@@ -52,6 +52,11 @@ For feature work:
 - Remove worktrees after the work is merged or abandoned. Preserve the plan and
   state notes, moving them to `archive/` if useful.
 
+Feature branch history may be rewritten while the branch is under development
+and has not been merged into the main branch. Use this to keep functional
+commits, generated updates, and follow-up fixes reviewable. Do not rewrite
+history that has already been merged.
+
 Before changing code in a repository, read its local `AGENTS.md` if present.
 When a repository has no `AGENTS.md`, infer commands and style from its
 existing files, history, and manifests.
@@ -131,6 +136,17 @@ Development is generally Nix-based. Prefer each repository's `nix develop`,
 `nix-shell`, flake outputs, or documented development shell before running
 language-specific tools. Deployment is usually to NixOS or vpsAdminOS systems,
 often through `confctl` and the configuration repositories.
+
+When changing Ruby code that is packaged for Nix as gems, rebuild the packaged
+gems so integration tests and future deployments use the new code. This applies
+to tools such as vpsAdminOS `osctl` components and vpsAdmin `nodectl`
+programs. In vpsAdminOS, see `make gems` and `make commit-gems`. In vpsAdmin,
+use `rake vpsadmin:gems`.
+
+Commit gem rebuilds separately from functional changes. Gem rebuild commits use
+only a subject line, following the repository's generated-gem commit style. One
+gem rebuild commit per feature branch is enough; amend or recreate it as needed
+while the feature branch is still unmerged.
 
 Do not assume that commands from one repository apply to another. Use the local
 `AGENTS.md`, README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer
