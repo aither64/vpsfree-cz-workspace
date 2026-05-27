@@ -15,6 +15,8 @@ Use these paths consistently:
   compatibility notes, and decisions.
 - `work/<yyyy-mm-dd-slug>/state.md`: current status, branch names, commands
   run, test results, open questions, and cleanup notes.
+- `NOTES.md`: durable development notes, troubleshooting tips, and reusable
+  lessons that should survive beyond one initiative.
 - `archive/`: optional location for completed initiative notes after worktrees
   have been removed.
 
@@ -70,6 +72,18 @@ For each initiative, maintain:
 Keep these files current enough that a future agent can resume the work without
 guessing. When plans change because code or tests reveal new facts, update the
 tracking notes.
+
+Promote reusable lessons to `NOTES.md`. In particular, write a note when a
+command, shell, test, build, deploy, hook, or worktree operation fails in a
+non-obvious way; when a workaround saves future time; when a repository has
+undocumented setup or ordering requirements; or when an investigation finds a
+dead end worth avoiding later.
+
+Keep `state.md` detailed for the current initiative and keep `NOTES.md`
+concise for future reuse. Record the command or workflow, symptom, cause if
+known, fix or workaround, verification result, and related initiative path.
+Summarize long logs instead of pasting them. Redact secrets and avoid recording
+temporary local paths unless the path itself matters.
 
 ## Compatibility And Deployment
 
