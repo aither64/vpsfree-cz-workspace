@@ -9,7 +9,7 @@ are, and what compatibility and deployment constraints are known.
 
 Use these paths consistently:
 
-- `repos/<project>`: canonical local checkout of an upstream repository.
+- `repos/<project>.git`: canonical bare clone of an upstream repository.
 - `worktrees/<yyyy-mm-dd-slug>/<project>`: per-initiative feature worktree.
 - `work/<yyyy-mm-dd-slug>/plan.md`: durable plan, affected repositories,
   compatibility notes, and decisions.
@@ -38,20 +38,23 @@ uses HTTPS, switch `origin` to the SSH URL before pushing. GitHub tokens may be
 used for API access, metadata, pull requests, and CI checks, but must not be
 embedded in remotes, committed to files, or recorded in work notes.
 
-Multiple Codex instances may work in this workspace at the same time. Do not
-develop directly in `repos/<project>` or reuse another initiative's branch or
+Multiple Codex instances may work in this workspace at the same time. Keep
+`repos/<project>.git` bare, and do not reuse another initiative's branch or
 worktree. Use feature branches and separate worktrees so concurrent work does
 not conflict over checked-out branches, index state, or uncommitted changes.
 
 For feature work:
 
-- Keep `repos/<project>` as the canonical checkout for fetching, inspecting,
-  and creating worktrees.
+- Keep `repos/<project>.git` as the canonical bare clone for fetching,
+  inspecting refs, and creating worktrees.
 - Create feature branches named `<yyyy>-<mm>-<dd>-<slug>`, for example
   `2026-05-27-api-token-rotation`, unless a repository-local rule requires a
   different name.
 - Create worktrees under `worktrees/<yyyy-mm-dd-slug>/<project>` so all changes
   for one initiative are easy to inspect together.
+- When merging a feature back, create a fresh temporary worktree from the target
+  branch, usually the upstream default branch, merge there, test there, push
+  from there, and remove the temporary worktree after the merge is complete.
 - Record every affected repository, branch, and worktree path in
   `work/<yyyy-mm-dd-slug>/state.md`.
 - Remove worktrees after the work is merged or abandoned. Preserve the plan and
