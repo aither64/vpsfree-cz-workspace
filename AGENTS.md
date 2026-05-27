@@ -38,6 +38,11 @@ uses HTTPS, switch `origin` to the SSH URL before pushing. GitHub tokens may be
 used for API access, metadata, pull requests, and CI checks, but must not be
 embedded in remotes, committed to files, or recorded in work notes.
 
+Multiple Codex instances may work in this workspace at the same time. Do not
+develop directly in `repos/<project>` or reuse another initiative's branch or
+worktree. Use feature branches and separate worktrees so concurrent work does
+not conflict over checked-out branches, index state, or uncommitted changes.
+
 For feature work:
 
 - Keep `repos/<project>` as the canonical checkout for fetching, inspecting,
