@@ -6,12 +6,12 @@ Branch name: `2026-05-27-outage-labels`
 
 | Repository | Worktree | Current head |
 | --- | --- | --- |
-| vpsadmin | `worktrees/2026-05-27-outage-labels/vpsadmin` | `f960f0e5d6f869e302a09f57cc27c181e87d13a1` |
-| vpsf-status | `worktrees/2026-05-27-outage-labels/vpsf-status` | `5f6db13103bf652e69b7b879a69e98794075e64e` |
-| vpsfree-irc-bot | `worktrees/2026-05-27-outage-labels/vpsfree-irc-bot` | `73ef144e761acd5b44b64d4d27ef292ea1b1322e` |
-| vpsfree-mail-templates | `worktrees/2026-05-27-outage-labels/vpsfree-mail-templates` | `d35ad25dab5de3f94fa25f485debde11413f5cd9` |
-| web | `worktrees/2026-05-27-outage-labels/web` | `ea0f19ce13b06194faada5b1fd4eeed3dc46c4b8` |
-| vpsfree-cz-configuration | `worktrees/2026-05-27-outage-labels/vpsfree-cz-configuration` | `e16d8ad3f51ff4e93aa9ee21a74d96b77dfea25d` |
+| vpsadmin | removed after merge | `f960f0e5d6f869e302a09f57cc27c181e87d13a1` |
+| vpsf-status | removed after merge | `5f6db13103bf652e69b7b879a69e98794075e64e` |
+| vpsfree-irc-bot | removed after merge | `73ef144e761acd5b44b64d4d27ef292ea1b1322e` |
+| vpsfree-mail-templates | removed after merge | `d35ad25dab5de3f94fa25f485debde11413f5cd9` |
+| web | removed after merge | `ea0f19ce13b06194faada5b1fd4eeed3dc46c4b8` |
+| vpsfree-cz-configuration | removed after merge | `e16d8ad3f51ff4e93aa9ee21a74d96b77dfea25d` |
 
 ## Upstream refresh
 
@@ -133,6 +133,20 @@ Branch name: `2026-05-27-outage-labels`
     again after the config rewrite to `f960f0e5`. An initial parallel run built
     a generation but exited with a log-file collision, so it was rerun alone.
   - `git diff --check` passed.
+
+## Merge and cleanup
+
+- Fast-forwarded `master` for all affected repositories on 2026-05-28:
+  - `vpsadmin` to `f960f0e5d`
+  - `vpsf-status` to `5f6db13`
+  - `vpsfree-irc-bot` to `73ef144`
+  - `vpsfree-mail-templates` to `d35ad25`
+  - `web` to `ea0f19c`
+  - `vpsfree-cz-configuration` to `e16d8ad3`
+- Removed feature and temporary merge worktrees, plus the empty initiative
+  worktree directories.
+- Kept local and remote feature branch refs as requested. No feature branches
+  were deleted.
 
 ## GitHub Actions
 

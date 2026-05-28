@@ -68,6 +68,9 @@ For feature work:
   `work/<yyyy-mm-dd-slug>/state.md`.
 - Remove worktrees after the work is merged or abandoned. Preserve the plan and
   state notes, moving them to `archive/` if useful.
+- Keep feature branches after merge, both locally and remotely, unless the user
+  explicitly asks for branch deletion. Cleanup means removing worktrees and
+  transient build/cache files, not deleting branch refs.
 
 Feature branch history may be rewritten while the branch is under development
 and has not been merged into the main branch. Use this to keep functional
