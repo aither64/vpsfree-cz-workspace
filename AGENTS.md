@@ -58,8 +58,12 @@ For feature work:
 - Create worktrees under `worktrees/<yyyy-mm-dd-slug>/<project>` so all changes
   for one initiative are easy to inspect together.
 - When merging a feature back, create a fresh temporary worktree from the target
-  branch, usually the upstream default branch, merge there, test there, push
-  from there, and remove the temporary worktree after the merge is complete.
+  branch, usually the upstream default branch. Fetch the target branch first,
+  rebase the feature branch onto the current target branch if needed, and merge
+  only when it can fast-forward, using `git merge --ff-only <feature-branch>` or
+  an equivalent fast-forward-only command. Do not create merge commits in normal
+  feature integration history. Test and push from the temporary worktree, then
+  remove it after the merge is complete.
 - Record every affected repository, branch, and worktree path in
   `work/<yyyy-mm-dd-slug>/state.md`.
 - Remove worktrees after the work is merged or abandoned. Preserve the plan and
