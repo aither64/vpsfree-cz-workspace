@@ -48,6 +48,10 @@ For feature work:
 
 - Keep `repos/<project>.git` as the canonical bare clone for fetching,
   inspecting refs, and creating worktrees.
+- Before pushing or updating downstream configuration pins, fetch upstream
+  and rebase feature branches when appropriate. Several repositories use
+  scheduled GitHub workflows to update dependencies, inputs, or generated
+  metadata, so default branches may advance while feature work is in progress.
 - Create feature branches named `<yyyy>-<mm>-<dd>-<slug>`, for example
   `2026-05-27-api-token-rotation`, unless a repository-local rule requires a
   different name.
@@ -149,6 +153,22 @@ Development is generally Nix-based. Prefer each repository's `nix develop`,
 language-specific tools. Deployment is usually to NixOS or vpsAdminOS systems,
 often through `confctl` and the configuration repositories.
 
+Use GitHub Actions as a feedback loop after pushing branches. If `gh` is not
+available in the current shell, run it through Nix, for example
+`nix shell nixpkgs#gh -c gh run list ...`. Inspect failed logs, monitor reruns,
+and resolve failures instead of leaving CI for the user to chase.
+
+When a repository is missing a tool in the ambient shell, enter the repository's
+Nix shell or use an appropriate `nix shell` command. Do not work around missing
+tooling by recording local environment limitations in commit messages.
+
+For `vpsfree-cz-configuration`, update flake inputs through `confctl`, not by
+manually editing `flake.lock`. Use
+`confctl inputs channel update --commit <channel> [role]` for normal channel
+updates. Use `confctl inputs channel set --commit <channel> <role> <rev>` when
+an exact unmerged feature revision has to be pinned. Keep changelogs enabled
+when they are useful; skip them for noisy `nixpkgs` and `llm-agents` updates.
+
 When changing Ruby code that is packaged for Nix as gems, rebuild the packaged
 gems so integration tests and future deployments use the new code. This applies
 to tools such as vpsAdminOS `osctl` components and vpsAdmin `nodectl`
@@ -168,8 +188,10 @@ configuration, and existing CI definitions as the source of truth.
 
 Write informative commits. A commit message must explain what is changing and
 why it is needed. The subject should summarize the change; the body should
-explain the problem, rationale, deployment or compatibility notes, and test
-evidence when that context matters.
+explain the problem, rationale, and deployment or compatibility notes when that
+context matters. Do not add command transcripts, "Checks:", "Tests:",
+"Syntax checks:", "Validated with:", or local tool availability notes to commit
+messages; record validation in `state.md` or PR notes instead.
 
 Rules:
 
