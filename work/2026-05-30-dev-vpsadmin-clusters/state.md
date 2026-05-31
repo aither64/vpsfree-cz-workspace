@@ -728,9 +728,22 @@ Open follow-ups:
   - `nix shell nixpkgs#nixfmt-rfc-style -c nixfmt --check
     tests/configs/nixos/vpsadmin-dns-server.nix`: passed.
 - Removed all temporary merge/rebase worktrees after pushing.
-- The original `vpsadmin` feature worktree still has unrelated dirty files and
-  remains on the unrebased feature branch; the pushed default branch contains
-  the equivalent rebased commit `e5aaed07d`.
+- Correction on 2026-05-31: the original `vpsadmin` feature worktree still
+  had uncommitted status and hook-installer changes from this initiative. They
+  were committed, rebased onto the pushed `master`, and merged in a fresh
+  `master` worktree.
+- Additional `vpsadmin` commits pushed to `master`:
+  - `155d36cfc api: reset invalid node status averages`;
+  - `f00087c59 libnodectld: create container hook directories`;
+  - `31942d6d2 packages: update nodectl gems`.
+- The additional push moved `vpsadmin` `master` from `e5aaed07d` to
+  `31942d6d2`.
+- Validation for the additional `vpsadmin` push:
+  - `git diff --check origin/master..HEAD`: passed;
+  - `ruby -c` on the changed API and libnodectld Ruby/spec files: passed;
+  - targeted API and libnodectld specs were attempted but both require a local
+    test DB (`DATABASE_URL` or `api/config/database.yml` test config), so they
+    did not run in the ambient shell.
 
 ## Bridge cluster DNS runtime update
 
