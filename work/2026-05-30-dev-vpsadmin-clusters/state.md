@@ -693,6 +693,18 @@ Open follow-ups:
 - Committed the vpsAdmin DNS-server forwarder option as
   `e398a8c32 tests: allow DNS server forwarders`.
 
+## Generic certificate import
+
+- Removed the devcluster tooling's hardcoded legacy certificate path and
+  replaced the specific certificate import command with
+  `devcluster cert import <cert-dir>`.
+- `start` now generates a workspace-local CA by default. Set
+  `VPSADMIN_DEVCLUSTER_CERT_IMPORT_DIR=/path/to/certs` to import an existing
+  certificate set automatically when a cluster does not yet have certificates.
+- Removed the hardcoded workspace fallback from the devcluster flake. The shell
+  wrapper still exports `VPSADMIN_DEVCLUSTER_WORKSPACE`; direct impure Nix
+  invocations fall back to the caller's `PWD`.
+
 ## Bridge cluster DNS runtime update
 
 - Updated running bridge DNS VMs to the rebuilt vpsAdmin node package:
