@@ -206,6 +206,20 @@ Rules:
 - Always write the commit message to a temporary file and commit with
   `git commit -F <tmpfile>`.
 - Do not use `git commit -m` for final commits.
+- Pre-commit hooks are mandatory, not advisory. Before the first commit in a
+  repository or worktree, verify that the repository's hook framework is
+  installed and active when the repository declares one, for example
+  `.overcommit.yml`, `.pre-commit-config.yaml`, `lefthook.yml`, or Husky
+  configuration. Install hooks with the repository-documented command, or infer
+  the standard framework command when documentation is missing.
+- Do not commit when expected hooks are absent, fail, or cannot be run. Fix the
+  hook setup or the reported offenses first. Only continue without hooks when
+  the user explicitly authorizes it for that commit, and record the reason and
+  replacement checks in the initiative state.
+- Running syntax checks or selected tests is not a substitute for hook-managed
+  lint/format checks. If a hook framework cannot be installed but the
+  equivalent command is known, run that command manually before committing and
+  record that fallback in state.
 - Do not bypass git hooks unless the user explicitly authorizes it and the
   reason is recorded in the initiative state.
 - Keep commits focused. Split generated updates, dependency bumps, release
