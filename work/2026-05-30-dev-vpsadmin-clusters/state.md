@@ -78,6 +78,11 @@ Commands/results:
   `br0` in this shell.
 - Committed the vpsAdminOS OSVM bridge-helper support as
   `b4230c479 osvm: support explicit QEMU bridge helper`.
+- Rebuilt vpsAdminOS packaged gems with `nix develop --command make gems`.
+  The build published `25.11.0.build20260531170948` gems and updated
+  `.build_id` plus `os/packages/*/{Gemfile,Gemfile.lock,gemset.nix}`.
+- Committed the generated vpsAdminOS gem refresh as
+  `dfed89a5d os: update gems to 25.11.0.build20260531170948`.
 - `dev-clusters/vpsadmin/bin/devcluster start 2026-05-29-security-advisories
   --topology single --network local`: passed after fixing short socket paths,
   services CPU topology, cert paths inside the VM, services virtiofs mounts, and
