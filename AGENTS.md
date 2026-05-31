@@ -169,6 +169,12 @@ When a repository is missing a tool in the ambient shell, enter the repository's
 Nix shell or use an appropriate `nix shell` command. Do not work around missing
 tooling by recording local environment limitations in commit messages.
 
+When adding new integration tests that use the vpsAdminOS test-runner, write
+test scripts in the current RSpec-style structure with examples and
+expectations, such as `describe`, `it`, and `expect`. Do not refactor existing
+tests solely to convert their style unless the user explicitly asks for that
+refactor.
+
 For `vpsfree-cz-configuration`, update flake inputs through `confctl`, not by
 manually editing `flake.lock`. Use
 `confctl inputs channel update --commit <channel> [role]` for normal channel
