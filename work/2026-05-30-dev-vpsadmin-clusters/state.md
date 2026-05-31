@@ -705,6 +705,33 @@ Open follow-ups:
   wrapper still exports `VPSADMIN_DEVCLUSTER_WORKSPACE`; direct impure Nix
   invocations fall back to the caller's `PWD`.
 
+## Default branch merges
+
+- Merged `vpsadminos` branch `2026-05-30-dev-vpsadmin-clusters` into the
+  default branch `staging` in a fresh detached worktree and pushed
+  `8a76972f7..dfed89a5d` to `github.com:vpsfreecz/vpsadminos.git`.
+- `vpsadminos` validation before push:
+  - `git diff --check origin/staging..HEAD`: passed;
+  - `nix develop .#vpsadminos --command ... bundle exec rspec
+    spec/osvm/machine_config_spec.rb`: passed with 18 examples, 0 failures.
+- `nix develop .#test-runner --command bundle exec rspec ...` failed with
+  Ruby 3.3.10 while the local `osvm` gem requires Ruby 3.4.0; recorded the
+  working OSVM RSpec shell in
+  `notes/vpsadminos/2026-05-31-osvm-rspec-shell.md`.
+- Rebased the committed `vpsadmin` DNS-server forwarder change in a detached
+  temporary worktree because `origin/master` had advanced to
+  `670f4089f packages: update gem dependencies`, then fast-forwarded a fresh
+  `master` worktree and pushed `670f4089f..e5aaed07d` to
+  `github.com:vpsfreecz/vpsadmin.git`.
+- `vpsadmin` validation before push:
+  - `git diff --check origin/master..HEAD`: passed;
+  - `nix shell nixpkgs#nixfmt-rfc-style -c nixfmt --check
+    tests/configs/nixos/vpsadmin-dns-server.nix`: passed.
+- Removed all temporary merge/rebase worktrees after pushing.
+- The original `vpsadmin` feature worktree still has unrelated dirty files and
+  remains on the unrebased feature branch; the pushed default branch contains
+  the equivalent rebased commit `e5aaed07d`.
+
 ## Bridge cluster DNS runtime update
 
 - Updated running bridge DNS VMs to the rebuilt vpsAdmin node package:
