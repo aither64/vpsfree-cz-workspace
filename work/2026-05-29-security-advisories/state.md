@@ -780,6 +780,31 @@
     the `routes` topic could not pull `mariadb:latest` from Docker Hub. The
     token available locally could not rerun the failed workflow, so the small
     regression-test commit above was used to trigger a fresh run.
+  - The next API Specs run `26850575631` hit the same Docker Hub pull timeout.
+    Removed the workflow-level MariaDB Docker services and let API Specs use
+    the repository's local MariaDB fallback from `tools/test_db.rb`, adding
+    `mariadb-server` to the workflow package list. Committed and pushed
+    `bcf95b723` `ci: run API specs with local MariaDB`.
+  - API Specs run `26851113030` then reached the specs but failed because the
+    local MariaDB database was created with the server default `utf8mb4`
+    charset, while the schema still declares `utf8mb3` collations. Updated the
+    local test database URL and MySQL database creation helpers to set
+    `utf8mb3`/`utf8mb3_unicode_ci` explicitly. Committed and pushed
+    `3018becf4` `ci: preserve MySQL charset in API specs`.
+  - Validation before pushing `3018becf4`: `ruby -c tools/test_db.rb`;
+    `ruby -c api/spec/support/db_setup.rb`;
+    `nix develop .#api --command bash -lc 'bundle exec rubocop
+    ../tools/test_db.rb spec/support/db_setup.rb'`; auto-DB smoke
+    `VPSADMIN_PLUGINS=none bundle exec rspec
+    spec/smoke/core_schema_spec.rb --format progress` with 2 examples,
+    0 failures; focused auto-DB smoke `VPSADMIN_PLUGINS=none bundle exec
+    rspec spec/smoke/auth_smoke_spec.rb spec/smoke/stability_spec.rb --format
+    progress` with 5 examples, 0 failures.
+  - GitHub Actions after pushing `3018becf4`: API Specs run `26851584495`,
+    libnodectld Specs run `26851584493`, CI run `26851584492`, and RuboCop
+    run `26851584494` started. Older vpsAdmin CI runs `26849986084` and
+    `26849230214` were still in progress and are being monitored even though
+    they predate the current branch head.
   - `vpsfree-irc-bot` integration run `26849211188` failed because the test VM
     was locked to a vpsAdmin revision without `SecurityAdvisory` models.
     Updated `flake.lock` to vpsAdmin `2be7c47f0`, committed and pushed
