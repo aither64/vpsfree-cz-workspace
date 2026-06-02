@@ -744,6 +744,19 @@
     advanced from `2026-06-02 17:57:40` to `2026-06-02 17:58:40` UTC and
     `update_count` increased from 3 to 5. `systemctl --failed` reported no
     failed units and `container@mailer.service` was active.
+- `vpsf-status` CI lock correction on 2026-06-02:
+  - GitHub Actions integration run `26849211273` failed while creating
+    security advisory fixtures because the test VM was still locked to an
+    older upstream `vpsadmin` revision without the `SecurityAdvisory` model.
+  - Updated `flake.lock` to pin the `vpsadmin` input to the pushed feature
+    commit `d4f9347e5d02dd9b4da5934e0ae9f4e18a38d71d`.
+  - Committed and pushed `8429038`:
+    `status: test security advisories against feature API`.
+  - Validation before push: `CGO_ENABLED=0 go test ./...`, `nix build
+    .#vpsf-status --no-link`, and
+    `nix develop --command lefthook run pre-commit --all-files` passed.
+    The commit was amended inside `nix develop` so the repository Git hook
+    could run with `lefthook` available in `PATH`.
 
 ## Cleanup
 
