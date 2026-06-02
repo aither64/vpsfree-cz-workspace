@@ -757,6 +757,42 @@
     `nix develop --command lefthook run pre-commit --all-files` passed.
     The commit was amended inside `nix develop` so the repository Git hook
     could run with `lefthook` available in `PATH`.
+- GitHub Actions follow-up fixes on 2026-06-02:
+  - `vpsadmin` API Specs failed in run `26849230234` because outage metrics
+    still called dynamic translated summary methods such as `cs_summary`.
+    After plugin tables were removed from the core schema, those methods are
+    no longer reliable in schema-built plugin specs.
+  - Fixed outage metrics to preload `outage_translations` and read summaries
+    from the association, emitting an empty label for languages without a
+    translation. Committed and pushed `2be7c47f0`
+    `api: read outage metric summaries from translations`.
+  - Added regression coverage for the empty untranslated label and pushed
+    `ae25ee388` `api: cover untranslated outage metric labels`.
+  - Focused validation:
+    `ruby -c plugins/outage_reports/api/lib/vpsadmin/api/plugins/outage_reports/metrics.rb`;
+    `nix develop .#api --command bundle exec rubocop
+    ../plugins/outage_reports/api/lib/vpsadmin/api/plugins/outage_reports/metrics.rb
+    spec/lib/vpsadmin/api/plugins/outage_reports/metrics_spec.rb`;
+    `nix develop .#api --command bundle exec rspec
+    spec/lib/vpsadmin/api/plugins/outage_reports/metrics_spec.rb --format
+    progress` with `VPSADMIN_PLUGINS=all` and the temporary MariaDB socket.
+  - A later API Specs run `26849986086` failed before running specs because
+    the `routes` topic could not pull `mariadb:latest` from Docker Hub. The
+    token available locally could not rerun the failed workflow, so the small
+    regression-test commit above was used to trigger a fresh run.
+  - `vpsfree-irc-bot` integration run `26849211188` failed because the test VM
+    was locked to a vpsAdmin revision without `SecurityAdvisory` models.
+    Updated `flake.lock` to vpsAdmin `2be7c47f0`, committed and pushed
+    `7e76325` `bot: test advisory events against feature API`.
+  - IRC bot validation: `nix develop --command bundle exec rspec` passed
+    `39 examples, 0 failures`; `./test-runner.sh test -f vpsadmin-events`
+    passed all 6 examples, including both security-advisory examples, in
+    487.18 seconds.
+  - `vpsf-status` was also aligned to vpsAdmin `2be7c47f0`, committed and
+    pushed `5ed2ba1` `status: align vpsadmin feature input`.
+  - Status-page validation: `CGO_ENABLED=0 go test ./...`, `nix build
+    .#vpsf-status --no-link`, and
+    `nix develop --command lefthook run pre-commit --all-files` passed.
 
 ## Cleanup
 
