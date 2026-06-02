@@ -181,6 +181,9 @@ manually editing `flake.lock`. Use
 updates. Use `confctl inputs channel set --commit <channel> <role> <rev>` when
 an exact unmerged feature revision has to be pinned. Keep changelogs enabled
 when they are useful; skip them for noisy `nixpkgs` and `llm-agents` updates.
+Keep automated `confctl ... --commit` commit messages exactly as generated;
+do not amend or rewrap them to satisfy generic commit-message line length
+rules. Edit them only when intentionally making a concise changelog edit.
 
 When changing Ruby code that is packaged for Nix as gems, rebuild the packaged
 gems so integration tests and future deployments use the new code. This applies
@@ -208,7 +211,9 @@ messages; record validation in `state.md` or PR notes instead.
 
 Rules:
 
-- Wrap every commit message line at 80 characters or fewer.
+- Wrap every commit message line at 80 characters or fewer. Generated
+  `confctl ... --commit` messages in `vpsfree-cz-configuration` are the
+  exception: keep them exactly as generated, even when they exceed this limit.
 - Always write the commit message to a temporary file and commit with
   `git commit -F <tmpfile>`.
 - Do not use `git commit -m` for final commits.
