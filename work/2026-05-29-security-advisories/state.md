@@ -526,8 +526,8 @@
     `vpsfree-cz-configuration/configs/internal-dns/zone.vpsfree.cz.`:
     `adminer.aitherdev.int` -> `frontend.aitherdev.int.vpsfree.cz.`.
 - Final committed feature worktrees before push:
-  - `vpsadmin`: `2ecf36b73` `api: add security advisories`; branch is
-    currently ahead 1 and behind upstream `origin/master` by 7 commits.
+  - `vpsadmin`: `d4f9347e5` `api: add security advisories`; rebased onto
+    `origin/master` at `d832189df`.
   - `vpsadmin-go-client`: `4c74d69`
     `Update client for security advisories`; already pushed to
     `origin/2026-05-29-security-advisories`.
@@ -543,9 +543,11 @@
     `dns: add aitherdev adminer alias`; pushed to
     `origin/2026-05-29-security-advisories`.
 - Final focused validations before push:
-  - `vpsadmin`: focused core advisory/schema/mail-template specs and the
-    outage_reports advisory plugin spec passed against temporary MariaDB;
-    targeted RuboCop on changed advisory/spec files passed.
+  - `vpsadmin`: after rebasing, focused core
+    advisory/schema/mail-template specs passed against temporary MariaDB:
+    28 examples, 0 failures. The outage_reports advisory plugin spec passed:
+    3 examples, 0 failures. Targeted RuboCop on changed advisory/spec files
+    passed before the rebase.
   - `vpsadmin-go-client`: `go fmt ./...` and `CGO_ENABLED=0 go test ./...`
     passed.
   - `vpsf-status`: `CGO_ENABLED=0 go test ./...`,
