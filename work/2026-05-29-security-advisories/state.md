@@ -531,7 +531,7 @@
   - `vpsadmin-go-client`: `4c74d69`
     `Update client for security advisories`; already pushed to
     `origin/2026-05-29-security-advisories`.
-  - `vpsf-status`: `835f572`
+  - `vpsf-status`: `775c7aa`
     `status: show recent security advisories`.
   - `vpsfree-irc-bot`: `cd206df`
     `bot: announce security advisories`.
@@ -564,6 +564,25 @@
   - `cb7fc42` `dev-clusters: add vpsf-status to vpsadmin cluster`.
   - `d5043e7` `dev-clusters: use configured API host for webui OAuth`.
   - `a50a1a7` `dev-clusters: disable duplicate vpsadmin Mailpit service`.
+  - `9e528d5` `dev-clusters: keep webui sessions out of private tmp`.
+- Dev-cluster login repair on 2026-06-02:
+  - The Web UI OAuth callback was still failing after the API internal URL
+    fix because PHP could not write sessions:
+    `PHP Request Shutdown: Write failed: No space left on device (28)`.
+  - The Web UI PHP-FPM private `/tmp` tmpfs was full of session files. Many
+    session files were about 2.6 MiB because logged-in Web UI sessions store
+    the API description.
+  - Old session files were removed and PHP-FPM was restarted, which
+    immediately restored login.
+  - Added a dev-cluster Web UI override that stores sessions in
+    `/run/vpsadmin-webui-sessions` and sets aggressive one-hour session GC.
+  - Deployed with
+    `dev-clusters/vpsadmin/bin/devcluster update
+    2026-05-29-security-advisories services`.
+  - Verified `/etc/vpsadmin/config.php` in the `webui` container contains the
+    new `session.save_path` and GC settings, `/tmp` is empty, and the full
+    OAuth login flow for `test-admin` redirects to `?page=cluster` with no
+    token-exchange error.
   - Live check against
     `https://status.aitherdev.int.vpsfree.cz/` confirmed that recent security
     advisories are shown, `No issues reported` is still shown when there are
