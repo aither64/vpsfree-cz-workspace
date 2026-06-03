@@ -5,11 +5,9 @@
 - Slug: `2026-05-29-security-advisories`
 - Branch: `2026-05-29-security-advisories`
 - Started: 2026-05-29
-- Current status: implementation is committed in the project worktrees and
-  split dev-cluster support commits are committed in the coordination
-  workspace. Remaining work is to rebase the vpsAdmin feature branch on
-  current upstream, push unpushed branches, repair/verify the running bridge
-  dev-cluster login, and monitor GitHub Actions to completion.
+- Current status: uncommitted follow-up changes are implemented, validated,
+  and deployed to the bridge dev cluster. Remaining work is to commit and push
+  the changed project worktrees, then monitor GitHub Actions.
 
 ## Worktrees
 
@@ -873,6 +871,87 @@
     also completed successfully. `/run` was 26 MiB used out of 1.6 GiB with
     11 session files. Fresh OAuth logins passed for `test-admin`
     (`?page=cluster`) and `test-user1` (`?page=`).
+- Security advisory update text simplification on 2026-06-03:
+  - Simplified advisory updates from `summary`, `description`, and `response`
+    to `summary` plus optional `message`. Main advisory text fields remain
+    `summary`, `description`, and `response`.
+  - Updated vpsAdmin API resources, model translation helpers, built-in mail
+    templates, WebUI forms/detail rendering, and specs. Update create/edit now
+    requires per-language summaries and accepts optional per-language messages.
+  - Added admin WebUI actions to edit and delete advisory updates. Delete has
+    confirmation and update translation rows are deleted with the update.
+  - Fixed direct admin update deletion coverage to assert no orphaned
+    `security_advisory_translations` remain. Changed
+    `SecurityAdvisory` update cleanup to `dependent: :destroy` so update
+    callbacks are honored if an advisory is destroyed later.
+  - Fixed `vpsadmin:plugins:status` and `vpsadmin:plugins:rollback`
+    compatibility with ActiveRecord 8 while testing the dev-cluster migration
+    path. `status` now uses `connection.pool.schema_migration`; rollback no
+    longer references a stale undefined variable.
+  - Updated `vpsfree-mail-templates` advisory update templates to render only
+    optional update message text after the summary.
+  - Updated the IRC bot integration fixture to create update translations with
+    `message` instead of `description`/`response`; runtime bot code did not
+    need a change because update announcements use the summary.
+  - Regenerated `vpsadmin-go-client` from the local vpsAdmin API using the
+    HaveAPI 0.28 generator. The generated update resource now exposes
+    `en_message`/`cs_message` and show/update/delete actions. The new
+    generated action files are staged so Nix flake source filtering can see
+    them during local dev-cluster builds.
+  - Updated `vpsf-status` Nix package hash for the regenerated local Go
+    client; no status-page source change was needed for this text-field
+    simplification.
+  - Validation:
+    - `ruby -c` for changed Ruby files in advisory update resources/models,
+      plugin migration helpers, and advisory specs.
+    - `php -l` for changed WebUI security advisory page/forms.
+    - ERB compilation for vpsAdmin built-in advisory update templates and
+      production `vpsfree-mail-templates` advisory update templates.
+    - `VPSADMIN_PLUGINS=none bundle exec rspec
+      spec/api/resources/security_advisory_spec.rb`: 17 examples, 0 failures.
+    - `bundle exec rubocop` on changed advisory and plugin task Ruby files:
+      no offenses.
+    - `CGO_ENABLED=0 go test ./...` in `vpsadmin-go-client` and
+      `vpsf-status`: passed.
+    - `nix build --impure --expr ...` for `vpsf-status` with sibling local
+      generated client: passed after the package hash update.
+    - `nix develop --command bundle exec rspec` in `vpsfree-irc-bot`:
+      39 examples, 0 failures.
+    - `nix-instantiate --parse tests/suite/vpsadmin-events.nix`: passed.
+    - `git diff --check` passed in `vpsadmin`, `vpsadmin-go-client`,
+      `vpsf-status`, `vpsfree-mail-templates`, and `vpsfree-irc-bot`.
+  - Dev cluster migration/deploy:
+    - Stopped vpsAdmin API/scheduler/supervisor/status services on the
+      services VM and rolled back the old deployed advisory schema. The
+      outage/advisory plugin join table was dropped manually because the old
+      plugin rollback/status task was not ActiveRecord 8-compatible; then the
+      core migration `20260601120000` was reverted with
+      `db:migrate:down VERSION=20260601120000`.
+    - Re-ran `dev-clusters/vpsadmin/bin/devcluster update
+      2026-05-29-security-advisories services`. The first switch applied the
+      new migration successfully, but exited non-zero because a temporary
+      HaveAPI generator worktree caused a new `/mnt/haveapi` mount in the
+      already-running VM. Removed and pruned that support worktree, then
+      re-ran the services update to remove the stale mount.
+    - Ran one final services update after the plugin task helper fix.
+    - Final dev-cluster checks: no failed systemd units; `vpsadmin-api`,
+      `vpsadmin-database-setup`, `vpsf-status`, `container@webui`, and
+      `nginx` active; `vpsadmin-devcluster-seed` inactive as expected for a
+      completed oneshot.
+    - Dev database has schema migration rows `20260601120000` and
+      `20260601121000-outage_reports`. `security_advisory_translations` has
+      `summary`, `description`, `response`, and `message`, and no longer has
+      the old `title` column.
+    - `vpsadmin:plugins:status PLUGIN=outage_reports` works on the services
+      VM and shows `20260601121000 Add outage security advisories` as up.
+    - HTTP smoke checks returned 200 for
+      `https://webui.aitherdev.int.vpsfree.cz/`,
+      `https://status.aitherdev.int.vpsfree.cz/`, and
+      `https://api.aitherdev.int.vpsfree.cz/v7.0/`.
+    - API `OPTIONS /v7.0/security_advisory_updates` exposes `en_summary` and
+      `en_message`, with no `en_description` or `en_response`.
+  - Removed the temporary HaveAPI generator worktree after client generation
+    and deployment; only the bare `repos/haveapi.git` remains.
 
 ## Cleanup
 
