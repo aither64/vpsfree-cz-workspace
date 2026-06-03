@@ -1047,6 +1047,46 @@
       `outage_report_user_announce` and `outage_report_generic_announce`
       include CVE text and outage detail links.
 
+- 2026-06-03 advisory/outage WebUI action follow-up:
+  - Planned and implemented a WebUI-only follow-up after admin testing:
+    - Local vpsAdmin commit: `74b46202e` (`webui: improve security advisory
+      links`).
+    - Security advisory `Related outages` rows now use the standard details
+      icon instead of a text `Show` link.
+    - Admins can unlink related outages from the advisory detail table with the
+      same inline unlink action used on outage details.
+    - Transaction log concern rendering now handles `SecurityAdvisory` in both
+      PHP and the live JavaScript sidebar updater, linking to advisory details.
+  - Validation:
+    - `php -l webui/forms/security_advisory.forms.php` passed.
+    - `php -l webui/lib/functions.lib.php` passed.
+    - `nix shell nixpkgs#nodejs --command node --check
+      webui/public/js/transaction-chains.js` passed. The repository's
+      `.#webui` shell does not include `node`.
+    - `git diff --check` passed in `vpsadmin` and for this state file.
+    - Deployed with `dev-clusters/vpsadmin/bin/devcluster update
+      2026-05-29-security-advisories services`. The switch initially failed
+      because the services VM root filesystem was full while recreating
+      vpsAdmin config symlinks. Ran `nix-collect-garbage -d` inside the VM,
+      restarted the failed vpsAdmin units, restarted RabbitMQ after it lost
+      its user/vhost process state, reran/verified RabbitMQ user provisioning,
+      restored the initialized marker, and cleared failed units.
+    - Final dev-cluster checks: cluster running/ready; no failed systemd units;
+      `rabbitmq`, `vpsadmin-api`, `vpsadmin-console-router`,
+      `vpsadmin-supervisor`, `vpsadmin-scheduler`, `container@webui`, and
+      `vpsf-status` active; root filesystem 85% used with about 700 MiB free.
+    - HTTP checks returned 200 for
+      `https://webui.aitherdev.int.vpsfree.cz/` and
+      `https://api.aitherdev.int.vpsfree.cz/v7.0/`.
+    - Rendered advisory detail page
+      `?page=security_advisory&action=show&id=1` shows the related outage
+      details icon linking to `?page=outage&action=show&id=1`, with no text
+      `Show` link.
+    - Verified `transaction_concern_class("SecurityAdvisory")` and
+      `transaction_concern_link("SecurityAdvisory", 1)` output the readable
+      label and advisory detail link. The served `transaction-chains.js`
+      contains the same `SecurityAdvisory` mapping for live sidebar updates.
+
 ## Cleanup
 
 - Remove worktrees after merge or abandonment.
