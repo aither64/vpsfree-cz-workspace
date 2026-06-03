@@ -837,6 +837,42 @@
     - All affected worktrees were clean except `vpsfree-cz-configuration`,
       which still had the known local untracked `.bin/` and `.bundle/`
       directories.
+- Dev cluster authentication failure on 2026-06-03:
+  - Symptom: browser login reported the webui OAuth callback error
+    `vpsAdmin was unable to obtain access token from the authorization
+    server`. A previous curl reproduction for `test-user1` left an
+    `oauth2_authorizations` row with `user_session_id = NULL`, consistent
+    with callback/token state not being persisted.
+  - Root cause: after adding `vpsf-status` to the dev cluster, its built-in
+    vpsAdmin webui HTTP probe used `HEAD /` every 5 seconds. The PHP webui
+    starts a session at the top of `public/index.php` and stores the full API
+    description in `$_SESSION`, so anonymous probes created 2.6 MiB session
+    files. `/run/vpsadmin-webui-sessions` grew to 1.6 GiB with 728 files and
+    filled the webui container `/run` tmpfs to 100%, preventing reliable
+    OAuth state/PKCE verifier writes.
+  - Immediate recovery: removed generated session files from
+    `/run/vpsadmin-webui-sessions` in the webui container. `/run` dropped
+    from 100% used to 1% used.
+  - Superseded workaround: briefly extended `vpsf-status` with separate check
+    URLs and configured the dev cluster to probe the webui favicon. This was
+    removed before commit, because the index page is the important service
+    check.
+  - Durable fix: dev-cluster `vpsf-status` probes the webui index page every
+    30 seconds, matching production. The webui container has a dedicated
+    systemd timer that prunes PHP session files older than 60 minutes from
+    `/run/vpsadmin-webui-sessions`, matching the configured PHP session
+    lifetime.
+  - Final validation: deployed with
+    `dev-clusters/vpsadmin/bin/devcluster update
+    2026-05-29-security-advisories services`. `vpsf-status` config has
+    `check_interval = 30` and no separate webui check URL. HAProxy logs show
+    `HEAD /` every 30 seconds and no new favicon probes after the switch. The
+    webui container has `vpsadmin-webui-prune-sessions.timer` active; a
+    synthetic two-hour-old `sess_*` file was deleted by
+    `vpsadmin-webui-prune-sessions.service`; the first scheduled timer run
+    also completed successfully. `/run` was 26 MiB used out of 1.6 GiB with
+    11 session files. Fresh OAuth logins passed for `test-admin`
+    (`?page=cluster`) and `test-user1` (`?page=`).
 
 ## Cleanup
 
