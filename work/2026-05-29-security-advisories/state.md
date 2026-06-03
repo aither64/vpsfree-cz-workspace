@@ -5,9 +5,10 @@
 - Slug: `2026-05-29-security-advisories`
 - Branch: `2026-05-29-security-advisories`
 - Started: 2026-05-29
-- Current status: vpsAdmin follow-up for the nondeterministic CI failure is
-  committed locally and validated. Remaining work is to push vpsAdmin, monitor
-  GitHub Actions, and resolve any new failures.
+- Current status: clean outage/advisory link API is implemented and committed
+  locally in `vpsadmin`; the generated Go client is updated and committed
+  locally in `vpsadmin-go-client`. Changes have not been pushed. Integration
+  tests were intentionally skipped per user request.
 
 ## Worktrees
 
@@ -108,6 +109,11 @@
   `nodectld` sets `Thread.abort_on_exception = true`, the remote command
   thread exception terminated the daemon and the test eventually timed out
   waiting for node 102 runtime status.
+- Local vpsAdmin commits after the clean outage/advisory link API follow-up:
+  `33c9e0cf2` (`outage_reports: expose advisory links as resource`) on top of
+  `bb36cedf8` (`outage_reports: improve advisory links`).
+- Local `vpsadmin-go-client` commit after regeneration:
+  `f3b308f` (`Update client for outage advisory links`).
 
 ## Implementation Summary
 
@@ -133,6 +139,11 @@
   - Split outage/advisory API coverage out of the core advisory resource spec
     into an outage_reports plugin spec. Extracted generic VPS/export fixture
     helpers from the outage_reports helper into a core spec helper.
+  - Replaced the temporary nested `/outages/:id/security_advisories` API with
+    top-level `outage_security_advisory#index/show/create/delete`, backed by
+    the `OutageSecurityAdvisory` join model. WebUI outage and advisory pages
+    now create/delete join rows directly, so advisory details can always render
+    the unlink action from the link row.
 - `vpsadmin-go-client`
   - Regenerated from the local vpsAdmin API schema and formatted with `gofmt`.
 - `vpsf-status`
@@ -159,6 +170,21 @@
 - vpsAdmin syntax:
   - `ruby -c` for new/changed Ruby files.
   - `php -l` for new/changed web UI PHP files.
+- vpsAdmin clean outage/advisory link API follow-up on 2026-06-03:
+  - `ruby -c` for changed outage advisory Ruby files and plugin spec passed.
+  - `php -l` for changed outage/advisory WebUI PHP files passed.
+  - `git diff --check` passed.
+  - `nix develop .#api -c bash -lc 'bundle exec rspec
+    spec/api/plugins/outage_reports/security_advisory_spec.rb'`: 6 examples,
+    0 failures.
+  - `nix develop .#api -c bash -lc 'bundle exec rspec
+    spec/api/plugins/outage_reports/outage_spec.rb
+    spec/api/plugins/outage_reports/security_advisory_spec.rb'`: 61 examples,
+    0 failures.
+  - `nix develop -c bundle exec overcommit --run pre_commit`: Nixfmt,
+    RuboCop, and PhpCsFixer passed.
+  - Commit hooks passed during commit `33c9e0cf2`.
+  - Integration tests were not run per user request.
 - vpsAdmin focused specs:
   - Temporary MariaDB under `/tmp`, `DATABASE_URL` with `encoding=utf8`,
     `RACK_ENV=test VPSADMIN_PLUGINS=all bundle exec rspec
@@ -214,11 +240,18 @@
   - `gofmt -w client`
   - `CGO_ENABLED=0 go test ./...` passed; rerun after final checks also
     passed.
+  - For the outage/advisory link API follow-up, regenerated against a temporary
+    local vpsAdmin API server at `http://127.0.0.1:19292`; the server and
+    persistent test DB were stopped afterwards.
+  - `go fmt ./...` passed.
+  - `CGO_ENABLED=0 go test ./...` passed.
 - `vpsf-status`:
   - `CGO_ENABLED=0 go test ./...` passed; rerun after final checks also
     passed.
   - Plain `go test ./...` failed in this environment because cgo/gcc was not
     available.
+  - For the outage/advisory link API follow-up, `CGO_ENABLED=0 go test ./...`
+    passed with no source changes.
   - Nix integration is pending until `go.mod` uses a released generated client
     instead of the sibling local replace.
 - `vpsfree-irc-bot`:
@@ -1049,8 +1082,8 @@
 
 - 2026-06-03 advisory/outage WebUI action follow-up:
   - Planned and implemented a WebUI-only follow-up after admin testing:
-    - Local vpsAdmin commit: `74b46202e` (`webui: improve security advisory
-      links`).
+    - Local vpsAdmin commit after squash: `bb36cedf8`
+      (`outage_reports: improve advisory links`).
     - Security advisory `Related outages` rows now use the standard details
       icon instead of a text `Show` link.
     - Admins can unlink related outages from the advisory detail table with the
