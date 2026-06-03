@@ -5,9 +5,9 @@
 - Slug: `2026-05-29-security-advisories`
 - Branch: `2026-05-29-security-advisories`
 - Started: 2026-05-29
-- Current status: uncommitted follow-up changes are implemented, validated,
-  and deployed to the bridge dev cluster. Remaining work is to commit and push
-  the changed project worktrees, then monitor GitHub Actions.
+- Current status: vpsAdmin follow-up for the nondeterministic CI failure is
+  committed locally and validated. Remaining work is to push vpsAdmin, monitor
+  GitHub Actions, and resolve any new failures.
 
 ## Worktrees
 
@@ -99,6 +99,15 @@
   throwaway Git copy was needed so new files and ignored generated package
   locks were visible. See
   `notes/cross-project/2026-06-01-test-runner-flake-overrides.md`.
+- GitHub Actions run `26882093251` for vpsAdmin failed in
+  `webui#vps-admin-ops` because `nodectld` crashed repeatedly during setup.
+  The concrete exception was `NoMethodError: undefined method 'empty?' for nil`
+  in `NodeCtld::PoolStatus#update`. The failure was a startup race: the remote
+  control socket was accepting `nodectl refresh` after `Daemon#init` started
+  remote control but before `PoolStatus#init` populated `@pools`. Since
+  `nodectld` sets `Thread.abort_on_exception = true`, the remote command
+  thread exception terminated the daemon and the test eventually timed out
+  waiting for node 102 runtime status.
 
 ## Implementation Summary
 
@@ -180,6 +189,27 @@
   - Checked `rake -T`; `rake vpsadmin:gems` only rebuilds `libnodectld`,
     `nodectl`, and `nodectld`, which this feature did not touch. No vpsAdmin
     generated gem rebuild is needed for this change.
+  - Follow-up for GitHub Actions run `26882093251`:
+    - `nix develop .#libnodectld --command bundle exec rspec
+      spec/nodectld/pool_status_spec.rb`: 2 examples, 0 failures.
+    - `nix develop .#libnodectld --command bundle exec rspec`: 389 examples,
+      0 failures.
+    - `nix-instantiate --parse tests/suite/storage/remote-common.nix` passed.
+    - `nix develop .#libnodectld --command bundle exec ruby -c
+      lib/nodectld/pool_status.rb`: syntax OK.
+    - `nix develop .#libnodectld --command bundle exec ruby -c
+      spec/nodectld/pool_status_spec.rb`: syntax OK.
+    - `nix develop --command rake vpsadmin:gems` rebuilt and pushed
+      `libnodectld`, `nodectl`, and `nodectld`
+      `4.1.0.build20260603174938`.
+    - `nix build --impure --expr 'let flake = builtins.getFlake
+      "path:/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-05-29-security-advisories/vpsadmin";
+      system = "x86_64-linux"; pkgs = import flake.inputs.nixpkgs {
+      inherit system; overlays = [ flake.overlays.default ]; }; in [
+      pkgs.libnodectld pkgs.nodectl pkgs.nodectld ]' --no-link` passed.
+    - `bundle exec rubocop` is not available in the `.#libnodectld` bundle or
+      as a standalone command in that dev shell; Overcommit RuboCop hooks ran
+      successfully during commits instead.
 - `vpsadmin-go-client`:
   - `gofmt -w client`
   - `CGO_ENABLED=0 go test ./...` passed; rerun after final checks also
@@ -918,6 +948,12 @@
     - `nix develop --command bundle exec rspec` in `vpsfree-irc-bot`:
       39 examples, 0 failures.
     - `nix-instantiate --parse tests/suite/vpsadmin-events.nix`: passed.
+    - After pushing the advisory update `message` field change, GitHub
+      integration failed in `vpsfree-irc-bot` because its `vpsadmin` flake
+      input was still pinned to `2be7c47f0`, whose
+      `SecurityAdvisoryTranslation` schema did not have `message`.
+      Updated the lock to vpsAdmin `c0aef236e` and reran
+      `./test-runner.sh test -f vpsadmin-events`: 6 examples, 0 failures.
     - `git diff --check` passed in `vpsadmin`, `vpsadmin-go-client`,
       `vpsf-status`, `vpsfree-mail-templates`, and `vpsfree-irc-bot`.
   - Dev cluster migration/deploy:
@@ -952,6 +988,64 @@
       `en_message`, with no `en_description` or `en_response`.
   - Removed the temporary HaveAPI generator worktree after client generation
     and deployment; only the bare `repos/haveapi.git` remains.
+  - Upstream/rebase and push status:
+    - Fetched affected upstream repositories on 2026-06-03. All affected
+      feature branches contain their `origin/master` heads; no additional
+      rebase was needed after the final IRC bot lockfile commit. Earlier in
+      the same push cycle, vpsAdmin was rebased onto moved `origin/master`
+      and force-pushed.
+    - Pushed vpsAdmin `2026-05-29-security-advisories` at `c0aef236e`.
+    - Pushed vpsadmin-go-client at `7df45c3`.
+    - Pushed vpsf-status at `c860b3e`.
+    - Pushed vpsfree-mail-templates at `f143a3f`.
+    - Pushed vpsfree-irc-bot at `48337bb`.
+  - GitHub workflow status after push:
+    - vpsAdmin API Specs, RuboCop, Webui PHPUnit, and libnodectld Specs are
+      green for `c0aef236e`.
+    - vpsf-status Integration Tests are green for `c860b3e`.
+    - vpsfree-irc-bot RSpec and Integration Tests are running for `48337bb`.
+    - vpsAdmin CI is still running for `c0aef236e`.
+
+- 2026-06-03 outage/security advisory link follow-up:
+  - Implemented WebUI changes:
+    - Outage detail now shows linked advisory CVEs above `Handled by`, including
+      advisory names and admin unlink controls.
+    - Outage `Link security advisory` form now supports selecting multiple
+      advisories and skips already linked advisories.
+    - Security advisory detail now has an admin `Link outage` form accepting an
+      outage ID, unlink controls, and related outage type/impact columns.
+  - Implemented outage mail changes:
+    - Outage mail chain now passes `security_advisory_cves` and `webui_url`.
+    - vpsAdmin built-in outage announcement templates and
+      `vpsfree-mail-templates` outage announcement templates now include linked
+      CVEs/advisory names and the vpsAdmin outage detail URL.
+  - Validation:
+    - `php -l` passed for changed WebUI outage/security advisory files.
+    - `ruby -c` passed for changed outage mail chain, plugin metadata, and spec
+      files.
+    - ERB compilation passed for changed vpsAdmin built-in and
+      `vpsfree-mail-templates` outage announcement templates.
+    - `nix develop .#api --command bundle exec rubocop` passed on changed Ruby
+      files.
+    - `nix develop .#api --command bundle exec rspec
+      spec/models/transaction_chains/plugins/outage_reports/update_spec.rb
+      spec/api/plugins/outage_reports/security_advisory_spec.rb --format
+      progress`: 6 examples, 0 failures.
+    - `git diff --check` passed in `vpsadmin` and `vpsfree-mail-templates`.
+  - Dev cluster deployment:
+    - Ran `dev-clusters/vpsadmin/bin/devcluster update
+      2026-05-29-security-advisories services`; it completed successfully.
+    - `devcluster status` reports the bridge cluster running and ready.
+    - Direct service checks show no failed systemd units and
+      `vpsadmin-api.service`, `container@webui.service`,
+      `vpsadmin-supervisor.service`, and `vpsf-status.service` active.
+    - HTTP checks returned 200 for `https://webui.aitherdev.int.vpsfree.cz/`
+      and `https://api.aitherdev.int.vpsfree.cz/v7.0/`.
+    - Deployed API rollback-only smoke script created two advisory links,
+      unlinked both, verified link counts, and rolled back.
+    - Deployed mail template database check confirmed
+      `outage_report_user_announce` and `outage_report_generic_announce`
+      include CVE text and outage detail links.
 
 ## Cleanup
 
