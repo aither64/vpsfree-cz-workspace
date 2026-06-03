@@ -805,6 +805,18 @@
     run `26851584494` started. Older vpsAdmin CI runs `26849986084` and
     `26849230214` were still in progress and are being monitored even though
     they predate the current branch head.
+  - Final vpsAdmin workflow results on 2026-06-03:
+    - Current branch head `3018becf4` passed all workflows:
+      API Specs `26851584495`, RuboCop `26851584494`, libnodectld Specs
+      `26851584493`, and CI `26851584492`.
+    - Superseded CI run `26849230214` for initial commit `d4f9347e5` passed
+      after 3h51m.
+    - Superseded CI run `26849986084` for commit `2be7c47f0` failed after
+      3h08m in the WebUI VPS Playwright group: VPS create transaction chains
+      failed at progress 0 in `vps-user-ops`, `vps-admin-ops`,
+      `vps-user-core`, `vps-lifecycle`, and `vps-admin-core`. The same CI
+      workflow passed on the current branch head, so no remaining head failure
+      was left to fix.
   - `vpsfree-irc-bot` integration run `26849211188` failed because the test VM
     was locked to a vpsAdmin revision without `SecurityAdvisory` models.
     Updated `flake.lock` to vpsAdmin `2be7c47f0`, committed and pushed
@@ -818,6 +830,13 @@
   - Status-page validation: `CGO_ENABLED=0 go test ./...`, `nix build
     .#vpsf-status --no-link`, and
     `nix develop --command lefthook run pre-commit --all-files` passed.
+  - Final cross-repository workflow status on 2026-06-03:
+    - `vpsf-status` latest integration run `26850459760` passed.
+    - `vpsfree-irc-bot` latest RSpec run `26850464628` and integration run
+      `26850464621` passed.
+    - All affected worktrees were clean except `vpsfree-cz-configuration`,
+      which still had the known local untracked `.bin/` and `.bundle/`
+      directories.
 
 ## Cleanup
 
