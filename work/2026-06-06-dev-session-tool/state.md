@@ -26,6 +26,9 @@
 - `bin/dev-session --help`
 - `ruby test/dev_session_test.rb -n test_list_output_uses_aligned_columns_for_long_slugs`
 - `bin/dev-session list | head -20`
+- `bin/dev-session list service-health-checks`
+- `ruby test/dev_session_test.rb -n '/start_slug_resolution|start_new/'`
+- `ruby test/dev_session_test.rb -n test_tmux_start_and_sync_manage_only_worktree_windows`
 
 ## Results
 
@@ -65,6 +68,34 @@
     0 errors, 0 skips.
   - `git diff --check`: passed.
   - `bin/dev-session --help`: printed the `remove` usage.
+- Follow-up: fixed `start <name>` slug resolution.
+  - `start` now resumes a unique existing matching slug before creating
+    today's slug.
+  - `start --new <name>` forces today's slug.
+  - `--new` and `--as-is` are mutually exclusive.
+  - `--new` rejects dated slugs.
+- Follow-up verification:
+  - `ruby test/dev_session_test.rb -n '/start_slug_resolution|start_new/'`:
+    7 runs, 13 assertions, 0 failures.
+  - `ruby -c bin/dev-session`: passed.
+  - `ruby -c test/dev_session_test.rb`: passed.
+  - `ruby test/dev_session_test.rb`: 20 runs, 99 assertions, 0 failures,
+    0 errors, 0 skips.
+  - `git diff --check`: passed.
+  - `bin/dev-session --help`: printed the `--new` usage.
+  - `bin/dev-session list service-health-checks`: resolved
+    `2026-06-05-service-health-checks`.
+- Follow-up: changed the initial `dev` window left pane to start Codex from
+  the workspace repository root instead of `work/<slug>`. The right top pane
+  remains `work/<slug>` and the right bottom pane remains `worktrees/<slug>`.
+- Follow-up verification:
+  - `ruby test/dev_session_test.rb -n test_tmux_start_and_sync_manage_only_worktree_windows`:
+    1 run, 17 assertions, 0 failures.
+  - `ruby -c bin/dev-session`: passed.
+  - `ruby -c test/dev_session_test.rb`: passed.
+  - `ruby test/dev_session_test.rb`: 20 runs, 101 assertions, 0 failures,
+    0 errors, 0 skips.
+  - `git diff --check`: passed.
 
 ## Open questions
 
