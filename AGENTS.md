@@ -253,6 +253,9 @@ These repositories are in scope for this workspace:
   core runtime for vpsFree.cz nodes and many integration tests.
 - `vpsadmin`: Ruby/PHP control panel and API for managing VPSes on top of
   vpsAdminOS.
+- `ruby-lxc`: Ruby native extension wrapping liblxc. It is consumed by
+  vpsAdminOS `osctld` and may need coordinated gem releases for Ruby or LXC
+  upgrades.
 - `haveapi`: framework for self-describing APIs. It underpins vpsAdmin's API
   shape and client generation.
 - `vpsf-status`: Go status page and monitoring-facing status service for
