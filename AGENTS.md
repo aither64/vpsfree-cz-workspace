@@ -26,6 +26,12 @@ The initiative slug must be descriptive and dated, for example
 feature branch, and worktree group unless a repository-specific rule requires
 otherwise.
 
+Prefer `bin/dev-session start <name>` when starting a new development session in
+this workspace. It creates a dated slug from the short name, opens the matching
+tmux session, and can add or remove worktrees under `worktrees/<slug>/` using
+the canonical bare repositories in `repos/`. Use `--as-is` when the full slug
+has already been chosen.
+
 ## Git And Worktrees
 
 Clone and push repositories over SSH. Use remotes in this form:
