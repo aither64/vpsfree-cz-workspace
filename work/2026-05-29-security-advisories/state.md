@@ -7,8 +7,18 @@
 - Started: 2026-05-29
 - Current status: clean outage/advisory link API is implemented and committed
   locally in `vpsadmin`; the generated Go client is updated and committed
-  locally in `vpsadmin-go-client`. Changes have not been pushed. Integration
-  tests were intentionally skipped per user request.
+  locally in `vpsadmin-go-client`. The feature branch histories were cleaned up
+  on 2026-06-04 after creating local backup branches named
+  `backup/2026-05-29-security-advisories-pre-cleanup` in all task repos.
+  Current heads after the 2026-06-04 default-branch refresh: `vpsadmin`
+  `597848686`, `vpsadmin-go-client` `1d9240f`, `vpsf-status` `ee9afa9`,
+  `vpsfree-irc-bot` `a7393bb`, `vpsfree-mail-templates` `22e7393`, and
+  `vpsfree-cz-configuration` `a25d799c`.
+  `./test-runner.sh test 'webui#security-advisories'` passed on
+  2026-06-04 after the cleanup. All task worktrees were fetched from their
+  default branches again on 2026-06-04; only `vpsfree-cz-configuration` needed
+  rebasing, now at `9dcd51bf`. The running dev cluster was updated
+  successfully after the rebase.
 
 ## Worktrees
 
@@ -116,6 +126,274 @@
   `f3b308f` (`Update client for outage advisory links`).
 
 ## Implementation Summary
+
+### 2026-06-04 WebUI Playwright Coverage
+
+- Continued on existing `vpsadmin` branch
+  `2026-05-29-security-advisories` per user request.
+- Committed the Playwright coverage in `vpsadmin` as `022411302`
+  (`webui: add security advisory browser coverage`).
+- Added dedicated Playwright security advisory browser coverage:
+  `tests/playwright/webui/specs/security-advisories.spec.cjs`.
+- Added advisory page helper:
+  `tests/playwright/webui/lib/pages/security-advisory.cjs`.
+- Extended `tests/suite/webui.nix` to seed deterministic advisory fixtures:
+  affected published, unaffected published, draft hidden, node status data, and
+  deterministic UI-create values.
+- Added `webui#security-advisories` script metadata and CI routing/tags in
+  `tests/suite/webui.nix`, `tests/ci-tags.nix`, `tests/ci-selection.yml`, and
+  `tests/ci-selection-test.rb`.
+- Updated the shared Playwright auth helper to wait up to 60 seconds for the
+  post-login WebUI redirect; local VM startup made the previous 20-second
+  assertion flaky.
+- Fixed advisory detail markup in `webui/forms/security_advisory.forms.php` by
+  clearing stale XTemplate form context before rendering the updates table.
+  Without this, the browser treated update delete forms as nested/invalid after
+  the related-outage link form, so the delete form was absent from the DOM.
+- Changed advisory confirm-form helper to register a one-shot dialog accept
+  handler before clicking instead of waiting indefinitely for a dialog event.
+
+Validation for this continuation:
+
+- `nix shell nixpkgs#nodejs -c node --check
+  tests/playwright/webui/specs/security-advisories.spec.cjs`
+- `nix shell nixpkgs#nodejs -c node --check
+  tests/playwright/webui/lib/pages/security-advisory.cjs`
+- `nix shell nixpkgs#nodejs -c node --check
+  tests/playwright/webui/lib/pages/auth.cjs`
+- `php -l webui/forms/security_advisory.forms.php`
+- `nix-instantiate --parse tests/suite/webui.nix >/tmp/webui-nix-parse.out`
+- `ruby tests/ci-selection-test.rb`: 15 runs, 54 assertions, 0 failures,
+  0 errors.
+- `git diff --check`
+- `./test-runner.sh test 'webui#security-advisories'`: passed on the final run,
+  1 test script successful in 842.7 seconds.
+- Commit hooks passed during commit `022411302`: Nixfmt, PhpCsFixer,
+  RuboCop, SingleLineSubject, TrailingPeriod, and TextWidth.
+
+Integration issues fixed during this continuation:
+
+- Initial advisory test attempts exposed list-page heading assumptions and a
+  missing update delete form caused by invalid nested forms.
+- Update form state options did not include `published`; test now posts a
+  normal update without selecting a non-existent state.
+- A previous helper implementation could hang waiting for a dialog event; it
+  now accepts a dialog if present and proceeds to the normal page assertions.
+- Related outage row assertions now match rendered labels (`Unplanned outage`,
+  `Performance`) and assert the date column format.
+
+### 2026-06-04 Default-Branch Refresh And Dev Deploy
+
+- Fetched `origin` with pruning for all task worktrees:
+  `vpsadmin`, `vpsadmin-go-client`, `vpsf-status`, `vpsfree-irc-bot`,
+  `vpsfree-mail-templates`, and `vpsfree-cz-configuration`.
+- Compared each worktree against `origin/master`.
+  - `vpsadmin`: `13 0`, no upstream commits missing, still at `022411302`.
+  - `vpsadmin-go-client`: `3 0`, no upstream commits missing, still at
+    `f3b308f`.
+  - `vpsf-status`: `5 0`, no upstream commits missing, still at `e967791`.
+  - `vpsfree-irc-bot`: `4 0`, no upstream commits missing, still at
+    `48337bb`.
+  - `vpsfree-mail-templates`: `3 0`, no upstream commits missing, still at
+    `21e9c06`.
+  - `vpsfree-cz-configuration`: initially `3 7`, then rebased cleanly onto
+    current `origin/master`; post-rebase comparison is `3 0`, head
+    `9dcd51bf`.
+- `vpsfree-cz-configuration` still has local untracked tool directories
+  `.bin/` and `.bundle/`; they were left untouched.
+- Post-rebase check:
+  - `git diff --check` passed in `vpsfree-cz-configuration`.
+- Deployed the refreshed worktrees to the running dev cluster:
+  - `dev-clusters/vpsadmin/bin/devcluster update
+    2026-05-29-security-advisories services` completed successfully.
+  - `devcluster status 2026-05-29-security-advisories` reports running,
+    topology `single`, network `bridge`, and `ready: yes`.
+  - HTTP probes returned 200 for:
+    `https://webui.aitherdev.int.vpsfree.cz/`,
+    `https://api.aitherdev.int.vpsfree.cz/v7.0/`, and
+    `https://status.aitherdev.int.vpsfree.cz/`.
+  - Services VM has no failed systemd units. Confirmed active:
+    `rabbitmq.service`, `vpsadmin-api.service`,
+    `vpsadmin-console-router.service`, `vpsadmin-supervisor.service`,
+    `vpsadmin-scheduler.service`, `container@webui.service`, and
+    `vpsf-status.service`.
+  - Services VM root filesystem is tight but usable: 4.8 GiB size, 4.1 GiB
+    used, 420 MiB available, 91% used.
+  - `node1` at `172.16.106.41` has `nodectld` running, and `nodectl status`
+    reports `State: running`.
+
+### 2026-06-04 Feature Branch History Cleanup
+
+- Created local backup branches before rewriting:
+  `backup/2026-05-29-security-advisories-pre-cleanup`.
+  - `vpsadmin`: backup `022411302`, rewritten head `25bb83266`.
+  - `vpsadmin-go-client`: backup `f3b308f`, rewritten head `1d9240f`.
+  - `vpsf-status`: backup `e967791`, rewritten head `0e67673`.
+  - `vpsfree-irc-bot`: backup `48337bb`, rewritten head `a7393bb`.
+  - `vpsfree-mail-templates`: backup `21e9c06`, rewritten head `22e7393`.
+  - `vpsfree-cz-configuration`: backup and head both `9dcd51bf`; no cleanup
+    was applied there per user preference.
+- Rewrote `vpsadmin` history while preserving the final tree:
+  - Squashed advisory update-shape simplification into the main advisory
+    feature commit.
+  - Squashed the outage metric regression spec into the outage metric fix.
+  - Squashed the MySQL charset follow-up and the order-dependent
+    `add_route_spec` fixture isolation into the local-MariaDB CI commit.
+  - Kept plugin migration helper fix, nodectld startup-race fix, and generated
+    nodectld gem rebuild separate.
+  - Combined outage/advisory linking commits, including direct join-resource
+    use, reliable linked-advisory filtering, and the WebUI form-context fix.
+  - Split shared Playwright login timeout into
+    `207194501` (`tests: allow slower WebUI login redirects`).
+  - Kept advisory Playwright coverage as `25bb83266`
+    (`webui: add security advisory browser coverage`).
+- Rewrote related repositories while preserving final trees:
+  - `vpsadmin-go-client`: one generated-client commit `1d9240f`.
+  - `vpsf-status`: one feature commit `0e67673`.
+  - `vpsfree-irc-bot`: one feature commit `a7393bb`.
+  - `vpsfree-mail-templates`: advisory templates commit `67142f4` plus outage
+    report advisory-CVE template commit `22e7393`.
+- Tree comparisons against the backup branches returned no differences in all
+  rewritten repos.
+- Commit hooks passed during rewritten commits:
+  - `vpsadmin`: Overcommit Nixfmt, PhpCsFixer, RuboCop, SingleLineSubject,
+    TrailingPeriod, and TextWidth.
+  - `vpsf-status`: Lefthook `gofmt`.
+
+### 2026-06-04 Push And GitHub Workflow Watch
+
+- Force-pushed cleaned task branches:
+  - `vpsadmin-go-client` `1d9240f`.
+  - `vpsf-status` `0e67673`.
+  - `vpsfree-irc-bot` `a7393bb`.
+  - `vpsfree-mail-templates` `22e7393`.
+  - `vpsfree-cz-configuration` `9dcd51bf`.
+  - `vpsadmin` first `792a5d7d0`, then `f2528f112`, then final
+    `25bb83266` after API Specs CI fixes were autosquashed.
+- First `vpsadmin` API Specs run on `792a5d7d0` failed endpoint coverage
+  because `api/spec/api/covered_endpoints.yml` still used stale nested
+  `outage.security_advisory` endpoint names and missed
+  `outage_security_advisory#show`.
+- Fixed the coverage manifest, verified locally with:
+  `nix develop .#api -c 'bundle exec rspec spec/api/endpoint_coverage_spec.rb
+  spec/api/plugins/outage_reports/security_advisory_spec.rb --format progress'`.
+- Second `vpsadmin` API Specs run on `f2528f112` passed coverage but failed
+  `API specs (full) - engine` in
+  `spec/models/transaction_chains/network_interface/add_route_spec.rb` with
+  `Validation failed: Ip addr has already been taken`.
+- Reproduced the engine shard locally with seed `31437`, then isolated
+  `add_route_spec` route IPs in an example-local private VPS network and
+  autosquashed that into `ce4dccac0` (`ci: run API specs with local MariaDB`).
+- Local verification after the fixture fix:
+  - `bundle exec rspec
+    spec/models/transaction_chains/network_interface/add_route_spec.rb --seed
+    31437 --format progress`: 1 example, 0 failures.
+  - Engine shard equivalent:
+    `find spec/models -name "*_spec.rb" | sort >
+    tmp/rspec-files-engine-local.txt; xargs -a
+    tmp/rspec-files-engine-local.txt bundle exec rspec --seed 31437 --format
+    progress`: 735 examples, 0 failures, 3 pending.
+- GitHub workflow status for current pushed heads:
+  - `vpsf-status` Integration Tests `26937152802`: success.
+  - `vpsfree-irc-bot` RSpec `26937153609`: success.
+  - `vpsfree-irc-bot` Integration Tests `26937153620`: success.
+  - `vpsadmin` RuboCop `26939004328`: success.
+  - `vpsadmin` Webui PHPUnit `26939004322`: success.
+  - `vpsadmin` libnodectld Specs `26939004310`: success.
+  - `vpsadmin` API Specs `26939004324`: success.
+  - `vpsadmin` CI `26939004499`: in progress at last update, still in
+    `Run tests`.
+  - `vpsfree-irc-bot`: Overcommit RuboCop, SingleLineSubject,
+    TrailingPeriod, and TextWidth.
+- After the final `vpsadmin` force-push, older CI runs on the same feature
+  branch remained in progress at obsolete SHAs:
+  - `26937799253` at `f2528f112`.
+  - `26937202106` at `792a5d7d0`.
+  `gh run cancel` was attempted for both after the user refreshed `gh`
+  credentials, but GitHub still returned HTTP 403 `Resource not accessible by
+  personal access token`. No workflows on other branches were touched.
+- Local reproduction of the selector for the final force-push diff from
+  `f2528f112` to `25bb83266` produced `mode=skip`, because only
+  `api/spec/models/transaction_chains/network_interface/add_route_spec.rb`
+  changed between those trees. The current GitHub CI run is nevertheless in
+  its integration `Run tests` step, probably because the runner could not use
+  the forced-out previous SHA and fell back to a broader branch-vs-master
+  selection.
+- `vpsadmin` CI run `26939004499` later failed only in the integration `webui`
+  group. The dedicated `webui#security-advisories` script passed, but later
+  VPS scripts failed during container creation with osctld reporting
+  `error: user not found` for `ct create --user "2"`.
+- Root cause: `prepare_webui_storage_runtime` created raw osctl containers for
+  the storage browser fixtures without using the database fixture's user
+  namespace map. osctl created users named after container IDs `16` through
+  `27`; after nodectld restarted, it saw API VPS rows with
+  `user_namespace_map_id=2` and cached map `2` as already present, so later
+  WebUI VPS create flows skipped `osctl user new 2` and failed at
+  `ct create --user 2`.
+- Fixed `tests/suite/webui.nix` so storage fixture JSON includes
+  `userNamespaceMapId`, `uidMap`, and `gidMap` for each fixture VPS. The
+  storage runtime setup now creates the matching osctl user with the map data
+  and passes `--user "$userns_map_id"` to `osctl ct new`.
+- Committed the fix as vpsAdmin `3bd7a190e`:
+  `tests: create WebUI storage fixtures with user namespaces`.
+- No `vpsfree-cz-configuration` input bump was made for this test-only
+  vpsAdmin fix. The running dev cluster builds vpsAdmin from the local
+  `worktrees/2026-05-29-security-advisories/vpsadmin` path via
+  `dev-clusters/vpsadmin/bin/devcluster` flake input overrides, so a cluster
+  update picks up the new commit without changing `vpsadminServices`.
+- Local verification for the WebUI fixture fix:
+  - `nix-instantiate --parse tests/suite/webui.nix`.
+  - `git diff --check`.
+  - `./test-runner.sh test -f 'webui#storage-backup-export'`: passed. The
+    Playwright example reported 2 tests passed in 4.9 minutes; the script
+    finished in 759.33 seconds and the outer `webui` test in 1192.86 seconds.
+- Pushed vpsAdmin `3bd7a190e` to
+  `origin/2026-05-29-security-advisories`.
+- GitHub Actions after push:
+  - New vpsAdmin CI run `26949629281` queued for `3bd7a190e`.
+  - Older vpsAdmin CI run `26937202106` was still in progress at old SHA
+    `792a5d7d0` on the same branch. A second `gh run cancel` attempt still
+    returned HTTP 403 `Resource not accessible by personal access token`, so
+    it was left running. No workflows on other branches were touched.
+  - `gh api -X POST .../actions/runs/26937202106/force-cancel` also returned
+    HTTP 403 with `X-Accepted-GitHub-Permissions: actions=write`.
+  - Listing self-hosted runners also returned HTTP 403 with
+    `X-Accepted-GitHub-Permissions: administration=read`.
+  - The branch-head run `26949629281` remains queued in GitHub metadata while
+    the obsolete same-branch run `26937202106` remains `in_progress` with no
+    runner name and no update since 2026-06-04 07:33 UTC.
+- Deployed the new vpsAdmin worktree to the running dev cluster with
+  `dev-clusters/vpsadmin/bin/devcluster update
+  2026-05-29-security-advisories services`; it completed successfully.
+- Post-deploy checks:
+  - `devcluster status 2026-05-29-security-advisories`: running, topology
+    `single`, network `bridge`, `ready: yes`.
+  - Services VM has no failed systemd units.
+  - `rabbitmq.service`, `vpsadmin-api.service`,
+    `vpsadmin-console-router.service`, `vpsadmin-supervisor.service`,
+    `vpsadmin-scheduler.service`, `container@webui.service`, and
+    `vpsf-status.service` are active.
+  - Services root filesystem is tight but usable: 4.8 GiB size, 4.2 GiB used,
+    287 MiB available, 94% used.
+  - `node1` `nodectl status` reports `State: running`.
+  - HTTP probes returned 200 for
+    `https://webui.aitherdev.int.vpsfree.cz/`,
+    `https://api.aitherdev.int.vpsfree.cz/v7.0/`, and
+    `https://status.aitherdev.int.vpsfree.cz/`.
+- Validation after cleanup:
+  - `vpsadmin`: `php -l webui/forms/security_advisory.forms.php`;
+    `node --check` for touched Playwright JS files;
+    `ruby tests/ci-selection-test.rb`; `git diff --check`.
+  - `vpsadmin-go-client`: `CGO_ENABLED=0 go test ./...`; `git diff --check`.
+  - `vpsf-status`: `CGO_ENABLED=0 go test ./...`; `git diff --check`.
+  - `vpsfree-irc-bot`: `nix develop -c bundle exec rspec`;
+    `git diff --check`.
+  - `vpsfree-mail-templates`: ERB parse check through `nix develop`;
+    `git diff --check`.
+  - `vpsfree-cz-configuration`: `git diff --check`.
+  - `./test-runner.sh test 'webui#security-advisories'`: passed; the example
+    succeeded in 147.37 seconds, the script in 473.33 seconds, and the outer
+    `webui` test in 737.14 seconds.
 
 - `vpsadmin`
   - Added core advisory migrations, models, API resources, transaction-chain
@@ -1120,8 +1398,254 @@
       label and advisory detail link. The served `transaction-chains.js`
       contains the same `SecurityAdvisory` mapping for live sidebar updates.
 
+- 2026-06-04 post-push default-branch refresh and squash review:
+  - Fetched `origin` with pruning for all six task repositories.
+  - Default branches advanced in `vpsadmin` and `vpsfree-cz-configuration`.
+    Created local backups before rebasing:
+    - `vpsadmin`:
+      `backup/2026-05-29-security-advisories-pre-default-rebase-20260604-122953`
+      at `3bd7a190e`.
+    - `vpsfree-cz-configuration`:
+      `backup/2026-05-29-security-advisories-pre-default-rebase-20260604-122953`
+      at `9dcd51bf`.
+  - `vpsadmin` rebase initially stopped because the Overcommit hook
+    configuration signature was stale after fetching the new default branch.
+    Ran `nix develop --command overcommit --sign`, then rebased cleanly onto
+    `origin/master`; new local head is `597848686`.
+  - `vpsfree-cz-configuration` rebased cleanly onto `origin/master`; new local
+    head is `e8e90c94`. Existing untracked `.bin/` and `.bundle/` directories
+    remain untouched.
+  - `vpsadmin-go-client`, `vpsf-status`, `vpsfree-irc-bot`, and
+    `vpsfree-mail-templates` were already based on current `origin/master` and
+    were not rebased.
+  - `git diff --check origin/master..HEAD` passed in `vpsadmin` and
+    `vpsfree-cz-configuration`.
+  - Squash review notes:
+    - Keep `tests: allow slower WebUI login redirects` separate; it is the
+      shared Playwright login helper change split out from the advisory browser
+      coverage.
+    - Consider moving the XTemplate form-context clearing hunk from
+      `outage_reports: improve advisory links` into the original advisory UI
+      commit if the history is rewritten.
+    - Consider squashing `api: read outage metric summaries from translations`
+      into the initial advisory API commit if treating it as fallout from the
+      new plugin schema tests; otherwise it is also defensible as a small
+      standalone outage metrics fix.
+    - Keep `nodectld: avoid pool status startup race` and
+      `packages: update nodectld gems` separate, because the gem rebuild is
+      intentionally isolated.
+    - No squash needed in `vpsfree-cz-configuration` per user preference.
+  - Merged the feature branches into default branches using temporary detached
+    worktrees under `worktrees/2026-05-29-security-advisories-merge` and
+    fast-forward-only merges, then pushed:
+    - `vpsadmin` `master` to `597848686`. The default branch later advanced to
+      `21fe7e24e` by another upstream commit; `597848686` remains an ancestor.
+    - `vpsadmin-go-client` `master` to `1d9240f`.
+    - `vpsf-status` `master` to `0e67673`, then force-updated to
+      `ee9afa9` after fixing the generated-client dependency described below.
+    - `vpsfree-irc-bot` `master` to `a7393bb`.
+    - `vpsfree-mail-templates` `master` to `22e7393`.
+    - `vpsfree-cz-configuration` `master` to `e8e90c94`.
+    - Follow-up after review: `vpsfree-cz-configuration` `master` to
+      `a25d799c`, including:
+      - `517faac2`: update the `vpsadmin` channel's `vpsadminServices` input
+        to exact vpsAdmin revision
+        `5978486864a57fdc94aaa7fae6a74813e76c3d63`.
+      - `34db3522`: update the `vpsf-status` channel's `vpsfStatus` input to
+        amended vpsf-status revision
+        `ee9afa95a77c09efbf366bcf09d17857f54ea48d`.
+      - `a25d799c`: update the packaged `vpsfree-irc-bot` source to
+        `a7393bbe514958ad76ccd5ba86406b0270511297`.
+  - `git diff --check origin/master..HEAD` passed in all six merge worktrees
+    before pushing.
+  - Push notes:
+    - `vpsadmin` push needed `nix develop --command overcommit --sign` in the
+      temporary worktree, then `nix develop --command git push origin
+      HEAD:master`, because the ambient shell failed the Overcommit signature
+      check.
+    - `vpsfree-cz-configuration` push needed `nix develop --command git push
+      origin HEAD:master`, because the ambient shell could not load the
+      repository's Overcommit bundle.
+    - The follow-up `vpsadminServices` pin was created by
+      `confctl inputs channel set --commit vpsadmin vpsadmin
+      5978486864a57fdc94aaa7fae6a74813e76c3d63` after signing the updated
+      Overcommit pre-commit plugin signature. A locally created manual commit
+      with misformatted changelog markers was reset before rerunning
+      `confctl`; only the `confctl`-created commit was pushed.
+    - `vpsf-status` initially still depended on old generated client commit
+      `4c74d697`, which existed only on a local backup branch after cleanup.
+      Updated `go.mod`/`go.sum` to merged generated client `1d9240f`, updated
+      the normal `nix/package.nix` vendor hash, amended the vpsf-status feature
+      commit, and force-pushed `vpsf-status` `master` and feature branch to
+      `ee9afa9`.
+    - The follow-up `vpsfStatus` configuration pin was created by
+      `confctl inputs channel set --commit vpsf-status vpsf-status
+      ee9afa95a77c09efbf366bcf09d17857f54ea48d`.
+    - `vpsfree-irc-bot` has no `confctl` channel; it is packaged from
+      `packages/vpsfree-irc-bot/default.nix`. Updated that package source to
+      `a7393bbe514958ad76ccd5ba86406b0270511297` with prefetched hash
+      `sha256-IZD80aV9Dq8mgPxqqJKA6fpuJ8hQyEoSRyn0uyIny1A=`.
+    - GitHub printed existing Dependabot vulnerability notices for
+      `vpsfree-irc-bot` and `vpsfree-cz-configuration`.
+  - Removed the temporary merge worktrees. The configuration temporary worktree
+    was force-removed after confirming only `.bin/` and `.bundle/` were
+    untracked.
+  - GitHub workflow state immediately after pushing:
+    - `vpsadmin`: CI queued for new default head `21fe7e24e`; CI queued and
+      API Specs running for the security-advisory merge head `597848686`;
+      RuboCop and Webui PHPUnit already green for `597848686`.
+    - `vpsf-status`: Integration Tests queued for `0e67673`; dependency graph
+      update green.
+    - `vpsfree-irc-bot`: RSpec green and Integration Tests queued for
+      `a7393bb`.
+    - `vpsadmin-go-client`, `vpsfree-mail-templates`, and
+      `vpsfree-cz-configuration` had no new relevant push workflow run visible
+      in `gh run list` at that point.
+  - Later CI poll: vpsAdmin API Specs for `597848686` completed successfully;
+    vpsAdmin selected CI for `597848686` and `21fe7e24e`, vpsf-status
+    Integration Tests for `0e67673`, and vpsfree-irc-bot Integration Tests for
+    `a7393bb` remained queued.
+  - Dependency/pin validation after follow-up:
+    - `vpsf-status`: `nix develop --command go test ./...` passed after
+      updating `vpsadmin-go-client` to
+      `v0.0.0-20260604065514-1d9240f3d27b`.
+    - `vpsf-status`: `nix build .#vpsf-status` passed after updating the
+      normal package vendor hash to
+      `sha256-D8wImkdUvapGiudMcbvtGwkPOjbQHGKEGPGY7A4yFa4=`.
+    - `vpsfree-cz-configuration`: `confctl build -y
+      cz.vpsfree/containers/int.vpsfbot` passed with the updated IRC bot
+      package pin.
+    - `vpsfree-cz-configuration`: `confctl build -y
+      cz.vpsfree/machines/prg/apu` failed before building vpsf-status because
+      the local path `/srv/iso-images/systemrescue-11.01-amd64.iso` does not
+      exist.
+  - Current workflow state after dependency/pin follow-up:
+    - Cancelled obsolete `vpsadmin` CI run `26952316519` for `21fe7e24e`.
+    - Cancelled obsolete `vpsf-status` Integration Tests run `26952254108` for
+      old commit `0e67673`.
+    - `vpsadmin` selected CI run `26952238132` for `597848686` is queued.
+    - `vpsf-status` Integration Tests run `26953358104` for amended commit
+      `ee9afa9` is queued.
+    - `vpsfree-irc-bot` Integration Tests run `26952260074` for `a7393bb` is
+      queued.
+  - Final deployment-pin correction on 2026-06-04:
+    - Dev-cluster update was skipped per user request. The attempted build
+      exposed that `vpsf-status`'s local `vpsadminGoClientSource` package path
+      still used the old vendor hash. Updated that second vendor hash to
+      `sha256-1+51I1kIJMVq5gBcrh7oPvFJiUgdcbUnjqb0y40SoRo=`.
+    - Updated `vpsf-status` `flake.lock` so its `vpsadmin` input points at the
+      deployed vpsAdmin revision
+      `5978486864a57fdc94aaa7fae6a74813e76c3d63`, not stale `2be7c47`.
+    - Amended and force-pushed `vpsf-status` `master` and
+      `2026-05-29-security-advisories` to
+      `a376224b97490353daae4e141667d8fcc1050c34`. Backed up the prior remote
+      heads as
+      `backup/2026-05-29-security-advisories-vpsf-status-ee9afa95` and
+      `backup/2026-05-29-security-advisories-vpsf-status-5cd4deb8`.
+    - Rebuilt `vpsfree-cz-configuration` history so the old `ee9afa9` and
+      `5cd4deb8` pins are not left in `master`. Final config branch head is
+      `a3202987f078b0e286f3b7ee72f4aef97ac7e8db`, with commits:
+      `583f7945` (`vpsadminServices` -> `59784868`),
+      `18c85306` (`vpsfStatus` -> `a376224b`), and `a3202987`
+      (`vpsfree-irc-bot` package -> `a7393bb`). Backed up the old config head
+      as `backup/2026-05-29-security-advisories-config-a25d799c`.
+    - Updated the remote `vpsadmin` feature branch to match deployed
+      `master` at `5978486864a57fdc94aaa7fae6a74813e76c3d63`; backed up the
+      old feature ref as
+      `backup/2026-05-29-security-advisories-vpsadmin-3bd7a190`.
+    - Verification after the correction:
+      - `vpsf-status`: `nix build .#vpsf-status --no-link` passed.
+      - `vpsf-status`: replacement-source package build with local
+        `vpsadmin-go-client` source passed.
+      - `vpsfree-cz-configuration`: `confctl build -y
+        cz.vpsfree/containers/int.vpsfbot` passed.
+      - `vpsfree-cz-configuration`: `git diff --check` passed.
+    - Cancelled obsolete queued `vpsf-status` Integration Tests runs
+      `26954220422` and `26954221875` for `5cd4deb8`. Current runs to watch:
+      `vpsadmin` master CI `26952238132`, `vpsadmin` feature branch runs
+      `26954838456`/`26954838896`/`26954838511`/`26954838484`/`26954838471`,
+      `vpsf-status` master/feature Integration Tests
+      `26954599759`/`26954601255`, and `vpsfree-irc-bot` master Integration
+      Tests `26952260074`.
+    - CI snapshot after polling:
+      - `vpsadmin` feature branch: RuboCop `26954838484`, Webui PHPUnit
+        `26954838471`, and libnodectld Specs `26954838511` passed for
+        `597848686`; API Specs `26954838896` and CI `26954838456` remained
+        queued.
+      - `vpsadmin` master selected CI `26952238132` remained in progress in
+        the `Run tests` step for `597848686`.
+      - `vpsf-status` master/feature Integration Tests
+        `26954599759`/`26954601255` remained queued for `a376224b`.
+      - `vpsfree-irc-bot` master RSpec `26952260134` passed and Integration
+        Tests `26952260074` remained queued for `a7393bb`.
+  - Follow-up bug investigation on 2026-06-04:
+    - Confirmed the reported API hole in
+      `security_advisory.node_status#create`: the action copied the nested
+      `security_advisory_id` route parameter directly into
+      `SecurityAdvisoryNodeStatus.create!`, so a missing advisory id could be
+      stored when no database foreign key existed.
+    - Updated the create action to load the parent advisory first and create
+      the node status through the resolved advisory object.
+    - Added model-level association presence validations for advisory child
+      rows so raw-id writes cannot create orphan CVE, node status, update,
+      affected user/VPS, translation, or outage link records.
+    - Added API regression coverage for missing advisory ids on node status,
+      CVE, update, and outage-link creates, plus model coverage for internal
+      raw child rows.
+    - Committed in `vpsadmin` as `aba00ba43`:
+      `api: reject orphan security advisory children`.
+    - Pushed `vpsadmin` branch `2026-05-29-security-advisories` to
+      `origin` at `aba00ba4312a6f6760f6988b0888cf3bc1b62713`.
+    - Fast-forwarded and pushed `vpsadmin` `master` to
+      `aba00ba4312a6f6760f6988b0888cf3bc1b62713` from a temporary merge
+      worktree, then removed the temporary worktree.
+    - Master push triggered GitHub Actions runs: CI `26959294329` queued,
+      RuboCop `26959294375` in progress, and API Specs `26959295281` queued
+      at the time of merge.
+    - Verification:
+      - `nix develop .#api --command bundle exec rspec
+        spec/api/resources/security_advisory_spec.rb
+        spec/api/plugins/outage_reports/security_advisory_spec.rb
+        spec/models/security_advisory_spec.rb` passed with 31 examples.
+      - `nix develop .#api --command bundle exec rubocop ...` passed on the
+        touched API/model/spec files.
+      - `git diff --check` passed.
+  - Follow-up staged publication timestamp coverage on 2026-06-04:
+    - Confirmed current API create/update behavior persists `published_at` on
+      drafts with focused RSpec:
+      `nix develop .#api --command bundle exec rspec
+      spec/api/resources/security_advisory_spec.rb -e
+      'allows admins to create and update drafts'` passed.
+    - Added WebUI browser assertions that staged `published_at` is visible
+      after draft creation, editable before publishing, preserved as the
+      publish-form default, and still visible after publishing and later
+      advisory/update forms.
+    - Committed locally in `vpsadmin` as
+      `ad03f5cade060bfdf77f5f3a7b19a235406f20b3`:
+      `tests: cover staged advisory publication time`.
+    - Pushed to `vpsadmin` `master` at
+      `ad03f5cade060bfdf77f5f3a7b19a235406f20b3`; remote feature branch
+      `2026-05-29-security-advisories` remains at parent `aba00ba43`.
+    - Master push triggered GitHub Actions CI run `26964211206`, queued at
+      the time of push verification.
+    - Verification:
+      - `nix shell nixpkgs#nodejs -c node --check
+        tests/playwright/webui/specs/security-advisories.spec.cjs` passed.
+      - `git diff --check` passed.
+      - `./test-runner.sh test 'webui#security-advisories'` passed in
+        798.82 seconds.
+
 ## Cleanup
 
-- Remove worktrees after merge or abandonment.
-- Keep local and remote feature branches unless explicitly asked to delete them.
+- Removed the `worktrees/2026-05-29-security-advisories` worktrees for
+  `vpsadmin`, `vpsadmin-go-client`, `vpsf-status`,
+  `vpsfree-cz-configuration`, `vpsfree-irc-bot`, and
+  `vpsfree-mail-templates`, then removed the empty initiative worktree
+  directory.
+- Preserved local and remote feature branches as requested by the workspace
+  policy.
 - Removed the throwaway temp sources used for the IRC bot VM integration run.
+- Stopped the running vpsAdmin dev cluster for slug
+  `2026-05-29-security-advisories` with
+  `dev-clusters/vpsadmin/bin/devcluster stop 2026-05-29-security-advisories`.
+  Follow-up status reported `status: stopped`.
