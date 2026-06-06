@@ -122,6 +122,21 @@
   - Direct env-only probe with a mismatched slug failed as designed because
     tmux reported `2026-06-06-os-install-tests`; retrying with isolated tmux
     socket printed `2026-06-06-demo`.
+- Follow-up: fixed `remove` cleanup order so a dev-session can remove itself
+  safely.
+  - `remove` now deletes clean worktrees, removes the empty worktree group
+    directory, optionally removes notes with `--all`, and kills the managed
+    tmux session last.
+  - Added a regression test that a managed tmux session is killed only after
+    its worktree has been removed.
+  - Updated `docs/dev-sessions.md` to document the cleanup-before-kill order.
+  - Cleaned up stranded `2026-06-06-vpsfbot-fast-forward` worktrees after its
+    tmux session had already been killed.
+- Follow-up verification:
+  - `ruby -c bin/dev-session`: passed.
+  - `ruby -c test/dev_session_test.rb`: passed.
+  - `ruby test/dev_session_test.rb -n '/remove/'`: 8 runs, 57 assertions,
+    0 failures, 0 errors, 0 skips.
 
 ## Open questions
 
