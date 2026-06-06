@@ -32,6 +32,13 @@ tmux session, and can add or remove worktrees under `worktrees/<slug>/` using
 the canonical bare repositories in `repos/`. Use `--as-is` when the full slug
 has already been chosen.
 
+When running inside an existing development session, do not choose a new slug
+until checking for the active one. Run `bin/dev-session current` from the
+workspace root; if it prints a slug, reuse `work/<slug>/` and
+`worktrees/<slug>/` for the task and record progress in that session's
+`state.md`. Only create a new slug when `current` fails or when the user
+explicitly asks for a separate initiative.
+
 ## Git And Worktrees
 
 Clone and push repositories over SSH. Use remotes in this form:

@@ -18,6 +18,10 @@ worktrees.
   `--as-is` for literal slugs.
 - Create a first tmux window with Codex on the left, a notes shell on the
   right top, and a worktree-group shell on the right bottom.
+- Export the active session slug and related paths into managed tmux panes so
+  agents and shells can discover the chosen initiative.
+- Add `current` to print the active slug from env, tmux, or the current
+  workspace path before any new slug is created.
 - Add explicit `sync` behavior for one managed tmux window per worktree.
 - Add thin `git worktree add/remove` helpers that follow workspace paths.
 - Document the workflow and add focused Ruby tests.
@@ -35,3 +39,4 @@ unmanaged windows alone, so it is safe to use in sessions that users customize.
 
 - `ruby -c bin/dev-session`
 - `ruby test/dev_session_test.rb`
+- `git diff --check`

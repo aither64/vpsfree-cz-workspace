@@ -21,6 +21,9 @@
 - `ruby -c test/dev_session_test.rb`
 - `ruby test/dev_session_test.rb`
 - `ruby test/dev_session_test.rb -n test_tmux_start_and_sync_manage_only_worktree_windows`
+- `env VPSFREE_DEV_SESSION_SLUG=2026-06-06-demo bin/dev-session current`
+- `env -u TMUX VPSFREE_DEV_SESSION_SLUG=2026-06-06-demo bin/dev-session current`
+- `env VPSFREE_DEV_SESSION_SLUG=2026-06-06-demo bin/dev-session --tmux-socket dev-session-none current`
 - temporary Ruby/tmux debug snippets to inspect managed window options
 - `git diff --check`
 - `bin/dev-session --help`
@@ -96,6 +99,29 @@
   - `ruby test/dev_session_test.rb`: 20 runs, 101 assertions, 0 failures,
     0 errors, 0 skips.
   - `git diff --check`: passed.
+- Follow-up: added active session discovery for Codex/dev-session reuse.
+  - Added `bin/dev-session current`, resolving the active slug from
+    `VPSFREE_DEV_SESSION_SLUG`, the current managed tmux session, or cwd under
+    `work/<slug>` / `worktrees/<slug>`.
+  - Managed tmux sessions, panes, and synced worktree windows now receive
+    `VPSFREE_DEV_SESSION_SLUG`, `VPSFREE_DEV_SESSION_WORKSPACE`,
+    `VPSFREE_DEV_SESSION_WORK_DIR`, and `VPSFREE_DEV_SESSION_WORKTREES_DIR`.
+  - Updated `AGENTS.md` to require checking `bin/dev-session current` before
+    creating a new initiative slug.
+  - Updated `docs/dev-sessions.md` with `current` and the exported
+    environment.
+- Follow-up verification:
+  - `ruby -c bin/dev-session`: passed.
+  - `ruby -c test/dev_session_test.rb`: passed.
+  - `ruby test/dev_session_test.rb`: 26 runs, 128 assertions, 0 failures,
+    0 errors, 0 skips.
+  - `git diff --check`: passed.
+  - `bin/dev-session --help`: includes `current`.
+  - `bin/dev-session current`: printed active tmux slug
+    `2026-06-06-os-install-tests` in the current shell.
+  - Direct env-only probe with a mismatched slug failed as designed because
+    tmux reported `2026-06-06-os-install-tests`; retrying with isolated tmux
+    socket printed `2026-06-06-demo`.
 
 ## Open questions
 
