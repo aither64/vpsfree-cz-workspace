@@ -178,6 +178,11 @@ available in the current shell, run it through Nix, for example
 `nix shell nixpkgs#gh -c gh run list ...`. Inspect failed logs, monitor reruns,
 and resolve failures instead of leaving CI for the user to chase.
 
+When creating or editing GitHub workflows, verify the latest upstream version of
+each imported action from its official repository before choosing the `uses:`
+ref. Do not rely on remembered version numbers; use the newest compatible
+version unless the workflow records a specific reason to pin an older one.
+
 When a repository is missing a tool in the ambient shell, enter the repository's
 Nix shell or use an appropriate `nix shell` command. Do not work around missing
 tooling by recording local environment limitations in commit messages.
