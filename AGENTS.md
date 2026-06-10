@@ -183,6 +183,15 @@ each imported action from its official repository before choosing the `uses:`
 ref. Do not rely on remembered version numbers; use the newest compatible
 version unless the workflow records a specific reason to pin an older one.
 
+Rerunning a failed GitHub Actions job is not a substitute for investigation.
+Before accepting a rerun as validation, download or open the failed attempt's
+logs and artifacts, identify the root cause as far as the available evidence
+allows, and record the finding in the initiative `state.md`. If the artifacts
+are insufficient, improve the test or runner diagnostics rather than treating a
+green rerun as proof that the failure did not matter. Prefer fixing the
+underlying problem; when the failure is unrelated to the current change, record
+the evidence for that conclusion.
+
 When a repository is missing a tool in the ambient shell, enter the repository's
 Nix shell or use an appropriate `nix shell` command. Do not work around missing
 tooling by recording local environment limitations in commit messages.
