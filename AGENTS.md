@@ -212,17 +212,6 @@ Keep automated `confctl ... --commit` commit messages exactly as generated;
 do not amend or rewrap them to satisfy generic commit-message line length
 rules. Edit them only when intentionally making a concise changelog edit.
 
-When changing Ruby code that is packaged for Nix as gems, rebuild the packaged
-gems so integration tests and future deployments use the new code. This applies
-to tools such as vpsAdminOS `osctl` components and vpsAdmin `nodectl`
-programs. In vpsAdminOS, see `make gems` and `make commit-gems`. In vpsAdmin,
-use `rake vpsadmin:gems`.
-
-Commit gem rebuilds separately from functional changes. Gem rebuild commits use
-only a subject line, following the repository's generated-gem commit style. One
-gem rebuild commit per feature branch is enough; amend or recreate it as needed
-while the feature branch is still unmerged.
-
 Do not assume that commands from one repository apply to another. Use the local
 `AGENTS.md`, README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer
 configuration, and existing CI definitions as the source of truth.
