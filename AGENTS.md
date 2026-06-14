@@ -152,6 +152,25 @@ For vpsAdminOS changes, explicitly call out when an update would require
 coordinated updates of all running machines or nodes. State why that cost is
 worth it, or choose a compatible design.
 
+## Mandatory Change Review
+
+For feature, bugfix, refactor, or cross-project work with relevant code,
+schema, API, protocol, configuration, documentation, deployment, or security
+impact, run the `mandatory-change-review` skill after all intended changes are
+committed and quick local verification has passed, but before starting long
+integration tests.
+
+The review must be performed by a standalone agent with fresh context. Provide
+the reviewer with the requested outcome, initiative plan/state files, affected
+repositories and worktrees, base/head commits, dependency or configuration pins,
+quick verification results, and known compatibility assumptions. Record the
+review result and any follow-up decision in the initiative `state.md`.
+
+The review is advisory, but significant findings must be fixed or explicitly
+discussed before continuing. Skip the review only for dependency-only,
+generated, or otherwise mechanical update sessions that contain no relevant code
+or design changes.
+
 ## Rule Precedence
 
 This top-level `AGENTS.md` controls workspace orchestration, tracking,
