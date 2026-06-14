@@ -158,13 +158,17 @@ For feature, bugfix, refactor, or cross-project work with relevant code,
 schema, API, protocol, configuration, documentation, deployment, or security
 impact, run the `mandatory-change-review` skill after all intended changes are
 committed and quick local verification has passed, but before starting long
-integration tests.
+integration tests. The review must be performed by a standalone agent with
+fresh context.
 
-The review must be performed by a standalone agent with fresh context. Provide
-the reviewer with the requested outcome, initiative plan/state files, affected
-repositories and worktrees, base/head commits, dependency or configuration pins,
-quick verification results, and known compatibility assumptions. Record the
-review result and any follow-up decision in the initiative `state.md`.
+The skill file is `skills/mandatory-change-review/SKILL.md`. Follow that file
+for the detailed review workflow and reviewer checklist.
+
+Provide the reviewer with the requested outcome, initiative plan/state files,
+affected repositories and worktrees, base/head commits, dependency or
+configuration pins, quick verification results, and known compatibility
+assumptions. Record the review result and any follow-up decision in the
+initiative `state.md`.
 
 The review is advisory, but significant findings must be fixed or explicitly
 discussed before continuing. Skip the review only for dependency-only,
