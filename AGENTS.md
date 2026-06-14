@@ -192,6 +192,11 @@ Development is generally Nix-based. Prefer each repository's `nix develop`,
 language-specific tools. Deployment is usually to NixOS or vpsAdminOS systems,
 often through `confctl` and the configuration repositories.
 
+When running `dev-clusters/vpsadmin/bin/devcluster`, use the bridge network by
+default. Do not choose `--network local` unless the user explicitly asks for it
+or the bridge network is genuinely unavailable; if local networking is used,
+record the reason in the initiative state.
+
 Use GitHub Actions as a feedback loop after pushing branches. If `gh` is not
 available in the current shell, run it through Nix, for example
 `nix shell nixpkgs#gh -c gh run list ...`. Inspect failed logs, monitor reruns,
