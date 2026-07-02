@@ -249,14 +249,15 @@ DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
   `/home/aither/.codex/codex-kb-vpsfree-org-aither-key`
 
 Never copy tokens into notes, commits, command output, URLs, or prompts. Always
-prepare wiki changes as a local preview file first. Draft pages under the
-`drafts:` namespace may be saved after the preview is prepared and the exact
-target wiki/page has been verified. For non-draft pages, ask the user for
-direct approval before calling any DokuWiki write method such as
-`core.savePage`. It is acceptable to use the tokens for read-only verification
-calls such as `core.whoAmI`, `core.getPage`, `core.getPageInfo`, or
-`core.aclCheck`. Before any write, verify authentication and page permission
-against the exact target wiki.
+prepare wiki changes as a local preview file first. Use `bin/kb-page` for
+DokuWiki page operations instead of hand-crafting API calls. Draft pages under
+the `drafts:` namespace may be saved after the preview is prepared and the
+exact target wiki/page has been verified. For non-draft pages, ask the user for
+direct approval before writing, deleting, or renaming; pass
+`--approved-non-draft` only after that approval. It is acceptable to use the
+tokens for read-only verification calls through `bin/kb-page whoami`,
+`bin/kb-page acl`, or `bin/kb-page get`. Before any write, verify
+authentication and page permission against the exact target wiki.
 
 When asked to draft user documentation for KB, write draft pages under the
 `drafts:` namespace unless the user names a different draft namespace. Use page
@@ -267,6 +268,22 @@ wiki/page and permissions. Do not publish, move, or copy draft content to a
 non-draft page without a separate explicit approval. The IRC bot is configured
 to ignore draft page updates by namespace prefix, so draft saves should not
 announce in IRC.
+
+Common KB tool examples:
+
+```sh
+bin/kb-page whoami --wiki cz
+bin/kb-page acl --wiki cz drafts:2026-07-02-example:page
+bin/kb-page save --wiki cz drafts:2026-07-02-example:page preview.txt \
+  --summary "Create draft" --create
+bin/kb-page save --wiki cz information:published-page preview.txt \
+  --summary "Update documentation" --update --approved-non-draft
+bin/kb-page rename --wiki cz drafts:2026-07-02-example:page \
+  information:published-page --summary "Publish documentation" \
+  --approved-non-draft
+bin/kb-page delete --wiki cz drafts:2026-07-02-example:page \
+  --summary "Remove obsolete draft" --yes
+```
 
 Do not assume that commands from one repository apply to another. Use the local
 `AGENTS.md`, README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer

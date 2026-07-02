@@ -152,6 +152,35 @@
   - `core.getPage` read-back matched the local preview.
   - Page URL:
     `https://kb.vpsfree.cz/drafts/2026-07-02-kb-staging/bot-ignore-test`.
+- Added `bin/kb-page`, a stdlib Ruby helper for repeatable DokuWiki page
+  operations against `kb.vpsfree.cz` and `kb.vpsfree.org`.
+  - Supports `whoami`, `acl`, `get`, `save`, `delete`, and `rename`.
+  - Uses the existing token files and Bearer authentication without printing
+    token values.
+  - Enforces preview/workflow safety by allowing draft namespace writes after
+    verification and requiring `--approved-non-draft` for non-draft writes.
+- Added `test/kb_page_test.rb` covering token handling, write safety gates,
+  create/update checks, HTTP 400 JSON-RPC error parsing, missing page reads,
+  delete via empty `core.savePage`, false save results, and rename behavior.
+- `ruby -c bin/kb-page`
+  - Passed: syntax OK.
+- `ruby -Itest test/kb_page_test.rb`
+  - Passed: 18 runs, 74 assertions, 0 failures.
+- `ruby -Itest test/dev_session_test.rb`
+  - Passed: 27 runs, 138 assertions, 0 failures.
+- `bin/kb-page acl --wiki cz drafts:2026-07-02-kb-staging:bot-ignore-test`
+  - Passed: returned `255`.
+- Mandatory standalone review by agent `Mill`
+  - Initial result: one Blocking, two Important, and one Advisory finding.
+  - Fixed JSON-RPC error parsing for HTTP 400 error responses so missing page
+    detection works against the live KB API.
+  - Fixed `get` to check page existence before reading page syntax.
+  - Fixed write operations to require `core.savePage` result `true`; rename no
+    longer deletes the source when saving the destination fails.
+  - Added direct tests for non-draft delete/rename refusal and delete without
+    `--yes`.
+- `bin/kb-page get --wiki cz drafts:2026-07-02-kb-staging:definitely-missing-page`
+  - Passed expected failure: exited `1` with `page does not exist`.
 
 ## Results
 
@@ -181,6 +210,9 @@
   before publishing to non-draft pages.
 - Targeted configuration build passed after mandatory review.
 - Draft bot ignore test page exists on `kb.vpsfree.cz`.
+- Workspace `AGENTS.md` now requires `bin/kb-page` for DokuWiki page
+  operations, with examples for draft saves, approved non-draft updates,
+  renames, and deletes.
 
 ## Open questions
 
