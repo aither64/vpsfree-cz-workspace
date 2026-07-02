@@ -34,9 +34,13 @@
   `34cbeea7 cluster: ignore KB draft updates in vpsfbot`.
 - 2026-07-02: Updated workspace `AGENTS.md` with the KB draft workflow and
   chose the default draft namespace `drafts:`.
+- 2026-07-02: User clarified that disposable live write checks are allowed in
+  the draft namespace.
 - 2026-07-02: Mandatory standalone review completed with no findings.
 - 2026-07-02: Targeted `confctl build -y "cz.vpsfree/containers/int.vpsfbot"`
   completed successfully.
+- 2026-07-02: Follow-up mandatory standalone review for the draft write-check
+  workflow update completed with no findings.
 
 ## Commands run
 
@@ -181,6 +185,46 @@
     `--yes`.
 - `bin/kb-page get --wiki cz drafts:2026-07-02-kb-staging:definitely-missing-page`
   - Passed expected failure: exited `1` with `page does not exist`.
+- Prepared disposable KB write-check preview:
+  `work/2026-07-02-kb-staging/kb-drafts/kb-page-write-check.txt`.
+- `bin/kb-page whoami --wiki cz`
+  - Passed: authenticated as user `aither`.
+- `bin/kb-page acl --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check`
+  - Passed: returned `255`.
+- `bin/kb-page acl --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check-renamed`
+  - Passed: returned `255`.
+- `bin/kb-page get --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check`
+  - Passed expected pre-create failure: page did not exist.
+- `bin/kb-page get --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check-renamed`
+  - Passed expected pre-create failure: page did not exist.
+- `bin/kb-page save --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check work/2026-07-02-kb-staging/kb-drafts/kb-page-write-check.txt --summary "Create draft write-check page" --create`
+  - Passed: created disposable draft page on `kb.vpsfree.cz`.
+- `bin/kb-page save --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check work/2026-07-02-kb-staging/kb-drafts/kb-page-write-check.txt --summary "Update draft write-check page" --update`
+  - Passed: updated the disposable draft page.
+- `bin/kb-page rename --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check drafts:2026-07-02-kb-staging:kb-page-write-check-renamed --summary "Rename draft write-check page"`
+  - Passed: moved the disposable page within the draft namespace.
+- `bin/kb-page get --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check-renamed`
+  - Passed: returned the updated marker from the renamed page.
+- `bin/kb-page get --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check`
+  - Passed expected post-rename failure: original page ID did not exist.
+- `bin/kb-page delete --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check-renamed --summary "Remove draft write-check page" --yes`
+  - Passed: deleted the disposable draft page.
+- `bin/kb-page get --wiki cz drafts:2026-07-02-kb-staging:kb-page-write-check-renamed`
+  - Passed expected post-delete failure: page did not exist.
+- `ruby -c bin/kb-page`
+  - Passed: syntax OK.
+- `ruby -Itest test/kb_page_test.rb`
+  - Passed: 18 runs, 74 assertions, 0 failures.
+- `ruby -Itest test/dev_session_test.rb`
+  - Passed: 27 runs, 138 assertions, 0 failures.
+- Follow-up mandatory standalone review by agent `Carson`
+  - Reviewed pre-review-record commit `4379f44` in range
+    `2558ee4..4379f44`; the subsequent amend only recorded this review.
+  - Result: no Blocking, Important, or Advisory findings.
+  - Reviewer reran `ruby -c bin/kb-page`,
+    `ruby -Itest test/kb_page_test.rb`, and
+    `ruby -Itest test/dev_session_test.rb`; all passed.
+  - Reviewer did not perform another live DokuWiki write.
 
 ## Results
 
@@ -213,6 +257,14 @@
 - Workspace `AGENTS.md` now requires `bin/kb-page` for DokuWiki page
   operations, with examples for draft saves, approved non-draft updates,
   renames, and deletes.
+- Workspace `AGENTS.md` now explicitly allows disposable `bin/kb-page` write
+  smoke checks in the draft namespace, with cleanup afterward.
+- Live draft write smoke passed on `kb.vpsfree.cz` using
+  `drafts:2026-07-02-kb-staging:kb-page-write-check` and
+  `drafts:2026-07-02-kb-staging:kb-page-write-check-renamed`; the disposable
+  renamed page was deleted and confirmed absent.
+- Follow-up mandatory review found no issues with the draft write smoke-check
+  workflow update.
 
 ## Open questions
 

@@ -258,6 +258,9 @@ direct approval before writing, deleting, or renaming; pass
 tokens for read-only verification calls through `bin/kb-page whoami`,
 `bin/kb-page acl`, or `bin/kb-page get`. Before any write, verify
 authentication and page permission against the exact target wiki.
+Disposable write smoke checks for `bin/kb-page` are allowed in the draft
+namespace when useful; use page IDs under `drafts:<slug>:` and delete the test
+pages before finishing.
 
 When asked to draft user documentation for KB, write draft pages under the
 `drafts:` namespace unless the user names a different draft namespace. Use page
