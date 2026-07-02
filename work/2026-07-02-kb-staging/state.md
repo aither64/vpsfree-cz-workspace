@@ -136,6 +136,22 @@
     `cz.vpsfree/containers/int.vpsfbot`.
   - Build log:
     `.confctl/logs/2026-07-02--18-38-55-confctl-build.log`.
+- Prepared local KB draft preview:
+  `work/2026-07-02-kb-staging/kb-drafts/bot-ignore-test.txt`.
+- Read-only KB API checks for `kb.vpsfree.cz`
+  `drafts:2026-07-02-kb-staging:bot-ignore-test`:
+  - Bearer token authentication identified user `aither`.
+  - `core.aclCheck` returned `255`.
+- Updated workspace instructions so draft pages under `drafts:` may be saved
+  after preview and target/permission verification, while non-draft writes
+  still require explicit approval.
+- `core.savePage` created the draft page on `kb.vpsfree.cz`:
+  `drafts:2026-07-02-kb-staging:bot-ignore-test`.
+  - Summary: `Create draft page for vpsfbot ignore test`.
+  - API result: `true`.
+  - `core.getPage` read-back matched the local preview.
+  - Page URL:
+    `https://kb.vpsfree.cz/drafts/2026-07-02-kb-staging/bot-ignore-test`.
 
 ## Results
 
