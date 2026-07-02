@@ -136,6 +136,22 @@
     `cz.vpsfree/containers/int.vpsfbot`.
   - Build log:
     `.confctl/logs/2026-07-02--18-38-55-confctl-build.log`.
+- Prepared local KB draft preview:
+  `work/2026-07-02-kb-staging/kb-drafts/bot-ignore-test.txt`.
+- Read-only KB API checks for `kb.vpsfree.cz`
+  `drafts:2026-07-02-kb-staging:bot-ignore-test`:
+  - Bearer token authentication identified user `aither`.
+  - `core.aclCheck` returned `255`.
+- Updated workspace instructions so draft pages under `drafts:` may be saved
+  after preview and target/permission verification, while non-draft writes
+  still require explicit approval.
+- `core.savePage` created the draft page on `kb.vpsfree.cz`:
+  `drafts:2026-07-02-kb-staging:bot-ignore-test`.
+  - Summary: `Create draft page for vpsfbot ignore test`.
+  - API result: `true`.
+  - `core.getPage` read-back matched the local preview.
+  - Page URL:
+    `https://kb.vpsfree.cz/drafts/2026-07-02-kb-staging/bot-ignore-test`.
 
 ## Results
 
@@ -160,9 +176,11 @@
   `48b06b915451a8babfea4c0dabf63b11019a1715` and configures both KB feeds
   with `exclude_pages = [ "drafts:*" ];`.
 - Workspace `AGENTS.md` now documents using `drafts:` for KB article drafts,
-  storing previews under `work/<slug>/kb-drafts/`, and requiring separate
-  explicit approval before publishing to non-draft pages.
+  storing previews under `work/<slug>/kb-drafts/`, allowing draft saves after
+  target/permission verification, and requiring separate explicit approval
+  before publishing to non-draft pages.
 - Targeted configuration build passed after mandatory review.
+- Draft bot ignore test page exists on `kb.vpsfree.cz`.
 
 ## Open questions
 
