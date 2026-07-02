@@ -34,6 +34,9 @@
   `34cbeea7 cluster: ignore KB draft updates in vpsfbot`.
 - 2026-07-02: Updated workspace `AGENTS.md` with the KB draft workflow and
   chose the default draft namespace `drafts:`.
+- 2026-07-02: Mandatory standalone review completed with no findings.
+- 2026-07-02: Targeted `confctl build -y "cz.vpsfree/containers/int.vpsfbot"`
+  completed successfully.
 
 ## Commands run
 
@@ -114,6 +117,25 @@
     lines remain within the workspace 80-column rule.
 - `nix develop -c git push -u origin 2026-07-02-kb-staging`
   - Pushed the configuration feature branch to GitHub.
+- Mandatory standalone review by agent `Descartes`
+  - Result: no Blocking, Important, or Advisory findings.
+  - Residual risks noted by reviewer:
+    - production package pin includes intervening bot commits that are
+      CI/flake/test-runner only;
+    - private `/private/vpsfbot/libera.yml` is not present, so if it defines a
+      top-level `dokuwiki` array it could override generated filtered config;
+    - full `confctl build` still needed after the review.
+- `gh run list --branch 2026-07-02-kb-staging --limit 5`
+  - In `vpsfree-irc-bot`, GitHub Actions showed `RSpec` and
+    `Integration Tests` completed successfully for commit `48b06b9`.
+  - In `vpsfree-cz-configuration`, no workflow runs were listed for the
+    branch.
+- `nix develop -c confctl build -y "cz.vpsfree/containers/int.vpsfbot"`
+  - Passed in `vpsfree-cz-configuration`.
+  - Built generation `2026-07-02--18-39-55` for
+    `cz.vpsfree/containers/int.vpsfbot`.
+  - Build log:
+    `.confctl/logs/2026-07-02--18-38-55-confctl-build.log`.
 
 ## Results
 
@@ -140,10 +162,16 @@
 - Workspace `AGENTS.md` now documents using `drafts:` for KB article drafts,
   storing previews under `work/<slug>/kb-drafts/`, and requiring separate
   explicit approval before publishing to non-draft pages.
+- Targeted configuration build passed after mandatory review.
 
 ## Open questions
 
-- None for the implemented scope.
+- Production validation after deployment:
+  - Create or edit a page under `drafts:` and verify no IRC announcement.
+  - Create or edit a non-draft page and verify announcements still work.
+  - Check effective runtime config if draft updates are still announced; the
+    private `/private/vpsfbot/libera.yml` could override the generated
+    top-level `dokuwiki` array if it defines one.
 
 ## Cleanup
 
