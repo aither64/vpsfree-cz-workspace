@@ -240,6 +240,32 @@ Keep automated `confctl ... --commit` commit messages exactly as generated;
 do not amend or rewrap them to satisfy generic commit-message line length
 rules. Edit them only when intentionally making a concise changelog edit.
 
+DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
+`kb.vpsfree.org`. API access uses one token per wiki:
+
+- `kb.vpsfree.cz`:
+  `/home/aither/.codex/codex-kb-vpsfree-cz-aither-key`
+- `kb.vpsfree.org`:
+  `/home/aither/.codex/codex-kb-vpsfree-org-aither-key`
+
+Never copy tokens into notes, commits, command output, URLs, or prompts. Always
+prepare wiki changes as a local preview file first, then ask the user for
+direct approval before calling any DokuWiki write method such as
+`core.savePage`. It is acceptable to use the tokens for read-only verification
+calls such as `core.whoAmI`, `core.getPage`, `core.getPageInfo`, or
+`core.aclCheck`. Before any approved write, verify authentication and page
+permission against the exact target wiki.
+
+When asked to draft user documentation for KB, write draft pages under the
+`drafts:` namespace unless the user names a different draft namespace. Use page
+IDs such as `drafts:<yyyy-mm-dd-slug>:<short-title>` so related drafts are easy
+to find. Store the local preview in the active initiative, for example under
+`work/<slug>/kb-drafts/`, and show or summarize that preview for approval
+before writing to the wiki. Do not publish, move, or copy draft content to a
+non-draft page without a separate explicit approval. The IRC bot is configured
+to ignore draft page updates by namespace prefix, so draft saves should not
+announce in IRC.
+
 Do not assume that commands from one repository apply to another. Use the local
 `AGENTS.md`, README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer
 configuration, and existing CI definitions as the source of truth.
