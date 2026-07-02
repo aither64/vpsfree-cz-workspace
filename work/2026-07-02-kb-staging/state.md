@@ -41,6 +41,12 @@
   completed successfully.
 - 2026-07-02: Follow-up mandatory standalone review for the draft write-check
   workflow update completed with no findings.
+- 2026-07-02: Merged and pushed `vpsfree-irc-bot` to `origin/master` at
+  `48b06b9`; GitHub Actions `RSpec` and `Integration Tests` passed.
+- 2026-07-02: Merged and pushed `vpsfree-cz-configuration` to
+  `origin/master` at `34cbeea7`; targeted local configuration checks passed.
+- 2026-07-02: Removed the initiative worktrees for `vpsfree-irc-bot` and
+  `vpsfree-cz-configuration`; feature branches were left intact.
 
 ## Commands run
 
@@ -225,6 +231,57 @@
     `ruby -Itest test/kb_page_test.rb`, and
     `ruby -Itest test/dev_session_test.rb`; all passed.
   - Reviewer did not perform another live DokuWiki write.
+- `git fetch origin --prune`
+  - Passed in both project feature worktrees.
+- `git rev-list --left-right --count origin/master...2026-07-02-kb-staging`
+  - Returned `0 1` in both `vpsfree-irc-bot` and
+    `vpsfree-cz-configuration`; both were fast-forward candidates.
+- `git worktree add --detach ... origin/master`
+  - Created detached merge worktrees under
+    `worktrees/2026-07-02-kb-staging/merge/`.
+  - Checkout hooks warned about missing ambient Overcommit/Gemfile gems; the
+    worktrees were clean and the hooks were refreshed inside `nix develop`.
+- `git merge --ff-only 2026-07-02-kb-staging`
+  - Passed in both detached merge worktrees.
+- `nix develop -c bundle exec overcommit --install`
+  - Passed in both project merge worktrees.
+- `nix develop -c bundle exec rspec`
+  - Passed in the `vpsfree-irc-bot` merge worktree: 49 examples, 0 failures.
+- `nix develop -c bundle exec rubocop`
+  - Passed in the `vpsfree-irc-bot` merge worktree: 61 files inspected, no
+    offenses.
+- `nix develop -c git push origin HEAD:master`
+  - Pushed `vpsfree-irc-bot` master from `1deb4e9` to `48b06b9`.
+  - GitHub reported existing Dependabot alerts on the default branch.
+- `gh run list --branch master --limit 5`
+  - `vpsfree-irc-bot`: the push-triggered `RSpec` workflow completed
+    successfully and `Integration Tests` was running.
+  - `vpsfree-cz-configuration`: no push-triggered workflow appeared; only
+    scheduled `Daily update` workflows were listed.
+- `gh run watch 28609718188 --exit-status`
+  - Passed: `vpsfree-irc-bot` master `Integration Tests` completed
+    successfully in 4m10s.
+- `nix develop -c nixfmt --check packages/vpsfree-irc-bot/default.nix cluster/cz.vpsfree/containers/int.vpsfbot/config.nix`
+  - Passed in the `vpsfree-cz-configuration` merge worktree.
+- `nix develop -c nix build --impure --expr 'let flake = builtins.getFlake (toString ./.); pkgs = import flake.inputs.nixpkgs { system = builtins.currentSystem; overlays = import ./overlays; }; in pkgs.vpsfree-irc-bot'`
+  - Passed in the `vpsfree-cz-configuration` merge worktree.
+- `nix develop -c confctl build -y "cz.vpsfree/containers/int.vpsfbot"`
+  - Passed in the `vpsfree-cz-configuration` merge worktree.
+  - Built generation `2026-07-02--19-38-08`.
+- `nix develop -c git push origin HEAD:master`
+  - Pushed `vpsfree-cz-configuration` master from `56391b80` to
+    `34cbeea7`.
+  - GitHub reported existing Dependabot alerts on the default branch.
+- Removed transient `.bin`, `.bundle`, and `result` artifacts from the
+  configuration merge worktree after checks.
+- `git worktree remove .../merge/vpsfree-irc-bot`
+  - Removed the temporary bot merge worktree.
+- `git worktree remove .../vpsfree-irc-bot`
+  - Removed the bot feature worktree.
+- `git worktree remove .../merge/vpsfree-cz-configuration`
+  - Removed the temporary configuration merge worktree.
+- `git worktree remove .../vpsfree-cz-configuration`
+  - Removed the configuration feature worktree.
 
 ## Results
 
@@ -265,6 +322,12 @@
   renamed page was deleted and confirmed absent.
 - Follow-up mandatory review found no issues with the draft write smoke-check
   workflow update.
+- `vpsfree-irc-bot` default branch `master` now contains
+  `48b06b9 bot: filter DokuWiki page announcements`.
+- `vpsfree-cz-configuration` default branch `master` now contains
+  `34cbeea7 cluster: ignore KB draft updates in vpsfbot`.
+- Project worktrees for this initiative were removed after the default branch
+  pushes; the feature branches remain locally and remotely.
 
 ## Open questions
 
@@ -277,9 +340,11 @@
 
 ## Cleanup
 
-- No cleanup needed yet.
-- Before committing in either worktree, enter the repository dev shell and
-  verify Overcommit/hooks are installed and runnable; the ambient shell was not
-  sufficient during worktree creation.
-- Removed transient `result`, `.bin`, and `.bundle` artifacts from the
-  `vpsfree-cz-configuration` worktree after local checks.
+- Removed project feature and merge worktrees for:
+  - `vpsfree-irc-bot`
+  - `vpsfree-cz-configuration`
+- Left the feature branches intact locally and remotely.
+- Remaining cleanup after merging the workspace branch:
+  - remove the temporary workspace feature/merge worktrees;
+  - remove empty `worktrees/2026-07-02-kb-staging/merge/` and
+    `worktrees/2026-07-02-kb-staging/` directories if still present.
