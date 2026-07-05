@@ -206,6 +206,11 @@ available in the current shell, run it through Nix, for example
 `nix shell nixpkgs#gh -c gh run list ...`. Inspect failed logs, monitor reruns,
 and resolve failures instead of leaving CI for the user to chase.
 
+After a force-push or a follow-up fix push, cancel superseded queued or
+in-progress GitHub Actions workflow runs for the same branch. Only cancel runs
+whose `headSha` no longer matches the current branch head; do not cancel
+workflows for other branches or workflows already running on the current head.
+
 When creating or editing GitHub workflows, verify the latest upstream version of
 each imported action from its official repository before choosing the `uses:`
 ref. Do not rely on remembered version numbers; use the newest compatible
