@@ -47,12 +47,14 @@
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-07-10-kb-czech-fixes/vpsfree-cz-configuration`
   - Base: `origin/master` at
     `435f63d77be0aa20ab48cec334340e9fc94ac163`
+  - Commit: `bbe8a5db` (`cluster: add on-demand KB staging instances`)
 
 ## Status
 
 - The screenshot implementation and original production-draft bundle passed
-  their earlier mandatory review. The later staging-infrastructure and release
-  workflow are implemented and undergoing their required fresh review.
+  their earlier mandatory review. The staging infrastructure and release
+  workflow have now passed their required fresh standalone review with no
+  remaining findings.
 - Detailed audit written to `kb-label-audit.md`.
 - Added create-only DokuWiki media operations to `bin/kb-page` and committed
   them on the coordination workspace `master` as `5e2b40b`.
@@ -110,6 +112,8 @@
   `cs:screenshots:vpsadmin:<topic>:<view>.png`.
 - The old production draft set will be removed only after staging has been
   deployed and verified, with separate explicit production approval.
+- Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
+  `693f8da`; the next state-only commit records review and push status.
 
 ## Commands run
 
@@ -184,15 +188,15 @@
 - Updated the capture inventory to schema 3 and ran
   `nix develop -c bin/check`: 60 assets, 63 references, 60 PNGs, and all
   language-first paths passed.
-- Ran `ruby test/kb_page_test.rb`: 28 runs, 114 assertions, no failures.
-- Ran `ruby test/kb_stage_test.rb`: 5 runs, 22 assertions, no failures.
+- Ran `ruby test/kb_page_test.rb`: 30 runs, 120 assertions, no failures.
+- Ran `ruby test/kb_stage_test.rb`: 9 runs, 34 assertions, no failures.
 - Regenerated `screenshot-manifest.yml` from capture commit `e0a3502` and
   regenerated `kb-release.yml`: 30 pages and 60 media objects.
 - Ran Ruby syntax checks for `kb-page`, `kb-stage`, `kb-release`, and their
   libraries; all passed.
 - Ran `nixfmt` on the aitherdev configuration and built
   `cz.vpsfree/machines/aitherdev` with `confctl build -y`; generation
-  `2026-07-10--22-41-37` completed successfully. This was a build only; no
+  `2026-07-10--22-59-41` completed successfully. This was a build only; no
   deployment or DNS update was performed.
 - A standalone `nixpkgs#rubocop` invocation could not activate because its
   packaged `rubocop-ast` requires `prism ~> 1.7`, which was absent from the
@@ -201,6 +205,20 @@
   workspace already uses Ruby 3 keyword shorthand. Ruby 3.4 syntax checks,
   unit tests, line-length inspection, and `git diff --check` are the recorded
   fallback checks; the coordination repository declares no Ruby hook framework.
+- Ran the mandatory fresh-context review across coordination commit range
+  `b7afb3f..693f8da`, capture commit `e0a3502`, and configuration commit
+  `bbe8a5db`. The review initially found unsafe removal of a live media bind
+  mount, stale pending-release markers, staging mutation races, non-retryable
+  partial publication, an unguarded future media-update policy, an overly wide
+  correction commit, and a long production drift-check window.
+- Corrected every finding: reset preserves bind-mount roots; all staging
+  lifecycle and publication operations share the ownership lock; staging bytes
+  are reverified before promotion; partial page saves are retryable; update
+  media requires the recorded source hash; source pages are rechecked directly
+  before each save; and the coordination history was rebuilt as four focused
+  commits. The reviewer returned **no remaining findings**. The documented
+  residual is DokuWiki's lack of compare-and-swap saves, so publication needs
+  an announced editing window.
 
 ## Results
 
