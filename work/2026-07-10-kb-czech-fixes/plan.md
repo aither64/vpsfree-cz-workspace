@@ -95,7 +95,11 @@ mirror for all candidate pages, writes media before pages, verifies all staged
 bytes, and records the exact pending manifest digest. `verify` can recheck
 staging or production. `promote` requires both the same owned/pending manifest
 and an explicit production-approval flag, rechecks production drift, writes,
-and verifies all results. `bin/kb-page` applies the same environment boundary:
+rechecks every source page again immediately before its save, and verifies all
+results. DokuWiki has no compare-and-swap page-save API, so a narrow race with
+an independent editor remains between that final check and the write;
+publication should run in an announced editing window. `bin/kb-page` applies
+the same environment boundary:
 staging ownership for staging writes, explicit approval for every production
 write, including the legacy `drafts:` namespace.
 
