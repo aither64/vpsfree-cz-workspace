@@ -23,8 +23,9 @@ production-media write.
   `origin/master` at `299147166ecb8459c712ed8a5c4dd14f673663fc`.
 - `haveapi` is read-only background material. No framework wording was needed
   beyond the vpsAdmin catalogs exposed to users.
-- `kb.vpsfree.cz` is the eventual documentation target. This investigation
-  made no wiki writes.
+- `kb.vpsfree.cz` is the documentation target. The complete review set has
+  been created under `drafts:2026-07-10-kb-czech-fixes`; no production page or
+  production media ID has been written.
 
 The detailed replacement and screenshot inventory is in
 `work/2026-07-10-kb-czech-fixes/kb-label-audit.md`.
@@ -182,21 +183,21 @@ round-trip bytes and metadata.
    tag in the draft copy so drafts cannot claim the production page's language
    mapping. Add a visible draft note with the source page ID and source
    revision; neither draft-only change is carried into publication.
-3. Upload all Czech screenshot revisions to the draft media namespace using
+3. Upload all Czech screenshot assets to the draft media namespace using
    their manifest IDs, then save each complete draft page with only new draft
    screenshot references. A reviewer must never need access to local files to
    see the proposed result.
 4. Fetch every draft page and media object back from DokuWiki; verify the page
    source, image hashes, rendered dimensions, links, and absence of legacy
    screenshot references.
-5. Run the mandatory standalone change review on the complete local previews
-   and screenshot set. Record the result and disposition of findings in
-   `state.md`.
+5. Run the mandatory standalone change review on the complete local previews,
+   capture implementation, and screenshot set before the long acceptance run.
+   Record the result and disposition of findings in `state.md`.
 6. Ask for explicit user approval before any non-draft page or media write.
 
 ### Publication after approval
 
-1. Copy the approved immutable screenshot files to their new permanent
+1. Copy the approved screenshot files to their new permanent
    `screenshots:vpsadmin:...:cs:...` IDs using create-only writes. Never replace
    or delete a legacy screenshot during publication.
 2. Produce publication source from the reviewed draft by removing the draft
@@ -225,9 +226,9 @@ round-trip bytes and metadata.
 - Publish only against a deployment that contains the localization baseline
   used for the audit. English-language vpsAdmin remains available, but the
   Czech KB will intentionally describe the Czech interface.
-- DokuWiki page history provides per-page rollback. Legacy media is not
-  overwritten or deleted, and all new media IDs are immutable, so rollback
-  does not depend on reconstructing a previous bitmap.
+- DokuWiki page and media history provides rollback. Legacy media is not
+  overwritten or deleted; the new stable semantic IDs can receive future
+  recaptures as normal DokuWiki revisions without changing page source.
 - Publication is not atomic. Complete and review all local previews first,
   then publish coherent batches so navigation text and screenshots do not
   disagree for long.
