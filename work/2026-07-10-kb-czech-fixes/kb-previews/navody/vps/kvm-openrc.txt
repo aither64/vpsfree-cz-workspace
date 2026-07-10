@@ -1,0 +1,119 @@
+<note warning>**Pracovní návrh k revizi.** Zdrojová stránka [[:navody:vps:kvm-openrc|navody:vps:kvm-openrc]], zdrojová revize ''1724178060''. Tento návrh není publikovaná dokumentace.</note>
+
+======!!!!! UPOZORNĚNÍ Stránka se stále vytváří UPOZORNĚNÍ !!!!! ======
+
+====== Používání KVM(Qemu) na vpsfree.cz s qemu-openrc ======
+
+Zde na vpsfree.cz místo klasického VPS(plně virtualizovaný systém) se používá linuxové kontejnery(Vlastní systém, ale se sdíleným jádrem(kernel) pro všechny VPS) - trochu podobné jako docker kontejnery.\\
+Více info: [[informace:vpsadminos|linuxové kontejnery]]
+
+==== 1. Definice Pojmů ====
+Zde v návodu budu používát určité pojmy, které zde definuji
+  VPS = VPS u vpsfree.cz
+  KVM = Náš vritualizovaný systém
+  Lokální IP/rozsah = Privátní IP/rozsah sloužící zejména pro komunikaci mezi VPS-KVM, bez přístupu na internet 
+  Privátní IP/rozsah = stejné jako lokální IP/rozsah, ale s přístupem k internetu přes NAT
+  NAT = Network Address Translation (překlad Privátních adres na jednu veřejnou IP - tj. že více klientů se na internetu mohou tvářit že mají stejnou IP adresu)
+  Veřejná IPv4/IPv6 = IPv4/IPv6 adresa, která má přístup na internet a taky se lze na ní mohou klienti připojit, kde běží např. webový server
+  IPv4 = Internet Protocol version 4 -32 bitová adresa - např. 45.168.32.15
+  IPv6 = Internet Protocol version 6 -128 bitová adresa - např.  2183:3161:71b9:22b0:719c:c3ae:8100:6da7
+
+==== 2. Konfigurace VPS ====
+Ve vpsadmin je nutné v detailu povolit funkce "TUN/TAP" a "KVM"\\
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:vps-details:cs:feature-settings.png?direct&200|}}\\
+Dále je vhodné si rozdělit dataset na hlavní dataset(zde bude hostující OS VPS) a na subdataset (zde bude disk k našemu KVM). Doproučuji rozdělit stejně jako na obrázku níže. 5GiB bude pro hostující OS více, než dostatečné a 115 GiB pro KVM disk\\
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:vps-details:cs:datasets.png?direct&400|}}
+
+==== 3. Hostující OS a jeho konfigurace ====
+Pro hostující OS na VPS použijeme Alpine Linux 3.19 (zřejmě by šel použít i jiný OS, ale to by byl návod nekončený), Alpine linux jsem vybral, protože je tzv. lightweight (lehký ve smyslu, že OS i s balíky nezabírá moc místa a ušetřené místo můžem použít pro KVM)
+=== 3.1 instalace balíčků ===
+Pro tento návod budeme předpokládat s čistou instalací a nainstalujeme potřebné balíčky příkazy:
+  apk update
+  apk add iptables iptables-legacy iptables-openrc qemu qemu-system-x86_64 qemu-openrc qemu-img bridge nfs-utils nfs-utils-openrc
+Kdo rád používá nano, tak je také možnost si ho nainstalovat
+  apk add nano
+=== 3.2 Přidání nfsmount ===
+Pomocí nfsmount si můžeme namapovat náš NAS kde si můžeme dočasně uložit instalační ISO pro instalaci KVM.
+Nejprve vytvoříme složku kam budeme NAS mapovat. např.
+  mkdir -p /mnt/nas
+Poté výjímečně využijeme soubor /etc/fstab ze kterého bude nfsmount číst
+při exportování z vpsadmin dostaneme vstup do fstab, který bude vypadat např.:
+  172.18.113.133:/nas/3582 /mnt/export1096 nfs vers=3,nofail 0 0
+Který upravíme na a přidáme na konec /etc/fstab:
+  172.18.113.133:/nas/3582 /mnt/nas nfs vers=3,nolock,_netdev,auto 0 0
+nolock a _netdev je zde důlžeité. nolock aby se nezamknul mount a mohli jsem si v KVM také mountnout NAS. a _netdev slouží, aby se čekalo, až bude dostupná síť. 
+Takže /etc/fstab může vypdata např. takto
+  /dev/cdrom      /media/cdrom    iso9660 noauto,ro 0 0
+  /dev/usbdisk    /media/usb      vfat    noauto,ro 0 0
+  172.18.113.133:/nas/3582 /mnt/nas nfs vers=3,nolock,_netdev,auto 0 0
+Poté přidáme nfsmount aby se spouštěl se startem VPS
+  rc-update add nfsmount default
+Dále restartujeme VPS.
+  reboot
+A zkontrolujeme pomocí příkazu:
+  mount
+Že na konci výpisu máme náš NAS mountnutý
+např.
+  172.18.113.133:/nas/3582 on /mnt/nas type nfs (rw,relatime,vers=3,rsize=1048576,wsize=1048576,namlen=255,hard,nolock,proto=tcp,timeo=600,retrans=2,sec=sys,mountaddr=172.18.113.133,mountvers=3,mountport=41797,mountproto=udp,local_lock=all,addr=172.18.113.133)
+ === 3.3 Upráva sshd config ===
+Je potřeba upravit sshd config aby naslouchal na jiném portu např. 1022 (port 22 použíjeme pro KVM) a ideálně zakázat ověřování pomocí hesla a nechat ověření veřejným klíčem (nechám na Vašem rozhodnutí).
+[[https://gist.githubusercontent.com/rhsCZ/08e6758f98de6fbc8010dcf9c53deeea/raw/7ccb802b902d3472749ba4ef8c75a1737dbd79d9/sshd_config|Příklad configu]]
+Po změně configu restartujeme sshd
+  /etc/init.d/sshd restart
+a ověříme, že se můžeme připojit na portu 1022
+ === 3.4 nastavení iptables ===
+Zde můžete použít předpřipravené soubory
+[[https://gist.githubusercontent.com/rhsCZ/8881d87e75b3ccf80496507aa6d5ccf9/raw/6bac39bfb809894a24614cc00a5836737a5c0d00/iptables|/etc/iptables]]
+[[https://gist.githubusercontent.com/rhsCZ/cd773fb5cf2b1cf876dff1d4e05dd51f/raw/a1b6f432b15a903e779919fd1ef654324f2c34e6/ip6tables|/etc/ip6tables]]
+poté je nutné povolit, aby se iptables nahrály při startu OS
+  rc-update add iptables boot
+  rc-update add ip6tables boot
+V alpine linux 3.19 je v balíku iptables jeho náhrada nftables, který stojí za nic, a symbolické odkazy příkazů iptables odkazují na soubory nft. Proto, je nutné tyto odkazy pozměnit
+  cd /sbin
+  rm iptables
+  rm iptables-save
+  rm iptables-restore
+  rm ip6tables
+  rm ip6tables-save
+  rm ip6tables-restore
+  ln -s ./iptables-legacy iptables
+  ln -s ./iptables-legacy-save iptables-save
+  ln -s ./iptables-legacy-restore iptables-restore
+  ln -s ./ip6tables-legacy ip6tables
+  ln -s ./ip6tables-legacy-save ip6tables-save
+  ln -s ./ip6tables-legacy-restore ip6tables-restore
+Pote upravíme soubor /etc/conf.d/iptables kde změníme odkud má iptables číst a že nemá zapisovat při zastavení služby a povolíme ip forwarding
+  # /etc/conf.d/iptables
+  
+  # Location in which iptables initscript will save set rules on
+  # service shutdown
+  IPTABLES_SAVE="/etc/iptables"
+  
+  # Options to pass to iptables-save and iptables-restore
+  #SAVE_RESTORE_OPTIONS="-T filter"
+  
+  # Save state on stopping iptables
+  SAVE_ON_STOP="no"
+  
+  # Enable/disable IPv4 forwarding with the rules
+  IPFORWARD="yes"
+To samé uděláme s /etc/conf.d/ip6tables
+  # /etc/conf.d/ip6tables
+  
+  # Location in which ip6tables initscript will save set rules on
+  # service shutdown
+  IP6TABLES_SAVE="/etc/iptables"
+  
+  # Options to pass to ip6tables-save and ip6tables-restore
+  SAVE_RESTORE_OPTIONS="-T filter"
+  
+  # Save state on stopping iptables
+  SAVE_ON_STOP="no"
+  
+  # Enable/disable IPv6 forwarding with the rules
+  IPFORWARD="yes"
+Poté restartujeme a oveříme, že ve výpisu
+  iptables -L
+se nám přidala pravidla.
+
+  

@@ -1,0 +1,17 @@
+<page>manuals:vps:metrics</page>
+====== Metriky pro Prometheus ======
+vpsAdmin exportuje metriky pro monitorovací systém [[https://prometheus.io|Prometheus]].
+Tyto metriky si můžete přidat do vlastního monitoringu, který provozujete ve VPS, nebo jinde.
+
+Metriky obsahují informace o VPS jako využití CPU, paměti, load average, datové přenosy,
+OOM reporty, statusy nodů, apod. Jsou zde taky metriky týkající se členství, včetně data
+do kdy máte členství uhrazeno.
+
+Pro nastavení si ve vpsAdminu v **Edit profile** -> **Metrics access tokens** vytvořte přístupový
+token. Zobrazí se vám tzv. scrape URL, kterou přidáte do vašeho monitoringu. Statusy VPS se aktualizují
+co 2 minuty, takže nemá cenu data stahovat častěji. Pro přesný přehled dostupných metrik si URL
+otevřete v prohlížeči.
+
+Metrika ''vpsadmin_metrics_version'' (pokud jste si nezměnili prefix) udává verzi metrik. Pokud bychom
+dělali zpětně nekompatibilní změny, první číslo se navýší, tj. např. ''1.0 -> 2.0''. Číslo za desetinnou
+čárkou se může zvyšovat, když přidáme nějaké nové metriky, ale význam původních metrik se nezmění.

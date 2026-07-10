@@ -1,0 +1,64 @@
+<page>manuals:vps:full_disk</page>
+====== Řešení nedostatku volného místa na disku ======
+
+Pokud nevíme, kde se nám volné místo ztrácí, můžeme použít např. program
+''du'' nebo ''ncdu'':
+
+<code>
+# Prohledat všechny adresáře v kořenu
+du -sh /*
+
+# Najdeme-li velký adresář, spustíme du zase na něj, např.:
+du -sh /var/*
+</code>
+
+''ncdu'' obsahuje jednoduché textové rozhraní a umožňuje soubory rovnou i mazat.
+
+Běží-li ''du'' nebo ''ncdu'' moc dlouho (stačí desítky sekund až minuty),
+pravděpodobně máme problém s velkým množstvím souborů. V takovém případě
+prohledáváme možné adresáře po jednom, dokud nenajdeme ten problémový.
+
+===== NAS =====
+Nedaří-li se mazáním dat uvolnit místo na NASu, nejspíše je drží snapshot.
+Velikost snapshotů se totiž
+[[navody:vps:datasety#kvoty_datasetu|počítá do zabraného místa na NASu]].
+Pro uvolnění místa je nutné snapshoty smazat, to můžeme udělat ve vpsAdminu
+v menu Backups -> NAS.
+
+===== VPS s připojeným NAsem =====
+Nemůžeš-li přijít na to, kde se volné místo disku VPS ztrácí a máš-li připojený
+NAS, je možné, že se data skrývají pod mountpointem NASu. Dojde k tomu tak, že
+se zapisovalo do adresáře, kde měl být NAS připojen, v momentě, kdy připojen nebyl.
+Data pak skončily na disku VPS. Pokud se pak NAS později připojí, překryje data
+na disku VPS.
+
+Můžeme to ověřit buď tak, že NAS dočasně odpojíme a poté podíváme se na jeho
+mountpoint:
+
+<code>
+umount /mnt/nas
+du -sh /mnt/nas
+df -h /mnt/nas
+</code>
+
+Pokud ''df'' ukazuje filesystem jako ''tank/ct/<id vps>'', data jsou na disku VPS.
+
+Jestliže NAS odpojovat nechceme, protože ho třeba používá nějaká služba, existuje
+i jiný způsob, jak se dostat k datům pod ním. Uděláme-li bind-mount kořenového
+adresáře, NAS v něm nebude připojen:
+
+<code>
+mkdir tmp-rootfs
+mount --bind / tmp-rootfs
+
+du -sh tmp-rootfs/mnt/nas
+df -h tmp-rootfs/mnt/nas
+</code>
+
+''df'' by měl opět ukazovat filesystem jako ''tank/ct/<id vps>''.
+Data z ''tmp-rootfs/mnt/nas'' uklidíme a potom odpojíme bind-mount:
+
+<code>
+umount tmp-rootfs
+rmdir tmp-rootfs
+</code>

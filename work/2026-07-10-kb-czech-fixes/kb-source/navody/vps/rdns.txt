@@ -1,0 +1,42 @@
+<page>manuals:vps:rdns</page>
+
+====== Kde nastavit reverzní záznam ======
+
+Pro nastavení reverzních záznamů už není potřeba psát na podporu, vpsAdmin se dočkal integrace s DNS servery. Reverzní záznamy tak nastavíte přímo z detailu VPS, popř. z nového menu DNS.
+
+{{:navody:vps:reverzni_dns.png?400|}}
+
+
+====== Reverzní záznamy (PTR) ======
+
+Nejčastěji klademe systému DNS běžný dopředný dotaz, tedy: „Jakou IP adresu má tohle doménové jméno?“ Existuje ale i způsob, jak položit reverzní dotaz, tedy: „Jaké doménové jméno patří k této IP adrese?“ K tomu je ale potřeba zavést do systému DNS takzvaný reverzní záznam, označovaný jako PTR. Ten obsahuje odpověď na výše položenou otázku: K této IP adrese patří následující doménové jméno.
+
+Pro každou IP adresu je možné zavést pouze **jeden** DNS záznam. Pozor ovšem na to, že pro IPv4 a IPv6 adresu **je potřeba zavést reverzní záznamy zvlášť**.
+
+===== Správa reverzních záznamů =====
+
+Všechny reverzní záznamy pro [[informace:ip_adresy|rozsahy IP adres]] vpsFree.cz jsou delegovány na naše DNS servery. Reverzní záznamy pro jednotlivé IP adresy nastavíte ve vpsAdminu v detailu VPS, formulář
+"Interface addresses", popř. v menu DNS.
+
+===== Příklad =====
+
+V následujícím příkladu se nejprve zeptáme na dopředný záznam. Poté se zase zeptáme na reverzní záznam získané adresy a obdržíme stejné doménové jméno. Totéž zopakujeme pro IPv6.
+
+<code>
+$ host mxproxy.vpsfree.cz
+mxproxy.vpsfree.cz has address 37.205.9.45
+mxproxy.vpsfree.cz has IPv6 address 2a01:430:17:1::ffff:427
+
+$ host 37.205.9.45
+45.9.205.37.in-addr.arpa domain name pointer mxproxy.vpsfree.cz.
+
+$ host 2a01:430:17:1::ffff:427
+7.2.4.0.f.f.f.f.0.0.0.0.0.0.0.0.1.0.0.0.7.1.0.0.0.3.4.0.1.0.a.2.ip6.arpa domain name pointer mxproxy.vpsfree.cz.</code>
+
+===== Proč je to důležité =====
+
+Poštovní servery dnes obvykle v rámci boje proti spamu ověřují, zda je jim pošta doručována z adres, ke kterým náleží správné reverzní záznamy. Pokud poštu posílá běžná domácí internetová přípojka, obvykle nesedí reverzní záznam a dopředný záznam, protože záznamy jsou spravovány jiným správcem.
+
+Pokud tedy chcete serveru dokázat, že jste správcem serveru a můžete manipulovat oběma typy záznamu, nastavte si oba typy záznamů tak, jak je uvedeno v příkladu nahoře. Reverzní záznam pro danou adresu musí vracet doménové jméno, které zase vede na stejnou IP adresu.
+
+Pokud potřebujete nastavit poštovní server tak, aby přijímal poštu pro více domén, navštivte [[navody:server:postfix|návod pro server Postfix]].

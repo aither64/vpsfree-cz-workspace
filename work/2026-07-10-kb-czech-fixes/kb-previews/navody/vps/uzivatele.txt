@@ -1,0 +1,102 @@
+<note warning>**Pracovní návrh k revizi.** Zdrojová stránka [[:navody:vps:uzivatele|navody:vps:uzivatele]], zdrojová revize ''1740328720''. Tento návrh není publikovaná dokumentace.</note>
+
+====== Správa uživatelského účtu ======
+===== Konfigurace e-mailových adres =====
+vpsAdmin umožňuje nastavit jeden primární e-mail patřící majiteli účtu --
+členovi v našem spolku. Ten musí být nastaven a může být jen jeden. Krom toho je
+možné nastavit různé e-mailové adresy pro různé typy kontaktů -- např. účetní a
+správce VPS. Toto nastavení lze měnit v detailech uživatelského účtu
+(vpsAdmin -> Upravit profil).
+
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:account:cs:email-roles.png?300|}}
+
+Například, správce členství (role Vedení účtu) dostává následující
+maily:
+
+  * upozornění k platbě členského příspěvku,
+  * pozastavení/obnovení členství,
+  * potvrzení přijetí platby.
+
+Správce VPS (role Správce systému) pak maily o:
+
+  * změně stavu VPS,
+  * změně konfigurace VPS,
+  * stahování záloh,
+  * migrace VPS.
+
+==== Detailní nastavení ====
+Komu by nestačilo nastavení různých e-mailových adres pro různé role, nebo
+některé e-maily nechce vůbec dostávat, existuje ještě pokročilé nastavení
+(vpsAdmin -> Upravit profil -> Pokročilá konfigurace e-mailu). Zde si můžete
+nastavit libovolné adresy pro vybrané typy e-mailů, případně zasílání zrušit
+úplně.
+
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:account:cs:mail-template-recipients.png?300|}}
+
+===== Dvoufaktorové přihlašování (2FA) =====
+Ve vpsAdminu je možné volitelně zapnout dvoufaktorové ověřování při přihlašování.
+K dispozici je [[wp>Time-based One-time Password algorithm|TOTP]] a [[wp>WebAuthn|passkey]].
+TOTP a passkey lze kombinovat, od každého mít více autentizačních zařízení a k přihlášení
+pak stačí jedno z nich.
+
+Dvoufaktorové ověřování je vynuceno k jakémukoli přihlášení: ve webovém rozhraní,
+v [[navody:vps:api|API]] i s [[navody:vps:api#cli|vpsfreectl]]. Přihlášení je
+možné jen pomocí [[navody:vps:api#autentizace|autentizace tokenem]], HTTP basic
+použít nelze.
+
+V nastavení profilu (vpsAdmin -> Upravit profil) je možné dvoufaktorové ověřování
+vypnout nebo zapnout. Aktivní je ale jen když existuje aspoň jedno TOTP zařízení
+nebo passkey.
+
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:account:cs:multifactor-status.png?200|}}
+
+==== TOTP ====
+
+Pro ověřování můžete použít např. mobilní telefon s aplikací
+[[https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=cs|Google Authenticator]]
+nebo [[https://freeotp.github.io|FreeOTP]]. Při aktivaci naskenujete zobrazený
+QR kód do aplikace a opíšete jednorázové heslo, které vám zobrazí. Alternativně
+můžete do aplikace opsat tajný klíč, který vpsAdmin ukazuje pod QR kódem.
+
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:account:cs:totp-confirm.png?300|}}
+
+Po aktivaci vpsAdmin zobrazí obnovovací kód, který můžete použít, pokud ztratíte
+přístup k zařízení s nastaveným TOTP. Tento kód neukládejte společně s heslem
+k vpsAdminu. Pokud ztratíte i tento kód, budete muset napsat na podporu.
+
+Je možné nastavit více autentizačních zařízení a pro přihlášení lze použít libovolné
+z nich. Autentizační zařízení můžete dočasně vypnout, nebo trvale smazat
+(vpsAdmin -> Upravit profil -> TOTP zařízení).
+
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:account:cs:totp-device-list.png?300|}}
+
+==== Passkey ====
+
+Jako passkey lze použít hardwarové tokeny (YubiKey, GoTrust IdemKey, apod.) a softwarové klíčenky jako KeePassXC, KeePassium, iCloud Keychain, Google Password Manager, Microsoft Windows Hello, 1Password, atp.
+
+Ověřování přes passkey je k dispozici pouze ve webovém prohlížeči, s [[navody:vps:api#cli|vpsfreectl]]
+použít nelze a vyžaduje TOTP.
+
+Ve vpsAdminu v Upravit profil -> Přístupové klíče si nejprve své zařízení registrujte
+a poté aktivujte dvoufaktorové ověřování v nastavení profilu (vpsAdmin -> Upravit profil).
+
+===== Nastavení přihlášení =====
+V nastavení profilu (vpsAdmin -> Upravit profil) je formulář „Nastavení relací“:
+
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:account:cs:session-settings.png?300}}
+
+  * **Povolit jednotné přihlášení** povolí sdílené přihlášení pro vpsAdmin, znalostní bázi a Discourse, tj. přihlašovací údaje stačí zadat jen jednou
+  * **Doba nečinnosti před odhlášením** nastaví maximální dobu neaktivity, po které vás webové rozhraní vpsAdminu odhlasí; ve výchozím stavu je to 20 minut
+  * **Odhlašovat všude** při odhlášení zruší všechny aktivní relace dané aplikace, tj. např. pokud máte vpsAdmin otevřen ve více prohlížečích, nebo na různých zařízeních, jedno odhlášení je odhlásí všechny
+
+===== Log přihlášení a vykonaných akcí =====
+vpsAdmin loguje všechny relace a pamatuje si, jaké akce byly vykonány
+(vpsAdmin -> Upravit profil -> Relace).
+
+{{:drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:account:cs:session-list.png?300}}
+
+Vidíme zde kdy došlo k přihlášení, jaký způsob autentizace byl využit, IP
+adresy, identifikace klienta a máme možnost se podívat, jaké příkazy byly v
+dané relaci vykonány. Světle zeleně jsou zvýrazněny relace, které jsou stále aktivní.
+Aktuální relace, ze které se na log díváme, je zvýrazněna tmavě zeleně. Kliknutím
+na ikonku koše můžeme vybranou aktivní relaci ukončit.

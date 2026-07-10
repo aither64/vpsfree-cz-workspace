@@ -1,0 +1,29 @@
+<page>manuals:vps:start_menu</page>
+====== Start Menu ======
+Start menu je dostupné ze [[navody:vps:konzole|vzdálené konzole VPS]], když se
+VPS zapíná nebo restartuje. Pomocí start menu je možné měnit příkaz, kterým
+se spouští init proces, případně spustit shell. Pokud uživatel menu nepoužije,
+automaticky se spustí systém z VPS.
+
+{{navody:vps:vps_console_start_menu.png?600}}
+
+  * **Start system** spustí systém jako obvykle.
+  * **Run shell** spustí ''/bin/sh'' z VPS. Po ukončení shellu se znovu objeví start menu. Shell lze použít k přístupu do VPS, když systém nestartuje, např. kvůli nějaké chybě v konfiguraci.
+  * **Run custom command** spouští libovolný příkaz s argumenty jako init proces.
+
+Start menu se nastavuje v detailu VPS ve vpsAdminu:
+
+{{navody:vps:vps_details_start_menu.png?600}}
+
+Ve výchozím stavu je zapnuto na všech VPS běžících na vpsAdminOS. Na vstup
+uživatele čeká 5 sekund. Menu lze vypnout nastavením timeoutu na **0**.
+
+===== NixOS generace =====
+U VPS s NixOS start menu obsahuje položku **Select NixOS generation**. Tato volba
+umožnuje spustit systém z libovolné generace systému.
+
+{{navody:vps:vps_console_start_menu_nixos.png?600}}
+
+Po vybrání se otevře vnořené menu se seznamem generací:
+
+{{navody:vps:vps_console_start_menu_generations.png?600}}

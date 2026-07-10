@@ -1,0 +1,702 @@
+<page>manuals:vps:api</page>
+====== API ======
+
+Naše API běží na adrese https://api.vpsfree.cz. Pomocí API lze vykonat vše
+co jde naklikat ve webovém rozhraní, a více. Ve skutečnosti webové rozhraní
+běžící na https://vpsadmin.vpsfree.cz pro každý úkon volá API.
+
+===== Dokumentace API =====
+Dokumentace API, tzn. seznam zdrojů, možných akcí, vstupních a výstupních
+parametrů je k vidění na https://api.vpsfree.cz/.
+
+Bez přihlášení se zobrazuje seznam všech zdrojů, tj. i těch, se kterými můžou
+pracovat pouze administrátoři. Vpravo nahoře se lze přihlásit stejnými údaji
+jako do vpsAdminu a poté se zobrazí pouze objekty, akce a parametry, se
+kterými může aktuálně přihlášený uživatel pracovat.
+
+===== Práce s API =====
+API je postaveno na námi vyvinutém frameworku
+[[https://github.com/vpsfreecz/haveapi|HaveAPI]], které vytváří
+[[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|samodokumentující]]
+se API, což znamená, že lze využít předpřipravené generické
+klienty:
+
+  * Ruby - https://github.com/vpsfreecz/vpsfree-client
+  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
+  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
+  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
+  * Webové rozhraní z HaveAPI - https://github.com/vpsfreecz/haveapi-webui (zastaralé)
+  * Souborový systém založený na FUSE - https://github.com/vpsfreecz/haveapi-fs (zastaralé)
+
+Ukázka použití je vždy v ''README.md'' každého klienta. Obecně se klientovi
+předá URL k API, poté si sám stáhne dokumentaci a podle ní se nastaví.
+
+API je [[wp>Representational state transfer|RESTful]], takže pro jednoduché
+úkony lze využít i libovolný REST klient. Popis vlastního protokolu pro přenos
+dat, který HaveAPI klienti abstrahují, je k nahlédnutí v
+[[https://api.vpsfree.cz/doc/protocol.md|dokumentaci]].
+
+**poznámka** Pokud API vpsfree vrací http kód 500, ujistěte se, že váš REST klient posílá http hlavičku `User-Agent: x"`, která nesmí být prázdným řetězcem. Nejspíš jsou povinné i hlavičky `Accept: application/json` a `"Content-Type: application/json`. Většina http rest knihoven hlavičku `User-Agent` přidá automaticky, ale některé to nedělají.
+
+
+
+===== Autentizace =====
+API podporuje dva způsoby autentizace:
+
+  * [[#http_basic|HTTP Basic]]
+  * [[#tokeny|Pomocí tokenů]]
+
+Konkrétní ukázky autentizace pro podporované programovací jazyky a CLI najdete
+v [[https://api.vpsfree.cz/v6.0/#auth|dokumentaci API]].
+
+==== HTTP Basic ====
+S každým požadavkem na API se musí zaslat jméno a heslo v HTTP hlavičce "Authorization".
+Je to dobrá volba pro jednorázové akce, pokud je ale potřeba API volat vícekrát nebo
+automatizovaně, ukládání hesla na disk či neustálé opisování není dobrý nápad. HTTP basic
+nelze použít, pokud máte aktivované dvoufaktorové ověřování.
+
+==== Tokeny ====
+Klient nejprve požádá o vytvoření tokenu, k tomu potřebuje jméno, heslo a připadně i TOTP.
+Jakmile klient dostane token, může jméno a heslo zapomenout a dále se autentizuje
+získaným tokenem.
+
+Tokeny mohou být několika typů s různě dlouhou životností:
+
+  * //fixed// - platnost tokenu je pevně dána
+  * //renewable_manual// - platnost tokenu lze manuálně prodloužit
+  * //renewable_auto// - platnost tokenu je prodloužena při každém požadavku
+  * //permanent// - token je platný napořád, resp. dokud není smazán
+
+Typ tokenu a časový interval, o který se prodlužuje, si volí klient.
+
+===== Scopes =====
+U autentizačních tokenů si můžeme zvolit, jaké akce bude token mít k dispozici.
+To se může hodit u tokenů s dlouhou nebo permanentní platností. Každá akce
+má svůj //scope//, jehož název najdeme v dokumentaci. Dostupné scope se nastavuje,
+když žádáme o nový token, tj. zasílá se společně s přihlašovacími údaji.
+
+Ukázky možných scopes:
+
+  * ''all'' povolí přístup ke všem akcím, toto je výchozí hodnota
+  * prázdný scope, přístup je povolen jen k akci ''user#current'', což zobrazí info o aktuálním uživateli; toto se využívá pro přihlášení do Discourse a KB
+  * ''vps#show'' povolí zobrazení info o jakékoli VPS
+  * ''vps#show:vps_id=123'' info o VPS s ID 123
+  * ''vps#*'' umožní volat všechny akce nad všemi VPS
+  * ''vps#*:vps_id=123'' všechny akce nad VPS s ID 123
+  * ''{vps,dataset}#{index,show}''  umožní vylistovat VPS a datasety a zobrazit údaje o jednom konkrétním
+
+Scope může obsahovat globy pro název resource a akce. Akce je od resource oddělena křížkem (''#''). Volitelné ID objektů se píšou za dvojtečkou ('':'') a nemohou obsahovat globy, musí být přesně. Každý token může mít více nastavených scopes, oddělují se mezerou. Pro udělení přístupu musí aspoň jedno nastavené scope platit pro volanou akci v API.
+
+===== Instalace klienta =====
+[[https://github.com/vpsfreecz/vpsfree-client|Klient pro Ruby]] obsahuje CLI
+(rozhraní pro příkazovou řádku) a knihovnu pro použití v Ruby skriptech.
+Pro správnou funkci vyžaduje Ruby >= 2.7, nainstalované hlavičkové soubory
+Ruby a ncurses (většinou balíčky s příponou ''-dev'' či ''-devel'').
+Poté klienta nainstalujeme pomocí Ruby gems:
+
+<code bash>
+gem install vpsfree-client
+</code>
+
+Konkrétní postupy instalace podle platformy:
+
+  * Linux
+    * [[navody:vps:api:arch|Arch Linux]]
+    * [[navody:vps:api:centos|CentOS]]
+    * [[navody:vps:api:ubuntu|Ubuntu 20.04]]
+  * [[navody:vps:api:macos|macOS]]
+  * [[navody:vps:api:windows|Windows]]
+
+Po instalaci by v ''$PATH'' měl být k dispozici ''vpsfreectl''. Pokud tomu tak
+není, lze to jednoduše napravit:
+
+<code bash>
+$ gem env | grep "EXECUTABLE DIRECTORY"
+</code>
+
+Tento příkaz vypíše, kde jsou uloženy spustitelné soubory instalované přes
+''gem''. Stačí tedy onen adresář přidat do ''$PATH'', např.:
+
+<code bash>
+$ PATH="$PATH:/home/user/.gem/ruby/2.7.0/bin"
+</code>
+
+===== Použití CLI =====
+
+<code>
+$ vpsfreectl --help
+Usage: vpsfreectl [options] <resource> <action> [objects ids] [-- [parameters]]
+    -u, --api URL                    API URL
+    -a, --auth METHOD                Authentication method
+        --list-versions              List all available API versions
+        --list-auth-methods [VERSION]
+                                     List available authentication methods
+        --list-resources [VERSION]   List all resource in API version
+        --list-actions [VERSION]     List all resources and actions in API version
+        --version VERSION            Use specified API version
+    -c, --columns                    Print output in columns
+    -H, --no-header                  Hide header row
+    -L, --list-parameters            List output parameters
+    -o, --output PARAMETERS          Parameters to display, separated by a comma
+    -r, --rows                       Print output in rows
+    -s, --sort PARAMETER             Sort output by parameter
+        --save                       Save credentials to config file for later use
+        --raw                        Print raw response as is
+        --timestamp                  Display Datetime parameters as timestamp
+        --utc                        Display Datetime parameters in UTC
+        --localtime                  Display Datetime parameters in local timezone
+        --date-format FORMAT         Display Datetime in custom format
+        --[no-]block                 Toggle action blocking mode
+        --timeout SEC                Fail when the action does not finish within the timeout
+    -v, --[no-]verbose               Run verbosely
+        --client-version             Show client version
+        --protocol-version           Show protocol version
+        --check-compatibility        Check compatibility with API server
+    -h, --help                       Show this message
+
+Commands:
+action_state wait <STATE ID>         Block until the action is finished 
+vps remote_console VPS_ID            Open VPS remote console                       
+vps migrate_many VPS_ID...           Migrate multiple VPSes using a migration plan                                                                                                          
+snapshot download [SNAPSHOT_ID]      Download a snapshot as an archive or a stream
+snapshot send SNAPSHOT_ID            Download a snapshot stream and write it on stdout
+backup dataset [DATASET_ID] FILESYSTEM Backup dataset locally
+backup vps [VPS_ID] FILESYSTEM       Backup VPS locally
+ip_traffic top                       Live IP traffic monitor
+
+Available resources:
+cluster
+cluster_resource
+cluster_resource_package
+cluster_resource_package.item
+dataset
+dataset.snapshot
+dataset.plan
+dataset.property_history
+dataset_plan
+dns_resolver
+environment
+environment.config_chain
+environment.dataset_plan
+host_ip_address
+integrity_check
+integrity_fact
+integrity_object
+ip_address
+ip_traffic
+ip_traffic_monitor
+language
+location
+mail_log
+mail_recipient
+mail_template
+mail_template.recipient
+mail_template.translation
+migration_plan
+migration_plan.vps_migration
+network
+network_interface
+node
+node.status
+object_history
+os_template
+pool
+session_token
+snapshot_download
+system_config
+transaction
+transaction_chain
+user
+user.environment_config
+user.cluster_resource
+user.public_key
+user.mail_role_recipient
+user.mail_template_recipient
+user.state_log
+user_cluster_resource_package
+user_cluster_resource_package.item
+user_namespace
+user_namespace_map
+user_namespace_map.entry
+user_session
+vps
+vps.state_log
+vps.config
+vps.feature
+vps.mount
+vps.outage_window
+vps.console_token
+vps.status
+vps_config
+monitored_event
+monitored_event.log
+outage
+outage.entity
+outage.handler
+outage_update
+user_outage
+vps_outage
+vps_outage_mount
+help_box
+news_log
+incoming_payment
+payment_stats
+user_account
+user_payment
+user_request
+user_request.registration
+user_request.change
+action_state
+</code>
+
+Výběrem autentizační metody nebo objektu či akce se v nápovědě přibydou
+další možné přepínače:
+
+<code bash>
+$ vpsfreectl --auth basic --help
+$ vpsfreectl vps --help
+$ vpsfreectl vps list --help
+</code>
+
+==== Autentizace ====
+=== HTTP basic ===
+Jméno a heslo buď předáme parametry ''%%--username%%'' a ''%%--password%%'', nebo
+parametry vynecháme a program k zadání údajů uživatele vybídne.
+<code>
+$ vpsfreectl --auth basic user current
+</code>
+
+=== Tokeny ===
+Autentizace přes tokeny zavádí několik nových přepínačů:
+
+<code>
+$ vpsfreectl --auth token --help
+    ...
+    -a, --auth METHOD                Authentication method
+    -s, --save                       Save credentials to config file for later
+        --user USER                  User name
+        --password PASSWORD          Password
+        --scope [SCOPE]              Scope
+        --token TOKEN                Token
+        --token-lifetime LIFETIME    Token lifetime, defaults to renewable_auto
+        --token-interval SECONDS     How long will token be valid in seconds
+        --new-token                  Request new token
+        --token-via VIA              Send token as a query parameter or in HTTP header (query_param, header)
+    ...
+</code>
+
+Jméno a heslo opět nemusíme předávat jako parametry, program se na ně zeptá.
+
+Jednorázový token:
+<code bash>
+$ vpsfreectl --auth token user current
+</code>
+Po ukončení je token zapomenut a příště je nutné vyžádat další. Token pro
+takové použití postráda smysl.
+
+Uložení tokenu:
+<code bash>
+$ vpsfreectl --auth token --save user current
+</code>
+
+Token se uložil do souboru ''~/.haveapi-client.yml'' a při dalším spuštění je
+automaticky načten:
+<code bash>
+$ vpsfreectl user current
+</code>
+
+Takový token ale do 20 minut expiruje a je nutné vyžádat si nový. Je možné si
+rovnou udělat token s delší platností:
+
+<code bash>
+$ vpsfreectl --auth token --save --token-interval $((24*60*60)) user current # 1 den
+</code>
+
+Nebo rovnou token s platností neomezenou:
+<code bash>
+$ vpsfreectl --auth token --save --token-lifetime permanent user current
+</code>
+
+<note warning>
+Na token s neomezenou platností je třeba dávat pozor, protože kdokoli s
+přístupem k ''~/.haveapi-client.yml'' může token získat a použít.
+</note>
+
+Při vytváření tokenu můžeme specifikovat scope:
+<code bash>
+$ vpsfreectl --auth token --scope 'vps#*:vps_id=123' --save vps show 123
+</code>
+
+Příkaz výše vytvoří autentizační token, který bude omezen na volání akcí nad resource ''vps'' s ID 123.
+
+==== Akce a parametry ====
+Objekty a akce mají názvy stejné jako v dokumentaci, jen malými písmeny a
+místo mezer se píší podtržítka. Každá akce má svoje vstupní a výstupní parametry.
+Zobrazí se přepínačem ''%%--help%%'', pokud je zadán název objektu i akce:
+
+<code>
+$ vpsfreectl vps list --help
+...
+Action description:
+List VPS
+
+Input parameters:
+        --offset OFFSET              The offset of the first object
+        --limit LIMIT                The number of objects to retrieve
+        --node NODE                  Filter by node
+        --location LOCATION          Filter by location
+        --environment ENVIRONMENT    Filter by environment
+        --os-template OS_TEMPLATE    OS template
+        --object-state OBJECT_STATE  Object state
+    -h, --help                       Show this message
+
+Output parameters:
+    id                               
+    user                             VPS owner
+    hostname                         VPS hostname
+    os_template                      
+    dns_resolver                     DNS resolver the VPS will use
+    node                             Node VPS will run on
+    dataset                          Dataset the VPS resides in
+    created_at                       
+    memory                           Minimally 1024, maximally 12288, step size is 128
+    swap                             Minimally 0, maximally 12288, step size is 128
+    cpu                              Minimally 1, maximally 8, step size is 1
+    maintenance_lock                 
+    maintenance_lock_reason          
+    object_state                     
+    expiration_date                  A date after which the state will progress
+    running                          
+    process_count                    
+    used_memory                      in MB
+    used_disk                        in MB
+...
+</code>
+
+Můžeme tedy VPS filtrovat dle serveru, lokace, prostředí, distribuce, stavu
+a omezit počet zobrazených položek či stránkovat.
+
+Parametry akcí jsou od parametrů klienta odděleny dvěmi pomlčkami ''%%--%%''.
+Následující příkaz vypíše první tři VPS:
+
+<code bash>
+$ vpsfreectl vps list -- --limit 3
+</code>
+
+Pokud bychom chtěli filtrovat např. dle lokace, nejdříve si je vypíšeme:
+
+<code bash>
+$ vpsfreectl location list
+ ID  Label      
+  3  Praha      
+  4  Brno       
+  5  Playground
+</code>
+
+Nyní zobrazíme VPS nacházející se v lokaci Praha:
+
+<code bash>
+$ vpsfreectl vps list -- --location 3
+</code>
+
+==== Formátování výstupu ====
+Výstup lze formátovat buď to sloupců, nebo řádků. Ve výchozím stavu se pro
+zobrazení vícero objektů použijí sloupce a pro jeden objekt řádky. Formát se
+vybírá přepínači ''-c'', ''%%--columns%%'' pro sloupce a ''-r'', ''%%--rows%%''
+pro řádky.
+
+Ukázka výpisu do sloupců (v tomto případě je přepínač ''%%--columns%%''
+nadbytečný -- jelikož výstup obsahuje více objektů, zvolí se automaticky):
+<code bash>
+$ vpsfreectl vps list --columns
+ ID  Label      
+  3  Praha      
+  4  Brno       
+  5  Playground
+</code>
+
+Ukázka výpisu do řádků:
+<code bash>
+$ vpsfreectl location list --rows
+    ID:  3
+ Label:  Praha
+
+    ID:  4
+ Label:  Brno
+
+    ID:  5
+ Label:  Playground
+</code>
+
+Při použití ve skriptech by při formátování do sloupců mohla vadit hlavička
+s názvy parametrů. Její výpis můžeme potlačit přepínačem ''-H'',
+''%%--no-header%%''.
+
+==== Výběr parametrů k zobrazení ====
+Přepínačem ''-o'', ''%%--output%%'' se nastavuje, které výstupní parametry akce
+a v jakém pořadí budou vypsány. Názvy parametrů se oddělují čárkou.
+
+<code>
+$ vpsfreectl vps list -o id,hostname,node,os_template
+      VPS id:  4710
+    Hostname:  vps
+        Node:  node7.prg (#108)
+ OS template:  CentOS 7 (#43)
+</code>
+
+==== Řazení ====
+Přepínačem ''-s'', ''%%--sort%%'' lze výstup vzestupně seřadit podle určitého
+parametru (na straně klienta).
+
+<code>
+$ vpsfreectl os_template list --sort label
+ ID  Label                  Info   Supported 
+ 42  Arch Linux [TEST]      -      0         
+ 24  CentOS 6               -      1         
+ 43  CentOS 7               -      1         
+ 20  Debian 6               -      1         
+ 31  Debian 7               -      1         
+ 38  Debian 7 [TEST]        -      0         
+ 46  Debian 8               -      1         
+ 33  Fedora 20              -      1         
+ 40  Fedora 22              -      1         
+ 14  Gentoo 13.0            -      1         
+ 37  Gentoo [TEST]          -      0         
+ 32  OpenSUSE 12.3          -      1         
+ 26  Scientific Linux 6.6   -      1         
+ 45  Scientific Linux 7     -      0         
+ 30  Ubuntu 12.04           -      1         
+ 35  Ubuntu 14.04           -      1         
+ 39  Ubuntu 14.04 [TEST]    -      0         
+ 47  openSUSE 13.2 [TEST]   -      0
+</code>
+
+==== Formát času a data ====
+Klient obsahuje několik přepínačů, kterými se volí formát data a času,
+vrací-li akce parametr typu ''Datetime''.
+
+  * ''%%--utc%%''
+  * ''%%--localtime%%''
+  * ''%%--timestamp%%''
+  * ''%%--date-format FORMAT%%'' - formát dle [[http://ruby-doc.org/core-2.3.0/Time.html#method-i-strftime|Time#strftime]]
+
+==== Blokující mód ====
+Volání akcí jako vytvoření VPS, reinstalace, start/stop/restart, apod., mohou
+trvat delší dobu. ''vpsfreectl'' může buď po dobu vykonávání akce blokovat, nebo
+se hned ukončit a nečekat. Informace o dokončení akce je však důležitá, neboť
+nad jedním objektem (tedy třeba VPS) lze vykonávat v jednom čase jen jednu
+akci, ostatní skončí s chybou "Resource is locked".
+
+Ve výchozím stavu ''vpsfreectl'' blokuje:
+
+<code>
+$ vpsfreectl vps start 3438
+
+Waiting for the action to complete (hit Ctrl+C to skip)...
+Executing: [==========================================================================] 1/1 transactions
+</code>
+
+Pokud nechceme čekat, můžeme použít přepínač ''--no-block'':
+
+<code>
+$ vpsfreectl vps start 3438 --no-block
+
+Run
+  vpsfreectl action_state show 653411
+or
+  vpsfreectl action_state wait 653411
+to check the action's progress.
+</code>
+
+Pokud bychom chtěli zkontrolovat stav akce, můžeme využít příkazy, které nám
+''vpsfreectl'' napověděl. Příkaz ''action_state show'' vypíše aktuální stav a
+ukončí se, ''action_state wait'' naopak blokuje, dokud není akce dokončena.
+
+<code>
+$ vpsfreectl action_state show 653411
+               Id:  653411
+            Label:  Start
+         Finished:  true
+           Status:  true
+ Current progress:  1
+            Total:  1
+             Unit:  transactions
+       Can cancel:  -
+       Created at:  2016-11-26 16:14:05 +0100
+       Updated at:  2016-11-26 16:14:05 +0100
+</code>
+
+===== Aktualizace =====
+
+Pro využití nových vlastností je potřeba klienta občas aktualizovat, což se
+provede příkazem
+
+<code bash>
+$ gem update vpsfree-client
+</code>
+
+Následně můžeme odstranit starou verzi:
+
+<code bash>
+$ gem cleanup vpsfree-client
+</code>
+
+Tento příkaz odstraní pouze staré verze gemu ''vpsfree-client'', ale jeho
+závislosti zůstanou. Pro odstranění všech starých gemů použijte příkaz
+
+<code bash>
+$ gem cleanup -n  # vypíše, které gemy by smazal
+$ gem cleanup  # smaže gemy
+</code>
+
+===== Souborový systém ======
+''haveapi-fs'' je souborový systém založený na FUSE, tzn. umožňuje připojit
+API jako souborový systém z userspace. Objekty, akce a jejich parametry můžeme
+procházet jako adresáře a soubory v libovolném programu. Instaluje se stejným způsobem
+jako CLI, má jen jiný název:
+
+<code bash>
+$ gem install haveapi-fs
+</code>
+
+==== Použití ====
+Použití ''haveapi-fs'' je podrobně popsáno v
+[[https://github.com/vpsfreecz/haveapi-fs#usage|README.md]], zde jen ve
+zkratce.
+
+<code>
+$ haveapi-fs https://api.vpsfree.cz /mnt/api.vpsfree.cz
+Username: mujlogin
+Password:
+
+$ cd /mnt/api.vpsfree.cz
+$ ls -1
+auth_token
+cluster
+cluster_resource
+dataset
+dataset_plan
+dns_resolver
+environment
+help.html
+help.man
+help.md
+help.txt
+ip_address
+language
+location
+mail_template
+migration_plan
+node
+object_history
+os_template
+snapshot_download
+transaction
+transaction_chain
+user
+user_session
+vps
+vps_config
+</code>
+
+V každém adresáři se nachází soubory ''help.{html,txt,md,man}'', které popisují co
+aktuální adresář obsahuje.
+
+<code>
+$ cat vps/5685/hostname 
+moje-vps
+
+$ echo lepsi-hostname > vps/5685/hostname
+$ echo 1 > vps/5685/save
+$ cat vps/5685/actions/update/status 
+1
+$ cat vps/5685/hostname
+lepsi-hostname
+</code>
+
+Z ukázky výše lze vidět, že jednotlivé atributy objektů lze měnit jednoduše
+zapsáním do souboru. Akce uložení se vyvolá zapsáním jedničky, případně je to
+i spustitelný soubor, takže jej můžeme spustit.
+
+Pro přehlednější vytváření/úpravu objektů lze použít YAML soubory
+''create.yml'', resp. ''update.yml''. Tyto soubory obsahují parametry jako
+hash a po uložení a uzavření souboru se příslušná akce provede.
+
+Tímto způsobem lze provést jakoukoli operaci v API.
+
+===== Ukázky použití =====
+Následují skripty demonstrují možnosti využití API. Tyto skripty lze
+spouštět odkudkoli -- manuálně, z cronu, apod.
+
+<note>
+Ač jsou tyto ukázky stále validní, klient v CLI už obsahuje
+[[navody:vps:datasety#stahovani_zaloh|příkazy]], díky kterým je stahování záloh
+ještě jednodušší.
+</note>
+
+==== Každodenní stahování záloh VPS ====
+<code ruby>
+#!/usr/bin/env ruby
+# Stažení poslední (nejnovější) zálohy všech VPS.
+require 'vpsfree/client'
+
+api = VpsFree::Client.new
+api.authenticate(:token, token: 'PUT YOUR TOKEN HERE')
+
+api.dataset.list(role: :hypervisor).each do |ds|
+  last_snapshot = ds.snapshot.list.last
+
+  # Volání této akce může trvat i několik hodin
+  dl = api.snapshot_download.create(snapshot: last_snapshot.id)
+  
+  unless dl.api_response.ok?
+    warn "#{ds.name}@#{last_snapshot.created_at}: #{dl.api_response.message}"
+    next
+  end
+  
+  # Soubor je připraven ke stažení
+  puts "Downloading #{id} to #{dl.file_name} (#{dl.size / 1024} GB)"
+  `wget #{dl.url}`
+
+  # Nakonec smažeme soubor ze serveru
+  dl.delete
+end
+
+puts "Done"
+</code>
+
+==== Denní zálohování NASu s týdenní historií ====
+<code ruby>
+#!/usr/bin/env ruby
+# Denní snapshotovaní NASu se 7 denní historií
+require 'vpsfree/client'
+
+api = VpsFree::Client.new
+api.authenticate(:token, token: 'PUT YOUR TOKEN HERE')
+
+api.dataset.list(role: :primary).each do |ds|
+  # Vytvoření nového snapshotu
+  ds.snapshot.create
+
+  # Smazání starších snapshotů
+  t = Time.now - 7 * 24 * 60 * 60
+  snapshots = ds.snapshot.list(meta: {count: true})
+  deleted = 0
+  
+  snapshots.each do |snap|
+    # Necháme si nejméně 7 snapshotů
+    break if snapshots.total_count - deleted < 7
+    
+    # Smazaní přebytečných snapshotů staršich než 7 dní
+    if snap.created_at < t
+      puts "Delete #{ds.name}@#{snap.created_at}"
+      snap.delete
+      deleted += 1
+    end
+  end
+end
+</code>
+
+<maintainers hidden>
+aither
+</maintainers>

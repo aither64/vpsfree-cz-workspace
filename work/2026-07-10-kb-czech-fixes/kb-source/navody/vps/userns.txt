@@ -1,0 +1,80 @@
+<page>manuals:vps:userns</page>
+====== User namespace =======
+User namespace je funkce Linux kernelu sloužící k izolaci procesů. Neprivilegovaný
+uživatel z pohledu hostitele se může stát rootem v jeho user namespace. Každé naše
+VPS běží v jednom user namespace. Nastavování user namespace je potřeba jen
+ve výjimečných případech, jako když je potřeba využít vysoké čísla uživatelů (UID)
+či skupin (GID).
+
+Každý člen má přidělen unikátní blok 524 288 (512k) uživatelských/skupinových ID.
+Tyto ID jsou na hostiteli (nodech) neprivilegované. Například, vezměme blok ID
+začínající s ID 1 048 576 z pohledu hostitele. Poslední použitelné ID bude
+1 048 576 + 524 287. Z pohledu VPS bude první ID 0 (root) a poslední ID bude
+524 287. Blok ID následujícího člena by začínal od 1 572 864, atd. Díky tomu,
+že každý člen má unikátní ID, se útočník ani po úniku z mount namespace nedostane
+k datům jiných členů.
+
+VPS jsou od námi vytvořených user namespace abstrahovány a většinou si toho ani
+nevšimneme. Můžeme na to však narazit, pokud potřebujeme ve VPS použít
+uživatelské/skupinové ID větší než 512k. Ve výchozím nastavení mapování to není
+možné. V takovém případě si můžeme vytvořit vlastní mapování a vyšší ID
+zpřístupnit.
+
+===== UID/GID mapování =====
+Každé VPS používá jedno UID/GID mapování, můžeme jej vidět a nastavovat v detailu
+VPS:
+
+{{manuals:vps:vps_userns_map.png?600}}
+
+  * **ID within VPS** je první ID z pohledu VPS
+  * **ID within namespace** je první ID z Tvého unikátního UID/GID bloku, může nabývat hodnot 0 - 524 287
+  * **ID count** je počet namapovaných ID
+
+Výchozí mapování používá ID 0 - 512 287, tj. celý blok je využit.
+
+Pokud potřebuješ použít vyšší ID, můžeš si vytvořit vlastní mapování.
+UID/GID mapa, která je už nastavena u VPS, nejde měnit. Je nutné vytvořit mapu novou
+a VPS do ní potom přepnout.
+Jedna mapa může obsahovat **10** položek pro UID a **10** položek pro GID.
+
+===== Příklad UID/GID mapování =====
+Řekněme, že chceme ve VPS použít ID 5 000 000. Můžeme přeorganizovat našich 512k
+např. takto:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 0                   | 65536    |
+| UID/GID | 5000000       | 100000              | 200000   |
+
+Toto mapování zachová ID 0 - 65535, to je minimální a zároveň nutný počet ID,
+který VPS potřebuje. ID 5 000 000 - 5 199 999 namapujeme na 100 000 - 199 999
+z našeho user namespace. Toto mapování používá celkem 265 536 ID z 524 288 ID,
+které máš k dispozici. ID, které nejsou zahrnuté v mapování, nejsou dostupné.
+
+===== Pravidla mapování a upozornění =====
+
+  * Každé mapování musí obsahovat 0 - 65 535 **IDs within VPS**, tj. ID z pohledu VPS. Ty jsou nutné pro základní funkci VPS.
+  * Změna mapování nepřepisuje vlastníky souborů na disku, pouze mění jejich zobrazení.
+  * Pokud jsou na disku soubory vlastněné určitým ID a v novém mapování toto ID není zahrnuto, tak takové soubory budou patřit ''nobody''/''nogroup''.
+
+===== Izolace VPS =====
+Každý člen má přidělen unikátní blok ID, ale tím, že výchozí mapování je používá
+všechny, tak také všechny VPS jednoho člena sdílejí stejná ID. Přidělených 512k
+ID je možné rozdělit až na 8 unikátních bloků s 65k ID. Ač to nepovažujeme za nutné,
+dá se tak vytvořit až 8 VPS, které nebudou sdílet ID.
+
+Mapování #1:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 0                   | 65536    |
+
+Mapování #2:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 65536               | 65536    |
+
+Mapování #3:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 131072              | 65536    |
+
+Každé následující mapování zvýší **ID within namespace** o 65 536.

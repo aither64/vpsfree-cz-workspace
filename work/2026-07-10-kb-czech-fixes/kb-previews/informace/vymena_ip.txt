@@ -1,0 +1,78 @@
+<note warning>**Pracovní návrh k revizi.** Zdrojová stránka [[:informace:vymena_ip|informace:vymena_ip]], zdrojová revize ''1710321288''. Tento návrh není publikovaná dokumentace.</note>
+
+====== Výměna IP adres =======
+
+Z doby kdy vpsFree.cz vznikalo používáme IP adresy od našeho ISP,
+až později jsme se sami stali členem RIPE NCC a požádali o vlastní adresní rozsahy.
+Abychom nyní mohli použít i vlastní autonomní systém, je nutné tyto adresy od ISP
+vyměnit za adresy z adresních rozsahů, které RIPE NCC přidělilo přímo našemu spolku.
+
+===== O jaké adresy se jedná? ====
+
+Měníme adresy z těchto rozsahů:
+
+  * 77.93.223.0/24
+  * 83.167.228.0/25
+  * 2a01:430:17::/48
+
+===== Jak adresy vyměnit? =====
+
+Nové adresy byly do VPS naroutovány, o jaké adresy se jedná zjistíš z mailu,
+který jsme ti poslali. Pokud jsi žádný mail nedostal a nemáš žádnou IP z rozsahů uvedených výše,
+výměna se tě netýká. Až budeš chtít výměnu provést, nové adresy v detailu VPS ve vpsAdminu
+přidej na síťové rozhraní pomocí formuláře „Adresy rozhraní“. Na rozhraní můžeš mít více
+adres a výměnu tak provádět postupně. Až původní adresy nebudou potřeba, pomocí stejného
+formuláře ve vpsAdminu je můžeš z VPS odstranit.
+
+===== Jaké adresy mám vyměnit? =====
+
+Seznam adres k výměně jsme ti poslali na mail. Může se to týkat IPv4 i IPv6, nebo jen
+jedné z nich. Adresy, které v mailu nejsou zmíněny, měnit nemusíš.
+
+===== Kolik mám na výměnu adres času? =====
+
+Prosíme tě o dokončení výměny do 1. května 2024. Po tomto datu zbylé adresy vyměníme automaticky,
+tj. nové adresy přidáme na rozhraní a původní adresy odstraníme.
+
+===== Co výměna adres obnáší? =====
+
+Zejména změnu DNS záznamů u domén: A, AAAA, MX záznamy. Pokud chceš na nové adresy nastavit
+[[navody:vps:rdns|reverzní záznam]], napiš prosím na [[mailto:podpora@vpsfree.cz|podporu]].
+
+Pokud máš nějaké služby nastavené tak, že poslouchají na konkrétní IP adrese, bude potřeba
+změnit jejich konfiguraci.
+
+===== Mohu na čas používat původní i nové adresy? =====
+
+Ano, na síťové rozhraní si přidáš nové adresy a dokud původní adresy neodebereš,
+VPS na nich bude dostupný. Jako odchozí adresa se použije vždy ta, co je na síťovém rozhraní
+jako první.
+
+===== Budu mít při výměně adres výpadek? =====
+
+Když nejprve přidáš novou IP a původní IP odebereš až po přenastavení DNS záznamů, tak
+žádný výpadek mít nebudeš.
+
+===== Musím VPS restartovat? =====
+
+Ne, IP adresy jde přidávat a odebírat za běhu. 
+
+===== K čemu je reverzní záznam? =====
+
+[[navody:vps:rdns|Reverzní záznam]] je potřeba pokud ve VPS provozuješ mail server. Jeho hodnota
+by se měla shodovat se jménem, pod kterým se hlásí tvůj mail server. Jestli a jak máš reverzní
+záznam nastaven teď zjistíš např. příkazem ''host 1.2.3.4'' nebo ''dig -x 1.2.3.4'', kde ''1.2.3.4''
+je tvoje IP adresa.
+
+===== Nová IPv6 je /64 místo /128? =====
+
+Ano, kvůli OpenVZ jsme kdysi přidělovali /128 IPv6 adresy, protože OpenVZ s většími rozsahy
+neumělo pracovat. V dnešní době jsou /128 adresy nevyhovující, neboť spam listy zahrnují
+minimálně celé /64 sítě. Proto jsou nové adresy /64. Na způsobu použití se nic nemění.
+
+===== Potřebuji vrátit původní adresu =====
+
+V detailu VPS ve vpsAdminu ve formuláři „Adresy rozhraní“ si ji přidej zpět. Případně, pokud
+jsi smazal i routu, přidáš ji kousek výše ve formuláři „Routované adresy“. Původní adresy
+budou k dispozici až do 1. května 2024.
+

@@ -1,0 +1,88 @@
+<note warning>**Pracovní návrh k revizi.** Zdrojová stránka [[:navody:server:ssh|navody:server:ssh]], zdrojová revize ''1691000278''. Tento návrh není publikovaná dokumentace.</note>
+
+<note important>
+Tento článek je zastaralý, doporučujeme se řídit dokumentací nebo wiki distribuce, kterou používáš.
+Pokud chceš, můžeš tento článek doplnit a aktualizovat.
+</note>
+
+====== SSH ======
+
+===== Co je to? =====
+
+SSH je univerzální komunikační protokol umožňující **šifrované** a **oboustranně ověřené** připojení k serveru. Nejčastěji se používá pro zpřístupnění vzdáleného terminálu (příkazové řádky) nebo přenosu souborů. Pokud se chcete připojit ke svému serveru a provádět na něm jakékoliv administrátorské zásahy, budete potřebovat správně nakonfigurované SSH.
+
+===== Konfigurace =====
+
+<code>/etc/ssh/sshd_config</code>
+
+Měli bychom dodržovat zásadu, že co není povoleno, je zakázáno.
+
+====== Přihlášení jen pro některé uživatele ======
+
+<code>AllowUsers petr karel</code>
+
+v systému můžeme mít mnoho uživatelů a někteří mohou mít slabé heslo apod., tímto nastavením umožníme přihlásit se jen explicitně uvedeným uživatelům
+
+za jméno můžeme přidat i omezení na IP adresu:
+
+<code>AllowUsers petr karel@8.8.8.8</code>
+
+====== Zakázaní roota s heslem ======
+
+<code>PermitRootLogin without-password</code>
+
+====== Zakáz přihlašování heslem ======
+
+<code>PasswordAuthentication no</code>
+
+====== Restrikce připojení dle IP ======
+
+<code>vim /etc/hosts.deny
+SSHD: all</code>
+
+<code>vim /etc/hosts.allow
+SSHD: 8.8.8.8 8.8.4.4 ..... # dalsi ip adresy ze kterych umoznime spojeni na SSH</code>
+
+
+====== Přihlášení pomocí klíčů ======
+
+Nejprve je potřeba si vygenerovat soukromý a veřejný klíč pomocí PuTTYgen. Vygenerujeme si  SSH-2 RS 1024 bitové klíče. Nyní vyplníme údaje o klíči (komentář a passphrase) a uložíme si soukromný klíč do pc.
+
+V Linuxu použijeme řádkovou utilitu:
+
+<code>ssh-keygen -t rsa -b 2048 -C uzivatel@stanice</code>
+
+Na serveru si vytvoříme složku s právy 700:
+
+<code>mkdir ~/.ssh
+chmod 700 ~/.ssh</code>
+
+Vygenerovaný klíč so vložíme v domovském adresáři na serveru do souboru
+
+<code>~/.ssh/authorized_keys</code>
+
+Nesmíme zapomenou nastavit práva k souboru:
+
+<code>chmod 600 ~/.ssh/authorized_keys</code>
+
+Nyní se můžeme přihlásit pomocí PuTTY a soukromého klíče, který zadáme v sekci SSH -> Auth.
+
+
+Pokud chceme zakázat přihlašování pomocí hesla přes SSH, změníme konfiguraci v souboru /etc/ssh/sshd_config:
+
+<code>[...]
+Protocol 2
+PasswordAuthentication no
+UsePAM no
+[...]</code>
+
+
+====== Automatické vložení klíčů ======
+
+vpsAdmin umí do nově vytvořeného VPS vložit klíče automaticky. Nejprve mu jej musíme předat. To uděláme po přihlášení v Upravit profil → Veřejné klíče → vpravo v panelu Přidat veřejný klíč.
+
+{{ :drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:ssh-keys:cs:add-public-key.png?300 |}}
+
+U každého klíče si můžeme vybrat, jestli se má do nových/reinstalovaných VPS nahrávat automaticky. Klíče můžeme kdykoliv do běžícího VPS také nahrát pomocí formuláře v detailech VPS, hned pod formulářem na nastavení hesla.
+
+{{ :drafts:2026-07-10-kb-czech-fixes:media:vpsadmin:ssh-keys:cs:deploy-public-key.png?300 |}}
