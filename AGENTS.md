@@ -22,9 +22,9 @@ Use these paths consistently:
   have been removed.
 
 The initiative slug must be descriptive and dated, for example
-`2026-05-27-api-token-rotation`. Use the same slug for the tracking directory,
-feature branch, and worktree group unless a repository-specific rule requires
-otherwise.
+`2026-05-27-api-token-rotation`. For affected project repositories, use the
+same slug for the tracking directory, feature branch, and worktree group unless
+a repository-specific rule requires otherwise.
 
 Prefer `bin/dev-session start <name>` when starting a new development session in
 this workspace. It creates a dated slug from the short name, opens the matching
@@ -40,6 +40,26 @@ workspace root; if it prints a slug, reuse `work/<slug>/` and
 explicitly asks for a separate initiative.
 
 ## Git And Worktrees
+
+The top-level workspace repository is a shared coordination checkout and is an
+exception to the per-initiative branch workflow:
+
+- Keep the shared checkout on `master` at all times. Never create or check out
+  an initiative branch in the top-level repository.
+- Make top-level changes and commits directly on `master`. Do not create
+  top-level repository worktrees under `worktrees/<slug>/`; those paths are
+  reserved for the independent project repositories from `repos/<project>.git`.
+- Multiple sessions share the top-level branch, index, and working tree. Before
+  editing or committing, inspect the current status, preserve unrelated changes,
+  and stage only the paths belonging to the current task. Never use a
+  repository-wide reset, clean, or stash operation, and never switch branches
+  out from under another session.
+- Fetch `origin` before a top-level commit and keep `master` linear. If either
+  local or remote `master` advanced, reconcile it without rewriting published
+  history or discarding shared working-tree changes.
+
+All feature-branch and worktree rules below apply to the independent project
+repositories, not to the top-level workspace repository.
 
 Clone and push repositories over SSH. Use remotes in this form:
 
@@ -57,7 +77,7 @@ Multiple Codex instances may work in this workspace at the same time. Keep
 worktree. Use feature branches and separate worktrees so concurrent work does
 not conflict over checked-out branches, index state, or uncommitted changes.
 
-For feature work:
+For feature work in the independent project repositories:
 
 - Keep `repos/<project>.git` as the canonical bare clone for fetching,
   inspecting refs, and creating worktrees.
