@@ -83,8 +83,8 @@
   lifecycle and fixture setup with no runtime coordination-repository
   dependency. The repository now vendors and adapts the cluster definition,
   pins upstream inputs in `flake.lock`, and has passed a fresh acceptance run.
-- The capture feature branch was previously pushed through `af5525e`; the new
-  language-first commit `e0a3502` is pending final review and push.
+- The capture feature branch is pushed through language-first commit
+  `e0a3502`.
 
 ## Staging implementation update
 
@@ -113,7 +113,7 @@
 - The old production draft set will be removed only after staging has been
   deployed and verified, with separate explicit production approval.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
-  `693f8da`; the next state-only commit records review and push status.
+  `693f8da`, followed by state-only completion commits.
 
 ## Commands run
 
@@ -219,6 +219,14 @@
   commits. The reviewer returned **no remaining findings**. The documented
   residual is DokuWiki's lack of compare-and-swap saves, so publication needs
   an announced editing window.
+- Pushed capture branch `2026-07-10-kb-czech-fixes` through `e0a3502` and
+  configuration branch `2026-07-10-kb-czech-fixes` through `bbe8a5db`.
+  Pushed coordination `master` through the review-resolution state commit.
+- The configuration repository's ambient pre-push hook initially could not
+  load its bundled gems. Re-running the push from `nix develop` loaded the
+  declared hook environment and succeeded without bypassing the hook.
+- Queried GitHub Actions for both feature branches after push; neither
+  repository has a workflow run for this branch.
 
 ## Results
 
@@ -301,14 +309,15 @@
 - No publication naming decision remains: draft and permanent screenshot IDs
   use functional-topic, language, and semantic-view components. English
   variants will reuse the same topic/view structure in the `en` namespace.
-- The standalone GitHub repository and its corrected feature branch are ready
-  for review.
+- The standalone capture and configuration feature branches are pushed and
+  ready for operator review/merge.
 
 ## Cleanup
 
 - The standalone initiative dev cluster has been stopped.
-- The three initiative worktrees (`vpsadmin`, `vpsfree-sms-gateway`, and
-  `vpsadmin-kb-captures`) remain in use.
+- The four initiative worktrees (`vpsadmin`, `vpsfree-sms-gateway`,
+  `vpsadmin-kb-captures`, and `vpsfree-cz-configuration`) remain available for
+  review and post-deployment acceptance.
 - Temporary capture credentials, console tokens, raw terminal streams, fixture
   state, and contact sheets are under the ignored `tmp/` directory in the
   capture worktree and are not committed.
