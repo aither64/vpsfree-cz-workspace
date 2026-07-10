@@ -1,0 +1,469 @@
+<page>manuals:vps:backups</page>
+====== Zálohy ======
+
+Zálohy jsou u nás realizovány pomocí ZFS snapshotů. Při vytvoření snapshotu se
+uchová obraz všech dat v datasetu, tak jak v tu chvíli vypadají.
+Když tedy data po vytvoření snapshotu změníme nebo smažeme, vždy se k nim
+můžeme vrátit.
+
+Ze snapshotu můžeme data libovolně [[navody:vps:exporty|číst]], případně
+celý dataset [[#obnova_zaloh|obnovit]] z vybraného snapshotu. Obnovou na snapshot
+ale přijdeme o všechny data (změny), které proběhly od vytvoření snapshotu.
+
+Snapshoty jsou vidět v menu Zálohy. Tam je možné je také vytvářet.
+
+{{:cs:screenshots:vpsadmin:backups:vps-backups.png?300|}}
+
+Zálohování VPS probíhá tak, že každý den v 01:00 se v rámci jednoho node
+udělá snapshot všech datasetů najednou. Poté jsou snapshoty přesunuty na
+backuper.prg. Snapshoty uchováváme po dobu 14 dnů, starší se mažou. K tomu je možné
+si vytvořit 6 snapshotů navíc pro vlastní potřebu. Vytvořené snapshoty VPS však nelze libovolně
+mazat, je nutné počkat, až se samy odrotují v rámci denních záloh.
+
+Pozor! NAS **není zálohován** na backuper.prg. Snapshoty jsou
+pouze lokální a slouží jen jako ochrana proti nechtěnému smazání či poškození dat.
+
+===== Mazání snapshotů =====
+Mazat jdou jen snapshoty z NASu. U snapshotů VPS je nutné počkat, až se samy odrotují v rámci
+denních záloh.
+
+===== Obnova záloh =====
+
+Obnova vždy funguje na úrovni datasetu. Když má VPS subdatasety a rootfs je
+obnoven ze zálohy, subdatasety obnoveny nejsou. Tzn. je možno obnovit
+jakýkoliv dataset, aniž by to mělo vliv na ostatní datasety.
+
+NAS je možné snapshotovat pouze **manuálně**. Jelikož ale není zálohován na
+backuper, obnova se chová stejně jako ''zfs rollback -r'', tzn. obnova na
+starší snapshot **smaže** všechny novější snapshoty. Je to **nevratná** operace.
+
+Pro obnovu dat ze zálohy na NASu bez smazání snapshotů si zvolený
+snapshot moutněte do VPS a data vykopírujte.
+
+===== Stahování záloh =====
+
+Zálohy můžeme stahovat buď přes webové rozhraní nebo [[navody:vps:api#cli|CLI]].
+CLI má výhodu v tom, že nemusíme čekat na e-mail s odkazem na stažení zálohy,
+ale stahujeme ihned, připadně jde celý proces automatizovat. Můžeme stáhnout buď
+tar.gz archiv, nebo přímo ZFS data stream (i inkrementálně).
+
+==== Inkrementální zálohy ====
+
+Inkrementální záloha obsahuje pouze změněná data od předchozího snapshotu.
+Aby klient dokázal vyhodnotit, které snapshoty lze stahovat inkrementálně,
+každý snapshot obsahuje //identifikátor historie// (číslo). Snapshoty se stejným
+identifikátorem mohou být přeneseny inkrementálně. Tok historie naruší reinstalace
+VPS nebo obnova ze zálohy, poté je identifikátor historie navýšen o 1 a
+znovu se musí stáhnout plná záloha.
+
+Identifikátor historie je znázorněn v tabulce se seznamem snapshotů v menu Zálohy.
+
+==== Stažení zálohy do souboru ====
+
+<code>
+$ vpsfreectl snapshot download --help
+snapshot download [SNAPSHOT_ID]      Download a snapshot as an archive or a stream
+
+Command options:
+    -f, --format FORMAT              archive, stream or incremental_stream
+    -I, --from-snapshot SNAPSHOT_ID  Download snapshot incrementally from SNAPSHOT_ID
+    -d, --[no-]delete-after          Delete the file from the server after successful download
+    -F, --force                      Overwrite existing files if necessary
+    -o, --output FILE                Save the download to FILE
+    -q, --quiet                      Print only errors
+    -r, --resume                     Resume cancelled download
+    -s, --[no-]send-mail             Send mail after the file for download is completed
+    -x, --max-rate N                 Maximum download speed in kB/s
+        --[no-]checksum              Verify checksum of the downloaded data (enabled)
+</code>
+
+Není-li ID snapshotu předáno programu jako argument, interaktivně se na něj
+zeptá:
+
+<code>
+$ vpsfreectl snapshot download
+Dataset 14
+  (1) @2015-12-04T00:00:02Z
+VPS #198
+  (2) @2015-12-01T09:08:28Z
+  (3) @2015-12-01T09:10:10Z
+  (4) @2015-12-01T11:25:55Z
+  (5) @2015-12-01T11:36:03Z
+  (6) @2015-12-01T11:54:51Z
+  (7) @2015-12-01T11:55:19Z
+  (8) @2015-12-01T12:02:27Z
+  (9) @2015-12-01T12:27:50Z
+  (10) @2015-12-01T12:37:50Z
+  (11) @2015-12-01T12:55:46Z
+  (12) @2016-02-29T09:56:03Z
+  (13) @2016-02-29T10:08:31Z
+  (14) @2016-02-29T10:08:35Z
+Pick a snapshot for download:
+
+</code>
+
+Budeme stahovat 4. snapshot (''@2015-12-01T11:25:55Z''):
+
+<code>
+Pick a snapshot for download: 4
+The download is being prepared...
+Downloading to 198__2015-12-01T12-25-56.tar.gz
+Time: 00:01:37 Downloading 0.3 GB: [=====================================================================================] 100% 992 kB/s
+</code>
+
+Přepínačem ''%%--format%%'' vybereme, jestli chceme stáhnout tar.gz, data
+stream, nebo inkrementální data stream. Ve výchozím stavu dojde ke stažení
+tar.gz archivu.
+
+Soubor můžeme buď nechat pojmenovat vpsAdminem
+([[https://api.vpsfree.cz/v2.0/#root-snapshot_download-show|SnapshotDownload#Show.file_name]]),
+nebo si zvolit vlastní umístění pomocí přepínače ''%%--output%%''. Pokud je použit
+''%%--output=-%%'', výstup je přesměrován na stdout.
+
+Program umožňuje stáhování přerušit (třeba ''Ctrl+C'') a následně na něj opět
+navázat. Pokud není použit přepínač ''%%--resume%%'', nebo ''%%--force%%'',
+program se uživatele zeptá, jestli má pokračovat ve stahování, nebo začít
+znovu.
+
+<note>
+Stahování lze navázat jen v případě, že připravený soubor na serveru mezitím
+nebyl smazán (přepínač ''%%-[no-]delete-after%%''), což je až týden od prvního
+stahování.
+</note>
+
+==== ZFS data stream ====
+
+<code>
+$ vpsfreectl snapshot send --help
+snapshot send SNAPSHOT_ID            Download a snapshot stream and write it on stdout
+
+Command options:
+    -I, --from-snapshot SNAPSHOT_ID  Download snapshot incrementally from SNAPSHOT_ID
+    -d, --[no-]delete-after          Delete the file from the server after successful download
+    -q, --quiet                      Print only errors
+    -s, --[no-]send-mail             Send mail after the file for download is completed
+    -x, --max-rate N                 Maximum download speed in kB/s
+        --[no-]checksum              Verify checksum of the downloaded data (enabled)
+</code>
+
+Rozdíl oproti ''snapshot download'' je, že data stream je vypisován rovnou na
+stdout a to v nekomprimované formě, abychom ho mohli propojit přimo se
+''zfs recv'':
+
+<code>
+$ vpsfreectl snapshot send <id> | zfs recv -F <dataset>
+</code>
+
+Inkrementální data stream lze vyžádat přepínačem ''%%-I, --from-snapshot%%'':
+
+<code>
+$ vpsfreectl snapshot send <id2> -- --from-snapshot <id1> | zfs recv -F <dataset>
+</code>
+
+==== Automatizované stahování záloh ====
+
+Automatizované stahování záloh řeší příkazy ''backup vps'' a
+''backup dataset''. Používají se stejně, akorát první má jako argument ID VPS
+a druhý ID datasetu.
+
+Tyto příkazy vyžadují nainstalované ZFS, vytvořený zpool a práva roota.
+Program lze spustit buď přímo pod rootem, nebo bude za běhu používat sudo.
+
+Při spuštění se stáhnou snapshoty s aktuálním identifikátorem historie, které
+ještě lokálně neexistují, a to pokud možno inkrementálně. Aby fungoval
+inkrementální přenos, program musí najít snapshot, který je přitomen lokálně a
+zároveň je na serveru. Z toho vyplývá, že je potřeba zálohy stahovat minimálně
+jednou za 14 dní, protože poté bude náš nejnovější lokální snapshot smazán ze
+serveru a program nebude schopen pokračovat ve stahování záloh -- nebude existovat
+žádný společný snapshot.
+
+<code>
+$ vpsfreectl backup vps --help
+backup vps [VPS_ID] FILESYSTEM       Backup VPS locally
+
+Command options:
+    -p, --pretend                    Print what would the program do
+    -r, --[no-]rotate                Delete old snapshots (enabled)
+    -m, --min-snapshots N            Keep at least N snapshots (30)
+    -M, --max-snapshots N            Keep at most N snapshots (45)
+    -a, --max-age N                  Delete snapshots older then N days (30)
+    -x, --max-rate N                 Maximum download speed in kB/s
+    -q, --quiet                      Print only errors
+    -s, --safe-download              Download to a temp file (needs 2x disk space)
+        --retry-attemps N            Retry N times to recover from download error (10)
+    -i, --init-snapshots N           Download max N snapshots initially
+        --[no-]checksum              Verify checksum of the downloaded data (enabled)
+    -d, --[no-]delete-after          Delete the file from the server after successful download (enabled)
+        --no-snapshots-as-error      Consider no snapshots to download as an error
+        --[no-]sudo                  Use sudo to run zfs if not run as root (enabled)
+</code>
+
+Pokud program nedostane ID VPS/datasetu jako argument, buď se na něj uživatele
+zeptá, nebo se pokusí jej zjistit sám. Argument ''FILESYSTEM'' musí být uveden
+vždy. Měl by obsahovat jméno datasetu, do kterého chceme zálohy ukládat.
+
+<note warning>
+První argument programu je **ID VPS/datasetu**, což může být v případě
+datasetu matoucí, jelikož ID není stejné jako název datasetu, ale obojí je
+většinou číslo.
+</note>
+
+Než program spustíme na ostro, může se hodit přepínač ''%%--pretend%%'', který
+nám vypíše, co by program udělal, tedy jaké snapshoty by stáhnul a případně
+smazal.
+
+Přepínačem ''%%--[no-]rotate%%'' se (de)aktivuje mazání starých snapshotů, aby se
+uvolnilo místo pro ty nové. Nezměníme-li další nastavení, budeme mít minimálně
+30 snapshotů (což aktualně znamená 30 denní historii), maximálně 45 snapshotů
+(pokud si nějaké vytvoříme manuálně) a budou se mazat snapshoty starší nez 30
+dní.
+
+Obsah datasetu ''FILESYSTEM'' si program spravuje sám a uživatel by v něm
+neměl vytvářet další subdatasety/snapshoty. Stažené snapshoty jsou umístěny v
+subdatasetech, které jsou pojmenovány podle identifikátoru historie.
+
+=== Ukázka použití ===
+
+<code>
+$ vpsfreectl backup vps storage/backup/199
+(1) VPS #198
+(2) VPS #199
+(3) VPS #202
+Pick a dataset to backup: 2
+Will download 8 snapshots:
+  @2016-03-07T18:12:58
+  @2016-03-07T18:13:21
+  @2016-03-07T18:18:35
+  @2016-03-10T10:18:03
+  @2016-03-10T10:18:30
+  @2016-03-10T11:49:00
+  @2016-03-10T14:28:00
+  @2016-03-10T14:33:12
+
+Performing a full receive of @2016-03-07T18:12:58 to storage/backup/199/1
+The download is being prepared...
+Time: 00:00:56 Downloading 0.3 GB: [====================================================================================] 100% 1755 kB/s
+Performing an incremental receive of @2016-03-07T18:12:58 - @2016-03-10T14:33:12 to storage/backup/199/1
+The download is being prepared...
+Time: 00:00:00 Downloading 0.0 GB: [=======================================================================================] 100% 0 kB/s
+</code>
+
+Můžeme si všimnout, že program stáhne první snapshot v plné velikosti a
+všechny další pak inkrementálně.
+
+Seznam snapshotů vypíšeme pomocí ''zfs list'':
+<code>
+$ sudo zfs list -r -t snapshot storage/backup/199
+NAME                                       USED  AVAIL  REFER  MOUNTPOINT
+storage/backup/199/1@2016-03-07T18:12:58     8K      -   284M  -
+storage/backup/199/1@2016-03-07T18:13:21     8K      -   284M  -
+storage/backup/199/1@2016-03-07T18:18:35     8K      -   284M  -
+storage/backup/199/1@2016-03-10T10:18:03     8K      -   285M  -
+storage/backup/199/1@2016-03-10T10:18:30     8K      -   285M  -
+storage/backup/199/1@2016-03-10T11:49:00   160K      -   285M  -
+storage/backup/199/1@2016-03-10T14:28:00   160K      -   285M  -
+storage/backup/199/1@2016-03-10T14:33:12      0      -   285M  -
+</code>
+
+K vlastním datům se lze dostat přes speciální adresář ''.zfs'':
+<code>
+$ ls -1 /storage/backup/199/1/.zfs/snapshot
+2016-03-07T18:12:58
+2016-03-07T18:13:21
+2016-03-07T18:18:35
+2016-03-10T10:18:03
+2016-03-10T10:18:30
+2016-03-10T11:49:00
+2016-03-10T14:28:00
+2016-03-10T14:33:12
+</code>
+
+K pravidelnému stahování záloh se dá použít cron. Zápis v crontabu může vypadat
+takto:
+
+<code>
+MAILTO=tvuj@mail
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name command to be executed
+  0  7  *  *  * root      vpsfreectl backup vps 199 storage/backup/199 -- --max-rate 1000
+</code>
+
+Program se tedy spustí každý den v 7 ráno (kdy už by měly být zálohy ve
+vpsFree přeneseny na backuper.prg) a budou se stahovat maximální rychlostí
+1 MB/s. Výstup příkazu nám zašle cron na e-mail nastavený v proměnné
+''MAILTO''. Po ověření funkčnosti je však zbytečné, aby e-mail chodil každý den.
+Proto má program přepínač ''%%--quiet%%'', který zajistí, že se vypíšou jen
+případné chyby.
+
+<note>
+Pokud budeme zálohy stahovat pod rootem, ale ''vpsfreectl'' byl nainstalován
+pod obyčejným uživatelem, musí se pro roota program
+[[navody:vps:api#cli|nainstalovat]] i se všemi závislostmi znovu.
+</note>
+
+=== Stažení plné zálohy po pomalé/nespolehlivé lince ===
+
+Příkaz ''backup'' ve výchozím stavu neumožnuje přerušit a pokračovat ve stahování,
+protože nestahuje do žádného souboru, ale data hned předává ZFS. Jestliže máme
+k dispozici jen pomalou nebo nespolehlivou linku, může se stát, že stahování
+selže a bude nutné jej restartovat -- od začátku. Můžeme si ale pomoct
+přepínačem ''%%--safe-download%%'', který nejdříve stáhne data do souboru a až
+pak je předá ZFS. Díky tomu je možné kdykoli stahování přerušit a později
+v něm pokračovat. Nevýhodou je, že je k tomu potřeba 2x více místa na disku, protože
+jsou data v jednu chvíli v dočasném souboru i v ZFS datasetu. Dočasný soubor je vytvořen
+v adresáři, ze kterého je program spuštěn.
+
+Na další problém můžeme narazit při dlouhé době stahování. Program při prvním
+spuštění totiž stahuje všechny snapshoty, od nejstaršiho po nejnovější. Pokud
+ale stahujeme ten nejstarší snapshot moc dlouho, může dojít k jeho smazání ze
+serveru, což vede k tomu, že ho později nemůžeme použít k inkrementálnímu stahování a
+musíme stahovat plnou zálohu znovu. Pro tyto případy existuje přepínač
+''%%--init-snapshots N%%'', který programu řekne, že chceme stáhnout jen ''N''
+posledních snapshotů. Nejbezpečnější je použít ''%%--init-snapshots 1%%'', pak
+máme až 14 dní na dokončení stahování (poslední přerušení může nastat po 7
+dnech). Není to ale všelék, protože pokud je program ukončen a znovu spuštěn v jiný
+den, poslední snapshot bude jiný a stahování začne nanovo, není-li hodnota
+''%%--init-snapshots%%'' patřičně upravena.
+
+=== Detekce chybějící zálohy ===
+
+Někdy se může stát, že z nějakého důvodu denní záloha neproběhne a program tedy nebude
+mít co stáhnout. Tato situace normálně není považována za chybu -- jednoduše
+jsou všechny snapshoty už staženy a program nemá co dělat. Probíhá-li však
+stahování záloh automaticky za pomocí cronu, nijak se nedozvíme o tom, že se
+žádné zálohy nestahují. Z tohoto důvodu má program přepínač
+''%%--no-snapshots-as-error%%'', který se postará o to, že pokud program nemá
+co stáhnout, skončí s chybou. Chyby nejsou potlačeny přepínačem ''%%--quiet%%'',
+takže nám ji cron pošle na e-mail a o výpadku se dozvíme.
+
+=== Stahování záloh pod obyčejným uživatelem s využitím sudo ===
+
+Nechceme-li ''vpsfree-client'' instalovat či spouštět pod rootem, program umí
+běžet i pod neprivilegovaným uživatelem. K práci se ZFS pak využije sudo.
+
+V následující ukázce budeme program instalovat a používat pod uživatelem
+''vpsfree''. Nejdříve jej vytvoříme a nainstalujeme ''vpsfree-client'':
+
+<code>
+# useradd -m -d /home/vpsfree -s /bin/bash vpsfree
+# su vpsfree
+$ gem install --user-install vpsfree-client
+</code>
+
+Následující řádky vložte do ''/etc/sudoers.d/zfs'':
+
+<code>
+Defaults:vpsfree !requiretty
+vpsfree ALL=(root) NOPASSWD: /sbin/zfs
+</code>
+
+Uživatel ''vpsfree'' tedy bude moci spouštět ''zfs'' jako root a to bez hesla,
+což je nezbytné, pokud jej chceme pouštět cronem.
+
+Nyní zkusíme program spustit manuálně a potom jej umístíme do crontabu. Zkusme
+si tedy vyžádat a uložit autentizační token:
+
+<code>
+# su vpsfree
+$ vpsfreectl --auth token --new-token --token-lifetime permanent --save user current
+</code>
+
+Dostanete-li chybu, že program neexistuje, bude potřeba specifikovat celou
+cestu, nebo přidat správný adresář do ''$PATH''. Gemy se instalují do
+''~/.gem/ruby/<verze ruby>/'', na mém systému je cesta ke spouštěcím souborům konkrétně
+''/home/vpsfree/.gem/ruby/2.0.0/bin''.
+
+Máme-li funkčního klienta, můžeme stáhnout první zálohu do datasetu, který si
+vytvoříme. V této ukázce se bude zálohovat VPS #123 do datasetu
+''storage/backup/vps/123''.
+
+<code>
+# su vpsfree
+$ sudo zfs create -p storage/backup/vps/123
+$ vpsfreectl backup vps 123 storage/backup/vps/123
+</code>
+
+Další zálohy budeme stahovat pravidelně cronem, do souboru
+''/etc/cron.d/vpsfree'' vložte:
+
+<code>
+PATH=/bin:/usr/bin:/home/vpsfree/.gem/ruby/2.0.0/bin
+MAILTO=tvuj@mail
+HOME=/home/vpsfree
+
+0 7 * * * vpsfree vpsfreectl backup vps storage/backup/vps/123 -- --quiet
+</code>
+
+V ''PATH'' je uveden adresář obsahující ''vpsfreectl''. Všimněte si, že
+programu už nemusíme předávat ID VPS, při prvním spuštění si jej totiž uloží.
+
+=== Stahování záloh pod obyčejným uživatelem s využitím delegace práv ===
+
+Solaris/OpenIndiana a FreeBSD umožnuje delegovat práva pro ovládání datasetů
+různým uživatelům. Program v tomto případě vůbec nepotřebuje práva roota, ani
+sudo.
+
+Potřebné práva budeme přidělovat uživateli ''vpsfree'':
+
+<code>
+# zfs create storage/backup/123
+# zfs allow vpsfree create,mount,destroy,receive storage/backup/123
+</code>
+
+Aby mohl uživatel vytvářet subdatasety a připojit je, musí mít i práva na
+úrovni adresářů a souborů:
+
+<code>
+# chown vpsfree:vpsfree /storage/backup/123
+</code>
+
+<note>
+Na FreeBSD je potřeba upravit nastavení kernelu tak, aby umožnil uživatelům mount:
+
+<code>
+# sysctl vfs.usermount=1
+</code>
+</note>
+
+Teď můžeme začit stahovat zálohy. Přepínačem ''%%--no-sudo%%'' zajistíme, aby se
+program nesnažil použít sudo.
+
+<code>
+# su vpsfree
+$ vpsfreectl backup vps 123 storage/backup/123 -- --no-sudo
+</code>
+
+
+==== Obecné přepínače ====
+  * ''%%--[no-]delete-after%%'' rozhoduje o tom, jestli se má stahovaný soubor po úspěšném stažení smazat ze serveru
+  * ''%%--[no-]send-mail%%'' říká, jestli chceme stále dostat e-mail o tom, že je záloha připravena na serveru ke stažení
+  * ''%%--max-rate N%%'' nastavuje maximální rychlost stahování v kB/s
+  * ''%%--quiet%%'' potlačí všechen výstup, vypsány jsou pouze chyby
+  * ''%%--no-checksum%%'' vypne počítání a kontrolu checksumu (sha256, což někdy může zdržovat)
+
+===== Obnova stažené zálohy =====
+
+Obnova VPS ze stažené zálohy není nijak automatizována. Staženou zálohu lze do VPS
+nahrát pomocí [[navody:vps:vpsadminos:oprava#nouzovy_rezim|nouzového režimu]].
+
+Po nastartovaní VPS v nouzovém režimu máme přístup k disku VPS "zvenčí", podobně jako
+bychom nabootovali live CD. Obsah zálohy rozbalíme do adresáře, kde je disk VPS připojen.
+Po restartu VPS nastartuje z obnoveného systému. Pokud záloha obsahuje jinou distribuci,
+než která ve VPS byla, je potřeba upravit nastavení ve vpsAdminu.
+
+===== Získanie zálohy stránky z automatického zálohovacieho systému =====
+
+V [[navody:vps:obnova_webu_zo_zalohy|tomto]] návode si ukážeme ako získať súbory stránky z automatického zálohovacieho systému.
+
+
+<maintainers hidden>
+aither
+kerrycze
+</maintainers>

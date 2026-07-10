@@ -31,6 +31,7 @@
   - Commits:
     - `838b3ef` (`captures: add standalone reproducible screenshot framework`)
     - `af5525e` (`captures: add Czech vpsAdmin screenshot inventory`)
+    - `e0a3502` (`captures: put screenshot language first`)
   - SSH remote:
     `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
   - GitHub repository created by the user:
@@ -39,12 +40,19 @@
   `/home/aither/workspace/ai/vpsfree.cz/repos/haveapi.git`
   - Inspected current `origin/master`:
     `350547447ba42dfa765e09c762dd916ad0acce03`
+- `vpsfree-cz-configuration`:
+  `/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git`
+  - Feature branch: `2026-07-10-kb-czech-fixes`
+  - Worktree:
+    `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-07-10-kb-czech-fixes/vpsfree-cz-configuration`
+  - Base: `origin/master` at
+    `435f63d77be0aa20ab48cec334340e9fc94ac163`
 
 ## Status
 
-- The mandatory-review findings have been corrected. The standalone cluster,
-  fixture setup, complete 60-image capture, strict validation, and visual
-  review all pass. Draft staging is complete.
+- The screenshot implementation and original production-draft bundle passed
+  their earlier mandatory review. The later staging-infrastructure and release
+  workflow are implemented and undergoing their required fresh review.
 - Detailed audit written to `kb-label-audit.md`.
 - Added create-only DokuWiki media operations to `bin/kb-page` and committed
   them on the coordination workspace `master` as `5e2b40b`.
@@ -54,14 +62,16 @@
   synchronized screenshots are committed as `e3ae318`.
 - A disposable draft media upload was written, downloaded byte-for-byte, and
   deleted. No smoke-check media remains on the wiki.
-- Created 30 review pages and 60 media assets under
+- The obsolete review set still contains 30 pages and 60 media assets under
   `drafts:2026-07-10-kb-czech-fixes` using create-only writes. The review entry
   page is
   `https://kb.vpsfree.cz/drafts:2026-07-10-kb-czech-fixes:domu`.
 - Read every draft page and media asset back through the API. All 30 page
   sources match the local previews byte-for-byte and all 60 media SHA-256
   hashes match the manifest.
-- Non-draft publication remains subject to explicit user approval.
+- No staging or production deployment has been attempted. The user/operator
+  deploys aitherdev and internal DNS from a build machine. Production
+  publication remains subject to explicit user approval.
 - All 60 Czech screenshot assets are generated and tracked in the standalone
   repository. The inventory maps 63 page references to exact scenario
   checkpoints and stable semantic draft/permanent media IDs.
@@ -71,8 +81,35 @@
   lifecycle and fixture setup with no runtime coordination-repository
   dependency. The repository now vendors and adapts the cluster definition,
   pins upstream inputs in `flake.lock`, and has passed a fresh acceptance run.
-- The capture feature branch was pushed to
-  `origin/2026-07-10-kb-czech-fixes`.
+- The capture feature branch was previously pushed through `af5525e`; the new
+  language-first commit `e0a3502` is pending final review and push.
+
+## Staging implementation update
+
+- Added the stopped-by-default declarative `kb-staging` NixOS container to
+  aitherdev, with Czech and English DokuWiki sites, shared media, the production
+  template/syntax plugins, local staging-only authentication, and an explicit
+  full-state reset helper.
+- Added internal DNS CNAMEs and aitherdev nginx reverse proxies for
+  `kb-cs.aitherdev.int.vpsfree.cz` and
+  `kb-en.aitherdev.int.vpsfree.cz`.
+- Added `bin/kb-stage` and `lib/kb_stage.rb` for ownership, generated
+  credentials, start/stop/status, full production mirror reset, and safe
+  release of the global staging instance.
+- Added `bin/kb-release` and `lib/kb_release.rb` for checksummed staging,
+  verification, drift-safe production promotion, and pending-manifest binding.
+- Changed `bin/kb-page` so staging writes require current ownership and every
+  production write requires `--approved-production`. Staging uses generated
+  Basic credentials; production continues to use bearer tokens.
+- Migrated the local review bundle from draft IDs to exact production page IDs
+  and final Czech media IDs. `kb-release.yml` now contains 30 page candidates
+  and 60 create-only media objects. Page translation tags and relative links
+  remain intact for staging review.
+- Changed both capture-repository and initiative artifact paths to
+  `screenshots/cs/<topic>/<view>.png`; DokuWiki IDs are
+  `cs:screenshots:vpsadmin:<topic>:<view>.png`.
+- The old production draft set will be removed only after staging has been
+  deployed and verified, with separate explicit production approval.
 
 ## Commands run
 
@@ -144,6 +181,26 @@
 - Re-ran `ruby test/kb_page_test.rb`: 25 runs, 104 assertions, no failures.
 - Re-ran `nix develop -c bin/check` in `vpsadmin-kb-captures`: 60 assets, 63
   references, and 60 PNGs; syntax and inventory checks passed.
+- Updated the capture inventory to schema 3 and ran
+  `nix develop -c bin/check`: 60 assets, 63 references, 60 PNGs, and all
+  language-first paths passed.
+- Ran `ruby test/kb_page_test.rb`: 28 runs, 114 assertions, no failures.
+- Ran `ruby test/kb_stage_test.rb`: 5 runs, 22 assertions, no failures.
+- Regenerated `screenshot-manifest.yml` from capture commit `e0a3502` and
+  regenerated `kb-release.yml`: 30 pages and 60 media objects.
+- Ran Ruby syntax checks for `kb-page`, `kb-stage`, `kb-release`, and their
+  libraries; all passed.
+- Ran `nixfmt` on the aitherdev configuration and built
+  `cz.vpsfree/machines/aitherdev` with `confctl build -y`; generation
+  `2026-07-10--22-41-37` completed successfully. This was a build only; no
+  deployment or DNS update was performed.
+- A standalone `nixpkgs#rubocop` invocation could not activate because its
+  packaged `rubocop-ast` requires `prism ~> 1.7`, which was absent from the
+  generated Ruby load path. The configuration repository's RuboCop could not
+  be reused as-is because its project config targets Ruby 2.7 while this
+  workspace already uses Ruby 3 keyword shorthand. Ruby 3.4 syntax checks,
+  unit tests, line-length inspection, and `git diff --check` are the recorded
+  fallback checks; the coordination repository declares no Ruby hook framework.
 
 ## Results
 

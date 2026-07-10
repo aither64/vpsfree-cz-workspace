@@ -1,0 +1,94 @@
+====== Získanie zálohy stránky z automatického zálohovacieho systému ======
+
+V tomto návode si ukážeme ako získať súbory z automatického zálohovacieho systému.
+
+===== Scenár =====
+
+Zachraňovaná stránka beží na CMS Wordpress a doméne //zachnanovanadomena.sk//. Na úspešné obnovenie akejkoľvek wordpressovskej stránky vždy potrebujeme súbory a databázu.
+
+===== Krok 1: Vytvorenie "hracieho" VPS a zapnutie zálohy =====
+
+Najskôr vytvoríme VPS na hranie dajme tomu s názvom "//hracie//" [VPS]. Pod cestou "//VPS > Nové VPS//" v "//Lokace//" vyberieme "//Playground//" a klikneme na "//Další//". Nastavenia (verzia operačného systému...) zvolíme identické s našim ostrým serverom.
+
+{{ :cs:screenshots:vpsadmin:restore-backups:playground-vps-list.png?direct |}}
+
+Na ceste "//Zálohy > Zálohy VPS//" klikneme na "//Mount//" pri "//snapshote//" (zálohe), z ktorej chceme navrátiť údaje.
+
+{{ :cs:screenshots:vpsadmin:restore-backups:backup-list.png?direct |}}
+
+Zálohu zapneme ("//snapshot//" "//moutneme//") pre "//hracie//" [VPS] pod cestu ("//mountpoint//") /mnt/data1.
+
+{{ :cs:screenshots:vpsadmin:restore-backups:mount-backup-form.png?direct |}}
+
+Vytvorime si heslo a prihlásime na "//hracie//" [VPS] cez terminál ako root.
+
+**Poznámka: Celý čas pracujeme na "//hracom//" [VPS] ako root**
+
+===== Krok 2: Získanie súborov =====
+
+Keďže je to nové, čisté VPSko nainštalujeme si základné príkazy:
+
+  * ''sudo apt-get update && sudo apt-get upgrade''
+  * ''sudo apt-get install nano zip''
+
+Súbory stránky zo zálohy na nachádzajú pod cestou ///mnt/data1/var/www/zachnanovanadomena.sk///. Vojdeme do adresára:
+
+  * ''cd /mnt/data1/var/www/zachnanovanadomena.sk/''
+
+Zazipujeme súbory. Vytvorený zipový súbor uložíme do /root/, pretože mountnutá partícia (zapnutá záloha) neumožňuje do zálohy zapisovať, je "//read only//":
+
+  * ''zip -r /root/zachnanovanadomena.sk.zip .''
+
+**Poznámka: Všimnite si aj tú bodku na konci. Aj s tou treba príkaz zadať.**
+
+===== Krok 3: Získanie databázy =====
+
+Obnova databázy bude tvrdší oriešok, ale rozlúskneme aj ten. Najskôr si nainštalujeme verziu databázy, ktorú používame na ostrom servery. Príkaz na zistenie verzie DB:
+
+  * ''mysql -V''
+
+Ja používam MySql 5.x:
+
+  * ''apt-get install mysql-server-5.x''
+
+Teraz nakopírujeme fyzické súbory databázy zo zálohy (///mnt/data1/var/lib/mysql//) medzi databázy "//hracieho//" [VPS] (///var/lib/mysql//). Najskôr ale zastavíme MySql:
+
+  * ''service mysql stop''
+  * ''cd /mnt/data1/var/lib/mysql''
+  * ''zip -r /var/lib/mysql/db_zo_zalohy.zip .''
+  * ''cd /var/lib/mysql/''
+  * ''unzip -o db_zo_zalohy.zip''
+  * ''service mysql start''
+
+Keďže sme prepísali aktuálne súbory na "hracom" [VPS] databázovými súbormi zo zálohy treba preinštalovať mysql-server-5.x. K dispozícii sú 2 príkazy:
+
+  * ''sudo dpkg-reconfigure mysql-server-5.x''
+
+alebo
+
+  * ''sudo apt-get install --reinstall mysql-server-5.x''
+
+Mne sa chytil ten prvý. Pustíme databázu:
+
+  * ''service mysql status''
+  * ''service mysql start''
+
+Nazrieme do //wp-config.php// stránky //zachnanovanadomena.sk// a pozrieme si //nazov_databazy//, //prihlasovacie_meno//, //prihlasovacie_heslo// a dumpneme ju do ///root///
+
+  * ''nano /mnt/data1/var/www/zachnanovanadomena.sk/wp-config.php''
+  * ''mysqldump -u prihlasovacie_meno -p'prihlasovacie_heslo' nazov_databazy | gzip -9 > nazov_databazy_zaloha.sql.gz''
+
+Stiahneme si pripravené zálohy na ostrý server cez [[https://www.digitalocean.com/community/tutorials/how-to-use-sftp-to-securely-transfer-files-with-a-remote-server|sftp]]:
+
+  * ''sftp root@123.4.567.89''
+  * ''get zachnanovanadomena.sk.zip''
+  * ''get nazov_databazy_zaloha.sql.gz''
+  * ''exit''
+
+===== Hotovo =====
+
+V tomto kroku máme na ostrom servery dáta stránky //zachnanovanadomena.sk// z poslednej automatickej zálohy. "//Unmountneme snapshot//" v nastaveniach "//hracieho//" [VPS] a vymažeme "//hracie//" [VPS].
+
+Úloha splnená, dáta získané.
+
+<wrap lo>[[http://www.ointernete.sk/ako-ziskat-zalohu-stranky-zo-zalohovacieho-systemu-spolku-vpsfreecz|zdroj]]</wrap>

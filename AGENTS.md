@@ -266,51 +266,58 @@ do not amend or rewrap them to satisfy generic commit-message line length
 rules. Edit them only when intentionally making a concise changelog edit.
 
 DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
-`kb.vpsfree.org`. API access uses one token per wiki:
+`kb.vpsfree.org`. Their review instances are
+`kb-cs.aitherdev.int.vpsfree.cz` and `kb-en.aitherdev.int.vpsfree.cz`. API
+access to production uses one token per wiki:
 
 - `kb.vpsfree.cz`:
   `/home/aither/.codex/codex-kb-vpsfree-cz-aither-key`
 - `kb.vpsfree.org`:
   `/home/aither/.codex/codex-kb-vpsfree-org-aither-key`
 
-Never copy tokens into notes, commits, command output, URLs, or prompts. Always
-prepare wiki changes as a local preview file first. Use `bin/kb-page` for
-DokuWiki page operations instead of hand-crafting API calls. Draft pages under
-the `drafts:` namespace may be saved after the preview is prepared and the
-exact target wiki/page has been verified. For non-draft pages, ask the user for
-direct approval before writing, deleting, or renaming; pass
-`--approved-non-draft` only after that approval. It is acceptable to use the
-tokens for read-only verification calls through `bin/kb-page whoami`,
-`bin/kb-page acl`, or `bin/kb-page get`. Before any write, verify
-authentication and page permission against the exact target wiki.
-Disposable write smoke checks for `bin/kb-page` are allowed in the draft
-namespace when useful; use page IDs under `drafts:<slug>:` and delete the test
-pages before finishing.
+Never copy credentials into notes, commits, command output, URLs, or prompts.
+Always prepare wiki changes as local candidate files first. Use `bin/kb-page`
+for individual DokuWiki operations and `bin/kb-release` for a review bundle
+instead of hand-crafting API calls.
 
-When asked to draft user documentation for KB, write draft pages under the
-`drafts:` namespace unless the user names a different draft namespace. Use page
-IDs such as `drafts:<yyyy-mm-dd-slug>:<short-title>` so related drafts are easy
-to find. Store the local preview in the active initiative, for example under
-`work/<slug>/kb-drafts/`, and write the draft after verifying the exact target
-wiki/page and permissions. Do not publish, move, or copy draft content to a
-non-draft page without a separate explicit approval. The IRC bot is configured
-to ignore draft page updates by namespace prefix, so draft saves should not
-announce in IRC.
+The declarative `kb-staging` NixOS container on aitherdev is global and
+on-demand. Its data and ownership survive `bin/kb-stage stop`; only
+`bin/kb-stage reset --yes` discards staging content and mirrors the current
+production pages and shared media. A development session must claim staging
+with `bin/kb-stage start` before it can write. Staging ownership is serialized
+by the active `VPSFREE_DEV_SESSION_SLUG`; do not manipulate another session's
+staging data or ownership. `bin/kb-stage release --yes` stops the container and
+releases ownership while retaining the data. It refuses a pending review
+bundle unless `--discard-pending` is explicit.
+
+Stage complete pages at their real page IDs so links and language mappings are
+reviewed exactly as they will appear in production. Prepare a checksummed
+release manifest, stage it with `bin/kb-release stage --manifest FILE --yes`,
+and verify it with `bin/kb-release verify --manifest FILE`. Do not use the
+production `drafts:` namespace for routine review. The release tool verifies
+that production still matches the recorded source revision and content before
+staging or promotion.
+
+Production writes always require direct user approval. After approval, promote
+the exact staged manifest with `bin/kb-release promote --manifest FILE --yes`
+and `--approved-production`. Individual production writes with `bin/kb-page`
+also require `--approved-production`, including writes in `drafts:`. Read-only
+production checks do not require approval. Before every write, verify
+authentication and page permission against the exact target wiki.
 
 Common KB tool examples:
 
 ```sh
 bin/kb-page whoami --wiki cz
-bin/kb-page acl --wiki cz drafts:2026-07-02-example:page
-bin/kb-page save --wiki cz drafts:2026-07-02-example:page preview.txt \
-  --summary "Create draft" --create
+bin/kb-stage start
+bin/kb-stage reset --yes
+bin/kb-release stage --manifest work/example/kb-release.yml --yes
+bin/kb-release verify --manifest work/example/kb-release.yml
 bin/kb-page save --wiki cz information:published-page preview.txt \
-  --summary "Update documentation" --update --approved-non-draft
-bin/kb-page rename --wiki cz drafts:2026-07-02-example:page \
-  information:published-page --summary "Publish documentation" \
-  --approved-non-draft
-bin/kb-page delete --wiki cz drafts:2026-07-02-example:page \
-  --summary "Remove obsolete draft" --yes
+  --summary "Update documentation" --update --approved-production
+bin/kb-release promote --manifest work/example/kb-release.yml --yes \
+  --approved-production
+bin/kb-stage release --yes
 ```
 
 Do not assume that commands from one repository apply to another. Use the local

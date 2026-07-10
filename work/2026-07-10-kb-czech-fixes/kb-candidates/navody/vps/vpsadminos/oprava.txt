@@ -1,0 +1,184 @@
+<page>manuals:vps:vpsadminos:recovery</page>
+====== Oprava rozbité VPS ======
+
+vpsAdmin umožňuje členům samostatně vyřešit většinu problémů s poškozeným VPS,
+tj. když nestartuje nebo není přístupná po síti. K rozbití VPS může dojít
+například při aktualizaci systému, špatně zvoleným příkazem či konfigurací, apod.
+
+Neznamená to, že vám s VPS nepomůžeme na [[informace:podpora|podpoře]]. Zdatní
+administrátoři si však mohou zprovoznit VPS sami rychleji a bez čekání na naši
+pomoc.
+
+
+===== Identifikace stavu VPS =====
+
+Pro zvolení správného postupu je nutné zjistit, v jakém stavu se VPS nachází.
+V každém případě potřebujeme vzdálenou konzoli ve vpsAdminu, mohou se tam objevit
+důležité informace.
+
+==== Selhává transakce zapnutí VPS ====
+
+Ve VPS buď chybí/je rozbit init systém nebo jiná důležitá součást systému.
+Pokračuj [[navody:vps:vpsadminos:oprava#nouzovy_rezim|použitím nouzového režimu]].
+
+Ojediněle se může jednat i o chybu na nodu, se kterou si sám neporadíš. Typicky
+když jsou v konzoli vidět chyby ohledně lxc. V takovém případě se prosím
+[[informace:podpora|obrať na podporu]].
+
+==== VPS je zapnut ====
+Pravděpodobně se na něčem zasekl init, nebo jen není nastavená síť.
+Nahlédnutím do vzdálené konzole ve vpsAdminu lze zjistit, na čem se start VPS
+zastaví, jaké služby se nepodaří zapnout, apod.
+
+===== Nouzový režim =====
+VPS je ve vpsAdminu možné nechat nastartovat z čísté, funkční šablony distribuce
+a z tohoto dočasného systému opravit systém na VPS. Je to něco jako boot live CD.
+
+Nouzový režim lze použít z detailu VPS, formulář **Spustit VPS ze šablony (nouzový režim)**:
+
+{{ :cs:screenshots:vpsadmin:rescue-mode:boot-form.png?700 |}}
+
+Případně přímo ze vzdálené konzole v pravém sloupci:
+
+{{ :cs:screenshots:vpsadmin:rescue-mode:console.png?700 |}}
+
+Při startu do nouzového režimu je na výběr z distribucí, které podporujeme. VPS
+v nouzovém režimu má stejnou konfiguraci jako při normálním startu, tzn.
+zůstavají IP adresy, DNS resolvery, přidělené zdroje, atd. Pokud máš
+ve vpsAdminu nastaveny [[navody:vps:sprava#automaticke_vlozeni_klicu|SSH klíče]],
+budou vloženy i do VPS v nouzovém režimu. Příprava nouzového režimu může trvat
+i několik minut, podle velikosti distribuce.
+
+Původní systém VPS je ve výchozím stavu připojen do ''/mnt/vps''.
+
+Nouzový režim se opustí restartem VPS, případně jinou akcí, která má za následek
+restart VPS. Po restartu VPS startuje klasicky ze svého datasetu. Disk nouzového
+systému se **ihned maže**.
+
+==== Chroot ====
+
+Dle typu závady může být nutné se do poškozeného systému chrootnout, třeba k
+práci s balíčkovacím systémem.
+
+Jestliže je rootfs připojen do ''/mnt/vps'', chroot se provede následovně:
+
+<code>
+# cd /mnt/vps
+# mount -t proc proc proc/
+# mount -t sysfs sys sys/
+# mount -o bind /dev dev/
+# chroot /mnt/vps /bin/bash
+</code>
+
+Nyní lze k opravě využít programy z poškozené VPS.
+
+Konkrétní postup je závislý na distribuci - kontrola logů, oprava balíčkovacího
+systému, apod.
+
+Po dokončení práce vše odpojíme:
+
+<code>
+# umount proc
+# umount sys
+# umount dev
+</code>
+
+==== Porovnání se zálohou ====
+Pokud problém nastal během posledních 14 dní, je možné VPS buď rovnou obnovit
+ze zálohy, nebo porovnat konfiguraci s funkční zálohou a pokusit se systém
+opravit.
+
+Ve vpsAdminu exportujeme vybranou zálohu a přes NFS připojíme do VPS, viz
+[[navody:vps:exporty|exporty]]. Poté můžeme porovnat
+např. ''/etc''. Jestliže je záloha připojena do ''/mnt/snapshot'', může příkaz
+pro porovnaní vypadat následovně:
+
+<code>
+# diff -qr /mnt/vps/etc /mnt/snapshot/etc
+</code>
+
+Nyní se musí prozkoumat nalezené rozdíly a zvážit, jestli může mít jejich změna 
+vliv na funkčnost systému.
+
+
+===== Konfigurace sítě =====
+Běží-li VPS, ale nereaguje po síti, zkontrolujeme, zda má:
+
+  * IP adresy: ''ip addr''
+  * výchozí (default) routa: ''ip route list''
+  * přístup neblokuje pravidlo či politika v iptables
+
+<note warning>
+Uvedené příkazy dávají smysl jen ve vzdálené konzoli, ne v chrootu z nouzového
+režimu!
+</note>
+
+==== IP adresy a routování ====
+Pokud chybí IP adresa, jednorázově ji přidáme (fungují pouze adresy, které jsou
+k VPS přirazené ve vpsAdminu):
+
+<code>
+ip addr add <ip adresa>/<prefix> dev venet0
+ip addr add 1.2.3.4/32 dev venet0
+</code>
+
+Chybí-li výchozí routa, přidáme ji takto:
+
+<code>
+ip route add 255.255.255.254/32 dev venet0
+ip route add default via 255.255.255.254 dev venet0
+</code>
+
+Takto přidaná routa po restartu VPS zmizí, není to trvalé řešení.
+
+Nemá-li VPS po restartu IP adresy nebo routu, může to znamenat, že je z nějakého
+důvodu poškozená konfigurace sítě. Při každém startu VPS je uvnitř podle
+distribuce vygenerována konfigurace, na Debianu je to třeba
+''/etc/network/interfaces''. Init skripty z distribuce potom podle dané
+konfigurace nastavují síť. Pokud toto nastavení selhává, můžeme o tom najít
+informace v logu (zde záleží na použité distribuci), např.:
+
+<code>
+systemctl status network
+systemctl status networking
+</code>
+
+==== Firewall ====
+iptables lze vyčistit přes vzdálenou konzoli např. příkazem
+''service iptables stop'', záleží na použité distribuci. Manuálně by to mohlo
+vypadat následovně:
+
+<code>
+# iptables -F
+# iptables -X
+# iptables -P INPUT ACCEPT
+# iptables -P FORWARD ACCEPT
+# iptables -P OUTPUT ACCEPT
+</code>
+
+<note warning>
+Smazáním iptables pravidel mohou být z internetu přístupné služby, které
+počítají s nastaveným firewallem a nejsou patřičně zabezpečeny.
+</note>
+
+Bez přístupu ke vzdálené konzoli je nutné buď nalézt soubor, do kterého se
+ukládají perzistentní pravidla a smazat jeho obsah, nebo vypnout službu
+iptables. Poté restartovat VPS.
+
+====== Známé příčiny nefunkčnosti VPS ======
+
+===== Plný disk =====
+Pokud je disk zaplněn, VPS nepůjde zapnout. Lze zkusit připojit dataset do
+jiné VPS a promazat data. Pokud by nešlo ani to, obrať se na podporu.
+
+===== Debian =====
+Pro správné nastavení sítě je nutné mít nainstalovány balíčky ''iproute2''
+a ''ifupdown''.
+
+Setkali jsme se s rozbitím konfigurace např. kvůli existenci
+''/etc/network/interfaces.head'' nebo ''tail'', jenž obsahoval statickou
+konfiguraci sítě a přebil tak konfiguraci generovanou vpsAdminem.
+
+<maintainers hidden>
+aither
+</maintainers>
