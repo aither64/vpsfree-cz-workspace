@@ -207,6 +207,10 @@
   Reset staging to a fresh production mirror, then staged and API-verified the
   revised pages and media. Language-link warming verified all 27 paired Czech
   candidate pages. Production remains untouched.
+- Rendered staging smoke checks returned HTTP 200 for the Czech home page, the
+  rescue article, and the renamed rescue PNG with `image/png`. The dedicated
+  capture cluster was stopped and its GC root removed; the global KB staging
+  container remains running for review.
 
 - The screenshot implementation and original production-draft bundle passed
   their earlier mandatory review. The staging infrastructure and release
