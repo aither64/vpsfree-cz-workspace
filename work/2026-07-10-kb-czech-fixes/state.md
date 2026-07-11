@@ -148,11 +148,16 @@
   deployed sudo version. Corrected both sides to use the same profile path.
 - Built corrected aitherdev generation `2026-07-11--10-22-44`; its generated
   sudoers puts the exact profile-path allowlist after `%wheel ALL` and passes
-  `visudo -cf`. The amended configuration commit is `324afe7` pending push and
-  redeployment.
+  `visudo -cf`. The amended configuration commit is `324afe7`.
 - The mandatory permission follow-up review returned no findings. It confirmed
   that the paths now match, rule ordering is effective, and privilege remains
   limited to exact start, stop, and clear actions for `kb-staging`.
+- Force-with-lease pushed configuration commit `324afe7` and pushed matching
+  coordination commit `2438ef9`. The configuration repository's push hook must
+  run inside `nix develop`; the ambient-shell attempt was rejected because its
+  bundled hook gems were unavailable, and the Nix-shell push passed.
+- Awaiting an aitherdev redeployment before running the live sudo allow/deny
+  matrix and staging lifecycle.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
   `693f8da`, followed by state-only completion commits.
 
