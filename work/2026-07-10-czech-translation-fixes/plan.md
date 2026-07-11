@@ -10,15 +10,20 @@ across the Czech catalogs. A further follow-up audits mount-state wording,
 localizes the user-namespace restart notice, and makes node scrub/resilver and
 performance values consistently lower-case. The current follow-up replaces the
 generic WebUI submit label `Go >>` with context-specific actions and fully
-localizes the VPS swap preview. Merge the result to vpsAdmin's default branch
-and update the `vpsadmin` deployment channel in production configuration.
+localizes the VPS swap preview. A subsequent follow-up localizes descriptions
+of configured web services on the Czech vpsf-status page while preserving the
+existing English JSON API contract. Merge each result to its default branch
+and update the corresponding production deployment channel.
 
 ## Affected repositories
 
 - `vpsadmin`: owns the WebUI gettext catalog/templates and the Czech API
   locale used for transaction-chain and dataset-property metadata.
 - `vpsfree-cz-configuration`: pins the merged vpsAdmin revision for the
-  `vpsadmin` channel through the `vpsadminServices` flake input.
+  `vpsadmin` channel, configures monitored vpsf-status web services, and pins
+  the deployed vpsf-status revision.
+- `vpsf-status`: parses configured web-service descriptions, renders the
+  locale-specific status page, and exports the stable JSON status contract.
 
 HaveAPI itself is not changed: it provides the localization mechanism, but the
 reported application strings are defined by vpsAdmin.
@@ -65,6 +70,14 @@ reported application strings are defined by vpsAdmin.
   `Přehled plateb`; translate all payment-table headers; rename the incoming
   payment's contextual English `FROM` header to `PAYER` / `PLÁTCE`; and render
   incoming-payment state values through the API's localized choice metadata.
+- Add an optional `descriptions` map to each configured vpsf-status web
+  service. Select `descriptions.<page locale>` for HTML and fall back to the
+  canonical English `description`; keep `/json` unchanged.
+- Configure exact Czech descriptions for all six production web services:
+  `Webové stránky v češtině`, `Webové stránky v angličtině`, `Znalostní báze
+  v češtině`, `Znalostní báze v angličtině`, `Diskusní fórum`, and the agreed
+  technical term `IRC bouncer`.
+- Update the vpsf-status sample configuration to document the localized shape.
 - Use exact Czech payment headers `PŘIJATO`, `ZAÚČTOVAL`, `ČÁSTKA`, `OD`,
   `DO`, `PLATBA`, `DATUM`, `STAV`, `PLÁTCE`, `ZPRÁVA`, `VS`, `UŽIVATEL`, and
   `MĚSÍCE` according to each table's columns.
@@ -91,6 +104,13 @@ reported application strings are defined by vpsAdmin.
 - Deployment ordering is vpsAdmin merge/push first, then configuration input
   update. Rolling mixed-version operation and rollback to the prior pin are
   safe because all runtime changes are presentation-only.
+- The vpsf-status configuration extension is additive. Old binaries ignore
+  `descriptions`; new binaries render legacy configurations through the
+  existing `description` fallback. The public JSON schema and English values,
+  metrics, persisted probe history, and on-disk formats do not change.
+- The vpsf-status application and configuration can be deployed in either
+  order. Until both are present, the Czech page falls back to English; rollback
+  is safe and requires no operator action.
 
 ## Testing plan
 
@@ -109,3 +129,9 @@ reported application strings are defined by vpsAdmin.
 - Verify the generated configuration input diff and run the repository hook
   checks; evaluate a representative affected vpsAdmin service scope if the
   channel update selects one clearly.
+- Add parser/model and HTTP rendering coverage for localized vpsf-status
+  descriptions, English rendering, missing-translation fallback, and the
+  unchanged `/json` contract.
+- Run `go test ./...`, `make i18n-health`, the declared Lefthook checks, and
+  `nix build .#vpsf-status`; evaluate/build the production vpsf-status machine
+  after updating its input through `confctl`.

@@ -13,9 +13,24 @@
   - base: `origin/master` at `1c85e9b6`
   - latest follow-up base/head: `435f63d7` / `e5446820`
   - planned command: `confctl inputs channel update --commit vpsadmin`
+- `vpsf-status`
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsf-status`
+  - current follow-up base: `origin/master` at `29853c364`
+  - current follow-up head: `3eb6fd86a`
+- `vpsfree-cz-configuration` (vpsf-status follow-up)
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsfree-cz-configuration`
+  - current follow-up base: `origin/master` at `fd70548fc`
+  - configuration text head: `22a5e66b`
+  - merged configuration head: `6e93bc04`
+  - planned command: `confctl inputs channel update --commit vpsf-status`
 
 ## Status
 
+- Complete: localized descriptions of configured web services on the Czech
+  vpsf-status page without changing the stable JSON API; merged vpsf-status at
+  `3eb6fd86a` and production configuration at `6e93bc04`.
 - Complete: localized the administrator payment pages and state values, merged
   vpsAdmin `7e0be5d21`, and updated configuration `fd70548f` to pin
   `vpsadminServices` to `7e0be5d2`.
@@ -31,6 +46,86 @@
 
 ## Commands run
 
+- Verified that `VPSFREE_DEV_SESSION_SLUG` and `bin/dev-session current` both
+  identify this initiative, fetched current vpsf-status and configuration refs
+  over SSH, and created fresh isolated worktrees at `29853c364` and
+  `fd70548fc`. The configuration checkout hook initially reported its expected
+  missing ambient bundle; the worktree was nevertheless created cleanly and
+  hook dependencies will be installed before committing.
+- Read both repository-local guides and the mandatory standalone review skill.
+  Confirmed that configured web-service descriptions currently have one plain
+  string, the HTML table renders it directly for every locale, and `/json`
+  exports the same canonical description as a strict public contract.
+- Added optional per-locale `descriptions` to configured web services, selected
+  the current locale for HTML with canonical-description fallback, and included
+  localized values in the pre-render cache signature. The JSON exporter still
+  reads only the unchanged canonical `Description` field.
+- Updated the sample configuration and added parser, runtime fallback, Czech
+  and English HTTP rendering, JSON contract, and cache-invalidation coverage.
+  Focused config/main tests, `make i18n-health`, `git diff --check`, and the
+  full `go test ./...` suite passed.
+- Installed the declared vpsf-status Lefthook hook through `make hooks`. Commit
+  `3eb6fd86a` (`Localize configured service descriptions`) passed its gofmt and
+  i18n pre-commit hooks. Git printed a non-failing post-commit PATH notice for
+  Lefthook because the commit ran outside the Nix shell; the declared
+  pre-commit hook had already completed successfully.
+- Added exact Czech overrides for all six production web services in
+  `configs/vpsf-status.nix`. `nixfmt --check`, `nix-instantiate --parse`, and
+  `git diff --check` passed. Installed/signed Overcommit in the Nix shell and
+  committed the focused configuration change as `22a5e66b`; Nixfmt passed and
+  commit-message checks emitted only the repository's non-failing 72-column
+  warning, with every line within the required 80 columns.
+- The required exactly-one fresh standalone mandatory reviewer inspected both
+  committed ranges and reported no Blocking, Important, or Advisory findings.
+  It confirmed focused history, exact production text, template escaping,
+  deterministic cache signatures, unchanged JSON serialization, and safe
+  mixed-version deployment. Its residual gaps are the intentionally deferred
+  Nix/package and production configuration builds, no single end-to-end test
+  rendering all six production Nix values, and a low-risk indirect canonical
+  JSON value assertion for the service fixture that has an override.
+- Deferred package verification passed: `nix build .#vpsf-status` produced
+  `/nix/store/3c33jq8pg76s895sqxfx2q455ah6m98q-vpsf-status-3eb6fd8`.
+  A fresh upstream fetch confirmed `origin/master` remains at the reviewed base
+  `29853c364`, so the application commit requires no rebase.
+- Pushed vpsf-status feature head `3eb6fd86a`. Exact-head GitHub i18n health
+  passed, and the CI-tagged integration workflow passed in 13m08s. Fetched
+  upstream again, fast-forwarded the reviewed commit in fresh integration
+  worktree `merge-vpsf-status-descriptions`, reran `make i18n-health`, and
+  pushed `3eb6fd86a` to `origin/master` without a merge commit.
+- The first plain configuration feature push invoked its Overcommit push hook
+  outside the repository's Ruby environment and failed with the documented
+  missing-gem error. Reinstalled the worktree bundle and reran `git push`
+  inside `nix develop`; the feature branch advanced cleanly to `22a5e66b`.
+- Ran `confctl inputs channel update --commit vpsf-status` after the application
+  merge. Generated commit `6e93bc04` changes only `flake.lock`, pins
+  `vpsfStatus` from `29853c36` to merged `3eb6fd86`, preserves the generated
+  message, and passed declared hooks. It is a dependency-only generated update,
+  so the mandatory-review rule exempts it from a second standalone review.
+- Evaluated `configs/vpsf-status.nix` with an empty machine inventory and
+  confirmed the resulting JSON contains all six exact canonical/`cs`
+  description pairs. `flake.lock` resolves `vpsfStatus` to the full reviewed
+  revision `3eb6fd86a79349757e1296e1dc88460df06c7f7c`.
+- The first scoped `confctl build` lacked `-y` and stopped safely at its
+  confirmation prompt. The serial rerun with `-y` evaluated the build plan but
+  could not build `cz.vpsfree/machines/prg/apu`: unrelated carrier configuration
+  requires absent local file `/srv/iso-images/systemrescue-11.01-amd64.iso`.
+  This is the existing prerequisite documented in
+  `notes/vpsfree-cz-configuration/2026-06-04-build-machine-systemrescue-iso.md`;
+  no rerun or dummy production media was used to mask it.
+- Pushed both configuration commits to the retained feature branch. In fresh
+  integration worktree `merge-vpsf-status-configuration`, installed the
+  repository bundle/hooks, fast-forwarded `22a5e66b` and `6e93bc04`, verified
+  `confctl inputs channel ls vpsf-status` reports `vpsfStatus` at `3eb6fd86`,
+  and ran the complete Overcommit pre-commit set; Nixfmt and RuboCop passed.
+  Pushed the fast-forward to configuration `origin/master` at `6e93bc04`.
+- Exact merged vpsf-status i18n health passed on `master`, and its duplicate
+  exact-SHA integration workflow passed in 8m26s. The earlier feature-branch
+  run on the identical `3eb6fd86a` tree also passed in full.
+- Removed transient Nix result, Ruby bundle/helper/cache, RuboCop, and confctl
+  log directories created by this follow-up. Removed all four feature and
+  integration worktrees while retaining local and remote branch refs. Final
+  remote audit confirmed vpsf-status master/feature at `3eb6fd86a` and
+  configuration master/feature at `6e93bc04`.
 - Verified the active initiative slug in both the environment and
   `bin/dev-session current`, fetched vpsAdmin over SSH, and recreated the
   retained vpsAdmin feature worktree at current `origin/master`
