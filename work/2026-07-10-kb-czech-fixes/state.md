@@ -103,7 +103,7 @@
   begin at columns 26 and 51. `tools/check-terminal.cjs`, run by `bin/check`,
   decodes a representative ANSI screen and asserts the complete canonical
   header rather than merely looking for escape-sequence fragments.
-- The final reviewer verified capture head `a2c696f4` and cleared the blocker.
+- The final reviewer verified capture head `008acd3` and cleared the blocker.
   It confirmed the exact decoded header, epilogue removal, pinned-shell check,
   focused commit series, and coordination record, with no remaining findings.
   Long three-machine integration may proceed.
@@ -121,6 +121,92 @@
   backuper1 2 GiB, driven directly by declarative config. These sizes still
   satisfy the two 4 GiB fixture VPSes and are independent of the public
   resource/package values displayed by the WebUI.
+- The next local launch booted and seeded all four VMs, then exposed a runtime
+  identity mismatch: the seed reassigned nodes to production-shaped fixture
+  locations, while RabbitMQ and nodectld still used the original `.lab`
+  domain. Capture commit `70285e0` now derives each node identity and nodectld
+  location domain from the same safe `example.test` location fixture. A fresh
+  mandatory standalone review returned no blocking, important, or advisory
+  findings. The remaining integration check is to confirm the rendered node
+  names, RabbitMQ accounts, and running nodectld daemons.
+- That clean launch confirmed node1's corrected API/RabbitMQ/nodectld identity
+  and a running nodectld, then exposed an osctld readiness race: the pool was
+  visible before `/default` existed, so the first device grant failed with
+  `group not found`. Capture commit `adf33bd` makes the existing readiness loop
+  require both the pool and `/default`, and retains a fail-closed timeout. Its
+  Nix-shell Bash, ShellCheck, diff, and Nix-parse checks pass. The mandatory
+  standalone review returned no findings and confirmed the probe uses the
+  pinned osctld pool-scoped group lookup; live refresh and repeated-refresh
+  checks may proceed.
+- Both live refreshes then passed, including repeated device grants. The first
+  full capture attempt stopped before writing new images because the admin VPS
+  wizard was entered without its required numeric target user; the final URL
+  contained `user=` and the database remained free of VPS records. The first
+  review caught that the members page needed `action=list` and that lookup had
+  to match the designated login column. Amended capture commit `4f761e9`
+  requests an exact login-filtered list, resolves one numeric user ID, and
+  carries it through both fixture VPS wizards. Node syntax and allow-missing
+  inventory checks pass; follow-up review returned no remaining findings.
+- The next diagnostic capture reached `user=2` and preserved the rendered API
+  error: no free node was available because Production requests a 120 GiB
+  disk while each generated ZFS tank had only 20 GiB; the 250 GiB NAS package
+  would fail the same check. Fixture commit `2597243` retains full rendered
+  error text. Cluster commit `78f61f4` makes tank size configurable and gives
+  node1, node2, and backuper1 sparse 320 GiB images, leaving public package
+  values unchanged. Quick Nix-shell checks pass. Fresh review returned no
+  findings and confirmed `truncate`-backed sparse allocation plus sufficient
+  margin below vpsAdmin's projected pool-fill limit. The old 20 GiB runtime
+  state must now be reset because existing tank images are not resized.
+- The 320 GiB cluster then passed node capacity selection, and the preserved
+  error advanced to `no ipv6 address available`: production-shaped defaults
+  request one IPv6 object, while the standalone seed only had IPv4 networks.
+  Capture commit `ac307a2` adds ten individual `/128` addresses in the RFC
+  3849 `2001:db8:106::/64` documentation prefix through the existing generic
+  network seeder. The first mandatory review found that the shared reverse-zone
+  helper is IPv4-only; the amended commit disables reverse-zone creation only
+  for this documentation IPv6 network and retains it for both IPv4 networks.
+  JSON, diff, and inventory checks pass. Follow-up review cleared the finding
+  with no remaining issues; reset/allocation integration remains to confirm
+  that both fixture VPSes consume the seeded IPv6 addresses successfully.
+- The final local-mode acceptance cluster now has two running fixture VPSes:
+  `vps` in Production/Praha on node1 and `playground-vps` in
+  Playground/Playground on node2. Both have documentation IPv4 and IPv6
+  addresses. Dataset `1/data` is mounted at `/srv/data`; NAS dataset `nas` is
+  provisioned with a 250 GiB quota on primary pool `backuper1`.
+- Capture commits `484da75` through `e809e94` make dataset capacity, explicit
+  mounts, NAS provisioning, and flake source filtering idempotent. The live
+  database-setup rerun validated the existing NAS dataset, pool copy, quota,
+  and resource accounting without recreating it.
+- Capture commits `c17a731` through `c1d80b2` tighten action/form crops, add
+  the documented interface address, retain exactly one additional fixture VPS
+  allocation in Playground and Production, include the mount table with VPS
+  datasets, prevent CPU status normalization from replacing requested cores,
+  wait for NFS advanced options to reach full opacity, and anchor section
+  crops at their headings. Fresh mandatory reviews cleared every functional
+  change; the only history advisory was resolved by squashing the interface
+  navigation correction into its owning commit.
+- Determinism commits `b54a39c`, `5673aeb`, and `b82711e` remove the temporary
+  TOTP device ID from route provenance, render a canonical rescue-console
+  summary only after observing the real Alpine login, exclude volatile tips
+  and transaction rows from the rescue sidebar, restore the start-menu timeout
+  without a redundant restart, and allow the real traffic TUI up to 30 seconds
+  to paint its first finite row. Back-to-back TOTP and rescue captures produced
+  identical routes and PNG hashes. Fresh mandatory reviews returned no
+  blocking or important findings.
+- The definitive capture at `62126b5` completed all 60 Czech checkpoints in
+  one process. `nix develop -c bin/check` passes with 60 assets, 63 page
+  references, 60 PNGs, no duplicate hashes, JavaScript/Ruby/shell syntax, and
+  ShellCheck. Contact sheets and direct image inspection confirmed all user
+  feedback, including tight titled forms, populated mounts/NAS, opaque export
+  options, production-shaped environments, corrected TUI, full TOTP content,
+  and the full console/header/keyboard/rescue controls view.
+- Force-with-lease was unnecessary when pushing the finalized capture branch:
+  remote `e0a3502` fast-forwarded to `62126b5`. The repository has no GitHub
+  Actions runs for this branch.
+- Rebuilt the local 30-page/60-media release from capture commit `62126b5`.
+  Reset staging to a fresh production mirror, then staged and API-verified the
+  revised pages and media. Language-link warming verified all 27 paired Czech
+  candidate pages. Production remains untouched.
 
 - The screenshot implementation and original production-draft bundle passed
   their earlier mandatory review. The staging infrastructure and release
