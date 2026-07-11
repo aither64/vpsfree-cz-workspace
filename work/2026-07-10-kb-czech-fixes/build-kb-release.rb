@@ -328,8 +328,8 @@ REPLACEMENTS.each do |page, replacements|
   end
 
   media_by_page[page].each do |asset|
-    legacy = asset.fetch('legacy_media')
-    basename = legacy.split(':').last
+    legacy_ids = [asset.fetch('legacy_media'), *asset.fetch('legacy_media_aliases', [])]
+    basenames = legacy_ids.map { |legacy| legacy.split(':').last }
     replaced = 0
 
     text = text.gsub(/\{\{[^}]+\}\}/) do |media_ref|
@@ -337,13 +337,15 @@ REPLACEMENTS.each do |page, replacements|
       next media_ref unless target
 
       normalized = target.delete_prefix(':')
-      next media_ref unless normalized == legacy || normalized == basename
+      next media_ref unless legacy_ids.include?(normalized) || basenames.include?(normalized)
 
       replaced += 1
       media_ref.sub(target, ":#{asset.fetch('media_id')}")
     end
 
-    abort "#{page}: did not replace media reference #{legacy}" if replaced.zero?
+    if replaced.zero?
+      abort "#{page}: did not replace any media reference from #{legacy_ids.join(', ')}"
+    end
   end
 
   revision = metadata.fetch(page).fetch('revision')
@@ -373,5 +375,14 @@ end
 
 release = { 'schema' => 1, 'wiki' => 'cz', 'pages' => drafts, 'media' => media }
 File.write(File.join(ROOT, 'kb-release.yml'), YAML.dump(release))
+
+new_members = File.read(File.join(ROOT, 'kb-candidates', 'informace', 'novacci.txt'))
+password_media = ':cs:screenshots:vpsadmin:vps-management:set-root-password.png'
+abort 'informace:novacci does not use the root-password form' unless new_members.include?(password_media)
+abort 'informace:novacci still uses the VPS action menu' if new_members.include?('vps-action-menu')
+abort "expected 59 release media objects, got #{media.length}" unless media.length == 59
+abort 'obsolete VPS action menu remains in release' if media.any? do |item|
+  item.fetch('id').include?('vps-action-menu')
+end
 
 puts "wrote release with #{drafts.length} pages and #{media.length} media objects"

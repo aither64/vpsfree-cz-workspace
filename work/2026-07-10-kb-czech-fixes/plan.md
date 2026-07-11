@@ -3,7 +3,7 @@
 ## Goal
 
 Bring the Czech knowledge base in line with the localized vpsAdmin interface,
-replace all 60 vpsAdmin screenshots used by the affected pages, and make both
+replace all 59 unique vpsAdmin screenshots used by the affected pages, and make both
 capture and review workflows repeatable. Review must happen on full staging KB
 instances at the real page and media IDs. Production publication remains a
 separate, explicitly approved action.
@@ -16,7 +16,7 @@ separate, explicitly approved action.
   capture implementation.
 - `vpsfree-cz-configuration`: internal DNS records, reverse proxy, and an
   on-demand declarative `kb-staging` NixOS container on aitherdev.
-- `vpsadmin` at `299147166ecb8459c712ed8a5c4dd14f673663fc`:
+- `vpsadmin` at `7e0be5d215ce554009ff92381bdb54557e618776`:
   read-only authority for Czech UI terminology and captured behavior.
 - Production and staging Czech/English DokuWiki instances. No production
   writes are part of implementation or infrastructure validation.
@@ -56,13 +56,20 @@ the four standard packages. Its fixtures include VPSes `vps` and
 dataset on the primary pool.
 
 All Czech assets are recaptured. Content-aware cropping measures visible text,
-controls, media, and terminals instead of full-width layout containers. Forms
-retain their titles. The CLI monitor replays the real ANSI transcript in
-xterm.js, the WebUI console includes its heading and on-screen keyboard, and
-the rescue screenshot uses the semantic name `vps-console-boot.png` and
-includes the rescue controls in the WebUI sidebar. TOTP documentation replaces
-the real QR and secret with a deterministic, non-scannable placeholder before
-capture.
+complete table borders, controls, media, and terminals instead of full-width
+layout containers. It retains full heading line heights and adds symmetric
+eight-pixel margins. The pinned capture shell provides Liberation Mono for the
+CLI monitor and WebUI console. The WebUI console includes its complete heading
+and on-screen keyboard, and the rescue screenshot uses the semantic name
+`vps-console-boot.png` and includes the rescue controls in the WebUI sidebar.
+TOTP documentation replaces the real QR and secret with a deterministic,
+non-scannable placeholder before capture.
+
+The two historical password-form images `informace:details2.png` and
+`navody:vps:root_passwd.png` map to the single canonical
+`vps-management/set-root-password.png` asset. Capture schema 4 records the
+former as a legacy alias and both source pages use the same generated PNG. The
+incorrect `vps-action-menu.png` capture has no remaining KB use and is removed.
 
 ### Staging infrastructure
 
@@ -159,17 +166,17 @@ approval.
 ## Verification
 
 1. Validate capture schema, production-shaped fixture data, exact
-   scenario/checkpoint mappings, 60 PNG hashes, 63 references, and
+   scenario/checkpoint mappings, 59 PNG hashes, 63 references, and
    language-first paths with `nix develop -c bin/check`.
 2. Run Ruby syntax and unit tests for authentication, ownership, production
    gates, manifest validation, source-drift checks, and staged verification.
-3. Regenerate the screenshot manifest and 30-page/60-media release bundle; fail
+3. Regenerate the screenshot manifest and 30-page/59-media release bundle; fail
    on replacement counts, missing media references, or checksum differences.
 4. Format Nix, run repository hooks, and build
    `cz.vpsfree/machines/aitherdev` through `confctl`.
 5. Run the mandatory standalone change review after functional commits and
    quick checks, before starting the full three-machine capture cluster.
-6. Run the `screenshots` topology, regenerate all 60 Czech captures, inspect
+6. Run the `screenshots` topology, regenerate all 59 Czech captures, inspect
    contact sheets, rebuild the page/media bundle, and restage it at the real
    IDs. Verify all 27 language pairs and every rendered screenshot.
 7. Push feature branches. Production promotion remains a separately approved

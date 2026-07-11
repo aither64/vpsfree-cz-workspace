@@ -547,6 +547,35 @@
   - byte-for-byte page verification, SHA-256 media verification, and rendered
     page/media checks passed.
 
+## 2026-07-11 screenshot review follow-up
+
+- Fetched vpsAdmin and fast-forwarded the clean initiative worktree from
+  `299147166` to `7e0be5d21`, the current `origin/master`. The capture flake and
+  every inventory entry now pin that exact revision.
+- Traced `informace:details2.png` to the incorrect
+  `getting-started/vps-action-menu` asset. No other page uses that capture.
+  Capture schema 4 removes it and records `informace:details2.png` as a legacy
+  alias of `vps-management/set-root-password`, which is now shared by
+  `informace:novacci` and `navody:vps:sprava`. The expected result is 59 unique
+  assets and 63 page references.
+- The crop helper now includes complete table/fieldset boxes, preserves heading
+  line heights, and applies symmetric eight-pixel padding. The Web Console
+  selects its complete H1 element. Synthetic and WebUI terminals use a pinned
+  Liberation Mono font through the Nix-shell Fontconfig configuration.
+- Browser-level crop and font checks pass in `nix develop`, as do the terminal,
+  console, provenance, dataset-link, Ruby syntax, inventory allow-missing, and
+  ShellCheck quick checks.
+- A direct pure `nix eval` of the cluster derivation still hits the pinned
+  vpsAdminOS source's existing unlocked `builtins.getFlake` path. The capture
+  shell evaluates and builds through the repository's normal dev-cluster
+  lifecycle; this failed diagnostic did not change tracked files.
+- Release synchronization and generation now accept legacy aliases, remove
+  stale generated PNGs, require 59 media objects, and fail if
+  `informace:novacci` does not use the canonical root-password form.
+- The capture-side functional changes are committed as `6309288`. The
+  generated schema-4 provenance and refreshed PNG hashes remain intentionally
+  pending until the full cluster capture.
+
 ## Open questions
 
 - Before publication, decide whether to modernize the old Slovak article
