@@ -137,6 +137,22 @@
   `4392ef47`; the previous remote head was the pre-rebase staging commit. No
   GitHub Actions runs exist for the branch, so there were no superseded runs to
   cancel.
+- The first permission redeployment still prompted for a password. Runtime
+  inspection showed that the later generic `%wheel ALL` rule overrode the
+  earlier aither `NOPASSWD` tag. The corrected configuration uses `lib.mkAfter`
+  so the three exact rules are last. Both sudoers and the coordination tooling
+  use the root-controlled `/run/current-system/sw/bin/kb-staging-containerctl`
+  path with one exact action argument.
+- The mandatory follow-up review found that a direct Nix-store path in sudoers
+  would not match the system-profile path used by the tooling under the
+  deployed sudo version. Corrected both sides to use the same profile path.
+- Built corrected aitherdev generation `2026-07-11--10-22-44`; its generated
+  sudoers puts the exact profile-path allowlist after `%wheel ALL` and passes
+  `visudo -cf`. The amended configuration commit is `324afe7` pending push and
+  redeployment.
+- The mandatory permission follow-up review returned no findings. It confirmed
+  that the paths now match, rule ordering is effective, and privilege remains
+  limited to exact start, stop, and clear actions for `kb-staging`.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
   `693f8da`, followed by state-only completion commits.
 
