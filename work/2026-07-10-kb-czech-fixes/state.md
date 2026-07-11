@@ -10,7 +10,7 @@
   `/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin.git`
   - Authority ref: `origin/master`
   - Authority commit:
-    `299147166ecb8459c712ed8a5c4dd14f673663fc`
+    `7e0be5d215ce554009ff92381bdb54557e618776`
   - Feature branch: `2026-07-10-kb-czech-fixes`
   - Worktree:
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-07-10-kb-czech-fixes/vpsadmin`
@@ -32,6 +32,12 @@
     - `838b3ef` (`captures: add standalone reproducible screenshot framework`)
     - `af5525e` (`captures: add Czech vpsAdmin screenshot inventory`)
     - `e0a3502` (`captures: put screenshot language first`)
+    - `0cfad06` (`captures: share the root-password form`)
+    - `e76a040` (`flake: update vpsAdmin 299147166 -> 7e0be5d21`)
+    - `7157a51` (`captures: preserve complete content bounds`)
+    - `3ff72c9` (`captures: provide deterministic terminal fonts`)
+    - `ad41b29` (`fixtures: accept a pending NAS creation`)
+    - `799b385` (`captures: refresh Czech screenshot set`)
   - SSH remote:
     `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
   - GitHub repository created by the user:
@@ -478,6 +484,22 @@
   declared hook environment and succeeded without bypassing the hook.
 - Queried GitHub Actions for both feature branches after push; neither
   repository has a workflow run for this branch.
+- Fast-forwarded the vpsAdmin worktree to current `origin/master` commit
+  `7e0be5d215ce554009ff92381bdb54557e618776`.
+- Captured all 59 Czech checkpoints in one process and ran
+  `nix develop -c bin/check`; schema-4 inventory, 63 references, 59 distinct
+  PNGs, crop/font regression checks, syntax checks, and ShellCheck passed.
+- Pushed `vpsadmin-kb-captures` feature head
+  `799b385635d051a87a90bff2e14787f635904bb8` over SSH. The repository has no
+  GitHub Actions workflows or branch runs.
+- Ran `bin/kb-stage reset --yes`, `bin/kb-release stage --yes`, and
+  `bin/kb-release verify`; the final release contains 30 pages and 59 media
+  objects and remains pending on Czech staging.
+- Ran a Playwright staging acceptance pass over every candidate page. All 30
+  documents and same-origin resources loaded, and all 59 distinct canonical
+  screenshots returned successful `image/png` responses.
+- Stopped dev cluster `2026-07-10-kb-czech-fixes`, removed its GC root, and
+  verified `stopped no-gcroot`. The staging KB container remains `up`.
 
 ## Results
 
@@ -605,6 +627,18 @@
   natural terminal spacing, contextual Czech buttons, populated storage
   fixtures, and the shared root-password form. The branch is pushed and has no
   GitHub Actions runs.
+- Reset the internal staging instance from production after generating the
+  final release. The mirror contains 146 Czech pages, 70 English pages, 58
+  language pairs, and 166 shared media objects. Staged and API-verified the
+  final 30-page/59-media release. Its pending-manifest SHA-256 is
+  `5c27cab9a2569d8e8ff69066b1ed600dff315308b316cf4c81dd410ebee8289c`.
+- The final Playwright pass rendered all 30 candidate pages, checked all
+  same-origin resources, and fetched all 59 distinct screenshot paths as
+  PNGs. The root-password image appears twice at different display widths, as
+  expected, but resolves to one canonical media object.
+- The dedicated local-network capture cluster is stopped and its GC root has
+  been removed. The global KB staging container remains up and owned by this
+  initiative for user review. Production remains untouched.
 
 ## Open questions
 
@@ -624,7 +658,8 @@
 
 ## Cleanup
 
-- The standalone initiative dev cluster has been stopped.
+- The standalone initiative dev cluster has been stopped and its GC root
+  removed.
 - The four initiative worktrees (`vpsadmin`, `vpsfree-sms-gateway`,
   `vpsadmin-kb-captures`, and `vpsfree-cz-configuration`) remain available for
   review and post-deployment acceptance.
@@ -633,3 +668,5 @@
   capture worktree and are not committed.
 - The 30 review pages and 60 review media assets remain in the draft namespace
   for user review.
+- The current 30-page/59-media release remains on the internal staging KB at
+  `http://kb-cs.aitherdev.int.vpsfree.cz/`; production has not been changed.
