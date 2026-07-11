@@ -172,6 +172,25 @@
   after the clear/mirror operation.
 - Pushed reset-fix commit `9e6f2d58` to the configuration feature branch;
   awaiting redeployment for the live reset retry.
+- After redeployment, reset mirrored 146 Czech pages, 70 English pages, and 166
+  shared media objects. Credential contents and modes were identical before
+  and after reset. Staged and API-verified all 30 candidate pages and 60
+  create-only media objects at their production IDs.
+- HTTP checks rendered all 30 pages and fetched all 60 distinct referenced
+  screenshots as valid PNG files. A Playwright check then found six broken
+  template images: the template derivation's versioned name installed it under
+  `lib/tpl/dokuwiki-vpsfree-2023-12-09`, while DokuWiki generated URLs under
+  `lib/tpl/dokuwiki-vpsfree`.
+- Configuration commit `d19575b1` restores the exact configured template name.
+  Hooks and full aitherdev build passed; generation
+  `2026-07-11--10-52-15` contains `lib/tpl/dokuwiki-vpsfree/images/logo.png`.
+- The standalone template follow-up review returned no findings. It confirmed
+  that both language packages retain all 64 template files with identical
+  bytes and modes and change only the directory name. Deployment-only browser
+  validation remains.
+- Pushed template-path correction `d19575b1`; awaiting aitherdev redeployment
+  and a staging-container restart. The staged release remains pending in the
+  persistent container state.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
   `693f8da`, followed by state-only completion commits.
 
