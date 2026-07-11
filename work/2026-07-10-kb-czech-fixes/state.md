@@ -53,6 +53,75 @@
 
 ## Status
 
+- Implementing the user-review follow-up on top of capture commit `e0a3502`.
+  The declarative screenshot topology now uses `node1`, `node2`, and
+  `backuper1` and seeds the supplied four environments, five locations, seven
+  resources, complete package catalog, and per-environment defaults using
+  local IDs and `example.test` domains.
+- Fixture preparation now creates `vps` in Production/Praha,
+  `playground-vps` in Playground/Playground, a `data` child dataset mounted at
+  `/srv/data`, and a `nas` dataset on the primary pool. Export screenshots use
+  NAS while restore screenshots continue to use the labeled snapshot.
+- Added shared content-aware screenshot bounds, protected form input rows from
+  status-value normalization, replaced the TOTP secret/QR before capture,
+  replayed the live monitor's real ANSI transcript in xterm.js, expanded the
+  WebUI console capture, and renamed the rescue checkpoint to
+  `rescue-mode/vps-console-boot`.
+- Added deterministic staging language-link warming and verification. A live
+  quick check warmed English first and then Czech and verified both links for
+  all 27 paired candidate pages; the three candidates without `<page>` remain
+  intentionally unpaired.
+- Quick checks pass: Ruby syntax and 13 staging/release tests (45 assertions),
+  Nix parse, JSON parse, JavaScript syntax in the pinned shell, shellcheck, and
+  inventory validation with the one intentionally not-yet-generated renamed
+  rescue screenshot allowed missing. Nix evaluation reached the cluster
+  derivation graph; an accidental build attempt was stopped and also exposed
+  the expected absence of generated dev-cluster certificates before
+  `bin/devcluster start`.
+- Functional tooling changes are committed. The full screenshot topology and
+  all 60 Czech assets remain behind the mandatory follow-up review gate.
+- Mandatory review of workspace `2899390` and the original broad capture
+  commit `6c8a830` found two blockers and two important issues. Before
+  integration, the capture history was split into production-shaped fixtures,
+  shared rendering mechanics, and scenario corrections; Playground creation
+  and cloning now select Playground explicitly; object-resource `free_chain`
+  uses the pinned model contract; and staging accepts an identical candidate
+  page on retry after a transient language-render failure. A regression test
+  covers that retry path. The reviewer also noted that the old orphan rescue
+  PNG must be removed when the renamed artifact is generated.
+- A fresh follow-up review found that README changes belonged in the first two
+  capture commits, dataset discovery still accepted guessed or ambiguous
+  matches, and the raw monitor stream retained changing numeric cells and the
+  `script` termination epilogue. The rewritten capture series now documents
+  topology/fixtures in its owning commit and crop mechanics in the next;
+  dataset and mount discovery fail on missing or ambiguous fixture state; and
+  the validated ANSI stream receives deterministic fixed-width cell overlays
+  after its wrapper epilogue is removed. The target VPS row is derived from the
+  captured cursor position instead of hard-coded.
+- The final review found that the two timestamp overlays used the TUI's
+  single-character refresh columns instead of the timestamp starts. They now
+  begin at columns 26 and 51. `tools/check-terminal.cjs`, run by `bin/check`,
+  decodes a representative ANSI screen and asserts the complete canonical
+  header rather than merely looking for escape-sequence fragments.
+- The final reviewer verified capture head `a2c696f4` and cleared the blocker.
+  It confirmed the exact decoded header, epilogue removal, pinned-shell check,
+  focused commit series, and coordination record, with no remaining findings.
+  Long three-machine integration may proceed.
+- The first bridge-mode start correctly refused because another active
+  initiative (`2026-07-02-haveapi-i18n`) owns the shared service address
+  `172.16.106.53`. Its runner and VMs are live, so they were not stopped or
+  reused. Bridge networking is genuinely unavailable; this capture run uses
+  the repository's isolated `--network local` mode as the documented fallback.
+- The first local launch built the full topology and started all four VMs, but
+  the three vpsAdminOS guests remained immediately after ROM because
+  `/dev/shm` reached 100%. The unrelated integration test and long-lived bridge
+  cluster already consumed 35 GiB of the 48 GiB tmpfs; our original 8/8/4 GiB
+  node backends could not coexist. Only this partial cluster was stopped. VM
+  runtime capacity is now services 4 GiB, node1 4 GiB, node2 4 GiB, and
+  backuper1 2 GiB, driven directly by declarative config. These sizes still
+  satisfy the two 4 GiB fixture VPSes and are independent of the public
+  resource/package values displayed by the WebUI.
+
 - The screenshot implementation and original production-draft bundle passed
   their earlier mandatory review. The staging infrastructure and release
   workflow have now passed their required fresh standalone review with no

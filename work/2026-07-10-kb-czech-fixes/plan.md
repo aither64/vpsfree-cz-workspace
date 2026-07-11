@@ -45,6 +45,25 @@ Git versions capture files and DokuWiki versions published media. A future UI
 can use a new capture driver and scenario set while preserving stable asset
 IDs where the documented concept is unchanged.
 
+The `screenshots` topology mirrors the public production shape without copying
+production identifiers: Production/Praha runs on `node1`,
+Playground/Playground on `node2`, and Praha storage/Praha Storage on
+`backuper1`. Brno and Staging remain display-only. Public environment,
+location, cluster-resource, and package labels and values are fixture data;
+domains and IDs are stable local values. The documentation account receives
+the four standard packages. Its fixtures include VPSes `vps` and
+`playground-vps`, a `data` subdataset mounted at `/srv/data`, and a `nas`
+dataset on the primary pool.
+
+All Czech assets are recaptured. Content-aware cropping measures visible text,
+controls, media, and terminals instead of full-width layout containers. Forms
+retain their titles. The CLI monitor replays the real ANSI transcript in
+xterm.js, the WebUI console includes its heading and on-screen keyboard, and
+the rescue screenshot uses the semantic name `vps-console-boot.png` and
+includes the rescue controls in the WebUI sidebar. TOTP documentation replaces
+the real QR and secret with a deterministic, non-scannable placeholder before
+capture.
+
 ### Staging infrastructure
 
 `vpsfree-cz-configuration` declares one stopped-by-default NixOS container on
@@ -83,6 +102,12 @@ first clears all staging DokuWiki state and history, then mirrors the current
 production Czech/English pages and their shared media. `release` stops the
 container and clears ownership, but refuses to discard a pending review bundle
 without an explicit override.
+
+The installed `mlfarm` translation map is populated lazily. Reset and release
+tooling therefore renders every English target before its Czech `<page>`
+source and verifies that both rendered pages contain both language links. The
+27 paired candidate pages must pass this check; the three intentionally
+unpaired pages remain unaffected.
 
 ### Candidate and publication lifecycle
 
@@ -133,14 +158,19 @@ approval.
 
 ## Verification
 
-1. Validate capture schema, exact scenario/checkpoint mappings, 60 PNG hashes,
-   63 references, and language-first paths with `nix develop -c bin/check`.
+1. Validate capture schema, production-shaped fixture data, exact
+   scenario/checkpoint mappings, 60 PNG hashes, 63 references, and
+   language-first paths with `nix develop -c bin/check`.
 2. Run Ruby syntax and unit tests for authentication, ownership, production
    gates, manifest validation, source-drift checks, and staged verification.
 3. Regenerate the screenshot manifest and 30-page/60-media release bundle; fail
    on replacement counts, missing media references, or checksum differences.
 4. Format Nix, run repository hooks, and build
    `cz.vpsfree/machines/aitherdev` through `confctl`.
-5. Run the mandatory standalone change review after commits and quick checks.
-6. Push feature branches. Runtime staging acceptance waits for operator
-   deployment and is not represented as completed by the build test.
+5. Run the mandatory standalone change review after functional commits and
+   quick checks, before starting the full three-machine capture cluster.
+6. Run the `screenshots` topology, regenerate all 60 Czech captures, inspect
+   contact sheets, rebuild the page/media bundle, and restage it at the real
+   IDs. Verify all 27 language pairs and every rendered screenshot.
+7. Push feature branches. Production promotion remains a separately approved
+   operation.
