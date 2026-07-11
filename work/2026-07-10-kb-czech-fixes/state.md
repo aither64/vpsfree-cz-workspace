@@ -572,9 +572,21 @@
 - Release synchronization and generation now accept legacy aliases, remove
   stale generated PNGs, require 59 media objects, and fail if
   `informace:novacci` does not use the canonical root-password form.
-- The capture-side functional changes are committed as `6309288`. The
-  generated schema-4 provenance and refreshed PNG hashes remain intentionally
-  pending until the full cluster capture.
+- The mandatory standalone review found no correctness, security,
+  compatibility, or deployment issues. It blocked the original broad capture
+  commit only because the pin, alias migration, crop behavior, and font setup
+  could be reviewed independently.
+- Rewrote the unmerged capture change into four focused commits with an
+  identical final tree: `0cfad06` (password-form alias/removal), `e76a040`
+  (vpsAdmin pin), `13afc48` (crop and console heading), and `e2eb35e`
+  (terminal fonts). Repeated every quick check after the rewrite; all pass.
+  The generated schema-4 provenance and refreshed PNG hashes remain
+  intentionally pending until the full cluster capture.
+- Bridge networking remains occupied by the running
+  `2026-07-02-haveapi-i18n` initiative. This run will reuse the already
+  isolated `local` capture-cluster configuration. `/dev/shm` has 33 GiB free,
+  sufficient for this topology's 14 GiB VM allocation without disturbing the
+  other cluster.
 
 ## Open questions
 
