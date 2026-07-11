@@ -578,7 +578,7 @@
   could be reviewed independently.
 - Rewrote the unmerged capture change into four focused commits with an
   identical final tree: `0cfad06` (password-form alias/removal), `e76a040`
-  (vpsAdmin pin), `13afc48` (crop and console heading), and `e2eb35e`
+  (vpsAdmin pin), `7157a51` (crop and console heading), and `3ff72c9`
   (terminal fonts). Repeated every quick check after the rewrite; all pass.
   The generated schema-4 provenance and refreshed PNG hashes remain
   intentionally pending until the full cluster capture.
@@ -587,6 +587,24 @@
   isolated `local` capture-cluster configuration. `/dev/shm` has 33 GiB free,
   sufficient for this topology's 14 GiB VM allocation without disturbing the
   other cluster.
+- A completely reset cluster exposed the two-stage seed lifecycle: database
+  setup creates the transaction-backed NAS records, then the idempotence seed
+  can run before nodectld confirms them. Commit `ad41b29` accepts only the
+  coherent four-record `confirm_create` state in addition to the fully
+  confirmed state; missing, mixed, and unsupported states remain drift. A
+  fresh mandatory review returned no blocking or important findings, and its
+  unsupported-state test advisory was incorporated before the live update.
+- The live services update reran the seed successfully, refreshed both nodes,
+  and preserved the dedicated cluster. Representative VPS-management, Web
+  Console, and CLI-monitor captures passed visual inspection.
+- Capture commit `799b385` regenerates all 59 Czech assets in one process.
+  Strict `nix develop -c bin/check` passes with schema-4 provenance, 63 page
+  references, 59 distinct PNG hashes, crop/font regression checks, Ruby/Node
+  syntax, and ShellCheck. Refreshed contact sheets confirm complete right
+  borders with symmetric margins, the complete console title and keyboard,
+  natural terminal spacing, contextual Czech buttons, populated storage
+  fixtures, and the shared root-password form. The branch is pushed and has no
+  GitHub Actions runs.
 
 ## Open questions
 

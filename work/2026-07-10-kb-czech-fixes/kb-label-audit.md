@@ -172,12 +172,18 @@ rechecked for revision drift before editing.
 
 ## Screenshot recapture plan
 
-There are 63 affected references to 60 unique images on 18 pages. Their media
+There are 63 affected references to 59 unique replacement images on 18 pages. Their media
 revisions range from 2014-10-29 to 2025-03-16. Recapture every listed screen
 from current software instead of editing pixels in old images. Where the
 component is localized, use Czech; where current vpsAdminOS console or CLI text
 remains English, recapture the current interface and treat the asset as
 language-neutral content stored initially with the Czech set.
+
+The legacy images `informace:details2.png` and
+`navody:vps:root_passwd.png` both show the root-password form and therefore map
+to the single canonical `vps-management/set-root-password.png` capture. The
+previously proposed `vps-action-menu.png` did not match the surrounding text in
+`informace:novacci` and has no remaining KB placement.
 
 | Page | Media to recapture |
 | --- | --- |
