@@ -47,7 +47,9 @@
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-07-10-kb-czech-fixes/vpsfree-cz-configuration`
   - Base: `origin/master` at
     `435f63d77be0aa20ab48cec334340e9fc94ac163`
-  - Commit: `bbe8a5db` (`cluster: add on-demand KB staging instances`)
+  - Commits after rebasing onto current `origin/master`:
+    - `594f4c55` (`cluster: add on-demand KB staging instances`)
+    - `4392ef47` (`cluster: delegate KB staging container lifecycle`)
 
 ## Status
 
@@ -121,6 +123,20 @@
   Passwordless sudo is limited to the helper's exact `start`, `stop`, and
   `clear` command lines. Unprivileged status continues to call
   `nixos-container status` directly.
+- Built aitherdev generation `2026-07-11--09-49-03`, inspected the generated
+  sudoers and helper outputs, and validated the sudoers with `visudo -cf`.
+  Unknown actions and extra helper arguments exit with status 2.
+- A fresh mandatory security review found that the live
+  `nixos-container status` output is lowercase `up`/`down`, while the first
+  reset guard expected uppercase `UP`. Amended coordination commit `9553f71`
+  centralizes lowercase status parsing and adds coverage for `up`, `down`,
+  uppercase output, and command failure. The reviewer returned no remaining
+  findings. Post-redeployment validation must exercise the sudo allow/deny
+  matrix and the complete lifecycle.
+- Force-with-lease pushed the rebased configuration feature branch through
+  `4392ef47`; the previous remote head was the pre-rebase staging commit. No
+  GitHub Actions runs exist for the branch, so there were no superseded runs to
+  cancel.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
   `693f8da`, followed by state-only completion commits.
 
