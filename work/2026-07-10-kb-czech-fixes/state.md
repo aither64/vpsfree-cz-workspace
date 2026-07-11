@@ -156,8 +156,22 @@
   coordination commit `2438ef9`. The configuration repository's push hook must
   run inside `nix develop`; the ambient-shell attempt was rejected because its
   bundled hook gems were unavailable, and the Nix-shell push passed.
-- Awaiting an aitherdev redeployment before running the live sudo allow/deny
-  matrix and staging lifecycle.
+- After redeployment, the live sudo boundary passed: exact start and stop work;
+  unknown actions, extra arguments, direct `nixos-container`, direct
+  `systemctl`, and shell execution are all rejected by `sudo -n`. Unprivileged
+  status reports lowercase `up` and `down` as expected.
+- The first live reset reached the permitted clear action, then failed because
+  `systemd-tmpfiles --create` tried to change permissions on the intentionally
+  read-only credential bind mount. Stopped the partially cleared container.
+- Configuration commit `9e6f2d58` excludes only `/private/kb-staging` from the
+  reset-time tmpfiles pass. Repository hooks and a full aitherdev build passed;
+  generation `2026-07-11--10-35-32` contains the corrected clear script.
+- The standalone reset-fix review returned no findings and confirmed that all
+  writable wiki and shared-media tmpfiles rules still run. After redeployment,
+  reset validation must also compare credential hashes and modes before and
+  after the clear/mirror operation.
+- Pushed reset-fix commit `9e6f2d58` to the configuration feature branch;
+  awaiting redeployment for the live reset retry.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
   `693f8da`, followed by state-only completion commits.
 
