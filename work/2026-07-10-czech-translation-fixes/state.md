@@ -16,6 +16,9 @@
 
 ## Status
 
+- Complete: localized the administrator payment pages and state values, merged
+  vpsAdmin `7e0be5d21`, and updated configuration `fd70548f` to pin
+  `vpsadminServices` to `7e0be5d2`.
 - Complete: replaced generic `Go >>` submit labels, fully localized the VPS
   swap preview, merged vpsAdmin `1a81fb282`, and updated configuration
   `fa0b1b93` to pin `vpsadminServices` to `1a81fb28`.
@@ -28,6 +31,108 @@
 
 ## Commands run
 
+- Verified the active initiative slug in both the environment and
+  `bin/dev-session current`, fetched vpsAdmin over SSH, and recreated the
+  retained vpsAdmin feature worktree at current `origin/master`
+  (`1a81fb282`). Read the repository instructions and Czech terminology guide.
+- Audited all requested payment contexts. The shared WebUI `Login` msgid has
+  five call sites across four source files; all identify a user account name,
+  so its Czech value can safely change from `Přihlášení` to `Přezdívka`
+  without changing English. Every `Amount` use is monetary and can safely
+  share `Částka`.
+- Confirmed incoming-payment states are exactly `queued`, `unmatched`,
+  `processed`, and `ignored`; the API already provides Czech labels `ve
+  frontě`, `bez shody`, `zpracováno`, and `ignorováno`. The list currently
+  bypasses those labels and prints the raw enum, while existing
+  `api_param_choice_label()` provides the required localized rendering and a
+  forward-compatible raw fallback.
+- The first locale-generation attempt used a repository-root path inside
+  `nix develop .#webui`; that shell changes into `webui/`, so the script was
+  not found and no catalog was changed. Reran with the shell-relative
+  `lang/scripts/locales-update` path successfully and recorded the reusable
+  behavior in `notes/vpsadmin/2026-07-11-webui-dev-shell-cwd.md`.
+- Implemented gettext-backed headers for the payset, incoming-payment, and
+  payment-history tables; changed only the contextual incoming-payment English
+  header from `FROM` to `PAYER`; and rendered list state values with
+  `api_param_choice_label()` using the same API descriptor as the filter.
+- Added exact Czech catalog values for all agreed labels and headers, including
+  `Login` / `Přezdívka`, and regenerated POT/PO/MO artifacts. Added a PHPUnit
+  catalog regression covering all exact payment strings and Playwright
+  assertions for all three pages, all four state choices, the processed row,
+  and failure-safe restoration of English.
+- Locale update/check/health passed with only the two existing embedded-URL
+  warnings. PHP and Node syntax checks, `git diff --check`, the full WebUI
+  PHPUnit suite (63 tests, 238 assertions), and CI selection tests (16 runs,
+  55 assertions) passed; the exact browser target is `webui#users-admin`.
+- The first two manual Overcommit runs found the fresh worktree's API bundle
+  absent, so `VpsadminApiI18n` could not resolve ActiveRecord; other declared
+  hooks passed. Installed the API bundle in `nix develop .#api` and reran all
+  hooks without bypassing any. Migration specs, API/WebUI i18n, Nixfmt, PHP CS
+  Fixer, and RuboCop all passed.
+- Committed the complete payment-page change as `6268b5452` (`webui: localize
+  payment administration pages`) on base `1a81fb282`. Commit hooks all passed;
+  the message-width hook emitted only non-failing 72-column warnings and every
+  line is within the required 80 columns.
+- Launched the required exactly-one standalone mandatory reviewer with the
+  user acceptance criteria, initiative plan/state, base/head, commit rationale,
+  quick verification, and compatibility/deployment assumptions. Long browser
+  integration remains paused until the review result is handled.
+- Mandatory review reported no Blocking or Important findings. Its one
+  Advisory correctly noted that the terminology guide still listed `login` as
+  unconditionally untranslated and that the state audit understated the
+  catalog references. Clarified that account-name `Login` labels are
+  `Přezdívka`, retained untranslated `login` only for authentication-process
+  prose, and corrected the audit to five call sites across four source files.
+- Amended the focused commit to `7e0be5d21` with the terminology-guide fix;
+  all declared commit hooks passed again. The same standalone reviewer cleared
+  the amended series with no Blocking, Important, or Advisory findings and
+  confirmed the commit remains focused and clean.
+- Residual review gaps are limited to the intended long-test phase: the
+  `webui#users-admin` scenario has not yet run, only `processed` is rendered in
+  a list row while the other states are asserted as API-backed select options,
+  and the established shared-helper raw fallback is not directly retested.
+- Pushed reviewed feature head `7e0be5d21`. Exact-head GitHub WebUI PHPUnit
+  and i18n health workflows passed; selected integration CI remains active on
+  the same SHA without a reported failure.
+- Ran focused `webui#users-admin` on the exact reviewed head. The Playwright
+  example passed in 448.39 seconds, including all new Czech payment assertions;
+  the script passed in 942.3 seconds and the complete VM test passed in
+  1,252.26 seconds.
+- Fetched current upstream refs and confirmed vpsAdmin `origin/master` remained
+  at base `1a81fb282`. Fast-forwarded reviewed head `7e0be5d21` in fresh
+  integration worktree
+  `worktrees/2026-07-10-czech-translation-fixes/merge-vpsadmin-payment-pages`,
+  reran WebUI locale check successfully, and pushed it to `origin/master`.
+- Recreated the retained configuration feature worktree at current
+  `origin/master` (`fa0b1b93`). Its ambient checkout hook emitted the known
+  missing-gem warning while leaving a clean worktree; installed the bundle and
+  installed/signed Overcommit hooks in `nix develop`.
+- Ran `confctl inputs channel update --commit vpsadmin`. Generated commit
+  `fd70548f` changes only `flake.lock`, pins `vpsadminServices` from
+  `1a81fb28` to merged vpsAdmin `7e0be5d2`, preserves the generated message,
+  and passed declared hooks.
+- Verified the updated channel and built all 11
+  `cz.vpsfree/vpsadmin/*` service machines successfully as generation
+  `2026-07-11--17-09-38`.
+- Skipped another mandatory standalone review for configuration commit
+  `fd70548f`: it is a confctl-generated dependency-only `flake.lock` update
+  with no configuration or design changes, which the review rule exempts.
+- Pushed configuration feature commit `fd70548f`, fast-forwarded it in fresh
+  integration worktree
+  `worktrees/2026-07-10-czech-translation-fixes/merge-vpsfree-cz-configuration-payment-pages`,
+  reverified channel `vpsadminServices` at `7e0be5d2`, and pushed it to
+  `origin/master`.
+- Exact merged-head WebUI PHPUnit and i18n health workflows passed on
+  `7e0be5d21`. Feature and master selected-integration CI remain in progress on
+  that exact SHA without reported failures. Cancelled superseded feature and
+  master CI runs `29153123293` and `29153196173`, whose old head was
+  `1a81fb282`; current-head runs were left untouched.
+- Removed transient Composer, Ruby bundle, RuboCop, confctl log/helper, and
+  temporary commit-message files. Removed all four payment follow-up feature
+  and integration worktrees while retaining branch refs as required.
+- Final remote audit confirmed both vpsAdmin `master` and its retained feature
+  branch at `7e0be5d21`, and both configuration `master` and its retained
+  feature branch at `fd70548f`. No initiative worktrees remain.
 - Replaced all 22 live `Go >>` uses with context-specific English actions and
   Czech infinitive translations, including the requested `Set resources` /
   `Nastavit prostředky` and `Set features` / `Nastavit funkce` labels.

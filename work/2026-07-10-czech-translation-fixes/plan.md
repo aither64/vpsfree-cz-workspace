@@ -60,6 +60,14 @@ reported application strings are defined by vpsAdmin.
   running.
 - Add the exact ZFS names to the five advanced dataset-property labels:
   `compression`, `recordsize`, `atime`, `relatime`, and `sync`.
+- Localize the three administrator payment views. Keep English `Login` and
+  translate it as `Přezdívka`; use `Částka`, `Platby uživatele`, and
+  `Přehled plateb`; translate all payment-table headers; rename the incoming
+  payment's contextual English `FROM` header to `PAYER` / `PLÁTCE`; and render
+  incoming-payment state values through the API's localized choice metadata.
+- Use exact Czech payment headers `PŘIJATO`, `ZAÚČTOVAL`, `ČÁSTKA`, `OD`,
+  `DO`, `PLATBA`, `DATUM`, `STAV`, `PLÁTCE`, `ZPRÁVA`, `VS`, `UŽIVATEL`, and
+  `MĚSÍCE` according to each table's columns.
 - Regenerate the WebUI POT/PO/MO catalogs with the repository scripts.
 - Fast-forward the reviewed vpsAdmin feature commit into current upstream
   `master` and push it.
@@ -90,6 +98,10 @@ reported application strings are defined by vpsAdmin.
 - Run focused WebUI regression tests for template/localization behavior.
 - Update Playwright selectors for the contextual submit labels and extend the
   existing swap preview coverage to assert both English and Czech rendering.
+- Extend the existing administrator payment Playwright scenario with exact
+  Czech payset, incoming-payment, detail, and payment-history assertions,
+  including all four localized state choices and failure-safe restoration of
+  English.
 - Run focused API locale specs or the repository's equivalent localization
   checks.
 - Run mandatory pre-commit hooks and the standalone mandatory change review
