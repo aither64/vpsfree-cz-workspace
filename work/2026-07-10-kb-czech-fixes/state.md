@@ -191,6 +191,19 @@
 - Pushed template-path correction `d19575b1`; awaiting aitherdev redeployment
   and a staging-container restart. The staged release remains pending in the
   persistent container state.
+- After deployment, stopped and restarted the container onto the corrected
+  generation. The pending release survived and `kb-release verify` still
+  matched all 30 pages and 60 media objects.
+- Final Playwright validation covered all 30 page URLs, 304 rendered image
+  instances, all 60 distinct KB screenshots, and the six previously missing
+  template assets. No same-host document, stylesheet, script, image, or font
+  requests failed. The first pass's `networkidle` timeout on the SSH article
+  was caused by its external embed; the final check waits for DOM completion
+  and validates all same-host resources explicitly.
+- Visually inspected full-page renders of `informace:novacci`,
+  `navody:vps:datasety`, and `navody:vps:konzole`; the template, screenshot
+  cropping, scaling, and article layout render correctly. Czech staging is
+  ready for user review at `http://kb-cs.aitherdev.int.vpsfree.cz/`.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
   `693f8da`, followed by state-only completion commits.
 
