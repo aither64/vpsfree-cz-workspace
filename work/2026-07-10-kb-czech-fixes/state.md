@@ -112,6 +112,15 @@
   `cs:screenshots:vpsadmin:<topic>:<view>.png`.
 - The old production draft set will be removed only after staging has been
   deployed and verified, with separate explicit production approval.
+- After the first operator deployment, both internal names resolved to
+  `172.16.106.40` and all 30 production source pages still matched the release
+  manifest. Runtime start then exposed that aitherdev's general sudo policy
+  requires an interactive password, which Codex cannot provide.
+- Replaced direct privileged `nixos-container` calls with a Nix-store-backed
+  helper that validates one action and always targets only `kb-staging`.
+  Passwordless sudo is limited to the helper's exact `start`, `stop`, and
+  `clear` command lines. Unprivileged status continues to call
+  `nixos-container status` directly.
 - Final coordination commits are `e29896d`, `e89a91c`, `a14b15e`, and
   `693f8da`, followed by state-only completion commits.
 

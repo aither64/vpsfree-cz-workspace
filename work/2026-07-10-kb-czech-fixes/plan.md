@@ -61,6 +61,9 @@ aitherdev:
   media are used;
 - production OAuth, OAuth secrets, and analytics are excluded;
 - generated local `authplain` API users are used only for staging.
+- a root-owned `kb-staging-containerctl` helper accepts only `start`, `stop`,
+  and `clear` for the fixed container; aither has passwordless sudo access to
+  those three exact helper invocations, not to `nixos-container` generally.
 
 The internal sites intentionally use HTTP, consistent with other aitherdev
 services. They are reachable only through internal DNS/VPN firewall rules.
