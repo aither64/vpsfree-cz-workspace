@@ -765,6 +765,20 @@
   production publication waits for user review.
 - The semantic DokuWiki annotation/plugin work is a later initiative after the
   English rollout; it is not part of the current production publication gate.
+- Cleanup commit `78937eb` adds an explicit 30-page/60-media manifest and a
+  production-gated cleanup runner. Its live read-only check verifies every
+  current object against the historical review checksum.
+- The mandatory standalone cleanup review found no blockers and two important
+  safety gaps: non-owning-wiki page absence was checked only after mutation,
+  and partial retry coverage exercised only the fully absent state. The amended
+  commit now aborts during preflight if any draft page unexpectedly exists on
+  the other wiki and covers mixed partial state, repeated cleanup, and
+  cross-wiki media hash disagreement. All eight cleanup tests and the existing
+  71 KB/session tests pass; a fresh live check still reports 30/30 pages and
+  60/60 shared media objects.
+- DokuWiki deletion has no compare-and-swap primitive. Cleanup will therefore
+  run immediately after the final full preflight; versioned deletion is the
+  recovery mechanism for the remaining narrow edit race.
 
 ## Cleanup
 
