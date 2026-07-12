@@ -855,3 +855,17 @@
 - Corrected stale cleanup status and the inventory note: seven capture concepts
   are unembedded, while two of the 52 embedded concepts are each reused on two
   pages, producing 54 total references.
+- Rebuilt after review and reran all quick checks: 16 staging tests with 51
+  assertions, 30 KB-page tests with 120 assertions, eight cleanup tests with 29
+  assertions, and 28 development-session tests with 144 assertions all pass.
+- Reset staging from the post-publication production baseline: 116 Czech pages,
+  70 English pages, 58 language pairs, and 165 shared media objects. Staged and
+  API-verified the English 14-page/59-media release; all 14 exact counterpart
+  pairs contain both rendered language links.
+- Browser verification rendered all 14 English candidate pages, loaded all 52
+  distinct embedded canonical screenshots, and directly fetched all 59
+  manifest media objects as PNGs. Pending English release digest is
+  `4ed52cd3742c7b8cab5214aa38488928928251d36264e41286d708b7d2feb6c7`.
+- The dedicated screenshot cluster is stopped and its GC root removed. The KB
+  staging container remains up and owned by this initiative for user review at
+  `http://kb-en.aitherdev.int.vpsfree.cz/`. English production is unchanged.
