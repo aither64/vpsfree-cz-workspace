@@ -1,0 +1,30 @@
+====== Start Menu ======
+The start menu can be seen in [[manuals:vps:console|VPS console]] when the VPS
+is starting. The menu can be used to configure the init command to be used or
+to start a shell. Without user interaction, the menu starts ''/sbin/init''
+from the VPS. This command can be sligthly different depending on the distribution.
+
+{{navody:vps:vps_console_start_menu.png?600}}
+
+  * **Start system** will start the system as usual.
+  * **Run shell** will start ''/bin/sh'' from the VPS. After the shell is closed, the start menu reappears. This can be used to access the file system when the system is not starting, e.g. due to a configuration error.
+  * **Run custom command** can be used to add arguments to the init process or to run a different process as init.
+
+The start menu can be configured in VPS details in vpsAdmin:
+
+{{navody:vps:vps_details_start_menu.png?600}}
+
+By default, the start menu is enabled on all VPS with
+a timeout of 5 seconds. Setting the timeout to **0** will disable the start menu
+completely.
+
+===== NixOS generations =====
+For VPS with NixOS, the start menu allows one to choose which system generation
+to start, similar to a standard boot loader like GRUB. Notice the second menu
+item:
+
+{{navody:vps:vps_console_start_menu_nixos.png?600}}
+
+Accessing it will open a sub menu with available generations:
+
+{{navody:vps:vps_console_start_menu_generations.png?600}}

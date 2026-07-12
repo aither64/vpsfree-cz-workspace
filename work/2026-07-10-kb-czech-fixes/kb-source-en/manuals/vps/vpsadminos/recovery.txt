@@ -1,0 +1,182 @@
+====== VPS recovery ======
+
+vpsAdmin allows members to solve most of the problems causing the VPS to not
+start or when it does not respond over network. VPS can be broken e.g. during
+system upgrade, modification or configuration.
+
+[[information:support|Our support]] can of course help you recover your VPS,
+but we try to give our members tools to be able to help themselves if they can.
+
+
+===== Identifying VPS state =====
+
+In order to choose an appropriate course of action, you need to find out what
+state the VPS is currently in. In any case, you need the remote console
+in vpsAdmin, which can reveal important information.
+
+==== VPS start failure ====
+
+The VPS has a broken or missing init system or other essential component.
+Confinue with [[manuals:vps:vpsadminos:recovery#rescue_mode|rescue mode]].
+
+On rare occasions the problem can be on the node and out of your reach. This is
+the case e.g. if you can see lxc-related errors in the console. Please
+[[information:support|contact our support]] if you suspect this is the case.
+
+==== VPS is running ====
+The init system can be hung up or the network is not configured. Open the remote
+console in vpsAdmin to see what is going on, which services or not running or
+blocking the start process, etc.
+
+===== Rescue mode =====
+VPS can be booted into a clean system from one of our templates that are used to
+create new VPSes. It's something like booting a live CD. This temporary system
+can be used to access and repair the VPS.
+
+The rescue mode can be enabled from VPS details in vpsAdmin, form
+**Boot from VPS template**:
+
+{{ :navody:vps:vpsadminos:vps-details-boot.png?700 |}}
+
+The rescue mode can also be used directly from the
+remote console in the right column.
+
+{{ :navody:vps:vpsadminos:vps-console-boot.png?700 |}}
+
+You can choose which distribution to boot. VPS in a rescue mode has the same
+configuration as before, e.g. the IP addresses, DNS resolvers, resources and so
+on are all the same. If you have configured SSH keys in vpsAdmin, they
+will be installed in the rescue system as well. It can take several minutes to
+prepare the rescue system, depending on the distribution size.
+
+The original system from the VPS is by default mounted to ''/mnt/vps'' inside
+the rescue system.
+
+To leave the rescue mode, simply restart the VPS. Any action that causes the VPS
+to restart will take it out of the rescue mode. The rescue system is temporary
+and is **immediately deleted** when the VPS is restarted.
+
+==== Chroot ====
+
+Depending on the problem, it might be necessary to chroot inside the damaged
+system, e.g. to access the packaging system.
+
+If the root filesystem is mounted to ''/mnt/vps'', the chroot sequence can be:
+
+<code>
+# cd /mnt/vps
+# mount -t proc proc proc/
+# mount -t sysfs sys sys/
+# mount -o bind /dev dev/
+# chroot /mnt/vps /bin/bash
+</code>
+
+Now you can use programs from the VPS to repair it.
+
+The concrete steps depend on the distribution - check logs, fix the packaging
+system, etc.
+
+After you're done, leave the chroot and unmount it:
+
+<code>
+# umount proc
+# umount sys
+# umount dev
+</code>
+
+==== Comparing with a backup ====
+If the problem has occurred within the last 14 days, it is possible to restore
+the VPS from backup or to compare it with a backup and try to repair it.
+
+Backups can be exported in vpsAdmin and mounted to the VPS over NFS,
+see [[manuals:vps:vpsadminos:storage#exports|exports]]. Then you can compare
+e.g. directory ''/etc''. If the backup is mounted to ''/mnt/snapshot'',
+the command to compare it could be:
+
+<code>
+# diff -qr /mnt/vps/etc /mnt/snapshot/etc
+</code>
+
+Examine the differences and attempt to resolve the issue.
+
+===== Network configuration =====
+If the VPS is running, but is not accessible over network, check that:
+
+  * It has IP adressess: ''ip addr''
+  * It has a default route: ''ip route list''
+  * The access is not blocked by a firewall rule or policy
+
+<note warning>
+The commands below are meant to be used from the remote console, not from chroot
+in the rescue mode!
+</note>
+
+==== IP addresses and routing ====
+If the IP address is missing, you can add it as (only addresses assigned through
+vpsAdmin will work):
+
+<code>
+ip addr add <ip adresa>/<prefix> dev venet0
+ip addr add 1.2.3.4/32 dev venet0
+</code>
+
+If the default route is missing, add it with:
+
+<code>
+ip route add 255.255.255.254/32 dev venet0
+ip route add default via 255.255.255.254 dev venet0
+</code>
+
+Addresses and routes configured like this will dissappear after restart, it's
+not a permanent solution.
+
+If the VPS does not have IP addresses or routes after it is restarted, it is
+most likely because the network configuration inside the VPS is broken. At every
+VPS start, vpsAdmin generates network configuration files inside the VPS.
+The where and how varies depending on the distribution. For example,
+on Debian-based distributions we generate ''/etc/network/interfaces''. Init
+scripts from the VPS read these configuration files and set up the network.
+If the network is not set up, you can find the reason in the system log.
+Depending on the distribution, it could be e.g.:
+
+<code>
+systemctl status network
+systemctl status networking
+</code>
+
+==== Firewall ====
+You can clear iptables over the remote console however your distribution
+recommends it. Manually, this could do the trick:
+
+<code>
+# iptables -F
+# iptables -X
+# iptables -P INPUT ACCEPT
+# iptables -P FORWARD ACCEPT
+# iptables -P OUTPUT ACCEPT
+</code>
+
+<note warning>
+By deleting iptables rules, you can grant access to online services that rely
+on a firewall being set up and that aren’t appropriately secured.
+</note>
+
+Without access to the remote console, it is necessary to either find the file
+in which persistent rules are stored and delete its content or to turn off
+the iptables service. Then restart the VPS.
+
+====== Known reasons for VPSes not working ======
+
+===== No Disk Space =====
+If the disk is full, the VPS won’t run. [[information:support|Contact our support]].
+
+===== Debian =====
+For the network configuration to work, you have to have packages ''iproute2''
+and ''ifupdown'' installed.
+
+Check for user-controlled files like ''/etc/network/interfaces.{head,tail}''
+for incompatible configuration.
+
+<maintainers hidden>
+aither
+</maintainers>

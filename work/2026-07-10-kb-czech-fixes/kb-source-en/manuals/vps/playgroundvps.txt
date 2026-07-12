@@ -1,0 +1,79 @@
+====== Playground VPS ======
+
+When you need to test a new application, configuration, perform a system
+upgrade in rough or prepare a new production VPS, you can use a playground VPS.
+You can create up to two playground VPS, but their lifetime is limited to 1 month.
+When the expiration date passes, the playground
+VPS is deleted and you can reate another one. If you need more than a month to
+test something, please contact the [[information:support|support team]].
+
+Playground is a standalone location, like Praha and Brno, which means it has
+different IP addresses.
+
+===== What is playground VPS for =====
+  * testing of new configurations
+  * testing of new distributions
+  * testing and "playing" with anything
+
+===== What is playground VPS **not** for =====
+  * secondary VPS (meaning used in production or for a long time)
+
+===== VPS creation =====
+Playground VPS can be created in vpsAdmin. You can either create a new (empty)
+VPS or clone an existing VPS to playground.
+
+==== Creating a new VPS ====
+
+A new VPS can be created in section VPS, "New VPS" in the right sidebar.
+You have to select location as "Playground".
+
+{{:navody:vps:pgnd_create.png?300|}}
+
+Next, choose parameters of your new VPS and vpsAdmin will create it.
+
+==== Cloning an existing VPS ====
+
+Cloning is useful when you want to test a new configuration of a production
+system and don't want to risk an outage. The playground VPS will be an exact
+copy of your production VPS, except it will have different IP addresses.
+
+Go to details of the VPS you wish to clone. Click on **Clone VPS** in the
+right sidebar and select Playground as a target environment and location.
+
+{{:navody:vps:clone_vps.png?300|}}
+
+Note that this is possible only if you don't have a playground VPS already.
+There can only be one and clone always creates a new VPS.
+
+The cloning can take a long time, depending on how much data it has to copy.
+You can monitor its progress in the transaction log.
+
+===== VPS swapping =====
+
+You can prepare a new system or configuration on playground or
+[[manuals:vps:vpsadminos#staging_environment|staging]] VPS and then transfer the
+new VPS to production. The swap function will move the playground the VPS to production,
+switch IP addresses and then move the original production VPS to playground. VPS can be
+swapped from details of the production VPS:
+
+{{:navody:vps:swap_vps2.png?700|}}
+
+Make sure to invoke swap from the details of the production VPS, not the other way around.
+The VPS will be considered more important and its downtime is minimized.
+
+vpsAdmin will show you what exactly will happen when the VPSes are swapped:
+
+{{:navody:vps:swap_preview2.png?400|}}
+
+VPS swap consists of two migrations. First the playground VPS is moved to production,
+then IP addresses are swapped, the new VPS is started and the original production VPS
+is moved to playground. Attributes that will be swapped are shown in green.
+
+===== Domain names of playground VPS =====
+
+Our DNS servers automatically generate domain names for all playground VPS. It
+can be used to test new settings when you don't have your own domain.
+
+Domain name is derived from the IP address. For example, if you have IP 185.8.164.10,
+the domain is 10.164.8.185.pgnd.vpsfree.cz and all other higher levels, e.g.
+test.10.164.8.185.pgnd.vpsfree.cz are mapped as well.

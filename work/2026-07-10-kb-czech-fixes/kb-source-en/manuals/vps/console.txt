@@ -1,0 +1,63 @@
+====== Remote Console ======
+Everybody has definitely experienced the situation where the system got into a state where it wasn’t able
+to connect to SSH – be it because of a turned off sshd, incorrectly set rules
+in iptables or a lost SSH key. Luckily, you can use vpsAdmin to connect
+directly to the console of the VPS.
+
+The console is available either via an web interface or directly from the terminal using the
+[[manuals:vps:api#cli|vpsfreectl]] utility. If you can choose, I recommend
+using [[manuals:vps:api#cli|vpsfreectl]] to access the console. The console
+works much more reliably and responsively in the terminal than in a web
+browser.
+
+You can use the console to follow the process of turning the VPS
+off and on. Disconnecting from the console does not log the user off unless an intentional logoff
+takes place before disconnecting.
+
+The console can be used to access the [[manuals:vps:start_menu|start menu]], which appears
+when the VPS is being started or restarted.
+===== Web Interface =====
+
+{{navody:vps:console-2-web.png?600|}}
+
+You can access the console through the VPS tab (see screenshot).
+
+{{navody:vps:console-1-web.png?600|}}
+
+===== vpsfreectl =====
+The installation process for ''vpsfreectl'' is described in the article about our
+[[manuals:vps:api#cli|API]].
+
+{{ youtube>Eg_i_iX7l6I?large }}
+
+You can connect to the VPS console using the following command:
+
+<code>
+$ vpsfreectl vps remote_console <VPS_ID>
+</code>
+
+Here, substitute ''<VPS_ID>'' for the ID of the VPS to which you want to connect the console.
+The console can be closed by pressing the ''ENTER ESC .'' keys one after another (//enter escape 
+period//). This is the only way you can disconnect from the console (other than closing
+the terminal window).
+
+==== Ensuring Proper Functioning ====
+In order for the console to work as well as possible, it is important for the VPS to have the same ''locale'' that is
+used by the terminal from which you are connected. The most important thing here is encoding –
+if the two sides use different encoding, certain characters will be replaced by
+question marks, etc.
+
+vpsAdmin cannot send the ''$TERM'' environment variable to the console. However, some TUI
+apps adapt to the value of this variable. Thus, at first glance it
+might seem that the app or console is not working properly. For example, in order for the
+mouse and colors to work in ''mc'', you first need to set  ''TERM=xterm'' or force this
+mode using the ''mc -x'' option.
+
+You can have the ''$TERM'' variable automatically set upon console startup
+using ''.bashrc'':
+
+<code>
+cat <<EOF >> ~/.bashrc
+[ "`tty`" == "/dev/console" ] && export TERM=xterm
+EOF
+</code>
