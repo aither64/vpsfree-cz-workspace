@@ -393,3 +393,10 @@
   annotations in total. Released staging ownership with `bin/kb-stage release
   --yes`; the container is down, its retained mirror has no owner, and no
   release manifest is pending.
+
+## Final cleanup
+
+- Removed all 298 untracked full-inventory source/candidate mirror files while
+  preserving the committed changed-page sources, candidates, review ledger,
+  manifests, generators, plan, and state. The merged project worktrees had
+  already been removed; feature branches remain.

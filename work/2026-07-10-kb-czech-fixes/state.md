@@ -1000,3 +1000,20 @@
   media were changed. Released staging ownership after publication; the
   container is down, owner and pending manifest are null, and retained mirror
   data remain available for a future claimed session.
+
+## Final cleanup
+
+- Removed the clean, completed vpsAdmin and vpsadmin-kb-captures worktrees. Both
+  heads are included in their repositories' current master histories; feature
+  branches were retained.
+- Removed the clean staging-configuration worktree. Its four commits were
+  integrated into configuration master as the rebased equivalents `ed5cc0bc`,
+  `172dc604`, `8e8d0fe6`, and `8b5c6677`; the original local and remote feature
+  branch remains.
+- Removed disposable capture output, contact sheets, downloaded legacy media,
+  the authoring-guide all-page source snapshot, and its temporary fixture JSON.
+  Committed screenshots, previews, guarded manifests, generators, plan, and
+  state records remain.
+- Left `vpsfree-sms-gateway` untouched because it is unrelated to the KB work.
+  Confirmed the global staging container remains down with no owner or pending
+  release.
