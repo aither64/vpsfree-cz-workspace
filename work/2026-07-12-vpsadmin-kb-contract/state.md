@@ -329,8 +329,9 @@
   assertions; the full capture `bin/check`; and configuration evaluation of
   `cz.vpsfree/machines/aitherdev` and `cz.vpsfree/containers/int.kb`. Earlier
   full `confctl build -y` results apply to the identical configuration head.
-- Removed merge-worktree PHPUnit and Nix-shell caches. Feature branches remain
-  locally and remotely as required.
+- Removed merge-worktree PHPUnit and Nix-shell caches, then removed all three
+  temporary merge worktrees. Feature branches remain locally and remotely as
+  required.
 - This integration does not deploy `int.kb`. The operator must deploy production
   configuration from the build machine before any annotated production page is
   promoted. Both production KBs remain untouched.
