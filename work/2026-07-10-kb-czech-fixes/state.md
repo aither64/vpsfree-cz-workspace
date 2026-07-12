@@ -918,3 +918,20 @@
 - The pending marker is cleared. Released staging ownership and stopped the
   global container while retaining its data. The dedicated screenshot cluster
   was already stopped with no GC root.
+
+## 2026-07-12 capture repository integration
+
+- Fetched current upstream and confirmed the reviewed English branch was a
+  direct three-commit descendant of `origin/master`. Fast-forwarded `master`
+  from `4364db7` to `951a5e6` in a fresh temporary integration worktree.
+- Strict validation on the merged master passes with 59 concepts, 118 variants,
+  63 Czech references, 54 English references, and 118 PNGs. Pushed master to
+  `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`; the repository has no
+  GitHub Actions runs.
+- Removed the temporary integration worktree and retained the feature branch as
+  required. The original capture worktree remains available on
+  `2026-07-12-kb-english-captures`.
+- GitHub still rejects changing the repository default branch with HTTP 403 for
+  the available personal access token. The default remains
+  `2026-07-10-kb-czech-fixes`; an organization repository administrator must
+  switch it to `master` in GitHub settings.
