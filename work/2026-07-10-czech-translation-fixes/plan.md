@@ -91,6 +91,13 @@ reported application strings are defined by vpsAdmin.
   boundary for entity and group detail logs. Keep shared lower-case
   translations for history summaries, and preserve acronym, numeric, and
   already-capitalized prefixes.
+- Render monitored-event states through the API's localized choice metadata in
+  both the WebUI list and detail views. Keep the raw enum values unchanged and
+  use exact Czech labels `sleduje se`, `potvrzeno`, `nepotvrzeno`, `vzato na
+  vědomí`, `ignorováno`, and `uzavřeno`.
+- Store `sleduje se` at the catalog's compacted `state.monitoring` choice key.
+  This choice is exposed only by monitored events, so unrelated API resources
+  and screens cannot consume the changed label.
 - Use exact Czech payment headers `PŘIJATO`, `ZAÚČTOVAL`, `ČÁSTKA`, `OD`,
   `DO`, `PLATBA`, `DATUM`, `STAV`, `PLÁTCE`, `ZPRÁVA`, `VS`, `UŽIVATEL`, and
   `MĚSÍCE` according to each table's columns.
@@ -130,6 +137,9 @@ reported application strings are defined by vpsAdmin.
 - Probe history storage is unchanged. Capitalization occurs only in probe-log
   view models, so existing history summaries such as `Ping not responding` and
   `Ping neodpovídá` remain grammatically unchanged.
+- Monitored-event enum values, filters, database data, and API response bodies
+  remain unchanged. Only localized API self-description metadata and WebUI
+  rendering change, with a raw-value fallback for mixed-version operation.
 
 ## Testing plan
 
@@ -161,3 +171,9 @@ reported application strings are defined by vpsAdmin.
 - Keep the password warning, interface labels, and probe-log capitalization as
   three focused functional commits. Run the mandatory standalone review before
   `webui#vps-user-core` and other long integration tests.
+- Add a focused API self-description assertion for all Czech monitored-event
+  states and extend `webui#support-pages` to verify the Czech filter, list, and
+  detail values with failure-safe restoration of English.
+- Pin the merged vpsAdmin revision in `vpsadmin-kb-captures` and run its WebUI
+  documentation contract. No monitoring capture currently exists, so do not
+  accept unrelated contract or screenshot drift and do not publish KB content.

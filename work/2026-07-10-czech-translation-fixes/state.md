@@ -44,6 +44,27 @@
 
 ## Status
 
+- Complete: monitored-event state values are localized in the WebUI list,
+  filter, and detail views; vpsAdmin is merged at `9a5fccf4d`, the documentation
+  contract is merged at `470b759`, production configuration is merged at
+  `e1cc165c`, all required local/review/integration/build checks passed, and
+  initiative worktrees were removed.
+- Reopened: the user reported raw monitored-event state values in the WebUI
+  list and detail views. This follow-up will localize them through API choice
+  metadata, use contextual Czech `sleduje se`, run the mandatory review
+  and browser coverage, check the KB contract, and update the production pin.
+- `vpsadmin` monitoring-state follow-up:
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsadmin`
+  - base: `origin/master` at `cd8344cc4`
+- `vpsadmin-kb-captures` monitoring-state follow-up:
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsadmin-kb-captures`
+  - base: `origin/master` at `704f16d`
+- `vpsfree-cz-configuration` monitoring-state follow-up:
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsfree-cz-configuration`
+  - base: `origin/master` at `b8d8d1ce`
 - Complete: password warning and interface labels are merged in vpsAdmin,
   probe-log capitalization is merged in vpsf-status, both production pins are
   merged, required tests/review passed, and initiative worktrees are removed.
@@ -65,6 +86,89 @@
 
 ## Commands run
 
+- Reverified the active initiative, fetched vpsAdmin, vpsadmin-kb-captures,
+  and configuration remotes, recreated the vpsAdmin feature worktree, and
+  fast-forwarded the retained branch to current `origin/master` `cd8344cc4`.
+- Confirmed the list and detail views printed raw monitored-event state enums,
+  while the filter already consumed localized API choice metadata. Confirmed
+  that `monitoring` is an exclusive choice of the monitored-event resource.
+- Changed both rendered values to use escaped `api_param_choice_label()`
+  output. Added exact Czech metadata coverage for `sleduje se`, `potvrzeno`,
+  `nepotvrzeno`, `vzato na vědomí`, `ignorováno`, and `uzavřeno`, plus Czech
+  Playwright assertions for the selected filter, list row, and detail row.
+- The first catalog-health attempt rejected a resource-specific override
+  because the catalog compacts a choice used by only one resource to
+  `attributes.state.choices.monitoring`. A temporary source-label experiment
+  caused unrelated catalog churn and was discarded before commit. Repository
+  search proved no other state parameter offers `monitoring`, so the compacted
+  key cannot alter another screen; the final diff changes no unrelated labels.
+- API catalog regeneration and health passed. The focused monitored-event API
+  spec passed 41 examples with no failures. PHP and Node syntax checks and
+  `git diff --check` passed.
+- Verified and signed the existing Overcommit installation. Commit
+  `9d404f83a` (`webui: localize monitored event states`) passed Nixfmt,
+  migration specs, WebUI/API i18n, PHP CS Fixer, RuboCop, and commit-message
+  hooks; only non-failing 72-column warnings were emitted and all message lines
+  remain within the required 80 columns.
+- The required exactly-one fresh standalone mandatory reviewer reported no
+  Blocking, Important, or Advisory findings. It independently passed the
+  focused API spec (41 examples), PHP and Node syntax, and `git diff --check`;
+  it confirmed the metadata wiring, escaping, fallback, catalog scope, focused
+  commit, and rolling/rollback compatibility. Remaining planned gaps are the
+  `webui#support-pages` VM test, KB contract, and deployment pin checks.
+- Deferred `./test-runner.sh test 'webui#support-pages'` passed. Its Playwright
+  example succeeded in 277.69 seconds, the focused script in 616.53 seconds,
+  and the complete three-machine VM test in 841.93 seconds with one successful
+  test and no failures.
+- Upstream vpsAdmin advanced to `6761aa11b` during the VM test. Rebased the
+  feature to content-identical head `9a5fccf4d`; old/new stable patch IDs match
+  (`3428aa2be453ca66898e5e754286580428bfadab`). The same mandatory reviewer
+  verified with range-diff that the upstream nodectld DNS change does not
+  overlap, reported no findings, and confirmed no long-test rerun is needed.
+- Pushed vpsAdmin feature head `9a5fccf4d`. Exact-SHA GitHub Actions started;
+  API Migration Specs passed immediately, while API Specs, CI, RuboCop, i18n
+  health, Webui PHPUnit, and libnodectld Specs were initially queued/running.
+- Created a fresh vpsAdmin integration worktree from current upstream, applied
+  the feature with `--ff-only`, and reran PHP/Node syntax, `git diff --check`,
+  and API i18n health successfully. Pushed `9a5fccf4d` to `origin/master`.
+- Created an isolated vpsadmin-kb-captures worktree from `704f16d`, pinned the
+  exact merged vpsAdmin revision in flake, capture, and navigation metadata,
+  and updated only the vpsAdmin lock entry with `nix flake update vpsadmin`.
+  `nix develop -c bin/check` passed: documentation contract, KB annotations,
+  14 tests/66 assertions, and the 59-concept/118-variant PNG inventory are all
+  valid. No monitoring capture or KB page is bound, so no screenshot, page,
+  staging, or production KB change is needed. Committed the mechanical pin as
+  `470b759` (`contract: pin localized monitoring states`); mandatory review is
+  skipped under the dependency-only/generated exception.
+- Pushed and fast-forwarded the documentation pin through a fresh integration
+  worktree, reran the complete contract there, and pushed vpsadmin-kb-captures
+  `origin/master` to `470b759`.
+- Recreated the retained configuration branch, fast-forwarded it to current
+  `origin/master` `b8d8d1ce`, installed/signed its declared Overcommit hooks,
+  and verified the `vpsadmin` channel initially pinned `6761aa11`.
+- Ran `confctl inputs channel update --commit vpsadmin`. It produced the exact
+  generated input-only commit `e1cc165c` (`inputs: update vpsadminServices to
+  9a5fccf4`); Nixfmt and commit-message hooks passed, and channel listing now
+  reports `vpsadminServices` at `9a5fccf4`.
+- `confctl build -y 'cz.vpsfree/vpsadmin/*'` successfully evaluated and built
+  all 11 vpsAdmin service machines as generation `2026-07-12--23-53-54`.
+  Skipped another mandatory review because this is a confctl-generated,
+  dependency-only `flake.lock` update with no configuration or design change.
+- The first ambient configuration feature push failed at the existing
+  Overcommit hook because its gems are available only in the Nix shell. The
+  retry through `nix develop -c git push` succeeded; no hooks were bypassed.
+- Pushed configuration feature commit `e1cc165c`, created a fresh integration
+  worktree from `b8d8d1ce`, fast-forwarded it, and verified the channel pin.
+  A fresh worktree exposed that `confctl inputs channel ls` expects
+  `.confctl/logs`; after creating this transient directory the command exited
+  cleanly. Recorded the reusable workaround in
+  `notes/vpsfree-cz-configuration/2026-07-13-confctl-missing-log-directory.md`.
+- Pushed configuration `origin/master` to `e1cc165c`. At cleanup, vpsAdmin
+  current-head i18n health, RuboCop, WebUI PHPUnit, migration specs, and
+  libnodectld specs were green. The feature API suite had 24/26 topic jobs
+  green and the master suite 16/26, with only long platform/remaining topic
+  jobs still active and no failure; selected CI remained queued/running on the
+  same merged SHA.
 - Reverified the active initiative slug, fetched all three SSH remotes, and
   recreated isolated retained-branch worktrees at vpsAdmin `7e0be5d21`,
   vpsf-status `3eb6fd86a`, and configuration `6e93bc04`. Read current local
@@ -877,6 +981,11 @@
 
 ## Cleanup
 
+- Removed all six monitoring follow-up feature/integration worktrees and their
+  transient gem, bundle, confctl, and test artifacts after remote masters
+  reached vpsAdmin `9a5fccf4d`, vpsadmin-kb-captures `470b759`, and
+  configuration `e1cc165c`. Retained all feature and integration branch refs as
+  required.
 - Removed the vpsAdmin feature and temporary integration worktrees after
   `origin/master` reached `299147166`.
 - Removed the vpsfree-cz-configuration feature and temporary integration
