@@ -10,7 +10,7 @@
   `/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin.git`
   - Authority ref: `origin/master`
   - Authority commit:
-    `7e0be5d215ce554009ff92381bdb54557e618776`
+    `af3b885a82955dbeb06a102948c35a82bf74acc4`
   - Feature branch: `2026-07-10-kb-czech-fixes`
   - Worktree:
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-07-10-kb-czech-fixes/vpsadmin`
@@ -712,10 +712,15 @@
 - Fast-forwarded the clean vpsAdmin worktree from `7e0be5d21` to
   `af3b885a8`. The three upstream commits update dependencies and localize the
   root-password warning and network-interface types.
-- The capture repository will pin `af3b885a82955dbeb06a102948c35a82bf74acc4`,
-  select exact template label `Debian (latest)` in fixture and wizard paths,
-  and require a Debian console banner before capture. A completely reset
+- Capture commits `a307bd9` and `1f4f023` pin
+  `af3b885a82955dbeb06a102948c35a82bf74acc4`, select exact template label
+  `Debian (latest)` in fixture and wizard paths, and require a Debian console
+  banner before capture. A completely reset
   cluster is required so existing Alpine fixture VPSes cannot be reused.
+- The mandatory standalone review returned no blocking or important findings.
+  Its advisory to correct the top-level authority revision and committed-work
+  tense is incorporated here. It independently reran strict validation with
+  59 assets and 63 references; reset-cluster integration may proceed.
 - The complete 59-image Czech release will be regenerated and restaged;
   production remains outside the authorized work.
 
