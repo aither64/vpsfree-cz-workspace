@@ -666,12 +666,44 @@
 - Exact location domains are Praha `prg`, Brno `brq`, Playground `pgnd`, Praha
   Storage `prg`, and Staging `stg`. Environment domains remain documentation
   fixtures.
-- The console follow-up will crop the H1 with the complete outer iframe so
+- The console follow-up crops the H1 with the complete outer iframe so
   nested-frame scrolling cannot clip its top or right edge. Other screenshot
   crop behavior remains unchanged.
-- Implementation will use a fresh local-network cluster, recapture all 59
-  assets, rebuild and verify the 30-page/59-media staging release, and leave
-  production untouched.
+- Capture commits `6886dc8` and `20be817` implement the fixture identities and
+  console-only crop respectively. `nix develop -c bin/check` passes with Nix,
+  Node, Ruby, shell, topology, crop, and strict 59-asset inventory checks.
+- The mandatory standalone review found one blocking merged-host issue:
+  Playground's bare system hostname `node1` resolved to Production because
+  shared peer maps used internal machine keys. The amended fixture commit now
+  exposes only complete domain names in shared and node/DNS peer maps; machine
+  aliases remain local to the services VM. The regression check verifies that
+  each repeated bare hostname remains mapped to its own node address. No other
+  findings remained.
+- A completely reset local-network cluster confirmed database, RabbitMQ, and
+  nodectld identities `node1.prg`, `node1.pgnd`, and `backuper1.prg`. Each VM's
+  `/etc/hosts` retains its own bare hostname only on its own IP and uses full
+  domain names for peers.
+- An orphaned checkpoint-only capture from the previous day had lost its
+  browser but remained waiting on the same initiative slug. It was terminated
+  before scenario capture and had not written during this run. The reusable
+  diagnostic is recorded in
+  `notes/cross-project/2026-07-12-orphaned-kb-capture.md`.
+- Generated commit `7e1785a` contains the definitive one-process run of all 59
+  Czech checkpoints. Strict validation passes with 63 references and 59
+  distinct PNGs. Contact sheets and direct inspection confirm the short node
+  identities, complete Web Console H1 and iframe border, and the unchanged
+  rescue sidebar composition. The capture feature branch is pushed through
+  `7e1785abbffcf3e1c181ebcfcf02e05b5f7c1c41`.
+- Synchronized the capture head and rebuilt the 30-page/59-media release. Unit
+  tests pass: 28 development-session tests with 144 assertions, 30 KB-page
+  tests with 120 assertions, and 13 staging tests with 45 assertions.
+- Reset staging from production, staged and API-verified the new release, and
+  verified all 27 candidate language pairs. Playwright rendered all 30 pages
+  and fetched all 59 distinct screenshot paths successfully. Pending release
+  digest is
+  `fe4f1a25668e04d56ca25120b2e3c7a501405382f0fb495682905522d0d49dd0`.
+- The capture cluster is stopped with no GC root. Czech staging remains up for
+  review, and production remains untouched.
 
 ## Cleanup
 
