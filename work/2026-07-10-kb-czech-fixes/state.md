@@ -805,6 +805,20 @@
   explicit `--language cs|en`, preventing an omitted flag from overwriting the
   reviewed Czech working-tree images. Fixups were autosquashed into the two
   owning commits and the allow-missing check passes again.
+- A full one-process English integration run captured all 59 checkpoints. The
+  strict check passes with 59 concepts, 118 variants, 63 Czech references, 54
+  English references, and 118 PNGs. All eight English contact sheets plus the
+  Web Console, rescue console, and live-monitor terminal were inspected; the
+  complete English capture branch is pushed through `951a5e6`.
+- The English release builder derives its exact 14-page set from schema 5,
+  records production revision and source checksums, and changes only the 54
+  existing DokuWiki media references. It packages all 59 create-only English
+  media variants, including seven captures not currently embedded by an English
+  article, so capture parity does not depend on present article coverage.
+- English manifests record each Czech counterpart explicitly. The staging
+  release verifier now warms and checks those exact pairs in either release
+  direction, preventing an English-only update from leaving the custom
+  language switcher's rendered links stale.
 
 ## Cleanup
 
@@ -816,7 +830,28 @@
 - Temporary capture credentials, console tokens, raw terminal streams, fixture
   state, and contact sheets are under the ignored `tmp/` directory in the
   capture worktree and are not committed.
-- The 30 review pages and 60 review media assets remain in the draft namespace
-  for user review.
-- The current 30-page/59-media release remains on the internal staging KB at
-  `http://kb-cs.aitherdev.int.vpsfree.cz/`; production has not been changed.
+- The obsolete 30 review pages and 60 shared review media assets have been
+  deleted from production and verified absent through both wiki endpoints.
+- The reviewed 30-page/59-media Czech release is published and browser-verified
+  at `https://kb.vpsfree.cz/`.
+- The staging container remains owned by this initiative. It must be reset from
+  the now-current production baseline before staging the English bundle.
+- English production remains untouched until the user reviews the English
+  staging release and gives separate publication approval.
+
+## 2026-07-12 English release review
+
+- Standalone review of `1678300` independently confirmed current production
+  baselines for all 14 pages, absence of all 59 target media IDs, byte-identical
+  regeneration, exactly 54 media-reference changes with all other bytes
+  preserved, and matching payload checksums and dimensions.
+- Its blocking commit-focus finding is resolved by separating reusable
+  release/link behavior, schema-5 release tooling, and the generated English
+  payload into independently reviewable commits before staging.
+- Its important generator finding is resolved by requiring exactly one
+  replacement for each inventory page binding and exactly 54 replacements in
+  total. The English runner dispatch now has direct regression coverage for
+  every explicit counterpart pair.
+- Corrected stale cleanup status and the inventory note: seven capture concepts
+  are unembedded, while two of the 52 embedded concepts are each reused on two
+  pages, producing 54 total references.

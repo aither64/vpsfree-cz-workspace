@@ -196,6 +196,12 @@ approval.
    IDs. Verify all 27 language pairs and every rendered screenshot.
 7. Push feature branches. Production promotion remains a separately approved
    operation.
+8. For the English follow-up, derive the 14 affected production pages and 54
+   old media references from the bilingual schema, preserve all non-media
+   source bytes, and package all 59 English captures as create-only media.
+   Reset staging after Czech publication, stage the English bundle at its real
+   page IDs, verify all API bytes, counterpart links, rendered pages, and media
+   responses, then stop for user review without writing English production.
 
 ## Publication and English follow-up
 
