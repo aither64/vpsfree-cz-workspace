@@ -376,3 +376,20 @@
 - The pending release guard is now clear. Staging remains running and owned by
   this session for the later English promotion. `kb.vpsfree.org` remains
   unchanged and requires a separate explicit approval.
+
+## English production promotion and closeout
+
+- The user separately and explicitly approved the exact English manifest for
+  `kb.vpsfree.org`. Restaged manifest SHA-256
+  `518103f1bde17173b6f48340a345920a065646d6e70688a604b07dc4dc6bddf3`,
+  verified all 16 candidate pages, 16 language pairs, and 34 rendered semantic
+  annotations, then promoted it with the English edit summary
+  `Annotate vpsAdmin navigation paths and update interface labels`.
+- Post-promotion verification passed byte-for-byte through the production API.
+  All 16 public English pages render all 34 expected
+  `data-vpsadmin-doc-id` markers and no invalid-tag warning. The release
+  contains no media changes.
+- Both production KB releases are complete: 35 pages and 75 semantic
+  annotations in total. Released staging ownership with `bin/kb-stage release
+  --yes`; the container is down, its retained mirror has no owner, and no
+  release manifest is pending.
