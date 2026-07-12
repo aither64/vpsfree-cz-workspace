@@ -1,7 +1,7 @@
 # KB navigation annotation review
 
-Changed pages: 36
-Annotation tags: 78
+Changed pages: 35
+Annotation tags: 75
 
 | Language | Page | Semantic path | Count | Existing text | Candidate text |
 | --- | --- | --- | ---: | --- | --- |
@@ -70,10 +70,7 @@ Annotation tags: 78
 | en | manuals:vps:userdata | `userdata.deploy.open` | 1 | **vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form | **vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form |
 | en | manuals:vps:exports | `exports.export-dataset.open` | 1 | //Exports// -> //Export dataset// | //Exports// -> //Export dataset// |
 | en | manuals:vps:exports | `backups.vps.open` | 1 | //Backups// -> //VPS backups// | //Backups// -> //VPS backups// |
-| en | manuals:vps:vpsadminos:storage | `exports.export-dataset.open` | 1 | //Exports// -> //Export dataset// | //Exports// -> //Export dataset// |
-| en | manuals:vps:vpsadminos:storage | `backups.vps.open` | 1 | //Backups// -> //VPS backups// | //Backups// -> //VPS backups// |
 | en | manuals:vps:exports | `exports.open` | 1 | main menu as //Exports// | //Exports// |
-| en | manuals:vps:vpsadminos:storage | `exports.open` | 1 | main menu called //Exports// | //Exports// |
 
 ## Explicit exceptions
 
