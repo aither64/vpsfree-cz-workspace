@@ -3,10 +3,11 @@
 ## Goal
 
 Bring the Czech knowledge base in line with the localized vpsAdmin interface,
-replace all 59 unique vpsAdmin screenshots used by the affected pages, and make both
-capture and review workflows repeatable. Review must happen on full staging KB
-instances at the real page and media IDs. Production publication remains a
-separate, explicitly approved action.
+replace all 59 unique vpsAdmin screenshots used by the affected pages, and make
+both capture and review workflows repeatable. Publish the reviewed Czech
+release, then create complete English screenshot parity and stage the English
+reference migration for review. Review happens on full staging KB instances at
+the real page and media IDs.
 
 ## Affected components
 
@@ -195,3 +196,25 @@ approval.
    IDs. Verify all 27 language pairs and every rendered screenshot.
 7. Push feature branches. Production promotion remains a separately approved
    operation.
+
+## Publication and English follow-up
+
+- Before Czech publication, remove the obsolete review namespace using an
+  explicit checksummed cleanup manifest. The 30 pages exist only on the Czech
+  wiki; the 60 media objects are shared by both production wikis and are
+  deleted exactly once, then verified absent through both endpoints.
+- Promote the already staged Czech manifest in its existing media-first order,
+  verify all 30 pages and 59 canonical media objects through the API and a
+  browser, and retain legacy production media unchanged.
+- Extend the capture inventory to 59 language-neutral concepts with Czech and
+  English variants. Generate all 59 English PNGs even when an English article
+  does not currently embed a particular concept.
+- Build the English release from current production sources. Upload all 59
+  `en:screenshots:vpsadmin:*` media objects and change only existing image
+  references in English pages; do not rewrite English prose in this phase.
+- Stage and verify the English release, then stop for user review. English
+  production promotion happens only after that review.
+- After both language releases are complete, start a separate initiative for a
+  standalone DokuWiki annotation plugin and a semantic vpsAdmin documentation
+  contract. That follow-up is not allowed to delay or alter the reviewed
+  localization publication.

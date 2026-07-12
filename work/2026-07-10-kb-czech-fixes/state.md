@@ -751,6 +751,21 @@
   45 assertions. The capture cluster is stopped with no GC root; Czech staging
   remains up for review and production remains untouched.
 
+## 2026-07-12 publication and English follow-up
+
+- User approved deletion of the obsolete production review namespace and
+  publication of the reviewed Czech screenshots and pages.
+- Live read-only preflight found all 30 Czech draft pages, no English draft
+  pages, and all 60 draft media objects through both wikis because production
+  media is shared. The shared media must be deleted only once.
+- All 30 Czech production pages still match the release source revisions and
+  SHA-256 hashes. None of the 59 canonical Czech media IDs exists yet.
+- After Czech verification, generate all 59 English screenshot variants and
+  stage an English release that changes only existing image references. English
+  production publication waits for user review.
+- The semantic DokuWiki annotation/plugin work is a later initiative after the
+  English rollout; it is not part of the current production publication gate.
+
 ## Cleanup
 
 - The standalone initiative dev cluster has been stopped and its GC root
