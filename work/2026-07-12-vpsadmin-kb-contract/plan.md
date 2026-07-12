@@ -125,3 +125,15 @@ required.
   container configuration; deployment remains operator-only.
 - Mandatory standalone change review after committed quick checks and before
   long cluster/staging integration.
+
+## Durable handoff
+
+- Add a canonical WebUI-change workflow to `vpsadmin-kb-captures` covering the
+  cross-repository trigger, semantic-ID decisions, contract checks, screenshot
+  regeneration, KB candidate validation, staging, and approval-gated release.
+- Link the guide from the vpsAdmin and capture repository instructions and from
+  the coordination workspace instructions so an agent entering through any of
+  those repositories discovers it.
+- Promote reusable all-page fetching, exact replacement-plan application, and
+  guarded release-manifest generation from this dated initiative into stable
+  top-level `bin/` commands. Keep publication outside the capture repository.

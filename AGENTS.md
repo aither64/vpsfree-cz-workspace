@@ -270,6 +270,13 @@ DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
 `kb-cs.aitherdev.int.vpsfree.cz` and `kb-en.aitherdev.int.vpsfree.cz`. API
 access to production uses one token per wiki:
 
+For vpsAdmin changes that can affect visible WebUI documentation, follow the
+canonical workflow in `vpsadmin-kb-captures/docs/webui-change-workflow.md`.
+Use `bin/kb-contract-fetch`, `bin/kb-contract-build`, and
+`bin/kb-contract-manifest` for durable all-page candidate preparation; keep
+capture generation and the documentation contract in the independent capture
+repository.
+
 - `kb.vpsfree.cz`:
   `/home/aither/.codex/codex-kb-vpsfree-cz-aither-key`
 - `kb.vpsfree.org`:
@@ -376,6 +383,11 @@ These repositories are in scope for this workspace:
   core runtime for vpsFree.cz nodes and many integration tests.
 - `vpsadmin`: Ruby/PHP control panel and API for managing VPSes on top of
   vpsAdminOS.
+- `vpsadmin-kb-captures`: independent, reproducible Czech/English screenshot
+  inventory and WebUI documentation contract for the vpsFree.cz knowledge
+  bases. Its canonical `docs/webui-change-workflow.md` must be followed when a
+  vpsAdmin feature can change visible labels, navigation, forms, layout, or
+  screenshots.
 - `ruby-lxc`: Ruby native extension wrapping liblxc. It is consumed by
   vpsAdminOS `osctld` and may need coordinated gem releases for Ruby or LXC
   upgrades.
