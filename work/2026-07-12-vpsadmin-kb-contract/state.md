@@ -13,20 +13,23 @@
 
 - `vpsadmin-kb-captures`: branch `2026-07-12-vpsadmin-kb-contract` in
   `worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin-kb-captures`, based on
-  `origin/master` `951a5e6`, at `41d5cd9` and force-with-lease pushed after
-  folding review fixes into the two logical commits.
+  `origin/master` `951a5e6`, at `681ebef` and pushed. Review fixes remain
+  folded into the first two logical commits; a third integration-found commit
+  closes lingering proxy tunnels after successful captures.
 - `vpsadmin`: branch `2026-07-12-vpsadmin-kb-contract` in
   `worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin`, based on
   `origin/master` `af3b885`, at `f76c0cf` and pushed.
 - `vpsfree-cz-configuration`: branch `2026-07-12-vpsadmin-kb-contract` in
   `worktrees/2026-07-12-vpsadmin-kb-contract/vpsfree-cz-configuration`, based
-  on current `origin/master` `606ab08`, at `f2a98c23` locally. It carries the
+  on current `origin/master` `606ab08`, at `f2a98c23` and pushed. It carries the
   four still-unmerged but deployed KB staging commits as separate cherry-picks
   before the new plugin packaging commit.
 - `dokuwiki-plugin-vpsadmindoc`: branch
   `2026-07-12-vpsadmin-kb-contract` in
   `worktrees/2026-07-12-vpsadmin-kb-contract/dokuwiki-plugin-vpsadmindoc`,
-  initial commit `ed92a4d` and pushed to the user-created repository.
+  initial commit `ed92a4d` and pushed to the user-created repository. The same
+  reviewed root commit is now also `master`; GitHub still considers the feature
+  branch default because the available token cannot change repository settings.
 - Top-level workspace: plan/state tracking on shared `master`; KB tooling
   changes, if any, will be staged path-by-path around unrelated shared changes.
 
@@ -117,6 +120,49 @@
   nested DokuWiki bold/link rendering. Residual integration gaps are the long
   Nix builds, Playwright capture exercise, real metadata persistence, live
   staging rendering, and eventual annotated page inventory.
+
+## Integration verification
+
+- `confctl build -y cz.vpsfree/machines/aitherdev` passed and created generation
+  `2026-07-12--18-02-23` with the updated on-demand staging container.
+- `confctl build -y cz.vpsfree/containers/int.kb` passed and created generation
+  `2026-07-12--18-04-34` for the production KB container. Both Czech/English
+  packages in both closures contain `lib/plugins/vpsadmindoc/syntax.php` with
+  identical SHA-256
+  `a538a08b0a6e50d438b0f274b75f2d1f042d26672709ff50154895322af71cda`.
+- The first confctl build attempt reached its interactive confirmation and
+  received EOF; reran with the documented noninteractive `-y` option. The first
+  ambient configuration push was rejected by its Overcommit hook's missing
+  gems; pushing inside `nix develop` passed, as required by the repository.
+- The bridge capture cluster refused to start because its reserved frontend IP
+  already responded. To avoid disturbing another initiative, used the supported
+  `--network local` fallback and recorded that bridge unavailability here.
+- The isolated `kb-contract` screenshots topology started successfully. English
+  captures passed for `vps-management/feature-settings`,
+  `vps-details/feature-settings`, and `rescue-mode/boot-form`, proving all three
+  semantic selector declarations against the real WebUI.
+- The first feature capture changed 774 pixels despite identical dimensions;
+  the other two were byte-identical. Since this phase changes selectors rather
+  than reviewed bitmap content, restored the generated feature PNG to its
+  reviewed inventory hash `6acd27dc...` and strict validation passed.
+- The second successful capture then waited indefinitely while closing an open
+  HTTP CONNECT tunnel. Added explicit proxy-socket tracking and teardown plus a
+  regression test in capture commit `681ebef`. The rescue capture subsequently
+  completed and exited normally. The full `bin/check` passes, and the cluster
+  is stopped with its GC root removed.
+- vpsAdmin GitHub WebUI PHPUnit and i18n-health workflows passed at `f76c0cf`.
+  The broader selected integration-test workflow remains in progress; no rerun
+  has been requested.
+
+## Next deployment gate
+
+- Deploy configuration branch `2026-07-12-vpsadmin-kb-contract` at
+  `f2a98c23` to aitherdev only. After redeployment, restart the stopped
+  `kb-staging` container so the real packaged plugin can be tested for XHTML
+  rendering and metadata persistence.
+- Production `int.kb` deployment and every production KB content update still
+  require separate explicit approval. No staging or production page was
+  changed in this initiative so far.
 
 ## Approval boundaries
 
