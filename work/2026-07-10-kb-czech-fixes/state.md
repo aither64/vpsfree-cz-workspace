@@ -38,6 +38,9 @@
     - `3ff72c9` (`captures: provide deterministic terminal fonts`)
     - `ad41b29` (`fixtures: accept a pending NAS creation`)
     - `799b385` (`captures: refresh Czech screenshot set`)
+    - `a307bd9` (`flake: update vpsAdmin 7e0be5d21 -> af3b885a8`)
+    - `9430ccf` (`fixtures: create documentation VPSes with Debian`)
+    - `4364db7` (`captures: refresh Debian Czech screenshot set`)
   - SSH remote:
     `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
   - GitHub repository created by the user:
@@ -712,17 +715,41 @@
 - Fast-forwarded the clean vpsAdmin worktree from `7e0be5d21` to
   `af3b885a8`. The three upstream commits update dependencies and localize the
   root-password warning and network-interface types.
-- Capture commits `a307bd9` and `1f4f023` pin
+- Capture commits `a307bd9` and `9430ccf` pin
   `af3b885a82955dbeb06a102948c35a82bf74acc4`, select exact template label
-  `Debian (latest)` in fixture and wizard paths, and require a Debian console
-  banner before capture. A completely reset
-  cluster is required so existing Alpine fixture VPSes cannot be reused.
+  `Debian (latest)` in fixture and wizard paths, and require a live guest whose
+  `/etc/os-release` identifies Debian before rendering its verified version in
+  console captures. The Debian-family template section is opened explicitly;
+  traffic generation uses `/bin/ping` instead of Alpine's BusyBox path.
 - The mandatory standalone review returned no blocking or important findings.
   Its advisory to correct the top-level authority revision and committed-work
   tense is incorporated here. It independently reran strict validation with
-  59 assets and 63 references; reset-cluster integration may proceed.
-- The complete 59-image Czech release will be regenerated and restaged;
-  production remains outside the authorized work.
+  59 assets and 63 references.
+- A completely reset local-network cluster created both fixture VPSes from
+  `Debian (latest)`. Database state identified both guests as Debian and live
+  `osctl` inspection confirmed Debian 13. Integration exposed and fixed the
+  collapsed Debian template family, Alpine-specific traffic command, and
+  Debian getty clearing its initial banner from terminal scrollback. The
+  console driver now verifies `/etc/os-release` inside the running guest and
+  renders the matching canonical Debian banner and login prompt.
+- Generated commit `4364db7` contains the definitive one-process run of all 59
+  Czech checkpoints from vpsAdmin `af3b885a8`. Strict validation passes with
+  63 references and 59 PNGs. Direct inspection confirms Debian in the VPS
+  details, create/reinstall/rescue forms, complete Web Console and rescue
+  frames with `Debian GNU/Linux 13`, and the newly localized Czech root-password
+  warning. The capture branch is pushed through
+  `4364db7e4ae9b2cdf6759962a7ade5dab969ec73`; the repository has no GitHub
+  Actions workflows or runs.
+- Rebuilt the 30-page/59-media release and reset staging from production. The
+  mirror contains 146 Czech pages, 70 English pages, 58 language pairs, and
+  166 shared media objects. Staging API verification and all 27 candidate
+  language pairs pass. The pending release digest is
+  `513e70bc95a75279b4e0549a2bf9873400838fbaf8b7d14cfd880388362afae8`.
+- Playwright rendered all 30 candidate pages and fetched all 59 screenshot
+  paths successfully. Unit tests pass: 28 development-session tests with 144
+  assertions, 30 KB-page tests with 120 assertions, and 13 staging tests with
+  45 assertions. The capture cluster is stopped with no GC root; Czech staging
+  remains up for review and production remains untouched.
 
 ## Cleanup
 
