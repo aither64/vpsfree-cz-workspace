@@ -935,3 +935,33 @@
   the available personal access token. The default remains
   `2026-07-10-kb-czech-fixes`; an organization repository administrator must
   switch it to `master` in GitHub settings.
+
+## 2026-07-12 KB authoring guide update
+
+- User requested local previews and staging updates for
+  `informace:jak_psat` and `information:kb`; every later production write needs
+  a fresh approval.
+- Fetched a new immutable production snapshot with 116 Czech and 70 English
+  pages under `kb-authoring-guide/sources`. The Czech guide contains the full
+  translation, media, and maintainer guidance; the current English page only
+  contains its introductory login paragraph and must first be brought to Czech
+  parity.
+- Prepared complete localized previews with matching section structure. Both
+  document the paired `<vpsadmin-nav>` syntax and public-key example, require
+  contract-backed semantic IDs, forbid manual vpsAdmin screenshots, and link
+  `vpsadmin-kb-captures` plus its canonical WebUI-change workflow. The Czech
+  preview also corrects obvious spelling and grammar errors in the existing
+  guide; the English preview translates the previously missing guidance.
+- Generated page-only schema-2 release manifests from the immutable source
+  revisions. Czech digest is
+  `8632088c7611e6f30adffe504cc4729156908439fb6f18ae29e5c5a1e8ae29aa`
+  with summary `Doplnění pravidel pro dokumentaci vpsAdminu`; English digest is
+  `eae4a588b6d0015fa6f71c53651d8dd2bbac19876f1c7bb488d211f90a4ab8bb`
+  with summary `Expand the contribution guide and document the vpsAdmin
+  workflow`. Both contain one page and no media.
+- Claimed and reset the on-demand staging instance from current production,
+  then staged and API-verified both pages. The exact language pair verifies in
+  both directions. Rendered pages contain the expected headings and repository
+  links; the example tag is escaped inside its code block and does not emit an
+  active `data-vpsadmin-doc-id` marker. The English manifest is pending only for
+  review. Production remains untouched.

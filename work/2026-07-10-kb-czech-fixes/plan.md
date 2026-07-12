@@ -228,3 +228,21 @@ approval.
   `manuals:vps:management` to uniform non-floating left placement and restage the
   checksummed bundle. Record a concise English production summary in the
   manifest; production remains gated on the user's subsequent approval.
+
+## KB authoring guide update
+
+- Update `informace:jak_psat` and bring `information:kb` to content parity with
+  it in English.
+- Explain that every vpsAdmin navigation instruction must use a paired
+  `<vpsadmin-nav>` tag with a stable semantic ID, localized visible text, and a
+  concrete public-key navigation example.
+- Explain that vpsAdmin screenshots are reproducible artifacts maintained in
+  `vpsadmin-kb-captures`, not manually captured or uploaded, and link the
+  canonical WebUI documentation workflow.
+- Fetch immutable production sources, prepare two local preview files, validate
+  a guarded two-language page-only release, reset and populate the on-demand
+  staging KBs, and verify page rendering and bidirectional language links.
+- This is documentation-only and changes no API, schema, protocol, media, or
+  persisted application format. The annotation plugin is already deployed.
+  Each production KB promotion requires a new, separate explicit approval and
+  a localized single-line edit summary.
