@@ -224,3 +224,7 @@ approval.
   standalone DokuWiki annotation plugin and a semantic vpsAdmin documentation
   contract. That follow-up is not allowed to delay or alter the reviewed
   localization publication.
+- Before English approval, normalize every screenshot on
+  `manuals:vps:management` to uniform non-floating left placement and restage the
+  checksummed bundle. Record a concise English production summary in the
+  manifest; production remains gated on the user's subsequent approval.

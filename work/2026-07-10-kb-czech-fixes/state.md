@@ -869,3 +869,32 @@
 - The dedicated screenshot cluster is stopped and its GC root removed. The KB
   staging container remains up and owned by this initiative for user review at
   `http://kb-en.aitherdev.int.vpsfree.cz/`. English production is unchanged.
+
+## 2026-07-12 English review feedback
+
+- User review found inconsistent image alignment on
+  `manuals:vps:management`. The builder now emits all ten page screenshots with
+  no inner alignment whitespace. On their standalone lines, DokuWiki renders
+  this non-floating form at one consistent left edge without adjacent floats.
+- The English manifest records the future production summary `Replace outdated
+  vpsAdmin screenshots`. New schema 2 release manifests require a non-blank,
+  single-line summary, promotion uses it, and direct production page operations
+  reject multiline summaries. Schema 1 compatibility is retained only for
+  historical bundles such as the already-published Czech release.
+- Added a durable top-level rule requiring informative single-line production
+  summaries in the wiki's language. The pre-existing generic Czech summary is
+  intentionally left unchanged, as requested.
+- The mandatory standalone review found two blockers: summary and alignment
+  changes were bundled, and new/direct writes could still bypass informative
+  summaries. The history now separates summary tooling, summary payload,
+  alignment tooling, and alignment payload. Schema 2 and direct-write checks
+  close the policy bypasses; missing, blank, and multiline cases have regression
+  coverage.
+- The first rendered alignment check exposed that DokuWiki's `medialeft` form
+  floats images and could place the second SSH-key screenshot beside the first.
+  The final non-floating form renders all ten screenshots at the exact same
+  horizontal coordinate. API verification, all 14 language pairs, all 14
+  rendered pages, 52 embedded screenshots, and all 59 manifest media objects
+  pass. Pending digest is
+  `ff9f8e2700cc3c204d5fb0c9525db9bc16fda0ef96fbb4d73efe96d95817f8fd`;
+  English production remains unchanged.
