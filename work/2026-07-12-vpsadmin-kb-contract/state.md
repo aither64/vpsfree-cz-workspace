@@ -267,3 +267,6 @@
   rule and force-pushed with lease. Shared top-level master history was not
   rewritten; its already-committed overlong correction bodies remain the
   review's advisory exception to avoid disrupting concurrent workspace users.
+- GitHub WebUI PHPUnit and i18n-health workflows pass for final vpsAdmin commit
+  `870d16773`. Superseded selected-integration runs were cancelled after each
+  force-push; final CI run `29202530426` is still in progress.
