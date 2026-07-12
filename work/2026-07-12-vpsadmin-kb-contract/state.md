@@ -339,3 +339,26 @@
   configuration, and DokuWiki plugin) after confirming they were clean. Their
   local and remote feature branches remain; canonical bare repositories retain
   the merged refs.
+
+## Production plugin deployment verification
+
+- The operator confirmed deployment of `cz.vpsfree/containers/int.kb` from the
+  integrated configuration. Both `kb.vpsfree.cz` and `kb.vpsfree.org` serve the
+  installed `vpsadmindoc/plugin.info.txt` metadata dated 2026-07-12.
+- Authentication and ACL checks passed for the exact disposable smoke-test page
+  ID on both production KBs. The attempted draft save was rejected before any
+  write because the current `kb-page` implementation requires
+  `--approved-production` for all production writes, including `drafts:` pages;
+  that approval flag was not supplied.
+- Read-only release checks confirmed that all 19 Czech and 16 English target
+  pages still match the manifests' recorded source revisions and SHA-256
+  hashes. Every candidate file also matches its manifest checksum.
+- Both staged manifests still verify byte-for-byte, including 17 Czech/English
+  pairs for the Czech release and 16 pairs for the English release. A fresh
+  rendered-page scan from captures `origin/master` verified 35 pages and all 75
+  semantic annotations (41 Czech and 34 English), with no invalid-tag warning.
+- The exact Czech production manifest is `kb-release-cs.yml`, SHA-256
+  `45f44feecc7b495e8f0d07fe83045269ef681501b654f4e70b078f5a6ae51ba3`.
+  It updates 19 pages, no media, using the Czech single-line edit summary
+  `Označení navigačních cest a aktualizace názvů ve vpsAdminu`. Production is
+  still untouched and requires a fresh explicit approval before promotion.
