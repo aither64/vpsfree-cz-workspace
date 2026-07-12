@@ -970,3 +970,14 @@
   added the same hidden maintainer assignment as the Czech counterpart. The
   changed candidate triggered the staging clean-baseline guard as intended;
   reset from production and restaged/reverified both final previews.
+- The exactly one fresh mandatory reviewer found no Blocking or Important
+  issues. It independently confirmed seven-section bilingual parity, correct
+  hidden maintainer metadata and English `users` namespace, contract-backed
+  localized navigation examples, valid repository/workflow links, literal code
+  rendering with no active semantic marker, immutable one-page/no-media
+  manifests, and unchanged production revisions and hashes. Its only Advisory
+  finding records that staging integration occurred before review; final
+  manifests were nevertheless reset, restaged, and independently verified
+  after the corrections. The reviewer accepted the four-commit series through
+  `33a73a1` because rewriting the shared top-level `master` would risk other
+  concurrent sessions.
