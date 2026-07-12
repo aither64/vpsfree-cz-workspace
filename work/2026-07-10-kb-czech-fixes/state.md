@@ -834,10 +834,10 @@
   deleted from production and verified absent through both wiki endpoints.
 - The reviewed 30-page/59-media Czech release is published and browser-verified
   at `https://kb.vpsfree.cz/`.
-- The staging container remains owned by this initiative. It must be reset from
-  the now-current production baseline before staging the English bundle.
-- English production remains untouched until the user reviews the English
-  staging release and gives separate publication approval.
+- The staging container has been released and stopped after both publications;
+  its final review data are retained without an owner or pending release.
+- The reviewed 14-page/59-media English release is published and
+  browser-verified at `https://kb.vpsfree.org/`.
 
 ## 2026-07-12 English release review
 
@@ -868,7 +868,8 @@
   `4ed52cd3742c7b8cab5214aa38488928928251d36264e41286d708b7d2feb6c7`.
 - The dedicated screenshot cluster is stopped and its GC root removed. The KB
   staging container remains up and owned by this initiative for user review at
-  `http://kb-en.aitherdev.int.vpsfree.cz/`. English production is unchanged.
+  `http://kb-en.aitherdev.int.vpsfree.cz/`. English production was unchanged at
+  this review gate.
 
 ## 2026-07-12 English review feedback
 
@@ -897,4 +898,23 @@
   rendered pages, 52 embedded screenshots, and all 59 manifest media objects
   pass. Pending digest is
   `ff9f8e2700cc3c204d5fb0c9525db9bc16fda0ef96fbb4d73efe96d95817f8fd`;
-  English production remains unchanged.
+  English production was unchanged at this review gate.
+
+## 2026-07-12 English publication
+
+- User approved the exact staged manifest with digest
+  `ff9f8e2700cc3c204d5fb0c9525db9bc16fda0ef96fbb4d73efe96d95817f8fd`.
+  Final preflight authenticated production identity `aither`, confirmed ACL 255
+  on all 14 target pages, and matched the owned pending digest.
+- Promoted 14 pages and 59 create-only English media objects. Every page edit
+  used the manifest summary `Replace outdated vpsAdmin screenshots`.
+- Production API verification matches every candidate page and media checksum.
+  Playwright rendered all 14 public pages, found all ten management screenshots
+  at horizontal coordinate 184, loaded 52 distinct embedded screenshots, and
+  directly fetched all 59 manifest media objects as PNGs.
+- Warmed and verified all 14 affected production language pairs through both
+  public domains. Each rendered Czech and English page contains both language
+  links.
+- The pending marker is cleared. Released staging ownership and stopped the
+  global container while retaining its data. The dedicated screenshot cluster
+  was already stopped with no GC root.
