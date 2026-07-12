@@ -1,0 +1,62 @@
+<page>manuals:vps:exports</page>
+===== Exporty datasetů/snapshotů =====
+Exporty datasetů/snapshotů se používají pokud chceme do VPS připojit NAS
+nebo obsah snapshotu (zálohy). Vytvoření exportu nám daný dataset/snapshot
+zpřístupní přes NFS. Každý export má svou IP adresu a cestu, pomocí které
+ho můžeme mount-nout do VPS, viz níže.
+
+==== Vytvoření exportu ====
+Exporty najedeme v hlavním menu vpsAdminu, položka //Exporty//.
+Nový export datasetu lze vytvořit buď ze seznamu datasetů v menu //NAS//:
+
+{{:cs:screenshots:vpsadmin:exports:nas-export-list.png|}}
+
+
+Nebo z menu //Exporty// -> //Export datasetu//, kde se zobrazí formulář s výběrem
+datasetů k exportu.
+
+Snapshoty lze exportovat z menu //Zálohy// -> //Zálohy VPS//, popř. //Zálohy NAS//:
+
+{{:cs:screenshots:vpsadmin:exports:backup-export-list.png|}}
+
+==== Nastavení exportu ====
+U každého exportu lze nastavit, které VPS jej budou moct připojit. Pokud
+ponecháte zaškrtnuto //Všechny VPS//, export se bude automaticky přizpůsobovat IP
+adresám vašich VPS. Případně je možné si vybrat, které VPS nebo IP adresy
+budou mít přístup. U každého VPS/IP adresy lze nastavovat různé volby NFS
+serveru, např. read-only a read-write. Více info viz man exports(5).
+
+NFS server je možné vypnout/zapnout, IP adresa serveru je zachována.
+
+Jeden dataset/snapshot může být exportován pouze jednou, nicméně připojen může
+být vícekrát.
+
+==== Připojení ve VPS ====
+Při vytvoření exportu se na příslušném nodu spustí dedikovaný NFS server.
+vpsAdmin vám zobrazí adresu tohoto serveru a cestu exportovaného datasetu/snapshotu.
+
+{{:cs:screenshots:vpsadmin:exports:create-export-form.png?500|}}
+
+
+Zobrazují se zde rovněž ukázky různých způsobů připojení, tzn. pomocí příkazu
+//mount//, pomocí záznamu v ''/etc/fstab'', nebo systemd mount unit. 
+
+<note warning>Pro
+připojení je potřeba mít nainstalovány NFS utility, balíček se často jmenuje
+''nfs-client'', ''nfs-utils'' nebo ''nfs-common''. NFS server instalovat nemusíte.
+
+{{:cs:screenshots:vpsadmin:exports:export-details.png?500|}}
+
+==== Problém s rpc.statd ====
+
+Na Debianu Buster jsem narazil na problém se startem ''rpc.statd'':
+
+  Jul 06 10:31:52 bee rpc.statd[23393]: Failed to find any visible netconfig entries
+  Jul 06 10:31:52 bee rpc.statd[23393]: failed to create RPC listeners, exiting
+
+Problém je, že žádný z použitelných protokolů nebyl označený jako viditelný pro knihovní funkci getnetconfig(3), protože neměl nastavený příslušný flag v ''/etc/netconfig''. Pro správnou funkci TCP a UDP by příslušné řádky měly vypadat takto (ve 3. sloupci je ''v'', ne ''-''):
+
+  udp        tpi_clts      v     inet     udp     -       -
+  tcp        tpi_cots_ord  v     inet     tcp     -       -
+  udp6       tpi_clts      v     inet6    udp     -       -
+  tcp6       tpi_cots_ord  v     inet6    tcp     -       -

@@ -1,7 +1,7 @@
 # KB navigation annotation review
 
-Changed pages: 33
-Annotation tags: 55
+Changed pages: 36
+Annotation tags: 78
 
 | Language | Page | Semantic path | Count | Existing text | Candidate text |
 | --- | --- | --- | ---: | --- | --- |
@@ -15,6 +15,7 @@ Annotation tags: 55
 | cs | navody:vps:uzivatele | `member.totp-devices.open` | 1 | vpsAdmin -> Upravit profil -> TOTP zařízení | vpsAdmin -> Upravit profil -> TOTP zařízení |
 | cs | navody:vps:uzivatele | `member.passkeys.open` | 1 | Upravit profil -> Přístupové klíče | Upravit profil -> Přístupové klíče |
 | cs | navody:vps:uzivatele | `member.sessions.open` | 1 | vpsAdmin -> Upravit profil -> Relace | vpsAdmin -> Upravit profil -> Relace |
+| cs | navody:vps:uzivatele | `member.edit-profile.open` | 4 | (vpsAdmin -> Upravit profil) | vpsAdmin -> Upravit profil |
 | cs | navody:vps:ip_adresy | `networking.routable-addresses.open` | 1 | Sítě -> Routované adresy | Sítě -> Routované adresy |
 | cs | navody:vps:prenosy | `networking.monthly-traffic.open` | 1 | Sítě -> Seznam měsíčního provozu | Sítě -> Seznam měsíčního provozu |
 | cs | navody:vps:prenosy | `networking.live-monitor.open` | 1 | Sítě -> Live monitor | Sítě -> Live monitor |
@@ -29,11 +30,17 @@ Annotation tags: 55
 | cs | navody:vps:playgroundvps | `vps.swap.open` | 2 | **Prohodit VPS** | **Prohodit VPS** |
 | cs | navody:vps:datasety | `datasets.create.open` | 2 | //Vytvořit dataset// | //Vytvořit dataset// |
 | cs | navody:vps:oprava | `datasets.mount.open` | 1 | **Mount** | **Mount** |
+| cs | navody:distribuce:nixos:impermanence | `datasets.mount.open` | 1 | **Mount** | **Mount** |
 | cs | navody:distribuce:nixos:impermanence | `vps.features.open` | 1 | **Funkce** | **Funkce** |
 | cs | navody:vps:vpsadminos:oprava | `vps.boot-rescue.open` | 1 | **Spustit VPS ze šablony (nouzový režim)** | **Spustit VPS ze šablony (nouzový režim)** |
 | cs | navody:distribuce:nixos:impermanence | `vps.boot-rescue.open` | 1 | **Spustit VPS ze šablony (nouzový režim)** | **Spustit VPS ze šablony (nouzový režim)** |
-| cs | navody:vps:userdata | `userdata.deploy.open` | 1 | **Nasadit do VPS** | **Nasadit do VPS** |
-| en | information:membership_fees | `member.payment-instructions.open` | 1 | You can find member ID ↵ in vpsAdmin -> Edit profile at the top, or Members section. It is also sent in email payment ↵ reminders and can be seen in Payment instructions in member details in vpsAdmin. | You can find member ID in vpsAdmin -> Edit profile -> Payment instructions. It is also sent in email payment reminders. |
+| cs | navody:vps:userdata | `userdata.manage-vps.open` | 1 | menu **VPS** -> **User data**, ↵ popř. | **VPS** -> **User data** |
+| cs | navody:vps:userdata | `userdata.manage-profile.open` | 1 | **Upravit profil** -> **User data** | **Upravit profil** -> **User data** |
+| cs | navody:vps:userdata | `userdata.deploy.open` | 1 | **vpsAdmin** -> **VPS** -> **User data** -> Upravit položku ze seznamu a poté formulář **Nasadit do VPS** | **vpsAdmin** -> **VPS** -> **User data** -> Upravit položku ze seznamu a poté formulář **Nasadit do VPS** |
+| cs | navody:vps:exporty | `exports.export-dataset.open` | 1 | //Exporty// -> //Export datasetu// | //Exporty// -> //Export datasetu// |
+| cs | navody:vps:exporty | `exports.open` | 1 | položka //Exporty// | //Exporty// |
+| cs | navody:vps:exporty | `backups.vps.open` | 1 | //Zálohy// -> //Zálohy VPS// | //Zálohy// -> //Zálohy VPS// |
+| en | information:membership_fees | `member.payment-instructions.open` | 1 | in vpsAdmin -> Edit profile at the top, or Members section. It is also sent in email payment ↵ reminders and can be seen in Payment instructions in member details in vpsAdmin. | vpsAdmin -> Edit profile -> Payment instructions |
 | en | manuals:vps:management | `member.public-keys.add` | 1 | Edit profile → Public keys → Add public key | Edit profile → Public keys → Add public key |
 | en | manuals:vps:metrics | `member.metrics-access-tokens.open` | 1 | **Edit profile** -> **Metrics access tokens** | **Edit profile** -> **Metrics access tokens** |
 | en | manuals:vps:environment | `member.cluster-resources.open` | 1 | Edit profile → ↵ Cluster resources | Edit profile → ↵ Cluster resources |
@@ -42,6 +49,8 @@ Annotation tags: 55
 | en | manuals:vps:users | `member.totp-devices.open` | 1 | vpsAdmin -> Edit profile -> TOTP devices | vpsAdmin -> Edit profile -> TOTP devices |
 | en | manuals:vps:users | `member.passkeys.open` | 1 | vpsAdmin -> Edit profile -> Passkeys | vpsAdmin -> Edit profile -> Passkeys |
 | en | manuals:vps:users | `member.sessions.open` | 1 | vpsAdmin -> Edit profile -> Session log | vpsAdmin -> Edit profile -> Sessions |
+| en | manuals:vps:users | `member.edit-profile.open` | 3 | (vpsAdmin -> Edit profile) | vpsAdmin -> Edit profile |
+| en | manuals:vps:users | `member.edit-profile.open` | 1 | in vpsAdmin -> Edit profile. | vpsAdmin -> Edit profile |
 | en | manuals:vps:ip_addresses | `networking.routable-addresses.open` | 1 | Networking -> Routable addresses | Networking -> Routable addresses |
 | en | manuals:vps:traffic | `networking.monthly-traffic.open` | 1 | Networking -> List monthly traffic | Networking -> List monthly traffic |
 | en | manuals:vps:traffic | `networking.live-monitor.open` | 1 | Networking -> Live monitor | Networking -> Live monitor |
@@ -53,9 +62,18 @@ Annotation tags: 55
 | en | manuals:vps:playgroundvps | `vps.clone.open` | 1 | **Clone VPS** | **Clone VPS** |
 | en | manuals:vps:playgroundvps | `vps.swap.open` | 1 | VPS can be ↵ swapped from details of the production VPS: | Use **Swap VPS** in details of the production VPS: |
 | en | manuals:vps:repair | `datasets.mount.open` | 1 | Details of the recovery VPS -> Create mount | VPS details -> Mount |
+| en | manuals:distributions:nixos:impermanence | `datasets.mount.open` | 1 | **Mount** | **Mount** |
 | en | manuals:vps:vpsadminos:recovery | `vps.boot-rescue.open` | 1 | **Boot from VPS template** | **Boot VPS from template (rescue mode)** |
 | en | manuals:distributions:nixos:impermanence | `vps.boot-rescue.open` | 1 | **Boot VPS from template (rescue mode)** | **Boot VPS from template (rescue mode)** |
-| en | manuals:vps:userdata | `userdata.deploy.open` | 1 | **Deploy to VPS** | **Deploy to VPS** |
+| en | manuals:vps:userdata | `userdata.manage-vps.open` | 1 | under **VPS** -> **User data**, or | **VPS** -> **User data** |
+| en | manuals:vps:userdata | `userdata.manage-profile.open` | 1 | **Edit profile** -> **User data** | **Edit profile** -> **User data** |
+| en | manuals:vps:userdata | `userdata.deploy.open` | 1 | **vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form | **vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form |
+| en | manuals:vps:exports | `exports.export-dataset.open` | 1 | //Exports// -> //Export dataset// | //Exports// -> //Export dataset// |
+| en | manuals:vps:exports | `backups.vps.open` | 1 | //Backups// -> //VPS backups// | //Backups// -> //VPS backups// |
+| en | manuals:vps:vpsadminos:storage | `exports.export-dataset.open` | 1 | //Exports// -> //Export dataset// | //Exports// -> //Export dataset// |
+| en | manuals:vps:vpsadminos:storage | `backups.vps.open` | 1 | //Backups// -> //VPS backups// | //Backups// -> //VPS backups// |
+| en | manuals:vps:exports | `exports.open` | 1 | main menu as //Exports// | //Exports// |
+| en | manuals:vps:vpsadminos:storage | `exports.open` | 1 | main menu called //Exports// | //Exports// |
 
 ## Explicit exceptions
 
