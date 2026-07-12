@@ -956,7 +956,7 @@
   revisions. Czech digest is
   `8632088c7611e6f30adffe504cc4729156908439fb6f18ae29e5c5a1e8ae29aa`
   with summary `Doplnění pravidel pro dokumentaci vpsAdminu`; English digest is
-  `eae4a588b6d0015fa6f71c53651d8dd2bbac19876f1c7bb488d211f90a4ab8bb`
+  `fe03ca3a4be102dfa28f367b8f29af4367928207eb33458352b8cf2466b79ea0`
   with summary `Expand the contribution guide and document the vpsAdmin
   workflow`. Both contain one page and no media.
 - Claimed and reset the on-demand staging instance from current production,
@@ -965,3 +965,8 @@
   links; the example tag is escaped inside its code block and does not emit an
   active `data-vpsadmin-doc-id` marker. The English manifest is pending only for
   review. Production remains untouched.
+- A configuration cross-check found that the English maintainers plugin uses
+  the `users` namespace, not Czech `uzivatele`. Corrected that description and
+  added the same hidden maintainer assignment as the Czech counterpart. The
+  changed candidate triggered the staging clean-baseline guard as intended;
+  reset from production and restaged/reverified both final previews.
