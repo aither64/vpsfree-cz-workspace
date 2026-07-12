@@ -17,8 +17,8 @@ review and explicit approval gates.
   screenshot bindings, source fingerprints, and the operator-run consistency
   checker.
 - `vpsadmin`: expose stable documentation landmarks in rendered WebUI elements
-  and provide a machine-readable contract derived from the same label/route
-  definitions used by the interface.
+  and keep their IDs next to the label/route definitions used by the
+  interface.
 - `dokuwiki-plugin-vpsadmindoc` (new standalone repository): implement paired
   `<vpsadmin-nav>` annotation syntax that preserves human-authored visible text
   while exposing stable semantic IDs to renderers and inventory tools.
@@ -55,11 +55,14 @@ diagnostic rather than disappearing.
 ### WebUI contract
 
 Documented controls and navigation entries receive stable semantic landmarks
-from the same definitions that provide their gettext msgid and target route.
-Rendered HTML exposes `data-vpsadmin-doc-id`; a generated JSON contract records
-the ID, kind, gettext msgid, route shape, source owner, and any replacement or
-retirement state. Capture scenarios prefer these landmarks over translated-text
-selectors where available.
+next to the definitions that provide their gettext msgid and target route.
+Rendered HTML exposes `data-vpsadmin-doc-id`. The capture repository's pinned
+contract records the ID, gettext msgid, source fingerprint, affected pages,
+and screenshot bindings, then verifies those facts against the exact vpsAdmin
+source revision. Capture scenarios prefer the rendered landmarks over
+translated-text selectors where available. Keeping the impact contract outside
+the runtime WebUI avoids adding an otherwise unused production endpoint or
+generated artifact.
 
 ### Consistency checker
 

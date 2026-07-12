@@ -11,14 +11,21 @@
 
 ## Repositories
 
-- `vpsadmin-kb-captures`: upstream default branch verified as `master` at
-  `951a5e6`; new feature branch/worktree pending.
-- `vpsadmin`: affected by stable WebUI documentation landmarks and contract
-  generation; branch/worktree pending.
-- `vpsfree-cz-configuration`: affected later by plugin packaging; branch and
-  worktree deferred until a plugin revision exists.
-- `dokuwiki-plugin-vpsadmindoc`: requested as a new empty GitHub repository;
-  clone/worktree pending repository creation.
+- `vpsadmin-kb-captures`: branch `2026-07-12-vpsadmin-kb-contract` in
+  `worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin-kb-captures`, based on
+  `origin/master` `951a5e6`, at `92ee834` and pushed.
+- `vpsadmin`: branch `2026-07-12-vpsadmin-kb-contract` in
+  `worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin`, based on
+  `origin/master` `af3b885`, at `f76c0cf` and pushed.
+- `vpsfree-cz-configuration`: branch `2026-07-12-vpsadmin-kb-contract` in
+  `worktrees/2026-07-12-vpsadmin-kb-contract/vpsfree-cz-configuration`, based
+  on current `origin/master` `606ab08`, at `f2a98c23` locally. It carries the
+  four still-unmerged but deployed KB staging commits as separate cherry-picks
+  before the new plugin packaging commit.
+- `dokuwiki-plugin-vpsadmindoc`: branch
+  `2026-07-12-vpsadmin-kb-contract` in
+  `worktrees/2026-07-12-vpsadmin-kb-contract/dokuwiki-plugin-vpsadmindoc`,
+  initial commit `ed92a4d` and pushed to the user-created repository.
 - Top-level workspace: plan/state tracking on shared `master`; KB tooling
   changes, if any, will be staged path-by-path around unrelated shared changes.
 
@@ -38,6 +45,50 @@
   `sbar_add()` call sites. Stable landmarks should be added through explicit
   contracts/helper parameters rather than inferred permanently from translated
   text.
+
+## Implemented
+
+- Added optional, validated documentation-ID parameters to vpsAdmin's menu,
+  sidebar, and table-title helpers and annotated the initial documented
+  controls. No routes, labels, API contracts, or persisted state changed.
+- Added a capture-owned YAML contract with 29 controls, 22 navigation paths,
+  bilingual labels, page bindings, source fingerprints, and 32 screenshot
+  concept bindings. The checker validates it against the pinned vpsAdmin Czech
+  catalog, source tree, rendered landmark declarations, and capture inventory.
+- Changed the Features and rescue-mode captures to select their sections via
+  semantic IDs as an initial end-to-end use of the landmarks.
+- Implemented the standalone `vpsadmindoc` DokuWiki syntax plugin. It preserves
+  and escapes human-authored bodies, emits `data-vpsadmin-doc-id`, records page
+  metadata, and visibly diagnoses malformed IDs. The test suite includes a
+  render through the real nixpkgs DokuWiki parser.
+- Pinned plugin commit `ed92a4d` and its fetched content hash in both the
+  production KB and on-demand staging plugin lists. This prepares closures only;
+  neither machine nor page content has been changed.
+
+## Quick verification
+
+- vpsAdmin WebUI PHPUnit: 65 tests, 246 assertions; PHP CS Fixer dry run passed;
+  all Overcommit hooks passed for `f76c0cf`.
+- `vpsadmin-kb-captures`: `nix develop -c bin/check` passed with 6 contract
+  tests/16 assertions and strict validation of 59 concepts, 118 variants, and
+  118 PNGs.
+- `dokuwiki-plugin-vpsadmindoc`: `nix develop -c bin/check` passed PHP syntax,
+  isolated behavior checks, and a real DokuWiki parser/render integration.
+- `vpsfree-cz-configuration`: Nix formatting passed and `confctl ls` evaluates
+  both affected targets. Repository hooks passed for `f2a98c23`.
+
+## Compatibility and deployment
+
+- WebUI attributes and DokuWiki syntax are additive; there are no schema,
+  protocol, API, or on-disk-format changes and mixed WebUI versions are safe.
+- The plugin must be deployed before annotated pages. Existing pages are
+  unaffected by installation. Production rollback must not remove the plugin
+  while annotated tags remain published unless fallback behavior is first
+  proven.
+- Configuration can be built here, but only the operator can deploy aitherdev
+  or the production KB container.
+- Long `confctl` builds and staged page rendering are deferred until the
+  mandatory standalone review.
 
 ## Approval boundaries
 
