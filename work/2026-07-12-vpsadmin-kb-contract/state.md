@@ -270,3 +270,27 @@
 - GitHub WebUI PHPUnit and i18n-health workflows pass for final vpsAdmin commit
   `870d16773`. Superseded selected-integration runs were cancelled after each
   force-push; final CI run `29202530426` is still in progress.
+
+## Durable workflow handoff
+
+- User accepted the staged result and requested a durable workflow that future
+  agents will discover. Added the canonical end-to-end guide at
+  `vpsadmin-kb-captures/docs/webui-change-workflow.md` in capture commit
+  `ddcb038`. It covers the trigger, semantic-ID decisions, revision pinning,
+  impact reports, bilingual recapture, immutable KB source validation, staging,
+  and the explicit production approval boundary.
+- Added a pointer to that guide in the capture repository README/AGENTS and in
+  vpsAdmin AGENTS commit `cd8344cc4`. Added `vpsadmin-kb-captures` to the
+  top-level project map and linked the guide from the workspace KB instructions
+  without staging the unrelated pre-existing AGENTS change.
+- Promoted reusable preparation logic to stable workspace commands:
+  `bin/kb-contract-fetch`, `bin/kb-contract-build`, and
+  `bin/kb-contract-manifest`. Exact replacement plans are data, while fetching,
+  candidate construction, review ledgers, counterpart checks, source/candidate
+  checksums, and guarded manifests are reusable code.
+- `test/kb_contract_tools_test.rb` passes with 3 runs/18 assertions. Existing
+  KB page, stage, and cleanup suites also pass with 58 runs/214 assertions. A
+  live read-only fetch reproduced 116 Czech and 70 English page identities.
+- No configuration deployment or production KB write was performed. The next
+  operational decisions remain feature-branch integration, production plugin
+  deployment, and separately approved Czech/English manifest promotions.
