@@ -82,3 +82,6 @@ Annotation tags: 75
 | cs | navody:vps:sprava | `vps.features.open` | Features is only the article section heading, not an in-prose navigation instruction. |
 | en | manuals:vps:management | `vps.features.open` | Features is only the article section heading, not an in-prose navigation instruction. |
 | en | manuals:distributions:nixos:impermanence | `vps.features.open` | The current English article does not mention the Features form. |
+| en | manuals:vps:vpsadminos:storage | `exports.open` | Legacy duplicate has no Czech counterpart and is intentionally not annotated or released. |
+| en | manuals:vps:vpsadminos:storage | `exports.export-dataset.open` | Legacy duplicate has no Czech counterpart and is intentionally not annotated or released. |
+| en | manuals:vps:vpsadminos:storage | `backups.vps.open` | Legacy duplicate has no Czech counterpart and is intentionally not annotated or released. |
