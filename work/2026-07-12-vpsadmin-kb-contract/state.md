@@ -313,3 +313,24 @@
   snapshot mismatch, explicit ledger text, path escape, and malformed semantic
   ID regressions. The existing 58 KB tests/214 assertions and live read-only
   116/70-page fetch also pass.
+
+## Feature integration
+
+- User authorized integration. Fetched all three upstream repositories; each
+  feature branch was already a direct descendant of current `origin/master`, so
+  no rebase or conflict resolution was needed.
+- Created fresh detached merge worktrees under
+  `worktrees/2026-07-12-vpsadmin-kb-contract-merge/`, fast-forwarded them with
+  `git merge --ff-only`, tested the exact merge heads, and pushed:
+  - vpsAdmin `master` to `cd8344cc4`;
+  - vpsadmin-kb-captures `master` to `704f16d`;
+  - vpsfree-cz-configuration `master` to `f2a98c23`.
+- Merge-head verification passed: vpsAdmin WebUI PHPUnit 65 tests/248
+  assertions; the full capture `bin/check`; and configuration evaluation of
+  `cz.vpsfree/machines/aitherdev` and `cz.vpsfree/containers/int.kb`. Earlier
+  full `confctl build -y` results apply to the identical configuration head.
+- Removed merge-worktree PHPUnit and Nix-shell caches. Feature branches remain
+  locally and remotely as required.
+- This integration does not deploy `int.kb`. The operator must deploy production
+  configuration from the build machine before any annotated production page is
+  promoted. Both production KBs remain untouched.
