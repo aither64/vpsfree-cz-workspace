@@ -213,3 +213,37 @@
 - Every production KB update requires a new explicit user approval.
 - Machine deployment remains operator-only; this initiative may prepare and
   build configuration but cannot deploy it.
+
+## Complete-inventory review follow-up
+
+- A second standalone review found that the first annotation inventory was
+  circular: production fetching started from already-curated contract pages.
+  It also identified missing standalone Edit profile references, both User data
+  entry routes and the full deployment path, Mount in both impermanence pages,
+  and the previously unfetched current exports articles. The English payment
+  annotation also covered more prose than the navigation phrase.
+- Production fetching now begins with `core.listPages` and snapshots all 116
+  Czech and 70 English pages before applying any curated replacements. The
+  capture repository independently scans every candidate page and records 108
+  navigation-shaped paragraphs as bound paths or explicit classifications;
+  candidate validation rejects partial page sets, new unclassified paragraphs,
+  stale classifications, and tag/path mismatch.
+- vpsAdmin commit `1c575161c` adds stable landmarks for the VPS menu, User data
+  entry, Exports menu, and Export dataset action. WebUI PHPUnit passed with 65
+  tests and 248 assertions, and all repository hooks passed. The branch is
+  pushed.
+- Capture commits `567be66` and `334ff9b` pin vpsAdmin `1c575161c`, add the
+  independent inventory/checker, and bind the missed paths. Full `bin/check`
+  passes: 33 controls, 29 paths, 65 annotation bindings, 6 path exceptions,
+  8 contract tests/50 assertions, 5 annotation tests/13 assertions, and the
+  unchanged 59-concept/118-variant screenshot inventory. The branch is pushed.
+- The unpaired legacy English page `manuals:vps:vpsadminos:storage` remains in
+  the complete scan with explicit classifications, but is not annotated: it has
+  no Czech counterpart and the release workflow correctly rejects an unpaired
+  English page. The current paired `navody:vps:exporty` and
+  `manuals:vps:exports` pages are annotated.
+- Reset only the owned staging mirror after its baseline guard rejected
+  layering over the old candidate. Staged and verified the corrected release:
+  19 Czech pages, 16 English pages, 35 rendered pages, and 75 semantic tags.
+  The English manifest is pending for review. Production remains untouched.
+- A fresh mandatory follow-up review is pending for the committed corrections.
