@@ -335,3 +335,7 @@
 - This integration does not deploy `int.kb`. The operator must deploy production
   configuration from the build machine before any annotated production page is
   promoted. Both production KBs remain untouched.
+- Removed the four merged project feature worktrees (vpsAdmin, captures,
+  configuration, and DokuWiki plugin) after confirming they were clean. Their
+  local and remote feature branches remain; canonical bare repositories retain
+  the merged refs.
