@@ -1,0 +1,98 @@
+====== Contributing to the Knowledge Base ======
+Any vpsFree.cz member can contribute to the Knowledge Base. Below the login form, select “Log in with other services”, click vpsAdmin, and enter your vpsAdmin credentials.
+
+===== Translations and page linking =====
+Our Knowledge Base is available in two languages,
+[[https://kb.vpsfree.org|English]] and [[https://kb.vpsfree.cz|Czech]].
+We use our own
+[[https://github.com/vpsfreecz/dokuwiki-plugin-mlfarm|plugin]] to link equivalent
+pages between the language versions. It marks translated pages with the
+''%%<page>page name</page>%%'' tag. Pages with the same name are then linked to
+each other. Page names follow the [[https://kb.vpsfree.org|English KB]], which
+is the canonical version.
+
+For example, the English page
+[[https://kb.vpsfree.org/information/association|information:association]] is
+paired with the Czech page
+[[https://kb.vpsfree.cz/informace/sdruzeni|informace:sdruzeni]]. Add the
+following tag anywhere in the Czech page:
+
+<code>
+<page>information:association</page>
+
+... page text ...
+</code>
+
+For consistency, always put this tag on the first line. The English KB is the
+canonical version, so its pages do not use the tag.
+
+===== Media =====
+All images and other data files are shared between both KBs. In other words, a
+file uploaded through one KB is also available to all other KB translations.
+When different language versions need different media, especially screenshots,
+put them in a directory named after the language code, such as ''en'' or ''cs''.
+
+===== Documenting vpsAdmin =====
+==== Navigation in vpsAdmin ====
+Every description of navigation, a menu entry, or a form in vpsAdmin must be
+wrapped in a paired ''%%<vpsadmin-nav>%%'' tag. Its ''id'' attribute contains
+the stable semantic identifier of that control. The visible text remains in
+English and must match the current WebUI labels.
+
+For example:
+
+<code>
+<vpsadmin-nav id="member.public-keys.add">Edit profile → Public keys → Add public key</vpsadmin-nav>
+</code>
+
+Do not invent identifiers only in KB text. They must be part of the
+[[https://github.com/vpsfreecz/vpsadmin-kb-captures/blob/master/contract/navigation.yml|navigation contract]].
+If the required identifier does not exist, or the WebUI is changing, follow the
+[[https://github.com/vpsfreecz/vpsadmin-kb-captures/blob/master/docs/webui-change-workflow.md|WebUI change documentation workflow]].
+
+==== vpsAdmin screenshots ====
+Do not capture or upload vpsAdmin screenshots manually. They are generated
+reproducibly using Playwright scenarios, a development cluster, and prepared
+fixtures in
+[[https://github.com/vpsfreecz/vpsadmin-kb-captures|vpsadmin-kb-captures]].
+The repository maintains both Czech and English variants of every screenshot.
+Add or update a screenshot there, regenerate it, review it on the staging KB,
+and only then publish it.
+
+===== Maintainers =====
+Each page can name one or more maintainers. A maintainer is responsible for
+keeping the page accurate and up to date.
+
+Maintainers are informational: they show whom to contact with a question or an
+idea for improvement. Anyone can still make small changes, corrections, or add
+more information directly. If you write a guide and have time to maintain it,
+please add yourself as a maintainer.
+
+Our IRC [[information:chat#bot|bot]] regularly checks KB changes and announces
+them on IRC. If a maintainer has an IRC nick in their KB profile, the bot pings
+them when one of their pages changes.
+
+Set page maintainers with the ''%%<maintainers>%%'' tag:
+
+<code>
+<maintainers>
+aither
+nick2 (first section)
+nick3 (second section)
+</maintainers>
+</code>
+
+The first word on each line is the maintainer's nick. It links to that
+maintainer's profile page in the ''uzivatele:<nick>'' namespace on the Czech KB.
+Each maintainer has to create their own profile. Profiles use the
+''%%<maintainer>%%'' tag:
+
+<code>
+<maintainer name="My name">
+irc my_irc_nick
+mail somebody@example.com
+</maintainer>
+</code>
+
+Both ''irc'' and ''mail'' are optional. The IRC bot reads the maintainer's IRC
+nick from this profile and pings them when one of their pages changes.
