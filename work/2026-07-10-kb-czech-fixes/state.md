@@ -981,3 +981,22 @@
   after the corrections. The reviewer accepted the four-commit series through
   `33a73a1` because rewriting the shared top-level `master` would risk other
   concurrent sessions.
+
+## 2026-07-12 KB authoring guide publication
+
+- User explicitly approved both exact staged manifests. Restaged and verified
+  Czech digest
+  `8632088c7611e6f30adffe504cc4729156908439fb6f18ae29e5c5a1e8ae29aa`,
+  then promoted `informace:jak_psat` with summary `Doplnění pravidel pro
+  dokumentaci vpsAdminu`. Production API content matches the candidate
+  byte-for-byte; the public page renders the new guidance, repository links,
+  and escaped example without an active semantic marker.
+- Restaged and verified English digest
+  `fe03ca3a4be102dfa28f367b8f29af4367928207eb33458352b8cf2466b79ea0`,
+  then promoted `information:kb` with summary `Expand the contribution guide
+  and document the vpsAdmin workflow`. Production API and rendered-page checks
+  passed, including the configured `users` namespace and literal example.
+- Both public pages contain their reciprocal Czech/English language links. No
+  media were changed. Released staging ownership after publication; the
+  container is down, owner and pending manifest are null, and retained mirror
+  data remain available for a future claimed session.
