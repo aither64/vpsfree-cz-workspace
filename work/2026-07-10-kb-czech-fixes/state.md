@@ -656,6 +656,23 @@
 - The standalone capture and configuration feature branches are pushed and
   ready for operator review/merge.
 
+## 2026-07-12 node identity and console follow-up
+
+- User review requested production-shaped short node domain names and a final
+  correction to the Web Console framing.
+- Exact exposed identities are `node1.prg`, `node1.pgnd`, and
+  `backuper1.prg`. The Playground VM retains internal machine key `node2`;
+  duplicate bare `node1` values must not be used as peer or seed identifiers.
+- Exact location domains are Praha `prg`, Brno `brq`, Playground `pgnd`, Praha
+  Storage `prg`, and Staging `stg`. Environment domains remain documentation
+  fixtures.
+- The console follow-up will crop the H1 with the complete outer iframe so
+  nested-frame scrolling cannot clip its top or right edge. Other screenshot
+  crop behavior remains unchanged.
+- Implementation will use a fresh local-network cluster, recapture all 59
+  assets, rebuild and verify the 30-page/59-media staging release, and leave
+  production untouched.
+
 ## Cleanup
 
 - The standalone initiative dev cluster has been stopped and its GC root

@@ -71,6 +71,15 @@ The two historical password-form images `informace:details2.png` and
 former as a legacy alias and both source pages use the same generated PNG. The
 incorrect `vps-action-menu.png` capture has no remaining KB use and is removed.
 
+The final fixture follow-up uses the production location domains `prg`, `brq`,
+`pgnd`, `prg`, and `stg`. Its exposed screenshot nodes are `node1.prg`,
+`node1.pgnd`, and `backuper1.prg`; the Playground machine keeps the internal
+orchestration key `node2`. Seed and peer mappings use node IDs, machine keys,
+or complete domain names so the repeated exposed name `node1` is unambiguous.
+The Web Console crop targets the complete outer iframe together with its H1,
+avoiding nested-frame scrolling and retaining the full heading and iframe
+border without changing crop behavior for other screenshots.
+
 ### Staging infrastructure
 
 `vpsfree-cz-configuration` declares one stopped-by-default NixOS container on
