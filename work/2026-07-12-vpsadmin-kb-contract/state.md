@@ -294,3 +294,22 @@
 - No configuration deployment or production KB write was performed. The next
   operational decisions remain feature-branch integration, production plugin
   deployment, and separately approved Czech/English manifest promotions.
+- The exactly one fresh mandatory review found three blocking issues in the new
+  handoff: manifests could combine stale candidates with a newer source
+  baseline, explicit replacements hid surrounding edits in the review ledger,
+  and the guide's two-language promotion sequence could not satisfy the single
+  pending-manifest guard. It also requested containment checks for IDs/indexed
+  paths and an explicit staging-ownership closeout.
+- Fixed all findings. Manifests now require the candidate's recorded source hash
+  to equal the chosen source snapshot, explicit replacement tag bodies must
+  equal their declared bodies and the ledger displays the complete replacement,
+  and all remote/index-derived paths and semantic/page IDs are validated before
+  access. Duplicate page IDs/files and English counterparts are rejected.
+- Guide commit `704f16d` now explains that both languages remain visible on
+  staging but only one manifest is pending. After approval, each language is
+  restaged, verified, and immediately promoted before staging ownership is
+  released; abandoned pending reviews require explicit discard.
+- Expanded tooling coverage passes with 7 runs/33 assertions, including source
+  snapshot mismatch, explicit ledger text, path escape, and malformed semantic
+  ID regressions. The existing 58 KB tests/214 assertions and live read-only
+  116/70-page fetch also pass.
