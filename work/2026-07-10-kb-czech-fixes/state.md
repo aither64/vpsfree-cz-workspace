@@ -705,6 +705,20 @@
 - The capture cluster is stopped with no GC root. Czech staging remains up for
   review, and production remains untouched.
 
+## 2026-07-12 vpsAdmin and Debian follow-up
+
+- User review requested the Czech translation fixes from current vpsAdmin
+  `origin/master` and Debian instead of Alpine for documentation VPSes.
+- Fast-forwarded the clean vpsAdmin worktree from `7e0be5d21` to
+  `af3b885a8`. The three upstream commits update dependencies and localize the
+  root-password warning and network-interface types.
+- The capture repository will pin `af3b885a82955dbeb06a102948c35a82bf74acc4`,
+  select exact template label `Debian (latest)` in fixture and wizard paths,
+  and require a Debian console banner before capture. A completely reset
+  cluster is required so existing Alpine fixture VPSes cannot be reused.
+- The complete 59-image Czech release will be regenerated and restaged;
+  production remains outside the authorized work.
+
 ## Cleanup
 
 - The standalone initiative dev cluster has been stopped and its GC root

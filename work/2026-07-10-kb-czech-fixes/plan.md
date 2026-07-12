@@ -16,7 +16,7 @@ separate, explicitly approved action.
   capture implementation.
 - `vpsfree-cz-configuration`: internal DNS records, reverse proxy, and an
   on-demand declarative `kb-staging` NixOS container on aitherdev.
-- `vpsadmin` at `7e0be5d215ce554009ff92381bdb54557e618776`:
+- `vpsadmin` at `af3b885a82955dbeb06a102948c35a82bf74acc4`:
   read-only authority for Czech UI terminology and captured behavior.
 - Production and staging Czech/English DokuWiki instances. No production
   writes are part of implementation or infrastructure validation.
@@ -54,6 +54,11 @@ domains and IDs are stable local values. The documentation account receives
 the four standard packages. Its fixtures include VPSes `vps` and
 `playground-vps`, a `data` subdataset mounted at `/srv/data`, and a `nas`
 dataset on the primary pool.
+
+Both documentation VPSes and the captured VPS-creation wizard select the exact
+`Debian (latest)` template. Console readiness and normalization require a real
+Debian console banner, so an accidental fallback to the first or an Alpine
+template fails capture instead of silently producing the wrong documentation.
 
 All Czech assets are recaptured. Content-aware cropping measures visible text,
 complete table borders, controls, media, and terminals instead of full-width
