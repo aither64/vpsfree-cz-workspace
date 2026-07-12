@@ -791,12 +791,20 @@
   branch with HTTP 403 for the available token, so the remote default still
   points to the old dated branch; no repository content is affected.
 - English capture work uses branch `2026-07-12-kb-english-captures` in the
-  existing capture worktree. Commits `81b4027` and `128d9fe` introduce schema 5
+  existing capture worktree. Commits `9afb658` and `92f6c1c` introduce schema 5
   with 59 concepts/118 Czech-English variants and locale-aware scenario labels.
   The English inventory records 53 replaceable references across 14 pages;
   the remaining old image reference is an unrelated icon and stays unchanged.
   `nix develop -c bin/check --allow-missing` passes with the existing 59 Czech
   PNGs and the intentionally pending English variants.
+- The mandatory standalone English-capture review found one blocking missing
+  binding: `manuals:vps:management` still embeds `vps_features.png`. The schema
+  now binds that page to `vps-management/feature-settings`, expects 54 English
+  references, and asserts the exact binding. Its important operational finding
+  is also resolved: `bin/capture` no longer defaults to Czech and requires an
+  explicit `--language cs|en`, preventing an omitted flag from overwriting the
+  reviewed Czech working-tree images. Fixups were autosquashed into the two
+  owning commits and the allow-missing check passes again.
 
 ## Cleanup
 
