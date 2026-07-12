@@ -12,8 +12,10 @@ performance values consistently lower-case. The current follow-up replaces the
 generic WebUI submit label `Go >>` with context-specific actions and fully
 localizes the VPS swap preview. A subsequent follow-up localizes descriptions
 of configured web services on the Czech vpsf-status page while preserving the
-existing English JSON API contract. Merge each result to its default branch
-and update the corresponding production deployment channel.
+existing English JSON API contract. The latest follow-up localizes the VPS
+root-password warning and network-interface type labels, and capitalizes only
+the entity probe-log message column in vpsf-status. Merge each result to its
+default branch and update the corresponding production deployment channel.
 
 ## Affected repositories
 
@@ -78,6 +80,17 @@ reported application strings are defined by vpsAdmin.
   v češtině`, `Znalostní báze v angličtině`, `Diskusní fórum`, and the agreed
   technical term `IRC bouncer`.
 - Update the vpsf-status sample configuration to document the localized shape.
+- Localize and polish the non-admin VPS root-password warning using exact
+  English/Czech sentences while preserving its formatting and behavior.
+- Render network-interface types through the API's localized choice metadata.
+  Keep raw values unchanged and use exact English/Czech labels: lower-case
+  `venet`, `Bridged veth` / `Veth připojený do bridge`, and `Routed veth` /
+  `Routovaný veth`.
+- Capitalize the first Unicode character of localized vpsf-status probe-log
+  messages only when it is lower-case. Apply this at the shared probe-log view
+  boundary for entity and group detail logs. Keep shared lower-case
+  translations for history summaries, and preserve acronym, numeric, and
+  already-capitalized prefixes.
 - Use exact Czech payment headers `PŘIJATO`, `ZAÚČTOVAL`, `ČÁSTKA`, `OD`,
   `DO`, `PLATBA`, `DATUM`, `STAV`, `PLÁTCE`, `ZPRÁVA`, `VS`, `UŽIVATEL`, and
   `MĚSÍCE` according to each table's columns.
@@ -111,6 +124,12 @@ reported application strings are defined by vpsAdmin.
 - The vpsf-status application and configuration can be deployed in either
   order. Until both are present, the Czech page falls back to English; rollback
   is safe and requires no operator action.
+- Network-interface enum values and API response data remain unchanged; only
+  localized choice labels change. Old/new vpsAdmin API and WebUI versions are
+  compatible, though both updated components are needed to display the labels.
+- Probe history storage is unchanged. Capitalization occurs only in probe-log
+  view models, so existing history summaries such as `Ping not responding` and
+  `Ping neodpovídá` remain grammatically unchanged.
 
 ## Testing plan
 
@@ -135,3 +154,10 @@ reported application strings are defined by vpsAdmin.
 - Run `go test ./...`, `make i18n-health`, the declared Lefthook checks, and
   `nix build .#vpsf-status`; evaluate/build the production vpsf-status machine
   after updating its input through `confctl`.
+- Add exact WebUI catalog/API metadata assertions and English/Czech Playwright
+  coverage for the password warning and `veth_routed` label.
+- Add vpsf-status unit/HTTP coverage for English/Czech capitalization, raw
+  messages, acronym/numeric preservation, and unchanged shared history text.
+- Keep the password warning, interface labels, and probe-log capitalization as
+  three focused functional commits. Run the mandatory standalone review before
+  `webui#vps-user-core` and other long integration tests.

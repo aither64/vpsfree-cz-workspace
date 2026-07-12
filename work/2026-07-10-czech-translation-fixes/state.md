@@ -18,6 +18,22 @@
   - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsf-status`
   - current follow-up base: `origin/master` at `29853c364`
   - current follow-up head: `3eb6fd86a`
+- `vpsadmin` (VPS details follow-up)
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsadmin`
+  - current follow-up base: `origin/master` at `d888a19f2`
+  - current follow-up head: `af3b885a8`
+- `vpsf-status` (probe-log capitalization follow-up)
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsf-status`
+  - current follow-up base: `origin/master` at `3eb6fd86a`
+  - current follow-up head: `9c19b23`
+- `vpsfree-cz-configuration` (dual input follow-up)
+  - branch: `2026-07-10-czech-translation-fixes`
+  - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsfree-cz-configuration`
+  - current follow-up base: `origin/master` at `6e93bc04`
+  - planned commands: `confctl inputs channel update --commit vpsadmin` and
+    `confctl inputs channel update --commit vpsf-status`
 - `vpsfree-cz-configuration` (vpsf-status follow-up)
   - branch: `2026-07-10-czech-translation-fixes`
   - worktree: `worktrees/2026-07-10-czech-translation-fixes/vpsfree-cz-configuration`
@@ -28,6 +44,9 @@
 
 ## Status
 
+- Complete: password warning and interface labels are merged in vpsAdmin,
+  probe-log capitalization is merged in vpsf-status, both production pins are
+  merged, required tests/review passed, and initiative worktrees are removed.
 - Complete: localized descriptions of configured web services on the Czech
   vpsf-status page without changing the stable JSON API; merged vpsf-status at
   `3eb6fd86a` and production configuration at `6e93bc04`.
@@ -46,6 +65,156 @@
 
 ## Commands run
 
+- Reverified the active initiative slug, fetched all three SSH remotes, and
+  recreated isolated retained-branch worktrees at vpsAdmin `7e0be5d21`,
+  vpsf-status `3eb6fd86a`, and configuration `6e93bc04`. Read current local
+  rules, Czech terminology guides, and the mandatory review workflow.
+- Confirmed the password warning is a hard-coded three-line HTML string shown
+  only to non-admin VPS users. Confirmed network-interface types are printed as
+  raw enums even though the API already exposes localized choice metadata for
+  `venet`, `veth_bridge`, and `veth_routed`.
+- Confirmed vpsf-status entity probe logs and history summaries share lower-case
+  catalog messages through different view builders. The probe-log view can
+  capitalize after localization without changing stored messages or shared
+  history text such as `Ping not responding` / `Ping neodpovídá`.
+- Localized the non-admin VPS root-password warning with the exact agreed
+  English and Czech sentences, regenerated POT/PO/MO catalogs, and added exact
+  PHPUnit catalog plus English/Czech Playwright assertions. Locale update,
+  check, and health passed with only the existing embedded-URL warnings; PHP
+  and Node syntax checks and the focused PHPUnit regression passed (12 tests,
+  34 assertions).
+- Installed and signed the vpsAdmin Overcommit hooks and all required root,
+  API, and WebUI dependencies. Commit `c7fce570a` (`webui: localize root
+  password warning`) passed Nixfmt, migration specs, WebUI/API i18n, PHP CS
+  Fixer, RuboCop, and commit-message hooks; only the repository's non-failing
+  72-column warnings were reported.
+- Declared network-interface choice labels in the API resource metadata as a
+  value-to-label map, preserving the values `venet`, `veth_bridge`, and
+  `veth_routed`. The WebUI now escapes and renders the localized API choice
+  label instead of the raw enum. Regeneration produced exact English and Czech
+  labels, including `Routed veth` / `Routovaný veth`.
+- The first focused API spec run intentionally exposed that editing generated
+  English locale output alone was insufficient: regeneration restored the raw
+  array-choice fallback. Moving the English labels into the resource's source
+  metadata fixed the cause. The rerun passed all five API smoke examples, API
+  locale health, PHP and Node syntax checks, and `git diff --check`.
+- Committed the interface change as `73b3d04eb` (`webui: localize network
+  interface types`). All declared vpsAdmin hooks passed; commit-message checks
+  emitted only non-failing 72-column warnings and all lines remain within the
+  required 80 columns.
+- Capitalized the first Unicode character only after probe-message localization
+  in the shared probe-log view builder. Lower-case English, Czech, and unknown
+  messages are capitalized; empty, acronym, numeric, and already-capitalized
+  starts are preserved. Stored messages, catalogs, and incident-summary
+  builders remain unchanged.
+- Added unit and HTTP rendering assertions for English/Czech capitalization,
+  Unicode handling, acronym/numeric preservation, pagination, and unchanged
+  sentence-style history summaries. The first full test run found existing
+  pagination expectations for synthetic lower-case `event` messages; updating
+  those expectations to the newly intended display form resolved the failure.
+  Full `go test ./...`, `make i18n-health`, and `git diff --check` pass.
+- Installed the vpsf-status Lefthook hooks and committed the change as
+  `9c19b23` (`Capitalize probe log messages`). Its gofmt and i18n pre-commit
+  hooks passed, and both application worktrees are clean.
+- The required exactly-one fresh standalone mandatory reviewer inspected the
+  complete vpsAdmin and vpsf-status committed ranges and reported no Blocking,
+  Important, or Advisory findings. It independently passed full `go test
+  ./...`, the focused API smoke spec (5 examples), and `git diff --check` in
+  both repositories.
+- The review confirmed exact warning/interface text, unchanged enum values,
+  supported HaveAPI choice-map metadata, escaped WebUI output with raw fallback,
+  view-only Unicode capitalization shared by entity/group probe logs, unchanged
+  catalogs/persistence/history summaries, focused commit history, and safe
+  rolling deployment/rollback.
+- Residual review gaps are the intentionally deferred `webui#vps-user-core`,
+  vpsf-status package/CI checks, production input pins and builds, no direct
+  OPTIONS-map assertion, and browser coverage of routed-veth rather than every
+  interface choice. These are acceptable for the long-test phase; exact labels
+  for all choices are covered by the API catalog test.
+- Deferred vpsf-status package verification passed and produced
+  `/nix/store/kgzpigvxhiahw7j3za8vcm7bjipq5rbg-vpsf-status-9c19b23`.
+  Pushed the feature head; exact-SHA i18n health and CI-tagged integration tests
+  both passed. A fresh upstream fetch confirmed the reviewed base was unchanged,
+  so a fresh integration worktree fast-forwarded `9c19b23`, reran i18n health,
+  and pushed it to `origin/master`.
+- Inspected an older failed scheduled dependency-update workflow at vpsf-status
+  head `3eb6fd86a`. It updated modules successfully and then failed in its own
+  update script with `Unknown regexp modifier "/R"` / an unterminated Perl
+  string. This is unrelated to the current patch and its passing exact-SHA CI.
+- The first deferred `webui#vps-user-core` run failed in the new English warning
+  assertion after two preceding tests passed. Captured Playwright output proved
+  the page rendered all three exact sentences; the combined assertion inserted
+  spaces where HTML `<br>` elements produce no whitespace in `textContent`, so
+  the expected combined substring could never match. No services failed.
+- Replaced the combined English/Czech assertions with three exact sentence
+  assertions per language, preserving the intended markup and strengthening
+  wording checks. Node syntax, `git diff --check`, and all declared vpsAdmin
+  hooks passed. Autosquashed the test-only correction into the password commit;
+  the clean focused history is now `de70d7837` (password warning) and
+  `c4f5a3f6b` (interface labels) on the unchanged base `7e0be5d21`.
+- The same mandatory reviewer cleared the autosquashed assertion correction
+  with no Blocking, Important, or Advisory findings. It confirmed that every
+  exact sentence remains covered, production files are unchanged, and the
+  focused two-commit history is preserved.
+- The evidence-based `webui#vps-user-core` rerun passed all four Playwright
+  tests. The browser example completed in 1,832.87 seconds, the script in
+  2,216.57 seconds, and the full VM test in 2,446.25 seconds.
+- A pre-push fetch then found upstream vpsAdmin `master` had advanced from
+  `7e0be5d21` to `d888a19f2` with only generated package gem dependency lock/Nix
+  files. There was no overlap with this change, so rebased the two commits
+  conflict-free onto current master. Node syntax, `git diff --check`, and the
+  focused API smoke spec (5 examples) pass after rebase. Revised hashes are
+  `93ad06704` (password) and `af3b885a8` (interface).
+- The same standalone reviewer compared stable patch IDs across the rebase and
+  reported no Blocking, Important, or Advisory findings. It confirmed both
+  patches are identical, trees outside upstream `packages/*` are identical,
+  commit order/focus is preserved, and no review or compatibility conclusion
+  changes.
+- Pushed rebased feature head `af3b885a8`. Exact-SHA RuboCop, WebUI PHPUnit,
+  WebUI/API i18n health, and completed API topic shards pass. The remaining API
+  shards and selected integration workflow are still active without a reported
+  failure.
+- Merged vpsf-status exact-head duplicate master CI also passed both i18n
+  health and its selected integration suite at `9c19b23`.
+- Created a fresh vpsAdmin integration worktree from upstream `d888a19f2`,
+  fast-forwarded the reviewed commits, passed API health and WebUI locale
+  update-check/health (only the two known URL warnings), and pushed vpsAdmin
+  `origin/master` to `af3b885a8` without a merge commit.
+- The feature-branch exact-SHA parallel API workflow completed successfully in
+  all full/core topic shards. Exact-SHA master RuboCop, WebUI PHPUnit, and i18n
+  health also pass; selected integration runs on feature/master remain active
+  on the same SHA without a reported failure. The identical local selected VM
+  scenario already passed in full.
+- Installed the configuration worktree bundle and signed Overcommit hooks.
+  `confctl inputs channel update --commit vpsadmin` generated `adfdacfc`,
+  pinning `vpsadminServices` from `7e0be5d2` to `af3b885a`; the separate
+  vpsf-status command generated `606ab08d`, pinning `vpsfStatus` from
+  `3eb6fd86` to `9c19b23f`. Both commits change only `flake.lock`, preserve the
+  generated messages, and passed Nixfmt/commit hooks.
+- Verified channel resolution reports `vpsadminServices` at `af3b885a` and
+  `vpsfStatus` at `9c19b23f`. All 11 `cz.vpsfree/vpsadmin/*` service machines
+  built successfully as generation `2026-07-12--11-44-22`.
+- Attempted `confctl build -y cz.vpsfree/machines/prg/apu` once. Evaluation
+  failed only because the unrelated carrier configuration references absent
+  `/srv/iso-images/systemrescue-11.01-amd64.iso`, matching the existing durable
+  prerequisite note; no dummy media or unexplained rerun was used.
+- Skipped another mandatory standalone review for `adfdacfc` and `606ab08d`:
+  both are `confctl`-generated dependency-only `flake.lock` updates, which the
+  workspace review rule explicitly exempts.
+- Pushed the configuration feature branch. In a fresh integration worktree,
+  installed/signed hooks, fast-forwarded both generated commits, reverified
+  both channels, passed the complete Overcommit Nixfmt/RuboCop set, and pushed
+  configuration `origin/master` to `606ab08d` without a merge commit.
+- Removed transient Nix results, Ruby/Composer bundles, RuboCop/confctl caches,
+  and all six application/configuration feature and integration worktrees while
+  retaining local and remote feature branches. Durable notes record the
+  Playwright `<br>` assertion lesson and the unrelated vpsf-status dependency
+  updater Perl failure.
+- Final remote audit confirmed vpsAdmin master/feature at `af3b885a8`,
+  vpsf-status master/feature at `9c19b23`, and configuration master/feature at
+  `606ab08d`. Exact-SHA feature/master selected vpsAdmin integration workflows
+  remain active without a reported failure; the same selected local VM passed,
+  and all feature API shards plus master/feature quick workflows are green.
 - Verified that `VPSFREE_DEV_SESSION_SLUG` and `bin/dev-session current` both
   identify this initiative, fetched current vpsf-status and configuration refs
   over SSH, and created fresh isolated worktrees at `29853c364` and
