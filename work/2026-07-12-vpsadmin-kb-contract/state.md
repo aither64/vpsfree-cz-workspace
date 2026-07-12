@@ -228,11 +228,12 @@
   navigation-shaped paragraphs as bound paths or explicit classifications;
   candidate validation rejects partial page sets, new unclassified paragraphs,
   stale classifications, and tag/path mismatch.
-- vpsAdmin commit `1c575161c` adds stable landmarks for the VPS menu, User data
+- vpsAdmin commit `870d16773` adds stable landmarks for the VPS menu, User data
   entry, Exports menu, and Export dataset action. WebUI PHPUnit passed with 65
   tests and 248 assertions, and all repository hooks passed. The branch is
   pushed.
-- Capture commits `567be66` and `334ff9b` pin vpsAdmin `1c575161c`, add the
+- Capture commits `9d24744`, `8bc56cb`, and `ba3fdcc` pin vpsAdmin
+  `870d16773`, add the
   independent inventory/checker, and bind the missed paths. Full `bin/check`
   passes: 33 controls, 29 paths, 65 annotation bindings, 6 path exceptions,
   8 contract tests/50 assertions, 5 annotation tests/13 assertions, and the
@@ -246,4 +247,23 @@
   layering over the old candidate. Staged and verified the corrected release:
   19 Czech pages, 16 English pages, 35 rendered pages, and 75 semantic tags.
   The English manifest is pending for review. Production remains untouched.
-- A fresh mandatory follow-up review is pending for the committed corrections.
+- The exactly one fresh mandatory follow-up review reproduced three blocking
+  checker defects: the heuristic missed 14 annotated source paragraphs, count-
+  only page validation accepted duplicate/omitted identities, and the legacy
+  export page had false generic classifications while being removed from its
+  affected paths. It found the 35-page/75-tag staging content itself correct
+  and confirmed that production was untouched.
+- Fixed all three findings. Discovery now runs on immutable production sources,
+  every candidate paragraph containing a tag must have been independently
+  discovered, and the inventory pins exact sorted page IDs while rejecting
+  duplicate IDs and files. Regression coverage reproduces the duplicate-page
+  bypass. The legacy storage page is again associated with `exports.open`,
+  `exports.export-dataset.open`, and `backups.vps.open` through truthful per-path
+  exceptions explaining why the unpaired duplicate is not annotated/released.
+- Final validation passes with 175 independently discovered source paragraphs,
+  65 annotation bindings, 9 path exceptions, 75 candidate tags, 8 contract
+  tests/50 assertions, and 6 annotation tests/16 assertions. Rewrote the
+  unmerged vpsAdmin/capture correction commit messages to satisfy the 80-column
+  rule and force-pushed with lease. Shared top-level master history was not
+  rewritten; its already-committed overlong correction bodies remain the
+  review's advisory exception to avoid disrupting concurrent workspace users.
