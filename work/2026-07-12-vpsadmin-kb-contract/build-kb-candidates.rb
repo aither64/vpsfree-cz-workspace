@@ -148,7 +148,7 @@ add.call('en', 'manuals:vps:userdata', 'userdata.manage-profile.open',
          '**Edit profile** -> **User data**')
 add.call('en', 'manuals:vps:userdata', 'userdata.deploy.open',
          '**vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form')
-%w[manuals:vps:exports manuals:vps:vpsadminos:storage].each do |page|
+%w[manuals:vps:exports].each do |page|
   add.call('en', page, 'exports.export-dataset.open',
            '//Exports// -> //Export dataset//')
   add.call('en', page, 'backups.vps.open',
@@ -157,9 +157,6 @@ end
 add.call('en', 'manuals:vps:exports', 'exports.open',
          'main menu as //Exports//', '//Exports//', 1,
          'main menu as <vpsadmin-nav id="exports.open">//Exports//</vpsadmin-nav>')
-add.call('en', 'manuals:vps:vpsadminos:storage', 'exports.open',
-         'main menu called //Exports//', '//Exports//', 1,
-         'main menu called <vpsadmin-nav id="exports.open">//Exports//</vpsadmin-nav>')
 
 index = JSON.parse(File.read(File.join(SOURCE_ROOT, 'index.json')))
 pages = index.flat_map do |language, entries|
