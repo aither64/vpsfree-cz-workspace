@@ -362,3 +362,17 @@
   It updates 19 pages, no media, using the Czech single-line edit summary
   `Označení navigačních cest a aktualizace názvů ve vpsAdminu`. Production is
   still untouched and requires a fresh explicit approval before promotion.
+
+## Czech production promotion
+
+- The user explicitly approved the exact Czech manifest for `kb.vpsfree.cz`.
+  Restaged manifest SHA-256
+  `45f44feecc7b495e8f0d07fe83045269ef681501b654f4e70b078f5a6ae51ba3`,
+  verified all 19 candidate pages, 17 language pairs, and 41 rendered semantic
+  annotations, then promoted it with the approved Czech edit summary.
+- Post-promotion verification passed byte-for-byte through the production API.
+  All 19 public pages render all 41 expected `data-vpsadmin-doc-id` markers and
+  no invalid-tag warning. The release contains no media changes.
+- The pending release guard is now clear. Staging remains running and owned by
+  this session for the later English promotion. `kb.vpsfree.org` remains
+  unchanged and requires a separate explicit approval.
