@@ -13,7 +13,8 @@
 
 - `vpsadmin-kb-captures`: branch `2026-07-12-vpsadmin-kb-contract` in
   `worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin-kb-captures`, based on
-  `origin/master` `951a5e6`, at `92ee834` and pushed.
+  `origin/master` `951a5e6`, at `41d5cd9` and force-with-lease pushed after
+  folding review fixes into the two logical commits.
 - `vpsadmin`: branch `2026-07-12-vpsadmin-kb-contract` in
   `worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin`, based on
   `origin/master` `af3b885`, at `f76c0cf` and pushed.
@@ -69,8 +70,8 @@
 
 - vpsAdmin WebUI PHPUnit: 65 tests, 246 assertions; PHP CS Fixer dry run passed;
   all Overcommit hooks passed for `f76c0cf`.
-- `vpsadmin-kb-captures`: `nix develop -c bin/check` passed with 6 contract
-  tests/16 assertions and strict validation of 59 concepts, 118 variants, and
+- `vpsadmin-kb-captures`: `nix develop -c bin/check` passed with 8 contract
+  tests/50 assertions and strict validation of 59 concepts, 118 variants, and
   118 PNGs.
 - `dokuwiki-plugin-vpsadmindoc`: `nix develop -c bin/check` passed PHP syntax,
   isolated behavior checks, and a real DokuWiki parser/render integration.
@@ -87,8 +88,35 @@
   proven.
 - Configuration can be built here, but only the operator can deploy aitherdev
   or the production KB container.
-- Long `confctl` builds and staged page rendering are deferred until the
-  mandatory standalone review.
+- Long `confctl` builds and staged page rendering were deferred until the
+  mandatory standalone review; builds are now authorized, while staging still
+  waits for deployment and local page candidates.
+
+## Mandatory review
+
+- The exactly one standalone fresh-context review found one blocking checker
+  weakness: labels, route fragments, and landmarks were checked independently,
+  so stale PO entries, prefix routes, or test-only ID references could hide
+  production drift. It also requested accumulated impact output and explicit
+  semantic-selector bindings, and advised stricter page-array validation.
+- Fixed all findings before long builds. Each control now fingerprints the
+  normalized production source context coupling its ID, label, and route;
+  `member.edit-profile` also fingerprints its label assignment. Runtime lookup
+  is restricted to the declared production paths. Tests mutate real copied
+  vpsAdmin source for route, label, and landmark drift and reproduce the
+  reviewer's failure modes.
+- The checker now accumulates every discrepancy and prints the affected Czech
+  and English pages and screenshot concepts. Three migrated selectors have
+  exact machine-readable source declarations, with a regression test proving a
+  translated-selector reversion fails. Page bindings must be non-empty string
+  arrays in language-appropriate namespaces.
+- Rewrote the unmerged capture branch so the generic hardened contract remains
+  in commit `1fe6457`, while selector declarations/tests remain with their
+  scenario implementation in `41d5cd9`. The final full check passes.
+- The review found no plugin security/escaping issue and independently verified
+  nested DokuWiki bold/link rendering. Residual integration gaps are the long
+  Nix builds, Playwright capture exercise, real metadata persistence, live
+  staging rendering, and eventual annotated page inventory.
 
 ## Approval boundaries
 
