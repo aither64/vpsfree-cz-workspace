@@ -222,6 +222,24 @@ exceptions = [
     'page' => 'manuals:distributions:nixos:impermanence',
     'path' => 'vps.features.open',
     'reason' => 'The current English article does not mention the Features form.'
+  },
+  {
+    'language' => 'en',
+    'page' => 'manuals:vps:vpsadminos:storage',
+    'path' => 'exports.open',
+    'reason' => 'Legacy duplicate has no Czech counterpart and is intentionally not annotated or released.'
+  },
+  {
+    'language' => 'en',
+    'page' => 'manuals:vps:vpsadminos:storage',
+    'path' => 'exports.export-dataset.open',
+    'reason' => 'Legacy duplicate has no Czech counterpart and is intentionally not annotated or released.'
+  },
+  {
+    'language' => 'en',
+    'page' => 'manuals:vps:vpsadminos:storage',
+    'path' => 'backups.vps.open',
+    'reason' => 'Legacy duplicate has no Czech counterpart and is intentionally not annotated or released.'
   }
 ]
 
