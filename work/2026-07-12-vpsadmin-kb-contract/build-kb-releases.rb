@@ -43,7 +43,8 @@ settings.each do |language, setting|
       'sha256' => page.fetch('candidate_sha256')
     }
     if language == 'en'
-      entry['language_counterpart'] = czech_counterparts.fetch(page.fetch('id'))
+      counterpart = czech_counterparts[page.fetch('id')]
+      entry['language_counterpart'] = counterpart if counterpart
     end
     entry
   end

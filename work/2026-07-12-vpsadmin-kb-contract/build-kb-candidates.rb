@@ -9,10 +9,10 @@ ROOT = __dir__
 SOURCE_ROOT = File.join(ROOT, 'kb-sources')
 OUTPUT_ROOT = File.join(ROOT, 'kb-candidates')
 
-Replacement = Data.define(:language, :page, :path, :before, :body, :count)
+Replacement = Data.define(:language, :page, :path, :before, :body, :count, :after)
 replacements = []
-add = lambda do |language, page, path, before, body = before, count = 1|
-  replacements << Replacement.new(language:, page:, path:, before:, body:, count:)
+add = lambda do |language, page, path, before, body = before, count = 1, after = nil|
+  replacements << Replacement.new(language:, page:, path:, before:, body:, count:, after:)
 end
 
 add.call('cs', 'informace:platby', 'member.payment-instructions.open',
@@ -35,6 +35,9 @@ add.call('cs', 'navody:vps:uzivatele', 'member.passkeys.open',
          'Upravit profil -> Přístupové klíče')
 add.call('cs', 'navody:vps:uzivatele', 'member.sessions.open',
          'vpsAdmin -> Upravit profil -> Relace')
+add.call('cs', 'navody:vps:uzivatele', 'member.edit-profile.open',
+         '(vpsAdmin -> Upravit profil)', 'vpsAdmin -> Upravit profil', 4,
+         '(<vpsadmin-nav id="member.edit-profile.open">vpsAdmin -> Upravit profil</vpsadmin-nav>)')
 add.call('cs', 'navody:vps:ip_adresy', 'networking.routable-addresses.open',
          'Sítě -> Routované adresy')
 add.call('cs', 'navody:vps:prenosy', 'networking.monthly-traffic.open',
@@ -60,20 +63,31 @@ add.call('cs', 'navody:vps:playgroundvps', 'vps.swap.open', '**Prohodit VPS**',
 add.call('cs', 'navody:vps:datasety', 'datasets.create.open', '//Vytvořit dataset//',
          '//Vytvořit dataset//', 2)
 add.call('cs', 'navody:vps:oprava', 'datasets.mount.open', '**Mount**')
+add.call('cs', 'navody:distribuce:nixos:impermanence', 'datasets.mount.open', '**Mount**')
 add.call('cs', 'navody:distribuce:nixos:impermanence', 'vps.features.open', '**Funkce**')
 %w[navody:vps:vpsadminos:oprava navody:distribuce:nixos:impermanence].each do |page|
   add.call('cs', page, 'vps.boot-rescue.open',
            '**Spustit VPS ze šablony (nouzový režim)**')
 end
-add.call('cs', 'navody:vps:userdata', 'userdata.deploy.open', '**Nasadit do VPS**')
+add.call('cs', 'navody:vps:userdata', 'userdata.manage-vps.open',
+         "menu **VPS** -> **User data**,\npopř.", '**VPS** -> **User data**', 1,
+         "menu <vpsadmin-nav id=\"userdata.manage-vps.open\">**VPS** -> **User data**</vpsadmin-nav>,\npopř.")
+add.call('cs', 'navody:vps:userdata', 'userdata.manage-profile.open',
+         '**Upravit profil** -> **User data**')
+add.call('cs', 'navody:vps:userdata', 'userdata.deploy.open',
+         '**vpsAdmin** -> **VPS** -> **User data** -> Upravit položku ze seznamu a poté formulář **Nasadit do VPS**')
+add.call('cs', 'navody:vps:exporty', 'exports.export-dataset.open',
+         '//Exporty// -> //Export datasetu//')
+add.call('cs', 'navody:vps:exporty', 'exports.open',
+         'položka //Exporty//', '//Exporty//', 1,
+         'položka <vpsadmin-nav id="exports.open">//Exporty//</vpsadmin-nav>')
+add.call('cs', 'navody:vps:exporty', 'backups.vps.open',
+         '//Zálohy// -> //Zálohy VPS//')
 
-add.call(
-  'en',
-  'information:membership_fees',
-  'member.payment-instructions.open',
-  "You can find member ID\nin vpsAdmin -> Edit profile at the top, or Members section. It is also sent in email payment\nreminders and can be seen in Payment instructions in member details in vpsAdmin.",
-  'You can find member ID in vpsAdmin -> Edit profile -> Payment instructions. It is also sent in email payment reminders.'
-)
+add.call('en', 'information:membership_fees', 'member.payment-instructions.open',
+         "in vpsAdmin -> Edit profile at the top, or Members section. It is also sent in email payment\nreminders and can be seen in Payment instructions in member details in vpsAdmin.",
+         'vpsAdmin -> Edit profile -> Payment instructions', 1,
+         'in <vpsadmin-nav id="member.payment-instructions.open">vpsAdmin -> Edit profile -> Payment instructions</vpsadmin-nav>. It is also sent in email payment reminders.')
 add.call('en', 'manuals:vps:management', 'member.public-keys.add',
          'Edit profile → Public keys → Add public key')
 add.call('en', 'manuals:vps:metrics', 'member.metrics-access-tokens.open',
@@ -91,6 +105,12 @@ add.call('en', 'manuals:vps:users', 'member.passkeys.open',
 add.call('en', 'manuals:vps:users', 'member.sessions.open',
          'vpsAdmin -> Edit profile -> Session log',
          'vpsAdmin -> Edit profile -> Sessions')
+add.call('en', 'manuals:vps:users', 'member.edit-profile.open',
+         '(vpsAdmin -> Edit profile)', 'vpsAdmin -> Edit profile', 3,
+         '(<vpsadmin-nav id="member.edit-profile.open">vpsAdmin -> Edit profile</vpsadmin-nav>)')
+add.call('en', 'manuals:vps:users', 'member.edit-profile.open',
+         'in vpsAdmin -> Edit profile.', 'vpsAdmin -> Edit profile', 1,
+         'in <vpsadmin-nav id="member.edit-profile.open">vpsAdmin -> Edit profile</vpsadmin-nav>.')
 add.call('en', 'manuals:vps:ip_addresses', 'networking.routable-addresses.open',
          'Networking -> Routable addresses')
 add.call('en', 'manuals:vps:traffic', 'networking.monthly-traffic.open',
@@ -114,12 +134,32 @@ add.call('en', 'manuals:vps:playgroundvps', 'vps.swap.open',
 add.call('en', 'manuals:vps:repair', 'datasets.mount.open',
          'Details of the recovery VPS -> Create mount',
          'VPS details -> Mount')
+add.call('en', 'manuals:distributions:nixos:impermanence', 'datasets.mount.open',
+         '**Mount**')
 add.call('en', 'manuals:vps:vpsadminos:recovery', 'vps.boot-rescue.open',
          '**Boot from VPS template**',
          '**Boot VPS from template (rescue mode)**')
 add.call('en', 'manuals:distributions:nixos:impermanence', 'vps.boot-rescue.open',
          '**Boot VPS from template (rescue mode)**')
-add.call('en', 'manuals:vps:userdata', 'userdata.deploy.open', '**Deploy to VPS**')
+add.call('en', 'manuals:vps:userdata', 'userdata.manage-vps.open',
+         'under **VPS** -> **User data**, or', '**VPS** -> **User data**', 1,
+         'under <vpsadmin-nav id="userdata.manage-vps.open">**VPS** -> **User data**</vpsadmin-nav>, or')
+add.call('en', 'manuals:vps:userdata', 'userdata.manage-profile.open',
+         '**Edit profile** -> **User data**')
+add.call('en', 'manuals:vps:userdata', 'userdata.deploy.open',
+         '**vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form')
+%w[manuals:vps:exports manuals:vps:vpsadminos:storage].each do |page|
+  add.call('en', page, 'exports.export-dataset.open',
+           '//Exports// -> //Export dataset//')
+  add.call('en', page, 'backups.vps.open',
+           '//Backups// -> //VPS backups//')
+end
+add.call('en', 'manuals:vps:exports', 'exports.open',
+         'main menu as //Exports//', '//Exports//', 1,
+         'main menu as <vpsadmin-nav id="exports.open">//Exports//</vpsadmin-nav>')
+add.call('en', 'manuals:vps:vpsadminos:storage', 'exports.open',
+         'main menu called //Exports//', '//Exports//', 1,
+         'main menu called <vpsadmin-nav id="exports.open">//Exports//</vpsadmin-nav>')
 
 index = JSON.parse(File.read(File.join(SOURCE_ROOT, 'index.json')))
 pages = index.flat_map do |language, entries|
@@ -137,7 +177,7 @@ plan = replacements.map do |replacement|
     raise "#{key.join(':')}: #{replacement.path} expected #{replacement.count} matches, found #{actual_count}"
   end
 
-  tagged = %(<vpsadmin-nav id="#{replacement.path}">#{replacement.body}</vpsadmin-nav>)
+  tagged = replacement.after || %(<vpsadmin-nav id="#{replacement.path}">#{replacement.body}</vpsadmin-nav>)
   pages[key] = source.gsub(replacement.before, tagged)
   {
     'language' => replacement.language,

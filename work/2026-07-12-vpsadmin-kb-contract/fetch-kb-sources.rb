@@ -4,20 +4,13 @@
 require 'digest'
 require 'fileutils'
 require 'json'
-require 'yaml'
 
 ROOT = File.expand_path('../..', __dir__)
-CAPTURE_ROOT = File.join(
-  ROOT,
-  'worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin-kb-captures'
-)
-CONTRACT = File.join(CAPTURE_ROOT, 'contract/navigation.yml')
 OUTPUT = File.join(__dir__, 'kb-sources')
 WIKIS = { 'cs' => 'cz', 'en' => 'org' }.freeze
 
 load File.join(ROOT, 'bin/kb-page')
 
-contract = YAML.safe_load_file(CONTRACT)
 index = {}
 
 WIKIS.each do |language, wiki|
@@ -26,9 +19,11 @@ WIKIS.each do |language, wiki|
     base_url: wiki_config.fetch(:url),
     token_path: wiki_config.fetch(:token_path)
   )
-  page_ids = contract.fetch('paths').flat_map do |path|
-    path.fetch('pages').fetch(language)
+  page_ids = client.call('core.listPages', namespace: '', depth: 20).filter_map do |page|
+    page['id'] || page['page']
   end.uniq.sort
+
+  raise "#{wiki}: core.listPages returned no pages" if page_ids.empty?
 
   index[language] = page_ids.map do |page_id|
     info = client.call('core.getPageInfo', page: page_id)
