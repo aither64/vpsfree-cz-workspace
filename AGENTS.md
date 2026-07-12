@@ -305,6 +305,11 @@ also require `--approved-production`, including writes in `drafts:`. Read-only
 production checks do not require approval. Before every write, verify
 authentication and page permission against the exact target wiki.
 
+Every production page edit must have an informative, single-line change
+summary that describes the actual content change. Do not use generic summaries
+such as "Publish reviewed KB release" for new edits. Write summaries for
+`kb.vpsfree.cz` in Czech and summaries for `kb.vpsfree.org` in English.
+
 Common KB tool examples:
 
 ```sh

@@ -97,7 +97,13 @@ end
 
 abort "expected 59 English media objects, got #{media.length}" unless media.length == 59
 
-release = { 'schema' => 1, 'wiki' => 'org', 'pages' => pages, 'media' => media }
+release = {
+  'schema' => 2,
+  'wiki' => 'org',
+  'production_summary' => 'Replace outdated vpsAdmin screenshots',
+  'pages' => pages,
+  'media' => media
+}
 File.write(File.join(ROOT, 'kb-release-en.yml'), YAML.dump(release))
 
 puts "wrote English release with #{pages.length} pages and #{media.length} media objects"
