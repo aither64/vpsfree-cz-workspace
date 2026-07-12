@@ -779,6 +779,24 @@
 - DokuWiki deletion has no compare-and-swap primitive. Cleanup will therefore
   run immediately after the final full preflight; versioned deletion is the
   recovery mechanism for the remaining narrow edit race.
+- Production cleanup completed after a final 30/30-page and 60/60-media
+  preflight. It deleted all 30 Czech draft pages and the 60 shared draft media
+  objects; the idempotent post-check reports 0/30 pages and 0/60 media through
+  both production endpoints.
+- Promoted the reviewed Czech release in media-first order. Production API
+  verification matches all 30 pages and 59 canonical media objects, and
+  Playwright rendered all 30 public pages while loading all 59 screenshots.
+- Established capture repository branch `master` at reviewed Czech head
+  `4364db7` and pushed it. GitHub refused changing the repository default
+  branch with HTTP 403 for the available token, so the remote default still
+  points to the old dated branch; no repository content is affected.
+- English capture work uses branch `2026-07-12-kb-english-captures` in the
+  existing capture worktree. Commits `81b4027` and `128d9fe` introduce schema 5
+  with 59 concepts/118 Czech-English variants and locale-aware scenario labels.
+  The English inventory records 53 replaceable references across 14 pages;
+  the remaining old image reference is an unrelated icon and stays unchanged.
+  `nix develop -c bin/check --allow-missing` passes with the existing 59 Czech
+  PNGs and the intentionally pending English variants.
 
 ## Cleanup
 
