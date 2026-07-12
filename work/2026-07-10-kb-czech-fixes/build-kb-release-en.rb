@@ -56,6 +56,16 @@ pages = media_by_page.keys.sort.map do |page|
     replacement_count += replaced
   end
 
+  if page == 'manuals:vps:management'
+    candidate = candidate.gsub(/\{\{\s*(:en:screenshots:vpsadmin:[^}]+?)\s*\}\}/) do
+      inner = Regexp.last_match(1).strip
+      inner = inner.sub(/\s*\|\z/, '|')
+      "{{#{inner}}}"
+    end
+    aligned = candidate.scan(/\{\{:en:screenshots:vpsadmin:[^}\s]+\|\}\}/).length
+    abort "#{page}: expected 10 left-aligned screenshots, got #{aligned}" unless aligned == 10
+  end
+
   unexpected_changes = candidate.lines.zip(source.lines).count do |new_line, old_line|
     next false if new_line == old_line
 
