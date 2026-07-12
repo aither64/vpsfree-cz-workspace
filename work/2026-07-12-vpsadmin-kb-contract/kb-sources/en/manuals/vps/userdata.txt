@@ -1,0 +1,204 @@
+====== User Data ======
+When creating or reinstalling a VPS, vpsAdmin can upload a script or configuration for [[https://cloud-init.io/|cloud-init]] into the VPS. This script or configuration is applied on the first startup of the VPS. We support these formats for the initial configuration:
+
+  * [[#script|script]]
+  * [[#cloud-init_config|cloud-init config]]
+  * [[#cloud-init_script|cloud-init script]]
+  * [[#nixos_configuration|NixOS configuration]]
+  * [[#nixos_flake_configuration|NixOS flake configuration]]
+  * [[#nixos_flake_uri|NixOS flake URI]]
+
+Scripts and configurations can be stored in vpsAdmin, and you can select the configuration method when creating/reinstalling a VPS. You can manage stored configurations in vpsAdmin under **VPS** -> **User data**, or **Edit profile** -> **User data**. Alternatively, you can provide a configuration directly during the creation/reinstallation of a VPS without saving it in vpsAdmin. Saving configurations is optional but can simplify repeated use of unchanged configurations.
+
+For development and testing, you can deploy a stored configuration to a VPS at any time:
+**vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form. This action will only create the script/configuration files inside the VPS, it will not run/apply
+it.
+
+===== Configuration Formats =====
+==== Script ====
+vpsAdmin uploads the specified script to the VPS and integrates it into the VPS's init system, depending on the distribution. In systemd-based distributions, this is handled by the ''vpsadmin-script.service''. The script's output is stored in the journal, accessible via ''journalctl -u vpsadmin-script.service'', or in the file ''/var/log/vpsadmin-script-output.log''.
+
+Example script:
+
+<code bash>
+#!/bin/sh
+
+apt install -y nginx
+echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
+</code>
+
+The service and script are automatically deleted after execution.
+
+If you upload a script to an existing VPS via vpsAdmin, you can run it manually as follows:
+
+<code bash>
+# systemd
+systemctl daemon-reload
+systemctl start vpsadmin-script.service
+
+# OpenRC
+service vpsadmin-script start
+</code>
+
+=== Environment Variables ===
+The executed script has access to the following environment variables:
+
+  * ''VPSADMIN_VPS_ID'' - VPS ID
+
+==== cloud-init config ====
+Configuration for cloud-init in YAML format, see https://cloudinit.readthedocs.io/en/latest/explanation/format.html#cloud-config-data
+
+Example configuration:
+
+<code yaml>
+#cloud-config
+users:
+  - name: myuser
+    ssh_authorized_keys:
+      - "ssh-rsa AAAA..."
+packages:
+  - htop
+  - curl
+runcmd:
+  - echo "Hello, world!" > /root/welcome.txt
+</code>
+
+The cloud-init output can be seen in the kernel log and is stored in ''/var/log/cloud-init-output.log''.
+
+==== cloud-init script ====
+A script executed via cloud-init, see
+https://cloudinit.readthedocs.io/en/latest/explanation/format.html#user-data-script
+
+The cloud-init output can be seen in the kernel log and is stored in ''/var/log/cloud-init-output.log''.
+
+==== NixOS Configuration ====
+The provided configuration is saved to ''/etc/vpsadmin-nixos/configuration.nix'' and upon VPS startup, the command ''nixos-rebuild switch'' is executed. Keep in mind that the provided configuration must import ''vpsadminos.nix'' or include it directly.
+
+Example configuration:
+
+<code nix>
+{ config, pkgs, lib, ... }:
+{
+  imports = [
+    /etc/nixos/vpsadminos.nix
+  ];
+
+  environment.systemPackages = with pkgs; [
+    vim
+  ];
+
+  services.openssh.enable = true;
+  services.openssh.settings.PermitRootLogin = "yes";
+  #users.extraUsers.root.openssh.authorizedKeys.keys =
+  #  [ "..." ];
+
+  systemd.extraConfig = ''
+    DefaultTimeoutStartSec=900s
+  '';
+
+  time.timeZone = "Europe/Amsterdam";
+
+  system.stateVersion = "24.11";
+}
+</code>
+
+The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
+
+==== NixOS Flake Configuration ====
+The configuration is saved to the file ''/etc/vpsadmin-nixos/flake.nix'', and the command ''nixos-rebuild switch --flake /etc/vpsadmin-nixos#vps'' is executed. The configuration for the ''vps'' system must be included within the provided ''flake.nix''.
+
+Example configuration:
+
+<code nix>
+{
+  inputs = {
+    nixpkgs.url = github:NixOS/nixpkgs/nixos-24.11;
+    vpsadminos.url = github:vpsfreecz/vpsadminos/staging;
+  };
+  
+  outputs = { self, nixpkgs, vpsadminos }: {
+    # The configuration must include a system named "vps"
+    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+      modules = [
+        ({ config, pkgs, lib, ... }:
+        {
+          imports = [
+            vpsadminos.nixosConfigurations.container
+          ];
+
+          environment.systemPackages = with pkgs; [
+            vim
+          ];
+
+          services.openssh.enable = true;
+          services.openssh.settings.PermitRootLogin = "yes";
+          #users.extraUsers.root.openssh.authorizedKeys.keys =
+          #  [ "..." ];
+
+          systemd.extraConfig = ''
+            DefaultTimeoutStartSec=900s
+          '';
+
+          time.timeZone = "Europe/Amsterdam";
+
+          nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+
+          system.stateVersion = "24.11";
+        })
+      ];
+    };
+  };
+}
+</code>
+
+The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
+
+==== NixOS Flake URI ====
+Upon VPS startup, the command ''nixos-rebuild switch --flake $flake_uri'' is executed. This allows you to easily deploy a configuration that is publicly available, for example, on GitHub.
+
+Example configuration:
+
+<code nix>
+github:vpsfreecz/example-vps-flake#vps
+</code>
+
+You can find this configuration at https://github.com/vpsfreecz/example-vps-flake.
+
+The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
+
+===== Usage with vpsfreectl =====
+The initial configuration can also be uploaded to a VPS using [[manuals:vps:api|vpsfreectl]].
+First, prepare a file with the script:
+
+<code bash>
+cat <<EOF > my-script.sh
+#!/bin/sh
+
+apt install -y nginx
+echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
+EOF
+</code>
+
+Now create a new VPS:
+
+<code bash>
+vpsfreectl vps create -- \
+                      --hostname vps \
+                      --os-template 168 \
+                      --location 7 \
+                      --user-data-format script \
+                      --user-data-content @my-script.sh
+</code>
+
+The parameter ''--user-data-content'' starts with ''@'', which instructs ''vpsfreectl'' to send the content of the ''my-script.sh'' file. OS template **168** corresponds to Ubuntu 24.04 (''vpsfreectl os_template list''), and location **7** is [[manuals:vps:stagingvps|Staging]] (''vpsfreectl location list''). You can also upload a script when reinstalling a VPS:
+
+<code bash>
+vpsfreectl vps reinstall 123 -- --user-data-format script --user-data-content @my-script.sh
+</code>
+
+===== Supported distributions =====
+
+All distributions are supported with the following exceptions:
+
+  * script is not supported on Guix, NixOS and Slackware
+  * cloud-init is not supported on Guix, NixOS, Slackware and Void Linux

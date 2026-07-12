@@ -1,0 +1,102 @@
+====== User account management ======
+===== E-mail addresses =====
+vpsAdmin allows users to set one primary e-mail address belonging to the
+account owner -- a member of our association. This address must be set and
+can only be a single address. In addition to the primary e-mail address, you
+can set different addresses for certain contact roles, such as an accountant
+or system administrator. These settings can be changed in user profile details
+(vpsAdmin -> Edit profile)
+
+{{:en:screenshots:vpsadmin:account:email-roles.png?300|}}
+
+For example, the account manager receives e-mails about:
+
+  * payment notification,
+  * suspension/activation of the membership,
+  * accepted payments.
+
+The system administrator receives e-mails about:
+
+  * VPS status changes,
+  * VPS configuration changes,
+  * backup downloads,
+  * VPS migrations.
+
+==== Advanced settings ====
+Should contact roles not be enough or if don't wish to receive certain
+e-mails, there is an advanced settings form (<vpsadmin-nav id="member.advanced-email-configuration.open">vpsAdmin -> Edit profile ->
+Advanced e-mail configuration</vpsadmin-nav>). You can choose different e-mail addresses for
+specific mail templates or disable receiving of some mails altogether.
+
+{{:en:screenshots:vpsadmin:account:mail-template-recipients.png?300|}}
+
+===== Two-factor authentication (2FA) =====
+Two-factor authentication for vpsAdmin using
+[[wp>Time-based One-time Password algorithm|TOTP]] or [[wp>WebAuthn|passkeys]]
+can be optionally enabled. You then need both the password and one of the
+additional authentication devices. It is possible to combine TOTP and passkeys,
+using one of the configured authentication devices is sufficient to log in.
+
+When enabled, the two-factor authentication is mandatory for access to
+your account: in the web interface, using [[manuals:vps:api|API]] and
+[[manuals:vps:api#cli|vpsfreectl]]. Only the
+[[manuals:vps:api#authentication|token authentication]] can be used, HTTP basic
+will cease to work.
+
+2FA can be enabled in profile settings (vpsAdmin -> Edit profile). Note that 2FA is active
+only when there's at least one authentication device enabled.
+
+{{:en:screenshots:vpsadmin:account:multifactor-status.png?200|}}
+
+==== TOTP ====
+
+You can setup TOTP e.g. on your mobile phone using applications like
+[[https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2|Google Authenticator]]
+or [[https://freeotp.github.io|FreeOTP]].
+vpsAdmin will show you a QR code which you scan into the application. The 2FA
+activation is then confirmed when you enter the one-time password that the
+application will show you. Alternatively, instead of scanning the QR code,
+you can enter the secret key manually.
+
+{{:en:screenshots:vpsadmin:account:totp-confirm.png?300|}}
+
+Once activated, you will be given a recovery code. This code can be used when
+you lose access to your authentication device. Do not save this code together
+with your vpsAdmin password. If you lose both the authentication device and
+the recovery code, you will have to contact our support to recover your account.
+
+You can configure multiple TOTP devices and any one of them can be used to log in.
+Individual devices can be temporarily disabled or removed
+(<vpsadmin-nav id="member.totp-devices.open">vpsAdmin -> Edit profile -> TOTP devices</vpsadmin-nav>).
+
+{{:en:screenshots:vpsadmin:account:totp-device-list.png?300|}}
+
+==== Passkeys ====
+You can use hardware security tokens (YubiKey, GoTrust IdemKey, etc.) or software keychains such as KeePassXC, KeePassium, iCloud Keychain, Google Password Manager, Microsoft Windows Hello, 1Password. 
+
+Authentication using passkeys is available only in web browser, it cannot be used
+with [[manuals:vps:api#cli|vpsfreectl]], which requires TOTP.
+
+First register your passkeys in <vpsadmin-nav id="member.passkeys.open">vpsAdmin -> Edit profile -> Passkeys</vpsadmin-nav>. Then enable
+2FA in vpsAdmin -> Edit profile.
+
+===== Session control =====
+In profile settings (vpsAdmin -> Edit profile), there's a "Session control" form:
+
+{{:en:screenshots:vpsadmin:account:session-settings.png?300}}
+
+  * **Enable single sign-on** will let you enter vpsAdmin credentials once and log in to vpsAdmin, knowledge base and Discourse
+  * **Preferred session length** will configure time to logout on inactivity in vpsAdmin web interface, it defaults to 20 minutes
+  * **Logout all** will always log you out from all sessions of the same client, e.g. if you're logged into vpsAdmin from different browsers or devices, logout on one will logout all of them
+
+===== Session log =====
+vpsAdmin logs all user sessions and remembers what actions were performed
+(<vpsadmin-nav id="member.sessions.open">vpsAdmin -> Edit profile -> Sessions</vpsadmin-nav>).
+
+{{:en:screenshots:vpsadmin:account:session-list.png?300}}
+
+You can see when the session started, ended, what authentication method was
+used, IP addresses, client identification and a list of executed actions in a
+particular session. Active sessions have a light green background. The current session
+which is used to view the page has dark green background. You can end active sessions
+by clicking on the trash bin icon.

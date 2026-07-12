@@ -1,0 +1,217 @@
+<page>manuals:vps:userdata</page>
+====== User data =======
+Při vytvoření nebo reinstalaci VPS může vpsAdmin do VPS nahrát skript nebo konfiguraci
+pro [[https://cloud-init.io/|cloud-init]]. Tento skript nebo konfigurace se aplikuje při prvním
+spuštění VPS. Podporujeme tyto formáty prvotní konfigurace:
+
+  * [[#script|script]]
+  * [[#cloud-init_config|cloud-init config]]
+  * [[#cloud-init_script|cloud-init script]]
+  * [[#nixos_configuration|NixOS konfigurace]]
+  * [[#nixos_flake_configuration|NixOS flake konfigurace]]
+  * [[#nixos_flake_uri|NixOS flake URI]]
+
+Skripty a konfigurace je možné si do vpsAdminu uložit a při vytvoření/reinstalaci VPS
+vyberete způsob konfigurace. Správu uložených konfigurací najdeme ve vpsAdminu menu **VPS** -> **User data**,
+popř. **Upravit profil** -> **User data**. Při vytvoření/reinstalaci VPS lze konfiguraci vložit i přímo
+bez ukládání do vpsAdminu. Konfiguraci do vpsAdminu není nutné ukládat, jen vám to ulehčí opakované
+použítí konfigurací, které se nemění.
+
+Pro vývoj a testování je možné uloženou konfiguraci nahrát do VPS kdykoliv,
+**vpsAdmin** -> **VPS** -> **User data** -> Upravit položku ze seznamu a poté formulář <vpsadmin-nav id="userdata.deploy.open">**Nasadit do VPS**</vpsadmin-nav>.
+Tato akce pouze zapíše skript/konfiguraci na disk VPS, k jejímu spuštění dojde až při restartu VPS.
+
+===== Formáty konfigurace =====
+==== Script ====
+vpsAdmin do VPS nahraje zadaný skript a integruje jej do init systému VPS, tj. způsob
+záleží na použité distribuci. V distribucích se systemd je to služba ''vpsadmin-script.service''.
+Výstup ze spuštěného skriptu je uložen v journalu, tj. ''journalctl -u vpsadmin-script.service'', popř.
+v souboru ''/var/log/vpsadmin-script-output.log''.
+
+Příklad skriptu:
+
+<code bash>
+#!/bin/sh
+
+apt install -y nginx
+echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
+</code>
+
+Služba i skript se po spuštění automaticky smaže.
+
+Pokud skript přes vpsAdmin nahrajeme do existující VPS, spustíme ho následovně:
+
+<code bash>
+# systemd
+systemctl daemon-reload
+systemctl start vpsadmin-script.service
+
+# OpenRC
+service vpsadmin-script start
+</code>
+=== Proměnné prostředí ===
+Spuštěný skript má k dispozici tyto proměnné prostředí:
+
+  * ''VPSADMIN_VPS_ID'' - ID VPS
+
+==== cloud-init config ===
+Konfigurace pro cloud-init jako YAML, viz https://cloudinit.readthedocs.io/en/latest/explanation/format.html#cloud-config-data
+
+Příklad konfigurace:
+
+<code yaml>
+#cloud-config
+users:
+  - name: myuser
+    ssh_authorized_keys:
+      - "ssh-rsa AAAA..."
+packages:
+  - htop
+  - curl
+runcmd:
+  - echo "Hello, world!" > /root/welcome.txt
+</code>
+
+Výstup cloud-init je vidět v kernel logu a je uložen v souboru ''/var/log/cloud-init-output.log''.
+
+==== cloud-init script =====
+Skript spuštěný přes cloud-init, viz
+https://cloudinit.readthedocs.io/en/latest/explanation/format.html#user-data-script
+
+Výstup cloud-init je vidět v kernel logu a je uložen v souboru ''/var/log/cloud-init-output.log''.
+
+==== NixOS configuration ====
+Vložená konfigurace se uloží do ''/etc/vpsadmin-nixos/configuration.nix''
+a po startu VPS se provede ''nixos-rebuild switch''. Mějte na paměti, že vložená
+konfigurace musí importovat ''vpsadminos.nix'', nebo jej rovnou zahrnovat.
+
+Příklad konfigurace:
+
+<code nix>
+{ config, pkgs, lib, ... }:
+{
+  imports = [
+    /etc/nixos/vpsadminos.nix
+  ];
+
+  environment.systemPackages = with pkgs; [
+    vim
+  ];
+
+  services.openssh.enable = true;
+  services.openssh.settings.PermitRootLogin = "yes";
+  #users.extraUsers.root.openssh.authorizedKeys.keys =
+  #  [ "..." ];
+
+  systemd.extraConfig = ''
+    DefaultTimeoutStartSec=900s
+  '';
+
+  time.timeZone = "Europe/Amsterdam";
+
+  system.stateVersion = "24.11";
+}
+</code>
+
+Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
+
+==== NixOS flake configuration ====
+Konfigurace se uloží do souboru ''/etc/vpsadmin-nixos/flake.nix'' a spustí se příkaz ''nixos-rebuild switch --flake /etc/vpsadmin-nixos#vps''. Konfigurace pro systém ''vps'' musí být součástí vloženého ''flake.nix''.
+
+Příklad konfigurace:
+
+<code nix>
+{
+  inputs = {
+    nixpkgs.url = github:NixOS/nixpkgs/nixos-24.11;
+    vpsadminos.url = github:vpsfreecz/vpsadminos/staging;
+  };
+  
+  outputs = { self, nixpkgs, vpsadminos }: {
+    # Zde musí být konfigurace s názvem "vps"
+    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+      modules = [
+        ({ config, pkgs, lib, ... }:
+        {
+          imports = [
+            vpsadminos.nixosConfigurations.container
+          ];
+
+          environment.systemPackages = with pkgs; [
+            vim
+          ];
+
+          services.openssh.enable = true;
+          services.openssh.settings.PermitRootLogin = "yes";
+          #users.extraUsers.root.openssh.authorizedKeys.keys =
+          #  [ "..." ];
+
+          systemd.extraConfig = ''
+            DefaultTimeoutStartSec=900s
+          '';
+
+          time.timeZone = "Europe/Amsterdam";
+
+          nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+
+          system.stateVersion = "24.11";
+        })
+      ];
+    };
+  };
+}
+</code>
+
+Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
+
+==== NixOS flake URI ====
+Po startu VPS se spustí příkaz ''nixos-rebuild switch --flake $flake_uri''. Tímto způsobem můžete
+jednoduše nasadit konfiguraci, kterou máte veřejně k dispozici třeba na GitHubu.
+
+Ukázka použití:
+
+<code nix>
+github:vpsfreecz/example-vps-flake#vps
+</code>
+
+Tuto konfiguraci najdete na https://github.com/vpsfreecz/example-vps-flake.
+
+Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
+
+===== Použítí s vpsfreectl =====
+Prvotní konfiguraci je možné do VPS nahrát také pomocí [[navody:vps:api|vpsfreectl]].
+Nejdříve si připravíme soubor se skriptem:
+
+<code bash>
+cat <<EOF > my-script.sh
+#!/bin/sh
+
+apt install -y nginx
+echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
+EOF
+</code>
+
+Nyní vytvoříme novou VPS:
+
+<code bash>
+vpsfreectl vps create -- \
+                      --hostname vps \
+                      --os-template 168 \
+                      --location 7 \
+                      --user-data-format script \
+                      --user-data-content @my-script.sh
+</code>
+
+Hodnota parametru ''--user-data-content'' začíná s ''@'' a ''vpsfreectl'' tak pošle obsah souboru ''my-script.sh''. OS template **168** je Ubuntu 24.04 (''vpsfreectl os_template list''), location **7** je [[navody:vps:stagingvps|Staging]] (''vpsfreectl location list''). Stejně tak můžeme skript
+nahrát při reinstalaci VPS:
+
+<code bash>
+vpsfreectl vps reinstall 123 -- --user-data-format script --user-data-content @my-script.sh
+</code>
+
+===== Podporované distribuce =====
+
+Všechny kromě následujících výjimek:
+
+  * script není podporován na Guix, NixOS a Slackware
+  * cloud-init není podporován na Guix, NixOS, Slackware a Void Linuxu

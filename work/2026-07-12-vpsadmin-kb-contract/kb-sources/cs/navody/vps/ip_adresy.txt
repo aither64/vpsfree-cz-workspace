@@ -1,0 +1,69 @@
+<page>manuals:vps:ip_addresses</page>
+====== IP adresy ======
+
+===== Veřejné IP adresy =====
+Každý člen má v produkci k dispozici:
+
+  * 1 veřejnou IPv4 adresu,
+  * až 32 IPv6 /64 adres.
+
+Další veřejné IPv4 adresy jsou za [[informace:platby|poplatek]], IPv6 přidáme
+na požádání a to i větší sítě než /64.
+
+===== Privátní IP adresy =====
+Privátní IP adresy přistupují k Internetu přes NAT a zvenku tedy nejsou
+dostupné. Privátní adresy jsou užitečné, pokud rozdělíte přidělené
+[[navody:vps:prostredi|prostředky]] mezi více VPS. Často [[https://lists.vpsfree.cz/pipermail/community-list/2019-May/010045.html|není veřejná IPv4
+adresa potřeba]] a zároveň fungovat pouze s IPv6 je problematické, protože
+některé servery ji stále nepodporují.
+
+O přidělení privátních adres je nutné požádat na podpoře.
+
+===== Vlastnictví IP adres =====
+V produkčním prostředí je používán koncept vlastnictví IP adres. Jakmile je
+adresa poprvé přiřazena k VPS, nastaví se její vlastník. I když je pak adresa
+z VPS odebrána, vlastník adresy se nezmění. Při přiřazování adres k VPS je
+nutné nejprve přiřadit adresy již vlastněné a až potom vybrat nové.
+
+Vlastnictví zabraňuje tomu, aby někdo mohl sebrat dočasně nepoužívanou adresu
+a také aby někdo nečinil z IP adresy neplechu, dostal ji na blacklisty a pak
+by si vzal adresu jinou. Adresu s poškozenou reputací by pak dostal někdo
+jiný.
+
+Na [[navody:vps:playgroundvps|playgroundu]] se vlastnictví neuplatňuje.
+
+IP adresy jsou taktéž vázány na lokaci v Praze nebo Brně. IP adresy z Prahy
+nelze použít v Brně, a naopak. Pokud chceš přejít např. z Prahy do Brna, je nutné
+uvolnit adresu z Prahy a poté je možné si vybrat novou adresu v Brně.
+Pro uvolnění adresy prosím kontaktuj podporu.
+===== Přehled adres =====
+
+V menu Sítě -> Routované adresy je k dispozici seznam adres. Zobrazují se
+zde adresy vlastněné nebo přidělené k VPS a adresy, které jsou k dispozici.
+Přimo z tohoto seznamu je možné adresy přiřazovat k VPS.
+
+{{:cs:screenshots:vpsadmin:networking:ip-address-list.png?300|}}
+
+V sloupcích TX a RX se zobrazuje maximální možný datový tok v Mbps.
+
+===== Routování adres a adresy na síťovém rozhraní =====
+Adresy se k VPS přiřazují ve dvou krocích. Adresa je do VPS potřeba naroutovat
+a poté přiřadit na síťové rozhraní. Naroutovat lze i větší sítě, např. /64 IPv6.
+Na rozhraní se pak přiřadí vybrané adresy, případně lze naroutovanou síť
+používat na kontejnery, atp. a na rozhraní VPS žádnou adresu nepřiřazovat.
+
+Ve vpsAdminu jsou na správu rout a adres na rozhraní dva formuláře v nastavení
+VPS:
+
+{{:cs:screenshots:vpsadmin:networking:routed-addresses.png?200|}}
+
+{{:cs:screenshots:vpsadmin:networking:interface-addresses.png?350|}}
+
+
+Z každé sítě vpsAdminu umožňuje přidat první adresu na síťové rozhraní. Pokud
+jich potřebujete více, můžete si další IP adresy do vpsAdminu přidat. U seznamu
+routovaných adres v detailu VPS klikneme na ikonku s popiskem „Spravovat adresy hostitelů“
+a potom „Přidat adresy hostitelů“.
+
+
+

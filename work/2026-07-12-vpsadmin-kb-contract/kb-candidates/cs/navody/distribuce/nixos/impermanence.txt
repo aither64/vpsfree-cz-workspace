@@ -1,0 +1,121 @@
+<page>manuals:distributions:nixos:impermanence</page>
+====== NixOS Impermanence ======
+
+Tato stránka popisuje použití modulu [[https://github.com/nix-community/impermanence|NixOS Impermanence]] na vpsFree.cz. Podporujeme impermanence s kořenovým souborovým systémem v dočasném ZFS datasetu, který poskytuje naše platforma. Je nutné přesunout Nix store do subdatasetu, což lze automaticky provést [[#pouziti_os_sablony|použitím OS šablony pro impermanence]] nebo to nastavit [[#manualni_konfigurace|manuálně]].
+
+Upozorňujeme, že při zapnutí impermanence bude kořenový souborový systém skutečně dočasný a jeho data se při každém startu VPS resetují. Tento dočasný dataset také není zálohován. Dávejte pozor, kde ukládáte svá data. Pokud nejsou na trvalém úložišti, budou ztracena.
+
+===== Použití OS šablony =====
+vpsAdmin obsahuje OS šablony, kde je impermanence předkonfigurována. Při vytváření nové VPS vyberte odpovídající šablonu (v názvu je uvedeno impermanence). Nová VPS bude mít ''/nix'' vyčleněný do subdatasetu. Root dataset bude připojen na ''/persistent'' a počáteční flake konfigurace NixOS bude nasazena do ''/etc/nixos'', viz ''/etc/nixos/flake.nix'' a ''/etc/nixos/configuration.nix''. Šablona také vytvoří ''/etc/nixos/flake.lock'', takže verze vpsAdminOS, ''nixpkgs'' a impermanence budou připnuté společně.
+
+Impermanence je přidána jako flake input. Pokud ji chcete aktualizovat, aktualizujte lock soubor a systém znovu sestavte:
+
+<code bash>
+cd /etc/nixos
+nix flake lock --update-input impermanence
+nixos-rebuild switch --flake /etc/nixos#vps
+</code>
+
+Upozorňujeme, že přeinstalace VPS nebude účinná, protože přeinstalace změní pouze root dataset. Nix store se nepřesune, pokud je již v subdatasetu. Ze stejného důvodu nemůžete pomocí přeinstalace převést existující VPS na impermanence. OS šablona automaticky nakonfiguruje VPS pouze při jeho vytvoření. Viz [[#manualni_konfigurace|manuální konfigurace]] pokud chcete zapnout impermanence na stávající VPS.
+
+===== Manuální konfigurace =====
+
+==== 1. Vytvoření NixOS VPS ====
+Vytvořte nový VPS a nechte ho spustit. Můžete také použít svůj stávající NixOS VPS.
+
+==== 2. Spuštění VPS v rescue módu ====
+V detailu VPS použijte formulář <vpsadmin-nav id="vps.boot-rescue.open">**Spustit VPS ze šablony (nouzový režim)**</vpsadmin-nav>. Nejlepší je vybrat jinou distribuci než NixOS, aby zde nebyl adresář ''/nix''. Použijte např. Alpine nebo Debian.
+
+==== 3. Vytvoření VPS subdatasetu pro Nix store ====
+V detailu VPS vytvořte subdataset ''nix'', který bude připojen na ''/nix'' (proto jsme v předchozím kroku nechtěli bootovat do NixOS). Možná budete muset uvolnit nějaké místo na disku, abyste mohli vytvořit dataset, což lze provést zmenšením root datasetu.
+
+==== 4. Přesun Nix store do subdatasetu ====
+Přihlaste se do VPS v rescue módu, buď přes SSH, nebo použijte vzdálenou konzoli. Root dataset je připojen na ''/mnt/vps'' a náš nový subdataset ''nix'' je připojen na ''/nix''. Chceme přesunout Nix store z root datasetu do subdatasetu.
+
+<code bash>
+mv /mnt/vps/nix/* /nix/
+</code>
+
+==== 5. Připojení root datasetu do /persistent ====
+V režimu impermanence bude váš kořenový souborový systém dočasný a při každém startu vymazán. Naše trvalé úložiště připojíme do ''/persistent''. Může to být root dataset, nebo můžete vytvořit další subdataset pro tento účel. Zde použijeme root dataset. V detailu VPS klikněte na odkaz **Mount** u prvního uvedeného datasetu (jeho název je ID VPS) a připojte ho do ''/persistent''.
+
+==== 6. Restart VPS ====
+Nyní restartujte VPS, čímž opustíte rescue mód.
+
+==== 7. Úprava flake konfigurace a přidání impermanence ====
+Šablony vpsAdminOS mají flakes zapnuté ve výchozím stavu. Vytvořte ''/etc/nixos/flake.nix'' a své lokální nastavení ponechte v ''/etc/nixos/configuration.nix''. Následující příklad používá stabilní větev ''nixpkgs'', kterou používá vpsAdminOS. Pokud používáte jinou stabilní verzi, zvolte odpovídající větev ''nixos-YY.MM''. Pokud používáte NixOS unstable, nahraďte ''github:NixOS/nixpkgs/nixos-25.11'' za ''github:NixOS/nixpkgs/nixos-unstable'' a v příkladu nahraďte řádek se stabilním modulem kontejneru za ''vpsadminos.nixosModules.containerUnstable''.
+
+<file nix /etc/nixos/flake.nix>
+{
+  inputs = {
+    vpsadminos.url = "github:vpsfreecz/vpsadminos";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    impermanence.url = "github:nix-community/impermanence";
+  };
+
+  outputs = { nixpkgs, vpsadminos, impermanence, ... }:
+    let
+      containerModule = "container_${builtins.replaceStrings [ "." ] [ "_" ] nixpkgs.lib.trivial.release}";
+    in
+    {
+      nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          vpsadminos.nixosModules.${containerModule}
+          impermanence.nixosModules.impermanence
+          ./configuration.nix
+        ];
+      };
+    };
+}
+</file>
+
+Poté rozšiřte svou konfiguraci a přidejte nastavení persistence:
+
+<file nix /etc/nixos/configuration.nix>
+{ ... }:
+{
+  environment.persistence."/persistent" = {
+    hideMounts = true;
+    directories = [
+      "/etc/nixos"
+      "/var/log"
+      "/var/lib/nixos"
+    ];
+    files = [
+      "/etc/machine-id"
+    ];
+  };
+}
+</file>
+
+Ujistěte se, že jsou flakes povolené, například:
+
+<code nix>
+nix.settings.experimental-features = [
+  "nix-command"
+  "flakes"
+];
+</code>
+
+Upozorňujeme, že ''/persistent'' musí odpovídat mountpointu datasetu, ale můžete si zvolit libovolný název. Datasety budou připojeny prostřednictvím vpsAdminOS, takže není nutné konfigurovat položky ''fileSystems''.
+
+Až budete hotovi, nasaďte novou konfiguraci pro další restart:
+
+<code bash>
+nixos-rebuild boot --flake /etc/nixos#vps
+</code>
+
+==== 8. Zapnutí funkce impermanence ====
+V detailu VPS ve formuláři <vpsadmin-nav id="vps.features.open">**Funkce**</vpsadmin-nav> zapněte funkci **NixOS Impermanence**. To nakonfiguruje VPS tak, aby při startu používal čistý, dočasný dataset. Jeho obsah bude při každém restartu ztracen a není zálohován. Zapnutí této funkce způsobí restart VPS do konfigurace, kterou jsme připravili v kroku **7**.
+
+Uvnitř VPS můžete zkontrolovat připojené souborové systémy:
+
+<code>
+root@nixos:/# df -hT | grep zfs
+tank/ct/11327.impermanence-c5a8b7 zfs     10G  768K   10G   1% /
+tank/ct/11327/nix                 zfs     20G  1.1G   19G   6% /nix
+tank/ct/11327                     zfs    100G  7.7M  120G   1% /persistent
+</code>
+
+''/'' je založeno na dočasném datasetu, ''11327'' se používá pro ''/persistent'' a ''11327/nix'' obsahuje Nix store.

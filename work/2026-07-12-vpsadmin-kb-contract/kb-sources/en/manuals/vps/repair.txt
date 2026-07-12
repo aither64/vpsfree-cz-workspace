@@ -1,0 +1,147 @@
+====== Fixing a Broken VPS ======
+
+Since version 2.0, vpsAdmin enables members to solve most problems
+with a corrupted VPS themselves, i.e. when the VPS won’t start or isn’t accessible on the network. Examples of things that
+might cause a VPS to get corrupted are system updates, badly chosen commands or
+configurations, etc.
+
+This doesn’t mean that our [[information: where_to_write |support]] won’t help you with your VPS. However, capable admins
+can get their VPS running again quicker and don’t need to wait for our help.
+
+
+===== Identifying the State of the VPS =====
+
+In order to choose an appropriate course of action, you need to find out what state the VPS is currently in.
+In any case, you need the remote console in vpsAdmin, which can reveal
+important information.
+
+==== VPS Boot Failure ====
+
+The init system or a different important part of the VPS system is either missing or corrupted.
+Continue by [[manuals:vps:repair#mounting_rootfs|mounting rootfs]].
+
+==== VPS Is Turned On ====
+The most probable issue is that init has gotten stuck somewhere or the network just isn’t set up.
+By taking a look in the remote console in vpsAdmin, you can find out where exactly the VPS startup
+stops, what services it fails to run, etc.
+
+
+===== Mounting rootfs =====
+vpsAdmin makes it possible to mount **any** dataset to **any** VPS. I.e. it is possible to
+mount a dataset with the rootfs of a corrupted VPS to a different, working VPS.
+In order to do this, you can use the playground or another VPS running in a production environment.
+It doesn’t matter whether the VPS on the mounted dataset is running or not.
+
+You can create a mount like this: Details of the recovery VPS -> Create mount ->
+choose the dataset of the corrupted VPS.
+
+This guide assumes that the rootfs of the corrupted VPS is mounted to ''/mnt/recovery''.
+
+<note>
+When you have finished the repair process, it is recommended that you remove the mount between the VPSs.
+</note>
+
+
+=== A Comparison with Backups ===
+If the problem arose during the last 14 days, it is possible to restore the VPS directly from
+a backup or compare the configuration with a working backup and try to repair
+the system.
+
+In vpsAdmin, mount the chosen backup to the recovery VPS. Then you can compare
+e.g. ''/etc''. If the backup is mounted to ''/mnt/snapshot'', the command
+for comparison can look like this:
+
+<code>
+# diff -qr /mnt/recovery/etc /mnt/snapshot/etc
+</code>
+
+<note>
+If ''/mnt/snapshot/etc'' does not exist, the snapshot is a local one and it is necessary
+to use a different path: ''/mnt/snapshot/private/etc''.
+</note>
+
+Now it is necessary to examine the differences found and consider whether changing them can affect 
+the functioning of the system.
+
+
+===== Chroot =====
+
+Depending on the type of corruption, it might be necessary to chroot into the corrupted system, for example in order to
+work with the package system or other programs.
+
+If rootfs is mounted to ''/mnt/recovery'', chroot will be performed like this:
+
+<code>
+# cd /mnt/recovery
+# mount -t proc proc proc/
+# mount -t sysfs sys sys/
+# mount -o bind /dev dev/
+# chroot /mnt/recovery /bin/bash
+</code>
+
+Now you can use programs from the corrupted VPS for repairs.
+
+The specific procedure depends on the distro – log checks, repairing the package
+system, etc.
+
+When the job is finished, unmount everything:
+
+<code>
+# umount proc
+# umount sys
+# umount dev
+</code>
+
+
+===== Network Configuration =====
+If the VPS is running but isn’t responding on the network, check if it has:
+
+  * IP addresses: ''ip addr'' or ''ifconfig -a''
+  * the default route: ''ip route list''
+  * no rule or policy in iptables blocking access
+
+<note warning>
+These commands only make sense in a remote console, not in chroot!
+</note>
+
+If the default route is missing, you can add it using ''ip r a default dev venet0''.
+A route added this way disappears after restarting the VPS – it is not a permanent solution.
+
+The the VPS doesn’t have IP addresses or a route, it could mean that either the network configuration
+is corrupted for some reason.
+
+One of the ways how you can clear iptables via remote console is using
+the ''service iptables stop'' command – this depends on the distro used. If done manually, it could
+look like this:
+
+<code>
+# iptables -F
+# iptables -X
+# iptables -P INPUT ACCEPT
+# iptables -P FORWARD ACCEPT
+# iptables -P OUTPUT ACCEPT
+</code>
+
+<note warning>
+By deleting iptables rules, you can grant access to online services that
+rely on a firewall being set up and that aren’t appropriately secured.
+</note>
+
+Without access to the remote console, it is necessary to either find the file in which
+persistent rules are stored and delete its content or to turn off the iptables
+service. Then restart the VPS.
+
+====== Known Reasons For VPSs Not Working ======
+
+===== No Disk Space =====
+If the disk is full, the VPS won’t run. You can try mounting the dataset to
+a different VPS and removing data. If this doesn’t work either, contact our support.
+
+===== Ubuntu and ISPConfig =====
+After creating a new website, a bind mount with the parameter ''_netdev'' can be written into ''/etc/fstab''.
+Because of this, the VPS start-up process will get stuck when mounting
+file systems. You need to remove it.
+
+===== Debian =====
+In order to configure the network properly, you need to have ''ifconfig'' from the ''net-tools'' package
+installed.

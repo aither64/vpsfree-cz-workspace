@@ -1,0 +1,104 @@
+<page>manuals:vps:datasets</page>
+====== Datasety ======
+Dataset je pojem ze souborového systému ZFS, který všude používáme. Můžeme si ho
+představit jako naformátovaný oddíl na disku s adresáři a soubory, popř. na
+podobném principu fungují //subvolumes// z btrfs.
+
+Dataset ve vpsAdminu reprezentuje přímo ZFS dataset v zpoolu.
+Datasety se používají jednak na data z VPS (každá VPS je v jednom datasetu)
+a také NAS, jen se zobrazují na různých místech. Datasety VPS se nacházejí
+v detailu VPS a datasety NASu v menu NAS. S datasety VPS a NASu můžeme provádět
+stejné operace, jako třeba [[navody:vps:zalohy|vytváření a obnovy snapshotů]],
+mountovat je do různých VPS, apod. Tyto operace jsou popsány níže.
+
+{{:cs:screenshots:vpsadmin:datasets:vps-dataset-list.png?300|}}
+
+Datasetům lze nastavovat kvótu a jiné ZFS vlastnosti, pomocí kterých můžeme
+optimalizovat výkon pro různé aplikace, např. komprese, velikost bloku,
+//atime//, //relatime// nebo //sync//. Mohou posloužit také k logickému
+oddělení dat. Každý dataset se snapshotuje zvlášť.
+
+===== Vytvoření datasetu =====
+Dataset VPS vytváříme z detailů VPS, dataset na NASu z menu NAS. V menu na
+pravé straně je odkaz //Vytvořit dataset//, popř. v seznamu datasetů klikneme
+na ikonu {{:navody:vps:vps_add.png}} a tím vytvoříme subdataset zvoleného
+datasetu.
+
+{{:cs:screenshots:vpsadmin:datasets:create-dataset-form.png?300|}}
+
+Pokud vytváříme dataset pomocí menu //Vytvořit dataset//, je nutné vyplnit
+políčko //Rodičovský dataset//, tj. nadřazený dataset. Název datasetu nesmí začínat
+lomítkem, ale můžeme ho použít pro vytvoření zanořeného datasetu v jednom
+kroku, např. ''data/zalohy'' vytvoří dataset ''data'' a v něm subdataset
+''zalohy''. Pokud je zaškrtnutý //Automatický mount// a nadřazený dataset je ve VPS
+připojen, nově vytvořený dataset se také připojí.
+
+//Kvóta včetně potomků (quota)// pak udává velikost datasetu, viz [[#kvoty_datasetu|kvóty datasetů]].
+Další ZFS vlastnosti většinou řešit nemusíme a můžeme ponechat výchozí
+hodnoty.
+
+Rezervovaná jména datasetů jsou: ''private'', ''vpsadmin'', ''branch-*'' a ''tree.*''.
+Tyto názvy nelze použít.
+
+===== Velikost datasetů a zabrané místo =====
+V seznamu datasetů se zobrazují tři sloupečky: //Použité místo//, //Referencovaný prostor (referenced)//
+a //Dostupné místo//. //Použité místo// zahrnuje místo zabrané datasetem, jeho snapshoty
+i všemi potomky. //Referencovaný prostor (referenced)// zobrazuje jen místo, které zabírá odpovídající dataset,
+snapshoty ani subdatasety se nepočítají.
+
+//Dostupné místo// zobrazuje volné místo v aktuálním datasetu s ohledem na nastavenou kvótu.
+
+===== Kvóty datasetů =====
+Pro datasety VPS se používá //Kvóta datasetu (refquota)// - místo zabrané snapshoty
+a subdatasety není zahrnuto. Datasety NASu naopak //Kvóta včetně potomků (quota)// - místo zabrané
+snapshoty a subdatasety je zahrnuto. vpsAdmin automaticky dle kontextu nabízí správný typ kvóty.
+
+U VPS nechceme, aby se do zabraného místa počítalo
+místo zabrané snapshoty, protože by se zmenšila velikost disku VPS, o tolik,
+kolik dat je změněno mezi vytvořenými snapshoty.
+Každý dataset je samostatný a nesdíli místo s nadřazenými datasety, ani se
+svými potomky.
+
+Naopak na NASu je použita property quota a do té se počítá místo zabrané
+snapshoty i subdatasety. Pokud se na NASu udělají snapshoty, budou
+ubírat místo z celkové velikosti. Taky je jedno, že subdatasetu na NASu lze
+dat větší kvótu, než má uživatel k dispozici, protože se stejně uplatní kvóta
+z datasetu nejvyšší úrovně, tzn. ve výchozím stavu 250 GB.
+
+Z toho vyplývá, že k vytvoření subdatasetu VPS musí být nejdříve uvolněno místo,
+tzn. nějaký jiný (sub)dataset VPS musí být zmenšen minimálně o 128 MB, což je
+minimální velikost datasetu. Na NASu záleží jen na kvótě nejvýše postaveného
+datasetu a kvóty subdatasetů můžou být libovolné.
+
+===== Připojení NAS datasetu do VPS =====
+Pro VPS běžící na [[navody:vps:vpsadminos|vpsAdminOS]] vytvoříme
+[[navody:vps:exporty|export]] a ten ve VPS připojíme pomocí NFS.
+
+===== Mounty =====
+
+Mounty ve vpsAdminu slouží jen pro připojení lokálních subdatasetů pro VPS.
+Datasety NASu, i jejich subdatasety a snapshoty, se do VPS připojují po síti pomocí [[navody:vps:exporty|exportů]].
+
+Mounty lze vidět v detailech VPS:
+
+{{:cs:screenshots:vpsadmin:datasets:mount-list.png?300|}}
+
+Mountpointy nedoporučujeme nepřirozeně zanořovat. Situace, kdy
+dataset ''raz/dva'' je připojen nad dataset ''raz'' není ošetřena.
+
+{{:cs:screenshots:vpsadmin:datasets:mount-dataset-form.png?300|}}
+
+Mount lze dočasně vypnout a znovu zapnout. Toto nastavení je
+perzistentní mezi restarty VPS.
+
+===== Další informace =====
+
+  * [[navody:vps:zalohy]]
+  * [[navody:vps:exporty]]
+
+<maintainers hidden>
+aither
+kerrycze
+krcmar
+</maintainers>
+

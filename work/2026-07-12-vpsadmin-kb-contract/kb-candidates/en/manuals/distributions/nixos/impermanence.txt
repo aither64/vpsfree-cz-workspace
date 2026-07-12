@@ -1,0 +1,159 @@
+<page>manuals:distributions:nixos:impermanence</page>
+====== NixOS Impermanence ======
+
+This page describes usage of [[https://github.com/nix-community/impermanence|NixOS Impermanence]] module
+at vpsFree.cz. We support impermanence with root filesystem in a temporary ZFS dataset that is
+provided by our platform. It is necessary to move the Nix store to a subdataset, which can be
+done automatically [[#using_os_template|using the OS template for impermanence]], or you can
+set it up [[#manual_configuration|manually]].
+
+Please note that when you enable impermanence, the root file system is indeed temporary
+and its data reset on each VPS start. The temporary dataset also isn't backed up. Be mindful
+of where you store your data. If it isn't in a persistent location, it will be lost.
+
+===== Using OS template =====
+vpsAdmin contains OS templates where impermanence is preconfigured. When creating a new VPS,
+choose the appropriate template (impermanence is in its name). The new VPS will have ''/nix''
+separated in a subdataset. The root dataset will be mounted to ''/persistent'' and initial
+flake-based NixOS configuration will be deployed to ''/etc/nixos'', see ''/etc/nixos/flake.nix''
+and ''/etc/nixos/configuration.nix''. The template also writes ''/etc/nixos/flake.lock'', so
+versions of vpsAdminOS, ''nixpkgs'' and impermanence are pinned together.
+
+Impermanence is included as a flake input. To update it, update the flake lock and rebuild
+the system:
+
+<code bash>
+cd /etc/nixos
+nix flake lock --update-input impermanence
+nixos-rebuild switch --flake /etc/nixos#vps
+</code>
+
+Note that reinstalling the VPS will be ineffective, as reinstall changes only the root dataset.
+It will not touch the Nix store when it is moved to a subdataset. For the same reason, you
+cannot convert an existing VPS to impermanence using reinstall. The OS template will
+auto-configure the VPS only on creation. See [[#manual_configuration|manual configuration]] if you'd like to
+enable impermanence on an existing VPS.
+
+===== Manual configuration =====
+
+==== 1. Create a NixOS VPS ====
+Create a new VPS and let it start. You can also reuse your existing NixOS VPS.
+
+==== 2. Start the VPS in rescue mode ====
+In VPS details, use form <vpsadmin-nav id="vps.boot-rescue.open">**Boot VPS from template (rescue mode)**</vpsadmin-nav>. It's best
+to choose a different distribution than NixOS, so that there's no ''/nix'' directory.
+Use e.g. Alpine or Debian.
+
+==== 3. Create VPS subdataset for the Nix store ====
+In VPS details, create subdataset ''nix'', which will be mounted to ''/nix'' (this is why we didn't
+want to boot into NixOS in the previous step). You might have to free some diskspace in order to be
+able to create the dataset, you can do that by shrinking the root dataset.
+
+==== 4. Move the Nix store to the subdataset ====
+Login to the VPS while in rescue mode, either over SSH or use the remote console.
+The root dataset is mounted at ''/mnt/vps'' and our new subdataset ''nix'' is mounted at
+''/nix''. We want to move the Nix store from the root dataset to the subdataset.
+
+<code bash>
+mv /mnt/vps/nix/* /nix/
+</code>
+
+==== 5. Mount root dataset to /persistent ====
+In the impermanence mode, your root file system will be temporary and cleared on
+every start. We must mount our persistent storage to ''/persistent''. This can be either
+the root dataset, or you can create another subdataset for that purpose. We'll use the root
+dataset. In VPS details, click on **Mount** link of the first listed dataset
+(its name is the VPS ID) and mount it to ''/persistent''.
+
+==== 6. Restart the VPS ====
+Now restart the VPS, you will leave the rescue mode.
+
+==== 7. Edit your flake configuration and add impermanence ====
+vpsAdminOS templates enable flakes by default. Create ''/etc/nixos/flake.nix'' and
+keep your local settings in ''/etc/nixos/configuration.nix''. The example below follows the
+stable ''nixpkgs'' branch used by vpsAdminOS. If you're using another stable release, use the
+matching ''nixos-YY.MM'' branch. If you're using NixOS unstable, replace
+''github:NixOS/nixpkgs/nixos-25.11'' with ''github:NixOS/nixpkgs/nixos-unstable'' and
+replace the stable container module line in the example with
+''vpsadminos.nixosModules.containerUnstable''.
+
+<file nix /etc/nixos/flake.nix>
+{
+  inputs = {
+    vpsadminos.url = "github:vpsfreecz/vpsadminos";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    impermanence.url = "github:nix-community/impermanence";
+  };
+
+  outputs = { nixpkgs, vpsadminos, impermanence, ... }:
+    let
+      containerModule = "container_${builtins.replaceStrings [ "." ] [ "_" ] nixpkgs.lib.trivial.release}";
+    in
+    {
+      nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          vpsadminos.nixosModules.${containerModule}
+          impermanence.nixosModules.impermanence
+          ./configuration.nix
+        ];
+      };
+    };
+}
+</file>
+
+Then extend your configuration and add the persistence settings:
+
+<file nix /etc/nixos/configuration.nix>
+{ ... }:
+{
+  environment.persistence."/persistent" = {
+    hideMounts = true;
+    directories = [
+      "/etc/nixos"
+      "/var/log"
+      "/var/lib/nixos"
+    ];
+    files = [
+      "/etc/machine-id"
+    ];
+  };
+}
+</file>
+
+Ensure flakes are enabled, for example:
+
+<code nix>
+nix.settings.experimental-features = [
+  "nix-command"
+  "flakes"
+];
+</code>
+
+Note that ''/persistent'' must match the dataset mountpoint, but you can choose an arbitrary name
+if you like. The datasets will be mounted by vpsAdminOS, so you don't have to configure ''fileSystems''
+entries yourself.
+
+When you're done, deploy the new configuration for the next restart:
+
+<code bash>
+nixos-rebuild boot --flake /etc/nixos#vps
+</code>
+
+==== 8. Turn on impermanence feature ====
+In VPS details, enable the **NixOS Impermanence** feature. This will configure your VPS so that it
+is started with a clean, temporary dataset. Its contents will be lost on every reboot and it's not
+backed up. Turning on the feature will cause the VPS to restart into the configuration we've prepared
+in step **7**.
+
+Inside the VPS, you can check the mounted filesystems:
+
+<code>
+root@nixos:/# df -hT | grep zfs
+tank/ct/11327.impermanence-c5a8b7 zfs     10G  768K   10G   1% /
+tank/ct/11327/nix                 zfs     20G  1.1G   19G   6% /nix
+tank/ct/11327                     zfs    100G  7.7M  120G   1% /persistent
+</code>
+
+''/'' is based in a temporary dataset, ''11327'' is used for ''/persistent'' and ''11327/nix''
+contains the Nix store.
