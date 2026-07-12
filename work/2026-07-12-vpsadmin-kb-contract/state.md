@@ -13,7 +13,7 @@
 
 - `vpsadmin-kb-captures`: branch `2026-07-12-vpsadmin-kb-contract` in
   `worktrees/2026-07-12-vpsadmin-kb-contract/vpsadmin-kb-captures`, based on
-  `origin/master` `951a5e6`, at `681ebef` and pushed. Review fixes remain
+  `origin/master` `951a5e6`, at `7185b17` and pushed. Review fixes remain
   folded into the first two logical commits; a third integration-found commit
   closes lingering proxy tunnels after successful captures.
 - `vpsadmin`: branch `2026-07-12-vpsadmin-kb-contract` in
@@ -154,15 +154,56 @@
   The broader selected integration-test workflow remains in progress; no rerun
   has been requested.
 
-## Next deployment gate
+## Production approval gate
 
-- Deploy configuration branch `2026-07-12-vpsadmin-kb-contract` at
-  `f2a98c23` to aitherdev only. After redeployment, restart the stopped
-  `kb-staging` container so the real packaged plugin can be tested for XHTML
-  rendering and metadata persistence.
 - Production `int.kb` deployment and every production KB content update still
-  require separate explicit approval. No staging or production page was
-  changed in this initiative so far.
+  require separate explicit approval. No production configuration or page was
+  changed by this initiative.
+
+## Staging annotation release
+
+- User deployed aitherdev configuration `f2a98c23` and changed the plugin
+  repository default branch to `master`. Verified both states and started the
+  stopped `kb-staging` container on the new generation without resetting its
+  mirrored content.
+- The staging controller remains owned by the verified active development
+  session `2026-07-10-kb-czech-fixes`; the semantic-contract work and artifacts
+  remain tracked under this follow-up initiative.
+- Created paired disposable staging pages to exercise the real packaged plugin.
+  Both language sites rendered `data-vpsadmin-doc-id`, nested bold text, and
+  internal links correctly, and the language plugin linked the pair in both
+  directions. Deleted both disposable pages after the check.
+- Refetched exact current production sources for all 18 Czech and 16 English
+  contract-bound pages, including production revision IDs and SHA-256 hashes.
+- The candidate builder prepared 55 annotations across 33 changed pages. It
+  also corrected stale English labels to current vpsAdmin terminology:
+  `Session log` to `Sessions`, `Boot from VPS template` to
+  `Boot VPS from template (rescue mode)`, DNS label casing, and several
+  navigation descriptions that omitted current submenus/forms.
+- Added previously missed `member.advanced-email-configuration.open` and
+  `member.totp-devices.open` paths. Capture contract commit `7185b17` records
+  51 page/path bindings and six explicit exceptions where an affected page has
+  no in-prose navigation phrase. Its checker rejects unknown/malformed tags,
+  count drift, and unclassified affected pages; 4 tests/10 assertions pass in
+  addition to the existing contract and inventory suites.
+- Generated review ledger `kb-candidates/review.md`, guarded Czech/English
+  release manifests, and reproducible fetch/build/render-verification helpers.
+  Top-level commits `228dc2b` and `d661da9` separate tooling from generated
+  source/candidate/release artifacts.
+- Staged 18 Czech pages and 15 English pages at their production IDs. Both
+  manifests verify byte-for-byte, 31 language pairs verify bidirectionally,
+  and live HTTP rendering verifies all 33 pages and all 55 expected semantic
+  IDs with no invalid-tag warnings. The English manifest is the current pending
+  release because it was staged second; both language page contents remain in
+  staging for review.
+- Source snapshots intentionally preserve pre-existing production trailing
+  whitespace and EOF layout. `git diff --cached --check` therefore reported
+  those inherited lines in both source and byte-preserving candidate copies;
+  the candidate builder changes only its exact counted replacements.
+- Production remains untouched. Staging review URLs are the normal page URLs
+  under `http://kb-cs.aitherdev.int.vpsfree.cz/` and
+  `http://kb-en.aitherdev.int.vpsfree.cz/`; the complete replacement ledger is
+  `work/2026-07-12-vpsadmin-kb-contract/kb-candidates/review.md`.
 
 ## Approval boundaries
 
