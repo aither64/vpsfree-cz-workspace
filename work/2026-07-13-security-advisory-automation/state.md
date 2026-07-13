@@ -296,11 +296,11 @@ lost create response without duplicating drafts. The reporter has an explicit
   `node.kernel_history#index`, `node.security_evidence#index`, advisory
   `external_id`/`content_revision`, and expected-revision parameters on the
   advisory and nested Node-status mutation actions.
-- The final vpsAdmin head is green for API migrations, RuboCop, WebUI PHPUnit,
-  i18n health, and libnodectld specs; its long integration and topic-parallel
-  API jobs are in progress.
-- Final-head vpsAdminOS GitHub CI is in progress; its immediately preceding
-  equivalent feature head completed successfully.
+- The final vpsAdmin head is green for API migrations, all 27 topic-parallel
+  API jobs and endpoint coverage, RuboCop, WebUI PHPUnit, i18n health, and
+  libnodectld specs. Its selected VM integration suite remains in progress.
+- Final-head vpsAdminOS GitHub CI completed successfully, including the OS
+  closure build and VM test suite.
 - A superseded API-specs run failed because the two new endpoints were missing
   from the endpoint-coverage manifest. Logs were inspected, the manifest was
   fixed in the final evidence commit, and superseded runs were cancelled after
@@ -341,7 +341,7 @@ lost create response without duplicating drafts. The reporter has an explicit
 
 ## Remaining handoff actions
 
-1. Confirm the final-head vpsAdmin and vpsAdminOS integration CI completes
+1. Confirm the final-head vpsAdmin selected integration CI completes
    successfully.
 2. User creates the private `vpsfreecz/security-advisories` GitHub repository;
    then push `35ca6b94f76658b9bbb5c451e972fc300ebb6e50` over its already
