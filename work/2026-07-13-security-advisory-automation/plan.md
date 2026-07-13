@@ -19,8 +19,11 @@ explicit human action outside the automation token's authority.
 - `vpsadmin`
   - advisory draft/node-status API and detached action-scoped tokens already
     exist;
-  - evaluate a narrow kernel-history read interface derived from existing node
-    status records, so the automation does not need SSH or log-server access.
+  - add a user-visible kernel lifecycle and a separate narrow security-evidence
+    interface, so the automation does not need SSH or log-server access.
+- `vpsadmin-kb-captures`
+  - update the WebUI documentation contract and Czech/English capture inventory
+    when the kernel-history page is implemented.
 - `vpsadminos`
   - read-only platform evidence for kernel configuration, packaged kernel
     sources, livepatches, and eBPF LSM mitigations;
@@ -49,11 +52,55 @@ explicit human action outside the automation token's authority.
    ranges alone are insufficient: configuration reachability, container/user
    namespace restrictions, capability exposure, architecture, livepatches, and
    eBPF mitigations can change practical exploitability.
-5. Make submission idempotent, transactional, and review-gated. Re-running a
-   CVE updates the same automation-owned draft and reconciles node statuses;
-   the automation token cannot modify arbitrary or published advisories.
+5. Make client-side submission idempotent and review-gated. Re-running a CVE
+   reconciles the same draft through the existing advisory, CVE, and node-status
+   resources. The automation token cannot publish or notify users.
 
 ## Proposed architecture
+
+### Public kernel lifecycle
+
+Add an authenticated, read-only `node.kernel_history#index` resource and a
+first-class event table instead of exposing raw `node_statuses`. Existing node
+IDs, labels, and current kernel releases are already visible to logged-in users
+and the public status view, so this is a safe projection when it excludes
+utilization, addresses, tenant identity, and internal mitigation details.
+
+Backfill the event table from `node_statuses` once:
+
+- estimate each boot as `created_at - uptime` and group samples whose estimated
+  boot time and monotonically increasing uptime agree;
+- record a new boot when the estimate/uptime indicates a reboot;
+- record a reported release change inside the same boot when `kernel` changes;
+- bound an inferred change between the previous and first changed sample. Do
+  not claim an exact time or label it a livepatch unless separate evidence
+  verifies the cause;
+- preserve gaps and confidence. Fifteen-minute persisted sampling can miss a
+  short boot or only bound a livepatch transition.
+
+Future nodectld reports make new events exact. The public resource returns a
+safe timeline such as:
+
+```text
+id
+node_id
+event_type                 boot | livepatch | reported_release_change
+booted_at
+booted_release
+reported_release
+effective_after            exact time when known, otherwise null
+observed_after
+observed_before
+source                     node_report | reconstructed_node_status
+confidence                 exact | inferred | incomplete
+current
+```
+
+The raw boot UUID, Nix store path, configuration digest, livepatch internals,
+and exposure counts remain out of this user-facing projection. On the WebUI
+cluster overview, make the existing kernel value a link to a per-node timeline
+showing boots and indented livepatch/release changes. Advisory node rows can
+link to the same timeline around `vulnerable_until`/`mitigated_since`.
 
 ### Security evidence
 
@@ -68,19 +115,38 @@ with:
   mitigations, including enough identity and freshness data to verify them.
 
 The vpsAdmin receiver accepts old and new payloads during a rolling upgrade. It
-stores current evidence and a compact event whenever the semantic evidence
-fingerprint changes, including mitigation changes that occur without a reboot.
-Existing `node_statuses` provide the initial/fallback boot timeline by grouping
-samples on `sample_time - uptime`.
+updates the kernel event log and stores a compact internal event whenever the
+semantic evidence fingerprint changes, including mitigation changes that occur
+without a reboot.
 
-Add an admin-only `node.security_evidence#index` action which returns only:
+Add an admin-only `node.security_evidence#index` action. It returns a
+point-in-time, revisioned snapshot shaped as follows:
 
-- the active node set relevant to security advisories;
-- each node's boot/kernel/mitigation timeline and evidence freshness;
-- security-relevant aggregate exposure, such as whether/count of active VPSes
-  with KVM enabled, without VPS IDs, user identities, or general node metrics;
-- explicit confidence/gap markers when an old agent or missing sample prevents
-  a definitive conclusion.
+```text
+meta
+  schema_version, generated_at, evidence_revision, node_set_digest
+nodes[]
+  id, domain_name, role, active, evidence_observed_at, freshness
+  kernel
+    boot_id, booted_at, booted_release, reported_release
+    vpsadminos_revision, kernel_source_revision, config_digest
+    history[]             same lifecycle, with internal exact identifiers
+  runtime_mitigations
+    livepatches[]         id, revision, state, applied_at, verified_at
+    ebpf_programs[]       id, revision/digest, hooks, state, attached_at,
+                          verified_at
+  tenant_exposure
+    untrusted_vps[]       aggregated count intervals
+    kvm_device[]          aggregated enabled/running count intervals
+  gaps[]                  time range, missing evidence, effect on confidence
+```
+
+It returns only the active advisory node set, boot/kernel/mitigation timeline,
+immutable build/configuration identity, security-relevant aggregate exposure
+intervals, freshness, and confidence gaps. It does not return IP addresses,
+resource utilization, individual VPSes/users, general logs, or CVE
+conclusions. The security-advisories repository combines these measured facts
+with pinned vpsAdminOS/configuration source analysis.
 
 The unpublished central-log work remains useful for an operator-controlled
 one-time cross-check/backfill, but is not a runtime dependency and does not
@@ -88,33 +154,57 @@ justify an SSH or root credential for this project.
 
 ### Draft submission and token scope
 
-Do not grant the project the existing generic advisory create/update/CVE/status
-actions: they can modify arbitrary advisories and do not themselves enforce
-automation ownership or draft state. Add a single transactional action,
-`security_advisory#submit_draft`, which:
+Use the existing resource actions. The repository stores the vpsAdmin advisory
+ID and a digest of the last canonical draft snapshot in `submission.yml`. A
+submission run:
 
-- creates or updates only an automation-owned draft identified by a stable
-  external key such as `security-advisories:CVE-2026-46242`;
-- refuses published/retracted advisories and never accepts publication, mail,
-  or state-transition fields;
-- validates and replaces the complete CVE and active-node conclusion set in
-  one transaction;
-- rejects node-set drift, missing/duplicate nodes, and stale optimistic-lock
-  versions instead of silently overwriting human review changes.
+1. reads the advisory, CVEs, and node statuses;
+2. stops with a diff if they no longer match the recorded snapshot, so WebUI
+   review edits are not overwritten;
+3. creates or updates the advisory text, then reconciles CVE and active-node
+   rows using their existing create/update/delete actions;
+4. reads everything back, validates the complete node set, and records the new
+   digest and source repository commit.
 
-The long-lived runtime token then needs only these scopes:
+An interrupted run may leave an incomplete draft, which is acceptable because
+it is not visible to users and publication validates completeness. Re-running
+converges it. After review feedback, Codex first incorporates the canonical
+WebUI changes into the committed analysis/submission files, then performs the
+same reconciliation. The client refuses to alter a published or retracted
+advisory.
+
+The runtime token therefore needs these existing actions:
 
 ```text
 node.security_evidence#index
-security_advisory#submit_draft
+security_advisory#index
+security_advisory#show
+security_advisory#create
+security_advisory#update
+security_advisory_cve#index
+security_advisory_cve#create
+security_advisory_cve#delete
+security_advisory.node_status#index
+security_advisory.node_status#create
+security_advisory.node_status#update
+security_advisory.node_status#delete
 token#revoke
 ```
 
 The evidence response is authoritative for node identities and labels, so
-`node#index` is unnecessary. The token has no generic node/VPS reads, advisory
-reads or writes, publish/retract/mail action, user/session creation, or `all`
-scope. `submit_draft` supports a non-mutating dry-run response and returns the
-draft revision, so a separate advisory read scope is also unnecessary.
+`node#index` is unnecessary. `security_advisory#index` is used only to recover
+or verify the stored advisory ID by CVE. `security_advisory_cve#update` and
+`security_advisory.node_status#show` are unnecessary because CVEs are reconciled
+by create/delete and node rows are returned by index. The token has no generic
+node/VPS access, publication, mail, retraction, user/session creation, or `all`
+scope.
+
+As a small general API hardening, make the existing advisory, CVE, and node
+status mutation actions reject non-draft advisories. Add an optimistic
+precondition (canonical content digest or revision covering parent and child
+rows) so a human edit between the client's read and write produces a conflict.
+These protections improve the existing API without introducing a parallel
+submission endpoint.
 
 `bin/vpsadmin-token create` will accept a temporary operator bootstrap token in
 memory, verify the live API action inventory, create a detached scoped token,
@@ -161,6 +251,36 @@ trigger from hardening that merely reduces exploitation reliability; version
 strings alone are not sufficient because stable backports and custom kernels
 exist.
 
+### User-facing advisory text
+
+Render summary, description, and response from a structured impact assessment,
+but keep the final prose natural and specific to the CVE. The audience controls
+individual VPSes while administrators control the shared kernel, so every
+advisory should answer:
+
+- what access an attacker needs inside a VPS before reaching the bug;
+- whether successful exploitation can grant root only inside that VPS, escape
+  to the host kernel, access or affect other VPSes, or only cause denial of
+  service;
+- whether hardening such as init-on-alloc/free, slab freelist hardening, or
+  stack initialization prevents the trigger or merely makes reliable
+  exploitation harder;
+- likely failure modes of attempted exploitation, such as a NULL pointer
+  dereference, general protection fault, kernel oops, or node instability, when
+  supported by the bug analysis;
+- that node kernel reports are monitored, while making clear that monitoring
+  detects failures and is not itself a mitigation or proof that no attempt
+  occurred;
+- the exact administrator response: fixed booted kernel, livepatch/eBPF
+  mitigation if applicable, per-node time, and whether users need to act.
+
+When true, explicitly tell users that no guest kernel update or VPS reboot is
+needed because vpsFree.cz manages the shared node kernel. Do not claim that no
+exploitation was attempted unless monitoring evidence was actually checked,
+and phrase absence of observed kernel faults as evidence rather than proof.
+Keep exploit mechanics and full reasoning in `analysis.md`; public text should
+explain risk and response without becoming an exploitation guide.
+
 ## Preliminary CVE conclusions
 
 These are source/configuration conclusions, not final node statuses. Final
@@ -199,8 +319,9 @@ Alternatives under evaluation:
   state outside vpsAdmin drafts.
 - Any vpsAdmin API addition must be additive. Existing clients and older
   nodectld payloads continue to work unchanged.
-- The initial specialized read endpoint over existing `node_statuses` needs no
-  migration and supports an ordinary rolling API deployment and rollback.
+- The kernel-event table and evidence fields are additive migrations. Backfill
+  is restartable/idempotent and retains source/confidence instead of rewriting
+  `node_statuses`.
 - Deploy vpsAdmin's tolerant evidence receiver/schema first, then nodectld and
   production pins gradually. Old payloads remain valid and visibly lower
   evidence confidence. Rolling back nodectld leaves additive stored fields;
@@ -216,11 +337,19 @@ Alternatives under evaluation:
 - Kernel/livepatch/eBPF evidence is pinned to immutable git revisions in each
   CVE analysis so later repository changes do not silently rewrite a past
   conclusion.
+- The visible kernel-history page requires the canonical
+  `vpsadmin-kb-captures` WebUI workflow, durable documentation-contract update,
+  and Czech/English screenshot review.
 
 ## Testing plan
 
 - Verify exact action scopes from the live API description and exercise a
   generated token against an allow/deny matrix without printing the token.
+- Test reconstruction from 15-minute status samples: first observation,
+  ordinary reboot, same-kernel reboot, same-boot UTS change, clock skew, missing
+  samples, rapid reboot, and idempotent repeated backfill.
+- Test that all logged-in users can read only the sanitized kernel history and
+  that unauthenticated requests and sensitive fields are rejected/absent.
 - Unit-test kernel boot grouping, version comparison (including stable-branch
   backports), incomplete history, clock/uptime tolerance, node-set drift, and
   mitigation composition.
@@ -232,6 +361,8 @@ Alternatives under evaluation:
   tests; require explicit opt-in for writes to a real API.
 - Test idempotency, partial-failure recovery, dry-run output, and refusal to
   publish.
+- Test review iteration: clean resubmission, stale revision conflict, human
+  WebUI edit, reconciliation, and hard refusal after publication/retraction.
 - Test each vpsAdmin API change in its focused RSpec topic and run RuboCop and
   repository hooks before commit.
 - After intended code changes are committed and quick checks pass, run the
@@ -240,5 +371,6 @@ Alternatives under evaluation:
   created, every active advisory node gets one status, removed nodes are not
   silently retained, and the scoped token is denied unrelated and publish
   actions.
-- Verify the token allow/deny matrix includes denial of existing generic
-  advisory create/update/CVE/status actions and all VPS/user resources.
+- Verify the token can perform only the listed advisory/CVE/node-status reads
+  and draft mutations, while the allow/deny matrix rejects publication, mail,
+  retraction, non-draft mutation, and all generic node/VPS/user resources.

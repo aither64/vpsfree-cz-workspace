@@ -17,6 +17,10 @@
   - worktree:
     `worktrees/2026-07-13-security-advisory-automation/vpsfree-cz-configuration`
   - base: `origin/master` at `e1cc165c`
+- `vpsadmin-kb-captures`
+  - affected by the newly proposed user-visible kernel-history WebUI;
+  - no worktree prepared yet because this phase is design-only and the capture
+    contract changes with the eventual implementation.
 - `security-advisories`
   - intended remote: `git@github.com:vpsfreecz/security-advisories.git`
   - not created locally because the upstream repository does not exist yet
@@ -31,6 +35,9 @@
 - The end-to-end architecture, least-privilege boundary, repository layout,
   and preliminary assessment of all five requested CVEs are documented in
   `plan.md`.
+- The design now separates an authenticated user-visible kernel lifecycle from
+  the richer admin-only security-evidence snapshot and defines user-focused
+  advisory text requirements.
 - The unpublished kernel-log initiative was inspected read-only. It is fully
   implemented and locally reviewed/tested, not merely a sketch, but remains
   unpushed, unmerged, and undeployed.
@@ -49,6 +56,8 @@
   supervisor status ingestion, and historical node status API
 - inspected vpsAdmin VPS feature defaults, creation/migration paths, nodectld
   device grants, and `/dev/kvm` exposure
+- inspected the existing public node status, raw historical node-status API,
+  persistence interval, and current WebUI kernel presentation
 - inspected vpsAdminOS kernel configuration, packaged kernel revisions,
   cumulative livepatches, eBPF programs, and production configuration pins
 - queried the official CVE records and upstream Linux stable commits for all
@@ -80,11 +89,23 @@
 - Direct `node.status#index` access is possible but unnecessarily discloses
   general node metrics and transfers raw samples. A narrow
   `node.security_evidence#index` aggregate is the recommended interface.
-- Existing generic security-advisory write actions are individually scoped but
-  can modify arbitrary advisories. The recommended runtime scope is a new
-  transactional `security_advisory#submit_draft` action constrained to
-  automation-owned drafts, plus evidence read and self-revocation. Publication
-  remains impossible for the project token.
+- Add a separate `node.kernel_history#index` projection for all logged-in users.
+  Backfill a first-class event log from `node_statuses`; preserve inferred time
+  bounds and confidence instead of presenting 15-minute samples as exact.
+- Link the existing WebUI kernel value to a per-node boot/livepatch timeline.
+  This makes `vpsadmin-kb-captures` an affected repository for implementation.
+- Use the existing advisory, CVE, and node-status resource actions rather than
+  adding `security_advisory#submit_draft`. The client reconciles them
+  idempotently; an interrupted sequence leaves only an incomplete unpublished
+  draft and converges on rerun.
+- Scope the token to advisory index/show/create/update, CVE index/create/delete,
+  node-status index/create/update/delete, security evidence, and self-revoke.
+  Publication, mail, retraction, generic node/VPS access, sessions, and `all`
+  remain excluded.
+- Review feedback is committed to the repository and reconciled into the same
+  draft. A canonical snapshot digest/optimistic precondition detects concurrent
+  WebUI edits. Existing mutation actions should reject published/retracted
+  advisories.
 - New VPSes enable the KVM feature by default. nodectld grants character device
   10:232 as `/dev/kvm`, and pool defaults permit that device. A tenant can run
   KVM userspace and a nested guest, so CVE-2026-53359 must be treated as
@@ -122,6 +143,10 @@
 - Make vpsAdmin the broker for narrowly aggregated security evidence.
 - Keep detailed analysis in git and submit only concise bilingual conclusions
   and per-node statuses to vpsAdmin.
+- Write public advisory text for VPS operators: attacker prerequisite, root in
+  the VPS, host escape/cross-VPS and availability impact, hardening limits,
+  plausible monitored kernel failure modes, administrator remediation, and
+  whether the user must act. Monitoring is detection, not mitigation.
 - Default all submission commands to dry-run. The project token cannot publish
   or send mail; publication stays in a separate human WebUI session.
 - Keep the future repository private while it may contain embargoed CVE work.
