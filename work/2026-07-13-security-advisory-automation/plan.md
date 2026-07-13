@@ -135,18 +135,26 @@ nodes[]
     livepatches[]         id, revision, state, applied_at, verified_at
     ebpf_programs[]       id, revision/digest, hooks, state, attached_at,
                           verified_at
-  tenant_exposure
-    untrusted_vps[]       aggregated count intervals
-    kvm_device[]          aggregated enabled/running count intervals
+  runtime_kernel_state
+    loaded_modules[]      module identity/version and observed_at
+    security_settings[]   selected runtime settings with source/freshness
   gaps[]                  time range, missing evidence, effect on confidence
 ```
 
 It returns only the active advisory node set, boot/kernel/mitigation timeline,
-immutable build/configuration identity, security-relevant aggregate exposure
-intervals, freshness, and confidence gaps. It does not return IP addresses,
-resource utilization, individual VPSes/users, general logs, or CVE
+immutable build/configuration identity, runtime module/security state,
+freshness, and confidence gaps. It does not return IP addresses, resource
+utilization, individual VPSes/users, workload counts, general logs, or CVE
 conclusions. The security-advisories repository combines these measured facts
-with pinned vpsAdminOS/configuration source analysis.
+with pinned vpsAdminOS/configuration and vpsAdmin policy source analysis.
+
+Do not return `untrusted_vps` or per-node KVM-enabled VPS counts. All
+user-controlled VPSes are untrusted by definition, and KVM access is the
+default vpsAdmin policy, so those counts add noise rather than evidence. For a
+KVM CVE, use the versioned vpsAdmin feature policy plus measured node facts
+such as the node role and loaded KVM modules. If a future vulnerability depends
+on a non-default optional interface, add a specifically named factual signal
+for that interface rather than a generic workload category.
 
 The unpublished central-log work remains useful for an operator-controlled
 one-time cross-check/backfill, but is not a runtime dependency and does not
@@ -259,9 +267,13 @@ individual VPSes while administrators control the shared kernel, so every
 advisory should answer:
 
 - what access an attacker needs inside a VPS before reaching the bug;
-- whether successful exploitation can grant root only inside that VPS, escape
-  to the host kernel, access or affect other VPSes, or only cause denial of
-  service;
+- whether successful exploitation can grant UID 0/capabilities only in the
+  VPS's user namespace;
+- independently, whether there is a realistic path to credentials or code
+  execution in the initial user namespace/node, and whether that enables
+  access to other VPSes;
+- whether exploitation or failed attempts can cause node-wide denial of
+  service even when node compromise is not realistic;
 - whether hardening such as init-on-alloc/free, slab freelist hardening, or
   stack initialization prevents the trigger or merely makes reliable
   exploitation harder;
@@ -281,6 +293,24 @@ and phrase absence of observed kernel faults as evidence rather than proof.
 Keep exploit mechanics and full reasoning in `analysis.md`; public text should
 explain risk and response without becoming an exploitation guide.
 
+Record these impact conclusions independently in `assessment.yml`:
+
+```text
+impact.vps_root             yes | no | unknown
+impact.node_escape          not_reachable | no_known_path | plausible |
+                            realistic | demonstrated | unknown
+impact.cross_vps_access     yes | no | conditional | unknown
+impact.node_availability    none | possible | likely | demonstrated | unknown
+```
+
+Do not infer node escape from the CVE's "local privilege escalation" label, a
+memory-corruption class such as UAF, or a proof of concept that merely prints
+UID 0. The analysis must identify which user namespace owns the resulting
+credentials/capabilities and what additional primitive would be needed to
+cross into the initial user namespace. A strong kernel read/write or code
+execution primitive can make escape plausible, but that is a separate
+conclusion which must be justified.
+
 ## Preliminary CVE conclusions
 
 These are source/configuration conclusions, not final node statuses. Final
@@ -291,7 +321,7 @@ submission requires the boot and mitigation timeline from vpsAdmin.
 | CVE-2026-23111 (`nf_tables`) | Reachable to an unprivileged VPS through user and network namespaces with `CONFIG_USER_NS` and nftables enabled. Init-on-alloc/free and slab hardening make exploitation less reliable, but do not make the UAF non-exploitable. Nodes are fixed once booted into 6.12.70 or a kernel containing the fix. | 6.12.70, `1444ff890b4653add12f734ffeffc173d42862dd` |
 | CVE-2026-46242 (Bad epoll) | Unprivileged epoll UAF/free-to-wrong-cache path is reachable. The write can target a reused live object, so allocation initialization is not a sufficient mitigation. 6.12.93 is affected; 6.12.95 contains the fix. | 6.12.95, `9324de74a3a59b9fde9b62ee45ebaa71458ba2e5` |
 | CVE-2026-53362 (IPv6) | Unprivileged UDPv6 splice/`MSG_MORE` path is present. The overwrite is within a live skb allocation, so init-on-alloc/free does not block it. 6.12.93 is affected; 6.12.95 contains the fix. | 6.12.95, `46f201f8b4c39633a1fa3dc12459f506d470993d` |
-| CVE-2026-53359 (KVM) | Real tenant-to-host candidate: new VPSes default to KVM enabled and nodectld grants `/dev/kvm`, so a tenant controls KVM userspace/memslots and its nested guest. Per-node classification must include actual KVM-enabled VPS exposure. 6.12.93 is affected; 6.12.95 contains the fix. | 6.12.95, `2ad3afa40ac6aa340dada122f9abfa46c0a6eb35` |
+| CVE-2026-53359 (KVM) | The trigger is tenant-reachable because new VPSes default to KVM enabled and nodectld grants `/dev/kvm`, so a tenant controls KVM userspace/memslots and its nested guest. Reachability alone does not establish node escape; the KVM UAF primitive must be assessed separately for VPS-root, node-escape, cross-VPS, and denial-of-service impact. 6.12.93 is affected; 6.12.95 contains the fix. | 6.12.95, `2ad3afa40ac6aa340dada122f9abfa46c0a6eb35` |
 | CVE-2026-43499 (GhostLock) | Unprivileged futex PI/requeue path is reachable. The dangling waiter/PI state is not neutralized by heap initialization. Nodes are fixed once booted into 6.12.86 or a kernel containing the fix. | 6.12.86, `6d52dfcb2a5db86e346cf51f8fcf2071b8085166` |
 
 The custom 6.12.95 kernel revision currently pinned by the configuration
@@ -355,8 +385,8 @@ Alternatives under evaluation:
   mitigation composition.
 - Test semantic evidence events for reboot, livepatch and eBPF changes; verify
   that a mutable UTS release cannot masquerade as a newly booted kernel.
-- Test aggregate KVM exposure against legacy-disabled, new-default-enabled,
-  stopped/deleted, and migrating VPSes without returning tenant data.
+- Test runtime module/security-state reporting and verify that the evidence
+  response contains no tenant/workload counts or identities.
 - Use recorded API fixtures for deterministic advisory create/update/reconcile
   tests; require explicit opt-in for writes to a real API.
 - Test idempotency, partial-failure recovery, dry-run output, and refusal to

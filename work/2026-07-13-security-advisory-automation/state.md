@@ -108,9 +108,13 @@
   advisories.
 - New VPSes enable the KVM feature by default. nodectld grants character device
   10:232 as `/dev/kvm`, and pool defaults permit that device. A tenant can run
-  KVM userspace and a nested guest, so CVE-2026-53359 must be treated as
-  reachable on affected nodes with KVM-enabled VPSes. The evidence endpoint
-  should expose only a per-node aggregate, not tenant or VPS records.
+  KVM userspace and a nested guest, so CVE-2026-53359's trigger is reachable.
+  This does not by itself prove node escape; impact requires separate primitive
+  analysis.
+- Remove `untrusted_vps` and KVM-enabled VPS counts from security evidence. All
+  user VPSes are untrusted and KVM is default policy. Return measured kernel
+  facts such as loaded modules and runtime security settings; resolve VPS/KVM
+  policy from the pinned vpsAdmin source.
 - Current vpsAdminOS kernel hardening includes init-on-alloc, init-on-free,
   hardened/randomized slab freelists, non-merged slabs, stack initialization,
   and strong stack protectors. These controls reduce reliability for some UAFs
@@ -144,9 +148,10 @@
 - Keep detailed analysis in git and submit only concise bilingual conclusions
   and per-node statuses to vpsAdmin.
 - Write public advisory text for VPS operators: attacker prerequisite, root in
-  the VPS, host escape/cross-VPS and availability impact, hardening limits,
-  plausible monitored kernel failure modes, administrator remediation, and
-  whether the user must act. Monitoring is detection, not mitigation.
+  the VPS user namespace, node escape, cross-VPS and availability impact as
+  independent conclusions, plus hardening limits, plausible monitored kernel
+  failure modes, administrator remediation, and whether the user must act.
+  Monitoring is detection, not mitigation.
 - Default all submission commands to dry-run. The project token cannot publish
   or send mail; publication stays in a separate human WebUI session.
 - Keep the future repository private while it may contain embargoed CVE work.
