@@ -196,7 +196,6 @@ security_advisory.node_status#index
 security_advisory.node_status#create
 security_advisory.node_status#update
 security_advisory.node_status#delete
-token#revoke
 ```
 
 The evidence response is authoritative for node identities and labels, so
@@ -214,14 +213,15 @@ rows) so a human edit between the client's read and write produces a conflict.
 These protections improve the existing API without introducing a parallel
 submission endpoint.
 
-`bin/vpsadmin-token create` will accept a temporary operator bootstrap token in
-memory, verify the live API action inventory, create a detached scoped token,
-and store it outside git at
-`$XDG_CONFIG_HOME/vpsfree-security-advisories/token` with mode `0600`. It must
-not print the token or enable shell tracing. `bin/vpsadmin-token revoke` uses
-the runtime token's self-revoke authority. A permanent detached token is
+Token issuance and self-revocation are authentication-provider operations, not
+resource action scopes. `bin/create-token` performs the interactive password
+and optional TOTP exchange directly against HaveAPI, requests only the resource
+scopes above, and stores the returned token outside git at
+`$XDG_CONFIG_HOME/vpsfreecz-security-advisories/token.json` with mode `0600`.
+It never prints the token or enables shell tracing. A permanent token is
 reasonable for sporadic CVE work because its server-side authority is narrow
-and revocable; the script can also support an explicit finite lifetime.
+and revocable; the script also accepts an explicit lifetime and renewal
+interval.
 
 ### Repository shape
 
@@ -344,6 +344,22 @@ Alternatives under evaluation:
   kernel).
 
 ## Compatibility and deployment
+
+The implementation uses additive vpsAdmin migrations, a schema-versioned
+optional nodectld payload, and exact non-production configuration pins. The
+deployed sequence is:
+
+1. migrate/deploy the tolerant vpsAdmin receiver and new API resources;
+2. deploy the node-side vpsAdmin package so exact evidence begins to arrive;
+3. deploy vpsAdminOS/configuration metadata files on nodes;
+4. run the idempotent historical reconstruction task;
+5. collect evidence and resolve every `unknown` before syncing any CVE draft.
+
+Mixed old/new versions are supported. Old nodectld payloads continue updating
+ordinary node status while security evidence remains missing/stale. A future
+unsupported evidence schema is ignored without rejecting the status. Missing
+vpsAdminOS/configuration metadata is returned as an explicit gap rather than a
+false conclusion. No coordinated all-node reboot or update is required.
 
 - Advisory repository files and tooling add no runtime or persisted platform
   state outside vpsAdmin drafts.
