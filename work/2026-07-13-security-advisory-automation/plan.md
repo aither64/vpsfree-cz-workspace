@@ -2,7 +2,7 @@
 
 ## Goal
 
-Design an end-to-end, least-privilege workflow for the future
+Implement an end-to-end, least-privilege workflow for the new
 `vpsfreecz/security-advisories` repository. A Codex session in that repository
 must be able to investigate a requested CVE against the deployed vpsFree.cz
 platform, preserve detailed and reviewable reasoning in git, create or update a
@@ -25,16 +25,14 @@ explicit human action outside the automation token's authority.
   - update the WebUI documentation contract and Czech/English capture inventory
     when the kernel-history page is implemented.
 - `vpsadminos`
-  - read-only platform evidence for kernel configuration, packaged kernel
-    sources, livepatches, and eBPF LSM mitigations;
-  - change only if investigation proves that existing node status reports lack
-    evidence that cannot be derived centrally.
+  - expose immutable booted-kernel build identity and verifiable livepatch/eBPF
+    metadata for kernel configuration, packaged sources, and mitigations.
 - `vpsfree-cz-configuration`
-  - read-only deployment evidence for selected kernel revisions, node roles,
-    deployed livepatches/eBPF programs, and exact production pins;
-  - compare the proposed API-based history source with the unpublished
-    `2026-07-10-node-kernel-version-logs` work; change only if a log backfill or
-    deployment integration remains necessary.
+  - reuse confctl's existing per-machine deployment input identity and pin the
+    exact feature revisions in non-production channels;
+  - compare the API-based history source with the unpublished
+    `2026-07-10-node-kernel-version-logs` work without making the log host a
+    runtime dependency.
 
 ## Approach
 
@@ -77,6 +75,13 @@ Backfill the event table from `node_statuses` once:
   verifies the cause;
 - preserve gaps and confidence. Fifteen-minute persisted sampling can miss a
   short boot or only bound a livepatch transition.
+
+Persist a per-Node reconstruction checkpoint with the first and last retained
+status IDs and times. Reconstruct only the period before the first exact Node
+report, never replace an exact current event with an inferred row, and expose
+incomplete reconstruction as a coverage gap. A current-kernel snapshot without
+a real boot/release event at or before an assessment window cannot establish
+historical safety.
 
 Future nodectld reports make new events exact. The public resource returns a
 safe timeline such as:
@@ -126,7 +131,8 @@ point-in-time, revisioned snapshot shaped as follows:
 meta
   schema_version, generated_at, evidence_revision, node_set_digest
 nodes[]
-  id, domain_name, role, active, evidence_observed_at, freshness
+  id, domain_name, role, active, evidence_observed_at, evidence_received_at,
+  freshness
   kernel
     boot_id, booted_at, booted_release, reported_release
     vpsadminos_revision, kernel_source_revision, config_digest
@@ -160,6 +166,10 @@ The unpublished central-log work remains useful for an operator-controlled
 one-time cross-check/backfill, but is not a runtime dependency and does not
 justify an SSH or root credential for this project.
 
+Freshness uses the vpsAdmin server receipt time. The Node-provided observation
+time remains separate evidence and a clock more than five minutes ahead of the
+server is an explicit gap rather than a way to extend freshness.
+
 ### Draft submission and token scope
 
 Use the existing resource actions. The repository stores the vpsAdmin advisory
@@ -174,12 +184,25 @@ submission run:
 4. reads everything back, validates the complete node set, and records the new
    digest and source repository commit.
 
+An apply run recollects and re-evaluates evidence, then requires the full
+canonical per-Node result to equal the reviewed evaluation before its first
+write. Recovery checkpoints use file and directory synchronization plus atomic
+rename, so an interrupted local write retains either the old or new valid
+baseline.
+
 An interrupted run may leave an incomplete draft, which is acceptable because
 it is not visible to users and publication validates completeness. Re-running
 converges it. After review feedback, Codex first incorporates the canonical
 WebUI changes into the committed analysis/submission files, then performs the
 same reconciliation. The client refuses to alter a published or retracted
 advisory.
+
+Draft creation uses an admin-only, unique `external_id` derived from the
+repository/CVE identity and creates the first CVE row atomically. If the create
+response is lost, a retry can recover only that exact untouched draft instead
+of creating a duplicate. Every parent, CVE, and Node-status mutation requires
+the current `expected_content_revision`, including edits made after review
+feedback.
 
 The runtime token therefore needs these existing actions:
 
@@ -233,27 +256,27 @@ the workspace's established tooling:
 AGENTS.md
 README.md
 flake.nix
-Gemfile
 bin/security-advisory
-bin/vpsadmin-token
+bin/create-token
 lib/security_advisories/
-schemas/assessment.schema.json
+schema/advisory.schema.json
 advisories/CVE-YYYY-NNNNN/
   analysis.md
-  assessment.yml
-  sources.yml
+  advisory.yml
   submission.yml
-spec/
+test/
 ```
 
-`analysis.md` holds the detailed human reasoning. `assessment.yml` records
+`analysis.md` holds the detailed human reasoning. `advisory.yml` records
 immutable source revisions, affected/fixed commit ancestry, config and trigger
 reachability, hardening and runtime mitigation evidence, per-node evidence and
 confidence, and the conclusion. `submission.yml` contains only the concise
 bilingual vpsAdmin text and node conclusions.
 
-The CLI workflow is `new`, `collect`, `validate`, `render`, and `submit`.
-Submission defaults to dry-run and requires an explicit apply flag. It never
+The CLI workflow is `validate`, `collect`, `evaluate`, `adopt`, and `sync`.
+Sync defaults to dry-run and requires `--apply`. It may put explicit `unknown`
+rows into a draft for administrator review, but vpsAdmin publication continues
+to require every active Node to be `mitigated` or `not_affected`. It never
 publishes. Every assessment must distinguish a control that prevents the bug's
 trigger from hardening that merely reduces exploitation reliability; version
 strings alone are not sufficient because stable backports and custom kernels
@@ -293,7 +316,7 @@ and phrase absence of observed kernel faults as evidence rather than proof.
 Keep exploit mechanics and full reasoning in `analysis.md`; public text should
 explain risk and response without becoming an exploitation guide.
 
-Record these impact conclusions independently in `assessment.yml`:
+Record these impact conclusions independently in `advisory.yml`:
 
 ```text
 impact.vps_root             yes | no | unknown
@@ -330,6 +353,12 @@ livepatch or eBPF mitigation programs covers these five CVEs. A repository pin
 does not prove which kernel a node actually booted, so it cannot by itself set
 a node to `not_affected` or `mitigated`.
 
+When retained exact evidence does not cover the requested historical window,
+an operator may add a reviewed historical attestation to the dossier. It names
+the exact Node/event facts and is bound to their canonical digest; changed or
+missing evidence invalidates it. An attestation is not a version-only override
+and cannot turn an unrelated repository pin into proof of a booted build.
+
 Alternatives under evaluation:
 
 - query the existing `node.status#index` action directly and aggregate client
@@ -346,14 +375,25 @@ Alternatives under evaluation:
 ## Compatibility and deployment
 
 The implementation uses additive vpsAdmin migrations, a schema-versioned
-optional nodectld payload, and exact non-production configuration pins. The
-deployed sequence is:
+optional nodectld payload, and exact non-production configuration pins. One
+API change is intentionally incompatible: all advisory publication callers
+must provide the reviewed `expected_content_revision`. Making it optional
+would permit a stale client to bypass the review guarantee. Deploy updated
+WebUI and administrative clients with or before the API; old publishing
+clients then fail validation safely instead of publishing. Rolling Node
+updates are unaffected. Rolling the API back leaves the additive revision
+column readable but temporarily loses enforcement, so operators must not
+publish from stale clients during that rollback window. The deployed sequence
+is:
 
 1. migrate/deploy the tolerant vpsAdmin receiver and new API resources;
 2. deploy the node-side vpsAdmin package so exact evidence begins to arrive;
-3. deploy vpsAdminOS/configuration metadata files on nodes;
+3. deploy vpsAdminOS boot/livepatch/eBPF metadata and verify the existing
+   confctl-managed `/etc/confctl/inputs-info.json` is present on Nodes;
 4. run the idempotent historical reconstruction task;
-5. collect evidence and resolve every `unknown` before syncing any CVE draft.
+5. collect evidence before syncing a CVE draft, retain missing/stale evidence
+   as explicit `unknown` rows for review, and resolve every `unknown` before
+   publication.
 
 Mixed old/new versions are supported. Old nodectld payloads continue updating
 ordinary node status while security evidence remains missing/stale. A future
@@ -363,8 +403,9 @@ false conclusion. No coordinated all-node reboot or update is required.
 
 - Advisory repository files and tooling add no runtime or persisted platform
   state outside vpsAdmin drafts.
-- Any vpsAdmin API addition must be additive. Existing clients and older
-  nodectld payloads continue to work unchanged.
+- Evidence/history resources and status fields are additive. Existing evidence
+  readers and older nodectld payloads continue to work unchanged; publication
+  clients follow the coordinated revision-precondition deployment above.
 - The kernel-event table and evidence fields are additive migrations. Backfill
   is restartable/idempotent and retains source/confidence instead of rewriting
   `node_statuses`.
@@ -383,6 +424,9 @@ false conclusion. No coordinated all-node reboot or update is required.
 - Kernel/livepatch/eBPF evidence is pinned to immutable git revisions in each
   CVE analysis so later repository changes do not silently rewrite a past
   conclusion.
+- Configuration provenance comes from confctl's existing
+  `/etc/confctl/inputs-info.json`; the feature does not install or maintain a
+  second reduced deployment-input file.
 - The visible kernel-history page requires the canonical
   `vpsadmin-kb-captures` WebUI workflow, durable documentation-contract update,
   and Czech/English screenshot review.
@@ -407,6 +451,8 @@ false conclusion. No coordinated all-node reboot or update is required.
   tests; require explicit opt-in for writes to a real API.
 - Test idempotency, partial-failure recovery, dry-run output, and refusal to
   publish.
+- Test a lost draft-create response, exact `external_id` recovery, and refusal
+  to adopt a draft that is no longer the untouched atomic create result.
 - Test review iteration: clean resubmission, stale revision conflict, human
   WebUI edit, reconciliation, and hard refusal after publication/retraction.
 - Test each vpsAdmin API change in its focused RSpec topic and run RuboCop and
