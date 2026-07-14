@@ -552,3 +552,27 @@ false conclusion. No coordinated all-node reboot or update is required.
 - Verify the token can perform only the listed advisory/CVE/node-status reads
   and draft mutations, while the allow/deny matrix rejects publication, mail,
   retraction, non-draft mutation, and all generic node/VPS/user resources.
+
+## Completion status (2026-07-14)
+
+The implementation and mandatory fresh-context review are complete. The
+review's findings were resolved before the final clean-cluster test: token
+scope discovery now verifies the exact typed actions, configuration absence is
+reported as unknown instead of inferred, eBPF links require exact attachment
+evidence, collection is revision-bounded and retryable, and rewritten history
+contains no implementation of the superseded opaque evidence route.
+
+The final clean dev cluster proves that the additive migration creates and
+populates relational kernel-option rows. A real least-privilege dev token
+collected schema-4 evidence through the typed API without Node, VPS, publish,
+or notification authority. The collector returned only the active hosting
+Node; DNS and mailer service containers were excluded. The token and ignored
+evidence snapshot used for the smoke test were removed afterward.
+
+No production advisory can yet be concluded from repository pins alone. After
+deployment, exact evidence must accumulate on each production Node, and every
+initial dossier must receive reviewed accepted build identities or historical
+attestations before its per-Node results can leave `unknown`. The only source
+repository handoff dependency is creation of the private
+`vpsfreecz/security-advisories` GitHub repository so its local feature branch
+can be pushed.

@@ -578,3 +578,86 @@ testing the dev cluster from the rewritten final inputs.
   The security-advisories branch remains local only because its GitHub
   repository does not yet exist.
 - No production vpsAdmin or KB write was made.
+
+## Final review resolution and live smoke test (2026-07-14)
+
+This section supersedes the older normalized-head and remaining-action
+snapshots above.
+
+The mandatory standalone change review completed and its significant findings
+were addressed:
+
+- the token generator verifies and grants the exact twelve typed evidence
+  index actions plus existing advisory/CVE/nested Node-status draft actions;
+- missing kernel configuration is represented by an explicit evidence gap and
+  an `unknown` assessment, never a repository-derived assumption;
+- eBPF mitigation evidence requires exact attached-link state;
+- typed-resource collection is paginated, revision-checked, bounded, and
+  retried instead of combining concurrent reports;
+- vpsAdmin and security-advisories histories were rewritten so the superseded
+  `all/security_evidence`/`node.security_evidence#index` implementation was
+  never introduced; remaining string matches are negative regression tests;
+- functional work, generated pins, and the vpsAdminOS flake input are split
+  into reviewable commits.
+
+Final heads:
+
+- vpsadmin `1fa16a3cd0cb9c5c42904545f80aea210ccaeccf`, pushed;
+- vpsadminOS `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`, pushed;
+- vpsfree-cz-configuration
+  `795f459fa07bab1fe9cdf7f663b250b5723622aa`, pushed, with exact vpsadmin
+  staging/services and vpsadminOS staging pins;
+- vpsadmin-kb-captures
+  `06c0f6cc488a07b83d1c56091848990edcf66639`, pushed;
+- security-advisories
+  `2737812d139facedd1250ccbefb9f5cd87889388`, local-only because the requested
+  GitHub repository does not exist yet.
+
+Final verification:
+
+- security-advisories: 57 tests, 318 assertions, zero failures/errors; all five
+  committed CVE dossiers validate;
+- vpsAdmin ordinary focused suite: 102 examples, zero failures; libnodectld:
+  five examples, zero failures;
+- vpsAdmin complete Overcommit run: MigrationSpecs, WebUI/API i18n, Nixfmt,
+  RuboCop, and PhpCsFixer pass;
+- vpsadmin-kb-captures complete check: 34 controls, 29 paths, 32 concepts,
+  65 bindings, nine exceptions, and 118 valid PNGs;
+- vpsadminOS final-head CI and RSpec workflows pass;
+- vpsAdmin final-head migration, API, client, libnodectld, RuboCop, WebUI, and
+  i18n workflows pass. Long selected integration run `29355435328` remains in
+  progress with its test step running; superseded run `29348186505` was
+  cancelled after confirming its head is obsolete.
+
+The dedicated dev cluster was reset after the history rewrite because its old
+database had already recorded the same unmerged migration timestamp from the
+discarded schema. A clean bridge/single initialization then applied the final
+migration and demonstrated that relational kernel-option rows are created.
+The cluster remains `running` and `ready`; WebUI and API both return HTTP 200.
+The live API exposes all twelve typed evidence resources plus the public
+newest-first `node.kernel_history#index`. Current evidence contains only
+hosting Node 101; DNS and mailer service containers are excluded. Filtering
+`node_kernel_configuration_option#index` by Node 101 and `CONFIG_IPV6` returns
+the expected typed option row.
+
+The real token smoke test initially exposed that vpsAdmin's token-management
+endpoint is unversioned: authentication was incorrectly attempted below the
+configured `/v7.0` resource URL. `TokenIssuer` now derives the API origin for
+`/_auth/token/tokens` while retaining the versioned resource URL in the saved
+configuration, with an exact-URI regression test. A newly generated token with
+23 exact actions then ran `collect` end to end and produced schema-4 evidence
+with the Node's booted/current closures, required kernel options, modules,
+security settings, and no gaps. The temporary token file and ignored evidence
+snapshot were removed; no credential was retained in the repository or notes.
+
+Remaining handoff:
+
+1. Monitor current-head selected integration run `29355435328`; inspect its
+   logs if it fails.
+2. Create the private `vpsfreecz/security-advisories` repository and push the
+   existing SSH-configured local branch.
+3. Deploy in the recorded coordinated order, collect production evidence, and
+   resolve every per-Node `unknown` before preparing drafts for human review.
+
+No production vpsAdmin, deployment, advisory, publication, notification, or KB
+write was made.
