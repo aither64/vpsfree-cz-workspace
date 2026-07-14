@@ -10,6 +10,31 @@ draft vpsAdmin security advisory, and populate a conclusion for every active
 hypervisor/storage node. Publishing and user notification must remain an
 explicit human action outside the automation token's authority.
 
+## Final feedback refinements
+
+- Evidence collection is vulnerability-agnostic. vpsAdminOS publishes the
+  complete booted kernel configuration, configured kernel parameters, and all
+  sysctls declared by the activated system. nodectld pairs these inputs with
+  the actual command line, effective sysctl values, loaded modules, closure
+  identities, and runtime mitigations. No CVE-specific option or sysctl list is
+  embedded in the reporter.
+- Full kernel configuration text is deduplicated in vpsAdmin by SHA-256 digest
+  and returned through the admin-only evidence endpoint as a parsed catalog.
+  Frequent Node status/event rows retain only the digest. This keeps complete
+  future evidence without duplicating the large configuration on every row.
+- Mailer, DNS, and any other service-only Node roles neither report nor expose
+  kernel evidence. The advisory/public-history Node set is exactly the active
+  hypervisor/storage set used by publication validation.
+- The advisory repository must generate one conclusion for every Node in that
+  authoritative set. Missing production data stays `unknown`; it is never
+  fabricated from repository pins. A read-only `ready` preflight recollects
+  evidence, rejects incomplete per-Node results, and verifies that the reviewed
+  vpsAdmin draft exactly matches the committed dossier.
+- Public Czech/English texts explain platform hardening in ordinary language
+  and separately identify root inside one VPS, root on the host Node, access to
+  other VPSes, and shared-Node availability. Czech texts use the project term
+  `node`, not `nod` or `uzel`.
+
 ## Affected repositories
 
 - `security-advisories` (new; GitHub remote not created yet)

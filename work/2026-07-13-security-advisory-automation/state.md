@@ -2,18 +2,25 @@
 
 ## Current status
 
-- The requested implementation and all mandatory-review fixes are committed in
-  five independent repositories. Four feature branches are pushed. The new
-  `security-advisories` repository is committed locally and cannot be pushed
-  until its GitHub repository exists.
+- The final feedback implementation is committed on top of current
+  `origin/master`/`origin/staging`. It replaces CVE-specific reporter fields
+  with complete kernel configuration plus generic deployment/runtime inputs,
+  excludes service-only Nodes, adds a digest-keyed configuration catalog and
+  per-Node readiness preflight, generalizes repository instructions, and
+  rewrites all five public texts for standalone clarity.
+- The earlier requested implementation and mandatory-review fixes remain the
+  base of this work. The new heads and exact downstream pins are recorded in
+  the final feedback checkpoint below; the older revision inventory remains as
+  an audit trail for the currently running, not-yet-refreshed dev cluster.
 - Exact feature revisions are pinned for vpsAdminOS/vpsAdmin staging and for
   the vpsAdmin services channel used by a later coordinated production service
   rollout. The production vpsAdminOS Node input is unchanged. No production
   deployment, vpsAdmin API write, KB staging, or KB publication has occurred.
-- Quick local verification and the mandatory standalone review are complete.
-  All blocking and important findings were resolved. A later design correction
-  removed confctl from the evidence contract: nodectld now reports booted and
-  activated system closures directly in every environment.
+- The previous mandatory standalone review is complete and all of its blocking
+  and important findings were resolved. The new final-feedback changes have
+  passed quick verification and await their own mandatory fresh-context review.
+  confctl remains absent from the evidence contract: nodectld reports booted
+  and activated system closures directly in every environment.
 - The initiative development cluster is running and ready with the `single`
   topology on the bridge network.
 - Live per-Node conclusions are intentionally not fabricated from repository
@@ -21,44 +28,86 @@
   dossiers produce `unknown` rows that may be reviewed in a draft but cannot be
   published.
 
+## 2026-07-14 final feedback verification in progress
+
+- `security-advisories`: all test files pass, all five dossiers validate, Ruby
+  syntax and `git diff --check` pass.
+- `libnodectld`: generic evidence, publish acknowledgement, and service-role
+  suppression specs pass (5 examples).
+- vpsAdmin migration/rollback specs pass (2 examples). A newly added Node API
+  example initially omitted required `NodeCurrentStatus` fixture fields;
+  adding the real non-null fields fixed the fixture and the focused example
+  passes. This was a test-data issue, not an implementation failure.
+- vpsAdminOS `nixfmt --check` and full system evaluation pass.
+- The combined vpsAdmin API/evidence suite passes (57 examples), as do all
+  repository pre-commit hooks: migration specs, API/WebUI i18n, Nixfmt,
+  RuboCop, and PHP CS Fixer.
+- The refreshed KB contract passes `nix develop -c bin/check`: 34 controls,
+  29 paths, 32 capture concepts, 3 selectors, 65 bindings, 9 exceptions, and
+  all 118 PNG variants.
+
+## 2026-07-14 final feedback commit checkpoint
+
+- `vpsadmin` head `441b1375f3b6e1c21052efe577205a9bb61f9f80`
+  is pushed. Its seven feature commits are based on `origin/master`
+  `1a4fa3031`; the final separate flake commit pins vpsAdminOS
+  `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`.
+- `vpsadminos` head `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`
+  is pushed and based on `origin/staging` `ff9e49b20`.
+- `vpsfree-cz-configuration` head
+  `cdf3fa4b5e9c4ff8f5a1a13c77650abe185ef282` has three generated input
+  commits: staging vpsAdminOS at `d47ba226...`, staging vpsAdmin at
+  `441b1375...`, and the vpsAdmin services channel at `441b1375...`. It is not
+  pushed yet.
+- `vpsadmin-kb-captures` head
+  `63dfb09051f1fc8e9dce4349a4c73db7b28f448a` pins vpsAdmin
+  `441b1375f3b6e1c21052efe577205a9bb61f9f80`. It is not pushed yet.
+- `security-advisories` head
+  `3282fc3c664ce48418d0faa41538c7b08b819fd3` separates general assessment
+  guidance, generic evidence evaluation, read-only readiness, and standalone
+  public texts. Its GitHub repository still does not exist, so it remains
+  local.
+- All five project worktrees are clean. The mandatory fresh-context review is
+  the next gate before integration/deployment testing.
+
 ## Repositories and revisions
 
 ### vpsadmin
 
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin`
-- Base: `458b2ac71` (`origin/master` when created)
-- Head: `a7781afee8e51e5a0cc15e5b7b0eb3c99dfb9b7b`, pushed to `origin`
+- Base: `1a4fa3031` (current `origin/master` at final rebase)
+- Head: `441b1375f3b6e1c21052efe577205a9bb61f9f80`, pushed to `origin`
 - Commits:
-  - `dd6f40ca5 api: lock security advisory draft revisions`
-  - `9854f62fc api: reconstruct Node kernel history`
-  - `f94b71e5f api: store Node security evidence`
-  - `9beea455b libnodectld: report Node security evidence`
-  - `c38f30fc1 webui: show Node kernel history`
-  - `8d3b9e0ee api: harden security advisory draft synchronization`
-  - `a7781afee flake: vpsadminos 849282e6b -> 58be2dd01`
+  - `0b2cdc3c3 api: lock security advisory draft revisions`
+  - `2e0c1fce4 api: reconstruct Node kernel history`
+  - `daac3aaa9 api: store Node security evidence`
+  - `53286dced libnodectld: report generic Node security evidence`
+  - `0f80ba843 webui: show Node kernel history`
+  - `6fb7e3ca7 api: harden security advisory draft synchronization`
+  - `441b1375f flake: vpsadminos 849282e6b -> d47ba226a`
 
 ### vpsadminos
 
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadminos`
-- Base: `9daf6d67e` (`origin/staging` when created)
-- Head: `58be2dd0177427f27e62960f4b5a1b99b4086ac7`, pushed to `origin`
+- Base: `ff9e49b20` (current `origin/staging` at final rebase)
+- Head: `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`, pushed to `origin`
 - Commits:
-  - `54f2e17b5 os: expose booted kernel build evidence`
-  - `3d5bc4a72 os: record livepatch application time`
-  - `58be2dd01 os: expose eBPF live-patch link metadata`
+  - `e6a5835f6 os: expose booted kernel build evidence`
+  - `897580c12 os: record livepatch application time`
+  - `d47ba226a os: expose eBPF live-patch link metadata`
 
 ### vpsfree-cz-configuration
 
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsfree-cz-configuration`
 - Base: `e1cc165c` (`origin/master` when created)
-- Head: `ba1e2690bbda3c03ef67dda1f06323e273a82358`, pushed to `origin`
+- Head: `cdf3fa4b5e9c4ff8f5a1a13c77650abe185ef282`, not yet pushed
 - Commits:
-  - `e0235b02 inputs: set vpsadminosStaging to 58be2dd0`
-  - `af4093bf inputs: set vpsadminStaging to a7781afe`
-  - `ba1e2690 inputs: set vpsadminServices to a7781afe`
+  - `29550349 inputs: set vpsadminosStaging to d47ba226`
+  - `0c1a8969 inputs: set vpsadminStaging to 441b1375`
+  - `cdf3fa4b inputs: set vpsadminServices to 441b1375`
 - The input commits were generated with `confctl`. `vpsadminServices` feeds the
   production API/WebUI service channel, so its pin prepares a future
   coordinated deployment; it has not deployed anything. The production
@@ -70,17 +119,17 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin-kb-captures`
 - Base: `470b759`
-- Head: `28c06744a8b0229976cc211390f914a19e129efc`, pushed to `origin`
+- Head: `63dfb09051f1fc8e9dce4349a4c73db7b28f448a`, not yet pushed
 - Commits:
-  - `6698ecf contract: track the Node kernel history control`
-  - `39487e7 tools: ignore literal navigation tag examples`
-  - `28c0674 contract: refresh production navigation inventory`
+  - `726acaa contract: track the Node kernel history control`
+  - `ec65de3 tools: ignore literal navigation tag examples`
+  - `63dfb09 contract: refresh production navigation inventory`
 
 ### security-advisories
 
 - Orphan branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/security-advisories`
-- Head: `aa16f1ec5886e80bd34fcbf5f2e6828ef40e3043`
+- Head: `3282fc3c664ce48418d0faa41538c7b08b819fd3`
 - Commits:
   - `93e8cae Establish the advisory analysis repository`
   - `681e00f Add the narrow vpsAdmin API client`
@@ -95,6 +144,10 @@
   - `abbc41d Analyze CVE-2026-43499 GhostLock`
   - `35ca6b9 Test the complete advisory workflow`
   - `aa16f1e Use Node-reported system closure identities`
+  - `527615e Generalize CVE platform assessment guidance`
+  - `2bba771 Evaluate complete generic Node evidence`
+  - `b84e43a Add a read-only publication readiness preflight`
+  - `3282fc3 Clarify user impact in initial advisory texts`
 - `origin` is the required SSH URL
   `git@github.com:vpsfreecz/security-advisories.git`, but the GitHub repository
   does not exist yet, so this branch is not pushed.
@@ -129,8 +182,8 @@
   to all logged-in users, including inactive Nodes. It exposes boot/release
   intervals and confidence, not boot UUIDs or internal evidence. The WebUI links
   current kernel values to a per-Node history page.
-- Czech follows `doc/i18n-cs.md`: `Node`, `Nody`, and `nod` are used; `uzel` is
-  not used. The page label is `Podrobnosti nodu`.
+- Czech follows `doc/i18n-cs.md`: the infrastructure term remains `Node` in
+  Czech text, with `Nody` for the plural; neither `nod` nor `uzel` is used.
 - Admin-only `node.security_evidence#index` returns, per active Node/storage
   Node: ID/name/role, separate Node observation/server receipt times, freshness
   based on receipt, reconstruction completeness and evidence revision; current
@@ -163,8 +216,9 @@
 ### security-advisories
 
 - The dependency-free Ruby CLI provides `validate`, `collect`, `evaluate`,
-  `adopt`, and `sync`. Sync is dry-run by default and requires `--apply`; there
-  is no publish command.
+  `adopt`, `ready`, and `sync`. Sync is dry-run by default and requires
+  `--apply`; `ready` is a fresh read-only publication preflight, and there is
+  no publish command.
 - Before any remote mutation, sync validates the committed dossier/evaluation,
   recollects and re-evaluates evidence, compares the complete canonical per-Node
   results, verifies active-Node-set digests/freshness, checks the exact remote
@@ -195,7 +249,7 @@
 
 ### Documentation contract
 
-- The contract pins vpsAdmin `a7781afee...` and records the bilingual
+- The contract pins vpsAdmin `441b1375f...` and records the bilingual
   `node.kernel-history` WebUI control/fingerprint.
 - The canonical full production inventory was fetched (116 Czech and 70 English
   pages), checked, and used to build durable candidates. There are zero changed
