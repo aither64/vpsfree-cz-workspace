@@ -2,12 +2,11 @@
 
 ## Current status
 
-- A follow-up API redesign is in progress. The unmerged collector-specific
-  `nodes/all/security_evidence` hash response is being replaced by top-level,
-  typed, filterable HaveAPI resources. Complete kernel options will be parsed
-  into relational rows at ingestion, and the advisory collector will query
-  only option names required by committed dossiers. The final feature history
-  will be rewritten so the opaque route/schema is never introduced.
+- The approved relational evidence normalization is complete. Current and
+  immutable event snapshots, kernel parameters/modules, security settings,
+  livepatch/eBPF state, errors, and parsed kernel options use normalized
+  tables. Top-level typed HaveAPI resources expose filterable rows, while the
+  superseded opaque route and evidence blobs never appear in feature history.
 - The final feedback implementation is committed on top of current
   `origin/master`/`origin/staging`. It replaces CVE-specific reporter fields
   with complete kernel configuration plus generic deployment/runtime inputs,
@@ -28,10 +27,10 @@
   reporting share a Node row lock, and the new repository history is clean.
   confctl remains absent from the evidence contract: nodectld reports booted
   and activated system closures directly in every environment.
-- The initiative development cluster is running and ready with the `single`
-  topology on the bridge network. Its kernel-host Node is booted and activated
-  at the same final closure and reports complete schema-v2 evidence without
-  gaps; service-only Nodes report neither kernel nor security evidence.
+- The initiative development cluster was cleanly reset after the final history
+  rewrite and is running and ready with the `single` topology on the bridge
+  network. Its kernel-host Node reports complete normalized schema-v2 evidence;
+  service-only Nodes retain no kernel evidence.
 - Live per-Node conclusions are intentionally not fabricated from repository
   pins. Until the feature is deployed and exact evidence is collected, the five
   dossiers produce `unknown` rows that may be reviewed in a draft but cannot be
@@ -799,3 +798,91 @@ The current vpsAdmin GitHub Actions runs are on `c83f8db4`. Superseded
 in-progress CI run `29363677398` for `100e54ec` was cancelled. The dedicated
 dev cluster still requires a clean reset and redeployment because the migration
 history was rewritten again.
+
+## Final normalized integration checkpoint (2026-07-14)
+
+This section supersedes older head, cluster, and remaining-action snapshots in
+this file.
+
+Final heads and pins:
+
+- vpsAdmin `b7ec792464fb095961d9e84f49b4b86502ede694`, pushed. The
+  normalized migrations are in `e4ddad399`, typed resources in `a5028934c`,
+  generic reporting in `59c1100c7`, and the separate vpsAdminOS flake pin in
+  `b7ec79246`.
+- vpsAdminOS `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`, pushed.
+- vpsfree-cz-configuration
+  `dda588941e901d49dfe5ae0de89ded0ba190e7ea`, pushed. Generated staging and
+  services inputs select vpsAdmin `b7ec79246`; staging vpsAdminOS selects
+  `d47ba226`.
+- vpsadmin-kb-captures
+  `64a1e37e925eed9bfc4b0ee79bb628cf160d9b89`, pushed. Its contract selects
+  vpsAdmin `b7ec79246`.
+- security-advisories
+  `0f67a6047dac9dfc5b092edd3132ef2a7aa9e864`, local-only because the requested
+  GitHub repository does not exist. The last commit corrects the documented
+  current vpsAdmin resource URL from `/v2` to `/v7.0` after the live smoke test
+  exposed the stale example.
+
+The first clean-cluster ingestion exposed a real relational-schema issue. Linux
+can simultaneously load case-distinct modules such as `xt_DSCP`/`xt_dscp` and
+`xt_TCPMSS`/`xt_tcpmss`, but MariaDB's default Czech case-insensitive collation
+treated each pair as a duplicate and rolled back the report transaction. All
+machine-identity evidence tables and the kernel configuration catalog/options
+now use `utf8mb3_bin`. Migration specs assert the collation and a model
+regression preserves both pairs. This fix is folded into the original
+normalized-ingestion commit, so the broken schema is absent from branch
+history.
+
+Final verification after that fix:
+
+- normalized model and supervisor specs: 21 examples, zero failures;
+- migration specs in their supported separate process: four examples, zero
+  failures;
+- focused RuboCop and the complete vpsAdmin pre-commit gate pass (Nixfmt,
+  migration specs, WebUI/API i18n, RuboCop, and commit-message checks);
+- security-advisories: 60 runs, 326 assertions, zero failures/errors; all five
+  dossiers validate;
+- vpsadmin-kb-captures complete validation/check passes with 59 concepts, 118
+  variants/PNGs, and both test groups green;
+- an attempted combined migration/model RSpec process produced false model
+  failures after the migration harness intentionally switched to its stripped
+  `vpsadmin_test_migration` database. The supported separate-process runs above
+  are green; this was not an application failure.
+
+The clean bridge/single cluster applied the rewritten migrations and is
+`running`, `ready`, and serving the final worktrees. The live database contains
+one current and one immutable event evidence snapshot, both for hosting Node
+101. Service Nodes 100, 301, and 302 have null evidence references. The tested
+normalized tables report `utf8mb3_bin`, and both snapshots contain all four
+case-distinct `xt_*` module names. The supervisor journal has no ingestion
+error. The WebUI returns HTTP 200 after final activation; authenticated typed
+API collection succeeds.
+
+The exact documented token workflow was tested with a fixed five-minute token.
+It requested 23 actions (the twelve read-only evidence indexes and eleven
+existing advisory/CVE/nested Node-status draft actions), saved the versioned
+`/v7.0` API URL, and collected schema-4 evidence without overrides. The result
+contains only `101:node`, one filtered kernel configuration, 341 loaded modules,
+current and historical normalized snapshots, and a canonical evidence digest.
+All five dossier evaluations completed and correctly returned `unknown` for the
+dev Node because their accepted production build identities are deliberately
+empty. The temporary token and command output were removed; no credential was
+retained.
+
+At this checkpoint, current-head vpsAdmin GitHub Actions are green for migration
+specs, RuboCop, client specs, WebUI PHPUnit, i18n, and libnodectld. The long CI
+run `29368532294` and topic-parallel API run `29368532293` are still in
+progress. Superseded old-head runs were cancelled after the history rewrite.
+
+Remaining handoff:
+
+1. Monitor the two current-head vpsAdmin runs and inspect logs if either fails.
+2. Create the private `vpsfreecz/security-advisories` repository, then push the
+   already configured SSH branch.
+3. Deploy in the recorded order, collect exact production evidence, and review
+   per-Node conclusions. Do not publish until every active hosting Node is
+   resolved and a human has reviewed the draft.
+
+No production deployment, advisory mutation/publication, notification, KB
+write, or root/log-host access occurred.
