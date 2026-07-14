@@ -440,8 +440,11 @@ were regenerated once more so they retain only the final vpsAdmin head.
   `external_id`/`content_revision`, and expected-revision parameters on the
   advisory and nested Node-status mutation actions.
 - Final vpsAdmin head `70d4f4e5e...` is green for API migrations, RuboCop,
-  client specs, WebUI PHPUnit, i18n health, and libnodectld specs. Its
-  topic-parallel API and selected VM integration jobs remain in progress.
+  client specs, WebUI PHPUnit, i18n health, libnodectld specs, and the
+  topic-parallel API suite. Selected integration run `29331995182` remains in
+  progress. Its current reporter delta intentionally selects the broad
+  `dns/network/node/storage/supervisor/vps` integration set; the run has no
+  failure annotation or downloadable completed log yet.
 - Final-head vpsAdminOS GitHub CI completed successfully, including the OS
   closure build and VM test suite.
 - A superseded API-specs run failed because the two new endpoints were missing
@@ -491,9 +494,8 @@ were regenerated once more so they retain only the final vpsAdmin head.
 
 ## Remaining handoff actions
 
-1. Confirm the final-head vpsAdmin topic-parallel API and selected integration
-   CI complete
-   successfully.
+1. Confirm final-head vpsAdmin selected integration run `29331995182`
+   completes successfully and inspect its logs if it does not.
 2. User creates the private `vpsfreecz/security-advisories` GitHub repository;
    then push `0d06b29d2af97699bc440d15d46c496e70ba3ef2` over its already
    configured SSH remote.
