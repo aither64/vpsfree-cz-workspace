@@ -28,7 +28,8 @@ explicit human action outside the automation token's authority.
   - expose immutable booted-kernel build identity and verifiable livepatch/eBPF
     metadata for kernel configuration, packaged sources, and mitigations.
 - `vpsfree-cz-configuration`
-  - pin the exact feature revisions in non-production channels, but do not use
+  - pin vpsAdminOS and vpsAdmin staging inputs plus the vpsAdmin services input
+    used by a later coordinated production service deployment, but do not use
     the deployment tool as a runtime evidence source;
   - compare the API-based history source with the unpublished
     `2026-07-10-node-kernel-version-logs` work without making the log host a
@@ -375,16 +376,17 @@ Alternatives under evaluation:
 ## Compatibility and deployment
 
 The implementation uses additive vpsAdmin migrations, a schema-versioned
-optional nodectld payload, and exact non-production configuration pins. One
-API change is intentionally incompatible: all advisory publication callers
-must provide the reviewed `expected_content_revision`. Making it optional
-would permit a stale client to bypass the review guarantee. Deploy updated
-WebUI and administrative clients with or before the API; old publishing
-clients then fail validation safely instead of publishing. Rolling Node
-updates are unaffected. Rolling the API back leaves the additive revision
-column readable but temporarily loses enforcement, so operators must not
-publish from stale clients during that rollback window. The deployed sequence
-is:
+optional nodectld payload, exact staging pins, and an exact vpsAdmin services
+pin prepared for a later production rollout. No pin is itself a deployment,
+and the production vpsAdminOS Node input remains unchanged. One API change is
+intentionally incompatible: all advisory publication callers must provide the
+reviewed `expected_content_revision`. Making it optional would permit a stale
+client to bypass the review guarantee. Deploy updated WebUI and administrative
+clients with or before the API; old publishing clients then fail validation
+safely instead of publishing. Rolling Node updates are unaffected. Rolling the
+API back leaves the additive revision column readable but temporarily loses
+enforcement, so operators must not publish from stale clients during that
+rollback window. The deployed sequence is:
 
 1. migrate/deploy the tolerant vpsAdmin receiver and new API resources;
 2. deploy the node-side vpsAdmin package so exact evidence begins to arrive;

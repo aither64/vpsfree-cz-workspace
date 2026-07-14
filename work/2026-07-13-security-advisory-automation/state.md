@@ -6,9 +6,10 @@
   five independent repositories. Four feature branches are pushed. The new
   `security-advisories` repository is committed locally and cannot be pushed
   until its GitHub repository exists.
-- Exact feature revisions are pinned only in non-production configuration
-  channels. No production deployment, vpsAdmin API write, KB staging, or KB
-  publication has occurred.
+- Exact feature revisions are pinned for vpsAdminOS/vpsAdmin staging and for
+  the vpsAdmin services channel used by a later coordinated production service
+  rollout. The production vpsAdminOS Node input is unchanged. No production
+  deployment, vpsAdmin API write, KB staging, or KB publication has occurred.
 - Quick local verification and the mandatory standalone review are complete.
   All blocking and important findings were resolved. A later design correction
   removed confctl from the evidence contract: nodectld now reports booted and
@@ -27,7 +28,7 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin`
 - Base: `458b2ac71` (`origin/master` when created)
-- Head: `611d8a351de765e75ec75f93a14dcab8bbdcf520`, pushed to `origin`
+- Head: `039a6ecc04c1eb620799ca91564e654b181f29bf`, pushed to `origin`
 - Commits:
   - `dd6f40ca5 api: lock security advisory draft revisions`
   - `9854f62fc api: reconstruct Node kernel history`
@@ -35,7 +36,7 @@
   - `5ff1c8c29 libnodectld: report Node security evidence`
   - `dcc8f1b8f webui: show Node kernel history`
   - `f934d9312 api: harden security advisory draft synchronization`
-  - `611d8a351 libnodectld: identify deployed systems without confctl`
+  - `039a6ecc0 libnodectld: identify deployed systems without confctl`
 
 ### vpsadminos
 
@@ -53,34 +54,33 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsfree-cz-configuration`
 - Base: `e1cc165c` (`origin/master` when created)
-- Head: `67d0632110db05f5f04ba10b285e6317b92b940a`, pushed to `origin`
+- Head: `007a2c241780834b1ea4ff334bd3af24fdc0418c`, pushed to `origin`
 - Commits:
   - `e0235b02 inputs: set vpsadminosStaging to 58be2dd0`
-  - `4cfdc892 inputs: set vpsadminStaging to f934d931`
-  - `2a76fcb5 inputs: set vpsadminServices to f934d931`
-  - `1c412fe5 inputs: set vpsadminStaging to 611d8a35`
-  - `67d06321 inputs: set vpsadminServices to 611d8a35`
-- The input commits were generated with `confctl`; production channels remain
-  unchanged. Configuration pins deploy the feature but are not part of the
-  evidence contract.
+  - `8c99d761 inputs: set vpsadminStaging to 039a6ecc`
+  - `007a2c24 inputs: set vpsadminServices to 039a6ecc`
+- The input commits were generated with `confctl`. `vpsadminServices` feeds the
+  production API/WebUI service channel, so its pin prepares a future
+  coordinated deployment; it has not deployed anything. The production
+  vpsAdminOS Node input remains unchanged. Configuration pins select the
+  feature but are not part of the evidence contract.
 
 ### vpsadmin-kb-captures
 
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin-kb-captures`
 - Base: `470b759`
-- Head: `fa1b69e1ad51ea17c18a87dc955072965ac289ee`, pushed to `origin`
+- Head: `d3d1e22c2934a8dcea8edbd7588a430cbaa00340`, pushed to `origin`
 - Commits:
-  - `f4579b0 contract: track the Node kernel history control`
-  - `356ae81 tools: ignore literal navigation tag examples`
-  - `6d45dc0 contract: refresh production navigation inventory`
-  - `fa1b69e contract: pin deployment-independent evidence head`
+  - `db2958e contract: track the Node kernel history control`
+  - `bca9fc3 tools: ignore literal navigation tag examples`
+  - `d3d1e22 contract: refresh production navigation inventory`
 
 ### security-advisories
 
 - Orphan branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/security-advisories`
-- Head: `90f20e787f4a1c4578a865d7b1be38254f2126e4`
+- Head: `aa16f1ec5886e80bd34fcbf5f2e6828ef40e3043`
 - Commits:
   - `93e8cae Establish the advisory analysis repository`
   - `681e00f Add the narrow vpsAdmin API client`
@@ -94,7 +94,7 @@
   - `1e56368 Analyze CVE-2026-53359 KVM flaw`
   - `abbc41d Analyze CVE-2026-43499 GhostLock`
   - `35ca6b9 Test the complete advisory workflow`
-  - `90f20e7 Use Node-reported system closure identities`
+  - `aa16f1e Use Node-reported system closure identities`
 - `origin` is the required SSH URL
   `git@github.com:vpsfreecz/security-advisories.git`, but the GitHub repository
   does not exist yet, so this branch is not pushed.
@@ -195,7 +195,7 @@
 
 ### Documentation contract
 
-- The contract pins vpsAdmin `611d8a351...` and records the bilingual
+- The contract pins vpsAdmin `039a6ecc0...` and records the bilingual
   `node.kernel-history` WebUI control/fingerprint.
 - The canonical full production inventory was fetched (116 Czech and 70 English
   pages), checked, and used to build durable candidates. There are zero changed
@@ -262,6 +262,20 @@ and an admin-only `external_id` plus atomic initial CVE creation recovers a
 lost create response without duplicating drafts. The reporter does not depend
 on confctl or any other deployment tool.
 
+The mandatory direct-system-identity follow-up review confirmed that nodectld
+is the sole source of booted/current closure identity and that missing links
+fail explicitly. Its remaining findings were resolved before handoff:
+
+1. repeated staging/services and KB pins were rewritten into one final commit
+   per input stream;
+2. a same-boot activation now has model/API regression coverage proving that a
+   private `deployment_change` is recorded and exposed;
+3. evaluator regressions prove that either changed closure, an old
+   `deployment.inputs` payload, or a missing closure all invalidate the
+   reviewed build and return `unknown`; and
+4. these records now distinguish a prepared production services-channel pin
+   from an actual deployment and from the unchanged production Node input.
+
 ## Verification
 
 - vpsAdmin public history/reconstruction: 9 examples, no failures; private
@@ -282,15 +296,16 @@ on confctl or any other deployment tool.
 - A push attempted outside `nix develop` could not load the repository's removed
   local `.bundle`; retrying inside the declared Nix development shell ran the
   mandatory pre-push checks and pushed successfully.
-- security-advisories: 38 tests, 131 assertions, no failures; all five dossiers
+- security-advisories: 41 tests, 143 assertions, no failures; all five dossiers
   validate; all Ruby files pass syntax checking; `git diff --check` passes.
 - vpsadmin-kb-captures `nix develop -c bin/check` passes: 34 controls, 29 paths,
   32 concepts, 3 selectors; 65 bindings and 9 exceptions; 118 valid PNGs; test
   groups at 8/50 and 7/17 runs/assertions.
 - The deployment-tool-independent follow-up passes its focused libnodectld spec
-  (1 example), the related API/receiver specs (13 examples), all vpsAdmin
-  pre-commit hooks, 38 security-advisories tests/131 assertions, and validation
-  of all five dossiers.
+  (1 example), the focused evidence recording/API specs (11 examples), the
+  related receiver checks, all vpsAdmin pre-commit hooks, 41
+  security-advisories tests/143 assertions, and validation of all five
+  dossiers.
 - The running dev Node was switched from booted closure
   `z2d206nn...` to activated closure `rm7dzw1f...` without reboot. The updated
   probe reported both identities with an empty error list while
@@ -305,9 +320,9 @@ on confctl or any other deployment tool.
   `node.kernel_history#index`, `node.security_evidence#index`, advisory
   `external_id`/`content_revision`, and expected-revision parameters on the
   advisory and nested Node-status mutation actions.
-- The final vpsAdmin head is green for API migrations, all 27 topic-parallel
-  API jobs and endpoint coverage, RuboCop, WebUI PHPUnit, i18n health, and
-  libnodectld specs. Its selected VM integration suite remains in progress.
+- The final vpsAdmin head is green for RuboCop, i18n health, and libnodectld
+  specs. Topic-parallel API and selected VM integration jobs remain in
+  progress.
 - Final-head vpsAdminOS GitHub CI completed successfully, including the OS
   closure build and VM test suite.
 - A superseded API-specs run failed because the two new endpoints were missing
@@ -316,6 +331,10 @@ on confctl or any other deployment tool.
   the updated branch was pushed.
 - After the history rewrite, the remaining superseded vpsAdmin CI run for old
   head `2cf07d4d...` was explicitly cancelled; new-head runs were left intact.
+- After folding the direct-system-identity regressions into the implementation
+  commit, the superseded selected integration run for `611d8a351...` was
+  cancelled. Its completed API/libnodectld/RuboCop/i18n jobs were green; only
+  runs for current head `039a6ecc0...` remain active.
 - Final-head migration CI initially found that the new spec called the local
   two-argument `index_exists?` helper with an Active Record keyword. The logs
   were inspected, the spec was changed to inspect the exact index and unique
@@ -353,7 +372,7 @@ on confctl or any other deployment tool.
 1. Confirm the final-head vpsAdmin selected integration CI completes
    successfully.
 2. User creates the private `vpsfreecz/security-advisories` GitHub repository;
-   then push `90f20e787f4a1c4578a865d7b1be38254f2126e4` over its already
+   then push `aa16f1ec5886e80bd34fcbf5f2e6828ef40e3043` over its already
    configured SSH remote.
 3. Deploy the feature in the recorded coordinated order and allow exact
    evidence to accumulate.
