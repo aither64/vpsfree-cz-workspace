@@ -67,8 +67,15 @@ self-description is the API contract.
   unchanged.
 - Collection reads the typed resources, binds child rows to the current
   evidence or an exact history event, and then re-reads per-Node revisions. A
-  concurrent Node-set or evidence change causes a retry. Configuration rows
-  need no second read because digest/content/options are immutable.
+  concurrent Node-set or semantic evidence change causes a retry; observation
+  and receipt timestamps may advance without invalidating an otherwise exact
+  collection. Configuration rows need no second read because
+  digest/content/options are immutable.
+- A time-filtered event query returns the newest matching pre-window baseline
+  independently for every selected Node. Event filters apply before baseline
+  selection, cursor/limit processing stays in SQL, and component collection
+  extends back to the oldest returned exact snapshot. The collector recomputes
+  every assembled snapshot revision and fails if a component is missing.
 - The least-privilege token replaces `node.security_evidence#index` with the
   exact top-level evidence/component index scopes. A generic Node scope is not
   needed because current evidence rows already provide Node identity and typed
@@ -97,6 +104,13 @@ one immutable event snapshot shared by those events. Reconciliation updates
 only changed component rows. Stable database IDs and snapshot revisions let the
 collector use ordinary ID pagination and reject component rows from a different
 report before assembling a per-Node document.
+
+Status ingestion holds the existing per-Node database lock while it reloads the
+last accepted report, derives events, and replaces current evidence. The Node
+observation time is the ordering watermark, so a delayed supervisor delivery
+cannot regress current status or omit an intermediate change. Duplicate keyed
+entries that cannot be represented by the relational unique keys are rejected
+as evidence gaps at the reporting boundary.
 
 Scalar values accepted as JSON numbers or strings are canonicalized before the
 snapshot digest and change comparison. This prevents an unchanged numeric

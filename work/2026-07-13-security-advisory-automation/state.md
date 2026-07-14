@@ -738,3 +738,64 @@ old/new reporter compatibility contract are unchanged. The dedicated dev
 cluster must be reset before deployment because it used the discarded
 migrations with identical timestamps. Long cluster integration is intentionally
 deferred until the mandatory fresh-context change review.
+
+## Mandatory normalization review resolution (2026-07-14)
+
+The required standalone fresh-context review completed after the normalized
+implementation and quick verification. It found six correctness issues; the
+review was intentionally not repeated because the workspace review skill calls
+for exactly one standalone reviewer. All blocking and important findings were
+fixed and covered by focused tests before integration:
+
+- status ingestion now reloads and updates evidence under the Node lock, uses
+  the Node observation time as an ordering watermark, and ignores delayed
+  reports; events and current evidence remain one transaction;
+- event history selects one matching baseline per Node after applying all event
+  filters, with cursor and limit handled by SQL rather than loading the fleet's
+  history into Ruby;
+- component collection expands back to the oldest exact baseline returned by
+  the event API, and the collector recomputes every assembled snapshot digest,
+  failing closed when a child row is absent;
+- host-role filtering is applied to every component, nested component, kernel
+  option, event, current, and gap path, including retained evidence after a Node
+  changes to a service-only role;
+- duplicate relational keys are rejected by the supervisor and normalized
+  before direct model digesting, preventing the stored rows from disagreeing
+  with the snapshot revision;
+- collector convergence compares per-Node semantic evidence revisions, so a
+  harmless observation/receipt timestamp refresh does not force repeated
+  retries.
+
+The review found no tenant authorization bypass and confirmed that the typed
+resources remain admin-only, the token scopes are exact, the schema-2 Node
+report is unchanged, and the flake input remains a separate commit.
+
+Rewritten and refreshed heads:
+
+- vpsAdmin `c83f8db49c5a905322615ba0bf6b55cdb2fab808`, force-pushed;
+  normalized ingestion is `98af2959c`, typed resources are `e38063fad`, and the
+  separate vpsAdminOS input is the final commit;
+- security-advisories `f849a08`, local-only because the requested remote still
+  does not exist; the review fixes are folded into `d98f46f`;
+- vpsfree-cz-configuration `301ac693`, force-pushed, with generated staging and
+  services pins to `c83f8db4` and the existing vpsAdminOS staging pin;
+- vpsadmin-kb-captures `c8c592f`, force-pushed, with flake, capture inventory,
+  and navigation contract pinned to `c83f8db4`;
+- vpsAdminOS remains `d47ba226`.
+
+Verification after the review fixes:
+
+- vpsAdmin supervisor: 17 examples, zero failures, including stale worker,
+  out-of-order report, and duplicate-key cases;
+- vpsAdmin real MariaDB event checks: per-Node filtered baselines and 1,002-row
+  two-page cursor traversal pass without omissions;
+- both vpsAdmin fixup commits passed Nixfmt, migration specs, WebUI/API i18n,
+  RuboCop, and commit-message hooks from `nix develop .#vpsadmin`;
+- security-advisories: 60 runs, 326 assertions, zero failures/errors, including
+  incomplete-baseline rejection and stable-revision timestamp convergence;
+- vpsadmin-kb-captures validation: 59 concepts, 118 variants, 118 PNGs.
+
+The current vpsAdmin GitHub Actions runs are on `c83f8db4`. Superseded
+in-progress CI run `29363677398` for `100e54ec` was cancelled. The dedicated
+dev cluster still requires a clean reset and redeployment because the migration
+history was rewritten again.
