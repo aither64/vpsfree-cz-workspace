@@ -2,6 +2,12 @@
 
 ## Current status
 
+- A follow-up API redesign is in progress. The unmerged collector-specific
+  `nodes/all/security_evidence` hash response is being replaced by top-level,
+  typed, filterable HaveAPI resources. Complete kernel options will be parsed
+  into relational rows at ingestion, and the advisory collector will query
+  only option names required by committed dossiers. The final feature history
+  will be rewritten so the opaque route/schema is never introduced.
 - The final feedback implementation is committed on top of current
   `origin/master`/`origin/staging`. It replaces CVE-specific reporter fields
   with complete kernel configuration plus generic deployment/runtime inputs,
@@ -465,6 +471,60 @@ were regenerated once more so they retain only the final vpsAdmin head.
   were inspected, the spec was changed to inspect the exact index and unique
   flag, the focused suite passed locally, and final-head migration CI is green.
   Superseded long/API jobs for `67281212...` were cancelled.
+
+### Typed evidence redesign (2026-07-14)
+
+- Removed the unmerged nested `node.security_evidence#index` implementation
+  and its `all/security_evidence` route. The replacement is twelve top-level
+  HaveAPI object-list resources with concrete scalar fields; current Nodes,
+  exact events, kernel options, parameters, modules, sysctls, livepatches,
+  eBPF program details, and evidence gaps are independently filterable.
+- Extended the original unmerged kernel-configuration migration with a
+  relational `node_kernel_configuration_options` table. The canonical raw
+  config remains private and digest-addressed; all `CONFIG_*` assignments are
+  parsed atomically on first save, including `# CONFIG_* is not set` as `n`.
+- Component resources use `node_active` for Node-state filtering so an eBPF
+  program's own typed `active` field remains independently filterable. Service
+  roles are excluded centrally; current evidence still uses its row-level
+  `active` filter.
+- security-advisories now reads and paginates the typed resources, requests
+  only the union of exact kernel option names used by committed dossiers,
+  reconstructs the evaluator's local snapshot, and re-reads revisioned current
+  rows. It retries instead of combining data if evidence changes concurrently.
+- Local advisory evidence is schema 4. The least-privilege scope list now names
+  only the twelve evidence indexes and the existing advisory/CVE/nested
+  Node-status actions; no generic Node inventory scope is required.
+- Final quick checks: the normalized API/resource, model, supervisor, and
+  migration specs pass; the full security-advisories suite passes 52 tests and
+  300 assertions; all five dossiers validate; API catalog health, syntax,
+  `git diff --check`, and RuboCop pass. vpsAdmin's complete Overcommit gate
+  passed MigrationSpecs, Nixfmt, WebUI/API i18n, and repository-wide RuboCop.
+  The KB contract passes its complete check with 118 valid PNGs and the WebUI
+  tree is unchanged from the prior feature head.
+
+### Final normalized-resource heads (2026-07-14)
+
+- vpsadmin `0d07921edb969ee079e70b5430540de7d4cb7585`; pushed with rewritten
+  history. The normalized implementation is folded into
+  `0d04a9486 api: store Node security evidence`, while the vpsAdminOS flake
+  input remains a separate final commit.
+- security-advisories `6718325ff5e1dc00ea7a205330309edc6b5cc146`;
+  local-only because the requested GitHub repository does not yet exist. The
+  collector redesign is folded into `9ddbde0 Evaluate complete generic Node
+  evidence`.
+- vpsfree-cz-configuration `c1c17f27a073787dea2234ee6f8cc25d08b81e1c`;
+  the clean feature range contains one generated staging pin and one generated
+  services pin directly to vpsAdmin `0d07921e`, plus the independent
+  vpsAdminOS staging pin.
+- vpsadmin-kb-captures `27383188e6ee8cd896a69616688145ea09abd10a`;
+  contract commit `06bb2f6` pins vpsAdmin `0d07921e`. No capture or annotation
+  content changed because the normalized API rewrite does not change WebUI
+  source.
+- vpsadminOS remains `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`.
+
+The configuration and KB branches are committed locally but not yet pushed.
+The mandatory fresh-context change review is next, before rebuilding and
+testing the dev cluster from the rewritten final inputs.
 
 ## Compatibility and deployment
 

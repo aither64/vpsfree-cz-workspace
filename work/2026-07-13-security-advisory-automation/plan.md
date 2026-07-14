@@ -19,9 +19,9 @@ explicit human action outside the automation token's authority.
   identities, and runtime mitigations. No CVE-specific option or sysctl list is
   embedded in the reporter.
 - Full kernel configuration text is deduplicated in vpsAdmin by SHA-256 digest
-  and returned through the admin-only evidence endpoint as a parsed catalog.
-  Frequent Node status/event rows retain only the digest. This keeps complete
-  future evidence without duplicating the large configuration on every row.
+  and retained as canonical private evidence. It is parsed into relational
+  option rows when saved; the API returns only requested options. Frequent
+  Node status/event rows retain only the digest.
 - Mailer, DNS, and any other service-only Node roles neither report nor expose
   kernel evidence. The advisory/public-history Node set is exactly the active
   hypervisor/storage set used by publication validation.
@@ -34,6 +34,52 @@ explicit human action outside the automation token's authority.
   and separately identify root inside one VPS, root on the host Node, access to
   other VPSes, and shared-Node availability. Czech texts use the project term
   `node`, not `nod` or `uzel`.
+
+## Typed evidence resource redesign
+
+The collector-specific `node.security_evidence#index` envelope is superseded
+before merge. vpsAdmin will not expose `all/security_evidence`, an endpoint
+schema version, `custom :nodes`, or `custom :kernel_configurations`. HaveAPI's
+self-description is the API contract.
+
+- `node_security_evidence#index` is a top-level typed object list with one
+  current row per kernel-hosting Node. It supports Node, active-state, and
+  freshness filters and flattens current kernel/build/deployment and history
+  coverage fields.
+- Exact internal history and every repeated evidence component are separate
+  top-level typed object-list resources: events, configured kernel parameters,
+  loaded modules, sysctls, livepatch modules and patch entries, eBPF programs,
+  BPF object/link entries, and evidence/coverage gaps. No output parameter in
+  this private evidence API uses HaveAPI's `Custom` type.
+- `node_kernel_configuration_option#index` is a typed list backed by a
+  relational option table. It filters by Node, active state, configuration
+  digest, and one exact option name. The advisory collector requests each name
+  in the union of all dossiers' `platform.required_options` and paginates the
+  results.
+- The raw digest-addressed kernel configuration remains canonical and private.
+  All parsed `CONFIG_*` values are inserted atomically when the raw artifact is
+  first stored; status and event evidence retain only its digest.
+- The API returns all kernel-hosting Node/storage Nodes unless an active-state
+  filter is supplied. The current resource uses `active`; related resources
+  use `node_active` to avoid colliding with component state such as an active
+  eBPF program. The collector always requests active Nodes; service-only roles
+  are excluded. The public sanitized `node.kernel_history#index` remains
+  unchanged.
+- Collection reads the typed resources, binds child rows to the current
+  evidence or an exact history event, and then re-reads per-Node revisions. A
+  concurrent Node-set or evidence change causes a retry. Configuration rows
+  need no second read because digest/content/options are immutable.
+- The least-privilege token replaces `node.security_evidence#index` with the
+  exact top-level evidence/component index scopes. A generic Node scope is not
+  needed because current evidence rows already provide Node identity and typed
+  Node filters are resolved within each authorized action. Advisory draft
+  scopes remain unchanged.
+
+The unmerged feature history is rewritten so the opaque endpoint and its
+intermediate database shape are never introduced. The development database is
+reset when the rewritten migrations are deployed. vpsAdminOS reporting stays
+unchanged; this is a vpsAdmin storage/API and security-advisories client
+redesign.
 
 ## Affected repositories
 
@@ -152,35 +198,31 @@ updates the kernel event log and stores a compact internal event whenever the
 semantic evidence fingerprint changes, including mitigation changes that occur
 without a reboot.
 
-Add an admin-only `node.security_evidence#index` action. It returns a
-point-in-time, revisioned snapshot shaped as follows:
+Add admin-only top-level typed evidence resources. The current resource returns
+one point-in-time, revisioned row per kernel-hosting Node; exact history and
+repeated components are independently filterable resources:
 
 ```text
-meta
-  schema_version, generated_at, evidence_revision, node_set_digest
-nodes[]
-  id, domain_name, role, active, evidence_observed_at, evidence_received_at,
-  freshness
-  kernel
-    boot_id, booted_at, booted_release, reported_release
-    vpsadminos_revision, kernel_source_revision, config_digest
-    history[]             same lifecycle, with internal exact identifiers
-  runtime_mitigations
-    livepatches[]         id, revision, state, applied_at, verified_at
-    ebpf_programs[]       id, revision/digest, hooks, state, attached_at,
-                          verified_at
-  runtime_kernel_state
-    loaded_modules[]      module identity/version and observed_at
-    security_settings[]   selected runtime settings with source/freshness
-  gaps[]                  time range, missing evidence, effect on confidence
+node_security_evidence[]
+node_security_event[]
+node_kernel_configuration_option[]
+node_kernel_parameter[]
+node_kernel_module[]
+node_security_setting[]
+node_kernel_livepatch[]
+node_kernel_livepatch_patch[]
+node_ebpf_program[]
+node_ebpf_program_object[]
+node_ebpf_program_link[]
+node_security_evidence_gap[]
 ```
 
-It returns only the active advisory node set, boot/kernel/mitigation timeline,
-immutable build/configuration identity, runtime module/security state,
-freshness, and confidence gaps. It does not return IP addresses, resource
-utilization, individual VPSes/users, workload counts, general logs, or CVE
-conclusions. The security-advisories repository combines these measured facts
-with pinned vpsAdminOS/configuration and vpsAdmin policy source analysis.
+They return only boot/kernel/mitigation history, immutable build/configuration
+identity, runtime module/security state, freshness, and confidence gaps. They
+do not return IP addresses, resource utilization, individual VPSes/users,
+workload counts, general logs, or CVE conclusions. The security-advisories
+repository combines these measured facts with pinned vpsAdminOS/configuration
+and vpsAdmin policy source analysis.
 
 Do not return `untrusted_vps` or per-node KVM-enabled VPS counts. All
 user-controlled VPSes are untrusted by definition, and KVM access is the
@@ -235,7 +277,18 @@ feedback.
 The runtime token therefore needs these existing actions:
 
 ```text
-node.security_evidence#index
+node_security_evidence#index
+node_security_event#index
+node_kernel_configuration_option#index
+node_kernel_parameter#index
+node_kernel_module#index
+node_security_setting#index
+node_kernel_livepatch#index
+node_kernel_livepatch_patch#index
+node_ebpf_program#index
+node_ebpf_program_object#index
+node_ebpf_program_link#index
+node_security_evidence_gap#index
 security_advisory#index
 security_advisory#show
 security_advisory#create
