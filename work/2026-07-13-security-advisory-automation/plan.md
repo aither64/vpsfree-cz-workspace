@@ -20,7 +20,9 @@ explicit human action outside the automation token's authority.
   - advisory draft/node-status API and detached action-scoped tokens already
     exist;
   - add a user-visible kernel lifecycle and a separate narrow security-evidence
-    interface, so the automation does not need SSH or log-server access.
+    interface, so the automation does not need SSH or log-server access;
+  - pin the exact vpsAdminOS evidence implementation through the repository's
+    flake input in a separate dependency commit.
 - `vpsadmin-kb-captures`
   - update the WebUI documentation contract and Czech/English capture inventory
     when the kernel-history page is implemented.
@@ -429,6 +431,10 @@ false conclusion. No coordinated all-node reboot or update is required.
 - Deployment identity comes from the booted and currently activated Nix system
   closures resolved directly by nodectld. It is independent of confctl or any
   other deployment tool and distinguishes activation without reboot.
+- The vpsAdmin feature branch pins the exact vpsAdminOS feature revision in a
+  separate flake-input commit. Its functional history introduces only the
+  nodectld-owned closure mechanism; no intermediate commit introduces a
+  confctl evidence contract.
 - The visible kernel-history page requires the canonical
   `vpsadmin-kb-captures` WebUI workflow, durable documentation-contract update,
   and Czech/English screenshot review.

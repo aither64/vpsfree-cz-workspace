@@ -28,15 +28,15 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin`
 - Base: `458b2ac71` (`origin/master` when created)
-- Head: `039a6ecc04c1eb620799ca91564e654b181f29bf`, pushed to `origin`
+- Head: `a7781afee8e51e5a0cc15e5b7b0eb3c99dfb9b7b`, pushed to `origin`
 - Commits:
   - `dd6f40ca5 api: lock security advisory draft revisions`
   - `9854f62fc api: reconstruct Node kernel history`
   - `f94b71e5f api: store Node security evidence`
-  - `5ff1c8c29 libnodectld: report Node security evidence`
-  - `dcc8f1b8f webui: show Node kernel history`
-  - `f934d9312 api: harden security advisory draft synchronization`
-  - `039a6ecc0 libnodectld: identify deployed systems without confctl`
+  - `9beea455b libnodectld: report Node security evidence`
+  - `c38f30fc1 webui: show Node kernel history`
+  - `8d3b9e0ee api: harden security advisory draft synchronization`
+  - `a7781afee flake: vpsadminos 849282e6b -> 58be2dd01`
 
 ### vpsadminos
 
@@ -54,11 +54,11 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsfree-cz-configuration`
 - Base: `e1cc165c` (`origin/master` when created)
-- Head: `007a2c241780834b1ea4ff334bd3af24fdc0418c`, pushed to `origin`
+- Head: `ba1e2690bbda3c03ef67dda1f06323e273a82358`, pushed to `origin`
 - Commits:
   - `e0235b02 inputs: set vpsadminosStaging to 58be2dd0`
-  - `8c99d761 inputs: set vpsadminStaging to 039a6ecc`
-  - `007a2c24 inputs: set vpsadminServices to 039a6ecc`
+  - `af4093bf inputs: set vpsadminStaging to a7781afe`
+  - `ba1e2690 inputs: set vpsadminServices to a7781afe`
 - The input commits were generated with `confctl`. `vpsadminServices` feeds the
   production API/WebUI service channel, so its pin prepares a future
   coordinated deployment; it has not deployed anything. The production
@@ -70,11 +70,11 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin-kb-captures`
 - Base: `470b759`
-- Head: `d3d1e22c2934a8dcea8edbd7588a430cbaa00340`, pushed to `origin`
+- Head: `28c06744a8b0229976cc211390f914a19e129efc`, pushed to `origin`
 - Commits:
-  - `db2958e contract: track the Node kernel history control`
-  - `bca9fc3 tools: ignore literal navigation tag examples`
-  - `d3d1e22 contract: refresh production navigation inventory`
+  - `6698ecf contract: track the Node kernel history control`
+  - `39487e7 tools: ignore literal navigation tag examples`
+  - `28c0674 contract: refresh production navigation inventory`
 
 ### security-advisories
 
@@ -195,7 +195,7 @@
 
 ### Documentation contract
 
-- The contract pins vpsAdmin `039a6ecc0...` and records the bilingual
+- The contract pins vpsAdmin `a7781afee...` and records the bilingual
   `node.kernel-history` WebUI control/fingerprint.
 - The canonical full production inventory was fetched (116 Czech and 70 English
   pages), checked, and used to build durable candidates. There are zero changed
@@ -276,6 +276,14 @@ fail explicitly. Its remaining findings were resolved before handoff:
 4. these records now distinguish a prepared production services-channel pin
    from an actual deployment and from the unchanged production Node input.
 
+At the user's request, the vpsAdmin history was then rewritten on current
+`origin/master` so the direct closure mechanism is part of the original
+libnodectld evidence commit. No commit in the final feature range adds or
+removes `/etc/confctl/inputs-info.json` or `inputs_info`; the corrective commit
+no longer exists. The exact vpsAdminOS feature revision is pinned separately by
+the repository-prescribed flake update commit. Configuration and KB histories
+were regenerated once more so they retain only the final vpsAdmin head.
+
 ## Verification
 
 - vpsAdmin public history/reconstruction: 9 examples, no failures; private
@@ -302,10 +310,19 @@ fail explicitly. Its remaining findings were resolved before handoff:
   32 concepts, 3 selectors; 65 bindings and 9 exceptions; 118 valid PNGs; test
   groups at 8/50 and 7/17 runs/assertions.
 - The deployment-tool-independent follow-up passes its focused libnodectld spec
-  (1 example), the focused evidence recording/API specs (11 examples), the
-  related receiver checks, all vpsAdmin pre-commit hooks, 41
+  (1 example), the focused evidence recording/API/receiver specs (19 examples),
+  all vpsAdmin pre-commit hooks, 41
   security-advisories tests/143 assertions, and validation of all five
   dossiers.
+- After the history rewrite and separate vpsAdminOS flake update, the same
+  focused suites remained green and a complete `overcommit --run` passed
+  MigrationSpecs, WebUI/API i18n, Nixfmt, RuboCop, and PhpCsFixer.
+- The dev cluster was refreshed and all machines were updated from the final
+  worktrees. Services and Node closures built and activated successfully; the
+  WebUI/API both return HTTP 200. Node1 now has activated closure
+  `h2jba50g...` while retaining booted closure `z2d206nn...`, the confctl inputs
+  file is absent, and nodectld continues periodic status updates without an
+  evidence error.
 - The running dev Node was switched from booted closure
   `z2d206nn...` to activated closure `rm7dzw1f...` without reboot. The updated
   probe reported both identities with an empty error list while
@@ -320,9 +337,9 @@ fail explicitly. Its remaining findings were resolved before handoff:
   `node.kernel_history#index`, `node.security_evidence#index`, advisory
   `external_id`/`content_revision`, and expected-revision parameters on the
   advisory and nested Node-status mutation actions.
-- The final vpsAdmin head is green for RuboCop, i18n health, and libnodectld
-  specs. Topic-parallel API and selected VM integration jobs remain in
-  progress.
+- Rewritten vpsAdmin head `a7781afee...` is green for API migrations,
+  RuboCop, client specs, WebUI PHPUnit, i18n health, and libnodectld specs.
+  Topic-parallel API and selected VM integration jobs remain in progress.
 - Final-head vpsAdminOS GitHub CI completed successfully, including the OS
   closure build and VM test suite.
 - A superseded API-specs run failed because the two new endpoints were missing
@@ -334,7 +351,10 @@ fail explicitly. Its remaining findings were resolved before handoff:
 - After folding the direct-system-identity regressions into the implementation
   commit, the superseded selected integration run for `611d8a351...` was
   cancelled. Its completed API/libnodectld/RuboCop/i18n jobs were green; only
-  runs for current head `039a6ecc0...` remain active.
+  runs for the then-current head were left active.
+- After the final history rewrite, superseded selected-integration work for
+  `039a6ecc0...` was cancelled; its API run had already completed before the
+  cancellation request. Only current-head `a7781afee...` runs remain active.
 - Final-head migration CI initially found that the new spec called the local
   two-argument `index_exists?` helper with an Active Record keyword. The logs
   were inspected, the spec was changed to inspect the exact index and unique
