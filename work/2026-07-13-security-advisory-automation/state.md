@@ -661,3 +661,80 @@ Remaining handoff:
 
 No production vpsAdmin, deployment, advisory, publication, notification, or KB
 write was made.
+
+## Relational evidence normalization (started 2026-07-14)
+
+The user approved replacing the remaining current/event evidence JSON blobs
+with relational storage. The implementation will retain only a canonical
+SHA-256 snapshot revision, use a mutable current evidence row per reporting
+Node, and create one immutable normalized snapshot shared by all events
+detected from the same report. Typed component APIs will expose real evidence
+foreign keys and database-backed ID pagination. vpsAdminOS schema 2 and the
+existing action scopes remain unchanged.
+
+Because all evidence migrations are unmerged, vpsAdmin and
+security-advisories history will be rewritten so the blob-backed schema is
+never introduced. Configuration and KB pins will then be refreshed to the new
+vpsAdmin head. The dedicated dev cluster must be reset again after that rewrite
+because its database has already applied the discarded migration timestamps.
+
+## Relational evidence normalization (implemented 2026-07-14)
+
+The approved normalization is implemented and committed.
+
+- vpsAdmin base/head: `1a4fa3031` / `100e54ec20e3a185f357486d44ab7044c2cf1055`
+  in `worktrees/2026-07-13-security-advisory-automation/vpsadmin`.
+  The branch was autosquashed and force-pushed. Its history now introduces
+  relational history gaps in `e511fd254`, normalized snapshots/components in
+  `1f213c7fd`, and their typed top-level resources in `04dfaf658`; the discarded
+  blob columns never appear in the rewritten series. The separate vpsAdminOS
+  input commit remains the final commit `100e54ec2`.
+- security-advisories head:
+  `f98b88cf4e91b9108343c2b92c38c5b806973c5a` in
+  `worktrees/2026-07-13-security-advisory-automation/security-advisories`.
+  `46a93c6` collects stable component/evidence IDs, validates snapshot
+  revisions, and uses ID pagination for stored rows. Its SSH remote still does
+  not exist, so it is not pushed.
+- vpsfree-cz-configuration base/head: `e1cc165c` /
+  `6ef742eb333c727849f1521366f812481f9eefce`. Obsolete vpsAdmin pins were
+  removed before `confctl inputs channel set --commit` generated the final
+  staging and services pins to `100e54ec`; the vpsAdminOS staging pin remains
+  `d47ba226`.
+- vpsadmin-kb-captures base/head: `470b759` /
+  `1e233c7daba10733d0e1a24c66fc2e1e79a3caa2`. The vpsAdmin flake,
+  capture-manifest, and navigation-contract pins all select `100e54ec` and are
+  squashed into the original Node history contract commit.
+- vpsAdminOS remains `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`
+  on base `ff9e49b20`; its report schema and deployed evidence mechanism did not
+  change in this follow-up.
+
+Storage now uses one mutable current snapshot per kernel-hosting Node and one
+immutable snapshot shared by all events created from a single report. Scalar
+versions/sysctl values are canonicalized before change comparison and digesting
+so relational string columns cannot create false history events. Service-only
+Node roles still neither retain nor expose kernel evidence.
+
+Quick verification after the rewrite:
+
+- vpsAdmin pre-commit hooks passed for every staged fixup in
+  `nix develop .#vpsadmin` (Nixfmt, migration specs, WebUI/API i18n, RuboCop,
+  and commit-message hooks). An ambient-shell attempt correctly failed because
+  RuboCop/gettext/MariaDB were absent; commits were made only after rerunning in
+  the declared shell.
+- vpsAdmin migration specs: 4 examples, 0 failures.
+- vpsAdmin normalized model/operation/supervisor specs after the final fixture
+  correction: 30 examples, 0 failures.
+- vpsAdmin combined API/supervisor/resource run before the final fixture-only
+  correction: 29 examples, 0 failures. The larger rewritten run exposed only
+  a direct test fixture missing mandatory `schema_version`; production reports
+  were unaffected and the corrected affected suite is green.
+- security-advisories: 57 runs, 319 assertions, 0 failures/errors.
+- vpsadmin-kb-captures `bin/validate`: 59 concepts, 118 variants, 118 PNGs.
+- `git diff --check` is clean in all changed feature worktrees.
+
+Compatibility/deployment: all rewritten migrations are unmerged and absent
+from production, so no blob data migration is needed. nodectld schema 2 and the
+old/new reporter compatibility contract are unchanged. The dedicated dev
+cluster must be reset before deployment because it used the discarded
+migrations with identical timestamps. Long cluster integration is intentionally
+deferred until the mandatory fresh-context change review.

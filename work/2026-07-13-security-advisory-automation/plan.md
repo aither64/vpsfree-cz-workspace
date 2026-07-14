@@ -81,6 +81,36 @@ reset when the rewritten migrations are deployed. vpsAdminOS reporting stays
 unchanged; this is a vpsAdmin storage/API and security-advisories client
 redesign.
 
+## Relational evidence persistence
+
+Current and historical security evidence is normalized at ingestion. A
+`node_security_evidences` row stores the snapshot identity and scalar
+kernel/deployment fields; child tables store kernel parameters, loaded modules,
+declared/effective sysctls, livepatch modules and patch entries, eBPF programs,
+objects and links, and reported errors. Reconstruction coverage gaps are rows
+under `node_security_history_states`. No current status, event, or history
+checkpoint retains an opaque evidence/gaps JSON value.
+
+One mutable current snapshot is referenced by each kernel-hosting Node's
+current status. A report that produces several simultaneous event types creates
+one immutable event snapshot shared by those events. Reconciliation updates
+only changed component rows. Stable database IDs and snapshot revisions let the
+collector use ordinary ID pagination and reject component rows from a different
+report before assembling a per-Node document.
+
+Scalar values accepted as JSON numbers or strings are canonicalized before the
+snapshot digest and change comparison. This prevents an unchanged numeric
+livepatch version or configured sysctl from producing false history events
+after its relational string representation is read back.
+
+The migrations and API are still unmerged and have not reached production, so
+no legacy blob data requires conversion. The dedicated development cluster has
+applied discarded versions of the same migration timestamps and must be reset.
+nodectld schema 2 and its rolling-upgrade behavior do not change. A rollback to
+pre-feature vpsAdmin ignores the additive Node report field and can leave or
+remove the new tables; it does not need to read data written in a new opaque
+format.
+
 ## Affected repositories
 
 - `security-advisories` (new; GitHub remote not created yet)
