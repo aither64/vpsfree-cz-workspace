@@ -10,9 +10,9 @@
   channels. No production deployment, vpsAdmin API write, KB staging, or KB
   publication has occurred.
 - Quick local verification and the mandatory standalone review are complete.
-  All blocking and important findings were resolved. A follow-up removed
-  redundant deployment metadata in favor of confctl's existing machine input
-  file, and its focused tests and final repository checks pass.
+  All blocking and important findings were resolved. A later design correction
+  removed confctl from the evidence contract: nodectld now reports booted and
+  activated system closures directly in every environment.
 - The initiative development cluster is running and ready with the `single`
   topology on the bridge network.
 - Live per-Node conclusions are intentionally not fabricated from repository
@@ -27,7 +27,7 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin`
 - Base: `458b2ac71` (`origin/master` when created)
-- Head: `f934d9312a63074e84bb0dfb558704c8dd39626a`, pushed to `origin`
+- Head: `611d8a351de765e75ec75f93a14dcab8bbdcf520`, pushed to `origin`
 - Commits:
   - `dd6f40ca5 api: lock security advisory draft revisions`
   - `9854f62fc api: reconstruct Node kernel history`
@@ -35,6 +35,7 @@
   - `5ff1c8c29 libnodectld: report Node security evidence`
   - `dcc8f1b8f webui: show Node kernel history`
   - `f934d9312 api: harden security advisory draft synchronization`
+  - `611d8a351 libnodectld: identify deployed systems without confctl`
 
 ### vpsadminos
 
@@ -52,32 +53,34 @@
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsfree-cz-configuration`
 - Base: `e1cc165c` (`origin/master` when created)
-- Head: `2a76fcb5f8a5de24539e0a8213275350fa2fe58d`, pushed to `origin`
+- Head: `67d0632110db05f5f04ba10b285e6317b92b940a`, pushed to `origin`
 - Commits:
   - `e0235b02 inputs: set vpsadminosStaging to 58be2dd0`
   - `4cfdc892 inputs: set vpsadminStaging to f934d931`
   - `2a76fcb5 inputs: set vpsadminServices to f934d931`
+  - `1c412fe5 inputs: set vpsadminStaging to 611d8a35`
+  - `67d06321 inputs: set vpsadminServices to 611d8a35`
 - The input commits were generated with `confctl`; production channels remain
-  unchanged. The earlier `nodes: record deployment inputs` commit was removed:
-  production Nodes already receive `/etc/confctl/inputs-info.json` from
-  confctl, so a second reduced copy was unnecessary.
+  unchanged. Configuration pins deploy the feature but are not part of the
+  evidence contract.
 
 ### vpsadmin-kb-captures
 
 - Branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/vpsadmin-kb-captures`
 - Base: `470b759`
-- Head: `6d45dc0c742d84fdf9919d750004fec2e647aaf4`, pushed to `origin`
+- Head: `fa1b69e1ad51ea17c18a87dc955072965ac289ee`, pushed to `origin`
 - Commits:
   - `f4579b0 contract: track the Node kernel history control`
   - `356ae81 tools: ignore literal navigation tag examples`
   - `6d45dc0 contract: refresh production navigation inventory`
+  - `fa1b69e contract: pin deployment-independent evidence head`
 
 ### security-advisories
 
 - Orphan branch/worktree: `2026-07-13-security-advisory-automation` at
   `worktrees/2026-07-13-security-advisory-automation/security-advisories`
-- Head: `35ca6b94f76658b9bbb5c451e972fc300ebb6e50`
+- Head: `90f20e787f4a1c4578a865d7b1be38254f2126e4`
 - Commits:
   - `93e8cae Establish the advisory analysis repository`
   - `681e00f Add the narrow vpsAdmin API client`
@@ -91,6 +94,7 @@
   - `1e56368 Analyze CVE-2026-53359 KVM flaw`
   - `abbc41d Analyze CVE-2026-43499 GhostLock`
   - `35ca6b9 Test the complete advisory workflow`
+  - `90f20e7 Use Node-reported system closure identities`
 - `origin` is the required SSH URL
   `git@github.com:vpsfreecz/security-advisories.git`, but the GitHub repository
   does not exist yet, so this branch is not pushed.
@@ -137,8 +141,8 @@
   KVM-device counts.
 - The schema-versioned nodectld payload contains immutable boot ID/time/release,
   reported release, vpsAdminOS/kernel/config identity, livepatch/eBPF metadata,
-  loaded modules, runtime settings, and the exact role/input identity read from
-  `/etc/confctl/inputs-info.json`. A missing file is an explicit evidence gap.
+  loaded modules, runtime settings, and exact booted/current system closure
+  identities resolved from `/run/booted-system` and `/run/current-system`.
   Unsupported/malformed evidence becomes a gap without rejecting ordinary Node
   status.
 
@@ -152,10 +156,9 @@
 - Livepatch services persist a first-application timestamp marker. eBPF
   livepatch metadata includes the link fields needed to verify every pinned
   attachment.
-- Production Nodes already receive `/etc/confctl/inputs-info.json` from
-  confctl. The reporter wraps its selected role metadata under
-  `deployment.inputs`; it does not install a duplicate metadata file or expose
-  secret/general configuration data through the evidence endpoint.
+- nodectld resolves the booted and currently activated Nix system closures
+  itself. This single mechanism works on production Nodes, the dev cluster, and
+  other installations without confctl or a generated evidence file.
 
 ### security-advisories
 
@@ -192,7 +195,7 @@
 
 ### Documentation contract
 
-- The contract pins vpsAdmin `f934d931...` and records the bilingual
+- The contract pins vpsAdmin `611d8a351...` and records the bilingual
   `node.kernel-history` WebUI control/fingerprint.
 - The canonical full production inventory was fetched (116 Czech and 70 English
   pages), checked, and used to build durable candidates. There are zero changed
@@ -256,8 +259,8 @@ without depending on later dossiers or classes; eBPF evidence is bound to a
 revision/digest and attachment time; every draft mutation requires the expected
 content revision; operator historical attestations are exact and digest-bound;
 and an admin-only `external_id` plus atomic initial CVE creation recovers a
-lost create response without duplicating drafts. The reporter has an explicit
-`inputs_info` gap for missing confctl data.
+lost create response without duplicating drafts. The reporter does not depend
+on confctl or any other deployment tool.
 
 ## Verification
 
@@ -284,9 +287,15 @@ lost create response without duplicating drafts. The reporter has an explicit
 - vpsadmin-kb-captures `nix develop -c bin/check` passes: 34 controls, 29 paths,
   32 concepts, 3 selectors; 65 bindings and 9 exceptions; 118 valid PNGs; test
   groups at 8/50 and 7/17 runs/assertions.
-- The confctl reuse follow-up passes its focused libnodectld spec (1 example),
-  RuboCop on both affected reporter files, all vpsAdmin pre-commit hooks, and a
-  repeated full KB contract check with the final vpsAdmin pin.
+- The deployment-tool-independent follow-up passes its focused libnodectld spec
+  (1 example), the related API/receiver specs (13 examples), all vpsAdmin
+  pre-commit hooks, 38 security-advisories tests/131 assertions, and validation
+  of all five dossiers.
+- The running dev Node was switched from booted closure
+  `z2d206nn...` to activated closure `rm7dzw1f...` without reboot. The updated
+  probe reported both identities with an empty error list while
+  `/etc/confctl/inputs-info.json` was absent; subsequent nodectld status updates
+  continued normally.
 - Dev cluster `2026-07-13-security-advisory-automation` is `running`, `ready`,
   topology `single`, network `bridge`. WebUI and API are reachable at
   `https://webui.aitherdev.int.vpsfree.cz/` and
@@ -344,7 +353,7 @@ lost create response without duplicating drafts. The reporter has an explicit
 1. Confirm the final-head vpsAdmin selected integration CI completes
    successfully.
 2. User creates the private `vpsfreecz/security-advisories` GitHub repository;
-   then push `35ca6b94f76658b9bbb5c451e972fc300ebb6e50` over its already
+   then push `90f20e787f4a1c4578a865d7b1be38254f2126e4` over its already
    configured SSH remote.
 3. Deploy the feature in the recorded coordinated order and allow exact
    evidence to accumulate.

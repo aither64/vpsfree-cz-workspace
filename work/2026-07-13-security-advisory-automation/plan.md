@@ -28,8 +28,8 @@ explicit human action outside the automation token's authority.
   - expose immutable booted-kernel build identity and verifiable livepatch/eBPF
     metadata for kernel configuration, packaged sources, and mitigations.
 - `vpsfree-cz-configuration`
-  - reuse confctl's existing per-machine deployment input identity and pin the
-    exact feature revisions in non-production channels;
+  - pin the exact feature revisions in non-production channels, but do not use
+    the deployment tool as a runtime evidence source;
   - compare the API-based history source with the unpublished
     `2026-07-10-node-kernel-version-logs` work without making the log host a
     runtime dependency.
@@ -388,8 +388,8 @@ is:
 
 1. migrate/deploy the tolerant vpsAdmin receiver and new API resources;
 2. deploy the node-side vpsAdmin package so exact evidence begins to arrive;
-3. deploy vpsAdminOS boot/livepatch/eBPF metadata and verify the existing
-   confctl-managed `/etc/confctl/inputs-info.json` is present on Nodes;
+3. deploy vpsAdminOS boot/livepatch/eBPF metadata; nodectld reads the booted and
+   currently activated system closures directly on every Node;
 4. run the idempotent historical reconstruction task;
 5. collect evidence before syncing a CVE draft, retain missing/stale evidence
    as explicit `unknown` rows for review, and resolve every `unknown` before
@@ -424,9 +424,9 @@ false conclusion. No coordinated all-node reboot or update is required.
 - Kernel/livepatch/eBPF evidence is pinned to immutable git revisions in each
   CVE analysis so later repository changes do not silently rewrite a past
   conclusion.
-- Configuration provenance comes from confctl's existing
-  `/etc/confctl/inputs-info.json`; the feature does not install or maintain a
-  second reduced deployment-input file.
+- Deployment identity comes from the booted and currently activated Nix system
+  closures resolved directly by nodectld. It is independent of confctl or any
+  other deployment tool and distinguishes activation without reboot.
 - The visible kernel-history page requires the canonical
   `vpsadmin-kb-captures` WebUI workflow, durable documentation-contract update,
   and Czech/English screenshot review.
