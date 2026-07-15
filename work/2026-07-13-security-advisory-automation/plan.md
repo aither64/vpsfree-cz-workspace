@@ -42,7 +42,7 @@ before merge. vpsAdmin will not expose `all/security_evidence`, an endpoint
 schema version, `custom :nodes`, or `custom :kernel_configurations`. HaveAPI's
 self-description is the API contract.
 
-- `node_security_evidence#index` is a top-level typed object list with one
+- `node_kernel_evidence#index` is a top-level typed object list with one
   current row per kernel-hosting Node. It supports Node, active-state, and
   freshness filters and flattens current kernel/build/deployment and history
   coverage fields.
@@ -91,7 +91,7 @@ redesign.
 ## Relational evidence persistence
 
 Current and historical security evidence is normalized at ingestion. A
-`node_security_evidences` row stores the snapshot identity and scalar
+`node_kernel_evidences` row stores the snapshot identity and scalar
 kernel/deployment fields; child tables store kernel parameters, loaded modules,
 declared/effective sysctls, livepatch modules and patch entries, eBPF programs,
 objects and links, and reported errors. Reconstruction coverage gaps are rows
@@ -127,7 +127,7 @@ format.
 
 ## Affected repositories
 
-- `security-advisories` (new; GitHub remote not created yet)
+- `security-advisories` (new private repository)
   - primary implementation repository;
   - one durable analysis directory per CVE, source/evidence manifests,
     assessment tooling, vpsAdmin draft submission, and scoped-token bootstrap.
@@ -247,18 +247,18 @@ one point-in-time, revisioned row per kernel-hosting Node; exact history and
 repeated components are independently filterable resources:
 
 ```text
-node_security_evidence[]
-node_security_event[]
+node_kernel_evidence[]
+node_kernel_event[]
 node_kernel_configuration_option[]
 node_kernel_parameter[]
 node_kernel_module[]
-node_security_setting[]
+node_sysctl[]
 node_kernel_livepatch[]
 node_kernel_livepatch_patch[]
 node_ebpf_program[]
 node_ebpf_program_object[]
 node_ebpf_program_link[]
-node_security_evidence_gap[]
+node_kernel_evidence_gap[]
 ```
 
 They return only boot/kernel/mitigation history, immutable build/configuration
@@ -321,18 +321,19 @@ feedback.
 The runtime token therefore needs these existing actions:
 
 ```text
-node_security_evidence#index
-node_security_event#index
+token#revoke
+node_kernel_evidence#index
+node_kernel_event#index
 node_kernel_configuration_option#index
 node_kernel_parameter#index
 node_kernel_module#index
-node_security_setting#index
+node_sysctl#index
 node_kernel_livepatch#index
 node_kernel_livepatch_patch#index
 node_ebpf_program#index
 node_ebpf_program_object#index
 node_ebpf_program_link#index
-node_security_evidence_gap#index
+node_kernel_evidence_gap#index
 security_advisory#index
 security_advisory#show
 security_advisory#create
@@ -361,15 +362,17 @@ rows) so a human edit between the client's read and write produces a conflict.
 These protections improve the existing API without introducing a parallel
 submission endpoint.
 
-Token issuance and self-revocation are authentication-provider operations, not
-resource action scopes. `bin/create-token` performs the interactive password
-and optional TOTP exchange directly against HaveAPI, requests only the resource
-scopes above, and stores the returned token outside git at
+Token issuance is an unauthenticated provider operation. Self-revocation is the
+authenticated `token#revoke` provider action and is the only non-domain scope.
+`bin/create-token` performs the interactive password and optional TOTP exchange
+directly against HaveAPI, requests only the action scopes above, and stores the
+returned token outside git at
 `$XDG_CONFIG_HOME/vpsfreecz-security-advisories/token.json` with mode `0600`.
-It never prints the token or enables shell tracing. A permanent token is
+It never prints the token or enables shell tracing. `bin/revoke-token`
+invalidates the current token and removes its saved file. A permanent token is
 reasonable for sporadic CVE work because its server-side authority is narrow
-and revocable; the script also accepts an explicit lifetime and renewal
-interval.
+and revocable; the creation script also accepts an explicit lifetime and
+renewal interval.
 
 ### Repository shape
 
@@ -389,7 +392,7 @@ advisories/CVE-YYYY-NNNNN/
   analysis.md
   advisory.yml
   submission.yml
-test/
+spec/
 ```
 
 `analysis.md` holds the detailed human reasoning. `advisory.yml` records
@@ -616,7 +619,45 @@ evidence snapshot used for the smoke test were removed afterward.
 No production advisory can yet be concluded from repository pins alone. After
 deployment, exact evidence must accumulate on each production Node, and every
 initial dossier must receive reviewed accepted build identities or historical
-attestations before its per-Node results can leave `unknown`. The only source
-repository handoff dependency is creation of the private
-`vpsfreecz/security-advisories` GitHub repository so its local feature branch
-can be pushed.
+attestations before its per-Node results can leave `unknown`. The private
+`vpsfreecz/security-advisories` repository has since been created and the
+reviewed feature branch can be pushed without changing the review-gated
+publication workflow.
+
+## Kernel evidence schema and Ruby tooling follow-up (2026-07-15)
+
+The unmerged vpsAdmin history will be rewritten so the database and API use
+kernel-specific terminology from their first introduction. Rename the
+`node_security_*` model, table, association, and top-level API-resource family
+to `node_kernel_*`, except that sysctls use the explicit `node_sysctl` name.
+The public nested `node.kernel_history` resource remains stable. The nodectld
+wire report key and vpsAdminOS evidence file keep their existing names because
+they describe the wider report contract, not the normalized Node schema.
+
+Store configured kernel parameters relationally as an ordered sequence. Each
+row has a zero-based `position`, parsed `name`, and nullable `value`; duplicate
+tokens are valid. Split only at the first equals sign, so `foo`, `foo=`, and
+`foo=bar=baz` remain distinguishable. The raw `/proc/cmdline` field remains the
+authoritative exact command line, while these rows represent the ordered
+parameters from the booted deployment closure. Snapshot canonicalization must
+preserve parameter-array order while continuing to normalize collections whose
+order has no meaning.
+
+Keep `observed_after` and `observed_before`. Document them as the open/closed
+observation interval `(observed_after, observed_before]`: the transition was
+not present at the lower observation and was present by the upper observation.
+The first known event has no lower bound. Exact event time, when available,
+continues to be carried separately in `effective_at`.
+
+Convert `security-advisories` from Minitest to RSpec and integrate it like the
+other Ruby repositories: a reviewed RuboCop policy adapted from vpsAdmin,
+Overcommit pre-commit RuboCop enforcement, a locked development bundle, and
+separate GitHub Actions for RuboCop and RSpec. Rewrite its unpublished history
+so Minitest and the superseded API names do not appear in the branch.
+
+This remains an additive, not-yet-deployed feature. Rewrite the original
+migrations instead of adding compatibility rename migrations. A clean dev
+cluster database reset is therefore required. Rebuild the downstream
+configuration and documentation pins only after the final vpsAdmin history is
+known, then run the mandatory fresh-context change review before the clean
+integration test.

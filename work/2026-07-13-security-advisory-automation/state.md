@@ -886,3 +886,290 @@ Remaining handoff:
 
 No production deployment, advisory mutation/publication, notification, KB
 write, or root/log-host access occurred.
+
+## Follow-up implementation started (2026-07-15)
+
+The user approved a history rewrite that replaces the normalized
+`node_security_*` family with `node_kernel_*` names and the clearer
+`node_sysctl` resource/table. Kernel parameters will gain an explicit
+zero-based position and separately stored name/value, preserving duplicates and
+the distinctions between a flag, an empty value, and a value containing equals
+signs. The observation-bound column names remain and will be documented as the
+interval `(observed_after, observed_before]`.
+
+The `security-advisories` repository will be converted from Minitest to RSpec
+and receive the repository-standard RuboCop, Overcommit, locked bundle, and CI
+setup. No source changes have been made for this follow-up yet. The existing
+heads listed in the final normalized integration checkpoint are the rewrite
+inputs. The dedicated dev cluster must be reset after rewritten migrations and
+downstream pins are ready; no attempt will be made to migrate its old unmerged
+schema in place.
+
+## Kernel naming and ordered parameters implemented (2026-07-15)
+
+This section supersedes the preceding follow-up-start snapshot.
+
+Current heads and pins:
+
+- vpsAdmin `dd07e0d26183db7462a92fc43f82443846a551f0`, force-pushed on
+  `2026-07-13-security-advisory-automation`. Its rewritten history is four
+  commits on `1a4fa3031`: the complete API/storage feature, generic
+  libnodectld reporting, the WebUI, and the separately generated vpsAdminOS
+  flake pin. The tree is identical to the pre-rewrite feature tree except for
+  the approved kernel/sysctl names and ordered parameter representation.
+- vpsAdminOS remains
+  `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`; no report schema or source change
+  was required.
+- security-advisories
+  `3486db8ebd9e1e898968220e8f3f03cc5ed67da5`, local-only. Its unpublished
+  history is now one initial repository commit, so RSpec, RuboCop, Overcommit,
+  and the kernel-focused API names exist from the first commit. The configured
+  SSH remote still has no repository to accept a push.
+- vpsfree-cz-configuration
+  `4e827fbe4b6e7d8ee24b2ce207b9e732b1fe43c9`, local pending review. The three
+  `confctl inputs channel set --commit` commits select vpsAdminOS `d47ba226`
+  for staging and vpsAdmin `dd07e0d2` for both staging and vpsAdmin services.
+- vpsadmin-kb-captures
+  `b2e54855cdf4fe3e8925f566ac5863cb846434ec`, local pending review. Its rewritten
+  single feature commit pins vpsAdmin `dd07e0d2` in the flake, capture
+  inventory, and navigation contract.
+
+Implementation details:
+
+- normalized history/snapshot/error tables and resources use
+  `node_kernel_*`; sysctls use `node_sysctls`/`NodeSysctl` and
+  `node_sysctl#index`;
+- kernel parameter rows store zero-based `position`, `name`, and nullable
+  `value`; reconstruction preserves order, duplicate names, flags, empty
+  values, and values containing additional equals signs;
+- set-like evidence remains canonicalized independently of report ordering;
+- `observed_after`/`observed_before` are documented as the interval
+  `(observed_after, observed_before]`, with a null lower bound for the first
+  known state and `effective_at` reserved for exact times;
+- public `node.kernel_history#index`, the nodectld `security_evidence` wire
+  key, and vpsAdminOS schema 2 remain unchanged.
+
+Quick verification:
+
+- every rewritten vpsAdmin commit passed the declared Overcommit gate from
+  `nix develop .#vpsadmin` (Nixfmt, migration mapping, WebUI/API i18n,
+  RuboCop, PHP formatting where applicable, and commit-message checks);
+- vpsAdmin application/API/model/supervisor specs: 89 examples, 0 failures;
+- vpsAdmin migration specs in their separate process: 10 examples,
+  0 failures;
+- libnodectld component-shell specs: 5 examples, 0 failures;
+- security-advisories: RuboCop inspected 18 files with no offenses; RSpec ran
+  61 examples with 0 failures; its real staged pre-commit RuboCop hook passed;
+- vpsadmin-kb-captures `bin/validate && bin/check`: 59 concepts,
+  118 variants/PNGs, both test groups green, documentation contract and KB
+  annotation inventory valid;
+- rewritten worktrees are clean and downstream lock metadata resolves the
+  exact revisions above.
+
+Two invalid combined test attempts did not change source. Parallel vpsAdmin
+development shells raced over the shared `.gems` cache, and mixing migration
+and ordinary specs in one randomized RSpec process sent application examples
+to the deliberately partial migration database. The successful sequential,
+separate runs above supersede those results. The reusable migration-isolation
+lesson is in `notes/vpsadmin/2026-07-15-migration-rspec-db-isolation.md`.
+One `confctl` attempt used a mistyped nonexistent full revision and failed with
+HTTP 404 before changing the lock; the exact pushed revision then succeeded.
+
+Compatibility remains additive because none of these migrations or API names
+has merged or reached production. A mixed deployment still accepts the
+unchanged schema-2 Node report, while old vpsAdmin simply ignores its existing
+extra report key. The dev database cannot be upgraded in place because the
+unmerged migration timestamps were rewritten; the next integration step is a
+clean bridge-network cluster reset after the mandatory fresh-context review.
+
+## Focused review history and refreshed pins (2026-07-15)
+
+The mandatory review preparation found that the first follow-up rewrite had
+collapsed independent changes too aggressively. Before launching the reviewer,
+the histories were made reviewable without changing the validated trees.
+
+- vpsAdmin is now `bd6614122a03c1a2874c898b4872687dc318a506` on the current
+  upstream base `8028e5032dcc2b778ae0e6d9cf21944b1c9fe6cf`. The branch was
+  force-pushed. It restores the original focused advisory, history,
+  normalization, typed-API, reporter, and WebUI commits; the kernel-specific
+  naming/ordered-parameter change is `6343bdfdc`; the independent vpsAdminOS
+  input update is the final commit. Upstream advanced only through generated
+  Ruby and WebUI dependency locks, and the feature rebased without conflict.
+- security-advisories is
+  `2636f3ba5c0de895939c9c1c836ddb78bdd79091`, still local-only because its
+  remote repository does not exist. Its unpublished history now has focused
+  project/tooling, token client, collector, evaluator, reconciler, and one
+  commit for each of the five CVE dossiers. Its tree is byte-for-byte equal to
+  the previously validated single-root history.
+- vpsfree-cz-configuration is
+  `6e763101859448d9dcedbf470e59cc287f0d452f`, local pending review. Generated
+  confctl commits pin staging vpsAdminOS to `d47ba226` and both staging and
+  services vpsAdmin to `bd661412`. Lock metadata resolves those exact full
+  revisions.
+- vpsadmin-kb-captures is
+  `2630ac8db3778c9734fad35581219c1c5b01186a`, local pending review. Its single
+  contract commit pins `bd661412` in the flake, capture inventory, and
+  navigation contract.
+- vpsAdminOS remains
+  `d47ba226ab759f6d71f0f8dbae5152dd1826e86c` on its staging-line base
+  `ff9e49b20`; its evidence contract did not change in this follow-up.
+
+Final quick verification on the review heads:
+
+- vpsAdmin affected application/API/model/supervisor suite: 114 examples,
+  0 failures, against a fresh MariaDB schema;
+- vpsAdmin migration suite in its isolated process: 10 examples, 0 failures;
+- libnodectld component-shell suite: 5 examples, 0 failures;
+- security-advisories: RuboCop inspected 18 files without offenses and RSpec
+  ran 61 examples with 0 failures;
+- vpsadmin-kb-captures complete `bin/validate && bin/check`: 59 concepts,
+  118 variants/PNGs, 34 controls, 29 paths, 32 capture concepts, 3 semantic
+  selectors, and both test groups green;
+- all five affected worktrees are clean.
+
+Two confctl invocations failed without changing the lock: one used a guessed
+nonexistent full vpsAdmin revision and GitHub returned 404; another used
+`services` as a channel name, while the declared channel is `vpsadmin`. The
+successful commands used the exact revision read from Git and the repository's
+declared `staging` and `vpsadmin` channels.
+
+The required standalone mandatory change review is the next step. The dev
+cluster remains intentionally untouched until that review is resolved; it must
+then be reset rather than upgraded in place.
+
+Review-gate operations after freezing the packet:
+
+- the superseded bridge/single dev cluster for this verified session was found
+  running and was stopped successfully; its status is now `stopped` and its GC
+  root was removed;
+- superseded in-progress vpsAdmin CI runs `29403821237` (`dd9801251`) and
+  `29402627560` (`dd07e0d26`) were cancelled after the final branch push;
+- on final head `bd661412`, RuboCop, API migration specs, WebUI PHPUnit,
+  client specs, i18n health, and libnodectld specs are green; the aggregate CI
+  and topic-parallel API run were still in progress when recorded.
+
+## Mandatory kernel naming review (2026-07-15)
+
+The one required standalone fresh-context review completed. Long integration
+remains paused while four Blocking findings are resolved; the review will not
+be repeated because the mandatory review workflow calls for exactly one fresh
+reviewer.
+
+1. Collector-shaped reconstructed events always contain a partial
+   `security_evidence.kernel` hash, so the evaluator returns that incomplete
+   evidence before consulting a historical operator attestation. Advisory
+   validation also accepts fewer attestation fields than evaluation needs.
+   Fix the exact/reconstructed distinction, align validation, and cover the
+   collector-to-evaluator path.
+2. vpsAdmin normalization commit `6343bdfdc` combines the mechanical
+   `node_security_*` rename with independently reviewable ordered-parameter
+   semantics. Fold final names into their introductory commits and retain the
+   parameter change as a focused commit.
+3. security-advisories still combines tooling/CI with its domain model in
+   `44b32f1`, and reconciler behavior with CLI/operator documentation in
+   `c0261ae`. Split those layers.
+4. KB commit `2630ac8d` combines annotation parser/test behavior with the
+   generated contract pin/inventory update. Restore separate commits.
+
+The reviewer found no other significant issue in the requested areas. It
+confirmed final-name completeness, ordered command-line/digest semantics,
+relational constraints and binary collations, `(observed_after,
+observed_before]` meaning, authentication and service-role exclusion, exact
+least-privilege scopes including `security_advisory.node_status`, draft
+locking/revision checks, and the VPS-root versus Node-compromise wording.
+
+Residual review notes: configuration and KB remotes must be fetched/reconciled
+before push; regenerated pins must follow any rewritten head; the clean reset
+and live collector/evaluator exercise remain required.
+
+## Mandatory review resolution and final heads (2026-07-15)
+
+All four Blocking findings from the single mandatory review were resolved;
+the review was not repeated, as required by the review workflow.
+
+- `security-advisories` no longer treats the collector's partial reconstructed
+  event shape as exact evidence. Reconstructed events without an immutable
+  snapshot require a complete operator attestation, and dossier validation now
+  requires every field consumed by evaluation. The collector-to-evaluator
+  regression is covered. Tooling/domain, collector/evaluator,
+  reconciler/CLI, and individual dossier commits are separated.
+- vpsAdmin introduces the final `node_kernel_*` and `node_sysctl` names in the
+  original ingestion and typed-resource commits. Ordered kernel parameters
+  and `(observed_after, observed_before]` documentation are independent
+  commits; the vpsAdminOS input update remains last. The final tree is
+  byte-for-byte identical to the previously reviewed implementation.
+- The KB annotation parser/test change and generated navigation-contract pin
+  are separate commits.
+
+Final repository heads:
+
+- vpsAdmin: `0e9c345f6c50b4c880382b237cc251a4eee9ed47`, force-pushed;
+- vpsAdminOS: `d47ba226ab759f6d71f0f8dbae5152dd1826e86c`, unchanged;
+- security-advisories: `334ae8d1e8ff7f426f075146ee1e3235cf73877c`, pushed
+  to the newly created private remote;
+- vpsfree-cz-configuration: `97220d423a3b49cce83ba36f2ec6b89d2e03f792`,
+  force-pushed with generated `confctl` commits;
+- vpsadmin-kb-captures: `c1c0fb2`, force-pushed.
+
+The configuration lock resolves `vpsadminosStaging` to `d47ba226` and both
+`vpsadminStaging` and `vpsadminServices` to `0e9c345f6`. The KB flake,
+capture inventory, and navigation contract pin the same vpsAdmin revision.
+
+Final quick verification after the history rewrite:
+
+- vpsAdmin affected API/model/supervisor suite: 101 examples, 0 failures;
+- isolated vpsAdmin migration suite: 10 examples, 0 failures;
+- libnodectld component-shell suite: 5 examples, 0 failures;
+- security-advisories: after the self-revocation follow-up, RuboCop inspected
+  21 files without offenses and RSpec ran 64 examples with 0 failures;
+- vpsadmin-kb-captures complete `bin/validate && bin/check`: 59 concepts,
+  118 variants/PNGs, 34 controls, 29 paths, 32 capture concepts, 3 semantic
+  selectors, and both test groups green.
+
+The old session cluster was stopped, then its persisted state was reset. A
+clean single-Node bridge-network cluster is running and ready from the exact
+vpsAdmin and vpsAdminOS worktrees above. The prior migration timestamps could
+not be upgraded in place because the unmerged history was intentionally
+rewritten.
+
+An ambient `vpsfree-cz-configuration` push failed locally before contacting
+GitHub because its pre-push hook could not load bundled gems. The identical
+lease-protected push passed inside `nix develop`; the reusable note is
+`notes/vpsfree-cz-configuration/2026-07-15-push-hooks-require-nix-shell.md`.
+
+Clean-cluster live verification:
+
+- WebUI and API return HTTP 200 through the bridge-network endpoints.
+- The schema-4 collector returned exactly active hosting Node 101. DNS and
+  mailer/service Nodes were excluded. It collected Linux 6.12.95, the exact
+  booted/current system closures, all six required `CONFIG_*` options, generic
+  loaded-module/sysctl state, and no evidence gaps.
+- `node_kernel_parameter#index` returned separate event/current relational
+  rows with contiguous positions 0 through 4 and explicit `name`/nullable
+  `value` fields. Their tokens reconstruct the configured parameter array
+  exactly.
+- All five dossiers evaluated the one authoritative Node and remained
+  `unknown`, correctly fail-closing because the fresh cluster has no retained
+  history back to `2026-01-01`. A dry-run sync for CVE-2026-23111 proposed one
+  Node status and no writes; no advisory or draft was created.
+- The real narrow token could read the typed evidence resources and received
+  HTTP 403 for generic `node#index`.
+
+The live cleanup exposed that HaveAPI describes self-revocation as the exact
+`token#revoke` provider action. The repository now grants that one additional
+non-domain action and provides `bin/revoke-token`; it still has no generic
+inventory, VPS, publication, mail, or unrelated-resource authority. A new
+24-scope token revoked itself successfully and removed its saved file. The
+earlier 23-scope development token was closed and its token row deleted from
+the disposable dev database. Generated `.state` evidence/evaluations and both
+temporary credential files were removed.
+
+Final GitHub Actions status:
+
+- security-advisories RuboCop and RSpec are green on `334ae8d1`;
+- all completed vpsAdmin workflows on `0e9c345f6` are green except the full
+  platform shard of the topic-parallel API workflow, which GitHub cancelled at
+  its 30-minute job limit while examples were still passing. Its complete log
+  shows no failure before cancellation; the topic-coverage job and every other
+  shard passed. The focused local platform tests covering this change passed;
+- the vpsAdmin aggregate vpsAdminOS integration workflow remains in progress.
