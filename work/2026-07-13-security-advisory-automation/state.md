@@ -2,6 +2,43 @@
 
 ## Current status
 
+- The requested Node evidence presentation correction is implemented and
+  pushed at vpsAdmin head
+  `c5803845cc841d0c415b9009fe5878dcea23589c`. Parameter comparison rows follow
+  booted positions, raw command lines render as wrapping code, passive
+  explanations use a neutral content component, and current/history sysctl
+  tables use compact fixed-width layouts.
+- Full WebUI PHPUnit passes with 72 tests and 267 assertions. PHP syntax,
+  JavaScript syntax, gettext health, PHP CS Fixer, `git diff --check`, and all
+  vpsAdmin pre-commit hooks pass. The focused `webui#admin-cluster` integration
+  passes end to end, including exact ordering, code markup, table structure,
+  and browser width/overflow assertions.
+- The first browser integration attempt found a shared fixture still calling
+  revision-checked advisory publication without `expected_content_revision`.
+  Focused tip commit `c5803845c` passes the fixture's current revision; the
+  preserved test log established this as a setup failure before Chromium, and
+  the cached rerun completed successfully.
+- vpsfree-cz-configuration was rebuilt from feature base `e1cc165c` with
+  exactly three generated commits: `751bb183` for `vpsadminosStaging`,
+  `81dea6ca` for `vpsadminStaging`, and `e8e60e4d` for `vpsadminServices`.
+  The final head is `e8e60e4d`, with vpsAdmin channels pinned to `c5803845c`
+  and vpsAdminOS staging pinned to `6a8f1d355`.
+- The KB contract is repinned and pushed at `1adabf7`; its complete check
+  passes with 37 controls, 65 bindings, 9 exceptions, and 118 PNG variants.
+  These administrator-only pages have no current end-user KB page or capture
+  binding, so no KB candidate, staging, or production write is required.
+- The mandatory fresh-context review initially blocked on repeated same-input
+  pins and advised exact row assertions. After those fixes it cleared the
+  presentation gate. The same reviewer examined the integration-discovered
+  fixture commit and final repins and again found no Blocking, Important, or
+  Advisory findings; no residual browser test gap remains.
+- The bridge-network development cluster is running and ready with the updated
+  services generation; WebUI and API both return HTTP 200 using the development
+  CA. No production deployment or write was performed.
+- No API/database/protocol compatibility changes are introduced. Deployment
+  can update the vpsAdmin services independently; older Nodes continue to
+  report the same evidence and rollback reads the unchanged schema.
+
 - The approved relational evidence normalization is complete. Current and
   immutable event snapshots, kernel parameters/modules, security settings,
   livepatch/eBPF state, errors, and parsed kernel options use normalized
@@ -1375,3 +1412,39 @@ was cancelled after confirming that its head was obsolete.
 
 The cluster remains running for review. No production deployment, vpsAdmin
 advisory mutation/publication, user notification, or KB write was performed.
+
+## Node evidence WebUI presentation completion (2026-07-15)
+
+- vpsAdmin head `c5803845cc841d0c415b9009fe5878dcea23589c` is
+  pushed. The functional WebUI commit is `b27406af2`; focused tip commit
+  `c5803845c` updates the shared advisory browser fixture for the existing
+  optimistic-concurrency publication contract.
+- vpsfree-cz-configuration head
+  `e8e60e4d4a999188b4b1e72e6abc86adf566e270` is force-pushed with exactly
+  three generated pin commits from `e1cc165c`: `751bb183`, `81dea6ca`, and
+  `e8e60e4d`. vpsadmin-kb-captures head
+  `1adabf736d5bde9dd6b65d916b65b48d2b5efc6a` is force-pushed and pins the
+  exact final vpsAdmin revision.
+- WebUI PHPUnit passes 72 tests and 267 assertions. The complete KB contract
+  check passes. `webui#admin-cluster` passes its Playwright scenario, including
+  boot-position order, raw-command-line code markup, neutral descriptions,
+  compact table columns, and horizontal-overflow checks.
+- The first integration attempt failed during fixture creation before
+  Playwright because `SecurityAdvisory#publish!` now requires
+  `expected_content_revision`. The preserved log identified the exact call;
+  passing `advisory.content_revision` fixed it, and the cached rerun passed.
+- The same mandatory standalone reviewer checked this post-gate delta and the
+  regenerated downstream pins. The result contains no Blocking, Important, or
+  Advisory findings, and no residual test gap.
+- The bridge development cluster remains `running` and `ready` on the default
+  network, with WebUI and API returning HTTP 200 through the development CA.
+  Its active services generation contains the final runtime WebUI changes;
+  `c5803845c` changes test fixtures only.
+- Current-head vpsAdmin CI run `29441379490` is still executing the full
+  `tag=ci` set because the fixture lives in shared `tests/suite/webui.nix`.
+  Setup, selection, and preview are green and the check has no annotations at
+  this checkpoint. Superseded in-progress runs `29439429583`, `29438336356`,
+  and `29432504910` were cancelled only after their heads became obsolete.
+- All three affected project worktrees are clean and synchronized with their
+  SSH remotes. No production deployment, API mutation, advisory publication,
+  notification, KB staging, or KB publication was performed.

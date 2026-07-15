@@ -35,6 +35,25 @@ explicit human action outside the automation token's authority.
   other VPSes, and shared-Node availability. Czech texts use the project term
   `node`, not `nod` or `uzel`.
 
+## Node evidence WebUI presentation
+
+- Kernel parameter comparisons are presented in the exact booted order;
+  configuration-only entries follow in configured order. The raw command line
+  is escaped, marked as code, and allowed to wrap.
+- Passive explanations use a neutral page-description component inside the
+  normal content area. `perex` remains reserved for action results and errors.
+- Current sysctl evidence omits the redundant availability column. History
+  groups availability, configured value, and effective value into previous and
+  new state cells so both views fit the fixed WebUI content width.
+- The unmerged WebUI correction is folded into its original functional commit.
+  Exact configuration and KB contract pins are refreshed to the rewritten
+  vpsAdmin head. No API, evidence schema, daemon protocol, or production KB
+  content changes are involved.
+- The focused browser integration must exercise the actual admin-cluster pages,
+  including width checks at the fixed desktop viewport. Shared advisory test
+  fixtures must supply the current draft revision when publishing records, in
+  line with the already implemented optimistic-concurrency contract.
+
 ## Typed evidence resource redesign
 
 The collector-specific `node.security_evidence#index` envelope is superseded
