@@ -2,6 +2,82 @@
 
 ## Current status
 
+### 2026-07-15 final implementation checkpoint
+
+- The source histories have been rewritten into their owning functional
+  commits. Current clean heads are vpsAdmin
+  `fb11991d42f4f0cb18298137c8ceed8278dbb9ae`, vpsAdminOS
+  `dbc03d00508b89093ecafc5e5abdcfc6bb5bdfbb`, and
+  security-advisories `ce0aca81789c7dec31a939ddd5c88ebeafdc7281`.
+  The vpsAdminOS feature branch is published at that head; downstream pins and
+  the other rewritten branch updates remain pending final verification.
+- vpsAdmin's vpsAdminOS input is an isolated generated lock commit and resolves
+  the exact final vpsAdminOS head. The earlier intermediate lock revision was
+  folded out of history.
+- vpsAdmin verification before mandatory review was green: the schema-4
+  reporter had 4 examples with no failures; status and record-operation
+  coverage has 31 examples with no
+  failures; normalized model/resource coverage has 19 examples with no
+  failures; migration coverage has 2 examples with no failures; WebUI evidence
+  coverage has 5 tests and 17 assertions; and the complete Overcommit gate
+  passes migration mapping, WebUI/API i18n, Nixfmt, RuboCop, and PHP CS Fixer.
+- security-advisories passes its full 67-example RSpec suite after review
+  remediation, RuboCop reports no offenses, and its installed pre-commit hook
+  passes.
+- vpsAdminOS passes its Overcommit gate and targeted flake evaluation. Its
+  repository-wide `nix flake check --no-build` still stops at the existing
+  invalid `overlays.all` flake-output type; this is unrelated to the changed
+  metadata module and is not treated as validation of this feature.
+- A default vpsAdmin development-shell reporter invocation could not load the
+  native libosctl extension. Re-running the same spec in the declared
+  `.#libnodectld` component shell passed all 4 examples. Migration specs are
+  also kept in their own process because their connection switching invalidates
+  the ordinary shared test database when combined with model/resource specs.
+- Mandatory review found that legacy report schemas could still produce a
+  confident assessment, missing native dirty metadata was treated as clean,
+  and configured kernel parameters remained in intermediate unmerged commits.
+  The evaluator and historical attestations now require schema 4, nodectld
+  falls back to closure confctl metadata when native dirty state is unknown,
+  and all configured-parameter behavior was folded out of the feature history.
+  Commit messages now describe the schema-4 contract and rolling behavior.
+- The top-level dev-cluster source-identity plumbing is formatted,
+  shell-checked, and committed as `069bd60`. Only this initiative's argument
+  and Node metadata hunks were staged; unrelated notification work in the
+  shared checkout remains untouched.
+
+### 2026-07-15 exact closure metadata implementation
+
+- Work resumed from heads vpsAdmin `c5803845c`, vpsAdminOS `6a8f1d355`,
+  security-advisories `7e3979b`, KB contract `1adabf7`, and configuration
+  `e8e60e4d`. All are still unmerged feature branches.
+- vpsAdminOS evidence schema 4 removes configured kernel parameters, records
+  native revision dirty state, and no longer emits the false `staging`
+  fallback. vpsAdmin's native metadata likewise no longer emits `dev`.
+- nodectld reports only the ordered `/proc/cmdline` parameters and all six
+  booted/current vpsAdminOS/vpsAdmin/nixpkgs identities. It uses closure-native
+  metadata first and the matching closure's confctl inputs file only as an
+  exact-revision fallback. `/proc/config.gz` remains the no-reboot kernel-config
+  fallback for an older booted closure. `/etc/os-release` is not used.
+- The normalized database/API stores revision provenance and dirty state for
+  current identities and history changes. WebUI links only full Git hashes,
+  labels invalid or absent identities unavailable, and marks dirty native
+  revisions as modified. Kernel parameter pages now show only the actual boot
+  sequence.
+- The security-advisories collector/evaluator is being updated to the same
+  booted-only and exact-provenance contract. Its focused evaluator tests pass;
+  the complete suite and RuboCop remain pending.
+- Targeted vpsAdmin verification completed so far: libnodectld 4 examples,
+  migration 2 examples, and normalized model/resource 19 examples all pass.
+  Status/record-operation focused tests also completed without failures.
+- The workspace dev-cluster launcher now derives exact worktree HEAD/dirty
+  metadata and injects it into Node closures. These top-level edits overlap a
+  shared dirty checkout only in `nix/test.nix`; the unrelated notification
+  changes remain untouched and must not be staged in this initiative.
+- `nix develop .#webui --command webui/lang/scripts/locales-update` failed
+  because the shell changes into `webui`, duplicating the path. The correct
+  invocation is `nix develop .#webui --command lang/scripts/locales-update`.
+
+
 - The requested Node evidence presentation correction is implemented and
   pushed at vpsAdmin head
   `c5803845cc841d0c415b9009fe5878dcea23589c`. Parameter comparison rows follow

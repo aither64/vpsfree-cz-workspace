@@ -13,11 +13,12 @@ explicit human action outside the automation token's authority.
 ## Final feedback refinements
 
 - Evidence collection is vulnerability-agnostic. vpsAdminOS publishes the
-  complete booted kernel configuration, configured kernel parameters, and all
-  sysctls declared by the activated system. nodectld pairs these inputs with
-  the actual command line, effective sysctl values, loaded modules, closure
-  identities, and runtime mitigations. No CVE-specific option or sysctl list is
-  embedded in the reporter.
+  complete booted kernel configuration and all sysctls selected by the generic
+  evidence policy. nodectld pairs these inputs with the actual boot command
+  line, effective sysctl values, loaded modules, closure identities, and
+  runtime mitigations. Configured kernel parameters are not evidence and are
+  not stored. No CVE-specific option or sysctl list is embedded in the
+  reporter.
 - Full kernel configuration text is deduplicated in vpsAdmin by SHA-256 digest
   and retained as canonical private evidence. It is parsed into relational
   option rows when saved; the API returns only requested options. Frequent
@@ -37,9 +38,8 @@ explicit human action outside the automation token's authority.
 
 ## Node evidence WebUI presentation
 
-- Kernel parameter comparisons are presented in the exact booted order;
-  configuration-only entries follow in configured order. The raw command line
-  is escaped, marked as code, and allowed to wrap.
+- Kernel parameters are presented only in their exact booted order. The raw
+  command line is escaped, marked as code, and allowed to wrap.
 - Passive explanations use a neutral page-description component inside the
   normal content area. `perex` remains reserved for action results and errors.
 - Current sysctl evidence omits the redundant availability column. History
@@ -54,6 +54,26 @@ explicit human action outside the automation token's authority.
   fixtures must supply the current draft revision when publishing records, in
   line with the already implemented optimistic-concurrency contract.
 
+## Exact closure metadata refinement
+
+- Treat booted and current vpsAdminOS, vpsAdmin, and nixpkgs as six identities
+  belonging to the booted and activated system closures. All six are relevant
+  even though vpsAdmin and nixpkgs are not themselves kernels.
+- Resolve each identity from native metadata inside the corresponding closure.
+  If an exact revision is absent, fall back only to that closure's
+  `/etc/confctl/inputs-info.json`. Do not consult `/etc/os-release` and do not
+  assume confctl is installed on the running Node.
+- Store revision provenance and native dirty-checkout state. Only a full
+  40-character Git commit is linkable or sufficient for an exact assessment;
+  branch names and placeholders such as `dev` or `staging` remain unavailable.
+- The dev-cluster launcher injects the selected worktree HEADs and dirty flags
+  so its closure metadata is truthful without confctl.
+- vpsAdmin services can be deployed before Nodes. Old and new report schemas
+  coexist, service-only Nodes remain excluded, and gradually updated staging
+  Nodes begin contributing schema-4 evidence without a reboot. A reboot is
+  necessary only when an operator wants the booted closure or booted kernel to
+  change, not to deploy the reporter or API.
+
 ## Typed evidence resource redesign
 
 The collector-specific `node.security_evidence#index` envelope is superseded
@@ -66,7 +86,7 @@ self-description is the API contract.
   freshness filters and flattens current kernel/build/deployment and history
   coverage fields.
 - Exact internal history and every repeated evidence component are separate
-  top-level typed object-list resources: events, configured kernel parameters,
+  top-level typed object-list resources: events, booted kernel parameters,
   loaded modules, sysctls, livepatch modules and patch entries, eBPF programs,
   BPF object/link entries, and evidence/coverage gaps. No output parameter in
   this private evidence API uses HaveAPI's `Custom` type.
@@ -139,10 +159,10 @@ after its relational string representation is read back.
 The migrations and API are still unmerged and have not reached production, so
 no legacy blob data requires conversion. The dedicated development cluster has
 applied discarded versions of the same migration timestamps and must be reset.
-nodectld schema 2 and its rolling-upgrade behavior do not change. A rollback to
-pre-feature vpsAdmin ignores the additive Node report field and can leave or
-remove the new tables; it does not need to read data written in a new opaque
-format.
+nodectld schema 4 is accepted alongside schemas 1-3 for rolling upgrades. A
+rollback to pre-feature vpsAdmin ignores the additive Node report field and can
+leave or remove the new tables; it does not need to read data written in a new
+opaque format.
 
 ## Affected repositories
 
