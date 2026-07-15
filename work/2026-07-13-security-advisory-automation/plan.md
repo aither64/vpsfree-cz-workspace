@@ -661,3 +661,84 @@ cluster database reset is therefore required. Rebuild the downstream
 configuration and documentation pins only after the final vpsAdmin history is
 known, then run the mandatory fresh-context change review before the clean
 integration test.
+
+## Software, sysctl, and boot-parameter evidence follow-up (2026-07-15)
+
+The Node evidence model will additionally preserve the exact software and
+runtime inputs needed by future CVE assessments without depending on confctl
+or a vulnerability-specific allowlist.
+
+- Record booted and currently activated identities for vpsAdminOS, vpsAdmin,
+  and nixpkgs as normalized `node_software_versions` rows. Each row identifies
+  its `booted` or `current` generation and component, with exact revision and
+  version where the component exposes one. vpsAdmin is intentionally present
+  even though status rows carry its human version, because those rows do not
+  carry the precise source revision.
+- Detect changes in those six identities just like kernel changes. A Nix
+  activation is one deployment event even when several components change;
+  typed child rows retain the before/after identity for every changed
+  component and generation. The first schema-3 report establishes an explicit
+  baseline and never invents exact historical revisions from legacy status
+  rows.
+- Obtain all identities from the booted/current system closures. vpsAdminOS
+  metadata carries its own and nixpkgs identities. The vpsAdmin module writes
+  build information into each closure, while nodectld also identifies the
+  revision of the code that is actually running and reports a gap if it does
+  not match the current closure. confctl is neither required nor consulted.
+- Normalize both configured and actually booted kernel parameters. Preserve
+  zero-based order and duplicates independently for the two origins, because
+  later parameters can override earlier ones. `/proc/cmdline` remains the
+  authoritative raw boot command line; a tested Linux-compatible tokenizer
+  creates filterable rows and a parse failure becomes an evidence gap.
+- Replace the current "all sysctls declared by Nix" rule with an explicit,
+  versioned security-evidence policy. The policy includes attack-surface
+  controls, exploit hardening, payload controls, and failure-reporting
+  visibility, including unsupported entries as `available=false`. It excludes
+  ordinary capacity/performance tuning. Unexpected read errors are evidence
+  gaps rather than being mistaken for unsupported controls.
+- Persist per-sysctl before/after changes under exact evidence events. This
+  permits a per-Node, per-name newest-first history rather than retaining only
+  the current configured/effective value.
+
+Add admin-only typed top-level resources for current/event software versions,
+grouped software deployments, component changes, and sysctl changes. Extend
+kernel-parameter rows with an origin and sysctl rows with availability. Keep
+the existing authenticated public kernel history unchanged.
+
+The Node WebUI sidebar gains three admin-only pages: Kernel parameters,
+Sysctls, and Software versions. Parameter rows compare configured and booted
+ordered sequences with occurrence-aware differences. Sysctls show configured
+versus effective values and link each name to its newest-first history.
+Software versions show booted/current component identities with fixed GitHub
+revision links and a newest-first grouped deployment history. The existing
+kernel-history page remains available to all logged-in users.
+
+Compatibility remains additive at the deployed protocol boundary: vpsAdmin
+accepts legacy schema-2 and new schema-3 evidence during rolling deployment,
+while old vpsAdmin ignores the optional report. Because all affected database
+migrations and API resources remain unmerged, their introduction is rewritten
+in place and the development database must be reset. Deploy the tolerant
+receiver/API first, then activate new Node closures. A rollback can ignore the
+new rows, but cannot reconstruct exact revisions that were never reported.
+
+Update security-advisories to collect and digest the typed additions and grant
+only their exact index scopes. Refresh vpsfree-cz-configuration pins through
+confctl and the vpsadmin-kb-captures contract only after the final rewritten
+heads are known. After focused verification and committed changes, perform the
+mandatory standalone review before resetting and exercising the bridge-network
+development cluster.
+
+## Implementation result (2026-07-15)
+
+The design above is implemented, committed, pushed, and exercised end to end
+on the dedicated bridge-network development cluster. The clean-cluster test
+found and fixed the test-framework propagation of exact nixpkgs identity while
+retaining fail-closed behavior for mismatched package sets. The least-privilege
+token workflow collected one hosting Node, excluded service Nodes, evaluated
+all five dossiers, produced a no-write dry-run advisory plan, demonstrated the
+expected public/admin authorization boundary, and revoked its credentials.
+
+Production evidence is intentionally not available in this workspace. The
+initial dossiers therefore retain no accepted production build identities or
+historical attestations; production collection and human review must resolve
+every per-Node `unknown` before a draft can be made publishable.

@@ -1173,3 +1173,205 @@ Final GitHub Actions status:
   shows no failure before cancellation; the topic-coverage job and every other
   shard passed. The focused local platform tests covering this change passed;
 - the vpsAdmin aggregate vpsAdminOS integration workflow remains in progress.
+
+## 2026-07-15 software/sysctl evidence follow-up start
+
+- The verified active session remains
+  `2026-07-13-security-advisory-automation`; all five affected feature
+  worktrees started clean and matched their remote feature branches.
+- Starting heads are vpsAdmin `0e9c345f6`, vpsAdminOS `d47ba226a`,
+  security-advisories `334ae8d1`, vpsfree-cz-configuration `97220d42`, and
+  vpsadmin-kb-captures `c1c0fb25`.
+- vpsAdmin `origin/master` remains `8028e5032`. vpsAdminOS `origin/staging`
+  advanced from the feature base `ff9e49b20` to `c21989035` through a nixpkgs
+  input update and packaged-gem update. Its unmerged feature branch will be
+  rebased before the new implementation.
+- Approved decisions are recorded in `plan.md`: booted/current identities for
+  vpsAdminOS, vpsAdmin, and nixpkgs; grouped Nix deployment history; ordered
+  configured and booted parameters; a versioned merit-based sysctl policy with
+  availability and per-name history; and three admin-only Node detail pages.
+- Receiver/API deployment precedes Node activation. Legacy schema-2 reports
+  remain accepted, the new reporter emits schema 3, and exact legacy software
+  history is not fabricated. The rewritten migrations require a clean dev
+  cluster reset after mandatory review.
+
+## 2026-07-15 software/sysctl evidence review checkpoint
+
+All intended follow-up changes are committed and the review packet is frozen.
+The final histories contain one vpsAdminOS input update and one generated pin
+per configuration channel; superseded intermediate pins were removed before
+review without changing the implementation trees.
+
+Repository heads and commit shape:
+
+- vpsAdmin is `f578c8adb77db7d64690524ecafa5c124aed1e19`, force-pushed.
+  The follow-up is split into `5abee06af` for normalized API/database history,
+  `b33f58c8e` for the schema-3 reporter, `b7855d72f` for the administrator
+  WebUI, and `f578c8adb` for the separate final vpsAdminOS input pin.
+- vpsAdminOS is `a42a9fc95997122769a1012ac208214b56c6dfae`,
+  force-pushed after rebasing on current `origin/staging`. Its follow-up is the
+  focused `os: expose exact nixpkgs build identity` commit on top of the
+  existing boot/livepatch/eBPF evidence series.
+- security-advisories is
+  `829fa15aaa79ded43fef62ec33adff1e8ca9d2a4`. The follow-up adds typed exact
+  software collection, schema-3 completeness/digests, and matching minimal
+  token scope in one evidence-contract commit. It is committed locally and
+  pending the review gate before push.
+- vpsadmin-kb-captures is
+  `2f86e434526c815427d68231c3bdaf37841e0dc2` locally. Its final contract commit
+  pins vpsAdmin `f578c8adb`, refreshes the production navigation inventory,
+  and registers kernel history, ordered parameters, sysctls, and software
+  versions. The three new administrator pages have no current end-user KB page
+  or screenshot bindings.
+- vpsfree-cz-configuration is
+  `1e340b498de25370c635d7cae34d78a0b4ee7d08` locally. Three clean generated
+  confctl commits pin staging vpsAdminOS to `a42a9fc9` and staging/services
+  vpsAdmin to `f578c8ad`; production vpsAdminOS remains unchanged.
+
+Quick verification before review:
+
+- vpsAdmin focused model/operation/supervisor/API-resource and advisory specs
+  passed in their ordinary database; the isolated migration suite passed.
+- libnodectld's schema-3 reporter specs passed. The vpsAdmin build-info module
+  evaluated to schema 1 with the exact injected revision and version.
+- vpsAdmin WebUI regression specs passed with 3 tests and 13 assertions. API
+  and WebUI catalogs regenerated successfully, Czech uses `Node`, and all
+  affected RuboCop/PHP CS Fixer/Nixfmt/migration/i18n hooks passed.
+- vpsAdminOS system evaluation succeeded and its metadata evaluation returned
+  the exact nixpkgs revision/version with evidence schema 3. `nix flake check
+  --no-build` still reaches the repository's pre-existing invalid
+  `overlays.all` list output; the targeted system check used by this change is
+  green.
+- security-advisories RSpec passed 65 examples with no failures, RuboCop
+  inspected 21 files without offenses, and its staged Overcommit hook passed.
+- vpsadmin-kb-captures `nix develop -c bin/check` passed: 37 controls, 29
+  paths, 32 capture concepts, 3 selectors, 65 bindings, 9 exceptions, both
+  test groups green, and all 118 PNG variants valid. The final rewritten pin
+  was rechecked against the byte-identical vpsAdmin source tree.
+- All generated confctl commits ran the active Nixfmt hook successfully. One
+  attempted pin used a mistyped nonexistent vpsAdmin revision and failed with
+  HTTP 404 before changing `flake.lock`; the exact revision read from Git then
+  succeeded.
+
+Compatibility remains additive. vpsAdmin accepts evidence schemas 2 and 3;
+the reporter emits schema 3 only after the tolerant receiver/API is deployed.
+The six exact software identities, booted parameters, and policy availability
+are never synthesized for schema-2 history. A rollback ignores the new rows,
+but cannot reconstruct identities that were not reported. Since the unmerged
+migration was rewritten in place, the next integration step is a clean
+bridge-network dev-cluster reset after the standalone review.
+
+## 2026-07-15 mandatory software/sysctl review resolution
+
+The one required fresh-context standalone review completed and was not
+repeated. It found one Blocking schema-contract issue, two Important findings,
+and two Advisory hardening opportunities. Every finding was resolved before
+the clean integration test:
+
+1. Schema 3 now supports one explicit policy version whose exact 35-control
+   inventory is shared consistently by reporter, receiver/API, and advisory
+   evaluator. Empty/partial maps and unknown policy versions fail closed.
+   Software version and revision fields must be nonempty at receiver,
+   API-completeness, evaluator, and historical-attestation boundaries.
+2. vpsAdminOS records a nixpkgs revision only when the actual `pkgs.path`
+   matches the flake input source. Caller-supplied package sets with unproven
+   provenance record no revision, and dirty input metadata is never stripped
+   into a clean-looking commit.
+3. The WebUI labels an available but unread sysctl as an effective-value read
+   failure, not as effective. Czech translates this as
+   `efektivní hodnotu se nepodařilo načíst`.
+4. A sysctl policy-version-only transition now creates an immutable internal
+   history event even when serialized values are unchanged.
+5. nodectld validates that parsed metadata is a JSON object; arrays, scalars,
+   and null become explicit evidence gaps instead of aborting Node status
+   construction.
+
+Post-fix focused verification:
+
+- security-advisories RuboCop: 21 files, no offenses; RSpec: 67 examples,
+  0 failures, including receiver-equivalent empty/partial/unknown-policy and
+  historical-attestation cases;
+- vpsAdmin API/model/supervisor/operation resources: 48 examples, 0 failures;
+- libnodectld probe: 3 examples, 0 failures;
+- WebUI evidence regression: 4 tests, 15 assertions; all repository hooks for
+  the API, reporter, and WebUI fix folds passed;
+- vpsAdminOS Nix formatting and targeted system evaluation passed; a matching
+  package set evaluates the exact nixpkgs revision
+  `8eeec934ae0dbeca3d7868c059568a65c08b2fc3`;
+- the three policy inventories were compared mechanically and are identical,
+  sorted, and contain 35 controls.
+
+Fixes were folded into their owning commits. Final pre-integration heads are
+vpsAdmin `a757f6918123bd445ad71a47e45290857f216a85`, vpsAdminOS
+`2b86a03952cc322bf43b506908bcf05e370d18d8`, security-advisories
+`7e3979bf1c07a10442c6eebfdfab4f96a8359bb8`, vpsadmin-kb-captures
+`0a551088637562c288261db206593df83b499cdd`, and
+vpsfree-cz-configuration `814f02621b4719c33a4d59d0137c484513511c8c`.
+The final contract and generated configuration pins resolve those exact
+vpsAdmin/vpsAdminOS revisions.
+
+## Final clean integration and live workflow (2026-07-15)
+
+The clean bridge-network cluster exposed one additional integration gap after
+the mandatory review: vpsAdminOS' raw test-framework evaluation did not carry
+the locked nixpkgs revision into the generated closure. The receiver correctly
+rejected that first schema-3 report instead of accepting a partial software
+identity. Production flake systems already received the identity module; the
+test framework now carries the same locked revision only when the evaluated
+`pkgs.path` is the matching nixpkgs source. An unrelated caller-supplied
+package set still records no revision. The active Node was updated and the
+cluster was stopped and started so both booted and current closures contain
+nixpkgs `8eeec934ae0dbeca3d7868c059568a65c08b2fc3`.
+
+The resulting final heads are:
+
+- vpsAdmin `d57c6f0fc66927bf5cea16dd10cbe519b31a3c86`, pushed;
+- vpsAdminOS `6a8f1d35539f9aade7a0535a535587f025aa96d2`, force-pushed;
+- security-advisories `7e3979bf1c07a10442c6eebfdfab4f96a8359bb8`, pushed;
+- vpsfree-cz-configuration
+  `fa01112c44afa31f53d21cc3e278ba3fef2cf6a0`, force-pushed with generated
+  confctl commits for the corrected staging/services pins;
+- vpsadmin-kb-captures
+  `e060503b2de25c963ded49a1567de43d1b847452`, force-pushed and pinned to the
+  exact final vpsAdmin/vpsAdminOS revisions.
+
+Final live verification on the running, ready, single-Node bridge cluster:
+
+- WebUI and API return HTTP 200. The normalized database contains one hosting
+  Node and excludes the mailer and two DNS service Nodes from kernel evidence.
+- Node 101 reports evidence schema 3 with no gaps. The canonical kernel
+  configuration contains 8,047 parsed relational options; the advisory
+  collector requested the six dossier-relevant options and received all six.
+- Both current and event snapshots contain the exact 35-control sysctl policy:
+  34 controls are available and one is explicitly unavailable. The initial
+  event contains typed before/after sysctl rows and all six booted/current
+  software identities.
+- Configured kernel parameters reconstruct at positions 0 through 4 and the
+  actual boot command line at positions 0 through 8, preserving order and
+  values independently. The first boot event correctly has no
+  `observed_after` lower bound and has its first `observed_before` upper bound.
+- A real token created by `bin/create-token` had mode 0600 and exactly 25
+  scopes: the typed evidence indexes, draft advisory/CVE/Node-status actions,
+  and self-revocation. Collection returned evidence schema 5 for Node 101 only.
+- All five CVEs evaluated that Node as `unknown`, fail-closing because the
+  clean cluster has no history back to 2026-01-01. Dry-run sync for
+  CVE-2026-23111 proposed one unknown Node status and no write; no advisory or
+  draft was created.
+- The automation token received HTTP 403 for generic `node#index` and
+  `security_advisory#publish`. A normal member token received HTTP 200 for the
+  nested public `node.kernel_history#index` and HTTP 403 for admin-only
+  sysctls. All temporary tokens were revoked or removed from the disposable
+  database, token files and generated `.state` files were removed, and no
+  credential remains.
+- The complete KB check remains green: 37 controls, 29 paths, 32 capture
+  concepts, 3 semantic selectors, 65 bindings, 9 exceptions, both test groups,
+  and all 118 PNGs.
+
+Current-head GitHub checks are green for security-advisories RuboCop/RSpec and
+the completed vpsAdmin and vpsAdminOS jobs. The long selected vpsAdmin
+integration run `29432504910` and vpsAdminOS test-suite run `29432240364` are
+still in progress at this checkpoint. Superseded vpsAdmin run `29429676226`
+was cancelled after confirming that its head was obsolete.
+
+The cluster remains running for review. No production deployment, vpsAdmin
+advisory mutation/publication, user notification, or KB write was performed.
