@@ -1524,3 +1524,78 @@ advisory mutation/publication, user notification, or KB write was performed.
 - All three affected project worktrees are clean and synchronized with their
   SSH remotes. No production deployment, API mutation, advisory publication,
   notification, KB staging, or KB publication was performed.
+
+## 2026-07-16 exact closure final rollout
+
+The exact-closure refinement is complete and all five project worktrees are
+clean and synchronized with their SSH feature branches:
+
+- vpsAdmin `9de28b8fb92c383f50e5ca3605642d7a78b46cf1`;
+- vpsAdminOS `dbc03d00508b89093ecafc5e5abdcfc6bb5bdfbb`;
+- security-advisories `ce0aca81789c7dec31a939ddd5c88ebeafdc7281`;
+- vpsadmin-kb-captures `3fb8b0cfe7b53cfd83724766cb333553b96d3c46`;
+- vpsfree-cz-configuration
+  `9a7db1519ebea5bdc003c7232a5a167c50af18c9`.
+
+The configuration branch consists of three generated confctl commits that pin
+staging vpsAdminOS and staging/services vpsAdmin to the exact final revisions.
+The KB contract pins the same vpsAdmin head and its complete contract check is
+green. The top-level exact source-injection implementation is published on
+workspace master as `cf437a53809cbc9b25d78bd7585325763ff26e86`.
+
+The previous cluster was stopped and its state was reset before integration.
+The final single-Node cluster is running and ready on the bridge network. A
+clean temporary checkout was required so unrelated shared-workspace
+notification edits could not enter the build. Nix rejected symlinked path
+inputs, so project inputs were real detached worktrees. Workspace master also
+contains an unmerged notification-stack harness whose NixOS options do not yet
+exist on vpsAdmin master. The final build therefore used compatible committed
+harness baseline `a98bdb9` plus only the 47-line source revision/dirty-state
+plumbing from `cf437a5`; product inputs remained the exact clean final commits.
+Both issues have durable troubleshooting notes.
+
+Live evidence verification through the real narrow API token established:
+
+- Node 101 is the only active kernel-hosting Node; DNS and other service roles
+  are excluded from the evidence set;
+- report schema 4 has no evidence gaps and identifies kernel `6.12.95`;
+- booted and current vpsAdminOS are `dbc03d005`, vpsAdmin is `9de28b8fb`, and
+  nixpkgs is `8eeec934ae0dbeca3d7868c059568a65c08b2fc3`; all six identities have
+  native provenance and `revision_dirty=false`;
+- booted/current system paths are identical in this fresh cluster, while the
+  API still stores the two generations separately;
+- `/proc/cmdline` reconstructed exactly as nine typed rows at positions 0
+  through 8, including the valueless `quiet` token. There is no configured
+  parameter origin or configured-parameter data;
+- the typed sysctl resource contains the exact 35-control merit-based policy;
+  the six dossier-required kernel options were retrieved by exact-name filters
+  from the digest-addressed relational configuration;
+- the first boot event correctly has `observed_after=null` and a populated
+  `observed_before`, because no earlier observation can bound its lower side.
+
+`bin/create-token` wrote a mode-0600 token with exactly 25 scopes. The complete
+collector returned schema-5 evidence for Node 101 and all five CVEs fail-closed
+to `unknown`: the fresh development database cannot prove history back to
+2026-01-01. The real apply workflow created development draft 1, its CVE row,
+and Node 101's unknown status. `ready` refused the draft because the Node is
+unknown and resolution is incomplete. Generic `node#index` and
+`security_advisory#publish` both returned HTTP 403. The token was then revoked
+and its file removed; ignored development evidence/evaluation files were also
+removed. The development draft remains for WebUI review, but no advisory was
+published and no mail or user notification was sent.
+
+Final current-head CI status at this checkpoint:
+
+- security-advisories RuboCop and RSpec are green;
+- vpsAdmin migration, RuboCop, WebUI, client, libnodectld, and i18n workflows
+  are green. The topic-parallel full platform shard was cancelled exactly at
+  its configured 30-minute timeout while examples were still passing; its log
+  reached the new evidence resource specs without a test failure, and every
+  other shard plus topic coverage passed. The long integration CI remains in
+  progress;
+- vpsAdminOS RSpec and the closure-build job are green; its long test-suite job
+  remains in progress.
+
+The bridge cluster is intentionally left running for review. Its state and
+source mounts depend on
+`/tmp/vpsfree-security-advisory-devcluster-compat-20260715` until it is stopped.

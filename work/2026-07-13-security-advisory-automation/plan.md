@@ -134,7 +134,7 @@ Current and historical security evidence is normalized at ingestion. A
 kernel/deployment fields; child tables store kernel parameters, loaded modules,
 declared/effective sysctls, livepatch modules and patch entries, eBPF programs,
 objects and links, and reported errors. Reconstruction coverage gaps are rows
-under `node_security_history_states`. No current status, event, or history
+under `node_kernel_history_states`. No current status, event, or history
 checkpoint retains an opaque evidence/gaps JSON value.
 
 One mutable current snapshot is referenced by each kernel-hosting Node's
@@ -673,14 +673,14 @@ The public nested `node.kernel_history` resource remains stable. The nodectld
 wire report key and vpsAdminOS evidence file keep their existing names because
 they describe the wider report contract, not the normalized Node schema.
 
-Store configured kernel parameters relationally as an ordered sequence. Each
-row has a zero-based `position`, parsed `name`, and nullable `value`; duplicate
-tokens are valid. Split only at the first equals sign, so `foo`, `foo=`, and
-`foo=bar=baz` remain distinguishable. The raw `/proc/cmdline` field remains the
-authoritative exact command line, while these rows represent the ordered
-parameters from the booted deployment closure. Snapshot canonicalization must
-preserve parameter-array order while continuing to normalize collections whose
-order has no meaning.
+Store only the kernel parameters actually used at boot as an ordered
+relational sequence parsed from `/proc/cmdline`. Each row has a zero-based
+`position`, parsed `name`, and nullable `value`; duplicate tokens are valid.
+Split only at the first equals sign, so `foo`, `foo=`, and `foo=bar=baz`
+remain distinguishable. The raw command line remains authoritative.
+Configured kernel parameters are not evidence and are never stored. Snapshot
+canonicalization must preserve parameter-array order while continuing to
+normalize collections whose order has no meaning.
 
 Keep `observed_after` and `observed_before`. Document them as the open/closed
 observation interval `(observed_after, observed_before]`: the transition was
@@ -716,19 +716,20 @@ or a vulnerability-specific allowlist.
 - Detect changes in those six identities just like kernel changes. A Nix
   activation is one deployment event even when several components change;
   typed child rows retain the before/after identity for every changed
-  component and generation. The first schema-3 report establishes an explicit
+  component and generation. The first schema-4 report establishes an explicit
   baseline and never invents exact historical revisions from legacy status
   rows.
 - Obtain all identities from the booted/current system closures. vpsAdminOS
   metadata carries its own and nixpkgs identities. The vpsAdmin module writes
-  build information into each closure, while nodectld also identifies the
-  revision of the code that is actually running and reports a gap if it does
-  not match the current closure. confctl is neither required nor consulted.
-- Normalize both configured and actually booted kernel parameters. Preserve
-  zero-based order and duplicates independently for the two origins, because
-  later parameters can override earlier ones. `/proc/cmdline` remains the
-  authoritative raw boot command line; a tested Linux-compatible tokenizer
-  creates filterable rows and a parse failure becomes an evidence gap.
+  build information into each closure. nodectld reads closure-native metadata
+  first and falls back only to that closure's
+  `/etc/confctl/inputs-info.json` when a native exact revision is absent.
+  confctl need not be installed or running on the Node.
+- Normalize only the actually booted kernel parameters. Preserve zero-based
+  order and duplicates because later parameters can override earlier ones.
+  `/proc/cmdline` remains the authoritative raw boot command line; a tested
+  Linux-compatible tokenizer creates filterable rows and a parse failure
+  becomes an evidence gap.
 - Replace the current "all sysctls declared by Nix" rule with an explicit,
   versioned security-evidence policy. The policy includes attack-surface
   controls, exploit hardening, payload controls, and failure-reporting
@@ -740,21 +741,23 @@ or a vulnerability-specific allowlist.
   the current configured/effective value.
 
 Add admin-only typed top-level resources for current/event software versions,
-grouped software deployments, component changes, and sysctl changes. Extend
-kernel-parameter rows with an origin and sysctl rows with availability. Keep
+grouped software deployments, component changes, and sysctl changes. Keep
+kernel-parameter rows ordered by boot position and sysctl rows with
+availability. Keep
 the existing authenticated public kernel history unchanged.
 
 The Node WebUI sidebar gains three admin-only pages: Kernel parameters,
-Sysctls, and Software versions. Parameter rows compare configured and booted
-ordered sequences with occurrence-aware differences. Sysctls show configured
-versus effective values and link each name to its newest-first history.
+Sysctls, and Software versions. Parameter rows show the exact booted sequence.
+Sysctls show configured versus effective values and link each name to its
+newest-first history.
 Software versions show booted/current component identities with fixed GitHub
 revision links and a newest-first grouped deployment history. The existing
 kernel-history page remains available to all logged-in users.
 
 Compatibility remains additive at the deployed protocol boundary: vpsAdmin
-accepts legacy schema-2 and new schema-3 evidence during rolling deployment,
-while old vpsAdmin ignores the optional report. Because all affected database
+stores report schemas 1 through 4 during rolling deployment, while only schema
+4 has enough exact provenance for a confident assessment and old vpsAdmin
+ignores the optional report. Because all affected database
 migrations and API resources remain unmerged, their introduction is rewritten
 in place and the development database must be reset. Deploy the tolerant
 receiver/API first, then activate new Node closures. A rollback can ignore the
