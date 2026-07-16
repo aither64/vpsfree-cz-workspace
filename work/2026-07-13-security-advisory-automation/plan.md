@@ -53,6 +53,23 @@ explicit human action outside the automation token's authority.
   including width checks at the fixed desktop viewport. Shared advisory test
   fixtures must supply the current draft revision when publishing records, in
   line with the already implemented optimistic-concurrency contract.
+- Cluster administration lists link Node names to Node details and reported
+  kernel versions to the public kernel history, matching the overview page.
+- The kernel-parameter table remains ordered by its stored boot position but
+  does not display that internal position. Its raw command-line value receives
+  most of the table width. Sysctl history identifies the selected sysctl in the
+  page title instead of rendering a separate description below it.
+
+## Rolling supervisor compatibility
+
+- The vpsAdmin service is deployed before all Nodes are upgraded. Its
+  supervisor integration suite therefore publishes a legacy Node status that
+  omits `security_evidence` and verifies that the ordinary status fields are
+  accepted. The real nodectld reporter is stopped around this assertion so it
+  cannot race with or overwrite the fixture.
+- Legacy means the older payload shape, not an older observation. Reports that
+  arrive out of chronological order remain rejected by the existing status
+  ordering watermark.
 
 ## Exact closure metadata refinement
 

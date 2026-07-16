@@ -1599,3 +1599,100 @@ Final current-head CI status at this checkpoint:
 The bridge cluster is intentionally left running for review. Its state and
 source mounts depend on
 `/tmp/vpsfree-security-advisory-devcluster-compat-20260715` until it is stopped.
+
+## 2026-07-16 integration follow-up
+
+The completed long suites exposed four test assumptions rather than product
+regressions. The fixes are committed and pushed on the feature branches:
+
+- vpsAdmin `f6caefd79` makes `supervisor/runtime-ingestion` an explicit rolling
+  compatibility test. It stops the real nodectld reporter, publishes a current
+  legacy Node status with no `security_evidence`, verifies the ordinary status
+  fields, and restarts nodectld. Follow-up `100c93fc3` permits the test to run
+  before nodectld has created an initial current-status row, while still
+  choosing an observation newer than the stored watermark when one exists.
+  The existing stale-observation rejection is unchanged and remains covered by
+  the supervisor unit specs.
+- vpsAdmin splits the WebUI fixes into focused commits: `00ad4ab3b` links Node
+  names in both cluster views and kernels in the overview, `b1e70f9ea` removes
+  the displayed parameter position while retaining boot-order sorting and
+  gives the raw command line value 85 percent of its row, `0e1ed2649` moves the
+  selected sysctl into the history title, and `e44132ad3` edits advisory
+  content while it is still a draft. `7f90ef35b` changes the raw-command-line
+  table to automatic layout because fixed table layout ignored widths assigned
+  after XTemplate's empty first row. The final head is
+  `7f90ef35b269fec7cef6e61357b0a7162cc0cdb0`.
+- vpsAdminOS `8f598f2d6` replaces an exact console-login prompt wait with the
+  test driver's shell-readiness wait, avoiding console output interleaving from
+  cron during stage-2 boot.
+
+Quick verification is green: vpsAdmin WebUI PHPUnit passes 72 tests and 277
+assertions; both changed Playwright files pass Node syntax checks; all three
+vpsAdmin integration targets and the vpsAdminOS stage-2 target evaluate and
+list successfully; `git diff --check` is clean. Overcommit hooks passed in both
+repositories, including nixfmt, migration specs, WebUI/API localization, PHP
+CS Fixer, and commit-message checks. The first vpsAdminOS commit attempt from
+the ambient shell failed because nixfmt was absent; it was rerun normally from
+the repository Nix shell without bypassing hooks. The removed `Position`
+gettext entry and Czech catalog were regenerated with
+`webui/lang/scripts/locales-update`.
+
+The independent KB contract final commit is
+`2f4742934d9f5b20d85a6858685157c57f977913`; it pins the exact final vpsAdmin
+head. Its complete check is green with 37 controls, 29 paths, 32 capture
+concepts, 3 semantic selectors, 65 bindings, 9 exceptions, 15 tests/67
+assertions, and 118 PNGs. The changed administrator controls have no bound
+Czech/English KB pages or capture concepts, so no KB candidate or PNG update
+is required.
+
+The mandatory standalone reviewer reported one Blocking commit-structure
+finding: the original Node-evidence WebUI commit grouped cluster navigation,
+kernel-parameter presentation, and the sysctl-history title. It was split into
+the three focused commits above. The review's Advisory test gap was also fixed
+by asserting the Node-details link in the alternate cluster VPS view. There
+were no Important findings and no product-code, compatibility, authorization,
+or escaping defect. No second reviewer was launched because the skill requires
+exactly one standalone reviewer; the final trees preserve the reviewed behavior
+and only improve the requested commit split and direct coverage.
+
+Final focused integration verification is green:
+
+- `supervisor/runtime-ingestion`: all 10 examples pass. The legacy `statuses`
+  message omits `security_evidence`, is accepted by the real supervisor, and
+  persists process, memory, swap, ARC, and pool fields; nodectld is restored
+  before the remaining nine examples run.
+- `webui#admin-cluster`: all 9 Playwright scenarios pass. The first isolated
+  run measured equal 402-pixel command-line cells and exposed the fixed-layout
+  behavior described above; the automatic-layout rerun passes the width,
+  markup, order, link, and overflow assertions.
+- `webui#security-advisories`: all 10 Playwright scenarios pass, including
+  draft editing with the current content revision.
+- vpsAdminOS `system/boot/stage-2`: all 4 examples pass using shell readiness.
+
+Two initially simultaneous WebUI invocations collided over the same
+`/tmp/os-test-runner/os-test-webui-fd1a3b33` runtime and virtiofsd PID file.
+They were discarded as non-authoritative infrastructure collisions and rerun
+in isolation. The final WebUI PHPUnit run also passes 72 tests and 277
+assertions. vpsAdminOS GitHub CI at `8f598f2d6` is fully green. At the final
+checkpoint, vpsAdmin WebUI PHPUnit and i18n are green at `7f90ef35b`; the full
+selected integration workflow `29489765787` is still running its test step.
+The obsolete `e44132ad3` integration run was cancelled only after the new head
+was pushed.
+
+The production configuration branch now ends at
+`bde2ea9bd8495a675ef32294550fb63bc171cff8`. Its two generated confctl commits
+pin both `vpsadminStaging` and `vpsadminServices` to `7f90ef35b`; the latter is
+role `vpsadmin` in channel `vpsadmin`. The KB contract is pushed at `2f4742934`
+and its complete check remains green.
+
+The preserved bridge-network development cluster was restarted without a
+reset and then switched in place with `devcluster update ... all`; no guest
+reboot was requested. It is running and ready, and WebUI/API both return HTTP
+200. The live normalized evidence contains two schema-4 observations for Node
+101. Both booted and current software rows report exact clean revisions:
+vpsAdminOS `dbc03d005`, vpsAdmin `7f90ef35b`, and nixpkgs `8eeec934a`. This
+also verifies that the final revision metadata reaches nodectld after an
+in-place update even though the booted kernel and system path are unchanged.
+
+No production deployment, API mutation, advisory publication, notification,
+KB staging, or KB publication was performed.
