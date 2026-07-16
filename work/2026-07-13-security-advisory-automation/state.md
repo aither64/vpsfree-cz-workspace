@@ -1696,3 +1696,169 @@ in-place update even though the booted kernel and system path are unchanged.
 
 No production deployment, API mutation, advisory publication, notification,
 KB staging, or KB publication was performed.
+
+## 2026-07-16 authoritative system-state implementation
+
+The user approved implementing authoritative runtime CPU, Linux-visible
+memory, swap, and cgroup state for hosting/storage Nodes. The durable plan now
+records the normalized change-only history, public authenticated read access,
+narrow security-advisories cgroup projection, compatibility cache, backfill,
+and rolling deployment design. Implementation begins from clean, pushed heads:
+vpsAdmin `7f90ef35b`, security-advisories `ce0aca817`, configuration
+`bde2ea9bd`, and KB contract `2f4742934`. The shared top-level checkout has
+unrelated changes which will be preserved and staged selectively.
+
+### Implemented and committed
+
+- vpsAdmin now ends at `304d741e5` with three focused commits:
+  - `c418e93e1` adds `node_system_states`, authoritative current-report reads,
+    transactional rollback-cache updates, reconstruction, typed
+    `node_system_state`/`node_cgroup_state` resources, raw-status cgroup
+    output, and fail-closed swap checks;
+  - `7ca044842` refreshes CPU count and cgroup version on every nodectld status
+    cycle;
+  - `304d741e5` adds the authenticated System history page, removes bootstrap
+    capacity fields from the Node WebUI form, and adds member/admin browser
+    coverage.
+- security-advisories now ends at `07a4ecf`. Evidence schema 6 includes the
+  narrow per-Node cgroup timeline, validates one current non-overlapping
+  history for every active hosting Node, retries raced transitions, and adds
+  only `node_cgroup_state#index` to the token. The digest includes cgroup
+  transitions but excludes only the moving `last_observed_at` of an unchanged
+  current row.
+- Reconstructed rows can be inserted after a live current row, so database IDs
+  do not necessarily follow observation time. The API now uses a composite
+  `(first_observed_at, id)` cursor; a regression spec proves that pagination
+  does not skip a backfilled row with a newer ID.
+- Impossible zero CPU/memory reports are normalized to unknown. The non-null
+  rollback cache is set to zero in that case, avoiding stale capacity after a
+  rollback, while zero swap remains a valid observed value.
+
+### Quick verification
+
+- vpsAdmin application specs: 115 examples passed in 7m48s across the new
+  resource/reconstruction suites and affected Node, supervisor, status, and
+  VPS write specs. The focused composite-cursor resource rerun passed 12
+  examples; the final capacity-normalization/atomicity rerun passed 3 examples.
+- The migration ran separately and passed 2 up/down examples. An attempted
+  mixed migration/application RSpec process was discarded because migration
+  specs intentionally switch to a partial isolated database; the existing
+  durable migration-spec note documents this constraint.
+- libnodectld passed 5 examples. Its component bundle does not contain RuboCop,
+  so the repository-level RuboCop run was used as CI does.
+- Repository RuboCop inspected 2024 Ruby files without offenses. WebUI PHPUnit
+  passed 75 tests/287 assertions, WebUI locale health passed, both changed
+  Playwright files passed Node syntax checks through `nix shell
+  nixpkgs#nodejs`, and CI selection passed 16 tests/55 assertions.
+- security-advisories passed 71 RSpec examples and RuboCop inspected 21 files
+  without offenses. Its installed Overcommit hook passed.
+- All three vpsAdmin commits passed the installed Nixfmt, migration mapping,
+  API/WebUI i18n, RuboCop, and applicable PHP CS Fixer hooks. The first commit
+  attempt from the ambient shell failed because it lacked RuboCop, gettext,
+  and MariaDB; it was rerun from `nix develop .#vpsadmin` without bypassing
+  hooks. No product file changed during the failed attempt.
+
+The vpsAdmin and security-advisories worktrees are clean. Configuration and KB
+pins still point at the previous reviewed vpsAdmin head; they will be updated
+after the mandatory fresh-context review establishes the final functional
+revision. No long integration suite, dev-cluster update, production write,
+advisory mutation, token creation, or KB staging has been started for this
+follow-up yet.
+
+### Mandatory review and remediation
+
+The required standalone fresh-context review examined vpsAdmin
+`7f90ef35b..304d741e5` and security-advisories
+`ce0aca817..07a4ecf`. It reported one product-code Blocking finding: the
+narrow `node_cgroup_state` resource projected every `node_system_states` row,
+so a CPU, memory, or swap-only change produced a duplicate cgroup row, exposed
+irrelevant transition timing, and changed the advisory evidence digest. It
+also required the broad API and WebUI commits to be split into independently
+reviewable history/policy and history/form commits. There were no Important
+findings. Focused nodectld and security-advisories commit structure was
+accepted.
+
+The cgroup finding is fixed by coalescing consecutive equal cgroup versions in
+the API's derived relation while returning null capacity placeholders to
+ActiveRecord and omitting those fields from the typed resource. A vpsAdmin API
+regression proves that a capacity-only change remains visible in full system
+history but produces one cgroup period. The collector now also rejects an
+uncoalesced narrow timeline fail-closed. Focused verification passes: the new
+vpsAdmin regression passes against MariaDB, and security-advisories passes 13
+collector examples plus RuboCop on both affected files. The first attempted
+vpsAdmin focused command used the aggregate development shell and did not
+provide the API bundle; it was rerun with the repository's `.#api` shell. The
+initial derived relation omitted model-only placeholder columns and was
+corrected after a failing API test identified ActiveRecord eager-load column
+selection. No check was bypassed.
+
+The remaining review remediation is an unmerged history rewrite into focused
+commits. Exact configuration and KB pins remain intentionally unchanged until
+the rewritten vpsAdmin head is final.
+
+### Final system-state checkpoint and canonical Node authorization
+
+The review remediation and requested follow-up are complete. The pushed
+vpsAdmin branch ends at `a64c796fa3b05d0f8166ea5a33cf03bbdf56dc9a` with the
+functional history split into `c32bb3004` (normalized system history),
+`7bf62140a` (reported capacities), `ac8f8a517` (live probe refresh),
+`d21da33a0` (history WebUI), and `b3f3bca61` (bootstrap form removal), followed
+by the focused test/endpoint-inventory commit `889ab525f` and CI timeout commit
+`a64c796fa`. The earlier
+`api: expose Node IDs in system histories` workaround was removed completely
+from the rewritten branch; the cgroup history resource has no duplicate
+`node_id` field.
+
+The pushed security-advisories branch ends at
+`10a1f7ace2c1e509e823be94dcd76f950ceec83b`. Its token now requests normal
+`node#index` and `node#show` permissions, plus `node_cgroup_state#index` and
+`node_cgroup_state#show`. The cgroup `show` scope is required by HaveAPI when
+authorizing the typed Node association: with only the first three scopes a
+direct Node show succeeds, but a cgroup row returns an unresolved,
+unauthorized Node relationship. With all four, the row resolves to the
+canonical Node object. A real mode-0600, 29-scope development token collected
+schema-6 evidence for Node 101 through this relationship, including its cgroup
+history. The token was then revoked with the repository command and its file
+was deleted. No advisory draft was mutated.
+
+Final vpsAdmin focused verification is green. The swap-policy specs pass four
+examples after fixtures gained authoritative current reports, and endpoint
+coverage passes after adding index/show coverage for both new typed resources.
+The complete targeted integrations pass: `supervisor/runtime-ingestion` has 10
+green examples (including an older status payload without evidence),
+`webui#navigation-readonly` passes, and `webui#admin-cluster` passes. The
+runtime integrations exercised the same functional head; `889ab525f` changes
+only specs and the endpoint coverage manifest. security-advisories passes 72
+RSpec examples and RuboCop over 21 files; GitHub RSpec and RuboCop are green at
+`10a1f7a`. vpsAdmin GitHub RuboCop and i18n are green at `889ab525f`. Earlier
+API failures were investigated: the first exposed swap fixtures that lacked
+authoritative reports, and the second exposed missing endpoint coverage
+entries. Both causes are fixed in `889ab525f`. The next full-platform shard
+was cancelled exactly at the workflow's 30-minute timeout without an RSpec
+failure; core platform was green but also needed 26m43s. Commit `a64c796fa`
+raises both equivalent API matrix job limits to 45 minutes. The corrected
+current-head workflow `29526678528` is fully green: all 26 topic shards and
+aggregation passed. Full platform completed successfully in 31m43s, directly
+proving that the former 30-minute limit, rather than an RSpec failure, caused
+the cancelled run. The superseded selected-integration run was cancelled after
+the follow-up push as required; the same functional tree had already passed
+the three targeted integration suites locally.
+
+The configuration branch ends at
+`ceb856c3ea1f06e0cd7a51b85e231495731197be`; generated confctl commits pin both
+`vpsadminStaging` and `vpsadminServices` to `a64c796fa`. The production input
+was not changed. A production-configuration staging build resolved the feature
+inputs but could not continue locally because the production initrd SSH host
+key is intentionally unavailable at `/secrets/nodes/initrd/ssh_host_ed25519_key`.
+The independent KB contract remains clean and pushed at `5e2221177`, pinning
+the final functional WebUI revision; the later vpsAdmin commit has no product
+or documentation change.
+
+The bridge development cluster remains running. API/services and node1 were
+updated in place to the exact final heads. Node 101 retained boot ID
+`bca00320-cc4f-4381-a5a8-665cad7977c4`, so no reboot occurred. Its build-info
+reports clean vpsAdmin revision `a64c796fa`, and the API database records the
+same revision as the current vpsAdmin generation while preserving
+`7f90ef35b` as the booted generation. This proves the normalized history
+records an in-place closure change. No production deployment, API mutation,
+advisory publication, notification, KB staging, or KB publication occurred.

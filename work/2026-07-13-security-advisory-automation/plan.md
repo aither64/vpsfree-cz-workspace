@@ -801,3 +801,57 @@ Production evidence is intentionally not available in this workspace. The
 initial dossiers therefore retain no accepted production build identities or
 historical attestations; production collection and human review must resolve
 every per-Node `unknown` before a draft can be made publishable.
+
+## Authoritative Node system-state history (2026-07-16)
+
+Make runtime reports from hosting and storage Nodes authoritative for CPU
+count, Linux-visible memory, swap, and cgroup version. Service-container roles
+are excluded because their process-visible host resources do not describe
+capacity controlled by vpsAdmin. Refresh CPU and cgroup probes on every
+nodectld status cycle; memory and swap are already refreshed per report.
+
+Keep the existing non-null `nodes` capacity columns as a rollback-compatible
+cache, but update them transactionally from each accepted report for `node`
+and `storage` roles. New code reads current observed values. Before the first
+accepted report, capacity is unknown and swap-dependent operations fail
+closed. Node registration accepts the old capacity fields only as optional
+bootstrap data for rolling client compatibility; the WebUI no longer asks for
+them and the update API no longer exposes them.
+
+Add normalized `node_system_states` history. Consecutive equal tuples extend
+`last_observed_at`; a changed tuple closes the previous current row and creates
+a new one with `first_observed_at` and `last_observed_at` set to the report
+time. Recording happens under the existing per-Node lock and transaction, and
+stale reports do not change current state or history. An idempotent task
+reconstructs change-only history from `node_statuses` and finishes with
+`node_current_statuses`, tolerating incomplete legacy rows.
+
+Expose typed top-level `node_system_state` and `node_cgroup_state` resources.
+All authenticated members may read active hosting/storage Node history;
+administrators may also include inactive Nodes. The system-state resource is
+filterable by Node, current state, observation range, and Node activity. The
+narrow cgroup projection exists so security-advisories can receive only the
+runtime fact it needs. Add cgroup version to the existing raw Node status API.
+
+Add an authenticated Node WebUI page named System history, ordered newest
+first and showing observation period, CPUs, Linux-visible memory, swap, and
+cgroup version. Explain that the first and last timestamps are the first
+observation and latest confirmation of a state. Use normal page description
+content, not action-result perex styling, and retain the project terminology
+where Czech also calls a machine a "node".
+
+Extend security-advisories evidence from schema 5 to schema 6 with only the
+narrow per-Node cgroup history and its digest contribution. Grant the token
+ordinary `node#index`/`node#show` access for the canonical Node inventory and
+both index/show access to the cgroup projection so HaveAPI can authorize its
+typed Node relationship. CPU, memory, and swap do not enter CVE evidence.
+Missing current cgroup evidence remains explicit and fail-closed for future
+assessments without changing the existing dossier conclusions.
+
+Deployment is additive and rolling: migrate and deploy vpsAdmin first, run the
+history reconstruction, then update Nodes gradually. Old nodectld payloads
+already carry all four values and remain accepted; updated nodectld merely
+refreshes CPU and cgroup during its lifetime. No Node reboot or coordinated
+fleet update is required. A rollback can continue using the refreshed legacy
+columns while ignoring normalized history. Update the configuration and KB
+contract pins only after the final vpsAdmin revision is committed and reviewed.
