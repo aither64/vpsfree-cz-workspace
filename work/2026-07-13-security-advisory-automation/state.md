@@ -1867,22 +1867,36 @@ advisory publication, notification, KB staging, or KB publication occurred.
 
 The user requested removing the description blocks from System history,
 Software versions, Sysctls, Kernel parameters, and Kernel history, and showing
-cgroup generations as `v1`/`v2`. vpsAdmin commit `9d532e5c5` implements the
+cgroup generations as `v1`/`v2`. vpsAdmin commit `61596d6b7` implements the
 presentation changes, updates generated gettext artifacts, changes browser
 expectations, and adds regression coverage for the compact value and absence
-of descriptions. It also checks that the existing header version link contains
-an exact 40-character vpsAdmin commit and displays its eight-character prefix.
+of descriptions.
 
 The development header showed static `4.1.0` because the services machine had
 both an empty packaged `.git-revision` and `revision: null` in
 `/etc/vpsadmin/build-info.json`. The dev-cluster passed the selected worktree
 revision only to Node-machine module arguments. Workspace commit `a95b2ba`
-passes the same revision and dirty flag to the services machine; production
-flake inputs already provide exact revisions and need no fallback.
+passes the same revision and dirty flag to the services host. vpsAdmin commit
+`bf103480d` forwards them into the separately evaluated WebUI container,
+removes cross-deployment session caching, and compares the rendered header link
+with the exact packaged revision. Production flake inputs already provide
+exact revisions and need no metadata fallback.
 
-Quick verification is green: WebUI PHPUnit passes 76 tests/288 assertions,
+Quick verification is green: WebUI PHPUnit passes 76 tests/289 assertions,
 both changed Playwright files pass Node syntax checks, locale generation and
 health pass, all vpsAdmin pre-commit hooks pass, and the complete current API
-matrix remains green. The workspace Nix file passes `nixfmt --check`. The
-required standalone follow-up review and long browser/dev-cluster verification
-are pending.
+matrix remains green. The workspace Nix file passes `nixfmt --check`.
+
+The required standalone reviewer reported two Blocking findings: the
+services-host module arguments did not cross the nested WebUI container's
+`specialArgs`, and the presentation commit bundled independent header
+coverage. It also reported two Important findings: sessions cached empty/stale
+revisions across deployments, and the browser assertion accepted any valid
+hash instead of the selected source revision. One Advisory finding asked that
+the description regression not prohibit unrelated future Node descriptions.
+All findings are remediated in the two focused vpsAdmin commits above: the
+broad unit assertion was removed in favor of page-scoped browser checks, and
+the expected revision is read from the packaged source used by the test. Per
+the skill, exactly one standalone reviewer performed this follow-up review; no
+second reviewer is launched. Long browser and live dev-cluster verification
+can now proceed.

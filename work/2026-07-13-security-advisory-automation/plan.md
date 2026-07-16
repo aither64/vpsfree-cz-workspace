@@ -864,7 +864,10 @@ tables, ordering, and authorization behavior. Verify the exact WebUI source
 revision link in browser coverage.
 
 The development cluster must pass its selected vpsAdmin worktree revision to
-the services machine, not only to Node machines. This lets the packaged WebUI
-use its existing `.git-revision` link and gives service-side build metadata the
-same exact identity. This affects development-cluster evaluation only and does
-not change production deployment contracts.
+the services machine, not only to Node machines, and the services module must
+forward it into the separately evaluated WebUI container. This lets the
+packaged WebUI use its existing `.git-revision` link and gives service-side
+build metadata the same exact identity. Read the revision for every request so
+sessions cannot retain an empty or stale value across an in-place deployment.
+This affects development-cluster evaluation and version presentation only and
+does not change production deployment contracts.
