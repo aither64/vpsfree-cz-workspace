@@ -855,3 +855,16 @@ refreshes CPU and cgroup during its lifetime. No Node reboot or coordinated
 fleet update is required. A rollback can continue using the refreshed legacy
 columns while ignoring normalized history. Update the configuration and KB
 contract pins only after the final vpsAdmin revision is committed and reviewed.
+
+## Evidence-page presentation follow-up (2026-07-16)
+
+Keep the Node evidence pages concise: remove their explanatory description
+blocks and render cgroup generations as `v1`/`v2`. Preserve the data, titles,
+tables, ordering, and authorization behavior. Verify the exact WebUI source
+revision link in browser coverage.
+
+The development cluster must pass its selected vpsAdmin worktree revision to
+the services machine, not only to Node machines. This lets the packaged WebUI
+use its existing `.git-revision` link and gives service-side build metadata the
+same exact identity. This affects development-cluster evaluation only and does
+not change production deployment contracts.

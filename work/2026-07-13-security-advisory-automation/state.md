@@ -1862,3 +1862,27 @@ same revision as the current vpsAdmin generation while preserving
 `7f90ef35b` as the booted generation. This proves the normalized history
 records an in-place closure change. No production deployment, API mutation,
 advisory publication, notification, KB staging, or KB publication occurred.
+
+### Evidence-page presentation and dev-cluster header follow-up
+
+The user requested removing the description blocks from System history,
+Software versions, Sysctls, Kernel parameters, and Kernel history, and showing
+cgroup generations as `v1`/`v2`. vpsAdmin commit `9d532e5c5` implements the
+presentation changes, updates generated gettext artifacts, changes browser
+expectations, and adds regression coverage for the compact value and absence
+of descriptions. It also checks that the existing header version link contains
+an exact 40-character vpsAdmin commit and displays its eight-character prefix.
+
+The development header showed static `4.1.0` because the services machine had
+both an empty packaged `.git-revision` and `revision: null` in
+`/etc/vpsadmin/build-info.json`. The dev-cluster passed the selected worktree
+revision only to Node-machine module arguments. Workspace commit `a95b2ba`
+passes the same revision and dirty flag to the services machine; production
+flake inputs already provide exact revisions and need no fallback.
+
+Quick verification is green: WebUI PHPUnit passes 76 tests/288 assertions,
+both changed Playwright files pass Node syntax checks, locale generation and
+health pass, all vpsAdmin pre-commit hooks pass, and the complete current API
+matrix remains green. The workspace Nix file passes `nixfmt --check`. The
+required standalone follow-up review and long browser/dev-cluster verification
+are pending.
