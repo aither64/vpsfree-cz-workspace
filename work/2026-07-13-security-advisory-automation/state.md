@@ -1900,3 +1900,56 @@ the expected revision is read from the packaged source used by the test. Per
 the skill, exactly one standalone reviewer performed this follow-up review; no
 second reviewer is launched. Long browser and live dev-cluster verification
 can now proceed.
+
+### Final presentation/header verification
+
+The final pushed vpsAdmin head is
+`ae76ea3c01148986acd34d43b0d0dd6f6f140ea4`. The focused commits are
+`61596d6b7` for the concise evidence-page presentation and `ae76ea3c0` for
+deployed WebUI source identity. The latter keeps an exact commit-link assertion
+when metadata exists and verifies the intended static `4.1.0` fallback in an
+isolated local-worktree evaluation, whose generated `.git-revision` is empty.
+This preserves a strict deployed-revision check without inventing a revision
+for unpinned local source.
+
+Two integration attempts exposed test-only assumptions before the final green
+run. The first referenced a package attribute unavailable at suite scope. The
+second required an exact revision even though the isolated flake path has no
+`rev` or `dirtyRev`; its package `.git-revision` contains only a newline. The
+final test reads the services build metadata, validates an exact link when that
+metadata is exact, and otherwise validates the static fallback. The durable
+lesson is recorded in
+`notes/vpsadmin/2026-07-16-webui-local-revision-fallback.md`.
+
+Final integration verification is green and was run sequentially to avoid the
+test runner's shared temporary VM-state collision:
+
+- `webui#navigation-readonly`: 1/1 script successful in 715.22 seconds; its
+  Playwright example passed in 155.17 seconds. It verifies no System history
+  description and the compact `v2` value.
+- `webui#admin-cluster`: 1/1 script successful in 701.77 seconds; its
+  Playwright example passed in 332.34 seconds. It verifies the removed Kernel
+  history, Kernel parameters, Sysctls, and Software versions descriptions.
+- The KB contract at `2aa73ba1b` pins the final vpsAdmin revision and passes
+  `nix develop -c bin/check`: 38 controls, 29 paths, 32 capture concepts, 3
+  selectors, 65 bindings, 9 exceptions, 15 tests/67 assertions, and all 118
+  PNGs. No KB pages or captures are bound to the changed controls.
+
+Generated confctl commits `2168be37` and `6b92adea` pin both staging vpsAdmin
+and the vpsAdmin services channel to `ae76ea3c0`; production remains unchanged.
+Workspace commits `a95b2ba` and `7ed215d` propagate the services revision and
+copy `.git-revision` into the live development WebUI root.
+
+The persistent single-topology bridge cluster was switched in place and remains
+running and ready. The public WebUI header renders `ae76ea3c` linked to the
+exact GitHub commit. Services-host, nested-container, live-WebUI, and node1
+metadata all report the full clean `ae76ea3c...` revision. Node1 retained boot
+ID `bca00320-cc4f-4381-a5a8-665cad7977c4`; only nodectld restarted, so no node
+reboot occurred. Normalized software evidence preserves booted vpsAdmin
+`7f90ef35b...` and reports current vpsAdmin `ae76ea3c...`.
+
+GitHub WebUI PHPUnit and i18n are green at the final head. The final selected
+CI workflow is still running its integration step at this checkpoint. The
+superseded `39c350a7` CI run was cancelled only after the final head was
+pushed. No production deployment, advisory/API mutation, token creation, KB
+staging, or KB publication was performed.

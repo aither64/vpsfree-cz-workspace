@@ -871,3 +871,8 @@ build metadata the same exact identity. Read the revision for every request so
 sessions cannot retain an empty or stale value across an in-place deployment.
 This affects development-cluster evaluation and version presentation only and
 does not change production deployment contracts.
+
+An isolated test-runner evaluation of a local checkout has no exact flake
+revision and therefore exercises the static version fallback. Browser coverage
+must compare the exact link whenever revision metadata is present; the running
+bridge dev cluster provides the strict deployed-revision check.
