@@ -2196,24 +2196,19 @@ resource inputs and ActiveRecord-backed resource outputs. The fixes remain
 unreleased; publishing a HaveAPI release and updating vpsAdmin's packaged gem
 still require explicit user approval.
 
-The vpsAdmin association conversion remains one API-wide commit followed by
-one WebUI consumer commit. Splitting the API conversion by resource family
-was attempted, but the repository's global i18n contract is invalid while
-some resources still expose removed scalar Node labels. Keeping the model,
-resource, authorization, catalog, and focused endpoint regressions together
-therefore preserves an independently valid API contract at the commit
-boundary. The failed split was aborted without changing the final tree.
+At the preceding review checkpoint, the vpsAdmin association conversion was
+one API-wide commit followed by one WebUI consumer commit. An initial split
+showed that the repository's global i18n contract is invalid while only part
+of the association graph has changed. That checkpoint is superseded by the
+hook-clean history fold recorded below.
 
-Quick verification is green. The current vpsAdmin tree is byte-for-byte equal
-to the tree that passed 85 focused resource, advisory, supervisor, and model
-examples with no failures in 10 minutes 17 seconds; every history-rewrite
-commit ran the installed Nixfmt, migration, API/WebUI i18n, RuboCop, and
-applicable PHP hooks. security-advisories is byte-for-byte equal to its
-76-example/RuboCop-verified tree, and each rewritten commit passed its
-installed RuboCop hook. HaveAPI passes all 349 Ruby server examples and
-RuboCop over 116 files. vpsAdminOS source is unchanged by its message/schema
-history rewrite and its Nixfmt/Overcommit gate remains green. All four
-worktrees are clean and `git diff --check` passes.
+Verification at that checkpoint was green. The vpsAdmin tree passed 85 focused
+resource, advisory, supervisor, and model examples with no failures in 10
+minutes 17 seconds; every history-rewrite commit ran the installed Nixfmt,
+migration, API/WebUI i18n, RuboCop, and applicable PHP hooks.
+security-advisories passed its then-current 76 examples and RuboCop, HaveAPI
+passed all 349 Ruby server examples and RuboCop over 116 files, and vpsAdminOS
+passed its Nixfmt/Overcommit gate.
 
 The isolated vpsAdmin flake commit still points to the pre-rewrite vpsAdminOS
 metadata commit. After mandatory review clears the source histories, publish
@@ -2223,3 +2218,67 @@ the previous reviewed vpsAdmin revision until the final vpsAdmin head is known.
 No long integration test, development-cluster refresh, production write,
 advisory mutation, notification, package release, or KB write has begun for
 this follow-up.
+
+### Review remediation and association-history fold (2026-07-17)
+
+The mandatory reviewer found that the internal report reader still accepted
+legacy shapes, explicit unsupported evidence could preserve stale current
+data, two API relationships still used raw IDs, token-scope coverage was
+incomplete, API projections had moved into ActiveRecord models, and migration
+rollback intent was unclear. These findings are remediated in the rewritten
+source histories:
+
+- the report reader now requires the one complete internal shape and the
+  payload parser records explicitly unsupported schemas as an invalid current
+  snapshot without deriving events;
+- omission of `security_evidence` remains the sole rolling-upgrade fallback,
+  while an explicit unsupported report replaces stale evidence;
+- API presentation is isolated in immutable resource projections rather than
+  model methods;
+- all available association targets are exercised under the exact read scopes,
+  and security-advisories rejects scalar relationship IDs;
+- the remaining kernel-history and advisory Node relationships use HaveAPI
+  resources, and the token documentation is checked against the configured
+  scope list;
+- reversible migrations use `change`, while the two MySQL migrations that
+  require foreign-key/index rollback ordering retain explicit `down` methods
+  with the reason documented.
+
+Before the final history fold, the vpsAdmin head was saved as local branch
+`2026-07-13-security-advisory-automation-before-association-fold` at
+`51281fa144e82d8c23ea984bd183338681e07041`. The standalone commits
+`api: expose Node evidence through associations` and
+`webui: consume typed Node evidence associations` were then removed. Their
+changes now appear directly in the earlier model, typed evidence,
+system-state, advisory synchronization, endpoint inventory, Node WebUI, and
+advisory WebUI commits. Each amended boundary passed the installed repository
+hooks. The rewritten vpsAdmin tree is byte-for-byte identical to the backup
+tree.
+
+Current review heads are vpsAdmin
+`40527f781e827a6201fb05c5856af1a495344f9c`, security-advisories
+`6ce87ffe2d4addceb5e30b70f23274100d176874`, HaveAPI
+`3bd0f946e0e2a8517faeff7be5a20ff967e7657b`, and vpsAdminOS
+`d1df07f89e0cc55d74d388902c59fe3284467248`.
+
+Verification on the preserved final trees is green: the focused vpsAdmin
+resource, advisory, supervisor, and model suite passes 93 examples; the
+resource-only association suite passes 20 examples; the model/supervisor set
+passes 34 examples; migration coverage passes 8 examples; security-advisories
+passes all 77 examples and RuboCop over 24 files; HaveAPI passes all 349
+examples and RuboCop over 116 files. Long integration suites remain paused
+until the mandatory reviewer rechecks these final heads.
+
+The first follow-up review found one remaining commit-boundary issue and no
+other findings: the pre-existing advisory `node_id`/`node_name` transition,
+its public Node authorization guards, and generated locale cleanup had been
+folded into the kernel-evidence resource commit. Those changes now remain in
+their merged-compatible scalar form through the evidence commit and transition
+atomically in `api: synchronize reviewed security advisory drafts`, alongside
+the advisory and scoped-token regressions. Both amended boundaries passed the
+full hook gate, locale catalogs were regenerated at each boundary, and the
+final tree remains byte-for-byte identical to the preserved backup. A final
+review of head `40527f781e827a6201fb05c5856af1a495344f9c` passed with no
+Blocking, Important, or Advisory findings. The reviewer authorized long
+integration testing while retaining the separate HaveAPI release and
+production-action approval gates.

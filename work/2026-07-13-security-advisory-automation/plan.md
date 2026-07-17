@@ -911,9 +911,11 @@ immutability only.
 security-advisories will collect the new evidence-error, history-state, and
 history-gap resources. It will derive current validity directly from stored
 facts and timestamps, keep reported errors inside snapshots, and keep only
-actual sampling intervals under history coverage. The unpublished local
-evidence document is introduced directly with schema 1; old ignored evidence
-must be recollected. Per-CVE dossier and submission schemas do not change.
+actual sampling intervals under history coverage. Its ignored aggregate
+evidence wrapper advances to schema 7 and old local evidence must be
+recollected. That repository-local wrapper is distinct from the Node report
+and per-snapshot schema 1, and from the unchanged per-CVE dossier and
+submission schemas.
 
 Canonical HaveAPI resource inputs must be authorized using the referenced
 resource's full action scope. Fix HaveAPI to propagate that resource path into
@@ -928,6 +930,12 @@ Remove duplicated Node IDs, names, role/active fields, and relationship IDs.
 Keep only the three opaque status-sample provenance IDs for which no API
 resource exists. HaveAPI must preserve the referenced resource path while
 authorizing output associations as well as input associations.
+
+Introduce those associations directly in the existing model, typed evidence,
+system-state, advisory, endpoint-coverage, and WebUI commits. The feature
+history must not first expose scalar relationship fields and replace them in
+follow-up API/WebUI commits. Preserve a local backup ref before this rewrite
+and verify that the final tree is identical to the already tested snapshot.
 
 After quick verification, rewrite the feature commits, run the mandatory
 standalone review, then update generated configuration pins and the KB contract
