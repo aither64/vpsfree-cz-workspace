@@ -876,3 +876,29 @@ An isolated test-runner evaluation of a local checkout has no exact flake
 revision and therefore exercises the static version fallback. Browser coverage
 must compare the exact link whenever revision metadata is present; the running
 bridge dev cluster provides the strict deployed-revision check.
+
+## Kernel evidence code simplification (2026-07-17)
+
+Rewrite the unmerged vpsAdmin and security-advisories histories so the kernel
+evidence feature is introduced with separated responsibilities. Each new
+top-level HaveAPI resource lives in its own file. vpsAdmin exposes stored
+evidence errors, reconstruction checkpoints, and sampling gaps as relational
+facts instead of constructing a generic evidence-gap policy resource.
+
+Replace hash construction in ActiveRecord models with an immutable typed
+kernel-evidence report, a payload parser, and relational snapshot reader and
+writer services. Preserve nodectld report schemas 1 through 4, the normalized
+database schema, canonical snapshot shape, and snapshot digests. Models retain
+associations, validations, and immutability only.
+
+security-advisories will collect the new evidence-error, history-state, and
+history-gap resources. It will derive current validity directly from stored
+facts and timestamps, keep reported errors inside snapshots, and keep only
+actual sampling intervals under history coverage. Its ignored evidence schema
+advances from 6 to 7; old local evidence must be recollected. Per-CVE dossier
+and submission schemas do not change.
+
+After quick verification, rewrite the feature commits, run the mandatory
+standalone review, then update generated configuration pins and the KB contract
+pin. Exercise supervisor ingestion, admin evidence pages, and a real scoped
+collector against the bridge development cluster without rebooting the Node.

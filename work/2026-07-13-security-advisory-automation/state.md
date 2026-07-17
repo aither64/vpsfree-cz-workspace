@@ -1953,3 +1953,20 @@ CI workflow is still running its integration step at this checkpoint. The
 superseded `39c350a7` CI run was cancelled only after the final head was
 pushed. No production deployment, advisory/API mutation, token creation, KB
 staging, or KB publication was performed.
+
+## 2026-07-17 kernel evidence simplification start
+
+The user approved a history rewrite that removes the generic derived gap API,
+splits every initiative top-level HaveAPI resource into its own file, and moves
+report normalization/serialization/reconciliation out of ActiveRecord models.
+The database schema and nodectld wire contract remain unchanged. vpsAdmin will
+expose relational evidence errors, reconstruction state, and sampling gaps;
+security-advisories will interpret those facts and advance its ignored evidence
+document to schema 7.
+
+Starting clean pushed heads are vpsAdmin `ae76ea3c0`, security-advisories
+`10a1f7ace`, configuration `6b92adea`, and KB contract `2aa73ba1b`. The prior
+vpsAdmin selected integration workflow `29534366590` completed successfully.
+The persistent single-topology bridge cluster is still running and ready. No
+source, database, deployment, API, advisory, token, or KB mutation for this
+follow-up has occurred yet.
