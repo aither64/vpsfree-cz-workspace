@@ -13,8 +13,9 @@ explicit human action outside the automation token's authority.
 ## Final feedback refinements
 
 - Evidence collection is vulnerability-agnostic. vpsAdminOS publishes the
-  complete booted kernel configuration and all sysctls selected by the generic
-  evidence policy. nodectld pairs these inputs with the actual boot command
+  complete booted kernel configuration and nodectld reads a merit-based set of
+  potentially useful sysctls owned solely by the reporter. nodectld pairs
+  these inputs with the actual boot command
   line, effective sysctl values, loaded modules, closure identities, and
   runtime mitigations. Configured kernel parameters are not evidence and are
   not stored. No CVE-specific option or sysctl list is embedded in the
@@ -941,3 +942,54 @@ After quick verification, rewrite the feature commits, run the mandatory
 standalone review, then update generated configuration pins and the KB contract
 pin. Exercise supervisor ingestion, admin evidence pages, and a real scoped
 collector against the bridge development cluster without rebooting the Node.
+
+## Reporter-owned sysctls and boot evidence caching (2026-07-17)
+
+Remove the unpublished sysctl-policy protocol. `libnodectld` is the sole owner
+of the merit-based sysctl inventory and sends a `sysctls` object containing
+exactly the controls it inspected. vpsAdmin validates the reported names and
+values structurally, stores precisely that set in normalized rows, and exposes
+those rows through the existing typed resources. It neither duplicates the
+inventory nor requires a policy version. The advisory collector validates the
+same generic shape and each CVE dossier decides which named controls are
+relevant; an absent relevant value remains fail-closed evidence. Do not probe
+`kernel.unprivileged_userns_clone`, because that sysctl is not provided by the
+vpsAdminOS kernel.
+
+Define shared filesystem roots once in the reporter and derive child paths
+with `File.join`. Cache boot-scoped facts on their first collection in each
+nodectld process: boot identity/time, booted kernel release and command line,
+ordered boot parameters, booted closure identities, and kernel configuration
+content/digest. Continue refreshing current closure identities, loaded modules,
+sysctls, livepatch state, and eBPF state for every evidence report. Keep the
+status report self-contained. Kernel configuration text is still transmitted
+initially and every six hours for delivery recovery, but it is read and hashed
+only once per process.
+
+This replaces only unpublished feature-branch payloads. The production rolling
+contract remains the pre-feature report without `security_evidence` and the
+final schema-1 report. Deploy vpsAdmin services first, then nodectld gradually;
+no Node reboot is required. Rewrite the original feature commits so
+`security_settings`, `sysctl_policy_version`, the duplicate API inventory, and
+the unsupported sysctl never occur in the final branch history. Preserve
+backup refs before rewriting, regenerate both configuration channel pins and
+the KB contract pin, perform the mandatory standalone review, and then run the
+bridge dev-cluster supervisor, WebUI, and scoped-collector checks.
+
+## HaveAPI association release gate (2026-07-18)
+
+The final bridge-cluster collector check must use the released HaveAPI output
+association authorization fix. vpsAdmin currently packages HaveAPI 0.29.3,
+which authorizes a related `Node` using the parent resource path. As a result,
+the correctly scoped token can read `node_cgroup_state#index`, but the returned
+`node` association is marked unauthorized and has no typed ID despite carrying
+`node#show`.
+
+Do not add `node_cgroup_state#show` or scalar Node IDs as workarounds. Release
+the already-reviewed HaveAPI commits that preserve resource paths for input and
+output associations, update vpsAdmin's packaged dependency in a separate
+commit, add a live-equivalent regression for the cgroup projection's typed
+Node, then repin configuration and the KB contract once more. This release and
+dependency bump require explicit user approval before execution. Afterwards,
+rebuild the bridge cluster and repeat token creation, collection, all five CVE
+evaluations, dry-run synchronization, and token revocation.

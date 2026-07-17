@@ -2282,3 +2282,193 @@ review of head `40527f781e827a6201fb05c5856af1a495344f9c` passed with no
 Blocking, Important, or Advisory findings. The reviewer authorized long
 integration testing while retaining the separate HaveAPI release and
 production-action approval gates.
+
+### Reporter-owned sysctls and cached boot evidence (2026-07-17)
+
+The final unpublished evidence protocol no longer carries
+`sysctl_policy_version` or `security_settings`. `libnodectld` owns the only
+tracked-sysctl list, omits the unavailable
+`kernel.unprivileged_userns_clone`, and emits `sysctls`. The API structurally
+validates and relationally stores exactly the reported map; it has no copied
+inventory or completeness policy. security-advisories accepts arbitrary
+structurally valid maps and instructs each CVE analysis to discover and require
+only the controls relevant to that vulnerability.
+
+The reporter now derives reused paths from shared filesystem roots. It caches
+boot identity, kernel, command line and ordered parameters, booted closure
+metadata, and kernel configuration on first collection. Current closure
+metadata, loaded modules, sysctls, livepatches, and eBPF state remain dynamic.
+The cached configuration text is still sent initially and at the existing
+six-hour recovery interval, without rereading or rehashing `/proc/config.gz`.
+
+Backup refs created before history rewriting are:
+
+- vpsAdmin `backup/2026-07-17-security-evidence-refactor-vpsadmin` at
+  `d650b7fd8b6794a9a5b7e81e8328461831b1bd29`;
+- security-advisories
+  `backup/2026-07-17-security-evidence-refactor-security-advisories` at
+  `6ce87ffe2d4addceb5e30b70f23274100d176874`;
+- vpsfree-cz-configuration
+  `backup/2026-07-17-security-evidence-refactor-vpsfree-cz-configuration` at
+  `77ec4722010edc9cccaa7354577ef149cd721574`;
+- vpsadmin-kb-captures
+  `backup/2026-07-17-security-evidence-refactor-vpsadmin-kb-captures` at
+  `9ee2f48a23870fcf4b5ee8f11b8d265a30d7bd86`.
+
+Current committed heads are vpsAdmin
+`1fc8d245845cca1c39ffc451096f4495d4810361`, security-advisories
+`0b0b69d75cfd67cc740521b81dbd6926e62a8b1f`,
+vpsfree-cz-configuration
+`d86fd3ee252b8ee3f1b22a6136860e212fffbba9`, and
+vpsadmin-kb-captures
+`c4bb0afb9eaf89b4cd4117bb6cfd150a9797f623`. The two source branches are
+force-pushed. Configuration and KB pins are committed locally and await the
+mandatory review before their force-push.
+
+Quick verification is green:
+
+- libnodectld evidence/status specs: 10 examples, no failures;
+- affected API operation/reconstruction specs: 17 examples, no failures;
+- evidence migration specs: 2 examples, no failures;
+- security-advisories: 77 examples, no failures, and RuboCop clean over all
+  24 files;
+- touched vpsAdmin API and libnodectld Ruby files: RuboCop clean;
+- the KB contract check: valid 38-control/29-path contract, 15 test runs with
+  67 assertions, and a valid 118-image capture inventory.
+
+Every rewritten vpsAdmin commit passed the installed Nixfmt, migration,
+WebUI/API i18n, RuboCop, and commit-message hooks. security-advisories commits
+passed their installed RuboCop and commit-message hooks. The source histories
+contain none of `sysctl_policy_version`, `SYSCTL_POLICIES`, or
+`security_settings`; a negative reporter spec is the sole intentional history
+reference to the omitted sysctl.
+
+Rolling compatibility is unchanged: deploy the API/services first, continue
+accepting old status updates that omit evidence, then deploy nodectld to staging
+and the fleet without rebooting Nodes. Only intermediate unpublished payloads
+from this feature branch are unsupported. Long supervisor, WebUI, scoped-client,
+and dev-cluster checks remain paused for the mandatory standalone review.
+
+### Mandatory reporter/sysctl review remediation
+
+The standalone reviewer confirmed the vpsAdmin reporter, storage, history,
+commit split, exact downstream pins, and rolling deployment design. It found
+one Blocking omission in security-advisories: the workflow told analysts to
+identify relevant sysctls, but the dossier could not declare them, so an empty
+map or unavailable relevant control did not fail closed. It also found that the
+advisory-side name validator did not mirror vpsAdmin's dotted-name/255-byte
+contract and that `docs/evidence.md` still described the superseded versioned
+policy.
+
+All findings are remediated in the rewritten 14-commit security-advisories
+history at `41d19eeb4bec50f0c63d20867d2dc1e442a5bf4e`:
+
+- `platform.required_sysctls` maps each relevant sysctl to a nonempty unique
+  list of exact effective string values reviewed for the conclusion;
+- current and historical snapshots remain `unknown` when a required sysctl is
+  missing, unavailable, unreadable, or outside the reviewed value set;
+- one `SysctlEvidence` module owns the vpsAdmin-compatible generic name/value
+  validation used by the collector, evaluator, and historical attestations;
+- the collector rejects malformed typed sysctl rows before accepting the
+  reconstructed snapshot;
+- the schema, operator instructions, evidence contract, fixture, and all five
+  initial dossiers express the final contract directly; the five current
+  dossiers explicitly declare `{}` because their analyses do not depend on a
+  sysctl value.
+
+Post-rewrite verification passes 82 RSpec examples and RuboCop over 25 files;
+`git diff --check` is clean. Added regressions cover malformed dossier
+requirements, malformed collected/evaluated names, missing/unavailable/missing
+effective values, unreviewed values, and accepted values. The same reviewer is
+performing the required follow-up check; long integration remains paused until
+that gate is cleared.
+
+### Runtime evidence integration follow-up (2026-07-17)
+
+The reporter/sysctl reviewer cleared all findings at security-advisories
+`41d19eeb4bec50f0c63d20867d2dc1e442a5bf4e`. The supervisor
+`runtime-ingestion` integration suite then passed all 10 examples, including
+the rolling-deployment case where an older nodectld omits evidence.
+
+The admin-cluster WebUI integration reached seven passing browser examples but
+failed the kernel-parameter page because the API had stored the current report
+as an invalid evidence gap. Test artifacts showed nodectld reporting normally
+after startup, and source comparison identified the contract mismatch:
+vpsAdminOS uses valid Nix booleans for configured sysctls such as
+`kernel.dmesg_restrict = true`, while schema-1 validation accepted only string
+and numeric scalars. The unrelated initial nodectld restarts were caused by a
+pre-existing CPU-sampling `NaN` serialization error and recovered before the
+browser checks.
+
+vpsAdmin now accepts boolean configured sysctl scalars and normalizes them to
+their string representation in relational evidence. The regression uses
+`false` and asserts the stored report value is `"false"`. Two full-matrix CI
+failures were also traced to shared seed Nodes whose role/activity had been
+changed by other examples; the kernel-evidence and advisory resource specs now
+restore their required active host roles in setup.
+
+The combined supervisor, Node-kernel-resource, and security-advisory resource
+run passes 69 examples with no failures. Every fixup passed the installed
+Nixfmt, migration, WebUI/API i18n, and RuboCop hooks. The changes were folded
+into their original model, ingestion, resource, and advisory commits. The
+pre-follow-up head is preserved as
+`backup/2026-07-17-security-evidence-runtime-fixes` at
+`1fc8d245845cca1c39ffc451096f4495d4810361`; the rewritten vpsAdmin head is
+`b1551d3da688e4bce3914734753d8d79bff51c8f`.
+
+A fresh mandatory reviewer is checking this final follow-up before the failed
+WebUI suite is rerun. Downstream configuration and KB pins still point to the
+previous vpsAdmin head and must be regenerated after that review.
+
+### Final integration, pins, and release blocker (2026-07-18)
+
+The fresh mandatory review of vpsAdmin
+`b1551d3da688e4bce3914734753d8d79bff51c8f` found no Blocking, Important, or
+Advisory issues and cleared the integration gate. The final branch has 24
+feature commits, is pushed, and differs from the pre-follow-up backup only by
+the reviewed four-file semantic correction folded into its owning commits.
+
+Long integration is green on that exact head:
+
+- `webui#admin-cluster` passed its complete three-VM Playwright flow in 870.31
+  seconds, including the previously failing kernel-parameter evidence page;
+- `supervisor/runtime-ingestion` passed all 10 examples in 554.04 seconds,
+  including acceptance of the pre-feature Node status without evidence.
+
+Generated downstream pins are pushed. vpsfree-cz-configuration
+`feb859be6d5a675ce985dca5755a332ffc690e76` contains separate confctl-generated
+commits for `vpsadminStaging` and `vpsadminServices`, both at `b1551d3da`, after
+the isolated `vpsadminosStaging` pin at `730b144ac`. vpsadmin-kb-captures
+`89ea2ea1e9aeb7e518cf170d97ea35c87b8423b5` pins the same vpsAdmin revision and
+its followed vpsAdminOS revision. `nix flake check` passed, and `bin/check`
+validated the 38-control/29-path contract, 15 tests with 67 assertions, and all
+118 PNGs.
+
+The verified session's old bridge cluster was the only running dev cluster. It
+did not exit before the normal stop timeout, so `devcluster` killed the runner,
+removed its state, and built a fresh single-node bridge cluster. It is ready at
+the standard aitherdev URLs. Services and the nested WebUI container both
+report exact vpsAdmin revision `b1551d3da`; the public header links to that full
+commit. Node 101 reports schema 1 for kernel `6.12.95`, 9 ordered boot
+parameters, 34 relational sysctls, and zero evidence errors. The original Nix
+boolean values are accepted and stored as configured `true` while their
+effective values are `1`.
+
+The least-privilege token was created successfully with 34 scopes and mode
+0600. Collection then failed read-only before writing `.state` or any advisory:
+released HaveAPI 0.29.3 serialized `node_cgroup_state.node` as
+`{"_meta":{"resolved":false,"authorized":false}}`, without an ID, even though
+the token has `node#show`. The existing HaveAPI feature branch at
+`3bd0f946e0e2a8517faeff7be5a20ff967e7657b` fixes output association resource
+paths; vpsAdmin still packages 0.29.3. Granting `node_cgroup_state#show` would be
+an unrelated-permission workaround and is intentionally rejected. The
+temporary token was revoked and its file removed.
+
+Completing the scoped collector requires explicit approval to release the
+reviewed HaveAPI changes and bump vpsAdmin's packaged gem, followed by another
+vpsAdmin/configuration/KB pin and bridge-cluster refresh. No draft advisory,
+publication, notification, package release, production deployment, or KB write
+was performed. GitHub RSpec and RuboCop are green for security-advisories
+`41d19eeb`; current vpsAdmin CI is green for RuboCop, libnodectld, WebUI,
+client, and i18n, with the final API matrix still in progress. A superseded CI
+run for the old vpsAdmin head was cancelled.
