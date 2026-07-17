@@ -1970,3 +1970,82 @@ vpsAdmin selected integration workflow `29534366590` completed successfully.
 The persistent single-topology bridge cluster is still running and ready. No
 source, database, deployment, API, advisory, token, or KB mutation for this
 follow-up has occurred yet.
+
+### Framework authorization dependency
+
+The refactored advisory synchronization deliberately restored the canonical
+HaveAPI `resource node` input instead of retaining a duplicate scalar
+`node_id`. Its scoped-token regression exposed a framework defect: resource
+input authorization constructed the referenced Show action's child context
+without its resource path, so the global authorization hook saw `#show`
+instead of `node#show` and denied a token that correctly held
+`node#index`/`node#show`.
+
+HaveAPI is now an affected repository. Its feature worktree is
+`worktrees/2026-07-13-security-advisory-automation/haveapi`, branch
+`2026-07-13-security-advisory-automation`, based on `origin/master`
+`1d55e85`. The local fix passes the referenced resource path to the child
+context. A nested-resource regression proves that the pre-authorization hook
+receives the full scope and never the empty `#show` scope. The focused
+ActiveRecord adapter suite passes 27 examples and focused RuboCop reports no
+offenses. No HaveAPI release or package publication has been performed; that
+will require explicit user approval after the code is committed and reviewed.
+
+### Simplification implementation and final history rewrite
+
+The kernel-evidence simplification is implemented and committed on top of the
+current upstream bases. The final clean heads prepared for mandatory review
+are:
+
+- vpsAdmin `241312d3da55565609df3919912d70e8106e0d39`, based on
+  `origin/master` `25611d8ff`;
+- security-advisories `899cef950d52535b26c85813fa8890342a22f7ad`;
+- HaveAPI `f9064b680affc1bf3e0d7b5e529d2fa698c64b06`, based on
+  `origin/master` `1d55e85`.
+
+vpsAdmin now introduces the feature in nine focused commits:
+
+- `22b3ca278 api: add Node evidence and advisory schema`;
+- `eb886017e api: ingest normalized Node evidence`;
+- `8d01810e0 api: expose typed Node evidence resources`;
+- `be49cb161 api: synchronize reviewed security advisory drafts`;
+- `19c213690 libnodectld: report generic Node evidence`;
+- `10b12c22d webui: show Node evidence and advisory review`;
+- `803b2487e tests: cover Node evidence deployment and WebUI`;
+- `e06a91a32 ci: allow complete API topic matrices`;
+- `241312d3d flake: vpsadminos 849282e6b -> dbc03d005`.
+
+The earlier broad but functionally equivalent series is retained at
+`backup/2026-07-17-focused-series-pre-split`. A direct tree comparison between
+that branch and the final head has no differences. Every rewritten commit
+passed the installed vpsAdmin hooks, including migration mapping, API/WebUI
+localization, Nix formatting, RuboCop, and PHP CS Fixer. The final branch is
+clean and `git diff --check` passes.
+
+security-advisories was rewritten from `ff28f95` into one core evidence
+commit, one review-workflow commit, and five dossier commits. Its final tree is
+identical to preserved commit `816c1a2`; the full suite passes 74 examples and
+RuboCop reports no offenses over 21 files. The installed hook passes.
+
+HaveAPI commit `f9064b6` preserves the referenced resource path during
+resource-input authorization. Its complete Ruby server suite passes 348
+examples and RuboCop reports no offenses over 235 files. The installed hook
+passes. A vpsAdmin scoped-token regression also passes with this one-line
+framework fix applied to the ignored local gem cache. The source dependency is
+not published, and production vpsAdmin deployment therefore remains gated on
+an explicitly approved HaveAPI release.
+
+The vpsAdmin focused application verification passes 62 examples, including
+normalized resources and snapshots, supervisor ingestion and reconstruction,
+canonical advisory Node inputs, and an exact action-scoped-token workflow.
+API RuboCop reports no offenses over 1,428 files. A previous 87-example run
+found one timezone-formatting assertion that compared strings; the test now
+compares timestamps within one second and the exact rerun passes.
+
+Compatibility remains additive. vpsAdmin accepts legacy Node status reports
+and evidence schemas 1 through 4, service-only Nodes remain excluded, and no
+Node reboot is required. Evidence schema 7 invalidates only ignored local
+security-advisories snapshots, which must be recollected. Rollback can ignore
+the additive normalized tables. Configuration and KB contract pins still
+point to the previous reviewed vpsAdmin head and will be regenerated only
+after mandatory review and any remediation establish the final head.

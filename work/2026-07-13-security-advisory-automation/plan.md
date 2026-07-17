@@ -183,6 +183,9 @@ opaque format.
 
 ## Affected repositories
 
+- `haveapi`
+  - preserve full referenced-resource scopes when authorizing typed resource
+    inputs, so action-scoped tokens can use canonical relationships.
 - `security-advisories` (new private repository)
   - primary implementation repository;
   - one durable analysis directory per CVE, source/evidence manifests,
@@ -897,6 +900,12 @@ facts and timestamps, keep reported errors inside snapshots, and keep only
 actual sampling intervals under history coverage. Its ignored evidence schema
 advances from 6 to 7; old local evidence must be recollected. Per-CVE dossier
 and submission schemas do not change.
+
+Canonical HaveAPI resource inputs must be authorized using the referenced
+resource's full action scope. Fix HaveAPI to propagate that resource path into
+the child authorization context, with a framework regression, so vpsAdmin can
+require ordinary `node#index`/`node#show` scopes instead of adding scalar Node
+ID workarounds to advisory mutations.
 
 After quick verification, rewrite the feature commits, run the mandatory
 standalone review, then update generated configuration pins and the KB contract
