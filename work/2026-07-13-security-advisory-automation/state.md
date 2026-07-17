@@ -2140,3 +2140,19 @@ the older shared stash. The older stash object was immediately restored under
 its original message from Git's reported object ID and remains present. The
 reusable precaution is recorded in a dedicated cross-project note. No user
 work was lost.
+
+### Mandatory follow-up review passed
+
+The same standalone reviewer rechecked the full final series and reported no
+Blocking, Important, or Advisory findings at vpsAdmin `db634e949`,
+security-advisories `5b2bc3e`, and HaveAPI `f9064b6`. All seven original
+findings are resolved. The reviewer explicitly accepted the supervisor adapter
+commit as transactionally indivisible and found the remaining functional,
+generated, integration-test, CI, dependency, and dossier splits cohesive.
+
+Residual gates are long supervisor/WebUI/collector/dev-cluster verification,
+the generated configuration and KB pins, and the explicit approval required
+before any HaveAPI release. The concurrent kernel-configuration
+`RecordNotUnique` recovery was not stress-tested directly; its post-conflict
+reread is compatible with the configured `READ-COMMITTED` database isolation.
+No production write or release is authorized.
