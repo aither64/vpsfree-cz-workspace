@@ -85,9 +85,10 @@ explicit human action outside the automation token's authority.
   branch names and placeholders such as `dev` or `staging` remain unavailable.
 - The dev-cluster launcher injects the selected worktree HEADs and dirty flags
   so its closure metadata is truthful without confctl.
-- vpsAdmin services can be deployed before Nodes. Old and new report schemas
-  coexist, service-only Nodes remain excluded, and gradually updated staging
-  Nodes begin contributing schema-4 evidence without a reboot. A reboot is
+- vpsAdmin services can be deployed before Nodes. The pre-feature status
+  payload, which omits evidence, remains accepted; service-only Nodes remain
+  excluded, and gradually updated staging Nodes begin contributing schema-1
+  evidence without a reboot. A reboot is
   necessary only when an operator wants the booted closure or booted kernel to
   change, not to deploy the reporter or API.
 
@@ -98,10 +99,12 @@ before merge. vpsAdmin will not expose `all/security_evidence`, an endpoint
 schema version, `custom :nodes`, or `custom :kernel_configurations`. HaveAPI's
 self-description is the API contract.
 
-- `node_kernel_evidence#index` is a top-level typed object list with one
-  current row per kernel-hosting Node. It supports Node, active-state, and
-  freshness filters and flattens current kernel/build/deployment and history
-  coverage fields.
+- `node_kernel_evidence#index` is a top-level typed object list of persisted
+  current evidence rows. It supports Node and active-state filters and
+  flattens current kernel/build/deployment and history coverage fields. The
+  collector separately reads the canonical active Node inventory and records
+  missing evidence as an unresolved input, so a gradual reporter rollout
+  never silently drops a Node from an assessment.
 - Exact internal history and every repeated evidence component are separate
   top-level typed object-list resources: events, booted kernel parameters,
   loaded modules, sysctls, livepatch modules and patch entries, eBPF programs,
@@ -133,10 +136,17 @@ self-description is the API contract.
   extends back to the oldest returned exact snapshot. The collector recomputes
   every assembled snapshot revision and fails if a component is missing.
 - The least-privilege token replaces `node.security_evidence#index` with the
-  exact top-level evidence/component index scopes. A generic Node scope is not
-  needed because current evidence rows already provide Node identity and typed
-  Node filters are resolved within each authorized action. Advisory draft
-  scopes remain unchanged.
+  exact top-level evidence/component actions plus `node#index` and
+  `node#show`. The Node scopes provide the authoritative assessment inventory
+  and authorize the real HaveAPI Node associations returned by evidence and
+  advisory resources. Advisory draft scopes remain unchanged.
+
+All normalized resources are backed by ActiveRecord models and expose
+relations as HaveAPI `resource` associations. They do not duplicate Node IDs,
+Node names, active state, or relationship IDs as scalar output parameters.
+The only raw relation-like values are status-sample provenance IDs
+(`source_status_id`, `from_status_id`, and `through_status_id`), because the
+internal status samples deliberately have no API resource.
 
 The unmerged feature history is rewritten so the opaque endpoint and its
 intermediate database shape are never introduced. The development database is
@@ -176,10 +186,12 @@ after its relational string representation is read back.
 The migrations and API are still unmerged and have not reached production, so
 no legacy blob data requires conversion. The dedicated development cluster has
 applied discarded versions of the same migration timestamps and must be reset.
-nodectld schema 4 is accepted alongside schemas 1-3 for rolling upgrades. A
-rollback to pre-feature vpsAdmin ignores the additive Node report field and can
-leave or remove the new tables; it does not need to read data written in a new
-opaque format.
+The feature has one evidence schema, version 1; intermediate schema numbers
+from the unpublished branch are not accepted or retained in history. Rolling
+deployment compatibility is with the pre-feature status payload that omits
+`security_evidence`. A rollback to pre-feature vpsAdmin ignores the additive
+Node report field and can leave or remove the new tables; it does not need to
+read data written in a new opaque format.
 
 ## Affected repositories
 
@@ -670,9 +682,9 @@ contains no implementation of the superseded opaque evidence route.
 
 The final clean dev cluster proves that the additive migration creates and
 populates relational kernel-option rows. A real least-privilege dev token
-collected schema-4 evidence through the typed API without Node, VPS, publish,
-or notification authority. The collector returned only the active hosting
-Node; DNS and mailer service containers were excluded. The token and ignored
+collected complete evidence through the typed API without VPS, publish, or
+notification authority. The collector returned only the active hosting Node;
+DNS and mailer service containers were excluded. The token and ignored
 evidence snapshot used for the smoke test were removed afterward.
 
 No production advisory can yet be concluded from repository pins alone. After
@@ -736,7 +748,7 @@ or a vulnerability-specific allowlist.
 - Detect changes in those six identities just like kernel changes. A Nix
   activation is one deployment event even when several components change;
   typed child rows retain the before/after identity for every changed
-  component and generation. The first schema-4 report establishes an explicit
+  component and generation. The first complete report establishes an explicit
   baseline and never invents exact historical revisions from legacy status
   rows.
 - Obtain all identities from the booted/current system closures. vpsAdminOS
@@ -890,22 +902,32 @@ facts instead of constructing a generic evidence-gap policy resource.
 
 Replace hash construction in ActiveRecord models with an immutable typed
 kernel-evidence report, a payload parser, and relational snapshot reader and
-writer services. Preserve nodectld report schemas 1 through 4, the normalized
-database schema, canonical snapshot shape, and snapshot digests. Models retain
-associations, validations, and immutability only.
+writer services. Introduce one complete nodectld evidence schema, version 1;
+the only rolling-deployment fallback is the pre-feature status payload that
+omits evidence. Preserve the normalized database schema, canonical snapshot
+shape, and snapshot digests. Models retain associations, validations, and
+immutability only.
 
 security-advisories will collect the new evidence-error, history-state, and
 history-gap resources. It will derive current validity directly from stored
 facts and timestamps, keep reported errors inside snapshots, and keep only
-actual sampling intervals under history coverage. Its ignored evidence schema
-advances from 6 to 7; old local evidence must be recollected. Per-CVE dossier
-and submission schemas do not change.
+actual sampling intervals under history coverage. The unpublished local
+evidence document is introduced directly with schema 1; old ignored evidence
+must be recollected. Per-CVE dossier and submission schemas do not change.
 
 Canonical HaveAPI resource inputs must be authorized using the referenced
 resource's full action scope. Fix HaveAPI to propagate that resource path into
 the child authorization context, with a framework regression, so vpsAdmin can
 require ordinary `node#index`/`node#show` scopes instead of adding scalar Node
 ID workarounds to advisory mutations.
+
+Normalized API outputs also use canonical HaveAPI associations. Return
+ActiveRecord rows from model-backed resources and let HaveAPI serialize Node,
+current evidence, event, history-state, livepatch, and eBPF relationships.
+Remove duplicated Node IDs, names, role/active fields, and relationship IDs.
+Keep only the three opaque status-sample provenance IDs for which no API
+resource exists. HaveAPI must preserve the referenced resource path while
+authorizing output associations as well as input associations.
 
 After quick verification, rewrite the feature commits, run the mandatory
 standalone review, then update generated configuration pins and the KB contract

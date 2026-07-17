@@ -2156,3 +2156,70 @@ before any HaveAPI release. The concurrent kernel-configuration
 `RecordNotUnique` recovery was not stress-tested directly; its post-conflict
 reread is compatible with the configured `READ-COMMITTED` database isolation.
 No production write or release is authorized.
+
+### Single evidence schema and HaveAPI associations
+
+The latest review feedback is implemented in clean, unpublished histories.
+Current heads prepared for mandatory review are vpsAdmin
+`d3d28744a5d8c0f14aa10c51ee207016326702ca`, security-advisories
+`8920cb7c0c08fd945e5fb9a97aa819e321dc8181`, HaveAPI
+`3bd0f946e0e2a8517faeff7be5a20ff967e7657b`, and vpsAdminOS
+`d1df07f89e0cc55d74d388902c59fe3284467248`.
+
+vpsAdmin and nodectld introduce exactly one complete evidence payload schema,
+version 1. The original model, ingestion, and reporter commits were rewritten
+so schemas 2 through 4 are never introduced and then removed. Pre-feature
+nodectld remains compatible by omitting `security_evidence`; unsupported
+non-1 evidence is rejected and recorded as incomplete. vpsAdminOS metadata is
+also schema 1 in every feature commit, and its exact-nixpkgs commit message no
+longer describes unpublished schema transitions. The security-advisories
+collector/evaluator history likewise introduces schema 1 and typed API reads
+directly rather than carrying follow-up correction commits.
+
+All normalized evidence resources are now model-backed and return real
+HaveAPI associations. Node, evidence, event, history-state, livepatch, and eBPF
+relationships are resource objects; duplicated `node_id`, `node_name`, role,
+active-state, and relationship-ID outputs are removed. In particular,
+`NodeKernelHistoryGap` returns `node_kernel_history_state` instead of
+`node_kernel_history_state_id`, and `SecurityAdvisory::NodeStatus` returns
+`node`. The only raw relation-like output values are `source_status_id`,
+`from_status_id`, and `through_status_id`: opaque provenance into internal
+Node status samples, which deliberately have no API resource.
+
+The collector reads the canonical active Node inventory with `node#index`,
+joins actual evidence through typed associations, and creates an explicit
+unresolved local input for a hosting Node whose upgraded reporter has not yet
+sent evidence. Its token therefore grants read-only `node#index`/`node#show`
+and the Show actions needed for association targets, but no Node mutation.
+HaveAPI now preserves the related resource path for authorization of both
+resource inputs and ActiveRecord-backed resource outputs. The fixes remain
+unreleased; publishing a HaveAPI release and updating vpsAdmin's packaged gem
+still require explicit user approval.
+
+The vpsAdmin association conversion remains one API-wide commit followed by
+one WebUI consumer commit. Splitting the API conversion by resource family
+was attempted, but the repository's global i18n contract is invalid while
+some resources still expose removed scalar Node labels. Keeping the model,
+resource, authorization, catalog, and focused endpoint regressions together
+therefore preserves an independently valid API contract at the commit
+boundary. The failed split was aborted without changing the final tree.
+
+Quick verification is green. The current vpsAdmin tree is byte-for-byte equal
+to the tree that passed 85 focused resource, advisory, supervisor, and model
+examples with no failures in 10 minutes 17 seconds; every history-rewrite
+commit ran the installed Nixfmt, migration, API/WebUI i18n, RuboCop, and
+applicable PHP hooks. security-advisories is byte-for-byte equal to its
+76-example/RuboCop-verified tree, and each rewritten commit passed its
+installed RuboCop hook. HaveAPI passes all 349 Ruby server examples and
+RuboCop over 116 files. vpsAdminOS source is unchanged by its message/schema
+history rewrite and its Nixfmt/Overcommit gate remains green. All four
+worktrees are clean and `git diff --check` passes.
+
+The isolated vpsAdmin flake commit still points to the pre-rewrite vpsAdminOS
+metadata commit. After mandatory review clears the source histories, publish
+the reviewed vpsAdminOS feature branch and regenerate that one flake commit to
+the exact `730b144ac` metadata revision. Configuration and KB pins remain at
+the previous reviewed vpsAdmin revision until the final vpsAdmin head is known.
+No long integration test, development-cluster refresh, production write,
+advisory mutation, notification, package release, or KB write has begun for
+this follow-up.
