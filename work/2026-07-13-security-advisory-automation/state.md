@@ -2049,3 +2049,94 @@ security-advisories snapshots, which must be recollected. Rollback can ignore
 the additive normalized tables. Configuration and KB contract pins still
 point to the previous reviewed vpsAdmin head and will be regenerated only
 after mandatory review and any remediation establish the final head.
+
+### Mandatory simplification review
+
+The required single fresh-context reviewer examined vpsAdmin
+`25611d8ff..241312d3d`, security-advisories `ff28f95..899cef9`, and HaveAPI
+`1d55e85..f9064b6`. Long integration remained paused. The review reported four
+Blocking groups:
+
+- malformed schema-4 software identity can raise `NoMethodError` in the
+  evaluator instead of producing a fail-closed `unknown` result;
+- a time-filtered event collection can omit the reconstruction's first boot,
+  while client completeness logic still requires that boot in the returned
+  window;
+- kernel-configuration parsing, boot-parameter serialization, and system-state
+  reconciliation remain in ActiveRecord models despite the requested service
+  boundary;
+- the rewritten schema, ingestion, WebUI, core security-advisories, and final
+  dossier commits still bundle independently reviewable changes.
+
+The reviewer also reported three Important findings: public kernel history
+includes inactive hosting/storage Nodes, recovery from a malformed evidence
+snapshot can synthesize a false reboot, and sysctl/eBPF scalar fields are not
+fully shape-validated at the report boundary. The focused HaveAPI fix had no
+finding.
+
+All findings are accepted for remediation. Configuration and KB pins remain
+unchanged, the persistent development cluster is not updated, and no long
+integration, production write, release, advisory mutation, notification, or
+publication will begin until product fixes and the corrected commit split are
+reviewed by the same standalone reviewer.
+
+### Mandatory review remediation
+
+All Blocking and Important findings are remediated and committed. Final clean
+heads awaiting follow-up review are vpsAdmin
+`db634e949bc2a930c84f10b2789bf034bbe97500`, security-advisories
+`5b2bc3ee78b1211707a4701e1e52007d0e3ca856`, and unchanged HaveAPI
+`f9064b680affc1bf3e0d7b5e529d2fa698c64b06`.
+
+Product fixes are:
+
+- schema-four assessment verifies that every software identity is an object
+  before reading its fields, so malformed snapshots produce `unknown` instead
+  of `NoMethodError`;
+- reconstruction completeness uses the stored completed checkpoint and
+  coherent first/through status IDs, independent of which pre-window baseline
+  event a time-filtered query returns;
+- kernel configuration parsing and writing, boot-parameter serialization, and
+  system-state normalization/reconciliation now live in dedicated services;
+- public kernel history returns only active hosting/storage Nodes;
+- supervisor comparison falls back to the newest valid exact event after a
+  malformed current snapshot, preventing a false same-boot reboot event;
+- sysctl scalar fields and optional eBPF text fields are validated at the
+  payload boundary and malformed shapes remain explicit stored errors.
+
+The vpsAdmin history is now 24 focused commits. Advisory synchronization,
+kernel evidence, and system-state migrations are separate, followed by one
+generated schema commit. Kernel report modeling, change recording, history
+reconstruction, system-state recording/reconstruction, capacity policy, kernel
+resources, system resources, advisory synchronization, endpoint inventory,
+nodectld reporting, three WebUI behaviors, four integration-test concerns, CI,
+and the vpsAdminOS pin each have independent commits. The only deliberate
+cross-domain commit is `54ed3bc19 api: ingest Node runtime reports atomically`:
+one accepted status must update ordinary status, normalized system state,
+rollback capacity cache, kernel events, and current evidence under one Node
+lock and database transaction; splitting that adapter would permit one report
+to describe conflicting persisted Node states.
+
+security-advisories is split into collector, evaluator, reconciler, token
+permissions/self-revocation, operator workflow, five individual CVE dossiers,
+and a final cross-dossier validation commit. General token and historical
+attestation regressions no longer appear in the GhostLock dossier commit.
+
+Post-remediation verification is green:
+
+- security-advisories passes all 76 RSpec examples and RuboCop over 24 files;
+- the affected vpsAdmin API/resource/supervisor suite passes 68 examples and
+  focused RuboCop passes over 20 files;
+- vpsAdmin WebUI PHPUnit passes 75 tests and 288 assertions after removing the
+  now-unused page-description abstraction;
+- every final vpsAdmin commit passed installed Nixfmt, migration mapping,
+  API/WebUI i18n, RuboCop, and applicable PHP CS Fixer hooks;
+- both final source trees exactly match their preserved, verified remediation
+  snapshots and all feature commit-message lines are at most 80 characters.
+
+During the isolated hook workflow, a successful `git stash pop` automatically
+dropped the initiative stash before a following unconditional drop targeted
+the older shared stash. The older stash object was immediately restored under
+its original message from Git's reported object ID and remains present. The
+reusable precaution is recorded in a dedicated cross-project note. No user
+work was lost.
