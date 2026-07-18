@@ -2472,3 +2472,195 @@ was performed. GitHub RSpec and RuboCop are green for security-advisories
 `41d19eeb`; current vpsAdmin CI is green for RuboCop, libnodectld, WebUI,
 client, and i18n, with the final API matrix still in progress. A superseded CI
 run for the old vpsAdmin head was cancelled.
+
+### HaveAPI release approval (2026-07-18)
+
+The user approved merging the reviewed HaveAPI fixes into master, backporting
+them to the supported 0.29 line, publishing 0.29.4, and updating every HaveAPI
+consumer in vpsAdmin.
+
+Current exact refs before release work are HaveAPI master
+`1d55e85b57569ff00b4bcd12b158ea77fba24ed6`, feature head
+`3bd0f946e0e2a8517faeff7be5a20ff967e7657b`, and `haveapi-0.29`/`v0.29.3`
+`268fd6c8a2eef3635d8a518bc1a35467959334a0`. The feature branch contains two
+commits and fast-forwards master. The supported patch branch will receive both
+with `cherry-pick -x` before the version commit.
+
+The release also requires the standalone `haveapi-client-php` master/tag
+because HaveAPI's shared version task updates the PHP client marker and vpsAdmin
+WebUI resolves that package from its independent repository. Temporary master,
+release, and PHP integration worktrees will be recorded here when created.
+
+### HaveAPI 0.29.4 release preparation (2026-07-18)
+
+HaveAPI master was fast-forwarded and pushed at
+`3bd0f946e0e2a8517faeff7be5a20ff967e7657b`. The supported patch worktree is
+`worktrees/2026-07-13-security-advisory-automation/haveapi-0.29.4` on branch
+`2026-07-13-security-advisory-automation-0.29.4`. It contains the two
+`cherry-pick -x` association backports, the release-order backport, and the
+separate version commit `6a8ca97fc8c0f3db4ef33fd9d9f62703d807572f` on top of
+v0.29.3.
+
+The Ruby server suite passes 349 examples, RuboCop passes all 116 files, the
+JavaScript suite passes 39 examples, and the PHP suite passes 49 tests with 136
+assertions. `make release` succeeded inside the top-level Nix shell after
+installing the declared JavaScript development dependencies; the repository
+does not carry a lockfile or provision `node_modules` in its shell. Built gem
+metadata reports 0.29.4 and the expected `~> 0.29.4` internal dependencies.
+
+The standalone PHP worktree is
+`worktrees/2026-07-13-security-advisory-automation/haveapi-client-php` on branch
+`2026-07-13-security-advisory-automation-0.29.4`, with synchronized version
+commit `44bb8d1e4f786f3a84794c5ffe845d9afd2d50e5`. Composer validation succeeds
+with only its existing warning about the explicit package version. Neither the
+HaveAPI nor standalone PHP release branch has been pushed, tagged, or
+published. Both now await the mandatory standalone release review.
+
+The mandatory reviewer found no Blocking or Advisory issues and one Important
+release-integrity issue: the shared publish target uploaded the server before
+the matching Ruby client required by both the server and Go generator. Master
+now fixes this in `555fd7e20d520409fb19ed72c46600b00f14d57b`; its
+`cherry-pick -x` backport is
+`ee27701d46ce6458360ef5c9f9a2417401d3f45d`, placed before the rewritten
+version commit. `make -n publish` now orders the Ruby client, server, Go
+generator, and JavaScript package. The pre-remediation release head is retained
+at `backup/2026-07-18-haveapi-0.29.4-pre-publish-order`. Artifact contents and
+checksums are unchanged. The same reviewer is performing focused follow-up.
+
+The focused follow-up found no remaining Blocking, Important, or Advisory
+issues. It confirmed the master and release patches are identical, the version
+commit rewrite is patch-identical, artifacts are unchanged, and the publication
+gate is clear. The remaining risk is the unavoidable non-atomic sequence across
+RubyGems, npm, GitHub, and Composer; every published component will therefore
+be verified before vpsAdmin is updated.
+
+HaveAPI `master` is pushed at
+`555fd7e20d520409fb19ed72c46600b00f14d57b`; `haveapi-0.29` and annotated tag
+`v0.29.4` are pushed at `6a8ca97fc8c0f3db4ef33fd9d9f62703d807572f`.
+All seven branch workflows and all seven tag workflows passed. The approved
+publish target successfully registered `haveapi-client`, `haveapi`, and
+`haveapi-go-client` 0.29.4 on RubyGems and `haveapi-client@0.29.4` on npm.
+Independent registry queries list all four versions; npm reports tarball SHA-1
+`3e5a4c7bb2271e78130259cdde72d9ad3dce2d69`.
+
+The standalone PHP feature branch, master, and annotated `v0.29.4` tag are
+pushed at `44bb8d1e4f786f3a84794c5ffe845d9afd2d50e5`. Packagist resolves
+`haveapi/client` 0.29.4 to that exact commit. Temporary master/release
+integration worktrees were removed; the initiative feature worktrees and
+branches remain. vpsAdmin dependency regeneration can now use only public
+0.29.4 artifacts.
+
+### vpsAdmin HaveAPI 0.29.4 adoption (2026-07-18)
+
+Every tracked HaveAPI consumer now resolves 0.29.4: API, vpsAdmin client,
+download mounter, mail templates, outage-report utility, WebUI PHP client, and
+both bundled JavaScript clients. The API/client/download-mounter package locks
+and Nix gemsets were regenerated from RubyGems. The WebUI Composer lock and
+Composer-to-Nix source resolve `haveapi/client` to exact standalone revision
+`44bb8d1e4f786f3a84794c5ffe845d9afd2d50e5`; no unrelated Composer package was
+changed. Both bundled JavaScript files have release artifact SHA-256
+`d848de52fa3999e75bcba8d9764012a190bf6a8c495b5e4066a4c605c6a171d6`.
+
+The initial repository package task hit the known Bundix gem-environment
+mismatch after deleting `packages/api/Gemfile.lock`. A first clean-environment
+retry also ran from the wrong directory because the root development shell
+returns to the repository root. The documented clean Bundix command was rerun
+with `cd packages/<name>` inside the shell; all three generated package sets
+then contain only 0.29.4. The working-directory lesson is recorded in
+`notes/vpsadmin/2026-07-18-vpsadmin-shell-package-working-directory.md`.
+
+The exact scoped-token advisory workflow now creates a cgroup state, reads
+`node_cgroup_state#index` with `node#show` but without
+`node_cgroup_state#show`, and asserts that the returned typed Node contains its
+ID. Its first run exposed the missing spec fixture rather than a product error;
+after adding the explicit state, the exact example passes.
+
+Quick validation is green: the scoped example passes, the touched API spec is
+RuboCop-clean, API i18n health passes, WebUI passes 75 tests with 288
+assertions, Composer validates and reports exact 0.29.4/`44bb8d1`, and Nix
+builds pass for API, client, download mounter, console router, and WebUI. The
+complete installed vpsAdmin pre-commit suite passes migration specs, API/WebUI
+i18n, Nixfmt, PHP-CS-Fixer, and RuboCop.
+
+The complete dependency update and scoped-token regression are committed as
+`b216a5fcb5bc65b9e8472a512ac88e5aac68becc` (`deps: update HaveAPI to
+0.29.4`) on top of rebased, previously reviewed vpsAdmin head
+`f963e542f3ebeda9e727f49ac7e0e97453023fc8`. The worktree is clean. The commit
+awaits the mandatory standalone dependency-integration review before push,
+downstream repins, and dev-cluster refresh.
+
+Upstream master advanced to `400a20fad29e27d3256a3345e6c6c21354e51672`
+with a generated WebUI Guzzle 7.15 update before the feature push. The complete
+25-commit feature series was rebased onto it after preserving pre-rebase head
+`f287fc3c347c933241a76812a3dbfec5b4b8153f` at
+`backup/2026-07-18-pre-haveapi-0.29.4-rebase`. Range-diff reports all 25 feature
+patches unchanged. The final WebUI lock/Nix files contain both master’s Guzzle
+7.15 revision and HaveAPI 0.29.4; compared with the backup feature tree, those
+two generated files are the only changes. The combined WebUI again passes 75
+tests with 288 assertions and its Nix package builds successfully.
+
+The fresh mandatory reviewer cleared rebased head
+`b216a5fcb5bc65b9e8472a512ac88e5aac68becc` with no Blocking, Important, or
+Advisory findings. It confirmed the stable dependency patch, all tracked
+consumer versions, exact PHP/JS artifacts, non-vacuous least-privilege
+regression, upstream Guzzle retention, and unchanged compatibility contract.
+The push/integration gate is clear; remaining assurance is the current-head CI
+and bridge-cluster scoped-token workflow.
+
+### HaveAPI 0.29.4 rollout verification (2026-07-18)
+
+The reviewed vpsAdmin branch is pushed at
+`b216a5fcb5bc65b9e8472a512ac88e5aac68becc`. The earlier API workflow failure
+on superseded head `b1551d3da688e4bce3914734753d8d79bff51c8f` was investigated from its
+logs: released HaveAPI 0.29.3 omitted authorized typed Node associations on
+evidence output and rejected the advisory Node resource input. These are the
+two association-context defects fixed by HaveAPI 0.29.4. The exact current
+regression passes locally and exercises both the required `node#show` scope and
+the absence of the unrelated `node_cgroup_state#show` scope.
+
+Downstream pins were regenerated from their current upstream masters and
+pushed. vpsfree-cz-configuration
+`4e5922f145181fe6d7066c3005a1eb0426864bda` contains separate generated
+confctl commits for vpsAdminOS staging
+`730b144ac36b6bded25d84e47aa33020b8dae916`, vpsAdmin staging
+`b216a5fcb5bc65b9e8472a512ac88e5aac68becc`, and vpsAdmin services at the same
+vpsAdmin revision. `nix flake check` passes. vpsadmin-kb-captures
+`b5adc2fcb7b98eb899e233d5e4b486f6ea27a95a` pins exact vpsAdmin revision
+`b216a5fcb5bc65b9e8472a512ac88e5aac68becc`; `bin/check` validates all 38
+controls, 29 paths, 32 concepts, 65 bindings, 15 test runs, and 118 capture
+images. This dependency-only change does not alter the visible WebUI contract,
+so no KB page or screenshot was changed.
+
+The existing single-node bridge cluster was updated in place without a reboot.
+The API, supervisor, WebUI container, and nodectld are active. Services and
+node1 carry `/etc/vpsadmin/build-info.json` revision
+`b216a5fcb5bc65b9e8472a512ac88e5aac68becc`; the API identifies HaveAPI 0.29.4
+and the public WebUI header links to the same exact vpsAdmin commit. Node 101
+correctly reports booted vpsAdmin revision
+`b1551d3da688e4bce3914734753d8d79bff51c8f` and current revision
+`b216a5fcb5bc65b9e8472a512ac88e5aac68becc`, demonstrating an activated
+closure change without falsely claiming that the new vpsAdmin revision was
+booted.
+
+The end-to-end least-privilege workflow now succeeds. A temporary permanent
+development token was issued with exactly the documented 34 scopes and file
+mode 0600. `collect` succeeded without `node_cgroup_state#show` and saved one
+active hosting Node with schema 1, kernel 6.12.95, six requested configuration
+options, nine ordered boot parameters, 34 sysctls, exact software revisions,
+kernel/deployment history, cgroup v2 history, and no evidence errors. All five
+dossiers validate and evaluate the complete active Node set. Each result is
+deliberately `unknown` because the fresh development cluster has neither
+kernel history back to the dossiers' required `2026-01-01` boundary nor a
+completed reconstruction for that period. Dry-run synchronization for every
+CVE produced a new-draft plan with the typed Node 101 status and performed no
+mutation. No advisory draft, publication, notification, or KB production write
+was made. The temporary token was revoked and its file removed.
+
+Current-head GitHub validation is green wherever complete. API migration,
+client, WebUI, console-router, RuboCop, download-mounter, i18n, and libnodectld
+workflows all passed at `b216a5fcb5bc65b9e8472a512ac88e5aac68becc`. In API matrix run
+`29639019554`, 25 of 26 shards have passed with no failures; only the full
+platform shard remains in progress. Self-hosted integration run `29639019522`
+is queued for its runner. These two externally running checks are the only
+remaining validation; all intended implementation, review, publication,
+repinning, cluster verification, and scoped dry-run work is complete.

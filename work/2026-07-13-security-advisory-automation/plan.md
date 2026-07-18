@@ -993,3 +993,31 @@ Node, then repin configuration and the KB contract once more. This release and
 dependency bump require explicit user approval before execution. Afterwards,
 rebuild the bridge cluster and repeat token creation, collection, all five CVE
 evaluations, dry-run synchronization, and token revocation.
+
+## HaveAPI 0.29.4 release and vpsAdmin update (2026-07-18)
+
+With explicit user approval, fast-forward the two reviewed association-context
+fixes into current HaveAPI master. Backport both commits with `cherry-pick -x`
+onto the supported `haveapi-0.29` branch, document the Ruby server fix, and use
+the repository's shared version task to prepare 0.29.4. The version task updates
+all component markers even though the functional change is server-only.
+
+Run the Ruby server regression/full suite, RuboCop, release build, package
+inspection, and mandatory standalone review before publishing. Tag and push the
+0.29 release branch, publish the Ruby server, Ruby client, Go generator, and
+JavaScript packages with the repository release task, and sync/tag the
+standalone `haveapi-client-php` repository at the same version. Verify every
+published artifact independently.
+
+Update every vpsAdmin HaveAPI consumer to 0.29.4: the API server, vpsAdmin Ruby
+client, download mounter, mail templates, outage-report utilities, WebUI PHP
+client, and the two bundled JavaScript clients. Regenerate Ruby lockfiles and
+Nix gemsets through the repository package tasks, and regenerate Composer/Nix
+metadata from the released standalone PHP tag. Add a scoped-token regression
+that requires `node#show`—and not `node_cgroup_state#show`—to expose the typed
+Node association.
+
+This is a patch-level dependency correction. It does not alter vpsAdmin's
+database, API resources, or deployment order. After review and CI, repin both
+configuration channels and the KB contract, refresh the bridge cluster, and
+repeat the least-privilege collection/evaluation/dry-run workflow.
