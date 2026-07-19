@@ -2,6 +2,26 @@
 
 ## Current status
 
+### Deployment runbook and configuration provenance (2026-07-18)
+
+The user clarified that deployment is documentation-only. No production
+deployment, migration, backfill, channel update, Node reboot, or KB write is
+authorized by this follow-up.
+
+A confctl feature worktree was created at
+`worktrees/2026-07-13-security-advisory-automation/confctl` on branch
+`2026-07-13-security-advisory-automation`, based on current
+`origin/master` `8ccb94d`. The implementation in progress adds optional
+per-closure vpsFree.cz configuration source metadata, canonical sysctl values,
+the corresponding vpsAdmin/API/WebUI/advisory identity, and an operator
+runbook under vpsfree-cz-configuration documentation.
+
+The feature has seven core vpsAdmin migrations and no feature-specific plugin
+migrations. The existing reconstruction tasks are
+`vpsadmin:node:reconstruct_kernel_history` and
+`vpsadmin:node:reconstruct_system_states`; they will be documented but not
+executed against production.
+
 ### 2026-07-15 final implementation checkpoint
 
 - The source histories have been rewritten into their owning functional
@@ -2664,3 +2684,313 @@ platform shard remains in progress. Self-hosted integration run `29639019522`
 is queued for its runner. These two externally running checks are the only
 remaining validation; all intended implementation, review, publication,
 repinning, cluster verification, and scoped dry-run work is complete.
+
+### Deployment runbook and configuration provenance (2026-07-18)
+
+This follow-up is documentation and implementation only. No production host
+was activated, migrated, backfilled, rebooted, or otherwise changed. The
+operator runbook is committed in vpsfree-cz-configuration as `92860594`
+(`docs: add vpsAdmin evidence deployment runbook`). It documents the manual
+api1 migration, api2 and WebUI rollout, the two idempotent reconstruction
+tasks, no-reboot staging-node validation, gradual production rollout, and
+rollback. The seven feature migrations are all core API migrations; there are
+no feature plugin migrations.
+
+confctl worktree
+`worktrees/2026-07-13-security-advisory-automation/confctl` uses branch
+`2026-07-13-security-advisory-automation` at
+`e61385ef8a6eb9242ef39832bdc0eea1f68f28b3`. It embeds optional schema-1
+configuration metadata containing the exact configuration-flake revision and
+dirty flag in NixOS and vpsAdminOS closures. RSpec passes 35 examples,
+RuboCop passes 120 files, Nixfmt and all Overcommit hooks pass. A full
+`nix flake check --no-build` encounters the same invalid vpsAdminOS source-path
+error on untouched upstream `8ccb94d317`; this is not caused by the feature.
+The branch is pushed.
+
+vpsAdmin history was backed up at
+`backup/2026-07-18-configuration-provenance-vpsadmin` and rewritten so the
+configuration identity, scalar sysctl conversion, and dirty-revision model fix
+are folded into their owning commits. The clean 25-commit feature head is
+`2e2f6dc496b5b99fdef097a958a5cf35046ae751`. Nix booleans are reported as
+kernel-facing `1` and `0`; optional booted/current
+`vpsfree_cz_configuration` revisions are stored, exposed, linked in the admin
+WebUI, and rejected when present but malformed. Focused reporter, persistence,
+API, WebUI, translation, and all pre-commit checks pass. The rewritten branch
+is pushed and current-head GitHub workflows are running.
+
+security-advisories history was backed up at
+`backup/2026-07-18-configuration-provenance-security-advisories` and rewritten
+so optional configuration provenance is part of the original collector,
+evaluator, dossier validation, evidence digest, and general agent guidance.
+The clean 14-commit feature head is
+`55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11`. All 84 RSpec examples and
+RuboCop over 25 files pass. The rewritten branch is pushed and current-head
+GitHub workflows are running.
+
+vpsfree-cz-configuration pins the final vpsAdmin revision for staging and
+service closures through generated commits `33e07297` and `2c3bc792`, contains
+the runbook in `27311f57`, and pins confctl through generated commit
+`e45eca0e`. Its current exact head is
+`e45eca0e947626de9f64c86b80e8696a3b77bb9d`. The temporary replacement pins
+were folded into their original generated commits; backup ref
+`backup/2026-07-18-pre-provenance-pin-fold-config` retains the pre-fold head.
+The final tree is byte-identical. `nix flake check --no-build` passes. Before
+the history-only fold, a local
+`confctl build -y cz.vpsfree/vpsadmin/int.api1` completed and the resulting
+`/etc/confctl/configuration-info.json` contained its then-current exact
+revision with `revisionDirty: false`; the generation was built but not
+activated. A current-head build remains part of post-review integration. The
+rewritten feature branch is pushed.
+
+vpsadmin-kb-captures pins exact finalized vpsAdmin revision `2e2f6dc496...` in
+commit `fdb788f`. The temporary replacement pin was folded into its owning pin
+commit; backup ref `backup/2026-07-18-pre-provenance-pin-fold-kb` retains the
+pre-fold head and the final tree is byte-identical. Current-head
+`nix develop -c bin/check` passes with 38 controls, 29 paths, 32 capture
+concepts, 65 bindings, 15 test runs, and 118 PNGs. The semantic contract did
+not drift, so no screenshot or production KB page changed. The rewritten
+feature branch is pushed.
+
+The mandatory standalone review at task
+`mandatory_configuration_provenance_review` completed with no Blocking,
+Important, or Advisory findings and cleared the post-review integration gate.
+It confirmed coherent commit boundaries, correctly folded provenance changes,
+isolated generated pins, and byte-identical configuration/KB rewrite results.
+Residual verification is the current configuration-head build, current-head
+GitHub and bridge-cluster integration, and scoped no-reboot collection. The
+review also notes that optional-identity removal and current-only to
+booted-and-current transitions rely on the generic reconciliation coverage
+rather than dedicated end-to-end cases. The deployment runbook was reviewed
+statically and none of its operational commands were executed.
+
+Post-review confctl integration exposed three test-harness assumptions. The
+flake fixture carried a stale lock into its initial commit, the expected Git
+revision was captured outside the example-sharing context, and vpsAdminOS
+deployment replaces the bootstrap VM test shell. The final test prepares its
+lock before the clean commit, captures the revision in `before(:context)`, and
+reads deployed metadata through the same confctl SSH transport used by the
+other post-switch checks. These corrections are folded into the original
+confctl feature commit at final head
+`7bee58a52372b95c2198ce3f2a719807a3c2c66b`.
+
+The first full `deploy/flakes` attempt was not accepted or blindly rerun: its
+artifacts showed the clean metadata file was initially absent and later dirty
+metadata was correct. Focused diagnostic runs then proved exact clean JSON and
+identified the example-context and vpsAdminOS-shell assumptions. The final
+fresh `deploy/flakes` run passes all 23 examples in 1017.94 seconds, including
+clean NixOS/vpsAdminOS and dirty NixOS metadata.
+
+The same standalone reviewer then found that the shared harness also serves
+legacy swpins mode, where no configuration identity exists. The final test
+gates value assertions to flake mode and explicitly verifies file absence in
+swpins mode. `deploy/swpins` passes all 23 examples in 555.28 seconds. The
+reviewer's focused remediation pass reports no remaining Blocking, Important,
+or Advisory findings and clears the updated integration gate.
+
+vpsfree-cz-configuration now pins final confctl head through the one generated
+commit `10a5ae21` and has exact head
+`10a5ae213c8ee63601b12579a698f89913bf3fc8`. The replacement pin was folded
+into its owning generated commit; backup
+`backup/2026-07-18-pre-swpins-confctl-repin` has the byte-identical pre-fold
+tree. Final `nix flake check --no-build` and
+`confctl build -y cz.vpsfree/vpsadmin/int.api1` pass, and the generated
+configuration metadata contains exact revision `10a5ae21...`, clean state,
+and schema 1. No generation was activated.
+
+### Final-head integration and dev-cluster evidence (2026-07-18)
+
+Post-review integration ran against final vpsAdmin head
+`2e2f6dc496b5b99fdef097a958a5cf35046ae751`. The vpsAdminOS supervisor VM
+scenario `supervisor/runtime-ingestion` passes all 10 examples in 734.61
+seconds, including acceptance of a legacy Node status without security
+evidence. The Playwright-backed `webui#admin-cluster` scenario passes its full
+browser flow in 946.0 seconds. It covers the cluster and Node navigation plus
+kernel, parameter, sysctl, system, and software history pages at the fixed
+test viewport.
+
+The existing bridge-network development cluster
+`2026-07-13-security-advisory-automation` was updated in place without a
+reboot. The API, supervisor, WebUI container, and nodectld are active. Services
+report exact clean vpsAdmin revision `2e2f6dc496...`. Node 101 still truthfully
+reports booted vpsAdmin revision `b1551d3da...` while its current activated
+closure reports `2e2f6dc496...`; the booted and current nixpkgs and vpsAdminOS
+identities are also exact native revisions. Optional vpsfree-cz-configuration
+identity is absent in this confctl-less development closure, as designed.
+
+A newly issued temporary development token used exactly the collector's 34
+documented scopes and file mode 0600. At final heads, `collect` saved schema-7
+evidence for the one active hosting Node: kernel 6.12.95, ordered boot
+parameters and raw command line, selected parsed configuration options,
+runtime modules and mitigations, cgroup history, software generations, and no
+reporting errors. Current `kernel.dmesg_restrict` is correctly represented as
+configured `1` and effective `1`. The older historical snapshot retains the
+pre-normalization configured string `true`, rather than rewriting historical
+evidence.
+
+All five dossiers validate and evaluate with a typed result for Node 101. Each
+result is conservatively `unknown` because this fresh cluster does not cover
+the dossiers' required history boundary and has no completed reconstruction
+for that period. Dry-run reconciliation succeeds for all five CVEs, proposes
+one advisory and one Node status each, reports `dry_run: true`, and performs no
+API writes. The temporary token was then revoked through its own scoped action
+and its local file was removed.
+
+Exact remote refs match every final feature/release head, all inspected
+worktrees are clean, and all remotes use SSH. Current-head confctl RSpec,
+RuboCop, and test workflows pass; security-advisories RSpec and RuboCop pass;
+vpsAdmin's client, API, WebUI, libnodectld, i18n, RuboCop, console-router, and
+download-mounter workflows pass. The vpsAdmin self-hosted integration workflow
+`29651792649` remains in progress on its current head and is being monitored.
+No superseded queued or in-progress workflow exists on any rewritten feature
+branch. HaveAPI 0.29.4 release/backport workflows are green; repositories
+without Actions on mechanical pin heads retain the local checks recorded
+above.
+
+### Interrupted RPC reliability follow-up recovery (2026-07-19)
+
+The resumed session recovered two unfinished vpsAdmin paths:
+`libnodectld/lib/nodectld/rpc_client.rb` and the new
+`libnodectld/spec/nodectld/rpc_client_spec.rb`. The implementation retries the
+complete RPC channel setup on a fresh channel after a timeout at any setup
+boundary. It retains ten delayed retries, a final attempt, and the existing
+ten-second delay. Six deterministic examples cover channel creation,
+exchange declaration, reply-queue declaration, binding, subscription, and
+retry exhaustion.
+
+The partial change is not treated as the cause of the existing self-hosted CI
+stalls. Run `29651792649` attempt 1 had one unrelated invalid Nix-store path
+while evaluating `storage/vps-hard-delete` and stalled at the final queue
+release in `storage/rollback-across-trees`. Attempt 2 stalled inside
+`osctl ct send state` in `vps/swap-across-locations` after 116 other scenarios
+passed. Earlier run `29639019522` stalled in swap and
+`vps/migrate-with-subdataset-mounts`. The targeted scenarios will be rerun
+after review to classify this evidence independently.
+
+Initial focused RSpec passed 6 examples and focused RuboCop passed. The first
+full libnodectld run reported 17 `LoadError` failures because the shared
+`/tmp/dev-ruby-gems` cache contained truncated Bundler and RSpec gem trees.
+No process was using that cache, so it was preserved as
+`/tmp/dev-ruby-gems.incomplete-20260719133451` and rebuilt through the declared
+Nix shell. The resulting full suite passed 419 examples. The reusable failure
+mode is recorded in
+`notes/vpsadmin/2026-07-19-libnodectld-incomplete-ruby-cache.md`.
+
+All Overcommit checks passed and the follow-up was committed before rebasing
+as `6cbbe5c0f`. A recovery ref named
+`recovery/2026-07-13-security-advisory-automation-pre-20260719-rebase`
+preserves that exact pre-rebase head. Upstream master had advanced from
+`400a20fad` to `81f7460c5` through scheduled Ruby and WebUI dependency updates.
+The complete 26-commit feature series rebased without conflicts. Range-diff is
+identical except that upstream had already supplied the generated lockfile and
+gemset portions of the HaveAPI dependency commit. The rebased RPC commit is
+`d8d12e9d6`; current rebased head is the same commit.
+
+Post-rebase verification passes: full libnodectld RSpec has 419 examples and
+no failures with seed 55996, and focused RuboCop inspected the implementation
+and spec without offenses. The complete post-rebase Overcommit run also
+passes. The mandatory standalone review remains before integration. Existing
+configuration and KB capture pins still refer to the pre-follow-up vpsAdmin head
+`2e2f6dc496b5b99fdef097a958a5cf35046ae751` and must not be updated until the
+reviewed final head is known.
+
+The mandatory standalone review reported one Blocking finding and no
+Important or Advisory findings. Bunny 2.24.0 routes every channel-open reply
+through a connection-wide continuation queue without retaining the AMQP frame
+channel number. A delayed `Channel::OpenOk` from a timed-out first channel can
+therefore satisfy the next channel's open, even though it has a different
+number. The original direct-timeout spec did not model this queue. Long
+integration remained correctly gated.
+
+The remediation moves channel-open timeout handling into `NodeBunny`. Channel
+creation is serialized; on timeout it identifies the opening channel, closes
+the transport immediately, removes that orphan through Bunny's pre-recovery
+callback, waits for a new `recovery_completed` generation, and only then
+propagates the original timeout to `RpcClient`. Bunny resets the
+connection-wide continuation queue while starting the new transport and
+recovers every remaining long-lived channel. The orphan is removed before
+recovery and its allocator ID is released, avoiding one unreachable recovered
+channel per retry. Later exchange and queue setup timeouts remain isolated by
+using a fresh registered channel.
+
+The regression uses Bunny's real session continuation queue: it reproduces a
+timed-out open followed by a delayed `Channel::OpenOk`, verifies forced
+transport recovery, verifies the stale continuation is discarded, verifies
+the orphan registry entry is removed and its ID reusable, and verifies the
+original timeout is re-raised. Focused RSpec passes 7 examples; focused
+RuboCop passes all four implementation/spec paths; full libnodectld RSpec
+passes 420 examples with seed 51908; and every Overcommit and commit-message
+hook passes. The corrected focused commit and current head is
+`c7dd83878a4c87dafa42c67907ec3c08db8163ea`. The same standalone reviewer must
+clear this remediation before the long integration gate opens.
+
+The same standalone reviewer completed the focused remediation pass with no
+Blocking, Important, or Advisory findings. It independently reran the focused
+suite with 7 passing examples and confirmed the continuation reset, orphan
+cleanup, allocator reuse, recovery-generation predicate, and mutex/callback
+ordering. It also confirmed the remaining 25 commits are unchanged and opened
+the long integration gate. The accepted residual contracts are the intentionally
+unbounded Bunny recovery wait, isolated use of Bunny 2.24.0 private-documented
+internals with regression coverage, the ordinary forced-recovery window for
+other NodeBunny consumers, and deliberate retention of channels that time out
+after opening so their numbers cannot be reused unsafely.
+
+All post-review long integration gates pass on
+`c7dd83878a4c87dafa42c67907ec3c08db8163ea`. The
+`supervisor/runtime-ingestion` scenario passed all 10 examples and the complete
+test in 583.67 seconds, including the legacy status without security evidence.
+`vps/swap-across-locations` passed its cross-location VPS/IP swap example in
+696.91 seconds and the complete test in 1296.75 seconds.
+`vps/migrate-with-subdataset-mounts` passed its mounted-subdataset remapping
+example in 452.45 seconds and the complete test in 1081.22 seconds.
+`storage/rollback-across-trees` passed both examples, including backup-head
+switching and future incremental backups, and completed in 1127.89 seconds.
+The previous container-send and final queue-release stalls did not reproduce;
+these isolated results provide no basis to attribute them to the RPC recovery
+change.
+
+The reviewed vpsAdmin branch was force-pushed with an explicit lease from the
+expected old remote head `2e2f6dc496...` to
+`c7dd83878a4c87dafa42c67907ec3c08db8163ea`. Upstream master remained
+`81f7460c5cc9b26cf3deffefa55044fd180d2c1c`. No superseded queued or running
+workflow existed after the push. Current-head WebUI PHPUnit, API migrations,
+RuboCop, client, i18n, libnodectld, download-mounter, and console-router
+workflows pass. API topic-parallel specs and the self-hosted integration
+workflow remain in progress and are being monitored.
+
+Downstream pins were regenerated and pushed from clean worktrees whose master
+refs had not advanced. vpsfree-cz-configuration has separate generated confctl
+commits `ca68ee77` and `4aa97c28` for `vpsadminStaging` and
+`vpsadminServices`, both at exact vpsAdmin head `c7dd83878`. Final configuration
+head is `4aa97c28`; `nix flake check --no-build` passes. The Nix development
+shell's generated `.bin/` and `.bundle/` caches were moved outside the worktree
+after the pin and push commands, leaving it clean.
+
+vpsadmin-kb-captures head `f0d9e6c6` pins exact vpsAdmin revision `c7dd83878`
+in `flake.nix`, the lock, capture inventory, and navigation contract. Its full
+`bin/check` validates 38 controls, 29 paths, 32 capture concepts, 65 bindings,
+both test groups, and all 118 PNGs. The RPC recovery and upstream rebase do not
+change the member-visible WebUI contract, so no semantic fingerprint,
+screenshot, KB candidate, staging content, or production page changed.
+
+The verified single-node bridge cluster was updated in place with
+`devcluster update ... all`. It remains running and ready; API, supervisor,
+WebUI, and nodectld are active. Services and node1 carry exact clean vpsAdmin
+revision `c7dd83878a4c87dafa42c67907ec3c08db8163ea`. The update did not reset or
+reboot the Node: evidence retains boot ID
+`048f8a1d-2327-475e-9ac0-8d61bb8f47bc`, booted vpsAdmin revision
+`b1551d3da688e4bce3914734753d8d79bff51c8f`, and current vpsAdmin revision
+`c7dd83878a4c87dafa42c67907ec3c08db8163ea`.
+
+A temporary permanent development token was issued through the repository
+token issuer with exactly 34 documented scopes and mode 0600. All five dossiers
+validate. Collection saved schema-7 evidence for the sole active hosting Node,
+with kernel 6.12.95, six requested configuration options, ordered boot
+parameters, runtime evidence, exact software generations, and no errors. All
+five evaluations are conservatively `unknown` because the fresh cluster lacks
+history back to 2026-01-01 and a completed reconstruction for that period. All
+five default sync commands returned `dry_run: true`, proposed one new advisory
+and one typed unknown Node status, and performed no write. A read-only API check
+confirmed zero remote advisories. The token was revoked through its scoped
+action, its file removed, and ignored evidence/evaluation state moved outside
+the worktree. No production deployment, migration, backfill, reboot, advisory
+mutation, publication, notification, KB staging, or KB write occurred.

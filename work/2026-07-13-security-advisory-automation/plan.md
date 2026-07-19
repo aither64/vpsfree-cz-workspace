@@ -10,6 +10,25 @@ draft vpsAdmin security advisory, and populate a conclusion for every active
 hypervisor/storage node. Publishing and user notification must remain an
 explicit human action outside the automation token's authority.
 
+## Deployment and provenance completion
+
+- Add an operator runbook to vpsfree-cz-configuration. It documents the
+  api1 migration, api2/WebUI rollout, history backfills, no-reboot staging
+  rollout, verification, gradual production rollout, and rollback. This
+  initiative must not execute any of those production deployment, migration,
+  backfill, channel-update, or reboot commands.
+- Canonicalize configured sysctl scalars in nodectld to the kernel-facing text
+  representation, including Nix booleans as `1` and `0`, before they enter
+  vpsAdmin history.
+- Have confctl embed the configuration flake's exact Git revision and dirty
+  state in each system closure. Treat this identity as optional independently
+  for booted and current closures, because non-confctl deployments and older
+  closures do not contain it.
+- Extend vpsAdmin's relational software revisions, history, API, admin WebUI,
+  and security-advisories evidence digest with the optional
+  `vpsfree_cz_configuration` identity. Missing metadata is normal; present
+  malformed metadata is an evidence error.
+
 ## Final feedback refinements
 
 - Evidence collection is vulnerability-agnostic. vpsAdminOS publishes the
@@ -1021,3 +1040,39 @@ This is a patch-level dependency correction. It does not alter vpsAdmin's
 database, API resources, or deployment order. After review and CI, repin both
 configuration channels and the KB contract, refresh the bridge cluster, and
 repeat the least-privilege collection/evaluation/dry-run workflow.
+
+## RPC setup timeout recovery follow-up (2026-07-19)
+
+Complete the interrupted libnodectld reliability change by treating a timeout
+from any synchronous AMQP channel-setup operation as a failure of that entire
+channel. A late reply can otherwise remain in the timed-out channel's method
+stream and be consumed by a later declaration. A channel-open timeout poisons
+Bunny's connection-wide continuation queue, so force automatic connection
+recovery, remove the orphaned opening channel before registered channels are
+recovered, and wait for recovery completion. Later setup timeouts are scoped
+to their channel; retry the complete setup on a fresh channel while leaving
+the timed-out channel registered so its number cannot be reused for a delayed
+reply. Preserve the existing ten delayed retries plus one final attempt.
+
+Cover channel creation, exchange declaration, reply-queue declaration,
+binding, subscription, and retry exhaustion with deterministic unit tests.
+Run the full libnodectld suite, focused RuboCop, and all repository hooks;
+commit the change, rebase the complete feature branch onto current upstream
+master, then perform the mandatory standalone review before long integration
+tests.
+
+The previously observed self-hosted integration failures stalled in container
+send operations and a final queue release, while a separate shard encountered
+an invalid Nix-store path. There is no evidence that those failures were
+caused by RPC channel setup. Re-run the affected swap, migration, and rollback
+scenarios to classify them independently, and retain the supervisor ingestion
+scenario as the feature integration gate.
+
+This follow-up changes no database schema, external API, stored format, or
+nodectld protocol. It is compatible with mixed service and Node versions and
+requires no coordinated update or reboot. After review and validation, push
+the rebased vpsAdmin branch, update both generated configuration channel pins
+and the mechanical KB source pin, refresh the existing bridge cluster without
+rebooting its Node, and repeat the scoped collection/evaluation/dry-run flow.
+No production deployment, migration, backfill, reboot, advisory mutation, or
+KB write is part of this follow-up.
