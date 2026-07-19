@@ -10,6 +10,57 @@ draft vpsAdmin security advisory, and populate a conclusion for every active
 hypervisor/storage node. Publishing and user notification must remain an
 explicit human action outside the automation token's authority.
 
+## Resumable per-Node history backfill
+
+Refactor the unpublished kernel and system-state reconstruction into durable,
+per-Node backfills. Historical samples are selected and computed in bounded
+batches without the Node lock. A short final lock verifies that neither the
+candidate status watermark nor the exact/live-history boundary changed, then
+writes the derived rows and completion checkpoint atomically. A changed
+boundary causes an initial scan plus at most three retries (four total
+attempts) before the operator receives a clear failure.
+
+`NodeKernelHistoryState` remains the kernel completion checkpoint. The
+unpublished system-state migration also creates a private
+`NodeSystemHistoryState`, with one row per Node and source-status/observation
+boundaries plus `completed_at`; this preserves the seven core vpsAdmin
+migrations. Completed components are skipped unless `FORCE=1`, and the
+combined task resumes only a Node's missing component.
+
+The operator interface is:
+
+```shell
+bundle exec rake vpsadmin:node:history_backfill_status
+NODE_ID=300 bundle exec rake vpsadmin:node:reconstruct_history
+NODE_ID=300 bundle exec rake vpsadmin:node:reconstruct_kernel_history
+NODE_ID=300 bundle exec rake vpsadmin:node:reconstruct_system_states
+```
+
+Without `NODE_ID`, reconstruction tasks process every pending eligible
+hypervisor/storage Node. A positive `BATCH_SIZE` defaults to 10,000. Invalid
+IDs and service-only roles fail before reconstruction starts. Status and run
+output expose pending/partial/complete state, component timestamps and source
+boundaries, plus periodic processed/total, percentage, elapsed time,
+rows/second, ETA, and created-row counts.
+
+The scan selects only chronologically ordered status IDs once, then plucks the
+columns needed by each component in primary-key batches while restoring that
+order. Kernel boot/release/gap state and system-state run collapsing carry
+across batch boundaries. Reconciliation preserves exact kernel events as the
+current authority; live system states keep the current marker and absorb an
+equal reconstructed prefix. With no live state, the final reconstructed or
+current-status state becomes current under the lock.
+
+Completion and derived writes share one transaction, so a crash leaves the
+component pending. A successful kernel backfill followed by system failure is
+reported as partial. Later legacy status samples do not invalidate an already
+completed checkpoint; the rollout therefore backfills each active Node
+immediately before deploying it. Inactive historical Nodes may be processed
+separately off-peak.
+
+No production migration, backfill, deployment, Node update, configuration
+channel update, or KB write is authorized by this implementation work.
+
 ## Deployment and provenance completion
 
 - Add an operator runbook to vpsfree-cz-configuration. It documents the

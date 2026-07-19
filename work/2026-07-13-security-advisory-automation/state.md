@@ -2,6 +2,160 @@
 
 ## Current status
 
+### Resumable per-Node history backfill (2026-07-19)
+
+- The verified development session and existing vpsAdmin feature worktree are
+  being reused. The worktree is clean at published feature head `96c622c13`.
+- The requested refactor is confined to the existing unpublished kernel and
+  system-state migrations, models, reconstruction operations/tasks/specs, and
+  the configuration deployment runbook. No production operation is
+  authorized.
+- The current implementation materializes full historical `NodeStatus` rows
+  and holds the Node lock throughout each scan. It has a kernel checkpoint but
+  no system-state completion marker, no per-Node/task selection, no combined
+  resume/status command, and no periodic progress reporting. These are the
+  implementation gaps being addressed.
+- The vpsAdmin implementation now has an unpublished private system-history
+  checkpoint in the existing system-state migration, unlocked ID/scalar batch
+  scans, three bounded retries, short savepoint-backed Node-lock writes,
+  component resume/force behavior, combined and status tasks, and a reusable
+  progress reporter.
+- The configuration deployment runbook now requires a combined backfill and
+  `complete` status immediately before each gradual Node deployment. It keeps
+  inactive historical Nodes as separate off-peak work.
+- Focused operation/model/task specs pass: 37 examples, 0 failures. They cover
+  batch-boundary transitions/gaps, exact/live cutoffs, current ownership,
+  idempotency, force, partial failure, atomic rollback, concurrent unlocked
+  scans, bounded retry, scalar-only SQL, task selection/status, and rate/ETA
+  formatting.
+- Focused migration specs pass: 4 examples, 0 failures, including checkpoint
+  uniqueness and rollback.
+- Targeted RuboCop passes for all changed API Ruby/spec files: 13 files, no
+  offenses. `tests/ci-selection-test.rb` passes with 16 runs and 55 assertions.
+- The four Rake task descriptions were verified against the isolated test
+  database. Plain task listing without a database and starting the database
+  helper outside the Nix API shell both failed during application/tool loading;
+  the working setup is recorded in
+  `notes/vpsadmin/2026-07-19-rake-task-list-test-db.md`.
+- The complete non-migration API RSpec suite passed in eight isolated local
+  shards: 3,969 examples, no failures, and nine expected plugin-mode pending
+  examples. Full API RuboCop inspected 1,442 files without offenses. The
+  repository Overcommit gate passes migration specs, WebUI/API i18n, Nixfmt,
+  RuboCop, and PHP CS Fixer.
+- The initial broad vpsAdmin implementation commit was `a72e23de5`; the
+  mandatory review required it to be split and folded into the unpublished
+  owning commits. The configuration rollout runbook is committed separately
+  as `71c78b5c`; its hooks passed. Upstream vpsAdmin `master` remains
+  `81f7460c5`, so no upstream rebase was required before review.
+- Long supervisor/dev-cluster integration and downstream exact pin updates
+  remain gated on the mandatory standalone review. No production migration,
+  backfill, deployment, or KB write has been performed.
+- The mandatory standalone review blocked integration with two findings. A
+  forced system rerun after an empty completion checkpoint could classify all
+  later live states as reconstructed and delete them. The review also requires
+  the broad vpsAdmin follow-up to be folded into the unpublished owning kernel,
+  system-schema, and system-reconstruction commits, retaining only the combined
+  task/progress interface as a focused new commit.
+- Important review findings require terminal retry exhaustion to be reported as
+  failure instead of a nonexistent next retry, and reconstruction output to
+  expose the selected Node's component timestamps and processed boundaries.
+  The original request says to retry up to three times; the plan will clarify
+  that this means one initial scan plus at most three retries. Integration and
+  downstream pins remain paused until remediation passes the same review gate.
+- The blocking live-state issue is fixed. When an empty completed backfill is
+  followed by live states, a forced rerun now treats the first existing state
+  as the live boundary and preserves every live transition and row identity.
+  A regression covers empty completion, two later live runs, and force.
+- The final unpublished history now folds the checkpoint migration into
+  `369c0032d`, its generated table into the owning schema refresh
+  `5915750a3`, unlocked kernel reconstruction into `87880e2e4`, and unlocked
+  system reconstruction into `e69af7d20`. The focused combined task and
+  progress interface is `c7e4b8785`, which is also the current vpsAdmin head.
+  Owning commit messages describe the final short-lock design. A recovery ref
+  retains the pre-remediation `a72e23de5` tree.
+- Exhaustion after one initial scan plus three retries now emits a terminal
+  `failed` progress record rather than claiming another retry. Reconstruction
+  prints each selected Node's overall/component state, completion timestamps,
+  source-status IDs, and observation bounds, including on partial failure.
+- Post-remediation focused RSpec passes 40 examples with no failures (seed
+  62122), targeted RuboCop passes 12 files without offenses, migration and all
+  commit-time Overcommit hooks pass, and every final commit message is within
+  80 columns. The same standalone reviewer is performing the required focused
+  remediation pass before integration can start.
+- The focused re-review cleared the live-state, retry, history-split, and
+  processed/partial output findings, then found that a fully complete no-op run
+  returned before printing the selected Node's checkpoint details. The no-op
+  path now prints the same final status line before returning. Its focused task
+  spec passes 11 examples (seed 25282), focused RuboCop passes two files, and
+  all amend-time hooks pass. Integration remains paused for the same reviewer's
+  final confirmation.
+- The same standalone reviewer confirmed the no-op correction at final head
+  `c7e4b87854fe27619dd5450f93a1e5c4d4f8e4d1` with no Blocking, Important, or
+  Advisory findings. It independently passed the 11-example task spec and
+  opened the supervisor/dev-cluster integration gate. Accepted residual risks
+  are production-scale scan/short-lock performance, the explicit immutable
+  `NodeStatus` assumption, and real concurrent supervisor ingestion, which the
+  next integration step targets.
+- `nix develop -c rake vpsadmin:gems` completed before the cluster rebuild but
+  also refreshed the unrelated unconstrained `concurrent-ruby` dependency from
+  1.3.7 to 1.3.8 in three package bundles. That dependency-only drift was not
+  accepted into this feature; the six generated files were restored to their
+  committed content and the worktree is clean. The reusable caveat is recorded
+  in `notes/vpsadmin/2026-07-19-vpsadmin-gems-unrelated-updates.md`.
+- The dedicated single-Node bridge cluster was reset because the unpublished
+  system-state migration changed. Graceful shutdown reached the tool's known
+  timeout fallback, then only this initiative's state was removed. A clean
+  `--topology single --network bridge` start rebuilt and deployed exact
+  vpsAdmin head `c7e4b87854fe27619dd5450f93a1e5c4d4f8e4d1`; API, supervisor,
+  nodectld, DNS, WebUI, and seeded pool setup reached ready state.
+- The repository's long `supervisor/runtime-ingestion` scenario passed all 10
+  examples and the complete test in 682.78 seconds. It covered legacy Node
+  status, VPS status, storage, expansion, network monitor/accounting, mounts,
+  VPS events, and oomd incident ingestion.
+- The development database then received 20,000 synthetic immutable legacy
+  statuses before the live/exact boundary. The combined per-Node task ran with
+  `NODE_ID=101 BATCH_SIZE=1`. During its unlocked kernel scan, nodectld was
+  restarted after making the current status eligible for logging; the real
+  supervisor appended status ID `32776`. The first 20,000-row scan detected the
+  changed watermark and retried once, then completed in 23.6 seconds at 846.7
+  rows/second. System reconstruction completed its 20,000-row scan in 34.9
+  seconds at 573.5 rows/second.
+- Both durable checkpoints are complete with source IDs `9..20008` and
+  observations `2026-07-01T00:00:01Z..2026-07-01T05:33:20Z`. Kernel history
+  has three public events, exactly one current event, and that current event is
+  exact `node_report`. System history collapsed to two states and exactly one
+  current state; the original live row retained identity/current ownership and
+  absorbed the equal reconstructed run. The supervisor status table contains
+  20,003 rows with the concurrent row as its maximum.
+- A repeated `NODE_ID=101 reconstruct_history` run invoked no component,
+  reported `No pending combined history backfills`, printed both completion
+  timestamps/source/observation boundaries, and kept before/after totals at one
+  complete Node. This also confirms later legacy samples do not revert durable
+  completion.
+- The reviewed vpsAdmin branch was force-pushed with an explicit lease from
+  expected remote head `96c622c13356c31db275e2050e5b724cbcb9739f` to final
+  head `c7e4b87854fe27619dd5450f93a1e5c4d4f8e4d1`. The superseded self-hosted
+  workflow was cancelled. All nine non-integration current-head workflows pass,
+  including all 26 API topic-parallel jobs. The migration path intentionally
+  makes the CI selector choose the full `tag=ci` integration set; its original
+  self-hosted attempt remains in progress as run `29698931645` with no failed
+  step or rerun. It was not cancelled; recent successful full sweeps take
+  multiple hours.
+- vpsfree-cz-configuration keeps the runbook in `71c78b5c`, then uses separate
+  unedited confctl-generated commits `570832d8` and `898b8632` to pin
+  `vpsadminStaging` and `vpsadminServices` to exact final vpsAdmin head
+  `c7e4b878`. `nix flake check --no-build` passes. The branch is pushed at
+  `898b863292f196b8e7c6998eb4c865f6dac45393`; pre-existing untracked `.bin/`
+  and `.bundle/` development caches remain untouched.
+- vpsadmin-kb-captures commit `0a3f92f` pins exact vpsAdmin revision
+  `c7e4b878` in `flake.nix`, its generated lock, the capture inventory, and the
+  navigation contract. `nix develop -c bin/check` passes 8/50 and 7/17 test
+  groups and validates 38 controls, 29 paths, 32 capture concepts, 65
+  bindings, 59 concepts, 118 variants, and all 118 PNGs. No semantic selector,
+  capture, screenshot, KB candidate, staging content, or production page
+  changed. The branch is pushed at
+  `0a3f92f8dd4058186d51a9271d9debafd6f1c418`.
+
 ### Deployment runbook and configuration provenance (2026-07-18)
 
 The user clarified that deployment is documentation-only. No production
