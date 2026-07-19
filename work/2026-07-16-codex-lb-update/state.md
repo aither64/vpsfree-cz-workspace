@@ -1,13 +1,149 @@
 # 2026-07-16-codex-lb-update
 
+## Follow-up status (2026-07-19)
+
+- A new user-requested follow-up is in progress to deploy the latest upstream
+  default-branch commit rather than the latest release.
+- Recreated the existing initiative worktree and fast-forwarded branch
+  `2026-07-16-codex-lb-update` to current `origin/master` at `5aa82621` inside
+  the repository Nix shell.
+- Upstream `Soju06/codex-lb` default branch is `main`, currently at
+  `9b40f746262b895c7f2b94d3afc17266f75b76ce` from 2026-07-18.
+- The newest published release/image remains `1.21.0`; GHCR has no `main`,
+  edge, or commit tag. A source-pinned Nix-built OCI image is therefore being
+  implemented.
+- The target commit's upstream CI run `29654532080` passed Docker build,
+  packaging, all frontend/backend tests, type checks, and migration checks.
+  Ruff's architecture precheck failed because `service.py` has 2,604 lines
+  against its 2,600-line budget, which made the aggregate result red.
+- Runtime dependencies are unchanged from `v1.21.0`, no runtime source file
+  under `app/`, `config/`, or `scripts/` was deleted, and seven new Alembic
+  migrations are present. The existing explicit database backup and rollback
+  plan remains required for deployment.
+- Added Bun2nix as a direct flake/channel input at revision `5a39d717` using
+  `confctl inputs channel update`; this prevents an unrelated `llm-agents`
+  update from silently selecting a different image builder.
+- Implemented a source-pinned package that builds the exact upstream frontend
+  lock with Bun 1.3.14, overlays the target application source on the pinned
+  dependency-compatible `1.21.0` runtime image, and labels/tags the local OCI
+  image with the upstream revision.
+- The first frontend build exposed an incorrect build working directory. The
+  derivation was corrected to build from `frontend/`; no workaround or manual
+  artifact was retained.
+- The initial OCI overlay was built one directory too shallow, so its target
+  files landed beside the active `/app/app`, `/app/config`, and `/app/scripts`
+  paths. The resulting fresh-database smoke check reported the release head
+  `20260713_040000_add_account_refresh_claims`; mandatory review correctly
+  identified that result as evidence that the image still ran `1.21.0`, not as
+  a successful target validation. The overlay and validation were fixed before
+  integration.
+- Per the user's explicit direction, this follow-up will stop before any push.
+  Local image loading for smoke testing is permitted; no image or Git ref has
+  been published and no aitherdev deployment is in scope.
+- Final local follow-up commits:
+  - `53bd859d inputs: update bun2nix to 5a39d717`
+  - `d6f845d4 cluster: build codex-lb from upstream main`
+- Pre-review quick verification passed: clean Bun2nix regeneration, Nixfmt,
+  staged whitespace checks, `nix flake check --no-build`, and the initial OCI
+  image build. Overcommit's Nixfmt and commit-message hooks passed both
+  commits; the functional commit received non-failing warnings for two message
+  lines over the hook's 72-character preference, while all lines satisfy the
+  workspace's mandatory 80-character limit. The amended functional commit
+  message was rewrapped and all hooks then passed without warnings.
+
+## Follow-up mandatory review
+
+- Standalone review of base `5aa82621` through head `898f36a2` found one
+  Blocking OCI layout defect, one Important stale rollback-procedure defect,
+  and one Advisory tracking defect.
+- Decision: resolve all findings before integration. Correct the overlay to
+  populate `/app/app`, `/app/config`, and `/app/scripts`; assert target-only
+  active paths and target migration head; exercise a disposable upgrade from
+  the `1.21.0` schema with backup/restore; make backup names and rollback target
+  specific to `git-9b40f746`; and correct follow-up base/history tracking.
+- Residual reviewer gaps after those fixes are the pending full aitherdev build
+  and real deployment-time database/service/endpoint validation. No deployment
+  is authorized in this initiative.
+- All review findings were resolved. The amended image layer now populates
+  `/app/app`, `/app/config`, and `/app/scripts`. Corrected image inspection
+  found target-only backend, migration, and script files in their active paths,
+  no copies at the formerly misplaced paths, `import app` resolving to
+  `/app/app/__init__.py`, and an active frontend whose SHA-256 exactly matches
+  the Nix-built frontend output.
+- A disposable volume was initialized and checked by the pinned `1.21.0`
+  image at migration head `20260713_040000_add_account_refresh_claims`. An
+  online SQLite backup named for `git-9b40f746` was created with Python's
+  backup API, was non-empty, and passed `PRAGMA quick_check`.
+- The corrected target image upgraded that same database to
+  `20260717_000000_optimize_dashboard_hot_path_indexes` and reported
+  `migration_policy=ok` and `schema_drift=none`. The pre-upgrade backup still
+  passed `quick_check`; restoring it byte-for-byte and checking it with the
+  prior `1.21.0` image again reported `migration_policy=ok` and
+  `schema_drift=none`.
+- The target-specific backup name, exact-backup recording requirement, and
+  exact digest-pinned `1.21.0` rollback target are now explicit in the plan.
+  Follow-up base/history tracking was also corrected.
+- Full integration build passed with
+  `confctl build -y cz.vpsfree/machines/aitherdev` as generation
+  `2026-07-19--14-29-16`. The generated pre-start script loads the corrected
+  `/nix/store/yiywbsrnvk98syghvl97h4s80j070h55-docker-image-codex-lb.tar.gz`,
+  and the generated service starts
+  `localhost/codex-lb:git-9b40f746` with the persistent `codex-lb-data` volume.
+- A final upstream check after the integration build still resolved default
+  branch `main` to `9b40f746262b895c7f2b94d3afc17266f75b76ce`.
+- No Git ref or OCI image was pushed and no configuration was deployed.
+
+## Follow-up commands run
+
+- `git --git-dir=repos/vpsfree-cz-configuration.git fetch origin --prune`
+- `bin/dev-session worktree add 2026-07-16-codex-lb-update ...`
+- `nix develop -c git merge --ff-only origin/master`
+- Queried upstream repository metadata, commits, releases, tags, workflows,
+  image tags, and CI logs with `gh` and `skopeo`.
+- Cloned upstream `main` read-only under `/tmp` and compared it with `v1.21.0`.
+- Prefetched source commit `9b40f746` as
+  `sha256-PB3wbTxd25HgHSeufzkqnsH8mKo2B4pEceBZic+RXuE=`.
+- Prefetched Bun 1.3.14 as
+  `sha256-lR7iruhV8IWVruxiJSJqKY0/6oOj3NZGXAnLzN9+hI8=`.
+- Generated `packages/codex-lb/bun.nix` with Bun2nix 2.1.1 from the exact
+  upstream `frontend/bun.lock` and verified a clean regeneration is identical.
+- `confctl inputs channel update --no-commit --no-changelog bun2nix`
+- Built the frontend and OCI image derivations with Nix.
+- Loaded the result into local Podman, inspected its configuration, and ran
+  the database migration upgrade/check against a disposable database.
+- `nix develop -c bundle check`
+- `nix develop -c bundle exec overcommit --install`
+- `nix develop -c nixfmt --check ...`
+- `nix develop -c nix flake check --no-build`
+- `/nix/store/...-confctl/bin/confctl inputs channel update --commit bun2nix`
+- Built the direct-input OCI derivation as
+  `/nix/store/4y28q58lrvb5nlg7kjm9y6g63a9jhkzm-docker-image-codex-lb.tar.gz`;
+  mandatory review showed this first layout was invalid.
+- Rechecked upstream `main` immediately before the functional commit; it still
+  resolved to `9b40f746262b895c7f2b94d3afc17266f75b76ce`.
+- `nix develop -c git commit -F /tmp/vpsfree-cz-configuration-codex-lb-commit.txt`
+- Built the corrected image as
+  `/nix/store/yiywbsrnvk98syghvl97h4s80j070h55-docker-image-codex-lb.tar.gz`.
+- Loaded the corrected image locally and asserted target-only application,
+  migration, script, and frontend content beneath active `/app` paths.
+- Exercised the disposable `1.21.0` database migration, verified backup,
+  `git-9b40f746` upgrade/check, backup recheck, and byte-identical restore with
+  the prior image.
+- `nix develop -c git commit --amend -F /tmp/vpsfree-cz-configuration-codex-lb-commit.txt`
+- `nix develop -c confctl build -y cz.vpsfree/machines/aitherdev`
+- Inspected generation `2026-07-19--14-29-16` to confirm its generated
+  pre-start and service scripts reference the corrected image derivation and
+  `localhost/codex-lb:git-9b40f746` tag.
+
 ## Repositories
 
 - `vpsfree-cz-configuration`
   - branch: `2026-07-16-codex-lb-update`
   - worktree: `worktrees/2026-07-16-codex-lb-update/vpsfree-cz-configuration`
-  - base: `origin/master` at `e1cc165c`
+  - follow-up base: `origin/master` at `5aa82621`
+  - original initiative base: `origin/master` at `e1cc165c`
 
-## Status
+## Historical status from the original 2026-07-16 work
 
 - All intended repository changes are committed, reviewed, and pushed as a
   clean six-commit series on `master`.

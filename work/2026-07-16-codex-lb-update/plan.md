@@ -1,5 +1,73 @@
 # 2026-07-16-codex-lb-update
 
+## Follow-up: 2026-07-19 default-branch snapshot
+
+### Goal
+
+Update the codex-lb instance configured on aitherdev from release `1.21.0` to
+the latest commit in upstream's default `main` branch.
+
+### Approach
+
+1. Resolve and pin the current `main` commit and source hash.
+2. Keep the published `1.21.0` image as the runtime dependency base because
+   upstream has not published a default-branch image and runtime Python
+   dependencies have not changed since `1.21.0`.
+3. Pin Bun2nix as a direct flake input and pin upstream's required Bun 1.3.14
+   binary. Generate the frontend dependency closure from the exact upstream
+   lock file, build the frontend, overlay the complete application,
+   configuration, script, and generated frontend files on the base image, and
+   produce a locally named OCI image through Nix.
+4. Point aitherdev's declarative container at the Nix-built image. Do not
+   publish an invented upstream tag or rely on a mutable/preloaded local
+   image.
+5. Format and build the image and complete aitherdev configuration, commit the
+   focused change, and run mandatory standalone review before final
+   integration validation.
+
+### Compatibility and deployment
+
+- The target source contains seven Alembic migrations after `1.21.0`, so the
+  explicit verified SQLite backup, post-start migration check, and rollback
+  procedure below remains mandatory before any deployment. Name the backup
+  `store.pre-git-9b40f746-<UTC timestamp>.db`, record the exact created path,
+  and use only that verified file for this deployment's rollback.
+- Runtime Python dependencies are unchanged between `v1.21.0` and the target
+  commit. Reusing the pinned release runtime image therefore preserves the
+  exact Python environment while replacing all application, configuration,
+  script, and frontend files from the target source.
+- Bun2nix is a direct channel input rather than an implementation detail of
+  `llm-agents`, so routine `llm-agents` input updates cannot silently change
+  the image builder. Bun itself is pinned to the version required by the
+  upstream frontend.
+- No application/configuration/script files were deleted between `v1.21.0`
+  and the target commit, so an OCI overlay cannot expose removed stale code
+  from the base image.
+- Upstream CI for the target commit passed its Docker build, packaging,
+  frontend/backend tests, type checks, and migration checks. The aggregate run
+  is red only because the architecture line-budget check reports 2,604 lines
+  against a 2,600-line limit.
+- The change remains configuration-only until explicitly deployed. Mixed
+  versions do not communicate with one another, but rollback to the exact
+  digest-pinned `1.21.0` image/configuration still requires restoring the
+  recorded `store.pre-git-9b40f746-*` database because `1.21.0` cannot be
+  assumed to load the target commit's schema.
+
+### Testing plan
+
+- Verify the source pin still matches upstream `main` immediately before the
+  final commit.
+- Build the reproducible frontend derivation and OCI image.
+- Inspect the loaded image metadata and assert that target-only backend,
+  migration, script/configuration, and frontend files are active beneath
+  `/app`.
+- Exercise the upgrade from a disposable database created by the pinned
+  `1.21.0` image, including verified backup, target migration/check, and
+  restore followed by the `1.21.0` migration check.
+- Run Nix formatting, repository hooks, whitespace checks, and a full
+  `confctl build -y cz.vpsfree/machines/aitherdev`.
+- Run mandatory standalone review after the intended commit and quick checks.
+
 ## Goal
 
 Update the codex-lb container deployed on aitherdev to the latest upstream
@@ -42,27 +110,29 @@ same workflow on demand.
   compatible with GitHub-hosted runners, repository permissions, and the
   repository's `confctl` commit/push flow. Scheduled and manual runs share the
   same job and its final push remains atomic.
-- Deployment order: merge the configuration/input commits, but before deploying
-  aitherdev use the currently running container's Python `sqlite3` backup API to
-  copy `/var/lib/codex-lb/store.db` to a unique
-  `/var/lib/codex-lb/store.pre-1.21.0-<UTC timestamp>.db` inside
-  `codex-lb-data`. Run `PRAGMA quick_check` on the new backup and verify that it
-  returns `ok` and the backup is non-empty. Abort deployment if creation or
-  verification fails. This online backup is an explicit operator step; no
-  deployment is part of this initiative.
+- Deployment order: merge the configuration/input commits, but before
+  deploying aitherdev use the currently running container's Python `sqlite3`
+  backup API to copy `/var/lib/codex-lb/store.db` to a unique
+  `/var/lib/codex-lb/store.pre-git-9b40f746-<UTC timestamp>.db` inside
+  `codex-lb-data`. Record the exact created path. Run `PRAGMA quick_check` on
+  that backup and verify that it returns `ok` and the file is non-empty. Abort
+  deployment if creation or verification fails. This online backup is an
+  explicit operator step; no deployment is part of this initiative.
 - After activation, require `podman-codex-lb.service` to remain active, inspect
   its entrypoint output for the resulting `current_revision`, and run
   `podman exec codex-lb python -m app.db.migrate check`. Accept the deployment
   only when it prints `migration_policy=ok` and `schema_drift=none`, and the
   codex-lb endpoints respond normally.
-- Reverting only the image is not a reliable codex-lb rollback because the old
-  version can reject a schema revision created by `1.21.0`. To roll back, stop
-  the service, use `podman volume inspect codex-lb-data` to locate the volume,
-  preserve the failed upgraded `store.db` and sidecars, restore the selected
-  verified `store.pre-1.21.0-*.db` as `store.db` with matching ownership/mode,
-  remove stale `store.db-wal` and `store.db-shm` while the service is stopped,
-  activate the reverted image configuration, and start the service. This is
-  deliberate operator action, not an automatic configuration rollback.
+- Reverting only the image is not a reliable codex-lb rollback because
+  `1.21.0` cannot be assumed to load schema revisions created by commit
+  `9b40f746`. To roll back, stop the service, use
+  `podman volume inspect codex-lb-data` to locate the volume, preserve the
+  failed upgraded `store.db` and sidecars, restore the exact recorded and
+  verified `store.pre-git-9b40f746-*.db` as `store.db` with matching
+  ownership/mode, remove stale `store.db-wal` and `store.db-shm` while the
+  service is stopped, activate the exact prior digest-pinned `1.21.0`
+  configuration, and start the service. This is deliberate operator action,
+  not an automatic configuration rollback.
 
 ## Testing plan
 
