@@ -37,6 +37,8 @@
 - `git fetch origin master` in the top-level coordination repository.
 - Verified advisory worktree registration, branch/ref identity, SSH remote,
   clean status, installed Overcommit hooks, and `git diff --check` results.
+- Committed the scoped coordination changes with `git commit -F` and pushed
+  top-level `master` over SSH.
 
 ## Results
 
@@ -53,6 +55,8 @@
   completed the registered, clean worktree. Future hook/test commands must run
   from the repository's `nix develop` environment.
 - The top-level `master` matched `origin/master` after fetching.
+- Coordination commit `eaaf844f150dc52470ab8cb9ce001fd5cdb06350` was pushed
+  to `origin/master`.
 - `git diff --check` passed for the advisory worktree and this initiative's
   top-level documentation.
 - Repository-local rules require evidence-backed platform assessment, resolved
