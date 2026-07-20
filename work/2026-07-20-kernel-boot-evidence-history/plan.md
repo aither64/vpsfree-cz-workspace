@@ -12,6 +12,15 @@ release and reconstructed all eligible Node history. The data migration in this
 initiative must therefore correct existing backfilled and subsequently reported
 rows safely.
 
+The final follow-up scope is deliberately limited to two changes: shorten the
+WebUI origin label from `reported by Node` to `node`, and pin the final vpsAdmin
+revision in the configuration repository's `vpsadmin`, `staging`, and
+`production` channels. Legacy component normalization, WebUI rolling aliases,
+runtime old-supervisor reconciliation, and migration behavior remain unchanged.
+The legacy component alias and `reconcile_existing_reported_boot!` will be
+removed together in a later cleanup after this compatible release is deployed
+everywhere; they remain in this initiative to avoid mixed-version disruption.
+
 ## Affected repositories
 
 - `vpsadmin`: classification, corrective migration, WebUI, tests and
@@ -81,9 +90,10 @@ the migration to consume another nearby candidate.
   the immutable evidence attached to that event.
 - Prevent a later forced history backfill from recreating the reconstructed
   bootstrap that exact reporting replaced.
-- Advance `updated_at` for every migration data change so event and collection
-  evidence revisions invalidate. Repeated `up` runs must not churn timestamps
-  or revisions.
+- Advance `updated_at` monotonically at microsecond precision for every
+  migration data change so event and collection evidence revisions invalidate,
+  including same-second old-supervisor rows. Repeated `up` runs must not churn
+  timestamps or revisions.
 
 ### Administration WebUI
 
