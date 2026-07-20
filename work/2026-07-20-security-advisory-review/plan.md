@@ -5,15 +5,20 @@
 Register `security-advisories` in the workspace project map and prepare an
 isolated feature worktree for reviewing security advisories against current,
 typed vpsAdmin Node evidence once the user supplies an authentication token.
+Investigate the production token-creation failure before attempting that
+review.
 
 ## Affected repositories
 
 - Top-level coordination repository: project-map documentation only, committed
   directly on `master`.
 - `security-advisories`: isolated review branch and worktree, initially with no
-  source changes.
-- vpsAdmin: authenticated API data is an external read-only review input; no
-  vpsAdmin source or production data changes are currently planned.
+  source changes; inspect the exact requested token scopes and client payload.
+- `vpsadmin`: inspect the deployed token table schema and API integration.
+- `haveapi`: inspect token option/scope serialization and validation used by
+  vpsAdmin.
+- Production vpsAdmin API data remains an external read-only review input; no
+  production data changes are currently planned.
 
 ## Approach
 
@@ -29,14 +34,27 @@ typed vpsAdmin Node evidence once the user supplies an authentication token.
 5. Do not synchronize drafts, modify vpsAdmin data, or publish advisories
    without a separate explicit user request and the repository workflow's
    required review gates.
+6. Trace the reported `tokens.opts` overflow from the advisory client's scope
+   list through HaveAPI serialization to vpsAdmin's schema. Reproduce the size
+   boundary locally if possible and report the root cause and safe remediation;
+   do not implement a fix unless requested.
 
 ## Compatibility and deployment
 
-This preparation changes only workspace documentation and creates a Git
-worktree. It changes no API, schema, protocol, persistent state, generated
-configuration, or deployed system. There are no mixed-version, deployment
-ordering, or rollback concerns at this stage. The later review is intended to
-be read-only and therefore must not change production state.
+The initial preparation changes only workspace documentation and creates Git
+worktrees. The later review is intended to be read-only and therefore must not
+change production state.
+
+The investigated failure requires a vpsAdmin schema fix before the review token
+can be issued through MFA: widen `auth_tokens.opts` from `VARCHAR(255)` to
+`TEXT`, retain its existing JSON serialization, and add a long-scope MFA
+regression test. This is backward-compatible with old API processes because
+they read and write the same JSON value. Deploy the migration before retrying
+token creation. A rollback to `VARCHAR(255)` is unsafe while any continuation
+row contains more than 255 characters; these authentication rows expire after
+five minutes, so rollback must wait for or explicitly clean such rows. Assess
+the ordinary MariaDB DDL lock before applying the column change. No HaveAPI,
+vpsAdminOS, node, protocol, or client rollout is required.
 
 ## Testing plan
 
@@ -46,3 +64,7 @@ be read-only and therefore must not change production state.
   upstream default-branch commit and starts clean.
 - Record exact branch, worktree, base commit, commands, and results in
   `state.md`.
+- Reproduce the exact 34-scope request against the current vpsAdmin test schema
+  with MFA enabled and confirm the `auth_tokens.opts` overflow.
+- Run the existing focused token-config spec to establish that current coverage
+  remains green despite omitting a long-scope MFA case.
