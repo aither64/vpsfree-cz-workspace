@@ -29,9 +29,10 @@ everywhere; they remain in this initiative to avoid mixed-version disruption.
 - `vpsadmin-kb-captures`: exact review pin, visible WebUI captures and KB
   contract verification when the contract identifies affected pages.
 
-All repositories use the feature branch
-`2026-07-20-kernel-boot-evidence-history`. Default branches are not merged
-without explicit user approval after review.
+All repositories used the feature branch
+`2026-07-20-kernel-boot-evidence-history`. After review, the user explicitly
+approved fast-forward integration to the default branches; feature branches are
+retained after merge.
 
 ## Design
 
@@ -163,15 +164,17 @@ and another Node after deployment.
   member denial.
 - Focused and full vpsAdmin API/WebUI suites, migrations in both directions,
   RuboCop, gettext checks and repository hooks.
-- Configuration flake checks with the exact unmerged vpsAdmin feature revision.
+- Configuration flake checks with the exact vpsAdmin revision.
 - Capture repository checks and the canonical WebUI/KB contract workflow.
 - Mandatory fresh-context change review after commits and quick checks, before
   long integration tests.
 
 ## Review and integration
 
-Push only feature branches for user review. Present exact heads, migration
-behavior, visible changes and verification results. After explicit approval,
-fetch and rebase against current defaults, refresh downstream SHA pins if
-needed, repeat affected checks and review, then integrate through fresh
-fast-forward-only worktrees.
+The feature branches were reviewed before integration. After explicit user
+approval, all upstream defaults were fetched and confirmed unchanged, exact
+downstream pins were regenerated for the cleaned four-commit vpsAdmin history,
+and affected checks were repeated. Fresh temporary master worktrees then
+fast-forwarded and pushed vpsAdmin, configuration and KB captures in dependency
+order. The temporary integration worktrees were removed; feature branches were
+retained.

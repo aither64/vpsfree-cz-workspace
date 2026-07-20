@@ -4,36 +4,38 @@
 
 - Initiative: `2026-07-20-kernel-boot-evidence-history`.
 - Status: the final label and three-channel follow-up is committed, verified,
-  reviewed and pushed. A fresh development cluster is running the final head.
+  reviewed, fast-forwarded to all affected default branches and pushed. A fresh
+  development cluster is running the merged vpsAdmin head.
 - Production premise: the preceding seven-migration release is deployed to the
   whole cluster and all eligible Node/storage history is backfilled. This
   release does not rerun or reset those completion checkpoints.
-- Default branches remain untouched pending explicit user review and approval.
+- The user approved integration after reviewing the commit series. All affected
+  default branches were fast-forwarded from fresh integration worktrees.
 
-## Exact feature heads
+## Exact merged heads
 
 - `vpsadmin`
   - base: `9773ac2bdf931a052ba1d7394f5e57aa4ca99f74`
-  - head: `f74b9da44878e053c7b76fc1bcc0cf60a90cd120`
+  - head: `1bca29dfac3dba6a82a857ffad24d42e46ae861e`
   - commits:
     - `6da090d6a` API reconciliation, monotonic data migration and specs
-    - `1938b9cd9` per-boot evidence WebUI
-    - `76833158c` generic system-configuration identity
-    - `3dd7e6a08` migration-spec CI selection hardening
-    - `f74b9da44` concise WebUI Node-origin label and browser coverage
+    - `5f7c7430c` per-boot evidence WebUI, concise origin label and coverage
+    - `36f8f69e7` generic system-configuration identity
+    - `1bca29dfa` migration-spec CI selection hardening
 - `vpsfree-cz-configuration`
   - base: `1931c5d4c0676cba1214546ec98bcf7a0c288b74`
-  - head: `06ba5f52304c6a4adea27791482beb453f7e227f`
-  - generated pins: `bd8913af` (`vpsadminServices`), `f39c5ef3`
-    (`vpsadminStaging`) and `ce3730f2` (`vpsadminProduction`), all resolving
-    to `f74b9da4...`
-  - runbook/config commit: `06ba5f52`
+  - head: `36c0e9ba2f5cdca43d4d3b0541c6b6fa809f699d`
+  - generated pins: `b8774fb3` (`vpsadminServices`), `b7610ed8`
+    (`vpsadminStaging`) and `21c5d330` (`vpsadminProduction`), all resolving
+    to `1bca29df...`
+  - runbook/config commit: `36c0e9ba`
 - `vpsadmin-kb-captures`
   - base: `b9eb59ebc81b78deaac1242fe6ce2e55c3f84efe`
-  - head: `6e0fa98c4d092fd50391e1a1d57b988f9762fba0`
-  - the source and contract pin resolve to `f74b9da4...`
+  - head: `8f5395f3890792bb9dc7ceb1c379cbef481e26f5`
+  - the source and contract pin resolve to `1bca29df...`
 
-All use branch `2026-07-20-kernel-boot-evidence-history` and SSH remotes.
+All use SSH remotes. The retained feature branches and the corresponding
+`master` branches point to these same heads.
 
 ## Implemented behavior
 
@@ -95,7 +97,7 @@ All use branch `2026-07-20-kernel-boot-evidence-history` and SSH remotes.
 - `vpsadminosStaging` remains exactly
   `702155fb91effd7102a92b568f684c7b0d948b1f`.
 - `vpsadminServices`, `vpsadminStaging`, and `vpsadminProduction` all resolve
-  to exact vpsAdmin revision `f74b9da44878e053c7b76fc1bcc0cf60a90cd120`.
+  to exact vpsAdmin revision `1bca29dfac3dba6a82a857ffad24d42e46ae861e`.
 
 ## Verification
 
@@ -118,7 +120,7 @@ All use branch `2026-07-20-kernel-boot-evidence-history` and SSH remotes.
   passed. Migration-spec mapping selects only the final migration/spec. The
   rewritten final tree exactly matches the tested tree.
 - Configuration hooks, `nix flake check`, and `confctl inputs channel ls`
-  passed at `06ba5f52`; the latter reports `f74b9da4` for all three channels.
+  passed at `36c0e9ba`; the latter reports `1bca29df` for all three channels.
 - Capture `bin/check` passed: contract suites 8 runs/50 assertions and
   7 runs/17 assertions, 39 controls, 29 paths, 65 bindings, 59 concepts, 118
   variants and 118 PNGs valid. Capture `nix flake check` passed.
@@ -145,19 +147,24 @@ All use branch `2026-07-20-kernel-boot-evidence-history` and SSH remotes.
   supervisor concurrency. Do not run `FORCE=1` reconstruction from a rolled-back
   pre-feature application because that old code does not contain the duplicate
   recreation guard.
-- The final exact-head review of vpsAdmin `f74b9da4...`, configuration
+- The final content review of vpsAdmin `f74b9da4...`, configuration
   `06ba5f52...` and captures `6e0fa98c...` found no remaining blocking,
   important or advisory findings. It caught stale Playwright label assertions
   and non-monotonic bare `CURRENT_TIMESTAMP` migration writes; both were fixed,
   tested, and folded into the appropriate logical commits before downstream
-  pins were regenerated. It also confirmed the intended five/four/one commit
-  split and clean worktrees matching the pushed feature refs.
+  pins were regenerated. At the user's final history review, the label-only
+  commit was folded into the earlier WebUI commit. The resulting
+  `1bca29df...` tree is byte-for-byte identical to the reviewed vpsAdmin tree,
+  and the KB flake retained the same NAR hash. Only commit identities and exact
+  downstream pins changed, producing the final four/four/one commit split.
 
 ## GitHub Actions
 
-- Current head `f74b9da4...`: API Migration Specs, topic-parallel API Specs,
-  RuboCop, WebUI PHPUnit, i18n health and libnodectld Specs passed. Broad CI is
-  queued and was left to run without blocking the reviewed integration checks.
+- Feature head `1bca29df...`: broad CI, API Migration Specs, topic-parallel API
+  Specs, RuboCop, WebUI PHPUnit, i18n health and libnodectld Specs all passed.
+- Merged `master` at the same head: API Migration Specs, RuboCop, WebUI PHPUnit,
+  i18n health and libnodectld Specs passed. Broad CI and topic-parallel API
+  Specs are still running and were left to finish naturally.
 - Superseded queued/in-progress workflow runs for old feature SHAs were
   cancelled after the final force-push. Runs on the current SHA were retained.
 - Failed migration run `29752208265` was investigated from its retained failed
@@ -173,7 +180,8 @@ All use branch `2026-07-20-kernel-boot-evidence-history` and SSH remotes.
   review. A new cluster with the same initiative name was built from scratch
   and is left running and ready with topology `single` and network `bridge`.
 - Both services and node1 report exact, clean vpsAdmin revision
-  `f74b9da44878e053c7b76fc1bcc0cf60a90cd120`.
+  `1bca29dfac3dba6a82a857ffad24d42e46ae861e`, which is also the merged
+  vpsAdmin `master` head.
 - API and supervisor are active; node1 `osctld` and `nodectld` are running; API
   and WebUI return HTTP 200. Migration `20260720120000` is present in
   `schema_migrations`, and `node_kernel_events.superseded_by_event_id` does not
@@ -200,6 +208,11 @@ All use branch `2026-07-20-kernel-boot-evidence-history` and SSH remotes.
 - Fresh rewrite worktrees initially lacked repository-local hook gems. Entering
   their declared Nix shells installed dependencies, after which every real
   commit hook passed; no hook was bypassed.
+- The fresh vpsAdmin integration worktree's first explicit Overcommit run lacked
+  `api/.gems`, so only `VpsadminApiI18n` failed before loading ActiveRecord.
+  Entering `nix develop .#api` populated the declared API bundle; the complete
+  root Overcommit suite was then rerun and all hooks passed before pushing
+  `master`.
 - Unmerged migration history was rewritten again so only the final data-only
   migration/spec is introduced. There is no supersession schema in any feature
   commit. Tree identity was verified before the lease-protected force-push.
@@ -209,7 +222,11 @@ All use branch `2026-07-20-kernel-boot-evidence-history` and SSH remotes.
 
 ## Remaining handoff
 
-- Present the three exact feature heads and deployment runbook for user review.
-- Leave the broad current-head GitHub Actions run to finish naturally and
-  investigate its logs if it fails.
-- Do not merge default branches until explicit user approval.
+- Leave the two long merged-`master` GitHub Actions runs to finish naturally and
+  investigate their logs if either fails.
+- The configuration, capture and temporary integration worktrees were removed
+  after merge. Keep the ready development cluster running; its vpsAdmin source
+  worktree is retained until the cluster is stopped, then remove that final
+  worktree while preserving the feature branch.
+- Production deployment and migration execution remain operator actions under
+  the reviewed runbook.
