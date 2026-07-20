@@ -17,6 +17,9 @@ review.
 - `vpsadmin`: inspect the deployed token table schema and API integration.
 - `haveapi`: inspect token option/scope serialization and validation used by
   vpsAdmin.
+- `vpsfree-cz-configuration`: after the vpsAdmin fix is committed, reviewed,
+  and pushed, pin the `vpsadmin` channel's `vpsadmin` role to that exact feature
+  revision using `confctl`.
 - Production vpsAdmin API data remains an external read-only review input; no
   production data changes are currently planned.
 
@@ -38,6 +41,17 @@ review.
    list through HaveAPI serialization to vpsAdmin's schema. Reproduce the size
    boundary locally if possible and report the root cause and safe remediation;
    do not implement a fix unless requested.
+7. Implement the requested vpsAdmin fix as one focused commit containing the
+   reversible schema migration, core schema update, migration coverage, and
+   end-to-end long-scope MFA token regression coverage.
+8. Run quick focused verification, commit the complete vpsAdmin change, and
+   push the feature revision so the configuration flake can resolve it.
+9. Set the `vpsadmin` channel's `vpsadmin` role to that exact revision with
+   `confctl inputs channel set --commit` and verify the generated configuration
+   commit.
+10. Run the mandatory standalone change review over both committed repository
+    changes before broader tests. Address significant findings, then run the
+    broader verification and push the final configuration branch.
 
 ## Compatibility and deployment
 
@@ -50,11 +64,13 @@ can be issued through MFA: widen `auth_tokens.opts` from `VARCHAR(255)` to
 `TEXT`, retain its existing JSON serialization, and add a long-scope MFA
 regression test. This is backward-compatible with old API processes because
 they read and write the same JSON value. Deploy the migration before retrying
-token creation. A rollback to `VARCHAR(255)` is unsafe while any continuation
-row contains more than 255 characters; these authentication rows expire after
-five minutes, so rollback must wait for or explicitly clean such rows. Assess
-the ordinary MariaDB DDL lock before applying the column change. No HaveAPI,
-vpsAdminOS, node, protocol, or client rollout is required.
+token creation. Pinning the `vpsadmin` channel updates the vpsAdmin service
+containers together, including the API and database migration service. A
+rollback to `VARCHAR(255)` is unsafe while any continuation row contains more
+than 255 characters; these authentication rows expire after five minutes, so
+rollback must wait for or explicitly clean such rows. Assess the ordinary
+MariaDB DDL lock before applying the column change. No HaveAPI, vpsAdminOS,
+node, protocol, or client rollout is required.
 
 ## Testing plan
 
@@ -68,3 +84,9 @@ vpsAdminOS, node, protocol, or client rollout is required.
   with MFA enabled and confirm the `auth_tokens.opts` overflow.
 - Run the existing focused token-config spec to establish that current coverage
   remains green despite omitting a long-scope MFA case.
+- Run the new migration spec in both directions, the focused token-config spec,
+  migration-spec inventory check, `git diff --check`, and applicable Overcommit
+  hooks before committing.
+- After standalone review, run the broader relevant API spec groups and verify
+  the configuration channel update through `confctl` evaluation/build checks
+  appropriate to the affected vpsAdmin service machines.
