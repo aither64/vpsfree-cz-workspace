@@ -2,6 +2,124 @@
 
 ## Current status
 
+### Default-branch integration (2026-07-19)
+
+- The user explicitly authorized default-branch merges and pushes, excluding
+  HaveAPI because its master/0.29 release work is already complete.
+- The final fast-forward ranges are confctl `8ccb94d3..7bee58a5` to `master`,
+  vpsAdminOS `37d87632..c1de6b34` to `staging`, vpsAdmin
+  `81f7460c5..84efbcba5` to `master`, vpsfree-cz-configuration
+  `d29e9c08..4ef31ca8` to `master`, and vpsadmin-kb-captures
+  `470b759..8d0ff09` to `master`. During the CI wait, automated defaults
+  advanced vpsAdminOS with Nixpkgs commit `37d87632` and configuration with
+  generated Nixpkgs/vpsAdminOS input commits through `d29e9c08`. The feature
+  branches were rebased onto those commits before integration.
+- security-advisories already uses
+  `2026-07-13-security-advisory-automation` at `55e26c3a` as its default branch.
+  The SMS gateway worktree equals its existing default
+  `2026-06-15-vpsadmin-events` at `af7b3faf` and has no initiative-only commit.
+  Neither needs a ref update. HaveAPI and haveapi-client-php remain untouched.
+- The deployment runbook now records the reviewed confctl, vpsAdminOS, and
+  vpsAdmin revisions, validates the rollout-approved configuration commit and
+  full resolved staging/service revisions, includes the service-only
+  `int.vpsadmin1` host, uses configured staging Node IDs 400 and 401, and
+  requires every active production Node to map to a current configuration
+  `node.id` before rollout. It freezes advisory mutations/publication during
+  mixed API/WebUI versions and rollback, and verifies that production pinning
+  creates exactly two generated `flake.lock` commits.
+- Runbook quick verification passes: both `confctl inputs` inspection commands
+  report the reviewed revisions, every documented host path exists in
+  `confctl ls`, strict MkDocs rendering succeeds through a one-shot Nix MkDocs
+  package, `nix flake check --no-build` passes, and all Overcommit hooks pass.
+  After the upstream rebase, the runbook's exact vpsAdminOS and vpsAdmin
+  revisions are `736f6893` and `84efbcba`; the final configuration head is
+  `4ef31ca8`.
+- vpsAdminOS current-head CI run `29691200484` ran 74/75 tests successfully.
+  Its downloaded full artifact showed only
+  `firewall/conntrack#no-conntrack` failing: a randomized example saw the TCP
+  refuse rule but not the UDP rule while an asynchronous firewall reload was
+  rebuilding the table. `sv 1 firewall` returns before the runit control
+  script starts, and the old table could satisfy the original readiness check,
+  so the following randomized example could observe the reload halfway through.
+- Focused commit `478c6abd` (rebased as `c1de6b34`) inserts a deliberate third
+  notrack rule before
+  signalling reload. The pre-reload table can no longer satisfy the exact
+  two-rule predicate, which also waits for both protected rules, the INPUT hook,
+  and temporary drop-chain removal. The exact scenario passes all nine examples
+  with forced seed 0 (reload first, compatibility assertion last) and again
+  with randomized order in an isolated state directory. Nixfmt and all commit
+  hooks pass; the initial ambient commit attempt was correctly blocked because
+  `nixfmt` was absent, then repeated successfully inside `nix develop` without
+  bypassing hooks.
+- The current-head vpsAdmin component/API workflows pass. The intentionally
+  selected full `tag=ci` self-hosted integration run `29698931645` was
+  externally cancelled during its test step after about five hours. The
+  completed GitHub log shows 88 scripts passed, 5 were running, 24 remained,
+  and there were zero unexpected results. The workflow's job and test-step
+  timeouts are 780 and 720 minutes, respectively, so neither timeout caused
+  the cancellation. The runner executed the always-run evaluation and summary
+  steps afterward, which rules out runner loss. GitHub's official status API
+  identifies the external cause: critical Actions incident `8vfyvq16hzh9`
+  began at `2026-07-19T23:34:03Z`, and its update warned that ongoing runs may
+  fail; GitHub cancelled this run at `23:38:33Z`. The same incident caused
+  intermittent Actions API HTTP 503 responses and delayed attempt 2 in the
+  queue. GitHub later reported recovery across the affected self-hosted
+  runners, attempt 2 began, and the incident was resolved at
+  `2026-07-20T04:44:03Z`. On 2026-07-20 the user explicitly directed the
+  default integrations to proceed without waiting for that long run, while
+  also directing that the run must be left untouched to finish.
+- The same standalone mandatory reviewer completed the final focused pass with
+  no Blocking or Advisory findings. It confirmed the runbook, firewall race
+  fix, commit split, default ancestry, and decision not to repin the test-only
+  vpsAdminOS commit. Its one Important gate is to wait for vpsAdmin run
+  `29698931645` to pass before starting the dependency-ordered default merges;
+  configuration and KB must not be integrated before that dependency.
+- vpsAdminOS was content-preservingly rebased to `c1de6b34`; its reviewed
+  runtime commit is `736f6893` and the firewall-only test commit remains
+  outside downstream runtime pins. vpsAdmin commit `84efbcba` updates its own
+  flake from orphaned pre-rebase runtime `dd4ac220` to `736f6893` and the
+  current Nixpkgs input. Configuration pins staging and services to
+  `84efbcba`, stages vpsAdminOS `736f6893`, preserves upstream Nixpkgs
+  `fd146203` and os-staging `37d87632`, and updates the deployment runbook.
+  The KB contract pins the same final vpsAdmin dependency graph without
+  changing content or screenshots.
+- confctl `master` was fast-forwarded and pushed to `7bee58a5`. Its fresh
+  merge worktree initially blocked the push on an unsigned Overcommit
+  configuration; the hook was installed and signed in the Nix development
+  shell, then the push completed without bypassing hooks.
+- Rebased feature refs are pushed over SSH: vpsAdminOS `c1de6b34`, vpsAdmin
+  `84efbcba`, configuration `4ef31ca8`, and KB captures `8d0ff09`.
+  Configuration passes `nix flake check --no-build`, strict MkDocs rendering,
+  exact channel inspection, diff checking, and all commit hooks. The full KB
+  check passes with 38 controls, 29 paths, 32 capture concepts, 65 bindings,
+  59 concepts, 118 variants, and 118 PNGs; no capture or KB content changed.
+- vpsAdmin's pin-only commit passed all mandatory pre-commit hooks. Generic
+  `nix flake check --no-build` still rejects the pre-existing
+  `overlays.list` output because it is a list rather than a function; the
+  feature changes only `flake.lock`, and the overlay definition is identical
+  to `c7e4b878`.
+- The final mandatory rebase review has no Blocking, Important, or Advisory
+  findings. It confirmed patch-identical vpsAdminOS history, the runtime/test
+  pin boundary, the repaired vpsAdmin dependency, consistent configuration/KB
+  pins, published feature refs, and fast-forward ancestry.
+- Default integration completed over SSH in dependency order. Final remote
+  refs are confctl `master` `7bee58a5`, vpsAdminOS `staging` `c1de6b34`,
+  vpsAdmin `master` `84efbcba`, vpsfree-cz-configuration `master` `4ef31ca8`,
+  and vpsadmin-kb-captures `master` `8d0ff09`. Every push was made from its
+  fresh default-branch worktree with exact pre/post ref checks and
+  fast-forward-only merges.
+- All five temporary default-merge worktrees were removed after remote ref
+  verification. The original initiative worktrees remain because the local
+  development cluster and the explicitly retained long CI follow-up are still
+  active; no feature or merge branch refs were deleted.
+- Default-head CI started normally. Short vpsAdmin jobs already passing include
+  RuboCop, migration specs, WebUI PHPUnit, Console Router Specs, and Download
+  Mounter Specs; other component/API jobs and both long CI workflows remain
+  queued or running. vpsAdminOS RSpec/CI and confctl Tests remain running or
+  queued. The user-directed old vpsAdmin attempt 2 at `c7e4b878` is still
+  running and was not cancelled despite now being superseded; the explicit
+  instruction to let it finish overrides routine superseded-run cleanup.
+
 ### Resumable per-Node history backfill (2026-07-19)
 
 - The verified development session and existing vpsAdmin feature worktree are

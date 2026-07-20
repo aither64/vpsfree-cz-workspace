@@ -61,6 +61,28 @@ separately off-peak.
 No production migration, backfill, deployment, Node update, configuration
 channel update, or KB write is authorized by this implementation work.
 
+## Default-branch integration
+
+With explicit user approval, integrate the reviewed initiative by
+fast-forwarding and pushing the current default branches in dependency order:
+confctl `master`, vpsAdminOS `staging`, vpsAdmin `master`,
+vpsfree-cz-configuration `master`, and vpsadmin-kb-captures `master`. Use a
+fresh temporary worktree for each default branch, fetch immediately before the
+merge, require `git merge --ff-only`, verify the exact head, push over SSH, and
+remove the temporary worktree afterward.
+
+HaveAPI and its standalone PHP client are excluded because their supported
+default/release branches and 0.29.4 releases are already integrated. The new
+security-advisories repository already uses the initiative branch as its
+default branch. The SMS gateway worktree equals its pre-existing default branch
+and contains no initiative-only commits, so neither requires a merge.
+
+Before configuration integration, update and review the security-evidence
+deployment runbook against the final source pins and current host/Node
+inventory. This integration changes repository refs only; it must not deploy
+systems, update production channel pins, migrate a database, run a backfill,
+reboot a Node, or write to the production KB.
+
 ## Deployment and provenance completion
 
 - Add an operator runbook to vpsfree-cz-configuration. It documents the
