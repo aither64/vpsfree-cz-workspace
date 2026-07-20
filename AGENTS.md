@@ -383,6 +383,9 @@ These repositories are in scope for this workspace:
   core runtime for vpsFree.cz nodes and many integration tests.
 - `vpsadmin`: Ruby/PHP control panel and API for managing VPSes on top of
   vpsAdminOS.
+- `security-advisories`: evidence-backed vpsFree.cz platform security
+  assessments, including vpsAdmin Node evidence collection, advisory
+  evaluation, and preparation of unpublished vpsAdmin drafts.
 - `vpsadmin-kb-captures`: independent, reproducible Czech/English screenshot
   inventory and WebUI documentation contract for the vpsFree.cz knowledge
   bases. Its canonical `docs/webui-change-workflow.md` must be followed when a
