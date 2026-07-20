@@ -67,10 +67,13 @@ they read and write the same JSON value. Deploy the migration before retrying
 token creation. Pinning the `vpsadmin` channel updates the vpsAdmin service
 containers together, including the API and database migration service. A
 rollback to `VARCHAR(255)` is unsafe while any continuation row contains more
-than 255 characters; these authentication rows expire after five minutes, so
-rollback must wait for or explicitly clean such rows. Assess the ordinary
-MariaDB DDL lock before applying the column change. No HaveAPI, vpsAdminOS,
-node, protocol, or client rollout is required.
+than 255 characters. Authentication continuations expire logically after five
+minutes, but their rows remain until `vpsadmin:auth:close_expired` removes them.
+Before rollback, wait for expiry and successful cleanup or explicitly close the
+temporary rows, then require `SELECT COUNT(*) FROM auth_tokens WHERE
+OCTET_LENGTH(opts) > 255` to return zero. Assess the ordinary MariaDB DDL lock
+before applying the column change. No HaveAPI, vpsAdminOS, node, protocol, or
+client rollout is required.
 
 ## Testing plan
 

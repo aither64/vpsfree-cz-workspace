@@ -27,9 +27,12 @@ completes the continuation, and verifies the final session scope.
 
 Deploy the migration before retrying token creation. Existing API code is
 compatible with both column types because the serialized JSON contract does not
-change. Before rolling back to `VARCHAR(255)`, wait for the five-minute
-continuation rows to expire or remove overlong rows deliberately, and assess
-normal MariaDB DDL locking for the production migration.
+change. Continuations expire logically after five minutes, but rows remain
+until the scheduled `vpsadmin:auth:close_expired` task removes them. Before
+rolling back to `VARCHAR(255)`, wait for expiry and confirmed cleanup or
+explicitly close the temporary rows, then verify that `SELECT COUNT(*) FROM
+auth_tokens WHERE OCTET_LENGTH(opts) > 255` returns zero. Assess normal MariaDB
+DDL locking for the production migration.
 
 Do not work around the failure by disabling MFA or broadening the token to a
 short wildcard scope.
