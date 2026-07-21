@@ -49,7 +49,8 @@
 - The evidence collector now completes against continuously reporting Nodes,
   and repository instructions explicitly exclude backup/NFS-only storage Nodes
   from VPS-only kernel exposure.
-- No advisory draft has been synchronized or published.
+- All five reviewed advisories have been synchronized to vpsAdmin as drafts and
+  pass the read-only readiness check. None has been published.
 - The corrected security-advisories change is committed as a focused series:
   collection consistency, configuration-identity compatibility, release
   classification, storage policy, one commit per CVE, and dossier invariants.
@@ -61,6 +62,11 @@
   dossier, and fresh sync/readiness checks compare in memory without rewriting
   the review record. Mandatory standalone review and all local and GitHub
   checks passed.
+- The useful kernel-warning monitoring statement has been restored uniformly
+  for the four memory-lifetime advisories. Periodic evidence-sample churn no
+  longer blocks an otherwise identical reviewed conclusion. The resulting
+  commits, generated submission baselines, five remote drafts, readiness
+  checks, and final CI are complete.
 
 ## Commands run
 
@@ -206,6 +212,50 @@
   pushed the three follow-up commits over SSH from `nix develop`.
 - Monitored GitHub Actions runs `29825092311` (RuboCop) and `29825092399`
   (RSpec) to successful completion for exact head `adddaf6`.
+- Restored one passive factual EN/CS kernel-warning monitoring sentence on
+  CVE-2026-23111, CVE-2026-43499, CVE-2026-46242, and CVE-2026-53359. Kept
+  CVE-2026-53362 unchanged because its analyzed primitive is an out-of-bounds
+  overwrite rather than a memory-lifetime/UAF bug.
+- Collected one read-only schema-7 snapshot at `2026-07-21T11:28:47Z` with
+  unchanged Node-set digest
+  `f434faac03a83c7ba7329214924bdb7561a5c619dd09b9f53a9dd9c660e9092e`
+  and evidence digest
+  `debd61c64eae1c18b68c40dadd4c2acd71e9f93bfb1f8ec53a237b8afb4dcef1`.
+  Refreshed analysis provenance and all five tracked evaluations.
+- A focused dossier run initially found that analysis provenance had been
+  edited after evaluation, invalidating the dossier digest. Regenerated all
+  evaluations after every dossier file was final; the complete dossier spec
+  then passed. Recorded the ordering in
+  `notes/security-advisories/2026-07-21-evaluate-after-dossier-final.md`.
+- Changed preflight comparison to treat periodic evidence revisions and the
+  resulting raw evidence digest as audit provenance while retaining exact
+  Node-set and all other per-Node result-field comparisons. Focused reconciler
+  and dossier coverage passed: 25 examples, 0 failures.
+- Committed `8cf1d8e` (monitoring text and refreshed evaluations) and `9162d66`
+  (periodic sample preflight), with installed hooks passing for both.
+- The mandatory standalone reviewer reported no blocking, important, or
+  advisory findings. It independently reproduced every evaluation and probed
+  that Node-set, state, both interval endpoints, reason, note, role, kernel
+  release, and configuration drift all fail before writes.
+- Ran the final full RSpec suite (106 examples), RuboCop over 25 files,
+  all-dossier validation, `git diff --check`, and Overcommit. All checks passed.
+- Pushed the reviewed behavior at `9162d66`; GitHub Actions runs `29827055567`
+  (RSpec) and `29827055557` (RuboCop) passed on that exact head.
+- Ran dry-run synchronization for all five advisories. Each planned one new
+  advisory with one CVE link and the exact 13 reviewed Node statuses; no
+  existing remote advisory matched.
+- Applied each synchronization sequentially. vpsAdmin created draft advisory
+  IDs `6`, `7`, `8`, `9`, and `10`, all at content revision `13`, for
+  CVE-2026-23111, CVE-2026-43499, CVE-2026-46242, CVE-2026-53359, and
+  CVE-2026-53362 respectively. No publication action was called.
+- Committed each generated `submission.yml` recovery baseline separately as
+  `7229778`, `14f7e1b`, `1cd15d0`, `6380e89`, and `06ddc84`, then pushed the
+  branch over SSH.
+- Ran `bin/security-advisory ready` for all five drafts. Each fresh read-only
+  preflight returned `ready: true`, the expected 13-Node completeness summary,
+  its tracked advisory ID, content revision `13`, and no blocking Node IDs.
+- GitHub Actions runs `29827735706` (RSpec) and `29827735679` (RuboCop) passed
+  for final generated-baseline head `06ddc84`.
 
 ## Results
 
@@ -422,6 +472,22 @@
 - Feature branch `2026-07-20-security-advisory-review` is pushed over SSH at
   `adddaf60c386a671676ae24afda22132ed55a437`. Its final RSpec and RuboCop
   GitHub workflows passed.
+- The restored public monitoring sentence is present in matching passive EN/CS
+  form on the four memory-lifetime advisories and absent from CVE-2026-53362.
+  Generic user non-action, first-person editorial, and public storage-role
+  wording remain excluded.
+- Periodic Node report sampling changes `evidence_revision` and the evidence
+  digest without necessarily changing the evaluated outcome. Those values are
+  retained in tracked records as provenance; apply/readiness comparisons omit
+  only `evidence_revision` and still require the exact Node set and every other
+  per-Node result field.
+- vpsAdmin draft mapping: CVE-2026-23111 is advisory `6`, CVE-2026-43499 is
+  `7`, CVE-2026-46242 is `8`, CVE-2026-53359 is `9`, and CVE-2026-53362 is
+  `10`. All are drafts at content revision `13`, contain 13 Node statuses, and
+  passed a subsequent fresh readiness check. None is published.
+- Final feature branch head is
+  `06ddc840b6f1ad56c607c3b5a15fa7e9d9dab59c`; its RSpec and RuboCop GitHub
+  workflows passed.
 - Durable collector note:
   `notes/security-advisories/2026-07-21-live-evidence-collection.md`.
 
@@ -431,8 +497,9 @@
   changes require a new collection and evaluation rather than reuse of this
   snapshot.
 - Production deployment of the already merged token fix and channel update is
-  outside this advisory-review stage. The configured advisory credential is
-  used without exposing it.
+  outside this advisory-review stage. Publishing the five verified drafts also
+  remains a separate administrator action. The configured advisory credential
+  is used without exposing it.
 
 ## Cleanup
 
@@ -443,6 +510,7 @@
   worktrees plus both temporary default-branch merge worktrees. Their feature
   branch refs were retained.
 - Removed transient development-shell files and the downloaded CI artifact.
-- The clean `security-advisories` initiative worktree is nineteen commits ahead
-  of base `55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11` at `adddaf6` and tracks the
-  pushed feature branch. It is retained for the user's subsequent review.
+- The clean `security-advisories` initiative worktree is twenty-six commits
+  ahead of base `55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11` at `06ddc84` and
+  tracks the pushed feature branch. It is retained for draft review and any
+  later publication decision.

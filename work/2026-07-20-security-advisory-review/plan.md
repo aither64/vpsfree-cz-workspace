@@ -74,6 +74,16 @@ evidence-backed review of every advisory against every active Node.
 17. Recollect one coherent production snapshot after the dossier text is final,
     regenerate every tracked evaluation, run mandatory standalone review, and
     push only after the complete local and GitHub checks pass.
+18. Restore the useful kernel-warning monitoring note with one factual English
+    and Czech sentence on the four memory-lifetime advisories, while keeping the
+    non-UAF overwrite advisory unchanged.
+19. Treat periodic sample revisions and their raw evidence digest as audit
+    provenance rather than conclusion drift. Before a draft write, continue to
+    require the exact Node set and all per-Node result fields to match the
+    committed review.
+20. After standalone review, complete verification, push, and green GitHub
+    checks, synchronize all five reports to vpsAdmin as drafts. Verify every
+    remote draft against the committed dossier and evaluation; do not publish.
 
 ## Compatibility and deployment
 
@@ -91,9 +101,17 @@ publication is part of this stage.
 The per-Node evaluation is now a committed review artifact rather than an
 ignored short-lived cache. Its schema remains unchanged. A reviewed evaluation
 does not expire solely because of age: `sync --apply` and `ready` collect fresh
-evidence and require the current Node set, evidence digest, and per-Node
-conclusions to match before proceeding. This changes no vpsAdmin API, database,
-protocol, or production data and remains safe for mixed repository versions.
+evidence and require the current Node set and every per-Node conclusion field to
+match before proceeding. Periodic sample revisions and the resulting evidence
+digest remain audit provenance but do not by themselves change a conclusion.
+This changes no vpsAdmin API, database, or protocol and remains safe for mixed
+repository versions.
+
+The authorized synchronization creates or updates vpsAdmin records only in the
+`draft` state. It uses stable external IDs, remote content-revision checks, and
+read-back verification. Draft creation is reversible through the ordinary
+draft workflow and has no Node or VPS runtime effect. Publication is excluded
+and remains a separate administrator action.
 
 The investigated failure requires a vpsAdmin schema fix before the review token
 can be issued through MFA: widen `auth_tokens.opts` from `VARCHAR(255)` to
@@ -146,3 +164,10 @@ client rollout is required.
 - Verify every English and Czech response uses the shared status closing and no
   public field contains generic non-action, editorial first-person, or internal
   storage-role wording.
+- Verify the four memory-lifetime advisories use the exact bilingual monitoring
+  sentence and the non-UAF advisory does not.
+- Verify fresh sample/evidence revisions are accepted only when the exact Node
+  set and every per-Node conclusion field remain unchanged.
+- Dry-run all five synchronizations, apply them only after the committed branch
+  passes review and CI, then run `ready` for each draft. Confirm that every
+  remote report remains a draft and matches local content and Node results.
