@@ -8,6 +8,13 @@ typed vpsAdmin Node evidence once the user supplies an authentication token.
 Investigate the production token-creation failure, fix it, then complete an
 evidence-backed review of every advisory against every active Node.
 
+The current follow-up shortens advisory summaries to the historical localized
+vulnerability-class title, removes repeated generic Node notes, and adds an
+explicit bilingual note contract for genuinely exceptional per-Node
+circumstances. It also adds localized Node-note storage and presentation to
+vpsAdmin, with an explicit deployment boundary because the normalized schema
+does not retain the legacy single-note column.
+
 ## Affected repositories
 
 - Top-level coordination repository: project-map documentation only, committed
@@ -22,6 +29,16 @@ evidence-backed review of every advisory against every active Node.
   revision using `confctl`.
 - Production vpsAdmin API data remains an external read-only review input; no
   production data changes are currently planned.
+- `vpsadmin-kb-captures`: pin the localized-note WebUI revision and run the
+  required bilingual documentation contract. No security-advisory binding is
+  currently registered, so no screenshot or KB page change is expected.
+- `vpsfree-notification-templates`: keep the managed Czech advisory mail label
+  consistent with the approved `Ošetřeno` terminology. This repository does
+  not consume per-Node notes, but its installed template can override the
+  corrected built-in vpsAdmin template.
+- `vpsf-status`: inspection only. Confirm that its advisory/status views do
+  not consume per-Node advisory notes before concluding that no change is
+  required.
 
 ## Approach
 
@@ -84,6 +101,43 @@ evidence-backed review of every advisory against every active Node.
 20. After standalone review, complete verification, push, and green GitHub
     checks, synchronize all five reports to vpsAdmin as drafts. Verify every
     remote draft against the committed dossier and evaluation; do not publish.
+21. Replace advisory summary sentences with the historical English/Czech
+    `Local privilege escalation` title and require future summaries to remain
+    short vulnerability-class titles.
+22. Remove evaluator-generated generic Node notes. Allow only explicit
+    dossier-authored English/Czech notes for exceptional individual Nodes;
+    retain detailed evidence reasons in the tracked evaluation.
+23. Add localized Node-status note translations to vpsAdmin. Remove the
+    legacy `note` API field instead of retaining an English alias. Migrate its
+    data into English translation rows and remove the old column. On rollback,
+    recreate the column from English rows before dropping the translation
+    table; Czech notes are intentionally lost because the old schema cannot
+    represent them. Make the WebUI select the current language with English
+    fallback.
+24. Permit the advisory reconciler to clear empty notes through the deployed
+    legacy API, but require the localized API before syncing any non-empty
+    bilingual note. Migrate existing submission baselines without hiding remote
+    review drift.
+25. Run the vpsAdmin KB contract against the exact feature revision and inspect
+    the renamed `vpsfree-notification-templates` advisory templates and
+    `vpsf-status` advisory consumers. Do not deploy vpsAdmin, change
+    configuration channels, stage KB content, or publish an advisory in this
+    follow-up.
+26. Narrow date and localized-note inputs in both the embedded new-advisory
+    Node table and the standalone existing-advisory Node table. Cover bulk and
+    per-Node rows, and update browser fixtures to use the translation table
+    instead of the removed legacy column.
+27. Standardize Czech advisory mitigation wording on `Ošetřeno`, document the
+    approved examples in vpsAdmin and security-advisories instructions, and
+    remove `Mitigováno` from advisory UI, mail, and test examples.
+28. Fix the unrelated publish-form alignment in its own commit by storing the
+    content revision outside visible table cells. Redeploy the development
+    cluster for visual review, but keep default-branch integration and the
+    production configuration channel paused until the user approves the UI.
+29. Address mandatory review by separating localized browser/VM fixture repair
+    from the input-width commit and correcting the canonical managed Czech mail
+    template. Re-pin the rewritten exact vpsAdmin head, re-review the complete
+    committed series, and only then run the long browser integration test.
 
 ## Compatibility and deployment
 
@@ -112,6 +166,19 @@ The authorized synchronization creates or updates vpsAdmin records only in the
 read-back verification. Draft creation is reversible through the ordinary
 draft workflow and has no Node or VPS runtime effect. Publication is excluded
 and remains a separate administrator action.
+
+Localized Node notes replace the single `note` column with a translation table.
+Migration up copies every non-empty legacy note into the English row before
+removing the old column. Migration down recreates the column, copies English
+back, and then drops the table; Czech translations are intentionally lost
+because the old schema cannot represent them. Old API code reads and writes the
+removed column, so the database migration must run only after all old API and
+WebUI processes have been stopped or drained. New code and the migration must
+be activated as one coordinated service boundary rather than a rolling
+mixed-version deployment. Current draft rows will contain no notes, so this
+follow-up creates no Czech rollback loss. The security-advisories client can
+clear legacy generic notes before deployment, but does not silently flatten
+non-empty bilingual notes.
 
 The investigated failure requires a vpsAdmin schema fix before the review token
 can be issued through MFA: widen `auth_tokens.opts` from `VARCHAR(255)` to
@@ -164,6 +231,23 @@ client rollout is required.
 - Verify every English and Czech response uses the shared status closing and no
   public field contains generic non-action, editorial first-person, or internal
   storage-role wording.
+- Verify all five localized summaries exactly match the historical privilege-
+  escalation title and all current public Node notes are absent.
+- Verify explicit per-Node notes require both languages, remain short and
+  single-line, and are reproduced by fresh evaluation rather than hand-edited
+  in the tracked JSON.
+- Verify migration of existing English notes, removal of the legacy column,
+  rollback restoration of English with intentional Czech loss, localized API
+  round trips, bulk translation loading, rejection of the removed legacy
+  field, WebUI locale selection, English fallback, and bilingual administrator
+  inputs.
+- Verify legacy submission digests are accepted only for the exact old remote
+  snapshot and are upgraded after a successful checkpoint; actual remote drift
+  must still stop synchronization.
+- Pin the exact vpsAdmin feature revision in `vpsadmin-kb-captures` and run its
+  contract. If it reports a security-advisory page or screenshot binding,
+  review and regenerate precisely that Czech/English material; otherwise keep
+  KB production untouched.
 - Verify the four memory-lifetime advisories use the exact bilingual monitoring
   sentence and the non-UAF advisory does not.
 - Verify fresh sample/evidence revisions are accepted only when the exact Node
@@ -171,3 +255,13 @@ client rollout is required.
 - Dry-run all five synchronizations, apply them only after the committed branch
   passes review and CI, then run `ready` for each draft. Confirm that every
   remote report remains a draft and matches local content and Node results.
+- Verify the embedded and standalone Node-status forms use size 14 for both
+  date and localized-note inputs in their bulk and per-Node rows.
+- Verify localized browser fixtures create translation rows and exercise both
+  `en_note` and `cs_note`; no integration fixture may write the removed `note`
+  column.
+- Verify the publish form has exactly one hidden content-revision input and its
+  publication-time row begins with the visible label rather than an empty
+  table cell.
+- Verify Czech security-advisory wording uses `Ošetřeno` consistently and the
+  translation instructions explicitly reject `Mitigováno`.

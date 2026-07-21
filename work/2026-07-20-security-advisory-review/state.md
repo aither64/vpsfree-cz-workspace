@@ -20,6 +20,11 @@
   - Worktree: `worktrees/2026-07-20-security-advisory-review/vpsadmin`
   - Base: `origin/master` at
     `1bca29dfac3dba6a82a857ffad24d42e46ae861e`
+  - Follow-up branch: `2026-07-21-security-advisory-localized-notes`
+  - Follow-up worktree:
+    `worktrees/2026-07-20-security-advisory-review/vpsadmin`
+  - Follow-up base: `origin/master` at
+    `88f03da4455f4d709ca64785b1db14db834f323a`
 - `haveapi`
   - Bare clone: `repos/haveapi.git`
   - Remote: `git@github.com:vpsfreecz/haveapi.git`
@@ -34,6 +39,32 @@
     `worktrees/2026-07-20-security-advisory-review/vpsfree-cz-configuration`
   - Base: `origin/master` at
     `36c0e9ba2f5cdca43d4d3b0541c6b6fa809f699d`
+- `vpsadmin-kb-captures`
+  - Bare clone: `repos/vpsadmin-kb-captures.git`
+  - Remote: `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
+  - Branch: `2026-07-21-security-advisory-localized-notes`
+  - Worktree:
+    `worktrees/2026-07-20-security-advisory-review/vpsadmin-kb-captures`
+  - Base: `origin/master` at
+    `6d10db3f9a395c5e786c5dc9c39019920d1f83c8`
+- `vpsfree-notification-templates`
+  - Bare clone: `repos/vpsfree-notification-templates.git`
+  - Remote: `git@github.com:vpsfreecz/vpsfree-notification-templates.git`
+  - Branch: `2026-07-20-security-advisory-review`
+  - Worktree:
+    `worktrees/2026-07-20-security-advisory-review/vpsfree-notification-templates`
+  - Base: `origin/master` at
+    `7da522e060fc18d5426e1dd6cd305b6847faf5ed`
+  - The templates do not render per-Node notes, but the managed Czech advisory
+    announcement included the old mitigation label and can override the
+    built-in vpsAdmin mail.
+- `vpsf-status`
+  - Inspection only at `origin/master`
+    (`9c19b23fb245910054d54f67496428f73af15f02`).
+  - `security_advisories.go` fetches only advisory-level localized summary,
+    description, response, CVEs, timestamps, state, and affected-Node count.
+    Its client interface does not list per-Node statuses, so localized Node
+    notes require no change in this repository.
 
 ## Status
 
@@ -67,6 +98,14 @@
   longer blocks an otherwise identical reviewed conclusion. The resulting
   commits, generated submission baselines, five remote drafts, readiness
   checks, and final CI are complete.
+- The localized-note follow-up is in progress. The accepted design uses the
+  historical `Local privilege escalation` / `Lokální eskalace oprávnění`
+  titles, omits all notes from the current five evaluations, and permits future
+  notes only as explicit bilingual per-Node exceptions. Per the follow-up
+  decision, the legacy English `note` API alias will be removed rather than
+  retained. `vpsf-status` is also being inspected as a possible consumer. The
+  work includes no vpsAdmin deployment, configuration-channel update, KB
+  publication, template upload, or advisory publication.
 
 ## Commands run
 
@@ -490,6 +529,163 @@
   workflows passed.
 - Durable collector note:
   `notes/security-advisories/2026-07-21-live-evidence-collection.md`.
+
+## Localized-note follow-up
+
+- vpsAdmin commit `438a92515` adds the Node-status translation table, explicit
+  `en_note`/`cs_note` API fields, localized administrator inputs, locale-aware
+  public rendering with English fallback, and generated API/WebUI catalogs.
+  The migration copies legacy values into English translation rows and removes
+  the `note` column. Rollback recreates the column from English before dropping
+  the table; Czech is intentionally lost. The legacy `note` field is not
+  exposed as an API compatibility alias.
+- vpsAdmin focused verification passed: 3 localized Node-status API examples,
+  2 bidirectional migration examples, 3 WebUI examples, API i18n health, WebUI
+  gettext health, migration-spec coverage, and all Overcommit hooks.
+- security-advisories commits `25d0b99`, `4f4f656`, and `018fc1c` separately
+  add reconciler compatibility, define the bilingual dossier/evaluator
+  contract, and activate strict schema 4 with all five reviewed dossiers and
+  generated evaluations. The reconciler accepts exact schema-1 submission
+  baselines, clears empty generic notes through the deployed legacy API, and
+  refuses to flatten non-empty bilingual notes before the localized API is
+  deployed.
+- A fresh read-only production collection at `2026-07-21T13:54:17Z` has Node
+  set digest
+  `f434faac03a83c7ba7329214924bdb7561a5c619dd09b9f53a9dd9c660e9092e`
+  and evidence digest
+  `d3ef095d5e0d5b701ff8384d9f61e3e8abb00ae9dc015e5917ab87340f45148a`.
+  All five evaluations cover the same 13 Nodes, have no blocking states or
+  public notes, and retain Node 161 as workload-excluded storage.
+- The full security-advisories suite passed with 113 examples; RuboCop checked
+  25 files without offenses and Overcommit passed.
+- `vpsfree-notification-templates` at `7da522e` and `vpsf-status` at `9c19b23`
+  do not consume advisory Node-status notes, so neither needs a code change.
+- The localized-note mandatory change review found one blocking commit-series
+  issue, two important implementation issues, and one advisory wording issue:
+  `dbc2772` combined independently reviewable concerns, one-time English
+  backfill could become stale under old API writers, `after_initialize` added a
+  translation query per Node status, and Czech API summary metadata retained
+  the old sentence wording.
+- The implementation fixes remove all database work from `after_initialize`
+  and bulk-preload translation rows. Regression coverage proves two localized
+  statuses use one translation query. The Czech metadata now describes the
+  short vulnerability-class title.
+- The user selected a normalized translation-only schema instead of the
+  temporary canonical-English-column design. Because old code requires the
+  removed column, deployment must drain every old API and WebUI process before
+  running the migration and starting the new code; mixed old/new service
+  operation is unsupported at this boundary.
+- Each coherent security-advisories intermediate commit passed the full suite:
+  109 examples at `25d0b99`, 111 at `4f4f656`, and 113 at `018fc1c`.
+- vpsadmin-kb-captures commit `f6c8207` is the single consolidated pin update;
+  `flake.nix`, `flake.lock`, `captures.json`, and `contract/navigation.yml` all
+  reference exact vpsAdmin commit
+  `438a92515fe397b32e94923d84eea76edc39e327`.
+- The KB contract check passed at that exact pin: 39 controls, 29 paths, 32
+  capture concepts, 3 selectors, 65 bindings, 9 exceptions, and all contract,
+  routing, inventory, and screenshot assertions.
+- A fresh storage-topology development cluster was started with the bridge
+  network. The first build exposed a class-load query against `languages`
+  before a fresh database had created that table. vpsAdmin `438a92515` moves
+  localized accessor definition to the API resource, where the schema exists.
+  Focused API regression coverage passed with 4 examples and all commit hooks
+  passed.
+- The corrected services closure deployed successfully. The database setup
+  unit completed every migration and seed with `Result=success`; migration
+  `20260721120000` is recorded, the Node-status translation table exists, and
+  the legacy `security_advisory_node_statuses.note` column is absent. The WebUI
+  and API return HTTP 200, and the WebUI build footer identifies exact commit
+  `438a92515`.
+- The running development cluster is
+  `2026-07-20-security-advisory-review`. Dev-only draft advisory `1` provides
+  three representative Node rows for visual review: bilingual live-patch text,
+  an English-only kernel-upgrade note to exercise Czech fallback, and a
+  note-free storage exclusion. This fixture is local to the development
+  cluster and must not be synchronized to production.
+- The standalone mandatory re-review cleared exact vpsAdmin commit
+  `438a92515fe397b32e94923d84eea76edc39e327` and KB commit
+  `f6c8207f990f9b5513eca038c8d751b88131ef67` with no blocking, important, or
+  advisory findings. It confirmed that localized accessors remain registered
+  at the API resource boundary and found no model-only caller that needs them
+  earlier.
+- Visual review found that both localized Node-status tables were too wide.
+  vpsAdmin commit `a1a4f21ed` reduces date and note inputs to size 14 in the
+  embedded new-advisory and standalone existing-advisory forms, including bulk
+  and per-Node rows. Preceding focused commit `70d265a8c` repairs the dedicated
+  Playwright and VM fixtures so they write and exercise `en_note`/`cs_note`
+  translations rather than the removed legacy column.
+- vpsAdmin commit `0e389a1ef` standardizes Czech mitigation wording on
+  `Ošetřeno`, updates the WebUI placeholder and advisory mail label, and adds
+  concrete live-patch, kernel-upgrade, and BPF LSM examples to
+  `doc/i18n-cs.md`. Focused WebUI coverage passed with 4 examples and 16
+  assertions; the localized API example passed with 1 example.
+- The unrelated publish-form correction is isolated in vpsAdmin commit
+  `19e613c2a`. It moves `expected_content_revision` into the form hidden-field
+  area so the publication-time row begins with its label. Fast and browser
+  regressions cover the cell structure.
+- Every vpsAdmin commit ran from the root Nix development shell and passed all
+  Overcommit hooks. The first ambient-shell attempt stopped without committing
+  because the expected hook tools were unavailable; the staged changes were
+  then checked normally in the documented shell.
+- security-advisories commit `c909aca` adds the same Czech terminology rule to
+  its assessment instructions and updates all Node-note contract examples.
+  Its focused advisory, evaluator, and reconciler specs passed with 76 examples
+  and all Overcommit hooks passed.
+- Current review heads are vpsAdmin
+  `19e613c2ae72103fc04265002402544f387e08c0` and security-advisories
+  `c909aca9d0271a27e01f2597394fe54acdbdac51`. KB capture commit
+  `7248a8b8c714335d5459d802a91e03d085acca8a` pins the exact vpsAdmin review
+  head in all four contract locations. All four worktrees are clean.
+- Full quick verification passed: vpsAdmin WebUI PHPUnit has 82 tests and 332
+  assertions; the complete security-advisory API spec has 29 examples; the
+  security-advisories suite has 113 examples and RuboCop reports no offenses;
+  and `vpsadmin-kb-captures` `bin/check` validates the contract, inventory,
+  screenshots, and both test suites. The long WebUI browser integration test
+  remains intentionally deferred until the mandatory review clears.
+- Mandatory review found two blocking completeness/history issues and no other
+  findings. The localized browser and VM fixture repair has been split into
+  focused vpsAdmin commit `70d265a8c`, followed by the size-only layout commit
+  `a1a4f21ed`; the final tree is byte-for-byte identical to the previously
+  verified head. Rewritten terminology and publish commits are `0e389a1ef` and
+  `19e613c2a`. Focused WebUI PHPUnit still passes with 4 tests and 16
+  assertions.
+- vpsfree-notification-templates commit `04921d75ab5321962b207bb380deff90906bd662`
+  changes the managed Czech advisory announcement label from `Mitigováno od:`
+  to `Ošetřeno od:`. ERB compilation and `git diff --check` passed; the
+  repository declares no local hook framework or standalone offline suite.
+- The mandatory standalone re-review passed the corrected four-repository
+  series with no blocking, important, or advisory findings. It independently
+  confirmed the commit split, migration rollback behavior, absence of the
+  legacy API alias, managed template wording, exact KB pins, and that
+  vpsf-status does not consume per-Node notes.
+- The long `./test-runner.sh test 'webui#security-advisories'` integration
+  passed. Its Playwright example succeeded in 278.74 seconds and the complete
+  test finished successfully in 834.28 seconds.
+- Pushed exact reviewed heads over SSH: vpsAdmin `19e613c2a`,
+  security-advisories `c909aca`, KB captures `7248a8b`, and managed templates
+  `04921d7`. The security-advisories ambient-shell push first stopped in its
+  pre-push hook because the ambient Ruby could not load repository gems; the
+  documented `nix develop -c git push` path passed. Exact-head
+  security-advisories RSpec/RuboCop and vpsAdmin API Specs, WebUI PHPUnit,
+  i18n, and RuboCop workflows are green; the aggregate vpsAdmin CI workflow is
+  still running.
+- The first devcluster update evaluation detected the initiative's newly added
+  notification-template worktree and tried to enable a Nix option unavailable
+  on the vpsAdmin feature base. No running machine was changed. The clean,
+  already-pushed template worktree was temporarily removed from devcluster
+  auto-discovery, the services update completed, and the worktree was restored
+  on the same branch and exact commit afterward.
+- Development cluster `2026-07-20-security-advisory-review` remains running and
+  ready with the `storage` topology on the bridge network. Services now report
+  vpsAdmin revision `19e613c2ae72103fc04265002402544f387e08c0`;
+  `systemctl is-system-running` reports `running`, no failed units were listed,
+  and `vpsadmin-database-setup.service` is active/exited with result `success`
+  and exit status zero.
+- Preserved dev-only advisory `1` and updated exactly its Node 101 Czech note
+  from `Mitigováno live patchem` to `Ošetřeno live patchem`. The English live
+  patch note, Node 102 English kernel-upgrade note, and fallback/no-note rows
+  remain in place for visual review. No production data or template upload was
+  performed.
 
 ## Open questions
 
