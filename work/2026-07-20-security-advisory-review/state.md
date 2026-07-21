@@ -838,3 +838,183 @@
 - Removed transient development-shell files and the downloaded CI artifact.
 - The unrelated `2026-07-21-node-evidence-access` security-advisories worktree
   remains registered at `06ddc84` and was not touched.
+
+## GhostLock wording follow-up
+
+- The user questioned capitalized `Node` in public prose and the ambiguous
+  antecedent in the GhostLock cross-VPS sentence. `Node` came from treating the
+  vpsAdmin resource name as a proper domain term, but ordinary public prose
+  should use lowercase `node`.
+- The cited research is Nebula Security's July 2026 GhostLock write-up. It
+  demonstrated host root from an unprivileged process inside a container on
+  Google's Linux 6.12.80 kernelCTF target. It did not test vpsAdminOS or access
+  to a second container; the cross-VPS consequence is an inference from host
+  compromise and must be labeled as such.
+- Recreated the initiative security-advisories worktree at `975e0e3` on the
+  existing feature branch. As documented, its initial checkout hook ran outside
+  the Nix shell and reported missing locked gems before `bin/dev-session`
+  recovered to a registered clean worktree.
+- Installed the locked worktree bundle, refreshed the Overcommit signature, and
+  ran its pre-commit hooks successfully inside `nix develop`.
+- Updated all five public English reports to use lowercase `node` in prose and
+  added the convention to repository instructions. Replaced the ambiguous
+  GhostLock passage in both languages with the exact Linux 6.12.80 kernelCTF
+  result, the vpsAdminOS test boundary, and an explicit untested
+  cross-container step.
+- Collected a fresh typed production snapshot at `2026-07-21T19:42:38Z` with
+  the same 13 active Node IDs and re-evaluated all five dossiers. Every Node
+  set, state, interval, reason, role, kernel, and configuration result remains
+  unchanged after excluding only periodic evidence revisions; all results are
+  resolved and note-free.
+- Quick verification passed: all five dossiers validate, focused advisory,
+  evaluator, and reconciler specs report 76 examples with 0 failures, no
+  dossier public text contains uppercase `Node`, and `git diff --check` passes.
+- Committed the complete wording and evaluation refresh as
+  `495457b` (`Clarify GhostLock exploit boundaries`). The mandatory standalone
+  reviewer found one blocking regression: `spec/dossiers_spec.rb` still
+  required the capitalized closing sentence and vague GhostLock phrases, so the
+  full suite had one failure.
+- Updated the dossier contract to reject uppercase `Node` in public English,
+  require the lowercase standard response, and assert the exact bilingual
+  GhostLock kernelCTF target, vpsAdminOS boundary, other-VPS consequence, and
+  untested cross-container step. Dossier plus focused advisory/evaluator/
+  reconciler specs now pass with 80 examples and 0 failures.
+- Amended the unpushed source commit to `d8c6474`. Pre-commit and commit-message
+  hooks passed; the commit-message hook emitted only its advisory 72-column
+  warning, while all lines remain within the workspace's required 80-column
+  limit. The same standalone reviewer is rechecking the amended commit.
+- Mandatory re-review confirmed the blocking finding is resolved and reported
+  no remaining blocking, important, or advisory findings. It independently ran
+  the full suite with 113 examples and 0 failures and confirmed the amended
+  commit remains focused, clean, and correctly based on `975e0e3`.
+- Main-agent verification of amended commit `d8c6474` also passed: 113 RSpec
+  examples, RuboCop over 25 files, Overcommit, and `git diff --check`.
+- Pushed reviewed source commit `d8c6474` to the existing feature branch after
+  fetching and confirming both upstream feature and default refs still pointed
+  to the expected base `975e0e3`.
+- Dry-run reconciliation of all five dossiers selected only parent advisory
+  text changes. It preserved the exact 13-node state and interval sets, empty
+  English/Czech notes, existing advisory/CVE identities, and draft state.
+- Applied the five reconciliations sequentially with content-revision
+  preconditions. Drafts 6 through 10 each advanced once, from revision 27 to
+  28, without changing their CVEs or node statuses and without publishing.
+- Committed each generated revision-28 submission baseline immediately:
+  `0f72bba` (CVE-2026-23111), `9605b37` (CVE-2026-43499), `bb0bff5`
+  (CVE-2026-46242), `52bb6ab` (CVE-2026-53359), and `8323559`
+  (CVE-2026-53362). All hooks passed with only advisory 72-column warnings;
+  commit messages remain within the required 80-column limit.
+- Fresh `ready` checks passed for every dossier at revision 28 with the full,
+  resolved 13-node set and no blocking node IDs. Direct authenticated readback
+  of IDs 6 through 10 confirmed draft state, null publication timestamps, the
+  short bilingual summaries, 13 statuses, and zero localized node notes.
+- GitHub Actions runs `29863501419` (RSpec) and `29863501466` (RuboCop) passed
+  on reviewed source commit `d8c6474`. After recording all submission
+  baselines, final local verification again passed 113 RSpec examples,
+  RuboCop over 25 files, Overcommit, and `git diff --check`.
+- Pushed final feature head `8323559` over SSH; its exact-head workflows are
+  both green: `29864524730` (RSpec) and `29864525280` (RuboCop).
+- Fetched the still-unchanged upstream default, created a fresh integration
+  worktree, and fast-forwarded `2026-07-13-security-advisory-automation` from
+  `975e0e3` to exact feature head `8323559`. The integrated tree passed 113
+  RSpec examples, RuboCop over 25 files, Overcommit, and `git diff --check`
+  before push over SSH.
+- Default-branch GitHub Actions runs `29864711151` (RSpec) and `29864711053`
+  (RuboCop) passed on exact head `8323559`.
+- Checked the authenticated token in response to the user's permission
+  question. It has `security_advisory#update` for draft content but does not
+  have the distinct `security_advisory#publish` action scope. It therefore
+  cannot publish these drafts; no publication was attempted.
+
+## Publication-token follow-up
+
+- The user requires the repository token to have publication authority, with
+  explicit user approval as the operational gate rather than omission of the
+  API scope. The current permanent token cannot be escalated in place and must
+  be replaced after the repository change is reviewed.
+- Added `security_advisory#publish` to the issuance scope list and its exact
+  permission documentation. Updated repository instructions to forbid
+  publication without explicit approval for the exact advisory and reviewed
+  content revision; sending email remains a separate action requiring explicit
+  approval.
+- Focused configuration, issuer, and revoker specs pass (3 examples), the two
+  changed Ruby files pass RuboCop, and `git diff --check` passes.
+- A read-only `OPTIONS` request to draft 7's publish action with the current
+  token returns HTTP 403 `Insufficient permissions`, confirming the effective
+  server-side token lacks the publish action rather than only stale local scope
+  metadata. The same request can safely verify the replacement without
+  publishing.
+- Committed the reviewed candidate as `e109d6d` (`Authorize approved advisory
+  publication`). Full pre-review verification passed: 113 RSpec examples,
+  RuboCop over 25 files, Overcommit, and `git diff --check`.
+- Mandatory standalone review found one blocking rotation issue: the documented
+  default issuance command and `Config.save` truncation could overwrite the
+  only saved old permanent credential before self-revocation, orphaning an
+  active token. No important or advisory findings were reported.
+- Changed token persistence to fail closed when its output path already exists,
+  with coverage proving the old credential is unchanged. Added a read-only
+  `bin/check-publish-token` command backed by an `OPTIONS`-only permission
+  checker and documented the separate-file issue, effective authorization
+  check, old-token revocation, and replacement install sequence.
+- Focused post-fix verification passes: 5 configuration/issuer/checker/revoker
+  examples, RuboCop over the 5 changed Ruby files, `git diff --check`, and a
+  live invocation of the checker that correctly reports the old token's HTTP
+  403 without making a publish request.
+- Amended the unpushed scope commit to `2248bba`. Full post-fix verification
+  passes with 115 RSpec examples, RuboCop over 28 files, Overcommit, and
+  `git diff --check`. The same standalone reviewer is rechecking the amended
+  commit and the resolved rotation finding.
+- Re-review found a second blocking edge case: reserving the path only during
+  `Config.save` still occurred after remote issuance, so a collision could
+  preserve the old file while orphaning the newly issued permanent token.
+- Moved exclusive output-path creation ahead of the issuer block. Failed
+  authentication/issuance removes the empty reservation, while an occupied path
+  returns before prompting or contacting the server. Added coverage that the
+  issuer is never called for an existing file and that failed issuance removes
+  the reservation.
+- Amended the still-unpushed commit to `5140bbf`. Verification now passes with
+  116 RSpec examples, RuboCop over 28 files, Overcommit, and `git diff --check`.
+  A live collision check using a dummy username exited on the existing standard
+  path before any password prompt or server authentication attempt.
+- Re-review found a third blocking failure mode: a local write, flush, or fsync
+  error after successful remote issuance would remove the reservation and
+  discard the new permanent token without revoking it.
+- Added post-issuance persistence cleanup. `bin/create-token` supplies a
+  self-revocation callback using the newly issued credential; `Config.save`
+  calls it before discarding credentials and reports whether persistence alone
+  or persistence plus revocation failed. Fault-injection coverage raises
+  `ENOSPC` on the first write and proves cleanup receives the issued credential.
+- Amended the still-unpushed commit to `5d4138a`. Verification passes with 117
+  RSpec examples, RuboCop over 28 files, Overcommit, and `git diff --check`.
+- Mandatory re-review of `5d4138a` reports no blocking, important, or advisory
+  findings. The reviewer independently passed 7 focused examples, relevant
+  RuboCop, `git diff --check`, commit-message checks, and confirmed that the
+  permission check cannot publish. Residual risk is limited to simultaneous
+  local persistence and remote self-revocation failure, which is reported for
+  operator cleanup, plus the intentionally policy-based email approval gate.
+- Pushed reviewed feature head `5d4138a` over SSH after confirming both remote
+  feature and default branches remained at expected base `8323559`.
+- Feature-head GitHub Actions runs `29866396892` (RSpec) and `29866397197`
+  (RuboCop) passed on exact head `5d4138a`.
+- Fast-forwarded the existing fresh integration worktree and actual default
+  branch `2026-07-13-security-advisory-automation` from `8323559` to `5d4138a`.
+  The integrated tree passed 117 RSpec examples, RuboCop over 28 files,
+  Overcommit, and `git diff --check` before push over SSH.
+- Default-branch GitHub Actions runs `29866511176` (RSpec) and `29866511160`
+  (RuboCop) passed on exact head `5d4138a`.
+- Live token rotation is waiting only for interactive password/TOTP issuance to
+  the separate `token.next.json` path. The existing working token remains
+  installed and active until the replacement passes the read-only publish
+  authorization check.
+- The user issued the replacement to `token.next.json`. Verified mode `0600`,
+  the exact 35-scope set including `security_advisory#publish`, and effective
+  server-side publication authorization for draft 7 through the read-only
+  `OPTIONS` checker. No publication request was made.
+- Revoked and removed the old permanent token through its saved standard file,
+  moved the verified replacement to `token.json`, confirmed mode `0600`, and
+  repeated the effective publish-authorization check successfully from the
+  standard path. No `token.next.json` remains.
+- Confirmed local and remote feature and default refs all resolve to `5d4138a`,
+  then removed the initiative feature and integration worktrees with
+  `bin/dev-session`. Preserved both branch refs. The unrelated
+  `2026-07-21-node-evidence-access` worktree remains registered at `06ddc84`
+  and was not touched.

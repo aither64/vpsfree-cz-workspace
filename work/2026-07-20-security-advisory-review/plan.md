@@ -150,6 +150,19 @@ does not retain the legacy single-note column.
     repeated generic Node notes. Re-evaluate changed dossiers, review and test
     the committed report data, then synchronize with revision preconditions and
     verify that every advisory remains an unpublished draft.
+32. Clarify that the GhostLock research demonstrated host root from a container
+    on Google's Linux 6.12.80 kernelCTF target, while cross-container access is
+    a separate untested post-compromise step. Use lowercase `node` consistently
+    in all public English prose, refresh the evaluations, and reconcile the
+    five drafts without changing their Node conclusions or publishing them.
+33. Grant newly issued repository tokens the distinct
+    `security_advisory#publish` action scope, while recording that the scope is
+    never exercised without explicit user approval for the exact advisory and
+    content revision. Treat email notification as a separate external action
+    that also requires explicit approval. Issue a replacement token to a
+    temporary path, verify its effective publication authorization without
+    publishing, revoke the old token, and only then install the replacement at
+    the standard path.
 
 ## Compatibility and deployment
 
@@ -185,6 +198,20 @@ conclusions, affected intervals, CVE associations, or running infrastructure.
 Descriptions retain the vulnerability-specific subsystem and primitive that no
 longer fit in the summary. Empty Node notes are intentional because no active
 Node has a distinct live patch, BPF program, or other exceptional mitigation.
+
+The GhostLock clarification and lowercase terminology follow-up is likewise a
+draft-text-only change. It makes the demonstrated kernelCTF result and the
+inferred cross-VPS consequence explicit, without changing impact
+classification, evidence, or runtime state.
+
+Adding the publication action changes only the scopes requested for newly
+issued repository tokens; existing tokens are immutable and keep their old
+authority until rotated. Rotation must avoid overwriting the only copy of the
+old credential before it is revoked: issue and verify the replacement at a
+temporary mode-0600 path, revoke the old token through its saved file, then move
+the replacement into place. The repository continues to have no automatic
+publish command, and publication remains gated by explicit user approval and
+the API's exact content-revision precondition.
 
 Localized Node notes replace the single `note` column with a translation table.
 Migration up copies every non-empty legacy note into the English row before
@@ -255,6 +282,10 @@ client rollout is required.
 - Verify the descriptions still identify nf_tables corruption, the GhostLock
   futex escape, the epoll race, the KVM shadow-paging use-after-free, and the
   crafted UDPv6 overwrite in both languages.
+- Verify the GhostLock description names the Linux 6.12.80 kernelCTF target and
+  says explicitly that the researchers did not test the cross-container step.
+  Require lowercase `node` throughout every public English summary,
+  description, and response.
 - Dry-run each production reconciliation and require that it contains only the
   reviewed parent-text update and clearing of the 13 generic Node notes. After
   apply, read back every draft, rerun readiness, and confirm the Node states and
@@ -291,3 +322,8 @@ client rollout is required.
   table cell.
 - Verify Czech security-advisory wording uses `Ošetřeno` consistently and the
   translation instructions explicitly reject `Mitigováno`.
+- Verify the configured and documented scopes include exactly
+  `security_advisory#publish`, issuance sends that scope, and repository policy
+  requires explicit user approval for the exact revision plus separate
+  approval for email. Verify a replacement token's effective action authority
+  without invoking publication before revoking the old token.
