@@ -96,6 +96,8 @@
   Overcommit hook could load the locked gems.
 - Monitored vpsAdmin branch workflows with `gh run list`, `gh run view`, and
   `gh run watch`.
+- Downloaded the failed serialized workflow's test-log artifact and inspected
+  the exact failing test's `test-result.txt` and `test-runner.log`.
 
 ## Results
 
@@ -216,12 +218,15 @@
 - vpsAdmin GitHub Actions passed RuboCop, API migration specs, libnodectld
   specs, i18n health, and all 26 parallel API/topic jobs for
   `b3ec1a757c51b639b6442cd2552401688061b3e3`. The separate serialized `CI`
-  workflow remains queued at
-  `https://github.com/vpsfreecz/vpsadmin/actions/runs/29781749917` behind the
-  default branch's long-running ci-tagged test job. Recent successful runs of
-  this workflow take approximately 5-13 hours, so the queue is recorded as
-  pending external validation rather than a failure. The configuration
-  repository produced no branch-triggered workflow runs.
+  workflow run `29781749917` completed 116 of 117 integration tests and failed
+  only `client/snapshot-download`. Its downloaded artifact shows that Nix
+  evaluation stopped before the test ran because the runner no longer had the
+  `rabbitmq-server-4.2.5.drv` store path. This pre-test runner/store failure is
+  unrelated to the authentication-token schema and regression changes, so it
+  does not block integration and was not treated as evidence repaired by a
+  blind rerun. Durable note:
+  `notes/vpsadmin/2026-07-21-ci-missing-rabbitmq-derivation.md`. The
+  configuration repository produced no branch-triggered workflow runs.
 - No merge, deployment, database migration, production API request, or token
   handling was performed.
 
