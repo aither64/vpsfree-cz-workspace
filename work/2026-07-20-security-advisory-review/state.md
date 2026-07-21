@@ -686,6 +686,38 @@
   patch note, Node 102 English kernel-upgrade note, and fallback/no-note rows
   remain in place for visual review. No production data or template upload was
   performed.
+- The user accepted the development WebUI review and authorized default-branch
+  integration. Fresh detached integration worktrees were created from each
+  fetched target, fast-forwarded with `git merge --ff-only`, tested, used for
+  the target push, and removed afterward. Feature branches and their ordinary
+  initiative worktrees remain available.
+- Upstream default refs now resolve exactly to the reviewed commits:
+  vpsAdmin `master` is `19e613c2ae72103fc04265002402544f387e08c0`;
+  security-advisories' actual remote default
+  `2026-07-13-security-advisory-automation` is
+  `c909aca9d0271a27e01f2597394fe54acdbdac51`; vpsadmin-kb-captures `master`
+  is `7248a8b8c714335d5459d802a91e03d085acca8a`; and
+  vpsfree-notification-templates `master` is
+  `04921d75ab5321962b207bb380deff90906bd662`.
+- Integration-worktree verification passed: focused vpsAdmin WebUI PHPUnit has
+  4 tests and 16 assertions; security-advisories has 113 RSpec examples and 25
+  RuboCop-inspected files; the KB contract/inventory and both test suites pass;
+  and the managed Czech ERB compiles. Default-branch security-advisories RSpec
+  and RuboCop workflows are green. vpsAdmin default-branch migration specs,
+  libnodectld specs, WebUI PHPUnit, RuboCop, and i18n workflows are green while
+  its longer API/aggregate workflows continue on the same already-verified
+  commit.
+- A fresh configuration integration worktree from `origin/master` used
+  `confctl inputs channel update --commit vpsadmin`. Generated commit
+  `3313c5841d4be30327294c1f5ee215405cf24817` moves `vpsadminServices` from
+  `88f03da4` to merged revision `19e613c2` and is pushed to
+  vpsfree-cz-configuration `master`.
+- `confctl build -y 'cz.vpsfree/vpsadmin/*'` built generation
+  `2026-07-21--19-55-54` successfully for all 11 vpsAdmin systems, including
+  both APIs, all three WebUIs, the database, supervisor, Redis, and RabbitMQ
+  systems. The first non-interactive invocation omitted `-y` and stopped at
+  its confirmation prompt before building; it made no state change. No
+  production deployment was run.
 
 ## Open questions
 

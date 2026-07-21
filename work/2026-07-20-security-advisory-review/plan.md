@@ -138,6 +138,12 @@ does not retain the legacy single-note column.
     from the input-width commit and correcting the canonical managed Czech mail
     template. Re-pin the rewritten exact vpsAdmin head, re-review the complete
     committed series, and only then run the long browser integration test.
+30. After user visual approval, integrate every reviewed feature branch into
+    its current upstream default by fast-forward from a fresh temporary
+    worktree. Update the `vpsadmin` configuration channel through `confctl`,
+    build the complete vpsAdmin configuration group, push the generated commit,
+    and remove only the temporary integration worktrees. Do not deploy the
+    production configuration.
 
 ## Compatibility and deployment
 
