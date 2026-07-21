@@ -1018,3 +1018,25 @@
   `bin/dev-session`. Preserved both branch refs. The unrelated
   `2026-07-21-node-evidence-access` worktree remains registered at `06ddc84`
   and was not touched.
+
+## Publication
+
+- The user explicitly approved publishing the five reviewed drafts and set the
+  publication time to `2026-07-21 22:00 Europe/Amsterdam`, while explicitly
+  prohibiting user email. This is `2026-07-21T20:00:00Z`.
+- Recreated a temporary worktree at exact default/feature head `5d4138a` for
+  the authenticated operation. Initial remote preflight confirmed IDs 6
+  through 10 were still the expected external IDs, all `draft`, revision 28,
+  and without publication timestamps.
+- Began the repository `ready` gate, but the user explicitly rejected fresh
+  evidence collection and instructed publication of the already reviewed data.
+  Interrupted the read-only collector before it completed; no write had been
+  made.
+- Published IDs 6 through 10 sequentially using their exact revision-28
+  precondition, `published_at: 2026-07-21T22:00:00+02:00`, and explicit
+  `send_mail: false`. Every publish response reported `published` at revision
+  28.
+- Independent direct readback confirmed all five records are `published`,
+  remain at content revision 28, and store the requested time as
+  `2026-07-21T20:00:00Z`. No evidence collection was run after the user's
+  correction and no email notification was requested.

@@ -163,6 +163,12 @@ does not retain the legacy single-note column.
     temporary path, verify its effective publication authorization without
     publishing, revoke the old token, and only then install the replacement at
     the standard path.
+34. After explicit user approval, publish the five exact reviewed revision-28
+    drafts with publication time `2026-07-21 22:00 Europe/Amsterdam` and
+    `send_mail: false`. Do not refresh evidence when the user explicitly asks
+    to publish the already reviewed records. Require immediate remote
+    state/revision preconditions before each write and read back every resulting
+    publication state and timestamp.
 
 ## Compatibility and deployment
 
@@ -212,6 +218,13 @@ temporary mode-0600 path, revoke the old token through its saved file, then move
 the replacement into place. The repository continues to have no automatic
 publish command, and publication remains gated by explicit user approval and
 the API's exact content-revision precondition.
+
+Publishing intentionally changes the five vpsAdmin records from `draft` to
+`published` and creates their affected-VPS snapshots. It does not change their
+reviewed text, CVEs, Node statuses, content revision, or runtime infrastructure.
+Email notification is disabled explicitly. Publication is externally visible;
+the ordinary retraction workflow can supersede a report but does not erase the
+publication event.
 
 Localized Node notes replace the single `note` column with a translation table.
 Migration up copies every non-empty legacy note into the English row before
@@ -327,3 +340,7 @@ client rollout is required.
   requires explicit user approval for the exact revision plus separate
   approval for email. Verify a replacement token's effective action authority
   without invoking publication before revoking the old token.
+- Before publishing, verify IDs 6 through 10 are still the expected drafts at
+  revision 28. Publish each with the exact revision precondition, timestamp,
+  and `send_mail: false`, then read back all five as revision-28 publications at
+  the equivalent UTC instant.
