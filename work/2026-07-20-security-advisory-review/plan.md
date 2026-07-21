@@ -64,6 +64,16 @@ evidence-backed review of every advisory against every active Node.
 14. Commit and push the reviewed dossier and workflow-instruction changes only
     after the mandatory standalone change review has no unresolved significant
     findings.
+15. Replace the ignored per-CVE evaluation cache with a tracked
+    `advisories/<CVE>/evaluation.json` review record. Keep raw production
+    evidence ignored, and compare fresh in-memory evaluation results with the
+    committed record before sync or readiness can proceed.
+16. Normalize English and Czech public text into the same factual structure;
+    remove generic user non-action statements, editorial first-person language,
+    and internal storage-role explanations from public fields.
+17. Recollect one coherent production snapshot after the dossier text is final,
+    regenerate every tracked evaluation, run mandatory standalone review, and
+    push only after the complete local and GitHub checks pass.
 
 ## Compatibility and deployment
 
@@ -77,6 +87,13 @@ of storage Nodes is compatible with existing evaluations because every active
 Node remains present in the output; only the real attack surface determines
 whether its kernel history is applicable. No vpsAdmin draft synchronization or
 publication is part of this stage.
+
+The per-Node evaluation is now a committed review artifact rather than an
+ignored short-lived cache. Its schema remains unchanged. A reviewed evaluation
+does not expire solely because of age: `sync --apply` and `ready` collect fresh
+evidence and require the current Node set, evidence digest, and per-Node
+conclusions to match before proceeding. This changes no vpsAdmin API, database,
+protocol, or production data and remains safe for mixed repository versions.
 
 The investigated failure requires a vpsAdmin schema fix before the review token
 can be issued through MFA: widen `auth_tokens.opts` from `VARCHAR(255)` to
@@ -120,3 +137,12 @@ client rollout is required.
 - Run `bin/security-advisory validate` for all advisories, evaluate all five
   against a final fresh evidence snapshot, and run full RSpec, RuboCop, and
   Overcommit checks before committing.
+- Verify `evaluate` writes beside the dossier, missing reviewed evaluations fail
+  closed, old matching records remain usable, and fresh mismatches block both
+  apply and readiness without rewriting the committed record.
+- Verify all five tracked evaluations contain the exact 13 reviewed Node IDs,
+  resolved completeness summaries, matching dossier/evidence digests, and the
+  storage Node as `not_affected`.
+- Verify every English and Czech response uses the shared status closing and no
+  public field contains generic non-action, editorial first-person, or internal
+  storage-role wording.

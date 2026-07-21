@@ -42,10 +42,14 @@ history start. Missing configuration on a reconstructed affected release
 cannot prove safety, so treat it conservatively as affected unless exact
 evidence proves the relevant interface was unavailable.
 
-The full 100-example suite, RuboCop, dossier validation, and installed commit
+The final 105-example suite, RuboCop, dossier validation, and installed commit
 hooks passed. A live schema-7 collection then completed for all 13 active
 Nodes, including 12 compute Nodes and one storage Node. All five evaluations
-resolved without `unknown` or `vulnerable` Nodes. The ignored snapshot remained
-local and no draft sync or publication was performed.
+resolved without `unknown` or `vulnerable` Nodes. The raw snapshot remains
+ignored local state, while each reviewed evaluation is tracked beside its
+dossier as `advisories/<CVE>/evaluation.json`. `ready` and `sync --apply`
+recollect evidence and require the fresh Node set, evidence digest, and
+canonical results to match the tracked review before proceeding. No draft sync
+or publication was performed.
 
 Related initiative: `work/2026-07-20-security-advisory-review/`.

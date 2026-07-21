@@ -56,6 +56,11 @@
   Mandatory review findings have been addressed in focused follow-up commits.
   The final standalone verification passed without any remaining finding. The
   branch is pushed and its RSpec and RuboCop workflows passed.
+- The follow-up redesign is complete and pushed: public English/Czech text is
+  compact and uniform, reviewed per-Node evaluations are tracked beside each
+  dossier, and fresh sync/readiness checks compare in memory without rewriting
+  the review record. Mandatory standalone review and all local and GitHub
+  checks passed.
 
 ## Commands run
 
@@ -177,6 +182,30 @@
   `nix develop` executed the hook and pushed the feature branch over SSH.
 - Monitored GitHub Actions runs `29821548394` (RSpec) and `29821548391`
   (RuboCop) to successful completion for final head `67e7b2d`.
+- Reviewed the five public English/Czech text sets side by side, defined a
+  shared response closing, and added checks against generic non-action,
+  editorial first-person, and internal storage-role wording.
+- Added tracked evaluation persistence, explicit reviewed-evaluation loading,
+  and fresh in-memory comparison for sync and readiness. Focused reconciler and
+  dossier coverage passed: 24 examples, 0 failures.
+- Collected one read-only schema-7 production snapshot at
+  `2026-07-21T11:00:08Z`, updated all analysis provenance, and generated five
+  tracked evaluation records. All five dry-run sync commands loaded the new
+  paths successfully and performed no writes.
+- Removed the five obsolete ignored `.state/<CVE>/evaluation.json` copies and
+  retained only raw `.state/evidence.json` as local state.
+- Committed the follow-up as `c9c7caa` (public language), `d6ffa82` (tracked
+  evaluation workflow), and `adddaf6` (snapshot and reviewed records).
+- Assigned the committed three-change series to a fresh standalone mandatory
+  reviewer with the initiative plan/state, exact base/head commits, local
+  verification, compatibility assumptions, and publication exclusions.
+- Ran the final full RSpec suite (105 examples), RuboCop over 25 files,
+  all-dossier validation, `git diff --check`, and the installed Overcommit
+  hooks. All checks passed.
+- Fetched the feature branch, confirmed its remote tip was still `67e7b2d`, and
+  pushed the three follow-up commits over SSH from `nix develop`.
+- Monitored GitHub Actions runs `29825092311` (RuboCop) and `29825092399`
+  (RSpec) to successful completion for exact head `adddaf6`.
 
 ## Results
 
@@ -371,6 +400,28 @@
 - Feature branch `2026-07-20-security-advisory-review` was pushed over SSH at
   `67e7b2d412b83c23f2f5295bc8a96046229d66d7`. Its RSpec and RuboCop GitHub
   workflows passed.
+- The follow-up production snapshot contains the unchanged 13-Node set digest
+  `f434faac03a83c7ba7329214924bdb7561a5c619dd09b9f53a9dd9c660e9092e`
+  and evidence digest
+  `479926d12587cb805955230ae9799be01d4564edc1a462bb5dd168c86d42a68f`.
+  CVE-2026-23111 remains ten `mitigated` and three `not_affected`; every other
+  advisory remains twelve `mitigated` and one `not_affected`, with no blocking
+  Node.
+- Each `advisories/<CVE>/evaluation.json` is tracked, contains all exact 13
+  reviewed Node IDs, matches its dossier digest and shared evidence digest, and
+  records `backuper2.prg` as storage and `not_affected`.
+- Reviewed evaluations no longer expire by wall-clock age. `sync --apply` and
+  `ready` instead recollect evidence without rewriting the tracked file and
+  require matching Node-set, evidence, and canonical per-Node results.
+- The follow-up mandatory standalone review reported no blocking, important,
+  or advisory findings. It independently reproduced the tracked evaluations
+  from the retained evidence and confirmed fail-closed comparison before remote
+  writes. Residual risks are limited to the normal lack of a fleet-wide lock
+  after preflight and intentionally omitted real apply/ready integration; a
+  later run detects evidence drift before it can proceed.
+- Feature branch `2026-07-20-security-advisory-review` is pushed over SSH at
+  `adddaf60c386a671676ae24afda22132ed55a437`. Its final RSpec and RuboCop
+  GitHub workflows passed.
 - Durable collector note:
   `notes/security-advisories/2026-07-21-live-evidence-collection.md`.
 
@@ -392,6 +443,6 @@
   worktrees plus both temporary default-branch merge worktrees. Their feature
   branch refs were retained.
 - Removed transient development-shell files and the downloaded CI artifact.
-- The clean `security-advisories` initiative worktree is sixteen commits ahead
-  of base `55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11` at `67e7b2d` and tracks the
+- The clean `security-advisories` initiative worktree is nineteen commits ahead
+  of base `55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11` at `adddaf6` and tracks the
   pushed feature branch. It is retained for the user's subsequent review.
