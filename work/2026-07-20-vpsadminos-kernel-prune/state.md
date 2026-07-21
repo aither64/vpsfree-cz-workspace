@@ -9,9 +9,10 @@
 
 ## Status
 
-Implementation committed and pushed. Quick verification, mandatory standalone
-review, and full builds of both retained kernel CI toplevels passed. Branch CI
-is queued awaiting a self-hosted runner.
+Implementation is fast-forwarded and pushed to `staging`, and local cleanup is
+complete. Quick verification, mandatory standalone review, full retained-kernel
+builds, original branch CI, and post-rebase RSpec passed. Post-integration
+self-hosted jobs remain queued for runner capacity.
 
 ## Commands run
 
@@ -40,6 +41,24 @@ is queued awaiting a self-hosted runner.
 - Pushed the feature branch to the SSH origin.
 - Built both retained kernel CI toplevels with `nix build --no-link`.
 - Started monitoring GitHub Actions run `29780892771` for the pushed head.
+- Verified run `29780892771` completed successfully, including the OS build and
+  full test-suite jobs.
+- Fetched updated `origin/staging`, rebased the feature branch over its one new
+  flake-input commit, and confirmed both feature patches were unchanged with
+  `git range-diff`.
+- Re-ran `.#lib.kernelVersions`, the targeted eBPF livepatch suite, and full
+  Overcommit after the rebase.
+- Updated the remote feature ref with an exact force-with-lease.
+- Created a fresh detached integration worktree at `origin/staging`, merged the
+  feature branch with `git merge --ff-only`, and re-ran the targeted suite from
+  that exact integration worktree.
+- Fetched `staging` again immediately before pushing and confirmed it was still
+  the direct ancestor of the integration head.
+- Pushed the fast-forwarded integration head to `origin/staging`.
+- Verified the post-rebase GitHub-hosted RSpec workflow passed.
+- Confirmed the feature and integration worktrees were clean and matched their
+  remote refs, removed both with `git worktree remove`, pruned worktree
+  metadata, and removed the empty initiative worktree directory.
 
 ## Results
 
@@ -52,8 +71,9 @@ is queued awaiting a self-hosted runner.
 - Examples are explicitly retained per user direction.
 - Exclusive `untilKernel = "6.12.89"` preserves ptrace guard coverage through
   6.12.88.
-- Commit `2df4dd49e` prunes kernels and updates the proactive-swap QEMU default.
-- Commit `bb3b2eeac` makes eBPF `untilKernel` exclusive and updates coverage.
+- Rebasing over staging commit `c0eb96f95` preserved both patches exactly.
+  Commit `49f064ca7` prunes kernels and updates the proactive-swap QEMU default;
+  commit `81a945228` makes eBPF `untilKernel` exclusive and updates coverage.
 - `flake.lib.kernelVersions` evaluates to `["6.12.48","6.12.95"]`.
 - Both retained kernel CI toplevel derivations and the proactive-swap QEMU
   derivation evaluate successfully.
@@ -66,10 +86,20 @@ is queued awaiting a self-hosted runner.
 - Both retained CI toplevels built successfully. The 6.12.48 build compiled the
   cumulative livepatch with kpatch, found the expected changed functions, and
   produced `livepatch_1.ko`; this confirms that the patch must be retained.
-- Feature head `bb3b2eeac9d52e14261e8a2076ae6704725ce206` is pushed to
+- The original feature head
+  `bb3b2eeac9d52e14261e8a2076ae6704725ce206` passed GitHub Actions run
+  `29780892771`: both OS build/cache population and the full test suite were
+  successful.
+- Rebased feature head `81a945228af4527de05f6cdbdcc243da0e9d44e1` is pushed to
   `origin/2026-07-20-vpsadminos-kernel-prune`.
-- GitHub Actions run `29780892771` targets the exact feature head. Its first job
-  remains queued because no self-hosted runner has accepted it yet.
+- `origin/staging` was fast-forwarded from `c0eb96f95` to the same rebased
+  feature head.
+- Post-rebase and integration-worktree targeted suites each passed 30 examples
+  with 0 failures. Post-rebase Nixfmt and RuboCop hooks also passed.
+- Post-rebase RSpec run `29815445881` passed on the integrated head.
+- Post-integration CI run `29815572098` and retained-kernel run `29815572185`
+  are queued on self-hosted runners. The kernel workflow successfully detected
+  exactly 6.12.48 and 6.12.95 before its build jobs queued.
 - The first ambient-shell commit attempt was blocked because `nixfmt` was not
   on `PATH`; rerunning inside the documented Nix development shell passed. The
   existing durable note
@@ -102,5 +132,6 @@ None.
 
 ## Cleanup
 
-- Remove the initiative worktree after integration or abandonment; keep the
-  feature branch unless the user requests deletion.
+- Feature and detached integration worktrees removed.
+- Empty `worktrees/2026-07-20-vpsadminos-kernel-prune` directory removed.
+- Local and remote feature branch refs retained as required.
