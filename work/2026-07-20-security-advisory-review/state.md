@@ -689,8 +689,9 @@
 - The user accepted the development WebUI review and authorized default-branch
   integration. Fresh detached integration worktrees were created from each
   fetched target, fast-forwarded with `git merge --ff-only`, tested, used for
-  the target push, and removed afterward. Feature branches and their ordinary
-  initiative worktrees remain available.
+  the target push, and removed afterward. Feature branches remain available
+  locally and remotely; their ordinary initiative worktrees were removed after
+  the accepted changes reached the defaults.
 - Upstream default refs now resolve exactly to the reviewed commits:
   vpsAdmin `master` is `19e613c2ae72103fc04265002402544f387e08c0`;
   security-advisories' actual remote default
@@ -718,6 +719,13 @@
   systems. The first non-interactive invocation omitted `-y` and stopped at
   its confirmation prompt before building; it made no state change. No
   production deployment was run.
+- The visual-review devcluster was stopped after integration. Its graceful
+  shutdown exceeded the helper timeout, so the helper terminated the remaining
+  runner process and still exited successfully; status now reports `stopped`
+  with retained `storage` topology/bridge-network state and a stale readiness
+  marker. Its GC root was removed. All four remaining feature worktrees and all
+  five temporary integration worktrees were removed without deleting branch
+  refs.
 
 ## Open questions
 
