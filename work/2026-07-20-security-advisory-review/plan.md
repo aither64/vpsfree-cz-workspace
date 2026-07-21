@@ -144,6 +144,12 @@ does not retain the legacy single-note column.
     build the complete vpsAdmin configuration group, push the generated commit,
     and remove only the temporary integration worktrees. Do not deploy the
     production configuration.
+31. Correct the five production draft reports after default-branch integration:
+    keep the historical short vulnerability-class summaries, move any lost
+    subsystem or trigger detail into the bilingual descriptions, and clear all
+    repeated generic Node notes. Re-evaluate changed dossiers, review and test
+    the committed report data, then synchronize with revision preconditions and
+    verify that every advisory remains an unpublished draft.
 
 ## Compatibility and deployment
 
@@ -172,6 +178,13 @@ The authorized synchronization creates or updates vpsAdmin records only in the
 read-back verification. Draft creation is reversible through the ordinary
 draft workflow and has no Node or VPS runtime effect. Publication is excluded
 and remains a separate administrator action.
+
+The final report correction changes only user-facing draft text and clears
+redundant note translations. It does not change the API schema, Node
+conclusions, affected intervals, CVE associations, or running infrastructure.
+Descriptions retain the vulnerability-specific subsystem and primitive that no
+longer fit in the summary. Empty Node notes are intentional because no active
+Node has a distinct live patch, BPF program, or other exceptional mitigation.
 
 Localized Node notes replace the single `note` column with a translation table.
 Migration up copies every non-empty legacy note into the English row before
@@ -239,6 +252,13 @@ client rollout is required.
   storage-role wording.
 - Verify all five localized summaries exactly match the historical privilege-
   escalation title and all current public Node notes are absent.
+- Verify the descriptions still identify nf_tables corruption, the GhostLock
+  futex escape, the epoll race, the KVM shadow-paging use-after-free, and the
+  crafted UDPv6 overwrite in both languages.
+- Dry-run each production reconciliation and require that it contains only the
+  reviewed parent-text update and clearing of the 13 generic Node notes. After
+  apply, read back every draft, rerun readiness, and confirm the Node states and
+  intervals are unchanged and no publication timestamp exists.
 - Verify explicit per-Node notes require both languages, remain short and
   single-line, and are reproduced by fresh evaluation rather than hand-edited
   in the tracked JSON.

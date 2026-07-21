@@ -737,16 +737,104 @@
   remains a separate administrator action. The configured advisory credential
   is used without exposing it.
 
+## Final draft-text correction
+
+- The user requested a follow-up synchronization because production drafts 6
+  through 10 still contain the original sentence-length summaries and 13
+  generic English-only Node notes each.
+- A read-only production check confirmed that all five records remain drafts at
+  content revision 13 and are unpublished. The merged dossiers already contain
+  the intended `Local privilege escalation` / `Lokální eskalace oprávnění`
+  summaries and omit all Node notes.
+- Four descriptions need a small bilingual clarification so shortening the
+  summary does not discard the distinguishing nf_tables, epoll race, KVM
+  shadow-paging use-after-free, or crafted UDPv6 overwrite detail. The GhostLock
+  description already retains its futex and demonstrated host-escape details.
+- The user removed the generic `IPv6 is enabled on vpsAdminOS` opening from the
+  UDPv6 report. IPv6 configuration remains in the internal reachability
+  analysis; the public description now starts with the actual trigger.
+- Recreated the initiative security-advisories worktree at `c909aca` on the
+  existing feature branch. The checkout hook first ran outside the Nix shell
+  and reported missing locked gems; `bin/dev-session` recovered to a registered,
+  clean worktree. Hook verification and all commits will run inside
+  `nix develop`.
+- Installed the locked bundle in the worktree, refreshed the Overcommit
+  signature, and ran the configured pre-commit hooks successfully inside
+  `nix develop`.
+- Collected one fresh typed production snapshot at `2026-07-21T18:29:48Z` with
+  the same 13 active Node IDs. Re-evaluated the four dossiers whose descriptions
+  changed; all Node sets, states, vulnerable/mitigated intervals, reasons,
+  kernel releases, and configuration digests are unchanged after excluding
+  periodic evidence revisions. Every result remains resolved and note-free.
+- Quick verification passed: all five dossiers validate, focused advisory,
+  evaluator, and reconciler specs report 76 examples with 0 failures, and
+  `git diff --check` passes.
+- Committed the complete source/report correction as
+  `fef1c2f592c19c74c2da5438114a8318294d42e5` (`Preserve vulnerability
+  details in concise reports`). The worktree is clean and the feature branch is
+  one commit ahead of its remote.
+- Mandatory standalone review completed with no blocking, important, or
+  advisory findings. It independently verified the five bilingual summaries
+  and descriptions, unchanged per-Node conclusions, the exact 65 legacy-note
+  differences in production, focused commit split, draft ownership and revision
+  protections, checkpoint/resume behavior, and absence of a publication path.
+  The only residual risk is interruption or evidence drift during sequential
+  apply; per-write checkpoints, resumability, revision checks, and final
+  read-back limit it. Generated submission baselines will be committed after
+  each advisory apply.
+- Post-review local verification passed: full RSpec reports 113 examples with
+  0 failures, RuboCop inspected 25 files with no offenses, Overcommit passed,
+  and the worktree remained clean. Feature-branch GitHub Actions runs
+  `29858037314` (RuboCop) and `29858037417` (RSpec) passed on report commit
+  `fef1c2f`.
+- Dry-run reconciliation for drafts 6 through 10 selected the exact short
+  English/Czech summaries, reviewed descriptions, unchanged 13-Node state and
+  interval sets, and null localized notes. No advisory or CVE creation was
+  planned.
+- Applied all five reconciliations sequentially with fresh evidence checks and
+  content-revision preconditions. Each advisory advanced from revision 13 to
+  27: one parent update plus clearing the 13 legacy Node notes. Every result
+  read back as `draft` with one expected CVE, 13 Node statuses, zero non-empty
+  English/Czech notes, and no publication timestamp.
+- Committed each generated schema-version-2 submission baseline immediately:
+  `e7e5900` (CVE-2026-23111), `9235ab7` (CVE-2026-43499), `e2ac7a1`
+  (CVE-2026-46242), `d9f6ed6` (CVE-2026-53359), and `975e0e3`
+  (CVE-2026-53362). All commit hooks passed; the commit-message hook emitted
+  only its advisory 72-column warnings, while every message remains within the
+  workspace's required 80-column limit.
+- Ran a fresh `ready` check for every CVE after all writes. All five returned
+  `ready: true`, content revision 27, the complete resolved 13-Node set, and no
+  blocking Node IDs. A separate authenticated API readback confirmed the exact
+  short summaries, zero localized notes, draft state, and null publication
+  timestamp for IDs 6 through 10.
+- The first attempt to push report commit `fef1c2f` ran the pre-push hook under
+  ambient Ruby and stopped locally because the locked worktree gems were not on
+  its load path; nothing reached GitHub. Re-running `git push` inside
+  `nix develop` succeeded, consistent with the existing linked-worktree gem
+  note.
+- Final feature-head verification after all five generated baselines passed:
+  113 RSpec examples, 25 RuboCop-inspected files, Overcommit, and
+  `git diff --check`. GitHub Actions runs `29859189643` (RuboCop) and
+  `29859189747` (RSpec) passed on exact head `975e0e3`.
+- Fetched the unchanged upstream default, created a fresh integration worktree,
+  and fast-forwarded `2026-07-13-security-advisory-automation` from `c909aca`
+  to `975e0e3` with `git merge --ff-only`. The exact integrated tree again
+  passed 113 RSpec examples, RuboCop over 25 files, Overcommit, and
+  `git diff --check` before it was pushed over SSH.
+- Default-branch GitHub Actions runs `29859366034` (RSpec) and `29859366140`
+  (RuboCop) passed on `975e0e3`. Local and remote feature and default refs all
+  resolve to that exact commit.
+
 ## Cleanup
 
-- Keep the review worktree until the advisory review is finished or abandoned.
-- Keep the feature branch after integration unless the user explicitly asks to
-  delete it.
+- The final advisory review and draft correction are complete. Removed both the
+  initiative feature worktree and its temporary default-branch integration
+  worktree, including their ignored bundle directories.
+- Preserved the feature and default branch refs locally and remotely at
+  `975e0e3`, as required. No branch was deleted.
 - Removed the `vpsadmin`, `vpsfree-cz-configuration`, and `haveapi` initiative
   worktrees plus both temporary default-branch merge worktrees. Their feature
   branch refs were retained.
 - Removed transient development-shell files and the downloaded CI artifact.
-- The clean `security-advisories` initiative worktree is twenty-six commits
-  ahead of base `55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11` at `06ddc84` and
-  tracks the pushed feature branch. It is retained for draft review and any
-  later publication decision.
+- The unrelated `2026-07-21-node-evidence-access` security-advisories worktree
+  remains registered at `06ddc84` and was not touched.
