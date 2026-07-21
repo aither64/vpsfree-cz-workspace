@@ -134,7 +134,11 @@ queued or in progress.
 - Feature branches remain available on origin. Temporary integration and both
   superseded/current initiative project worktrees were removed.
 - Development cluster `2026-07-20-node-evidence-compat-cleanup` completed a
-  graceful stop and its GC root was removed.
+  graceful stop, its GC root was removed, and its dedicated disk/log state was
+  reset after the user requested final cleanup.
+- Bare-repository worktree metadata was pruned. Both completed initiative
+  slugs now retain only their durable `work/` records: no project worktree,
+  tmux session, cluster state or GC root remains.
 - Master-head GitHub runs for RuboCop, WebUI PHPUnit, i18n health and client
   specs are green. API topic specs and integration CI are still running and
   were left untouched, as requested.
