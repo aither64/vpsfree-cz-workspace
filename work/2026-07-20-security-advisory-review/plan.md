@@ -5,8 +5,8 @@
 Register `security-advisories` in the workspace project map and prepare an
 isolated feature worktree for reviewing security advisories against current,
 typed vpsAdmin Node evidence once the user supplies an authentication token.
-Investigate the production token-creation failure before attempting that
-review.
+Investigate the production token-creation failure, fix it, then complete an
+evidence-backed review of every advisory against every active Node.
 
 ## Affected repositories
 
@@ -52,12 +52,31 @@ review.
 10. Run the mandatory standalone change review over both committed repository
     changes before broader tests. Address significant findings, then run the
     broader verification and push the final configuration branch.
+11. After authentication is available, collect one canonical typed evidence
+    snapshot and assign every advisory to its own fresh standalone reviewer.
+12. Classify storage Nodes by their backup/NFS workload. They do not host VPSes
+    and an older kernel does not make them affected by a VPS-only trigger;
+    storage is applicable only when the vulnerable operation is reachable from
+    its real storage workload.
+13. Independently cross-check each reviewer result, resolve all active Nodes,
+    validate every dossier, and run the complete test and lint suites. Do not
+    sync or publish vpsAdmin drafts without a separate explicit request.
+14. Commit and push the reviewed dossier and workflow-instruction changes only
+    after the mandatory standalone change review has no unresolved significant
+    findings.
 
 ## Compatibility and deployment
 
 The initial preparation changes only workspace documentation and creates Git
 worktrees. The later review is intended to be read-only and therefore must not
 change production state.
+
+The advisory review changes local dossiers and assessment instructions only.
+Evidence collection is read-only, ignored runtime state. Role-based exclusion
+of storage Nodes is compatible with existing evaluations because every active
+Node remains present in the output; only the real attack surface determines
+whether its kernel history is applicable. No vpsAdmin draft synchronization or
+publication is part of this stage.
 
 The investigated failure requires a vpsAdmin schema fix before the review token
 can be issued through MFA: widen `auth_tokens.opts` from `VARCHAR(255)` to
@@ -93,3 +112,11 @@ client rollout is required.
 - After standalone review, run the broader relevant API spec groups and verify
   the configuration channel update through `confctl` evaluation/build checks
   appropriate to the affected vpsAdmin service machines.
+- Verify authenticated collection returns every active Node without revealing
+  the token, then evaluate all five dossiers from one fresh snapshot.
+- Require one fresh standalone reviewer per advisory and independently inspect
+  every resulting accepted build, historical attestation, per-Node state, and
+  role-based exclusion.
+- Run `bin/security-advisory validate` for all advisories, evaluate all five
+  against a final fresh evidence snapshot, and run full RSpec, RuboCop, and
+  Overcommit checks before committing.

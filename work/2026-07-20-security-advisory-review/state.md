@@ -37,16 +37,25 @@
 
 ## Status
 
-- Preparation complete: the repository is documented and the isolated
-  worktree is ready.
-- Investigating a production token-creation failure before accessing vpsAdmin
-  data: `ActiveRecord::ValueTooLong` reports that `tokens.opts` is too long.
-- Awaiting successful token creation before accessing vpsAdmin data.
-- The token must remain ephemeral and must not be recorded in this file or
-  repository content.
 - Diagnosis, implementation, mandatory review, broader verification, and the
   requested `vpsadmin` channel pin are complete and merged to both default
   branches. The configuration change has not been deployed to production.
+- Advisory authentication is configured outside repository content. The token
+  has not been printed, committed, or copied into work notes.
+- Review of all five committed advisories is complete against one canonical
+  typed production snapshot. Each advisory received a separate standalone
+  review task, followed by an independent cross-check of exact build identities,
+  fix ancestry, role applicability, and final Node states.
+- The evidence collector now completes against continuously reporting Nodes,
+  and repository instructions explicitly exclude backup/NFS-only storage Nodes
+  from VPS-only kernel exposure.
+- No advisory draft has been synchronized or published.
+- The corrected security-advisories change is committed as a focused series:
+  collection consistency, configuration-identity compatibility, release
+  classification, storage policy, one commit per CVE, and dossier invariants.
+  Mandatory review findings have been addressed in focused follow-up commits.
+  The final standalone verification passed without any remaining finding. The
+  branch is pushed and its RSpec and RuboCop workflows passed.
 
 ## Commands run
 
@@ -107,6 +116,67 @@
 - Removed the completed implementation, investigation, and temporary merge
   worktrees; retained the clean `security-advisories` worktree for the pending
   token-based review.
+- Loaded the configured advisory API authentication without displaying it and
+  collected only the typed evidence resources authorized by the repository.
+- Diagnosed repeated live-collection revision failures, split immutable event
+  history from mutable current evidence, and bracketed current components one
+  Node at a time.
+- Diagnosed an immutable historical digest mismatch caused by the optional
+  software-component rename from `vpsfree_cz_configuration` to
+  `system_configuration`; added an exact legacy digest compatibility path.
+- Ran focused evidence collector, evaluator, and dossier evidence specs while
+  iterating on the collector.
+- Collected the canonical ignored schema-7 snapshot at
+  `2026-07-21T08:16:20Z` and handed that same snapshot to the standalone
+  advisory reviewers. Reviewers were instructed not to recollect, synchronize,
+  or publish.
+- Cross-checked every accepted deployment/software digest directly from the
+  canonical Node 401 snapshots and used GitHub's primary compare API to confirm
+  that the deployed Linux source descends from every dossier's 6.12 fix.
+- Ran a final read-only collection with the completed collector at
+  `2026-07-21T08:33:27Z`, then re-evaluated all five dossiers from that same
+  snapshot.
+- Ran complete RSpec, RuboCop, dossier validation, `git diff --check`, and
+  Overcommit checks. Rewrote the unmerged commit into a focused collector commit
+  and one atomic all-dossier review commit before mandatory review.
+- Rejected the gap-driven result after cross-checking the retained release
+  events and Node lifecycles. Added stable release classification, global
+  introduction/fix boundaries, and reviewed lifecycle starts for Nodes 126 and
+  401. Stored sampling gaps now retain timing provenance without erasing a
+  classifiable boot or release state.
+- Assigned the corrected per-CVE results back to standalone reviewers for
+  independent checks of every state and mitigation timestamp.
+- Collected the final read-only schema-7 snapshot at
+  `2026-07-21T09:25:44Z` and evaluated all five advisories from it.
+- Ran the corrected focused suite (84 examples), full suite (94 examples), and
+  RuboCop. All RSpec examples passed; RuboCop initially reported one
+  correctable `Style/Next` offense, which was fixed before committing.
+- Committed the corrected implementation as ten focused commits from
+  `490a42b` through `c652de1`; every commit ran the installed Overcommit hooks
+  inside `nix develop`.
+- Mandatory standalone review found two affected EOL stable backport sets that
+  predate the global mainline introduction, fail-open version-range validation,
+  stale snapshot provenance, and missing revision-pinned storage sources.
+- Added explicit open-ended ranges for all six Linux CNA backport
+  introductions, strict global and stable boundary validation, canonical YAML
+  branch-key validation, regression coverage, and pinned production storage
+  sources.
+- Rewrote the unpublished follow-up history into separate validator, evaluator
+  feature, per-CVE dossier, storage-source, and snapshot-provenance commits as
+  required by the mandatory review.
+- Collected the final read-only schema-7 snapshot at
+  `2026-07-21T10:00:32Z`, then evaluated all five committed dossiers from it at
+  `2026-07-21T10:12:56Z` through `2026-07-21T10:12:57Z`.
+- Ran the final full suite (100 examples), RuboCop over 25 files, all-dossier
+  validation, `git diff --check`, and Overcommit. All checks passed.
+- The same standalone mandatory reviewer verified the corrected final tree and
+  six-commit follow-up series. It reported no blocking, important, or advisory
+  findings.
+- The first advisory push outside the development shell stopped safely because
+  the pre-push hook could not load the locked gems. Re-running the push through
+  `nix develop` executed the hook and pushed the feature branch over SSH.
+- Monitored GitHub Actions runs `29821548394` (RSpec) and `29821548391`
+  (RuboCop) to successful completion for final head `67e7b2d`.
 
 ## Results
 
@@ -248,15 +318,70 @@
   remains in progress and serialized CI run `29810531324` remains queued; the
   same commit already passed the feature-branch API topic run. The
   configuration repository has no workflow run for its default-branch push.
-- No deployment, production database migration, production API request, or
-  token handling was performed.
+- The token-fix implementation stage performed no deployment, production
+  database migration, production API request, or token handling. This later
+  advisory stage made only authenticated read-only production API requests.
+- The canonical advisory snapshot contains all 13 active Nodes: 12 compute
+  Nodes with the `node` role and `backuper2.prg` with the `storage` role. It
+  records `CONFIG_FUTEX_PI=y`, `CONFIG_IPV6=y`, `CONFIG_KVM=m`,
+  `CONFIG_NF_TABLES=m`, and `CONFIG_USER_NS=y` for the deployed kernel
+  configuration digest.
+- Eleven current compute reports do not expose an exact kernel source revision.
+  Stable release history nevertheless has enough typed evidence to classify
+  upstream stable fixes. Node 401 additionally has two accepted exact fixed
+  deployment/software identities; its optional dirty `system_configuration`
+  identity is permitted by the evidence contract and retained in the software
+  digest. No historical attestations were invented.
+- The storage Node has no current kernel evidence, but that is not relevant to
+  VPS-only advisories: it stores backups and exports data over NFS, and does not
+  run VPS workloads. It is `not_affected` unless the advisory's primitive is
+  reachable through its actual backup, NFS, or host workload.
+- The original mandatory review blocked the first implementation because one
+  Node collection could mix reconstruction data from a different evidence
+  revision, the commit series bundled independent changes, and dossier
+  invariants were too weak. The collector now brackets the complete per-Node
+  bundle, its regression changes reconstruction between reads, the history is
+  split by concern and CVE, and dossier tests lock the complete accepted build
+  identities, roles, and lifecycle overrides.
+- Focused evidence collector, evaluator, reconciler, dossier, and advisory
+  coverage passed together: 84 examples, 0 failures. The final full suite
+  passed: 100 examples, 0 failures; RuboCop inspected 25 files without an
+  offense.
+- The final schema-7 snapshot has evidence digest
+  `252d2e0292cec6bb207e2cec73ae931384e8961cd5867aaa2cff593867810695`
+  and the unchanged 13-Node set digest
+  `f434faac03a83c7ba7329214924bdb7561a5c619dd09b9f53a9dd9c660e9092e`.
+- CVE-2026-23111 evaluates ten Nodes as `mitigated` and three as
+  `not_affected`. CVE-2026-43499, CVE-2026-46242, CVE-2026-53359, and
+  CVE-2026-53362 each evaluate twelve Nodes as `mitigated` and the storage Node
+  as `not_affected`. All five have zero `unknown`, zero `vulnerable`, and no
+  blocking Node IDs.
+- Direct evaluator probes classify Node 401's exact event 700 and current
+  snapshot as fixed for all five CVEs. GitHub compare results report the exact
+  deployed Linux source `a2384967b90f24d2470c9eb15f0e66d938df7e08`
+  ahead of all five 6.12 stable fixes with `behind_by=0`.
+- Corrected security-advisories commits:
+  `490a42b`, `28cf60a`, `7a2eaf0`, `a01eabe`, `ecfdb7f`, `60c890a`,
+  `9c447c4`, `670a94a`, `4d82845`, `c652de1`, `8689387`, `bc75010`,
+  `485ec5d`, `37562d1`, `b2acf0e`, and `67e7b2d`.
+- Final mandatory standalone review passed at `67e7b2d` with no findings. The
+  reviewer independently confirmed canonical branch validation, the focused
+  history, 13-Node coverage, snapshot provenance, and source-pinned storage
+  exclusions.
+- Feature branch `2026-07-20-security-advisory-review` was pushed over SSH at
+  `67e7b2d412b83c23f2f5295bc8a96046229d66d7`. Its RSpec and RuboCop GitHub
+  workflows passed.
+- Durable collector note:
+  `notes/security-advisories/2026-07-21-live-evidence-collection.md`.
 
 ## Open questions
 
-- Authentication identity, permissions, and API endpoint will be verified only
-  after the user supplies the token; the secret itself will not be persisted.
-- The merged fix and channel update must still be deployed before the
-  production token command can succeed with the long MFA scope list.
+- No advisory-review blocker remains. Future production evidence or Linux CNA
+  changes require a new collection and evaluation rather than reuse of this
+  snapshot.
+- Production deployment of the already merged token fix and channel update is
+  outside this advisory-review stage. The configured advisory credential is
+  used without exposing it.
 
 ## Cleanup
 
@@ -267,5 +392,6 @@
   worktrees plus both temporary default-branch merge worktrees. Their feature
   branch refs were retained.
 - Removed transient development-shell files and the downloaded CI artifact.
-- The clean `security-advisories` initiative worktree remains ready at
-  `55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11`.
+- The clean `security-advisories` initiative worktree is sixteen commits ahead
+  of base `55e26c3ad6bc548e7b40b0cc1dddd47c41e2da11` at `67e7b2d` and tracks the
+  pushed feature branch. It is retained for the user's subsequent review.
