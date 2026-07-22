@@ -12408,7 +12408,7 @@ GitHub Actions after final pushes:
   correct after JavaScript adds or removes specifications.
 - The WebUI commit remains one feature commit and was amended and pushed with
   an exact lease at
-  `c0a44e6e43d04877d90acb2144ba0ecbe01a126d`. All enabled hooks passed.
+  `d494ce1c83d864841272c61c7799da9d0c8b076e`. All enabled hooks passed.
   The superseded long CI run `29946181479` was canceled because it targeted the
   replaced revision.
 - Quick verification passed:
@@ -12427,12 +12427,12 @@ GitHub Actions after final pushes:
   passes: 47 controls, 34 paths, 35 capture concepts, 8 semantic selectors,
   77 bindings, 9 exceptions, test sets 8/50 and 9/19, and 128 validated PNGs.
   The capture commit was amended and pushed with an exact lease at
-  `7f2c6ed4b155d70bf807eccf74e1bd71a63f64c6`.
-- `confctl inputs channel set --commit vpsadmin vpsadmin c0a44e6e...`
+  `37a39e78d60507e7437e824fb2bb8e1a37eb2da5`.
+- `confctl inputs channel set --commit vpsadmin vpsadmin d494ce1c...`
   generated the final configuration commit
-  `9434d26c8430701fb144ad40a67dc77f706a20af`. It was rebuilt from the
+  `8eaf6a519d3949381d0dda3caa60469e0993a921`. It was rebuilt from the
   previous stable pin so the branch contains one final generated update from
-  `90291d53` to `c0a44e6e`, then force-pushed with an exact lease. Only the
+  `90291d53` to `d494ce1c`, then force-pushed with an exact lease. Only the
   development `vpsadminServices` input moved; production and staging remain
   unchanged. Nixfmt and rake pre-commit hooks passed.
 - Rebuilt both complete KB candidate trees and release manifests. Only the two
@@ -12440,7 +12440,31 @@ GitHub Actions after final pushes:
   refused to overwrite the old create-only media, so this session's owned
   staging mirror was reset from production and both complete manifests were
   restaged and verified. Production remains untouched.
-- Workspace commit `be8bcd042478d7ece299afde01b6d87e1575939f`
+- Workspace commit `be8bcd00f6e37b9986005888e74e7c9bac2b55ff`
   records the updated candidates, manifests, plan, and state on pushed master.
-- Pending work: run the required fresh standalone review, evaluate current-head
-  CI, and run proportionate final integration coverage.
+- Pending work: evaluate current-head CI and run proportionate final integration
+  coverage.
+
+### Time Interval Form Review Follow-up
+
+- The fresh standalone reviewer reported no blocking issues. One important
+  traceability finding identified two mistyped full hashes in this state file;
+  both are corrected above. The actual repository heads and configuration pin
+  were always valid.
+- An advisory test finding correctly noted that the PHP negative assertion did
+  not match the removed argument order and the browser test removed the second
+  specification instead of the original first one.
+- The PHP regression now rejects a time-zone `form_add_input()` regardless of
+  intervening arguments. The browser regression explicitly requires zero
+  `input[name="time_zone"]` controls, removes the original first
+  specification, verifies the remaining divider becomes hidden, and fills the
+  surviving dynamically indexed specification.
+- JavaScript and PHP syntax checks passed, as did the focused WebUI PHPUnit
+  suite with 16 tests and 148 assertions. All enabled vpsAdmin commit hooks
+  passed. Superseded current-head CI runs `29950983697` and `29950983024` were
+  canceled after the amended push.
+- Because the follow-up changes only tests and tracking, the reviewed screenshot
+  pixels and KB candidate/release checksums are unchanged. The capture metadata
+  and lock were advanced to exact vpsAdmin head `d494ce1c`; full capture checks
+  pass again. The development-only configuration pin was regenerated as one
+  commit. A reviewer follow-up on these corrections is pending.
