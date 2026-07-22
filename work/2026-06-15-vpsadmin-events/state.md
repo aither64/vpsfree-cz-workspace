@@ -12305,7 +12305,7 @@ GitHub Actions after final pushes:
 - Final post-integration heads are:
   - vpsAdmin `394064e71baaed8b3ab96ebbefac4b81f1f5520d`;
   - vpsadmin-kb-captures
-    `22c57638bf3ee4a9b6842a900308be24ff25bfca`;
+    `7c0a3a95533714d55e838f7672b23211c09214ad`;
   - vpsfree-cz-configuration
     `f3d4a2fa9219d7ade59737bf5f1c71c6fd736bb0`.
 - vpsAdmin was force-pushed from reviewed head `4eb064dd` to `394064e71` with
@@ -12321,3 +12321,20 @@ GitHub Actions after final pushes:
 - Capture, configuration, workspace, and KB review staging remain pending until
   the independent reviewer validates this post-review test-only delta and the
   updated exact pins.
+
+### Capture Revision Metadata Review Fix
+
+- The mandatory follow-up reviewer found that the amended capture flake and
+  lock pinned vpsAdmin `394064e71`, while `captures.json` and
+  `contract/navigation.yml` still declared `4eb064dd`. This was blocking:
+  `runner/capture.cjs` compares the inventory revision to the lock and would
+  have refused every capture run even though `bin/check` passed.
+- Both metadata references now declare the full final vpsAdmin revision
+  `394064e71baaed8b3ab96ebbefac4b81f1f5520d`. The complete
+  `nix develop -c bin/check` passes again with the same contract, annotation,
+  test, inventory, and PNG counts. A direct capture revision preflight also
+  confirmed that `flake.lock`, `captures.json`, and `contract/navigation.yml`
+  all resolve to the same full revision.
+- The corrected capture head is
+  `7c0a3a95533714d55e838f7672b23211c09214ad`. It remains a single commit over
+  the capture base and has not yet been pushed.
