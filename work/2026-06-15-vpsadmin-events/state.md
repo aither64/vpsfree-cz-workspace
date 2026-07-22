@@ -12338,3 +12338,22 @@ GitHub Actions after final pushes:
 - The corrected capture head is
   `7c0a3a95533714d55e838f7672b23211c09214ad`. It remains a single commit over
   the capture base and has not yet been pushed.
+
+### Final Mandatory Follow-up Result
+
+- The standalone reviewer passed the post-integration final heads with no
+  remaining blocking, important, or advisory findings:
+  - vpsAdmin `394064e71baaed8b3ab96ebbefac4b81f1f5520d`;
+  - vpsadmin-kb-captures
+    `7c0a3a95533714d55e838f7672b23211c09214ad`;
+  - vpsfree-cz-configuration
+    `f3d4a2fa9219d7ade59737bf5f1c71c6fd736bb0`;
+  - workspace state `230d60678afbe443bbd1bb5cc1cbe888a6f39aa0`.
+- The reviewer confirmed that the Ruby diagnostic and Playwright locator fixes
+  match the retained integration failure evidence and that their complete long
+  reruns pass. The reviewer independently repeated the capture repository's
+  full `nix develop -c bin/check` and confirmed that `flake.nix`, `flake.lock`,
+  `captures.json`, and `contract/navigation.yml` agree on the final revision.
+- Commit structure remains one vpsAdmin feature commit, one capture commit, and
+  one generated configuration pin commit. Remaining work is operational:
+  pending repository pushes, final-head CI evaluation, and KB review staging.
