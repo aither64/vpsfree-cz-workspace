@@ -12156,20 +12156,22 @@ GitHub Actions after final pushes:
     standalone API Ruby process where that extension is not loaded;
   - the Playwright assertion used an unscoped documentation ID shared by the
     time-interval heading and sidebar link, causing a strict-mode collision.
-- Commit `91db9d52c59af8ee8e35e7f24b7c4107338b221e`
-  (`tests: make scheduled interval checks portable`) replaces `sole` with
-  explicit cardinality checks and scopes the landmark assertion to page
-  content. Nix parsing, JavaScript syntax, CI selection tests (16 tests and 55
-  assertions), and all enabled commit hooks passed. The commit is pushed to
-  the vpsAdmin feature branch.
+- The correction replaced `sole` with explicit cardinality checks and scoped
+  the landmark assertion to page content. Nix parsing, JavaScript syntax, CI
+  selection tests (16 tests and 55 assertions), and all enabled commit hooks
+  passed.
+- Before mandatory review, the unmerged feature, layout correction, and CI-test
+  correction were squashed into final vpsAdmin commit
+  `5d24b42b39e386f0de4d619f45c07047abb38f62`
+  (`events: add scheduled route intervals`). It was force-pushed with an exact
+  lease, and the superseded running workflow for `91db9d52` was canceled.
 - The capture repository now contains deterministic Czech and English
   notification screenshots for routes, a receiver, interval editing, route
   interval assignment, and a scheduled-out event. The ten images were reviewed
   visually and all inventory checksums validate.
-  - Functional capture/documentation-contract commit:
-    `384491f2d61b76c081e436e05c265ea74563e3cc`.
-  - Final vpsAdmin pin commit:
-    `f20724c` (`captures: pin the reviewed event-system head`).
+  - The functional capture changes and repeated vpsAdmin pin corrections were
+    squashed before review into commit
+    `c191b39` (`document notification routes and scheduled intervals`).
   - Full `nix develop -c bin/check` passes: 64 concepts, 128 variants, 128
     PNGs, 47 controls, 34 paths, 77 KB bindings, and 9 exceptions; contract
     tests pass 8/50 and annotation tests pass 9/19.
@@ -12194,8 +12196,8 @@ GitHub Actions after final pushes:
   11 runs/56 assertions for contract tools and 22 runs/67 assertions for KB
   staging/release behavior.
 - The development `vpsadminServices` configuration pin was regenerated through
-  `confctl` and committed as `ebf11687` at exact vpsAdmin revision
-  `91db9d52c59af8ee8e35e7f24b7c4107338b221e`. Production and staging pins are
+  `confctl` as one clean generated commit `7ea8d069` at exact vpsAdmin revision
+  `5d24b42b39e386f0de4d619f45c07047abb38f62`. Production and staging pins are
   unchanged. The configuration worktree retains only its pre-existing ignored
   local cache directories.
 - Pending before long integration/staging: mandatory standalone change review,
