@@ -12429,15 +12429,18 @@ GitHub Actions after final pushes:
   The capture commit was amended and pushed with an exact lease at
   `7f2c6ed4b155d70bf807eccf74e1bd71a63f64c6`.
 - `confctl inputs channel set --commit vpsadmin vpsadmin c0a44e6e...`
-  generated and pushed configuration commit
-  `4a96f1146e80b9ea4da466f08319eecae609b045`. Only the development
-  `vpsadminServices` input moved; production and staging remain unchanged.
-  Nixfmt and rake pre-commit hooks passed.
+  generated the final configuration commit
+  `9434d26c8430701fb144ad40a67dc77f706a20af`. It was rebuilt from the
+  previous stable pin so the branch contains one final generated update from
+  `90291d53` to `c0a44e6e`, then force-pushed with an exact lease. Only the
+  development `vpsadminServices` input moved; production and staging remain
+  unchanged. Nixfmt and rake pre-commit hooks passed.
 - Rebuilt both complete KB candidate trees and release manifests. Only the two
   interval screenshot objects and their checksums changed. The staging guard
   refused to overwrite the old create-only media, so this session's owned
   staging mirror was reset from production and both complete manifests were
   restaged and verified. Production remains untouched.
-- Pending work: commit the updated workspace candidates and tracking files,
-  run the required fresh standalone review, evaluate current-head CI, and run
-  proportionate final integration coverage.
+- Workspace commit `be8bcd042478d7ece299afde01b6d87e1575939f`
+  records the updated candidates, manifests, plan, and state on pushed master.
+- Pending work: run the required fresh standalone review, evaluate current-head
+  CI, and run proportionate final integration coverage.
