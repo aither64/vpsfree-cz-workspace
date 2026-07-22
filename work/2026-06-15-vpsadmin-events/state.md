@@ -12205,3 +12205,54 @@ GitHub Actions after final pushes:
   current-head GitHub Actions, repository branch pushes, and staging of both KB
   manifests. Production promotion remains explicitly out of scope without
   direct user approval.
+
+## 2026-07-22 Mandatory Review Follow-up
+
+- The standalone mandatory reviewer found three blocking vpsAdmin issues:
+  - ten new CRUD scopes were absent from the endpoint coverage inventory;
+  - a matching mute interval did not count as OOM suppression, and raw OOM
+    schedules used processing time instead of the report occurrence time;
+  - interval count/delete checks were not serialized and the assignment table
+    lacked database referential integrity.
+- The final vpsAdmin implementation now lists all ten scopes, evaluates raw OOM
+  schedules at the payload timestamp, recognizes interval muting without
+  treating a continued delivery as ignored, serializes bounded interval and
+  assignment creation with row locks, locks interval deletion, and adds
+  cascade/restrict assignment foreign keys. Regression coverage includes a
+  delayed 2024 OOM report, scheduled mute continuation, lock ordering, and
+  actual MariaDB restrict/cascade behavior.
+- Follow-up vpsAdmin verification passed:
+  - endpoint inventory plus the complete routing request spec: 48 examples,
+    0 failures, 1 expected pending example;
+  - interval model and OOM supervisor specs: 27 examples, 0 failures;
+  - final OOM supervisor rerun: 17 examples, 0 failures;
+  - interval migration specs: 3 examples, 0 failures;
+  - focused interval API request: 1 example, 0 failures;
+  - targeted RuboCop checks and all enabled commit hooks passed.
+- An attempted parallel invocation of three API Nix shells was discarded: the
+  shells share the worktree bundle lock and temporary test-database lifecycle,
+  causing one process to terminate another. All reported verification above
+  comes from sequential reruns.
+- The reviewer also found two advisory documentation/tooling issues. New KB
+  pages now require DokuWiki create permission rather than edit permission,
+  with a low-ACL regression (23 runs, 71 assertions). Receiver captions now
+  describe the visible receiver form rather than an e-mail target that is not
+  present in the image; both candidate trees and manifests were regenerated,
+  and contract-tool tests pass 11 runs and 56 assertions.
+- Final committed heads for follow-up review are:
+  - vpsAdmin `4eb064ddf9a6832bbd0b96beeb8ae4241d04bd3a`;
+  - vpsadmin-kb-captures `c3732d36637ad66644b6ea8f13888b802ab0730a`;
+  - vpsfree-cz-configuration
+    `398db459b37bc0f85e848058eb1a16e77c729d74`;
+  - workspace master `5a65141c749ce122aef8f67d53c85c3aaab86c59`
+    before this state update.
+- The capture repository's full `nix develop -c bin/check` passed again on the
+  final vpsAdmin pin. The configuration branch contains one generated pin
+  commit from `90291d53` to `4eb064dd`; production and staging inputs remain
+  unchanged. A first `confctl` attempt had the channel and role reversed,
+  matched no channel, and made no changes; the corrected invocation and final
+  squashed pin both passed the repository hooks.
+- vpsAdmin `4eb064dd` has been force-pushed with an exact lease. Capture,
+  configuration, and workspace pushes remain pending until the review
+  follow-up is complete. Long integration tests and KB staging have not yet
+  started.
