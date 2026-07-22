@@ -12357,3 +12357,42 @@ GitHub Actions after final pushes:
 - Commit structure remains one vpsAdmin feature commit, one capture commit, and
   one generated configuration pin commit. Remaining work is operational:
   pending repository pushes, final-head CI evaluation, and KB review staging.
+
+## 2026-07-22 Final Delivery And Live Dev-Cluster Check
+
+- Pushed all final reviewed heads:
+  - vpsAdmin `394064e71baaed8b3ab96ebbefac4b81f1f5520d`;
+  - vpsadmin-kb-captures
+    `7c0a3a95533714d55e838f7672b23211c09214ad`;
+  - vpsfree-cz-configuration
+    `f3d4a2fa9219d7ade59737bf5f1c71c6fd736bb0`.
+- The configuration Event i18n workflow run `29947149378` passed. The shorter
+  vpsAdmin workflows for WebUI PHPUnit, API migrations, RuboCop, i18n health,
+  and libnodectld also passed. The complete core/full API matrix run
+  `29946181330` subsequently passed all 27 jobs. The selected long integration
+  run `29946181479` remained in progress without failures after the live WebUI
+  verification.
+- Claimed the shared KB staging container for this initiative, staged both
+  release manifests, and verified both Czech/English page pairs and their
+  checksum-pinned media. Review pages are available at:
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications`.
+  Production remains untouched and staging remains owned by this initiative
+  with the pending review content preserved.
+- The user reported HTTP 500 errors when an administrator opened notification
+  routes and time intervals in the main development cluster. WebUI logs showed
+  `event_time_interval` and nested route time-interval resources resolving to
+  `false`. The WebUI was live-mounted from the feature worktree, but
+  `/etc/vpsadmin/build-info.json` and the API service still used packaged
+  vpsAdmin revision `90291d533325774079e1e26a5b09d3a576f5abd6`.
+- Restarting the API and PHP-FPM confirmed this was not a process-cache issue.
+  `devcluster update 2026-06-15-vpsadmin-events services` rebuilt and activated
+  the exact feature revision while preserving cluster state. The services VM
+  now reports `394064e71baaed8b3ab96ebbefac4b81f1f5520d`, and the API is active.
+- A fresh authenticated admin Playwright session verified HTTP 200 and the
+  expected headings for:
+  - `notifications&action=routes&user=1`;
+  - `notifications&action=time_intervals&user=1`;
+  - `notifications&action=route_edit&id=1&user=1`.
+- No code change was needed. The reusable diagnosis and update procedure is in
+  `notes/vpsadmin/2026-07-22-devcluster-api-revision-mismatch.md`.
