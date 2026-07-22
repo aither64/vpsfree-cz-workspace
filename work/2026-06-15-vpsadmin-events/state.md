@@ -12256,3 +12256,24 @@ GitHub Actions after final pushes:
   configuration, and workspace pushes remain pending until the review
   follow-up is complete. Long integration tests and KB staging have not yet
   started.
+
+## 2026-07-22 Mandatory Review Result
+
+- The standalone reviewer passed the exact final heads with no remaining
+  blocking, important, or advisory findings:
+  - vpsAdmin `4eb064ddf9a6832bbd0b96beeb8ae4241d04bd3a`;
+  - vpsadmin-kb-captures
+    `c3732d36637ad66644b6ea8f13888b802ab0730a`;
+  - vpsfree-cz-configuration
+    `398db459b37bc0f85e848058eb1a16e77c729d74`;
+  - workspace master `609478e86d9e0ee64cfdd8053a8dc977e8a03d43`.
+- The reviewer confirmed that endpoint coverage, OOM timestamp and mute
+  handling, referential integrity, concurrency locks, KB create ACLs, capture
+  captions, and commit history are resolved. Reviewed paths are clean, diffs
+  pass whitespace checks, captures pin the exact vpsAdmin head, and the
+  configuration branch contains one generated input-pin commit.
+- Residual risks are accepted and already reflected in the plan: long
+  notification integration tests and KB staging must still run; old routing
+  workers can ignore interval assignments during a mixed-version rollout; and
+  locking has focused model and database coverage but no threaded concurrency
+  stress test.
