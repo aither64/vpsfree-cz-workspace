@@ -12467,4 +12467,31 @@ GitHub Actions after final pushes:
   pixels and KB candidate/release checksums are unchanged. The capture metadata
   and lock were advanced to exact vpsAdmin head `d494ce1c`; full capture checks
   pass again. The development-only configuration pin was regenerated as one
-  commit. A reviewer follow-up on these corrections is pending.
+  commit.
+
+## 2026-07-23 Final Time Interval Form Verification
+
+- The same standalone reviewer verified the corrections and passed final heads
+  with no blocking, important, or advisory findings:
+  - vpsAdmin `d494ce1c83d864841272c61c7799da9d0c8b076e`;
+  - vpsadmin-kb-captures
+    `37a39e78d60507e7437e824fb2bb8e1a37eb2da5`;
+  - vpsfree-cz-configuration
+    `8eaf6a519d3949381d0dda3caa60469e0993a921`;
+  - workspace state before this update
+    `464d6c3add93c0a1d305c02b8441ee986e918049`.
+- The reviewer independently confirmed the corrected hashes resolve, the PHP
+  regression catches the removed input shape, the browser test exercises the
+  surviving dynamically indexed first specification, capture and KB bytes are
+  unchanged, and production/staging inputs remain at `88f03da4`.
+- Current-head GitHub Actions results:
+  - RuboCop `29953488908`, API migrations `29953489108`, libnodectld
+    `29953488943`, WebUI PHPUnit `29953488692`, and i18n health `29953488686`
+    passed;
+  - API matrix `29953488706` passed all 26 core/full shards and topic coverage;
+  - aggregate CI `29953488942` remains in progress without failures. The local
+    selector confirms it is intentionally running the complete `tag=ci` suite
+    because the final feature diff matches the full rule for `api/Gemfile`.
+- Both staged review URLs return HTTP 200 and both Czech/English release
+  manifests re-verify against the staged page pairs and media. Production has
+  not been changed.
