@@ -1,0 +1,161 @@
+====== Using KVM on vpsFree.cz  ======
+VPS are [[information:vpsadminos|linux containers]], i.e. there is only one kernel running on every node,
+which is shared between all VPS. In case you need your own kernel or if you'd like to use a different
+operating system, you can create your own virtual machines inside the VPS using QEMU/KVM.
+
+===== Configuration =====
+
+Go to the details of your VPS in vpsAdmin and turn on the following features:
+
+  * TUN/TAP – enables the creation of virtual interfaces,
+  * KVM – enables KVM (for hardware support of virtualization).
+
+===== libvirt =====
+Virtual machines can be managed using [[https://libvirt.org|libvirt]]
+with [[https://virt-manager.org|virt-manager]].
+
+===== Mount dataset export from NAS server to QEMU/KVM ====
+If you want to use a connected dataset export from a NAS server in to QEMU/KVM, for example to mount an ISO image of a CD for system boot, and you get this error message "Failed to lock byte 100: No locks available", the given export must be mounted on the host system with the flag " nolock".
+
+For example, if you use fstab to mount to the system:
+
+  562.586.65.25:/nas/4562 /mnt/export4562 nfs vers=3,nofail 0 0
+
+You will now use the mount command as follows:
+
+  562.586.65.25:/nas/4562 /mnt/export4562 nfs vers=3,nofail,nolock 0 0
+
+(**//562.586.65.25//** > Address of your NFS server; **//4562//** > number of your dataset on NFS server)
+
+===== KVM on Alpine Linux  =====
+
+Install the required packages (ip6tables is optional):
+
+<code shell>
+apk update
+apk add qemu-system-x86_64 qemu-openrc qemu-img bridge iptables ip6tables
+</code>
+
+Configure the bridge for Qemu/KVM virtual machines – create the ///etc/network/interfaces.tail// file (of course, you can choose any IP address from your private range):
+
+<code shell>
+auto br0
+iface br0 inet static
+     pre-up brctl addbr br0
+     address 172.17.1.1
+     netmask 255.255.255.0
+     post-down brctl delbr br0
+</code>
+
+Since OpenVZ rewrites the ///etc/network/interfaces// file rather clumsily (this is also why we add the configuration of the bridge to //interfaces.tail//), it is safest to restart the container at this point.
+
+Give the user in the //qemu// group permissions to manage the newly-created bridge:
+
+<code shell>
+echo "allow br0" > /etc/qemu/bridge.conf
+chown root:qemu /etc/qemu/bridge.conf
+chmod 0640 /etc/qemu/bridge.conf
+</code>
+
+Configure the IP masquerade so that the Qemu/KVM virtual machines have access to the public Internet.
+
+If you have configured iptables, all you need to add is this rule:
+
+<code>
+iptables -t nat -A POSTROUTING -s 172.17.1.0/24 ! -o br0 -j MASQUERADE
+</code>
+
+If not, you can follow our paragraph on [[#nastaveni_iptables|configuring iptables]].
+
+
+==== Creating and Running a Virtual Machine ====
+
+This manual presupposes that you will be using [[https://github.com/jirutka/qemu-openrc|qemu-openrc]] – an OpenRC init script used to start Qemu/KVM. Of course, if you’re on Alpine, you can use libvirt as well, but do you really want and need its clumsy XML configuration files and/or the click interface above it...? ;) Qemu-openrc is a much simpler and more transparent solution. Each virtual machine is represented by an init script. Just like with other programs, you can declare dependencies between virtual machines, etc.
+
+Creating a new virtual machine consists only of preparing an image disk, creating a symlink for the init script and modifying a simple configuration script. Let’s say that the new virtual machine is called “myvirt.”
+
+Prepare a raw image for myvirt with the required size:
+
+<code shell>
+mkdir -p /var/lib/qemu/myvirt/
+qemu-img create -f raw /var/lib/qemu/myvirt/disk0.img 5G
+chown qemu:qemu /var/lib/qemu/myvirt/disk0.img
+chmod 0600 /var/lib/qemu/myvirt/disk0.img
+</code>
+
+Copy the default configuration file /etc/conf.d/qemu to /etc/conf.d/qemu.myvirt and modify it as needed:
+
+<code shell>
+cd /etc/conf.d
+cp qemu qemu.jarvis
+vi qemu.jarvis  # read comments and edit
+</code>
+
+Most importantly, add the prepared image:
+
+<code shell>
+disk1_file="/var/lib/qemu/myvirt/disk0.raw"
+disk1_format="raw"
+</code>
+
+You will probably also need to add the installation CD of a distribution that you have already downloaded:
+
+<code shell>
+cdrom0_file="/var/lib/qemu/alpine-virt-3.4.1-x86_64.iso"
+</code>
+
+Create a symlink for the init script and run myvirt.
+
+<code shell>
+cd /etc/init.d
+ln -s qemu qemu.myvirt
+
+rc-service qemu.myvirt start
+</code>
+
+
+==== Configuring iptables ====
+
+If you aren’t using any tool to generate iptables rules (like e.g. [[https://github.com/MaxKellermann/ferm|ferm]]), I recommend basing them on [https://gist.github.com/jirutka/3742890|existing rule templates]]. These are already in the iptables format, which can be loaded using iptables-restore.
+
+Download the modified rule template with the added masquerade for our bridge to /etc/iptables:
+
+<code shell>
+rmdir /etc/iptables
+wget -O /etc/iptables http://haste.fit.cvut.cz/raw/iwuqoso
+</code>
+
+Modify the /etc/conf.d/iptables configuration file (IPv4):
+
+<code shell>
+# /etc/conf.d/iptables
+
+IPTABLES_SAVE="/etc/iptables"
+#SAVE_RESTORE_OPTIONS="-c"
+SAVE_ON_STOP="no"
+IPFORWARD="yes"
+</code>
+
+…and the /etc/conf.d/ip6tables configuration file (IPv6):
+
+<code shell>
+# /etc/conf.d/ip6tables
+
+IP6TABLES_SAVE="/etc/iptables"
+SAVE_RESTORE_OPTIONS="-T filter"
+SAVE_ON_STOP="no"
+IPFORWARD="yes"
+</code>
+
+Run iptables and ip6tables and add them to the runlevel boot:
+
+<code shell>
+rc-service iptables start
+rc-service ip6tables start
+rc-update add iptables boot
+rc-update add ip6tables boot
+</code>
+
+==== Contacts ====
+
+  * [[jakub@jirutka.cz|Jakub Jirůtka]] (on [[irc://chat.freenode.net/vpsfree|#vpsfree]] under the name “jirutka”)

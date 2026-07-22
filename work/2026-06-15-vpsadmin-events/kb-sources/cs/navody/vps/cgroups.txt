@@ -1,0 +1,45 @@
+<page>manuals:vps:cgroups</page>
+====== Control groups (cgroups) ======
+Control groups (dále jen cgroups) v Linuxu slouží pro limitování a účtování
+prostředků skupin procesů, tzn. například počítají využitý čas na CPU a umožňují
+nastavovat kvóty, účtují paměť a omezují její velikost. Na vpsAdminOS jsou cgroups
+stěžejní součást systému: každé VPS běží ve své cgroup a samozřejmě může svoje procesy
+dále rozdělovat do podskupin, které si vytvoříte. Toto většinou obstarává init systém
+a s cgroups přimo do styku nepřijdete.
+
+Podstatné je, že existují dvě verze cgroups: v1 a v2. Protože VPS jsou kontejnery,
+použitá verze cgroups je dána hostitelem a uvnitř VPS nelze změnit. cgroups v1 je postupně
+vytlačována a systemd od v258 už cgroups v1 vůbec nepodporuje -- ve VPS je vždy připojen
+cgroups v2, avšak na nodech s cgroups v1 nelze nastavovat jednotlivé subsystémy.
+
+===== cgroups v2 =====
+Situace je komplikovaná tím, že starší systémy cgroups v2 nepodporují a v rámci jednoho node
+lze používat buď v1, nebo v2. Provozujeme tedy nody s cgroups v1 pro starší distribuce
+a nody s cgroups v2 pro nové VPS a distribuce, které v2 podporují. Na titulní stránce
+vpsAdminu můžeš vidět, jakou verzi cgroups jednotlivé nody používají. Do budoucna je cílem přesunout
+vše co půjde na cgroups v2.
+
+===== Podpora cgroups v2 =====
+Tyto distribuce podporují cgroups v2:
+
+  * Alpine Linux
+  * Arch Linux
+  * CentOS / Alma Linux / Rocky Linux >= 8
+  * Debian >= 9
+  * Devuan
+  * Fedora >= 31 (možná i starší)
+  * NixOS >= 19.03 (možná i starší)
+  * openSUSE Leap >= 15.1 (možná i starší)
+  * Ubuntu >= 18.04
+  * Void Linux
+
+===== Nastavení verze cgroups =====
+V detailu VPS lze nastavit verzi cgroups, kterou VPS vyžaduje. Pro většinu konfigurací
+by mělo stačit se spolehnout na podporu cgroups v2 v distribuci. Výchozí nastavení se tedy
+řídí použitou distribucí, která je uvedena ve vpsAdminu. VPS, u kterých to nastavení
+a distribuce umožňuje, budeme postupně a dle možností přesouvat na nody s cgroups v2.
+
+Pokud aplikace ve VPS vyžadují konkrétní cgroups verzi a změna není možná, lze
+to nastavením ve vpsAdminu zohlednit. Pokud by sis naopak přál verzi cgroups změnit, napiš
+prosím na podporu a VPS přesuneme na jiný node.
+

@@ -1,0 +1,38 @@
+<page>manuals:distributions:nixos</page>
+====== NixOS ======
+[[https://nixos.org|NixOS]] je distribuce založená na balíčkovacím systému Nix.
+Konfigurace systému a všech služeb se provádí deklarativně. Tato stránka popisuje
+použití NixOS na vpsFree.cz VPS. Pro více informací o NixOS obecně viz
+[[https://nixos.org/learn.html|dokumentace]].
+
+===== Podporované verze =====
+Poskytujeme šablony VPS pro stabilní vydání NixOS a průběžně pro NixOS unstable.
+
+Sami NixOS používáme na naší
+[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastruktuře]].
+Naše virtualizační platforma [[navody:vps:vpsadminos|vpsAdminOS]] je dokonce
+na NixOS a nixpkgs založená.
+
+===== Prvotní konfigurace =====
+VPS je vytvořeno ze šablony, která obsahuje minimální systém a SSH.
+Pro přihlášení je možné použít [[navody:vps:sprava#heslo_roota|vygenerované heslo]],
+nebo si nechat [[navody:vps:sprava#automaticke_vlozeni_klicu|nahrát veřejný klíč]] přes
+vpsAdmin. Systém lze pak spravovat pomocí ''nixos-rebuild'':
+
+<code>
+nixos-rebuild --flake /etc/nixos#vps
+</code>
+
+Naše VPS jsou linuxové kontejnery, není zde zavaděč, jádro je sdílené a je potřeba
+určité nastavení pro správnou funkci NixOS. V šabloně je proto vpsAdminOS jako flake input a potřebný
+modul je importován do konfigurace systému.
+
+Při vytvoření VPS a reinstalaci systému je možné do VPS přes vpsAdmin nahrát a nasadit vlastní
+konfiguraci, viz [[navody:vps:userdata|user data]].
+
+
+===== Správa VPS =====
+Přejdi na [[:domu|návody VPS]] pro více informací o naší infrastruktuře a možnostech VPS.
+
+===== Impermanence =====
+Viz [[navody:distribuce:nixos:impermanence]].

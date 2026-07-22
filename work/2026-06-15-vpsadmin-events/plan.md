@@ -23,6 +23,64 @@ The target design is:
 - Incident report rules, OOM report rules, and advanced e-mail settings are
   migrated into this system and then removed from the WebUI.
 
+## Event Time Intervals And User Documentation Addendum
+
+Requested on 2026-07-22: add reusable, account-owned time intervals to event
+routes and replace the obsolete knowledge-base guidance for role and template
+e-mail recipients with documentation of the event system.
+
+Design decisions:
+
+- Users define named intervals once and assign them to routes in `active` or
+  `mute` mode. Multiple active references are ORed, multiple mute references
+  are ORed, and a matching mute reference takes precedence.
+- A gated route still counts as matched and preserves normal child traversal
+  and sibling `continue` behavior. Only that route's own receiver is skipped;
+  schedules are not inherited by descendants.
+- Intervals support Alertmanager-style repeatable specifications with time
+  ranges, weekdays, days of month, months, and years. Specifications are ORed,
+  dimensions are ANDed, and ranges within one dimension are ORed.
+- Every interval stores one stable IANA time zone, defaulted at creation from
+  the owner's profile or UTC. Time ranges are start-inclusive/end-exclusive,
+  cannot cross midnight, and must be split explicitly for overnight windows.
+- Interval deletion is blocked while routes reference it. Existing routes
+  have no interval references and remain always active.
+- Route-match audit records snapshot interval names, modes, time zones, and
+  match results at the event's routing time.
+- The bilingual event-system guide will use `navody:notifikace` and
+  `manuals:notifications`. The old user-account articles will retain a concise
+  primary-address explanation and link to the new guide.
+- New screenshots use `notifications/*` semantic IDs. The legacy role and
+  advanced-recipient media remain untouched in production.
+- Production KB publication remains approval-gated. This initiative prepares,
+  stages, and verifies exact Czech and English releases but does not promote
+  them without a later direct approval.
+
+Affected components for this addendum:
+
+- `vpsadmin`: schema, interval evaluator, routing audit, HaveAPI resources,
+  WebUI, localization, and tests.
+- `vpsadmin-kb-captures`: exact vpsAdmin pin, navigation contract, fixtures,
+  bilingual scenarios, and generated PNGs.
+- `vpsfree-cz-configuration`: exact generated vpsAdmin input pin.
+- Top-level workspace tooling: guarded create-only KB pages and checksummed
+  capture media in candidate/release manifests.
+
+Compatibility and deployment:
+
+- The schema is additive. Old vpsAdmin versions ignore interval assignments,
+  so all event-routing API/supervisor processes must be updated before users
+  can rely on schedules.
+- Dispatchers require no protocol change because interval gating happens before
+  delivery preparation.
+- Rolling application rollback after intervals are configured can deliver
+  notifications that the old version would not mute. Do not drop persisted
+  interval data; disable configuration and account for this semantic rollback
+  before reverting application code.
+- Editing an interval affects every referencing route immediately. Historical
+  route matches keep the recorded outcome, but events are never queued for a
+  later active window or rerouted retroactively.
+
 Current implementation checkpoint:
 
 - The current `vpsadmin` slice is implemented on top of `origin/master`, not

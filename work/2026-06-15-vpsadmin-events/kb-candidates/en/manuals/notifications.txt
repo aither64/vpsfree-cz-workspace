@@ -1,0 +1,62 @@
+====== Notifications ======
+
+The vpsAdmin notification system processes events and sends them to receivers according to routes. Open it from the <vpsadmin-nav id="notifications.open">main Notifications menu</vpsadmin-nav>.
+
+The basic flow is **event → route → receiver → target**:
+
+  * an **event** describes what happened and contains a type, severity and additional data,
+  * a **route** selects events by type and optional matchers,
+  * a **receiver** defines what should happen to a selected event,
+  * a **target** is a specific e-mail address, webhook, telephone number or Telegram account.
+
+===== Routes =====
+
+Manage routes at <vpsadmin-nav id="notifications.routes.open">Notifications → Routes</vpsadmin-nav>. Routes are evaluated in order. A route can continue to another matching route, contain child routes, or expire after its first use. Default routes provide normal delivery to the primary e-mail address; you can add custom routes or select the **Mute** receiver.
+
+{{:en:screenshots:vpsadmin:notifications:routes.png?900|Notification routes}}
+
+Route matchers compare event fields. Every matcher on one route has to match. When a route selects a specific event type, its field and operator choices adapt to the data declared by that type.
+
+===== Receivers and contacts =====
+
+A receiver at <vpsadmin-nav id="notifications.receivers.open">Notifications → Receivers</vpsadmin-nav> groups one or more targets. One receiver can therefore send an e-mail and call a webhook at the same time. The **Default** target uses the account's current primary e-mail address. Add other e-mail addresses as custom targets; they have to be verified before use.
+
+{{:en:screenshots:vpsadmin:notifications:receiver.png?900|Receiver with an e-mail target}}
+
+A receiver can be disabled without removing its routes. The **Mute** receiver records the event but sends nothing.
+
+===== Time intervals =====
+
+Define reusable intervals at <vpsadmin-nav id="notifications.time-intervals.open">Notifications → Time intervals</vpsadmin-nav>. Every interval has a name, an IANA time zone (for example ''Europe/Prague''), and one or more specifications.
+
+{{:en:screenshots:vpsadmin:notifications:time-interval.png?900|Time interval configuration}}
+
+Within one specification, every filled dimension must match. Multiple ranges in one dimension are alternatives, and multiple specifications are also joined with logical **OR**. The available dimensions are:
+
+  * times in ''HH:MM-HH:MM'' format, inclusive at the start and exclusive at the end,
+  * weekdays written in English, for example ''monday-friday'',
+  * days of month; negative values count from the end (''-1'' is the last day),
+  * months and years as numbers or ''start:end'' ranges.
+
+Time and weekday ranges cannot wrap. Split an overnight interval into two specifications, for example ''22:00-24:00'' and ''00:00-06:00''; when weekdays are constrained, assign the second part to the following day.
+
+===== Active and mute route intervals =====
+
+Assign an interval to a route at <vpsadmin-nav id="notifications.route-time-intervals.open">Notifications → Routes → edit route</vpsadmin-nav>, using **Active interval** or **Mute interval** mode.
+
+{{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Interval assigned to a route}}
+
+  * With no active interval assigned, the route's active time is unrestricted.
+  * With multiple active intervals, a match of any one is sufficient.
+  * A matching mute interval always suppresses delivery.
+  * An interval gates only that route's receiver. Child routes are still evaluated and the route's continue behavior is preserved.
+
+An account can define at most 50 intervals. An interval can contain at most 20 specifications and each dimension at most 20 ranges. At most 20 intervals can be assigned to one route. An interval in use cannot be deleted until it is unassigned from every route.
+
+===== Checking delivery =====
+
+Inspect the result at <vpsadmin-nav id="notifications.event-route-matches.open">Notifications → Event log → event detail</vpsadmin-nav>. The detail shows matching routes, the time-interval state and the evaluation snapshot at the event timestamp. ''inactive'' means no active interval matched; ''muted'' means a mute interval matched.
+
+{{:en:screenshots:vpsadmin:notifications:event-suppressed.png?900|Event suppressed by a time interval}}
+
+Use **Test event** to verify a new configuration safely without waiting for a real incident.

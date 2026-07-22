@@ -1,0 +1,302 @@
+schema: 2
+new_pages:
+  - language: cs
+    page: navody:notifikace
+    body: |
+      <page>manuals:notifications</page>
+      ====== Notifikace ======
+
+      Notifikační systém vpsAdminu zpracovává události a podle rout je předává příjemcům. Nastavení najdete v hlavní nabídce Notifikace.
+
+      Základní tok je **událost → routa → příjemce → cíl**:
+
+        * **událost** popisuje, co se stalo, a obsahuje typ, závažnost a doplňující údaje,
+        * **routa** vybírá události podle typu a volitelných podmínek,
+        * **příjemce** určuje, co se má s vybranou událostí udělat,
+        * **cíl** je konkrétní e-mailová adresa, webhook, telefonní číslo nebo účet Telegramu.
+
+      ===== Routy =====
+
+      Routy se spravují v Notifikace → Routy. Vyhodnocují se podle pořadí. Routa může pokračovat na další odpovídající routu, obsahovat podřízené routy nebo po prvním použití zaniknout. Výchozí routy zajišťují běžné doručování na primární e-mailovou adresu; lze je doplnit vlastními routami nebo použít příjemce **Ztlumit**.
+
+      {{:cs:screenshots:vpsadmin:notifications:routes.png?900|Přehled notifikačních rout}}
+
+      Podmínky routy mohou porovnávat pole události. Všechny podmínky jedné routy musí platit současně. Pokud routa obsahuje konkrétní typ události, nabídka polí a operátorů se přizpůsobí jeho datům.
+
+      ===== Příjemci a kontakty =====
+
+      Příjemce v Notifikace → Příjemci sdružuje jeden nebo více cílů. Jeden příjemce tak může například současně odeslat e-mail a zavolat webhook. Cíl **Výchozí** používá aktuální primární e-mailovou adresu účtu. Vlastní e-mailové adresy se přidávají jako cíle a musí být před použitím ověřeny.
+
+      {{:cs:screenshots:vpsadmin:notifications:receiver.png?900|Příjemce s e-mailovým cílem}}
+
+      Příjemce lze vypnout bez odstranění jeho rout. Příjemce **Ztlumit** událost zaznamená, ale nic neodešle.
+
+      ===== Časové intervaly =====
+
+      Opakovaně použitelné intervaly se definují v Notifikace → Časové intervaly. Každý interval má název, časové pásmo IANA (například ''Europe/Prague'') a jednu nebo více specifikací.
+
+      {{:cs:screenshots:vpsadmin:notifications:time-interval.png?900|Nastavení časového intervalu}}
+
+      V jedné specifikaci musí současně odpovídat všechna vyplněná pole. Více rozsahů v jednom poli představuje alternativy a více specifikací je rovněž spojeno logickým **nebo**. K dispozici jsou:
+
+        * časy ve formátu ''HH:MM-HH:MM'', se začátkem včetně a koncem bez posledního okamžiku,
+        * dny v týdnu zadané anglicky, například ''monday-friday'',
+        * dny měsíce; záporná čísla počítají od konce měsíce (''-1'' je poslední den),
+        * měsíce a roky jako čísla nebo rozsahy ''začátek:konec''.
+
+      Časový rozsah ani rozsah dnů v týdnu se nesmí přetočit přes konec. Noční interval proto rozdělte na dvě specifikace, například ''22:00-24:00'' a ''00:00-06:00''; pokud omezujete dny v týdnu, druhou část přiřaďte následujícímu dni.
+
+      ===== Aktivní a ztlumující intervaly rout =====
+
+      Interval se k routě přiřazuje v Notifikace → Routy → upravit routu v režimu **Aktivní interval** nebo **Ztlumující interval**.
+
+      {{:cs:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Interval přiřazený k routě}}
+
+        * Bez přiřazeného aktivního intervalu není aktivní doba routy omezena.
+        * Je-li přiřazeno více aktivních intervalů, stačí shoda alespoň jednoho.
+        * Shoda kteréhokoli ztlumujícího intervalu doručení vždy potlačí.
+        * Interval řídí jen příjemce dané routy. Podřízené routy se dále vyhodnotí a nastavení pokračování routy zůstává zachováno.
+
+      Na účet lze vytvořit nejvýše 50 intervalů. Interval může obsahovat nejvýše 20 specifikací a každé pole nejvýše 20 rozsahů. K jedné routě lze přiřadit nejvýše 20 intervalů. Použitý interval nelze smazat, dokud jej neodeberete ze všech rout.
+
+      ===== Kontrola doručení =====
+
+      Výsledek najdete v Notifikace → Události → detail události. Detail ukazuje odpovídající routy, stav časových intervalů a snímek jejich vyhodnocení v čase vzniku události. Stav ''inactive'' znamená, že neodpovídal žádný aktivní interval; ''muted'' znamená shodu ztlumujícího intervalu.
+
+      {{:cs:screenshots:vpsadmin:notifications:event-suppressed.png?900|Událost potlačená časovým intervalem}}
+
+      Pro bezpečné ověření nové konfigurace lze vytvořit **Testovací událost** bez čekání na skutečný incident.
+
+  - language: en
+    page: manuals:notifications
+    body: |
+      ====== Notifications ======
+
+      The vpsAdmin notification system processes events and sends them to receivers according to routes. Open it from the main Notifications menu.
+
+      The basic flow is **event → route → receiver → target**:
+
+        * an **event** describes what happened and contains a type, severity and additional data,
+        * a **route** selects events by type and optional matchers,
+        * a **receiver** defines what should happen to a selected event,
+        * a **target** is a specific e-mail address, webhook, telephone number or Telegram account.
+
+      ===== Routes =====
+
+      Manage routes at Notifications → Routes. Routes are evaluated in order. A route can continue to another matching route, contain child routes, or expire after its first use. Default routes provide normal delivery to the primary e-mail address; you can add custom routes or select the **Mute** receiver.
+
+      {{:en:screenshots:vpsadmin:notifications:routes.png?900|Notification routes}}
+
+      Route matchers compare event fields. Every matcher on one route has to match. When a route selects a specific event type, its field and operator choices adapt to the data declared by that type.
+
+      ===== Receivers and contacts =====
+
+      A receiver at Notifications → Receivers groups one or more targets. One receiver can therefore send an e-mail and call a webhook at the same time. The **Default** target uses the account's current primary e-mail address. Add other e-mail addresses as custom targets; they have to be verified before use.
+
+      {{:en:screenshots:vpsadmin:notifications:receiver.png?900|Receiver with an e-mail target}}
+
+      A receiver can be disabled without removing its routes. The **Mute** receiver records the event but sends nothing.
+
+      ===== Time intervals =====
+
+      Define reusable intervals at Notifications → Time intervals. Every interval has a name, an IANA time zone (for example ''Europe/Prague''), and one or more specifications.
+
+      {{:en:screenshots:vpsadmin:notifications:time-interval.png?900|Time interval configuration}}
+
+      Within one specification, every filled dimension must match. Multiple ranges in one dimension are alternatives, and multiple specifications are also joined with logical **OR**. The available dimensions are:
+
+        * times in ''HH:MM-HH:MM'' format, inclusive at the start and exclusive at the end,
+        * weekdays written in English, for example ''monday-friday'',
+        * days of month; negative values count from the end (''-1'' is the last day),
+        * months and years as numbers or ''start:end'' ranges.
+
+      Time and weekday ranges cannot wrap. Split an overnight interval into two specifications, for example ''22:00-24:00'' and ''00:00-06:00''; when weekdays are constrained, assign the second part to the following day.
+
+      ===== Active and mute route intervals =====
+
+      Assign an interval to a route at Notifications → Routes → edit route, using **Active interval** or **Mute interval** mode.
+
+      {{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Interval assigned to a route}}
+
+        * With no active interval assigned, the route's active time is unrestricted.
+        * With multiple active intervals, a match of any one is sufficient.
+        * A matching mute interval always suppresses delivery.
+        * An interval gates only that route's receiver. Child routes are still evaluated and the route's continue behavior is preserved.
+
+      An account can define at most 50 intervals. An interval can contain at most 20 specifications and each dimension at most 20 ranges. At most 20 intervals can be assigned to one route. An interval in use cannot be deleted until it is unassigned from every route.
+
+      ===== Checking delivery =====
+
+      Inspect the result at Notifications → Event log → event detail. The detail shows matching routes, the time-interval state and the evaluation snapshot at the event timestamp. ''inactive'' means no active interval matched; ''muted'' means a mute interval matched.
+
+      {{:en:screenshots:vpsadmin:notifications:event-suppressed.png?900|Event suppressed by a time interval}}
+
+      Use **Test event** to verify a new configuration safely without waiting for a real incident.
+
+replacements:
+  - language: cs
+    page: navody:vps:uzivatele
+    path: notifications.open
+    before: |-
+      ===== Konfigurace e-mailových adres =====
+      vpsAdmin umožňuje nastavit jeden primární e-mail patřící majiteli účtu --
+      členovi v našem spolku. Ten musí být nastaven a může být jen jeden. Krom toho je
+      možné nastavit různé e-mailové adresy pro různé typy kontaktů -- např. účetní a
+      správce VPS. Toto nastavení lze měnit v detailech uživatelského účtu
+      (<vpsadmin-nav id="member.edit-profile.open">vpsAdmin -> Upravit profil</vpsadmin-nav>).
+
+      {{:cs:screenshots:vpsadmin:account:email-roles.png?300|}}
+
+      Například, správce členství (role Vedení účtu) dostává následující
+      maily:
+
+        * upozornění k platbě členského příspěvku,
+        * pozastavení/obnovení členství,
+        * potvrzení přijetí platby.
+
+      Správce VPS (role Správce systému) pak maily o:
+
+        * změně stavu VPS,
+        * změně konfigurace VPS,
+        * stahování záloh,
+        * migrace VPS.
+
+      ==== Detailní nastavení ====
+      Komu by nestačilo nastavení různých e-mailových adres pro různé role, nebo
+      některé e-maily nechce vůbec dostávat, existuje ještě pokročilé nastavení
+      (<vpsadmin-nav id="member.advanced-email-configuration.open">vpsAdmin -> Upravit profil -> Pokročilá konfigurace e-mailu</vpsadmin-nav>). Zde si můžete
+      nastavit libovolné adresy pro vybrané typy e-mailů, případně zasílání zrušit
+      úplně.
+
+      {{:cs:screenshots:vpsadmin:account:mail-template-recipients.png?300|}}
+    body: vpsAdmin → Notifikace
+    replacement: |-
+      ===== E-mailová adresa a notifikace =====
+      Primární e-mailová adresa patří majiteli účtu — členovi spolku. Je povinná,
+      může být pouze jedna a mění se v nastavení účtu (vpsAdmin → Upravit profil).
+
+      Doručování provozních zpráv se nyní nastavuje pomocí událostí, rout, příjemců
+      a cílů. Výchozí e-mailový cíl používá primární adresu; další adresy lze přidat
+      a ověřit jako vlastní cíle. Postup včetně ztlumení vybraných událostí popisuje
+      návod <vpsadmin-nav id="notifications.open">vpsAdmin → Notifikace</vpsadmin-nav>.
+  - language: cs
+    page: navody:vps:uzivatele
+    path: member.edit-profile.open
+    before: vpsAdmin → Upravit profil
+    count: 1
+  - language: en
+    page: manuals:vps:users
+    path: notifications.open
+    before: |-
+      ===== E-mail addresses =====
+      vpsAdmin allows users to set one primary e-mail address belonging to the
+      account owner -- a member of our association. This address must be set and
+      can only be a single address. In addition to the primary e-mail address, you
+      can set different addresses for certain contact roles, such as an accountant
+      or system administrator. These settings can be changed in user profile details
+      (<vpsadmin-nav id="member.edit-profile.open">vpsAdmin -> Edit profile</vpsadmin-nav>)
+
+      {{:en:screenshots:vpsadmin:account:email-roles.png?300|}}
+
+      For example, the account manager receives e-mails about:
+
+        * payment notification,
+        * suspension/activation of the membership,
+        * accepted payments.
+
+      The system administrator receives e-mails about:
+
+        * VPS status changes,
+        * VPS configuration changes,
+        * backup downloads,
+        * VPS migrations.
+
+      ==== Advanced settings ====
+      Should contact roles not be enough or if don't wish to receive certain
+      e-mails, there is an advanced settings form (<vpsadmin-nav id="member.advanced-email-configuration.open">vpsAdmin -> Edit profile ->
+      Advanced e-mail configuration</vpsadmin-nav>). You can choose different e-mail addresses for
+      specific mail templates or disable receiving of some mails altogether.
+
+      {{:en:screenshots:vpsadmin:account:mail-template-recipients.png?300|}}
+    body: vpsAdmin → Notifications
+    replacement: |-
+      ===== E-mail address and notifications =====
+      The primary e-mail address belongs to the account owner, a member of the
+      association. It is required, only one can be set, and it is changed in the
+      account settings (vpsAdmin → Edit profile).
+
+      Delivery of operational messages is now configured using events, routes,
+      receivers and targets. The default e-mail target follows the primary address;
+      additional addresses can be added and verified as custom targets. The
+      <vpsadmin-nav id="notifications.open">vpsAdmin → Notifications</vpsadmin-nav>
+      guide explains the complete setup, including how to mute selected events.
+  - language: en
+    page: manuals:vps:users
+    path: member.edit-profile.open
+    before: vpsAdmin → Edit profile
+    count: 1
+  - language: cs
+    page: navody:notifikace
+    path: notifications.open
+    before: hlavní nabídce Notifikace
+    body: hlavní nabídce Notifikace
+  - language: cs
+    page: navody:notifikace
+    path: notifications.routes.open
+    before: v Notifikace → Routy.
+    body: Notifikace → Routy
+    replacement: v <vpsadmin-nav id="notifications.routes.open">Notifikace → Routy</vpsadmin-nav>.
+  - language: cs
+    page: navody:notifikace
+    path: notifications.receivers.open
+    before: Notifikace → Příjemci
+  - language: cs
+    page: navody:notifikace
+    path: notifications.time-intervals.open
+    before: Notifikace → Časové intervaly
+  - language: cs
+    page: navody:notifikace
+    path: notifications.route-time-intervals.open
+    before: Notifikace → Routy → upravit routu
+  - language: cs
+    page: navody:notifikace
+    path: notifications.event-route-matches.open
+    before: Notifikace → Události → detail události
+  - language: en
+    page: manuals:notifications
+    path: notifications.open
+    before: main Notifications menu
+  - language: en
+    page: manuals:notifications
+    path: notifications.routes.open
+    before: at Notifications → Routes.
+    body: Notifications → Routes
+    replacement: at <vpsadmin-nav id="notifications.routes.open">Notifications → Routes</vpsadmin-nav>.
+  - language: en
+    page: manuals:notifications
+    path: notifications.receivers.open
+    before: Notifications → Receivers
+  - language: en
+    page: manuals:notifications
+    path: notifications.time-intervals.open
+    before: Notifications → Time intervals
+  - language: en
+    page: manuals:notifications
+    path: notifications.route-time-intervals.open
+    before: Notifications → Routes → edit route
+  - language: en
+    page: manuals:notifications
+    path: notifications.event-route-matches.open
+    before: Notifications → Event log → event detail
+media:
+  - { language: cs, capture: notifications/routes }
+  - { language: cs, capture: notifications/receiver }
+  - { language: cs, capture: notifications/time-interval }
+  - { language: cs, capture: notifications/route-time-intervals }
+  - { language: cs, capture: notifications/event-suppressed }
+  - { language: en, capture: notifications/routes }
+  - { language: en, capture: notifications/receiver }
+  - { language: en, capture: notifications/time-interval }
+  - { language: en, capture: notifications/route-time-intervals }
+  - { language: en, capture: notifications/event-suppressed }
+exceptions: []

@@ -1,0 +1,63 @@
+<page>manuals:notifications</page>
+====== Notifikace ======
+
+Notifikační systém vpsAdminu zpracovává události a podle rout je předává příjemcům. Nastavení najdete v <vpsadmin-nav id="notifications.open">hlavní nabídce Notifikace</vpsadmin-nav>.
+
+Základní tok je **událost → routa → příjemce → cíl**:
+
+  * **událost** popisuje, co se stalo, a obsahuje typ, závažnost a doplňující údaje,
+  * **routa** vybírá události podle typu a volitelných podmínek,
+  * **příjemce** určuje, co se má s vybranou událostí udělat,
+  * **cíl** je konkrétní e-mailová adresa, webhook, telefonní číslo nebo účet Telegramu.
+
+===== Routy =====
+
+Routy se spravují v <vpsadmin-nav id="notifications.routes.open">Notifikace → Routy</vpsadmin-nav>. Vyhodnocují se podle pořadí. Routa může pokračovat na další odpovídající routu, obsahovat podřízené routy nebo po prvním použití zaniknout. Výchozí routy zajišťují běžné doručování na primární e-mailovou adresu; lze je doplnit vlastními routami nebo použít příjemce **Ztlumit**.
+
+{{:cs:screenshots:vpsadmin:notifications:routes.png?900|Přehled notifikačních rout}}
+
+Podmínky routy mohou porovnávat pole události. Všechny podmínky jedné routy musí platit současně. Pokud routa obsahuje konkrétní typ události, nabídka polí a operátorů se přizpůsobí jeho datům.
+
+===== Příjemci a kontakty =====
+
+Příjemce v <vpsadmin-nav id="notifications.receivers.open">Notifikace → Příjemci</vpsadmin-nav> sdružuje jeden nebo více cílů. Jeden příjemce tak může například současně odeslat e-mail a zavolat webhook. Cíl **Výchozí** používá aktuální primární e-mailovou adresu účtu. Vlastní e-mailové adresy se přidávají jako cíle a musí být před použitím ověřeny.
+
+{{:cs:screenshots:vpsadmin:notifications:receiver.png?900|Příjemce s e-mailovým cílem}}
+
+Příjemce lze vypnout bez odstranění jeho rout. Příjemce **Ztlumit** událost zaznamená, ale nic neodešle.
+
+===== Časové intervaly =====
+
+Opakovaně použitelné intervaly se definují v <vpsadmin-nav id="notifications.time-intervals.open">Notifikace → Časové intervaly</vpsadmin-nav>. Každý interval má název, časové pásmo IANA (například ''Europe/Prague'') a jednu nebo více specifikací.
+
+{{:cs:screenshots:vpsadmin:notifications:time-interval.png?900|Nastavení časového intervalu}}
+
+V jedné specifikaci musí současně odpovídat všechna vyplněná pole. Více rozsahů v jednom poli představuje alternativy a více specifikací je rovněž spojeno logickým **nebo**. K dispozici jsou:
+
+  * časy ve formátu ''HH:MM-HH:MM'', se začátkem včetně a koncem bez posledního okamžiku,
+  * dny v týdnu zadané anglicky, například ''monday-friday'',
+  * dny měsíce; záporná čísla počítají od konce měsíce (''-1'' je poslední den),
+  * měsíce a roky jako čísla nebo rozsahy ''začátek:konec''.
+
+Časový rozsah ani rozsah dnů v týdnu se nesmí přetočit přes konec. Noční interval proto rozdělte na dvě specifikace, například ''22:00-24:00'' a ''00:00-06:00''; pokud omezujete dny v týdnu, druhou část přiřaďte následujícímu dni.
+
+===== Aktivní a ztlumující intervaly rout =====
+
+Interval se k routě přiřazuje v <vpsadmin-nav id="notifications.route-time-intervals.open">Notifikace → Routy → upravit routu</vpsadmin-nav> v režimu **Aktivní interval** nebo **Ztlumující interval**.
+
+{{:cs:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Interval přiřazený k routě}}
+
+  * Bez přiřazeného aktivního intervalu není aktivní doba routy omezena.
+  * Je-li přiřazeno více aktivních intervalů, stačí shoda alespoň jednoho.
+  * Shoda kteréhokoli ztlumujícího intervalu doručení vždy potlačí.
+  * Interval řídí jen příjemce dané routy. Podřízené routy se dále vyhodnotí a nastavení pokračování routy zůstává zachováno.
+
+Na účet lze vytvořit nejvýše 50 intervalů. Interval může obsahovat nejvýše 20 specifikací a každé pole nejvýše 20 rozsahů. K jedné routě lze přiřadit nejvýše 20 intervalů. Použitý interval nelze smazat, dokud jej neodeberete ze všech rout.
+
+===== Kontrola doručení =====
+
+Výsledek najdete v <vpsadmin-nav id="notifications.event-route-matches.open">Notifikace → Události → detail události</vpsadmin-nav>. Detail ukazuje odpovídající routy, stav časových intervalů a snímek jejich vyhodnocení v čase vzniku události. Stav ''inactive'' znamená, že neodpovídal žádný aktivní interval; ''muted'' znamená shodu ztlumujícího intervalu.
+
+{{:cs:screenshots:vpsadmin:notifications:event-suppressed.png?900|Událost potlačená časovým intervalem}}
+
+Pro bezpečné ověření nové konfigurace lze vytvořit **Testovací událost** bez čekání na skutečný incident.

@@ -1,0 +1,62 @@
+====== Dealing with full disks ======
+
+We can use ''du'' or ''ncdu'' to find directories or files taking up the space:
+
+<code>
+# Search all directories under the root filesystems
+du -sh /*
+
+# When we find a large directory, run du on it, e.g.:
+du -sh /var/*
+</code>
+
+''ncdu'' features a simple text interface and can also delete the files itself.
+
+Should ''du'' or ''ncdu'' take too long to run (tens of seconds or minutes),
+we're most likely dealing with too many files. In this case, search the directories
+on which ''du'' gets stuck by hand, one by one.
+
+===== NAS =====
+If you're deleting data from NAS, but the free space is not increasing, it's
+most likely held by a snapshot. Data taken by snapshots is
+[[manuals:vps:datasets#dataset_quotas|reducing NAS disk size]]. It's necessary
+to delete all snapshots to free the space. You can do it in vpsAdmin, menu
+Backups -> NAS.
+
+===== VPS with mounted NAS =====
+If you can't find what's taking the space and you have mounted NAS, it's possible
+that the data is hidden beneath the NAS mountpoint. Data could be written to the
+directory when NAS wasn't mounted and ended up on the VPS's disk. Later, when
+NAS gets mounted, the data on the VPS gets overlapped.
+
+You can check this either by temporarily unmounting NAS and then looking at the
+mountpoint:
+
+<code>
+umount /mnt/nas
+du -sh /mnt/nas
+df -h /mnt/nas
+</code>
+
+When ''df'' shows the filesystem as ''tank/ct/<id vps>'', the data is on the VPS's
+disk.
+
+If you do not wish to umount NAS, e.g. because it's being used, there is another
+way. We can make a bind-mount of the root filesystem, in which NAS will not be
+mounted:
+
+<code>
+mkdir tmp-rootfs
+mount --bind / tmp-rootfs
+
+du -sh tmp-rootfs/mnt/nas
+df -h tmp-rootfs/mnt/nas
+</code>
+
+''df'' should show the filesystem as ''tank/ct/<id vps>''. Clean up the data
+in ''tmp-rootfs/mnt/nas'' and remove the bind-mount:
+
+<code>
+umount tmp-rootfs
+rmdir tmp-rootfs
+</code>

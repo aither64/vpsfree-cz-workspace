@@ -41,10 +41,29 @@
   - Remote: `git@github.com:vpsfreecz/vpsfree-sms-gateway.git`
   - Note: GitHub reported repository not found earlier on 2026-06-22; user
     created it later. The feature branch was pushed successfully.
+- `vpsadmin-kb-captures`
+  - Worktree:
+    `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin-kb-captures`
+  - Branch: `2026-06-15-vpsadmin-events`
+  - Base: `origin/master`
+  - Initial head: `7248a8b`
+  - Remote: `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
 
 ## Status
 
 - Active workspace session: `2026-06-15-vpsadmin-events`.
+- 2026-07-22 reusable event time-interval and KB documentation slice started.
+  - The existing initiative and vpsAdmin branch are being extended; no new
+    initiative slug was created.
+  - Product decisions: full Alertmanager-style calendar fields, stable time
+    zone per named interval, same-day start-inclusive/end-exclusive time
+    ranges, Alertmanager-like route-tree behavior, blocked deletion while
+    referenced, and dedicated top-level bilingual Notifications articles.
+  - New documentation page IDs are `navody:notifikace` and
+    `manuals:notifications`.
+  - Prepared the dedicated `vpsadmin-kb-captures` worktree listed above from
+    current `origin/master`; its local `AGENTS.md` and canonical WebUI change
+    workflow were read before changes.
 - 2026-06-30 event routing cleanup slice started in `vpsadmin` only.
   - Requested outcome: implement the finalized route/event plan: replace
     special default-route matching with a `default_routed` matcher, make
@@ -12095,3 +12114,92 @@ GitHub Actions after final pushes:
 - Current-head aggregate integration workflow `29908412949` remains in
   progress in `Run tests` at commit
   `90291d533325774079e1e26a5b09d3a576f5abd6`; it has not reported a failure.
+
+## 2026-07-22 Time Interval Implementation
+
+- Added reusable account-owned calendar intervals, active/mute route
+  assignments, event-time evaluation, route-match audit snapshots, OOM mute
+  correctness, API/WebUI management, and browser/integration coverage.
+- Committed and pushed vpsAdmin revision
+  `02a599dffc71b4c8ae07900de39fe80be18cdd75` on branch
+  `2026-06-15-vpsadmin-events`; `origin/master` is an ancestor of the branch.
+- Quick verification before publication:
+  - application model/routing/OOM/API specs: 55 examples, 0 failures;
+  - focused interval model specs after the limit case: 9 examples, 0 failures;
+  - migration specs in an isolated process: 2 examples, 0 failures;
+  - WebUI PHPUnit: 123 tests, 647 assertions, 0 failures;
+  - CI selection: 16 tests, 55 assertions, 0 failures;
+  - migration coverage, API/WebUI locale health, RuboCop, Nixfmt,
+    PhpCsFixer, and all enabled pre-commit hooks passed.
+- Migration specs must remain in their dedicated workflow. An attempted API
+  engine topic mapping was removed because that workflow deliberately excludes
+  migration specs to preserve database-process isolation.
+- A direct `git commit` outside the development shell invoked active hooks but
+  lacked Nix-provided binaries. Re-running the exact commit as
+  `nix develop .#vpsadmin --command git commit -F FILE` passed every hook; this
+  is consistent with the existing root-devshell Overcommit note.
+- The first schema-generation attempt incorrectly addressed
+  `./tools/test-db` from the API dev shell. The shell automatically enters
+  `api/`, so the correct path is `../tools/test-db`; this behavior is already
+  documented in `notes/vpsadmin/2026-07-20-api-devshell-working-directory.md`.
+
+## 2026-07-22 Time Interval Documentation and Final CI Fixes
+
+- The first current-head vpsAdmin push exposed one RuboCop layout offense in
+  `EventTimeInterval`. Commit `50c549797c41c465ab0ebc93d18776aa9c1c0234`
+  fixed it; full RuboCop inspected 2,135 files without offenses, the focused
+  interval specs passed 9 examples, and every enabled hook passed.
+- The aggregate CI run `29932180850` at `50c549797` failed two newly added
+  integration assertions. Its failed logs and downloaded VM/Playwright
+  artifacts were inspected before changing the tests:
+  - the notification-routing test called Active Support's `Array#sole` from a
+    standalone API Ruby process where that extension is not loaded;
+  - the Playwright assertion used an unscoped documentation ID shared by the
+    time-interval heading and sidebar link, causing a strict-mode collision.
+- Commit `91db9d52c59af8ee8e35e7f24b7c4107338b221e`
+  (`tests: make scheduled interval checks portable`) replaces `sole` with
+  explicit cardinality checks and scopes the landmark assertion to page
+  content. Nix parsing, JavaScript syntax, CI selection tests (16 tests and 55
+  assertions), and all enabled commit hooks passed. The commit is pushed to
+  the vpsAdmin feature branch.
+- The capture repository now contains deterministic Czech and English
+  notification screenshots for routes, a receiver, interval editing, route
+  interval assignment, and a scheduled-out event. The ten images were reviewed
+  visually and all inventory checksums validate.
+  - Functional capture/documentation-contract commit:
+    `384491f2d61b76c081e436e05c265ea74563e3cc`.
+  - Final vpsAdmin pin commit:
+    `f20724c` (`captures: pin the reviewed event-system head`).
+  - Full `nix develop -c bin/check` passes: 64 concepts, 128 variants, 128
+    PNGs, 47 controls, 34 paths, 77 KB bindings, and 9 exceptions; contract
+    tests pass 8/50 and annotation tests pass 9/19.
+- A dedicated bridge capture cluster was used under slug
+  `2026-06-15-vpsadmin-events-captures` with checked-free addresses. The
+  services seed and node refresh completed against the final runtime. A durable
+  concurrency note is in
+  `notes/vpsadmin-kb-captures/2026-07-22-parallel-bridge-clusters.md`.
+- Final KB candidates were built from guarded production sources:
+  - create `navody:notifikace` and `manuals:notifications`;
+  - replace the obsolete e-mail-role and advanced e-mail configuration sections
+    in `navody:vps:uzivatele` and `manuals:vps:users`;
+  - create five checksum-pinned notification media objects per language.
+- Release manifests are
+  `work/2026-06-15-vpsadmin-events/kb-release-cs.yml` and
+  `work/2026-06-15-vpsadmin-events/kb-release-en.yml`. Both use schema 3,
+  create-only policies for the new pages/media, update policies for the two
+  existing pages, and informative localized production summaries. No
+  production KB write has been made.
+- Top-level KB tooling now supports guarded new pages, structural page
+  replacements, and selected checksum-verified capture media. Quick tests pass:
+  11 runs/56 assertions for contract tools and 22 runs/67 assertions for KB
+  staging/release behavior.
+- The development `vpsadminServices` configuration pin was regenerated through
+  `confctl` and committed as `ebf11687` at exact vpsAdmin revision
+  `91db9d52c59af8ee8e35e7f24b7c4107338b221e`. Production and staging pins are
+  unchanged. The configuration worktree retains only its pre-existing ignored
+  local cache directories.
+- Pending before long integration/staging: mandatory standalone change review,
+  focused reruns of `alerts/notification-routing` and `webui#support-pages`,
+  current-head GitHub Actions, repository branch pushes, and staging of both KB
+  manifests. Production promotion remains explicitly out of scope without
+  direct user approval.
