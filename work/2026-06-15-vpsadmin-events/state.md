@@ -12277,3 +12277,47 @@ GitHub Actions after final pushes:
   workers can ignore interval assignments during a mixed-version rollout; and
   locking has focused model and database coverage but no threaded concurrency
   stress test.
+
+## 2026-07-22 Long Integration Follow-up
+
+- `./test-runner.sh test alerts/notification-routing` first exposed a defect in
+  the new scheduled-suppression example: exception-message interpolation ran in
+  the outer test evaluator, where `deliveries` and `matches` did not exist. The
+  embedded API Ruby now uses string concatenation for those diagnostics. The
+  final rerun passed both examples and the complete test script in 373.68
+  seconds.
+- `./test-runner.sh test 'webui#support-pages'` exposed two successive scope
+  mistakes in the new matched-route assertion:
+  - the documentation ID is intentionally rendered on the matched-routes
+    heading, not inside the following table;
+  - the shared `rowWithText` helper searches for a table below its scope and
+    therefore cannot be passed an already selected table.
+- The final Playwright assertion anchors on the documented heading, selects its
+  following table, and locates the route row directly within that table. The
+  final bridge-network rerun passed the complete support-pages script, including
+  all ten Playwright cases, in 1022.45 seconds. The two failed attempts were
+  investigated from their retained Playwright error contexts and traces; nine
+  unaffected cases passed on each attempt.
+- Each vpsAdmin amendment ran inside `nix develop .#vpsadmin`; all pre-commit
+  hooks passed. One initial ambient-shell amend attempt was rejected because
+  Nixfmt, RuboCop, PHP CS Fixer, gettext, and MariaDB were unavailable; it made
+  no commit and was replaced by the successful Nix-shell invocation.
+- Final post-integration heads are:
+  - vpsAdmin `394064e71baaed8b3ab96ebbefac4b81f1f5520d`;
+  - vpsadmin-kb-captures
+    `22c57638bf3ee4a9b6842a900308be24ff25bfca`;
+  - vpsfree-cz-configuration
+    `f3d4a2fa9219d7ade59737bf5f1c71c6fd736bb0`.
+- vpsAdmin was force-pushed from reviewed head `4eb064dd` to `394064e71` with
+  an exact lease so Nix could compute immutable downstream hashes. The capture
+  flake now pins that exact revision and its full `nix develop -c bin/check`
+  passes: 47 controls, 34 paths, 35 concepts, 8 semantic selectors; 77
+  annotation bindings and 9 exceptions; test sets 8/50 and 9/19; 64 concepts,
+  128 variants, and 128 PNGs.
+- The prior generated configuration pin was replaced from its base with one
+  `confctl inputs channel set --commit vpsadmin vpsadmin 394064e71...`
+  commit. Repository hooks passed. Only `vpsadminServices` moved from
+  `90291d53` to `394064e71`; production and staging remain on `88f03da4`.
+- Capture, configuration, workspace, and KB review staging remain pending until
+  the independent reviewer validates this post-review test-only delta and the
+  updated exact pins.
