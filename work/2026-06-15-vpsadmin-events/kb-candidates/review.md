@@ -42,11 +42,11 @@ Annotation tags: 16
 | --- | --- | --- | --- |
 | cs | `notifications/routes` | cs:screenshots:vpsadmin:notifications:routes.png | `94738ad34c61dc11edc068dbfe9bb416487655af8f69c6759a1d6c77dd9cd297` |
 | cs | `notifications/receiver` | cs:screenshots:vpsadmin:notifications:receiver.png | `7161a9b1f6c08a3f6a1a327e2fd1bbfa32b2254c1b12534b38b4e9e27acf21ce` |
-| cs | `notifications/time-interval` | cs:screenshots:vpsadmin:notifications:time-interval.png | `4ab5ef2b8b89eb82eceb7d975250087eb6ecc24cb36f2fc00e2c8891491d8e48` |
+| cs | `notifications/time-interval` | cs:screenshots:vpsadmin:notifications:time-interval.png | `82277ac2c5ef3cb1ce8e2fad7165ab75e7c38c096f73d6460160d8f015c8e558` |
 | cs | `notifications/route-time-intervals` | cs:screenshots:vpsadmin:notifications:route-time-intervals.png | `ac7e16c9756ae1e3915c3efc8bd1a9860f409599a92e415322ca9850ba1df83f` |
 | cs | `notifications/event-suppressed` | cs:screenshots:vpsadmin:notifications:event-suppressed.png | `13cd491b775f353536d82a1fed33b31e28661565782a5fbee67b2406fa659fc0` |
 | en | `notifications/routes` | en:screenshots:vpsadmin:notifications:routes.png | `bff3b5484a4d6fc19fd0bb97cff07196ef77d16c89777a270248dc45817f99ab` |
 | en | `notifications/receiver` | en:screenshots:vpsadmin:notifications:receiver.png | `9909b554a00c7efab9c996f84c02e5f772b278e3df03adbea49a5859bb1772aa` |
-| en | `notifications/time-interval` | en:screenshots:vpsadmin:notifications:time-interval.png | `2a8e0e96da43c5c634c5755eb05acbebacaa2aa6fc7e812a511d6a9a847314f2` |
+| en | `notifications/time-interval` | en:screenshots:vpsadmin:notifications:time-interval.png | `57b09b3a779a5e96ed10f2d156484b04cd1b86455a9242b9b3c47c23f1082a20` |
 | en | `notifications/route-time-intervals` | en:screenshots:vpsadmin:notifications:route-time-intervals.png | `934adb0770c163bde825ff84eacf68694aaf38cfbf3463ecb03bcf05f229f490` |
 | en | `notifications/event-suppressed` | en:screenshots:vpsadmin:notifications:event-suppressed.png | `bae5860bb0ce09ed73a31c361adfa517904463551758f198cc6ea9ec4742e38a` |

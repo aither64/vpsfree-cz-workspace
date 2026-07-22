@@ -12396,3 +12396,48 @@ GitHub Actions after final pushes:
   - `notifications&action=route_edit&id=1&user=1`.
 - No code change was needed. The reusable diagnosis and update procedure is in
   `notes/vpsadmin/2026-07-22-devcluster-api-revision-mismatch.md`.
+
+## 2026-07-22 Time Zone Selector And Specification Separators
+
+- The interval editor now uses the shared `time_zone_options()` helper already
+  used by the user-profile form. It renders a select control with the target
+  user's zone as its default and UTC as fallback instead of accepting arbitrary
+  text.
+- Repeatable specifications now start with a horizontal-rule separator. CSS
+  hides the separator on the current first specification, so the layout remains
+  correct after JavaScript adds or removes specifications.
+- The WebUI commit remains one feature commit and was amended and pushed with
+  an exact lease at
+  `c0a44e6e43d04877d90acb2144ba0ecbe01a126d`. All enabled hooks passed.
+  The superseded long CI run `29946181479` was canceled because it targeted the
+  replaced revision.
+- Quick verification passed:
+  - PHP syntax and gettext generation/update checks;
+  - focused PHPUnit: 16 tests and 148 assertions;
+  - full WebUI PHPUnit: 124 tests and 655 assertions;
+  - an authenticated live-cluster Playwright check confirmed HTTP 200, a select
+    with 419 options including `Europe/Prague`, and first/second separator
+    display values `none` and `block`.
+- Capture fixtures now give Office hours two specifications so the separator is
+  visible. The Czech and English `notifications/time-interval` checkpoints were
+  regenerated in a dedicated bridge cluster and reviewed visually. Both are
+  821 by 943 pixels and show the time-zone selector and divider.
+- Capture revision metadata, flake input, inventory checksums, and navigation
+  contract all pin the exact vpsAdmin head. Full `nix develop -c bin/check`
+  passes: 47 controls, 34 paths, 35 capture concepts, 8 semantic selectors,
+  77 bindings, 9 exceptions, test sets 8/50 and 9/19, and 128 validated PNGs.
+  The capture commit was amended and pushed with an exact lease at
+  `7f2c6ed4b155d70bf807eccf74e1bd71a63f64c6`.
+- `confctl inputs channel set --commit vpsadmin vpsadmin c0a44e6e...`
+  generated and pushed configuration commit
+  `4a96f1146e80b9ea4da466f08319eecae609b045`. Only the development
+  `vpsadminServices` input moved; production and staging remain unchanged.
+  Nixfmt and rake pre-commit hooks passed.
+- Rebuilt both complete KB candidate trees and release manifests. Only the two
+  interval screenshot objects and their checksums changed. The staging guard
+  refused to overwrite the old create-only media, so this session's owned
+  staging mirror was reset from production and both complete manifests were
+  restaged and verified. Production remains untouched.
+- Pending work: commit the updated workspace candidates and tracking files,
+  run the required fresh standalone review, evaluate current-head CI, and run
+  proportionate final integration coverage.

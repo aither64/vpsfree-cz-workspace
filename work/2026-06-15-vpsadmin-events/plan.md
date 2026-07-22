@@ -1764,3 +1764,22 @@ Compatibility and deployment notes:
 - Rebuild the configuration branch on current master with one final generated
   pin per event-system source input. The temporarily disabled shared
   `dev-clusters/vpsadmin/nix/test.nix` wiring remains untouched.
+
+## Time Interval Form Follow-up
+
+- Render the interval time zone with the existing shared WebUI
+  `time_zone_options()` generator used by the user-profile form. Preserve the
+  target user's time zone as the default, falling back to UTC.
+- Separate dynamically repeatable time specifications with a horizontal rule.
+  Hide the rule on whichever specification is currently first so adding and
+  removing rows preserves the intended visual structure.
+- Extend PHP source regression and Playwright coverage for the select control,
+  representative IANA options, and dynamic separator visibility. Regenerate
+  gettext catalogs and deterministic Czech/English interval screenshots.
+- This is a WebUI-only follow-up: there is no API, database, persisted-state,
+  protocol, or generated-client change. Mixed-version operation and rollback
+  retain the compatibility properties of the existing interval resources.
+- Pin only the development `vpsadminServices` channel and the capture
+  repository to the final vpsAdmin revision. Production and staging inputs
+  remain unchanged. Refresh and verify the complete KB review manifests, but
+  do not write to production without direct user approval.
