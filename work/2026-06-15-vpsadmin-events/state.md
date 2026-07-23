@@ -12623,3 +12623,64 @@ GitHub Actions after final pushes:
   without a reported failure. This is the broad selected suite; the preceding
   base-head run took nearly five hours, so it is expected to continue beyond
   this implementation handoff.
+
+## 2026-07-23 Notification Guide Practical Examples
+
+- The user requested implementation of five bilingual notification recipes:
+  role routing, selected OOM/incident muting, Telegram, suspension SMS, and a
+  signed webhook with a simple receiver and example payload.
+- Confirmed active session `2026-06-15-vpsadmin-events`; the matching
+  `VPSFREE_DEV_SESSION_SLUG` is set.
+- Affected project repository:
+  `worktrees/2026-06-15-vpsadmin-events/vpsadmin-kb-captures` on branch
+  `2026-06-15-vpsadmin-events`, initially clean at
+  `42d8d189e3709636f1040a5cb81133b892ae4f99`.
+- The vpsAdmin worktree is clean at the already pinned runtime revision
+  `681a7a41b66dbae3dbdf4f318c45e9aca4489b9f`; no runtime code change is
+  planned.
+- The shared workspace has unrelated modified and untracked paths. This slice
+  will edit and stage only its existing plan/state, KB annotation plan,
+  generated candidates, and guarded release manifests.
+- The session still owns the global KB staging container. It contains the
+  previously reviewed create-only notification pages and will be reset from
+  production before the rebuilt complete manifests are staged.
+- Production KB pages and media remain untouched.
+- Initial clean screenshot-cluster starts exposed two fixture-ordering
+  constraints, both fixed without bypassing model validation:
+  - Telegram and SMS targets require their delivery methods to be globally
+    configured before database seed validation, while the full API runtime
+    notification config is normally materialized only after that seed.
+    Screenshot topology now supplies an inert minimal seed config and
+    non-delivering `example.test` provider settings.
+  - the seed runs in database setup and again as a follow-up service. On its
+    second idempotent pass, the new broad account-role route matched the
+    existing scheduled-out test event. Its inactive non-continuing route now
+    precedes broad additive routes, preserving the intended suppressed event.
+- Reusable details are recorded in
+  `notes/vpsadmin-kb-captures/2026-07-23-notification-method-fixtures.md`.
+- The final seed helper uses normal model validation. A services update reran
+  both `vpsadmin-database-setup.service` and
+  `vpsadmin-devcluster-seed.service` successfully after the temporary
+  per-target delivery-method validation bypass was removed.
+- Generated and visually reviewed ten new bilingual screenshots:
+  role routing, raw OOM muting, Telegram, SMS, and webhook. The route capture
+  helper collapses unrelated lifecycle/interval sections so the full route
+  form and matcher table fit in one image without clipping.
+- Rebuilt the guarded KB candidate set: four changed pages, 18 navigation
+  annotations, and 20 media objects. Each Czech/English release manifest
+  contains two pages and ten media objects. The incident codename lookup is
+  classified as an Event Log navigation path; the target-specific Telegram
+  pairing link is classified as an external-link exception.
+- Quick capture-repository verification passed:
+  - `nix develop -c bin/check`: 48 controls, 34 paths, 40 capture concepts,
+    13 semantic selectors, 77 bindings, 9 exceptions, test suites 8/50 and
+    9/19, and 138 validated PNGs;
+  - clean twice-run screenshot seed and a follow-up services update both
+    passed with normal target validation;
+  - all ten new images passed visual inspection and `git diff --check`.
+- Candidate verification passed against the complete guarded production
+  snapshot: 77 bindings and 9 exceptions. Both generated release manifests
+  parse as YAML. Production remains untouched.
+- Capture repository commit
+  `13ad6893dff0a0645ace717ac7ff5c6d23304212` contains the deterministic
+  fixtures, contract changes, and bilingual screenshots.

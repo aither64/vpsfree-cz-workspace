@@ -1838,3 +1838,30 @@ Compatibility and deployment:
 - The HaveAPI filename fix changes only generated filenames whose unsuffixed
   names would end in `_test.go`; generated Go types and API behavior are
   unchanged. Existing generated clients can adopt it independently.
+
+## Notification Guide Practical Examples
+
+- Extend the guarded Czech `navody:notifikace` and English
+  `manuals:notifications` candidates with five practical recipes:
+  role-based routing, selected-event muting, Telegram delivery, suspension
+  SMS, and a signed webhook.
+- Keep normal e-mail delivery for role, Telegram, SMS, and webhook examples by
+  enabling route continuation. Put mute routes first and disable continuation
+  so they also stop later custom and default routes.
+- Document exact route selectors and matchers, including transient raw OOM
+  matching by VPS, stage, and cgroup; incident matching by VPS and codename;
+  `monitoring.*`; suspension event types; and `vps.resources_changed`.
+- Add five deterministic screenshot concepts per language: role route, OOM
+  mute route, paired Telegram receiver, verified SMS receiver, and signed
+  webhook receiver. Fixtures use only reserved/example identities and never
+  contact providers.
+- Show a dependency-free Python 3 webhook server that verifies
+  `X-VpsAdmin-Signature-256`, handles the existing webhook JSON contract, and
+  returns a successful 2xx response.
+- Rebuild the complete guarded candidate trees and checksummed manifests,
+  restage both languages in the session-owned KB staging mirror, and leave
+  production untouched.
+- This slice changes documentation and reproducible captures only. It adds no
+  runtime API, schema, protocol, client, or deployment change and remains
+  pinned to vpsAdmin revision
+  `681a7a41b66dbae3dbdf4f318c45e9aca4489b9f`.

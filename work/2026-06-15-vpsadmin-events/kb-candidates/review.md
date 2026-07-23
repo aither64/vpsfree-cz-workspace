@@ -2,8 +2,8 @@
 
 Changed pages: 4
 New pages: 2
-Selected media: 10
-Annotation tags: 16
+Selected media: 20
+Annotation tags: 18
 
 | Language | Page | Semantic path | Count | Existing text | Candidate text |
 | --- | --- | --- | ---: | --- | --- |
@@ -16,12 +16,14 @@ Annotation tags: 16
 | cs | navody:notifikace | `notifications.receivers.open` | 1 | Notifikace → Příjemci | <vpsadmin-nav id="notifications.receivers.open">Notifikace → Příjemci</vpsadmin-nav> |
 | cs | navody:notifikace | `notifications.time-intervals.open` | 1 | Notifikace → Časové intervaly | <vpsadmin-nav id="notifications.time-intervals.open">Notifikace → Časové intervaly</vpsadmin-nav> |
 | cs | navody:notifikace | `notifications.route-time-intervals.open` | 1 | Notifikace → Routy → upravit routu | <vpsadmin-nav id="notifications.route-time-intervals.open">Notifikace → Routy → upravit routu</vpsadmin-nav> |
+| cs | navody:notifikace | `notifications.event-route-matches.open` | 1 | z detailu skutečného incidentu v přehledu událostí | <vpsadmin-nav id="notifications.event-route-matches.open">z detailu skutečného incidentu v přehledu událostí</vpsadmin-nav> |
 | cs | navody:notifikace | `notifications.event-route-matches.open` | 1 | Notifikace → Události → detail události | <vpsadmin-nav id="notifications.event-route-matches.open">Notifikace → Události → detail události</vpsadmin-nav> |
 | en | manuals:notifications | `notifications.open` | 1 | main Notifications menu | <vpsadmin-nav id="notifications.open">main Notifications menu</vpsadmin-nav> |
 | en | manuals:notifications | `notifications.routes.open` | 1 | at Notifications → Routes. | at <vpsadmin-nav id="notifications.routes.open">Notifications → Routes</vpsadmin-nav>. |
 | en | manuals:notifications | `notifications.receivers.open` | 1 | Notifications → Receivers | <vpsadmin-nav id="notifications.receivers.open">Notifications → Receivers</vpsadmin-nav> |
 | en | manuals:notifications | `notifications.time-intervals.open` | 1 | Notifications → Time intervals | <vpsadmin-nav id="notifications.time-intervals.open">Notifications → Time intervals</vpsadmin-nav> |
 | en | manuals:notifications | `notifications.route-time-intervals.open` | 1 | Notifications → Routes → edit route | <vpsadmin-nav id="notifications.route-time-intervals.open">Notifications → Routes → edit route</vpsadmin-nav> |
+| en | manuals:notifications | `notifications.event-route-matches.open` | 1 | from the detail of a real incident in the event log | <vpsadmin-nav id="notifications.event-route-matches.open">from the detail of a real incident in the event log</vpsadmin-nav> |
 | en | manuals:notifications | `notifications.event-route-matches.open` | 1 | Notifications → Event log → event detail | <vpsadmin-nav id="notifications.event-route-matches.open">Notifications → Event log → event detail</vpsadmin-nav> |
 
 ## Explicit exceptions
@@ -33,20 +35,30 @@ Annotation tags: 16
 
 | Language | Page | SHA-256 |
 | --- | --- | --- |
-| cs | navody:notifikace | `14aef634e804214ef91ff8de3afce26c664c10b37d7f8464aa9d75064e055e8a` |
-| en | manuals:notifications | `1a7c6e75549e0ef5a6f36d4183d2be30a4a7b3c4ce4d97544d39d48b1b84165a` |
+| cs | navody:notifikace | `4c653cbcf8975513407dc6290a1ce4a04f98c8bac199361797b14e3740e6d123` |
+| en | manuals:notifications | `c268652e9e509e117f95d7cc8ef2dd071ad881c14c0d28205f84573714226409` |
 
 ## Selected capture media
 
 | Language | Capture | Media ID | SHA-256 |
 | --- | --- | --- | --- |
-| cs | `notifications/routes` | cs:screenshots:vpsadmin:notifications:routes.png | `94738ad34c61dc11edc068dbfe9bb416487655af8f69c6759a1d6c77dd9cd297` |
+| cs | `notifications/routes` | cs:screenshots:vpsadmin:notifications:routes.png | `ce112aff059e9f6e516b53a7f6fe183495a255aa92fe7949cd9de306fae60057` |
 | cs | `notifications/receiver` | cs:screenshots:vpsadmin:notifications:receiver.png | `7161a9b1f6c08a3f6a1a327e2fd1bbfa32b2254c1b12534b38b4e9e27acf21ce` |
 | cs | `notifications/time-interval` | cs:screenshots:vpsadmin:notifications:time-interval.png | `82277ac2c5ef3cb1ce8e2fad7165ab75e7c38c096f73d6460160d8f015c8e558` |
 | cs | `notifications/route-time-intervals` | cs:screenshots:vpsadmin:notifications:route-time-intervals.png | `ac7e16c9756ae1e3915c3efc8bd1a9860f409599a92e415322ca9850ba1df83f` |
-| cs | `notifications/event-suppressed` | cs:screenshots:vpsadmin:notifications:event-suppressed.png | `13cd491b775f353536d82a1fed33b31e28661565782a5fbee67b2406fa659fc0` |
-| en | `notifications/routes` | en:screenshots:vpsadmin:notifications:routes.png | `bff3b5484a4d6fc19fd0bb97cff07196ef77d16c89777a270248dc45817f99ab` |
+| cs | `notifications/event-suppressed` | cs:screenshots:vpsadmin:notifications:event-suppressed.png | `2f848ed07d69c6925ff78ea02420fd36ef253857058495de7ca220464a6f83e0` |
+| cs | `notifications/example-role-routing` | cs:screenshots:vpsadmin:notifications:example-role-routing.png | `25d5ff584f17b287e00d5e625398adae244866a4c28b9f6c05cf3aabe0d2838a` |
+| cs | `notifications/example-mute-oom` | cs:screenshots:vpsadmin:notifications:example-mute-oom.png | `204b4fe0db30630b40df5b9df64617d564b886e873c86608ec8ccaf4adf63d47` |
+| cs | `notifications/example-telegram` | cs:screenshots:vpsadmin:notifications:example-telegram.png | `43bbb3dd4cd01238408eae58058f7ad1e945f616c4187287ac10fd543680b14c` |
+| cs | `notifications/example-sms` | cs:screenshots:vpsadmin:notifications:example-sms.png | `bf6b307039367d90feb5d771595142a81a1219ed67ab37e486149cd460f1039e` |
+| cs | `notifications/example-webhook` | cs:screenshots:vpsadmin:notifications:example-webhook.png | `cb9f9fbb752087371b89bb3037722f6ca0857f16beca8ba043a8f55a5ffc2fc4` |
+| en | `notifications/routes` | en:screenshots:vpsadmin:notifications:routes.png | `5ba10809dfcf8ddbbdfb1e55ead3af167688f40eea9358e16b7450231ef2f77a` |
 | en | `notifications/receiver` | en:screenshots:vpsadmin:notifications:receiver.png | `9909b554a00c7efab9c996f84c02e5f772b278e3df03adbea49a5859bb1772aa` |
 | en | `notifications/time-interval` | en:screenshots:vpsadmin:notifications:time-interval.png | `57b09b3a779a5e96ed10f2d156484b04cd1b86455a9242b9b3c47c23f1082a20` |
 | en | `notifications/route-time-intervals` | en:screenshots:vpsadmin:notifications:route-time-intervals.png | `934adb0770c163bde825ff84eacf68694aaf38cfbf3463ecb03bcf05f229f490` |
-| en | `notifications/event-suppressed` | en:screenshots:vpsadmin:notifications:event-suppressed.png | `bae5860bb0ce09ed73a31c361adfa517904463551758f198cc6ea9ec4742e38a` |
+| en | `notifications/event-suppressed` | en:screenshots:vpsadmin:notifications:event-suppressed.png | `166279cb37cbf4c0242f39c3b4b7ddb561431c6cbdfdcee0e08adb3b5b7011b4` |
+| en | `notifications/example-role-routing` | en:screenshots:vpsadmin:notifications:example-role-routing.png | `bbb34564628742d1cbbf9afdc254d321f4def422fe5e1076a17145c85ba2c88c` |
+| en | `notifications/example-mute-oom` | en:screenshots:vpsadmin:notifications:example-mute-oom.png | `b11e3a68b5840a558a6fab0667e2f6b12d14c3cabf51344d77b4927f1756199a` |
+| en | `notifications/example-telegram` | en:screenshots:vpsadmin:notifications:example-telegram.png | `a417fdb482b6a83c11b6b10eb7eabde3eb7b8077b5ffc8c34bb29c4beb3bca8d` |
+| en | `notifications/example-sms` | en:screenshots:vpsadmin:notifications:example-sms.png | `f4f90bf2b3e4d237725a646228f80b46e7846faab1ed6d08daf44862dd96dc09` |
+| en | `notifications/example-webhook` | en:screenshots:vpsadmin:notifications:example-webhook.png | `711feffe549a7cfa1d3051055035addfb6a02db86226832022919a781764329c` |
