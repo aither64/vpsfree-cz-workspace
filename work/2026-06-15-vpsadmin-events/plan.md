@@ -1815,6 +1815,10 @@ Design decisions:
   notification routes.
 - Regenerate `vpsadmin-go-client` from the resulting API contract. Removing the
   OOM rule resource and fields is an intentional client-breaking change.
+- Fix the HaveAPI Go generator so resources or actions named `test` remain
+  normal package sources instead of being hidden by Go's `_test.go` filename
+  convention. Use a collision-resistant suffix so legitimate sibling API
+  names cannot overwrite the rewritten source.
 
 Compatibility and deployment:
 
@@ -1831,3 +1835,6 @@ Compatibility and deployment:
   the limit.
 - No vpsAdminOS, RabbitMQ, notification dispatcher, or persisted raw-event
   protocol changes are required.
+- The HaveAPI filename fix changes only generated filenames whose unsuffixed
+  names would end in `_test.go`; generated Go types and API behavior are
+  unchanged. Existing generated clients can adopt it independently.

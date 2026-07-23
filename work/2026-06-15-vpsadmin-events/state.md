@@ -12511,8 +12511,8 @@ GitHub Actions after final pushes:
 - The shared workspace contains unrelated modified and untracked files. This
   slice will stage and commit only its initiative plan/state and any generated
   KB candidate artifacts.
-- Implementation is in progress. Planned affected repositories are
-  `vpsadmin`, `vpsadmin-go-client`, and `vpsadmin-kb-captures`.
+- Planned affected repositories are `vpsadmin`, `vpsadmin-go-client`,
+  `vpsadmin-kb-captures`, and `haveapi`.
 
 ### OOM Cutover Implementation
 
@@ -12555,11 +12555,11 @@ GitHub Actions after final pushes:
 - Created worktree
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin-go-client`
   on branch `2026-06-15-vpsadmin-events` from
-  `1d9240f27dd228f22263ed76f24c5503778ce46a`.
+  `1d9240f3d27b5831baf3694baab5fe06294875d8`.
 - Created supporting tool worktree
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/haveapi`
   on branch `2026-06-15-vpsadmin-events` from
-  `e3749669d6034d529095ccbd3a40148fcb243a27`; it has no source changes.
+  `e3749669d6034d529095ccbd3a40148fcb243a27`.
 - Regenerated into a fresh directory against the local vpsAdmin API so stale
   removed-resource files were deleted as well as new files generated.
   HaveAPI 0.29 currently generates a `Client.Language` property that collides
@@ -12567,11 +12567,22 @@ GitHub Actions after final pushes:
   used HaveAPI tag `v0.28.0`, matching the previous generated-client API.
   Reusable details are in
   `notes/vpsadmin-go-client/2026-07-23-haveapi-i18n-language-collision.md`.
-- `CGO_ENABLED=0 go test ./...` passed after `go fmt ./...`.
-- Go client commit `fed7dc302ac5a3fd1d59a70629f0345ab160eec2` is
+- The generated Event `test` action initially landed in
+  `resource_event_action_test.go`, which Go excluded from normal builds.
+  HaveAPI commit `6bd391b9737d40d4f678c9c4e3cda6dd2e4f504d` fixes
+  reserved `_test.go` names with a collision-resistant hash suffix and is
+  pushed to `origin/2026-06-15-vpsadmin-events`.
+- HaveAPI generator integration coverage passed at the current feature head
+  (7 examples) and on an exact `v0.28.0` plus fix cherry-pick (6 examples).
+  Both suites include normal-package `go build`; the current suite also
+  verifies that a legitimate `test_generated` sibling stays distinct.
+- `go fmt ./...`, `CGO_ENABLED=0 go build ./...`, and
+  `CGO_ENABLED=0 go test ./...` passed for the regenerated client.
+- Go client commit `22a931309cc4320d1114b1961f1cab2d46a9a7a3` is
   pushed to `origin/2026-06-15-vpsadmin-events`. The generated API no longer
   contains OOM report rule types or the implicit VPS counter and includes the
-  event/notification resources.
+  event/notification resources. Its Event `test` action is emitted as
+  `resource_event_action_test_a6159540.go`.
 
 ### WebUI Documentation Contract
 
@@ -12587,5 +12598,28 @@ GitHub Actions after final pushes:
   Production and KB staging were not touched.
 - Capture commit `42d8d189e3709636f1040a5cb81133b892ae4f99` is
   pushed to `origin/2026-06-15-vpsadmin-events`.
-- Next: run the mandatory standalone change review on the three committed
-  repository heads before longer integration coverage.
+- Mandatory standalone review completed against the four final committed
+  repository heads with no remaining Blocking, Important, or Advisory
+  findings.
+  - The reviewer identified a reusable HaveAPI filename collision in the
+    first `_generated.go` fix. The final hash-suffixed implementation and
+    `test_generated` sibling regression resolved it.
+  - The reviewer confirmed migration ordering, hit counts, enabled mute
+    receivers, raw-event matchers, supervisor mute-plan semantics, generated
+    client buildability, and the exact documentation pin.
+  - Accepted residual risks are the intentional migrate-before-processes
+    deployment order, backup-only legacy rule restoration, the route cap for
+    accounts migrated above 100 routes, and the absence of an OOM-specific KB
+    screenshot binding.
+- Targeted VM integration
+  `./test-runner.sh test 'webui#support-pages'` passed: its single script and
+  Playwright example succeeded, covering user/admin OOM report pages, absence
+  of the removed rule filter, and old-rule URL redirects.
+- All seven HaveAPI final-head GitHub workflows passed, including the Go
+  generator RSpec matrix on Ruby 3.2, 3.3, and 3.4.
+- vpsAdmin final-head migration specs, WebUI PHPUnit, RuboCop, libnodectld,
+  i18n, and the complete core/full API topic matrix passed.
+- Aggregate CI run `30002952844` remains in progress in its main test step
+  without a reported failure. This is the broad selected suite; the preceding
+  base-head run took nearly five hours, so it is expected to continue beyond
+  this implementation handoff.
