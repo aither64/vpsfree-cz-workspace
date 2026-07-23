@@ -12743,3 +12743,30 @@ GitHub Actions after final pushes:
 - The unpushed capture commit was amended with all review corrections and the
   final deterministic assets. The corrected capture head is
   `55e0b47832d37a8c2952e4ff5c1b0fd31ab00e0d`.
+
+### Notification Guide Final Review And Staging
+
+- The same standalone reviewer completed the mandatory final pass against
+  capture head `55e0b47832d37a8c2952e4ff5c1b0fd31ab00e0d`
+  and workspace head `42dfb2535d1fb1e77b0353698eb8de6aa56f8f7e`.
+  The verdict is pass with no Blocking, Important, or Advisory findings.
+- The reviewer independently repeated the capture contract, syntax, inventory,
+  annotation, manifest/hash, JSON, Python, and whitespace checks and confirmed
+  both repository heads were clean and correctly scoped. The reviewer also
+  confirmed that this documentation-only slice has no runtime, schema, API,
+  persistent-state, mixed-version, or deployment impact.
+- Both production wiki identities authenticated successfully before staging.
+  No production page or media write was performed.
+- Reset the session-owned KB staging mirror from production, replacing the
+  older pending notification draft. Staged the complete Czech and English
+  manifests in that order. Each contains two pages and ten media objects.
+  Both manifests then passed `kb-release verify`, including two warmed
+  Czech/English page pairs.
+- The review host exposes HTTP rather than HTTPS. Direct HTTP checks returned
+  200 for both rendered pages and representative Czech/English media. Both
+  pages render their practical-examples heading, notification images, and a
+  link to the peer-language page. Review URLs:
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications`.
+- The exact staged release remains pending in the session-owned container for
+  user review. Production promotion requires separate direct user approval.
