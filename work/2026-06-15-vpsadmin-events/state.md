@@ -12770,3 +12770,13 @@ GitHub Actions after final pushes:
   - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications`.
 - The exact staged release remains pending in the session-owned container for
   user review. Production promotion requires separate direct user approval.
+- Pushed capture head
+  `55e0b47832d37a8c2952e4ff5c1b0fd31ab00e0d` to
+  `origin/2026-06-15-vpsadmin-events` and workspace staging-state head
+  `7b0ecd5c0ac013e931b8dd3a09f94ceb050d01a8` to `origin/master`.
+  Both repositories have no GitHub Actions workflows, so the pushed heads
+  created no CI runs.
+- Stopped only the disposable
+  `2026-06-15-vpsadmin-events-captures` bridge cluster and removed its GC root.
+  The verified KB review container remains running and owned by this session
+  so the staged pages stay available for review.
