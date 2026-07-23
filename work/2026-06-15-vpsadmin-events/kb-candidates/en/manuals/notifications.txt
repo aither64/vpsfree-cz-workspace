@@ -48,14 +48,14 @@ First create and verify two e-mail targets, then add them to **Account contact**
 Use the **Mute** receiver and two separate routes. This example mutes OOM reports for VPS ''123'' from user scopes, and incident reports for the same VPS with codename ''abuse-feed'':
 
 ^ Event type ^ Matchers (all must match) ^ Receiver ^ Continue ^
-| ''vps.oom_report'' | ''vps_id == 123''; ''stage == raw''; ''cgroup =* /user.slice/*.scope'' | Mute | no |
+| ''vps.oom_report'' | ''vps_id == 123''; ''stage == raw''; ''cgroup =* /user.slice/**/*.scope'' | Mute | no |
 | ''vps.incident_report'' | ''vps_id == 123''; ''codename == abuse-feed'' | Mute | no |
 
 The ''=*'' operator means **matches glob**. The cgroup value is the full path without a ''/sys/fs/cgroup'' prefix. Incident codenames are assigned by their source; copy the exact value <vpsadmin-nav id="notifications.event-route-matches.open">from the detail of a real incident in the event log</vpsadmin-nav>.
 
 {{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Muting OOM reports by cgroup}}
 
-The ''stage == raw'' matcher is essential for OOM reports. It evaluates the route as each report arrives and marks the report ignored, so it does not enter a later notification batch. This transient ''raw'' event is not stored in the event log. Without the ''stage'' matcher, the route could mute the resulting notification but would not prevent the report from being batched.
+The ''stage == raw'' matcher limits the route to evaluation when each OOM report arrives. Muting at this stage marks a matching report ignored, so it does not enter a later notification batch. This transient ''raw'' event is not stored in the event log. A route without the ''stage'' matcher would also match the ''raw'' stage, but it could additionally apply to the later batched event at the ''notification'' stage.
 
 Put mute routes before general delivery routes and leave **Continue** disabled. Use **Test event** and the route hit count to check the configuration; use values from a real OOM report when checking a cgroup path.
 
@@ -151,6 +151,7 @@ The request body looks like this (IDs and values are illustrative):
     "subject": "VPS #123 resources changed",
     "summary": "Memory upgrade",
     "payload": {
+      "roles": ["admin"],
       "vps_id": 123,
       "vps_hostname": "web.example",
       "cpu": 4,

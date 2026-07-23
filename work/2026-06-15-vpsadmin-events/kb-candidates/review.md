@@ -35,30 +35,30 @@ Annotation tags: 18
 
 | Language | Page | SHA-256 |
 | --- | --- | --- |
-| cs | navody:notifikace | `4c653cbcf8975513407dc6290a1ce4a04f98c8bac199361797b14e3740e6d123` |
-| en | manuals:notifications | `c268652e9e509e117f95d7cc8ef2dd071ad881c14c0d28205f84573714226409` |
+| cs | navody:notifikace | `3cd766e6c3963b54352b58621f8109c7d66fba7f080b711cfff531197f06e170` |
+| en | manuals:notifications | `24a4109574fd4bcdb00342a3d6445c344eaac155090291d7f16c51f9eeab72d7` |
 
 ## Selected capture media
 
 | Language | Capture | Media ID | SHA-256 |
 | --- | --- | --- | --- |
-| cs | `notifications/routes` | cs:screenshots:vpsadmin:notifications:routes.png | `ce112aff059e9f6e516b53a7f6fe183495a255aa92fe7949cd9de306fae60057` |
+| cs | `notifications/routes` | cs:screenshots:vpsadmin:notifications:routes.png | `1a6eaceecd87ea6b22bafea466ca1da8cd6e8ee4beb16608c1befffda5bc1a28` |
 | cs | `notifications/receiver` | cs:screenshots:vpsadmin:notifications:receiver.png | `7161a9b1f6c08a3f6a1a327e2fd1bbfa32b2254c1b12534b38b4e9e27acf21ce` |
 | cs | `notifications/time-interval` | cs:screenshots:vpsadmin:notifications:time-interval.png | `82277ac2c5ef3cb1ce8e2fad7165ab75e7c38c096f73d6460160d8f015c8e558` |
 | cs | `notifications/route-time-intervals` | cs:screenshots:vpsadmin:notifications:route-time-intervals.png | `ac7e16c9756ae1e3915c3efc8bd1a9860f409599a92e415322ca9850ba1df83f` |
 | cs | `notifications/event-suppressed` | cs:screenshots:vpsadmin:notifications:event-suppressed.png | `2f848ed07d69c6925ff78ea02420fd36ef253857058495de7ca220464a6f83e0` |
 | cs | `notifications/example-role-routing` | cs:screenshots:vpsadmin:notifications:example-role-routing.png | `25d5ff584f17b287e00d5e625398adae244866a4c28b9f6c05cf3aabe0d2838a` |
-| cs | `notifications/example-mute-oom` | cs:screenshots:vpsadmin:notifications:example-mute-oom.png | `204b4fe0db30630b40df5b9df64617d564b886e873c86608ec8ccaf4adf63d47` |
+| cs | `notifications/example-mute-oom` | cs:screenshots:vpsadmin:notifications:example-mute-oom.png | `79c08386c76538174c38603227300f1a798c7ee36dc330563efcf7676ae6f627` |
 | cs | `notifications/example-telegram` | cs:screenshots:vpsadmin:notifications:example-telegram.png | `43bbb3dd4cd01238408eae58058f7ad1e945f616c4187287ac10fd543680b14c` |
 | cs | `notifications/example-sms` | cs:screenshots:vpsadmin:notifications:example-sms.png | `bf6b307039367d90feb5d771595142a81a1219ed67ab37e486149cd460f1039e` |
 | cs | `notifications/example-webhook` | cs:screenshots:vpsadmin:notifications:example-webhook.png | `cb9f9fbb752087371b89bb3037722f6ca0857f16beca8ba043a8f55a5ffc2fc4` |
-| en | `notifications/routes` | en:screenshots:vpsadmin:notifications:routes.png | `5ba10809dfcf8ddbbdfb1e55ead3af167688f40eea9358e16b7450231ef2f77a` |
-| en | `notifications/receiver` | en:screenshots:vpsadmin:notifications:receiver.png | `9909b554a00c7efab9c996f84c02e5f772b278e3df03adbea49a5859bb1772aa` |
-| en | `notifications/time-interval` | en:screenshots:vpsadmin:notifications:time-interval.png | `57b09b3a779a5e96ed10f2d156484b04cd1b86455a9242b9b3c47c23f1082a20` |
+| en | `notifications/routes` | en:screenshots:vpsadmin:notifications:routes.png | `310470b0e605a6c23c7ac239eb2fae9ef887b1dadda84aab6ca20478fa213c4c` |
+| en | `notifications/receiver` | en:screenshots:vpsadmin:notifications:receiver.png | `dd6ada08a4926e1e114309869c4988b7d4c09bc29c8efb0f183a40b20621ead4` |
+| en | `notifications/time-interval` | en:screenshots:vpsadmin:notifications:time-interval.png | `e15c5dd7ff9527fbb02afc0cee61d6f58b614eb746a18106b6873a2fcdf2b7c1` |
 | en | `notifications/route-time-intervals` | en:screenshots:vpsadmin:notifications:route-time-intervals.png | `934adb0770c163bde825ff84eacf68694aaf38cfbf3463ecb03bcf05f229f490` |
 | en | `notifications/event-suppressed` | en:screenshots:vpsadmin:notifications:event-suppressed.png | `166279cb37cbf4c0242f39c3b4b7ddb561431c6cbdfdcee0e08adb3b5b7011b4` |
 | en | `notifications/example-role-routing` | en:screenshots:vpsadmin:notifications:example-role-routing.png | `bbb34564628742d1cbbf9afdc254d321f4def422fe5e1076a17145c85ba2c88c` |
-| en | `notifications/example-mute-oom` | en:screenshots:vpsadmin:notifications:example-mute-oom.png | `b11e3a68b5840a558a6fab0667e2f6b12d14c3cabf51344d77b4927f1756199a` |
-| en | `notifications/example-telegram` | en:screenshots:vpsadmin:notifications:example-telegram.png | `a417fdb482b6a83c11b6b10eb7eabde3eb7b8077b5ffc8c34bb29c4beb3bca8d` |
-| en | `notifications/example-sms` | en:screenshots:vpsadmin:notifications:example-sms.png | `f4f90bf2b3e4d237725a646228f80b46e7846faab1ed6d08daf44862dd96dc09` |
-| en | `notifications/example-webhook` | en:screenshots:vpsadmin:notifications:example-webhook.png | `711feffe549a7cfa1d3051055035addfb6a02db86226832022919a781764329c` |
+| en | `notifications/example-mute-oom` | en:screenshots:vpsadmin:notifications:example-mute-oom.png | `ebe5b1bdfa5fba75c7959a5e128e4062976b829e8f474c6433686890a64bae6a` |
+| en | `notifications/example-telegram` | en:screenshots:vpsadmin:notifications:example-telegram.png | `6edb25693a674b1ee0876e822efb1f36a45c531424290b2a21bf4c4a65b7c74c` |
+| en | `notifications/example-sms` | en:screenshots:vpsadmin:notifications:example-sms.png | `e53c3935e273c937dc55fea6131fc8112655eee9970ac9d811b79e48be42ee0d` |
+| en | `notifications/example-webhook` | en:screenshots:vpsadmin:notifications:example-webhook.png | `ffd39220fe3b986d530faf156a048bd1452490609cb1d71249266647676d652d` |

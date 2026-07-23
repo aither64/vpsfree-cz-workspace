@@ -12684,3 +12684,62 @@ GitHub Actions after final pushes:
 - Capture repository commit
   `13ad6893dff0a0645ace717ac7ff5c6d23304212` contains the deterministic
   fixtures, contract changes, and bilingual screenshots.
+
+### Notification Guide Mandatory Review Follow-up
+
+- The standalone mandatory reviewer found seven correctness or reproducibility
+  issues in the initial committed guide and capture fixture:
+  - the OOM explanation incorrectly presented `stage = raw` as necessary to
+    prevent batching instead of as a way to limit the route to ingest;
+  - the example webhook payload omitted the serializer-provided `roles` member
+    under `event.payload`;
+  - `/user.slice/*.scope` did not match normal nested user scope paths with
+    pathname-aware glob matching;
+  - Telegram/SMS fixture capability probes could silently skip the exact pinned
+    runtime contract;
+  - SMS Nix configuration used a similar source-text capability probe;
+  - fixture route hit counts accumulated across seed runs;
+  - the suppressed sample event was deleted and recreated on every seed, so its
+    event-detail URL changed.
+- The guide now explains that a route without a stage matcher also sees raw OOM
+  reports and may additionally see the later `notification` stage. Both
+  languages use `/user.slice/**/*.scope`, and both example webhook payloads
+  include `roles` in `event.payload` and the flattened matcher fields.
+- The fixture now configures Telegram and SMS directly against the exact pinned
+  vpsAdmin revision. Fixture-owned routes reset their counters; the retained
+  scheduled sample route represents its single existing event with one hit.
+  The oldest fixture-owned suppressed event is reused and any earlier duplicate
+  samples are removed, keeping its URL stable.
+- A partially reset screenshot cluster retained `/tank/ct/1/private` on a node
+  while the new services database attempted to reuse container ID 1. The whole
+  disposable cluster was reset, its checked-free capture-specific bridge
+  addresses were restored, and a services update completed after the initial
+  node-network race. Reusable recovery details are in
+  `notes/vpsadmin-kb-captures/2026-07-23-reset-stale-node-state.md`.
+- The full unrelated Czech capture pass reached the console scenario and failed
+  because the console did not show its expected start menu. Only notification
+  screenshots are in scope here; all unrelated screenshot churn from that run
+  was restored. The targeted notification scenario completed successfully.
+- Each language was reseeded and captured independently. Two complete
+  Czech/English cycles produced the identical binary diff SHA-256
+  `815f2e94f7456a5477d869df2f5ba75ccdbfd8451d556bcec36b80a2bb8b59b0`.
+  Both route views show the same hit state, and the nested cgroup glob is
+  readable in both OOM route screenshots.
+- Final quick verification after the fixes:
+  - full `nix develop -c bin/check` passes with 48 controls, 34 paths,
+    40 concepts, 13 semantic selectors, 77 bindings, 9 exceptions, test sets
+    8/50 and 9/19, and all 138 PNGs;
+  - Ruby syntax, strict inventory validation, Nix formatting, and
+    `git diff --check` pass;
+  - the guarded candidate checker passes with 77 bindings and 9 exceptions;
+  - both release manifests parse as YAML;
+  - both dependency-free Python webhook examples compile and both example
+    payloads parse as JSON;
+  - an explicit pathname-aware Ruby check confirms the documented `**` glob
+    matches a nested user scope and rejects an unrelated system scope.
+- Rebuilt four guarded candidate pages with 18 annotations and 20 media
+  objects. Each language manifest contains two pages and ten media objects.
+  Production remains untouched.
+- The unpushed capture commit was amended with all review corrections and the
+  final deterministic assets. The corrected capture head is
+  `55e0b47832d37a8c2952e4ff5c1b0fd31ab00e0d`.

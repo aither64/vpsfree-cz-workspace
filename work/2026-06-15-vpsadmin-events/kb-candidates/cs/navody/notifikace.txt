@@ -49,14 +49,14 @@ Volba **Pokračovat** umožní, aby událost s oběma rolemi dorazila na oba kon
 Pro potlačení reportů použijte příjemce **Ztlumit** a dvě samostatné routy. V příkladu se ztlumí OOM reporty VPS ''123'' z uživatelských scope a incidenty stejné VPS s kódovým označením ''abuse-feed'':
 
 ^ Typ události ^ Podmínky (všechny musí platit) ^ Příjemce ^ Pokračovat ^
-| ''vps.oom_report'' | ''vps_id == 123''; ''stage == raw''; ''cgroup =* /user.slice/*.scope'' | Ztlumit | ne |
+| ''vps.oom_report'' | ''vps_id == 123''; ''stage == raw''; ''cgroup =* /user.slice/**/*.scope'' | Ztlumit | ne |
 | ''vps.incident_report'' | ''vps_id == 123''; ''codename == abuse-feed'' | Ztlumit | ne |
 
 Operátor ''=*'' znamená **odpovídá glob vzoru**. Cesta cgroup je úplná cesta bez prefixu ''/sys/fs/cgroup''. Kódové označení incidentu určuje jeho zdroj; správnou hodnotu zkopírujte <vpsadmin-nav id="notifications.event-route-matches.open">z detailu skutečného incidentu v přehledu událostí</vpsadmin-nav>.
 
 {{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Ztlumení OOM reportů podle cgroup}}
 
-Podmínka ''stage == raw'' je u OOM reportů zásadní. Routa se vyhodnotí hned při přijetí jednotlivého reportu a označí jej jako ignorovaný, takže se nezařadí do pozdějšího souhrnného oznámení. Tato přechodná ''raw'' událost se do přehledu událostí neukládá. Bez podmínky ''stage'' by routa mohla ztlumit až výsledné oznámení, ale nezabránila by seskupení reportu.
+Podmínka ''stage == raw'' omezuje routu na vyhodnocení při přijetí jednotlivého OOM reportu. Ztlumení v této fázi označí odpovídající report jako ignorovaný, takže se nezařadí do pozdějšího souhrnného oznámení. Tato přechodná ''raw'' událost se do přehledu událostí neukládá. Routa bez podmínky ''stage'' by také odpovídala fázi ''raw'', ale navíc by se mohla uplatnit na pozdější souhrnnou událost ve fázi ''notification''.
 
 Ztlumující routy umístěte před obecné doručovací routy a ponechte **Pokračovat** vypnuté. Konfiguraci lze ověřit pomocí **Testovací události** a počítadla shod routy; pro ověření cesty cgroup použijte hodnoty ze skutečného OOM reportu.
 
@@ -152,6 +152,7 @@ Tělo požadavku vypadá například takto (ID a hodnoty jsou pouze ilustrační
     "subject": "VPS #123 resources changed",
     "summary": "Memory upgrade",
     "payload": {
+      "roles": ["admin"],
       "vps_id": 123,
       "vps_hostname": "web.example",
       "cpu": 4,
