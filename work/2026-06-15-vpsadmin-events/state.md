@@ -12495,3 +12495,97 @@ GitHub Actions after final pushes:
 - Both staged review URLs return HTTP 200 and both Czech/English release
   manifests re-verify against the staged page pairs and media. Production has
   not been changed.
+
+## 2026-07-23 OOM Report Rule Final Cutover
+
+- The user requested implementation of the planned direct conversion from
+  legacy OOM report rules to event routes.
+- Confirmed active session `2026-06-15-vpsadmin-events`; the matching
+  `VPSFREE_DEV_SESSION_SLUG` is set.
+- vpsAdmin worktree
+  `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin`
+  is clean at `d494ce1c83d864841272c61c7799da9d0c8b076e` and tracks the
+  matching remote feature head.
+- vpsadmin-kb-captures worktree is clean at
+  `37a39e78d60507e7437e824fb2bb8e1a37eb2da5`.
+- The shared workspace contains unrelated modified and untracked files. This
+  slice will stage and commit only its initiative plan/state and any generated
+  KB candidate artifacts.
+- Implementation is in progress. Planned affected repositories are
+  `vpsadmin`, `vpsadmin-go-client`, and `vpsadmin-kb-captures`.
+
+### OOM Cutover Implementation
+
+- vpsAdmin commit
+  `681a7a41b66dbae3dbdf4f318c45e9aca4489b9f` is pushed to
+  `origin/2026-06-15-vpsadmin-events`.
+- Added migration `20260722121000_migrate_oom_report_rules_to_routes` after the
+  complete event schema. It preflights every rule owner and generated default
+  route, creates one muted receiver per account with ignore rules, preserves
+  rule order and hit counts, shifts generated defaults after the migrated
+  routes, verifies route/matcher counts, and then drops the legacy table and
+  columns.
+- The runtime now always plans transient raw `vps.oom_report` events. The
+  resulting route plan alone determines `oom_reports.ignored`; the old rule
+  evaluator, implicit counter, model/API resource, report relation/filter, and
+  WebUI rule forms are removed. Historical `oom_reports.ignored` values remain.
+- The old WebUI `rule_*` actions remain as redirects to notification routes.
+  OOM report list/detail forms no longer expose the removed rule filter or
+  relation.
+- Quick vpsAdmin verification:
+  - migration spec: 4 examples, 0 failures, including ordered overlapping
+    rules, 101-rule conversion, preflight failure, and lossy rollback;
+  - focused normal API/supervisor/transaction specs: 98 examples, 0 failures;
+  - Ruby and PHP syntax checks passed;
+  - API and WebUI i18n health checks passed; WebUI retained its pre-existing
+    embedded-URL warning;
+  - schema regenerated from an empty core database and contains only the
+    intended legacy table/column removals;
+  - migration/spec ownership check and `git diff --check` passed;
+  - all enabled vpsAdmin pre-commit hooks passed: migration specs, Nixfmt,
+    API/WebUI i18n, PHP-CS-Fixer, and RuboCop.
+- A discarded attempt to combine the isolated migration spec with normal
+  application specs produced 98 missing-table failures because the migration
+  harness switches schemas. Running migration and application specs in their
+  supported separate invocations passed. This behavior was already documented
+  in existing workspace notes.
+
+### Generated Go Client
+
+- Created worktree
+  `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin-go-client`
+  on branch `2026-06-15-vpsadmin-events` from
+  `1d9240f27dd228f22263ed76f24c5503778ce46a`.
+- Created supporting tool worktree
+  `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/haveapi`
+  on branch `2026-06-15-vpsadmin-events` from
+  `e3749669d6034d529095ccbd3a40148fcb243a27`; it has no source changes.
+- Regenerated into a fresh directory against the local vpsAdmin API so stale
+  removed-resource files were deleted as well as new files generated.
+  HaveAPI 0.29 currently generates a `Client.Language` property that collides
+  with vpsAdmin's top-level `Language` resource. The successful regeneration
+  used HaveAPI tag `v0.28.0`, matching the previous generated-client API.
+  Reusable details are in
+  `notes/vpsadmin-go-client/2026-07-23-haveapi-i18n-language-collision.md`.
+- `CGO_ENABLED=0 go test ./...` passed after `go fmt ./...`.
+- Go client commit `fed7dc302ac5a3fd1d59a70629f0345ab160eec2` is
+  pushed to `origin/2026-06-15-vpsadmin-events`. The generated API no longer
+  contains OOM report rule types or the implicit VPS counter and includes the
+  event/notification resources.
+
+### WebUI Documentation Contract
+
+- Pinned vpsadmin-kb-captures to exact vpsAdmin revision
+  `681a7a41b66dbae3dbdf4f318c45e9aca4489b9f` in `flake.nix`,
+  `flake.lock`, `captures.json`, and `contract/navigation.yml`.
+- Full `nix develop -c bin/check` passes: 47 controls, 34 paths, 35 capture
+  concepts, 8 semantic selectors, 77 bindings, 9 exceptions, test sets 8/50
+  and 9/19, and 128 validated PNGs.
+- The contract and capture inventory contain no OOM report page, legacy rule
+  control, or OOM screenshot concept. There are therefore no bound Czech or
+  English KB pages and no screenshots to regenerate for this removal.
+  Production and KB staging were not touched.
+- Capture commit `42d8d189e3709636f1040a5cb81133b892ae4f99` is
+  pushed to `origin/2026-06-15-vpsadmin-events`.
+- Next: run the mandatory standalone change review on the three committed
+  repository heads before longer integration coverage.

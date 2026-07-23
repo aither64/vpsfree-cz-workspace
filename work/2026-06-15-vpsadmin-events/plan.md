@@ -1783,3 +1783,51 @@ Compatibility and deployment notes:
   repository to the final vpsAdmin revision. Production and staging inputs
   remain unchanged. Refresh and verify the complete KB review manifests, but
   do not write to production without direct user approval.
+
+## OOM Report Rule Final Cutover
+
+Requested on 2026-07-23: finish replacing OOM report rules with event routes.
+The compatibility fallback is removed in one direct database migration.
+
+Design decisions:
+
+- Move the OOM backfill out of the initial event-table migration into a
+  dedicated migration after the complete event-routing schema.
+- Convert every legacy rule into an ordered top-level `vps.oom_report` route
+  with `vps_id`, `stage = raw`, and `cgroup =*` matchers. Notify rules use the
+  generated default receiver; ignore rules use one enabled muted receiver per
+  account. Routes stop after the first match and inherit the legacy hit count.
+- Insert migrated routes before generated default routes while preserving
+  legacy rule ID order per account. The migration writes rows directly, so all
+  legacy rules are retained even when the resulting account exceeds the normal
+  100-route creation limit.
+- Verify that every source rule has a VPS owner, receiver, route, and three
+  matchers before deleting legacy data. Then drop `oom_report_rules`,
+  `oom_reports.oom_report_rule_id`, and
+  `vpses.implicit_oom_report_rule_hit_count`; retain `oom_reports.ignored`.
+- Always plan a transient raw OOM event in the supervisor and set `ignored`
+  only when the final plan is suppressed by an enabled muted receiver or a
+  matching mute interval. Raw planning records route hit counts but does not
+  persist event or delivery audit rows.
+- Delete the legacy OOM rule model and API resource, the OOM report rule
+  relation/filter, the VPS implicit counter, dead WebUI forms/helpers, and
+  associated localization/tests. Keep old WebUI `rule_*` URLs as redirects to
+  notification routes.
+- Regenerate `vpsadmin-go-client` from the resulting API contract. Removing the
+  OOM rule resource and fields is an intentional client-breaking change.
+
+Compatibility and deployment:
+
+- This is an intentional direct cutover. Database migration must run before
+  the new API and supervisor processes. Brief mixed-version failures or lost
+  OOM reports during deployment are accepted; no expand/contract compatibility
+  layer is retained.
+- Migration rollback recreates only an empty legacy table and empty legacy
+  columns. It cannot reconstruct deleted rule rows, associations, or the
+  discarded implicit hit counter; restoring those values requires a database
+  backup.
+- Accounts migrated above the active-route limit keep all routes and continue
+  routing, but cannot create another route until their active count is below
+  the limit.
+- No vpsAdminOS, RabbitMQ, notification dispatcher, or persisted raw-event
+  protocol changes are required.
