@@ -1910,7 +1910,11 @@ Design decisions:
 - The unmerged migrations and branch history will be rewritten so the final
   series introduces only the final schema and protocol. The direct cutover is
   not mixed-version compatible; deploy from a database backup during a
-  coordinated API/supervisor/dispatcher maintenance window.
+  coordinated maintenance window. Update libnodectld on every affected node
+  before grouped routes are enabled, because old node code neither understands
+  grouping delivery state 9 nor participates in transaction-chain
+  serialization. Then activate the matching API, supervisor, dispatchers,
+  WebUI, templates, and configuration together.
 - Route-selector cleanup and the broader notification KB article split are
   deferred. The visible WebUI change still requires an updated capture
   contract and screenshots, but no KB page or production wiki write.

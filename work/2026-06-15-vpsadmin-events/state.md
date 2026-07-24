@@ -13231,3 +13231,21 @@ GitHub Actions after final pushes:
 - The long OOM integration scenario remains paused until the same standalone
   reviewer accepts this correction pass. Production configuration, running
   services, KB pages, and KB media remain untouched.
+
+### Final Grouping Review Acceptance
+
+- The same standalone reviewer `mandatory_grouping_review` accepted the second
+  correction pass with no Blocking or Important findings and did not run long
+  integration tests.
+- The reviewer independently confirmed the transaction-chain serialization,
+  stale-snapshot protection, abort-first interleaving coverage, coherent
+  generic/OOM commit boundary, exact final-tree match to backup `0556f81e5`,
+  pushed source heads, and downstream capture/configuration pins.
+- One Advisory rollout clarification was accepted into `plan.md`: updated
+  libnodectld must reach every affected node before grouped routes are enabled,
+  because old node code neither understands grouping delivery state 9 nor
+  participates in the new transaction-chain serialization. Matching API,
+  supervisor, dispatchers, WebUI, templates, and configuration then activate
+  together.
+- The mandatory review gate is cleared. A fresh focused
+  `alerts/oom-report-group-and-prune` integration scenario may now run.
