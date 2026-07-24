@@ -32,14 +32,167 @@
 
 ## Status
 
-The coordinated release is complete. HaveAPI 0.29.5, vpsadmin-client 4.2.0,
-and vpsfree-client 0.20.0 are published and verified. vpsAdmin `master` and
-lightweight tag `v4.2.0` point to
-`f01121b3ce8e809858d5443bb1306d72765b8b9b`; vpsfree-client `master` and
-lightweight tag `v0.20.0` point to
-`936536f59e34ba3be5a7de19d7c0ffc39b3839cc`. A clean public-registry install
-loads the exact 0.20.0/4.2.0/0.29.5 dependency chain. No server deployment was
-performed.
+The original coordinated release is complete: HaveAPI 0.29.5,
+vpsadmin-client 4.2.0, and vpsfree-client 0.20.0 are published and verified.
+A follow-up is in progress to fix resource-name collisions exposed by the new
+dependency chain. HaveAPI 0.29.6 must be completed and released before any
+vpsAdmin or vpsfree-client dependency update begins. No server deployment is
+planned.
+
+## Follow-up worktrees
+
+- `repos/haveapi.git`
+  - Branch `2026-07-24-haveapi-resource-name-collisions`
+  - Worktree
+    `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/haveapi-collisions`
+  - Branch `2026-07-24-haveapi-resource-name-collisions-0.29`
+  - Worktree
+    `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/haveapi-collisions-0-29`
+- `repos/haveapi-client-php.git`
+  - Branch `2026-07-24-haveapi-resource-name-collisions`
+  - Worktree
+    `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/haveapi-client-php-collisions`
+- Downstream follow-up branches and worktrees will be created from the public
+  release heads after HaveAPI 0.29.6 is published.
+
+## Follow-up status
+
+- Fetched current upstream heads.
+- Confirmed HaveAPI master at
+  `efd0314bee237aa3df5f0189eddc7267c05c0fd1` and `haveapi-0.29` at
+  `2d9edf01cf39963e6fd48282ae6c137c04e692dc`.
+- Confirmed the standalone PHP mirror remote master at
+  `03201f582e37abc586a3ac308308808b0b663539`.
+- Created fresh follow-up worktrees without rewriting the already released
+  branches or tags.
+- Implemented and committed the master-side HaveAPI changes as five focused
+  commits:
+  - `c8ad88ef6f24fdda33a4b3e47b8555a2c08e9081`
+    `clients/ruby: traverse association resource registry`
+  - `f62349c9b1174e284cad4063035b52fac28c9294`
+    `clients/ruby: keep language configuration in options`
+  - `89aaa8f32524012cc257474ffea016782f26d604`
+    `clients/js: traverse association resource registry`
+  - `c8c786f7f27fa4d621019641c0ee5dbe5916521c`
+    `clients/go: allocate collision-safe API members`
+  - `42b80198055c1bc24a266a566d6896e081840ab1`
+    `clients/php: cover language resource associations`
+- Added the identical PHP regression to the standalone mirror in
+  `1089e33dbf54c0af70465460b20e09d1c1dace12`.
+- Installed and signed the HaveAPI Overcommit hooks before committing. The
+  i18n, RuboCop, and PHP CS Fixer pre-commit hooks passed.
+- Quick follow-up verification:
+  - Ruby association, description-name, option/i18n, and CLI i18n specs:
+    11 examples, 0 failures.
+  - JavaScript full client suite after regenerating `dist`: 43 passing.
+  - Generated Go integration suite: 9 examples, 0 failures, including a
+    compile test for `language`, Client method names, nested resources,
+    actions, and aliases, plus absent-authentication member preservation.
+  - PHP collision regression in both copies: 1 test, 6 assertions.
+  - RuboCop on all changed Ruby generator/client/spec files: 11 files, no
+    offenses.
+- Full tree validation and the release-branch backport intentionally remain
+  pending until the mandatory fresh-context review.
+
+## Follow-up review packet
+
+- Requested outcome: eliminate resource-name collisions in maintained HaveAPI
+  clients, release coordinated HaveAPI 0.29.6, then update and release
+  vpsadmin-client 4.2.1 and vpsfree-client 0.20.1 in dependency order.
+- Initiative plan/state:
+  `work/2026-07-24-vpsfreectl-snapshot-download-fix/plan.md` and this file.
+- HaveAPI master worktree:
+  `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/haveapi-collisions`.
+- HaveAPI master base/head:
+  `efd0314bee237aa3df5f0189eddc7267c05c0fd1`..
+  `42b80198055c1bc24a266a566d6896e081840ab1`.
+- HaveAPI 0.29 backport worktree:
+  `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/haveapi-collisions-0-29`;
+  it remains at base `2d9edf01cf39963e6fd48282ae6c137c04e692dc`.
+- PHP mirror worktree:
+  `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/haveapi-client-php-collisions`.
+- PHP mirror base/head:
+  `03201f582e37abc586a3ac308308808b0b663539`..
+  `1089e33dbf54c0af70465460b20e09d1c1dace12`.
+- Compatibility assumptions:
+  - Ruby removes the 0.29.0-only `language`, `language=`,
+    `language_header`, and `language_header=` Client methods. Constructor
+    options and the pre-existing `set_opts`/`opts` interface replace them.
+  - Generated Go clients replace the 0.29.5-only exported `Language` and
+    `LanguageHeader` fields with setters/getters. Normal generated member
+    names remain unchanged; colliding names receive deterministic suffixes.
+  - JavaScript changes only association traversal. PHP runtime is unchanged.
+  - There is no API wire, server, database, persisted-state, or deployment
+    change, and no mixed-version ordering requirement beyond publishing
+    HaveAPI before downstream dependency updates.
+  - The standalone `vpsadmin-go-client` remains unchanged. A temporary client
+    generated from vpsAdmin will be compiled during downstream verification.
+
+## Follow-up mandatory change review
+
+- One fresh standalone reviewer completed the mandatory review on the
+  committed master and PHP mirror ranges.
+- Important finding: the Go allocator initially reserved the union of all
+  authentication-specific Client methods even when the corresponding backend
+  was absent. That unnecessarily renamed otherwise valid resource members and
+  contradicted the compatibility goal.
+- Resolved by deriving authentication-specific reservations from the
+  authentication methods present in the API description. The regression suite
+  now verifies that `revoke_access_token` is suffixed when OAuth2 emits the
+  conflicting method and retains its normal name when OAuth2 is absent.
+- The correction was folded into the focused Go commit before publication.
+  RuboCop passes and the complete generated Go suite now has 9 examples with
+  no failures.
+- The same reviewer inspected the rewritten head and confirmed that the
+  Important finding is closed with no remaining follow-up finding.
+- The reviewer found no other Blocking, Important, or Advisory issues. It
+  confirmed the commit split, Ruby/JavaScript structural traversal, Go
+  collision handling, generated JavaScript scope, PHP mirror equality,
+  backport applicability, and the documented intentional compatibility
+  changes.
+- Backported the five master commits to `haveapi-0.29` with `cherry-pick -x`:
+  - `1da1f49c13f611e7e81a425c1b13cbd4c00fb2cb`
+  - `2f226aa2c811daf104aee9dc84c83b5e6e1d5e88`
+  - `082c31dd4da229157314582d667b6d12ed0df83f`
+  - `f58ad100a3c99b6906488e3ae1be5662b810bbb0`
+  - `190a6a3a0871ffd224bf9227c75d0f545209c4fe`
+- Stable patch IDs match between every master commit and its release-branch
+  backport.
+- Added the separate coordinated version/changelog commit
+  `e4c19cfe751928be4b89a2297691591d69c0b5f3` for HaveAPI 0.29.6.
+- Synchronized the PHP subtree into the standalone mirror. Its separate
+  version commit is `27da6934f0497501187f77d14b566469dd4a7e14`.
+- Full HaveAPI 0.29.6 suite on the release branch:
+  - Ruby server: 347 examples, 0 failures.
+  - Ruby client: 47 examples, 0 failures.
+  - Generated Go client: 9 examples, 0 failures.
+  - JavaScript client: 43 passing.
+  - PHP client: 51 tests, 144 assertions.
+- The full HaveAPI Overcommit run passes i18n freshness, PHP CS Fixer, and
+  RuboCop.
+- `nix develop --command make release` built the unpublished 0.29.6
+  artifacts:
+  - `haveapi-client-0.29.6.gem` SHA-256
+    `b47338161b312fa91407e43f96db50c9617c1b17039a1a3f2eba01b897d68fc2`
+  - `haveapi-0.29.6.gem` SHA-256
+    `1e3257a0601566ac1fa713833d70882c6a8fa7f8e86f2b723c1130d5e092b9bd`
+  - `haveapi-go-client-0.29.6.gem` SHA-256
+    `83076666a49201a4f8a8409d14aa01afb407c367634ad149b7e1cf2079102923`
+  - `haveapi-client.js` SHA-256
+    `c65e005670928b12987245f5f2a52181ebbb7092d41be6aad91f92de39202630`
+- Gem metadata reports 0.29.6 throughout; the server and Go generator require
+  `haveapi-client ~> 0.29.6`.
+- `npm pack --dry-run` reports `haveapi-client` 0.29.6 with the expected
+  license, README, bundled client, and package metadata files.
+- Composer validates both PHP copies with only the existing explicit-version
+  warning, and the standalone mirror is checksum-identical to the monorepo
+  PHP subtree after excluding local dependency/cache files.
+- Pushed the three follow-up feature branches over SSH. GitHub Actions started
+  on exact heads `42b80198055c1bc24a266a566d6896e081840ab1` and
+  `e4c19cfe751928be4b89a2297691591d69c0b5f3`; per user instruction, their
+  completion is not awaited.
+- RubyGems and npm still end at 0.29.5, and neither source repository has a
+  `v0.29.6` tag. No target branch, tag, or package has been published.
 
 ## Commands run
 

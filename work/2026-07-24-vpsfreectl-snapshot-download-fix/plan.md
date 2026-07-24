@@ -69,3 +69,31 @@ dependency order.
   resolved dependency graph and CLI version.
 - Verify every published RubyGems/npm/Composer artifact and perform a clean
   public-registry install of the final dependency chain.
+
+## Follow-up: resource-name collisions
+
+The 0.29.5/4.2.0/0.20.0 chain exposed a second HaveAPI client issue while
+materializing `user.current`: Ruby's request-language accessor shadows the
+vpsAdmin `language` resource, and association traversal invokes the accessor
+instead of consulting the resource registry.
+
+The follow-up will:
+
+1. Fix Ruby association traversal through resource registries and remove the
+   redundant `language`/`language_header` client accessors in favor of
+   constructor options plus `set_opts`/`opts`.
+2. Fix JavaScript association traversal through its resource collection.
+3. Make generated Go language configuration private behind setters/getters and
+   allocate collision-safe Client/resource member names.
+4. Add PHP regression coverage without changing PHP runtime behavior.
+5. Apply functional changes on HaveAPI master first, backport them to
+   `haveapi-0.29`, and release the coordinated HaveAPI 0.29.6 artifacts.
+6. Only after 0.29.6 is public, update every vpsAdmin HaveAPI consumer, release
+   vpsadmin-client 4.2.1, then require it from vpsfree-client 0.20.1 and release
+   that package.
+
+The Ruby accessor removal and regenerated Go configuration fields are
+intentional source-level compatibility changes. There is no wire, server,
+database, persisted-state, or deployment change. The standalone
+`vpsadmin-go-client` will not be updated; a temporary generated client will be
+compiled against the public vpsAdmin description instead.
