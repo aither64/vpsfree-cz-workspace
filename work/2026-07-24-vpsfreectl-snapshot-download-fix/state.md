@@ -24,13 +24,15 @@
 
 ## Status
 
-All intended source, version, and review follow-up commits are prepared in
-isolated worktrees. Focused and full local checks pass. The mandatory
-standalone review is complete and both findings are addressed. HaveAPI master,
-the 0.29 release branch, and the standalone PHP mirror are integrated
-upstream. Downstream release branches are pushed but remain unmerged until
-their registry-backed dependency checks can pass. Package publication and
-release tags remain behind the required final approval gate.
+HaveAPI 0.29.5 is released and verified across RubyGems, npm, Packagist, and
+both Git repositories. The user approved only this HaveAPI release; no
+vpsAdmin or vpsfree-client tag/package publication is authorized. Every
+vpsAdmin Ruby, PHP, JavaScript, and packaged Nix consumer now targets the
+published release. Its unmerged feature history has been rewritten into two
+reviewable commits and force-pushed at
+`64d2493d1d9d7b0c3416d5ee2ec907f9e01c3055`. GitHub rejected PR creation
+because the configured fine-grained token cannot create pull requests; the
+review body is prepared and fresh branch workflows are running.
 
 ## Commands run
 
@@ -69,17 +71,11 @@ release tags remain behind the required final approval gate.
     `2d9edf01cf39963e6fd48282ae6c137c04e692dc`.
 - PHP mirror commit:
   `03201f582e37abc586a3ac308308808b0b663539`.
-- vpsAdmin client commits:
-  - Dependency/changelog commit
-    `c38cccdec3ad9360ad0c3fe4fb9109aabdd4efd2`.
-  - Shared version commit
-    `4042c9fd34651141eb8f13d19c44fa0e0cc17f88`.
-  - Packaged-client metadata follow-up
-    `4aef5bbfb5e0d40057264c98f4ceb18f8788a84e`.
-  - WebUI fallback-version test follow-up
-    `121ba5c01ae7981e17c068b85f4aa97d8328f59e`.
-  - Official release-artifact hash correction
-    `fb28d1a708a7268786a818ca54bc4c3da371fa4f`.
+- Final cleaned vpsAdmin commits:
+  - HaveAPI dependency and generated metadata
+    `707ed74f89677174184c59b029dbd5093999cd9b`.
+  - Coordinated version and release consistency
+    `64d2493d1d9d7b0c3416d5ee2ec907f9e01c3055`.
 - vpsfree-client commits:
   - Dependency commit `35b53b42846d3fac75a12a2046a59cbca7042707`.
   - Version/changelog commit
@@ -156,8 +152,8 @@ release tags remain behind the required final approval gate.
 
 ## Open questions
 
-- None for implementation. The user selected current-master downstream minor
-  releases and the coordinated HaveAPI 0.29.5 release model.
+- PR creation requires a GitHub credential with pull-request write access.
+  The branch and review body are ready; downstream releases remain deferred.
 
 ## Cleanup
 
@@ -172,8 +168,8 @@ release tags remain behind the required final approval gate.
   remains exact.
 - Release HaveAPI 0.29.5 from `haveapi-0.29` after first committing the
   canonical change against `master`.
-- Release current vpsAdmin master as `vpsadmin-client` 4.2.0 and
-  `vpsfree-client` 0.20.0 with a `~> 4.2` dependency.
+- Prepare current vpsAdmin master as a 4.2.0 review branch. Downstream branch
+  integration, tags, and package publications require separate approval.
 - JavaScript already validates map choices correctly. PHP and generated Go
   clients defer inclusion checks to the server. Legacy Elixir has no
   corresponding local validator/i18n path. `vpsadmin-go-client` is unaffected,
@@ -194,7 +190,7 @@ release tags remain behind the required final approval gate.
   `03201f582e37abc586a3ac308308808b0b663539`.
 - vpsAdmin base/head:
   `d0bb3c8ee8610ee941853912dc86768e66d3c726`..
-  `fb28d1a708a7268786a818ca54bc4c3da371fa4f`.
+  `64d2493d1d9d7b0c3416d5ee2ec907f9e01c3055`.
 - vpsfree-client base/head:
   `121f4e4a5709f8ea8f46c1ba732a522378b09039`..
   `936536f59e34ba3be5a7de19d7c0ffc39b3839cc`.
@@ -225,12 +221,20 @@ release tags remain behind the required final approval gate.
   `Version: 4.1.0`. Addressed in
   `121ba5c01ae7981e17c068b85f4aa97d8328f59e` by reading the shared `VERSION`
   marker. `node --check` passes.
-- The reviewer found no other issues. It confirmed identical master/backport
+- The initial reviewer found no other issues. It confirmed identical
+  master/backport
   patch IDs, exact array semantics, normalized map-key semantics, PHP mirror
   equality, consistent HaveAPI 0.29.5 markers, correct downstream dependency
   ranges, and appropriate commit splitting.
-- Residual gaps: registry-backed resolution and packaged-client regeneration
-  after publication, plus a real Czech snapshot-download end-to-end run.
+- The same standalone reviewer performed the required follow-up review after
+  the history cleanup. It found that the authoritative `libnodectld`,
+  `nodectl`, and `nodectld` package Gemfiles still pinned local gems to 4.1.0
+  while their generated metadata used 4.2.0.
+- Resolved the blocking follow-up finding by updating those three pins and
+  lockfiles and teaching `vpsadmin:version` to maintain the pins. Repeated
+  version/dependency generation is clean, and all three Nix packages build as
+  4.2.0.
+- Residual gap: a real Czech snapshot-download end-to-end run.
 
 ## Full validation and release artifacts
 
@@ -271,8 +275,8 @@ release tags remain behind the required final approval gate.
     `d33ca8bcb7b10071762f1236ed854ce1851719b466d9a018671538e354e5816e`.
   - `vpsfree-client-0.20.0.gem`:
     `325751cfc215358d7cc05fcd494356ee4840dc4dd111867217bebd2c036126aa`.
-- RubyGems, npm, Packagist, and the remote repositories do not yet contain
-  any target version/tag.
+- RubyGems, npm, Packagist, and both HaveAPI repositories contain the verified
+  0.29.5 release. Downstream target tags/packages remain absent.
 - All five feature branches were pushed over SSH. HaveAPI and vpsAdmin CI
   started on the exact tested heads; the standalone PHP and vpsfree-client
   repositories have no push workflows.
@@ -284,8 +288,9 @@ release tags remain behind the required final approval gate.
   `2d9edf01cf39963e6fd48282ae6c137c04e692dc` from fresh target worktrees.
 - Fast-forwarded `haveapi-client-php` `master` to
   `03201f582e37abc586a3ac308308808b0b663539` from a fresh target worktree.
-- Removed the temporary integration worktrees. No tag was created and no
-  package was published.
+- Removed the temporary integration worktrees. At this pre-release checkpoint,
+  no tag had been created and no package had been published; the later
+  HaveAPI-only release is recorded below.
 - All HaveAPI workflows passed on the feature heads and again on the exact
   integrated `master` and `haveapi-0.29` heads.
 - Completed vpsAdmin workflows and API/CI jobs are green except for Client
@@ -298,3 +303,98 @@ release tags remain behind the required final approval gate.
   run `30111588247` are still in progress on the exact vpsAdmin feature head.
   Every completed job in those runs is green. Their result must be checked
   before integrating or publishing vpsadmin-client.
+
+## HaveAPI 0.29.5 release
+
+- The user explicitly approved only the coordinated HaveAPI release.
+- Fast-forwarded `haveapi-client-php` `master` to
+  `03201f582e37abc586a3ac308308808b0b663539`; its stale local
+  `origin/master` tracking ref did not update from a fetch without an explicit
+  refspec, but `ls-remote` confirmed the remote branch.
+- Created and pushed annotated `v0.29.5` tags:
+  - HaveAPI tag target
+    `2d9edf01cf39963e6fd48282ae6c137c04e692dc`.
+  - PHP mirror tag target
+    `03201f582e37abc586a3ac308308808b0b663539`.
+- The initial HaveAPI tag push was stopped by Overcommit's changed-signature
+  check. Verified the clean configuration, ran `overcommit --sign` in the
+  top-level Nix shell, and pushed normally without bypassing hooks.
+- Ran `nix develop . --command make publish`; it published only:
+  - `haveapi-client` 0.29.5 to RubyGems.
+  - `haveapi` 0.29.5 to RubyGems.
+  - `haveapi-go-client` 0.29.5 to RubyGems.
+  - `haveapi-client` 0.29.5 to npm.
+- RubyGems reports SHA-256 values identical to all three reviewed local
+  artifacts. npm reports SHA-1
+  `37c931ff06f05123cdf3d389d6cbdfff767abb98`, identical to the prepared
+  tarball. Packagist resolves 0.29.5 to the reviewed PHP commit.
+- A clean registry install in the HaveAPI Nix shell loaded server, Ruby client,
+  and Go generator versions as `0.29.5`. An ambient install attempt failed
+  first because the minimal shell lacked a compiler for native dependencies;
+  no package defect was involved.
+
+## Final vpsAdmin review branch
+
+- The repository's `vpsadmin-update-haveapi` skill is stale: its script still
+  requires removed `tools/bundix_all.sh`. Used its declared five source
+  targets, then the current `AGENTS.md` command
+  `nix develop . --command rake vpsadmin:gems`.
+- Updated all active consumers:
+  - Ruby API, CLI, download mounter, mail templates, and outage-report utility.
+  - API, client, and download-mounter package lockfiles/gemsets.
+  - WebUI Composer lock/Nix metadata.
+  - WebUI and console-router bundled JavaScript clients.
+- Regeneration selected the published HaveAPI 0.29.5 hashes:
+  - `haveapi`: `14l8fwrn7b18mx9v0649x5vyxrcycg2phcyiqdyg0f0a0l109yai`.
+  - `haveapi-client`:
+    `1diyzs51dl74sc44pn9phn4ci663m53l5ql17xg2k99pgmynr0sd`.
+- Rewrote the five unmerged vpsAdmin development commits into:
+  - `707ed74f8`: `deps: update HaveAPI to 0.29.5`.
+  - `64d2493d1`: `Version 4.2.0`.
+- The first history rewrite attempt was paused by hooks because Git was run
+  outside Nix. Refreshed the API hook's isolated bundle to published 0.29.5
+  and completed all commits/rewording inside the root Nix shell. All
+  pre-commit and commit-message hooks pass without bypasses.
+- Quick verification:
+  - `rake vpsadmin:gems` is idempotent with a clean worktree.
+  - vpsadmin-client: 23 examples, 0 failures; gem build passes and loads
+    `4.2.0` with `haveapi-client` 0.29.5.
+  - WebUI: 82 tests, 332 assertions; Composer installs 0.29.5 and validates
+    for application use. Strict validation still reports the pre-existing
+    missing publish-only name/description/license metadata.
+- Both bundled JavaScript files are byte-identical to the reviewed HaveAPI
+  0.29.5 artifact and pass `node --check`.
+- The mandatory follow-up review found three package Gemfiles still pinned to
+  local gem version 4.1.0. Updated the canonical pins and generated lockfiles,
+  extended `vpsadmin:version` to maintain them, and amended the second commit.
+  Repeated `vpsadmin:version` plus `vpsadmin:gems` leaves the worktree clean.
+- Nix builds of `libnodectld`, `nodectl`, and `nodectld` all pass and produce
+  version 4.2.0.
+- `nix develop .#console-router` currently fails before entering the shell
+  because its flake still references removed `nodePackages`. JavaScript syntax
+  was therefore checked with `nix shell nixpkgs#nodejs`; this unrelated shell
+  maintenance issue is recorded separately.
+- The previous feature head's API Specs run `30111588148` passed. Its selected
+  integration run `30111588247` and Client Specs run `30111588172` failed
+  before HaveAPI publication. Downloaded and inspected the integration
+  artifact: all 116 unexpected failures share the same root build error,
+  `cannot download haveapi-client-0.29.5.gem`, after RubyGems mirrors returned
+  HTTP 403 for the not-yet-published artifact. The cleaned post-publication
+  head must start fresh runs; these are dependency-order bootstrap failures,
+  not test-behavior failures.
+- Force-pushed the cleaned two-commit history over SSH with an exact
+  `--force-with-lease`. No stale queued or running workflows existed after
+  the push; all active workflows target `64d2493d1`.
+- Prepared the pull-request title/body and attempted submission with `gh`.
+  GitHub returned `Resource not accessible by personal access token
+  (createPullRequest)`: the configured fine-grained token can inspect
+  branches, workflows, and PRs but cannot create a PR.
+- Preserved the exact review title/body in `vpsadmin-pr.md`. The GitHub compare
+  page is
+  `https://github.com/vpsfreecz/vpsadmin/compare/master...2026-07-24-vpsfreectl-snapshot-download-fix?expand=1`.
+- Fresh post-push workflow status when the user asked not to wait:
+  - RuboCop, Download Mounter Specs, Console Router Specs, WebUI PHPUnit,
+    Client Specs, libnodectld Specs, and i18n health passed.
+  - CI and API Specs were still running with no reported failure.
+- Stopped the local CI watcher immediately on request. The GitHub workflows
+  themselves were left running.
