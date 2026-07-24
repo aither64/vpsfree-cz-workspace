@@ -50,8 +50,8 @@ Annotation tags: 33
 
 | Language | Page | SHA-256 |
 | --- | --- | --- |
-| cs | navody:notifikace | `7906d05b859abe168492d960f89361ba8145026db58f9722c2e036bd81d78b33` |
-| en | manuals:notifications | `a0c9c4e482c1f46321cc6309ed3189cdf75a329a8f8a57f1d05093184ccab29b` |
+| cs | navody:notifikace | `aa5b1fba594c2838ae85ef2afe4a8c3e445641744e12f141364484c2b6086636` |
+| en | manuals:notifications | `3df8685ac2abfcc91af57fc0145ed49be29de180a01492c53e1ed722f3ee5f41` |
 
 ## Selected capture media
 

@@ -62,11 +62,11 @@ Routy se vyhodnocují shora dolů. Doručovací routy obvykle používají **Pok
 ^ Pole ^ Operátor ^ Hodnota ^
 | ''vps_id'' | rovná se | ''123'' |
 | ''stage'' | rovná se | ''raw'' |
-| ''cgroup'' | odpovídá glob vzoru | ''/user.slice/**/*.scope'' |
+| ''cgroup'' | odpovídá glob vzoru | %%/user.slice/**/*.scope%% |
 
 {{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Ztlumení OOM reportů podle VPS, fáze a cgroup}}
 
-Hodnota ''cgroup'' je úplná cesta bez prefixu ''/sys/fs/cgroup''. Operátor glob dovoluje, aby ''**'' odpovídalo více úrovním adresářů. Podmínka ''stage == raw'' označí jednotlivý OOM report jako ignorovaný ještě před vytvořením pozdější souhrnné notifikace. Skutečná přechodná událost ve fázi ''raw'' se do přehledu neukládá.
+Hodnota ''cgroup'' je úplná cesta bez prefixu ''/sys/fs/cgroup''. Operátor glob dovoluje, aby %%**%% odpovídalo více úrovním adresářů. Podmínka ''stage == raw'' označí jednotlivý OOM report jako ignorovaný ještě před vytvořením pozdější souhrnné notifikace. Skutečná přechodná událost ve fázi ''raw'' se do přehledu neukládá.
 
   - Přidejte druhou routu **Ztlumit incidentní zdroj pro VPS**.
   - Nastavte typ ''vps.incident_report'', příjemce **Ztlumit**, **Povoleno: ano**, **Pokračovat: ne** a podmínky:

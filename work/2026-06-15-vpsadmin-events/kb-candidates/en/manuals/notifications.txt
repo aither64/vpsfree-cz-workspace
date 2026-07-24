@@ -61,11 +61,11 @@ Routes are evaluated from top to bottom. Delivery routes normally use **Continue
 ^ Field ^ Operator ^ Value ^
 | ''vps_id'' | equals | ''123'' |
 | ''stage'' | equals | ''raw'' |
-| ''cgroup'' | matches glob | ''/user.slice/**/*.scope'' |
+| ''cgroup'' | matches glob | %%/user.slice/**/*.scope%% |
 
 {{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Muting OOM reports by VPS, stage and cgroup}}
 
-The ''cgroup'' value is the complete path without a ''/sys/fs/cgroup'' prefix. In the glob, ''**'' can match multiple directory levels. The ''stage == raw'' matcher marks each matching report ignored before it can enter a later notification batch. A real transient ''raw'' event is not stored in the event log.
+The ''cgroup'' value is the complete path without a ''/sys/fs/cgroup'' prefix. In the glob, %%**%% can match multiple directory levels. The ''stage == raw'' matcher marks each matching report ignored before it can enter a later notification batch. A real transient ''raw'' event is not stored in the event log.
 
   - Add a **Mute incident feed for VPS** route.
   - Set event type ''vps.incident_report'', receiver **Mute**, **Enabled: yes**, **Continue: no**, and add:

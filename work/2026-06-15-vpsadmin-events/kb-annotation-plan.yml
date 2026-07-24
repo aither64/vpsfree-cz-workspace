@@ -67,11 +67,11 @@ new_pages:
       ^ Pole ^ Operátor ^ Hodnota ^
       | ''vps_id'' | rovná se | ''123'' |
       | ''stage'' | rovná se | ''raw'' |
-      | ''cgroup'' | odpovídá glob vzoru | ''/user.slice/**/*.scope'' |
+      | ''cgroup'' | odpovídá glob vzoru | %%/user.slice/**/*.scope%% |
 
       {{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Ztlumení OOM reportů podle VPS, fáze a cgroup}}
 
-      Hodnota ''cgroup'' je úplná cesta bez prefixu ''/sys/fs/cgroup''. Operátor glob dovoluje, aby ''**'' odpovídalo více úrovním adresářů. Podmínka ''stage == raw'' označí jednotlivý OOM report jako ignorovaný ještě před vytvořením pozdější souhrnné notifikace. Skutečná přechodná událost ve fázi ''raw'' se do přehledu neukládá.
+      Hodnota ''cgroup'' je úplná cesta bez prefixu ''/sys/fs/cgroup''. Operátor glob dovoluje, aby %%**%% odpovídalo více úrovním adresářů. Podmínka ''stage == raw'' označí jednotlivý OOM report jako ignorovaný ještě před vytvořením pozdější souhrnné notifikace. Skutečná přechodná událost ve fázi ''raw'' se do přehledu neukládá.
 
         - Přidejte druhou routu **Ztlumit incidentní zdroj pro VPS**.
         - Nastavte typ ''vps.incident_report'', příjemce **Ztlumit**, **Povoleno: ano**, **Pokračovat: ne** a podmínky:
@@ -423,11 +423,11 @@ new_pages:
       ^ Field ^ Operator ^ Value ^
       | ''vps_id'' | equals | ''123'' |
       | ''stage'' | equals | ''raw'' |
-      | ''cgroup'' | matches glob | ''/user.slice/**/*.scope'' |
+      | ''cgroup'' | matches glob | %%/user.slice/**/*.scope%% |
 
       {{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Muting OOM reports by VPS, stage and cgroup}}
 
-      The ''cgroup'' value is the complete path without a ''/sys/fs/cgroup'' prefix. In the glob, ''**'' can match multiple directory levels. The ''stage == raw'' matcher marks each matching report ignored before it can enter a later notification batch. A real transient ''raw'' event is not stored in the event log.
+      The ''cgroup'' value is the complete path without a ''/sys/fs/cgroup'' prefix. In the glob, %%**%% can match multiple directory levels. The ''stage == raw'' matcher marks each matching report ignored before it can enter a later notification batch. A real transient ''raw'' event is not stored in the event log.
 
         - Add a **Mute incident feed for VPS** route.
         - Set event type ''vps.incident_report'', receiver **Mute**, **Enabled: yes**, **Continue: no**, and add:

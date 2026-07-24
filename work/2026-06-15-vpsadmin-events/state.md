@@ -12877,3 +12877,20 @@ GitHub Actions after final pushes:
   rather than external provider delivery, deliberate future matcher changes
   require an explicit fixture snapshot refresh, and rendered staging still
   needs replacement verification. Production remains untouched.
+
+### Rendered OOM Glob Correction
+
+- The first replacement staging passed manifest verification, but rendered
+  page inspection exposed DokuWiki parsing that source-level checks cannot
+  detect: the literal `**` inside `/user.slice/**/*.scope` was treated as bold
+  markup. It emptied the table value and hid the following OOM screenshot and
+  explanatory paragraph in both languages.
+- Both articles now wrap the glob and the standalone `**` token in DokuWiki
+  no-format spans (`%%...%%`). Rebuilt candidates still contain 33 navigation
+  annotations and 50 media objects; each manifest still contains two pages and
+  25 media objects. The independent candidate checker passes with 79 bindings
+  and 9 exceptions.
+- This rendered-only correction changes no capture, fixture, runtime, schema,
+  API, protocol, or deployment behavior. A focused reviewer correction pass
+  and replacement staging verification remain pending. Production is
+  untouched.
