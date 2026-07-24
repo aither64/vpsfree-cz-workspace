@@ -34,10 +34,9 @@
 
 The original coordinated release is complete: HaveAPI 0.29.5,
 vpsadmin-client 4.2.0, and vpsfree-client 0.20.0 are published and verified.
-A follow-up is in progress to fix resource-name collisions exposed by the new
-dependency chain. HaveAPI 0.29.6 must be completed and released before any
-vpsAdmin or vpsfree-client dependency update begins. No server deployment is
-planned.
+The follow-up HaveAPI 0.29.6 resource-name collision release is also published
+and verified. Downstream preparation for vpsadmin-client 4.2.1 is in progress.
+No server deployment is planned.
 
 ## Follow-up worktrees
 
@@ -52,8 +51,13 @@ planned.
   - Branch `2026-07-24-haveapi-resource-name-collisions`
   - Worktree
     `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/haveapi-client-php-collisions`
-- Downstream follow-up branches and worktrees will be created from the public
-  release heads after HaveAPI 0.29.6 is published.
+- `repos/vpsadmin.git`
+  - Branch `2026-07-24-haveapi-resource-name-collisions`
+  - Worktree
+    `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/vpsadmin-collisions`
+  - Base `f01121b3ce8e809858d5443bb1306d72765b8b9b`
+- The vpsfree-client follow-up branch and worktree will be created only after
+  vpsadmin-client 4.2.1 is public.
 
 ## Follow-up status
 
@@ -191,8 +195,23 @@ planned.
   on exact heads `42b80198055c1bc24a266a566d6896e081840ab1` and
   `e4c19cfe751928be4b89a2297691591d69c0b5f3`; per user instruction, their
   completion is not awaited.
-- RubyGems and npm still end at 0.29.5, and neither source repository has a
-  `v0.29.6` tag. No target branch, tag, or package has been published.
+- Fast-forwarded HaveAPI `master` to
+  `42b80198055c1bc24a266a566d6896e081840ab1` and `haveapi-0.29` to
+  `e4c19cfe751928be4b89a2297691591d69c0b5f3`.
+- Fast-forwarded the PHP mirror `master` to
+  `27da6934f0497501187f77d14b566469dd4a7e14`.
+- Tagged both repositories as `v0.29.6`.
+- Published and verified `haveapi-client`, `haveapi`, and
+  `haveapi-go-client` 0.29.6 on RubyGems.
+- Published and verified `haveapi-client` 0.29.6 on npm. The public tarball
+  SHA-1 is `db0a200afe73dfcca1983a9d75893ab063f4960e`, matching the prepared
+  dry-run package.
+- Verified Packagist `haveapi/client` 0.29.6 resolves to PHP mirror commit
+  `27da6934f0497501187f77d14b566469dd4a7e14`.
+- GitHub Actions were started by the branch and target pushes. Their
+  completion was not awaited, as instructed.
+- Fetched vpsAdmin `origin/master` after the HaveAPI publication and created
+  the fresh downstream worktree listed above.
 
 ## Commands run
 
@@ -632,3 +651,59 @@ planned.
   - haveapi-client 0.29.5.
 - Removed both clean temporary release-integration worktrees after verifying
   the final remote branch and tag targets. No feature branches were deleted.
+
+## HaveAPI 0.29.6 downstream vpsAdmin preparation
+
+- Created fresh vpsAdmin branch
+  `2026-07-24-haveapi-resource-name-collisions` from public `master`
+  `f01121b3ce8e809858d5443bb1306d72765b8b9b`.
+- Updated every active HaveAPI consumer to 0.29.6:
+  - Ruby API, CLI, download mounter, mail templates, and outage-report
+    utility requirements.
+  - API, client, and download-mounter package lockfiles and Nix gemsets.
+  - WebUI Composer lock and generated Nix package metadata.
+  - WebUI and console-router JavaScript bundles.
+- The generated package hashes resolve to the public artifacts:
+  - `haveapi`:
+    `1gdrjbhdac0i7ir2nvz8z2kqysici1q3v0qklwgsqrhmc2h5fchy`.
+  - `haveapi-client`:
+    `1hlgssbvh0ds5qzim6h32wdpqqf9a3drcgz40waajbri3cb3hwxl`.
+- Kept the history focused:
+  - `6ebf09a7b`: `deps: update HaveAPI to 0.29.6`.
+  - `43d017a71`: `Version 4.2.1`.
+- Both commits passed every configured pre-commit and commit-message hook.
+  The linked-worktree Overcommit signature had to be refreshed immediately
+  before committing because the signature configuration is shared by all
+  worktrees.
+- Quick and release verification:
+  - vpsadmin-client: 23 examples, 0 failures.
+  - WebUI: 82 tests, 332 assertions.
+  - Composer validation passes for application use with the existing
+    missing-license warning.
+  - Both JavaScript bundles are byte-identical to the published HaveAPI
+    0.29.6 artifact and pass `node --check`.
+  - Repeated `vpsadmin:version` and `vpsadmin:gems` generation leaves the
+    worktree clean.
+  - Built `vpsadmin-client-4.2.1.gem` with SHA-256
+    `4966f44bf5c752c889b3627776d240ae950d040ba1b4ffad7209d9320368a7d4`.
+  - An isolated install loads vpsadmin-client 4.2.1 with haveapi-client
+    0.29.6 and reports `4.2.1 based on haveapi-client 0.29.6`.
+  - Public `haveapi-go-client` 0.29.6 generated a temporary client from the
+    live vpsAdmin description. The generated `Language` resource is present;
+    `CGO_ENABLED=0 go build ./...` and `go test ./...` pass.
+- The first temporary Go generation attempt created `go.mod` too late for the
+  generator's internal `go fmt`. The corrected ordering is recorded in
+  `notes/vpsadmin-go-client/2026-07-24-generator-requires-go-module.md`.
+- No standalone `vpsadmin-go-client` files or refs were changed.
+- The final idempotency run crossed local midnight. Updated the new 4.2.1
+  changelog and generated nodectl manual date to 2026-07-25, amended only the
+  version commit, and reran all hooks and the client build.
+- Pushed review branch `2026-07-24-haveapi-resource-name-collisions` at
+  `43d017a716447752766d4f62e422ecfcf19a6f5b`. GitHub Actions started on that
+  exact head and are not being awaited.
+- GitHub again rejected `gh pr create` because the configured token lacks
+  `createPullRequest`. The exact review body is preserved in
+  `vpsadmin-0.29.6-pr.md`; the compare page is
+  `https://github.com/vpsfreecz/vpsadmin/compare/master...2026-07-24-haveapi-resource-name-collisions?expand=1`.
+- vpsAdmin has not been merged, tagged, or published. The next publication
+  action requires its explicit approval gate.
