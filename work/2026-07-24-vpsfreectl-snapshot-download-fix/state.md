@@ -17,22 +17,29 @@
   - Branch `2026-07-24-vpsfreectl-snapshot-download-fix`
   - Worktree
     `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/vpsadmin`
+  - Release target branch `master`
+  - Temporary integration worktree
+    `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/vpsadmin-release-master`
+    (removed after release)
 - `repos/vpsfree-client.git`
   - Branch `2026-07-24-vpsfreectl-snapshot-download-fix`
   - Worktree
     `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/vpsfree-client`
+  - Release target branch `master`
+  - Temporary integration worktree
+    `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/vpsfree-client-release-master`
+    (removed after release)
 
 ## Status
 
-HaveAPI 0.29.5 is released and verified across RubyGems, npm, Packagist, and
-both Git repositories. The user approved only this HaveAPI release; no
-vpsAdmin or vpsfree-client tag/package publication is authorized. Every
-vpsAdmin Ruby, PHP, JavaScript, and packaged Nix consumer now targets the
-published release. Its unmerged feature history has been rewritten into four
-focused commits and force-pushed at
-`f01121b3ce8e809858d5443bb1306d72765b8b9b`. GitHub rejected PR creation
-because the configured fine-grained token cannot create pull requests; the
-review body is prepared and replacement branch workflows were left running.
+The coordinated release is complete. HaveAPI 0.29.5, vpsadmin-client 4.2.0,
+and vpsfree-client 0.20.0 are published and verified. vpsAdmin `master` and
+lightweight tag `v4.2.0` point to
+`f01121b3ce8e809858d5443bb1306d72765b8b9b`; vpsfree-client `master` and
+lightweight tag `v0.20.0` point to
+`936536f59e34ba3be5a7de19d7c0ffc39b3839cc`. A clean public-registry install
+loads the exact 0.20.0/4.2.0/0.29.5 dependency chain. No server deployment was
+performed.
 
 ## Commands run
 
@@ -135,11 +142,11 @@ review body is prepared and replacement branch workflows were left running.
   - 0.29.4 with English metadata: valid.
   - 0.29.4 with Czech metadata: invalid with a readable
     `HaveAPI::Client::ValidationError`.
-- RubyGems currently publishes `haveapi-client` 0.29.4,
+- At investigation time, RubyGems published `haveapi-client` 0.29.4,
   `vpsadmin-client` 4.1.0, and `vpsfree-client` 0.19.0. The reporter has the
   latest two outer gems. Released `vpsadmin-client` 4.1.0 constrains
   `haveapi-client` to `~> 0.26.0`, explaining 0.26.5.
-- Current unreleased `vpsadmin` master changes that dependency to
+- The then-unreleased `vpsadmin` master changed that dependency to
   `~> 0.29.4`, but upgrading to it would only expose the real Czech validation
   error; it would not make the download work.
 - A complete client fix belongs in HaveAPI's Ruby inclusion validator and
@@ -156,14 +163,16 @@ review body is prepared and replacement branch workflows were left running.
 
 ## Open questions
 
-- PR creation requires a GitHub credential with pull-request write access.
-  The branch and review body are ready; downstream releases remain deferred.
+- None.
 
 ## Cleanup
 
 - Worktrees will use
   `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/`.
 - Removed both isolated temporary gem homes and downloaded API descriptions.
+- Removed the clean temporary vpsAdmin and vpsfree-client release-integration
+  worktrees after verifying their remote branch and tag targets. Feature
+  branches and feature worktrees remain.
 
 ## Implementation decisions
 
@@ -172,8 +181,8 @@ review body is prepared and replacement branch workflows were left running.
   remains exact.
 - Release HaveAPI 0.29.5 from `haveapi-0.29` after first committing the
   canonical change against `master`.
-- Prepare current vpsAdmin master as a 4.2.0 review branch. Downstream branch
-  integration, tags, and package publications require separate approval.
+- Release current vpsAdmin master as 4.2.0, then release vpsfree-client 0.20.0
+  after the public vpsadmin-client dependency is available.
 - JavaScript already validates map choices correctly. PHP and generated Go
   clients defer inclusion checks to the server. Legacy Elixir has no
   corresponding local validator/i18n path. `vpsadmin-go-client` is unaffected,
@@ -218,9 +227,8 @@ review body is prepared and replacement branch workflows were left running.
   - The committed Nix base32 hash
     `1diyzs51dl74sc44pn9phn4ci663m53l5ql17xg2k99pgmynr0sd`
     matches the exact artifact built by `nix develop . --command make release`.
-  - The normal `rake vpsadmin:gems:client` refresh still has to be rerun
-    after HaveAPI 0.29.5 is visible on RubyGems and must produce no unexpected
-    difference before publishing vpsadmin-client.
+  - The normal `rake vpsadmin:gems` refresh was rerun after HaveAPI 0.29.5
+    became visible on RubyGems and produced no unexpected difference.
 - Advisory finding: the no-revision Playwright assertion hard-coded
   `Version: 4.1.0`. Addressed in
   `121ba5c01ae7981e17c068b85f4aa97d8328f59e` by reading the shared `VERSION`
@@ -337,7 +345,7 @@ review body is prepared and replacement branch workflows were left running.
   first because the minimal shell lacked a compiler for native dependencies;
   no package defect was involved.
 
-## Final vpsAdmin review branch
+## Final vpsAdmin update and release
 
 - The repository's `vpsadmin-update-haveapi` skill is stale: its script still
   requires removed `tools/bundix_all.sh`. Used its declared five source
@@ -413,3 +421,61 @@ review body is prepared and replacement branch workflows were left running.
   rewrite, canceled the superseded CI run `30120345597` and API Specs run
   `30120345766`, which still targeted `64d2493d1`. Replacement workflows on
   `f01121b3c` are not being awaited.
+
+## Downstream integration and release
+
+- The user subsequently gave explicit approval to merge and release vpsAdmin,
+  then release vpsfree-client. This superseded the earlier downstream-release
+  deferral but did not authorize or require a server deployment.
+- Before integration, the cleaned vpsAdmin feature head had seven successful
+  replacement workflows; CI and API Specs were still running. They were not
+  awaited, following the user's instruction.
+- The canonical vpsAdmin bare repository's local `master` was at unrelated
+  unpushed commit `b3ec1a757`, while the fetched `origin/master` was
+  `d0bb3c8ee`. Preserved the local branch and used a detached temporary
+  worktree from `origin/master`; see
+  `notes/vpsadmin/2026-07-24-local-master-ahead-release-worktree.md`.
+- Fast-forwarded the detached vpsAdmin release worktree from
+  `d0bb3c8ee8610ee941853912dc86768e66d3c726` to
+  `f01121b3ce8e809858d5443bb1306d72765b8b9b`.
+- Final vpsadmin-client validation:
+  - Client RSpec: 23 examples, 0 failures.
+  - Fresh build SHA-256:
+    `d33ca8bcb7b10071762f1236ed854ce1851719b466d9a018671538e354e5816e`,
+    identical to the reviewed artifact.
+  - Isolated Nix-shell install loaded vpsadmin-client 4.2.0 with
+    haveapi-client 0.29.5.
+  - The ambient isolated install lacked a compiler for native dependencies;
+    the root Nix toolchain completed the same install successfully.
+- Atomically pushed vpsAdmin `master` and lightweight tag `v4.2.0`; both
+  resolve to `f01121b3ce8e809858d5443bb1306d72765b8b9b`.
+- Published vpsadmin-client 4.2.0 to RubyGems. The RubyGems API and direct
+  public download report the exact reviewed SHA-256 and dependency
+  `haveapi-client ~> 0.29.5`.
+- vpsfree-client's public-registry dependency resolution selected
+  vpsadmin-client 4.2.0 and haveapi-client 0.29.5.
+- The legacy vpsfree-client `shell.nix` cannot compile the current Prism gem
+  because `prism.h` is unavailable. Its shell hook also continues to the
+  requested command after Bundler fails. The isolated install passed in the
+  maintained vpsAdmin root Nix toolchain; see
+  `notes/vpsfree-client/2026-07-24-prism-header-shell.md`.
+- Fast-forwarded the detached vpsfree-client release worktree from
+  `121f4e4a5709f8ea8f46c1ba732a522378b09039` to
+  `936536f59e34ba3be5a7de19d7c0ffc39b3839cc`.
+- An ambient vpsfree-client rebuild initially differed from the reviewed gem
+  only because RubyGems used 1980-01-02 instead of the Nix release epoch.
+  Rebuilding with `SOURCE_DATE_EPOCH=315532800` reproduced the reviewed
+  artifact byte-for-byte; see
+  `notes/vpsfree-client/2026-07-24-source-date-epoch-gem-checksum.md`.
+- Atomically pushed vpsfree-client `master` and lightweight tag `v0.20.0`;
+  both resolve to `936536f59e34ba3be5a7de19d7c0ffc39b3839cc`.
+- Published the exact vpsfree-client 0.20.0 artifact to RubyGems. The API and
+  direct public download report SHA-256
+  `325751cfc215358d7cc05fcd494356ee4840dc4dd111867217bebd2c036126aa`
+  and dependency `vpsadmin-client ~> 4.2`.
+- A clean installation by public gem name loaded:
+  - vpsfree-client 0.20.0;
+  - vpsadmin-client 4.2.0;
+  - haveapi-client 0.29.5.
+- Removed both clean temporary release-integration worktrees after verifying
+  the final remote branch and tag targets. No feature branches were deleted.

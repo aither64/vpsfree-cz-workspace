@@ -15,15 +15,15 @@ manifest was prepared.
 The master fix and release-branch backport have identical stable patch IDs.
 Both HaveAPI commit sets passed every GitHub Actions component workflow.
 
-## Downstream release heads
+## Downstream integrated release heads
 
-- vpsAdmin feature head:
+- vpsAdmin `master` and lightweight `v4.2.0` tag:
   `f01121b3ce8e809858d5443bb1306d72765b8b9b`.
-- vpsfree-client feature head:
+- vpsfree-client `master` and lightweight `v0.20.0` tag:
   `936536f59e34ba3be5a7de19d7c0ffc39b3839cc`.
 
-The downstream default branches, tags, and published packages remain
-unchanged. The vpsAdmin branch is prepared and pushed for source review only.
+RubyGems publishes vpsadmin-client 4.2.0 and vpsfree-client 0.20.0 from the
+exact artifacts listed below.
 
 ## Artifacts
 
@@ -43,7 +43,7 @@ initiative worktree.
 The Nix hash for the exact HaveAPI Ruby-client release artifact is
 `1diyzs51dl74sc44pn9phn4ci663m53l5ql17xg2k99pgmynr0sd`.
 
-## HaveAPI release and downstream review sequence
+## Completed release sequence
 
 1. Completed: create and push annotated `v0.29.5` tags for HaveAPI
    `2d9edf01cf39963e6fd48282ae6c137c04e692dc` and the PHP mirror
@@ -54,21 +54,23 @@ The Nix hash for the exact HaveAPI Ruby-client release artifact is
 3. Completed: regenerate all vpsAdmin package metadata with
    `rake vpsadmin:gems`; it retains HaveAPI 0.29.5 and the verified release
    artifact hash without a diff on repetition.
-4. Completed for source handoff: push the cleaned vpsAdmin feature history.
-   Replacement workflows were triggered but are not being awaited, as
-   requested. Pull-request creation remains blocked by the configured GitHub
-   token's permissions.
-5. Deferred and not authorized: integration of vpsAdmin or vpsfree-client
-   default branches, creation of their release tags, and publication of their
-   packages.
+4. Completed: fast-forward vpsAdmin `master`, create lightweight tag `v4.2.0`,
+   publish vpsadmin-client 4.2.0, and verify its exact public checksum and
+   `haveapi-client ~> 0.29.5` dependency.
+5. Completed: resolve vpsfree-client against the public vpsadmin-client 4.2.0,
+   fast-forward `master`, create lightweight tag `v0.20.0`, publish the exact
+   reviewed gem, and verify `vpsadmin-client ~> 4.2`.
+6. Completed: install vpsfree-client 0.20.0 by public gem name in a clean gem
+   home and load the exact 0.20.0/4.2.0/0.29.5 dependency chain.
 
 Stop the sequence immediately if a tag, checksum, version, dependency, or
 registry result differs from this manifest.
 
 ## Approval scope
 
-Approval authorized only the HaveAPI and PHP-mirror `v0.29.5` tag pushes plus
-the coordinated HaveAPI RubyGems/npm publication described in steps 1 and 2.
-It did not authorize a vpsAdmin or vpsfree-client default-branch update, tag,
-package publication, deployment, or exception to vpsAdmin's first-party gem
-publication guideline.
+The initial approval authorized only the HaveAPI and PHP-mirror `v0.29.5`
+release. The user subsequently and explicitly authorized merging and releasing
+vpsAdmin, followed by vpsfree-client. That later approval covers the downstream
+default-branch fast-forwards, lightweight tags, RubyGems publications, and the
+necessary exception to vpsAdmin's first-party gem publication guideline. No
+server or system deployment was requested or performed.

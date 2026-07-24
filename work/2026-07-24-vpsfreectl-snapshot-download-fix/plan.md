@@ -4,18 +4,16 @@
 
 Fix the Ruby HaveAPI client's handling of localized choice maps, release the
 fix as coordinated HaveAPI 0.29.5, then update every vpsAdmin HaveAPI consumer
-and prepare the cleaned vpsAdmin 4.2.0 branch for review. Downstream client
-publication is deferred until separately approved.
+and release the cleaned vpsAdmin 4.2.0 and vpsfree-client 0.20.0 versions in
+dependency order.
 
 ## Affected repositories
 
 - `haveapi`: canonical Ruby client fix, cross-client regression coverage, and
   coordinated 0.29.5 release.
 - `haveapi-client-php`: standalone PHP mirror for the coordinated 0.29.5 tag.
-- `vpsadmin`: coordinated HaveAPI dependency update and cleaned 4.2.0 review
-  branch.
-- `vpsfree-client`: a dependency/version branch exists from the initial plan,
-  but its integration and release are explicitly deferred.
+- `vpsadmin`: coordinated HaveAPI dependency update and 4.2.0 release.
+- `vpsfree-client`: dependency update and 0.20.0 release.
 
 ## Implementation
 
@@ -48,11 +46,10 @@ publication is deferred until separately approved.
 - HaveAPI 0.29.5 is coordinated across the Ruby server/client, Go generator,
   JavaScript package, and PHP metadata, although only Ruby client runtime
   behavior changes.
-- HaveAPI 0.29.5 is published and verified. vpsAdmin and vpsfree-client tags,
-  default-branch integration, and package publication are not authorized by
-  the HaveAPI-only approval.
-- The vpsAdmin review branch must resolve only published artifacts and remain
-  safe to review and test without implying a server deployment.
+- HaveAPI 0.29.5, vpsadmin-client 4.2.0, and vpsfree-client 0.20.0 are
+  published and verified in dependency order.
+- Updating the source repositories and client packages does not imply a
+  vpsAdmin server deployment.
 
 ## Testing and review
 
@@ -67,9 +64,8 @@ publication is deferred until separately approved.
 - Run vpsAdmin client RSpec, RuboCop, hooks, gem build, and isolated install
   smoke tests.
 - Verify that `rake vpsadmin:gems` reproduces the prepared package metadata
-  after HaveAPI 0.29.5 becomes visible on RubyGems. Any vpsadmin-client
-  publication remains a separately approved future action.
+  after HaveAPI 0.29.5 becomes visible on RubyGems.
 - Build and install `vpsfree-client` in an isolated gem home and verify the
   resolved dependency graph and CLI version.
-- Verify the published HaveAPI RubyGems/npm/Composer artifacts and repeat
-  vpsAdmin generation from those registries before submitting the review.
+- Verify every published RubyGems/npm/Composer artifact and perform a clean
+  public-registry install of the final dependency chain.
