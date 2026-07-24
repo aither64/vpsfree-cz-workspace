@@ -12891,6 +12891,24 @@ GitHub Actions after final pushes:
   25 media objects. The independent candidate checker passes with 79 bindings
   and 9 exceptions.
 - This rendered-only correction changes no capture, fixture, runtime, schema,
-  API, protocol, or deployment behavior. A focused reviewer correction pass
-  and replacement staging verification remain pending. Production is
-  untouched.
+  API, protocol, or deployment behavior.
+- The same standalone reviewer accepted focused workspace commit
+  `f76c705da380461072a36e0b8d0479eeeebb32d5` with no Blocking, Important, or
+  Advisory findings. It confirmed that `%%...%%` is the documented scoped
+  DokuWiki no-format syntax and independently verified the regenerated
+  inventories, hashes, commit scope, and whitespace.
+- Reset the session-owned staging mirror again, staged both corrected
+  manifests, and verified both with `kb-release verify`. Each staged language
+  contains two pages and 25 media objects; two Czech/English page pairs were
+  warmed and verified.
+- Rendered HTTP checks returned 200 for both review pages. Each page renders
+  25 distinct notification images, starts with
+  `example-role-receiver.png`, shows the literal
+  `/user.slice/**/*.scope` value and its explanation, includes
+  `example-mute-oom.png`, and contains no `routes.png`.
+- Review URLs:
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications`.
+- The exact corrected release remains pending in the session-owned review
+  container. Production is untouched and promotion still requires direct user
+  approval.
