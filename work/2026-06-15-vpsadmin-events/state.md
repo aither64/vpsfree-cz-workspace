@@ -13299,3 +13299,27 @@ GitHub Actions after final pushes:
 - The same mandatory reviewer must check this test-only correction and exact
   downstream pins before the focused OOM VM scenario is rerun. Production and
   KB staging remain untouched.
+
+### Final OOM Integration Result
+
+- The same standalone reviewer accepted the test-only interpolation correction
+  with no Blocking, Important, or Advisory findings. It independently verified
+  that the one integration test file is the only application-tree difference
+  from accepted head `52f9aa181`, the final vpsAdmin branch is pushed at
+  `82996d11a5bb65e55e9edf469fa1854cdb100262`, and the capture/configuration
+  pins reference that exact revision.
+- Reran `./test-runner.sh test alerts/oom-report-group-and-prune` after the
+  follow-up review:
+  - grouped OOM ingestion/delivery example: passed in 84.71 seconds;
+  - OOM report pruning example: passed in 10.7 seconds;
+  - complete two-VM test script: passed in 715.52 seconds.
+- This successful run exercised RabbitMQ supervisor ingestion, one persisted
+  `vps.oom_report` event per report, the default route's grouping delay,
+  one grouped e-mail with both reports/all three kills, sent/grouped delivery
+  state and effective-delivery links, group membership, and old-report pruning.
+- Current-head RuboCop, migration, WebUI, libnodectld, and i18n GitHub Actions
+  passed. API Specs remains in progress. Aggregate run `30129071263`, which
+  had been intentionally cancelled while review was pending, was restarted
+  after the review and focused VM success.
+- Production configuration, running services, KB staging, production KB pages,
+  and production media remain untouched.
