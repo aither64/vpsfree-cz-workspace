@@ -28,11 +28,11 @@ HaveAPI 0.29.5 is released and verified across RubyGems, npm, Packagist, and
 both Git repositories. The user approved only this HaveAPI release; no
 vpsAdmin or vpsfree-client tag/package publication is authorized. Every
 vpsAdmin Ruby, PHP, JavaScript, and packaged Nix consumer now targets the
-published release. Its unmerged feature history has been rewritten into two
-reviewable commits and force-pushed at
-`64d2493d1d9d7b0c3416d5ee2ec907f9e01c3055`. GitHub rejected PR creation
+published release. Its unmerged feature history has been rewritten into four
+focused commits and force-pushed at
+`f01121b3ce8e809858d5443bb1306d72765b8b9b`. GitHub rejected PR creation
 because the configured fine-grained token cannot create pull requests; the
-review body is prepared and fresh branch workflows are running.
+review body is prepared and replacement branch workflows were left running.
 
 ## Commands run
 
@@ -72,10 +72,14 @@ review body is prepared and fresh branch workflows are running.
 - PHP mirror commit:
   `03201f582e37abc586a3ac308308808b0b663539`.
 - Final cleaned vpsAdmin commits:
-  - HaveAPI dependency and generated metadata
+  - HaveAPI dependency and generated metadata:
     `707ed74f89677174184c59b029dbd5093999cd9b`.
-  - Coordinated version and release consistency
-    `64d2493d1d9d7b0c3416d5ee2ec907f9e01c3055`.
+  - Release-task package-pin synchronization:
+    `3c0fff6e47f3b46aec9bf481a7c5d918bcd82d92`.
+  - WebUI fallback-version assertion:
+    `a0187018d87ea1171472ed8dccb18fad356754d5`.
+  - Coordinated version update:
+    `f01121b3ce8e809858d5443bb1306d72765b8b9b`.
 - vpsfree-client commits:
   - Dependency commit `35b53b42846d3fac75a12a2046a59cbca7042707`.
   - Version/changelog commit
@@ -190,7 +194,7 @@ review body is prepared and fresh branch workflows are running.
   `03201f582e37abc586a3ac308308808b0b663539`.
 - vpsAdmin base/head:
   `d0bb3c8ee8610ee941853912dc86768e66d3c726`..
-  `64d2493d1d9d7b0c3416d5ee2ec907f9e01c3055`.
+  `f01121b3ce8e809858d5443bb1306d72765b8b9b`.
 - vpsfree-client base/head:
   `121f4e4a5709f8ea8f46c1ba732a522378b09039`..
   `936536f59e34ba3be5a7de19d7c0ffc39b3839cc`.
@@ -348,9 +352,17 @@ review body is prepared and fresh branch workflows are running.
   - `haveapi`: `14l8fwrn7b18mx9v0649x5vyxrcycg2phcyiqdyg0f0a0l109yai`.
   - `haveapi-client`:
     `1diyzs51dl74sc44pn9phn4ci663m53l5ql17xg2k99pgmynr0sd`.
-- Rewrote the five unmerged vpsAdmin development commits into:
+- Initially rewrote the five unmerged vpsAdmin development commits into two
+  commits. After review of the commit boundaries, split the independent
+  release-task and WebUI test changes from the version update. The final
+  history is:
   - `707ed74f8`: `deps: update HaveAPI to 0.29.5`.
-  - `64d2493d1`: `Version 4.2.0`.
+  - `3c0fff6e4`: `release: update packaged gem pins with shared version`.
+  - `a0187018d`: `webui: derive fallback version assertion from VERSION`.
+  - `f01121b3c`: `Version 4.2.0`.
+- The final tree `f99f434844fbd62cf7c0f6e2764885b2dd71e82c` is
+  byte-identical to the superseded `64d2493d1` tree. All three replacement
+  commits passed the repository pre-commit and commit-message hooks.
 - The first history rewrite attempt was paused by hooks because Git was run
   outside Nix. Refreshed the API hook's isolated bundle to published 0.29.5
   and completed all commits/rewording inside the root Nix shell. All
@@ -382,9 +394,9 @@ review body is prepared and fresh branch workflows are running.
   HTTP 403 for the not-yet-published artifact. The cleaned post-publication
   head must start fresh runs; these are dependency-order bootstrap failures,
   not test-behavior failures.
-- Force-pushed the cleaned two-commit history over SSH with an exact
-  `--force-with-lease`. No stale queued or running workflows existed after
-  the push; all active workflows target `64d2493d1`.
+- Force-pushed the first cleaned history over SSH with an exact
+  `--force-with-lease`. After the focused split, force-pushed again with an
+  exact lease from `64d2493d1` to `f01121b3c`.
 - Prepared the pull-request title/body and attempted submission with `gh`.
   GitHub returned `Resource not accessible by personal access token
   (createPullRequest)`: the configured fine-grained token can inspect
@@ -397,4 +409,7 @@ review body is prepared and fresh branch workflows are running.
     Client Specs, libnodectld Specs, and i18n health passed.
   - CI and API Specs were still running with no reported failure.
 - Stopped the local CI watcher immediately on request. The GitHub workflows
-  themselves were left running.
+  themselves were initially left running. After the subsequent history
+  rewrite, canceled the superseded CI run `30120345597` and API Specs run
+  `30120345766`, which still targeted `64d2493d1`. Replacement workflows on
+  `f01121b3c` are not being awaited.

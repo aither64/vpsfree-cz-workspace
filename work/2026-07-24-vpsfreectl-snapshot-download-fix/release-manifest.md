@@ -18,7 +18,7 @@ Both HaveAPI commit sets passed every GitHub Actions component workflow.
 ## Downstream release heads
 
 - vpsAdmin feature head:
-  `64d2493d1d9d7b0c3416d5ee2ec907f9e01c3055`.
+  `f01121b3ce8e809858d5443bb1306d72765b8b9b`.
 - vpsfree-client feature head:
   `936536f59e34ba3be5a7de19d7c0ffc39b3839cc`.
 
@@ -54,8 +54,10 @@ The Nix hash for the exact HaveAPI Ruby-client release artifact is
 3. Completed: regenerate all vpsAdmin package metadata with
    `rake vpsadmin:gems`; it retains HaveAPI 0.29.5 and the verified release
    artifact hash without a diff on repetition.
-4. In progress: run fresh vpsAdmin workflows on the cleaned feature head and
-   submit that source branch for review.
+4. Completed for source handoff: push the cleaned vpsAdmin feature history.
+   Replacement workflows were triggered but are not being awaited, as
+   requested. Pull-request creation remains blocked by the configured GitHub
+   token's permissions.
 5. Deferred and not authorized: integration of vpsAdmin or vpsfree-client
    default branches, creation of their release tags, and publication of their
    packages.

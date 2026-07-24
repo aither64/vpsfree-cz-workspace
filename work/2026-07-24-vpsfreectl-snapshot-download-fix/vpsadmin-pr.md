@@ -32,4 +32,4 @@ without data migration.
 
 A standalone change review found stale 4.1.0 pins in the three node package
 Gemfiles. The pins, generated lockfiles, and version task were corrected before
-submission.
+the source-review handoff.
