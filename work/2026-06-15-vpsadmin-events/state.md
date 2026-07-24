@@ -13152,3 +13152,79 @@ GitHub Actions after final pushes:
 - The same standalone reviewer must now perform the correction pass before the
   long OOM integration scenario is run. Production configuration, running
   services, KB pages, and KB media remain untouched.
+
+### Second Grouping Review Corrections
+
+- The same standalone reviewer rejected the first correction pass with two
+  remaining blockers:
+  - abort and group activation could race because both API and node abort paths
+    discovered groups before serializing against an ungrouped delivery entering
+    a group;
+  - generic grouping commit `1f18e4533f` enabled OOM grouping defaults while
+    the legacy periodic OOM notification pipeline was still present.
+- The API and libnodectld activation/abort paths now serialize on the
+  transaction-chain row before any group or delivery locks. Activation resolves
+  the chain ID outside its Active Record transaction, takes the chain lock
+  first, reloads the delivery after the lock, and then follows the existing
+  group-to-delivery lock order. Resolving the ID first avoids a stale MySQL
+  repeatable-read snapshot when activation waits for an abort transaction.
+- Added deterministic interleaving coverage for both execution environments:
+  abort holds the chain lock while activation waits, commits the aborted chain
+  and deliveries, and activation then observes the abort instead of creating a
+  group. The node command spec uses real independent database transactions.
+- Rebuilt vpsAdmin history again from base
+  `681a7a41b66dbae3dbdf4f318c45e9aca4489b9f`:
+  - `095a98277` `notifications: add route-level event grouping`;
+  - `1c3639531` `oom: replace report batches with event grouping`;
+  - `52f9aa1810d57cf78fab30ff8e589610a8cdb618`
+    `webui: configure and inspect event grouping`.
+- Generic commit `095a98277` has no OOM group-capable template, OOM grouping
+  constants, default OOM route creation, or OOM fallback routing. Commit
+  `1c3639531` introduces all of that together with the single-event OOM
+  cutover. The final rebuilt tree is byte-for-byte identical to the corrected
+  pre-rebuild tree retained at
+  `backup/2026-06-15-vpsadmin-events-pre-final-rebuild`.
+- All three rebuilt vpsAdmin commits passed the repository's mandatory Nixfmt,
+  migration, API/WebUI i18n, RuboCop, PHP CS Fixer, and commit-message hooks.
+  Quick verification on the final tree passed:
+  - the focused API suite: 175 examples, 0 failures, 1 expected pending;
+  - the complete affected libnodectld command suite: 34 examples, 0 failures;
+  - focused API and node RuboCop: no offenses;
+  - Ruby syntax and whitespace checks.
+- Checked the generic intermediate revision independently. The grouping,
+  legacy OOM task, OOM supervisor, and OOM API resource suites passed 86
+  examples with no failures, confirming that the old OOM batching pipeline
+  remains coherent until the OOM cutover commit is applied.
+- Force-pushed vpsAdmin with lease to `52f9aa1810d57cf78fab30ff8e589610a8cdb618`
+  and cancelled only the superseded in-progress aggregate workflow. Current
+  head migration, WebUI, RuboCop, libnodectld, and i18n workflows have passed;
+  API Specs and the aggregate CI workflow are still running.
+- Updated and amended the grouping capture commit to
+  `3c64a6d20b4b6bb4a076b89650e18b4f5ea35cb4`, pinning the corrected vpsAdmin
+  head in `flake.nix`, `flake.lock`, `captures.json`, and the navigation
+  contract. `bin/validate` and `bin/check` both passed with the unchanged final
+  inventory of 86 concepts and 172 PNG variants. The capture branch was
+  force-pushed with lease.
+- Rebuilt the two generated configuration commits once more from `8eaf6a51`
+  using `confctl inputs channel set --commit`:
+  - `78adac34` pins `vpsadminServices` to
+    `52f9aa1810d57cf78fab30ff8e589610a8cdb618`;
+  - `73935b2138eecb1b9dfea7bc3b3196acc689308a` pins
+    `vpsfreeNotificationTemplates` to
+    `c9f4cd82d7f05030cb643960c417a1802e9629fb`.
+  The generated vpsAdmin pin passed Nixfmt and RakeTarget hooks; the unchanged
+  template commit was replayed intact from its previously hook-verified
+  commit. Exact lock revisions and whitespace checks passed. The configuration
+  branch was force-pushed with lease, and its pre-existing untracked cache
+  directories remain untouched.
+- Current pushed affected heads are:
+  - vpsAdmin `52f9aa1810d57cf78fab30ff8e589610a8cdb618`;
+  - notification templates
+    `c9f4cd82d7f05030cb643960c417a1802e9629fb`;
+  - HaveAPI `1720eb7fbe1d23366250c8bd3b15eb4424ff6b5b`;
+  - vpsAdmin Go client `4a92a8304be7a2e62c9dfaff47b65651309864f0`;
+  - KB captures `3c64a6d20b4b6bb4a076b89650e18b4f5ea35cb4`;
+  - configuration `73935b2138eecb1b9dfea7bc3b3196acc689308a`.
+- The long OOM integration scenario remains paused until the same standalone
+  reviewer accepts this correction pass. Production configuration, running
+  services, KB pages, and KB media remain untouched.
