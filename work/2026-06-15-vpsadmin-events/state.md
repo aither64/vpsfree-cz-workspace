@@ -12921,3 +12921,148 @@ GitHub Actions after final pushes:
   `2026-06-15-vpsadmin-events-captures` bridge cluster and removed its GC
   root. The verified KB review container remains running and owned by this
   session so both corrected pages stay available for review.
+
+## 2026-07-24 General Notification Grouping
+
+- The user approved implementation of general route-level notification
+  grouping and a single persisted `vps.oom_report` event per report.
+- Product decisions:
+  - grouping only in this revision; route selector cleanup and KB article
+    restructuring are deferred;
+  - OOM `group_wait` is 60 seconds and `group_interval` is three hours;
+  - grouping is explicit per route and is not inherited;
+  - all webhooks use one versioned `events` array payload.
+- Verified `bin/dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG` both identify
+  `2026-06-15-vpsadmin-events`.
+- Revalidated affected repository instructions and current worktree heads:
+  - `vpsadmin` `681a7a41b`;
+  - `vpsfree-notification-templates` `96d2192`;
+  - `vpsadmin-go-client` `22a9313`;
+  - `vpsadmin-kb-captures` `5e7dd19`;
+  - `vpsfree-cz-configuration` `8eaf6a51`.
+- All affected project worktrees are clean except for the configuration
+  worktree's pre-existing untracked `.bin/`, `.bundle/`, and
+  `.rubocop_cache/`, which must remain untouched.
+- The top-level coordination checkout contains unrelated shared changes and
+  untracked files. Only this initiative's `plan.md` and `state.md` belong to
+  the current implementation.
+- Implementation is starting with the vpsAdmin schema and routing lifecycle.
+
+### Grouping Implementation And Quick Verification
+
+- Final `vpsadmin` commits:
+  - `35992b70b632ba88415b41221e4511d30d228489`
+    `notifications: add route-level event grouping`;
+  - `cd6fd0b974755cd45cbee651bbd9b4b642ecf8a8`
+    `webui: configure and inspect event grouping`.
+- The implementation adds explicit route-level `group_by`,
+  `group_wait_seconds`, and `group_interval_seconds` configuration, persistent
+  group membership/snapshots, atomic group sealing, due-time reconciliation,
+  immutable retry payloads, and grouped e-mail, Telegram, SMS, and webhook
+  delivery.
+- Webhooks now use one versioned payload with an `events` array for both
+  grouped and single-event delivery. Grouped deliveries expose group labels,
+  event count, truncation count, and group/delivery headers without changing
+  retry payloads.
+- OOM ingestion now creates exactly one persisted `vps.oom_report` event in
+  the same transaction as the report, detail, and counter changes. The old
+  `stage` field, second notification event, periodic notification transaction,
+  timer, rake task, and `oom_reports.reported_at` state are removed.
+- The direct migration converts every legacy OOM rule into a terminal exact
+  event route before deleting the rules. Ignore routes are muted and
+  ungrouped; notify routes and per-account catch-all routes group by `vps_id`,
+  wait 60 seconds, and enforce a three-hour minimum group interval.
+- vpsAdmin quick verification:
+  - API/application specs excluding migration harnesses: 247 examples,
+    0 failures, 1 expected pending;
+  - isolated OOM cutover migration: 4 examples, 0 failures;
+  - isolated initial event migration: 3 examples, 0 failures;
+  - focused RuboCop on 30 changed Ruby files: no offenses;
+  - WebUI PHPUnit: 42 tests, 347 assertions;
+  - API and WebUI locale health checks passed; the WebUI check retains its
+    existing embedded-URL gettext warning;
+  - PHP syntax and `git diff --check` passed.
+- All vpsAdmin pre-commit hooks passed in the full Nix development shell:
+  Nixfmt, migration specs, API/WebUI i18n, RuboCop, and PHP CS Fixer.
+  The API-i18n hook signature was refreshed through Overcommit; no hook was
+  bypassed.
+- External template commit
+  `c9f4cd82d7f05030cb643960c417a1802e9629fb`
+  (`event_group: add grouped notification templates`) adds generic grouped
+  notification and grouped OOM templates. Its complete 674-file template
+  validation passed.
+
+### Go Client Generation
+
+- Regeneration showed that HaveAPI's Go generator omitted every API parameter
+  declared as `Custom`, including route `group_by` and grouped-delivery label
+  and member lists. This required a generic generator fix rather than a
+  vpsAdmin-specific client patch.
+- HaveAPI commit
+  `bcd38243b5b78a9c4e348ad9bbd75f89831fa8be`
+  (`clients/go: generate custom action parameters`) maps custom values to
+  `interface{}`, serializes non-string custom query values as JSON, and adds
+  generated-client runtime coverage while retaining the special global
+  `includes` metadata behavior.
+- HaveAPI quick verification passed:
+  - focused generated-client specs: 7 examples, 0 failures;
+  - focused RuboCop: no offenses;
+  - all repository-declared commit hooks passed.
+- The vpsAdmin Go client was regenerated using the vpsAdmin API and the matching
+  HaveAPI v0.28 generator with the committed custom-parameter fix. Commit
+  `23e1b0ea577eab04d13a94719ea3caed71190e8d`
+  (`Regenerate client for grouped event deliveries`) exposes the route
+  grouping and delivery group contract.
+- `go fmt ./...`, `CGO_ENABLED=0 go build ./...`, and
+  `CGO_ENABLED=0 go test ./...` all passed.
+
+### Capture Contract And Deployment Pins
+
+- `vpsadmin-kb-captures` commit
+  `9243acd764dfc01ba87be587eb6aede674b16e95`
+  (`captures: document notification grouping`) pins the final vpsAdmin
+  revision, removes the obsolete OOM `stage` matcher/payload fixture, adds a
+  dedicated grouped OOM route capture, and regenerates every visibly changed
+  notification route form in Czech and English.
+- The grouped route screenshot shows grouping by `vps_id`, a 60-second initial
+  wait, and a 10,800-second minimum interval. The OOM and incident mute
+  screenshots remain separate and show only their useful matchers.
+- The first English rerun exposed that the existing SMS tutorial mutated its
+  only target from pending to verified, so the second language no longer had a
+  verification form. The fixture now keeps a separate pending verification
+  target and a verified receiver target, and the scenario no longer mutates
+  either one.
+- Updating the old cluster state initially hit the unique verification-token
+  index because the new pending row was inserted before the old row released
+  the token. The declarative seed now verifies the old target first, then
+  inserts or resets the pending target. Two consecutive seed-service restarts
+  passed after this ordering fix.
+- Targeted Czech and English notification passes each captured 26 checkpoints.
+  Both contact sheets and the focused grouping/OOM/incident images were
+  inspected. Final `bin/check` passed with 49 controls, 35 paths, 57 capture
+  concepts, 30 semantic selectors, 79 annotation bindings, 9 exceptions,
+  test suites of 8/50 and 9/19, and all 172 PNG variants.
+- The disposable bridge screenshot cluster was stopped and its GC root
+  removed. The existing session-owned KB review container and production wikis
+  were not modified.
+- `confctl inputs channel set --commit` generated these configuration commits:
+  - `ab39f8c65c8fb9f11c222d755a61a60d6d121fb7`
+    pins `vpsadminServices` to
+    `cd6fd0b974755cd45cbee651bbd9b4b642ecf8a8`;
+  - `25406fe48afbee799f6e188c3f997ef3c4419d67`
+    pins `vpsfreeNotificationTemplates` to
+    `c9f4cd82d7f05030cb643960c417a1802e9629fb`.
+- The first template pin attempt used an incorrect full SHA after the correct
+  short prefix and was rejected by the remote without modifying or committing
+  the lock file. The remote branch head was checked with `git ls-remote`, then
+  the exact commit was pinned successfully.
+- Both generated configuration commits passed the repository's Nixfmt and
+  event-i18n rake hooks. The pre-existing untracked `.bin/`, `.bundle/`, and
+  `.rubocop_cache/` remain untouched.
+- The final vpsAdmin, template, HaveAPI, Go client, capture, and configuration
+  heads are pushed to `origin/2026-06-15-vpsadmin-events`.
+- Compatibility remains an intentional direct cutover: take a database backup,
+  run the irreversible migration, and activate API, supervisor, dispatchers,
+  WebUI, templates, and configuration in one coordinated maintenance window.
+  Rollback cannot reconstruct deleted legacy OOM rules from the down migration.

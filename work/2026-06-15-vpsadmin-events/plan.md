@@ -1873,3 +1873,69 @@ Compatibility and deployment:
   runtime API, schema, protocol, client, or deployment change and remains
   pinned to vpsAdmin revision
   `681a7a41b66dbae3dbdf4f318c45e9aca4489b9f`.
+
+## General Notification Grouping And Single OOM Event
+
+Requested on 2026-07-24: replace the OOM-specific two-stage batching workflow
+with reusable Alertmanager-style grouping on event routes.
+
+Design decisions:
+
+- Grouping is explicitly configured on each delivery-producing route with
+  `group_by`, `group_wait_seconds`, and `group_interval_seconds`; it is never
+  inherited by child routes.
+- A route may group on at most ten scalar common or event-specific matcher
+  fields. Empty `group_by` groups all events for that route. Pattern and
+  catch-all routes may use only common fields.
+- Group identity includes the route, route owner/routing context, action,
+  destination, template, grouping configuration, and canonical group label
+  values. Muted or otherwise skipped routing results never join a group.
+- The first pending member waits `group_wait`. Later batches become due at the
+  later of `first_member_at + group_wait` and
+  `last_sealed_at + group_interval`. Sealed payloads are immutable, retries do
+  not absorb new events, and no notification repeats without a new event.
+- Routing membership is persisted separately from the outbound delivery.
+  Transaction-backed events prepare/release members; dispatchers atomically
+  seal due members into one delivery and retain database reconciliation.
+- Grouped e-mail, Telegram, and SMS use an event-specific grouped template when
+  available and a generic grouped-event template otherwise. Webhooks use one
+  versioned `events` array shape for both grouped and ungrouped deliveries.
+- `vps.oom_report` represents exactly one persisted OOM report. The `stage`
+  field, synthetic notification event, periodic batching transaction, timer,
+  and `oom_reports.reported_at` state are removed.
+- Migrated OOM rules remain ordered terminal routes. Ignore rules use a mute
+  receiver; notify rules use the effective legacy OOM recipient. A grouped
+  catch-all route precedes generated defaults. Notify and catch-all routes
+  group by `vps_id`, wait 60 seconds initially, and use a three-hour interval.
+- The unmerged migrations and branch history will be rewritten so the final
+  series introduces only the final schema and protocol. The direct cutover is
+  not mixed-version compatible; deploy from a database backup during a
+  coordinated API/supervisor/dispatcher maintenance window.
+- Route-selector cleanup and the broader notification KB article split are
+  deferred. The visible WebUI change still requires an updated capture
+  contract and screenshots, but no KB page or production wiki write.
+
+Affected repositories:
+
+- `vpsadmin`: schema, routing/grouping, dispatchers, OOM ingress and migration,
+  API, WebUI, localization, Nix service configuration, and tests.
+- `vpsfree-notification-templates`: generic grouped notification and grouped
+  OOM rendering.
+- `haveapi`: Go client generation for custom-valued API parameters, including
+  grouping field lists and delivery group metadata.
+- `vpsadmin-go-client`: generated grouping, membership, and delivery contract.
+- `vpsadmin-kb-captures`: exact vpsAdmin pin, grouping controls, deterministic
+  fixtures, bilingual captures, and contract validation.
+- `vpsfree-cz-configuration`: exact final vpsAdmin services and notification
+  template pins through `confctl`.
+
+Verification and review:
+
+- Cover route validation, timing, concurrency, transaction release/abort,
+  immutable retries, destination changes, all delivery actions, webhook
+  signing, rate limits, OOM ordering/migration, and tenant visibility.
+- Run quick component checks and hooks, commit all intended changes, then run
+  exactly one fresh standalone mandatory change review before long integration
+  tests.
+- Regenerate downstream repositories only from the committed final vpsAdmin
+  head, monitor GitHub Actions, and record all results in `state.md`.
