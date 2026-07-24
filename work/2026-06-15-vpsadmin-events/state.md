@@ -12912,3 +12912,12 @@ GitHub Actions after final pushes:
 - The exact corrected release remains pending in the session-owned review
   container. Production is untouched and promotion still requires direct user
   approval.
+- Pushed capture head
+  `5e7dd194d569b90fceeb7c5b558d8cbe83b6d6e0` to
+  `origin/2026-06-15-vpsadmin-events` and workspace staging-state head
+  `aa3a47fef7a2acd33406f3663939e817c59c0bb6` to `origin/master`. Neither
+  repository declares GitHub Actions workflows for this slice.
+- Stopped only the disposable
+  `2026-06-15-vpsadmin-events-captures` bridge cluster and removed its GC
+  root. The verified KB review container remains running and owned by this
+  session so both corrected pages stay available for review.
