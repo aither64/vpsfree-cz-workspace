@@ -13249,3 +13249,53 @@ GitHub Actions after final pushes:
   together.
 - The mandatory review gate is cleared. A fresh focused
   `alerts/oom-report-group-and-prune` integration scenario may now run.
+
+### OOM Integration Test Harness Correction
+
+- The first post-review focused run of
+  `./test-runner.sh test alerts/oom-report-group-and-prune` completed its
+  two-machine setup and then produced one failed and one passing example:
+  - grouping/delivery example: failed after 60.55 seconds;
+  - prune example: passed after 25.42 seconds;
+  - complete script: failed after 667.47 seconds.
+- Full runner evidence was inspected in
+  `/tmp/os-test-runner/os-test-alerts__oom-report-group-and-prune-3cf285a3`
+  before any rerun. The failure was an integration-test construction error,
+  `undefined local variable or method 'adminUser'`, not an application or VM
+  service failure. Two embedded Ruby snippets used `#{adminUser.id}`, which
+  deferred interpolation to the Ruby test evaluator even though `adminUser`
+  exists only in the enclosing Nix expression.
+- Both snippets now interpolate `${toString adminUser.id}` through Nix before
+  Ruby evaluation. Nixfmt, Nix parse, and whitespace checks passed. A first
+  commit attempt outside the complete shell was correctly stopped by missing
+  hook dependencies; after verifying and re-signing the unchanged i18n hook,
+  the final commit ran in `nix develop .#vpsadmin` and all Nixfmt, migration,
+  WebUI/API i18n, and commit-message hooks passed.
+- Squashed this test-only correction into the OOM cutover commit and replayed
+  the WebUI commit. The generic grouping commit remains unchanged:
+  - `095a98277` `notifications: add route-level event grouping`;
+  - `0777eb1a5` `oom: replace report batches with event grouping`;
+  - `82996d11a5bb65e55e9edf469fa1854cdb100262`
+    `webui: configure and inspect event grouping`.
+  The only final-tree difference from previously accepted vpsAdmin head
+  `52f9aa1810d57cf78fab30ff8e589610a8cdb618` is the six-line test
+  interpolation correction.
+- Force-pushed vpsAdmin with lease. Cancelled superseded API Specs run
+  `30127471987` and the newly push-triggered aggregate integration run
+  `30129071263`; no fresh long integration rerun will start before the
+  mandatory test-only correction review.
+- Updated the exact capture pin and amended/pushed capture head
+  `83b5ccba71398cc80dd3a1fc92969bff21912f59`. `bin/validate` and
+  `bin/check` passed again with 86 concepts, 172 PNG variants, 49 controls,
+  35 paths, 57 capture concepts, 30 selectors, 79 bindings, and 9 exceptions.
+- Rebuilt the generated configuration pins from base `8eaf6a51`:
+  - `a1cc68a9` pins `vpsadminServices` to
+    `82996d11a5bb65e55e9edf469fa1854cdb100262`;
+  - `39944316` pins notification templates to unchanged
+    `c9f4cd82d7f05030cb643960c417a1802e9629fb`.
+  Exact lock revisions and whitespace checks passed, the generated vpsAdmin
+  commit passed Nixfmt and RakeTarget hooks, and the branch was force-pushed
+  with lease. Pre-existing untracked cache directories remain untouched.
+- The same mandatory reviewer must check this test-only correction and exact
+  downstream pins before the focused OOM VM scenario is rerun. Production and
+  KB staging remain untouched.
