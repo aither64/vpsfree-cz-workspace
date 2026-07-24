@@ -13323,3 +13323,15 @@ GitHub Actions after final pushes:
   after the review and focused VM success.
 - Production configuration, running services, KB staging, production KB pages,
   and production media remain untouched.
+- Final local/pushed heads match for vpsAdmin `82996d11`, HaveAPI `1720eb7`,
+  Go client `4a92a83`, capture `83b5ccb`, and configuration `39944316`; the
+  template branch is confirmed remotely at `c9f4cd82`. All worktrees are clean
+  except the configuration repository's preserved pre-existing `.bin/`,
+  `.bundle/`, and `.rubocop_cache/` directories.
+- Removed the clean temporary `vpsadmin-rebuild` worktree after retaining its
+  branch and backup refs. The primary initiative worktrees and feature
+  branches remain.
+- At handoff, 24 of 26 current-head API Specs jobs have passed and the two
+  bounded `platform` shards are still running without failures. Aggregate
+  attempt 2 is queued behind unrelated self-hosted CI runs. These external
+  statuses do not replace the completed local focused integration result.
