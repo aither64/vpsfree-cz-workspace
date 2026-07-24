@@ -12864,5 +12864,16 @@ GitHub Actions after final pushes:
 - Amended capture repository commit
   `5e7dd194d569b90fceeb7c5b558d8cbe83b6d6e0` contains the stable fixtures,
   corrected contract, and all bilingual screenshots.
-- The workspace commit, the reviewer's correction pass, and replacement
-  staging verification remain pending.
+- Workspace commit
+  `9c75d2d03002bf6272506f2e2d08030f9b9a261e` contains the guarded bilingual
+  candidates and exact release manifests.
+- The same standalone reviewer accepted the correction pass with no Blocking,
+  Important, or Advisory findings. It independently confirmed stable fixture
+  identities, all three added result captures, the consistent SMS target,
+  signed-body webhook idempotency, exact manifest hashes, absence of
+  `routes.png`, both contact sheets, annotation validation, repository checks,
+  and the two-commit split.
+- Accepted residual gaps are that screenshots prove representative routing
+  rather than external provider delivery, deliberate future matcher changes
+  require an explicit fixture snapshot refresh, and rendered staging still
+  needs replacement verification. Production remains untouched.
