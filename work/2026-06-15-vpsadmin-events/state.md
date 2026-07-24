@@ -13198,7 +13198,10 @@ GitHub Actions after final pushes:
 - Force-pushed vpsAdmin with lease to `52f9aa1810d57cf78fab30ff8e589610a8cdb618`
   and cancelled only the superseded in-progress aggregate workflow. Current
   head migration, WebUI, RuboCop, libnodectld, and i18n workflows have passed;
-  API Specs and the aggregate CI workflow are still running.
+  API Specs are still running. The push-triggered aggregate workflow
+  automatically began its integration step before the mandatory correction
+  review completed, so run `30127471969` was cancelled. A fresh aggregate or
+  focused OOM integration run will start only after reviewer acceptance.
 - Updated and amended the grouping capture commit to
   `3c64a6d20b4b6bb4a076b89650e18b4f5ea35cb4`, pinning the corrected vpsAdmin
   head in `flake.nix`, `flake.lock`, `captures.json`, and the navigation
