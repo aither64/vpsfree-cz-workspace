@@ -13066,3 +13066,89 @@ GitHub Actions after final pushes:
   run the irreversible migration, and activate API, supervisor, dispatchers,
   WebUI, templates, and configuration in one coordinated maintenance window.
   Rollback cannot reconstruct deleted legacy OOM rules from the down migration.
+
+### Mandatory Grouping Review And Corrections
+
+- Standalone reviewer `mandatory_grouping_review` found three blocking issues:
+  aborted transaction chains did not remove state-9 grouping deliveries or
+  recalculate the surviving group deadline; the old OOM integration scenario
+  still exercised the deleted periodic notifier; and the vpsAdmin and capture
+  commits mixed independently reviewable changes.
+- Important findings were that event queue membership filters did not apply
+  user and event-type constraints to every group member and that managed
+  webhooks validated only the leader event's user. Advisory findings requested
+  both delivery and group headers for one-member groups, surfaced Go custom
+  query JSON errors, and stronger restart/concurrency coverage.
+- Corrected vpsAdmin grouping behavior:
+  - API and node-side abort paths lock affected groups before deliveries,
+    cancel grouping members, and recompute `next_flush_at` from survivors;
+  - state 9 is handled by the node transaction-chain abort path;
+  - queue and log membership filters use member-aware `EXISTS` queries for
+    user and event type;
+  - managed webhooks validate every group member's user;
+  - every webhook carries both delivery and group headers;
+  - focused specs cover failed members, surviving deadlines, cross-user
+    managed webhooks, and node-side abort behavior.
+- Replaced the stale notifier integration test with
+  `alerts/oom-report-group-and-prune`. It publishes two reports through the
+  real RabbitMQ supervisor ingress, expects one persisted event per report,
+  waits for one sent and one grouped delivery, verifies a single grouped
+  e-mail containing all three OOM kills, and exercises pruning.
+- Rebuilt vpsAdmin history into independent commits:
+  - `1f18e4533f` `notifications: add route-level event grouping`;
+  - `6a51f3e5e` `oom: replace report batches with event grouping`;
+  - `3e97f28caf114e735901558ed2840653a01bc4c6`
+    `webui: configure and inspect event grouping`.
+  The rebuilt final tree is byte-for-byte identical to the corrected
+  pre-split tree. All commit hooks passed. The branch was force-pushed with
+  lease, and the only superseded in-progress GitHub Actions run was cancelled.
+- The generic commit deliberately keeps the old OOM batching pipeline usable.
+  The second commit performs the direct OOM cutover, so each intermediate
+  commit has coherent application and migration behavior.
+- Correction-focused vpsAdmin checks passed:
+  - API specs: 141 examples, 0 failures, 1 expected pending;
+  - libnodectld specs: 33 examples, 0 failures;
+  - isolated grouping/application specs in the split intermediate tree:
+    44 examples, 0 failures;
+  - the isolated initial-event migration: 3 examples, 0 failures;
+  - RuboCop on ten changed Ruby files, Nix formatting, integration-test
+    selection, i18n health, and whitespace checks.
+- A discarded combined migration/application invocation produced 44
+  missing-table failures after the migration harness switched to its isolated
+  schema. The same migration and application specs passed in their supported
+  separate invocations. This known harness behavior is documented in
+  `notes/vpsadmin/2026-07-20-api-migration-spec-isolation.md`.
+- HaveAPI commit
+  `1720eb7` now returns custom query serialization errors instead of silently
+  encoding invalid values as an empty string. Its generated-client integration
+  suite passes 7 examples and focused RuboCop is clean; all commit hooks
+  passed.
+- Regenerated `vpsadmin-go-client` from the final vpsAdmin API with HaveAPI
+  v0.28 plus the filename and custom-parameter fixes. Commit `4a92a83`
+  includes the error-returning GET conversion contract.
+  `gofmt`, `CGO_ENABLED=0 go build ./...`, and
+  `CGO_ENABLED=0 go test ./...` passed.
+- Split the capture correction from grouping as requested:
+  - `bdecced` keeps separate verified and pending SMS targets and refreshes
+    only the four affected bilingual images;
+  - `0bd005d` pins vpsAdmin `3e97f28c`, adds the grouping capture, removes the
+    OOM stage fixture, and refreshes grouping-visible forms.
+  Both the 85-concept intermediate capture contract and the final 86-concept
+  contract passed `bin/validate` and `bin/check`; final counts are 172 PNG
+  variants, 49 controls, 35 paths, 57 capture concepts, 30 selectors, 79
+  bindings, and 9 exceptions.
+- Rebuilt configuration history from `8eaf6a51` with exactly one generated pin
+  per input:
+  - `de2a3027` pins `vpsadminServices` to
+    `3e97f28caf114e735901558ed2840653a01bc4c6`;
+  - `b55079e7` pins `vpsfreeNotificationTemplates` to
+    `c9f4cd82d7f05030cb643960c417a1802e9629fb`.
+  Both confctl commits passed Nixfmt and rake hooks. Flake metadata confirms
+  both exact revisions. The pre-existing `.bin/`, `.bundle/`, and
+  `.rubocop_cache/` directories remain untouched.
+- Corrected vpsAdmin, HaveAPI, generated-client, capture, and configuration
+  heads are pushed to `origin/2026-06-15-vpsadmin-events`. The external
+  template head remains `c9f4cd82`.
+- The same standalone reviewer must now perform the correction pass before the
+  long OOM integration scenario is run. Production configuration, running
+  services, KB pages, and KB media remain untouched.
