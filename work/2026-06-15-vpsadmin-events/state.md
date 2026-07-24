@@ -12780,3 +12780,89 @@ GitHub Actions after final pushes:
   `2026-06-15-vpsadmin-events-captures` bridge cluster and removed its GC root.
   The verified KB review container remains running and owned by this session
   so the staged pages stay available for review.
+
+## 2026-07-24 Notification Guide Full Step-by-Step Revision
+
+- The user reported that the practical guide still omitted requested
+  scenarios, did not explain each workflow step by step, and opened with an
+  overwhelming all-routes screenshot.
+- Reworked both guarded notification pages into five independent tutorials:
+  event-role routing, OOM/incident muting, Telegram monitoring and incidents,
+  account/VPS suspension SMS, and a signed VPS resource-change webhook.
+- The first image is now the focused account-contact receiver used by the role
+  tutorial. `notifications/routes` is retired from KB page bindings and absent
+  from both candidates and release manifests.
+- The tutorials now show target or receiver setup, every requested route, and
+  representative match results. Each language release contains two pages and
+  25 focused media objects. The tutorial itself uses 21 focused concepts plus
+  four compact reference images.
+- The webhook tutorial contains a dependency-free Python server, signature
+  verification, transport headers, a parseable synthetic test-event body,
+  flattened matcher fields, source metadata, and delivery metadata.
+- Added deterministic persisted role, incident-mute, and OOM-mute events.
+  Fixture assertions verify both role routes match and both mute routes stop
+  further routing. The scheduled-out fixture keeps its stable event identity.
+- The capture repository's own `bin/devcluster` must manage screenshot
+  clusters. Using the coordination wrapper selected unrelated local state and
+  SSH credentials. Reusable details are in
+  `notes/vpsadmin-kb-captures/2026-07-24-use-own-devcluster-wrapper.md`.
+- Generic test events do not reconstruct real VPS or incident source objects.
+  Safe route-verification patterns and fixture snapshot behavior are recorded
+  in
+  `notes/vpsadmin-kb-captures/2026-07-24-notification-test-event-sources.md`.
+- Repeated restarts of `vpsadmin-devcluster-seed.service` passed with
+  `Result=success` and `ExecMainStatus=0`.
+- Targeted Czech and English notification capture passes each produced 25
+  checkpoints. Both contact sheets were inspected; all focused forms and
+  result tables are legible.
+- Quick verification passed:
+  - `nix develop -c bin/check`: 49 controls, 35 paths, 56 capture concepts,
+    29 semantic selectors, 79 KB bindings, 9 exceptions, test suites 8/50 and
+    9/19, and all 170 PNG variants;
+  - the guarded candidate checker passes with 79 bindings and 9 exceptions;
+  - both articles contain five parseable JSON examples and one compiling
+    Python example, use the role receiver as their first image, and contain no
+    retired routes image;
+  - both release manifests parse and contain two pages plus 25 media objects;
+  - the pathname-aware OOM cgroup glob accepts the nested user scope and
+    rejects an unrelated system scope;
+  - Ruby and JavaScript syntax checks and both repository whitespace checks
+    pass.
+- Consecutive Czech capture runs produced the identical capture-result
+  SHA-256
+  `af0813cd3f12233c502cde14158a8a332a24b04c9cbf26478a83480b92e8c8f2`.
+  Consecutive English runs likewise produced
+  `2891170501636cd5b47bdc5c5c28ed0941335766389ba42ac687b67f8163513a`.
+- This revision remains documentation- and capture-only. It changes no runtime
+  API, database schema, protocol, persistent state, generated client, or
+  deployment ordering. Production KB pages and media remain untouched.
+
+### Full Tutorial Mandatory Review Corrections
+
+- The standalone mandatory reviewer requested corrections before staging:
+  fixture events were recreated on every seed, Telegram/SMS/webhook tutorials
+  did not show route-match results, SMS setup used two different example
+  targets, the webhook idempotency text trusted an unsigned header, and stale
+  unindexed `routes.png` files remained in the candidate media trees.
+- The seed now keeps the oldest matching fixture event and removes only
+  duplicates. Seven example events retain their URL and route-match provenance
+  across ordinary reruns. The exact repeated capture-result hashes above
+  verify the rendered result links remain stable.
+- Added focused result screenshots for the temporary Telegram connection test,
+  the account-suspension SMS route, and the temporarily non-continuing
+  resource-change webhook route. The SMS walkthrough now verifies and then
+  reuses one `Suspension telephone` target with the same E.164 number.
+- The webhook server verifies HMAC over the unmodified body, takes the
+  idempotency key from signed `delivery.id`, and accepts
+  `X-VpsAdmin-Delivery` only when it equals that body value. The article
+  generates a random secret with OpenSSL instead of presenting a fixed secret
+  to copy.
+- Rebuilt four guarded candidate pages with 33 annotations and 50 selected
+  media objects. Each language manifest contains two pages and 25 media
+  objects. The retired all-routes image is absent from the articles, manifests,
+  candidate index, and candidate media directories.
+- Amended capture repository commit
+  `5e7dd194d569b90fceeb7c5b558d8cbe83b6d6e0` contains the stable fixtures,
+  corrected contract, and all bilingual screenshots.
+- The workspace commit, the reviewer's correction pass, and replacement
+  staging verification remain pending.

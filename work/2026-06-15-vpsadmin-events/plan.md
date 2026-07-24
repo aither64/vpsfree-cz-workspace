@@ -1841,23 +1841,31 @@ Compatibility and deployment:
 
 ## Notification Guide Practical Examples
 
-- Extend the guarded Czech `navody:notifikace` and English
-  `manuals:notifications` candidates with five practical recipes:
-  role-based routing, selected-event muting, Telegram delivery, suspension
-  SMS, and a signed webhook.
+- Rebuild the guarded Czech `navody:notifikace` and English
+  `manuals:notifications` candidates around five independent, task-first,
+  step-by-step recipes: role-based routing, selected-event muting, Telegram
+  delivery, suspension SMS, and a signed webhook.
+- Begin with the event → route → receiver → target mental model and then the
+  small account-contact receiver used by the first recipe. Retire the
+  overwhelming all-routes overview from the article and from release media;
+  keep reference material after the practical recipes.
 - Keep normal e-mail delivery for role, Telegram, SMS, and webhook examples by
   enabling route continuation. Put mute routes first and disable continuation
   so they also stop later custom and default routes.
 - Document exact route selectors and matchers, including transient raw OOM
   matching by VPS, stage, and cgroup; incident matching by VPS and codename;
   `monitoring.*`; suspension event types; and `vps.resources_changed`.
-- Add five deterministic screenshot concepts per language: role route, OOM
-  mute route, paired Telegram receiver, verified SMS receiver, and signed
-  webhook receiver. Fixtures use only reserved/example identities and never
-  contact providers.
+- Use 21 focused tutorial concepts per language to show receiver/target setup,
+  each relevant route, and representative route-match results. Together with
+  four reference images, each language release contains 25 media objects.
+  Fixtures use only reserved/example identities and never contact providers.
 - Show a dependency-free Python 3 webhook server that verifies
-  `X-VpsAdmin-Signature-256`, handles the existing webhook JSON contract, and
-  returns a successful 2xx response.
+  `X-VpsAdmin-Signature-256`, prints the event and delivery IDs plus the
+  complete JSON shape (including flattened matcher fields), and returns a
+  successful 2xx response.
+- Test role and mute routing with persisted deterministic fixture events.
+  Explain where a generic test event is safe and where a real source object is
+  required by Telegram, SMS, or e-mail delivery templates.
 - Rebuild the complete guarded candidate trees and checksummed manifests,
   restage both languages in the session-owned KB staging mirror, and leave
   production untouched.
