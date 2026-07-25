@@ -13916,9 +13916,9 @@ GitHub Actions after final pushes:
   manifests, staging, and rendered-page inspection await the final exact
   vpsAdmin capture pin.
 - Existing aggregate run `30170674927` for superseded pushed head
-  `b82f656da50a5f3b552f5fe454e8e4b0c6603b6c` is still running its selected
-  integration test. Per the user's instruction it has not been cancelled and
-  no newer vpsAdmin head has been pushed yet.
+  `b82f656da50a5f3b552f5fe454e8e4b0c6603b6c` was still running its selected
+  integration test at this checkpoint. Per the user's instruction it was not
+  cancelled; later correction heads were pushed while that run continued.
 - Reset and rebuilt the owned single-node development cluster from the current
   local vpsAdmin and configuration worktrees using bridge networking. The
   cluster reached `ready: yes`; the API, notification grouper, all four
@@ -13939,7 +13939,8 @@ GitHub Actions after final pushes:
   the same file remains uncommitted.
 - Pushed workspace commits `53bfc0b` and `9116219` to shared `master`, and
   pushed configuration helper commit `be264862` to the initiative branch.
-  The configuration's exact vpsAdmin pin still awaits the final vpsAdmin push.
+  The exact configuration pin was generated after the final vpsAdmin push, as
+  recorded below.
 - Ran the capture repository's complete `bin/check` with
   `VPSADMIN_KB_VPSADMIN_SOURCE` set to the final local vpsAdmin worktree. It
   passes with 51 controls, 37 paths, 57 capture concepts, 30 semantic
@@ -13953,7 +13954,7 @@ GitHub Actions after final pushes:
   route and its matchers while the grouping form remains a separate capture.
   Removed the obsolete word `raw` from the OOM capture description. Node
   syntax, JSON parsing, and whitespace checks pass in the capture Nix shell.
-- Pinned the capture contract to final vpsAdmin revision
+- Pinned the capture contract to the then-current vpsAdmin revision
   `36dc6f9c3a6261afc606bd5bef0e25ef0f45d792`, regenerated all 26 notification
   checkpoints in Czech and English from the owned bridge-network screenshot
   topology, and updated deterministic baselines. The final `bin/check` passes
@@ -13972,3 +13973,35 @@ GitHub Actions after final pushes:
   semantic annotations, and 52 media objects. The annotation checker passes
   with 123 bindings and 9 explicit exceptions. Regenerated localized release
   manifests contain eight pages and 26 media objects per language.
+- The mandatory final correction review found no functional, compatibility,
+  security, or tenant-isolation defect, but rejected the vpsAdmin history on
+  two Blocking commit-boundary findings: the strict-schema cleanup also
+  contained the existing-account OOM policy, and the route-header commit also
+  contained the semantic notification-groups control. It also advised
+  reconciling the two stale progress statements corrected above.
+- Rewrote only the unmerged vpsAdmin correction tail into four focused
+  commits: strict predecessor migrations `7350ce018`, existing-account OOM
+  defaults `5f7e683d1`, semantic group documentation control `936ce7f6e`, and
+  empty route action headers `5e042a5cd`. All declared hooks passed for every
+  reconstructed commit, and the final tracked tree is byte-identical to the
+  previously tested `36dc6f9c3` tree. The branch was force-pushed with lease.
+- The superseded current-head API matrix `30177710323` completed successfully
+  before its requested cancellation could take effect. The older user-retained
+  aggregate run `30170674927` remained in progress and was not cancelled.
+- Rebuilt the configuration pin from functional helper commit `be264862`.
+  An initial `confctl` attempt used an incorrectly transcribed full revision
+  and failed with GitHub HTTP 404 without changing tracked files. Re-running
+  with the exact copied revision succeeded, passed repository hooks, and
+  produced generated commit `c89d6e25`, pinning
+  `5e042a5cd8541814e9af221f2e914e70abb74349`. The rewritten branch was
+  force-pushed with lease.
+- Rebuilt the capture commit from `8fb2049` with the same exact vpsAdmin
+  revision. The vpsAdmin NAR hash is unchanged from `36dc6f9c3`, confirming
+  the history-only rewrite. Complete `bin/check` remains green with 51
+  controls, 37 paths, 57 capture concepts, 30 selectors, 123 bindings,
+  9 exceptions, 69 assertions, and 172 PNGs. Rewritten capture commit
+  `f79c838` is pushed.
+- Rebuilt both guarded KB candidates and release manifests after the capture
+  rewrite. Counts remain 16 changed pages, 4 annotations, 52 media objects,
+  123 bindings, and 9 exceptions; each language manifest contains 8 pages and
+  26 media objects.
