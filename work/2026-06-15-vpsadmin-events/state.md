@@ -13335,3 +13335,21 @@ GitHub Actions after final pushes:
   bounded `platform` shards are still running without failures. Aggregate
   attempt 2 is queued behind unrelated self-hosted CI runs. These external
   statuses do not replace the completed local focused integration result.
+
+## 2026-07-25 Development Cluster Startup
+
+- Verified that both `bin/dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG` identify `2026-06-15-vpsadmin-events`.
+- Started the existing single-topology development cluster with
+  `dev-clusters/vpsadmin/bin/devcluster start
+  2026-06-15-vpsadmin-events` on the default bridge network.
+- The launcher rebuilt configuration from vpsAdmin
+  `82996d11a5bb65e55e9edf469fa1854cdb100262`, enabled the configured
+  Telegram development integration, applied the final services configuration,
+  waited for the services seed to publish `tank/ct`, prepared the node pool,
+  and restarted nodectld.
+- Final status reports `running`, `ready: yes`, topology `single`, network
+  `bridge`, and launcher PID `286033`.
+- WebUI is available at `https://webui.aitherdev.int.vpsfree.cz/` and the API
+  at `https://api.aitherdev.int.vpsfree.cz/`. Development credentials were not
+  copied into this state file.
