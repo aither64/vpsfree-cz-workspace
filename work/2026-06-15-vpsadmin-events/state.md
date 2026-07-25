@@ -13473,3 +13473,176 @@ GitHub Actions after final pushes:
   production KB page or media was changed in this slice.
 - Long `alerts/oom-report-group-and-prune` integration and production-role
   configuration builds remain gated on the fresh mandatory change review.
+
+### Shared Grouping Review Corrections
+
+- The single fresh-context reviewer found two initial blockers:
+  - the `matcher_count` API/model/localization support belonged to the compact
+    WebUI commit instead of the earlier OOM deployment-policy commit;
+  - nine bilingual tutorial route examples still showed grouping fields in
+    the ordinary route form.
+- Rebuilt and force-pushed the vpsAdmin history so each commit is independently
+  coherent:
+  - `598409b46` `notifications: share groups across delivery actions`;
+  - `594ac132d` `events: make the OOM grouping route deployment policy`;
+  - `410f6abbb` `webui: simplify notification route management`;
+  - `d7c31bff3` `notifications: grant grouping queue permissions`.
+  The final pushed head is
+  `d7c31bff308e1141c395f26ed1db48b73b131a25`, based on
+  `82996d11a5bb65e55e9edf469fa1854cdb100262`.
+- Folded two CI-discovered corrections into the shared-grouping commit:
+  - fixed the changed `EventDelivery` RuboCop layout; a complete local RuboCop
+    run checked 2,136 files without offenses;
+  - removed a stale libnodectld SQL helper assignment to the deleted group
+    `action` column. The affected command suite passes 34 examples with no
+    failures. A broader local suite printed 344 examples with no failures, but
+    its shell cleanup exited 143, so it is not recorded as a clean complete
+    suite.
+- Rebuilt and pushed the production configuration history at
+  `0eda8a1ea2187ce56b40aabf31ffebce86f76cd0`. It retains the new-user
+  grouped OOM route hook and existing-cluster RabbitMQ permission reconciler,
+  then uses one generated `confctl` commit to pin the exact final vpsAdmin
+  revision. Preserved `.bin/`, `.bundle/`, and `.rubocop_cache/` directories
+  remain untouched.
+- Rebuilt the screenshot cluster from the exact final vpsAdmin pin on the
+  required bridge network. Runtime checks passed: WebUI HTTP 200, active
+  `vpsadmin-notification-grouper`, and durable quorum queue
+  `vpsadmin.notifications.grouping` in the `vpsadmin_test` vhost.
+- Regenerated the complete notification scenario in Czech and English,
+  producing 26 checkpoints per language. The final generated diff contains 31
+  notification PNGs (20 Czech and 11 English), including every requested
+  role, OOM mute, incident mute, Telegram, SMS, and webhook route example plus
+  the time-interval route and current-context captures.
+- The reviewer found the English OOM matcher crop incomplete during the
+  correction pass. `routeTables()` now includes the actual matcher table as an
+  explicit crop target so translated columns that overflow their enclosing
+  form remain visible. The reviewer rechecked the corrected original-resolution
+  image and confirmed both delete controls and the complete `Add matcher` link
+  are inside the crop.
+- Final capture verification passed:
+  - inventory: 86 concepts, 172 variants, 87 Czech references, 78 English
+    references, and 172 PNGs;
+  - documentation contract: 50 controls, 35 paths, 57 capture concepts, and
+    30 semantic selectors;
+  - annotations: 79 bindings and 9 exceptions;
+  - contract tests: 8 runs/50 assertions and 9 runs/19 assertions, all green.
+  All requested route examples were visually inspected in both languages;
+  ordinary route forms contain no grouping settings, OOM and incident mute
+  examples are distinct, and grouping remains a focused standalone form.
+- The final capture commit is pushed at
+  `f54f51e4ef4596aafb52d443ef6e24b2bd389aec`.
+- The same reviewer has the final pushed heads and verification inventory.
+  Long OOM integration and production-role configuration builds remain gated
+  until that correction review is accepted.
+- Current-head quick GitHub workflows for RuboCop, WebUI PHPUnit, and i18n
+  health passed. Aggregate run `30159742821` automatically entered its long VM
+  test step before review acceptance and was cancelled to preserve the review
+  gate. The API topic-parallel workflow remains allowed to run.
+
+### Final Shared Grouping Review Acceptance
+
+- The same standalone reviewer accepted the correction pass with no Blocking,
+  Important, or Advisory findings.
+- The reviewer verified the immutable vpsAdmin, configuration, and capture
+  heads; independent commit boundaries; exact configuration pin; action-neutral
+  owner/receiver-scoped group identity; concurrency controls; WebUI split;
+  bilingual route examples; corrected English OOM crop; RabbitMQ-first rollout
+  order; and rollback documentation.
+- The reviewer confirmed that security and tenant isolation are acceptable and
+  that webhook target validation prevents cross-tenant grouping.
+- Residual validation items are the final-head long OOM integration,
+  production-role configuration builds, and fresh final-head libnodectld CI.
+  Deterministic two-process grouper coordination remains a future coverage
+  improvement; the implementation is covered structurally and by duplicate
+  wakeup tests.
+- The mandatory review gate is cleared.
+
+### OOM Integration Fixture Correction
+
+- The first post-review integration invocation was terminated by the command
+  wrapper's five-minute ceiling while the scenario was still in VM setup.
+  The runner reported one running scenario and zero unexpected failures; no
+  example had completed. The screenshot cluster was stopped to free its QEMU
+  resources, and the exact command was rerun in a retained tmux pane.
+- The detached run completed after 496.8 seconds with one failed and one
+  passing example:
+  - grouped OOM ingestion/delivery failed after 68.18 seconds;
+  - old-report pruning passed after 11.03 seconds.
+- Full evidence in
+  `/tmp/os-test-runner/os-test-alerts__oom-report-group-and-prune-3cf285a3`
+  showed an integration-fixture error before any report was published:
+  `EventRoute.find_by!` could not find the former core-owned
+  `OOM report notifications` route. This is consistent with the reviewed
+  design, which intentionally moved that default to
+  `vpsfree-cz-configuration`; a core-only VM test does not run the production
+  hook.
+- Corrected the core VM test to create its own prepended grouped OOM route
+  with the default administrator receiver and query its explicit integration
+  label. Production routing code and configuration are unchanged.
+- Nixfmt, Nix parse, whitespace checks, and the complete vpsAdmin commit hook
+  chain passed. The correction was folded into the OOM deployment-policy
+  commit, leaving the final tree different from reviewed head `d7c31bff3`
+  only in `tests/suite/alerts/oom-report-group-and-prune.nix`.
+- Rebuilt and pushed the exact affected heads:
+  - vpsAdmin `d77c7516905c81333d04adb72cc3005a02dd573b`;
+  - KB captures `d4c49693a8bdc69a27cad2b44c028a05f1603036`;
+  - configuration `07c19c06e36912359b0e84357acf39fad93c1429`.
+- Capture validation remains green with 86 concepts, 172 variants, 172 PNGs,
+  69 contract assertions, and unchanged generated images. The configuration
+  pin was regenerated from its true parent through `confctl`, so its automated
+  changelog accurately records `82996d11 -> d77c7516`; the superseded pin is
+  absent.
+- The same mandatory reviewer must accept this test-only correction and exact
+  downstream pins before the focused VM scenario is rerun.
+- Rewritten-head RuboCop, WebUI PHPUnit, and i18n health workflows passed.
+  Aggregate run `30161952120` automatically entered its long VM step during
+  the correction review and was cancelled; API topic-parallel remains allowed
+  to finish.
+- The same standalone reviewer accepted the test-only correction with no
+  Blocking, Important, or Advisory findings. It verified that the only
+  application-tree delta is the test fixture, the fixture matches production
+  route semantics, the previous failure occurred before report publication,
+  all exact pins are correct, and the long OOM VM rerun gate is clear.
+
+### Final Integration And Production Evaluation
+
+- Reran `./test-runner.sh test alerts/oom-report-group-and-prune` in a retained
+  tmux session so the long VM setup could outlive the command wrapper. The
+  corrected scenario completed successfully with runner exit status 0:
+  - grouped OOM ingestion and one grouped notification: 124.42 seconds;
+  - old-report pruning without transaction/event side effects: 11.34 seconds;
+  - one test script successful in 969.76 seconds overall.
+- Evaluated the exact pinned production configuration for every affected host:
+  - `confctl build 'cz.vpsfree/vpsadmin/int.api*'` built `int.api1` and
+    `int.api2`;
+  - `confctl build 'cz.vpsfree/vpsadmin/int.rabbitmq*'` built `int.rabbitmq1`,
+    `int.rabbitmq2`, and `int.rabbitmq3`.
+  Both build groups exited successfully and produced generation
+  `2026-07-25--17-06-58`.
+- Final-head GitHub workflows for RuboCop, WebUI PHPUnit, and i18n health are
+  green. The complete API Specs (topic parallel) workflow passed every
+  core/full topic and both coverage jobs. Fresh final-head libnodectld Specs
+  run `30163051467` also passed. Automatic integration run `30163052531` is in
+  progress; the selector chose the complete 118-script CI set because the
+  branch's rewritten initial event migration triggers the workflow's full-run
+  rule.
+- Started rebuilding the general `2026-06-15-vpsadmin-events` development
+  cluster from the final source worktrees on the required bridge network.
+  The launcher completed with exit status 0 after switching the final services
+  closure, rerunning the seed, preparing the node pool, and restarting
+  nodectld. It reports `running`, `ready: yes`, topology `single`, and network
+  `bridge`.
+- Post-switch runtime checks passed: the WebUI returns HTTP 200,
+  `vpsadmin-notification-grouper.service` is active/running, RabbitMQ has active
+  `notification` connections, and `vpsadmin.notifications.grouping` is a
+  durable quorum queue. The notification user's permissions include that
+  queue, and nodectld reports healthy. The cluster is intentionally left
+  running for user inspection.
+- RabbitMQ does not show the grouping queue in `list_consumers` because the
+  grouper deliberately uses acknowledged `basic.get` polling (`queue.pop`) and
+  periodic database reconciliation instead of a registered long-lived
+  consumer.
+- `bin/devcluster urls` reported a CA path without the hidden top-level
+  `.dev-clusters` component. The corrected path returned HTTP 200; recorded the
+  reusable workaround in
+  `notes/vpsadmin/2026-07-25-devcluster-ca-path.md`.
