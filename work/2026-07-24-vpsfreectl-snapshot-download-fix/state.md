@@ -756,5 +756,24 @@ No server deployment is planned.
   `createPullRequest`. The exact review body is preserved in
   `vpsfree-client-0.20.1-pr.md`; the compare page is
   `https://github.com/vpsfreecz/vpsfree-client/compare/master...2026-07-24-haveapi-resource-name-collisions?expand=1`.
-- vpsfree-client has not been merged, tagged, or published. Those actions
-  require the next explicit approval gate.
+- After explicit approval, created a fresh detached integration worktree from
+  public `master`, fast-forwarded it to `56357098b`, and rebuilt the candidate
+  with the release epoch.
+- The fresh-worktree artifact retained SHA-256
+  `ef0dfadd1a5b7ba6183045fa8950a168d0913747f61ab9599c85642536026fcd`.
+  A second isolated install loaded the expected 0.20.1/4.2.1/0.29.6 chain and
+  confirmed `vpsadmin-client ~> 4.2.1`.
+- Atomically pushed vpsfree-client `master` and lightweight tag `v0.20.1`;
+  both resolve publicly to
+  `56357098b914e19d3a0f2ed34896e5dbbd802e21`.
+- Published `vpsfree-client` 0.20.1 to RubyGems. The public versions API and
+  direct download report the reviewed SHA-256, and the public gem metadata
+  reports runtime dependency `vpsadmin-client ~> 4.2.1`.
+- A final clean installation by public gem name loaded:
+  - vpsfree-client 0.20.1;
+  - vpsadmin-client 4.2.1;
+  - haveapi-client 0.29.6.
+- Removed the clean temporary release-integration worktree after public
+  verification. The review worktree and feature branch remain available.
+- No GitHub Actions were awaited, as requested. No server or system deployment
+  was performed.
