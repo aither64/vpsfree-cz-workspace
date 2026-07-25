@@ -2038,3 +2038,133 @@ Verification:
   migration, run focused API/WebUI/service and OOM integration checks, push
   exact heads, update configuration and capture pins, regenerate bilingual
   captures, and monitor current-head GitHub Actions.
+
+## Notification Group Observability And Route Form Guidance
+
+Requested on 2026-07-25: expose reusable notification groups directly in the
+API and WebUI, and finish the compact route/grouping form usability work.
+
+Design decisions:
+
+- Route owners can list and inspect their own logical notification groups;
+  administrators can inspect all groups. The list defaults to open groups
+  while filters retain access to overdue, idle, and all reusable groups.
+- A group is a reusable bucket rather than one immutable batch. Its state is
+  `waiting`, `overdue`, or `idle`; group detail shows the current pending
+  events and links to the complete event and, for administrators, delivery
+  history.
+- The group API records the receiver directly, publishes route/owner/receiver
+  identity, labels, timing, aggregate event/stream counts, actions, and state,
+  and adds group filters to event and administrative delivery indexes.
+- Event field metadata identifies common and groupable fields. Exact routes
+  may group by scalar fields for that event type; wildcard and catch-all routes
+  may group only by common scalar fields. List fields remain invalid.
+- Every editable route and grouping parameter receives localized HaveAPI
+  descriptions. WebUI-specific Event Types links are appended by the WebUI,
+  while the API descriptions remain presentation-neutral plain text.
+- The grouping explanation is the first row of the standalone grouping form
+  and spans all three label/input/description columns.
+- Route and subroute tables use separate narrow Add subroute and Delete icon
+  columns. The retired broad route-list KB screenshot stays retired.
+- Dedicated Prometheus/service metrics and group-retention policy are deferred;
+  this slice provides API/WebUI observability and keeps existing systemd and
+  RabbitMQ monitoring.
+
+Affected repositories:
+
+- `vpsadmin`: group schema/model/API, event metadata, WebUI, localization, and
+  tests.
+- `vpsadmin-go-client`: regenerated additive group and filter API.
+- `vpsadmin-kb-captures`: exact vpsAdmin pin and refreshed bilingual route and
+  grouping form captures.
+- `vpsfree-cz-configuration`: exact generated vpsAdmin services pin.
+
+Compatibility and verification:
+
+- The events schema remains unmerged, so the initial events migration is
+  updated in place and development databases must be rebuilt. Production keeps
+  the existing coordinated maintenance-window deployment requirement.
+- The API changes are additive. Existing grouping and delivery behavior is
+  unchanged, and existing clients may ignore the new resource and metadata.
+- Cover group state, aggregates, tenant isolation, event/delivery filters,
+  route action columns, API-driven descriptions, groupable field selection,
+  localized captures, generated-client compilation, and browser group
+  lifecycle inspection.
+- Commit all intended repositories after quick checks, run the mandatory fresh
+  standalone review, then rebuild the owned bridge-network development cluster
+  and run longer integration checks.
+
+## Strict Draft Migrations, Existing OOM Defaults, And Split KB Guide
+
+Requested on 2026-07-25: finish the existing-account OOM default, remove
+development-database compatibility guards from the unreleased migration chain,
+and turn the notification guide into a reference page with standalone examples.
+
+This section supersedes the earlier combined notification-guide recipe and all
+remaining references to an OOM event `stage` field.
+
+Design decisions:
+
+- The unreleased `2026072212*` migration chain assumes exactly the schema
+  produced by its immediately preceding migration. It does not probe for
+  tables, columns, or indexes to accommodate stale disposable databases.
+  Development databases are reset after migration rewrites.
+- Data-conversion validation remains strict. In particular, the final OOM
+  migration refuses to delete legacy data unless every existing account has
+  the generated administrator route and receiver required for its grouped
+  catch-all OOM route.
+- The migration creates the ordinary grouped `vps.oom_report` catch-all for
+  every account that exists at migration time, including accounts without
+  legacy OOM rules. The vpsFree.cz configuration hook remains responsible only
+  for accounts created later.
+- The vpsFree.cz OOM-default helper is one idempotent configuration fragment
+  shared by the user-create hook and the disposable development seed. The seed
+  loads it only when a configuration source is mounted, then reconciles every
+  seeded user after default receivers and routes exist. This is development
+  wiring, not a recurring production repair job.
+- Route and subroute tables keep separate Add-subroute and Delete action
+  columns, but both column headers are empty because the icon links already
+  carry accessible titles.
+- `navody:notifikace` and `manuals:notifications` become reference pages for
+  routes, receivers, grouping, time intervals, group observability, and
+  delivery inspection. They link to six independent bilingual tutorials:
+  event-role routing, OOM muting, incident muting, Telegram delivery, suspension
+  SMS, and a signed webhook.
+- Tutorial progress uses explicit `Krok/Step N` headings, so screenshots cannot
+  reset ordered-list numbering. OOM and incident muting are separate pages.
+- OOM matching uses the single persisted `vps.oom_report` event with `vps_id`
+  and `cgroup`; no `stage = raw` matcher or two-stage event is documented.
+- The webhook example consumes the version-1 `group`, `events`, and `delivery`
+  payload shared by grouped and ungrouped notifications. It verifies the HMAC
+  over the original body and treats signed `delivery.id` as the idempotency
+  key.
+- Existing route-specific tutorial images and the standalone grouping-form
+  image are regenerated from the final vpsAdmin revision. The retired broad
+  route-list screenshot remains excluded.
+
+Compatibility and deployment:
+
+- No released predecessor schema is added by these migration edits. The
+  production cutover and backup requirements described for the event system
+  are unchanged; only disposable databases created from an older draft chain
+  need resetting.
+- Existing production accounts receive their grouped OOM route from the data
+  migration. New accounts receive the same route from the configuration hook.
+  The helper accepts a matching active route and does not overwrite user edits.
+- The development seed is conditional on the mounted vpsFree.cz configuration,
+  so generic vpsAdmin development clusters retain their existing behavior.
+- KB pages and media are staged at their final page IDs in the session-owned
+  mirror. Production wiki writes remain forbidden without a later direct user
+  approval.
+
+Verification:
+
+- Cover strict predecessor migration behavior, migration refusal when an
+  existing user lacks defaults, grouped catch-all creation for users without
+  legacy rules, helper idempotence and exact route attributes, compact empty
+  action headers, annotation/capture contracts, rendered bilingual pages, and
+  the reset bridge-network development seed.
+- Commit quick-verified changes and exact downstream pins, then run one fresh
+  standalone mandatory change review before starting a new long integration
+  run. The already-running superseded-head integration run is allowed to
+  finish and its result is recorded before any branch update.

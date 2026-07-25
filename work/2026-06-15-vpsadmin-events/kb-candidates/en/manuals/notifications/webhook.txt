@@ -1,0 +1,199 @@
+====== Send VPS resource changes to a webhook ======
+
+This example sends signed JSON to an HTTPS endpoint for every
+''vps.resources_changed'' event. The payload supports both individual and
+grouped notifications.
+
+Before starting, see the [[manuals:notifications|notification system overview]].
+
+===== Step 1: Prepare a simple receiver server =====
+
+Save this as ''webhook.py''. It verifies the HMAC signature over the exact
+request body, checks the delivery ID, and prints every received event:
+
+<code python>
+import hashlib
+import hmac
+import json
+import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+SECRET = os.environ["VPSADMIN_WEBHOOK_SECRET"].encode()
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(length)
+        expected = "sha256=" + hmac.new(
+            SECRET, body, hashlib.sha256
+        ).hexdigest()
+        received = self.headers.get("X-VpsAdmin-Signature-256", "")
+
+        if not hmac.compare_digest(received, expected):
+            self.send_response(401)
+            self.end_headers()
+            return
+
+        data = json.loads(body)
+        delivery_id = str(data["delivery"]["id"])
+        if self.headers.get("X-VpsAdmin-Delivery") != delivery_id:
+            self.send_response(400)
+            self.end_headers()
+            return
+
+        print("group:", data["group"])
+        for event in data["events"]:
+            print("event:", event["id"], event["type"], event["fields"])
+
+        self.send_response(204)
+        self.end_headers()
+
+
+HTTPServer(("127.0.0.1", 8080), Handler).serve_forever()
+</code>
+
+Run it behind a public HTTPS reverse proxy:
+
+<code>
+export VPSADMIN_WEBHOOK_SECRET="$(openssl rand -hex 32)"
+printf '%s\n' "$VPSADMIN_WEBHOOK_SECRET"
+python3 webhook.py
+</code>
+
+Store the secret securely. The example server listens only on
+''127.0.0.1:8080''; the URL configured in vpsAdmin must be public HTTPS.
+
+===== Step 2: Create the webhook target =====
+
+At <vpsadmin-nav id="notifications.target-form.open">**Notifications →
+Targets**</vpsadmin-nav>, add a **Webhook** target. Enter a public URL such as
+''https://events.example.net/vpsadmin'' and the same secret. vpsAdmin rejects
+private, local, link-local, and otherwise unsafe destination addresses.
+
+{{:en:screenshots:vpsadmin:notifications:example-webhook-target.png?900|Webhook target with a public URL and HMAC secret}}
+
+===== Step 3: Create the receiver =====
+
+At <vpsadmin-nav id="notifications.receivers.open">**Notifications →
+Receivers**</vpsadmin-nav>, create **Resource-change webhook** and attach the
+new webhook target.
+
+{{:en:screenshots:vpsadmin:notifications:example-webhook.png?900|Webhook target attached to its receiver}}
+
+===== Step 4: Create the route =====
+
+At <vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>, add:
+
+^ Field ^ Value ^
+| Label | ''VPS resource-change webhook'' |
+| Event type | ''vps.resources_changed'' |
+| Receiver | Resource-change webhook |
+| Enabled | yes |
+| Continue | yes |
+
+{{:en:screenshots:vpsadmin:notifications:example-webhook-route.png?900|Webhook route for VPS resource changes}}
+
+===== Step 5: Test the webhook =====
+
+Temporarily move this route first and disable **Continue**. This keeps the
+synthetic event away from default templates that require a real VPS. Create a
+''vps.resources_changed'' test event:
+
+<code json>
+{
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "cpu": 4,
+  "cpu_limit": 400,
+  "memory": 8192,
+  "swap": 2048,
+  "reason": "Memory upgrade"
+}
+</code>
+
+The server receives ''Content-Type: application/json'', ''User-Agent: vpsAdmin
+notification dispatcher'', ''X-VpsAdmin-Delivery'', and
+''X-VpsAdmin-Signature-256''. ''X-VpsAdmin-Event'' is present for a
+single-event delivery. A grouped request instead has ''X-VpsAdmin-Group'' and
+can contain several entries in ''events''.
+
+Inspect the matched route at
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Event log → event detail**</vpsadmin-nav>, then re-enable **Continue**.
+
+{{:en:screenshots:vpsadmin:notifications:example-webhook-result.png?900|Resource-change test stopped by the webhook route}}
+
+===== What the server receives =====
+
+IDs and timestamps in this shortened example are illustrative:
+
+<code json>
+{
+  "version": 1,
+  "group": {
+    "grouped": false,
+    "key": null,
+    "labels": {},
+    "event_count": 1,
+    "truncated_count": 0
+  },
+  "events": [
+    {
+      "id": 48123,
+      "type": "vps.resources_changed",
+      "category": "vps",
+      "severity": "info",
+      "subject": "VPS resources changed",
+      "summary": null,
+      "payload": {
+        "vps_id": 123,
+        "memory": 8192
+      },
+      "fields": {
+        "vps_id": 123,
+        "vps_hostname": "example-vps"
+      },
+      "ip_addr": null,
+      "source": {
+        "class": null,
+        "id": null
+      },
+      "user": {
+        "id": 42,
+        "login": "example"
+      },
+      "vps": null,
+      "created_at": "2026-07-25T12:34:56Z"
+    }
+  ],
+  "delivery": {
+    "id": 91234,
+    "action": "webhook",
+    "route": {
+      "id": 17,
+      "label": "VPS resource-change webhook",
+      "matcher_summary": "vps.resources_changed"
+    },
+    "receiver": {
+      "id": 8,
+      "label": "Resource-change webhook"
+    },
+    "notification_target": {
+      "id": 14,
+      "label": "Resource changes",
+      "display_target": "https://events.example.net/vpsadmin"
+    },
+    "receiver_target": {
+      "id": 21
+    }
+  }
+}
+</code>
+
+The signature is HMAC-SHA256 over the unmodified body bytes and has the form
+''sha256=<HMAC>''. Any ''2xx'' response is successful. Failed deliveries may
+be retried, so process them idempotently using the signed ''delivery.id'' in
+the body. The ''X-VpsAdmin-Delivery'' header is not itself signed; the example
+accepts it only when it matches ''delivery.id''.

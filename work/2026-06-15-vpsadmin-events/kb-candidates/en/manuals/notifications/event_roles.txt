@@ -1,0 +1,80 @@
+====== Route events by account or admin role ======
+
+This example sends events intended for the ''account'' role to an
+account-management contact and events intended for the ''admin'' role to a
+system administrator. An event can have both roles, in which case both
+contacts receive it.
+
+Before starting, see the [[manuals:notifications|notification system overview]].
+
+===== Step 1: Create and verify two e-mail targets =====
+
+At <vpsadmin-nav id="notifications.target-form.open">**Notifications →
+Targets**</vpsadmin-nav>, add two e-mail targets. Give them descriptive labels,
+for example **Account e-mail** and **Administrator e-mail**. Open the link in
+each verification message before continuing.
+
+===== Step 2: Create two receivers =====
+
+At <vpsadmin-nav id="notifications.receivers.open">**Notifications →
+Receivers**</vpsadmin-nav>, create **Account contact**. Open it and add the
+verified **Account e-mail** target.
+
+Create **Administrator contact** in the same way and add **Administrator
+e-mail**.
+
+{{:en:screenshots:vpsadmin:notifications:example-role-receiver.png?900|E-mail target attached to the Account contact receiver}}
+
+===== Step 3: Add the account-role route =====
+
+At <vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>, select **Add route** and set:
+
+^ Field ^ Value ^
+| Label | ''Account-role notifications'' |
+| Event type | leave empty |
+| Event type pattern | leave empty |
+| Receiver | Account contact |
+| Enabled | yes |
+| Continue | yes |
+
+Save the route. On its detail, select **Add matcher** and set:
+
+^ Matcher setting ^ Value ^
+| Event type | Any event type |
+| Field | ''roles'' |
+| Operator | contains list item |
+| Value | ''account'' |
+
+{{:en:screenshots:vpsadmin:notifications:example-role-routing.png?900|Account-role route with its roles matcher}}
+
+===== Step 4: Add the admin-role route =====
+
+Repeat Step 3 with label **Admin-role notifications**, receiver
+**Administrator contact**, and matcher value ''admin''. Keep **Continue**
+enabled.
+
+{{:en:screenshots:vpsadmin:notifications:example-role-admin-route.png?900|Admin-role route with its roles matcher}}
+
+Move both routes above general default routes. Because both routes continue,
+an event with both roles reaches both contacts and can still reach later
+routes.
+
+===== Step 5: Test the result =====
+
+Create a **Test event** of type ''user.test_notification'' with this payload:
+
+<code json>
+{
+  "roles": ["account", "admin"],
+  "note": "Role routing test"
+}
+</code>
+
+Open the created event at
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Event log → event detail**</vpsadmin-nav>. Both new routes must appear in its
+matched-routes table. Test events perform real deliveries, so both verified
+addresses should receive the message.
+
+{{:en:screenshots:vpsadmin:notifications:example-role-result.png?900|Test event matching both role routes}}

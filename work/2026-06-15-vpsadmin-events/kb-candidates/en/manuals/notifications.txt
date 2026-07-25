@@ -1,352 +1,136 @@
 ====== Notifications ======
 
-The vpsAdmin notification system processes events and passes them to receivers according to routes. Open it from the <vpsadmin-nav id="notifications.open">main Notifications menu</vpsadmin-nav>.
+The vpsAdmin notification system turns events into e-mail, SMS, Telegram, or
+webhook deliveries. Open it from the
+<vpsadmin-nav id="notifications.open">main **Notifications** menu</vpsadmin-nav>.
 
 The basic flow is **event → route → receiver → target**:
 
   * an **event** describes what happened,
-  * a **route** selects events by type and matchers,
-  * a **receiver** groups the delivery behavior,
-  * a **target** is a specific e-mail, telephone, Telegram account or webhook.
-
-Routes are evaluated from top to bottom. Delivery routes normally use **Continue: yes**, allowing later routes to work as well. Mute routes belong before them and use **Continue: no**, stopping further evaluation.
+  * a **route** selects events and decides whether routing continues,
+  * a **receiver** describes who or which integration should be notified,
+  * a **target** is a concrete e-mail address, telephone number, Telegram chat,
+    or webhook endpoint.
 
 ===== Step-by-step examples =====
 
-==== 1. Route by event role ====
-
-**Goal:** send events intended for the ''account'' role to the account-management contact and events for the ''admin'' role to the system administrator. One event can carry both roles.
-
-  - <vpsadmin-nav id="notifications.target-form.open">Under **Targets**, add two e-mail targets</vpsadmin-nav>. Give each a descriptive label and e-mail address, then verify each target using the link from its verification message.
-  - <vpsadmin-nav id="notifications.receivers.open">Under **Receivers**, create an **Account contact** receiver</vpsadmin-nav>. Open it, select the first verified e-mail target and click **Add target**. Repeat this for an **Administrator contact** receiver and the second address.
-
-{{:en:screenshots:vpsadmin:notifications:example-role-receiver.png?900|E-mail target attached to the Account contact receiver}}
-
-  - Under **Routes**, click **Add route** and set:
-    * **Label:** ''Account-role notifications'',
-    * **Event type** and **Event type pattern:** leave both empty,
-    * **Receiver:** Account contact,
-    * **Enabled:** yes,
-    * **Continue:** yes.
-  - After saving the route, click **Add matcher**. In the type selector choose **Any event type**, field ''roles'', operator **contains list item**, and value ''account''.
-
-{{:en:screenshots:vpsadmin:notifications:example-role-routing.png?900|Account-role route including its roles matcher}}
-
-  - Add the second route in the same way. Use label ''Admin-role notifications'', receiver **Administrator contact**, matcher value ''admin'', and **Continue: yes**.
-
-{{:en:screenshots:vpsadmin:notifications:example-role-admin-route.png?900|Admin-role route including its roles matcher}}
-
-  - Move both routes before general default routes. Because they continue, an event can reach both contacts as well as other receivers.
-  - To verify the result, open **Test event**, select ''user.test_notification'', and override its roles in the payload:
-
-<code json>
-{
-  "roles": ["account", "admin"],
-  "note": "Role routing test"
-}
-</code>
-
-  - Open the created event from **Event log**. Its matched-routes table must contain both routes. A test event performs real deliveries to the configured targets.
-
-{{:en:screenshots:vpsadmin:notifications:example-role-result.png?900|Test event matching both the account and admin routes}}
-
-==== 2. Mute selected OOM and incident reports ====
-
-**Goal:** on VPS ''123'', ignore OOM reports from user scopes and incidents from source ''abuse-feed''. This uses the built-in **Mute** receiver, so no target has to be created.
-
-  - Under **Routes**, add a **Mute selected OOM reports** route.
-  - Set event type ''vps.oom_report'', receiver **Mute**, **Enabled: yes**, and **Continue: no**.
-  - After saving, add these three matchers; all of them have to match:
-
-^ Field ^ Operator ^ Value ^
-| ''vps_id'' | equals | ''123'' |
-| ''stage'' | equals | ''raw'' |
-| ''cgroup'' | matches glob | %%/user.slice/**/*.scope%% |
-
-{{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Muting OOM reports by VPS, stage and cgroup}}
-
-The ''cgroup'' value is the complete path without a ''/sys/fs/cgroup'' prefix. In the glob, %%**%% can match multiple directory levels. The ''stage == raw'' matcher marks each matching report ignored before it can enter a later notification batch. A real transient ''raw'' event is not stored in the event log.
-
-  - Add a **Mute incident feed for VPS** route.
-  - Set event type ''vps.incident_report'', receiver **Mute**, **Enabled: yes**, **Continue: no**, and add:
-
-^ Field ^ Operator ^ Value ^
-| ''vps_id'' | equals | ''123'' |
-| ''codename'' | equals | ''abuse-feed'' |
-
-{{:en:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Muting incidents by VPS ID and codename}}
-
-Copy ''codename'' from the detail of a real incident in the event log. It is a stable source identifier, not the incident subject or text.
-
-  - Move both mute routes above delivery and default routes. **Continue** must remain disabled.
-  - Verify the incident route with a ''vps.incident_report'' test event:
-
-<code json>
-{
-  "subject": "Documentation incident",
-  "text": "Synthetic incident used to test routing.",
-  "codename": "abuse-feed",
-  "vps_id": 123
-}
-</code>
-
-  - The OOM route can be checked with a ''vps.oom_report'' test event using values from a real report:
-
-<code json>
-{
-  "vps_id": 123,
-  "stage": "raw",
-  "cgroup": "/user.slice/user-1000.slice/session-2.scope",
-  "cgroups": ["/user.slice/user-1000.slice/session-2.scope"],
-  "count": 1
-}
-</code>
-
-Test events are persisted for inspection even at the ''raw'' stage. In the event detail, the appropriate mute route must be the first match and no later route may be evaluated.
-
-{{:en:screenshots:vpsadmin:notifications:example-mute-result.png?900|Incident stopped by its mute route}}
-
-==== 3. Send monitoring and incidents to Telegram ====
-
-**Goal:** send every ''monitoring.*'' event and incident report to a private Telegram chat while keeping normal e-mail delivery.
-
-  - <vpsadmin-nav id="notifications.target-form.open">Under **Targets**, add a **Telegram** target</vpsadmin-nav> named **Operations Telegram**.
-  - Open the displayed pairing link in a private chat with the bot, press Start, and return to vpsAdmin. The target status must change to **paired**. Do not share the pairing link.
-
-{{:en:screenshots:vpsadmin:notifications:example-telegram-target.png?900|Paired Telegram target}}
-
-  - Under **Receivers**, create **Operations Telegram**, open it, and attach the target with the same name.
-
-{{:en:screenshots:vpsadmin:notifications:example-telegram.png?900|Telegram target attached to its receiver}}
-
-  - Add a **Monitoring to Telegram** route. Leave Event type empty, set **Event type pattern** to ''monitoring.*'', choose **Operations Telegram**, and enable **Continue**.
-
-{{:en:screenshots:vpsadmin:notifications:example-telegram-monitoring-route.png?900|Telegram route for monitoring.*}}
-
-  - Add an **Incident reports to Telegram** route. Select exact type ''vps.incident_report'', the same receiver, and **Continue: yes**.
-
-{{:en:screenshots:vpsadmin:notifications:example-telegram-incident-route.png?900|Telegram route for incident reports}}
-
-  - Move both routes before the default e-mail routes. Safely test the connection with a temporary route for exact type ''user.test_notification'', receiver **Operations Telegram**, and **Continue: no**. Create a test event of that type, check the Telegram message, and delete the temporary route.
-  - Verify the incident and monitoring routes after their next real event, using its event detail or the route hit count. A synthetic incident is not linked to a real incident record, and some concrete monitoring types also require a source object, so a generic test cannot always create their delivery.
-
-{{:en:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Test event stopped by the temporary Telegram route}}
-
-==== 4. Send SMS on account or VPS suspension ====
-
-**Goal:** send an SMS when the whole account or an individual VPS is suspended, while preserving the e-mail notification.
-
-  - Under **Targets**, add an **SMS** target. Enter the number in international E.164 format, for example ''+420123456789'', and save it.
-  - Send the verification SMS and enter the received code. Routes use only an enabled, verified target.
-
-{{:en:screenshots:vpsadmin:notifications:example-sms-verification.png?900|Verifying an SMS target with its code}}
-
-  - Under **Receivers**, create **Suspension SMS**, open it, and attach the verified SMS target.
-
-{{:en:screenshots:vpsadmin:notifications:example-sms.png?900|Verified SMS target attached to its receiver}}
-
-  - Add an **Account suspension SMS** route with event type ''user.suspended'', receiver **Suspension SMS**, and **Continue: yes**.
-
-{{:en:screenshots:vpsadmin:notifications:example-sms-account-route.png?900|SMS route for account suspension}}
-
-  - Add a **VPS suspension SMS** route with event type ''vps.suspended'', the same receiver, and **Continue: yes**.
-
-{{:en:screenshots:vpsadmin:notifications:example-sms-vps-route.png?900|SMS route for VPS suspension}}
-
-  - Place both routes before the default e-mail routes. ''user.suspended'' applies to the whole account, while ''vps.suspended'' applies to one VPS.
-  - Optionally create a ''user.suspended'' test event with payload ''{"state":"suspended","reason":"Routing test"}''. The test suspends nothing, but it sends a real SMS and may incur the normal SMS charge.
-  - Verify the ''vps.suspended'' route after the next real event <vpsadmin-nav id="notifications.event-route-matches.open">in its detail or from the route hit count</vpsadmin-nav>. A generic test event is not attached to the real VPS required by this message template.
-
-{{:en:screenshots:vpsadmin:notifications:example-sms-result.png?900|Account suspension test matching the SMS route}}
-
-==== 5. Webhook on VPS resource changes ====
-
-**Goal:** send signed JSON to your own HTTPS endpoint for every ''vps.resources_changed'' event.
-
-  - First prepare a public HTTPS endpoint. For a test, run this Python server behind a reverse proxy; it listens directly on ''127.0.0.1:8080'' only.
-
-<code python>
-import hashlib
-import hmac
-import json
-import os
-from http.server import BaseHTTPRequestHandler, HTTPServer
-
-SECRET = os.environ["VPSADMIN_WEBHOOK_SECRET"].encode()
-
-
-class Handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        length = int(self.headers.get("Content-Length", "0"))
-        body = self.rfile.read(length)
-        expected = "sha256=" + hmac.new(
-            SECRET, body, hashlib.sha256
-        ).hexdigest()
-        received = self.headers.get("X-VpsAdmin-Signature-256", "")
-
-        if not hmac.compare_digest(received, expected):
-            self.send_response(401)
-            self.end_headers()
-            return
-
-        data = json.loads(body)
-        delivery = str(data["delivery"]["id"])
-        if self.headers.get("X-VpsAdmin-Delivery") != delivery:
-            self.send_response(400)
-            self.end_headers()
-            return
-
-        print("event:", self.headers.get("X-VpsAdmin-Event"))
-        print("delivery:", delivery)
-        print(json.dumps(data, indent=2))
-        self.send_response(204)
-        self.end_headers()
-
-
-HTTPServer(("127.0.0.1", 8080), Handler).serve_forever()
-</code>
-
-  - Generate and safely store a long random secret, then start the server:
-
-<code>
-export VPSADMIN_WEBHOOK_SECRET="$(openssl rand -hex 32)"
-printf '%s\n' "$VPSADMIN_WEBHOOK_SECRET"
-python3 webhook.py
-</code>
-
-  - Under **Targets**, add a **Webhook** target. Enter a public URL such as ''https://events.example.net/vpsadmin'' and the generated secret. vpsAdmin rejects private, local and link-local target addresses.
-
-{{:en:screenshots:vpsadmin:notifications:example-webhook-target.png?900|Webhook target with a public URL and HMAC secret}}
-
-  - Under **Receivers**, create **Resource-change webhook** and attach the webhook target.
-
-{{:en:screenshots:vpsadmin:notifications:example-webhook.png?900|Webhook target attached to its receiver}}
-
-  - Add a **VPS resource-change webhook** route with type ''vps.resources_changed'', this receiver, and **Continue: yes**.
-
-{{:en:screenshots:vpsadmin:notifications:example-webhook-route.png?900|Webhook route for VPS resource changes}}
-
-  - For the test, move the webhook route to the first position and temporarily disable **Continue**. This prevents the synthetic event from reaching normal e-mail routes whose template requires a real VPS. Under **Test event**, select ''vps.resources_changed'' and use:
-
-<code json>
-{
-  "vps_id": 123,
-  "vps_hostname": "example-vps",
-  "cpu": 4,
-  "cpu_limit": 400,
-  "memory": 8192,
-  "swap": 2048,
-  "reason": "Memory upgrade"
-}
-</code>
-
-  - The server receives a ''POST'' with ''Content-Type: application/json'', ''User-Agent: vpsAdmin notification dispatcher'', and the ''X-VpsAdmin-Event'', ''X-VpsAdmin-Delivery'', and ''X-VpsAdmin-Signature-256'' headers. The webhook route must be the only matched route <vpsadmin-nav id="notifications.event-route-matches.open">in the event detail</vpsadmin-nav>. Re-enable **Continue** afterwards so real resource changes continue to produce the normal e-mail as well.
-
-{{:en:screenshots:vpsadmin:notifications:example-webhook-result.png?900|Resource-change test stopped by the webhook route}}
-
-The received body looks like this (IDs are illustrative):
-
-<code json>
-{
-  "event": {
-    "id": 48123,
-    "type": "vps.resources_changed",
-    "category": "vps",
-    "severity": "info",
-    "subject": "Test notification",
-    "summary": null,
-    "payload": {
-      "roles": ["admin"],
-      "vps_id": 123,
-      "vps_hostname": "example-vps",
-      "cpu": 4,
-      "cpu_limit": 400,
-      "memory": 8192,
-      "swap": 2048,
-      "reason": "Memory upgrade"
-    },
-    "fields": {
-      "event_type": "vps.resources_changed",
-      "default_routed": true,
-      "category": "vps",
-      "severity": "info",
-      "subject": "Test notification",
-      "roles": ["admin"],
-      "subject_relation": "self",
-      "subject_user_id": 42,
-      "subject_is_self": true,
-      "subject_is_admin_visible": false,
-      "vps_id": 123,
-      "vps_hostname": "example-vps",
-      "cpu": 4,
-      "cpu_limit": 400,
-      "memory": 8192,
-      "swap": 2048,
-      "reason": "Memory upgrade"
-    },
-    "ip_addr": null,
-    "source": {
-      "class": "VpsAdmin::API::Resources::Event::Test",
-      "id": null
-    },
-    "user": {"id": 42, "login": "example"},
-    "vps": null,
-    "created_at": "2026-07-23T14:15:16+02:00"
-  },
-  "delivery": {
-    "id": 73001,
-    "action": "webhook",
-    "route": {
-      "id": 91,
-      "label": "VPS resource-change webhook",
-      "matcher_summary": "vps.resources_changed"
-    },
-    "receiver": {
-      "id": 37,
-      "label": "Resource-change webhook"
-    },
-    "notification_target": {
-      "id": 58,
-      "label": "Resource-change endpoint",
-      "display_target": "https://events.example.net/vpsadmin"
-    },
-    "receiver_target": {"id": 64}
-  }
-}
-</code>
-
-The signature is HMAC-SHA256 over the unmodified body bytes and has form ''sha256=<HMAC>''. Any ''2xx'' response is successful. Failed deliveries may be retried, so process them idempotently using the signed ''delivery.id'' value in the body. The ''X-VpsAdmin-Delivery'' header is not itself signed; the server above accepts it only when it equals ''delivery.id''.
-
-===== Reference =====
-
-==== Routes and matchers ====
-
-Manage routes at <vpsadmin-nav id="notifications.routes.open">Notifications → Routes</vpsadmin-nav>. Creating a route first saves its basic settings; matchers are added on its edit page afterwards. Every matcher on one route has to match. Event type is an exact value, while Event type pattern accepts a glob such as ''monitoring.*''.
-
-Reorder routes with the arrows or by dragging. **Continue: yes** passes the event to later matching routes. **Continue: no** stops processing at that level, which is essential for the **Mute** receiver.
-
-==== Targets and receivers ====
-
-Manage targets from <vpsadmin-nav id="notifications.target-form.open">Notifications → Targets</vpsadmin-nav>. A target contains a concrete address or account and its verification state. A receiver groups one or more targets, so one receiver can send an e-mail and call a webhook.
-
-Manage receivers under <vpsadmin-nav id="notifications.receivers.open">Notifications → Receivers</vpsadmin-nav>. The default e-mail target follows the account's primary address. Custom e-mail, SMS, and Telegram targets must be verified or paired before delivery.
+Each example starts from an ordinary account with the default routes. Follow
+one example at a time:
+
+  * [[manuals:notifications:event_roles|Route account and admin events to different contacts]]
+  * [[manuals:notifications:mute_oom|Mute selected OOM reports]]
+  * [[manuals:notifications:mute_incidents|Mute selected incident reports]]
+  * [[manuals:notifications:telegram|Send monitoring events and incident reports to Telegram]]
+  * [[manuals:notifications:sms|Send SMS on account or VPS suspension]]
+  * [[manuals:notifications:webhook|Send VPS resource changes to a webhook]]
+
+===== Routes and matchers =====
+
+Manage routes at <vpsadmin-nav id="notifications.routes.open">**Notifications
+→ Routes**</vpsadmin-nav>. Routes at the same level are evaluated from top to
+bottom. Every matcher on one route must match.
+
+Choose **Event type** for one exact type. Use **Event type pattern** for a
+shell-style glob such as ''monitoring.*''. Leave both empty only when the route
+is intended to match all event types. The **Event types** page lists available
+types and their fields.
+
+**Continue: yes** lets later sibling routes evaluate the same event. This is
+useful when, for example, both Telegram and e-mail should receive it.
+**Continue: no** stops at that route; mute routes normally use this setting.
+Subroutes are evaluated after their parent matches, independently of the
+parent's **Continue** setting.
+
+===== Targets and receivers =====
+
+Manage concrete destinations at
+<vpsadmin-nav id="notifications.target-form.open">**Notifications →
+Targets**</vpsadmin-nav>. Custom e-mail and SMS targets must be verified and
+Telegram targets must be paired before they can receive notifications.
+
+Manage receivers under
+<vpsadmin-nav id="notifications.receivers.open">**Notifications →
+Receivers**</vpsadmin-nav>. A receiver can contain several targets. A route
+points to the receiver, not directly to an address. The built-in **Mute**
+receiver has no delivery target and suppresses matching events.
 
 {{:en:screenshots:vpsadmin:notifications:receiver.png?900|Receiver and target configuration}}
 
-==== Time intervals ====
+===== Event grouping =====
 
-Define reusable intervals under <vpsadmin-nav id="notifications.time-intervals.open">Notifications → Time intervals</vpsadmin-nav>. Each has an IANA time zone and one or more specifications. Fields within one specification use logical **AND**; multiple ranges or specifications are alternatives.
+Grouping is useful when many related events arrive in a short burst. Instead
+of sending a message for every event, vpsAdmin collects them and sends a
+summary. The default OOM-report route uses grouping by ''vps_id'', so reports
+from one VPS are summarized together and reports from different VPSes stay
+separate.
+
+Grouping is configured separately on an existing route at
+<vpsadmin-nav id="notifications.route-grouping-form.open">**Notifications →
+Routes → edit route → Notification grouping**</vpsadmin-nav>:
+
+  * **Group by fields** contains comma-separated scalar event fields. Their
+    values identify a group. Leave it empty to put all events matching the
+    route into one group.
+  * **Initial wait** is how many seconds the first event waits so more events
+    can join a new, idle group.
+  * **Repeat interval** is the minimum delay before another summary from the
+    same still-active group.
+
+For an exact event type, use fields listed for that type on the **Event types**
+page. Pattern and catch-all routes can use only common fields accepted by the
+form. Grouping belongs only to that route and is not inherited by subroutes.
+Muted, skipped, and time-suppressed events do not enter a group.
+
+The group is defined for the route and receiver before individual delivery
+actions are sent. If one receiver has e-mail, Telegram, and webhook targets,
+each action receives the same set of grouped events. It is not three
+independently timed groups.
+
+{{:en:screenshots:vpsadmin:notifications:grouping-route.png?900|Grouping settings on an OOM-report route}}
+
+Open
+<vpsadmin-nav id="notifications.groups.open">**Notifications → Notification
+groups**</vpsadmin-nav> to inspect open, overdue, idle, and historical groups.
+A group detail shows its route, receiver, grouping labels, timing, pending
+events, and deliveries. Individual deliveries remain visible in the event
+detail and, for administrators, in the delivery queue and log.
+
+===== Time intervals =====
+
+Define reusable intervals under
+<vpsadmin-nav id="notifications.time-intervals.open">**Notifications → Time
+intervals**</vpsadmin-nav>. A time interval is useful for:
+
+  * silencing alerts outside working hours,
+  * sending work-hours and on-call notifications to different people or teams,
+  * limiting a route to a recurring maintenance window,
+  * expressing complementary schedules with separate routes.
+
+Each interval has an IANA time zone and one or more specifications. Fields
+within one specification use logical **AND**; multiple ranges or specifications
+are alternatives.
 
 {{:en:screenshots:vpsadmin:notifications:time-interval.png?900|Time interval configuration}}
 
-Assign an interval under <vpsadmin-nav id="notifications.route-time-intervals.open">Notifications → Routes → edit route</vpsadmin-nav> as an **Active interval** or **Mute interval**. With no active interval, the route's time is unrestricted. A matching mute interval suppresses that route's delivery.
+Assign an interval at
+<vpsadmin-nav id="notifications.route-time-intervals.open">**Notifications →
+Routes → edit route**</vpsadmin-nav> as an **Active interval** or **Mute
+interval**. With no active interval, the route has no active-time restriction.
+A matching mute interval suppresses that route.
 
-{{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Interval assigned to a route}}
+{{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Time interval assigned to a route}}
 
-==== Event log and delivery checks ====
+===== Event log and delivery checks =====
 
-Inspect the result at <vpsadmin-nav id="notifications.event-route-matches.open">Notifications → Event log → event detail</vpsadmin-nav>. The detail shows matched routes, time-interval state, created deliveries, and the evaluation snapshot at the event timestamp. ''inactive'' means no active interval matched; ''muted'' means a mute interval matched.
+Inspect routing at
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Event log → event detail**</vpsadmin-nav>. The detail shows matched routes,
+time-interval state, deliveries, and the routing snapshot captured when the
+event occurred. ''inactive'' means no active interval matched; ''muted'' means
+a mute interval matched.
 
 {{:en:screenshots:vpsadmin:notifications:event-suppressed.png?900|Event suppressed by a time interval}}
 
-**Test event** checks routing without causing a real suspension or incident, but its delivery is real: it can send e-mail, Telegram, SMS, or a webhook request.
+**Test event** checks routing without causing a real suspension or incident,
+but its notification delivery is real and may send e-mail, Telegram, SMS, or a
+webhook request.

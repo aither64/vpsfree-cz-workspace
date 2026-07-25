@@ -13646,3 +13646,329 @@ GitHub Actions after final pushes:
   `.dev-clusters` component. The corrected path returned HTTP 200; recorded the
   reusable workaround in
   `notes/vpsadmin/2026-07-25-devcluster-ca-path.md`.
+
+## 2026-07-25 Notification Group Observability
+
+- The user approved first-class notification group API/WebUI observability,
+  API-sourced route/grouping descriptions, separate route Add subroute/Delete
+  columns, and the corrected three-column grouping form layout.
+- Confirmed this process owns development session
+  `2026-06-15-vpsadmin-events`.
+- Starting repository heads:
+  - vpsAdmin `d77c7516905c81333d04adb72cc3005a02dd573b`;
+  - generated Go client `4a92a83`;
+  - KB captures `d4c4969`;
+  - vpsFree.cz configuration `07c19c06`.
+- vpsAdmin, Go client, HaveAPI, and capture worktrees are clean. The
+  configuration worktree contains only the preserved `.bin/`, `.bundle/`, and
+  `.rubocop_cache/` directories. Unrelated shared-workspace changes remain
+  untouched.
+- Product choices:
+  - route owners see their groups and administrators see all groups;
+  - the WebUI defaults to open groups and retains idle/all filters;
+  - this slice adds API/WebUI observability without a new Prometheus endpoint
+    or grouping metrics.
+- Implemented the first vpsAdmin candidate:
+  - an owner-restricted/admin-visible `EventDeliveryGroup` list/show API with
+    open, overdue, idle, route, receiver, and owner filters;
+  - group state, identity, timing, pending/all event counts, stream/action
+    summaries, and links through event and administrative delivery filters;
+  - a persisted receiver snapshot on the reusable logical group;
+  - common/groupable event-field metadata and API descriptions for route
+    selectors, continuation, grouping fields, and timing;
+  - a default-open notification-group list and detail view in the WebUI;
+  - a six-column route table with separate Add subroute/Delete columns and a
+    standalone three-column grouping form whose explanation is its first row.
+- Administrators now get an unscoped all-owner group list unless an owner ID
+  is explicitly selected. Non-admin API and UI access remains restricted to
+  the route owner.
+- Quick verification completed so far:
+  - initial events migration: 3 examples, 0 failures;
+  - route metadata, owner/admin group observability, group state filters,
+    event membership, and administrative delivery filter: focused examples
+    pass;
+  - WebUI regression: 20 tests, 225 assertions;
+  - focused RuboCop: 14 files, no offenses;
+  - PHP syntax and PHP CS Fixer: clean;
+  - API i18n health and WebUI gettext health: clean;
+  - Czech API and WebUI strings were completed and generated catalogs were
+    normalized.
+- A first WebUI catalog invocation was run from `webui/` while still using a
+  repository-root-relative `webui/lang/...` path. It failed before changing
+  files; rerunning `./lang/scripts/locales-update` from that shell succeeded.
+- Migration specs must remain separate from normal API resource/model specs:
+  the migration harness replaces the database schema and a combined
+  invocation caused unrelated missing-table failures. Separate invocations
+  are green.
+- Committed and pushed the vpsAdmin implementation:
+  - `72889b5fb` `api: expose notification delivery groups`;
+  - `8e72eeabd4fcc3819bfdccc1b391e7b753048931`
+    `webui: make notification groups observable`.
+  Every declared vpsAdmin pre-commit and commit-message hook passed in the
+  repository development shell. The custom API i18n hook first required the
+  standard Overcommit signature for its changed implementation; it was signed
+  and the complete hook chain then passed.
+- Regenerated the Go client from a plugin-complete local API catalog using the
+  HaveAPI v0.28 generator plus the two already-reviewed generator fixes.
+  A checksum dry run confirmed that the generated update adds only delivery
+  group support, event/delivery group filters, and route matcher counts; no
+  plugin resources were removed. `go fmt ./...`, `CGO_ENABLED=0 go build
+  ./...`, and `CGO_ENABLED=0 go test ./...` pass in the Nix shell. The
+  generated client repository declares no hook framework or installed
+  pre-commit hook. Commit `9b82475b91fb5db72c95239d0e30ba99f17b8d30`
+  is pushed.
+- Pinned the capture contract to exact vpsAdmin revision `8e72eeabd...` and
+  reviewed the changed `notifications.routes` fingerprint as the same
+  semantic control with a compact table implementation. The broad route-list
+  image remains retired. `nix develop -c bin/check` passes with 50 controls,
+  35 paths, 57 capture concepts, 30 selectors, 79 bindings, 9 exceptions,
+  69 contract assertions, and the complete 172-PNG inventory. Capture pin
+  commit `08a6470108954862e52b0bab656e1af27a7f135f` is ready for review;
+  generated route/grouping screenshots are intentionally deferred until the
+  post-review bridge-cluster run.
+- Updated only the development `vpsadmin` channel through the required
+  `confctl inputs channel set --commit` workflow. Generated configuration
+  commit `edab86ac` pins `vpsadminServices` exactly to `8e72eeabd...`;
+  Overcommit Nixfmt and rake hooks passed. A generated commit-message width
+  warning was retained without amending the generated message. The lock
+  metadata and `confctl.channels.vpsadmin` evaluation match the intended
+  input. Preserved `.bin/`, `.bundle/`, and `.rubocop_cache/` directories
+  remain untouched.
+- Two harmless invocation corrections occurred without source changes:
+  - the first capture pin used an incorrectly completed short hash and GitHub
+    returned 404; it was corrected from `git rev-parse HEAD` before the lock
+    update;
+  - `confctl` was unavailable in the ambient shell, so the exact command was
+    rerun through the repository's `nix develop` shell as required.
+- Current-head GitHub migration, WebUI PHPUnit, RuboCop, i18n health, and
+  libnodectld workflows passed. API topic-parallel remains in progress. The
+  aggregate CI workflow automatically entered its long integration step before
+  mandatory-review acceptance and was cancelled to preserve the review gate.
+  Superseded aggregate run `30163052531` on `d77c7516` was also cancelled as
+  required after the follow-up push.
+- Mandatory standalone reviewer
+  `/root/mandatory_notification_group_observability_review` kept the
+  integration gate closed:
+  - Blocking: split the backend and WebUI group-observability changes from
+    independently reviewable route metadata/form changes; preserve receiver
+    identity across receiver rename/delete and cover it.
+  - Important: model group filters as HaveAPI `resource EventDeliveryGroup`
+    parameters; provide an untruncated pending-members link for groups with
+    more than 100 events.
+  - Advisory: remove the `respond_to?(:id)` shape probe from the declared
+    `resource User` owner filter.
+  - Go generation and capture/config exact-pin commits were otherwise accepted
+    as focused and consistent, but must be regenerated after the vpsAdmin
+    history rewrite.
+- Addressed every review finding and rebuilt the vpsAdmin history into four
+  independently reviewable commits on base `d77c75169`:
+  - `2d9c66b4b` `api: expose notification delivery groups`;
+  - `1b2488915` `api: describe notification route behavior`;
+  - `8b11940e5` `webui: expose notification delivery groups`;
+  - `b82f656da50a5f3b552f5fe454e8e4b0c6603b6c`
+    `webui: clarify notification route management`.
+  The branch was force-pushed with lease and all vpsAdmin commit hooks passed at
+  each split boundary.
+- Group receiver identity is now an immutable ID/name snapshot populated when
+  the reusable group is created. Receiver rename and deletion retain the
+  historical label and are covered by model/resource tests. Event and
+  administrative delivery membership filters are declared as HaveAPI
+  `resource EventDeliveryGroup` parameters; the owner filter uses its declared
+  `resource User` value directly. Group detail links to the complete pending
+  event log even when its inline member table is capped at 100 rows.
+- Final quick vpsAdmin verification is green:
+  - group/model/API correction set: 14 examples, 0 failures;
+  - isolated initial event migration: 3 examples, 0 failures;
+  - WebUI: 20 tests, 229 assertions;
+  - endpoint inventory: 1 example, 0 failures;
+  - Nixfmt, migration, API/WebUI i18n, RuboCop, and PHP CS Fixer hooks all
+    passed.
+- Current-head API coverage initially failed because the new
+  `event_delivery_group#index` and `#show` endpoints were absent from
+  `api/spec/api/covered_endpoints.yml`. The failed run's log was inspected,
+  both endpoints were added to the backend observability commit, and the exact
+  endpoint inventory spec now passes. Superseded runs `30170549506` and
+  `30170549518` were cancelled after the final history rewrite.
+- Switched only the running development cluster's services VM to vpsAdmin
+  `b82f656da...`. The update completed successfully; the cluster remains
+  `running`, `ready: yes`, topology `single`, and network `bridge`. The API,
+  WebUI, all four dispatchers, and notification grouper restarted on the final
+  source. A full database reset remains gated on correction-review acceptance.
+- Regenerated the Go client from the plugin-complete local API catalogue with
+  HaveAPI v0.28 and the two already-reviewed generator fixes. The live
+  catalogue first confirmed the resource-typed filters; local generation then
+  avoided embedding the development OAuth origin and retained all plugin
+  resources. The resulting diff changes only the intended group resource,
+  route matcher count, and typed event/delivery filters.
+  `go fmt ./...`, `CGO_ENABLED=0 go build ./...`, and
+  `CGO_ENABLED=0 go test ./...` pass. The repository has no active hook
+  framework. Rewritten commit
+  `5ebb025a43b1c5dca5c5e02952d759791462fe04` is pushed.
+- Re-pinned the capture contract to exact vpsAdmin revision
+  `b82f656da50a5f3b552f5fe454e8e4b0c6603b6c`. The compact Routes control
+  fingerprint is unchanged, the broad route-list image remains retired, and
+  `nix develop -c bin/check` passes with 50 controls, 35 paths, 57 capture
+  concepts, 30 selectors, 79 bindings, 9 exceptions, 69 assertions, and all
+  172 PNG variants. Rewritten capture commit
+  `b582e59` is pushed; screenshot regeneration remains post-review work.
+- Rebuilt the development configuration pin from parent `07c19c06` using
+  `confctl inputs channel set --commit`. Generated commit
+  `5ac74c1989c246a529f630d282cbc9fd5cf4cfb5` pins only
+  `vpsadminServices` to exact revision `b82f656da...`; Nixfmt and rake hooks
+  passed and the generated commit-message width warning was retained.
+  `flake.lock` and `confctl.channels.vpsadmin` evaluate to the expected input.
+  Preserved `.bin/`, `.bundle/`, and `.rubocop_cache/` directories remain
+  untouched. The rewritten commit is pushed.
+- The correction set is ready for the same mandatory standalone reviewer.
+  Long integration, full development-database rebuild, and bilingual capture
+  regeneration remain gated until that reviewer accepts the corrections.
+- Final-head GitHub API migration, WebUI PHPUnit, RuboCop, i18n health, and
+  libnodectld workflows passed. API topic-parallel remains in progress.
+  Aggregate run `30170674927` automatically entered its long VM test step while
+  correction review was still active and was cancelled; it must be started
+  again after review acceptance.
+- The same standalone reviewer completed the correction pass against the exact
+  pushed vpsAdmin, generated-client, capture, and configuration heads.
+  Verdict: accepted with no Blocking, Important, or Advisory findings. It
+  confirmed the split commit boundaries, receiver snapshot semantics and
+  coverage, resource-typed filters and generated names, complete pending-log
+  link, tenant restrictions, endpoint inventory, exact downstream pins, and
+  recorded compatibility assumptions. The full development-database rebuild,
+  long integration, and bilingual capture gates are clear.
+- After review acceptance, restarted aggregate current-head CI run
+  `30170674927`. Current-head API migration, API topic-parallel, RuboCop,
+  WebUI PHPUnit, i18n health, and libnodectld workflows have all completed
+  successfully; the aggregate VM run remains in progress.
+- Rebuilt the owned general development database and cluster on the required
+  bridge network from exact vpsAdmin revision `b82f656da...`. The final
+  services closure includes the API, grouper, email/SMS/Telegram/webhook
+  dispatchers, and Telegram receiver.
+- Exercised an actual reusable group before capture generation:
+  - created a development-only exact `user.test_notification` route for
+    `test-user1`, grouped by severity with a long initial wait;
+  - emitted two warning events and observed group ID 1 in `waiting` state with
+    two pending events and the persisted Default receiver snapshot;
+  - verified as both `test-user1` and `test-admin` that group list/detail pages
+    show the route, owner where permitted, state, labels, and both members;
+  - verified the complete-history event link and the administrator delivery
+    queue link retain the delivery-group filter.
+- Temporarily stopped the general cluster and started the capture repository's
+  three-node `screenshots` topology on the bridge network from the exact
+  reviewed vpsAdmin pin. Both Czech and English `notifications` scenarios
+  captured all 26 checkpoints. `bin/validate --update` and the complete
+  `bin/check` passed with 50 controls, 35 paths, 57 capture concepts,
+  30 selectors, 79 bindings, 9 exceptions, 69 assertions, and all 172 PNGs.
+- Visually inspected the Czech/English standalone grouping form and the most
+  description-heavy route examples. The grouping explanation spans all three
+  columns, field descriptions are complete and uncropped, and route guidance
+  explains exact event types, patterns, and continuation. The retired broad
+  route-list image was not regenerated.
+- Committed and pushed the bilingual capture refresh as
+  `8fb2049` (`captures: refresh notification route guidance`) on top of exact
+  pin commit `b582e59`.
+- Stopped the screenshot topology and restored the general single-node cluster
+  on the bridge. Final status is `running`, `ready: yes`; the WebUI returns
+  HTTP 200 and the API, notification grouper, and email, SMS, Telegram, and
+  webhook dispatcher units are all active. The cluster is intentionally left
+  running for user inspection.
+- Added the workspace migration rule requested after review of the draft
+  event migrations. Commit `53bfc0b` on the shared workspace `master` requires
+  unreleased migrations to assume their exact predecessor schema and makes
+  unexplained stale-database existence guards a Blocking finding in
+  `mandatory-change-review`. The unrelated pre-existing `AGENTS.md` session
+  ownership edit was deliberately left unstaged.
+- Removed all `table_exists?`, `column_exists?`, `index_exists?`, `if_exists`,
+  and `if_not_exists` guards from the unreleased `2026072212*` notification
+  migration chain. Data-conversion checks remain. The OOM cutover now verifies
+  defaults for every existing user and creates the exact grouped catch-all for
+  users with no legacy OOM rules; it refuses to delete legacy storage when an
+  existing user lacks the required administrator route.
+- Committed the strict vpsAdmin migrations as `7b4d228` and the empty,
+  separately rendered route-action headers as `36dc6f9c3`. Focused migration
+  specs pass with 8 examples; focused RuboCop reports 11 clean files; the
+  WebUI regression passes with 20 tests and 242 assertions. All declared
+  vpsAdmin hooks passed from the root development shell. An initial commit
+  attempt outside that shell failed because RuboCop, gettext, and MariaDB were
+  unavailable; no commit was created, and the required hook chain was rerun
+  successfully in `nix develop`.
+- Extracted the vpsFree.cz OOM route policy to
+  `configs/vpsadmin/api/notification_defaults.rb`. The user-create hook and
+  development seed now call the same idempotent helper. Configuration commit
+  `be264862` includes two focused examples for the existing-route and exact
+  creation paths; RSpec, RuboCop, Nixfmt, event-i18n health, and repository
+  hooks pass.
+- The shared development seed conditionally loads that helper only when the
+  mounted configuration source contains it, then reconciles every seeded user
+  after default notification routes exist. `nix-instantiate --parse` accepts
+  the updated `dev-clusters/vpsadmin/nix/test.nix`. The file also contains an
+  unrelated pre-existing managed-template module-layout edit, which remains
+  uncommitted and must not be staged with this initiative's hunk.
+- Refactored the guarded Czech and English notification candidates into one
+  reference page and six standalone tutorials per language. Explicit
+  `Krok/Step N` headings replace image-interrupted ordered lists. OOM and
+  incident muting are separate, the obsolete `stage = raw` matcher is gone,
+  grouping and time-interval use cases are documented, and the webhook server
+  consumes the current version-1 `group`/`events`/`delivery` body.
+- Refetched the complete production KB source inventory with create guards for
+  all 14 notification pages. Updated the capture source-page ownership and
+  annotation bindings for the split pages, and added the standalone grouping
+  form to both media plans. Final contract building, screenshot regeneration,
+  manifests, staging, and rendered-page inspection await the final exact
+  vpsAdmin capture pin.
+- Existing aggregate run `30170674927` for superseded pushed head
+  `b82f656da50a5f3b552f5fe454e8e4b0c6603b6c` is still running its selected
+  integration test. Per the user's instruction it has not been cancelled and
+  no newer vpsAdmin head has been pushed yet.
+- Reset and rebuilt the owned single-node development cluster from the current
+  local vpsAdmin and configuration worktrees using bridge networking. The
+  cluster reached `ready: yes`; the API, notification grouper, all four
+  dispatchers, and Telegram receiver are active, and the WebUI returns HTTP
+  200 when checked with the development CA.
+- The clean database has exactly one `OOM report notifications` route for each
+  seeded account (`test-admin`, `test-user1`, and `test-user2`). Every route is
+  active and top-level, matches exact `vps.oom_report`, groups by `vps_id`,
+  waits 60 seconds initially, repeats after 10800 seconds, uses the account's
+  default administrator receiver, and has position 9999 immediately before
+  the default routes.
+- Explicitly restarted `vpsadmin-devcluster-seed.service`. It completed
+  successfully and left the same route IDs 7, 8, and 9, proving that the
+  shared configuration helper reconciles without creating duplicates.
+- Committed the conditional development-seed integration to shared workspace
+  `master` as `9116219`. Only the three notification-default hunks were
+  staged; the unrelated pre-existing managed-template module-layout edit in
+  the same file remains uncommitted.
+- Pushed workspace commits `53bfc0b` and `9116219` to shared `master`, and
+  pushed configuration helper commit `be264862` to the initiative branch.
+  The configuration's exact vpsAdmin pin still awaits the final vpsAdmin push.
+- Ran the capture repository's complete `bin/check` with
+  `VPSADMIN_KB_VPSADMIN_SOURCE` set to the final local vpsAdmin worktree. It
+  passes with 51 controls, 37 paths, 57 capture concepts, 30 semantic
+  selectors, 123 annotation bindings, 9 exceptions, 69 Ruby assertions, and
+  all 172 PNG variants. Exact revision pinning and regenerated route images
+  still await the final vpsAdmin push.
+- Visual inspection of the current OOM example found that the capture helper
+  selected the grouping form's available-field table when looking for the
+  `cgroup` matcher. Scoped route-example lookup to the actual
+  `matcher_save` form, so regenerated route screenshots will contain the main
+  route and its matchers while the grouping form remains a separate capture.
+  Removed the obsolete word `raw` from the OOM capture description. Node
+  syntax, JSON parsing, and whitespace checks pass in the capture Nix shell.
+- Pinned the capture contract to final vpsAdmin revision
+  `36dc6f9c3a6261afc606bd5bef0e25ef0f45d792`, regenerated all 26 notification
+  checkpoints in Czech and English from the owned bridge-network screenshot
+  topology, and updated deterministic baselines. The final `bin/check` passes
+  with 51 controls, 37 paths, 57 capture concepts, 30 semantic selectors,
+  123 bindings, 9 exceptions, 69 Ruby assertions, and all 172 PNG variants.
+- Visually inspected the standalone grouping form plus representative role,
+  OOM mute, incident mute, Telegram, SMS, and webhook routes in both
+  languages. OOM and incident captures now contain the route and actual
+  matcher form without the unrelated grouping field table. Committed and
+  pushed the exact capture/contract revision as `0975d47`.
+- Stopped the screenshot topology after capture. The general single-node
+  development cluster remains to be restored after the review and KB staging
+  work.
+- Rebuilt the guarded KB candidates from the final capture revision:
+  16 changed pages, including 14 standalone/new notification pages, four
+  semantic annotations, and 52 media objects. The annotation checker passes
+  with 123 bindings and 9 explicit exceptions. Regenerated localized release
+  manifests contain eight pages and 26 media objects per language.

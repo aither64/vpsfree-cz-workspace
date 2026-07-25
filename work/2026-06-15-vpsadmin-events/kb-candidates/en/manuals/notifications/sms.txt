@@ -1,0 +1,78 @@
+====== Send SMS on account or VPS suspension ======
+
+This example sends SMS when the whole account or an individual VPS is
+suspended, while preserving normal e-mail notifications.
+
+Before starting, see the [[manuals:notifications|notification system overview]].
+
+===== Step 1: Add and verify an SMS target =====
+
+At <vpsadmin-nav id="notifications.target-form.open">**Notifications →
+Targets**</vpsadmin-nav>, add an **SMS** target. Enter the telephone number in
+international E.164 format, for example ''+420123456789'', and save it.
+
+Send the verification SMS and enter the received code. Only an enabled,
+verified target can receive notifications.
+
+{{:en:screenshots:vpsadmin:notifications:example-sms-verification.png?900|Verifying an SMS target with its code}}
+
+===== Step 2: Create a receiver =====
+
+At <vpsadmin-nav id="notifications.receivers.open">**Notifications →
+Receivers**</vpsadmin-nav>, create **Suspension SMS**. Open it and attach the
+verified SMS target.
+
+{{:en:screenshots:vpsadmin:notifications:example-sms.png?900|Verified SMS target attached to its receiver}}
+
+===== Step 3: Route account suspensions =====
+
+At <vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>, add:
+
+^ Field ^ Value ^
+| Label | ''Account suspension SMS'' |
+| Event type | ''user.suspended'' |
+| Receiver | Suspension SMS |
+| Enabled | yes |
+| Continue | yes |
+
+{{:en:screenshots:vpsadmin:notifications:example-sms-account-route.png?900|SMS route for account suspension}}
+
+===== Step 4: Route VPS suspensions =====
+
+Add:
+
+^ Field ^ Value ^
+| Label | ''VPS suspension SMS'' |
+| Event type | ''vps.suspended'' |
+| Receiver | Suspension SMS |
+| Enabled | yes |
+| Continue | yes |
+
+{{:en:screenshots:vpsadmin:notifications:example-sms-vps-route.png?900|SMS route for VPS suspension}}
+
+Move both routes before default e-mail routes. ''user.suspended'' concerns the
+whole account, while ''vps.suspended'' concerns one VPS. Keep **Continue**
+enabled so e-mail delivery remains active.
+
+===== Step 5: Test and inspect delivery =====
+
+Optionally create a ''user.suspended'' test event with:
+
+<code json>
+{
+  "state": "suspended",
+  "reason": "Routing test"
+}
+</code>
+
+The test suspends nothing, but sends a real SMS and may incur the normal SMS
+charge.
+
+{{:en:screenshots:vpsadmin:notifications:example-sms-result.png?900|Account suspension test matching the SMS route}}
+
+Inspect the result at
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Event log → event detail**</vpsadmin-nav>. Verify the VPS route on the next real
+VPS suspension because a generic test is not attached to the real VPS required
+by its message template.
