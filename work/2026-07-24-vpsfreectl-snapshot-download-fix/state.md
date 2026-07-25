@@ -705,5 +705,56 @@ No server deployment is planned.
   `createPullRequest`. The exact review body is preserved in
   `vpsadmin-0.29.6-pr.md`; the compare page is
   `https://github.com/vpsfreecz/vpsadmin/compare/master...2026-07-24-haveapi-resource-name-collisions?expand=1`.
-- vpsAdmin has not been merged, tagged, or published. The next publication
-  action requires its explicit approval gate.
+- After explicit approval, created a fresh detached integration worktree from
+  public `master` and fast-forwarded it to `43d017a71`.
+- Rebuilt the release candidate in that worktree. Client RSpec again passed
+  with 23 examples and no failures, and the gem retained reviewed SHA-256
+  `4966f44bf5c752c889b3627776d240ae950d040ba1b4ffad7209d9320368a7d4`.
+- Atomically pushed vpsAdmin `master` and lightweight tag `v4.2.1`; both
+  resolve publicly to
+  `43d017a716447752766d4f62e422ecfcf19a6f5b`.
+- Published `vpsadmin-client` 4.2.1 to RubyGems. The public versions API and
+  downloaded gem report the reviewed SHA-256, Ruby `>= 3.0`, and
+  `haveapi-client ~> 0.29.6`.
+- GitHub Actions for the release head are not being awaited, as requested.
+
+## vpsfree-client 0.20.1 preparation
+
+- Created worktree
+  `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/vpsfree-client-collisions`
+  on branch `2026-07-24-haveapi-resource-name-collisions`, based on public
+  `master` `936536f59e34ba3be5a7de19d7c0ffc39b3839cc`.
+- Kept the release history focused:
+  - `55ab58018`: `client: require vpsadmin-client 4.2.1`.
+  - `56357098b`: `Version 0.20.1`.
+- The repository declares no hook framework. Both commits have clean
+  whitespace and commit-message lines at or below 72 characters.
+- The dependency remains within the vpsadmin-client 4.2 series, but raises
+  the minimum patch release so installations cannot resolve to affected
+  vpsadmin-client 4.2.0. There is no API, database, persisted-state, server,
+  deployment-order, or rollback-format change.
+- Used the maintained vpsAdmin root Nix Ruby toolchain because the
+  vpsfree-client legacy shell has the documented Prism header issue. The first
+  invocation correctly stopped because the vpsAdmin shell was entered from a
+  different repository; reran it from the vpsAdmin worktree and switched to
+  the vpsfree-client source after shell initialization.
+- Built `vpsfree-client-0.20.1.gem` with release epoch
+  `SOURCE_DATE_EPOCH=315532800`; SHA-256:
+  `ef0dfadd1a5b7ba6183045fa8950a168d0913747f61ab9599c85642536026fcd`.
+- A clean install of that candidate from the public dependency graph compiled
+  Prism successfully, verified runtime requirement
+  `vpsadmin-client ~> 4.2.1`, and loaded:
+  - vpsfree-client 0.20.1;
+  - vpsadmin-client 4.2.1;
+  - haveapi-client 0.29.6.
+- This is a dependency-only and release-metadata update with no relevant
+  functional or design change, so the mandatory standalone change review is
+  skipped under the workspace's mechanical-update exception.
+- Pushed review branch `2026-07-24-haveapi-resource-name-collisions` at
+  `56357098b914e19d3a0f2ed34896e5dbbd802e21`.
+- GitHub rejected `gh pr create` because the configured token still lacks
+  `createPullRequest`. The exact review body is preserved in
+  `vpsfree-client-0.20.1-pr.md`; the compare page is
+  `https://github.com/vpsfreecz/vpsfree-client/compare/master...2026-07-24-haveapi-resource-name-collisions?expand=1`.
+- vpsfree-client has not been merged, tagged, or published. Those actions
+  require the next explicit approval gate.
