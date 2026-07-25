@@ -172,6 +172,17 @@ For vpsAdminOS changes, explicitly call out when an update would require
 coordinated updates of all running machines or nodes. State why that cost is
 worth it, or choose a compatible design.
 
+For database migrations that have not been merged, released, or deployed,
+assume the exact schema produced by the immediately preceding migration. Do not
+add `table_exists?`, `column_exists?`, `index_exists?`, `if_exists`,
+`if_not_exists`, or equivalent guards merely to tolerate a stale disposable
+development or test database after rewriting migrations. Reset the disposable
+database instead. Such guards are appropriate only when the supported
+deployment contract intentionally includes multiple predecessor schemas; record
+that compatibility requirement in the initiative plan and test every supported
+path. Keep data-integrity and conversion checks that validate real persisted
+content.
+
 ## Mandatory Change Review
 
 For feature, bugfix, refactor, or cross-project work with relevant code,
