@@ -13353,3 +13353,123 @@ GitHub Actions after final pushes:
 - WebUI is available at `https://webui.aitherdev.int.vpsfree.cz/` and the API
   at `https://api.aitherdev.int.vpsfree.cz/`. Development credentials were not
   copied into this state file.
+
+## 2026-07-25 Shared Grouping Implementation
+
+- Verified the current process owns session `2026-06-15-vpsadmin-events` and
+  all three initiative worktrees remain on their dedicated feature branch.
+- Starting heads are vpsAdmin `82996d11`, configuration `39944316`, and KB
+  captures `83b5ccb`. The vpsAdmin and capture worktrees are clean; the
+  configuration worktree has only its preserved `.bin/`, `.bundle/`, and
+  `.rubocop_cache/` directories.
+- The existing single-topology development cluster is running and ready on the
+  bridge network. It will be rebuilt after the rewritten initial event
+  migration is committed and quick checks pass.
+- Added the superseding shared-grouping, dedicated-grouper, route-ordering,
+  configuration-hook, and compact-WebUI decisions to `plan.md` before changing
+  implementation.
+- The first focused API run loaded the stale checked-in schema, so all examples
+  failed during setup. Updated `api/db/schema.rb` to match the rewritten
+  initial event migration.
+- A later combined invocation mixed a migration spec with ordinary seeded
+  specs. The migration spec left Active Record connected to its minimal
+  scratch database, causing broad missing-`users` failures. Recorded the
+  reusable constraint in
+  `notes/vpsadmin/2026-07-25-migration-spec-database-isolation.md` and split
+  migration and ordinary verification into separate processes.
+- WebUI notification-route regression tests pass with 18 examples and 187
+  assertions. Regenerated the WebUI gettext catalogs and supplied Czech
+  translations for the compact route table and standalone grouping form.
+- Implemented action-neutral group identity shared by every delivery stream
+  produced by one route/owner/receiver fanout. Each persisted delivery keeps
+  an internal stream key, so sealing releases one leader per e-mail, SMS,
+  Telegram, or webhook stream with the same logical event membership.
+- Added the durable RabbitMQ grouping queue and dedicated
+  `vpsadmin-notification-grouper` process. Activation and sealing use database
+  locks and reconciliation, so duplicate wakeups and multiple grouper
+  instances are safe. Dispatchers now prepare sealed stream snapshots lazily,
+  allowing one action's preparation failure to be retried independently.
+- Moved the OOM default out of core vpsAdmin. The vpsFree.cz user-create hook
+  idempotently prepends an ordinary exact `vps.oom_report` route, grouped by
+  `vps_id` with a 60-second initial wait and three-hour interval. The
+  configuration health check now requires the grouper service.
+- Route creation without an explicit position now prepends both root routes
+  and subroutes. The route list uses seven compact columns, the route label is
+  the edit link, and grouping has its own form on route details.
+- Focused verification completed so far:
+  - migration spec: 3 examples, 0 failures;
+  - grouping examples passed; one dispatcher test double lacked the new
+    `grouped_delivery?` predicate, and its isolated rerun passed after
+    correcting the fixture;
+  - transaction-chain activation/abort race: isolated rerun passed after
+    changing the post-chain-lock delivery lookup to a locking/current read;
+  - focused WebUI regression suite: 18 tests, 187 assertions;
+  - focused API RuboCop: 17 files, no offenses;
+  - PHP CS Fixer, Nixfmt, WebUI gettext health, and API i18n health pass.
+- `nix develop .#webui` does not provide `php-cs-fixer`; the repository root
+  `nix develop .#vpsadmin` shell does. The first multi-path fixer invocation
+  also required the repository's explicit `.php-cs-fixer.dist.php` config.
+  This shell/tooling detail is recorded as a reusable note.
+- Committed the intended changes with all declared repository hooks active:
+  - vpsAdmin `16aa5a3a` `notifications: share groups across delivery actions`;
+  - vpsAdmin `e37f6120d`
+    `events: make the OOM grouping route deployment policy`;
+  - vpsAdmin `4130f90ad`
+    `webui: simplify notification route management`;
+  - configuration `59981497`
+    `vpsadmin-config: install the grouped OOM route for new users`.
+- The first vpsAdmin commit attempt stopped because the changed API i18n hook
+  signature had not yet been trusted in the shared bare repository. Read and
+  verified the hook, signed that pre-commit plugin, and reran the commit. Every
+  vpsAdmin commit then passed Nixfmt, migration, WebUI/API i18n, relevant
+  RuboCop/PHP CS Fixer, and commit-message hooks. The configuration commit
+  passed Nixfmt, its event i18n Rake target, RuboCop, and commit-message hooks.
+
+### Shared Grouping Completion Candidate
+
+- Completed and pushed the vpsAdmin implementation at
+  `1e521629ee439ba0b0a69884e539c83aaddc31de`:
+  - `16aa5a3ad` shares one logical event group across all receiver delivery
+    streams;
+  - `e37f6120d` removes core ownership of the default OOM grouping route;
+  - `4130f90ad` adds the compact route table and standalone grouping form;
+  - `1e521629e` grants the notification RabbitMQ user access to the durable
+    grouping queue.
+- Completed focused quick verification before review:
+  - initial migration: 3 examples, 0 failures;
+  - grouping/task coverage: 94 examples, 0 failures;
+  - route prepend, core OOM default removal, and activation-race targets:
+    4 examples, 0 failures;
+  - WebUI regression suite: 18 tests, 187 assertions;
+  - focused API RuboCop: 17 files, no offenses;
+  - PHP CS Fixer, Nixfmt, gettext health, API i18n health, whitespace checks,
+    and every declared vpsAdmin commit hook passed.
+- The final vpsFree.cz configuration head is `10dffe63`. It contains the
+  new-user grouped OOM route hook, exact generated vpsAdmin pin, and a boot-time
+  RabbitMQ permission reconciler for existing clusters. The reconciler waits
+  for both RabbitMQ and the one-time setup unit, and must be deployed on
+  RabbitMQ nodes before API-host groupers are enabled. Nixfmt, whitespace, and
+  all configuration commit hooks passed. Preserved untracked `.bin/`,
+  `.bundle/`, and `.rubocop_cache/` directories remain untouched.
+- Rebuilt the independent screenshot cluster from the exact pushed vpsAdmin
+  head. A running in-place source-pin update left QEMU's old virtiofs export
+  attached after its store path disappeared; restarting the disposable cluster
+  restored `/mnt/vpsadmin`. After restart, WebUI returned HTTP 200, the
+  grouper was active, and `vpsadmin.notifications.grouping` was a durable
+  quorum queue.
+- The capture repository head is `1982a0b`. It installs notification templates
+  before notification fixtures emit events, defines a distinct
+  `notifications.route-grouping-form` documentation control, keeps the broad
+  routes image retired, and regenerates only the focused Czech/English
+  grouping form. Both images were inspected at original resolution and have no
+  clipping or route-table content.
+- Capture validation passes with 86 concepts, 172 variants, 50 controls,
+  35 paths, 57 capture concepts, 30 semantic selectors, 79 bindings, and
+  9 exceptions. Both contract test suites pass (8 runs/50 assertions and
+  9 runs/19 assertions).
+- The capture cluster is stopped. The older, rejected monolithic notification
+  KB bundle remains only in the session-owned staging mirror and was not
+  promoted. The broader article split is still deferred by `plan.md`; no
+  production KB page or media was changed in this slice.
+- Long `alerts/oom-report-group-and-prune` integration and production-role
+  configuration builds remain gated on the fresh mandatory change review.

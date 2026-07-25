@@ -1943,3 +1943,98 @@ Verification and review:
   tests.
 - Regenerate downstream repositories only from the committed final vpsAdmin
   head, monitor GitHub Actions, and record all results in `state.md`.
+
+## Shared Notification Groups And Route UX
+
+Requested on 2026-07-25: make grouping an action-neutral routing decision,
+move group coordination out of action dispatchers, simplify route management,
+and provision the vpsFree.cz OOM policy outside core vpsAdmin.
+
+This section supersedes the action-specific group identity and dispatcher
+coordination described above.
+
+Design decisions:
+
+- One route match produces one logical group per route, routing owner,
+  receiver, grouping configuration, and canonical group label set. The group
+  does not include the delivery action or destination in its identity.
+- Every surviving receiver target receives the same logical batch. Each target
+  keeps its own stream key, payload snapshot, attempt history, retry schedule,
+  rate limits, and failure outcome. Receiver or target edits intentionally form
+  a new group identity so an already-open group keeps its original fan-out.
+- A dedicated notification grouper consumes a durable RabbitMQ grouping queue
+  and also reconciles due database state. It activates all target streams for
+  an event together, seals one leader per stream from the same event set, and
+  releases all leaders together to the existing action queues.
+- The grouper is safe to run concurrently on both API hosts. Database unique
+  constraints and row locks provide coordination; no singleton lease or
+  leader-election service is introduced. If all groupers are unavailable,
+  grouped notifications wait while ungrouped action delivery continues.
+- Action dispatchers no longer decide group membership or seal groups. They
+  lazily prepare their stream's immutable payload after claiming a released
+  grouped leader, so preparation or delivery failure affects only that stream.
+- New routes without an explicit position are prepended at their level.
+  Explicit positions and subroute parents remain unchanged.
+- Core vpsAdmin no longer creates or repairs a special OOM route. The
+  vpsFree.cz configuration user-create hook idempotently creates an ordinary
+  exact `vps.oom_report` route named `OOM report notifications`, copies the
+  generated administrator route's receiver, groups by `vps_id`, waits 60
+  seconds, uses a three-hour group interval, and prepends the route.
+- During a rolling core/configuration transition, the hook accepts a matching
+  route already created by the old core. Existing accounts continue to receive
+  the migration-created route; users may later edit or delete the hook-created
+  route without it being recreated.
+- Route creation in the WebUI contains only ordinary route fields. Route
+  details show grouping in a separate form. The route list is reduced to seven
+  compact columns: ordering, route, conditions, receiver, behavior, hits, and
+  actions.
+
+Compatibility and deployment:
+
+- The event schema is still unmerged, so the original migration is rewritten
+  to add the internal stream key and remove the action from delivery groups.
+  The development database must be rebuilt. Production remains a coordinated
+  migration-window deployment from backup as already documented.
+- The RabbitMQ grouping queue is additive. New publishers and groupers must be
+  deployed with the rewritten schema; old action dispatchers must not run
+  against it. The service module starts one grouper on every host where the
+  notification dispatcher is enabled.
+- Fresh RabbitMQ clusters receive the grouping-queue permission from
+  vpsAdmin's initialization tool. Existing vpsFree.cz clusters retain their
+  one-time initialization marker, so production configuration also reconciles
+  the notification user's permissions on every RabbitMQ node after the broker
+  and its initial setup unit. Deploy RabbitMQ nodes before enabling groupers on
+  API hosts.
+- The configuration hook is mixed-version safe with the preceding core route
+  creation behavior and does not depend on vpsFree.cz-specific constants in
+  the new core.
+- No public event or delivery payload shape changes. The stream key remains an
+  internal persistence detail. `EventRoute` gains the additive, read-only
+  `matcher_count` field used by the compact WebUI summary; existing clients can
+  ignore it. All protocols receive the same logical event membership, although
+  protocol-specific size limits may render different truncation summaries.
+
+Affected repositories:
+
+- `vpsadmin`: schema, routing plans, grouping queue and service, action
+  dispatchers, route ordering, removal of the core OOM default, WebUI,
+  localization, Nix service health, and tests.
+- `vpsfree-cz-configuration`: idempotent new-user OOM route hook and exact
+  final vpsAdmin pin.
+- `vpsadmin-kb-captures`: exact final vpsAdmin pin, compact route-list and
+  standalone-grouping capture, bilingual generated images, and contract
+  validation. The broad route-list capture stays retired; the grouping form
+  has its own semantic documentation control.
+
+Verification:
+
+- Cover shared cross-action membership, independent preparation failure,
+  receiver edits, concurrent groupers, missing RabbitMQ wakeups, route
+  prepend ordering, core default removal, configuration-hook idempotence, and
+  WebUI form/list regressions.
+- Run quick checks and repository hooks, commit the intended changes, then
+  perform a fresh standalone mandatory change review before long integration.
+- Rebuild the development cluster on the bridge network for the rewritten
+  migration, run focused API/WebUI/service and OOM integration checks, push
+  exact heads, update configuration and capture pins, regenerate bilingual
+  captures, and monitor current-head GitHub Actions.
