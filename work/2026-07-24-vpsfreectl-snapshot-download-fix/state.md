@@ -774,6 +774,20 @@ No server deployment is planned.
   - vpsadmin-client 4.2.1;
   - haveapi-client 0.29.6.
 - Removed the clean temporary release-integration worktree after public
-  verification. The review worktree and feature branch remain available.
+  verification.
 - No GitHub Actions were awaited, as requested. No server or system deployment
   was performed.
+
+## Final cleanup
+
+- Verified every initiative branch and detached release worktree was reachable
+  from its published default or release branch before cleanup.
+- The `haveapi-client-php` bare clone has no fetch refspec, so an explicit
+  branch fetch had updated only `FETCH_HEAD`. Refreshed
+  `refs/remotes/origin/master` with an explicit source and destination before
+  checking ancestry; see
+  `notes/haveapi-client-php/2026-07-25-bare-fetch-refspec.md`.
+- Removed all completed worktrees under
+  `worktrees/2026-07-24-vpsfreectl-snapshot-download-fix/`, including ignored
+  build artifacts. All feature branches and published tags remain; no refs
+  were deleted.
