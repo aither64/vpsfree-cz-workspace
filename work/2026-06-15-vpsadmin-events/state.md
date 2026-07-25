@@ -14017,3 +14017,61 @@ GitHub Actions after final pushes:
   API run `30179200156` remained in progress at review completion. The
   user-retained long run `30170674927` on `b82f656d` also remained in progress
   and was not cancelled.
+
+## 2026-07-26 Final Review, KB Staging, And Cluster Verification
+
+- The exact pushed initiative heads are:
+  - vpsAdmin `5e042a5cd8541814e9af221f2e914e70abb74349`;
+  - vpsFree.cz configuration
+    `c89d6e25414e39d25cc96c1d4e6612bfbefea45c`;
+  - vpsAdmin KB captures
+    `f79c838f1058b8c248c27b3132c3f5308a91b8ec`.
+- The configuration flake and capture contract both resolve the exact final
+  vpsAdmin revision. The capture NAR hash is identical to the previously
+  quick-tested `36dc6f9c3` tree, which confirms that the last rewrite changed
+  history boundaries but not tracked content.
+- The fresh standalone mandatory correction review accepted the final changes
+  with no Blocking, Important, or Advisory findings. Workspace commit
+  `1dd27f2` records that accepted verdict.
+- Dispatched full exact-head CI as run `30179736346`. At the final local
+  verification checkpoint it and exact-head topic-parallel API run
+  `30179200156` were in progress. The user-retained long aggregate run
+  `30170674927` on the older head also remained in progress and was not
+  cancelled.
+- Started the owned declarative KB staging container, reset it to the current
+  production baseline, and staged the Czech and English release manifests:
+  - `work/2026-06-15-vpsadmin-events/kb-release-cs.yml`;
+  - `work/2026-06-15-vpsadmin-events/kb-release-en.yml`.
+- Each manifest contains eight pages and 26 media objects. `bin/kb-release
+  verify` passed for both staging wikis and warmed all eight language pairs.
+  No production write was made.
+- Inspected the rendered staging pages at their real page IDs. Automated
+  browser checks over all 14 standalone/new tutorial pages confirmed:
+  - HTTP 200 and the expected page heading;
+  - uninterrupted explicit `Step/Krok 1` through `N` heading sequences;
+  - no ordered lists whose numbering could reset around screenshots;
+  - all referenced screenshots loaded with non-zero natural dimensions;
+  - Czech and English translation links on every page.
+- Visually inspected both rendered reference pages plus representative English
+  OOM muting and Czech incident muting tutorials. The reference pages keep
+  concepts and links separate from examples, grouping and time-interval use
+  cases are readable, and the two mute scenarios are independent.
+- Staging remains running and owned by this session for user review:
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications`.
+- Rebuilt and started the general development cluster from the exact final
+  worktrees. Final status is `running`, `ready: yes`, topology `single`, and
+  network `bridge`. The startup applied the Telegram-enabled services
+  configuration in place and completed the node-pool seed.
+- Live runtime verification passed:
+  - WebUI and API both return HTTP 200 with the development CA;
+  - `vpsadmin-api.service`,
+    `vpsadmin-notification-grouper.service`, all four notification dispatcher
+    units, and `vpsadmin-telegram-receiver.service` are active;
+  - the database contains exactly three `OOM report notifications` routes,
+    one for each of `test-admin`, `test-user1`, and `test-user2`;
+  - route IDs 7, 8, and 9 are enabled top-level exact `vps.oom_report`
+    routes, use `group_by = ["vps_id"]`, wait 60 seconds, repeat after 10800
+    seconds, have position 9999, and point to each account's enabled,
+    non-muted Default receiver.
+- The general cluster and KB staging container are intentionally left running.
