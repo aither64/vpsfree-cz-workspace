@@ -14242,11 +14242,20 @@ GitHub Actions after final pushes:
   base and again when replaying the commit that intentionally adds the event
   i18n hook. All replay and final pin hooks passed in the repository Nix
   shell.
-- `confctl inputs channel set --commit vpsadmin vpsadmin ee2ef062...`
-  generated configuration commit `ee702f6c`. The pushed branch now pins only
-  `vpsadminServices` to exact revision `ee2ef0620` and the same NAR hash as the
-  capture repository. Preserved `.bin/`, `.bundle/`, and `.rubocop_cache/`
-  directories remain untracked and untouched.
+- Rebuilt the configuration branch history before final review so each input
+  stream has one authoritative generated pin commit. The final commits are
+  `dc9482a0` for `vpsfreeSmsGateway`, `9016a9a3` for
+  `vpsfreeNotificationTemplates`, and `e1a31570` for `vpsadminServices`.
+  The final vpsAdmin revision is exact `ee2ef0620` with the same NAR hash as
+  the capture repository. The rebuilt tree
+  `3cc36ebd9f78001a9c514f739e5ede743f90ffe7` is byte-for-byte identical to
+  the previously tested branch tree.
+- Force-pushed the clean configuration history with an explicit lease on the
+  known previous feature head `ee702f6c`; the new feature head is
+  `e1a3157005b147f9dfa74cb8d4c4a55001fb26af`. A named backup ref preserves
+  the prior history. The temporary shell worktree was removed after the tree
+  comparison. Preserved `.bin/`, `.bundle/`, and `.rubocop_cache/`
+  directories in the primary worktree remain untracked and untouched.
 - Rebuilt the guarded bilingual KB candidates from canonical code and the
   final captures. The result contains 16 changed pages, 4 annotations, and 52
   media objects; each language manifest contains 8 pages and 26 media
@@ -14256,6 +14265,6 @@ GitHub Actions after final pushes:
   candidate annotation check passes with 123 bindings and 9 exceptions after
   refreshing the twelve changed new-page fingerprints in the capture
   contract.
-- All intended follow-up changes are committed except this final workspace
-  tracking/candidate commit. The next gate is one fresh mandatory change
-  review before renewed long integration tests.
+- All intended follow-up changes and candidates are committed and pushed.
+  The next gate is one fresh mandatory change review before renewed long
+  integration tests.
