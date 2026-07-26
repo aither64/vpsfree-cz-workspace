@@ -14075,3 +14075,187 @@ GitHub Actions after final pushes:
     seconds, have position 9999, and point to each account's enabled,
     non-muted Default receiver.
 - The general cluster and KB staging container are intentionally left running.
+
+## 2026-07-26 KB, Route List, And Example Verification Follow-Up
+
+- The user requested ordinary-user-only KB wording, repairs for DokuWiki lists,
+  role semantics, removal of obsolete route movement steps, a human-friendly
+  routing-state label, compact route action columns with an explicit edit
+  action, and executable documentation examples.
+- The chosen verification design is layered:
+  - canonical KB notification code is executed directly;
+  - vpsAdmin event and webhook fixtures are checked against their source
+    contracts;
+  - HaveAPI validates structured examples and syntax-checks its renderers;
+  - arbitrary mutating API examples are not run against shared infrastructure.
+- The user chose to release and consume the HaveAPI patch. The user then gave
+  the required immediate approval before package publication.
+- Starting heads are vpsAdmin `5e042a5cd8541814e9af221f2e914e70abb74349`,
+  HaveAPI `1720eb7`, capture contract `f79c838`, and configuration
+  `c89d6e25`.
+- All four initiative worktrees are clean apart from the configuration
+  worktree's preserved untracked development caches. Unrelated shared
+  workspace changes remain untouched.
+- The owned KB staging container is still running with the previous English
+  manifest pending. It will be reset only after replacement candidates and
+  manifests are ready.
+
+### Branch reconciliation
+
+- Fetched the affected repositories before starting this follow-up.
+- Rebased `vpsadmin` onto current `origin/master`:
+  - old head: `5e042a5cd`;
+  - new rebased head: `72a1821bc`;
+  - retained the upstream v4.2.1 version while replaying the notification
+    template rename, then accepted the later intentional removal of the
+    standalone notification-template gem.
+- Rebased `haveapi` onto current `origin/master`:
+  - old head: `1720eb7`;
+  - new rebased head: `a7a6032`;
+  - the pre-rebase hook initially refused the operation because the checked
+    configuration signature was stale; inspected `.overcommit.yml` and ran
+    `nix develop -c overcommit --sign` before retrying successfully.
+- Created local safety refs named
+  `backup/2026-06-15-vpsadmin-events-before-20260726-kb-example-followup`
+  in both rebased repositories.
+
+### Executable documentation examples and HaveAPI 0.29.7
+
+- Added structured API-example validation to HaveAPI. Resource and action
+  examples are now checked against the declared request and response schemas
+  while the API is built, and generated Ruby, JavaScript, Go, and PHP example
+  fragments are parser- or compiler-checked in the HaveAPI test suite.
+- Corrected generator defects exposed by the new checks: JavaScript comments
+  now preserve following statements, and frozen Ruby HTTP examples no longer
+  mutate path strings.
+- HaveAPI quick verification is green:
+  - the complete Ruby server suite passed with 357 examples;
+  - focused example validation and renderer checks passed with 12 examples;
+  - RuboCop passed on all eight changed Ruby files.
+- Committed the HaveAPI feature as `7273615` and `508d60d`.
+- Prepared the supported-series release branch
+  `2026-06-15-vpsadmin-events-haveapi-0.29.7` from current
+  `origin/haveapi-0.29`, cherry-picked the two feature commits with origin
+  attribution, and committed version 0.29.7 as `df6a2d1`.
+- `make release` initially stopped at the JavaScript client because its
+  declared development dependencies had not been installed. Running
+  `npm install --no-audit --no-fund` in the repository Nix shell supplied the
+  expected Gulp toolchain; the subsequent release build completed.
+- The clean release tree produced and verified these versioned artifacts:
+  `haveapi-client-0.29.7.gem`, `haveapi-0.29.7.gem`,
+  `haveapi-go-client-0.29.7.gem`, and the JavaScript client with
+  `Client.Version = '0.29.7'`.
+- The user approved `make publish`. Publication and registry verification are
+  recorded in the completed release section below.
+
+### Current follow-up implementation
+
+- Added a canonical executable Python webhook receiver plus representative
+  single-event and grouped-delivery JSON fixtures to vpsAdmin. The API smoke
+  spec executes the exact documented receiver and verifies successful,
+  invalid-signature, and mismatched-delivery behavior. The notification
+  integration scenario embeds the same canonical source.
+- Added validated notification route examples to the vpsAdmin API and repaired
+  stale Location and IP-address response examples discovered when booting the
+  entire API under the stricter HaveAPI validator.
+- Changed the WebUI route list to expose separate Edit, Add subroute, and
+  Delete cells with blank action headers. Removed broad action-column width
+  rules, retained compact no-wrap action cells, and updated the PHP regression
+  test.
+- Added an explicit human-facing `Routing state` label to the API event
+  resource and regenerated the English locale.
+- vpsAdmin quick verification is green so far:
+  - WebUI regression: 20 tests and 252 assertions;
+  - canonical webhook smoke spec: 4 examples;
+  - routing-state metadata spec: 1 example;
+  - changed Ruby files: no RuboCop offenses;
+  - notification-routing Nix scenario parses successfully;
+  - the complete API builds with every structured example validated.
+- Extended `bin/kb-contract-build` schema 3 with canonical source injection,
+  checksums, strict declaration use, and a physical-line guard against broken
+  DokuWiki list items. Its test suite passes with 14 runs and 74 assertions.
+- Reworked the bilingual notification candidates for ordinary users: fixed
+  malformed lists, explained account and admin event audiences, removed route
+  reordering instructions, and injected the canonical webhook server and
+  payload. Candidate generation currently reports 16 pages, 4 annotations,
+  and 52 media objects.
+- Extended the capture scenario to require seven route-table cells, three
+  blank action headers, distinct edit/add/delete actions, compact action
+  columns, and no horizontal content overflow. Final captures and contract
+  verification are recorded below.
+
+### Completed HaveAPI release and downstream integration
+
+- The supported-series HaveAPI release is published and integrated:
+  - `haveapi-client`, `haveapi`, and `haveapi-go-client` 0.29.7 are published
+    on RubyGems;
+  - `haveapi-client` 0.29.7 is published on npm with shasum
+    `258ca878d6136e36e438bd0c7a68aac151546940`;
+  - `origin/haveapi-0.29` and annotated tag `v0.29.7` point to
+    `df6a2d1`;
+  - all registry lookups returned version 0.29.7.
+- Synchronized the standalone `haveapi-client-php` mirror from the canonical
+  PHP client and committed `fc9452a`. Remote `master`, annotated tag
+  `v0.29.7`, and Packagist `haveapi/client` 0.29.7 all resolve to exact commit
+  `fc9452a79c6ff3d2c6123380176cd1c5a5e8e451`.
+- The canonical PHP suite passed with 51 tests and 144 assertions. Its
+  checksum comparison with the standalone mirror had no differences. A
+  direct standalone integration run cannot locate the Ruby test server
+  because its bootstrap assumes the HaveAPI monorepo layout; the reusable
+  note is
+  `notes/haveapi-client-php/2026-07-26-standalone-test-layout.md`.
+- The final vpsAdmin branch head is
+  `ee2ef0620b56615d4ab26cea8d6140b4420eb7bd`, pushed with these follow-up
+  commits:
+  - `304d7eadd` verifies the canonical notification examples;
+  - `0999e3270` repairs the HaveAPI dependency refresh skill;
+  - `8b2fca119` consumes HaveAPI 0.29.7;
+  - `ee2ef0620` clarifies notification route actions.
+- Every vpsAdmin commit passed its active Overcommit hooks. Focused
+  verification passed with 5 API examples, 20 WebUI tests and 252 assertions,
+  successful Composer validation, byte-identical JavaScript release bundles,
+  a parsed notification-routing Nix scenario, and a complete API definition
+  build under the structured example validator.
+
+### Final captures, configuration pin, and KB candidates
+
+- Pinned the capture repository to exact vpsAdmin revision `ee2ef0620` and
+  NAR hash `sha256-qrbQwIczOiIBp6HuaiGIcFMmu6QKItuWh4G0xH+ZPVk=`.
+- The already-running main development cluster occupied the capture
+  frontend's fixed bridge address. The isolated capture cluster therefore
+  used local networking; this was the only available non-disruptive mode and
+  the reason for the bridge exception. The main bridge cluster was not
+  stopped or replaced.
+- Recaptured all 26 notification checkpoints in Czech and English and
+  visually inspected both contact sheets. The accepted bitmap changes are
+  the localized event-state views. The old broad `routes.png` is intentionally
+  retired and is absent from KB media; a live Playwright assertion instead
+  verifies the current seven-column table, blank action headers, separate
+  edit/add/delete cells, compact action widths, and no overflow.
+- Complete capture validation passes with 51 controls, 37 paths, 57 capture
+  concepts, 30 semantic selectors, 123 bindings, 9 exceptions, 69 Ruby
+  assertions, and all 172 PNG variants. Pushed capture commits are `0ad4d47`
+  for the final revision/layout checks and `9430668` for independently
+  classified tutorial fingerprints.
+- Rebased the configuration branch over current `origin/master`. The rebase
+  required re-signing the declared Overcommit configuration first on the new
+  base and again when replaying the commit that intentionally adds the event
+  i18n hook. All replay and final pin hooks passed in the repository Nix
+  shell.
+- `confctl inputs channel set --commit vpsadmin vpsadmin ee2ef062...`
+  generated configuration commit `ee702f6c`. The pushed branch now pins only
+  `vpsadminServices` to exact revision `ee2ef0620` and the same NAR hash as the
+  capture repository. Preserved `.bin/`, `.bundle/`, and `.rubocop_cache/`
+  directories remain untracked and untouched.
+- Rebuilt the guarded bilingual KB candidates from canonical code and the
+  final captures. The result contains 16 changed pages, 4 annotations, and 52
+  media objects; each language manifest contains 8 pages and 26 media
+  objects. Canonical webhook source and payload checksums are recorded in the
+  candidate index.
+- Workspace KB tooling passes 14 tests and 74 assertions. The independent
+  candidate annotation check passes with 123 bindings and 9 exceptions after
+  refreshing the twelve changed new-page fingerprints in the capture
+  contract.
+- All intended follow-up changes are committed except this final workspace
+  tracking/candidate commit. The next gate is one fresh mandatory change
+  review before renewed long integration tests.

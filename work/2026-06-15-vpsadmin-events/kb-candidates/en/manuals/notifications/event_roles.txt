@@ -1,9 +1,14 @@
 ====== Route events by account or admin role ======
 
-This example sends events intended for the ''account'' role to an
-account-management contact and events intended for the ''admin'' role to a
-system administrator. An event can have both roles, in which case both
-contacts receive it.
+An event role identifies the intended audience for a notification. It does
+not grant vpsAdmin permissions and is unrelated to a user's access role.
+
+The ''account'' role covers membership and account lifecycle, payments and
+billing, requests, and security notices intended for the account owner or an
+accountant. The ''admin'' role covers VPS operation, monitoring, OOM and
+incident reports, backups, and migrations intended for a technical
+administrator. Check **Event types** for the roles of each concrete type. An
+event can have both roles, in which case both contacts receive it.
 
 Before starting, see the [[manuals:notifications|notification system overview]].
 
@@ -56,20 +61,26 @@ enabled.
 
 {{:en:screenshots:vpsadmin:notifications:example-role-admin-route.png?900|Admin-role route with its roles matcher}}
 
-Move both routes above general default routes. Because both routes continue,
-an event with both roles reaches both contacts and can still reach later
-routes.
+Because both routes have **Continue** enabled, an event with both roles
+reaches both contacts and can still reach later routes.
 
 ===== Step 5: Test the result =====
 
-Create a **Test event** of type ''user.test_notification'' with this payload:
+Create a **Test event** of type ''vps.suspended''. This type has both the
+''account'' and ''admin'' roles. For example, use:
 
 <code json>
 {
-  "roles": ["account", "admin"],
-  "note": "Role routing test"
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "state": "suspended",
+  "reason": "Role routing test"
 }
 </code>
+
+These values are only test-event content; no real VPS is suspended. Roles
+come from the selected event type and cannot be changed by adding a
+''roles'' item to the JSON.
 
 Open the created event at
 <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →

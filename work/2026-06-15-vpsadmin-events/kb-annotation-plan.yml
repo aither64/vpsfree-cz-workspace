@@ -1,5 +1,5 @@
 ---
-schema: 2
+schema: 3
 new_pages:
 - language: cs
   page: navody:notifikace
@@ -16,8 +16,7 @@ new_pages:
       * **událost** popisuje, co se stalo,
       * **routa** vybírá události a určuje, zda směrování pokračuje,
       * **příjemce** popisuje, koho nebo kterou integraci upozornit,
-      * **cíl** je konkrétní e-mail, telefonní číslo, chat v Telegramu nebo
-        webhookový endpoint.
+      * **cíl** je konkrétní e-mail, telefonní číslo, chat v Telegramu nebo webhookový endpoint.
 
     ===== Příklady krok za krokem =====
 
@@ -75,13 +74,9 @@ new_pages:
     <vpsadmin-nav id="notifications.route-grouping-form.open">**Notifikace → Routy
     → upravit routu → Seskupování notifikací**</vpsadmin-nav>:
 
-      * **Seskupit podle polí** obsahuje čárkami oddělená skalární pole události.
-        Jejich hodnoty určují skupinu. Prázdný seznam vytvoří jednu skupinu pro
-        všechny události odpovídající routě.
-      * **Počáteční čekání** určuje, kolik sekund první událost počká, aby se k ní
-        mohly přidat další.
-      * **Interval opakování** je nejkratší prodleva před dalším souhrnem ze stejné
-        stále aktivní skupiny.
+      * **Seskupit podle polí** obsahuje čárkami oddělená skalární pole události. Jejich hodnoty určují skupinu. Prázdný seznam vytvoří jednu skupinu pro všechny události odpovídající routě.
+      * **Počáteční čekání** určuje, kolik sekund první událost počká, aby se k ní mohly přidat další.
+      * **Interval opakování** je nejkratší prodleva před dalším souhrnem ze stejné stále aktivní skupiny.
 
     U přesného typu používejte pole uvedená na stránce **Typy událostí**. Routa se
     vzorem nebo pro všechny typy může použít pouze společná pole, která formulář
@@ -99,7 +94,7 @@ new_pages:
     notifikací**</vpsadmin-nav> lze prohlížet otevřené, zpožděné, neaktivní i
     historické skupiny. Detail ukazuje routu, příjemce, seskupovací hodnoty,
     časování, čekající události a doručení. Jednotlivá doručení zůstávají viditelná
-    v detailu události a správcům také ve frontě a protokolu doručení.
+    v detailu události.
 
     ===== Časové intervaly =====
 
@@ -146,9 +141,15 @@ new_pages:
     <page>manuals:notifications:event_roles</page>
     ====== Doručení událostí podle role account nebo admin ======
 
-    Tento příklad posílá události určené roli ''account'' kontaktu pro správu účtu
-    a události role ''admin'' správci systému. Jedna událost může mít obě role;
-    potom ji dostanou oba kontakty.
+    Role události označuje zamýšlené publikum notifikace. Neuděluje oprávnění ve
+    vpsAdminu a nesouvisí s přístupovou rolí uživatele.
+
+    Role ''account'' se používá pro správu členství a účtu, platby a vyúčtování,
+    požadavky a bezpečnostní zprávy určené majiteli účtu nebo účetnímu. Role
+    ''admin'' se používá pro provoz VPS, monitoring, OOM a incidentní reporty,
+    zálohy a migrace určené technickému správci. Konkrétní typy ověřte na stránce
+    **Typy událostí**. Jedna událost může mít obě role; potom ji dostanou oba
+    kontakty.
 
     Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]].
 
@@ -199,19 +200,25 @@ new_pages:
 
     {{:cs:screenshots:vpsadmin:notifications:example-role-admin-route.png?900|Routa role admin s podmínkou roles}}
 
-    Obě routy přesuňte nad obecné výchozí routy. Díky pokračování se událost s
-    oběma rolemi doručí oběma kontaktům a mohou ji zpracovat i další routy.
+    Díky zapnutému **Pokračovat** se událost s oběma rolemi doručí oběma
+    kontaktům a mohou ji zpracovat i další routy.
 
     ===== Krok 5: Ověřte výsledek =====
 
-    Vytvořte **Testovací událost** typu ''user.test_notification'':
+    Vytvořte **Testovací událost** typu ''vps.suspended''. Tento typ má role
+    ''account'' i ''admin''. Zadejte například:
 
     <code json>
     {
-      "roles": ["account", "admin"],
-      "note": "Role routing test"
+      "vps_id": 123,
+      "vps_hostname": "example-vps",
+      "state": "suspended",
+      "reason": "Role routing test"
     }
     </code>
+
+    Hodnoty jsou pouze obsahem testovací události; skutečná VPS se nepozastaví.
+    Role se vybírají podle typu události a nelze je změnit položkou v JSON.
 
     Vytvořenou událost otevřete v
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
@@ -266,9 +273,7 @@ new_pages:
 
     {{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Ztlumení OOM reportů podle VPS a cgroup}}
 
-    Routu přesuňte nad seskupující výchozí routu OOM reportů a ostatní doručovací
-    routy. **Pokračovat** nechte vypnuté, jinak by report mohly odeslat pozdější
-    routy.
+    **Pokračovat** nechte vypnuté, jinak by report mohly odeslat další routy.
 
     ===== Krok 4: Ověřte routu =====
 
@@ -331,7 +336,7 @@ new_pages:
 
     {{:cs:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Ztlumení incidentů podle ID VPS a kódového označení}}
 
-    Routu přesuňte nad doručovací a výchozí routy. **Pokračovat** nechte vypnuté.
+    **Pokračovat** nechte vypnuté, aby se odpovídající incident dále nesměroval.
 
     ===== Krok 4: Ověřte routu =====
 
@@ -412,15 +417,14 @@ new_pages:
 
     {{:cs:screenshots:vpsadmin:notifications:example-telegram-incident-route.png?900|Telegramová routa pro incidentní reporty}}
 
-    Obě routy přesuňte před výchozí e-mailové routy. **Pokračovat** zůstává
-    zapnuté, aby stejné události nadále chodily i e-mailem.
+    **Pokračovat** zůstává zapnuté, aby stejné události nadále chodily i e-mailem.
 
     ===== Krok 5: Ověřte doručení do Telegramu =====
 
-    Pro bezpečný test spojení dočasně přidejte jako první routu pro přesný typ
-    ''user.test_notification'', příjemce **Provozní Telegram** a
-    **Pokračovat: ne**. Vytvořte testovací událost, zkontrolujte zprávu v Telegramu
-    a dočasnou routu smažte.
+    Pro bezpečný test spojení dočasně přidejte routu pro přesný typ
+    ''user.test_notification'', příjemce **Provozní Telegram** a **Pokračovat:
+    ne**. Vytvořte testovací událost, zkontrolujte zprávu v Telegramu a dočasnou
+    routu smažte.
 
     {{:cs:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Testovací událost zastavená dočasnou telegramovou routou}}
 
@@ -486,9 +490,8 @@ new_pages:
 
     {{:cs:screenshots:vpsadmin:notifications:example-sms-vps-route.png?900|SMS routa pro pozastavení VPS}}
 
-    Obě routy přesuňte před výchozí e-mailové routy. ''user.suspended'' se týká
-    celého účtu a ''vps.suspended'' jedné VPS. **Pokračovat** nechte zapnuté, aby
-    zůstalo zachováno e-mailové doručení.
+    ''user.suspended'' se týká celého účtu a ''vps.suspended'' jedné VPS.
+    **Pokračovat** nechte zapnuté, aby zůstalo zachováno e-mailové doručení.
 
     ===== Krok 5: Otestujte a zkontrolujte doručení =====
 
@@ -523,57 +526,17 @@ new_pages:
 
     ===== Krok 1: Připravte jednoduchý přijímací server =====
 
-    Následující kód uložte jako ''webhook.py''. Ověří podpis HMAC z přesného těla
+    Následující kód uložte jako ''webhook_server.py''. Ověří podpis HMAC z přesného těla
     požadavku, porovná ID doručení a vypíše všechny přijaté události:
 
-    <code python>
-    import hashlib
-    import hmac
-    import json
-    import os
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-
-    SECRET = os.environ["VPSADMIN_WEBHOOK_SECRET"].encode()
-
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_POST(self):
-            length = int(self.headers.get("Content-Length", "0"))
-            body = self.rfile.read(length)
-            expected = "sha256=" + hmac.new(
-                SECRET, body, hashlib.sha256
-            ).hexdigest()
-            received = self.headers.get("X-VpsAdmin-Signature-256", "")
-
-            if not hmac.compare_digest(received, expected):
-                self.send_response(401)
-                self.end_headers()
-                return
-
-            data = json.loads(body)
-            delivery_id = str(data["delivery"]["id"])
-            if self.headers.get("X-VpsAdmin-Delivery") != delivery_id:
-                self.send_response(400)
-                self.end_headers()
-                return
-
-            print("group:", data["group"])
-            for event in data["events"]:
-                print("event:", event["id"], event["type"], event["fields"])
-
-            self.send_response(204)
-            self.end_headers()
-
-
-    HTTPServer(("127.0.0.1", 8080), Handler).serve_forever()
-    </code>
+    <kb-code-sample id="notifications.webhook-server" />
 
     Spusťte jej za veřejnou HTTPS reverzní proxy:
 
     <code>
-    export VPSADMIN_WEBHOOK_SECRET="$(openssl rand -hex 32)"
-    printf '%s\n' "$VPSADMIN_WEBHOOK_SECRET"
-    python3 webhook.py
+    export WEBHOOK_SECRET="$(openssl rand -hex 32)"
+    printf '%s\n' "$WEBHOOK_SECRET"
+    python3 webhook_server.py
     </code>
 
     Tajemství bezpečně uložte. Server naslouchá pouze na ''127.0.0.1:8080''; URL
@@ -612,9 +575,9 @@ new_pages:
 
     ===== Krok 5: Ověřte webhook =====
 
-    Dočasně routu přesuňte jako první a vypněte **Pokračovat**. Syntetická událost
-    se tak nedostane k výchozím šablonám, které potřebují reálnou VPS. Vytvořte
-    testovací událost ''vps.resources_changed'':
+    Pro tento test dočasně vypněte **Pokračovat**. Syntetická událost se tak
+    nedostane k výchozím šablonám, které potřebují reálnou VPS. Vytvořte testovací
+    událost ''vps.resources_changed'':
 
     <code json>
     {
@@ -645,68 +608,7 @@ new_pages:
 
     ID a čas v tomto zkráceném příkladu jsou pouze ilustrační:
 
-    <code json>
-    {
-      "version": 1,
-      "group": {
-        "grouped": false,
-        "key": null,
-        "labels": {},
-        "event_count": 1,
-        "truncated_count": 0
-      },
-      "events": [
-        {
-          "id": 48123,
-          "type": "vps.resources_changed",
-          "category": "vps",
-          "severity": "info",
-          "subject": "VPS resources changed",
-          "summary": null,
-          "payload": {
-            "vps_id": 123,
-            "memory": 8192
-          },
-          "fields": {
-            "vps_id": 123,
-            "vps_hostname": "example-vps"
-          },
-          "ip_addr": null,
-          "source": {
-            "class": null,
-            "id": null
-          },
-          "user": {
-            "id": 42,
-            "login": "example"
-          },
-          "vps": null,
-          "created_at": "2026-07-25T12:34:56Z"
-        }
-      ],
-      "delivery": {
-        "id": 91234,
-        "action": "webhook",
-        "route": {
-          "id": 17,
-          "label": "VPS resource-change webhook",
-          "matcher_summary": "vps.resources_changed"
-        },
-        "receiver": {
-          "id": 8,
-          "label": "Resource-change webhook"
-        },
-        "notification_target": {
-          "id": 14,
-          "label": "Resource changes",
-          "display_target": "https://events.example.net/vpsadmin"
-        },
-        "receiver_target": {
-          "id": 21
-        }
-      }
-    }
-    </code>
+    <kb-code-sample id="notifications.webhook-single-payload" />
 
     Podpis je HMAC-SHA256 z nezměněných bajtů těla a má tvar
     ''sha256=<HMAC>''. Libovolná odpověď ''2xx'' znamená úspěch. Neúspěšné
@@ -727,8 +629,7 @@ new_pages:
       * an **event** describes what happened,
       * a **route** selects events and decides whether routing continues,
       * a **receiver** describes who or which integration should be notified,
-      * a **target** is a concrete e-mail address, telephone number, Telegram chat,
-        or webhook endpoint.
+      * a **target** is a concrete e-mail address, telephone number, Telegram chat, or webhook endpoint.
 
     ===== Step-by-step examples =====
 
@@ -786,13 +687,9 @@ new_pages:
     <vpsadmin-nav id="notifications.route-grouping-form.open">**Notifications →
     Routes → edit route → Notification grouping**</vpsadmin-nav>:
 
-      * **Group by fields** contains comma-separated scalar event fields. Their
-        values identify a group. Leave it empty to put all events matching the
-        route into one group.
-      * **Initial wait** is how many seconds the first event waits so more events
-        can join a new, idle group.
-      * **Repeat interval** is the minimum delay before another summary from the
-        same still-active group.
+      * **Group by fields** contains comma-separated scalar event fields. Their values identify a group. Leave it empty to put all events matching the route into one group.
+      * **Initial wait** is how many seconds the first event waits so more events can join a new, idle group.
+      * **Repeat interval** is the minimum delay before another summary from the same still-active group.
 
     For an exact event type, use fields listed for that type on the **Event types**
     page. Pattern and catch-all routes can use only common fields accepted by the
@@ -811,7 +708,7 @@ new_pages:
     groups**</vpsadmin-nav> to inspect open, overdue, idle, and historical groups.
     A group detail shows its route, receiver, grouping labels, timing, pending
     events, and deliveries. Individual deliveries remain visible in the event
-    detail and, for administrators, in the delivery queue and log.
+    detail.
 
     ===== Time intervals =====
 
@@ -857,10 +754,15 @@ new_pages:
   body: |
     ====== Route events by account or admin role ======
 
-    This example sends events intended for the ''account'' role to an
-    account-management contact and events intended for the ''admin'' role to a
-    system administrator. An event can have both roles, in which case both
-    contacts receive it.
+    An event role identifies the intended audience for a notification. It does
+    not grant vpsAdmin permissions and is unrelated to a user's access role.
+
+    The ''account'' role covers membership and account lifecycle, payments and
+    billing, requests, and security notices intended for the account owner or an
+    accountant. The ''admin'' role covers VPS operation, monitoring, OOM and
+    incident reports, backups, and migrations intended for a technical
+    administrator. Check **Event types** for the roles of each concrete type. An
+    event can have both roles, in which case both contacts receive it.
 
     Before starting, see the [[manuals:notifications|notification system overview]].
 
@@ -913,20 +815,26 @@ new_pages:
 
     {{:en:screenshots:vpsadmin:notifications:example-role-admin-route.png?900|Admin-role route with its roles matcher}}
 
-    Move both routes above general default routes. Because both routes continue,
-    an event with both roles reaches both contacts and can still reach later
-    routes.
+    Because both routes have **Continue** enabled, an event with both roles
+    reaches both contacts and can still reach later routes.
 
     ===== Step 5: Test the result =====
 
-    Create a **Test event** of type ''user.test_notification'' with this payload:
+    Create a **Test event** of type ''vps.suspended''. This type has both the
+    ''account'' and ''admin'' roles. For example, use:
 
     <code json>
     {
-      "roles": ["account", "admin"],
-      "note": "Role routing test"
+      "vps_id": 123,
+      "vps_hostname": "example-vps",
+      "state": "suspended",
+      "reason": "Role routing test"
     }
     </code>
+
+    These values are only test-event content; no real VPS is suspended. Roles
+    come from the selected event type and cannot be changed by adding a
+    ''roles'' item to the JSON.
 
     Open the created event at
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
@@ -980,9 +888,8 @@ new_pages:
 
     {{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|OOM-report mute route with VPS and cgroup matchers}}
 
-    Move the mute route above the grouped default OOM-report route and any other
-    delivery route. Keep **Continue** disabled, otherwise later routes could still
-    send the report.
+    Keep **Continue** disabled, otherwise another route could still send the
+    report.
 
     ===== Step 4: Test the route =====
 
@@ -1044,8 +951,7 @@ new_pages:
 
     {{:en:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Incident mute route with VPS ID and codename matchers}}
 
-    Move the mute route above delivery and default routes. Keep **Continue**
-    disabled.
+    Keep **Continue** disabled so the matching incident is not routed further.
 
     ===== Step 4: Test the route =====
 
@@ -1125,15 +1031,15 @@ new_pages:
 
     {{:en:screenshots:vpsadmin:notifications:example-telegram-incident-route.png?900|Telegram route for incident reports}}
 
-    Move both routes before default e-mail routes. **Continue** remains enabled so
-    the same events can still be delivered by e-mail.
+    **Continue** remains enabled so the same events can still be delivered by
+    e-mail.
 
     ===== Step 5: Test Telegram delivery =====
 
-    For a safe connection test, temporarily add a first route for exact event type
-    ''user.test_notification'', receiver **Operations Telegram**, and
-    **Continue: no**. Create a test event, check the Telegram message, and delete
-    the temporary route.
+    For a safe connection test, temporarily add a route for exact event type
+    ''user.test_notification'', receiver **Operations Telegram**, and **Continue:
+    no**. Create a test event, check the Telegram message, and delete the temporary
+    route.
 
     {{:en:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Test event stopped by the temporary Telegram route}}
 
@@ -1198,9 +1104,8 @@ new_pages:
 
     {{:en:screenshots:vpsadmin:notifications:example-sms-vps-route.png?900|SMS route for VPS suspension}}
 
-    Move both routes before default e-mail routes. ''user.suspended'' concerns the
-    whole account, while ''vps.suspended'' concerns one VPS. Keep **Continue**
-    enabled so e-mail delivery remains active.
+    ''user.suspended'' concerns the whole account, while ''vps.suspended'' concerns
+    one VPS. Keep **Continue** enabled so e-mail delivery remains active.
 
     ===== Step 5: Test and inspect delivery =====
 
@@ -1236,57 +1141,17 @@ new_pages:
 
     ===== Step 1: Prepare a simple receiver server =====
 
-    Save this as ''webhook.py''. It verifies the HMAC signature over the exact
+    Save this as ''webhook_server.py''. It verifies the HMAC signature over the exact
     request body, checks the delivery ID, and prints every received event:
 
-    <code python>
-    import hashlib
-    import hmac
-    import json
-    import os
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-
-    SECRET = os.environ["VPSADMIN_WEBHOOK_SECRET"].encode()
-
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_POST(self):
-            length = int(self.headers.get("Content-Length", "0"))
-            body = self.rfile.read(length)
-            expected = "sha256=" + hmac.new(
-                SECRET, body, hashlib.sha256
-            ).hexdigest()
-            received = self.headers.get("X-VpsAdmin-Signature-256", "")
-
-            if not hmac.compare_digest(received, expected):
-                self.send_response(401)
-                self.end_headers()
-                return
-
-            data = json.loads(body)
-            delivery_id = str(data["delivery"]["id"])
-            if self.headers.get("X-VpsAdmin-Delivery") != delivery_id:
-                self.send_response(400)
-                self.end_headers()
-                return
-
-            print("group:", data["group"])
-            for event in data["events"]:
-                print("event:", event["id"], event["type"], event["fields"])
-
-            self.send_response(204)
-            self.end_headers()
-
-
-    HTTPServer(("127.0.0.1", 8080), Handler).serve_forever()
-    </code>
+    <kb-code-sample id="notifications.webhook-server" />
 
     Run it behind a public HTTPS reverse proxy:
 
     <code>
-    export VPSADMIN_WEBHOOK_SECRET="$(openssl rand -hex 32)"
-    printf '%s\n' "$VPSADMIN_WEBHOOK_SECRET"
-    python3 webhook.py
+    export WEBHOOK_SECRET="$(openssl rand -hex 32)"
+    printf '%s\n' "$WEBHOOK_SECRET"
+    python3 webhook_server.py
     </code>
 
     Store the secret securely. The example server listens only on
@@ -1325,8 +1190,8 @@ new_pages:
 
     ===== Step 5: Test the webhook =====
 
-    Temporarily move this route first and disable **Continue**. This keeps the
-    synthetic event away from default templates that require a real VPS. Create a
+    Temporarily disable **Continue** for this test. This keeps the synthetic event
+    away from default templates that require a real VPS. Create a
     ''vps.resources_changed'' test event:
 
     <code json>
@@ -1357,68 +1222,7 @@ new_pages:
 
     IDs and timestamps in this shortened example are illustrative:
 
-    <code json>
-    {
-      "version": 1,
-      "group": {
-        "grouped": false,
-        "key": null,
-        "labels": {},
-        "event_count": 1,
-        "truncated_count": 0
-      },
-      "events": [
-        {
-          "id": 48123,
-          "type": "vps.resources_changed",
-          "category": "vps",
-          "severity": "info",
-          "subject": "VPS resources changed",
-          "summary": null,
-          "payload": {
-            "vps_id": 123,
-            "memory": 8192
-          },
-          "fields": {
-            "vps_id": 123,
-            "vps_hostname": "example-vps"
-          },
-          "ip_addr": null,
-          "source": {
-            "class": null,
-            "id": null
-          },
-          "user": {
-            "id": 42,
-            "login": "example"
-          },
-          "vps": null,
-          "created_at": "2026-07-25T12:34:56Z"
-        }
-      ],
-      "delivery": {
-        "id": 91234,
-        "action": "webhook",
-        "route": {
-          "id": 17,
-          "label": "VPS resource-change webhook",
-          "matcher_summary": "vps.resources_changed"
-        },
-        "receiver": {
-          "id": 8,
-          "label": "Resource-change webhook"
-        },
-        "notification_target": {
-          "id": 14,
-          "label": "Resource changes",
-          "display_target": "https://events.example.net/vpsadmin"
-        },
-        "receiver_target": {
-          "id": 21
-        }
-      }
-    }
-    </code>
+    <kb-code-sample id="notifications.webhook-single-payload" />
 
     The signature is HMAC-SHA256 over the unmodified body bytes and has the form
     ''sha256=<HMAC>''. Any ''2xx'' response is successful. Failed deliveries may
@@ -1633,3 +1437,10 @@ media:
 - language: en
   capture: notifications/grouping-route
 exceptions: []
+code_samples:
+- id: notifications.webhook-server
+  file: doc/examples/notifications/webhook_server.py
+  language: python
+- id: notifications.webhook-single-payload
+  file: doc/examples/notifications/webhook_single.json
+  language: json

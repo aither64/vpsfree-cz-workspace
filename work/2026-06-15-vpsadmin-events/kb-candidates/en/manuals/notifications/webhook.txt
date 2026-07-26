@@ -8,57 +8,77 @@ Before starting, see the [[manuals:notifications|notification system overview]].
 
 ===== Step 1: Prepare a simple receiver server =====
 
-Save this as ''webhook.py''. It verifies the HMAC signature over the exact
+Save this as ''webhook_server.py''. It verifies the HMAC signature over the exact
 request body, checks the delivery ID, and prints every received event:
 
 <code python>
+#!/usr/bin/env python3
+
 import hashlib
 import hmac
 import json
 import os
-from http.server import BaseHTTPRequestHandler, HTTPServer
-
-SECRET = os.environ["VPSADMIN_WEBHOOK_SECRET"].encode()
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
-class Handler(BaseHTTPRequestHandler):
+SECRET = os.environ["WEBHOOK_SECRET"].encode()
+HOST = os.environ.get("WEBHOOK_HOST", "127.0.0.1")
+PORT = int(os.environ.get("WEBHOOK_PORT", "8080"))
+PATH = os.environ.get("WEBHOOK_PATH", "/events")
+
+
+class WebhookHandler(BaseHTTPRequestHandler):
     def do_POST(self):
-        length = int(self.headers.get("Content-Length", "0"))
-        body = self.rfile.read(length)
-        expected = "sha256=" + hmac.new(
-            SECRET, body, hashlib.sha256
-        ).hexdigest()
-        received = self.headers.get("X-VpsAdmin-Signature-256", "")
-
-        if not hmac.compare_digest(received, expected):
-            self.send_response(401)
-            self.end_headers()
+        if self.path != PATH:
+            self.send_error(404)
             return
 
-        data = json.loads(body)
-        delivery_id = str(data["delivery"]["id"])
+        try:
+            length = int(self.headers.get("Content-Length", ""))
+            body = self.rfile.read(length)
+        except (TypeError, ValueError):
+            self.send_error(400, "invalid Content-Length")
+            return
+
+        expected = "sha256=" + hmac.new(SECRET, body, hashlib.sha256).hexdigest()
+        supplied = self.headers.get("X-VpsAdmin-Signature-256", "")
+        if not hmac.compare_digest(supplied, expected):
+            self.send_error(401, "invalid signature")
+            return
+
+        try:
+            payload = json.loads(body)
+            delivery_id = str(payload["delivery"]["id"])
+            events = payload["events"]
+            if payload["version"] != 1 or not isinstance(events, list) or not events:
+                raise ValueError
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            self.send_error(400, "invalid webhook payload")
+            return
+
         if self.headers.get("X-VpsAdmin-Delivery") != delivery_id:
-            self.send_response(400)
-            self.end_headers()
+            self.send_error(400, "delivery ID does not match")
             return
 
-        print("group:", data["group"])
-        for event in data["events"]:
-            print("event:", event["id"], event["type"], event["fields"])
-
+        print(json.dumps(payload, sort_keys=True), flush=True)
         self.send_response(204)
         self.end_headers()
 
+    def log_message(self, format, *args):
+        print(f"{self.address_string()} - {format % args}", flush=True)
 
-HTTPServer(("127.0.0.1", 8080), Handler).serve_forever()
+
+if __name__ == "__main__":
+    print(f"Listening on http://{HOST}:{PORT}{PATH}", flush=True)
+    ThreadingHTTPServer((HOST, PORT), WebhookHandler).serve_forever()
 </code>
 
 Run it behind a public HTTPS reverse proxy:
 
 <code>
-export VPSADMIN_WEBHOOK_SECRET="$(openssl rand -hex 32)"
-printf '%s\n' "$VPSADMIN_WEBHOOK_SECRET"
-python3 webhook.py
+export WEBHOOK_SECRET="$(openssl rand -hex 32)"
+printf '%s\n' "$WEBHOOK_SECRET"
+python3 webhook_server.py
 </code>
 
 Store the secret securely. The example server listens only on
@@ -97,8 +117,8 @@ Routes**</vpsadmin-nav>, add:
 
 ===== Step 5: Test the webhook =====
 
-Temporarily move this route first and disable **Continue**. This keeps the
-synthetic event away from default templates that require a real VPS. Create a
+Temporarily disable **Continue** for this test. This keeps the synthetic event
+away from default templates that require a real VPS. Create a
 ''vps.resources_changed'' test event:
 
 <code json>
@@ -141,52 +161,50 @@ IDs and timestamps in this shortened example are illustrative:
   },
   "events": [
     {
-      "id": 48123,
+      "id": 501,
       "type": "vps.resources_changed",
       "category": "vps",
       "severity": "info",
       "subject": "VPS resources changed",
-      "summary": null,
+      "summary": "Memory changed from 4096 to 8192 MiB",
       "payload": {
-        "vps_id": 123,
         "memory": 8192
       },
       "fields": {
         "vps_id": 123,
-        "vps_hostname": "example-vps"
+        "subject_relation": "self"
       },
       "ip_addr": null,
       "source": {
-        "class": null,
-        "id": null
+        "class": "TransactionChain",
+        "id": 901
       },
       "user": {
         "id": 42,
         "login": "example"
       },
-      "vps": null,
-      "created_at": "2026-07-25T12:34:56Z"
+      "vps": {
+        "id": 123,
+        "hostname": "example-vps"
+      },
+      "created_at": "2026-07-26T10:30:00Z"
     }
   ],
   "delivery": {
-    "id": 91234,
+    "id": 7001,
     "action": "webhook",
     "route": {
-      "id": 17,
-      "label": "VPS resource-change webhook",
-      "matcher_summary": "vps.resources_changed"
+      "id": 81,
+      "label": "VPS resource changes",
+      "matcher_summary": "all"
     },
     "receiver": {
-      "id": 8,
-      "label": "Resource-change webhook"
+      "id": 91,
+      "label": "Automation webhook"
     },
-    "notification_target": {
-      "id": 14,
-      "label": "Resource changes",
-      "display_target": "https://events.example.net/vpsadmin"
-    },
+    "notification_target": null,
     "receiver_target": {
-      "id": 21
+      "id": 101
     }
   }
 }

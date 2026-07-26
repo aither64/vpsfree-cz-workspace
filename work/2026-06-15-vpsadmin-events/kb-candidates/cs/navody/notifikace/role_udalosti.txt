@@ -1,9 +1,15 @@
 <page>manuals:notifications:event_roles</page>
 ====== Doručení událostí podle role account nebo admin ======
 
-Tento příklad posílá události určené roli ''account'' kontaktu pro správu účtu
-a události role ''admin'' správci systému. Jedna událost může mít obě role;
-potom ji dostanou oba kontakty.
+Role události označuje zamýšlené publikum notifikace. Neuděluje oprávnění ve
+vpsAdminu a nesouvisí s přístupovou rolí uživatele.
+
+Role ''account'' se používá pro správu členství a účtu, platby a vyúčtování,
+požadavky a bezpečnostní zprávy určené majiteli účtu nebo účetnímu. Role
+''admin'' se používá pro provoz VPS, monitoring, OOM a incidentní reporty,
+zálohy a migrace určené technickému správci. Konkrétní typy ověřte na stránce
+**Typy událostí**. Jedna událost může mít obě role; potom ji dostanou oba
+kontakty.
 
 Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]].
 
@@ -54,19 +60,25 @@ správce** a hodnotou podmínky ''admin''. **Pokračovat** nechte zapnuté.
 
 {{:cs:screenshots:vpsadmin:notifications:example-role-admin-route.png?900|Routa role admin s podmínkou roles}}
 
-Obě routy přesuňte nad obecné výchozí routy. Díky pokračování se událost s
-oběma rolemi doručí oběma kontaktům a mohou ji zpracovat i další routy.
+Díky zapnutému **Pokračovat** se událost s oběma rolemi doručí oběma
+kontaktům a mohou ji zpracovat i další routy.
 
 ===== Krok 5: Ověřte výsledek =====
 
-Vytvořte **Testovací událost** typu ''user.test_notification'':
+Vytvořte **Testovací událost** typu ''vps.suspended''. Tento typ má role
+''account'' i ''admin''. Zadejte například:
 
 <code json>
 {
-  "roles": ["account", "admin"],
-  "note": "Role routing test"
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "state": "suspended",
+  "reason": "Role routing test"
 }
 </code>
+
+Hodnoty jsou pouze obsahem testovací události; skutečná VPS se nepozastaví.
+Role se vybírají podle typu události a nelze je změnit položkou v JSON.
 
 Vytvořenou událost otevřete v
 <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →

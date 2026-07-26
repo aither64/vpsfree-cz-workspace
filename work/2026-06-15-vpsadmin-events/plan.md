@@ -2168,3 +2168,78 @@ Verification:
   standalone mandatory change review before starting a new long integration
   run. The already-running superseded-head integration run is allowed to
   finish and its result is recorded before any branch update.
+
+## User-Facing KB Corrections And Verifiable Examples
+
+Requested on 2026-07-26: correct the staged notification documentation and
+route list, and make both KB code samples and generated HaveAPI examples
+verifiable.
+
+Design decisions:
+
+- Notification KB pages describe only facilities available to ordinary users.
+  Administrator delivery queues and logs are not mentioned.
+- Event roles describe the intended audience, not vpsAdmin permissions.
+  `account` covers membership, payment, account lifecycle, request, and account
+  security events. `admin` covers VPS operation, configuration, monitoring,
+  incident, OOM, migration, and backup events. Event types remain the
+  authoritative inventory and an event may have both roles.
+- Newly created top-level routes and subroutes are prepended. Tutorials do not
+  instruct users to move them; they explain only the relevant `Continue`
+  behavior.
+- DokuWiki list items in the notification pages stay on one physical source
+  line. Candidate and rendered-page checks verify that list text remains
+  inside the expected list item.
+- The route list has four data columns followed by separate Edit, Add
+  subroute, and Delete columns. All three action headers are empty. Browser
+  auto-layout sizes the table; fixed percentage widths are removed.
+- Canonical runnable notification examples live with vpsAdmin. The bilingual
+  KB contract references the same files and refuses unresolved or divergent
+  samples.
+- The documented Python webhook receiver is covered with valid single/grouped
+  requests and invalid signature/delivery-ID cases, then used by the real
+  notification-routing integration test.
+- HaveAPI validates structured documentation examples against action metadata
+  and syntax-checks generated Ruby, JavaScript, PHP, shell, curl, and HTTP
+  fragments. Arbitrary mutating examples are not executed against shared
+  infrastructure.
+- The HaveAPI changes are released as the next 0.29 patch and consumed by
+  vpsAdmin. Package publication and production KB promotion retain their
+  explicit approval gates.
+
+Affected components for this addendum:
+
+- `haveapi`: structured example validation, generated-fragment syntax checks,
+  and the coordinated 0.29.7 release.
+- `haveapi-client-php`: standalone Composer mirror and matching 0.29.7 tag.
+- `vpsadmin`: canonical examples, published HaveAPI dependencies, API metadata,
+  route-table actions, tests, and integration coverage.
+- `vpsadmin-kb-captures`: updated route-table contract and regenerated
+  screenshots pinned to the final vpsAdmin revision.
+- Top-level workspace tooling and KB candidates: canonical code injection,
+  list-shape checks, bilingual content, and staged manifests.
+
+Compatibility and deployment:
+
+- There is no notification protocol or database change. Webhook version 1
+  continues to use the `events` array for single and grouped deliveries.
+- HaveAPI gains stricter developer-facing example validation. Invalid examples
+  fail API definition validation with their resource, action, and title;
+  public API requests and responses are unchanged.
+- HaveAPI must be released before the final vpsAdmin dependency update.
+  Capture and production-configuration pins are updated only after the final
+  vpsAdmin revision is fixed.
+
+Verification:
+
+- Cover malformed example layouts, unknown fields, required inputs, path
+  parameters, primitive/resource shapes, prose-only examples, and syntax for
+  every generated client style.
+- Cover the human-friendly routing-state label, seven-column route tables,
+  compact action columns, explicit edit links, and viewport overflow in PHP
+  and Playwright tests.
+- Parse all KB JSON/shell/Python samples, validate event fixtures against event
+  metadata, verify canonical sample identity in both languages, and inspect
+  the rendered list DOM on staging.
+- After quick checks and focused commits, run one mandatory fresh standalone
+  review before renewed exact-head integration tests.

@@ -21,20 +21,27 @@ Annotation tags: 4
 
 | Language | Page | SHA-256 |
 | --- | --- | --- |
-| cs | navody:notifikace | `a77d94b107dec79a54b34160d9c8269f1fb995d224c00f2314daa09e4914bda0` |
-| cs | navody:notifikace:role_udalosti | `fb7de2a0ec83c69e18c0ba4d9be2b0f91aeb3d90e23d9456d8093de322cda970` |
-| cs | navody:notifikace:ztlumeni_oom | `d3d0da77decfd2216d1dc8347458737e0fd78c4e3eda258d7ad511093225d4a0` |
-| cs | navody:notifikace:ztlumeni_incidentu | `8ce7441926b08019d82f287615e3a56219c27182cf1f7c24d1500e757c3c5411` |
-| cs | navody:notifikace:telegram | `ab211390bd5bf44eb262bd26900d5cab9211c138e78ee933ed108430a625e4c8` |
-| cs | navody:notifikace:sms | `855837540a58589b5ceae0240c49d4ddfd895bde1a9b0ab2976fb36aa6949a39` |
-| cs | navody:notifikace:webhook | `9b345d1b41f0d34743f20741565b8d8fab4d0c5d85398a3c8403d7c7da33b203` |
-| en | manuals:notifications | `3d2d6a11ace2a4f13e8752eca9eac60fc137aab9496d1c300ce7f8c76ce4e398` |
-| en | manuals:notifications:event_roles | `9cce327588d1d9826b03a1a4e3880f968e2c6f2c99b8bb35d4eebc88192cf5cd` |
-| en | manuals:notifications:mute_oom | `bca481667aef5d7e63f726595f21f885ebf3144504285516973ad3336a1d806e` |
-| en | manuals:notifications:mute_incidents | `4c8eaed348894294eff930eb9aa8ec083ff22be4ef427cb5a79f7b46d4680881` |
-| en | manuals:notifications:telegram | `311307aca7a88e69f8237c30ffb00dfbedad652e0e26ee5bbe5b2c9ee146b462` |
-| en | manuals:notifications:sms | `062dd8c3427ac85beec386721231f2a76a349f3b2689471137508749e4f2da56` |
-| en | manuals:notifications:webhook | `5c781d2cd72a92ab8ba70638f307def65f90241dfce740460e4723db863952a3` |
+| cs | navody:notifikace | `8b6e067246cdb918d5ad04f96e10b7a5f0c0446de2aa8b803c3607b4119381b4` |
+| cs | navody:notifikace:role_udalosti | `2147472af1b6de408cc125d38b6be644cac9ba1059407f64d54ebc178b3c47b7` |
+| cs | navody:notifikace:ztlumeni_oom | `0a1e7af84f9820667b4a9046c422d1317a30af3060e82c08397c711ed99feae5` |
+| cs | navody:notifikace:ztlumeni_incidentu | `da278764ec0fa6f77835fda19dbe4e58fcdfd8a2b496f05118c9a96cb78b4cc6` |
+| cs | navody:notifikace:telegram | `dc4c90facca9ec64da75346a8bfc8a22425c37a6dc009050aeb5c024512f68fd` |
+| cs | navody:notifikace:sms | `be962d7c727918fcab38d5e2a2cdbf086e3a15db3b62ccc16aba6f39d12a5d52` |
+| cs | navody:notifikace:webhook | `0e0cff479cf22b473cecfc183d6d0581a9ad2abe129055c47677037307059f6c` |
+| en | manuals:notifications | `6c9699abef48625fd6bc74ffdeda49eef35ed9ae3d7ef237e3ba47372dd97bf1` |
+| en | manuals:notifications:event_roles | `115babb0c782528f8e30ee1680c49e22ac1530ba7eff3a18578059b2a1c91733` |
+| en | manuals:notifications:mute_oom | `e8598ba818a9b75a3a20d71dc2c4f893d4cb0caea176bd2493bcc57505900a4c` |
+| en | manuals:notifications:mute_incidents | `8260f7f343962ce32436db09faf2121f3672d5539f40975a12f6cf7f108f8f24` |
+| en | manuals:notifications:telegram | `9662f1714002becadf02125b17fc988562e86419c6ee2a907629c3c816f80c5b` |
+| en | manuals:notifications:sms | `6e5fc7d1a229d0aa118c657069f494b41272f5b2564c75a073d6036d9eb16a51` |
+| en | manuals:notifications:webhook | `6781716b0898ada4e219c1b8f5d30677e6dd7d88498aae51c59b2d753ec0b4b9` |
+
+## Canonical code samples
+
+| ID | File | Language | Uses | SHA-256 |
+| --- | --- | --- | ---: | --- |
+| `notifications.webhook-server` | doc/examples/notifications/webhook_server.py | python | 2 | `82cdcb2e6eed7c7b8c3724851e9a5cf8daa3fbabf3a40ffb5fb9184ac4b31d6d` |
+| `notifications.webhook-single-payload` | doc/examples/notifications/webhook_single.json | json | 2 | `3ecced6bfbdbdc0d3669f646008dbd0909e2024676707d817c1691ea91dbbc97` |
 
 ## Selected capture media
 
@@ -43,7 +50,7 @@ Annotation tags: 4
 | cs | `notifications/receiver` | cs:screenshots:vpsadmin:notifications:receiver.png | `7161a9b1f6c08a3f6a1a327e2fd1bbfa32b2254c1b12534b38b4e9e27acf21ce` |
 | cs | `notifications/time-interval` | cs:screenshots:vpsadmin:notifications:time-interval.png | `82277ac2c5ef3cb1ce8e2fad7165ab75e7c38c096f73d6460160d8f015c8e558` |
 | cs | `notifications/route-time-intervals` | cs:screenshots:vpsadmin:notifications:route-time-intervals.png | `389ef724e324677442b7edebeabf84bac31e929369806d4de217862a2284ff13` |
-| cs | `notifications/event-suppressed` | cs:screenshots:vpsadmin:notifications:event-suppressed.png | `1eaad29e7690e50d4320ee804d37e44dc31131d362ad9b80892183b67888a707` |
+| cs | `notifications/event-suppressed` | cs:screenshots:vpsadmin:notifications:event-suppressed.png | `e8416ffa575ddcf90b4f947c70150a750ac77c33e80e202f5450bf35a5fae047` |
 | cs | `notifications/example-role-receiver` | cs:screenshots:vpsadmin:notifications:example-role-receiver.png | `199793e51baac91f8b950be9803cf284a035552f2d7f818b65b189cf347a48a5` |
 | cs | `notifications/example-role-routing` | cs:screenshots:vpsadmin:notifications:example-role-routing.png | `1b50b9a1d05a6f44e0cd5d76873761358695f4edbe40ce7acb9c8e56bb4f7d61` |
 | cs | `notifications/example-role-admin-route` | cs:screenshots:vpsadmin:notifications:example-role-admin-route.png | `9e8fe7a083458411e6cbb417ce7624923d0a73279d128f35c928f3ef8aaec188` |
@@ -68,7 +75,7 @@ Annotation tags: 4
 | en | `notifications/receiver` | en:screenshots:vpsadmin:notifications:receiver.png | `9909b554a00c7efab9c996f84c02e5f772b278e3df03adbea49a5859bb1772aa` |
 | en | `notifications/time-interval` | en:screenshots:vpsadmin:notifications:time-interval.png | `57b09b3a779a5e96ed10f2d156484b04cd1b86455a9242b9b3c47c23f1082a20` |
 | en | `notifications/route-time-intervals` | en:screenshots:vpsadmin:notifications:route-time-intervals.png | `5fa2f42f7ae29ac4a9afba48bd627fd86e3a13a697a190c1525c59374bceec1b` |
-| en | `notifications/event-suppressed` | en:screenshots:vpsadmin:notifications:event-suppressed.png | `d7d671b6e2eb52b17223c6400b3124c47c97443f56f1ab622bdb71440aaa61f1` |
+| en | `notifications/event-suppressed` | en:screenshots:vpsadmin:notifications:event-suppressed.png | `b60f7d3a70533c960110656d76049a1e2a87fab24a27d8db90eba9beceb0682f` |
 | en | `notifications/example-role-receiver` | en:screenshots:vpsadmin:notifications:example-role-receiver.png | `7d86ca1acbd4fc99e92ccc9cf9b0ce13d631263051446cd38c9111b3243d5ed4` |
 | en | `notifications/example-role-routing` | en:screenshots:vpsadmin:notifications:example-role-routing.png | `7c61a30563096235bd3ad0550c7448a1e8c80990d00bb9cfb5776a87e1d584f3` |
 | en | `notifications/example-role-admin-route` | en:screenshots:vpsadmin:notifications:example-role-admin-route.png | `bc3b20f0f313f6979c40665ba1bf5580662ce1979ca8e1f7c2c5813f2b68bb5d` |
