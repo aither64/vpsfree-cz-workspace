@@ -27,20 +27,20 @@ Annotation tags: 4
 | cs | navody:notifikace:ztlumeni_incidentu | `da278764ec0fa6f77835fda19dbe4e58fcdfd8a2b496f05118c9a96cb78b4cc6` |
 | cs | navody:notifikace:telegram | `dc4c90facca9ec64da75346a8bfc8a22425c37a6dc009050aeb5c024512f68fd` |
 | cs | navody:notifikace:sms | `be962d7c727918fcab38d5e2a2cdbf086e3a15db3b62ccc16aba6f39d12a5d52` |
-| cs | navody:notifikace:webhook | `0e0cff479cf22b473cecfc183d6d0581a9ad2abe129055c47677037307059f6c` |
+| cs | navody:notifikace:webhook | `7215a82a5375fc1eeaf7c2234c98c6579ed0379255653eb0f95b5767785198af` |
 | en | manuals:notifications | `6c9699abef48625fd6bc74ffdeda49eef35ed9ae3d7ef237e3ba47372dd97bf1` |
 | en | manuals:notifications:event_roles | `115babb0c782528f8e30ee1680c49e22ac1530ba7eff3a18578059b2a1c91733` |
 | en | manuals:notifications:mute_oom | `e8598ba818a9b75a3a20d71dc2c4f893d4cb0caea176bd2493bcc57505900a4c` |
 | en | manuals:notifications:mute_incidents | `8260f7f343962ce32436db09faf2121f3672d5539f40975a12f6cf7f108f8f24` |
 | en | manuals:notifications:telegram | `9662f1714002becadf02125b17fc988562e86419c6ee2a907629c3c816f80c5b` |
 | en | manuals:notifications:sms | `6e5fc7d1a229d0aa118c657069f494b41272f5b2564c75a073d6036d9eb16a51` |
-| en | manuals:notifications:webhook | `6781716b0898ada4e219c1b8f5d30677e6dd7d88498aae51c59b2d753ec0b4b9` |
+| en | manuals:notifications:webhook | `4f2f165ab7a6882cec84d2eae38b0c07c7c5fb51f40d0b32e52791b34b6c5ef7` |
 
 ## Canonical code samples
 
 | ID | File | Language | Uses | SHA-256 |
 | --- | --- | --- | ---: | --- |
-| `notifications.webhook-server` | doc/examples/notifications/webhook_server.py | python | 2 | `82cdcb2e6eed7c7b8c3724851e9a5cf8daa3fbabf3a40ffb5fb9184ac4b31d6d` |
+| `notifications.webhook-server` | doc/examples/notifications/webhook_server.py | python | 2 | `82572c438f5ded1389d65c6f0896c86f0eb9b221d1f08a7795151d10b9b05274` |
 | `notifications.webhook-single-payload` | doc/examples/notifications/webhook_single.json | json | 2 | `3ecced6bfbdbdc0d3669f646008dbd0909e2024676707d817c1691ea91dbbc97` |
 
 ## Selected capture media

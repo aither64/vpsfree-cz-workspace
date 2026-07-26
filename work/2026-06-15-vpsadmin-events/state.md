@@ -14268,3 +14268,72 @@ GitHub Actions after final pushes:
 - All intended follow-up changes and candidates are committed and pushed.
   The next gate is one fresh mandatory change review before renewed long
   integration tests.
+
+## 2026-07-26 Release Review Corrections And Final Pins
+
+- Fresh standalone reviewer
+  `mandatory_release_review_20260726` inspected the requested outcome, this
+  initiative's plan and state, all affected branches, dependency pins, quick
+  verification, and compatibility assumptions before long integration tests.
+- The review was not accepted as-is. It reported:
+  - invalid nested/custom PHP literals and incomplete escaping in the HaveAPI
+    example renderer;
+  - repeated vpsAdmin pin commits in the capture history;
+  - mixed API/WebUI and documentation/location commit boundaries in vpsAdmin;
+  - a fix-only monitoring follow-up in the configuration history;
+  - raw integer association inputs that bypassed HaveAPI Resource metadata;
+  - an unbounded documented webhook request body.
+- Every reported item was resolved before continuing:
+  - HaveAPI now recursively renders PHP literals, escapes quoted scalar
+    values, and exercises the generated PHP with realistic nested data;
+  - vpsAdmin's reviewed tail was rebuilt into focused API, WebUI,
+    documentation, and dependency commits;
+  - event route parents, notification receivers, and reusable notification
+    targets are authorized HaveAPI Resource inputs while list output remains
+    normalized by ID;
+  - the canonical webhook receiver rejects negative and oversized request
+    bodies before reading them and the smoke test covers both cases;
+  - the monitoring correction is folded into its functional configuration
+    commit;
+  - the capture history contains exactly one final vpsAdmin pin commit.
+- HaveAPI 0.29.8 was released from the supported `haveapi-0.29` series:
+  - `origin/haveapi-0.29` and annotated tag `v0.29.8` point to
+    `22fae158`;
+  - RubyGems publishes `haveapi`, `haveapi-client`, and
+    `haveapi-go-client` 0.29.8;
+  - npm publishes `haveapi-client` 0.29.8 with shasum
+    `9666e84ff19f84500df34de2368017707e007112`;
+  - standalone PHP commit `0f5f9dad` is tagged `v0.29.8`, mirrored
+    byte-for-byte from the canonical client, and Packagist 0.29.8 resolves
+    to that exact commit.
+- HaveAPI release verification passed with 357 server examples, focused PHP
+  syntax/renderer coverage, clean RuboCop results, successful release builds,
+  and successful registry lookups for every 0.29.8 artifact.
+- The final pushed vpsAdmin branch head is
+  `d0b1e89b151b150b364d4e678c80c83a181af40f`. Its intended differences
+  from the pre-review tree are only HaveAPI 0.29.8 consumption, bounded
+  webhook handling, and authorized association metadata/tests. The complete
+  event-routing resource spec passed with 52 examples and one expected
+  pending example; the canonical webhook smoke spec passed with 5 examples;
+  all commit hooks passed.
+- The final pushed vpsFree.cz configuration head is
+  `4696a862daeb0a39ac4001162f2b9fc38711ed37`. Its tracked tree differs
+  from the pre-review branch only in the generated `vpsadminServices` pin:
+  revision `d0b1e89b`, NAR hash
+  `sha256-so1r2781gIbRqdm2O6FRqTEYZPpM2Ajttp872cnyOSI=`.
+- The final pushed capture-contract head is
+  `93d245485f2480956e2613ed825e6794e6114630`. All functional source,
+  contract, scenario, and PNG content is identical to the reviewed
+  pre-correction branch. Commit `93d2454` is the only commit that updates
+  `flake.nix`, `flake.lock`, `captures.json`, and
+  `contract/navigation.yml` to final vpsAdmin revision `d0b1e89b`.
+- `nix develop -c bin/check` passes on the final capture head with 51
+  controls, 37 paths, 57 capture concepts, 30 semantic selectors, 123 KB
+  bindings, 9 exceptions, and all 172 PNG variants.
+- Rebuilt the guarded bilingual KB candidates from final vpsAdmin source and
+  the final capture contract. The only content change is the bounded canonical
+  webhook server on the Czech and English webhook tutorial pages. Candidate
+  generation still reports 16 pages, 4 annotations, and 52 media objects; the
+  independent annotation checker passes with 123 bindings and 9 exceptions.
+  Both eight-page, 26-media release manifests were regenerated with the new
+  page checksums. Production remains untouched.

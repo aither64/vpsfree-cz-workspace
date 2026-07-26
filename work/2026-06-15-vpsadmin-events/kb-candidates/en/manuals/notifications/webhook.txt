@@ -25,6 +25,7 @@ SECRET = os.environ["WEBHOOK_SECRET"].encode()
 HOST = os.environ.get("WEBHOOK_HOST", "127.0.0.1")
 PORT = int(os.environ.get("WEBHOOK_PORT", "8080"))
 PATH = os.environ.get("WEBHOOK_PATH", "/events")
+MAX_BODY_BYTES = int(os.environ.get("WEBHOOK_MAX_BODY_BYTES", str(1024 * 1024)))
 
 
 class WebhookHandler(BaseHTTPRequestHandler):
@@ -35,10 +36,19 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
         try:
             length = int(self.headers.get("Content-Length", ""))
-            body = self.rfile.read(length)
         except (TypeError, ValueError):
             self.send_error(400, "invalid Content-Length")
             return
+
+        if length < 0:
+            self.send_error(400, "invalid Content-Length")
+            return
+
+        if length > MAX_BODY_BYTES:
+            self.send_error(413, "request body too large")
+            return
+
+        body = self.rfile.read(length)
 
         expected = "sha256=" + hmac.new(SECRET, body, hashlib.sha256).hexdigest()
         supplied = self.headers.get("X-VpsAdmin-Signature-256", "")
