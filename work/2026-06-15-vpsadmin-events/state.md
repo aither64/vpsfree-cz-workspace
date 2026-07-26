@@ -14337,3 +14337,60 @@ GitHub Actions after final pushes:
   independent annotation checker passes with 123 bindings and 9 exceptions.
   Both eight-page, 26-media release manifests were regenerated with the new
   page checksums. Production remains untouched.
+
+## 2026-07-26 Release Execution
+
+- Hardened the notification-routing integration scenario before release:
+  - retained the generated webhook server in the VM closure with
+    `system.extraDependencies`;
+  - replaced an ActiveSupport-only `Array#sole` assertion with core Ruby
+    length and first-element checks;
+  - asserted the persisted JSON `null` webhook response body as Ruby `nil`.
+  These corrections are test-only and are folded into vpsAdmin commit
+  `5e04c0c50173157bf3e55a69370397da43db78ea`. All repository hooks passed.
+- Final local integration gates passed:
+  - `alerts/notification-routing` passed both immediate e-mail/webhook
+    delivery and scheduled-out persistence in 414.06 seconds;
+  - `alerts/oom-report-group-and-prune` passed grouped OOM delivery and
+    old-report pruning in 622.71 seconds.
+- Published the lease-protected final feature heads:
+  - vpsAdmin `5e04c0c50173157bf3e55a69370397da43db78ea`;
+  - vpsFree.cz configuration
+    `305212e7cf5209d288d636c475b19a801a044e23`;
+  - vpsAdmin KB captures
+    `b1d8beff7442333e8c7d976e0d117db1d41ae345`.
+  The downstream histories were rebuilt from functional parents
+  `e7220d0b` and `eedefb8`, so each contains one authoritative final pin.
+- Generated the configuration pin with `confctl`; all hooks passed. The
+  capture contract pins the same exact vpsAdmin revision in `flake.nix`,
+  `flake.lock`, `captures.json`, and `contract/navigation.yml`.
+- The capture repository's complete `bin/check` passed at the final revision:
+  51 controls, 37 paths, 57 capture concepts, 30 semantic selectors,
+  123 bindings, 9 exceptions, and all 172 PNG variants.
+- Refreshed the owned bridge development cluster from the final worktree.
+  The build and `/etc/vpsadmin/build-info.json` both identify exact clean
+  revision `5e04c0c50173157bf3e55a69370397da43db78ea`. The cluster is
+  `running`, `ready: yes`, topology `single`, and network `bridge`.
+- Post-refresh runtime verification passed:
+  - API, grouper, all four dispatchers, and Telegram receiver are active;
+  - WebUI and API return HTTP 200 with the development CA;
+  - `test-admin`, `test-user1`, and `test-user2` retain route IDs 7, 8, and
+    9 respectively, with exact `vps.oom_report`, `group_by = ["vps_id"]`,
+    wait 60, repeat 10800, position 9999, and enabled Default receivers.
+- Final production configuration evaluation passed without deployment:
+  - `confctl build -y 'cz.vpsfree/vpsadmin/int.api*'` built `int.api1` and
+    `int.api2` as generation `2026-07-26--20-49-57`;
+  - `confctl build -y 'cz.vpsfree/vpsadmin/int.rabbitmq*'` built
+    `int.rabbitmq1`, `int.rabbitmq2`, and `int.rabbitmq3` as generation
+    `2026-07-26--20-51-49`.
+  An initial API build invocation omitted `-y` and stopped at the confirmation
+  prompt before evaluation; the confirmed rerun is the result recorded above.
+- Reverified both staged KB manifests. Each warms and verifies all eight
+  Czech/English page pairs. Staging remains owned by this initiative with the
+  English manifest pending; no production KB write was made.
+- Cancelled superseded full CI run `30213311552` on vpsAdmin
+  `8dac85466e4583ee9736c6767595d4633b900b80`. Exact final-head runs are:
+  - selective push CI `30214965799`;
+  - full dispatched CI `30215170409`;
+  - topic-parallel API matrix `30215171418`.
+  Their terminal results will be appended after completion.
