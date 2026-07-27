@@ -286,6 +286,12 @@
   - vpsAdmin `master` was fast-forwarded and pushed to
     `cba29b57ceacb2fd57864e03fb97a710f8168fe2`;
   - vpsAdmin RuboCop and i18n health passed on the default branch;
+  - vpsAdmin API Specs run
+    `https://github.com/vpsfreecz/vpsadmin/actions/runs/30288855306`
+    passed all 26 jobs on the default branch;
+  - the multi-hour vpsAdmin CI run
+    `https://github.com/vpsfreecz/vpsadmin/actions/runs/30288856228`
+    remains in progress and was not made a release gate, as requested;
   - terraform-provider-vpsadmin `master` was fast-forwarded and pushed to
     `1daa01ab113295e2e0e47d75843150aba0801496`;
   - provider Go Tests run
