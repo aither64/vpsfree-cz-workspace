@@ -106,8 +106,9 @@
 - Recorded the reusable OpenTofu cache diagnostic in
   `notes/terraform-provider-vpsadmin/2026-07-27-opentofu-registry-cache.md`.
 - Removed the two clean detached merge worktrees and their empty `merge/`
-  parent directory. The initiative feature worktrees and local/remote feature
-  branches were retained.
+  parent directory. The initiative feature worktrees were retained through
+  release review, then removed on the user's cleanup request. Local and remote
+  feature branches were retained.
 
 ## Results
 
@@ -342,8 +343,12 @@
     `worktrees/2026-07-27-terraform-provider-vpsadmin-issue-11/merge/vpsadmin`;
   - removed
     `worktrees/2026-07-27-terraform-provider-vpsadmin-issue-11/merge/terraform-provider-vpsadmin`;
-  - retained both initiative feature worktrees and all feature branches as
-    required.
+  - removed the clean initiative feature worktrees with
+    `bin/dev-session worktree remove`;
+  - removal discarded only ignored transient contents:
+    `api/.gems/`, `api/Gemfile.lock`, and the locally built provider binary;
+  - `bin/dev-session list` reports zero worktrees for the initiative;
+  - retained all local and remote feature branches as required.
 - Provider input update commit:
   - `c9c22a8` `flake: vpsadmin 52933ca65 -> cba29b57c`;
   - full commit ID:
@@ -455,5 +460,10 @@ Closes #11 based on the corrected root cause: v1.2.0 requested
 
 ## Cleanup
 
-- Worktree is active and must be retained until the candidate is reviewed or
-  the initiative is abandoned.
+- Complete. Both project feature worktrees and both detached merge worktrees
+  have been removed.
+- The durable plan, state, and troubleshooting notes remain in the workspace.
+- Local and remote feature branches remain at the merged commits:
+  - vpsAdmin: `cba29b57ceacb2fd57864e03fb97a710f8168fe2`;
+  - terraform-provider-vpsadmin:
+    `1daa01ab113295e2e0e47d75843150aba0801496`.
