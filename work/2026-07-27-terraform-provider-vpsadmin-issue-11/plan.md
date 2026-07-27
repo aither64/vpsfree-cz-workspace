@@ -11,6 +11,10 @@ to obtain GitHub Actions results.
 
 ## Affected repositories
 
+- `vpsadmin`
+  - branch: `2026-07-27-terraform-provider-vpsadmin-issue-11`
+  - worktree:
+    `worktrees/2026-07-27-terraform-provider-vpsadmin-issue-11/vpsadmin`
 - `terraform-provider-vpsadmin`
   - branch: `2026-07-27-terraform-provider-vpsadmin-issue-11`
   - worktree:
@@ -31,7 +35,10 @@ to obtain GitHub Actions results.
 5. Commit intended changes, run the mandatory fresh-context change review,
    resolve significant findings, and run the relevant full test/build/release
    checks.
-6. Push the development branch, inspect every GitHub Actions result and any
+6. Backport only the API example corrections from vpsAdmin branch
+   `2026-06-15-vpsadmin-events`, without taking any event work. Update the
+   provider's vpsAdmin flake input to the isolated fix branch.
+7. Push both development branches, inspect every GitHub Actions result and any
    failed-attempt evidence, then present the exact candidate commits, proposed
    tag/release notes, and remaining publication commands for review without
    publishing a release.
@@ -39,7 +46,9 @@ to obtain GitHub Actions results.
 ## Compatibility and deployment
 
 The provider is a client-side executable. No database, persisted server-side
-state, API, protocol, NixOS module, or vpsAdminOS on-disk format is changed.
+state, API contract, protocol, NixOS module, or vpsAdminOS on-disk format is
+changed. The vpsAdmin correction changes documentation examples only, aligning
+them with the output schemas that already govern actual responses.
 The effective request change is backward compatible: the provider uses the
 API's maximum accepted page size of 1000 instead of the rejected value 10000.
 The optional `hypervisor_type` was already omitted by v1.2.0 and remains
@@ -70,5 +79,9 @@ the current API.
 - `nix build` and `nix flake check` to cover the pinned Nix package and shell
   after removing the stale exact Go patch assertion.
 - Existing integration suite when quick checks and mandatory review pass.
+- vpsAdmin API smoke specs with packaged HaveAPI 0.29.8, proving that the
+  complete API can mount and serve its description.
+- Provider integration suite with its vpsAdmin input pinned to the isolated
+  correction branch.
 - Verify clean worktree, commit contents, proposed semantic version, and that no
   release tag or external publication state changed.

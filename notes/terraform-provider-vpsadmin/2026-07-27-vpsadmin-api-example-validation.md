@@ -78,3 +78,20 @@ and HAProxy evidence, but it does not contain the service VM's systemd journal.
 It can establish that the API backend never became healthy, while the exact
 HaveAPI exception still requires an interactive retained-VM journal or improved
 workflow diagnostics.
+
+## Confirmed resolution
+
+The trigger was vpsAdmin's automated packaged-gem update from HaveAPI 0.29.6
+to 0.29.8. The API Gemfile permits this with `~> 0.29.6`. HaveAPI 0.29.8
+strictly validates documented example responses against their declared output
+schemas.
+
+Backport only vpsAdmin commit `9ad43e4ec` from
+`2026-06-15-vpsadmin-events`. It corrects the Location and IP-address examples
+without bringing in event work or changing the API contract. In the related
+initiative, the isolated backport is `cba29b57c`.
+
+The vpsAdmin API boot smoke spec passed all 5 examples under HaveAPI 0.29.8.
+The provider's normal integration suite then passed all 8 workflow examples
+without an input override, and the provider GitHub integration workflow passed
+on the same combined revisions.

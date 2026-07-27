@@ -2,6 +2,12 @@
 
 ## Repositories
 
+- `vpsadmin`
+  - branch: `2026-07-27-terraform-provider-vpsadmin-issue-11`
+  - base: `origin/master` at `52933ca65`
+  - worktree:
+    `worktrees/2026-07-27-terraform-provider-vpsadmin-issue-11/vpsadmin`
+  - remote: `git@github.com:vpsfreecz/vpsadmin.git`
 - `terraform-provider-vpsadmin`
   - branch: `2026-07-27-terraform-provider-vpsadmin-issue-11`
   - base: `origin/master` at `0220361`
@@ -11,9 +17,13 @@
 
 ## Status
 
-- Release candidate is ready for review. Intended changes are committed;
-  mandatory change review and all quick, build/package, and release-snapshot
-  checks passed.
+- The combined release candidate is ready for review. The minimal vpsAdmin
+  examples-only backport, provider pin, and integration serialization are
+  committed and pushed; local integration and provider GitHub integration are
+  green.
+- vpsAdmin RuboCop, i18n health, and all 26 API-spec jobs are green. Its
+  selected VM integration workflow remains in progress; the user explicitly
+  requested that this several-hour run not delay handoff.
 - The development branch is pushed at `90c51c3`. GitHub's Go workflow passed
   for Go 1.25 and 1.26. The integration workflow failed before running
   OpenTofu or the provider because the pinned vpsAdmin API never became
@@ -55,6 +65,25 @@
 - Pushed `2026-07-27-terraform-provider-vpsadmin-issue-11` over SSH.
 - Inspected GitHub Actions runs `30280042318` and `30280042039`, including the
   failed integration log and uploaded diagnostic artifact.
+- Created an isolated vpsAdmin worktree from `origin/master` at `52933ca65`.
+- Compared vpsAdmin example-correction commits `9ad43e4ec` and `e0407c301` and
+  their parent file contents with current `origin/master`.
+- Cherry-picked only `9ad43e4ec` onto the isolated vpsAdmin branch.
+- Ran the vpsAdmin API smoke spec and RuboCop in `nix develop .#api`.
+- Computed the clean local vpsAdmin commit's NAR hash and committed the
+  provider's mechanical `flake.lock` update.
+- Ran `nix flake check` with the vpsAdmin input overridden to the identical
+  clean local commit, avoiding a pre-review remote push.
+- Ran the mandatory cross-project fresh-context review. Inspected the retained
+  diagnostic integration logs to resolve its blocking concurrency finding.
+- Added `-parallelism=1` to all state-changing OpenTofu workflow commands and
+  checked the edited Nix expression with `nix-instantiate --parse`, `nixfmt
+  --check`, and `git diff --check`.
+- Pushed the reviewed vpsAdmin development branch and verified that the
+  provider's committed GitHub input resolves without an override.
+- `nix develop -c make test-integration`
+- Pushed the reviewed provider follow-up commits and monitored all triggered
+  GitHub Actions through provider integration success.
 
 ## Results
 
@@ -94,6 +123,8 @@
   - `d2987e0` `tests: verify OS template platform is omitted`
   - `243a090` `nix: accept Go patch updates`
   - `90c51c3` `Version 1.3.0`
+  - `c9c22a8` `flake: vpsadmin 52933ca65 -> cba29b57c`
+  - `1daa01a` `tests: serialize provider workflow mutations`
 - No repository hook framework is declared. `git diff --check` passed before
   commit.
 - Quick verification passed after the Nix fix:
@@ -175,7 +206,7 @@
   - pushed to
     `origin/2026-07-27-terraform-provider-vpsadmin-issue-11`;
   - local and remote heads both resolve to
-    `90c51c3bc12d7991715901645093bc556cfa54f3`;
+    `1daa01ab113295e2e0e47d75843150aba0801496`;
   - the provider worktree remains clean.
 - GitHub Actions Go Tests run
   `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30280042318`
@@ -203,6 +234,107 @@
 - The failed workflow was not rerun because neither its head nor its locked
   integration inputs changed, and the inspected evidence shows the same
   deterministic upstream startup blocker already diagnosed locally.
+- The dependency trigger is confirmed:
+  - vpsAdmin declares `gem 'haveapi', '~> 0.29.6'`, which permits patch
+    releases through 0.29.x;
+  - automated dependency commit `575ff7937` updated packaged HaveAPI and its
+    client from 0.29.6 to 0.29.8;
+  - HaveAPI 0.29.8's stricter documentation validation rejects example
+    response fields outside declared output schemas.
+- vpsAdmin branch `2026-06-15-vpsadmin-events` contains commit `9ad43e4ec`
+  `api: correct location and address examples`. Its parent versions of both
+  touched resource files exactly match current `origin/master`.
+- Commit `e0407c301` on the unrelated `2026-07-24-ct-start-hang` branch carries
+  an identical two-file patch. The isolated initiative branch will backport
+  `9ad43e4ec` only; no event or container-start work is included.
+- vpsAdmin backport commit:
+  - `cba29b57c` `api: correct location and address examples`;
+  - exactly two resource files changed, with the same patch as `9ad43e4ec`;
+  - the vpsAdmin worktree is clean.
+- vpsAdmin quick verification:
+  - `nix develop .#api -c bundle exec rubocop
+    lib/vpsadmin/api/resources/location.rb
+    lib/vpsadmin/api/resources/ip_address.rb` passed with no offenses;
+  - `nix develop .#api -c bundle exec rspec
+    spec/smoke/api_boot_spec.rb` passed 5 examples with no failures;
+  - the test shell confirmed HaveAPI 0.29.8.
+- Provider input update commit:
+  - `c9c22a8` `flake: vpsadmin 52933ca65 -> cba29b57c`;
+  - full commit ID:
+    `c9c22a887bd792a5c2a9e03ac56792266e0009f0`;
+  - only `flake.lock` changed;
+  - the locked NAR hash was computed from the clean vpsAdmin Git commit;
+  - `nix flake check --override-input vpsadmin git+file://...` evaluated the
+    identical commit and passed all host-system checks.
+- Mandatory cross-project change review:
+  - one fresh standalone reviewer inspected both committed branches;
+  - no API, schema, state, protocol, WebUI, deployment, security, commit-split,
+    backport, or dependency-pin finding was reported;
+  - one blocking test-harness race was found: the workflow's independent VPS
+    and exported-dataset graph roots ran concurrently and the retained
+    diagnostic log proved that their vpsAdmin transaction chains collided;
+  - the review packet contained an incorrect guessed full provider commit ID;
+    the correct `c9c22a8` ID is recorded above.
+- The blocking review finding is fixed in separate provider commit `1daa01a`
+  `tests: serialize provider workflow mutations`. Every workflow `apply` and
+  `destroy` now uses `-parallelism=1`, matching the provider's operational
+  guidance and preventing unrelated vpsAdmin resource locks from preempting
+  provider behavior.
+- Quick verification of the review fix passed:
+  - every state-changing workflow command was enumerated and found serialized;
+  - `nix-instantiate --parse tests/suite/workflows.nix`;
+  - `nixfmt --check tests/suite/workflows.nix`;
+  - `git diff --check`;
+  - the locally overridden test runner evaluated the committed suite and
+    listed `workflows`.
+- The same standalone reviewer verified commit
+  `1daa01ab113295e2e0e47d75843150aba0801496` resolves the blocking finding:
+  all nine apply/destroy commands are serialized, the commit is focused, and
+  no new blocking, important, or advisory finding was introduced.
+- vpsAdmin branch publication:
+  - pushed
+    `origin/2026-07-27-terraform-provider-vpsadmin-issue-11`;
+  - local and remote heads both resolve to
+    `cba29b57ceacb2fd57864e03fb97a710f8168fe2`;
+  - the provider's normal GitHub lock resolves that revision with NAR hash
+    `sha256-v1hSoTf6gW1Jlhyz+xcHOGSqSN2a2O4n0+JnrJOxnUQ=`.
+- The normal provider integration suite passed without any input override:
+  - one `workflows` script passed in 1287.18 seconds;
+  - all 8 ordered examples passed;
+  - API readiness succeeded, proving packaged HaveAPI 0.29.8 accepts the
+    corrected examples and vpsAdmin mounts normally;
+  - the issue-critical initial apply resolved the OS template, created the VPS,
+    created the NAS dataset/export, read data sources, and allocated IP
+    addresses in 110.78 seconds;
+  - serialized updates converged without drift;
+  - mount and export recreation, imports, SSH-key deployment, and final
+    destroy/IP release all passed;
+  - the prior API-startup and transaction-lock failures did not recur.
+- Provider GitHub Actions Integration Tests run
+  `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30285167821`
+  passed on head `1daa01a` in 17 minutes 59 seconds.
+- No new Go Tests workflow was selected by the lockfile/test-harness-only
+  follow-up push. The earlier Go Tests run
+  `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30280042318`
+  remains green for both Go 1.25 and 1.26; provider Go source did not change
+  after that run.
+- vpsAdmin GitHub Actions on head `cba29b57c`:
+  - RuboCop passed:
+    `https://github.com/vpsfreecz/vpsadmin/actions/runs/30283484539`;
+  - i18n health passed:
+    `https://github.com/vpsfreecz/vpsadmin/actions/runs/30283489832`;
+  - API Specs passed all 26 jobs:
+    `https://github.com/vpsfreecz/vpsadmin/actions/runs/30283484104`;
+  - selected integration CI remained in progress at handoff:
+    `https://github.com/vpsfreecz/vpsadmin/actions/runs/30283484831`.
+- Monitoring of the vpsAdmin integration workflow was stopped at the user's
+  explicit request because that workflow takes several hours. It was still in
+  its `Run tests` step with no reported failure when monitoring stopped.
+- The vpsAdmin fix branch has not yet been pushed. This preserves the required
+  ordering in which the standalone change review happens before a push can
+  start GitHub integration workflows. After review, push vpsAdmin first and
+  verify that the committed GitHub lock resolves to the same revision and NAR
+  hash before running provider integration.
 
 ## Proposed release notes
 
@@ -220,8 +352,8 @@ Closes #11 based on the corrected root cause: v1.2.0 requested
 
 ## Open questions
 
-- Will the upstream vpsAdmin correction be merged before this provider
-  candidate is published, allowing the normal integration suite to pass?
+- What is the eventual result of the still-running vpsAdmin selected
+  integration workflow?
 
 ## Publication gate
 
@@ -231,7 +363,9 @@ Closes #11 based on the corrected root cause: v1.2.0 requested
 - Before publishing, merge the upstream vpsAdmin example correction, update the
   provider's vpsAdmin flake input to the corrected `master`, rerun the normal
   integration suite without overrides, and verify the exact tag-triggered
-  GoReleaser version/artifacts for `v1.3.0`.
+  GoReleaser version/artifacts for `v1.3.0`. The development branch may
+  temporarily pin the reviewed vpsAdmin feature commit to prove the combined
+  fix before either branch is merged.
 
 ## Cleanup
 
