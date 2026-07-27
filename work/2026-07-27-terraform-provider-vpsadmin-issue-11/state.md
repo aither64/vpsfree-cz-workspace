@@ -14,6 +14,10 @@
 - Release candidate is ready for review. Intended changes are committed;
   mandatory change review and all quick, build/package, and release-snapshot
   checks passed.
+- The development branch is pushed at `90c51c3`. GitHub's Go workflow passed
+  for Go 1.25 and 1.26. The integration workflow failed before running
+  OpenTofu or the provider because the pinned vpsAdmin API never became
+  healthy.
 - The normal integration suite is blocked by a newly pinned upstream vpsAdmin
   API example-validation regression before any provider operation. A
   diagnostic run with the matching unmerged upstream correction passed the
@@ -21,8 +25,7 @@
   unrelated vpsAdmin setup transaction lock.
 - Issue #11 is open and reports that provider v1.2.0 sends an empty
   `hypervisor_type` during OS-template lookup, causing VPS creation to fail.
-- No pushes, tags, GitHub releases, issue edits, or registry publications have
-  been made.
+- No tag, GitHub release, issue edit, or registry publication has been made.
 - Proposed release version: `v1.3.0`.
 
 ## Commands run
@@ -49,6 +52,9 @@
   journal to diagnose the integration startup failure.
 - `nix shell nixpkgs#goreleaser -c goreleaser release --snapshot --clean
   --skip=sign`
+- Pushed `2026-07-27-terraform-provider-vpsadmin-issue-11` over SSH.
+- Inspected GitHub Actions runs `30280042318` and `30280042039`, including the
+  failed integration log and uploaded diagnostic artifact.
 
 ## Results
 
@@ -165,6 +171,38 @@
   - issue #11 remains open and unchanged;
   - vpsAdmin `master` remains `52933ca65`, and no open pull request contains
     the example correction.
+- Development branch publication:
+  - pushed to
+    `origin/2026-07-27-terraform-provider-vpsadmin-issue-11`;
+  - local and remote heads both resolve to
+    `90c51c3bc12d7991715901645093bc556cfa54f3`;
+  - the provider worktree remains clean.
+- GitHub Actions Go Tests run
+  `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30280042318`
+  passed:
+  - Go 1.25.x passed in 41 seconds;
+  - Go 1.26.x passed in 47 seconds;
+  - provider and token-helper tests passed in both jobs.
+- GitHub Actions Integration Tests run
+  `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30280042039`
+  failed after 19 minutes 11 seconds. The test phase took 1127.74 seconds.
+- The failed attempt's logs and artifact
+  `terraform-provider-vpsadmin-test-logs-30280042039` were inspected before
+  deciding against a rerun:
+  - the workflow waited 909.04 seconds for `http://api.vpsadmin.test/`;
+  - the final error was `OsVm::TimeoutError` from
+    `wait_for_vpsadmin_api`;
+  - HAProxy returned HTTP 503 throughout the wait and the API description was
+    never served;
+  - no authentication, OpenTofu, or provider operation began.
+- The CI artifact does not include the service VM's systemd journal, so it
+  cannot directly show the HaveAPI exception. It reproduces the identical
+  API-unhealthy symptom against the same locked vpsAdmin revision
+  `52933ca65`; the matching local run's retained journal directly identified
+  the undeclared example fields as the cause.
+- The failed workflow was not rerun because neither its head nor its locked
+  integration inputs changed, and the inspected evidence shows the same
+  deterministic upstream startup blocker already diagnosed locally.
 
 ## Proposed release notes
 
@@ -187,7 +225,8 @@ Closes #11 based on the corrected root cause: v1.2.0 requested
 
 ## Publication gate
 
-- Stop for review before any push, tag, GitHub release, issue edit, or registry
+- The user authorized and the development branch received one push for CI.
+  Stop for review before any tag, GitHub release, issue edit, or registry
   publication.
 - Before publishing, merge the upstream vpsAdmin example correction, update the
   provider's vpsAdmin flake input to the corrected `master`, rerun the normal

@@ -5,8 +5,9 @@
 Verify the diagnosis in terraform-provider-vpsadmin issue #11, prove that the
 current provider no longer sends an empty `hypervisor_type` while resolving an
 OS template, and prepare the next provider release for review. Stop before any
-push, tag, GitHub release, issue mutation, or Terraform/OpenTofu registry
-publication.
+tag, GitHub release, issue mutation, or Terraform/OpenTofu registry
+publication. The user subsequently authorized pushing the development branch
+to obtain GitHub Actions results.
 
 ## Affected repositories
 
@@ -30,8 +31,10 @@ publication.
 5. Commit intended changes, run the mandatory fresh-context change review,
    resolve significant findings, and run the relevant full test/build/release
    checks.
-6. Present the exact candidate commits, proposed tag/release notes, evidence,
-   and remaining publication commands for review without publishing anything.
+6. Push the development branch, inspect every GitHub Actions result and any
+   failed-attempt evidence, then present the exact candidate commits, proposed
+   tag/release notes, and remaining publication commands for review without
+   publishing a release.
 
 ## Compatibility and deployment
 
@@ -68,4 +71,4 @@ the current API.
   after removing the stale exact Go patch assertion.
 - Existing integration suite when quick checks and mandatory review pass.
 - Verify clean worktree, commit contents, proposed semantic version, and that no
-  remote refs or external release state changed.
+  release tag or external publication state changed.

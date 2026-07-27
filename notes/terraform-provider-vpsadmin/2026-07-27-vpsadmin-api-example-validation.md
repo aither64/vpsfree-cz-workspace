@@ -63,3 +63,18 @@ result.
 Do not treat an override run as validation of the provider's pinned integration
 environment; update the normal flake input only after the upstream correction
 is merged.
+
+## GitHub Actions evidence
+
+Provider Integration Tests run `30280042039` reproduced the same failure
+against the locked vpsAdmin revision `52933ca65`. The workflow waited 909.04
+seconds for the API, received HTTP 503 responses throughout, never saw the API
+description, and raised `OsVm::TimeoutError` before OpenTofu or the provider
+ran.
+
+Download and inspect the failed run's uploaded test-log artifact before
+rerunning. The artifact contains machine consoles, shells, test-runner output,
+and HAProxy evidence, but it does not contain the service VM's systemd journal.
+It can establish that the API backend never became healthy, while the exact
+HaveAPI exception still requires an interactive retained-VM journal or improved
+workflow diagnostics.
