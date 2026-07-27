@@ -17,26 +17,21 @@
 
 ## Status
 
-- The combined release candidate is ready for review. The minimal vpsAdmin
-  examples-only backport, provider pin, and integration serialization are
-  committed and pushed; local integration and provider GitHub integration are
-  green.
+- The reviewed changes have been fast-forwarded and pushed to both default
+  branches. vpsAdmin `master` is at `cba29b57c`; terraform-provider-vpsadmin
+  `master` is at `1daa01a`.
+- Provider Go Tests and Integration Tests on `master` are green.
+- Lightweight tag `v1.3.0` points to provider commit `1daa01a`. The signed
+  GitHub release is public, and Terraform Registry has ingested it. OpenTofu
+  Registry has ingested and deployed its `1.3.0` download metadata; its
+  Cloudflare-cached versions list is still serving the preceding release.
 - vpsAdmin RuboCop, i18n health, and all 26 API-spec jobs are green. Its
-  selected VM integration workflow remains in progress; the user explicitly
-  requested that this several-hour run not delay handoff.
-- The development branch is pushed at `90c51c3`. GitHub's Go workflow passed
-  for Go 1.25 and 1.26. The integration workflow failed before running
-  OpenTofu or the provider because the pinned vpsAdmin API never became
-  healthy.
-- The normal integration suite is blocked by a newly pinned upstream vpsAdmin
-  API example-validation regression before any provider operation. A
-  diagnostic run with the matching unmerged upstream correction passed the
-  issue-critical OS-template lookup and reached `Vps.Create`, then failed on an
-  unrelated vpsAdmin setup transaction lock.
+  selected VM integration workflow remains intentionally non-blocking; the
+  user explicitly requested that this several-hour run not delay release.
 - Issue #11 is open and reports that provider v1.2.0 sends an empty
   `hypervisor_type` during OS-template lookup, causing VPS creation to fail.
-- No tag, GitHub release, issue edit, or registry publication has been made.
-- Proposed release version: `v1.3.0`.
+- Issue #11 has not been edited or closed.
+- Released version: `v1.3.0`.
 
 ## Commands run
 
@@ -84,6 +79,35 @@
 - `nix develop -c make test-integration`
 - Pushed the reviewed provider follow-up commits and monitored all triggered
   GitHub Actions through provider integration success.
+- Created fresh detached merge worktrees under
+  `worktrees/2026-07-27-terraform-provider-vpsadmin-issue-11/merge/`.
+- Fast-forwarded vpsAdmin `52933ca65..cba29b57c`, repeated the API smoke spec
+  and targeted RuboCop checks, and pushed the detached head to `master`.
+- Confirmed `nix flake update vpsadmin` made no provider diff after the
+  vpsAdmin merge because the existing lock already names merged commit
+  `cba29b57c`.
+- Fast-forwarded terraform-provider-vpsadmin `0220361..1daa01a`, then repeated
+  `make test`, `make test-get-token`, `make build`, `nix flake check`, and the
+  Nix provider package build in the fresh merge worktree.
+- Re-fetched provider `master`, verified it had not advanced, and pushed the
+  detached release-candidate head to `master`.
+- Waited for provider default-branch Go Tests and Integration Tests to pass.
+- Re-fetched tags and `master`, verified `v1.3.0` was absent and the release
+  target remained `1daa01a`, created a lightweight tag, and pushed it over
+  SSH.
+- Monitored the tag-triggered Release workflow through success.
+- Downloaded all GitHub release assets and verified every archive and registry
+  manifest against the published SHA-256 checksum file.
+- Imported the signing key returned by Terraform Registry into an isolated
+  temporary GnuPG home and verified the detached checksum signature.
+- Queried Terraform Registry and OpenTofu Registry version/download APIs.
+- Monitored OpenTofu's scheduled metadata updater and generated API sync
+  through success, then inspected its source metadata and public cache headers.
+- Recorded the reusable OpenTofu cache diagnostic in
+  `notes/terraform-provider-vpsadmin/2026-07-27-opentofu-registry-cache.md`.
+- Removed the two clean detached merge worktrees and their empty `merge/`
+  parent directory. The initiative feature worktrees and local/remote feature
+  branches were retained.
 
 ## Results
 
@@ -258,6 +282,62 @@
   - `nix develop .#api -c bundle exec rspec
     spec/smoke/api_boot_spec.rb` passed 5 examples with no failures;
   - the test shell confirmed HaveAPI 0.29.8.
+- Default-branch integration:
+  - vpsAdmin `master` was fast-forwarded and pushed to
+    `cba29b57ceacb2fd57864e03fb97a710f8168fe2`;
+  - vpsAdmin RuboCop and i18n health passed on the default branch;
+  - terraform-provider-vpsadmin `master` was fast-forwarded and pushed to
+    `1daa01ab113295e2e0e47d75843150aba0801496`;
+  - provider Go Tests run
+    `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30289132439`
+    passed for Go 1.25.x and Go 1.26.x;
+  - provider Integration Tests run
+    `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30289131511`
+    passed in 22 minutes 36 seconds; its test evaluation, summary, and cleanup
+    steps all succeeded.
+- Release publication:
+  - lightweight tag `v1.3.0` and provider `origin/master` both resolve to
+    `1daa01ab113295e2e0e47d75843150aba0801496`;
+  - Release workflow
+    `https://github.com/vpsfreecz/terraform-provider-vpsadmin/actions/runs/30290875926`
+    passed, including GPG import and GoReleaser;
+  - public release:
+    `https://github.com/vpsfreecz/terraform-provider-vpsadmin/releases/tag/v1.3.0`;
+  - the release is neither a draft nor a prerelease and contains 13 provider
+    archives plus the registry manifest, checksum list, and detached signature;
+  - all 14 entries in `terraform-provider-vpsadmin_1.3.0_SHA256SUMS` verified;
+  - the manifest declares registry protocol `5.0`;
+  - GPG verification returned a valid signature from key fingerprint
+    `7AF4 99EA 2F8B D595 B456 F345 1C85 E54D B0A1 2B16`;
+  - Terraform Registry already lists `1.3.0` and its Linux AMD64 download
+    metadata resolves successfully;
+  - OpenTofu Registry metadata source lists `1.3.0`, discovered at
+    `2026-07-27T18:07:34Z` with 13 targets;
+  - OpenTofu metadata updater
+    `https://github.com/opentofu/registry/actions/runs/30291745776`
+    passed, including the `v` namespace job;
+  - OpenTofu generated API sync
+    `https://github.com/opentofu/registry/actions/runs/30292861801`
+    passed and explicitly generated `vpsfreecz/vpsadmin`;
+  - OpenTofu's direct `1.3.0/download/linux/amd64` endpoint returns HTTP 200
+    with the expected filename and SHA-256
+    `1012808661c979e496d7f93a24a09c5b63ab826e9ea03ade9534e9c30ae16d04`;
+  - the OpenTofu versions endpoint at the observed Prague Cloudflare edge
+    remains a cache hit containing `1.2.0` as latest. Its response advertises
+    `cache-control: max-age=14400`; waiting for this third-party cache expiry
+    would take hours and was stopped in line with the user's request not to
+    wait on multi-hour validation;
+  - OpenTofu's official `Bump Provider and Module Versions` workflow is
+    nominally scheduled every 15 minutes, although recent GitHub-scheduled runs
+    have occurred approximately hourly. No manual third-party workflow dispatch
+    was attempted.
+- Cleanup:
+  - removed
+    `worktrees/2026-07-27-terraform-provider-vpsadmin-issue-11/merge/vpsadmin`;
+  - removed
+    `worktrees/2026-07-27-terraform-provider-vpsadmin-issue-11/merge/terraform-provider-vpsadmin`;
+  - retained both initiative feature worktrees and all feature branches as
+    required.
 - Provider input update commit:
   - `c9c22a8` `flake: vpsadmin 52933ca65 -> cba29b57c`;
   - full commit ID:
