@@ -3071,3 +3071,34 @@ Compatibility and deployment:
 - run focused API/WebUI verification, repository hooks, and mandatory
   fresh-context review, while continuing to skip the hours-long aggregate
   integration workflow.
+
+## API topic-spec follow-up
+
+Requested on 2026-07-30 after the completed topic-parallel workflow reported
+failures.
+
+Approach:
+
+- use the failed GitHub Actions attempt as the authoritative failure inventory
+  instead of rerunning it without investigation;
+- make Event-row assertions arrange an explicit webhook delivery route, so the
+  specs model delivery history rather than implicit audit persistence;
+- preserve explicit no-route examples and update them to assert that rejected
+  route matches leave no Event rows;
+- correct independent test defects exposed by the run, including invalid RSpec
+  `change` matcher syntax and a stale e-mail fixture that leaves delivery
+  disabled;
+- remove the obsolete operation-attempt expectation from the remaining
+  lifecycle example;
+- run every failed example locally with the shared route helper, plus RuboCop
+  and repository hooks, before mandatory fresh-context review;
+- commit and push a test-only follow-up, cancel superseded workflow attempts
+  for older branch heads, and inspect the replacement API Specs result.
+
+Compatibility:
+
+- this follow-up changes tests only and does not alter runtime behavior,
+  persisted state, API contracts, deployment ordering, the running development
+  cluster, or the already reviewed WebUI/KB capture contract;
+- no capture regeneration, database reset, or development-cluster redeployment
+  is required for a test-only correction.

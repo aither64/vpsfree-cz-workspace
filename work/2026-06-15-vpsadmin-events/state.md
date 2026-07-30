@@ -16907,3 +16907,78 @@ workflow and approval-gated production KB promotion.
   DokuWiki heading in the byte-for-byte production source/candidate mirrors;
   the same heading is present in the preceding canonical snapshot. These
   checksummed mirror bytes were intentionally preserved rather than normalized.
+
+#### API topic-spec failure investigation
+
+- GitHub Actions run `30558940027` for exact head `07bab674...` completed with
+  14 failed core/full jobs across supervisor, DNS, VPS, platform, engine,
+  users/auth, and mail. Topic coverage itself passed.
+- The downloaded failed-example inventory contains 41 examples. The dominant
+  root cause is test setup: 37 examples inspect Event delivery-history rows but
+  do not configure any executable receiver after unconditional Event
+  persistence was removed.
+- One transaction-chain read example still expects a route-mismatched Event to
+  survive, contradicting delivery-only persistence. Two explicitly unrouted
+  supervisor examples use invalid `change(-> { ... })` RSpec syntax and fail
+  before exercising the code.
+- The OOM-prevention stale-target example creates a valid e-mail route but
+  leaves the user's e-mail delivery method disabled, so the route produces
+  only a skipped delivery and correctly leaves no Event row.
+- The destroy-mount lifecycle example also retains the removed public
+  `attempt` field expectation, which would become visible after routing is
+  fixed.
+- The correction is test-only: introduce opt-in catch-all webhook routes for
+  examples that inspect delivery history, preserve the no-route cases, enable
+  the intended OOM e-mail delivery, and align obsolete expectations with the
+  published contract.
+- The first exact-location rerun exposed two additional fixture details:
+  - a custom e-mail target must be verified as well as enabled before it is an
+    executable delivery; and
+  - `SecurityAdvisoryTranslation` is an intentionally internal implementation
+    row, so its removed event must not be restored merely to satisfy an old
+    assertion.
+- The correction now marks the stale custom e-mail target verified before
+  corrupting its value and keeps only the public
+  `security_advisory_update.created` assertion.
+- Local verification after the corrections:
+  - all 41 examples reported by failed workflow `30558940027` pass in one
+    RSpec process with randomized seed `41729`;
+  - the two edge cases pass independently;
+  - RuboCop reports no offenses across all 21 changed spec/support files; and
+  - `git diff --check` passes.
+- A first RuboCop pass found ambiguous block association in the two corrected
+  `change` matchers. Parenthesizing the matcher resolved the warning; the
+  final RuboCop pass is clean.
+- The API development shell changes into `api/` automatically. An initial
+  command that also ran `cd api` and an initial location selection aimed at
+  multiline example declarations were discarded; the exact 41-example rerun
+  used assertion/body lines and is the authoritative result.
+- vpsAdmin commit `a2466114ebb4237b500587f377c7b0f3c64a27ce`
+  (`specs: route asserted event deliveries`) contains the complete test-only
+  correction. The installed Overcommit pre-commit suite passed Nixfmt,
+  migration-spec selection, both i18n checks, RuboCop, and the commit-message
+  checks; the latter reported only its advisory 72-column warnings, while
+  every message line satisfies the workspace's mandatory 80-column limit.
+- The standalone mandatory reviewer accepted exact range
+  `07bab67421f0ba76fad397944b6011d23f54b31c..a2466114ebb4237b500587f377c7b0f3c64a27ce`
+  with no Blocking, Important, or Advisory findings. It accepted the single
+  cohesive commit split, confirmed that no internal event or unrouted
+  persistence was restored, and independently reran the four highest-risk
+  routing edge cases with zero failures.
+- The remaining test gap before publication is the replacement topic-parallel
+  GitHub workflow, including CI-only topic isolation and plugin ordering.
+- The reviewed commit was pushed normally over SSH. Local and remote feature
+  branch heads match at
+  `a2466114ebb4237b500587f377c7b0f3c64a27ce`, and the vpsAdmin worktree is
+  clean.
+- Superseded aggregate CI run `30558940067` was still executing against old
+  head `07bab674...` after the push. It was canceled; no current-head workflow
+  was canceled.
+- Replacement API Specs workflow `30576866453` completed successfully at the
+  exact reviewed head. All 27 jobs passed, including core/full topic pairs,
+  plugin variants, smoke and coverage jobs, and the final topic-coverage
+  check. This resolves the CI-only topic-isolation and ordering test gap.
+- The separately triggered hours-long aggregate CI workflow was not awaited,
+  consistent with the user's earlier instruction. This correction is tests
+  only, so the development cluster remains valid at runtime revision
+  `07bab674...` and requires no redeployment.
