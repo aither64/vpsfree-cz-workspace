@@ -1,0 +1,75 @@
+====== Send monitoring and incident events to Telegram ======
+
+This example sends all ''monitoring.*'' events and all
+''vps.incident_report'' events to a private Telegram chat while preserving
+normal e-mail delivery.
+
+Before starting, see the [[manuals:notifications|notification system overview]].
+
+===== Step 1: Pair a Telegram target =====
+
+At <vpsadmin-nav id="notifications.target-form.open">**Notifications →
+Targets**</vpsadmin-nav>, add a **Telegram** target named **Operations
+Telegram**.
+
+Open the displayed pairing link in a private chat with the bot, press **Start**,
+and return to vpsAdmin. The target must show **paired**. Treat the pairing link
+as a secret and do not share it.
+
+{{:en:screenshots:vpsadmin:notifications:example-telegram-target.png?900|Paired Telegram target}}
+
+===== Step 2: Create a receiver =====
+
+At <vpsadmin-nav id="notifications.receivers.open">**Notifications →
+Receivers**</vpsadmin-nav>, create **Operations Telegram**. Open it and attach
+the paired target with the same name.
+
+{{:en:screenshots:vpsadmin:notifications:example-telegram.png?900|Telegram target attached to its receiver}}
+
+===== Step 3: Route monitoring events =====
+
+At <vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>, add:
+
+^ Field ^ Value ^
+| Label | ''Monitoring to Telegram'' |
+| Event type | leave empty |
+| Event type pattern | ''monitoring.*'' |
+| Receiver | Operations Telegram |
+| Enabled | yes |
+| Continue | yes |
+
+{{:en:screenshots:vpsadmin:notifications:example-telegram-monitoring-route.png?900|Telegram route for monitoring.*}}
+
+===== Step 4: Route incident reports =====
+
+Add another route:
+
+^ Field ^ Value ^
+| Label | ''Incident reports to Telegram'' |
+| Event type | ''vps.incident_report'' |
+| Event type pattern | leave empty |
+| Receiver | Operations Telegram |
+| Enabled | yes |
+| Continue | yes |
+
+{{:en:screenshots:vpsadmin:notifications:example-telegram-incident-route.png?900|Telegram route for incident reports}}
+
+**Continue** remains enabled so the same events can still be delivered by
+e-mail.
+
+===== Step 5: Test Telegram delivery =====
+
+For a safe connection test, temporarily add a route for exact event type
+''user.test_notification'', receiver **Operations Telegram**, and **Continue:
+no**. Create a test notification, check the Telegram message, and delete the
+temporary route.
+
+{{:en:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Test notification stopped by the temporary Telegram route}}
+
+Inspect the next real monitoring or incident event at
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Delivery history → event detail**</vpsadmin-nav>. A generic synthetic event
+may lack
+the real monitoring or incident object required by its message template, so
+use the temporary test route to test the connection itself.

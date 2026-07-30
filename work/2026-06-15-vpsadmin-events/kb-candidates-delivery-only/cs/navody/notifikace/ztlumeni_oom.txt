@@ -1,0 +1,64 @@
+<page>manuals:notifications:mute_oom</page>
+====== Ztlumení vybraných OOM reportů ======
+
+Tento příklad ztlumí OOM reporty z cgroups uživatelských relací na VPS s ID
+''123''. Ostatní OOM reporty se nezmění. Použije se vestavěný příjemce
+**Ztlumit**, takže není třeba vytvářet cíl ani příjemce.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]].
+
+===== Krok 1: Najděte hodnoty skutečného OOM reportu =====
+
+V historii doručování otevřete odpovídající ''vps.oom_report'' a
+poznamenejte si pole ''vps_id'' a ''cgroup''. Cgroup je úplná cesta bez prefixu
+''/sys/fs/cgroup'', například
+''/user.slice/user-1000.slice/session-2.scope''.
+
+===== Krok 2: Vytvořte ztlumující routu =====
+
+V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
+Routy**</vpsadmin-nav> zvolte **Přidat routu**:
+
+^ Pole ^ Hodnota ^
+| Název | ''Ztlumit vybrané OOM reporty'' |
+| Typ události | ''vps.oom_report'' |
+| Příjemce | Ztlumit |
+| Povoleno | ano |
+| Pokračovat | ne |
+
+Routu uložte.
+
+===== Krok 3: Přidejte obě podmínky =====
+
+Do uložené routy přidejte:
+
+^ Pole ^ Operátor ^ Hodnota ^
+| ''vps_id'' | rovná se | ''123'' |
+| ''cgroup'' | odpovídá glob vzoru | %%/user.slice/**/*.scope%% |
+
+Všechny podmínky musí platit současně. V globu může %%**%% odpovídat několika
+úrovním adresářů.
+
+{{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Ztlumení OOM reportů podle VPS a cgroup}}
+
+**Pokračovat** nechte vypnuté, jinak by report mohly odeslat další routy.
+
+===== Krok 4: Ověřte routu =====
+
+Vytvořte **Testovací notifikaci** typu ''vps.oom_report'':
+
+<code json>
+{
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "oom_report_id": 987,
+  "cgroup": "/user.slice/user-1000.slice/session-2.scope",
+  "count": 1,
+  "oom_count": 1,
+  "killed_name": "worker"
+}
+</code>
+
+Pokud je ztlumující routa první shodou a žádná jiná routa nepřipraví
+doručení, test musí oznámit, že žádná povolená routa doručení nevytvořila.
+V **Historii doručování** se takový kandidát nesmí objevit.

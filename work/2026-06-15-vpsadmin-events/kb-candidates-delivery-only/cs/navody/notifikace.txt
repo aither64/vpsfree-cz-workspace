@@ -1,0 +1,136 @@
+<page>manuals:notifications</page>
+====== Notifikace ======
+
+Notifikační systém vpsAdminu převádí události na e-mailová, SMS, telegramová
+nebo webhooková doručení. Najdete jej v
+<vpsadmin-nav id="notifications.open">hlavní nabídce **Notifikace**</vpsadmin-nav>.
+
+Základní tok je **událost → routa → příjemce → cíl**:
+
+  * **událost** popisuje, co se stalo,
+  * **routa** vybírá události a určuje, zda směrování pokračuje,
+  * **příjemce** popisuje, koho nebo kterou integraci upozornit,
+  * **cíl** je konkrétní e-mail, telefonní číslo, chat v Telegramu nebo webhookový endpoint.
+
+Historie doručování není interní auditní protokol. Událost se do ní uloží
+pouze tehdy, když směrování připraví alespoň jedno skutečné doručení. Pokud
+potřebujete úplný externí záznam, vytvořte záchytnou routu pro všechny typy
+událostí a doručujte ji do vlastního trvalého úložiště, například webhookem.
+
+===== Příklady krok za krokem =====
+
+Každý příklad začíná u běžného účtu s výchozími routami. Postupujte vždy podle
+jednoho samostatného návodu:
+
+  * [[navody:notifikace:role_udalosti|Doručení událostí rolí account a admin různým kontaktům]]
+  * [[navody:notifikace:ztlumeni_oom|Ztlumení vybraných OOM reportů]]
+  * [[navody:notifikace:ztlumeni_incidentu|Ztlumení vybraných incidentních reportů]]
+  * [[navody:notifikace:telegram|Odeslání monitoringu a incidentů do Telegramu]]
+  * [[navody:notifikace:sms|Odeslání SMS při pozastavení účtu nebo VPS]]
+  * [[navody:notifikace:webhook|Odeslání změn prostředků VPS na webhook]]
+
+===== Routy a podmínky =====
+
+Routy se spravují v
+<vpsadmin-nav id="notifications.routes.open">**Notifikace → Routy**</vpsadmin-nav>.
+Routy na stejné úrovni se vyhodnocují shora dolů. Všechny podmínky jedné routy
+musí platit.
+
+Pro jediný přesný typ zvolte **Typ události**. **Vzor typu události** používá
+glob ve stylu shellu, například ''monitoring.*''. Obě pole ponechte prázdná
+pouze u routy, která má odpovídat všem typům. Dostupné typy a jejich pole
+ukazuje stránka **Typy událostí**.
+
+**Pokračovat: ano** dovolí dalším sourozeneckým routám vyhodnotit stejnou
+událost. Hodí se například při současném doručení do Telegramu a e-mailem.
+**Pokračovat: ne** zpracování na této routě zastaví; takto se běžně nastavují
+ztlumující routy. Podrouty se po shodě rodiče vyhodnotí bez ohledu na jeho
+nastavení **Pokračovat**.
+
+===== Cíle a příjemci =====
+
+Konkrétní adresy se spravují v
+<vpsadmin-nav id="notifications.target-form.open">**Notifikace →
+Cíle**</vpsadmin-nav>. Vlastní e-mail a SMS musí být ověřeny a Telegram musí
+být spárován.
+
+Příjemci se spravují v
+<vpsadmin-nav id="notifications.receivers.open">**Notifikace →
+Příjemci**</vpsadmin-nav>. Příjemce může obsahovat několik cílů. Routa odkazuje
+na příjemce, nikoli přímo na adresu. Vestavěný příjemce **Ztlumit** nemá
+doručovací cíl a odpovídající události potlačí.
+
+{{:cs:screenshots:vpsadmin:notifications:receiver.png?900|Nastavení příjemce a jeho cílů}}
+
+===== Seskupování událostí =====
+
+Seskupování pomáhá při velkém množství souvisejících událostí v krátkém čase.
+Místo zprávy pro každou událost je vpsAdmin shromáždí a odešle souhrn. Výchozí
+routa OOM reportů seskupuje podle ''vps_id'': reporty jedné VPS jsou ve
+společném souhrnu a různé VPS zůstávají oddělené.
+
+Seskupování se nastavuje samostatně na existující routě v
+<vpsadmin-nav id="notifications.route-grouping-form.open">**Notifikace → Routy
+→ upravit routu → Seskupování notifikací**</vpsadmin-nav>:
+
+  * **Seskupit podle polí** obsahuje čárkami oddělená skalární pole události. Jejich hodnoty určují skupinu. Prázdný seznam vytvoří jednu skupinu pro všechny události odpovídající routě.
+  * **Počáteční čekání** určuje, kolik sekund první událost počká, aby se k ní mohly přidat další.
+  * **Interval opakování** je nejkratší prodleva před dalším souhrnem ze stejné stále aktivní skupiny.
+
+U přesného typu používejte pole uvedená na stránce **Typy událostí**. Routa se
+vzorem nebo pro všechny typy může použít pouze společná pole, která formulář
+přijme. Nastavení patří pouze dané routě a podrouty je nedědí. Kandidáti
+zastavení ztlumením, neaktivním intervalem nebo bez odpovídajícího doručení
+se neukládají a do skupiny nevstoupí.
+
+Skupina vzniká pro routu a příjemce před odesláním jednotlivými způsoby. Má-li
+jeden příjemce e-mailový, telegramový i webhookový cíl, všechny dostanou stejnou
+sadu událostí. Nejde o tři samostatně časované skupiny.
+
+{{:cs:screenshots:vpsadmin:notifications:grouping-route.png?900|Seskupování na routě OOM reportů}}
+
+V
+<vpsadmin-nav id="notifications.groups.open">**Notifikace → Skupiny
+notifikací**</vpsadmin-nav> lze prohlížet otevřené, zpožděné, neaktivní i
+historické skupiny. Detail ukazuje routu, příjemce, seskupovací hodnoty,
+časování, čekající události a doručení. Jednotlivá doručení zůstávají viditelná
+v detailu události.
+
+===== Časové intervaly =====
+
+Opakovaně použitelné intervaly se definují v
+<vpsadmin-nav id="notifications.time-intervals.open">**Notifikace → Časové
+intervaly**</vpsadmin-nav>. Hodí se například pro:
+
+  * ztlumení upozornění mimo pracovní dobu,
+  * rozdělení doručení během pracovní doby a pohotovosti různým lidem či týmům,
+  * omezení routy na pravidelné servisní okno,
+  * vyjádření doplňujících se rozvrhů pomocí samostatných rout.
+
+Každý interval má časové pásmo IANA a jednu či více specifikací. Pole jedné
+specifikace se spojují logickým **a**; více rozsahů nebo specifikací představuje
+alternativy.
+
+{{:cs:screenshots:vpsadmin:notifications:time-interval.png?900|Nastavení časového intervalu}}
+
+Interval se přiřazuje v
+<vpsadmin-nav id="notifications.route-time-intervals.open">**Notifikace → Routy
+→ upravit routu**</vpsadmin-nav> jako **Aktivní interval** nebo **Ztlumující
+interval**. Bez aktivního intervalu není doba routy omezena. Shoda libovolného
+ztlumujícího intervalu danou routu potlačí.
+
+{{:cs:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Časový interval přiřazený k routě}}
+
+===== Historie doručování =====
+
+Uložená doručení lze zkontrolovat v
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
+Historie doručování → detail události**</vpsadmin-nav>. Detail ukazuje
+odpovídající routy, doručení a snímek vyhodnocení v okamžiku události.
+Kandidát zastavený pouze ztlumením, neaktivním intervalem nebo bez
+odpovídající routy se neukládá, proto se v historii nezobrazí.
+
+**Testovací notifikace** umožňuje prověřit routování bez skutečného
+pozastavení nebo incidentu. Pokud žádná povolená routa nepřipraví doručení,
+test skončí chybou a nic se do historie neuloží. Úspěšné doručení je skutečné
+a může odeslat e-mail, Telegram, SMS nebo webhook.

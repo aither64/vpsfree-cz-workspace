@@ -3027,3 +3027,47 @@ known-device path that had previously returned HTTP 400 `invalid_request`.
 No database migration, node protocol update, dependency change, or generated
 client update was introduced. The hours-long aggregate integration workflow
 was deliberately not awaited, as requested.
+
+## Delivery-only persistence correction
+
+Requested on 2026-07-30: Events are notification delivery history, not an
+internal audit log. Users that need an audit log construct it externally by
+catching a deliberately routed event stream.
+
+Implementation decisions:
+
+- persist an Event only when routing produces at least one executable,
+  non-skipped delivery;
+- unmatched, muted-only, disabled-only, inactive-only, and otherwise
+  skipped-only candidates leave no Event, delivery, match, or routing-context
+  rows;
+- remove persistence overrides from resource, lifecycle, security, console,
+  OOM, outage, and test-event producers;
+- keep delivery outcome and retry state on EventDelivery for events that
+  entered the delivery pipeline;
+- treat operation lifecycle events as independently routed facts correlated by
+  `operation_id`, without `attempt` or `operation_attempt` counters;
+- materialize successful transaction result facts only after `done`, route
+  them before `operation.succeeded`, and reference only result events that
+  were actually persisted;
+- make the Test Event action fail clearly when no enabled route produces a
+  delivery;
+- retain OOM mute evaluation in the transient routing plan without persisting
+  a suppressed Event;
+- describe the Event API and WebUI as delivery history, and document that a
+  complete external record requires an explicit catch-all route with suitable
+  account or administrator visibility.
+
+Compatibility and deployment:
+
+- the Events feature is unreleased and the development database is
+  disposable, so draft migrations and API choices may be corrected in place;
+- add no audit table, operation-attempt counter, or compatibility migration;
+- reset and recreate the existing single-topology development cluster on its
+  default bridge network after the reviewed revision is published;
+- update the exact vpsAdmin pin and retire the suppressed-event concept in
+  vpsadmin-kb-captures, rebuilding bilingual review candidates without
+  publishing production KB changes;
+- run focused API/WebUI verification, repository hooks, and mandatory
+  fresh-context review, while continuing to skip the hours-long aggregate
+  integration workflow.

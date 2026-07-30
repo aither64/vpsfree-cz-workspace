@@ -1,0 +1,228 @@
+<page>manuals:notifications:webhook</page>
+====== Odeslání změn prostředků VPS na webhook ======
+
+Tento příklad posílá podepsaný JSON na HTTPS endpoint při každé události
+''vps.resources_changed''. Formát podporuje jednotlivé i seskupené notifikace.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]].
+
+===== Krok 1: Připravte jednoduchý přijímací server =====
+
+Následující kód uložte jako ''webhook_server.py''. Ověří podpis HMAC z přesného těla
+požadavku, porovná ID doručení a vypíše všechny přijaté události:
+
+<code python>
+#!/usr/bin/env python3
+
+import hashlib
+import hmac
+import json
+import os
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+
+SECRET = os.environ["WEBHOOK_SECRET"].encode()
+HOST = os.environ.get("WEBHOOK_HOST", "127.0.0.1")
+PORT = int(os.environ.get("WEBHOOK_PORT", "8080"))
+PATH = os.environ.get("WEBHOOK_PATH", "/events")
+MAX_BODY_BYTES = int(os.environ.get("WEBHOOK_MAX_BODY_BYTES", str(1024 * 1024)))
+
+
+class WebhookHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path != PATH:
+            self.send_error(404)
+            return
+
+        try:
+            length = int(self.headers.get("Content-Length", ""))
+        except (TypeError, ValueError):
+            self.send_error(400, "invalid Content-Length")
+            return
+
+        if length < 0:
+            self.send_error(400, "invalid Content-Length")
+            return
+
+        if length > MAX_BODY_BYTES:
+            self.send_error(413, "request body too large")
+            return
+
+        body = self.rfile.read(length)
+
+        expected = "sha256=" + hmac.new(SECRET, body, hashlib.sha256).hexdigest()
+        supplied = self.headers.get("X-VpsAdmin-Signature-256", "")
+        if not hmac.compare_digest(supplied, expected):
+            self.send_error(401, "invalid signature")
+            return
+
+        try:
+            payload = json.loads(body)
+            delivery_id = str(payload["delivery"]["id"])
+            events = payload["events"]
+            if payload["version"] != 1 or not isinstance(events, list) or not events:
+                raise ValueError
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            self.send_error(400, "invalid webhook payload")
+            return
+
+        if self.headers.get("X-VpsAdmin-Delivery") != delivery_id:
+            self.send_error(400, "delivery ID does not match")
+            return
+
+        print(json.dumps(payload, sort_keys=True), flush=True)
+        self.send_response(204)
+        self.end_headers()
+
+    def log_message(self, format, *args):
+        print(f"{self.address_string()} - {format % args}", flush=True)
+
+
+if __name__ == "__main__":
+    print(f"Listening on http://{HOST}:{PORT}{PATH}", flush=True)
+    ThreadingHTTPServer((HOST, PORT), WebhookHandler).serve_forever()
+</code>
+
+Spusťte jej za veřejnou HTTPS reverzní proxy:
+
+<code>
+export WEBHOOK_SECRET="$(openssl rand -hex 32)"
+printf '%s\n' "$WEBHOOK_SECRET"
+python3 webhook_server.py
+</code>
+
+Tajemství bezpečně uložte. Server naslouchá pouze na ''127.0.0.1:8080''; URL
+nastavená ve vpsAdminu musí být veřejná a používat HTTPS.
+
+===== Krok 2: Vytvořte webhookový cíl =====
+
+V <vpsadmin-nav id="notifications.target-form.open">**Notifikace →
+Cíle**</vpsadmin-nav> přidejte typ **Webhook**. Zadejte veřejnou URL, například
+''https://events.example.net/vpsadmin'', a stejné tajemství. vpsAdmin odmítá
+privátní, lokální, link-local a jiné nebezpečné cílové adresy.
+
+{{:cs:screenshots:vpsadmin:notifications:example-webhook-target.png?900|Webhookový cíl s veřejnou URL a HMAC tajemstvím}}
+
+===== Krok 3: Vytvořte příjemce =====
+
+V <vpsadmin-nav id="notifications.receivers.open">**Notifikace →
+Příjemci**</vpsadmin-nav> vytvořte **Webhook změn prostředků** a připojte k
+němu nový webhookový cíl.
+
+{{:cs:screenshots:vpsadmin:notifications:example-webhook.png?900|Webhookový cíl připojený k příjemci}}
+
+===== Krok 4: Vytvořte routu =====
+
+V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
+Routy**</vpsadmin-nav> přidejte:
+
+^ Pole ^ Hodnota ^
+| Název | ''Webhook změn prostředků VPS'' |
+| Typ události | ''vps.resources_changed'' |
+| Příjemce | Webhook změn prostředků |
+| Povoleno | ano |
+| Pokračovat | ano |
+
+{{:cs:screenshots:vpsadmin:notifications:example-webhook-route.png?900|Webhooková routa pro změny prostředků VPS}}
+
+===== Krok 5: Ověřte webhook =====
+
+Pro tento test dočasně vypněte **Pokračovat**. Syntetická událost se tak
+nedostane k výchozím šablonám, které potřebují reálnou VPS. Vytvořte testovací
+událost ''vps.resources_changed'':
+
+<code json>
+{
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "cpu": 4,
+  "cpu_limit": 400,
+  "memory": 8192,
+  "swap": 2048,
+  "reason": "Memory upgrade"
+}
+</code>
+
+Server přijme ''Content-Type: application/json'', ''User-Agent: vpsAdmin
+notification dispatcher'', ''X-VpsAdmin-Delivery'' a
+''X-VpsAdmin-Signature-256''. U doručení jediné události je přítomna také
+hlavička ''X-VpsAdmin-Event''. Seskupený požadavek má místo ní
+''X-VpsAdmin-Group'' a v poli ''events'' může obsahovat více událostí.
+
+Odpovídající routu zkontrolujte v
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
+Historie doručování → detail události**</vpsadmin-nav> a poté znovu zapněte
+**Pokračovat**.
+
+{{:cs:screenshots:vpsadmin:notifications:example-webhook-result.png?900|Test změny prostředků zastavený webhookovou routou}}
+
+===== Co server přijme =====
+
+ID a čas v tomto zkráceném příkladu jsou pouze ilustrační:
+
+<code json>
+{
+  "version": 1,
+  "group": {
+    "grouped": false,
+    "key": null,
+    "labels": {},
+    "event_count": 1,
+    "truncated_count": 0
+  },
+  "events": [
+    {
+      "id": 501,
+      "type": "vps.resources_changed",
+      "category": "vps",
+      "severity": "info",
+      "subject": "VPS resources changed",
+      "summary": "Memory changed from 4096 to 8192 MiB",
+      "payload": {
+        "memory": 8192
+      },
+      "fields": {
+        "vps_id": 123,
+        "subject_relation": "self"
+      },
+      "ip_addr": null,
+      "source": {
+        "class": "TransactionChain",
+        "id": 901
+      },
+      "user": {
+        "id": 42,
+        "login": "example"
+      },
+      "vps": {
+        "id": 123,
+        "hostname": "example-vps"
+      },
+      "created_at": "2026-07-26T10:30:00Z"
+    }
+  ],
+  "delivery": {
+    "id": 7001,
+    "action": "webhook",
+    "route": {
+      "id": 81,
+      "label": "VPS resource changes",
+      "matcher_summary": "all"
+    },
+    "receiver": {
+      "id": 91,
+      "label": "Automation webhook"
+    },
+    "notification_target": null,
+    "receiver_target": {
+      "id": 101
+    }
+  }
+}
+</code>
+
+Podpis je HMAC-SHA256 z nezměněných bajtů těla a má tvar
+''sha256=<HMAC>''. Libovolná odpověď ''2xx'' znamená úspěch. Neúspěšné
+doručení se může opakovat, proto je zpracovávejte idempotentně podle podepsané
+hodnoty ''delivery.id'' v těle. Hlavička ''X-VpsAdmin-Delivery'' není sama
+podepsaná; příklad ji přijme pouze při shodě s ''delivery.id''.

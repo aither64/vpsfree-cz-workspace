@@ -18,6 +18,11 @@ new_pages:
       * **příjemce** popisuje, koho nebo kterou integraci upozornit,
       * **cíl** je konkrétní e-mail, telefonní číslo, chat v Telegramu nebo webhookový endpoint.
 
+    Historie doručování není interní auditní protokol. Událost se do ní uloží
+    pouze tehdy, když směrování připraví alespoň jedno skutečné doručení. Pokud
+    potřebujete úplný externí záznam, vytvořte záchytnou routu pro všechny typy
+    událostí a doručujte ji do vlastního trvalého úložiště, například webhookem.
+
     ===== Příklady krok za krokem =====
 
     Každý příklad začíná u běžného účtu s výchozími routami. Postupujte vždy podle
@@ -80,8 +85,9 @@ new_pages:
 
     U přesného typu používejte pole uvedená na stránce **Typy událostí**. Routa se
     vzorem nebo pro všechny typy může použít pouze společná pole, která formulář
-    přijme. Nastavení patří pouze dané routě a podrouty je nedědí. Ztlumené,
-    přeskočené a časovým intervalem potlačené události se neseskupují.
+    přijme. Nastavení patří pouze dané routě a podrouty je nedědí. Kandidáti
+    zastavení ztlumením, neaktivním intervalem nebo bez odpovídajícího doručení
+    se neukládají a do skupiny nevstoupí.
 
     Skupina vzniká pro routu a příjemce před odesláním jednotlivými způsoby. Má-li
     jeden příjemce e-mailový, telegramový i webhookový cíl, všechny dostanou stejnou
@@ -121,20 +127,19 @@ new_pages:
 
     {{:cs:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Časový interval přiřazený k routě}}
 
-    ===== Události a kontrola doručení =====
+    ===== Historie doručování =====
 
-    Směrování lze zkontrolovat v
+    Uložená doručení lze zkontrolovat v
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
-    Události → detail události**</vpsadmin-nav>. Detail ukazuje odpovídající routy,
-    stav časových intervalů, doručení a snímek vyhodnocení v okamžiku události.
-    ''inactive'' znamená, že neodpovídal aktivní interval; ''muted'' znamená shodu
-    ztlumujícího intervalu.
+    Historie doručování → detail události**</vpsadmin-nav>. Detail ukazuje
+    odpovídající routy, doručení a snímek vyhodnocení v okamžiku události.
+    Kandidát zastavený pouze ztlumením, neaktivním intervalem nebo bez
+    odpovídající routy se neukládá, proto se v historii nezobrazí.
 
-    {{:cs:screenshots:vpsadmin:notifications:event-suppressed.png?900|Událost potlačená časovým intervalem}}
-
-    **Testovací událost** umožňuje prověřit routování bez skutečného pozastavení
-    nebo incidentu, ale její doručení je skutečné a může odeslat e-mail, Telegram,
-    SMS nebo webhook.
+    **Testovací notifikace** umožňuje prověřit routování bez skutečného
+    pozastavení nebo incidentu. Pokud žádná povolená routa nepřipraví doručení,
+    test skončí chybou a nic se do historie neuloží. Úspěšné doručení je skutečné
+    a může odeslat e-mail, Telegram, SMS nebo webhook.
 - language: cs
   page: navody:notifikace:role_udalosti
   body: |
@@ -205,7 +210,7 @@ new_pages:
 
     ===== Krok 5: Ověřte výsledek =====
 
-    Vytvořte **Testovací událost** typu ''vps.suspended''. Tento typ má role
+    Vytvořte **Testovací notifikaci** typu ''vps.suspended''. Tento typ má role
     ''account'' i ''admin''. Zadejte například:
 
     <code json>
@@ -222,11 +227,12 @@ new_pages:
 
     Vytvořenou událost otevřete v
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
-    Události → detail události**</vpsadmin-nav>. V tabulce odpovídajících rout musí
+    Historie doručování → detail události**</vpsadmin-nav>. V tabulce
+    odpovídajících rout musí
     být obě nové routy. Test provádí skutečná doručení, takže zprávu mají dostat
     obě ověřené adresy.
 
-    {{:cs:screenshots:vpsadmin:notifications:example-role-result.png?900|Testovací událost odpovídající oběma rolovým routám}}
+    {{:cs:screenshots:vpsadmin:notifications:example-role-result.png?900|Testovací notifikace odpovídající oběma rolovým routám}}
 - language: cs
   page: navody:notifikace:ztlumeni_oom
   body: |
@@ -241,8 +247,8 @@ new_pages:
 
     ===== Krok 1: Najděte hodnoty skutečného OOM reportu =====
 
-    V přehledu událostí otevřete odpovídající ''vps.oom_report'' a poznamenejte si
-    pole ''vps_id'' a ''cgroup''. Cgroup je úplná cesta bez prefixu
+    V historii doručování otevřete odpovídající ''vps.oom_report'' a
+    poznamenejte si pole ''vps_id'' a ''cgroup''. Cgroup je úplná cesta bez prefixu
     ''/sys/fs/cgroup'', například
     ''/user.slice/user-1000.slice/session-2.scope''.
 
@@ -277,7 +283,7 @@ new_pages:
 
     ===== Krok 4: Ověřte routu =====
 
-    Vytvořte **Testovací událost** typu ''vps.oom_report'':
+    Vytvořte **Testovací notifikaci** typu ''vps.oom_report'':
 
     <code json>
     {
@@ -291,9 +297,9 @@ new_pages:
     }
     </code>
 
-    V <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
-    Události → detail události**</vpsadmin-nav> musí být ztlumující routa první
-    shodou a další routy se již nesmí vyhodnotit.
+    Pokud je ztlumující routa první shodou a žádná jiná routa nepřipraví
+    doručení, test musí oznámit, že žádná povolená routa doručení nevytvořila.
+    V **Historii doručování** se takový kandidát nesmí objevit.
 - language: cs
   page: navody:notifikace:ztlumeni_incidentu
   body: |
@@ -308,9 +314,9 @@ new_pages:
 
     ===== Krok 1: Určete incident =====
 
-    V přehledu událostí otevřete odpovídající ''vps.incident_report''. Zkopírujte
-    pole ''vps_id'' a ''codename''. ''codename'' je stabilní označení zdroje
-    incidentu, nikoli zobrazený předmět nebo text reportu.
+    V historii doručování otevřete odpovídající ''vps.incident_report''.
+    Zkopírujte pole ''vps_id'' a ''codename''. ''codename'' je stabilní
+    označení zdroje incidentu, nikoli zobrazený předmět nebo text reportu.
 
     ===== Krok 2: Vytvořte ztlumující routu =====
 
@@ -340,7 +346,7 @@ new_pages:
 
     ===== Krok 4: Ověřte routu =====
 
-    Vytvořte **Testovací událost** typu ''vps.incident_report'':
+    Vytvořte **Testovací notifikaci** typu ''vps.incident_report'':
 
     <code json>
     {
@@ -351,11 +357,9 @@ new_pages:
     }
     </code>
 
-    V <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
-    Události → detail události**</vpsadmin-nav> musí být nová ztlumující routa
-    první shodou a další routy se již nesmí vyhodnotit.
-
-    {{:cs:screenshots:vpsadmin:notifications:example-mute-result.png?900|Incident zastavený ztlumující routou}}
+    Pokud je nová ztlumující routa první shodou a žádná jiná routa nepřipraví
+    doručení, test musí oznámit, že žádná povolená routa doručení nevytvořila.
+    V **Historii doručování** se takový kandidát nesmí objevit.
 - language: cs
   page: navody:notifikace:telegram
   body: |
@@ -423,14 +427,15 @@ new_pages:
 
     Pro bezpečný test spojení dočasně přidejte routu pro přesný typ
     ''user.test_notification'', příjemce **Provozní Telegram** a **Pokračovat:
-    ne**. Vytvořte testovací událost, zkontrolujte zprávu v Telegramu a dočasnou
+    ne**. Vytvořte testovací notifikaci, zkontrolujte zprávu v Telegramu a dočasnou
     routu smažte.
 
-    {{:cs:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Testovací událost zastavená dočasnou telegramovou routou}}
+    {{:cs:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Testovací notifikace zastavená dočasnou telegramovou routou}}
 
     Příští skutečný monitoring nebo incident zkontrolujte v
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
-    Události → detail události**</vpsadmin-nav>. Obecná syntetická událost nemusí
+    Historie doručování → detail události**</vpsadmin-nav>. Obecná syntetická
+    událost nemusí
     mít reálný monitoringový nebo incidentní objekt, který potřebuje šablona;
     spojení proto testujte dočasnou routou.
 - language: cs
@@ -510,7 +515,8 @@ new_pages:
 
     Výsledek zkontrolujte v
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
-    Události → detail události**</vpsadmin-nav>. Routa VPS se ověří při příštím
+    Historie doručování → detail události**</vpsadmin-nav>. Routa VPS se ověří
+    při příštím
     skutečném pozastavení, protože obecný test není spojen s reálnou VPS potřebnou
     šablonou zprávy.
 - language: cs
@@ -599,7 +605,7 @@ new_pages:
 
     Odpovídající routu zkontrolujte v
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
-    Události → detail události**</vpsadmin-nav> a poté znovu zapněte
+    Historie doručování → detail události**</vpsadmin-nav> a poté znovu zapněte
     **Pokračovat**.
 
     {{:cs:screenshots:vpsadmin:notifications:example-webhook-result.png?900|Test změny prostředků zastavený webhookovou routou}}
@@ -630,6 +636,11 @@ new_pages:
       * a **route** selects events and decides whether routing continues,
       * a **receiver** describes who or which integration should be notified,
       * a **target** is a concrete e-mail address, telephone number, Telegram chat, or webhook endpoint.
+
+    Delivery history is not an internal audit log. An event is stored there only
+    when routing prepares at least one real delivery. If you need a complete
+    external record, create a catch-all route and deliver it to your own durable
+    storage, for example through a webhook.
 
     ===== Step-by-step examples =====
 
@@ -694,7 +705,8 @@ new_pages:
     For an exact event type, use fields listed for that type on the **Event types**
     page. Pattern and catch-all routes can use only common fields accepted by the
     form. Grouping belongs only to that route and is not inherited by subroutes.
-    Muted, skipped, and time-suppressed events do not enter a group.
+    Candidates stopped by a mute, an inactive interval, or the absence of a
+    matching delivery are not stored and do not enter a group.
 
     The group is defined for the route and receiver before individual delivery
     actions are sent. If one receiver has e-mail, Telegram, and webhook targets,
@@ -735,20 +747,19 @@ new_pages:
 
     {{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Time interval assigned to a route}}
 
-    ===== Event log and delivery checks =====
+    ===== Delivery history =====
 
-    Inspect routing at
+    Inspect stored deliveries at
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
-    Event log → event detail**</vpsadmin-nav>. The detail shows matched routes,
-    time-interval state, deliveries, and the routing snapshot captured when the
-    event occurred. ''inactive'' means no active interval matched; ''muted'' means
-    a mute interval matched.
+    Delivery history → event detail**</vpsadmin-nav>. The detail shows matched
+    routes, deliveries, and the routing snapshot captured when the event
+    occurred. A candidate stopped only by a mute, an inactive interval, or the
+    absence of a matching route is not stored and does not appear here.
 
-    {{:en:screenshots:vpsadmin:notifications:event-suppressed.png?900|Event suppressed by a time interval}}
-
-    **Test event** checks routing without causing a real suspension or incident,
-    but its notification delivery is real and may send e-mail, Telegram, SMS, or a
-    webhook request.
+    **Test notification** checks routing without causing a real suspension or
+    incident. If no enabled route prepares a delivery, the test fails and
+    nothing is stored in delivery history. A successful notification delivery
+    is real and may send e-mail, Telegram, SMS, or a webhook request.
 - language: en
   page: manuals:notifications:event_roles
   body: |
@@ -820,7 +831,8 @@ new_pages:
 
     ===== Step 5: Test the result =====
 
-    Create a **Test event** of type ''vps.suspended''. This type has both the
+    Create a **Test notification** of type ''vps.suspended''. This type has both
+    the
     ''account'' and ''admin'' roles. For example, use:
 
     <code json>
@@ -838,11 +850,13 @@ new_pages:
 
     Open the created event at
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
-    Event log → event detail**</vpsadmin-nav>. Both new routes must appear in its
-    matched-routes table. Test events perform real deliveries, so both verified
+    Delivery history → event detail**</vpsadmin-nav>. Both new routes must appear
+    in its
+    matched-routes table. Test notifications perform real deliveries, so both
+    verified
     addresses should receive the message.
 
-    {{:en:screenshots:vpsadmin:notifications:example-role-result.png?900|Test event matching both role routes}}
+    {{:en:screenshots:vpsadmin:notifications:example-role-result.png?900|Test notification matching both role routes}}
 - language: en
   page: manuals:notifications:mute_oom
   body: |
@@ -856,8 +870,8 @@ new_pages:
 
     ===== Step 1: Find values from a real OOM report =====
 
-    Open a relevant ''vps.oom_report'' in the event log and note its ''vps_id'' and
-    ''cgroup'' fields. The cgroup is a complete path without the
+    Open a relevant ''vps.oom_report'' in delivery history and note its
+    ''vps_id'' and ''cgroup'' fields. The cgroup is a complete path without the
     ''/sys/fs/cgroup'' prefix, for example
     ''/user.slice/user-1000.slice/session-2.scope''.
 
@@ -893,7 +907,8 @@ new_pages:
 
     ===== Step 4: Test the route =====
 
-    Create a **Test event** of type ''vps.oom_report'' with representative fields:
+    Create a **Test notification** of type ''vps.oom_report'' with
+    representative fields:
 
     <code json>
     {
@@ -907,9 +922,9 @@ new_pages:
     }
     </code>
 
-    At <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
-    Event log → event detail**</vpsadmin-nav>, the mute route must be the first
-    match and later routes must not be evaluated.
+    If the mute route is the first match and no other route prepares a delivery,
+    the test must report that no enabled route produced a delivery. The
+    candidate must not appear in **Delivery history**.
 - language: en
   page: manuals:notifications:mute_incidents
   body: |
@@ -923,9 +938,9 @@ new_pages:
 
     ===== Step 1: Identify the incident =====
 
-    Open a relevant ''vps.incident_report'' in the event log. Copy its ''vps_id''
-    and ''codename'' fields. The codename is the stable identifier of the incident
-    source; it is not the displayed subject or report text.
+    Open a relevant ''vps.incident_report'' in delivery history. Copy its
+    ''vps_id'' and ''codename'' fields. The codename is the stable identifier of
+    the incident source; it is not the displayed subject or report text.
 
     ===== Step 2: Create the mute route =====
 
@@ -955,7 +970,7 @@ new_pages:
 
     ===== Step 4: Test the route =====
 
-    Create a **Test event** of type ''vps.incident_report'':
+    Create a **Test notification** of type ''vps.incident_report'':
 
     <code json>
     {
@@ -966,11 +981,9 @@ new_pages:
     }
     </code>
 
-    At <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
-    Event log → event detail**</vpsadmin-nav>, the new mute route must be the first
-    match and later routes must not be evaluated.
-
-    {{:en:screenshots:vpsadmin:notifications:example-mute-result.png?900|Incident stopped by its mute route}}
+    If the new mute route is the first match and no other route prepares a
+    delivery, the test must report that no enabled route produced a delivery.
+    The candidate must not appear in **Delivery history**.
 - language: en
   page: manuals:notifications:telegram
   body: |
@@ -1038,14 +1051,15 @@ new_pages:
 
     For a safe connection test, temporarily add a route for exact event type
     ''user.test_notification'', receiver **Operations Telegram**, and **Continue:
-    no**. Create a test event, check the Telegram message, and delete the temporary
-    route.
+    no**. Create a test notification, check the Telegram message, and delete the
+    temporary route.
 
-    {{:en:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Test event stopped by the temporary Telegram route}}
+    {{:en:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Test notification stopped by the temporary Telegram route}}
 
     Inspect the next real monitoring or incident event at
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
-    Event log → event detail**</vpsadmin-nav>. A generic synthetic event may lack
+    Delivery history → event detail**</vpsadmin-nav>. A generic synthetic event
+    may lack
     the real monitoring or incident object required by its message template, so
     use the temporary test route to test the connection itself.
 - language: en
@@ -1109,7 +1123,7 @@ new_pages:
 
     ===== Step 5: Test and inspect delivery =====
 
-    Optionally create a ''user.suspended'' test event with:
+    Optionally create a ''user.suspended'' test notification with:
 
     <code json>
     {
@@ -1125,7 +1139,8 @@ new_pages:
 
     Inspect the result at
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
-    Event log → event detail**</vpsadmin-nav>. Verify the VPS route on the next real
+    Delivery history → event detail**</vpsadmin-nav>. Verify the VPS route on the
+    next real
     VPS suspension because a generic test is not attached to the real VPS required
     by its message template.
 - language: en
@@ -1214,7 +1229,8 @@ new_pages:
 
     Inspect the matched route at
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
-    Event log → event detail**</vpsadmin-nav>, then re-enable **Continue**.
+    Delivery history → event detail**</vpsadmin-nav>, then re-enable
+    **Continue**.
 
     {{:en:screenshots:vpsadmin:notifications:example-webhook-result.png?900|Resource-change test stopped by the webhook route}}
 
@@ -1339,8 +1355,6 @@ media:
 - language: cs
   capture: notifications/route-time-intervals
 - language: cs
-  capture: notifications/event-suppressed
-- language: cs
   capture: notifications/example-role-receiver
 - language: cs
   capture: notifications/example-role-routing
@@ -1352,8 +1366,6 @@ media:
   capture: notifications/example-mute-oom
 - language: cs
   capture: notifications/example-mute-incident-route
-- language: cs
-  capture: notifications/example-mute-result
 - language: cs
   capture: notifications/example-telegram-target
 - language: cs
@@ -1389,8 +1401,6 @@ media:
 - language: en
   capture: notifications/route-time-intervals
 - language: en
-  capture: notifications/event-suppressed
-- language: en
   capture: notifications/example-role-receiver
 - language: en
   capture: notifications/example-role-routing
@@ -1402,8 +1412,6 @@ media:
   capture: notifications/example-mute-oom
 - language: en
   capture: notifications/example-mute-incident-route
-- language: en
-  capture: notifications/example-mute-result
 - language: en
   capture: notifications/example-telegram-target
 - language: en

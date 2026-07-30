@@ -1,0 +1,75 @@
+<page>manuals:notifications:telegram</page>
+====== Odeslání monitoringu a incidentů do Telegramu ======
+
+Tento příklad posílá všechny události ''monitoring.*'' a
+''vps.incident_report'' do soukromého chatu v Telegramu a zároveň zachová běžné
+e-mailové doručení.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]].
+
+===== Krok 1: Spárujte telegramový cíl =====
+
+V <vpsadmin-nav id="notifications.target-form.open">**Notifikace →
+Cíle**</vpsadmin-nav> přidejte cíl typu **Telegram** s názvem **Provozní
+Telegram**.
+
+Zobrazený párovací odkaz otevřete v soukromém chatu s botem, stiskněte
+**Start** a vraťte se do vpsAdminu. Cíl musí mít stav **spárováno**. Párovací
+odkaz je tajný a neposílejte jej dalším lidem.
+
+{{:cs:screenshots:vpsadmin:notifications:example-telegram-target.png?900|Spárovaný telegramový cíl}}
+
+===== Krok 2: Vytvořte příjemce =====
+
+V <vpsadmin-nav id="notifications.receivers.open">**Notifikace →
+Příjemci**</vpsadmin-nav> vytvořte **Provozní Telegram**. Otevřete jej a
+připojte spárovaný cíl stejného názvu.
+
+{{:cs:screenshots:vpsadmin:notifications:example-telegram.png?900|Telegramový cíl připojený k příjemci}}
+
+===== Krok 3: Směrujte monitoring =====
+
+V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
+Routy**</vpsadmin-nav> přidejte:
+
+^ Pole ^ Hodnota ^
+| Název | ''Monitoring do Telegramu'' |
+| Typ události | ponechte prázdný |
+| Vzor typu události | ''monitoring.*'' |
+| Příjemce | Provozní Telegram |
+| Povoleno | ano |
+| Pokračovat | ano |
+
+{{:cs:screenshots:vpsadmin:notifications:example-telegram-monitoring-route.png?900|Telegramová routa pro monitoring.*}}
+
+===== Krok 4: Směrujte incidentní reporty =====
+
+Přidejte další routu:
+
+^ Pole ^ Hodnota ^
+| Název | ''Incidenty do Telegramu'' |
+| Typ události | ''vps.incident_report'' |
+| Vzor typu události | ponechte prázdný |
+| Příjemce | Provozní Telegram |
+| Povoleno | ano |
+| Pokračovat | ano |
+
+{{:cs:screenshots:vpsadmin:notifications:example-telegram-incident-route.png?900|Telegramová routa pro incidentní reporty}}
+
+**Pokračovat** zůstává zapnuté, aby stejné události nadále chodily i e-mailem.
+
+===== Krok 5: Ověřte doručení do Telegramu =====
+
+Pro bezpečný test spojení dočasně přidejte routu pro přesný typ
+''user.test_notification'', příjemce **Provozní Telegram** a **Pokračovat:
+ne**. Vytvořte testovací notifikaci, zkontrolujte zprávu v Telegramu a dočasnou
+routu smažte.
+
+{{:cs:screenshots:vpsadmin:notifications:example-telegram-result.png?900|Testovací notifikace zastavená dočasnou telegramovou routou}}
+
+Příští skutečný monitoring nebo incident zkontrolujte v
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
+Historie doručování → detail události**</vpsadmin-nav>. Obecná syntetická
+událost nemusí
+mít reálný monitoringový nebo incidentní objekt, který potřebuje šablona;
+spojení proto testujte dočasnou routou.

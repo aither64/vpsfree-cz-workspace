@@ -16663,3 +16663,247 @@ RuboCop, and i18n health checks. The aggregate CI and topic-parallel API
 workflows remain in progress and are deliberately not awaited because the user
 asked to skip the hours-long workflow. The runtime delta from the already
 live-accepted OAuth fix `e1aa5c4b` is test-only.
+
+### Delivery-only persistence correction
+
+- 2026-07-30 implementation started from clean vpsAdmin head
+  `a1321b2485ce5f14087d4d93429a97ea8cf28306` and clean
+  vpsadmin-kb-captures head
+  `eb7d7272df43d15cab1cf685eda50e5053c43faa`.
+- The verified active session remains `2026-06-15-vpsadmin-events`.
+- User clarified that Events must not provide an internal audit log. An Event
+  is to be persisted only when at least one real delivery is planned; external
+  consumers build any desired audit record by configuring and catching a
+  routed stream.
+- The dev cluster may be reset and there is no production event state to
+  migrate. No new audit schema or operation-attempt counter is authorized.
+- Operation retries will be represented by ordered lifecycle events sharing
+  `operation_id`; `attempt` and `operation_attempt` are being removed.
+- The existing hours-long aggregate integration workflow remains explicitly
+  excluded.
+- Core routing/lifecycle work, public API/WebUI documentation work, and focused
+  regression coverage were delegated to independent agents; integration,
+  producer call sites, review, publication, capture pinning, and deployment
+  remain coordinated from the primary session.
+
+#### Implementation checkpoint
+
+- vpsAdmin implementation commit:
+  `d0855142e3ab9a2727f3fbe855facabc765cbbf6`
+  (`notifications: persist only routed events`), based on
+  `a1321b2485ce5f14087d4d93429a97ea8cf28306`.
+- No schema, migration, node protocol, dependency, or generated-client change
+  was introduced.
+- Focused API verification completed in bounded batches:
+  - routing and transaction lifecycle: 92 examples, with the corrected
+    assertion rerun green;
+  - resource operations: 33 examples, zero failures;
+  - formerly suppressed producers: 67 examples, zero failures;
+  - positive public resource events: 47 examples after two exact route
+    fixtures were added, zero failures;
+  - final Event API delivery-only and metadata focus: six examples, zero
+    failures.
+- The complete Event API resource spec was stopped after 8m31s rather than
+  turning into an hours-long run. At that point it had 29 passing examples,
+  one expected pending example, and one missing-route fixture failure; that
+  fixture was corrected and its focused rerun passed.
+- WebUI PHPUnit passed with 21 tests and 279 assertions. PHP syntax passed for
+  both changed source files.
+- RuboCop passed on all 50 changed Ruby files. Ruby syntax, `git diff --check`,
+  API/WebUI i18n health, migration specs, Nixfmt, and PHP CS Fixer passed.
+- The installed Overcommit pre-commit and commit-message hooks ran from
+  `nix develop .#vpsadmin`; all required hooks passed. An initial ambient-shell
+  commit attempt created no commit because its hook process lacked the Nix
+  tools; the successful commit was made from the repository development shell.
+- The required fresh-context mandatory change review is next. Publication,
+  capture-contract correction, and development-cluster reset/redeployment
+  remain pending.
+
+#### Mandatory review findings
+
+- The standalone reviewer rejected range
+  `a1321b2485ce5f14087d4d93429a97ea8cf28306..d0855142e3ab9a2727f3fbe855facabc765cbbf6`
+  on two Blocking findings:
+  - `Event.routing_state` had reassigned `aborted` from the stable raw node
+    value 4 to 1, while libnodectld still writes 4 when transaction-gated
+    deliveries are aborted;
+  - VPS runtime producer-ID deduplication still queried Event rows, so an
+    unrouted redelivery could duplicate object history and OOM incident work.
+- Both findings are accepted. The correction will preserve the established
+  routed/aborted numeric values, correct the unreleased migration default, add
+  a cross-layer enum assertion, and make runtime side-effect deduplication use
+  the existing durable VPS object-history row rather than notification
+  delivery history.
+- The reviewer found no other Blocking, Important, or Advisory issue and
+  accepted the single-commit split as cohesive. The corrected commit will be
+  amended, rerun through focused checks and hooks, then sent back to the same
+  standalone reviewer for an exact-head follow-up.
+
+#### Mandatory review corrections
+
+- The two Blocking findings were corrected and folded into amended vpsAdmin
+  revision `07bab67421f0ba76fad397944b6011d23f54b31c`.
+- `Event.routing_state` now preserves the existing cross-process numeric
+  contract: routed is 1 and aborted is 4. The default in the still-unreleased
+  Events migration and generated schema is routed (1), with an API assertion
+  tied directly to libnodectld's abort constant.
+- VPS runtime producer deduplication now uses the existing durable
+  `ObjectHistory` row, whose `event_data` records `producer_event_id`. It no
+  longer depends on an Event row that correctly does not exist when no route
+  produces a delivery.
+- Focused correction verification:
+  - API runtime and cross-layer enum: 15 examples, zero failures;
+  - Events migration: three examples, zero failures;
+  - libnodectld transaction-gated abort: one example, zero failures;
+  - RuboCop on all five corrected Ruby/spec files: zero offenses;
+  - Ruby syntax and `git diff --check`: clean;
+  - the complete installed Overcommit pre-commit and commit-message suites:
+    all hooks passed.
+- The earlier accidental attempt to combine migration and ordinary model specs
+  in one RSpec process was discarded because migration specs intentionally
+  replace the active schema. The two suites were rerun separately and passed.
+- The same standalone mandatory reviewer will now review the corrected exact
+  range before publication. The hours-long aggregate integration workflow
+  remains deliberately skipped.
+
+The same standalone reviewer accepted corrected exact range
+`a1321b2485ce5f14087d4d93429a97ea8cf28306..07bab67421f0ba76fad397944b6011d23f54b31c`
+with no Blocking or Important findings. Its sole Advisory was the mistyped
+full revision in this state file; it has been corrected above. The reviewer
+confirmed both prior blockers are resolved, accepted the one-commit split, and
+identified only the intentionally skipped aggregate workflow plus pending
+capture, KB, and deployment work as residual risk.
+
+The reviewed vpsAdmin revision was pushed normally over SSH; local and remote
+branch heads now match at
+`07bab67421f0ba76fad397944b6011d23f54b31c`.
+
+The disposable screenshot cluster was reset before validating the corrected
+capture seed. Starting its screenshot topology on the default bridge network
+was refused because the configured bridge service address `172.16.106.53`
+already responds for the concurrently running primary development cluster.
+The capture topology therefore uses local networking for this validation only;
+the bridge conflict is the recorded reason for the exception.
+
+#### Delivery-only capture and KB contract
+
+- The capture repository now has amended implementation commit
+  `251653fd176265a23fb518b6ebfd110301a19428`
+  (`captures: retire suppressed event results`), based on
+  `eb7d7272df43d15cab1cf685eda50e5053c43faa`.
+- Its vpsAdmin input, capture manifest, and navigation contract all pin the
+  reviewed application revision
+  `07bab67421f0ba76fad397944b6011d23f54b31c`.
+- The seed no longer forces Event persistence or creates muted/inactive Event
+  rows. The impossible `event-suppressed` and `example-mute-result` concepts,
+  their four bilingual PNGs, scenario steps, and KB bindings were removed.
+  Configuration screenshots for the mute routes remain.
+- The screenshot topology completed 24 Czech and 24 English notification
+  checkpoints. Both regenerated contact sheets were inspected; the retained
+  captures show the delivery-history terminology and expected route/receiver
+  states without suppressed-result history.
+- Capture verification passed:
+  - `bin/check`, including Node/Ruby/shell syntax and static checks;
+  - 8 contract tests with 50 assertions and 9 KB-annotation tests with
+    19 assertions;
+  - inventory validation with 84 concepts, 168 variants, 85 Czech references,
+    76 English references, and 168 PNGs;
+  - candidate-aware KB validation with 119 bindings and 9 explicit
+    exceptions;
+  - `git diff --check`.
+- Fresh guarded KB candidates were built from the 2026-07-30 production
+  snapshot: 16 changed pages, 4 annotations, and 48 media objects. Separate
+  manifests contain 8 pages and 24 media objects for each language:
+  `kb-release-delivery-only-cs.yml` and
+  `kb-release-delivery-only-en.yml`.
+- Owned KB staging was reset to a fresh production mirror, replacing the
+  superseded pending candidate. Both new manifests were staged and verified,
+  including 8 Czech/English language pairs. No production wiki write was
+  performed; the English manifest is the current pending-release marker while
+  both language candidates remain verified in staging.
+- The screenshot cluster was stopped after capture. Publication and primary
+  development-cluster redeployment remain pending.
+
+The standalone capture reviewer rejected the initial committed revision
+`9139a760dff83e10bab344f5722b41ee710d757b` on one Blocking finding: the
+navigation contract and one capture description still said `Event log`, while
+the pinned WebUI and KB use `Delivery history`. The contract fingerprint did
+not cover the live sidebar label, so its normal checker missed the mismatch.
+
+The finding was accepted and corrected in amended revision
+`251653fd176265a23fb518b6ebfd110301a19428`:
+
+- `notifications.events` now has the bilingual `Delivery history` /
+  `Historie doručování` contract label;
+- its source contract explicitly couples the fingerprint to the live
+  `Delivery history` sidebar declaration; and
+- the role-result capture description now says `Delivery history result`.
+
+After the correction, `bin/check`, the 17 contract tests, inventory validation,
+candidate-aware KB validation, stale-label search, and `git diff --check` all
+pass. The same standalone reviewer will perform an exact amended-head
+follow-up before publication.
+
+The standalone reviewer accepted corrected exact range
+`eb7d7272df43d15cab1cf685eda50e5053c43faa..251653fd176265a23fb518b6ebfd110301a19428`
+with no remaining Blocking, Important, or Advisory findings. It confirmed the
+live label is now coupled into the contract fingerprint, the stale terminology
+is gone, the exact vpsAdmin pin is intact, and the one-commit split is
+cohesive. Residual risk is limited to the intentionally skipped aggregate
+workflow and approval-gated production KB promotion.
+
+#### Delivery-only publication and development deployment
+
+- Reviewed capture revision
+  `251653fd176265a23fb518b6ebfd110301a19428` was pushed normally over SSH.
+  Local and remote branch heads match and the worktree is clean.
+- The existing primary cluster was reset as planned. Its old runner needed a
+  timeout kill, after which the exact cluster state and GC root were removed
+  before rebuilding; no old database or VM state was reused.
+- A fresh `single` topology started on the default `bridge` network from clean
+  vpsAdmin revision
+  `07bab67421f0ba76fad397944b6011d23f54b31c`. The configured Telegram secret
+  triggered the expected second services activation before readiness.
+- Post-deployment health:
+  - `devcluster status`: running, ready, single topology, bridge network;
+  - `/etc/vpsadmin/build-info.json`: exact revision `07bab674...`,
+    `revisionDirty: false`;
+  - API, scheduler, supervisor, console-router, e-mail dispatcher, and webhook
+    dispatcher: active;
+  - seed service: `Result=success`, exit status 0;
+  - failed units: none;
+  - API, WebUI, and auth HTTPS endpoints: HTTP 200;
+  - all four transaction chains are terminal state 2 (`done`).
+- A timer fired during the first activation before the development WebUI
+  plugin link existed, causing one transient incident-report rake failure.
+  The next two scheduled executions completed successfully after final
+  activation, the current unit is successful/inactive, and the API journal has
+  no error-priority entries. The race and verification workflow are recorded
+  in `notes/vpsadmin/2026-07-30-devcluster-plugin-timer-race.md`.
+- Browser acceptance completed a real OAuth password login, logged out, and
+  logged in again in the same context with the known-device cookie retained.
+  Both authorization submissions returned HTTP 302 and the second login
+  reached the authenticated WebUI without `invalid_request`.
+- Delivery-only live acceptance for `test-user1`:
+  - with all routes disabled, Test notification reported the explicit
+    delivery-only failure and persisted no matching Event;
+  - with only the default route enabled against the built-in mute receiver,
+    Test notification reported the same failure and persisted no matching
+    Event;
+  - after restoring the normal default receiver and all route enablement, Test
+    notification opened Delivery history and persisted one routed Event, one
+    route match, and one delivery;
+  - the two failed subjects have zero Event rows and all four stored Events in
+    the fresh cluster have routing state 1 (`routed`).
+- Temporary browser acceptance scripts were removed. The development routes
+  were restored to their seeded enabled/default-receiver state.
+- The hours-long aggregate and topic-parallel workflows remain deliberately
+  unawaited as requested. Fast CI for the exact vpsAdmin head is green for API
+  migration specs, RuboCop, WebUI PHPUnit, i18n health, and libnodectld specs.
+- Workspace release-record validation parsed the annotation plan and both
+  delivery-only manifests successfully. `git diff --cached --check` passes for
+  all authored tracking, note, annotation, and manifest files. The complete
+  check reports existing trailing whitespace and a conflict-marker-like
+  DokuWiki heading in the byte-for-byte production source/candidate mirrors;
+  the same heading is present in the preceding canonical snapshot. These
+  checksummed mirror bytes were intentionally preserved rather than normalized.

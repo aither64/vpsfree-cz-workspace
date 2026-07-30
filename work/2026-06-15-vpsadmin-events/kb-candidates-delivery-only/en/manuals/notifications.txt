@@ -1,0 +1,136 @@
+====== Notifications ======
+
+The vpsAdmin notification system turns events into e-mail, SMS, Telegram, or
+webhook deliveries. Open it from the
+<vpsadmin-nav id="notifications.open">main **Notifications** menu</vpsadmin-nav>.
+
+The basic flow is **event → route → receiver → target**:
+
+  * an **event** describes what happened,
+  * a **route** selects events and decides whether routing continues,
+  * a **receiver** describes who or which integration should be notified,
+  * a **target** is a concrete e-mail address, telephone number, Telegram chat, or webhook endpoint.
+
+Delivery history is not an internal audit log. An event is stored there only
+when routing prepares at least one real delivery. If you need a complete
+external record, create a catch-all route and deliver it to your own durable
+storage, for example through a webhook.
+
+===== Step-by-step examples =====
+
+Each example starts from an ordinary account with the default routes. Follow
+one example at a time:
+
+  * [[manuals:notifications:event_roles|Route account and admin events to different contacts]]
+  * [[manuals:notifications:mute_oom|Mute selected OOM reports]]
+  * [[manuals:notifications:mute_incidents|Mute selected incident reports]]
+  * [[manuals:notifications:telegram|Send monitoring events and incident reports to Telegram]]
+  * [[manuals:notifications:sms|Send SMS on account or VPS suspension]]
+  * [[manuals:notifications:webhook|Send VPS resource changes to a webhook]]
+
+===== Routes and matchers =====
+
+Manage routes at <vpsadmin-nav id="notifications.routes.open">**Notifications
+→ Routes**</vpsadmin-nav>. Routes at the same level are evaluated from top to
+bottom. Every matcher on one route must match.
+
+Choose **Event type** for one exact type. Use **Event type pattern** for a
+shell-style glob such as ''monitoring.*''. Leave both empty only when the route
+is intended to match all event types. The **Event types** page lists available
+types and their fields.
+
+**Continue: yes** lets later sibling routes evaluate the same event. This is
+useful when, for example, both Telegram and e-mail should receive it.
+**Continue: no** stops at that route; mute routes normally use this setting.
+Subroutes are evaluated after their parent matches, independently of the
+parent's **Continue** setting.
+
+===== Targets and receivers =====
+
+Manage concrete destinations at
+<vpsadmin-nav id="notifications.target-form.open">**Notifications →
+Targets**</vpsadmin-nav>. Custom e-mail and SMS targets must be verified and
+Telegram targets must be paired before they can receive notifications.
+
+Manage receivers under
+<vpsadmin-nav id="notifications.receivers.open">**Notifications →
+Receivers**</vpsadmin-nav>. A receiver can contain several targets. A route
+points to the receiver, not directly to an address. The built-in **Mute**
+receiver has no delivery target and suppresses matching events.
+
+{{:en:screenshots:vpsadmin:notifications:receiver.png?900|Receiver and target configuration}}
+
+===== Event grouping =====
+
+Grouping is useful when many related events arrive in a short burst. Instead
+of sending a message for every event, vpsAdmin collects them and sends a
+summary. The default OOM-report route uses grouping by ''vps_id'', so reports
+from one VPS are summarized together and reports from different VPSes stay
+separate.
+
+Grouping is configured separately on an existing route at
+<vpsadmin-nav id="notifications.route-grouping-form.open">**Notifications →
+Routes → edit route → Notification grouping**</vpsadmin-nav>:
+
+  * **Group by fields** contains comma-separated scalar event fields. Their values identify a group. Leave it empty to put all events matching the route into one group.
+  * **Initial wait** is how many seconds the first event waits so more events can join a new, idle group.
+  * **Repeat interval** is the minimum delay before another summary from the same still-active group.
+
+For an exact event type, use fields listed for that type on the **Event types**
+page. Pattern and catch-all routes can use only common fields accepted by the
+form. Grouping belongs only to that route and is not inherited by subroutes.
+Candidates stopped by a mute, an inactive interval, or the absence of a
+matching delivery are not stored and do not enter a group.
+
+The group is defined for the route and receiver before individual delivery
+actions are sent. If one receiver has e-mail, Telegram, and webhook targets,
+each action receives the same set of grouped events. It is not three
+independently timed groups.
+
+{{:en:screenshots:vpsadmin:notifications:grouping-route.png?900|Grouping settings on an OOM-report route}}
+
+Open
+<vpsadmin-nav id="notifications.groups.open">**Notifications → Notification
+groups**</vpsadmin-nav> to inspect open, overdue, idle, and historical groups.
+A group detail shows its route, receiver, grouping labels, timing, pending
+events, and deliveries. Individual deliveries remain visible in the event
+detail.
+
+===== Time intervals =====
+
+Define reusable intervals under
+<vpsadmin-nav id="notifications.time-intervals.open">**Notifications → Time
+intervals**</vpsadmin-nav>. A time interval is useful for:
+
+  * silencing alerts outside working hours,
+  * sending work-hours and on-call notifications to different people or teams,
+  * limiting a route to a recurring maintenance window,
+  * expressing complementary schedules with separate routes.
+
+Each interval has an IANA time zone and one or more specifications. Fields
+within one specification use logical **AND**; multiple ranges or specifications
+are alternatives.
+
+{{:en:screenshots:vpsadmin:notifications:time-interval.png?900|Time interval configuration}}
+
+Assign an interval at
+<vpsadmin-nav id="notifications.route-time-intervals.open">**Notifications →
+Routes → edit route**</vpsadmin-nav> as an **Active interval** or **Mute
+interval**. With no active interval, the route has no active-time restriction.
+A matching mute interval suppresses that route.
+
+{{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Time interval assigned to a route}}
+
+===== Delivery history =====
+
+Inspect stored deliveries at
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Delivery history → event detail**</vpsadmin-nav>. The detail shows matched
+routes, deliveries, and the routing snapshot captured when the event
+occurred. A candidate stopped only by a mute, an inactive interval, or the
+absence of a matching route is not stored and does not appear here.
+
+**Test notification** checks routing without causing a real suspension or
+incident. If no enabled route prepares a delivery, the test fails and
+nothing is stored in delivery history. A successful notification delivery
+is real and may send e-mail, Telegram, SMS, or a webhook request.

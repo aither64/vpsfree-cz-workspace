@@ -1,0 +1,78 @@
+<page>manuals:notifications:sms</page>
+====== Odeslání SMS při pozastavení účtu nebo VPS ======
+
+Tento příklad pošle SMS při pozastavení celého účtu nebo jednotlivé VPS a
+zároveň zachová běžné e-mailové notifikace.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]].
+
+===== Krok 1: Přidejte a ověřte SMS cíl =====
+
+V <vpsadmin-nav id="notifications.target-form.open">**Notifikace →
+Cíle**</vpsadmin-nav> přidejte cíl typu **SMS**. Číslo zadejte v mezinárodním
+formátu E.164, například ''+420123456789'', a uložte jej.
+
+Odešlete ověřovací SMS a zapište přijatý kód. Zprávy může přijímat pouze
+povolený a ověřený cíl.
+
+{{:cs:screenshots:vpsadmin:notifications:example-sms-verification.png?900|Ověření SMS cíle přijatým kódem}}
+
+===== Krok 2: Vytvořte příjemce =====
+
+V <vpsadmin-nav id="notifications.receivers.open">**Notifikace →
+Příjemci**</vpsadmin-nav> vytvořte **SMS pozastavení**. Otevřete jej a připojte
+ověřený SMS cíl.
+
+{{:cs:screenshots:vpsadmin:notifications:example-sms.png?900|Ověřený SMS cíl připojený k příjemci}}
+
+===== Krok 3: Směrujte pozastavení účtu =====
+
+V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
+Routy**</vpsadmin-nav> přidejte:
+
+^ Pole ^ Hodnota ^
+| Název | ''SMS při pozastavení účtu'' |
+| Typ události | ''user.suspended'' |
+| Příjemce | SMS pozastavení |
+| Povoleno | ano |
+| Pokračovat | ano |
+
+{{:cs:screenshots:vpsadmin:notifications:example-sms-account-route.png?900|SMS routa pro pozastavení účtu}}
+
+===== Krok 4: Směrujte pozastavení VPS =====
+
+Přidejte:
+
+^ Pole ^ Hodnota ^
+| Název | ''SMS při pozastavení VPS'' |
+| Typ události | ''vps.suspended'' |
+| Příjemce | SMS pozastavení |
+| Povoleno | ano |
+| Pokračovat | ano |
+
+{{:cs:screenshots:vpsadmin:notifications:example-sms-vps-route.png?900|SMS routa pro pozastavení VPS}}
+
+''user.suspended'' se týká celého účtu a ''vps.suspended'' jedné VPS.
+**Pokračovat** nechte zapnuté, aby zůstalo zachováno e-mailové doručení.
+
+===== Krok 5: Otestujte a zkontrolujte doručení =====
+
+Volitelně vytvořte testovací událost ''user.suspended'':
+
+<code json>
+{
+  "state": "suspended",
+  "reason": "Routing test"
+}
+</code>
+
+Test nic nepozastaví, ale odešle skutečnou SMS, která může být zpoplatněna.
+
+{{:cs:screenshots:vpsadmin:notifications:example-sms-result.png?900|Test pozastavení účtu odpovídající SMS routě}}
+
+Výsledek zkontrolujte v
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
+Historie doručování → detail události**</vpsadmin-nav>. Routa VPS se ověří
+při příštím
+skutečném pozastavení, protože obecný test není spojen s reálnou VPS potřebnou
+šablonou zprávy.

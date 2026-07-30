@@ -1,0 +1,90 @@
+<page>manuals:notifications:event_roles</page>
+====== Doručení událostí podle role account nebo admin ======
+
+Role události označuje zamýšlené publikum notifikace. Neuděluje oprávnění ve
+vpsAdminu a nesouvisí s přístupovou rolí uživatele.
+
+Role ''account'' se používá pro správu členství a účtu, platby a vyúčtování,
+požadavky a bezpečnostní zprávy určené majiteli účtu nebo účetnímu. Role
+''admin'' se používá pro provoz VPS, monitoring, OOM a incidentní reporty,
+zálohy a migrace určené technickému správci. Konkrétní typy ověřte na stránce
+**Typy událostí**. Jedna událost může mít obě role; potom ji dostanou oba
+kontakty.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]].
+
+===== Krok 1: Vytvořte a ověřte dva e-mailové cíle =====
+
+V <vpsadmin-nav id="notifications.target-form.open">**Notifikace →
+Cíle**</vpsadmin-nav> přidejte dva e-mailové cíle, například **E-mail účtu** a
+**E-mail správce**. Než budete pokračovat, otevřete odkaz v každé ověřovací
+zprávě.
+
+===== Krok 2: Vytvořte dva příjemce =====
+
+V <vpsadmin-nav id="notifications.receivers.open">**Notifikace →
+Příjemci**</vpsadmin-nav> vytvořte **Kontakt účtu**. Otevřete jej a přidejte
+ověřený cíl **E-mail účtu**.
+
+Stejně vytvořte **Kontakt správce** a přidejte **E-mail správce**.
+
+{{:cs:screenshots:vpsadmin:notifications:example-role-receiver.png?900|E-mailový cíl připojený k příjemci Kontakt účtu}}
+
+===== Krok 3: Přidejte routu role account =====
+
+V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
+Routy**</vpsadmin-nav> zvolte **Přidat routu**:
+
+^ Pole ^ Hodnota ^
+| Název | ''Události role account'' |
+| Typ události | ponechte prázdný |
+| Vzor typu události | ponechte prázdný |
+| Příjemce | Kontakt účtu |
+| Povoleno | ano |
+| Pokračovat | ano |
+
+Routu uložte. V jejím detailu zvolte **Přidat podmínku**:
+
+^ Nastavení podmínky ^ Hodnota ^
+| Typ události | Libovolný typ události |
+| Pole | ''roles'' |
+| Operátor | obsahuje položku seznamu |
+| Hodnota | ''account'' |
+
+{{:cs:screenshots:vpsadmin:notifications:example-role-routing.png?900|Routa role account s podmínkou roles}}
+
+===== Krok 4: Přidejte routu role admin =====
+
+Zopakujte Krok 3 s názvem **Události role admin**, příjemcem **Kontakt
+správce** a hodnotou podmínky ''admin''. **Pokračovat** nechte zapnuté.
+
+{{:cs:screenshots:vpsadmin:notifications:example-role-admin-route.png?900|Routa role admin s podmínkou roles}}
+
+Díky zapnutému **Pokračovat** se událost s oběma rolemi doručí oběma
+kontaktům a mohou ji zpracovat i další routy.
+
+===== Krok 5: Ověřte výsledek =====
+
+Vytvořte **Testovací notifikaci** typu ''vps.suspended''. Tento typ má role
+''account'' i ''admin''. Zadejte například:
+
+<code json>
+{
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "state": "suspended",
+  "reason": "Role routing test"
+}
+</code>
+
+Hodnoty jsou pouze obsahem testovací události; skutečná VPS se nepozastaví.
+Role se vybírají podle typu události a nelze je změnit položkou v JSON.
+
+Vytvořenou událost otevřete v
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
+Historie doručování → detail události**</vpsadmin-nav>. V tabulce
+odpovídajících rout musí
+být obě nové routy. Test provádí skutečná doručení, takže zprávu mají dostat
+obě ověřené adresy.
+
+{{:cs:screenshots:vpsadmin:notifications:example-role-result.png?900|Testovací notifikace odpovídající oběma rolovým routám}}

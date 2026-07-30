@@ -1,0 +1,56 @@
+====== Mute selected incident reports ======
+
+This example mutes incident reports with codename ''abuse-feed'' for VPS ID
+''123'', while leaving other incident reports unchanged. It uses the built-in
+**Mute** receiver.
+
+Before starting, see the [[manuals:notifications|notification system overview]].
+
+===== Step 1: Identify the incident =====
+
+Open a relevant ''vps.incident_report'' in delivery history. Copy its
+''vps_id'' and ''codename'' fields. The codename is the stable identifier of
+the incident source; it is not the displayed subject or report text.
+
+===== Step 2: Create the mute route =====
+
+At <vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>, select **Add route** and set:
+
+^ Field ^ Value ^
+| Label | ''Mute incident feed for VPS'' |
+| Event type | ''vps.incident_report'' |
+| Receiver | Mute |
+| Enabled | yes |
+| Continue | no |
+
+Save the route.
+
+===== Step 3: Add both matchers =====
+
+Add:
+
+^ Field ^ Operator ^ Value ^
+| ''vps_id'' | equals | ''123'' |
+| ''codename'' | equals | ''abuse-feed'' |
+
+{{:en:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Incident mute route with VPS ID and codename matchers}}
+
+Keep **Continue** disabled so the matching incident is not routed further.
+
+===== Step 4: Test the route =====
+
+Create a **Test notification** of type ''vps.incident_report'':
+
+<code json>
+{
+  "subject": "Documentation incident",
+  "text": "Synthetic incident used to test routing.",
+  "codename": "abuse-feed",
+  "vps_id": 123
+}
+</code>
+
+If the new mute route is the first match and no other route prepares a
+delivery, the test must report that no enabled route produced a delivery.
+The candidate must not appear in **Delivery history**.
