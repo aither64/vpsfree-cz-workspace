@@ -2906,3 +2906,106 @@ dependency change is part of this revision. The deliberately hours-long
 integration workflows were not awaited, as requested; focused local checks,
 all hooks, mandatory review, deployment acceptance, and the quick GitHub
 workflows provide the bounded validation for this handoff.
+
+## Public resource event catalog correction
+
+Requested on 2026-07-30: generated CRUD event types must describe
+outside-visible API resources, not every Active Record model. The Event Types
+API and WebUI must also expose only event types usable by the caller and group
+them by stable product topics.
+
+Decisions:
+
+- replace discovery of every loaded Active Record model with an explicit
+  catalog of mounted, externally meaningful HaveAPI resources;
+- catalog entries declare the logical resource, model, supported CRUD actions,
+  stable topic, and audience (`account` or `admin`);
+- account entries require an owner resolver and publish roles
+  `account, admin`; admin entries publish role `admin`;
+- ordinary and support users see only account-usable event types, while
+  administrators see the complete catalog; unauthenticated Event Type listing
+  is denied;
+- exclude storage implementation rows such as snapshot placement/clone
+  internals, authentication implementation rows such as generic tokens and
+  challenges, translation/join rows, delivery internals, and network
+  accounting;
+- read-only projections do not receive CRUD event types merely because their
+  backing model is loaded;
+- the recorder silently ignores uncataloged model callbacks so internal
+  persistence remains implementation detail; direct attempts to define or emit
+  an uncataloged resource event fail in development and tests;
+- transaction chains still emit the generic operation lifecycle even when
+  their mutations are entirely internal, but materialize typed CRUD result
+  facts only for cataloged resources;
+- preserve existing public typed event names, payload envelopes, operation
+  correlation, and stored Event rows; do not rewrite or delete historical
+  development events;
+- use curated machine topics:
+  `vps`, `storage`, `network`, `dns`, `account`, `notifications`, `mail`,
+  `security`, `infrastructure`, `operating_systems`, `monitoring`,
+  `incidents`, `outages`, `payments`, `requests`, and `system`;
+- make generated resource event category equal its catalog topic, expose an
+  additive localized `category_label`, and have the WebUI group/sort Event
+  Types by that label instead of a single `resource` group;
+- update `doc/events.mdwn` and repository `AGENTS.md` with the public-catalog
+  rule and the checklist for every new outside-visible mutable resource;
+- add no schema, migration, node protocol, dependency, or generated-client
+  change.
+
+Verification:
+
+- catalog unit tests cover representative account/admin resources and reject
+  internal storage, auth, and network-accounting models;
+- recorder and transaction-chain tests prove internal callbacks do not
+  materialize CRUD results while public facts retain operation correlation;
+- Event Type API tests cover authentication, account/support/admin filtering,
+  matching filtered counts, localized topic labels, and stable categories;
+- WebUI regression tests cover per-topic grouping and use of
+  `category_label`;
+- run focused core/full API specs, WebUI PHPUnit, RuboCop, i18n health, all
+  repository hooks, and the mandatory standalone review;
+- amend the unmerged typed-resource commit, force-push with lease, update and
+  verify the exact `vpsadmin-kb-captures` pin, deploy the reviewed clean head to
+  the existing bridge-network development cluster, and perform bounded API and
+  live-event checks;
+- do not wait for the hours-long aggregate integration workflow.
+
+Compatibility and deployment:
+
+- this narrows a development-only generated catalog and removes internal event
+  types that should never have been public; legitimate public names and
+  payloads remain compatible;
+- old stored rows remain readable, but removed internal names are no longer
+  advertised or emitted after all API workers restart;
+- mixed old/new API workers could expose different catalogs, so restart API
+  request workers together in the development deployment;
+- ordinary clients gain the additive `category_label` output field and receive
+  a role-filtered Event Type list; administrators retain access to all public
+  account and administrative types;
+- no coordinated vpsAdminOS or node rollout is required.
+
+### Final public-catalog outcome
+
+The corrected implementation is complete at vpsAdmin commit
+`a5f040ac8053be931d8b7df9beaecaffeb1b2ce8`, with the WebUI documentation
+contract pinned by vpsadmin-kb-captures commit
+`093b49edd3e208337a4716aa5812bc87b90615f0`. Both exact revisions are pushed
+and their worktrees are clean.
+
+The mandatory fresh-context review first found that a target-model restriction
+could omit public snapshot facts from a cascading dataset deletion. The
+correction records every cataloged public model encountered by a transaction
+chain while applying the requested CRUD intent only to the action's target
+models. The same reviewer then accepted the exact final range with no Blocking,
+Important, or Advisory findings.
+
+The exact clean vpsAdmin revision is active on the existing bridge-network
+development cluster. Its runtime publishes 172 typed resource event types
+across 12 populated product topics. Internal snapshot-placement and clone
+models, generic token and WebAuthn challenge rows, and network-accounting rows
+are absent. The per-type common-field examples match the actual event name,
+category, severity, roles, and default-routing value.
+
+No database migration, node protocol update, dependency change, or generated
+client update was introduced. The hours-long aggregate integration workflow
+was deliberately not awaited, as requested.

@@ -51,6 +51,23 @@
 
 ## Status
 
+- 2026-07-30 public resource event catalog correction started.
+  - User rejected the generated catalog of all Active Record descendants:
+    internal snapshot placement/clone rows, token/authentication internals, and
+    network accounting must not be public resource events.
+  - Approved design uses an explicit catalog of externally meaningful mounted
+    API resources with supported actions, audience, and curated product topic.
+  - Ordinary/support callers will see account-usable Event Types;
+    administrators will see the complete public/admin catalog.
+  - The WebUI Event Types view will group by localized per-topic labels rather
+    than the generic `resource` category.
+  - The verified session is `2026-06-15-vpsadmin-events`; vpsadmin and
+    vpsadmin-kb-captures worktrees were clean at
+    `eb847e89c71128f829f313916f56389c66993544` and
+    `e818726968a89e66cc4de1fc90daea436809cb39` before this correction.
+  - Repository-local instructions and the canonical WebUI documentation
+    workflow were reread before editing. No production KB write is authorized.
+
 - Active workspace session: `2026-06-15-vpsadmin-events`.
 - 2026-07-22 reusable event time-interval and KB documentation slice started.
   - The existing initiative and vpsAdmin branch are being extended; no new
@@ -16293,3 +16310,162 @@ migrations, RuboCop, WebUI PHPUnit, and i18n health. The aggregate CI and
 topic-parallel API workflows are still running on the same head and are not
 being awaited because the user explicitly requested that the hours-long
 integration workflow be skipped.
+
+### Public catalog implementation progress
+
+Implementation replaces the loaded-model catalog with explicit core and
+plugin-owned entries for mounted, mutable HaveAPI resources. Each entry
+declares its supported actions, topic, audience, and optional logical name.
+Catalog validation checks the mounted resource/model relationship, declared
+default CRUD actions, topic, audience, and account owner resolver.
+
+The recorder now ignores uncataloged callbacks, while direct definition or
+emission for an uncataloged model raises. Representative tests exclude snapshot
+placement/clone rows, generic tokens and WebAuthn challenges, and network
+accounting. Operation lifecycle types remain available to administrators under
+the `system` topic.
+
+The Event Type API now requires authentication, filters ordinary and support
+callers to account-usable types, gives administrators the complete catalog, and
+returns counts from the same filtered set. It adds localized
+`category_label`. The WebUI groups and sorts Event Types by stable topic and
+localized label instead of the former single resource category.
+
+Documentation in `doc/events.mdwn` and repository `AGENTS.md` now requires
+catalog registration, ownership, visibility, exclusion, and filtering checks
+for new public resources. English and Czech API locale catalogs include the
+curated topic labels.
+
+Quick verification completed so far:
+
+- focused full-plugin catalog and Event Type API selection: six examples,
+  zero failures;
+- a live test-registry inventory confirmed that every mounted model-backed
+  default CRUD resource and action is cataloged; this is now enforced by a
+  regression spec in both full-plugin and core-only modes;
+- the two compatibility examples exposed by a broader run now pass: admin-only
+  OOM metadata is inspected through the admin catalog, and synthetic test-event
+  source classes are no longer treated as Active Record models;
+- WebUI notification regression: 21 tests, 272 assertions;
+- API i18n health passed;
+- focused RuboCop: ten API files and six plugin files, zero offenses;
+- Ruby/PHP syntax and `git diff --check` passed.
+
+The full affected API run exercised 102 examples. It found one old synthetic
+model test that expected an uncataloged class to emit; that test now verifies
+its intended partial-row payload encoding directly. The final full-plugin
+resource-operation suite passes 30 examples, the new core-only catalog checks
+pass two examples, and the four focused compatibility/catalog examples pass.
+All other examples in the broader run passed, with one expected plugin-mode
+pending example. The hours-long aggregate integration workflow remains
+intentionally excluded.
+
+The public-catalog correction was folded into the existing unmerged typed
+resource event commit. The resulting clean vpsAdmin revision is
+`16f151ffe241eabd9e507af8a0d78ccec46608aa`, based on
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37`. All repository pre-commit hooks
+passed: Nixfmt, migration specs, WebUI i18n, PHP CS Fixer, RuboCop, and API
+i18n. Commit-message hooks passed with text-width warnings for body lines that
+are within the workspace's 80-column limit.
+
+The required standalone review rejected `16f151ffe` because blocking API
+actions limited their recorder to the target model. A cascading dataset delete
+could therefore defer `dataset.deleted` while omitting public
+`snapshot.deleted` facts found in the same chain's confirmations. The reviewer
+found no Important issues; its Advisory noted that missing catalog resource
+constants could be silently skipped.
+
+The correction makes transaction-chain recorders accept every cataloged public
+model while retaining the target-model list solely for the action-intent
+override. Uncataloged internal confirmation and callback rows remain ignored.
+The existing mixed-model recorder regression now proves a secondary public
+model is captured without inheriting the target CRUD intent. The real recursive
+dataset-destroy spec now requires both public snapshot deletion descriptors and
+the absence of internal `SnapshotInPool` descriptors. Catalog refresh also
+constantizes every declared resource strictly so a typo or unloaded catalog
+class fails validation instead of disappearing.
+
+Focused correction verification passed:
+
+- RuboCop on the four changed API/spec files: zero offenses;
+- the real cascade and mixed-model recorder examples: two examples, zero
+  failures;
+- the full-plugin resource recorder, transaction-chain, and dataset-destroy
+  set: 67 examples, zero failures;
+- the core-only resource recorder and dataset-destroy set: 31 examples, zero
+  failures.
+
+The correction is committed in clean vpsAdmin revision
+`a5f040ac8053be931d8b7df9beaecaffeb1b2ce8`, retaining base
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37`. The complete repository hook
+suite passed again: Nixfmt, migration specs, WebUI i18n, PHP CS Fixer, RuboCop,
+and API i18n. Exact-range follow-up review is pending before publication or
+deployment.
+
+The same standalone reviewer accepted exact range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..a5f040ac8053be931d8b7df9beaecaffeb1b2ce8`
+with no Blocking, Important, or Advisory findings. It confirmed the public
+cascade coverage, target-only action-intent override, internal-row exclusion,
+strict catalog loading, regression coverage, and cohesive amended commit.
+Publication and deployment may proceed; the deliberately skipped aggregate
+integration run remains the only stated residual risk.
+
+### Final publication, capture pin, and deployment
+
+The exact reviewed vpsAdmin revision
+`a5f040ac8053be931d8b7df9beaecaffeb1b2ce8` was force-pushed with lease to
+remote branch `2026-06-15-vpsadmin-events`. The local and remote heads match,
+and the vpsAdmin worktree is clean.
+
+The vpsadmin-kb-captures source pin, lock, capture inventory, and navigation
+contract were updated to that exact revision. `nix develop -c bin/check`
+passed with 51 controls, 37 paths, 57 capture concepts, 30 selectors, 123
+annotation bindings, nine exceptions, both test groups, and all 172 expected
+PNG variants. Capture commit
+`093b49edd3e208337a4716aa5812bc87b90615f0` is pushed, and its worktree is
+clean.
+
+The existing `2026-06-15-vpsadmin-events` development cluster was updated
+using its default bridge network. Before activation, all 12 transaction chains
+were terminal `done`. The API, scheduler, supervisor, and console-router were
+stopped together, the services closure was rebuilt and activated, and all four
+services restarted successfully. No database-schema or node update was run.
+
+Post-activation verification:
+
+- `devcluster status` reports running, ready, topology `single`, and network
+  `bridge`;
+- `/etc/vpsadmin/build-info.json` reports exact revision
+  `a5f040ac8053be931d8b7df9beaecaffeb1b2ce8` with `revisionDirty` false;
+- the API, scheduler, supervisor, and console-router units are active;
+- `systemctl --failed` reports zero failed units;
+- API and WebUI HTTPS endpoints return HTTP 200 with the development CA;
+- the transaction-chain state remains 12 terminal `done`;
+- no new error-level journal entries appeared after activation.
+
+The deployed runtime catalog contains 228 event types in total, including 172
+typed resource event types. The resource types are split across 12 currently
+populated topics: account, DNS, incidents, infrastructure, mail, network,
+notifications, operating systems, security, storage, system, and VPS.
+Account-role filtering selects 129 usable event types; the complete
+administrator view contains all 228.
+
+The live runtime check found no generated names for internal snapshot
+placement/branch/clone rows, generic tokens, authentication tokens, WebAuthn
+challenges, or network-interface daily accounting. It also found zero
+common-field example mismatches across all 228 event types. Representative
+`vps.updated` and `dns_zone.updated` definitions expose their own typed
+attribute descriptors and truthful per-type examples. Operation start,
+success, and failure definitions remain generic, correlated lifecycle facts
+under the system topic.
+
+The root and system HaveAPI client configurations on the services VM both
+returned HTTP 401, so the deployed catalog was inspected inside the API runtime
+without printing credentials or changing cluster authentication state. This
+environment issue is recorded in
+`notes/vpsadmin/2026-07-30-devcluster-haveapi-client-stale.md`.
+
+On the exact final GitHub head, i18n health, WebUI PHPUnit, API migration specs,
+and RuboCop are green. Aggregate CI and topic-parallel API specs are still
+running and are intentionally not awaited because the user asked to skip the
+hours-long workflow.
