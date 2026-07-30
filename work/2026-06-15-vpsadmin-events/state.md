@@ -16978,7 +16978,9 @@ workflow and approval-gated production KB promotion.
   exact reviewed head. All 27 jobs passed, including core/full topic pairs,
   plugin variants, smoke and coverage jobs, and the final topic-coverage
   check. This resolves the CI-only topic-isolation and ordering test gap.
-- The separately triggered hours-long aggregate CI workflow was not awaited,
-  consistent with the user's earlier instruction. This correction is tests
-  only, so the development cluster remains valid at runtime revision
-  `07bab674...` and requires no redeployment.
+- The separately triggered aggregate CI workflow was not used as a blocking
+  wait target, consistent with the user's earlier instruction, but it also
+  completed successfully while the API topic workflow was being monitored.
+  Current-head RuboCop and i18n workflows are green as well.
+- This correction is tests only, so the development cluster remains valid at
+  runtime revision `07bab674...` and requires no redeployment.
