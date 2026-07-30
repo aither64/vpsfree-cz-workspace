@@ -16469,3 +16469,197 @@ On the exact final GitHub head, i18n health, WebUI PHPUnit, API migration specs,
 and RuboCop are green. Aggregate CI and topic-parallel API specs are still
 running and are intentionally not awaited because the user asked to skip the
 hours-long workflow.
+
+### OAuth repeat-login regression
+
+After the public-catalog deployment, a password login from an already known
+device returned HTTP 400 with `{"error":"invalid_request"}`. HAProxy and nginx
+showed the failing `POST /_auth/oauth2/authorize`; a rollback-only check inside
+the deployed API runtime exposed the exception hidden by the OAuth error
+mapping:
+
+`ArgumentError: UserDevice does not publish a updated resource event`
+
+The known-device path updates `last_seen_at`. `UserDevice` is intentionally
+published only as the outside-visible `user_known_device.created` and
+`user_known_device.deleted` event types, but the recorder had filtered models
+without filtering each effective action. It therefore captured the incidental
+update and failed while materializing an undeclared event, rolling back the
+otherwise successful authorization.
+
+The recorder now checks the catalog against the effective published action.
+Natural actions absent from a resource's catalog entry are ignored, while an
+API action's explicit target-action override remains effective for transaction
+chain confirmations. Regression coverage exercises the complete OAuth password
+authorization path with an existing known-device cookie and the generic
+resource-policy behavior.
+
+Quick verification passed:
+
+- RuboCop on the three changed files: zero offenses;
+- OAuth and resource-operation specs: 58 examples, zero failures;
+- OAuth, resource-operation, transaction-chain, and recursive dataset-destroy
+  specs: 77 examples, zero failures;
+- `git diff --check`;
+- the complete Overcommit pre-commit suite, including Nixfmt, migration specs,
+  API/WebUI i18n, RuboCop, and PHP CS Fixer.
+
+An initial commit attempt from the ambient shell was correctly rejected because
+the hook subprocess could not find the Nix-provided tools. Repeating the amend
+through `nix develop` ran and passed every hook. The existing durable note
+`notes/vpsadmin/2026-07-30-vpsadmin-nix-shell-hooks.md` already documents this
+requirement.
+
+The fix is folded into the unmerged typed-resource event commit at
+`e1aa5c4be5ccc48fcf71924750aae23b21e46410`, still based on
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37`.
+
+The required fresh-context reviewer accepted that exact range with no Blocking,
+Important, or Advisory findings. It independently reran six examples covering
+repeat OAuth login, unsupported-action suppression, target and confirmation
+action overrides, and recursive public cascade capture; all passed. The only
+residual gaps are the deliberately skipped aggregate integration workflow,
+live repeat-login acceptance on the updated cluster, and the mechanical capture
+pin that follows publication.
+
+The vpsadmin-kb-captures pin and development deployment still point to the
+previously reviewed `a5f040ac8053be931d8b7df9beaecaffeb1b2ce8` until the new
+exact head is published.
+
+### OAuth regression publication and redeployment
+
+The exact reviewed vpsAdmin head
+`e1aa5c4be5ccc48fcf71924750aae23b21e46410` was force-pushed with lease to
+`2026-06-15-vpsadmin-events`; local and remote heads match and the worktree is
+clean.
+
+After publication, vpsadmin-kb-captures was repinned using `nix flake update`
+so its source hash matches the new commit. `nix develop -c bin/check` passed:
+51 controls, 37 paths, 57 capture concepts, 30 semantic selectors, 123
+annotation bindings, nine exceptions, both test groups, and all 172 expected
+PNG variants. Amended capture commit
+`be68cf911941f038ab9ce78e3eaf4fa01dbaf9f7` was force-pushed with lease; local
+and remote heads match and the worktree is clean.
+
+The existing bridge-network development cluster was updated without a schema
+or node rollout. Before activation, all 12 transaction chains were terminal
+state 2 (`done`). The API, scheduler, supervisor, and console-router were
+stopped together, the services closure was rebuilt and activated, and the four
+units restarted successfully.
+
+Live acceptance:
+
+- `/etc/vpsadmin/build-info.json` reports exact clean revision
+  `e1aa5c4be5ccc48fcf71924750aae23b21e46410`;
+- the cluster is running, ready, topology `single`, network `bridge`;
+- API, scheduler, supervisor, and console-router are active;
+- `systemctl --failed` reports no failed units;
+- the API and WebUI HTTPS endpoints return HTTP 200 through the development
+  CA;
+- all 12 transaction chains remain terminal `done`;
+- the four service journals contain no error-priority entries since activation;
+- a rollback-only live API-runtime probe updated an existing known device
+  inside `oauth2.authorize_post` capture and returned `recorder_check=ok`;
+- a real browser-style OAuth flow returned HTTP 302 on initial password
+  authorization and returned HTTP 302 again with the resulting device cookie,
+  exercising the known-device path that previously returned HTTP 400
+  `invalid_request`.
+
+The live OAuth flow created and then reused normal development authorization
+and device state. Its cookie jar and the ignored rollback diagnostic script
+were removed after verification. The hours-long aggregate integration workflow
+remains deliberately skipped at the user's request.
+
+### Superseded CI follow-up
+
+The superseded `a5f040ac` API topic run was inspected before accepting a rerun.
+Its five user/authentication failures were the same unsupported-action defect
+fixed by `e1aa5c4b`; all five exact examples pass on the corrected head. Four
+engine failures instead revealed expectations left over from earlier versions
+of the resource-event design:
+
+- snapshot placement rows had test-only recorders and no-op transactions that
+  expected internal `snapshot_in_pool.updated` events;
+- the node kernel reconstruction spec expected an event for the internal,
+  read-only `NodeKernelEvent` projection; and
+- VPS creation expected a successful operation to link only `vps.created`,
+  although the chain also commits a public dataset and three public VPS feature
+  mutations.
+
+The two snapshot specs now retain their original transaction shapes and do not
+publish internal placement counters. The node-kernel spec verifies that the
+internal state transition remains unexposed. The VPS creation spec verifies
+that the correlated successful operation links all five committed public
+facts: `dataset.created`, `vps.created`, and three `vps_feature.updated`
+events.
+
+Verification after these corrections:
+
+- the nine exact formerly failing examples: nine examples, zero failures;
+- the broader OAuth, resource-event, operation-lifecycle, dataset-destroy,
+  affected transaction-chain, and exact user/authentication set: 107 examples,
+  zero failures;
+- RuboCop on the four corrected specs: zero offenses;
+- `git diff --check`;
+- the complete Overcommit pre-commit suite, including Nixfmt, migration specs,
+  API/WebUI i18n, RuboCop, and PHP CS Fixer.
+
+The corrections are folded into clean vpsAdmin revision
+`a1321b2485ce5f14087d4d93429a97ea8cf28306`, based on
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37`. The superseded aggregate GitHub
+Actions run `30530366145` was canceled. A fresh mandatory review of the final
+range is pending before publication and redeployment. The hours-long aggregate
+integration workflow remains deliberately skipped.
+
+The required fresh-context reviewer accepted exact range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..a1321b2485ce5f14087d4d93429a97ea8cf28306`
+with no Blocking, Important, or Advisory findings. It independently reran 11
+examples covering the catalog/action boundary, public cascade capture,
+operation result correlation, OAuth known-device login, and final internal-row
+exclusions; all passed. The reviewer found the single amended commit cohesive.
+Residual risks are the deliberately skipped aggregate integration workflow,
+the capture pin still targeting `e1aa5c4b`, and deployment still running that
+previous revision. Publication and the mechanical pin/deployment updates may
+proceed.
+
+### Final reviewed publication and deployment
+
+The exact reviewed vpsAdmin revision
+`a1321b2485ce5f14087d4d93429a97ea8cf28306` was force-pushed with lease to
+`2026-06-15-vpsadmin-events`. Local and remote heads match and the worktree is
+clean. Superseded in-progress workflows for `e1aa5c4b` were canceled after the
+push.
+
+The vpsadmin-kb-captures source URL, lock, capture inventory, and navigation
+contract were repinned to the exact final revision. `nix develop -c bin/check`
+passed with 51 controls, 37 paths, 57 capture concepts, 30 semantic selectors,
+123 annotation bindings, nine exceptions, both test groups, and all 172
+expected PNG variants. Amended capture revision
+`eb7d7272df43d15cab1cf685eda50e5053c43faa` was force-pushed with lease; local
+and remote heads match and its worktree is clean.
+
+The existing single-topology development cluster was updated on its default
+bridge network. Before the switch, the four coupled API services were active
+and all 12 transaction chains were terminal state 2 (`done`). The API,
+scheduler, supervisor, and console-router were stopped together, the services
+closure was rebuilt and activated, and all four services restarted. No schema
+or node rollout was performed.
+
+Post-deployment verification:
+
+- `devcluster status` reports running, ready, topology `single`, and network
+  `bridge`;
+- `/etc/vpsadmin/build-info.json` reports exact revision
+  `a1321b2485ce5f14087d4d93429a97ea8cf28306` with `revisionDirty` false;
+- API, scheduler, supervisor, and console-router are active;
+- `systemctl --failed` reports zero failed units;
+- the four service journals contain no error-priority entries since the
+  switch;
+- all 12 transaction chains remain terminal state 2 (`done`);
+- API and WebUI HTTPS endpoints both return HTTP 200.
+
+The exact final GitHub head has green API migration specs, WebUI PHPUnit,
+RuboCop, and i18n health checks. The aggregate CI and topic-parallel API
+workflows remain in progress and are deliberately not awaited because the user
+asked to skip the hours-long workflow. The runtime delta from the already
+live-accepted OAuth fix `e1aa5c4b` is test-only.

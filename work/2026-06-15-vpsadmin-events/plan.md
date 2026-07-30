@@ -2987,9 +2987,9 @@ Compatibility and deployment:
 ### Final public-catalog outcome
 
 The corrected implementation is complete at vpsAdmin commit
-`a5f040ac8053be931d8b7df9beaecaffeb1b2ce8`, with the WebUI documentation
+`a1321b2485ce5f14087d4d93429a97ea8cf28306`, with the WebUI documentation
 contract pinned by vpsadmin-kb-captures commit
-`093b49edd3e208337a4716aa5812bc87b90615f0`. Both exact revisions are pushed
+`eb7d7272df43d15cab1cf685eda50e5053c43faa`. Both exact revisions are pushed
 and their worktrees are clean.
 
 The mandatory fresh-context review first found that a target-model restriction
@@ -2999,12 +2999,30 @@ chain while applying the requested CRUD intent only to the action's target
 models. The same reviewer then accepted the exact final range with no Blocking,
 Important, or Advisory findings.
 
+Live deployment subsequently exposed an OAuth repeat-login regression: a known
+device's incidental `last_seen_at` update was captured even though
+`user_known_device.updated` is not a published action. The final recorder
+filters by each model's effective catalog action, ignoring unsupported natural
+mutations while preserving transaction-chain target-action overrides. A second
+fresh-context review accepted that correction without findings.
+
+Inspection of the superseded API topic workflow then found four expectations
+left over from earlier designs. The final specs remove synthetic internal
+snapshot-placement events, keep node-kernel projection changes internal, and
+require a successful VPS-create operation to link all five committed public
+result facts. The final delta is test-only. A third fresh-context review
+accepted the exact final range without findings.
+
 The exact clean vpsAdmin revision is active on the existing bridge-network
 development cluster. Its runtime publishes 172 typed resource event types
 across 12 populated product topics. Internal snapshot-placement and clone
 models, generic token and WebAuthn challenge rows, and network-accounting rows
 are absent. The per-type common-field examples match the actual event name,
 category, severity, roles, and default-routing value.
+
+Browser-style live acceptance completed OAuth authorization twice with the same
+device cookie; both requests returned the successful redirect, including the
+known-device path that had previously returned HTTP 400 `invalid_request`.
 
 No database migration, node protocol update, dependency change, or generated
 client update was introduced. The hours-long aggregate integration workflow
