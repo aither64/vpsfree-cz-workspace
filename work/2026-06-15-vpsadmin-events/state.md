@@ -14394,3 +14394,1902 @@ GitHub Actions after final pushes:
   - full dispatched CI `30215170409`;
   - topic-parallel API matrix `30215171418`.
   Their terminal results will be appended after completion.
+
+## 2026-07-28 Complete Audit Coverage Investigation
+
+- Reused the verified active `2026-06-15-vpsadmin-events` session and existing
+  vpsAdmin worktree. `VPSFREE_DEV_SESSION_SLUG` matches the slug.
+- vpsAdmin worktree and remote feature branch are clean and aligned at
+  `5e04c0c50173157bf3e55a69370397da43db78ea`.
+- Scope was investigation and implementation planning only. No vpsAdmin source
+  files, schemas, generated files, or tests were changed or run.
+- Reviewed the repository-local `AGENTS.md` and split the investigation across
+  VPS operations, non-VPS resources/plugins, and transaction-chain semantics.
+- Traced event definitions, routing/persistence, Event/EventDelivery models,
+  transaction-chain creation, confirmation handling, NodeCtld terminal state
+  handling, supervisor event handling, retry behavior, ObjectHistory, console
+  token/router/node sessions, and representative synchronous/allowed-empty
+  chains.
+
+Key findings:
+
+- The existing catalog is designed primarily for notifications. Most mutable
+  API resources have no Event coverage, and `persist: :routed` allows unmatched
+  events to disappear.
+- Chain-construction rollback already provides the desired no-event boundary,
+  but existing past-tense events are inserted too early during link
+  construction. A runtime failure can leave a false `user.created`,
+  `vps.replaced`, or migration-finished Event even when confirmations remove or
+  restore the affected object.
+- Confirmations and terminal state commit together, making that the safe
+  success boundary. `resolved` is an acknowledgement, not success.
+- Broker wakeups are lossy and duplicable, retry has no immutable attempt
+  identity, and `done` may contain failed `keep_going` transactions.
+- Allowed-empty chains and synchronous link-time side effects prevent a simple
+  “project every terminal chain” implementation.
+- Event lacks first-class actor, impersonator, session, request, operation,
+  chain/run, idempotency, and immutable deleted-subject context.
+- `ObjectHistory` is useful validation evidence for VPS successes but is not a
+  complete audit stream and has no failed attempts.
+- Console-token creation/revocation is not the actual console session
+  lifecycle. Authoritative open/close events require NodeCtld per-client
+  session tracking, durable projection, revocation/revalidation, and crash
+  reconciliation.
+
+Plan decision:
+
+- Add an explicit durable logical operation/intention model, immutable chain
+  runs and state-change outbox, idempotent API projector/reconciliation, and
+  an always-persisted Event audit envelope.
+- Create the operation inside the same transaction as chain construction.
+  Emit no fact on construction rollback; emit an honest requested fact only
+  after durable acceptance; emit past-tense success only after confirmation;
+  emit failure/fatal facts with immutable target snapshots.
+- Handle synchronous and allowed-empty operations atomically without
+  constructing artificial notification transactions.
+- Require every mutating HaveAPI action to declare an audit mapping or an
+  explicit reasoned exemption. Treat sensitive reads/access and background
+  transitions explicitly.
+- Prioritize complete VPS coverage, console, expiration and runtime sources;
+  then account/security/notification configuration; then infrastructure, DNS,
+  storage, plugins, and administrative content.
+- Treat logical operations as the audit unit and exempt raw implementation,
+  telemetry, polling, accounting, generated join, and delivery-internal rows.
+- Follow the vpsAdmin KB capture/documentation workflow when Event Log/Event
+  Types and other visible WebUI changes are implemented.
+
+Compatibility decision:
+
+- Keep schema/API changes additive, preserve current state enum values, deploy
+  DB/API/projector and additive console RPC before updated node producers, and
+  retain old console RPC behavior during the mixed-version window.
+- The current event migrations have not been released. Update the draft
+  migration chain and reset disposable stale databases rather than adding
+  existence guards.
+- Record a production audit-coverage start marker; do not claim an exact
+  historical backfill. Preserve unprojected audit/outbox data across rollback.
+
+- The detailed catalog, implementation phases, compatibility analysis, and
+  verification matrix are recorded in the Complete Audit Event Coverage
+  Addendum in `plan.md`.
+
+## 2026-07-28 Audit Implementation Start
+
+- User approved implementation of the complete audit coverage plan.
+- Reverified the active session, clean vpsAdmin feature worktree, matching
+  local/remote head `5e04c0c50173157bf3e55a69370397da43db78ea`,
+  SSH remote, repository guidance, unreleased event migration baseline, and
+  migration-spec/Overcommit requirements.
+- Implementation is proceeding in dependency order:
+  audit schema/models, transaction-chain runs/outbox/projector, event emitter
+  semantics, primary VPS operations, console/runtime/storage/network, remaining
+  resources/plugins, coverage enforcement, then WebUI/client/KB updates.
+- Added an action-level `audit`/`audit_exempt` declaration scaffold and a
+  recursive HaveAPI resource inventory.
+- Captured every currently uncovered mutating core and plugin action in
+  `api/config/audit_coverage.yml`. The focused spec requires the list to remain
+  exact, so newly added mutations fail coverage until declared. Entries are
+  removed as their action families are instrumented.
+- Added event-definition `audit` metadata. Audit event types always persist
+  even without a matching route.
+- Marked `transaction_chain.state_changed` as an audit event and changed its
+  success predicate so only `done` is successful; `resolved` remains terminal
+  but is not success.
+- Updated the Event Types API metadata and focused transaction-chain/API specs
+  for the new audit semantics.
+- Ruby syntax checks passed for all locally added/edited audit, event, resource,
+  and spec files.
+- The initial coverage-spec run intentionally failed against an empty baseline
+  and printed the complete current action inventory. The baseline was then
+  populated; the focused spec will be rerun after the concurrent schema and
+  lifecycle slices settle.
+- A first Nix command incorrectly attempted `cd api` after the `.#api` shell
+  had already changed into the API directory. The corrected form is
+  `nix develop .#api -c bundle exec ...` from the vpsAdmin worktree root.
+
+## 2026-07-28 Audit Foundation And VPS Implementation
+
+- Added the additive audit persistence foundation to the unreleased Event
+  migration and schema:
+  - `audit_operations` records immutable logical operation intent, actor,
+    request, before/after, subject, and terminal outcome snapshots;
+  - `transaction_chain_runs` gives retries immutable attempt identity;
+  - `transaction_chain_state_changes` is the durable, idempotent projection
+    outbox;
+  - `event_audiences` records additional tenant visibility for ownership and
+    cross-owner operations;
+  - `events` now distinguishes occurrence from recording time and carries
+    actor/effective/admin/session, operation, chain/run, correlation,
+    idempotency, phase, and immutable subject fields.
+- Added bounded JSON-object validation for audit snapshots. Event API output
+  limits non-admin audit metadata and allowlists the session snapshot even for
+  administrators so an accidentally recorded credential cannot be exposed.
+- Audit event types are always persisted even without a notification route.
+  `transaction_chain.state_changed` is now an audit fact and only `done` is a
+  successful terminal state; `resolved` is not reclassified as success.
+- `TransactionChain.fire2` now registers accepted operations and the initial
+  run/outbox row in the same transaction as chain construction. Construction
+  failure rolls all of them back. Allowed-empty chains project their operation
+  atomically before removing the synthetic chain.
+- NodeCtld records immutable state transitions and retry runs in the same
+  database transaction as chain state/confirmations. RabbitMQ messages are
+  wakeups containing the durable state-change ID. The API projector is
+  idempotent, reconciles missed wakeups, emits requested facts only after queue
+  acceptance, and emits success/failure only at `done`/`failed`/`fatal`.
+  Failed keep-going transactions are retained as bounded warning evidence.
+- Primary VPS audit coverage is implemented for create, update,
+  suspend/resume, soft-delete/revive/destroy, start, stop, and restart.
+  Nested implementation chains do not create duplicate logical operations.
+  Create success is emitted only after confirmations; failed creates retain an
+  immutable snapshot after their provisional database row is removed.
+- VPS snapshots use an explicit allowlist. Free-form `info` is represented by
+  presence and SHA-256 only. Ownership changes retain both old/new audiences,
+  while terminal ownership follows the confirmed live VPS owner.
+- Extended direct VPS coverage is being integrated for password changes, boot,
+  reinstall, migration, clone/swap/replace, public-key deployment, features,
+  mounts, maintenance windows, and user-data operations. Console access and
+  session lifecycle are being implemented independently, including an
+  additive authentication RPC for mixed-version rollout.
+- Added an exact action-level audit coverage inventory. The baseline currently
+  blocks newly introduced uncovered mutations; entries are removed as action
+  families gain a policy and emitter.
+
+Verification so far:
+
+- Audit model specs: 12 examples, 0 failures.
+- Event audit API read specs: 3 examples, 0 failures.
+- Primary VPS focused specs: 17 examples, 0 failures.
+- NodeCtld audit-state helper spec: 1 example, 0 failures.
+- Audit foundation RuboCop: 22 files, no offenses.
+- `git diff --check`: clean before the current parallel VPS/console tranche.
+- Migration up/down specs passed independently. They cannot be combined in the
+  same RSpec process with ordinary model/API specs because the migration
+  harness intentionally changes to its scratch database and does not restore
+  the ordinary connection for later examples.
+- A broad notification-routing run was stopped after all completed audit,
+  chain, primary VPS, coverage, and Event model examples remained green; its
+  pre-existing routing examples are CPU-intensive and will be rerun after the
+  parallel code slices settle.
+
+## 2026-07-28 Console Audit Implementation
+
+- Console-token issue, reuse, and explicit revocation now emit synchronous,
+  always-persisted audit events in the same database transaction as the token
+  mutation. Event payloads contain only allowlisted identifiers, hostname, and
+  expiration time; neither the console token nor arbitrary request input is
+  retained.
+- Added per-browser console session UUIDs across the console router and
+  NodeCtld. NodeCtld tracks concurrent clients independently and durably
+  records authoritative open/close facts with VPS, console, actor, owner, node,
+  timestamps, duration, close reason, and an allowlisted actor identity.
+- Added an additive console authentication RPC that returns the safe identity
+  needed by the producer without returning the token. New NodeCtld falls back
+  to the legacy RPC only when an old API reports the v2 command as unknown.
+  New console-router output routing is also bound to the legacy token key, and
+  new NodeCtld preserves legacy routing when no client UUID is supplied.
+- The API supervisor reconciles durable console facts every 30 seconds and
+  projects idempotent `vps.console_session_opened` and
+  `vps.console_session_closed` audit events with retry/backoff. Close facts are
+  emitted only for observed idle timeout, console death, or graceful NodeCtld
+  shutdown. Token revocation deliberately does not claim that an already-open
+  session closed.
+- Session UUID reuse is bound to its original token. Input carrying a colliding
+  UUID with a different token is rejected before it can reuse an authenticated
+  session; a focused regression example verifies that no second write or open
+  fact occurs.
+- Exact console session facts require the new API/schema and identity RPC.
+  During rolling deployment, old combinations continue to provide console
+  access but legacy authentication lacks enough identity to create an honest
+  fact. Deploy the schema/API/projector first, then console-router and
+  NodeCtld. An abrupt process or host crash cannot execute a close write; a
+  future startup lease/reconciliation mechanism would be needed to distinguish
+  that case from a still-live session.
+- Console-token expiration is not a separate producer fact in this tranche.
+  Issue/reuse facts expose `expires_at`, while explicit revoke is audited. The
+  requested expiration coverage is handled as the VPS lifecycle operation;
+  adding exact credential-expiry facts would require a sweeper and a separate
+  semantic decision and must not be conflated with console-session close.
+
+Verification:
+
+- Focused API console-token, console-session projection, node RPC, and audit
+  coverage specs: 35 examples, 0 failures.
+- `AddEvents` migration spec, run separately from ordinary API specs:
+  3 examples, 0 failures.
+- Focused NodeCtld console producer/server specs: 6 examples, 0 failures.
+- Focused console-router specs: 19 examples, 0 failures.
+- Console-router JavaScript syntax check passed with Node.js.
+- RuboCop passed for all touched API and NodeCtld console files; the
+  console-router Ruby files also passed using the API bundle and repository
+  configuration.
+- `git diff --check` passed.
+- The dedicated console-router Nix shell remains unusable because its pinned
+  flake references the removed `nodePackages` attribute. Verification used the
+  API shell as documented in
+  `notes/vpsadmin/2026-07-24-console-router-nodepackages-shell.md`.
+
+## 2026-07-28 Expiration And Observed Runtime Audit
+
+- The lifetime scheduler now records an idempotent
+  `vps.expiration_reached` observation immediately before asking the lifetime
+  wrapper to progress an expired VPS. The fact records the scheduler actor,
+  observed node-independent time, prior/target lifecycle states, and configured
+  expiration. It is always persisted but never notification-routed.
+- Repeated scans of the same expiration/state tuple reuse an idempotency key,
+  so a locked object or scheduler retry does not duplicate the threshold fact.
+  The lifetime transaction chain remains authoritative for accepted,
+  succeeded, and failed lifecycle outcomes; the observation does not claim
+  that expiration processing succeeded.
+- Lifetime callers can now pass explicit `trigger` and `actor_kind` context
+  through `Lifetimes` and its transaction-chain wrapper. Scheduler-created
+  lifecycle operations are attributed to the scheduler instead of relying on
+  an inferred generic trigger.
+- The VPS expiration-only update path now emits
+  `vps.expiration_updated` atomically with its database change, including
+  before/after expiration and reminder dates without claiming a lifecycle
+  state transition.
+- NodeCtld VPS runtime messages now carry a producer UUID. The API supervisor
+  records idempotent, node-attributed observations for unexpected halt/reboot
+  and OOMD stop/restart using the producer timestamp:
+  `vps.runtime_halted`, `vps.runtime_rebooted`, `vps.oomd_stopped`, and
+  `vps.oomd_restarted`. These facts are deliberately not notification-routed;
+  the existing OOM incident-report notification flow is unchanged.
+- A broker redelivery with the same source UUID is ignored before repeating
+  legacy history, status, incident, chain, or audit side effects. Old NodeCtld
+  messages without a UUID remain accepted during rolling deployment, but
+  cannot provide source-level deduplication.
+- Viewing a live console token now records the sensitive-read policy and a
+  secret-free `vps.console_token_viewed` observation. It contains safe
+  identifiers and expiration only; the credential is never copied to an Event
+  payload.
+- The runtime message extension is additive: an old API ignores the extra
+  source field, and the new API accepts old messages without it. Either
+  component can therefore update first, although source-level deduplication
+  begins only once the new producer is deployed. Event definitions must be
+  present with the new API consumer before those observations can be recorded.
+
+Verification:
+
+- Focused expiration scheduler/lifetime specs: 13 examples, 0 failures,
+  including duplicate-scan idempotency and scheduler provenance.
+- Combined focused API expiration, lifecycle, runtime, console-token,
+  expiration-update, and coverage specs: 48 examples, 0 failures.
+- Focused NodeCtld runtime-message spec: 1 example, 0 failures.
+- RuboCop passed for all touched files in this tranche; the final scheduler
+  source/spec rerun inspected 2 files with no offenses.
+- `git diff --check` passed after the completed tranche.
+
+## 2026-07-28 Legacy NodeCtld Transaction-Chain Compatibility
+
+- The API supervisor now persists legacy transaction-chain RabbitMQ messages
+  from nodes that predate durable state-change rows. It synthesizes immutable
+  run/state-change facts and passes them through the same idempotent projector
+  as messages from upgraded nodes.
+- A legacy terminal message now finalizes semantic `AuditOperation` records,
+  instead of emitting only the generic chain-state notification and leaving
+  the operation permanently pending.
+- Duplicate legacy state messages are deduplicated per run. A queued message
+  following a terminal run starts the next immutable attempt and resets the
+  logical operation to pending while preserving the prior failure event.
+- Warning/failure transaction identifiers copied from the old chain tables are
+  bounded to 100 entries, with counts and truncation metadata retained.
+- This closes the mixed-version window in which the schema/API projector was
+  deployed before all NodeCtld instances: old and new producers can both drive
+  the durable audit lifecycle.
+
+Verification:
+
+- Focused legacy supervisor suite: 4 examples, 0 failures, including terminal
+  operation finalization, duplicate delivery, retry-run creation, and delivery
+  abort behavior.
+- RuboCop inspected the projector, legacy consumer, and focused spec with no
+  offenses.
+
+## 2026-07-28 Scope Correction
+
+- The user clarified that vpsAdmin should only emit events from which external
+  consumers can build their own audit log. The prior uncommitted implementation
+  incorrectly began building an internal audit ledger.
+- Backed up the over-scoped tracked diff and untracked files under
+  `/tmp/vpsadmin-over-scoped.HbW6Ts`, then restored only the exact uncommitted
+  paths in this initiative's vpsAdmin worktree to
+  `5e04c0c50173157bf3e55a69370397da43db78ea`.
+- Confirmed the vpsAdmin feature worktree is clean after restoration. No
+  over-scoped code, schema, audit model, or console fact change was committed
+  or deployed.
+- The corrected implementation will use only the existing `Event` model and
+  Event API. Audit-relevant facts will use existing always-persist behavior;
+  asynchronous results will be emitted from existing transaction-chain state
+  messages and concerns.
+
+## 2026-07-28 Lean Event Implementation
+
+- Implemented ordinary Event producers only; the vpsAdmin diff contains no
+  schema, migration, audit-ledger, outbox, or coverage-framework paths.
+- Transaction-chain queued events are emitted only after `fire2` commits.
+  Failed chain construction and allowed-empty rollback paths leave no Event.
+  Node terminal states always persist the existing state event; only `done`
+  is successful and `resolved` is not.
+- Added terminal `vps.operation_succeeded` and `vps.operation_failed` events
+  for mapped VPS chains and the VPS lifetime wrapper. The existing queued
+  Event retains affected owner identity for successful destruction or a
+  failed create after the VPS row no longer exists.
+- Added VPS expiration, runtime halt/reboot/OOM, maintenance-window, and
+  user-data events. The scheduler distinguishes expiration observation from
+  `vps.expiration_processing_started`; terminal chain events remain the
+  authority for eventual success or failure.
+- Added actual `vps.console_opened`/`vps.console_closed` events. Console
+  tokens are not published or persisted in Event payloads. The additive RPC
+  v2 returns safe VPS/actor/authorization IDs, and new NodeCtld falls back to
+  the unchanged legacy RPC only for the exact unknown-command response.
+- Added explicit synchronous `resource.created`, `resource.updated`, and
+  `resource.deleted` emissions to mailbox/handler, metrics-token, OAuth
+  client, notification receiver/target/link, and related verification
+  actions. Mutations and Events share a transaction where the action is
+  database-only; payloads contain changed field names, never submitted secret
+  values.
+- A fresh read-only subagent review found five issues: owner loss after VPS
+  deletion, missing VPS concerns, premature expiration success wording,
+  console close/open ordering, and non-atomic DB-only notification mutations.
+  The targeted rereview found a retry-owner edge case in the first fix; owner
+  recovery now uses the first accepted queued Event. All findings were
+  addressed without introducing schema changes.
+
+Quick verification:
+
+- API transaction-chain/lifetime/resource/mailbox focused suite:
+  112 examples, 0 failures.
+- Notification e-mail/SMS confirmation examples: 2 examples, 0 failures.
+- NodeCtld console and RPC suites: 17 examples, 0 failures.
+- Final transaction-chain terminal/owner retry suite: 16 examples,
+  0 failures.
+- Earlier focused console API/router, VPS lifecycle, VPS operation, metrics
+  token, OAuth client, maintenance-window, and user-data suites all passed.
+- RuboCop inspected all 47 currently changed Ruby files with no offenses.
+- `git diff --check` passed.
+- JavaScript syntax passed with
+  `nix shell nixpkgs#nodejs -c node --check
+  console_router/public/console.js`; `node` was not in the ambient or API
+  development shell.
+
+Commit and hook status:
+
+- Committed the lean implementation in `vpsadmin` as
+  `e6cfc3bd1cd2d8890978d438da7cb9459d83a94c`
+  (`api: emit VPS operation and console events`).
+- The committed range for this slice is
+  `5e04c0c50173157bf3e55a69370397da43db78ea..e6cfc3bd1`.
+- The API catalog was regenerated with `rake vpsadmin:i18n:update`; all
+  generated Czech entries were translated, no `TODO` remains, and
+  `rake vpsadmin:i18n:health` passes.
+- The commit ran in `nix develop .#vpsadmin`. Overcommit passed Nixfmt,
+  MigrationSpecs, VpsadminWebuiI18n, RuboCop, and VpsadminApiI18n. Commit
+  message hooks passed with warnings at the repository's 72-column advisory
+  threshold; every line remains within the workspace's mandatory 80-column
+  limit.
+- Mandatory change review was launched after the commit and quick checks with
+  standalone fresh-context reviewer `mandatory_event_review`. No long
+  integration test was started before review.
+
+Mandatory review result and decisions:
+
+- The reviewer reported two Blocking findings:
+  - the single implementation commit bundles independently reviewable
+    transaction-chain, lifecycle/runtime, synchronous-resource, and console
+    families;
+  - `TransactionChains::Vps::DestroyMount` is mapped as a VPS operation but
+    its top-level chain records only a Mount concern, so it cannot project the
+    mapped VPS outcome.
+- Important findings cover best-effort/non-idempotent node message projection,
+  owner recovery after a queued Event failure, and missing orderly
+  console-session close events during NodeCtld shutdown.
+- The fixes stay within the corrected scope: stable producer IDs are stored in
+  ordinary Event payloads, existing Event rows provide redelivery
+  deduplication, existing transaction-chain concerns preserve owner identity,
+  and broker acknowledgement/publication behavior is hardened. No outbox,
+  audit ledger, migration, or schema change will be introduced.
+- The implementation history will be rewritten before integration into
+  separate transaction-chain, lifecycle/runtime, synchronous-resource, and
+  console commits, each carrying its specs and incremental generated catalog
+  metadata.
+- The advisory `respond_to?` ownership/VPS guessing in the generic resource
+  helper is being removed. Instrumented tenant resources must pass explicit
+  `owner:`/`vps:` context unless the object itself is a User or VPS.
+- Documentation-contract assessment found no semantic WebUI control or capture
+  scenario bound to Event Types/Event Log rows. This slice adds catalog data
+  but changes no navigation, form, route, landmark, or screenshot contract;
+  no capture update is planned for this backend-only producer tranche.
+
+## 2026-07-28 Final Event-Only Series
+
+- Replaced the temporary broad commits `e6cfc3bd1` and `b8069dba9` with four
+  focused commits on `2026-06-15-vpsadmin-events`:
+  - `e8ed1cbac` `api: project VPS transaction outcomes`
+  - `3e6fd6385` `api: emit VPS lifecycle and runtime events`
+  - `2b059dab6` `api: emit synchronous resource events`
+  - `bc7420a8b` `console: emit VPS session lifecycle events`
+- The feature branch and primary worktree now point at
+  `bc7420a8b2fa1d312aeb521a389529b3ea16e2af`. The temporary unsplit history is
+  retained on `2026-06-15-vpsadmin-events-unsplit-backup`; it was not
+  deployed. The temporary split-construction worktree was removed after the
+  final review; the primary initiative worktree remains active.
+- The final range from
+  `5e04c0c50173157bf3e55a69370397da43db78ea` changes no migration, schema, or
+  audit-ledger path. It only adds ordinary Event definitions/producers,
+  additive node/console message fields, and supporting tests/locales.
+- Successful chain construction records the existing User concern alongside
+  VPS concerns. This preserves owner attribution after VPS deletion and does
+  not depend on best-effort queued Event persistence. Block/Unblock specs were
+  corrected to assert both concerns instead of assuming the VPS concern was
+  the only row, as were the existing VPS dataset-expansion mail and incident
+  processing concern specs.
+- Node-originated transaction, runtime, and console messages use stable
+  producer UUIDs and waiting publication. API consumers acknowledge manually
+  after their persistence transaction commits and deduplicate redeliveries
+  through existing Event payloads. Legacy messages without producer UUIDs
+  remain accepted for rolling compatibility.
+- Orderly NodeCtld shutdown closes every live console session once, identifying
+  a normal shutdown or daemon restart. Abrupt host/process loss still cannot
+  truthfully synthesize an exact close event without a future lease protocol.
+- Resource helpers infer ownership only for User/VPS objects; instrumented
+  tenant resources pass the owner explicitly. Payloads contain identifiers and
+  changed field names, not submitted values or credentials.
+
+Final verification:
+
+- Every final commit ran the installed Overcommit hooks. Nixfmt,
+  MigrationSpecs, VpsadminWebuiI18n, RuboCop, and VpsadminApiI18n passed.
+- Combined API transaction/operation/runtime/console/resource suite:
+  69 examples, 0 failures.
+- Combined NodeCtld transaction/runtime/console/RPC suite:
+  75 examples, 0 failures.
+- Focused lifecycle/API mutation examples: 19 examples, 0 failures.
+- Complete lifetime task suite after the explicit chain-return test correction:
+  13 examples, 0 failures.
+- Focused resource API/helper examples: 12 examples, 0 failures.
+- Focused console API suite: 17 examples, 0 failures.
+- Focused console-router suite: 20 examples, 0 failures.
+- `rake vpsadmin:i18n:health`, `git diff --check`, and console JavaScript
+  syntax passed.
+- Broad transaction-chain model suite: 371 examples, 0 failures, and 3
+  documented pending examples unrelated to this change.
+- The broad `vps_write_spec.rb` file is 2,004 lines and its unfiltered run was
+  stopped after roughly ten minutes while still consuming CPU. The exact
+  changed VPS-write example was rerun in the focused lifecycle selection and
+  passed.
+- The dedicated console-router shell still fails on the already documented
+  removed `nodePackages` attribute. Router specs used the API Ruby bundle and
+  repository Gemfile; JavaScript syntax used `nixpkgs#nodejs`, matching
+  `notes/vpsadmin/2026-07-24-console-router-nodepackages-shell.md`.
+- The same mandatory reviewer verified every prior finding against the final
+  series and reported no remaining Blocking or Important findings. The
+  reviewer also confirmed that the final lifetime-spec correction changes no
+  production behavior and that the clear integration verdict stands.
+- Mixed-version owner attribution has an explicit deployment requirement:
+  update API request workers first, drain chains created by old workers, then
+  enable the new supervisor projection and node producers.
+
+## 2026-07-29 Development Cluster Deployment
+
+- The owned `2026-06-15-vpsadmin-events` cluster was already running with the
+  `single` topology on the required bridge network. Its services and node1
+  initially used base revision
+  `5e04c0c50173157bf3e55a69370397da43db78ea`.
+- Refreshed packaged Ruby gem metadata with
+  `nix develop -c rake vpsadmin:gems`. The command exposed an unrelated
+  `csv` lock/bundix refresh, which was restored; the feature worktree remained
+  clean.
+- Drained transaction chains before deployment. No staged, queued, or
+  rollbacking chains existed. Stopped the old API, scheduler, supervisor, and
+  console-router units together so an old request worker could not create a
+  chain after the drain.
+- `devcluster update 2026-06-15-vpsadmin-events services` and the corresponding
+  `node1` update completed for reviewed revision
+  `bc7420a8b2fa1d312aeb521a389529b3ea16e2af`. The API, scheduler, supervisor,
+  and console router became active; both machines reported the exact clean
+  revision in their packaged build information. API and WebUI HTTPS endpoints
+  returned 200, and the live `/v7.0/event_types` catalog exposed the console
+  and VPS operation event types.
+- Post-switch log inspection caught NodeCtld restarting with RabbitMQ
+  `ACCESS_REFUSED`: the new console-close control exchange was absent from the
+  generated console-router write/configure and node read permissions. This was
+  an implementation omission, not a transient deployment failure, so no
+  cluster-only permission override was applied.
+- Added least-privilege control-exchange permissions to
+  `tools/rabbitmqcfg.rb` and a focused generator contract spec. The spec passed
+  with 2 examples and 0 failures; Ruby syntax, RuboCop for both touched files,
+  and `git diff --check` passed. All installed Overcommit pre-commit hooks
+  passed in `nix develop .#vpsadmin`.
+- Per the mandatory review history rules, folded the permission correction
+  into the still-unmerged console lifecycle commit instead of retaining a
+  follow-up fix commit. The final four-commit feature head is now
+  `506e5624c`; the first three commit IDs remain unchanged.
+- The cluster still has the earlier `bc7420a8b` package generation while the
+  revised head awaits mandatory review and redeployment. NodeCtld remains
+  unable to finish startup until the corrected generated RabbitMQ permissions
+  are applied. The state-file-gated RabbitMQ setup unit does not rerun on an
+  existing broker: redeploy services, explicitly run the newly installed
+  generator with
+  `rabbitmqcfg user --vhost vpsadmin_test --perms --execute console console`
+  and
+  `rabbitmqcfg user --vhost vpsadmin_test --perms --execute node
+  dev-node1.lab dev-dns-primary.lab dev-dns-secondary.lab`, then update node1.
+  The explicit vhost is required because `rabbitmqcfg` otherwise defaults to
+  `vpsadmin_dev`. Repeat version, process, log, HTTPS, catalog, permission, and
+  transaction-chain checks.
+- Fresh standalone mandatory reviewer `deployment_acl_review` assessed the
+  final four-commit series and the exact existing-broker reconciliation. It
+  reported no Blocking, Important, or Advisory findings and cleared
+  `506e5624cc2fe5707fee7815eed0c8dd99cca70a` for redeployment. The reviewer
+  confirmed that the ACL correction belongs in the console lifecycle commit
+  and remains least-privilege and node-scoped.
+- Residual review risks are intentional limits of the event-only scope: abrupt
+  node/broker loss can omit producer/close events without an outbox, and
+  legacy mixed-version messages without producer IDs can duplicate. Runtime
+  broker access and full cluster health remain to be verified after
+  redeployment.
+- Rechecked the drain immediately before the corrected rollout: there were no
+  staged, queued, or rollbacking transaction chains. Stopped the four old
+  request/projection/console units, then
+  `devcluster update 2026-06-15-vpsadmin-events services` built and switched
+  packages stamped with exact clean revision
+  `506e5624cc2fe5707fee7815eed0c8dd99cca70a`.
+- The services updater's seed refresh restarts node1 before a separate node
+  update. Because the old ACL was still live, the refresh waited until the
+  reviewed explicit `--vhost vpsadmin_test` permission commands were run.
+  Both console and all three node account permissions updated successfully;
+  the services update then exited successfully.
+- `devcluster update 2026-06-15-vpsadmin-events node1` switched NodeCtld and
+  libnodectld to the same exact revision. The NodeCtld runit wrapper retained
+  the same PID while its uptime increased from 41 to 56 seconds, and no crash
+  or access-denied entry occurred after permission reconciliation.
+- Final runtime verification:
+  - API, scheduler, supervisor, and console-router units are active on store
+    paths stamped with `506e5624cc2fe5707fee7815eed0c8dd99cca70a`;
+  - systemd has no failed units, and the four relevant unit journals have no
+    error-priority entries since rollout;
+  - both machines report clean build revision `506e5624cc2fe5707fee7815eed0c8dd99cca70a`;
+  - RabbitMQ lists the corrected least-privilege patterns for console,
+    `dev-node1.lab`, `dev-dns-primary.lab`, and `dev-dns-secondary.lab`;
+  - an authenticated console-account AMQP probe successfully declared the
+    node1 control exchange and published an unrouted probe message, confirming
+    actual configure/write access; stable NodeCtld startup confirms read/bind
+    access;
+  - API and WebUI HTTPS roots return 200 with the cluster CA;
+  - the live Event Types endpoint exposes `vps.console_opened`,
+    `vps.console_closed`, `vps.operation_succeeded`, and
+    `vps.operation_failed`;
+  - no staged, queued, or rollbacking transaction chain remains;
+  - the cluster reports running, ready, `single`, and `bridge`; the vpsAdmin
+    worktree is clean at the deployed head.
+- Development-cluster deployment is complete. No migration or schema action
+  was performed.
+
+## 2026-07-29 Cross-API Event Coverage
+
+- The user rejected the VPS-specific terminal event design and requested
+  mutation events across the entire API.
+- Approved semantics:
+  - lifecycle start/result pairs apply to accepted asynchronous transaction
+    chains only;
+  - synchronous mutations emit one committed resource/domain fact;
+  - completion-named events such as `vps.replaced` appear only after success
+    and share the operation ID;
+  - ordinary validation and authorization failures are excluded, while
+    security-relevant failures such as failed sign-ins remain explicit events.
+- Read-only audits found approximately 240 mutating HaveAPI actions: 187
+  default mutations, 53 custom mutators, and additional authentication,
+  WebAuthn, and callback surfaces.
+- `vps.replaced` is currently persisted during chain construction without a
+  chain identifier, so it can remain visible after a later failed execution.
+  This is being replaced rather than extended.
+- Event Type example values originate in
+  `EventRouteMatcher::COMMON_FIELDS`; the WebUI only renders the incorrect API
+  metadata.
+- Implementation is active in the verified session and existing vpsAdmin
+  worktree at head `506e5624c`. The worktree was clean before implementation.
+- No schema migration, HaveAPI change, generated-client change, or new
+  repository is planned.
+- Independent implementation workstreams are active for generic chain
+  lifecycle, synchronous API coverage, and exact Event Type examples. The
+  primary agent will integrate, add remaining security/example coverage,
+  split commits, run quick tests, invoke the mandatory standalone review, run
+  integration validation, and redeploy the existing bridge-network cluster.
+
+### Implementation checkpoint
+
+- Generic transaction-chain lifecycle implementation is complete:
+  - `operation.started`, `operation.succeeded`, `operation.failed`, and
+    `operation.resolved` use the transaction-chain ID as `operation_id` and a
+    one-based retry `attempt`;
+  - the start Event is created inside chain construction and rolls back with a
+    rejected chain;
+  - terminal success is persisted before success-only domain facts, and
+    `result_event_ids` links those facts back to the outcome;
+  - `vps.replaced` is deferred until `done` and is absent after failure;
+  - explicit User concerns retain the affected account after destructive
+    operations, while actor/admin/session attribution remains separate;
+  - the unmerged `vps.operation_succeeded` and `vps.operation_failed` types
+    are removed.
+- Cross-API synchronous coverage is complete:
+  - all 249 loaded mutating HaveAPI actions are classified;
+  - all 64 loaded `Operations::Base` entry points are classified;
+  - OAuth authorize/token/revoke boundaries are atomic and covered;
+  - failed password/MFA observations emit `user.login_failed`;
+  - automatic resource capture coalesces create/update/delete callbacks and
+    cancels create-then-delete objects, so rolled-back or erased objects do not
+    produce facts;
+  - SMS delivery callback state is explicitly excluded to avoid an
+    EventDelivery feedback loop;
+  - per-request basic/token/OAuth session counters and renewal timestamps are
+    explicitly internal bookkeeping and do not produce audit noise.
+- Exact Event Type metadata examples are complete:
+  - exact types expose their actual name, category, severity, roles, and
+    `default_routed` value;
+  - subject/summary examples are present only when the definition supplies a
+    value that can actually be emitted;
+  - aggregate metadata omits type-dependent examples;
+  - console close reasons and action-specific resource examples are exact.
+- No database schema, migration, HaveAPI, generated client, or node protocol
+  change was added in this cross-API slice.
+
+Quick verification:
+
+- generic lifecycle, retry, result ordering, owner, console, and redelivery
+  suite: 65 examples, 0 failures;
+- cross-API action/operation/external inventory, automatic CRUD, OAuth,
+  authentication, and routing suite: 116 examples initially found seven
+  failures caused by auditing per-request Basic authentication bookkeeping;
+  the cause was explicitly excluded and all seven focused regressions passed;
+- final notification-target routing regression: 1 example, 0 failures;
+- WebUI Event Type rendering regression: 21 tests, 255 assertions;
+- API i18n catalogs regenerated, Czech metadata translated, and
+  `vpsadmin:i18n:health` passed;
+- focused RuboCop passed after correcting its two reported style issues;
+- Ruby/PHP syntax checks and `git diff --check` passed.
+
+The intended changes were committed as
+`a2d387f33a7d6d13dfbf7129170b0d2bc9b75473`
+(`api: audit operations across all resources`).
+
+- The first commit attempt from the ambient shell was rejected because required
+  RuboCop, PHP-CS-Fixer, gettext, and MariaDB executables were unavailable.
+  Nothing was bypassed.
+- Re-running the commit through `nix develop .#vpsadmin` passed every active
+  pre-commit hook: Nixfmt, MigrationSpecs, VpsadminWebuiI18n, PhpCsFixer,
+  RuboCop, and VpsadminApiI18n.
+- The commit-message checks passed; the repository emitted only its advisory
+  72-column body warnings. All message lines comply with the workspace's
+  mandatory 80-column limit.
+- The worktree is clean and the feature branch is five commits ahead of
+  `origin/2026-06-15-vpsadmin-events`.
+- Final exact/aggregate Event Type metadata verification passed: 2 examples,
+  0 failures.
+
+The mandatory fresh-context review must now run on
+`5e04c0c50173157bf3e55a69370397da43db78ea..a2d387f33a7d6d13dfbf7129170b0d2bc9b75473`
+before long integration testing or redeployment.
+
+### Mandatory review result
+
+Fresh standalone reviewer `mandatory_events_review` did not accept the first
+committed range and reported three blocking findings:
+
+1. `a2d387f33` is an omnibus commit spanning lifecycle, synchronous capture,
+   security events, metadata, generated locales, and WebUI tests. The unmerged
+   tail must be rebuilt as focused commits.
+2. Deferral corrected `vps.replaced`, but other success-named facts were still
+   emitted during nonempty chain construction. Concrete examples include
+   `user.created`, `vps.suspended`, `vps.resumed`, network enable/disable, and
+   migration-finished facts. A later node failure could therefore produce a
+   false completion fact followed by `operation.failed`.
+3. The synchronous policy inventory classified every mutation surface, but
+   callback-only recording silently missed direct/bulk writes. Concrete paths
+   include default environment user-config updates, sibling location-network
+   primary clearing, and reconstructed kernel-event state/history writes.
+
+No long or broad test was started. Deployment remains paused. Follow-up work
+is active to:
+
+- classify every transaction-chain event call and defer all completion claims
+  to `done`, with failure and idempotency regressions;
+- inventory every callback-bypassing write within classified mutation
+  boundaries and add explicit row/fact capture with regression tests;
+- rebuild the unmerged correction tail into focused lifecycle, synchronous
+  resource, security, metadata, and generated-catalog commits;
+- return the rewritten exact range to the same mandatory reviewer before
+  integration testing.
+
+Read-only deployment baseline while review ran:
+
+- the bridge cluster is running and ready at old revision `506e5624c`;
+- API, scheduler, supervisor, console-router, NodeCtld, and osctld are active;
+- API and WebUI return HTTP 200;
+- no transaction chain is staged, queued, or rollbacking;
+- the old live catalog reproduces the intended before/after assertion:
+  `resource.created` still advertises `vps.oom_report`, and generic
+  `operation.started` is absent.
+- The independent WebUI documentation contract has no Event Types capture or
+  bound control. This metadata-only rendering correction therefore needs no
+  capture pin or screenshot regeneration; production KB remains untouched.
+
+### Rewritten cross-API implementation
+
+The rejected omnibus tail was rebuilt on top of `506e5624c` as seven focused
+commits:
+
+- `67617f226` `api: correlate transaction chain operations`;
+- `7f70ba2da` `api: defer transaction completion facts`;
+- `8a2a3adbe` `api: audit synchronous resource mutations`;
+- `d81f40d93` `api: emit failed sign-in events`;
+- `4801bfc24` `api: expose truthful event type examples`;
+- `98a5f51a7` `api: compare committed resource attributes directly`;
+- `3427009b8` `api: handle empty user lifetime chains`.
+
+The rewritten range is
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..3427009b8`.
+Every commit passed the repository's active pre-commit hooks from
+`nix develop .#vpsadmin`, including MigrationSpecs, RuboCop, API/WebUI i18n,
+Nixfmt, and PHP-CS-Fixer where applicable. No hook was bypassed.
+
+The first review's functional findings are addressed:
+
+- all completion-named facts found in non-empty transaction chains are now
+  deferred in signed final no-op input and materialized only after `done`;
+  failures produce only the failed lifecycle result;
+- every loaded mutating action and operation is classified, direct and bulk
+  writes are explicitly captured, and registered dependent-delete paths are
+  validated against real model reflections;
+- resource facts are checked against committed database values before
+  emission, using raw attribute reads so overridden model methods cannot affect
+  the check.
+
+Final quick verification:
+
+- all changed API specs: 310 examples, with seven failures identifying one
+  column/method collision plus an allowed-empty User lifetime edge case; all
+  other 303 examples passed and two documented pending examples remained;
+- all six affected notification-target examples passed after the raw-attribute
+  fix;
+- User soft delete, allowed-empty result emission, and the complete resource
+  policy suite: 16 examples, 0 failures;
+- WebUI Event Type rendering: 21 tests, 255 assertions;
+- every follow-up commit again passed all active pre-commit hooks.
+
+An allowed-empty User soft-delete now takes effect synchronously, emits
+`user.soft_deleted` without an operation ID, and returns no chain state ID.
+This matches the documented distinction between synchronous facts and accepted
+non-empty asynchronous operations.
+
+The same standalone reviewer must now re-review the exact rewritten range
+before deployment.
+
+### Mandatory follow-up review
+
+The same standalone reviewer did not accept
+`506e5624c..3427009b8` and reported three Blocking items:
+
+1. allowed-empty chains with synchronous writes are not comprehensively
+   covered. `Export::Update` can save export options, discard its empty chain,
+   and emit neither a generic operation result nor a resource/domain fact;
+2. when field A is observed in a rolled-back savepoint and field B later
+   commits on the same record, Recorder merges both field names but validates
+   only B's latest snapshot, so it can over-report A;
+3. the two small regression commits must be folded into the functional commits
+   that introduced the corresponding unmerged behavior.
+
+Deployment remains paused. Corrective work is active to audit all API-reachable
+allowed-empty chains, track and validate committed fields individually, add
+the missing regressions, and autosquash every follow-up into its owning
+functional commit before returning the rewritten range to the same reviewer.
+
+### Second review corrections
+
+All three blocking findings from the follow-up review are addressed and folded
+into their owning functional commits. The final five-commit range is:
+
+- `67617f226` `api: correlate transaction chain operations`;
+- `2aff864af` `api: defer transaction completion facts`;
+- `c3fe45a01` `api: audit synchronous resource mutations`;
+- `1efb15c63` `api: emit failed sign-in events`;
+- `18b29e0b2` `api: expose truthful event type examples`.
+
+The exact review range is now
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..18b29e0b2bd68e8b4feda4ed2126f33c9fc03dcf`.
+The prior seven-commit head remains recoverable through the local
+`2026-06-15-vpsadmin-events-review2-backup` branch.
+
+The allowed-empty audit covers all 27 API-reachable chain classes:
+
+- 18 resource-mutating paths defer a generic resource fact;
+- two paths already defer an explicit domain result fact;
+- three paths emit immediate facts for already-persisted observations;
+- four structural empty paths cannot mutate persistent state.
+
+When one of the 18 resource-mutating chains has no node transaction, its
+persisted resource fact is emitted synchronously without operation correlation.
+When the chain is nonempty, the same fact is signed into the operation result
+and emitted only after `done`, with `operation_id`, `operation_attempt`, and
+`operation_result_index`. `Export::Update` has regressions for both its
+database-only and runtime paths.
+
+The synchronous recorder now retains each field's database value at action
+start and its independently observed persisted values. Final resolution
+therefore excludes a field changed only in a rolled-back savepoint, even if a
+different field on the same row commits later. It also excludes fields restored
+to their original value and preserves committed create/delete outcomes.
+Callback-skipping writes supply explicit prior values and all raw attributes
+remain immune to model method/column collisions.
+
+Adding operation correlation to generic resource facts required generated
+English and Czech field descriptions. The catalog was normalized with
+`rake vpsadmin:i18n:update`; no placeholder translations remain.
+
+Commit verification:
+
+- the first lifecycle fixup commit attempt was made outside the Nix shell and
+  was rejected by hooks because RuboCop, gettext, and MariaDB were unavailable;
+  no commit was created;
+- both fixup commits then passed every active hook inside
+  `nix develop .#vpsadmin`;
+- the resource fixup initially exposed the missing generated locale keys and
+  was rejected; after adding and normalizing the translations, all hooks
+  passed;
+- autosquash completed without conflicts, leaving a clean worktree and the
+  five commits listed above;
+- consolidated API verification passed: 175 examples, 0 failures, one
+  documented pending example, randomized with seed 42469. The run covered the
+  complete resource recorder, allowed-empty inventory, Export update, core
+  transaction-chain lifecycle, supervisor operation events, Event Routing, and
+  User write/lifetime specifications.
+
+Deployment remains paused until the same standalone reviewer accepts this exact
+range.
+
+### Commit-series coherence correction
+
+The same reviewer found the three prior functional blockers resolved, but did
+not accept the five-commit series because the transaction-completion commit
+used `ResourceOperations::IGNORED_CHANGED_FIELDS`, the ownership/VPS resolver
+registry, and resource operation-result metadata introduced by the following
+synchronous-resource commit. The final head worked, but the intermediate
+completion commit raised `NameError` on deferred resource paths.
+
+The two focused commits were reordered so their dependency is explicit:
+generic synchronous resource facts and their resolver/catalog foundation are
+introduced before transaction chains defer those facts. The resulting exact
+range is:
+
+- `67617f226` `api: correlate transaction chain operations`;
+- `69f4aa16d` `api: audit synchronous resource mutations`;
+- `dab2dabd1` `api: defer transaction completion facts`;
+- `5278c5c1e` `api: emit failed sign-in events`;
+- `239bd3f01` `api: expose truthful event type examples`.
+
+The new review range is
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..239bd3f014fc2280d456a92e576af2a5f00705b9`.
+The pre-reorder head remains recoverable through the local
+`2026-06-15-vpsadmin-events-review3-backup` branch.
+
+The affected specs were run at the new intermediate completion commit
+`dab2dabd1` itself: 29 examples, 0 failures, seed 16633. The same resource
+recorder, allowed-empty inventory, and Export empty/nonempty specifications
+then passed again at final head `239bd3f01`: 29 examples, 0 failures, seed
+29607. The final worktree is clean and `git diff --check` passes.
+
+Deployment remains paused pending the same reviewer's verdict on the reordered
+range.
+
+### Operation-field foundation correction
+
+The reviewer found that the reordered synchronous-resource commit loaded
+`Core::OPERATION_RESULT_FIELDS`, while those constants were still introduced
+by the following transaction-completion commit. The final tree remained valid,
+but the intermediate resource commit could not load the Event catalog.
+
+`OPERATION_REFERENCE_FIELDS` and `OPERATION_RESULT_FIELDS` now belong to the
+first operation-correlation commit. This removes the dependency cycle:
+
+1. operation correlation defines the shared field schema;
+2. synchronous resources define resource facts and ownership/VPS resolution;
+3. transaction completion defers those existing resource facts.
+
+The final tree is byte-identical to the previous reviewed head. The exact
+range is now:
+
+- `a240698d3` `api: correlate transaction chain operations`;
+- `7920142fc` `api: audit synchronous resource mutations`;
+- `7a2a23ca6` `api: defer transaction completion facts`;
+- `61927063b` `api: emit failed sign-in events`;
+- `9d4b279a4` `api: expose truthful event type examples`.
+
+The exact range is
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..9d4b279a4fb84eae07a51294dc81bc8aa05f1626`.
+The prior head remains recoverable through local branch
+`2026-06-15-vpsadmin-events-review4-backup`.
+
+Verification at every requested checkpoint:
+
+- resource foundation commit `7920142fc`: complete resource recorder/catalog
+  suite, 19 examples, 0 failures, seed 26649;
+- completion commit `7a2a23ca6`: resource recorder, allowed-empty inventory,
+  and Export empty/nonempty paths, 29 examples, 0 failures, seed 3606;
+- final head `9d4b279a4`: the same affected suite, 29 examples, 0 failures,
+  seed 53849.
+
+The amended operation-correlation commit passed every active pre-commit hook
+inside `nix develop .#vpsadmin`. The final worktree is clean,
+`git diff --check` passes, and the final source diff remains unchanged.
+Deployment remains paused pending review acceptance.
+
+The same standalone reviewer accepted
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..9d4b279a4fb84eae07a51294dc81bc8aa05f1626`
+with no Blocking or Important findings. The reviewer confirmed that all five
+commits are independently coherent, there are no schema or dependency changes,
+and the only remaining work is the planned ordered bridge-cluster deployment
+and representative runtime verification.
+
+### Initial bridge-cluster rollout and acceptance gap
+
+The accepted head `9d4b279a4` was deployed to the existing bridge-network
+development cluster after draining transaction chains and stopping the API,
+scheduler, supervisor, and console router. The services host reported the exact
+clean feature head; the API, WebUI, scheduler, supervisor, and console router
+were healthy, and no systemd unit was failed. The node remained on the compatible
+base revision because this change adds API-side event projection and optional
+signed result metadata without changing node executables or the transaction
+protocol understood by the older node.
+
+Runtime checks confirmed:
+
+- the Event Type catalog exposes the new operation and resource facts with
+  truthful per-type examples;
+- synchronous `OsFamily` create, update, and delete calls emitted
+  `resource.created`, `resource.updated`, and `resource.deleted`;
+- a rejected password login emitted `user.login_failed` with request and actor
+  context;
+- a real VPS create emitted correlated `operation.started` and
+  `operation.succeeded` events for transaction chain 19.
+
+The real VPS create also exposed an acceptance failure: the successful chain
+created VPS 3, but `operation.succeeded.result_event_ids` was empty and no
+`resource.created` fact was materialized. Generic blocking API actions were
+classified as covered by the transaction-chain lifecycle and therefore did not
+install the Active Record resource recorder. The explicit deferred-event paths
+covered selected chains but not VPS creation or the full blocking CRUD surface.
+
+The rollout is therefore not accepted as final. The implementation is being
+corrected at the generic action-to-chain boundary so blocking create, update,
+and delete mutations are captured during chain construction, serialized into
+the signed completion result, and emitted only when the chain reaches `done`.
+Construction rollback and execution failure must emit no resource fact.
+
+### Generic blocking-action completion correction
+
+The runtime gap is corrected and folded into the existing
+`api: defer transaction completion facts` commit. The exact five-commit range
+is now:
+
+- `a240698d3` `api: correlate transaction chain operations`;
+- `7920142fc` `api: audit synchronous resource mutations`;
+- `801965b7b` `api: defer transaction completion facts`;
+- `539efc33d` `api: emit failed sign-in events`;
+- `8390b4ff6` `api: expose truthful event type examples`.
+
+The prior accepted deployment head remains recoverable through local branch
+`2026-06-15-vpsadmin-events-review5-backup`.
+
+Generic blocking API policies now retain the action resource model and default
+create, update, or delete intent. One action-scoped recorder spans validation,
+operation calls, pre-chain persistence, and root-chain construction. Before a
+root chain is queued, it resolves ordinary Active Record mutations together
+with transaction confirmations, replaces overlapping explicit generic
+descriptors, and appends one signed resource result fact per affected target.
+This covers confirmation-only edits and destroys that callbacks cannot observe.
+The default CRUD intent is applied only to the action's original target model,
+not to related models admitted by nested operation policies.
+
+Successful blocking paths that legitimately produce no chain, including
+administrator system DNS-zone creation/deletion and database-only DNS-record
+updates, emit their remaining facts synchronously. Allowed-empty chains keep
+their existing atomic immediate behavior. Non-empty chains materialize facts
+only at `done`; failed execution never materializes them.
+
+An independent read-only inventory covered all 46 blocking default CRUD
+actions: 19 creates, 13 updates, and 14 deletes. It confirmed the need to
+capture pre-fire persistence and confirmation-only changes, and identified the
+existing explicit descriptors that the generic boundary now deduplicates.
+
+Verification of the corrected committed tree:
+
+- all active pre-commit hooks passed inside `nix develop .#vpsadmin`;
+- focused create/update/delete, pre-fire, confirmation-only, deduplication,
+  execution failure, logical delete, real VPS create, and policy inventory
+  specs passed: 56 examples, 0 failures;
+- mixed synchronous DNS-zone API paths and the focused model set passed:
+  87 examples, 0 failures;
+- the expanded affected suite covering resource policies, allowed-empty
+  inventory, Export update, VPS create, operation supervision, Event Routing,
+  User writes/lifetimes, and DNS zones passed: 221 examples, 0 failures and one
+  documented monitoring-plugin pending example, seed 44328;
+- focused RuboCop passed with no offenses and `git diff --check` is clean;
+- the exact range contains no schema, migration, dependency, or generated gem
+  changes.
+
+The same standalone mandatory reviewer must accept
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..8390b4ff6`
+before the corrected services are redeployed.
+
+### Committed pre-fire mutation review correction
+
+The same standalone reviewer reported one Blocking finding: a blocking action
+could commit a target mutation before calling `TransactionChain.fire`, then
+return an error after chain construction failed. The recorder previously
+emitted its remaining entries only for a successful API response, so the
+persisted mutation was omitted even though the chain transaction correctly
+rolled back its own construction state.
+
+Blocking action recorders now resolve and emit all entries that remain after
+the action returns, regardless of response status. Entries transferred into a
+non-empty chain are cleared by `defer_to!`, so chain execution failure still
+cannot publish a resource success fact. Construction-only callbacks remain in
+the recorder, but final database resolution suppresses them after rollback.
+
+Two focused regressions cover the boundary:
+
+- a resource committed before `fire` followed by construction failure remains
+  persisted and emits a synchronous `resource.created` fact;
+- a resource created only inside failed chain construction is rolled back and
+  emits no fact.
+
+The focused completion/resource/VPS suite passed 58 examples with no failures,
+seed 40901. Targeted RuboCop passed, every active pre-commit hook passed again,
+and the correction was autosquashed into the completion commit. The exact
+range is now:
+
+- `a240698d3` `api: correlate transaction chain operations`;
+- `7920142fc` `api: audit synchronous resource mutations`;
+- `39adc617d` `api: defer transaction completion facts`;
+- `036606517` `api: emit failed sign-in events`;
+- `ada478d66` `api: expose truthful event type examples`.
+
+The prior head remains recoverable through local
+`2026-06-15-vpsadmin-events-review6-backup`. The same reviewer must now verify
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..ada478d66`.
+
+### Post-deferral rollback review correction
+
+The follow-up review found a narrower Blocking case: `Recorder#defer_to!`
+cleared its entries before the transaction containing root-chain construction
+had committed. If later finalization failed after deferred descriptors were
+appended, the chain and its construction-only object were rolled back, but a
+resource committed before `fire` also lost its remaining synchronous fact.
+
+Recorder entries are now consumed from
+`ActiveRecord.after_all_transactions_commit`, after the root construction
+transaction actually commits. A rollback leaves the entries available for the
+blocking action's final database-resolution pass. That pass emits a fact for a
+pre-existing committed object and suppresses facts for rows erased by the
+rollback.
+
+Two focused post-deferral regressions cover both outcomes:
+
+- a committed pre-fire `OsFamily` survives forced result-finalization failure
+  and emits `resource.created`;
+- an `OsFamily` saved only inside the same failed construction transaction is
+  rolled back and emits no event.
+
+The focused transaction-chain suite passed 34 examples with no failures,
+seed 4002. Targeted RuboCop passed with no offenses, and every active
+pre-commit hook passed inside `nix develop .#vpsadmin`. The correction was
+autosquashed into the completion commit. The exact clean range is now:
+
+- `a240698d3` `api: correlate transaction chain operations`;
+- `7920142fc` `api: audit synchronous resource mutations`;
+- `8c6164f87` `api: defer transaction completion facts`;
+- `63125b539` `api: emit failed sign-in events`;
+- `2333a64d5` `api: expose truthful event type examples`.
+
+The exact range is
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..2333a64d5c11e369ced6680b4eb902b98a8f299f`.
+The immediately preceding reviewed head remains recoverable through local
+branch `2026-06-15-vpsadmin-events-review7-backup`. Deployment remains paused
+until the same standalone reviewer accepts this corrected range.
+
+### Allowed-empty rollback deduplication correction
+
+The next follow-up review found one remaining Blocking rollback edge.
+Allowed-empty chains materialize their deferred resource facts immediately
+inside the construction transaction. The Event callback recorded an in-memory
+deduplication marker before that transaction committed. If routing, release, or
+cleanup then failed, the Event rolled back but the marker remained, causing the
+blocking action's final resolution to suppress a fact for a resource committed
+before `fire`.
+
+Deduplication now retains the exact emitted Event ID and verifies that the
+matching Event row still exists before suppressing a resource fact. A rolled
+back Event clears the stale marker and permits final database resolution; a
+committed Event remains deduplicated.
+
+Two allowed-empty cleanup regressions cover the boundary:
+
+- a pre-fire committed `OsFamily` receives its synchronous
+  `resource.created` fact after immediate materialization and later cleanup are
+  rolled back;
+- an `OsFamily` saved only inside that failed construction transaction remains
+  absent and emits no fact.
+
+The focused transaction-chain suite passed 36 examples with no failures,
+seed 56119. Targeted RuboCop passed with no offenses and every active
+pre-commit hook passed. The correction was autosquashed into the completion
+commit. The exact clean range is now:
+
+- `a240698d3` `api: correlate transaction chain operations`;
+- `7920142fc` `api: audit synchronous resource mutations`;
+- `d4b110019` `api: defer transaction completion facts`;
+- `76192ab6f` `api: emit failed sign-in events`;
+- `352b9c18d` `api: expose truthful event type examples`.
+
+The exact range is
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..352b9c18d23d1f134d9ec44eedc9eab359566c8c`.
+The preceding head remains recoverable through local branch
+`2026-06-15-vpsadmin-events-review8-backup`. Deployment remains paused until
+the same standalone reviewer accepts this final correction.
+
+The same standalone reviewer explicitly accepted
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..352b9c18d23d1f134d9ec44eedc9eab359566c8c`
+with no Blocking, Important, or Advisory findings. The reviewer confirmed that
+Event-ID-backed deduplication distinguishes committed immediate Events from
+rolled-back ones, the new regressions cover both outcomes, and the five commits
+remain focused and compatible with no schema or dependency changes. The only
+remaining validation is the ordered bridge-cluster deployment and
+representative live checks.
+
+### Accepted bridge-cluster deployment and live verification
+
+The accepted head
+`352b9c18d23d1f134d9ec44eedc9eab359566c8c` was deployed to the existing
+`2026-06-15-vpsadmin-events` bridge-network cluster.
+
+Before the switch, all five existing transaction chains were in terminal
+`done` state. The API, scheduler, supervisor, and console router were stopped,
+then `devcluster update 2026-06-15-vpsadmin-events services` built and
+activated packages stamped with the exact clean accepted revision. No schema
+migration was present or run. The node source revision remained unchanged
+because this correction is API/supervisor-side and preserves the existing
+signed transaction protocol.
+
+Live mutation acceptance:
+
+- creating VPS 4 (`events-audit-vps-final`) accepted non-empty chain 20;
+  while queued, only `operation.started` and the low-level state event were
+  visible, with no `resource.created`;
+- after chain 20 reached `done`, event 34 was `operation.succeeded` with
+  `result_event_ids: [35]`, and event 35 was `resource.created` for `Vps` 4
+  with `operation_id: 20`, attempt 1, and result index 0;
+- updating VPS 4's `info` took the legitimate allowed-empty path, created no
+  operation, and emitted synchronous event 37 `resource.updated` with only
+  `info` in `changed_fields`;
+- the first two delete requests were rejected before mutation because the
+  disposable cluster had no default VPS lifetime expiration configured; they
+  created neither chains nor resource facts;
+- one temporary, exact development lifetime default enabled the hard-delete
+  acceptance request and was removed immediately afterwards;
+- hard deletion accepted wrapper chain 22; while queued, only
+  `operation.started` was visible. At `done`, event 41
+  `operation.succeeded` listed result event 42, and event 42 was the
+  correlated `resource.deleted` fact for VPS 4. The VPS remains as the normal
+  logical `hard_delete` row.
+
+Cross-API and consumer checks:
+
+- synchronous `OsFamily` 6 create, update, and delete calls emitted events
+  43, 44, and 45 with the expected changed-field sets; the resource was
+  removed by the delete call;
+- a deliberately invalid password request returned HTTP 401 and emitted event
+  46 `user.login_failed` for user 2 with `auth_type: password` and
+  `reason: invalid password`;
+- the Event API returned resource event 35 to an authenticated consumer,
+  including operation 20, attempt 1, and result index 0 in `payload_json`;
+- the Event Type API returned 66 types. `operation.started`,
+  `resource.created`, and `user.login_failed` each advertised their exact
+  event name plus truthful roles, severity, default-routing, subject, and
+  summary examples.
+
+Final health:
+
+- `/etc/vpsadmin/build-info.json` reports exact revision
+  `352b9c18d23d1f134d9ec44eedc9eab359566c8c` and `revisionDirty: false`;
+- API, scheduler, supervisor, and console-router units are active, with no
+  failed systemd units and no error-priority entries after the successful
+  acceptance fixture was installed;
+- the user-sessions maintenance unit completed with `Result=success` and exit
+  status 0;
+- all seven transaction chains are terminal `done`, with no staged, queued, or
+  rollbacking chain;
+- the temporary lifetime-default row is absent;
+- API and WebUI return HTTP 200 using the development CA;
+- `devcluster status` reports running, ready, topology `single`, and network
+  `bridge`.
+
+Post-review expanded verification at the deployed commit passed 227 examples
+with 0 failures and one documented monitoring-plugin pending example, seed
+18956. The run covered the complete resource-policy inventory, every rollback
+regression, allowed-empty classification, real VPS creation, Export
+empty/nonempty updates, supervisor operation projection, Event Routing, User
+writes/lifetimes, and DNS-zone API paths.
+
+### First pushed-head CI correction
+
+Branch head `352b9c18d23d1f134d9ec44eedc9eab359566c8c` was pushed after
+deployment. Console Router Specs, RuboCop, WebUI PHPUnit, i18n health, and
+libnodectld Specs passed. The topic-parallel API workflow exposed failures in
+both engine shards:
+
+- core-only specs constantized string registrations belonging to unloaded
+  plugins;
+- transaction-chain correlation supplied `operation_id` as an explicit event
+  payload, replacing fields computed by typed event definitions. This caused
+  `user.new_login` and monitoring alerts to retain correlation but lose their
+  event-specific fields;
+- exact transaction-list expectations did not include the signed terminal
+  no-op that carries deferred result descriptors.
+
+The job logs were downloaded directly from failed job IDs `90629122210` and
+`90629122522` while the matrix was still running. The failures were reproduced
+and corrected rather than rerun unchanged.
+
+Commit `45996e7e7534e517a1fd97a5488e52871d06770e`
+(`api: preserve typed event fields in chain events`) keeps existing explicit
+payload replacement semantics and adds a narrow `payload_additions` channel.
+Transaction-chain events use it to merge the real operation ID into the
+computed or explicitly supplied payload. Integration assertions now prove
+that typed fields and correlation coexist. Plugin inventory specs skip only
+registrations whose owning plugin is not loaded, and transaction-chain specs
+describe the result-carrier no-op explicitly.
+
+The later core/full VPS shards also exposed two exact transaction-count
+expectations in `vps_feature_spec.rb`. Those tests now describe both the VPS
+feature transaction and terminal result carrier, and assert that the carrier
+contains the expected deferred `resource.updated` descriptors.
+
+Quick verification at `45996e7e7534e517a1fd97a5488e52871d06770e`:
+
+- full-plugin regression set: 37 examples, 0 failures, seed 14531;
+- core-only regression set: 27 examples, 0 failures, seed 2147;
+- strengthened transaction-chain/new-login/monitoring set: 47 examples,
+  0 failures, seed 19454;
+- core-only policy/new-login set: 22 examples, 0 failures, seed 627;
+- core-only VPS feature API file: 21 examples, 0 failures, seed 8539;
+- full-plugin VPS feature API file: 21 examples, 0 failures, seed 35280;
+- targeted RuboCop: seven files, no offenses;
+- all active pre-commit and commit-message hooks passed;
+- `git diff --check` is clean.
+
+No schema, migration, dependency, generated-client, protocol, or
+configuration changes were added. The development cluster remains on the
+previously accepted clean revision until this follow-up passes mandatory
+review.
+
+### Mandatory review of the CI correction
+
+The fresh standalone mandatory reviewer rejected follow-up commit
+`45996e7e7534e517a1fd97a5488e52871d06770e` with three Blocking and two
+Important findings:
+
+- correlation payload additions could coexist under string and symbol keys,
+  letting routing observe a caller-supplied operation ID while persisted JSON
+  exposed the authoritative ID;
+- `operation_id` was not declared on every chain-correlatable typed event, so
+  exact-type routing and Event Type metadata hid it;
+- the follow-up combined independently reviewable corrections belonging to
+  three unmerged feature commits;
+- core-only policy tests skipped every unresolved constant instead of only
+  explicitly disabled plugin-owned constants;
+- DNS and network-interface tests counted terminal no-ops without inspecting
+  their signed result descriptors.
+
+All findings are corrected. Correlation now removes both string and symbol
+forms of each added key and writes one canonical string key, with the
+authoritative operation ID taking precedence. `operation_id` is a common
+optional integer routing field with truthful metadata and localization.
+Regressions exercise string-keyed explicit payloads, string-keyed typed extra
+payloads, and `EventRouteMatcher` against a correlated `user.new_login`
+event. Plugin skips are limited to the known outage-reports, monitoring, and
+newslog ownership mappings, and missing core or enabled-plugin constants fail
+the specs. Shared result-descriptor parsing now verifies the exact resource
+facts carried for DNS records, network interfaces, and VPS features.
+
+The rejected follow-up commit was removed. Three hook-checked fixups were
+autosquashed into their owning unmerged commits. The exact clean series is now:
+
+- `f9c1d22fbb0a7c77126aa609938c88ebb8ede9ed`
+  `api: correlate transaction chain operations`;
+- `7c197d6f4208c314538b6e8b07a1217e89432519`
+  `api: audit synchronous resource mutations`;
+- `71e8fb6d71a4b50fdf8f667535af87b5cb883111`
+  `api: defer transaction completion facts`;
+- `5138e2db828d09fe5037fed6abd2bdd0fc65b4ef`
+  `api: emit failed sign-in events`;
+- `3d20e736336552d561874c6767bf87a479cd968a`
+  `api: expose truthful event type examples`.
+
+Post-correction quick verification passed:
+
+- full-plugin focused set: 95 examples, 0 failures, seed 48734;
+- core-only focused set: 85 examples, 0 failures, seed 21523;
+- targeted RuboCop: 12 files, no offenses;
+- every fixup commit passed active pre-commit and commit-message hooks;
+- the final autosquashed tree passed the complete active pre-commit hook set,
+  including normalized API i18n catalogs;
+- `git diff --check` is clean and the worktree has no uncommitted changes.
+
+The same fresh standalone reviewer must now verify exact range
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..3d20e736336552d561874c6767bf87a479cd968a`
+before the rewritten branch is pushed or the development cluster is updated.
+
+The same standalone reviewer completed the follow-up review and explicitly
+accepted exact range
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..3d20e736336552d561874c6767bf87a479cd968a`
+with no Blocking, Important, or Advisory findings. The reviewer confirmed that
+correlation additions canonicalize string and symbol keys before routing, the
+authoritative operation ID wins, `operation_id` is typed and visible in Event
+Type metadata and routing, plugin-disabled skips cannot hide missing core or
+enabled-plugin registrations, and the DNS, network-interface, and VPS-feature
+specs inspect the actual deferred result descriptors. The reviewer also
+confirmed that the rejected follow-up is absent, the corrections are
+autosquashed into the appropriate owning commits, and the clean five-commit
+series contains no schema, migration, dependency, generated-client, or
+protocol changes. Residual validation is limited to the fresh GitHub Actions
+matrix and updating and rechecking the development cluster.
+
+### Corrected-head push and bridge-cluster acceptance
+
+After fetching `origin`, the remote feature branch still pointed to the known
+pre-correction head
+`352b9c18d23d1f134d9ec44eedc9eab359566c8c`. The reviewed unmerged branch was
+updated with an exact `--force-with-lease` to accepted head
+`3d20e736336552d561874c6767bf87a479cd968a`; the local and remote refs now
+match.
+
+The existing `2026-06-15-vpsadmin-events` bridge-network cluster had seven
+terminal `done` transaction chains and no active chain before the switch. The
+API, scheduler, supervisor, and console router were stopped, then
+`devcluster update 2026-06-15-vpsadmin-events services` built and activated
+the corrected packages. No migration or schema operation was present or run.
+The active `/etc/vpsadmin/build-info.json` reports exact clean revision
+`3d20e736336552d561874c6767bf87a479cd968a`.
+
+Live regression acceptance:
+
+- API and WebUI HTTPS roots return 200 with the development CA;
+- API, scheduler, supervisor, and console-router units are active and there
+  are no failed systemd units;
+- a real token sign-in for the seeded second user created session 70 and
+  retained the complete typed `user.new_token` payload while the generic
+  synchronous recorder emitted committed `User`, `Token`, and `UserSession`
+  resource facts;
+- a controlled nonempty `TransactionChains::User::NewLogin` fixture using the
+  cluster's existing OAuth session and authorization created chain 23;
+- chain 23 progressed from `queued` to terminal `done`, with
+  `operation.started` and `operation.succeeded` correlated by
+  `operation_id: 23`;
+- persisted event 53 `user.new_login` retained `auth_type: oauth2`,
+  client/API addresses, client version, user agent, user-device,
+  authorization, and OAuth-client IDs together with the authoritative
+  `operation_id: 23`;
+- an actual `EventRouteMatcher` for `operation_id == 23` matched event 53;
+- the live Event Type catalog declares common `operation_id` as integer with
+  example 123 and reports `event_type: user.new_login`, roles `[admin]`,
+  severity `warning`, and `default_routed: true`;
+- all eight transaction chains are terminal `done` after the fixture.
+
+Fresh-head workflows started at the rewritten revision. RuboCop, i18n health,
+and WebUI PHPUnit passed immediately. The topic-parallel API run is
+`30472162052` and the aggregate CI run is `30472156949`; both are being
+monitored to completion. The still-running superseded aggregate CI run
+`30467543472` for old head `352b9c18d` was canceled after the rewritten push,
+as required.
+
+### Late platform-shard regression correction
+
+Inspection of the completed superseded API matrix found that both platform
+jobs had failed the same regression after roughly 40 minutes:
+
+- full-plugin job `90629122311`: 881 examples, one failure, seed 7763;
+- core-only job `90629122319`: 881 examples, one failure, seed 21442.
+
+The failed logs showed that
+`api/spec/api/resources/transaction_chain_read_spec.rb:508` expected an event
+unmatched by a stale one-shot notification route not to exist. That expectation
+predated the consumer Event API contract: all committed events remain
+persisted so consumers can build their own audit log, while route matching
+controls only notification delivery. The regression now asserts that the stale
+event is persisted and has no `event_route_matches`.
+
+The focused example passes in both supported configurations:
+
+- core-only: one example, zero failures, seeds 36819 and 32926;
+- full-plugin: one example, zero failures, seed 52389.
+
+The first ambient-shell commit attempt stopped at the mandatory hooks because
+the shell lacked RuboCop, GNU gettext, and MariaDB tooling. No hook was
+bypassed. Repeating the commit inside `nix develop .#vpsadmin` passed all
+pre-commit and commit-message hooks, and the fixup was autosquashed into the
+operation-correlation commit. The complete active pre-commit hook suite then
+passed on the rewritten tree, including migration checks, Nixfmt, RuboCop,
+WebUI/API i18n, and PHP CS Fixer. `git diff --check` is clean and the worktree
+has no uncommitted files.
+
+The exact rewritten series awaiting follow-up mandatory review is:
+
+- `17725e161` `api: correlate transaction chain operations`;
+- `61fbcc7b9` `api: audit synchronous resource mutations`;
+- `704e26653` `api: defer transaction completion facts`;
+- `4824f54ff` `api: emit failed sign-in events`;
+- `71396e3e9` `api: expose truthful event type examples`.
+
+The exact review range is
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..71396e3e9`.
+There are still no schema, migration, dependency, generated-client, or
+cross-service protocol changes.
+
+The same standalone reviewer completed the follow-up mandatory review and
+accepted exact range
+`506e5624cc2fe5707fee7815eed0c8dd99cca70a..71396e3e9` with no Blocking,
+Important, or Advisory findings. The reviewer confirmed that the corrected
+expectation distinguishes Event API persistence from notification routing:
+the stale event remains available to consumers, has no route matches, and
+does not consume the one-shot route. Residual validation is limited to
+publishing the rewritten series and confirming the fresh core/full platform
+shards.
+
+### Final reviewed-head push and deployment
+
+After fetching `origin`, the remote feature branch still pointed to the exact
+known prior head `3d20e736336552d561874c6767bf87a479cd968a`. The final reviewed
+series was published over SSH with an exact `--force-with-lease` to
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37`. Superseded topic-parallel API
+run `30472162052` and aggregate CI run `30472156949` were canceled only after
+the push and are both terminal `cancelled`; both carried the obsolete
+`3d20e736` head.
+
+Replacement final-head workflows are:
+
+- API Specs (topic parallel): `30475504620`;
+- aggregate CI: `30475505399`;
+- RuboCop: `30475504878`, passed;
+- WebUI PHPUnit: `30475504862`, passed;
+- i18n health: `30475504486`, passed.
+
+The existing `2026-06-15-vpsadmin-events` development cluster reported
+topology `single`, network `bridge`, and all eight transaction chains terminal
+before deployment. API, scheduler, supervisor, and console-router were stopped
+before `devcluster update 2026-06-15-vpsadmin-events services`. The update
+built and activated the exact reviewed source without running a migration.
+
+Post-switch checks passed:
+
+- `/etc/vpsadmin/build-info.json` reports exact clean revision
+  `71396e3e98860cdb2fb85efefb44b25b5ff34d37`;
+- API, scheduler, supervisor, and console-router are active;
+- no systemd unit is failed;
+- all eight transaction chains remain terminal state 2 (`done`);
+- API and WebUI HTTPS roots both return HTTP 200 using the development CA;
+- the error-priority service journal is empty from
+  `2026-07-29 17:35:00 UTC`;
+- `devcluster status` reports running, ready, topology `single`, and network
+  `bridge`.
+
+The deployed runtime source is semantically identical to the previously
+accepted live fixture because the final correction changes only a regression
+expectation. The earlier live consumer, operation-correlation, routing, and
+Event Type acceptance therefore remains applicable to this exact source tree.
+The two final-head long-running workflows remain to be monitored to terminal
+success.
+
+### Final validation disposition
+
+Final-head API Specs run `30475504620` completed successfully. All 27 jobs
+passed, including the exact slow regression gates:
+
+- core platform job `90656195197` passed after 42 minutes 36 seconds;
+- full-plugin platform job `90656195287` passed after 49 minutes 19 seconds.
+
+Aggregate CI run `30475505399` remains in progress on exact head
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37`, inside its `Run tests` step.
+The user explicitly asked not to wait for this hours-long integration workflow.
+It was left running and was not canceled.
+
+Final consistency checks:
+
+- the vpsadmin worktree is clean;
+- local branch, SSH remote branch, reviewed head, and deployed build-info
+  revision all equal
+  `71396e3e98860cdb2fb85efefb44b25b5ff34d37`;
+- `git diff --check` remains clean;
+- API, scheduler, supervisor, and console-router remain active;
+- there are no failed systemd units;
+- all eight transaction chains remain terminal `done`.
+
+### Typed resource event revision
+
+Implementation resumed on 2026-07-29 from vpsadmin head `71396e3e9`.
+Uncommitted work replaces generic resource mutation events with typed logical
+resource events and adds their field contracts. There are no schema, migration,
+dependency, generated-client, or node protocol changes.
+
+Implemented:
+
+- typed `<logical_resource>.created|updated|deleted` names and versioned
+  per-resource descriptors;
+- old/new value envelopes with explicit-null preservation, sensitive-value
+  redaction, oversized-value digests, and payload size limits;
+- exact resource/action/id Event API filters and exact typed route matchers;
+- successful operation ordering as start, result facts, then terminal success
+  with `result_event_ids`;
+- truthful dynamic Event Type labels and resource schemas in the API and
+  WebUI;
+- API producer guidance and the new-resource checklist in `doc/events.mdwn`
+  and `AGENTS.md`.
+
+Quick verification so far:
+
+- focused API resource/operation/metadata run: 45 examples, zero failures;
+- focused WebUI regression run: 21 tests, 264 assertions;
+- API and WebUI i18n health checks passed;
+- generic event-name scan finds only the negative registration assertion;
+- no changed migration or schema file;
+- `git diff --check` passed before the final RuboCop-only formatting fixes.
+
+The broader changed API spec set and final RuboCop pass are still running.
+Mandatory fresh-context review, exact revision publication, WebUI contract
+pinning, and bridge-network dev-cluster deployment remain pending.
+
+The broader changed-spec run completed after 52 minutes with 436 examples,
+six failures, and one expected plugin-mode pending example. All six failures
+were stale or mechanically guessed contract expectations:
+
+- two specs still expected the removed `action` payload key instead of
+  `resource_action`;
+- two specs used a parent or class-derived event name that did not match the
+  declared logical resource name;
+- the OAuth2 client spec expected the virtual `client_secret` input rather than
+  the persisted, redacted `client_secret_hash` attribute;
+- the API-description spec compared a mutable late-loaded type registry and
+  unresolved localized messages with the already-published metadata snapshot.
+
+The implementation now maps OAuth2 secret input to the persisted hash field for
+both create and update events. The affected seven examples pass, including
+redaction assertions for both OAuth2 paths. The route-metadata example was
+rerun alone after its localization correction and passed.
+
+Final quick verification before review:
+
+- focused resource/operation/metadata run: 45 examples, zero failures;
+- corrected regression examples: seven examples, zero failures;
+- route-metadata final rerun: one example, zero failures;
+- WebUI regression: 21 tests, 264 assertions;
+- RuboCop: 33 changed Ruby files, zero offenses;
+- complete pre-commit hook suite passed: MigrationSpecs, Nixfmt, RuboCop,
+  API/WebUI i18n, and PHP CS Fixer;
+- no changed migration or schema file;
+- `git diff --check` passed.
+
+The typed revision is committed in vpsadmin as `50172f8da`
+(`api: publish typed resource mutation events`). Review range:
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..50172f8da`.
+The vpsadmin worktree is clean. Mandatory fresh-context review, exact revision
+publication, WebUI contract pinning, and bridge-network dev-cluster deployment
+remain pending.
+
+### Typed resource event mandatory-review corrections
+
+The standalone reviewer rejected `50172f8da` with three Blocking findings:
+
+- enum and serialized attribute contracts described database storage types
+  instead of emitted logical values, which also made enum route matchers
+  silently fail;
+- `OsTemplate.config` was emitted inline despite being opaque advanced
+  configuration;
+- transaction-confirmation projection treated every confirmation like
+  `edit_after`, reversing `edit_before` and omitting increment/decrement
+  results.
+
+All three findings were corrected and the original commit was amended.
+Logical enums are now string-valued contracts and matchers, serialized
+YAML/JSON fields are described as `json`, and serialized fields are not
+automatically routable. Opaque OS-template, notification-template,
+event/history, delivery-response, and transaction-confirmation payloads were
+added to the redaction policy.
+
+Confirmation facts are processed deterministically and according to their
+actual execution semantics: `edit_before` records the stored rollback value as
+old, `edit_after` records the stored target as new, and counter confirmations
+predict sequential numeric results. Active Record type casting keeps boolean,
+enum, time, and numeric values consistent with the public resource contract.
+
+Focused follow-up verification:
+
+- five affected API/model spec files: 95 examples; the first run found three
+  mechanical new-test issues, all corrected;
+- exact HostIpAddress `edit_before`, SnapshotInPool increment, and
+  SnapshotInPool decrement examples: three examples, zero failures;
+- VpsFeature boolean `edit_after` example passed in the 95-example run;
+- public Event Type and selected resource metadata/matcher examples: four
+  examples, zero failures;
+- RuboCop on eight changed Ruby files: zero offenses;
+- complete Overcommit suite passed: MigrationSpecs, Nixfmt, RuboCop,
+  API/WebUI i18n, and PHP CS Fixer;
+- `git diff --check` is clean and no migration or schema file changed.
+
+The amended exact vpsadmin head is
+`aec8c78e9d34d8f9a291d9b783a0144f5e136750`, with review range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..aec8c78e9`.
+The vpsadmin worktree is clean. The same standalone reviewer is performing the
+mandatory follow-up review before publication and deployment.
+
+The same standalone reviewer accepted exact range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..aec8c78e9d34d8f9a291d9b783a0144f5e136750`
+with no Blocking, Important, or Advisory findings. The reviewer confirmed all
+three original blockers are resolved, the single commit remains cohesive, and
+the range contains no migration or schema change. Residual validation is the
+deliberately bounded development-cluster deployment and live acceptance; the
+hours-long integration workflow remains intentionally skipped.
+
+### Typed resource event live correction and second review
+
+The first typed-event revision was pinned by `vpsadmin-kb-captures` commit
+`17a43a34e97755b1b3e5dded7564e7573a73c640` and deployed to the existing
+bridge-network development cluster. Live VPS hostname updates confirmed the
+operation order and correlation, but also showed that a post-save update fact
+contained only the new value. The recorder now prefers pre-save
+`changes_to_save` and merges nested payload changes so both old and new values
+survive. The corrected focused suites passed with 69 examples and zero
+failures.
+
+A fresh mandatory review of amended head `507eae86e` found three additional
+Blocking contract issues:
+
+- semantic `outage.updated` and `security_advisory.updated` notifications
+  collided with the reserved typed resource event names and could expose a
+  differently shaped `changes` payload to route matching;
+- notification-template text and HTML bodies were emitted inline;
+- decimal values and composite primary keys did not agree with their declared
+  metadata types.
+
+The implementation now uses the distinct semantic notification names
+`outage.update_reported` and `security_advisory.update_published`. The reserved
+`.updated` names carry only the versioned resource envelope, and route matching
+defensively rejects malformed change objects. Notification-template text,
+HTML, and options are redacted for create, update, and delete facts.
+
+Decimals are documented and emitted as lossless strings. Composite resource
+IDs are keyed JSON objects with typed `id_attributes`; because the database
+`source_id` is scalar bigint, these events retain identity in the payload and
+`Event#source` reconstructs the model from that identity. Composite IDs are
+not offered as scalar route matchers. The same source reconstruction also
+supports future scalar non-integer primary keys.
+
+The existing unreleased event migrations were rewritten only to seed the two
+new semantic event names. There is no schema change. Documentation and
+repository guidance now reserve logical CRUD names, define decimal/composite
+encoding, require notification-template-body redaction, and extend the
+new-resource event checklist.
+
+Focused verification after these corrections:
+
+- resource operation event suite: 27 examples, zero failures;
+- explicit composite persistence/source-resolution example: one example, zero
+  failures;
+- advisory, outage-update-chain, and model notification set: 41 examples; one
+  mechanically renamed expectation failed, was corrected to the typed
+  `security_advisory.updated` fact, and its exact rerun passed;
+- migration specs, run separately to avoid their destructive schema
+  isolation: eight examples, zero failures;
+- Event Type API metadata example: one example, zero failures;
+- RuboCop on all 12 affected Ruby files: zero offenses;
+- API and WebUI i18n health checks passed;
+- complete Overcommit suite passed: MigrationSpecs, Nixfmt, RuboCop,
+  API/WebUI i18n, and PHP CS Fixer;
+- `git diff --check` is clean.
+
+Remote feedback from old head `aec8c78e9` completed while the follow-up review
+was running. Twenty-five of 27 topic API jobs passed; the core and full engine
+jobs each failed the same stale assertion in the VPS OS replacement spec. The
+implementation correctly persisted deferred `vps.replaced` event 1041 before
+terminal `operation.succeeded` event 1042 and included the result event ID, but
+the spec still expected the superseded result order. The assertion now checks
+result fact before terminal success. Its exact example passes in both core-only
+and full-plugin configurations, one example and zero failures each. No runtime
+code changed for this correction, and the complete Overcommit suite passed
+again.
+
+The amended typed-event implementation is committed as
+`ce2771ba89f3205641ccdb8e923bce72c6fc7b1c`, with exact review range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..ce2771ba89f3205641ccdb8e923bce72c6fc7b1c`.
+The vpsadmin worktree is clean. Exact-range acceptance by the same standalone
+reviewer, publication, capture pin refresh, and final bridge-network deployment
+remain pending. The hours-long integration workflow will not be awaited, per
+the user's instruction.
+
+### Final typed-event review corrections
+
+The standalone review of `ce2771ba8` found three remaining contract issues:
+
+- the semantic notification events `user.created`, `request.created`, and
+  `request.updated` collided with the reserved typed resource names;
+- synchronous recorder deduplication used array and keyed-object forms of a
+  composite ID inconsistently;
+- the WebUI omitted the names and types of composite ID attributes.
+
+The semantic notifications are now named `user.account_created`,
+`request.submitted`, and `request.update_submitted`. The typed resource facts
+retain `user.created`, `request.created`, and `request.updated`. Both
+unreleased event migrations and all producers, templates, tests, documentation,
+and translations use the semantic names. Resource type registration now raises
+if a static semantic definition occupies a reserved CRUD name, and the
+full-registry test verifies that every loaded `.created`, `.updated`, and
+`.deleted` type is a generated resource fact with the matching descriptor.
+
+The recorder now uses the keyed resource identifier consistently for capture,
+explicit-event deduplication, and persisted-row lookup. The composite test
+exercises an explicitly emitted fact followed by recorder observation and
+asserts that only one event is stored. That test exposed and fixed the
+persisted-row query for Active Record composite primary keys.
+
+The WebUI normalizes `id_attributes` from object or JSON metadata and renders
+each composite key name and type. The regression fixture and Czech gettext
+catalog cover the rendered contract.
+
+Final focused verification:
+
+- full-plugin resource/user/request suite: 37 examples, zero failures;
+- core-only resource/user suite: 31 examples, zero failures;
+- event migration specs: eight examples, zero failures;
+- WebUI regression: 21 tests, 267 assertions;
+- focused RuboCop: 11 files, zero offenses;
+- API and WebUI locale health checks passed;
+- complete Overcommit suite passed: MigrationSpecs, Nixfmt, RuboCop,
+  API/WebUI i18n, and PHP CS Fixer;
+- `git diff --check` is clean.
+
+The first amend attempt was deliberately rejected by the installed hooks
+because it was invoked outside the Nix development shell and therefore lacked
+RuboCop, PHP CS Fixer, gettext, and MariaDB. Repeating the normal commit inside
+`nix develop` ran all hooks successfully; no hook was bypassed.
+
+The final committed vpsadmin head is
+`eb847e89c71128f829f313916f56389c66993544`, with exact review range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..eb847e89c71128f829f313916f56389c66993544`.
+The vpsadmin worktree is clean. Mandatory exact-range re-review, publication,
+capture pin refresh, and final bridge-network deployment remain pending. The
+hours-long integration workflow remains intentionally excluded.
+
+The same standalone reviewer accepted exact range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..eb847e89c71128f829f313916f56389c66993544`
+with no Blocking or Important findings and confirmed that the commit remains
+cohesive. Its sole Advisory finding identified a stale decision in `plan.md`
+that still described attaching resource descriptors to semantic CRUD-name
+collisions. The plan now records the final generated-only CRUD namespace and
+the distinct semantic names. Publication, capture pin refresh, and deployment
+remain pending.
+
+### Final publication and documentation pin
+
+The exact reviewed vpsadmin revision
+`eb847e89c71128f829f313916f56389c66993544` was force-pushed with lease to
+remote branch `2026-06-15-vpsadmin-events`. The local and remote branch heads
+match and the vpsadmin worktree is clean.
+
+`origin/master` advanced by four unrelated commits after this initiative's
+common ancestor. The reviewed feature branch is 104 commits ahead of that
+ancestor. For this development deployment, the exact reviewed source was kept
+instead of invalidating the mandatory review with a large rebase. Rebase and
+fresh verification are deferred to final merge integration.
+
+Superseded queued or running CI for obsolete branch heads was canceled:
+
+- CI run `30497000216` for `aec8c78e9`;
+- CI run `30475505399` for `71396e3e9`.
+
+The vpsadmin-kb-captures source pin, lock, inventory, and navigation contract
+were refreshed to the final revision. `nix develop -c bin/check` passed:
+51 controls, 37 paths, 57 concepts, 30 selectors, 123 annotation bindings,
+nine annotation exceptions, both test groups, and all 172 expected PNG
+variants. The amended capture commit is
+`e818726968a89e66cc4de1fc90daea436809cb39`; its local and remote branch heads
+match and the worktree is clean.
+
+### Final bridge-cluster deployment
+
+The final revision was deployed to the existing
+`2026-06-15-vpsadmin-events` development cluster using the default bridge
+network. Before the update, all ten transaction chains were terminal `done`.
+The API, scheduler, supervisor, and console-router services were stopped
+together, then
+`bin/devcluster update 2026-06-15-vpsadmin-events services` built and
+activated the new source.
+
+Post-activation state:
+
+- `/etc/vpsadmin/build-info.json` reports exact clean revision
+  `eb847e89c71128f829f313916f56389c66993544`;
+- the API, scheduler, supervisor, and console-router units are active;
+- API and WebUI HTTPS endpoints return HTTP 200 with the development CA;
+- `devcluster status` reports running, ready, topology `single`, and network
+  `bridge`;
+- there was no schema or node-protocol deployment step.
+
+Two periodic rake tasks happened to start concurrently after activation and
+temporarily failed while another task's serialized setup had released its
+lock but was still replacing plugin links. `payments-process` could not load
+the newslog metadata and `auth-tokens` could not load outage-report metadata.
+The plugin links were present after setup; both exact services succeeded when
+retried, `systemctl reset-failed` left zero failed units, and no application
+service restart or code change was needed. This pre-existing dev-cluster
+maintenance-task race is recorded in
+`notes/vpsadmin/2026-07-30-concurrent-rake-setup-links.md`.
+
+### Final live typed-event acceptance
+
+The deployed Event Type API reports:
+
+- 609 event types in total;
+- 546 generated typed resource facts for 182 logical resources;
+- exactly 182 each of `created`, `updated`, and `deleted`;
+- zero names with a `resource.` prefix;
+- distinct semantic types `user.account_created`, `request.submitted`, and
+  `request.update_submitted`.
+
+For `vps.updated`, live metadata exposes the exact event-name example,
+resource category, actual roles, severity, default-routing value, truthful
+subject and summary examples, and the VPS-specific attribute contract.
+`hostname` is a string with both old and new route matchers, while
+`changed_fields` choices list actual VPS attributes.
+
+A reversible update changed VPS 3 from `events-audit-vps` to
+`events-audit-vps-final-typed`:
+
+- event 75: `operation.started`, operation 29;
+- event 78: `vps.updated`, operation 29, result index 0, with both old and new
+  hostname envelopes;
+- event 79: `operation.succeeded`, operation 29, with
+  `result_event_ids: [78]`.
+
+The restore changed the hostname back to `events-audit-vps`:
+
+- event 80: `operation.started`, operation 30;
+- event 83: `vps.updated`, operation 30, result index 0, with both old and new
+  hostname envelopes;
+- event 84: `operation.succeeded`, operation 30, with
+  `result_event_ids: [83]`.
+
+Both chains reached terminal `done` at progress 3/3. All twelve transaction
+chains are terminal `done`, and the VPS is restored to its original hostname.
+
+At handoff, quick GitHub workflows on the final head have passed for API
+migrations, RuboCop, WebUI PHPUnit, and i18n health. The aggregate CI and
+topic-parallel API workflows are still running on the same head and are not
+being awaited because the user explicitly requested that the hours-long
+integration workflow be skipped.

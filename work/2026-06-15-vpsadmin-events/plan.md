@@ -2243,3 +2243,666 @@ Verification:
   the rendered list DOM on staging.
 - After quick checks and focused commits, run one mandatory fresh standalone
   review before renewed exact-head integration tests.
+
+## Complete Audit Event Coverage Addendum
+
+Requested on 2026-07-28: extend the event system from notification-oriented
+coverage to a reconstructible audit stream. Every logical mutating API
+operation must have either an audit declaration or a documented exemption.
+Sensitive access operations and background/system transitions also require
+events even when they are not CRUD actions.
+
+### Current behavior and correctness constraints
+
+- `Events.emit!` defaults to persistence only when at least one route matches.
+  Audit facts must persist independently of notification routing.
+- `Event.user_id` currently identifies the affected owner/audience, not the
+  actor. It cannot distinguish an account action, an administrator acting for
+  that account, an impersonated session, a node, or a background task.
+- `TransactionChain.fire2` constructs the chain and provisional objects in a
+  database transaction. An exception from `link_chain` rolls back the chain,
+  transactions, confirmations, provisional objects, and audit intent. This is
+  the correct boundary for the requirement that a rejected chain creation
+  emits no event.
+- Successful node confirmations and the terminal chain state are committed in
+  one database transaction. This is the first safe point for facts named
+  `created`, `updated`, or `deleted`.
+- A failed `confirm_create` removes the provisional row, failed `edit_before`
+  restores the old values, `edit_after` applies only on success, and destroy
+  confirmation deletes only on success.
+- Existing `route_event!` calls persist past-tense events while the chain is
+  still being assembled. Aborting an unsent delivery on later failure cannot
+  retract the Event row or a delivery that ran before a later transaction.
+- `rollbacking` is intermediate, `failed` means rollback completed, and
+  `fatal` means rollback itself failed. `resolved` is an administrator
+  acknowledgement of a failure, not a successful outcome. The current event
+  helper's terminal/success calculation must be corrected accordingly.
+- A chain can reach `done` with failed `keep_going` transactions. The
+  operation declaration must state which transactions determine domain
+  success; the chain result may also be reported as completed with warnings.
+- Retrying currently rewrites the same chain and transaction state. An
+  immutable attempt/run identity is required to retain failure followed by a
+  successful retry.
+- RabbitMQ publications happen after database commits and may be dropped.
+  Broker messages can wake a projector, but cannot be the durable audit
+  source.
+- `allow_empty` chains can commit synchronous changes and then discard the
+  empty chain. Audit finalization must preserve the operation without creating
+  a synthetic notification transaction or requiring a surviving chain row.
+- Some link methods commit auxiliary synchronous changes before asynchronous
+  execution, for example VPS destruction removes selected auxiliary rows.
+  Those changes need their own facts or must eventually move behind
+  confirmations; a generic failure event must not claim a complete rollback
+  when that is not true.
+
+### Audit operation and event lifecycle
+
+Use an explicit logical-operation declaration instead of inferring public
+semantics from low-level confirmation rows:
+
+```text
+API/background request
+  -> construct mutation and AuditOperation in one transaction
+     -> construction error: both roll back, no event
+     -> synchronous/allow-empty success: finalize in that transaction
+     -> queued chain: persist an honest requested event
+        -> done: emit the past-tense success fact
+        -> failed: emit operation failure after rollback
+        -> fatal: emit failure with rollback_failed
+        -> retry: create a new immutable attempt
+```
+
+For example:
+
+- `vps.create_requested` means a durable request and provisional target were
+  accepted. It does not claim the VPS exists.
+- `vps.created` is emitted exactly once after successful create confirmation.
+- `vps.create_failed` is emitted after failed/fatal execution with an immutable
+  target snapshot, even when confirmation removed the provisional VPS.
+- A link-time exception emits none of these because the operation did not
+  become durable.
+
+Keep generic, always-persisted transaction-chain/run state events for
+diagnostics and correlation. Domain event types remain the stable audit
+interface; consumers should not have to reverse-map low-level transaction
+names to discover that a VPS creation failed.
+
+### Data model
+
+Add an `AuditOperation`-style model with:
+
+- stable operation ID, operation name, ordinal, requested time, and outcome;
+- optional transaction-chain ID and immutable execution-attempt/run ID;
+- intended requested, success, and failure event types;
+- subject class/ID plus immutable label and owner snapshots;
+- explicitly allowlisted before/after values and changed fields;
+- effective account, actual actor, impersonating administrator, session,
+  authentication type, client/API IPs, user agent, request/action name, and
+  request/correlation ID;
+- failure class and bounded/redacted summary, rollback outcome, and failed
+  noncritical transaction IDs;
+- accepted and terminal Event IDs and an idempotency key.
+
+The operation is created inside the same transaction as chain construction.
+Its chain relation must be optional and must not cascade away when an allowed
+empty chain is discarded. Enforce uniqueness for the operation key and for
+each `(operation, attempt, phase)` event.
+
+Extend Event, or add a normalized companion context/audience model, so the API
+can filter by actor, subject, operation, chain, and correlation ID. Keep
+affected owner/audience distinct from actor. Cross-owner swap, clone,
+ownership-transfer, and administrator actions need either multiple audience
+rows or owner-visible events sharing one operation ID.
+
+Deleted targets must remain understandable without resolving a live foreign
+key. Store immutable subject and owner labels on the operation/event.
+Historical users and sessions can also disappear, so snapshot the identifying
+actor fields in addition to retaining nullable references.
+
+Add immutable `TransactionChainRun` and append-only
+`TransactionChainStateChange`/outbox rows. Every state transition writer,
+including NodeCtld terminal transitions, writes the row in the same database
+transaction as chain state and confirmations. The API projector claims rows
+under a lock, creates Events idempotently, and marks rows projected in the same
+transaction. RabbitMQ is only a wakeup; periodic reconciliation handles lost
+wakeups. Stale and duplicate messages are rejected by run and sequence.
+
+For synchronous mutations, persist the domain change, operation, and terminal
+Event in one ActiveRecord transaction. Prepare/release notification delivery
+only after commit. A plain `after_commit` callback without an outbox is not a
+complete durability mechanism.
+
+Audit persistence uses an explicit `persist: :always`/`audit: true` path.
+Routing remains optional and must not control whether the fact exists.
+Creating, routing, dispatching, or retrying an audit Event must not recursively
+audit internal Event delivery rows.
+
+### Actor, payload, and retention policy
+
+Use a common audit envelope across all event types:
+
+- operation ID/name/phase, event occurrence time, and recording time;
+- subject type/ID/label and affected owner snapshot;
+- actor kind (`user`, `system`, `anonymous`, or `node`), effective user,
+  impersonating administrator, session/authentication context, and source;
+- request/action/correlation/chain/run IDs;
+- changed-field names and an explicitly allowlisted before/after map;
+- outcome, reason, and bounded failure metadata.
+
+Never persist passwords, console/access/refresh/verification/pairing tokens,
+TOTP or TSIG secrets, OAuth client secrets, signing-key passphrases, private
+key material, raw public-key bodies, webhook secrets, raw user data, or secret
+system-configuration values. Use IDs, booleans, content hashes, or
+non-reversible fingerprints where correlation is useful.
+
+Audit retention is independent of notification delivery retention. Define the
+retention/index/partition policy before enabling high-volume sources. There is
+no claim of complete historical coverage before the deployment marker; any
+best-effort import from `ObjectHistory` must be labeled as such.
+
+### P0 VPS event coverage
+
+Primary VPS actions:
+
+- create: `vps.create_requested`, `vps.created`, `vps.create_failed`;
+- general update: `vps.update_requested`, `vps.updated`,
+  `vps.update_failed`, with safe changed fields for hostname, template,
+  resolver, namespace/map mode, resources, start menu, autostart, network,
+  owner, cgroup, and administrator flags;
+- lifecycle: `vps.suspended`, `vps.resumed`, `vps.soft_deleted`,
+  `vps.revived`, `vps.destroyed`, plus the matching failed operation event and
+  old/new state and trigger;
+- runtime actions: start, stop, restart, rescue/template boot, and their
+  failures;
+- reinstall, restore, migration, clone, swap, and replacement, each with
+  requested, terminal success, and failure facts;
+- root-password change, SSH public-key deployment, and user-data deployment,
+  recording only generated/provided mode, key ID/label/fingerprint, or data
+  ID/label/format/digest;
+- feature changes, mount create/update/delete, and maintenance-window changes;
+- ownership changes and cross-VPS operations use shared operation IDs and
+  correct visibility for every affected owner.
+
+Existing `vps.replaced` and migration-finished events move from link time to
+terminal success. Existing migration-planned/begun events remain milestones
+only if their names and payload clearly describe an intermediate fact.
+`vps.resources_changed` must cover every resource change, not only changes
+having `change_reason`. Direct VPS resolver selection and resolver-object
+configuration changes are separate facts.
+
+Related VPS network/storage coverage:
+
+- network-interface update;
+- IP and host-IP create/update/delete/assign/unassign;
+- reverse-DNS update;
+- dataset create/update/delete/property inheritance;
+- snapshot create/delete/rollback and VPS restore;
+- backup request/success/failure;
+- snapshot-download request/ready/failure/delete/expiry;
+- dataset migration, expansion, shrink, and over-quota failures.
+
+Background/runtime coverage:
+
+- expiration setting changed and expiration reached;
+- the lifecycle operation initiated by expiration, with `system` actor and
+  scheduler reason;
+- unsolicited node-reported halt, reboot, OOMD stop, and OOMD restart;
+- automatic quota, dataset-expansion, OS-release, and autostart changes with
+  component/task attribution.
+
+### VPS console events
+
+Token lifecycle and actual console use are different:
+
+- API token operations: `vps.console_access.issued`,
+  `vps.console_access.reused`, `vps.console_access.revoked`, and
+  `vps.console_access.expired`; never include the token.
+- Actual use: `vps.console_session.opened` and
+  `vps.console_session.closed`, one per authenticated client session, with a
+  generated non-secret session ID, VPS/user/console row/node IDs, timestamps,
+  duration, router-observed IP when available, and close reason.
+
+The authoritative open/close point is the NodeCtld console server, not the API
+token row or console-router cache. Persist session lifecycle/outbox state so a
+node or broker crash does not lose events. Add an additive console
+authentication RPC returning VPS, user, and console-row IDs; deploy the API
+method before nodes use it and retain the old method during mixed-version
+operation.
+
+Close reasons include explicit user/admin revoke, disconnect, idle expiry,
+token expiry, VPS state change, console process exit, service shutdown, and
+node loss. Current token revocation does not terminate an authenticated
+session, so truthful revoked-close events require a revocation channel or
+periodic revalidation. An expiry/reconciliation task must close sessions left
+open by crashes.
+
+### P0 cross-cutting and security coverage
+
+Instrument common facilities once:
+
+- `lifetime.state_changed` and `lifetime.expiration_changed` for User, VPS,
+  Dataset, Export, Mount, and SnapshotDownload;
+- `maintenance.locked` and `maintenance.unlocked` for cluster, environment,
+  location, node, pool, and VPS;
+- user update/password/authentication-setting changes;
+- user sessions, OAuth authorizations, remembered devices, TOTP devices,
+  WebAuthn credentials, public keys, metrics access tokens, OAuth clients, and
+  transaction-signing-key unlock;
+- user allocation/resource/package assignment changes;
+- notification targets, receivers/actions, receiver-target links, event
+  routes/matchers/time intervals, notification templates/variants, and
+  explicit delivery retry requests.
+
+Session/token events include IDs, labels, authentication type, scope, client,
+safe network/user-agent context, close reason, and actor, but never bearer
+material. Do not emit public audit events for renewable-token extension,
+`last_seen_at`, or use counters.
+
+Notification configuration events are security-relevant because they change
+where audit and account messages are delivered. Target secrets, verification
+codes, webhook credentials, and full template bodies remain redacted; record
+content revision/hash where needed.
+
+### P1 infrastructure, storage, and plugin coverage
+
+Add logical CRUD/action events for:
+
+- locations and location-network policy;
+- networks, IP addresses, host IP addresses, interfaces, nodes, node transfer
+  connections, evacuations, clusters, cluster resources/packages/defaults,
+  and user namespace maps;
+- DNS zones, records including authenticated dynamic updates, resolvers,
+  servers, server-zone links, TSIG keys, and zone-transfer configuration;
+- environments, OS families/templates, pools, datasets/snapshots/exports,
+  expansion requests, and migration plans;
+- payments and incoming-payment state, retaining `payment.accepted` with the
+  correct user/system actor;
+- requests, with the actual approve/deny/ignore/correction resolution rather
+  than the current generic `resolve`, and correlated `user.updated` on
+  approved change requests;
+- outages, affected objects, entities, handlers, updates, and advisory links;
+  audit persistence must not depend on `send_mail`;
+- monitoring acknowledge/ignore actions, without logging every sample;
+- security-advisory draft/publish/update/CVE/node-status actions and incident
+  creation;
+- system configuration, mailboxes/handlers, news log, help boxes, and WebUI
+  user settings, with strict configuration-value allowlists.
+
+This inventory is intentionally logical rather than one Event for every
+internal row. Existing notification events such as DNS transfer
+failed/recovered, snapshot download ready, OOM reports, incidents, outage
+announcements, and monitoring detected/resolved alerts remain, but become
+always-persisted audit facts where appropriate and receive the common actor,
+subject, and correlation envelope.
+
+### Explicit exemptions
+
+Require an `audit_exempt` declaration with a reason for intentionally noisy or
+internal rows:
+
+- Event routing/delivery attempt/group/context/match internals, except an
+  explicit user/admin retry request;
+- transaction rows and confirmation rows, while preserving chain/run state
+  and logical outcomes;
+- maintenance/resource lock implementation rows, represented by semantic
+  lock/unlock facts;
+- raw token/challenge/user-agent/failed-login and rate-limit counter rows;
+- session renewal, touch/last-seen, use counters, accounting, monitoring
+  samples, process/status metrics, node evidence, and polling/progress rows;
+- dataset/snapshot pool-placement, branch/clone/property-history and expansion
+  queue implementation rows;
+- generated DNSSEC and transfer-log rows;
+- OOM usage/stat/task/counter and mail-log rows;
+- automatically rebuilt advisory/outage joins, represented by one rebuild
+  summary.
+
+### Coverage enforcement
+
+Extend the vpsAdmin action DSL with an explicit audit declaration for each
+mutating action, for example a synchronous event or a transaction-chain
+operation mapping. Sensitive read/access actions such as console and snapshot
+download are declared explicitly too.
+
+A definition/spec check enumerates POST/PUT/PATCH/DELETE HaveAPI actions and
+fails when an action has neither `audit` nor `audit_exempt(reason:)`.
+Top-level transaction chains similarly declare their logical operation;
+nested `use_chain` calls inherit/correlate with that operation so internal
+start/stop steps during create or reinstall do not masquerade as independent
+user actions.
+
+Use `ObjectHistory` as a comparison oracle during conversion, especially for
+VPS changes, but not as the audit API. It lacks failed attempts and broad
+non-VPS coverage.
+
+### Implementation sequence
+
+1. Add the common audit envelope, audience/subject snapshots, always-persist
+   emitter, idempotency, and coverage declaration/exemption framework.
+2. Add immutable operation intents, chain runs, durable state-change outbox,
+   projector/reconciliation, and correct state semantics. Cover synchronous
+   and `allow_empty` finalization.
+3. Convert existing link-time past-tense events to terminal projection and
+   harden existing event types without changing notification meaning.
+4. Cover primary VPS CRUD/lifecycle/runtime and complex operations first.
+5. Cover console, VPS-associated network/storage, expiration, and node/runtime
+   sources.
+6. Cover account/security and notification-routing configuration.
+7. Cover infrastructure, DNS, storage, plugins, and lower-priority
+   administrative/UI configuration; finish the exemption manifest.
+8. Update generated clients, Event/Event Types API and WebUI, the independent
+   capture/documentation contract, and production configuration pins.
+
+Keep commits reviewable by separating schema/foundation, chain projection,
+VPS families, other resource families, generated clients, WebUI/docs, and
+configuration pins. Run mandatory change review after the intended commits and
+quick verification, before long integration tests.
+
+### Verification
+
+Foundation and transaction tests:
+
+- link-time failure and an outer transaction rollback leave no object, chain,
+  operation, or Event;
+- successful create emits exactly one `created` after confirmation;
+- failed/fatal create removes the provisional object, preserves its snapshot,
+  emits one failure, and never emits `created`;
+- failed update restores old values and emits no successful update;
+- successful delete remains understandable after the target row is gone;
+- synchronous and allowed-empty changes commit mutation and Event atomically;
+- no terminal notification is deliverable before terminal confirmation;
+- `done` with failed `keep_going` work reports warnings according to declared
+  domain-success criteria;
+- failed attempt, retry, and success preserve both immutable run outcomes;
+- `resolved` never becomes success;
+- lost wakeups, duplicate/stale broker messages, crashes, and concurrent
+  projectors remain idempotent and recover by reconciliation.
+
+Coverage and security tests:
+
+- every mutating API action has an audit declaration or reasoned exemption;
+- ordinary user, administrator-on-behalf-of-user, impersonated, anonymous,
+  node, and background actors are attributed correctly;
+- owner visibility is correct for transfer, clone, swap, and admin actions;
+- audit persistence succeeds with no matching route;
+- secret fixtures never appear in payload, delivery snapshots, or failure
+  summaries;
+- console covers concurrent sessions, revoke, idle/token expiry, disconnect,
+  process death, service shutdown, and node-loss reconciliation;
+- existing notification routes fire only for the intended phase, normally
+  terminal semantic success or explicit failure, not provisional intent.
+
+### Compatibility and deployment
+
+- Schema and API changes are additive. The current event migrations are still
+  unreleased development history, so amend the draft migration chain rather
+  than adding existence guards for stale disposable databases; reset those
+  databases.
+- Do not reorder the existing transaction-chain state enum. Add run/sequence
+  data around it and fix `resolved` interpretation.
+- Deploy schema, API projector/reconciliation, and the additive console RPC
+  before updated NodeCtld/console producers. Retain old RPC behavior during a
+  mixed-version window. Exact transition history is guaranteed only after all
+  producers write the durable outbox; record that audit-coverage start marker.
+- Old application versions ignore additive audit tables. Rolling back after
+  new events exist must preserve them for forward recovery. A rollback may
+  temporarily stop projection but must not discard operation/outbox data.
+- Event type and field additions are API-compatible for generated clients.
+  Consumers must tolerate new event types. Any pagination/retention behavior
+  is documented before production use.
+- Event Types/Event Log and visible WebUI changes require the canonical
+  `vpsadmin-kb-captures` WebUI documentation workflow and exact downstream
+  pins. Production KB publication remains separately approval-gated.
+
+## 2026-07-28 Scope Correction: Consumer Events, Not An Audit Ledger
+
+The complete-audit addendum above over-interpreted the request. It is
+superseded for implementation by this section.
+
+The requested outcome is additional ordinary vpsAdmin events. Consumers can
+persist those events and construct their own audit logs. vpsAdmin will not add
+an internal audit-operation ledger, actor/audience tables, transaction-chain
+run or state-change outbox tables, console-session fact tables, or an audit
+coverage DSL.
+
+Implementation boundaries:
+
+- use the existing `Event` model, event definition DSL, Event API, and routing
+  system without schema changes;
+- persist audit-relevant events even when no notification route matches, so
+  Event API consumers can observe them;
+- emit synchronous mutation events only after the mutation succeeds, in the
+  same database transaction where practical;
+- emit transaction-chain success only from the existing `done` state
+  notification, and failure from existing `failed` or `fatal` notifications;
+- do not emit a creation event when chain construction rolls back;
+- when chain execution fails after a provisional object was removed, identify
+  the attempted object by the existing transaction-chain concern class and row
+  ID rather than adding an audit snapshot table;
+- represent retries as the naturally occurring sequence of failed and later
+  successful events for the same transaction-chain ID;
+- add VPS operation, expiration/runtime, and console open/close events using
+  the existing event payload for relevant identifiers and non-secret context;
+- preserve the existing mixed-version protocol behavior. Any new node message
+  field or message kind must be additive, and the API must continue accepting
+  messages from old nodes.
+
+The first implementation tranche covers all identifiable VPS operations,
+console lifecycle, and VPS expiration/runtime observations. Further resource
+families will use the same small pattern after this tranche is verified.
+
+Compatibility:
+
+- no database migration or persisted-format change is introduced;
+- new event types are additive API data, and consumers must tolerate event
+  types unknown to older clients;
+- node message fields are additive and the new API consumer accepts legacy
+  messages, but owner attribution for destructive in-flight chains requires
+  ordered deployment: update API request workers first, drain chains created
+  by old workers, then enable the new supervisor projection and node
+  producers;
+- console close signaling adds a per-node RabbitMQ control exchange. Deploy
+  the corrected `rabbitmqcfg` generator with the services configuration, then
+  explicitly reapply `--perms` for the console and node accounts, selecting the
+  deployment's actual virtual host instead of relying on the tool's
+  `vpsadmin_dev` default, before starting updated NodeCtld. The initial
+  RabbitMQ setup unit is state-file gated and does not update permissions on an
+  existing broker. The new permissions are restricted to publishing control
+  messages and reading each node's own control queue; leaving them in place
+  during rollback is harmless;
+- rollback stops producing the new events but does not make existing Event rows
+  unreadable.
+
+### Lean first tranche
+
+The first implementation commit is limited to producers using the existing
+Event system:
+
+- always persist the existing transaction-chain state event after successful
+  chain construction and for node-reported state changes;
+- emit `vps.operation_succeeded` only for `done` and
+  `vps.operation_failed` only for `failed` or `fatal`, using existing VPS and
+  User concerns to retain object and owner identity after deletion;
+- treat the shared lifetime wrapper as a VPS lifecycle operation only when its
+  concerns identify a VPS;
+- emit VPS expiration, observed runtime, maintenance-window, and user-data
+  events with no user-data content;
+- emit console open/close events from actual NodeCtld sessions, with an
+  additive actor-aware authentication RPC and legacy fallback;
+- provide small `resource.created`, `resource.updated`, and
+  `resource.deleted` helpers for explicitly instrumented synchronous actions,
+  recording field names but not values.
+
+No audit-operation model, audit ledger, outbox, event-audience table, action
+coverage DSL, migration, or schema update is part of this tranche.
+
+## Cross-API Event Coverage Addendum
+
+Requested on 2026-07-29: supersede the VPS-only outcome projection with
+ordinary events covering mutations across the complete API. External
+consumers, not vpsAdmin, construct the audit log.
+
+Decisions:
+
+- add no database table, column, migration, or internal audit ledger;
+- emit `operation.started`, `operation.succeeded`, `operation.failed`, and
+  `operation.resolved` for every accepted non-empty transaction chain;
+- use the existing transaction-chain/action-state ID as `operation_id`, and
+  use a one-based `attempt` for same-chain retries;
+- retain `transaction_chain.state_changed` as the low-level admin diagnostic;
+- emit synchronous `resource.created`, `resource.updated`, and
+  `resource.deleted` only after successful mutations;
+- emit chain-backed resource and domain completion events only after `done`;
+- keep immediate security or observation facts distinct from completion
+  claims, while automatically correlating them to their chain;
+- do not emit generic events for invalid input or denied requests, but add
+  explicit security events for useful observations such as failed sign-ins;
+- require every core, plugin, authentication, and callback mutation surface to
+  declare its event policy or a documented exclusion;
+- remove the unmerged `vps.operation_succeeded` and
+  `vps.operation_failed` types.
+
+Implementation:
+
+- create the initial operation event inside `TransactionChain.fire2`'s
+  database transaction so construction rollback leaves no Event and accepted
+  chains cannot lack their start;
+- derive stable operation keys from the transaction-chain namespace, with
+  explicit overrides for wrappers and implementation variants;
+- keep success-only result descriptors in existing signed transaction input,
+  not hidden Event rows, and materialize them idempotently at `done`;
+- correlate all domain results with `operation_id`; successful outcomes list
+  `result_event_ids`, while failures expose no completed facts;
+- generalize affected-owner resolution through explicit resource metadata,
+  keeping owner, effective actor, impersonating administrator, and session
+  separate;
+- introduce a vpsAdmin action event-policy contract for synchronous,
+  chain-backed, domain/security, and intentionally excluded mutations;
+- correct Event Types examples at the API source: exact type name, category,
+  severity, roles, and default routing; event-specific subject/summary samples
+  where truthful; no OOM-derived fallback for unrelated types.
+
+Compatibility and deployment:
+
+- event types and payload fields are additive except for removal of the
+  dev-only VPS outcome types;
+- existing nodes accept the additive signed no-op input, so no coordinated
+  node protocol upgrade is required;
+- deploy the updated supervisor before API request workers, then drain newly
+  started chains before any rollback;
+- run the mandatory standalone change review after focused commits and quick
+  verification, before integration tests;
+- deploy the reviewed head to the existing
+  `2026-06-15-vpsadmin-events` bridge-network development cluster and verify
+  representative synchronous, successful, failed, retried, and security
+  events.
+
+## Implementation completion
+
+Implemented as a five-commit vpsadmin series with no schema, migration,
+dependency, generated-client, or cross-service protocol changes:
+
+- transaction-chain operations have correlated start and terminal events using
+  the existing chain ID as `operation_id`;
+- successful chain completion materializes deferred, idempotent resource and
+  domain facts, while failed chains emit no false completion facts;
+- committed synchronous create, update, and delete mutations emit generic
+  resource events across the API policy inventory;
+- immediate domain and security events retain their typed payloads while
+  gaining authoritative operation correlation where applicable;
+- failed sign-ins emit explicit security observations;
+- Event Type field examples describe each actual event type and field contract;
+- VPS console lifecycle events from the earlier tranche remain included.
+
+The exact reviewed and published head is
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37`. The mandatory standalone review
+accepted the final range with no findings. Local hooks, focused core/full
+regressions, RuboCop, i18n, WebUI PHPUnit, and the complete final-head API
+matrix passed. The same exact clean revision is active on the existing
+bridge-network development cluster and passed service, HTTP, journal,
+transaction-chain, live consumer, correlation, routing, and metadata checks.
+
+The hours-long aggregate integration workflow was intentionally left running
+at the user's request not to wait for it; it was not canceled.
+
+## Typed resource event revision
+
+Requested on 2026-07-29: replace the generic resource event family with a
+consumer-visible contract that identifies every logical resource and describes
+its actual fields. This section supersedes references above to
+`resource.created`, `resource.updated`, and `resource.deleted`.
+
+Decisions:
+
+- name completed resource facts `<logical_resource>.created`,
+  `<logical_resource>.updated`, and `<logical_resource>.deleted`, without a
+  `resource.` prefix;
+- reserve those CRUD names for generated resource facts; notification or
+  workflow events with another payload contract use distinct semantic names
+  such as `user.account_created`, `request.submitted`, and
+  `outage.update_reported`;
+- expose a versioned resource descriptor through Event Types with the logical
+  resource name, action, ID type, and each attribute's type, nullability, enum
+  values, payload value policy, and available old/new route matcher;
+- include per-field old/new envelopes in event payloads, preserving explicit
+  nulls; redact sensitive values and replace oversized values with a SHA-256
+  digest and byte count;
+- cap individual inline values at 4 KiB and the complete resource payload at
+  48 KiB;
+- publish successful chain facts before `operation.succeeded`, whose
+  `result_event_ids` correlate the terminal event with those facts; failed
+  chains publish `operation.failed` without completion facts;
+- generate typed resource definitions from loaded Active Record models and
+  enforce mutation coverage through the existing strict action-policy
+  inventory;
+- document the producer contract and new-resource checklist in
+  `doc/events.mdwn` and the repository `AGENTS.md`;
+- add no database table, column, migration, internal audit ledger, or outbox.
+
+Compatibility and deployment:
+
+- this revises only the unmerged development event contract; consumers and
+  routes using the generic development names must switch to the typed names;
+- persisted Event rows require no conversion because event names and payloads
+  are stored as ordinary data;
+- old application processes ignore the additional payload metadata, while
+  mixed old/new API processes could expose different Event Type catalogs, so
+  request workers should be restarted together in the development deployment;
+- no node protocol or vpsAdminOS update is required;
+- update the pinned WebUI documentation contract because Event Types gains a
+  visible resource schema table;
+- deploy the reviewed revision to the existing bridge-network development
+  cluster and validate typed synchronous and chain-backed events.
+
+### Final typed-event outcome
+
+The typed-resource revision is complete at vpsadmin commit
+`eb847e89c71128f829f313916f56389c66993544`. The exact mandatory review range
+`71396e3e98860cdb2fb85efefb44b25b5ff34d37..eb847e89c71128f829f313916f56389c66993544`
+was accepted with no Blocking or Important findings. The same clean revision
+is pushed and active on the existing bridge-network development cluster.
+
+The deployed Event Type registry contains 546 generated resource event types:
+`created`, `updated`, and `deleted` for each of 182 logical resources. There
+are no `resource.`-prefixed types. Semantic notifications that previously
+collided with generated CRUD names use distinct names, including
+`user.account_created`, `request.submitted`, and
+`request.update_submitted`.
+
+A reversible live VPS hostname update and restore verified both directions of
+the completed contract:
+
+- each accepted chain first emitted `operation.started`;
+- each terminal success emitted a typed `vps.updated` result followed by
+  `operation.succeeded`;
+- the resource fact and terminal fact used the same `operation_id`;
+- the resource fact contained both old and new hostname values;
+- `operation.succeeded.result_event_ids` named the resource fact;
+- the restore completed and left the VPS at its original hostname.
+
+The documentation contract is pinned to the exact vpsadmin revision by
+vpsadmin-kb-captures commit
+`e818726968a89e66cc4de1fc90daea436809cb39`. No schema, node protocol, or
+dependency change is part of this revision. The deliberately hours-long
+integration workflows were not awaited, as requested; focused local checks,
+all hooks, mandatory review, deployment acceptance, and the quick GitHub
+workflows provide the bounded validation for this handoff.
