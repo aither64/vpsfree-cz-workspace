@@ -17483,3 +17483,22 @@ workflow and approval-gated production KB promotion.
   before this final status record was
   `90375234425f5d54b35e0dfc2e85d0e953fd9634`. The unrelated existing
   `.plan.md.swp` remains untracked and untouched.
+
+#### Matcher-table rendering correction
+
+- Rendered staging inspection found that the operator table was malformed in
+  both languages. The literal `**` in the glob explanation was parsed as the
+  beginning of DokuWiki bold markup, which consumed the remaining operator
+  rows and the first two matcher examples. DokuWiki also substituted `<=`
+  with a typography arrow inside the affected table.
+- Every operator and complete matcher expression now uses the established
+  `''%%literal%%''` pattern: `%%...%%` disables markup and typography while the
+  surrounding apostrophes retain inline-code styling. This protects `**`,
+  `<=`, and future operator strings consistently rather than escaping only the
+  first observed break.
+- `kb-contract-build` rebuilt the guarded bilingual candidates and both
+  manifests. The release shape remains 11 pages and 29 media objects per
+  language; only the two routing-page hashes and derived manifest/index
+  records change. The currently staged bundle still contains the malformed
+  table and will be replaced only after committed quick checks and mandatory
+  review.
