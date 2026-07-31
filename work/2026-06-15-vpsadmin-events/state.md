@@ -10,7 +10,7 @@
   - Current base/head before local commits:
     `6351e273ed257f5e3233a99ffa7d8eae9221856a`
   - Current feature head:
-    `0a5cc6ed407ef2b10b213141d1f8011148c080c5`
+    `8355beca035d4decf5fc28b6d858746400232fe4`
   - Remote: `git@github.com:vpsfreecz/vpsadmin.git`
 - `vpsfree-notification-templates`
   - Worktree:
@@ -29,7 +29,7 @@
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
   - Current head:
-    `70f44656ad05d449fdecde402e6b9fad5b848571`
+    `14d71ccd0c0aa39f32de83683b3f824b145b606a`
   - Remote: `git@github.com:vpsfreecz/vpsfree-cz-configuration.git`
 - `vpsfree-sms-gateway`
   - Worktree:
@@ -46,7 +46,7 @@
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin-kb-captures`
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
-  - Current head: `69a2f2a2cfd3186d3f304d9cb678412359ce13c0`
+  - Current head: `1fbb5d2132c76061227522f34a4b714ba8b88f86`
   - Remote: `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
 
 ## Status
@@ -287,6 +287,41 @@
       configuration hook/build caches;
     - all ten vpsAdmin workflows passed on `0a5cc6ed`, including all 26 jobs
       in final parallel API workflow `30618397732`.
+  - Late default-branch refresh:
+    - the final audit fetched two dependency-update commits that had reached
+      vpsAdmin `master` while the first final-head CI was running, advancing it
+      from `e8a8ae516` to `170e2c228`;
+    - before rewriting again, created and pushed
+      `backup/2026-06-15-vpsadmin-events-before-final-default-refresh-2026-07-31`
+      at vpsAdmin `0a5cc6ed`, KB captures `69a2f2a2`, and configuration
+      `70f44656`;
+    - rebased all 102 vpsAdmin feature commits onto `170e2c228`; range-diff
+      marked every commit patch-equivalent and the final normal Overcommit
+      suite passed at `8355beca035d4decf5fc28b6d858746400232fe4`;
+    - updated the four authoritative KB revision fields in the first pin
+      commit, regenerated `flake.lock`, reran `nix develop -c bin/check`, and
+      published final KB head
+      `1fbb5d2132c76061227522f34a4b714ba8b88f86`;
+    - dropped the superseded generated configuration pin and regenerated it
+      with `confctl inputs channel set --commit`; final head
+      `14d71ccd0c0aa39f32de83683b3f824b145b606a` pins vpsAdmin `8355beca`,
+      notification templates `5c515d1a`, and SMS gateway `af7b3faf`;
+    - the configuration commit and final full hook run passed, and
+      `nix develop -c confctl build -y cz.vpsfree/vpsadmin/int.api1`
+      completed as generation `2026-07-31--12-00-10`;
+    - the configuration-only force-push changed `flake.lock`, which is outside
+      the Event i18n health workflow's push paths, so no new run was expected;
+      the preceding feature-head run passed and the refreshed normal hooks and
+      integration build cover the final pin;
+    - the standalone review approval remains applicable because all 102
+      vpsAdmin feature commits are patch-equivalent and the downstream deltas
+      are exact source-pin refreshes;
+    - nine of ten vpsAdmin workflows passed on `8355beca`, including all 27
+      jobs in parallel API run `30621724661`;
+    - aggregate CI run `30621724684` selected a long vpsAdminOS integration
+      test because of the new default-branch dependency commits. It remained
+      actively running without a failed step when the user asked not to wait
+      for it; the workflow was left running and was not cancelled.
 
 - 2026-07-30 public resource event catalog correction started.
   - User rejected the generated catalog of all Active Record descendants:
