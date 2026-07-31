@@ -69,6 +69,9 @@ Decisions:
   type column. Give `=*` and `!*` explicit glob meanings, show independent
   matcher examples, and state separately that all matchers on one route use
   logical AND.
+- Protect literal operators and glob examples with DokuWiki no-format spans
+  inside inline code. This prevents `**` from opening bold markup and protects
+  comparison operators such as `<=` from typography substitution.
 - Put full event-grouping and time-interval sections in the bilingual routing
   article. Cover grouping keys, initial wait, repeat interval, per-route
   ownership, skipped deliveries, group inspection, schedule syntax, boolean
