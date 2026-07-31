@@ -17437,3 +17437,40 @@ workflow and approval-gated production KB promotion.
   validation; no unrelated binding deletion is included in the change.
 - The previous staged concept bundle remains untouched while review is in
   progress. No production wiki write has been performed or approved.
+- The mandatory standalone fresh-context reviewer reported no Blocking or
+  Important findings. It independently verified matcher, grouping, interval,
+  hash, binding, discovery, commit-focus, and production-safety claims.
+- Two Advisory findings were incorporated: every interval specification now
+  explicitly requires at least one constrained field, and the group page uses
+  the actual **Open (waiting and overdue)**, **Overdue**, **Idle**, and **All**
+  filter names (with their Czech translations). Candidates, manifests, and
+  discovery records were rebuilt; both the complete capture check and the
+  candidate-aware annotation check remain green.
+- The screenshot Advisory was inspected at its original 821×943 resolution.
+  The **Specifications** and **Assigned routes** labels wrap within their left
+  table cells but are fully visible; the functional controls and explanatory
+  text are readable, so the existing deterministic capture is retained.
+- After review, the exact session ownership was reverified and the global
+  `kb-staging` container was reset to a current production mirror. The reset
+  mirrored 116 Czech pages, 70 English pages, 58 language pairs, and 224
+  shared media objects at `2026-07-31T17:26:53Z`.
+- The corrected Czech manifest staged and verified 11 pages and 29 media
+  objects. The corrected English manifest then staged and verified the same
+  counts; a final Czech verification after the English stage also passed.
+  Both checks warmed and verified all 11 affected language pairs.
+- Rendered review checks returned HTTP 200 for the overview and routing pages.
+  DokuWiki produced the expected Czech anchors `seskupovani_udalosti` and
+  `casove_intervaly` and English anchors `event_grouping` and
+  `time_intervals`; overview links resolve to them. The rendered group filters,
+  non-empty specification rule, navigation annotations, and all five routing
+  screenshot references are present.
+- Review URLs:
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace`;
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace/routovani`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications/routing`.
+- The current pending record is the English manifest with SHA-256
+  `7788a55adbf1f101c34291d2256ebfd95ac4cec2d72cc9116d1c8ae3073297a2`,
+  staged at `2026-07-31T17:27:25Z`. Both language bundles remain installed and
+  verified in the staging mirror. No production wiki write has been performed
+  or approved.
