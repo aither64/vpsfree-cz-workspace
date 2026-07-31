@@ -17393,3 +17393,47 @@ workflow and approval-gated production KB promotion.
   verified in the staging mirror.
 - No production wiki write has been performed or approved. Promotion remains
   an explicit user-approved follow-up.
+
+#### Routing-guide documentation follow-up
+
+- The active development-session slug was reverified as
+  `2026-06-15-vpsadmin-events`. The vpsAdmin and capture worktrees started
+  clean at exact pushed heads `ab504844a8393e1a3d1bfbe50d9d30ee9434356a`
+  and `036d91f40148c129fde0b2a7bac6cdbfcef3068c`; no vpsAdmin runtime change is
+  required for this documentation correction.
+- The Czech and English overview headings are now neutral descriptions of the
+  concept articles. Grouping and time intervals are linked as routing
+  features instead of being compressed into an "Advanced options" paragraph.
+- The routing matcher table is organized by operator and explicitly defines
+  equality, regular-expression, glob, comparison, and list operators. The
+  formerly connected `cgroup` and `vps_id` prose is replaced by three
+  standalone examples, followed by the AND rule for multiple matchers.
+- Full bilingual sections restore event grouping and time intervals. They
+  document group keys, initial/repeat timing, route-local settings, exclusion
+  of skipped deliveries, group inspection, IANA time zones, specification and
+  range boolean logic, supported schedule fields, overnight splitting,
+  active/mute precedence, event-time evaluation, and unaffected child-route
+  traversal. The existing grouping and schedule captures were visually
+  rechecked against the text.
+- Capture navigation and binding contracts move
+  `notifications.groups.open`, `notifications.time-intervals.open`,
+  `notifications.route-grouping-form.open`, and
+  `notifications.route-time-intervals.open` from the overview pages to the
+  routing pages. The independent discovery inventory was regenerated while
+  preserving classifications for unrelated source paragraphs.
+- `kb-contract-build` rebuilt 22 changed pages with 58 media objects and four
+  replacement annotations. Each localized release manifest contains 11 pages
+  and 29 media objects with updated informative summaries.
+- Quick verification passes:
+  - `nix develop -c bin/check`: 8 contract tests/50 assertions and 9
+    annotation tests/19 assertions, plus syntax, contract, and 176-PNG
+    inventory validation;
+  - candidate-aware `tools/check-kb-annotations.rb`: 131 bindings and 9
+    explicit exceptions;
+  - all 252 independent navigation discoveries are classified.
+- The provided `import-kb-annotation-plan.rb` helper imports only candidate
+  replacement annotations and is not an all-page semantic-tag scanner. Its
+  incomplete local output was detected in the diff and replaced before
+  validation; no unrelated binding deletion is included in the change.
+- The previous staged concept bundle remains untouched while review is in
+  progress. No production wiki write has been performed or approved.
