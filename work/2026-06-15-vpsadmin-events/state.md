@@ -10,7 +10,7 @@
   - Current base/head before local commits:
     `6351e273ed257f5e3233a99ffa7d8eae9221856a`
   - Current feature head:
-    `4c6d0dc01803a9e0f1b7c6739c0e2d00060d7358`
+    `0a5cc6ed407ef2b10b213141d1f8011148c080c5`
   - Remote: `git@github.com:vpsfreecz/vpsadmin.git`
 - `vpsfree-notification-templates`
   - Worktree:
@@ -18,7 +18,7 @@
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
   - Current head:
-    `2074fe28446ec43212e4e2f2fa9001d2624bd6d3`
+    `5c515d1a9876cf52d857df35a0205b093bf0f2f1`
   - Remote: `git@github.com:vpsfreecz/vpsfree-notification-templates.git`
   - Note: local worktree/reference renamed from the historical
     `vpsfree-mail-templates` naming for this managed template deployment
@@ -29,7 +29,7 @@
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
   - Current head:
-    `b58aa05c0e95a3e46dcd49909261847e16e366ed`
+    `70f44656ad05d449fdecde402e6b9fad5b848571`
   - Remote: `git@github.com:vpsfreecz/vpsfree-cz-configuration.git`
 - `vpsfree-sms-gateway`
   - Worktree:
@@ -46,10 +46,247 @@
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin-kb-captures`
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
-  - Initial head: `7248a8b`
+  - Current head: `69a2f2a2cfd3186d3f304d9cb678412359ce13c0`
   - Remote: `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
 
 ## Status
+
+- 2026-07-30 final history cleanup and default-branch rebase started.
+  - Verified active session `2026-06-15-vpsadmin-events` with the matching
+    `VPSFREE_DEV_SESSION_SLUG`.
+  - Refreshed all affected remotes and confirmed the intended feature heads.
+  - Created and pushed
+    `backup/2026-06-15-vpsadmin-events-before-final-history-cleanup-2026-07-30`
+    before rewriting any branch:
+    - `haveapi`: `d2549fb33204c3b5184c992a2ac03bc4b4e4393e`;
+    - `vpsadmin`: `a2466114ebb4237b500587f377c7b0f3c64a27ce`;
+    - `vpsadmin-go-client`:
+      `5ebb025a43b1c5dca5c5e02952d759791462fe04`;
+    - `vpsadmin-kb-captures`:
+      `251653fd176265a23fb518b6ebfd110301a19428`;
+    - `vpsfree-cz-configuration`:
+      `305212e7cf5209d288d636c475b19a801a044e23`;
+    - `vpsfree-notification-templates`:
+      `c9f4cd82d7f05030cb643960c417a1802e9629fb`.
+  - Verified every remote backup ref with `git ls-remote`. The released
+    HaveAPI `v0.29.8` tag and `haveapi-0.29` branch, the standalone PHP client
+    release, and the SMS gateway default branch remain untouched.
+  - Final rewritten heads:
+    - `haveapi`: `0e1e67e2057eb498691cc0dd4c674fe2f002513a`,
+      five patch-equivalent commits rebased onto current `master`;
+    - `vpsadmin`: `00287a0a6709dd28452de3cc4aaad6881cbc9cf6`,
+      96 commits on current `master`, reduced from 106;
+    - `vpsadmin-go-client`:
+      `dad6ea02c3256f35b48d2e4b346d5b895b3abfd7`, one generated commit
+      instead of three;
+    - `vpsadmin-kb-captures`:
+      `a8a0a6587b18d15967389e335918f9b4a2e2f964`, four commits instead of
+      fourteen and pinned to rewritten vpsAdmin;
+    - `vpsfree-cz-configuration`:
+      `1cc818e28cf867efb9d5dad6d7b6cf7154d40350`, ten commits instead of
+      twelve on current `master`;
+    - `vpsfree-notification-templates`:
+      `5c515d1a9876cf52d857df35a0205b093bf0f2f1`, seven commits instead of
+      nine with an identical final tree.
+  - Published the rewritten HaveAPI, vpsAdmin, and notification-template
+    source branches with exact force-with-lease guards so downstream pins
+    could be regenerated. No superseded queued or in-progress workflow was
+    present; all active vpsAdmin workflows use the rewritten head.
+  - Configuration pins were generated with `confctl` and resolve to:
+    - `vpsfreeSmsGateway`:
+      `af7b3fafb780c849ae03e31712128ecb0749ec0b`;
+    - `vpsfreeNotificationTemplates`:
+      `5c515d1a9876cf52d857df35a0205b093bf0f2f1`;
+    - `vpsadminServices`:
+      `00287a0a6709dd28452de3cc4aaad6881cbc9cf6`.
+  - Structural verification:
+    - HaveAPI range-diff reported all five feature commits patch-equivalent;
+    - vpsAdmin's cleanup tree matched its clean post-rebase tree exactly;
+    - Go client and notification-template trees matched their backups;
+    - KB capture tree matched its backup except for the rewritten vpsAdmin
+      pin;
+    - configuration differed from its backup only by current default-input
+      advances and rewritten source pins;
+    - `git diff --check` passed in all six rewritten repositories.
+  - Quick verification:
+    - HaveAPI rewritten-head CI: all seven workflows passed;
+    - notification templates:
+      `nix develop -c bundle exec rake check`, 674 template files checked;
+    - Go client: `gofmt -l client` returned no files and
+      `CGO_ENABLED=0 go test ./...` passed;
+    - KB captures: `nix develop -c bin/check` passed contract, annotation,
+      navigation, and inventory checks (17 test runs, 69 assertions);
+    - configuration focused specs: 10 examples, 0 failures; every rewritten
+      configuration commit also passed its active Overcommit hooks;
+    - vpsAdmin rewritten-head CI passed API Migration Specs, Webui PHPUnit,
+      RuboCop, Client Specs, i18n health, Console Router Specs, Download
+      Mounter Specs, and libnodectld Specs. Aggregate CI and API Specs remained
+      in progress at this checkpoint.
+  - Mandatory standalone change review is the next gate. No long dev-cluster
+    integration run or production KB write has been started.
+  - The first standalone history review by `Boole` returned changes required:
+    - split the mixed delivery-rate-limit commit into delivery throttling,
+      event persistence, route-match schema/API/WebUI, and test/default-label
+      changes;
+    - split the protocol-aware template commit from API setup serialization
+      and Telegram RabbitMQ permissions;
+    - split managed-template installation from removal of the bundled
+      uploader; and
+    - make the first KB pin commit own both top-level revision markers as well
+      as the flake input, leaving generated capture checksums to the final
+      commit.
+  - The user explicitly authorized bypassing hooks for the reconstructed
+    historical commits only. Those commits were created with `--no-verify`;
+    the complete active hook suite was then run at the final vpsAdmin head.
+  - Corrected vpsAdmin history:
+    - final head
+      `ba8ce3fbc9ef35d6335838549401d1e748205c56`, 102 commits on current
+      `origin/master`;
+    - the protocol, setup serialization, RabbitMQ permission, managed
+      installer, bundled-uploader removal, route-match recording,
+      delivery-only persistence, default-label normalization, and delivery
+      rate-limit changes now have separate functional boundaries;
+    - generated default-label normalization was moved into new unreleased
+      migration `20260722120730`, with its own migration spec, so the preceding
+      `20260722120700` migration and spec contain only the route-match shape;
+    - compared with the first cleaned head `00287a0a`, the final tree differs
+      only by this migration/spec separation. Runtime behavior and final
+      schema remain unchanged;
+    - the complete Overcommit pre-commit suite passed at the final head:
+      MigrationSpecs, Nixfmt, RuboCop, API/WebUI i18n, and PHP CS Fixer;
+    - migration specs passed separately: 6 examples, 0 failures;
+    - route model: 39 examples, 0 failures;
+    - delivery task: 82 examples, 0 failures;
+    - Event Routing API: 57 examples, 0 failures, 1 expected plugin-mode
+      pending example;
+    - combining migration and ordinary model/API specs in one RSpec process
+      was discarded because migration specs intentionally replace and roll
+      back the active schema. The suites above were rerun in isolated
+      processes. A parallel rerun also raced while installing Bundler into one
+      shared `.gems`; the completed suites themselves were green;
+    - pushed over SSH with an exact force-with-lease from `00287a0a` to
+      `ba8ce3fb`. No queued or in-progress workflow on the superseded head
+      remained to cancel.
+  - Corrected KB history:
+    - final head
+      `92b6b3829436939b7a621d3232f76f6171e83789`, four commits on current
+      `origin/master`;
+    - first commit `de0efe4` pins `ba8ce3fb` in `flake.nix`, `flake.lock`,
+      `captures.json`, and `contract/navigation.yml`;
+    - the final tutorial/capture commit no longer changes either top-level
+      revision marker;
+    - its tree differs from pre-correction head `a8a0a65` only in the exact
+      four pin fields/files;
+    - `nix develop -c bin/check` passed syntax, contract, annotation,
+      navigation, and inventory validation: 84 concepts, 168 variants, and
+      168 PNGs.
+  - Corrected deployment pin:
+    - dropped the superseded generated `00287a0a` pin and regenerated it with
+      `confctl inputs channel set --commit vpsadmin vpsadmin ba8ce3fb...`;
+    - final configuration head
+      `a652aa3488858a0beffd6e81b294ccdceb28ed21`;
+    - the generated input commit passed active Nixfmt and RakeTarget
+      pre-commit hooks and pins `vpsadminServices` to `ba8ce3fb`,
+      `vpsfreeNotificationTemplates` to `5c515d1a`, and
+      `vpsfreeSmsGateway` to `af7b3faf`.
+  - The rewritten Go client remains the one-commit head
+    `dad6ea02c3256f35b48d2e4b346d5b895b3abfd7`; the corrected vpsAdmin
+    history changes only unreleased migration boundaries and does not alter
+    the generated API schema.
+  - Transient configuration `.bin`, `.bundle`, and `.rubocop_cache`
+    directories were inspected and removed. The shell/rebase cleanup lessons
+    are recorded in
+    `notes/cross-project/2026-07-31-safe-history-cleanup-shell.md`.
+  - The second standalone history review by `Boole` returned changes
+    required:
+    - introduce executable-delivery-only persistence in its owning early
+      commit instead of adding and later correcting audit-style retention;
+    - remove `persist: :always` and execution-attempt fields from the
+      producer and operation-lifecycle commits that introduced them;
+    - split administrative test-event scope from default-label
+      normalization; and
+    - move the default-label migration/spec retimestamp into the retimestamp
+      commit, leaving the predecessor-enforcement commit focused.
+  - Final vpsAdmin review repair:
+    - head `0a5cc6ed407ef2b10b213141d1f8011148c080c5`,
+      102 non-empty commits on current `origin/master`
+      `e8a8ae516355a0cea2e0067ee5dcf505ec733466`;
+    - the final tree is byte-for-byte identical to reviewed head
+      `ba8ce3fbc9ef35d6335838549401d1e748205c56`;
+    - history-wide checks found no commit containing `persist: :always`, a
+      positive `operation_attempt` payload/schema field, an empty commit, an
+      unwrapped commit-message line, or a whitespace error;
+    - the early routing commit now owns delivery-only persistence, later
+      producers never reintroduce unconditional persistence, operation
+      correlation uses the stable operation ID without execution attempts,
+      and grouping tests follow the same contract from their introduction;
+    - the final non-bypassed Overcommit suite passed MigrationSpecs, WebUI
+      and API i18n, Nixfmt, RuboCop, and PHP CS Fixer;
+    - pushed over SSH with an exact lease from `ba8ce3fb` to `0a5cc6ed`;
+      superseded in-progress runs `30615568437` and `30615568462` were
+      cancelled, while all workflows for the final head were left running.
+  - Final KB pin repair:
+    - head `69a2f2a2cfd3186d3f304d9cb678412359ce13c0`,
+      four commits on current `origin/master`;
+    - first commit `a54a638` owns the vpsAdmin revision in `flake.nix`,
+      `flake.lock`, `captures.json`, and `contract/navigation.yml`, all pinned
+      to `0a5cc6ed`;
+    - `nix develop -c bin/check` passed: 51 controls, 37 paths, 55 capture
+      concepts, 28 semantic selectors, 119 annotation bindings, 17 test runs,
+      69 assertions, 84 inventory concepts, 168 variants, and 168 PNGs.
+  - Final configuration rebase and pin:
+    - `origin/master` advanced to
+      `511b106c2bb5f68efa1265e679fd3082d0e76b19`; all nine functional commits
+      were rebased onto it;
+    - generated final pin commit
+      `70f44656ad05d449fdecde402e6b9fad5b848571` with
+      `confctl inputs channel set --commit`, pinning vpsAdmin to `0a5cc6ed`,
+      notification templates to `5c515d1a`, and the SMS gateway to
+      `af7b3faf`;
+    - the generated commit and final complete hook run passed Nixfmt,
+      RakeTarget, and RuboCop;
+    - the rebase initially stopped because the ambient shell lacked bundled
+      hook gems and later because the branch itself changed the Overcommit
+      signature. Gems and signatures were installed in the Nix shell;
+      reconstructed replay commits used the user's authorized hook bypass,
+      followed by the successful final non-bypassed hook run.
+  - Final heads and quick verification are ready for a third review by the
+    same standalone reviewer. No long configuration build or production KB
+    write has been started.
+  - The third standalone review by `Boole` approved the complete six-repository
+    rewrite with no Critical, Important, or Advisory findings.
+    - It verified the early delivery-only persistence owner, independent test
+      scope and default-label commits, migration retimestamp/predecessor
+      boundaries, stable operation IDs without execution attempts, and absence
+      of the former corrective tail.
+    - It verified all four KB pins and all three configuration source pins,
+      current default-branch bases, linear/non-empty history, message wrapping,
+      clean worktrees, whitespace checks, migration ordering, and absence of
+      stale-schema existence guards.
+    - Residual work is limited to the intentionally deferred configuration
+      build and publication/CI monitoring of the rewritten Go, KB, and
+      configuration branches.
+  - Post-review configuration integration:
+    - `nix develop -c confctl build -y cz.vpsfree/vpsadmin/int.api1`
+      completed successfully;
+    - generation `2026-07-31--11-13-28` was built for
+      `cz.vpsfree/vpsadmin/int.api1`;
+    - the closure includes vpsAdmin `0a5cc6ed`, notification templates
+      `5c515d1a`, and the API, database, supervisor, notification dispatcher,
+      grouping, console-router, and Telegram-receiver services.
+  - Final publication:
+    - pushed the rewritten Go client, KB capture, and configuration branches
+      over SSH with exact force-with-lease guards;
+    - verified with `git ls-remote` that all six published feature refs match
+      their local final heads;
+    - no branch workflow runs were created for the Go client or KB capture
+      repositories;
+    - configuration Event i18n health run `30619420332` passed on
+      `70f44656`;
+    - all six feature worktrees were clean after removing transient
+      configuration hook/build caches;
+    - all ten vpsAdmin workflows passed on `0a5cc6ed`, including all 26 jobs
+      in final parallel API workflow `30618397732`.
 
 - 2026-07-30 public resource event catalog correction started.
   - User rejected the generated catalog of all Active Record descendants:

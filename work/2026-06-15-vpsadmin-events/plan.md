@@ -23,6 +23,46 @@ The target design is:
 - Incident report rules, OOM report rules, and advanced e-mail settings are
   migrated into this system and then removed from the WebUI.
 
+## Final History Cleanup
+
+Requested on 2026-07-30: rebase every active event-system branch onto its
+current default branch and rewrite unpublished feature history into a clean,
+reviewable sequence. Preserve every pre-rewrite tip locally and remotely before
+changing a branch.
+
+Decisions:
+
+- Keep HaveAPI's five feature commits individually because three are already
+  represented by cherry-picks in the released `v0.29.7`/`v0.29.8` history and
+  the remaining two are separate Go-generator corrections. Rebase only the
+  development branch; do not rewrite release branches or tags.
+- Remove vpsAdmin commits whose files are deleted by the final design, and fold
+  directly additive follow-ups into their owning features. Keep the late event
+  producer commits separate where transaction completion, resource typing, and
+  operation correlation have real replay-order dependencies.
+- Store the generated Go client in one commit so consumers never see
+  intermediary schemas.
+- Keep the KB history as four layers: exact vpsAdmin pin, routes and intervals,
+  practical recipes, and the final capture/contract refresh.
+- Keep generated configuration pins as standalone `confctl` commits. Combine
+  the three grouped-OOM follow-ups into one deployment-policy commit.
+- Preserve the released HaveAPI branch/tag, standalone PHP client release, and
+  SMS gateway default branch. They are inputs to the final stack, not rewrite
+  targets.
+
+Compatibility:
+
+- Rewriting commit identities does not change the final application, template,
+  generated-client, or capture-contract content. Downstream exact pins must be
+  regenerated to the rewritten source commits before deployment.
+- Default-branch dependency updates are accepted as part of each rebase and
+  verified through repository tests and CI.
+- The event schema and migration contract remain the same as the backed-up
+  implementation. Disposable development databases should be reset rather
+  than adding guards for superseded in-branch migration shapes.
+- Production KB content is not changed by this cleanup. The capture repository
+  continues to prepare reviewable local artifacts only.
+
 ## Event Time Intervals And User Documentation Addendum
 
 Requested on 2026-07-22: add reusable, account-owned time intervals to event
