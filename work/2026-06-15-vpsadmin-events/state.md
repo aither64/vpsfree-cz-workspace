@@ -17361,7 +17361,30 @@ workflow and approval-gated production KB promotion.
   Candidates and both manifests were rebuilt from the corrected plan; the
   candidate-aware checker remains green with 131 bindings and 9 explicit
   exceptions. Commit focus was corrected as described above, and the durable
-  note is being split into its own top-level commit.
-- The same reviewer must verify the corrected committed ranges before staging.
-  Capture branch push, superseded-CI cleanup, and exact staging verification
-  remain pending. No production wiki write has been performed or approved.
+  note was split into top-level commit `056bfad` after release-record commit
+  `c314158`.
+- The same standalone reviewer accepted the corrected ranges with no Blocking
+  or Important findings. It independently confirmed the route/interval and
+  test-role wording, commit split, exact capture pin, manifest counts and all
+  hashes. Its only Advisory finding was a stale audience-visibility sentence
+  in the landmark commit message. That message-only issue is carried forward:
+  the split and implementation are correct, while rewriting it would
+  invalidate the exact capture pin and restart valid CI without changing a
+  reviewed artifact. The reviewer accepted the missing local browser run as a
+  residual gap because the exact WebUI paths were exercised by capture
+  generation and are selected in replacement CI.
+- The rewritten capture branch was pushed over SSH at exact head
+  `036d91f40148c129fde0b2a7bac6cdbfcef3068c`. Superseded vpsAdmin aggregate
+  CI run `30637686691` for old head `bdb4cee...` was canceled; no current-head
+  workflow was canceled. At the latest check, current-head RuboCop, WebUI
+  PHPUnit, and i18n workflows were green, while aggregate run `30642570177`
+  and topic-parallel API run `30642568011` were still running.
+- The session-owned staging container was reset from current production,
+  replacing the older pending delivery-only bundle. Both concept manifests
+  staged 11 pages and 29 media objects, warmed all 11 Czech/English page pairs,
+  and passed exact `kb-release verify` checks for `cz-staging` and
+  `org-staging`. The current pending release record names the English manifest
+  staged at 2026-07-31 15:30 UTC; both language contents remain installed and
+  verified in the staging mirror.
+- No production wiki write has been performed or approved. Promotion remains
+  an explicit user-approved follow-up.
