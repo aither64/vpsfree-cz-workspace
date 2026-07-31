@@ -17474,3 +17474,12 @@ workflow and approval-gated production KB promotion.
   staged at `2026-07-31T17:27:25Z`. Both language bundles remain installed and
   verified in the staging mirror. No production wiki write has been performed
   or approved.
+- The capture follow-up was pushed over SSH at exact head
+  `69591fed0e18f05a33cb7bbfa1c4a906a99ac773`; local and remote feature heads
+  match and the worktree is clean. The repository has no GitHub Actions runs
+  for this branch push.
+- Workspace documentation, durable-note, review-follow-up, and staging-state
+  commits were pushed on the shared linear `master`. The pushed checkpoint
+  before this final status record was
+  `90375234425f5d54b35e0dfc2e85d0e953fd9634`. The unrelated existing
+  `.plan.md.swp` remains untracked and untouched.
