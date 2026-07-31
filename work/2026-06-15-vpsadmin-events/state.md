@@ -17376,9 +17376,14 @@ workflow and approval-gated production KB promotion.
 - The rewritten capture branch was pushed over SSH at exact head
   `036d91f40148c129fde0b2a7bac6cdbfcef3068c`. Superseded vpsAdmin aggregate
   CI run `30637686691` for old head `bdb4cee...` was canceled; no current-head
-  workflow was canceled. At the latest check, current-head RuboCop, WebUI
-  PHPUnit, and i18n workflows were green, while aggregate run `30642570177`
-  and topic-parallel API run `30642568011` were still running.
+  workflow was canceled. Current-head RuboCop, WebUI PHPUnit, and i18n
+  workflows are green. Topic-parallel API run `30642568011` completed
+  successfully with all 27 jobs green, including final coverage checks and
+  the slow platform shards. Aggregate run `30642570177`, which selects the
+  support-page browser path, was still running its test step without a failure
+  after 75 minutes. It is not a blocking wait target under the user's earlier
+  instruction; the workflow permits up to 12 hours and no failed log exists to
+  investigate at handoff.
 - The session-owned staging container was reset from current production,
   replacing the older pending delivery-only bundle. Both concept manifests
   staged 11 pages and 29 media objects, warmed all 11 Czech/English page pairs,
