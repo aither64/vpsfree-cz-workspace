@@ -17528,3 +17528,101 @@ workflow and approval-gated production KB promotion.
   staged at `2026-07-31T19:32:11Z`. Both corrected language bundles remain
   installed and verified. No production wiki write has been performed or
   approved.
+## Report-based muting shortcuts implementation
+
+- Started on 2026-07-31 in the verified session
+  `VPSFREE_DEV_SESSION_SLUG=2026-06-15-vpsadmin-events`.
+- Reused the existing clean feature worktrees for `vpsadmin`,
+  `vpsfree-notification-templates`, `vpsadmin-go-client`,
+  `vpsadmin-kb-captures`, and `vpsfree-cz-configuration`.
+- Confirmed the shared workspace checkout already contains unrelated modified
+  and untracked paths; they remain untouched. Only this initiative's tracking
+  files will be staged for the follow-up.
+- Confirmed that the event-route model, schema, and router already implement
+  `expires_at`; generic API/WebUI mutation support is the missing layer.
+- Implementation is in progress. The previously verified bilingual KB review
+  bundle remains staged and no production wiki write is approved.
+- `nix develop .#webui -c webui/lang/scripts/locales-update` failed because the
+  component shell changes into `webui/` before executing the command. The
+  corrected component-relative invocation and reusable explanation are
+  recorded in `notes/vpsadmin/2026-07-31-webui-devshell-working-directory.md`.
+- vpsAdmin is committed as two functional changes and pushed over SSH:
+  - `8ef07f147` (`events: create mute routes from report values`) adds atomic
+    OOM/incident mute-route actions, expiration mutation, `mute_url` template
+    context, fallback template links, endpoint inventory entries, and API/model
+    coverage;
+  - `ddbcdb2d1` (`webui: compose mute routes from reports`) adds non-mutating
+    review forms, contextual owners, selected/default matchers, expiry presets,
+    sidebar shortcuts, route-expiration editing/status, translations, and
+    WebUI/browser coverage.
+- The report actions enforce report visibility and derive matcher values on the
+  server. OOM defaults are VPS plus cgroup, with invoking/killed process names
+  optional. Incident defaults are VPS plus codename, or VPS plus IP when no
+  codename exists, with subject optional. An administrator may choose the
+  report account or an administrator as owner. Route creation and matcher
+  creation are one transaction, and GET requests never mutate state.
+- `expires_at` was already present in the persisted route schema and router.
+  The implementation exposes one hour, one day (default), one week, one
+  calendar month, forever, and custom expiry without a migration. Existing
+  `single_use` semantics remain unchanged and read-only in this workflow.
+- Focused vpsAdmin verification is green:
+  - WebUI PHPUnit: 26 tests and 348 assertions;
+  - API report/resource/model checks: 195 examples in the broad focused run,
+    plus the corrected 16-example supervisor file;
+  - endpoint/custom-route coverage: 2 examples after adding the two action
+    scopes;
+  - notification-template model spec: 20 examples;
+  - selector tests: 16 runs and 55 assertions;
+  - RuboCop on all 13 changed Ruby files, PHP CS Fixer, PHP/JavaScript syntax,
+    Nix formatting, gettext generation/update/check, and the full Overcommit
+    suites passed.
+- Superseded GitHub Actions runs for rewritten heads were canceled. Failed run
+  `30666362881` was inspected before replacement: its only failure was the two
+  missing endpoint-inventory entries, which are now committed and pass the
+  exact local coverage spec. Current final-head CI is being monitored after
+  mandatory review.
+- Managed templates are committed and pushed at
+  `6dda345aa47dba418d4f434cb9cd7ef5be08e465`. Guarded Czech/English Email and
+  Telegram variants include the mute link when `mute_url` is present; SMS is
+  unchanged. `nix develop -c bundle exec rake check` validates all 674 files.
+- The generated Go client is committed and pushed at
+  `cbb8285e9493da1dd49ca84d51985e05944147d2`. It contains only the ten expected
+  generated paths, including the two actions; `CGO_ENABLED=0 go build ./...`
+  and `go test ./...` pass.
+- The capture contract is committed and pushed at
+  `8b655e270609376092f7a136a63ec67e0baf27ba`, pinned to exact vpsAdmin head
+  `ddbcdb2d1b14ef9672b90a747356c5a30bb83f94`. Deterministic report-only
+  fixtures create real VPS-linked reports without optional plugins, and four
+  new Czech/English composer images show the server-derived values and owner.
+  The final visual inspection confirms both incident images show `test-user1`.
+- The complete capture check passes with 58 controls, 44 paths, 61 capture
+  concepts, 34 semantic selectors, 135 KB bindings, 9 exceptions, 8 tests/50
+  assertions, 9 tests/19 assertions, 90 concepts, 180 variants, 92 Czech
+  references, 83 English references, and 180 PNGs. The disposable bridge
+  cluster was reset once to discard stale VM state, recaptured on the final
+  source, stopped, and had its GC root removed. One stale failed-capture Node
+  process was terminated by exact PID.
+- A fresh immutable production inventory was fetched to
+  `kb-sources-mute-shortcuts` (126 Czech and 80 English pages). The rebuilt
+  `kb-candidates-mute-shortcuts` contains 22 changed pages, 20 guarded new
+  pages, 4 annotations, 62 media objects, and the two canonical webhook code
+  samples. Candidate-aware annotation validation passes. The localized
+  `kb-release-mute-shortcuts-{cs,en}.yml` manifests each contain 11 pages and
+  31 media objects with informative production summaries.
+- Deployment pins were generated only through `confctl` and pushed:
+  - `2b3dd3a7` sets `vpsadminServices` to `ddbcdb2d1`;
+  - `e573d2c6` sets `vpsfreeNotificationTemplates` to `6dda345a`.
+  Their Overcommit suites passed, and
+  `confctl build -y cz.vpsfree/vpsadmin/int.api1` successfully built all 146
+  derivations with both exact revisions. Generated `.bin` and `.bundle`
+  development-shell artifacts were removed after the build.
+- Compatibility remains incremental: the API/WebUI deployment must precede or
+  accompany managed templates for links to be populated, while guarded
+  templates remain usable with an older API because they omit a missing
+  `mute_url`. Existing route rows need no conversion, expired routes simply
+  stop matching, old code ignores the nullable field on rollback, and the Go
+  client additions are backward compatible.
+- Mandatory fresh-context change review, long browser integration testing,
+  final-head CI monitoring, and replacement of the session-owned staging KB
+  bundle are still pending. No production wiki write has been performed or
+  approved.

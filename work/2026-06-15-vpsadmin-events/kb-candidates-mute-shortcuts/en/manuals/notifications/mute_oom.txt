@@ -1,0 +1,65 @@
+====== Mute selected OOM reports ======
+
+The quickest workflow creates a mute route directly from an OOM report.
+vpsAdmin loads matcher values from the authorized report on the server,
+shows them for review, and uses the built-in **Mute** receiver. No target or
+receiver has to be created.
+
+Before starting, read the [[manuals:notifications|notification system overview]],
+[[manuals:notifications:events|events]], [[manuals:notifications:routing|routing]],
+and [[manuals:notifications:targets_and_receivers|targets and receivers]].
+
+===== Step 1: Open the mute-route proposal =====
+
+On an OOM report detail, select
+<vpsadmin-nav id="oom-reports.mute-similar.open">**Mute similar OOM
+reports**</vpsadmin-nav>. The same link is included in e-mail and Telegram
+notifications. Opening it does not change state; it only displays the
+review form. For a grouped OOM notification, select one of the displayed
+reports as the source of matcher values.
+
+{{:en:screenshots:vpsadmin:notifications:mute-oom-composer.png?900|Review OOM-report matchers and mute-route expiration}}
+
+===== Step 2: Review matchers and expiration =====
+
+The defaults match **VPS ID** and the complete **cgroup path** without the
+''/sys/fs/cgroup'' prefix. You can optionally add the invoking-process name
+and killed-process name. Selecting more fields narrows the route; all
+selected matchers must match together.
+
+The default expiration is one day. Other choices are one hour, one week,
+one calendar month, forever, or a custom local date and time. After expiry,
+the router automatically stops using the route.
+
+===== Step 3: Create and optionally tune the route =====
+
+**Create mute route** atomically creates the route and all matchers, prepends
+it to the existing routes, and opens the ordinary editor at
+<vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>. You can then change the label, matchers, or expiry.
+Keep **Continue** disabled, otherwise another route could still send the
+report.
+
+{{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Resulting OOM-report mute route with VPS and cgroup matchers}}
+
+===== Step 4: Test the route =====
+
+Create a **Test notification** of type ''vps.oom_report'' with
+representative fields:
+
+<code json>
+{
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "oom_report_id": 987,
+  "cgroup": "/user.slice/user-1000.slice/session-2.scope",
+  "count": 1,
+  "oom_count": 1,
+  "invoked_by_name": "ruby",
+  "killed_name": "worker"
+}
+</code>
+
+If the mute route is the first match and no other route prepares a delivery,
+the test must report that no enabled route produced a delivery. The
+candidate must not appear in **Delivery history**.

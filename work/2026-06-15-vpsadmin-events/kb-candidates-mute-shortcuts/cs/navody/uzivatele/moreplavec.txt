@@ -1,0 +1,83 @@
+====== Instalace certifikačního robota ======
+
+O certifikáty  Let’s Encrypt zdarma se dobře postará Certbot. Stačí aktualizovat repozitář a pokračovat:
+
+  apt install certbot python3-certbot-nginx
+
+Nyní je dostupný příkaz certbot, který zajistí potřebný certifikát a automatizace obnovy.
+
+
+====== Nginx + Wordpress + HTTPS ======
+
+Pro běžící Wordpress web je nejprve nutné získat certifikát (stačí nahradit mojedomena.cz za svou):
+
+  certbot --nginx -d mojedomena.cz -d www.mojedomena.cz
+  
+Vygenerovaná konfigurace funguje, vypadá nějak takto (typicky /etc/nginx/sites-available/mojedomena.cz):
+
+  server {
+    root /var/www/mojedomena.cz/public_html;
+    index index.php;
+    server_name www.mojedomena.cz;
+    client_max_body_size 20M;
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    	}
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+        include fastcgi_params;
+    }
+    listen [::]:443 ssl; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/mojedomena.cz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/mojedomena.cz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    }
+  server {
+    if ($host = www.mojedomena.cz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+    if ($host = mojedomena.cz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+    listen 80;
+    listen [::]:80;
+    server_name mojedomena.cz www.mojedomena.cz;
+    return 404; # managed by Certbot
+  }
+  
+Je nutné přesměrovat https://mojedomena.cz na https://www.mojedomena.cz:
+
+Nejprve je vhodné přidat vlastní blok pro https://mojedomena.cz
+
+  server {
+    server_name mojedomena.cz;
+    return 301 https://www.mojedomena.cz;
+    listen [::]:443 ssl; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/mojedomena.cz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/mojedomena.cz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    }
+
+A pak umazat doménu bez WWW z hlavní definice server
+
+  ...
+  server_name www.mojedomena.cz
+  ...
+  
+Poslední změny jsou pak nutné přímo ve Wordpressu. Nejprve je nutné administraci donutit servírovat obsah stránek na HTTPS. Stačí do souboru wp-config.php na konec přidat tento řádek:
+
+  define('FORCE_SSL_ADMIN', true);
+  
+A stejně jako při migraci WP mezi doménami proběhnout celou DB a provést nahrazení textu http://www.mojedomena.cz na https://www.mojedomena.cz. Pro tento účel výborně poslouží skript Search&Replace https://interconnectit.com/products/search-and-replace-for-wordpress-databases/
+
+Nakonec je třeba restartovat server
+
+  systemctl restart nginx
+
+A je to :)

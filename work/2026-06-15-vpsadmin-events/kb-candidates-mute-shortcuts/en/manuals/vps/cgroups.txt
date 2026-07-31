@@ -1,0 +1,43 @@
+====== Control groups (cgroups) ======
+Control groups (cgroups) in Linux are used to account and limit resources of groups
+of processes. For example, cgroups are used to account CPU usage and let us configure
+quotas and memory limits. cgroups are one of the foundation blocks of vpsAdminOS:
+every VPS has its own cgroup and can of course create its own nested cgroups. This is
+usually handled by the init system and so you don't work with cgroups directly.
+
+There are two cgroup versions: v1 and v2. Because VPS are containers, the cgroup version
+depends on the host and cannot be changed inside VPS.
+cgroups v1 is slowly being deprecated and since systemd v258, it is no longer supported
+-- all VPS have mounted cgroups v2, but you cannot configure individual subsystems
+on nodes with v1.
+
+===== cgroups v2 =====
+The situation is complicated by the fact that older distributions do not support cgroups v2
+and one node can use only one cgroup version. We have nodes with v1 for older VPS and nodes
+with v2 for new VPS and distributions that support it. You can see what cgroup version invididual
+nodes are using on vpsAdmin landing page. Our end goal is to move as many VPS as possible
+to cgroup v2, since it also comes with performance benefits e.g. in the memory subsystem.
+
+===== cgroups v2 support =====
+The following distributions support cgroups v2:
+
+  * Alpine Linux
+  * Arch Linux
+  * CentOS / Alma Linux / Rocky Linux >= 8
+  * Debian >= 9
+  * Devuan
+  * Fedora >= 31 (possibly older)
+  * NixOS >= 19.03 (possibly older)
+  * openSUSE Leap >= 15.1 (possibly older)
+  * Ubuntu >= 18.04
+  * Void Linux
+
+===== Configuring cgroup version =====
+You can configure the cgroup version that the VPS requires. For most configurations, it should
+be enough to rely on cgroup v2 support in the distribution. The default setting is thus
+to allow whatever cgroup version the distribution works with. VPS with distributions that
+support v2 will be moved to nodes with v2 over time.
+
+If your VPS requires a specific cgroup version and it's not possible to change it, you can
+reflect this in vpsAdmin settings. If you'd like to move to a node with a different cgroup
+version, please contact our support.

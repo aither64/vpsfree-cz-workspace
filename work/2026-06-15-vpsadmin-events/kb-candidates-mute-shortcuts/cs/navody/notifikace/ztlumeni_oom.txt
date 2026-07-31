@@ -1,0 +1,63 @@
+<page>manuals:notifications:mute_oom</page>
+====== Ztlumení vybraných OOM reportů ======
+
+Nejrychlejší postup vytvoří ztišovací routu přímo z OOM reportu. Hodnoty
+matcherů načte vpsAdmin z reportu na serveru, zobrazí je ke kontrole a použije
+vestavěný příjemce **Ztlumit**. Není tedy třeba vytvářet cíl ani příjemce.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]],
+[[navody:notifikace:udalosti|události]], [[navody:notifikace:routovani|routování]]
+a [[navody:notifikace:cile_a_prijemci|cíle a příjemce]].
+
+===== Krok 1: Otevřete návrh ztišovací routy =====
+
+V detailu OOM reportu zvolte
+<vpsadmin-nav id="oom-reports.mute-similar.open">**Ztlumit podobná hlášení
+OOM**</vpsadmin-nav>. Stejný odkaz je v e-mailové a telegramové notifikaci.
+Odkaz sám nic nemění; pouze otevře kontrolní formulář. U seskupené OOM
+notifikace vyberte jeden ze zobrazených reportů jako zdroj hodnot.
+
+{{:cs:screenshots:vpsadmin:notifications:mute-oom-composer.png?900|Kontrola matcherů a platnosti ztišovací routy pro OOM report}}
+
+===== Krok 2: Zkontrolujte matchery a platnost =====
+
+Ve výchozím stavu se porovnává **ID VPS** a úplná **cgroup cesta** bez
+prefixu ''/sys/fs/cgroup''. Volitelně lze přidat název procesu, který vyvolal
+OOM killer, a název ukončeného procesu. Čím více polí zvolíte, tím užší bude
+záběr routy. Všechny vybrané matchery musí platit současně.
+
+Výchozí platnost je jeden den. Lze zvolit jednu hodinu, jeden den, jeden
+týden, jeden kalendářní měsíc, trvalou platnost nebo vlastní datum a čas.
+Platnost se vztahuje na vytvořenou routu; po vypršení ji router automaticky
+přestane používat.
+
+===== Krok 3: Vytvořte a případně dolaďte routu =====
+
+Tlačítko **Vytvořit ztišovací routu** atomicky vytvoří routu i všechny
+matchery a vloží ji před stávající routy. Potom se otevře běžný editor v
+<vpsadmin-nav id="notifications.routes.open">**Notifikace → Routy**</vpsadmin-nav>,
+kde lze upravit název, podmínky nebo dobu platnosti. **Pokračovat** nechte
+vypnuté, jinak by report mohly odeslat další routy.
+
+{{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Výsledná ztišovací routa OOM reportů podle VPS a cgroup}}
+
+===== Krok 4: Ověřte routu =====
+
+Vytvořte **Testovací notifikaci** typu ''vps.oom_report'':
+
+<code json>
+{
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "oom_report_id": 987,
+  "cgroup": "/user.slice/user-1000.slice/session-2.scope",
+  "count": 1,
+  "oom_count": 1,
+  "invoked_by_name": "ruby",
+  "killed_name": "worker"
+}
+</code>
+
+Pokud je ztlumující routa první shodou a žádná jiná routa nepřipraví
+doručení, test musí oznámit, že žádná povolená routa doručení nevytvořila.
+V **Historii doručování** se takový kandidát nesmí objevit.

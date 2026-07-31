@@ -1,0 +1,53 @@
+<page>manuals:vps:vpsadminos:snap</page>
+====== Snap na vpsAdminOS ======
+snap je na vpsAdminOS funkční, ale samozřejmě záleží na instalované aplikaci,
+testovali jsem jich jen několik nad Ubuntu 18.04.
+
+===== Instalace =====
+Ve vpsAdminu je potřeba v detailu VPS povolit feature **FUSE**. Potom
+nainstalujte snapd a [[https://github.com/vasi/squashfuse|squashfuse]]:
+
+<code>
+apt install fuse squashfuse snapd
+</code>
+
+V případě Ubuntu 18.04 by se mělo nainstalovat squashfuse-tools
+
+snapd vyžaduje adresář ''/lib/modules'', pro jistotu jej vytvoříme pokud neexistuje:
+
+<code>
+mkdir -p /lib/modules
+</code>
+
+A to je vše, nyní můžeme zkusit nainstalovat a spustit hello-world:
+
+<code>
+snap install hello-world
+snap run hello-world
+</code>
+
+===== LXD =====
+Pokud chcete ve VPS provozovat kontejnery, jednou z možností je
+[[https://linuxcontainers.org/lxd|LXD]]. Nejprve v detailu VPS povolte feature
+**LXC nesting**.
+
+V Ubuntu je LXD k dispozici v repozitářích, ale na jiných distribucích jej
+můžete nainstalovat jako snap:
+
+<code>
+snap install lxd
+</code>
+
+Pak už stačí jen LXD nastavit:
+
+<code>
+lxd init
+</code>
+
+A můžete začít spouštět kontejnery:
+
+<code>
+lxc launch ubuntu:18.04 myubuntu
+lxc exec myubuntu -- /bin/bash
+</code>
+

@@ -1,0 +1,240 @@
+======Převod Drupalu ze sdíleného hostingu na vpsFree======
+Distribuce Debian 6, Drupal 7 
+
+V rámci zachování konzistence návodu prosíme případné komentáře a větší změny navrhnout na konci dokumentu v sekci Návrhy na zlepšení a zpětná vazba.
+
+=====Tento návod je=====
+  * zápisem postupu použitém při převodu osobního blogu na drupalu ze sdíleného hostingu na vpsFree
+  * kompletním fukčním step-by-step návodem, který byl ověřen v playgroundu
+  * vhodný pro drupalisty, kterým nestačí sdílený hosting a chtějí zkusit třeba Drush (Drupal shell), ale zatím se to neodvážili zkusit na vlastní VPS..
+  * poslouží k jednoduchému a funkčnímu nastavení prostředí pro běh Drupalu
+
+=====Tento návod není=====
+  * optimalizován pro weby s velkou návštěvností, takové instalace by asi bylo vhodné optimalizovat na výkon, aby co nejméně zatěžovaly sdílený server. Doporučení zkušenějších drupalistů a adminů v tomto ohledu jsou vítána.
+  * nijak zvlášť promyšlen s ohledem na bezpečnost, např. při provozu více webů a uživatelů na jednom serveru. Pro jednoduchý osobní Drupal web však může postačit. Jakákoliv doporučení ohledně zabezpečení jsou vítána.
+  * používejte tento návod na vlastní riziko
+
+=====Příprava=====
+Předpokládáme čerstvě nainstalovaný server z template Debian 6.
+  * ''apt-get update''
+  * ''apt-get upgrade''
+  * ''apt-get install aptitude''
+  * ''aptitude install mc'' (používáte-li)
+Používáme aptitude, protože si pamatuje, které balíky byly instalovány jako závislosti a pak je umí i automaticky odstranit, když již nejsou potřebné. Snad to prý už umí i apt-get, ale nezkoušeli jsme. Použítí apt-get místo aptitude by mělo také fungovat.
+
+===== Instalace Apache, PHP, MySQL, phpMyAdmin =====
+Vhodnou verzi Apache nainstalujeme jako závislost php5. Php-pear a curl (nebo wget) se nám bude hodit pro instalaci a používání Drupal shellu Drush.
+  * ''aptitude install php5 php-pear curl''
+
+Nainstalujeme databázi a pár knihoven které Drupal potřebuje.
+  * ''aptitude install php5-mysql mysql-server php5-gd php5-curl''
+Proběhne konfigurace MySQL, zvolíme heslo root pro správu databáze (není vidět že heslo píšeme).
+
+Pro převod naší stávající drupal databáze budeme potřebovat phpMyAdmin:
+  * ''aptitude install phpmyadmin''
+  * zaškrtneme apache2
+  * configure database yes
+  * zadáme heslo roota databáze zvolené při instalaci mysql
+  * zvolíme heslo pro uživatele phpmyadmin
+  
+=====Převod databáze=====
+  * databázi z našeho hostingu zaarchivujeme pomocí modulu [[http://drupal.org/project/backup_migrate|Backup and Migrate]]. Databázi můžeme zazálohovat i přes phpmyadmin, ale Backup and Migrate se postará o vhodné parametry exportu a vynechá drupal cache, takže db je pak menší.
+  * do phpmyadmin se přihlásíme přes naše.ip/phpmyadmin , uživatel root a heslo námi dříve zvolené
+  * hned na první stránce po přihlášení je políčko pro vytvoření nové databáze. Zvolíme stejné jméno, jako jsme měli dříve (a se stejným collation, v našem případě utf8_czech_ci )
+  * název původní databáze najdeme nejspíše v naší původní instalaci v sites/default/settings.php 
+  * nahoře klikneme na import / vybereme soubor se staženou databází z Backup and Migrate / Go
+V případě, že je databáze větší než 2MB, import ohlási chybu a je třeba pomocí editoru vim nebo nano patřičně navýšit limity pro upload v php.ini:
+  * ''vim /etc/php5/apache2/php.ini''
+  * ''upload_max_filesize = 2M''
+  * ''post_max_size = 8M''
+
+Vytvoříme uživatele v phpmyadmin pro databázi:
+  * jdeme na Priviledes 
+  * username: stejné jako náš původní uživatel 
+  * host: localhost
+  * password: jako naše původní v settings.php
+  * nic dalšího neměníme a jdeme rovnou dole na Go
+
+===== Převod souborů webu=====
+==== Příprava ====
+Nejprve soubory našeho webu stáhneme přes FTP na lokální počítač (vč. skrytých) a zabalíme. Tečka na konci místo * zajistí, že se nám zabalí i skryté soubory jako .htaccess. V root adresáři našeho www staženého na lokále:
+''tar -zcvf nasweb.tgz .''
+
+V případě že na našem lokálním PC používáme Windows, můžeme samozřejmě zazipovat a pak pro rozbalení doinstalovat do vps unzip pomocí ''aptitude install unzip''. Další možností je stáhnout soubory našeho původního webu třeba pomocí ftp klienta Midnight commenderu (mc) rovnou do vps. My jsme již měli soubory na na lokálním PC stažené, takže dál budeme vycházet z této varianty.
+
+====Instalace FTP serveru (volitelně)====
+Pro nahrání a správu souborů webu na serveru se nám může hodit zprovoznit ftp server na naší vps. Zvolili jsme ProFTPD.
+  * ''aptitude install proftpd-basic''
+  * vybereme standalone, hotovo..
+  * pro větší zabezpečení by jistě stálo za to zprovoznit SFTP server, my však pro další správu webu chceme používat hlavně Drush přes ssh, tak nás to zatím netrápí. 
+  * také se doporučuje editací ''/etc/proftpd/proftpd.conf'' omezit uživatele ftp na jeho home adresář. My ale budeme mít data webu ve /var/www/nasweb a home pod /home/nasweb, tak ponecháme jak je, navíc se nechystáme poskytnout přístup dalším uživatlům.
+
+Alternativně můžeme zabalená data webu na server zkopírovat bezpečně přes scp, viz dále.
+
+====Vytvoření uživatele pro web a nastavení práv====
+Vytvoříme uživatele, zvolíme heslo, ostatní nemusíme vyplňovat
+  * ''adduser nasweb'' 
+Vytvoříme adresář pro náš web, nastavíme vlastníka:
+  * ''mkdir /var/www/nasweb''
+  * ''chown nasweb:www-data /var/www/nasweb''
+Nastavíme primární skupinu uživatele na www-data. To nám zajistí, že nové soubory co vytvoříme, budou čitelné webserverem.
+  * ''usermod -g www-data nasweb'' 
+
+====Nahrání souborů webu na vps====
+Nyní nahrajeme zabalená data webu z lokálního počátače na vps pomocí našeho oblíbeného ftp klienta do /var/www/nasweb. Použijeme uživatele nasweb a zvolené heslo. Ftp je pro vytvořené uživatele hned aktivní.
+
+Nebo můžeme použít pro zkopírování souboru zabezpečené scp:
+  * ''scp nasweb.tgz nasweb@ip.nasi.vps:/var/www/nasweb''
+
+
+Pak data rozbalíme a archiv nezapomeneme smazat. Můžeme samozřejmě přenášet i nezabalené, ale trvá to zbytečně dlouho.
+  * ''su nasweb'' 
+  * ''cd /var/www/nasweb''
+  * ''tar -xvf nasweb.tgz''
+  * ''rm nasweb.tgz''
+  * ''chmod -R g+w /var/www/nasweb/sites/default/files/''
+  * poslední řádek nastaví práva zápisu pro skupinu www-data do adresáře files (což je v Drupalu důležité pro upload souborů a různé moduly tam občas potřebují zapisovat)
+
+
+====Úprava konfiguračních souborů Drupalu pro lokální prostředí====
+  * .htaccess - s námi použitou konfigurací serveru by měl fungovat standardní .htaccess dodávaný s drupalem. Pokud jsme v něm měli na původním hostingu nějaké speciality, musíme je ošetřit ručně. Pokud jsme museli .htaccess dříve upravpvat z důvodů omezení na sdíleném hostingu, můžeme jej přepsat originálním .htaccess z drupal instalace. Ponechání standardního .htacess oceníme při aktualizacích Drupal core.
+  * v sites/default(případně jiné)/settings.php upravíme host v údajích pro přihlášení do databáze na 'localhost'
+
+=====Nastavení Apache, otestování=====
+====Povolení rewrite==
+Pro správnou funkci Drupalu potřebujeme zapnout apache modul rewrite:
+  * ''a2enmod rewrite''
+  * ''/etc/init.d/apache2 reload''
+
+====Test přes ip adresu a default site====
+Než přesměrujeme DNS záznamy na náš nový server, můžeme náš web nyní zkusit přes ip adresu vps. K tomu potřebujeme upravit konfiguraci default site Apache, aby fungovalo url rewriting v .htaccess drupalu:
+  * ''vim /etc/apache2/sites-available/default''
+  * a povolíme přepisování options v adresáři /var/www/ z None na All
+<code><Directory /var/www/>
+  Options Indexes FollowSymLinks MultiViews
+  AllowOverride All
+  Order allow,deny
+  allow from all
+</Directory></code>
+
+Vyzkoušíme náš web přes: ip.nasi.vps/nasweb. Hlavní stránka webu by měla fungovat a pokud máme standardní .htaccess  drupalu 7, mělo by fungovat i url rewriting a tím i podstránky našeho webu. V případě že to nefunguje, chyba je pravděpodobně v .htaccess nebo v konfiguraci apache default site. 
+
+Případné potíže nám může pomoci vyřešit nahlédnutí do error logu apache:
+  * ''tail /var/log/apache2/error.log''
+
+====Nastavení adresáře pro dočasné soubory drupalu====
+  * cesta byla u našeho webhostingu pravděpodobně jiná
+  * natavíme v ''ip.nasi.vps/nasweb/admin/config/media/file-system'' na
+  * ''/tmp''
+  * vyčistíme drupal cache ''ip.nasi.vps/nasweb/admin/config/development/performance''
+
+====Nastavení virtualhost====
+Pokud nám vše funguje můžeme vytvořit apache site soubor pro náš web
+
+  * ''vim /etc/apache2/sites-available/nasweb'' (případně použijte editor nano, pokud Vám vim není po chuti)
+
+s obsahem:
+<code>
+<VirtualHost *:80>
+       ServerName www.nasweb.cz
+
+       DocumentRoot /var/www/nasweb/
+       <Directory /var/www/nasweb/>
+               Options Indexes FollowSymLinks MultiViews
+               AllowOverride All
+               Order allow,deny
+               allow from all
+       </Directory>
+
+       ErrorLog ${APACHE_LOG_DIR}/error.log
+
+       # Possible values include: debug, info, notice, warn, error, crit,
+       # alert, emerg.
+       LogLevel warn
+
+       CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+</code>
+
+====Aktivace nové apache site====
+  * ''a2ensite nasweb''
+  * ''/etc/init.d/apache2 reload''
+
+=====Nastavení mailserveru=====
+Aby náš web mohl odesílat e-mailová upozornění, nakonfigurujeme na naší vps mailserver. Použijeme výchozí Debian mailserver Exim. Konfigurujeme pouze odesílání, nikoliv příjem pošty.
+  * ''aptitude install exim4''
+  * ''dpkg-reconfigure exim4-config''
+  * vybereme internet site
+  * zadáme doménu našeho webu: nasweb.cz
+  * ip-adresses to listen to - necháme na: 127.0.0.1; ::1
+  * destinations - necháme na nasweb.cz
+  * domains to relay: prázdné
+  * machines to relay: prázdné
+  * DNS quwries minimal queries: no
+  * delivery method: maildir
+  * split configuration: no
+  * redirect root and postmastermail to: nasweb
+  * zdroj: [[http://library.linode.com/email/exim/send-only-mta-debian-6-squeeze]]
+
+Funkčnost odesílání mailů můžeme otestovat pomocí:
+  * ''echo "Test mailu z VPS." | mail -s Test mail@mujmail.com''
+
+Pro lepší průchodnost spam filtry a vůbec větší věrohodnost našeho serveru by mohlo pomoci požádat podporu vpsFree o nastavení reverzního záznamu pro IP adresu naší vps na naši doménu.
+
+=====Přesměrování DNS záznamů=====
+Máme-li otestováno, že náš web funguje, můžeme přesměrovat DNS A záznam webu na náš vps server.
+
+  * To již samozřejmě musíme provést v administračním rozhraní pro správu domény našeho registrátora / poskytovatele původního webhostingu.
+
+  * po úspěšném přesměrování vyčistíme drupal cache ''http://nasweb.cz/admin/config/development/performance''
+    
+=====Drush v Debian Squeeze=====
+Vyzkoušet Drush bylo naším hlavním motivem přechodu na vps. Namísto zdlouahvého mazání a znovunahrávání souborů přes FTP vyřešíme aktualizaci core a modulů jednou příkazovou řádkou a ušetříme spoustu času. Drush je napsán v PHP a funguje tak, že se připojí lokálně k našemu Drupal webu a databázi a nad tim funguje, ale s rozhraním příkazové řádky.
+
+====Instalace====
+  * ''pear channel-discover pear.drush.org''
+  * ''pear install drush/drush''
+
+====Povolení drush autocompletion a aliasů====
+===Pro všechny uživatele===
+  * ''cp /usr/share/php/drush/drush.complete.sh /etc/profile.d/''
+  * ''cp /usr/share/php/drush/examples/example.bashrc /etc/profile.d/drush.bashrc.sh''
+
+Pro aktivaci drush aliasů a autocompletion se odhlašte a přihlašte, nebo aktuvujte příkazy:
+  * ''source /etc/profile.d/drush.complete.sh''
+  * ''source /etc/profile.d/drush.bashrc.sh''
+
+===Jen pro jednoho uživatele===
+  * namísto do /etc... zkopírujeme výše uvedené soubory do ~/.drush/ a do ~/.bashrc přidáme nakonec
+  * ''source ~/.drush/drush.bashrc.sh''
+  * ''source ~/.drush/drush.complete.sh''
+
+===Otestování (používá Drush aliasy)===
+  * ''cd /var/www/nasweb''
+  * ''dr st'' (drush status)
+  * ''dr cc all'' (vyčistí všechny cache)
+  * ''dr dl security_review'' (stáhne modul security review)
+  * ''dr en security_review'' (zapne modul security review)
+  * ''dr up'' (zkontroluje dostupné aktualizace core i modulů s možností upgrade)
+
+
+Více o Drush třeba zde: 
+  * [[http://drupal.org/project/drush]]
+  * [[http://drush.ws/]]
+  * [[http://www.opc.com.au/web-development/introduction-drush-drupal-power-tool]] 
+
+=====Obecněji o nastavení práv pro běh Drupalu=====
+Následujících pár řádků Vám může pomoci porozumnět, jak je třeba nastavit práva pro správné fungování Drupalu. Jde o to, aby:
+
+  * proces web serveru mohl číst vše v document root (v našem případě /var/www/nasweb/). Proto je u všeho nastavena skupina www-data
+  * proces web serveru memohl měnit nic kromě files adresáře (to by mohlo v případě chyby v Apachi umožnit  potenciální škodlivou modifikaci kódu webu). V Debianu standardně u vytvořených souborů skupina nemá právo zápisu, takže toto je splněno.
+  * v případě, že ale chceme aktualizovat moduly z www rozhraní Druaplu, web server musím mít možnost zapisovat alespoň do sites/all/modules (případně themes). To však v případě použití Drush nepotřebujeme.
+  * nové soubory vytvořené uživatelem (ať už přes drush, nebo nahrané přes ftp) byly čitelné web serverem. Za tímto účelem nastavujeme primarní skupinu uživatele nasweb na www-data a nové soubory se tak vytvoří s touto skupinou.
+  * abychom drush spouštěli vždy pod uživatelem nasweb (soubory jím vytvořené tak budou čitelné web serverem i uživatelem nasweb)
+  * nové soubory vytvořené web serverem v adresáři files či jinde (např soubory nahrané z webu) budou mít vlastníka i skupinu www-data:www-data. Potřebujeme-li je měnit, musíme je převlastnit na uživatele nasweb: 
+  * ''chown -R nasweb:www-data /var/www/nasweb/sites/''
+
+=====Návrhy na zlepšení návodu a zpětná vazba=====
+Sem prosím piště případné komentáře, větší aktualizace / návrhy na změny v tomto návodu, které se čas od času pokusíme zapracovat. Samozřejmě nás také potěší jakákoliv zpětná vazba, obzvláště byl-li Vám tento návod k něčemu užitečný.
+
+**Hodně zdaru s Vaší svobodnější instalací Drupalu!**

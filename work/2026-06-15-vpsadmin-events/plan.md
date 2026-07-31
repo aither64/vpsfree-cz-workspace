@@ -1,5 +1,60 @@
 # 2026-06-15-vpsadmin-events
 
+## Report-based muting shortcuts addendum
+
+Requested on 2026-07-31: let users prepare mute routes directly from OOM and
+incident reports and from their notification messages, with an optional expiry.
+
+Decisions:
+
+- Add review-first WebUI composers for OOM and incident reports. The composers
+  create one top-level, prepended route using the owner's built-in Mute receiver
+  and redirect to the ordinary route editor for further tuning.
+- OOM routes can match VPS, cgroup, invoking process, and killed process. The
+  safe default is VPS plus cgroup. Incident routes can match VPS, IP address,
+  codename, and subject; the safe default is VPS plus codename, with IP as the
+  fallback when no codename exists.
+- Grouped OOM notifications contain one non-mutating link carrying at most the
+  displayed report IDs. The composer lets the user select one authorized report
+  as the matcher-value source.
+- Detail-page links default to the report account. Notification links default
+  to the route recipient. Administrators can select the report account or an
+  administrator as route owner; ordinary users can act only for themselves.
+- Temporary mute presets are one hour, one day (default), one week, one calendar
+  month, forever, and a custom local date/time. Ordinary event-route create and
+  update operations also gain nullable expiry input. Single-use remains a
+  specialized read-only lifecycle property.
+- Add mute links to built-in and managed Czech/English e-mail and Telegram
+  templates. SMS remains compact and unchanged. GET links never mutate state;
+  the CSRF-protected POST creates the complete route and matchers atomically.
+
+Compatibility and deployment:
+
+- The existing event-route schema and router already support `expires_at`; no
+  migration is required. Routes created by the new UI remain readable and keep
+  expiring after rollback to the existing router.
+- `invoked_by_name` is an additive OOM event field. Old producers omit it, so
+  only events emitted by updated supervisors can match that optional field;
+  all existing routes and events remain valid.
+- New templates guard the mute URL and therefore render with an older API.
+  Deploy API instances before WebUI instances during a rolling update, then
+  deploy the managed templates. No vpsAdminOS-wide coordination is required.
+- Regenerate the Go client, pin final vpsAdmin and managed-template revisions
+  through `confctl`, and refresh the bilingual WebUI capture/documentation
+  contract. Production KB promotion remains separately approval-gated.
+
+Verification:
+
+- Cover API authorization, owner scope, atomic creation, matcher validation,
+  limits, prepend ordering, expiry, and actual delivery suppression.
+- Cover WebUI defaults, grouped selection, expiry presets, CSRF behavior,
+  expired-route rendering, redirects, escaping, and translations.
+- Render-check built-in and managed e-mail/Telegram variants, regenerate and
+  compile the Go client, rebuild captures/candidates, evaluate deployment
+  configuration, and monitor CI.
+- Commit all intended changes and run the mandatory fresh-context standalone
+  review after quick checks and before long integration tests.
+
 ## Concept-First Notification Documentation Addendum
 
 Requested on 2026-07-31: make the bilingual notification articles explain

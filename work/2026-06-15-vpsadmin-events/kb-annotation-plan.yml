@@ -449,49 +449,45 @@ new_pages:
     <page>manuals:notifications:mute_oom</page>
     ====== Ztlumení vybraných OOM reportů ======
 
-    Tento příklad ztlumí OOM reporty z cgroups uživatelských relací na VPS s ID
-    ''123''. Ostatní OOM reporty se nezmění. Použije se vestavěný příjemce
-    **Ztlumit**, takže není třeba vytvářet cíl ani příjemce.
+    Nejrychlejší postup vytvoří ztišovací routu přímo z OOM reportu. Hodnoty
+    matcherů načte vpsAdmin z reportu na serveru, zobrazí je ke kontrole a použije
+    vestavěný příjemce **Ztlumit**. Není tedy třeba vytvářet cíl ani příjemce.
 
     Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]],
     [[navody:notifikace:udalosti|události]], [[navody:notifikace:routovani|routování]]
     a [[navody:notifikace:cile_a_prijemci|cíle a příjemce]].
 
-    ===== Krok 1: Najděte hodnoty skutečného OOM reportu =====
+    ===== Krok 1: Otevřete návrh ztišovací routy =====
 
-    V historii doručování otevřete odpovídající ''vps.oom_report'' a
-    poznamenejte si pole ''vps_id'' a ''cgroup''. Cgroup je úplná cesta bez prefixu
-    ''/sys/fs/cgroup'', například
-    ''/user.slice/user-1000.slice/session-2.scope''.
+    V detailu OOM reportu zvolte
+    <vpsadmin-nav id="oom-reports.mute-similar.open">**Ztlumit podobná hlášení
+    OOM**</vpsadmin-nav>. Stejný odkaz je v e-mailové a telegramové notifikaci.
+    Odkaz sám nic nemění; pouze otevře kontrolní formulář. U seskupené OOM
+    notifikace vyberte jeden ze zobrazených reportů jako zdroj hodnot.
 
-    ===== Krok 2: Vytvořte ztlumující routu =====
+    {{:cs:screenshots:vpsadmin:notifications:mute-oom-composer.png?900|Kontrola matcherů a platnosti ztišovací routy pro OOM report}}
 
-    V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
-    Routy**</vpsadmin-nav> zvolte **Přidat routu**:
+    ===== Krok 2: Zkontrolujte matchery a platnost =====
 
-    ^ Pole ^ Hodnota ^
-    | Název | ''Ztlumit vybrané OOM reporty'' |
-    | Typ události | ''vps.oom_report'' |
-    | Příjemce | Ztlumit |
-    | Povoleno | ano |
-    | Pokračovat | ne |
+    Ve výchozím stavu se porovnává **ID VPS** a úplná **cgroup cesta** bez
+    prefixu ''/sys/fs/cgroup''. Volitelně lze přidat název procesu, který vyvolal
+    OOM killer, a název ukončeného procesu. Čím více polí zvolíte, tím užší bude
+    záběr routy. Všechny vybrané matchery musí platit současně.
 
-    Routu uložte.
+    Výchozí platnost je jeden den. Lze zvolit jednu hodinu, jeden den, jeden
+    týden, jeden kalendářní měsíc, trvalou platnost nebo vlastní datum a čas.
+    Platnost se vztahuje na vytvořenou routu; po vypršení ji router automaticky
+    přestane používat.
 
-    ===== Krok 3: Přidejte obě podmínky =====
+    ===== Krok 3: Vytvořte a případně dolaďte routu =====
 
-    Do uložené routy přidejte:
+    Tlačítko **Vytvořit ztišovací routu** atomicky vytvoří routu i všechny
+    matchery a vloží ji před stávající routy. Potom se otevře běžný editor v
+    <vpsadmin-nav id="notifications.routes.open">**Notifikace → Routy**</vpsadmin-nav>,
+    kde lze upravit název, podmínky nebo dobu platnosti. **Pokračovat** nechte
+    vypnuté, jinak by report mohly odeslat další routy.
 
-    ^ Pole ^ Operátor ^ Hodnota ^
-    | ''vps_id'' | rovná se | ''123'' |
-    | ''cgroup'' | odpovídá glob vzoru | %%/user.slice/**/*.scope%% |
-
-    Všechny podmínky musí platit současně. V globu může %%**%% odpovídat několika
-    úrovním adresářů.
-
-    {{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Ztlumení OOM reportů podle VPS a cgroup}}
-
-    **Pokračovat** nechte vypnuté, jinak by report mohly odeslat další routy.
+    {{:cs:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Výsledná ztišovací routa OOM reportů podle VPS a cgroup}}
 
     ===== Krok 4: Ověřte routu =====
 
@@ -505,6 +501,7 @@ new_pages:
       "cgroup": "/user.slice/user-1000.slice/session-2.scope",
       "count": 1,
       "oom_count": 1,
+      "invoked_by_name": "ruby",
       "killed_name": "worker"
     }
     </code>
@@ -518,45 +515,43 @@ new_pages:
     <page>manuals:notifications:mute_incidents</page>
     ====== Ztlumení vybraných incidentních reportů ======
 
-    Tento příklad ztlumí incidenty s kódovým označením ''abuse-feed'' pro VPS s ID
-    ''123''. Ostatní incidenty se nezmění. Použije se vestavěný příjemce
-    **Ztlumit**.
+    Nejrychlejší postup vytvoří ztišovací routu přímo z incidentního reportu.
+    Hodnoty matcherů načte vpsAdmin z reportu na serveru a použije vestavěný
+    příjemce **Ztlumit**.
 
     Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]],
     [[navody:notifikace:udalosti|události]], [[navody:notifikace:routovani|routování]]
     a [[navody:notifikace:cile_a_prijemci|cíle a příjemce]].
 
-    ===== Krok 1: Určete incident =====
+    ===== Krok 1: Otevřete návrh ztišovací routy =====
 
-    V historii doručování otevřete odpovídající ''vps.incident_report''.
-    Zkopírujte pole ''vps_id'' a ''codename''. ''codename'' je stabilní
-    označení zdroje incidentu, nikoli zobrazený předmět nebo text reportu.
+    V detailu incidentu zvolte
+    <vpsadmin-nav id="incidents.mute-similar.open">**Ztlumit podobná hlášení
+    incidentů**</vpsadmin-nav>. Stejný odkaz je v e-mailové a telegramové
+    notifikaci. Odkaz sám nic nemění; pouze otevře kontrolní formulář.
 
-    ===== Krok 2: Vytvořte ztlumující routu =====
+    {{:cs:screenshots:vpsadmin:notifications:mute-incident-composer.png?900|Kontrola matcherů a platnosti ztišovací routy pro incident}}
 
-    V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
-    Routy**</vpsadmin-nav> zvolte **Přidat routu**:
+    ===== Krok 2: Zkontrolujte matchery a platnost =====
 
-    ^ Pole ^ Hodnota ^
-    | Název | ''Ztlumit incidentní zdroj pro VPS'' |
-    | Typ události | ''vps.incident_report'' |
-    | Příjemce | Ztlumit |
-    | Povoleno | ano |
-    | Pokračovat | ne |
+    Výchozí matchery jsou **ID VPS** a **kódové označení** incidentu. Pokud
+    report kódové označení nemá, použije se místo něj **IP adresa**. Volitelně
+    lze porovnávat také předmět. Všechny vybrané matchery musí platit současně;
+    hodnoty není možné podstrčit v odkazu, protože je API znovu načte z
+    autorizovaného reportu.
 
-    Routu uložte.
+    Výchozí platnost je jeden den. K dispozici je také jedna hodina, jeden
+    týden, jeden kalendářní měsíc, trvalá platnost a vlastní datum a čas.
 
-    ===== Krok 3: Přidejte obě podmínky =====
+    ===== Krok 3: Vytvořte a případně dolaďte routu =====
 
-    Přidejte:
+    Tlačítko **Vytvořit ztišovací routu** atomicky vytvoří prepended routu i
+    matchery a otevře běžný editor v
+    <vpsadmin-nav id="notifications.routes.open">**Notifikace → Routy**</vpsadmin-nav>.
+    **Pokračovat** nechte vypnuté, aby se odpovídající incident dále
+    nesměroval.
 
-    ^ Pole ^ Operátor ^ Hodnota ^
-    | ''vps_id'' | rovná se | ''123'' |
-    | ''codename'' | rovná se | ''abuse-feed'' |
-
-    {{:cs:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Ztlumení incidentů podle ID VPS a kódového označení}}
-
-    **Pokračovat** nechte vypnuté, aby se odpovídající incident dále nesměroval.
+    {{:cs:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Výsledná ztišovací routa incidentů podle ID VPS a kódového označení}}
 
     ===== Krok 4: Ověřte routu =====
 
@@ -1292,50 +1287,47 @@ new_pages:
   body: |
     ====== Mute selected OOM reports ======
 
-    This example mutes OOM reports from user-session cgroups on VPS ID ''123'',
-    while leaving other OOM reports unchanged. It uses the built-in **Mute**
-    receiver, so no target or receiver has to be created.
+    The quickest workflow creates a mute route directly from an OOM report.
+    vpsAdmin loads matcher values from the authorized report on the server,
+    shows them for review, and uses the built-in **Mute** receiver. No target or
+    receiver has to be created.
 
     Before starting, read the [[manuals:notifications|notification system overview]],
     [[manuals:notifications:events|events]], [[manuals:notifications:routing|routing]],
     and [[manuals:notifications:targets_and_receivers|targets and receivers]].
 
-    ===== Step 1: Find values from a real OOM report =====
+    ===== Step 1: Open the mute-route proposal =====
 
-    Open a relevant ''vps.oom_report'' in delivery history and note its
-    ''vps_id'' and ''cgroup'' fields. The cgroup is a complete path without the
-    ''/sys/fs/cgroup'' prefix, for example
-    ''/user.slice/user-1000.slice/session-2.scope''.
+    On an OOM report detail, select
+    <vpsadmin-nav id="oom-reports.mute-similar.open">**Mute similar OOM
+    reports**</vpsadmin-nav>. The same link is included in e-mail and Telegram
+    notifications. Opening it does not change state; it only displays the
+    review form. For a grouped OOM notification, select one of the displayed
+    reports as the source of matcher values.
 
-    ===== Step 2: Create the mute route =====
+    {{:en:screenshots:vpsadmin:notifications:mute-oom-composer.png?900|Review OOM-report matchers and mute-route expiration}}
 
-    At <vpsadmin-nav id="notifications.routes.open">**Notifications →
-    Routes**</vpsadmin-nav>, select **Add route** and set:
+    ===== Step 2: Review matchers and expiration =====
 
-    ^ Field ^ Value ^
-    | Label | ''Mute selected OOM reports'' |
-    | Event type | ''vps.oom_report'' |
-    | Receiver | Mute |
-    | Enabled | yes |
-    | Continue | no |
+    The defaults match **VPS ID** and the complete **cgroup path** without the
+    ''/sys/fs/cgroup'' prefix. You can optionally add the invoking-process name
+    and killed-process name. Selecting more fields narrows the route; all
+    selected matchers must match together.
 
-    Save the route.
+    The default expiration is one day. Other choices are one hour, one week,
+    one calendar month, forever, or a custom local date and time. After expiry,
+    the router automatically stops using the route.
 
-    ===== Step 3: Add both matchers =====
+    ===== Step 3: Create and optionally tune the route =====
 
-    Add these matchers to the saved route:
-
-    ^ Field ^ Operator ^ Value ^
-    | ''vps_id'' | equals | ''123'' |
-    | ''cgroup'' | matches glob | %%/user.slice/**/*.scope%% |
-
-    All matchers on a route must match. In this glob, %%**%% can span several
-    directory levels.
-
-    {{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|OOM-report mute route with VPS and cgroup matchers}}
-
+    **Create mute route** atomically creates the route and all matchers, prepends
+    it to the existing routes, and opens the ordinary editor at
+    <vpsadmin-nav id="notifications.routes.open">**Notifications →
+    Routes**</vpsadmin-nav>. You can then change the label, matchers, or expiry.
     Keep **Continue** disabled, otherwise another route could still send the
     report.
+
+    {{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|Resulting OOM-report mute route with VPS and cgroup matchers}}
 
     ===== Step 4: Test the route =====
 
@@ -1350,6 +1342,7 @@ new_pages:
       "cgroup": "/user.slice/user-1000.slice/session-2.scope",
       "count": 1,
       "oom_count": 1,
+      "invoked_by_name": "ruby",
       "killed_name": "worker"
     }
     </code>
@@ -1362,45 +1355,44 @@ new_pages:
   body: |
     ====== Mute selected incident reports ======
 
-    This example mutes incident reports with codename ''abuse-feed'' for VPS ID
-    ''123'', while leaving other incident reports unchanged. It uses the built-in
-    **Mute** receiver.
+    The quickest workflow creates a mute route directly from an incident
+    report. vpsAdmin loads matcher values from the authorized report on the
+    server and uses the built-in **Mute** receiver.
 
     Before starting, read the [[manuals:notifications|notification system overview]],
     [[manuals:notifications:events|events]], [[manuals:notifications:routing|routing]],
     and [[manuals:notifications:targets_and_receivers|targets and receivers]].
 
-    ===== Step 1: Identify the incident =====
+    ===== Step 1: Open the mute-route proposal =====
 
-    Open a relevant ''vps.incident_report'' in delivery history. Copy its
-    ''vps_id'' and ''codename'' fields. The codename is the stable identifier of
-    the incident source; it is not the displayed subject or report text.
+    On the incident detail, select
+    <vpsadmin-nav id="incidents.mute-similar.open">**Mute similar incident
+    reports**</vpsadmin-nav>. The same link is included in e-mail and Telegram
+    notifications. Opening it does not change state; it only displays the
+    review form.
 
-    ===== Step 2: Create the mute route =====
+    {{:en:screenshots:vpsadmin:notifications:mute-incident-composer.png?900|Review incident-report matchers and mute-route expiration}}
 
-    At <vpsadmin-nav id="notifications.routes.open">**Notifications →
-    Routes**</vpsadmin-nav>, select **Add route** and set:
+    ===== Step 2: Review matchers and expiration =====
 
-    ^ Field ^ Value ^
-    | Label | ''Mute incident feed for VPS'' |
-    | Event type | ''vps.incident_report'' |
-    | Receiver | Mute |
-    | Enabled | yes |
-    | Continue | no |
+    The defaults match **VPS ID** and the incident **codename**. If the report
+    has no codename, **IP address** is used instead. You can optionally match the
+    subject. All selected matchers must match together. Matcher values cannot
+    be injected through the link because the API reloads them from the
+    authorized report.
 
-    Save the route.
+    The default expiration is one day. You can also choose one hour, one week,
+    one calendar month, forever, or a custom local date and time.
 
-    ===== Step 3: Add both matchers =====
+    ===== Step 3: Create and optionally tune the route =====
 
-    Add:
+    **Create mute route** atomically creates the prepended route and matchers,
+    then opens the ordinary editor at
+    <vpsadmin-nav id="notifications.routes.open">**Notifications →
+    Routes**</vpsadmin-nav>. Keep **Continue** disabled so the matching incident
+    is not routed further.
 
-    ^ Field ^ Operator ^ Value ^
-    | ''vps_id'' | equals | ''123'' |
-    | ''codename'' | equals | ''abuse-feed'' |
-
-    {{:en:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Incident mute route with VPS ID and codename matchers}}
-
-    Keep **Continue** disabled so the matching incident is not routed further.
+    {{:en:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Resulting incident mute route with VPS ID and codename matchers}}
 
     ===== Step 4: Test the route =====
 
@@ -1817,7 +1809,11 @@ media:
 - language: cs
   capture: notifications/example-mute-oom
 - language: cs
+  capture: notifications/mute-oom-composer
+- language: cs
   capture: notifications/example-mute-incident-route
+- language: cs
+  capture: notifications/mute-incident-composer
 - language: cs
   capture: notifications/example-telegram-target
 - language: cs
@@ -1873,7 +1869,11 @@ media:
 - language: en
   capture: notifications/example-mute-oom
 - language: en
+  capture: notifications/mute-oom-composer
+- language: en
   capture: notifications/example-mute-incident-route
+- language: en
+  capture: notifications/mute-incident-composer
 - language: en
   capture: notifications/example-telegram-target
 - language: en

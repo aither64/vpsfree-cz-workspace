@@ -1,0 +1,57 @@
+<page>manuals:notifications:mute_incidents</page>
+====== Ztlumení vybraných incidentních reportů ======
+
+Nejrychlejší postup vytvoří ztišovací routu přímo z incidentního reportu.
+Hodnoty matcherů načte vpsAdmin z reportu na serveru a použije vestavěný
+příjemce **Ztlumit**.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]],
+[[navody:notifikace:udalosti|události]], [[navody:notifikace:routovani|routování]]
+a [[navody:notifikace:cile_a_prijemci|cíle a příjemce]].
+
+===== Krok 1: Otevřete návrh ztišovací routy =====
+
+V detailu incidentu zvolte
+<vpsadmin-nav id="incidents.mute-similar.open">**Ztlumit podobná hlášení
+incidentů**</vpsadmin-nav>. Stejný odkaz je v e-mailové a telegramové
+notifikaci. Odkaz sám nic nemění; pouze otevře kontrolní formulář.
+
+{{:cs:screenshots:vpsadmin:notifications:mute-incident-composer.png?900|Kontrola matcherů a platnosti ztišovací routy pro incident}}
+
+===== Krok 2: Zkontrolujte matchery a platnost =====
+
+Výchozí matchery jsou **ID VPS** a **kódové označení** incidentu. Pokud
+report kódové označení nemá, použije se místo něj **IP adresa**. Volitelně
+lze porovnávat také předmět. Všechny vybrané matchery musí platit současně;
+hodnoty není možné podstrčit v odkazu, protože je API znovu načte z
+autorizovaného reportu.
+
+Výchozí platnost je jeden den. K dispozici je také jedna hodina, jeden
+týden, jeden kalendářní měsíc, trvalá platnost a vlastní datum a čas.
+
+===== Krok 3: Vytvořte a případně dolaďte routu =====
+
+Tlačítko **Vytvořit ztišovací routu** atomicky vytvoří prepended routu i
+matchery a otevře běžný editor v
+<vpsadmin-nav id="notifications.routes.open">**Notifikace → Routy**</vpsadmin-nav>.
+**Pokračovat** nechte vypnuté, aby se odpovídající incident dále
+nesměroval.
+
+{{:cs:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Výsledná ztišovací routa incidentů podle ID VPS a kódového označení}}
+
+===== Krok 4: Ověřte routu =====
+
+Vytvořte **Testovací notifikaci** typu ''vps.incident_report'':
+
+<code json>
+{
+  "subject": "Documentation incident",
+  "text": "Synthetic incident used to test routing.",
+  "codename": "abuse-feed",
+  "vps_id": 123
+}
+</code>
+
+Pokud je nová ztlumující routa první shodou a žádná jiná routa nepřipraví
+doručení, test musí oznámit, že žádná povolená routa doručení nevytvořila.
+V **Historii doručování** se takový kandidát nesmí objevit.
