@@ -17502,3 +17502,29 @@ workflow and approval-gated production KB promotion.
   records change. The currently staged bundle still contains the malformed
   table and will be replaced only after committed quick checks and mandatory
   review.
+- Quick verification passed before review: the complete capture contract
+  reported 8 tests/50 assertions and 9 tests/19 assertions, the candidate-aware
+  checker reported 131 bindings/9 exceptions, all 40 manifest entries per
+  language matched their hashes, and both source tables contained 12 protected
+  operator rows plus 3 protected example rows.
+- The required standalone fresh-context reviewer reported no Blocking,
+  Important, or Advisory findings. It independently verified the DokuWiki
+  syntax, bilingual parity, exact semantic equivalence, generated hashes,
+  source guards, manifest shape, commit focus, and staging/production safety.
+- After review, exact session ownership was reverified and the staging mirror
+  was reset from production at `2026-07-31T19:31:47Z`. Both corrected manifests
+  staged 11 pages and 29 media objects, warmed all 11 affected language pairs,
+  and passed exact verification; Czech was verified again after English was
+  staged.
+- Rendered HTML inspection found exactly two tables in each matcher section.
+  The operator tables have two columns and 12 body rows; the example tables
+  have two columns and 3 body rows. Literal `**`, `<=`, and the complete
+  `/user.slice/**/*.scope` expression are preserved, with no typography arrow.
+  Fresh Playwright screenshots of the real review pages were also visually
+  inspected in both languages and show every row with normal table borders and
+  inline-code styling.
+- The current pending record is the English manifest with SHA-256
+  `34f2891e030647b7e09117dc599f16543f6ded201d8834d68568a703d6d06ae6`,
+  staged at `2026-07-31T19:32:11Z`. Both corrected language bundles remain
+  installed and verified. No production wiki write has been performed or
+  approved.
