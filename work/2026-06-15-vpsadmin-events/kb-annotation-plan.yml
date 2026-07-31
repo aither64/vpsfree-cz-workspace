@@ -23,7 +23,9 @@ new_pages:
     potřebujete úplný externí záznam, vytvořte záchytnou routu pro všechny typy
     událostí a doručujte ji do vlastního trvalého úložiště, například webhookem.
 
-    ===== Nejdříve si přečtěte =====
+    ===== Pojmy notifikačního systému =====
+
+    Následující články popisují jednotlivé části notifikačního systému:
 
       * [[navody:notifikace:udalosti|Události a typy událostí]] vysvětlují, co událost obsahuje, jaké rodiny typů existují a kde najít aktuální katalog.
       * [[navody:notifikace:routovani|Routování událostí a podmínky]] popisuje pořadí rout, podrouty, matchery, operátory a testování.
@@ -31,8 +33,8 @@ new_pages:
 
     ===== Příklady krok za krokem =====
 
-    Každý příklad začíná u běžného účtu s výchozími routami. Postupujte vždy podle
-    jednoho samostatného návodu:
+    Příklady níže začínají u běžného účtu s výchozími routami a každý
+    představuje samostatný postup:
 
       * [[navody:notifikace:role_udalosti|Doručení událostí rolí account a admin různým kontaktům]]
       * [[navody:notifikace:ztlumeni_oom|Ztlumení vybraných OOM reportů]]
@@ -41,16 +43,13 @@ new_pages:
       * [[navody:notifikace:sms|Odeslání SMS při pozastavení účtu nebo VPS]]
       * [[navody:notifikace:webhook|Odeslání změn prostředků VPS na webhook]]
 
-    ===== Pokročilé možnosti =====
+    ===== Možnosti routování =====
 
-    <vpsadmin-nav id="notifications.route-grouping-form.open">Seskupování na
-    routě</vpsadmin-nav> sbírá související události do jednoho souhrnu; rozepsané
-    i minulé souhrny ukazuje <vpsadmin-nav id="notifications.groups.open">seznam
-    skupin notifikací</vpsadmin-nav>. Opakovaně použitelný rozvrh vytvoříte v
-    <vpsadmin-nav id="notifications.time-intervals.open">**Notifikace → Časové
-    intervaly**</vpsadmin-nav> a k routě jej připojíte jako aktivní nebo ztlumující
-    přes <vpsadmin-nav id="notifications.route-time-intervals.open">nastavení
-    časových intervalů routy</vpsadmin-nav>.
+    Článek [[navody:notifikace:routovani#seskupovani_udalosti|Routování
+    událostí a podmínky]] popisuje také seskupování souvisejících událostí
+    do společného souhrnu a
+    [[navody:notifikace:routovani#casove_intervaly|časové intervaly]], které
+    omezují doručení routy na vybranou dobu nebo je v ní ztlumí.
 
     Skutečně připravená doručení a odpovídající routy najdete v
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
@@ -166,21 +165,105 @@ new_pages:
     <vpsadmin-nav id="notifications.matcher-form.open">**Notifikace → Routy →
     upravit routu → Přidat matcher**</vpsadmin-nav>.
 
-    Operátory závisí na datovém typu:
+    Po výběru pole formulář nabídne operátory, které pro něj lze
+    použít. Porovnávaná hodnota se zadává do pole pro hodnotu.
+    Dostupná pole, jejich příklady a popisy ukazuje
+    [[navody:notifikace:udalosti|katalog typů událostí]].
 
-    ^ Typ pole ^ Operátory ^ Význam ^
-    | text | ''=='', ''!='' | rovnost a nerovnost |
-    | text | ''=~'', ''!~'' | odpovídá nebo neodpovídá regulárnímu výrazu |
-    | text | ''=*'', ''!*'' | odpovídá nebo neodpovídá glob vzoru; ''*'' odpovídá části a ''**'' více úrovním cesty |
-    | celé nebo desetinné číslo, datum a čas | ''=='', ''!='', ''>'', ''>='', ''<'', ''<='' | číselné nebo časové porovnání |
-    | logická hodnota | ''=='', ''!='' | porovnání ''true''/''false'' |
-    | seznam textů nebo čísel | ''contains'', ''not_contains'' | seznam obsahuje nebo neobsahuje položku |
+    ^ Operátor ^ Význam ^
+    | ''=='' | hodnota pole se rovná zadané hodnotě |
+    | ''!='' | hodnota pole se nerovná zadané hodnotě |
+    | ''=~'' | text odpovídá regulárnímu výrazu |
+    | ''!~'' | text neodpovídá regulárnímu výrazu |
+    | ''=*'' | text odpovídá glob vzoru; ''*'' nepřechází přes ''/'' a ''**'' může zahrnout více úrovní cesty |
+    | ''!*'' | text neodpovídá glob vzoru |
+    | ''>'' | hodnota je větší nebo pozdější než zadaná hodnota |
+    | ''>='' | hodnota je větší, pozdější nebo stejná |
+    | ''<'' | hodnota je menší nebo dřívější než zadaná hodnota |
+    | ''<='' | hodnota je menší, dřívější nebo stejná |
+    | ''contains'' | seznam v poli obsahuje zadanou položku |
+    | ''not_contains'' | seznam v poli zadanou položku neobsahuje |
 
-    Například podmínka ''cgroup =* /user.slice/**/*.scope'' vybere OOM reporty
-    z uživatelských relací. Další podmínka ''vps_id == 123'' omezí stejnou routu
-    na jednu VPS; platit musí obě.
+    Typické samostatné podmínky vypadají takto:
+
+    ^ Podmínka ^ Co vybere ^
+    | ''vps_id == 123'' | události vybraného typu pro VPS s ID 123 |
+    | ''cgroup =* /user.slice/**/*.scope'' | OOM reporty z cgroups uživatelských relací |
+    | ''roles contains admin'' | události, které uvádějí roli ''admin'' pro výchozí doručení |
+
+    Přidáte-li na jednu routu více podmínek, musí jedné události
+    odpovídat všechny současně.
 
     {{:cs:screenshots:vpsadmin:notifications:matcher-form.png?900|Podmínka pole cgroup a přehled operátorů}}
+
+    ===== Seskupování událostí =====
+
+    Seskupování omezuje počet zpráv při velkém množství souvisejících
+    událostí v krátkém čase. vpsAdmin místo zprávy pro každou událost
+    shromáždí události do skupiny a odešle jejich souhrn. Výchozí routa
+    OOM reportů seskupuje podle ''vps_id'', takže reporty jedné VPS jsou ve
+    společném souhrnu a reporty různých VPS zůstávají oddělené.
+
+    Nastavení se nachází na uložené routě v
+    <vpsadmin-nav id="notifications.route-grouping-form.open">**Notifikace →
+    Routy → upravit routu → Seskupování notifikací**</vpsadmin-nav>:
+
+      * **Seskupit podle polí** obsahuje čárkami oddělená skalární pole události. Jejich hodnoty určují skupinu. Prázdné pole vytvoří jednu skupinu pro všechny události odpovídající routě.
+      * **Počáteční čekání** určuje počet sekund, po které první událost nové skupiny čeká na další události.
+      * **Interval opakování** je nejkratší počet sekund před odesláním dalšího souhrnu ze stejné stále aktivní skupiny.
+
+    U routy s přesným typem lze použít pole uvedená v katalogu tohoto
+    typu. Routa se vzorem nebo bez zvoleného typu může seskupovat jen podle
+    společných polí, která formulář přijme. Nastavení patří pouze dané
+    routě; podrouty je nedědí.
+
+    Do skupiny vstoupí pouze doručení, která se mají skutečně odeslat.
+    Ztlumené události a doručení přeskočená kvůli intervalu, vypnutému
+    příjemci nebo nedostupnému cíli se neseskupují. Skupina vzniká pro routu a
+    příjemce před jednotlivými cíli; má-li jeden příjemce několik povolených
+    cílů, každý dostane stejnou sadu seskupených událostí.
+
+    {{:cs:screenshots:vpsadmin:notifications:grouping-route.png?900|Seskupování na routě OOM reportů}}
+
+    <vpsadmin-nav id="notifications.groups.open">**Notifikace → Skupiny
+    notifikací**</vpsadmin-nav> ukazují otevřené, zpožděné, neaktivní i
+    historické skupiny. Detail skupiny obsahuje routu, příjemce, hodnoty
+    použité k seskupení, časování, čekající události a doručení.
+
+    ===== Časové intervaly =====
+
+    Časový interval je opakovaně použitelný rozvrh s vlastním časovým
+    pásmem. Může omezit doručování například na pracovní dobu nebo servisní
+    okno, ztlumit upozornění mimo pracovní dobu nebo rozdělit pracovní a
+    pohotovostní doručení mezi samostatné routy. Intervaly se vytvářejí v
+    <vpsadmin-nav id="notifications.time-intervals.open">**Notifikace → Časové
+    intervaly**</vpsadmin-nav>.
+
+    Každý interval používá pojmenované časové pásmo IANA, například
+    ''Europe/Prague'', a jednu nebo více specifikací. Všechna vyplněná pole
+    jedné specifikace musí platit současně (logické **a**). Více rozsahů v
+    jednom poli a více samostatných specifikací jsou alternativy (logické
+    **nebo**). Nevyplněné pole čas nijak neomezuje.
+
+      * **Časy** používají rozsahy ''HH:MM-HH:MM''. Začátek je zahrnutý, konec nikoli. Rozsah nesmí přecházet půlnoc; noční interval proto rozdělte například na ''22:00-24:00'' a ''00:00-06:00''.
+      * **Dny v týdnu** používají anglické názvy nebo rozsahy, například ''monday-friday''. Rozsah nesmí přejít z konce týdne na jeho začátek.
+      * **Dny v měsíci** používají čísla a rozsahy. Záporná čísla se počítají od konce měsíce, takže ''-1'' znamená poslední den.
+      * **Měsíce** používají čísla 1–12 a **roky** celé letopočty; oba rozměry podporují jednotlivé hodnoty i rozsahy.
+
+    {{:cs:screenshots:vpsadmin:notifications:time-interval.png?900|Pracovní doba vyjádřená dvěma specifikacemi časového intervalu}}
+
+    U uložené routy se interval připojí v
+    <vpsadmin-nav id="notifications.route-time-intervals.open">**Notifikace →
+    Routy → upravit routu → Časové intervaly**</vpsadmin-nav> v jednom ze
+    dvou režimů:
+
+      * **Aktivní interval** povolí příjemce routy pouze v době, kdy odpovídá alespoň jeden připojený aktivní interval. Nemá-li routa žádný aktivní interval, není její aktivní doba omezena.
+      * **Ztlumující interval** příjemce routy při shodě potlačí. Shoda libovolného ztlumujícího intervalu má přednost před aktivními intervaly.
+
+    Intervaly se vyhodnotí pro čas události. Ovlivňují jen příjemce dané
+    routy: nemění shodu routy a nebrání vyhodnocení jejích podrout.
+
+    {{:cs:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Časový interval připojený k routě jako aktivní}}
 
     ===== Ověření routování =====
 
@@ -779,7 +862,9 @@ new_pages:
     external record, create a catch-all route and deliver it to your own durable
     storage, for example through a webhook.
 
-    ===== Read these concepts first =====
+    ===== Notification system concepts =====
+
+    The following articles describe the parts of the notification system:
 
       * [[manuals:notifications:events|Events and event types]] explains event contents, event families, and the live catalog.
       * [[manuals:notifications:routing|Event routing and matchers]] explains route order, subroutes, matcher operators, and testing.
@@ -787,8 +872,8 @@ new_pages:
 
     ===== Step-by-step examples =====
 
-    Each example starts from an ordinary account with the default routes. Follow
-    one example at a time:
+    The examples below start from an ordinary account with the default routes;
+    each one is a self-contained procedure:
 
       * [[manuals:notifications:event_roles|Route account and admin events to different contacts]]
       * [[manuals:notifications:mute_oom|Mute selected OOM reports]]
@@ -797,16 +882,12 @@ new_pages:
       * [[manuals:notifications:sms|Send SMS on account or VPS suspension]]
       * [[manuals:notifications:webhook|Send VPS resource changes to a webhook]]
 
-    ===== Advanced options =====
+    ===== Routing features =====
 
-    <vpsadmin-nav id="notifications.route-grouping-form.open">Grouping on a
-    route</vpsadmin-nav> collects related events into one summary; the
-    <vpsadmin-nav id="notifications.groups.open">notification-group list</vpsadmin-nav>
-    shows pending and historical summaries. Create a reusable schedule under
-    <vpsadmin-nav id="notifications.time-intervals.open">**Notifications → Time
-    intervals**</vpsadmin-nav>, then attach it as an active or mute interval in
-    the <vpsadmin-nav id="notifications.route-time-intervals.open">route's time
-    interval settings</vpsadmin-nav>.
+    [[manuals:notifications:routing#event_grouping|Event routing and matchers]]
+    also describes grouping related events into a shared summary and
+    [[manuals:notifications:routing#time_intervals|time intervals]], which
+    limit a route's delivery to selected times or mute it during them.
 
     Inspect prepared deliveries and matched routes at
     <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
@@ -923,21 +1004,105 @@ new_pages:
     <vpsadmin-nav id="notifications.matcher-form.open">**Notifications → Routes
     → edit route → Add matcher**</vpsadmin-nav>.
 
-    Available operators depend on the field's data type:
+    After you select a field, the form offers the operators that can be used
+    with it. Enter the comparison value in the value field. The available
+    fields, their examples, and descriptions are shown in the
+    [[manuals:notifications:events|event-type catalog]].
 
-    ^ Field type ^ Operators ^ Meaning ^
-    | text | ''=='', ''!='' | equal and not equal |
-    | text | ''=~'', ''!~'' | matches or does not match a regular expression |
-    | text | ''=*'', ''!*'' | matches or does not match a glob; ''*'' matches a part and ''**'' matches multiple path levels |
-    | integer, number, or date and time | ''=='', ''!='', ''>'', ''>='', ''<'', ''<='' | numeric or time comparison |
-    | boolean | ''=='', ''!='' | compare ''true'' or ''false'' |
-    | list of text or numbers | ''contains'', ''not_contains'' | list contains or does not contain an item |
+    ^ Operator ^ Meaning ^
+    | ''=='' | the field value equals the entered value |
+    | ''!='' | the field value does not equal the entered value |
+    | ''=~'' | the text matches a regular expression |
+    | ''!~'' | the text does not match a regular expression |
+    | ''=*'' | the text matches a glob; ''*'' does not cross ''/'' and ''**'' can span multiple path levels |
+    | ''!*'' | the text does not match a glob |
+    | ''>'' | the value is greater than or later than the entered value |
+    | ''>='' | the value is greater than, later than, or equal to the entered value |
+    | ''<'' | the value is less than or earlier than the entered value |
+    | ''<='' | the value is less than, earlier than, or equal to the entered value |
+    | ''contains'' | the list in the field contains the entered item |
+    | ''not_contains'' | the list in the field does not contain the entered item |
 
-    For example, ''cgroup =* /user.slice/**/*.scope'' selects OOM reports from
-    user sessions. A second matcher, ''vps_id == 123'', restricts the same route
-    to one VPS; both must match.
+    Typical standalone matchers include:
+
+    ^ Matcher ^ What it selects ^
+    | ''vps_id == 123'' | events of the selected type for VPS ID 123 |
+    | ''cgroup =* /user.slice/**/*.scope'' | OOM reports from user-session cgroups |
+    | ''roles contains admin'' | events that declare the ''admin'' role for default delivery |
+
+    If you add more than one matcher to a route, all of them must match the
+    same event.
 
     {{:en:screenshots:vpsadmin:notifications:matcher-form.png?900|cgroup matcher form and the operator reference}}
+
+    ===== Event grouping =====
+
+    Grouping reduces the number of messages when many related events arrive in
+    a short period. Instead of sending one message for every event, vpsAdmin
+    collects the events in a group and sends a summary. The default OOM-report
+    route groups by ''vps_id'', so reports from one VPS are summarized together
+    while reports from different VPSes stay separate.
+
+    Configure grouping on a saved route at
+    <vpsadmin-nav id="notifications.route-grouping-form.open">**Notifications →
+    Routes → edit route → Notification grouping**</vpsadmin-nav>:
+
+      * **Group by fields** contains comma-separated scalar event fields. Their values identify a group. An empty field creates one group for all events matching the route.
+      * **Initial wait** is the number of seconds the first event in a new group waits for more events to join it.
+      * **Repeat interval** is the minimum number of seconds before another summary is sent from the same still-active group.
+
+    An exact-type route can use fields listed for that type in the catalog. A
+    pattern or catch-all route can group only by common fields accepted by the
+    form. The setting belongs to that route only; subroutes do not inherit it.
+
+    Only deliveries that can actually be sent enter a group. Muted events and
+    deliveries skipped because of a time interval, a disabled receiver, or an
+    unavailable target are not grouped. The group is created for the route and
+    receiver before individual targets are processed; if one receiver has
+    several enabled targets, each receives the same set of grouped events.
+
+    {{:en:screenshots:vpsadmin:notifications:grouping-route.png?900|Grouping settings on the OOM-report route}}
+
+    <vpsadmin-nav id="notifications.groups.open">**Notifications →
+    Notification groups**</vpsadmin-nav> shows open, overdue, idle, and
+    historical groups. A group detail contains its route, receiver, grouping
+    values, timing, pending events, and deliveries.
+
+    ===== Time intervals =====
+
+    A time interval is a reusable schedule with its own time zone. It can limit
+    delivery to working hours or a maintenance window, mute alerts outside
+    working hours, or divide work-hours and on-call delivery between separate
+    routes. Create intervals at
+    <vpsadmin-nav id="notifications.time-intervals.open">**Notifications → Time
+    intervals**</vpsadmin-nav>.
+
+    Each interval uses an IANA time-zone name such as ''Europe/Prague'' and one
+    or more specifications. All filled fields in one specification must match
+    (logical **AND**). Multiple ranges in one field and multiple separate
+    specifications are alternatives (logical **OR**). An empty field does not
+    restrict the time.
+
+      * **Times** use ''HH:MM-HH:MM'' ranges. The start is inclusive and the end is exclusive. A range cannot cross midnight; split an overnight period into ranges such as ''22:00-24:00'' and ''00:00-06:00''.
+      * **Weekdays** use English names or ranges such as ''monday-friday''. A range cannot wrap from the end of the week to its beginning.
+      * **Days of month** use numbers and ranges. Negative numbers count from the end of the month, so ''-1'' means the last day.
+      * **Months** use numbers 1–12 and **years** use full years; both accept individual values and ranges.
+
+    {{:en:screenshots:vpsadmin:notifications:time-interval.png?900|Office hours expressed by two time-interval specifications}}
+
+    Attach an interval to a saved route at
+    <vpsadmin-nav id="notifications.route-time-intervals.open">**Notifications →
+    Routes → edit route → Time intervals**</vpsadmin-nav> in one of two
+    modes:
+
+      * An **Active interval** allows the route's receiver only when at least one assigned active interval matches. If the route has no active intervals, its active time is unrestricted.
+      * A **Mute interval** suppresses the route's receiver when it matches. Any matching mute interval takes precedence over active intervals.
+
+    Intervals are evaluated at the event time. They gate only that route's
+    receiver: they do not change whether the route matched and do not prevent
+    its subroutes from being evaluated.
+
+    {{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|A time interval attached to a route in active mode}}
 
     ===== Testing routing =====
 

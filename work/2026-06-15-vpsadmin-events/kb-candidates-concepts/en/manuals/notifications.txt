@@ -16,7 +16,9 @@ when routing prepares at least one real delivery. If you need a complete
 external record, create a catch-all route and deliver it to your own durable
 storage, for example through a webhook.
 
-===== Read these concepts first =====
+===== Notification system concepts =====
+
+The following articles describe the parts of the notification system:
 
   * [[manuals:notifications:events|Events and event types]] explains event contents, event families, and the live catalog.
   * [[manuals:notifications:routing|Event routing and matchers]] explains route order, subroutes, matcher operators, and testing.
@@ -24,8 +26,8 @@ storage, for example through a webhook.
 
 ===== Step-by-step examples =====
 
-Each example starts from an ordinary account with the default routes. Follow
-one example at a time:
+The examples below start from an ordinary account with the default routes;
+each one is a self-contained procedure:
 
   * [[manuals:notifications:event_roles|Route account and admin events to different contacts]]
   * [[manuals:notifications:mute_oom|Mute selected OOM reports]]
@@ -34,16 +36,12 @@ one example at a time:
   * [[manuals:notifications:sms|Send SMS on account or VPS suspension]]
   * [[manuals:notifications:webhook|Send VPS resource changes to a webhook]]
 
-===== Advanced options =====
+===== Routing features =====
 
-<vpsadmin-nav id="notifications.route-grouping-form.open">Grouping on a
-route</vpsadmin-nav> collects related events into one summary; the
-<vpsadmin-nav id="notifications.groups.open">notification-group list</vpsadmin-nav>
-shows pending and historical summaries. Create a reusable schedule under
-<vpsadmin-nav id="notifications.time-intervals.open">**Notifications → Time
-intervals**</vpsadmin-nav>, then attach it as an active or mute interval in
-the <vpsadmin-nav id="notifications.route-time-intervals.open">route's time
-interval settings</vpsadmin-nav>.
+[[manuals:notifications:routing#event_grouping|Event routing and matchers]]
+also describes grouping related events into a shared summary and
+[[manuals:notifications:routing#time_intervals|time intervals]], which
+limit a route's delivery to selected times or mute it during them.
 
 Inspect prepared deliveries and matched routes at
 <vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →

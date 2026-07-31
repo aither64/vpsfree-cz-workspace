@@ -54,6 +54,41 @@ Verification:
 - Run the mandatory standalone fresh-context review after focused commits and
   quick verification, before final staging checks.
 
+## Routing Guide Follow-up
+
+Requested on 2026-07-31 after review of the staged articles: make the matcher
+section read as one coherent explanation and restore the grouping and
+time-interval material that had been compressed into the overview.
+
+Decisions:
+
+- Keep the notification overview descriptive. Replace the instructional
+  "Read these concepts first" wording with a neutral concepts section and
+  replace "Advanced options" with a short link to routing features.
+- Document matcher operators directly instead of organizing them by a field
+  type column. Give `=*` and `!*` explicit glob meanings, show independent
+  matcher examples, and state separately that all matchers on one route use
+  logical AND.
+- Put full event-grouping and time-interval sections in the bilingual routing
+  article. Cover grouping keys, initial wait, repeat interval, per-route
+  ownership, skipped deliveries, group inspection, schedule syntax, boolean
+  combination rules, active/mute precedence, and child-route traversal.
+- Reuse the existing deterministic grouping and time-interval captures and
+  move their semantic page bindings from the overview to the routing guide.
+- Rebuild both guarded manifests, run a fresh standalone review, then replace
+  and verify the session-owned staging bundle. Production publication remains
+  out of scope without direct approval.
+
+Compatibility and deployment:
+
+- This follow-up changes documentation candidates and capture-contract page
+  mappings only. It has no schema, API, protocol, generated-client, runtime,
+  or persistent-state effect.
+- The documented behavior is checked against the existing matcher, grouping,
+  and interval implementation at the pinned vpsAdmin revision. Deployment
+  ordering and rollback constraints from the concept-first addendum are
+  unchanged.
+
 ## Goal
 
 Design a general vpsAdmin event system that sits above e-mail delivery.

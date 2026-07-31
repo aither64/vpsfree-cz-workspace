@@ -41,21 +41,105 @@ of a saved route. Open the form at
 <vpsadmin-nav id="notifications.matcher-form.open">**Notifications → Routes
 → edit route → Add matcher**</vpsadmin-nav>.
 
-Available operators depend on the field's data type:
+After you select a field, the form offers the operators that can be used
+with it. Enter the comparison value in the value field. The available
+fields, their examples, and descriptions are shown in the
+[[manuals:notifications:events|event-type catalog]].
 
-^ Field type ^ Operators ^ Meaning ^
-| text | ''=='', ''!='' | equal and not equal |
-| text | ''=~'', ''!~'' | matches or does not match a regular expression |
-| text | ''=*'', ''!*'' | matches or does not match a glob; ''*'' matches a part and ''**'' matches multiple path levels |
-| integer, number, or date and time | ''=='', ''!='', ''>'', ''>='', ''<'', ''<='' | numeric or time comparison |
-| boolean | ''=='', ''!='' | compare ''true'' or ''false'' |
-| list of text or numbers | ''contains'', ''not_contains'' | list contains or does not contain an item |
+^ Operator ^ Meaning ^
+| ''=='' | the field value equals the entered value |
+| ''!='' | the field value does not equal the entered value |
+| ''=~'' | the text matches a regular expression |
+| ''!~'' | the text does not match a regular expression |
+| ''=*'' | the text matches a glob; ''*'' does not cross ''/'' and ''**'' can span multiple path levels |
+| ''!*'' | the text does not match a glob |
+| ''>'' | the value is greater than or later than the entered value |
+| ''>='' | the value is greater than, later than, or equal to the entered value |
+| ''<'' | the value is less than or earlier than the entered value |
+| ''<='' | the value is less than, earlier than, or equal to the entered value |
+| ''contains'' | the list in the field contains the entered item |
+| ''not_contains'' | the list in the field does not contain the entered item |
 
-For example, ''cgroup =* /user.slice/**/*.scope'' selects OOM reports from
-user sessions. A second matcher, ''vps_id == 123'', restricts the same route
-to one VPS; both must match.
+Typical standalone matchers include:
+
+^ Matcher ^ What it selects ^
+| ''vps_id == 123'' | events of the selected type for VPS ID 123 |
+| ''cgroup =* /user.slice/**/*.scope'' | OOM reports from user-session cgroups |
+| ''roles contains admin'' | events that declare the ''admin'' role for default delivery |
+
+If you add more than one matcher to a route, all of them must match the
+same event.
 
 {{:en:screenshots:vpsadmin:notifications:matcher-form.png?900|cgroup matcher form and the operator reference}}
+
+===== Event grouping =====
+
+Grouping reduces the number of messages when many related events arrive in
+a short period. Instead of sending one message for every event, vpsAdmin
+collects the events in a group and sends a summary. The default OOM-report
+route groups by ''vps_id'', so reports from one VPS are summarized together
+while reports from different VPSes stay separate.
+
+Configure grouping on a saved route at
+<vpsadmin-nav id="notifications.route-grouping-form.open">**Notifications →
+Routes → edit route → Notification grouping**</vpsadmin-nav>:
+
+  * **Group by fields** contains comma-separated scalar event fields. Their values identify a group. An empty field creates one group for all events matching the route.
+  * **Initial wait** is the number of seconds the first event in a new group waits for more events to join it.
+  * **Repeat interval** is the minimum number of seconds before another summary is sent from the same still-active group.
+
+An exact-type route can use fields listed for that type in the catalog. A
+pattern or catch-all route can group only by common fields accepted by the
+form. The setting belongs to that route only; subroutes do not inherit it.
+
+Only deliveries that can actually be sent enter a group. Muted events and
+deliveries skipped because of a time interval, a disabled receiver, or an
+unavailable target are not grouped. The group is created for the route and
+receiver before individual targets are processed; if one receiver has
+several enabled targets, each receives the same set of grouped events.
+
+{{:en:screenshots:vpsadmin:notifications:grouping-route.png?900|Grouping settings on the OOM-report route}}
+
+<vpsadmin-nav id="notifications.groups.open">**Notifications →
+Notification groups**</vpsadmin-nav> shows open, overdue, idle, and
+historical groups. A group detail contains its route, receiver, grouping
+values, timing, pending events, and deliveries.
+
+===== Time intervals =====
+
+A time interval is a reusable schedule with its own time zone. It can limit
+delivery to working hours or a maintenance window, mute alerts outside
+working hours, or divide work-hours and on-call delivery between separate
+routes. Create intervals at
+<vpsadmin-nav id="notifications.time-intervals.open">**Notifications → Time
+intervals**</vpsadmin-nav>.
+
+Each interval uses an IANA time-zone name such as ''Europe/Prague'' and one
+or more specifications. All filled fields in one specification must match
+(logical **AND**). Multiple ranges in one field and multiple separate
+specifications are alternatives (logical **OR**). An empty field does not
+restrict the time.
+
+  * **Times** use ''HH:MM-HH:MM'' ranges. The start is inclusive and the end is exclusive. A range cannot cross midnight; split an overnight period into ranges such as ''22:00-24:00'' and ''00:00-06:00''.
+  * **Weekdays** use English names or ranges such as ''monday-friday''. A range cannot wrap from the end of the week to its beginning.
+  * **Days of month** use numbers and ranges. Negative numbers count from the end of the month, so ''-1'' means the last day.
+  * **Months** use numbers 1–12 and **years** use full years; both accept individual values and ranges.
+
+{{:en:screenshots:vpsadmin:notifications:time-interval.png?900|Office hours expressed by two time-interval specifications}}
+
+Attach an interval to a saved route at
+<vpsadmin-nav id="notifications.route-time-intervals.open">**Notifications →
+Routes → edit route → Time intervals**</vpsadmin-nav> in one of two
+modes:
+
+  * An **Active interval** allows the route's receiver only when at least one assigned active interval matches. If the route has no active intervals, its active time is unrestricted.
+  * A **Mute interval** suppresses the route's receiver when it matches. Any matching mute interval takes precedence over active intervals.
+
+Intervals are evaluated at the event time. They gate only that route's
+receiver: they do not change whether the route matched and do not prevent
+its subroutes from being evaluated.
+
+{{:en:screenshots:vpsadmin:notifications:route-time-intervals.png?900|A time interval attached to a route in active mode}}
 
 ===== Testing routing =====
 
