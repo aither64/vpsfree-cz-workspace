@@ -1,0 +1,74 @@
+<page>manuals:vps:vpsadminos:storage</page>
+====== Datasets, snapshots, mounts and exports on vpsAdminOS ======
+This page describes managing storage in [[manuals:vps:vpsAdminOS]].
+
+===== NAS =====
+NAS datasets cannot be mounted using vpsAdmin. Instead, the datasets
+have to be [[#exports|exported over NFS]] and then manually mounted from within
+the VPS.
+
+===== VPS datasets =====
+VPS datasets can be mounted only locally within one VPS. It's not possible to
+mount datasets of a different VPS. VPS datasets also cannot be exported like
+NAS datasets. Another means of sharing data between VPS have to be used, e.g.
+FUSE filesystems or nasbox (which is not backed up, beware).
+
+===== Snapshots =====
+Snapshots are [[#exports|exported]] similarly to datasets, they cannot be mounted
+directly.
+
+===== Exports =====
+There's a new entry in vpsAdmin main menu called //Exports//. Datasets can be
+exported either by going to a list of NAS datasets in menu //NAS//:
+
+{{:navody:vps:vpsadminos:nasexport.png|}}
+
+Another way is to go to //Exports// -> //Export dataset//, which will show you
+a form when you can select which dataset you'd like to export.
+
+Snapshots can be exported from menu //Backups// -> //VPS backups// or //NAS backups//:
+
+{{:navody:vps:vpsadminos:backupexport.png|}}
+
+==== Export configuration ====
+Each exports has a list of allowed hosts which can mount it. When //All VPS//
+checkbox is turned on, the export will automatically track IP addresses of all
+your VPS and will be updated when IP addresses are added or removed from any
+VPS. It's also possible to select which VPS or IP addresses will have access
+and ignore the rest. Each allowed host can have its own export options, such
+as read-only or read-write mode, see man exports(5) for more information.
+
+The NFS server can be stopped/started on demand, its IP address will remain
+the same.
+
+One dataset/snapshot can be exported only once, but it can be mounted multiple
+times on different hosts.
+
+==== Mounting exports ====
+Each export represents a dedicated NFS server, which is used to export selected
+filesystem or snapshot. vpsAdmin will show you the server's address and path
+to the exported filesystem.
+
+{{:navody:vps:vpsadminos:detailexportu1v2.png?500|}}
+
+There are also several examples to demonstrate the ways the export can be
+mounted, e.g. the //mount// command, entry in ''/etc/fstab'' and systemd mount
+unit. For a successful mount you need to have NFS client utils installed, the
+package is usually called ''nfs-client'', ''nfs-utils'' or ''nfs-common'',
+depending on the distribution. It's not necessary to install the NFS server.
+
+{{:navody:vps:vpsadminos:detailexportu2v2.png?500|}}
+
+==== Problem with rpc.statd ====
+
+On Debian Buster we found an issue with start of ''rpc.statd'':
+
+  Jul 06 10:31:52 bee rpc.statd[23393]: Failed to find any visible netconfig entries
+  Jul 06 10:31:52 bee rpc.statd[23393]: failed to create RPC listeners, exiting
+
+Problem is, that none of available protocols has been marked as a visible for library function getnetconfig(3) due to unconfigured proper flag in ''/etc/netconfig''. For correct behaviour of TCP and UDP should those lines look as follows (third column contains ''v'', not ''-''):
+
+  udp        tpi_clts      v     inet     udp     -       -
+  tcp        tpi_cots_ord  v     inet     tcp     -       -
+  udp6       tpi_clts      v     inet6    udp     -       -
+  tcp6       tpi_cots_ord  v     inet6    tcp     -       -

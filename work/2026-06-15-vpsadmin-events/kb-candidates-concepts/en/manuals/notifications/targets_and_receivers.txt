@@ -1,0 +1,58 @@
+<page>navody:notifikace:cile_a_prijemci</page>
+====== Targets and receivers ======
+
+A route does not send an event directly to an address. It points to a
+**receiver**, which contains one or more **targets**:
+
+  * a **target** is a concrete delivery endpoint such as an e-mail address, telephone number, Telegram chat, or webhook URL,
+  * a **receiver** is a named group of targets that can be reused by several routes.
+
+One event passed to a receiver prepares delivery for each of its enabled
+targets. The same target can be attached to several receivers, and targets
+can change without rewriting routes.
+
+===== Targets =====
+
+Open the list at
+<vpsadmin-nav id="notifications.targets.open">**Notifications → Targets**</vpsadmin-nav>.
+It shows each target's delivery method, endpoint, enabled state, and
+verification state.
+
+{{:en:screenshots:vpsadmin:notifications:targets.png?900|List of notification targets}}
+
+When adding or editing a target at
+<vpsadmin-nav id="notifications.target-form.open">**Notifications → Targets
+→ add or edit target**</vpsadmin-nav>, choose one delivery method:
+
+  * **E-mail** can use the account address or a custom address. A custom address must be verified through a link in the verification message.
+  * **SMS** uses an E.164 international telephone number and requires a verification code before delivery.
+  * **Telegram** is paired with a particular chat using a one-time pairing command.
+  * **Webhook** sends JSON to a public HTTP(S) URL. An optional secret signs the exact body in the ''X-VpsAdmin-Signature-256'' header.
+
+A disabled, unverified, or unpaired target receives nothing. Globally
+disabling one delivery method also pauses all targets of that type.
+
+===== Receivers =====
+
+Create a receiver at
+<vpsadmin-nav id="notifications.receivers.open">**Notifications →
+Receivers**</vpsadmin-nav>. Give it a purpose-oriented name such as
+**On-call** or **Resource-change webhook**.
+
+After opening it at
+<vpsadmin-nav id="notifications.receiver-form.open">**Notifications →
+Receivers → edit receiver**</vpsadmin-nav>, you can change its description,
+enabled state, and attached targets.
+
+{{:en:screenshots:vpsadmin:notifications:receiver.png?900|Receiver settings and its targets table}}
+
+Disabling a receiver stops all delivery through it without changing its
+routes. A receiver with multiple targets fans out delivery, for example to
+e-mail and Telegram at the same time.
+
+The built-in **Mute** receiver is special: it has no delivery endpoint and
+suppresses the matching event. It is used by mute routes, normally with
+**Continue** disabled.
+
+Continue with [[manuals:notifications:routing|Event routing]] or choose a
+practical procedure from the [[manuals:notifications|notifications overview]].

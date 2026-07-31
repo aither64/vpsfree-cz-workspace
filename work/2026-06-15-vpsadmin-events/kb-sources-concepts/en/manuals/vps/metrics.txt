@@ -1,0 +1,9 @@
+====== Metrics for Prometheus ======
+vpsAdmin exports metrics for the monitoring system [[https://prometheus.io|Prometheus]].
+You can add these metrics to your own monitoring setup, whether it’s running in your VPS or elsewhere.
+
+The metrics include information about your VPS, such as CPU usage, memory usage, load average, data transfers, OOM reports, node statuses, and more. There are also metrics related to membership, including the date until your membership is paid.
+
+To set this up, go to <vpsadmin-nav id="member.metrics-access-tokens.open">**Edit profile** -> **Metrics access tokens**</vpsadmin-nav> in vpsAdmin and create an access token. You will be provided with a scrape URL, which you can add to your monitoring configuration. VPS statuses are updated every 2 minutes, so there’s no point in fetching the data more frequently. For a detailed overview of the available metrics, open the URL in your browser.
+
+The metric ''vpsadmin_metrics_version'' (unless you’ve changed the prefix) indicates the version of the metrics. If we make backward-incompatible changes, the first number will increase, e.g., ''1.0 -> 2.0''. The number after the decimal point may increase when new metrics are added, but the meaning of the original metrics will remain unchanged.

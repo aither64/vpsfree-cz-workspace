@@ -1,0 +1,119 @@
+<page>information:chat</page>
+====== Chat ======
+
+===== IRC =====
+
+  * **host:** irc.libera.chat
+  * **místnost:** #vpsfree
+  * **web klient:** [[https://web.libera.chat/?channels=#vpsfree]]
+  * **archiv**: [[https://im.vpsfree.cz/archive/irc.libera.chat/%23vpsfree/]]
+  * **původní archiv kanálu na Freenode**: [[https://im.vpsfree.cz/archive/chat.freenode.net/%23vpsfree/]]
+
+===== Matrix =====
+
+  * **místnost:** [[https://matrix.to/#/#vpsfree:matrix.org|#vpsfree:matrix.org]]
+  * **archiv:** https://view.matrix.org/room/!vOrcaItWgYDyYypqCI:matrix.org/
+  * Propojeno s IRC pomocí matterbridge přes uživatele //vpsfbr0//
+
+===== Bot =====
+V naší místnosti je bot ''vpsfbot'', který archivuje zprávy a reaguje na
+příkazy. Zdrojové kódy bota jsou k dispozici na
+[[https://github.com/vpsfreecz/vpsfree-irc-bot|githubu]].
+
+<code>
+[01/26] vpsFree.cz IRC Bot v0.1.0
+[02/26] =========================
+[03/26]   
+[04/26] Channel commands:
+[05/26]     !archive [which]              get URL to the web archive
+[06/26]     !greet <user>                 introduce a new user to vpsFree.cz
+[07/26]     !help [command]               show help
+[08/26]     !lastlog [n]                  print N last messages, defaults to 10
+[09/26]     !ping                         play a game of ping pong
+[10/26]     !rank                         show your rank
+[11/26]     !status                       show cluster status
+[12/26]     !top [n]                      show top N users
+[13/26]     !uptime                       show bot's uptime
+[14/26] 
+[15/26] Private commands:
+[16/26]     archive [which]               get URL to the web archive
+[17/26]     greet <user>                  introduce a new user to vpsFree.cz
+[18/26]     help [command]                show help
+[19/26]     lastlog [n]                   print N last messages, defaults to 10
+[20/26]     ping                          play a game of ping pong
+[21/26]     rank                          show your rank
+[22/26]     status                        show cluster status
+[23/26]     top [n]                       show top N users
+[24/26]     uptime                        show bot's uptime
+[25/26] 
+[26/26] Use !help <command> to get help for a specific command.
+</code>
+
+Bot reaguje na příkazy v kanálu i v PM. Příkazy v kanálu lze vyvolat dvěma
+způsoby, buď vykřičníkem, nebo adresováním na bota pomocí jeho jména:
+
+<code>
+14:28 < user> !ping
+14:28 < vpsfbot> pong
+14:29 < user> vpsfbot: ping
+14:29 < vpsfbot> pong
+</code>
+
+==== Archiv a zobrazení posledních zpráv ====
+Bota se můžeme zeptat na URL adresu k web archivu:
+
+<code>
+14:30 < user> !archive
+14:30 < vpsfbot> https://im.vpsfree.cz/archive/irc.libera.chat/%23vpsfree/
+14:32 < user> !archive today
+14:32 < vpsfbot> https://im.vpsfree.cz/archive/irc.libera.chat/%23vpsfree/2016/07/31.html
+</code>
+
+Nemáš-li vlastní bouncer a chceš po připojení do kanálu vědět, o čem se mluví,
+můžes si buď přečíst archiv na webu, nebo si nechat zaslat několik posledních
+zpráv od bota do PM.
+
+<code>
+14:35 < user> !lastlog
+14:35 <vpsfbot> [1/4] Last 3 messages from '#vpsfree':
+14:35 <vpsfbot> [2/4] [2016-07-31 14:35:37] < nekdo> neco psal
+14:35 <vpsfbot> [3/4] [2016-07-31 14:35:37] < nekdo> mu odpovedel
+14:35 <vpsfbot> [4/4] [2016-07-31 14:35:40] < franta> nic nerikal
+</code>
+
+==== Stav serverů ====
+Příkazem ''status'' bot zkontroluje stav serverů, např.:
+
+<code>
+14:39 < user> !status
+14:39 < vpsfbot> 18 nodes online, 2 under maintenance, 0 down
+14:39 < vpsfbot> Under maintenance: node1.prg, nasbox.prg
+</code>
+
+Bot také v pravidelných intervalech kontroluje novinky z logu ve vpsAdminu.
+O zjištěných událostech potom informuje v kanálu.
+
+==== Karma ====
+Pokud někdo řekne něco geniálního, nebo naopak hloupého, můžeme mu dát +1 nebo
+-1. Bot tyto zprávy sleduje a počítá karmu jednotlivých uživatelů. Příkaz
+''top'' vypíše 5 uživatelů s nejvyšší karmou a ''rank'' vypíše tvou karmu a
+pozici, na které se nacházíš.
+
+<code>
+14:43 < aither> !top
+14:43 < vpsfbot>  1. ewew (karma 10, 186 messages)
+14:43 < vpsfbot>  2. aither (karma 3, 178 messages)
+14:43 < vpsfbot>  3. snajpa (karma 2, 868 messages)
+14:43 < vpsfbot>  4. ghormoon (karma 1, 276 messages)
+14:43 < vpsfbot>  5. jirutka (karma 1, 241 messages)
+
+14:44 < aither> !rank
+14:44 < vpsfbot> Your rank is 2 of 23 users with karma 3 and 178 messages
+</code>
+
+Možné způsoby přidání a odebrání karmy:
+
+  * ''<nick> +<n>'' (''nekdo +1'', ''nekdo +5'', ''nekdo: +2'')
+  * ''<nick> -<n>'' (''nekdo -1'', ''nekdo -5'', ''nekdo: -2'')
+  * ''<nick>++'' (''nekdo++'')
+  * ''%%<nick>--%%'' (''%%nekdo--%%'')

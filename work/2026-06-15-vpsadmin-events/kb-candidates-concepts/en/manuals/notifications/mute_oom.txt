@@ -1,0 +1,67 @@
+====== Mute selected OOM reports ======
+
+This example mutes OOM reports from user-session cgroups on VPS ID ''123'',
+while leaving other OOM reports unchanged. It uses the built-in **Mute**
+receiver, so no target or receiver has to be created.
+
+Before starting, read the [[manuals:notifications|notification system overview]],
+[[manuals:notifications:events|events]], [[manuals:notifications:routing|routing]],
+and [[manuals:notifications:targets_and_receivers|targets and receivers]].
+
+===== Step 1: Find values from a real OOM report =====
+
+Open a relevant ''vps.oom_report'' in delivery history and note its
+''vps_id'' and ''cgroup'' fields. The cgroup is a complete path without the
+''/sys/fs/cgroup'' prefix, for example
+''/user.slice/user-1000.slice/session-2.scope''.
+
+===== Step 2: Create the mute route =====
+
+At <vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>, select **Add route** and set:
+
+^ Field ^ Value ^
+| Label | ''Mute selected OOM reports'' |
+| Event type | ''vps.oom_report'' |
+| Receiver | Mute |
+| Enabled | yes |
+| Continue | no |
+
+Save the route.
+
+===== Step 3: Add both matchers =====
+
+Add these matchers to the saved route:
+
+^ Field ^ Operator ^ Value ^
+| ''vps_id'' | equals | ''123'' |
+| ''cgroup'' | matches glob | %%/user.slice/**/*.scope%% |
+
+All matchers on a route must match. In this glob, %%**%% can span several
+directory levels.
+
+{{:en:screenshots:vpsadmin:notifications:example-mute-oom.png?900|OOM-report mute route with VPS and cgroup matchers}}
+
+Keep **Continue** disabled, otherwise another route could still send the
+report.
+
+===== Step 4: Test the route =====
+
+Create a **Test notification** of type ''vps.oom_report'' with
+representative fields:
+
+<code json>
+{
+  "vps_id": 123,
+  "vps_hostname": "example-vps",
+  "oom_report_id": 987,
+  "cgroup": "/user.slice/user-1000.slice/session-2.scope",
+  "count": 1,
+  "oom_count": 1,
+  "killed_name": "worker"
+}
+</code>
+
+If the mute route is the first match and no other route prepares a delivery,
+the test must report that no enabled route produced a delivery. The
+candidate must not appear in **Delivery history**.

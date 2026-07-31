@@ -1,5 +1,23 @@
 # 2026-06-15-vpsadmin-events
 
+## 2026-07-31 Concept-First Notification Documentation
+
+- Verified that `bin/dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG` both identify
+  `2026-06-15-vpsadmin-events`.
+- The vpsAdmin, vpsadmin-kb-captures, and configuration worktrees are clean,
+  on their initiative branches, and use SSH remotes.
+- The session still owns the running KB staging container. Its pending release
+  is the prior English delivery-only manifest; it will be replaced only after
+  fresh concept candidates and manifests are complete.
+- Reviewed the current delivery-only candidates, event registry, route
+  evaluator, matcher implementation, Event Types filtering, WebUI forms,
+  capture contract, and screenshot set.
+- Confirmed the documentation gaps recorded in `plan.md`, including the
+  incorrect reuse of notification roles for Event Type API visibility.
+- Implementation started; production KB and running vpsAdmin services remain
+  untouched.
+
 ## Repositories
 
 - `vpsadmin`
@@ -17256,3 +17274,94 @@ workflow and approval-gated production KB promotion.
   Current-head RuboCop and i18n workflows are green as well.
 - This correction is tests only, so the development cluster remains valid at
   runtime revision `07bab674...` and requires no redeployment.
+
+#### Notification concepts implementation
+
+- The active development-session slug was reverified as
+  `2026-06-15-vpsadmin-events`; all work continues in the existing initiative
+  worktrees.
+- vpsAdmin now separates event-catalog audience from delivery roles. Bundled
+  and generated account-owned types are visible to ordinary/support users even
+  when their default delivery role is `admin`; infrastructure-only types and
+  unspecified extension types remain administrator-only. There is no API wire
+  field, database migration, persisted routing change, or default-role change.
+- vpsAdmin commits were rewritten after mandatory review and force-pushed with
+  lease over SSH at exact head
+  `ab504844a8393e1a3d1bfbe50d9d30ee9434356a`:
+  - `2ce61f938` — `api: separate event catalog audience from delivery roles`;
+  - `ab504844a` — `webui: add notification documentation landmarks`.
+  The audience-visibility Playwright assertions now belong to the audience
+  commit; the landmark commit retains only its landmark assertion.
+- Quick verification passed:
+  - focused routing/resource-event RSpec: 90 examples, 0 failures, 1 expected
+    pending example;
+  - RuboCop on all 13 touched Ruby files: no offenses;
+  - focused WebUI PHPUnit: 22 tests, 291 assertions;
+  - PHP syntax checks and updated contract checks: clean.
+  - the rewritten Playwright file passes a standalone Node syntax check.
+- The first ambient-shell commit attempt correctly stopped because Overcommit
+  could not find Nix-provided `rubocop` and `msgattrib`. Retrying with
+  `nix develop .#vpsadmin -c git commit -F ...` ran the declared hooks and
+  passed. The reusable workflow is already recorded in
+  `notes/vpsadmin/2026-07-20-overcommit-requires-root-devshell.md`.
+- The capture repository is pinned to the exact rewritten vpsAdmin head in
+  commit `43c31f2` (`Pin notification captures to the event catalog revision`).
+  Its contract/scenario work adds event-type, matcher, route-list, target-list,
+  and receiver-detail concepts. The contract checker reports 55 controls, 42
+  paths, 59 capture concepts, and 32 semantic selectors.
+- A stopped status record concealed an old same-session QEMU runner. After
+  verifying its slug and paths, the screenshots topology was restarted with
+  `--force` on the default bridge network and rebuilt against the exact pin.
+  The workflow is recorded in
+  `notes/vpsadmin-kb-captures/2026-07-31-stale-devcluster-runner.md`.
+- Fresh guarded production sources were fetched to `kb-sources-concepts` with
+  20 expected-new notification pages (10 Czech and 10 English). An incomplete
+  first fetch was moved recoverably to
+  `/tmp/vpsadmin-kb-sources-concepts-incomplete` and is not a release input.
+- The annotation plan now defines three bilingual concept pairs for events,
+  routing/matchers, and targets/receivers. It also corrects the role versus
+  catalog-visibility explanation, links recipes to the concepts, and places
+  webhook configuration before the long receiving-server example. YAML
+  parsing reports 20 new pages and 58 selected media entries.
+- Reproducible notification capture completed for both languages. The requested
+  route-list, event-catalog, OOM-detail, matcher/operator, target-list, and
+  receiver-with-target-table screenshots were visually inspected; the complete
+  notification scenario refreshed 29 images per language. Capture metadata and
+  PNG checksums validate as 88 concepts, 176 variants, 90 Czech references, 81
+  English references, and 176 PNGs.
+- Capture commit `036d91f` (`captures: illustrate notification routing
+  concepts`) follows the exact-pin commit. `nix develop -c bin/check` passes the
+  contract checker, 8 contract tests with 50 assertions, 9 KB-annotation tests
+  with 19 assertions, syntax/tool checks, and inventory validation. The
+  candidate-aware checker passes with 131 bindings and 9 explicit exceptions.
+- An interrupted preliminary capture left a stale Czech route checksum in the
+  manifest. A clean complete Czech pass plus `bin/validate --update` and normal
+  `bin/validate` reconciled it; two partial candidate outputs were moved to
+  `/tmp` and are not release inputs. The final capture cluster was stopped and
+  its GC root removed.
+- Fresh `kb-candidates-concepts` now contains 22 changed pages: 20 guarded new
+  notification pages and the two existing account-profile replacements. It
+  injects 58 checksummed media objects and the two canonical webhook samples.
+- `kb-release-concepts-cs.yml` and `kb-release-concepts-en.yml` each contain 11
+  pages and 29 media objects with localized, informative edit summaries.
+- The standalone mandatory reviewer reported four Blocking findings and no
+  Important or Advisory findings:
+  - interval state was incorrectly described as part of route matching;
+  - the role-routing recipe incorrectly claimed test JSON could not override
+    `roles`;
+  - audience-specific Playwright assertions were placed in the landmark
+    commit; and
+  - the stale-cluster durable note was bundled with the KB release record.
+- All four findings are addressed. The Czech and English guides now explain
+  that type selection plus all matchers establish a route match, while active
+  and mute intervals only decide whether that route's receiver runs and never
+  prevent matching children from being traversed. History wording covers the
+  resulting all-routes/no-delivery case. The role recipe deliberately omits
+  `roles` and explains that an explicit test value overrides the type default.
+  Candidates and both manifests were rebuilt from the corrected plan; the
+  candidate-aware checker remains green with 131 bindings and 9 explicit
+  exceptions. Commit focus was corrected as described above, and the durable
+  note is being split into its own top-level commit.
+- The same reviewer must verify the corrected committed ranges before staging.
+  Capture branch push, superseded-CI cleanup, and exact staging verification
+  remain pending. No production wiki write has been performed or approved.

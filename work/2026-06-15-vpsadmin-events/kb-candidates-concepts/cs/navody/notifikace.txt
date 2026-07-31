@@ -1,0 +1,51 @@
+<page>manuals:notifications</page>
+====== Notifikace ======
+
+Notifikační systém vpsAdminu převádí události na e-mailová, SMS, telegramová
+nebo webhooková doručení. Najdete jej v
+<vpsadmin-nav id="notifications.open">hlavní nabídce **Notifikace**</vpsadmin-nav>.
+
+Základní tok je **událost → routa → příjemce → cíl**:
+
+  * **událost** popisuje, co se stalo,
+  * **routa** vybírá události a určuje, zda směrování pokračuje,
+  * **příjemce** popisuje, koho nebo kterou integraci upozornit,
+  * **cíl** je konkrétní e-mail, telefonní číslo, chat v Telegramu nebo webhookový endpoint.
+
+Historie doručování není interní auditní protokol. Událost se do ní uloží
+pouze tehdy, když směrování připraví alespoň jedno skutečné doručení. Pokud
+potřebujete úplný externí záznam, vytvořte záchytnou routu pro všechny typy
+událostí a doručujte ji do vlastního trvalého úložiště, například webhookem.
+
+===== Nejdříve si přečtěte =====
+
+  * [[navody:notifikace:udalosti|Události a typy událostí]] vysvětlují, co událost obsahuje, jaké rodiny typů existují a kde najít aktuální katalog.
+  * [[navody:notifikace:routovani|Routování událostí a podmínky]] popisuje pořadí rout, podrouty, matchery, operátory a testování.
+  * [[navody:notifikace:cile_a_prijemci|Cíle a příjemci]] vysvětlují doručovací endpointy a jejich opakovaně použitelné skupiny.
+
+===== Příklady krok za krokem =====
+
+Každý příklad začíná u běžného účtu s výchozími routami. Postupujte vždy podle
+jednoho samostatného návodu:
+
+  * [[navody:notifikace:role_udalosti|Doručení událostí rolí account a admin různým kontaktům]]
+  * [[navody:notifikace:ztlumeni_oom|Ztlumení vybraných OOM reportů]]
+  * [[navody:notifikace:ztlumeni_incidentu|Ztlumení vybraných incidentních reportů]]
+  * [[navody:notifikace:telegram|Odeslání monitoringu a incidentů do Telegramu]]
+  * [[navody:notifikace:sms|Odeslání SMS při pozastavení účtu nebo VPS]]
+  * [[navody:notifikace:webhook|Odeslání změn prostředků VPS na webhook]]
+
+===== Pokročilé možnosti =====
+
+<vpsadmin-nav id="notifications.route-grouping-form.open">Seskupování na
+routě</vpsadmin-nav> sbírá související události do jednoho souhrnu; rozepsané
+i minulé souhrny ukazuje <vpsadmin-nav id="notifications.groups.open">seznam
+skupin notifikací</vpsadmin-nav>. Opakovaně použitelný rozvrh vytvoříte v
+<vpsadmin-nav id="notifications.time-intervals.open">**Notifikace → Časové
+intervaly**</vpsadmin-nav> a k routě jej připojíte jako aktivní nebo ztlumující
+přes <vpsadmin-nav id="notifications.route-time-intervals.open">nastavení
+časových intervalů routy</vpsadmin-nav>.
+
+Skutečně připravená doručení a odpovídající routy najdete v
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
+Historie doručování → detail události**</vpsadmin-nav>.

@@ -1,0 +1,50 @@
+====== Notifications ======
+
+The vpsAdmin notification system turns events into e-mail, SMS, Telegram, or
+webhook deliveries. Open it from the
+<vpsadmin-nav id="notifications.open">main **Notifications** menu</vpsadmin-nav>.
+
+The basic flow is **event → route → receiver → target**:
+
+  * an **event** describes what happened,
+  * a **route** selects events and decides whether routing continues,
+  * a **receiver** describes who or which integration should be notified,
+  * a **target** is a concrete e-mail address, telephone number, Telegram chat, or webhook endpoint.
+
+Delivery history is not an internal audit log. An event is stored there only
+when routing prepares at least one real delivery. If you need a complete
+external record, create a catch-all route and deliver it to your own durable
+storage, for example through a webhook.
+
+===== Read these concepts first =====
+
+  * [[manuals:notifications:events|Events and event types]] explains event contents, event families, and the live catalog.
+  * [[manuals:notifications:routing|Event routing and matchers]] explains route order, subroutes, matcher operators, and testing.
+  * [[manuals:notifications:targets_and_receivers|Targets and receivers]] explains delivery endpoints and their reusable groups.
+
+===== Step-by-step examples =====
+
+Each example starts from an ordinary account with the default routes. Follow
+one example at a time:
+
+  * [[manuals:notifications:event_roles|Route account and admin events to different contacts]]
+  * [[manuals:notifications:mute_oom|Mute selected OOM reports]]
+  * [[manuals:notifications:mute_incidents|Mute selected incident reports]]
+  * [[manuals:notifications:telegram|Send monitoring events and incident reports to Telegram]]
+  * [[manuals:notifications:sms|Send SMS on account or VPS suspension]]
+  * [[manuals:notifications:webhook|Send VPS resource changes to a webhook]]
+
+===== Advanced options =====
+
+<vpsadmin-nav id="notifications.route-grouping-form.open">Grouping on a
+route</vpsadmin-nav> collects related events into one summary; the
+<vpsadmin-nav id="notifications.groups.open">notification-group list</vpsadmin-nav>
+shows pending and historical summaries. Create a reusable schedule under
+<vpsadmin-nav id="notifications.time-intervals.open">**Notifications → Time
+intervals**</vpsadmin-nav>, then attach it as an active or mute interval in
+the <vpsadmin-nav id="notifications.route-time-intervals.open">route's time
+interval settings</vpsadmin-nav>.
+
+Inspect prepared deliveries and matched routes at
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Delivery history → event detail**</vpsadmin-nav>.

@@ -1,5 +1,59 @@
 # 2026-06-15-vpsadmin-events
 
+## Concept-First Notification Documentation Addendum
+
+Requested on 2026-07-31: make the bilingual notification articles explain
+the event-routing model before asking members to follow delivery recipes.
+
+Decisions:
+
+- Keep `navody:notifikace` and `manuals:notifications` as concise entry
+  points. Add focused bilingual references for events, routing and matchers,
+  and targets and receivers; keep the existing recipes task-oriented.
+- Describe event families and teach the live Event Types view instead of
+  copying its deployment- and role-dependent catalog into DokuWiki.
+- Separate Event Type catalog visibility from notification roles. Event
+  definitions gain an explicit account/admin audience; account-owned OOM,
+  incident, monitoring, VPS, and similar types remain visible to ordinary
+  users even when their notification role is `admin`. Operator-only types
+  remain administrator-only.
+- Preserve event roles, default routing, route evaluation, delivery
+  authorization, API wire output, and persisted data. The visibility change
+  only broadens the ordinary user's Event Types catalog and selectors with
+  types that the account can already route.
+- Add stable documentation landmarks for Event Types, matcher creation, and
+  Test notification. Correct contract paths so list and edit-form navigation
+  are distinct.
+- Restore a clean basic route-list capture; add Event Types, matcher-form, and
+  target-list captures; expand the generic receiver capture to include linked
+  targets. Every capture remains deterministic and bilingual.
+- Build a fresh guarded candidate/release set rather than overwriting the
+  already staged delivery-only bundle. Production remains approval-gated.
+
+Compatibility and deployment:
+
+- There is no schema, generated-client, daemon protocol, node, vpsAdminOS, or
+  persistent-format change. Generated resource types inherit their existing
+  catalog audience and bundled semantic events declare theirs explicitly.
+- Unspecified external event definitions default to administrator-only
+  catalog visibility, which is backward compatible and avoids leaking type
+  metadata until the extension opts into account visibility.
+- A rollback can read and execute routes created for newly visible event
+  types; an older WebUI merely stops offering those types in its selector.
+- Deploy the matching vpsAdmin API/WebUI revision before publishing KB pages
+  that depend on the corrected catalog and documentation landmarks.
+
+Verification:
+
+- Test audience validation and ordinary/support/admin Event Type filtering,
+  including OOM, incident, monitoring, and infrastructure-only examples.
+- Test WebUI landmarks and ordinary-user exact-type/matcher selection.
+- Regenerate and inspect the selected Czech and English notification
+  checkpoints, then run the complete capture contract.
+- Build, validate, stage, and render-check fresh bilingual guarded releases.
+- Run the mandatory standalone fresh-context review after focused commits and
+  quick verification, before final staging checks.
+
 ## Goal
 
 Design a general vpsAdmin event system that sits above e-mail delivery.

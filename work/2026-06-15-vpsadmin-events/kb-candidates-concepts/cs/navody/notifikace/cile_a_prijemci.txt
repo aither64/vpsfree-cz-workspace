@@ -1,0 +1,57 @@
+<page>manuals:notifications:targets_and_receivers</page>
+====== Cíle a příjemci ======
+
+Routa neposílá událost přímo na adresu. Odkazuje na **příjemce** a ten
+obsahuje jeden nebo více **cílů**:
+
+  * **cíl** je konkrétní doručovací endpoint, například e-mailová adresa, telefonní číslo, telegramový chat nebo URL webhooku,
+  * **příjemce** je pojmenovaná skupina cílů, kterou lze použít z více rout.
+
+Jedna událost předaná příjemci se připraví pro každý jeho povolený cíl.
+Stejný cíl lze připojit k více příjemcům a cíle lze měnit bez přepisování
+rout.
+
+===== Cíle =====
+
+Seznam otevřete v
+<vpsadmin-nav id="notifications.targets.open">**Notifikace → Cíle**</vpsadmin-nav>.
+U každého cíle vidíte způsob doručení, endpoint, stav povolení a ověření.
+
+{{:cs:screenshots:vpsadmin:notifications:targets.png?900|Seznam notifikačních cílů}}
+
+Při přidání nebo úpravě cíle přes
+<vpsadmin-nav id="notifications.target-form.open">**Notifikace → Cíle →
+přidat nebo upravit cíl**</vpsadmin-nav> zvolíte jeden způsob doručení:
+
+  * **E-mail** může použít adresu účtu nebo vlastní adresu. Vlastní adresa musí být ověřena odkazem z ověřovací zprávy.
+  * **SMS** používá telefonní číslo v mezinárodním formátu E.164 a před doručováním vyžaduje ověřovací kód.
+  * **Telegram** se spáruje s konkrétním chatem pomocí jednorázového párovacího příkazu.
+  * **Webhook** odesílá JSON na veřejnou HTTP(S) URL. Volitelný tajný klíč podepisuje přesné tělo hlavičkou ''X-VpsAdmin-Signature-256''.
+
+Vypnutý, neověřený nebo nespárovaný cíl zprávy nepřijímá. Globálně vypnutý
+způsob doručení také pozastaví všechny cíle daného typu.
+
+===== Příjemci =====
+
+Příjemce vytvoříte v
+<vpsadmin-nav id="notifications.receivers.open">**Notifikace →
+Příjemci**</vpsadmin-nav>. Dejte mu název podle účelu, například
+**Pohotovost** nebo **Webhook změn prostředků**.
+
+Po otevření přes
+<vpsadmin-nav id="notifications.receiver-form.open">**Notifikace → Příjemci
+→ upravit příjemce**</vpsadmin-nav> můžete měnit jeho popis, povolení a
+připojené cíle.
+
+{{:cs:screenshots:vpsadmin:notifications:receiver.png?900|Nastavení příjemce a tabulka jeho cílů}}
+
+Vypnutí příjemce zastaví všechna doručení přes něj, aniž by bylo nutné měnit
+jednotlivé routy. Příjemce s více cíli rozvětví doručení například současně
+do e-mailu a Telegramu.
+
+Vestavěný příjemce **Ztlumit** je zvláštní: nemá doručovací endpoint a
+odpovídající událost potlačí. Používá se ve ztlumujících routách, obvykle s
+vypnutým **Pokračovat**.
+
+Pokračujte článkem [[navody:notifikace:routovani|Routování událostí]] nebo
+si vyberte praktický postup v [[navody:notifikace|přehledu notifikací]].

@@ -1,0 +1,72 @@
+<page>navody:notifikace:routovani</page>
+====== Event routing and matchers ======
+
+A **route** is a rule that decides whether an event should be passed to a
+particular receiver. It contains an event-type selection, zero or more
+matchers, a receiver, and the **Continue** behavior. Manage routes at
+<vpsadmin-nav id="notifications.routes.open">**Notifications → Routes**</vpsadmin-nav>.
+
+{{:en:screenshots:vpsadmin:notifications:routes.png?900|Basic list with one custom route and the default routes}}
+
+===== How routes are evaluated =====
+
+  - vpsAdmin starts with root routes and evaluates siblings from top to bottom.
+  - A route matches only when its event-type selection and **all** matchers match. Matchers on one route therefore use logical **AND**.
+  - After a match, active and mute intervals decide whether this route's receiver is processed. Intervals do not change whether the route matched and do not prevent its subroutes from being evaluated.
+  - Matching subroutes are evaluated after the match even when an interval skipped the parent route's receiver.
+  - **Continue: yes** permits later sibling routes at the same level. **Continue: no** stops later siblings at that level.
+
+After a parent matches, its subroutes are evaluated regardless of the
+parent's **Continue** setting. That setting controls siblings, not entry
+into the subroute branch.
+
+Default routes use the ''default_routed'' and ''roles'' fields. Custom
+routes precede them, so they can redirect or mute selected events first. A
+mute route usually uses the built-in **Mute** receiver and **Continue: no**.
+
+===== Selecting event types =====
+
+  * **Event type** selects one exact type, such as ''vps.oom_report''.
+  * **Event type pattern** uses a glob such as ''monitoring.*''.
+  * If both fields are empty, the route can match every event type.
+
+An exact-type route can use common fields and fields specific to that type.
+A pattern or catch-all route can use only common fields. Check the available
+types and fields in the [[manuals:notifications:events|event-type catalog]].
+
+===== Matchers and operators =====
+
+A **matcher** compares one event field with a value. Add it from the detail
+of a saved route. Open the form at
+<vpsadmin-nav id="notifications.matcher-form.open">**Notifications → Routes
+→ edit route → Add matcher**</vpsadmin-nav>.
+
+Available operators depend on the field's data type:
+
+^ Field type ^ Operators ^ Meaning ^
+| text | ''=='', ''!='' | equal and not equal |
+| text | ''=~'', ''!~'' | matches or does not match a regular expression |
+| text | ''=*'', ''!*'' | matches or does not match a glob; ''*'' matches a part and ''**'' matches multiple path levels |
+| integer, number, or date and time | ''=='', ''!='', ''>'', ''>='', ''<'', ''<='' | numeric or time comparison |
+| boolean | ''=='', ''!='' | compare ''true'' or ''false'' |
+| list of text or numbers | ''contains'', ''not_contains'' | list contains or does not contain an item |
+
+For example, ''cgroup =* /user.slice/**/*.scope'' selects OOM reports from
+user sessions. A second matcher, ''vps_id == 123'', restricts the same route
+to one VPS; both must match.
+
+{{:en:screenshots:vpsadmin:notifications:matcher-form.png?900|cgroup matcher form and the operator reference}}
+
+===== Testing routing =====
+
+At <vpsadmin-nav id="notifications.test-notification.open">**Notifications
+→ Test notification**</vpsadmin-nav>, choose a type and enter JSON values for
+its fields. A test uses real routing and real targets, so it can actually
+send e-mail, SMS, Telegram, or a webhook. It does not perform an underlying
+operational action such as suspending a VPS.
+
+If no enabled route prepares a delivery, the test fails and the event is
+not stored. Inspect a successful result in the Delivery history detail.
+
+See also [[manuals:notifications:targets_and_receivers|Targets and receivers]]
+and the recipes in the [[manuals:notifications|notifications overview]].

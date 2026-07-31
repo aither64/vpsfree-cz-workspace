@@ -1,0 +1,59 @@
+<page>manuals:notifications:mute_incidents</page>
+====== Ztlumení vybraných incidentních reportů ======
+
+Tento příklad ztlumí incidenty s kódovým označením ''abuse-feed'' pro VPS s ID
+''123''. Ostatní incidenty se nezmění. Použije se vestavěný příjemce
+**Ztlumit**.
+
+Nejprve si přečtěte [[navody:notifikace|přehled notifikačního systému]],
+[[navody:notifikace:udalosti|události]], [[navody:notifikace:routovani|routování]]
+a [[navody:notifikace:cile_a_prijemci|cíle a příjemce]].
+
+===== Krok 1: Určete incident =====
+
+V historii doručování otevřete odpovídající ''vps.incident_report''.
+Zkopírujte pole ''vps_id'' a ''codename''. ''codename'' je stabilní
+označení zdroje incidentu, nikoli zobrazený předmět nebo text reportu.
+
+===== Krok 2: Vytvořte ztlumující routu =====
+
+V <vpsadmin-nav id="notifications.routes.open">**Notifikace →
+Routy**</vpsadmin-nav> zvolte **Přidat routu**:
+
+^ Pole ^ Hodnota ^
+| Název | ''Ztlumit incidentní zdroj pro VPS'' |
+| Typ události | ''vps.incident_report'' |
+| Příjemce | Ztlumit |
+| Povoleno | ano |
+| Pokračovat | ne |
+
+Routu uložte.
+
+===== Krok 3: Přidejte obě podmínky =====
+
+Přidejte:
+
+^ Pole ^ Operátor ^ Hodnota ^
+| ''vps_id'' | rovná se | ''123'' |
+| ''codename'' | rovná se | ''abuse-feed'' |
+
+{{:cs:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Ztlumení incidentů podle ID VPS a kódového označení}}
+
+**Pokračovat** nechte vypnuté, aby se odpovídající incident dále nesměroval.
+
+===== Krok 4: Ověřte routu =====
+
+Vytvořte **Testovací notifikaci** typu ''vps.incident_report'':
+
+<code json>
+{
+  "subject": "Documentation incident",
+  "text": "Synthetic incident used to test routing.",
+  "codename": "abuse-feed",
+  "vps_id": 123
+}
+</code>
+
+Pokud je nová ztlumující routa první shodou a žádná jiná routa nepřipraví
+doručení, test musí oznámit, že žádná povolená routa doručení nevytvořila.
+V **Historii doručování** se takový kandidát nesmí objevit.

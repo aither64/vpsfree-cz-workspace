@@ -1,0 +1,94 @@
+===== Nginx =====
+
+Webový server Nginx [endžin iks] se vyznačuje především nízkými nároky na paměť a obecně systémové zdroje. K obsluze požadavků přistupuje asynchronně a využívá neblokující rozhraní řízené událostmi. Na rozdíl třeba od Apache tak každý další příchozí požadavek nezpůsobí forkování web serveru v paměti, aby každý požadavek dostal svůj obslužný proces. Nginx má v paměti jeden (či předem definovaný počet) worker, který obsluhuje všechny požadavky.
+
+Nginx se velmi často používá jako reverzní proxy server, který přijímá požadavky od klientů a pak je nechá vyřídit například Apache. Lze jej ale stejně dobře použít i jako samostatně stojící web server. Ostatně i tato znalostní báze běží na Nginx.
+
+==== Instalace ====
+
+Stačí nainstalovat příslušný balíček, v Debianu či Ubuntu použijte příkaz ''aptitude install nginx''.
+
+==== Konfigurace ====
+
+Základní konfigurace web serveru se provádí v souboru ''/etc/nginx/nginx.conf''. Základní volby jsou: ''user'' definuje uživatele, pod kterým Nginx běží; ''worker_processes'' určuje počet procesů Nginx, které budou vyřizovat požadavky. Pokud chcete využít více procesorových jader, nastavte vyšší počet procesů.
+
+==== Virtuální servery ====
+
+Virtuály pro jednotlivé domény/služby se definují v adresáři ''/etc/nginx/sites-available/''. Pokud chcete některý z nich zapnout, vytvořte symbolický odkaz v adresáři ''/etc/nginx/sites-enabled/''. Vzorová konfigurace virtuálu může vypadat takto:
+
+<code>
+
+# příklad přesměrování
+server {
+        listen   80; # poslouchej na ipv4
+        listen   [::]:80; # poslouchej na ipv6
+        server_name server.cz; # jméno serveru
+        rewrite ^(.*) http://www.server.cz$1 permanent; # přesměrování na adresu s www.
+}
+
+# hlavní část konfigurace
+server {
+        listen   80;
+        listen   [::]:80;
+        server_name server.cz;
+        root /var/www/server/cz; # adresář s obsahem webu
+        index index.php index.html index.htm; # pořadí načítaných souborů s indexem
+}
+</code>
+
+Toto je základní konfigurace pro statický web. Pokud jste s konfigurací spokojeni, stačí ji znovu načíst pomocí ''service nginx reload''.
+
+==== PHP ====
+
+Nginx neumí přímo interpretovat PHP, je třeba nainstalovat a spustit službu ''php5-fpm''. V adresáři ''/etc/php5/fpm/users.d/'' je třeba založit soubor s konfigurací konkrétního uživatele, pod kterým ten který PHP proces poběží. Kromě jména uživatele je také třeba zvolit, kde bude ležet socket, na který se bude Nginx připojovat.
+
+Poté stačí do konfigurace Nginx připsat deklaraci pro zpracování souborů s příponou ''.php'' pomocí FastCGI rozhraní PHP-FPM. Tuto část vložte **dovnitř sekce server** z předchozího příkladu.
+
+<code>
+        location ~ \.php$ {
+          fastcgi_pass   unix:/var/run/php5-fpm.user.sock;
+          fastcgi_index  index.php;
+          fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+          include        fastcgi_params;
+        }
+</code>
+
+==== Nginx na NixOS ====
+
+Standardní primární konfigurace nginx (z které se následně linkuje na samotné weby které si nginx spouští ze separátních konfiguračních podsouborů) vypadá přibližně takto:
+<code>
+
+#user  nobody;
+worker_processes  1;
+
+error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+
+pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /martyet/staging.config;
+
+}
+</code>
