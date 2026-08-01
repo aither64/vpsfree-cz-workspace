@@ -17706,3 +17706,175 @@ workflow and approval-gated production KB promotion.
   actions are additive, persisted routes use the already-existing nullable
   `expires_at`, rollback can read them, and no coordinated vpsAdminOS rollout
   or schema migration is required.
+
+### Aggregate CI failure correction
+
+- Final-head aggregate run `30679057740` completed after 4h15m with 113
+  successful scripts and five unexpected failures. The exact failed-attempt
+  artifact `vpsadmin-test-logs-30679057740` was downloaded and inspected before
+  any rerun.
+- Four failures were stale integration contracts exposed by the completed Event
+  redesign:
+  - `alerts/notification-routing` still expected an inactive-only route to
+    persist a suppressed Event, although delivery-only persistence deliberately
+    returns `nil` and creates no Event, delivery, or route-match rows;
+  - `storage/snapshot-download-full-archive` and `tx/chain-lifecycle` still
+    expected one transaction, although deferred result events now append a
+    `Transactions::Utils::NoOp` completion marker;
+  - `webui#navigation-readonly` eagerly walked four parents from its packaged
+    Nix-store spec and attempted to read `/VERSION` before Playwright could run.
+- Focused correction commits
+  `ca6313b84e30cc4c093b4f819569ae82baaae60f`,
+  `39dbf49e37d6617b1d15f3fa855aca4b72d9ec1f`, and
+  `24aa8f16ebffe83b6664a0de8b5b471046a883df` update those assertions and pass
+  the WebUI version from deployed `/etc/vpsadmin/build-info.json` alongside its
+  revision. The commits are test-only and do not alter the deployable
+  API/WebUI implementation, schema, protocol, generated clients, capture
+  contract, or configuration pins.
+- The fifth failure,
+  `storage/vps-hard-delete-complex-history-with-descendants`, never entered its
+  test script. Its isolated log shows Nix evaluation aborting because runner
+  store path
+  `/nix/store/j9a4dmn75vxc97v2qbnpinn2a5i272fg-wxwidgets-3.2.11.drv`
+  did not exist. The unchanged scenario subsequently evaluated all closures,
+  booted three VMs, and passed its complete descendant/backup graph in 1062.98
+  seconds, isolating the failed attempt to self-hosted runner store state.
+- Local integration verification after the corrections:
+  - `alerts/notification-routing`: both examples passed;
+  - `storage/snapshot-download-full-archive`: passed with the expected download
+    plus completion-marker transaction sequence;
+  - `webui#navigation-readonly`: packaged Playwright passed from the Nix store
+    in 194.49 seconds;
+  - the unchanged complex hard-delete scenario passed as described above;
+  - the first `tx/chain-lifecycle` attempt proved the two-transaction chain
+    reached done/progress 2 but exposed a JSON boolean assertion mismatch; after
+    correcting `true` versus integer `1`, the exact rerun passed all five
+    examples and VM teardown in 643.99 seconds.
+- `nixfmt --check`, JavaScript syntax, `git diff --check`, and the installed
+  Overcommit pre-commit suite pass on the committed corrections. The mandatory
+  standalone review found the correction content sound and required only that
+  the original combined commit be split into the three focused commits above.
+  Follow-up review confirmed the split is byte-for-byte equivalent and left no
+  blocking, important, or advisory findings. Residual risk is replacement
+  aggregate CI and possible recurrence of the self-hosted runner's missing Nix
+  store path.
+
+### Unified test-framework interruption support
+
+- While replacement vpsAdmin aggregate run `30690908685` was still executing,
+  its periodic output showed that the suite had already accumulated unexpected
+  results. Normal GitHub Actions cancellation would preserve streamed console
+  output but the existing `if: failure()` artifact steps would not reliably
+  upload runner-local per-test logs for a canceled run.
+- Inventory of every default-branch repository in `repos/*.git` found six
+  framework-backed workflows in five repositories:
+  - `vpsadminos`: `.github/workflows/ci.yml` and
+    `.github/workflows/image-scripts.yml`;
+  - `vpsadmin`: `.github/workflows/ci.yml`;
+  - `confctl`: `.github/workflows/tests.yml`;
+  - `terraform-provider-vpsadmin` and `vpsfree-irc-bot`:
+    `.github/workflows/integration-tests.yml`.
+- Added or activated initiative worktrees and branches:
+  - `vpsadminos` at base
+    `fe197867307c5499451edc31aec69116f2ab5b5f`;
+  - `vpsadmin` at reviewed correction head
+    `24aa8f16ebffe83b6664a0de8b5b471046a883df`;
+  - `confctl` at base `7bee58a52372b95c2198ce3f2a719807a3c2c66b`;
+  - `terraform-provider-vpsadmin` at base
+    `1daa01ab113295e2e0e47d75843150aba0801496`;
+  - `vpsfree-irc-bot` at base
+    `565c4b4e99c7b6b6daf8b0a9768b9b3796611247`.
+  All use branch `2026-06-15-vpsadmin-events` and SSH remotes.
+- Committed implementation:
+  - `vpsadminos` runner diagnostics:
+    `223a844fba7f8751a52d44e78f214fcb73469a2b`;
+  - `vpsadminos` workflow behavior:
+    `65b9a688fb375ae92d2bf22e7c21ddaaabbc777a`, followed by
+    checkout update `3aa11f8303b9443f7bfddc90ac474b810b614bd3` and independent
+    shell-quoting cleanup `4db13a5fd05330916c0b7d0334d754f565d59d53`;
+  - `vpsadmin` workflow behavior:
+    `ebb34091365ddeef02129a633755ee163373949a`, followed by
+    checkout update `a1ab297dd62d9444efcb7b83d3c32c12717385f5`;
+  - `confctl` workflow behavior:
+    `e2f4b5cc5d35bf91203e9ae66f9c77329f90727d`, followed by
+    checkout update `ffba1878ffdf8b5ea3fd510c0b65d9f90216b2c1`;
+  - `terraform-provider-vpsadmin` workflow behavior:
+    `0967c545eb685d2d687b2cf582acfb957fb303b9`, followed by
+    checkout update `b3ee78660c1b815608a44f59a55c60457f72d3da`;
+  - `vpsfree-irc-bot` workflow behavior:
+    `1d6c831a06a65d053141b1b4e21e71dd8037dde3`, followed by
+    checkout update `b66f8843420db1cccba196aefd2d205c822afba7`.
+- The implementation provides the following behavior:
+  - periodic test-runner status retains its aggregate counts and now lists the
+    exact unexpectedly failed and unexpectedly successful script paths;
+  - the existing `--stop-on-failure` switch remains disabled by default and is
+    documented accurately as stopping new scheduling after an unexpected
+    result while already-running tests finish;
+  - all six workflows retain exhaustive behavior by default and expose the
+    switch only as a false-by-default manual-dispatch input;
+  - failed or normally canceled runs upload full logs immediately after the
+    runner step, before evaluation and summary; vpsAdminOS image CI now reuses
+    the same local evaluation/upload actions as the main suite;
+  - touched workflows use the latest official `actions/checkout@v7`, verified
+    against upstream release `v7.0.1` on 2026-08-01.
+- Quick verification:
+  - test-runner RSpec: 151 examples, zero failures;
+  - focused RuboCop: three changed Ruby files, no offenses;
+  - Actionlint 1.7.12 plus ShellCheck passed all six workflows before and
+    after the commits;
+  - Overcommit pre-commit suites passed in `vpsadminos`, `vpsadmin`, `confctl`,
+    and `vpsfree-irc-bot`; the Terraform provider declares no hook framework;
+  - `git diff --check` passed in all five worktrees.
+- Two incorrect initial RSpec invocations were corrected using the existing
+  durable note `notes/vpsadminos/2026-07-04-test-runner-rspec-local.md`: runner
+  specs need `-Itest-runner/spec` from the repository root and `TMPDIR=/tmp` for
+  CLI default-path expectations. The IRC bot shell also requires
+  `bundle exec overcommit`; the reusable workaround is recorded in
+  `notes/vpsfree-irc-bot/2026-08-01-overcommit-via-bundle.md`.
+- The mandatory standalone review found two Blocking issues in the initial
+  vpsAdminOS history. Mixed per-script expectations were classified by their
+  enclosing test result, which could put an unexpectedly successful script
+  under the failed heading. The runner now partitions paths by each real script
+  result and a mixed-result regression is included; the complete runner suite
+  passes with 152 examples. The image workflow also contained two independent
+  shell-redirection quoting fixes in the interruption commit; those are now the
+  separate `4db13a5fd` cleanup above. Actionlint plus ShellCheck and repository
+  hooks pass after both corrections. The same standalone reviewer confirmed
+  both Blocking findings are resolved; range-diff showed the workflow behavior
+  and checkout updates otherwise unchanged. No Blocking, Important, or
+  Advisory findings remain. Residual validation is the live GitHub
+  cancellation/artifact path and the pending exact consumer lock graph.
+- Consumer input pins still reference older vpsAdminOS revisions. The reviewed
+  vpsAdminOS tooling commit must be published first; `vpsadmin` and `confctl`
+  then update their direct `vpsadminos` locks through documented Nix commands.
+  `terraform-provider-vpsadmin` and `vpsfree-irc-bot` declare
+  `vpsadminos.follows = "vpsadmin/vpsadminos"`, so they must update their
+  `vpsadmin` inputs to the resulting vpsAdmin head instead. Every lock update
+  remains a separate dependency-only commit.
+- Published `vpsadminos` head
+  `4db13a5fd05330916c0b7d0334d754f565d59d53`. Exact dependency commits are:
+  - `vpsadmin` `e5e3cf168d19a0740678fd03d2060f25d93f91fe`, generated by
+    `tools/update_vpsadminos_flake.sh`, directly pins vpsAdminOS `4db13a5fd`;
+  - `confctl` `022d1888ba9988ab90166732c7830ad573cc37fb`
+    directly pins vpsAdminOS `4db13a5fd`;
+  - `terraform-provider-vpsadmin`
+    `fd08890cac391144a4a735ed6c442d97d2a88603` and
+    `vpsfree-irc-bot` `7e2a734d041717c30cd92d653e9a9e06f2b7683c`
+    pin vpsAdmin `e5e3cf168`; both resolved lock graphs inherit vpsAdminOS
+    `4db13a5fd` exactly.
+- Each dependency commit changes only `flake.lock`. All four consumer wrappers
+  successfully built and launched the pinned runner with `--help`; the command
+  help exposes the reviewed opt-in stop-on-failure description. Final narrow
+  lock-graph review approved every dependency commit with no findings. It
+  confirmed that only the expected vpsAdmin/vpsAdminOS revisions and their
+  matching `nixpkgs_2`/`nixpkgsUnstable` transitive locks changed; no topology,
+  root-input, or unrelated dependency change occurred.
+- vpsAdminOS exact-head CI started as run `30695881654`; exact-head RSpec,
+  RuboCop, and the image-script workflow already passed. vpsAdmin exact-head CI
+  started as run `30695959564`; WebUI PHPUnit, i18n health, and client specs
+  already passed while aggregate CI and libnodectld specs continue.
+- Superseded aggregate run `30690908685` remains intentionally running despite
+  the newer branch head: its old workflow cannot upload full per-test artifacts
+  on cancellation, and the user explicitly requested the completed artifact for
+  root-cause investigation. New workflow runs use the cancellation-safe upload
+  order.

@@ -3289,3 +3289,50 @@ Compatibility:
   cluster, or the already reviewed WebUI/KB capture contract;
 - no capture regeneration, database reset, or development-cluster redeployment
   is required for a test-only correction.
+
+## Aggregate CI early-failure feedback
+
+Requested on 2026-08-01 while investigating the replacement aggregate run.
+
+Affected repositories:
+
+- `vpsadminos`: improve periodic test-runner status output so it names test
+  scripts with unexpected results, clarify the existing opt-in stop-on-failure
+  behavior, and align both framework-backed workflows;
+- `vpsadmin`, `confctl`, `terraform-provider-vpsadmin`, and
+  `vpsfree-irc-bot`: make cancellation upload runner logs and expose the
+  existing stop-on-failure mode as an opt-in manual-workflow input.
+
+Approach:
+
+- keep normal push, pull-request, schedule, and manual CI exhaustive by
+  default across every repository that uses the framework;
+- retain the existing `--stop-on-failure` runner switch as an explicit
+  development choice that stops scheduling new tests only after an unexpected
+  failure or unexpected success;
+- include the unexpected script paths in every periodic failed-suite status so
+  a developer or monitoring agent can decide to cancel without waiting for the
+  final aggregate summary;
+- use the same explicit manual input and runner argument handling in all
+  framework-backed workflows;
+- run cancellation log upload before result evaluation in every workflow and
+  guard it for both failure and cancellation, preserving runner-local per-test
+  evidence after a normal GitHub Actions cancellation;
+- add focused runner specs and workflow syntax/selection checks, commit both
+  repositories, run mandatory fresh-context review, then validate the behavior
+  in GitHub Actions.
+
+Compatibility and deployment:
+
+- the runner output is additive and its existing final summary remains
+  unchanged, so consumers that parse the final counts remain compatible;
+- the new workflow input defaults to false and therefore does not change
+  exhaustive CI behavior unless a developer opts in;
+- no schema, API, protocol, persistent-state, node rollout, or WebUI/KB change
+  is involved;
+- `vpsadmin` and `confctl` must pin the reviewed vpsAdminOS test-runner
+  revision before the enhanced status appears in their CI. The Terraform
+  provider and IRC bot inherit `vpsadminos` through their `vpsadmin` input, so
+  they must instead pin the resulting vpsAdmin revision. Runtime nodes do not
+  need coordinated updates because the changed component is development and
+  CI tooling.
