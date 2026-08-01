@@ -3318,9 +3318,45 @@ Approach:
 - run cancellation log upload before result evaluation in every workflow and
   guard it for both failure and cancellation, preserving runner-local per-test
   evidence after a normal GitHub Actions cancellation;
+- clear the dedicated test-runner state directory in a separate identified
+  preparation step before each framework-backed workflow; derive the directory
+  from the GitHub repository ID, run ID, and attempt so jobs from different
+  repositories on one shared runner, as well as sequential and overlapping
+  attempts, cannot share evidence; publish results only when preparation
+  succeeded and the test step started;
+- remove an isolated state directory after a successful runner, a skipped
+  runner, or a successful failure/cancellation artifact upload; retain it when
+  both the runner and artifact upload fail so operators still have a local
+  recovery path without allowing another run to consume that directory;
+- implement directory derivation, stale-state removal, validation, export, and
+  outcome-aware cleanup once as vpsAdminOS composite actions. Every framework
+  consumer calls those actions instead of duplicating path construction and
+  shell deletion, and pins the complete shared action set to one exact
+  vpsAdminOS revision;
 - add focused runner specs and workflow syntax/selection checks, commit both
   repositories, run mandatory fresh-context review, then validate the behavior
   in GitHub Actions.
+
+The first exact-head vpsAdminOS run identified `kernel/module-autoload` as an
+unexpected failure. Its assertion found the expected module-wrapper record and
+then copied the complete `/var/log/messages`. The newline-free base64 response
+stalled mid-frame after 227,328 encoded bytes and hit the 15-minute command
+timeout; the exact lower-level reason for the transport stall is not proven.
+Replace that unbounded diagnostic capture with one bounded fixed-string match
+that includes both the `kernel.modprobe` logger and expected payload, then run
+the isolated integration test before accepting a rerun.
+
+The first live cancellation proved that GitHub runs the upload, evaluation, and
+summary steps after interrupting the runner, but its artifact also demonstrated
+why the historical global `/tmp/os-test-runner` is unsafe: it contained logs
+from jobs completed hours before the canceled job started. Every workflow must
+pass its run-specific state directory to the runner and to artifact/summary
+actions; cleanup and guards alone are insufficient evidence isolation.
+
+While validating every framework consumer, the IRC integration suite exposed a
+separate stale fixture contract. Security-advisory publication now requires the
+reviewed content revision, so the fixture must pass its current revision before
+testing the IRC announcement and dependent update path.
 
 Compatibility and deployment:
 
@@ -3335,4 +3371,7 @@ Compatibility and deployment:
   provider and IRC bot inherit `vpsadminos` through their `vpsadmin` input, so
   they must instead pin the resulting vpsAdmin revision. Runtime nodes do not
   need coordinated updates because the changed component is development and
-  CI tooling.
+  CI tooling;
+- the shared actions must be published in vpsAdminOS before consumer workflow
+  heads can execute. Consumer workflows use an immutable action revision, so
+  they remain valid independently of later changes to the `staging` branch.

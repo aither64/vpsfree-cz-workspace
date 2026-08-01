@@ -17878,3 +17878,136 @@ workflow and approval-gated production KB promotion.
   on cancellation, and the user explicitly requested the completed artifact for
   root-cause investigation. New workflow runs use the cancellation-safe upload
   order.
+- vpsAdminOS exact-head CI run `30695881654` completed with 74 successful
+  scripts and one unexpected failure. The enhanced periodic status named
+  `kernel/module-autoload` immediately, and artifact
+  `os-test-logs-30695881654` (artifact ID `8817819974`, 34,153,146 bytes) was
+  uploaded successfully after the runner failed.
+- Inspection of that exact test log found the expected
+  `kernel.modprobe: action=deny bonding` record at 13:06:40. The subsequent
+  `cat /var/log/messages` transfer stalled mid-frame after 227,328 base64 bytes
+  representing 170,496 decoded bytes and 1,510 lines, then hit the VM shell's
+  15-minute timeout at 13:21:46. The buffer ends mid-line; the exact lower-level
+  transport cause is unproven. The test did not expose a kernel
+  module-autoload failure; its unnecessary unbounded diagnostic read caused the
+  timeout path.
+- vpsAdminOS commit `358c8eada` replaces the two-pass full-log capture with a
+  bounded `grep -F -m 1` for the logger and expected payload. Final workflow
+  commit `fc7ae4031` assigns a repository/run/attempt-specific state directory
+  and prepares it in a separate step before both vpsAdminOS workflows;
+  vpsAdmin workflow commit `6cb92c6b8` does the same before aggregate CI.
+  Post-run upload, evaluation, and summary require both a successful
+  preparation step and a started test step, and consume only that isolated
+  directory. Cleanup removes state after runner success/skip or a successful
+  artifact upload, while a runner failure/cancellation combined with an upload
+  failure retains the isolated directory for manual recovery.
+- The first mandatory review found no Blocking or Advisory issues and two
+  Important issues: the original rationale overstated why the full-log transfer
+  stalled, and interruption during in-step cleanup could still expose stale
+  logs. The evidence wording and vpsAdminOS/vpsAdmin commits were amended.
+  Final confctl commit `a10342a`, Terraform-provider commit `5ceeefc`, and
+  IRC-bot workflow commit `14bb4d7` use the same repository/run/attempt-
+  specific, identified, guarded preparation and cleanup pattern.
+- `nixfmt --check`, Actionlint with ShellCheck, `git diff --check`, and the
+  active vpsAdminOS/vpsAdmin pre-commit hooks pass for these follow-ups. The
+  first vpsAdminOS commit attempt correctly stopped when ambient `nixfmt` was
+  unavailable; it was rerun through the repository Nix shell with hooks active.
+  The confctl and IRC-bot hooks also pass; the Terraform provider declares no
+  hook framework.
+- Mandatory follow-up review of the bounded assertion and preparation guards
+  found no remaining Blocking, Important, or Advisory issues. The isolated
+  `kernel/module-autoload` scenario then passed all 16 examples and teardown in
+  620.95 seconds; the previously failing logger assertion passed in 0.63
+  seconds instead of timing out after roughly 906 seconds.
+- Superseded vpsAdmin run `30695959564` was canceled during its runner step.
+  Its `Upload full test logs`, evaluation, and summary steps all completed
+  successfully, producing artifact `vpsadmin-test-logs-30695959564` (ID
+  `8818308278`, 32,829,733 bytes). This proves the cancellation control flow,
+  but the downloaded artifact contained logs timestamped hours before the job
+  began because that published revision still used the historical global state
+  directory. It therefore did not prove evidence freshness and motivated the
+  run-specific path correction above.
+- IRC run `30696155934` uploaded artifact ID `8818295179` and identified one
+  unexpected script, `vpsadmin-events`. Security advisory creation failed
+  because `SecurityAdvisory#publish!` now requires
+  `expected_content_revision`; the dependent update example consequently had
+  no advisory ID. Final IRC commit `1c8e9f4` passes the fixture's current
+  revision, matching vpsAdmin's model and WebUI fixtures.
+- Actionlint with ShellCheck passes all six run-specific workflow definitions;
+  `nixfmt --check`, `git diff --check`, and all declared repository hooks pass.
+  Fresh standalone review approved the exact workflow/test corrections with no
+  Blocking, Important, or Advisory findings. It verified the cleanup truth
+  table and that repository ID closes the cross-repository collision gap on a
+  shared runner. The final dependency commits are `ccc6bde36` in vpsAdmin and
+  `8cdd043` in confctl, both pinning vpsAdminOS `fc7ae4031`, plus `d72d87f` in
+  the Terraform provider and `c30c6c6` in the IRC bot, both pinning vpsAdmin
+  `6cb92c6b8` and transitively the same vpsAdminOS revision. All lock commits
+  remain separate and lock-only.
+- Published final repository heads are vpsAdminOS `fc7ae4031`, vpsAdmin
+  `6cb92c6b8`, confctl `a10342a`, Terraform provider `5ceeefc`, and IRC bot
+  `1c8e9f4`. Superseded queued or running attempts were canceled after each
+  force-push; original vpsAdmin aggregate run `30690908685` remains untouched
+  because its historical workflow would lose per-test artifacts on
+  cancellation.
+- Focused final IRC verification ran `vpsadmin-events` against IRC head
+  `1c8e9f4` and its pinned vpsAdmin/vpsAdminOS graph. All seven examples passed,
+  including security-advisory creation and update announcements, and the test
+  completed teardown successfully in 701.17 seconds. The isolated temporary
+  state directory was then removed to reclaim its VM images.
+- Exact-head confctl run `30700202322` passed its exhaustive test selection.
+  Preparation, the runner, evaluation, summary, and final test-state cleanup
+  all succeeded; the failure-only upload correctly remained skipped. RuboCop
+  run `30700202343` and RSpec run `30700202351` also passed.
+- User follow-up moved stale-state handling out of consumer-specific shell.
+  vpsAdminOS commit `c2c071c0f` adds shared `prepare-test-state` and
+  `cleanup-test-state` composite actions. Preparation derives the state path
+  from repository ID, run ID, and attempt, validates all identifiers, removes
+  any stale instance of that exact path, recreates it privately, and exports it
+  as both a step output and `TEST_RUNNER_STATE_DIR`. Cleanup verifies ownership
+  of the exact derived path and centralizes the reviewed outcome truth table.
+- Both vpsAdminOS workflows now call the local shared actions. All four remote
+  consumers call the same actions and pin the complete upload/evaluate/
+  summarize/lifecycle action set to immutable vpsAdminOS revision
+  `c2c071c0f3680991f03309d095b599b6dad9405e`; no consumer constructs or
+  deletes the state path itself.
+- Current committed heads for mandatory review are vpsAdminOS `c2c071c0f`,
+  vpsAdmin `9ce01bd8a`, confctl `939c6c4`, Terraform provider `4b394f5`, and IRC
+  bot `8a11f77`. vpsAdmin and confctl lock vpsAdminOS `c2c071c0f`; provider and
+  IRC lock vpsAdmin `9ce01bd8a` and transitively the same vpsAdminOS revision.
+- Quick verification for the shared lifecycle passes: 11 focused lifecycle
+  examples and the complete 163-example test-runner suite; Actionlint with
+  ShellCheck for all six workflows; direct ShellCheck for both action scripts;
+  `git diff --check`; and every declared repository hook. The lifecycle specs
+  cover stale replacement, identifier/path deletion guards, success/skip
+  cleanup, successful-upload cleanup after failure/cancellation, and retention
+  when failure evidence was not uploaded.
+- Live cancellation freshness is now verified with the immediately preceding
+  inline implementation. Superseded vpsAdminOS run `30700067574` and vpsAdmin
+  run `30700153582` were canceled inside their runner steps; upload, evaluation,
+  summary, and cleanup all succeeded. Artifacts `os-test-logs-30700067574`
+  (ID `8819259342`) and `vpsadmin-test-logs-30700153582` (ID `8819259804`)
+  contain 75/40 test directories respectively. Their internal runner timestamp
+  windows begin after each current job's preparation (`15:03:45` and
+  `14:48:54` CEST) and end immediately before cancellation (`15:47:47` and
+  `15:48:29`), proving that the isolated artifacts contain current-attempt data
+  rather than the older global-directory logs seen in the first cancellation.
+  The downloaded temporary copies were removed after inspection; the GitHub
+  artifacts remain retained and recoverable.
+- The mandatory fresh-context review approved vpsAdminOS `c2c071c0f`, vpsAdmin
+  `9ce01bd8a`, confctl `939c6c4`, Terraform provider `4b394f5`, and IRC bot
+  `8a11f77` with no Blocking, Important, or Advisory findings. It independently
+  verified deletion guards, `0700` preparation, GitHub step outcomes and
+  cancellation expressions, the centralized truth table, uniform use in all
+  six workflows, immutable action refs, range-diffs, and direct/transitive lock
+  pins. Residual validation is one live cancellation through the new composite
+  wrappers. The path key intentionally supports one framework-backed test job
+  per workflow attempt, which all six current workflows satisfy.
+- Direct shared-composite cancellation validation passed on final provider head
+  `4b394f5` in run `30702892971`. The new shared preparation action succeeded,
+  the runner was canceled during evaluation, artifact upload/evaluation/summary
+  all succeeded, and the new shared cleanup action succeeded. Artifact
+  `terraform-provider-vpsadmin-test-logs-30702892971` (ID `8819399242`)
+  contains exactly one current evaluation directory and its active Nix build
+  log, with no unrelated test directories. The downloaded temporary copy was
+  removed after inspection; the GitHub artifact remains available. The same
+  exact-head run is rerun exhaustively after this deliberate validation.
