@@ -17590,7 +17590,7 @@ workflow and approval-gated production KB promotion.
   generated paths, including the two actions; `CGO_ENABLED=0 go build ./...`
   and `go test ./...` pass.
 - The capture contract is committed and pushed at
-  `8b655e270609376092f7a136a63ec67e0baf27ba`, pinned to exact vpsAdmin head
+  `9d032499c61f794c1ad3a5a24bd87ffc85761c3c`, pinned to exact vpsAdmin head
   `ddbcdb2d1b14ef9672b90a747356c5a30bb83f94`. Deterministic report-only
   fixtures create real VPS-linked reports without optional plugins, and four
   new Czech/English composer images show the server-derived values and owner.
@@ -17602,6 +17602,10 @@ workflow and approval-gated production KB promotion.
   cluster was reset once to discard stale VM state, recaptured on the final
   source, stopped, and had its GC root removed. One stale failed-capture Node
   process was terminated by exact PID.
+- Before mandatory review, the two capture commits were consolidated into the
+  single final commit above so the branch no longer records an obsolete
+  intermediate vpsAdmin pin. The rewritten branch was force-pushed with an
+  explicit lease.
 - A fresh immutable production inventory was fetched to
   `kb-sources-mute-shortcuts` (126 Czech and 80 English pages). The rebuilt
   `kb-candidates-mute-shortcuts` contains 22 changed pages, 20 guarded new
