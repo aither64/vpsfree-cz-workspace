@@ -17551,7 +17551,7 @@ workflow and approval-gated production KB promotion.
     OOM/incident mute-route actions, expiration mutation, `mute_url` template
     context, fallback template links, endpoint inventory entries, and API/model
     coverage;
-  - `ddbcdb2d1` (`webui: compose mute routes from reports`) adds non-mutating
+  - `08ba0a4dc` (`webui: compose mute routes from reports`) adds non-mutating
     review forms, contextual owners, selected/default matchers, expiry presets,
     sidebar shortcuts, route-expiration editing/status, translations, and
     WebUI/browser coverage.
@@ -17590,8 +17590,8 @@ workflow and approval-gated production KB promotion.
   generated paths, including the two actions; `CGO_ENABLED=0 go build ./...`
   and `go test ./...` pass.
 - The capture contract is committed and pushed at
-  `9d032499c61f794c1ad3a5a24bd87ffc85761c3c`, pinned to exact vpsAdmin head
-  `ddbcdb2d1b14ef9672b90a747356c5a30bb83f94`. Deterministic report-only
+  `ca787d009f352e32c54088fbae76c53a5c174b32`, pinned to exact vpsAdmin head
+  `08ba0a4dccbf46feef3840120da0e7bd18d5dc36`. Deterministic report-only
   fixtures create real VPS-linked reports without optional plugins, and four
   new Czech/English composer images show the server-derived values and owner.
   The final visual inspection confirms both incident images show `test-user1`.
@@ -17614,8 +17614,8 @@ workflow and approval-gated production KB promotion.
   `kb-release-mute-shortcuts-{cs,en}.yml` manifests each contain 11 pages and
   31 media objects with informative production summaries.
 - Deployment pins were generated only through `confctl` and pushed:
-  - `2b3dd3a7` sets `vpsadminServices` to `ddbcdb2d1`;
-  - `e573d2c6` sets `vpsfreeNotificationTemplates` to `6dda345a`.
+  - `d351d71f` sets `vpsadminServices` to `08ba0a4d`;
+  - `8defe258` sets `vpsfreeNotificationTemplates` to `6dda345a`.
   Their Overcommit suites passed, and
   `confctl build -y cz.vpsfree/vpsadmin/int.api1` successfully built all 146
   derivations with both exact revisions. Generated `.bin` and `.bundle`
@@ -17626,7 +17626,23 @@ workflow and approval-gated production KB promotion.
   `mute_url`. Existing route rows need no conversion, expired routes simply
   stop matching, old code ignores the nullable field on rollback, and the Go
   client additions are backward compatible.
-- Mandatory fresh-context change review, long browser integration testing,
+- Reviewer verification of the corrections, long browser integration testing,
   final-head CI monitoring, and replacement of the session-owned staging KB
   bundle are still pending. No production wiki write has been performed or
   approved.
+- The mandatory fresh-context review reported one blocking and two important
+  WebUI findings: incident owner choices used the current VPS owner instead of
+  the report account after a transfer, `+1 month` overflowed at month end, and
+  malformed custom expiry text could be reparsed fatally while rendering its
+  validation error. All three were fixed in amended commit `08ba0a4dc`.
+- Added regressions cover an administrator composing and creating a route when
+  `incident.user != incident.vps.user`, invalid custom-expiry POST rerendering,
+  January month-end clamping including a leap year, and local wall-clock time
+  across the Europe/Amsterdam DST transition. Focused PHPUnit now passes 28
+  tests and 353 assertions; PHP syntax, PHP CS Fixer, JavaScript syntax,
+  `nixfmt`, the complete capture contract, and repository hooks are green.
+- The old `ddbcdb2d1` aggregate CI run was canceled after the corrected head
+  was force-pushed. The capture and configuration histories were regenerated
+  from their pre-feature bases so no obsolete intermediate source or input pin
+  remains. The same reviewer is being asked to verify the corrections before
+  long integration testing.
