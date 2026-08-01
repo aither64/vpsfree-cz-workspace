@@ -17646,3 +17646,63 @@ workflow and approval-gated production KB promotion.
   from their pre-feature bases so no obsolete intermediate source or input pin
   remains. The same reviewer is being asked to verify the corrections before
   long integration testing.
+
+### Final report-muting checkpoint
+
+- The same standalone mandatory reviewer rechecked the corrected implementation
+  and reported no Blocking or Important findings. It independently reran the
+  focused WebUI suite (28 tests, 353 assertions) and verified the exact
+  downstream pins.
+- Final pushed heads are:
+  - `vpsadmin`: `ebe4b071b0426a085b8b78e65f3147d0e1f17c71`, consisting of API
+    commit `8ef07f147bc6558f174f7661f773fc55978edef1` and the amended WebUI
+    commit `ebe4b071b`;
+  - `vpsfree-notification-templates`:
+    `6dda345aa47dba418d4f434cb9cd7ef5be08e465`;
+  - `vpsadmin-go-client`: `cbb8285e9493da1dd49ca84d51985e05944147d2`;
+  - `vpsadmin-kb-captures`: `e65815e`, pinned to exact vpsAdmin head
+    `ebe4b071b`;
+  - `vpsfree-cz-configuration`: `6fe42a71`, with generated commit `4ce935bb`
+    pinning `vpsadminServices` to `ebe4b071b` and generated commit `6fe42a71`
+    pinning `vpsfreeNotificationTemplates` to `6dda345a`.
+- The long `webui#support-pages` integration scenario was run to completion
+  after every inspected correction. The first two attempts exposed stale
+  shared-page expectations for renamed notification navigation, a duplicated
+  documentation landmark, and the delivery table's `Group` column. The third
+  attempt passed all four new report-muting flows and 11 of 12 Playwright
+  tests, then identified the same missing `Group` expectation in the delivery
+  log. After that artifact was inspected and corrected, the final run passed
+  all 12 Playwright tests and VM teardown: one script successful in 1415.51
+  seconds.
+- Final quick and integration verification is green:
+  - the complete vpsAdmin Overcommit suite, PHP and JavaScript syntax, PHP CS
+    Fixer, Nix formatting, and focused WebUI/API tests;
+  - managed-template rendering/checks for all 674 files;
+  - Go client build and tests;
+  - capture validation with 58 controls, 44 paths, 61 concepts, 34 selectors,
+    135 bindings, 9 exceptions, 17 test runs/69 assertions, and all 180 PNGs;
+  - `confctl build -y cz.vpsfree/vpsadmin/int.api1`, which successfully built
+    all 145 derivations from the final source/template pins.
+- Exact-head GitHub WebUI PHPUnit run `30679057732` and i18n health run
+  `30679057763` passed. Aggregate CI run `30679057740` is still running its
+  selected integration tests at this checkpoint. The still-running aggregate
+  job for superseded head `35f0c4550` was canceled; completed jobs were kept.
+- The session-owned KB staging mirror was reset from current production at
+  `2026-08-01T02:32:52Z`. Both final manifests staged 11 pages and 31 media
+  objects, warmed all 11 language pairs, and passed exact Czech and English
+  verification. Render checks confirmed the OOM and incident pages, all four
+  composer images with PNG/HTTP 200 responses, and correct bidirectional
+  language links:
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace/ztlumeni_oom`;
+  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/notifikace/ztlumeni_incidentu`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications/mute_oom`;
+  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/notifications/mute_incidents`.
+- The current pending record names the English manifest with SHA-256
+  `ea7ab963e5353ddab8fe17f25afeab74f8e6da548925e6bc981995f2dad468ea`;
+  both language bundles remain installed and verified in staging. No
+  production KB write has been performed or approved.
+- Compatibility and ordering remain as planned: deploy the updated API before
+  or with the WebUI, then deploy managed templates. The new client fields and
+  actions are additive, persisted routes use the already-existing nullable
+  `expires_at`, rollback can read them, and no coordinated vpsAdminOS rollout
+  or schema migration is required.
