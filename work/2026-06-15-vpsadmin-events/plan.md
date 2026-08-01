@@ -3358,6 +3358,26 @@ separate stale fixture contract. Security-advisory publication now requires the
 reviewed content revision, so the fixture must pass its current revision before
 testing the IRC announcement and dependent update path.
 
+The protected historical vpsAdmin aggregate must run to completion because its
+older workflow cannot preserve per-test artifacts after cancellation. Classify
+every unexpected result from that artifact and fix actionable causes before
+accepting a replacement run. Recover self-hosted-runner infrastructure failures
+centrally in vpsAdminOS: repair and retry one exact invalid Nix store path, and
+serialize initrd udev workers in framework-created NixOS test VMs to avoid the
+observed concurrent x86 module text-patching crash. Keep genuine scenario fixes
+in their owning repository, including the explicit completion assertion for the
+WebUI logout flow. Propagate the reviewed framework revision through every
+direct and transitive consumer lock before exhaustive validation.
+
+The ensuing exact-head vpsAdminOS aggregate identified the same Arch Linux
+mirror throughput failure in Docker, Podman, and Incus package installation.
+Add one explicit, bounded command-retry primitive to osvm without changing
+existing command semantics. Opt only those three idempotent Pacman setup
+commands into three attempts with fixed delays and per-attempt timeouts. Cover
+the helper and Machine forwarding with framework specs, review it independently,
+then validate all three real VM scenarios concurrently before publishing the
+final direct and transitive lock graph.
+
 Compatibility and deployment:
 
 - the runner output is additive and its existing final summary remains
@@ -3375,3 +3395,25 @@ Compatibility and deployment:
 - the shared actions must be published in vpsAdminOS before consumer workflow
   heads can execute. Consumer workflows use an immutable action revision, so
   they remain valid independently of later changes to the `staging` branch.
+- the Nix repair is bounded to one exact path and one retry; an unrepairable
+  path or a repeated build failure remains visible as a test failure. Serialized
+  udev coldplug applies only to generated test guests, not deployed machines.
+- the Arch retry primitive is additive and opt-in. Each selected test setup is
+  bounded to three 900-second attempts with two 15-second gaps; final failures
+  retain the last command's status and output. It changes no production image,
+  package source, persistent format, runtime protocol, or node deployment.
+
+## Default-branch test framework integration
+
+The final integration is tracked in
+`work/2026-08-01-test-framework-ci/{plan,state}.md`. The one-path Nix store
+repair was dropped because garbage collection can invalidate paths repeatedly;
+runner job hooks and a shared GC lock solve the lifecycle centrally instead.
+The shared framework and workflow commits were merged into every affected
+default branch, while the event feature commits remained on this initiative's
+branches.
+
+After default integration, rebase every existing
+`2026-06-15-vpsadmin-events` branch onto its repository's actual GitHub
+default. Remove framework-only commits now present on defaults, preserve the
+event-specific ranges, and regenerate exact capture and deployment pins.

@@ -18011,3 +18011,250 @@ workflow and approval-gated production KB promotion.
   log, with no unrelated test directories. The downloaded temporary copy was
   removed after inspection; the GitHub artifact remains available. The same
   exact-head run is rerun exhaustively after this deliberate validation.
+- The protected historical vpsAdmin aggregate run `30690908685` completed after
+  seven hours with artifact `vpsadmin-test-logs-30690908685` (ID `8820033173`,
+  32,311,674 bytes). Of the complete result set, exactly three tests were
+  unexpected: `dns/server-zone-lifecycle`, `user/hard-delete-cascade`, and
+  `webui`.
+- `dns/server-zone-lifecycle` did not expose a DNS defect. Its DNS guest hit
+  Linux 6.18.39 `BUG()` at `arch/x86/kernel/alternative.c:2531` in
+  `__text_poke` while initrd udev workers concurrently loaded
+  `vivaldi_fmap`, `virtio_net`, and `libata`. The storage module path never
+  completed, `/dev/disk/by-label/nixos` did not appear, and the guest entered
+  emergency mode before a test shell or DNS service could start. No other guest
+  artifact contained that kernel signature.
+- `user/hard-delete-cascade` never reached its scenario. Nix evaluation failed
+  because the self-hosted runner referenced missing store path
+  `rabbitmq-server-4.2.5-man`. This is the same invalid-store class previously
+  seen with a missing wxWidgets path, not a user-deletion assertion failure.
+- `webui#support-pages` completed the logout click but Playwright timed out
+  waiting for its implicit scheduled navigation. The logged-out state already
+  had an explicit login-button completion assertion. vpsAdmin commit
+  `184e7d2b0` uses `noWaitAfter` for that click and retains the explicit state
+  check.
+- vpsAdminOS commit `d1c53594a7f2eaa7a4a04d8ecbb9f7bd0400f6fa`
+  addresses both shared infrastructure failures. `NixCli` streams build output,
+  detects one exact invalid `/nix/store` path, runs `nix-store --repair-path`,
+  and retries the original build once only after successful repair. Generated
+  NixOS test guests receive `rd.udev.children_max=1`, serializing initrd
+  coldplug so concurrent module text patching cannot strand the root disk. This
+  parameter affects test VMs only.
+- Quick validation after those corrections passes: focused Nix CLI RSpec has
+  nine examples; the complete test-runner suite has 165 examples; RuboCop and
+  Nixfmt are clean; generated `driver/nixos` JSON contains
+  `rd.udev.children_max=1`; vpsAdmin Playwright helper syntax is valid; all four
+  consumer wrappers build and launch. The first vpsAdminOS commit attempt was
+  correctly rejected outside the Nix shell because hook tooling was absent;
+  rerunning in the repository shell passed all hooks. All vpsAdmin, confctl,
+  and IRC hooks passed; the provider declares none.
+- The exact corrected dependency graph is committed as vpsAdmin
+  `f806a6f063a17d55e044d7c2f2a4e3633c280542` (lock commit `f806a6f06`),
+  confctl `00a58bf`, Terraform provider `e82813e`, and IRC bot `503d2e5`.
+  vpsAdmin and confctl directly pin vpsAdminOS `d1c53594a`; provider and IRC pin
+  vpsAdmin `f806a6f06` and transitively resolve the same vpsAdminOS revision.
+  Every dependency commit is lock-only. The first vpsAdmin updater invocation
+  used an incorrect guessed full SHA, received GitHub 404, and changed nothing;
+  it was rerun with the exact published object ID above.
+- Before the required final review, the combined vpsAdminOS correction was
+  rewritten into two independently revertible commits: `92100f92b` repairs an
+  exact invalid Nix store path and retries once, while `fe5846452` serializes
+  initrd coldplug in generated NixOS test guests. The final vpsAdminOS head is
+  `fe584645280af6cfb2f02447a1cfa663bc6a420f`; its tree and NAR hash are
+  unchanged from the already verified combined commit.
+- The downstream lock commits were regenerated against that focused history.
+  Final published heads are vpsAdmin `40c6eb853c1c4f2c6fc06e02b9571f6fae667691`,
+  confctl `64c84c894e601ca0b78bac06f9ca6a687b5aad96`, Terraform provider
+  `c35bb8ca48f417097423aa79bafa2a1f49646ee1`, and IRC bot
+  `5619eea170908b2900c542ec8206f4ad00297c66`. vpsAdmin and confctl directly
+  resolve vpsAdminOS `fe5846452`; provider and IRC resolve vpsAdmin
+  `40c6eb853` and transitively the same vpsAdminOS revision. All five
+  worktrees are clean and use SSH remotes. All four consumer wrappers build
+  and print `--help` successfully from this final lock graph.
+- Superseded exhaustive vpsAdminOS run `30702183232`, attempt 2, completed
+  with exactly one unexpected script, `docker/arch#latest`. Artifact
+  `os-test-logs-30702183232` (ID `8820202342`) shows that `pacman -Syu` failed
+  because `mirror.vpsfree.cz` transferred Arch's
+  `binutils-2.47-1-x86_64.pkg.tar.zst` below one byte per second for ten
+  seconds. The guest and test reached package installation normally; this was
+  an external mirror throughput failure unrelated to the lifecycle, Nix store,
+  initrd, or WebUI changes. The new status output named the script while other
+  tests continued, and upload, evaluation, summary, and cleanup all ran.
+- After publishing the focused history, superseded active runs
+  `30705507286` (vpsAdminOS) and `30705671675`/`30702368002` (vpsAdmin) were
+  canceled. Their head SHAs differ from the final branch heads; all queued
+  final-head runs were left untouched.
+- The mandatory fresh-context review found one Blocking issue before long
+  tests: the initial invalid-store regex captured every syntactically valid
+  `/nix/store` mention, so an unrelated failure after ordinary `building` or
+  `copying path` output could repair an arbitrary valid path and retry. Long
+  integration testing was paused as required.
+- The detector is now anchored to Nix's explicit
+  `error: path '/nix/store/...' is not valid` diagnostic. Real streaming
+  subprocess specs prove ordinary build/copy mentions are ignored and the
+  explicit diagnostic is captured. Another regression proves a successful
+  repair followed by a failed retry remains failed with the retry's status.
+  Focused Nix CLI specs pass 12 examples, the complete runner suite passes 168
+  examples, RuboCop is clean, and repository-wide Overcommit hooks pass.
+- The reviewed correction was folded into focused vpsAdminOS commit
+  `67d7c94f9`; final vpsAdminOS head is
+  `cd82ee551f617cc04750b47076b2839c188255df`. Regenerated published heads are
+  vpsAdmin `cb80e91243469cbb5107ee1bfa86c379af4c0c31`, confctl
+  `c2997185df8ba863229590ad4293821b17fab929`, Terraform provider
+  `65d0f163f42486896ceb416791f057566750eeb5`, and IRC bot
+  `76fa054d17db5e9bdf7cb8601d9dc369ff33a8b0`. Direct and transitive lock
+  metadata resolves exactly to vpsAdmin `cb80e9124` and vpsAdminOS
+  `cd82ee551`; every worktree is clean and every consumer wrapper launches.
+- Mandatory re-review confirms the detector blocker is resolved. It verified
+  the real subprocess parsing coverage, one-path/one-retry bounds, preserved
+  repair and retry failures, focused commit split, immutable shared-action
+  refs, clean worktrees, and final direct/transitive locks. There are no
+  remaining Blocking, Important, or Advisory findings; the three historical
+  focused scenarios and final exhaustive CI are approved to proceed.
+- Superseded exhaustive runs `30705835619`, `30705917018`, `30705931607`,
+  `30705978770`, and `30705992840` were canceled after the corrected
+  force-pushes. Replacement runs on the exact final heads were left active.
+- Final focused `dns/server-zone-lifecycle` validation passed both examples
+  and teardown in 769.06 seconds. Both generated NixOS guests found and
+  checked `/dev/disk/by-label/nixos`; no `alternative.c:2531`/kernel BUG
+  signature occurred. The result marker is `expected_success`. Its isolated
+  `/tmp/vpsadmin-dns-server-zone.SGPafd` state was removed after inspection.
+- Final focused `user/hard-delete-cascade` validation passed its complete
+  credential, namespace, DNS, session, and identity cascade plus teardown in
+  819.28 seconds. Evaluation and scenario startup produced no invalid-store
+  diagnostic; the result marker is `expected_success`. Its isolated
+  `/tmp/vpsadmin-hard-delete.uLRkm6` state, including the 20 GiB node tank
+  image, was removed after inspection.
+- Final focused `webui#support-pages` validation passed all 12 Chromium tests,
+  including both user/admin incident mute composers and both user/admin OOM
+  notification-route redirects. Playwright returned status 0 after 621.07
+  seconds; the full VM test and teardown completed in 1189.32 seconds with an
+  `expected_success` marker. The isolated
+  `/tmp/vpsadmin-webui-support-pages.zGp1Ag` state was removed after
+  inspection.
+- Exact-final-head GitHub validation is fully green for confctl run
+  `30706586090`, Terraform provider run `30706616228`, and IRC bot integration
+  run `30706622082` plus IRC RSpec run `30706622078`. In every integration
+  run, shared preparation, exhaustive tests, evaluation, summary, and cleanup
+  succeeded; failure-only log upload correctly skipped. The vpsAdminOS and
+  vpsAdmin exhaustive exact-head runs remain in progress and are being
+  monitored to completion.
+- Exact-head vpsAdminOS run `30706499626` completed after 72 expected-success
+  tests and exactly two unexpected scripts: `incus/arch#latest` and
+  `podman/arch#latest`. The new five-minute status named Podman as soon as it
+  failed and then both scripts while the remaining suite continued. Artifact
+  `os-test-logs-30706499626` (ID `8821561250`) was downloaded for diagnosis;
+  upload, evaluation, summary, and centralized cleanup all executed.
+- Both Arch failures are the same external mirror throughput defect already
+  seen in `docker/arch#latest`: `mirror.vpsfree.cz` fell below one byte per
+  second for ten seconds while Pacman downloaded large packages. Incus lost
+  LLVM, Perl, Python, and Mesa; Podman lost binutils, glib2, and protobuf. The
+  containers, package resolution, and test setup otherwise reached the
+  install command normally.
+- The root fix adds an explicit, bounded `succeeds_with_retries` osvm command
+  primitive. It is opt-in, validates a positive attempt count, waits between
+  attempts, returns the first success, and raises the final command status and
+  output after exhaustion. All three Arch Docker/Podman/Incus package installs
+  use three attempts with 15-second gaps and a 900-second per-attempt timeout;
+  unrelated commands retain single-attempt semantics.
+- Quick validation for the retry change passes: focused osvm specs 33/33,
+  complete osvm specs 90/90, complete test-runner specs 168/168, focused
+  RuboCop, Nixfmt, `git diff --check`, and local-source Nix evaluation of all
+  three Arch definitions. The generic osvm shell initially selected the root
+  bundle without RSpec, then exposed that upstream Ruby cannot load the
+  vpsAdminOS-specific native extension; the authoritative checks use the
+  `.#test-runner` shell's patched `ruby_vpsadminos`, matching test runtime.
+- The bounded-retry correction is committed as vpsAdminOS
+  `75ebc3f989c93f659853168af943df71f456e9b5`. Mandatory fresh-context review
+  found no Blocking, Important, or Advisory issues. The reviewer confirmed the
+  opt-in semantics, positive attempt validation, first-success return, final
+  failure propagation, per-attempt logging, Machine forwarding, uniform Arch
+  callers, and bounded runtime. Its only residual gap is deliberately covered
+  by the ensuing live Docker, Podman, and Incus Arch VM tests.
+- The reviewed vpsAdminOS correction is published. The regenerated exact-head
+  graph is vpsAdminOS `75ebc3f989c93f659853168af943df71f456e9b5`, vpsAdmin
+  `2a3f4523f63e9b9a9443353ed1562d0ded871e72`, confctl
+  `1f178fad7471126b38b190b8f5256d856a288919`, Terraform provider
+  `7b1734b9948fa288d88b9cea9590d20ad9c45239`, and IRC bot
+  `f6bb33f90daf188034cfe481faf25f12c05f62d5`. All worktrees are clean and
+  match their remote branches. Direct vpsAdmin/confctl locks and transitive
+  provider/IRC locks resolve exactly to the new vpsAdminOS head; provider and
+  IRC resolve exactly to the new vpsAdmin head.
+- Superseded vpsAdmin aggregate run `30706580781` was canceled only after the
+  replacement head was published. All other active branch runs belonged to
+  the exact new heads and were left running.
+- Concurrent live `podman/arch#latest` and `incus/arch#latest` VM validation
+  passed on the reviewed framework head. Podman's script passed in 626.59
+  seconds and its full test/teardown in 693.98 seconds; Incus passed in 690.83
+  and 758.67 seconds respectively. Both produced `expected_success`, including
+  Pacman installation and runtime assertions. Their exact isolated state
+  directories were removed after inspection. Docker remains in its independent
+  post-install scenario validation.
+- Concurrent live `docker/arch#latest` validation also passed: the script took
+  880.06 seconds and the full test/teardown 946.50 seconds. Docker's Pacman
+  install completed under the same load as Podman and Incus, followed by all
+  image-build, cgroup/resource-limit, and large-image assertions. Its result
+  marker is `expected_success`; its exact isolated state directory was removed.
+  All three Arch consumers of the new bounded-retry primitive therefore pass
+  real end-to-end VM validation concurrently.
+- Local downloads of failed-run artifacts for vpsAdminOS run `30706499626`
+  and vpsAdmin run `30690908685` were removed after the diagnoses and fixes
+  were verified. The corresponding GitHub artifacts remain retained remotely.
+- Final exact-head confctl run `30710961820` completed successfully. Shared
+  preparation, exhaustive tests, evaluation, summary, centralized cleanup, and
+  the repository's Nix-gcroot cleanup all succeeded; failure-only log upload
+  correctly skipped. Provider integration began when its runner was released.
+- Final exact-head Terraform provider run `30711004540` completed
+  successfully. Shared preparation, exhaustive integration tests, evaluation,
+  summary, centralized cleanup, and Nix-gcroot cleanup all succeeded;
+  failure-only log upload correctly skipped. IRC integration began in the
+  released runner slot.
+- Final exact-head IRC integration run `30711007977` completed successfully.
+  Shared preparation, exhaustive integration tests, evaluation, summary,
+  centralized cleanup, and Nix-gcroot cleanup all succeeded; failure-only log
+  upload correctly skipped. Its exact-head RSpec run `30711007966` is also
+  green. Only the vpsAdminOS and vpsAdmin exhaustive suites remain active.
+- Final exact-head vpsAdminOS run `30710869158` completed successfully. Its OS
+  build/cache job and exhaustive 72-test suite passed; shared preparation,
+  evaluation, summary, and centralized cleanup succeeded, while failure-only
+  log upload correctly skipped. This includes the corrected concurrent Arch
+  scenarios on GitHub Actions. Only the vpsAdmin exhaustive suite remains.
+
+### Test framework default integration and final event rebases
+
+The separate integration initiative at
+`work/2026-08-01-test-framework-ci/` completed the requested history cleanup
+and default-branch rollout:
+
+- vpsAdminOS `staging` is `0b102133b`; the unsafe one-path Nix store repair is
+  absent, image result evaluation has its own commit, lifecycle upload fails
+  when no evidence files exist, initrd coldplug carries the observed kernel
+  backtrace, and osvm exposes symmetric bounded success/failure retries;
+- vpsAdmin `master` is `47fc93e3d`, confctl `master` is `9648e9f`, the provider
+  `master` is `29c768a`, and IRC bot `master` is `af553fd`; all four workflows
+  pin the exact shared-action revision `0b102133b` and their direct/transitive
+  locks resolve the final vpsAdminOS graph;
+- vpsadminos.org configuration `master` is `7087bb9`; the merged runner hooks
+  defer Nix GC behind a shared lock and the generated strict systemd sandbox
+  permits only the lock file. The configuration was not activated or deployed;
+- the standalone mandatory review's two blockers, important artifact finding,
+  and advisory subject finding were all fixed and reverified before these
+  integrations.
+
+Every existing event branch is now based on its actual default. Framework-only
+branches in vpsAdminOS, confctl, the provider, and IRC are default-equivalent.
+The 109 event-specific vpsAdmin commits were patch-equivalently rebased onto
+`47fc93e3d`, producing head `9e8625583`; the six obsolete framework and lock
+commits are gone. HaveAPI, the generated Go client, notification templates,
+and the SMS gateway already had current defaults as ancestors.
+
+The capture branch is `81c5ca0`; its final mute-composer commit now pins the
+rebased deployable vpsAdmin revision `19a4a63c`, and `nix develop -c bin/check`
+passes. The configuration branch is `f9b537ae`; seven functional commits were
+rebased onto `af8c84d0`, five obsolete intermediate pin commits were discarded,
+and `confctl` generated final pins for vpsAdmin `19a4a63c`, notification
+templates `6dda345a`, and SMS gateway `af7b3faf`.
+
+All local/remote event heads match and all primary event worktrees are clean.
+Superseded aggregate run `30710962728` on old vpsAdmin head `2a3f4523f` was
+canceled; the replacement aggregate remains queued and is not awaited, as
+requested. Current-head short workflows completed without failures.
