@@ -23,6 +23,15 @@ Decisions:
 - Create the RabbitMQ `notification` user before broker activation. Reapply
   permissions to `console-router` and every verified live nodectld account
   because the state-file-gated initial setup does not update existing users.
+- Reconcile the production proxy's temporary vpsAdmin baseline override before
+  rollout. Prepare reviewed maintenance-on and release proxy generations so
+  public writes can be closed and reopened with exact, prebuilt closures while
+  retaining a known rollback generation.
+- Classify every per-user template/role recipient row before migration. The
+  event migration deliberately skips disabled-mailer, empty-target, and
+  unsupported rows before the source tables are dropped; require explicit
+  acceptance or a separately reviewed conversion for every skipped class and
+  reconcile all expected new receivers, targets, and routes.
 - Deploy and verify both physical SMS gateways before the cutover. Preserve the
   existing sachet/Nexmo Alertmanager fallback.
 - During maintenance, drain mail handle `9001`, stop the old mailer, snapshot
@@ -52,6 +61,9 @@ Verification:
   permissions/resources/connections, and Node/DNS nodectld health.
 - Strict-build the MkDocs site, run repository hooks, commit scoped changes,
   and perform the mandatory fresh-context standalone review.
+- Validate the proxy input/maintenance sequence, recipient classification
+  generators, rollback unmask ordering, and absence of rake-timer activation
+  on api2 as part of the review follow-up.
 
 ## Report-based muting shortcuts addendum
 

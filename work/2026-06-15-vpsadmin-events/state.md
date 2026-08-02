@@ -46,6 +46,14 @@
     old generations, supplemented by a targeted affected-data export;
   - RabbitMQ needs a new `notification` user, an updated `console-router`
     profile, and updated node profiles for every live Node/storage/DNS user;
+  - the production proxy's `proxyVpsadminBaseline` override predates the new
+    Telegram frontend option and must be reconciled in a separate reviewed
+    proxy change; prebuilt maintenance-on, release, and rollback generations
+    now form part of the deployment gate;
+  - per-user advanced recipient rows are migrated selectively and their source
+    tables are then dropped, so every migrated and skipped row requires a
+    preflight classification, explicit acceptance, and post-migration count
+    reconciliation;
   - all nodectld consumers must understand event-delivery release handle
     `9002` before API activation.
 - Current configuration is intentionally not rollout-ready and was not
@@ -62,8 +70,8 @@
   `docs/operations/vpsadmin-event-system-deployment.md` and linked it from
   `mkdocs.yml`.
   - Strict MkDocs build passed.
-  - All 66 Markdown fences are balanced and all 26 shell blocks pass
-    `bash -n`.
+  - The initial 66 Markdown fences were balanced and all 26 initial shell
+    blocks passed `bash -n`.
   - Scoped `git diff --check` passed in the configuration worktree and the
     coordination workspace.
   - The configuration repository's Nixfmt and event i18n RakeTarget
@@ -72,8 +80,44 @@
   - Committed on `2026-06-15-vpsadmin-events` as
     `21a1441ca52e0daae5b63c023c786aebc0fec1d9`
     (`vpsadmin-config: document event-system deployment`).
-- Mandatory fresh-context review remains pending before this documentation
-  task is complete.
+- Mandatory fresh-context review by `/root/mandatory_change_review` completed
+  with changes required:
+  - add the proxy input/maintenance generations and an executable traffic
+    close/reopen sequence;
+  - unmask API units in the rollback order before switching legacy API
+    generations;
+  - fully account for selectively skipped per-user legacy recipient rows;
+  - do not start absent rake timers on api2;
+  - verify all shared-secret copies and plugin migration status; and
+  - refresh the stale repository inventory below.
+- The review also classified coordination commit `f09c6fe` as too broad
+  because it combines plan/state tracking with two independent reusable notes.
+  The top-level `master` checkout is shared and its instructions prohibit a
+  repository-wide reset; rewriting that already-visible shared commit would
+  move the branch beneath concurrent sessions. The finding is accepted as a
+  coordination-only history exception. It contains no runtime or deployment
+  configuration, and all review follow-up is kept in later focused commits.
+- Review fixes are implemented in the runbook:
+  - strict MkDocs build and scoped `git diff --check` passed again;
+  - all 80 final Markdown fences are balanced and all 30 shell blocks pass
+    `bash -n`;
+  - the approved-source recipient generators ran successfully and produced 83
+    supported template names plus route expansion counts for both supported
+    roles;
+  - Nixfmt and the event i18n RakeTarget pre-commit hooks passed again; and
+  - the focused configuration follow-up is
+    `20b5c02d7a94b0471da3951c525f0efadc4286bc`
+    (`vpsadmin-config: harden event-system rollout`).
+- The same standalone reviewer checked follow-up commit `20b5c02d` and
+  reported no remaining findings. The proxy, rollback, per-user recipient,
+  timer, secret-consistency, inventory, and plugin-status findings are all
+  resolved. The coordination commit split remains the accepted shared-checkout
+  exception described above.
+- Residual deployment risk is operational: the proxy generations still need
+  to be created, reviewed, built, and copied for the actual release, and the
+  conversion plus rollback procedure should be rehearsed against
+  production-shaped data before production rollout. No production state was
+  changed by this documentation task.
 
 ## 2026-07-31 Concept-First Notification Documentation
 
@@ -100,10 +144,8 @@
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin`
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
-  - Current base/head before local commits:
-    `6351e273ed257f5e3233a99ffa7d8eae9221856a`
   - Current feature head:
-    `8355beca035d4decf5fc28b6d858746400232fe4`
+    `e5ee3f056eec97c7d5d9276b9aa95460aaee7bae`
   - Remote: `git@github.com:vpsfreecz/vpsadmin.git`
 - `vpsfree-notification-templates`
   - Worktree:
@@ -111,7 +153,7 @@
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
   - Current head:
-    `5c515d1a9876cf52d857df35a0205b093bf0f2f1`
+    `6dda345aa47dba418d4f434cb9cd7ef5be08e465`
   - Remote: `git@github.com:vpsfreecz/vpsfree-notification-templates.git`
   - Note: local worktree/reference renamed from the historical
     `vpsfree-mail-templates` naming for this managed template deployment
@@ -122,7 +164,7 @@
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
   - Current head:
-    `14d71ccd0c0aa39f32de83683b3f824b145b606a`
+    `20b5c02d7a94b0471da3951c525f0efadc4286bc`
   - Remote: `git@github.com:vpsfreecz/vpsfree-cz-configuration.git`
 - `vpsfree-sms-gateway`
   - Worktree:
@@ -130,7 +172,7 @@
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: new local repository, no upstream commits
   - Current head:
-    `730b35c652d0efb596bfe290d0afea76e494a678`
+    `af7b3fafb780c849ae03e31712128ecb0749ec0b`
   - Remote: `git@github.com:vpsfreecz/vpsfree-sms-gateway.git`
   - Note: GitHub reported repository not found earlier on 2026-06-22; user
     created it later. The feature branch was pushed successfully.
@@ -139,7 +181,7 @@
     `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-15-vpsadmin-events/vpsadmin-kb-captures`
   - Branch: `2026-06-15-vpsadmin-events`
   - Base: `origin/master`
-  - Current head: `1fbb5d2132c76061227522f34a4b714ba8b88f86`
+  - Current head: `81c5ca08564f272e2b14c73840e04efd2fee8455`
   - Remote: `git@github.com:vpsfreecz/vpsadmin-kb-captures.git`
 
 ## Status
