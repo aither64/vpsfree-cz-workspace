@@ -253,8 +253,9 @@ corrected; a live post-activation job remains required to verify both hooks.
 After rebasing over an automated input update, the reviewed suffix fix is
 `f924aabd0a774d88d173419527215cf4b538168a` and is present on both
 `vpsadminos-org-configuration` `master` and its retained initiative branch. A
-complete build of all three runner configurations produced confctl generation
-`2026-08-02--14-56-01`. Deployment was not attempted because this host cannot
+complete build of all three runner configurations produced retained confctl
+generation `2026-08-02--15-02-04`. Deployment was not attempted because this
+host cannot
 connect to `172.16.4.21`, `172.16.4.22`, or `172.16.4.25`, and the available
 GitHub token cannot report organization-runner busy state. Draining cannot be
 verified safely from the present environment.
@@ -271,5 +272,5 @@ flake check, JavaScript syntax, both exact test-selection evaluations, and
 Replacement aggregate runs `30748100208` (`master`) and `30748413419` (event
 branch) both failed during runner setup with the same extensionless-hook error.
 They contain no integration-test result. Once generation
-`2026-08-02--14-56-01` is activated on the drained runners, rerun both exact
+`2026-08-02--15-02-04` is activated on the drained runners, rerun both exact
 workflow attempts and monitor them through completion.
