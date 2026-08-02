@@ -1,5 +1,56 @@
 # 2026-06-15-vpsadmin-events
 
+## Dedicated API RabbitMQ Identity and Infrastructure-First Rollout
+
+Requested on 2026-08-02: keep RabbitMQ topology declaration with the
+publishers and consumers, give the API a standalone RabbitMQ identity, deploy
+the SMS/Alertmanager/Prometheus infrastructure before vpsAdmin, and reset the
+development cluster to validate the final configuration.
+
+Decisions:
+
+- Continue to declare the fixed durable exchange, quorum queues and bindings
+  idempotently from the API and notification workers. Do not introduce a
+  topology-reconciliation service.
+- Reuse RabbitMQ user `api`. It can configure and write the notification
+  exchange and fixed queues, but its read permission matches only the source
+  exchange required by queue bindings. It cannot consume notification queues.
+- Keep the grouper and all action dispatchers on the shared `notification`
+  identity. Per-worker identities are outside this change.
+- Give the API a dedicated `/private/vpsadmin-api-rabbitmq.pw` secret in
+  production. Provision or rotate the broker password operationally; use Nix
+  to reconcile only permissions.
+- Split production operations into a standalone infrastructure runbook and the
+  later maintenance cutover. Upgrade Alertmanager first, then BRQ and PRG APUs,
+  then both Prometheus instances. Record one real `sms-aither` proof and stop
+  for the operator's decision.
+- New Alertmanager is compatible with old Sachet because the additional bearer
+  header is ignored. Old Alertmanager is not compatible with the authenticated
+  new gateways, so a full rollback restores both APUs before Alertmanager.
+- Reset the existing single-node bridge development cluster after review,
+  rebuild it from empty MariaDB and RabbitMQ state, prove the API connects as
+  `api`, prove workers remain `notification`, and leave the cluster ready.
+
+Compatibility and deployment:
+
+- The identity split introduces no database, API wire, message-format or queue
+  topology change. Existing equivalent durable RabbitMQ resources are reused.
+- The API user and its permissions can be prepared while the old API is still
+  running. Activate the permission reconciler before the new API generation.
+- The event-system database migration and rollback boundary remain unchanged.
+- Production commands remain operator-run; implementation does not activate
+  any production generation.
+
+Verification:
+
+- Cover the permission regex in unit specs, including denied queue reads.
+- Build both APIs, all three brokers, both Alertmanagers and both Prometheus
+  instances; build APUs where their external SystemRescue ISO input is
+  available.
+- Strict-build MkDocs and syntax-check every shell example.
+- Run the mandatory standalone review before resetting and exercising the
+  development cluster end to end.
+
 ## Production Deployment Runbook Addendum
 
 Requested on 2026-08-02: start the event-system development cluster and

@@ -1,5 +1,46 @@
 # 2026-06-15-vpsadmin-events
 
+## 2026-08-02 API RabbitMQ Identity and Infrastructure-First Runbook
+
+- Verified the active session slug and reused the existing vpsAdmin and
+  configuration worktrees. Unrelated shared-workspace changes remain
+  untouched.
+- vpsAdmin commit `a1c4b30de0742e9bc5789cb4b4e9e5d5af560803`
+  (`rabbitmq: separate API notification identity`) is pushed on the initiative
+  branch:
+  - the API defaults to and is tested with RabbitMQ user `api`;
+  - configure/write match the notification exchange and five fixed queues;
+  - read matches only the exchange, preventing queue consumption; and
+  - notification workers remain on user `notification`.
+- Focused libnodectld permission specs passed twice: 4 examples, 0 failures.
+  The full vpsAdmin pre-commit suite passed Nixfmt, RuboCop, migration specs,
+  API i18n and WebUI i18n.
+- Configuration commits:
+  - `6a79946d` configures the production API secret and reconciles separate API
+    and worker RabbitMQ permissions;
+  - `f932ff01` adds the standalone infrastructure runbook and makes it an
+    explicit manual prerequisite of the application runbook; and
+  - generated `confctl` commit `5cc21604` pins `vpsadminServices` to
+    `a1c4b30de`.
+- The configuration repository's pre-commit hooks passed for all three
+  commits. Strict MkDocs passed through `nix shell nixpkgs#mkdocs`; all shell
+  blocks in both event deployment runbooks pass `bash -n`.
+- Production configuration builds passed for api1, api2, rabbitmq1 through
+  rabbitmq3, alerts1, alerts2, mon1 and mon2. Inspection of the built closures
+  confirmed:
+  - API notifications use username `api` and
+    `/private/vpsadmin-api-rabbitmq.pw`;
+  - workers still use `/private/vpsadmin-notification-rabbitmq.pw`; and
+  - `vpsadmin-event-rabbitmq-permissions.service` contains the intended narrow
+    API read pattern and the existing notification worker profile.
+- Both APU builds stop during evaluation on the known absent external input
+  `/srv/iso-images/systemrescue-11.01-amd64.iso`. No placeholder was created;
+  the existing workspace note documents this environment requirement. The SMS
+  gateway itself will be built and exercised by the reset development cluster.
+- No production generation, secret, broker or database was changed. The
+  currently running development cluster has not yet been reset; reset and
+  end-to-end verification follow the mandatory standalone review.
+
 ## 2026-08-02 Production Deployment Runbook
 
 - Verified `bin/dev-session current` and
