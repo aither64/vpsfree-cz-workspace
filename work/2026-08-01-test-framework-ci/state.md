@@ -106,8 +106,10 @@ remotely. Fresh temporary worktrees fast-forwarded and pushed these defaults:
 | vpsfree-irc-bot | `master` | `af553fda06819b8f7518daf9d0d96700f0acb41f` |
 | vpsadminos-org-configuration | `master` | `7087bb9cfc3733026a2dc048b58b7a613aa3ecc4` |
 
-The runner configuration was merged only. It was not built into an activated
-deployment and was not deployed to any runner.
+At the time of integration, the runner configuration was merged only. This
+initiative neither built an activated generation nor deployed it to a runner.
+It was activated separately afterward, as demonstrated by the extensionless
+hook paths reported by `gh-runner2.int.vpsadminos.org` in job `91497114963`.
 
 Final shared-action and lock verification:
 
@@ -169,3 +171,105 @@ a merge or completion gate for this integration.
   initiative's plan/state paths may be staged for its coordination commits.
 - Overcommit hooks are installed and signed in every repository that declares
   them. The provider declares no hook framework.
+
+## Post-integration vpsAdmin master CI investigation
+
+Run `30718729692` tested vpsAdmin `master` at
+`47fc93e3d9a4492bac13bb5a19b2763c23df02c7`. The aggregate runner completed
+all 117 tests: 116 succeeded and only `webui#navigation-readonly` failed.
+The retained artifact showed that Playwright failed while loading the spec,
+before any browser assertion, because it tried to read
+`../../../../VERSION` relative to the Nix-store-packaged suite. That path
+normalizes to `/VERSION`, which does not exist. The event branch already fixes
+this exact issue in `9e8625583` (`tests: pass the packaged WebUI version`) by
+passing the deployed version alongside the revision. The same WebUI test
+succeeded in event-branch run `30719120204`, corroborating the diagnosis.
+
+No implementation change was made during this investigation. GitHub retains
+the source failure artifact for 14 days.
+
+## Post-integration vpsAdmin remediation
+
+The master-targeted branch `2026-08-01-test-framework-ci` now adds two focused
+commits on `47fc93e3d`:
+
+- `7f659e385` `tests: pass the packaged WebUI version`;
+- `a1e999590` `nixos: publish API database config atomically`.
+
+Both repository commits ran the active Overcommit hooks from `nix develop`;
+Nixfmt, migration checks, WebUI i18n, and API i18n passed. The focused WebUI
+revision/version flake check passed. Both affected integration-test names
+evaluate and select correctly. The complete services NixOS system built to
+`/nix/store/7a7ql1la9jfmbsbir0n6m9inpkyh0p8j-nixos-system-vpsadmin-services-26.05pre-git`.
+Its generated API pre-start script creates a private sibling file, renders the
+substituted database configuration, sets mode 0440, and only then renames it
+over the live path. JavaScript syntax passed. ShellCheck passed for the
+generated script with only pre-existing `SC2086` excluded for the unchanged
+`basename $v` expression.
+
+The first ambient-shell commit attempt was correctly blocked because the hook
+dependencies were absent; rerunning the commits through the root Nix shell
+passed every mandatory hook. The documented WebUI dev shell also lacks Node,
+so the syntax check used `nix shell nixpkgs#nodejs`. These tool-selection
+details did not affect repository content.
+
+Standalone mandatory review found no Blocking, Important, or Advisory issues.
+It confirmed the commit split, packaged-version metadata contract, atomic
+same-filesystem publication, restrictive temporary permissions, unchanged
+configuration format, and safe rollback. The residual gap is the lack of a
+deterministic concurrent-reader regression test; the master and rebased-event
+aggregate runs provide the planned end-to-end validation. During the event
+rebase, its setup-serialization commit must preserve the atomic sequence inside
+the existing `flock`, and its duplicate WebUI fix must be dropped as upstream.
+
+## Runner hook suffix failure
+
+vpsAdmin replacement master run `30748100208` and the identical-head work
+branch run `30748085213` failed before checkout. GitHub Actions rejected the
+configured job-start and job-completion hooks because their Nix store paths did
+not end in `.sh`, `.ps1`, or `.js`. The earlier
+`vpsadminos-org-configuration` change used extensionless names with
+`pkgs.writeShellScript`; it had since been activated outside the initiative,
+despite the earlier state recording that this initiative did not deploy it.
+
+Commit `f924aab` (`gh-runner: give job hooks recognized script suffixes`) adds
+`.sh` to both generated script names without changing the GC coordination
+protocol. The active Overcommit Nixfmt hook passed. A complete configuration
+build for `org.vpsadminos/int.gh-runner1` passed and produced derivations named
+`github-runner-job-started.sh` and `github-runner-job-completed.sh` as required.
+The correction requires activation on all three GitHub runner machines before
+replacement CI can start successfully.
+
+The current request to find and fix the CI root causes and then watch both
+replacement aggregate runs requires this activation; source integration alone
+cannot make any self-hosted job pass. Before rollout, an organization-runner API
+query was denied by the available token, while direct connection tests to all
+three private runner addresses timed out. Activation is therefore pending a
+network path or operator with runner access. The independent mandatory review
+found no Blocking or Important issue and one Advisory issue: update the stale
+activation record and drain each runner before switching it. The record is now
+corrected; a live post-activation job remains required to verify both hooks.
+
+After rebasing over an automated input update, the reviewed suffix fix is
+`f924aabd0a774d88d173419527215cf4b538168a` and is present on both
+`vpsadminos-org-configuration` `master` and its retained initiative branch. A
+complete build of all three runner configurations produced confctl generation
+`2026-08-02--14-56-01`. Deployment was not attempted because this host cannot
+connect to `172.16.4.21`, `172.16.4.22`, or `172.16.4.25`, and the available
+GitHub token cannot report organization-runner busy state. Draining cannot be
+verified safely from the present environment.
+
+vpsAdmin `master` is at `a1e999590e2559ffb205e6c7e1d53f81c96673c5`.
+The event branch was rebased onto it and force-pushed at
+`e5ee3f056eec97c7d5d9276b9aa95460aaee7bae`. Range-diff retained all 108 event
+commits patch-equivalently except the setup-serialization commit, which now
+keeps atomic database configuration publication inside its `flock`; the 109th,
+duplicate WebUI version fix was dropped as upstream. Nixfmt, the focused WebUI
+flake check, JavaScript syntax, both exact test-selection evaluations, and
+`git diff --check` passed on the rebased branch.
+
+Replacement aggregate runs `30748100208` (`master`) and `30748413419` (event
+branch) both failed during runner setup with the same extensionless-hook error.
+They contain no integration-test result. Once generation
+`2026-08-02--14-56-01` is activated on the drained runners, rerun both exact
+workflow attempts and monitor them through completion.

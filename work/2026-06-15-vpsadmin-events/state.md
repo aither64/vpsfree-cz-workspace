@@ -18235,7 +18235,8 @@ and default-branch rollout:
   locks resolve the final vpsAdminOS graph;
 - vpsadminos.org configuration `master` is `7087bb9`; the merged runner hooks
   defer Nix GC behind a shared lock and the generated strict systemd sandbox
-  permits only the lock file. The configuration was not activated or deployed;
+  permits only the lock file. This initiative did not activate it during the
+  original integration, but the configuration was deployed separately later;
 - the standalone mandatory review's two blockers, important artifact finding,
   and advisory subject finding were all fixed and reverified before these
   integrations.
@@ -18258,3 +18259,36 @@ All local/remote event heads match and all primary event worktrees are clean.
 Superseded aggregate run `30710962728` on old vpsAdmin head `2a3f4523f` was
 canceled; the replacement aggregate remains queued and is not awaited, as
 requested. Current-head short workflows completed without failures.
+
+## Aggregate CI run 30719120204
+
+The exact event head `9e862558332f8f1a2458e4bfb42d90298ad371ef`
+completed the 117-test aggregate with 116 successes and one unexpected
+failure: `storage/vps-hard-delete-complex-history-with-descendants`. The event
+and notification-specific tests passed, as did `webui#navigation-readonly`.
+
+The retained failure artifact identifies a pre-existing timing race in shared
+vpsAdmin API setup, unrelated to the event changes. The failing
+`api_ruby_json` helper started at 01:40:37. At 01:40:38 the scheduled
+`vpsadmin-api-monitoring-check.service` started. Every rake task runs
+`apiApp.setup`, which copies a live `database.yml` whose generated password is
+temporarily `password: #dbpass#`, then substitutes the actual password in a
+separate `sed` operation. The helper read the file in that interval, YAML
+treated the placeholder as a comment, and MariaDB rejected `api@127.0.0.1`
+with `using password: NO`. Earlier invocations in the same test and explicit
+credentialed MariaDB probes succeeded, and the API service itself remained
+healthy, ruling out bad test credentials or a database outage.
+
+No implementation change was made during this investigation. The reusable
+failure analysis is recorded in
+`notes/vpsadmin/2026-08-02-api-setup-database-config-race.md`.
+
+The branch was then rebased onto fixed vpsAdmin `master` at `a1e999590` and
+force-pushed at `e5ee3f056`. Its setup serialization now contains the atomic
+temporary-render/chmod/rename sequence, and its duplicate packaged-WebUI
+version commit was dropped as upstream. Range-diff otherwise preserved the 108
+event commits. Replacement aggregate run `30748413419` did not reach the test
+suite: the self-hosted runner rejected extensionless job-hook paths during
+setup. The shared configuration source is fixed at
+`vpsadminos-org-configuration` `f924aab`; the built runner generation still
+requires activation before this exact run can be rerun and monitored.
