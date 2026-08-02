@@ -1,5 +1,58 @@
 # 2026-06-15-vpsadmin-events
 
+## Production Deployment Runbook Addendum
+
+Requested on 2026-08-02: start the event-system development cluster and
+document everything required for the first production deployment.
+
+Decisions:
+
+- Add a release-specific operations runbook to `vpsfree-cz-configuration`;
+  this task documents the rollout but does not update channel pins, secrets,
+  RabbitMQ, the production database, or running production machines.
+- Treat the schema change as a coordinated maintenance cutover. The old API
+  cannot use the renamed mail tables, and the final OOM migration is
+  irreversible. Stop all writers and use a pre-migration snapshot as the
+  authoritative rollback artifact.
+- Supplement the snapshot with a small, checksummed logical export of only the
+  destructively changed legacy mail, user setting, mailer Node, VPS, and OOM
+  data. Do not take a full logical dump.
+- Deploy the new `nodectld` transaction handler to every Node, storage/backup
+  host, and DNS consumer before the new API can emit event-delivery release
+  handle `9002`. This requires fleet-wide coverage but no vpsAdminOS reboot.
+- Create the RabbitMQ `notification` user before broker activation. Reapply
+  permissions to `console-router` and every verified live nodectld account
+  because the state-file-gated initial setup does not update existing users.
+- Deploy and verify both physical SMS gateways before the cutover. Preserve the
+  existing sachet/Nexmo Alertmanager fallback.
+- During maintenance, drain mail handle `9001`, stop the old mailer, snapshot
+  and export the database, activate the database/RabbitMQ configuration, run
+  all core and plugin migrations once from the reviewed database package on
+  api1, then start api1, api2, and both WebUIs.
+- Keep the old mailer container powered off until acceptance. Before traffic
+  reopens, rollback means restoring the snapshot and old generations. After
+  traffic reopens, prefer a forward fix because snapshot restoration loses new
+  writes.
+
+Compatibility and deployment:
+
+- The vpsAdmin services, staging, and production channels must all pin the same
+  approved event revision. Managed templates and the SMS gateway must also
+  match their reviewed revisions.
+- New nodectld code and widened RabbitMQ permissions are backward-compatible
+  with the old API and can remain during an application rollback.
+- The removed OOM-rule API is a downstream client compatibility break.
+  Generated clients and automation updates follow server acceptance.
+- Production KB publication remains separately approval-gated.
+
+Verification:
+
+- Start the existing single-node bridge dev cluster without resetting it.
+- Verify all event services, API/WebUI HTTPS, all twelve migrations, RabbitMQ
+  permissions/resources/connections, and Node/DNS nodectld health.
+- Strict-build the MkDocs site, run repository hooks, commit scoped changes,
+  and perform the mandatory fresh-context standalone review.
+
 ## Report-based muting shortcuts addendum
 
 Requested on 2026-07-31: let users prepare mute routes directly from OOM and

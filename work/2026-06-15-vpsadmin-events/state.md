@@ -1,5 +1,80 @@
 # 2026-06-15-vpsadmin-events
 
+## 2026-08-02 Production Deployment Runbook
+
+- Verified `bin/dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG=2026-06-15-vpsadmin-events` identify this
+  initiative. Unrelated shared-workspace edits were left untouched.
+- Started the existing cluster without reset:
+  `devcluster start 2026-06-15-vpsadmin-events --topology single --network
+  bridge`.
+  - The build used vpsAdmin `e5ee3f056eec97c7d5d9276b9aa95460aaee7bae`
+    and the current initiative vpsAdminOS and SMS gateway worktrees.
+  - Session Telegram configuration triggered the expected second services
+    switch, adding the Telegram receiver and dispatcher.
+  - Final status is `running`, topology `single`, network `bridge`, and
+    readiness `yes`.
+- Development verification:
+  - API and WebUI HTTPS returned 200.
+  - API, supervisor, console router, scheduler, notification grouper, e-mail,
+    Telegram, webhook and SMS dispatchers, Telegram receiver, and development
+    SMS gateway are active.
+  - node1 `osctld` and `nodectld`, plus both DNS nodectld services, are active.
+  - The `vpsadmin_test` RabbitMQ vhost has the intended notification, console,
+    supervisor, and per-node permission profiles; the
+    `vpsadmin.notifications` exchange and five action/grouping queues exist.
+    Five live `notification` connections were observed.
+  - `db:migrate:status` reports all twelve event migrations from
+    `20260722120000` through `20260722121000` as up.
+  - The stripped database package's generic `db:version` task expects the
+    full Rails environment and fails with `NameError: uninitialized constant
+    Rails`; the deployment-supported `db:migrate:status` task works. A
+    reusable note records the task-scope distinction so this is not mistaken
+    for a database connectivity failure.
+  - One payments timer fired during the services switch while plugin symlinks
+    were being replaced and briefly failed to load `plugins/webui/meta.rb`.
+    The completed switch had a valid target; rerunning the unit succeeded and
+    `systemctl list-units --failed` is now empty. A reusable note records this
+    switch race.
+- Deployment analysis:
+  - production sets `vpsadmin.databaseSetup.autoSetup = false`, so deployment
+    will not run migrations automatically;
+  - the first migration immediately breaks old mail-table readers, recipient
+    rollback recreates empty tables, mailer retirement has a no-op down path,
+    and the OOM conversion is explicitly irreversible;
+  - the authoritative rollback is therefore a quiesced database snapshot plus
+    old generations, supplemented by a targeted affected-data export;
+  - RabbitMQ needs a new `notification` user, an updated `console-router`
+    profile, and updated node profiles for every live Node/storage/DNS user;
+  - all nodectld consumers must understand event-delivery release handle
+    `9002` before API activation.
+- Current configuration is intentionally not rollout-ready and was not
+  repinned in this documentation task:
+  - feature vpsAdmin head:
+    `e5ee3f056eec97c7d5d9276b9aa95460aaee7bae`;
+  - `vpsadminServices`: `19a4a63c0c9b27402de61de10247baa45690c296`;
+  - `vpsadminStaging` and `vpsadminProduction`:
+    `eb2ccde5cd709a42a802589419ba8cf525c97f34`;
+  - notification templates:
+    `6dda345aa47dba418d4f434cb9cd7ef5be08e465`;
+  - SMS gateway: `af7b3fafb780c849ae03e31712128ecb0749ec0b`.
+- Added
+  `docs/operations/vpsadmin-event-system-deployment.md` and linked it from
+  `mkdocs.yml`.
+  - Strict MkDocs build passed.
+  - All 66 Markdown fences are balanced and all 26 shell blocks pass
+    `bash -n`.
+  - Scoped `git diff --check` passed in the configuration worktree and the
+    coordination workspace.
+  - The configuration repository's Nixfmt and event i18n RakeTarget
+    pre-commit hooks passed. Its commit-message hooks passed with only the
+    expected 72-column warning for an 80-column-compliant body.
+  - Committed on `2026-06-15-vpsadmin-events` as
+    `21a1441ca52e0daae5b63c023c786aebc0fec1d9`
+    (`vpsadmin-config: document event-system deployment`).
+- Mandatory fresh-context review remains pending before this documentation
+  task is complete.
+
 ## 2026-07-31 Concept-First Notification Documentation
 
 - Verified that `bin/dev-session current` and
