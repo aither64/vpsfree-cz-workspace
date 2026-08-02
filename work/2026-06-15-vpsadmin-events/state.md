@@ -5,29 +5,31 @@
 - Verified the active session slug and reused the existing vpsAdmin and
   configuration worktrees. Unrelated shared-workspace changes remain
   untouched.
-- vpsAdmin commit `a1c4b30de0742e9bc5789cb4b4e9e5d5af560803`
+- vpsAdmin commit `dce3fe8cf619f77ed1f85f9ffb01f367627e656f`
   (`rabbitmq: separate API notification identity`) is pushed on the initiative
   branch:
   - the API defaults to and is tested with RabbitMQ user `api`;
   - configure/write match the notification exchange and five fixed queues;
   - read matches only the exchange, preventing queue consumption; and
   - notification workers remain on user `notification`.
-- Focused libnodectld permission specs passed twice: 4 examples, 0 failures.
+- Focused libnodectld permission specs passed after the review repair: 5
+  examples, 0 failures.
   The full vpsAdmin pre-commit suite passed Nixfmt, RuboCop, migration specs,
   API i18n and WebUI i18n.
 - Configuration commits:
   - `6a79946d` configures the production API secret and reconciles separate API
     and worker RabbitMQ permissions;
-  - `f932ff01` adds the standalone infrastructure runbook and makes it an
+  - `963066d5` adds the standalone infrastructure runbook and makes it an
     explicit manual prerequisite of the application runbook; and
-  - generated `confctl` commit `5cc21604` pins `vpsadminServices` to
-    `a1c4b30de`.
+  - generated `confctl` commit `36346574` pins `vpsadminServices` to
+    `dce3fe8c`.
 - The configuration repository's pre-commit hooks passed for all three
   commits. Strict MkDocs passed through `nix shell nixpkgs#mkdocs`; all shell
   blocks in both event deployment runbooks pass `bash -n`.
 - Production configuration builds passed for api1, api2, rabbitmq1 through
-  rabbitmq3, alerts1, alerts2, mon1 and mon2. Inspection of the built closures
-  confirmed:
+  rabbitmq3, alerts1, alerts2, mon1 and mon2. After the review repair and
+  regenerated final pin, api1, api2 and rabbitmq1 were rebuilt successfully.
+  Inspection of the built closures confirmed:
   - API notifications use username `api` and
     `/private/vpsadmin-api-rabbitmq.pw`;
   - workers still use `/private/vpsadmin-notification-rabbitmq.pw`; and
@@ -37,6 +39,20 @@
   `/srv/iso-images/systemrescue-11.01-amd64.iso`. No placeholder was created;
   the existing workspace note documents this environment requirement. The SMS
   gateway itself will be built and exercised by the reset development cluster.
+- Mandatory fresh-context review by `Carson` reported no Blocking findings.
+  Its one Important finding required a safe audit of the reused production
+  `api` user before rotating or narrowing it. The application runbook now
+  verifies live connections, tags and every vhost permission, stops if another
+  legitimate client uses the identity, clears unwanted tags and removes only
+  reviewed unused extra-vhost permissions.
+- Both Advisory findings were also resolved: the infrastructure runbook checks
+  that the Alertmanager service user can read the SMS credential and labels
+  the direct HAProxy-to-gateway request as a compositional proof; permission
+  specs now reject unrelated configure and write targets in addition to queue
+  reads.
+- The superseded GitHub aggregate CI run `30763744983` was canceled after the
+  amended vpsAdmin head was force-pushed with an exact lease. Current-head CI
+  is still being monitored.
 - No production generation, secret, broker or database was changed. The
   currently running development cluster has not yet been reset; reset and
   end-to-end verification follow the mandatory standalone review.
