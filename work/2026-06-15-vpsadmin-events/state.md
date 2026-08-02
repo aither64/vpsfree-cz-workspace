@@ -53,9 +53,40 @@
 - The superseded GitHub aggregate CI run `30763744983` was canceled after the
   amended vpsAdmin head was force-pushed with an exact lease. Current-head CI
   is still being monitored.
-- No production generation, secret, broker or database was changed. The
-  currently running development cluster has not yet been reset; reset and
-  end-to-end verification follow the mandatory standalone review.
+- The configuration branch was pushed over SSH through final head
+  `363465748eb4d415c17567a435412eb336c0b961`; its local tree contains only the
+  pre-existing untracked `.bin/` and `.bundle/` directories.
+- The authorized reset removed the initiative's disposable cluster state. A
+  fresh single-node bridge cluster was built from vpsAdmin `dce3fe8c`, empty
+  MariaDB and RabbitMQ state, then switched to the expected Telegram-enabled
+  services generation. Final status is `running`, network `bridge`, readiness
+  `yes`; the cluster is intentionally left available.
+- Clean-cluster acceptance passed:
+  - API, supervisor, console router, scheduler, grouper, all four action
+    dispatchers, Telegram receiver, RabbitMQ, MySQL, Mailpit and the development
+    SMS gateway are active; node1 `osctld` and `nodectld` are running and no
+    systemd unit is failed;
+  - API and WebUI HTTPS return 200 using the development CA; authenticated
+    Mailpit access works;
+  - all twelve event migrations from `20260722120000` through
+    `20260722121000` report `up` on the newly created database;
+  - RabbitMQ contains the untagged `api` and `notification` users, the exact
+    narrow API permission profile, the durable direct notification exchange,
+    all five durable quorum queues and all five bindings;
+  - a real `user.test_notification` created event 1, opened one persistent
+    `api` connection while the five worker connections remained
+    `notification`, completed its e-mail delivery as `sent`, and appeared in
+    Mailpit with the expected subject;
+  - a live AMQP `basic.get` probe using the API service's own credential was
+    rejected with `Bunny::AccessRefused`, proving the API cannot consume the
+    e-mail queue; and
+  - an authenticated request using the API's configured SMS-gateway token was
+    accepted with HTTP 202 and recorded as `sent` by the fake modem.
+- Final-head vpsAdmin RuboCop and libnodectld workflows passed. Aggregate CI run
+  `30764885174` is still running its selected integration tests and has not
+  reported a failure.
+- No production generation, secret, broker, database or running production
+  machine was changed.
 
 ## 2026-08-02 Production Deployment Runbook
 
