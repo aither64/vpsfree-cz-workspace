@@ -24,10 +24,10 @@
   `kb-sources-main-page-link`: 126 Czech and 80 English production pages,
   including exact missing-page guards for all twenty notification articles.
 - Built `kb-candidates-main-page-link` from the existing complete annotation
-  plan. The independent annotation checker passed. The candidate has 24
-  changed pages: twenty guarded creates, the two account-settings updates and
-  the two guarded home-page updates; it also carries 62 media objects, four
-  semantic annotations and two literal content replacements.
+  plan. The candidate has 24 changed pages: twenty guarded creates, the two
+  account-settings updates and the two guarded home-page updates; it also
+  carries 62 media objects, four semantic annotations and two literal content
+  replacements.
 - Confirmed the only home-page diff in each language is the requested link
   immediately after account settings. All 22 pages changed by the prior
   candidate and all 62 media objects are byte-for-byte unchanged in the fresh
@@ -36,9 +36,31 @@
   `kb-release-main-page-link-en.yml`. Each has 12 pages (10 creates and 2
   revision-guarded updates) and 31 create-only media objects. Every manifest
   file checksum was recalculated and verified locally.
-- Quick verification passed: Ruby syntax checks for the builder and tests,
-  the complete KB tool test suite, annotation discovery/checking, manifest
-  policy/count inspection, artifact checksums and `git diff --check`.
+- Initial quick verification passed Ruby syntax checks, the complete KB tool
+  test suite, manifest policy/count inspection, artifact checksums and focused
+  `git diff --check`. The first candidate-aware checker was started through a
+  yielded command but its final exit status was not polled correctly; the
+  premature green claim was removed after mandatory review reproduced the
+  failure.
+- Mandatory fresh-context reviewer `kb_home_link_review` found one Blocking
+  issue and no Important or Advisory issues. The home diffs, source guards,
+  manifest policies/hashes, builder tests and commit split all reviewed
+  cleanly. The blocker was a stale independent navigation inventory for the
+  four mute-shortcut pages: it still described manual **Add route** steps
+  instead of the current mute-composer controls.
+- Reconciled only the independent navigation contract in the capture
+  repository; no screenshot, scenario, capture metadata or PNG changed.
+  Commit `140ff904bcd205bf04147e8209635e361c190f6e`
+  (`contract: track mute composer navigation`) is pushed on branch
+  `2026-06-15-vpsadmin-events` from worktree
+  `worktrees/2026-06-15-vpsadmin-events/vpsadmin-kb-captures`.
+- Post-review verification passes:
+  - the exact candidate-aware annotation checker reports 135 bindings and 9
+    exceptions and exits 0;
+  - its focused unit suite passes 9 tests and 19 assertions; and
+  - `nix develop -c bin/check` passes the complete capture contract, browser,
+    shell, Ruby, seed and 180-PNG inventory checks.
+  No GitHub Actions workflows are configured for the pushed capture branch.
 
 ## 2026-08-02 API RabbitMQ Identity and Infrastructure-First Runbook
 

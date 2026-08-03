@@ -21,8 +21,10 @@ Decisions:
   guards, rebuild both languages, run the annotation checker, and generate new
   checksummed manifests. The expected release contains 12 pages and 31 media
   objects per language.
-- Make no capture or screenshot changes. Commit and run the mandatory
-  fresh-context review before staging.
+- Make no screenshot, scenario or capture-metadata changes. Reconcile the
+  independent navigation inventory only if the fresh candidate exposes stale
+  contract discoveries. Commit and run the mandatory fresh-context review
+  before staging.
 - Reset only the disposable staging environment owned by this verified
   development session, stage and verify both manifests, and inspect the source
   and rendered home/article pages. Leave staging available for review.
