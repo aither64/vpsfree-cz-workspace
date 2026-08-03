@@ -1,0 +1,57 @@
+====== Mute selected incident reports ======
+
+The quickest workflow creates a mute route directly from an incident
+report. vpsAdmin loads matcher values from the authorized report on the
+server and uses the built-in **Mute** receiver.
+
+Before starting, read the [[manuals:notifications|notification system overview]],
+[[manuals:notifications:events|events]], [[manuals:notifications:routing|routing]],
+and [[manuals:notifications:targets_and_receivers|targets and receivers]].
+
+===== Step 1: Open the mute-route proposal =====
+
+On the incident detail, select
+<vpsadmin-nav id="incidents.mute-similar.open">**Mute similar incident
+reports**</vpsadmin-nav>. The same link is included in e-mail and Telegram
+notifications. Opening it does not change state; it only displays the
+review form.
+
+{{:en:screenshots:vpsadmin:notifications:mute-incident-composer.png?900|Review incident-report matchers and mute-route expiration}}
+
+===== Step 2: Review matchers and expiration =====
+
+The defaults match **VPS ID** and the incident **codename**. If the report
+has no codename, **IP address** is used instead. You can optionally match the
+subject. All selected matchers must match together. Matcher values cannot
+be injected through the link because the API reloads them from the
+authorized report.
+
+The default expiration is one day. You can also choose one hour, one week,
+one calendar month, forever, or a custom local date and time.
+
+===== Step 3: Create and optionally tune the route =====
+
+**Create mute route** atomically creates the prepended route and matchers,
+then opens the ordinary editor at
+<vpsadmin-nav id="notifications.routes.open">**Notifications →
+Routes**</vpsadmin-nav>. Keep **Continue** disabled so the matching incident
+is not routed further.
+
+{{:en:screenshots:vpsadmin:notifications:example-mute-incident-route.png?900|Resulting incident mute route with VPS ID and codename matchers}}
+
+===== Step 4: Test the route =====
+
+Create a **Test notification** of type ''vps.incident_report'':
+
+<code json>
+{
+  "subject": "Documentation incident",
+  "text": "Synthetic incident used to test routing.",
+  "codename": "abuse-feed",
+  "vps_id": 123
+}
+</code>
+
+If the new mute route is the first match and no other route prepares a
+delivery, the test must report that no enabled route produced a delivery.
+The candidate must not appear in **Delivery history**.

@@ -1,0 +1,31 @@
+<note important>
+Tento článek je zastaralý, doporučujeme se řídit dokumentací nebo wiki distribuce, kterou používáš.
+Pokud chceš, můžeš tento článek doplnit a aktualizovat.
+</note>
+
+OpenShift nema rad nase OpenVZ tak treba ist hlbsie.
+
+1. Setup DNS
+	*.example.com to VPS IP
+2. Install CentOS
+  * yum update
+3. Enable KVM
+  * yum group install virtualization-host-environment
+  * yum install virt-manager xauth virt-viewer virt-install
+  * systemctl enable libvirtd
+  * systemctl disable firewalld
+  * reboot 
+4. Install CentOS in CentOS in NAT
+  * Example virt-install -n OpenShift --description "Test VM CentOS 7" --os-type=Linux --os-variant=rhel7 --ram=2048 --vcpus=2 --disk path=/var/lib/libvirt/images/myRHELVM1.img,bus=virtio,size=10  --cdrom http://mirror.centos.org/centos/7/os/x86_64/
+  * remember IP addr
+  * yum update
+  * systemctl disable firewalld
+5. Install OpenShift
+  * https://wiki.centos.org/SpecialInterestGroup/PaaS/OpenShift-Quickstart
+6. Port forwarding
+	* iptables -t nat -I PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.122.X:80
+	* iptables -t nat -I PREROUTING -p tcp --dport 8443 -j DNAT --to-destination 192.168.122.X:8443
+	* iptables -I FORWARD -m state -d 192.168.122.0/24 --state NEW,RELATED,ESTABLISHED -j ACCEPT
+7. Start OpenShift
+   *  oc cluster up --public-hostname=www.example.com --routing-suffix=example.com
+8. Login to https://www.example.com:8443

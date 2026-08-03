@@ -1,0 +1,160 @@
+<page>manuals:notifications:routing</page>
+====== Routování událostí a podmínky ======
+
+**Routa** je pravidlo, které rozhoduje, zda má být událost předána určitému
+příjemci. Obsahuje výběr typu události, nula nebo více podmínek, příjemce a
+chování **Pokračovat**. Routy spravujete v
+<vpsadmin-nav id="notifications.routes.open">**Notifikace → Routy**</vpsadmin-nav>.
+
+{{:cs:screenshots:vpsadmin:notifications:routes.png?900|Základní seznam vlastní a výchozích rout}}
+
+===== Jak se routy vyhodnocují =====
+
+  - vpsAdmin začne kořenovými routami a sourozence zkouší shora dolů.
+  - Routa odpovídá pouze tehdy, když odpovídá výběr typu a **všechny** její podmínky. Podmínky jedné routy se tedy spojují logickým **a**.
+  - Po shodě aktivní a ztlumující intervaly rozhodnou, zda se zpracuje příjemce této routy. Intervaly nemění shodu routy a nebrání vyhodnocení jejích podrout.
+  - Po shodě se vyhodnotí také odpovídající podrouty, i když interval přeskočil příjemce rodičovské routy.
+  - **Pokračovat: ano** dovolí zkoušet další sourozenecké routy na stejné úrovni. **Pokračovat: ne** další sourozence na této úrovni zastaví.
+
+Podrouty se po shodě rodiče vyhodnotí bez ohledu na nastavení
+**Pokračovat** rodiče. Toto nastavení řídí sourozence, nikoli vstup do větve
+podrout.
+
+Výchozí routy používají pole ''default_routed'' a ''roles''. Vlastní routy
+jsou před nimi, takže můžete konkrétní události nejprve přesměrovat nebo
+ztlumit. Ztlumující routa obvykle používá příjemce **Ztlumit** a
+**Pokračovat: ne**.
+
+===== Výběr typu události =====
+
+  * **Typ události** vybere jeden přesný typ, například ''vps.oom_report''.
+  * **Vzor typu události** používá glob, například ''monitoring.*''.
+  * Jsou-li obě pole prázdná, routa může odpovídat všem typům.
+
+Přesná routa nabízí společná pole i vlastní pole vybraného typu. Routa se
+vzorem nebo bez typu může použít jen společná pole. Dostupné typy a pole
+ověřte v [[navody:notifikace:udalosti|katalogu typů událostí]].
+
+===== Podmínky a operátory =====
+
+Podmínka neboli **matcher** porovnává jedno pole události se zadanou
+hodnotou. Přidává se v detailu uložené routy. Formulář otevřete přes
+<vpsadmin-nav id="notifications.matcher-form.open">**Notifikace → Routy →
+upravit routu → Přidat matcher**</vpsadmin-nav>.
+
+Po výběru pole formulář nabídne operátory, které pro něj lze
+použít. Porovnávaná hodnota se zadává do pole pro hodnotu.
+Dostupná pole, jejich příklady a popisy ukazuje
+[[navody:notifikace:udalosti|katalog typů událostí]].
+
+^ Operátor ^ Význam ^
+| ''%%==%%'' | hodnota pole se rovná zadané hodnotě |
+| ''%%!=%%'' | hodnota pole se nerovná zadané hodnotě |
+| ''%%=~%%'' | text odpovídá regulárnímu výrazu |
+| ''%%!~%%'' | text neodpovídá regulárnímu výrazu |
+| ''%%=*%%'' | text odpovídá glob vzoru; ''%%*%%'' nepřechází přes ''%%/%%'' a ''%%**%%'' může zahrnout více úrovní cesty |
+| ''%%!*%%'' | text neodpovídá glob vzoru |
+| ''%%>%%'' | hodnota je větší nebo pozdější než zadaná hodnota |
+| ''%%>=%%'' | hodnota je větší, pozdější nebo stejná |
+| ''%%<%%'' | hodnota je menší nebo dřívější než zadaná hodnota |
+| ''%%<=%%'' | hodnota je menší, dřívější nebo stejná |
+| ''%%contains%%'' | seznam v poli obsahuje zadanou položku |
+| ''%%not_contains%%'' | seznam v poli zadanou položku neobsahuje |
+
+Typické samostatné podmínky vypadají takto:
+
+^ Podmínka ^ Co vybere ^
+| ''%%vps_id == 123%%'' | události vybraného typu pro VPS s ID 123 |
+| ''%%cgroup =* /user.slice/**/*.scope%%'' | OOM reporty z cgroups uživatelských relací |
+| ''%%roles contains admin%%'' | události, které uvádějí roli ''admin'' pro výchozí doručení |
+
+Přidáte-li na jednu routu více podmínek, musí jedné události
+odpovídat všechny současně.
+
+{{:cs:screenshots:vpsadmin:notifications:matcher-form.png?900|Podmínka pole cgroup a přehled operátorů}}
+
+===== Seskupování událostí =====
+
+Seskupování omezuje počet zpráv při velkém množství souvisejících
+událostí v krátkém čase. vpsAdmin místo zprávy pro každou událost
+shromáždí události do skupiny a odešle jejich souhrn. Výchozí routa
+OOM reportů seskupuje podle ''vps_id'', takže reporty jedné VPS jsou ve
+společném souhrnu a reporty různých VPS zůstávají oddělené.
+
+Nastavení se nachází na uložené routě v
+<vpsadmin-nav id="notifications.route-grouping-form.open">**Notifikace →
+Routy → upravit routu → Seskupování notifikací**</vpsadmin-nav>:
+
+  * **Seskupit podle polí** obsahuje čárkami oddělená skalární pole události. Jejich hodnoty určují skupinu. Prázdné pole vytvoří jednu skupinu pro všechny události odpovídající routě.
+  * **Počáteční čekání** určuje počet sekund, po které první událost nové skupiny čeká na další události.
+  * **Interval opakování** je nejkratší počet sekund před odesláním dalšího souhrnu ze stejné stále aktivní skupiny.
+
+U routy s přesným typem lze použít pole uvedená v katalogu tohoto
+typu. Routa se vzorem nebo bez zvoleného typu může seskupovat jen podle
+společných polí, která formulář přijme. Nastavení patří pouze dané
+routě; podrouty je nedědí.
+
+Do skupiny vstoupí pouze doručení, která se mají skutečně odeslat.
+Ztlumené události a doručení přeskočená kvůli intervalu, vypnutému
+příjemci nebo nedostupnému cíli se neseskupují. Skupina vzniká pro routu a
+příjemce před jednotlivými cíli; má-li jeden příjemce několik povolených
+cílů, každý dostane stejnou sadu seskupených událostí.
+
+{{:cs:screenshots:vpsadmin:notifications:grouping-route.png?900|Seskupování na routě OOM reportů}}
+
+<vpsadmin-nav id="notifications.groups.open">**Notifikace → Skupiny
+notifikací**</vpsadmin-nav> nabízejí filtry **Otevřené (čekající a po
+termínu)**, **Po termínu**, **Nečinné** a **Vše**. Detail skupiny obsahuje
+routu, příjemce, hodnoty použité k seskupení, časování, čekající
+události a doručení.
+
+===== Časové intervaly =====
+
+Časový interval je opakovaně použitelný rozvrh s vlastním časovým
+pásmem. Může omezit doručování například na pracovní dobu nebo servisní
+okno, ztlumit upozornění mimo pracovní dobu nebo rozdělit pracovní a
+pohotovostní doručení mezi samostatné routy. Intervaly se vytvářejí v
+<vpsadmin-nav id="notifications.time-intervals.open">**Notifikace → Časové
+intervaly**</vpsadmin-nav>.
+
+Každý interval používá pojmenované časové pásmo IANA, například
+''Europe/Prague'', a jednu nebo více specifikací. Všechna vyplněná pole
+jedné specifikace musí platit současně (logické **a**). Více rozsahů v
+jednom poli a více samostatných specifikací jsou alternativy (logické
+**nebo**). Nevyplněné pole čas nijak neomezuje, ale každá specifikace musí
+omezit alespoň jedno pole.
+
+  * **Časy** používají rozsahy ''HH:MM-HH:MM''. Začátek je zahrnutý, konec nikoli. Rozsah nesmí přecházet půlnoc; noční interval proto rozdělte například na ''22:00-24:00'' a ''00:00-06:00''.
+  * **Dny v týdnu** používají anglické názvy nebo rozsahy, například ''monday-friday''. Rozsah nesmí přejít z konce týdne na jeho začátek.
+  * **Dny v měsíci** používají čísla a rozsahy. Záporná čísla se počítají od konce měsíce, takže ''-1'' znamená poslední den.
+  * **Měsíce** používají čísla 1–12 a **roky** celé letopočty; oba rozměry podporují jednotlivé hodnoty i rozsahy.
+
+{{:cs:screenshots:vpsadmin:notifications:time-interval.png?900|Pracovní doba vyjádřená dvěma specifikacemi časového intervalu}}
+
+U uložené routy se interval připojí v
+<vpsadmin-nav id="notifications.route-time-intervals.open">**Notifikace →
+Routy → upravit routu → Časové intervaly**</vpsadmin-nav> v jednom ze
+dvou režimů:
+
+  * **Aktivní interval** povolí příjemce routy pouze v době, kdy odpovídá alespoň jeden připojený aktivní interval. Nemá-li routa žádný aktivní interval, není její aktivní doba omezena.
+  * **Ztlumující interval** příjemce routy při shodě potlačí. Shoda libovolného ztlumujícího intervalu má přednost před aktivními intervaly.
+
+Intervaly se vyhodnotí pro čas události. Ovlivňují jen příjemce dané
+routy: nemění shodu routy a nebrání vyhodnocení jejích podrout.
+
+{{:cs:screenshots:vpsadmin:notifications:route-time-intervals.png?900|Časový interval připojený k routě jako aktivní}}
+
+===== Ověření routování =====
+
+V
+<vpsadmin-nav id="notifications.test-notification.open">**Notifikace →
+Testovací notifikace**</vpsadmin-nav> vyberte typ a zadejte JSON s jeho poli.
+Test používá skutečné routování a skutečné cíle; může proto opravdu odeslat
+e-mail, SMS, Telegram nebo webhook. Neprovádí však skutečnou provozní akci,
+například nepozastaví VPS.
+
+Pokud žádná povolená routa nepřipraví doručení, test skončí chybou a událost
+se neuloží. Úspěšný výsledek zkontrolujte v detailu Historie doručování.
+
+Viz také [[navody:notifikace:cile_a_prijemci|Cíle a příjemci]] a praktické
+příklady v [[navody:notifikace|přehledu notifikací]].

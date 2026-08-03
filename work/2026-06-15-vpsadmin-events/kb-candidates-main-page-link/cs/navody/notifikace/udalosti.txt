@@ -1,0 +1,60 @@
+<page>manuals:notifications:events</page>
+====== Události a typy událostí ======
+
+**Událost** je strukturovaná zpráva o tom, co se ve vpsAdminu stalo. Může
+oznamovat například přihlášení, změnu stavu VPS, OOM report, incident,
+monitoringový problém nebo dokončení operace. Událost má vždy **typ**
+(například ''vps.oom_report''), závažnost a sadu pojmenovaných polí.
+
+Typ události je popis možných událostí, nikoli jedna konkrétní událost.
+Určuje výchozí závažnost, zda se typ doručuje výchozími routami, a která
+pole lze použít v podmínkách. Aktuální katalog otevřete v
+<vpsadmin-nav id="notifications.event-types.open">**Notifikace → Typy
+událostí**</vpsadmin-nav>.
+
+{{:cs:screenshots:vpsadmin:notifications:event-types.png?900|Kategorie v aktuálním katalogu typů událostí}}
+
+===== Rodiny událostí =====
+
+Katalog se vyvíjí spolu s vpsAdminem, proto je stránka **Typy událostí**
+přesnějším zdrojem než pevný seznam v dokumentaci. Typy jsou seskupeny do
+rodin:
+
+  * **účet a bezpečnost** – vznik a stav účtu, přihlášení, tokeny, TOTP a upozornění na expiraci,
+  * **VPS** – životní cyklus, změny prostředků a sítě, konzole, OOM reporty a prevence,
+  * **monitoring, incidenty a výpadky** – problémy zjištěné monitoringem a zprávy vztahující se k vašim službám,
+  * **úložiště a migrace** – změny datasetů, snapshoty, připravené stažení a přesuny,
+  * **operace a změny prostředků** – průběh operací a typované změny objektů, například ''vps.updated'',
+  * **požadavky a platby** – změny uživatelských požadavků a platební události,
+  * **systém** – průběh operací spuštěných uživatelem; interní provozní typy vpsAdminu jsou určené administrátorům a zůstávají skryté.
+
+Běžný účet vidí jen typy, které může smysluplně použít pro své routy.
+Interní typy infrastruktury zůstávají skryté.
+
+===== Pole události =====
+
+Každý typ obsahuje společná pole, například ''event_type'', ''severity'',
+''subject'', ''summary'', ''roles'' a ''default_routed'', a může přidat
+vlastní pole. ''vps.oom_report'' například nabízí ''vps_id'',
+''vps_hostname'', ''cgroup'', ''oom_count'' a ''killed_name''.
+
+V detailu typu je u každého pole uveden datový typ, příklad a význam.
+Formulář podmínky podle datového typu nabídne jen použitelné operátory.
+
+{{:cs:screenshots:vpsadmin:notifications:event-type-vps-oom-report.png?900|Pole typu události vps.oom_report}}
+
+Pole ''roles'' označuje výchozí roli pro směrování, ne oprávnění uživatele.
+Typ vlastněný účtem proto může být v katalogu běžného uživatele, i když má
+roli ''admin''. Jedna událost může mít také role ''account'' i ''admin''.
+
+===== Kdy se událost objeví v historii =====
+
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifikace →
+Historie doručování → detail události**</vpsadmin-nav> není úplný auditní
+protokol. Kandidát se uloží pouze tehdy, když routování připraví alespoň
+jedno skutečné doručení. Pokud všechny odpovídající routy pouze ztlumí
+událost nebo přeskočí svůj příjemce kvůli aktivnímu či ztlumujícímu
+intervalu a žádná jiná routa ani podrouta nevytvoří doručení, událost se v
+historii neobjeví. Neobjeví se ani událost bez odpovídající routy.
+
+Pokračujte článkem [[navody:notifikace:routovani|Routování a podmínky]].

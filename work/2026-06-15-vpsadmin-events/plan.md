@@ -1,5 +1,45 @@
 # 2026-06-15-vpsadmin-events
 
+## KB Home-Page Notification Links
+
+Requested on 2026-08-03: link the pending notification documentation from the
+main page of each Knowledge Base under the VPS manuals.
+
+Decisions:
+
+- Add `[[navody:notifikace|Notifikace]]` to the Czech **Návody → Ovládání
+  VPS** list immediately after account settings. Add
+  `[[manuals:notifications|Notifications]]` to the equivalent English
+  **Manuals → VPS** list in the same position.
+- Fold the links into a fresh, complete release of the pending notification
+  bundle. Both notification roots are still absent from production, so a home
+  link must never be published separately from its target article.
+- Extend the immutable candidate builder with guarded literal content
+  replacements. A Knowledge Base article link is not a vpsAdmin WebUI
+  navigation path and must not be represented by a `vpsadmin-nav` annotation.
+- Fetch a new all-page production source inventory with exact missing-page
+  guards, rebuild both languages, run the annotation checker, and generate new
+  checksummed manifests. The expected release contains 12 pages and 31 media
+  objects per language.
+- Make no capture or screenshot changes. Commit and run the mandatory
+  fresh-context review before staging.
+- Reset only the disposable staging environment owned by this verified
+  development session, stage and verify both manifests, and inspect the source
+  and rendered home/article pages. Leave staging available for review.
+- Do not modify either production wiki without a later, explicit production
+  approval for the exact staged manifests.
+
+Compatibility and deployment:
+
+- The home-page changes are guarded by the current production revisions and
+  exact adjacent list entries, so concurrent edits fail instead of being
+  overwritten.
+- Create policies remain in force for every notification article and media
+  object. Promotion therefore stops if any target has appeared in production.
+- Czech and English releases are independently guarded but form one logical
+  documentation release; production promotion must include both reviewed
+  manifests.
+
 ## Dedicated API RabbitMQ Identity and Infrastructure-First Rollout
 
 Requested on 2026-08-02: keep RabbitMQ topology declaration with the

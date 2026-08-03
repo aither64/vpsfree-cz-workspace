@@ -1,0 +1,62 @@
+<page>navody:notifikace:udalosti</page>
+====== Events and event types ======
+
+An **event** is a structured message describing something that happened in
+vpsAdmin. It can report a login, a VPS state change, an OOM report, an
+incident, a monitoring problem, or a completed operation. Every event has
+an **event type** (for example ''vps.oom_report''), a severity, and a set of
+named fields.
+
+An event type describes possible events; it is not one particular event.
+It defines the default severity, whether default routes deliver the type,
+and which fields can be used by matchers. Open the current catalog at
+<vpsadmin-nav id="notifications.event-types.open">**Notifications → Event
+types**</vpsadmin-nav>.
+
+{{:en:screenshots:vpsadmin:notifications:event-types.png?900|Categories in the current event-type catalog}}
+
+===== Event families =====
+
+The catalog evolves together with vpsAdmin, so **Event types** is more
+accurate than a fixed list in this documentation. Types are grouped into
+families:
+
+  * **account and security** — account lifecycle, logins, tokens, TOTP, and expiration notices,
+  * **VPS** — lifecycle, resource and network changes, console access, OOM reports, and prevention,
+  * **monitoring, incidents, and outages** — detected problems and reports concerning your services,
+  * **storage and migration** — dataset changes, snapshots, prepared downloads, and moves,
+  * **operations and resource changes** — operation progress and typed object changes such as ''vps.updated'',
+  * **requests and payments** — user-request changes and payment events,
+  * **system** — progress of user-started operations; internal vpsAdmin operational types are administrator-only and remain hidden.
+
+An ordinary account sees only event types it can meaningfully use in its
+routes. Internal infrastructure event types remain hidden.
+
+===== Event fields =====
+
+Every type has common fields such as ''event_type'', ''severity'',
+''subject'', ''summary'', ''roles'', and ''default_routed'', and can add
+fields of its own. For example, ''vps.oom_report'' includes ''vps_id'',
+''vps_hostname'', ''cgroup'', ''oom_count'', and ''killed_name''.
+
+The type detail shows each field's data type, example value, and meaning.
+The matcher form offers only operators appropriate for that data type.
+
+{{:en:screenshots:vpsadmin:notifications:event-type-vps-oom-report.png?900|Fields of the vps.oom_report event type}}
+
+The ''roles'' field controls default role-based routing; it is not an access
+permission. An account-owned type can therefore appear in an ordinary
+user's catalog even when its delivery role is ''admin''. One event can also
+have both ''account'' and ''admin'' roles.
+
+===== When an event appears in history =====
+
+<vpsadmin-nav id="notifications.event-route-matches.open">**Notifications →
+Delivery history → event detail**</vpsadmin-nav> is not a complete audit log.
+A candidate is stored only when routing prepares at least one real
+delivery. If every matching route only mutes the event or skips its
+receiver because of an active or mute interval, and no other route or
+subroute produces a delivery, the event does not appear in history. An
+event without a matching route does not appear either.
+
+Continue with [[manuals:notifications:routing|Event routing and matchers]].

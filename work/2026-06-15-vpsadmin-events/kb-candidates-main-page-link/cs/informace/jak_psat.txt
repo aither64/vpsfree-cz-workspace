@@ -1,0 +1,103 @@
+<page>information:kb</page>
+====== Jak přispívat do znalostní báze ======
+Do znalostní báze může přispět kterýkoliv člen vpsFree.cz. Pod přihlašovacím formulářem je odkaz „Přihlásit se pomocí jiných služeb“. Klikněte na vpsAdmin a následně zadejte své přihlašovací údaje do vpsAdminu.
+
+===== Překlady a prolinkování stránek =====
+Naše KB existuje ve dvou jazykových verzích,
+[[https://kb.vpsfree.org|anglické]] a [[https://kb.vpsfree.cz|české]].
+Pro prolinkování stejných stránek v různých jazycích máme vlastní
+[[https://github.com/vpsfreecz/dokuwiki-plugin-mlfarm|plugin]].
+Ten umožňuje stránky označit pomocí tagu ''%%<page>název stránky</page>%%''.
+Stránky se stejným jménem jsou pak navzájem propojeny. Jména stránek se řídí
+podle [[https://kb.vpsfree.org|anglické KB]].
+
+Například pokud je v anglické KB stránka
+[[https://kb.vpsfree.org/information/association|information:association]] a
+chceme ji propojit s českou stránkou
+[[https://kb.vpsfree.cz/informace/sdruzeni|informace:sdruzeni]], přidáme
+kamkoli do české stránky následující tag:
+
+<code>
+<page>information:association</page>
+
+... text stránky ...
+</code>
+
+Pro přehlednost přidávejte tag vždy na první řádek. Anglická KB se považuje za
+hlavní, takže tam se tento tag nepíše.
+
+===== Média =====
+Všechny obrázky a jiné datové soubory jsou sdílené pro obě KB. Jinými slovy,
+nahrajeme-li soubor do jedné KB, objeví se i ve všech ostatních překladech KB.
+Pokud je potřeba mít pro různé jazykové verze různá média (zejména obrázky),
+umístěte je do adresáře pojmenovaného kódem jazyka, například ''en'' nebo ''cs''.
+
+===== Dokumentace vpsAdminu =====
+==== Navigace ve vpsAdminu ====
+Každý popis navigace, položky nabídky nebo formuláře ve vpsAdminu musí být
+uzavřen v párovém tagu ''%%<vpsadmin-nav>%%''. Atribut ''id'' obsahuje stabilní
+sémantický identifikátor daného ovládacího prvku. Viditelný text zůstává česky
+a musí odpovídat názvům v aktuálním webovém rozhraní.
+
+Například:
+
+<code>
+<vpsadmin-nav id="member.public-keys.add">Upravit profil → Veřejné klíče → Přidat veřejný klíč</vpsadmin-nav>
+</code>
+
+Identifikátory nevymýšlejte jen v textu KB. Musejí být součástí
+[[https://github.com/vpsfreecz/vpsadmin-kb-captures/blob/master/contract/navigation.yml|navigačního kontraktu]].
+Pokud potřebný identifikátor neexistuje nebo se webové rozhraní mění, postupujte
+podle [[https://github.com/vpsfreecz/vpsadmin-kb-captures/blob/master/docs/webui-change-workflow.md|workflow pro změny webového rozhraní]].
+
+==== Screenshoty vpsAdminu ====
+Screenshoty vpsAdminu nevytvářejte ani nenahrávejte ručně. Jsou reprodukovatelně
+generovány pomocí Playwright scénářů, vývojového clusteru a připravených dat v
+repozitáři [[https://github.com/vpsfreecz/vpsadmin-kb-captures|vpsadmin-kb-captures]].
+Repozitář spravuje českou i anglickou variantu každého screenshotu. Nový nebo
+změněný screenshot je potřeba upravit a znovu vygenerovat tam, zkontrolovat ve
+staging KB a teprve potom publikovat.
+
+===== Maintaineři =====
+Každá stránka může mít přiřazeného jednoho či více maintainerů. Maintainer je
+člověk, který se stará o aktuálnost a správnost obsahu dané stránky.
+
+V KB mají maintaineři pouze informační význam: ukazují, na koho se obrátit v
+případě dotazu či nápadu na vylepšení. Drobné změny, opravy a další informace
+můžete samozřejmě přidávat přímo. Pokud napíšete návod a máte čas se o něj
+starat, zapište se u něj jako maintainer.
+
+Náš IRC [[informace:chat#bot|bot]] pravidelně kontroluje změny v KB a informuje o
+nich na IRC. Pokud má maintainer v KB vyplněný nick na IRC, bot ho při změně
+stránky pingne.
+
+Na stránce se maintaineři nastavují pomocí tagu ''%%<maintainers>%%'':
+
+<code>
+<maintainers>
+aither
+nick2 (prvni sekce)
+nick3 (druha sekce)
+</maintainers>
+</code>
+
+První slovo na každém řádku je nick maintainera, ze kterého se vytvoří odkaz na
+stránku ''uzivatele:<nick>''. Tu si musí každý maintainer vytvořit. Na těchto
+stránkách jsou uloženy profily maintainerů, které se zapisují pomocí tagu
+''%%<maintainer>%%'':
+
+<code>
+<maintainer name="Moje jméno">
+irc nick_na_irc
+mail nekdo@domena.tld
+</maintainer>
+</code>
+
+Položky ''irc'' a ''mail'' jsou nepovinné. Z tohoto profilu si IRC bot načte
+nick maintainera na IRC a pingne ho při změně některé z jeho stránek.
+
+<maintainers hidden>
+aither
+krcmar
+kerrycze
+</maintainers>

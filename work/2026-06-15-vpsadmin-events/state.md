@@ -1,5 +1,45 @@
 # 2026-06-15-vpsadmin-events
 
+## 2026-08-03 KB Home-Page Notification Links
+
+- Verified `bin/dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG=2026-06-15-vpsadmin-events` identify this
+  initiative. Unrelated shared-workspace edits remain untouched.
+- Read-only production checks confirmed that Czech `domu` and English `home`
+  list account settings immediately before reverse DNS in their VPS sections.
+  Czech `navody:notifikace` and English `manuals:notifications` still do not
+  exist in production.
+- The session-owned staging container is running with the previously verified
+  mute-shortcuts manifests installed. It will be reset only after the fresh
+  candidate is committed, locally verified and independently reviewed.
+- Implementation started with exact guarded home-page replacements. The
+  release builder is being extended to represent non-WebUI content edits
+  without adding misleading semantic navigation annotations.
+- Added schema-3 `content_replacements` support to `bin/kb-contract-build`.
+  Each edit validates its language, page, exact source text and occurrence
+  count, records the edit in the candidate index and review, and aborts on
+  source drift. The full KB contract tool suite passes: 16 tests and 86
+  assertions.
+- Fetched the fresh immutable source inventory
+  `kb-sources-main-page-link`: 126 Czech and 80 English production pages,
+  including exact missing-page guards for all twenty notification articles.
+- Built `kb-candidates-main-page-link` from the existing complete annotation
+  plan. The independent annotation checker passed. The candidate has 24
+  changed pages: twenty guarded creates, the two account-settings updates and
+  the two guarded home-page updates; it also carries 62 media objects, four
+  semantic annotations and two literal content replacements.
+- Confirmed the only home-page diff in each language is the requested link
+  immediately after account settings. All 22 pages changed by the prior
+  candidate and all 62 media objects are byte-for-byte unchanged in the fresh
+  candidate.
+- Generated `kb-release-main-page-link-cs.yml` and
+  `kb-release-main-page-link-en.yml`. Each has 12 pages (10 creates and 2
+  revision-guarded updates) and 31 create-only media objects. Every manifest
+  file checksum was recalculated and verified locally.
+- Quick verification passed: Ruby syntax checks for the builder and tests,
+  the complete KB tool test suite, annotation discovery/checking, manifest
+  policy/count inspection, artifact checksums and `git diff --check`.
+
 ## 2026-08-02 API RabbitMQ Identity and Infrastructure-First Runbook
 
 - Verified the active session slug and reused the existing vpsAdmin and
