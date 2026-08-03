@@ -18648,3 +18648,29 @@ keeps implementation, generated locale output, and direct regression coverage
 together as one reviewable presentation fix; the second commit is the
 independent mechanical documentation-contract pin. The standalone mandatory
 change review is the next step, before dev-cluster update or browser tests.
+
+The exactly-one standalone mandatory reviewer reported one Blocking finding
+and no Important or Advisory findings. The stale
+`NotificationDeliveryHtmlDetailsTest` still required the old thirteen-column
+empty-row span, which independently reproduced as one failure in its 25-test
+class and caused current-head GitHub WebUI PHPUnit run `30813677965` to fail
+one of 137 tests. The renderer itself correctly used six columns. The reviewer
+otherwise confirmed the requested fields, links, filters, scoped CSS, Czech
+labels, commit boundaries, exact capture pin, and absence of an admin
+queue/log capture binding. A synthetic Chromium stress check at 1150 pixels
+kept an 805-pixel table and extreme unbroken cell values contained.
+
+The Blocking finding was fixed by updating the old regression to require the
+six-column span. The complete local WebUI PHPUnit suite then passed 137 tests
+and 893 assertions. The vpsAdmin commit was amended, with all non-bypassed
+Overcommit hooks passing again, and force-pushed as
+`a138f991d41c0fb2f9e7a4f21e42d127c263ad2d`. Superseded old-head aggregate
+run `30813677946` was canceled after the force-push; completed old-head locale
+and failed PHPUnit runs were retained as evidence.
+
+All four capture references were refreshed to the amended vpsAdmin head,
+`nix develop -c bin/check` passed again with 17 runs, 69 assertions, and 180
+valid PNG variants, and the final capture commit was pushed as
+`8b8034cb439a877b90d52849934df5d007c181c0`. Both affected worktrees are
+clean. The mandatory review finding is resolved; dev-cluster update and
+populated-row browser validation may now proceed.
