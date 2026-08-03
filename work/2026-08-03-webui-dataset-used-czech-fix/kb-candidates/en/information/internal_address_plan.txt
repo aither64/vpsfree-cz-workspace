@@ -1,0 +1,128 @@
+====== Internal IP Address Plan ======
+==== Autonomous systems ====
+<code>
+AS65534       AS-PRG
+AS65533       AS-BRQ
+AS65532       AS-B48
+AS65531       AS-SNAJPA
+AS65530       AS-MEDVED
+</code>
+==== Diagram ====
+<code>
+                                               AS65534                               AS65533          
+                                     +-------------------------+           +-------------------------+
+                                     |                         +-----------+                         |
+                               +-----+ edgertr1-prg.vpsfree.cz |           | edgertr1-brq.vpsfree.cz |
+          AS65532              |     |                         |           |                         |
++-------------------------+    |     +-------------------------+____   ____+-------------------------+
+|                         +----+                                    \ /                                   
+|    gw.b48.vpsfree.cz    |                                          \                                  
+|                         +----+                                ____/ \____                          
++-------------------------+    |     +-------------------------+           +-------------------------+
+                               |     |                         |           |                         |
+                               +-----+ edgertr2-prg.vpsfree.cz |           | edgertr2-brq.vpsfree.cz |
+                                     |                         +-----------+                         |
+                                     +-------------------------+           +-------------------------+
+                           GRE/IPSec                                                                  
+                                                                IPIP/IPSec                            
+</code>
+
+==== IP Summary ====
+<code>
+GLOBAL ALLOCATION:    172.16.0.0 - 172.31.255.255
+</code>
+
+<code>
+172.16.0.0 - 172.16.255.255 VPSFREE-PRG
+172.17.0.0 - 172.17.255.255 BASE48-BRQ
+172.18.0.0 - 172.30.255.255 [UNALLOCATED]
+172.19.0.0 - 172.19.255.255 VPSFREE-BRQ
+172.20.0.0 - 172.29.255.255 [UNALLOCATED]
+172.30.0.0 - 172.30.255.255 ADMIN-TUNNELS
+172.31.0.0 - 172.31.255.255 MNT-SUBNET
+</code>
+
+==== VPSFREE-PRG ====
+== Allocation: ==
+<code>
+172.16.0.0/16     VPSFREE-PRG
+</code>
+== Assignments: ==
+<code>
+NETWORK           ALLOCATION NAME       VLAN #
+===============================================================================
+172.16.0.0/23     VPSFREE-PRG-PROD      200
+172.16.2.0/23     VPSFREE-PRG-PGND      210
+172.16.8.0/21     VPSFREE-PRG-PROD-INT  200
+172.16.100.0/24   VPSFREE-PRG-LEGACY    100
+172.16.101.0/24   VPSFREE-PRG-MGMT      101
+172.16.103.0/24   VPSFREE-PRG-SWITCHES  103
+172.16.107.0/24   VPSFREE-PRG-VPN       220
+</code>
+
+==== BASE48-BRQ ====
+== Allocation: ==
+<code>
+172.17.0.0/16     BASE48-BRQ
+</code>
+== Assignments: ==
+<code>
+NETWORK           ALLOCATION NAME       VLAN #
+===============================================================================
+172.17.0.0/24     BASE48-MGMT           100
+-dhcp-            BASE48-UPC            200
+172.17.1.0/24     BASE48-LAN            201
+172.17.2.0/24     BASE48-WLAN           202
+172.17.3.0/24     BASE48-IOT            203
+172.17.4.0/23     BASE48-RACKBASE       300
+172.17.6.0/23     BASE48-RACKVPSF       301
+</code>
+
+==== VPSFREE-BRQ ====
+== Allocation: ==
+<code>
+172.19.0.0/16     VPSFREE-BRQ
+</code>
+== Assignments: ==
+<code>
+NETWORK           ALLOCATION NAME       VLAN #
+===============================================================================
+172.19.0.0/23     VPSFREE-PRG-PROD      ---
+172.19.8.0/21     VPSFREE-BRQ-PROD-INT  ---
+172.19.101.0/24   VPSFREE-PRG-MGMT      101
+</code>
+
+==== ADMIN-TUNNELS ====
+== Allocation: ==
+<code>
+172.30.0.0/16     ADMIN-TUNNELS
+</code>
+== Assignments: ==
+<code>
+NETWORK           ALLOCATION NAME       COMMENT
+===============================================================================
+172.30.0.0/21     SNAJPA
+172.30.8.0/21     MEDVED
+</code>
+
+==== MNT-SUBNET ====
+== Allocation: ==
+<code>
+172.31.0.0/16     MNT-SUBNET
+</code>
+== Assignments: ==
+<code>
+NETWORK           ALLOCATION NAME       COMMENT
+===============================================================================
+172.31.0.0/24     PEERING               IPSec /30 tunnels
+  172.31.0.0/30   PEER-PRG-BRQ-1-1      edge-rtr1.prg <-> edge-rtr1.brq
+  172.31.0.4/30   PEER-PRG-BRQ-1-2      edge-rtr1.prg <-> edge-rtr2.brq
+  172.31.0.8/30   PEER-PRG-BRQ-2-1      edge-rtr2.prg <-> edge-rtr1.brq
+  172.31.0.12/30  PEER-PRG-BRQ-2-2      edge-rtr2.prg <-> edge-rtr2.brq
+  172.31.0.16/30  PEER-PRG-B48-1-1      edge-rtr1.prg <-> edge-rtr1.b48
+  172.31.0.20/30  PEER-PRG-B48-2-1      edge-rtr2.prg <-> edge-rtr1.b48
+  172.31.0.24/30  PEER-PRG-SNAJPA-1-1   edge-rtr1.prg <-> edge-rtr1.snajpa
+  172.31.0.28/30  PEER-PRG-SNAJPA-2-1   edge-rtr2.prg <-> edge-rtr1.snajpa
+  172.31.0.32/30  PEER-PRG-MEDVED-1-1   edge-rtr1.prg <-> edge-rtr1.medved
+  172.31.0.36/30  PEER-PRG-MEDVED-2-1   edge-rtr2.prg <-> edge-rtr1.medved
+</code>

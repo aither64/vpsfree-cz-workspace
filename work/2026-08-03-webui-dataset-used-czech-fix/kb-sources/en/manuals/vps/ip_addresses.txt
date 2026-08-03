@@ -1,0 +1,59 @@
+====== IP Addresses ======
+
+===== Public IP Addresses =====
+Every member has 1 public IPv4 address and 32 IPv6 addresses available. Additional
+public IPv4 addresses are subject to a [[information: membership_fees |fee]], IPv6 addresses are given upon request.
+
+===== Private IP Addresses =====
+Private IP addresses access the internet using NAT and are therefore not accessible from
+the outside. Private addresses are useful if you divide the allocated
+[[manuals:vps:environment|resources]] between several VPSs. The public IPv4 address is
+often unnecessary. However, functioning with only an IPv6 is problematic since
+some servers still don’t support it.
+
+Currently it is necessary to request private addresses from our support.
+
+===== IP Address Ownership =====
+In the production environment, we use a concept of IP address ownership. As soon as an
+address is first assigned to a VPS, its owner is set. Afterwards, even if the address is
+removed from the VPS, the owner of the address remains the same. When assigning addresses to VPSs, it is
+necessary to first assign pre-owned addresses and only then to choose new ones.
+
+Ownership prevents people from taking temporarily unused addresses
+while also preventing people from misusing IP addresses by getting them on blacklists and then
+taking new ones. The address with a damaged reputation would then be given to someone
+else.
+
+The concept of ownership does not apply to [[manuals:vps:playgroundvps|the playground]].
+
+IP addresses are also dependent on location, i.e. Prague or Brno. IP addresses from Prague cannot
+be used in Brno and vice versa. If you'd like to e.g. move from Prague to Brno, the IP addresses
+from Prague have to be released and then you'll be able to choose new addresses in Brno. Please
+contact our support to release the addresses.
+
+===== Address Overview =====
+
+A list of addresses is available in the “<vpsadmin-nav id="networking.routable-addresses.open">Networking -> Routable addresses</vpsadmin-nav>” menu. This is where you can see
+addresses that are owned or assigned to VPSs, as well as addresses that are available.
+It is possible to assign addresses to VPSs directly from this list.
+
+{{:en:screenshots:vpsadmin:networking:ip-address-list.png?300|}}
+
+The TX and RX columns display the maximum possible data flow in Mbps.
+
+===== Routed addresses and host addresses =====
+Addresses are added to VPS in two steps. First, the address has to be routed to the
+VPS and then optionally added to the network interface. You can route larger networks,
+e.g. /64 IPv6. Only selected addresses are actually added to the network interface.
+You can also use the routed network e.g. for containers inside your VPS and not add
+any to the VPS interface.
+
+There are two forms in VPS details in vpsAdmin to manage addresses:
+
+{{:en:screenshots:vpsadmin:networking:routed-addresses.png?200|}}
+
+{{:en:screenshots:vpsadmin:networking:interface-addresses.png?350|}}
+
+vpsAdmin only has the first host address from every network in its database. In case you need
+more host addresses, you can add them to vpsAdmin's database. In "Routed addresses" form, click
+on the icon with labeled "Manage host addresses" and then "Add host addresses".
