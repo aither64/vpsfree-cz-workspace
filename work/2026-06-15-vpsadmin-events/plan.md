@@ -3623,3 +3623,23 @@ locale generation/health checks, hook-managed checks, and the capture
 repository's `nix develop -c bin/check`. After the mandatory standalone change
 review, run the targeted WebUI Playwright scenario against the updated dev
 cluster and inspect the table geometry at the WebUI's minimum supported width.
+
+## Event route expiration metadata
+
+Give the shared `EventRoute.expires_at` API parameter an explicit
+human-friendly label and a description explaining that the optional timestamp
+ends event matching. Regenerate and translate the API metadata catalog, then
+squash the correction into `api: describe notification route behavior`, where
+the other route parameter labels and descriptions were introduced.
+
+Add a general API-parameter metadata rule to vpsAdmin's `AGENTS.md` and the
+mandatory-change-review checklist: labels must always be human-friendly, and
+descriptions must explain meaning or purpose unless the parameter is already
+obvious and a description would add nothing. Keep the repository rule as a
+separate policy commit because it applies beyond this route feature.
+
+This is documentation and API self-description metadata only. It changes no
+request/response value, database schema, persisted state, RabbitMQ message, or
+deployment ordering. Mixed old and new API/WebUI processes remain compatible,
+and rollback requires no data conversion. Refresh the WebUI documentation
+contract pin and update the bridge development cluster after review.
