@@ -201,12 +201,17 @@
   manifest or DokuWiki write to stage; production and global KB staging were
   left untouched.
 - vpsAdmin push workflows for `2f9546ce8`: WebUI PHPUnit and i18n health are
-  green; the selected CI integration run is still in progress.
+  green on both the feature branch and `master`. The selected integration
+  runs are still in progress with no failed step or downloadable log: feature
+  run `30852775194` and master run `30856191557`. Recent successful selected
+  CI runs in this repository commonly take roughly 3--6 hours; these are
+  current-head runs at the same commit and therefore were not cancelled.
 
 ## Open questions
 
-- None. Waiting only for the already-running vpsAdmin master CI integration
-  workflow to finish.
+- None. The two already-running vpsAdmin CI integration workflows are the only
+  outstanding asynchronous validation; both are current-head runs of the same
+  tested commit and had not completed at the final check.
 
 ## Cleanup
 
