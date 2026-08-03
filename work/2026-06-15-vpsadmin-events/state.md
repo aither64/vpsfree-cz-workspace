@@ -171,6 +171,13 @@
   `tests/ci-selection-test.rb` with 16 runs and 55 assertions.
 - Long API/VM tests remain paused until a new standalone mandatory review of
   the complete committed history passes.
+- The new standalone review of `cda461f8..fe8a01176` returned **PASS** with no
+  Blocking, Important or Advisory findings. It independently confirmed the
+  source-local event and external-owner declarations, explicit delivery
+  interfaces, persisted target-kind source of truth, open/runtime-validated
+  Nix contract, isolated outage behavior fix, compatibility assumptions and
+  ten-commit cohesion. Full API, VM, bridge-cluster and current-head CI
+  validation may now proceed.
 
 ## 2026-08-03 KB Home-Page Notification Links
 
