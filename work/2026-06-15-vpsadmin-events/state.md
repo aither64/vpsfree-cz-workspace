@@ -18711,3 +18711,53 @@ Current-head GitHub WebUI PHPUnit run `30814546911` and i18n-health run
 is still running its selected CI-tagged tests on the exact vpsAdmin head; it
 has not reported a failure. The earlier failed PHPUnit run remains retained as
 review evidence and the superseded aggregate run alone was canceled.
+
+## 2026-08-03 route expiration API metadata
+
+The shared `EventRoute.expires_at` parameter now declares the label `Expires
+at` and explains that it is an optional date and time after which the route
+stops matching events. The incident-report and OOM-report mute actions expose
+the same route-expiration parameter in their inputs and created-route outputs,
+so those definitions carry the same metadata. The generated Czech metadata is
+`Expiruje` with a corresponding explanation. No test source was changed, at
+the user's request.
+
+The metadata was history-rewritten into the commits that introduced the
+surrounding behavior:
+
+- `047b9fedbc96eebb3c3971005388127c08dcdbdd` (`api: describe notification
+  route behavior`) owns the shared EventRoute label, description, and generated
+  catalog structure;
+- `e7d3e7dd2` (`events: create mute routes from report values`) owns the same
+  metadata on the later incident/OOM mute action parameters and their generated
+  catalog entries.
+
+The branch contains no fixup commit. Its final tree differs from the preceding
+published head only in the three route-related API resource files, generated
+English/Czech catalogs, and `AGENTS.md`; the event-routing spec is byte-for-byte
+unchanged. vpsAdmin head `a4153079367b7d7b374d2599f819c9ec5755e8e9` is
+force-pushed with a lease. Its separate head commit `a41530793` requires every
+new or changed API parameter to use a human-friendly label and a useful
+description unless an obvious meaning would only be repeated.
+
+The workspace mandatory-change-review skill has the corresponding reviewer
+check in top-level commit `10cc0fd`. The implementation plan update is
+`756ef5a`. The capture pin was regenerated and its existing pin commit amended
+to `0136141446fc91627ceba103376979248c5d869d`, with all four references set to
+the exact vpsAdmin head. No capture binds the affected administrator route
+forms, so no PNG or KB candidate changed and the existing staged KB release was
+not touched.
+
+Quick verification before mandatory review:
+
+- Ruby syntax passed for EventRoute, IncidentReport, and OomReport;
+- `rake vpsadmin:i18n:update` normalized the catalogs and
+  `rake vpsadmin:i18n:health` passed on the final rewritten tree;
+- all vpsAdmin Overcommit hooks passed on the metadata fixups and the separate
+  repository-guidance commit;
+- `nix develop -c bin/check` passed in vpsAdmin KB captures: 17 runs and 69
+  assertions passed, the 58-control documentation contract and annotation
+  inventory are valid, and all 180 PNG variants validate.
+
+The standalone mandatory review is next. Dev-cluster update and live bilingual
+form verification have not started.
