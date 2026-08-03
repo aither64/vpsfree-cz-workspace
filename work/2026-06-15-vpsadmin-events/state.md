@@ -61,6 +61,30 @@
   - `nix develop -c bin/check` passes the complete capture contract, browser,
     shell, Ruby, seed and 180-PNG inventory checks.
   No GitHub Actions workflows are configured for the pushed capture branch.
+- Reconfirmed staging ownership belongs to this exact session, then reset the
+  disposable mirror. The clean mirror completed at `2026-08-03T11:32:19Z`
+  with 116 Czech pages, 70 English pages, 58 language pairs and 224 shared
+  media objects.
+- Staged the Czech manifest followed by the English manifest. Each installed
+  12 pages and 31 media objects. Strict verification warmed and verified all
+  12 Czech/English changed-page pairs and reports both `cz-staging` and
+  `org-staging` valid.
+- Source and rendered review checks pass:
+  - both home pages place the notification link immediately after account
+    settings and before reverse DNS;
+  - both home links render as existing links and both article roots return
+    HTTP 200;
+  - the notification roots expose bidirectional Czech/English translation
+    links; and
+  - semantic navigation tags render as `vpsadmindoc-nav` spans with the
+    expected IDs rather than leaking raw markup.
+- Staging remains running and owned by this initiative. Its pending record is
+  the English manifest with SHA-256
+  `0f4cb463a49251d56d0870d173645bcb62727eded04c24048255ed9dc9cdad96`;
+  both language page/media sets remain installed for review.
+- Production was not modified. Promotion still requires explicit approval and
+  the documented per-language restage, verify and immediate promote sequence
+  for these exact manifests.
 
 ## 2026-08-02 API RabbitMQ Identity and Infrastructure-First Runbook
 
