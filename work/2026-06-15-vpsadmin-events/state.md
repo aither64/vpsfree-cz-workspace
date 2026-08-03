@@ -109,14 +109,19 @@
   - RuboCop reports no offenses in all 14 modified Ruby files, `nixfmt --check`
     passes all four Nix files, Ruby syntax and `git diff --check` pass, and
     `tests/ci-selection-test.rb` passes 16 runs with 55 assertions.
-- Committed the review repairs as two focused vpsAdmin commits:
-  - `da83c237f` (`api: validate event policy declarations`) contains the closed
-    policy/redaction contracts and derived OAuth instrumentation; and
-  - `945adba42` (`notifications: validate delivery extension contracts`)
-    contains strict delivery results/failures, atomic registry conflicts,
-    owner-directory discovery and the runtime-checked Nix extension contract.
-  Repository Overcommit hooks passed for both commits, including Nixfmt,
-  migration specs, API/WebUI i18n and RuboCop.
+- The first review repairs were later rewritten into focused commits:
+  - `7fc64334f` (`api: validate event policy declarations`) contains the closed
+    policy/redaction contracts, derived OAuth instrumentation and owning
+    repository guidance;
+  - `0638d1b8d` (`notifications: validate transport results`) contains typed
+    results, generic failures and protocol-neutral dispatch;
+  - `720336741` (`notifications: finalize delivery metadata`) contains atomic
+    registry conflicts, owner-directory discovery and load-order-independent
+    finalization; and
+  - `b23dcfe86` (`notifications: validate deployment defaults`) contains the
+    open Nix worker generation and runtime-checked defaults contract.
+  Repository Overcommit hooks passed on every rewritten commit, including
+  Nixfmt, migration specs, API/WebUI i18n and RuboCop.
 - The second standalone mandatory review also returned **FAIL**, with two
   Blocking and three Important findings. Runtime API finalization did not yet
   reject mounted custom mutating actions without a policy, and the first
@@ -125,28 +130,46 @@
   was load-order-sensitive, and SMS callback instrumentation still used a
   bespoke three-place protocol.
 - All second-review findings were repaired:
-  - `2c9eab011` (`api: validate mounted event policies`) validates the fully
+  - `a6d7a7d54` (`api: validate mounted event policies`) validates the fully
     mounted recursive API after `api.mount`, including extension actions;
-  - `dd1510c23` (`notifications: finalize action metadata`) rejects duplicate
-    configuration sections and validates cross-action fallbacks after action
-    discovery, including atomic late registration;
-  - `1b5ac6938` (`api: derive notification callback policies`) makes the SMS
-    callback use the same owner-local mapping and generic external-boundary
-    wrapper mechanism as OAuth; and
+  - duplicate configuration sections and complete-registry fallback validation
+    are folded into the owning `720336741` registry-finalization commit;
+  - SMS callback ownership is folded into `dfa64b92a` (`api: derive external
+    policy owners`) with OAuth and the generic external wrapper mechanism; and
   - the branch was rewritten before publication so `28c59a0d7` contains only
-    the architecture refactor, while `87093ad8e` (`events: capture outage
+    the architecture refactor, while `8cb26aeb0` (`events: capture outage
     advisory cascade deletions`) separately adds the missing deletion facts and
     direct behavior coverage through both parents.
 - The separate cascade correction uses an existing public event type and wire
   format. Old and new workers can consume the additional facts, mixed-version
   deployment needs no ordering, and rollback only stops producing those facts.
-- Final quick verification from the rewritten history passes: repository hooks
-  on the functional commit; 149 focused all-plugin examples; 63 core-only
-  examples with the one plugin-specific case correctly pending; Ruby syntax
-  across all changed Ruby files; RuboCop on all 208 changed API/plugin Ruby
-  files; `nixfmt --check` on all four changed Nix files; `git diff --check`; and
+- A third standalone mandatory review returned **FAIL** with three Blocking
+  findings and no lower-severity findings. It confirmed all earlier runtime
+  repairs, but required the oversized notification repair to be split into
+  independently reviewable commits, found the remaining central list of
+  external callback owners, and found that action target kinds/defaults were
+  not checked against one authoritative persisted enum.
+- All third-review findings were accepted and repaired:
+  - the unpublished history now has separate transport-result,
+    registry/finalization and Nix deployment-contract commits, later metadata
+    and SMS fixes are folded into their owning commits, and event policy
+    guidance is part of `7fc64334f`;
+  - `dfa64b92a` adds a source-local external-owner registry from which wrapper
+    validation and installation are derived; identical registration and
+    repeated finalization are idempotent, while invalid/conflicting mappings
+    fail atomically; and
+  - `fe8a01176` (`notifications: validate persisted target kinds`) defines one
+    ordered persisted mapping for both model enums and rejects unsupported or
+    undeclared action defaults before registry mutation.
+- The rewritten final tree is byte-for-byte identical to the fully repaired
+  pre-rewrite snapshot. Final quick verification passes: repository hooks on
+  all newly created/amended commits; 180 focused all-plugin examples; 94
+  core-only examples with the one plugin-specific case correctly pending; Ruby
+  syntax across all changed Ruby files; RuboCop on all 209 changed API/plugin
+  Ruby files; `nixfmt --check` on all four changed Nix files; a standalone
+  target-kind load check; `git diff --check`; and
   `tests/ci-selection-test.rb` with 16 runs and 55 assertions.
-- Long API/VM tests remain paused until a final standalone mandatory review of
+- Long API/VM tests remain paused until a new standalone mandatory review of
   the complete committed history passes.
 
 ## 2026-08-03 KB Home-Page Notification Links
