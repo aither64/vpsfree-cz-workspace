@@ -18674,3 +18674,40 @@ valid PNG variants, and the final capture commit was pushed as
 `8b8034cb439a877b90d52849934df5d007c181c0`. Both affected worktrees are
 clean. The mandatory review finding is resolved; dev-cluster update and
 populated-row browser validation may now proceed.
+
+The bridge-network `single` development cluster was updated in place with
+`devcluster update 2026-06-15-vpsadmin-events services`. It is running and
+ready, and `/etc/vpsadmin/build-info.json` reports the exact clean vpsAdmin
+revision `a138f991d41c0fb2f9e7a4f21e42d127c263ad2d`. The API, WebUI container,
+RabbitMQ, email notification dispatcher, and notification grouper are all
+active after deployment.
+
+The first targeted `webui#support-pages` integration attempt used the
+historical global `/tmp/os-test-runner` state. A concurrent test from
+`worktrees/2026-08-03-vpsadmin-ci-failure/vpsadmin` reused and overwrote the
+same `os-test-webui-fd1a3b33` state, including its log and VM sockets, and the
+run ended with `stream closed in another thread`. That evidence is invalid as
+a product result; the collision mechanism matches the existing durable note
+`notes/vpsadminos/2026-07-26-test-runner-state-collision.md`.
+
+The test was rerun with its own `mktemp` state directory using
+`./test-runner.sh test --state-dir DIR 'webui#support-pages'`. The Playwright
+example succeeded in 777.76 seconds, the script in 1448.44 seconds, and the
+complete VM test and teardown in 1535.95 seconds with `expected_success`. The
+exact isolated state directory was inspected and removed afterward.
+
+A separate headless Chromium check exercised the deployed development WebUI
+at a 1150 by 900 viewport as `test-admin`. The English and Czech delivery-log
+pages each rendered seven real deliveries with exactly six cells per row and
+the expected vertically stacked labels. In both languages the table was 805
+pixels wide, its right edge and widest cell ended at the 820-pixel content
+edge, and the 1150-pixel document had no horizontal scroll. The empty delivery
+queue rendered the same contained six-column headers in both languages. The
+administrator language was restored to English and temporary screenshots were
+removed after visual inspection.
+
+Current-head GitHub WebUI PHPUnit run `30814546911` and i18n-health run
+`30814547417` completed successfully. Aggregate integration run `30814546869`
+is still running its selected CI-tagged tests on the exact vpsAdmin head; it
+has not reported a failure. The earlier failed PHPUnit run remains retained as
+review evidence and the superseded aggregate run alone was canceled.
