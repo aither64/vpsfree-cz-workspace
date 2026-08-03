@@ -13,9 +13,10 @@
   unrelated and will remain untouched.
 - Read the workspace and repository instructions, event documentation, current
   resource/action catalogs, notification delivery implementation and
-  `mandatory-change-review` skill. The approved implementation keeps all
-  external contracts unchanged while replacing mirrored registries and hidden
-  delivery receiver protocols.
+  `mandatory-change-review` skill. The approved implementation keeps schema,
+  API and wire contracts unchanged while replacing mirrored registries and
+  hidden delivery receiver protocols; one additive event-capture correction is
+  tracked separately.
 - Implementation is in progress in three disjoint workstreams: the review
   skill, declarative resource/action policy, and explicit delivery-action
   classes. No production system or deployment configuration is in scope.
@@ -33,13 +34,13 @@
 - The detached pre-refactor characterization run passed 141 focused resource,
   target and delivery examples with no failures. Its temporary worktree remains
   available only for the post-refactor comparison and will be removed afterward.
-- Implemented and committed the vpsAdmin refactor as two focused commits on
-  branch `2026-06-15-vpsadmin-events`:
+- Implemented and committed the initial vpsAdmin refactor as two focused
+  commits on branch `2026-06-15-vpsadmin-events`:
   - `980b16735` (`api: isolate notification delivery actions`) introduces an
     explicit delivery-action interface and registry, separate e-mail, webhook,
     Telegram and SMS implementations, typed planning/result objects, and
     protocol-neutral routing and dispatch services;
-  - `a8b305a13` (`api: colocate event policy declarations`) replaces central
+  - `28c59a0d7` (`api: colocate event policy declarations`) replaces central
     resource, action, operation, cascade, redaction and concern-owner catalogs
     with declarations beside their owning resources, models and entry points.
 - The event contract characterization is unchanged for the resource catalog,
@@ -66,13 +67,14 @@
   the API is mounted more than once. External policy registration is now
   idempotent only for an identical declaration and rejects conflicting policy;
   the repeated-mount i18n health check and explicit regression spec pass.
-- Compatibility remains as planned: no schema, persisted representation, API,
-  Event Type, queue topology/message, operator-facing configuration default,
-  transport, retry, rate-limit or rendering contract changed. Generated
-  notification YAML gains only an optional internal `delivery_contract`; old
-  processes ignore it and new processes accept it as absent, so mixed versions
-  and rollback require no new ordering or data handling.
-- Mandatory fresh-context review of `cda461f8..a8b305a13` returned **FAIL** and
+- Compatibility remains as planned for the architecture refactor: no schema,
+  persisted representation, API, Event Type, queue topology/message,
+  operator-facing configuration default, transport, retry, rate-limit or
+  rendering contract changed. Generated notification YAML gains only an
+  optional internal `delivery_contract`; old processes ignore it and new
+  processes accept it as absent, so mixed versions and rollback require no new
+  ordering or data handling.
+- Mandatory fresh-context review of `cda461f8..28c59a0d7` returned **FAIL** and
   long tests remain paused. The strengthened architecture checklist identified
   three Blocking gaps: open-ended policy kinds could silently disable capture,
   malformed delivery results could be marked successful while the dispatcher
@@ -108,15 +110,44 @@
     passes all four Nix files, Ruby syntax and `git diff --check` pass, and
     `tests/ci-selection-test.rb` passes 16 runs with 55 assertions.
 - Committed the review repairs as two focused vpsAdmin commits:
-  - `b01389210` (`api: validate event policy declarations`) contains the closed
+  - `da83c237f` (`api: validate event policy declarations`) contains the closed
     policy/redaction contracts and derived OAuth instrumentation; and
-  - `26c2a0160` (`notifications: validate delivery extension contracts`)
+  - `945adba42` (`notifications: validate delivery extension contracts`)
     contains strict delivery results/failures, atomic registry conflicts,
     owner-directory discovery and the runtime-checked Nix extension contract.
   Repository Overcommit hooks passed for both commits, including Nixfmt,
   migration specs, API/WebUI i18n and RuboCop.
-- Long API/VM tests remain paused until the repaired implementation is
-  committed and a new standalone mandatory review passes.
+- The second standalone mandatory review also returned **FAIL**, with two
+  Blocking and three Important findings. Runtime API finalization did not yet
+  reject mounted custom mutating actions without a policy, and the first
+  architecture commit mixed in the outage-advisory cascade behavior fix.
+  Delivery configuration sections could collide, template fallback validation
+  was load-order-sensitive, and SMS callback instrumentation still used a
+  bespoke three-place protocol.
+- All second-review findings were repaired:
+  - `2c9eab011` (`api: validate mounted event policies`) validates the fully
+    mounted recursive API after `api.mount`, including extension actions;
+  - `dd1510c23` (`notifications: finalize action metadata`) rejects duplicate
+    configuration sections and validates cross-action fallbacks after action
+    discovery, including atomic late registration;
+  - `1b5ac6938` (`api: derive notification callback policies`) makes the SMS
+    callback use the same owner-local mapping and generic external-boundary
+    wrapper mechanism as OAuth; and
+  - the branch was rewritten before publication so `28c59a0d7` contains only
+    the architecture refactor, while `87093ad8e` (`events: capture outage
+    advisory cascade deletions`) separately adds the missing deletion facts and
+    direct behavior coverage through both parents.
+- The separate cascade correction uses an existing public event type and wire
+  format. Old and new workers can consume the additional facts, mixed-version
+  deployment needs no ordering, and rollback only stops producing those facts.
+- Final quick verification from the rewritten history passes: repository hooks
+  on the functional commit; 149 focused all-plugin examples; 63 core-only
+  examples with the one plugin-specific case correctly pending; Ruby syntax
+  across all changed Ruby files; RuboCop on all 208 changed API/plugin Ruby
+  files; `nixfmt --check` on all four changed Nix files; `git diff --check`; and
+  `tests/ci-selection-test.rb` with 16 runs and 55 assertions.
+- Long API/VM tests remain paused until a final standalone mandatory review of
+  the complete committed history passes.
 
 ## 2026-08-03 KB Home-Page Notification Links
 

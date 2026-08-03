@@ -37,16 +37,21 @@ Decisions:
 
 Compatibility and deployment:
 
-- This is an internal Ruby/Nix architecture refactor. It changes no schema,
-  persisted values, API/Event Type contract, RabbitMQ topology or message,
-  operator-facing configuration key/default, rendering, retry/rate-limit or
-  transport behavior.
+- The architecture refactor changes no schema, persisted values, API/Event
+  Type contract, RabbitMQ topology or message, operator-facing configuration
+  key/default, rendering, retry/rate-limit or transport behavior.
+- A separate functional commit corrects one callback-bypassing cascade:
+  deleting an outage or security advisory can now emit the already-public
+  `outage_security_advisory.deleted` fact for removed join rows. This is an
+  additive event stream correction, not a new event type or message format.
 - Generated notification configuration gains an optional internal
   `delivery_contract`. Old processes ignore it; new processes accept it as
   absent and validate it when present. Existing action concurrency and rate
   limits remain unchanged.
 - Old and new API/worker processes remain compatible with the same rows and
-  queue messages. Rollback has no new ordering or data-format constraint.
+  queue messages. Mixed versions can consume the additional deletion facts;
+  rollback merely stops producing them and has no ordering or data-format
+  constraint.
 - HaveAPI, generated clients, configuration pins, WebUI and KB content are not
   changed.
 
