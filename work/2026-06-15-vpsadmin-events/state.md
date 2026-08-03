@@ -18761,3 +18761,58 @@ Quick verification before mandatory review:
 
 The standalone mandatory review is next. Dev-cluster update and live bilingual
 form verification have not started.
+
+The exactly-one fresh mandatory reviewer reported one Blocking finding and no
+Important or Advisory findings. The generated global
+`vpsadmin.attributes.expires_at.description` fallback gave the route-specific
+text to unrelated DNS-zone and transaction-chain expiration parameters. The
+finding was resolved by giving every route-related declaration the explicit
+shared key
+`vpsadmin.resources.event_route.attributes.expires_at.description`. The
+English and Czech descriptions now exist only under EventRoute, while the
+unrelated parameters retain their prior metadata. No second review was run;
+the original reviewer found no other issue.
+
+The fix was folded into the same two owning commits during the existing history
+rewrite:
+
+- `ccb68fa5c815514ad717fd15388edcc0882a3818` (`api: describe notification
+  route behavior`) owns the shared EventRoute metadata and scoped catalog key;
+- `4cf0efa51712ba46db21a209fc989607f7dfab6e` (`events: create mute routes
+  from report values`) owns the explicit shared key on incident/OOM mute inputs
+  and outputs.
+
+The temporary WIP commit used to keep hook-generated locale state coherent was
+dropped by the rebase. The requested spec change remains absent. Ruby syntax,
+the generated-catalog update, API i18n health, and the non-bypassed Overcommit
+hooks passed. A focused YAML assertion also confirmed that both locales contain
+the scoped EventRoute description and no global expiration description.
+
+The final vpsAdmin head is
+`cda461f8aca81518cec6723117efa55aa2308002`, force-pushed with an explicit
+lease. The final documentation-contract pin is
+`782dce28e8d7322c55361475bff61d02320a326e`; all four pin locations contain
+the exact vpsAdmin revision. `nix develop -c bin/check` passed again with 17
+runs, 69 assertions, valid contract/annotation inventories, and all 180 PNG
+variants. Both project worktrees and their published branch heads match.
+
+The bridge-network `single` development cluster was updated in place with
+`devcluster update 2026-06-15-vpsadmin-events services`. It is running and
+ready, and `/etc/vpsadmin/build-info.json` reports the exact clean revision
+`cda461f8aca81518cec6723117efa55aa2308002`. The API, WebUI container,
+RabbitMQ, email dispatcher, notification grouper, and console router are
+active, with no failed units. The console router needed its configured
+five-minute stop timeout during activation before systemd completed the normal
+restart.
+
+A live headless-Chromium check logged into the deployed WebUI as the development
+administrator and opened the new notification-route form. The expiration field
+showed `Expires at` together with the full English explanation and `Expiruje`
+with the full Czech explanation in the same form row. The administrator
+language was restored to English and the temporary check script was removed.
+
+Current-head GitHub runs for i18n health, WebUI PHPUnit, RuboCop, API migration
+specs, client specs, libnodectld, download mounter, and console router are
+successful. API topic specs and aggregate CI are still running on the exact
+head. Superseded old-head aggregate run `30822361840` was canceled after the
+final force-push; completed old-head runs were retained.
