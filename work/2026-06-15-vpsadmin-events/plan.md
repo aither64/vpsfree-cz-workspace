@@ -3575,3 +3575,51 @@ After default integration, rebase every existing
 `2026-06-15-vpsadmin-events` branch onto its repository's actual GitHub
 default. Remove framework-only commits now present on defaults, preserve the
 event-specific ranges, and regenerate exact capture and deployment pins.
+
+## Compact notification delivery tables
+
+Requested on 2026-08-03 after observing that the administrator delivery-log
+table overflows the fixed-width WebUI content area. Apply the same presentation
+to the delivery queue because both pages share one renderer and contain the
+same fields.
+
+Replace the current thirteen-column table with six grouped columns:
+
+1. `Delivery`: the existing delivery link and action.
+2. `Event`: the existing event link, type, and subject.
+3. `Context`: vertically stacked Group, User, and VPS values.
+4. `Destination`: vertically stacked Receiver and Target values.
+5. `State`: vertically stacked State and Attempts values.
+6. `Times`: vertically stacked Released, Last attempt, and Next retry values.
+
+Use a table-specific identifier, fixed table layout, explicit proportional
+column widths, top-aligned cells, and wrapping inside long values. Remove the
+redundant icon-only detail column because the Delivery value already links to
+the same detail page. Keep filtering, pagination, API requests, and delivery
+detail pages unchanged.
+
+Affected repositories:
+
+- `vpsadmin`: shared queue/log markup, scoped CSS, Czech translations, and
+  focused source and browser regression coverage;
+- `vpsadmin-kb-captures`: exact vpsAdmin revision pin and documentation
+  contract validation for the visible WebUI change. The admin-only pages have
+  no screenshot binding, so no PNG or KB article candidate is expected.
+
+Compatibility and deployment:
+
+- there is no database migration, persisted-state change, API or message
+  contract change, or RabbitMQ impact;
+- old and new WebUI processes can coexist because this is presentation-only;
+- rollback can use the preceding WebUI revision without data conversion;
+- after review, push the exact vpsAdmin revision, update and validate the
+  capture contract pin, update the already-running bridge dev cluster's
+  services, and verify both pages in English and Czech with a populated row;
+- do not reset or alter the independently staged notification KB release,
+  because this layout has no corresponding KB page or captured image.
+
+Quick verification consists of PHP syntax, focused PHPUnit regression tests,
+locale generation/health checks, hook-managed checks, and the capture
+repository's `nix develop -c bin/check`. After the mandatory standalone change
+review, run the targeted WebUI Playwright scenario against the updated dev
+cluster and inspect the table geometry at the WebUI's minimum supported width.

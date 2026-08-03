@@ -18583,3 +18583,68 @@ suite: the self-hosted runner rejected extensionless job-hook paths during
 setup. The shared configuration source is fixed at
 `vpsadminos-org-configuration` `f924aab`; the built runner generation still
 requires activation before this exact run can be rerun and monitored.
+
+## 2026-08-03 compact notification delivery tables
+
+The active session is verified as `2026-06-15-vpsadmin-events` through both
+`bin/dev-session current` and `VPSFREE_DEV_SESSION_SLUG`. The affected clean
+worktrees at the start of this slice are:
+
+- `worktrees/2026-06-15-vpsadmin-events/vpsadmin`, branch
+  `2026-06-15-vpsadmin-events`, head `dce3fe8cf619f77ed1f85f9ffb01f367627e656f`;
+- `worktrees/2026-06-15-vpsadmin-events/vpsadmin-kb-captures`, branch
+  `2026-06-15-vpsadmin-events`, head
+  `140ff904bcd205bf04147e8209635e361c190f6e`.
+
+Inspection found that `notifications_deliveries_admin()` renders both queue
+and log pages with thirteen independent columns inside an approximately
+820-pixel content area. The selected implementation groups the existing fields
+into Delivery, Event, Context, Destination, State, and Times, with vertically
+stacked labels and values. The duplicate details icon is removed. Filters and
+API requests are unchanged.
+
+The bridge-network development cluster is already running in the `single`
+topology and will be updated in place after review. The global KB staging
+container currently holds a separate pending notification release; it will not
+be reset, modified, or released for this admin-only presentation change.
+
+Implementation and quick verification are in progress. No schema migration,
+protocol change, deployment ordering constraint, or mixed-version concern was
+identified.
+
+Implementation commits prepared for review:
+
+- vpsAdmin `567e29d49cc1383aa8fa840a915f1cf98aa4f766`, based on
+  `dce3fe8cf619f77ed1f85f9ffb01f367627e656f`, implements the six-column
+  queue/log renderer, scoped wrapping layout, Czech labels, source regression,
+  and populated-row Playwright geometry assertions. It is pushed to the event
+  branch so Nix can fetch the immutable revision.
+- vpsAdmin KB captures `9f16187`, based on
+  `140ff904bcd205bf04147e8209635e361c190f6e`, pins that exact vpsAdmin
+  revision in all four required contract locations. No screenshot scenario is
+  bound to these administrator-only pages, so the existing images are
+  intentionally unchanged.
+
+Quick verification before mandatory review:
+
+- PHP syntax passed for the renderer and focused regression test;
+- `NotificationRouteUiTest.php` passed 29 tests and 382 assertions;
+- `lang/scripts/locales-update --check` passed, apart from the existing
+  embedded-URL extraction warning, and JavaScript syntax passed;
+- the full vpsAdmin Overcommit pre-commit suite passed: Nixfmt,
+  MigrationSpecs, VpsadminWebuiI18n, PhpCsFixer, VpsadminApiI18n, and RuboCop.
+  The first commit attempt exposed a stale trust signature for the committed
+  API-i18n hook; its source was inspected and the signature was refreshed.
+  A second ambient-shell attempt lacked Nix-provided hook tools, so the final
+  commit ran without bypass from the root `nix develop` shell. The commit-msg
+  width hook warned at its stricter 72-character preference, while every line
+  remains within the workspace's required 80-character limit.
+- `nix develop -c bin/check` in vpsAdmin KB captures passed: documentation
+  contract and annotation inventories are valid, its two test suites passed
+  17 runs and 69 assertions, and all 180 PNG variants validate.
+
+The two commits are intentionally split by repository. The vpsAdmin commit
+keeps implementation, generated locale output, and direct regression coverage
+together as one reviewable presentation fix; the second commit is the
+independent mechanical documentation-contract pin. The standalone mandatory
+change review is the next step, before dev-cluster update or browser tests.
