@@ -1,5 +1,123 @@
 # 2026-06-15-vpsadmin-events
 
+## 2026-08-03 Declarative Event And Delivery Architecture
+
+- Verified `bin/dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG=2026-06-15-vpsadmin-events` identify this session.
+- Reused the clean vpsAdmin worktree on branch
+  `2026-06-15-vpsadmin-events` at `cda461f8`. Its merge base with current
+  `origin/master` is `a1e99959`; the branch is 111 commits ahead and one
+  unrelated WebUI dependency commit behind.
+- The shared coordination checkout remains on `master`. Its pre-existing
+  `AGENTS.md`, `dev-clusters/vpsadmin/nix/test.nix` and untracked files are
+  unrelated and will remain untouched.
+- Read the workspace and repository instructions, event documentation, current
+  resource/action catalogs, notification delivery implementation and
+  `mandatory-change-review` skill. The approved implementation keeps all
+  external contracts unchanged while replacing mirrored registries and hidden
+  delivery receiver protocols.
+- Implementation is in progress in three disjoint workstreams: the review
+  skill, declarative resource/action policy, and explicit delivery-action
+  classes. No production system or deployment configuration is in scope.
+- Extended `mandatory-change-review` with ownership/source-of-truth, hidden
+  protocol, plugin isolation, change-locality and cohesion checks. Validation
+  passed with the skill-creator `quick_validate.py` and `git diff --check`;
+  `agents/openai.yaml` remained accurate.
+- A neutral fresh agent forward-tested the updated skill against the committed
+  pre-refactor branch. It independently found the mirrored resource and policy
+  registries, hidden `instance_exec` delivery interface, plugin/core coupling,
+  silent event-type overwrite and multi-transport dispatcher, while accepting
+  finite topic/state/AMQP registries as legitimate central contracts.
+- Committed the focused skill update directly on the shared workspace `master`
+  as `19b6c17` (`review: check architecture ownership and extension points`).
+- The detached pre-refactor characterization run passed 141 focused resource,
+  target and delivery examples with no failures. Its temporary worktree remains
+  available only for the post-refactor comparison and will be removed afterward.
+- Implemented and committed the vpsAdmin refactor as two focused commits on
+  branch `2026-06-15-vpsadmin-events`:
+  - `980b16735` (`api: isolate notification delivery actions`) introduces an
+    explicit delivery-action interface and registry, separate e-mail, webhook,
+    Telegram and SMS implementations, typed planning/result objects, and
+    protocol-neutral routing and dispatch services;
+  - `a8b305a13` (`api: colocate event policy declarations`) replaces central
+    resource, action, operation, cascade, redaction and concern-owner catalogs
+    with declarations beside their owning resources, models and entry points.
+- The event contract characterization is unchanged for the resource catalog,
+  mounted action policies, operation policies, external policies, Event Types
+  and delivery metadata in all-plugin and core-only modes. The only all-plugin
+  cascade difference is intentional: the new bidirectional coverage exposed
+  and fixed missing `OutageSecurityAdvisory` callback-bypassing delete facts.
+  Core-only mode no longer carries plugin cascade entries before those plugins
+  load.
+- Quick verification before standalone review:
+  - repository Overcommit hooks passed on both commits, including Nixfmt,
+    RuboCop, migration specs, API i18n and WebUI i18n;
+  - Ruby syntax passed for all changed Ruby files, RuboCop reported no offenses,
+    `git diff --check` passed and `tests/ci-selection-test.rb` passed 16 runs
+    with 55 assertions;
+  - focused resource/policy/delivery architecture coverage passes 73 examples
+    with all plugins and 73 examples with `VPSADMIN_PLUGINS=none`;
+  - notification routing, delivery grouping and worker regression coverage
+    passes 138 examples; and
+  - the pre/post contract digests match for 84 public catalog entries, 537
+    mounted action policies, 64 operation policies, 7 external policies, 235
+    Event Types and 4 delivery actions.
+- An initial full hook run usefully exposed repeated WebAuthn registration when
+  the API is mounted more than once. External policy registration is now
+  idempotent only for an identical declaration and rejects conflicting policy;
+  the repeated-mount i18n health check and explicit regression spec pass.
+- Compatibility remains as planned: no schema, persisted representation, API,
+  Event Type, queue topology/message, operator-facing configuration default,
+  transport, retry, rate-limit or rendering contract changed. Generated
+  notification YAML gains only an optional internal `delivery_contract`; old
+  processes ignore it and new processes accept it as absent, so mixed versions
+  and rollback require no new ordering or data handling.
+- Mandatory fresh-context review of `cda461f8..a8b305a13` returned **FAIL** and
+  long tests remain paused. The strengthened architecture checklist identified
+  three Blocking gaps: open-ended policy kinds could silently disable capture,
+  malformed delivery results could be marked successful while the dispatcher
+  still named protocol exceptions, and redaction names were not checked against
+  model attributes. It also identified three Important extension gaps: target
+  label conflicts failed too late, Nix retained a closed mirrored action/default
+  contract, and OAuth declarations could drift from their central wrappers.
+- All six findings were accepted for repair rather than waived:
+  - policy kinds and option combinations are now closed, and both model and
+    resource redactions are validated against auditable attributes during
+    catalog finalization;
+  - delivery actions must return `DeliveryResult` with `sent` or `accepted`, or
+    raise generic `DeliveryFailure`; malformed results enter retry flow and the
+    dispatcher no longer names provider exceptions;
+  - duplicate target kinds and conflicting cross-action labels fail before
+    registry mutation;
+  - OAuth owns one method-to-policy mapping from which generic, validated
+    wrappers are generated;
+  - Nix accepts safe registered action names, generates workers generically,
+    and emits a runtime-validated non-exhaustive defaults contract; and
+  - notification action implementation files are discovered from their owning
+    directory instead of repeated in a central require list.
+- Repaired-tree quick verification before the second standalone review:
+  - merged all-plugin resource/policy/delivery/worker coverage passes 143
+    examples; the core-only resource/policy/delivery subset passes 57 examples;
+  - negative coverage includes kind/option typos, invalid redactions, malformed
+    delivery results, target-label conflicts, incomplete OAuth mappings,
+    unsafe/unknown action names and Nix/Ruby default drift;
+  - Nix evaluation creates an `extension_action` dispatcher while preserving
+    current 2/2/4/1 concurrency and rate-limit defaults, and the direct
+    Nix-defaults-to-Ruby-registry contract check passes;
+  - RuboCop reports no offenses in all 14 modified Ruby files, `nixfmt --check`
+    passes all four Nix files, Ruby syntax and `git diff --check` pass, and
+    `tests/ci-selection-test.rb` passes 16 runs with 55 assertions.
+- Committed the review repairs as two focused vpsAdmin commits:
+  - `b01389210` (`api: validate event policy declarations`) contains the closed
+    policy/redaction contracts and derived OAuth instrumentation; and
+  - `26c2a0160` (`notifications: validate delivery extension contracts`)
+    contains strict delivery results/failures, atomic registry conflicts,
+    owner-directory discovery and the runtime-checked Nix extension contract.
+  Repository Overcommit hooks passed for both commits, including Nixfmt,
+  migration specs, API/WebUI i18n and RuboCop.
+- Long API/VM tests remain paused until the repaired implementation is
+  committed and a new standalone mandatory review passes.
+
 ## 2026-08-03 KB Home-Page Notification Links
 
 - Verified `bin/dev-session current` and

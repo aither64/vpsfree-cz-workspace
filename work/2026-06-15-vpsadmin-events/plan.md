@@ -1,5 +1,67 @@
 # 2026-06-15-vpsadmin-events
 
+## Declarative Event And Delivery Architecture
+
+Requested on 2026-08-03: replace the branch's manually maintained resource and
+action policy catalogs, split notification delivery protocols into explicit
+classes, and teach the mandatory review to catch the same architecture smells.
+
+Decisions:
+
+- Add vpsAdmin-local DSLs to HaveAPI resources/actions and API operations. Keep
+  generated CRUD inference, but colocate exceptional event policy, ownership,
+  redaction, cascade and plugin declarations with their owning code.
+- Reject missing, duplicate and conflicting declarations at API finalization;
+  retain central registries only for authoritative public topics, persisted
+  states and protocol identifiers.
+- Replace receiver-changing delivery closures with explicit e-mail, webhook,
+  Telegram and SMS action classes. Keep routing and dispatch orchestration
+  generic and derive delivery metadata from the registered classes. Require a
+  closed `DeliveryResult` or generic `DeliveryFailure` at the transport
+  boundary so malformed provider results cannot be recorded as success.
+- Keep event policy kinds and option combinations closed, validate declared
+  redactions against auditable model attributes at catalog finalization, and
+  derive external-boundary wrappers from one owner mapping.
+- Keep the Nix action selector open to safe registered names. Where Nix must
+  duplicate evaluation-time concurrency and rate-limit defaults, emit an
+  internal deployment contract and reject drift against the Ruby registry at
+  process startup. New actions without Nix overrides use their Ruby defaults.
+- Split the event recorders and notification services into focused load units
+  after behavior has moved behind explicit interfaces.
+- Extend `mandatory-change-review` with source-of-truth, hidden-protocol,
+  plugin-ownership and change-locality checks. Validate it independently on the
+  current pre-refactor diff before using it for the final review.
+- Preserve the existing feature history and add focused refactor commits on
+  top. The unrelated one-commit WebUI dependency advance on `origin/master`
+  does not justify rewriting the initiative's pinned 111-commit history now.
+
+Compatibility and deployment:
+
+- This is an internal Ruby/Nix architecture refactor. It changes no schema,
+  persisted values, API/Event Type contract, RabbitMQ topology or message,
+  operator-facing configuration key/default, rendering, retry/rate-limit or
+  transport behavior.
+- Generated notification configuration gains an optional internal
+  `delivery_contract`. Old processes ignore it; new processes accept it as
+  absent and validate it when present. Existing action concurrency and rate
+  limits remain unchanged.
+- Old and new API/worker processes remain compatible with the same rows and
+  queue messages. Rollback has no new ordering or data-format constraint.
+- HaveAPI, generated clients, configuration pins, WebUI and KB content are not
+  changed.
+
+Verification:
+
+- Compare Event Type/resource descriptors, policy classifications and delivery
+  metadata before and after the refactor in core-only and all-plugin modes.
+- Forward-test a syntactically valid new delivery action through Nix worker
+  generation and Ruby defaults, and negatively test policy, redaction,
+  target-label, result-shape, OAuth wrapper and deployment-contract drift.
+- Run focused API specs, RuboCop, selector coverage and Overcommit before the
+  mandatory fresh-context review.
+- After review, run the full API suite, notification routing/grouping VM tests,
+  a bridge-cluster service smoke test and current-head CI.
+
 ## KB Home-Page Notification Links
 
 Requested on 2026-08-03: link the pending notification documentation from the
