@@ -11,6 +11,10 @@ Determine why RT ticket 93961, a MasterDC UCEPROTECT report for
 - `vpsfree-cz-configuration`: production parser configuration, fixtures, and
   production host/logging configuration.
 
+The production Request Tracker installation is also in scope as an external,
+non-repository system because it selects the recipients of abuse ticket
+notifications before handing mail to Postfix.
+
 ## Approach
 
 1. Trace the UCEPROTECT routing and parsing rules from production
@@ -19,6 +23,8 @@ Determine why RT ticket 93961, a MasterDC UCEPROTECT report for
 3. Inspect production mail-task logs around ticket creation and later polls.
 4. Separate parser behavior from upstream RT, mail delivery, filtering, and
    IMAP-folder behavior.
+5. Trace RT 4.4.6's exact machine-generated-message and recipient-filtering
+   behavior against the delivery headers and retained production history.
 
 ## Compatibility and deployment
 
