@@ -178,6 +178,58 @@
   Nix contract, isolated outage behavior fix, compatibility assumptions and
   ten-commit cohesion. Full API, VM, bridge-cluster and current-head CI
   validation may now proceed.
+- Post-review validation at `bb02247b0` passed the notification-routing VM
+  scenario (2/2 examples), OOM grouping/pruning VM scenario (2/2 examples),
+  and a bridge-cluster smoke test with the exact clean revision, HTTP 200 from
+  API and WebUI, all affected services active with zero restarts, and an empty
+  error journal. The all-plugin API suite printed a complete summary of 3,469
+  examples, zero failures and five expected pending examples after 321 minutes;
+  its terminal process status is not accepted as independently green because
+  it was interrupted while apparently completing final reporting.
+- GitHub API Specs, RuboCop and i18n workflows passed at `bb02247b0`. Aggregate
+  CI run `30870228249` failed 15 of 118 integration scripts. The failed-run
+  logs and artifact `vpsadmin-test-logs-30870228249` were inspected before any
+  rerun; all 15 failures were deterministic rejections of valid resource event
+  models in production-style scripts that load `vpsadmin` without mounting
+  `VpsAdmin::API`.
+- The first API-matrix repair was split into five focused commits after a fresh
+  reviewer found the original repair insufficiently cohesive:
+  `120533a98` finalizes event types before metadata mounting, `8603ba10b`
+  makes repeated monitoring registration atomic, `e8cfea448` retains legacy
+  action-policy inference, and `2d90235cb` plus `bb02247b0` repair tests through
+  typed delivery seams. Repository hooks and focused checks passed on every
+  commit, and the follow-up standalone review returned **PASS** with no
+  findings.
+- The aggregate failure exposed a separate initialization assumption:
+  `ResourceOperations` derived its source-local declarations only during API
+  mounting. Commit `f19364c2e` (`events: finalize the resource catalog on first
+  use`) now lazily and atomically finalizes the validated immutable catalog on
+  its first consumer while preserving explicit mount-time refresh and complete
+  mounted-resource validation. An isolated child-process regression proves
+  that `require 'vpsadmin'` and `TransactionChain#defer_resource_event!` work
+  without accessing `VpsAdmin::API.default`. Hooks, 81 combined focused
+  examples, syntax, RuboCop and `git diff --check` passed.
+- A fresh standalone mandatory review of `bb02247b0..f19364c2e` returned
+  **PASS** with no Blocking, Important or Advisory findings. It independently
+  passed the full changed spec (45 examples) and the focused lazy-finalization
+  cases (4 examples), and confirmed that schema, persisted state, API/wire,
+  event type, RabbitMQ, mixed-version, deployment-order and rollback contracts
+  remain unchanged.
+- Final exact-head validation uses the clean pushed revision
+  `f19364c2ef7ad9baf8f92b834a368df17bd76921`. The bridge cluster is ready on
+  bridge networking with that exact revision, all affected services active
+  with zero restarts, API and WebUI returning HTTP 200, and no relevant error
+  journal entries. Representative production-style scripts now pass directly:
+  `dns/server-zone-lifecycle` passes 2/2 examples and
+  `vps/update-resources-and-features` passes 1/1, both with exit 0 and retained
+  `expected_success` artifacts.
+- All four final-head GitHub workflows are successful: API Specs run
+  `30888647099` passed all 27 jobs, aggregate CI run `30888647167` passed,
+  RuboCop run `30888647677` passed, and i18n run `30888647452` passed. The final
+  audit reports all 31 check-runs complete/successful and no active workflows
+  on superseded branch heads. The final exact-head all-plugin API suite passed
+  4,334 examples with zero failures and nine pending examples in 366 minutes
+  18 seconds, exited 0, and used seed `12345`.
 
 ## 2026-08-03 KB Home-Page Notification Links
 
