@@ -20,5 +20,8 @@ nix develop --command overcommit --sign
 ```
 
 The command completed successfully and updated only worktree-local Git
-configuration. Do not bypass the hook. Related initiative:
+configuration. Run hook-bearing Git operations through the same development
+shell, for example `nix develop --command git push ...`; an ambient `git push`
+can invoke a different Overcommit installation and reject the just-created
+signature. Do not bypass the hook. Related initiative:
 `work/2026-08-03-gh-runner-gc/`.

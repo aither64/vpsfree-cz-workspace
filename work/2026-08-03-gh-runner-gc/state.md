@@ -15,6 +15,23 @@
   - rebased base: `origin/master` at `d0efecb36`
   - worktree: `worktrees/2026-08-03-gh-runner-gc/vpsadmin-ci-store-churn`
 
+### Uniform follow-up worktrees
+
+All follow-up branches are named `2026-08-04-stable-test-source` and use
+worktrees beneath `worktrees/2026-08-03-gh-runner-gc/`:
+
+- vpsAdminOS: `vpsadminos-stable-test-source`, based on `staging`
+  `9c52c991a`;
+- vpsAdmin: `vpsadmin-stable-test-source`, based on `master` `1907e1990`;
+- confctl: `confctl-stable-test-source`, based on `master` `9648e9f`;
+- terraform-provider-vpsadmin:
+  `terraform-provider-vpsadmin-stable-test-source`, based on `master`
+  `ae1551a`;
+- vpsf-status: `vpsf-status-stable-test-source`, based on `master` `9c19b23`;
+- vpsfree-irc-bot: `vpsfree-irc-bot-stable-test-source`, based on `master`
+  `af553fd`;
+- web: `web-stable-test-source`, based on `master` `26e8584`.
+
 ## Status
 
 ### Uniform framework follow-up
@@ -39,14 +56,14 @@ then every triggered workflow will be monitored to completion.
 
 Two temporary empty `[skip ci]` guard tips were pushed only to make exact
 dependency commits reachable for lock generation without starting long CI:
-`bf7a53363` in vpsAdminOS and `467f9facc` in vpsAdmin. Consumers pin the
-functional parents (`fbe37909f` and `382a02c8f`), not the guards. Both guards
+`829f845fe` in vpsAdminOS and `796adcbbf` in vpsAdmin. Consumers pin the
+functional parents (`31b3dff43` and `3f9b68adb`), not the guards. Both guards
 will be removed with lease-protected force-pushes before reviewed-head CI and
 will not remain in final review history.
 
 ### Uniform framework implementation
 
-vpsAdminOS (`origin/staging` `9c52c991a` -> functional head `fbe37909f`):
+vpsAdminOS (`origin/staging` `9c52c991a` -> functional head `31b3dff43`):
 
 - `5365ec24a test-runner: pin repository source per invocation`
   - resolves one immutable flake source for each `ls`, `test`, or `debug`
@@ -66,31 +83,52 @@ vpsAdminOS (`origin/staging` `9c52c991a` -> functional head `fbe37909f`):
     image while labels remain fixed;
   - runs the image-reuse check early in the main CI workflow and includes
     `flake.nix` in that workflow's path trigger.
+- `31b3dff43 test-runner: harden repository source lifetime`
+  - resolves and roots the snapshot through one `nix-build --out-link`
+    operation, closing the temporary-root gap between two Nix processes;
+  - serializes source-root reservation and scavenging with a shared registry
+    mutex, publishes each entry lock while that mutex is held, and retains the
+    entry lock for the invocation lifetime;
+  - uses one per-user runtime registry across unique CI state directories so a
+    later invocation can reclaim roots abandoned by `SIGKILL` or runner crash;
+  - exports the frozen path as `TEST_RUNNER_REPO_ROOT` for the invocation so
+    image-script VMs mount the snapshot rather than the mutable checkout;
+  - builds the wrapper for the host platform, independently of a requested
+    test-evaluation `--system`, preserving cross-evaluation behavior;
+  - adds concurrent-invocation and real `Process.exit!` crash cleanup coverage.
 
 Consumer commits:
 
 - vpsAdmin: `893e53d0b` restores selector scratch to its original workflow
   paths and relies on the framework snapshot while retaining the live log in
   prepared state; `0f7d3b1f3` follows shared actions from `@staging`;
-  `382a02c8f` pins vpsAdminOS `fbe37909f`.
-- confctl: `36d3780` follows shared actions from `@staging`; `7e4383b` pins
-  vpsAdminOS `fbe37909f`.
+  `3f9b68adb` is the sole dependency commit and pins final vpsAdminOS head
+  `31b3dff43`.
+- confctl: `36d3780` follows shared actions from `@staging`; `b6d7245` is the
+  sole dependency commit and pins `31b3dff43`.
 - terraform-provider-vpsadmin: `f249b37` follows shared actions from
-  `@staging`; `3d7e50b` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS
-  `fbe37909f`.
-- vpsf-status: `8c64fe5` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS
-  `fbe37909f`; its shared actions already used `@staging`.
+  `@staging`; `6e35529` is the sole dependency commit and pins vpsAdmin
+  `3f9b68adb`, transitively vpsAdminOS `31b3dff43`.
+- vpsf-status: `4bc0ab2` is the sole dependency commit and pins vpsAdmin
+  `3f9b68adb`, transitively vpsAdminOS `31b3dff43`; its shared actions already
+  used `@staging`; `e68cbaa` updates its security-advisory fixture for the
+  required vpsAdmin content-revision contract found by reviewed-head CI.
 - vpsfree-irc-bot: `c4f2341` follows shared actions from `@staging`;
-  `03a1ba8` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS `fbe37909f`.
-- web: `c7441f1` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS
-  `fbe37909f`; its shared actions already used `@staging`.
+  `d17a852` is the sole dependency commit and pins vpsAdmin `3f9b68adb`,
+  transitively vpsAdminOS `31b3dff43`.
+- web: `8603ad0` is the sole dependency commit and pins vpsAdmin `3f9b68adb`,
+  transitively vpsAdminOS `31b3dff43`; its shared actions already used
+  `@staging`.
 
 No `vpsadmin-events` branch, ref, worktree, or file was modified.
 
 ### Uniform framework quick verification
 
-- vpsAdminOS focused RSpec: 46 examples, 0 failures.
-- vpsAdminOS full test-runner RSpec: 168 examples, 0 failures.
+- vpsAdminOS focused RSpec after the final source-lifetime change: 19
+  examples, 0 failures.
+- vpsAdminOS full test-runner RSpec after review fixes: 171 examples,
+  0 failures. This includes concurrent live invocations and cleanup after a
+  forked invocation uses `Process.exit!` to bypass `ensure`.
 - vpsAdminOS RuboCop on all changed Ruby/spec files: no offenses.
 - vpsAdminOS Nix image-reuse check built successfully at
   `/nix/store/nhb58azi0pckj2hk0zvbbprl74k2j5xx-nixos-test-disk-image-reuse`.
@@ -102,14 +140,104 @@ No `vpsadmin-events` branch, ref, worktree, or file was modified.
 - terraform-provider-vpsadmin and vpsfree-irc-bot actionlint passed;
   vpsfree-irc-bot bundled Overcommit hooks passed.
 - vpsf-status Lefthook was installed and its pre-commit i18n check passed.
-- Flake metadata resolves direct vpsAdminOS pins to `fbe37909f` and all
-  transitive vpsAdmin pins to `382a02c8f` / vpsAdminOS `fbe37909f`.
+- Flake metadata resolves direct vpsAdminOS pins to `31b3dff43` and all
+  transitive vpsAdmin pins to `3f9b68adb` / vpsAdminOS `31b3dff43`.
 - Metadata-only `./test-runner.sh ls` smoke tests passed in vpsAdmin, confctl,
   terraform-provider-vpsadmin, vpsf-status, vpsfree-irc-bot, and web. No VM
-  test was started. `/tmp/os-test-runner/.repository-sources` was empty after
-  the commands completed.
+  test was started. A live vpsAdmin evaluation exposed exactly one locked entry
+  in `/run/user/1000/os-test-runner-repository-sources-1000`; the shared
+  registry had no entry roots or locks after all commands completed.
+- vpsAdminOS metadata evaluation listed all `image-scripts/test@*` cases while
+  the immutable-source environment was active; no image or VM was built.
 - No precise 40-character shared-action revision remains in any of the seven
   follow-up worktrees.
+
+### Mandatory review of the uniform follow-up
+
+The fresh-context reviewer initially reported three blocking findings and one
+important finding:
+
+- source resolution and GC-root attachment used separate Nix processes;
+- an entry lock pathname was visible before its flock was held, allowing a
+  concurrent scavenger to mistake it for stale;
+- image-script tests read the original `TEST_RUNNER_REPO_ROOT` and exposed the
+  mutable checkout to their VM;
+- abandoned roots lived under unique CI state directories and could not be
+  discovered by later invocations.
+
+Commit `31b3dff43` addresses all four findings with one rooted Nix build, a
+serialized shared registry, lifetime-held entry locks, a per-user runtime root
+location, crash/concurrency regression coverage, and invocation-scoped export
+of the frozen source. On follow-up, the reviewer confirmed those issues were
+resolved and then found that the consumer history retained intermediate pin
+commits and that the wrapper build had incorrectly followed the requested
+test-evaluation `--system`. The histories were rewritten to contain one final
+pin commit per consumer, and `31b3dff43` now uses the host platform for the
+wrapper while leaving `--system` to test evaluation. Focused and full tests,
+RuboCop, nixfmt, actionlint, Overcommit, flake metadata, the image-reuse check,
+all six consumer `ls` smokes, and all image-script metadata enumeration passed
+afterward. The same reviewer completed a final pass with no blocking,
+important, or advisory findings and declared all seven functional heads ready
+for reviewed-head CI. The remaining gaps are the intended GitHub workflows,
+VM/integration behavior, concurrent runner/GC operation, and peak-store
+measurement. No merge is authorized before user review.
+
+### Reviewed-head publication and CI
+
+After the final review, the temporary guard tips were removed locally and
+lease-protected force-pushes changed the two existing remote review refs to the
+reviewed functional heads. The other five review refs were created. Published
+heads are:
+
+- vpsAdminOS `31b3dff4306cce8904ac45630a931a7b72d36507`;
+- vpsAdmin `3f9b68adb97b7f43df929a85fc172d9d11e15211`;
+- confctl `b6d72453cbf94f94b9712575cf474ed077228189`;
+- terraform-provider-vpsadmin
+  `6e355293501278fe918007eeac9f1bb06b78c775`;
+- vpsf-status `e68cbaaf75a6f4c9ee27fdddb07d42ef44cca338`;
+- vpsfree-irc-bot `d17a8520766a5010cc826ce02b0c7a74a3d988d4`;
+- web `8603ad09435350db1843d4710bb51272bf881324`.
+
+confctl and vpsfree-irc-bot initially rejected ambient `git push` because the
+pre-push hook used an Overcommit installation that did not accept the
+development-shell signature. Both unchanged configurations were re-signed and
+the pushes passed when `git push` ran inside each repository's Nix shell. The
+reusable note was updated in
+`notes/confctl/2026-08-04-overcommit-worktree-signature.md`.
+
+Moving the guarded vpsAdminOS and vpsAdmin refs backward did not emit push
+workflow runs. vpsAdminOS CI was therefore dispatched explicitly as run
+`30917125042`. The many-hour vpsAdmin CI suite was not dispatched, per the
+user's instruction. A fresh vpsAdmin API Specs workflow was dispatched as run
+`30917010124` to replace the previously failed evidence. All exact-head runs
+triggered by the other five pushes are being monitored to completion.
+
+The fresh API Specs run passed all 26 topic shards. vpsf-status integration
+run `30916922629` failed its seventh and final example after the first six
+passed. The downloaded artifact showed a precise compatibility error:
+`SecurityAdvisory#publish!` now requires `expected_content_revision:`, while
+the vpsf-status security-advisory fixture still called it with only
+`published_by:`. This was not a source-snapshot, image-reuse, runner, or GC
+failure. Commit `e68cbaa` passes `advisory.content_revision`, matching current
+vpsAdmin model and API specs. The metadata smoke, `git diff --check`, and
+Lefthook pre-commit checks passed. The mandatory reviewer reported no blocking,
+important, or advisory findings on the incremental commit. Replacement head
+`e68cbaaf75a6f4c9ee27fdddb07d42ef44cca338` was pushed and Integration Tests
+run `30920474166` passed, including the corrected seventh VM example.
+
+The final exact-head workflow audit found ten runs, all completed successfully:
+
+- vpsAdminOS CI `30917125042` (explicit dispatch because removing the guard
+  tip did not emit a push run): build/cache population and full test suite;
+- vpsAdmin API Specs `30917010124` (explicit dispatch): all 26 topic shards;
+- confctl RuboCop `30916987486`, RSpec `30916985450`, and Tests `30916985408`;
+- terraform-provider-vpsadmin Integration Tests `30916922990`;
+- vpsf-status replacement Integration Tests `30920474166`;
+- vpsfree-irc-bot RSpec `30916988440` and Integration Tests `30916983136`;
+- web Integration Tests `30916917691`.
+
+The many-hour vpsAdmin CI suite did not trigger from the guard removal and was
+not dispatched, as requested. No project default branch was changed or merged.
 
 Investigation complete. Implementation of the two confirmed vpsAdmin and
 vpsAdminOS CI store-churn fixes is committed in isolated feature worktrees.
