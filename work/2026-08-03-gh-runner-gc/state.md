@@ -302,13 +302,14 @@ passed shell syntax and diff checks, and pushed it over SSH. The remote staging
 ref was read back as `09edd405c`, and the temporary worktree was removed.
 
 The old-head staging CI run `30928615686` was still in progress on
-`31b3dff43` after the follow-up push, so its cancellation was requested as a
-superseded run. Staging RSpec run `30930445798` then passed on exact head
+`31b3dff43` after the follow-up push, so it was cancelled as a superseded run.
+Staging RSpec run `30930445798` then passed on exact head
 `09edd405c` in 4m40s. Its logs report all aggregate suites passing and
 test-runner at 171 examples, 0 failures. The old vpsAdmin master CI run
 `30904642236` was also still consuming a runner on superseded head `1907e1990`,
-so its cancellation was requested. The current-head many-hour vpsAdmin CI is
-intentionally not an integration gate and was not awaited.
+so it was cancelled. Current-head vpsAdmin CI run `30928881044` remained in
+progress at the final audit; it is intentionally not an integration gate and
+was not awaited.
 
 Investigation complete. Implementation of the two confirmed vpsAdmin and
 vpsAdminOS CI store-churn fixes is committed in isolated feature worktrees.
