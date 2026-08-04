@@ -7,6 +7,13 @@ then implement the two confirmed CI churn fixes: keep mutable workflow scratch
 outside path-flake source trees and reuse NixOS raw disk images whenever the
 evaluated machine configuration is identical.
 
+The follow-up replaces workflow-specific source-stability assumptions with a
+uniform test-runner guarantee. Each runner invocation will evaluate one
+immutable, temporarily GC-rooted repository snapshot across discovery and all
+per-test builds. Every workspace consumer will be updated to that framework
+revision and shared vpsAdminOS actions will follow the default `staging`
+branch. All work remains on review branches until explicit user approval.
+
 ## Affected repositories
 
 - `vpsadminos-org-configuration`: primary location of the runner GC timer and
@@ -16,6 +23,9 @@ evaluated machine configuration is identical.
   evaluation-only regression check, and move its CI log into prepared state.
 - `vpsadmin`: move selector and test log scratch outside the checkout and pin
   the vpsAdminOS feature revision for integration validation.
+- `confctl`, `terraform-provider-vpsadmin`, `vpsf-status`,
+  `vpsfree-irc-bot`, and `web`: update their locked test framework revision;
+  replace precise shared-action revisions with `staging` where present.
 
 ## Approach
 
@@ -35,6 +45,11 @@ evaluated machine configuration is identical.
    successful reviewed-head vpsAdminOS workflow as the long integration gate
    and use a partial vpsAdmin run to compare source/image churn without waiting
    several hours for that suite to finish.
+8. For the uniform follow-up, make the vpsAdminOS and vpsAdmin dependency
+   commits remotely reachable behind temporary empty `[skip ci]` guard tips.
+   This permits exact lock generation without starting long workflows before
+   mandatory review. Remove both guard commits before the reviewed-head push;
+   they must not remain in the review history.
 
 ## Compatibility and deployment
 
@@ -59,6 +74,12 @@ evaluated machine configuration is identical.
   preserve failed-log upload and result evaluation behavior.
 - Apply the configuration uniformly to all three runners. No API, persistent
   data format, or cross-component deployment ordering change is involved.
+- The test-runner CLI remains compatible. Relative test configuration paths
+  resolve inside the immutable snapshot; absolute paths outside the tested
+  repository keep their existing external-file semantics.
+- Merge ordering after approval is vpsAdminOS first, direct consumers second,
+  and transitive vpsAdmin consumers last. Old and new runner versions can be
+  used concurrently because there is no persisted or protocol state.
 
 ## Testing plan
 
@@ -80,3 +101,10 @@ If the recommendation is implemented:
    shell access is available.
 7. Run repository hooks and the mandatory fresh-context change review before
    the long GitHub integration run.
+8. Run `test-runner.sh ls` in every consumer as a metadata-only compatibility
+   smoke test, verify all exact flake revisions, and confirm temporary source
+   roots are removed after each command.
+9. After review, push all seven final heads together and monitor every workflow
+   triggered by those pushes to completion. Dispatch vpsAdmin API Specs on its
+   review branch and investigate any failure from fresh logs before accepting a
+   rerun.

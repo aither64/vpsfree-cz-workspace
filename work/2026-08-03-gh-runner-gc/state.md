@@ -17,6 +17,100 @@
 
 ## Status
 
+### Uniform framework follow-up
+
+The user rejected relying on vpsAdmin-specific workflow paths for source
+stability and required review before any further default-branch integration.
+Fresh branches named `2026-08-04-stable-test-source` have been created from
+current defaults in isolated worktrees under
+`worktrees/2026-08-03-gh-runner-gc/` for vpsAdminOS, vpsAdmin, confctl,
+terraform-provider-vpsadmin, vpsf-status, vpsfree-irc-bot, and web. No
+`vpsadmin-events` ref or worktree is in scope.
+
+The implementation target is one immutable flake source per test-runner
+command, propagated through test discovery and every configuration build. The
+existing live-log placement under prepared state is retained, while the small
+vpsAdmin selector files will return to their original locations. Shared action
+references will use `@staging`; flake locks remain exact by design.
+
+No project branch will be merged before user review. All review heads will be
+pushed together after quick verification and the mandatory standalone review,
+then every triggered workflow will be monitored to completion.
+
+Two temporary empty `[skip ci]` guard tips were pushed only to make exact
+dependency commits reachable for lock generation without starting long CI:
+`bf7a53363` in vpsAdminOS and `467f9facc` in vpsAdmin. Consumers pin the
+functional parents (`fbe37909f` and `382a02c8f`), not the guards. Both guards
+will be removed with lease-protected force-pushes before reviewed-head CI and
+will not remain in final review history.
+
+### Uniform framework implementation
+
+vpsAdminOS (`origin/staging` `9c52c991a` -> functional head `fbe37909f`):
+
+- `5365ec24a test-runner: pin repository source per invocation`
+  - resolves one immutable flake source for each `ls`, `test`, or `debug`
+    command and uses it for discovery and every per-test evaluation;
+  - protects the source with a unique indirect GC root under the command state
+    directory, locks live roots, removes abandoned roots safely, and cleans up
+    in `ensure`;
+  - maps relative and in-repository absolute test configuration paths into the
+    snapshot while preserving external absolute path behavior;
+  - adds Nix-backed RSpec coverage for source immutability, mutable `test.log`
+    exclusion, GC-root lifetime, exception cleanup, abandoned-root cleanup,
+    nested invocations, path mapping, and discovery/executor source identity.
+- `fbe37909f tests: enforce NixOS disk image reuse`
+  - extends the evaluation-only flake check so changed test names and changed
+    machine names reuse an identical base image;
+  - proves a real disk input change (`additionalSpace`) produces a distinct
+    image while labels remain fixed;
+  - runs the image-reuse check early in the main CI workflow and includes
+    `flake.nix` in that workflow's path trigger.
+
+Consumer commits:
+
+- vpsAdmin: `893e53d0b` restores selector scratch to its original workflow
+  paths and relies on the framework snapshot while retaining the live log in
+  prepared state; `0f7d3b1f3` follows shared actions from `@staging`;
+  `382a02c8f` pins vpsAdminOS `fbe37909f`.
+- confctl: `36d3780` follows shared actions from `@staging`; `7e4383b` pins
+  vpsAdminOS `fbe37909f`.
+- terraform-provider-vpsadmin: `f249b37` follows shared actions from
+  `@staging`; `3d7e50b` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS
+  `fbe37909f`.
+- vpsf-status: `8c64fe5` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS
+  `fbe37909f`; its shared actions already used `@staging`.
+- vpsfree-irc-bot: `c4f2341` follows shared actions from `@staging`;
+  `03a1ba8` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS `fbe37909f`.
+- web: `c7441f1` pins vpsAdmin `382a02c8f` and transitively vpsAdminOS
+  `fbe37909f`; its shared actions already used `@staging`.
+
+No `vpsadmin-events` branch, ref, worktree, or file was modified.
+
+### Uniform framework quick verification
+
+- vpsAdminOS focused RSpec: 46 examples, 0 failures.
+- vpsAdminOS full test-runner RSpec: 168 examples, 0 failures.
+- vpsAdminOS RuboCop on all changed Ruby/spec files: no offenses.
+- vpsAdminOS Nix image-reuse check built successfully at
+  `/nix/store/nhb58azi0pckj2hk0zvbbprl74k2j5xx-nixos-test-disk-image-reuse`.
+- vpsAdminOS `nixfmt --check`, actionlint, and full Overcommit hooks passed.
+- vpsAdmin selector regression test: 16 runs, 55 assertions, passed.
+- vpsAdmin actionlint and full Overcommit hooks passed after installing the
+  repository API bundle in its documented Nix development shell.
+- confctl actionlint and full Overcommit hooks passed.
+- terraform-provider-vpsadmin and vpsfree-irc-bot actionlint passed;
+  vpsfree-irc-bot bundled Overcommit hooks passed.
+- vpsf-status Lefthook was installed and its pre-commit i18n check passed.
+- Flake metadata resolves direct vpsAdminOS pins to `fbe37909f` and all
+  transitive vpsAdmin pins to `382a02c8f` / vpsAdminOS `fbe37909f`.
+- Metadata-only `./test-runner.sh ls` smoke tests passed in vpsAdmin, confctl,
+  terraform-provider-vpsadmin, vpsf-status, vpsfree-irc-bot, and web. No VM
+  test was started. `/tmp/os-test-runner/.repository-sources` was empty after
+  the commands completed.
+- No precise 40-character shared-action revision remains in any of the seven
+  follow-up worktrees.
+
 Investigation complete. Implementation of the two confirmed vpsAdmin and
 vpsAdminOS CI store-churn fixes is committed in isolated feature worktrees.
 The existing `2026-06-15-vpsadmin-events` worktrees and branches are explicitly
@@ -120,6 +214,11 @@ retained space and points to the store-resident raw image outputs and their
 closures.
 
 ## Commands run
+
+- created clean `2026-08-04-stable-test-source` feature worktrees for all
+  seven affected repositories from their current default branches
+- repaired confctl's worktree-local Overcommit signature after its
+  post-checkout hook rejected the newly created worktree
 
 - `bin/dev-session current`
 - `git status --short --branch`
