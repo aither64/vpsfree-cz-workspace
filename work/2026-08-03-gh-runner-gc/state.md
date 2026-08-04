@@ -211,7 +211,13 @@ smoke test, actionlint, and `git diff --check` all passed after the rebase.
 - retained both local and remote `2026-08-04-ci-store-churn` feature branches;
 - cancelled redundant feature-branch workflow copies after the identical head
   was pushed to master. Master workflows may continue independently and are not
-  part of the user-selected integration gate.
+  part of the user-selected integration gate;
+- cancelled the duplicate vpsAdminOS staging CI and RSpec runs because the same
+  commit's feature-branch runs had already passed; the staging changed-image
+  workflow completed successfully before cancellation;
+- vpsAdmin master Client Specs, libnodectld Specs, WebUI PHPUnit, and i18n
+  health workflows passed on `1907e1990`. Master CI run `30904642236` continues
+  independently and is not being awaited at the user's direction.
 
 ## Mandatory change review
 
