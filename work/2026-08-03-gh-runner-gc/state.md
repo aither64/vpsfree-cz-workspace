@@ -237,7 +237,78 @@ The final exact-head workflow audit found ten runs, all completed successfully:
 - web Integration Tests `30916917691`.
 
 The many-hour vpsAdmin CI suite did not trigger from the guard removal and was
-not dispatched, as requested. No project default branch was changed or merged.
+not dispatched, as requested. At this review checkpoint, no project default
+branch had been changed or merged.
+
+### Default-branch integration
+
+After the user approved integration, all seven default branches were fetched
+again and confirmed unchanged since review. Fresh detached target worktrees
+were created, each feature branch was merged with `--ff-only`, quick target
+checks passed, and the exact reviewed heads were pushed over SSH:
+
+- vpsAdminOS `staging` -> `31b3dff4306cce8904ac45630a931a7b72d36507`;
+- vpsAdmin `master` -> `3f9b68adb97b7f43df929a85fc172d9d11e15211`;
+- confctl `master` -> `b6d72453cbf94f94b9712575cf474ed077228189`;
+- terraform-provider-vpsadmin `master` ->
+  `6e355293501278fe918007eeac9f1bb06b78c775`;
+- vpsf-status `master` -> `e68cbaaf75a6f4c9ee27fdddb07d42ef44cca338`;
+- vpsfree-irc-bot `master` ->
+  `d17a8520766a5010cc826ce02b0c7a74a3d988d4`;
+- web `master` -> `8603ad09435350db1843d4710bb51272bf881324`.
+
+The target checks were the vpsAdminOS image-reuse Nix check, vpsAdmin's
+`services-up` metadata listing, and complete metadata listings in confctl and
+all four transitive consumers. Remote refs were read back and matched each
+expected head. Temporary target worktrees were removed; feature worktrees and
+local/remote feature branches were retained.
+
+### Post-integration vpsAdminOS RSpec follow-up
+
+The duplicate vpsAdminOS RSpec push run `30928614451` failed on `staging`.
+Its logs showed 171 test-runner examples with seven failures while every other
+suite passed. This was reproducible and not accepted as a transient failure:
+
+- the aggregate script entered `test-runner/`, so the CLI observed that
+  subdirectory instead of the repository root;
+- the workflow used the general `.#vpsadminos` shell, which did not provide
+  `TEST_RUNNER_NIXPKGS_PATH` and `TEST_RUNNER_NIX_SYSTEM` required by the new
+  Nix-backed repository-source specs.
+
+Follow-up commit `09edd405c ci: run test-runner specs in their development
+shell` runs that suite from the repository root through the canonical
+`.#test-runner` shell. It explicitly preserves the aggregate shell's `/tmp`
+contract, because entering a nested Nix development shell otherwise replaces
+`TMPDIR` and invalidates three CLI-default examples.
+
+Quick verification on `09edd405c`:
+
+- `bash -n` and `git diff --check` passed;
+- direct test-runner RSpec passed: 171 examples, 0 failures;
+- the exact workflow command, `GITHUB_WORKSPACE="$PWD" nix develop
+  .#vpsadminos -c bash .github/workflows/scripts/run-rspec-all.sh`, passed all
+  13 suites, including test-runner's 171 examples;
+- the full vpsAdminOS Overcommit pre-commit suite passed.
+
+The exact aggregate run created only transient `.native/` and `libosctl/tmp/`
+build products. They were moved out of the feature worktree after verification,
+and the worktree is clean. The incremental mandatory reviewer reported no
+blocking, important, or advisory findings. It confirmed that the commit is
+focused, uses production repository-root semantics and the canonical framework
+shell, preserves `TMPDIR=/tmp`, and leaves every other suite unchanged. The
+feature branch was pushed from `31b3dff43` to `09edd405c`. A freshly fetched,
+detached target worktree then fast-forwarded `staging` to the same commit,
+passed shell syntax and diff checks, and pushed it over SSH. The remote staging
+ref was read back as `09edd405c`, and the temporary worktree was removed.
+
+The old-head staging CI run `30928615686` was still in progress on
+`31b3dff43` after the follow-up push, so its cancellation was requested as a
+superseded run. Staging RSpec run `30930445798` then passed on exact head
+`09edd405c` in 4m40s. Its logs report all aggregate suites passing and
+test-runner at 171 examples, 0 failures. The old vpsAdmin master CI run
+`30904642236` was also still consuming a runner on superseded head `1907e1990`,
+so its cancellation was requested. The current-head many-hour vpsAdmin CI is
+intentionally not an integration gate and was not awaited.
 
 Investigation complete. Implementation of the two confirmed vpsAdmin and
 vpsAdminOS CI store-churn fixes is committed in isolated feature worktrees.
