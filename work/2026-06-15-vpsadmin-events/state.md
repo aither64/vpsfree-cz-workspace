@@ -19047,3 +19047,46 @@ specs, client specs, libnodectld, download mounter, and console router are
 successful. API topic specs and aggregate CI are still running on the exact
 head. Superseded old-head aggregate run `30822361840` was canceled after the
 final force-push; completed old-head runs were retained.
+
+## 2026-08-04 rebase onto current vpsAdmin master
+
+Fetched the vpsAdmin SSH remote and rebased all 127 feature commits from base
+`a1e999590e2559ffb205e6c7e1d53f81c96673c5` onto current `origin/master`
+`3f9b68adb97b7f43df929a85fc172d9d11e15211`. The unpublished rebased head is
+`a5ffd487f79fc1a53f9128991e7e0d3985b7183f`; local backup ref
+`backup/2026-06-15-vpsadmin-events-before-master-rebase-20260804` retains the
+published pre-rebase head `f19364c2ef7ad9baf8f92b834a368df17bd76921`.
+
+The rebase resolved three substantive textual overlaps. Two combined the
+feature's event translations with newer Czech WebUI catalog entries from
+master. The OOM migration kept the feature's intentional removal of the legacy
+OOM rule UI while retaining the newer master catalog content. Conflicted MO
+files were regenerated from their merged PO sources with the canonical WebUI
+locale scripts.
+
+`git range-diff` maps all 127 old commits one-to-one to the rebased series. It
+reports 124 patches as identical and only the two catalog patches plus the OOM
+migration as changed, matching the resolved overlaps. The branch is zero
+commits behind and 127 commits ahead of the new base. Final local verification
+passed:
+
+- `git diff --check origin/master...HEAD`;
+- WebUI `locales-update --check` (only the existing embedded-URL warning);
+- focused resource-operation and transaction-chain event specs: 63 examples,
+  zero failures, seed 12345;
+- CI selection tests: 16 runs, 55 assertions, zero failures; and
+- every repository pre-commit hook, including migration specs, both i18n
+  checks, Nixfmt, RuboCop and PHP CS Fixer.
+
+The first locale-check attempt used a repository-relative `webui/...` path,
+which the WebUI shell doubled after changing into the component directory. The
+existing durable note
+`notes/vpsadmin/2026-08-03-webui-dev-shell-working-directory.md` already
+documents the symptom, cause and component-relative workaround; the successful
+rerun used the equivalent absolute path. Re-signing the unchanged custom API
+i18n hook was also required because the rebase changed its commit identity.
+
+This is a history-only integration with current master. It does not change the
+event system's schema, persisted data, API, queue, deployment or rollback
+contracts beyond the already reviewed feature series. Publishing and
+current-head GitHub Actions monitoring are next.
