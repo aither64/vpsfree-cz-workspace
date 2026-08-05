@@ -4,13 +4,16 @@
 
 - `vpsadminos`
   - Branch: `2026-08-05-vpsadminos-test-disk-image-reuse`
-  - Worktree: `worktrees/2026-08-05-vpsadminos-test-disk-image-reuse/vpsadminos`
+  - Worktree (removed):
+    `worktrees/2026-08-05-vpsadminos-test-disk-image-reuse/vpsadminos`
+  - Merge worktree (removed):
+    `worktrees/2026-08-05-vpsadminos-test-disk-image-reuse/vpsadminos-merge`
   - Base: `origin/staging` at `00d081b89`
 
 ## Status
 
-Complete. The committed branch is pushed and all GitHub Actions validation is
-green.
+Merged into `staging` by fast-forward, pushed, validated on the default branch,
+and cleaned up. Both initiative worktrees have been removed.
 
 ## Commands run
 
@@ -32,6 +35,15 @@ green.
 - `nix develop --command git push --set-upstream origin 2026-08-05-vpsadminos-test-disk-image-reuse`
 - Monitored GitHub Actions runs `31022450292` (CI) and `31022449851`
   (RSpec) through completion.
+- Refreshed `origin/staging` and verified it remained an ancestor of the feature
+  head; no rebase was required.
+- Updated the local `staging` branch to fetched `origin/staging` and created the
+  temporary `vpsadminos-merge` target worktree.
+- `git merge --ff-only 2026-08-05-vpsadminos-test-disk-image-reuse`
+- Rebuilt both disk-image reuse checks from the merged `staging` worktree.
+- `nix develop --command git push origin staging`
+- Removed the `vpsadminos-merge` and `vpsadminos` worktrees with
+  `bin/dev-session worktree remove`.
 
 ## Results
 
@@ -63,6 +75,15 @@ green.
 - GitHub Actions CI run `31022450292` passed. The build/cache job, including
   both disk-image reuse checks, passed in 2m34s; the full VM suite passed in
   57m11s.
+- The local and remote `staging` refs now point to
+  `be2f1e5c3526732d778d0a064aeb70f900123224`; integration was a clean
+  fast-forward with no merge commit.
+- Both focused flake checks passed again from the merged target worktree.
+- The local and remote feature branch refs remain at `be2f1e5c3` as required.
+- Default-branch GitHub Actions RSpec run `31037433900` passed in 4m44s.
+- Default-branch GitHub Actions CI run `31037433453` passed. The build/cache
+  job, including both disk-image reuse checks, passed in 1m52s; the full VM
+  suite passed in 52m57s.
 
 ## Open questions
 
@@ -70,6 +91,5 @@ None.
 
 ## Cleanup
 
-Retain the feature worktree until the branch is merged or abandoned. Keep the
-local and remote feature branch after merge unless the user explicitly asks
-for branch deletion.
+The feature and temporary merge worktrees have been removed. Local and remote
+feature branch refs were deliberately retained after merge.
