@@ -19116,3 +19116,87 @@ Aggregate CI ran the selected integration tests from 2026-08-04 17:17 UTC to
 2026-08-05 00:41 UTC and completed successfully. Final fetch and status checks
 confirmed that current `origin/master` is still the rebased base, the feature
 remote equals local HEAD, and the vpsAdmin worktree is clean.
+
+## 2026-08-05 rebase all initiative branches onto current defaults
+
+Fetched every initiative repository over SSH and resolved each authoritative
+default branch with `git ls-remote --symref origin HEAD`. Repositories whose
+feature branch already contained the current default were left unchanged:
+
+- `haveapi-client-php` at `0f5f9dad0ff445bdd36c776390ce4c8e8415444e`;
+- `vpsadmin-go-client` at `cbb8285e9493da1dd49ca84d51985e05944147d2`;
+- `vpsadmin-kb-captures` at
+  `782dce28e8d7322c55361475bff61d02320a326e`;
+- `vpsfree-notification-templates` at
+  `6dda345aa47dba418d4f434cb9cd7ef5be08e465`; and
+- `vpsfree-sms-gateway` at
+  `af7b3fafb780c849ae03e31712128ecb0749ec0b`.
+
+Default-equivalent support branches were fast-forwarded and pushed without
+history rewriting:
+
+- `confctl`: `9648e9ff` to current `master`
+  `b6d72453cbf94f94b9712575cf474ed077228189`;
+- `terraform-provider-vpsadmin`: `29c768ae` to current `master`
+  `6e355293501278fe918007eeac9f1bb06b78c775`;
+- `vpsadminos`: `0b102133` to current `staging`
+  `be2f1e5c3526732d778d0a064aeb70f900123224`; and
+- `vpsfree-irc-bot`: `af553fda` to current `master`
+  `d17a8520766a5010cc826ce02b0c7a74a3d988d4`.
+
+The five HaveAPI feature patches were rebased from `b8dff993` onto current
+`master` `ee254ab0c183718a117ece38ec65ee29d1d2d0b3`. `git range-diff`
+maps all five patches one-to-one and marks every patch identical. The new head
+`d4941f2b9098751a75f94c9cdf4988384215fb5d` was force-pushed with an
+explicit lease on old remote head `0e1e67e2057eb498691cc0dd4c674fe2f002513a`.
+Local verification passed the complete Overcommit suite, 12 focused Ruby
+server examples, and 9 focused Go generator examples.
+
+All 127 vpsAdmin feature commits were rebased from `3f9b68adb` onto current
+`master` `0b066c42814d3a9f5b0b8f8e3ed7910ae20a4fac`. One locale conflict kept
+both the new snapshot-download errors from `master` and the event catalog from
+the feature. `git range-diff` maps all 127 commits one-to-one: 125 patches are
+identical and the two reported differences contain only those inherited
+snapshot locale keys. The new head
+`131ef638075a652cdfaecdbe163f137f7716056f` was force-pushed with an
+explicit lease on old remote head `a5ffd487f79fc1a53f9128991e7e0d3985b7183f`.
+Local verification passed `git diff --check`, the canonical WebUI locale check,
+63 focused resource-operation and transaction-chain event examples, the CI
+selection test's 16 runs and 55 assertions, and every Overcommit hook.
+
+The production configuration feature was rebased onto current `master`
+`e5395e1d9c9ee59836450c3ef7179c9758f42ca9`. Twelve functional patches,
+including the notification-template and SMS-gateway lock update, remain
+patch-identical. The two obsolete intermediate `vpsadminServices` pin commits
+were dropped. `confctl inputs channel set --commit` generated the one
+authoritative final pin commit `319dce2a`, setting `vpsadminServices` exactly
+to rebased vpsAdmin head `131ef638`. All configuration Overcommit hooks passed.
+The branch was force-pushed with an explicit lease on old remote head
+`363465748eb4d415c17567a435412eb336c0b961`; its new head is
+`319dce2afca5465057fb27aa3b555d4634106d9c`.
+
+`confctl build -y cz.vpsfree/vpsadmin/int.api1` reached configuration
+evaluation but could not evaluate the current default tree because its locked
+`web` input at `26e85847` has the already documented upstream NAR-hash
+mismatch. The failure is independent of this rebase and matches
+`notes/vpsfree-cz-configuration/2026-08-05-web-input-nar-hash-mismatch.md`.
+The input was deliberately not hand-edited or refreshed as part of this
+initiative.
+
+Every rewritten repository has local backup ref
+`backup/2026-06-15-vpsadmin-events-before-default-rebase-20260805` pointing to
+its previous feature head. Final remote fetches confirmed that every default
+and feature branch still matched the exact heads used for the lease-protected
+pushes. No superseded queued or running workflow existed after publication,
+so no workflow cancellation was required.
+
+Mandatory change review was not repeated for this mechanical integration. The
+feature architecture and behavior have already been reviewed; the HaveAPI and
+functional configuration patches are byte-identical, and the only vpsAdmin
+differences are the explicitly inspected default-branch locale additions.
+
+GitHub monitoring started on all exact published heads. HaveAPI's seven
+workflows are already successful. At this checkpoint the remaining current-head
+runs are in progress or queued: ten vpsAdmin workflows, one configuration
+event-i18n workflow, three confctl workflows, one Terraform-provider workflow,
+four vpsAdminOS workflows, and two IRC-bot workflows.
