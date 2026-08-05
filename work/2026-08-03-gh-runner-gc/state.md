@@ -605,3 +605,14 @@ not remove temporary-root files manually.
   heads.
 - A temporary upstream Nix source checkout was made under `/tmp` for read-only
   source inspection; it is not part of the workspace.
+- After uniform follow-up integration, verified all seven
+  `2026-08-04-stable-test-source` worktrees were clean and removed them through
+  their canonical bare repositories. This removed approximately 451 MB of
+  checkout, gem, and build-cache data and left
+  `worktrees/2026-08-03-gh-runner-gc/` empty, so that directory was removed.
+- Retained all seven local and remote `2026-08-04-stable-test-source` branch
+  refs at the merged heads, as required. No `vpsadmin-events` worktree or ref
+  was changed.
+- Removed the follow-up's 104 KB temporary RSpec native-build directory and
+  temporary commit-message files from `/tmp`. Durable `plan.md` and `state.md`
+  remain under `work/2026-08-03-gh-runner-gc/`.
