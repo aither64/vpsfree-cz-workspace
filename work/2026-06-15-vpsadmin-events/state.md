@@ -19090,3 +19090,29 @@ This is a history-only integration with current master. It does not change the
 event system's schema, persisted data, API, queue, deployment or rollback
 contracts beyond the already reviewed feature series. Publishing and
 current-head GitHub Actions monitoring are next.
+
+The branch was force-pushed with the explicit lease for pre-rebase head
+`f19364c2ef7ad9baf8f92b834a368df17bd76921`. The remote branch now matches
+the clean local head `a5ffd487f79fc1a53f9128991e7e0d3985b7183f`, which is
+zero commits behind and 127 commits ahead of `origin/master`. No superseded
+old-head workflow was queued or active after the push, so no cancellation was
+needed.
+
+All ten GitHub Actions workflows completed successfully on the exact rebased
+head:
+
+- API Migration Specs `30932585431`;
+- API Specs (topic parallel) `30932585443`, including all 26 shards;
+- aggregate CI `30932589345`;
+- Client Specs `30932585554`;
+- Console Router Specs `30932585489`;
+- Download Mounter Specs `30932585442`;
+- RuboCop `30932585406`;
+- WebUI PHPUnit `30932585389`;
+- i18n health `30932585359`; and
+- libnodectld Specs `30932588928`.
+
+Aggregate CI ran the selected integration tests from 2026-08-04 17:17 UTC to
+2026-08-05 00:41 UTC and completed successfully. Final fetch and status checks
+confirmed that current `origin/master` is still the rebased base, the feature
+remote equals local HEAD, and the vpsAdmin worktree is clean.
