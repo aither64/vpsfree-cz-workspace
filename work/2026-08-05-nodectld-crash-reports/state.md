@@ -6,12 +6,21 @@
   - Branch: `2026-08-05-nodectld-crash-reports`
   - Worktree:
     `worktrees/2026-08-05-nodectld-crash-reports/vpsadmin`
-  - Base: `origin/master` at `0b066c42814d3a9f5b0b8f8e3ed7910ae20a4fac`
-  - Head: `9b391055c3654710760c0f58679b75c1cf84d94a`
+  - Rebased base: `origin/master` at
+    `d363f0c6afab4a3b646215df16552018042fb64d`
+  - Merged head: `92bba722b16d8f1e68e183f7041be1d44a17db7d`
+  - Published: `master` and the retained feature branch
+- `vpsfree-cz-configuration`
+  - Branch: `2026-08-05-nodectld-crash-reports`
+  - Worktree:
+    `worktrees/2026-08-05-nodectld-crash-reports/vpsfree-cz-configuration`
+  - Base: `origin/master` at `1bf6f45592647570905a5ad20b40dce4c052f1ef`
+  - Intended inputs: role `vpsadmin` in channels `production`, `staging`, and
+    `vpsadmin`
 
 ## Status
 
-- Root cause identified and the revised vpsAdmin fix is committed. The
+- Root cause identified and the revised vpsAdmin fix is merged and pushed. The
   Connector/C override is node-only, nodectld disables TLS at its connection
   site, and a focused mysql2 patch makes that option effective with
   Connector/C 3.4.9. Fresh mandatory review found no findings, and final
@@ -55,6 +64,18 @@
   Connector/C 3.3.5.
 - Ran `nix develop .#libnodectld --command bundle exec rspec`.
 - Ran `./test-runner.sh test services-up` using the default bridge network.
+- Fetched the advanced vpsAdmin `origin/master`, rebased the feature commit,
+  reran the focused regression spec, and fast-forwarded a fresh merge worktree.
+- Pushed vpsAdmin `master` and the retained feature branch.
+- Created the `vpsfree-cz-configuration` feature worktree, installed its pinned
+  Overcommit environment, and updated the three requested channels with
+  `confctl inputs channel update --commit --no-editor`.
+- Read all three channel mappings back through `confctl`, ran
+  `nix flake check --no-build --no-update-lock-file`, and attempted a
+  representative `confctl build` for one production node, one staging node,
+  and one vpsAdmin API machine.
+- Fast-forwarded the configuration input commit in a fresh merge worktree and
+  pushed configuration `master` and the retained feature branch.
 
 ## Results
 
@@ -112,7 +133,23 @@
   seconds using the default bridge network. MariaDB responded and was
   populated, API responded, and the mailer node's packaged nodectld reported a
   running state.
-- The vpsAdmin worktree is clean and one commit ahead of `origin/master`.
+- The reviewed vpsAdmin commit was rebased without content changes onto the
+  intervening WebUI-only upstream commit and published as
+  `92bba722b16d8f1e68e183f7041be1d44a17db7d` on `master`.
+- `confctl` created isolated lockfile commit
+  `d6f1c5d1aab18220fd5595ecd6ab3b7795aea6cf`. The `vpsadmin` role in channels
+  `production`, `staging`, and `vpsadmin` all resolve to `92bba722`; the
+  configuration commit is published on `master`.
+- The configuration Nixfmt pre-commit hook and repository-wide flake
+  evaluation passed. The representative three-machine build cannot complete
+  locally because the production node evaluation requires absent operator
+  secret `/secrets/nodes/initrd/ssh_host_ed25519_key`; the build stopped at
+  that missing path, before testing the changed package closure.
+- GitHub's vpsAdmin RuboCop and libnodectld Specs workflows passed on the
+  merged commit. Full integration run `31101183563` was still active in its
+  test step after 31 minutes at handoff; recent full runs take several hours,
+  and no failure was available to investigate.
+- No GitHub Actions workflows were created for the configuration commit.
 
 ## Superseded mandatory review
 
@@ -154,6 +191,10 @@
 
 ## Cleanup
 
-- Keep the feature worktree until the branch is reviewed, tested and merged.
-- Root and API `.gems/` directories in the worktree are transient development
-  shell output and can be removed with the worktree after integration.
+- Removed both initiative feature worktrees, both temporary merge worktrees,
+  and their transient development caches. The empty initiative worktree group
+  was removed.
+- Retained both local and remote `2026-08-05-nodectld-crash-reports` feature
+  branches and set each local branch to track its matching remote branch.
+- Removed the temporary configuration merge-helper branch after confirming its
+  commit is reachable from remote `master`.

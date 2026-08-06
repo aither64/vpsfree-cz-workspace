@@ -12,6 +12,8 @@ concrete, testable fixes at the correct layer.
 - `vpsadmin`: build the node-side mysql2 extension with an overlaid MariaDB
   Connector/C and keep the TLS compatibility policy in nodectld's connection
   code. API packages retain their existing Connector/C closure.
+- `vpsfree-cz-configuration`: advance the `vpsadmin` role in the `production`,
+  `staging`, and `vpsadmin` channels to the merged vpsAdmin revision.
 - `vpsadminos` and nixpkgs are compatibility inputs only. No change is needed
   there because vpsAdmin already owns an overlay applied to its deployed
   services.
@@ -37,6 +39,9 @@ concrete, testable fixes at the correct layer.
    malformed-metadata reproducer against both vulnerable and fixed clients.
 8. Commit the package fix, run mandatory change review, and then run the
    appropriate integration validation.
+9. Merge and publish vpsAdmin, update the three deployment channels through
+   `confctl`, validate representative channel consumers, and publish the
+   configuration update.
 
 ## Compatibility and deployment
 
@@ -46,6 +51,9 @@ concrete, testable fixes at the correct layer.
 - A Connector/C, mysql2 or Ruby package fix requires a vpsAdminOS/system
   rebuild and rolling nodectld restart, but should not require coordinated
   updates of all nodes if protocol and schema behavior are unchanged.
+- The three channels may be deployed incrementally. Mixed old and new
+  nodectld packages remain protocol-, schema-, and state-compatible, and a
+  rollback to the prior system generation remains possible.
 - API packages and their database connection behavior remain unchanged. This
   avoids imposing Connector/C 3.4's TLS defaults on unrelated services.
 - Any package upgrade or backport must be checked for ABI compatibility with
