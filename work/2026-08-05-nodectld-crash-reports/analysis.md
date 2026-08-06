@@ -76,28 +76,32 @@ thread count and nodectld's work loop as prerequisites.
 
 ## Implemented fix
 
-vpsAdmin commit `8a71a3b79` overlays MariaDB Connector/C 3.4.9 until pinned
-nixpkgs provides that version or newer. It also explicitly feeds the overlaid
-package into the mysql2 gem configuration used by node and API packages. This
-is necessary: replacing `libmariadb.so.3` under an already-built mysql2 is not
-a supported validation or deployment strategy because mysql2 compiles
-Connector option constants from the headers.
+vpsAdmin commit `9b391055c` builds node-side mysql2 against MariaDB Connector/C
+3.4.9 until pinned nixpkgs provides that version or newer. Replacing
+`libmariadb.so.3` under an already-built mysql2 is not a supported validation
+or deployment strategy because mysql2 compiles Connector option constants
+from the headers.
 
 The overlay makes two packaging adaptations:
 
 1. It clears nixpkgs patches that are already integrated in Connector/C 3.4.9
    and adjusts nixpkgs's compile-time `mariadb_config` path substitutions for
    GCC's format checks.
-2. It sets `DEFAULT_SSL_VERIFY_SERVER_CERT=OFF`. Connector/C 3.4 otherwise
-   enables certificate verification by default and consequently rejects the
-   current plaintext-capable database connection configuration. Verified
-   database TLS should be enabled as a separate coordinated change.
+2. It rebuilds mysql2 0.5.6 from source with a small compatibility patch.
+   mysql2 maps `ssl_mode: :disabled` to `MYSQL_OPT_SSL_ENFORCE=0`, but
+   Connector/C 3.4 separately defaults
+   `MYSQL_OPT_SSL_VERIFY_SERVER_CERT=1`, which still requires TLS. The patch
+   clears both options for disabled mode.
 
-Both relevant consumers rebuild:
+Nodectld passes `ssl_mode: :disabled` explicitly when constructing every
+database connection. Connector/C itself retains its upstream TLS defaults.
+The local mysql2 patch can be removed when an upstream mysql2 release clears
+certificate verification in its MariaDB `ssl_mode` compatibility path.
+Verified database TLS should later be configured at this connection site with
+CA and identity verification.
 
-- nodectld/libnodectld use mysql2 0.5.6 linked to Connector/C 3.4.9;
-- vpsadmin-api/database/supervisor use mysql2 0.5.7 linked to Connector/C
-  3.4.9.
+Only node packages use the fixed connector. API packages retain mysql2 0.5.7
+and Connector/C 3.3.5, so the nodectld fix cannot change API TLS behavior.
 
 No database schema, persisted state, API, daemon protocol, or generated
 configuration format changes. Old and new nodes can coexist against the same
@@ -108,21 +112,27 @@ load all state written by the new version, but restores the vulnerable client.
 
 - Built Connector/C 3.4.9 through the vpsAdmin overlay.
 - Built final nodectld and vpsadmin-api packages.
-- Inspected both recursive closures: neither contains Connector/C 3.3.5.
-- Confirmed both rebuilt mysql2 extensions resolve `libmariadb.so.3` from the
-  Connector/C 3.4.9 store path.
+- Confirmed nodectld's mysql2 resolves `libmariadb.so.3` from stock Connector/C
+  3.4.9 and its compiled header retains
+  `DEFAULT_SSL_VERIFY_SERVER_CERT=1`.
+- Confirmed the API closure still uses Connector/C 3.3.5.
 - Ran the official malformed-server reproducer against the rebuilt nodectld
   mysql2: it completed the plaintext handshake and returned `Mysql2::Error`
   instead of SIGSEGV.
+- Queried a real MariaDB server with the packaged nodectld client and confirmed
+  the query succeeds with no negotiated TLS cipher.
+- Passed the focused database-connection spec: 1 example, 0 failures.
 - Passed all declared pre-commit hooks: Nixfmt, MigrationSpecs,
   VpsadminApiI18n, and VpsadminWebuiI18n.
-- Passed the MariaDB-backed libnodectld suite: 423 examples, 0 failures.
-- Passed the `services-up` NixOS integration test: all 27 service assertions,
-  including MariaDB, packaged nodectld state, and API responsiveness.
+- Passed the final MariaDB-backed libnodectld suite: 424 examples, 0 failures.
+- Passed the final `services-up` NixOS integration test: all 27 service
+  assertions, including MariaDB, API responsiveness, and packaged nodectld
+  state.
 
-Mandatory fresh-context review found no blockers. Its Important finding about
-retaining the TLS compatibility flag after the nixpkgs source pin expires was
-fixed before these long tests. The reviewer confirmed the amended design.
+The earlier mandatory review covered a now-superseded global Connector/C CMake
+flag. A new fresh-context review of the connection-scoped design found no
+Blocking, Important, or Advisory findings and confirmed its package scoping,
+TLS semantics, compatibility, and removal conditions.
 
 ## Operational follow-up
 

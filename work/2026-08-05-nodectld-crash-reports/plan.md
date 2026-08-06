@@ -9,8 +9,9 @@ concrete, testable fixes at the correct layer.
 
 ## Affected repositories
 
-- `vpsadmin`: add a local package overlay for MariaDB Connector/C so every
-  vpsAdmin service using mysql2 is rebuilt against a fixed client library.
+- `vpsadmin`: build the node-side mysql2 extension with an overlaid MariaDB
+  Connector/C and keep the TLS compatibility policy in nodectld's connection
+  code. API packages retain their existing Connector/C closure.
 - `vpsadminos` and nixpkgs are compatibility inputs only. No change is needed
   there because vpsAdmin already owns an overlay applied to its deployed
   services.
@@ -25,12 +26,16 @@ concrete, testable fixes at the correct layer.
    relevant upstream fixes/releases.
 4. Inspect nodectld database connection ownership, fork/thread lifecycle and
    mysql2 native calls for a trigger that explains the corrupted state.
-5. Upgrade MariaDB Connector/C in the vpsAdmin overlay to the latest upstream
-   release. Document CONC-709 and remove the override when the pinned nixpkgs
-   provides that release or newer.
-6. Build the overlaid connector and mysql2 consumer, then run the official
+5. Upgrade MariaDB Connector/C for node-side mysql2 in the vpsAdmin overlay to
+   the latest upstream release. Document CONC-709 and remove the source
+   override when the pinned nixpkgs provides that release or newer.
+6. Disable TLS explicitly in nodectld's mysql2 connection options. Patch
+   mysql2's MariaDB compatibility path so `ssl_mode: :disabled` also clears
+   Connector/C 3.4's certificate-verification default; remove that patch when
+   an upstream mysql2 release implements those semantics.
+7. Build the overlaid connector and mysql2 consumer, then run the official
    malformed-metadata reproducer against both vulnerable and fixed clients.
-7. Commit the package fix, run mandatory change review, and then run the
+8. Commit the package fix, run mandatory change review, and then run the
    appropriate integration validation.
 
 ## Compatibility and deployment
@@ -41,6 +46,8 @@ concrete, testable fixes at the correct layer.
 - A Connector/C, mysql2 or Ruby package fix requires a vpsAdminOS/system
   rebuild and rolling nodectld restart, but should not require coordinated
   updates of all nodes if protocol and schema behavior are unchanged.
+- API packages and their database connection behavior remain unchanged. This
+  avoids imposing Connector/C 3.4's TLS defaults on unrelated services.
 - Any package upgrade or backport must be checked for ABI compatibility with
   mysql2 and rollback compatibility with the previous system generation.
 
