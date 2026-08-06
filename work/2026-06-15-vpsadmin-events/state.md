@@ -19200,3 +19200,57 @@ workflows are already successful. At this checkpoint the remaining current-head
 runs are in progress or queued: ten vpsAdmin workflows, one configuration
 event-i18n workflow, three confctl workflows, one Terraform-provider workflow,
 four vpsAdminOS workflows, and two IRC-bot workflows.
+
+## 2026-08-06 default rebase CI completion
+
+All 28 workflows started by the initial publication completed successfully on
+their exact heads:
+
+- HaveAPI `d4941f2b`: RuboCop `31040189048`, Go RSpec `31040189534`,
+  JavaScript tests `31040188938`, PHP PHPUnit `31040188701`, Ruby-client RSpec
+  `31040189425`, i18n health `31040188715`, and Ruby-server RSpec
+  `31040189424`;
+- vpsAdmin `131ef638`: API migration specs `31040194997`, API topic specs
+  `31040195192`, aggregate CI `31040194973`, client specs `31040194962`,
+  console-router specs `31040194998`, download-mounter specs `31040195308`,
+  RuboCop `31040194896`, WebUI PHPUnit `31040195162`, i18n health
+  `31040195046`, and libnodectld specs `31040195015`;
+- vpsFree.cz configuration `319dce2a`: event i18n health `31040368340`;
+- confctl `b6d72453`: RSpec `31040367557`, RuboCop `31040367258`, and tests
+  `31040367096`;
+- Terraform provider `6e355293`: integration tests `31040371823`;
+- vpsAdminOS `be2f1e5c`: changed-image checks `31040368174`, aggregate CI
+  `31040368028`, RSpec `31040368169`, and RuboCop `31040368039`; and
+- IRC bot `d17a8520`: integration tests `31040367165` and RSpec
+  `31040367980`.
+
+The vpsAdmin aggregate integration run executed from 2026-08-05 19:36 UTC to
+2026-08-06 02:20 UTC and passed after approximately 6 hours 44 minutes. No
+failed run was rerun, and no superseded queued or active run required
+cancellation.
+
+The post-CI remote audit then found that vpsAdminOS `staging` had advanced once
+during monitoring, from `be2f1e5c` to
+`008aa4605ec263397bf46bd9fe915a01be1670a6`. The new default commit publishes
+the 6.12.95.2 livepatch uname-v1 behavior. Because the initiative branch was
+default-equivalent, it was fast-forwarded without rewriting or conflict and
+pushed normally. Its path filters started only replacement aggregate CI run
+`31065546509`; both jobs passed on exact final head `008aa4605` from 02:25 UTC
+to 03:08 UTC.
+
+A final fetch after replacement CI confirms that every affected feature remote
+equals its local head and is zero commits behind its authoritative default:
+
+- HaveAPI `d4941f2b` is 5 commits ahead of `master` `ee254ab0`;
+- vpsAdmin `131ef638` is 127 commits ahead of `master` `0b066c42`;
+- vpsFree.cz configuration `319dce2a` is 13 commits ahead of `master`
+  `e5395e1d`;
+- confctl `b6d72453`, Terraform provider `6e355293`, vpsAdminOS `008aa4605`,
+  and IRC bot `d17a8520` exactly equal their current defaults.
+
+HaveAPI, vpsAdmin, confctl, Terraform provider, vpsAdminOS, and IRC-bot
+worktrees are clean. The configuration worktree has only the preserved
+untracked development caches `.bin/`, `.bundle/`, and `.rubocop_cache/`; its
+tracked tree is clean and matches the published feature head. Monitoring is
+complete with all 29 observed workflow runs successful, including the final
+replacement run after the vpsAdminOS default advanced.
