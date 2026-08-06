@@ -19254,3 +19254,13 @@ untracked development caches `.bin/`, `.bundle/`, and `.rubocop_cache/`; its
 tracked tree is clean and matches the published feature head. Monitoring is
 complete with all 29 observed workflow runs successful, including the final
 replacement run after the vpsAdminOS default advanced.
+
+## 2026-08-06 development cluster handoff
+
+At the user's request, stopped the initiative's `single` development cluster
+with `devcluster stop 2026-06-15-vpsadmin-events` so its resources are
+available to another initiative. The cluster used bridge networking. Graceful
+shutdown exceeded the cluster manager's timeout, after which it killed the
+remaining cluster processes and removed the cluster configuration's Nix GC
+root. A subsequent `devcluster status` reported `status: stopped`; no cluster
+reset was performed.
