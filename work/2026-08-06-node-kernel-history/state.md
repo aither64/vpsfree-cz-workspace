@@ -235,5 +235,7 @@ Both advisory changes are committed and pushed.
 
 - The temporary detached vpsAdminOS history worktree used to compare fixture
   derivations was removed.
-- Pending the top-level tracking commit and eventual feature-worktree removal
-  after integration/merge.
+- Top-level tracking updates are committed and pushed.
+- The development cluster, its state, and its task-local compatibility launcher
+  are intentionally retained while the user reviews the feature. Feature
+  worktrees remain pending integration/merge.
