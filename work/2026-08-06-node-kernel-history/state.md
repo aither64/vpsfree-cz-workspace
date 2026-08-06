@@ -26,7 +26,34 @@
 - Quick repository verification and the full WebUI browser integration test
   have passed. The mandatory fresh-context review is complete with no blocking
   or important findings. Both final advisory findings have been addressed.
+- The single-node bridge-network development cluster
+  `2026-08-06-node-kernel-history` is running and reports `ready: yes`.
 - No production deployment or production KB write is authorized.
+
+## Development cluster
+
+- WebUI: `https://webui.aitherdev.int.vpsfree.cz/`
+- Kernel history demonstration:
+  `https://webui.aitherdev.int.vpsfree.cz/?page=node&action=kernel_history&id=101`
+- API and WebUI both returned HTTP 200 after startup. The kernel-history API
+  returned the real current boot event plus two dev-only demonstration rows:
+  exact `applied` and inferred `removed`. The latter has distinct
+  `observed_after` and `observed_before` values so the compact visible time and
+  its hover/focus detail can be reviewed.
+- The shared dev-cluster definition currently contains notification options
+  from another unmerged vpsAdmin initiative, while this worktree is correctly
+  based on `origin/master`. A task-local launcher snapshot from coordination
+  commit `c1d70e281619b6a51c5d8f285bff2786f6c04cf9`, immediately before that
+  notification integration, is retained at
+  `dev-clusters/vpsadmin-node-kernel-history/` for cluster lifecycle commands.
+  The shared tracked launcher and its unrelated working-tree changes were not
+  modified.
+- The cluster-specific config disables optional Mailpit capture and the fake
+  SMS gateway. These services are unrelated to kernel history and their newer
+  option definitions are absent from the vpsAdmin master base.
+- Initial node activation encountered the documented late-osctld readiness
+  race after the cluster had already reached `ready: yes`. Once `osctld` and
+  `nodectld` were running, `devcluster update ... node1` completed cleanly.
 
 ## Commits
 
