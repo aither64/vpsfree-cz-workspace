@@ -31,7 +31,7 @@
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsfree-cz-configuration`
   - base: `338db498743c8e04fd6d9ed3d2a0f33f7bbc5ba5`
-  - head: `2595a57bffc0452f5c392db86c13f5341ca38c77`
+  - head: `2051708717b170afd34820817945bf858f93bb19`
 
 ## Status
 
@@ -45,10 +45,12 @@
 - All repository branches are pushed. Exact configuration pins, strict runbook
   documentation, the KB contract, browser integration, and the bridge-network
   development-cluster scenario pass.
-- The prior mandatory review was clear. A new fresh-context review is required
-  for the migration refactor and rollback regressions before final long tests.
-- Final-head GitHub workflows have started. The superseded old-head vpsAdmin CI
-  run `31207316731` was cancelled after the force-push.
+- The fresh mandatory review confirmed the migration and rollback semantics.
+  Its one Blocking finding, a stale vpsAdmin revision in the rollout runbook,
+  was corrected and verified by the same reviewer; no Blocking or Important
+  findings remain.
+- Final-head security-advisories and all vpsAdmin specification/lint workflows
+  pass. The vpsAdmin aggregate full integration workflow is still running.
 - No production deployment or production KB write is authorized.
 
 ## Final commits
@@ -62,8 +64,8 @@
 - `security-advisories`
   - `7cb4fb1` — `security: evaluate observed livepatch state`
 - `vpsfree-cz-configuration`
-  - `17b4cd5e` — loaded-livepatch deployment runbook
-  - `2595a57b` — generated vpsAdmin role pins to `c0d87beb`
+  - `af7962dae` — loaded-livepatch deployment runbook
+  - `20517087` — generated vpsAdmin role pins to `c0d87beb`
 - `vpsadmin-kb-captures`
   - `3d394b3` — final vpsAdmin documentation-contract pin
 - `vpsadminos`
@@ -93,7 +95,7 @@
 - The paused
   `worktrees/2026-08-07-security-advisories-6-12-95-2/security-advisories`
   worktree was read only and remains untouched for a later rebase.
-- Quick verification:
+- Quick verification before the migration readability follow-up:
   - libnodectld security-evidence spec: 10 examples, 0 failures;
   - API recorder spec: 26 examples, 0 failures;
   - corrective migration spec: 5 examples, 0 failures;
@@ -132,27 +134,29 @@
 - The paused `2026-08-07-security-advisories-6-12-95-2` initiative remains
   untouched and will be resumed/rebased only after this work is final.
 
-## Current verification
+## Verification
 
 - vpsAdmin libnodectld security-evidence specs: 10 examples, 0 failures.
 - vpsAdmin API recorder/parser specs: 26 examples, 0 failures.
-- vpsAdmin corrective migration specs: 5 examples, 0 failures.
+- vpsAdmin corrective migration specs: 6 examples, 0 failures.
 - vpsAdmin commit hooks passed Nixfmt, migration specs, RuboCop, WebUI i18n,
   and API i18n checks.
-- security-advisories RSpec: 122 examples, 0 failures.
+- security-advisories RSpec: 123 examples, 0 failures.
 - security-advisories RuboCop: 28 files, no offenses; its commit hook passed.
 - Configuration exact-pin assertions passed: all three vpsAdmin roles use
-  `89f93ece`; all three relevant vpsAdminOS roles use `8d5fe005`.
+  `c0d87beb`; all three relevant vpsAdminOS roles use `8d5fe005`.
 - `nix shell nixpkgs#mkdocs -c mkdocs build --strict` passed for the rollout
   runbook.
 - KB `nix develop -c bin/check` passed: 39 controls, 29 paths, 32 capture
   concepts, 65 bindings, 9 exceptions, 15 tests, and 118 PNG variants.
 - vpsAdmin browser integration `./test-runner.sh test
   'webui#admin-cluster'` passed. The Playwright example completed in 380.24
-  seconds and the full test completed in 992.2 seconds.
-- Configuration builds passed for `int.api1`, `int.api2`, `int.webui1`, and
-  `int.webui2`. Evaluation of `node1.stg` stopped before compilation because
-  this local machine does not have the deployment-only
+  seconds and the full test completed in 992.2 seconds. This was before the
+  migration-only history rewrite; the browser-affecting tree is unchanged and
+  final-head WebUI PHPUnit passes in CI.
+- Final configuration builds passed for `int.api1`, `int.api2`, `int.webui1`,
+  and `int.webui2`. Earlier evaluation of `node1.stg` stopped before
+  compilation because this local machine does not have the deployment-only
   `/secrets/nodes/initrd/ssh_host_ed25519_key`; `node2.stg` was not attempted
   after the serial command stopped. No substitute secret was created.
 - vpsAdminOS has no initiative-specific feature diff; its existing
@@ -161,18 +165,22 @@
 
 ## GitHub Actions
 
-- vpsAdmin head `89f93ece`: migration specs, RuboCop, i18n health,
-  libnodectld specs, WebUI PHPUnit, and topic-parallel API specs passed. The
-  aggregate CI workflow `31207316731` is still running its selected integration
-  tests.
-- security-advisories head `9cd57cc`: RSpec and RuboCop passed.
-- vpsAdminOS head `8d5fe005`: RSpec and the aggregate build job passed. The
-  branch-specific aggregate CI workflow `31210461594` is still running its test
-  suite. The same exact commit already passed full staging CI in workflow
-  `31198648330`.
+- vpsAdmin head `c0d87beb`: migration specs, RuboCop, i18n health,
+  libnodectld specs, WebUI PHPUnit, and topic-parallel API workflow
+  `31218686499` passed. Aggregate CI workflow `31218686721` is running the
+  full `tag=ci` integration suite selected because the branch changes a
+  migration; recent successful full runs take approximately 4–5 hours.
+- security-advisories head `7cb4fb1`: RSpec and RuboCop passed.
+- vpsAdminOS head `8d5fe005`: RSpec passed and exact-head full CI workflow
+  `31198648330` passed. Later branch workflow `31210461594` had 71 successful
+  tests and four unrelated QEMUs terminated by runner memory pressure. Its
+  downloaded artifacts show synchronized `qemu_exit` records with empty status,
+  abrupt guest consoles without panic, and OSVM shell EOFs; this matches the
+  documented 92-GiB scheduling-on-96-GiB swapless-runner failure.
 - Configuration and KB repositories have no workflows for this branch push.
-- Superseded vpsAdmin aggregate runs `31186815892` and `31204583570` were
-  cancelled after force-pushes; completed old-head runs are retained.
+- Superseded vpsAdmin aggregate runs `31186815892`, `31204583570`, and
+  `31207316731` were cancelled after force-pushes; completed old-head runs are
+  retained.
 - Failed attempts from 2026-08-06 were inspected before rerunning and were
   attributed to the GitHub service outage and associated self-hosted-runner
   availability, not accepted merely because a later run became green.
@@ -180,7 +188,7 @@
 ## Development cluster
 
 - The bridge-network cluster `2026-08-06-node-kernel-history` is running and
-  ready. vpsAdmin services use final revision `89f93ece`; schema migrations
+  ready. vpsAdmin services use final clean revision `c0d87beb`; schema migrations
   `20260806120000` and `20260806120100` are applied.
 - The cluster reproduced the staging transition without rebooting: the booted
   system remains vpsAdminOS `008aa460` with patch-2 metadata, while the current
@@ -193,7 +201,10 @@
 - Current software evidence has concrete booted/current revisions for
   vpsAdminOS (`008aa460` / `8d5fe005`), vpsAdmin (`91b574ae` / `89f93ece`),
   and nixpkgs (`04607e11` / `445d861c`); the WebUI therefore has no reason to
-  render those vpsAdmin/vpsAdminOS revisions as unavailable.
+  render those vpsAdmin/vpsAdminOS revisions as unavailable. The node system
+  intentionally remains at the pre-rewrite reporter closure; only services
+  needed refresh because the folded follow-up changed migration/spec code, not
+  reporter behavior.
 - The cluster is intentionally left running in this staging-like state at
   `https://webui.aitherdev.int.vpsfree.cz/`. Kernel history is at
   `?page=node&action=kernel_history&id=101` and software versions at
@@ -230,11 +241,20 @@
 - The same reviewer verified the fixes and regenerated pins. No Blocking,
   Important, or Advisory findings remain, and the long-test gate is open. This
   is not merge or deployment approval.
+- A new fresh-context review of the migration readability and rollback
+  follow-up found no semantic, architectural, security, or commit-split issue.
+  It found one Blocking operational mismatch: the runbook still named the
+  superseded `89f93ece` revision while generated pins used `c0d87beb`.
+- Both runbook constants now use `c0d87beb`; strict MkDocs, exact-pin
+  assertions, configuration hooks, and a same-reviewer follow-up pass. No
+  Blocking or Important findings remain. The only Advisory was to refresh this
+  state file's pre-rewrite hashes, which this update resolves.
 
 ## Cleanup
 
 - Feature worktrees and the review cluster remain intentionally available.
-- Generated MkDocs `site/` output was removed after validation. Configuration
+- Generated MkDocs `site/` output and downloaded CI diagnostics were moved to
+  trash after validation. Configuration
   keeps untracked `.bin/` and `.bundle/` only for its installed hook/tooling
   environment.
 - Top-level shared-workspace changes unrelated to this initiative were
