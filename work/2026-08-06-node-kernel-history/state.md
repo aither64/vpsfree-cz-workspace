@@ -10,17 +10,17 @@
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin`
   - base: `92bba722b16d8f1e68e183f7041be1d44a17db7d`
-  - head: `6521facb41e7f182f8c9bb4d5623ade2a6abbafa`
+  - head: `bc6eb8e20f9cc4fa7b9c9f22650bc2cd235fc33d`
 - `vpsadmin-kb-captures`
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin-kb-captures`
   - base: `7248a8b`
-  - head: `893c6da`
+  - head: `c3c1eb5c0d544149432417d3d92a64b653b75411`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsfree-cz-configuration`
   - base: `d6f1c5d1`
-  - head: `016a35d`
+  - head: `157eea17eb8249d22fff214016723cdf324cb92f`
 
 ## Status
 
@@ -29,8 +29,7 @@
 - The proposed vpsAdminOS livepatch completion service and reporter changes
   were removed. Its branch now points directly to the existing `008aa460`
   livepatch release and has no feature diff.
-- vpsAdmin and vpsAdminOS rewritten branches are pushed. Configuration and KB
-  branches still need their final force-with-lease pushes.
+- All four rewritten feature branches are pushed to their SSH origins.
 - Quick checks pass. Mandatory fresh-context review, long integration testing,
   final CI confirmation, and development-cluster refresh remain.
 - No production deployment or production KB write is authorized.
@@ -40,14 +39,14 @@
 - `vpsadmin`
   - `5c3e59a95` — `api: record observed livepatch lifecycle`
   - `01af411e3` — `webui: label effective livepatch lifecycle`
-  - `1b9dcac88` — `webui: simplify inferred version timestamps`
-  - `6521facb4` — `tests: cover compact history tooltip in browser`
+  - `32035b72c` — `webui: simplify inferred version timestamps`
+  - `bc6eb8e20` — `tests: cover compact history tooltip in browser`
 - `vpsfree-cz-configuration`
-  - `44acee75` — generated production vpsAdminOS pin to `008aa460`
-  - `82e765ef` — generated vpsAdmin role pins to `6521facb`
-  - `016a35d` — observed-livepatch deployment runbook
+  - `40242970` — generated production vpsAdminOS pin to `008aa460`
+  - `53e0664a` — generated vpsAdmin role pins to `bc6eb8e2`
+  - `157eea17` — observed-livepatch deployment runbook
 - `vpsadmin-kb-captures`
-  - `893c6da` — final vpsAdmin documentation-contract pin
+  - `c3c1eb5` — final vpsAdmin documentation-contract pin
 - `vpsadminos`
   - no feature commit; final revision is `008aa460`
 
@@ -65,9 +64,10 @@
   and leaves ambiguous history generic.
 - WebUI and API expose only `applied`, `removed`, and the null/generic fallback.
 - Bounded inferred timestamps visibly show the lower bound and retain the full
-  interval in mouse-hover and keyboard-focus detail across version tables.
+  interval in mouse-hover and keyboard-focus detail across version tables. The
+  Czech catalog contains complete, non-fuzzy translations for these strings.
 - Configuration keeps all vpsAdminOS channels at `008aa460` and points all
-  vpsAdmin roles at `6521facb` using generated `confctl --commit` updates.
+  vpsAdmin roles at `bc6eb8e2` using generated `confctl --commit` updates.
 - The runbook removes the coordinated reporter rollout and exact-timestamp
   claims, and documents the one-way migration and supervisor quiescence.
 - The KB contract found no owned administrator Node-history screenshots, so no
@@ -82,6 +82,8 @@
 - libnodectld security-evidence specs: 7 examples, 0 failures.
 - WebUI PHPUnit regression: 13 tests, 73 assertions.
 - API i18n generation and WebUI locale generation passed.
+- WebUI translation health passed after adding the missing Czech compact-time
+  translations and removing two incorrect fuzzy matches.
 - All rewritten vpsAdmin commits passed declared Overcommit checks, including
   Nixfmt, migration specs, RuboCop, PHP CS Fixer, and i18n validation.
 - `git diff --check` passes in the affected worktrees.
@@ -100,9 +102,16 @@
 - The prior implementation's reruns were affected by the 2026-08-06 GitHub
   outage and self-hosted-runner availability. Those results do not validate the
   rewritten head.
-- After force-pushing vpsAdmin, superseded aggregate run `31118349379` was
-  cancelled as required. Fresh workflows for `6521facb` are pending/running and
-  will be evaluated after review.
+- The first rewritten head's i18n workflow `31183328857` found three empty
+  Czech translations and two incorrect fuzzy matches that the generation
+  command alone did not reject. The exact log was inspected, the translations
+  were completed, and local `locales-health` now passes. A follow-up workflow
+  on `d34b9a3d` passed before that correction was folded into its owning
+  timestamp commit.
+- Superseded aggregate/API runs `31118349379`, `31183328520`, `31183328344`,
+  and `31184331945` were cancelled after their heads were replaced. Fresh
+  workflows for final head `bc6eb8e20` are pending/running and will be evaluated
+  after review.
 - The vpsAdminOS branch was force-updated from the discarded feature commit to
   existing revision `008aa460`; no new vpsAdminOS commit requires validation.
 
