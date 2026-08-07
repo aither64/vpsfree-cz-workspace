@@ -135,10 +135,15 @@
   tests.
 - security-advisories head `9cd57cc`: RSpec and RuboCop passed.
 - vpsAdminOS head `8d5fe005`: RSpec and the aggregate build job passed. The
-  aggregate CI workflow `31210461594` is still running its test suite.
+  branch-specific aggregate CI workflow `31210461594` is still running its test
+  suite. The same exact commit already passed full staging CI in workflow
+  `31198648330`.
 - Configuration and KB repositories have no workflows for this branch push.
 - Superseded vpsAdmin aggregate runs `31186815892` and `31204583570` were
   cancelled after force-pushes; completed old-head runs are retained.
+- Failed attempts from 2026-08-06 were inspected before rerunning and were
+  attributed to the GitHub service outage and associated self-hosted-runner
+  availability, not accepted merely because a later run became green.
 
 ## Development cluster
 

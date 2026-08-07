@@ -19,8 +19,9 @@ sysctl history without losing the full observation interval.
   vpsAdminOS livepatch release, and document deployment and rollback.
 - `vpsadmin-kb-captures`: pin the final visible WebUI revision and validate the
   documentation contract.
-- `vpsadminos`: no feature diff remains. Current revision `8d5fe005` supplies
-  cumulative patch 3 and includes the earlier patch-2 release.
+- `vpsadminos`: no initiative-specific feature diff remains. Current revision
+  `8d5fe005` supplies cumulative patch 3 and includes the earlier patch-2
+  release.
 
 ## Design decisions
 
@@ -134,7 +135,8 @@ sysctl history without losing the full observation interval.
   and interval-timing specs.
 - WebUI localization, PHP regressions, and real-browser hover/focus coverage for
   lifecycle labels and compact intervals.
-- vpsAdminOS has no feature diff; its release-specific test remains unchanged.
+- vpsAdminOS has no initiative-specific feature diff; its release-specific test
+  remains unchanged.
 - Validate exact configuration pins and build the deployment documentation.
 - Run the capture contract; regenerate screenshots only if it reports an owned
   administrator-history concept.
