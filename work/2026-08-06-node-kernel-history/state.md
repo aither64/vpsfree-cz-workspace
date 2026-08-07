@@ -15,56 +15,57 @@
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin`
   - base: `1657a32126a24a1a06f4e1fea3e9bdf3e40b335d`
-  - head: `89f93ece94c8881706df37605cf3ed97bce55391`
+  - head: `c0d87bebf36c6d29b7861990890e8c650fa1afca`
 - `security-advisories`
   - branch: `2026-08-06-node-kernel-history`
   - worktree:
     `worktrees/2026-08-06-node-kernel-history/security-advisories`
   - base: `5d4138ae01322904ae30cabfbe0c62dfa8eac344`
-  - head: `9cd57ccfa25c21dcd9ff5ef67dc0b68735aa5222`
+  - head: `7cb4fb19253c853f720520dee37698c71def2189`
 - `vpsadmin-kb-captures`
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin-kb-captures`
   - base: `7248a8b`
-  - head: `63c3618964576b2bf05f15ec2a27e89d1a600de8`
+  - head: `3d394b377db1e57375bd1af0f8d19f9b72a1a8b3`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsfree-cz-configuration`
   - base: `338db498743c8e04fd6d9ed3d2a0f33f7bbc5ba5`
-  - head: `380f756705b63f42dbeb2047a8df9a62af228017`
+  - head: `2595a57bffc0452f5c392db86c13f5341ca38c77`
 
 ## Status
 
-- The staging follow-up is implemented and committed in vpsAdmin and
-  security-advisories. Configuration retains patch 3 and pins the rewritten
-  vpsAdmin head; the KB contract pin is refreshed.
+- The migration readability and node-rollback follow-up is implemented and
+  folded into the original undeployed vpsAdmin and security-advisories commits.
+  Configuration retains patch 3 and pins the rewritten vpsAdmin head; the KB
+  contract pin is refreshed.
 - The proposed vpsAdminOS livepatch completion service and reporter changes
   were removed. Its branch now points directly to existing patch-3 revision
   `8d5fe005` and has no initiative-specific feature diff.
 - All repository branches are pushed. Exact configuration pins, strict runbook
   documentation, the KB contract, browser integration, and the bridge-network
   development-cluster scenario pass.
-- The mandatory reviewer verified all four blocker fixes. No Blocking,
-  Important, or Advisory findings remain, and the long-test gate is open.
-- Final-head focused GitHub workflows pass. The vpsAdmin and vpsAdminOS
-  aggregate integration workflows are still running.
+- The prior mandatory review was clear. A new fresh-context review is required
+  for the migration refactor and rollback regressions before final long tests.
+- Final-head GitHub workflows have started. The superseded old-head vpsAdmin CI
+  run `31207316731` was cancelled after the force-push.
 - No production deployment or production KB write is authorized.
 
 ## Final commits
 
 - `vpsadmin`
-  - `197cbe351` — `api: record observed livepatch lifecycle`
-  - `5456c7bfb` — `nodectld: report observed livepatch modules`
-  - `03def1f37` — `webui: label effective livepatch lifecycle`
-  - `b411950e6` — `webui: simplify inferred version timestamps`
-  - `89f93ece9` — `tests: cover compact history tooltip in browser`
+  - `988ce4a0d` — `api: record observed livepatch lifecycle`
+  - `0945bd749` — `nodectld: report observed livepatch modules`
+  - `c6bd3796c` — `webui: label effective livepatch lifecycle`
+  - `97db3a06f` — `webui: simplify inferred version timestamps`
+  - `c0d87bebf` — `tests: cover compact history tooltip in browser`
 - `security-advisories`
-  - `9cd57cc` — `security: evaluate observed livepatch state`
+  - `7cb4fb1` — `security: evaluate observed livepatch state`
 - `vpsfree-cz-configuration`
   - `17b4cd5e` — loaded-livepatch deployment runbook
-  - `380f7567` — generated vpsAdmin role pins to `89f93ece`
+  - `2595a57b` — generated vpsAdmin role pins to `c0d87beb`
 - `vpsadmin-kb-captures`
-  - `63c3618` — final vpsAdmin documentation-contract pin
+  - `3d394b3` — final vpsAdmin documentation-contract pin
 - `vpsadminos`
   - no initiative-specific feature commit; branch and current channel revision
     are `8d5fe005`
@@ -99,6 +100,37 @@
   - security-advisories RSpec: 122 examples, 0 failures;
   - security-advisories RuboCop: 28 files, no offenses;
   - vpsAdmin and security-advisories pre-commit hooks passed.
+
+## Migration readability and rollback follow-up
+
+- Replaced the corrective migration's deeply nested predecessor query with
+  three named data-loading stages and small predicates. Its comment now states
+  the old-reporter defect, the exact recognition rules, and why empty evidence
+  and same-ID inactive evidence are preserved as possible removals.
+- The migration orders events only by `observed_before` and event ID. It never
+  compares kernel releases or Git revisions for recency, and it does not update
+  `node_software_versions`.
+- A MariaDB migration regression covers a stable patch application, an inactive
+  next-patch availability row, and then a later reboot into the unpatched base
+  kernel with an older software revision. The later boot remains the sole
+  current public event; the older revision rows are byte-for-byte unchanged.
+- The existing same-ID possible-removal regression also uses descending
+  software revisions and verifies they remain unchanged.
+- A security-advisories evaluator regression covers the same semantic rollback:
+  after accepted livepatch mitigation, a later unpatched boot with an older
+  vpsAdminOS revision evaluates as vulnerable and has no `mitigated_since`.
+- Focused verification after the refactor:
+  - vpsAdmin corrective migration: 6 examples, 0 failures;
+  - security-advisories evaluator: 49 examples, 0 failures;
+  - vpsAdmin and security-advisories RuboCop passed for changed files;
+  - both repository pre-commit hooks passed;
+  - KB contract check passed: 39 controls, 29 paths, 32 capture concepts,
+    65 bindings, 9 exceptions, 15 tests, and 118 PNG variants;
+  - exact configuration pins resolve all three vpsAdmin roles to `c0d87beb`.
+- vpsAdmin, security-advisories, configuration, and KB branches were
+  force-pushed with leases after folding/regenerating their undeployed commits.
+- The paused `2026-08-07-security-advisories-6-12-95-2` initiative remains
+  untouched and will be resumed/rebased only after this work is final.
 
 ## Current verification
 

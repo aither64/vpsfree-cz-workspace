@@ -59,6 +59,11 @@ sysctl history without losing the full observation interval.
 - Reclassify only safely identifiable availability-only public rows as internal
   inventory events, including a different-ID inactive successor at an unchanged
   reported release. Preserve same-ID removal candidates and all evidence.
+- Implement the correction as named stages: select inactive candidates, find
+  each candidate's immediately preceding public event in observation order,
+  load their livepatch evidence, and apply explicit runtime/effective-state
+  predicates. Keep the old reporter's patch-2-active/patch-3-inactive rule in a
+  migration comment instead of encoding it in one nested anti-join.
 - Historical stable rows whose exact event timestamp matches the old
   application marker become inferred `applied` rows and lose the misleading
   exact effective timestamp. Ambiguous and later metadata rows remain generic.
@@ -67,6 +72,11 @@ sysctl history without losing the full observation interval.
 - Recompute public `current` markers for affected nodes. The corrective data
   migration has a no-op rollback because the original interpretation cannot be
   reconstructed safely.
+- Treat kernel and software revisions as opaque identities, never as monotonic
+  version order. A later boot into an older unpatched system remains the current
+  public event, its older software rows remain attached to its evidence, and an
+  earlier livepatch application remains historical. Advisory evaluation follows
+  that current boot and therefore becomes vulnerable again.
 
 ### Security advisory evidence
 
@@ -118,6 +128,10 @@ sysctl history without losing the full observation interval.
   application.
 - After an application rollback, keep old supervisors paused until the new
   recorder is restored or an explicit semantic-regression plan is approved.
+- A node rollback to an older kernel/system is independently supported: the
+  next boot observation supersedes the patched state without rewriting earlier
+  evidence or comparing revision strings. No special deployment ordering is
+  required for this node-side rollback.
 - Production deployment and production KB publication require separate direct
   operator approval and are outside this implementation request.
 - Land the security-advisories tooling before rebasing the paused
@@ -128,11 +142,12 @@ sysctl history without losing the full observation interval.
 
 - vpsAdmin recorder/model/API and migration specs for availability, boot state,
   transition-to-stable application, replacement, removal, mixed reporters,
-  staging patch 2/3 history, current markers, serialization, and filtering.
+  staging patch 2/3 history, current markers, serialization, filtering, and a
+  later rollback boot with descending software revisions.
 - libnodectld reporter specs for booted patch-2 metadata, current patch-3
   metadata, and only patch 2 present in kernel sysfs.
 - security-advisories collector, schema, identity, attestation, active-state,
-  and interval-timing specs.
+  interval-timing, and patched-then-unpatched rollback specs.
 - WebUI localization, PHP regressions, and real-browser hover/focus coverage for
   lifecycle labels and compact intervals.
 - vpsAdminOS has no initiative-specific feature diff; its release-specific test
