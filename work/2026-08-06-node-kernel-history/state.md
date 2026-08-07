@@ -30,9 +30,10 @@
   were removed. Its branch now points directly to the existing `008aa460`
   livepatch release and has no feature diff.
 - All four rewritten feature branches are pushed to their SSH origins.
-- Quick checks pass. The mandatory fresh-context review and its focused
-  follow-up are complete with no remaining findings. Long integration testing,
-  final CI confirmation, and development-cluster refresh remain.
+- Quick checks, mandatory fresh-context review, long local integration testing,
+  application-host builds, and the development-cluster refresh pass. All
+  final-head GitHub workflows except the still-running aggregate integration
+  workflow have completed successfully.
 - No production deployment or production KB write is authorized.
 
 ## Final commits
@@ -101,6 +102,11 @@
   `nix shell nixpkgs#mkdocs -c mkdocs build --strict` passed.
 - KB `nix develop -c bin/check` passed: 39 controls, 29 paths, 32 capture
   concepts, 65 bindings, 9 exceptions, 15 tests, and 118 PNG variants.
+- `./test-runner.sh test 'webui#admin-cluster'` passed on the final head. The
+  Playwright example succeeded in 360.22 seconds and the complete scenario in
+  689.61 seconds.
+- Final configuration builds passed separately for
+  `cz.vpsfree/vpsadmin/int.api1`, `int.api2`, `int.webui1`, and `int.webui2`.
 
 ## GitHub Actions
 
@@ -116,19 +122,42 @@
 - Superseded aggregate/API runs `31118349379`, `31183328520`, `31183328344`,
   `31184331945`, and `31184769710` were cancelled after their heads were
   replaced. On final head `91b574aef`, migration specs, RuboCop, i18n health,
-  libnodectld specs, and WebUI PHPUnit have passed; aggregate and topic API CI
-  are still running.
+  libnodectld specs, WebUI PHPUnit, and the topic-parallel API specs have
+  passed. Aggregate integration run `31186815892` is still running its selected
+  tests; its live log is unavailable until the job completes. The selector
+  intentionally chose the full `tag=ci` suite because the final force-push
+  changed a database migration relative to the preceding remote head. Recent
+  successful full runs take approximately 4.5--6 hours, so its current runtime
+  is expected.
 - The vpsAdminOS branch was force-updated from the discarded feature commit to
   existing revision `008aa460`; no new vpsAdminOS commit requires validation.
 
 ## Development cluster
 
-- The existing bridge-network cluster
-  `2026-08-06-node-kernel-history` is still running from the superseded
-  implementation and must be refreshed after review/integration.
+- The single-node bridge-network cluster
+  `2026-08-06-node-kernel-history` is running the reviewed vpsAdmin revision
+  `91b574aef` and vpsAdminOS revision `008aa460`.
 - WebUI: `https://webui.aitherdev.int.vpsfree.cz/`
 - Kernel history page:
   `https://webui.aitherdev.int.vpsfree.cz/?page=node&action=kernel_history&id=101`
+- Software versions page:
+  `https://webui.aitherdev.int.vpsfree.cz/?page=node&action=software_versions&id=101`
+- The rendered kernel table was verified with inferred applied and removed
+  examples. It displays only the lower observation bound and exposes the full
+  interval in the accessible tooltip.
+- The rendered software-version table was verified with booted and current
+  revision links for vpsAdminOS `008aa4605ec2`, vpsAdmin `91b574aefc49`, and
+  nixpkgs `04607e1165ac`; no revision is shown as unavailable.
+- The task-local launcher passes clean worktree HEAD and dirty-state metadata
+  into the existing vpsAdmin and vpsAdminOS version options. This compensates
+  only for Nix `path:` inputs dropping flake revision metadata and is unrelated
+  to the removed livepatch service design. `bash -n` and `nixfmt --check`
+  passed for the local launcher changes.
+- An in-guest node reboot exposed that the retained older launcher does not
+  respawn a QEMU VM started with `--no-reboot`. The whole runner was restarted
+  without resetting persistent state, then node pool/nodectld refresh passed.
+  The first automatic refresh raced `osctld` socket creation; retrying after
+  `osctld` became ready succeeded.
 - A task-local launcher snapshot is retained at
   `dev-clusters/vpsadmin-node-kernel-history/` because the shared launcher has
   unrelated concurrent changes. Those shared changes remain untouched.
