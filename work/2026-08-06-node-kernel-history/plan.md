@@ -11,13 +11,16 @@ sysctl history without losing the full observation interval.
 ## Affected repositories
 
 - `vpsadmin`: classify lifecycle and inventory observations, migrate existing
-  history, expose lifecycle actions, and update WebUI rendering and tests.
+  history, report loaded livepatches, expose lifecycle actions, and update
+  WebUI rendering and tests.
+- `security-advisories`: collect lifecycle actions, require exact accepted
+  livepatch identities, and evaluate mitigation using observation intervals.
 - `vpsfree-cz-configuration`: pin the final vpsAdmin revision and the existing
   vpsAdminOS livepatch release, and document deployment and rollback.
 - `vpsadmin-kb-captures`: pin the final visible WebUI revision and validate the
   documentation contract.
-- `vpsadminos`: no feature diff remains. Revision `008aa460` supplies the real
-  livepatch payload and retains its release-specific certification test.
+- `vpsadminos`: no feature diff remains. Current revision `8d5fe005` supplies
+  cumulative patch 3 and includes the earlier patch-2 release.
 
 ## Design decisions
 
@@ -38,13 +41,23 @@ sysctl history without losing the full observation interval.
   removal event.
 - Availability, metadata, and transition-only changes remain internal evidence
   and do not replace the public/current kernel event.
+- `/sys/kernel/livepatch` is authoritative for the reporter inventory. Loaded
+  modules are enriched from booted/current closure metadata; configured but
+  unloaded patches are omitted.
+- A loaded module without matching closure metadata remains valid inventory
+  with unknown enrichment fields and an evidence error. Unreadable module
+  enumeration or state flags are incomplete observations and cannot create a
+  lifecycle event.
+- During rollout, an old reporter that replaces active patch 2 with unavailable
+  patch 3 at the same reported release is inventory drift, not removal.
 
 ### Existing data
 
 - Add a nullable action column without renumbering existing enums and append
   the internal `livepatch_inventory_change` event type.
 - Reclassify only safely identifiable availability-only public rows as internal
-  inventory events. Preserve all evidence records.
+  inventory events, including a different-ID inactive successor at an unchanged
+  reported release. Preserve same-ID removal candidates and all evidence.
 - Historical stable rows whose exact event timestamp matches the old
   application marker become inferred `applied` rows and lose the misleading
   exact effective timestamp. Ambiguous and later metadata rows remain generic.
@@ -53,6 +66,16 @@ sysctl history without losing the full observation interval.
 - Recompute public `current` markers for affected nodes. The corrective data
   migration has a no-op rollback because the original interpretation cannot be
   reconstructed safely.
+
+### Security advisory evidence
+
+- Carry `livepatch_action` in normalized history and historical event digests.
+- Evidence schema 8 forces cached schema-7 evidence to be recollected.
+- Accept livepatch mitigation only for the reviewed ID, patch version, kernel
+  version/source, and exact clean booted or current vpsAdminOS revision.
+- Treat `applied_at` as provenance, not an exact transition time. Livepatch
+  mitigation uses `(observed_after, observed_before]`; fixed kernels and eBPF
+  mitigations retain exact timing where available.
 
 ### WebUI
 
@@ -80,29 +103,38 @@ sysctl history without losing the full observation interval.
 
 - Persisted changes are additive. Old enum values and `event_type=livepatch`
   retain their meanings, and the action is nullable.
-- Old and new node reporters interoperate because classification uses existing
-  loaded/enabled/transition fields. Reporters may still send `verified_at`; new
-  API code accepts but ignores it for lifecycle timing.
+- Old and new node reporters interoperate when the API is upgraded first. The
+  recorder suppresses false removal for the old different-ID/same-release
+  shape; new reporters then expose only modules present in kernel sysfs. The
+  API also accepts the reporter's nullable unknown-metadata/state shape before
+  reporters begin sending it.
 - No coordinated vpsAdminOS rollout, all-node restart, or reboot is required
   for the history semantics. Nodes can receive the actual livepatch release
   independently through the normal rolling procedure.
-- Deploy the WebUI before the API. Quiesce old supervisors while switching both
-  API hosts and applying the one-way classification migration so they cannot
-  recreate availability-only public events.
+- Deploy the WebUI, then quiesce old supervisors while switching both API hosts
+  and applying the one-way migration, then roll node reporters. This ordering
+  prevents old API code from interpreting the complete inventory as a new
+  application.
 - After an application rollback, keep old supervisors paused until the new
   recorder is restored or an explicit semantic-regression plan is approved.
 - Production deployment and production KB publication require separate direct
   operator approval and are outside this implementation request.
+- Land the security-advisories tooling before rebasing the paused
+  `2026-08-07-security-advisories-6-12-95-2` branch. That branch must recollect
+  evidence, regenerate evaluations, and resynchronize unpublished drafts.
 
 ## Testing plan
 
 - vpsAdmin recorder/model/API and migration specs for availability, boot state,
-  transition-to-stable application, replacement, removal, legacy markers,
-  current markers, serialization, and public filtering.
+  transition-to-stable application, replacement, removal, mixed reporters,
+  staging patch 2/3 history, current markers, serialization, and filtering.
+- libnodectld reporter specs for booted patch-2 metadata, current patch-3
+  metadata, and only patch 2 present in kernel sysfs.
+- security-advisories collector, schema, identity, attestation, active-state,
+  and interval-timing specs.
 - WebUI localization, PHP regressions, and real-browser hover/focus coverage for
   lifecycle labels and compact intervals.
-- vpsAdminOS must be byte-clean against `008aa460`; its release-specific test
-  remains unchanged rather than being generalized falsely.
+- vpsAdminOS has no feature diff; its release-specific test remains unchanged.
 - Validate exact configuration pins and build the deployment documentation.
 - Run the capture contract; regenerate screenshots only if it reports an owned
   administrator-history concept.
