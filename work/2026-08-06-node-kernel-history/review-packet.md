@@ -36,12 +36,12 @@ nested reviewers or subagents.
 - worktree:
   `worktrees/2026-08-06-node-kernel-history/vpsadmin`
 - base: `92bba722b16d8f1e68e183f7041be1d44a17db7d`
-- head: `bc6eb8e20f9cc4fa7b9c9f22650bc2cd235fc33d`
+- head: `91b574aefc49aabb9c3fdc867120a0946b40c324`
 - commits:
-  - `5c3e59a95` — `api: record observed livepatch lifecycle`
-  - `01af411e3` — `webui: label effective livepatch lifecycle`
-  - `32035b72c` — `webui: simplify inferred version timestamps`
-  - `bc6eb8e20` — `tests: cover compact history tooltip in browser`
+  - `b703e5948` — `api: record observed livepatch lifecycle`
+  - `cb0c05c39` — `webui: label effective livepatch lifecycle`
+  - `582e1ebc9` — `webui: simplify inferred version timestamps`
+  - `91b574aef` — `tests: cover compact history tooltip in browser`
 
 ### vpsadminos
 
@@ -55,20 +55,20 @@ nested reviewers or subagents.
 - worktree:
   `worktrees/2026-08-06-node-kernel-history/vpsfree-cz-configuration`
 - base: `d6f1c5d1`
-- head: `157eea17eb8249d22fff214016723cdf324cb92f`
+- head: `8818f1f98ce6c76cd1b0b00ca7af23daac436ab5`
 - commits:
-  - `40242970` — generated production vpsAdminOS pin to `008aa460`
-  - `53e0664a` — generated vpsAdmin role pins to `bc6eb8e2`
-  - `157eea17` — deployment and rollback runbook
+  - `eeefda7f` — generated production vpsAdminOS pin to `008aa460`
+  - `6d4a6664` — generated vpsAdmin role pins to `91b574ae`
+  - `8818f1f9` — deployment and rollback runbook
 
 ### vpsadmin-kb-captures
 
 - worktree:
   `worktrees/2026-08-06-node-kernel-history/vpsadmin-kb-captures`
 - base: `7248a8b`
-- head: `c3c1eb5c0d544149432417d3d92a64b653b75411`
+- head: `b3802820f8302cda11c0bdb174621df906c35407`
 - commit:
-  - `c3c1eb5` — exact vpsAdmin contract/flake pin
+  - `b380282` — exact vpsAdmin contract/flake pin
 
 All branches are pushed. The configuration worktree contains untracked local
 `.bin/` and `.bundle/` development caches; they are not part of any commit.
@@ -101,7 +101,7 @@ No unrelated implementation is deliberately bundled.
   `vpsadminosProduction` resolve to
   `008aa4605ec263397bf46bd9fe915a01be1670a6`.
 - `vpsadminStaging`, `vpsadminServices`, and `vpsadminProduction` resolve to
-  `bc6eb8e20f9cc4fa7b9c9f22650bc2cd235fc33d`.
+  `91b574aefc49aabb9c3fdc867120a0946b40c324`.
 - The capture contract and flake pin the same final vpsAdmin revision.
 - vpsAdmin itself retains its default vpsAdminOS input
   `31b3dff4306cce8904ac45630a931a7b72d36507`; the history design has no
@@ -113,9 +113,9 @@ No unrelated implementation is deliberately bundled.
 - `nix develop .#api -c bundle exec rspec
   spec/models/operations/node/record_kernel_evidence_spec.rb
   spec/api/resources/node_kernel_evidence_spec.rb
-  spec/api/resources/node_kernel_history_spec.rb`: 41 examples, 0 failures.
+  spec/api/resources/node_kernel_history_spec.rb`: 42 examples, 0 failures.
 - Migration specs, run separately because their helper replaces the schema:
-  5 examples, 0 failures.
+  6 examples, 0 failures.
 - `nix develop .#libnodectld -c bundle exec rspec
   spec/nodectld/system_probes/security_evidence_spec.rb`: 7 examples,
   0 failures.
@@ -131,8 +131,23 @@ No unrelated implementation is deliberately bundled.
 - `nix develop -c bin/check` in the capture repository passed: 39 controls,
   29 paths, 32 capture concepts, 65 bindings, 9 exceptions, 15 tests, and
   118 PNG variants.
-- Final-head GitHub workflows are still running. No long VM integration test
+- Final-head GitHub aggregate/API workflows are still running; migration,
+  RuboCop, i18n, libnodectld, and WebUI jobs passed. No long VM integration test
   has been started for this final design before this review.
+
+## Review result and corrections
+
+- Initial review found that an all-false monitor row could represent either
+  availability or a same-release unload. The final migration requires the
+  immediately preceding public event to contain trustworthy inactive evidence;
+  otherwise it preserves the row as ambiguous. Both shapes have migration
+  regressions.
+- Initial review also found that the declared lifecycle-action filter was not
+  applied. The final resource scope filters before window/baseline selection
+  and API coverage exercises both applied and removed.
+- The same standalone reviewer confirmed both corrections on the final heads,
+  found no new regression, and reported no remaining Blocking, Important, or
+  Advisory finding. The long-test gate is open.
 
 ## Compatibility and deployment assumptions
 

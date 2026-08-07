@@ -10,17 +10,17 @@
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin`
   - base: `92bba722b16d8f1e68e183f7041be1d44a17db7d`
-  - head: `bc6eb8e20f9cc4fa7b9c9f22650bc2cd235fc33d`
+  - head: `91b574aefc49aabb9c3fdc867120a0946b40c324`
 - `vpsadmin-kb-captures`
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin-kb-captures`
   - base: `7248a8b`
-  - head: `c3c1eb5c0d544149432417d3d92a64b653b75411`
+  - head: `b3802820f8302cda11c0bdb174621df906c35407`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-06-node-kernel-history`
   - worktree: `worktrees/2026-08-06-node-kernel-history/vpsfree-cz-configuration`
   - base: `d6f1c5d1`
-  - head: `157eea17eb8249d22fff214016723cdf324cb92f`
+  - head: `8818f1f98ce6c76cd1b0b00ca7af23daac436ab5`
 
 ## Status
 
@@ -30,23 +30,24 @@
   were removed. Its branch now points directly to the existing `008aa460`
   livepatch release and has no feature diff.
 - All four rewritten feature branches are pushed to their SSH origins.
-- Quick checks pass. Mandatory fresh-context review, long integration testing,
+- Quick checks pass. The mandatory fresh-context review and its focused
+  follow-up are complete with no remaining findings. Long integration testing,
   final CI confirmation, and development-cluster refresh remain.
 - No production deployment or production KB write is authorized.
 
 ## Final commits
 
 - `vpsadmin`
-  - `5c3e59a95` — `api: record observed livepatch lifecycle`
-  - `01af411e3` — `webui: label effective livepatch lifecycle`
-  - `32035b72c` — `webui: simplify inferred version timestamps`
-  - `bc6eb8e20` — `tests: cover compact history tooltip in browser`
+  - `b703e5948` — `api: record observed livepatch lifecycle`
+  - `cb0c05c39` — `webui: label effective livepatch lifecycle`
+  - `582e1ebc9` — `webui: simplify inferred version timestamps`
+  - `91b574aef` — `tests: cover compact history tooltip in browser`
 - `vpsfree-cz-configuration`
-  - `40242970` — generated production vpsAdminOS pin to `008aa460`
-  - `53e0664a` — generated vpsAdmin role pins to `bc6eb8e2`
-  - `157eea17` — observed-livepatch deployment runbook
+  - `eeefda7f` — generated production vpsAdminOS pin to `008aa460`
+  - `6d4a6664` — generated vpsAdmin role pins to `91b574ae`
+  - `8818f1f9` — observed-livepatch deployment runbook
 - `vpsadmin-kb-captures`
-  - `c3c1eb5` — final vpsAdmin documentation-contract pin
+  - `b380282` — final vpsAdmin documentation-contract pin
 - `vpsadminos`
   - no feature commit; final revision is `008aa460`
 
@@ -59,15 +60,19 @@
 - Legacy application and verification marker timestamps are ignored for new
   lifecycle timing. The optional verification field remains accepted for
   compatibility.
-- The migration reclassifies safe availability-only rows, converts only exact
-  old marker/event matches to inferred applications, repairs current markers,
-  and leaves ambiguous history generic.
+- The migration reclassifies an all-false availability row only when its
+  immediate public predecessor has trustworthy evidence with no loaded,
+  enabled, transitioning, or marked patch. It converts only exact old
+  marker/event matches to inferred applications, repairs current markers, and
+  leaves unload-shaped or otherwise ambiguous history generic.
+- The private event API applies `livepatch_action` filters before time-window
+  and baseline selection for both applied and removed values.
 - WebUI and API expose only `applied`, `removed`, and the null/generic fallback.
 - Bounded inferred timestamps visibly show the lower bound and retain the full
   interval in mouse-hover and keyboard-focus detail across version tables. The
   Czech catalog contains complete, non-fuzzy translations for these strings.
 - Configuration keeps all vpsAdminOS channels at `008aa460` and points all
-  vpsAdmin roles at `bc6eb8e2` using generated `confctl --commit` updates.
+  vpsAdmin roles at `91b574ae` using generated `confctl --commit` updates.
 - The runbook removes the coordinated reporter rollout and exact-timestamp
   claims, and documents the one-way migration and supervisor quiescence.
 - The KB contract found no owned administrator Node-history screenshots, so no
@@ -75,8 +80,8 @@
 
 ## Quick verification
 
-- vpsAdmin API recorder/resource specs: 41 examples, 0 failures.
-- vpsAdmin migration specs: 5 examples, 0 failures. They must run separately
+- vpsAdmin API recorder/resource specs: 42 examples, 0 failures.
+- vpsAdmin migration specs: 6 examples, 0 failures. They must run separately
   from ordinary API specs because the migration helper switches to an isolated
   schema; mixing the suites caused later ordinary specs to see missing tables.
 - libnodectld security-evidence specs: 7 examples, 0 failures.
@@ -109,9 +114,10 @@
   on `d34b9a3d` passed before that correction was folded into its owning
   timestamp commit.
 - Superseded aggregate/API runs `31118349379`, `31183328520`, `31183328344`,
-  and `31184331945` were cancelled after their heads were replaced. Fresh
-  workflows for final head `bc6eb8e20` are pending/running and will be evaluated
-  after review.
+  `31184331945`, and `31184769710` were cancelled after their heads were
+  replaced. On final head `91b574aef`, migration specs, RuboCop, i18n health,
+  libnodectld specs, and WebUI PHPUnit have passed; aggregate and topic API CI
+  are still running.
 - The vpsAdminOS branch was force-updated from the discarded feature commit to
   existing revision `008aa460`; no new vpsAdminOS commit requires validation.
 
@@ -139,10 +145,20 @@
 
 ## Mandatory review
 
-- Pending. Provide the standalone reviewer with this plan/state, all four
-  worktrees, base/head revisions, exact configuration pins, quick-test results,
-  compatibility assumptions, and the unchanged release-specific vpsAdminOS
-  test decision.
+- The standalone fresh-context review found one Blocking issue: the original
+  migration could irreversibly classify an all-false unload report as internal
+  inventory. It also found one Important issue: the declared
+  `livepatch_action` API filter was not applied.
+- The migration now requires trustworthy inactive predecessor evidence and has
+  positive availability and negative same-release unload regressions. The
+  resource scope now applies the action filter before window/baseline selection
+  and tests both action values. The runbook describes the conservative rule.
+- Both corrections were folded into the owning API commit and downstream pins
+  were rebuilt with one clean update per input stream.
+- The same reviewer inspected final heads `91b574aef`, `8818f1f9`, and
+  `b380282` and confirmed that both findings are resolved, no new regression is
+  apparent, the runbook is accurate, and the commit split remains clean. There
+  are no Blocking, Important, or Advisory findings. The long-test gate is open.
 
 ## Cleanup
 
