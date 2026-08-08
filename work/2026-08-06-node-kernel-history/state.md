@@ -4,7 +4,8 @@
 
 - `vpsadminos`
   - branch: `2026-08-06-node-kernel-history`
-  - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadminos`
+  - worktree removed after merge completion; former path:
+    `worktrees/2026-08-06-node-kernel-history/vpsadminos`
   - base for the two-stage cluster test: patch-2 revision
     `008aa4605ec263397bf46bd9fe915a01be1670a6`
   - head: patch-3 revision
@@ -13,23 +14,26 @@
     existing reviewed patch-3 revision after testing the patch-2 state
 - `vpsadmin`
   - branch: `2026-08-06-node-kernel-history`
-  - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin`
+  - worktree removed after merge; former path:
+    `worktrees/2026-08-06-node-kernel-history/vpsadmin`
   - base: `1657a32126a24a1a06f4e1fea3e9bdf3e40b335d`
   - head: `c0d87bebf36c6d29b7861990890e8c650fa1afca`
 - `security-advisories`
   - branch: `2026-08-06-node-kernel-history`
-  - worktree:
+  - worktree removed after merge; former path:
     `worktrees/2026-08-06-node-kernel-history/security-advisories`
   - base: `5d4138ae01322904ae30cabfbe0c62dfa8eac344`
   - head: `7cb4fb19253c853f720520dee37698c71def2189`
 - `vpsadmin-kb-captures`
   - branch: `2026-08-06-node-kernel-history`
-  - worktree: `worktrees/2026-08-06-node-kernel-history/vpsadmin-kb-captures`
+  - worktree removed after merge; former path:
+    `worktrees/2026-08-06-node-kernel-history/vpsadmin-kb-captures`
   - base: `7248a8b`
   - head: `3d394b377db1e57375bd1af0f8d19f9b72a1a8b3`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-06-node-kernel-history`
-  - worktree: `worktrees/2026-08-06-node-kernel-history/vpsfree-cz-configuration`
+  - worktree removed after merge; former path:
+    `worktrees/2026-08-06-node-kernel-history/vpsfree-cz-configuration`
   - base: `338db498743c8e04fd6d9ed3d2a0f33f7bbc5ba5`
   - head: `2051708717b170afd34820817945bf858f93bb19`
 
@@ -42,15 +46,16 @@
 - The proposed vpsAdminOS livepatch completion service and reporter changes
   were removed. Its branch now points directly to existing patch-3 revision
   `8d5fe005` and has no initiative-specific feature diff.
-- All repository branches are pushed. Exact configuration pins, strict runbook
-  documentation, the KB contract, browser integration, and the bridge-network
-  development-cluster scenario pass.
+- vpsAdmin, security-advisories, configuration, and the KB contract were
+  fast-forwarded into their GitHub-confirmed default branches on 2026-08-08.
+  Exact configuration pins, strict runbook documentation, browser integration,
+  and the bridge-network development-cluster scenario pass.
 - The fresh mandatory review confirmed the migration and rollback semantics.
   Its one Blocking finding, a stale vpsAdmin revision in the rollout runbook,
   was corrected and verified by the same reviewer; no Blocking or Important
   findings remain.
-- Final-head security-advisories and all vpsAdmin specification/lint workflows
-  pass. The vpsAdmin aggregate full integration workflow is still running.
+- Final feature-head security-advisories and all vpsAdmin workflows pass,
+  including aggregate integration workflow `31218686721`.
 - No production deployment or production KB write is authorized.
 
 ## Final commits
@@ -71,6 +76,30 @@
 - `vpsadminos`
   - no initiative-specific feature commit; branch and current channel revision
     are `8d5fe005`
+
+## Default branch integration
+
+- `vpsadmin` `master` was fast-forwarded from `1657a321` to `c0d87beb`.
+- `security-advisories` uses
+  `2026-07-13-security-advisory-automation` as its GitHub default branch; it was
+  fast-forwarded from `5d4138ae` to `7cb4fb1`.
+- `vpsfree-cz-configuration` `master` was fast-forwarded from `338db498` to
+  `20517087`, after vpsAdmin `master` made the pinned revision reachable.
+- `vpsadmin-kb-captures` `master` was fast-forwarded from `7248a8b` to
+  `3d394b3`, after vpsAdmin `master` made the contract pin reachable.
+- The KB bare clone's cached `origin/HEAD` still named the old
+  `2026-07-10-kb-czech-fixes` default. GitHub's REST API identified `master` as
+  current; the cached symbolic ref was refreshed before integration. The
+  reusable lesson is in
+  `notes/vpsadmin-kb-captures/2026-08-08-stale-origin-head.md`.
+- Fresh detached target worktrees were used for all four fast-forward merges.
+  Target-tree verification passed: vpsAdmin migration 6 examples,
+  security-advisories 123 examples plus RuboCop, four vpsAdmin service builds,
+  and the complete KB contract/inventory check.
+- Feature branches remain locally and on origin at their final heads. All
+  temporary target and feature worktrees were removed after the pushes.
+- vpsAdminOS had no initiative-specific change and therefore required no
+  default-branch merge.
 
 ## Staging patch-2/patch-3 follow-up
 
@@ -132,7 +161,8 @@
 - vpsAdmin, security-advisories, configuration, and KB branches were
   force-pushed with leases after folding/regenerating their undeployed commits.
 - The paused `2026-08-07-security-advisories-6-12-95-2` initiative remains
-  untouched and will be resumed/rebased only after this work is final.
+  untouched. With this work now merged, it can be resumed and rebased in its
+  own development session.
 
 ## Verification
 
@@ -167,10 +197,15 @@
 
 - vpsAdmin head `c0d87beb`: migration specs, RuboCop, i18n health,
   libnodectld specs, WebUI PHPUnit, and topic-parallel API workflow
-  `31218686499` passed. Aggregate CI workflow `31218686721` is running the
+  `31218686499` passed. Aggregate CI workflow `31218686721` also passed the
   full `tag=ci` integration suite selected because the branch changes a
-  migration; recent successful full runs take approximately 4–5 hours.
+  migration.
 - security-advisories head `7cb4fb1`: RSpec and RuboCop passed.
+- After the default-branch pushes, security-advisories RSpec and RuboCop passed
+  again. vpsAdmin migration specs, RuboCop, i18n, libnodectld, and WebUI
+  PHPUnit passed again; the redundant exact-head topic-parallel and aggregate
+  workflows remain in progress. The same commit already passed both full
+  feature-branch workflows before integration.
 - vpsAdminOS head `8d5fe005`: RSpec passed and exact-head full CI workflow
   `31198648330` passed. Later branch workflow `31210461594` had 71 successful
   tests and four unrelated QEMUs terminated by runner memory pressure. Its
@@ -187,9 +222,9 @@
 
 ## Development cluster
 
-- The bridge-network cluster `2026-08-06-node-kernel-history` is running and
-  ready. vpsAdmin services use final clean revision `c0d87beb`; schema migrations
-  `20260806120000` and `20260806120100` are applied.
+- The bridge-network cluster `2026-08-06-node-kernel-history` completed its
+  review purpose with vpsAdmin services at clean revision `c0d87beb`; schema
+  migrations `20260806120000` and `20260806120100` were applied.
 - The cluster reproduced the staging transition without rebooting: the booted
   system remains vpsAdminOS `008aa460` with patch-2 metadata, while the current
   system is `8d5fe005` with patch-3 metadata. Kernel sysfs contains only
@@ -205,13 +240,13 @@
   intentionally remains at the pre-rewrite reporter closure; only services
   needed refresh because the folded follow-up changed migration/spec code, not
   reporter behavior.
-- The cluster is intentionally left running in this staging-like state at
-  `https://webui.aitherdev.int.vpsfree.cz/`. Kernel history is at
-  `?page=node&action=kernel_history&id=101` and software versions at
-  `?page=node&action=software_versions&id=101`.
-- The task-local launcher remains at
-  `dev-clusters/vpsadmin-node-kernel-history/` because the shared launcher has
-  unrelated concurrent changes.
+- The cluster was stopped after the default-branch merges. Its runner did not
+  exit on TERM within the launcher's built-in 120-second window, so the launcher
+  used its documented forced-stop path. The cluster is stopped and its
+  persistent task state was not reset.
+- The task-local `dev-clusters/vpsadmin-node-kernel-history/` launcher was moved
+  to trash after shutdown; the shared launcher's unrelated concurrent changes
+  remain untouched.
 
 ## Compatibility and rollback
 
@@ -252,10 +287,11 @@
 
 ## Cleanup
 
-- Feature worktrees and the review cluster remain intentionally available.
-- Generated MkDocs `site/` output and downloaded CI diagnostics were moved to
-  trash after validation. Configuration
-  keeps untracked `.bin/` and `.bundle/` only for its installed hook/tooling
-  environment.
+- The review cluster is stopped. All initiative feature worktrees and fresh
+  default-branch integration worktrees were removed. Feature branch refs were
+  retained locally and remotely as required.
+- Generated MkDocs output, downloaded CI diagnostics, configuration hook/gem
+  caches, build logs, and the task-local cluster launcher were moved to trash.
+  Tracked content remains recoverable from the retained commits and branches.
 - Top-level shared-workspace changes unrelated to this initiative were
   preserved and not staged.
