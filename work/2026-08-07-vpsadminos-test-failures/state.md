@@ -5,20 +5,25 @@
 - `vpsadminos`
   - branch: `2026-08-07-vpsadminos-test-failures`
   - worktree: `worktrees/2026-08-07-vpsadminos-test-failures/vpsadminos`
+    (removed after merge)
   - base: `8d5fe0058f5f4db3840c7d8043c7aba3b88ccca4`
   - head: `ccd22b65fc4a1f69ca464825c20ea839d3dd1dea`
+  - merged into `staging` by fast-forward at the same head
 - `vpsadminos-org-configuration`
   - inspected read-only through canonical bare repository at `origin/master`
   - no branch or worktree created
 
 ## Status
 
-Implementation, mandatory review, and integration testing are complete. The
-two focused commits are pushed to the initiative branch. The mandatory
-standalone review found two blocking issues; both were fixed and autosquashed.
+Implementation, mandatory review, integration testing, and the requested
+default-branch merge are complete. The two focused commits are pushed to the
+initiative branch and `staging` was fast-forwarded to the same head. The
+mandatory standalone review found two blocking issues; both were fixed and
+autosquashed.
 Follow-up review found no remaining blocking, important, or advisory findings.
-All exact-head GitHub Actions workflows passed. No runner configuration change
-was made.
+All feature-branch exact-head workflows passed. Post-merge RuboCop and RSpec
+also passed; post-merge CI encountered a new Fedora 44 package-script failure
+unrelated to these commits. No runner configuration change was made.
 
 ## Commands run
 
@@ -55,6 +60,18 @@ was made.
   runs of the same suite
 - checked the public Prometheus target inventory; runner3 is not scraped, so
   host memory low-water metrics were unavailable for the integration run
+- fetched `origin/staging`, created a fresh temporary merge worktree, and
+  fast-forwarded `staging` from `8d5fe0058` to `ccd22b65f`
+- ran `nix develop .#vpsadminos --command overcommit --run` in the merge
+  worktree: all hooks passed
+- fetched immediately before pushing and confirmed the remote target had not
+  advanced, then pushed `staging` over SSH
+- monitored all post-merge workflows and downloaded artifact
+  `os-test-logs-31251769077` after the VM suite failed
+- correlated every post-merge failure with Fedora 44's
+  `udisks2-2.11.2-1.fc44` update transaction and verified normal QEMU exits
+- removed the clean feature and temporary merge worktrees after verifying both
+  remote refs; retained the downloaded artifact only under `/tmp`
 
 ## Commits
 
@@ -158,6 +175,40 @@ the integration run proves suite correctness and successful scheduling but
 does not provide host memory low-water data. A future run assigned to runner2
 would be the direct validation of the original host's measured headroom.
 
+## Merge and post-merge validation
+
+After a final fetch confirmed that `origin/staging` was still the feature
+branch base, a temporary merge worktree fast-forwarded `staging` to
+`ccd22b65fc4a1f69ca464825c20ea839d3dd1dea`. Repository hooks passed in the
+merged tree and the branch was pushed over SSH.
+
+Post-merge workflows at the exact `staging` head produced these results:
+
+- RuboCop run 31251769070 passed in 36 seconds.
+- RSpec run 31251769078 passed in 4 minutes 33 seconds.
+- CI run 31251769077 built successfully, then reported 71 successful tests and
+  four failed tests after 3508.59 seconds on runner3.
+
+The CI failure is unrelated to the scheduler and OSVM commits. Five Fedora 44
+scripts failed across four tests: `docker/fedora#latest`,
+`incus/fedora#latest`, `podman/fedora#latest`, `snap/fedora#hello`, and
+`snap/fedora#lxd`. Every script failed while running `dnf -y update` because
+the repository had begun serving `udisks2-2.11.2-1.fc44`. Its `%post` device
+scan received `Permission denied` inside the unprivileged container, returned
+status 1, and caused the RPM transaction to fail.
+
+All four test VMs shut down normally with QEMU `STATUS: 0`, followed by the new
+safe `kill` log with `SIGNAL: NONE`. There were no signaled QEMU exits,
+`MachineShellClosed` errors, cleanup `TypeError`s, or evidence of renewed
+memory exhaustion. The run again selected a 91.0 GiB scheduler limit.
+
+The failed job was not rerun because the currently published Fedora package
+made the failure deterministic across every Fedora test. A rerun would not
+validate this change. The feature-branch full suite for the identical commit
+had already passed before that repository update. The Fedora issue and
+containment options are recorded in
+`notes/vpsadminos/2026-08-08-fedora-44-udisks2-container-update.md`.
+
 ## Open questions
 
 - Whether the QEMUs were selected by the kernel cgroup OOM killer or another
@@ -173,7 +224,10 @@ would be the direct validation of the original host's measured headroom.
 
 ## Cleanup
 
-- The feature worktree remains clean and is retained until the branch is
-  merged or abandoned.
-- Downloaded artifacts are in a temporary directory only.
-- The feature branch is pushed. No superseded workflow needed cancellation.
+- The feature branch remains available locally and remotely after merge.
+- Feature and temporary merge worktrees were removed after the post-merge
+  evidence was recorded.
+- Downloaded post-merge artifacts remain only under `/tmp` for automatic
+  system cleanup; the combined manual deletion command was rejected before
+  execution, so no unrelated path was touched.
+- No superseded workflow needed cancellation.
