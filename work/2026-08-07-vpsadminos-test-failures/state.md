@@ -239,10 +239,11 @@ scripts.
 The preferred upstream fix is for Fedora's udisks2 scriptlet to explicitly skip
 containers and treat both udev refresh commands as best-effort. Fedora 43 has
 the same update in testing, so a corrected build should cover both releases and
-gain container gating. A Fedora-only `dnf upgrade --exclude='udisks2*'` is an
-acceptable short-lived CI fallback, but not a published-image solution because
-2.11.2 includes a CVE fix. Global `--noscripts`, relaxed sysfs/device access,
-and hiding the udev socket were rejected as unsafe workarounds.
+gain container gating. A Fedora-only `dnf upgrade --exclude='udisks2*'
+--exclude='libudisks2*'` is an acceptable short-lived CI fallback, but not a
+published-image solution because 2.11.2 includes a CVE fix. Global
+`--noscripts`, relaxed sysfs/device access, and hiding the udev socket were
+rejected as unsafe workarounds.
 
 ## Open questions
 

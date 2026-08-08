@@ -114,10 +114,10 @@ container image, verify that it contains `udisks2-2.11.2-1.fc44`, run
 full VM suite.
 
 If image publication cannot happen promptly, a narrow test-only workaround is
-to exclude `udisks2*` from `dnf upgrade` in Fedora variants. Remove the
-exclusion after Fedora publishes a fixed build. Version 2.11.2 includes a fix
-for CVE-2026-7867, so retaining an old udisks build is inappropriate for
-published images and should be short-lived even in CI.
+to exclude both `udisks2*` and `libudisks2*` from `dnf upgrade` in Fedora
+variants. Remove the exclusion after Fedora publishes a fixed build. Version
+2.11.2 includes a fix for CVE-2026-7867, so retaining an old udisks build is
+inappropriate for published images and should be short-lived even in CI.
 
 A retry can also work because RPM may have installed the new package before the
 `%post` failure. Do not hide the first result with an unconditional
@@ -127,12 +127,12 @@ less robust than refreshing the base image.
 
 ### Existing containers
 
-For a container that has not upgraded, temporarily exclude `udisks2*` until a
-fixed Fedora package is available, with the security tradeoff recorded. For a
-container where the transaction already failed, first check the installed
-versions with `rpm -q udisks2 libudisks2`, run `dnf check`, then rerun the
-upgrade. Use an internally rebuilt fixed RPM when the security update is
-urgent.
+For a container that has not upgraded, temporarily exclude both `udisks2*` and
+`libudisks2*` until a fixed Fedora package is available, with the security
+tradeoff recorded. For a container where the transaction already failed,
+first check the installed versions with `rpm -q udisks2 libudisks2`, run
+`dnf check`, then rerun the upgrade. Use an internally rebuilt fixed RPM when
+the security update is urgent.
 
 Do not globally disable RPM scriptlets and do not grant containers broader
 sysfs or device access. Stopping or hiding the udev socket is also unsuitable
