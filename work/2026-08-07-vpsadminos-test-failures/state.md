@@ -209,6 +209,41 @@ had already passed before that repository update. The Fedora issue and
 containment options are recorded in
 `notes/vpsadminos/2026-08-08-fedora-44-udisks2-container-update.md`.
 
+## Fedora 44 follow-up investigation
+
+Fedora update `FEDORA-2026-ae4aff6b6f` promoted
+`udisks2-2.11.2-1.fc44` to stable at 01:36 UTC on 2026-08-08, several hours
+before post-merge CI began. The Fedora dist-git release commit does not change
+the failing `%post`; it only bumps upstream udisks from 2.11.1 to 2.11.2 and
+removes a patch included upstream. Upstream 2.11.2 contains bug and security
+fixes, not a container policy change.
+
+The failure is a latent Fedora packaging bug. Fedora added the existing
+`/run/udev/control` socket guard in 2019 to skip udev retriggering when udev is
+unavailable in containers and rpm-ostree systems. vpsAdminOS deliberately
+provides the socket so systemd can monitor udev events and device units, but an
+unprivileged container cannot scan all devices through its restricted sysfs.
+The socket-existence test is therefore insufficient, and `udevadm trigger`
+returns nonzero. DNF correctly reports the failed RPM scriptlet.
+
+The regular Fedora image build should not be blocked. Its update runs in a
+chroot where `/proc`, `/sys`, and `/dev` are mounted but `/run` is not shared,
+so no udev control socket is present and the Fedora guard skips retriggering.
+The current Fedora 42 builder is also unaffected by this 2.11.2 update. A
+refreshed Fedora 44 image is the preferred immediate mitigation: it can install
+the security-fixed package safely during the chroot build and prevents live
+test containers from performing the broken upgrade transition. This still
+needs verification with `image-scripts/test@fedora-44` and the affected VM
+scripts.
+
+The preferred upstream fix is for Fedora's udisks2 scriptlet to explicitly skip
+containers and treat both udev refresh commands as best-effort. Fedora 43 has
+the same update in testing, so a corrected build should cover both releases and
+gain container gating. A Fedora-only `dnf upgrade --exclude='udisks2*'` is an
+acceptable short-lived CI fallback, but not a published-image solution because
+2.11.2 includes a CVE fix. Global `--noscripts`, relaxed sysfs/device access,
+and hiding the udev socket were rejected as unsafe workarounds.
+
 ## Open questions
 
 - Whether the QEMUs were selected by the kernel cgroup OOM killer or another
