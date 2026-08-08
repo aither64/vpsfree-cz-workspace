@@ -1,0 +1,146 @@
+====== Incident/abuse reports ======
+When IP addresses from our network are the source of spam or are attacking
+other systems, we often receive abuse notices. We're forwarding these notices
+to individual members who should then secure their VPS. The notices may also
+be precautionary when services which are known to be exploitable are available
+from the public Internet.
+
+===== Accessible-MySQL =====
+Your MySQL/MariaDB database is publicly accessible on port **3306** over **IPv4**.
+If possible, it is best to configure the database to listen only on localhost,
+e.g. in ''my.cnf'':
+
+<code>
+[mysqld]
+bind-address = 127.0.0.1
+</code>
+
+If you need to connect to the database remotely, you could restrict access
+using firewall, so that only selected IP addresses could connect.
+
+===== Accessible-PostgreSQL =====
+Your PostgreSQL databae is accessible on port **5432** over **IPv4**.
+If possible, it is best to configure the database to listen only on localhost,
+e.g. in ''postgresql.conf'':
+
+<code>
+listen_addresses = localhost
+</code>
+
+If you need to connect to the database remotely, you could restrict access
+using firewall, so that only selected IP addresses could connect.
+
+===== Accessible-SMB =====
+There is a publicly accessible samba (smbd) instance running on your VPS.
+It is highly recommended to use VPN and allow access to samba only from your
+private network. Alternatively, you can use protocol with better security,
+such as SFTP over SSH.
+
+===== DNS-Open-Resolvers =====
+There is a DNS resolver running on port **53** that is publicly accessible over **IPv4**.
+DNS resolved should be configured to either listen only on localhost, or to resolve queries
+from selected networks, e.g. addresses of your VPS or your private network.
+
+Openly accessible DNS resolvers are frequently used in amplification attacks -- the
+response sent by the server is much larger than the request. The attacker can use this
+to direct server responses to the victim.
+
+===== IPv6-Accessible-MySQL =====
+Your MySQL/MariaDB database is publicly accessible on port **3306** over **IPv6**.
+If possible, it is best to configure the database to listen only on localhost,
+e.g. in ''my.cnf'':
+
+<code>
+[mysqld]
+bind-address = 127.0.0.1
+</code>
+
+If you need to connect to the database remotely, you could restrict access
+using firewall, so that only selected IP addresses could connect.
+
+===== IPv6-Accessible-PostgreSQL =====
+Your PostgreSQL databae is accessible on port **5432** over **IPv6**.
+If possible, it is best to configure the database to listen only on localhost,
+e.g. in ''postgresql.conf'':
+
+<code>
+listen_addresses = localhost
+</code>
+
+If you need to connect to the database remotely, you could restrict access
+using firewall, so that only selected IP addresses could connect.
+
+===== IPv6-DNS-Open-Resolvers =====
+There is a DNS resolver running on port **53** that is publicly accessible over **IPv6**.
+DNS resolved should be configured to either listen only on localhost, or to resolve queries
+from selected networks, e.g. addresses of your VPS or your private network.
+
+Openly accessible DNS resolvers are frequently used in amplification attacks -- the
+response sent by the server is much larger than the request. The attacker can use this
+to direct server responses to the victim.
+
+===== malware =====
+There is a malware running in your VPS. There's probably a vulnerability in your websites
+or other publicly accessible service. It is also possible you have a weak SSH password.
+Malware usually makes the VPS a part of a botnet, which is then used to attack other
+systems, send spam and mine cryptocurrencies.
+
+We can find the vulnerable application by looking at the system user the malware is running as
+and the path to its executable. For example, if the user is ''www-data'', you can be certain
+it is one of your websites. The incident report further includes the path to its executable --
+you can read it yourself from '/proc/<pid>/exe'. If you're using containers, you can
+use the cgroup path as a pointer to which container it is, e.g. compare the cgroup path
+with ''docker ps''. Note that ''/proc/<pid>/cmdline'' (usually seen in top and ps) might be
+made up by the malware.
+
+If the malware is running as an unprivileged user, it can be enough to kill its processes,
+remove its files, update the application, the system, change passwords, etc. Consider that
+the malware had access wherever the system user it run as had access. Malware often
+uses cron to launch itself repeatedly, check ''/var/spool/cron'' for malignant crontabs.
+
+In case the malware is running as root, nothing in that VPS can be trusted. Unless you've
+been prepare for such a situation and have checksums of all files, you can never know
+what it changed and what backdoors it made for itself. It has access to all of your files,
+including configuration files with passwords, etc. Packaging systems can check integrity
+of installed packages, but that won't include your data and system configuration files.
+It's best to reinstall the VPS and configure it anew.
+
+===== oomd =====
+The VPS reached its memory limit. As a result, processes were stalled waiting for free memory, while holding shared kernel locks. This had a negative impact not only on the VPS itself but also on other VPSes and the entire node.
+
+To avoid this, make sure your service configuration prevents more worker processes from starting (e.g. web servers, Apache workers, PHP processes, etc.) than your VPS can handle — even during temporary traffic spikes.
+
+===== open-memcached =====
+memcached is often used for amplification attacks. The attacker uses your memcached
+server to send responses to victims, as the response is much larger than the attacker's
+request. If you're using memcached only locally, it is best to have it listen only
+on localhost. In case you're using memcached from multiple VPS, secure it using
+the firewall to not be available from the public Internet.
+
+===== open-portmapper =====
+Portmapper, or rpcbind, is a part of NFSv3. You have it running most likely
+because you're using [[manuals:vps:exports|NAS]]. Portmapper is used by the NFS
+client to discover which ports on the NFS server should it connect to. rpcbind
+shouldn't be available from the public Internet, as it is often used in amplification
+attacks. rpcbind's response is much larger than the initial request, which the
+attacker uses to overwhelm the victim.
+
+Portmapper listens on port 111. We can block it, but we must allow existing
+connections:
+
+<code>
+iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+iptables -A INPUT -p tcp --dport 111 -j DROP
+iptables -A INPUT -p udp --dport 111 -j DROP
+
+ip6tables -A INPUT -p tcp --dport 111 -j DROP
+ip6tables -A INPUT -p udp --dport 111 -j DROP
+</code>
+
+Note that iptables rules configured like this will be lost when the VPS is restarted.
+For these rules to be persistent, consult your distribution's documentation.
+
+===== Open-Redis =====
+There is a redis server running on port **6379**, which is publicly accessible over **IPv4**.
+It is recommended to configure redis to listen only on localhost, or to protect it by firewall.

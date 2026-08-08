@@ -1,0 +1,25 @@
+====== Primary DNS Servers ======
+vpsFree.cz operates shared DNS servers that you can use as authoritative servers for your domains. The setup process is as follows:
+
+  - In the <vpsadmin-nav id="dns.primary-zones.open">**DNS** -> **Primary zones**</vpsadmin-nav> menu, create a zone for your domain. The zone name is simply the domain name, usually a second-level domain, but you can delegate higher-level domains as well.
+  - You need to update the nameservers with your domain registrar to our shared servers, which you will see in the zone details (e.g., //ns3.vpsfree.cz// and //ns4.vpsfree.cz//).
+  - You can then manage the DNS records through the vpsAdmin interface.
+  
+We support the following DNS records: A, AAAA, CAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA, and TXT.
+
+Enter CAA content as ''flags property "value"'', for example ''0 issue "letsencrypt.org"''. Supported flags are ''0'' and ''128'' and supported properties are ''issue'', ''issuewild'', ''issuemail'', ''issuevmc'', ''iodef'', ''contactemail'', and ''contactphone''. The value must be non-empty and enclosed in double quotes.
+
+===== Dynamic Records =====
+For A and AAAA records, you can generate a unique link that, when visited, updates the DNS record to the address from which the HTTP request was made. This is useful if you have a public address at home that is not static and may change. By running wget/curl on your router via cron or in response to an address change, you can keep your DNS records up to date.
+
+===== DNSSEC =====
+We support DNSSEC, but to set it up, you need to pass the DNSKEY/DS record to the parent zone, check with your registrar as to how it is done. DNSSEC is activated in the zone details in vpsAdmin, and the keys are automatically generated and the zone is signed; we use the default BIND policy. You can view the DNSKEY/DS records by clicking on **View DNSKEY and DS records** in the zone details.
+
+===== Custom Secondary Servers =====
+You can run your own DNS server in your VPS and use it as an additional secondary server. You can add it in the zone details in vpsAdmin through the **Secondary Servers** form. vpsAdmin will then show you how its configuration might look. Once your server is up and running, you can add it to the nameservers with your domain registrar.
+
+Alternatively, you can export records from our servers and import them to your own server using this method.
+
+
+
+
