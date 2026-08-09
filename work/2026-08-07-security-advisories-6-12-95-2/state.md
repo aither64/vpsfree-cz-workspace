@@ -280,7 +280,39 @@
 - Draft correction remains in progress. Publication and merge remain
   prohibited.
 
-## Current remote draft state
+## Approved publication automation and release
+
+- On 2026-08-09, the user approved merging the reviewed feature branch,
+  publishing all 19 exact drafts, and cleaning up the initiative worktrees.
+- Before publication, the repository will gain a batch `publish` command with
+  a required `--approved-publication` write switch. The command will verify the
+  committed dossier, stored evaluation, submission baseline, remote content,
+  revision, and effective publish permission before any write.
+- Publication will use the prepared drafts as reviewed. It will not collect
+  fresh Node evidence, reevaluate conclusions, synchronize content, or update
+  submission baselines. Future publication work follows the same rule unless
+  the user explicitly asks for an evidence or draft refresh.
+- Notification email is not approved. Every publication request will set
+  `send_mail: false`; the new command will expose no email-enabling option.
+- Publication automation is committed at `ad64a05`. Focused RSpec passed 42
+  examples (seed 8864), focused RuboCop and syntax checks passed, and all active
+  hooks passed.
+- Mandatory review initially found that a pre-set draft publication timestamp
+  could survive publication and that a committed write with a lost response
+  could be misreported as unpublished. The amended command rejects pre-set
+  timestamps, recovers and verifies completed writes, and reports the current
+  CVE as outcome-unknown whenever recovery cannot establish completion,
+  including when an in-flight transaction still reads back as a draft.
+- The same standalone reviewer independently passed 42 focused examples (seed
+  15952), RuboCop, syntax, commit-message, and diff checks on `ad64a05`, and
+  found no remaining Blocking, Important, or Advisory issue. Residual risk is
+  limited to the documented sequential, non-atomic batch API and lack of a live
+  vpsAdmin publication integration test.
+- Final pre-integration verification passed all 24 dossier validations, full
+  RSpec with 152 examples and zero failures (seed 5955), RuboCop over all 29
+  files, Overcommit, and `git diff --check`.
+
+## Reviewed remote draft state before publication
 
 - All records written in this initiative were verified as `draft` with no
   publication timestamp.
@@ -291,6 +323,33 @@
   28/14, and new draft 29/13.
 - Exact local submission baselines are committed for every draft. Publication,
   notification email, and merge remain prohibited.
+
+## Merge and publication
+
+- Feature head `ad64a0524b1e0e9e628c444340b10680d7292185` was pushed after
+  GitHub Actions RSpec run 31333974959 and RuboCop run 31333974966 passed.
+- A fresh temporary integration worktree fast-forwarded the current default
+  branch from `7cb4fb1` to `ad64a05`. All 24 dossiers validated there; full
+  RSpec passed 152 examples (seed 34678); RuboCop passed all 29 files;
+  Overcommit and `git diff --check` passed.
+- The default branch was pushed at exact head `ad64a05`. GitHub Actions RSpec
+  run 31334129080 and RuboCop run 31334129087 both passed.
+- The new snapshot-only `publish` preflight passed all 19 CVEs. It confirmed
+  IDs 11-18 at revision 40, ID 19 at revision 39, IDs 20-24 at revision 27,
+  IDs 25-26 at revision 17, IDs 27-28 at revision 14, and ID 29 at revision 13.
+  Every record was still an exact matching draft, every effective publish
+  permission check passed, and `send_mail` was false.
+- The identical explicit CVE batch was published with
+  `--approved-publication`. The command completed successfully and read all 19
+  records back as `published` at their unchanged content revisions. Publication
+  timestamps range from `2026-08-09T20:24:48Z` through
+  `2026-08-09T20:27:31Z`.
+- A separate read-only API pass independently confirmed all IDs 11-29 are
+  published at the approved revisions with non-null timestamps. No notification
+  email was requested.
+- Publication used only committed dossiers, evaluations, submission baselines,
+  and remote draft snapshots. No fresh evidence collection, `ready`,
+  evaluation, or draft synchronization was run.
 
 ## Commands run in this revision
 
@@ -314,6 +373,9 @@
 ## Cleanup
 
 - Keep the local and remote feature branches.
-- Keep the initiative worktree because the branch is neither merged nor
-  abandoned.
-- Do not publish, send email, merge, or remove the worktree.
+- Remove the clean feature and temporary integration worktrees after recording
+  the successful merge and publication. Preserve this plan, state, and the
+  durable security-advisory notes.
+- Both initiative worktrees were removed with `bin/dev-session`; the worktree
+  group now contains zero worktrees. Local and remote feature/default branch
+  refs remain at `ad64a0524b1e0e9e628c444340b10680d7292185`.

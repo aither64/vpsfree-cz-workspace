@@ -9,10 +9,12 @@ first carried by patch 3, using patch 3 only as source and historical evidence
 while distinguishing the first fixing patch from the corrected cumulative patch
 currently deployed.
 
-The user withdrew approval to publish or merge. This initiative is limited to
-the feature branch and unpublished vpsAdmin drafts. It must not publish an
-advisory, send notification email, merge the feature branch, or remove its
-worktree.
+The user has now approved merging and publishing the exact reviewed drafts.
+Before release, add repository-owned publication automation that requires an
+explicit approval switch and operates only on the committed dossier,
+evaluation, submission baseline, and matching remote draft. Publication must
+not refresh evidence or synchronize draft content unless the user separately
+requests that work. Notification email remains prohibited.
 
 ## Affected repositories
 
@@ -57,6 +59,17 @@ deployed live-patch state, and production workload applicability.
    apply synchronization only to unpublished drafts using that time-limited
    shared evidence, commit each resulting submission baseline, and run
    read-only readiness and draft readback checks.
+8. Add a batch `publish` command. Without `--approved-publication`, it performs
+   a read-only preflight. With the switch, it publishes only exact preflighted
+   drafts using revision preconditions and `send_mail: false`. It must never
+   collect evidence, evaluate current Nodes, synchronize drafts, or rewrite
+   submission baselines.
+9. Run mandatory review and all repository checks, fast-forward the feature
+   branch into the current default branch from a temporary integration
+   worktree, and require exact-head default-branch CI to pass.
+10. Preflight and publish the 19 approved draft revisions with the new command,
+    verify every resulting publication, update durable tracking, and remove
+    the clean feature and integration worktrees while retaining branch refs.
 
 ## Compatibility and deployment
 
@@ -71,10 +84,13 @@ fixes it carries forward; only an effective loss of protection starts another
 affected interval.
 
 Draft synchronization uses revision preconditions and fresh evidence matching,
-so concurrent remote review or node-state drift stops the operation. Existing
-drafts remain unpublished, new advisories are created as drafts, and
-`send_mail` remains disabled. Publication and merge are intentionally outside
-this plan.
+so concurrent remote review or node-state drift stops the operation. The
+separate publication command deliberately does not repeat that evidence work:
+it publishes the exact committed and remotely matching reviewed snapshot.
+Remote review drift or a changed revision stops the whole batch before its
+first write. Publication remains sequential at the API boundary; a concurrent
+failure after an earlier publication stops the batch and reports the completed
+CVEs without automatically retracting them. `send_mail` remains disabled.
 
 ## Testing plan
 
@@ -93,3 +109,14 @@ this plan.
   then run `bin/security-advisory ready` with recent shared evidence and read
   every remote record back as an unpublished draft.
 - Push the feature branch and require its current GitHub Actions runs to pass.
+- Test publication dry runs, explicit approval gating, complete batch preflight,
+  exact revision and digest checks, stored evaluation readiness, permission
+  checks, `send_mail: false`, readback verification, drift rejection, and
+  partial-failure reporting. Prove that publication does not collect or
+  evaluate evidence, synchronize drafts, or modify baselines.
+- From a fresh integration worktree, rerun validation, RSpec, RuboCop,
+  Overcommit, and `git diff --check`, then require exact-head default-branch CI.
+- Run the publication command without its approval switch for all 19 CVEs and
+  require the approved draft revisions. Run the identical batch with
+  `--approved-publication`, then read every advisory back as published with a
+  publication timestamp and no email request.
