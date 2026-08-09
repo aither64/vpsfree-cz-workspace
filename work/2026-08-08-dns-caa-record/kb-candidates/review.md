@@ -13,8 +13,8 @@ Content replacements: 2
 
 | Language | Page | Count | Existing text | Candidate text |
 | --- | --- | ---: | --- | --- |
-| cs | navody:server:primarni_dns | 1 | Podporujeme následující DNS záznamy: A, AAAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA a TXT. | Podporujeme následující DNS záznamy: A, AAAA, CAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA a TXT. ↵  ↵ U záznamů CAA se obsah zadává ve tvaru ''příznaky vlastnost "hodnota"'', například ''0 issue "letsencrypt.org"''. Povoleny jsou příznaky ''0'' a ''128'' a vlastnosti ''issue'', ''issuewild'', ''issuemail'', ''issuevmc'', ''iodef'', ''contactemail'' a ''contactphone''. Hodnota musí být neprázdná a uzavřená v dvojitých uvozovkách. |
-| en | manuals:server:primary_dns | 1 | We support the following DNS records: A, AAAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA, and TXT. | We support the following DNS records: A, AAAA, CAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA, and TXT. ↵  ↵ Enter CAA content as ''flags property "value"'', for example ''0 issue "letsencrypt.org"''. Supported flags are ''0'' and ''128'' and supported properties are ''issue'', ''issuewild'', ''issuemail'', ''issuevmc'', ''iodef'', ''contactemail'', and ''contactphone''. The value must be non-empty and enclosed in double quotes. |
+| cs | navody:server:primarni_dns | 1 | Podporujeme následující DNS záznamy: A, AAAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA a TXT. | Podporujeme následující DNS záznamy: A, AAAA, CAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA a TXT. |
+| en | manuals:server:primary_dns | 1 | We support the following DNS records: A, AAAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA, and TXT. | We support the following DNS records: A, AAAA, CAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA, and TXT. |
 
 ## Explicit exceptions
 

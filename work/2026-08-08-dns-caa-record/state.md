@@ -78,8 +78,10 @@ branches track their same-named remote branches.
   `24cae14e916d1f90996b90c98c7bc1090e914e00`.
 - Fetched 116 Czech and 70 English production KB pages read-only. Prepared
   guarded candidates for `navody:server:primarni_dns` and
-  `manuals:server:primary_dns`, documenting CAA syntax, flags, and tags. The
-  one-page manifests are `kb-release-cs.yml` and `kb-release-en.yml`.
+  `manuals:server:primary_dns`. Each candidate only adds `CAA` to the existing
+  supported-record list; it does not single out CAA syntax on a page which does
+  not document the formats of the other record types. The one-page manifests
+  are `kb-release-cs.yml` and `kb-release-en.yml`.
 - After `2026-06-15-vpsadmin-events` released staging, claimed it with
   `bin/kb-stage start`. Staged and verified the Czech manifest, then staged and
   verified the English manifest and re-verified Czech. Both one-page candidates
@@ -87,12 +89,20 @@ branches track their same-named remote branches.
   owned by `2026-08-08-dns-caa-record`.
 - The release tool maintains one pending manifest. The English manifest is
   pending with digest
-  `8c3443c96bca1e73d7580b4b8614a2a72b0198c7e0ea64dbbf227a5c34b380e9`;
+  `7e0d0af66e28b988da4f65d3cd6268a98d341a1839d057474b1ee3f64c76a685`;
   both language pages remain staged for review. If production publication is
   later approved, promote English first, then restage, verify, and promote
   Czech. No production write was attempted.
 - Both internal review page URLs return HTTP 200. The staging endpoints are
   HTTP-only; HTTPS is not configured for these internal names.
+- The first staged candidates over-documented CAA's format while the page only
+  lists supported record types. Regenerated both candidates to list `CAA` only.
+  The release guard refused to overwrite the old staged Czech page because it
+  was no longer a clean production mirror. Since this initiative owned the only
+  staged changes, reset staging to production, re-mirrored 116 Czech pages, 70
+  English pages, and 224 shared media objects, then staged and verified both
+  corrected manifests. Direct staging reads show `CAA` only in the supported
+  type lists; the removed explanatory text is absent.
 - The workspace-wide staged whitespace check reports pre-existing trailing
   spaces and conflict-marker-like DokuWiki text in the verbatim production KB
   snapshots. Those bytes are intentionally preserved because source hashes and
@@ -149,8 +159,8 @@ branches track their same-named remote branches.
   known unrelated runner failure documented in
   `notes/vpsadmin/2026-07-08-ci-services-vm-kernel-oops.md`. After inspecting
   the uploaded logs, requested a failed-job-only rerun at
-  https://github.com/vpsfreecz/vpsadmin/actions/runs/31281639745. Attempt 2 is
-  in progress on the same final feature head.
+  https://github.com/vpsfreecz/vpsadmin/actions/runs/31281639745. Attempt 2
+  completed successfully on the same final feature head.
 - The intermediate libnodectld workflow failure was investigated from its
   logs: `named-checkzone` was absent from the job environment. Adding `bind`
   to the declared Nix shell fixed the environment; the final-head workflow now
@@ -177,9 +187,6 @@ branches track their same-named remote branches.
 
 ## Remaining work and cleanup
 
-- Monitor aggregate CI attempt 2. Attempt 1's sole failure was investigated and
-  identified as an unrelated early services-VM kernel Oops; do not treat a
-  green rerun as replacing that diagnosis.
 - Dev-cluster deployment and live UI/API/DNS smoke testing are blocked by the
   unrelated dirty shared launcher file described above.
 - Review the staged Czech page at
