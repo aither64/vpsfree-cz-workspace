@@ -18,6 +18,9 @@
   failures in generated NixOS guests. The implementation uses udev
   serialization and shared guest-kernel failure detection; no kernel patch.
 - vpsAdminOS implementation is committed and ready for standalone review.
+- The mandatory standalone review completed. Its three blocking propagation
+  findings were fixed and folded into the detector commit; long integration
+  tests may now proceed.
 - vpsAdmin input update and integration validation are pending the review and
   publication of the vpsAdminOS feature revision.
 
@@ -39,18 +42,32 @@
 - built the evaluated `driver/nixos` test JSON and inspected the machine kernel
   parameters
 - committed from `nix develop .#vpsadminos`; Overcommit ran Nixfmt and RuboCop
+- ran the standalone `mandatory-change-review`
+- full osvm and test-runner RSpec suites after resolving review findings
 
 ## Results
 
 - vpsAdminOS commits:
   - `0952edfb6 tests: serialize NixOS udev workers`
-  - `976187b30 tests: fail on guest kernel failures`
+  - `48566c4c8 tests: fail on guest kernel failures`
 - Focused osvm specs: 47 examples, 0 failures.
 - Focused test-runner specs: 18 examples, 0 failures.
 - RuboCop inspected 9 changed Ruby files with no offenses.
 - Nixfmt accepted all changed Nix files.
 - Evaluated `driver/nixos` kernel parameters contain both
   `rd.udev.children_max=1` and `udev.children_max=1`.
+- Mandatory review result:
+  - commit split accepted;
+  - fixed unconditional outcome propagation so neither test-level nor
+    per-script expected-failure metadata can accept a guest kernel failure;
+  - fixed the end-of-run race by checking fatal state after teardown and by
+    carrying a dedicated child-process/result marker into executor summaries;
+  - fixed `Machine#join` and the post-poweroff reaper wait to poll kernel state
+    at intervals of at most one second;
+  - added regressions for expected-failure handling, end-of-run detection,
+    non-retry behavior, child-result classification, and both machine waits.
+- Full osvm specs after review fixes: 107 examples, 0 failures.
+- Full test-runner specs after review fixes: 182 examples, 0 failures.
 - The initial combined RSpec command mixed the two suites' `spec_helper` load
   paths and could not load `libosctl/native`. Rebuilding the native extension
   in the generic osvm shell was also invalid because it needs the symbols
@@ -67,6 +84,6 @@
 
 ## Cleanup
 
-- Pending standalone review, full specs, VM integration tests, vpsAdmin input
-  update, `services-up`, CI, integration, worktree removal, and session cleanup.
+- Pending VM integration tests, vpsAdmin input update, `services-up`, CI,
+  integration, worktree removal, and session cleanup.
 - Feature branches must remain after merge.
