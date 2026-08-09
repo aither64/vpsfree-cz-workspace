@@ -1,0 +1,434 @@
+====== Wiki Syntax ======
+
+[[DokuWiki]] podporuje jednoduchý jazyk tak, aby datové soubory byly čitelné a co nejpřehlednější. Na této stránce najdete kompletní popis syntaxe, kterou můžete použít při editaci stránek. Zdrojový text této stránky jednoduše zobrazíte kliknutím na tlačítko //Upravit stránku// na začátku nebo na konci stránky. Chcete-li něco vyzkoušet, použijte [[playground|pískoviště]]. Jednodušší prvky jsou přístupné také pomocí [[doku>toolbar|tlačítek]].
+
+
+===== Základní formátování textu =====
+
+DokuWiki podporuje **tučné** písmo, //kurzivu//, __podtržené__ a ''neproporcionální'' texty. Všechny můžete samozřejmě **__//''kombinovat''//__**.
+
+  DokuWiki podporuje **tučné** písmo, //kurzivu//, __podtržené__ a ''neproporcionální'' texty.
+  Všechny můžete samozřejmě **__//''kombinovat''//__**.
+
+Můžete rovněž používat <sub>dolní index</sub> i <sup>horní index</sup>.
+
+  Můžete rovněž používat <sub>dolní index</sub> i <sup>horní index</sup>.
+
+Nějaký text lze označit jako <del>smazaný</del>.
+
+  Nějaký text lze označit jako <del>smazaný</del>.
+
+**Odstavce** se oddělují pomocí prázdných řádků. Pokud chcete **zalomit řádek** bez nového odstavce, použijte dvě zpětná lomítka následovaná bílými znaky nebo koncem řádku.
+
+Toto je nějaký text se zalomením řádků\\ Všimněte si,
+že dvě zpětná lomítka jsou rozpoznána na konci řádku,\\
+nebo pokud následují\\ bílé znaky \\toto se stane bez nich.
+
+  Toto je nějaký text se zalomením řádků\\ Všimněte si,
+  že dvě zpětná lomítka jsou rozpoznána na konci řádku,\\
+  nebo pokud následují\\ bílé znaky \\toto se stane bez nich.
+
+Ruční zalomení řádku používejte uvážlivě jen tam, kde je to opravdu nutné.
+
+
+
+
+===== Odkazy =====
+
+[[DokuWiki]] podporuje mnoho různých způsobů, jak vytvářet odkazy.
+
+
+==== Externí ====
+
+Externí odkazy jsou rozpoznávány automaticky: http://www.google.com nebo jednoduše www.google.com - lze nastavit i jména odkazů: [[http://www.google.com|Tento odkaz ukazuje na google]]. Mailové adresy jako <andi@splitbrain.org> rovněž fungují.
+
+  Externí odkazy jsou rozpoznávány automaticky: http://www.google.com nebo
+  jednoduše www.google.com - lze nastavit i jména odkazů:
+  [[http://www.google.com|Tento odkaz ukazuje na google]]. Mailové adresy
+  jako <andi@splitbrain.org> rovněž fungují.
+
+
+
+
+
+==== Interní ====
+
+Interní odkazy se vytváří pomocí hranatých závorek. Vložíte [[doku>pagename|název stránky]] ([[wiki stránka]]) a případně i [[wiki stránka|jiný popisek stránky]]. Názvy wiki stránek jsou převedeny automaticky na malá písmena. Speciální znaky nejsou povoleny.
+
+  Interní odkazy se vytváří pomocí hranatých závorek. Vložíte
+  [[doku>pagename|název stránky]] ([[wiki stránka]]) a případně
+  [[wiki stránka|jiný popisek stránky]]. Názvy wiki stránek jsou
+  převedeny automaticky na malá písmena. Speciální znaky nejsou povoleny.
+
+
+Můžete používat [[doku>namespaces|jmenné prostory]] pomocí dvojtečky v názvu stránky.
+
+  Můžete používat [[doku>namespaces|jmenné prostory]] pomocí dvojtečky v názvu stránky.
+
+Pro další informace o jmenných prostorech se podívejte do jejich [[doku>namespaces|dokumentace]].
+
+Odkazování na určitou sekci je rovněž možné. Jednoduše do odkazu přidáte za název stránky mřížku ''#'' a název sekce (podobně jako v HTML). Tento odkaz vede na [[wiki:syntax#interni|sekci o interních odkazech]].
+
+  Tento odkaz vede na [[wiki:syntax#interni|sekci o interních odkazech]].
+
+Poznámky:
+
+  * Odkazy na [[wiki:syntax|existující stránky]] jsou ostylovány jinak než odkazy na [[neexistující]].
+  * DokuWiki ve výchozím nastavení nepoužívá [[wp>CamelCase]] k automatickému vytváření odkazů, ale tuto funkci je možné zapnout v souboru s [[doku>config|nastavením]]. Rada: Pokud je slovo DokuWiki odkazem, je CamelCase zapnut.
+  * Jakmile se změní název sekce, změní se pochopitelně i odkaz na tuto sekci. Tudíž na odkazování mezi sekcemi nespoléhejte až příliš.
+
+
+==== Interwiki ====
+
+DokuWiki podporuje [[doku>interwiki|Interwiki]] odkazy. Jedná se o rychlé odkazy mezi různými wiki. Například tento odkaz směřuje na stránku o wiki na Wikipedii: [[wp>Wiki]].
+
+  DokuWiki podporuje [[doku>interwiki|Interwiki]] odkazy. Jedná se o
+  rychlé odkazy mezi různými wiki. Například tento odkaz směřuje na stránku
+  o wiki na Wikipedii: [[wp>Wiki]].
+
+
+
+==== Sdílené složky ve Windows ====
+
+Odkaz na sdílenou složku jako [[\\server\disk|tento]] je rozpoznáván. Uvědomte si, že to je smysluplné pouze v homogenním prostředí, jako je [[wp>Intranet|intranet]].
+
+  Odkaz na sdílenou složku jako [[\\server\disk|tento]] je rozpoznáván.
+
+Poznámky:
+
+  * Přímé procházení sdílenými složkami funguje z bezpečnostních důvodů pouze ve výchozím nastavení Microsoft Internet Exploreru, a to ještě jen v "lokální zóně".
+  * V Mozille a Firefoxu to lze zapnout pomocí volby [[http://www.mozilla.org/quality/networking/docs/netprefs.html#file|security.checkloaduri]], ale není to doporučeno.
+  * Viz [[dokubug>151]] pro více informací.
+
+
+==== Obrázkové odkazy ====
+
+Také je možno používat obrázek jako odkaz na jinou interní či externí stránky, a to zkombinováním syntaxe pro odkazy a [[#obrazky_a_jine_soubory|obrázky]] (viz níže) například takto:
+
+  [[http://www.php.net|{{wiki:dokuwiki-128.png}}]]
+
+[[http://www.php.net|{{wiki:dokuwiki-128.png}}]]
+
+Poznámka: Formátování obrázku je jediná formátovací syntaxe, kterou lze použít uvnitř jména odkazu.
+
+Je podporována kompletní syntax [[#obrazky_a_jine_soubory|obrázků]] a [[#odkazy|odkazů]] včetně změny rozměrů, interních a externích obrázků a URL a interwiki odkazů.
+
+===== Poznámky pod čarou =====
+
+Poznámky pod čarou ((Toto je poznámka pod čarou)) vložte do dvojitých závorek.
+
+  Poznámky pod čarou ((Toto je poznámka pod čarou)) vložte do dvojitých závorek.
+
+
+===== Sekce a nadpisy =====
+
+Abyste mohli rozumně strukturovat obsah, můžete použít až pět různých úrovní nadpisů. Pokud máte ve stránce více než tři úrovně nadpisů, automaticky se vygeneruje tabulka s obsahem. Toto chování lze vypnout tak, že někam do dokumentu vložíte text ''<nowiki>~~NOTOC~~</nowiki>''.
+
+==== Nadpis 3. úrovně ====
+=== Nadpis 4. úrovně ===
+== Nadpis 5. úrovně ==
+
+  ==== Nadpis 3. úrovně ====
+  === Nadpis 4. úrovně ===
+  == Nadpis 5. úrovně ==
+
+Pomocí čtyř nebo více pomlček vytvoříte vodorovnou čáru:
+
+----
+
+
+
+===== Obrázky a jiné soubory =====
+
+Interní a externí [[doku>images|obrázky]] můžete vkládat pomocí složených závorek. Volitelně jim můžete nastavit i rozměry.
+
+Původní velikost                  {{wiki:dokuwiki-128.png}}
+
+Zmenšeno na danou šířku           {{wiki:dokuwiki-128.png?50}}
+
+Zmenšeno na danou šířku i výšku   {{wiki:dokuwiki-128.png?200x50}}
+
+Externí obrázek se změněnými rozměry: {{http://de3.php.net/images/php.gif?200x50}}
+
+  Původní velikost                  {{wiki:dokuwiki-128.png}}
+  Zmenšeno na danou šířku           {{wiki:dokuwiki-128.png?50}}
+  Zmenšeno na danou šířku i výšku   {{wiki:dokuwiki-128.png?200x50}}
+  Externí obrázek se změněnými rozměry: {{http://de3.php.net/images/php.gif?200x50}}
+
+
+Zarovnání obrázku volíte mezerami napravo nebo nalevo.
+
+{{ wiki:dokuwiki-128.png}}
+
+{{wiki:dokuwiki-128.png }}
+
+{{ wiki:dokuwiki-128.png }}
+
+  {{ wiki:dokuwiki-128.png}}
+  {{wiki:dokuwiki-128.png }}
+  {{ wiki:dokuwiki-128.png }}
+
+Samozřejmě můžete přidat také titulek, který se ve většině prohlížečů zobrazí jako vyskakovací bublina (tooltip).
+
+{{ wiki:dokuwiki-128.png |Toto je titulek}}
+
+  {{ wiki:dokuwiki-128.png |Toto je titulek}}
+
+Pokud zadáte název souboru (interního či externího), který nemá příponu jako obrázek (''gif, jpeg, png''), dostate místo toho obyčejný odkaz na soubor.
+
+Viz výše pro [[#obrázkové odkazy|odkazování obrázkem]].
+
+
+
+
+
+===== Seznamy =====
+
+DokuWiki podporuje číslované i nečíslované seznamy. Položku seznamu vytvoříte odsazením textu o dvě mezery a použitím hvězdičky ''*'' pro nečíslované seznamy, resp. pomlčky ''-'' pro seznamy číslované.
+
+  * Toto je seznam
+  * Druhá položka
+    * Můžete používat více úrovní
+  * Další položka
+
+  - Další seznam, ale číslovaný
+  - Jiná položka
+    - Jednoduše odsazujte dále pro další úrovně
+  - A je to!
+
+<code>
+  * Toto je seznam
+  * Druhá položka
+    * Můžete používat více úrovní
+  * Další položka
+
+  - Další seznam, ale číslovaný
+  - Jiná položka
+    - Jednoduše odsazujte dále pro další úrovně
+  - A je to!
+</code>
+
+
+
+===== Smajlíci =====
+
+DokuWiki převede běžně používané [[wp>emoticon|smajlíky]] do jejich obrázkové podoby. Další smajlíky můžete vložit do adresáře ''smiley'' a nastavit v souboru ''conf/smileys.conf''. Tady je přehled smajlíků, které DokuWiki standardně rozpoznává.
+
+  * 8-) %%  8-)  %%
+  * 8-O %%  8-O  %%
+  * :-( %%  :-(  %%
+  * :-) %%  :-)  %%
+  * =)  %%  =)   %%
+  * :-/ %%  :-/  %%
+  * :-\ %%  :-\  %%
+  * :-? %%  :-?  %%
+  * :-D %%  :-D  %%
+  * :-P %%  :-P  %%
+  * :-O %%  :-O  %%
+  * :-X %%  :-X  %%
+  * :-| %%  :-|  %%
+  * ;-) %%  ;-)  %%
+  * ^_^ %%  ^_^  %%
+  * :?: %%  :?:  %%
+  * :!: %%  :!:  %%
+  * LOL %%  LOL  %%
+  * FIXME %%  FIXME %%
+  * DELETEME %% DELETEME %%
+
+
+
+===== Typografie =====
+
+[[DokuWiki]] umí převést některé obyčejné znaky na odpovídající typograficky správné entity. Zde je příklad rozpoznávaných znaků.
+
+-> <- <-> => <= <=> >> << -- --- 640x480 (c) (tm) (r)
+"He thought 'It's a man's world'..."
+
+<code>
+-> <- <-> => <= <=> >> << -- --- 640x480 (c) (tm) (r)
+"He thought 'It's a man's world'..."
+</code>
+
+Poznámka: Tento převod lze vypnout v [[doku>config#typography|nastavení]] a v [[doku>entities|souboru s entitami]].
+
+
+===== Citace =====
+
+Občas budete potřebovat označit nějaký text jako odpověď nebo komentář. Můžete využít následující syntaxe:
+
+  Myslím, že bychom to měli udělat.
+  
+  > Ne, neměli.
+  
+  >> Ne fakt, řekl jsem, že bychom měli.
+  
+  > Fakt?
+  
+  >> Jistě!
+  
+  >>> No tak to teda uděláme!
+
+Myslím, že bychom to měli udělat.
+
+> Ne, neměli.
+
+>> Ne fakt, řekl jsem, že bychom měli.
+
+> Fakt?
+
+>> Jistě!
+
+>>> No tak to teda uděláme!
+
+
+
+
+===== Tabulky =====
+
+[[DokuWiki]] podporuje jednoduchou syntaxi pro vytváření tabulek.
+
+^ Nadpis 1      ^ Nadpis 2       ^ Nadpis 3          ^
+| Řádek 1 Sloupec 1    | Řádek 1 Sloupec 2     | Řádek 1 Sloupec 3        |
+| Řádek 2 Sloupec 1    | spojené sloupce (všimněte si dvou svislých čar) ||
+| Řádek 3 Sloupec 1    | Řádek 3 Sloupec 2     | Řádek 3 Sloupec 3        |
+
+Normální řádky tabulky musí začínat a končit svislou čárou ''|'', řádky v hlavičce stříškou ''^''.
+
+  ^ Nadpis 1      ^ Nadpis 2       ^ Nadpis 3          ^
+  | Řádek 1 Sloupec 1    | Řádek 1 Sloupec 2     | Řádek 1 Sloupec 3        |
+  | Řádek 2 Sloupec 1    | (všimněte si dvou svislých čar) ||
+  | Řádek 3 Sloupec 1    | Řádek 3 Sloupec 2     | Řádek 3 Sloupec 3        |
+
+Ponecháte-li buňky vodorovně vedle sebe úplně prázdné, spojí se jako v příkladu výše (colspan). Pozor, abyste měli vždy stejný počet oddělovačů buněk!
+
+Svislé hlavičky tabulek jsou také možné.
+
+|              ^ Nadpis 1            ^ Nadpis 2          ^
+^ Nadpis 3    | Řádek 1 Sloupec 2          | Řádek 1 Sloupec 3        |
+^ Nadpis 4    | buňky se nyní nespojí (jsou tu mezery) |                    |
+^ Nadpis 5    | Řádek 2 Sloupec 2          | Řádek 2 Sloupec 3        |
+
+Jak vidíte, formátování buňky ovlivňuje oddělovač před buňkou:
+
+  |              ^ Nadpis 1            ^ Nadpis 2          ^
+  ^ Nadpis 3    | Řádek 1 Sloupec 2          | Řádek 1 Sloupec 3        |
+  ^ Nadpis 4    | buňky se nyní nespojí (jsou tu mezery) |                    |
+  ^ Nadpis 5    | Řádek 2 Sloupec 2          | Řádek 2 Sloupec 3        |
+
+Poznámka: Svislé spojování buněk (rowspan) není možné.
+
+Obsah buněk můžete také zarovnat. Prostě přidejte alespoň dva bílé znaky na druhý konec textu: Přidejte dvě mezery nalevo pro zarovnání doprava, dvě mezery napravo pro zarovnání doleva nebo aspoň dvě mezery na oba konce pro zarovnání na střed.
+
+^           Tabulka se zarovnáním           ^^^
+|         doprava|    na střed    |doleva          |
+|doleva          |         doprava|    na střed    |
+| xxxxxxxxxxxx | xxxxxxxxxxxx | xxxxxxxxxxxx |
+
+A takhle vypadá zdroják:
+
+  ^           Tabulka se zarovnáním           ^^^
+  |         doprava|    na střed    |doleva          |
+  |doleva          |         doprava|    na střed    |
+  | xxxxxxxxxxxx | xxxxxxxxxxxx | xxxxxxxxxxxx |
+
+
+
+
+===== Neparsované bloky =====
+
+Do svých stránek můžete zahrnout i bloky, které nebudou interpretovány, když je odsadíte o alespoň dvě mezery (podobně jako v předchozích příkladech), nebo použitím tagů ''code'' či ''file''.
+
+<code>
+Toto je již naformátovaný text, kde jsou všechny mezery zachovány: např.
+              <-takto
+</code>
+
+<file>
+Tohle je skoro to samé, jen to lze využít spíš, když chcete ukázat, že citujete nějaký soubor.
+</file>
+
+Aby parser kompletně ignorovat nějaký text (tj. vůbec jej neformátoval), uzavřete danou oblast do tagů ''nowiki'' nebo jednoduše do dvojitých procent ''<nowiki>%%</nowiki>''.
+
+<nowiki>
+Toto je nějaký text obsahující URL jako: http://www.splitbrain.org a **formátování**, ale parser s ním vůbec nic neudělá.
+</nowiki>
+
+Podívejte se na zdrojový text této stránky, jak se neparsované bloky používají.
+
+
+===== Zvýrazňování syntaxe =====
+
+[[DokuWiki]] umí zvýrazňovat a obarvovat zdrojové kódy, aby se daly lépe číst. Používá přitom [[http://qbnz.com/highlighter/|GeSHi]] Generic Syntax Highlighter. Díky tomu DokuWiki podporuje všechny jazyky, které umí zvýrazňovat GeSHi. Syntax je stejná jako v bloku kódu v minulé sekci, jen se tentokrát dovnitř tagu vloží název jazyka. Např. ''<nowiki><code java></nowiki>''.
+
+<code java>
+/** 
+ * The HelloWorldApp class implements an application that
+ * simply displays "Hello World!" to the standard output.
+ */
+class HelloWorldApp {
+    public static void main(String[] args) {
+        System.out.println("Hello World!"); //Display the string.
+    }
+}
+</code>
+
+Následující názvy jazyků jsou aktuálně rozpoznávány: //actionscript-french, actionscript, ada, apache, applescript, asm, asp, autoit, bash, blitzbasic, bnf, caddcl, cadlisp, cfdg, cfm, c_mac, c, cpp, cpp-qt, csharp, css, delphi, diff, div, dos, d, eiffel, fortran, freebasic, gml, groovy, html, idl, ini, inno, io, java5, java, javascript, latex, lisp, lua, matlab, mirc, mpasm, mysql, nsis, objc, ocaml-brief, ocaml, oobas, oracle8, pascal, perl, php-brief, php, plsql, python, qbasic, rails, reg, robots, ruby, sas, scheme, sdlbasic, smalltalk, smarty, sql, tcl, text, thinbasic, tsql, vbnet, vb, vhdl, visualfoxpro, winbatch, xml, xpp, z80//
+
+
+
+===== Agregace RSS/ATOM kanálů =====
+
+[[DokuWiki]] je schopna integrovat data z externích XML kanálů. Pro jejich parsování se využívá [[http://simplepie.org/|SimplePie]]. Všechny formáty, kterým rozumí SimplePie, lze tudíž použít v DokuWiki. Jak bude výsledný výpis vypadat, můžete ovlivnit několika dalšími parametry (oddělenými mezerami):
+
+^ Parametr  ^ Popis ^
+| //jakékoliv číslo// | maximální počet položek, které se zobrazí, standardně 8 |
+| reverse    | obrácené pořadí - zobrazí poslední položku v kanálu nejdřív |
+| author     | ukáže jména autorů |
+| date       | ukáže data položek |
+| description| ukáže popisy položek. Pokud je [[doku>config#htmlok|HTML]] vynuto, všechny tagy se ořežou. |
+| //n//[dhm] | obnovovací perioda, kde d=dny, h=hodiny, m=minuty. (např. 12h = 12 hodin). |
+
+Obnovovací perioda je standardně nastavena na 4 hodiny. Jakákoliv hodnota menší než 10 minut bude chápána jako právě 10 minut. [[DokuWiki]] se obecně snaží poskytnout cachovanou verzi stránky, což je očividně nevhodné, obsahuje-li stránka dynamický externí obsah. Tento parametr říká [[DokuWiki]], aby znovu zpracovala danou stránku, pokud od posledního zpracování uběhlo více času, než je //obnovovací perioda//.
+
+**Příklad:**
+
+  {{rss>http://slashdot.org/index.rss 5 author date 1h }}
+
+{{rss>http://slashdot.org/index.rss 5 author date 1h }}
+
+
+
+===== Vkládání HTML a PHP =====
+
+Čistý HTML či PHP kód můžete do svých dokumentů začlenit pomocí tagů ''html'' resp. ''php'' takto:
+
+<code>
+<html>
+Toto je nějaké <font color="red" size="+1">HTML</font>
+</html>
+</code>
+
+<html>
+Toto je nějaké <font color="red" size="+1">HTML</font>
+</html>
+
+<code>
+<php>
+echo 'Logo generované pomocí PHP:';
+echo '<img src="' . $_SERVER['PHP_SELF'] . '?=' . php_logo_guid() . '" alt="PHP Logo !" />';
+</php>
+</code>
+
+<php>
+echo 'Logo generované pomocí PHP:';
+echo '<img src="' . $_SERVER['PHP_SELF'] . '?=' . php_logo_guid() . '" alt="PHP Logo !" />';
+</php>
+
+**Poznámka**: Vkládání HTML a PHP je ve výchozím nastavení vypnuto. Pokud je právě vypnuto, HTML či PHP kód se místo vykonání zobrazí jako obyčejný text.
+
+
+===== Syntaktické pluginy =====
+
+Syntaxi DokuWiki lze rozšířit pomocí [[doku>plugins|pluginů]]. Jak se nainstalované pluginy používají, je popsáno na příslušné stránce o každém pluginu. Následující syntaktické pluginy jsou k dispozici v této konkrétní instalaci DokuWiki:
+
+~~INFO:syntaxplugins~~

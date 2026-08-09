@@ -1,0 +1,197 @@
+<page>manuals:vps:kvm</page>
+====== Používání KVM na vpsFree.cz  ======
+VPS jsou [[informace:vpsadminos|linuxové kontejnery]], tzn. na nodu běží jeden kernel, který je sdílený
+mezi všemi VPS. Pokud z nějakého důvodu potřebuješ vlastní kernel, nebo chceš provozovat jiný operační
+systém, můžeš si ve VPS spouštět vlastní plnohodnotné virtuály pomocí QEMU/KVM.
+
+===== Konfigurace =====
+Nejprve je potřeba ve vpsAdminu v detailu VPS zapnout následující vlastnosti:
+
+  * TUN/TAP - povolí vytváření virtuálních interface, které jsou pak bridgovány,
+  * KVM – povolí použití KVM (pro HW podporu virtualizace).
+
+Na vpsFree není jiná možnost než mít disky pro KVM virtuály v souborech (images). Doporučujeme k tomu vytvořit nový (sub)dataset, **vypnout v něm kompresi** a nastavit velikost bloku (Record size) na 65536 B. Vypnutí komprese je velmi důležité, jinak vám bude image bobtnat a bobtnat, přes deklarovanou velikost image, dokud nenarazí na kvótu datasetu! Pro optimální výkon vytvářejte „raw“ image.
+
+===== libvirt =====
+Virtuály můžeš spravovat pomocí [[https://libvirt.org|libvirt]] ve VPS
+a připojit se k němu přes [[https://virt-manager.org|virt-manager]].
+
+===== Mount dataset export z NAS serveru pro QEMU/KVM =====
+Pokud chceš používat v QEMU/KVM připojený dataset export z NAS serveru, například pro mount ISO obrazu CD pro boot systému a dostaneš toto hlášení "//Failed to lock byte 100: No locks available//", musí být daný export namountován do hostitelského systému s příznakem "nolock".
+
+Například pokud používáš pro mount do systému fstab:
+
+  562.586.65.25:/nas/4562 /mnt/export4562 nfs vers=3,nofail 0 0
+
+Nově použiješ mount příkaz takto:
+
+  562.586.65.25:/nas/4562 /mnt/export4562 nfs vers=3,nofail,nolock 0 0
+
+(**//562.586.65.25//** > Adresa tvého NFS serveru; **//4562//** > číslo tvého datasetu na NFS serveru)
+
+===== KVM na Alpine Linuxu  =====
+
+Připravu hypervizoru lze provést automatizovaně pomocí [[http://docs.ansible.com/ansible/latest/index.html|Ansible]].
+
+[[https://gist.github.com/HalisCz/192955c64c255ee15cc647f6efabd020|Na GitHubu]] jsou dle níže uvedeného návodu automatizovány zatím tyto sekce:
+  * [[navody:vps:kvm#instalace_balicku_a_konfigurace_hypervizoru|Instalace balíčků a konfigurace hypervizoru]] - tag ''instalace''
+  * [[navody:vps:kvm#nastaveni_iptables|Nastavení iptables]] - tag ''nastaveni-iptables''
+
+==== Instalace balíčků a konfigurace hypervizoru ====
+
+Nainstalujte potřebné balíčky (ip6tables je volitelný):
+
+<code shell>
+apk update
+apk add qemu-system-x86_64 qemu-openrc qemu-img bridge iptables ip6tables
+</code>
+
+Nastavte potřebná práva pro přístup ke KVM a TUN (do skupin //kvm// a //netdev// by měl patřit uživatel //qemu//, pod kterým bude běžet vytvořený virtuál):
+
+<code shell>
+chown :kvm /dev/kvm
+chmod g+rw /dev/kvm
+chown :netdev /dev/net/tun
+chmod g+rw /dev/net/tun
+</code>
+
+Nakonfigurujte bridge pro Qemu/KVM virtuály; vytvořte soubor ///etc/network/interfaces.tail// (IP adresu si samozřejmě můžete zvolit libovolnou z privátního rozsahu):
+
+<code shell>
+auto br0
+iface br0 inet static
+     pre-up brctl addbr br0
+     address 172.17.1.1
+     netmask 255.255.255.0
+     post-down brctl delbr br0
+</code>
+
+Jelikož OpenVZ poněkud neohrabaně přepisuje soubor ///etc/network/interfaces// (proto také konfiguraci bridge přidáváme do //interfaces.tail//, tak nejjistější je v tuto chvíli kontejner restartovat. :/
+
+Povolte uživateli ve skupině //qemu// spravovat vytvořený bridge:
+
+<code shell>
+echo "allow br0" > /etc/qemu/bridge.conf
+chown root:qemu /etc/qemu/bridge.conf
+chmod 0640 /etc/qemu/bridge.conf
+</code>
+
+Nastavte IP maškarádu pro přístup Qemu/KVM virtuálů ven do veřejného Internetu.
+
+Pokud už máte nakonfigurované iptables, tak jen přidejte pravidlo:
+
+<code>
+iptables -t nat -A POSTROUTING -s 172.17.1.0/24 ! -o br0 -j MASQUERADE
+</code>
+
+V opačném případě můžete postupovat např. podle odstavce [[#nastaveni_iptables|Nastavení iptables]].
+
+
+==== Vytvoření a spuštění virtuálu ====
+
+V tomto návodu předpokládám použití [[https://github.com/jirutka/qemu-openrc|qemu-openrc]] – OpenRC init skript pro startování Qemu/KVM. Na Alpine samozřejmě můžete používat i libvirt, ale opravdu chcete a potřebujete jeho neohrabané XML konfiguráky a/nebo klikátka nad ním…? ;) Qemu-openrc je výrazně jednodušší a transparentnější řešení. Každý virtuál je reprezentovaný init skriptem, stejně jako ostatní programy, můžete deklarativně nastavovat závislosti mezi virtuály atd.
+
+Vytvoření nového virtálu spočívá pouze v přípravě image disku, vytvoření symlinku pro init skript a úpravě jednoduchého konfiguračního skriptu. Nechť se nový virtuál jmenuje třeba „myvirt.“
+
+Připravte raw image pro myvirt o potřebné velikosti:
+
+<code shell>
+mkdir -p /var/lib/qemu/myvirt/
+qemu-img create -f raw /var/lib/qemu/myvirt/disk0.raw 5G
+chown qemu:qemu /var/lib/qemu/myvirt/disk0.raw
+chmod 0600 /var/lib/qemu/myvirt/disk0.raw
+</code>
+
+Zkopírujte výchozí konfigurák /etc/conf.d/qemu do /etc/conf.d/qemu.myvirt a upravte dle potřeby:
+
+<code shell>
+cd /etc/conf.d
+cp qemu qemu.myvirt
+vi qemu.myvirt  # read comments and edit
+</code>
+
+Zejména tedy přidejte připravený image:
+
+<code shell>
+disk1_file="/var/lib/qemu/myvirt/disk0.raw"
+disk1_format="raw"
+</code>
+
+A zřejmě také instalační CD některé distribuce, které jste si předem stáhli:
+
+<code shell>
+cdrom0_file="/var/lib/qemu/alpine-virt-3.4.1-x86_64.iso"
+</code>
+
+Vytvořte symlink pro init skript a spusťte myvirt:
+
+<code shell>
+cd /etc/init.d
+ln -s qemu qemu.myvirt
+
+rc-service qemu.myvirt start
+</code>
+
+<note important>
+Pokud máte problémy s tím, že při větším provozu na síťové kartě spadne ve virtuálu sít, zkuste použít driver e1000 místo výchozího virtio-net-pci:
+
+<code shell>net0_device="e1000"</code>
+
+stabilitu je možno otestovat iperf-em, na testovanem stroji:
+
+<code shell>iperf -s</code>
+
+na hostiteli pak:
+<code shell>
+iperf -c 172.17.1.X -P 20
+</code>
+</note>
+
+==== Nastavení iptables ====
+
+Pokud nepoužíváte žádný nástroj pro generování iptables pravidel (jako např. [[https://github.com/MaxKellermann/ferm|ferm]]), doporučuji vyjít z [[https://gist.github.com/jirutka/3742890|připravené šablony pravidel]]. Tyto jsou přímo ve formátu iptables, který je možný načíst pomocí iptables-restore.
+
+Stáhněte upravenou šablonu pravidel s přidanou maškarádou pro náš bridge do /etc/iptables:
+
+<code shell>
+rmdir /etc/iptables
+wget -O /etc/iptables https://gist.githubusercontent.com/jirutka/3742890/raw/c9f6bdbfcf597578e562c92ea1e256a9ebcf3a2c/rules-both.iptables
+</code>
+
+Upravte konfigurák /etc/conf.d/iptables (IPv4):
+
+<code shell>
+# /etc/conf.d/iptables
+
+IPTABLES_SAVE="/etc/iptables"
+#SAVE_RESTORE_OPTIONS="-c"
+SAVE_ON_STOP="no"
+IPFORWARD="yes"
+</code>
+
+…a /etc/conf.d/ip6tables (IPv6):
+
+<code shell>
+# /etc/conf.d/ip6tables
+
+IP6TABLES_SAVE="/etc/iptables"
+SAVE_RESTORE_OPTIONS="-T filter"
+SAVE_ON_STOP="no"
+IPFORWARD="yes"
+</code>
+
+Spusťte iptables a ip6tables a přidejte je do runlevel boot:
+
+<code shell>
+rc-service iptables start
+rc-service ip6tables start
+rc-update add iptables boot
+rc-update add ip6tables boot
+</code>
+
+
+===== Kontakty =====
+
+<maintainers>
+jirutka (Alpine Linux)
+</maintainers>

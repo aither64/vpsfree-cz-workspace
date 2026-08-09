@@ -1,0 +1,86 @@
+<page>manuals:vps:vpsadminos:docker</page>
+====== Docker on vpsAdminOS ======
+We support latest version of Docker on our [[manuals:vps:vpsAdminOS]] servers.
+
+===== Installation =====
+
+As there are not everytime latest packages in distribution repos, we recommend to instead use the docker.com ones. Installation of these can be done easily on:
+
+  * [[https://docs.docker.com/install/linux/docker-ce/ubuntu/|Ubuntu 18.04 LTS]]
+  * [[https://docs.docker.com/install/linux/docker-ce/fedora/|Fedora 28]]
+  * [[https://docs.docker.com/install/linux/docker-ce/debian/|Debian 9]]
+
+Other distributions are not tested, but there is big chance they will be totally fine. Feel free to modify this page afterwise.
+
+=== Ubuntu 18.04 LTS ===
+<code>
+apt-get -y update 
+apt-get -y install apt-transport-https ca-certificates curl software-properties-common 
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - 
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" 
+apt-get -y update 
+apt-get -y install docker-ce 
+</code>
+
+=== Fedora 33 ===
+The upstream version of docker //moby-engine// can be installed directly from Fedora repositories:
+<code>
+dnf install -y moby-engine
+</code>
+
+It's necessary to configure the //dockerd// daemon to run with cgroupdriver=cgroupfs, otherwise you encounter the following problem:
+<code>
+$ docker run hello-world
+docker: Error response from daemon: OCI runtime create failed: cgroup v2 not enabled on this host, can't use systemd (rootless) as cgroups manager: unknown.
+</code>
+
+To configure the cgroup driver one needs to override the //ExecStart// for docker.service:
+<code>
+$ systemctl edit docker
+ExecStart=/usr/bin/dockerd \
+          --host=fd:// \
+          --exec-opt native.cgroupdriver=cgroupfs \
+          $OPTIONS
+</code>
+==== General stuff ====
+Checking that docker is running smoothly:
+
+<code>
+systemctl status docker.service
+
+● docker.service - Docker Application Container Engine
+    Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: e
+    Active: active (running) since Sun 2020-02-23 14:55:22 UTC; 9s ago
+      Docs: https://docs.docker.com
+  Main PID: 2893 (dockerd)
+     Tasks: 30
+    CGroup: /system.slice/docker.service
+            └─2893 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/contain
+</code>
+
+<note>
+If service "docker.service" will not get up, its probably this (already fixed) [[https://github.com/containerd/containerd/issues/2772|bug in containerd]]. To solve this bug we can replace ''/sbin/modprobe'', or modify ''containerd.service'' with changes of value ''ExecStartPre''.
+<code>
+mv /sbin/modprobe /sbin/modprobe.old && ln -s /bin/true /sbin/modprobe
+</code>
+</note>
+
+Now we can try ''docker run hello-world'':
+
+<code>
+docker run hello-world
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+[...]
+</code>
+
+Test of networking can be done with:
+<code>
+docker run -it alpine ping -c 3 vpsfree.cz
+</code>
+
+===== Something not working? =====
+If any command result prints //permission denied// most likely its not enabled in AppArmor profile.
+We can fix this, but we really need to know way how to reproduce it and know your VPS ID.
+Come by to [[informace:chat|IRC]] #vpsfree / #vpsadminos or mail us on support.
