@@ -19264,3 +19264,12 @@ shutdown exceeded the cluster manager's timeout, after which it killed the
 remaining cluster processes and removed the cluster configuration's Nix GC
 root. A subsequent `devcluster status` reported `status: stopped`; no cluster
 reset was performed.
+
+## 2026-08-09 KB staging handoff
+
+At the user's request, released this initiative's hold on the shared KB
+staging environment with `bin/kb-stage release --yes --discard-pending`.
+Releasing ownership required clearing the pending-release marker for
+`kb-release-main-page-link-en.yml`; this did not publish anything to
+production. A subsequent status check reported no owner, a stopped staging
+container, and no pending release. The mirrored and staged data were retained.
