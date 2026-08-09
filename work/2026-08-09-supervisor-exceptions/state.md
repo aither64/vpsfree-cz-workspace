@@ -2,24 +2,22 @@
 
 ## Repositories
 
-- `vpsadmin`: production revision
-  `c0d87bebf36c6d29b7861990890e8c650fa1afca`; inspected from canonical bare
-  repository `repos/vpsadmin.git`. Implementation branch
-  `2026-08-09-supervisor-exceptions` is based on upstream `master` at
-  `63c2c44f6` and checked out at
-  `worktrees/2026-08-09-supervisor-exceptions/vpsadmin`.
-- `vpsfree-cz-configuration`: production inventory revision
-  `2051708717b170afd34820817945bf858f93bb19`; canonical bare repository
-  `repos/vpsfree-cz-configuration.git`; temporary read-only worktree branch
-  `2026-08-09-supervisor-exceptions`.
+- `vpsadmin`: canonical bare repository `repos/vpsadmin.git`; feature branch
+  `2026-08-09-supervisor-exceptions`; upstream `master` fast-forwarded from
+  `63c2c44f6` to `95f8d9ca7` and pushed.
+- `vpsfree-cz-configuration`: canonical bare repository
+  `repos/vpsfree-cz-configuration.git`; feature branch
+  `2026-08-09-supervisor-exceptions`; upstream `master` fast-forwarded from
+  `6f7992f12` to `8888cc735` and pushed. The `vpsadminServices` input is pinned
+  to `95f8d9ca7cb31e284d19ac7bc6d310a25a7071dc`.
 
 ## Status
 
-Root-cause investigation and implementation are complete. Two vpsadmin
-commits have passed focused verification and mandatory standalone review.
-The branch is pushed, all targeted workflows are green, and the multi-hour
-full integration run remains active on GitHub. No production or configuration
-changes have been made.
+Root-cause investigation, implementation, default-branch integration, and the
+configuration channel update are complete. The exact vpsadmin revision passed
+focused verification, mandatory standalone review, and all feature-branch
+GitHub workflows. Both repositories' default branches and retained feature
+branches are pushed. No production deployment was performed.
 
 ## Implementation decisions
 
@@ -38,6 +36,7 @@ changes have been made.
 
 - `b1490c201`: `api: log full supervisor consumer exceptions`
 - `95f8d9ca7`: `api: accept unsigned OOM task UIDs`
+- `8888cc735`: `inputs: update vpsadminServices to 95f8d9ca`
 
 ## Commands run
 
@@ -94,11 +93,49 @@ changes have been made.
 - GitHub Actions completed successfully for API Migration Specs, RuboCop,
   i18n health, libnodectld Specs, and API Specs (topic parallel). The API
   workflow completed 27 jobs with zero failures.
-- Full `tag=ci` integration run
-  `https://github.com/vpsfreecz/vpsadmin/actions/runs/31314460784` remains in
-  progress. A migration path intentionally selects the full matrix; recent
-  successful runs take roughly 3--6 hours, so it remains active for GitHub to
-  complete rather than blocking this implementation handoff.
+- Full feature-branch `tag=ci` integration run
+  `https://github.com/vpsfreecz/vpsadmin/actions/runs/31314460784` completed
+  successfully on the exact merge revision.
+- Created a fresh vpsadmin target worktree at `origin/master`, fast-forwarded
+  it to the feature branch, and reran the migration spec (4 examples) and
+  focused supervisor specs (14 examples), all without failures.
+- The first target-worktree command used a relative path from the bare
+  repository and therefore placed the worktree below `repos/vpsadmin.git`.
+  No merge ran there; the exact misplaced worktree was removed and recreated
+  with an absolute workspace path. Existing cross-project worktree notes cover
+  this path-resolution behavior.
+- Fetched upstream immediately before integration, verified the target was
+  still an ancestor, fast-forwarded `vpsadmin` `master` to `95f8d9ca7`, and
+  pushed it over SSH.
+- Ran `nix develop -c overcommit --sign` in the configuration worktree. The
+  repository hook passed Nixfmt while confctl created its generated commit;
+  the generated commit message was retained unchanged.
+- Ran `nix develop -c confctl inputs channel update --commit vpsadmin`. It
+  changed only `flake.lock` and advanced `vpsadminServices` from `63c2c44f6`
+  to the merged revision `95f8d9ca7`.
+- Built every machine that consumes channel `vpsadmin`: 11 vpsAdmin service
+  containers (generation `2026-08-09--18-47-38`), five DNS containers
+  (generation `2026-08-09--18-52-52`), and the Prague proxy (generation
+  `2026-08-09--18-56-02`). All builds passed.
+- Created a fresh configuration target worktree from current `origin/master`,
+  fast-forwarded it to `8888cc735`, and revalidated `int.api1` from that exact
+  target commit (generation `2026-08-09--18-58-24`).
+- Fetched and checked ancestry again immediately before pushing configuration
+  `master` at `8888cc735`. The repository has no GitHub Actions run for that
+  revision.
+- The mechanical, generated configuration-only pin update did not require a
+  second mandatory change review; the substantive vpsadmin changes had already
+  received the required standalone review.
+- A bare-clone push of the retained configuration feature branch failed because
+  its pre-push hook reads `.overcommit.yml` from the current working directory.
+  Repeating the push from a short-lived worktree inside `nix develop` ran the
+  normal hook and succeeded. The reusable constraint is recorded in
+  `notes/vpsfree-cz-configuration/2026-08-09-bare-push-hook.md`.
+- The vpsadmin default-branch push triggered GitHub Actions on the same tested
+  revision. API Migration Specs, RuboCop, i18n health, and libnodectld Specs
+  were green at cleanup time; API Specs was running and the long CI workflow
+  was queued. Their feature-branch counterparts, including the full CI matrix,
+  were already green for the identical commit.
 
 ## Results
 
@@ -160,6 +197,7 @@ changes have been made.
 
 ## Cleanup
 
-Removed the temporary configuration worktree and its generated `.bin/` and
-`.bundle/` Nix-shell caches. Retained branch
-`2026-08-09-supervisor-exceptions` per workspace policy.
+Removed all vpsadmin and configuration feature/merge worktrees and their
+generated `.bin/` and `.bundle/` Nix-shell caches. Retained the feature branches
+locally and remotely, and retained the temporary local merge branch refs, per
+workspace policy. No production systems were changed.
