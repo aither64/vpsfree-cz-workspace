@@ -23,8 +23,8 @@
   integration tests pass; RSpec and RuboCop GitHub workflows pass, while the
   long CI workflow is pending.
 - vpsAdmin pins the exact feature revision in commit `d286413d9`. Local
-  `services-up` passes and the feature branch is published; GitHub workflows
-  are pending.
+  `services-up` passes and the feature branch is published. All short GitHub
+  workflows pass; the long integration workflow is queued.
 
 ## Commands run
 
@@ -112,8 +112,14 @@
   framework. It booted the NixOS services guest, brought up the complete
   application stack, and produced no detected kernel failure. Combined with
   the vpsAdminOS module-autoload test, both guest types have VM coverage.
-- The vpsAdmin branch was pushed to the required SSH remote. GitHub workflows
-  are in progress on `d286413d9`.
+- The vpsAdmin branch was pushed to the required SSH remote. Client Specs,
+  libnodectld Specs, WebUI PHPUnit, and i18n health all pass on `d286413d9`.
+- The remaining vpsAdminOS CI run `31324312195` and vpsAdmin CI run
+  `31324929488` are queued with no runner or executed steps. Two older
+  vpsAdmin integration jobs occupy the shared self-hosted capacity, while an
+  older master run is also ahead in the queue. These unrelated runs were not
+  cancelled. The queue was monitored through 2026-08-09 19:03 CEST; there are
+  no logs or failures from the queued feature runs to investigate yet.
 
 ## Open questions
 
