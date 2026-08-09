@@ -5,16 +5,14 @@
 - Coordination workspace: shared `master` checkout
   `/home/aither/workspace/ai/vpsfree.cz`; only files under this initiative's
   `work/2026-08-09-kb-nixos-rebuild-switch/` are in scope.
-- vpsadmin-kb-captures: workflow consulted at bare repository `HEAD`; no code
-  changes expected; validation worktree
-  `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-08-09-kb-nixos-rebuild-switch/vpsadmin-kb-captures`
-  on branch `2026-08-09-kb-nixos-rebuild-switch`, based on `fe07bdf`.
+- vpsadmin-kb-captures: workflow and validator used at `fe07bdf`; no code
+  changes. The clean validation worktree was removed after publication. Local
+  branch `2026-08-09-kb-nixos-rebuild-switch` is retained at `fe07bdf`.
 
 ## Status
 
-- Staging is prepared and verified for both languages. Mandatory standalone
-  review passed without findings. The candidates are ready for human review;
-  production has not been changed and still requires explicit approval.
+- Complete. Both reviewed pages are published and verified in production,
+  staging ownership is released, and the validation worktree is removed.
 
 ## Commands run
 
@@ -52,11 +50,20 @@
   asserted that the changed set contains exactly the two intended pages.
 - Read both production pages again after staging; their hashes and original
   commands still match the guarded sources.
+- After explicit user approval, verified production identity and ACL 255 on
+  `navody:distribuce:nixos` and `manuals:distributions:nixos`.
+- Restaged, verified, promoted with `--approved-production`, and
+  production-verified the Czech manifest, followed by the English manifest.
+- Read both production pages directly, compared their SHA-256 digests with the
+  reviewed candidates, and inspected rendered HTTPS pages and language links.
+- Confirmed staging had no pending release, then ran `bin/kb-stage release
+  --yes` and removed the clean validation worktree with `bin/dev-session
+  worktree remove`.
 
 ## Results
 
 - Verified initiative isolation: `2026-08-09-kb-nixos-rebuild-switch`.
-- Production writes are out of scope until explicit user approval.
+- Production publication was explicitly approved by the user on 2026-08-09.
 - Fetched 116 Czech and 70 English production pages.
 - The only executable commands missing an action are the paired NixOS overview
   pages `navody:distribuce:nixos` and `manuals:distributions:nixos`, each with
@@ -73,17 +80,17 @@
   `946181f0540d4c8f1a219992f9dae65f38bd22cf1cb1350acfe02fb02bcf7fd8`.
 - Staging was reset from 116 Czech pages, 70 English pages, 58 language pairs,
   and 224 shared media objects, then both one-page releases were applied.
-- Both staging pages return HTTP 200 and render
+- Both production pages return HTTP 200 and render
   `nixos-rebuild switch --flake /etc/nixos#vps`.
-- Both rendered pages link Czech `navody:distribuce:nixos` and English
-  `manuals:distributions:nixos` bidirectionally.
-- Review URLs:
-  - `http://kb-cs.aitherdev.int.vpsfree.cz/navody/distribuce/nixos`
-  - `http://kb-en.aitherdev.int.vpsfree.cz/manuals/distributions/nixos`
-- The English release is the current pending manifest, digest
-  `5c75e6e26091b226f870d8bb66fd6ee17a7a213455f27274c1bc9beb0aff2101`.
-  Staging the second language replaces only the pending-promotion record; both
-  languages remain staged and independently verify against their manifests.
+- Production page content matches the reviewed candidate hashes exactly:
+  Czech `05712001f24afe6fd00430d3f4f64cf4da2ba401fec512e3bb6cdc5f864e3ca4`
+  and English
+  `946181f0540d4c8f1a219992f9dae65f38bd22cf1cb1350acfe02fb02bcf7fd8`.
+- Both rendered production pages link Czech `navody:distribuce:nixos` and
+  English `manuals:distributions:nixos` bidirectionally.
+- Production URLs:
+  - `https://kb.vpsfree.cz/navody/distribuce/nixos`
+  - `https://kb.vpsfree.org/manuals/distributions/nixos`
 - A workspace-wide `git diff --check` reports trailing whitespace and a
   conflict-marker-like DokuWiki line inherited from production in the complete
   byte-for-byte source/candidate snapshots. These bytes cannot be normalized
@@ -104,10 +111,11 @@
 - The reviewer accepted the single commit because the inventory, replacement
   plan, candidates, manifests, and tracking form one integrity-bound staging
   packet.
-- Decision: continue without candidate changes. Residual gaps are the
-  intentionally untested production promotion and lack of a separate manual
-  browser visual inspection; API, HTML, command text, HTTP status, checksums,
-  and bidirectional language links were verified programmatically.
+- Decision: continue without candidate changes. Production promotion was
+  subsequently completed and verified after explicit approval. No separate
+  manual browser visual inspection was performed; API, HTML, command text,
+  HTTP status, checksums, and bidirectional language links were verified
+  programmatically.
 
 ## Open questions
 
@@ -115,7 +123,7 @@
 
 ## Cleanup
 
-- Release the staging claim after production promotion or explicit abandonment;
-  retain it while the staged review is pending.
-- Remove the clean `vpsadmin-kb-captures` validation worktree after this
-  initiative is published or abandoned; keep its branch as required.
+- Staging ownership released with retained mirror data; container is down and
+  `pending_release` is null.
+- Clean `vpsadmin-kb-captures` validation worktree removed. Its local feature
+  branch remains at `fe07bdf` as required.
