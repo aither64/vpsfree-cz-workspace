@@ -24,10 +24,10 @@ branches track their same-named remote branches.
   shared dev-cluster tooling is dirty. Starting it would evaluate unreviewed
   work belonging to another session, contrary to the initiative plan and
   workspace isolation rules.
-- Validated Czech and English KB candidates and guarded manifests are under
-  this initiative's work directory. KB staging is still owned by the unrelated
-  `2026-06-15-vpsadmin-events` session; the claim was retried after the code was
-  final, but nothing was reset, overwritten, or staged.
+- Validated Czech and English KB candidates are staged at their real page IDs.
+  The staging container is running and owned by this initiative. Both pages and
+  their language pairing were verified; the English manifest is the current
+  pending promotion guard.
 - No live system was deployed and no production KB page was written.
 
 ## Implementation
@@ -80,8 +80,19 @@ branches track their same-named remote branches.
   guarded candidates for `navody:server:primarni_dns` and
   `manuals:server:primary_dns`, documenting CAA syntax, flags, and tags. The
   one-page manifests are `kb-release-cs.yml` and `kb-release-en.yml`.
-- Retried `bin/kb-stage start`; it refused because staging remains owned by
-  `2026-06-15-vpsadmin-events`. No staging or production mutation occurred.
+- After `2026-06-15-vpsadmin-events` released staging, claimed it with
+  `bin/kb-stage start`. Staged and verified the Czech manifest, then staged and
+  verified the English manifest and re-verified Czech. Both one-page candidates
+  and the single Czech/English pair passed. The container remains running and
+  owned by `2026-08-08-dns-caa-record`.
+- The release tool maintains one pending manifest. The English manifest is
+  pending with digest
+  `8c3443c96bca1e73d7580b4b8614a2a72b0198c7e0ea64dbbf227a5c34b380e9`;
+  both language pages remain staged for review. If production publication is
+  later approved, promote English first, then restage, verify, and promote
+  Czech. No production write was attempted.
+- Both internal review page URLs return HTTP 200. The staging endpoints are
+  HTTP-only; HTTPS is not configured for these internal names.
 - The workspace-wide staged whitespace check reports pre-existing trailing
   spaces and conflict-marker-like DokuWiki text in the verbatim production KB
   snapshots. Those bytes are intentionally preserved because source hashes and
@@ -130,8 +141,16 @@ branches track their same-named remote branches.
   succeeded for all 17 systems as generation `2026-08-09--00-30-14`.
 - GitHub Actions on the final vpsAdmin head: RuboCop, Webui PHPUnit, Client
   Specs, i18n health, libnodectld Specs, and the complete topic-parallel API
-  matrix passed. The aggregate CI workflow is still running its selected
-  integration tests at https://github.com/vpsfreecz/vpsadmin/actions/runs/31281639745.
+  matrix passed. Aggregate CI attempt 1 ran the complete 117-test selection:
+  116 passed, including all three CAA-relevant DNS, Prometheus, and WebUI tests.
+  `storage/backup-remote-interrupted-recv` failed before its examples because
+  the services VM hit a Linux 6.18.41 module-loader page fault in
+  `__execmem_cache_free`; the API then never became ready. This matches the
+  known unrelated runner failure documented in
+  `notes/vpsadmin/2026-07-08-ci-services-vm-kernel-oops.md`. After inspecting
+  the uploaded logs, requested a failed-job-only rerun at
+  https://github.com/vpsfreecz/vpsadmin/actions/runs/31281639745. Attempt 2 is
+  in progress on the same final feature head.
 - The intermediate libnodectld workflow failure was investigated from its
   logs: `named-checkzone` was absent from the job environment. Adding `bind`
   to the declared Nix shell fixed the environment; the final-head workflow now
@@ -158,12 +177,19 @@ branches track their same-named remote branches.
 
 ## Remaining work and cleanup
 
-- The final-head aggregate CI workflow is still running; investigate its logs
-  if it eventually fails. A recent successful `master` run of this workflow
-  took more than six hours, so it is not a hard handoff gate.
+- Monitor aggregate CI attempt 2. Attempt 1's sole failure was investigated and
+  identified as an unrelated early services-VM kernel Oops; do not treat a
+  green rerun as replacing that diagnosis.
 - Dev-cluster deployment and live UI/API/DNS smoke testing are blocked by the
   unrelated dirty shared launcher file described above.
-- KB staging is blocked by another session's serialized ownership.
+- Review the staged Czech page at
+  `http://kb-cs.aitherdev.int.vpsfree.cz/doku.php?id=navody:server:primarni_dns`
+  and English page at
+  `http://kb-en.aitherdev.int.vpsfree.cz/doku.php?id=manuals:server:primary_dns`.
+  Production promotion still requires direct user approval.
+- Keep KB staging claimed while the pending release is under review. Release
+  without discarding only after pending promotion is complete; discarding it
+  requires an explicit cleanup decision.
 - Keep worktrees and feature branches until the work is merged or abandoned.
   Remove worktrees after completion but retain branch refs unless explicitly
   asked to delete them.
