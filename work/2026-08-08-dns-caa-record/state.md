@@ -4,9 +4,9 @@
 
 | Repository | Branch | Worktree | Base | Current head |
 | --- | --- | --- | --- | --- |
-| `vpsadmin` | `2026-08-08-dns-caa-record` | `worktrees/2026-08-08-dns-caa-record/vpsadmin` | `c0d87bebf36c6d29b7861990890e8c650fa1afca` | `4caf3d023c0fdc6b4c298af1d9396451dae976e1` |
-| `vpsadmin-kb-captures` | `2026-08-08-dns-caa-record` | `worktrees/2026-08-08-dns-caa-record/vpsadmin-kb-captures` | `3d394b377db1e57375bd1af0f8d19f9b72a1a8b3` | `24cae14e916d1f90996b90c98c7bc1090e914e00` |
-| `vpsfree-cz-configuration` | `2026-08-08-dns-caa-record` | `worktrees/2026-08-08-dns-caa-record/vpsfree-cz-configuration` | `2051708717b170afd34820817945bf858f93bb19` | `8bd17074060bec81e2adefcaae1e5f383511cffa` |
+| `vpsadmin` | `2026-08-08-dns-caa-record` | removed after merge | `f90895a1a301232d10d603cc3790adbe4816d143` | `63c2c44f6ca04ab958f3d72f777add389b77b162` |
+| `vpsadmin-kb-captures` | `2026-08-08-dns-caa-record` | removed after merge | `3d394b377db1e57375bd1af0f8d19f9b72a1a8b3` | `fe07bdf08d371c900fdc11f87f49be2dbc839d2b` |
+| `vpsfree-cz-configuration` | `2026-08-08-dns-caa-record` | removed after merge | `2051708717b170afd34820817945bf858f93bb19` | `6f7992f124656e6febf45bb10e35a5fe4276981a` |
 
 All remotes use `git@github.com:vpsfreecz/PROJECT.git`. All three feature
 branches track their same-named remote branches.
@@ -14,7 +14,9 @@ branches track their same-named remote branches.
 ## Current status
 
 - The vpsAdmin implementation, exact configuration-channel pin, and capture
-  contract pin are committed and pushed.
+  contract pin are fast-forwarded and pushed to all three default branches.
+  Same-named feature branches are retained locally and remotely; all initiative
+  and temporary merge worktrees have been removed.
 - The initiative session is owned: `VPSFREE_DEV_SESSION_SLUG` and
   `bin/dev-session current` both report `2026-08-08-dns-caa-record`.
 - The top-level checkout remains on `master`. Its unrelated changes are
@@ -24,11 +26,12 @@ branches track their same-named remote branches.
   shared dev-cluster tooling is dirty. Starting it would evaluate unreviewed
   work belonging to another session, contrary to the initiative plan and
   workspace isolation rules.
-- Validated Czech and English KB candidates are staged at their real page IDs.
-  The staging container is running and owned by this initiative. Both pages and
-  their language pairing were verified; the English manifest is the current
-  pending promotion guard.
-- No live system was deployed and no production KB page was written.
+- The corrected Czech and English KB candidates were promoted to their real
+  production page IDs and verified byte-for-byte. Direct production reads show
+  only `CAA` added to each supported-record list. KB staging has no pending
+  release and its ownership has been released with retained data.
+- No live system was deployed. The configuration default branch now selects the
+  new vpsAdmin revision for the `vpsadmin` channel.
 
 ## Implementation
 
@@ -64,18 +67,21 @@ branches track their same-named remote branches.
   the root bundle through `RUBYOPT`; rerunning without `RUBYOPT` exposed the
   genuinely missing CAA locale entries. Added both locale entries, regenerated
   catalogs, and reran all hooks successfully.
-- Committed and pushed vpsAdmin as
-  `4caf3d023c0fdc6b4c298af1d9396451dae976e1` (`api: add CAA records to
-  internal DNS zones`).
+- The original vpsAdmin feature commit was
+  `4caf3d023c0fdc6b4c298af1d9396451dae976e1`. After `origin/master` advanced
+  to `f90895a1a301232d10d603cc3790adbe4816d143`, rebased it without conflicts
+  as `63c2c44f6ca04ab958f3d72f777add389b77b162`. `git range-diff` confirmed the
+  feature patch was unchanged, and the remote feature branch was updated with
+  an explicit force-with-lease.
 - Updated `vpsfree-cz-configuration` with
   `confctl inputs channel set --commit vpsadmin vpsadmin REV`. The final
-  generated commit is `8bd17074060bec81e2adefcaae1e5f383511cffa`
-  (`inputs: set vpsadminServices to 4caf3d02`) and changes only `flake.lock`.
-  Its full locked revision is the final vpsAdmin head.
+  generated commit is `6f7992f124656e6febf45bb10e35a5fe4276981a`
+  (`inputs: set vpsadminServices to 63c2c44f`) and changes only `flake.lock`.
+  Its full locked revision is the merged vpsAdmin head.
 - Updated the capture repository's flake, lock, capture inventory, and
   navigation contract to the same SHA. `bin/check` found no navigation or
-  screenshot drift. Committed and pushed as
-  `24cae14e916d1f90996b90c98c7bc1090e914e00`.
+  screenshot drift. Amended and force-with-lease pushed the final pin as
+  `fe07bdf08d371c900fdc11f87f49be2dbc839d2b`.
 - Fetched 116 Czech and 70 English production KB pages read-only. Prepared
   guarded candidates for `navody:server:primarni_dns` and
   `manuals:server:primary_dns`. Each candidate only adds `CAA` to the existing
@@ -83,16 +89,15 @@ branches track their same-named remote branches.
   not document the formats of the other record types. The one-page manifests
   are `kb-release-cs.yml` and `kb-release-en.yml`.
 - After `2026-06-15-vpsadmin-events` released staging, claimed it with
-  `bin/kb-stage start`. Staged and verified the Czech manifest, then staged and
-  verified the English manifest and re-verified Czech. Both one-page candidates
-  and the single Czech/English pair passed. The container remains running and
-  owned by `2026-08-08-dns-caa-record`.
-- The release tool maintains one pending manifest. The English manifest is
-  pending with digest
-  `7e0d0af66e28b988da4f65d3cd6268a98d341a1839d057474b1ee3f64c76a685`;
-  both language pages remain staged for review. If production publication is
-  later approved, promote English first, then restage, verify, and promote
-  Czech. No production write was attempted.
+  `bin/kb-stage start`. Staged and verified both corrected one-page manifests
+  and their Czech/English pairing. The English pending manifest had digest
+  `7e0d0af66e28b988da4f65d3cd6268a98d341a1839d057474b1ee3f64c76a685`.
+- With direct user approval, promoted and production-verified English first,
+  then restaged, verified, promoted, and production-verified Czech. Production
+  summaries were `Document DNS CAA record support` and
+  `Doplnění podpory DNS záznamů CAA`. Final direct reads found only the supported
+  record-list lines, with no CAA format paragraph. Released staging ownership
+  after confirming `pending_release` was null; mirrored data were retained.
 - Both internal review page URLs return HTTP 200. The staging endpoints are
   HTTP-only; HTTPS is not configured for these internal names.
 - The first staged candidates over-documented CAA's format while the page only
@@ -109,6 +114,17 @@ branches track their same-named remote branches.
   guarded promotion depend on exact content. The authored tracking files,
   manifests, and indexes pass the scoped check; the two edited candidates also
   retain inherited whitespace outside the guarded replacement.
+- For each repository, fetched current `origin/master`, created a fresh
+  temporary merge worktree, used `git merge --ff-only`, validated from that
+  worktree, and pushed `HEAD:master`. Default heads are vpsAdmin `63c2c44f6`,
+  capture `fe07bdf`, and configuration `6f7992f1`. Temporary merge branches and
+  all initiative worktrees were removed; feature branches were preserved.
+- Fresh vpsAdmin and configuration worktrees initially lacked their ignored
+  Bundler caches. Reinitialized each documented Nix environment, reran hooks
+  successfully, and only removed caches after the hook-protected push. The
+  first configuration push was rejected locally by its pre-push hook after an
+  early cache cleanup; no remote ref changed until the successful Nix-shell
+  push.
 
 ## Mandatory change review
 
@@ -130,6 +146,9 @@ branches track their same-named remote branches.
   operations, Prometheus matching, and the 64,512/64,513-byte boundary.
 - The final libnodectld DNS-zone spec passed 6 examples, including an actual
   `named-checkzone` check at the accepted maximum.
+- After the vpsAdmin rebase, the focused API suite passed 94 examples and the
+  libnodectld DNS-zone suite passed 6 examples. All vpsAdmin hooks passed again
+  both on the feature head and in the fresh merge worktree.
 - API RuboCop and libnodectld RuboCop passed. `nixfmt --check` passed for both
   touched Nix tests. `ruby tests/ci-selection-test.rb` passed 16 runs and 55
   assertions.
@@ -145,10 +164,12 @@ branches track their same-named remote branches.
 - Capture `nix develop -c bin/check`: 39 controls, 29 paths, 32 capture
   concepts, 65 bindings, 9 exceptions, and 118 PNG variants valid; its test
   groups passed 8 runs/50 assertions and 7 runs/17 assertions.
-- `confctl ls --tag vpsadmin` selected 17 systems. A full build on the
-  intermediate reviewed SHA succeeded as generation
-  `2026-08-09--00-10-03`. A second full build against the exact final SHA
-  succeeded for all 17 systems as generation `2026-08-09--00-30-14`.
+- `confctl ls --tag vpsadmin` selected 17 systems. Earlier reviewed and final
+  pre-rebase generations were `2026-08-09--00-10-03` and
+  `2026-08-09--00-30-14`. After repinning to the rebased vpsAdmin head, all 17
+  systems built as generation `2026-08-09--13-48-55`; the integrated
+  configuration commit rebuilt from its fresh merge worktree as generation
+  `2026-08-09--14-10-04`.
 - GitHub Actions on the final vpsAdmin head: RuboCop, Webui PHPUnit, Client
   Specs, i18n health, libnodectld Specs, and the complete topic-parallel API
   matrix passed. Aggregate CI attempt 1 ran the complete 117-test selection:
@@ -166,6 +187,10 @@ branches track their same-named remote branches.
   to the declared Nix shell fixed the environment; the final-head workflow now
   passes. Superseded aggregate CI runs were cancelled only after their head no
   longer matched the pushed branch.
+- On rebased head `63c2c44f6`, GitHub Actions completed RuboCop, WebUI PHPUnit,
+  Client Specs, i18n health, and libnodectld Specs successfully on both the
+  feature and `master` pushes. Topic-parallel API Specs and aggregate CI were
+  still running when default-branch integration and publication completed.
 
 ## Decisions and constraints
 
@@ -176,27 +201,20 @@ branches track their same-named remote branches.
 - Old API versions can still load and serve persisted CAA rows after rollback,
   but cannot validate edits. Remove CAA rows or roll forward before a planned
   API downgrade.
-- Configuration receives the exact reviewed feature SHA on its feature branch
-  only. Configuration `master` was not integrated and no live confctl deploy
-  was attempted.
+- Configuration `master` now receives the exact merged vpsAdmin SHA through
+  the `vpsadmin` channel. No live confctl deploy was attempted.
 - The intended development deployment is the single workspace VM topology on
   bridge networking, left running after its smoke test. Do not start it while
   shared dev-cluster tooling contains unresolved unowned changes; do not modify
   or revert those changes.
-- No production KB write is authorized.
+- The user's merge-and-publish request directly authorized the two guarded
+  production KB writes. No other production writes were made.
 
 ## Remaining work and cleanup
 
 - Dev-cluster deployment and live UI/API/DNS smoke testing are blocked by the
   unrelated dirty shared launcher file described above.
-- Review the staged Czech page at
-  `http://kb-cs.aitherdev.int.vpsfree.cz/doku.php?id=navody:server:primarni_dns`
-  and English page at
-  `http://kb-en.aitherdev.int.vpsfree.cz/doku.php?id=manuals:server:primary_dns`.
-  Production promotion still requires direct user approval.
-- Keep KB staging claimed while the pending release is under review. Release
-  without discarding only after pending promotion is complete; discarding it
-  requires an explicit cleanup decision.
-- Keep worktrees and feature branches until the work is merged or abandoned.
-  Remove worktrees after completion but retain branch refs unless explicitly
-  asked to delete them.
+- GitHub topic-parallel API Specs and aggregate CI for the rebased feature and
+  `master` pushes remain to be observed to completion.
+- Repository and KB publication cleanup is complete: no initiative worktrees
+  remain, feature branches are retained, and staging ownership is released.
