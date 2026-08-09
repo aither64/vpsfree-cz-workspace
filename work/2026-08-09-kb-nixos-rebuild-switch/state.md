@@ -12,8 +12,9 @@
 
 ## Status
 
-- Staging prepared and verified for both languages; mandatory standalone review
-  is pending. Production has not been changed.
+- Staging is prepared and verified for both languages. Mandatory standalone
+  review passed without findings. The candidates are ready for human review;
+  production has not been changed and still requires explicit approval.
 
 ## Commands run
 
@@ -47,6 +48,10 @@
 - Read both staging pages through `bin/kb-page get`, compared their SHA-256
   digests to the manifests, and inspected rendered HTML and language links with
   `curl`.
+- Verified all 186 source/candidate pairs against their index hashes and
+  asserted that the changed set contains exactly the two intended pages.
+- Read both production pages again after staging; their hashes and original
+  commands still match the guarded sources.
 
 ## Results
 
@@ -79,6 +84,30 @@
   `5c75e6e26091b226f870d8bb66fd6ee17a7a213455f27274c1bc9beb0aff2101`.
   Staging the second language replaces only the pending-promotion record; both
   languages remain staged and independently verify against their manifests.
+- A workspace-wide `git diff --check` reports trailing whitespace and a
+  conflict-marker-like DokuWiki line inherited from production in the complete
+  byte-for-byte source/candidate snapshots. These bytes cannot be normalized
+  without breaking source fidelity and release checksums. The authored files
+  and the two changed page diffs are clean.
+
+## Mandatory change review
+
+- Standalone fresh-context review completed for coordination commit `af13032`
+  against base `d64eb76`.
+- Blocking findings: none.
+- Important findings: none.
+- Advisory findings: none.
+- The reviewer independently fetched production and matched all 116 Czech and
+  70 English committed sources, verified all 186 source/candidate hashes and
+  the exact two-page change set, checked both staging manifests and rendered
+  pages, and confirmed that production remains unchanged.
+- The reviewer accepted the single commit because the inventory, replacement
+  plan, candidates, manifests, and tracking form one integrity-bound staging
+  packet.
+- Decision: continue without candidate changes. Residual gaps are the
+  intentionally untested production promotion and lack of a separate manual
+  browser visual inspection; API, HTML, command text, HTTP status, checksums,
+  and bidirectional language links were verified programmatically.
 
 ## Open questions
 
