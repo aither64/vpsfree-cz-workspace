@@ -55,9 +55,10 @@
   current `origin/master` with the repository helper after publishing the
   final vpsAdminOS SHA.
 - The corrected vpsAdminOS head `67fcc1737` is published and CI run
-  `31392730922` is queued. The vpsAdmin input is now pinned to that exact SHA
-  in the single rewritten pin commit `8b883cfb5`; its fresh workflows have
-  started.
+  `31392730922` is active. Its build, generic full suite, and AMD lifecycle
+  passed; Intel is queued for the existing `intel-kvm` runner. The vpsAdmin
+  input is pinned to that exact SHA in the single rewritten pin commit
+  `8b883cfb5`; its fresh workflows have started.
 - Superseded vpsAdmin CI run `31380971998` on `5ceadff4b` received a
   cancellation request after the force-push, as required for a run whose
   `headSha` no longer matches the branch.
@@ -145,6 +146,18 @@
     migration, WebUI i18n, API i18n, and commit-message hooks all passed. This
     known requirement is documented in
     `notes/vpsadmin/2026-07-20-overcommit-requires-root-devshell.md`.
+  - final vpsAdminOS CI run `31392730922` selected
+    `gh-runner4.int.vpsadminos.org` in group `vpsadminos runners` with the sole
+    job label `amd-livepatch`. The AMD lifecycle test, result evaluation,
+    summary, test-state cleanup, and runner completion all passed on
+    `67fcc1737` from 13:37:55Z through 13:40:18Z.
+  - the same run's OS build passed on runner1 and the generic full suite passed
+    on runner1 after 41 minutes. Only its Intel lifecycle remains queued; that
+    unchanged path passed on the immediately preceding `cf1994bfb` head.
+  - final vpsAdmin client specs, WebUI PHPUnit, i18n health, and libnodectld
+    specs passed on `8b883cfb5`. Its selected integration run `31393025128`
+    remains active on runner2, which also explains the final Intel lifecycle
+    queue.
 - The root filesystem reached the non-root reserve while another session built
   a KVM initrd. Removing only this initiative's caches was insufficient; after
   that active build completed, standard `nix-store --gc` removed unreferenced
