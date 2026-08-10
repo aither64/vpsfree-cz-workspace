@@ -6,14 +6,18 @@ Prevent recurring Linux 6.18 module-loader Oopses from being misreported as
 unrelated vpsAdmin integration failures. Serialize udev-triggered module
 loading in generated NixOS test VMs and make the shared test framework fail
 quickly and explicitly when either a NixOS or vpsAdminOS guest reports a fatal
-kernel failure.
+kernel failure. Complete dual-vendor livepatch validation with a dedicated AMD
+runner that cannot receive generic self-hosted jobs.
 
 ## Affected repositories
 
 - `vpsadminos`: NixOS test-VM kernel parameters, shared osvm console
-  detection, test-runner propagation, and intentional crashdump allowances.
+  detection, test-runner propagation, intentional crashdump allowances,
+  lifecycle checksum correction, and runner routing.
 - `vpsadmin`: update the locked vpsAdminOS test-framework revision after the
   framework change is merged.
+- `vpsadminos-org-configuration`: add the dedicated AMD GitHub runner.
+- `vpsfree-cz-configuration`: add its internal DNS record.
 
 ## Approach
 
@@ -34,6 +38,15 @@ kernel failure.
    to the expected panic message.
 5. Update vpsAdmin with `tools/update_vpsadminos_flake.sh` after publishing the
    reviewed vpsAdminOS feature revision.
+6. Remove the checksum of the current livepatch candidate, whose bytes follow
+   the current locked kernel and toolchain inputs. Retain checksums for
+   historical predecessors evaluated from immutable vpsAdminOS revisions.
+7. Route the lifecycle matrix through the existing `vpsAdminOS runners` group
+   with `intel-kvm` and `amd-livepatch` labels. Keep runners 1-3 unchanged.
+8. Add `gh-runner4.int.vpsadminos.org` at `172.16.4.31`, configured without
+   GitHub's default runner labels and with only `amd-livepatch`, plus its
+   internal DNS record. VPS ID 30102 is operational inventory and is not
+   represented in the vpsadminos.org configuration module.
 
 ## Compatibility and deployment
 
@@ -44,6 +57,14 @@ kernel failure.
   concurrency is intentionally reduced to avoid the observed Linux 6.18 race.
 - New test-framework consumers fail on genuine guest kernel failures instead
   of timing out later. Existing intentional crash tests use a scoped allowance.
+- Livepatch modules are loaded into a QEMU guest. Ordinary livepatch faults are
+  expected to affect only that guest, but host KVM/SVM bugs remain a residual
+  risk because the production runner exposes `/dev/kvm`.
+- Runner4 has no `self-hosted`, OS, or architecture default labels, so generic
+  jobs continue to use runners 1-3. Pull-request use of the explicit
+  `amd-livepatch` label remains allowed by user decision.
+- The runner and DNS changes are additive. Rollback removes or disables
+  runner4 and its DNS record; unmatched AMD jobs then remain queued.
 - Mixed versions are safe: consumers pinned to the old test framework retain
   old behavior, while updated consumers receive detection and serialization.
 - Rollback consists only of reverting the framework/input commits. No state
@@ -63,3 +84,9 @@ kernel failure.
   and a vpsAdminOS node with the updated shared framework.
 - Push both feature branches, inspect GitHub Actions and artifacts, and cancel
   only superseded runs whose SHA no longer matches the branch head.
+- Validate workflow syntax, the internal DNS zone, and the evaluated runner4
+  configuration. Before activation, verify the VPS exposes an AMD CPU with
+  `svm`, `npt`, `nrip_save`, and a usable `/dev/kvm`.
+- Run both Intel and AMD lifecycle jobs. Confirm generic jobs remain on runners
+  1-3, AMD runs only on runner4, QEMU is cleaned up, and the host node reports
+  no KVM/SVM fault after the first run.
