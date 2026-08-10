@@ -50,7 +50,7 @@
   required Safe RET mitigation. The test now matches the semantic mitigation
   name, as the comprehensive 6.12.95 regression already does.
 - The old vpsAdmin integration run `31380971998` was superseded by the final
-  pin rewrite and has a cancellation request pending.
+  pin rewrite and is confirmed cancelled.
 - All four feature branches are published. The vpsAdmin pin was rebuilt from
   current `origin/master` with the repository helper after publishing the
   final vpsAdminOS SHA.
@@ -178,8 +178,8 @@
 - Runner activation, AMD CPU feature checks, and QEMU cleanup are verified.
   The first hardware run exposed only the over-specific mitigation wording
   assertion and did not load a patch.
-- Next: monitor fresh vpsAdminOS and vpsAdmin CI through a complete AMD
-  lifecycle and final downstream validation.
+- Next: monitor the queued Intel lifecycle and the active final vpsAdmin
+  selected integration to their terminal results.
 - Direct host KVM/SVM log inspection is unavailable from this workspace and is
   an operator-only residual check. The user confirmed that access to the
   running system is not available here; do not retry SSH-based probing.
