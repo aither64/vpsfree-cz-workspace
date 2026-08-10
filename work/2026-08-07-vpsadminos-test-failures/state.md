@@ -12,6 +12,32 @@
 - `vpsadminos-org-configuration`
   - inspected read-only through canonical bare repository at `origin/master`
   - no branch or worktree created
+- Consumer rollout target:
+  `837baf04054c6ee0e71d288b8870ac42a6990c38` on vpsAdminOS `staging`
+- Consumer branch: `2026-08-07-vpsadminos-test-failures` in every repository
+- Consumer worktrees under
+  `worktrees/2026-08-07-vpsadminos-test-failures/`:
+  - `vpsadmin`: original base `63c2c44f6`, rebased onto `95f8d9ca7`, head
+    `4b340a7240`, merged into `master` by fast-forward at the same head;
+    post-merge CI passed and both worktrees were removed
+  - `confctl`: base `b6d7245`, head `9eaa0ee73f`, merged into `master` by
+    fast-forward at the same head; post-merge CI passed and both worktrees
+    were removed
+  - `terraform-provider-vpsadmin`: base `6e35529`, head `1275e4282e`, merged
+    into `master` by fast-forward at the same head; post-merge CI passed and
+    both worktrees were removed
+  - `vpsf-status`: base `e68cbaa`, head `5739e1f226`, merged into `master` by
+    fast-forward at the same head; post-merge CI passed and both worktrees
+    were removed
+  - `vpsfree-irc-bot`: base `d17a852`, head `b41dbafd81`, merged into
+    `master` by fast-forward at the same head; post-merge CI passed and both
+    worktrees were removed
+  - `web`: base `8603ad0`, head `9c76351dfe`, merged into `master` by
+    fast-forward at the same head; post-merge CI passed and both worktrees
+    were removed
+  - `vpsadmin-kb-captures`: base `fe07bdf`, head `f54352d56b`, merged into
+    `master` by fast-forward at the same head; feature and merge worktrees
+    removed
 
 ## Status
 
@@ -24,6 +50,18 @@ Follow-up review found no remaining blocking, important, or advisory findings.
 All feature-branch exact-head workflows passed. Post-merge RuboCop and RSpec
 also passed; post-merge CI encountered a new Fedora 44 package-script failure
 unrelated to these commits. No runner configuration change was made.
+
+A follow-up rollout updated all lock-bearing workspace users
+of the test framework from vpsAdminOS `31b3dff4306cce8904ac45630a931a7b72d36507`
+to `837baf04054c6ee0e71d288b8870ac42a6990c38`. The latter contains the runner
+fixes, the Fedora runtime-test mitigation, current Nixpkgs inputs, and packaged
+gem updates. Downstream vpsAdmin application revisions remain unchanged.
+
+All seven lock-only commits are published and fast-forwarded into their default
+branches. Every GitHub workflow passed at the merged head, and all feature and
+merge worktrees were removed while retaining the feature branches. The KB
+capture repository has no GitHub workflow; its local static checks and
+runtime-equivalent cluster closure build passed.
 
 ## Commands run
 
@@ -72,12 +110,53 @@ unrelated to these commits. No runner configuration change was made.
   `udisks2-2.11.2-1.fc44` update transaction and verified normal QEMU exits
 - removed the clean feature and temporary merge worktrees after verifying both
   remote refs; retained the downloaded artifact only under `/tmp`
+- created isolated worktrees and the same-named feature branch for all seven
+  lock-bearing test-framework consumers
+- updated each lock from `31b3dff4306cce8904ac45630a931a7b72d36507` to
+  `837baf04054c6ee0e71d288b8870ac42a6990c38`, preserving each indirect
+  consumer's existing vpsAdmin revision
+- verified every consumer commit changes only `flake.lock`, resolves the exact
+  requested vpsAdminOS revision, and leaves its worktree clean
+- installed or signed each declared hook framework and committed with all
+  hooks passing; confctl and vpsfree-irc-bot pushes used their pinned Nix
+  shells because ambient Overcommit rejected the worktree-local signature
+- enumerated CI-tagged tests with the updated runner: 134 vpsAdmin entries, 5
+  confctl, 2 vpsfree-irc-bot, and one each for the Terraform provider,
+  vpsf-status, and web
+- ran `nix develop -c bin/check` in vpsadmin-kb-captures: contract, annotation,
+  inventory, and both test suites passed
+- diagnosed a bare KB `cluster-config` build failure as an invalid diagnostic
+  invocation: the source default intentionally contains no runtime CA, while
+  `bin/devcluster` generates the CA and passes its ignored directory through
+  impure evaluation; repeated the build with that supported runtime input and
+  successfully built both the runner and complete cluster configuration
+- pushed all seven feature branches over SSH and began monitoring every
+  exact-head GitHub workflow in the six repositories that have CI
+- detected that vpsadmin `master` advanced to `95f8d9ca7` while its initial
+  feature CI was running, rebased the lock-only commit without conflict,
+  refreshed the changed API bundle, reran all hooks and the 134-test
+  enumeration, and force-pushed with a lease
+- cancelled only superseded vpsadmin CI run `31320376221`, whose old head
+  `e64c313401` no longer matched the published branch head
+- fetched the KB capture default branch, fast-forwarded it in a fresh detached
+  merge worktree, reran `nix develop -c bin/check`, fetched again, pushed
+  `master` at `f54352d56b`, and removed both KB worktrees while retaining the
+  feature branch
 
 ## Commits
 
 - base: `8d5fe0058f5f4db3840c7d8043c7aba3b88ccca4`
 - `a351e2172` — `test-runner: account for initial host memory use`
 - `ccd22b65f` — `osvm: handle signaled qemu exits safely`
+- consumer commits, all titled
+  `flake: vpsadminos 31b3dff43 -> 837baf040`:
+  - vpsadmin `4b340a7240` after rebase onto current `master`
+  - confctl `9eaa0ee73f`
+  - terraform-provider-vpsadmin `1275e4282e`
+  - vpsf-status `5739e1f226`
+  - vpsfree-irc-bot `b41dbafd81`
+  - web `9c76351dfe`
+  - vpsadmin-kb-captures `f54352d56b`
 
 ## Mandatory change review
 
@@ -99,6 +178,75 @@ Fixes were autosquashed into their owning commits. The final full spec suites
 and Overcommit hooks pass. The same reviewer verified the rewritten head and
 reported no remaining findings. The full VM CI run now also passes. Direct
 cgroup-v1 headroom coverage remains a test gap; cgroup v2 is covered.
+
+## Consumer rollout validation
+
+All non-VM feature-branch workflows for the initial consumer heads passed.
+The vpsadmin runs listed first were superseded by a required rebase and are no
+longer validation for its current head:
+
+- superseded vpsadmin Client Specs `31320376247`
+- superseded vpsadmin Webui PHPUnit `31320376224`
+- superseded vpsadmin i18n health `31320376236`
+- superseded vpsadmin libnodectld Specs `31320376258`
+- confctl RuboCop `31320392406`
+- confctl RSpec `31320392398`
+- vpsfree-irc-bot RSpec `31320391730`
+
+Exact-head VM workflow IDs:
+
+- vpsadmin CI `31326791937` at rebased head `4b340a7240`
+- confctl Tests `31320392402`
+- terraform-provider-vpsadmin Integration Tests `31320375797`
+- vpsf-status Integration Tests `31320375811`
+- vpsfree-irc-bot Integration Tests `31320391729`
+- web Integration Tests `31320376385`
+
+All feature VM runs passed. The initial vpsadmin CI run
+`31320376221` was cancelled after `master` advanced and the lock commit was
+rebased. Replacement CI run `31326791937` passed at `4b340a7240`. Fresh
+RuboCop, API, client, WebUI, i18n, migration, and libnodectld workflows passed
+at that exact head, including all API shards in run `31326791945`. The VM run
+waited for shared-runner capacity, started at 17:54 UTC, and completed after
+about 4 hours 26 minutes.
+
+vpsadmin `master` was fast-forwarded to `4b340a7240` after a fresh fetch, a
+full six-hook Overcommit run, and enumeration of 134 CI-tagged tests. The push
+triggered post-merge CI run `31339595176`, Webui PHPUnit run `31339595200`,
+i18n health run `31339595180`, libnodectld Specs run `31339595184`, and Client
+Specs run `31339595177` at that exact head. The four fast workflows passed.
+The full VM run started on `gh-runner2.int.vpsadminos.org` immediately after
+another six-hour job released it. It passed after 7 hours 23 minutes 45
+seconds, within recent runner2 successful durations of 4 hours 45 minutes to
+7 hours 24 minutes. Remote `master` and the retained feature branch were then
+verified at the exact merged head, and both worktrees were removed.
+
+Terraform provider `master` was fast-forwarded to `1275e4282e` after a fresh
+fetch and merge-tree runner enumeration. Post-merge Integration Tests run
+`31322295752` passed at that exact head. Both worktrees were removed after
+remote-ref verification; the feature branch was retained.
+
+vpsfree-irc-bot `master` was fast-forwarded to `b41dbafd81` after a fresh
+fetch, merge-tree Overcommit run, and runner enumeration. Post-merge RSpec run
+`31322693412` and Integration Tests run `31322693413` passed at that exact
+head. Both worktrees were removed after remote-ref verification; the feature
+branch was retained.
+
+web `master` was fast-forwarded to `9c76351dfe` after a fresh fetch and
+merge-tree runner enumeration. Post-merge Integration Tests run `31322897309`
+passed at that exact head. Both worktrees were removed after remote-ref
+verification; the feature branch was retained.
+
+confctl `master` was fast-forwarded to `9eaa0ee73f` after a fresh fetch,
+merge-tree Overcommit run, and runner enumeration. Post-merge RSpec run
+`31323810818`, Tests run `31323810819`, and RuboCop run `31323810830` passed
+at that exact head. Both worktrees were removed after remote-ref verification;
+the feature branch was retained.
+
+vpsf-status `master` was fast-forwarded to `5739e1f226` after a fresh fetch,
+merge-tree Lefthook run, and runner enumeration. Post-merge Integration Tests
+run `31324173031` passed at that exact head. Both worktrees were removed after
+remote-ref verification; the feature branch was retained.
 
 ## Results
 
@@ -260,9 +408,11 @@ rejected as unsafe workarounds.
 
 ## Cleanup
 
-- The feature branch remains available locally and remotely after merge.
-- Feature and temporary merge worktrees were removed after the post-merge
-  evidence was recorded.
+- The vpsAdminOS and all seven consumer feature branches remain available
+  locally and remotely after merge.
+- Every initiative feature and temporary merge worktree was removed after its
+  post-merge evidence was recorded. Ignored per-worktree build and gem caches
+  were removed with their worktrees and can be regenerated normally.
 - Downloaded post-merge artifacts remain only under `/tmp` for automatic
   system cleanup; the combined manual deletion command was rejected before
   execution, so no unrelated path was touched.
