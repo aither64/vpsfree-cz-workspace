@@ -6,12 +6,12 @@
   - branch: `2026-08-09-test-vm-kernel-oops`
   - worktree: `worktrees/2026-08-09-test-vm-kernel-oops/vpsadminos`
   - current base: `origin/staging` / `579737ac9`
-  - current head: `cf1994bfb`
+  - current head: `67fcc1737`
 - `vpsadmin`
   - branch: `2026-08-09-test-vm-kernel-oops`
   - worktree: `worktrees/2026-08-09-test-vm-kernel-oops/vpsadmin`
   - current base: `origin/master` / `a0e2c7af4`
-  - current head: `5ceadff4b`
+  - current head: `8b883cfb5`
 - `vpsadminos-org-configuration`
   - branch: `2026-08-09-test-vm-kernel-oops`
   - worktree:
@@ -36,19 +36,31 @@
   checksums remain.
 - Lifecycle CI now selects the existing `vpsAdminOS runners` group using
   `intel-kvm` and `amd-livepatch`. Existing runners 1-3 are unchanged.
-- `gh-runner4.int.vpsadminos.org` is configured at `172.16.4.31` without
-  default GitHub labels and with only `amd-livepatch`.
-- VPS 30102 is operational inventory only; the user will place it on an AMD
-  production node and provision its runner secret before activation.
+- `gh-runner4.int.vpsadminos.org` is deployed at `172.16.4.31` and activated
+  on GitHub. Job metadata confirms it receives only the `amd-livepatch` job.
+- VPS 30102 is operational inventory only. The user placed it on an AMD
+  production node and completed runner activation.
 - Internal DNS contains the runner4 A record with zone serial `2026081001`.
 - Obsolete CI run `31324312195` is cancelled. Its AMD job was permanently
   queued for the retired `self-hosted,Linux,X64,amd-kvm` selector.
-- Current vpsAdminOS CI run `31380014093` is waiting only for AMD job
-  `93428443248`. Current vpsAdmin integration run `31380971998` is still
-  active.
+- vpsAdminOS CI run `31380014093` reached runner4. AMD job `93428443248`
+  failed before loading a livepatch because the test pinned the complete
+  `spec_rstack_overflow` status to `Vulnerable: Safe RET, no microcode`.
+  Runner firmware/microcode produced different wording while retaining the
+  required Safe RET mitigation. The test now matches the semantic mitigation
+  name, as the comprehensive 6.12.95 regression already does.
+- The old vpsAdmin integration run `31380971998` was superseded by the final
+  pin rewrite and has a cancellation request pending.
 - All four feature branches are published. The vpsAdmin pin was rebuilt from
   current `origin/master` with the repository helper after publishing the
   final vpsAdminOS SHA.
+- The corrected vpsAdminOS head `67fcc1737` is published and CI run
+  `31392730922` is queued. The vpsAdmin input is now pinned to that exact SHA
+  in the single rewritten pin commit `8b883cfb5`; its fresh workflows have
+  started.
+- Superseded vpsAdmin CI run `31380971998` on `5ceadff4b` received a
+  cancellation request after the force-push, as required for a run whose
+  `headSha` no longer matches the branch.
 
 ## Commits
 
@@ -57,12 +69,13 @@
   - `8e3d6db57 tests: fail on guest kernel failures`
   - `cf38f27a7 tests/kernel: stop hashing livepatch candidates`
   - `cf1994bfb ci: reserve AMD runner for livepatch checks`
+  - `67fcc1737 tests/kernel: match Safe RET status semantically`
 - vpsadminos-org-configuration:
   - `3fd69cc cluster: add dedicated AMD livepatch runner`
 - vpsfree-cz-configuration:
   - `f25dc345 internal-dns: add gh-runner4.int.vpsadminos.org`
 - vpsAdmin:
-  - `5ceadff4b flake: vpsadminos 837baf040 -> cf1994bfb`
+  - `8b883cfb5 flake: vpsadminos 837baf040 -> 67fcc1737`
 
 ## Verification
 
@@ -98,7 +111,7 @@
     examples against vpsAdminOS `cf1994bfb` in 453.15 seconds;
   - vpsAdminOS RSpec and RuboCop Actions passed on `cf1994bfb`;
   - the Intel livepatch lifecycle job and the generic full suite passed on
-    `cf1994bfb`; the AMD lifecycle job is correctly queued for runner4;
+    `cf1994bfb`;
   - the generic suite ran on runner1 and completed its test-state cleanup step
     successfully;
   - vpsAdmin RuboCop, WebUI PHPUnit, migration specs, client specs, i18n,
@@ -111,6 +124,27 @@
   - organization-wide runner inventory could not be read because the active
     GitHub token lacks the required Actions administration scope. Repository
     job metadata remains sufficient to verify current workflow routing.
+  - AMD job metadata identifies `gh-runner4.int.vpsadminos.org`, runner group
+    `vpsadminos runners`, and label `amd-livepatch`;
+  - its guest booted with `AuthenticAMD`, `svm`, `npt`, and `nrip_save`; the
+    failure artifact contains no Oops or panic and shows the exact full-line
+    sysfs assertion failed before any candidate or predecessor module load;
+  - the failed AMD job uploaded diagnostics, completed test-state cleanup, and
+    QEMU exited with status 0. The evidence therefore shows neither the guest
+    nor the production host crashed;
+  - the corrected test evaluates as both `#amd` and `#intel`, Nix formatting
+    and `git diff --check` pass, and the installed Overcommit pre-commit hook
+    passes.
+  - an ambient-shell commit attempt was blocked because its active Overcommit
+    hook could not find `nixfmt`. The hook passes inside `nix develop`, so the
+    commit is run there without bypassing validation. This is recorded in
+    `notes/vpsadminos/2026-08-10-overcommit-nix-develop.md`.
+  - the vpsAdmin pin helper changed only `flake.lock`; its ambient-shell commit
+    was blocked because `msgattrib` and MariaDB were unavailable. The staged
+    helper result was committed inside `nix develop .#vpsadmin`, where Nixfmt,
+    migration, WebUI i18n, API i18n, and commit-message hooks all passed. This
+    known requirement is documented in
+    `notes/vpsadmin/2026-07-20-overcommit-requires-root-devshell.md`.
 - The root filesystem reached the non-root reserve while another session built
   a KVM initrd. Removing only this initiative's caches was insufficient; after
   that active build completed, standard `nix-store --gc` removed unreferenced
@@ -122,16 +156,20 @@
   Advisory findings. It confirmed the checksum policy, runner routing,
   unchanged runners 1-3, additive DNS/configuration, compatibility assumptions,
   and commit split.
-- Residual review gaps are hardware and registration preflight, the AMD half
-  of dual-vendor CI, AMD QEMU cleanup, host KVM/SVM log inspection, and the
-  terminal result of the still-running vpsAdmin selected integration tests.
-- Next: preflight and activate runner4 after the user places VPS 30102 on an
-  AMD node and provisions its runner secret. Then monitor the AMD lifecycle
-  job through cleanup and inspect the host node's KVM/SVM log.
-- Before runner activation, verify `AuthenticAMD`, `svm`, `npt`, `nrip_save`,
-  usable `/dev/kvm`, and no IP conflict inside VPS 30102.
-- After the first AMD lifecycle run, verify runner/QEMU cleanup and inspect the
-  host node for KVM/SVM faults.
+- A second mandatory standalone review after the runner4 false negative found
+  no Blocking, Important, or Advisory findings. It confirmed that `67fcc1737`
+  retains the AMD vendor, virtualization, nested-SVM, and relevant Safe RET
+  preconditions while removing only firmware/microcode-dependent presentation
+  text. Keeping the hardware-discovered correction as a separate commit is
+  justified because the preceding series was already published and reviewed.
+- Runner activation, AMD CPU feature checks, and QEMU cleanup are verified.
+  The first hardware run exposed only the over-specific mitigation wording
+  assertion and did not load a patch.
+- Next: monitor fresh vpsAdminOS and vpsAdmin CI through a complete AMD
+  lifecycle and final downstream validation.
+- Direct host KVM/SVM log inspection is unavailable from this workspace and is
+  an operator-only residual check. The user confirmed that access to the
+  running system is not available here; do not retry SSH-based probing.
 
 ## Cleanup
 

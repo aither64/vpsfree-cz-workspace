@@ -47,6 +47,10 @@ runner that cannot receive generic self-hosted jobs.
    GitHub's default runner labels and with only `amd-livepatch`, plus its
    internal DNS record. VPS ID 30102 is operational inventory and is not
    represented in the vpsadminos.org configuration module.
+9. Require the AMD 6.12.95 guest to use the Safe RET mitigation because the
+   livepatch changes that code path. Match the semantic mitigation name, not
+   the complete sysfs vulnerability status: its firmware and microcode wording
+   can change independently of the livepatch behavior under test.
 
 ## Compatibility and deployment
 
