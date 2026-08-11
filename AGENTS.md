@@ -282,7 +282,7 @@ DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
 access to production uses one token per wiki:
 
 For vpsAdmin changes that can affect visible WebUI documentation, follow the
-canonical workflow in `vpsadmin-kb-captures/docs/webui-change-workflow.md`.
+canonical workflow in `vpsfree-kb-contracts/docs/webui-change-workflow.md`.
 Use `bin/kb-contract-fetch`, `bin/kb-contract-build`, and
 `bin/kb-contract-manifest` for durable all-page candidate preparation; keep
 capture generation and the documentation contract in the independent capture
@@ -397,11 +397,11 @@ These repositories are in scope for this workspace:
 - `security-advisories`: evidence-backed vpsFree.cz platform security
   assessments, including vpsAdmin Node evidence collection, advisory
   evaluation, and preparation of unpublished vpsAdmin drafts.
-- `vpsadmin-kb-captures`: independent, reproducible Czech/English screenshot
-  inventory and WebUI documentation contract for the vpsFree.cz knowledge
-  bases. Its canonical `docs/webui-change-workflow.md` must be followed when a
-  vpsAdmin feature can change visible labels, navigation, forms, layout, or
-  screenshots.
+- `vpsfree-kb-contracts`: independent, reproducible Czech/English article,
+  runtime-test, screenshot, and WebUI documentation contracts for an explicit
+  subset of the vpsFree.cz knowledge bases. Its canonical
+  `docs/webui-change-workflow.md` must be followed when a vpsAdmin feature can
+  change visible labels, navigation, forms, layout, or screenshots.
 - `ruby-lxc`: Ruby native extension wrapping liblxc. It is consumed by
   vpsAdminOS `osctld` and may need coordinated gem releases for Ruby or LXC
   upgrades.
