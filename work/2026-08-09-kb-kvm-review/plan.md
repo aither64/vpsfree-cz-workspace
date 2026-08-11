@@ -147,3 +147,38 @@ revision history; no coordinated node update is required.
 - Fetch the complete Czech and English KB corpus, validate navigation and
   annotations, scan backlinks to deletion candidates, stage the manifest, and
   verify staged pages and media before requesting production approval.
+
+## Generic managed-article follow-up
+
+The repository will become `vpsfree-kb-contracts` and will own an explicit
+subset of source-controlled KB articles together with their screenshots,
+samples, contracts, and runtime tests. The KVM guide is the first registered
+article; this does not make the repository authoritative for the complete KB.
+
+- Replace the KVM-specific runtime manifest and checker with a generic article
+  registry validated against the external test framework's `testsMeta` output.
+  Every article test script carries the common `kb-runtime` tag and an
+  article-specific `kbArticle` label. CI derives one runtime job per article
+  from the registry.
+- Add a visible localized maintenance note to every managed page, linking its
+  canonical source and automated test and directing contributors away from
+  direct wiki edits. Update both KB authoring guides with the managed-page
+  exception.
+- Extend candidate construction with managed-article replacement and a
+  three-way reconciliation among the fetched wiki page, the explicit Git base
+  commit, and the current canonical source. Wiki-only changes are never
+  overwritten: release preparation stops until they are explicitly adopted or
+  merged into Git and pass the contract and tests.
+- Rename the GitHub repository and active references. Keep the existing
+  capture provenance identifier and flake outputs compatible. Since unrelated
+  sessions still have linked worktrees using the old local bare path, expose
+  the new project name through a temporary ignored symlink and defer moving the
+  bare directory until those worktrees are gone.
+- Rebuild and stage the KVM pages and the Czech/English authoring guides after
+  the repository rename. Production publication remains separately approval
+  gated.
+
+The shared candidate-plan schemas 1 through 3 remain supported. Schema 4 adds
+managed articles without changing DokuWiki release manifests or production
+write safeguards. No vpsAdmin, vpsAdminOS, database, API, protocol, node
+configuration, or persisted-state change is introduced.

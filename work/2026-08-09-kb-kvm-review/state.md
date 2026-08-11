@@ -1388,6 +1388,55 @@
 - Await explicit production approval before promoting either language or
   deleting the two obsolete production pages.
 
+## Generic managed-article follow-up
+
+- The user approved making the repository authoritative for an explicit
+  managed subset of KB articles, using per-article runtime CI and three-way
+  reconciliation for direct wiki edits.
+- The selected GitHub name is `vpsfree-kb-contracts`. Existing GitHub web/Git
+  redirects will remain available, while the old repository name must not be
+  reused.
+- The current capture worktree is clean at `984d7d0`. Upstream `master`
+  advanced by one vpsAdminOS consumer-pin commit and will be rebased before the
+  follow-up implementation.
+- The shared workspace checkout contains unrelated edits and untracked files.
+  Only initiative paths and isolated AGENTS project-name hunks will be staged.
+- Other initiatives still have linked worktrees backed by
+  `repos/vpsadmin-kb-captures.git`; they will not be modified or repaired by
+  this initiative. A temporary `repos/vpsfree-kb-contracts.git` symlink will
+  provide the new project identity until safe final local cleanup.
+- Rebased the capture branch cleanly onto upstream `b670cf0`, including its
+  vpsAdminOS `67fcc173` pin. The article registry and generic workflow use the
+  same revision; no vpsAdminOS source change is part of this initiative.
+- Capture commits `7481685` and `b1a006c` respectively generalize managed
+  article contracts and adopt the `vpsfree-kb-contracts` identity. The first
+  commit is behavior-focused; the second is the mechanical repository rename
+  and deliberately retains the schema-5 capture provenance identifier.
+- `nix develop --command bin/check --allow-missing` passes with 39 controls,
+  29 paths, 69 annotation bindings, one managed article, five tests, five
+  executable samples, and all 59/118 capture variants. The generic article
+  checker unit suite passes 8 examples/20 assertions.
+- Workspace commit `0c79f59` adds schema-4 managed-article candidate building,
+  explicit three-way reconciliation, and compatibility tests. Schemas 1-3 and
+  release manifest schema 3 remain unchanged. The focused workspace suite
+  passes 25 examples/124 assertions.
+- The guarded production corpus reconciles as the explicit KVM bootstrap at
+  pre-feature base `origin/master`. Candidate construction produces four
+  changed pages and the two existing dataset media updates. Complete-corpus
+  navigation validation passes with two routed-address annotations per KVM
+  language, including the IPv6 paragraph.
+- Current candidate SHA-256 values are Czech authoring guide
+  `da86d3e0d33aafa65640604b142cee6b09ac70a4499171041d1f2b7231788cc8`,
+  Czech KVM
+  `9572b9620482683ffd62d343e20d3e27986dabb53fa2ed68d136c2850fd79636`,
+  English authoring guide
+  `6f99ad0930c0259d56e6cda6eba164795734237c91266920d6a7ff710a5d2a20`,
+  and English KVM
+  `c105081b0a21772ebef99ed05529413693ca2bc5ebcbec753560104ecb5d4e97`.
+  Both KVM candidates are byte-identical to their canonical article sources.
+- Refreshed localized release manifests each contain two pages and one media
+  update. Production and staging have not been written during this follow-up.
+
 ## Cleanup
 
 - Keep the feature worktree until the branch is merged or abandoned.
