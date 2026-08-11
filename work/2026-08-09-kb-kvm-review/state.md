@@ -1748,3 +1748,25 @@
   untouched. Before an explicitly approved promotion, the production KB
   container must deploy configuration `c29a3c34` so production renders the
   same plugin behavior already validated on staging.
+- The user approved publication and deployed production KB configuration
+  `c29a3c34`. Production preflight authenticated `aither` as an administrator
+  on both wikis and reverified both staged manifests.
+- The first Czech promotion attempt was safely refused before any write because
+  the pending-release lock still named the last-staged English manifest. The
+  Czech manifest was restaged, verified, and promoted first; the English
+  manifest was then restaged, verified, and promoted. Each promotion wrote two
+  pages and one media object using its informative localized manifest summary.
+- `bin/kb-release verify --production` passes for both manifests. Authenticated
+  live production HTML checks also pass for both KVM pages and editor views:
+  Edit is present, source/test/guide URLs and localized notice text match,
+  required links use the safe new-tab attributes, authoring-guide links remain
+  local to their wiki, and normal rendering exposes neither the managed marker
+  nor the automated-test URL.
+- The staging pending-release lock cleared after promotion. The shared staging
+  container was stopped and its ownership released while retaining its data.
+  Production publication is complete.
+- Removed the clean merged plugin, contract, and configuration feature
+  worktrees and the empty integration directory. Preserved the dirty
+  vpsAdminOS investigation worktree untouched: it contains uncommitted
+  experimental shared-framework changes that were excluded from the final
+  capture-side design and were never merged to a default branch.
