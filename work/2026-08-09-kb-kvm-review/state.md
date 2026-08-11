@@ -1727,3 +1727,24 @@
   and English toolbar/editor output. Production content remains untouched and
   its separately approval-gated promotion additionally requires deployment of
   the production KB container configuration.
+- The operator deployed aitherdev configuration `c29a3c34`. The staging
+  container was stopped and started to load the new closure while preserving
+  session ownership, then reset to a fresh production mirror: 116 Czech pages,
+  70 English pages, 58 language pairs, and 224 shared media objects at
+  `2026-08-11T16:54:52Z`.
+- Both regenerated manifests were staged and verified together after the reset.
+  The pending English manifest SHA-256 is
+  `3a1ef0bb676fa8a37d82747b4003aa1fc2fec5151ab658572fbafb6a0e6eeb44`;
+  a final pass verified both `cz-staging` and `org-staging` after all writes.
+- Authenticated live HTML checks passed on `navody:vps:kvm` and
+  `manuals:vps:kvm`. Both normal pages retain an Edit action, contain exactly
+  one toolbar source link with the registered URL, and hide the managed marker
+  and automated-test URL. Both editor views render the exact agreed localized
+  notice with source, test, and localized in-wiki authoring-guide links. The
+  toolbar source and all three notice links use `target="_blank"` and
+  `rel="noopener noreferrer"`; the guide links resolve locally to
+  `/informace/jak_psat` and `/information/kb`. The edit form remains present.
+- The reviewed release is ready on staging. Production content remains
+  untouched. Before an explicitly approved promotion, the production KB
+  container must deploy configuration `c29a3c34` so production renders the
+  same plugin behavior already validated on staging.
