@@ -1712,3 +1712,18 @@
   both staging DokuWiki closures; the production build included both public
   DokuWiki closures. The builds were intentionally serialized to avoid
   `confctl`'s known same-worktree log collision.
+- Fresh integration worktrees fast-forwarded plugin `master` to `8ba8897` and
+  configuration `master` to `c29a3c34`. The plugin's complete `nix develop -c
+  bin/check` suite and both sequential configuration target evaluations passed
+  again from the integration worktrees before the SSH pushes. The temporary
+  integration worktrees and their generated `.bin`/`.bundle` paths were
+  removed; feature branches and feature worktrees remain until live staging
+  validation is complete.
+- Staging remains owned by this initiative and still has the prior English
+  release manifest staged. It must not be restaged yet: aitherdev has to deploy
+  configuration `c29a3c34`, then the persistent on-demand container must be
+  stopped and started so it loads the new closure. After that, reset the mirror,
+  stage and verify both regenerated manifests, and inspect authenticated Czech
+  and English toolbar/editor output. Production content remains untouched and
+  its separately approval-gated promotion additionally requires deployment of
+  the production KB container configuration.
