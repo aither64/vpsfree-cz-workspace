@@ -169,6 +169,11 @@ article; this does not make the repository authoritative for the complete KB.
   commit, and the current canonical source. Wiki-only changes are never
   overwritten: release preparation stops until they are explicitly adopted or
   merged into Git and pass the contract and tests.
+- Require the explicit base to be a full commit OID. Managed sources and the
+  registry must match the contract repository's committed HEAD, and registered
+  pages cannot use legacy release-time replacements or sample expansion. Bind
+  the base, contract HEAD, registry digest, and canonical page digests into the
+  candidate index and generated schema-3 release manifests.
 - Rename the GitHub repository and active references. Keep the existing
   capture provenance identifier and flake outputs compatible. Since unrelated
   sessions still have linked worktrees using the old local bare path, expose

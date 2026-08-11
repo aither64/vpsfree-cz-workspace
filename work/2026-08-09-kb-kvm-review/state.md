@@ -1451,14 +1451,54 @@
   pre-registry `articles/...` path and stopped before the remaining checks.
   Repeating it with the registry's `contract/pages/...` source paths passed;
   this was a validation-command correction, not a content change.
+- Mandatory change review of workspace range `d1b1344..30b00be` and contract
+  range `b670cf0..b1a006c` rejected integration pending two Blocking findings,
+  one Important finding, and one Advisory correction. It found that legacy
+  release transformations could alter a reconciled or omitted managed page,
+  that `testsMeta` coverage was only registry-to-tests rather than
+  bidirectional, that movable Git bases and source identity were not retained
+  in release artifacts, and that the cleanup note below named the superseded
+  vpsAdminOS pin.
+- Contract commits `fa690b0` and `289f358` address runtime-test coverage and
+  document immutable provenance. The checker now inventories every
+  `kb-runtime` tag and `kbArticle` label across all suites and rejects missing,
+  unknown, untagged, and cross-suite labels before CI matrix construction.
+  Eleven examples/31 assertions pass, including the three negative coverage
+  cases requested by review.
+- Workspace commit `cca890e` requires full 40-character base OIDs, committed
+  registry and canonical sources, blocks every legacy page transformation and
+  release-time sample expansion for registered pages, compares reconciled
+  candidates exactly with canonical sources, and rejects changed registered
+  pages omitted from `managed_articles`. Candidate artifacts now record base
+  `b670cf0f780e11c8a92451418710c2811c227cfe`, contract HEAD
+  `289f35849d0e5a8dafa36d4a995b80b41a1e9c72`, registry SHA-256
+  `edde17892b447100c2c96538d8611965886ed0bfb8a78cbeb81d99ffa0d59021`,
+  and both canonical page digests. Generated schema-3 manifests retain and
+  validate the same provenance without breaking manifests that do not manage
+  repository articles.
+- Focused review-fix verification passes: candidate tooling has 29 examples/
+  144 assertions and release validation has 27 examples/95 assertions. The
+  rebuilt release still contains two pages and one media object per language;
+  the KVM candidates retain their previously recorded canonical SHA-256
+  values.
+- Full post-review verification also passes at workspace `cca890e` and contract
+  `289f358`: all Ruby entry points pass syntax checks; the complete contract
+  check reports 39 controls, 29 paths, 69 annotation bindings, one article,
+  five tests, five samples, and 118 PNGs; its unit suites pass 50, 18, and 31
+  assertions. Both candidate articles remain byte-identical to canonical
+  sources, complete-corpus annotations pass, both release manifests validate
+  through `KbRelease::Manifest`, and committed-range whitespace checks are
+  clean. All Mandatory review findings are therefore resolved before
+  integration testing.
 
 ## Cleanup
 
 - Keep the feature worktree until the branch is merged or abandoned.
 - The unconsumed vpsAdminOS worktree remains on the abandoned
   `2026-08-09-kb-kvm-review` branch. It contains uncommitted follow-up source
-  resolver experiments, so it was not force-removed or discarded. The capture
-  repository remains pinned to upstream vpsAdminOS `837baf040`; none of this
-  work is consumed, pushed for this final design, or intended for merge.
+  resolver experiments, so it was not force-removed or discarded. None of
+  those experiments is consumed, pushed, or intended for merge. The contract
+  repository instead inherits upstream vpsAdminOS pin `67fcc173` from base
+  `b670cf0`; this initiative changes no vpsAdminOS source.
 - No temporary VM or ad hoc validation environment is permitted.
 - Staging ownership must be released after publication or explicit abandonment.
