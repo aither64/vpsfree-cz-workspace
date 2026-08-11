@@ -1636,3 +1636,30 @@
   there is no execution log or artifact to investigate. The available token
   cannot inspect organization runner availability. No duplicate rerun was
   started.
+- The operator deployed aitherdev. The queued exact-head runtime job then ran
+  on `gh-runner1.int.vpsadminos.org` and passed all five maintained KVM
+  scenarios in 31m54s; contract discovery, exact test preview, result
+  evaluation, summary, and cleanup also passed. The full-log artifact step was
+  skipped because the tests succeeded.
+- The first post-deployment render exposed the on-demand staging container's
+  retained old DokuWiki closure: it rendered `<kb-managed>` as raw text even
+  though the aitherdev host had been switched. `bin/kb-stage stop` followed by
+  `bin/kb-stage start` retained this session's ownership and data while loading
+  the new closure. Staging was then reset to the guarded production mirror and
+  both manifests were staged again, ensuring the plugin was active before the
+  marker pages were saved.
+- Both staged releases verify after the restart and restage. Live anonymous and
+  authenticated HTML checks in Czech and English confirm that normal article
+  content contains neither the raw marker nor the test URL; authenticated page
+  tools are ordered Edit, Source on GitHub, Old revisions, Backlinks, and Top.
+  The editor displays the localized repository-managed warning with canonical
+  source and automated-test links. The authoring guides and media objects are
+  covered by the checksummed release verification.
+- A fresh integration worktree fast-forwarded contract `master` to exact tested
+  head `3c02342` after the complete `nix develop -c bin/check --allow-missing`
+  suite passed again. The integration worktree was removed and the feature
+  branch retained. Pushing `master` started static run `31510515984` and runtime
+  run `31510515817` automatically for the same already-tested SHA; they are not
+  superseded runs and were therefore not cancelled. Production KB content is
+  untouched. The production KB container must load configuration `19c688e`
+  before the separately approval-gated manifest promotion.
