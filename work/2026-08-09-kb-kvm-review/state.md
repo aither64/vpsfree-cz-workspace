@@ -1316,6 +1316,42 @@
   52 seconds. Contract/discovery checks, the maintained runtime tests, result
   evaluation, summary, and cleanup all succeeded. Log upload was intentionally
   skipped because the test was green. No CI failure or rerun occurred.
+- User review requested a final operational wording correction: support, not
+  the user, assigns the private IPv4 `/32`; additional IPv6 `/64` prefixes are
+  already available to users; routed public addresses are not configured on
+  any interface inside the VPS; and the IPv4 introduction must not end in a
+  misleading colon. Both languages and their networking fingerprints are
+  amended in exact head `984d7d00b8c9b90f9547595836fd2fad025136d6`.
+  `eb998dd..984d7d0` changes only those two pages and `contract/runtime.yml`;
+  the fixture and test tree objects are identical.
+- Quick verification at `984d7d0` passes: `git diff --check`, the focused
+  runtime contract (2 pages, 5 tests, 5 samples), and `nix develop -c
+  bin/check` (8/50, 8/18, 6/16, inventory 59/118). A fresh standalone mandatory
+  reviewer found no Blocking, Important, or Advisory issues, independently
+  confirmed all requested wording, commit cohesion, unchanged pins and runtime
+  behavior, and judged a new long VM run disproportionate. Existing `eb998dd`
+  local and CI execution remains valid because the executable/test tree did
+  not change. The operational availability of additional `/64` prefixes is a
+  user-supplied policy; the integration test covers their routing mechanics.
+- Amended capture head `984d7d0` was force-pushed with an exact lease over
+  `eb998dd`; no superseded queued or in-progress runs existed. GitHub static
+  run `31472977370` passed at the new head in 5 minutes 36 seconds. Runtime run
+  `31472977319` was triggered automatically and passed at the same head in
+  23 minutes 7 seconds. Contract/test discovery, the maintained tests, result
+  evaluation, summary, and cleanup all succeeded; full-log upload was skipped
+  because the test was green. No failure or rerun occurred.
+- Production was fetched again and remains at the same 116/70-page inventory,
+  KVM source revisions, page hashes, deletion hashes, and source-index hash.
+  Rebuilt candidates are byte-identical to `984d7d0`: Czech SHA-256
+  `de3edb64ae3a6c4d15d815409b0f58b2de59d23d0be7f7fef91d56a13e9fec45`
+  and English SHA-256
+  `b2a3bdc144b0129710254c7cb4c280066d8d0567400062d7a2f84cc987dc72d3`.
+- Staging was reset from the superseded candidates to the current production
+  mirror, both corrected manifests were staged and verified, and rendered
+  output contains the corrected private-IPv4 and additional-IPv6 wording. The
+  two obsolete pages matched their guarded production/staging hashes and had
+  zero backlinks before their staging copies were removed again. Production
+  remains untouched.
 - A fresh read-only production fetch still contains 116 Czech and 70 English
   pages. The guarded KVM source revisions and hashes are unchanged. The
   replacement plan was synchronized with the final reviewed contract pages,

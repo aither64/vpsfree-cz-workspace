@@ -597,18 +597,20 @@ content_replacements:
     VPS funguje ve vnitřní síti vpsFree.cz a na internet odchází přes NAT na našich
     routerech; veřejné adresy domény se v libvirt nepřekládají.
 
-    Pro IPv4 nejprve přidejte VPS privátní adresu:
+    Pro IPv4 nejprve požádejte podporu o přidělení privátní IPv4 ''/32'' k VPS.
 
     <vpsadmin-nav id="networking.routable-addresses.open">
     V části **Síť → Routované adresy** pak vyberte veřejnou ''/32'' v poli
     **Adresa**, privátní adresu VPS v poli **Přes** a cílové rozhraní VPS. Veřejná
-    adresa se tím na VPS nepřidá; vpsAdminOS ji k VPS směruje přes privátní adresu.
+    adresa se tím nenastaví na žádném rozhraní uvnitř VPS; vpsAdminOS ji k VPS
+    směruje přes privátní adresu.
     </vpsadmin-nav>
 
-    Pro IPv6 požádejte podporu o další ''/64'' směrovanou přes adresu z běžné
-    ''/64'' VPS. Pokud už máte směrovanou větší síť, například ''/48'', vyberte z ní
-    pro doménu samostatnou ''/64''. První adresu této druhé ''/64'' použijeme jako
-    bránu na bridge libvirt; například pro ''ROUTED_IPV6_PREFIX::/64'' to bude
+    Pro IPv6 použijte další ''/64'', kterou máte v části **Síť → Routované adresy**
+    k dispozici, a nastavte její směrování přes adresu z běžné ''/64'' VPS. Pokud už
+    máte směrovanou větší síť, například ''/48'', vyberte z ní pro doménu
+    samostatnou ''/64''. První adresu této druhé ''/64'' použijeme jako bránu na
+    bridge libvirt; například pro ''ROUTED_IPV6_PREFIX::/64'' to bude
     ''ROUTED_IPV6_PREFIX::1''.
 
     Tok IPv4 paketů používá malou tranzitní síť pouze mezi VPS a doménou:
@@ -1333,20 +1335,21 @@ content_replacements:
     Internet through NAT on our routers; libvirt does not translate the domain's
     public addresses.
 
-    For IPv4, first add a private address to the VPS:
+    For IPv4, first ask support to assign a private IPv4 ''/32'' to the VPS.
 
     <vpsadmin-nav id="networking.routable-addresses.open">
     Under **Networking → Routable addresses**, select the public ''/32'' in
     **Address**, the VPS private address in **Via**, and the target VPS interface.
-    The public address is not added to the VPS; vpsAdminOS routes it to the VPS via
-    the private address.
+    The public address is not configured on any interface inside the VPS; vpsAdminOS
+    routes it to the VPS via the private address.
     </vpsadmin-nav>
 
-    For IPv6, ask support for another ''/64'' routed through an address in the VPS's
-    ordinary ''/64''. If you already have a larger routed network such as a ''/48'',
-    select a dedicated ''/64'' from it for the domain. Use the first address of this
-    second ''/64'' as the gateway on the libvirt bridge; for example,
-    ''ROUTED_IPV6_PREFIX::1'' for ''ROUTED_IPV6_PREFIX::/64''.
+    For IPv6, use another ''/64'' available to you under **Networking → Routable
+    addresses** and route it through an address in the VPS's ordinary ''/64''. If
+    you already have a larger routed network such as a ''/48'', select a dedicated
+    ''/64'' from it for the domain. Use the first address of this second ''/64'' as
+    the gateway on the libvirt bridge; for example, ''ROUTED_IPV6_PREFIX::1'' for
+    ''ROUTED_IPV6_PREFIX::/64''.
 
     IPv4 uses a small transit network only between the VPS and the domain:
 

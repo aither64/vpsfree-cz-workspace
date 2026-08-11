@@ -80,15 +80,17 @@ installer-ISO workaround precise and maintainable.
   automation. Keep this network on a subnet distinct from libvirt's active
   `default` network and call out that interconnected private networks need
   independently generated ULA prefixes.
-- To assign the public IPv4 `/32` to a domain, give the VPS a private IPv4
-  `/32`, route the public address to the VPS through that private address in
-  vpsAdmin, and route it onward over a private libvirt transit network without
-  DNAT or SNAT.
-- Give the routed-address VPS its normal public IPv6 `/64`, then route a
-  separate `/64` through an address in the primary prefix and place that
-  delegated `/64` directly on the libvirt bridge. If the user already has a
-  larger routed prefix such as `/48`, select a dedicated `/64` from it. Do not
-  route individual `/128`s from the VPS's primary `/64` for this design.
+- To assign the public IPv4 `/32` to a domain, ask support to assign the VPS a
+  private IPv4 `/32`, route the public address to the VPS through that private
+  address in vpsAdmin, and route it onward over a private libvirt transit
+  network without DNAT or SNAT. The routed public address is not configured on
+  an interface inside the VPS.
+- Give the routed-address VPS its normal public IPv6 `/64`, then use another
+  `/64` already available to the user, route it through an address in the
+  primary prefix, and place that delegated `/64` directly on the libvirt
+  bridge. If the user already has a larger routed prefix such as `/48`, select
+  a dedicated `/64` from it. Do not route individual `/128`s from the VPS's
+  primary `/64` for this design.
 - Compare the dual-stack NAT and routed-address topologies, including their
   operational advantages and disadvantages. The setup scripts are run when a
   network is created or its addresses change; libvirt autostart, network hooks,

@@ -392,18 +392,20 @@ V tomto zapojení má VPS privátní IPv4 ''/32'' a svou běžnou veřejnou IPv6
 VPS funguje ve vnitřní síti vpsFree.cz a na internet odchází přes NAT na našich
 routerech; veřejné adresy domény se v libvirt nepřekládají.
 
-Pro IPv4 nejprve přidejte VPS privátní adresu:
+Pro IPv4 nejprve požádejte podporu o přidělení privátní IPv4 ''/32'' k VPS.
 
 <vpsadmin-nav id="networking.routable-addresses.open">
 V části **Síť → Routované adresy** pak vyberte veřejnou ''/32'' v poli
 **Adresa**, privátní adresu VPS v poli **Přes** a cílové rozhraní VPS. Veřejná
-adresa se tím na VPS nepřidá; vpsAdminOS ji k VPS směruje přes privátní adresu.
+adresa se tím nenastaví na žádném rozhraní uvnitř VPS; vpsAdminOS ji k VPS
+směruje přes privátní adresu.
 </vpsadmin-nav>
 
-Pro IPv6 požádejte podporu o další ''/64'' směrovanou přes adresu z běžné
-''/64'' VPS. Pokud už máte směrovanou větší síť, například ''/48'', vyberte z ní
-pro doménu samostatnou ''/64''. První adresu této druhé ''/64'' použijeme jako
-bránu na bridge libvirt; například pro ''ROUTED_IPV6_PREFIX::/64'' to bude
+Pro IPv6 použijte další ''/64'', kterou máte v části **Síť → Routované adresy**
+k dispozici, a nastavte její směrování přes adresu z běžné ''/64'' VPS. Pokud už
+máte směrovanou větší síť, například ''/48'', vyberte z ní pro doménu
+samostatnou ''/64''. První adresu této druhé ''/64'' použijeme jako bránu na
+bridge libvirt; například pro ''ROUTED_IPV6_PREFIX::/64'' to bude
 ''ROUTED_IPV6_PREFIX::1''.
 
 Tok IPv4 paketů používá malou tranzitní síť pouze mezi VPS a doménou:
