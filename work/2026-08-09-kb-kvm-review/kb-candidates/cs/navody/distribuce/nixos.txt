@@ -1,0 +1,53 @@
+<page>manuals:distributions:nixos</page>
+====== NixOS ======
+[[https://nixos.org|NixOS]] je distribuce založená na balíčkovacím systému Nix.
+Konfigurace systému a všech služeb se provádí deklarativně. Tato stránka popisuje
+použití NixOS na vpsFree.cz VPS. Pro více informací o NixOS obecně viz
+[[https://nixos.org/learn.html|dokumentace]].
+
+===== Podporované verze =====
+Poskytujeme šablony VPS pro stabilní vydání NixOS a průběžně pro NixOS unstable.
+
+Sami NixOS používáme na naší
+[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastruktuře]].
+Naše virtualizační platforma [[navody:vps:vpsadminos|vpsAdminOS]] je dokonce
+na NixOS a nixpkgs založená.
+
+===== Prvotní konfigurace =====
+VPS je vytvořeno ze šablony, která obsahuje minimální systém a SSH.
+Pro přihlášení je možné použít [[navody:vps:sprava#heslo_roota|vygenerované heslo]],
+nebo si nechat [[navody:vps:sprava#automaticke_vlozeni_klicu|nahrát veřejný klíč]] přes
+vpsAdmin. Systém lze pak spravovat pomocí ''nixos-rebuild'':
+
+<code>
+nixos-rebuild switch --flake /etc/nixos#vps
+</code>
+
+Naše VPS jsou linuxové kontejnery, není zde zavaděč, jádro je sdílené a je potřeba
+určité nastavení pro správnou funkci NixOS. V šabloně je proto vpsAdminOS jako flake input a potřebný
+modul je importován do konfigurace systému.
+
+Při vytvoření VPS a reinstalaci systému je možné do VPS přes vpsAdmin nahrát a nasadit vlastní
+konfiguraci, viz [[navody:vps:userdata|user data]].
+
+===== Správa VPS =====
+Přejdi na [[:domu|návody VPS]] pro více informací o naší infrastruktuře a možnostech VPS.
+
+===== Impermanence =====
+Viz [[navody:distribuce:nixos:impermanence]].
+
+===== GitHub API limit =====
+Nixpkgs se stahují z [[https://github.com/nixos/nixpkgs|GitHubu]] a [[https://nixos.wiki/wiki/Binary_Cache|Binary Cache]]. GitHub nepodporuje IPv6 a má limity buď [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users|per IPv4]] nebo [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-authenticated-users|per uživatel]].
+Při vyčerpání Nix (respektive GitHub API) zahlásí:
+<code>
+error: unable to download 'GITHUB_URL': HTTP error 403 ('')
+
+       response body:
+
+       {"message":"API rate limit exceeded for IP_ADDR. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
+</code>
+Řešením je [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token|vyrobit si personal access token]] (Public repositories, v Permissions není potřeba nic) a [[https://search.nixos.org/options?channel=26.05&query=nix.settings&type=options#show=option%253Anix.settings|předat konfiguraci]] Nixu:
+<code>
+# configuration.nix
+nix.settings.access-tokens = [ "github.com=github_pat_TokenTokenChangeMe" ];
+</code>

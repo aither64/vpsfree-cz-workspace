@@ -1,0 +1,102 @@
+<page>manuals:vps:vpsadminos:docker</page>
+====== Docker na vpsAdminOS ======
+===== Instalace =====
+
+Docker instalujte z repozitářů na docker.com, nedoporučujeme používat Docker
+z distribučních repozitářů, protože bývá starší a můžou tam mít nějaké patche
+navíc. Instalujte podle návodu:
+
+  * [[https://docs.docker.com/engine/install/ubuntu/|Ubuntu]]
+  * [[https://docs.docker.com/engine/install/fedora/|Fedora]]
+  * [[https://docs.docker.com/engine/install/debian/|Debian]]
+  * [[https://docs.docker.com/engine/install/centos/|CentOS 7 a 8]]
+
+Fungovat mohou samozřejmě i jiné distribuce, ale uvádíme jen ty, které jsme testovali.
+
+=== Ubuntu 20.04 LTS ===
+<code>
+apt-get -y update 
+apt-get -y install apt-transport-https ca-certificates curl software-properties-common gnupg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - 
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" 
+apt-get -y update 
+apt-get -y install docker-ce 
+</code>
+
+=== Fedora 33 ===
+Upstream verzi Dockeru //moby-engine// nainštalujete priamo z oficiálnych repozitárov distribúcie:
+<code>
+dnf install -y moby-engine
+</code>
+
+Je potrebné nakonfigurovať //dockerd// daemona aby bežal s cgroupdriver=cgroupfs, inak narazite na nasledujúci problém:
+<code>
+$ docker run hello-world
+docker: Error response from daemon: OCI runtime create failed: cgroup v2 not enabled on this host, can't use systemd (rootless) as cgroups manager: unknown.
+</code>
+
+Konfiguráciu cgroup driveru je možné previesť pomocou overridu //ExecStart// pre docker.service:
+<code>
+$ systemctl edit docker
+ExecStart=/usr/bin/dockerd \
+          --host=fd:// \
+          --exec-opt native.cgroupdriver=cgroupfs \
+          $OPTIONS
+</code>
+
+=== CentOS 7 ===
+
+Podle návodu na docker.com nainstalujeme //docker-ce//. Před spuštěním je ještě potřeba upravit konfiguraci Docker daemona v /etc/docker/daemon.json
+* nastavit cgroup driver
+<code>
+{
+    "exec-opt": "native.cgroupdriver=cgroupfs",
+}
+</code>
+
+
+==== Všeobecně ====
+Ověříme, zda běží docker v pořádku:
+
+<code>
+systemctl status docker.service
+
+● docker.service - Docker Application Container Engine
+    Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: e
+    Active: active (running) since Sun 2020-02-23 14:55:22 UTC; 9s ago
+      Docs: https://docs.docker.com
+  Main PID: 2893 (dockerd)
+     Tasks: 30
+    CGroup: /system.slice/docker.service
+            └─2893 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/contain
+</code>
+
+<note>
+Pokud nenaběhne ''docker.service'', může se jednat o tento už opravený [[https://github.com/containerd/containerd/issues/2772|bug v containerd]]. Řešením je buď
+nahradit ''/sbin/modprobe'', nebo upravit ''containerd.service'' a změnit
+volbu ''ExecStartPre''.
+<code>
+mv /sbin/modprobe /sbin/modprobe.old && ln -s /bin/true /sbin/modprobe
+</code>
+</note>
+
+Nyní můžete zkusit ''docker run hello-world'':
+
+<code>
+docker run hello-world
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+[...]
+</code>
+
+Networking otestujeme pomocí:
+<code>
+docker run -it alpine ping -c 3 vpsfree.cz
+</code>
+
+===== Hlášení chyb =====
+Pokud nějaká operace hlásí //permission denied//, pravděpodobně není povolená
+v AppArmor profilu. To můžeme napravit, nicméně potřebujeme mít možnost 
+to reprodukovat a vědět ID VPS. Stavte se na [[informace:chat|IRC]] #vpsfree
+nebo #vpsadminos, případně pište na podporu.

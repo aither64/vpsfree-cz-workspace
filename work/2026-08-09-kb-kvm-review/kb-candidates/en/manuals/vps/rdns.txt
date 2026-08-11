@@ -1,0 +1,33 @@
+====== PTR Records ======
+
+Most often, we perform “forward” DNS lookups, i.e. we ask the question: “What IP address does this domain name have?” But there is also a way to do reverse DNS lookups, i.e. asking: “What domain name belongs to this IP address?” In order to do that, however, we need to write a reverse record into the DNS. These are known as PTR records.  They contain the answer to the previous question: This IP address has the following domain name.
+
+It is only possible to make **one** DNS record for each IP address. Keep in mind, however, that you need to make PTR records for IPv4 and IPv6 addresses separately.
+
+===== PTR Record Management =====
+
+All PTR records for [[Information:IP_Addresses|the IP ranges]] of vpsFree.cz are delegated to our DNS servers. PTR records for individual IP addresses can be configured in VPS details in vpsAdmin,
+form "Interface addresses". PTR records can also be configured in menu DNS.
+
+===== Example =====
+
+In the following example, we will first perform a forward lookup. Then we will perform a reverse lookup of the obtained address and get the same domain name. We will do the same for IPv6.
+
+<code>
+$ host mxproxy.vpsfree.cz
+mxproxy.vpsfree.cz has address 37.205.9.45
+mxproxy.vpsfree.cz has IPv6 address 2a01:430:17:1::ffff:427
+
+$ host 37.205.9.45
+45.9.205.37.in-addr.arpa domain name pointer mxproxy.vpsfree.cz.
+
+$ host 2a01:430:17:1::ffff:427
+7.2.4.0.f.f.f.f.0.0.0.0.0.0.0.0.1.0.0.0.7.1.0.0.0.3.4.0.1.0.a.2.ip6.arpa domain name pointer mxproxy.vpsfree.cz.</code>
+
+===== Why Is This Important? =====
+
+As part of the war against spam, email servers usually check whether they have received emails from addresses that have correct PTR records. If the email is sent by a regular home internet connection, the PTR record and forward record typically do not match since the records are managed by a different administrator.
+
+If you want to prove to the server that you are the server administrator and you can manipulate both types of record, configure both types of records the same way they are configured in the example above. A PTR record for the given address must return the domain name that leads to the same IP address.
+
+If you need to configure an email server so that it accepts emails for several domains, see our [[manuals:server:postfix|Postfix server tutorial]].

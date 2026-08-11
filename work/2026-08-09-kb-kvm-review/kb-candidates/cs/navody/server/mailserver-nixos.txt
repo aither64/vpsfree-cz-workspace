@@ -1,0 +1,100 @@
+<page>manuals:server:mailserver-nixos</page>
+====== Mailserver na NixOSu ======
+
+Pro potřeby jednoduchého setupu mailserveru lze využít nixosu, jeho balíčkovacího a deklarativního systému - v tomto návodu si ukážeme jak na to spolu s nastavením DNS záznamů.
+
+[[https://gitlab.com/simple-nixos-mailserver/nixos-mailserver|nixos mailserver]] je nixový balík skládající se z:
+
+  * Postfix & Dovecot 
+  * rspamd (spam filter) & clamav (virus scanning)
+  * opendkim 
+  * sieve custom scripts
+  * user aliases & catch all & regular aliases
+
+Nastavení v případě produkčního serveru s nastaveným [[navody:vps:rdns|reverzním záznamem]] (v konfiguraci jako fqdn) vypadá v konfiguračním souboru importovaným přes configuration.nix následovně:
+
+
+(jde o mou vlastní (lehce upravenou pro demo funkcionalit) konfiguraci, nezapomeňte proto pozměnit zvýrazněné dle svého)
+<code>
+{ config, pkgs, ... }:
+{
+  imports = [
+    (builtins.fetchTarball {
+      url = "https://gitlab.com/simple-nixos-mailserver/nixos-mailserver/-/archive/v2.3.0/nixos-mailserver-v2.3.0.tar.gz";
+      sha256 = "0lpz08qviccvpfws2nm83n7m2r8add2wvfg9bljx9yxx8107r919";
+    })
+  ];
+
+
+# sets up path to sieve scripts
+#  services.dovecot2.sieveScripts = {
+#    before = "/etc/nixos/mailserver/sieve/vpsf.sieve";
+#  };
+
+  mailserver = {
+    enable = true;
+    fqdn = "<your-rDNS-ready-domain-here>";
+    domains = [ "martinmyska.cz" "domain.cz" "domain2.cz"]; # here we specify hosted domains
+
+    # A list of all login accounts. To create the password hashes, use
+    # mkpasswd -m sha-512 "super secret password"
+    loginAccounts = {
+        "martin@martinmyska.cz" = {
+            hashedPassword = "<your-sha512-password-here>";
+
+            aliases = [
+                "myska@martinmyska.cz" # alias where to look for other emails (not a mailbox address)
+            ];
+
+            # Or we can set this to catch all mails going to whole martinmyska.cz domain.com
+            catchAll = [
+                "martinmyska.cz"
+            ];
+        };
+        "info@domain.cz" = {
+            hashedPassword = "<your-sha512-password-here>";
+
+            # Or we can catch all mails going to completely another domain
+            catchAll = [
+                "domain2.cz"
+            ];
+        };
+
+
+    };
+    # Extra virtual aliases. These are email addresses that are forwarded to
+    # loginAccounts addresses.
+    extraVirtualAliases = {
+        # address = forward address;
+        #"abuse@example.com" = "user1@example.com";
+    };
+
+    # Use Let's Encrypt certificates. Note that this needs to set up a stripped
+    # down nginx and opens port 80.
+    certificateScheme = 3;
+
+    # Enable IMAP and POP3
+    enableImap = true;
+    enablePop3 = true;
+    enableImapSsl = true;
+    enablePop3Ssl = true;
+
+    # Enable the ManageSieve protocol
+    enableManageSieve = true;
+
+    # whether to scan inbound emails for viruses (note that this requires at least
+    # 1 Gb RAM for the server. Without virus scanning 256 MB RAM should be plenty)
+    virusScanning = true;
+  };
+}
+</code>
+
+Po nakonfigurování je třeba nastavit na doméně DNS záznamy podle následujícího:
+
+
+^ Doména          ^Typ          ^ TTL          ^ Priorita          ^ Hodnota          ^
+|**martinmyska.cz**| TXT        | 1800        |         | v=spf1 ip4:<**IP adresa mailserveru**> -all        |
+| _dmarc.**martinmyska.cz**|TXT        | 1800        |         | v=DMARC1; p=none        |
+| mail._domainkey.**martinmyska.cz** |TXT        | 1800        |         | v=DKIM1; k=rsa; p=<**tvůj klíč z** /var/dkim/<tvoje-domena>.**txt**        |
+| mail.**martinmyska.cz** |A        | 1800        |         | <**IP tvého mailserveru**>        |
+| mail.**martinmyska.cz** |MX        | 1800        |10         | mail.**martinmyska.cz**        |
