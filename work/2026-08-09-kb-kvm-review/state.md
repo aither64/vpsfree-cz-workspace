@@ -1537,3 +1537,102 @@
   `b670cf0`; this initiative changes no vpsAdminOS source.
 - No temporary VM or ad hoc validation environment is permitted.
 - Staging ownership must be released after publication or explicit abandonment.
+
+## Invisible managed-page marker follow-up
+
+- The user selected an invisible marker at the top of the page, immediately
+  after the existing `<page>` language mapping. The normal page exposes the
+  source through the right-hand toolbar only; the page ID remains plain text.
+  The marker carries both the canonical source and automated-test GitHub links.
+- Reused verified session `2026-08-09-kb-kvm-review`. Created these project
+  worktrees and branches:
+  - `dokuwiki-plugin-vpsadmindoc` at
+    `worktrees/2026-08-09-kb-kvm-review/dokuwiki-plugin-vpsadmindoc`, branch
+    `2026-08-09-kb-kvm-review`, based on `origin/master` `ed92a4d`;
+  - `vpsfree-kb-contracts` at
+    `worktrees/2026-08-09-kb-kvm-review/vpsfree-kb-contracts`, existing branch
+    `2026-08-09-kb-kvm-review` at merged head `289f358`;
+  - `vpsfree-cz-configuration` at
+    `worktrees/2026-08-09-kb-kvm-review/vpsfree-cz-configuration`, branch
+    `2026-08-09-kb-kvm-review`, based on current `origin/master` `6fa4063f`.
+- The existing vpsAdminOS worktree and its uncommitted abandoned source-resolver
+  experiments remain untouched. The shared workspace's unrelated changes and
+  untracked files also remain untouched.
+- Creating the configuration worktree ran its active Overcommit checkout hook
+  in the ambient shell, which lacked the repository's bundled gems. The
+  worktree was nevertheless created cleanly; hook installation and all commit
+  operations will run from the repository's Nix development shell.
+- Plugin commit `d8d5e8e4c1c38968441daf7d08ab95b434a7f62e` adds strict
+  `<kb-managed>` parsing, metadata-only rendering, the localized GitHub page
+  tool, and warnings for edit, preview, locked, and source views. Valid marker
+  URLs are restricted to HTTPS GitHub blob links and every emitted value is
+  escaped. The existing navigation annotation behavior is unchanged.
+- `nix develop -c bin/check` passes for the plugin: all PHP files parse, the
+  isolated behavior suite passes, and the real nixpkgs DokuWiki parser renders
+  a valid marker invisibly while diagnosing an invalid marker. The plugin
+  feature branch is pushed because the configuration needs an immutable
+  fetchable commit. Its unpacked Nix hash is
+  `sha256-BGv1DoCcTysyT5L82uju++OrxBU51DtzoJAp8KtzP4U=`.
+- Contract commit `3c02342f3b56bc8f746667823bbd36afb0d5d1dd` replaces both
+  visible maintenance notes with top-of-page markers and validates their exact
+  registry-derived source/test links and position. The expanded checker suite
+  passes 15 examples/43 assertions; the complete static contract check passes
+  with 39 controls, 29 paths, 69 annotation bindings, one article, five tests,
+  five executable samples, and all 59/118 capture variants.
+- Configuration commit `19c688e1c30cb2c4b58ae2ec339b57e88572d257`
+  pins the new plugin commit and hash for both aitherdev staging and production
+  KB closures. `confctl ls` evaluates both affected targets, and the active
+  Overcommit hooks pass Nix formatting from the repository's Nix shell.
+- Rebuilt the four-page guarded candidate set and both release manifests from
+  committed contract head `3c02342` and unchanged base `b670cf0`. The managed
+  KVM candidates are byte-identical to their canonical sources. New candidate
+  SHA-256 values are Czech KVM
+  `f186a765bc0cc0f24bd4bf1e969dff2436fca7a02fb544fd9945258a99f3e75d`,
+  Czech authoring guide
+  `7951804ec275f99605b973d430ac1e1b27dce38c8556b1827f5254df060bfd5d`,
+  English KVM
+  `f53f3b340ed401bf5c4c6bf90fd9185561de09a37c951de60e4e783144942347`,
+  and English authoring guide
+  `1f213e9bc0b05d4137705f86b9bbf83573f4fbe0e46cf366aad8b73014894fa1`;
+  each manifest still contains two pages and one media object.
+- The authoring guides now identify managed pages by the **Source on GitHub**
+  toolbar entry and the source/test warning in the KB editor. The focused
+  candidate tooling suite passes 29 examples/144 assertions, and both generated
+  manifests parse with the new contract provenance.
+- Live `kb-release verify` still reports the authoring-guide pages from the
+  previously staged release, as expected: staging has not yet been reset or
+  written during this follow-up. Live verification will be repeated only after
+  the reviewed plugin configuration is deployed and the new manifests are
+  staged.
+- Mandatory fresh-context review of plugin `ed92a4d..d8d5e8e`, contract
+  `289f358..9ffe859`, configuration `6fa4063..19c688e`, and workspace
+  `b60d1b2..9b5abc7` found no Blocking or Important issues. Its one Advisory
+  noted that the contract checker counted only syntactically complete markers,
+  allowing a second malformed marker start. The contract commit was amended to
+  `3c02342` to count every `<kb-managed` tag start and add a regression. The
+  focused suite now passes 15 examples/43 assertions and the complete contract
+  and candidate-tool suites pass after regeneration. The reviewer independently
+  confirmed the plugin archive hash, deployment pins, candidate/source equality,
+  manifest provenance, hook API, escaping, and requested behavior. Remaining
+  validation is the two full closures, exact-head CI, and deployed staging UI.
+- Both full configuration builds pass. Aitherdev staging built generation
+  `2026-08-11--16-01-17`, including the new plugin and both localized DokuWiki
+  closures. The production KB container built generation
+  `2026-08-11--16-05-08`. Neither generation was deployed.
+- The first configuration feature-branch push was rejected by the mandatory
+  pre-push hook because the ambient shell lacked the bundled Overcommit gems.
+  Repeating it with `nix develop -c git push` ran the hook in the supported
+  environment and succeeded; no hook was bypassed.
+- Fresh integration worktrees fast-forwarded and pushed plugin `master` to
+  `d8d5e8e` after `nix develop -c bin/check`, then configuration `master` to
+  `19c688e` after both affected targets evaluated through `confctl ls`. The
+  temporary integration worktrees and their generated `.bin`/`.bundle`
+  directories were removed; the feature branches remain.
+- Contract feature head `3c02342` is pushed. Exact-head GitHub Actions static
+  run `31499807836` passed in 5m36s. Managed runtime run `31499807880` selected
+  the KVM article correctly and is waiting for the maintained VM job to finish
+  before the contract can be fast-forwarded to `master`. After 30 minutes the
+  job API still reports `queued`, no `runner_name`, and the `self-hosted` label;
+  there is no execution log or artifact to investigate. The available token
+  cannot inspect organization runner availability. No duplicate rerun was
+  started.

@@ -187,3 +187,26 @@ The shared candidate-plan schemas 1 through 3 remain supported. Schema 4 adds
 managed articles without changing DokuWiki release manifests or production
 write safeguards. No vpsAdmin, vpsAdminOS, database, API, protocol, node
 configuration, or persisted-state change is introduced.
+
+## Invisible managed-page marker follow-up
+
+Replace the visible source/test note on every repository-managed article with
+an invisible `<kb-managed>` marker immediately after the bilingual `<page>`
+mapping. The marker carries the canonical GitHub source and test links. The
+existing `vpsadmindoc` plugin records those links as page metadata, adds a
+localized source link to the right-hand page toolbar, and warns in every
+editor-bearing view without blocking emergency edits.
+
+- Keep the page ID as plain text and use the existing
+  `TEMPLATE_PAGETOOLS_DISPLAY` hook; do not change the DokuWiki template.
+- Validate marker attributes as untrusted input, render valid markers as no
+  body content, and render malformed markers with a localized diagnostic.
+- Require one correctly positioned marker per registered page and verify its
+  source/test URLs against `contract/articles.yml`.
+- Update the Czech and English authoring guides to describe the toolbar and
+  editor warning instead of a notice below the article title.
+- Pin the reviewed plugin revision in the aitherdev staging and production KB
+  configurations. Build both closures, but leave machine deployment to the
+  operator and retain the separate approval gate for production KB writes.
+- Preserve all KVM prose, executable samples, runtime tests, article IDs, and
+  release reconciliation guarantees.
