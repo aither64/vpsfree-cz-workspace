@@ -1436,6 +1436,21 @@
   Both KVM candidates are byte-identical to their canonical article sources.
 - Refreshed localized release manifests each contain two pages and one media
   update. Production and staging have not been written during this follow-up.
+- Workspace commits `be2e835` and `d13f634` respectively prepare the guarded
+  four-page release and update the workspace project identity. The unrelated
+  pre-existing `AGENTS.md` session-ownership edit remains uncommitted.
+- Exact-head quick verification passes: the workspace contract suite has 25
+  examples/124 assertions; all three new Ruby entry points pass syntax checks;
+  the capture repository reports 39 controls, 29 paths, 69 annotation
+  bindings, one article, five tests, five executable samples, and 118 PNGs;
+  its three unit suites pass 50, 18, and 20 assertions. Committed-range
+  whitespace checks, both localized manifest parses, complete-corpus
+  annotation validation, and byte comparison of both KVM candidates with
+  their registered canonical sources also pass.
+- A supplemental byte comparison initially referenced the superseded
+  pre-registry `articles/...` path and stopped before the remaining checks.
+  Repeating it with the registry's `contract/pages/...` source paths passed;
+  this was a validation-command correction, not a content change.
 
 ## Cleanup
 
