@@ -1706,3 +1706,9 @@
 - Neither affected project has feature-branch CI for this change: the plugin
   has no GitHub workflow, and the configuration repository's sole workflow is
   its scheduled updater. No branch runs were present after the pushes.
+- Both post-review closure builds passed sequentially: aitherdev generation
+  `2026-08-11--18-42-26` and production KB container generation
+  `2026-08-11--18-44-00`. The aitherdev build included the updated plugin and
+  both staging DokuWiki closures; the production build included both public
+  DokuWiki closures. The builds were intentionally serialized to avoid
+  `confctl`'s known same-worktree log collision.
