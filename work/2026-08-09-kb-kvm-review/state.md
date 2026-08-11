@@ -1663,3 +1663,34 @@
   superseded runs and were therefore not cancelled. Production KB content is
   untouched. The production KB container must load configuration `19c688e`
   before the separately approval-gated manifest promotion.
+
+## Managed-page editing guidance follow-up
+
+- Reused verified session `2026-08-09-kb-kvm-review`. Plugin and configuration
+  feature worktrees started at their merged `master` heads `d8d5e8e` and
+  `19c688e`.
+- The repository identity is not hardcoded in the plugin: source and test URLs
+  remain validated marker values derived from `contract/articles.yml`. The new
+  editing-guide link uses localized local page IDs, preserving the current
+  staging or production wiki host.
+- The agreed notice permits direct editing but states that manual KB edits are
+  not verified. Source, test, and editing-guide notice links, plus the toolbar
+  source link, open in a new tab. The Edit action remains unchanged.
+- Updated and pushed `dokuwiki-plugin-vpsadmindoc` feature commit
+  `8ba88976e3ee0ceb1becd5ef21f007dcb02d9d82`; its unpacked Nix hash is
+  `sha256-lIO9q4Mwqezzpr28hEIcsQExgDJZ9TbeOP9IqBT5HoU=`. `nix develop -c
+  bin/check` passed, including syntax checks, unit checks, and the real
+  DokuWiki integration test.
+- Pinned that plugin revision and hash for both `aitherdev` staging and the
+  production KB container. `nix develop -c confctl ls` evaluated
+  `cz.vpsfree/machines/aitherdev` and `cz.vpsfree/containers/int.kb`; scoped
+  `git diff --check` also passed. Configuration feature commit
+  `c29a3c34` passed its Nixfmt pre-commit hook.
+- Rebuilt the four-page candidate set and both manifests. The KVM candidates
+  remain byte-identical to the contract sources. Only the two authoring guides
+  changed: Czech SHA-256
+  `dc830b84053d6afb89430f6f12f7e12386cb8278ff519c648075f2149483cf21`
+  and English SHA-256
+  `39522f21c7eb8275d4da8b798adcd1ed79c3707de39c3020b2818a890fe57047`.
+  `ruby -Itest test/kb_contract_tools_test.rb` passed with 29 runs and 144
+  assertions, both manifests parsed, and scoped `git diff --check` passed.

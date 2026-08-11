@@ -210,3 +210,29 @@ editor-bearing view without blocking emergency edits.
   operator and retain the separate approval gate for production KB writes.
 - Preserve all KVM prose, executable samples, runtime tests, article IDs, and
   release reconciliation guarantees.
+
+## Managed-page editing guidance follow-up
+
+Keep the normal DokuWiki Edit action and clarify that direct edits are possible
+but are not verified by the repository test. The managed-page toolbar source
+link and every link in the editor notice open in a new tab with
+`rel="noopener noreferrer"`.
+
+- Use this exact English notice: “This page is managed in a repository and
+  covered by an automated test. Manual edits made directly in the KB are not
+  verified. See the source on GitHub, automated test, and Contributing to the
+  Knowledge Base.”
+- Use the equivalent Czech notice: “Tato stránka je spravována v repozitáři a
+  pokryta automatickým testem. Ruční úpravy provedené přímo v KB nejsou
+  ověřovány. Viz zdroj na GitHubu, automatický test a Jak přispívat do
+  znalostní báze.”
+- Link source and test from the validated marker. Generate the editing-guide
+  link locally with DokuWiki for `informace:jak_psat` or `information:kb`, so
+  staging remains on staging and production remains on production. Do not add
+  another toolbar action or marker attribute.
+- Align both KB authoring guides with the same non-prohibitive policy while
+  retaining the existing drift protection and release reconciliation text.
+- The marker and metadata schemas remain unchanged. Old and new plugin versions
+  accept the same pages, so rolling deployment and rollback require no page or
+  persisted-state migration. Deploy the plugin before publishing the updated
+  guidance; production KB writes remain separately approval-gated.
