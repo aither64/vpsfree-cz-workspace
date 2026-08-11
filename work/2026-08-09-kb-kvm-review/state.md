@@ -1490,10 +1490,45 @@
   through `KbRelease::Manifest`, and committed-range whitespace checks are
   clean. All Mandatory review findings are therefore resolved before
   integration testing.
+- GitHub already resolved the repository as `vpsfreecz/vpsfree-kb-contracts`;
+  the old name remains a working rename redirect. The canonical bare-repository
+  remote now uses `git@github.com:vpsfreecz/vpsfree-kb-contracts.git`, and
+  `repos/vpsfree-kb-contracts.git` is a relative compatibility symlink to the
+  old bare-directory path for concurrent worktrees. Updating the optional
+  GitHub description was refused with HTTP 403 by the available API token, so
+  the pre-existing description remains; Git over SSH and all repository links
+  work under the new name.
+- The reviewed feature branch was force-pushed with an exact lease from remote
+  `984d7d0` to `289f358`. Branch Check run `31483626494` passed in 5m45s.
+  Managed-article runtime run `31483626542` discovered the KVM matrix entry,
+  passed contract/test selection, ran all maintained tests in 41m35s, and
+  passed result evaluation, summary, and cleanup. Failure-log upload was
+  correctly skipped because the run was green.
+- A fresh target worktree fast-forwarded local `master` through upstream
+  `b670cf0` and then to feature head `289f358`; the complete local static suite
+  passed before `master` was pushed and the temporary integration worktree was
+  removed. Master Check run `31487072088` passed. Master managed-article run
+  `31487072110` passed discovery and all maintained KVM tests, with the VM test
+  step completing in 36m05s; evaluation, summary, and cleanup also passed.
+- Workspace `master` through release/provenance commit `3199cdd` was fetched,
+  confirmed as a linear 17-commit fast-forward, and pushed without touching
+  unrelated working-tree edits.
+- Staging was reset to the current 116 Czech/70 English-page and 224-media
+  production mirror, then both two-page/one-media manifests were staged and
+  independently verified. A fresh complete production fetch has the same
+  source-index SHA-256
+  `80bf3afc3ef5f79ef9f001f56baee693a8a8b328bfcde2c95d6b299002aff58c`
+  and still contains zero exact references to the obsolete Alpine and
+  vpsAdminOS/libvirt pages. Both pages matched their guarded hashes in
+  production and staging before only their staging copies were deleted again.
+  Both release manifests continue to verify; production remains untouched.
 
 ## Cleanup
 
-- Keep the feature worktree until the branch is merged or abandoned.
+- The contract feature and temporary integration worktrees were removed after
+  the fast-forward merge. Local and remote feature branches were retained as
+  required; the compatibility bare-repository symlink remains for other active
+  initiatives.
 - The unconsumed vpsAdminOS worktree remains on the abandoned
   `2026-08-09-kb-kvm-review` branch. It contains uncommitted follow-up source
   resolver experiments, so it was not force-removed or discarded. None of
