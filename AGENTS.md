@@ -281,6 +281,11 @@ DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
 `kb-cs.aitherdev.int.vpsfree.cz` and `kb-en.aitherdev.int.vpsfree.cz`. API
 access to production uses one token per wiki:
 
+When authoring or translating Czech KB articles, address the reader using
+informal singular forms (`tykání`), for example `můžeš`, `potřebuješ`,
+`nainstaluj`, and `použij`. Do not use formal `vy` or plural imperatives as a
+polite form; use plural only when genuinely addressing multiple people.
+
 For vpsAdmin changes that can affect visible WebUI documentation, follow the
 canonical workflow in `vpsfree-kb-contracts/docs/webui-change-workflow.md`.
 Use `bin/kb-contract-fetch`, `bin/kb-contract-build`, and
