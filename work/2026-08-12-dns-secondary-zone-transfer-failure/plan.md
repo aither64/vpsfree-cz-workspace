@@ -23,9 +23,8 @@ configuration pin on unmerged feature branches.
 - Ignore `Transfer status: up to date` in `libnodectld`, like the already
   ignored `Transfer status: success`, because BIND follows it with the richer
   completion event.
-- Add a supervisor-side compatibility filter for older nodectld versions. Mark
-  it with a searchable TODO explaining that it can be removed only after all
-  DNS nodes are updated and old queued events are drained.
+- Keep the supervisor free of compatibility filtering. The rollout updates
+  nodectld on all DNS nodes and drains queued events before the API cleanup.
 - Add a data migration that deletes precisely identified synthetic failures
   and repairs every `last_transfer_*` field when a deleted row is current.
 - Leave the configuration monitoring rule unchanged: it reads
@@ -37,17 +36,15 @@ configuration pin on unmerged feature branches.
 ## Compatibility and deployment
 
 - The event protocol and database schema shape remain unchanged.
-- Mixed-version event handling is safe in either direction: new nodectld
-  suppresses the event for an old supervisor, while the new supervisor drops
-  it from an old nodectld.
-- Deploy the guarded API supervisor revision to every API host before running
-  the cleanup migration. The new supervisor and migration serialize writes on
-  each DNS-server-zone row, so the migration can run online without replacing
-  a newer completion. After migration, roll out ns3/ns4; the API guard remains
-  until every DNS node is updated and older queued events have drained.
+- Deploy the new nodectld revision to every DNS node first and allow transfer
+  events produced by older nodectld versions to drain from the queue. Then
+  deploy the new supervisor revision to every API host before running the
+  cleanup migration. The supervisor and migration serialize writes on each
+  DNS-server-zone row, so the migration can run online without replacing a
+  newer completion.
 - The cleanup migration is irreversible because synthetic history cannot be
   reconstructed. Rollback can still load the unchanged schema, but rolling
-  back both guards can recreate false rows.
+  back the nodectld parser change can recreate false rows.
 - The monitoring rule becomes healthy on its next 30-minute evaluation after
   `last_transfer_status` is repaired; monitoring history is preserved.
 - Stop with pushed feature branches. Do not merge, deploy, or change
@@ -57,8 +54,7 @@ configuration pin on unmerged feature branches.
 
 - Add parser coverage for the exact prefixed status, case-insensitive matching,
   real failures, and the following zero-byte/one-record success completion.
-- Add supervisor coverage for the older-node compatibility filter and nearby
-  legitimate unknown failures.
+- Keep supervisor coverage for serialized transfer-state persistence.
 - Add migration coverage for deletion, same-second replacement, older failure
   replacement, empty state, and near-matching rows that must remain.
 - Extend `dns/secondary-transfer-errors` with the observed pair and assert that

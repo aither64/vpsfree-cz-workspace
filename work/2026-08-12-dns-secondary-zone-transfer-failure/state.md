@@ -8,7 +8,7 @@
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - base/head: `origin/master` at `925a85878`
     (`webui: update dependencies`)
-  - feature head: `6248f607e850b347ed39d43822540ab61260aad4`
+  - feature head: `28c01ee114ef22040f48fef907fbade4ddce7b58`
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -16,9 +16,9 @@
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `origin/master` at
     `a301114d3e34412f201352a7f3e59d1556d2f561`
-  - feature head: `52aaabcc4e98adb5e3e48a55aabeb12ea86b76eb`
-    (`inputs: set vpsadminServices to 6248f607`)
-  - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
+  - feature head: `b1bfe70f9ba03339c25378b50491a408ac4a0b78`
+    (`inputs: set vpsadminServices to 28c01ee1`)
+  - pending force-push after follow-up review
 
 ## Status
 
@@ -26,12 +26,11 @@
 - User selected cleanup of existing false rows.
 - User selected unmerged feature-branch delivery and an exact
   `vpsadminServices` feature pin in `vpsfree-cz-configuration`.
-- User requires the supervisor compatibility code to include a removal TODO
-  tied to full DNS-node rollout and draining older queued events.
-- Both repository feature branches are committed and pushed. Local integration,
-  configuration builds, and all completed current-head GitHub checks pass. The
-  branches are ready for review; migration-triggered full integration run
-  31621832711 remains in progress and is the only pending check.
+- User subsequently chose to remove the supervisor compatibility filter and
+  deploy nodectld to DNS nodes before the API cleanup.
+- The revised vpsAdmin branch is committed and pushed. The revised exact
+  configuration pin is committed locally. Quick follow-up checks pass;
+  standalone review and long validation remain.
 
 ## Commands run
 
@@ -60,8 +59,9 @@
 - Fetched both affected repositories before implementation.
   - vpsAdmin `origin/master` remains `925a85878`.
   - vpsfree-cz-configuration `origin/master` advanced to `a301114d`.
-- Implemented parser suppression, the marked supervisor rolling-upgrade guard,
-  cleanup migration, focused specs, and DNS integration coverage.
+- Implemented parser suppression, cleanup migration, focused specs, and DNS
+  integration coverage. The initially implemented supervisor rolling-upgrade
+  filter was later removed at the user's request.
 - Focused verification:
   - libnodectld parser: 7 examples, 0 failures;
   - API supervisor: 8 examples, 0 failures;
@@ -102,8 +102,8 @@
   - supervisor persistence now holds the DNS-server-zone row lock;
   - cleanup acquires the same lock, reloads/rechecks the latest pointer, and
     deletes candidates per zone;
-  - the plan requires all API supervisors to run the guarded/locking revision
-    before migration, then ns3/ns4 roll out after cleanup.
+  - the initial plan required all API supervisors to run the guarded/locking
+    revision before migration, then ns3/ns4 to roll out after cleanup.
 - Follow-up verification passed:
   - cleanup migration: 6 examples, 0 failures, including stale-state recheck;
   - API supervisor: 8 examples, 0 failures, including row-lock use;
@@ -134,14 +134,28 @@
   the installed Overcommit pre-push hook because ambient gems were missing; no
   remote ref changed. Re-running in `nix develop` succeeded and pushed
   `origin/2026-08-12-dns-secondary-zone-transfer-failure` at `52aaabcc`.
-- Current-head GitHub Actions at `6248f607`:
+- GitHub Actions at superseded head `6248f607`:
   - API Migration Specs, RuboCop, i18n health, and every core/full API Specs
     topic shard passed;
   - API Specs run 31621832621 completed successfully;
-  - full integration run 31621832711 remains in progress because the database
-    migration intentionally selects the complete `tag=ci` suite;
+  - full integration run 31621832711 was cancelled after the branch was
+    rewritten to remove the supervisor compatibility filter;
   - the configuration repository has no push workflow applicable to this
     lock-only branch (its workflows are scheduled or event-specific).
+- User changed the rollout strategy after this validation: remove the
+  supervisor compatibility filter, deploy nodectld on every DNS node first,
+  drain older queued events, then deploy the locking supervisor and run the
+  cleanup migration.
+- Removed the compatibility predicate and its two dedicated supervisor specs.
+  The resulting supervisor spec has 6 examples and passes; RuboCop reports no
+  offenses on the two touched API files.
+- Folded the removal into the original unmerged vpsAdmin commit. The revised
+  two-commit branch is `764dcaaec` followed by `28c01ee11`, and was force-pushed
+  with lease.
+- Regenerated the configuration pin from `origin/master` in a detached
+  worktree. Commit `b1bfe70f` is a single generated commit directly changing
+  `vpsadminServices` from production `95f8d9ca` to `28c01ee1`;
+  `confctl inputs channel ls vpsadmin` resolves the expected revision.
 
 ## Results
 
