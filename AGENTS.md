@@ -332,6 +332,11 @@ Every production page edit must have an informative, single-line change
 summary that describes the actual content change. Do not use generic summaries
 such as "Publish reviewed KB release" for new edits. Write summaries for
 `kb.vpsfree.cz` in Czech and summaries for `kb.vpsfree.org` in English.
+Write Czech summaries as noun phrases that name the resulting changes, not as
+infinitive instructions. For example, use `Aktualizace KVM, doplnění sítě a
+vysvětlení správy článků v repozitáři`, not `Aktualizovat KVM, doplnit síť a
+vysvětlit správu článků v repozitáři`. Do not rewrite existing DokuWiki
+revision summaries merely to adopt this convention.
 
 Common KB tool examples:
 
@@ -342,7 +347,7 @@ bin/kb-stage reset --yes
 bin/kb-release stage --manifest work/example/kb-release.yml --yes
 bin/kb-release verify --manifest work/example/kb-release.yml
 bin/kb-page save --wiki cz information:published-page preview.txt \
-  --summary "Update documentation" --update --approved-production
+  --summary "Aktualizace dokumentace" --update --approved-production
 bin/kb-release promote --manifest work/example/kb-release.yml --yes \
   --approved-production
 bin/kb-stage release --yes
