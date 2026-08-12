@@ -1919,3 +1919,14 @@
   `Add KVM navigation coverage and vpsAdmin documentation rules`. Each manifest
   contains two pages and no media. The old pending Czech-only manifest remains
   untouched and unpromoted.
+- Mandatory fresh-context review of vpsAdmin `925a858..02449a1`, contract
+  `cef730c..2c7a827`, coordination commits `c941f87`, `47d3ab2`, `66bf0ce`,
+  `49b666d`, and the guarded candidates found no Blocking, Important, or
+  Advisory issues. The reviewer manually enumerated Features, root quota Edit,
+  Create dataset, Mount, IPv4 routing, and IPv6 routing in both KVM pages and
+  verified every action against its semantic navigation path. It independently
+  confirmed all three storage landmarks and fingerprints, 75 bindings and 9
+  exceptions, the unchanged dataset screenshots, informal Czech address, the
+  noun-phrase Czech release summary, byte-identical canonical KVM candidates,
+  and exactly four candidate pages with no media changes. Long capture and VM
+  validation were deliberately left for the post-review gate.
