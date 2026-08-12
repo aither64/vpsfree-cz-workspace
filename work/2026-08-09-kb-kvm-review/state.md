@@ -1770,3 +1770,94 @@
   vpsAdminOS investigation worktree untouched: it contains uncommitted
   experimental shared-framework changes that were excluded from the final
   capture-side design and were never merged to a default branch.
+
+## Czech informal-address follow-up
+
+- User requested that Czech KB articles consistently use informal singular
+  address (`tykání`), that the convention be stored as durable instructions,
+  and that the Czech KVM article be corrected accordingly.
+- Reused the verified active initiative and recreated
+  `worktrees/2026-08-09-kb-kvm-review/vpsfree-kb-contracts` on branch
+  `2026-08-09-kb-kvm-review`.
+- Fetched both repositories. The coordination `master` and `origin/master` are
+  `5228e5d70481e497c2feef0c6b632c832074b127`; contract `master`, feature and
+  their remote refs are all
+  `3c02342f3b56bc8f746667823bbd36afb0d5d1dd`.
+- Read-only production comparison confirms `navody:vps:kvm` is byte-identical
+  to the canonical contract source at that base.
+- The shared coordination checkout already has an unrelated uncommitted
+  `AGENTS.md` hunk changing development-session ownership detection. Preserve
+  it and stage only this follow-up's separate KB-language hunk.
+- Coordination commit `cfbf7851f76e5614efb3e394a2a7e4d08a722415`
+  records the workspace-wide Czech informal-singular convention. Interactive
+  hunk staging excluded the pre-existing development-session edit, which
+  remains uncommitted and unchanged in the shared checkout.
+- Contract commit `2d5201506cba62825e60386c03fa552d934be9a1` records the
+  same rule locally, converts direct reader address throughout the Czech KVM
+  prose, and refreshes the four affected Czech section fingerprints. The
+  English page and all fixtures are unchanged.
+- Quick verification passed: `git diff --check`, all 16 DokuWiki code blocks
+  are byte-identical to the base, the explicit formal-address audit found no
+  remaining candidates, and `nix develop --command bin/check` passed with 39
+  controls, 69 annotation bindings, five KVM tests, five executable samples,
+  all 31 unit-test runs and the 118-image inventory.
+- Mandatory standalone review of both exact commits found no Blocking,
+  Important or Advisory issues. It independently confirmed the instruction
+  scope and commit split, all four fingerprints, unchanged English/source
+  artifacts, clean contract worktree and proportionate omission of a local KVM
+  runtime rerun. Remaining gates are exact-head GitHub workflows and managed
+  article staging reconciliation.
+- Pushed coordination commit `cfbf7851` to `origin/master` and the initial
+  contract commit to the development branch. Its exact-head GitHub `Check` run
+  `31562518413` passed; runtime run `31562518449` became superseded by the
+  candidate-validation correction below.
+- Fetched a fresh guarded production corpus with 116 Czech and 70 English
+  pages. Managed reconciliation reports Czech KVM as `git-only`, English KVM
+  as `in-sync`, and exactly one changed page with no media or content
+  replacements.
+- Complete candidate validation exposed four independent navigation
+  discoveries missing from the committed inventory: the two KVM routed-address
+  paragraphs changed identity with their wording, while the already-published
+  Czech and English repository-managed authoring-guide paragraphs had never
+  been classified. The initial diagnostic command continued after the checker
+  failure because it lacked `set -e`; the corrected command fails safely and
+  now passes.
+- Amended the requested change as
+  `18683fc0ce5644d890db373d27b625677bbcb5cf`, including the two derived KVM
+  inventory identities. Kept the pre-existing authoring-guide inventory gap in
+  a separate focused commit
+  `cef730c13862fe34d71f86d427dff56104df2ea0`, classifying both paragraphs as
+  authoring instructions rather than member navigation paths.
+- Post-commit quick verification passes again: all-page annotation validation
+  reports 69 bindings and 9 exceptions, all 16 code blocks remain identical,
+  `git diff --check` passes, and the full `bin/check` result remains 8/50,
+  8/18, 15/43 with 59 concepts, 118 variants and 118 PNGs.
+- Final fresh-context mandatory review of coordination `cfbf7851` and contract
+  `3c02342..cef730c` found no Blocking, Important or Advisory issues. It
+  independently recomputed all four paragraph inventory identities, approved
+  the three-commit cross-repository split, and confirmed that a VM rerun is not
+  warranted for this prose-only change. Remaining gates are the final-head
+  force-push/CI and a rebuilt Czech staging manifest.
+- Force-pushed the reviewed final contract history with an exact lease. Canceled
+  only superseded runtime run `31562518449` after confirming its head differed
+  from the final branch. Final-head `Check` run `31563407725` passed in 5m57s;
+  final-head `Managed article runtime` run `31563407705` passed all maintained
+  KVM tests in 24m25s.
+- Rebuilt the candidate and Czech-only manifest against exact contract head
+  `cef730c13862fe34d71f86d427dff56104df2ea0`. It reconciles Czech KVM as
+  `git-only`, English KVM as `in-sync`, and changes exactly
+  `cs:navody:vps:kvm`, with no media, annotations or content replacements.
+- Claimed KB staging, reset it to a fresh production mirror of 116 Czech pages,
+  70 English pages, 58 language pairs and 224 shared media objects, then staged
+  and verified `kb-release-tykani-cs-final.yml`. The pending manifest SHA-256 is
+  `564b5935cda94f9c5729fb5c587db1e15924f3113d330cdf91f62340f1e3f508`.
+- Staged Czech source is byte-identical to the canonical candidate at SHA-256
+  `2f72dcfa6187e1c9990fb75ffe83ec8a9eff456f9cd020f6a272a5e9dbfbb9dd`.
+  Rendered staging checks passed for representative informal wording, both
+  screenshots, the English language link, the GitHub source link and hidden
+  managed marker. English staging remains byte-identical to production.
+  Production Czech remains at its guarded source SHA-256
+  `f186a765bc0cc0f24bd4bf1e969dff2436fca7a02fb544fd9945258a99f3e75d`.
+- Left the staging container running and owned by this initiative with the
+  verified Czech manifest pending for user review. No production write or
+  contract default-branch merge was performed.

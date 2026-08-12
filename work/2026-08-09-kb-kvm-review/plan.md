@@ -236,3 +236,18 @@ link and every link in the editor notice open in a new tab with
   accept the same pages, so rolling deployment and rollback require no page or
   persisted-state migration. Deploy the plugin before publishing the updated
   guidance; production KB writes remain separately approval-gated.
+
+## Czech informal-address follow-up
+
+Make informal singular address (`tykání`) the durable convention for Czech KB
+articles. Record it in the coordination workspace and contract-repository
+instructions, then convert all direct reader address in the Czech KVM article
+from polite plural to singular while preserving technical meaning, commands,
+screenshots and the English article.
+
+Refresh the Czech article-section fingerprints and any derived identities for
+changed annotated paragraphs. Run the complete static contract checks and
+mandatory fresh-context review, then push the development branch and monitor
+its existing workflows. Reconcile the managed article from a complete
+production fetch and stage a Czech-only guarded release at `navody:vps:kvm`.
+Production promotion remains separately approval-gated.
