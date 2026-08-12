@@ -1861,3 +1861,61 @@
 - Left the staging container running and owned by this initiative with the
   verified Czech manifest pending for user review. No production write or
   contract default-branch merge was performed.
+
+## KVM navigation-contract completeness follow-up
+
+- User identified that the KVM storage instructions are not wrapped in
+  `<vpsadmin-nav>` and therefore are absent from the WebUI documentation
+  contract. Read-only audit confirmed the gap in both canonical language
+  sources: the root refquota edit, `vm-images` creation, and mount operation
+  are all unannotated.
+- The independent scanner currently discovers only the KVM Features and two
+  Routable addresses paragraphs. It misses the storage workflow because that
+  paragraph does not name vpsAdmin, a menu, or a form. The mandatory review
+  skill also has no KB-specific annotation-completeness check.
+- The existing vpsAdmin contract has `datasets.create` and `datasets.mount`
+  landmarks but no dataset Edit landmark. Current upstream `master`
+  `925a85878d7a6960e2f48906ca615644b80043ea` still lacks it.
+- User also requested a durable repository rule for Czech KB change summaries:
+  use noun phrases rather than infinitive instructions. Existing DokuWiki
+  summaries and the pending Czech-only manifest must not be edited merely to
+  adopt the new convention.
+- The previously staged Czech-only manifest remains pending and must not be
+  promoted. It will be superseded only after corrected bilingual candidates
+  have passed review and validation.
+- Created vpsAdmin worktree
+  `worktrees/2026-08-09-kb-kvm-review/vpsadmin` on branch
+  `2026-08-09-kb-kvm-review` from current upstream `master` `925a85878`.
+  Its SSH remote and active Overcommit configuration satisfy the workspace
+  repository and hook requirements.
+- Added and committed vpsAdmin dataset Edit landmark as `02449a1`. The first
+  commit attempt correctly failed because the new worktree lacked the API
+  bundle required by `VpsadminApiI18n`. After preparing it with
+  `nix develop .#api -c true`, all six mandatory pre-commit hooks passed and
+  the commit completed without bypasses. Recorded the reusable setup lesson in
+  `notes/vpsadmin/2026-08-12-overcommit-api-bundle.md`.
+- Pushed vpsAdmin feature commit
+  `02449a1e0966c00969e98e7267ad68e002123d62` over SSH so the contract can pin
+  an immutable revision. No vpsAdmin default-branch integration or deployment
+  has occurred.
+- Contract commit `2c7a827` adds `datasets.edit`, binds Edit, Create dataset,
+  and Mount to both KVM pages and the existing dataset screenshot, rewrites the
+  storage setup as three annotated steps, strengthens discovery and authoring
+  rules, updates article fingerprints and navigation inventory, and pins the
+  vpsAdmin landmark commit. `nix develop -c bin/check --allow-missing` passes
+  with 40 controls, 30 paths, 75 bindings, 9 scanner tests, 15 article-contract
+  tests, and all 118 PNG variants.
+- Coordination commits `c941f87` and `47d3ab2` respectively strengthen the
+  mandatory reviewer checklist and record the Czech noun-phrase summary rule.
+  The unrelated pre-existing development-session hunk in `AGENTS.md` remains
+  unstaged and unchanged.
+- Fetched a fresh guarded production corpus of 116 Czech and 70 English pages.
+  Candidate construction against canonical base `3c02342` prepared exactly
+  four changed pages: both KVM guides and both KB authoring guides, with no
+  media changes. Full-corpus annotation validation passes with 75 bindings and
+  9 exceptions.
+- Generated new release manifests with noun-phrase Czech summary
+  `Doplnění KVM navigace a pravidel dokumentace vpsAdminu` and English summary
+  `Add KVM navigation coverage and vpsAdmin documentation rules`. Each manifest
+  contains two pages and no media. The old pending Czech-only manifest remains
+  untouched and unpromoted.

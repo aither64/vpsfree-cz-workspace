@@ -251,3 +251,29 @@ mandatory fresh-context review, then push the development branch and monitor
 its existing workflows. Reconcile the managed article from a complete
 production fetch and stage a Czech-only guarded release at `navody:vps:kvm`.
 Production promotion remains separately approval-gated.
+
+## KVM navigation-contract completeness follow-up
+
+Cover every vpsAdmin operation in the KVM storage workflow with a semantic
+navigation annotation. Add an inert dataset Edit landmark to vpsAdmin, bind
+Edit, Create dataset, and Mount to both KVM pages and the existing dataset
+screenshot, and rewrite the storage paragraph as three explicit annotated
+steps. Strengthen independent discovery for this workflow and make a manual
+action-by-action annotation audit mandatory in the fresh-context review.
+
+Record the same broader rule in the contract repository and the Czech/English
+KB authoring guides: instructions to perform vpsAdmin actions require
+`<vpsadmin-nav>` even when they do not name a menu or form. Pin the final
+vpsAdmin commit, refresh the complete bilingual capture provenance, rerun the
+managed KVM suite, and replace the obsolete staged Czech-only release with
+guarded bilingual candidates. No existing production revision summary is
+rewritten, and corrected publication remains approval-gated.
+
+## Czech KB change-summary follow-up
+
+Czech production change summaries use informative noun phrases that describe
+the resulting changes, rather than infinitive instructions. For example, use
+`Aktualizace KVM, doplnění sítě a vysvětlení správy článků v repozitáři`
+instead of `Aktualizovat KVM, doplnit síť a vysvětlit správu článků v
+repozitáři`. Keep summaries specific and single-line; leave all existing
+DokuWiki summaries and the obsolete pending manifest unchanged.
