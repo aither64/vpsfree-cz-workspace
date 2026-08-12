@@ -1961,3 +1961,93 @@
   that the page release manifests intentionally contain no media updates and
   may retain article provenance at `2c7a827`, because `2c6d533` changes only
   generated screenshot evidence.
+- Exact-head contract static run `31628923858` passed at `2c6d533` in 5m40s.
+  The managed KVM runtime and the vpsAdmin integration suite remain in progress
+  on their reviewed exact heads; neither has failed or been rerun.
+- Reset the initiative-owned staging instance from the obsolete Czech-only
+  bundle to a fresh production mirror of 116 Czech pages, 70 English pages,
+  58 language pairs, and 224 shared media objects. Staged and independently
+  verified `navigation-kb-release-cs.yml` and
+  `navigation-kb-release-en.yml`, each with two pages and no media changes.
+- Authenticated render checks passed for both KVM pages, their editor notices,
+  and both authoring guides. The new Edit, `vm-images`, and Mount instructions
+  render in Czech and English; managed and navigation markers remain invisible;
+  the toolbar source links open a new tab; and editor source, test, and local
+  authoring-guide links remain present. Production remains untouched.
+- Exact-head managed runtime run `31628923876` failed only the ninth networking
+  example after the other four scripts and eight networking examples passed.
+  The final routed-IPv6 `/outbound6` assertion timed out after inbound IPv6
+  HTTP and SSH had succeeded. Downloaded logs show the domain running, correct
+  host routes, forwarding enabled, and accepting firewall policies, but the
+  piped curl/grep diagnostic discarded the raw HTTP response and guest wget
+  error. The retained artifact is under
+  `/tmp/kvm-runtime-31628923876.nJONZI/`.
+- This is not a navigation-change regression: compared with earlier green
+  head `eb998dd`, the KVM guest and runtime tree at `2c6d533` differs only by
+  the required `labels.kbArticle = "kvm"` metadata. Nevertheless, no blind
+  rerun was accepted as validation because the failed artifact cannot identify
+  whether the response was absent, contained an unexpected source address, or
+  reflected a guest outbound routing failure.
+- The first diagnostic commit `c382f44` added guest IPv6 wget errors and raw
+  endpoint responses. Fresh mandatory review found one Blocking gap: BusyBox
+  wget defaults to a 900-second network timeout, so a black-holed request could
+  outlive the outer 180-second assertion without publishing any evidence. No
+  Important or Advisory findings were reported.
+- Amended contract commit `d0d38f2` bounds each wget attempt to five seconds,
+  then publishes the error plus address, route, and neighbor state atomically
+  at `/outbound6.error`; the test retrieves that and the raw `/outbound6`
+  response only after its original timeout. The tested success condition and
+  outer timeout remain unchanged. Full static checks, Nix parsing, generated
+  networking Ruby syntax, and exact `kb/kvm` derivation build pass again. A
+  fresh follow-up mandatory review is required before any maintained VM rerun
+  or branch integration.
+- Follow-up review of `d0d38f2` found one further Blocking issue and no
+  Important or Advisory findings: pinned BusyBox accepts `ip neigh`, not
+  `ip neighbor`, and `set -e` would terminate the diagnostic subshell before
+  publication. Final amended commit `5bf06be` uses `ip -6 neigh show` and makes
+  every diagnostic `ip` probe non-fatal so evidence publication and retries do
+  not depend on optional probe success. The full static suite and exact KVM
+  derivation pass again; direct initrd inspection confirms `wget -T 5`, all
+  non-fatal probes, and the atomic diagnostic publication in the built guest.
+  A fresh exact-head review remains required before the VM rerun.
+- Final fresh-context review of exact head `5bf06be` found no Blocking,
+  Important, or Advisory issues and approved the maintained VM rerun. It
+  independently confirmed the exact BusyBox options, non-fatal shell behavior,
+  same-filesystem atomic publication, bounded UTF-8-safe runner retrieval, raw
+  404/body preservation, unchanged success criteria, and focused commit split.
+- Pushed `5bf06beccdd29c333f04bb044a7610cee5ccda3d` over SSH. Exact-head static
+  run `31634574923` and managed runtime run `31634574802` are in progress.
+  No superseded current-head run exists. The earlier failed run remains retained
+  with its investigated artifact; it was not blindly rerun.
+- Exact-head static run `31634574923` passed in 5m38s. Managed runtime run
+  `31634574802` passed in 27m22s with all five scripts, result evaluation, and
+  cleanup green. All nine networking examples passed; the formerly failing
+  routed-IPv6 inbound/outbound example completed in 3.16s. The run also passed
+  libvirt, platform defaults, NFS locking, dual-stack NAT, routed IPv4, and
+  storage. No full-log artifact was uploaded because the exact-head test was
+  green.
+- Exact vpsAdmin CI run `31618474081` passed at
+  `02449a1e0966c00969e98e7267ad68e002123d62` in 3h51m45s. Test selection,
+  the complete selected suite, result evaluation, summary, and cleanup all
+  succeeded; full-log upload was skipped because the result was green.
+- Fresh temporary integration worktrees re-fetched both upstream default
+  branches and proved they were direct ancestors of the exact tested heads.
+  Fast-forwarded and pushed vpsAdmin `master` from `925a85878` to `02449a1e0`
+  after a final PHP syntax check. Fast-forwarded and pushed
+  vpsfree-kb-contracts `master` from `3c02342` to `5bf06be` after the complete
+  `nix develop -c bin/check --allow-missing` suite passed again.
+- Remote verification confirms both `origin/master` refs equal their retained
+  feature-branch heads. Default-branch workflows started automatically for the
+  same already-tested SHAs; they are current-head runs and were not cancelled.
+  vpsAdmin master WebUI PHPUnit run `31637898417` is already green while CI and
+  i18n remain in progress. Contract master static and managed runtime runs are
+  in progress for the same SHA.
+- Removed this initiative's clean temporary integration worktrees, baseline
+  worktree, and merged feature worktrees. Retained both local and remote feature
+  branches as required. No worktree or branch belonging to another initiative
+  was changed.
+- Reverified both staged release manifests after default-branch integration;
+  Czech and English staging remain checksummed and language-link complete at
+  the real page IDs. The staging container remains running and owned by this
+  initiative for review. Production KB content remains untouched and requires
+  a separate explicit approval before promotion.
