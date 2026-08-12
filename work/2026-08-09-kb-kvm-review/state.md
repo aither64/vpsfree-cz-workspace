@@ -1930,3 +1930,23 @@
   noun-phrase Czech release summary, byte-identical canonical KVM candidates,
   and exactly four candidate pages with no media changes. Long capture and VM
   validation were deliberately left for the post-review gate.
+- Built the maintained `screenshots` topology as cluster
+  `kb-kvm-navigation` with the default bridge network. Complete Czech and
+  English runs each captured all 59 checkpoints; strict validation accepts all
+  118 PNG variants. An initial same-cluster bilingual sequence exposed
+  language-specific snapshot and TOTP labels accumulating duplicate fixtures.
+  The failure was investigated rather than accepted on rerun: focused console
+  capture passed, the complete English ordering then passed, and contact-sheet
+  comparison identified the independent fixture-label problem.
+- Discarded the polluted capture state and regenerated each language from a
+  fresh seeded cluster. Both contact sheets were reviewed: each has one
+  language-appropriate snapshot and TOTP device, while the intentional
+  `kvm-host` VPS supplies a 20 GiB root dataset plus a 100 GiB `vm-images`
+  subdataset mounted at `/srv/libvirt/images`. Recorded the reusable isolation
+  workaround in
+  `notes/vpsfree-kb-contracts/2026-08-12-bilingual-fixture-labels.md`.
+- Contract commit `2c6d533` contains the complete 44-PNG bilingual refresh and
+  generated manifest hashes/provenance. Post-capture `bin/check` passes with
+  40 controls, 30 paths, 75 bindings, 9 exceptions, 8/50 scanner tests, 9/20
+  annotation tests, 15/43 article tests, and all 59 concepts/118 variants.
+  The capture cluster is stopped and its GC root has been removed.
