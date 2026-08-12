@@ -8,7 +8,7 @@
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - base/head: `origin/master` at `925a85878`
     (`webui: update dependencies`)
-  - feature head: `28c01ee114ef22040f48fef907fbade4ddce7b58`
+  - feature head: `7162ebac96cefb900831285a480f551d799cbc49`
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -16,9 +16,9 @@
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `origin/master` at
     `a301114d3e34412f201352a7f3e59d1556d2f561`
-  - feature head: `b1bfe70f9ba03339c25378b50491a408ac4a0b78`
-    (`inputs: set vpsadminServices to 28c01ee1`)
-  - pending force-push after follow-up review
+  - feature head: `60cc79d3133ddc63980d96ed58871d2eb4d57c69`
+    (`inputs: set vpsadminServices to 7162ebac`)
+  - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
 
 ## Status
 
@@ -28,9 +28,10 @@
   `vpsadminServices` feature pin in `vpsfree-cz-configuration`.
 - User subsequently chose to remove the supervisor compatibility filter and
   deploy nodectld to DNS nodes before the API cleanup.
-- The revised vpsAdmin branch is committed and pushed. The revised exact
-  configuration pin is committed locally. Quick follow-up checks pass;
-  standalone review and long validation remain.
+- Both revised feature branches are committed and pushed. The standalone
+  follow-up review is resolved, focused validation and all requested builds
+  pass, and completed current-head GitHub checks are green. API matrices and
+  the migration-triggered full integration workflow remain in progress.
 
 ## Commands run
 
@@ -156,6 +157,28 @@
   worktree. Commit `b1bfe70f` is a single generated commit directly changing
   `vpsadminServices` from production `95f8d9ca` to `28c01ee1`;
   `confctl inputs channel ls vpsadmin` resolves the expected revision.
+- Mandatory standalone follow-up review of the revised design found no
+  blocking code findings. It found one Important commit-message issue: the
+  first commit body still claimed the removed supervisor compatibility filter.
+- Amended the first commit body to require DNS-node nodectld deployment and
+  queue draining before cleanup. This changed only commit hashes, not the
+  reviewed tree. Final vpsAdmin commits are `0c9b3844d` and `7162ebac9`.
+- Regenerated the exact configuration pin once more from `origin/master`.
+  Final generated commit `60cc79d3` directly pins production `95f8d9ca` to
+  final vpsAdmin head `7162ebac`; only `flake.lock` changes.
+- Post-review long validation passed at the final source/configuration state:
+  - `./test-runner.sh test dns/secondary-transfer-errors`: both examples and
+    the 1-test scenario passed in 562.74 seconds;
+  - `confctl build -y 'cz.vpsfree/vpsadmin/*'`: all 11 machines built;
+  - `confctl build -y cz.vpsfree/containers/ns3`: built;
+  - `confctl build -y cz.vpsfree/containers/ns4`: built.
+- Force-pushed both unmerged feature branches with lease. Superseded active
+  workflows were cancelled when their head no longer matched the branch.
+- Current-head GitHub Actions at `7162ebac`:
+  - API Migration Specs, RuboCop, i18n health, and libnodectld Specs passed;
+  - API Specs run 31634674759 is still running its two platform shards;
+  - full integration run 31634674690 is still running the complete `tag=ci`
+    suite selected by the migration.
 
 ## Results
 
