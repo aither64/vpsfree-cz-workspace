@@ -2051,3 +2051,20 @@
   the real page IDs. The staging container remains running and owned by this
   initiative for review. Production KB content remains untouched and requires
   a separate explicit approval before promotion.
+- On 2026-08-13, the user explicitly approved publication of the reviewed KB
+  changes. Rechecked the active initiative and staging ownership, authenticated
+  as an administrator against both production wikis, and reverified both
+  staged manifests before promotion.
+- Restaged and promoted the exact Czech manifest with the noun-phrase summary
+  `Doplnění KVM navigace a pravidel dokumentace vpsAdminu`. Production now
+  contains the reviewed versions of `informace:jak_psat` and `navody:vps:kvm`.
+  Post-promotion manifest verification passed.
+- Restaged and promoted the exact English manifest with summary
+  `Add KVM navigation coverage and vpsAdmin documentation rules`. Production
+  now contains the reviewed versions of `information:kb` and
+  `manuals:vps:kvm`. Post-promotion manifest verification passed.
+- Both promotions contained two pages and no media objects. The guarded
+  release workflow accepted the recorded production baselines, and both
+  production wikis match their candidate checksums. Released staging ownership
+  after confirming there was no pending release; the container is stopped and
+  its reviewed data are retained.
