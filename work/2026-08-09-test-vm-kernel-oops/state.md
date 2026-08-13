@@ -152,12 +152,11 @@
     summary, test-state cleanup, and runner completion all passed on
     `67fcc1737` from 13:37:55Z through 13:40:18Z.
   - the same run's OS build passed on runner1 and the generic full suite passed
-    on runner1 after 41 minutes. Only its Intel lifecycle remains queued; that
-    unchanged path passed on the immediately preceding `cf1994bfb` head.
+    on runner1 after 41 minutes. The Intel lifecycle subsequently passed, so
+    final feature run `31392730922` completed successfully in all four jobs.
   - final vpsAdmin client specs, WebUI PHPUnit, i18n health, and libnodectld
     specs passed on `8b883cfb5`. Its selected integration run `31393025128`
-    remains active on runner2, which also explains the final Intel lifecycle
-    queue.
+    also completed successfully.
 - The root filesystem reached the non-root reserve while another session built
   a KVM initrd. Removing only this initiative's caches was insufficient; after
   that active build completed, standard `nix-store --gc` removed unreferenced
@@ -178,14 +177,19 @@
 - Runner activation, AMD CPU feature checks, and QEMU cleanup are verified.
   The first hardware run exposed only the over-specific mitigation wording
   assertion and did not load a patch.
-- Next: monitor the queued Intel lifecycle and the active final vpsAdmin
-  selected integration to their terminal results.
+- Final feature and default-branch validation is complete. vpsAdminOS feature
+  run `31392730922` and default run `31400699936` passed build, generic suite,
+  Intel lifecycle, and AMD lifecycle. vpsAdmin feature run `31393025128` and
+  default run `31400740738` passed their selected integration tests.
 - Direct host KVM/SVM log inspection is unavailable from this workspace and is
   an operator-only residual check. The user confirmed that access to the
   running system is not available here; do not retry SSH-based probing.
 
 ## Cleanup
 
-- Worktrees remain active until validation, default-branch integration, and
-  deployment are complete.
-- Feature branches must be retained after merge.
+- All four initiative worktrees were removed after confirming clean tracked
+  state, published feature heads, and ancestry from the current default
+  branches. Forced removal discarded only `.bundle`/`.bin` caches in the two
+  configuration worktrees.
+- The managed development-session tmux instance was stopped. Feature branches
+  remain locally and remotely after merge.

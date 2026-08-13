@@ -85,9 +85,10 @@
   - vpsAdmin client, WebUI PHPUnit, i18n, and libnodectld specs passed;
   - confctl RSpec and RuboCop passed;
   - IRC-bot RSpec passed.
-- Self-hosted default-branch integration workflows for vpsAdminOS, vpsAdmin,
-  confctl, Terraform provider, and IRC bot are queued behind shared runner
-  capacity. No failure has been accepted or rerun without investigation.
+- All previously queued self-hosted default-branch workflows completed
+  successfully: vpsAdminOS run `31400699936`, vpsAdmin run `31400740738`,
+  confctl run `31402089240`, Terraform provider run `31402095774`, and IRC-bot
+  run `31402220153`.
 - The mandatory review was not repeated: new commits are dependency-only or
   generated lock/channel updates, and the merged vpsAdminOS code series had
   already completed standalone review with no findings.
