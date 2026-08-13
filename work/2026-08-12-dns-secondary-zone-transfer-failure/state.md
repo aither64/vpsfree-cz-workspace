@@ -212,11 +212,11 @@
   - `confctl build -y cz.vpsfree/containers/ns4`: built.
 - Refetched configuration once more, confirmed upstream had not advanced, and
   fast-forwarded `origin/master` from `8dd3d1a4` to `a8d8b5fe`.
-- Post-merge GitHub Actions at vpsAdmin `b3d63c005` already pass for API
-  Migration Specs, RuboCop, i18n health, and libnodectld Specs. The API Specs
-  and full CI workflows remain active on the same merged head and are being
-  monitored; previous full validation at the pre-rebase equivalent source tree
-  passed.
+- Post-merge GitHub Actions at vpsAdmin `b3d63c005` pass for API Migration
+  Specs, RuboCop, i18n health, libnodectld Specs, and the complete 27-job API
+  Specs matrix (run 31675738739). At the user's direction, stopped waiting for
+  the separate full CI workflow, which remained in progress; previous full
+  validation at the pre-rebase equivalent source tree passed.
 
 ## Results
 
