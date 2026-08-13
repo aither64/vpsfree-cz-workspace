@@ -12,11 +12,14 @@
     `b3d63c005bef30be52165cd80ef4978bbf0e72b2`
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
     and fast-forwarded into `origin/master`
-  - follow-up feature head: `9526f88db84c0d93ac76d3a2194f863cf4005234`
-    - `f9e8d1c70 nodectld: correlate BIND transfer attempts`
-    - `212c0e12e dns: track direct primary transfer paths`
-    - `d20f20271 webui: show direct DNS transfer status`
-    - `9526f88db tests: cover DNS primary path recovery`
+  - follow-up base: `origin/master` at `5724cf262e858409e9142502dcb2a84a2940065f`
+  - follow-up feature head: `be0fa305f7d1d84c6dc3d7dca6abeee04906c983`
+    - `ba76f23ad nodectld: correlate BIND transfer attempts`
+    - `9c489d937 bind: log successful SOA refreshes`
+    - `86efcf695 dns: track direct primary transfer paths`
+    - `b64318eab monitoring: reset DNS transfer incident history`
+    - `bb960396b webui: show direct DNS transfer status`
+    - `be0fa305f tests: cover DNS primary path recovery`
   - follow-up branch pushed; not merged
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -29,25 +32,27 @@
     (`inputs: set vpsadminServices to b3d63c00`)
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
     and fast-forwarded into `origin/master`
-  - follow-up feature head: `97ca5a6a`
-    - `05eb4613 vpsadmin: monitor DNS primary transfer paths`
-    - `97ca5a6a inputs: set vpsadminServices to 9526f88d`
+  - follow-up feature head: `21f799aa015c82d661c9bb59e81a088f888ae56e`
+    - `7639285f vpsadmin: monitor DNS primary transfer paths`
+    - `bc8d48b1 dns: use vpsAdmin BIND telemetry package`
+    - `21f799aa inputs: set vpsadminServices to be0fa305`
   - follow-up branch pushed; not merged
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-mail-templates`
   - base: `origin/master` at `04921d7`
-  - feature head: `e59a65d` (`dns: report failed direct primary paths`)
+  - feature head: `c4288b56a426385bb41ec66ed9aa57d14cf8d590`
+    (`dns: report failed direct primary paths`)
   - branch pushed; not merged
 - `vpsfree-kb-contracts`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `origin/master` at `5bf06be`
-  - feature head: `a366842`
-    - `7c0c76f Pin DNS primary transfer status revision`
-    - `a366842 Track DNS documentation paragraph shifts`
+  - feature head: `768ab2941e42c1033f1c295543f747bf17d2e6ee`
+    - `66e1799 Pin DNS primary transfer status revision`
+    - `768ab29 Track DNS documentation paragraph shifts`
   - branch pushed; not merged
 
 ## Status
@@ -74,11 +79,24 @@
   `5724cf262`. Worktrees for mail templates and KB contracts were created; the
   existing configuration worktree was restored after its known checkout-hook
   exit 78.
-- The follow-up implementation is committed and pushed in all four affected
-  project repositories. Quick verification and repository hooks pass. The
-  mandatory fresh review and long DNS/WebUI/configuration tests are pending.
-- Guarded Czech and English KB candidates and manifests were prepared locally;
-  production KB was not changed.
+- The final follow-up implementation is committed and pushed in all four
+  affected project repositories. Quick verification and repository hooks pass.
+  The mandatory standalone review reports no remaining Blocking or Important
+  findings, and all authorized long validation passes on the final heads.
+- Review findings were folded into the logical commits. The final deployment
+  contract uses an all-at-once BIND/nodectld/consumer protocol boundary, a
+  fresh tracking epoch, repeatable legacy-log and monitor-history cleanup, and
+  explicit queue and journal-cursor barriers for rollback and re-upgrade.
+- Final guarded Czech and English KB candidates are in
+  `kb-candidates-final/`, with release manifests `kb-release-cs.yml` and
+  `kb-release-en.yml`. Their code contract
+  pins exact vpsAdmin head `be0fa305`. Production KB was not changed.
+- The mandatory standalone review of the final clean, pushed commit ranges
+  reports no remaining Blocking or Important findings. After the long tests,
+  the reviewer re-audited the test-only vpsAdmin delta and the regenerated
+  configuration and KB pins, found no new significant issues, and closed the
+  review. Its residual Advisory is the operational NTP/clock-synchronization
+  dependency already recorded in `plan.md`.
 
 ## Commands run
 
@@ -278,9 +296,10 @@
   records` warning, and failure to load the secondary's local cached zone file.
 - Implemented a bounded stateful libnodectld parser for BIND 9.18 and 9.20.
   It correlates pointer or zone/primary attempts, never treats completion
-  accounting as success, accepts transferred serial and up-to-date results,
-  suppresses IXFR fallback, and classifies user-primary, network, local,
-  lifecycle, and unknown failures.
+  accounting as success, accepts only `transferred serial` as transfer success,
+  treats ambiguous xfrin `up to date` as refresh evidence, suppresses IXFR
+  fallback, and classifies user-primary, network, local, lifecycle, and unknown
+  failures.
 - Added `dns_server_zone_primary_transfer_states` and event classification to
   the API. The supervisor tracks each current `(secondary, configured primary)`
   path, preserves explicit-failure precedence, resets grace time when network
@@ -387,18 +406,83 @@
   BIND status ingestion separately provides loaded, serial, refresh, and expiry
   timestamps suitable for health/staleness gating.
 - Minimum safe remediation is to stop using `Transfer completed` as success,
-  use accepted `transferred serial` and up-to-date outcomes for success, ignore
-  IXFR fallback and lifecycle cancellation, and remove nonfatal/local cache
-  patterns from user failures. Correct failure notification additionally needs
-  correlation across fallback and configured primaries, or preferably delayed
-  notification based on whether the served zone is actually unhealthy or near
-  expiry.
+  use accepted `transferred serial` as transfer success, use equal/older-serial
+  refresh evidence only to recover network reachability state, ignore IXFR
+  fallback and lifecycle cancellation, and remove nonfatal/local cache patterns
+  from user failures. Correct notification also requires correlating attempts,
+  preserving each configured primary path independently, and delaying alerts.
 
-## Open questions
+## Current implementation and review
 
-- Mandatory standalone review is pending.
-- After review, run the long real-BIND DNS scenario, the WebUI browser scenario,
-  and production configuration builds selected by the exact feature pin.
+- The user accepted patching BIND to restore positive passive recovery
+  evidence. Minimal version-specific patches add an INFO message to the
+  successful equal-serial SOA refresh branch in BIND 9.18 and 9.20 without
+  changing protocol or refresh behavior. The configuration selects
+  `pkgs.bind-vpsadmin` for DNS servers. GNU patch dry runs with fuzz disabled
+  pass against official BIND 9.18.50 and the exact deployed BIND 9.20.26 source.
+  The exact deployed 9.20.26 derivation builds successfully at
+  `/nix/store/3z3iy9r677xbfhl06rd8ljsi67rf8kjg-bind-9.20.26`; its companion
+  `dnsutils` and `host` outputs are also present. The exact 9.18.50
+  compatibility derivation builds at
+  `/nix/store/vs7gkqc1c4h3yby17bp1pjrh482q5qli-bind-9.18.50`. The respective
+  `libdns-9.18.50.so` and `libdns-9.20.26.so` outputs both contain the patched
+  `confirmed current serial` message.
+- Network failures become alertable only when failed observations span 24
+  hours. A patched equal-serial refresh, the existing older-primary-serial
+  response, or same-primary current NOTIFY clears only a network failure to
+  unknown. Ambiguous xfrin `up to date` is refresh evidence and cannot clear an
+  explicit error. Routine refresh/NOTIFY and peer-positive events do not create
+  durable transfer-log rows, but associated direct-primary observations advance
+  the per-path ordering watermark so out-of-order consumers cannot restore an
+  older failure.
+- The review also found and the working tree now addresses: BIND network-down
+  and malformed-response result families, context-sensitive `unexpected error`,
+  partial-transfer EOF, the 120-minute maximum transfer window, per-enable and
+  per-path event boundaries, and queued events received while a zone is
+  disabled. It additionally led to filtering stale/unassociated successes from
+  the user API, resetting path state across enable/source epochs, closing
+  monitor incidents after source changes, and a repeatable rollback/re-upgrade
+  monitor-history cleanup task.
+- Follow-up verification currently passed: libnodectld parser 27 examples and
+  API supervisor/model/task 36 examples. The core migration passes 5 examples.
+  An earlier accidental combined run
+  included an isolated migration spec with normal API specs and switched the
+  shared test connection to the migration database; the groups are therefore
+  run separately, as required by the migration-spec harness.
+- KB replacement text, generated candidates, manifests, hashes, and exact code
+  pins were rebuilt for the final policy. `nix develop -c bin/check` passes at
+  vpsAdmin pin `be0fa305`; the final two-page candidate build reports two
+  replacements with no annotations or media changes, and annotation checking
+  passes with 75 bindings and 9 exceptions.
+- The first post-review long-validation pass built all 11 exact-pinned
+  vpsAdmin machines plus `ns3` and `ns4` successfully. It also exposed two
+  integration-test defects and one ambiguous selector rather than product
+  failures:
+  - after the first refused refresh, BIND's process-local unreachable cache
+    suppressed the test's immediate second `rndc refresh`, so the simulated
+    24-hour outage never received its required second observation;
+  - synthetic assertions still expected routine peer/refresh successes to add
+    durable log rows, contrary to the finalized state-watermark design;
+  - the Playwright primary-row selector matched the DNS-server status row first
+    because both rows contained the same primary IP address.
+  The DNS scenario now restarts BIND to clear only its local unreachable cache
+  before the real repeated outage attempt, backdates the tracking/path epoch
+  consistently with the simulated 25-hour failure, disables automatic test
+  NOTIFY so equal-serial refresh telemetry is proven directly, and uses
+  persisted local-event barriers when asserting that routine positive events
+  add no rows. The Playwright assertion is scoped through the primary-specific
+  transfer-log link.
+- Final long validation on the committed and exactly pinned heads passes:
+  - `./test-runner.sh test dns/secondary-transfer-errors`: all six examples and
+    the one real-BIND scenario passed in 764.74 seconds;
+  - `./test-runner.sh test 'webui#networking-dns'`: all four Playwright cases
+    and the focused browser scenario passed in 1,130.76 seconds;
+  - `confctl build -y 'cz.vpsfree/vpsadmin/*'`: all 11 machines built from
+    exact vpsAdmin revision `be0fa305`;
+  - `confctl build -y cz.vpsfree/containers/ns3` and the corresponding `ns4`
+    command both built with the patched BIND package;
+  - final KB contract checks pass with 40 controls, 75 annotation bindings,
+    118 screenshot variants, and all 32 executable/unit test runs green.
 - The prepared KB candidates can be staged for review after code review. Any
   production KB promotion requires separate direct user approval.
 

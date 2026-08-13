@@ -17,8 +17,10 @@ content_replacements:
       přímá cesta, a **Neznámý**, že zatím nemáme potvrzení ze všech cest. Selhání přímé
       cesty nutně neznamená nedostupnou zónu, protože aktuální kopii mohl dodat jiný
       sekundární server. Obvykle ale upozorňuje na nedostupný primární server, chybějící
-      povolení přenosu nebo nesprávný TSIG. Upozornění na síťovou nedostupnost posíláme
-      až po 24 hodinách, ostatní potvrzené chyby po 30 minutách.
+      povolení přenosu nebo nesprávný TSIG. Na síťovou chybu upozorňujeme až tehdy,
+      když neúspěšné pokusy na stejné cestě trvají alespoň 24 hodin. Úspěšná následná
+      kontrola stejného primárního serveru síťovou chybu ukončí, i když se sériové číslo
+      nezměnilo. Na ostatní potvrzené chyby upozorňujeme po 30 minutách.
     count: 1
   - language: en
     page: manuals:server:secondary_dns
@@ -34,8 +36,10 @@ content_replacements:
       yet. A failed direct path does not necessarily make the zone unavailable because
       another secondary may have supplied a current copy. It usually indicates an
       unreachable primary, a missing transfer permission, or incorrect TSIG settings.
-      We send network-unreachability alerts only after 24 hours and other confirmed
-      errors after 30 minutes.
+      We alert on a network error only after failed observations on the same path span
+      at least 24 hours. A later successful check of that same primary ends the network
+      failure even when the serial did not change. We alert on other confirmed errors
+      after 30 minutes.
     count: 1
 new_pages: []
 media: []
