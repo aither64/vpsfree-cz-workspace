@@ -36,6 +36,10 @@
   The standalone follow-up review is resolved, focused validation and all
   requested integration/configuration builds pass. No deployment or database
   migration was run.
+- The vpsAdmin feature worktree was recreated at the merged feature head for a
+  source-level audit of all BIND transfer messages. The audit is complete and
+  shows that the parser is not yet a reliable user-health signal. No parser or
+  API code was changed during this investigation.
 
 ## Commands run
 
@@ -217,6 +221,22 @@
   Specs matrix (run 31675738739). At the user's direction, stopped waiting for
   the separate full CI workflow, which remained in progress; previous full
   validation at the pre-rebase equivalent source tree passed.
+- Recreated the retained vpsAdmin feature branch worktree at
+  `b3d63c005bef30be52165cd80ef4978bbf0e72b2` for the requested follow-up.
+- Audited the exact deployed BIND 9.20.26 source from Nix source archive
+  `/nix/store/jgibfp4pxrnlck46l7rbyd0j3yhan9vp-bind-9.20.26.tar.xz` and its
+  upstream system tests. Compared the relevant behavior with BIND 9.18.50.
+- Reviewed `lib/dns/xfrin.c`, `lib/dns/zone.c`, `lib/isc/result.c`, transfer
+  system tests, the complete libnodectld parser, its specs, API persistence,
+  BIND statistics ingestion, and the DNS integration test's injected logs.
+- Ran representative BIND 9.20 messages through
+  `NodeCtld::DnsTransferLog#parse_message` in the libnodectld Nix shell. The
+  sequence `failed while receiving responses: FORMERR`, `Transfer status:
+  FORMERR`, and a nonempty `Transfer completed` summary produced two failed
+  events followed by a false successful event with the rejected serial.
+- The same parser probe confirmed false failures for `Transfer status: IXFR
+  failed`, `Transfer status: shutting down`, a secondary MX/SRV `has no address
+  records` warning, and failure to load the secondary's local cached zone file.
 
 ## Results
 
@@ -245,17 +265,55 @@
   than interpreting BIND's completion line itself.
 - The adjacent `SERVFAIL` refresh messages concern other zones and do not
   produce the quoted `message: up to date` values.
+- BIND's `xfrin_destroy()` logs both `Transfer status` and `Transfer completed`
+  for every terminal result. Completion is transfer accounting, not evidence
+  of success; its counters and serial can be nonzero after malformed data or a
+  rejected database.
+- BIND converts an incremental-transfer processing error to `IXFR failed` and
+  immediately retries with AXFR. Its own tests deliberately avoid treating any
+  transfer status as final because of this fallback.
+- Shutdown, forced retransfer, and reconfiguration can emit `shutting down` or
+  `operation canceled`; these are infrastructure lifecycle events, not failures
+  caused by the zone owner or primary.
+- Refresh messages are per-primary attempts. BIND may retry without EDNS, use
+  TCP, start AXFR despite an SOA-query refusal, or try another primary. A later
+  equal-serial response is successful but has no matching INFO-level success
+  line, so a parsed first-primary failure can remain falsely current.
+- Secondary MX/SRV `has no address records` messages are nonfatal consistency
+  warnings in BIND. Failure to load a secondary's master file refers to its
+  local cached copy and triggers automatic refresh. Both are currently
+  mislabeled as a rejected customer zone.
+- BIND can reject a received database with `transferred zone has <n> SOA
+  records` or `transferred zone has no NS records`, yet the transfer context
+  still reports status success and a completion summary. The parser ignores
+  the rejection and emits success.
+- `transferred serial <serial>` is the reliable accepted-transfer message: BIND
+  emits it only after the received database passes SOA and NS checks. Existing
+  BIND status ingestion separately provides loaded, serial, refresh, and expiry
+  timestamps suitable for health/staleness gating.
+- Minimum safe remediation is to stop using `Transfer completed` as success,
+  use accepted `transferred serial` and up-to-date outcomes for success, ignore
+  IXFR fallback and lifecycle cancellation, and remove nonfatal/local cache
+  patterns from user failures. Correct failure notification additionally needs
+  correlation across fallback and configured primaries, or preferably delayed
+  notification based on whether the served zone is actually unhealthy or near
+  expiry.
 
 ## Open questions
 
-- None. The implementation and delivery choices are fixed in `plan.md`.
+- The completed audit does not change code. A follow-up implementation should
+  choose between a minimal conservative parser (few trustworthy success/failure
+  events) and the recommended health-oriented model that keeps individual
+  attempts as diagnostics and alerts only on accepted zone state/staleness.
 
 ## Cleanup
 
 - Both default branches are merged. No deployment, database migration, or
   other production write was made.
-- Removed both initiative worktrees and both detached merge worktrees,
+- Removed both original initiative worktrees and both detached merge worktrees,
   including their local transient gem and configuration build caches. Feature
-  branch refs are retained locally and remotely at the merged heads.
+  branch refs are retained locally and remotely at the merged heads. The
+  vpsAdmin feature worktree was later recreated for the requested BIND audit
+  and remains available for follow-up implementation.
 - The upstream BIND source inspection used a temporary clone under `/tmp`,
   outside the workspace.

@@ -62,3 +62,45 @@ configuration pin into the default branches.
   only the completion produces a stored success.
 - Run focused specs and lint, mandatory standalone review, the DNS integration
   test, and confctl builds for all vpsAdmin services plus ns3 and ns4.
+
+## Follow-up BIND transfer-log audit (2026-08-13)
+
+### Goal
+
+Check the complete BIND 9.20 transfer and refresh message flow against the
+merged parser before treating its events as reliable user-facing health.
+
+### Approach
+
+- Audit the exact deployed BIND 9.20.26 source and its system tests, with a
+  comparison against the supported 9.18 branch where message semantics differ.
+- Enumerate transfer-engine, transfer-manager, refresh, and post-load messages,
+  including retry, fallback, cancellation, and local failure paths.
+- Run representative full message sequences through the feature-branch parser,
+  rather than evaluating isolated regex examples only.
+- Classify messages by provenance and finality: accepted zone state, remote
+  primary attempt, local DNS-server fault, or infrastructure lifecycle event.
+- Record findings and recommend a follow-up design. This phase is read-only;
+  parser changes require a separate implementation decision.
+
+### Compatibility and deployment consequences
+
+- BIND 9.18 and 9.20 share the central hazards: completion accounting is
+  unconditional and IXFR failures can be followed by AXFR. BIND 9.20 adds a
+  transfer-context pointer and reports shutdown as `shutting down`; BIND 9.18
+  can report `operation canceled` and rewrite it as `IXFR failed`.
+- A safe follow-up must not require atomic upgrades merely to understand the
+  log vocabulary. Unknown or uncorrelated attempt messages should be retained
+  as internal diagnostics, not promoted to user failures.
+- Existing BIND statistics already publish loaded, serial, refresh, and expiry
+  state. User notification should be gated by accepted/served zone health or
+  staleness, so retries across primaries and deployments cannot create alerts.
+
+### Verification plan
+
+- Reproduce a failed transfer with nonzero accounting, IXFR fallback,
+  cancellation, a nonfatal MX/SRV warning, and a local cache-file load error.
+- Verify upstream control flow for equal-serial refresh, per-primary fallback,
+  post-transfer SOA/NS validation, and accepted `transferred serial` logging.
+- Document parser coverage gaps and the minimum safe remediation separately
+  from the recommended health-oriented design.
