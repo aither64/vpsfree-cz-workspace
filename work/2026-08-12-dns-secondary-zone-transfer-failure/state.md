@@ -498,3 +498,29 @@
   and remains available for follow-up implementation.
 - The upstream BIND source inspection used a temporary clone under `/tmp`,
   outside the workspace.
+
+## Dev cluster WebUI review
+
+- On 2026-08-13, deployed exact vpsAdmin revision `be0fa305` to the bridge-mode
+  dev cluster `2026-08-12-dns-secondary-zone-transfer-failure`. The running
+  review topology contains the services VM plus the primary and secondary DNS
+  VMs; no compute node is needed for the DNS WebUI review.
+- The shared dev-cluster harness currently contains unrelated notification-test
+  integration that requires API options from another unmerged vpsAdmin branch.
+  To avoid changing that concurrent work, this deployment uses an isolated
+  compatibility copy of the harness from workspace revision `39750da` at
+  `dev-clusters/.vpsadmin-dns-transfer-compat`. Mail capture is disabled in
+  this review cluster; the DNS API, WebUI, and both DNS VMs are healthy.
+- Created user-owned external zone `secondary-transfer-review.example.` for
+  `test-user1` on `ns-public.aitherdev.int.vpsfree.cz`, with four configured
+  primary paths for visual review:
+  - `198.51.100.210`: successful, 0 / 1 failed servers;
+  - `198.51.100.211`: explicit `REFUSED`, 1 / 1 failed servers;
+  - `198.51.100.212`: continuous network failure older than 24 hours,
+    1 / 1 failed servers;
+  - `198.51.100.213`: unknown, 0 / 1 failed servers.
+- Verified an OAuth login as `test-user1`, fetched the exact zone detail page,
+  and found all four expected status rows, counts, timestamps, and filtered
+  transfer-log links. The WebUI endpoint returned HTTP 200 at
+  `https://webui.aitherdev.int.vpsfree.cz/`. The cluster remains running for
+  user review; no production service or data was changed.
