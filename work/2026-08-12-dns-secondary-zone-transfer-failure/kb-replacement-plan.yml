@@ -1,0 +1,43 @@
+---
+schema: 3
+replacements: []
+content_replacements:
+  - language: cs
+    page: navody:server:sekundarni_dns
+    before: |-
+      V seznamu sekundárních serverů se zobrazuje jejich stav, tj. aktuální sériové číslo zóny
+      a datumy posledního načtení, dalšího obnovení a expirace.
+    replacement: |-
+      V seznamu sekundárních serverů se zobrazuje jejich stav, tj. aktuální sériové číslo zóny
+      a datumy posledního načtení, dalšího obnovení a expirace.
+
+      Sloupec **Přímé přenosy** u primárních serverů ukazuje, jestli se z nich zóna
+      přenesla přímo na všechny naše sekundární servery. **Úspěšný** znamená, že přenos
+      potvrdily všechny sekundární servery, **Nepodařilo se**, že selhala alespoň jedna
+      přímá cesta, a **Neznámý**, že zatím nemáme potvrzení ze všech cest. Selhání přímé
+      cesty nutně neznamená nedostupnou zónu, protože aktuální kopii mohl dodat jiný
+      sekundární server. Obvykle ale upozorňuje na nedostupný primární server, chybějící
+      povolení přenosu nebo nesprávný TSIG. Upozornění na síťovou nedostupnost posíláme
+      až po 24 hodinách, ostatní potvrzené chyby po 30 minutách.
+    count: 1
+  - language: en
+    page: manuals:server:secondary_dns
+    before: |-
+      The list of secondary servers shows their status, i.e., the current zone serial number and the dates of the last load, the next refresh, and expiration.
+    replacement: |-
+      The list of secondary servers shows their status, i.e., the current zone serial number and the dates of the last load, the next refresh, and expiration.
+
+      The **Direct transfers** column for primary servers shows whether the zone was
+      transferred from them directly to all of our secondary servers. **Successful**
+      means every secondary has confirmed a direct transfer, **Failed** means at least
+      one direct path failed, and **Unknown** means not every path has been confirmed
+      yet. A failed direct path does not necessarily make the zone unavailable because
+      another secondary may have supplied a current copy. It usually indicates an
+      unreachable primary, a missing transfer permission, or incorrect TSIG settings.
+      We send network-unreachability alerts only after 24 hours and other confirmed
+      errors after 30 minutes.
+    count: 1
+new_pages: []
+media: []
+code_samples: []
+exceptions: []

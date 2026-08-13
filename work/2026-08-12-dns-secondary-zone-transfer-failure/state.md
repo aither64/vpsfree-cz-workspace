@@ -12,6 +12,12 @@
     `b3d63c005bef30be52165cd80ef4978bbf0e72b2`
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
     and fast-forwarded into `origin/master`
+  - follow-up feature head: `9526f88db84c0d93ac76d3a2194f863cf4005234`
+    - `f9e8d1c70 nodectld: correlate BIND transfer attempts`
+    - `212c0e12e dns: track direct primary transfer paths`
+    - `d20f20271 webui: show direct DNS transfer status`
+    - `9526f88db tests: cover DNS primary path recovery`
+  - follow-up branch pushed; not merged
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
@@ -23,6 +29,26 @@
     (`inputs: set vpsadminServices to b3d63c00`)
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
     and fast-forwarded into `origin/master`
+  - follow-up feature head: `97ca5a6a`
+    - `05eb4613 vpsadmin: monitor DNS primary transfer paths`
+    - `97ca5a6a inputs: set vpsadminServices to 9526f88d`
+  - follow-up branch pushed; not merged
+- `vpsfree-mail-templates`
+  - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
+  - worktree:
+    `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-mail-templates`
+  - base: `origin/master` at `04921d7`
+  - feature head: `e59a65d` (`dns: report failed direct primary paths`)
+  - branch pushed; not merged
+- `vpsfree-kb-contracts`
+  - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
+  - worktree:
+    `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
+  - base: `origin/master` at `5bf06be`
+  - feature head: `a366842`
+    - `7c0c76f Pin DNS primary transfer status revision`
+    - `a366842 Track DNS documentation paragraph shifts`
+  - branch pushed; not merged
 
 ## Status
 
@@ -40,6 +66,19 @@
   source-level audit of all BIND transfer messages. The audit is complete and
   shows that the parser is not yet a reliable user-health signal. No parser or
   API code was changed during this investigation.
+- The user approved the follow-up implementation plan. It separates served-zone
+  health from per-user-primary path health, keeps one alert incident per zone,
+  delays network alerts for 24 hours, and preserves the July rolling-reboot fix
+  by allowing same-primary up-to-date NOTIFY to clear network failures only.
+- The retained vpsAdmin branch was fast-forwarded to current `origin/master` at
+  `5724cf262`. Worktrees for mail templates and KB contracts were created; the
+  existing configuration worktree was restored after its known checkout-hook
+  exit 78.
+- The follow-up implementation is committed and pushed in all four affected
+  project repositories. Quick verification and repository hooks pass. The
+  mandatory fresh review and long DNS/WebUI/configuration tests are pending.
+- Guarded Czech and English KB candidates and manifests were prepared locally;
+  production KB was not changed.
 
 ## Commands run
 
@@ -237,6 +276,62 @@
 - The same parser probe confirmed false failures for `Transfer status: IXFR
   failed`, `Transfer status: shutting down`, a secondary MX/SRV `has no address
   records` warning, and failure to load the secondary's local cached zone file.
+- Implemented a bounded stateful libnodectld parser for BIND 9.18 and 9.20.
+  It correlates pointer or zone/primary attempts, never treats completion
+  accounting as success, accepts transferred serial and up-to-date results,
+  suppresses IXFR fallback, and classifies user-primary, network, local,
+  lifecycle, and unknown failures.
+- Added `dns_server_zone_primary_transfer_states` and event classification to
+  the API. The supervisor tracks each current `(secondary, configured primary)`
+  path, preserves explicit-failure precedence, resets grace time when network
+  failure becomes explicit, and changes network failure to unknown on a
+  same-primary current NOTIFY. Peer events never mutate direct-primary state.
+- Added batched aggregate status to `DnsZoneTransfer`, user log authorization
+  and filtering, alert-eligibility scopes, pruning preservation, aggressive
+  legacy log cleanup, and a monitoring-plugin migration that removes old
+  `DnsServerZone` incidents for the zone-level monitor.
+- Updated the WebUI, generated Czech gettext catalogs, Playwright fixture, and
+  DNS integration scenario. The Primary servers table now shows direct status,
+  failed/participating server counts, last attempt, and a primary-filtered log
+  link.
+- Updated the production monitor to query one precomputed eligible-failure count
+  per external DNS zone. It closes incidents for disabled zones and uses the
+  model's 30-minute primary and 24-hour network thresholds.
+- Updated and rendered both notification languages. Confirmed alerts group
+  failures by primary and list every affected secondary; closed alerts now own
+  a `DnsZone` object.
+- Focused checks passed:
+  - libnodectld: 16 examples, 0 failures; targeted RuboCop clean;
+  - supervisor: 14 examples, 0 failures;
+  - path model: 2 examples, 0 failures;
+  - core cleanup migration: 5 examples, 0 failures;
+  - monitoring cleanup migration: 2 examples, 0 failures;
+  - aggregate/visibility/filter API examples: 4 examples, 0 failures;
+  - DNS task specs: 6 examples, 0 failures;
+  - API and WebUI i18n health, PHP syntax, JS syntax, Nix parse/format, full
+    integration derivation evaluation, test discovery, and CI selection pass.
+- Repository hooks passed for every vpsAdmin and configuration commit. The first
+  vpsAdmin API commit attempt was correctly blocked by three migration-spec
+  RuboCop offenses; the lines were fixed and the complete hook set passed.
+  The first configuration functional commit attempt similarly caught two
+  RuboCop offenses; both were fixed before commit.
+- Pushed vpsAdmin follow-up head `9526f88db` and generated the exact production
+  configuration pin with
+  `confctl inputs channel set --commit vpsadmin vpsadmin 9526f88d...`.
+  `confctl inputs channel ls vpsadmin` resolves `vpsadminServices` to
+  `9526f88d`. A first push outside the dev shell was blocked by the mandatory
+  pre-push hook's missing ambient gems; the dev-shell push succeeded.
+- Pinned vpsfree-kb-contracts to `9526f88db` in the flake, capture, navigation,
+  and article contracts. The first `bin/check` exposed the undocumented article
+  provenance pin; it was updated and the canonical workflow was corrected.
+  The complete contract then passed: 40 controls, 30 paths, 33 capture concepts,
+  one article, all unit checks, and 118 PNG variants.
+- `bin/kb-contract-fetch` fetched 116 Czech and 70 English production pages.
+  `bin/kb-contract-build` prepared two local candidates documenting direct
+  status and alert delays. The independent discovery inventory was updated for
+  the shifted TSIG paragraphs, and `check-kb-annotations.rb` then passed with
+  75 bindings and 9 exceptions. Guarded one-page Czech and English release
+  manifests were generated. No staging or production write was made.
 
 ## Results
 
@@ -301,15 +396,17 @@
 
 ## Open questions
 
-- The completed audit does not change code. A follow-up implementation should
-  choose between a minimal conservative parser (few trustworthy success/failure
-  events) and the recommended health-oriented model that keeps individual
-  attempts as diagnostics and alerts only on accepted zone state/staleness.
+- Mandatory standalone review is pending.
+- After review, run the long real-BIND DNS scenario, the WebUI browser scenario,
+  and production configuration builds selected by the exact feature pin.
+- The prepared KB candidates can be staged for review after code review. Any
+  production KB promotion requires separate direct user approval.
 
 ## Cleanup
 
-- Both default branches are merged. No deployment, database migration, or
-  other production write was made.
+- The earlier minimal fix is merged in both original default branches. The new
+  four-repository follow-up remains on pushed feature branches. No deployment,
+  database migration, staging KB write, or production write was made.
 - Removed both original initiative worktrees and both detached merge worktrees,
   including their local transient gem and configuration build caches. Feature
   branch refs are retained locally and remotely at the merged heads. The
