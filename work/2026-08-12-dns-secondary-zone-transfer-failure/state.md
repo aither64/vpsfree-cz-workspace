@@ -6,19 +6,23 @@
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
-  - base/head: `origin/master` at `925a85878`
-    (`webui: update dependencies`)
-  - feature head: `7162ebac96cefb900831285a480f551d799cbc49`
+  - rebased base: `origin/master` at `02449a1e0`
+    (`webui: identify the dataset edit action`)
+  - merged feature head:
+    `b3d63c005bef30be52165cd80ef4978bbf0e72b2`
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
+    and fast-forwarded into `origin/master`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
-  - base: `origin/master` at
-    `a301114d3e34412f201352a7f3e59d1556d2f561`
-  - feature head: `60cc79d3133ddc63980d96ed58871d2eb4d57c69`
-    (`inputs: set vpsadminServices to 7162ebac`)
+  - merge base: `origin/master` at
+    `8dd3d1a42664ce0fed33fd6e985a2d95402bf2f0`
+  - merged feature head:
+    `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
+    (`inputs: set vpsadminServices to b3d63c00`)
   - pushed to `origin/2026-08-12-dns-secondary-zone-transfer-failure`
+    and fast-forwarded into `origin/master`
 
 ## Status
 
@@ -28,10 +32,10 @@
   `vpsadminServices` feature pin in `vpsfree-cz-configuration`.
 - User subsequently chose to remove the supervisor compatibility filter and
   deploy nodectld to DNS nodes before the API cleanup.
-- Both revised feature branches are committed and pushed. The standalone
-  follow-up review is resolved, focused validation and all requested builds
-  pass, and completed current-head GitHub checks are green. API matrices and
-  the migration-triggered full integration workflow remain in progress.
+- Both revised feature branches and default branches are committed and pushed.
+  The standalone follow-up review is resolved, focused validation and all
+  requested integration/configuration builds pass. No deployment or database
+  migration was run.
 
 ## Commands run
 
@@ -175,10 +179,44 @@
 - Force-pushed both unmerged feature branches with lease. Superseded active
   workflows were cancelled when their head no longer matched the branch.
 - Current-head GitHub Actions at `7162ebac`:
-  - API Migration Specs, RuboCop, i18n health, and libnodectld Specs passed;
-  - API Specs run 31634674759 is still running its two platform shards;
-  - full integration run 31634674690 is still running the complete `tag=ci`
-    suite selected by the migration.
+  - API Migration Specs, RuboCop, i18n health, libnodectld Specs, API Specs,
+    and full integration all completed successfully;
+  - API Specs run 31634674759 and full integration run 31634674690 passed.
+- Refetched vpsAdmin before integration. Upstream `master` had advanced by the
+  unrelated `02449a1e0 webui: identify the dataset edit action` commit.
+  Rebased the two feature commits conflict-free, producing final commits
+  `35a7a9bf6` and `b3d63c005`.
+- Re-ran all repository hooks after the rebase; Migration Specs, i18n,
+  Nixfmt, PHP CS fixer, and RuboCop passed. A combined API RSpec invocation
+  demonstrated the existing migration-spec connection isolation issue, so the
+  affected groups were rerun in independent processes and passed:
+  - libnodectld parser: 7 examples, 0 failures;
+  - API supervisor: 6 examples, 0 failures;
+  - cleanup migration: 6 examples, 0 failures.
+- Force-pushed the rebased vpsAdmin feature branch with lease. Created a fresh
+  detached worktree at current `origin/master`, fast-forwarded it to
+  `b3d63c005`, and repeated the three focused spec groups there. An initial
+  parallel API-spec attempt raced per-worktree gem-cache initialization; the
+  parser passed and both API groups passed when rerun sequentially.
+- Refetched vpsAdmin once more, confirmed upstream had not advanced, and
+  fast-forwarded `origin/master` from `02449a1e0` to `b3d63c005`.
+- Refetched vpsfree-cz-configuration. Upstream `master` had advanced to
+  `8dd3d1a4`. From a fresh detached worktree, ran
+  `confctl inputs channel set --commit vpsadmin vpsadmin b3d63c005bef30be52165cd80ef4978bbf0e72b2`.
+  Generated commit `a8d8b5fe` changes only `flake.lock` and resolves
+  `vpsadminServices` to `b3d63c00`.
+- Force-pushed the regenerated configuration feature branch with lease. From
+  the same fresh merge worktree, final configuration validation passed:
+  - `confctl build -y 'cz.vpsfree/vpsadmin/*'`: all 11 machines built;
+  - `confctl build -y cz.vpsfree/containers/ns3`: built;
+  - `confctl build -y cz.vpsfree/containers/ns4`: built.
+- Refetched configuration once more, confirmed upstream had not advanced, and
+  fast-forwarded `origin/master` from `8dd3d1a4` to `a8d8b5fe`.
+- Post-merge GitHub Actions at vpsAdmin `b3d63c005` already pass for API
+  Migration Specs, RuboCop, i18n health, and libnodectld Specs. The API Specs
+  and full CI workflows remain active on the same merged head and are being
+  monitored; previous full validation at the pre-rebase equivalent source tree
+  passed.
 
 ## Results
 
@@ -214,9 +252,10 @@
 
 ## Cleanup
 
-- Both initiative worktrees are retained for review.
-- No merge, deployment, or production write was made.
-- The detached temporary configuration worktree used to regenerate the exact
-  one-commit pin was removed; feature branch refs were retained.
+- Both default branches are merged. No deployment, database migration, or
+  other production write was made.
+- Removed both initiative worktrees and both detached merge worktrees,
+  including their local transient gem and configuration build caches. Feature
+  branch refs are retained locally and remotely at the merged heads.
 - The upstream BIND source inspection used a temporary clone under `/tmp`,
   outside the workspace.

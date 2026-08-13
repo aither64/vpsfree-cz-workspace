@@ -4,8 +4,8 @@
 
 Prevent BIND's successful `Transfer status: up to date` result from being
 recorded as a failed secondary DNS transfer, remove existing synthetic failure
-rows, repair current transfer state, and prepare the exact production
-configuration pin on unmerged feature branches.
+rows, repair current transfer state, and merge the exact production
+configuration pin into the default branches.
 
 ## Affected repositories
 
@@ -15,8 +15,8 @@ configuration pin on unmerged feature branches.
     state.
   - the WebUI displays every persisted transfer-log row.
 - `vpsfree-cz-configuration`
-  - pin `vpsadminServices` to the exact unmerged vpsAdmin feature revision for
-    review and build validation.
+  - pin `vpsadminServices` to the exact merged vpsAdmin revision for review,
+    build validation, and later ordered deployment.
 
 ## Approach
 
@@ -30,8 +30,9 @@ configuration pin on unmerged feature branches.
 - Leave the configuration monitoring rule unchanged: it reads
   `last_transfer_status`, which the migration and future completion events
   repair.
-- Pin the exact vpsAdmin feature head through confctl on a separate
-  `vpsfree-cz-configuration` feature branch.
+- Pin the exact vpsAdmin head through confctl on a separate
+  `vpsfree-cz-configuration` feature branch, then fast-forward both default
+  branches after validation.
 
 ## Compatibility and deployment
 
@@ -47,8 +48,8 @@ configuration pin on unmerged feature branches.
   back the nodectld parser change can recreate false rows.
 - The monitoring rule becomes healthy on its next 30-minute evaluation after
   `last_transfer_status` is repaired; monitoring history is preserved.
-- Stop with pushed feature branches. Do not merge, deploy, or change
-  production state.
+- Merge both repositories by fast-forward after validation. Do not deploy,
+  run the cleanup migration, or otherwise change production state.
 
 ## Testing plan
 
