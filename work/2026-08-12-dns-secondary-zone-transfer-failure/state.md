@@ -120,6 +120,12 @@ not merged.
   private/internal wiki pages. Only the two changed public pages and their
   checksummed release manifests are committed with this workspace record. The
   superseded intermediate candidate directory is not retained.
+- The already-pushed `d30f744` commit body overstated artifact retention by
+  saying that the complete source snapshot and candidate tree were preserved.
+  This linear follow-up records the actual privacy boundary without rewriting
+  shared workspace history: only the two public changed-page candidates and
+  manifests are durable; complete source/candidate snapshots remain local and
+  untracked.
 - The final Czech/English manifests were regenerated from those complete-page
   candidates after the final KB-contract commit. Their page hashes match the
   candidate index (`dd87efcd...` Czech and `fdbbd25c...` English).
