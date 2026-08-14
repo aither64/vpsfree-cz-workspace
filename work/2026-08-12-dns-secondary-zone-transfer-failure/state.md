@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - follow-up base: `5724cf262e858409e9142502dcb2a84a2940065f`
-  - head: `1c7d398ea8ca1a4e1172f19894d9c061ef866175`
+  - head: `150a43cc3a896ba7ca334f76956f2ad6b94ad2d9`
   - six focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `6a03e89343300d8c744c0689714c411a08a657fa`
+  - head: `a66deb38e1935c253297020eab638b4bb65694d0`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `67f2b5dba510631d228e3a5cf6a6d589e420ee26`
+  - head: `c1784c9e3e338bf68b2ab644d832f0d24ff89a8e`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -192,10 +192,17 @@ not merged.
   clean. No obsolete queued/in-progress GitHub Actions run remained to cancel;
   current-head CI was left running.
 - Final exact pins use the complete vpsAdmin object ID
-  `1c7d398ea8ca1a4e1172f19894d9c061ef866175` in configuration and every KB
+  `150a43cc3a896ba7ca334f76956f2ad6b94ad2d9` in configuration and every KB
   contract declaration. An earlier local `confctl` attempt used an incorrect
   expansion of the abbreviated hash; GitHub rejected it before any lock or
   commit was changed.
+- The first authorized real-BIND run failed during suite setup before any DNS
+  assertion. The preserved runner log showed the API helper received literal
+  `DNS_NODE2_ID`, `DNS_NODE2_NAME`, `DNS_NODE2_ADDR` and `ZONE_NAME` constants
+  in a separate Ruby process, which raised `NameError`. The integration test
+  now interpolates all five concrete values before dispatch. Nix parse/format,
+  test discovery and CI selection are green; the correction is folded into the
+  existing test commit, and configuration/KB exact pins were regenerated.
 - The standalone mandatory reviewer has completed the substantive parser,
   probe, state/API, security, monitoring, UI, mail, KB, migration and
   deployment review. All Blocking/Important findings have been resolved in
