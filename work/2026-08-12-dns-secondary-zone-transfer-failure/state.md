@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46`
+  - head: `461cdcc10472608ccc0f7a5a9e76a00edeaf86ef`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `6dde84e0da0e0614c5e049e7825c9bf5ac45cf83`
+  - head: `69978f98fcb828285159e5b0f0c66c6cab9a3d5a`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `6e3935a4e12c383556109412b882a1bbda75c2b5`
+  - head: `8d04ddceb315b6d54ce9261319a6076f79a058c6`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -225,7 +225,7 @@ not merged.
 - All four feature branches are clean, pushed and range `git diff --check`
   clean. No obsolete queued/in-progress GitHub Actions run remained to cancel;
   current-head CI was left running.
-- Final exact pins use the complete vpsAdmin object ID
+- The previous reviewed exact pins used the complete vpsAdmin object ID
   `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46` in configuration and every KB
   contract declaration. An earlier local `confctl` attempt used an incorrect
   expansion of the abbreviated hash; GitHub rejected it before any lock or
@@ -365,7 +365,8 @@ not merged.
   This follow-up changes neither the RabbitMQ event envelope nor the database
   schema or durable AXFR-latch format. Transient units are tied to
   `nodectld.service` and keep no durable worker state.
-- Implementation is committed and pushed at vpsAdmin
+- Before the lifecycle cleanup, implementation was committed and pushed at
+  vpsAdmin
   `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46`, configuration
   `6dde84e0da0e0614c5e049e7825c9bf5ac45cf83` and KB contracts
   `6e3935a4e12c383556109412b882a1bbda75c2b5`.
@@ -399,6 +400,31 @@ not merged.
   disposable review cluster was still consuming memory. No worktree changes
   were lost. The bridge cluster is now stopped, leaving approximately 88 GiB
   available before the long retry; it will be reset for the final deployment.
+- The next real-DNS run proved the full four-path readiness matrix, the
+  retained invalid-zone diagnostic followed by validated AXFR recovery, and
+  the two-observation continuous-outage rule. The matrix's refused path used a
+  valid initial `axfr_probe` because no local serial was available yet, so its
+  assertion now accepts either active probe kind instead of incorrectly
+  requiring IXFR.
+- Runtime deletion exposed a product lifecycle bug: transaction confirmations
+  raw-delete `DnsZoneTransfer` and `DnsServerZone`, bypassing their ActiveRecord
+  dependent callbacks. Deleting a primary or whole zone therefore left
+  `DnsServerZonePrimaryTransferState` rows behind. The destroy chains now
+  register those rows as explicit `just_destroy` confirmations under the
+  server-zone lock. Focused specs cover primary, managed-secondary and
+  whole-zone deletion; successful confirmation removes the rows while generic
+  confirmation behavior continues to preserve them on failure or rollback.
+- Focused API specs for all three destroy chains pass (6 examples), targeted
+  RuboCop and Nix parse/format checks pass, and the integration scenario now
+  asserts that whole-zone removal leaves no path state. All vpsAdmin hooks and
+  KB contract checks pass. The correction is folded into the original logical
+  commits, the eight-commit series is clean and pushed, and configuration and
+  KB contracts carry the exact new vpsAdmin revision. A fresh mandatory review
+  remains required before another long run.
+- Current-head migration, RuboCop, WebUI PHPUnit, i18n and libnodectld GitHub
+  workflows are green; the main CI and topic-parallel API specs are still
+  running. Superseded old-head CI run `31810932973` was cancelled without
+  touching any current-head run.
 
 ## Development cluster review deployment
 
@@ -409,7 +435,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46` after the
+  redeployed from `461cdcc10472608ccc0f7a5a9e76a00edeaf86ef` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the

@@ -115,6 +115,11 @@ observation as the M:N coverage mechanism with bounded active probes.
   cancel a running unit when a primary or zone disappears. Drop cancelled or
   obsolete results, while the API's existing ID/generation/boundary checks
   remain a second line of defence.
+- Include readiness-state deletion in the same transaction confirmation graph
+  when removing a primary, managed secondary or entire zone. Take the shared
+  server-zone lock while registering those confirmations so a concurrent event
+  consumer cannot recreate a disappearing path. A successful confirmation
+  removes endpoint and state together; failure or rollback preserves both.
 - Preserve the full-AXFR latch across a generation change for an unchanged
   zone/primary identity and prune it when that path is actually removed.
 - Keep the combined transfer log and its existing daily 365-day retention.
@@ -313,7 +318,9 @@ each downstream repository retains a single exact feature-pin update.
   output and local launch/resource failures.
 - Runtime churn: create/delete zones and add/remove primaries while nodectld is
   running, verify new paths are scheduled within 60 seconds, and prove an
-  in-flight old-generation result cannot update or recreate path state.
+  in-flight old-generation result cannot update or recreate path state. Verify
+  successful deletion removes all affected path states and a failed or rolled
+  back transaction retains them.
 - Parser tests: complete BIND attempt sequences, completion-after-failure,
   IXFR fallback, lifecycle/local/warning noise, peer isolation and all retained
   actionable failures.

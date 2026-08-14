@@ -24,3 +24,16 @@ may be deliberately absent from history under transition-only retention.
 Nix parse/format, CI selection, range diff-check and repository hooks passed
 after the correction. The long scenario rerun remains the definitive runtime
 verification.
+
+The next real-DNS run showed two additional integration details. A primary's
+first active readiness check may validly use `axfr_probe`, not `ixfr_probe`,
+when the managed secondary has no local serial yet. Tests that need to prove an
+active check should accept both and reserve an exact IXFR assertion for a
+fixture that first establishes a local serial.
+
+Deleting a DNS primary or zone uses transaction confirmations whose success
+path removes rows with raw SQL. ActiveRecord `dependent` callbacks therefore
+do not run. Any dependent readiness rows must be explicit `just_destroy`
+confirmations in the same transaction, registered while holding the shared
+server-zone lock. This preserves them on transaction failure/rollback and
+prevents a concurrent event consumer from recreating state during deletion.
