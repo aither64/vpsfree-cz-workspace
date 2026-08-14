@@ -313,11 +313,9 @@ not merged.
 
 ## Remaining work
 
-1. Complete the mandatory review follow-up over the corrected committed/pushed
-   exact ranges and record its authorization.
-2. After authorization, run the expanded real-BIND DNS scenario, WebUI browser
-   scenario and exact-pinned configuration builds.
-3. Reset/redeploy the disposable bridge cluster from the final exact pins and
+1. Run the authorized expanded real-BIND DNS scenario, WebUI browser scenario
+   and exact-pinned configuration builds.
+2. Reset/redeploy the disposable bridge cluster from the final exact pins and
    recreate the review zone/path fixture.
 
 ## Unprivileged probe follow-up
@@ -353,6 +351,11 @@ not merged.
   suite passes 44 examples and targeted RuboCop reports no offenses; all
   repository hooks passed before the correction was folded into the isolation
   commit.
+- The fresh reviewer verified the corrected committed ranges and independently
+  reran the focused suite (44 examples, 0 failures). It reported no Blocking,
+  Important or Advisory findings and authorized the long real-DNS, Playwright,
+  exact-pinned configuration and dev-cluster validations. Current-head CI
+  remains a residual gate before integration or merge acceptance.
 - The selected primary address intentionally remains visible as the
   `IPAddressAllow` systemd property because this is how the root coordinator
   installs the destination filter. No zone name, source address, query or TSIG
