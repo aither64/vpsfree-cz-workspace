@@ -37,3 +37,12 @@ do not run. Any dependent readiness rows must be explicit `just_destroy`
 confirmations in the same transaction, registered while holding the shared
 server-zone lock. This preserves them on transaction failure/rollback and
 prevents a concurrent event consumer from recreating state during deletion.
+
+Registering existing dependent rows is not sufficient by itself. The endpoint
+remains in `confirm_destroy` until the remote transaction finishes, so a
+delayed event can arrive after the registration transaction releases its row
+lock. The consumer must scope and recheck the server zone as current after
+taking that same lock, and treat a row deleted between lookup and locking as an
+obsolete event. When primary deletion also locks the transfer row, acquire
+ordered server-zone locks first to match the consumer's lock order and avoid a
+server-zone/transfer deadlock.

@@ -120,6 +120,11 @@ observation as the M:N coverage mechanism with bounded active probes.
   server-zone lock while registering those confirmations so a concurrent event
   consumer cannot recreate a disappearing path. A successful confirmation
   removes endpoint and state together; failure or rollback preserves both.
+- Event admission scopes server zones to current rows and repeats that check
+  after acquiring the server-zone lock, treating a concurrently deleted row as
+  obsolete. Primary deletion acquires ordered server-zone locks before marking
+  the transfer for destruction, matching the consumer's server-zone-then-
+  transfer lock order.
 - Preserve the full-AXFR latch across a generation change for an unchanged
   zone/primary identity and prune it when that path is actually removed.
 - Keep the combined transfer log and its existing daily 365-day retention.
@@ -327,6 +332,8 @@ each downstream repository retains a single exact feature-pin update.
 - State/API tests: precedence and recovery rules, out-of-order/idempotent
   delivery, generation boundaries, continuity gaps/reboots, alert delays,
   authorization, aggregate/detail shape, bounded log volume and reset tasks.
+  Deterministically reject events after a server zone is marked for deletion
+  or disappears between lookup and locking.
 - Real BIND: two primaries/two secondaries, probe coverage of all paths, ACL
   omissions on one secondary, prolonged outage, invalid-zone diagnostics,
   full-AXFR recovery and secondary peer distribution while direct probes fail.

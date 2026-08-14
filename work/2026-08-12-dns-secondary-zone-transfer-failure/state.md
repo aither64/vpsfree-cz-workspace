@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `461cdcc10472608ccc0f7a5a9e76a00edeaf86ef`
+  - head: `b6415d758372b49e313b94aed615151468ff38c7`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `69978f98fcb828285159e5b0f0c66c6cab9a3d5a`
+  - head: `6c3bbbf28bdb0949969858626a519320c1da84eb`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `8d04ddceb315b6d54ce9261319a6076f79a058c6`
+  - head: `8fc6fe5a27f39e21a1c52f0d88640a81db61e5d7`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -425,6 +425,21 @@ not merged.
   workflows are green; the main CI and topic-parallel API specs are still
   running. Superseded old-head CI run `31810932973` was cancelled without
   touching any current-head run.
+- The fresh lifecycle review withheld long-test authorization on one race and
+  one lock-order issue. A managed-secondary event could pass the initial lookup
+  before `confirm_destroy`, wait for the server-zone lock, and recreate state
+  after confirmation registration. Primary deletion also locked the transfer
+  before server zones, inverse to event consumption.
+- Event admission now scopes server zones to `existing`, repeats that check
+  after taking the server-zone lock, and safely ignores a row deleted between
+  lookup and locking. Primary deletion locks ordered server zones before
+  marking the transfer for destruction. Deterministic supervisor regressions
+  cover both the post-lookup `confirm_destroy` window and row disappearance;
+  the focused supervisor/destroy suite passes 22 examples and targeted RuboCop
+  reports no offenses. All mandatory hooks and KB contract checks pass. The
+  fixes are folded into the path-state commit, the clean eight-commit vpsAdmin
+  series is pushed, and configuration plus KB carry the exact new revision. A
+  second fresh review is required; long validation remains paused.
 
 ## Development cluster review deployment
 
@@ -435,7 +450,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `461cdcc10472608ccc0f7a5a9e76a00edeaf86ef` after the
+  redeployed from `b6415d758372b49e313b94aed615151468ff38c7` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
