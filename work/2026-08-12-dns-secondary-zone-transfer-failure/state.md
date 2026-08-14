@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - follow-up base: `5724cf262e858409e9142502dcb2a84a2940065f`
-  - head: `150a43cc3a896ba7ca334f76956f2ad6b94ad2d9`
+  - head: `cc9c6d1b19680b5cfb99832836afaa586af095ff`
   - six focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `a66deb38e1935c253297020eab638b4bb65694d0`
+  - head: `e219dff4f5e12654cdc3097a0f46d8e86c3944ee`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `c1784c9e3e338bf68b2ab644d832f0d24ff89a8e`
+  - head: `d21ad8ad19f07810c3a2cf49a977dc88c3dc2558`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -192,7 +192,7 @@ not merged.
   clean. No obsolete queued/in-progress GitHub Actions run remained to cancel;
   current-head CI was left running.
 - Final exact pins use the complete vpsAdmin object ID
-  `150a43cc3a896ba7ca334f76956f2ad6b94ad2d9` in configuration and every KB
+  `cc9c6d1b19680b5cfb99832836afaa586af095ff` in configuration and every KB
   contract declaration. An earlier local `confctl` attempt used an incorrect
   expansion of the abbreviated hash; GitHub rejected it before any lock or
   commit was changed.
@@ -203,19 +203,40 @@ not merged.
   now interpolates all five concrete values before dispatch. Nix parse/format,
   test discovery and CI selection are green; the correction is folded into the
   existing test commit, and configuration/KB exact pins were regenerated.
+- The second authorized real-BIND run also stopped during suite setup before
+  any DNS example. The dynamically inserted node 302 started nodectld, but the
+  daemon remained in `get_node_config` RPC retries and never created
+  `/run/nodectl/nodectld.sock`. A preserved debug run showed that the
+  supervisor had enumerated active nodes before node 302 was inserted, so its
+  RabbitMQ RPC/status/DNS queues had no consumers. Restarting the supervisor
+  after creating node 302 created all four consumers; the next RPC attempt
+  completed and nodectld initialized normally. The fixture now performs that
+  reload before starting either DNS node. Nix parse/format, test discovery,
+  CI selection (16 runs, 55 assertions), `git diff --check` and the complete
+  vpsAdmin pre-commit hook set are green for this correction.
+- Inspection of the older failed `API Specs (topic parallel)` workflow exposed
+  a real coverage-manifest omission rather than an unrelated runner failure:
+  `dns_server_zone_primary_transfer_state#index` was tested by the resource
+  suite but absent from `covered_endpoints.yml`. The scope is now listed; the
+  current targeted endpoint inventory run passes with 1 example and 0
+  failures. The one-line correction is folded into the core path-state commit,
+  all vpsAdmin hooks passed, and the downstream exact pins were regenerated.
+- Configuration history now contains only the monitor-policy commit followed
+  by one generated `confctl` exact-pin commit. The two superseded consecutive
+  pin commits were dropped before regenerating the final pin.
 - The standalone mandatory reviewer has completed the substantive parser,
   probe, state/API, security, monitoring, UI, mail, KB, migration and
-  deployment review. All Blocking/Important findings have been resolved in
-  the six focused vpsAdmin commits. Final long-test authorization is waiting
-  only for this workspace record and exact downstream heads to be committed
-  and handed back to the reviewer.
+  deployment review. Its final follow-up found no Blocking, Important or new
+  Advisory items, verified the six focused vpsAdmin commits, the single
+  generated configuration pin and both exact KB pins, and authorized the
+  paused real-BIND, Playwright and exact-pinned configuration validations. The
+  previously recorded synchronized-clock/NTP assumption remains operational.
 
 ## Remaining work
 
-1. Obtain the reviewer's final authorization for the committed exact ranges.
-2. Run the long two-primary/two-secondary real-BIND test, Playwright WebUI test,
+1. Run the long two-primary/two-secondary real-BIND test, Playwright WebUI test,
    exact-pinned configuration builds and final mail/KB validation.
-3. Reset and deploy the dedicated development cluster over its default bridge
+2. Reset and deploy the dedicated development cluster over its default bridge
    network, seed a review zone, and hand the user the WebUI review details.
 
 ## Deployment constraints
