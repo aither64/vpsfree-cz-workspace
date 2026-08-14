@@ -86,6 +86,43 @@ observation as the M:N coverage mechanism with bounded active probes.
   growth. Persist probe history on failure/reason transitions and recovery;
   persist every meaningful real BIND transfer outcome.
 
+### Unprivileged probe execution follow-up
+
+- Keep scheduling, live `DnsConfig` lookup, the durable full-AXFR latch and
+  RabbitMQ publication in nodectld, but move all `dig`, AXFR download and
+  `named-checkzone` processing into a one-shot `vpsadmin-dns-transfer-probe`
+  worker.
+- Start each worker as a hardened transient systemd service with a private
+  dynamic user. Pass exactly one immutable path description through stdin and
+  accept only one bounded, schema-validated JSON result on stdout. The worker
+  receives no RabbitMQ/database credentials and never gets to choose path IDs,
+  generations or event keys.
+- Give the worker a private temporary directory, no capabilities, no privilege
+  escalation, a read-only/protected filesystem view, inaccessible BIND and
+  nodectld state paths, restricted namespaces/address families, resource
+  limits and network access only to the selected primary. Never put TSIG
+  secrets or user-controlled names in argv, environment, unit names or journal
+  metadata.
+- Recompute the current M:N path set continuously. Schedule a new zone/primary
+  path with deterministic jitter of at most 60 seconds. Remove pending work and
+  cancel a running unit when a primary or zone disappears. Drop cancelled or
+  obsolete results, while the API's existing ID/generation/boundary checks
+  remain a second line of defence.
+- Preserve the full-AXFR latch across a generation change for an unchanged
+  zone/primary identity and prune it when that path is actually removed.
+- Keep the combined transfer log and its existing daily 365-day retention.
+  Probe rows remain transition-oriented: first failure, changed reason/class,
+  alert-eligibility milestone, recovery and a later post-recovery failure.
+  Identical retries and routine healthy observations do not create rows.
+- Treat the worker job/result JSON as an internal contract of one nodectld
+  package revision, not as another service protocol. Deploy the nodectld
+  scheduler, worker executable and NixOS unit settings together on each DNS
+  node. The follow-up does not change the RabbitMQ event envelope, database
+  schema or on-disk AXFR latch format.
+- Transient workers are tied to `nodectld.service`, have no durable state and
+  are stopped with the parent service. Rolling back the whole nodectld package
+  therefore cannot leave an old worker processing a new scheduler job.
+
 ## API and state model
 
 - Maintain current path state per `(DnsServerZone, DnsZoneTransfer)` with
@@ -144,6 +181,9 @@ observation as the M:N coverage mechanism with bounded active probes.
   are failed or pending.
 - Label transfer-log entries by evidence source: real BIND transfer, IXFR
   readiness probe or AXFR validation.
+- Make links readable in every globally styled failed/error table row, not
+  only the DNS transfer table. Preserve the red row background and use a dark,
+  underlined link color with explicit visited, hover and keyboard-focus states.
 - Alert mail lists actionable primary/secondary paths and explains that the
   zone may still be served through another path. Advice covers reachability,
   transfer ACLs, TSIG and zone validity. Closed mail is sent only after all
@@ -251,11 +291,22 @@ There is no supported mixed old/new producer or consumer interval.
    mail rendering and KB contract validation.
 6. Reset and redeploy the dedicated development cluster with review fixtures.
 
+The unprivileged-worker follow-up is added as its own functional commit after
+the original probe implementation. The global WebUI contrast fix is a separate
+commit. The generated configuration and documentation pins are rewritten so
+each downstream repository retains a single exact feature-pin update.
+
 ## Required test coverage
 
 - Probe unit tests: cadence/jitter/retry, exact source binding, TSIG secret
   hygiene, classifications, IXFR and full-AXFR paths, size/time/concurrency
   limits and temporary-file cleanup.
+- Worker/runner tests: stdin/stdout schema, transient-unit hardening, dynamic
+  UID, secret-free process metadata, output bounds, cancellation, malformed
+  output and local launch/resource failures.
+- Runtime churn: create/delete zones and add/remove primaries while nodectld is
+  running, verify new paths are scheduled within 60 seconds, and prove an
+  in-flight old-generation result cannot update or recreate path state.
 - Parser tests: complete BIND attempt sequences, completion-after-failure,
   IXFR fallback, lifecycle/local/warning noise, peer isolation and all retained
   actionable failures.
@@ -267,4 +318,5 @@ There is no supported mixed old/new producer or consumer interval.
   full-AXFR recovery and secondary peer distribution while direct probes fail.
   Exact TSIG and stale-serial classifications are covered in the probe suite.
 - UI/mail/docs: vertical primary layout, secondary serving state, bilingual
-  templates, Playwright behavior and full KB contract/candidate verification.
+  templates, global failed-row link contrast, Playwright behavior and full KB
+  contract/candidate verification.

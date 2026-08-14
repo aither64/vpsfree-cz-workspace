@@ -14,15 +14,15 @@
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
-  - follow-up base: `5724cf262e858409e9142502dcb2a84a2940065f`
-  - head: `f54494a084382ecb20e414c35800655f33ee5fc4`
-  - six focused commits; clean and pushed after the unmerged history rewrite.
+  - final rebase base: `c28b0b447` (`origin/master`)
+  - head: `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102`
+  - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `a00de5876f1b6b9e66854626311d572d63f73476`
+  - head: `40d7eabb5a6ecf312a1390ecba1e42e2135431e1`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `1afc364a3c78ca747cf62fb18022284592f0eb8e`
+  - head: `1979a8f878daed01cc0b866549e9b717b9aedd8d`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -61,6 +61,17 @@ not merged.
   user-primary path. It binds the secondary's real source address, uses the
   configured TSIG, reads SOA, sends signed TCP IXFR at the primary serial and
   escalates to bounded temporary AXFR validation only when needed.
+- nodectld no longer fetches or validates user-controlled DNS data itself. It
+  continuously schedules current paths and publishes results, while each check
+  runs in a one-shot transient systemd service with `DynamicUser=yes`, no
+  capabilities, a private temporary directory, protected/inaccessible BIND and
+  nodectld paths, bounded memory/process/runtime/output and network access only
+  to the selected primary. The worker receives no RabbitMQ/database credentials
+  or trusted path identity and receives optional TSIG material only on stdin.
+- New zones and primaries are scheduled with deterministic jitter of at most 60
+  seconds. Removing a primary or zone drops pending work, stops its running
+  transient unit and discards any obsolete result before publication. Existing
+  API identity/generation/epoch admission remains defence in depth.
 - Probe defaults are hourly healthy checks, five-minute access/network failure
   retries, and hourly invalid-zone/protocol/stale retries. Nodes run two probes
   concurrently, with a 30-second cheap timeout, ten-minute AXFR timeout and a
@@ -90,6 +101,9 @@ not merged.
   vertically expanded primary/server-check presentation under **Primary
   servers**. TSIG no longer forces a wide table. Logs identify BIND transfers,
   IXFR readiness probes and AXFR validation.
+- Links in all globally styled `failed`/`error` table rows now use a dark,
+  underlined normal/visited style and black hover/focus style on the retained
+  red background; the rule is not specific to the DNS table.
 - Monitoring opens one zone incident only after a path reaches its grace
   period, keeps it open while any current path remains failed, suppresses empty
   repeat mail for young overlapping failures and sends closure only after all
@@ -188,11 +202,31 @@ not merged.
   - 44 controls, 34 paths, 33 capture concepts and 3 semantic selectors;
   - annotation inventory: 83 bindings and 9 exceptions;
   - 59 concepts, 118 variants and all 118 PNGs validated.
+- Unprivileged probe follow-up checks:
+  - scheduler/runner/worker specs: 32 examples, 0 failures;
+  - worker package builds with both `nodectld` and
+    `vpsadmin-dns-transfer-probe` executables;
+  - final DNS integration derivation evaluates as
+    `/nix/store/6h2vylx0skjq3paqgzk986wx5yb9jcp8-os-test-dns-secondary-transfer-errors.json.drv`;
+  - Nix parse/format, targeted RuboCop, Ruby syntax and repository
+    `git diff --check` pass;
+  - WebUI stylesheet regression: 1 test, 2 assertions, 0 failures;
+  - complete vpsAdmin pre-commit hooks pass for both follow-up commits.
+- Runtime-churn coverage now removes/re-adds a primary and deletes the complete
+  zone without restarting either nodectld. Unit coverage proves ≤60-second new
+  path scheduling, pending deletion, running cancellation and post-delete
+  result suppression; the expanded real-DNS scenario is pending review-gated
+  execution.
+- The final visual-only CSS change affects no registered screenshot concept:
+  the contract has no secondary-zone-status capture. The exact vpsAdmin pin was
+  still regenerated in every contract declaration, and `nix develop -c
+  bin/check` remains green with 44 controls, 34 paths, 33 captures, 83
+  annotation bindings, 9 exceptions and all 118 existing PNGs valid.
 - All four feature branches are clean, pushed and range `git diff --check`
   clean. No obsolete queued/in-progress GitHub Actions run remained to cancel;
   current-head CI was left running.
 - Final exact pins use the complete vpsAdmin object ID
-  `f54494a084382ecb20e414c35800655f33ee5fc4` in configuration and every KB
+  `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102` in configuration and every KB
   contract declaration. An earlier local `confctl` attempt used an incorrect
   expansion of the abbreviated hash; GitHub rejected it before any lock or
   commit was changed.
@@ -279,8 +313,39 @@ not merged.
 
 ## Remaining work
 
-1. User review of the deployed WebUI and seeded readiness states.
-2. Stop/reset the disposable cluster when the review is complete.
+1. Run the mandatory fresh-context review over the committed/pushed exact
+   ranges and record its findings or authorization.
+2. After authorization, run the expanded real-BIND DNS scenario, WebUI browser
+   scenario and exact-pinned configuration builds.
+3. Reset/redeploy the disposable bridge cluster from the final exact pins and
+   recreate the review zone/path fixture.
+
+## Unprivileged probe follow-up
+
+- User review confirmed that probes currently run from root nodectld and asked
+  for untrusted DNS transfer data to be processed in standalone unprivileged
+  processes.
+- Chosen design: nodectld retains scheduling, current `DnsConfig`, the durable
+  AXFR latch and RabbitMQ publication; each path check runs as a one-shot,
+  hardened transient systemd service with `DynamicUser=yes`. One immutable job
+  is sent over stdin and one bounded result is accepted over stdout.
+- Runtime contract: newly created paths are deterministically staggered within
+  60 seconds; removed paths and zones cancel pending/running work; stale
+  generation results are dropped locally and rejected again by the API.
+- Log decision: keep probe transitions combined with real BIND diagnostics and
+  retain both for 365 days. Identical probe retries and routine healthy probes
+  remain nonpersistent; meaningful BIND outcomes remain fully retained.
+- WebUI decision: apply accessible failed/error-row link colors globally while
+  preserving the existing red status background.
+- The worker JSON is package-internal: scheduler, executable and NixOS
+  hardening settings are deployed and rolled back as one nodectld revision.
+  This follow-up changes neither the RabbitMQ event envelope nor the database
+  schema or durable AXFR-latch format. Transient units are tied to
+  `nodectld.service` and keep no durable worker state.
+- Implementation is committed and pushed at vpsAdmin
+  `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102`, configuration
+  `40d7eabb5a6ecf312a1390ecba1e42e2135431e1` and KB contracts
+  `1979a8f878daed01cc0b866549e9b717b9aedd8d`.
 
 ## Development cluster review deployment
 
@@ -290,6 +355,9 @@ not merged.
   `https://webui.aitherdev.int.vpsfree.cz/`.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
+  This is now the previous review build; the cluster will be reset and
+  redeployed from `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102` after the
+  fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
   notification dispatcher, Telegram receiver/webhook or webhook test service.
