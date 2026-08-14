@@ -48,8 +48,8 @@ not merged.
 - The durable plan is `plan.md`. The user approved the active-probe design,
   destructive transfer-history reset, WebUI separation and strict coordinated
   event-protocol cutover.
-- The development cluster is disposable. It will be reset for deployment
-  instead of preserving the prototype database state.
+- The development cluster is disposable. It was reset and redeployed from the
+  final exact revision instead of preserving the prototype database state.
 - The custom BIND package and both 9.18/9.20 source patches have been removed.
   Production and tests use the one stock BIND package selected by pinned
   nixpkgs.
@@ -313,11 +313,11 @@ not merged.
 
 ## Remaining work
 
-1. Complete the focused mandatory review of the final WebUI locator correction,
-   then rerun the targeted Playwright scenario.
-2. Run the exact-pinned configuration builds.
-3. Reset/redeploy the disposable bridge cluster from the final exact pins and
-   recreate the review zone/path fixture.
+1. Let current-head main CI finish and inspect any failure rather than blindly
+   rerunning it.
+2. Merge/deploy the coordinated feature set only with the queue and writer
+   barriers below.
+3. Promote the prepared KB manifests only after separate production approval.
 
 ## Unprivileged probe follow-up
 
@@ -524,18 +524,28 @@ not merged.
   declaration now pin exact vpsAdmin
   `39e2753d8e4decc3a0961738741bdfaba4c44b65`. A fresh focused review is
   required before rerunning Playwright.
+- The fresh focused locator review reported no Blocking, Important or Advisory
+  findings and authorized the browser rerun plus exact-pinned configuration
+  builds. The definitive `webui#networking-dns` run then passed its changed
+  browser scenario in 229.7 seconds and the complete 1/1 test in 808.67
+  seconds.
+- Exact-pinned configuration builds completed successfully for
+  `cz.vpsfree/vpsadmin/int.api1` (generation
+  `2026-08-14--20-56-07`), `cz.vpsfree/vpsadmin/int.webui1`
+  (`2026-08-14--20-57-42`) and `cz.vpsfree/containers/ns3`
+  (`2026-08-14--20-59-03`).
+- Current-head WebUI PHPUnit and i18n GitHub workflows are green. Main CI is
+  still running; the immediately preceding product-equivalent head is green
+  for API specs, RuboCop, libnodectld, WebUI and i18n, and the final head
+  changes only the reviewed Playwright locator.
 
 ## Development cluster review deployment
 
 - The dedicated
   `2026-08-12-dns-secondary-zone-transfer-failure` development cluster using
-  the default bridge network was stopped after the validation OOM. It will be
-  reset and redeployed from the final exact pins after long validation.
-- The deployed API and WebUI report the exact vpsAdmin revision
-  `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
-  This is now the previous review build; the cluster will be reset and
-  redeployed from `39e2753d8e4decc3a0961738741bdfaba4c44b65` after the
-  fresh-context review and long validation.
+  the default bridge network was reset and freshly deployed after all long
+  validation. It is ready and running from exact vpsAdmin revision
+  `39e2753d8e4decc3a0961738741bdfaba4c44b65`.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
   notification dispatcher, Telegram receiver/webhook or webhook test service.
@@ -552,14 +562,17 @@ not merged.
 - The primary table has three paths for WebUI review:
   `172.16.106.61` succeeds through the configured TSIG key, while deliberately
   unreachable `172.16.106.250` and `172.16.106.251` both show network timeout
-  failures. The successful path's latest observation is an IXFR probe with
-  matching primary/secondary serials. The secondary remains healthy despite
-  the two failed readiness paths.
-- Probe timing was shortened only in the running nodectld process to populate
-  the disposable review state promptly; restarting nodectld restores normal
-  production intervals. The primary's zone stanza is likewise local to this
-  disposable cluster and is not a repository or production configuration
-  change.
+  failures. The successful path has current validated probe evidence. The
+  secondary remains healthy despite the two failed readiness paths.
+- The fixture populated using normal production probe timing; no runtime
+  interval override was needed. Its retained history contains the real
+  successful BIND transfer and the two failure transitions, while routine
+  successful checks remain state watermarks rather than noisy permanent log
+  rows. The primary's zone stanza is local to this disposable cluster and is
+  not a repository or production configuration change.
+- Review access is `https://webui.aitherdev.int.vpsfree.cz/`, user
+  `test-user1`, password `testUser1Password`. The zone is
+  `transfer-review.aitherdev.test.` (ID 3).
 - The cluster can be inspected with
   `dev-clusters/vpsadmin/bin/devcluster status 2026-08-12-dns-secondary-zone-transfer-failure`
   and removed after review with the matching `reset` command.
