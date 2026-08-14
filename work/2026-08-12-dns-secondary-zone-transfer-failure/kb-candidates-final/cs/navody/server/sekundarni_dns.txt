@@ -1,0 +1,48 @@
+<page>manuals:server:secondary_dns</page>
+====== Sekundární DNS servery ======
+Pokud ve VPS používáš vlastní autoritativní DNS server, ve vpsAdminu si k němu můžeš
+nechat vytvořit sekundární server na sdílené infrastruktuře. Hodí se to například když
+registrátor domény k delegaci na vlastní server vyžaduje, abys jich měl více na různých IP adresách.
+
+Jednotlivé zóny nastavíš v menu <vpsadmin-nav id="dns.secondary-zones.open">DNS -> Sekundární zóny</vpsadmin-nav>.
+Nejprve <vpsadmin-nav id="dns.secondary-zones.create">vytvoř zónu</vpsadmin-nav>. V jejím detailu potom pomocí formuláře
+„Primární servery“ <vpsadmin-nav id="dns.secondary-zones.add-primary">přidej adresu svého primárního autoritativního serveru</vpsadmin-nav>,
+který ti běží ve VPS.
+
+V detailu zóny uvidíš názvy a adresy přidělených sekundárních serverů. Je potřeba
+upravit konfiguraci primárního serveru tak, aby naše sekundární servery informoval o změnách
+v záznamech a aby umožnil přenos zóny. vpsAdmin zobrazuje ukázkovou konfiguraci pro BIND.
+
+V tabulce **Jmenné servery** uvidíš, jestli má každý přidělený sekundární server
+zónu načtenou a obsluhuje ji. Zobrazuje se také sériové číslo, poslední načtení,
+poslední kontrola, další obnovení, expirace a odkaz na záznamy přenosů.
+
+Tabulka **Primární servery** naproti tomu ověřuje připravenost každého tvého
+primárního serveru pro každý přidělený sekundární server. vpsAdmin z adresy
+sekundárního serveru pravidelně provede kontrolu připravenosti pomocí IXFR a
+použije stejný TSIG jako BIND, pokud je pro primární server nastavený. Když krátká
+kontrola nestačí nebo je potřeba ověřit obsah,
+stáhne dočasný AXFR a zónu zkontroluje. Zachovává také skutečné chyby přenosů,
+které hlásí BIND, například odmítnutí, chyby TSIG nebo neplatný obsah zóny.
+
+Stav **Úspěšný** znamená, že kontrola uspěla ze všech sekundárních serverů,
+**Nepodařilo se**, že selhala alespoň jedna cesta, a **Čeká**, že ještě chybí
+průkazný výsledek. Selhání jedné cesty nutně neznamená nedostupnou zónu: aktuální
+kopii mohl získat jiný sekundární server a předat ji ostatním. Chyba ale obvykle
+upozorňuje na nedostupný primární server, chybějící povolení AXFR/IXFR, nesprávný
+TSIG, staré sériové číslo nebo neplatnou zónu. Na síťovou chybu upozorňujeme až
+tehdy, když opakované neúspěšné kontroly stejné cesty pokrývají alespoň 24 hodin.
+Na ostatní potvrzené chyby upozorňujeme po 30 minutách.
+
+===== Skrytý primární server =====
+Jedna z možných konfigurací je primární server ve VPS provozovat na privátní IP adrese, nebo
+jej obecně nemít dostupný z Internetu. V takovém případě doménu u registrátora deleguj jen na sdílené
+sekundární servery, tj. ns3.vpsfree.cz a ns4.vpsfree.cz.
+
+===== TSIG =====
+Přenos zón mezi primárními a sekundárními servery můžeš dále zabezpečit pomocí TSIG.
+V menu <vpsadmin-nav id="dns.tsig-keys.open">DNS -> TSIG klíče</vpsadmin-nav> si nejprve <vpsadmin-nav id="dns.tsig-keys.create">vytvoř sdílený klíč</vpsadmin-nav>. Každý klíč je identifikován
+libovolným názvem, zvoleným algoritmem a tajným kódem. Tyto hodnoty se musí shodovat
+na všech serverech. Při přidávání primárního serveru k zóně
+<vpsadmin-nav id="dns.secondary-zones.primary-tsig.select">vyber tento TSIG klíč</vpsadmin-nav>. V ukázkové konfiguraci uvidíš,
+jak TSIG nastavit na primárním serveru.

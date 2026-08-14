@@ -1,114 +1,206 @@
-# 2026-08-12-dns-secondary-zone-transfer-failure
+# 2026-08-12 DNS secondary transfer monitoring
 
 ## Goal
 
-Make user-facing secondary DNS transfer reporting follow BIND's actual transfer
-semantics. Track each direct path from a vpsAdmin secondary to a configured user
-primary independently from whether the zone is loaded and served through a
-vpsAdmin peer. Preserve recovery after rolling reboots without allowing peer
-success or NOTIFY traffic to hide broken user-primary authorization.
+Report two separate facts without implying that every secondary naturally
+transfers from every configured primary:
+
+- whether each managed secondary currently has the zone loaded and is serving
+  it; and
+- whether every configured user primary is presently able to serve a valid,
+  authenticated transfer to every managed secondary.
+
+Retain BIND's real transfer diagnostics, including rejected transfers, invalid
+zone contents and malformed transfer responses. Replace sparse passive
+observation as the M:N coverage mechanism with bounded active probes.
 
 ## Affected repositories
 
-- `vpsadmin`: small BIND 9.18/9.20 logging patches, stateful parser, event
-  protocol, schema and state model, supervisor, API, WebUI, migrations, and
-  tests.
+- `vpsadmin`: BIND log parsing, node configuration and probe worker, event
+  protocol, schema/state model, supervisor, API, WebUI, migrations and tests.
+- `vpsfree-cz-configuration`: zone-level production monitor and exact vpsAdmin
+  feature pin. Production returns to the single stock `pkgs.bind` package.
 - `vpsfree-mail-templates`: zone-level confirmed and closed alert templates.
-- `vpsfree-cz-configuration`: patched BIND selection, zone-level production
-  monitor, and exact vpsAdmin revision pin.
-- `vpsfree-kb-contracts`: exact vpsAdmin pin and review of the visible Primary
-  servers status change.
+- `vpsfree-kb-contracts`: exact feature pin, navigation/capture contract and
+  Czech/English candidate documentation.
+- workspace coordination repository: durable plan/state and complete-page KB
+  release candidates, plus a disposable-dev-cluster import adjustment so the
+  final notification-template input can be deployed for WebUI review.
 
-## Design
+## Collection design
 
-- Keep BIND `DnsStatus` as the source for loaded/served zone health. Add an
-  internal state for every current `(secondary, configured user primary)` path.
-- Parse complete BIND 9.18/9.20 attempts. Completion counters are never success;
-  engine success requires an accepted `transferred serial` marker. Suppress IXFR
-  fallback, lifecycle noise, harmless MX/SRV warnings, and local cache errors
-  from user health.
-- Classify explicit remote/configuration errors separately from network errors.
-  Explicit failures become alertable after 30 minutes. A network failure is
-  alertable only when failed observations on that path span at least 24 hours;
-  one transient reboot-time failure cannot open an incident.
-- Patch BIND's already-validated equal-serial SOA response branch to emit one
-  INFO message identifying the primary, source, and serial. Treat that message,
-  BIND's existing older-primary-serial message, and a same-primary current
-  NOTIFY as positive reachability evidence which changes only a network failure
-  to unknown. Routine positive refresh/NOTIFY observations are not persisted as
-  transfer-log rows; their per-path ordering watermark is retained in state.
-- Treat xfrin `Transfer status: up to date` as refresh evidence, not proof that
-  AXFR is authorized: BIND also emits it for SOA-before-AXFR paths. Only an
-  accepted `transferred serial` clears an explicit REFUSED, TSIG, protocol, or
-  zone failure. Peer transfers and peer NOTIFY never clear user-primary state.
-- Expose one aggregate `success`/`failed`/`unknown` status on each Primary
-  servers row. Keep the internal matrix out of the WebUI and send one monitoring
-  incident per DNS zone. Delay opening until a path is eligible, but once an
-  incident is active keep it open until every current path has recovered.
-  Suppress repeat mail while only younger, non-eligible failures keep it open.
-- Purge unsafe legacy completion, NOTIFY, refresh, fallback, lifecycle, warning,
-  and local-cache rows. Repair cached latest-transfer fields but do not seed new
-  direct-path state from old history. Purge legacy server-zone monitoring
-  incidents because the monitor now owns one DNS-zone object per incident.
-- Do not add active probes or compatibility handling for old nodectld events.
+### Passive BIND diagnostics
 
-## Network-outage decision
+- Keep the correlated parser for complete BIND transfer attempts.
+- `Transfer completed` is accounting, never success. An accepted
+  `transferred serial` is a real transfer success.
+- Preserve actionable TSIG/ACL, network, protocol and invalid-zone failures.
+- Suppress transient IXFR-to-AXFR fallback, lifecycle/cancellation noise,
+  harmless MX/SRV warnings and local secondary cache-load errors from user
+  health while retaining appropriate admin diagnostics.
+- Mark configured user primaries distinctly from vpsAdmin secondary peers.
+  Peer success never clears a user's primary-path failure.
+- Retain new-envelope BIND diagnostics without a user-primary association for
+  administrators, including managed peer and internal-zone activity; these
+  rows never enter user-visible primary readiness.
+- The already-deployed correction for `Transfer status: up to date` remains in
+  the production baseline. The new feature does not reimplement compatibility
+  for the pre-fix event format.
 
-BIND's stock INFO log cannot distinguish a primary that stayed down from one
-that recovered and answered an equal-serial SOA refresh. The user accepted a
-small BIND patch instead of dropping long network-outage alerts. The patch adds
-five logging lines in the existing successful branch and changes no DNS
-protocol, timing, transfer, or state behavior. Separate minimal hunks cover the
-9.18 and 9.20 implementations of the adjacent primary-health bookkeeping.
+### Active M:N probe
 
-## Compatibility and deployment
+- Probe every current `(managed secondary, configured user primary)` path.
+  Never probe vpsAdmin peer secondaries as user primaries.
+- Carry stable `dns_server_zone_id`, `dns_zone_transfer_id` and an opaque
+  configuration generation in node configuration and every event. The API
+  consumer accepts an event only when all three still identify the current,
+  enabled external-zone path.
+- Snapshot path IDs and generation when a passive BIND transfer starts. On
+  journal replay, associate a transfer only when its first entry is strictly
+  newer than the current tracking boundary. Configuration changes while a
+  transfer is running therefore cannot apply its terminal result to a new path.
+- Use the secondary's real transfer source address and the configured TSIG key.
+  First read the primary's SOA, then issue a TCP IXFR query at that primary
+  serial, signed with the configured TSIG when present. BIND checks transfer
+  ACL/TSIG before returning the current SOA, so this is a cheap positive check
+  of direct transfer readiness.
+- Run healthy paths hourly with deterministic staggering. Retry failed
+  access/network paths every five minutes. Retry invalid-zone, protocol and
+  stale results hourly so a large or hostile zone cannot force a full download
+  every five minutes. Bound probe concurrency and add timeouts so one primary
+  cannot monopolize the node worker.
+- Escalate to a temporary full AXFR only when there is no local serial, IXFR is
+  unsupported/inconclusive, or a prior content/protocol failure needs positive
+  recovery evidence. Validate downloaded data with `named-checkzone` before
+  reporting success. Never publish zone contents or TSIG secrets.
+- Default full-transfer safeguards are two concurrent AXFRs, 256 MiB per
+  response and ten minutes. A local safeguard hit is inconclusive/admin-only,
+  not evidence that the user's server is broken.
+- A cheap IXFR success clears access/network failures. Invalid-zone/content or
+  protocol failures clear only after BIND accepts a real transfer or a complete
+  probe AXFR validates successfully.
+- If a reachable, valid primary's SOA serial remains behind the secondary,
+  classify it as `stale`. This affects primary readiness, not secondary serving
+  status.
+- Emit routine positive observations as state watermarks without permanent log
+  growth. Persist probe history on failure/reason transitions and recovery;
+  persist every meaningful real BIND transfer outcome.
 
-- The node event adds attempt kind and failure classification while retaining
-  the existing success/failed envelope. The new consumer intentionally does not
-  accept old events without this classification.
-- Patched BIND, the new nodectld parser, the new supervisor/state model, the
-  zone-level monitor, and its templates are one compatibility set. Do not run
-  the new monitor without positive refresh telemetry on every DNS server.
-- For upgrade, first pause this monitor and drain already-enqueued old
-  monitor-alert and mail transactions. Stop old API workers and other old-code
-  writers which can enable a DNS zone or change its source; DNS-zone mutations
-  remain unavailable through the core migration and new API activation. Stop
-  old nodectld producers on every DNS server, then drain `dns_transfer_logs`
-  completely with the old consumers still running. Only after the queue is
-  empty, stop every old supervisor consumer for that queue. This creates an
-  explicit message-format boundary: no old-format event can arrive after the
-  drain. With all consumers stopped, deploy and start patched BIND and new
-  nodectld on every DNS server; new-format events may safely queue. Verify the
-  live `named` binaries contain `confirmed current serial` and observe the message
-  from a controlled equal-serial refresh. Keep consumers stopped while the core
-  and monitoring migrations, new supervisor code, templates, and configuration
-  are deployed everywhere; never use a mixed-consumer cutover. Run
-  `CONFIRM=1 rake vpsadmin:dns:reset_primary_transfer_tracking` once while
-  writers and consumers are stopped. It repeats unsafe old-format log cleanup,
-  repairs cached latest-transfer fields, establishes a fresh boundary, and
-  empties path state. Verify that every enabled external zone has a non-NULL
-  tracking epoch and every disabled or internal zone has NULL. Only then start
-  new consumers, drain queued
-  classified events, inspect fresh path state, and resume API writes and
-  monitoring. The new
-  consumer also checks current enabled/source state independently and fails
-  closed if epoch metadata is stale.
-- New path state starts unknown. Schema additions remain readable after an API
-  rollback, but deleted transfer and monitoring history is irreversible.
-- Rollback is also coordinated. Pause monitoring and drain its queued alert/mail
-  work. Stop API workers which can acknowledge, ignore, or otherwise mutate
-  monitoring events for the reset window; the reset task also locks each event
-  batch transactionally. Stop new nodectld producers on every DNS server, drain
-  `dns_transfer_logs` completely with new consumers, and only then stop all new
-  transfer-log consumers. Stop BIND before changing its package. This prevents
-  classified events from reaching the old envelope-only consumer. A stopped
-  parser may retain a cursor behind an unresolved attempt, so deliberately move
-  `/var/lib/nodectld/dns-transfer-log.cursor` to the current `bind.service`
-  journal tail. Extract only the opaque value after `-- cursor: `; never write
-  the complete human-readable `journalctl` output. With BIND and nodectld
-  stopped, write it atomically with the existing cursor's ownership and mode.
-  On these NixOS DNS servers nodectld runs as root and its state directory is
-  `0700 root:root`, so use:
+## API and state model
+
+- Maintain current path state per `(DnsServerZone, DnsZoneTransfer)` with
+  source (`bind`, `ixfr_probe`, `axfr_probe`), status/reason, serials, first and
+  latest failure times, last check, last success and ordering watermark.
+- Process events idempotently and conservatively under the server-zone lock.
+  Positive observations win timestamp ties, and old generations or events at
+  the configuration boundary second are rejected.
+- Explicit access, TSIG, protocol, invalid-zone and stale failures become
+  alertable after continuous evidence for 30 minutes. Network failures require
+  observations spanning 24 hours. A gap beyond the expected retry cadence
+  resets continuity, preventing rolling node restarts from manufacturing a
+  long outage.
+- Keep one sticky monitoring incident per DNS zone. Delay opening until any
+  path is eligible, keep an open incident until every current path has
+  recovered, and suppress repeat mail while only young/noneligible failures
+  remain.
+- Expose a user-authorized path resource plus per-primary aggregate fields:
+  `transfer_check_status`, `last_transfer_check_at`, and total/success/failed/
+  pending secondary counts. The UI can fetch failed/pending path details for a
+  selected primary without exposing other users' zones or TSIG material.
+- Expose a derived per-secondary `zone_status`: `serving`, `expired`,
+  `not_loaded` or `unknown`, based on BIND status serial/load/expiry/check data.
+  Call this status “Serving”; do not claim freshness beyond the evidence.
+
+## Database reset and compatibility
+
+- Rewrite the unmerged `20260813120000` migration. It deletes every existing
+  DNS transfer-log row, clears all `DnsServerZone.last_transfer_*` pointers and
+  starts all new primary-path state as unknown. This is an intentional,
+  irreversible history reset requested by the operator; no old rows are
+  imported or reclassified.
+- Remove the unmerged custom BIND package, both 9.18/9.20 patches and production
+  package override. There is one supported stock BIND from pinned nixpkgs.
+- Do not retain runtime branches for old nodectld or old supervisor payloads.
+  Upgrade is a coordinated hard protocol boundary.
+- Keep `dns_server_zone_transfer_logs.attempt_kind` nullable only at the
+  database-schema level so the old supervisor can write after the documented
+  full rollback. The new model/API require it, and the re-upgrade reset deletes
+  any rollback-era nil rows before new services resume.
+- Keep small guarded operational reset tasks for supported rollback and later
+  re-upgrade. They reset probe generations/path state and the monitor's object
+  history; they are not mixed-version compatibility code.
+- The development cluster is disposable and may be reset rather than migrated
+  from the earlier prototype schema.
+
+## WebUI, mail and documentation
+
+- “Name servers” shows resulting service state per managed secondary: server
+  address/name, serving status, serial, loaded/last-check/expiry information and
+  an activity-log link. Remove the duplicate direct-transfer aggregate from
+  this table.
+- “Primary servers” shows each configured primary's transfer readiness. Use a
+  vertical/stacked layout so address, TSIG and check summary do not overflow.
+  Show aggregate counts; expand/list individual secondary paths only when they
+  are failed or pending.
+- Label transfer-log entries by evidence source: real BIND transfer, IXFR
+  readiness probe or AXFR validation.
+- Alert mail lists actionable primary/secondary paths and explains that the
+  zone may still be served through another path. Advice covers reachability,
+  transfer ACLs, TSIG and zone validity. Closed mail is sent only after all
+  current failures recover.
+- Rebuild the complete Czech/English KB candidates and review manifests through
+  the canonical WebUI documentation workflow. Production wiki publication is
+  separately approval-gated and is not part of implementation.
+
+## Deployment and rollback
+
+### Upgrade
+
+1. Pause the DNS transfer monitor and drain already-enqueued alert/mail work.
+2. Stop DNS-zone/API configuration writers. With old nodectld still running,
+   drain its DNS transaction queue. Make the new release code available only
+   for this schema-independent check, without starting new services, and run
+   `bundle exec rake vpsadmin:dns:verify_configuration_drained`. Resolve
+   failed/staged work and require a zero boundary before continuing.
+3. Stop old nodectld producers on every DNS server. Drain `dns_transfer_logs`
+   with old supervisors, then stop every consumer and monitoring-event writer.
+4. Deploy the database/application/configuration/templates and run migrations.
+   With DNS-zone writers and transfer consumers still stopped, run
+   `CONFIRM=1 bundle exec rake vpsadmin:dns:reset_primary_transfer_tracking`.
+   This deletes all old transfer history again, establishes fresh probe
+   generations and queues complete configuration refreshes for every existing
+   server-zone. Verify the queued refresh count before continuing.
+5. Deploy/start new nodectld with stock BIND on all DNS servers. Let it consume
+   every queued full configuration refresh; verify persisted zone JSON contains
+   server-zone/transfer IDs, primary kinds, generation and probe source
+   addresses. New-format events may queue.
+6. Start only new supervisors, drain and inspect classified events, then resume
+   API writes and monitoring.
+
+There is no supported mixed old/new producer or consumer interval.
+
+### Rollback and re-upgrade
+
+- Use the same producer/queue/consumer barrier in reverse. First stop new
+  DNS-zone writers. While the complete new nodectld fleet is still running,
+  run `bundle exec rake vpsadmin:dns:verify_primary_transfer_configuration_drained`
+  and require zero pending/in-flight new-format server-zone updates. A failed
+  or partial upgrade must first restore enough new nodectld service to drain
+  those transactions; rollback is blocked rather than delivering them to old
+  nodectld. Then stop new nodectld producers on every DNS server, drain
+  `dns_transfer_logs` with the new consumers, and stop every new consumer and
+  monitoring-event writer. While the new API code is still installed, run
+  `CONFIRM=1 REFRESH_CONFIGURATION=0 bundle exec rake
+  vpsadmin:dns:reset_primary_transfer_tracking`, then run
+  `CONFIRM=1 bundle exec rake
+  'vpsadmin:monitoring:reset_dns_secondary_transfer_failure[DnsZone]'`.
+  The rollback reset therefore does not enqueue new-format configuration
+  refreshes for the old nodectld. Stop BIND on every DNS server, then
+  deliberately advance `/var/lib/nodectld/dns-transfer-log.cursor`
+  to the current `bind.service` journal tail. This accepts skipping already
+  drained trailing diagnostics and prevents the old parser from replaying a
+  cursor withheld behind an unresolved new-parser attempt. Extract only the
+  opaque cursor value and install it atomically as root on these NixOS nodes:
 
   ```sh
   cursor=$(journalctl -u bind.service -n 0 --show-cursor \
@@ -121,54 +213,58 @@ protocol, timing, transfer, or state behavior. Separate minimal hunks cover the
   mv "$cursor_tmp" /var/lib/nodectld/dns-transfer-log.cursor
   ```
 
-  Verify that `journalctl
-  --after-cursor="$(cat /var/lib/nodectld/dns-transfer-log.cursor)" -u
-  bind.service -n 1` is empty. This accepts skipping the already-drained trailing
-  diagnostics and prevents the old false-positive parser from replaying them.
-  While the new application is still installed run
-  `rake 'vpsadmin:monitoring:reset_dns_secondary_transfer_failure[DnsZone]'`.
-  This repeatable, destructive task removes new monitor events and their logs.
-  Restore the old templates, monitor configuration, API/core consumers, then
-  start the old consumers before starting upstream BIND and old nodectld
-  producers. Resume monitoring last.
-  Rolling back
-  patched BIND alone while the new monitor is active is unsupported because
-  quiet network recovery would again be invisible.
-- On a later re-upgrade, pause/drain monitoring again, stop old nodectld
-  producers, drain their queue with old consumers, then stop the old consumers
-  and old DNS-zone and monitoring-event writers. Deploy the new application and
-  before starting new
-  producers or consumers run `CONFIRM=1 rake
-  vpsadmin:dns:reset_primary_transfer_tracking`. This also removes unsafe
-  old-format transfer rows recreated by the old parser and repairs the cached
-  latest result; only rows with NULL attempt classification are candidates.
-  Before enabling the new
-  zone-level monitor run
-  `rake 'vpsadmin:monitoring:reset_dns_secondary_transfer_failure[DnsServerZone]'`.
-  The original irreversible migration will already be recorded and therefore
-  cannot remove legacy incidents recreated during the rollback. Both cleanup
-  directions deliberately discard incident history and require an operator to
-  confirm the reported deletion count.
-- Update production configuration inputs only through `confctl`. KB production
-  publication remains separately approval-gated.
-- Admission and ordering compare DNS-node journal timestamps with API database
-  timestamps at one-second resolution. All DNS and API hosts must keep NTP
-  synchronization healthy; clock skew is an operationally monitored deployment
-  assumption. The consumer deliberately rejects the entire boundary second.
+  Verify that `journalctl --after-cursor="$(cat
+  /var/lib/nodectld/dns-transfer-log.cursor)" -u bind.service -n 1` is empty.
+  Restore templates/configuration/API as a coordinated set, then start old
+  consumers before old BIND/nodectld producers. Let the old application issue
+  its own compatible configuration refreshes after it is live.
+- Before a later re-upgrade, stop old DNS-zone writers while old nodectld stays
+  running. Drain its DNS transaction queue and run the new release's
+  schema-independent `bundle exec rake
+  vpsadmin:dns:verify_configuration_drained` gate. Only then stop old
+  nodectld, drain `dns_transfer_logs` with old consumers and stop those
+  consumers. Deploy/migrate the new API, configuration and templates while
+  everything remains stopped. Run `CONFIRM=1 bundle exec rake
+  vpsadmin:dns:reset_primary_transfer_tracking` with configuration refreshes
+  enabled, then run `CONFIRM=1 bundle exec rake
+  'vpsadmin:monitoring:reset_dns_secondary_transfer_failure[DnsServerZone]'`
+  for incidents recreated by the old monitor. Start new nodectld producers,
+  drain their events with only new consumers, then resume writers and
+  monitoring.
+- Deleted transfer and incident history is not recoverable through rollback.
+- Event ordering compares node and API timestamps. Healthy NTP on DNS and API
+  hosts is an operational prerequisite.
 
-## Verification
+## Implementation sequence
 
-- Unit/spec coverage for full BIND 9.18/9.20 sequences, both patch variants,
-  parser replay, event
-  classification, state transitions, aggregation, authorization, migration
-  cleanup, pruning, and bilingual mail rendering.
-- Real-BIND integration coverage for peer distribution, direct-primary failure,
-  a continuously down primary, recovery through the patched equal-serial
-  refresh, rolling-reboot protection, same-primary network NOTIFY recovery,
-  peer NOTIFY isolation, and explicit-error persistence.
-- WebUI browser coverage and the canonical KB contract/capture workflow.
-- Prepare guarded Czech and English KB candidates explaining direct-transfer
-  status and alert delays. Production publication remains separately approved.
-- Run focused lint/specs and repository hooks, commit all intended changes, then
-  invoke the mandatory standalone review before long integration/configuration
-  builds. Merge through fresh worktrees using fast-forward-only integration.
+1. Rebase all unmerged feature branches on current defaults and rewrite the
+   vpsAdmin series into focused parser, probe, state/API, monitoring, WebUI and
+   integration-test commits. Remove the custom-BIND commit entirely.
+2. Rewrite monitoring/configuration, mail templates and KB contracts against
+   the final vpsAdmin head. Update configuration pins only through `confctl`.
+3. Run focused specs, lint, formatters, schema/API i18n generation and hooks.
+   Commit and push all intended changes.
+4. Run the mandatory fresh-context change review. Resolve or explicitly discuss
+   every Blocking/Important finding before long validation.
+5. Run the real-BIND M:N scenario with at least two primaries and two managed
+   secondaries, Playwright WebUI coverage, exact-pinned configuration builds,
+   mail rendering and KB contract validation.
+6. Reset and redeploy the dedicated development cluster with review fixtures.
+
+## Required test coverage
+
+- Probe unit tests: cadence/jitter/retry, exact source binding, TSIG secret
+  hygiene, classifications, IXFR and full-AXFR paths, size/time/concurrency
+  limits and temporary-file cleanup.
+- Parser tests: complete BIND attempt sequences, completion-after-failure,
+  IXFR fallback, lifecycle/local/warning noise, peer isolation and all retained
+  actionable failures.
+- State/API tests: precedence and recovery rules, out-of-order/idempotent
+  delivery, generation boundaries, continuity gaps/reboots, alert delays,
+  authorization, aggregate/detail shape, bounded log volume and reset tasks.
+- Real BIND: two primaries/two secondaries, probe coverage of all paths, ACL
+  omissions on one secondary, prolonged outage, invalid-zone diagnostics,
+  full-AXFR recovery and secondary peer distribution while direct probes fail.
+  Exact TSIG and stale-serial classifications are covered in the probe suite.
+- UI/mail/docs: vertical primary layout, secondary serving state, bilingual
+  templates, Playwright behavior and full KB contract/candidate verification.

@@ -1,0 +1,36 @@
+====== Secondary DNS Servers ======
+If you are using your own authoritative DNS server in your VPS, you can create a secondary server on our shared infrastructure through vpsAdmin. This is useful, for example, when your domain registrar requires you to have multiple servers on different IP addresses for delegation to your own server.
+
+You can set up individual zones in the menu <vpsadmin-nav id="dns.secondary-zones.open">DNS -> Secondary zones</vpsadmin-nav>.
+First, <vpsadmin-nav id="dns.secondary-zones.create">create the zone</vpsadmin-nav>. In its details, use the "Primary servers" form to
+<vpsadmin-nav id="dns.secondary-zones.add-primary">add the address of your primary authoritative server</vpsadmin-nav> running in your VPS.
+
+In the zone details, you will see the names and addresses of the assigned secondary servers. You need to adjust the configuration of your primary server so that it informs our secondary servers about changes in records and allows zone transfers. vpsAdmin provides a sample configuration for BIND.
+
+The **Name servers** table shows whether every assigned secondary has loaded and
+is serving the zone. It also shows the serial, load and check times, next refresh,
+expiration, and a link to transfer activity.
+
+The **Primary servers** table instead checks each of your primaries from every
+assigned secondary. vpsAdmin regularly sends an IXFR readiness check from the
+secondary's real transfer address, using the same TSIG as BIND when one is
+configured. When the short check is inconclusive or zone contents need validation, it downloads a
+temporary AXFR and validates the zone. Actual transfer errors reported by BIND,
+such as refusal, TSIG failure, or invalid zone contents, are retained as well.
+
+**Successful** means checks succeeded from every secondary, **Failed** means at
+least one path failed, and **Pending** means a conclusive result is still missing.
+One failed path does not necessarily make the zone unavailable: another secondary
+may have obtained a current copy and distributed it to its peers. The failure does,
+however, usually indicate an unreachable primary, missing AXFR/IXFR permission,
+incorrect TSIG, an old serial, or an invalid zone. We alert on a network error only
+after repeated failed checks on the same path span at least 24 hours. We alert on
+other confirmed errors after 30 minutes.
+
+===== Hidden primary server =====
+It is possible to run your primary server on a private IPv4 address, or to simply not have it
+accessible from the Internet at all. In that case, delegate your domain at your registrar only to
+the shared secondary servers, i.e. ns3.vpsfree.cz and ns4.vpsfree.cz.
+
+===== TSIG =====
+Zone transfers between primary and secondary servers can be further secured using TSIG. First, <vpsadmin-nav id="dns.tsig-keys.create">create a shared key</vpsadmin-nav> in the menu <vpsadmin-nav id="dns.tsig-keys.open">DNS -> TSIG keys</vpsadmin-nav>. Each key is identified by an arbitrary name, chosen algorithm, and secret code. These values must match on all servers. When adding a primary server to a zone, <vpsadmin-nav id="dns.secondary-zones.primary-tsig.select">select this TSIG key</vpsadmin-nav>. The sample configuration shows how to set up TSIG on the primary server.
