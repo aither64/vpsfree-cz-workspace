@@ -103,6 +103,12 @@ observation as the M:N coverage mechanism with bounded active probes.
   limits and network access only to the selected primary. Never put TSIG
   secrets or user-controlled names in argv, environment, unit names or journal
   metadata.
+- The selected primary IP address is the deliberate metadata exception:
+  `systemd-run` must receive it in `IPAddressAllow` to install the per-unit
+  network allowlist. It is public path configuration, not a secret. The zone
+  name, source address, TSIG and query remain confined to the bounded stdin job
+  and private worker files; the transient unit name is an opaque digest/random
+  value.
 - Recompute the current M:N path set continuously. Schedule a new zone/primary
   path with deterministic jitter of at most 60 seconds. Remove pending work and
   cancel a running unit when a primary or zone disappears. Drop cancelled or

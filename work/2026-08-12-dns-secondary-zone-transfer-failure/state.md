@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102`
+  - head: `37e6447d453f2621156da5bb80674bd0f59be4ba`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `40d7eabb5a6ecf312a1390ecba1e42e2135431e1`
+  - head: `9acaf5ec95dcf33ff9ef86fa0f72575184fc3fa5`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `1979a8f878daed01cc0b866549e9b717b9aedd8d`
+  - head: `6cbc391de4b0c60aff591e6ae5b017a4234f589f`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -203,7 +203,7 @@ not merged.
   - annotation inventory: 83 bindings and 9 exceptions;
   - 59 concepts, 118 variants and all 118 PNGs validated.
 - Unprivileged probe follow-up checks:
-  - scheduler/runner/worker specs: 32 examples, 0 failures;
+  - scheduler/runner/worker specs: 41 examples, 0 failures;
   - worker package builds with both `nodectld` and
     `vpsadmin-dns-transfer-probe` executables;
   - final DNS integration derivation evaluates as
@@ -226,7 +226,7 @@ not merged.
   clean. No obsolete queued/in-progress GitHub Actions run remained to cancel;
   current-head CI was left running.
 - Final exact pins use the complete vpsAdmin object ID
-  `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102` in configuration and every KB
+  `37e6447d453f2621156da5bb80674bd0f59be4ba` in configuration and every KB
   contract declaration. An earlier local `confctl` attempt used an incorrect
   expansion of the abbreviated hash; GitHub rejected it before any lock or
   commit was changed.
@@ -313,8 +313,8 @@ not merged.
 
 ## Remaining work
 
-1. Run the mandatory fresh-context review over the committed/pushed exact
-   ranges and record its findings or authorization.
+1. Complete the mandatory review follow-up over the corrected committed/pushed
+   exact ranges and record its authorization.
 2. After authorization, run the expanded real-BIND DNS scenario, WebUI browser
    scenario and exact-pinned configuration builds.
 3. Reset/redeploy the disposable bridge cluster from the final exact pins and
@@ -337,15 +337,27 @@ not merged.
   remain nonpersistent; meaningful BIND outcomes remain fully retained.
 - WebUI decision: apply accessible failed/error-row link colors globally while
   preserving the existing red status background.
+- The first fresh-context review blocked long validation on a partially typed
+  worker job, post-exit tempfile output caps, user values in child argv,
+  AF_UNIX access and missing execution-level isolation coverage. The rewritten
+  isolation commit now validates a closed bounded job/result schema and
+  canonical reasons, streams/caps output while the unit runs, feeds dig through
+  stdin and BIND validation through a private `named-checkconf -z` config,
+  removes AF_UNIX, bounds cancellation state and adds real subprocess plus
+  causal NixOS isolation/cancellation checks.
+- The selected primary address intentionally remains visible as the
+  `IPAddressAllow` systemd property because this is how the root coordinator
+  installs the destination filter. No zone name, source address, query or TSIG
+  secret appears in root/child argv or unit names.
 - The worker JSON is package-internal: scheduler, executable and NixOS
   hardening settings are deployed and rolled back as one nodectld revision.
   This follow-up changes neither the RabbitMQ event envelope nor the database
   schema or durable AXFR-latch format. Transient units are tied to
   `nodectld.service` and keep no durable worker state.
 - Implementation is committed and pushed at vpsAdmin
-  `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102`, configuration
-  `40d7eabb5a6ecf312a1390ecba1e42e2135431e1` and KB contracts
-  `1979a8f878daed01cc0b866549e9b717b9aedd8d`.
+  `37e6447d453f2621156da5bb80674bd0f59be4ba`, configuration
+  `9acaf5ec95dcf33ff9ef86fa0f72575184fc3fa5` and KB contracts
+  `6cbc391de4b0c60aff591e6ae5b017a4234f589f`.
 
 ## Development cluster review deployment
 
@@ -356,7 +368,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `fa6da61f9fc8a6abebf2093afdebad5a2c2bb102` after the
+  redeployed from `37e6447d453f2621156da5bb80674bd0f59be4ba` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
