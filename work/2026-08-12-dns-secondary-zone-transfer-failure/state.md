@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `b7efb9d63e36a21be0765d364e90bc9e097a3392`
+  - head: `7496cdd69fa6e04044a6331453606f20a870ec87`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `7301751610bd577109546ee2a0756db09058ddb1`
+  - head: `acabbe61b274073860275a47616beb13525e159e`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `d694b457f7fdbb1b9285f97d72a724ebf2998927`
+  - head: `85fb1f1f7f29af6b67c441a65f845205acdfea71`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -459,6 +459,21 @@ not merged.
   into the core path-state commit and pushed; configuration and all five KB
   declarations carry the exact new object ID. Long validation remains paused
   pending a fresh committed-range review.
+- That fresh review accepted the database cascade/nullification graph and all
+  surrounding lifecycle, deployment, API, probe-isolation, WebUI, mail, KB and
+  commit-boundary decisions. It found one independent parser blocker: BIND can
+  reuse a pointer after a missed terminal journal line, and the stale attempt
+  could attribute a new failure to the old zone, primary and generation.
+- Correlation now drops a pointer-keyed attempt before processing any line when
+  its normalized zone or address changes. Every `connected` line starts a new
+  logical attempt even for the same path, so generation/transfer snapshots and
+  failure flags cannot leak across reuse. Regressions cover both different-path
+  and same-path/configuration-churn reuse. The focused parser suite passes 30
+  examples and targeted RuboCop is clean. All mandatory hooks pass, the fix is
+  folded into parser commit 1, the clean eight-commit branch is pushed, and the
+  generated configuration pin plus all five KB declarations use the exact new
+  object ID. A final confirmation review is required; long validation remains
+  paused.
 
 ## Development cluster review deployment
 
@@ -469,7 +484,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `b7efb9d63e36a21be0765d364e90bc9e097a3392` after the
+  redeployed from `7496cdd69fa6e04044a6331453606f20a870ec87` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the

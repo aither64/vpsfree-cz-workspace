@@ -32,6 +32,11 @@ observation as the M:N coverage mechanism with bounded active probes.
 ### Passive BIND diagnostics
 
 - Keep the correlated parser for complete BIND transfer attempts.
+- BIND transfer pointers are reusable object addresses, not durable attempt
+  identities. On a pointer collision, reset correlation when the normalized
+  zone or primary changes, and treat every `connected` line as a fresh logical
+  attempt even for the same path. Continuation/terminal lines alone retain the
+  existing configuration snapshot.
 - `Transfer completed` is accounting, never success. An accepted
   `transferred serial` is a real transfer success.
 - Preserve actionable TSIG/ACL, network, protocol and invalid-zone failures.
