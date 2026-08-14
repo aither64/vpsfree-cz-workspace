@@ -388,7 +388,13 @@ not merged.
   all mandatory vpsAdmin hooks pass after folding the two corrections into
   their logical integration/isolation commits. Configuration and KB pins were
   regenerated through their required workflows and all worktrees are clean.
-  A focused reviewer rerun authorization is pending before the long retry.
+- The fresh standalone review of the committed test-only delta reported no
+  Blocking, Important or Advisory findings and authorized the long real-DNS,
+  WebUI and exact-pinned configuration validations. It independently verified
+  the isolation audit's causal active-only path, the validated-AXFR recovery
+  assertion, the eight-commit split and every exact downstream pin. The long
+  rerun remains the definitive systemd/kernel boundary proof; current-head CI
+  is still a merge gate.
 - An unrelated OOM kill interrupted a later heavy Nix evaluation while the old
   disposable review cluster was still consuming memory. No worktree changes
   were lost. The bridge cluster is now stopped, leaving approximately 88 GiB
