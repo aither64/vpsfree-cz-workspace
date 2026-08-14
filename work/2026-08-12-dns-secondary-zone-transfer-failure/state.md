@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `ca78e6c08e853ef5803cc884645c395c21a3fb9c`
+  - head: `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `8c9b638f11a25618556bc9846ff8e872325ace1a`
+  - head: `6dde84e0da0e0614c5e049e7825c9bf5ac45cf83`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `ac45182b4874339457c50c566abc43cd6200d295`
+  - head: `6e3935a4e12c383556109412b882a1bbda75c2b5`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -226,7 +226,7 @@ not merged.
   clean. No obsolete queued/in-progress GitHub Actions run remained to cancel;
   current-head CI was left running.
 - Final exact pins use the complete vpsAdmin object ID
-  `ca78e6c08e853ef5803cc884645c395c21a3fb9c` in configuration and every KB
+  `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46` in configuration and every KB
   contract declaration. An earlier local `confctl` attempt used an incorrect
   expansion of the abbreviated hash; GitHub rejected it before any lock or
   commit was changed.
@@ -366,20 +366,44 @@ not merged.
   schema or durable AXFR-latch format. Transient units are tied to
   `nodectld.service` and keep no durable worker state.
 - Implementation is committed and pushed at vpsAdmin
-  `ca78e6c08e853ef5803cc884645c395c21a3fb9c`, configuration
-  `8c9b638f11a25618556bc9846ff8e872325ace1a` and KB contracts
-  `ac45182b4874339457c50c566abc43cd6200d295`.
+  `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46`, configuration
+  `6dde84e0da0e0614c5e049e7825c9bf5ac45cf83` and KB contracts
+  `6e3935a4e12c383556109412b882a1bbda75c2b5`.
+- The first post-isolation real-DNS run reached the complete readiness matrix.
+  Three paths had the expected passive BIND evidence, while the path that
+  depended solely on its active probe remained unknown. Extracted guest
+  journal evidence showed every audit-wrapped transient unit exiting before
+  the packaged worker because the test accepted only specific access-denial
+  errno values. The isolation contract permits any failed syscall (or blocked
+  connection timeout) and still fails if access succeeds, so the audit now
+  rescues `SystemCallError`/`IO::TimeoutError` before running the real worker.
+- The same run exposed a separate test-only race: the invalid-zone diagnostic
+  remained retained as required, but an asynchronous probe could replace the
+  current failed state before it was sampled. The scenario now asserts the
+  durable diagnostic and eventual validated `axfr_probe` recovery, without
+  requiring a routine deduplicated success log row. The healthy interval is
+  60 seconds in this scenario to keep that state observable and reduce probe
+  churn.
+- Nix parse/format, CI selection (16 runs, 55 assertions), range diff-check and
+  all mandatory vpsAdmin hooks pass after folding the two corrections into
+  their logical integration/isolation commits. Configuration and KB pins were
+  regenerated through their required workflows and all worktrees are clean.
+  A focused reviewer rerun authorization is pending before the long retry.
+- An unrelated OOM kill interrupted a later heavy Nix evaluation while the old
+  disposable review cluster was still consuming memory. No worktree changes
+  were lost. The bridge cluster is now stopped, leaving approximately 88 GiB
+  available before the long retry; it will be reset for the final deployment.
 
 ## Development cluster review deployment
 
-- Reset and started the dedicated
+- The dedicated
   `2026-08-12-dns-secondary-zone-transfer-failure` development cluster using
-  the default bridge network. It is running and ready at
-  `https://webui.aitherdev.int.vpsfree.cz/`.
+  the default bridge network was stopped after the validation OOM. It will be
+  reset and redeployed from the final exact pins after long validation.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `ca78e6c08e853ef5803cc884645c395c21a3fb9c` after the
+  redeployed from `38ad10fbdd00e7de07b5ac6b5261ec3d4f541d46` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
