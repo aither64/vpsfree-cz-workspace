@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `b6415d758372b49e313b94aed615151468ff38c7`
+  - head: `b7efb9d63e36a21be0765d364e90bc9e097a3392`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `6c3bbbf28bdb0949969858626a519320c1da84eb`
+  - head: `7301751610bd577109546ee2a0756db09058ddb1`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `8fc6fe5a27f39e21a1c52f0d88640a81db61e5d7`
+  - head: `d694b457f7fdbb1b9285f97d72a724ebf2998927`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -440,6 +440,25 @@ not merged.
   fixes are folded into the path-state commit, the clean eight-commit vpsAdmin
   series is pushed, and configuration plus KB carry the exact new revision. A
   second fresh review is required; long validation remains paused.
+- The second fresh lifecycle review accepted the destroy-time admission and
+  lock-order corrections, but found a separate pending-create rollback race.
+  `confirm_create` endpoints are intentionally visible to probes, while a later
+  failed creation is removed by raw confirmation SQL. That SQL bypasses model
+  dependencies, so probe state/history admitted before rollback could become
+  orphaned.
+- The unmerged schema now makes this integrity boundary explicit with foreign
+  keys: deleting a server-zone endpoint cascades its path states and transfer
+  logs; deleting a primary cascades its path states and nulls the primary link
+  on retained logs; deleting a retained log nulls the state's optional latest-
+  log link. Deterministic supervisor regressions cover both pending-create
+  rollback shapes and prove clean recreation. The migration spec checks all
+  five delete actions. The migration suite passes 3 examples, the combined
+  supervisor/destroy suite passes 27 examples, and targeted RuboCop reports no
+  offenses. CI selection passes 16 runs/55 assertions, Nix parsing and Nixfmt
+  are clean, and all mandatory vpsAdmin hooks pass. The correction is folded
+  into the core path-state commit and pushed; configuration and all five KB
+  declarations carry the exact new object ID. Long validation remains paused
+  pending a fresh committed-range review.
 
 ## Development cluster review deployment
 
@@ -450,7 +469,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `b6415d758372b49e313b94aed615151468ff38c7` after the
+  redeployed from `b7efb9d63e36a21be0765d364e90bc9e097a3392` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the

@@ -125,6 +125,15 @@ observation as the M:N coverage mechanism with bounded active probes.
   obsolete. Primary deletion acquires ordered server-zone locks before marking
   the transfer for destruction, matching the consumer's server-zone-then-
   transfer lock order.
+- Keep pending-create endpoints probe-visible so a newly applied path can be
+  checked immediately, but enforce their rollback integrity in the database.
+  Raw transaction confirmations bypass ActiveRecord callbacks: deleting a
+  server-zone endpoint cascades its path states and transfer history, while
+  deleting a primary cascades its path states and nulls that primary's link on
+  retained diagnostic history. The path state's optional latest-log reference
+  also nulls when log retention removes that row. This covers create rollback,
+  final deletion and delayed asynchronous events without relying on callback
+  timing.
 - Preserve the full-AXFR latch across a generation change for an unchanged
   zone/primary identity and prune it when that path is actually removed.
 - Keep the combined transfer log and its existing daily 365-day retention.
@@ -333,7 +342,9 @@ each downstream repository retains a single exact feature-pin update.
   delivery, generation boundaries, continuity gaps/reboots, alert delays,
   authorization, aggregate/detail shape, bounded log volume and reset tasks.
   Deterministically reject events after a server zone is marked for deletion
-  or disappears between lookup and locking.
+  or disappears between lookup and locking. Admit state/history for each kind
+  of pending-create endpoint, raw-delete that parent as confirmation rollback
+  does, and prove referential cleanup plus clean endpoint recreation.
 - Real BIND: two primaries/two secondaries, probe coverage of all paths, ACL
   omissions on one secondary, prolonged outage, invalid-zone diagnostics,
   full-AXFR recovery and secondary peer distribution while direct probes fail.
