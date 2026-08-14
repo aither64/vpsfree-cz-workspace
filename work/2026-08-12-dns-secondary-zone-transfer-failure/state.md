@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `8fa969886bba1a95efe9edf399bcc1d213129f4d`
+  - head: `39e2753d8e4decc3a0961738741bdfaba4c44b65`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `d508bf5dc3588b6075faecf819b4b745143081e9`
+  - head: `2945e10fd33ef960c75dd9c091ee9fd7eff0a396`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `6b4363994e3fec2af147db8f0bc98fc2f72470dd`
+  - head: `0a70573412cc413aec7047befca208d242da787d`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -313,9 +313,9 @@ not merged.
 
 ## Remaining work
 
-1. Complete the focused mandatory review of the final two-line integration-test
-   correction, then rerun the expanded real-BIND DNS scenario.
-2. Run the WebUI browser scenario and exact-pinned configuration builds.
+1. Complete the focused mandatory review of the final WebUI locator correction,
+   then rerun the targeted Playwright scenario.
+2. Run the exact-pinned configuration builds.
 3. Reset/redeploy the disposable bridge cluster from the final exact pins and
    recreate the review zone/path fixture.
 
@@ -499,6 +499,31 @@ not merged.
   mandatory hooks pass. Configuration and all five KB declarations are pinned
   exactly to `8fa969886bba1a95efe9edf399bcc1d213129f4d`; a fresh focused review
   is required before the definitive rerun.
+- The fresh focused review reported no Blocking, Important or Advisory
+  findings and independently confirmed that the two-line matrix correction did
+  not hide any product change. The definitive real-BIND rerun then passed all
+  four examples and the complete script in 944.72 seconds: the M:N matrix in
+  162.28 seconds, invalid-zone/validated-AXFR recovery in 22.28 seconds,
+  continuous crashed-primary behavior in 72.05 seconds and runtime
+  reconciliation/cancellation in 109.81 seconds.
+- The targeted `webui#networking-dns` browser run completed three of four
+  Playwright tests and exposed a test-only locator error in the changed DNS
+  user-flow test. The fixture renders the failed summary row—with the zone link
+  whose global contrast is under test—followed by a separate details row that
+  contains `reason_code: refused` but intentionally has no link. The test tried
+  to find a single failed row containing both. The page snapshot proves the
+  failed IXFR-probe summary and refused detail were both rendered correctly;
+  services stayed healthy. The result, screenshot, error context and trace are
+  preserved under `/tmp/os-test-runner/os-test-webui-fd1a3b33`.
+- The locator now selects the actual failed summary row by its `IXFR readiness
+  probe` source; the table-level assertion still verifies the filtered
+  `refused` reason independently. Relative to the previous reviewed head, this
+  changes one Playwright line and no product code. JavaScript syntax,
+  diff-check, CI selection (16 runs/55 assertions), all mandatory vpsAdmin
+  hooks and the complete KB contract check pass. Configuration and every KB
+  declaration now pin exact vpsAdmin
+  `39e2753d8e4decc3a0961738741bdfaba4c44b65`. A fresh focused review is
+  required before rerunning Playwright.
 
 ## Development cluster review deployment
 
@@ -509,7 +534,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `8fa969886bba1a95efe9edf399bcc1d213129f4d` after the
+  redeployed from `39e2753d8e4decc3a0961738741bdfaba4c44b65` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
