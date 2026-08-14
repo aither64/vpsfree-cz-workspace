@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `7496cdd69fa6e04044a6331453606f20a870ec87`
+  - head: `8fa969886bba1a95efe9edf399bcc1d213129f4d`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `acabbe61b274073860275a47616beb13525e159e`
+  - head: `d508bf5dc3588b6075faecf819b4b745143081e9`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `85fb1f1f7f29af6b67c441a65f845205acdfea71`
+  - head: `6b4363994e3fec2af147db8f0bc98fc2f72470dd`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -59,8 +59,8 @@ not merged.
   lifecycle/fallback/local false positives.
 - nodectld now actively checks every current managed-secondary × configured
   user-primary path. It binds the secondary's real source address, uses the
-  configured TSIG, reads SOA, sends signed TCP IXFR at the primary serial and
-  escalates to bounded temporary AXFR validation only when needed.
+  configured TSIG when present, reads SOA, sends a TCP IXFR at the primary
+  serial and escalates to bounded temporary AXFR validation only when needed.
 - nodectld no longer fetches or validates user-controlled DNS data itself. It
   continuously schedules current paths and publishes results, while each check
   runs in a one-shot transient systemd service with `DynamicUser=yes`, no
@@ -313,9 +313,10 @@ not merged.
 
 ## Remaining work
 
-1. Run the authorized expanded real-BIND DNS scenario, WebUI browser scenario
-   and exact-pinned configuration builds.
-2. Reset/redeploy the disposable bridge cluster from the final exact pins and
+1. Complete the focused mandatory review of the final two-line integration-test
+   correction, then rerun the expanded real-BIND DNS scenario.
+2. Run the WebUI browser scenario and exact-pinned configuration builds.
+3. Reset/redeploy the disposable bridge cluster from the final exact pins and
    recreate the review zone/path fixture.
 
 ## Unprivileged probe follow-up
@@ -474,6 +475,30 @@ not merged.
   generated configuration pin plus all five KB declarations use the exact new
   object ID. A final confirmation review is required; long validation remains
   paused.
+- The final pointer confirmation review reported no Blocking, Important or
+  Advisory findings. It independently passed the 30-example parser suite and
+  3-example migration suite and authorized the long real-BIND, Playwright and
+  exact-pinned configuration validations at vpsAdmin
+  `7496cdd69fa6e04044a6331453606f20a870ec87`.
+- The authorized expanded real-BIND run completed all four examples in 939.58
+  seconds. Invalid-zone evidence with validated AXFR recovery, the simulated
+  continuous crashed-primary condition and runtime add/remove/delete without a
+  nodectld restart all passed. The matrix reached its final assertion with all
+  four path states correct and both secondaries serving. Its refused path was
+  last updated by a legitimate passive BIND transfer after an active probe, so
+  the test-only requirement that the latest attempt kind be a probe failed even
+  though retained history contained the expected real `transfer`/`refused`
+  diagnostic. The complete result is preserved at
+  `/tmp/os-test-runner/os-test-dns__secondary-transfer-errors-3ad00b8f`.
+- The matrix now checks that the retained diagnostic includes a real BIND
+  transfer with reason `refused`, without imposing a race-dependent latest
+  source. Runtime-churn coverage separately and causally waits for isolated
+  active-probe units on both DNS nodes. Relative to the fully reviewed tree,
+  the final vpsAdmin tree changes only those two assertions. Nix parsing,
+  Nixfmt, CI selection (16 runs/55 assertions), range diff-check and all
+  mandatory hooks pass. Configuration and all five KB declarations are pinned
+  exactly to `8fa969886bba1a95efe9edf399bcc1d213129f4d`; a fresh focused review
+  is required before the definitive rerun.
 
 ## Development cluster review deployment
 
@@ -484,7 +509,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `7496cdd69fa6e04044a6331453606f20a870ec87` after the
+  redeployed from `8fa969886bba1a95efe9edf399bcc1d213129f4d` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
