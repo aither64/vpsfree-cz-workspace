@@ -71,8 +71,9 @@ observation as the M:N coverage mechanism with bounded active probes.
   cannot monopolize the node worker.
 - Escalate to a temporary full AXFR only when there is no local serial, IXFR is
   unsupported/inconclusive, or a prior content/protocol failure needs positive
-  recovery evidence. Validate downloaded data with `named-checkzone` before
-  reporting success. Never publish zone contents or TSIG secrets.
+  recovery evidence. Validate downloaded data with a private
+  `named-checkconf -z` configuration before reporting success. Never publish
+  zone contents or TSIG secrets.
 - Default full-transfer safeguards are two concurrent AXFRs, 256 MiB per
   response and ten minutes. A local safeguard hit is inconclusive/admin-only,
   not evidence that the user's server is broken.
@@ -90,8 +91,8 @@ observation as the M:N coverage mechanism with bounded active probes.
 
 - Keep scheduling, live `DnsConfig` lookup, the durable full-AXFR latch and
   RabbitMQ publication in nodectld, but move all `dig`, AXFR download and
-  `named-checkzone` processing into a one-shot `vpsadmin-dns-transfer-probe`
-  worker.
+  private-config `named-checkconf -z` processing into a one-shot
+  `vpsadmin-dns-transfer-probe` worker.
 - Start each worker as a hardened transient systemd service with a private
   dynamic user. Pass exactly one immutable path description through stdin and
   accept only one bounded, schema-validated JSON result on stdout. The worker

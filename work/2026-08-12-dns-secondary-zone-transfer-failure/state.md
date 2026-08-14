@@ -15,14 +15,14 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
   - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `37e6447d453f2621156da5bb80674bd0f59be4ba`
+  - head: `ca78e6c08e853ef5803cc884645c395c21a3fb9c`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
   - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `9acaf5ec95dcf33ff9ef86fa0f72575184fc3fa5`
+  - head: `8c9b638f11a25618556bc9846ff8e872325ace1a`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -36,7 +36,7 @@
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
   - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `6cbc391de4b0c60aff591e6ae5b017a4234f589f`
+  - head: `ac45182b4874339457c50c566abc43cd6200d295`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -203,11 +203,11 @@ not merged.
   - annotation inventory: 83 bindings and 9 exceptions;
   - 59 concepts, 118 variants and all 118 PNGs validated.
 - Unprivileged probe follow-up checks:
-  - scheduler/runner/worker specs: 41 examples, 0 failures;
+  - scheduler/runner/worker specs: 44 examples, 0 failures;
   - worker package builds with both `nodectld` and
     `vpsadmin-dns-transfer-probe` executables;
   - final DNS integration derivation evaluates as
-    `/nix/store/6h2vylx0skjq3paqgzk986wx5yb9jcp8-os-test-dns-secondary-transfer-errors.json.drv`;
+    `/nix/store/3xd2r5wkpppi8k21iv7yz26fyma04lis-os-test-dns-secondary-transfer-errors.json.drv`;
   - Nix parse/format, targeted RuboCop, Ruby syntax and repository
     `git diff --check` pass;
   - WebUI stylesheet regression: 1 test, 2 assertions, 0 failures;
@@ -226,7 +226,7 @@ not merged.
   clean. No obsolete queued/in-progress GitHub Actions run remained to cancel;
   current-head CI was left running.
 - Final exact pins use the complete vpsAdmin object ID
-  `37e6447d453f2621156da5bb80674bd0f59be4ba` in configuration and every KB
+  `ca78e6c08e853ef5803cc884645c395c21a3fb9c` in configuration and every KB
   contract declaration. An earlier local `confctl` attempt used an incorrect
   expansion of the abbreviated hash; GitHub rejected it before any lock or
   commit was changed.
@@ -345,6 +345,14 @@ not merged.
   stdin and BIND validation through a private `named-checkconf -z` config,
   removes AF_UNIX, bounds cancellation state and adds real subprocess plus
   causal NixOS isolation/cancellation checks.
+- The review follow-up found one remaining prelaunch lifecycle leak: a
+  `ThreadError`, or path removal before `runner.run`, could retain a prepared
+  runner registration and consume a concurrency slot until restart. The
+  coordinator now explicitly releases prepared registrations from both paths,
+  retries local thread-allocation failures, and covers both races. The focused
+  suite passes 44 examples and targeted RuboCop reports no offenses; all
+  repository hooks passed before the correction was folded into the isolation
+  commit.
 - The selected primary address intentionally remains visible as the
   `IPAddressAllow` systemd property because this is how the root coordinator
   installs the destination filter. No zone name, source address, query or TSIG
@@ -355,9 +363,9 @@ not merged.
   schema or durable AXFR-latch format. Transient units are tied to
   `nodectld.service` and keep no durable worker state.
 - Implementation is committed and pushed at vpsAdmin
-  `37e6447d453f2621156da5bb80674bd0f59be4ba`, configuration
-  `9acaf5ec95dcf33ff9ef86fa0f72575184fc3fa5` and KB contracts
-  `6cbc391de4b0c60aff591e6ae5b017a4234f589f`.
+  `ca78e6c08e853ef5803cc884645c395c21a3fb9c`, configuration
+  `8c9b638f11a25618556bc9846ff8e872325ace1a` and KB contracts
+  `ac45182b4874339457c50c566abc43cd6200d295`.
 
 ## Development cluster review deployment
 
@@ -368,7 +376,7 @@ not merged.
 - The deployed API and WebUI report the exact vpsAdmin revision
   `f54494a084382ecb20e414c35800655f33ee5fc4` with a clean source tree.
   This is now the previous review build; the cluster will be reset and
-  redeployed from `37e6447d453f2621156da5bb80674bd0f59be4ba` after the
+  redeployed from `ca78e6c08e853ef5803cc884645c395c21a3fb9c` after the
   fresh-context review and long validation.
 - The disposable cluster needed a top-level harness compatibility correction:
   revisions without the optional notifications module cannot define the
