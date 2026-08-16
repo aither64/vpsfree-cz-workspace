@@ -286,6 +286,17 @@ informal singular forms (`tykání`), for example `můžeš`, `potřebuješ`,
 `nainstaluj`, and `použij`. Do not use formal `vy` or plural imperatives as a
 polite form; use plural only when genuinely addressing multiple people.
 
+For all user-facing prose, use the workspace skill in
+`skills/vpsfree-user-facing-writing/SKILL.md`. This applies to KB articles,
+vpsAdmin documentation and interface copy, user-visible errors and help, mail
+templates, website copy, and member-facing release or operational messages.
+The agent that owns the task context must apply the skill directly after the
+technical content is settled and before committing. Do not delegate the main
+rewrite to a context-poor subagent; a fresh agent may review the finished text.
+Human-readable comments in bilingual scripts and configuration examples must
+use the language of the surrounding page while commands and machine-significant
+content remain equivalent.
+
 Write KB articles as documentation of the current supported state. Do not
 mention obsolete distributions, former defaults, superseded commands, or
 historical workarounds unless readers of a still-supported installation need
