@@ -332,11 +332,16 @@ releases ownership while retaining the data. It refuses a pending review
 bundle unless `--discard-pending` is explicit.
 
 Stage complete pages at their real page IDs so links and language mappings are
-reviewed exactly as they will appear in production. Prepare a checksummed
-release manifest, stage it with `bin/kb-release stage --manifest FILE --yes`,
-and verify it with `bin/kb-release verify --manifest FILE`. Do not use the
-production `drafts:` namespace for routine review. The release tool verifies
-that production still matches the recorded source revision and content before
+reviewed exactly as they will appear in production. For every new release,
+prepare one bilingual `release-changes.yml` with an informative localized
+summary for each page write or deletion, then generate checksummed schema-4
+manifests with `bin/kb-contract-manifest --changes FILE`. Stage them with
+`bin/kb-release stage --manifest FILE --yes` and verify them with
+`bin/kb-release verify --manifest FILE`. The verification output must expose
+each exact summary and its clickable staging revision-history URL so the user
+can review revision metadata before publication. Do not use the production
+`drafts:` namespace for routine review. The release tool verifies that
+production still matches the recorded source revision and content before
 staging or promotion.
 
 Production writes always require direct user approval. After approval, promote
@@ -355,6 +360,12 @@ infinitive instructions. For example, use `Aktualizace KVM, doplnění sítě a
 vysvětlení správy článků v repozitáři`, not `Aktualizovat KVM, doplnit síť a
 vysvětlit správu článků v repozitáři`. Do not rewrite existing DokuWiki
 revision summaries merely to adopt this convention.
+
+Page deletions belong in the same guarded schema-4 release manifest as page
+writes. Stage and review their localized summaries and revision histories, then
+promote the exact manifest after approval. Do not delete release pages with
+separate `kb-page` calls. New `kb-cleanup` manifests must use schema 2 and give
+every page deletion its own summary; media deletions do not have summaries.
 
 Common KB tool examples:
 
