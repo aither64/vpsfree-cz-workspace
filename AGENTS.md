@@ -311,6 +311,13 @@ Use `bin/kb-contract-fetch`, `bin/kb-contract-build`, and
 capture generation and the documentation contract in the independent capture
 repository.
 
+Do not merge a `vpsfree-kb-contracts` feature branch merely to make managed-page
+links work in staging. Managed release manifests pin the committed and pushed
+feature revision, and staging resolves `<kb-managed>` links at that exact
+commit. Before production promotion, integrate the contract changes into
+`master`; the release tool verifies the recorded page and test files against
+remote `master` before it writes production pages.
+
 - `kb.vpsfree.cz`:
   `/home/aither/.codex/codex-kb-vpsfree-cz-aither-key`
 - `kb.vpsfree.org`:
