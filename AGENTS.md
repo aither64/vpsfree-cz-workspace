@@ -345,7 +345,7 @@ bundle unless `--discard-pending` is explicit.
 Stage complete pages at their real page IDs so links and language mappings are
 reviewed exactly as they will appear in production. For every new release,
 prepare one bilingual `release-changes.yml` with an informative localized
-summary for each page write or deletion, then generate checksummed schema-4
+summary for each page write or deletion, then generate checksummed schema-5
 manifests with `bin/kb-contract-manifest --changes FILE`. Stage them with
 `bin/kb-release stage --manifest FILE --yes` and verify them with
 `bin/kb-release verify --manifest FILE`. The verification output must expose
@@ -369,12 +369,12 @@ such as "Publish reviewed KB release" for new edits. Write summaries for
 Because each summary already belongs to one page, do not repeat that page's
 title or subject. Describe only the resulting content changes.
 Write Czech summaries as noun phrases that name the resulting changes, not as
-infinitive instructions. For example, use `Aktualizace KVM, doplnění sítě a
-vysvětlení správy článků v repozitáři`, not `Aktualizovat KVM, doplnit síť a
-vysvětlit správu článků v repozitáři`. Do not rewrite existing DokuWiki
+infinitive instructions. For example, use `Doplnění síťové konfigurace a
+vysvětlení správy obsahu v repozitáři`, not `Doplnit síťovou konfiguraci a
+vysvětlit správu obsahu v repozitáři`. Do not rewrite existing DokuWiki
 revision summaries merely to adopt this convention.
 
-Page deletions belong in the same guarded schema-4 release manifest as page
+Page deletions belong in the same guarded schema-5 release manifest as page
 writes. Stage and review their localized summaries and revision histories, then
 promote the exact manifest after approval. Do not delete release pages with
 separate `kb-page` calls. New `kb-cleanup` manifests must use schema 2 and give
