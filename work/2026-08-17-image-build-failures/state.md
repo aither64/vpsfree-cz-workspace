@@ -135,6 +135,9 @@
     and rerun after recovery.
   - The incident remained active through 2026-08-17 14:20 UTC. No image or CI
     test command ran in any failed attempt.
+  - After GitHub marked Actions operational, the user requested new retries.
+    Image workflow attempt 4 and CI attempt 3 both passed checkout and began
+    their Nix build steps at approximately 2026-08-17 19:18 UTC.
 
 ## Open questions
 
