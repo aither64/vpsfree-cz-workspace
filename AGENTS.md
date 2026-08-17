@@ -281,13 +281,17 @@ DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
 `kb-cs.aitherdev.int.vpsfree.cz` and `kb-en.aitherdev.int.vpsfree.cz`. API
 access to production uses one token per wiki:
 
-When authoring or translating Czech KB articles, address the reader using
+When authoring or translating Czech KB pages, address the reader using
 informal singular forms (`tykání`), for example `můžeš`, `potřebuješ`,
 `nainstaluj`, and `použij`. Do not use formal `vy` or plural imperatives as a
 polite form; use plural only when genuinely addressing multiple people.
 
+The invisible DokuWiki `<page>` tag connects Czech and English translations.
+Use the same tag value in every language variant, and always derive it from the
+English KB page ID. The real DokuWiki page IDs remain language-specific.
+
 For all user-facing prose, use the workspace skill in
-`skills/vpsfree-user-facing-writing/SKILL.md`. This applies to KB articles,
+`skills/vpsfree-user-facing-writing/SKILL.md`. This applies to KB pages,
 vpsAdmin documentation and interface copy, user-visible errors and help, mail
 templates, website copy, and member-facing release or operational messages.
 The agent that owns the task context must apply the skill directly after the
@@ -297,11 +301,11 @@ Human-readable comments in bilingual scripts and configuration examples must
 use the language of the surrounding page while commands and machine-significant
 content remain equivalent.
 
-Write KB articles as documentation of the current supported state. Do not
+Write KB pages as documentation of the current supported state. Do not
 mention obsolete distributions, former defaults, superseded commands, or
 historical workarounds unless readers of a still-supported installation need
 that history to migrate or recover. Record removal rationale in commit
-messages, DokuWiki revision summaries, or initiative notes instead of article
+messages, DokuWiki revision summaries, or initiative notes instead of page
 prose.
 
 For vpsAdmin changes that can affect visible WebUI documentation, follow the
@@ -443,7 +447,7 @@ These repositories are in scope for this workspace:
 - `security-advisories`: evidence-backed vpsFree.cz platform security
   assessments, including vpsAdmin Node evidence collection, advisory
   evaluation, and preparation of unpublished vpsAdmin drafts.
-- `vpsfree-kb-contracts`: independent, reproducible Czech/English article,
+- `vpsfree-kb-contracts`: independent, reproducible Czech/English page,
   runtime-test, screenshot, and WebUI documentation contracts for an explicit
   subset of the vpsFree.cz knowledge bases. Its canonical
   `docs/webui-change-workflow.md` must be followed when a vpsAdmin feature can
