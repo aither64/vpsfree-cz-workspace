@@ -632,5 +632,13 @@ not merged.
   manifest hashes did not change, so the release manifests were not rewritten.
 - The existing development-cluster review fixture still runs the previous
   exact application head. This follow-up has not redeployed it.
-- The mandatory standalone review and long real-DNS/configuration validation
-  for the five-probe default are pending.
+- The mandatory fresh standalone review found no Blocking, Important or
+  Advisory issues and authorized the long real-DNS scenario and exact-pinned
+  configuration builds. It independently reran the scheduler spec with 14
+  examples and no failures.
+- Residual capacity note: the integration matrix has only two paths per DNS
+  node and does not saturate five workers. Five simultaneous production AXFR
+  validations can reserve up to 3.75 GiB of cgroup memory, approximately
+  2.5 GiB of transfer/temporary storage and 80 tasks. Production resource
+  pressure should be monitored; transfer-count quotas remain deferred.
+- Long validation for the five-probe default is authorized and pending.
