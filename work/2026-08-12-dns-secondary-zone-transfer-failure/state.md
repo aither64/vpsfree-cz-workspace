@@ -641,4 +641,18 @@ not merged.
   validations can reserve up to 3.75 GiB of cgroup memory, approximately
   2.5 GiB of transfer/temporary storage and 80 tasks. Production resource
   pressure should be monitored; transfer-count quotas remain deferred.
-- Long validation for the five-probe default is authorized and pending.
+- Long validation for the five-probe default is complete:
+  - exact real-DNS derivation:
+    `/nix/store/7lsich858nj2s36vqrf4ks9vqd6f5ifn-os-test-dns-secondary-transfer-errors.json`;
+  - all four examples and the complete scenario passed in 970.16 seconds;
+    matrix 136.42 seconds, invalid-zone/AXFR recovery 17.85 seconds,
+    crashed-primary continuity 84.23 seconds and runtime reconciliation
+    163.68 seconds;
+  - exact-pinned configuration builds passed for
+    `cz.vpsfree/vpsadmin/int.api1` (generation
+    `2026-08-17--12-07-57`), `cz.vpsfree/vpsadmin/int.webui1`
+    (`2026-08-17--12-09-32`) and `cz.vpsfree/containers/ns3`
+    (`2026-08-17--12-10-45`).
+- Current-head GitHub checks are green for libnodectld, RuboCop, API
+  migrations/specs, WebUI PHPUnit, i18n and the KB contract check. Aggregate
+  vpsAdmin CI and the KB managed-article runtime remain in progress.
