@@ -4,7 +4,8 @@
 
 - workspace coordination repository
   - branch: shared `master`
-  - base before this follow-up: `ca6ebc3b49ec9ab562de8672b77b44beeef8f10d`
+  - base before the concurrency follow-up:
+    `d70e1a093b4848351f701ea44407487159a60dab`
   - dev-cluster harness commit:
     `1f3fb2d` (`devcluster: import managed notification templates conditionally`)
   - plan/state, two changed public KB candidate pages and final release
@@ -14,15 +15,15 @@
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsadmin`
-  - final rebase base: `c28b0b447` (`origin/master`)
-  - head: `39e2753d8e4decc3a0961738741bdfaba4c44b65`
+  - final rebase base: `8aa4ad30a` (`origin/master`)
+  - head: `461a3c4bae767b2e3c6dcd91d9d501f76f410841`
   - eight focused commits; clean and pushed after the unmerged history rewrite.
 - `vpsfree-cz-configuration`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-cz-configuration`
-  - base: `a8d8b5fe84c8a9990f5ff245361819e4132e8826`
-  - head: `2945e10fd33ef960c75dd9c091ee9fd7eff0a396`
+  - base: `f19c6a70d720383ccdac083731756d5ff1101d64`
+  - head: `00edfbf6ddc76392822052229ccf2ecf1e832541`
   - monitor policy plus generated exact vpsAdmin pin; clean and pushed.
 - `vpsfree-mail-templates`
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
@@ -35,8 +36,8 @@
   - branch: `2026-08-12-dns-secondary-zone-transfer-failure`
   - worktree:
     `worktrees/2026-08-12-dns-secondary-zone-transfer-failure/vpsfree-kb-contracts`
-  - base: `5bf06beccdd29c333f04bb044a7610cee5ccda3d`
-  - head: `0a70573412cc413aec7047befca208d242da787d`
+  - base: `4189c7661c8dcefb2cb9f9610fe85515e87c9e6f`
+  - head: `342e680c3f7790597e395f59fdc4677ebab0fc62`
   - exact final vpsAdmin pin and discovery inventory; clean and pushed.
 
 The original `Transfer status: up to date` parser correction was already
@@ -73,7 +74,7 @@ not merged.
   transient unit and discards any obsolete result before publication. Existing
   API identity/generation/epoch admission remains defence in depth.
 - Probe defaults are hourly healthy checks, five-minute access/network failure
-  retries, and hourly invalid-zone/protocol/stale retries. Nodes run two probes
+  retries, and hourly invalid-zone/protocol/stale retries. Nodes run five probes
   concurrently, with a 30-second cheap timeout, ten-minute AXFR timeout and a
   256 MiB AXFR output cap. Secrets and transferred contents are not published.
 - Zone configuration and every event carry stable server-zone/transfer IDs and
@@ -600,3 +601,36 @@ not merged.
   not recoverable.
 - Event admission compares DNS-node journal time with API database epochs;
   synchronized clocks/NTP are an operational requirement.
+
+## 2026-08-17 probe-concurrency follow-up
+
+- The user deferred transfer-count quotas for a later initiative and requested
+  that the node-wide default probe concurrency increase from two to five.
+- The vpsAdmin feature series was rebased onto current `origin/master` and the
+  new value was folded into the original probe and DNS integration-test
+  commits. The default, scheduler fixtures and real-DNS scenario all use five;
+  explicit node configuration can still override it.
+- Compatibility is unchanged: there is no schema, API, Rabbit envelope or
+  persisted-state change. During a rolling deployment, old nodes run two
+  probes and updated nodes run five until convergence. Rollback restores the
+  old default without data work.
+- Focused verification before review:
+  - scheduler spec: 14 examples, 0 failures;
+  - RuboCop: 4 files, no offenses;
+  - Nix parse/format, CI selection (16 runs/55 assertions), test inventory and
+    range `git diff --check`: green;
+  - complete vpsAdmin pre-commit and commit-message hooks: green from the root
+    Nix shell. The ambient-shell attempt was rejected for missing declared
+    tools and made no commit.
+- `vpsfree-cz-configuration` was rebased onto current `origin/master`. It has
+  the monitor-policy commit plus one generated `confctl` commit pinning exact
+  vpsAdmin `461a3c4bae767b2e3c6dcd91d9d501f76f410841`.
+- All five KB-contract revision declarations pin that same exact vpsAdmin
+  commit. `nix develop -c bin/check` passes: 46 controls, 38 paths, 35 capture
+  concepts, 98 annotation bindings, 60 inventory concepts/120 variants/120
+  PNGs and 47 unit runs with no failures. Public candidate content and release
+  manifest hashes did not change, so the release manifests were not rewritten.
+- The existing development-cluster review fixture still runs the previous
+  exact application head. This follow-up has not redeployed it.
+- The mandatory standalone review and long real-DNS/configuration validation
+  for the five-probe default are pending.

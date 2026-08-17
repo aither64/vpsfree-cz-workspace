@@ -79,9 +79,10 @@ observation as the M:N coverage mechanism with bounded active probes.
   recovery evidence. Validate downloaded data with a private
   `named-checkconf -z` configuration before reporting success. Never publish
   zone contents or TSIG secrets.
-- Default full-transfer safeguards are two concurrent AXFRs, 256 MiB per
-  response and ten minutes. A local safeguard hit is inconclusive/admin-only,
-  not evidence that the user's server is broken.
+- Default safeguards allow five concurrent probes per DNS node, including at
+  most five concurrent AXFR validations. Each response is capped at 256 MiB
+  and ten minutes. A local safeguard hit is inconclusive/admin-only, not
+  evidence that the user's server is broken.
 - A cheap IXFR success clears access/network failures. Invalid-zone/content or
   protocol failures clear only after BIND accepts a real transfer or a complete
   probe AXFR validates successfully.
