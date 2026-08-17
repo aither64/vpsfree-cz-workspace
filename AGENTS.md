@@ -366,6 +366,8 @@ Every production page edit must have an informative, single-line change
 summary that describes the actual content change. Do not use generic summaries
 such as "Publish reviewed KB release" for new edits. Write summaries for
 `kb.vpsfree.cz` in Czech and summaries for `kb.vpsfree.org` in English.
+Because each summary already belongs to one page, do not repeat that page's
+title or subject. Describe only the resulting content changes.
 Write Czech summaries as noun phrases that name the resulting changes, not as
 infinitive instructions. For example, use `Aktualizace KVM, doplnění sítě a
 vysvětlení správy článků v repozitáři`, not `Aktualizovat KVM, doplnit síť a
