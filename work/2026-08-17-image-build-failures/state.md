@@ -9,10 +9,12 @@
 
 ## Status
 
-- All sixteen implementation commits, quick verification, and mandatory review
-  are complete. The reviewed feature branch is pushed. RuboCop passed; the
-  expensive integration workflows are externally blocked before checkout by
-  an active GitHub Actions incident.
+- The original sixteen implementation commits are reviewed and pushed.
+  RuboCop and the main CI suite passed. Image workflow attempt 4 built and
+  tested 48 of 51 images successfully. Two Slackware compatibility fixes and
+  Guix failure-log diagnostics are committed, locally verified, and passed the
+  follow-up mandatory review. The branch is ready for the targeted image
+  workflow push.
 
 ## Commands run
 
@@ -26,6 +28,11 @@
 - Changed-image detection against `origin/staging...HEAD`
 - Metadata-only exact package resolution against Slackware 15.0 and current
 - Synthetic image runner failure propagation using an isolated temporary copy
+- `gh run view 32037034898 ...`
+- `gh run download 32037034898 ...`
+- Targeted analysis of the Guix and Slackware failure artifacts
+- `nix develop --command overcommit --run`
+- ShellCheck 0.11 through `nix shell nixpkgs#shellcheck`
 
 ## Results
 
@@ -57,7 +64,28 @@
   abstract templates and Fedora 42 are excluded.
 - The latest fetched `origin/staging` remains at the recorded base and is an
   ancestor of the feature branch.
-- vpsAdminOS commit series from base `563d08fb9` to head `37212611d`:
+- Main CI run `32037034981` attempt 3 passed its system build, core test suite,
+  AMD livepatch, and Intel livepatch jobs. RuboCop run `32037034986` passed.
+- Image run `32037034898` attempt 4 passed 48 of all 51 selected concrete
+  images. Fedora 43, Fedora 44, Fedora Rawhide, and both Gentoo musl variants
+  passed. Only Guix, Slackware 15.0, and Slackware current failed.
+- Both Slackware jobs completed the hardened download, checksum, package
+  resolution, and deterministic install stages. The freshly installed
+  `slackpkg` was already current, so its first upgrade returned documented
+  no-op status 20. The new configuration failure propagation exposed this
+  benign status. Upgrade commands now accept only statuses 0 and 20; every
+  other status and all update/configuration commands remain fail-fast.
+- Guix reached the canonical repository, authenticated channel commit
+  `53d0ba4`, and failed identically on all three attempts while Debian Guix
+  1.4.0-9 compiled `module-import-compiled.drv`. The runner had ample memory
+  and disk, with no OOM, ENOSPC, or network evidence. The referenced Guix
+  derivation log was destroyed with the builder before artifact collection.
+  Pull output is now captured privately and referenced plain/compressed build
+  logs are emitted before retries and final exit so the next run can expose
+  the exact Guile exception without changing retry or success behavior.
+- Follow-up change detection from the pushed head selects exactly
+  `guix,slackware-15.0,slackware-current`.
+- vpsAdminOS commit series from base `563d08fb9` to head `34e44b7b9`:
   - `219d09ae6` github: fix concrete image change detection
   - `4b9866571` github: detect image builder changes
   - `1cabaee99` image-scripts: update Fedora builder to 44
@@ -74,6 +102,8 @@
   - `18e626751` image-scripts/guix: retry channel pulls
   - `fc799d081` image-scripts/gentoo: depclean temporary Rust toolchain
   - `37212611d` github: test shared image runtime changes
+  - `f560a84` image-scripts/slackware: accept empty upgrades
+  - `34e44b7b9` image-scripts/guix: emit failed pull build logs
 
 ## Mandatory review
 
@@ -107,6 +137,11 @@
 - Residual integration coverage is intentionally delegated to GitHub Actions:
   all 51 selected image builds, including Guix pull, Gentoo depclean and size,
   and Slackware bootstrap and configuration.
+- Follow-up review of commits `f560a84d1` and `34e44b7b9`: **PASS** with no
+  Blocking, Important, or Advisory findings. The reviewer confirmed the
+  Slackpkg status handling is limited to upgrade operations, Guix preserves
+  pull/retry outcomes, and keeping both focused follow-ups separate improves
+  reviewability.
 
 ## GitHub Actions
 
@@ -138,12 +173,20 @@
   - After GitHub marked Actions operational, the user requested new retries.
     Image workflow attempt 4 and CI attempt 3 both passed checkout and began
     their Nix build steps at approximately 2026-08-17 19:18 UTC.
+  - CI attempt 3 and RuboCop completed successfully.
+  - Image workflow attempt 4 completed after about 3 hours 47 minutes. It
+    passed 48 of 51 images; artifact `os-test-logs-32037034898` was downloaded
+    and the three failures were investigated before preparing fixes.
+  - The next push changes only Guix and the two concrete Slackware images, so
+    change detection should run those three image tests rather than all 51.
 
 ## Open questions
 
-- None. The current musl stage3 archives still contain 1,508,934,142 bytes
-  under `/opt/rust-bin-1.95.0`; the implemented temporary, dependency-checked
-  Portage depclean avoids delaying the full workflow.
+- The current musl stage3 archives still contain 1,508,934,142 bytes under
+  `/opt/rust-bin-1.95.0`; the implemented temporary, dependency-checked Portage
+  depclean passed both musl image jobs.
+- The exact Guix compiler exception remains unknown until the targeted run
+  emits the derivation log from inside the builder.
 
 ## Cleanup
 
