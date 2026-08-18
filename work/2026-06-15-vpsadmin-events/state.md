@@ -19364,3 +19364,12 @@ reported no remaining blocking, important, or advisory findings. VM lifecycle
 behavior was not exercised because starting, updating, or resetting the stopped
 cluster is explicitly outside this isolation task. Publication and final remote
 verification remain pending.
+
+Publication used SSH remotes after a final fetch confirmed that neither target
+had advanced. Workspace `master` fast-forwarded from `60c9d4a` to `dbb21df`.
+The existing remote event branch was lease-protected force-updated from
+`c40d7f6` to reviewed head `8813e0b`; this replaces its stale pre-default-rebase
+history with current `master`, the isolated event cluster, and its validation
+records. The workspace repository defines no GitHub Actions workflows, so no CI
+run or superseded workflow cancellation is expected. This final publication
+record follows as a normal feature-branch fast-forward.
