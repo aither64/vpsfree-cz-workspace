@@ -656,3 +656,13 @@ not merged.
 - Current-head GitHub checks are green for libnodectld, RuboCop, API
   migrations/specs, WebUI PHPUnit, i18n and the KB contract check. Aggregate
   vpsAdmin CI and the KB managed-article runtime remain in progress.
+
+## 2026-08-18 development-cluster release
+
+- Stopped development cluster
+  `2026-08-12-dns-secondary-zone-transfer-failure`. Graceful shutdown did not
+  finish within the runner's 120-second window, so `devcluster stop` killed the
+  runner after the timeout.
+- Verified the runner is stopped and the `result-config` GC root is removed.
+  The persisted cluster state remains available for an explicit later start or
+  reset; the WebUI review endpoint is no longer running.
