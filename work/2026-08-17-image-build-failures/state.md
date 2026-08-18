@@ -7,19 +7,82 @@
   - worktree: `worktrees/2026-08-17-image-build-failures/vpsadminos`
   - base: `origin/staging` at `563d08fb951b624078c3f1bf4e5b817c641be0be`
   - current integration target: `origin/staging` at
-    `7f50e2d43b1ed4703e1d717c57fc1a6db0ddd881`
+    `b6b57f4866c0cbc74210d8464390a824467a24c1`
+  - integration branch: `2026-08-17-image-build-failures-integrate`
+  - integration worktree:
+    removed after the fast-forward integration
+  - integration head: `b6b57f4866c0cbc74210d8464390a824467a24c1`
+  - follow-up branch: `2026-08-17-image-build-failures-followup`
+  - follow-up worktree:
+    `worktrees/2026-08-17-image-build-failures/vpsadminos-followup`
+  - follow-up head: `7f5a0a05b5bc9c4381a8f5fd380aa5bb473d385e`
+  - Guix draft worktree:
+    removed after its commits were copied to the follow-up branch
 
 ## Status
 
-- The 24-commit implementation is reviewed and pushed at `b0eeed852`. Final
+- The 18 verified non-Guix commits passed a fresh mandatory review and were
+  fast-forwarded to `staging` at `b6b57f486` with normal commit messages and
+  normal GitHub triggers. Runs `32125885812` (images), `32125885934` (CI), and
+  `32125885869` (RuboCop) started from the integrated head. A clean follow-up
+  branch now contains only unresolved work.
+
+- The Arch failure has an exact reproduced root cause in the unchanged Ruby
+  exporter. `Zlib::GzipWriter#close` runs while the `zfs send` child exits;
+  Ruby's `SIGCHLD` can interrupt zlib 3.2.3 during `Z_FINISH`, whose interrupted
+  retry condition incorrectly requires input to remain. The call can therefore
+  return success after writing the CRC/size footer but before writing the final
+  deflate block. The planned focused fix moves compression to an external
+  `gzip` pipeline, checks both child statuses, and adds a producer-exit/signal
+  regression. The final focused fix is committed at `1c8e5affd`; quick
+  verification passes and its standalone mandatory review returned PASS with
+  no findings.
+
+- The final Guix rewrite is committed at `4ffd22c8b` and `7f5a0a05b`. It
+  replaces Debian Guix 1.4 with `guix:latest`, resolves the newest authenticated
+  default-branch revision with Guix CI pull substitutes at build time, performs
+  one `guix time-machine ... system init`, and separately module-qualifies the
+  delayed service binding. There is no maintained repository revision pin.
+  Fast checks and hooks pass; the detector selects only Guix. A fresh final
+  mandatory review returned PASS with no Blocking, Important, or Advisory
+  findings. The continuation branch was updated with force-with-lease.
+
+- The full follow-up review found one Important exporter lifecycle issue:
+  Open3 starts `zfs send` before attempting the next pipeline process, so a
+  missing gzip could strand the producer until garbage collection. The exporter
+  now resolves gzip before starting the pipeline, and a regression proves the
+  producer never starts when resolution fails. The fix is folded into the
+  exporter commit; its focused reviewer follow-up passed.
+
+- The focused follow-up review confirmed the lifecycle fix and returned PASS
+  with no findings. The clean branch was pushed normally at `4e3a2d7da`.
+  GitHub runs `32129561366` (Guix image), `32129561380` (CI), `32129561419`
+  (RSpec), and `32129561518` (RuboCop) started without skip directives.
+  These runs are on the superseded pinned-Guix head. After the final
+  force-with-lease update, cancel only runs that are still queued or running on
+  that old SHA.
+
+- An independent supported-consumer audit found no missing runtime compressor.
+  osctld declares `pkgs.gzip` directly. osctl-image and scheduled repository
+  builds execute with the vpsAdminOS system path, where GNU gzip is a mandatory
+  core package. Fetched vpsAdmin `origin/master` at `d8ce525fa`; it has no
+  `Exporter::Zfs` or `ct_export` caller, so it needs no change. The standalone
+  libosctl gem now records GNU gzip as a conditional
+  requirement for gzip-compressed ZFS exports. The legacy OpenVZ converter is
+  intentionally out of scope by user decision.
+
+- The original 24-commit implementation is reviewed and pushed at
+  `b0eeed852`. Final
   image run `32094157385` completed all 51 tests: 49 passed, Arch failed after
   a successful build because its exported gzip/ZFS stream was truncated, and
   Guix failed deterministically after both pulls succeeded because current
-  Guix could not resolve the delayed `%ct-services` binding. Arch needs no
-  image-script change. The integration plan now separates the 18 verified
-  non-Guix commits from a rewritten Guix-only feature branch. The Guix branch
-  will self-host from the last published Guix image and use a pinned
-  `guix time-machine` revision; no standing recovery builder will be kept.
+  Guix could not resolve the delayed `%ct-services` binding. The later Arch
+  investigation identified and reproduced Ruby zlib's interrupted gzip
+  finalization as the exact cause. The integration plan separates the 18
+  verified commits from a clean follow-up branch for the exporter and Guix.
+  Guix will self-host from the last published Guix image and dynamically
+  select a CI-substitutable authenticated default-branch revision; no standing
+  recovery builder will be kept.
 
 - Historical implementation progress follows. The original sixteen
   implementation commits are reviewed and pushed.
@@ -61,6 +124,25 @@
 - Guix pull/system-init boundary and upstream module-loader history analysis
 - Public vpsAdminOS image index inspection for the latest Guix artifact
 - `git fetch origin staging`
+- Clean cherry-pick of the 18 non-Guix commits onto `7f50e2d43`
+- Integration-tree Bash/Ruby syntax and common-helper regression
+- Integration-tree 51-image detector matrix and `git diff --check`
+- Integration-tree Nix image-repository evaluation
+- Integration-tree `nix develop --command overcommit --run`
+- Fast-forward push of integration head `b6b57f486` to `origin/staging`
+- Removal of the temporary integration worktree and creation of the clean
+  follow-up branch/worktree from integrated `origin/staging`
+- Focused Ruby zlib producer-exit reproduction and signal stress test
+- Focused libosctl exporter spec and targeted RuboCop
+- Built the libosctl gem and inspected its GNU gzip requirement metadata
+- Independent supported-consumer gzip PATH audit across current default refs
+- Full follow-up-tree `nix develop --command overcommit --run`
+- Force-with-lease update of the unmerged continuation branch to `7f5a0a05b`
+- Cancellation of superseded old-head image and CI workflows
+- Guix builder/image configuration resolution and Scheme parsing
+- Mocked Guix time-machine success, status-42 failure, and build-log extraction
+- Final follow-up detector run against integrated `origin/staging`
+- Normal push of the new follow-up branch at `4e3a2d7da`
 - Targeted analysis of the Guix and Slackware failure artifacts
 - `nix develop --command overcommit --run`
 - ShellCheck 0.11 through `nix shell nixpkgs#shellcheck`
@@ -206,6 +288,58 @@
 - The user explicitly chose not to maintain a NixOS or other recovery builder.
   The last known-good dated Guix image remains available and can be selected
   manually for exceptional recovery.
+- The user rejected a `skip-checks: true` integration trailer. All commits keep
+  ordinary messages and the `staging` push will use normal GitHub triggers,
+  even though shared runtime and detector changes schedule all 51 images.
+- The user also rejected truncated-stream classification as an Arch root-cause
+  explanation and requested integration first. The verified slice was merged
+  before the exporter change. The subsequent investigation reproduced the
+  exact Ruby zlib finalization race; no retry-only or Arch-specific workaround
+  is planned.
+- A fresh integration worktree was created from current `origin/staging`. The
+  18 non-Guix commits cherry-picked cleanly in their original order. Excluding
+  the six omitted Guix commits and the staging `flake.lock` update, its tree is
+  byte-identical to reviewed feature head `b0eeed852`. Shell and Ruby syntax,
+  the permanent common-helper regression, the 51-image detector matrix,
+  `git diff --check`, the Nix image-repository evaluation, and full Overcommit
+  all pass. A fresh standalone mandatory review returned PASS with no blocking,
+  important, or advisory findings. The series was fast-forwarded to `staging`
+  at `b6b57f486`, and the temporary integration worktree was removed.
+- The failing gzip member retains the correct CRC and ISIZE footer for the
+  complete input but lacks the final deflate block. The repository's exact
+  `IO.popen`/32 KiB `GzipWriter` shape reproduced silent corruption after as
+  few as two iterations. Without an exiting child it passed 1,000 iterations;
+  reaping the producer before finalization also passed 1,000. An external gzip
+  pipeline passed 1,000 producer-exit iterations and 50 signal-bombarded
+  iterations. Ruby zlib 3.2.3 commit `c975060` retries interrupted work only
+  while both input and output remain, although `Z_FINISH` must continue with
+  zero input until `Z_STREAM_END`.
+- Rewritten commit `1c8e5affd` replaces Ruby gzip finalization with an external
+  pipeline, copies compressed output into the unchanged tar member, and
+  reports every failed or signaled stage. Its spec exercises `zfs send` status
+  23, `gzip` status 29, and six 1 MiB streams while repeatedly delivering real
+  `SIGCHLD`; every decompressed byte is checked. A harness of the removed
+  implementation corrupted 23 of 25 streams under the same signal loop, while
+  the new example passed ten process-level repetitions covering 60 streams.
+- Gzip executable resolution now happens before Open3 starts the producer. The
+  missing-compressor regression raises `ENOENT` and verifies that the fake
+  `zfs send` start marker is never created. The exporter spec now has twelve
+  examples and passes on the rewritten head; full Overcommit passes again.
+- The mandatory reviewer reproduced the original partial-pipeline lifecycle
+  issue, then verified the preflight fix. Its follow-up verdict is PASS with no
+  blocking, important, or advisory findings.
+- The focused exporter mandatory review returned PASS with no blocking,
+  important, or advisory findings. It independently verified the spec and the
+  declarative vpsAdminOS gzip dependency. A later exhaustive audit confirmed
+  every supported caller has gzip in its declared runtime environment. The
+  user excluded the retired OpenVZ converter from further work.
+- Rewritten commits `4ffd22c8b` and `7f5a0a05b` implement the Guix self-host
+  and loader compatibility changes. `channels.scm` follows the authenticated
+  default channel without a revision pin. A separate resolver chooses the
+  newest revision with Guix CI pull substitutes and the build passes that
+  validated commit to one time-machine invocation. Bash syntax, focused
+  ShellCheck, Guile parsing, published-runtime resolution, mocked success and
+  diagnostic failures, `git diff --check`, and full Overcommit pass.
 - The edited workflow uses `actions/checkout@v7`; GitHub's official latest
   release is `v7.0.1`.
 - vpsAdminOS commit series from base `563d08fb9` to head `b0eeed852`:
@@ -305,6 +439,12 @@
   repository evaluation, syntax/diff checks, and Overcommit. The required
   residual coverage is the intentionally deferred 51-image workflow, including
   real `unshare` permission in every builder and the final Guix rolling pull.
+- Final fresh follow-up review through `7f5a0a05b`: **PASS** with no Blocking,
+  Important, or Advisory findings. It independently reran the exporter spec,
+  confirmed executable availability and gem metadata, checked the dynamic Guix
+  resolver and authentication semantics, and repeated syntax, Scheme, diff,
+  and hook checks. Residual integration coverage is the targeted Guix image
+  build, import, and runtime test.
 
 ## GitHub Actions
 
@@ -359,11 +499,14 @@
   - Run `32094157385` completed after 6 hours 28 minutes. Its artifact was
     downloaded before classifying Arch as a truncated export and Guix as a
     post-pull module-scope incompatibility.
-  - To avoid repeating this verified matrix on the `staging` integration push,
-    the plan uses GitHub's documented `skip-checks: true` commit trailer after
-    hooks and a mandatory review of the exact rebased tree. This exception is
-    limited to the already exercised non-Guix slice. The rewritten Guix-only
-    branch will run its targeted image workflow normally.
+  - The `staging` integration push will use ordinary commit messages and
+    normal workflow triggers. The detector will therefore schedule all 51
+    images again. No commit-message skip directive will be used.
+  - Final continuation head `7f5a0a05b` started runs `32132207935` (changed
+    images), `32132207974` (CI), `32132207952` (RSpec), and `32132208000`
+    (RuboCop). Superseded old-head runs `32129561366` and `32129561380` were
+    cancelled after the force-with-lease update; completed old-head RSpec and
+    RuboCop runs were left intact.
 
 ## Decisions and remaining work
 
@@ -373,10 +516,11 @@
 - Integrate the reviewed non-Guix slice on current `origin/staging`, after quick
   verification and a fresh mandatory review, without repeating the 51-image
   workflow.
-- Rewrite the feature branch to contain only the self-hosted Guix builder,
-  pinned time-machine channel, and module-qualified custom service fix.
-- Run only the Guix image workflow, inspect its successful artifact, and then
-  integrate it separately.
+- Monitor the final follow-up workflows. Confirm the image detector selects
+  only Guix, inspect any failure artifact, and inspect the successful artifact
+  before integration.
+- Fast-forward the exporter and Guix follow-up into current `staging` only
+  after targeted workflows pass.
 
 ## Cleanup
 
