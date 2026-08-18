@@ -13,8 +13,11 @@
   RuboCop and the main CI suite passed. Image workflow attempt 4 built and
   tested 48 of 51 images successfully. Two Slackware compatibility fixes and
   Guix failure-log diagnostics are committed, locally verified, and passed the
-  follow-up mandatory review. The branch is ready for the targeted image
-  workflow push.
+  follow-up mandatory review. The targeted workflow then passed both
+  Slackwares and exposed Guix's exact Guile compatibility failure. An
+  authenticated Guix 1.4 bridge is committed, locally verified, and passed
+  mandatory review. Guix-only workflow run `32085757382` is now in progress
+  on the exact reviewed commit.
 
 ## Commands run
 
@@ -33,6 +36,8 @@
 - Targeted analysis of the Guix and Slackware failure artifacts
 - `nix develop --command overcommit --run`
 - ShellCheck 0.11 through `nix shell nixpkgs#shellcheck`
+- Official Guix and Guile history inspection in filtered temporary clones
+- Targeted workflow run `32081719754` and artifact inspection
 
 ## Results
 
@@ -85,7 +90,17 @@
   the exact Guile exception without changing retry or success behavior.
 - Follow-up change detection from the pushed head selects exactly
   `guix,slackware-15.0,slackware-current`.
-- vpsAdminOS commit series from base `563d08fb9` to head `34e44b7b9`:
+- Targeted image run `32081719754` passed Slackware 15.0 in 842 seconds and
+  Slackware current in 736 seconds. Guix remained the only failure.
+- The emitted Guix derivation log identifies `spawn: unbound variable` while
+  compiling `(guix ui)`. Official sources confirm Guix 1.4's self-build uses
+  Guile 3.0.8, `spawn` was added in Guile 3.0.9, and Guix commit `a6094158`
+  first references it. Commit `a6094158` has sole parent `6c03bb1d`, which
+  does not reference `spawn` and whose self-build selects Guile 3.0.11.
+- Guix 1.4 now performs an authenticated pull to `6c03bb1d` before the normal
+  unpinned rolling pull. The bridge is skipped for newer Guix versions and is
+  marked for removal when the Debian builder moves beyond Guix 1.4.
+- vpsAdminOS commit series from base `563d08fb9` to head `97bbf2d13`:
   - `219d09ae6` github: fix concrete image change detection
   - `4b9866571` github: detect image builder changes
   - `1cabaee99` image-scripts: update Fedora builder to 44
@@ -104,6 +119,7 @@
   - `37212611d` github: test shared image runtime changes
   - `f560a84` image-scripts/slackware: accept empty upgrades
   - `34e44b7b9` image-scripts/guix: emit failed pull build logs
+  - `97bbf2d13` image-scripts/guix: bridge pulls from Guix 1.4
 
 ## Mandatory review
 
@@ -142,6 +158,10 @@
   Slackpkg status handling is limited to upgrade operations, Guix preserves
   pull/retry outcomes, and keeping both focused follow-ups separate improves
   reviewability.
+- Mandatory review of Guix bridge commit `97bbf2d13`: **PASS** with no
+  Blocking, Important, or Advisory findings. The reviewer confirmed the
+  authenticated pin, 1.4-only selection, profile activation, unpinned final
+  pull, and final-image channel handling.
 
 ## GitHub Actions
 
@@ -179,14 +199,22 @@
     and the three failures were investigated before preparing fixes.
   - The next push changes only Guix and the two concrete Slackware images, so
     change detection should run those three image tests rather than all 51.
+  - Targeted run https://github.com/vpsfreecz/vpsadminos/actions/runs/32081719754
+    passed both Slackware variants and failed only Guix. The new diagnostics
+    successfully preserved the inner derivation log before builder cleanup.
+  - The next push changes only Guix files, so change detection should select
+    only `image-scripts/test@guix`.
+  - Guix-only run https://github.com/vpsfreecz/vpsadminos/actions/runs/32085757382
+    started on reviewed commit `97bbf2d13`.
 
 ## Open questions
 
 - The current musl stage3 archives still contain 1,508,934,142 bytes under
   `/opt/rust-bin-1.95.0`; the implemented temporary, dependency-checked Portage
   depclean passed both musl image jobs.
-- The exact Guix compiler exception remains unknown until the targeted run
-  emits the derivation log from inside the builder.
+- The Guix 1.4 authenticated bridge has synthetic coverage but still requires
+  a real image build to validate substitute, network, and two-stage pull
+  behavior.
 
 ## Cleanup
 

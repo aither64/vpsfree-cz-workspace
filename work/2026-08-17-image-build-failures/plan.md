@@ -23,7 +23,9 @@ authenticated channel, and validate the affected images in GitHub Actions.
   atomic/retried downloads, mandatory checksums, deterministic installation,
   and fail-fast chroot configuration.
 - Configure Guix to pull the authenticated official channel through
-  `https://git.guix.gnu.org/guix.git` with bounded retries.
+  `https://git.guix.gnu.org/guix.git` with bounded retries. When bootstrapping
+  from Debian's Guix 1.4, first use an authenticated pre-`spawn` bridge whose
+  self-build upgrades Guile, then retain the unpinned rolling pull.
 - Keep the 1 GiB rootfs limit unchanged. Add a temporary musl-only Portage
   depclean for the unneeded Rust build dependency, with an explicit removal
   comment for when upstream stage3 archives are corrected.
