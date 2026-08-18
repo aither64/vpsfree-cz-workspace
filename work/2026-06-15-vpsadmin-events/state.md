@@ -19302,8 +19302,8 @@ The workspace event branch previously had local head `16c1b0b` and remote head
 patches; the differing historical Telegram patch and obsolete KB draft patch
 were also skipped because their final behavior is already present upstream.
 Commit `f509d79` (`devcluster: retain vpsAdmin event support`) restores the
-exact dev-cluster tree from immediately before `dbb21df`, leaving the feature
-branch one commit ahead of `master`.
+exact dev-cluster tree from immediately before `dbb21df`. The later isolated
+workspace support and tracking commits build on this behavior boundary.
 
 Quick verification before mandatory review:
 
@@ -19328,5 +19328,39 @@ The requested runtime regression command
 `devcluster gcroots __mandatory_review_nonexistent__` now exits successfully,
 writes no error, and reports the slug as `stopped no-gcroot`. Shell, JSON, Nix
 parse, whitespace, tree-equivalence, and commit-message checks pass after the
-review fix. Configuration evaluation, publication, and final remote
+review fix.
+
+The first event configuration evaluation proved that linked coordination
+directories were not viable: Nix rejected the `vpsadmin` input because its
+intermediate `worktrees` path was a symlink. Commit `fff910c` adds an explicit
+`VPSADMIN_DEVCLUSTER_WORKSPACE` override to the event branch runner and
+documents its use. The temporary links and local excludes were removed.
+
+Configuration evaluation then passed without starting or updating VMs:
+
+- generic workspace `master` evaluated against current upstream defaults as
+  `/nix/store/09s04g73d4i4r29s6pky53539k6li1km-os-test-vpsadmin-devcluster-dev.json.drv`;
+- the event workspace evaluated with exact local vpsAdmin, vpsAdminOS,
+  HaveAPI, configuration, template, Go-client, and SMS-gateway worktrees as
+  `/nix/store/y0q0fillxmysq8hi58m9ach126p6pnp0-os-test-vpsadmin-devcluster-2026-06-15-vpsadmin-events.json.drv`;
+- the event evaluation used direct canonical paths and disabled lock-file
+  writes; the untracked lock file produced by the generic evaluation was
+  removed.
+
+Follow-up review found one important isolation leak: the first override also
+selected `dev-clusters/lib` from shared `master`, so later generic runner-library
+changes could silently affect the event branch. No blocking or advisory
+findings remained. The correction was autosquashed into commit `fff910c`:
+`VPSADMIN_DEVCLUSTER_SOURCE_WORKSPACE` now owns branch-local runner sources and
+the explicit `VPSADMIN_DEVCLUSTER_WORKSPACE` owns only canonical coordination
+data.
+
+The corrected `#runner` output built successfully with both roots set and exact
+feature inputs. Nix produced
+`/nix/store/ham7cvihr4vkvb16gr7irh41k5yqwb4h-vpsadmin-devcluster-runner`;
+its wrapper uses separately stored branch runner libraries. The same mandatory
+reviewer confirmed that all blocking and important findings are resolved and
+reported no remaining blocking, important, or advisory findings. VM lifecycle
+behavior was not exercised because starting, updating, or resetting the stopped
+cluster is explicitly outside this isolation task. Publication and final remote
 verification remain pending.

@@ -3727,8 +3727,9 @@ service assumptions on unrelated workspace initiatives.
 - Use the dedicated top-level workspace worktree at
   `worktrees/2026-06-15-vpsadmin-events/workspace`. Set
   `VPSADMIN_DEVCLUSTER_WORKSPACE` to the canonical coordination checkout so the
-  runner and Nix definitions come from the branch while project inputs and
-  runtime state use direct, non-symlinked paths.
+  runner, Nix definitions, and shared runner library come from the branch while
+  project inputs and runtime state use direct, non-symlinked paths. Keep the
+  source and coordination roots distinct in the runner environment.
 - Shared `master` keeps the generic Mailpit/mailer container and legacy seed
   contract. The event branch keeps Telegram, SMS, webhook, notification
   dispatcher, managed-template, delivery-method, and OOM-route support.
