@@ -31,10 +31,10 @@ authenticated channel, and validate the affected images in GitHub Actions.
   rolling pulls. Keep the channel itself unpinned in the repository so it does
   not require manual revision updates; fail before the build if CI cannot
   supply a suitable revision.
-- Qualify the custom Guix service list across Guix's delayed operating-system
+- Capture both custom Guix service fields across delayed operating-system
   evaluation. Current Guix loads the configuration into fresh anonymous
-  modules, so the formerly imported `%ct-services` binding is no longer in
-  scope when the services field is forced.
+  modules, so imports from the original user module are no longer in scope
+  when those fields are forced.
 - Keep the 1 GiB rootfs limit unchanged. Add a temporary musl-only Portage
   depclean for the unneeded Rust build dependency, with an explicit removal
   comment for when upstream stage3 archives are corrected.
@@ -92,9 +92,21 @@ returned PASS with no findings. The normal staging push started the complete
   one authenticated `guix time-machine` invocation. At build time, use Guix's
   CI API to resolve the newest default-branch revision with package-definition
   substitutes, validate the returned commit, and pass it with `--commit`.
-- Module-qualify `%ct-services` in the delayed services field. Self-hosting
-  removes the old bootstrap cost, but does not by itself fix this compatibility
-  break.
+- Move the complete operating-system record and its delayed service
+  construction into the retained named module as a platform base. Have the
+  disposable wrapper resolve and inherit that base at run time without
+  importing an alias into the anonymous configuration module. Keep literal
+  user defaults such as host name, timezone, and locale visible and editable in
+  `system.scm`; inherited delayed fields remain owned by the named module.
+  Self-hosting removes the old bootstrap cost, but does not by itself fix this
+  compatibility break.
+- Replace the removed, deprecated ISC dhclient service with Guix's supported
+  dhcpcd service while preserving automatic interface discovery and the
+  `networking` Shepherd provision.
+- Keep a custom module already supplied through Guix's load path and add the
+  fixed `/etc/config` path only as an installed-system fallback. Image builds
+  pass the current repository directory with `-L`, so the older copy in the
+  published builder cannot shadow the replacement module.
 - Preserve the last known-good dated Guix image. There will be no standing
   NixOS or foreign-distribution recovery builder; an exceptional recovery can
   explicitly select that dated image if it is ever needed.

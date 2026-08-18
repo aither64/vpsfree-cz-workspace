@@ -15,7 +15,7 @@
   - follow-up branch: `2026-08-17-image-build-failures-followup`
   - follow-up worktree:
     `worktrees/2026-08-17-image-build-failures/vpsadminos-followup`
-  - follow-up head: `7f5a0a05b5bc9c4381a8f5fd380aa5bb473d385e`
+  - follow-up head: `b0646d988cc8af3427a7997a1a00b06beb702acf`
   - Guix draft worktree:
     removed after its commits were copied to the follow-up branch
 
@@ -38,14 +38,136 @@
   verification passes and its standalone mandatory review returned PASS with
   no findings.
 
-- The final Guix rewrite is committed at `4ffd22c8b` and `7f5a0a05b`. It
+- The Guix rewrite is committed at `6df1d1de8` and `f77141eb0`. It
   replaces Debian Guix 1.4 with `guix:latest`, resolves the newest authenticated
   default-branch revision with Guix CI pull substitutes at build time, performs
-  one `guix time-machine ... system init`, and separately module-qualifies the
-  delayed service binding. There is no maintained repository revision pin.
-  Fast checks and hooks pass; the detector selects only Guix. A fresh final
-  mandatory review returned PASS with no Blocking, Important, or Advisory
-  findings. The continuation branch was updated with force-with-lease.
+  one `guix time-machine ... system init`, and captures both delayed service
+  fields without depending on bindings from Guix's discarded anonymous module.
+  There is no maintained repository revision pin. The latest exact local test
+  proved that the final imported operating-system alias is subject to the same
+  loader lifetime, so the wrapper is being narrowed to a runtime module lookup.
+
+- Guix image run `32132207935` resolved the current CI-substitutable revision,
+  but rejected the time-machine invocation because `--commit` accepts its
+  value only in `--commit=REV` form. That syntax is corrected in the rewritten
+  self-host commit. Run `32133007185` then resolved and realized revision
+  `ca708296f`, proving the self-host and substitute path works, but failed in
+  `guix system init` while forcing the lazily evaluated service list from a
+  fresh anonymous module. Qualifying only `%ct-services` was incomplete: the
+  complete user-service expression and the custom essential-service expression
+  still referenced imports that were no longer in scope. The final form moves
+  essential-service construction to the retained `(vpsadminos)` module,
+  captures its helper and the complete user-service list lexically, and keeps
+  essential-service inheritance self-aware through `this-operating-system`.
+  A real Guix `load*` check forces 17 user services and 36 total services.
+
+- A first local Guix-only image test from a normal temporary clone reached the real
+  self-hosted path, authenticated and realized dynamic revision `6645016c`,
+  then failed after 2689.96 seconds because `system.scm` prepended the fixed
+  `/etc/config` load path. The builder therefore selected the old published
+  `vpsadminos.scm`, which lacks `ct-essential-services`, instead of the current
+  repository module passed with `-L`. A first fix tried to prepend the
+  directory containing `system.scm`; a second exact local test authenticated
+  and realized revision `d0dcd319` but proved current Guix evaluates compiled
+  configuration with `current-filename` equal to `#f`. It failed after 2713.04
+  seconds before loading the module. The final configuration instead keeps a
+  `vpsadminos.scm` already resolvable through Guix's load path and adds
+  `/etc/config` only when none exists. Image builds already pass the current
+  repository directory with `-L`; direct installed use retains the historical
+  `/etc/config` fallback. The real Guix loader check forces 17 user services
+  and 36 total services. A new standalone mandatory review returned PASS with
+  no Blocking or Important findings. It reported one Advisory: without `-L`,
+  the `/etc/config` fallback is added late enough that Guile first falls back
+  to interpreted module loading instead of auto-compiling it. This does not
+  affect correctness or build mode. The reviewer approved proceeding with
+  another Guix-only image test.
+
+- The third local Guix-only test at `b81d1dbe6` selected and realized dynamic
+  revision `6a721c370` with substitutes, then failed after 2780.47 seconds
+  while loading `system.scm`. The exception is `variable-ref` on an exported
+  but undefined module variable. Of the configuration's two module-qualified
+  lookups, only newly exported `ct-essential-services` fits that exact Guile
+  failure shape; `%ct-services` existed in the published builder module. This
+  points to the compile-time `(@ (vpsadminos) ct-essential-services)` binding,
+  not another service-thunk reference or a Guix build failure. The follow-up
+  captures the already imported procedure and service list directly instead
+  of embedding module-variable objects. It also applies the reviewer's
+  `eval-when` recommendation so the installed `/etc/config` fallback is active
+  during auto-compilation. A packaged-Guix `load*` check still forces 17 user
+  services and 36 total services. A fresh mandatory review of `f928fc87f`
+  returned PASS with no Blocking, Important, or Advisory findings. Exact
+  current-Guix validation remained the next Guix-only image test.
+
+- The fourth local Guix-only test at `f928fc87f` selected and realized dynamic
+  revision `d2b8077be`, then failed after 2931.64 seconds with the now-explicit
+  `%ct-services: unbound variable`. This proves that capturing an imported
+  value in a lexical binding inside `system.scm` is still insufficient: the
+  service thunk itself belongs to Guix's discarded anonymous module and loses
+  the binding when forced. The helper lookup was fixed, but the same lifetime
+  boundary remained for the service list. The revised design constructs and
+  exports the complete operating-system record from the retained named
+  `(vpsadminos)` module; `system.scm` only returns that already-built record.
+  A packaged-Guix check loads the record, forces 17 user and 36 total services,
+  and forces the provenance-derived record with 18 user and 37 total services.
+  A fresh mandatory review of `41f69505d` returned PASS with no Blocking,
+  Important, or Advisory findings and approved another Guix-only image test.
+
+- The fifth local Guix-only test at `41f69505d` selected and realized dynamic
+  revision `c104f12e2`, then failed after 2866.39 seconds with the explicit
+  `%ct-operating-system: unbound variable`. Moving the complete record into the
+  retained named module fixed its delayed service internals, but importing the
+  final record into `system.scm` still created an alias in Guix's disposable
+  anonymous module. The wrapper now avoids `use-modules` entirely: it resolves
+  `(vpsadminos)` at runtime and returns `%ct-operating-system` with `module-ref`
+  immediately. A packaged-Guix `read-operating-system` check loads this form
+  and still forces 17 user and 36 total services. Quick checks and hooks pass;
+  a fresh mandatory review returned PASS with no Blocking, Important, or
+  Advisory findings. The reviewer confirmed against current Guix master that
+  `load*` eagerly returns the `module-ref` result, then reproduced normal and
+  provenance-derived records after discarding and garbage-collecting the
+  anonymous module. One final exact local image test remains before push.
+
+- The sixth local Guix-only test at `f77141eb0` selected current master
+  `82e281ad9`, realized the time-machine profile, and got past the disposable
+  module and `%ct-operating-system` lookup. It then failed after 2992.5 seconds
+  while loading `vpsadminos.scm` because current Guix has removed
+  `dhcp-client-service-type`. Guix 1.5 identifies that deprecated type as the
+  end-of-life ISC dhclient service and directs configurations to
+  `dhcpcd-service-type`; current Guix exports only the replacement. Commit
+  `d9d28297b` makes that focused migration. The replacement is present in both
+  Guix 1.5 and current Guix, still discovers all interfaces and provisions
+  `networking`, and the fast configuration check finds exactly one dhcpcd
+  service while preserving the 17 user / 36 total service counts. A fresh
+  mandatory review returned PASS with no findings after checking Guix 1.5 and
+  exact current revision `82e281ad98`. The remaining integration gap is actual
+  dhcpcd startup and image/runtime behavior in the vpsAdminOS LXC builder.
+
+- The seventh local Guix-only test at final head `d9d28297b` passed in
+  3932.22 seconds. It dynamically selected authenticated CI-substitutable
+  revision `eb54cdee2fcd6356cad1f7c02cffdcd93a47f8b1`, ran exactly one
+  `guix time-machine ... system init`, and returned status 0. The image built,
+  exported, imported, and passed all 15 runtime tests, including console login,
+  SSH, passwords, the 1 GiB ZFS rootfs limit, bridged networking, and routed
+  networking. The SquashFS artifact was 443.12 MiB. This exercises dhcpcd in
+  the actual vpsAdminOS LXC environment and closes the planned local
+  integration gap; a targeted GitHub Guix run remains before integration.
+
+- During the targeted GitHub run, the user identified that moving the complete
+  record into `vpsadminos.scm` hid normal user settings. Commit `7455c81b7`
+  now exports an explicitly named `%ct-operating-system-base`; `system.scm`
+  inherits it and contains the literal default host name, timezone, and locale
+  for users to edit directly. The base retains only a required internal
+  `localhost` placeholder and all platform/delayed fields. Guix 1.5 and an
+  exact-current fresh-module/GC check confirm omitted service thunks remain in
+  the named module, are invoked with the child record, and therefore see user
+  overrides. Default and custom scalar configurations both force every delayed
+  field with the expected service counts. The fresh mandatory review of head
+  `b0646d988` returned PASS with no Blocking, Important, or Advisory findings.
+  It independently verified Guix 1.5/current inheritance semantics, fresh
+  module garbage collection, default and custom host/timezone/locale values,
+  all delayed operating-system accessors, and the expected 19 essential, 17
+  user, and 36 total services. Inline `services` or `essential-services`
+  overrides remain intentionally outside the visible immediate-field contract.
 
 - The full follow-up review found one Important exporter lifecycle issue:
   Open3 starts `zfs send` before attempting the next pipeline process, so a
@@ -137,6 +259,11 @@
 - Built the libosctl gem and inspected its GNU gzip requirement metadata
 - Independent supported-consumer gzip PATH audit across current default refs
 - Full follow-up-tree `nix develop --command overcommit --run`
+- GitHub artifact inspection for Guix runs `32132207935` and `32133007185`
+- Actual Guix fresh-user-module `load*` evaluation of both delayed service
+  fields
+- Local `image-scripts/test@guix` from a normal temporary clone, with full
+  artifact analysis of the old-module shadowing failure
 - Force-with-lease update of the unmerged continuation branch to `7f5a0a05b`
 - Cancellation of superseded old-head image and CI workflows
 - Guix builder/image configuration resolution and Scheme parsing
@@ -507,6 +634,26 @@
     (RuboCop). Superseded old-head runs `32129561366` and `32129561380` were
     cancelled after the force-with-lease update; completed old-head RSpec and
     RuboCop runs were left intact.
+  - Final follow-up head `d9d28297b` was force-pushed with an exact lease over
+    old remote head `587156134`. Targeted image run `32180362434` started at
+    that exact SHA. No superseded old-SHA run was queued or running, so there
+    was nothing to cancel. The workflow passed, change detection selected only
+    `image-scripts/test@guix`, and the Guix image build, import, and runtime
+    tests completed successfully.
+  - Reviewed user-configuration head `b0646d988` was force-pushed with an
+    exact lease over `d9d28297b`. Run `32186293885` started at the new exact
+    head; its toplevel and detector jobs passed, and the detector reported
+    exactly `Detected images: guix`. The run completed successfully; the sole
+    Guix image test passed in 2277.36 seconds with no unexpected failures.
+  - `origin/staging` remained at `b6b57f486`, so a fresh temporary integration
+    worktree fast-forwarded it by the four reviewed commits to `b0646d988`.
+    The exact head was pushed to `staging` without a merge commit, and the
+    clean temporary integration worktree was removed. Integration runs
+    `32190301537` (images), `32190301642` (CI), `32190301463` (RSpec), and
+    `32190301545` (RuboCop) started at that exact SHA. All four runs passed.
+    The detector again selected only Guix; its image test passed in 2382.05
+    seconds with no unexpected failures. The general CI suite passed in
+    1h00m36s, and both livepatch jobs passed.
 
 ## Decisions and remaining work
 
@@ -516,13 +663,12 @@
 - Integrate the reviewed non-Guix slice on current `origin/staging`, after quick
   verification and a fresh mandatory review, without repeating the 51-image
   workflow.
-- Monitor the final follow-up workflows. Confirm the image detector selects
-  only Guix, inspect any failure artifact, and inspect the successful artifact
-  before integration.
-- Fast-forward the exporter and Guix follow-up into current `staging` only
-  after targeted workflows pass.
+- The implementation is integrated, all exact-head feature and `staging`
+  workflows are green, and the merged worktrees have been removed while
+  retaining branch refs. No code or CI work remains for this initiative.
 
 ## Cleanup
 
-- Keep the feature worktree until the branch is reviewed, pushed, tested, and
-  integrated or explicitly abandoned.
+- Removed the clean merged `vpsadminos` and `vpsadminos-followup` worktrees
+  after all integrated workflows passed.
+- Retained the local and remote feature branches as required.
