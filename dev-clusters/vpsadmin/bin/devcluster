@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CLUSTER_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
-WORKSPACE="$(cd -- "$CLUSTER_DIR/../.." && pwd)"
+SOURCE_WORKSPACE="$(cd -- "$CLUSTER_DIR/../.." && pwd)"
+WORKSPACE="${VPSADMIN_DEVCLUSTER_WORKSPACE:-$SOURCE_WORKSPACE}"
 STATE_ROOT="$WORKSPACE/.dev-clusters/vpsadmin"
 CERT_DIR="$STATE_ROOT/certs/default"
 TELEGRAM_DIR="$STATE_ROOT/telegram"
@@ -597,6 +598,7 @@ nix_common_env() {
   local vpsf_status_path="${10}"
   local vpsadmin_go_client_path="${11}"
 
+  export VPSADMIN_DEVCLUSTER_SOURCE_WORKSPACE="$SOURCE_WORKSPACE"
   export VPSADMIN_DEVCLUSTER_WORKSPACE="$WORKSPACE"
   export VPSADMIN_DEVCLUSTER_SLUG="$slug"
   export VPSADMIN_DEVCLUSTER_TOPOLOGY="$topology"

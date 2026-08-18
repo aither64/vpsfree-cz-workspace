@@ -6,6 +6,17 @@ from feature worktrees under `worktrees/<slug>/`.
 Runtime state, certificates, SSH keys, result links, and logs are stored under
 `.dev-clusters/` at the workspace root and are intentionally not tracked by git.
 
+When this runner comes from a dedicated top-level workspace worktree, set
+`VPSADMIN_DEVCLUSTER_WORKSPACE` to the canonical coordination checkout. The
+runner and Nix definitions then come from the checked-out branch, while bare
+repositories, project worktrees, and runtime state resolve through canonical
+paths that Nix accepts:
+
+```sh
+VPSADMIN_DEVCLUSTER_WORKSPACE=/path/to/vpsfree.cz \
+  dev-clusters/vpsadmin/bin/devcluster status <slug>
+```
+
 ## Basic Usage
 
 ```sh

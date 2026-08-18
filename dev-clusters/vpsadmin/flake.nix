@@ -37,7 +37,8 @@
         in
         if value == "" then default else value;
 
-      workspace = env "VPSADMIN_DEVCLUSTER_WORKSPACE" (env "PWD" ".");
+      sourceWorkspace = env "VPSADMIN_DEVCLUSTER_SOURCE_WORKSPACE" (env "PWD" ".");
+      workspace = env "VPSADMIN_DEVCLUSTER_WORKSPACE" sourceWorkspace;
       slug = env "VPSADMIN_DEVCLUSTER_SLUG" "dev";
       topology = env "VPSADMIN_DEVCLUSTER_TOPOLOGY" "single";
       networkMode = env "VPSADMIN_DEVCLUSTER_NETWORK" "bridge";
@@ -60,7 +61,7 @@
       telegramSecretsSourcePath = env "VPSADMIN_DEVCLUSTER_TELEGRAM_SECRETS" "";
       telegramEnable = env "VPSADMIN_DEVCLUSTER_TELEGRAM_ENABLE" "0";
       sharedRunnerLib = builtins.path {
-        path = "${workspace}/dev-clusters/lib";
+        path = "${sourceWorkspace}/dev-clusters/lib";
         name = "devcluster-runner-lib";
       };
 
