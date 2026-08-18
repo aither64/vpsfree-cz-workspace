@@ -6,10 +6,23 @@
   - branch: `2026-08-17-image-build-failures`
   - worktree: `worktrees/2026-08-17-image-build-failures/vpsadminos`
   - base: `origin/staging` at `563d08fb951b624078c3f1bf4e5b817c641be0be`
+  - current integration target: `origin/staging` at
+    `7f50e2d43b1ed4703e1d717c57fc1a6db0ddd881`
 
 ## Status
 
-- The original sixteen implementation commits are reviewed and pushed.
+- The 24-commit implementation is reviewed and pushed at `b0eeed852`. Final
+  image run `32094157385` completed all 51 tests: 49 passed, Arch failed after
+  a successful build because its exported gzip/ZFS stream was truncated, and
+  Guix failed deterministically after both pulls succeeded because current
+  Guix could not resolve the delayed `%ct-services` binding. Arch needs no
+  image-script change. The integration plan now separates the 18 verified
+  non-Guix commits from a rewritten Guix-only feature branch. The Guix branch
+  will self-host from the last published Guix image and use a pinned
+  `guix time-machine` revision; no standing recovery builder will be kept.
+
+- Historical implementation progress follows. The original sixteen
+  implementation commits are reviewed and pushed.
   RuboCop and the main CI suite passed. Image workflow attempt 4 built and
   tested 48 of 51 images successfully. Two Slackware compatibility fixes and
   Guix failure-log diagnostics are committed, locally verified, and passed the
@@ -43,6 +56,11 @@
 - Synthetic image runner failure propagation using an isolated temporary copy
 - `gh run view 32037034898 ...`
 - `gh run download 32037034898 ...`
+- `gh run download 32094157385 ...`
+- Current-versus-prior Arch artifact comparison
+- Guix pull/system-init boundary and upstream module-loader history analysis
+- Public vpsAdminOS image index inspection for the latest Guix artifact
+- `git fetch origin staging`
 - Targeted analysis of the Guix and Slackware failure artifacts
 - `nix develop --command overcommit --run`
 - ShellCheck 0.11 through `nix shell nixpkgs#shellcheck`
@@ -89,8 +107,10 @@
 - CI change detection selects all 51 concrete images for the shared runner and
   `common.sh` changes, including the consumers omitted by the first review;
   abstract templates and Fedora 42 are excluded.
-- The latest fetched `origin/staging` remains at the recorded base and is an
-  ancestor of the feature branch.
+- `origin/staging` advanced from the recorded base to `7f50e2d43` through the
+  scheduled mechanical commit `flake: nixpkgs 02e08985a -> 0dd31db7e`. It does
+  not overlap the image-script changes. The integration slice must be rebuilt
+  and reviewed on this current target before fast-forwarding.
 - Main CI run `32037034981` attempt 3 passed its system build, core test suite,
   AMD livepatch, and Intel livepatch jobs. RuboCop run `32037034986` passed.
 - Image run `32037034898` attempt 4 passed 48 of all 51 selected concrete
@@ -158,6 +178,34 @@
 - Changes to the detector script now trigger the image workflow and select all
   51 concrete images. The workflow runs the common-helper regression before
   calculating its image matrix.
+- Final image run `32094157385` exercised all 51 selected images at reviewed
+  head `b0eeed852` in 23,186 seconds. Forty-nine images passed. RuboCop run
+  `32094157381` passed at the same head.
+- Arch run `32094157385` completed its bootstrap and configuration with
+  `build_status=0`; both chroot calls and every new mount cleanup returned 0.
+  Import then reported `gzip: stdin: unexpected end of file` and an incomplete
+  ZFS stream from `rootfs/base.dat.gz`. The prior full run imported the same
+  Arch 2026.08.01 bootstrap and passed all 15 runtime tests in 552 seconds.
+  Mount namespace isolation ends before the Ruby exporter writes the archive,
+  so the evidence does not support an Arch or branch regression. No
+  Arch-specific change is planned. General atomic export validation is recorded
+  in `notes/vpsadminos/2026-08-18-truncated-image-zfs-stream.md`.
+- Guix ran for 4,847.74 seconds. Debian Guix 1.4 authenticated and built the
+  pinned bridge, the bridge Guix authenticated and built floating commit
+  `f2b9872`, and both pulls returned 0. `guix system init` then failed with
+  `%ct-services: unbound variable`. Upstream commit `94ae360ab403` changed
+  configuration loading to use fresh anonymous modules; the operating-system
+  services field is delayed and can no longer resolve the custom binding
+  imported into the original module. The binding must be module-qualified.
+- The public image index currently has Guix `20260613` tagged both `latest`
+  and `stable`; it contains Guix 1.5 and the running Guix daemon. The planned
+  normal builder therefore uses `DISTNAME=guix`, `RELVER=latest`. It will run
+  one exact authenticated revision through `guix time-machine`, selected only
+  after channel substitutes exist. The Debian 1.4 builder, bridge, double pull,
+  and version compatibility path will be removed.
+- The user explicitly chose not to maintain a NixOS or other recovery builder.
+  The last known-good dated Guix image remains available and can be selected
+  manually for exceptional recovery.
 - The edited workflow uses `actions/checkout@v7`; GitHub's official latest
   release is `v7.0.1`.
 - vpsAdminOS commit series from base `563d08fb9` to head `b0eeed852`:
@@ -260,13 +308,13 @@
 
 ## GitHub Actions
 
-- Pushed branch `2026-08-17-image-build-failures` is currently at
-  `97bbf2d13`; reviewed local head `b0eeed852` is ready to push.
-- Active runs:
-  - RuboCop: https://github.com/vpsfreecz/vpsadminos/actions/runs/32037034986
-  - CI: https://github.com/vpsfreecz/vpsadminos/actions/runs/32037034981
-  - Build and test changed container images:
-    https://github.com/vpsfreecz/vpsadminos/actions/runs/32037034898
+- Pushed branch `2026-08-17-image-build-failures` and its clean worktree are at
+  reviewed head `b0eeed852`.
+- Final full-matrix runs:
+  - RuboCop passed:
+    https://github.com/vpsfreecz/vpsadminos/actions/runs/32094157381
+  - Image workflow completed 49/51 successfully:
+    https://github.com/vpsfreecz/vpsadminos/actions/runs/32094157385
 - First attempts:
   - RuboCop passed.
   - CI and the image workflow failed during runner setup before checkout.
@@ -308,14 +356,27 @@
   - The next push includes a shared `common.sh` correction and detector logic,
     so the selector intentionally expands to all 51 concrete images. The Guix
     result remains independently identifiable within that resource-aware run.
+  - Run `32094157385` completed after 6 hours 28 minutes. Its artifact was
+    downloaded before classifying Arch as a truncated export and Guix as a
+    post-pull module-scope incompatibility.
+  - To avoid repeating this verified matrix on the `staging` integration push,
+    the plan uses GitHub's documented `skip-checks: true` commit trailer after
+    hooks and a mandatory review of the exact rebased tree. This exception is
+    limited to the already exercised non-Guix slice. The rewritten Guix-only
+    branch will run its targeted image workflow normally.
 
-## Open questions
+## Decisions and remaining work
 
 - The current musl stage3 archives still contain 1,508,934,142 bytes under
   `/opt/rust-bin-1.95.0`; the implemented temporary, dependency-checked Portage
   depclean passed both musl image jobs.
-- The isolated channel-file follow-up requires the reviewed 51-image rerun to
-  validate the rolling pull and final image test after the now-proven bridge.
+- Integrate the reviewed non-Guix slice on current `origin/staging`, after quick
+  verification and a fresh mandatory review, without repeating the 51-image
+  workflow.
+- Rewrite the feature branch to contain only the self-hosted Guix builder,
+  pinned time-machine channel, and module-qualified custom service fix.
+- Run only the Guix image workflow, inspect its successful artifact, and then
+  integrate it separately.
 
 ## Cleanup
 
