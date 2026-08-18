@@ -3710,3 +3710,33 @@ request/response value, database schema, persisted state, RabbitMQ message, or
 deployment ordering. Mixed old and new API/WebUI processes remain compatible,
 and rollback requires no data conversion. Refresh the WebUI documentation
 contract pin and update the bridge development cluster after review.
+
+## Workspace dev-cluster isolation
+
+Requested on 2026-08-18: keep the complex, unmerged event-aware vpsAdmin
+development cluster from imposing its module, schema, template, and helper
+service assumptions on unrelated workspace initiatives.
+
+- Restore the generic vpsAdmin development cluster on workspace `master` by
+  reversing the complete event-specific cluster stack. Keep later generic
+  improvements, including source revision reporting, larger service storage,
+  and stale Nix-root cleanup.
+- Rebase the existing workspace branch `2026-06-15-vpsadmin-events` onto the
+  cleaned `master` and restore the exact event-aware cluster there as one
+  branch-owned commit.
+- Use the dedicated top-level workspace worktree at
+  `worktrees/2026-06-15-vpsadmin-events/workspace`. Set
+  `VPSADMIN_DEVCLUSTER_WORKSPACE` to the canonical coordination checkout so the
+  runner and Nix definitions come from the branch while project inputs and
+  runtime state use direct, non-symlinked paths.
+- Shared `master` keeps the generic Mailpit/mailer container and legacy seed
+  contract. The event branch keeps Telegram, SMS, webhook, notification
+  dispatcher, managed-template, delivery-method, and OOM-route support.
+- This changes no production API, schema, protocol, configuration pin, or
+  deployment. Do not start, update, or reset the stopped initiative cluster as
+  part of the isolation.
+
+Verify shell, JSON, and Nix syntax on both trees; assert that the branch's
+dev-cluster files exactly match pre-isolation `master`; evaluate both cluster
+configurations without starting VMs; and run the mandatory standalone review
+before publishing the workspace branches.

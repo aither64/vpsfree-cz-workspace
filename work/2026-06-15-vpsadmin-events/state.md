@@ -19273,3 +19273,60 @@ Releasing ownership required clearing the pending-release marker for
 `kb-release-main-page-link-en.yml`; this did not publish anything to
 production. A subsequent status check reported no owner, a stopped staging
 container, and no pending release. The mirrored and staged data were retained.
+
+## 2026-08-18 workspace dev-cluster isolation
+
+The current process is bound to `2026-06-15-vpsadmin-events`. The workspace
+branch now has its own top-level worktree at
+`worktrees/2026-06-15-vpsadmin-events/workspace`. Invoke its dev-cluster runner
+with `VPSADMIN_DEVCLUSTER_WORKSPACE=/home/aither/workspace/ai/vpsfree.cz` so
+the runner and Nix definitions come from the event branch while repositories,
+project worktrees, and runtime state use canonical paths in the coordination
+checkout.
+
+An initial local-link approach was discarded during configuration evaluation:
+Nix rejects a `path:` input when an intermediate `worktrees` component is a
+symlink. The three temporary links and their repository-local excludes were
+removed. No project source or cluster state was copied, changed, or reset.
+
+The shared workspace base was `60c9d4a7553ebdda987b9c0e73a6d0cc2d33a33d`.
+Commit `dbb21df` (`devcluster: isolate vpsAdmin event support`) reverses the
+thirteen event-specific dev-cluster commits as one atomic compatibility
+boundary. It changes only the README, runner, default JSON configuration,
+flake, and Nix cluster definition under `dev-clusters/vpsadmin`. The unrelated
+modified `AGENTS.md` and image-build initiative plan/state files were preserved
+without staging, as were all untracked workspace files.
+
+The workspace event branch previously had local head `16c1b0b` and remote head
+`c40d7f6`. Rebasing onto the new `master` skipped the already-integrated
+patches; the differing historical Telegram patch and obsolete KB draft patch
+were also skipped because their final behavior is already present upstream.
+Commit `f509d79` (`devcluster: retain vpsAdmin event support`) restores the
+exact dev-cluster tree from immediately before `dbb21df`, leaving the feature
+branch one commit ahead of `master`.
+
+Quick verification before mandatory review:
+
+- `git diff --check`, `bash -n`, JSON parsing with `jq`, and
+  `nix-instantiate --parse` passed for the generic and event-aware trees;
+- the generic tree contains none of the event-specific SMS gateway,
+  dispatcher, managed-template, webhook-test, or Telegram environment hooks;
+- the generic tree still contains the mailer container, `mailer_enabled` seed,
+  12 GiB services disk, source revision reporting, and later generic cleanup;
+- the event branch's five dev-cluster files compare equal to `dbb21df^`;
+- the existing cluster was not started, updated, or reset.
+
+The mandatory standalone reviewer found one blocking regression and no
+important or advisory findings. The aggregate reversal had removed
+`cluster_running`, although the later generic GC-root cleanup still calls it.
+That would have treated a running cluster as stopped and allowed `gcroots
+--cleanup` to remove its result root. The helper is now retained on `master`,
+the isolation commit was amended to `dbb21df`, and the event branch was rebased
+so its event-aware tree remains exactly equal to pre-isolation `master`.
+
+The requested runtime regression command
+`devcluster gcroots __mandatory_review_nonexistent__` now exits successfully,
+writes no error, and reports the slug as `stopped no-gcroot`. Shell, JSON, Nix
+parse, whitespace, tree-equivalence, and commit-message checks pass after the
+review fix. Configuration evaluation, publication, and final remote
+verification remain pending.
