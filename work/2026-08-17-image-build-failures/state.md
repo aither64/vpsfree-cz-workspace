@@ -16,8 +16,18 @@
   follow-up mandatory review. The targeted workflow then passed both
   Slackwares and exposed Guix's exact Guile compatibility failure. An
   authenticated Guix 1.4 bridge is committed, locally verified, and passed
-  mandatory review. Guix-only workflow run `32085757382` is now in progress
-  on the exact reviewed commit.
+  mandatory review. Guix-only workflow run `32085757382` proved that bridge
+  succeeds, then exposed an isolated channel-file compatibility issue. The
+  two focused Guix follow-ups are committed and passed quick verification.
+  Their full-series review found a separate partial chroot-mount failure and
+  missing detector self-trigger. Both findings are fixed in three focused,
+  hook-verified commits. A follow-up review found unsafe shared-mount cleanup
+  and two direct callers that masked failures. The next review confirmed the
+  mount barrier and Arch fix, but found OpenSUSE still disabled `errexit` by
+  invoking its bootstrap in a conditional context and noted that a failed
+  safety barrier could leave a mount in the reusable builder namespace. Both
+  findings are fixed. The final fresh full-series review passed with no
+  findings; the reviewed follow-up is ready to push for the 51-image workflow.
 
 ## Commands run
 
@@ -38,6 +48,18 @@
 - ShellCheck 0.11 through `nix shell nixpkgs#shellcheck`
 - Official Guix and Guile history inspection in filtered temporary clones
 - Targeted workflow run `32081719754` and artifact inspection
+- Guix-only workflow run `32085757382` and artifact inspection
+- Guix 1.4-style and isolated safe-binding channel-file evaluation
+- Synthetic Guix bridge/rolling retry, status, profile activation, and version
+  detection matrix
+- Permanent common chroot helper regression covering setup, mount, chroot, and
+  cleanup failure precedence
+- Isolated real-mount propagation-barrier check and actual OpenSUSE/Arch caller
+  failure checks
+- Disposable image-runner mount-namespace argument, status, recursion, and
+  teardown checks
+- Actionlint and detector self-change/full-matrix checks
+- Official `actions/checkout` latest-release verification
 
 ## Results
 
@@ -100,7 +122,45 @@
 - Guix 1.4 now performs an authenticated pull to `6c03bb1d` before the normal
   unpinned rolling pull. The bridge is skipped for newer Guix versions and is
   marked for removal when the Debian builder moves beyond Guix 1.4.
-- vpsAdminOS commit series from base `563d08fb9` to head `97bbf2d13`:
+- Guix-only run `32085757382` authenticated and built the pinned bridge, then
+  the bridge Guix rejected the rolling channel file before fetching it:
+  isolated channel evaluation intentionally does not expose `use-modules`.
+  Both Guix 1.4 and the isolated loader already provide the safe channel
+  bindings, so the redundant import is removed from both channel files.
+- The same run showed a nonfatal broken-pipe backtrace from probing
+  `guix --version` through `head`. The probe now uses `sed`, which consumes the
+  full output while selecting the first line.
+- Both channel files evaluate successfully under the Guix 1.4 loader model and
+  the bridge's exact isolated safe-binding set. Tests assert the inherited
+  authentication introduction, canonical URL, exact bridge pin, and unpinned
+  rolling channel.
+- The synthetic pull matrix covers retry success and exhaustion for bridge and
+  rolling pulls, exact failure status propagation, profile command
+  re-resolution, diagnostics, private temporary-file cleanup, and version
+  output with thousands of trailing lines.
+- `mount-chroot` now checks every operation explicitly even when called from a
+  conditional context, preserves the first setup failure, skips `chroot`, and
+  cleans only filesystems mounted by that invocation. A recursive `/dev` clone
+  is made private before unmount; if the safety barrier fails, detachment is
+  deferred to namespace teardown. Every image action is re-executed in a
+  disposable private mount namespace, so an undetachable bind cannot persist
+  in or poison the reusable builder. The wrapper preserves normal process
+  status and signal behavior and fails closed if `unshare` is unavailable. All
+  current builder bases normally include util-linux; an unusually old or
+  minimized persistent builder may need that package installed or recreation.
+  OpenSUSE invokes its `set -e` bootstrap outside a conditional context and
+  preserves bootstrap-over-cleanup precedence, while Arch exits immediately on
+  chroot failure.
+- The permanent regression verifies all helper stages, both direct callers,
+  the first failing OpenSUSE `zypper` command, chroot-over-cleanup status
+  precedence, namespace-wrapper arguments and recursion, and propagation and
+  teardown behavior with real isolated mounts.
+- Changes to the detector script now trigger the image workflow and select all
+  51 concrete images. The workflow runs the common-helper regression before
+  calculating its image matrix.
+- The edited workflow uses `actions/checkout@v7`; GitHub's official latest
+  release is `v7.0.1`.
+- vpsAdminOS commit series from base `563d08fb9` to head `b0eeed852`:
   - `219d09ae6` github: fix concrete image change detection
   - `4b9866571` github: detect image builder changes
   - `1cabaee99` image-scripts: update Fedora builder to 44
@@ -120,6 +180,11 @@
   - `f560a84` image-scripts/slackware: accept empty upgrades
   - `34e44b7b9` image-scripts/guix: emit failed pull build logs
   - `97bbf2d13` image-scripts/guix: bridge pulls from Guix 1.4
+  - `5768d848d` image-scripts/guix: support isolated channel evaluation
+  - `8be6a707a` image-scripts/guix: avoid a version probe broken pipe
+  - `42bf2e131` image-scripts: fail closed on partial chroot mounts
+  - `851d8c151` github: run common image helper regression
+  - `b0eeed852` github: test image detector changes
 
 ## Mandatory review
 
@@ -162,10 +227,41 @@
   Blocking, Important, or Advisory findings. The reviewer confirmed the
   authenticated pin, 1.4-only selection, profile activation, unpinned final
   pull, and final-image channel handling.
+- Full-series review through `8be6a707a`: **FAIL**. The two Guix commits had no
+  finding, but the reviewer reproduced a blocking partial-mount failure masked
+  by conditional-context `errexit` behavior in `common.sh`. The reviewer also
+  reported that detector-only changes did not trigger the image workflow.
+- Follow-up commits explicitly preserve and clean partial mount failures, add
+  permanent regression coverage, run it in the workflow, and make detector
+  changes trigger and conservatively select all concrete images.
+- Follow-up review through the first chroot fix: **FAIL**. It reproduced
+  recursive `/dev` unmount propagation when `make-rslave` failed and confirmed
+  OpenSUSE and Arch could still mask helper failures.
+- The chroot commit was rewritten before push to establish a private
+  propagation barrier, defer unsafe detachment, preserve both direct-caller
+  failures, and cover these paths with mocked and isolated real-mount tests.
+- Follow-up review through `b728eeab5`: **FAIL**. It confirmed the private
+  barrier and Arch propagation, but reproduced OpenSUSE continuing after its
+  first failing `zypper` command because `do_bootstrap` was called on the left
+  of `||`. It also found that an undetachable bind would outlive the build in
+  the persistent builder namespace.
+- The unpublished chroot and regression commits were rewritten again.
+  OpenSUSE now captures a standalone `do_bootstrap` invocation, the regression
+  uses the actual bootstrap with a first-command failure, and image actions run
+  under `unshare` in a disposable private mount namespace. Quick syntax,
+  ShellCheck, focused regression, `git diff --check`, and full Overcommit checks
+  pass.
+- Final fresh full-series review through `b0eeed852`: **PASS** with no Blocking,
+  Important, or Advisory findings. The reviewer independently ran the real
+  mount branch, focused helper and detector matrices, Fedora discovery, Nix
+  repository evaluation, syntax/diff checks, and Overcommit. The required
+  residual coverage is the intentionally deferred 51-image workflow, including
+  real `unshare` permission in every builder and the final Guix rolling pull.
 
 ## GitHub Actions
 
-- Pushed branch `2026-08-17-image-build-failures` at `37212611d`.
+- Pushed branch `2026-08-17-image-build-failures` is currently at
+  `97bbf2d13`; reviewed local head `b0eeed852` is ready to push.
 - Active runs:
   - RuboCop: https://github.com/vpsfreecz/vpsadminos/actions/runs/32037034986
   - CI: https://github.com/vpsfreecz/vpsadminos/actions/runs/32037034981
@@ -205,16 +301,21 @@
   - The next push changes only Guix files, so change detection should select
     only `image-scripts/test@guix`.
   - Guix-only run https://github.com/vpsfreecz/vpsadminos/actions/runs/32085757382
-    started on reviewed commit `97bbf2d13`.
+    failed after 1 hour 8 minutes on reviewed commit `97bbf2d13`. The bridge
+    authenticated, built, and activated successfully; all three rolling pull
+    attempts then failed deterministically on the redundant `use-modules`
+    form before any rolling channel fetch.
+  - The next push includes a shared `common.sh` correction and detector logic,
+    so the selector intentionally expands to all 51 concrete images. The Guix
+    result remains independently identifiable within that resource-aware run.
 
 ## Open questions
 
 - The current musl stage3 archives still contain 1,508,934,142 bytes under
   `/opt/rust-bin-1.95.0`; the implemented temporary, dependency-checked Portage
   depclean passed both musl image jobs.
-- The Guix 1.4 authenticated bridge has synthetic coverage but still requires
-  a real image build to validate substitute, network, and two-stage pull
-  behavior.
+- The isolated channel-file follow-up requires the reviewed 51-image rerun to
+  validate the rolling pull and final image test after the now-proven bridge.
 
 ## Cleanup
 
