@@ -21,7 +21,7 @@
   - Guix DNS follow-up branch:
     `2026-08-17-image-build-failures-guix-dns`
   - Guix DNS follow-up worktree:
-    `worktrees/2026-08-17-image-build-failures/vpsadminos-guix-dns`
+    removed after integration and corrected-image publication
   - Guix DNS follow-up base: `origin/staging` at `e37be4fd6`
   - Guix DNS follow-up head: `96850c6b5`
   - Guix DNS integration branch:
@@ -31,12 +31,14 @@
   - Guix DNS integration head: `96850c6b5`
 - `vpsfree-kb-contracts`
   - branch: `2026-08-17-image-build-failures`
-  - worktree:
-    `worktrees/2026-08-17-image-build-failures/vpsfree-kb-contracts`
+  - worktree: removed after production publication
   - base: `origin/master` at `1fe36b3`
   - head: `c1d0aca`
-  - status: mandatory reviews and GitHub checks passed; bilingual candidates
-    are staged pending production approval and later fast-forward integration
+  - integration branch:
+    `2026-08-17-image-build-failures-kb-integrate`
+  - integration worktree: removed after fast-forwarding `master`
+  - status: integrated into `master`; both production pages published and
+    verified
 
 ## Status
 
@@ -158,6 +160,28 @@
   This predates the Guix change and does not affect its managed-page contract,
   release checksums, or schema-5 manifest verification. The mismatch is
   recorded as a reusable workspace note.
+- The user explicitly approved production publication. A fresh integration
+  worktree fast-forwarded current `origin/master` from `1fe36b3` to exact
+  reviewed contract head `c1d0aca`; `nix develop --command bin/check` passed
+  on the integrated tree, and remote `master` was updated without a merge
+  commit.
+- Production authentication and write permission were verified separately for
+  both wikis. Each language manifest was restaged, verified, promoted with
+  explicit production approval, and verified again against production. The
+  Czech revision uses summary `Aktualizace dědění kontejnerové konfigurace
+  Guixu a příkladu nasazení`; the English revision uses summary `Update Guix
+  platform inheritance and deployment examples`. Both managed source/test
+  links resolve through `master` and the production content hashes match the
+  reviewed manifests.
+- KB staging has no pending release and its ownership was released after
+  publication. The generated production snapshot, candidates, plans, and
+  manifests were removed from the initiative directory after successful
+  verification; the canonical pages, Git history, state, and DokuWiki
+  revisions remain durable.
+- The `master` fast-forward triggered duplicate Check run `32265636429` and
+  managed runtime run `32265636631` at the same exact `c1d0aca` tree. They are
+  in progress; the corresponding feature-branch runs `32261740355` and
+  `32261740309` already passed at that SHA before publication.
 
 - The 18 verified non-Guix commits passed a fresh mandatory review and were
   fast-forwarded to `staging` at `b6b57f486` with normal commit messages and
@@ -440,6 +464,11 @@
 - `bin/kb-contract-fetch`, schema-5 `bin/kb-contract-build`, and bilingual
   `bin/kb-contract-manifest`
 - `bin/kb-release stage` and `bin/kb-release verify` for both Guix pages
+- Fast-forward push of exact contract head `c1d0aca` to `origin/master`
+- Production `bin/kb-page whoami` checks for both wikis
+- Approval-gated `bin/kb-release promote` and production verification for both
+  localized manifests
+- `bin/kb-stage release --yes`
 
 ## Results
 
@@ -813,21 +842,18 @@
 - The current musl stage3 archives still contain 1,508,934,142 bytes under
   `/opt/rust-bin-1.95.0`; the implemented temporary, dependency-checked Portage
   depclean passed both musl image jobs.
-- Integrate the reviewed non-Guix slice on current `origin/staging`, after quick
-  verification and a fresh mandatory review, without repeating the 51-image
-  workflow.
 - The implementation is integrated, all exact-head feature and `staging`
   workflows are green, and the merged worktrees have been removed while
   retaining branch refs. No code or CI work remains for this initiative.
-- The Guix KB release is staged and verified. Await explicit production
-  approval; immediately before promotion, fast-forward the exact pushed
-  contract revision into current `origin/master`, then promote the exact
-  reviewed manifests. Do not rebuild or rewrite the candidates after approval.
+- The Guix KB release is published and verified after explicit production
+  approval. The exact reviewed contract revision is on `master`; the feature
+  and integration branch refs are retained, and no release action remains.
 
 ## Cleanup
 
 - Removed the clean merged `vpsadminos` and `vpsadminos-followup` worktrees
   after all integrated workflows passed.
 - Retained the local and remote feature branches as required.
-- Retained the contract worktree and KB staging ownership until the staged
-  bilingual release is reviewed and either promoted or explicitly discarded.
+- Removed the clean Guix DNS, contract feature, and contract integration
+  worktrees after publication. Released KB staging ownership with no pending
+  release and retained all local and remote feature/integration branch refs.

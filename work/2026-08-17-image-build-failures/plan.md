@@ -185,11 +185,11 @@ returned PASS with no findings. The normal staging push started the complete
 
 ## Guix documentation follow-up
 
-Status: the corrected `guix/20260819` image is published, normal self-hosting
-from `guix:latest` is restored and verified at `96850c6b5`, and the managed
-documentation runtime passes at contract head `c1d0aca`. Both localized pages
-are staged and verified. Production promotion remains approval-gated and
-requires the contract revision to be integrated into `master` first.
+Status: completed. The corrected `guix/20260819` image is published, normal
+self-hosting from `guix:latest` is restored and verified at `96850c6b5`, and
+the managed documentation runtime passes at contract head `c1d0aca`. That
+exact contract revision is integrated into `master`; both localized pages were
+promoted to production and verified with their reviewed summaries.
 
 - Update the managed Czech and English Guix pages for the deployed
   `guix/20260819` image. Explain that `system.scm` inherits the maintained
@@ -229,6 +229,6 @@ requires the contract revision to be integrated into `master` first.
   protocol, or persisted-state format. Existing containers created before the
   corrected artifact retain their generation until they reconfigure from the
   corrected platform module.
-- Staging can use the committed and pushed feature revision. Production will
-  be updated only after explicit approval and after a fast-forward integration
-  of the contract branch into `master`.
+- Staging used the committed and pushed feature revision. After explicit
+  approval, the contract branch was fast-forwarded into `master` and the exact
+  staged manifests were promoted without regenerating their content.
