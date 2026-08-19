@@ -23,19 +23,20 @@
   - Guix DNS follow-up worktree:
     `worktrees/2026-08-17-image-build-failures/vpsadminos-guix-dns`
   - Guix DNS follow-up base: `origin/staging` at `e37be4fd6`
-  - Guix DNS follow-up head: `ce9d7dda3`
+  - Guix DNS follow-up head: `96850c6b5`
   - Guix DNS integration branch:
     `2026-08-17-image-build-failures-guix-dns-integrate`
   - Guix DNS integration worktree:
     removed after fast-forwarding `staging`
-  - Guix DNS integration head: `ce9d7dda3`
+  - Guix DNS integration head: `96850c6b5`
 - `vpsfree-kb-contracts`
   - branch: `2026-08-17-image-build-failures`
   - worktree:
     `worktrees/2026-08-17-image-build-failures/vpsfree-kb-contracts`
   - base: `origin/master` at `1fe36b3`
-  - head: `89a5012`
-  - status: mandatory review passed; ready to push for GitHub testing
+  - head: `c1d0aca`
+  - status: mandatory reviews and GitHub checks passed; bilingual candidates
+    are staged pending production approval and later fast-forward integration
 
 ## Status
 
@@ -95,6 +96,15 @@
   artifact. Once it is available as `latest`, restore the builder setting,
   rebuild with a fresh builder, then rerun the managed KB runtime against the
   corrected exact image version before staging documentation.
+- The user published the corrected Guix image. The public index still exposes
+  exact version `20260819` as both `latest` and `stable`; this is now the
+  corrected replacement artifact. Commit `96850c6b5` removes the temporary
+  `20260613` recovery pin and restores `RELVER=latest`. Builder configuration,
+  Bash syntax, `git diff --check`, and Overcommit pass. A fresh mandatory
+  review returned PASS with no findings. Guix-only run `32253712534` then
+  passed in 44 minutes, including a fresh self-hosted builder from public
+  `guix:latest`; the image job passed in 40 minutes 38 seconds. The exact commit
+  was fast-forwarded into `staging` at `96850c6b5`.
 
 - The deployed `guix/20260819` image changed the supported configuration
   model. The maintained `(vpsadminos)` module now exports
@@ -124,6 +134,30 @@
   one-commit split and approval-gated publication ordering are sound. The
   remaining gap is the long two-container GitHub runtime test against the
   public `20260819` image.
+- Managed runtime run `32231700797` attempt 2 reached every substantive Guix
+  check successfully after the corrected image was published: reconfigure,
+  restart and SSH, deployment dry run, real deployment, signing-key ACL,
+  target reboot, host name, and generation checks all passed. Its only failure
+  was a stale static assertion that expected the unconfigured dhcpcd service
+  form; the corrected platform intentionally configures
+  `no-hook '("resolv.conf")`.
+- Commit `c1d0aca` updates that assertion to require the configured resolver
+  hook. Nix parsing, `git diff --check`, and the full contract check pass. A
+  fresh mandatory review returned PASS with no findings. Quick Check run
+  `32261740355` and managed runtime run `32261740309` both pass; the latter
+  completed all four managed page suites in 24 minutes 50 seconds.
+- A fresh production snapshot contains 114 Czech and 77 English pages. The
+  schema-5 candidate builder reconciled both Guix pages as Git-only managed
+  changes at exact pushed contract head
+  `c1d0aca2b7848a29512811e157b0e8cb4c3184cc`. The bilingual manifests were
+  staged and verified under session ownership, including exact localized
+  summaries, managed source/test links, and Czech/English page pairing.
+- The optional global navigation annotation checker cannot currently validate
+  the otherwise identical source and candidate inventories because its static
+  inventory still lists five Czech pages that no longer exist in production.
+  This predates the Guix change and does not affect its managed-page contract,
+  release checksums, or schema-5 manifest verification. The mismatch is
+  recorded as a reusable workspace note.
 
 - The 18 verified non-Guix commits passed a fresh mandatory review and were
   fast-forwarded to `staging` at `b6b57f486` with normal commit messages and
@@ -398,6 +432,14 @@
 - `nix-instantiate --parse tests/suite/kb/guix.nix`
 - `nix develop --command bin/check`
 - English/Czech user-facing prose and typography scans
+- Public Guix image index and archive availability checks
+- Fresh Guix self-host workflow run `32253712534`
+- Managed KB runtime artifact inspection for run `32231700797` attempt 2
+- Managed KB Quick Check run `32261740355`
+- Managed KB runtime run `32261740309`
+- `bin/kb-contract-fetch`, schema-5 `bin/kb-contract-build`, and bilingual
+  `bin/kb-contract-manifest`
+- `bin/kb-release stage` and `bin/kb-release verify` for both Guix pages
 
 ## Results
 
@@ -777,9 +819,15 @@
 - The implementation is integrated, all exact-head feature and `staging`
   workflows are green, and the merged worktrees have been removed while
   retaining branch refs. No code or CI work remains for this initiative.
+- The Guix KB release is staged and verified. Await explicit production
+  approval; immediately before promotion, fast-forward the exact pushed
+  contract revision into current `origin/master`, then promote the exact
+  reviewed manifests. Do not rebuild or rewrite the candidates after approval.
 
 ## Cleanup
 
 - Removed the clean merged `vpsadminos` and `vpsadminos-followup` worktrees
   after all integrated workflows passed.
 - Retained the local and remote feature branches as required.
+- Retained the contract worktree and KB staging ownership until the staged
+  bilingual release is reviewed and either promoted or explicitly discarded.

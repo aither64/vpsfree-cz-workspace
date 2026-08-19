@@ -185,10 +185,11 @@ returned PASS with no findings. The normal staging push started the complete
 
 ## Guix documentation follow-up
 
-Status: the platform DNS fix and recovery bootstrap are integrated into
-`staging` at `ce9d7dda3` after the exact feature head passed its Guix-only
-workflow. Publication of the corrected Guix image is the next deployment gate;
-the documentation runtime and release stay pending until that artifact exists.
+Status: the corrected `guix/20260819` image is published, normal self-hosting
+from `guix:latest` is restored and verified at `96850c6b5`, and the managed
+documentation runtime passes at contract head `c1d0aca`. Both localized pages
+are staged and verified. Production promotion remains approval-gated and
+requires the contract revision to be integrated into `master` first.
 
 - Update the managed Czech and English Guix pages for the deployed
   `guix/20260819` image. Explain that `system.scm` inherits the maintained
@@ -207,18 +208,16 @@ the documentation runtime and release stay pending until that artifact exists.
   osctld injects `/etc/resolv.conf`, replacing the configured nameserver with
   an empty generated file. Disable only dhcpcd's resolver hook so development
   DHCP and the `networking` Shepherd provision remain available.
-- Bootstrap the corrective build from known-good `guix/20260613`, because the
-  broken `20260819` artifact is currently both `latest` and `stable` and cannot
-  repair itself before builder networking is checked. After publishing the
-  correction, restore the builder to `latest` and run a second Guix-only build
-  to prove the normal self-hosted path before integration.
+- Bootstrap the corrective build from known-good `guix/20260613`, then restore
+  the builder to `latest` after publishing the replacement and run a second
+  Guix-only build to prove the normal self-hosted path before integration.
 - Run the contract's quick validation in its pinned Nix shell, commit the
   focused bilingual change, and obtain a fresh mandatory change review before
   pushing the feature branch for GitHub runtime testing.
-- After the exact feature revision passes, build and stage bilingual managed
-  KB candidates and a schema-5 release manifest. Production promotion remains
-  approval-gated and requires the contract revision to be integrated into
-  `master` first.
+- Build and stage bilingual managed KB candidates and schema-5 release
+  manifests after the exact feature revision passes. Production promotion
+  remains approval-gated and requires the contract revision to be integrated
+  into `master` first.
 
 ### Documentation compatibility and deployment
 
@@ -227,11 +226,9 @@ the documentation runtime and release stay pending until that artifact exists.
   images.
 - The change affects documentation, its executable example, and test fixtures
   plus the Guix image's DHCP resolver integration. It changes no API, schema,
-  protocol, or persisted-state format. Existing `20260819` containers keep the
-  faulty service until they reconfigure from the corrected platform module;
-  a corrected image must be built and published, and the managed runtime must
-  target that exact corrected artifact, before the documentation release can
-  advance.
+  protocol, or persisted-state format. Existing containers created before the
+  corrected artifact retain their generation until they reconfigure from the
+  corrected platform module.
 - Staging can use the committed and pushed feature revision. Production will
   be updated only after explicit approval and after a fast-forward integration
   of the contract branch into `master`.
