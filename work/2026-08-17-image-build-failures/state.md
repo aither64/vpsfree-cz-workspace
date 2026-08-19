@@ -18,8 +18,44 @@
   - follow-up head: `b0646d988cc8af3427a7997a1a00b06beb702acf`
   - Guix draft worktree:
     removed after its commits were copied to the follow-up branch
+- `vpsfree-kb-contracts`
+  - branch: `2026-08-17-image-build-failures`
+  - worktree:
+    `worktrees/2026-08-17-image-build-failures/vpsfree-kb-contracts`
+  - base: `origin/master` at `1fe36b3`
+  - head: `89a5012`
+  - status: mandatory review passed; ready to push for GitHub testing
 
 ## Status
+
+- The deployed `guix/20260819` image changed the supported configuration
+  model. The maintained `(vpsadminos)` module now exports
+  `%ct-operating-system-base`, and the shipped `system.scm` resolves and
+  inherits that base while keeping host name, timezone, and locale visible as
+  user defaults. The managed KB pages and runtime fixture still describe the
+  previous direct `%ct-services`, `%ct-file-systems`, and `%ct-bootloader`
+  assembly and test image `20260613`.
+- A separate `vpsfree-kb-contracts` worktree was created from the latest
+  fetched `origin/master`. The planned update keeps the full `guix deploy`
+  example, modifies inherited OpenSSH services eagerly before constructing
+  the operating-system record, tests a dry run before deployment, and targets
+  only the current `20260819` image. No production KB write is authorized yet.
+- The bilingual pages, shared deployment fixture, registry fingerprints, and
+  Guix runtime contract are updated. A Guix 1.5 fresh-user-module evaluation
+  loaded the exact shared fixture, forced 19 user services and 38 total
+  services, and returned host name `guix-target`; this covers the delayed
+  service binding that motivated the documentation change. The Scheme reader,
+  Nix parser, page contract, full `bin/check`, prose scans, and
+  `git diff --check` pass. The expensive two-container reconfigure/deploy test
+  remains intentionally delegated to GitHub Actions after mandatory review.
+- A fresh standalone mandatory review of `89a5012` returned PASS with no
+  Blocking, Important, or Advisory findings. It independently confirmed that
+  the delayed `services` field captures the eagerly computed lexical service
+  list, that Guix accepts the documented post-file `--dry-run` option, that
+  page samples and registry metadata match the executed fixture, and that the
+  one-commit split and approval-gated publication ordering are sound. The
+  remaining gap is the long two-container GitHub runtime test against the
+  public `20260819` image.
 
 - The 18 verified non-Guix commits passed a fresh mandatory review and were
   fast-forwarded to `staging` at `b6b57f486` with normal commit messages and
@@ -287,6 +323,13 @@
   teardown checks
 - Actionlint and detector self-change/full-matrix checks
 - Official `actions/checkout` latest-release verification
+- Created the `vpsfree-kb-contracts` feature worktree from fetched
+  `origin/master`
+- Guile reader parse of the shared Guix deployment fixture
+- Guix 1.5 fresh-user-module load and forced operating-system service access
+- `nix-instantiate --parse tests/suite/kb/guix.nix`
+- `nix develop --command bin/check`
+- English/Czech user-facing prose and typography scans
 
 ## Results
 

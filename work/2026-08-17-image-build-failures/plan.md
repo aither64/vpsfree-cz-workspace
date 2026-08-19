@@ -10,6 +10,7 @@ authenticated channel, and validate the affected images in GitHub Actions.
 ## Affected repositories
 
 - `vpsadminos`
+- `vpsfree-kb-contracts`
 
 ## Approach
 
@@ -181,3 +182,37 @@ returned PASS with no findings. The normal staging push started the complete
   resource-aware `--jobs auto`.
 - Inspect logs and artifacts for every failure, fix causes, and cancel
   superseded runs after follow-up pushes.
+
+## Guix documentation follow-up
+
+- Update the managed Czech and English Guix pages for the deployed
+  `guix/20260819` image. Explain that `system.scm` inherits the maintained
+  `%ct-operating-system-base`, while member settings such as host name,
+  timezone, locale, and packages remain visible in `system.scm`.
+- Keep the complete `guix deploy` example, but inherit the platform base and
+  construct the modified service list before the `operating-system` record.
+  This keeps delayed Guix fields independent of the disposable configuration
+  module and avoids duplicating bootloader, kernel, file-system, and essential
+  service details.
+- Update the executable fixture and Guix runtime contract to use image
+  `20260819`, verify the new platform inheritance and dhcpcd integration, run
+  the documented deployment dry run, and then perform the real deployment.
+- Run the contract's quick validation in its pinned Nix shell, commit the
+  focused bilingual change, and obtain a fresh mandatory change review before
+  pushing the feature branch for GitHub runtime testing.
+- After the exact feature revision passes, build and stage bilingual managed
+  KB candidates and a schema-5 release manifest. Production promotion remains
+  approval-gated and requires the contract revision to be integrated into
+  `master` first.
+
+### Documentation compatibility and deployment
+
+- The pages document only the current supported `guix/20260819` image. The
+  runtime test does not retain compatibility branches for older untagged Guix
+  images.
+- The change affects documentation, its executable example, and test fixtures
+  only. It changes no API, schema, protocol, persisted state, node
+  configuration, or running container.
+- Staging can use the committed and pushed feature revision. Production will
+  be updated only after explicit approval and after a fast-forward integration
+  of the contract branch into `master`.
