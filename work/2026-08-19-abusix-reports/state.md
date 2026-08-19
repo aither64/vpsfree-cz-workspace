@@ -4,19 +4,17 @@
 
 - `vpsfree-cz-configuration`
   - branch: `2026-08-19-abusix-reports`
-  - worktree:
-    `worktrees/2026-08-19-abusix-reports/vpsfree-cz-configuration`
+  - worktree: removed after merge
   - base inspected: `origin/master` at
     `3733ab8c71b8dcfa2ad29a22ca25ed8f3acc4615`
 
 ## Status
 
-Implementation and quick local verification are complete. The parser supports
-XARF v3 and v4 decoding while the automatic-forwarding policy is restricted to
-Abusix spam-trap reports with textual evidence. The supplied messages both pass
-the parser in dry-run tests. The mandatory independent review and its follow-up
-verification are complete with no remaining findings. Both API configurations
-built successfully, and the feature branch is pushed.
+Merged into `master` by fast-forward and pushed at
+`50e8f42020ffa2351e4ff14c06d864cf99241fb6`. The parser supports XARF v3 and
+v4 decoding while the automatic-forwarding policy is restricted to Abusix
+spam-trap reports with textual evidence. Verification, independent review, and
+both API configuration builds completed successfully.
 
 ## Commands run
 
@@ -57,6 +55,16 @@ built successfully, and the feature branch is pushed.
 - `nix develop -c gh run list --repo
   vpsfreecz/vpsfree-cz-configuration --branch
   2026-08-19-abusix-reports ...`
+- Created temporary integration worktree
+  `worktrees/2026-08-19-abusix-reports/vpsfree-cz-configuration-merge`
+  on local `master`
+- `git merge --ff-only 2026-08-19-abusix-reports`
+- `nix develop -c bundle exec rake spec` from the integration worktree
+- `nix develop -c bundle exec rubocop` from the integration worktree
+- `git push origin master`
+- `nix develop -c gh run list --repo
+  vpsfreecz/vpsfree-cz-configuration --commit 50e8f420... ...`
+- Removed the temporary integration and feature worktrees
 
 ## Results
 
@@ -146,6 +154,18 @@ built successfully, and the feature branch is pushed.
 - No GitHub Actions run was created for the branch. The repository's only
   workflow is the scheduled or manually dispatched dependency updater, so
   there is no push-triggered CI to monitor for this feature.
+- The temporary `master` worktree was created from current
+  `origin/master`. Its checkout hook reported the same known ambient-shell
+  Bundler error as initial worktree creation; hook setup succeeded through
+  `nix develop`.
+- `master` fast-forwarded from `3733ab8c` to `50e8f420` without conflicts.
+- Post-merge verification from the temporary `master` worktree passed with 39
+  RSpec examples and no failures; RuboCop inspected 34 files with no offenses.
+- Remote `master`, local `master`, the local feature branch, and the remote
+  feature branch all point to
+  `50e8f42020ffa2351e4ff14c06d864cf99241fb6`.
+- The `master` push created no GitHub Actions run because the repository has
+  no push-triggered workflow.
 
 ## Decisions and follow-up
 
@@ -163,9 +183,7 @@ built successfully, and the feature branch is pushed.
 
 - The supplied `.eml` files remain only under the ignored/untracked `tmp/`
   evidence directory and must not be committed.
-- The feature worktree contains only generated, untracked development artifacts
-  under `.bin/`, `.bundle/`, and `.rubocop_cache/`; all tracked files are
-  committed and match the pushed branch.
-- Keep the feature branch and worktree until the change is reviewed and
-  integrated. Remove the worktree after merge; keep branch refs unless the user
-  explicitly requests deletion.
+- The temporary integration and feature worktrees were removed after the
+  successful push. Their generated `.bin/`, `.bundle/`, and
+  `.rubocop_cache/` artifacts were removed with them.
+- Local and remote feature branch refs are retained as required.
