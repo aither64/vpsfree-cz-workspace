@@ -197,6 +197,16 @@ returned PASS with no findings. The normal staging push started the complete
 - Update the executable fixture and Guix runtime contract to use image
   `20260819`, verify the new platform inheritance and dhcpcd integration, run
   the documented deployment dry run, and then perform the real deployment.
+- Keep vpsAdminOS-managed resolver configuration intact. The published image's
+  all-interface dhcpcd service currently invokes its resolver hook after
+  osctld injects `/etc/resolv.conf`, replacing the configured nameserver with
+  an empty generated file. Disable only dhcpcd's resolver hook so development
+  DHCP and the `networking` Shepherd provision remain available.
+- Bootstrap the corrective build from known-good `guix/20260613`, because the
+  broken `20260819` artifact is currently both `latest` and `stable` and cannot
+  repair itself before builder networking is checked. After publishing the
+  correction, restore the builder to `latest` and run a second Guix-only build
+  to prove the normal self-hosted path before integration.
 - Run the contract's quick validation in its pinned Nix shell, commit the
   focused bilingual change, and obtain a fresh mandatory change review before
   pushing the feature branch for GitHub runtime testing.
@@ -211,8 +221,12 @@ returned PASS with no findings. The normal staging push started the complete
   runtime test does not retain compatibility branches for older untagged Guix
   images.
 - The change affects documentation, its executable example, and test fixtures
-  only. It changes no API, schema, protocol, persisted state, node
-  configuration, or running container.
+  plus the Guix image's DHCP resolver integration. It changes no API, schema,
+  protocol, or persisted-state format. Existing `20260819` containers keep the
+  faulty service until they reconfigure from the corrected platform module;
+  a corrected image must be built and published, and the managed runtime must
+  target that exact corrected artifact, before the documentation release can
+  advance.
 - Staging can use the committed and pushed feature revision. Production will
   be updated only after explicit approval and after a fast-forward integration
   of the contract branch into `master`.

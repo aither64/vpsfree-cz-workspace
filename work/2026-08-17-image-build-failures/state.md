@@ -18,6 +18,12 @@
   - follow-up head: `b0646d988cc8af3427a7997a1a00b06beb702acf`
   - Guix draft worktree:
     removed after its commits were copied to the follow-up branch
+  - Guix DNS follow-up branch:
+    `2026-08-17-image-build-failures-guix-dns`
+  - Guix DNS follow-up worktree:
+    `worktrees/2026-08-17-image-build-failures/vpsadminos-guix-dns`
+  - Guix DNS follow-up base: `origin/staging` at `e37be4fd6`
+  - Guix DNS follow-up head: `ce9d7dda3`
 - `vpsfree-kb-contracts`
   - branch: `2026-08-17-image-build-failures`
   - worktree:
@@ -27,6 +33,43 @@
   - status: mandatory review passed; ready to push for GitHub testing
 
 ## Status
+
+- Managed page runtime run `32231700797` failed only in `kb/guix#reconfigure`.
+  Both the first reconfigure and the documented deploy dry run failed DNS
+  resolution before Scheme evaluation; all non-Guix runtime tests passed.
+  Run `32231700813` passed the ordinary contract checks.
+- A short local diagnostic against the exact published `guix/20260819` image
+  reproduced the failure without starting `guix time-machine`. osctld
+  successfully configured resolver `10.0.2.3`, the container had its expected
+  address and default route, but `/etc/resolv.conf` contained only dhcpcd's
+  empty generated header. The new all-interface dhcpcd service overwrites the
+  vpsAdminOS-managed resolver file. A focused vpsAdminOS follow-up will disable
+  only dhcpcd's `resolv.conf` hook, preserving DHCP for development use and the
+  `networking` Shepherd provision.
+- The focused resolver fix is committed at `3d721bd1c`. It configures
+  dhcpcd's `no-hook` field with `resolv.conf` and removes Guix from the shared
+  DNS-test exclusion, so resolver persistence is checked after startup and
+  after runtime updates and restarts. Guix 1.5 loaded the exact module and
+  found one dhcpcd service with `no-hook` equal to `("resolv.conf")`; Bash
+  syntax, `git diff --check`, and the full Overcommit pre-commit suite pass.
+  No long image build has started. Existing published `20260819` artifacts are
+  unchanged; after review, a Guix-only build must pass and a corrected dated
+  image must be published before the KB runtime version can be advanced.
+- The initial mandatory review found one Blocking deployment prerequisite:
+  the public `20260819` image is both `latest` and `stable`, so a fresh builder
+  would lose DNS before reaching the candidate configuration. Commit
+  `ce9d7dda3` temporarily pins the recovery builder to the available,
+  previously validated `20260613` image and explains when to restore `latest`.
+  Builder configuration output selects `guix/20260613`; Bash syntax,
+  `git diff --check`, and Overcommit pass. The reviewer is checking the updated
+  two-commit head. No long image test has started.
+- The reviewer rechecked head `ce9d7dda3` and returned PASS with no Blocking,
+  Important, or Advisory findings. It independently confirmed that the dated
+  image is available, the recovery pin is cleanly revertible, and change
+  detection selects only Guix. The branch is pushed. Guix-only workflow run
+  `32236056671` is in progress; after it passes, the corrected artifact must be
+  published, the builder restored to `latest`, and a fresh Guix-only build run
+  so a persistent builder cannot mask the self-hosting check.
 
 - The deployed `guix/20260819` image changed the supported configuration
   model. The maintained `(vpsadminos)` module now exports
