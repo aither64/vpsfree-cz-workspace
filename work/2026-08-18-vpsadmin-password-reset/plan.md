@@ -1,0 +1,107 @@
+# 2026-08-18-vpsadmin-password-reset
+
+## Goal
+
+Add self-service password recovery to the vpsAdmin OAuth server. Recovery is
+available only to accounts with effective TOTP or WebAuthn configuration. The
+public request form accepts a login or primary email address and never reveals
+whether an account exists or can use recovery.
+
+## Affected repositories
+
+- `vpsadmin`: schema, recovery state and operations, OAuth forms and routes,
+  MFA integration, mail queue integration, localization, and tests.
+- `vpsfree-mail-templates`: Czech and English production recovery template.
+- `vpsfree-kb-contracts`: pin the exact vpsAdmin feature revision and run the
+  visible-WebUI impact contract; update captures or managed documentation only
+  if the contract reports the OAuth/recovery screens as covered concepts.
+
+## Approach
+
+- Resolve an exact login first. Otherwise find all users with the submitted
+  primary email, using the database's case-insensitive collation.
+- Make the public POST account-independent by inserting one
+  `PasswordRecoverySubmission` for every non-empty identifier. A dedicated API
+  worker claims submissions with row locking, resolves accounts, and performs
+  mail work after the HTTP response. Failed work is retried up to three times;
+  processed rows are deleted and abandoned rows are retained for at most one
+  day. Admission is serialized and bounded globally and per source address so
+  the uniform queue cannot grow without limit.
+- Send one combined message per destination. It lists every matching login and
+  contains a separate one-hour, single-use link for each eligible account. An
+  account without MFA gets a support notice instead of a link.
+- Represent one delivery with `PasswordRecoveryRequest` and one child
+  `PasswordRecovery` per account. Link tokens are scoped to a child recovery.
+- Queue one normal `MailLog`/mail transaction with no single user association,
+  explicit language and destination, and no configured alternate recipients.
+  The persistent mail body necessarily contains the rendered one-hour links;
+  recovery records store only token digests and MFA is always required.
+- Exchange a link for a 15-minute recovery session. Verify TOTP, an existing
+  recovery code, or WebAuthn before showing the password form. Invalid MFA does
+  not require re-entering the password, and password validation errors do not
+  require repeating MFA while the recovery session remains valid.
+- Offer the existing session-logout choice, checked by default. When unchecked,
+  existing token, OAuth authorization-code, and SSO state remains usable, while
+  incomplete password/TOTP continuations are invalidated by every password
+  change. A successful reset invalidates all other recovery state for that
+  account and restarts OAuth through the configured client authorization start
+  URI without logging the user in automatically. Successful password
+  authentication and OAuth token issuance carry a per-user generation and
+  revalidate it under the user row lock so concurrent password changes cannot
+  publish stale credentials.
+- Gate all new public behavior behind `core.password_recovery_enabled`, which
+  defaults to false.
+
+## Compatibility and deployment
+
+- Schema additions are backward compatible: new recovery and submission
+  tables, a nullable OAuth client start URI, recovery context on WebAuthn
+  challenges, a non-unique user email index, and a defaulted non-null
+  authentication generation on users.
+- Old API processes ignore the new schema. Keep the feature disabled until all
+  OAuth API instances, the password-recovery workers, and templates are updated
+  and client start URIs are set. The worker discards queued submissions while
+  the feature is disabled, so disabling the flag is also the first rollback
+  step.
+- Deploy the additive migrations first, then the templates and API/auth/WebUI
+  application configuration, verify the workers and OAuth client start URIs,
+  and enable the feature last. All application instances includes every
+  process that can perform Basic/token authentication or update passwords, not
+  only the OAuth frontend. For rollback, disable the feature, stop the new
+  workers, return all application instances to the old version, and only then
+  migrate down; new processes must not run after their required columns are
+  removed.
+- WebUI clients must list the separate authentication origin in
+  `api.oauth2TrustedOrigins`. The production and development configurations
+  already do so; the integration fixture carries the same explicit trust so it
+  exercises the deployed cross-origin OAuth description safely.
+- Production deployment and merging are out of scope for this session. The
+  operator handoff will document deployment ordering and rollback by disabling
+  the feature first.
+- No vpsAdminOS protocol change is expected. The admin API adds the optional
+  OAuth client authorization-start URI and permits an account-neutral mail log
+  to expose `user: null`. These changes are additive and existing consumers
+  remain compatible. The current generated Go client does not expose the new
+  OAuth setting, so operators must configure it through another admin API/WebUI
+  path; regeneration is deferred until that client is otherwise refreshed.
+  The KB contract impact check is required because the OAuth sign-in page
+  changes; any resulting capture or documentation changes remain
+  deployment-independent.
+
+## Testing plan
+
+- Add model, worker, operation, route, mail, token, MFA, OAuth redirect,
+  localization, and migration specs, including shared-email, asynchronous
+  non-disclosure, retry, and feature-disable scenarios.
+- Run focused API specs, migration checks, i18n maintenance, RuboCop, active
+  Overcommit hooks, mail-template rendering, and CI selection coverage.
+- Commit quick-verified changes, then run the mandatory fresh-agent change
+  review before long integration tests.
+- Run the OAuth/WebUI authentication integration test through the dedicated
+  auth frontend and deploy a single-node bridge-network dev cluster. Seed
+  shared-email accounts with TOTP and without MFA, verify the worker and the
+  combined message in Mailpit, and leave the cluster running for user
+  acceptance.
+- After pushing the vpsAdmin feature commit, pin that exact revision in
+  `vpsfree-kb-contracts` and run `nix develop -c bin/check`. Regenerate only the
+  bilingual screenshots or page contracts that are actually reported.
