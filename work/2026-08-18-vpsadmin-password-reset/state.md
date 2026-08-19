@@ -425,6 +425,60 @@
   grouped `MailLog.user_id`. The token is unconsumed, uninvalidated, and valid
   until `2026-08-19 10:07:12 UTC`; the message is intentionally left untouched
   for user acceptance.
+- Exact-head KB GitHub Actions are green: `Check` passed and the managed-page
+  runtime completed successfully in 39 minutes 18 seconds.
+- The exact-head API topic workflow encountered an external package-mirror
+  failure before Ruby or any affected spec ran. Multiple independent
+  `ubuntu-latest` jobs reached their 45-minute timeout inside `apt-get update`:
+  logs show repeated failures against `azure.archive.ubuntu.com`, a fallback
+  to `archive.ubuntu.com`, and then no package-index progress until GitHub
+  cancelled the step. Seven matrix jobs that reached their package mirror
+  normally completed successfully. The full integration workflow is
+  unaffected and still running. Wait for the topic workflow to finish, then
+  rerun its failed jobs only after retaining this root-cause evidence.
+- After the cancelled first attempt closed, only its affected jobs were
+  rerun. Every rerun job cleared package installation, executed RSpec, and the
+  exact-head API topic workflow completed successfully on attempt 2 with all
+  27 jobs green. This confirms the recorded first-attempt failure was external
+  to the feature. The exact-head full integration workflow remains the sole
+  GitHub Actions job in progress.
+- The exact-head full integration attempt was interrupted by the operator's
+  planned runner deployment at `2026-08-19 11:31:56 UTC`. The retained job log
+  explicitly says the runner received a shutdown signal; immediately before
+  it, the suite reported 95 expected successes, zero expected or unexpected
+  failures, three running, and 19 remaining. Both `webui#users-self-service`
+  and `webui#auth` had passed in this attempt. GitHub skipped artifact upload
+  and result evaluation because the runner stopped. The exact same run was
+  restarted as attempt 2 after the new runner came online and was picked up
+  immediately.
+- Full integration attempt 2 completed 114 of 117 tests successfully. Its
+  uploaded artifact was inspected before another rerun. `vps/create` and
+  `vps/clone-same-node` failed during Nix evaluation because the runner store
+  no longer contained the MariaDB 11.4.12 derivation. `vps/replace-remote`
+  failed 8.5 guest-seconds into boot with a Linux 6.18.43 write-protection
+  page fault in `__execmem_cache_free`; it never reached API readiness or a
+  scenario assertion. These failures are unrelated to the feature.
+- At the user's request, a fresh independent agent investigated the kernel
+  failure. The trace matches Linux's executable-memory cache race under
+  parallel module loading, fixed upstream by commit `1871d548fc4f`
+  (`mm/execmem: make the populate and alloc atomic`). A durable workspace note
+  records the evidence, safe mitigation, proposed vpsAdminOS kernel backport,
+  and verification plan at
+  `notes/vpsadmin/2026-08-19-linux-execmem-ci-kernel-page-fault.md`. No
+  vpsAdminOS or kernel change was made in this password-recovery initiative.
+- The authorized attempt-3 rerun then completed successfully. All 117 selected
+  integration tests passed, with zero unexpected failures or successes, in
+  21,367.76 seconds. Exact-head GitHub Actions are therefore green for the
+  vpsAdmin API topic matrix, full integration suite, i18n workflow, KB checks,
+  and managed-page runtime.
+- A final shared-email recovery submission returned the neutral HTTP 303 at
+  `2026-08-19 22:08 UTC` and produced Mailpit message
+  `1UPqQ0KBwrJcr1HrziKHsj`. Database request 3 has exactly two children:
+  `test-user1` is recoverable with an unconsumed, uninvalidated, uncompleted
+  email token, while `test-user2` has the `no_mfa` support-only outcome and no
+  token. The grouped MailLog has `user_id = NULL`. At verification the link
+  had 3,457 seconds of its one-hour lifetime remaining; it was not opened or
+  consumed and is left in the newest Mailpit message for user acceptance.
 
 ## Open questions
 
