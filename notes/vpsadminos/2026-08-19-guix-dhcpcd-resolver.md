@@ -37,7 +37,10 @@ post-start resolver check.
 The local diagnostic confirmed the configured address and routes alongside the
 empty dhcpcd-generated resolver file. Guix 1.5 loaded the corrected module and
 reported exactly one dhcpcd service whose `no-hook` value is
-`("resolv.conf")`. Full verification requires building a corrected dated Guix
-image and running its image and managed KB tests.
+`("resolv.conf")`. The Guix-only workflow built the corrected candidate from
+known-good `guix/20260613`; its full image runtime suite passed, including the
+now-enabled resolver test. Publication and a fresh self-hosted build from
+corrected `guix:latest` remain required before removing the temporary recovery
+pin.
 
 Related initiative: `work/2026-08-17-image-build-failures/`.

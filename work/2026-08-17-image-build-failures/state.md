@@ -24,6 +24,11 @@
     `worktrees/2026-08-17-image-build-failures/vpsadminos-guix-dns`
   - Guix DNS follow-up base: `origin/staging` at `e37be4fd6`
   - Guix DNS follow-up head: `ce9d7dda3`
+  - Guix DNS integration branch:
+    `2026-08-17-image-build-failures-guix-dns-integrate`
+  - Guix DNS integration worktree:
+    removed after fast-forwarding `staging`
+  - Guix DNS integration head: `ce9d7dda3`
 - `vpsfree-kb-contracts`
   - branch: `2026-08-17-image-build-failures`
   - worktree:
@@ -66,10 +71,30 @@
 - The reviewer rechecked head `ce9d7dda3` and returned PASS with no Blocking,
   Important, or Advisory findings. It independently confirmed that the dated
   image is available, the recovery pin is cleanly revertible, and change
-  detection selects only Guix. The branch is pushed. Guix-only workflow run
-  `32236056671` is in progress; after it passes, the corrected artifact must be
-  published, the builder restored to `latest`, and a fresh Guix-only build run
-  so a persistent builder cannot mask the self-hosting check.
+  detection selects only Guix. The branch was pushed and Guix-only workflow
+  run `32236056671` started. The remaining sequence was to pass that run,
+  publish the corrected artifact, restore the builder to `latest`, and use a
+  fresh Guix-only build to prevent a persistent builder from masking the
+  self-hosting check.
+- Feature workflow run `32236056671` passed the exact head in 41 minutes. The
+  detector selected only `image-scripts/test@guix`; the image build and full
+  runtime suite passed in 2204.76 seconds. Successful-job log retention omits
+  the inner test artifact, but the shared image test enumerates every configured
+  test and Guix is no longer exempt from `dns_resolver.sh`, whose delayed,
+  runtime-update, restart, and multiple-resolver assertions must all return
+  success for the image test to pass.
+- A fresh integration worktree fast-forwarded the reviewed two-commit series
+  onto unchanged `origin/staging` and pushed `staging` at `ce9d7dda3`; the
+  temporary integration worktree was removed and its branch retained. The
+  first merge command was accidentally issued from the coordination checkout
+  after `git worktree add` and failed without changing either repository; the
+  merge was then run from the intended integration worktree.
+- Staging push run `32239696390` is a duplicate build of the identical
+  `ce9d7dda3` tree and is in progress. The validated feature run closes code
+  integration, but deployment remains gated on publishing a corrected Guix
+  artifact. Once it is available as `latest`, restore the builder setting,
+  rebuild with a fresh builder, then rerun the managed KB runtime against the
+  corrected exact image version before staging documentation.
 
 - The deployed `guix/20260819` image changed the supported configuration
   model. The maintained `(vpsadminos)` module now exports

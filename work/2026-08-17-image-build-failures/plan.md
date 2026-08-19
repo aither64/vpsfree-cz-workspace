@@ -185,6 +185,11 @@ returned PASS with no findings. The normal staging push started the complete
 
 ## Guix documentation follow-up
 
+Status: the platform DNS fix and recovery bootstrap are integrated into
+`staging` at `ce9d7dda3` after the exact feature head passed its Guix-only
+workflow. Publication of the corrected Guix image is the next deployment gate;
+the documentation runtime and release stay pending until that artifact exists.
+
 - Update the managed Czech and English Guix pages for the deployed
   `guix/20260819` image. Explain that `system.scm` inherits the maintained
   `%ct-operating-system-base`, while member settings such as host name,
