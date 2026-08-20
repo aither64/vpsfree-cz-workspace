@@ -496,6 +496,55 @@
   fragments, and only the validated origin is added to `img-src`.
 - The Linux page fault remains documented but is not being patched, per the
   user's explicit decision. No kernel or vpsAdminOS files are in scope.
+- The acceptance follow-up was split into focused wording, HTML-mail, logo/CSP,
+  and OAuth-restart commits. Production mail wording and HTML are separate, and
+  the KB history contains one final exact-pin commit. Clean pushed heads are:
+  - `vpsadmin`: `60126568cd7b6cd6c806efb4ed476774e37b4c4f`
+  - `vpsfree-mail-templates`:
+    `e6a9d9bbe058ca9279fa825d7bbd91dae8958c8f`
+  - `vpsfree-kb-contracts`:
+    `20517911557ea142507f0c6e2ee33860d7f286b7`
+- Focused final-tree verification passes: 34 API examples, RuboCop, API i18n
+  update and health, Playwright JavaScript syntax, Nix formatting, all changed
+  ERB compilation, active Overcommit hooks, and the full KB contract with its
+  120-image inventory.
+- The fresh standalone mandatory review found no Blocking or Important issue.
+  Its one Advisory notes that custom-route coverage still synchronizes
+  `custom_routes_coverage_spec.rb` with `covered_custom_routes.yml` manually.
+  All twelve recovery routes are correctly covered. Consolidating that existing
+  test registry is deferred because it is unrelated architecture cleanup and
+  does not affect runtime behavior or this feature's coverage.
+- The exact `60126568c` `./test-runner.sh test 'webui#auth'` integration passes.
+  Its Playwright example completed in 351.02 seconds, the test script in 725.88
+  seconds, and the full isolated test in 967.95 seconds with 1 of 1 tests
+  successful. The browser assertion follows “Back to sign in” through WebUI
+  and confirms that a new authorization starts on the auth frontend.
+- The existing bridge-network development cluster was updated in place to
+  exact clean revision `60126568c`. `/etc/vpsadmin/build-info.json` reports that
+  revision with `revisionDirty: false`; `vpsadmin-api`, nginx, and
+  `vpsadmin-password-recovery` are active and the cluster reports ready. The
+  public recovery page returns HTTP 200, renders the configured logo, and its
+  CSP permits only the validated WebUI logo origin. The live WebUI sign-in
+  entry returns HTTP 302 to the OAuth authorization endpoint instead of the
+  previously empty login shell.
+- The shared-address fixture was reapplied after the service switch:
+  `test-user1` and `test-user2` both use
+  `shared-password-recovery@example.test`; only `test-user1` has effective TOTP,
+  with deterministic secret `JBSWY3DPEHPK3PXP`. A real public request returned
+  the neutral confirmation and produced one grouped multipart message. It has
+  one plain-text link and one HTML action button for `test-user1`, a support-only
+  entry for `test-user2`, and no user-facing recovery-code or single-use
+  wording. A bad factor attempt returned HTTP 422 with the TOTP-only error; a
+  valid TOTP reached the new-password form, whose logo and account label were
+  also verified. No password was changed.
+- The ten-minute recipient throttle was preserved during testing. After moving
+  only the disposable request timestamp outside that window, a final public
+  submission produced fresh Mailpit message `7jLZ5HzjbO8DX7YMr50lnX`. Its
+  per-account reset token was not opened or consumed and is intentionally left
+  as the newest message for user acceptance.
+- Exact-head GitHub Actions are green for vpsAdmin RuboCop, i18n health, and all
+  27 API topic jobs, and for both KB workflows (`Check` and managed-page
+  runtime). The exact-head full vpsAdmin integration workflow is still running.
 
 ## Open questions
 
