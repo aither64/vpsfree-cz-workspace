@@ -744,6 +744,16 @@
   successful run spent 5 hours 7 minutes in the same test step, so the current
   duration is normal and the completed handoff is not held open for that
   multi-hour remote signal.
+- The in-place services update reran the declarative development seed after the
+  final acceptance checks. It reset the two test users to their default email
+  addresses and forced `test-user1.enable_multi_factor_auth` off while leaving
+  its enabled, confirmed `Acceptance TOTP` device intact. This caused the
+  user's next `test-user1` recovery to produce the support-only outcome. The
+  live bridge fixture is corrected: both users again share
+  `shared-password-recovery@example.test`, only `test-user1` has account MFA
+  enabled, and its TOTP device remains enabled and confirmed. The one recent
+  `test-user1` submission was moved outside the ten-minute development throttle
+  window so the user can retry immediately; no replacement request was sent.
 
 ## Cleanup
 
