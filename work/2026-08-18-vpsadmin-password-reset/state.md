@@ -780,10 +780,13 @@
   and health, focused RuboCop, ERB compilation, JavaScript syntax, Nix format,
   `git diff --check`, and all active vpsAdmin hooks pass.
 - The completion follow-up is committed and pushed as vpsAdmin
-  `15e58aefdc878f7fd32db7270d6958ab8a272a9e`. The superseded broad CI run for
-  `eba275914` was cancelled; exact-head workflows are running.
+  `8d61b33fda41169faf2c985c38fd85c9a506c3ca`. The former standalone
+  completion commit and its replacement were consolidated so the unmerged
+  history presents only the final OAuth-login alert design. Superseded CI runs
+  for `eba275914` and `15e58aefd` were cancelled; exact-head workflows are
+  running.
 - The KB contract is mechanically repinned at all six revision sites in
-  commit `66fa70f6ca387c2035f6fab14105a4b13dcc0b35`. Its complete local check passes
+  commit `fcfe56f6da459d1ef8826bd8fe52b671347b0cdf`. Its complete local check passes
   with 42 controls, 34 paths, 35 capture concepts, 90 bindings, four managed
   pages, 12 runtime tests, 21 executable samples, and all 120 PNGs. No managed
   page or screenshot changed.
@@ -792,10 +795,12 @@
   already-documented linked-worktree behavior; the worktree itself was created
   cleanly and all commits ran through the repository Nix shell with active
   hooks.
-- Generated configuration commit `8304a444` pins only the `vpsadmin` services
-  channel (`vpsadminServices`) to exact revision `15e58aefd`. Manual commit
-  `9cf4b722` adds the release-specific deployment runbook and MkDocs navigation.
-  Both commits are pushed on the initiative branch.
+- Generated configuration commit `ec2b42f4` pins only the `vpsadmin` services
+  channel (`vpsadminServices`) to exact revision `8d61b33fd`. Manual commit
+  `957fa346` adds the release-specific deployment runbook and MkDocs navigation.
+  The configuration history was rebuilt from its base so the generated pin
+  message contains the complete final vpsAdmin changelog. Both commits are
+  pushed on the initiative branch.
 - The runbook records the exact authorization start URI for WebUI, Czech and
   English DokuWiki, and Discourse; the schema-first API/frontend rollout; the
   reviewed production mail-template revision; enablement, verification, and
