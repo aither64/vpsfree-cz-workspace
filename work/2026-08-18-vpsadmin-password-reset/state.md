@@ -809,6 +809,73 @@
 - The required fresh standalone mandatory review is the next gate before the
   long WebUI integration test, configuration builds, and bridge-cluster update.
 
+## Final release review and handoff (2026-08-21)
+
+- All affected repositories are committed, clean, pushed over SSH, and match
+  their remote feature branches at these exact revisions:
+  - `vpsadmin`:
+    `cdbe04cca72acfaacccca81e7b95dd55c01b4a9e`
+  - `vpsfree-mail-templates`:
+    `2f6c657321e43d39fa1d464bff78048bb5279573`
+  - `vpsfree-kb-contracts`:
+    `cd1936b157aa200af6bfc48021b7edad1a7b8cbc`
+  - `vpsfree-cz-configuration`:
+    `178e3981f1be3425ae57b77fd7a1e720691a2d90`
+- The final standalone mandatory review first found that the production auth
+  route targeted the API machines instead of the actual `prg/proxy` frontend,
+  that the rollout installed the feature-independent password-change template
+  after starting upgraded APIs, and that security notices accepted a spoofable
+  `Client-IP`. All three findings were fixed. A correction pass reported no
+  remaining Blocking or Important issue. Its final Advisory about the missing
+  `ip_address` mail-template registry variable was also fixed and verified by
+  the same reviewer. The only unchanged Advisory is the pre-existing manual
+  synchronization between the two custom-route coverage inventories.
+- The final vpsAdmin trust-boundary commit uses proxy-controlled `X-Real-IP`
+  with Rack's address as fallback for password-change notices and recovery
+  WebAuthn challenges. The production templates render that explicit address,
+  and `MailTemplate.register :user_password_changed` declares it. Focused
+  regression specs, RuboCop, ERB compilation, and all Overcommit hooks pass.
+- The production configuration branch contains three focused commits: the
+  exact generated `vpsadminServices` pin, the auth-proxy recovery route, and
+  the deployment runbook. The runbook installs templates before upgraded API
+  code, deploys both API nodes plus `cz.vpsfree/containers/prg/proxy`, verifies
+  the disabled route, lists the exact WebUI/DokuWiki/Discourse authorization
+  start URIs, and records rollback. Strict MkDocs validation passes.
+- `nix develop -c bin/check` passes at the final KB pin with 42 controls, 34
+  paths, 35 capture concepts, 90 bindings, four pages, 12 runtime tests, 21
+  executable samples, and all 120 PNGs. Exact-head GitHub Actions are green for
+  both KB workflows and for vpsAdmin RuboCop, i18n health, and all API topic
+  jobs.
+- The final exact-head `./test-runner.sh test 'webui#auth'` passes. The browser
+  example completed in 337.88 seconds, the script in 783.87 seconds, and the
+  full three-machine test in 1,031.13 seconds with one of one tests successful.
+- Final production configuration builds pass independently for
+  `cz.vpsfree/vpsadmin/int.api1`, `cz.vpsfree/vpsadmin/int.api2`, and
+  `cz.vpsfree/containers/prg/proxy`. No production machine was deployed.
+- Updating the existing development service VM initially returned exit 4
+  because the configuration worktree had been added after QEMU started: the
+  new generation expected a `config` virtiofs mount that the running VM could
+  not acquire. The runner was stopped gracefully and restarted with the same
+  preserved state, single topology, and bridge network. The new QEMU command
+  includes the `config` device, `/mnt/configuration` is mounted, and no systemd
+  unit is failed. The documented node `osctld` readiness race was resolved with
+  a scoped node update and `devcluster refresh`.
+- The running bridge cluster reports ready at exact clean vpsAdmin revision
+  `cdbe04cca` (`revisionDirty: false`). API, nginx, WebUI, Mailpit, and the
+  password-recovery worker are active. The public form returns HTTP 200 with
+  the logo and centered OAuth restart link; WebUI's start URI returns HTTP 302
+  to a fresh OAuth authorization.
+- The live acceptance fixture is ready without consuming a recovery request:
+  `test-user1` and `test-user2` share
+  `shared-password-recovery@example.test`; only `test-user1` has account MFA
+  enabled and an enabled, confirmed `Acceptance TOTP` device with deterministic
+  secret `JBSWY3DPEHPK3PXP`. The unfinished recovery queue is empty and the
+  feature flag is enabled.
+- Broad exact-head vpsAdmin CI run `32421058486` remains normally in progress
+  in its multi-hour integration step. There is no runner-shutdown signal or
+  failed attempt to investigate. Superseded in-progress run `32419516057` was
+  cancelled; all other current-head workflows have completed successfully.
+
 ## Cleanup
 
 - Leave the dev cluster running for user acceptance.

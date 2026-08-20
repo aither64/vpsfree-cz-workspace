@@ -172,3 +172,25 @@ whether an account exists or can use recovery.
 - Re-run focused checks, mandatory review, exact-head CI and WebUI integration,
   repin the KB contract, then reset and deploy the bridge-network development
   cluster. Production deployment remains an operator task.
+
+## Final deployment and trust-boundary decisions
+
+- Publish `/oauth2/password-reset` on the real production auth frontend,
+  `cz.vpsfree/containers/prg/proxy`. Its protected vpsAdmin baseline can remain
+  on the stable revision; a low-priority route in shared production frontend
+  configuration proxies this path to `auth_production` and retains the
+  maintenance response.
+- Install both new production mail templates before starting either upgraded
+  API. The password-change security notice is not controlled by the recovery
+  feature flag, so making its template available first preserves existing
+  password-change behavior throughout a rolling deployment.
+- Treat nginx `X-Real-IP` as the trusted client address for password-change
+  notices and recovery WebAuthn challenges. Do not use caller-controlled
+  `Client-IP` for security metadata.
+- Build both production API nodes and the production auth proxy before the
+  operator rollout. Keep the feature disabled until schema, templates, both
+  APIs, the worker, the proxy route, and each OAuth client's authorization
+  start URI have been verified.
+- Production deployment remains exclusively an operator action. This
+  initiative updates and leaves the exact `vpsadminServices` revision and
+  deployment runbook on the feature branch, without deploying production.
