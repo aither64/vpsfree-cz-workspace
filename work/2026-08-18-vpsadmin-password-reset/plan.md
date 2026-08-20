@@ -128,3 +128,32 @@ whether an account exists or can use recovery.
   update the existing bridge dev cluster and leave it running for acceptance.
 - The Linux executable-memory page fault is explicitly out of scope by user
   decision. Do not patch or repin the kernel or vpsAdminOS in this initiative.
+
+## Mail notification and throttling follow-up
+
+- Restore the established automated-mail notice verbatim in the plain and HTML
+  recovery templates. Record the exact English and Czech wording in the local
+  contributor rules for both template repositories so future member-facing
+  mail keeps the notice uniform.
+- Send a plain-text security notification after every successful self-service
+  password change: recovery, an authenticated user changing their own password,
+  and a forced OAuth or token password change. Include the login, time, source
+  address, and user agent. Do not notify for an administrator changing another
+  user's password or for maintenance code.
+- Remove the recipient-address throttle. Rate-limit the normalized submitted
+  login or email value before account lookup, regardless of whether it exists,
+  so different logins sharing one primary email remain independent and the
+  public response does not disclose account existence.
+- Admit one request per submitted value per 10 minutes and at most 10 requests
+  per source address per 10 minutes. Limit the worker queue to 100 unfinished
+  submissions. Return an explicit HTTP 429 with `Retry-After` for either rolling
+  limit and HTTP 503 when queue admission is unavailable.
+- Retain finished submission ledgers for one day so processed work still counts
+  toward rolling limits, while clearing the raw identifier and user agent after
+  processing. Before every claim, terminalize and scrub an exhausted claim that
+  remained stale after a worker process was terminated, so it cannot consume
+  one of the 100 queue slots until daily cleanup. Rewrite the unreleased
+  migration directly and reset disposable development databases.
+- Re-run focused checks, mandatory review, exact-head CI and WebUI integration,
+  repin the KB contract, then reset and deploy the bridge-network development
+  cluster. Production deployment remains an operator task.

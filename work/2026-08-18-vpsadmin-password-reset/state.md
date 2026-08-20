@@ -550,6 +550,143 @@
 
 - None. Product and security choices are recorded in `plan.md`.
 
+## Mail notification and throttling follow-up (2026-08-20)
+
+- The user reported that the recovery message changed the established
+  automated-mail notice, requested a password-changed security message, and
+  found that recipient-address throttling silently suppressed a request for a
+  different login sharing the same primary email.
+- The accepted admission policy uses the normalized submitted value before
+  account lookup: one accepted request per value per 10 minutes, plus the
+  existing 10-per-source rolling limit. Either limit returns HTTP 429 and
+  `Retry-After`. Queue capacity is reduced from 1,000 to 100 unfinished rows;
+  capacity or persistence failures return HTTP 503.
+- Finished submission ledgers will be kept for one day and excluded from queue
+  capacity. The raw identifier and user agent will be cleared after terminal
+  processing. The unreleased migration can be rewritten and the development
+  database reset.
+- Password-change notices cover recovery, authenticated self-service changes,
+  and forced OAuth/token changes. They are plain text, include security details
+  comparable to `user_new_login`, and are not sent for administrator changes to
+  another account.
+- The exact canonical automated-mail notice will be written into both
+  repositories' contributor rules. The English and Czech member-facing copy is
+  being edited under the workspace user-facing-writing and Humanizer guidance.
+- Implementation is in progress from clean pushed heads `60126568c`
+  (vpsAdmin), `e6a9d9bbe` (production mail templates), and `205179115`
+  (KB contracts). The kernel investigation remains out of scope and no kernel
+  or vpsAdminOS change will be made.
+- The follow-up is implemented, committed, and pushed at clean exact heads:
+  - `vpsadmin`: `94c521bfef8dd116a32e37f620b4b5bf0f8cbc8c`
+  - `vpsfree-mail-templates`:
+    `26a010e0b7316a25804a280b713b625572205f88`
+  - `vpsfree-kb-contracts`:
+    `c9c7b4128387f3879d864b448a441d743aa1dbc1`
+- The admission ledger now hashes the normalized submitted value before any
+  account lookup. It returns HTTP 429 with a computed `Retry-After` for the
+  per-value or per-source window and HTTP 503 when the 100-item unfinished
+  queue cannot admit work. Terminal rows are scrubbed and retained for one
+  day; they enforce rolling limits without consuming queue capacity.
+- The recipient-address throttle was removed. Operation coverage confirms that
+  two different submitted logins sharing one primary email create two
+  independent messages, while an email submission can still group all matching
+  accounts in one message.
+- Successful recovery, authenticated self-service, and forced OAuth/token
+  password changes now enqueue the bilingual plain-text security notice.
+  Administrator changes to another account do not. The canonical bilingual
+  automated-mail footer is restored in both recovery message variants and its
+  exact wording is recorded in both repositories' contributor rules.
+- Quick verification passes: 49 queue/worker/operation/route/task examples;
+  both migration examples including rollback; all 27 changed Ruby files under
+  RuboCop; API locale update and health; changed ERB and Ruby syntax; and the
+  two focused authenticated/admin password-change resource examples. The
+  expanded 125-example notification run initially had 124 passes and one
+  fixture-only failure because its deliberate concurrency wrapper lacked a
+  mail server; after isolating the notification chain there, that exact failed
+  example passes. The vpsAdmin Overcommit hook reran Nix formatting, migration
+  specs, WebUI/API i18n checks, and RuboCop successfully at commit time.
+- The mandatory-review commit-split gate was applied before review: the
+  vpsAdmin follow-up is now two independently reviewable commits,
+  `8f27d577a` for throttling/schema and `94c521bfe` for password-change mail.
+  Production mail remains split between canonical-footer policy/content and
+  the new template. Superseded in-progress CI runs for the rewritten vpsAdmin
+  and KB heads were cancelled as required.
+- The KB contract is mechanically pinned at all six lock/configuration sites
+  to exact pushed vpsAdmin revision `94c521bfe...`. `nix develop -c bin/check`
+  passes with 42 controls, 34 paths, 35 capture concepts, 90 bindings, four
+  managed pages, 12 runtime tests, 21 executable samples, and all 120 PNGs.
+- The required fresh standalone mandatory change review is the next gate
+  before the long WebUI integration test and dev-cluster reset/deployment.
+- The fresh mandatory review of exact heads `94c521bfe`, `26a010e0b`, and
+  `c9c7b4128` reported one Blocking history issue, one Important worker edge
+  case, and one Advisory timing issue. The vpsAdmin footer/rule restoration
+  must be split from the notification commit; a worker killed after claiming
+  attempt three leaves an unclaimable unfinished payload until daily cleanup;
+  and admission time was captured before waiting for the serialization lock.
+  All three findings are accepted for correction before integration. The same
+  standalone reviewer will verify the corrected exact heads.
+- All three findings are corrected and pushed. The current clean exact heads
+  are `1096992e4cd6fd0c6263f58fc77ac0f3b255aa7e` for vpsAdmin,
+  `26a010e0b7316a25804a280b713b625572205f88` for the production mail
+  templates, and `ee6b3c079a6282e269465e49876372ec1f25851e` for the KB
+  contract. The vpsAdmin history now has independent commits for throttling,
+  password-change notification, and footer/rule restoration.
+- Admission now measures its rolling windows after obtaining the serialization
+  lock and calculates `Retry-After` against current time. Before claiming new
+  work, the worker terminalizes and scrubs a stale submission whose final
+  attempt was interrupted, releasing its unfinished-queue slot.
+- Focused submission and worker coverage passes with 14 examples. The full
+  expanded notification/password-flow batch also passes with 125 examples,
+  zero failures, and one pre-existing expected pending example. Repository
+  hooks pass for both reconstructed vpsAdmin commits, and the repinned full KB
+  contract passes locally. Superseded running workflows for both rewritten
+  branches were cancelled.
+- The same standalone reviewer is verifying the corrected exact heads before
+  the long OAuth/WebUI integration test and bridge dev-cluster reset.
+- The same standalone reviewer completed the correction pass with no remaining
+  Blocking, Important, or Advisory findings. It confirmed that all original
+  findings are resolved, the three vpsAdmin follow-up commits are focused, all
+  worktrees and SSH remote heads match, and all six KB pin sites resolve to
+  `1096992e4cd6fd0c6263f58fc77ac0f3b255aa7e`.
+- The exact `1096992e4` `./test-runner.sh test 'webui#auth'` integration passes.
+  The Playwright example completed in 363.03 seconds, the script in 807.79
+  seconds, and the isolated test in 1,069.82 seconds with 1 of 1 tests
+  successful.
+- The bridge development cluster was reset because the unreleased migration
+  was rewritten. The old runner exceeded its 120-second stop grace period, so
+  the reset tool killed it, removed only this initiative's GC root/state, and
+  rebuilt a fresh single-node bridge cluster from clean exact revision
+  `1096992e4` (`revisionDirty: false`). Initial post-seed node refresh hit the
+  documented osctld-socket startup race; node1 was already healthy moments
+  later, and the documented scoped `devcluster update ... node1` followed by
+  `devcluster refresh` completed successfully. The cluster is ready and API,
+  nginx, and `vpsadmin-password-recovery` are active.
+- The shared-email acceptance fixture is restored on the fresh database:
+  `test-user1` and `test-user2` use
+  `shared-password-recovery@example.test`; only `test-user1` has effective
+  TOTP, with secret `JBSWY3DPEHPK3PXP`.
+- Live acceptance verifies that immediate `test-user2` and `test-user1`
+  submissions each return the neutral HTTP 303 and produce separate messages.
+  A repeated `test-user1` request returns HTTP 429, a computed `Retry-After`
+  header, and the explicit English wait message. The no-MFA message contains
+  support guidance but no reset action; the MFA-enabled message has plain and
+  HTML actions. Both have the canonical footer and neither mentions recovery
+  codes or single-use behavior.
+- A complete live recovery used the deterministic TOTP, showed the logo and
+  account label on the password form, reset the account to its documented
+  development password, and redirected to WebUI's OAuth-start entry point. It
+  produced the plain password-changed security message with time, source IP,
+  user agent, support guidance, and canonical footer.
+- A final unconsumed acceptance request is the newest Mailpit message,
+  `5oQPUVXLrO1bJgwo7i3d4K`. Its `test-user1` recovery is unconsumed,
+  incomplete, and uninvalidated; it had 3,588 seconds remaining when checked.
+  Leave the bridge cluster running for user acceptance.
+- Exact-head GitHub Actions are green for API topic specs, migration specs,
+  RuboCop, i18n health, libnodectld specs, the KB contract, and managed-page
+  runtime. The full vpsAdmin CI run `32388040775` is still in progress; the
+  user warned that runner redeployment may interrupt it, so inspect evidence
+  and restart it if that occurs.
+
 ## Cleanup
 
 - Leave the dev cluster running for user acceptance.
