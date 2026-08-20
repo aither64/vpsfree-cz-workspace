@@ -686,6 +686,64 @@
   runtime. The full vpsAdmin CI run `32388040775` is still in progress; the
   user warned that runner redeployment may interrupt it, so inspect evidence
   and restart it if that occurs.
+- User acceptance found that the immediate post-reset OAuth redirect hides the
+  successful outcome. The completion follow-up now redirects the password POST
+  to the internal completion page, carries only the persisted recovery client
+  and locale, shows the exact short bilingual confirmation, and offers a button
+  to start a fresh OAuth authorization. It never accepts a browser-provided
+  redirect target and omits the button if the saved client has no configured
+  authorization start URI.
+- The focused password-recovery route spec passes with 20 examples. API i18n
+  update/health, RuboCop for the touched Ruby files, ERB compilation with the
+  production trim mode, JavaScript syntax, and `git diff --check` pass. The
+  first focused rerun exposed one old redirect expectation and the first i18n
+  health run exposed the stale explicit key inventory; both test-backed issues
+  were corrected before commit.
+- The completion follow-up is committed and pushed as vpsAdmin
+  `eba275914372bb69db0b3b84c0d9d7ecf18b240a`. The production mail-template
+  head is unchanged at `26a010e0b7316a25804a280b713b625572205f88`.
+- The KB branch was rebased onto current `origin/master` at `c1d0aca` and its
+  repeated development pins were consolidated into one mechanical commit, as
+  required for clean unmerged dependency history. Its exact pushed head is
+  `60293e20efd2fdc4209dc18a2759156a1ff69537`; all six pin sites reference the
+  vpsAdmin completion head. The full contract passes after the rebase with 42
+  controls, 34 paths, 35 capture concepts, 90 bindings, four managed pages, 12
+  runtime tests, 21 executable samples, and all 120 PNGs. No managed page or
+  capture changed.
+- Superseded in-progress CI for the prior vpsAdmin head and both superseded KB
+  heads was cancelled. Exact-head CI has started. The fresh mandatory review
+  of the two pushed completion deltas is the next gate before rerunning the
+  long WebUI integration test.
+- The required fresh standalone mandatory review completed for exact pushed
+  vpsAdmin `eba275914` and KB `60293e2` with no Blocking, Important, or
+  Advisory findings. It confirmed the persisted client/locale context, internal
+  303, flow-cookie clearing, server-configured OAuth destination, exact copy,
+  optional button behavior, focused commit split, unchanged mail templates,
+  and all six KB pins. The reviewer independently reran the 20-example route
+  spec successfully. Residual coverage is limited to the intentionally pending
+  exact-head `webui#auth` integration and indirect rather than header-level
+  assertion of cookie deletion; rejected recovery reuse covers the latter
+  behavior.
+- The exact `eba275914` `./test-runner.sh test 'webui#auth'` integration passes.
+  The Playwright example completed in 327.86 seconds, the script in 703.22
+  seconds, and the complete three-machine test in 937.64 seconds with 1 of 1
+  tests successful.
+- The existing single-node bridge development cluster was updated in place to
+  exact clean revision `eba275914372bb69db0b3b84c0d9d7ecf18b240a` without a
+  database reset. `devcluster refresh` completed, the cluster reports
+  `running` and `ready: yes`, and `vpsadmin-api`,
+  `vpsadmin-password-recovery`, nginx, WebUI, and Mailpit are all active. The
+  public recovery form returns HTTP 200 with the configured logo. The live
+  English and Czech completion pages show the exact requested copy and sign-in
+  labels, and the WebUI sign-in entry point returns HTTP 302 to a fresh OAuth
+  authorization request.
+- Exact-head GitHub Actions are green for the vpsAdmin API topic specs,
+  RuboCop, and i18n health, and for both KB contract workflows. Broad vpsAdmin
+  CI run `32402119307` remains healthy on the current head after 54 minutes;
+  no runner interruption has been reported. The immediately preceding
+  successful run spent 5 hours 7 minutes in the same test step, so the current
+  duration is normal and the completed handoff is not held open for that
+  multi-hour remote signal.
 
 ## Cleanup
 

@@ -44,8 +44,9 @@ whether an account exists or can use recovery.
   existing token, OAuth authorization-code, and SSO state remains usable, while
   incomplete password/TOTP continuations are invalidated by every password
   change. A successful reset invalidates all other recovery state for that
-  account and restarts OAuth through the configured client authorization start
-  URI without logging the user in automatically. Successful password
+  account and shows a confirmation page whose button restarts OAuth through the
+  configured client authorization start URI without logging the user in
+  automatically. Successful password
   authentication and OAuth token issuance carry a per-user generation and
   revalidate it under the user row lock so concurrent password changes cannot
   publish stale credentials.
@@ -117,9 +118,13 @@ whether an account exists or can use recovery.
 - Show the configured vpsFree.cz logo on every recovery state, as on the OAuth
   sign-in and WebAuthn registration forms. Permit only a validated HTTP(S) logo
   origin in the recovery page's content security policy.
-- Make “Back to sign in” and the successful-reset redirect start a fresh OAuth
-  authorization through WebUI's `page=login&action=login` entry point. The
-  previous bare login page rendered the WebUI shell without initiating OAuth.
+- Make “Back to sign in” start a fresh OAuth authorization through WebUI's
+  `page=login&action=login` entry point. After a successful reset, show a
+  confirmation page instead of redirecting immediately; use “Password changed.
+  You can sign in.” / “Heslo změněno, můžeš se přihlásit.” and a
+  “Sign in” / “Přihlásit se” button that starts the same fresh OAuth flow.
+  The previous bare login page rendered the WebUI shell without initiating
+  OAuth.
 - Add bilingual HTML recovery messages with one clear action button per
   recoverable account. Keep the plain-text alternative, the one-hour validity,
   grouped shared-address behavior, and support-only account entries.
