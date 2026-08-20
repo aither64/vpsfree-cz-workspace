@@ -15,6 +15,9 @@ whether an account exists or can use recovery.
 - `vpsfree-kb-contracts`: pin the exact vpsAdmin feature revision and run the
   visible-WebUI impact contract; update captures or managed documentation only
   if the contract reports the OAuth/recovery screens as covered concepts.
+- `vpsfree-cz-configuration`: pin the exact vpsAdmin feature revision and add
+  an operator deployment guide with the production OAuth authorization start
+  URI for WebUI, both DokuWiki clients, and Discourse.
 
 ## Approach
 
@@ -44,9 +47,12 @@ whether an account exists or can use recovery.
   existing token, OAuth authorization-code, and SSO state remains usable, while
   incomplete password/TOTP continuations are invalidated by every password
   change. A successful reset invalidates all other recovery state for that
-  account and shows a confirmation page whose button restarts OAuth through the
-  configured client authorization start URI without logging the user in
-  automatically. Successful password
+  account, sets a 15-minute host-only completion marker, and starts a fresh
+  authorization through the configured client authorization start URI. The
+  matching OAuth client consumes the marker, bypasses SSO for that request,
+  and shows the normal credential form with a Bootstrap success alert. A
+  client without a start URI falls back to a minimal internal confirmation
+  page. Successful password
   authentication and OAuth token issuance carry a per-user generation and
   revalidate it under the user row lock so concurrent password changes cannot
   publish stale credentials.
@@ -77,8 +83,9 @@ whether an account exists or can use recovery.
   already do so; the integration fixture carries the same explicit trust so it
   exercises the deployed cross-origin OAuth description safely.
 - Production deployment and merging are out of scope for this session. The
-  operator handoff will document deployment ordering and rollback by disabling
-  the feature first.
+  production configuration will pin the feature revision and include an
+  operator guide for deployment ordering, client start URIs, verification, and
+  rollback by disabling the feature first.
 - No vpsAdminOS protocol change is expected. The admin API adds the optional
   OAuth client authorization-start URI and permits an account-neutral mail log
   to expose `user: null`. These changes are additive and existing consumers
@@ -106,6 +113,9 @@ whether an account exists or can use recovery.
 - After pushing the vpsAdmin feature commit, pin that exact revision in
   `vpsfree-kb-contracts` and run `nix develop -c bin/check`. Regenerate only the
   bilingual screenshots or page contracts that are actually reported.
+- Pin the same exact revision in the `vpsadmin` services channel using
+  `confctl`, add the deployment guide in a separate configuration commit, and
+  run the configuration repository's required checks and relevant builds.
 
 ## User-acceptance follow-up
 
@@ -119,12 +129,12 @@ whether an account exists or can use recovery.
   sign-in and WebAuthn registration forms. Permit only a validated HTTP(S) logo
   origin in the recovery page's content security policy.
 - Make “Back to sign in” start a fresh OAuth authorization through WebUI's
-  `page=login&action=login` entry point. After a successful reset, show a
-  confirmation page instead of redirecting immediately; use “Password changed.
-  You can sign in.” / “Heslo změněno, můžeš se přihlásit.” and a
-  “Sign in” / “Přihlásit se” button that starts the same fresh OAuth flow.
-  The previous bare login page rendered the WebUI shell without initiating
-  OAuth.
+  `page=login&action=login` entry point and center the link. After a successful
+  reset, start the saved client's authorization flow, bypass SSO once, and show
+  “Password changed.” / “Heslo změněno.” as a Bootstrap success alert above
+  the normal login fields. The previous standalone completion page made the
+  next step look like missing login fields, and its full-width link overflowed
+  the form.
 - Add bilingual HTML recovery messages with one clear action button per
   recoverable account. Keep the plain-text alternative, the one-hour validity,
   grouped shared-address behavior, and support-only account entries.

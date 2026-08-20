@@ -14,6 +14,10 @@
   - branch: `2026-08-18-vpsadmin-password-reset`
   - worktree: `worktrees/2026-08-18-vpsadmin-password-reset/vpsfree-kb-contracts`
   - base at creation: `1fe36b35cebb75f8c61741da77b6861d4e0ece58`
+- `vpsfree-cz-configuration`
+  - branch: `2026-08-18-vpsadmin-password-reset`
+  - worktree: `worktrees/2026-08-18-vpsadmin-password-reset/vpsfree-cz-configuration`
+  - base at creation: `50e8f42020ffa2351e4ff14c06d864cf99241fb6`
 
 ## Status
 
@@ -754,6 +758,51 @@
   enabled, and its TOTP device remains enabled and confirmed. The one recent
   `test-user1` submission was moved outside the ten-minute development throttle
   window so the user can retry immediately; no replacement request was sent.
+
+## OAuth completion and deployment handoff follow-up (2026-08-20)
+
+- User acceptance showed that the standalone completion page looked like a
+  login form with missing fields and that its full-width sign-in link
+  overflowed. The accepted replacement starts the saved OAuth client again and
+  shows a Bootstrap success alert above the normal credential fields.
+- A successful recovery now sets a host-only, HttpOnly, SameSite=Lax completion
+  marker for 15 minutes and redirects to the saved client's validated
+  authorization start URI. The OAuth authorization page accepts it only for
+  the same client, clears invalid or expired markers, consumes a matching
+  marker, bypasses SSO once, and shows `Password changed.` or `Heslo změněno.`
+  with the credential form. A marker for another client is left for that
+  client and has no authentication effect.
+- Clients without an authorization start URI retain a minimal internal
+  confirmation page with the same short message and no action button. The
+  request and sent pages center their `Back to sign in` links.
+- Focused API verification passes with 57 route/OAuth examples, followed by 37
+  OAuth examples after adding the invalid-marker regression. API i18n update
+  and health, focused RuboCop, ERB compilation, JavaScript syntax, Nix format,
+  `git diff --check`, and all active vpsAdmin hooks pass.
+- The completion follow-up is committed and pushed as vpsAdmin
+  `15e58aefdc878f7fd32db7270d6958ab8a272a9e`. The superseded broad CI run for
+  `eba275914` was cancelled; exact-head workflows are running.
+- The KB contract is mechanically repinned at all six revision sites in
+  commit `66fa70f6ca387c2035f6fab14105a4b13dcc0b35`. Its complete local check passes
+  with 42 controls, 34 paths, 35 capture concepts, 90 bindings, four managed
+  pages, 12 runtime tests, 21 executable samples, and all 120 PNGs. No managed
+  page or screenshot changed.
+- A dedicated `vpsfree-cz-configuration` worktree was created. The worktree
+  post-checkout hook initially reported missing ambient Bundler gems, the
+  already-documented linked-worktree behavior; the worktree itself was created
+  cleanly and all commits ran through the repository Nix shell with active
+  hooks.
+- Generated configuration commit `8304a444` pins only the `vpsadmin` services
+  channel (`vpsadminServices`) to exact revision `15e58aefd`. Manual commit
+  `9cf4b722` adds the release-specific deployment runbook and MkDocs navigation.
+  Both commits are pushed on the initiative branch.
+- The runbook records the exact authorization start URI for WebUI, Czech and
+  English DokuWiki, and Discourse; the schema-first API/frontend rollout; the
+  reviewed production mail-template revision; enablement, verification, and
+  rollback. It does not instruct the operator to update the channel. A strict
+  MkDocs build passes.
+- The required fresh standalone mandatory review is the next gate before the
+  long WebUI integration test, configuration builds, and bridge-cluster update.
 
 ## Cleanup
 
