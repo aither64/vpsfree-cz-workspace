@@ -480,6 +480,23 @@
   had 3,457 seconds of its one-hour lifetime remaining; it was not opened or
   consumed and is left in the newest Mailpit message for user acceptance.
 
+## User-acceptance follow-up (2026-08-20)
+
+- The user requested shorter request-form copy, a revised neutral confirmation,
+  no user-facing recovery-code wording, HTML mail buttons, a working OAuth
+  restart behind “Back to sign in”, and the configured logo on all recovery
+  states.
+- Root cause of the empty WebUI content column: the OAuth client's
+  `authorization_start_uri` ended at `?page=login`; WebUI only begins OAuth for
+  `?page=login&action=login`. The test seed and backward-compatible shared
+  dev-cluster updater are being changed to use the actual authorization entry
+  point.
+- The recovery page keeps its restrictive content security policy. Logo
+  rendering is limited to configured absolute HTTP(S) URLs without user info or
+  fragments, and only the validated origin is added to `img-src`.
+- The Linux page fault remains documented but is not being patched, per the
+  user's explicit decision. No kernel or vpsAdminOS files are in scope.
+
 ## Open questions
 
 - None. Product and security choices are recorded in `plan.md`.

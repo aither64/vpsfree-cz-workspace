@@ -105,3 +105,26 @@ whether an account exists or can use recovery.
 - After pushing the vpsAdmin feature commit, pin that exact revision in
   `vpsfree-kb-contracts` and run `nix develop -c bin/check`. Regenerate only the
   bilingual screenshots or page contracts that are actually reported.
+
+## User-acceptance follow-up
+
+- Keep the request form concise: state the TOTP/passkey requirement and ask for
+  the login or primary address, without explaining the non-disclosure policy or
+  the support-only outcome in advance. Keep the submitted response neutral.
+- Do not mention TOTP recovery codes in password-recovery forms, validation
+  errors, or messages. Recovery codes remain accepted internally so existing
+  MFA recovery behavior is compatible.
+- Show the configured vpsFree.cz logo on every recovery state, as on the OAuth
+  sign-in and WebAuthn registration forms. Permit only a validated HTTP(S) logo
+  origin in the recovery page's content security policy.
+- Make “Back to sign in” and the successful-reset redirect start a fresh OAuth
+  authorization through WebUI's `page=login&action=login` entry point. The
+  previous bare login page rendered the WebUI shell without initiating OAuth.
+- Add bilingual HTML recovery messages with one clear action button per
+  recoverable account. Keep the plain-text alternative, the one-hour validity,
+  grouped shared-address behavior, and support-only account entries.
+- Re-run focused verification, a fresh mandatory review, the WebUI OAuth test,
+  the KB contract at the new exact vpsAdmin revision, and current-head CI. Then
+  update the existing bridge dev cluster and leave it running for acceptance.
+- The Linux executable-memory page fault is explicitly out of scope by user
+  decision. Do not patch or repin the kernel or vpsAdminOS in this initiative.
