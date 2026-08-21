@@ -37,19 +37,21 @@ Puma's merged fix replaces the buffered pipe operations with `syswrite` and
 `sysread` and adds safe rescue handling. Puma 8.0.2 predates the fix, and no
 newer Puma 8 release exists as of this investigation.
 
-## Recommended fix
+## Operational decision
 
-Backport the exact upstream patch in the shared Puma gem derivation used by the
-API and console router, then remove it when a released Puma version contains
-the fix. Carry Puma's trap-context and concurrent-stop regression tests, and
-add a NixOS smoke check that repeatedly stops the console router, requires it
-to become inactive within about ten seconds, restarts it, and waits for
-readiness.
+Do not carry a local Puma patch. Tolerate the intermittent stop timeout and
+systemd's forced termination until an upstream Puma release contains merge
+commit `515987476202e0bd6faf5f14ba9838fdf088b5d5`, then update Puma normally.
+After that update, run Puma's trap-context and concurrent-stop regression tests
+and a NixOS smoke check that stops the console router, requires it to become
+inactive within about ten seconds, restarts it, and waits for readiness.
 
 Changing only the stop timeout or forcing non-graceful shutdown limits the
 delay but leaves the race. Production API and console-router packages also use
 Puma 8.0.2; the issue is intermittent and can delay restarts or force-kill
-in-flight requests, but it does not change persistent state or protocols.
+in-flight requests, but it does not change persistent state or protocols. If
+the operational frequency or impact increases before an upstream release, the
+exact upstream backport remains the fallback.
 
 ## Verification
 

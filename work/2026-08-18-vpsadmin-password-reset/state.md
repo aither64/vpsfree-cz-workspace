@@ -1245,9 +1245,11 @@
   `515987476202e0bd6faf5f14ba9838fdf088b5d5`. Deployed Puma 8.0.2 predates the
   fix. The old PID received no dynamic console requests, so neither vpsAdmin's
   router/Bunny connection nor systemd caused this incident. The recommended
-  follow-up is an exact upstream backport in the shared Puma derivation plus
-  Puma's concurrency tests and a service stop/start smoke test. The evidence,
-  temporary workaround, production exposure, and proposed coverage are in
+  upstream backport was considered, but the operator chose to tolerate the
+  intermittent forced shutdowns and wait for a Puma release containing the
+  merged fix. That future dependency update should carry Puma's concurrency
+  tests and a service stop/start smoke test. The evidence, operational
+  decision, production exposure, and proposed coverage are in
   `notes/vpsadmin/2026-08-21-devcluster-console-router-stop.md`.
 - The bridge cluster is again running and ready with zero failed services.
   API, password-recovery worker, and console-router `ExecStart` paths all
