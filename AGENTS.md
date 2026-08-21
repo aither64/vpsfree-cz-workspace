@@ -236,6 +236,9 @@ missed the cache. A local rebuild is acceptable only when the kernel or its
 configuration is intentionally changed, or when the responsible runner has not
 yet built and published the expected derivation; record the justification in
 the initiative `state.md`.
+If the work needs an additional kernel output, update the vpsAdminOS CI builder
+to build and publish that output as part of the same initiative instead of
+relying on recurring local builds.
 
 When running `dev-clusters/vpsadmin/bin/devcluster`, use the bridge network by
 default. Do not choose `--network local` unless the user explicitly asks for it
