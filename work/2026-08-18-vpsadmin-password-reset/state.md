@@ -1189,3 +1189,72 @@
   the commit was rerun from the full repository Nix shell and every declared
   pre-commit hook passed. The long WebUI integration test is pending the
   mandatory fresh-agent review.
+
+## Password visibility completion (2026-08-21)
+
+- The standalone mandatory reviewer initially raised one accessibility
+  Advisory: a changing Show/Hide accessible label should not also use the ARIA
+  toggle-button `aria-pressed` state. The recovery controls now keep the
+  changing bilingual labels, remove `aria-pressed`, and use `data-visible` only
+  for visual state. The same reviewer rechecked exact base `e9356b194` and
+  exact head `00674913d` and reported no Blocking, Important, or Advisory
+  findings. The one-commit split remains appropriate.
+- The final exact pushed vpsAdmin head is
+  `00674913d112dd6a4ad3ae87a749f8da383e3aab`. Either eye button reveals or
+  masks both recovery password fields together; fields start masked; labels
+  are `Show passwords` / `Hide passwords` and `Zobrazit hesla` / `Skrýt hesla`.
+  The existing OAuth forced-password-change form remains unchanged and has
+  explicit regression coverage for its synchronized visibility controls.
+- Focused recovery and OAuth specs pass with 65 examples before the review
+  fix, and the directly affected post-fix example passes independently. The
+  final amended commit ran every declared pre-commit hook successfully in the
+  full Nix shell: migration specs, Nixfmt, WebUI i18n, RuboCop, and API i18n.
+  Node syntax, diff checks, and commit-message formatting also pass.
+- The exact-head `./test-runner.sh test 'webui#auth'` integration passes. The
+  changed Playwright browser example completed in 319.6 seconds, the script in
+  661.23 seconds, and the full three-machine test in 890.18 seconds with one of
+  one tests successful. It verifies masked initial state, synchronized field
+  types and assistive labels, both toggle controls, and the existing forced
+  reset behavior. No kernel page fault was observed.
+- The KB feature history was rebuilt from `c1d0aca` so it contains one exact
+  mechanical pin commit followed by the independent production-navigation
+  inventory refresh. All six pin sites resolve vpsAdmin `00674913d`; the exact
+  pushed KB head is `9298febb013b0b06d3e47a66c7c5a6e054b66fe5`.
+  `nix develop -c bin/check` passes with all contract tests and all 120 PNGs.
+  The recovery visibility control is not a managed KB screenshot concept, so
+  no page or screenshot content changed.
+- The production configuration history was rebuilt from `50e8f420` so it
+  retains one unmodified generated `confctl inputs channel set --commit` pin.
+  Generated pin commit `0b7dba68` and the runbook both use exact vpsAdmin
+  `00674913d`; the exact pushed configuration head is
+  `5012ebb631f9bfb947f674a8bef6daeae0cb7419`. Nixfmt and strict MkDocs pass.
+  All five release configurations build successfully with
+  `confctl build -y`: both API machines, the auth proxy, and both monitoring
+  containers. No production machine was deployed.
+- The first configuration push was stopped by its pre-push hook because the
+  ambient shell lacked the locked Ruby gems. Rerunning the exact push through
+  `nix develop` let the declared hook execute and the guarded force-with-lease
+  push succeeded. Generated `.bin`, `.bundle`, and `site` outputs and both
+  detached pin-rebuild worktrees were removed.
+- The existing ready bridge cluster was updated in place with
+  `devcluster update ... services`; its database was not reset. The old
+  stateless console router did not finish Puma's graceful shutdown, so systemd
+  used the unit's configured five-minute stop timeout and continued activation.
+  An independent read-only investigation matched this to Puma shutdown-pipe
+  race `puma/puma#3677`, fixed upstream by pull request `#3940` and merge commit
+  `515987476202e0bd6faf5f14ba9838fdf088b5d5`. Deployed Puma 8.0.2 predates the
+  fix. The old PID received no dynamic console requests, so neither vpsAdmin's
+  router/Bunny connection nor systemd caused this incident. The recommended
+  follow-up is an exact upstream backport in the shared Puma derivation plus
+  Puma's concurrency tests and a service stop/start smoke test. The evidence,
+  temporary workaround, production exposure, and proposed coverage are in
+  `notes/vpsadmin/2026-08-21-devcluster-console-router-stop.md`.
+- The bridge cluster is again running and ready with zero failed services.
+  API, password-recovery worker, and console-router `ExecStart` paths all
+  contain exact revision `00674913d`. The public auth recovery form returns
+  HTTP 200 and its deployed stylesheet contains the new password-visibility
+  controls. The shared-email/TOTP acceptance state was preserved.
+- Exact-head vpsAdmin RuboCop and i18n workflows and both KB workflows are
+  green. API topic specs and broad vpsAdmin CI are still in progress. Obsolete
+  broad CI run `32480959677` for vpsAdmin `e9356b194` was cancelled; no
+  current-head run was cancelled.
