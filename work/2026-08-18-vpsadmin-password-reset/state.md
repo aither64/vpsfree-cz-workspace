@@ -1254,7 +1254,8 @@
   contain exact revision `00674913d`. The public auth recovery form returns
   HTTP 200 and its deployed stylesheet contains the new password-visibility
   controls. The shared-email/TOTP acceptance state was preserved.
-- Exact-head vpsAdmin RuboCop and i18n workflows and both KB workflows are
-  green. API topic specs and broad vpsAdmin CI are still in progress. Obsolete
-  broad CI run `32480959677` for vpsAdmin `e9356b194` was cancelled; no
-  current-head run was cancelled.
+- Exact-head vpsAdmin API topic specs, RuboCop, and i18n workflows and both KB
+  workflows are green. Broad vpsAdmin CI remains normally in its multi-hour
+  `Run tests` step; setup, selection, and preview succeeded, and there is no
+  runner-loss signal. Obsolete broad CI run `32480959677` for vpsAdmin
+  `e9356b194` was cancelled; no current-head run was cancelled.
