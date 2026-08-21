@@ -194,3 +194,59 @@ whether an account exists or can use recovery.
 - Production deployment remains exclusively an operator action. This
   initiative updates and leaves the exact `vpsadminServices` revision and
   deployment runbook on the feature branch, without deploying production.
+
+## OAuth client completion behavior
+
+- Add a default-off OAuth client setting for authorization start URLs that
+  require another user action before they return to vpsAdmin. WebUI and both
+  DokuWiki clients keep the immediate redirect flow; enable the setting only
+  for Discourse in production.
+- For an interactive client, show the successful password-change message on
+  the internal recovery page before leaving vpsAdmin. Link to the validated,
+  stored authorization start URI and explain that the vpsAdmin sign-in form is
+  reached through that service.
+- Keep the completed-recovery marker so the matching authorization still
+  bypasses SSO once. Add a short-lived, host-only marker bound to that recovery
+  when the internal message is shown; suppress the duplicate OAuth alert only
+  when both markers match.
+- Require a valid recent completion marker before the internal page reports
+  success. Clients without a start URI retain the internal confirmation without
+  a continuation button. Invalid, expired, or cross-client markers never expose
+  a continuation target.
+- Rewrite the unreleased migration directly, reset the disposable development
+  database, and configure the development WebUI client in interactive mode so
+  the completion and no-repeat behavior can be tested without Discourse.
+- Update the production runbook and exact vpsAdmin pins after focused tests and
+  the mandatory fresh-agent review. Do not change mail templates or deploy
+  production.
+
+## Password recovery metrics and acceptance refinements
+
+- Export durable global counters for recovery admission outcomes, queue-capacity
+  events, and committed password changes. Export the unfinished queue depth and
+  configured limit as gauges. Persist only fixed event names, aggregate counts,
+  and last-occurrence timestamps; do not persist identifiers or user IDs in the
+  event table.
+- Record password-change sources centrally as authenticated self-service,
+  forced reset, recovery, administrator, or other. Keep the event update in the
+  same database transaction as the password update so rollbacks do not count.
+- Extend the user-owned metrics-token endpoint with password generation,
+  forced-reset state, account MFA enablement, and enabled TOTP/passkey counts.
+  Bump the additive metrics contract from version 1.0 to 1.1.
+- Alert by warning email when the unfinished recovery queue reaches its global
+  limit of 100 or reached that limit within the preceding ten minutes. Preserve
+  the transition as a durable event so a fast worker drain cannot hide it.
+- Label the read-only login value on the password form. Choose the MFA
+  explanation from the actual available method set so TOTP-only, passkey-only,
+  and combined accounts see accurate English and Czech text, including after a
+  failed verification.
+- Return the development WebUI OAuth client to the direct completion mode used
+  by production WebUI and DokuWiki. Keep the interactive completion mode for
+  Discourse and retain its route-level coverage.
+- Keep recovery user-agent metadata as bounded raw snapshots. Do not populate
+  the permanent `user_agents` dictionary from the anonymous submission queue;
+  document and test the retention distinction.
+- Update the bilingual metrics KB pages, the deployment runbook, both monitor
+  builds, the exact KB vpsAdmin pin, and the production `vpsadminServices`
+  channel pin. Stage KB changes for review but do not publish them. Production
+  deployment remains an operator action.

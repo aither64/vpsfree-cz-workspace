@@ -880,3 +880,295 @@
 
 - Leave the dev cluster running for user acceptance.
 - Remove worktrees only after the feature is merged or abandoned.
+
+## OAuth client completion follow-up (2026-08-21)
+
+- The user approved an explicit per-client completion mode. Discourse must show
+  the password-change confirmation before its CSRF-protected Continue page, and
+  the later vpsAdmin credentials form must not repeat the confirmation. WebUI
+  and both DokuWiki clients keep the current immediate authorization restart.
+- Verified the active session slug and clean, remote-matching starting heads:
+  vpsAdmin `cdbe04cca`, mail templates `2f6c6573`, KB contracts `cd1936b1`, and
+  production configuration `178e3981`. All remotes use SSH, and fetched
+  `origin/master` has not advanced beyond any feature branch base.
+- Re-read the repository rules and the complete English and Czech user-facing
+  writing guidance. Implementation is in progress; production remains
+  untouched.
+- vpsAdmin now has an additive
+  `authorization_start_requires_user_action` OAuth-client setting, defaulting
+  to false. Successful recovery always creates the existing client-bound
+  completion marker. Clients with the setting enabled first render a localized
+  confirmation and continuation button; a second HttpOnly marker bound to the
+  same recovery suppresses the alert when authorization later opens. SSO is
+  still bypassed once and the normal credential form is always shown.
+- The test WebUI client enables the interactive mode so the browser integration
+  test and bridge development cluster can exercise the Discourse-style flow.
+  Production WebUI and DokuWiki will keep the false default; only Discourse is
+  to enable the setting.
+- Quick verification on the final source passes: the migration spec has two
+  examples, the focused OAuth-client/recovery/OAuth configuration suite has 88
+  examples, API i18n health and focused RuboCop pass, both Ruby files and the
+  ERB template compile, the Playwright file passes Node syntax checking, the
+  Nix seed is formatted, and `git diff --check` is clean. The first application
+  suite attempt was incorrectly combined with the migration spec and produced
+  the repository's documented database-switch failures; they were rerun in
+  separate processes as required.
+- The first vpsAdmin commit invocation was attempted outside the Nix shell and
+  was rejected by the active hooks because their tools were unavailable. No
+  commit was created. The commit was rerun inside `nix develop`; every
+  pre-commit and commit-message hook passed. The exact pushed vpsAdmin head is
+  `cb3775345e92fc6ced1798a7141b523455fe936d`.
+- The KB contract was mechanically repinned to `cb3775345` at all six revision
+  sites. `nix flake update vpsadmin` regenerated the lock metadata, and
+  `nix develop -c bin/check` passes with 42 controls, 34 paths, 35 capture
+  concepts, 90 bindings, four pages, 12 runtime tests, 21 executable samples,
+  and all 120 PNGs. The existing unmerged pin commit was amended and pushed as
+  `8c77d895dd97cbf0ea734cca6f78f887486c4da0`; no managed page or screenshot
+  changed.
+- The production configuration branch was rebuilt from its base so it retains
+  one generated `confctl inputs channel set --commit vpsadmin vpsadmin`
+  commit, now pinning `vpsadminServices` to `cb3775345` with the complete
+  feature changelog. The auth-proxy commit remains separate. The amended
+  runbook commit records the new per-client boolean, leaves it false for WebUI
+  and both DokuWiki clients, enables it only for Discourse, and documents both
+  acceptance paths. Strict MkDocs and the active Nixfmt hook pass. The exact
+  pushed configuration head is
+  `c220e42a0edc4a43dbc6a7a3b7b4e769c084094e`.
+- The temporary detached configuration worktree used to generate the clean pin
+  from the branch base was removed. Its `.bin`, `.bundle`, and MkDocs `site`
+  outputs were transient and were deleted after verification.
+- All four affected worktrees are clean and match their remote feature refs.
+  Exact heads are vpsAdmin `cb3775345`, mail templates `2f6c6573`, KB contracts
+  `8c77d895`, and production configuration `c220e42a`. GitHub Actions on the
+  new vpsAdmin and KB heads are running; there are no superseded queued or
+  in-progress runs to cancel, and the configuration repository has no branch
+  runs.
+- The required fresh standalone mandatory review covered all four exact pushed
+  ranges and reported no Blocking or Important finding. It independently ran
+  the focused OAuth-client/recovery/OAuth configuration suite with 88 examples
+  and no failures, verified clean worktrees and exact downstream pins, and
+  accepted the latest schema/producer/consumer/UI/test commit as one coherent
+  completion protocol. The only Advisory is the pre-existing manual
+  synchronization between `custom_routes_coverage_spec.rb` and
+  `covered_custom_routes.yml`; all current recovery routes are present and
+  request-tested, so it does not block this feature. Residual validation gaps
+  are the now-ungated browser integration/bridge deployment and the absence of
+  a real Discourse harness for its own CSRF Continue page.
+- The final exact-head `./test-runner.sh test 'webui#auth'` passes. The changed
+  Playwright authentication example completed in 316.44 seconds, the script in
+  754.84 seconds, and the full three-machine test in 1,080.91 seconds with one
+  of one tests successful.
+- Production configuration builds pass independently for
+  `cz.vpsfree/vpsadmin/int.api1`, `cz.vpsfree/vpsadmin/int.api2`, and
+  `cz.vpsfree/containers/prg/proxy`. The first `int.api1` invocation reached a
+  confirmation prompt in a noninteractive shell and exited before building;
+  rerunning with `confctl build -y` succeeded. No production machine was
+  deployed.
+- The initiative's old disposable bridge-cluster state was reset because the
+  unreleased migration was amended. The existing runner did not exit within
+  the 120-second grace period, so `devcluster reset` killed it and removed only
+  this initiative's VM/database state, sockets, and GC root. A fresh
+  single-topology bridge cluster was built from clean vpsAdmin `cb3775345`.
+- Fresh startup hit the documented `node1` readiness race: the services seed
+  completed just before `/run/osctl/osctld.sock` was republished. The runner
+  and VMs remained healthy; once the socket existed, an idempotent
+  `devcluster refresh` completed successfully. The cluster reports running and
+  ready, with no failed boot or kernel page fault observed.
+- Live bridge checks confirm `vpsadmin-api`,
+  `vpsadmin-password-recovery`, and nginx are active; the public recovery form
+  returns HTTP 200 with the logo; and the WebUI sign-in entry returns HTTP 302
+  to a fresh OAuth authorization. The active API unit references exact revision
+  `cb3775345e92fc6ced1798a7141b523455fe936d`.
+- The fresh acceptance fixture is ready without consuming a request:
+  `test-user1` and `test-user2` share
+  `shared-password-recovery@example.test`; only `test-user1` has account MFA
+  enabled and an enabled, confirmed `Acceptance TOTP` device with deterministic
+  secret `JBSWY3DPEHPK3PXP`; the test WebUI client has interactive completion
+  enabled; and the unfinished submission queue is empty. The temporary fixture
+  script was removed after its assertions passed.
+- Exact-head GitHub Actions are green for vpsAdmin API migration specs,
+  RuboCop, i18n health, libnodectld, and all API topic jobs, and for both KB
+  workflows. Broad vpsAdmin CI run `32461418440` remains normally in progress
+  in its multi-hour `Run tests` step; setup and selection steps succeeded and
+  there is no runner-death signal. All four worktrees remain clean and match
+  their pushed feature refs.
+
+## Metrics and acceptance follow-up (2026-08-21)
+
+- The user approved durable internal recovery/password-change metrics, a
+  warning-email alert for the 100-row unfinished queue limit, member-owned
+  password/MFA gauges, method-specific MFA instructions, a labelled read-only
+  login field, and direct development WebUI completion behavior.
+- The active session slug is verified. Clean SSH-backed starting heads are
+  vpsAdmin `cb3775345`, mail templates `2f6c6573`, KB contracts `8c77d895`,
+  and production configuration `c220e42a`; every feature branch contains the
+  current `origin/master` as its base.
+- The global exporter already runs only with default API rake tasks every two
+  minutes and publishes through node_exporter. The user metrics endpoint has a
+  versioned, token-prefixed registry. Password writes converge on
+  `User#set_password`, with account creation excluded by the update callback.
+- The existing MFA controller already supplies the effective method set on the
+  initial page and failed-TOTP retry. The template alone uses generic copy.
+- `password_recovery_submissions.user_agent` is cleared after processing and
+  retained for at most one day; matched request records are deleted after 30
+  days. The permanent deduplicated `user_agents` table has no orphan cleanup,
+  so recovery metadata remains a bounded raw snapshot by design.
+- The complete user-facing writing guidance and WebUI documentation workflow
+  have been read. Mail templates are outside this follow-up. Production
+  deployment and KB publication remain prohibited without separate approval.
+- vpsAdmin implements fixed-name aggregate event rows for recovery admission,
+  queue-capacity transitions, and committed password changes. The base exporter
+  emits all planned counters, timestamps, queue gauges, and fixed label values;
+  account-owned metrics tokens now expose password generation, forced-reset
+  state, account MFA enablement, and enabled TOTP/passkey counts as additive
+  metrics contract version 1.1.
+- Password changes are classified at `User#set_password` as authenticated,
+  forced reset, recovery, administrator, or other. The after-update event write
+  shares the password transaction, excludes account creation, and rolls back
+  with a failed password update. Queue counters are recorded under the existing
+  global admission lock, and the durable capacity event is written exactly when
+  the unfinished queue reaches 100.
+- The recovery password form now labels an escaped read-only login value while
+  retaining autofocus on the new password. Verification guidance is selected
+  from the effective method set for TOTP-only, passkey-only, and combined
+  accounts in English and Czech, including a failed-TOTP retry. Anonymous
+  recovery user agents remain bounded raw snapshots; they are not inserted into
+  the permanent `user_agents` dictionary, and this retention distinction is
+  documented and tested.
+- The development WebUI client now uses direct completion like production
+  WebUI and DokuWiki. The browser example expects a fresh OAuth credentials
+  form with the successful password-change alert and consumed completion
+  markers; the Discourse-style intermediate confirmation remains covered by
+  the route suite.
+- Quick vpsAdmin verification passes: the new migration up/down spec has two
+  examples; the combined event, queue, global exporter, account metrics,
+  forced-reset, and recovery-route suite has 55 examples; the broader user
+  write/recovery/reset suite ran 76 examples with only its existing pending
+  soft-delete case; API i18n update and health, focused RuboCop, Node syntax,
+  Nix formatting, and `git diff --check` pass. Initial failures were confined to
+  a migration helper's two-argument API, an unavailable `Time.zone` in a test,
+  and Czech expectations that had not set `Accept-Language`; each was corrected
+  and rerun successfully.
+- The exact pushed vpsAdmin head is
+  `6eee15df1b68091836bfd3d55100fba38da85d92`. The follow-up is split into
+  `d400b9a34` for security metrics, `f983f5a48` for recovery form behavior, and
+  `6eee15df1` for the direct WebUI acceptance fixture. Active Overcommit hooks
+  passed on all three commits. Superseded broad CI run `32461418440` for the old
+  branch head was cancelled after inspecting the run list; exact-head workflows
+  are in progress, with migration specs, RuboCop, i18n, and libnodectld already
+  green.
+- The production configuration adds warning-only alert
+  `VpsAdminPasswordRecoveryQueueFull`, with a 15-minute repeat interval and no
+  `for`, when the current queue is at its limit or the durable capacity event is
+  less than ten minutes old. The runbook now covers the third additive
+  migration, both monitoring builds/deployments, exporter checks, and alert-rule
+  verification.
+- The configuration branch was rebuilt from base `50e8f420` so it retains one
+  generated `confctl inputs channel set --commit` pin with the complete
+  changelog. Its exact pushed head is
+  `eedad5b8e95b6d9c01390c3c8c3325ed0f7949c7`; the generated pin is
+  `742dcc5f` and resolves `vpsadminServices` to exact vpsAdmin
+  `6eee15df1b68091836bfd3d55100fba38da85d92`. Nixfmt and strict MkDocs pass.
+  The detached pin-rebuild worktree and generated `.bin`, `.bundle`, and `site`
+  outputs were removed.
+- A fresh production KB snapshot contains 114 Czech and 77 English pages. The
+  bilingual metrics candidates document all four account security metric
+  families and metrics version 1.1, and convert the Czech article to informal
+  singular address. Both carry the shared `<page>manuals:vps:metrics</page>`
+  language-pair tag exactly once. The all-page annotation checker passes with
+  90 bindings and nine exceptions.
+- The fresh snapshot also confirmed five previously inventoried Czech pages no
+  longer exist and that four published Guix paragraphs moved by one position.
+  These independent production-inventory updates are isolated in KB contract
+  commit `0257db3`; the exact vpsAdmin mechanical pin is commit `870e3e7`.
+  `nix develop -c bin/check` passes at the pushed KB head
+  `0257db337c9c1dc7fb35ab27d43326ace827479c` with all 120 PNGs and all contract
+  tests.
+- Schema-5 manifests are prepared from one bilingual changes file. The Czech
+  metrics page is staged with summary `Doplnění metrik zabezpečení účtu a
+  neformálního oslovení`; the English page is staged with summary `Document
+  account security metrics and clarify metrics setup`. Both staging releases
+  verify and interlink at their real page IDs. The staging container remains
+  running for review; no production KB write was made.
+
+## Metrics mandatory-review follow-up (2026-08-21)
+
+- The fresh mandatory reviewer identified broad follow-up commits, a stale
+  runbook revision, a queue-capacity race between worker completion and
+  admission, and exporters that could query the new schema during migration.
+  The history was rebuilt into focused commits, every queue transition now
+  uses the shared global queue lock, and the runbook masks the base exporter
+  timer and service while migrations run.
+- Follow-up review then found that daily retention cleanup could delete a
+  pending submission outside the queue lock and that the authentication-token
+  cleanup timer also queries the recovery tables. Pending retention deletion
+  now holds the queue lock and row locks; finished ledgers remain independently
+  removable. A deterministic two-connection regression proves cleanup blocks
+  behind admission. The focused submission/authentication suite passes with
+  20 examples, and all vpsAdmin pre-commit hooks pass.
+- The exact pushed vpsAdmin head is
+  `e9356b1947648c226e94e34535f8ec42f4e99fdf`. Superseded in-progress CI runs
+  for `ee17077e4` were cancelled after the new head was pushed.
+- The KB contract is mechanically repinned at all six revision sites. Its
+  exact pushed head is `d6dc4d61aff851165621ffecae8807bfb2701e20`;
+  `nix develop -c bin/check` passes with all contract tests and 120 PNGs. The
+  superseded managed-page runtime run for `5eba9a7` was cancelled.
+- The production configuration was rebuilt from base `50e8f420` so the input
+  pin remains an unmodified generated `confctl inputs channel set --commit`
+  commit. The runbook now pins `e9356b194`, masks and unmasks both
+  `vpsadmin-api-auth-tokens` and base-exporter timer/service units around the
+  migration, and starts and verifies both timers afterward. Its exact pushed
+  head is `5fbfb40612401572a23b13184d15887b9b03ec1f`. The active Nixfmt hooks and
+  `nix shell nixpkgs#mkdocs --command mkdocs build --strict` pass. A first
+  attempt through the repository dev shell failed because that shell does not
+  provide MkDocs; the explicit Nix package command is the working invocation.
+- The same standalone reviewer is being asked to verify these exact final
+  heads and confirm that every prior Blocking or Important item is resolved
+  before long integration tests begin.
+- The standalone reviewer completed the exact-head follow-up with no Blocking,
+  Important, or Advisory findings. All earlier findings are resolved, including
+  strict commit splitting, queue-lock ordering for every pending-state
+  transition, dry-run cleanup behavior, exact downstream pins, and migration
+  masking for both schema-dependent timers and services. The reviewer found no
+  production lock-order inversion and approved proceeding with long
+  integration verification. Remaining gaps are the planned exact-head WebUI
+  suite, five production configuration builds, bridge-cluster refresh, and
+  live exporter/alert checks; real Discourse behavior remains covered only at
+  route level.
+- The final exact-head `./test-runner.sh test 'webui#auth'` integration passes.
+  The Playwright example completed in 329.77 seconds, the script in 793.82
+  seconds, and the full three-machine test in 1,037.47 seconds with one of one
+  tests successful.
+- All five release configurations build successfully with `confctl build -y`:
+  `cz.vpsfree/vpsadmin/int.api1`, `cz.vpsfree/vpsadmin/int.api2`,
+  `cz.vpsfree/containers/prg/proxy`, `cz.vpsfree/containers/prg/int.mon1`, and
+  `cz.vpsfree/containers/prg/int.mon2`. Prometheus rule checking is part of the
+  monitoring builds. No production machine was deployed.
+- The old disposable bridge cluster was reset because it ran the prior feature
+  revision. Its runner again exceeded the 120-second graceful-stop timeout, so
+  the wrapper killed only this initiative's runner and removed only its GC root,
+  VM, and database state. A fresh single-topology bridge cluster was built from
+  exact clean vpsAdmin `e9356b194`.
+- Fresh bootstrap hit the documented `node1` readiness race after the seed
+  completed but before `/run/osctl/osctld.sock` was republished. The VMs and
+  services remained healthy; the socket appeared, a scoped `devcluster update
+  ... node1` succeeded, and `devcluster refresh` completed cleanly. The cluster
+  reports running and ready on the bridge network with no failed units or
+  observed kernel page fault.
+- Live API and password-recovery worker `ExecStart` paths contain exact
+  `e9356b194`. The recovery form returns HTTP 200 with the configured logo, the
+  WebUI authorization start returns HTTP 302 to a fresh OAuth request, and API,
+  worker, nginx, and the exporter timer are active.
+- The shared-email acceptance fixture is restored without consuming a recovery
+  request. `test-user1` and `test-user2` use
+  `shared-password-recovery@example.test`; only `test-user1` has account MFA
+  enabled and an enabled, confirmed `Acceptance TOTP` device with deterministic
+  secret `JBSWY3DPEHPK3PXP`. WebUI direct completion and recovery are enabled,
+  and the unfinished submission queue is empty.
+- A live base-exporter run completed successfully and deployed metrics to
+  `/run/metrics/vpsadmin-base.prom`. It contains every fixed password-recovery
+  admission result, unfinished depth `0`, queue limit `100`, capacity event,
+  and every fixed password-change source counter/timestamp.
+- Exact-head vpsAdmin RuboCop, i18n, and API topic workflows are green. Both
+  exact-head KB workflows are green. The broad vpsAdmin CI workflow remains
+  normally in progress; no runner-shutdown or failure signal is present.
