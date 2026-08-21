@@ -10,8 +10,9 @@
 
 ## Status
 
-Complete. Both reviewed fixes are on `master`, and the full hosted daily update
-workflow passed, including generated commits, final push, and cache save.
+Complete again as of 2026-08-21. The reviewed recurrence fix is on `master`,
+and an exact-head hosted daily update passed package generation, every
+generated commit hook, the final push, and cache save.
 
 ## Commands run
 
@@ -131,11 +132,91 @@ workflow passed, including generated commits, final push, and cache save.
 
 - None currently.
 
+## 2026-08-21 recurrence
+
+- Recreated the removed worktree at
+  `worktrees/2026-08-10-vpsfconf-daily-update/vpsfree-cz-configuration` on the
+  existing `2026-08-10-vpsfconf-daily-update` branch, then fast-forwarded it
+  from `3ec29850` to current `origin/master` at `50e8f420`.
+- Scheduled runs `31774644772` through `32449244222` failed on eight
+  consecutive days. Run `31672141206` on 2026-08-13 was the last success.
+- The first and latest failures both reach `Update package dependencies`,
+  generate `packages/geminabox/Gemfile.lock` and `gemset.nix`, then fail before
+  the package commit because the Overcommit process cannot load the root
+  bundle.
+- Root cause: the workflow exports `BUNDLE_APP_CONFIG` to a temporary config
+  whose path contains only package gems. The Nix development shell originally
+  points `BUNDLE_APP_CONFIG` at the repository `.bundle` configuration and
+  root gems under `.gems`. Exporting the package config overwrites that setting
+  for later `git commit` hook processes. Runs without a changed package lock
+  never exercise the affected commit path, which masked the latent bug.
+- Local reproduction: after selecting a disposable package-only
+  `BUNDLE_APP_CONFIG`, `bundle exec overcommit --run` fails with the same
+  `Bundler::GemNotFound` list seen in the hosted logs.
+- Intended fix: pass the temporary `BUNDLE_APP_CONFIG` only to the config and
+  `bundix` commands. The parent shell and subsequent commits retain the root
+  development-shell Bundler configuration.
+- Implemented that scoping in `.github/workflows/daily-update.yml`; no package,
+  runtime configuration, input, or generated dependency files are changed.
+- Quick verification passed:
+  - `git diff --check`
+  - Ruby YAML parsing with aliases enabled
+  - Actionlint 1.7.12
+  - Disposable `geminabox` `bundix -l` generation using the scoped config,
+    including nonempty `Gemfile.lock` and sourced `gemset.nix` assertions
+  - Root `bundle check` and `bundle exec overcommit --run` in the same parent
+    shell after package generation; Nixfmt and RuboCop hooks both passed
+- Verified imported workflow actions against their official latest releases on
+  2026-08-21: `actions/checkout@v7` maps to v7.0.1,
+  `actions/cache@v6` maps to v6.1.0, and
+  `cachix/install-nix-action@v31` maps to v31.11.1. Current major refs remain
+  appropriate.
+- Functional commit: `a5afe3ae20789ab3d83e39792e85c26975178198`
+  (`ci: isolate package Bundler configuration`). Installed pre-commit and
+  commit-message hooks ran; Nixfmt passed and the commit-message checks passed
+  with their existing 72-column warnings for body lines that remain within the
+  workspace-required 80-column limit.
+- Mandatory fresh-context review completed with no Blocking, Important, or
+  Advisory findings. The reviewer independently matched the hosted failure to
+  the Bundler config leak and reran diff, YAML, and Actionlint checks. The only
+  residual gap is the planned hosted run at the exact integrated head; the
+  disposable regression test covered `geminabox`, while the hosted run will
+  also exercise the two Git-source packages and the final push.
+- Refetched `origin/master`; it remains at reviewed base `50e8f420`, which is
+  an ancestor of the feature head, so no rebase or review invalidation is
+  needed.
+- Pushed the reviewed feature branch to `origin` at `a5afe3ae` through the Nix
+  development shell; the installed pre-push hook remained active.
+- Created fresh target-branch worktree
+  `worktrees/2026-08-10-vpsfconf-daily-update/vpsfree-cz-configuration-merge`
+  on local branch `merge/2026-08-10-vpsfconf-daily-update-recurrence`, based on
+  `origin/master` at `50e8f420`.
+- Fast-forwarded reviewed commit `a5afe3ae` into `master` in the fresh merge
+  worktree and pushed it without a merge commit.
+- Manually dispatched hosted run `32521846985` at exact reviewed head
+  `a5afe3ae`; it passed all steps in 4m48s.
+- The hosted package update exercised every affected path. Root dependencies,
+  `geminabox`, `ssh-exporter`, and `syslog-exporter` all changed, and every
+  generated commit ran and passed the installed pre-commit hooks. This covers
+  the formerly failing package commit as well as both Git-source packages.
+- The workflow pushed all expected automated updates and saved its confctl
+  cache. Remote `master` ended at `c5ec9ea7` after these routine commits:
+  - `6923061f` updates stable/production/staging nixpkgs inputs.
+  - `d534cf7a` updates nixpkgsUnstable.
+  - `baa8e937` updates vpsAdminOS staging inputs.
+  - `31be71aa` updates llm-agents.
+  - `7e8d77a0` updates root Ruby dependencies.
+  - `035c7f15` updates geminabox dependencies.
+  - `7f415298` updates ssh-exporter dependencies.
+  - `c5ec9ea7` updates syslog-exporter dependencies.
+
 ## Cleanup
 
-- Removed both initiative worktrees with `bin/dev-session worktree remove`:
-  `vpsfree-cz-configuration` and `vpsfree-cz-configuration-merge`.
-- Removed their transient ignored development-shell files together with the
-  worktrees. No material uncommitted files were present.
-- Kept the local feature branch, local merge branch, and remote feature branch
-  at `3ec29850`, per workspace policy.
+- Removed both recreated initiative worktrees with
+  `bin/dev-session worktree remove --force`: `vpsfree-cz-configuration` and
+  `vpsfree-cz-configuration-merge`.
+- The only uncommitted contents removed were transient `.bin/`, `.bundle/`,
+  and `.rubocop_cache/` development-shell files. No material changes were
+  present.
+- Kept the local and remote feature branches at `a5afe3ae`, plus the local
+  merge branch refs, per workspace policy.

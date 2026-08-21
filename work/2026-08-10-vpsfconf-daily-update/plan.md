@@ -34,3 +34,19 @@ no deployment ordering or operator migration is required.
 - Run the mandatory fresh-context change review.
 - Trigger or otherwise validate the daily workflow on the pushed branch and
   inspect its logs.
+
+## 2026-08-21 recurrence
+
+The workflow began failing again on 2026-08-14 in the package dependency
+update step. Resume the initiative with this approach:
+
+1. Compare the first and latest failures with the last successful run.
+2. Reproduce the package-only Bundler environment leaking into the repository
+   hook process.
+3. Scope the temporary Bundler configuration to package generation only.
+4. Verify workflow syntax, hook execution, and Bundler environment isolation.
+5. Run the mandatory fresh-context review, fast-forward the fix into `master`,
+   and trigger and inspect the complete hosted daily update workflow.
+
+The compatibility and deployment analysis above is unchanged: this remains an
+automation-only fix with no runtime, state, schema, API, or rollout impact.
