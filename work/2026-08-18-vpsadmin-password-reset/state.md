@@ -22,6 +22,20 @@
 ## Status
 
 - Feature worktrees created.
+- Password-change history follow-up started at vpsAdmin
+  `00674913d112dd6a4ad3ae87a749f8da383e3aab`, KB contracts
+  `9298febb013b0b06d3e47a66c7c5a6e054b66fe5`, and production configuration
+  `5012ebb631f9bfb947f674a8bef6daeae0cb7419`; all three feature worktrees were
+  clean and matched their SSH upstream branches before editing.
+- Decisions for the follow-up: keep global counters, store a nullable exact
+  user-session relation, allow owners and administrators to read history,
+  prune detailed rows at hard deletion, leave the worker unchanged, and retain
+  the existing rolling production deployment with its short measurable audit
+  gap.
+- The ambient-shell Overcommit version check failed because the required bundle
+  is available only inside the repository Nix shell. The existing durable
+  Overcommit/Nix-shell note applies; hooks will be verified and run from
+  `nix develop .#vpsadmin` before committing.
 - vpsAdmin schema, recovery state machine, OAuth routes/forms, TOTP and
   WebAuthn verification, shared-address mail delivery, cleanup task, feature
   flag, localization, and focused specs are implemented.
@@ -1261,3 +1275,132 @@
   `Run tests` step; setup, selection, and preview succeeded, and there is no
   runner-loss signal. Obsolete broad CI run `32480959677` for vpsAdmin
   `e9356b194` was cancelled; no current-head run was cancelled.
+
+## Password change history follow-up (2026-08-21)
+
+- Work started from clean pushed vpsAdmin `00674913d`, KB contracts
+  `9298febb0`, and production configuration `5012ebb63` on the existing
+  initiative branches and worktrees.
+- The API follow-up adds an unbackfilled `password_change_logs` table. Each
+  persisted password update records the target user, source, timestamp, and
+  exact initiating user session when one exists. Recovery and required-reset
+  changes deliberately have a null session. Existing global event counters
+  remain unchanged and detailed rows are pruned when the target user is hard
+  deleted.
+- The read-only API lets members list and show only their own history and lets
+  administrators list, show, and filter all history. Members receive the exact
+  numeric session ID but not the related session object, so an administrator's
+  session metadata is not exposed. The additive API surface is not yet added
+  to `vpsadmin-go-client`; existing clients ignore it.
+- The WebUI adds a localized `Password changes` profile-sidebar entry and a
+  paginated history table with change time, localized source, and session.
+  Administrators can follow every session link; members can follow only their
+  own sessions, while administrator-session IDs remain plain text.
+- Focused ordinary API regression coverage passes with 42 examples, including
+  authenticated, administrator, recovery, required-reset, authorization,
+  pagination, rollback, and hard-delete behavior. The migration spec passes
+  independently with 2 examples. It must not be combined in the same RSpec
+  process with ordinary specs because the migration helper intentionally
+  switches Active Record to `vpsadmin_test_migration`.
+- API i18n health and focused RuboCop pass. WebUI gettext health passes with
+  only the two pre-existing embedded-URL warnings, focused PHPUnit passes with
+  5 tests and 13 assertions, and PHP CS Fixer reports no changed files.
+- The implementation is committed as two independently reversible vpsAdmin
+  commits: API/schema/audit behavior `1b180f23f` followed by localized WebUI
+  presentation `23cb768cf`. Every declared pre-commit and commit-message hook
+  passed for both final commits. The worktree is clean.
+- The KB contract history was rebuilt from `c1d0aca` so it still has one exact
+  mechanical pin commit. All six pin sites use vpsAdmin `23cb768cf`; semantic
+  control `member.password-changes` and path
+  `member.password-changes.open` describe the localized profile navigation.
+  The exact clean, pushed KB head is `9bfd65f48`. Full `nix develop -c
+  bin/check` passes with 43 controls, 35 paths, 92 KB bindings, and all 120
+  existing PNGs. A new screenshot was deliberately omitted because the audit
+  table is simple and the documentation can identify it deterministically by
+  its semantic path.
+- Fresh production sources for `navody:vps:uzivatele` and
+  `manuals:vps:users` were fetched read-only into `kb-sources-history`.
+  Bilingual candidates in `kb-candidates-history` add a concise password
+  change history section with the semantic navigation tag. The standalone
+  reviewer verified that tag against the exact semantic contract. Running the
+  all-page annotation checker on this history-only candidate reports unrelated
+  metrics-page inventory drift because the contract already describes the
+  separately staged metrics candidate while this source remains the production
+  baseline; the earlier complete metrics candidate passed that all-page check.
+  Checksummed schema-5 staging manifests are
+  `kb-release-history-cs.yml` and `kb-release-history-en.yml`; no production
+  KB write has been made.
+- The production configuration history was rebuilt from `50e8f420` so it
+  retains one unmodified generated `confctl inputs channel set --commit` pin.
+  Generated commit `df1c1bcd` pins `vpsadminServices` to exact vpsAdmin
+  `23cb768cf`. Runbook commit `8f9c6ee4` adds the fourth migration, both WebUI
+  hosts, the accepted brief mixed-version audit gap, owner/admin privacy
+  checks, and detailed-history rollback behavior. Strict MkDocs, diff checks,
+  and every declared hook pass. The exact clean, pushed configuration head is
+  `8f9c6ee491689c535d7a58f420a67085e8dcd676`.
+- The first exact-head API topic workflow `32519458283` failed only its endpoint
+  coverage shard because `password_change_log#index` and
+  `password_change_log#show` were missing from `covered_endpoints.yml`. The
+  failed job log was inspected at `/tmp/vpsadmin-coverage-job-96888291709.log`;
+  the precise missing scopes were added before rerunning CI. The superseded
+  long CI run `32519458340` was cancelled after the corrected force-push.
+- The mandatory reviewer also reproduced a session-attribution defect in
+  transparent old-password-hash upgrades: their direct password update logged
+  source `other` without the current session. Password updates with no explicit
+  audit context now use `UserSession.current`, while an explicit nil context
+  remains authoritative for recovery and required-reset flows. The API exposes
+  a derived, read-only ownership flag so members can link any initiating session
+  belonging to their account without inferring authorization from the source
+  label; administrator session details remain hidden.
+- Remediation coverage includes the endpoint registry, model ownership cases,
+  transparent-rehash session attribution, owner serialization, WebUI source
+  independence, and a Playwright assertion that both signed-in changes appear
+  as the two newest matching rows with authorized session links. The assertion
+  deliberately avoids total row counts so it remains repeatable with the
+  append-only, paginated history in the preserved development database.
+  Focused API specs pass with 22 examples;
+  RuboCop, API i18n health, focused PHPUnit (2 tests, 9 assertions), PHP CS
+  Fixer, JavaScript syntax, diff checks, and every declared commit hook pass.
+  The same standalone reviewer rechecked exact pushed vpsAdmin `23cb768cf`, KB
+  `9bfd65f48`, and configuration `8f9c6ee49` after the repeatability correction
+  and reported no Blocking, Important, or Advisory findings. An independent
+  malicious-include proof also confirmed that members retain the numeric
+  administrator-session ID and false ownership flag without receiving the
+  protected session relation (23 focused examples, no failures). The reviewer
+  approved proceeding with long integration testing.
+- The exact-head `./test-runner.sh test 'webui#users-self-service'` integration
+  passes. Its Playwright example completed in 421.52 seconds, the selected
+  script in 906.25 seconds, and the complete three-machine test in 1,168.85
+  seconds with one of one tests successful. This exercises the password-change
+  history page twice against the live API and verifies both newest signed-in
+  rows link to their initiating sessions.
+- All seven production release configurations build successfully and no
+  production machine was deployed: both API hosts, both WebUI hosts, the auth
+  proxy, and both monitoring hosts. The monitoring builds include Prometheus
+  rule validation. Strict MkDocs also passes, and generated `.bin`, `.bundle`,
+  and `site` residue was removed after the checks.
+- The existing single-topology bridge cluster was updated in place to exact
+  vpsAdmin `23cb768cf`; its database and acceptance fixtures were preserved.
+  The shared vpsAdminOS staging input advanced to `5d74cb39c` during closure
+  evaluation, so the update rebuilt the affected OS services as well. The
+  service switch completed without the tolerated Puma shutdown race, the
+  wrapper refreshed the node runtime, and the cluster reports running and
+  ready with no failed units.
+- The live API, password-recovery worker, and console-router `ExecStart` paths
+  all contain exact revision `23cb768cf`, and their services plus the base
+  exporter timer are active. Schema migration `20260821210000` is the current
+  maximum; the preserved database contains the new audit table and four detail
+  rows. A member API request returns only its two rows with the ownership flag
+  and no serialized session relation.
+- A fresh live base-exporter run reports ten monotonic `other` password-change
+  events while only four detailed rows remain, confirming that the retained
+  aggregate counter is independent of detailed-log retention. All fixed source
+  labels remain exported for both the counter and last-change timestamp.
+- Both history manifests were staged and verified at their real Czech and
+  English page IDs. Verification exposes the localized summaries and revision
+  histories at the two review wikis. The staging container remains running;
+  no production KB write was made.
+- Exact-head KB `Check` and `Managed page runtime`, vpsAdmin WebUI PHPUnit, and
+  vpsAdmin i18n workflows are green. Exact-head broad CI run `32525960380`
+  remains normally active in its `Run tests` step with setup, selection, and
+  preview green; no runner-loss signal is present.

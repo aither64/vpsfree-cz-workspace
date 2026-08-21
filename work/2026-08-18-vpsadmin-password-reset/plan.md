@@ -267,3 +267,34 @@ whether an account exists or can use recovery.
   vpsAdmin revision in the KB contract and production configuration, update the
   runbook's embedded revision, and refresh the existing bridge development
   cluster. Production deployment and KB publication remain out of scope.
+
+## Password change history follow-up
+
+- Leave the database-backed password-recovery worker and its polling behavior
+  unchanged. Add an append-only password-change log containing the affected
+  user, the stable change source, the creation time, and the exact initiating
+  user session when one exists.
+- Keep `user_session_id` nullable because recovery and forced-password-change
+  flows run before an authenticated user session exists. Do not create a
+  synthetic session or copy IP address and user-agent snapshots into the log.
+- Create the detailed log and increment the existing durable global counter in
+  the same transaction as the password update. Keep the counter as the
+  Prometheus source so deleting detailed rows never makes metrics decrease.
+- Retain history through soft deletion and remove it when the account enters
+  hard deletion. Do not backfill changes from before the new migration.
+- Expose a read-only password-change-log API. Account owners can list their own
+  history and administrators can list all history; the existing user-session
+  resource authorization controls whether a related session can be resolved.
+- Add **Password changes** / **Změny hesla** after **Sessions** / **Relace** in
+  the profile sidebar. Show newest entries first with the change time, localized
+  method, and an authorized link to the exact session when available.
+- Add a semantic WebUI documentation ID and Czech/English user-documentation
+  candidates. The simple audit table does not need a new screenshot concept;
+  stage the documentation for review without publishing it.
+- Add a fourth additive migration to the deployment runbook, update the exact
+  vpsAdmin pins, and deploy both API hosts before both WebUI hosts. Preserve the
+  chosen rolling deployment: accept and quantify the brief interval in which
+  an old API can increment the global counter without writing a detailed row.
+- Production deployment and KB publication remain operator-only. Update the
+  existing bridge-network development cluster and leave it running for user
+  acceptance.
