@@ -227,6 +227,16 @@ Development is generally Nix-based. Prefer each repository's `nix develop`,
 language-specific tools. Deployment is usually to NixOS or vpsAdminOS systems,
 often through `confctl` and the configuration repositories.
 
+Treat an unexpected local Linux kernel build in vpsAdminOS development or test
+workflows as a bug unless the current work intentionally changes kernel sources
+or configuration. vpsAdminOS kernels should normally be substituted from the
+vpsAdminOS binary cache after GitHub Actions or its runners build them. When a
+command starts building a kernel, stop it and investigate why the derivation
+missed the cache. A local rebuild is acceptable only when the kernel or its
+configuration is intentionally changed, or when the responsible runner has not
+yet built and published the expected derivation; record the justification in
+the initiative `state.md`.
+
 When running `dev-clusters/vpsadmin/bin/devcluster`, use the bridge network by
 default. Do not choose `--network local` unless the user explicitly asks for it
 or the bridge network is genuinely unavailable; if local networking is used,
