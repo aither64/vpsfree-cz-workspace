@@ -1172,3 +1172,20 @@
 - Exact-head vpsAdmin RuboCop, i18n, and API topic workflows are green. Both
   exact-head KB workflows are green. The broad vpsAdmin CI workflow remains
   normally in progress; no runner-shutdown or failure signal is present.
+- A follow-up is in progress to add password visibility controls to the
+  recovery password form. The OAuth forced-password-change form already reveals
+  both new-password fields together; it needs regression coverage but no
+  functional change. The planned recovery control is self-contained, accessible
+  from a keyboard, bilingual for assistive technology, masked by default, and
+  does not change schema or API behavior.
+- The recovery visibility follow-up is committed in vpsAdmin as `2c446a17f` on
+  `2026-08-18-vpsadmin-password-reset`. Both fields remain masked by default;
+  either keyboard-accessible eye button reveals or masks them together and
+  updates the localized assistive label. The existing forced-reset toggle is
+  unchanged and now has explicit regression assertions.
+- Focused recovery and OAuth specs pass with 65 examples. API i18n update and
+  health, focused RuboCop, Node syntax, Nixfmt, and diff checks pass. The first
+  commit attempt was stopped because the ambient shell lacked the hook tools;
+  the commit was rerun from the full repository Nix shell and every declared
+  pre-commit hook passed. The long WebUI integration test is pending the
+  mandatory fresh-agent review.

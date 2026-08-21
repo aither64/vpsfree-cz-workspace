@@ -250,3 +250,20 @@ whether an account exists or can use recovery.
   builds, the exact KB vpsAdmin pin, and the production `vpsadminServices`
   channel pin. Stage KB changes for review but do not publish them. Production
   deployment remains an operator action.
+
+## Recovery password visibility follow-up
+
+- Add keyboard-accessible eye controls to both new-password fields on the
+  recovery password form. Either control reveals or masks both fields together,
+  matching the existing forced-password-change behavior. Passwords remain
+  masked by default and the form remains usable without JavaScript.
+- Add concise English and Czech accessibility labels for showing and hiding the
+  passwords. Keep the recovery page self-contained and do not add a third-party
+  icon or stylesheet dependency.
+- Add route and browser coverage for the recovery toggle and regression coverage
+  for the already-supported forced-password-change controls. No schema, API,
+  mail-template, or authentication-policy change is required.
+- After focused checks and the mandatory fresh-agent review, repin the exact
+  vpsAdmin revision in the KB contract and production configuration, update the
+  runbook's embedded revision, and refresh the existing bridge development
+  cluster. Production deployment and KB publication remain out of scope.
