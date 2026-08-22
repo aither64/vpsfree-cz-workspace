@@ -1404,3 +1404,103 @@
   vpsAdmin i18n workflows are green. Exact-head broad CI run `32525960380`
   remains normally active in its `Run tests` step with setup, selection, and
   preview green; no runner-loss signal is present.
+
+## Expired recovery page follow-up (2026-08-22)
+
+- Work starts from clean pushed vpsAdmin `23cb768cf`, KB contracts
+  `9bfd65f48`, and production configuration `8f9c6ee49` in the existing
+  initiative worktrees. The environment and `bin/dev-session current` both
+  identify `2026-08-18-vpsadmin-password-reset`.
+- A password form left open until the cookies expire submits without the CSRF
+  cookie. `PasswordRecovery#verify_csrf!` handles that before recovery-session
+  lookup and calls Sinatra `halt` with a string, which explains the observed
+  plain-text response. Ordinary invalid-session paths already use the branded
+  HTML template but do not offer recovery actions.
+- The accepted behavior is a branded failure page with a primary request-new-
+  link action and an optional configured OAuth sign-in link. Public client and
+  locale context will survive the flow; stored OAuth client configuration stays
+  authoritative and no arbitrary redirect URL will be accepted.
+- Upstream fetches completed over SSH. vpsAdmin and KB are based on current
+  `origin/master`; production configuration is 12 upstream commits behind and
+  will be rebased before its exact channel pin is updated.
+- vpsAdmin commit `5ce685e75` renders every browser-facing invalid recovery
+  state inside the branded card. It keeps the recovery token in the fragment,
+  preserves the public OAuth client ID and locale, and resolves continuation
+  links only from stored client configuration. WebAuthn CSRF failures remain
+  structured JSON responses.
+- The initial route-focused checks passed. Focused RuboCop, API i18n health,
+  Ruby/ERB syntax, Playwright JavaScript syntax, and diff checks pass. Browser
+  coverage now clears the form cookies before submission and verifies the
+  branded failure, exact restart URL, configured WebUI sign-in URL, logo, and
+  retained locale. Every declared vpsAdmin commit hook passed and exact pushed
+  head is `5ce685e75dc0b30be49366b4e559bad3fd1fdfd3`.
+- The KB contract has no managed control or screenshot for the OAuth recovery
+  page, so only its six exact vpsAdmin revision sites changed. Full
+  `nix develop -c bin/check` passes with 43 controls, 35 paths, 92 bindings,
+  four pages, 12 runtime tests, 21 executable samples, and all 120 PNGs. Exact
+  clean pushed KB head is `c1a12b72f0718d9ff9b1b51a0e0f86b0c68e6896`.
+- The configuration branch was rebased onto current `origin/master` before the
+  service pin was regenerated. The first rebase attempt could not run the
+  updated hook bundle because upstream added `rubyzip`; installing the locked
+  bundle inside `nix develop` restored the declared hooks. Generated commit
+  force-with-lease push succeeded and generated `.bin`/`.bundle` residue was
+  removed.
+- The fresh mandatory review found that pre-lookup CSRF failures could use a
+  conflicting known client and locale from the query even when the submitted
+  email token or flow cookie identified a persisted recovery. It also required
+  consolidation of the two superseding configuration pin commits and asked for
+  rendered Czech/link-level browser coverage.
+- CSRF failure handling now performs only a non-mutating recovery lookup from
+  the submitted email token or flow cookie, uses its stored client and locale
+  when identifiable, and still falls back to the validated query context when
+  all cookies are gone. Regressions use two real clients with conflicting
+  parameters for both email-token exchange and an established recovery
+  session. A Czech Playwright case now follows an invalid fragment token to the
+  branded failure page and checks both recovery actions. Focused route/model
+  specs pass with 34 examples; focused RuboCop, Ruby syntax, Node syntax, diff
+  checks, and every declared commit hook pass.
+- Configuration history was rebuilt from current `origin/master` with one
+  unmodified generated `confctl` input commit, `ac550b89`, directly from
+  `b3d63c00` to exact vpsAdmin `5ce685e75`. The final revision checks were
+  folded into the password-history runbook commit instead of retained as a
+  fixup. Exact clean pushed configuration head is
+  `9709165ea9269a9436f4d7d6d82bd550ec894cad`.
+- The exact-head recheck found one remaining presentation edge: invalidated
+  email tokens still identify their persisted request, but the context lookup
+  used the active-only exchange scope. Presentation now uses an including-
+  inactive digest lookup while a separate active lookup and locked usability
+  check continue to authorize exchange. A conflicting-client Czech regression
+  verifies the invalidated row is not mutated and the original actions remain.
+- The same standalone reviewer rechecked exact pushed vpsAdmin `5ce685e75`, KB
+  `c1a12b72`, and configuration `9709165e` and reported no Blocking,
+  Important, or Advisory findings. The application commit, mechanical KB pin,
+  single generated configuration pin, and four hand-written configuration and
+  runbook commits are focused; the reviewer approved proceeding to the planned
+  integration, build, strict-documentation, and bridge-cluster gates.
+- Strict MkDocs passes. All seven affected production configurations build
+  successfully without deployment: both API hosts, both WebUI hosts, the auth
+  proxy, and both monitoring hosts. The monitoring builds validate the
+  Prometheus configuration and rules. Generated `.bin`, `.bundle`, and `site`
+  outputs were removed after verification.
+- Exact-head `./test-runner.sh test 'webui#auth'` passes. The Playwright
+  example succeeded in 337.81 seconds, the selected script in 669.65 seconds,
+  and the complete three-machine test in 928.41 seconds with one of one tests
+  successful. It exercises the stale-form recovery failure and the new Czech
+  invalid-link browser path against the live auth frontend.
+- The existing single-topology bridge development cluster was updated in place
+  to exact vpsAdmin `5ce685e75`; the database and acceptance fixtures were
+  preserved. Its shared vpsAdminOS staging input advanced to `3bf14ec67` while
+  evaluating the updated closure. The switch completed without the tolerated
+  Puma console-router shutdown race, and the cluster reports running and ready
+  with no failed units.
+- The live API, password-recovery worker, and console-router services are all
+  active, and each `ExecStart` path contains exact vpsAdmin revision
+  `5ce685e75`. A direct stale-form submission through the live auth frontend
+  returns HTTP 400 with the logo, explanatory recovery-session error, primary
+  `Request a new link` action, centered configured WebUI sign-in link,
+  `Cache-Control: no-store`, and the restrictive recovery-page CSP. The cluster
+  remains running for user acceptance testing.
+- Exact-head KB `Check` and `Managed page runtime`, vpsAdmin RuboCop, and
+  vpsAdmin i18n workflows are green. The exact-head broad vpsAdmin CI and API
+  topic workflows remain normally in progress after the dev-cluster acceptance
+  gate passed; superseded runs were cancelled after each force-push.

@@ -298,3 +298,27 @@ whether an account exists or can use recovery.
 - Production deployment and KB publication remain operator-only. Update the
   existing bridge-network development cluster and leave it running for user
   acceptance.
+
+## Expired recovery page follow-up
+
+- Render every browser-facing invalid or expired recovery state inside the
+  existing branded password-recovery layout. A stale CSRF cookie must never
+  fall back to Sinatra's plain-text halt response.
+- Show a primary **Request a new link** / **Požádat o nový odkaz** action on
+  every failure page. When the originating OAuth client is known, also show the
+  configured, centered **Back to sign in** / **Zpět na přihlášení** link.
+- Carry the public OAuth client ID and selected locale through recovery email
+  links, redirects, and form actions. Keep the recovery token in the URL
+  fragment. For a valid recovery, use the client stored with the recovery
+  request as the authority; never accept a caller-provided redirect URI.
+- Keep HTTP 400, no-store and browser security headers, the one-hour email-link
+  lifetime, and the 15-minute recovery-session lifetime. WebAuthn failures must
+  remain structured JSON responses.
+- No schema, API resource, generated-client, or production mail-template change
+  is required. Existing recovery links without context query parameters remain
+  compatible.
+- Add route and Playwright coverage for a form left open past cookie expiry,
+  invalid and reused links, missing client context, bilingual copy, and safe
+  client-aware actions. Repin the KB contract and production configuration,
+  run the mandatory review, update the existing bridge cluster, and leave
+  production deployment and KB publication to the operator.
