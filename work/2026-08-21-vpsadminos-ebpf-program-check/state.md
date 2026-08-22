@@ -4,14 +4,16 @@
 
 - `vpsadminos`
   - branch: `2026-08-21-vpsadminos-ebpf-program-check`
-  - worktree:
+  - removed worktree:
     `worktrees/2026-08-21-vpsadminos-ebpf-program-check/vpsadminos`
-  - base: `origin/staging` at `5d74cb39c`
+  - initial base: `origin/staging` at `5d74cb39c`
+  - integration base: `origin/staging` at `f0657cb4e`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-21-vpsadminos-ebpf-program-check`
-  - worktree:
+  - removed worktree:
     `worktrees/2026-08-21-vpsadminos-ebpf-program-check/vpsfree-cz-configuration`
-  - base: `origin/master` at `c5ec9ea7`
+  - initial base: `origin/master` at `c5ec9ea7`
+  - integration base: `origin/master` at `942174b8`
 - `linux`
   - read-only inspection of public `vpsfreecz/linux` commits; no local
     worktree
@@ -22,16 +24,20 @@
 ## Status
 
 - vpsAdminOS implementation, binary-cache fix, and deterministic lifecycle
-  coverage are committed and pushed at
-  `5a4917393511f27ffd8c2a33e25d8f2624b094be`.
+  coverage were rebased onto current `origin/staging`, tested, and
+  fast-forwarded into `staging` at
+  `4ebcaab16c3827834f8a8019ff685d5849623c4a`.
 - Mandatory change review completed with no blocking findings. Its one
   important lifecycle-test race was fixed and folded into the first
   implementation commit before the final push.
-- The configuration channel update is committed and pushed at `8afc1343`.
-- The lifecycle VM test passes with the runner-published kernel outputs. The
-  vpsAdminOS action for the final head is publishing its closure before the
-  representative configuration builds. Default branches and live Nodes remain
-  untouched.
+- The configuration channel update was regenerated from current
+  `origin/master` and fast-forwarded into `master` at
+  `d5a7df8e6b45c05b3f02e25f425b6f4e84fdca8f`.
+- The lifecycle VM test passes with the runner-published kernel outputs.
+  Exact-head RSpec, cache publication, both hardware livepatch jobs, and the
+  76-test broad suite pass both before and after integration. Both project
+  default branches and their remote feature branches point to the intended
+  commits. No Node was deployed.
 
 ## Commands run
 
@@ -89,6 +95,35 @@
   `8afc134338fa101ddd70fb3379cdbe5d927ba864`
 - monitored final vpsAdminOS CI run `32539141798` through completion and
   inspected its test log
+- fetched both default branches after merge authorization; vpsAdminOS
+  `staging` had advanced to `f0657cb4e` and configuration `master` to
+  `942174b8`
+- rebased the four vpsAdminOS commits onto `f0657cb4e` without conflicts and
+  force-pushed the feature branch with an explicit lease at
+  `4ebcaab16c3827834f8a8019ff685d5849623c4a`
+- reran the 33-example registry suite and three-example lifecycle VM on the
+  rebased head; both passed and used cached Linux 6.12.95 outputs
+- regenerated all three configuration pins with `confctl` from current master,
+  moved the feature branch to generated commit `d5a7df8e`, and force-pushed it
+  with an explicit lease
+- interrupted one configuration regeneration attempt before it changed the
+  lock file after detecting an incorrect revision argument, then reran it with
+  the exact full vpsAdminOS revision
+- monitored rebased feature-head vpsAdminOS CI run `32555949716` through
+  completion and inspected its broad-suite summary
+- created fresh detached target worktrees from the current default branches,
+  fast-forwarded vpsAdminOS `staging` and vpsfree-cz-configuration `master`,
+  reran the focused registry suite from the vpsAdminOS integration worktree,
+  and verified the generated channel listing from the configuration
+  integration worktree
+- pushed vpsAdminOS `staging` at `4ebcaab16` and configuration `master` at
+  `d5a7df8e6`, then removed both detached integration worktrees
+- monitored post-merge vpsAdminOS RSpec run `32558824389` and CI run
+  `32558824376` through successful completion and inspected the broad-suite
+  summary
+- verified both remote default and feature branch heads, then removed the two
+  merged feature worktrees while retaining all local and remote feature branch
+  refs
 
 ## Results
 
@@ -147,11 +182,10 @@
   `99570e6e222a` in May 2024. Legacy livepatch has consumed `zfsBuiltinPkg`
   since `88ea86fd265a` on 2024-05-17. This is therefore a longstanding build
   dependency, not one added by the current eBPF work.
-- The vpsAdminOS feature branch is pushed at
-  `5a4917393511f27ffd8c2a33e25d8f2624b094be`. Superseded action runs were
-  cancelled. The preceding head's RSpec action and both hardware livepatch
-  lifecycle jobs passed; the final-head OS CI action is publishing its closure
-  before its test jobs start.
+- The vpsAdminOS feature branch and `staging` point to
+  `4ebcaab16c3827834f8a8019ff685d5849623c4a`. Its rebased exact-head RSpec,
+  cache publication, AMD and Intel livepatch lifecycle jobs, and broad suite
+  all passed before integration.
 - The eBPF lifecycle VM passes all three examples: initial pins are attached,
   a forced activation failure preserves the exact link IDs and generation, and
   deploying an empty configuration unloads every old link and leaves one empty
@@ -161,9 +195,10 @@
   and validates the JSON link ID; the reusable finding is recorded in
   `notes/vpsadminos/2026-08-22-bpftool-pinned-tracing-exit-status.md`.
 - Generated configuration commit
-  `8afc1343` pins `staging`, `os-staging`, and `production` to that vpsAdminOS
-  revision. Its changelog records the feature commits for staging channels and
-  the accepted existing staging delta plus those commits for production.
+  `d5a7df8e6b45c05b3f02e25f425b6f4e84fdca8f` pins `staging`, `os-staging`,
+  and `production` to the integrated vpsAdminOS revision. Its changelog records
+  the feature commits for staging channels and the accepted existing staging
+  delta plus those commits for production.
 - The final-head vpsAdminOS action published its closure in about four minutes;
   neither it nor the local lifecycle test rebuilt Linux. Both final-head AMD
   and Intel legacy livepatch lifecycle jobs passed.
@@ -182,16 +217,30 @@
 - An initial `confctl` attempt used an incorrect expanded revision and failed
   with GitHub HTTP 404 before changing `flake.lock`; the command was rerun with
   the exact pushed revision and succeeded with hooks active.
+- Rebased feature-head CI run `32555949716` completed successfully: its broad
+  suite ran 266 scripts across 76 tests with no unexpected outcomes, and
+  `ebpf-livepatch-lifecycle` passed in 96.79 seconds. The fresh integration
+  worktree's focused registry suite also passed all 33 examples.
+- Both default branches were updated by fast-forward only. Configuration
+  `master` contains the three exact `4ebcaab16` input revisions. No deployment,
+  service reload, or other live Node change was performed.
+- Post-merge vpsAdminOS RSpec and CI passed on `staging`. The CI cache job took
+  three minutes, both hardware livepatch jobs passed, and the broad suite ran
+  266 scripts across 76 successful tests with no unexpected outcomes.
+  `ebpf-livepatch-lifecycle` passed in 67.49 seconds. No push-triggered workflow
+  exists for the configuration repository.
 
 ## Open questions
 
-- None. The user selected feature-branch pushes without default-branch merges
-  or Node deployment, current fail-safe reload reporting, and intentional
-  promotion of the existing staging vpsAdminOS delta to the production channel.
+- None. The user authorized both default-branch fast-forwards and will perform
+  deployment. The existing staging vpsAdminOS delta is intentionally promoted
+  to the production channel.
 
 ## Cleanup
 
-- Both initiative worktrees are retained for the remaining checks.
-- Both project worktrees are clean. The detached configuration regeneration
-  worktree and transient `.bin/` and `.bundle/` paths were removed.
-- No feature branch should be deleted during cleanup.
+- All feature, detached integration, and configuration regeneration worktrees
+  for this initiative were removed after clean-status checks.
+- Ignored `.gems/`, `.confctl/`, `Gemfile.lock`, and `result` development
+  artifacts inside the removed feature worktrees were discarded with the
+  worktrees; they are reproducible from the repositories and Nix store.
+- Local and remote feature branch refs were retained as required.

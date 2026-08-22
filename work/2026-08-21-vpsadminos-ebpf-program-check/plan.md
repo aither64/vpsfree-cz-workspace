@@ -6,7 +6,8 @@ Retire `cifs_spnego_guard` on kernels which contain the upstream CIFS SPNEGO
 description validation, and make successful eBPF livepatch reloads reconcile
 the attached programs to the complete new configuration. Update the staging,
 OS-staging, and production configuration channels to the tested feature
-revision without deploying Nodes or merging either default branch.
+revision, fast-forward both project default branches, and leave Node deployment
+to the user.
 
 ## Affected repositories
 
@@ -43,7 +44,10 @@ revision without deploying Nodes or merging either default branch.
    pin `staging`, `os-staging`, and `production` to it. The production update
    intentionally includes the accepted existing 32-commit staging delta.
 7. Run the mandatory fresh-agent review after intended commits and quick
-   checks, before long VM and configuration builds. Push feature branches only.
+   checks, before long VM and configuration builds.
+8. After exact-head CI passes, fast-forward vpsAdminOS `staging` and then
+   vpsfree-cz-configuration `master` from fresh target worktrees. Do not deploy
+   any Node.
 
 ## Compatibility and deployment
 
