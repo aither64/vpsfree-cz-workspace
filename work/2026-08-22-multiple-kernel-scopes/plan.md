@@ -10,6 +10,7 @@ unchanged.
 ## Affected repositories
 
 - `vpsadminos`
+- `vpsfree-cz-configuration`
 
 ## Approach
 
@@ -25,6 +26,9 @@ unchanged.
   guards.
 - Leave compiled kernel livepatch selection unchanged. Its `filterFn`
   predicates already support arbitrary version logic.
+- After integrating the reviewed vpsAdminOS commit into `staging`, update the
+  `vpsadminos` role in the `staging`, `os-staging`, and `production` channels
+  through `confctl` to the exact merged revision.
 
 ## Compatibility and deployment
 
@@ -34,6 +38,10 @@ unchanged.
   deployments and rollback remain compatible.
 - The implementation does not change kernel sources or configuration and does
   not require a coordinated machine update.
+- Integrate and publish vpsAdminOS before updating configuration pins so every
+  channel resolves a revision reachable from the upstream default branch.
+- The three channel pins may be deployed independently. Older nodes remain
+  compatible, and rollback consists of restoring the previous vpsAdminOS pin.
 
 ## Testing plan
 
@@ -46,3 +54,7 @@ unchanged.
 - After review, run `./test-runner.sh test ebpf-livepatch-lifecycle` and
   `./test-runner.sh test 'prometheus/exporters#ebpf'`.
 - Push the feature branch and monitor GitHub Actions.
+- Verify the generated configuration pin mapping, run a no-build flake check,
+  evaluate representative staging and production nodes without local builds,
+  and build one managed `os-staging` consumer after confirming its build graph
+  contains no kernel or ZFS derivations.

@@ -6,12 +6,24 @@
   - branch: `2026-08-22-multiple-kernel-scopes`
   - worktree: `worktrees/2026-08-22-multiple-kernel-scopes/vpsadminos`
   - base: `origin/staging` at `4ebcaab16`
+- `vpsfree-cz-configuration`
+  - branch: `2026-08-22-multiple-kernel-scopes`
+  - worktree:
+    `worktrees/2026-08-22-multiple-kernel-scopes/vpsfree-cz-configuration`
+  - base: `origin/master` at `d5a7df8e`
 
 ## Status
 
-- Implementation, mandatory review follow-up, local integration tests, push,
-  and GitHub Actions validation are complete.
+- Implementation, mandatory review follow-up, local integration tests, feature
+  push, and feature-head GitHub Actions validation are complete.
 - Scope decision: add the multi-range mechanism without adding 6.18 ranges.
+- vpsAdminOS was fast-forwarded to `staging` at `3bf14ec67`.
+- The `staging`, `os-staging`, and `production` configuration channels were
+  pinned to that exact revision in generated commit `3bd35c6c`, which was
+  fast-forwarded to configuration `master`.
+- Default-branch integration, downstream pinning, validation, CI, and worktree
+  cleanup are complete.
+- The configuration repository has no push-triggered workflow for this commit.
 
 ## Commands run
 
@@ -48,6 +60,38 @@
 - `gh run rerun 32566122706 --repo vpsfreecz/vpsadminos --failed` after a
   four-minute backoff
 - Monitored GitHub Actions run `32566122706` through completion.
+- Created a fresh detached vpsAdminOS target worktree from `origin/staging`,
+  fast-forwarded it to `3bf14ec67`, and reran
+  `./test-runner.sh test ebpf-livepatch`.
+- `git push origin HEAD:staging`
+- Removed the temporary vpsAdminOS target worktree.
+- `bin/dev-session worktree add 2026-08-22-multiple-kernel-scopes
+  vpsfree-cz-configuration --as-is --branch
+  2026-08-22-multiple-kernel-scopes --base origin/master`
+- `nix develop --command bundle exec overcommit --install`
+- `nix develop --command confctl inputs channel set --commit
+  staging,os-staging,production vpsadminos
+  3bf14ec679229ab6c19387593e3a34db2da20220`
+- `nix develop --command confctl inputs channel ls
+  staging,os-staging,production`
+- `nix flake check --no-build --no-update-lock-file`
+- `nix develop --command confctl build -y --max-jobs=0
+  cz.vpsfree/nodes/stg/node1`
+- `nix develop --command confctl build -y --max-jobs=0
+  cz.vpsfree/nodes/prg/node25`
+- `nix develop --command confctl build -y --max-jobs=0
+  cz.vpsfree/containers/int.vpsfbot`
+- `nix develop --command confctl build -y
+  cz.vpsfree/containers/int.vpsfbot`
+- Pushed configuration feature branch
+  `2026-08-22-multiple-kernel-scopes`.
+- Created a fresh detached configuration target worktree from `origin/master`,
+  fast-forwarded it to `3bd35c6c`, reran the no-build flake check, and pushed
+  `HEAD:master`.
+- Removed the temporary configuration target worktree.
+- Monitored vpsAdminOS default-branch CI run `32573492517` through completion.
+- Removed the retained vpsAdminOS and configuration feature worktrees after
+  verifying that their local and remote feature refs matched.
 
 ## Results
 
@@ -114,6 +158,37 @@
   - `Livepatch lifecycle (intel)`: passed.
   - `Livepatch lifecycle (amd)`: passed.
   - Run: https://github.com/vpsfreecz/vpsadminos/actions/runs/32566122706
+- The vpsAdminOS target worktree was a clean direct fast-forward from
+  `4ebcaab16` to `3bf14ec67`; its focused registry suite passed all 37 examples
+  again before the default-branch push.
+- `confctl` generated configuration commit
+  `3bd35c6ca62f7e9a9c77d3f21b1c146d49f6b036` with all three inputs set to
+  `3bf14ec679229ab6c19387593e3a34db2da20220` and the same resolved NAR hash.
+  Its Nixfmt pre-commit hook passed, and no hook was bypassed.
+- `confctl inputs channel ls` confirmed the `vpsadminos` role in `staging`,
+  `os-staging`, and `production` resolves to `3bf14ec6`.
+- `nix flake check --no-build --no-update-lock-file` passed in both the feature
+  and fresh target worktrees.
+- Staging `node1` and production `node25` evaluated to vpsAdminOS
+  `26.05.git.3bf14ec`; both stopped only because the intentionally external
+  `/secrets/nodes/initrd/ssh_host_ed25519_key` is unavailable locally. With
+  `max-jobs=0`, neither attempted a local build.
+- The dry build of managed `os-staging` consumer
+  `cz.vpsfree/containers/int.vpsfbot` requested only five configuration and
+  activation derivations, with no Linux or ZFS derivation. Building those five
+  derivations normally succeeded.
+- vpsAdminOS default-branch CI run `32573492517` passed at the exact merged
+  head `3bf14ec679229ab6c19387593e3a34db2da20220`:
+  - `Build OS and populate binary cache`: passed.
+  - `Run test suite`: passed.
+  - `Livepatch lifecycle (intel)`: passed.
+  - `Livepatch lifecycle (amd)`: passed.
+  - Run: https://github.com/vpsfreecz/vpsadminos/actions/runs/32573492517
+- `vpsfree-cz-configuration` has no push-triggered workflow for the merged
+  configuration head.
+- The downstream change is a generated dependency-only lock update, so it did
+  not require a second mandatory review after the reviewed vpsAdminOS code was
+  integrated.
 
 ## Open questions
 
@@ -121,6 +196,7 @@
 
 ## Cleanup
 
-- Keep the feature branch after integration.
-- The feature branch and worktree are retained for review and eventual
-  integration. Remove the worktree after the branch is merged or abandoned.
+- Keep both feature branches locally and remotely after integration.
+- Temporary target and retained feature worktrees have been removed. The local
+  and remote feature branches remain at `3bf14ec67` for vpsAdminOS and
+  `3bd35c6c` for configuration.
