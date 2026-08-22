@@ -16,15 +16,22 @@ without producing independent security evidence.
 
 ## Workflow
 
-Run `bin/security-advisory collect` once immediately before a related batch and
+Run `bin/security-advisory collect` once for the reviewed deployment state and
 pass `--evidence .state/evidence.json` to each sequential `sync` or `ready`
-invocation. Reuse expires when the oldest Node receipt or history-coverage
-timestamp reaches the evaluator's 15-minute evidence-age limit. Collection
-itself consumes part of that window. Commit each generated submission baseline
-before the next apply so the source remains clean. Recollect if the Node set or
+invocation. The evaluator checks that every Node receipt and history-coverage
+timestamp was current at the document's recorded collection time. The coherent
+document does not expire merely because advisory editing, review, or draft sync
+takes longer than 15 minutes. Do not alter `collected_at` to extend a snapshot;
+the evidence digest and original timing remain audit provenance.
+
+Commit each generated submission baseline before the next apply so the source
+remains clean. Recollect explicitly after a deployment or when the Node set or
 security state may have changed.
 
 This optimization does not weaken remote concurrency controls: every advisory
 still uses content-revision preconditions and an exact post-write readback.
-Focused and full RSpec cover reuse, expiration, and the default recollection
-path.
+Focused and full RSpec cover delayed reuse, stale-at-collection rejection,
+future timestamps, and the default recollection path. The behavior was updated
+in initiative
+`work/2026-08-22-security-advisories-6-12-95-6/` after a valid reviewed
+snapshot expired during editorial follow-up and caused needless fleet reads.
