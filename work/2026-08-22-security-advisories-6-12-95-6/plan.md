@@ -35,6 +35,12 @@ out of scope without separate explicit approval.
    Evaluate stored evidence against its recorded collection time and require
    an explicit collection only when operators need to observe changed Node
    state. Reuse the reviewed snapshot for draft synchronization.
+7. Correct retrospective mitigation intervals by treating an accepted
+   cumulative live-patch replacement as continuous while the verified outgoing
+   patch remains loaded on the same boot and the exact incoming patch is also
+   accepted for the CVE. Fail closed on boots, removals, first-time transitions,
+   and unreviewed successors. Reevaluate and resynchronize only the 24 affected
+   retrospective drafts from the existing coherent evidence snapshot.
 
 ## Compatibility and deployment
 
@@ -54,6 +60,14 @@ must run `collect` explicitly after a deployment or when Node state may have
 changed. Rollback restores wall-clock expiry but does not invalidate evaluations
 already committed with complete provenance.
 
+The cumulative-replacement correction changes only local evaluation state and
+tracked per-Node conclusions. It does not alter evidence or advisory schemas,
+Node software, vpsAdmin APIs, or public text. Existing dossiers remain
+compatible. The evaluator retains reviewed patch provenance only within one
+boot and only while that exact module remains loaded, so rollback and removal
+continue to fail closed. Draft synchronization remains revision-guarded and
+must not publish advisories or send mail.
+
 ## Testing plan
 
 - Compare patch v5/v6 coverage and live-patch source at exact vpsAdminOS commits.
@@ -64,3 +78,9 @@ already committed with complete provenance.
 - Add evaluator and reconciler regression tests proving that old snapshots are
   accepted when they were coherent at collection time, that stale-at-collection
   and future timestamps still fail closed, and that reuse does not recollect.
+- Add realistic regression coverage for an accepted two-module cumulative
+  transition, a first-time transitioning module, an unreviewed successor, a
+  changed current system closure, and existing reboot rollback behavior.
+- Compare all corrected security-interval signatures with established `.2`,
+  `.3`, and `.5` evaluation cohorts, then dry-run and read back every updated
+  draft before recording a new submission baseline.

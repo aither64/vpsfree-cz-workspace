@@ -15,8 +15,15 @@
 - Complete bilingual dossiers and typed production evaluations have been
   prepared for all 26 CVEs.
 - All 26 approved vpsAdmin advisories have been created as unpublished drafts
-  and read back at content revision 13. Their exact baselines are committed and
-  pushed. Final GitHub Actions are running on the baseline head.
+  and read back at content revision 13. Review found that 24 retrospective
+  drafts incorrectly restarted their mitigation interval at the `.6` rollout.
+- The evaluator correction and all 24 regenerated evaluations are committed,
+  reviewed, pushed, and green in CI. All 24 affected drafts were corrected and
+  read back at revision 25, and all 26 drafts pass readiness. Final submission
+  baselines are committed and pushed at `ea62476`; final CI passed on that
+  exact head.
+- No Node evidence was recollected. No advisory was published and no email was
+  sent.
 
 ## Commands run
 
@@ -77,6 +84,39 @@
 - retried the baseline push inside the Nix environment after the ambient
   pre-push hook rejected its missing pinned Ruby gems
 - pushed baseline head `ac41c2b` and started monitoring its GitHub Actions
+- reproduced the retrospective date defect from the retained 20:02 UTC
+  evidence and inspected the actual `.2` to `.6` per-Node transition history
+- verified Linux's cumulative live-patch atomic replacement semantics against
+  the upstream kernel documentation
+- changed the evaluator to retain accepted live-patch provenance across a
+  clean current-closure change on the same boot and to bridge only an exact,
+  accepted two-module cumulative transition
+- added regression coverage for accepted atomic replacement, first-time
+  transition rejection, unreviewed successor rejection, and continued rollback
+  handling
+- regenerated the 24 retrospective evaluations from the existing `.state`
+  snapshot without running `collect`
+- ran the focused evaluator suite (54 examples), focused RuboCop (three files),
+  and dossier suite (seven examples), all with zero failures or offenses
+- ran the mandatory standalone review against base `ac41c2b` and the committed
+  correction series, then resolved every reported fail-closed edge with focused
+  regression coverage
+- independently reproduced all 24 committed evaluations from the unchanged
+  evidence using `Reconciler#evaluate(..., persist: false)`
+- squashed the review follow-ups into the behavior commit and restored the
+  intended two-commit correction series
+- ran the complete local RSpec suite (164 examples, zero failures) and RuboCop
+  suite (29 files, no offenses)
+- pushed reviewed source head `e8e064b` and monitored exact-head GitHub Actions
+  RSpec and RuboCop runs to success
+- dry-ran all 24 affected drafts and confirmed existing draft identities,
+  complete 13-Node plans, and the `.2`, `.3`, and `.5` historical date windows
+- synchronized all 24 drafts sequentially from the unchanged evidence,
+  validated exact readback after each write, and committed each updated
+  `submission.yml` baseline before the next remote write
+- ran readiness for all 26 drafts from the unchanged evidence snapshot
+- pushed final baseline head `ea62476` and monitored exact-head GitHub Actions
+  RSpec and RuboCop runs to success
 
 ## Results
 
@@ -118,10 +158,12 @@
 - Every new evaluation is complete: 12 compute nodes are `mitigated` and
   storage node 161 is `not_affected` because it does not host the VPS
   interface assessed by these dossiers.
-- Exact transition history restarts the continuous mitigation interval at v5
-  or v6 for the retrospective CVEs because replacement rollouts contain a
-  recorded interval without an accepted active patch. Durable response text
-  still names the first live-patch release that carried each fix.
+- The retrospective interval reset was an evaluator defect. During Linux's
+  atomic cumulative replacement, the outgoing accepted patch remains loaded
+  while tasks move to the accepted successor. The evaluator incorrectly
+  invalidated the outgoing patch when the current vpsAdminOS closure changed
+  and rejected every transitioning observation, even when both exact patches
+  were accepted for the CVE.
 - The current configuration digest is
   `b996b11eacbebe6f739dee82eda4fb2fa608351501fabf98770729ff29d2443f`;
   every requested subsystem option is present. SCTP's `auth_enable` control
@@ -194,6 +236,59 @@
 - Submission baseline commits span `bdb87be` through `ac41c2b`. The feature
   branch is pushed at final baseline head `ac41c2b`. Final RSpec run
   `32597421156` and RuboCop run `32597421131` both passed on that exact head.
+- The correction retains patch identity only while the same exact module is
+  loaded on the same boot. A first-time transition, boot, removal, or
+  unreviewed successor remains affected and starts a new interval only after a
+  later accepted stable patch is observed.
+- All 16 `.2` retrospective evaluations now match the established `.2` cohort's
+  security interval and reason on every Node: continuous Nodes date to
+  2026-08-06, while Node 214 correctly dates to its post-reboot `.4` mitigation
+  on 2026-08-09. All three `.3` evaluations date staging Nodes 400 and 401 to
+  `.3` on 2026-08-07 and the remaining compute Nodes to `.4` on 2026-08-09.
+  All five `.5` evaluations date every compute Node to `.5` on 2026-08-14.
+- The regenerated evaluations retain the unchanged evidence digest
+  `d42987be19062f80312e80f6b9f1bb4d33433d95f7860cb2cac87339e586ef13`.
+  Public `advisory.yml` files and the two genuine `.6` evaluations are
+  unchanged.
+- Mandatory review initially found fail-open transition shapes involving an
+  unreviewed successor beside a stable patch, missing boot identity, metadata
+  inheritance across a boot, reverse unpatch transitions, removal without an
+  active counterpart, and reversal through an inactive endpoint. It also
+  identified the real Node 124 disabled-transition record that must remain
+  continuous because both `.5` and `.6` are accepted and `.5` is active.
+- The final evaluator examines every loaded transition, validates both exact
+  patch tuples, and applies direction-specific continuity rules. Enabled
+  forward transitions require the distinct counterpart to be the previously
+  protecting outgoing patch. Disabled reverse transitions require an accepted
+  loaded, enabled, stable counterpart. Ambiguous, multiple, unreviewed, removal,
+  missing-boot, and cross-boot inheritance shapes fail closed.
+- The final independent review passed with no remaining Blocking, Important,
+  or Advisory findings. Its independent evaluator and dossier run passed 69
+  examples, focused RuboCop reported no offenses, and all 24 evaluations
+  reproduced exactly without collection or writes. Residual risk is deliberate:
+  unknown future Linux live-patch inventory shapes fail closed until reviewed.
+- After tree-preserving history cleanup, the correction commits are `e80548f`
+  (workflow, documentation, and regressions) and `e8e064b` (24 evaluations and
+  cohort guard), with final head `e8e064bc6d9986de4893c260573f3ab917cca4d8`.
+- Full local verification passed with 164 RSpec examples and zero failures in
+  4 minutes 40.6 seconds; RuboCop inspected 29 files with no offenses. GitHub
+  Actions RuboCop run `32600707066` and RSpec run `32600707071` both passed on
+  exact source head `e8e064b`.
+- All 24 dry-run plans resolved existing draft IDs, never proposed creation,
+  and contained 12 mitigated compute Nodes plus one not-affected storage Node.
+- Drafts 33 through 56 in the retrospective set were each updated from content
+  revision 13 to 25: 12 compute Node rows changed and the role-excluded storage
+  row remained unchanged. Every write read back `state: draft`,
+  `published_at: null`, exact bilingual dossier text, 13 Node rows, and the
+  expected historical intervals. The corrected submission-baseline series
+  spans `282ef06` through `ea62476`.
+- Final readiness passed for all 26 advisories with complete 13/13 Node sets.
+  Genuine `.6` drafts 31 and 32 remain unchanged at revision 13; the 24
+  retrospective drafts are ready at revision 25. No advisory was published and
+  no email was sent.
+- The feature branch is pushed at final head
+  `ea6247687fd02417f87e1e5593fecd8b9055925d`. Final GitHub Actions RuboCop run
+  `32601144048` and RSpec run `32601144062` both passed on that exact head.
 
 ## Open questions
 
