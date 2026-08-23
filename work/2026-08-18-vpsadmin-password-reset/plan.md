@@ -373,3 +373,32 @@ whether an account exists or can use recovery.
 - Keep schema and public API shapes unchanged. Repin the exact vpsAdmin revision
   in the KB contract and production configuration, and update the deployment
   runbook. Do not publish KB pages or deploy production systems.
+
+## Administrator recovery restriction and history fix
+
+- Fix the administrator password-change history view so rows without an
+  initiating session never cause the PHP client to resolve `user_session#show`
+  without an ID. Keep administrator attribution for rows with a session.
+- Limit self-service password recovery to accounts whose API role is `user`.
+  Treat both `support` and `admin` roles as administrator accounts for this
+  policy. The public form and neutral confirmation remain unchanged.
+- Send the normal grouped recovery email for matching administrator accounts,
+  but never create a reset token. Give administrator status precedence over
+  MFA and other account eligibility and tell the recipient to ask another
+  administrator to change the password.
+- Keep the stored recovery outcome `unavailable` and use an
+  administrator-specific mail outcome. This avoids a schema, persisted enum,
+  API, generated-client, or metrics change while preserving the rendered
+  reason in the mail log.
+- Revalidate the shared policy before consuming a recovery link and in the
+  locked final password transaction. Invalidate active recoveries whenever an
+  account crosses the ordinary-user and privileged-account boundary, so links
+  issued before a promotion cannot be used later.
+- Update embedded and production Czech/English plain-text and HTML templates,
+  preserving the exact automated-mail footer. Install production templates
+  before starting the updated API.
+- Add API, model, template, PHP, and browser regressions for privileged
+  accounts, shared addresses, stale links, privilege transitions, and
+  sessionless history rows. Run mandatory review, repin the KB contract and
+  production configuration, refresh the existing bridge development cluster,
+  and leave production deployment and KB publication to the operator.

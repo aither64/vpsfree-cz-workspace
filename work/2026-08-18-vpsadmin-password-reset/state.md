@@ -1729,3 +1729,25 @@
   The broad CI workflow remains in progress at this checkpoint; it will be
   monitored to completion, and any runner loss will be inspected before a
   replacement run is accepted.
+
+## Administrator recovery restriction and history fix (2026-08-23)
+
+- User acceptance found an administrator history failure at
+  `?page=adminm&action=password_changes&id=2` and requested that self-service
+  recovery be unavailable to administrator accounts while still sending an
+  explanatory recovery email.
+- Live WebUI logs reproduce the failure at `webui/forms/users.forms.php:374`:
+  a recovery row with no initiating session causes HaveAPI PHP to call
+  `user_session#show` without path arguments and throw `UnresolvedArguments`.
+  The API response and authorization are not the cause.
+- Repository inspection confirms that API role `user` covers levels below 21,
+  `support` covers levels 21 through 89, and `admin` covers levels 90 and above.
+  The accepted policy permits only role `user` and treats both privileged roles
+  as administrator accounts in recovery mail.
+- The four project worktrees are clean at the start of this follow-up:
+  vpsAdmin `e67572ca27952f977603f570ca23961bd3bc9ebf`, production mail templates
+  `c21e186c72299db573c3ed16e0bc33df3c460731`, KB contracts
+  `6ca3a0698bebed1042ebd15039626ea158deb6e8`, and production configuration
+  `c7346294e5f8ed425c4c359ce8d33b53898faa49`.
+- No product repository, production host, or KB page has been changed at this
+  checkpoint. The existing bridge cluster remains the only deployment target.
