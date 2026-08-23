@@ -1814,3 +1814,32 @@
   development-cluster update. The Playwright sessionless-row assertion checks
   the row and absence of links but not the literal `---`; the pending browser
   gate exercises the real client rendering.
+
+### Administrator recovery integration follow-up
+
+- The first post-review `webui#users-admin` run failed after 708.88 seconds
+  while creating its browser fixtures. Artifact
+  `/tmp/os-test-runner/os-test-webui-fd1a3b33` records a Ruby `NameError`:
+  the two password-recovery fixtures referenced the ordinary `user` before
+  `ensure_webui_user` created it. This is an integration-fixture regression in
+  the administrator-recovery commit, not a runner or product-runtime failure.
+- The correction moves those recovery fixtures immediately after the ordinary
+  browser user is created. It retains an ordinary recovery subject while
+  preserving the later token output consumed by the authentication browser
+  tests. The failed run will not be accepted as validation; the affected
+  browser gates will be rerun at the corrected exact head.
+- Repository hooks passed when the amend was rerun inside the full Nix
+  development shell. The corrected exact clean vpsAdmin head is
+  `5a61d5698deff70fea385bb620c6bb24b9a88597` and is pushed.
+- The KB contract is mechanically repinned at all six sites to that revision.
+  `bin/check` again passes with 43 controls, 35 paths, 92 bindings, and all 120
+  PNGs. Its corrected exact clean pushed head is
+  `39f2b827cf2c91a03e276bd95e04ed7c7f243aac`.
+- Production configuration was regenerated through `confctl`. Its rewritten
+  feature history retains one generated pin commit, `8399af33`, followed by
+  one runbook commit, instead of recording superseding pins for the same
+  integration correction. The lock and both runbook literals use exact
+  vpsAdmin `5a61d5698`; exact clean pushed configuration head is
+  `304799867315efa42ad9367cca3e62fd0c77d41e`. No host was deployed.
+- The same standalone mandatory reviewer is rechecking only this correction
+  and the new exact downstream heads before the browser gates resume.
