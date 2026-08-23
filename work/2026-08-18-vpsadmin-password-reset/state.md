@@ -1504,3 +1504,45 @@
   vpsAdmin i18n workflows are green. The exact-head broad vpsAdmin CI and API
   topic workflows remain normally in progress after the dev-cluster acceptance
   gate passed; superseded runs were cancelled after each force-push.
+
+## Default OAuth client follow-up (2026-08-23)
+
+- User acceptance found that a queryless recovery submission reaches the
+  **Check your email** page without a sign-in link. The template already shows
+  the link when an OAuth client is known; live database evidence shows the
+  latest direct submission had `oauth2_client_id = NULL`.
+- The accepted design adds a general `Oauth2Client#is_default` role instead of
+  a password-recovery-specific system setting. Password recovery uses the
+  default WebUI client only when no persisted or explicit valid client exists,
+  and stores it as the context for the complete flow.
+- The live `test-user1` account has an enabled and confirmed `Acceptance TOTP`
+  device, but the last service update reran the generic seed and reset
+  `enable_multi_factor_auth` to false. The acceptance step will restore only
+  that development account flag after deploying the corrected revision.
+- vpsAdmin commit `fdaf8c41a` adds nullable `oauth2_clients.is_default` with a
+  unique index and an atomic API switch. Explicit and persisted OAuth clients
+  remain authoritative; a valid default is used only when neither exists and
+  is stored on new queryless recovery submissions. The default must have a
+  safe authorization start URI, can be cleared, and serializes as false while
+  stored as NULL when unselected.
+- Focused recovery and OAuth-client specs pass with 62 and 29 examples. The
+  migration spec passes independently with two examples. Focused RuboCop, API
+  i18n health, Nixfmt, JavaScript syntax, diff checks, and every declared
+  vpsAdmin commit hook pass. The exact clean pushed vpsAdmin head is
+  `fdaf8c41a8b1f626098c2979884982aff073ae7e`.
+- The KB contract is mechanically repinned at all six revision sites. Its full
+  `bin/check` suite passes with 43 controls, 35 paths, 92 bindings, and all 120
+  PNGs. No managed page, semantic control, or screenshot changed. The exact
+  clean pushed KB head is `08201ee082f4cb4b3d4b9f93fb907191ab84b8f9`.
+- The production configuration history was rebuilt on current `origin/master`
+  `1adf7d860` so it contains one generated `confctl` input commit, followed by
+  the independent proxy, monitoring, and consolidated runbook commits. It pins
+  `vpsadminServices` to exact `fdaf8c41a`, lists all five migrations, and marks
+  only the production WebUI OAuth client as default. The active Nixfmt hook and
+  strict MkDocs pass. The exact clean pushed configuration head is
+  `10a27311167e3063c59a8b82a90a27ded2b20976`; no production host was deployed.
+- The shared development seed remains backward compatible with older vpsAdmin
+  revisions and now marks WebUI as default whenever the new model API is
+  available. Its Nix formatting check passes. Deployment to the preserved
+  bridge cluster and restoration of the `test-user1` MFA flag remain pending
+  until the mandatory review completes.

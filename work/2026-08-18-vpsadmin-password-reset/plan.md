@@ -322,3 +322,24 @@ whether an account exists or can use recovery.
   client-aware actions. Repin the KB contract and production configuration,
   run the mandatory review, update the existing bridge cluster, and leave
   production deployment and KB publication to the operator.
+
+## Default OAuth client follow-up
+
+- Add the general-purpose nullable boolean `oauth2_clients.is_default` and a
+  unique index that permits any number of non-default clients but at most one
+  default. Expose it through the administrator OAuth-client API and switch the
+  default atomically when another client is selected.
+- Require a default client to have a validated authorization start URI. Resolve
+  a recovery client from persisted recovery state first, an explicit valid
+  client second, and the default client last. Never accept a return URI from a
+  public request.
+- Use the resolved default for the complete queryless flow, including the
+  submission, confirmation page, mail link, failure pages, and completion.
+  Existing flows with an explicit or persisted client keep that client.
+- Configure the development WebUI client as default and document selecting the
+  production WebUI client after the additive migration. Older API versions
+  ignore the new column, and a newer API without a default keeps the existing
+  safe behavior.
+- Restore the development-only account MFA flag for `test-user1` after the
+  cluster update. Reuse its existing enabled and confirmed `Acceptance TOTP`
+  device and leave production deployment and KB publication to the operator.
