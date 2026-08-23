@@ -1546,3 +1546,43 @@
   available. Its Nix formatting check passes. Deployment to the preserved
   bridge cluster and restoration of the `test-user1` MFA flag remain pending
   until the mandatory review completes.
+
+### Mandatory review corrections
+
+- The standalone reviewer found that OAuth client updates loaded the target
+  before entering the default-switch transaction. A stale target could clear a
+  newer default or remove the start URI from a client that had meanwhile
+  become default. The corrected model locks all OAuth clients in ID order,
+  reloads the target, applies the explicit update, validates the current state,
+  and then switches the default. Clearing the former default now also updates
+  its exposed `updated_at` timestamp.
+- Deterministic regressions cover both reproduced stale schedules and an
+  explicit stale `is_default: false` update. The complete OAuth client resource
+  spec passes with 32 examples and focused RuboCop is clean. All vpsAdmin
+  pre-commit and commit-message hooks ran; the corrected pushed vpsAdmin head
+  is `8ba310cbbc9af272f1c258ac0f68c5d6f844bfac`.
+- The reviewer also found that an older model can see the retained
+  `is_default` column without supporting atomic switching. Shared development
+  seed commit `2875597ab28a78609d0a6c94c64baf9ac9d15fa2` now assigns the flag only
+  when `save_with_default!` is available. Its Nix formatting check passes.
+- The failed prior-head API topic-coverage log was inspected before accepting
+  a replacement run. It showed that the earlier password history resource
+  spec was never assigned to a topic. Focused vpsAdmin commit `8ba310cbb` maps
+  it to `users-auth`; the remaining superseded prior-head CI run was cancelled.
+- The KB contract is repinned at all six sites to exact vpsAdmin `8ba310cbb`.
+  Its full check still passes with 43 controls, 35 paths, 92 bindings, and all
+  120 PNGs. The corrected clean pushed KB head is
+  `20b8d77a8c0af3e8f5a09720945861d81f9e26d1`.
+- The production configuration series was rebuilt on `origin/master`
+  `1adf7d860` so it again contains one generated `confctl` pin followed by the
+  focused proxy, monitoring, and runbook commits. The lock and both runbook
+  checks use exact vpsAdmin `8ba310cbb`; the corrected clean pushed head is
+  `cd3130e3b4abd6adbb9f7b6846288dc21cd2a874`. No production host was deployed.
+- The same standalone reviewer rechecked the corrected exact heads and reported
+  no remaining Blocking, Important, or Advisory findings. The reviewer also
+  independently reran the 32-example OAuth client spec and reconstructed the
+  topic mapping: all 399 non-migration API specs map exactly once, with the
+  password history spec only in `users-auth`. The reviewer accepted every
+  corrected commit boundary and exact downstream pin. Long integration tests,
+  production configuration builds, and development-cluster deployment can now
+  proceed.
