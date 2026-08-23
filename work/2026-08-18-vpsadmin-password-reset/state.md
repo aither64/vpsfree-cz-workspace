@@ -1881,3 +1881,15 @@
   standard automated-mail footer, and neither contains a recovery URL or HTML
   link. The email remains in development Mailpit for user inspection; local
   CSRF/cookie/form artifacts were removed.
+- Exact corrected-head GitHub workflows for API topic specs, RuboCop, API/WebUI
+  i18n, and the KB contract check are green. Superseded broad vpsAdmin run
+  `32654022527` was cancelled after the amend. Current broad vpsAdmin run
+  `32656237937` and KB managed-runtime run `32656346842` remain alive in their
+  test steps with no reported failure; runner deployment may extend or
+  interrupt them, so any eventual failed result requires log inspection before
+  a rerun is accepted.
+- Final handoff audit confirms all four project worktrees are clean and every
+  local feature head equals its SSH upstream: vpsAdmin `5a61d5698`, mail
+  templates `a71b329b`, KB contracts `39f2b827`, and configuration `30479986`.
+  All immutable KB/configuration/runbook references resolve to the exact
+  vpsAdmin and mail-template revisions listed above.
