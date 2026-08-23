@@ -1751,3 +1751,45 @@
   `c7346294e5f8ed425c4c359ce8d33b53898faa49`.
 - No product repository, production host, or KB page has been changed at this
   checkpoint. The existing bridge cluster remains the only deployment target.
+
+### Administrator recovery implementation and quick verification
+
+- The WebUI failure was caused by resolving `user_session#show` for recovery
+  and forced-reset audit rows whose optional `user_session_id` is null. Commit
+  `3622dffde302a874d146fe5abfa35ea4804aeede` guards the relation lookup and
+  adds an administrator browser fixture for a sessionless row.
+- Commit `0057e59f4a839c5a83f138ee6ffb97e2dc231ece` permits recovery only for API
+  role `user`. Roles `support` and `admin` still receive the grouped security
+  mail, but their entry has no token and directs them to another administrator.
+  The existing persisted `unavailable` outcome is retained; the distinct mail
+  branch is transient, so this follow-up adds no migration or API/client
+  contract change.
+- Recovery eligibility is checked when the email token is exchanged and again
+  under the user lock before the final password write. Crossing between an
+  ordinary and privileged role invalidates active recoveries; tests also cover
+  tokens manufactured by an older process and a role change after the password
+  form was opened.
+- Embedded and production templates use the same English and Czech
+  administrator guidance. The exact standard automated-mail footer remains
+  unchanged. Production template commit
+  `a71b329b91acb38d24e19d8dda9512537253e901` is clean and pushed.
+- vpsAdmin was rebased onto current `origin/master` and force-pushed with lease.
+  Its exact clean pushed head is `0057e59f4a839c5a83f138ee6ffb97e2dc231ece`.
+  The installed hooks pass migration specs, Nixfmt, WebUI/API i18n checks,
+  PHP CS Fixer, and RuboCop.
+- Focused recovery, route, policy, model, and template specs pass with 64
+  examples and no failures. Full WebUI PHPUnit passes with 86 tests and 365
+  assertions. All four production ERB variants compile, and diff/footer checks
+  pass.
+- The KB contract is pinned at all six sites to exact vpsAdmin `0057e59f4`.
+  Its full `bin/check` passes with 43 controls, 35 paths, 92 bindings, and all
+  120 PNGs. No managed page, semantic control, or screenshot changed. Exact
+  clean pushed KB head: `908cd0dabf141c529fabbc8b5ea02a9f1fefa962`.
+- Production configuration was rebased onto current `origin/master`. Generated
+  `confctl` commit `9860559e` pins `vpsadminServices` to exact `0057e59f4`;
+  commit `b7214ab53dc6bfca60d95a84aa6064313ab21039` updates the runbook with the
+  member-only policy, privileged-account acceptance checks, and exact template
+  revision. Nixfmt hooks and strict MkDocs pass. The exact clean head is pushed;
+  no production host was deployed.
+- Long browser integration tests, production configuration builds, mandatory
+  review, CI completion, and bridge-cluster deployment remain pending.
