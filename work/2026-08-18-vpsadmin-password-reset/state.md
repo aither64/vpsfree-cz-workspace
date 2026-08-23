@@ -1659,3 +1659,22 @@
   it through `nix develop` ran every mandatory hook successfully. A separate
   reusable note records the unrelated `tools/test-db status` NameError seen
   after the automated test database had stopped.
+
+### Password reset UI follow-up mandatory review
+
+- A fresh standalone reviewer found no behavioral, security, compatibility,
+  deployment, or user-facing-copy defects in the exact pushed vpsAdmin, mail
+  template, or development-seed revisions. The reviewer independently reran
+  the three highest-risk API specs: 56 examples passed with no failures.
+- The reviewer classified shared-workspace commit `6a85deb` as a commit-split
+  failure because it combined this initiative's plan/state update with an
+  unrelated reusable test-database troubleshooting note. This finding is
+  accepted rather than rewritten: the commit is already published on the
+  shared `master`, whose history must remain linear and must not be rewritten
+  out from under concurrent sessions. The note is a valid durable workspace
+  lesson and neither part changes product behavior, so deleting and re-adding
+  it would add churn without repairing the published boundary.
+- Future unrelated reusable lessons will be committed separately from
+  initiative tracking, even when the lesson is discovered during that
+  initiative. This dedicated follow-up records the review disposition before
+  downstream repins, integration tests, and development deployment proceed.
