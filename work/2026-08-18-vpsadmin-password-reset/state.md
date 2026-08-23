@@ -1678,3 +1678,54 @@
   initiative tracking, even when the lesson is discovered during that
   initiative. This dedicated follow-up records the review disposition before
   downstream repins, integration tests, and development deployment proceed.
+
+### Password reset UI follow-up integration and deployment
+
+- The KB contract is pinned at all six revision sites to exact vpsAdmin
+  `e67572ca27952f977603f570ca23961bd3bc9ebf`. Its complete `bin/check` suite
+  passes with 43 controls, 35 paths, 92 bindings, and all 120 PNGs. No managed
+  page, semantic control, or screenshot changed. The clean pushed KB head is
+  `6ca3a0698bebed1042ebd15039626ea158deb6e8`; no KB page was published.
+- The production configuration input was updated with `confctl` to exact
+  vpsAdmin `e67572ca`; the deployment runbook now names that revision and
+  exact mail-template revision `c21e186c72299db573c3ed16e0bc33df3c460731`.
+  Nixfmt hooks and strict MkDocs pass. The clean pushed configuration head is
+  `c7346294e5f8ed425c4c359ce8d33b53898faa49`.
+- Two incorrect `confctl inputs channel set` invocations used the flake input
+  name where the channel/role mapping was required and made no changes. The
+  corrected mapping is `vpsadmin vpsadmin`; a separate reusable note records
+  the discovery. An ambient-shell push was also rejected by the repository
+  hook because its pinned gems were absent; the same push passed from the Nix
+  development shell. Generated `.bin`, `.bundle`, and `site` outputs were
+  removed after verification.
+- All seven affected production configurations build successfully without
+  deployment: both API hosts, both WebUI hosts, the auth proxy, and both
+  Prometheus hosts. No production host was switched or otherwise changed.
+- The existing bridge-network single-topology development cluster was updated
+  in place to exact vpsAdmin `e67572ca`; its database and acceptance fixtures
+  were preserved. The cluster reports running and ready with no failed units.
+  API, password-recovery worker, and console-router services are active, and
+  all three `ExecStart` paths contain the exact deployed revision.
+- The switch-time seed reset `test-user1` once because earlier acceptance had
+  changed its password away from the configured development value. This
+  correctly incremented authentication generation from 12 to 13 and created
+  seed audit row 16. Two subsequent explicit seed runs left both test-user
+  password digests, authentication generations, session counts, and audit
+  counts unchanged, proving the new matching-password path is a no-op.
+- Exact pre-delete inspection identified seed-generated audit rows 1 through
+  12 and 16: all had source `other`, no initiating session, and belonged to
+  the two development users. Those 13 rows were deleted from the development
+  database. Real acceptance rows 13 through 15 remain: recovery, signed-in,
+  and forced reset. The deletion is recoverable only from a database backup.
+- `test-user1.enable_multi_factor_auth` was restored to true only after its
+  `Acceptance TOTP` device ID 1 was confirmed enabled and confirmed. The
+  development cluster remains available for user acceptance.
+- All three exact-head long browser gates pass:
+  `webui#auth` completed in 1002.58 seconds, `webui#users-admin` in 964.09
+  seconds, and `webui#users-self-service` in 1027.83 seconds. They cover the
+  labelled forced-reset form, administrator attribution link, and member
+  history/privacy behavior respectively.
+- Exact-head API topic, RuboCop, WebUI PHPUnit, and i18n GitHub workflows pass.
+  The broad CI workflow remains in progress at this checkpoint; it will be
+  monitored to completion, and any runner loss will be inspected before a
+  replacement run is accepted.
