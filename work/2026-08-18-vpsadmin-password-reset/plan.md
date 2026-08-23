@@ -343,3 +343,33 @@ whether an account exists or can use recovery.
 - Restore the development-only account MFA flag for `test-user1` after the
   cluster update. Reuse its existing enabled and confirmed `Acceptance TOTP`
   device and leave production deployment and KB publication to the operator.
+
+## Password reset and history UI follow-up
+
+- Redesign the OAuth forced-password-reset step to match the recovery password
+  form: show the trusted account login in a labelled read-only field, add
+  visible labels to both new-password fields, retain the shared show-password
+  control, and keep the existing OAuth client, cancellation, and submission
+  behavior.
+- Show an **Admin** column only in the administrator view of password-change
+  history. Resolve the administrator through the recorded initiating session
+  and link to that administrator's profile when the nested relation is
+  authorized. Do not request or disclose the nested user relation to members.
+- Increase only the password-recovery worker's idle polling interval from one
+  second to five seconds. Continue processing queued work immediately and keep
+  the existing error backoff unchanged.
+- Use `Login` as the Czech label for the account identifier throughout WebUI,
+  password recovery, embedded and production mail templates, tests, and the
+  Czech terminology guide. Keep `Přezdívka` only as the translation of the
+  separate `Nickname` field.
+- Make the shared development seed idempotent for unchanged passwords by
+  checking the configured plaintext against the stored password hash before
+  calling `set_password`. This avoids password-change history, authentication
+  generation changes, and session revocation when the seed is rerun.
+- After deploying the reviewed revision to the existing bridge development
+  cluster, remove only the password-change rows proven to have been created by
+  previous seed reruns. Preserve all real recovery, signed-in, forced-reset,
+  and administrator changes, then rerun the seed twice to prove it is a no-op.
+- Keep schema and public API shapes unchanged. Repin the exact vpsAdmin revision
+  in the KB contract and production configuration, and update the deployment
+  runbook. Do not publish KB pages or deploy production systems.

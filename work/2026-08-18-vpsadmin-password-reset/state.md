@@ -1625,3 +1625,37 @@
   link reaches a fresh OAuth authorization for `vpsadmin-webui-test`.
 - The bridge development cluster remains running for user acceptance. No
   production host was deployed and no production KB page was published.
+
+## Password reset and history UI follow-up (2026-08-23)
+
+- User acceptance requested labelled forced-reset fields with a read-only
+  login, administrator attribution in password-change history, a five-second
+  idle worker poll, and consistent Czech use of `Login` for the account
+  identifier. The accepted follow-up also makes the development seed skip an
+  unchanged password and cleans only the seed-generated development audit rows.
+- The existing initiative and project worktrees were verified clean before
+  editing. vpsAdmin starts at exact pushed revision `8ba310cbb`, production mail
+  templates at `2f6c657`, KB contracts at `20b8d77`, and production
+  configuration at `cd3130e`. The preserved bridge cluster is running exact
+  vpsAdmin `8ba310cbb`; production deployment and KB publication remain out of
+  scope.
+- vpsAdmin now has four focused local commits: `026869a8e` labels the trusted
+  OAuth forced-reset fields, `b8b5923c5` attributes administrator password
+  changes, `ab2880105` changes only the idle worker poll to five seconds, and
+  `e67572ca2` corrects Czech `Login` terminology and embedded templates. Every
+  commit passed the installed Overcommit pre-commit and commit-message hooks
+  from the root Nix development shell.
+- Production mail-template commit `c21e186` applies the same Czech `Login`
+  label without changing either automated-mail footer. Shared workspace commit
+  `fa7a295` makes unchanged development passwords a seed no-op. Neither change
+  affects production state on its own.
+- Focused API verification passes with 102 examples and no failures across the
+  OAuth form, password-change resource, worker, recovery routes, and embedded
+  templates. Focused RuboCop is clean. Full WebUI PHPUnit passes with 86 tests
+  and 364 assertions; gettext health, PHP CS Fixer, JavaScript syntax, Nix
+  parsing/formatting, and all 16 CI-selection tests pass.
+- The first commit attempt was correctly rejected because Overcommit was run
+  outside the root Nix shell and could not find its declared tools. Repeating
+  it through `nix develop` ran every mandatory hook successfully. A separate
+  reusable note records the unrelated `tools/test-db status` NameError seen
+  after the automated test database had stopped.
