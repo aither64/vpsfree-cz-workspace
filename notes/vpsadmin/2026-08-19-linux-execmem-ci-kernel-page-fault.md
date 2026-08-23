@@ -43,9 +43,17 @@ write.
 Upstream commit
 [`1871d548fc4f`](https://github.com/torvalds/linux/commit/1871d548fc4feb007644efb6d669c93a4e191254),
 `mm/execmem: make the populate and alloc atomic`, fixes this matching race.
-Linux 6.18.45 and the `linux-6.18.y` branch did not yet contain the fix when
-this was investigated on 2026-08-19, so a 6.18.43 to 6.18.45 version bump
-alone is insufficient.
+Linux 6.18.46 and the `linux-6.18.y` branch still did not contain the fix when
+rechecked on 2026-08-23, so a 6.18.43 to 6.18.46 version bump alone is
+insufficient.
+
+The failure recurred in vpsAdmin run `32628417831`, job `97167303577`, in
+`vps/deploy-public-key-and-user-data`. The services VM Oopsed at
+`native_set_pte()` while `__execmem_cache_free()` changed executable-memory
+permissions. The test never reached its feature assertions. Its vpsAdminOS pin
+already included both `rd.udev.children_max=1` and `udev.children_max=1`, which
+proves that serializing udev workers does not prevent other module loaders from
+racing.
 
 The failure is unrelated to password recovery. It occurred 8.5 guest-seconds
 after boot, before vpsAdmin API readiness. The feature branch did not change
@@ -57,7 +65,7 @@ The uncertain `trusted_tee_seal` frame was prefixed with `?` and does not prove
 that the `trusted` module triggered the race. Do not blacklist that module on
 this evidence.
 
-## Durable fix
+## Durable fix and temporary containment
 
 Backport upstream commit `1871d548fc4feb007644efb6d669c93a4e191254` into
 the NixOS kernel used by generated vpsAdminOS test VMs, then update vpsAdmin's
@@ -66,35 +74,39 @@ vpsAdminOS pin. Also request inclusion in the Linux 6.18 stable series.
 Do not disable the test runner's kernel-failure detector. It correctly exposed
 the guest-kernel failure.
 
-## Temporary mitigation
+Until a fixed 6.18.y is available, generated NixOS test VMs use
+`pkgs.linuxPackages_6_12`. Linux 6.12 does not have the executable-memory cache
+path involved in this race. The test-only udev serialization parameters were
+removed because the recurrence demonstrated that they were insufficient.
 
-Retrying the affected test is reasonable after confirming that the runner's
-Nix store is healthy. The race is timing-dependent and the same-head test
-already passed once.
+Remove the 6.12 pin only after all three conditions are met:
 
-For test VMs only, `clearcpuid=pse` bypasses the x86 ROX executable-memory
-cache that contains the bug. Linux documents `clearcpuid` as a testing option
-and it taints the kernel, so this is not a production or durable fix.
+1. Upstream commit `1871d548fc4feb007644efb6d669c93a4e191254` is in
+   `linux-6.18.y`.
+2. The Nixpkgs revision pinned by vpsAdminOS packages that fixed release.
+3. Parallel boot and module-loading stress reproduces neither the
+   `__execmem_cache_free` fault nor the earlier `__text_poke` static-call
+   failure that originally motivated udev serialization.
 
 ## Verification
 
-Build otherwise identical test kernels with and without the backport. Stress
-parallel loading of initially unloaded modules for at least 100 KVM boot
-cycles, retaining the debug `vmlinux` and recording the guest kernel
-derivation, `uname -a`, `/proc/cmdline`, and `/proc/cpuinfo`. The patched kernel
-must complete without allocation errors, Oopses, page faults, or
-`__execmem_cache_free` failures.
+When returning to Linux 6.18, stress parallel loading of initially unloaded
+modules for at least 100 KVM boot cycles, retaining the debug `vmlinux` and
+recording the guest kernel derivation, `uname -a`, `/proc/cmdline`, and
+`/proc/cpuinfo`. The fixed kernel must complete without allocation errors,
+Oopses, page faults, `__execmem_cache_free` failures, or `__text_poke`
+static-call failures.
 
 Then run:
 
 ```sh
 ./test-runner.sh test -f --jobs 1 services-up
-./test-runner.sh test -f --jobs 1 vps/replace-remote
+./test-runner.sh test -f --jobs 1 vps/deploy-public-key-and-user-data
 ./test-runner.sh test -f --jobs auto --filter 'tag=ci'
 ```
 
-Repeat `vps/replace-remote` at least 20 times while other VM tests run, then run
-the full CI selection twice.
+Repeat the previously failing test at least 20 times while other VM tests run,
+then run the full CI selection twice.
 
 Related initiative:
-`work/2026-08-18-vpsadmin-password-reset/`.
+`work/2026-08-23-vpsadmin-ci-failure/`.
