@@ -123,6 +123,22 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   stress is free of both known `__execmem_cache_free` and `__text_poke`
   failures.
 
+## Mandatory change review
+
+- One fresh standalone reviewer inspected vpsAdminOS range
+  `80a0017d7..7dc777a5d`, workspace commit `f8b7f2c`, the initiative records,
+  and the quick-verification evidence before long VM testing.
+- Result: `READY_WITH_NOTES`.
+- Blocking findings: none. Important findings: none. Advisory findings: none.
+- The reviewer confirmed that every direct-boot `spin = "nixos"` guest imports
+  the changed base configuration, vpsAdminOS guests use a separate path,
+  `lib.mkDefault` permits deliberate per-test overrides, and no copy of either
+  udev serialization parameter remains.
+- Residual validation matches the plan: run `driver/nixos`, inspect the later
+  vpsAdmin services machine against the exact pin, run the two focused
+  downstream tests, require green feature/target CI, and stop if a kernel
+  compilation starts.
+
 ## Cleanup
 
 - The vpsAdminOS feature worktree and branch are active and will be retained
