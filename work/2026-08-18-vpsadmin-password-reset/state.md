@@ -1586,3 +1586,42 @@
   corrected commit boundary and exact downstream pin. Long integration tests,
   production configuration builds, and development-cluster deployment can now
   proceed.
+
+### Final integration and development deployment
+
+- Exact-head `./test-runner.sh test 'webui#auth'` passes. The Playwright
+  example completed in 365.65 seconds, the selected script in 729.53 seconds,
+  and the complete three-machine test in 995.29 seconds with one of one tests
+  successful.
+- All seven affected production configurations build successfully without
+  deployment: both API hosts, both WebUI hosts, the auth proxy, and both
+  Prometheus hosts. The monitoring builds validate the generated Prometheus
+  rules and configuration. The first non-interactive batch stopped before any
+  build because confirmation was not enabled; rerunning the same serial batch
+  with `confctl build --yes` passed. Generated `.bin` and `.bundle` residue was
+  removed.
+- Current-head vpsAdmin API topic workflow `32635630952` passes, including
+  exact topic coverage and the `users-auth` shard. Both current-head KB
+  workflows pass. All active superseded vpsAdmin runs were cancelled after
+  their replacement heads were pushed; the prior topic-coverage failure was
+  inspected and fixed rather than rerun unchanged.
+- The existing single-topology bridge development cluster was updated in place
+  to exact vpsAdmin `8ba310cbb`; its database and acceptance fixtures were
+  preserved. Closure evaluation advanced the shared vpsAdminOS staging input
+  to `80a0017d7`. The switch completed without the tolerated Puma console-router
+  stop race, and the cluster reports running and ready with no failed units.
+- Live API, password-recovery worker, and console-router `ExecStart` paths all
+  contain exact vpsAdmin revision `8ba310cbb` and the three services are active.
+  Migration `20260823100000` is the current maximum.
+- The development WebUI client `vpsadmin-webui-test` is the sole default and
+  retains start URI
+  `https://webui.aitherdev.int.vpsfree.cz/?page=login&action=login`.
+  `test-user1.enable_multi_factor_auth` was restored to true; its `Acceptance
+  TOTP` device ID 1 remains enabled and confirmed.
+- A live queryless recovery GET returns HTTP 200. A submission for a unique
+  unknown address returns HTTP 303 to `/oauth2/password-reset/sent` with
+  `client_id=vpsadmin-webui-test`; the rendered page contains **Check your
+  email** and the configured WebUI **Back to sign in** link. Following that
+  link reaches a fresh OAuth authorization for `vpsadmin-webui-test`.
+- The bridge development cluster remains running for user acceptance. No
+  production host was deployed and no production KB page was published.
