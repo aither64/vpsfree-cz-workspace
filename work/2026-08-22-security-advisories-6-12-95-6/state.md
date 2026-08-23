@@ -14,16 +14,20 @@
 - The user approved the 26-CVE candidate list.
 - Complete bilingual dossiers and typed production evaluations have been
   prepared for all 26 CVEs.
-- All 26 approved vpsAdmin advisories have been created as unpublished drafts
-  and read back at content revision 13. Review found that 24 retrospective
-  drafts incorrectly restarted their mitigation interval at the `.6` rollout.
+- All 26 approved vpsAdmin advisories were created as unpublished drafts and
+  read back at content revision 13. Review found that 24 retrospective drafts
+  incorrectly restarted their mitigation interval at the `.6` rollout.
 - The evaluator correction and all 24 regenerated evaluations are committed,
   reviewed, pushed, and green in CI. All 24 affected drafts were corrected and
   read back at revision 25, and all 26 drafts pass readiness. Final submission
   baselines are committed and pushed at `ea62476`; final CI passed on that
   exact head.
 - No Node evidence was recollected. No advisory was published and no email was
-  sent.
+  sent while preparing and correcting the drafts.
+- The reviewed feature head was fast-forwarded into the repository's long-lived
+  target branch and passed target-branch CI. All 26 advisories were then
+  published from their exact reviewed revisions with mail disabled, and an
+  independent API read-back verified every live record.
 
 ## Commands run
 
@@ -117,6 +121,22 @@
 - ran readiness for all 26 drafts from the unchanged evidence snapshot
 - pushed final baseline head `ea62476` and monitored exact-head GitHub Actions
   RSpec and RuboCop runs to success
+- created a temporary integration branch and worktree from target commit
+  `9f21948`, fast-forwarded it to `ea62476`, and reran the focused evaluator,
+  dossier, and RuboCop checks
+- fetched the remote immediately before integration, confirmed the target was
+  still an ancestor of the reviewed head, and pushed the target branch by
+  fast-forward
+- monitored target-branch GitHub Actions RSpec and RuboCop runs to success on
+  exact head `ea62476`
+- ran one read-only publication preflight for all 26 advisories and confirmed
+  their exact draft identities, revisions, digests, publication permission,
+  and `send_mail: false`
+- published the exact preflighted batch with explicit user approval and
+  `send_mail: false`
+- independently fetched advisory IDs 31 through 56 from the production API and
+  verified their external IDs, published states, expected content revisions,
+  and valid publication timestamps
 
 ## Results
 
@@ -289,13 +309,29 @@
 - The feature branch is pushed at final head
   `ea6247687fd02417f87e1e5593fecd8b9055925d`. Final GitHub Actions RuboCop run
   `32601144048` and RSpec run `32601144062` both passed on that exact head.
+- The repository target branch `2026-07-13-security-advisory-automation` was
+  fast-forwarded from `9f21948` to
+  `ea6247687fd02417f87e1e5593fecd8b9055925d`. No rebase or merge commit was
+  required. Target-branch RuboCop run `32626226730` and RSpec run
+  `32626226779` both passed on the exact merged head.
+- The all-advisory publication preflight returned 26 drafts, matching the exact
+  committed submission baselines: IDs 31 and 32 at revision 13 and IDs 33
+  through 56 at revision 25. Every item reported `send_mail: false`.
+- All 26 production records were published successfully between
+  2026-08-23 07:43:56 UTC and 07:47:57 UTC. Publication preserved the reviewed
+  content revisions and used `send_mail: false`; no email was sent.
+- A separate production API read-back verified all 26 records as `published`,
+  with the expected external CVE identity and content revision and a valid
+  `published_at` timestamp.
 
 ## Open questions
 
-- None. Publication and email remain outside this approved draft-only task.
+- None. Publication is complete. Email was neither requested nor sent.
 
 ## Cleanup
 
 - Removed the initiative's temporary commit-message files.
-- Retained the feature worktree and branch for review. No worktree or branch
-  refs were removed.
+- Removed the clean temporary integration worktree, including its ignored local
+  gem cache. The integration branch ref remains available for audit history.
+- Retained the feature worktree and branch as required. No feature branch refs
+  were removed.
