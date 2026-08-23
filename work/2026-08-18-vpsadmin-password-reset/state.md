@@ -1740,7 +1740,7 @@
   a recovery row with no initiating session causes HaveAPI PHP to call
   `user_session#show` without path arguments and throw `UnresolvedArguments`.
   The API response and authorization are not the cause.
-- Repository inspection confirms that API role `user` covers levels below 21,
+- Repository inspection confirms that API role `user` covers levels 1 through 20,
   `support` covers levels 21 through 89, and `admin` covers levels 90 and above.
   The accepted policy permits only role `user` and treats both privileged roles
   as administrator accounts in recovery mail.
@@ -1793,3 +1793,24 @@
   no production host was deployed.
 - Long browser integration tests, production configuration builds, mandatory
   review, CI completion, and bridge-cluster deployment remain pending.
+
+### Administrator recovery mandatory review
+
+- The exact-head standalone review found no Blocking or Important issue and
+  cleared the implementation for long integration and development-only
+  deployment.
+- One tracking advisory corrected the ordinary-member range from "below 21" to
+  levels 1 through 20. Levels below 1 have no API role and remain ineligible.
+- One commit-quality advisory noted that already-published shared-workspace
+  commit `f7c7b3e` contains a 137-character body line. Shared `master` must not
+  be rewritten, so the exception is recorded here; all product commits and
+  other hand-written reviewed messages comply with the 80-character rule.
+- The reviewer independently passed all 64 focused API examples, both WebUI
+  history regressions with 14 assertions, rendered all four production
+  administrator mail variants without reset links, verified every exact remote
+  head and downstream pin, and accepted the commit boundaries.
+- Residual gates are the planned browser/vpsAdminOS integrations, seven
+  production configuration builds, current-head CI completion, and bridge
+  development-cluster update. The Playwright sessionless-row assertion checks
+  the row and absence of links but not the literal `---`; the pending browser
+  gate exercises the real client rendering.
