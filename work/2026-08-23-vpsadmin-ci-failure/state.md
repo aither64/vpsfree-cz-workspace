@@ -56,6 +56,17 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   `tests: use Linux 6.12 for NixOS VMs`. The commit hook reran Nixfmt and
   passed; commit-message hooks passed with non-fatal 72-column warnings while
   every line remains within the workspace's required 80 columns.
+- Ran `./test-runner.sh test -f --jobs 1 driver/nixos`; the single test passed
+  in 124.54 seconds. Test-runner Ruby packages were rebuilt from the changed
+  repository source, but the Linux kernel was not compiled.
+- Refetched `origin/staging`; it remained at `80a0017d7`, with the feature
+  branch one commit ahead and no divergence.
+- Pushed vpsAdminOS branch `2026-08-23-vpsadmin-ci-failure` at exact head
+  `7dc777a5ddd543e54bb61abc58f9c8b2fe293188`.
+- Feature GitHub Actions CI run: `32668034165`, initially queued on the generic
+  self-hosted runner with zero executed steps. The available token cannot list
+  repository self-hosted runner status (`403 Resource not accessible by
+  personal access token`), so the run status itself is being monitored.
 
 ## Results
 
