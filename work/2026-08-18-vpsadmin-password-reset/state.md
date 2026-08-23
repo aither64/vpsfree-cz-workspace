@@ -1849,3 +1849,35 @@
   KB pins match, the configuration series is exactly one generated pin plus
   one runbook commit, and every worktree/SSH branch tip is clean and exact.
   The long browser gates are cleared to resume.
+- Corrected-head `webui#users-admin` passes: its Playwright example completed
+  in 388.22 seconds, its script in 829.74 seconds, and the full VM test in
+  1088.12 seconds. This covers the real sessionless history rendering that had
+  failed during user acceptance.
+- Corrected-head `webui#auth` also passes: its Playwright example completed in
+  363.55 seconds, its script in 755.10 seconds, and the full VM test in 857.37
+  seconds. This revalidates recovery and OAuth completion using the relocated
+  ordinary-user fixtures.
+- All seven production configurations in the runbook build successfully, with
+  no deployment: `int.api1`, `int.api2`, `int.webui1`, `int.webui2`,
+  `prg/proxy`, `prg/int.mon1`, and `prg/int.mon2`. The builds include exact
+  vpsAdmin `5a61d5698`, the recovery worker unit, frontend route, and checked
+  Prometheus configuration/rules.
+- The existing single-topology bridge cluster was updated in place from the
+  exact corrected vpsAdmin worktree; its persistent database was preserved.
+  The cluster reports ready, has no failed units, and the API, password
+  recovery worker, WebUI container, and mailer are active. No production host
+  or KB page was changed.
+- A live Playwright smoke signs in as the development administrator and opens
+  the exact reported URL, `?page=adminm&action=password_changes&id=2`. It sees
+  `Password changes for test-user1`, renders the history table, and finds no
+  server error. The first smoke attempt stopped at Chromium's private-CA error;
+  explicit `ignoreHTTPSErrors` resolved that test-environment issue. The next
+  attempt reached the WebUI but used an incorrect visibility assertion for the
+  intentionally hidden account-menu logout form; matching the repository's
+  value assertion resolved that test-only error. The final run passed in 25.0
+  seconds, and its temporary spec/artifacts were removed.
+- A live recovery submission for `test-admin` produced exactly one Mailpit
+  message. Its plain and HTML bodies contain the administrator guidance and
+  standard automated-mail footer, and neither contains a recovery URL or HTML
+  link. The email remains in development Mailpit for user inspection; local
+  CSRF/cookie/form artifacts were removed.
