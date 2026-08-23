@@ -1843,3 +1843,9 @@
   `304799867315efa42ad9367cca3e62fd0c77d41e`. No host was deployed.
 - The same standalone mandatory reviewer is rechecking only this correction
   and the new exact downstream heads before the browser gates resume.
+- The exact-head correction recheck passed with no Blocking, Important, or new
+  Advisory finding. The reviewer confirmed the vpsAdmin delta is only the
+  intact fixture relocation, all product/runtime files are unchanged, all six
+  KB pins match, the configuration series is exactly one generated pin plus
+  one runbook commit, and every worktree/SSH branch tip is clean and exact.
+  The long browser gates are cleared to resume.
