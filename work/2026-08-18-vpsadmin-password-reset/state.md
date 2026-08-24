@@ -2077,3 +2077,43 @@
   `gh-runner2`; its test step remains live without a failure signal. It was not
   restarted or disturbed. Exact-head KB managed-page runtime run `32667741305`
   remains queued for a self-hosted runner, while its `Check` workflow is green.
+- Three independent security/architecture reviews completed against exact
+  vpsAdmin head `df4216aee`. They found no cross-user recovery, administrator
+  recovery, recovery/API/OAuth token confusion, open redirect, completion-cookie
+  authentication, or stale-password token-issuance path. Email tokens are
+  256-bit random values stored as digests, expire after one hour, and are
+  exchanged once for a distinct 15-minute digested browser-session token.
+- The reviews independently confirmed one factor-revocation race. Recovery
+  TOTP and WebAuthn select an enabled factor without locking and revalidating
+  the factor before committing `mfa_verified_at`; a concurrent disable or hard
+  delete can therefore finish first while the stale proof is still accepted.
+  Real-MariaDB proofs cover recovery TOTP disable/delete, recovery WebAuthn
+  disable, an end-to-end password replacement, and the same pre-existing race
+  in ordinary TOTP. Exploitation requires the emailed recovery session, valid
+  factor proof, and a narrow race, but production enablement should wait for a
+  shared ordinary/recovery TOTP/WebAuthn locking fix.
+- Keep the separate browser recovery routes and authority state machines:
+  recovery uses an HttpOnly flow cookie plus CSRF and never creates a user
+  session or OAuth authorization, while normal MFA uses generation-bound
+  `AuthToken` capabilities. Extract only the common factor verification,
+  replay/counter update, and locked enabled-state revalidation. Factor
+  management and both verification paths should use one user-first lock order.
+  Do not reuse the existing WebAuthn challenge helper unchanged because it
+  prefers caller-controlled `Client-IP`; recovery correctly trusts
+  proxy-controlled `X-Real-IP` with the Rack peer as fallback.
+- Advisory hardening: replace or cap outstanding two-minute WebAuthn challenges
+  per recovery and add failed-finish observability/backoff. A valid recovery
+  session can currently create them without a per-flow cap, although the
+  five-minute cleanup bounds retention and no service degradation was shown.
+  Also define and test behavior when an OAuth client referenced by an active
+  recovery is deleted; the current nullification falls back to the default
+  client but loses completion-marker client binding and one-time SSO
+  suppression.
+- Independent focused suites passed with 126 normal authentication/recovery
+  examples, the route/architecture review passed 102 plus 24 examples, and the
+  vulnerability proofs passed independently. The primary agent reproduced the
+  MariaDB TOTP disable/delete proof (2 examples) and TOTP/WebAuthn scheduling
+  proof (2 examples). All exact-head GitHub workflows are now green, including
+  broad CI, API topic/migration specs, WebUI PHPUnit, RuboCop, i18n, and
+  libnodectld. No existing feature source was changed; review artifacts are
+  confined to untracked `vulnerabilities/` paths pending remediation.
