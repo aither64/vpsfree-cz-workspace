@@ -5,9 +5,12 @@
 - `vpsadmin`
   - failed revision: `b12f41859a9ae198224cd6ca63eddbcdd0371db8`
   - target branch: `master`
-  - feature branch: `2026-08-23-vpsadmin-ci-failure` (not yet created)
-  - worktree: `worktrees/2026-08-23-vpsadmin-ci-failure/vpsadmin` (not yet
-    created)
+  - feature branch: `2026-08-23-vpsadmin-ci-failure`
+  - worktree: `worktrees/2026-08-23-vpsadmin-ci-failure/vpsadmin`
+  - base revision after rebase:
+    `6610c6789c3d567ba0c67fdbf8392904b9f266ba`
+  - implementation commit:
+    `a7a1dfc9b06131bcacf22adfc4e361c9742ea517`
 - `vpsadminos`
   - vpsAdmin input revision: `67fcc17372d175b036706a1459a8b471bfc225e0`
   - base revision: `80a0017d7b35cdfd4d11311876f487d2d56e3e3d`
@@ -19,11 +22,10 @@
 
 ## Status
 
-Implementation in progress. The investigation found a recurrence of the known
-Linux 6.18 execmem cache race during parallel module loading, not a failure of
-the `vps/deploy-public-key-and-user-data` behavior or of the vpsAdmin change
-under test. The selected containment is to use Linux 6.12 in generated NixOS
-test VMs and remove the insufficient udev-worker serialization parameters.
+Rollout in progress. vpsAdminOS `staging` contains the Linux 6.12 containment
+at `8e44a5124` and both feature and target CI are green. vpsAdmin pins that
+revision on feature head `a7a1dfc9b`; local focused tests pass and feature CI
+is running.
 
 ## Commands run
 
@@ -95,12 +97,53 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   udev parameters; no kernel was compiled.
 - Force-pushed the rebased feature head with an exact `--force-with-lease`.
   The superseded run was already complete, so no queued or running workflow
-  required cancellation. Exact-head CI run `32695473960` is in progress.
+  required cancellation. Exact-head CI run `32695473960` passed its OS build,
+  full 76-test selection, and AMD and Intel livepatch jobs.
 - Stopped the redundant local CI selection after 48 of 76 test groups had
   completed: 47 succeeded and only the documented linked-worktree evaluation
   failure was unexpected. The exact pre-rebase feature CI had already passed
   all 76 groups, and the rebased focused test passed, so continuing the
   resource-constrained duplicate would not add useful evidence.
+- Fetched vpsAdmin `origin/master` and created its isolated feature branch and
+  worktree at current master `66f58d761`. The vpsAdminOS input remains
+  unchanged until the verified vpsAdminOS commit reaches `staging`.
+- Created a fresh vpsAdminOS integration worktree at `93014dd1f`, merged the
+  feature branch with `git merge --ff-only`, rebuilt the generated NixOS
+  driver JSON, and verified cached Linux 6.12.104 plus the absence of both
+  udev parameters. Pushed exact head `8e44a5124` to `staging`.
+- vpsAdminOS target CI run `32699480491` passed the OS build, full 76-test
+  selection, and AMD and Intel livepatch jobs on exact `staging` head
+  `8e44a5124439b1f3048ffc56b1717614a5360358`.
+- Ran `tools/update_vpsadminos_flake.sh` in `nix develop .#vpsadmin`. It
+  resolved vpsAdminOS from `67fcc1737` to merged `8e44a5124` and changed only
+  `flake.lock`. Its automatic commit was correctly stopped by the mandatory
+  `VpsadminApiI18n` hook because the API component bundle was not installed.
+- Followed `notes/vpsadmin/2026-08-22-overcommit-api-bundle.md`: prepared
+  `api/.gems` with `nix develop .#api --command true`, then ran the complete
+  root-shell Overcommit suite. Nixfmt, MigrationSpecs, both i18n hooks,
+  PhpCsFixer, and RuboCop passed. Committed the generated update as
+  `ed806873d`, `flake: vpsadminos 67fcc1737 -> 8e44a5124`; the commit hooks and
+  commit-message hooks passed.
+- Built vpsAdmin `.#tests.x86_64-linux."services-up"` and inspected the
+  resulting JSON. Its services VM uses Linux 6.12.104, keeps `console=ttyS0`,
+  and contains neither udev parameter. The resolved flake metadata names exact
+  vpsAdminOS revision `8e44a5124` and expected NAR hash. No kernel was
+  compiled.
+- On `ed806873d`, `services-up` passed all 27 examples in 422.99 seconds and
+  `vps/deploy-public-key-and-user-data` passed its end-to-end example in
+  824.59 seconds.
+- vpsAdmin `master` advanced independently to `6610c6789` with an automated
+  packaged `curses` update, so rebased the lock commit to `a7a1dfc9b`. Rebuilt
+  the services JSON; only the new dependency and affected service closures
+  were rebuilt, while Linux 6.12 remained cached. The rebased JSON again uses
+  Linux 6.12.104 and omits both udev parameters.
+- On rebased head `a7a1dfc9b`, `services-up` passed all 27 examples in 470.93
+  seconds and `vps/deploy-public-key-and-user-data` passed its end-to-end
+  example in 852.68 seconds.
+- Pushed vpsAdmin feature branch `2026-08-23-vpsadmin-ci-failure` at exact head
+  `a7a1dfc9b06131bcacf22adfc4e361c9742ea517`. Feature workflow runs include
+  CI `32704895810`, i18n health `32704895590`, WebUI PHPUnit `32704895736`,
+  Client Specs `32704895803`, and libnodectld Specs `32704895708`.
 
 ## Results
 
@@ -157,6 +200,11 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   `rd.udev.children_max=1` nor `udev.children_max=1`.
 - The exact feature-branch CI completed green after the initial runner queue:
   <https://github.com/vpsfreecz/vpsadminos/actions/runs/32668034165>.
+- The rebased exact-head feature and target CI runs are green:
+  <https://github.com/vpsfreecz/vpsadminos/actions/runs/32695473960> and
+  <https://github.com/vpsfreecz/vpsadminos/actions/runs/32699480491>.
+- vpsAdmin now pins exact merged vpsAdminOS revision `8e44a5124`; both focused
+  tests pass before and after the independent `master` dependency update.
 
 ## Decisions
 
