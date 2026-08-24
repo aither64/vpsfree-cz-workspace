@@ -7,6 +7,10 @@
   - target branch: `master`
   - feature branch: `2026-08-23-vpsadmin-ci-failure`
   - worktree: `worktrees/2026-08-23-vpsadmin-ci-failure/vpsadmin`
+  - integration branch:
+    `2026-08-23-vpsadmin-ci-failure-merge-master`
+  - integration worktree:
+    `worktrees/2026-08-23-vpsadmin-ci-failure/vpsadmin-merge`
   - base revision after rebase:
     `6610c6789c3d567ba0c67fdbf8392904b9f266ba`
   - implementation commit:
@@ -22,10 +26,11 @@
 
 ## Status
 
-Rollout in progress. vpsAdminOS `staging` contains the Linux 6.12 containment
-at `8e44a5124` and both feature and target CI are green. vpsAdmin pins that
-revision on feature head `a7a1dfc9b`; local focused tests pass and feature CI
-is running.
+Complete. vpsAdminOS `staging` contains the Linux 6.12 containment at
+`8e44a5124`, and both feature and target CI are green. vpsAdmin merged the
+channel update at `a7a1dfc9b`; local focused tests plus exact-head feature and
+target CI pass. Current vpsAdmin `master` is a descendant of that commit and
+still pins exact vpsAdminOS revision `8e44a5124`.
 
 ## Commands run
 
@@ -144,6 +149,31 @@ is running.
   `a7a1dfc9b06131bcacf22adfc4e361c9742ea517`. Feature workflow runs include
   CI `32704895810`, i18n health `32704895590`, WebUI PHPUnit `32704895736`,
   Client Specs `32704895803`, and libnodectld Specs `32704895708`.
+- All five feature workflows passed on exact head `a7a1dfc9b`. The full CI
+  selection completed successfully after about 7.25 hours; the four focused
+  workflows also completed successfully.
+- Refetched vpsAdmin `origin/master`; it remained at the feature's exact base
+  `6610c6789`. Created a fresh integration worktree from that revision and
+  merged `2026-08-23-vpsadmin-ci-failure` with `git merge --ff-only`.
+- Built `.#tests.x86_64-linux."services-up"` with `--no-link` from the exact
+  integration head. It reused the previously verified generated JSON at
+  `/nix/store/78sqgihpl4q1q8bn17imcw4nl19lrwwh-os-test-vpsadmin-services-up.json`:
+  the input is `8e44a5124`, the services VM uses cached Linux 6.12.104, and
+  only `console=ttyS0` is present. Neither udev parameter is present and no
+  kernel was compiled.
+- Refetched `origin/master` immediately before pushing and confirmed it was
+  still `6610c6789`. Pushed the fast-forward and fetched again; local HEAD and
+  remote `master` both resolve to
+  `a7a1dfc9b06131bcacf22adfc4e361c9742ea517`.
+- vpsAdmin target workflow runs are CI `32732594867`, i18n health
+  `32732594551`, WebUI PHPUnit `32732594529`, Client Specs `32732594521`, and
+  libnodectld Specs `32732594624`.
+- All five target workflows passed on exact merged head `a7a1dfc9b`. The full
+  integration selection completed successfully after about 4.8 hours.
+- Fetched `origin/master` after target CI. It had advanced by four unrelated
+  API, libnodectld, and nodectld commits to `661896d00`; `a7a1dfc9b` is an
+  ancestor, none of those commits changes `flake.lock`, and current
+  `origin/master` still pins vpsAdminOS `8e44a5124` with the verified NAR hash.
 
 ## Results
 
@@ -205,6 +235,21 @@ is running.
   <https://github.com/vpsfreecz/vpsadminos/actions/runs/32699480491>.
 - vpsAdmin now pins exact merged vpsAdminOS revision `8e44a5124`; both focused
   tests pass before and after the independent `master` dependency update.
+- Exact-head vpsAdmin feature CI is green:
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32704895810>,
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32704895590>,
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32704895736>,
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32704895803>, and
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32704895708>.
+- vpsAdmin `master` contains the channel update at exact head `a7a1dfc9b`.
+- Exact merged-head vpsAdmin target CI is green:
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32732594867>,
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32732594551>,
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32732594529>,
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32732594521>, and
+  <https://github.com/vpsfreecz/vpsadmin/actions/runs/32732594624>.
+- Current vpsAdmin `master` at `661896d00` is a descendant of the merged
+  channel update and retains exact vpsAdminOS revision `8e44a5124`.
 
 ## Decisions
 
@@ -237,7 +282,13 @@ is running.
 
 ## Cleanup
 
-- The vpsAdminOS feature worktree and branch are active and will be retained
-  until both repositories are merged and verified.
+- Removed the clean vpsAdminOS feature and `staging` integration worktrees.
+  Their local branch refs remain at `8e44a5124`; the feature branch also
+  remains on the remote.
+- Removed the clean vpsAdmin feature and `master` integration worktrees. Their
+  local branch refs remain at `a7a1dfc9b`; the feature branch also remains on
+  the remote.
+- Removed the now-empty initiative worktree group directory. The durable plan,
+  state, and reusable notes remain in the workspace.
 - The downloaded artifact and temporary Linux repository were used only under
   `/tmp` and removed after the investigation.
