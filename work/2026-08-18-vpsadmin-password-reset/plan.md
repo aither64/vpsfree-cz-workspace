@@ -402,3 +402,39 @@ whether an account exists or can use recovery.
   sessionless history rows. Run mandatory review, repin the KB contract and
   production configuration, refresh the existing bridge development cluster,
   and leave production deployment and KB publication to the operator.
+
+## Password change client audit follow-up
+
+- Supersede the earlier decision not to snapshot sessionless client metadata.
+  Store an immutable client IP address, server-resolved PTR, and normalized
+  user agent on every password-change log. Copy the snapshot from the exact
+  initiating session when one exists; otherwise derive it from trusted
+  `X-Real-IP` or the connection address and the current request user agent.
+- Keep the existing session relation nullable. Required token resets attach the
+  session atomically when token issuance succeeds. Required OAuth resets carry
+  the exact log through the pending authorization and attach the session during
+  authorization-code exchange. Do not create an OAuth session before exchange;
+  abandoned flows remain sessionless with their client snapshot intact.
+- Keep password recovery sessionless because its later sign-in is a separate
+  authentication flow. Record its final password request metadata, and also
+  cover transparent password-hash upgrades. Maintenance changes without a
+  session or request may retain null client fields.
+- Expose the nullable snapshot fields through the existing owner/admin
+  password-change API. Administrators can inspect every snapshot; account
+  owners can inspect their own and sessionless events, but client details from
+  another user's initiating session remain redacted. In WebUI, keep the compact
+  primary columns and render IP, PTR, and user agent in a wrapping full-width
+  detail row below each event so a long user agent cannot widen the table.
+- Rewrite the unreleased password-change migration, reset the disposable
+  development database, and preserve rolling compatibility by migrating before
+  starting new API processes. Reconcile an OAuth password-change link if an old
+  process exchanges its code during a rolling deployment, using the existing
+  idempotent authentication-maintenance timer. Old processes remain compatible
+  but cannot populate the new snapshots, so drain them promptly and document
+  the short, irreversible audit-detail gap. Update the runbook and exact
+  downstream pins; production deployment and KB publication remain
+  operator-only.
+- Run focused API, migration, i18n, PHP, browser, and layout-overflow checks,
+  then the mandatory fresh-agent review before long integration. Repin the KB
+  contract and production configuration and redeploy the bridge development
+  cluster for acceptance.

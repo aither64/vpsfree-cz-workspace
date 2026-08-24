@@ -22,6 +22,16 @@
 ## Status
 
 - Feature worktrees created.
+- Password-change client auditing started at clean, pushed heads vpsAdmin
+  `5a61d5698deff70fea385bb620c6bb24b9a88597`, KB contracts
+  `39f2b827cf2c91a03e276bd95e04ed7c7f243aac`, production configuration
+  `304799867315efa42ad9367cca3e62fd0c77d41e`, and mail templates
+  `a71b329b91acb38d24e19d8dda9512537253e901`. The mail templates are not
+  expected to change.
+- Accepted follow-up decisions: snapshot IP, server-resolved PTR, and normalized
+  user agent on every detailed event; attach required-reset sessions only when
+  real token or OAuth session creation succeeds; and render client metadata in
+  a wrapping full-width detail row rather than new horizontal table columns.
 - Password-change history follow-up started at vpsAdmin
   `00674913d112dd6a4ad3ae87a749f8da383e3aab`, KB contracts
   `9298febb013b0b06d3e47a66c7c5a6e054b66fe5`, and production configuration
@@ -1893,3 +1903,177 @@
   templates `a71b329b`, KB contracts `39f2b827`, and configuration `30479986`.
   All immutable KB/configuration/runbook references resolve to the exact
   vpsAdmin and mail-template revisions listed above.
+
+### Password change client audit follow-up
+
+- Work started from the clean pushed project heads vpsAdmin `5a61d5698`, mail
+  templates `a71b329b`, KB contracts `39f2b827`, and production configuration
+  `30479986`. No mail-template change is currently required.
+- The unreleased password-change migration now stores a nullable client IP,
+  server-resolved PTR, and normalized user-agent reference. Pending OAuth
+  authorizations can carry one password-change log until code exchange.
+- Signed-in and administrator changes snapshot the exact initiating session.
+  Recovery and required-reset writes snapshot the final browser request from
+  proxy-controlled `X-Real-IP` or the connection address. Transparent hash
+  upgrades use the current session when present and otherwise snapshot their
+  request. Maintenance writes without either context remain nullable.
+- Required token resets attach their new session in the same savepoint as
+  session creation. Required OAuth resets remain sessionless until code
+  exchange, then attach within the exchange savepoint. Focused regressions
+  prove that wrong-user attachment failures roll back session creation and
+  preserve OAuth authorization codes.
+- The API exposes the three nullable snapshot fields to the existing
+  owner/administrator history endpoint. WebUI keeps its compact primary
+  columns and adds a full-width detail row with vertically listed IP address,
+  PTR, and user agent. The table uses fixed layout and anywhere wrapping; the
+  browser fixture contains a 300-character unbroken user-agent segment.
+- API and WebUI catalogs were regenerated. The new Czech labels are
+  `IP adresa`, `PTR IP adresy`, and `User agent`; API metadata uses
+  `IP adresa klienta`. WebUI locale health, Node syntax checks, the focused
+  PHPUnit regression (2 tests, 19 assertions), Nixfmt, PHP CS Fixer, and
+  focused RuboCop (22 files) pass.
+- The migration up/down spec passes independently with two examples. A mixed
+  migration/application RSpec invocation was discarded because the migration
+  harness switches Active Record to its isolated database, as documented in
+  the existing workspace notes. The complete focused ordinary API rerun passes
+  with 121 examples and no failures.
+- vpsAdmin commit `4afc559b4` contains the API/schema/session-linking unit and
+  commit `df4216aee` contains the independently reviewable WebUI/layout unit.
+  Both commits ran all installed Overcommit hooks successfully. A serialized
+  final PHPUnit rerun passes with 2 tests and 20 assertions; an earlier parallel
+  Nix-shell startup was discarded after hitting the already-documented shared
+  Bundler extraction race.
+- The exactly-one fresh standalone mandatory review is now running against
+  base `5a61d5698` and head `22eadb340`. Long browser/vpsAdminOS integration,
+  downstream pins, configuration documentation, and development deployment
+  remain gated on that result.
+- The full configured WebUI PHPUnit suite passes from `webui/` with 86 tests
+  and 371 assertions. A root-directory invocation was discarded because it
+  bypassed `webui/phpunit.xml.dist` and loaded duplicate regression helpers.
+- Mandatory review found a rolling-upgrade gap when an old API process exchanges
+  a new authorization: it would create the correct session without attaching
+  the password-change row. The existing five-minute authentication task now
+  reconciles those rows with the same locked, same-user, idempotent attachment.
+  New processes attach immediately after opening the OAuth session, before
+  publishing it as the thread-local current session.
+- The review also found that a superseded unsaved password assignment retained
+  its earlier explicit client snapshot. Password-change context assignment now
+  clears all three client fields first, with a replacement-to-null regression.
+- Account owners retain client details for their own and sessionless events,
+  while another user's initiating-session details are returned as null. This
+  keeps administrator workstation IP, PTR, and user agent private from the
+  affected member; administrators continue to see every stored snapshot.
+- Schema-first rolling deployment remains API-compatible, but an old process
+  cannot populate the newly added client fields and some sessionless metadata
+  cannot be reconstructed. The production runbook must minimize and explicitly
+  describe this transient audit-detail gap. New-authorize/old-code-exchange is
+  separately repairable and converges through authentication maintenance.
+- Corrected focused API verification passes with 74 examples and no failures;
+  the standalone reviewer independently passes 71 examples. Focused RuboCop
+  reports no offenses in ten files, and both rewritten vpsAdmin commits pass
+  every installed Overcommit hook. The exact clean pushed vpsAdmin head is
+  `df4216aeeafc4893e3167f71f840345e3f37b31f`.
+- KB contract history was reduced to the inventory update, navigation change,
+  and one final pin. All six source references resolve to the exact vpsAdmin
+  head; `nix develop -c bin/check` passes. The clean pushed KB head is
+  `60cc9fb6e2016ec1de99231e77d4b4ea1a55df6b`.
+- Production configuration history was reduced to the frontend, monitoring,
+  final runbook, and one generated `confctl` input commit. The runbook records
+  the mixed-version metadata gap and reconciliation procedure, and the exact
+  channel pin is `df4216aee`. Overcommit and strict MkDocs pass. The clean
+  pushed configuration head is
+  `c7a1978c96daacc9b98936b74e23e2914f511155`.
+- Ambient configuration rebase/push attempts were rejected by Overcommit
+  because the pinned bundle is only present in `nix develop`; the identical
+  guarded operations succeeded inside that shell. Generated `.bin` and
+  `.bundle` files and the MkDocs `site/` output were removed after validation.
+- The mandatory reviewer cleared its original three findings on the corrected
+  vpsAdmin head and is completing the exact KB/configuration pin, runbook, and
+  commit-series review before long integration starts.
+- Current-head CI started after the force-push. Migration, WebUI PHPUnit,
+  RuboCop, i18n, and libnodectld workflows are already green; API topics and
+  broad CI remain active or queued. Superseded broad run `32656237937` at
+  vpsAdmin `5a61d5698` was cancelled, while current-head jobs were left intact.
+- Mandatory review completed on exact ranges vpsAdmin `5a61d5698..df4216aee`,
+  KB contracts `c1d0aca2b..60cc9fb6e`, and configuration
+  `7cd45c867..c7a1978c9`. It reported no Blocking, Important, or Advisory
+  findings. The reviewer confirmed the commit splits, authorization and
+  redaction boundary, atomic session attachment, mixed-version reconciliation,
+  migration/rollback contract, wrapping layout, exact downstream pins, and
+  runbook. Long Playwright/vpsAdminOS and development-cluster acceptance are
+  now unblocked.
+- `./test-runner.sh list` was a discarded discovery attempt: this runner has no
+  `list` command. The exact RSpec-style script selectors were confirmed from
+  the test suite sources instead.
+- The long `webui#users-self-service` vpsAdminOS test passes: its Playwright
+  example completed successfully in 481.05 seconds and the complete test
+  returned exit status 0 after 1,190.84 seconds. The long `webui#users-admin`
+  test is running next, serialized to avoid VM and shared-memory contention.
+- The old bridge development cluster was stopped before the remaining VM tests
+  because it consumed enough `/dev/shm` for the runner to warn that its 24 GiB
+  request exceeded the safe limit. Shutdown reached the known Puma stop timeout
+  and the cluster runner killed it; status is now stopped and shared-memory
+  availability rose from 25 GiB to 44 GiB. Its disposable state will be reset
+  before the final deployment as already required by the rewritten migration.
+- The long `webui#users-admin` vpsAdminOS test also passes: its Playwright
+  example completed successfully in 510.72 seconds and the complete test
+  returned exit status 0 after 1,400.2 seconds. Services-guest teardown consumed
+  the expected remainder of the known Puma stop timeout, but did not affect the
+  result. The serialized `webui#auth` test is running last.
+- Exact-head API topic CI completed successfully, including the `users-auth`
+  shard and the topic-coverage gate. Current-head broad VM CI is still queued
+  for a runner; all current-head quick workflows remain green.
+- The final long `webui#auth` vpsAdminOS test passes: its Playwright example
+  completed successfully in 445.42 seconds and the complete test returned exit
+  status 0 after 1,083.22 seconds. All three serialized browser/vpsAdminOS
+  suites selected for this follow-up are green.
+- The stopped bridge cluster was reset successfully, removing all disposable
+  database and VM state. A fresh single-node bridge deployment is now building
+  from exact vpsAdmin head `df4216aee`.
+- The fresh bridge deployment built exact clean vpsAdmin `df4216aee` and all
+  four guests. Its first node boot reached the known pre-kernel/stale-readiness
+  failure and the post-start refresh returned `No route to host`; the failed
+  attempt was stopped without resetting the newly seeded disks. The preserved
+  retry booted node1, but its first refresh raced osctld group initialization.
+  Once `/default` existed, the documented idempotent refresh succeeded. The
+  cluster now reports running, bridge, and `ready: yes` with no failed units.
+- Live build info reports exact revision
+  `df4216aeeafc4893e3167f71f840345e3f37b31f` with `revisionDirty: false`.
+  API, password-recovery worker, console router, supervisor, nginx, the
+  five-minute authentication timer, and the base Prometheus timer are active.
+- Development-only acceptance state was restored through the application
+  models: password recovery is enabled and `test-user1` has one enabled,
+  confirmed `Acceptance TOTP` using deterministic secret
+  `JBSWY3DPEHPK3PXP`; `test-user2` and `test-admin` have no MFA. Both temporary
+  scripts were removed immediately after their assertions passed.
+- The queryless public recovery form returns HTTP 200 with no-store/security
+  headers, the configured logo, labelled login-or-primary-email field, and a
+  default-client sign-in link to WebUI's OAuth start. That WebUI URI returns a
+  fresh OAuth authorization redirect. The neutral sent page contains the
+  requested wording, logo, and sign-in link.
+- One live `test-user1` submission returned the neutral HTTP 303. The worker
+  completed it on attempt 1, the unfinished queue returned to zero, and the
+  resulting recovery remains unconsumed and incomplete. Mailpit message
+  `4Kqxuv0yfNhkUerYwuX1XN` is the newest message for manual acceptance. It is
+  multipart, contains reset links in both text and HTML, uses the canonical
+  automated-mail footer, and contains neither recovery-code nor used-once
+  wording.
+- A live base-exporter run records one accepted recovery submission, zero
+  pending submissions, queue limit 100, zero capacity events, and all five
+  fixed password-change source counter/timestamp series. The live schema has
+  nullable `user_session_id`, `client_ip_addr`, `client_ip_ptr`, and
+  `user_agent_id` on password-change logs and the nullable OAuth authorization
+  handoff column.
+- Exact-head vpsAdmin API topics and every quick workflow are green; broad CI
+  has started on a redeployed runner. Exact-head KB `Check` is green and
+  managed-page runtime is queued.
+- Build-only production configuration validation passes for all seven affected
+  systems: `int.api1`, `int.api2`, `int.webui1`, `int.webui2`, `prg/proxy`,
+  `prg/int.mon1`, and `prg/int.mon2`. No production generation was deployed.
+  The development shell's transient `.bin/rubocop` and `.bundle/config` files
+  were removed afterward, leaving the configuration worktree clean.
+- The migration matches the CI selector's full rule, so broad vpsAdmin run
+  `32667575449` is executing all 130 `tag=ci` integration scripts on
+  `gh-runner2`; its test step remains live without a failure signal. It was not
+  restarted or disturbed. Exact-head KB managed-page runtime run `32667741305`
+  remains queued for a self-hosted runner, while its `Check` workflow is green.
