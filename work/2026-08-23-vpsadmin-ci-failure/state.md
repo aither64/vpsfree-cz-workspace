@@ -67,6 +67,23 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   self-hosted runner with zero executed steps. The available token cannot list
   repository self-hosted runner status (`403 Resource not accessible by
   personal access token`), so the run status itself is being monitored.
+- Feature GitHub Actions CI run `32668034165` completed successfully on exact
+  head `7dc777a5ddd543e54bb61abc58f9c8b2fe293188`. The OS build, full 76-test CI
+  selection, and AMD and Intel livepatch jobs all passed. In particular,
+  `zfs/block-cloning-corruption` passed in 115.43 seconds.
+- Started a second, workflow-equivalent local CI selection with
+  `./test-runner.sh test --test-config tests/test-configs/ci.nix -f --jobs auto
+  -t ci`. It fetched the Linux 6.12 kernel from the binary cache and did not
+  compile a kernel. Resource sharing limited the run mostly to one high-memory
+  VM at a time.
+- The extra local run encountered one unrelated evaluation-only failure in
+  `zfs/block-cloning-corruption`, before a VM was started. Its immutable source
+  snapshot contains the linked worktree's `.git` file; vpsAdminOS revision
+  discovery accepts a `.git` directory or `.git-revision`, so channel source
+  generation tried to coerce a null revision. A normal CI checkout has a
+  `.git` directory and the exact feature CI ran this test successfully. The
+  reusable caveat is recorded in
+  `notes/vpsadminos/2026-08-24-test-runner-linked-worktree-revision.md`.
 
 ## Results
 
@@ -120,6 +137,8 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   `/nix/store/c9ahm2mgq3fwz3f3g8xk78rs8gljmbwy-linux-6.12.104/bzImage`.
   Its effective kernel arguments include `console=ttyS0` and contain neither
   `rd.udev.children_max=1` nor `udev.children_max=1`.
+- The exact feature-branch CI completed green after the initial runner queue:
+  <https://github.com/vpsfreecz/vpsadminos/actions/runs/32668034165>.
 
 ## Decisions
 
