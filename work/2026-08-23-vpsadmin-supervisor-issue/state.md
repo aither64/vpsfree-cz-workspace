@@ -208,6 +208,10 @@ modes:
   remote default refs, retained both feature branches, removed the four clean
   initiative worktrees and their small shell-created cache directories, and
   removed the empty worktree group directory.
+- At the final post-merge audit, vpsAdmin `master` migration, RuboCop, i18n, and
+  libnodectld workflows were green. Duplicate exact-head API run `32752872665`
+  and full integration run `32752872688` were still in progress without a
+  failure; the feature-branch API run on the same SHA was already fully green.
 
 ## vpsAdmin commits
 
