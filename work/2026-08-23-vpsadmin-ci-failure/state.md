@@ -14,7 +14,8 @@
   - target branch: `staging`
   - feature branch: `2026-08-23-vpsadmin-ci-failure`
   - worktree: `worktrees/2026-08-23-vpsadmin-ci-failure/vpsadminos`
-  - implementation commit: `7dc777a5ddd543e54bb61abc58f9c8b2fe293188`
+  - implementation commit after rebase:
+    `8e44a5124439b1f3048ffc56b1717614a5360358`
 
 ## Status
 
@@ -84,6 +85,22 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   `.git` directory and the exact feature CI ran this test successfully. The
   reusable caveat is recorded in
   `notes/vpsadminos/2026-08-24-test-runner-linked-worktree-revision.md`.
+- Fetched `origin/staging` after feature CI. It had advanced independently to
+  `93014dd1f` with an automated Nixpkgs lock update, so rebased the one
+  functional commit without conflict. Its new SHA is `8e44a5124`.
+- On the rebased head, ran the full Overcommit suite successfully, rebuilt and
+  inspected `.#tests.x86_64-linux."driver/nixos"`, and reran
+  `./test-runner.sh test -f --jobs 1 driver/nixos`. The test passed in 80.32
+  seconds. The generated JSON still uses cached Linux 6.12.104 and omits both
+  udev parameters; no kernel was compiled.
+- Force-pushed the rebased feature head with an exact `--force-with-lease`.
+  The superseded run was already complete, so no queued or running workflow
+  required cancellation. Exact-head CI run `32695473960` is in progress.
+- Stopped the redundant local CI selection after 48 of 76 test groups had
+  completed: 47 succeeded and only the documented linked-worktree evaluation
+  failure was unexpected. The exact pre-rebase feature CI had already passed
+  all 76 groups, and the rebased focused test passed, so continuing the
+  resource-constrained duplicate would not add useful evidence.
 
 ## Results
 
@@ -100,7 +117,8 @@ test VMs and remove the insufficient udev-worker serialization parameters.
   `__execmem_cache_free` -> `execmem_free` -> `load_module`. The shared test
   framework detected it as `OsVm::KernelFailure` while waiting for the API and
   terminated the VMs.
-- This matches `notes/vpsadmin/2026-08-19-linux-execmem-ci-kernel-page-fault.md`.
+- This matches
+  `notes/vpsadmin/2026-08-19-linux-execmem-ci-kernel-page-fault.md`.
   Linux 6.18's execmem cache population and following allocation are not
   atomic. Another module loader can consume the newly populated area before
   the first loader retries, leaving error cleanup to restore/free executable
