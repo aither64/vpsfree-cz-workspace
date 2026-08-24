@@ -3,31 +3,33 @@
 ## Repositories
 
 - Canonical bare clone: `repos/vpsadmin.git`
-- vpsAdmin base: `6610c6789c3d567ba0c67fdbf8392904b9f266ba`
+- vpsAdmin merge base: `a7a1dfc9b06131bcacf22adfc4e361c9742ea517`
 - vpsAdmin branch: `2026-08-23-vpsadmin-supervisor-issue`
-- vpsAdmin worktree:
+- vpsAdmin worktree was removed after merge:
   `worktrees/2026-08-23-vpsadmin-supervisor-issue/vpsadmin`
 - Configuration base: `b615d1eafe0dc763a9f90dfc8c78bdff9bd6067a`
 - Configuration branch: `2026-08-23-vpsadmin-supervisor-issue`
-- Configuration worktree:
+- Configuration worktree was removed after merge:
   `worktrees/2026-08-23-vpsadmin-supervisor-issue/vpsfree-cz-configuration`
 - Diagnosed deployed vpsAdmin commit:
   `b3d63c005bef30be52165cd80ef4978bbf0e72b2`
 
 ## Status
 
-Implementation is committed and pushed in vpsAdmin. The second mandatory review
-confirmed the first-review corrections and found two new blockers: an ungated
-console-output publisher and feature branches behind their upstream defaults.
-Both are resolved. vpsAdmin is rebased onto current `master`, console output now
-uses the recovery gate, and focused verification is green. The regenerated
-configuration pin is committed and pushed for all three approved channels on
-current configuration `master`; both narrow API configuration builds are green.
+Implementation and configuration are merged into their default branches.
+vpsAdmin `master` was fast-forwarded to
+`661896d007313dedc91066f55c72410ef893d10f`; configuration `master` was then
+fast-forwarded to `e8544363b0e8ef94412a3d1a946a8703e95fe82d`, which pins the
+`vpsadmin`, `staging`, and `production` roles to that exact vpsAdmin revision.
 The final fresh-context review found no blocking, important, or advisory issues.
-Six final-head CI workflows are green and the long integration workflow remains
-in progress. Node configuration evaluation remains blocked in this workstation
-by the unavailable operator initrd SSH host key. No production state has been
-changed and deployment is explicitly out of scope.
+All current-head component workflows and all 26 API spec partitions are green.
+Full integration continues remotely on the exact merged revision; the merge was
+also supported by a successful full run on the new upstream base, 113 expected
+successes and no failures before the superseded reviewed-head run was canceled,
+and green local focused integration tests. Both feature branches were retained
+and all four initiative worktrees were removed. Node configuration evaluation
+remains blocked in this workstation by the unavailable operator initrd SSH host
+key. No deployment, activation, database migration, or service restart was run.
 
 The incident contains three independent or partially independent failure
 modes:
@@ -168,20 +170,58 @@ modes:
   `cz.vpsfree/vpsadmin/int.api1` (87 derivations) and
   `cz.vpsfree/vpsadmin/int.api2` (8 derivations) successfully without
   activation. Pushed the configuration feature branch.
+- Upstream vpsAdmin advanced by one independent `flake.lock` commit to
+  `a7a1dfc9b06131bcacf22adfc4e361c9742ea517`. Rebased the four commits cleanly;
+  `git range-diff` marked every patch identical and a tree comparison excluding
+  `flake.lock` found no difference from the reviewed head.
+- Reran the focused NodeBunny/watchdog/daemon suite after the rebase: 28
+  examples, 0 failures. Reran the migration spec: 4 examples, 0 failures.
+- Force-pushed the equivalent rebased feature head with an exact lease at
+  `661896d007313dedc91066f55c72410ef893d10f`. Canceled only integration run
+  `32718252103` for the superseded SHA. Its uploaded artifact contained 113
+  completed results, all `expected_success`, with no failure before
+  cancellation.
+- Confirmed full integration run `32704895810` passed on the exact new upstream
+  base and vpsAdminOS pin. On the combined feature head, API workflow
+  `32749378655` passed all 26 partitions plus topic coverage; the six other
+  component workflows also passed. Full integration run `32749378671` remained
+  in progress at merge time.
+- Regenerated the configuration commit from current configuration `master` with
+  `confctl inputs channel set --commit`. Verified that only `flake.lock` changed
+  and that `vpsadminProduction`, `vpsadminServices`, and `vpsadminStaging` all
+  resolve to the full `661896d007313dedc91066f55c72410ef893d10f` revision.
+- Verified the three channel mappings sequentially and built
+  `cz.vpsfree/vpsadmin/int.api1` (78 derivations) and
+  `cz.vpsfree/vpsadmin/int.api2` (8 derivations) without activation, then pushed
+  the rewritten configuration feature branch with an exact lease.
+- Created a fresh detached vpsAdmin merge worktree at current `origin/master`,
+  applied the feature with `git merge --ff-only`, and reran the focused
+  NodeBunny/watchdog/daemon suite from the resulting tree: 28 examples, 0
+  failures. Fast-forwarded and pushed vpsAdmin `master` to `661896d0`.
+- Created a fresh detached configuration merge worktree at current
+  `origin/master`. Its ambient post-checkout hook returned 78 because the locked
+  gems are available only in the Nix shell; the clean worktree was
+  fast-forwarded inside that shell. Rechecked all three exact pins and channel
+  mappings, and
+  rebuilt both API supervisors without activation from the merged tree.
+- Fast-forwarded and pushed configuration `master` to `e8544363`. Verified both
+  remote default refs, retained both feature branches, removed the four clean
+  initiative worktrees and their small shell-created cache directories, and
+  removed the empty worktree group directory.
 
 ## vpsAdmin commits
 
-- Base: `6610c6789c3d567ba0c67fdbf8392904b9f266ba`
-- `64d283dc0eebb9709094dab0baf1c457d055a4ce` — `api: widen OOM report
+- Base: `a7a1dfc9b06131bcacf22adfc4e361c9742ea517`
+- `aeb2de41ed559e9d101dee977f23380f3c7d469e` — `api: widen OOM report
   task memory counters`
-- `ebbcf52a6171b268e7f59d751abe0612ea81569b` — `api: persist OOM reports
+- `5886b58d79097f7371289e6c292aded4d84602f2` — `api: persist OOM reports
   atomically`
-- `48b206d9e545fadf457450822975311a9d70426a` — `libnodectld: gate
+- `0ad049f8851acbed66c96c5db1234398a3ca770a` — `libnodectld: gate
   publishers during channel recovery`
-- `582f6165b506d655f47397e6e39216da9ac871e6` — `nodectld: make
+- `661896d007313dedc91066f55c72410ef893d10f` — `nodectld: make
   watchdog use poll staleness`
-- Final rebased head after resolving the second-review findings:
-  `582f6165b506d655f47397e6e39216da9ac871e6`
+- Merged default-branch head:
+  `661896d007313dedc91066f55c72410ef893d10f`
 
 The configuration channel pin is a generated mechanical follow-up and is not
 part of the first pre-integration code review.
@@ -189,10 +229,12 @@ part of the first pre-integration code review.
 ## Configuration commit
 
 - Base: `b615d1eafe0dc763a9f90dfc8c78bdff9bd6067a`
-- `7eaaf7d5f22825b3350eec960578b04651d96196` — generated `confctl`
+- `e8544363b0e8ef94412a3d1a946a8703e95fe82d` — generated `confctl`
   update of `vpsadminProduction`, `vpsadminServices`, and `vpsadminStaging`
-  to `582f6165b506d655f47397e6e39216da9ac871e6`
-- No deployment, activation, migration, service restart, or merge was run.
+  to `661896d007313dedc91066f55c72410ef893d10f`
+- Merged default-branch head:
+  `e8544363b0e8ef94412a3d1a946a8703e95fe82d`
+- No deployment, activation, database migration, or service restart was run.
 
 ## Mandatory change review
 
@@ -253,7 +295,11 @@ important, or advisory findings. It confirmed:
 - the generated configuration commit is directly based on current upstream and
   changes only the three approved vpsAdmin inputs to the exact reviewed head.
 
-Residual gaps are the still-running final integration workflow, simulated
+After this review, upstream advanced only through an independent `flake.lock`
+update. The reviewed patches were rebased without content changes, as verified
+by `git range-diff`, so no additional design review was required.
+
+Residual gaps are the still-running exact-head integration workflows, simulated
 rather than broker-backed RabbitMQ recovery coverage, no static prohibition on
 future raw publishers, no production-scale migration locking measurement, the
 operator-key-blocked node evaluation, and the need for a real future watchdog
