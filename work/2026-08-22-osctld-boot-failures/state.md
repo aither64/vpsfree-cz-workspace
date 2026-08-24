@@ -1428,15 +1428,57 @@ and no kernel build was started.
 Current-head GitHub Actions have already passed vpsAdminOS RuboCop and RSpec,
 including the formerly failing aggregate RSpec workflow. vpsAdmin Client
 Specs, Webui PHPUnit, i18n health, and libnodectld Specs have also passed at
-`48b91cc1c`. The two long current-head CI workflows remain queued. Superseded
-queued/in-progress CI runs `32666734679` (vpsAdminOS `45dea0306`) and
-`32666902596` (vpsAdmin `ffc226c7d`) were cancelled; completed runs were left
-unchanged.
+`48b91cc1c`.
+
+The long vpsAdminOS CI run `32668258237` subsequently completed with one
+unexpected test script, `os-test-osctld__resilience-d4100678`. The complete
+uploaded VM-test artifact was inspected before any rerun. Two of the script's
+five examples failed. The intended force-delete of a running container whose
+rootfs dataset had been renamed away was rejected with `container lifecycle
+admission is closed (daemon phase blocked)`; the following stale-shared-dir
+example failed for the same reason and is cascading contamination, not a
+separate shared-directory regression. The old daemon drained and stopped
+cleanly, and the replacement daemon loaded the pool and socket successfully.
+
+The failure is a deterministic ownership-classification regression introduced
+by the lifecycle restart work. Loading the container correctly preserves its
+public state as `error` because LXC configuration cannot be generated without
+the rootfs. Recovery also obtains a current authoritative LXC observation of
+the still-live runtime, records the exact active generation as `running`, and
+captures its init-process identity. `Daemon#lxc_generation_runtime_owned?`,
+however, accepts ordinary LXC payload/monitor cgroups only when the public
+container state is `running` or `frozen`; it does not use that current recovery
+observation. It consequently reports the known generation as
+`unowned_container_cgroup_processes`, keeps daemon readiness in `blocked`, and
+leaves all external lifecycle admission closed. This prevents osctld from
+self-remediating the errored container with the tested force-delete while the
+dataset remains absent. It can also affect a runtime upgrade whenever an
+otherwise known live generation has an independent configuration/rootfs error.
+
+The correction must remain fail-closed: public `error` alone is not proof of
+runtime ownership, and merely trusting a persisted `running` phase could accept
+stale state. The narrow ownership proof should require the active normal
+generation, a successful `running`/`frozen` recovery observation made by the
+current daemon startup, and the matching captured init `ProcessIdentity` still
+being alive. Missing, stale, failed, dead, or mismatched evidence must remain a
+readiness blocker. Add focused daemon specs for both the accepted and rejected
+cases, and make the resilience restart helper wait for `osctl daemon
+wait-ready` so future failures are attributed at the restart boundary. No
+source change and no workflow rerun were made during this investigation. The
+downloaded artifact is recoverable beneath
+`/tmp/osctld-ci-failure-32668258237.0bepOPwJ`.
+
+Superseded queued/in-progress CI runs `32666734679` (vpsAdminOS `45dea0306`)
+and `32666902596` (vpsAdmin `ffc226c7d`) were cancelled; completed runs were
+left unchanged.
 
 ## Verification still required
 
-- the two long current-head GitHub Actions CI workflows after their runners
-  become available.
+- implement and review the current-recovery ownership proof described above;
+- rerun the focused osctld resilience and restart VM tests, then the complete
+  current-head vpsAdminOS CI;
+- the long current-head vpsAdmin CI workflow after its runner becomes
+  available.
 
 ## Cleanup
 
