@@ -23,9 +23,11 @@ Both are resolved. vpsAdmin is rebased onto current `master`, console output now
 uses the recovery gate, and focused verification is green. The regenerated
 configuration pin is committed and pushed for all three approved channels on
 current configuration `master`; both narrow API configuration builds are green.
-Final-head CI is in progress. Node configuration evaluation remains blocked in
-this workstation by the unavailable operator initrd SSH host key. No production
-state has been changed and deployment is explicitly out of scope.
+The final fresh-context review found no blocking, important, or advisory issues.
+Six final-head CI workflows are green and the long integration workflow remains
+in progress. Node configuration evaluation remains blocked in this workstation
+by the unavailable operator initrd SSH host key. No production state has been
+changed and deployment is explicitly out of scope.
 
 The incident contains three independent or partially independent failure
 modes:
@@ -230,6 +232,32 @@ Console output now uses the recovery gate with call-site recovery coverage.
 Both branches were rebased onto current upstream revisions, the vpsAdmin branch
 was revalidated and pushed, and the three-role configuration pin was regenerated
 from current configuration `master`.
+
+## Final mandatory change review
+
+The final standalone fresh-context review inspected the post-fix pushed heads
+`582f6165b506d655f47397e6e39216da9ac871e6` and
+`7eaaf7d5f22825b3350eec960578b04651d96196`. It reported no blocking,
+important, or advisory findings. It confirmed:
+
+- the four vpsAdmin commits are focused, correctly ordered, and based directly
+  on current upstream;
+- exactly the seven kernel unsigned-long counters are widened with guarded
+  upgrade and downgrade behavior;
+- OOM report rows and related counters are enclosed in one savepoint-backed
+  transaction;
+- all libnodectld publishers route through the NodeBunny gate, including console
+  output, and no direct exchange publisher remains outside the gated methods;
+- watchdog freshness advances only after a successful transaction metadata poll
+  and no transaction selection, age, eligibility, or drag logic was introduced;
+- the generated configuration commit is directly based on current upstream and
+  changes only the three approved vpsAdmin inputs to the exact reviewed head.
+
+Residual gaps are the still-running final integration workflow, simulated
+rather than broker-backed RabbitMQ recovery coverage, no static prohibition on
+future raw publishers, no production-scale migration locking measurement, the
+operator-key-blocked node evaluation, and the need for a real future watchdog
+backtrace to identify the exact stuck Connector/C native frame.
 
 ## Results
 
