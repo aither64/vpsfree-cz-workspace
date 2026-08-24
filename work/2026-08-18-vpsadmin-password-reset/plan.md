@@ -438,3 +438,50 @@ whether an account exists or can use recovery.
   then the mandatory fresh-agent review before long integration. Repin the KB
   contract and production configuration and redeploy the bridge development
   cluster for acceptance.
+
+## MFA revocation and recovery-state hardening
+
+- Amend the unreleased password-recovery schema with nullable identifiers for
+  the exact TOTP device or passkey that completed recovery MFA. Keep them as
+  audit/revocation snapshots without foreign keys so deleting the factor can
+  invalidate the recovery while retaining which factor was used.
+- Share only factor-level TOTP and WebAuthn proof verification, replay/counter
+  updates, and enabled-state revalidation. Keep ordinary authentication and
+  password recovery as separate authority state machines. Serialize both
+  verification and supported factor management in the lock order user, then
+  authority, then factor.
+- Disabling or deleting a factor invalidates active recoveries verified with
+  that exact factor. Unrelated factor changes remain usable. Disabling MFA for
+  the whole account invalidates every active recovery and MFA authentication
+  token. A TOTP fallback code may disable its own factor and still complete the
+  recovery currently using it; other active recoveries verified by that factor
+  are invalidated. Using the fallback code in ordinary authentication has no
+  current recovery to preserve, so it invalidates every active recovery tied
+  to the disabled factor. Lock the current recovery and every relevant
+  recovery authority together in one ID-ordered query before the factor.
+- Keep WebAuthn failure accounting schema-free. Permit exactly one outstanding
+  two-minute passkey challenge per recovery: a new begin replaces the previous
+  recovery challenge and any recognized finish attempt consumes it, including
+  assertion type or ID mismatches reported by the WebAuthn library. Ordinary
+  authentication challenges remain independent. Normalize failures only around
+  the untrusted WebAuthn parser and verifier calls so every malformed assertion
+  follows the handled failure path without hiding database failures.
+- Deleting an OAuth client invalidates its active recoveries before nullifying
+  the request association and finishes and scrubs queued submissions linked to
+  it. Enqueue and deletion share the global queue lock, and the worker locks
+  and rechecks its submission before the client row, so queued work cannot
+  become a generic recovery after client deletion. A recovery completed before
+  deletion can show its completion alert only through the current default
+  client; active flows do not silently move to another client.
+- Deploy the amended additive migration before the new API code and keep the
+  password-recovery feature disabled until every API process runs the new
+  revision. Older code ignores the nullable columns, but it cannot record the
+  exact factor, so no mixed-version recovery must be admitted. Rolling back to
+  older code remains compatible; the down migration discards only the new
+  factor snapshots.
+- Add deterministic two-connection MariaDB coverage for both verification-first
+  and revocation-first TOTP/passkey schedules, plus route, model, migration,
+  OAuth-client deletion, challenge replacement, and ordinary-authentication
+  regressions. Run mandatory fresh-agent review before long integration, repin
+  downstream revisions, and reset/redeploy the bridge development cluster.
+  Production deployment and KB publication remain operator-only.

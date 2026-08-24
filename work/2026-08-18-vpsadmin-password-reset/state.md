@@ -2117,3 +2117,211 @@
   broad CI, API topic/migration specs, WebUI PHPUnit, RuboCop, i18n, and
   libnodectld. No existing feature source was changed; review artifacts are
   confined to untracked `vulnerabilities/` paths pending remediation.
+
+### MFA revocation and recovery-state hardening
+
+- Implementation started from exact clean pushed vpsAdmin head
+  `df4216aeeafc4893e3167f71f840345e3f37b31f`. The unreleased recovery
+  migration now records the exact verified TOTP device or passkey using two
+  nullable indexed identifiers.
+- Shared TOTP and WebAuthn factor operations now lock and revalidate the latest
+  enabled factor state while the caller holds the user and authority locks.
+  Ordinary and recovery authority transitions remain separate operations.
+  Supported TOTP/passkey disable and delete operations use the same user-first
+  lock order and invalidate only recoveries verified with the affected factor.
+- Whole-account MFA disable invalidates all active recoveries and pending MFA
+  tokens. The TOTP fallback-code path disables its factor internally and keeps
+  the current recovery usable while invalidating other active recoveries that
+  were verified by the same device.
+- Recovery passkey begin replaces the preceding recovery challenge, a
+  recognized finish consumes its challenge even on failed proof, and ordinary
+  WebAuthn challenges are not touched. No retry-counter schema was added.
+- OAuth-client deletion invalidates active associated recoveries before the
+  request association is nullified. The worker locks and revalidates a selected
+  client while creating recovery state, which closes the concurrent
+  create-after-invalidation window. Completed recoveries can fall through only
+  the current default OAuth client for the existing completion alert.
+- Deterministic independent-connection MariaDB regressions pass for six
+  TOTP/passkey schedules: verification-first blocks factor revocation until
+  commit, exact recovery revocation then wins, and revocation-first prevents
+  ordinary and recovery MFA. A second deterministic client-lock schedule proves
+  deletion waits for recovery creation and then invalidates the new flow; a
+  deleted-client regression proves stale workers cannot create orphaned state.
+- The complete recovery-route suite passes with 38 examples. The affected
+  model/resource suite passes with 141 examples, the migration suite with two,
+  the maintained MFA concurrency suite with six, the TOTP fallback suite with
+  six, and the request-creation suite with nine. Focused RuboCop passes on all
+  38 hand-written MFA files and all eight OAuth lifecycle files. An earlier
+  198-example pass had two ordinary WebAuthn lookup-rescue failures; the rescue
+  placement was corrected and its four exact regressions then passed.
+- All temporary `vulnerabilities/` proof artifacts were removed after their
+  evidence was represented in maintained product specs. vpsAdmin commits
+  `2d2cd1f67d603b2a54c9e340718d21d4a901b3fc`,
+  `fe5bbbd3fb2cde9ed8cf8ffa05399c7812f08165`,
+  `4a105768331823205e8452e346ed2e0c1a397480`, and
+  `7ccaf19bbea35d32b345267c8240da99e3906ea1` separate factor lifecycle,
+  trusted WebAuthn metadata, bounded recovery challenges, and OAuth-client
+  lifecycle behavior. Every commit passed all installed Overcommit hooks
+  inside `nix develop .#vpsadmin`.
+- A first ambient-shell commit attempt was correctly rejected because RuboCop,
+  gettext, and MariaDB were absent. No hook was bypassed; the repository's
+  existing `notes/vpsadmin/2026-08-18-overcommit-nix-shell.md` procedure was
+  used for both successful commits.
+- Mandatory fresh-agent review, downstream repins, CI, long integration, and
+  the bridge-cluster reset/deploy remain pending. Production deployment and KB
+  publication remain operator-only.
+- Upstream fetch found seven new vpsAdmin master commits. The entire feature
+  branch was rebased onto exact master `661896d007313dedc91066f55c72410ef893d10f`;
+  the only conflicts were schema-version lines, resolved by retaining master's
+  later `2026_08_23_170000` version while preserving every feature column.
+  KB contracts and production configuration also have upstream changes and
+  will be rebased before their final mechanical repins.
+- A post-rebase 195-example security/resource run passed 194 examples and
+  exposed one order-dependent passkey setup failure. The new committed
+  no-transaction OAuth deletion race had persisted a per-spec `core.api_url`
+  override, while WebAuthn allowed origins are configured once at suite start.
+  Removing the unnecessary override fixed the reproducing combined order; 47
+  request-and-route examples then passed at the original seed. No rerun was
+  accepted without first identifying this cause.
+- Mandatory review of rebased head `9db2b8086` requested three Blocking fixes:
+  ordinary TOTP fallback did not invalidate recoveries tied to its disabled
+  factor; client deletion before worker pickup degraded queued work into a
+  queryless recovery; and WebAuthn RuntimeError paths rolled back recognized
+  challenge consumption. It also found that both lock tests inferred blocking
+  from a timed thread join without proving the competing query was scheduled.
+- Ordinary and recovery TOTP now prelock all active TOTP-verified recoveries
+  before factor verification. Ordinary fallback invalidates every recovery
+  tied to the device, while recovery fallback preserves only its current flow.
+  Queued OAuth work is locked, scrubbed, and finished during client deletion;
+  enqueue revalidates the client under the queue lock and the worker rechecks a
+  locked unfinished submission before client lookup. WebAuthn parser and proof
+  RuntimeErrors are narrowly normalized to the handled assertion-error path,
+  so recognized challenge destruction commits.
+- The concurrency regressions now publish the competing MariaDB connection ID
+  and wait until its blocking SQL is visible in
+  `information_schema.PROCESSLIST`; they no longer depend on a 250 ms scheduling
+  guess. A new no-transaction malformed-assertion regression proves the exact
+  challenge is consumed across a real commit boundary.
+- Corrected focused verification passes: 30 MFA/concurrency/request/TOTP
+  examples before the malformed correction, the exact malformed WebAuthn
+  example, 50 OAuth-client/submission/worker examples, and 57 recovery-route
+  plus ordinary WebAuthn examples. Targeted RuboCop passes on all eleven
+  changed hand-written files, and every amended commit passes all installed
+  hooks.
+- The corrected clean vpsAdmin head is
+  `459232faa1c8843f56f51ac4b2c16b248bef8bc5`, with focused commits
+  `0d6463109`, `9efa4f850`, `763f084cb`, and `459232faa`. The same mandatory
+  reviewer is checking the exact rewritten tree and closure of all findings;
+  downstream repins, CI, long integration, and bridge deployment remain
+  blocked on that follow-up verdict.
+- Mandatory follow-up review of `459232faa` confirmed two remaining Blocking
+  paths. Recovery TOTP locked the current recovery before older verified rows,
+  while OAuth deletion locked all linked recoveries by ID; a deterministic
+  MariaDB schedule reproduced the resulting lock inversion. The WebAuthn gem
+  also raises `JSON::ParserError` and `NoMethodError` for other malformed client
+  data, outside the earlier `RuntimeError` normalization, so those failures
+  still rolled back recognized challenge deletion. The reviewer also noted a
+  loose SQL match and incomplete persistent-fixture cleanup in the OAuth race
+  test.
+- TOTP verification now locks the current recovery and all active
+  TOTP-verified recoveries in one ID-ordered query, then operates on the locked
+  current instance. A maintained two-thread regression pauses before that
+  query, lets OAuth deletion complete, and proves verification returns a clean
+  rejection rather than deadlocking. The WebAuthn boundary now normalizes
+  `StandardError` only around the gem parser and verifier calls; database lookup
+  and counter updates remain outside. Its real-transaction regression covers a
+  wrong assertion type, invalid JSON, and valid JSON missing its challenge, and
+  proves each recognized challenge deletion commits.
+- The OAuth race harness now requires both the `oauth2_clients` table and the
+  `FOR UPDATE` clause in observed SQL, restores the two values changed by its
+  no-transaction setup, and removes its recovery, mail transaction, factor,
+  user, and client fixtures. Focused verification passes 22 combined
+  TOTP/WebAuthn/concurrency examples, eight revised WebAuthn/concurrency
+  examples, the corrected OAuth race, and targeted RuboCop on all seven files.
+  Both fixup commits passed every installed hook before autosquash.
+- The exact clean corrected vpsAdmin head is now
+  `75ea67f886ff5deb4e9c70066599212522c8dba7`; its final hardening commits are
+  `0d6463109`, `9efa4f850`, `974f049e5`, and `75ea67f88`. The same reviewer is
+  performing the required exact-head closure check. The KB contract and
+  production configuration branches have been rebased onto their current
+  masters but remain intentionally pinned to the preceding feature revision
+  until this review clears and the final vpsAdmin revision is pushed.
+- The mandatory reviewer cleared exact vpsAdmin head `75ea67f886` against
+  merge base `661896d007` with no Blocking, Important, or Advisory findings.
+  Its independent focused MFA/concurrency/OAuth run passed 23 examples, and
+  the same-process request/recovery-route run passed 48. The review confirmed
+  that the ID-ordered recovery lock closes the TOTP/OAuth deadlock and that
+  recognized malformed WebAuthn attempts consume their challenge across a
+  real transaction boundary.
+- The rebased KB contract is clean and pushed at
+  `01b100037407cc682c4093047146e5ab223cc613`. All capture, navigation, page,
+  workflow-action, and Nix inputs use exact vpsAdmin `75ea67f886` and its
+  inherited vpsAdminOS `8e44a51244`. `nix develop -c bin/check` passes; the
+  initial run correctly rejected the stale page-runtime action revision before
+  it was updated.
+- The rebased production configuration is clean and pushed at
+  `52ed765062f6c2033f3fa49f0414b8a668f4fd92`. Its runbook records the MFA
+  snapshots, hardening acceptance checks, no-sixth-migration fact, and both
+  API/worker rollout requirement. `confctl inputs channel set --commit` created
+  the sole final `vpsadminServices` pin at exact `75ea67f886`; no lock file was
+  edited manually.
+- All seven production configurations named by the runbook build successfully:
+  `int.api1`, `int.api2`, `int.webui1`, `int.webui2`, `prg/proxy`,
+  `prg/int.mon1`, and `prg/int.mon2`. The first scripted attempt stopped at
+  the expected interactive confirmation; the actual validation used
+  `confctl build --yes` and completed every system.
+
+### Final hardening closure
+
+- The final fixture/history corrections keep every commit independently
+  runnable: the completed-recovery browser case runs before delayed tests with
+  the production completion lifetime, only the active password-form fixture
+  receives a one-hour test lifetime, and exact verified-factor IDs appear in
+  the same commit as their schema.
+- The last order-dependent API failure was traced to the non-transactional
+  OAuth deletion schedule retaining `SpecSeed.node` state. Its teardown now
+  restores the seed node and complete current-status row. The exact full API
+  engine run passed 912 examples with zero failures and three pending; the
+  reproducing 21-example polluting order also passes.
+- The final clean, pushed vpsAdmin head is
+  `8d55a0a4871a52c7dc3f90c5449b32149328fc24`. The mandatory fresh-context
+  reviewer found no Blocking, Important, or Advisory issue and cleared this
+  exact head for integration and downstream pins. Its independent focused
+  suite passed three examples; targeted RuboCop, JavaScript syntax, and Nix
+  parsing also pass.
+- Every GitHub check at the final vpsAdmin head is green: broad CI, API topic
+  and migration specs, WebUI PHPUnit, RuboCop, i18n health, and libnodectld.
+  The full `webui#auth` VM/browser scenario passed in 1,198.07 seconds,
+  including the real password-recovery completion path.
+- The clean, pushed KB contract head is
+  `6096a76caf9ad6825218eeaa8ce5f1f8fb54e672`. All six contract and Nix pin
+  sites use exact vpsAdmin `8d55a0a487`; `nix develop -c bin/check` passes.
+  Both the `Check` and managed-page runtime workflows are green.
+- The clean, pushed production-configuration head is
+  `35e43276f2b2a2af7e3235fa51a7c2306bf136bb`. Its sole generated
+  `vpsadminServices` update and runbook use exact vpsAdmin `8d55a0a487`.
+  `confctl build --yes` passes for both API servers, both WebUI servers, the
+  auth proxy, and both monitoring servers.
+- The final `webui#users-self-service` VM/browser test passes: its Playwright
+  example completed in 436.74 seconds and the complete test in 1,086.04
+  seconds. The final `webui#users-admin` test also passes: its Playwright
+  example completed in 459.12 seconds and the complete test in 1,074.12
+  seconds. The suites were serialized to stay within `/dev/shm` limits.
+- The preceding bridge cluster was reset, including its disposable database
+  and VM state. The fresh single-node bridge deployment built exact clean
+  vpsAdmin `8d55a0a487` and reports `ready: yes`; API, recovery worker, console
+  router, supervisor, nginx, osctld, and nodectld are active with no failed
+  systemd units. Build info reports `revisionDirty: false`.
+- First boot encountered the documented osctld socket readiness race after
+  successful service seeding. Once osctld and nodectld were running, the
+  documented idempotent node refresh completed successfully without resetting
+  the seeded disks.
+- Development-only acceptance state is restored without consuming a recovery
+  request: password recovery is enabled, the unfinished queue is empty,
+  `test-user1` and `test-user2` share
+  `shared-password-recovery@example.test`, and only `test-user1` has effective
+  MFA with a confirmed, enabled `Acceptance TOTP` device using deterministic
+  secret `JBSWY3DPEHPK3PXP`. `test-user2` and `test-admin` have no factors.
+  The WebUI OAuth client is the default direct-continuation client. The public
+  recovery form returns HTTP 200 with its logo, labelled identifier field, and
+  working OAuth-start sign-in link. The temporary fixture scripts were removed.
