@@ -2339,11 +2339,14 @@ images. No deployment, activation, production access, or node access occurred.
 
 Exact-head GitHub Actions status after the local VM pass:
 
-- vpsAdminOS `f4a8799eb`: RSpec and RuboCop passed; the OS build and both
-  livepatch lifecycle jobs passed; the full VM-suite job in CI run
-  `32848337427` is still in progress;
+- vpsAdminOS `f4a8799eb`: RSpec and RuboCop passed; CI run `32848337427`
+  subsequently completed successfully with the OS build, full VM suite, and
+  both livepatch lifecycle jobs passing;
 - vpsAdmin `8c80ba2a0`: client, libnodectld, WebUI PHPUnit, and i18n workflows
-  passed; aggregate CI run `32848909673` is still in progress.
+  passed; aggregate CI run `32848909673` remains in progress on the exact head.
+  Recent successful master runs take roughly three to eight hours, so its
+  current runtime is normal. It was left active and was neither rerun nor
+  cancelled.
 
 All three feature branches remain clean, pushed, and exactly equal to their
 remote feature refs. Final generated validation artifacts were moved
