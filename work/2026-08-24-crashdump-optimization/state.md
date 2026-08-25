@@ -4,9 +4,20 @@
 
 - Project: `vpsadminos`
 - Branch: `2026-08-24-crashdump-optimization`
-- Worktree:
+- Branch head retained locally: `3e936050a10cedc9e6cde7d10e42d779657d4bda`
+- Worktree removed after abandonment:
   `worktrees/2026-08-24-crashdump-optimization/vpsadminos`
-- Base: `origin/staging` at `8e44a5124439b1f3048ffc56b1717614a5360358`
+- Validation branch: `2026-08-24-crashdump-optimization-validation`
+- Validation branch head retained locally:
+  `3a823e5a2c1ba84fc01d3c962e8113b474f8dbca`
+- Validation worktree removed after abandonment:
+  `worktrees/2026-08-24-crashdump-optimization/vpsadminos-validation`
+- Rewrite branch retained locally:
+  `2026-08-24-crashdump-optimization-rewrite` at
+  `9169a6dba3d65993e4296b3234cb7dc3d25e6246`
+- Rewrite worktree removed after abandonment:
+  `worktrees/2026-08-24-crashdump-optimization/vpsadminos-rewrite`
+- Base: `origin/staging` at `399cc60d215fb9427447c37133b5eb27e9879a4e`
 - Remote: `git@github.com:vpsfreecz/vpsadminos.git`
 
 No production access or `vpsfree-cz-configuration` change is in scope.
@@ -15,12 +26,109 @@ No production access or `vpsfree-cz-configuration` change is in scope.
 
 - Created the isolated feature branch and worktree.
 - Implemented the single-session collector, bounded direct writer, local crash
-  patches, telemetry, 512-process regression load, NFS checks, manual
-  equivalence test, and six-case 5,000-process benchmark template.
-- Quick validation and the mandatory review/fixes are complete. A focused
-  reviewer follow-up found no unresolved blocking or important issues. VM
-  validation, the replacement benchmark, and GitHub Actions are complete. The
-  branch is pushed and ready for review.
+  patches, telemetry, 512-process regression load, and NFS checks.
+- Extended the implementation to collect crash essentials first, flush them
+  with `syncfs(2)`, and publish `inspect/priority-complete` before the large
+  supplementary reports. Report payloads still write directly to their final
+  destination and are not staged in tmpfs.
+- Rewrote the merge branch to exclude comparison-only code. The legacy
+  collector, equivalence test, and six-case benchmark are committed only on
+  the validation branch, which is based on the finalized merge-tree code.
+- The earlier review and validation results below apply to the original report
+  order. Quick checks and the mandatory review for the priority extension
+  completed, but its inspection VM test later exposed an unresolved collector
+  failure.
+- The user ended this initiative on 2026-08-25 because a colleague implemented
+  the required solution in commit
+  `b0e1a4dee54efda0075904b31d6b87e003aaa41b`. The active diagnostic rerun was
+  interrupted, no rewritten branch was pushed, and none of these local heads
+  is ready to merge.
+
+## Priority extension implementation
+
+- Merge branch final abandoned head: `3e936050a`.
+- Validation branch head: `3a823e5a2`, based directly on merge draft
+  `10159f00c`.
+- Priority order is `bt-panic.txt`, `log.txt`, `sys.txt`,
+  `bt-active-nonidle.txt`, `bt-active.txt`, and
+  `bt-sleeping-uninterruptible.txt`.
+- Supplementary order is `ps-active.txt`, `ps-summary.txt`, `ps.txt`,
+  `bt-sleeping-interruptible.txt`, and `ps-last-run.txt`.
+- `crash-buffer --syncfs --complete PATH` flushes the destination filesystem,
+  then atomically renames a complete marker containing `0`. It removes a stale
+  marker before processing and does not publish one on open, write, sync, or
+  timing failure.
+- Collector metadata is version 3 and identifies the priority marker, report
+  set, and `syncfs` barrier. The README explains that supplementary collection
+  can still be running when the marker appears.
+- Routine inspection checks exact report order, marker metadata, and stale
+  marker removal. Direct-NFS inspection observes the marker and all essential
+  files from the server while `inspect.exit-status` is still absent.
+- Comparison-only files and their `tests/all-tests.nix` registrations are
+  absent from the merge branch and present on the validation branch.
+
+## Priority extension quick checks
+
+- Formatted all changed Nix files and parsed them with `nix-instantiate`.
+- Compiled `crash-buffer.c` with `-Wall -Wextra -Werror`.
+- Built the `crash-buffer` derivation at
+  `/nix/store/rf9p9ny1abwlkcmb5sf7ksxl9pkg2igw-crash-buffer-1`; install checks
+  passed for streaming, atomic markers, `syncfs`, append, invalid options,
+  unavailable output, and post-open write failure.
+- Merge-branch discovery lists only `crashdump/default`, `crashdump/inspect`,
+  and `crashdump/nfs-inspect`. Validation-branch discovery additionally lists
+  equivalence and all six benchmark instances.
+- Evaluated the generated optimized and legacy benchmark, equivalence, and NFS
+  inspection test scripts from their Nix derivations and checked each with
+  `ruby -c`; all reported `Syntax OK`.
+- `nix develop --command overcommit --run` passed Nixfmt and RuboCop in both
+  worktrees. An initial amend outside the development shell was blocked because
+  ambient `nixfmt` was unavailable; rerunning inside `nix develop` passed all
+  pre-commit and commit-message hooks.
+
+## Priority extension mandatory review
+
+The required fresh standalone reviewer reported two blocking findings, one
+important finding, and one advisory before long tests:
+
+- a final priority writer could publish the marker even when an earlier
+  essential writer failed, and setup ignored stale-marker removal or report
+  truncation errors;
+- the two crash process optimizations, the session and priority changes, and
+  the equivalence and benchmark validation were not split finely enough;
+- `origin/staging` advanced to `399cc60d2` with a flake input update;
+- process-farm children inherited a SIGTERM handler that prevented clean test
+  cleanup.
+
+All findings were addressed before VM testing:
+
+- added repeatable `crash-buffer --require PATH`; the final essential writer
+  now requires completion markers from every preceding priority command before
+  `syncfs` and publication;
+- made output-directory creation, stale-marker invalidation, control-file
+  initialization, and report pre-truncation fail closed;
+- added package coverage in which the final writer succeeds but a required
+  earlier marker is absent, and routine coverage for an unremovable stale
+  marker;
+- reset SIGINT and SIGTERM to their defaults in process-farm children and
+  manually verified that a two-child farm terminates cleanly;
+- rebased onto `origin/staging` at `399cc60d2` and rebuilt both crash patch
+  variants independently against the updated Nix inputs;
+- rewrote the merge history into four focused commits:
+  `e5d976935` (`ps -A`), `be2d89228` (`ps -m`), `4662f69e1`
+  (single-session collector), and `10159f00c` (priority boundary);
+- rewrote validation as `05988dc31` (legacy collector and same-vmcore
+  equivalence) and `3a823e5a2` (benchmark).
+
+The updated `crash-buffer` derivation built at
+`/nix/store/zpvnr2j5k5daxpak6f8l48mk1jismj8b-crash-buffer-1`. All rewritten
+commits passed installed pre-commit and commit-message hooks. A focused
+reviewer follow-up found that the first validation commit referenced the legacy
+collector added by the second commit, and noted that `mktemp` was unchecked.
+Moved the helper to its first consumer and made temporary-directory creation
+fail closed. The same standalone reviewer confirmed that all Blocking,
+Important, and Advisory findings are resolved, both histories are coherent and
+clean, and long VM tests may proceed.
 
 ## Commands and results
 
@@ -74,6 +182,23 @@ that all six findings were resolved, with no remaining blocking or important
 findings.
 
 ## VM validation
+
+- Before the priority-extension reruns, waited for an unrelated
+  `vps/autostart-monitoring` VM test to release `/dev/shm`. The first polling
+  expression matched its own shell after the test exited; documented the
+  self-excluding `pgrep -f '/tmp/[o]sctld-...'` pattern in
+  `notes/cross-project/2026-08-25-pgrep-self-match.md`.
+- A second unrelated instance started while `crashdump/default` was evaluating.
+  Interrupted the crashdump runner before it launched a VM and continued to
+  wait for an uncontended host. No validation result came from that interrupted
+  invocation.
+- The later priority-order `crashdump/default` rerun passed all six examples in
+  374.27 seconds; its crash and post-reboot artifact check took 53.38 seconds.
+- The first priority-order `crashdump/inspect` run reached the crash kernel but
+  inspection returned collector exit status 1 without the expected diagnostic
+  artifact. This is an unresolved functional failure in the abandoned branch.
+- Added diagnostic capture and started a fresh inspection rerun. Interrupted it
+  when the user superseded the initiative; it produced no accepted result.
 
 - `./test-runner.sh test --fresh crashdump/default` passed all six examples in
   425.37 seconds. The test used the cached vpsAdminOS Linux 6.12.95 derivation;
@@ -194,17 +319,22 @@ findings.
 
 ## Remaining
 
-- Await review and integration. No production deployment or configuration pin
-  is part of this initiative.
+- None. The initiative is abandoned in favor of
+  `b0e1a4dee54efda0075904b31d6b87e003aaa41b`. Do not resume, push, or merge the
+  retained local branches without a new explicit request and fresh validation.
 
 ## Compatibility
 
 Existing report filenames and status rows remain. New `session.txt`, `timings`,
-and manifest keys are additive. Report payloads are written directly to the
-destination with at most one 256 KiB writer; tmpfs contains only tiny control
-files. Mixed versions and rollback require no coordination or conversion.
+`priority-complete`, and manifest keys are additive. Report payloads are written
+directly to the destination with at most one 256 KiB writer; tmpfs contains
+only tiny control files. Mixed versions and rollback require no coordination or
+conversion.
 
 ## Cleanup
 
-Keep the feature branch after integration. Remove the worktree only after the
-work is merged or abandoned.
+All three initiative worktrees were clean and removed after abandonment. The
+local feature, validation, and rewrite branches remain recoverable as listed
+above. The previously pushed remote feature branch still points to the older
+validated implementation at `efba51db6`; no priority-extension rewrite was
+pushed. No production configuration or deployment was changed.
