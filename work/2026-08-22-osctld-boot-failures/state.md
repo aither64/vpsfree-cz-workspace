@@ -1803,15 +1803,171 @@ gate must include `osctld/lifecycle` in addition to restart, resilience,
 switch-to-configuration, declarative containers, migration, and autostart
 monitoring.
 
+The next fresh review found three remaining blockers and one monitoring
+advisory. Consistent export still opened its output before rejecting residual
+or stopped-source runtime generations; start/restart configuration readiness
+was checked outside the lifecycle manipulation lock; and three same-branch
+correction commits retained implementations which were already known to be
+wrong. The advisory identified missing monitoring cases for `freezing`, the
+legacy `frozen` operand, and the legacy pool-count empty/nearly-empty fallback.
+
+All findings were addressed. Export now performs every rejection-only
+preflight under the manipulation lock before opening the destination. Public
+command regressions preserve a pre-existing output for both residual
+generations and a stopped source with an active runtime generation. Start and
+restart now check readiness and start admissibility inside the same lifecycle
+manipulation lock which admits the request; deterministic race examples change
+configuration to error immediately before lock entry and prove that neither a
+start nor a restart request is issued. Monitoring tests now cover runtime
+`freezing`, legacy `state=frozen`, and legacy pool-count empty/nearly-empty
+alerts.
+
+The vpsAdminOS history was rewritten from 53 to 50 commits. The `svc`/`sv`
+activation correction, malformed runtime-state shell quoting correction, and
+literal cgroup PID path correction are folded into the commits which introduced
+those implementations. The post-rewrite tree is exactly
+`bf34fc46d28fb1ff629ea04863957843ca0cbf2e`, identical to the tested
+pre-rewrite tree. The corrected pushed vpsAdminOS head is
+`73abc70a485d21b92f791070476655d4acf6c202`.
+
+The required vpsAdmin pin helper generated and pushed head
+`e58d580fbd378e03293b63a7fea56b6ea245aa5d`, pinning vpsAdminOS
+`73abc70a4`. The configuration monitoring commit is now `259c9159`.
+`confctl` then generated consumer-first commit `7788c52e`, pinning staging
+vpsAdmin `e58d580f` while both staging vpsAdminOS inputs remain at
+`93014dd1`, followed by producer commit/head
+`1a658f2ae067d684dacf8edd0178c7bb161914e3`, pinning staging and
+os-staging vpsAdminOS to `73abc70a`. Production and `vpsadminServices` remain
+unchanged. All three feature branches are clean, pushed, use SSH remotes, and
+descend from their recorded bases.
+
+Post-fix quick verification passed:
+
+- focused transfer/lifecycle osctld RSpec: 67 examples, zero failures;
+- full osctld RSpec: 1,518 examples, zero failures;
+- vpsAdminOS full Overcommit after the corrected tree: Nixfmt and RuboCop
+  passed;
+- the three configuration Prometheus checks and full Overcommit passed;
+- all three final diffs pass `git diff --check`, and exact/intermediate pins
+  were verified.
+
+The first regenerated configuration pin attempt mistyped the full vpsAdmin
+revision and received GitHub 404 before changing `flake.lock` or creating a
+commit. The retry used the exact pushed revision. Configuration development
+artifacts were moved recoverably to
+`/tmp/vpsfree-config-pre-rewrite.ZyIuNU`,
+`/tmp/vpsfree-config-post-rewrite.mpZwzM`,
+`/tmp/vpsfree-config-final-caches.jmQ2MI`,
+`/tmp/vpsfree-config-rubocop-cache.dJiW1J`, and
+`/tmp/vpsfree-config-push-caches.CltrOf`.
+
+No long VM test, deployment, activation, or production access was performed.
+A new fresh-context mandatory review is required against these exact heads and
+pins before opening the long-test gate.
+
+The next fresh-context mandatory review APPROVED the exact heads above with no
+Blocking, Important, or Advisory findings. It independently confirmed the
+export and manipulation-lock preflights, authoritative runtime inventory,
+fail-closed runit/nodectld coordination, split-state compatibility and
+monitoring fallbacks, history coherence, clean ancestry, and consumer-first
+pins. It left the exact-head VM gate as residual verification.
+
+The first gated VM group then passed:
+
+- `osctld/lifecycle`: 4 examples, 615.89 seconds;
+- `osctld/restart`: 16 examples, 1,155.81 seconds;
+- `osctld/resilience`: 5 examples, 580.0 seconds;
+- `system/switch-to-configuration`: 10 examples, 846.53 seconds;
+- `declarative-containers`: 11 examples, 566.68 seconds.
+
+These runs covered legacy runtime adoption and interrupted handoff, unkillable
+residual quarantine, short-`sv`-timeout draining, SIGKILL during autostart,
+missing-veth recovery, exact unowned-process survival/readiness blocking,
+nodectld pause failure before service changes, and split configuration/runtime
+state under missing datasets.
+
+`osctl/ct-local-transfer` then failed 2 of 11 examples. All nine functional
+copy/move, retry, cleanup and data-integrity examples passed. Both failures
+were assertions in restart-between-phase cases: after replacement osctld had
+authoritatively inventoried the staged destination, the test expected
+`runtime_state=unknown` but correctly observed `runtime_state=stopped` while
+`config_state=staged`. The full attempt is preserved at
+`/tmp/os-test-runner/os-test-osctl__ct-local-transfer-a276bf07`. Changing the
+inventory to preserve `unknown` would contradict the requirement to discover
+all existing runtimes. Expectations after daemon restart were therefore
+changed to `stopped`; retry cases without restart retain `unknown`. The same
+correction was made to the analogous remote send/restart assertions.
+
+The correction was folded into the split-state commit rather than retained as
+a fixup. The corrected pushed vpsAdminOS head is
+`c845b77f1426a997b00ef1ed0e4a381f7e2ddd45`. vpsAdmin was regenerated with
+the required helper and pushed at
+`9fd5294c88d14dde0f15d17d7bd5a2886cc62d6e`. Configuration was regenerated
+consumer-first: intermediate `231f7d84` pins vpsAdmin `9fd5294c` while both
+staging vpsAdminOS inputs remain `93014dd1`; final pushed head `b86fb5a7` pins
+staging/os-staging vpsAdminOS `c845b77f`. Production and `vpsadminServices`
+remain unchanged. vpsAdminOS RSpec/RuboCop and the applicable vpsAdmin quick
+GitHub workflows passed at these exact heads; current-head long runs
+`32802262377` and `32802366589` were cancelled at the reopened review gate.
+
+The corrected transfer definitions pass Nixfmt/Overcommit and local-transfer
+evaluation. Configuration artifacts were moved recoverably to
+`/tmp/vpsfree-config-transfer-fix.Qq1GyD` and
+`/tmp/vpsfree-config-transfer-push.ZfOfTX`. No deployment, activation,
+production access, or local kernel build occurred.
+
+Because the committed producer revision and generated pins changed after the
+VM-discovered test correction, a final fresh-context mandatory review is
+required before rerunning local/remote transfer and the remaining vpsAdmin VM
+gate.
+
+That focused review APPROVED the corrected transfer semantics and pin chain
+with no Blocking or Important findings. Its plan-wording advisory was applied:
+staged transfer targets are authoritatively `stopped` after restart, while
+`unknown` remains correct before inventory and on non-restart retry paths.
+
+The corrected exact-head VM runs then passed:
+
+- `osctl/ct-local-transfer`: 11 examples, 1,345.48 seconds;
+- all seven `osctl/ct-send-recv` scripts, including every restart and failure
+  boundary: 1,453.76 seconds total;
+- `vps/migrate`: 11 examples, 1,275.36 seconds, including an actual cutover.
+
+`vps/autostart-monitoring` failed after 696.07 seconds because nodectld
+exported one expected auto-start VPS instead of two. The preserved attempt is
+`/tmp/os-test-runner/os-test-vps__autostart-monitoring-0af8bd80`. Logs and the
+transaction database showed the complete failure chain: the blocked VPS's
+`pre-start` hook aborted its launch, the new lifecycle finalizer emitted a
+guest `ct_exit: halt` event for that aborted generation, and the vpsAdmin
+supervisor consequently ran `TransactionChains::Vps::Autostart` to disable its
+desired auto-start setting. The previous finalizer explicitly suppressed exit
+events for aborted starts, so this was a lifecycle-redesign regression rather
+than a metric race or a wrong expected count.
+
+vpsAdminOS commit `eb955f6430c8fce6a64de294767f194047f96649`
+restores the distinction: execution generations and aborted container starts
+do not emit guest exit events. A focused finalizer regression spec proves that
+an aborted run still completes exact-generation cleanup without reporting an
+exit. The focused RSpec passed with 10 examples and zero failures; full
+vpsAdminOS Overcommit passed Nixfmt and RuboCop.
+
+The required vpsAdmin pin helper generated and pushed head
+`fd63d8a05eb6a5ee9c75b3fb94f600d670889b0a`, pinning the exact corrected
+vpsAdminOS revision. `confctl` then generated consumer-first configuration
+commit `35a7ccfb`, pinning staging vpsAdmin first, followed by producer
+commit/head `ba575e96`, pinning staging and os-staging vpsAdminOS. Production
+and `vpsadminServices` remain unchanged. The configuration shell/push artifacts
+are recoverable at `/tmp/vpsfree-config-aborted-start.8cYkv5`. Two mistyped
+full-revision attempts received GitHub 404 responses and changed no lockfile or
+commit. No deployment, activation, production access, or local kernel build
+occurred.
+
 ## Verification still required
 
-- obtain a clean fresh-agent review of the corrected split-state commits and
-  pins;
-- after review clearance, rerun the focused osctld resilience/restart and
-  lifecycle/configuration-switch/declarative-container and local/remote
-  transfer VM coverage at the exact pinned head;
-- after review clearance, rerun vpsAdmin migration and autostart-monitoring VM
-  coverage at the exact pinned head;
+- obtain a fresh-agent review of the aborted-start event correction and exact
+  downstream pins;
+- after review clearance, rerun `vps/autostart-monitoring` at the exact pinned
+  head;
 - inspect all current-head GitHub Actions results and artifacts before treating
   a rerun as validation.
 

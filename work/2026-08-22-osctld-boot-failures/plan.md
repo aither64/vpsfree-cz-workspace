@@ -330,8 +330,10 @@ RSpec-style vpsAdminOS VM scenarios will cover:
   proving that restart escalation preserves and resumes the desired stop before
   the copy is retried and its data is verified.
 - split local copy and remote send/receive across daemon restarts, including
-  explicit `config_state=staged` and `runtime_state=unknown` assertions and a
-  no-consistency clone whose source must be preflighted before mutation.
+  explicit `config_state=staged` and authoritatively inventoried
+  `runtime_state=stopped` assertions after restart (`unknown` remains valid
+  before inventory and on non-restart retry paths), plus a no-consistency clone
+  whose source must be preflighted before mutation.
 
 After intended changes are committed and quick checks pass, run the mandatory
 fresh-agent change review and address significant findings before long VM
