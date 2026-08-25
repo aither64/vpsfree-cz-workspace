@@ -1962,12 +1962,146 @@ full-revision attempts received GitHub 404 responses and changed no lockfile or
 commit. No deployment, activation, production access, or local kernel build
 occurred.
 
+The required review of `eb955f643` found that the first aborted-start guard
+was still timing-sensitive: `ct-post-stop` ran about four seconds before the
+preserved log's LXC `ABORTING` observation, so `RunConfiguration#aborted?`
+could still be false. It also found that the finalizer would misreport explicit
+stop and restart operations as guest halts, and that repeated generated pin
+commits needed folding. The review was Blocking and the remaining VM gate was
+not opened.
+
+The source correction was replaced, not layered with another fixup. Final
+vpsAdminOS commit `c160927f01cb1fe466194fcc58581f5dda74eab0` persists exact
+start-host completion, classifies and stores the per-run exit event at the
+first post-stop observation, preserves failed-launch desired-running intent,
+and makes the finalizer deliver only that durable decision. Regressions cover
+post-stop before delayed `ABORTING`, a newer stop during pre-start, explicit
+stop, explicit restart, direct control reboot, qualified guest halt/reboot,
+stopped execution, and recovery of a previously running generation. The
+focused lifecycle/finalizer/managed-callback suite passed 129 examples, full
+osctld RSpec passed 1,529 examples, targeted RuboCop passed six files, and full
+vpsAdminOS Overcommit passed Nixfmt and RuboCop.
+
+Before its final push, vpsAdminOS was rebased from upstream base `8e44a5124`
+onto current `origin/staging` `399cc60d2`. `git range-diff` marked all 51
+feature commits unchanged; the only final-tree difference from the pre-rebase
+head was upstream's 12-line `flake.lock` refresh. Superseded active GitHub
+Actions runs `32812168660`, `32812168649`, and `32810018418` were cancelled;
+current-head workflows remain running.
+
+The repeated downstream generated commits were folded. The vpsAdmin feature
+now has one generated pin commit/head
+`c99200013b25f6422ed79034892be73c37b33c90`, produced by
+`tools/update_vpsadminos_flake.sh`, which advances vpsAdminOS directly from
+base `8e44a5124` to `c160927f0`. Superseded vpsAdmin aggregate run
+`32810118145` was cancelled. The configuration branch was rebased onto current
+`origin/master` `8f26440d`, retaining monitoring as `c0f4527d`, then `confctl`
+generated consumer-first commit `66f19777` for staging vpsAdmin `c9920001` and
+producer commit/head `631346cc7a0875605e3824120d5e7d6832ed3b92`
+for staging/os-staging vpsAdminOS `c160927f`. Production vpsAdmin,
+`vpsadminServices`, and production vpsAdminOS remain unchanged. Configuration
+development caches are recoverable at
+`/tmp/vpsfree-config-exit-event.IRngk3`.
+
+All three exact heads are clean and pushed over SSH, descend directly from
+current upstream, and pass `git diff --check`. No deployment, activation,
+production access, or local kernel build occurred. A fresh standalone
+mandatory review of these exact committed heads and pins is now required
+before rerunning `vps/autostart-monitoring`.
+
+Additional exact-head quick checks passed while review was running. All three
+configuration checks (`container-state-prometheus-rules`,
+`vps-autostart-prometheus-rules`, and `process-count-prometheus-rules`) built
+with `--no-link`. The final vpsAdmin pin evaluated and listed
+`vps/autostart-monitoring` without starting a VM. Current-head vpsAdminOS RSpec
+and RuboCop workflows passed, as did vpsAdmin libnodectld, client, WebUI
+PHPUnit, and i18n workflows; both aggregate CI workflows remain in progress.
+
+The required fresh standalone review APPROVED the exact heads `c160927f0`,
+`c99200013`, and `631346cc` with no Blocking, Important, or Advisory findings,
+and cleared the final `vps/autostart-monitoring` VM gate. It independently
+confirmed the preserved post-stop-before-`ABORTING` ordering, durable
+start-host qualification and exit decision, intent semantics for every
+requested exit class, additive runtime-upgrade behavior, generic runit and
+supervisor preservation, folded generated history, consumer-first staging
+pins, and unchanged production pins. Residual validation is the exact-pin VM
+rerun and completion/inspection of both aggregate CI workflows. It also noted
+pre-existing asynchronous event-delivery crash windows which are not changed
+by this classification fix and have no dedicated crash-injection regression.
+
+The exact-pin `vps/autostart-monitoring` assertions then passed, but the test
+runner's final `poweroff -f` never returned and hit its 900-second command
+timeout. The same VM had powered off normally during the scenario's initial
+reboot, isolating the failure to shutdown after the failed boot autostart and
+manual recovery. A later instrumentation attempt was inconclusive because its
+extra named shell was unavailable after reboot; it did not change the source
+diagnosis. The shared test-runner artifact path was subsequently reused, so it
+does not preserve the original hung teardown.
+
+Source tracing found a real lock inversion in `Self::Shutdown`. It disabled
+pools, acquired every configured container's manipulation lock, and only then
+called `AutoStart::Plan#stop`, whose continuous executor joins its workers. An
+in-flight autostart retry could already be waiting for one of those container
+locks, leaving shutdown waiting for the worker while the worker waited for
+shutdown's lock indefinitely.
+
+vpsAdminOS commit `0a1dcffdf40484add9d601bf3b5297a366c7fd30`
+now calls `begin_stop` for every pool immediately after pools are disabled and
+before any container manipulation lock is acquired. The later stop/export loop
+therefore runs only after all autostart executors have drained. A focused
+shutdown spec records the ordering and proves every pool is drained exactly
+once. The focused spec passed two examples with zero failures, targeted RuboCop
+passed, all active commit hooks passed, and current-head GitHub RSpec and
+RuboCop workflows passed. A broad ad-hoc RSpec invocation did not load examples
+because that shell lacked the native `ruby-lxc` extension; the repository's
+aggregate harness remains the authoritative broad local command.
+
+vpsAdmin commit `5249e758d` extends `vps/autostart-monitoring` with an explicit
+bounded final poweroff, so the lock-order regression is part of the scenario
+rather than hidden in runner teardown. The required pin helper generated
+one folded pin commit/head `3f3800e7047d377fa7f6468a0aaab2a6e11bef43`,
+which advances vpsAdminOS directly from base `8e44a5124` to exact revision
+`0a1dcffdf`. Superseded aggregate runs `32812428752` at `c99200013` and
+`32818853996` at pre-fold head `f6228b4af` were cancelled after their heads
+were superseded.
+Current-head client, libnodectld, WebUI PHPUnit, and i18n workflows passed; the
+new folded head has a fresh workflow set.
+
+The earlier repeated generated configuration updates were folded before final
+review. `confctl` generated staging consumer pin `5e6924ca` for vpsAdmin
+`3f3800e7`, followed by producer pin/head
+`6000bb37` for vpsAdminOS `0a1dcffd` in both `staging` and `os-staging`.
+Production vpsAdmin, `vpsadminServices`, and
+production vpsAdminOS pins remain unchanged. The exact vpsAdmin pin evaluated
+and listed `vps/autostart-monitoring` without starting a VM. All three
+configuration checks (`container-state-prometheus-rules`,
+`vps-autostart-prometheus-rules`, and `process-count-prometheus-rules`) built
+with `--no-link`. All three feature heads are pushed over SSH and pass
+`git diff --check`. No deployment, activation, production access, or local
+kernel build occurred.
+
+Safety refs preserve both downstream pre-fold heads. The amended exact heads
+require a new fresh standalone mandatory review before
+the aggregate local RSpec command or exact-pin VM regression is run. The
+current-head vpsAdminOS CI run is `32818648487`; the folded vpsAdmin head has a
+fresh workflow set. No superseded active workflow was left running.
+
+The required fresh standalone review APPROVED exact heads `0a1dcffdf`,
+`3f3800e70`, and `6000bb37` with no Blocking, Important, or Advisory findings.
+It checked the complete 52/10/3-commit series, exact ancestry and generated pin
+history, and independently traced the real `AutoStart::Plan#stop` behavior:
+retry sleeps are awakened, queued starts are cancelled with durable intent
+preserved, and executor workers are joined before `grab_all_cts`. It also
+confirmed that the later composite pool stop sees the plan already shut down
+and cannot repeat the blocking join under container locks. Both the aggregate
+RSpec harness and exact-pin VM gate are cleared. Residual validation is the
+real executor/lock interaction in that VM, the aggregate suite, and completion
+of both exact-head CI runs; the focused ordering spec necessarily uses doubles.
+
 ## Verification still required
 
-- obtain a fresh-agent review of the aborted-start event correction and exact
-  downstream pins;
-- after review clearance, rerun `vps/autostart-monitoring` at the exact pinned
-  head;
+- run the repository aggregate RSpec harness and rerun
+  `vps/autostart-monitoring` at the exact pinned head;
 - inspect all current-head GitHub Actions results and artifacts before treating
   a rerun as validation.
 
@@ -2030,3 +2164,189 @@ occurred.
   `/tmp/vpsfree-config-compound-review.AWIvs1`,
   `/tmp/vpsfree-config-final-compound-hooks.O7RIgn`, and
   `/tmp/vpsfree-config-final-compound-push.oBiNav`.
+
+## Final shutdown regression diagnosis and exact heads
+
+The repository aggregate RSpec harness passed at vpsAdminOS `0a1dcffdf`: all
+13 gem suites completed with zero failures, including 1,529 osctld examples.
+The exact vpsAdminOS GitHub Actions run `32818648487` also completed on its
+first attempt: the OS build, full VM suite, and Intel/AMD livepatch lifecycle
+jobs all passed.
+
+The first exact-pin `vps/autostart-monitoring` rerun passed every monitoring
+and recovery assertion, but its newly explicit final `poweroff -f` timed out
+after 120 seconds. The preserved artifact is
+`/tmp/osctld-autostart-shutdown-failure.GlRoyf/os-test-vps__autostart-monitoring-0af8bd80`.
+A second instrumented run reproduced the default-shell timeout. Its snapshot
+showed the shutdown marker and a stuck `osctl shutdown --force --wall`, while
+both containers were still running and osctld had no shutdown command handler
+or manipulation-lock holder in its thread/lock reports. That artifact is
+`/tmp/osctld-shutdown-diagnostic.j7Koqh/os-test-vps__autostart-monitoring-0af8bd80`.
+The after-test log collector also waited on the occupied default shell; its
+temporary timeout and all other diagnostic edits were removed.
+
+A third diagnostic run executed the same final shutdown from a separately
+named guest shell and traced it. Both real shutdowns completed, the second in
+15 seconds, and the complete VM passed one example in 1,072.84 seconds. This
+isolated the post-fix timeout from the osctld drain/lock ordering and from the
+test assertions. vpsAdmin commit `bb0e528e0f6e401522831ddf8633ed84954f6266`
+retains only the minimal regression isolation: it declares a named `shutdown`
+shell and runs the bounded final untraced `poweroff -f` there. Temporary
+strace, lock-registry, diagnostic, and log-collector changes are absent.
+
+The vpsAdmin branch was rebased onto current `origin/master`
+`e1eb66f7484662abb0541dacd2ba56201d09cd83`; the two new upstream commits are
+dependency-only and did not conflict. The final vpsAdmin head is clean and
+pushed. Its commit hook initially refused the ambient shell because `nixfmt`,
+gettext, and MariaDB were unavailable; rerunning the mandatory hook through
+`nix develop` passed Nixfmt, migration specs, WebUI i18n, and API i18n.
+The exact head evaluates and lists `vps/autostart-monitoring`.
+
+Repeated configuration pins were folded again. The clean pushed configuration
+head is `7d3bf47d09cc61902363e9a48d8ac717a0e9763a`: monitoring commit
+`c0f4527d`, generated consumer-first staging vpsAdmin pin `fbf9713c` to
+`bb0e528e`, and generated staging/os-staging vpsAdminOS pin `7d3bf47d` to
+`0a1dcffd`. Production vpsAdmin, `vpsadminServices`, and production vpsAdminOS
+remain unchanged. Safety refs preserve both pre-rewrite downstream heads.
+Superseded vpsAdmin aggregate runs `32830082369` and `32819903387` were
+cancelled because their SHAs no longer matched the branch.
+
+All three worktrees are clean. Final review/tool artifacts were moved intact
+to `/tmp/osctld-final-review-artifacts.a6TIYe`. A fresh standalone mandatory
+review of exact heads `0a1dcffdf`, `bb0e528e0`, and `7d3bf47d` is in progress.
+The final untraced named-shell VM gate remains intentionally pending that
+review. No deployment, activation, production access, node access, or local
+kernel build occurred.
+
+## Default-shell shutdown root cause and final correction
+
+That fresh mandatory review rejected the named guest shutdown shell as
+Blocking. The runner creates fresh command sockets after a reboot, and the
+default-shell failures had reached a live `osctl shutdown`; changing shells
+and tracing changed the timing without proving a runner defect. The named-shell
+commit was therefore removed from the vpsAdmin feature history, and all
+subsequent acceptance work uses the ordinary shell.
+
+Repeated ordinary-shell runs showed that the problem was intermittent only
+because shutdown had raced a retrying autostart. The decisive preserved
+artifact is
+`/tmp/osctld-shutdown-syslog-120.TOOwfg/os-test-vps__autostart-monitoring-0af8bd80`.
+At `2026-08-25T14:26:37+02:00`, osctld rejected `self_shutdown` with:
+
+`lifecycle run tank:2:940f1945c9d26476a329dfcea021219d not found`
+
+The backtrace enters `AutoStart::Plan#pause`, `cancel_pending`, and
+`Container::Lifecycle#cancel_unlaunched`. An autostart request remains in the
+plan's pending table until the whole retry worker exits. A completed attempt
+can meanwhile become history and be pruned when a manual recovery start creates
+the replacement generation. Shutdown's newly early `begin_stop` then tried to
+cancel that missing original run. The cancellation operation already returned
+false for a completed, superseded, or non-active generation, but raised for a
+pruned one, aborting shutdown before any container lock was acquired.
+
+vpsAdminOS commit `e2b4e0291` makes unlaunched-generation cancellation
+idempotently return false when the exact run was already removed and adds the
+pruned-run regression. Commit `f4a8799eb` separates daemon connection loss
+from a valid command rejection in `OsCtl::Client`; only a connection loss now
+enters the shutdown-marker fallback. A future daemon error therefore fails
+immediately with its real message instead of being mislabeled as a disconnect
+and waiting for up to an hour. Existing callers which rescue
+`OsCtl::Client::Error` remain compatible because both new errors inherit from
+that superclass.
+
+Quick verification before the new review:
+
+- focused osctld lifecycle/autostart/shutdown RSpec: 129 examples, zero
+  failures;
+- focused osctl client/shutdown RSpec: 20 examples, zero failures;
+- targeted RuboCop: five files, zero offenses;
+- both vpsAdminOS commits passed active Overcommit Nixfmt, RuboCop, message,
+  and width checks (the repository's 72-column advisory warned, while all
+  lines satisfy the workspace's 80-column requirement);
+- the final vpsAdmin pin evaluated and listed `vps/autostart-monitoring`;
+- the configuration channel table resolves staging vpsAdmin to `8c80ba2a`
+  and staging/os-staging vpsAdminOS to `f4a8799e`, while production and
+  `vpsadminServices` pins remain unchanged;
+- both generated configuration commits passed active hooks.
+
+The clean pushed exact heads are now:
+
+- vpsAdminOS `f4a8799eb881acdde3d19d99426c763fdc15949e`, based on
+  `origin/staging` `399cc60d215fb9427447c37133b5eb27e9879a4e`;
+- vpsAdmin `8c80ba2a00ca49185e5a42511421467b05511a9d`, based on
+  `origin/master` `e1eb66f7484662abb0541dacd2ba56201d09cd83`, with one generated
+  vpsAdminOS pin directly from `8e44a5124` to `f4a8799eb`;
+- vpsfree-cz-configuration
+  `7c98a5b0f4a719d72593f8f5bc4db3339ddd0f19`, based on
+  `origin/master` `8f26440d73d652f82d7b756d637f5c3ef02ac14a`, with monitoring,
+  one consumer pin, and one producer pin in that order.
+
+Superseded vpsAdmin CI run `32830142590` at `bb0e528e0` was cancelled after
+the force-push. No superseded active vpsAdminOS run existed. New exact-head
+workflows are running. The final fresh mandatory review, aggregate RSpec, and
+ordinary-shell exact-pin VM remain pending. No deployment, activation,
+production access, node access, or local kernel build occurred.
+
+The required fresh standalone mandatory review then PASSED exact heads
+`f4a8799eb`, `8c80ba2a0`, and `7c98a5b0` with no Blocking, Important, or
+Advisory findings. It reviewed the complete 54/10/3-commit ranges and confirmed
+that the two new vpsAdminOS commits are correctly separate daemon-correctness
+and client-defense changes; reducer synchronization prevents a stale missing
+run ID from referring to a replacement; desired state remains untouched; and
+returning false matches completed/non-active cancellation semantics. It also
+confirmed pre-lock autostart drain, ordinary runit/supervisor preservation,
+client superclass compatibility, the ordinary-shell regression, mixed-node
+state compatibility, exact pins, consumer-first order, and unchanged
+production pins. Its independent focused runs passed 129 osctld and 20 osctl
+examples, and the final vpsAdmin test evaluated/listed. The aggregate RSpec and
+ordinary-shell exact-pin VM gates are cleared. Residual validation is the real
+Plan/executor/shutdown interaction in that VM; less common pre-existing socket
+errors remain fail-fast rather than entering the marker fallback.
+
+## Final local validation
+
+The first post-review aggregate RSpec run exposed one failure in the new hook
+process-group timeout example at seed `2176`. It also printed stale native-build
+linker noise, although `libosctl` itself passed. The complete aggregate summary
+had only `osctld` failing. Inspection found generated Bundler locks/caches and
+native products from earlier focused runs. They were moved recoverably to
+`/tmp/vpsadminos-rspec-artifacts.Qx4obq` before repeating the aggregate from a
+clean worktree.
+
+The hook failure did not reproduce in isolation at seed `2176`, in the complete
+clean aggregate at that same seed, or in 15 consecutive focused repetitions.
+The clean aggregate passed all 13 suites; osctld passed 1,530 examples and the
+other 12 suites also had zero failures. The production implementation sends
+`SIGKILL` to the complete process group after its grace period, and the spec
+already distinguishes live processes from zombies. With the exact failing
+order and repeated example both green, the one failure is classified as an
+isolated host-scheduling flake. No source or test timeout was changed to hide
+it.
+
+The required ordinary-shell exact-pin VM then passed without diagnostics or a
+named shell. `vps/autostart-monitoring` ran its sole default example in 544.44
+seconds and the complete test in 1,134.03 seconds. The final `poweroff -f`
+returned successfully in 7.47 seconds after osctld disabled the pool, drained
+autostart work, grabbed the pool and both containers, stopped both containers,
+unregistered them, and exported `tank`. After reboot, the test observed the
+failed autostart, performed manual recovery, and verified that monitoring
+cleared. The complete artifact is preserved at
+`/tmp/osctld-autostart-final.ZDdFvQ`.
+
+No kernel source was built locally. The VM used cached Linux 6.12.95 and
+6.12.105 outputs and built only the changed userland/system closures and test
+images. No deployment, activation, production access, or node access occurred.
+
+Exact-head GitHub Actions status after the local VM pass:
+
+- vpsAdminOS `f4a8799eb`: RSpec and RuboCop passed; the OS build and both
+  livepatch lifecycle jobs passed; the full VM-suite job in CI run
+  `32848337427` is still in progress;
+- vpsAdmin `8c80ba2a0`: client, libnodectld, WebUI PHPUnit, and i18n workflows
+  passed; aggregate CI run `32848909673` is still in progress.
+
+All three feature branches remain clean, pushed, and exactly equal to their
+remote feature refs. Final generated validation artifacts were moved
+recoverably to `/tmp/vpsadminos-final-validation-artifacts.IuW7RF`,
+`/tmp/vpsadmin-final-validation-artifacts.vtXabk`, and
+`/tmp/vpsfree-config-final-validation-artifacts.csNp2G`.

@@ -81,6 +81,15 @@ a hook child is blocked. Live processes found in a configured container cgroup
 without exact lifecycle ownership remain restart blockers through both
 escalation phases; osctld reports them but does not signal them.
 
+The exact run records successful completion of LXC's start-host callback as the
+first durable boundary proving that the guest launch was qualified. Post-stop
+classification does not depend on the ordering of LXC monitor messages or on a
+mutable run-configuration flag. It stores one exact exit-event decision in the
+run before cleanup begins. Only a qualified guest halt or reboot emits
+`ct_exit`; failed launches, explicit stop/restart/control-reboot operations,
+stopped executions, and uncertain recovered exits do not. A failed launch
+keeps its desired-running intent unless a newer explicit intent superseded it.
+
 ### Drain and direct service restart
 
 Keep the existing osctld CLI supervisor. It captures daemon output/backtraces,
@@ -98,6 +107,22 @@ available until active operations finish or their exact generations are
 fenced. The default natural drain is 300 seconds, followed by up to 60 seconds
 for cleanup of an attributable generation. Unattributable live work blocks a
 graceful restart instead of being killed heuristically.
+
+System shutdown follows the same lock ordering. After pools are disabled, it
+stops and joins every autostart executor before acquiring all container
+manipulation locks. An in-flight autostart retry can therefore finish or cancel
+while its container lock remains available. Only after the autostart plans are
+drained does shutdown lock containers and perform the existing stop/export
+sequence. This avoids a join-versus-container-lock deadlock without changing
+generic runit service behavior.
+
+Pausing an autostart plan can race completion and pruning of an earlier retry
+generation. Cancelling an unlaunched generation is therefore idempotent when
+that exact run has already completed, been superseded, or been removed; the
+durable desired-running intent remains for reconciliation. The osctl client
+also distinguishes a valid daemon command rejection from transport loss.
+Only real connection loss enters the shutdown-marker fallback, while a daemon
+error returns nonzero immediately with its original message.
 
 Daemon pre-stop hooks are a checked restart barrier. A nonzero hook result
 aborts preparation before osctld is stopped, runs the post-resume path while
@@ -329,6 +354,9 @@ RSpec-style vpsAdminOS VM scenarios will cover:
 - direct osctld restart while a local state copy is stopping its source,
   proving that restart escalation preserves and resumes the desired stop before
   the copy is retried and its data is verified.
+- shutdown after a failed boot autostart is retried, proving autostart workers
+  are drained before container manipulation locks and the node can power off
+  within the configured bound;
 - split local copy and remote send/receive across daemon restarts, including
   explicit `config_state=staged` and authoritatively inventoried
   `runtime_state=stopped` assertions after restart (`unknown` remains valid
