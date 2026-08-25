@@ -33,7 +33,33 @@ configuration pins only; it does not deploy any node.
     `staging`/`os-staging` feature inputs needed for review and CI;
   - do not deploy or activate the resulting configuration.
 
+Historical scripts in `vpsfree-maintenance-tasks` are explicitly outside this
+initiative and remain unchanged.
+
 ## Design
+
+### Independent configuration and runtime state
+
+Remove the ambiguous public container `state` and replace it with orthogonal
+`config_state` and `runtime_state` values. `config_state` is one of `staged`,
+`ready`, or `error`; `runtime_state` is `unknown` or an observed LXC runtime
+state. Configuration and runtime observation errors have separate structured
+diagnostics. A container may therefore be `config_state=error` while its exact
+owned generation remains `runtime_state=running`.
+
+New osctld and osctl interfaces emit only the split contract. Updated osctl,
+osctl-exporter, and nodectld normalize legacy `state` responses during the
+first runtime upgrade. Prometheus exports separate configuration and runtime
+state sets; central rules accept both old and new metric generations while
+nodes are upgraded incrementally. vpsAdmin continues to report the VPS as
+running when its runtime is running, and reports configuration failure through
+separate node health monitoring.
+
+Persist `config_state: staged` for new staged containers and accept the legacy
+`state: staged` key when loading. Runtime state is never persisted as current
+truth: every daemon startup inventories LXC and exact lifecycle evidence before
+admission. Runtime rollback remains unsupported after the new format is
+written.
 
 ### Durable lifecycle ownership
 
@@ -273,6 +299,10 @@ Quick unit/spec coverage will exercise drain state transitions, signal/API
 convergence, admission rejection, cancellation-aware queues and sleeps, durable
 autostart intent, exact-generation escalation, legacy handoff, veth repair,
 console lock granularity, readiness/status output, and supervisor behavior.
+It will also exercise split-state persistence and legacy normalization,
+configuration failures alongside live runtime, event compatibility, osctl and
+nodectld runtime decisions, exporter output, and mixed-generation Prometheus
+rules.
 
 RSpec-style vpsAdminOS VM scenarios will cover:
 
@@ -299,11 +329,18 @@ RSpec-style vpsAdminOS VM scenarios will cover:
 - direct osctld restart while a local state copy is stopping its source,
   proving that restart escalation preserves and resumes the desired stop before
   the copy is retried and its data is verified.
+- split local copy and remote send/receive across daemon restarts, including
+  explicit `config_state=staged` and `runtime_state=unknown` assertions and a
+  no-consistency clone whose source must be preflighted before mutation.
 
 After intended changes are committed and quick checks pass, run the mandatory
 fresh-agent change review and address significant findings before long VM
-tests. Push feature branches and use GitHub Actions as a feedback loop. Do not
-deploy nodes.
+tests. The long vpsAdminOS gate includes `osctld/restart`,
+`osctld/resilience`, `osctld/lifecycle`, `system/switch-to-configuration`,
+`declarative-containers`, `osctl/ct-local-transfer`, and
+`osctl/ct-send-recv`; the vpsAdmin gate includes `vps/migrate` and
+`vps/autostart-monitoring`. Push feature branches and use GitHub Actions as a
+feedback loop. Do not deploy nodes.
 
 ## Explicit exclusions
 

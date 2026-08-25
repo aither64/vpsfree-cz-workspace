@@ -1472,13 +1472,348 @@ Superseded queued/in-progress CI runs `32666734679` (vpsAdminOS `45dea0306`)
 and `32666902596` (vpsAdmin `ffc226c7d`) were cancelled; completed runs were
 left unchanged.
 
+## Split container state implementation
+
+The ambiguous public container `state` is now replaced by independent
+configuration and runtime state in the complete committed feature tail.
+vpsAdminOS commit `c07cdb8ae` updates osctld, osctl, osctl-exporter, osvm, the
+manual, and affected unit and integration-test call sites as one atomic public
+contract change. It retains `config_state=error` alongside an observed running
+runtime, rejects start/restart unless configuration is ready, keeps runtime
+stop/kill decisions independent, persists only staged configuration, accepts
+legacy staged persistence, and inventories LXC runtime on daemon startup. New
+clients normalize legacy daemon responses for the first runtime upgrade.
+
+vpsAdmin commit `c9a86a814` adds one normalization boundary in libnodectld,
+bases VPS decisions and central state events on runtime only, ignores
+configuration events in the existing VPS state stream, and filters queried
+containers client-side so an upgraded nodectld remains compatible with the old
+osctl CLI. Repository-generated commit `58efca042` pins vpsAdminOS
+`c07cdb8ae91cd31726c4c5e356206ad83657cbcc` using
+`tools/update_vpsadminos_flake.sh`.
+
+Configuration commit `81609b15` adds split configuration/runtime alerts and
+mixed-generation Prometheus rule tests while retaining legacy expressions for
+a rolling node update. The four superseded feature-pin commits were dropped
+during the rebase instead of manually resolving their generated lockfile
+conflicts. `confctl inputs channel set --commit --no-editor` then generated
+the single current vpsAdminOS pin `0f5468ee` for `staging` and `os-staging` and
+the single current vpsAdmin pin `d170ffa0` for `staging`. Production and the
+separate vpsAdmin services channel remain unchanged.
+
+All three branches were fetched and rebased onto current upstream before the
+final pushes. The vpsAdminOS range-diff marked all 55 commits unchanged; its
+head is `c07cdb8ae`. The vpsAdmin head is `58efca042` and the configuration
+head is `d170ffa0`. All three exact heads are pushed over SSH. No superseded
+queued or running GitHub Actions existed after either force-push, so no current
+run was cancelled.
+
+Quick verification before the mandatory review:
+
+- vpsAdminOS Overcommit passed Nixfmt and RuboCop without warnings after one
+  unused test keyword was removed;
+- full osctld RSpec passed 1,506 examples, osctl passed 192,
+  osctl-exporter passed 42, and osvm passed 108;
+- full libnodectld RSpec passed 510 examples and the final focused CtMonitor
+  spec passed three examples;
+- vpsAdmin Overcommit passed MigrationSpecs, API and WebUI i18n, Nixfmt,
+  RuboCop, and the applicable PHP check;
+- configuration Overcommit passed and all three Prometheus rule checks built,
+  including the new split-state rules;
+- all affected worktrees are clean and `git diff --check` passed.
+
+The vpsAdmin hook initially exposed two development-environment problems: the
+shared `/tmp/dev-ruby-gems` component cache contained gemspecs without complete
+gem contents, and the API i18n hook needed the independent `api/.gems` bundle.
+Tests used a task-specific libnodectld cache and the API bundle was prepared in
+its own Nix shell. Durable notes already record both workarounds in
+`notes/vpsadmin/2026-08-23-incomplete-shared-bundler-cache.md` and
+`notes/vpsadmin/2026-08-22-overcommit-api-bundle.md`.
+
+The first required standalone split-state review completed against those
+commits and kept the VM gate closed. It found six significant gaps:
+
+- the first in-place upgrade coordinator still selected the removed `state`
+  field from the target osctl CLI;
+- declarative image, NixOS-container, and garbage-collector scripts still
+  selected the removed field;
+- new osctld cleanup evidence used `runtime_state` while libnodectld still
+  required the legacy `lxc_state` keys;
+- the resilience VM test retained two stale `ct_state` calls and an obsolete
+  combined-error assertion;
+- an exception while generating initial LXC configuration could still prevent
+  the pool loader from registering and observing a live container;
+- staged containers with intentionally unknown runtime would falsely trigger
+  `VpsRuntimeStateUnknown`.
+
+All six findings are fixed. The legacy activation coordinator now selects and
+uses `runtime_state`; the target osctl CLI continues to normalize a legacy
+daemon's full `state` response before applying that selector. Declarative
+container reapplication and garbage collection use `runtime_state`, with VM
+coverage which reapplies both existing NixOS container variants and performs a
+non-destructive pool sweep. The resilience test now waits for daemon readiness
+and proves `config_state=error` alongside `runtime_state=running`.
+
+Pool startup invokes LXC configuration generation in a non-raising inventory
+mode. Failures still set structured configuration error state and log their
+exception class, but database registration and authoritative LXC/runtime
+observation continue. All non-startup callers retain fail-loud behavior.
+Focused LXC-config and pool specs exercise both paths. libnodectld validates
+the canonical `runtime_state` cleanup evidence while normalizing the old
+`lxc_state` schema at its node boundary, so either deployment order remains
+supported. The unknown-runtime alert now excludes matching
+`config_state=staged` series and has a promtool regression case.
+
+The unmerged feature tails were rewritten rather than accumulating fixup
+commits. Current pushed heads are:
+
+- vpsAdminOS `39a631689bb4ef822890d9bbbbc07dbd0098083d`;
+- vpsAdmin functional commit `877443639` and generated pin head
+  `7b675c4a4d96936ea6f0f3680e2afb2e16a06c7a`;
+- configuration monitoring commit `b9fefac9`, generated vpsAdminOS pin
+  `9f4bc562`, and generated vpsAdmin pin/head
+  `ea3952d5b1ee9930f7e1c2562791f27f903bedb6`.
+
+`tools/update_vpsadminos_flake.sh` generated the vpsAdmin pin. `confctl inputs
+channel set --commit --no-editor` generated the configuration pins. The final
+channel table selects vpsAdminOS `39a63168` in `staging` and `os-staging`, and
+vpsAdmin `7b675c4a` in `staging`; production and `vpsadminServices` are
+unchanged. All repositories were fetched before their final force-with-lease
+pushes and still descend directly from their current upstream base.
+
+Post-fix quick verification passed:
+
+- vpsAdminOS Overcommit passed Nixfmt and RuboCop;
+- focused switch coordinator, LXC config, and pool RSpec passed 76 examples;
+- full osctld RSpec passed 1,508 examples;
+- vpsAdmin Overcommit passed MigrationSpecs, API and WebUI i18n, Nixfmt,
+  RuboCop, and the applicable PHP check;
+- full libnodectld RSpec passed 528 examples from a fresh isolated bundle;
+- configuration Overcommit passed and all three Prometheus rule checks built;
+- every affected worktree is clean and every final diff passed
+  `git diff --check`.
+
+The shared libnodectld gem cache again exposed its documented incomplete-gem
+failure, including a missing RSpec formatter. The successful full run used the
+fresh isolated cache at `/tmp/vpsadmin-split-state-gems.OwQZRn`. Additional
+vpsAdminOS Ruby artifacts are recoverable at
+`/tmp/osctld-split-state-gems.Ep5NzJ` and
+`/tmp/osctld-split-state-native.6Yxfc4`; the full RSpec JSON result is at
+`/tmp/osctld-split-state-rspec.VuBB6D.json`.
+
+The automatically triggered long current-head CI workflows remain gated until
+the follow-up mandatory review: vpsAdminOS run `32781337942` and vpsAdmin run
+`32781484378` were cancelled, while their quick workflows were left running.
+The current-head vpsAdminOS RSpec and RuboCop workflows then passed. The
+current-head vpsAdmin libnodectld, RuboCop, WebUI PHPUnit, client, and i18n
+workflows also passed. No deployment or activation was performed.
+
+The fresh split-state follow-up review completed with two blocking findings and
+one advisory finding. It confirmed that all six findings from the preceding
+review were fixed. The new findings were:
+
+- the configuration pin history introduced the new vpsAdminOS producer before
+  the backward-compatible vpsAdmin consumer, making the intermediate staging
+  revision incompatible;
+- four vpsAdmin migration/autostart-monitoring VM calls still passed the
+  removed osvm helper keyword `state:` instead of `runtime_state:`;
+- a vpsAdminOS recovery unit fixture used the impossible split runtime state
+  `error` instead of `unknown`.
+
+All three were corrected. The vpsAdminOS fixture correction was folded into
+the split-state commit. The four vpsAdmin VM calls were corrected and folded
+into its functional commit, after which the required helper regenerated the
+vpsAdminOS flake pin. The configuration input commits were dropped and
+regenerated in deployment-safe order: first the backward-compatible vpsAdmin
+consumer, then the new vpsAdminOS producer. The intermediate configuration
+commit therefore pairs vpsAdmin `0aef563b` with the pre-existing vpsAdminOS
+`93014dd1`; the final commit advances vpsAdminOS to `a345550a`.
+
+The corrected pushed heads are:
+
+- vpsAdminOS `a345550afe985ff952e3e85d01c32fa323043f60`;
+- vpsAdmin functional commit `9386d50d1` and generated pin/head
+  `0aef563b664cd0d36da9e2178f3936ed121248c5`;
+- configuration monitoring commit `b9fefac9`, generated consumer-first
+  vpsAdmin pin `0a16d8a1`, and generated vpsAdminOS pin/head
+  `693e04b79ebfe6552c7a0248141df601d8aad34b`.
+
+Post-rewrite quick verification passed:
+
+- vpsAdminOS commit hooks passed Nixfmt and RuboCop; its focused pool spec
+  passed 22 examples and the full osctld suite passed 1,508 examples;
+- vpsAdmin commit/helper hooks passed MigrationSpecs, API and WebUI i18n,
+  Nixfmt and the applicable checks; full libnodectld RSpec passed 528 examples;
+- configuration commit hooks and a final full Overcommit run passed, and the
+  container-state, VPS-autostart, and process-count Prometheus rule checks all
+  built successfully;
+- all three final diffs pass `git diff --check`, descend from their current
+  upstream bases, are pushed, and have clean tracked worktrees.
+
+The first broad local RSpec attempts used contaminated shared component caches
+and stopped before examples: osctld could not load `lxc/lxc`, while
+libnodectld could not load `prometheus/client/formats/text`. The successful
+reruns used the documented isolated environments. The new libnodectld cache is
+`/tmp/vpsadmin-split-state-final-gems.lh6nOO`; osctld reused the known-good
+external cache under `/tmp/osctld-build-artifacts-D4ikLcPl/.gems`.
+
+Current-head long GitHub CI remains gated: vpsAdminOS run `32783813419` and
+vpsAdmin run `32784009128` were cancelled after the force-pushes. Their quick
+workflows were left running and subsequently all passed: vpsAdminOS RSpec and
+RuboCop, plus vpsAdmin libnodectld, RuboCop, WebUI PHPUnit, client, and i18n.
+No VM test, deployment, activation, or production access was performed.
+
+The next fresh review verified the exact pins, clean worktrees, ancestry,
+consumer-first configuration ordering, earlier fixes, and the atomic scope of
+the split-state commit. It found two remaining blockers:
+
+- commands that promised to restart a running container checked configuration
+  readiness only in their nested start, after consistent export/copy/clone or
+  custom boot had already stopped or mutated a live container;
+- the vpsAdmin functional commit used the new osvm helper/output contract while
+  it still pinned old vpsAdminOS, so that intermediate commit was not
+  independently test-coherent.
+
+Both blockers were fixed and folded into their respective functional commits.
+osctld now centralizes the configuration-readiness check and performs it under
+the manipulation lock before a consistent export, local copy restart, remote
+clone restart, or custom boot can stop or mutate the running container.
+Regression examples prove that configuration-error/running containers are not
+stopped, snapshotted, exported, or assigned a custom run configuration.
+
+The vpsAdmin VM common script now discovers whether the pinned osvm helper
+uses legacy `state:` or new `runtime_state:` and chooses both the helper keyword
+and osctl output field accordingly. The functional commit was explicitly
+checked while still pinning vpsAdminOS `8e44a512`: both `vps/migrate` and
+`vps/autostart-monitoring` definitions listed successfully, and the rendered
+common Ruby script passed `ruby -c`. After the required helper regenerated the
+new vpsAdminOS pin, both definitions also listed at the final pinned head.
+
+The newest corrected pushed heads are:
+
+- vpsAdminOS `85d53da3edfe89043c267b649dfa4661d92022e3`;
+- vpsAdmin functional commit `517e2a07b` and generated pin/head
+  `c7b172d39ee8290dab5744b7c799d4c0ccea8769`;
+- configuration monitoring commit `b9fefac9`, generated consumer-first
+  vpsAdmin pin `f037e3fc`, and generated vpsAdminOS pin/head
+  `c5023461c58f954885ef93c01587d45f258c9419`.
+
+The final configuration pins staging vpsAdmin `c7b172d3` first and then pins
+staging/os-staging vpsAdminOS `85d53da3`. At the intermediate consumer commit,
+vpsAdminOS remains `93014dd1`. Production and `vpsadminServices` remain
+unchanged.
+
+Post-fix quick verification passed:
+
+- focused compound-operation osctld specs: 98 examples, zero failures;
+- full osctld RSpec: 1,512 examples, zero failures;
+- full libnodectld RSpec: 528 examples, zero failures;
+- all repository commit hooks, final configuration Overcommit, and all three
+  Prometheus rule checks;
+- all current-head quick GitHub workflows: vpsAdminOS RSpec/RuboCop and
+  vpsAdmin libnodectld/RuboCop/WebUI PHPUnit/client/i18n;
+- clean pushed worktrees, exact pins, current-base ancestry, and
+  `git diff --check` in all repositories.
+
+New current-head long GitHub CI runs `32787208297` (vpsAdminOS) and
+`32787343630` (vpsAdmin) were cancelled at the review gate. No VM test,
+deployment, activation, or production access was performed.
+
+The next fresh review found five blocking issues, one important issue, and one
+advisory coverage gap:
+
+- remote clone send with `--no-consistent --restart` used a narrower readiness
+  predicate than the eventual source restart;
+- the local-transfer and send/receive VM suites still expected aggregate
+  `staged` from a helper which now returned `runtime_state`;
+- local-transfer retry accepted a configuration-error/stopped target;
+- internal `Eventd` and group-policy calls used capability probes which could
+  silently bypass required contracts;
+- two test correction commits needed folding into the commits which introduced
+  the broken definitions;
+- consistent export opened and truncated its destination before readiness
+  validation;
+- changed Prometheus expressions lacked cases for empty-node, aborting, frozen,
+  and legacy configuration-error branches.
+
+All findings were addressed. Remote clone readiness now matches the exact
+restart predicate, including the no-consistency path. Local transfer accepts a
+staged target or a ready/stopped retry target only, and validates the target
+before persisting source retry state or touching snapshots/data. Consistent
+export validates under the manipulation lock before opening the output file;
+its regression preserves existing file contents. Internal event and inherited
+group-policy calls now use explicit interfaces with explicit test doubles.
+The two transfer VM suites assert `config_state=staged` together with
+`runtime_state=unknown`. Prometheus tests now exercise every changed new and
+legacy rule branch named by the review.
+
+The vpsAdminOS history was rewritten from 55 to 53 commits. The correction for
+overlong restart test identifiers is folded into
+`tests/osctld: cover runtime restart recovery`, and the legacy-osctld package
+overlay correction is folded into
+`tests/system: cover coordinated osctld activation`. The final post-rewrite
+tree matched the tested pre-rewrite tree exactly. The current vpsAdminOS head
+is `496599e1c6ab5e7aecc907f47e76bd0c81851320` on base
+`8e44a5124439b1f3048ffc56b1717614a5360358`.
+
+The unchanged vpsAdmin functional split-state commit remains `517e2a07b`.
+The required pin helper generated current vpsAdmin head
+`e80817e05163cc616b324dbbd64006e192c018df`, which pins vpsAdminOS
+`496599e1c`. The configuration monitoring commit was rewritten as
+`07ba4c928eff80d25c913ba2be68218ad76fb0f8` with the expanded rule tests.
+`confctl` then generated consumer-first commit `3c8c2a7d`, pinning vpsAdmin
+`e80817e0` while both staging vpsAdminOS inputs remain at `93014dd1`, followed
+by producer commit/head `1b559af8`, pinning staging and os-staging vpsAdminOS
+to `496599e1`. Production and `vpsadminServices` remain unchanged. All three
+feature branches are pushed and descend from their unchanged current bases.
+
+Post-fix quick verification passed:
+
+- focused osctld transfer, local-transfer, container, and lifecycle specs:
+  195 examples, zero failures;
+- full osctld RSpec: 1,515 examples, zero failures;
+- vpsAdminOS full Overcommit: Nixfmt and RuboCop passed;
+- `osctl/ct-local-transfer` and every registered `osctl/ct-send-recv` script
+  evaluate/list at the exact final vpsAdminOS head;
+- `vps/migrate` and `vps/autostart-monitoring` evaluate/list at the exact final
+  vpsAdmin pin;
+- vpsAdmin full Overcommit passed MigrationSpecs, API/WebUI i18n, Nixfmt,
+  RuboCop, and PHP CS Fixer;
+- configuration full Overcommit and all three Prometheus rule checks passed;
+- current-head GitHub quick workflows passed for vpsAdminOS RSpec/RuboCop and
+  vpsAdmin libnodectld/WebUI PHPUnit/client/i18n;
+- every worktree is clean, every final diff passes `git diff --check`, exact
+  pins and consumer-first intermediate pins were verified.
+
+The first `confctl` pin attempt used a mistyped full vpsAdmin revision and
+failed with GitHub 404 before changing the lock file or creating a commit. The
+retry used the exact pushed revision and succeeded. Current-head long CI runs
+`32791080604` (vpsAdminOS) and `32791180397` (vpsAdmin) were cancelled at the
+review gate. No long VM test, deployment, activation, or production access was
+performed.
+
+The final mandatory fresh review must include the exact 53-commit vpsAdminOS
+series, explicit internal contracts, transfer preflights, folded history,
+expanded monitoring coverage, current generated pins, and the enlarged long
+test gate before any VM test begins.
+
+Another fresh standalone review is required against these newest corrected
+commits and exact pins before any long VM test is started. If it clears, the
+gate must include `osctld/lifecycle` in addition to restart, resilience,
+switch-to-configuration, declarative containers, migration, and autostart
+monitoring.
+
 ## Verification still required
 
-- implement and review the current-recovery ownership proof described above;
-- rerun the focused osctld resilience and restart VM tests, then the complete
-  current-head vpsAdminOS CI;
-- the long current-head vpsAdmin CI workflow after its runner becomes
-  available.
+- obtain a clean fresh-agent review of the corrected split-state commits and
+  pins;
+- after review clearance, rerun the focused osctld resilience/restart and
+  lifecycle/configuration-switch/declarative-container and local/remote
+  transfer VM coverage at the exact pinned head;
+- after review clearance, rerun vpsAdmin migration and autostart-monitoring VM
+  coverage at the exact pinned head;
+- inspect all current-head GitHub Actions results and artifacts before treating
+  a rerun as validation.
 
 ## Cleanup
 
@@ -1522,3 +1857,20 @@ left unchanged.
 - Final configuration pin, evaluation, and push artifacts were moved
   recoverably beneath `/tmp/osctld-config-final-pin-artifacts.uPsVbuRn` and
   `/tmp/osctld-config-final-push-artifacts.c690ChmX`.
+- Split-state configuration dev-shell and push caches were moved recoverably to
+  `/tmp/vpsfree-config-generated.V2vB58`,
+  `/tmp/vpsfree-config-rebase-generated.8qJTjA`,
+  `/tmp/vpsfree-config-final-generated.1vdNdT`, and
+  `/tmp/vpsfree-config-push-generated.MKBLKh`.
+- Follow-up review configuration caches were moved recoverably to
+  `/tmp/vpsfree-config-review-generated.EC5cph`,
+  `/tmp/vpsfree-config-final-review-generated.qCRB1e`, and
+  `/tmp/vpsfree-config-push-review-generated.mmHdtT`.
+- Safe pin-order configuration caches were moved recoverably to
+  `/tmp/vpsfree-config-safe-pin-order.QYj57d`,
+  `/tmp/vpsfree-config-final-hooks.8PdfE5`, and
+  `/tmp/vpsfree-config-final-push.hWsKXj`.
+- Final compound-preflight pin and hook caches were moved recoverably to
+  `/tmp/vpsfree-config-compound-review.AWIvs1`,
+  `/tmp/vpsfree-config-final-compound-hooks.O7RIgn`, and
+  `/tmp/vpsfree-config-final-compound-push.oBiNav`.
