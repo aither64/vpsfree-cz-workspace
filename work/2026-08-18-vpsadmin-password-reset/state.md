@@ -2446,3 +2446,58 @@
   `4a1dd1661048125c32b4adef72f85f4d650b06a6` and
   `e57fb02e184450b6ad94d4cc1e00772392d90ef2`; exact-head mandatory review is
   pending before long integration, force-push, repins, and deployment.
+
+### Final lifecycle and prefill validation
+
+- The mandatory reviewer cleared exact `e57fb02e184450b6ad94d4cc1e00772392d90ef2`
+  with no findings after independently running 24 affected examples. It
+  confirmed that every in-scope new authentication, OAuth, recovery, detached
+  session, and metrics-token authority observes the same user-row lifecycle
+  boundary. Existing session resumption remains intentionally unchanged.
+- The first exact-head API topic workflow found two state-log authorization
+  specs expecting HTTP 403 after authenticating as their own pending-soft-delete
+  target. The lifecycle denial correctly happened first and returned HTTP 401.
+  Both specs now authenticate as the separate active ordinary-user fixture while
+  retaining the pending-destructive target, so they continue to prove the
+  endpoint's administrator-only authorization. The focused state-log suite
+  passes 13 examples with zero failures.
+- The CI fixture correction was folded into the lifecycle commit. The final
+  clean, pushed vpsAdmin commits are
+  `174cc723a4492467590bbde6066080a913629867` and
+  `149cadd9943dadc9732d5acec6ef2e03b0c6d810`. Every Overcommit hook passed.
+  A fresh standalone reviewer inspected the complete feature and exact two-commit
+  follow-up, independently ran the state-log and OAuth coverage, and reported no
+  Blocking, Important, or Advisory findings.
+- Final vpsAdmin RuboCop, i18n health, and API topic workflows are green. The
+  topic matrix covered every API spec exactly once. The broad CI workflow is
+  still running at handoff; because the prior force-pushed commit was no longer
+  available in its checkout, its selector safely fell back to the master merge
+  base and launched the complete `tag=ci` VM suite. Comparable successful full
+  runs take about six and a half hours. The workflow remains live and was not
+  cancelled or rerun.
+- The exact-head `webui#auth` VM/browser integration test passes. Its Playwright
+  example completed in 370.38 seconds and the complete test in 1,033.37 seconds.
+- The clean, pushed KB contract head is
+  `e6c1c27448984cf2b68f63db6732cfcce04d49b5`. All source and flake pins use
+  exact vpsAdmin `149cadd994`; `nix develop --command bin/check`, the GitHub
+  `Check` workflow, and managed-page runtime pass. The runtime workflow
+  completed in 46 minutes 31 seconds.
+- The clean, pushed production-configuration head is
+  `5907085524b0a638e3f4a16874e4bf69fd0cdc3e`. The generated
+  `vpsadminServices` input and deployment runbook use exact vpsAdmin
+  `149cadd994`. `confctl build --yes` passes for `int.api1`, `int.api2`,
+  `int.webui1`, `int.webui2`, `prg/proxy`, `prg/int.mon1`, and `prg/int.mon2`.
+  No production system was deployed.
+- The existing single-node bridge development cluster was updated to exact
+  vpsAdmin `149cadd994`. The vpsAdminOS staging input had advanced, so Nix also
+  rebuilt the affected VM closure. Activation completed without the known Puma
+  console-router timeout. Cluster status is `running` and `ready: yes`; the API,
+  recovery worker, console router, supervisor, and nginx are active, no systemd
+  unit is failed, and build info reports the exact revision with
+  `revisionDirty: false`.
+- The public `/oauth2/password-reset` endpoint returns HTTP 200 after the update
+  and renders the vpsFree.cz logo, labelled identifier field, and sign-in link.
+- Final local/upstream and SSH-remote branch heads match for vpsAdmin
+  `149cadd994`, notification templates `a71b329b91`, KB contracts `e6c1c27448`,
+  and production configuration `5907085524`; all four project worktrees are
+  clean.
