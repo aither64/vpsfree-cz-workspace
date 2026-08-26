@@ -2366,9 +2366,27 @@
   failures; targeted RuboCop reports no offenses.
 - The lock correction was autosquashed into the lifecycle security commit so
   exact commits `150537ff1e0275f4d07a3cf40cee15e86d658c24` and
-  `257a5a0ae81b29a5c080d6666e71ff9fef58876e` still keep the lifecycle change
-  and recovery-prefill convenience separate. Every installed Overcommit hook
+  `257a5a0ae81b29a5c080d6666e71ff9fef58876e` kept the lifecycle change and
+  recovery-prefill convenience separate. Every installed Overcommit hook
   passed for each staged change in `nix develop .#vpsadmin`; no hook was
-  bypassed. The vpsAdmin worktree is clean at exact head
-  `257a5a0ae81b29a5c080d6666e71ff9fef58876e`, pending the same reviewer's
-  closure check before downstream repins and long integration.
+  bypassed.
+- The reviewer's closure pass found a second Blocking lifecycle path: inherited
+  expiration and reminder writers appended a newer `active` state log while a
+  destructive transition was queued, masking that transition from the shared
+  authentication predicate. User lifecycle metadata changes now take the same
+  user-row lock and reject any pending materialized/requested state mismatch;
+  the regression proves neither metadata writer can supersede the destructive
+  log.
+- The same pass found an Important test-isolation issue in the deterministic
+  authentication/lifecycle race. It now runs the real mail-backed queued chain,
+  retains the returned chain, and explicitly removes its mail, confirmations,
+  transactions, resource lock, concerns, and chain before deleting the user.
+  The first focused run exposed the missing live mail-node fixture; adding the
+  standard current-node-status fixture made the production-real path pass.
+- Exact-head verification passes the two lifecycle metadata examples and the
+  real two-connection issuance race (three examples, zero failures). Targeted
+  RuboCop reports no offenses, and every installed Overcommit pre-commit and
+  commit-message hook passed. The corrected clean commits are
+  `51cf5d80d8af898282170e28f2fa4ef38a022843` and
+  `64d8dcd63f4a5c7017ea35cced0aaeebbe7b5569`; the same reviewer is performing
+  the required closure check before downstream repins and long integration.
