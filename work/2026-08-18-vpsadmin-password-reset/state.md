@@ -2351,9 +2351,24 @@
   continues from an invalid-password response and checks the prefilled recovery
   field. Targeted RuboCop passes on all 19 changed Ruby files and JavaScript
   syntax passes with Node.
-- Commits `2e33e49d8` and `992576a54` keep the lifecycle security correction
+- The first mandatory review found one Blocking TOCTOU race: final
+  authentication checks held the `users` row, but lifecycle publication used
+  only the separate `resource_locks` table, so a destructive `ObjectState`
+  could still commit after the check and before authority publication. It found
+  no Important or Advisory issue and accepted the prefill and intended split.
+- User lifecycle publication now holds the same database user-row lock as
+  authentication authority creation, including direct recorded state changes.
+  A deterministic two-connection MariaDB regression pauses after the effective
+  lifecycle query, schedules a real soft-delete request, proves its `FOR UPDATE`
+  is blocked, and then proves token publication linearizes before deletion.
+  The exact race spec passes 12 examples with zero failures. User creation,
+  resource writes, and every user transition suite pass 58 examples with zero
+  failures; targeted RuboCop reports no offenses.
+- The lock correction was autosquashed into the lifecycle security commit so
+  exact commits `150537ff1e0275f4d07a3cf40cee15e86d658c24` and
+  `257a5a0ae81b29a5c080d6666e71ff9fef58876e` still keep the lifecycle change
   and recovery-prefill convenience separate. Every installed Overcommit hook
-  passed for both commits in `nix develop .#vpsadmin`; no hook was bypassed.
-  The vpsAdmin worktree is clean at exact head
-  `992576a542e54dfb193d19305a74d6c674f31c12`, pending the required
-  fresh-context mandatory review before downstream repins and long integration.
+  passed for each staged change in `nix develop .#vpsadmin`; no hook was
+  bypassed. The vpsAdmin worktree is clean at exact head
+  `257a5a0ae81b29a5c080d6666e71ff9fef58876e`, pending the same reviewer's
+  closure check before downstream repins and long integration.
