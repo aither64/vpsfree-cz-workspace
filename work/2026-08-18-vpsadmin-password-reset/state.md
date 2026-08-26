@@ -2325,3 +2325,35 @@
   The WebUI OAuth client is the default direct-continuation client. The public
   recovery form returns HTTP 200 with its logo, labelled identifier field, and
   working OAuth-start sign-in link. The temporary fixture scripts were removed.
+
+### Pending lifecycle authentication and recovery prefill
+
+- A final independent security review identified the pre-existing interval in
+  which a user with a newly requested destructive lifecycle state could still
+  authenticate or complete recovery before the transaction chain materialized
+  the state. The accepted compatibility decision blocks new authentication,
+  refresh, required-reset, and recovery authorities while leaving already-issued
+  sessions resumable until the chain closes them.
+- Fetched vpsAdmin upstream and rebased the feature branch onto exact master
+  `80e27053c8e6578251fca69a55981037ad2a6193`. The rebase completed without
+  source conflicts; downstream exact pins remain intentionally unchanged until
+  the follow-up is reviewed.
+- Added one shared user lifecycle predicate based on both the materialized state
+  and newest requested `ObjectState`, neutral denial for OAuth/login, and locked
+  rechecks before ordinary token authentication and required password reset.
+  Added recovery policy, route, Basic/token, OAuth authorization/code/refresh,
+  and existing-session compatibility regressions. The first focused run passed
+  172 examples with zero failures; the session/OAuth/submission follow-up passed
+  69 examples with zero failures.
+- Added recovery-link prefill from the retained OAuth login value. The value is
+  URL-encoded and bounded by the recovery identifier limit; blank and oversized
+  values are omitted and the password is never copied. The browser regression
+  continues from an invalid-password response and checks the prefilled recovery
+  field. Targeted RuboCop passes on all 19 changed Ruby files and JavaScript
+  syntax passes with Node.
+- Commits `2e33e49d8` and `992576a54` keep the lifecycle security correction
+  and recovery-prefill convenience separate. Every installed Overcommit hook
+  passed for both commits in `nix develop .#vpsadmin`; no hook was bypassed.
+  The vpsAdmin worktree is clean at exact head
+  `992576a542e54dfb193d19305a74d6c674f31c12`, pending the required
+  fresh-context mandatory review before downstream repins and long integration.

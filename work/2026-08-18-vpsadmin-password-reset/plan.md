@@ -485,3 +485,28 @@ whether an account exists or can use recovery.
   regressions. Run mandatory fresh-agent review before long integration, repin
   downstream revisions, and reset/redeploy the bridge development cluster.
   Production deployment and KB publication remain operator-only.
+
+## Pending lifecycle authentication and recovery prefill
+
+- Treat a user's latest requested lifecycle state as part of login eligibility.
+  Permit only active and suspended materialized/requested states for new Basic,
+  token, OAuth, required-reset, and password-recovery authority. Recheck this
+  predicate under the existing user locks before issuing credentials or writing
+  a password. Keep already-issued API and OAuth sessions resumable until the
+  lifecycle transaction chain closes them, while rejecting new OAuth codes and
+  refreshes after a destructive state is requested.
+- Keep public authentication errors neutral and retain the existing localized
+  invalid-login result. Do not add schema, API, mail-template, or user-facing
+  copy changes.
+- When a failed OAuth credential form retains its login value, append that exact
+  bounded value to the password-recovery link as an encoded `identifier` query
+  parameter. Never copy the submitted password, resolve the value to an
+  account, or disclose whether it exists. The recovery request form uses the
+  existing escaped identifier value and continues to preserve OAuth client and
+  locale context.
+- Keep the lifecycle guard and UI convenience in separate commits. Run focused
+  model, route, OAuth, queue, lint, and browser coverage, then mandatory
+  fresh-agent review before long integration. Repin the exact vpsAdmin revision
+  in the KB contract and production configuration, refresh the existing bridge
+  development cluster without a schema reset, and leave production deployment
+  and KB publication to the operator.
