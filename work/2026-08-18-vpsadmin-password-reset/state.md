@@ -2386,7 +2386,19 @@
 - Exact-head verification passes the two lifecycle metadata examples and the
   real two-connection issuance race (three examples, zero failures). Targeted
   RuboCop reports no offenses, and every installed Overcommit pre-commit and
-  commit-message hook passed. The corrected clean commits are
-  `51cf5d80d8af898282170e28f2fa4ef38a022843` and
-  `64d8dcd63f4a5c7017ea35cced0aaeebbe7b5569`; the same reviewer is performing
-  the required closure check before downstream repins and long integration.
+  commit-message hook passed.
+- Exact-head closure cleared the production lifecycle guard and transaction
+  graph cleanup, but found one Important test-isolation leak: the mail-node
+  setup mutated `SpecSeed.node` and left its `NodeCurrentStatus`. The race spec
+  now snapshots and exactly restores both records, matching the established
+  non-transactional recovery-race pattern. Its isolated metadata also skips the
+  ordinary spec setup, which otherwise persisted a password change for the
+  shared seed user outside RSpec's transaction.
+- A 187-example exploratory combined run started before the isolated-setup
+  correction and failed two later user-write examples because that shared seed
+  mutation persisted. The diagnosed four-example order now passes the real
+  issuance race, the reviewer's supervisor status regression, missing-login
+  validation, and signed-in password change with zero failures. The corrected
+  clean commits are `085f0c7fc891370ecb305b60307cea5f544feb20` and
+  `99f46e0238bfbc3a7bccb5eec7d6657ba57f3cda`; the same reviewer is performing
+  final closure before downstream repins and long integration.
