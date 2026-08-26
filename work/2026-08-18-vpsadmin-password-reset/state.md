@@ -2424,3 +2424,25 @@
   `4f20f4d730cd92ee3caa06cdb3b20324e05c8a6b` and
   `18cac37ed004e4fd960b723297566e9ca1328d91`; fresh exact-head mandatory
   review is pending before any downstream repin or deployment.
+- The reviewer required positive focused coverage for the rewritten fulfilled
+  WebAuthn OAuth path because the browser suite does not exercise passkey
+  sign-in. Those examples exposed a real block-value handoff regression that
+  made both successful branches call the `reset_password` method without its
+  arguments. The corrected code explicitly carries the locked password-reset
+  value out of the block. Focused examples now prove both authorization-code
+  issuance and conversion to an unfulfilled required-reset token, alongside
+  the rejected destructive-state case.
+- The completed authority inventory found two other new-credential paths:
+  administrator-created detached API token sessions and metrics bearer tokens.
+  Both now lock the target user and recheck the effective lifecycle predicate
+  before creating any owner or token row. Operation and authenticated API
+  regressions return controlled resource-locked failures and prove that no
+  credential is issued. Existing API/OAuth sessions and ordinary operations
+  performed through them remain deliberately usable until the lifecycle chain
+  closes those sessions.
+- The final focused closure batch passes nine examples with zero failures,
+  targeted RuboCop passes 13 files, all installed Overcommit hooks pass, and
+  the worktree is clean. Rewritten exact commits are
+  `4a1dd1661048125c32b4adef72f85f4d650b06a6` and
+  `e57fb02e184450b6ad94d4cc1e00772392d90ef2`; exact-head mandatory review is
+  pending before long integration, force-push, repins, and deployment.
