@@ -490,11 +490,12 @@ whether an account exists or can use recovery.
 
 - Treat a user's latest requested lifecycle state as part of login eligibility.
   Permit only active and suspended materialized/requested states for new Basic,
-  token, OAuth, required-reset, and password-recovery authority. Recheck this
-  predicate under the existing user locks before issuing credentials or writing
-  a password. Keep already-issued API and OAuth sessions resumable until the
-  lifecycle transaction chain closes them, while rejecting new OAuth codes and
-  refreshes after a destructive state is requested.
+  token, OAuth, MFA continuation, required-reset, and password-recovery
+  authority. Recheck this predicate under the existing user locks before
+  consuming an MFA factor, issuing credentials, or writing a password. Keep
+  already-issued API and OAuth sessions resumable until the lifecycle
+  transaction chain closes them, while rejecting new OAuth codes and refreshes
+  after a destructive state is requested.
 - Keep public authentication errors neutral and retain the existing localized
   invalid-login result. Do not add schema, API, mail-template, or user-facing
   copy changes.

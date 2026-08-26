@@ -2402,3 +2402,25 @@
   clean commits are `085f0c7fc891370ecb305b60307cea5f544feb20` and
   `99f46e0238bfbc3a7bccb5eec7d6657ba57f3cda`; the same reviewer is performing
   final closure before downstream repins and long integration.
+- The exact-head CI API shard then exposed a lifecycle-lock regression in the
+  payments transaction chain: ActiveRecord's `with_lock` reload discarded an
+  unsaved `UserAccount#paid_until` extension held by the caller. The corrected
+  lifecycle wrapper locks a separate `User` instance, refreshes only the three
+  lifecycle attributes on the caller, and preserves its association cache. It
+  uses the unscoped user relation so administrator transitions away from
+  `hard_delete` remain supported. The exact payment regression and all four
+  hard-delete transition examples pass.
+- The final reviewer found that an MFA token issued before a destructive state
+  request could still consume a TOTP factor or complete WebAuthn before the
+  later authorization/password boundary rejected it. Ordinary TOTP, WebAuthn
+  begin/finish, and fulfilled WebAuthn OAuth conversion now recheck the shared
+  lifecycle predicate while holding the user lock. Rejected continuations do
+  not consume the factor, challenge, or MFA token.
+- The complete affected MariaDB batch passes 144 examples with zero failures,
+  covering ordinary TOTP/WebAuthn, OAuth, password issuance, user lifecycle
+  writes, and the payments chain. Targeted RuboCop passes eight changed files,
+  and every installed Overcommit pre-commit and commit-message hook passed.
+  The corrected clean commits are
+  `4f20f4d730cd92ee3caa06cdb3b20324e05c8a6b` and
+  `18cac37ed004e4fd960b723297566e9ca1328d91`; fresh exact-head mandatory
+  review is pending before any downstream repin or deployment.
