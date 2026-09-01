@@ -4,21 +4,24 @@
 
 - `vpsadmin`
   - branch: `2026-09-01-mail-templates-reconciliation`
-  - worktree: `worktrees/2026-09-01-mail-templates-reconciliation/vpsadmin`
+  - worktree: removed after default-branch integration
 - `vpsfree-cz-configuration`
   - branch: `2026-09-01-mail-templates-reconciliation`
-  - worktree: `worktrees/2026-09-01-mail-templates-reconciliation/vpsfree-cz-configuration`
+  - worktree: removed after default-branch integration
 - `vpsfree-maintenance-tasks`
   - branch: `2026-09-01-mail-templates-reconciliation`
-  - worktree: `worktrees/2026-09-01-mail-templates-reconciliation/vpsfree-maintenance-tasks`
+  - worktree: removed after default-branch integration
 
 ## Status
 
-All intended implementation changes and mandatory-review fixes are committed
-and pushed. Both production-role configuration builds passed. Current-head
-vpsAdmin API specs and all ordinary checks passed; the separate aggregate CI
-workflow remains queued behind an existing shared-runner backlog. No
-maintenance or configuration workflows were triggered.
+All intended implementation changes and mandatory-review fixes are committed,
+fast-forwarded into the three upstream default branches, and pushed. Both
+production-role configuration builds passed from the exact merge candidate.
+Four default-branch vpsAdmin workflows passed; the API matrix is running
+without failures and aggregate CI remains queued behind the shared-runner
+backlog. The two other repositories did not trigger workflows for these
+commits. All initiative worktrees have been removed while preserving the local
+and remote feature branches.
 
 ## Commands run
 
@@ -76,6 +79,19 @@ maintenance or configuration workflows were triggered.
   template reconciliation unit.
 - Pushed the maintenance and configuration feature branches. Maintenance and
   configuration have no GitHub Actions runs for this branch.
+- Created detached integration worktrees from each exact `origin/master`,
+  fast-forwarded them to the reviewed feature heads, and confirmed that no
+  default branch had advanced before pushing.
+- From the exact vpsAdmin merge candidate, reran 34 focused examples, RuboCop
+  on the three touched specs, all three notification-template Nix checks, and
+  `git diff --check`.
+- From the exact configuration merge candidate, rebuilt
+  `cz.vpsfree/vpsadmin/int.api1` and `int.api2` sequentially.
+- Fast-forwarded and pushed `master` in dependency order: vpsAdmin, the
+  maintenance task repository, then production configuration.
+- Refetched all three remotes, verified each `origin/master` and preserved
+  local/remote feature ref at the reviewed head, and removed all six clean
+  initiative worktrees.
 
 ## Results
 
@@ -88,6 +104,7 @@ maintenance or configuration workflows were triggered.
   - base: `ba1217fb2757cf8624ac0d1fd89d9466377b6289`
   - head: `cbd0fa164` (`nixos: support authoritative notification templates`)
   - pushed to `origin/2026-09-01-mail-templates-reconciliation`
+  - fast-forwarded and pushed to `origin/master`
   - focused RSpec: 34 examples, 0 failures; post-edit chain rerun: 5 examples,
     0 failures
   - RuboCop: 3 files, no offenses
@@ -111,6 +128,7 @@ maintenance or configuration workflows were triggered.
     log after deletion each caused refusal; apply without the writer-shutdown
     confirmation was also refused
   - pushed to `origin/2026-09-01-mail-templates-reconciliation`
+  - fast-forwarded and pushed to `origin/master`
 - `vpsfree-cz-configuration`
   - base: `94125328acb7a6f5b28cfe4d58e49ed4788d23a1`
   - head: `28a39a52`
@@ -118,11 +136,14 @@ maintenance or configuration workflows were triggered.
   - functional commit: `28a39a52` (`vpsadmin-config: use authoritative notification templates`)
   - vpsAdmin services input pins `cbd0fa16`
   - all declared pre-commit hooks passed
-  - API1 generation `2026-09-01--17-28-32` built successfully
-  - API2 generation `2026-09-01--17-30-20` built successfully
+  - feature API1 generation `2026-09-01--17-28-32` and exact-merge generation
+    `2026-09-01--19-08-39` built successfully
+  - feature API2 generation `2026-09-01--17-30-20` and exact-merge generation
+    `2026-09-01--19-09-31` built successfully
   - API1 effective package contains 69 templates and omits IDs/names 71--76;
     API2 has no `vpsadmin-notification-templates.service`
   - pushed to `origin/2026-09-01-mail-templates-reconciliation`
+  - fast-forwarded and pushed to `origin/master`
 - A first manual database command failed because separate short-lived
   `nix develop -c` invocations do not preserve the test database process. The
   existing durable note `notes/vpsadmin/2026-07-22-test-db-single-nix-shell.md`
@@ -150,14 +171,32 @@ maintenance or configuration workflows were triggered.
   RuboCop, WebUI PHPUnit, Client Specs, and i18n health also completed
   successfully. Aggregate CI run `33525532270` remains externally queued; at
   handoff, older runs including master `33511838961` were still ahead of it.
+- The first merge-worktree RSpec invocation used stale `spec/api/...` paths and
+  therefore loaded no examples. The corrected repository paths ran 34 examples
+  successfully before any default-branch push.
+- Default-branch integration heads are vpsAdmin `cbd0fa164`, maintenance
+  `9965859`, and configuration `28a39a52`. Local and remote feature branches
+  remain at the same heads.
+- Default-branch vpsAdmin RuboCop, WebUI PHPUnit, Client Specs, and i18n health
+  runs passed. API Specs run `33536221934` had 14 of 26 jobs complete and 12
+  running without a failure at the last check; aggregate CI run `33536221911`
+  remained queued behind the shared-runner backlog.
+- The operator reported that a production maintenance-task run intentionally
+  refused removal after finding one `mail_logs` reference to the target IDs.
+  The guard ran before deletion, so no target template was removed by that
+  attempt. This proves that one fallback generated a logged email, although a
+  mail log alone does not prove final delivery. The operator planned to remove
+  the inspected log; that production change was not performed or verified by
+  this development session.
 
 ## Open questions
 
 None. Decisions confirmed with the user: explicit replace mode, guarded
-maintenance task, and feature-branch-only delivery. The maintenance task must
-not be run on production as part of this initiative.
+maintenance task, default-branch integration, and worktree cleanup. The
+maintenance task must not be run on production as part of this initiative.
 
 ## Cleanup
 
-Pending after integration or abandonment. Preserve feature branches; remove
-project worktrees only after the initiative has been merged or abandoned.
+Complete. Removed the three feature worktrees, the three detached integration
+worktrees, and the now-empty initiative worktree directories. Preserved all
+three feature branches locally and remotely, plus this plan and state record.

@@ -58,9 +58,10 @@ set is the desired authoritative production set.
   on all API hosts, keep them stopped while the task validates and commits,
   and pass `--apply --confirm-mail-writers-stopped`. Dry-run remains safe while
   services are running.
-- Cleanup is an explicitly approved later operator action. This initiative
-  stops at reviewed, tested, pushed feature branches and does not deploy or
-  modify production data.
+- Production cleanup is an explicitly approved later operator action. This
+  initiative integrates the reviewed changes into the three default branches,
+  but does not deploy them, run the maintenance task, or modify production
+  data.
 - Rolling back configuration to overlay mode can recreate the six defaults on
   the next reconciliation. Returning to replace mode and rerunning the guarded
   cleanup restores the intended state.
@@ -81,5 +82,6 @@ set is the desired authoritative production set.
   checks, before longer configuration builds.
 - Build/evaluate both `int.api1` and `int.api2`; inspect the resulting API1
   reconciliation source/unit and confirm API2 has no reconciliation unit.
-- Push feature branches and monitor current-head GitHub Actions. Cancel only
-  superseded runs after any follow-up push.
+- Push feature branches, fast-forward the reviewed commits into current default
+  branches, and monitor current-head GitHub Actions. Cancel only superseded
+  runs after any follow-up push.
