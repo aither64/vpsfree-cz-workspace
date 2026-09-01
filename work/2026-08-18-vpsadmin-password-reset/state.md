@@ -2501,3 +2501,153 @@
   `149cadd994`, notification templates `a71b329b91`, KB contracts `e6c1c27448`,
   and production configuration `5907085524`; all four project worktrees are
   clean.
+
+### Current-default rebase and notification-template migration
+
+- Verified the active development session as
+  `2026-08-18-vpsadmin-password-reset`, fetched all SSH remotes, and rebased the
+  four existing feature branches onto these current default heads:
+  - vpsAdmin `ba1217fb2757cf8624ac0d1fd89d9466377b6289`;
+  - notification templates `9e1ddbd973703cf48a43f0e5afc2bfb392a8b676`;
+  - KB contracts `5dd94f1609ecb0742360d6b0b2b8fa99c190a519`;
+  - production configuration `94125328acb7a6f5b28cfe4d58e49ed4788d23a1`.
+- The vpsAdmin rebase had one NixOS module conflict. Its resolution retains
+  both upstream `vpsadmin-notification-templates.service` ordering and the
+  feature's `vpsadmin-password-recovery.service`. The legacy built-in recovery
+  and password-change directories were relocated to the declarative
+  notification tree, subjects became channel variants, and the model specs now
+  inspect parsed variants through the current loader API. Commit
+  `b63a925f86f8c631e54bcce440c4d7cb12f44110` is clean, pushed, and matches the
+  remote feature branch.
+- The renamed `vpsfree-notification-templates` repository kept upstream's new
+  flake/package structure and the feature's exact bilingual automated-mail
+  footer guidance. Both branded mails now live under `templates/<name>/email`
+  with separate subject variants and unchanged reviewed bodies. Commit
+  `ae9960351c342c1a25b52666aec2c4eaabe1222b` is clean, pushed, and matches the
+  remote feature branch.
+- The KB rebase resolved only exact vpsAdmin pin conflicts. Its master-derived
+  security-advisory contract remains intact, while password-history navigation
+  remains additive. `nix flake update vpsadmin` produced the lock update for
+  exact vpsAdmin `b63a925f86`; all source, navigation, page, and lock references
+  agree. Commit `bf90da31e98a5379644e8bb28e90e7feb41397bf` is clean, pushed, and
+  matches the remote feature branch.
+- Production configuration was rebased onto the declarative external-template
+  integration on master. The obsolete pre-rebase vpsAdmin lock commit was
+  replaced using two generated `confctl inputs channel set --commit` commits:
+  `vpsadminServices` now pins `b63a925f86`, and
+  `vpsfreeNotificationTemplates` pins `ae9960351c`. The runbook no longer asks
+  an operator to upload templates with API credentials. It keeps api1 masked,
+  verifies the reconciliation service and database variants before migrations,
+  and records the preserved-template rollback behavior. Commit
+  `8beac569afa33377eb905a3daaea2ccf1377c142` is clean, pushed, and matches the
+  remote feature branch.
+- User-facing writing review was applied directly to the retained English and
+  Czech mail content and the revised operator runbook. The template migration
+  intentionally changes no approved visible mail wording.
+- Quick verification on the exact vpsAdmin head:
+  - built-in notification checker: 54 templates and 172 files;
+  - focused mail-template loader/model suite: 20 examples, zero failures;
+  - all 42 changed non-migration spec files: 505 examples, zero failures;
+  - all five migration specs, up and down: 10 examples, zero failures;
+  - WebUI PHPUnit: 89 tests and 374 assertions, zero failures;
+  - API and WebUI localization health pass; WebUI reports only the two existing
+    embedded-URL gettext warnings;
+  - full RuboCop: 1,512 files, no offenses;
+  - every Overcommit pre-commit hook passes, including migration specs,
+    Nixfmt, PHP CS Fixer, both localization checks, and RuboCop;
+  - changed JavaScript syntax, changed Nix parsing, and `git diff --check` pass.
+- Notification-template verification passes `nix run .#check` with 69
+  templates and 337 files, followed by `nix flake check` with all checks green.
+  The KB `nix develop -c bin/check` passes all syntax, navigation, managed-page,
+  unit, capture, and 120-image inventory checks.
+- Production-configuration Overcommit passes. Strict MkDocs succeeds through
+  `nix shell nixpkgs#python313Packages.mkdocs`; the repository dev shell does
+  not provide `mkdocs`. Both exact lock revisions were read back from
+  `flake.lock`. Seven production configuration builds remain gated behind the
+  mandatory review.
+- Two local command failures were diagnosed and superseded, not accepted as
+  validation: a newline-expanded RSpec path list ran only its first example
+  before Bash tried to execute the remaining files, and the corrected
+  positional-argument invocation passed all 505 examples; ambient config Git
+  hooks lacked their bundled gems, so dependencies and every later commit/push
+  hook ran in the repository Nix shell.
+- Force-pushes used lease protection. No obsolete queued or in-progress
+  vpsAdmin or notification-template workflow remained to cancel; all live
+  workflows observed after the push were on the current primary heads. Current
+  exact-head CI remains to be monitored through completion.
+- Mandatory fresh-context review is the next gate. Long `webui#auth`,
+  `webui#users-self-service`, and `webui#users-admin` integration tests, the
+  seven runbook configuration builds, and bridge-cluster refresh have not yet
+  started for these rebased heads. No production system or KB page has been
+  changed.
+- The mandatory standalone reviewer inspected the complete four-repository
+  ranges and independently verified the rebase range-diff, exact mail content
+  moves, parser/package safeguards, transactional reconciliation, systemd
+  dependency chain, rolling compatibility, migrations, downstream pins, and
+  commit boundaries. It reported no Blocking, Important, or Advisory findings
+  and approved proceeding to long integration and configuration validation.
+- Residual validation gates are the exact-head live service/cluster activation,
+  three WebUI VM suites, seven configuration builds, bridge-cluster refresh,
+  and current-head CI completion. The reviewer confirmed that this verdict does
+  not authorize production deployment or KB publication.
+- All three required exact-head vpsAdmin VM/browser integration scenarios pass
+  serially without an unexpected kernel build:
+  - `webui#auth`: Playwright example 442.05 seconds, complete script 907.33
+    seconds, complete test 1,163.32 seconds;
+  - `webui#users-self-service`: Playwright example 451.14 seconds, complete
+    script 823.80 seconds, complete test 920.16 seconds;
+  - `webui#users-admin`: Playwright example 395.07 seconds, complete script
+    825.48 seconds, complete test 905.51 seconds.
+- All seven production configurations build successfully in the repository Nix
+  shell with `confctl build --yes`: `int.api1`, `int.api2`, `int.webui1`,
+  `int.webui2`, `prg/proxy`, `prg/int.mon1`, and `prg/int.mon2`. This was
+  build-only validation; no production generation was deployed.
+- The existing single-node development cluster was refreshed on its bridge
+  network without a schema reset. The vpsAdminOS staging input advanced to
+  `399cc60d`; kernel 6.18.46 and its modules were fetched from the binary cache
+  rather than built locally.
+- The first services activation diagnosed a current-template compatibility
+  failure in `dev-clusters/vpsadmin/nix/test.nix`: the seed still read removed
+  `DirectoryTemplate#params` and `#translations` fields. API and recovery
+  services then failed only because they depend on that unsuccessful seed.
+- The workspace seed now calls the public transactional
+  `VpsAdmin::API::MailTemplates.reconcile!` entry point used by production.
+  Nix parsing and `git diff --check` pass. A second services update rebuilt
+  only the seed wrappers and system closure, reconciled the external package,
+  and started the API and recovery worker successfully. The node update and
+  cluster refresh also pass.
+- The refreshed cluster is `running` and `ready: yes`. API, password recovery,
+  console router, supervisor, nginx, osctld, and nodectld are active with no
+  failed units. Build info reports exact vpsAdmin
+  `b63a925f86f8c631e54bcce440c4d7cb12f44110` and `revisionDirty: false`.
+  The public `/oauth2/password-reset` route returns HTTP 200 with the branded
+  page, labelled identifier field, and sign-in link.
+- Database inspection confirms both Czech and English branded variants for
+  `password_recovery` and `user_password_changed`, including sender, reply,
+  return-path, subject, text, and HTML availability. Their source marker is the
+  exact external notification-template store path, and the reconciliation seed
+  completed with status 0.
+- Acceptance fixtures were restored through the current application models:
+  `test-user1` and `test-user2` share
+  `shared-password-recovery@example.test`; only `test-user1` has account MFA
+  enabled and its confirmed, enabled `Acceptance TOTP` device remains present.
+  The three test accounts have no WebAuthn credentials, and the active recovery
+  and submission queues are empty. The cluster remains running for acceptance.
+- The dev-cluster compatibility fix and workspace tracking update must be
+  committed on top-level `master`, followed by a fresh standalone mandatory
+  review. Production deployment and KB publication remain untouched.
+- Workspace commit `99021f0c781c0b8b240b9c37d83336752d4c1783` recorded the
+  first dev-cluster reconciliation fix. The fresh reviewer found no correctness
+  issue for the exact rebased pair, but raised one Important shared-tooling
+  compatibility decision: older vpsAdmin revisions do not implement
+  `reconcile!` and their external repository uses the former root layout.
+- Shared dev-cluster template installation now explicitly requires the
+  declarative reconciler introduced by vpsAdmin `ea956e5e` and the external
+  `templates/` layout. Nix evaluation reports how to set
+  `mail.templates.install` to `false` for older paired revisions. This keeps the
+  shared tool's failure early and clear without adding a legacy runtime adapter;
+  production rollback never executes the dev-cluster seed. Nix parsing,
+  Nixfmt, and `git diff --check` pass. A real services update evaluated the
+  compatible pair, completed activation and seeding, and left the cluster ready
+  with the public recovery route returning HTTP 200. Reviewer closure is pending
+  before the amended workspace commit is pushed.

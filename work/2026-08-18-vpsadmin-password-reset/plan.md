@@ -18,6 +18,9 @@ whether an account exists or can use recovery.
 - `vpsfree-cz-configuration`: pin the exact vpsAdmin feature revision and add
   an operator deployment guide with the production OAuth authorization start
   URI for WebUI, both DokuWiki clients, and Discourse.
+- workspace dev-cluster tooling: seed external notification templates through
+  the same declarative reconciler as deployed systems so the acceptance
+  cluster can run the rebased vpsAdmin revision.
 
 ## Approach
 
@@ -511,3 +514,53 @@ whether an account exists or can use recovery.
   in the KB contract and production configuration, refresh the existing bridge
   development cluster without a schema reset, and leave production deployment
   and KB publication to the operator.
+
+## Current-default rebase and declarative notification templates
+
+- Rebase all four feature branches onto their current upstream default
+  branches. Preserve the password-recovery feature as an additive layer over
+  the new security-advisory and notification-template work on vpsAdmin master.
+- Move the built-in recovery and password-change mails from the removed legacy
+  `api/mail_templates` layout into
+  `api/notification_templates/templates/<name>/email`. Keep subjects in
+  channel-specific `*.subject.erb` variants and adapt the loader specs to the
+  new parsed-variant API. Do not change the reviewed Czech or English copy.
+- Move the branded templates into the external repository's new
+  `templates/<name>/email` package layout. Keep its sender metadata and exact
+  automated-mail footer contract, and validate the complete package with the
+  vpsAdmin notification-template checker.
+- Pin both exact primary revisions in production configuration. `int.api1`
+  packages the branded source and runs
+  `vpsadmin-notification-templates.service`, which transactionally reconciles
+  the shared database before the API or supervisor can start. The
+  password-change template must exist before either upgraded API runs because
+  that notification is independent of the recovery feature flag.
+- Keep api1 masked during the configuration switch. Verify successful template
+  reconciliation and both language variants in the database before running the
+  additive migrations or starting the new API. Switch api2 immediately after
+  api1 is healthy, then deploy both WebUI instances, the auth proxy, and
+  monitoring. Enable recovery only after OAuth client settings are verified.
+- Rollback remains compatible. Disable recovery first and return every process
+  to the preceding configuration. The additive schema can remain, and
+  reconciliation deliberately preserves template rows omitted by the restored
+  source, so the recovery and password-change templates are harmless to old
+  application code. Reversing migrations remains destructive and requires the
+  existing database-backup procedure.
+- Repin the independent KB contract to the exact rebased vpsAdmin revision
+  while retaining the new default-branch security-advisory contract. The
+  password-history navigation remains additive and requires no new screenshot
+  concept or reader-visible managed-page change.
+- Run quick API, migration, template, PHP, localization, lint, hook, KB, and
+  documentation checks on the committed heads. Obtain the mandatory
+  fresh-context review before the long WebUI VM tests, seven configuration
+  builds, bridge-cluster refresh, and current-head CI closure.
+- Refresh the existing bridge cluster without resetting its database. If the
+  current template API exposes a dev-cluster seed incompatibility, update the
+  workspace seed to call the public transactional reconciler, verify its Nix
+  syntax and real activation, commit it on workspace `master`, and obtain a
+  fresh mandatory review of that additional code change.
+- Shared dev-cluster template installation supports the declarative API and
+  package layout introduced by vpsAdmin `ea956e5e`. Reject an older paired
+  worktree during Nix evaluation with instructions to disable external template
+  installation. Production rollback is unaffected because it does not use the
+  workspace seed.
