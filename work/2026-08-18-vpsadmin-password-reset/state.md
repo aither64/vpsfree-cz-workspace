@@ -2879,3 +2879,19 @@
   API topic matrix, the notification-template Check workflow, and the KB Check
   workflow. vpsAdmin broad CI remains queued, and KB managed-page runtime is in
   progress. They are not yet treated as successful.
+- Final runner inspection at 2026-09-01 23:13 CEST records exact current-head
+  workflow state. vpsAdmin broad CI run `33549217076` for
+  `227dab2f6ee83749eee47382b36d6d602648b1c3` is queued behind two running
+  broad suites and an older default-branch run. KB managed-page runtime run
+  `33549880278` for `2e882ad64ed45c477f2e901c4e17552185f37749`
+  is in progress in its whole-repository VM test step after successful checkout,
+  repository checking, and test-state preparation. The foreground watchers were
+  stopped without cancelling either current-head run. Exact-head successful
+  runs are vpsAdmin RuboCop `33549217123`, migration `33549217079`, WebUI
+  PHPUnit `33549217077`, i18n `33549217138`, libnodectld `33549217177`, and API
+  topics `33549217162`; notification-template Check `33549211944`; and KB Check
+  `33549880303`. The two outstanding external-capacity gates remain explicitly
+  pending and are not represented as passes.
+- A final read-only cluster status check reports the development cluster still
+  `running`, topology `single`, network `bridge`, and `ready: yes`, with PID
+  2700830. It was not restarted or reset and remains running for review.
