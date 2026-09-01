@@ -2723,3 +2723,53 @@
   module assertion preserves that dependency. Nix parsing, Nixfmt, and
   `git diff --check` pass. The same reviewer is checking this focused
   correction before long validation starts.
+- The same reviewer completed the focused closure check with no Blocking,
+  Important, or Advisory findings. It independently evaluated the actual
+  single-node bridge configuration and confirmed the final dependency graph:
+  database setup, notification-template reconciliation, repeatable dev seed,
+  then API and supervisor. The correction is cleared for live activation and
+  affected production builds; production deployment and KB publication remain
+  unauthorized.
+- All seven runbook production configurations build successfully in the
+  repository Nix shell, without deployment: `int.api1`, `int.api2`,
+  `int.webui1`, `int.webui2`, `prg/proxy`, `prg/int.mon1`, and `prg/int.mon2`.
+  The first api1 attempt used the containers namespace by mistake and returned
+  `No machines to build`; the corrected `cz.vpsfree/vpsadmin/int.api1` target
+  built successfully and is the accepted result.
+- Rebuilt packaged vpsAdmin gems, then updated the existing services VM and
+  node1 in place and ran the bridge-cluster refresh. The database and VM disks
+  were preserved. No kernel derivation was built locally; the vpsAdminOS input
+  remains at `399cc60d215fb9427447c37133b5eb27e9879a4e`.
+- Live systemd properties confirm notification reconciliation requires and
+  follows database setup; the repeatable dev seed requires and follows both;
+  and the API and supervisor require and follow both reconciliation and the
+  seed. The notification one-shot and seed both report `Result=success` and
+  exit status 0. API, supervisor, and password recovery are active, services
+  has no failed unit, and node1 reports healthy osctld and nodectld.
+- Build info reports exact vpsAdmin
+  `1e9ddc961770ddcf7d9392a4246fae2775009e2d` with `revisionDirty: false`.
+  Database inspection confirms Czech and English subjects and text for
+  `password_recovery` and `user_password_changed`, HTML for both recovery
+  variants, and the expected text-only password-change variants. The
+  `Dev admins` recipient is bound to `daily_report`, closing the review's
+  fresh-database ordering concern.
+- Restored acceptance fixtures through current application models:
+  `test-user1` and `test-user2` share
+  `shared-password-recovery@example.test`; only `test-user1` has account MFA
+  enabled and one confirmed, enabled `Acceptance TOTP`; all three test accounts
+  have no WebAuthn credential. Password recovery is enabled, active recoveries
+  and pending submissions are empty, and the temporary fixture script was
+  removed. Its first invocation lacked `require 'vpsadmin'`, failed before any
+  model mutation, and was corrected; the reusable runner requirement is now
+  recorded in the workspace note.
+- The cluster remains `running`, topology `single`, network `bridge`, and
+  `ready: yes`. The public `/oauth2/password-reset` route returns HTTP 200.
+  Temporary configuration build shell artifacts were moved to
+  `/tmp/vpsadmin-password-reset-config.ozOLjT/`; all four project worktrees are
+  clean.
+- Exact-head quick CI is green for the vpsAdmin migration, RuboCop, PHPUnit,
+  i18n, client, and libnodectld workflows, the notification-template check, and
+  the KB contract check. The vpsAdmin topic API workflow is still in progress,
+  its broad CI workflow is queued, and the KB managed-page runtime workflow is
+  queued. Superseded old-head broad CI and managed-page runs are confirmed
+  cancelled; pending current-head runs are not treated as successful.

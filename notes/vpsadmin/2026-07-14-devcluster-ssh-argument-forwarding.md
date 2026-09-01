@@ -16,6 +16,10 @@ word. For API model inspection, run `vpsadmin-api-shell` interactively and
 send the wrapped Ruby command through its standard input, or copy a prepared
 script and give its path to `vpsadmin-api-ruby`.
 
+The Ruby runner adds the packaged API `lib` directory to the load path but does
+not load the application. A prepared model-inspection script must start with
+`require 'vpsadmin'` before it uses model constants such as `User`.
+
 Do not assume convenience tools such as `jq` are installed on a vpsAdminOS
 Node. Read small evidence files directly or process them on the host.
 
