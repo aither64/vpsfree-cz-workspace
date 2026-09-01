@@ -3,7 +3,7 @@
 ## Repositories
 
 - Session slug and feature branch: `2026-08-31-vpsadmin-notifications`.
-- Worktree group:
+- Worktree group was removed during post-merge cleanup. Its former path was
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-08-31-vpsadmin-notifications/`.
 - `vpsadmin`: base `7b455cad1c0c`, head and merged `master`
   `f2f7c6a9a104`.
@@ -194,12 +194,21 @@ fixes.
   Nix shell with the pre-push hook enabled.
 - Remote `master` and the feature head were verified to match exactly in all
   three repositories after pushing. The temporary merge worktrees and their
-  generated cache/result files were removed. The feature branches and feature
-  worktrees were retained.
+  generated cache/result files were removed.
 - The vpsAdmin `master` quick workflows passed at `f2f7c6a9a104`; its API
   suite and exhaustive CI workflow were still queued or running when the
   merge completed. The already-running feature-branch exhaustive run
   `33495403375` tests the same commit.
+
+## Cleanup
+
+- All three feature worktrees were verified clean and removed with
+  `git worktree remove`; the now-empty initiative worktree group was removed
+  as well.
+- Generated files within those worktrees were removed with the worktrees.
+- Local and remote feature branches were intentionally retained. Each feature
+  branch and its corresponding remote `master` still resolve to the same
+  commit.
 
 ## Remaining work
 
