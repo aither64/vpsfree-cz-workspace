@@ -19,10 +19,12 @@ values from the expansion operation instead of mutable dataset status.
 - Top-level workspace: maintain this initiative's plan, state, and any durable
   setup lessons.
 
-The implementation branches are stacked on the unmerged
-`2026-08-31-vpsadmin-notifications` branches because the expansion templates
-already use that initiative's declarative notification layout. Exact base
-commits are recorded in `state.md`.
+The implementation branches were initially stacked on
+`2026-08-31-vpsadmin-notifications` because the expansion templates use that
+initiative's declarative notification layout. That base subsequently merged;
+the initiative branches were already direct descendants of the resulting
+default branches and were fast-forwarded into them without changing commit
+IDs. Exact base and integration commits are recorded in `state.md`.
 
 ## Approach
 

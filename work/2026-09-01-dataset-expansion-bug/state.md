@@ -9,7 +9,7 @@
   - stacked base: `origin/2026-08-31-vpsadmin-notifications` at
     `f2f7c6a9a10437892929fdf99b968e1010aa19b0`
   - head: `9fc0648accd414246d6422e67106ae7217486020`
-  - clean and pushed
+  - worktree removed after merge; feature branch retained
 - `vpsfree-mail-templates` (upstream repository
   `vpsfree-notification-templates`)
   - branch: `2026-09-01-dataset-expansion-bug`
@@ -18,7 +18,7 @@
   - stacked base: `origin/2026-08-31-vpsadmin-notifications` at
     `c38e56c945d1fb0df41a26b6c9127368eb592373`
   - head: `9e1ddbd973703cf48a43f0e5afc2bfb392a8b676`
-  - clean and pushed
+  - worktree removed after merge; feature branch retained
 - `vpsfree-cz-configuration`
   - branch: `2026-09-01-dataset-expansion-bug`
   - worktree:
@@ -26,19 +26,20 @@
   - stacked base: `origin/2026-08-31-vpsadmin-notifications` at
     `5aeb332c7841ec0f277b0062697805743b4cae24`
   - head: `3d09a0f1e50184e65f2547a0913f4aa76399f66b`
-  - clean and pushed
+  - worktree removed after merge; feature branch retained
 - Top-level workspace: this plan, state, and one reusable API-suite note only;
   unrelated shared changes are being left untouched.
 
 ## Status
 
-Implementation is committed and pushed in all three repositories. Focused and
-broad tests, lint, hooks, template checks, flake checks, and both API-service
-configuration builds pass. Mandatory fresh-context review reported no blocking
-or important findings. The two selected vpsAdminOS node builds cannot evaluate
-on this machine because its required initrd SSH secret is absent; both stop
-before any derivation, including a kernel, is built. Nothing has been deployed
-or activated.
+Implementation is fast-forwarded and pushed to `master` in all three
+repositories. Focused and broad tests, lint, hooks, template checks, flake
+checks, and API-service configuration builds pass. Mandatory fresh-context
+review reported no blocking or important findings. The two selected vpsAdminOS
+node builds cannot evaluate on this machine because its required initrd SSH
+secret is absent; both stop before any derivation, including a kernel, is
+built. Integration and feature worktrees have been removed while branch refs
+are retained. Nothing has been deployed or activated.
 
 ## Implementation commits
 
@@ -58,6 +59,57 @@ or activated.
   - `48497234`: pin `vpsadminStaging` to `9fc0648a`.
   - `c39e59e5`: pin `vpsadminProduction` to `9fc0648a`.
   - `3d09a0f1`: pin `vpsfreeNotificationTemplates` to `9e1ddbd9`.
+
+## Integration
+
+- After the `2026-08-31-vpsadmin-notifications` work merged, all three
+  `origin/master` refs were exactly the stacked base commits already recorded
+  above. `git rebase origin/master` was therefore a no-op in every feature
+  worktree, and all feature commit IDs and configuration pins remained valid.
+- Fresh temporary merge worktrees were created under
+  `worktrees/2026-09-01-dataset-expansion-bug/merge/`. Each local `master` was
+  first fast-forwarded to `origin/master` and then fast-forwarded to the
+  initiative branch; no merge commit was created.
+- vpsAdmin `master` was pushed from `f2f7c6a9a` to
+  `9fc0648accd414246d6422e67106ae7217486020`.
+- `vpsfree-notification-templates` `master` was pushed from `c38e56c9` to
+  `9e1ddbd973703cf48a43f0e5afc2bfb392a8b676` after the vpsAdmin producer
+  revision was present on its own `master`.
+- `vpsfree-cz-configuration` `master` was pushed from `5aeb332c` to
+  `3d09a0f1e50184e65f2547a0913f4aa76399f66b` last, after every pinned source
+  revision was present on its upstream `master`.
+- The configuration checkout/post-merge hooks initially reported missing gems
+  because the Nix shell had prepared the bundle for the stale local `master`
+  before it was fast-forwarded across the notification-base dependency update.
+  Re-entering `nix develop` in the merged worktree installed the current
+  bundle; `confctl` validation and the normal push then succeeded. No hook was
+  bypassed.
+- Verification from the temporary merge worktrees passed:
+  - all five changed API spec files: 24 examples, 0 failures, seed 34701;
+  - nodectld dataset-expander specs: 3 examples, 0 failures, seed 42971;
+  - notification-template `nix flake check --print-build-logs`: pass;
+  - configuration channel listing: the three vpsAdmin roles resolve to
+    `9fc0648a` and notification templates resolve to `9e1ddbd9`;
+  - `int.api1` configuration build: generation
+    `2026-09-01--14-38-47`.
+- The integration only moved existing reviewed commits and generated pins; no
+  source diff or commit ID changed, so the completed mandatory review remained
+  applicable and no second review was required.
+- The three temporary merge worktrees and isolated nodectld gem cache were
+  removed after their pushes. Feature branch refs are retained by policy.
+- Post-merge GitHub Actions at the integrated heads reported:
+  - notification-template Check, vpsAdmin RuboCop, i18n health, and
+    libnodectld Specs: success;
+  - vpsAdmin API topic matrix: 25 of 26 jobs succeeded; the final full-platform
+    job was canceled by `cancel-in-progress: true` when the separate
+    security-advisory initiative advanced `master` to `ba1217fb`;
+  - the earlier exhaustive feature-head API matrix at the identical
+    `9fc0648a` code commit succeeded in all 26 jobs, including full platform.
+- The cancellation was not a test failure: its RSpec step was active when the
+  newer master push superseded the run. The newer `ba1217fb` vpsAdmin master
+  and `74f2c58b` configuration master both contain this initiative's commits as
+  ancestors. Their queued workflows belong to the later initiative and were
+  left untouched.
 
 ## Quick verification
 
@@ -279,13 +331,15 @@ or activated.
 
 ## Cleanup
 
-- All three worktrees and feature branches are retained for review and
-  integration. Remove the worktrees after the initiative is merged or
-  abandoned;
-  retain branch refs per workspace policy.
+- All three feature heads are ancestors of their current upstream `master`.
+  The feature and temporary merge worktrees were removed; feature branch refs
+  remain locally and remotely per workspace policy.
 - Mandatory change review completed with no blocking or important findings.
 - The full libnodectld suite, final combined API regression suite, complete API
   topic-parallel CI matrix, notification CI, and both API configuration builds
   pass. Selected node builds are blocked only by the missing local initrd SSH
   secret and did not start a kernel build.
+- Post-merge checks passed except for the externally superseded final API
+  platform shard described in `Integration`; the identical feature head had
+  already passed that shard.
 - No deployment or activation was performed.
