@@ -19,8 +19,10 @@ legacy seed no longer matched its data model.
 Configure every external package through
 `vpsadmin.api.notificationTemplates` in `replace` mode. The upstream
 `vpsadmin-notification-templates.service` builds the effective package and
-uses the public transactional reconciler before the API or supervisor starts.
-The development cluster no longer duplicates that work in its seed.
+uses the public transactional reconciler. The repeatable development seed
+requires that service before it attaches configured mail recipients, and the
+API and supervisor require both steps. The development cluster no longer
+duplicates reconciliation in its seed.
 
 External installation requires authoritative notification-template mode,
 introduced by vpsAdmin commit `cbd0fa16`, and the declarative `templates/`
