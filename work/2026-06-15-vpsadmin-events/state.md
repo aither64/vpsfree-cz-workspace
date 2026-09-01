@@ -19366,3 +19366,87 @@ container, and no pending release. The mirrored and staged data were retained.
 - Quick verification is complete. One fresh mandatory default-replay review is
   next; long configuration builds, bridge integration checks, final
   configuration publication, and current-head CI monitoring remain pending.
+
+### Mandatory review follow-up and final pins
+
+- Fresh standalone reviewer Gibbs completed the required
+  `mandatory-change-review` before long integration work. The initial verdict
+  was fail with two blocking findings and one important finding:
+  - KB PNG provenance was stale after the final vpsAdmin wording change;
+  - the KB replay retained five successive vpsAdmin pin commits instead of one
+    authoritative dependency update; and
+  - six Czech notification confirmation prompts still used formal address.
+  The reviewer found no advisory issues and accepted the dropped imperative
+  template installer/uploader commits, declarative parser/reconciler ownership,
+  migration timestamps, deferred registration semantics, and authorization,
+  tenant-isolation, and deployment behavior.
+- Applied the user-facing writing rules to all six Czech prompts. They now use
+  informal singular `Opravdu chceš ...`; `které jej` was also corrected to
+  `které ho`. Regenerated WebUI PO/MO catalogs, reran the five-file overlap
+  suite, and amended the existing Czech wording commit. Hooks passed. The final
+  published vpsAdmin head is
+  `4bef8195077ffcb63acf74ac89f0a41794a3f028`.
+- Rewrote the KB branch a second time from its recorded backup
+  `backup/2026-06-15-vpsadmin-events-before-review-fixes-20260902`. Four
+  obsolete intermediate pin commits were dropped and the mixed capture commit
+  retained only its functional/capture changes. The replay now has one final
+  vpsAdmin pin commit, consistently setting `flake.nix`, `flake.lock`,
+  `captures.json`, `contract/navigation.yml`, and `contract/pages.yml` to
+  `4bef8195`.
+- A fresh-cluster capture exposed one compatibility error in the KB seed: it
+  still called the removed `NotificationTemplates.install_defaults!` entry
+  point. Commit `5390a8d` now invokes the authoritative
+  `NotificationTemplateReconciler.install_defaults!`. The first failed
+  disposable cluster was stopped and reset; the rebuilt empty database
+  migrated, seeded, published its pool, and refreshed both nodes successfully.
+- Bridge capture networking was unavailable because the active independent
+  `2026-08-18-vpsadmin-password-reset` cluster owns the shared bridge IP and
+  WebUI domains. Used this initiative's existing
+  `2026-06-15-vpsadmin-events-captures` local-network cluster instead, without
+  touching the other session. This is the documented exception to the normal
+  bridge default.
+- Recaptured all 31 notification checkpoints in each of Czech and English
+  against vpsAdmin `4bef8195`, then updated the inventory hashes. The first
+  Czech command wrote all checkpoints but hung after Chromium closed because
+  the local CONNECT proxy retained its upstream tunnel. Commit `f643690`
+  tracks and closes both tunnel endpoints; the full English command then wrote
+  all 31 checkpoints and exited normally. Contact-sheet review found complete,
+  correctly rendered inventories; the Czech OOM and incident composers visibly
+  contain `Matchery můžeš upravit`.
+- Final KB validation passed 91 concepts, 182 variants, 95 Czech references,
+  90 English references, 182 PNGs, 61 controls, 49 paths, 64 capture concepts,
+  34 semantic selectors, 160 bindings, 9 exceptions, 4 managed pages, 8 page
+  variants, 12 runtime tests, 21 executable samples, and all 60 Ruby tests.
+  The cluster was stopped after capture. Rewritten KB head
+  `1cb7f48c2269752bd924f1c1adcd2dd46ee436a9` is published with an explicit
+  lease; superseded active managed-page run `33562208229` was cancelled.
+- Notification templates now pin final vpsAdmin `4bef8195`; the complete check
+  passed 76 templates and 750 files. Amended published head is
+  `ac29bf8a00fc98cb15f1d89197e0968ebf3401b8`.
+- Removed both obsolete configuration pin pairs and regenerated direct final
+  pins from the functional parent with `confctl`. Nixfmt and Rake hooks passed.
+  Final published configuration head
+  `956faa1019a2566117338e486f992a5b28dc4637` contains exactly one generated
+  `vpsadminServices` pin to `4bef8195` and one
+  `vpsfreeNotificationTemplates` pin to `ac29bf8a`; the SMS gateway remains
+  `af7b3faf`.
+- Final configuration quick checks passed all 49 RSpec examples, event-i18n
+  health, and a strict MkDocs build. Production evaluation without deployment
+  passed:
+  - `confctl build -y 'cz.vpsfree/vpsadmin/int.api*'` built API1 and API2 as
+    generation `2026-09-02--00-51-17`;
+  - `confctl build -y 'cz.vpsfree/vpsadmin/int.rabbitmq*'` built all three
+    brokers as generation `2026-09-02--00-53-22`; and
+  - `confctl build -y 'cz.vpsfree/containers/prg/int.alerts*'` built both
+    Alertmanager/Prometheus containers as generation
+    `2026-09-02--00-55-37`.
+  The conditional APU build remains unavailable because the required external
+  `/srv/iso-images/systemrescue-11.01-amd64.iso` is absent, matching the
+  existing documented local prerequisite. No production generation was
+  activated.
+- Current-head GitHub results at this checkpoint: all seven HaveAPI workflows,
+  notification-template Check, KB Check, vpsAdmin WebUI PHPUnit, i18n health,
+  and complete topic-parallel API matrix, configuration event-i18n, and both
+  IRC workflows pass. Remaining exact-head aggregate/runtime workflows are
+  still being monitored. Superseded vpsAdmin aggregate/topic runs and the KB
+  managed-page runtime were cancelled only after their branch heads changed.
