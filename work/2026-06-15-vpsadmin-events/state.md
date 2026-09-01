@@ -19450,3 +19450,38 @@ container, and no pending release. The mirrored and staged data were retained.
   IRC workflows pass. Remaining exact-head aggregate/runtime workflows are
   still being monitored. Superseded vpsAdmin aggregate/topic runs and the KB
   managed-page runtime were cancelled only after their branch heads changed.
+
+### Final branch and CI audit
+
+- Refetched all affected SSH remotes after publication. Authoritative defaults
+  remained at the exact bases used for the replay. HaveAPI, vpsAdmin, the Go
+  client, KB contracts, configuration, and notification templates are all zero
+  commits behind their defaults; their local and remote feature heads match.
+  Confctl, Terraform provider, vpsAdminOS, IRC bot, the PHP HaveAPI client, and
+  the SMS gateway remain exactly at their current authoritative defaults.
+- Exact final pins were rechecked after the fetch:
+  - notification templates -> vpsAdmin `4bef8195`;
+  - all five KB provenance/pin fields -> vpsAdmin `4bef8195`;
+  - production configuration -> vpsAdmin `4bef8195`, notification templates
+    `ac29bf8a`, and SMS gateway `af7b3faf`.
+- No current-head GitHub workflow has failed. Terminal success at handoff:
+  - HaveAPI: all seven Ruby/PHP/JavaScript/Go/lint/i18n workflows;
+  - vpsAdmin: WebUI PHPUnit, i18n health, and the complete topic-parallel API
+    matrix;
+  - notification templates: Check;
+  - KB contracts: Check;
+  - configuration: Event i18n health;
+  - confctl: RuboCop and RSpec;
+  - Terraform provider: Go Tests;
+  - vpsAdminOS: RuboCop, RSpec, OS/cache setup, and AMD livepatch lifecycle;
+  - IRC bot: RSpec and Integration Tests.
+- Current-head long/shared-runner work remains queued or active with no failure
+  signal: vpsAdmin aggregate `33564289232`, KB managed-page runtime
+  `33567907533`, confctl tests `33562554958`, Terraform integration
+  `33562533503`, and vpsAdminOS image/aggregate runs `33562536297` and
+  `33562536093`. The plan explicitly does not wait for the hours-long aggregate
+  integration workflow; all of these runs were left intact because they match
+  current heads.
+- All initiative worktrees are clean. Generated configuration `.bin` and
+  `.bundle` caches were moved, not deleted, to
+  `/tmp/vpsfree-config-caches-final-20260902.55nDYE`.
