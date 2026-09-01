@@ -19273,3 +19273,96 @@ Releasing ownership required clearing the pending-release marker for
 `kb-release-main-page-link-en.yml`; this did not publish anything to
 production. A subsequent status check reported no owner, a stopped staging
 container, and no pending release. The mirrored and staged data were retained.
+
+## 2026-09-01 rebase onto current defaults
+
+- Verified that `bin/dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG=2026-06-15-vpsadmin-events` identify this
+  initiative. The shared workspace remains on `master`; unrelated tracked and
+  untracked changes are being preserved.
+- Fetched every affected repository over its SSH remote. The rewritten branch
+  starts at HaveAPI `d4941f2b`, vpsAdmin `131ef638`, the generated Go client
+  `cbb8285e`, KB contracts `782dce2`, vpsFree.cz configuration `319dce2a`, and
+  notification templates `6dda345`.
+- Created and pushed
+  `backup/2026-06-15-vpsadmin-events-before-default-rebase-20260901` in all
+  six rewritten repositories. Each remote backup ref was compared with the
+  corresponding exact local head before history changes began.
+- The configuration repository's pre-push hook initially refused the backup
+  push because the current Overcommit configuration had a new signature. The
+  ambient shell did not provide `overcommit`; `nix develop -c bundle exec
+  overcommit --sign` installed the trusted signature, after which the hook and
+  backup push succeeded without bypassing checks.
+- HaveAPI's five feature commits were rebased cleanly onto current `master`
+  `0138a2a8497604ba6db98453a9f02cda2892a83e`. The published feature head is
+  `1b87ba84417777215225b6a53654357167c28e11`, zero commits behind the default.
+  Focused Ruby documentation/example coverage passed 12 examples and the Go
+  generator integration passed 9 examples.
+- Replayed vpsAdmin's event series onto current `master`
+  `cbd0fa16434947a4273610389d84216bcde35e72`. Two obsolete feature commits
+  that installed and uploaded managed templates were dropped because the
+  default branch now owns the declarative notification-template package,
+  parser, and reconciler. The replay preserves the default parser and
+  reconciler while extending their protocol-aware behavior.
+- Retimestamped the twelve unreleased event migrations to
+  `20260901120000` through `20260901121100`, after the current default schema,
+  and regenerated schema version `2026_09_01_121100`. No stale disposable
+  database guards were added. Default-branch OOM transaction diagnostics, DNS
+  locking/events/CAA support, and public registration routes were retained.
+- Reconciled the default branch's synchronous registration mail assertion with
+  the event branch's intentional result-event lifecycle. A diagnostic focused
+  run confirmed registration approval has neither a completed Event nor a
+  `MailLog` before the node operation finishes; the obsolete assertion was
+  folded into the existing event-spec reconciliation commit. Dedicated user
+  creation specs continue to cover both immediate and deferred successful
+  `user.account_created` delivery.
+- The published vpsAdmin head is
+  `73a34eed5c94cf874bfedd15fb2f2058e944eefd`, zero commits behind and 128
+  commits ahead of current `master`. Repository hooks passed on all new replay
+  commits. Focused parser/reconciler/variant/OOM/delivery coverage passed 82
+  examples, migration coverage passed 33 examples, and the final five-file
+  overlap suite passed 39 examples in 5 minutes 23 seconds.
+- Rebased notification templates onto `master`
+  `9e1ddbd973703cf48a43f0e5afc2bfb392a8b676`, retaining the default tooling
+  and dataset-expansion wording while replaying nine multichannel, monitoring,
+  grouping, mute-link, and documentation commits. The exact vpsAdmin input is
+  pinned to `73a34eed`; `nix run .#check` passed all 76 templates and 750
+  files. Published head:
+  `0b75478c52b58f2c31da22b95d65cae91881829f`.
+- Rebased the KB capture/contract branch onto `master`
+  `5dd94f1609ecb0742360d6b0b2b8fa99c190a519` and pinned capture, navigation,
+  managed-page, and Nix metadata consistently to vpsAdmin `73a34eed` in
+  published head `8dfff27490ebf745779be931336736ae9bc0d579`.
+  `nix develop -c bash -lc 'bin/validate && bin/check'` passed 61 controls, 49
+  paths, 64 capture concepts, 34 selectors, 160 annotation bindings, 9
+  exceptions, 4 managed pages, 8 variants, 12 tests, 21 executable samples,
+  all Ruby suites, and the 182-PNG inventory.
+- The generated Go client already contained current `master`
+  `1d9240f3d27b5831baf3694baab5fe06294875d8` and remains published at
+  `cbb8285e9493da1dd49ca84d51985e05944147d2`. `nix-shell --run 'go test
+  ./...'` passed its compile smoke test.
+- Rebased ten functional vpsFree.cz configuration commits onto current
+  `master` `28a39a52707aa009a316799c75cd29e7762c3ec3`. The obsolete imperative
+  template installation and intermediate source-pin commits were dropped;
+  the default branch's declarative `vpsfreeNotificationTemplates` source is
+  retained. Generated `confctl` commits now pin `vpsadminServices` to
+  `73a34eed` and `vpsfreeNotificationTemplates` to `0b75478c`; the SMS gateway
+  remains exactly `af7b3faf`. Current clean local head is
+  `245be47f7723786e0286ced9eaac26ac6c5c29ad`, 12 commits ahead of `master`.
+- Configuration quick checks passed all 49 RSpec examples, event i18n health,
+  strict MkDocs, and hook-managed Nixfmt/Rake checks. Generated `.bin`,
+  `.bundle`, `.rubocop_cache`, and `site` directories were moved to
+  `/tmp/vpsfree-config-caches-20260901.mktzq8` so the worktree is clean.
+- Default-equivalent support branches were fast-forwarded and published at
+  their current defaults: confctl `6ed1715c`, Terraform provider `29b47dd9`,
+  vpsAdminOS staging `285369696`, and IRC bot `88906fd5`. The PHP HaveAPI
+  client already equals master at `0f5f9dad`; the SMS gateway's feature branch
+  is its remote default at `af7b3faf`. Updated Overcommit signatures for
+  confctl and the IRC bot were verified in their Nix shells before push.
+- Final source publication used explicit `--force-with-lease` values matching
+  the recorded old feature heads. HaveAPI, vpsAdmin, notification templates,
+  and KB contracts now match their local replayed heads. The configuration
+  branch remains unpublished until the mandatory review completes.
+- Quick verification is complete. One fresh mandatory default-replay review is
+  next; long configuration builds, bridge integration checks, final
+  configuration publication, and current-head CI monitoring remain pending.

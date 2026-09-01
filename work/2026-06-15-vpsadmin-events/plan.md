@@ -3710,3 +3710,45 @@ request/response value, database schema, persisted state, RabbitMQ message, or
 deployment ordering. Mixed old and new API/WebUI processes remain compatible,
 and rollback requires no data conversion. Refresh the WebUI documentation
 contract pin and update the bridge development cluster after review.
+
+## 2026-09-01 Current-default replay
+
+Rebase every event-system feature branch onto its current authoritative
+default, keeping default-equivalent support branches fast-forwarded. Replay
+the event-specific patches as a clean logical series instead of retaining
+commits whose notification-template reorganization is already on the default
+branch. Preserve the feature's later multichannel template layout and behavior
+on top of the merged `notification_templates` model, parser, reconciler, and
+declarative Nix package.
+
+Affected repositories are HaveAPI, vpsAdmin, the generated Go client,
+vpsFree.cz configuration, notification templates, and the WebUI/KB capture
+contract. Confctl, the PHP HaveAPI client, Terraform provider, vpsAdminOS, IRC
+bot, and SMS gateway carry no remaining event-only patch and must end at their
+current defaults. Keep remote backup refs for every rewritten branch, publish
+rewritten heads with explicit leases, regenerate the exact vpsAdmin/template
+configuration pins through `confctl`, and validate current-head CI.
+
+Compatibility and deployment:
+
+- the replay keeps the event schema and API/message contracts from the feature;
+  draft event migrations are retimestamped after the current default schema and
+  still assume the immediately preceding migration without stale-database
+  guards;
+- the merged notification-template parser, reconciler, associations, and Nix
+  installation path remain authoritative, while the feature extends them with
+  Telegram, SMS, grouping, and mute-link variants;
+- account-created notification rendering remains deferred until its transaction
+  operation succeeds, so registration approval no longer promises a synchronous
+  mail-log row;
+- exact source revisions change, but no new deployment ordering or rollback
+  requirement is introduced beyond the existing event-system maintenance
+  cutover; and
+- production KB content and running production services remain out of scope.
+
+Run focused HaveAPI, vpsAdmin, generated-client, template, KB-contract, and
+configuration checks before one fresh mandatory review. After review, build
+the affected vpsAdmin configurations, exercise the event integration paths on
+bridge networking where practical, publish any remaining rewritten branch,
+and monitor every current-head workflow while canceling only superseded active
+runs.
