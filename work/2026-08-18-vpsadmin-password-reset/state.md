@@ -2649,5 +2649,15 @@
   production rollback never executes the dev-cluster seed. Nix parsing,
   Nixfmt, and `git diff --check` pass. A real services update evaluated the
   compatible pair, completed activation and seeding, and left the cluster ready
-  with the public recovery route returning HTTP 200. Reviewer closure is pending
-  before the amended workspace commit is pushed.
+  with the public recovery route returning HTTP 200.
+- The same standalone reviewer inspected amended workspace commit
+  `1e2c9e04e412e8441f59dc9dc7132db6b412523a` and reported no Blocking,
+  Important, or Advisory findings. The earlier compatibility finding is fully
+  resolved. Its only workspace residuals are that the deliberate rejection and
+  opt-out branches were inspected rather than activated with an old cluster,
+  and a future harmless reformat of the public Ruby signature would fail safe
+  until the evaluation guard is updated.
+- Temporary `.bin/` and `.bundle/` directories created by production
+  configuration validation were moved out of the worktree to
+  `/tmp/vpsadmin-password-reset-config-artifacts.xma9HC/`. All four project
+  worktrees are clean and match their pushed SSH upstream branches.
