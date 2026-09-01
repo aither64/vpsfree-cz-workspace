@@ -188,8 +188,9 @@ and remote feature branches.
   mail log alone does not prove final delivery. The operator subsequently
   reported removing the inspected log and completing the cleanup. Those
   production changes were not performed or independently verified by this
-  development session; a follow-up dry-run should report all targets already
-  absent and no remaining references.
+  development session. The operator then confirmed that a follow-up dry-run
+  reported all targets absent; that path also validates that no table with a
+  `mail_template_id` column still references target IDs 71--76.
 
 ## Open questions
 
