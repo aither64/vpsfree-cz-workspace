@@ -4,14 +4,12 @@
 
 - `vpsadmin`
   - branch: `2026-08-31-vps-migrate-debug`
-  - worktree:
-    `worktrees/2026-08-31-vps-migrate-debug/vpsadmin`
+  - worktree: removed after merge
   - base: `origin/master`
     `3ded1bb20e9eceab2e47152cc438aaebda98f767`
 - `vpsfree-cz-configuration`
   - branch: `2026-08-31-vps-migrate-debug`
-  - worktree:
-    `worktrees/2026-08-31-vps-migrate-debug/vpsfree-cz-configuration`
+  - worktree: removed after merge
   - base: `origin/master`
     `6dbee52ed2173bda482796db5b33f70a5dcd035d`
 - Top-level workspace: this plan and state only; unrelated shared changes are
@@ -28,8 +26,14 @@ follow-up is pushed as `7b455cad1`, and configuration commit `64cacb34` pins
 that exact revision. It logs unexpected non-Show `RecordNotFound` exceptions
 outside the test environment while suppressing expected Show misses and RSpec
 noise. Mandatory review found no issue, and all workflows for the final
-vpsAdmin head succeeded. No direct production database access was used by this
-development session.
+vpsAdmin feature head succeeded. Both feature heads were then fast-forwarded
+into their remote `master` branches, with vpsAdmin at `7b455cad1` and
+configuration at `64cacb34`. Master API Specs and the other short workflows
+succeeded; at the user's direction, the repeated full aggregate CI run was
+left running without waiting for it. All initiative worktrees and generated
+hook caches were removed, while both local and remote feature branches were
+preserved. No direct production database access was used by this development
+session.
 
 ## Commands run
 
@@ -192,6 +196,34 @@ development session.
   vpsAdmin `7b455cad1` and configuration `64cacb34`. The vpsAdmin worktree is
   clean; the configuration worktree retains only the previously documented
   untracked `.bin/` and `.bundle/` hook directories.
+- Fetched both default branches immediately before integration and confirmed
+  each `origin/master` was an ancestor of its feature head. No rebase was
+  needed.
+- Created fresh detached integration worktrees from each `origin/master` and
+  fast-forwarded them with `git merge --ff-only`. The first attempt used paths
+  relative to the bare repositories and created clean temporary worktrees
+  under their bare directories; they were removed before recreating the
+  worktrees with absolute initiative paths. This known path-resolution trap is
+  already documented in
+  `notes/cross-project/2026-05-28-bare-head-worktree.md`.
+- Revalidated the exact integration trees: `git diff --check` passed in both,
+  vpsAdmin's CI selector test passed with 16 runs and 55 assertions, and
+  configuration flake metadata evaluated without changing the lock file.
+- Pushed vpsAdmin `master` to `7b455cad1`. The first configuration push was
+  blocked by its pre-push hook because the ambient shell lacked pinned gems;
+  rerunning inside `nix develop` executed the hook and pushed configuration
+  `master` to `64cacb34`. Remote inspection confirmed that each default and
+  preserved feature branch points to the same intended head.
+- Master-triggered API Migration Specs, RuboCop, i18n health, libnodectld
+  Specs, and API Specs (topic parallel), including topic coverage, all passed.
+  Aggregate CI run `33475835792` was still running when the user explicitly
+  chose not to wait for the duplicate full-suite validation; it was not
+  cancelled.
+- Removed both detached integration worktrees and both initiative feature
+  worktrees. The only untracked content removed was generated `.bin/` and
+  `.bundle/` hook caches in the two configuration worktrees. Removed the now
+  empty `worktrees/2026-08-31-vps-migrate-debug` directory. Feature branch refs
+  were retained locally and remotely.
 
 ## Results
 
@@ -303,15 +335,17 @@ development session.
   diagnostics in tests so normal negative-path specs do not pollute stderr.
 - Keep the existing localized 404 response mapping unchanged and do not log
   request payloads or other sensitive request context.
-- Push the reviewed vpsAdmin revision and its exact generated configuration
-  channel pin, but do not merge or deploy either branch as part of this
-  development session.
+- Fast-forward both reviewed heads to their default branches when requested,
+  pushing vpsAdmin before configuration so the pinned revision is present on
+  the vpsAdmin default branch first. Preserve the feature branch refs.
+- Treat the master API Specs workflow as the final merge gate at the user's
+  direction. Leave the duplicate aggregate CI run active without waiting for
+  or cancelling it.
 
 ## Cleanup
 
-- No production state was changed. Central systems were accessed read-only.
-- Remove both initiative worktrees after the branches are eventually merged or
-  abandoned; retain branch refs unless the user explicitly asks to delete them.
-- The configuration worktree contains untracked `.bin/` and `.bundle/`
-  directories created by its Nix/Bundler hook setup. They remain unmodified and
-  can be removed with the worktree during later cleanup.
+- No production runtime state was changed. Central systems were accessed
+  read-only; repository default branches were updated as explicitly requested.
+- Cleanup is complete: all four initiative and integration worktrees and their
+  generated hook caches are removed. Both local and remote feature branches
+  remain available.
