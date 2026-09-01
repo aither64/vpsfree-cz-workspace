@@ -2708,3 +2708,18 @@
   mode. Quick workspace verification, the mandatory fresh review,
   configuration builds, live bridge-cluster refresh, fixture restoration, and
   final CI inspection remain pending.
+- Workspace implementation commit
+  `23576275dfcaa70642924d6c8a120e2160aca672` and tracking commit
+  `2ba0a4393708ff341595b3443c0cf71025a072ef` pass Nix parsing, Nixfmt, and
+  `git diff --check`. The mandatory standalone review found no product-series,
+  security, deployment, pin, or commit-split issue, but reported one Blocking
+  fresh-database ordering defect: the repeatable dev seed could attach mail
+  recipients before external reconciliation and silently skip missing
+  templates.
+- Workspace correction commit
+  `6dcc6e81a95ff76a141fbdffca45c2f7ee7a6667` makes the dev seed require and
+  follow `vpsadmin-notification-templates.service` when external installation
+  is enabled. Both the API and supervisor require the seed, and an evaluated
+  module assertion preserves that dependency. Nix parsing, Nixfmt, and
+  `git diff --check` pass. The same reviewer is checking this focused
+  correction before long validation starts.
