@@ -5,18 +5,22 @@
 - `vpsadmin`
   - branch: `2026-09-01-security-advisory-lists`
   - worktree: `worktrees/2026-09-01-security-advisory-lists/vpsadmin`
+    (removed after merge)
   - base: `origin/master`
 - `vpsf-status`
   - branch: `2026-09-01-security-advisory-lists`
   - worktree: `worktrees/2026-09-01-security-advisory-lists/vpsf-status`
+    (removed after merge)
   - base: `origin/master`
 - `vpsfree-kb-contracts`
   - branch: `2026-09-01-security-advisory-lists`
   - worktree: `worktrees/2026-09-01-security-advisory-lists/vpsfree-kb-contracts`
+    (removed after merge)
   - base: `origin/master`
 - `vpsfree-cz-configuration`
   - branch: `2026-09-01-security-advisory-lists`
   - worktree: `worktrees/2026-09-01-security-advisory-lists/vpsfree-cz-configuration`
+    (removed after merge)
   - base: `origin/master`
 
 ## Status
@@ -24,13 +28,17 @@
 - Initiative session verified from `VPSFREE_DEV_SESSION_SLUG` and
   `bin/dev-session current`.
 - Plan and compatibility decisions recorded.
-- All repository worktrees and required hook frameworks are ready.
+- All repository worktrees and required hook frameworks were prepared before
+  implementation and integration.
 - All intended changes are committed and quick verification has passed.
 - The mandatory standalone review completed without blockers. Its pagination
   finding was fixed and verified before long integration tests.
-- Application, contract, and configuration branches are pushed. Local
-  validation is complete except for the known status-host ISO prerequisite;
-  current-head GitHub Actions are being monitored.
+- All four feature branches were rebased or regenerated on their current
+  default branches, verified, and fast-forwarded into `master`.
+- Local and remote feature branches are retained at the merged revisions.
+- Feature and temporary integration worktrees have been removed.
+- Default-branch GitHub Actions have no observed failures; self-hosted jobs
+  that had not acquired a runner at cleanup time remain queued.
 
 ## Commands run
 
@@ -70,6 +78,24 @@
 - `nix develop -c confctl build -y 'cz.vpsfree/vpsadmin/*'`.
 - `nix develop -c confctl build -y
   'cz.vpsfree/machines/prg/apu'`.
+- Fetched all four current default branches and rebased the feature branches.
+- Used `git range-diff` to verify that the rebased vpsAdmin series is
+  patch-identical to the reviewed series.
+- Re-ran the complete vpsAdmin advisory API spec, focused RuboCop, WebUI PHP
+  syntax, gettext health, and Playwright JavaScript syntax checks after the
+  rebase and again from the temporary integration worktree.
+- Re-ran `go test ./...` and `make i18n-health` from the vpsf-status
+  integration worktree.
+- Advanced the KB contract pin with `nix flake update vpsadmin`, amended its
+  single pin commit, and re-ran `nix develop -c bin/check` from the integration
+  worktree.
+- Dropped superseded generated configuration pins while rebasing, then ran
+  `confctl inputs channel set --commit` once for the final vpsAdmin revision
+  and once for the final vpsf-status revision.
+- Fast-forwarded all four feature tips from detached integration worktrees and
+  pushed them to the corresponding `master` branches.
+- Removed the initiative and temporary integration worktrees while retaining
+  the local and remote feature branches.
 
 ## Results
 
@@ -80,9 +106,9 @@
   omits the field from JSON.
 - The current KB contract has no advisory-specific page or capture bindings.
 - vpsAdmin commits:
-  - `5a94d2873` `api: interleave security advisory drafts by date`
-  - `d6aa30f5c` `webui: link recent advisories to the full list`
-  - `bb68d02f9` `api: paginate advisories by effective date`
+  - `4d4b3cab4` `api: interleave security advisory drafts by date`
+  - `594f7ca80` `webui: link recent advisories to the full list`
+  - `ba1217fb2` `api: paginate advisories by effective date`
 - Focused API ordering example passed, RuboCop found no offenses, PHP and
   JavaScript syntax checks passed, gettext catalogs are current, and all
   vpsAdmin pre-commit hooks passed.
@@ -109,9 +135,9 @@
   tests pagination in both directions. Its focused MariaDB spec, RuboCop, and
   all pre-commit hooks passed.
 - Pushed application revisions:
-  - vpsAdmin: `bb68d02f96ec8a2fdd2fe133a2a3ed90ae9142df`
+  - vpsAdmin: `ba1217fb2757cf8624ac0d1fd89d9466377b6289`
   - vpsf-status: `587cd65bb02e6dddea7f6b6409e42a15f36ab4fb`
-- vpsfree-kb-contracts commit `e37d95e` pins the vpsAdmin revision and its
+- vpsfree-kb-contracts commit `5dd94f1` pins the vpsAdmin revision and its
   transitive vpsAdminOS revision `8e44a5124439b1f3048ffc56b1717614a5360358`.
 - The complete KB contract check passed: 42 controls, 34 paths, 35 capture
   concepts, 90 page bindings, 4 managed pages, 12 runtime tests, and 120
@@ -120,11 +146,10 @@
 - Rebasing the configuration worktree onto current `origin/master` first
   required its Nix shell because the ambient pre-rebase hook could not load
   bundled gems. The shell rebase succeeded without conflicts.
-- vpsfree-cz-configuration commits generated by `confctl` after dropping the
-  superseded unpushed vpsAdmin pin:
-  - `d64e03f7` `inputs: set vpsfStatus to ac33a9a2`
-  - `d517f0dd` `inputs: set vpsadminServices to bb68d02f`
-  - `73440264` `inputs: set vpsfStatus to 587cd65b`
+- vpsfree-cz-configuration commits generated by `confctl` after rebasing and
+  dropping superseded pins:
+  - `9534ae42` `inputs: set vpsadminServices to ba1217fb`
+  - `74f2c58b` `inputs: set vpsfStatus to 587cd65b`
 - Configuration inventory evaluation resolves the affected vpsAdmin service
   set and `cz.vpsfree/machines/prg/apu`; both generated commits passed
   Overcommit.
@@ -155,11 +180,31 @@
   no placeholder was created.
 - Stale queued or running GitHub Actions for superseded application/contract
   SHAs were cancelled; completed stale checks were retained.
-- Current-head GitHub results so far: vpsAdmin RuboCop, i18n health, and
-  topic-parallel API specs passed; the KB contract check passed. The vpsAdmin
-  CI integration job, vpsf-status integration job, and KB managed-page runtime
-  job remain queued without a self-hosted runner assigned. No current-head
-  workflow has failed.
+- Before merge, the rebased vpsAdmin feature head had passed RuboCop, WebUI
+  PHPUnit, i18n, client, and libnodectld workflows; topic-parallel API specs
+  remained in progress and its self-hosted CI job remained queued. The
+  vpsf-status feature integration workflow passed. The KB contract check
+  passed while its managed-page runtime job remained queued. Default-branch
+  pushes started new workflow runs with no observed failure at cleanup time.
+- The mandatory review was not repeated after the final rebase: the only
+  application branch whose base moved had a patch-identical `range-diff`, its
+  complete affected spec passed, and the remaining changes only regenerated
+  exact dependency and configuration pins. The existing review therefore
+  still covers the merged code and design.
+- Integration-worktree validation passed: 31 vpsAdmin advisory examples,
+  focused RuboCop, PHP/gettext/JavaScript checks, the full vpsf-status Go and
+  i18n suites, and the complete KB contract check.
+- All 11 vpsAdmin service configurations built successfully as generation
+  `2026-09-01--15-00-35` from vpsAdmin `ba1217fb`.
+- The integration-worktree APU build remains blocked by the same absent
+  `/srv/iso-images/systemrescue-11.01-amd64.iso` prerequisite. Evaluation
+  reached that declared local file and did not reveal a channel-pin error.
+- Final merged revisions on local feature refs, remote feature refs, and remote
+  `master` refs are identical:
+  - vpsAdmin: `ba1217fb2757cf8624ac0d1fd89d9466377b6289`
+  - vpsf-status: `587cd65bb02e6dddea7f6b6409e42a15f36ab4fb`
+  - vpsfree-kb-contracts: `5dd94f1609ecb0742360d6b0b2b8fa99c190a519`
+  - vpsfree-cz-configuration: `74f2c58be77f022b4e28401345896128edbe90b9`
 
 ## Open questions
 
@@ -168,5 +213,6 @@
 
 ## Cleanup
 
-- Pending. Keep feature branches after integration; remove worktrees only when
-  the initiative is merged or abandoned.
+- Complete. Feature and temporary integration worktrees, including generated
+  worktree-local caches, were removed. Local and remote feature branches were
+  retained at the merged revisions.
