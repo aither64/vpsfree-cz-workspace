@@ -5,10 +5,12 @@
 - Session slug and feature branch: `2026-08-31-vpsadmin-notifications`.
 - Worktree group:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-08-31-vpsadmin-notifications/`.
-- `vpsadmin`: base `7b455cad1c0c`, head `f2f7c6a9a104`.
+- `vpsadmin`: base `7b455cad1c0c`, head and merged `master`
+  `f2f7c6a9a104`.
 - `vpsfree-notification-templates`: base `04921d75ab53`, head
-  `c38e56c945d1`.
+  and merged `master` `c38e56c945d1`.
 - `vpsfree-cz-configuration`: rebased base `66ab5d69`, head `5aeb332c`.
+  `master` was fast-forwarded to the same commit.
 - All three feature branches are pushed and all `origin` remotes use SSH.
 
 ## Implemented
@@ -64,8 +66,8 @@
 - Confctl-generated commit `5aeb332c` pins
   `vpsfreeNotificationTemplates` to
   `c38e56c945d1fb0df41a26b6c9127368eb592373`.
-- Staging and production application channels were not changed. No deployment
-  or merge was performed.
+- Staging and production application channels were not changed. The
+  configuration was merged, but no deployment was performed.
 
 ## Verification completed
 
@@ -173,8 +175,34 @@ fixes.
   cancelled after the force-push. No current-head runs were cancelled.
 - The configuration repository has no workflow runs for this branch.
 
+## Default branch integration
+
+- On 2026-09-01, all repositories were fetched and their current default
+  branches were confirmed to be exact ancestors of the reviewed feature
+  branches. No rebase or pin rewrite was required.
+- `vpsadmin` `master` was fast-forwarded from `7b455cad1c0c` to
+  `f2f7c6a9a104` after both notification-template Nix checks passed in a fresh
+  merge worktree. The repository pre-push hook ran in the full Nix shell.
+- `vpsfree-notification-templates` `master` was fast-forwarded from
+  `04921d75ab53` to `c38e56c945d1` after `nix flake check` and
+  `nix run .#check` passed in a fresh merge worktree. Its new default-branch
+  GitHub check run `33507271324` also passed.
+- `vpsfree-cz-configuration` `master` was fast-forwarded from `66ab5d69` to
+  `5aeb332c`. Fresh merge-worktree builds passed for API1 generation
+  `2026-09-01--14-23-37`, API2 generation `2026-09-01--14-24-43`, and
+  vpsfbot generation `2026-09-01--14-25-39`. The push ran in the repository
+  Nix shell with the pre-push hook enabled.
+- Remote `master` and the feature head were verified to match exactly in all
+  three repositories after pushing. The temporary merge worktrees and their
+  generated cache/result files were removed. The feature branches and feature
+  worktrees were retained.
+- The vpsAdmin `master` quick workflows passed at `f2f7c6a9a104`; its API
+  suite and exhaustive CI workflow were still queued or running when the
+  merge completed. The already-running feature-branch exhaustive run
+  `33495403375` tests the same commit.
+
 ## Remaining work
 
-- Observe current-head CI run `33495403375` to completion and inspect its logs
-  if it fails.
-- Merge and deployment remain with the user.
+- Observe exhaustive vpsAdmin CI at `f2f7c6a9a104` to completion and inspect
+  its logs if it fails.
+- Deployment remains with the user and is intentionally out of scope.
