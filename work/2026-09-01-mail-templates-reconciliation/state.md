@@ -185,9 +185,11 @@ and remote feature branches.
   refused removal after finding one `mail_logs` reference to the target IDs.
   The guard ran before deletion, so no target template was removed by that
   attempt. This proves that one fallback generated a logged email, although a
-  mail log alone does not prove final delivery. The operator planned to remove
-  the inspected log; that production change was not performed or verified by
-  this development session.
+  mail log alone does not prove final delivery. The operator subsequently
+  reported removing the inspected log and completing the cleanup. Those
+  production changes were not performed or independently verified by this
+  development session; a follow-up dry-run should report all targets already
+  absent and no remaining references.
 
 ## Open questions
 
