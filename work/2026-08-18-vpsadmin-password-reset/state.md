@@ -2671,3 +2671,40 @@
   managed-page runtime run `33515722144` remains queued for runner capacity.
   Do not treat either pending run as successful; inspect their first attempts
   and update this state when they finish.
+
+### Second current-default rebase and authoritative template source
+
+- Verified the active session and fetched all four SSH remotes. vpsAdmin master
+  advanced to `cbd0fa16434947a4273610389d84216bcde35e72`, which adds
+  authoritative notification-template mode. Production configuration master
+  advanced to `28a39a52707aa009a316799c75cd29e7762c3ec3`, which selects that mode
+  for `int.api1`. The notification-template and KB defaults remain at
+  `9e1ddbd973703cf48a43f0e5afc2bfb392a8b676` and
+  `5dd94f1609ecb0742360d6b0b2b8fa99c190a519`.
+- Rebased all 42 vpsAdmin feature commits without conflict. Range-diff reports
+  every patch unchanged. Exact head
+  `1e9ddc961770ddcf7d9392a4246fae2775009e2d` is clean and pushed with
+  lease protection. The built-in checker passes 54 templates and 172 files;
+  focused template and mail-trigger specs pass 23 examples with no failures.
+- The external notification-template branch needed no rebase and remains clean
+  and pushed at `ae9960351c342c1a25b52666aec2c4eaabe1222b`.
+- Rewrote all six KB source and lock references to exact vpsAdmin `1e9ddc96`,
+  amended the existing pin commit, and force-pushed clean KB head
+  `32c0c6333b034b5197c0cf93475de844d2ae7f69`. `nix develop -c bin/check`
+  passes all contract, test, and 120-image inventory checks.
+- Rebased production configuration onto authoritative replacement mode. The
+  obsolete intermediate vpsAdmin pin was dropped; generated `confctl` commit
+  `edde6fd639c66be4f24acc834430deacc6a4b47d` pins exact vpsAdmin
+  `1e9ddc96`, and the runbook's existing adaptation commit now describes the
+  complete external source. Overcommit and strict MkDocs pass. Clean head
+  `edde6fd639c66be4f24acc834430deacc6a4b47d` is pushed with lease
+  protection; no production system was deployed.
+- Superseded old-head vpsAdmin and KB workflow cancellations were submitted.
+  New exact-head workflows are pending. Temporary configuration shell and
+  documentation artifacts were moved to
+  `/tmp/vpsadmin-password-reset-config.ozOLjT/`.
+- The workspace dev cluster is being switched from duplicate seed-time
+  reconciliation to upstream `vpsadmin.api.notificationTemplates` replacement
+  mode. Quick workspace verification, the mandatory fresh review,
+  configuration builds, live bridge-cluster refresh, fixture restoration, and
+  final CI inspection remain pending.

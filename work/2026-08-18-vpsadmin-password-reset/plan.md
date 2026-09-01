@@ -564,3 +564,28 @@ whether an account exists or can use recovery.
   worktree during Nix evaluation with instructions to disable external template
   installation. Production rollback is unaffected because it does not use the
   workspace seed.
+
+## Second current-default rebase and authoritative template source
+
+- Rebase the feature again onto the latest upstream defaults. Preserve every
+  vpsAdmin feature patch while adopting upstream's authoritative
+  notification-template mode, and rewrite the KB and production-configuration
+  exact pins to the resulting head.
+- Configure both production `int.api1` and the development cluster with the
+  reviewed external package in `replace` mode. A new database receives only
+  templates from that package; reconciliation continues to preserve existing
+  database rows that the package omits.
+- Remove the development seed's duplicate template reconciliation. Let
+  `vpsadmin-notification-templates.service` build and reconcile the effective
+  replacement package after database setup and before the API or supervisor.
+  Reject vpsAdmin revisions older than authoritative mode during Nix
+  evaluation, with `mail.templates.install = false` as the explicit opt-out.
+- The schema and API remain compatible with the preceding feature revision.
+  No migration changed during this rebase. Mixed-version deployment ordering,
+  feature-flag gating, and rollback remain as recorded above; replacement mode
+  changes only how a new database obtains its initial template set.
+- Run focused API/template checks, KB and configuration checks, workspace Nix
+  checks, and a fresh mandatory review. Build the affected production
+  configuration without deployment, refresh the existing bridge cluster
+  without resetting its database, restore its acceptance fixtures, and leave
+  it running. Production deployment and KB publication remain operator-only.
