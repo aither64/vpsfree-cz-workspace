@@ -2773,3 +2773,109 @@
   CI workflow and KB managed-page runtime workflow remain queued. Superseded
   old-head broad CI and managed-page runs are confirmed cancelled; pending
   current-head runs are not treated as successful.
+
+### Schema-native password-mail history rewrite
+
+- Re-fetched all four SSH remotes and confirmed that the current default heads
+  remain vpsAdmin `cbd0fa16434947a4273610389d84216bcde35e72`, notification
+  templates `9e1ddbd973703cf48a43f0e5afc2bfb392a8b676`, KB contracts
+  `5dd94f1609ecb0742360d6b0b2b8fa99c190a519`, and production configuration
+  `28a39a52707aa009a316799c75cd29e7762c3ec3`. Before rewriting, each project
+  repository recorded its old feature head under
+  `refs/backup/2026-08-18-password-reset-before-schema-history-rewrite`.
+- Rewrote the notification-template history so the eight feature commits add
+  and evolve `templates/<name>/email`, subject variants, and current metadata
+  directly. The separate `password mails: adopt notification template layout`
+  adapter commit no longer exists. New exact head
+  `f944ba03eba5d0d6b58b7eb856f251d1c96f2c11` has the same tree
+  `2468ff35aa110e96f7a352d21d8d2b7d166db330` as old head
+  `ae9960351c342c1a25b52666aec2c4eaabe1222b`, so the reviewed English and
+  Czech mail content is byte-identical. Every schema-changing feature commit
+  passes `nix run .#check`; the final head also passes `nix flake check`,
+  `git diff --check`, and the remote Check workflow.
+- Rewrote the corresponding vpsAdmin feature commits so built-in templates and
+  model specs use `api/notification_templates`, subject variants,
+  `translation_params`, and the current loader API at their first introduction.
+  The separate `api: adapt password mail to notification templates` commit no
+  longer exists. New exact head
+  `227dab2f6ee83749eee47382b36d6d602648b1c3` has the same tree
+  `a6613cee71dc7093d97f69cdd157e8bfb5c9729f` as old head
+  `1e9ddc961770ddcf7d9392a4246fae2775009e2d`. All relevant historical heads
+  pass the built-in template checker and focused mail-template specs. The final
+  checker passes 54 templates and 172 files; final template and mail-trigger
+  specs pass 32 examples; and all Overcommit pre-commit hooks pass.
+- Force-pushed both rewritten primary branches with lease protection. Rebuilt
+  the downstream histories to reference only the rewritten heads. KB exact head
+  `2e882ad64ed45c477f2e901c4e17552185f37749` pins vpsAdmin `227dab2f6` at all
+  source, lock, capture, page, and navigation sites; `nix develop -c bin/check`
+  passes all contract tests and the 120-image inventory. Production
+  configuration exact head
+  `702f99803ed130995dbb7e54e2bee425ed13158c` contains generated `confctl`
+  commits pinning `vpsadminServices` to `227dab2f6` and
+  `vpsfreeNotificationTemplates` to `f944ba03e`; their generated changelogs
+  contain only the schema-native histories. The runbook carries the same exact
+  revisions. Overcommit and strict MkDocs pass.
+- All four rewritten heads are clean, pushed, and equal to their remote feature
+  refs. Superseded queued runs `33538526306` and `33539290195` were cancelled;
+  current-head CI is being monitored separately. The mandatory fresh review,
+  seven production configuration builds, three WebUI integration tests, and
+  live bridge-cluster update remain pending.
+- The mandatory fresh-context schema-history review inspected the complete four
+  repository ranges and independently reran both template checkers plus the
+  focused mail-template model spec. It reported no Blocking, Important, or
+  Advisory findings. The reviewer confirmed that only the nine original
+  vpsAdmin mail-touching commits and all eight notification-template commits
+  changed, the remaining 32 vpsAdmin patches are equivalent, no obsolete paths
+  or old pins remain, mail fidelity is exact, and the runbook preserves the
+  reviewed mixed-version and rollback contract. Verdict: proceed with the long
+  integration, build, CI, and bridge-cluster gates. This does not authorize a
+  production deployment or KB publication.
+- All seven production configurations build successfully with
+  `confctl build --yes`: `int.api1`, `int.api2`, `int.webui1`, `int.webui2`,
+  `prg/proxy`, `prg/int.mon1`, and `prg/int.mon2`. This was build-only
+  validation; no production system was deployed. Generated `.bin` and
+  `.bundle` residue was moved to
+  `/tmp/vpsadmin-password-reset-config-artifacts.IzuzGB/`, leaving the
+  configuration worktree clean.
+- All three required exact-head VM/browser gates pass serially without a local
+  kernel source build:
+  - `webui#auth`: Playwright 316.84 seconds, script 708.56 seconds, complete
+    test 948.4 seconds;
+  - `webui#users-self-service`: Playwright 377.81 seconds, script 798.41
+    seconds, complete test 907.02 seconds;
+  - `webui#users-admin`: Playwright 353.95 seconds, script 808.29 seconds,
+    complete test 928.29 seconds.
+- Updated the existing single-node development cluster in place without a
+  database reset. It remains on the bridge network. The vpsAdminOS staging
+  input advanced to `285369696fa82e430fb473774a408aeaea8836e3`; the update
+  built service, initrd, and filtered module outputs and consumed vpsAdminOS
+  packages from the binary cache without compiling a Linux kernel from source.
+  The services update, scoped `node1` update, and `devcluster refresh` all
+  completed successfully.
+- The cluster reports `running` and `ready: yes`. Build info reports exact
+  vpsAdmin `227dab2f6ee83749eee47382b36d6d602648b1c3`, version 4.2.1, and
+  `revisionDirty: false`. API, supervisor, password recovery, console router,
+  nginx, database setup, and notification reconciliation are active; the
+  repeatable seed reports `Result=success` and exit status 0; there are no
+  failed units. Reconciliation requires and follows database setup, while the
+  seed requires and follows both. Node1 osctld and nodectld are running. The
+  public password-reset route returns HTTP 200.
+- Live application-model inspection confirms Czech and English subjects and
+  text for `password_recovery` and `user_password_changed`, HTML for both
+  recovery variants, and the expected text-only password-change variants. The
+  source marker points at the effective external notification-template store
+  path, `Dev admins` is bound to `daily_report`, password recovery is enabled,
+  and active recovery and pending submission counts are zero.
+- The seed reset development acceptance flags but preserved the existing
+  confirmed `Acceptance TOTP`. Restored the intended fixture state through the
+  current application models: `test-user1` and `test-user2` share the acceptance
+  email; only `test-user1` has account MFA enabled and one confirmed, enabled
+  TOTP device; all three test accounts have no WebAuthn credentials. A second
+  read-only model check confirmed the state, and both temporary remote scripts
+  were removed. An exploratory `vpsadmin-api-ruby --help` invocation failed
+  before loading the application because the wrapper accepts a script path;
+  the existing durable SSH-runner note documents the correct interface.
+- Current-head CI is green for all vpsAdmin quick workflows including the full
+  API topic matrix, the notification-template Check workflow, and the KB Check
+  workflow. vpsAdmin broad CI remains queued, and KB managed-page runtime is in
+  progress. They are not yet treated as successful.
