@@ -2768,8 +2768,8 @@
   `/tmp/vpsadmin-password-reset-config.ozOLjT/`; all four project worktrees are
   clean.
 - Exact-head quick CI is green for the vpsAdmin migration, RuboCop, PHPUnit,
-  i18n, client, and libnodectld workflows, the notification-template check, and
-  the KB contract check. The vpsAdmin topic API workflow is still in progress,
-  its broad CI workflow is queued, and the KB managed-page runtime workflow is
-  queued. Superseded old-head broad CI and managed-page runs are confirmed
-  cancelled; pending current-head runs are not treated as successful.
+  i18n, client, libnodectld, and topic API workflows, the
+  notification-template check, and the KB contract check. The vpsAdmin broad
+  CI workflow and KB managed-page runtime workflow remain queued. Superseded
+  old-head broad CI and managed-page runs are confirmed cancelled; pending
+  current-head runs are not treated as successful.
