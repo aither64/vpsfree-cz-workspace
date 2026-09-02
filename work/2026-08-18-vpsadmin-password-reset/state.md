@@ -2895,3 +2895,32 @@
 - A final read-only cluster status check reports the development cluster still
   `running`, topology `single`, network `bridge`, and `ready: yes`, with PID
   2700830. It was not restarted or reset and remains running for review.
+
+### Final exact-head CI results
+
+- vpsAdmin CI run `33549217076` completed successfully at exact rewritten head
+  `227dab2f6ee83749eee47382b36d6d602648b1c3`. Its selector found no additional
+  `ci`-tagged integration scripts for the rewritten mail/template-only diff, so
+  it completed the selection and cleanup path and skipped VM execution. The
+  separately required exact-head `webui#auth`, `webui#users-self-service`, and
+  `webui#users-admin` VM/browser tests had already passed locally, and all
+  exact-head quick workflows are green.
+- KB managed-page runtime run `33549880278` completed with failure at exact head
+  `2e882ad64ed45c477f2e901c4e17552185f37749`. The first-attempt failed log and
+  uploaded artifact `9823180272` were inspected before considering a rerun.
+  Two of the twelve scripts failed, both outside the password-reset contract:
+  `kb/firewall#ufw` encountered a synchronized-mirror mismatch from
+  `cz.archive.ubuntu.com` during `apt-get update` (`Translation-en.xz` had an
+  unexpected size), and `kb/guix#reconfigure` spent its two-hour command timeout
+  waiting for Software Heritage to cook the pinned Guix revision's vault bundle.
+  The latter timeout left the old generation active, explaining the subsequent
+  hostname mismatch. The Guix deployment examples that did not depend on that
+  timed-out reconfigure still passed.
+- The KB `kb/kvm` suite passed all storage, platform-default, networking,
+  libvirt, and NFS-locking scripts in the same failed aggregate run. The feature
+  range from KB base `5dd94f1609ecb0742360d6b0b2b8fa99c190a519` changes only
+  capture and contract metadata plus the vpsAdmin flake pin; it has no diff in
+  `tests/suite/kb/firewall.nix`, `tests/suite/kb/guix.nix`, or `cluster/`.
+  These two failures are therefore evidenced external/unrelated failures, not
+  password-reset regressions. No rerun was initiated during this read-only CI
+  result check.
