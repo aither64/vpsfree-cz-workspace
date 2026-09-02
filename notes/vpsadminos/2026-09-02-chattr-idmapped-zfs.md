@@ -21,10 +21,11 @@ Legacy ZFS map mode works because inode ownership is physically shifted.
 
 ## Fix direction
 
-Thread `mnt_idmap(filp->f_path.mnt)` through the file-attribute owner checks
-and `zfs_setattr()` calls while retaining the existing first-level namespace
-capability restriction. Historical fork commit `454a692c3` is reference code,
-not a clean cherry-pick onto the current default history.
+In the existing `FS_IOC_SETFLAGS` handler, pass
+`mnt_idmap(filp->f_path.mnt)` to the inode-owner check and `zfs_setattr()` while
+retaining the existing first-level namespace capability restriction. The wider
+historical callback implementation in commit `454a692c3` is not required for
+this issue.
 
 Do not trust BusyBox 1.37.0 `chattr` status: its implementation reports ioctl
 errors but unconditionally returns success. Assert `lsattr` state and immutable

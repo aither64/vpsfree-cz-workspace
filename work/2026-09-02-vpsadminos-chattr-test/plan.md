@@ -8,79 +8,54 @@ underlying OpenZFS native/idmapped-mount behavior instead of masking it in the
 test.
 
 This initiative is independent of `2026-06-15-vpsadmin-events` and is intended
-to merge first. The events branches must then be rebased onto the resulting
-default branches.
+to merge first. The events work must then rebase onto the updated vpsAdminOS
+staging branch.
 
 ## Affected repositories
 
-- `zfs`: backport mount-idmap-aware file-attribute ownership and setattr
-  handling to the current `vpsadminos-release-next` lineage.
-- `vpsadminos`: strengthen `kernel/vpsadminos#misc-attrs` and update the ZFS
-  source pin after the ZFS change is committed.
+- `zfs`: add mount-idmap-aware file-attribute ownership and setattr handling
+  on top of the exact ZFS revision pinned by vpsAdminOS staging,
+  `6f5f54c3bfd68c1e52b0b6f454ee9679aaa9e83d`.
+- `vpsadminos`: update the active kernel's ZFS pin and strengthen
+  `kernel/vpsadminos#misc-attrs`.
 
 ## Approach
 
 1. Preserve the existing first-level-user-namespace
-   `CAP_LINUX_IMMUTABLE` policy.
-2. In OpenZFS, obtain the mount idmap from the opened file and use it for both
-   `zpl_inode_owner_or_capable()` and `zfs_setattr()` on file-attribute setter
-   paths. Adapt the focused implementation in historical fork commit
-   `454a692c3` to the current 2.3.5-based default branch. Do not pull in the
-   unrelated fallocate part of later commit `8374426f6` merely to fix attrs.
-3. Reconcile ZFS default `f53469bdc` with `6f5f54c3b` before adding the fix.
-   The latter is a direct descendant already pinned by vpsAdminOS staging, so
-   retaining it avoids regressing the current fallocate fix while keeping the
-   initiative rooted in the fetched ZFS default branch.
-4. Update the vpsAdminOS ZFS revision and hash to the committed ZFS fix.
-5. Replace status-only `chattr` examples with state and behavior assertions:
-   verify `lsattr` after every set/clear, immutable write/unlink denial, and
-   append-only append/truncate/unlink behavior.
-
-Recommended invocation strategy: keep the image-provided BusyBox tools, but
-treat `lsattr` state and file operations as the test oracle. BusyBox 1.37.0
-prints ioctl errors yet always returns success from `chattr_main()`, so its
-exit status cannot be trusted.
-
-Alternatives:
-
-- Install Alpine `e2fsprogs-extra` and use its `chattr`, which returns nonzero
-  when `FS_IOC_SETFLAGS` fails. This gives honest command status but adds a
-  repository/network dependency and still does not prove attribute semantics.
-- Push a small compiled ioctl helper from the Nix test closure. This is the
-  most deterministic way to assert flags and errno without image tooling, but
-  adds helper code that is unnecessary if `lsattr` plus behavior checks are
-  sufficient.
-- Force the test container to legacy `--map-mode zfs`. This is useful only as
-  a diagnostic control; it would stop testing the default native map mode.
-- Expect permission denial or change LXC capabilities. Both contradict the
-  stated feature and evidence: the container already has
-  `CAP_LINUX_IMMUTABLE`, and only the mount-idmap ownership check fails.
+   `CAP_LINUX_IMMUTABLE` policy and nested namespace restriction.
+2. Change only the existing `FS_IOC_SETFLAGS` path used by `chattr`. Obtain the
+   file mount's idmap and use it for the inode-owner check and `zfs_setattr()`.
+   Leave VFS callbacks, extended attributes, DOS attributes, and fallocate
+   unchanged.
+3. Publish the focused ZFS commit, then pin that exact revision in the active
+   vpsAdminOS 6.12.95 kernel definition.
+4. Test both `native` and `zfs` map modes explicitly. After every set or clear,
+   use `lsattr` and real write/delete operations as the oracle because BusyBox
+   1.37.0 reports ioctl errors but returns success from `chattr`.
 
 ## Compatibility and deployment
 
-- On-disk ZFS flags and dataset formats do not change.
-- The fix affects authorization through idmapped mounts: an inode owner as
-  seen through the mount may set supported flags when the existing namespace
-  capability policy also permits it. Host behavior and legacy ZFS map mode
-  remain unchanged.
-- Keep the existing restriction to first-level user namespaces; nested user
-  namespaces must not gain this authority accidentally.
-- Rollback can read all state created by the fix. A rolled-back kernel may be
-  unable to clear flags from inside a native-map container, while host root can
-  still clear them.
-- Merge and publish ZFS first, then update and merge vpsAdminOS. No coordinated
-  all-node update is required; nodes gain the behavior when they boot the new
-  vpsAdminOS kernel/ZFS build. Rebase the events work onto both resulting
-  defaults afterward.
+- No userspace API, schema, protocol, dataset format, or other persisted format
+  changes.
+- The fix allows an inode owner as seen through an idmapped mount to set
+  supported flags when the existing namespace capability policy permits it.
+  Host and legacy ZFS-map behavior remain unchanged.
+- Rolling upgrades are safe. A rolled-back kernel can read the flags but may
+  again be unable to clear them from inside a native-map container; host root
+  can clear them.
+- No coordinated all-node update is required. Nodes gain the behavior when
+  they boot the updated vpsAdminOS kernel.
 
 ## Testing plan
 
-- Reproduce denial on a default native-map Alpine container and success on a
-  legacy ZFS-map control container.
-- Build the changed ZFS module/kernel output through the vpsAdminOS workflow;
-  do not accept an unexplained local kernel build or cache miss.
-- Run `./test-runner.sh test 'kernel/vpsadminos#misc-attrs'` with assertions for
-  both flags and their filesystem effects.
-- Run focused OpenZFS attribute tests if present, plus the relevant vpsAdminOS
-  kernel aggregate after quick verification and mandatory change review.
-- Verify a nested user namespace still cannot use the first-level allowance.
+- Run OpenZFS source/style and commit checks, then build the changed ZFS kernel
+  integration through the vpsAdminOS workflow.
+- Run `kernel/vpsadminos#misc-attrs` with immutable and append-only semantic
+  assertions in explicit native- and ZFS-map containers.
+- Run the OpenZFS positive and negative chattr tests and the relevant
+  vpsAdminOS kernel aggregate after mandatory change review.
+- The OpenZFS full-suite VM uses an ext4 work image while module autoloading is
+  disabled. Explicitly load the ext4 module in that test VM so the selected
+  upstream cases can reach their test bodies.
+- Use GitHub Actions for the changed kernel build and full feedback. Inspect
+  every failure and cancel only superseded runs for old branch heads.
