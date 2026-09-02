@@ -19485,3 +19485,48 @@ container, and no pending release. The mirrored and staged data were retained.
 - All initiative worktrees are clean. Generated configuration `.bin` and
   `.bundle` caches were moved, not deleted, to
   `/tmp/vpsfree-config-caches-final-20260902.55nDYE`.
+
+### CI failure investigation and follow-up
+
+- The remaining long exact-head workflows reached terminal state. vpsAdmin
+  aggregate run `33564289232`, confctl tests `33562554958`, Terraform
+  integration `33562533503`, and vpsAdminOS image run `33562536297` passed.
+  KB managed-page runtime `33567907533` and vpsAdminOS aggregate run
+  `33562536093` failed; both artifacts were downloaded and inspected under
+  `/tmp/vpsadmin-events-ci.nUsYRD` before any follow-up.
+- The failed KB artifact showed that its repository checks were fully green,
+  but every `kb/kvm` script timed out because HAProxy returned HTTP 503 while
+  waiting for the vpsAdmin API. The artifact predated service-journal capture,
+  so a local fresh-state reproduction was run with temporary diagnostics. It
+  found `vpsadmin-database-setup.service` failing in the development seed with
+  `ActiveRecord::RecordInvalid: Validation failed: Action is not available`.
+  The seed unconditionally created screenshot Telegram fixtures even though
+  the runtime topology does not enable the Telegram and SMS notification
+  actions.
+- KB commit `fe9af1a` now creates the capture-only notification fixtures only
+  for the screenshot topology. Focused fresh-state integration test
+  `kb/kvm#platform-defaults` passed both examples in
+  `/tmp/vpsadmin-kb-kvm-fixed.CD9Mwv`. Commit `35955bf` also captures relevant
+  systemd status, journals, and the process tree on API-readiness timeout while
+  preserving the original timeout if diagnostic collection fails. Ruby
+  syntax, Nix parsing, `git diff --check`, and
+  `nix develop --command bin/check --allow-missing` all passed.
+- Fresh mandatory reviewer Carver initially reported one Important robustness
+  issue: the diagnostic command could fail and mask the original readiness
+  timeout. The diagnostic path was nested-rescued and the original exception
+  explicitly re-raised. Follow-up review passed at
+  `35955bfa6e685a8f6356838a42fedc980abdd848` with no Blocking, Important, or
+  Advisory findings. The two focused commits were published normally to the
+  KB feature branch.
+- The vpsAdminOS failure was isolated to default-equivalent test
+  `kernel/vpsadminos#misc-attrs`: an `osctl ct exec ... touch
+  /append-only.file` command returned status 1 through the container runner.
+  The other 75 tests passed, and the feature branch contained no event-system
+  changes. Upstream `staging` had since advanced through scheduled Nix input
+  update `f38b0018`; the support feature branch was fast-forwarded to that
+  exact revision and published. Exact-head RSpec run `33607057829` passed.
+- Replacement KB runs `33608039537` (managed-page runtime) and `33608039542`
+  (repository check) passed on corrected head `35955bfa`. The runtime run
+  completed all 12 scripts across the firewall, GRE, Guix, and KVM tests in
+  2,531 seconds; all four grouped tests and the result-evaluation step passed.
+  All exact-head CI relevant to this handoff is now green.
