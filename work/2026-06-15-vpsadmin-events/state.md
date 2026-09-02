@@ -19530,3 +19530,55 @@ container, and no pending release. The mirrored and staged data were retained.
   completed all 12 scripts across the firewall, GRE, Guix, and KVM tests in
   2,531 seconds; all four grouped tests and the result-evaluation step passed.
   All exact-head CI relevant to this handoff is now green.
+
+### vpsAdminOS misc-attrs root-cause investigation
+
+- Reopened aggregate run `33562536093` and traced the nominal
+  `kernel/vpsadminos#misc-attrs` failure through the downloaded VM logs. The
+  failed `touch /append-only.file` never ran in the container. The forked
+  osctld runner died first in
+  `OsCtl::Lib::Sys#attach_syslogns`, where opening
+  `/proc/16266/ns/syslog` returned `Errno::ENOENT`; the parent then reduced
+  the lost runner response to the generic `user runner failed` error.
+- PID 16266 was the still-running `/sbin/init` of
+  `kmisc-attrs-ed92`. Failure diagnostics two seconds later showed that same
+  PID in state `Ss`, with its syslogd, getty, and sshd children present, and
+  osctld still reported the container as running. Three earlier `ct exec`
+  operations against the same init PID succeeded. This rules out an
+  append-only-file rejection and gives no evidence of a stopped container or
+  stale PID.
+- The failure was not global memory exhaustion. The cgroup-v2 VM had about
+  4.8 GiB available immediately after the error; all OOMs in the log were the
+  intentional, cgroup-constrained `misc-oom-kill` events.
+- The kernel path is vpsAdminOS-specific: `attach_syslogns` opens the custom
+  proc namespace link and then calls `setns`. An `ENOENT` at the open means
+  proc/nsfs could not materialize that namespace link on this attempt. The
+  retained CI evidence was captured after the failure and does not show
+  whether the kernel's `syslogns_get()` returned no namespace or proc inode
+  instantiation failed, so the deeper one-off kernel condition cannot be
+  distinguished honestly from this artifact.
+- Reproduction attempts on the unchanged 6.12.95 kernel did not recur:
+  - isolated `kernel/vpsadminos#misc-attrs` passed;
+  - a six-way aggregate run passed `misc-attrs`;
+  - a forced queue matching the CI prefix and OOM-to-attrs worker handoff
+    passed all 60 intended memcg OOM checks and then all four attribute
+    examples; and
+  - a temporary stress example completed 2,000 `ct exec true` operations
+    with 16 concurrent runner/syslog-namespace attachments in 691 seconds,
+    after which all attribute examples passed. The complete focused test
+    passed in 1,076 seconds.
+  The temporary ordering and stress instrumentation was removed, and the
+  vpsAdminOS worktree is clean.
+- The investigation also found that `misc-attrs` does not validate its stated
+  behavior. In the CI artifact and both ordinary reproductions, every
+  `chattr +/-i` and `chattr +/-a` invocation printed
+  `Permission denied`, yet the command status was zero and the examples
+  passed. The test never checks `lsattr` or exercises the resulting file
+  semantics. This is a separate deterministic test defect, not the cause of
+  the aggregate red result.
+- Root-cause classification: the CI failure belongs to the osctld/custom
+  syslog-namespace attachment path and was only attributed to
+  `misc-attrs` because that script issued the unlucky `ct exec`. The OOM
+  predecessor, event-system branch, and file attributes are not causal. A
+  durable vpsAdminOS note records the evidence and the missing diagnostics
+  needed to identify a future recurrence below the proc-open boundary.
