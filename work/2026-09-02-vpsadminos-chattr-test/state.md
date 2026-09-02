@@ -4,14 +4,13 @@
 
 - `vpsadminos`
   - branch: `2026-09-02-vpsadminos-chattr-test`
-  - worktree:
-    `worktrees/2026-09-02-vpsadminos-chattr-test/vpsadminos`
+  - worktree removed after integration; branch retained
   - base: fetched `origin/staging` at
     `f38b0018ee80bb2c36fb7940b4bcfd185f8e7194`
   - head: `ee6d2f99d3c2ac51d4cbea54e1922808f345299d`
 - `zfs`
   - branch: `2026-09-02-vpsadminos-chattr-test`
-  - worktree: `worktrees/2026-09-02-vpsadminos-chattr-test/zfs`
+  - worktree removed after integration; branch retained
   - base: exact ZFS revision pinned by vpsAdminOS staging,
     `6f5f54c3bfd68c1e52b0b6f454ee9679aaa9e83d`
   - head: `9f479d6551bebde664b71b6d7553e8d23c162c4c`
@@ -26,8 +25,11 @@
   harness fix are committed as separate changes and pushed.
 - Two mandatory independent reviews passed with no findings on the final
   ZFS/pin/regression-test series and the follow-up test-harness fix. Focused,
-  selected upstream, and aggregate local integration tests all pass. CI for the
-  current vpsAdminOS head is still building its toplevel closure.
+  selected upstream, and aggregate local integration tests all pass.
+- vpsAdminOS was fast-forwarded into `staging` and pushed at
+  `ee6d2f99d3c2ac51d4cbea54e1922808f345299d`. The post-merge OS build, both
+  livepatch jobs, and the changed 6.12.95 kernel build pass. Full suites and the
+  unchanged 6.12.48 kernel build are waiting for runners.
 
 ## Changes
 
@@ -149,6 +151,28 @@
 - Current-head vpsAdminOS CI run `33661523571` for `ee6d2f99d3c2` passed its
   checkout and image-reuse checks and is building the toplevel closure. It has
   not reproduced the old HTTP 429 failure.
+- Fetched `origin/staging` immediately before integration. It remained at the
+  feature base `f38b0018e`, with the feature branch zero commits behind and
+  three ahead, so no rebase was necessary.
+- Created a fresh detached integration worktree from `origin/staging` and ran
+  `git merge --ff-only 2026-09-02-vpsadminos-chattr-test`. The result advanced
+  cleanly to the already-tested feature head `ee6d2f99d`.
+- `nix develop --command overcommit --run` in the integration worktree passed
+  both Nixfmt and RuboCop.
+- Re-fetched `origin/staging`, verified it was still an ancestor of the tested
+  head, and pushed `HEAD:staging` without force. The server-side `staging` ref
+  was verified at `ee6d2f99d3c2ac51d4cbea54e1922808f345299d`.
+- The staging push queued CI run `33670276663` and `Build all kernel versions`
+  run `33670276671`, both for the merged commit.
+- Feature-branch CI run `33661523571` built and published the exact merged OS
+  closure successfully in 1h32m55s. Its AMD livepatch job passed; its Intel
+  livepatch job is running and its full suite is queued.
+- Post-merge staging CI run `33670276663` reused the published closure and
+  passed its OS build plus both Intel and AMD livepatch lifecycle jobs. Its full
+  test suite is queued.
+- Post-merge `Build all kernel versions` run `33670276671` detected both
+  supported kernels and passed the changed 6.12.95 build. The unchanged
+  6.12.48 build is queued.
 
 ## Commits
 
@@ -172,5 +196,9 @@
 ## Cleanup
 
 - Debug containers were deleted and debug VMs stopped normally.
-- Project worktrees and feature branches are retained for review and testing.
-- Remove transient test `result` links and worktrees after integration.
+- Both project feature branches are retained locally and remotely.
+- The clean temporary vpsAdminOS integration worktree was removed after the
+  successful push.
+- The clean vpsAdminOS and ZFS feature worktrees and their empty worktree group
+  directory were removed after integration. Their transient test artifacts were
+  removed with the worktrees.
