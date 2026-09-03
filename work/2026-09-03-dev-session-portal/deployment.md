@@ -7,9 +7,9 @@ session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace source branch: `2026-09-03-dev-session-portal`
-- Workspace source: `d269a6ca57b46ac0a2c86279ce76120eb0948f3d`
+- Workspace source: `58e9b099420c96f594c943c31397b5f133918c6f`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: `7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354`
+- Configuration source: `1509f7f8c7fd01fc77f3f9d0d53616f5af514a14`
 
 Check both revisions against `state.md` before running any helper or deployment
 command:
@@ -18,9 +18,9 @@ command:
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD)" = \
-  d269a6ca57b46ac0a2c86279ce76120eb0948f3d
+  58e9b099420c96f594c943c31397b5f133918c6f
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD)" = \
-  7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354
+  1509f7f8c7fd01fc77f3f9d0d53616f5af514a14
 ```
 
 ## 1. Record rollback state
@@ -152,9 +152,9 @@ prevents an older `bin/dev-session` from mutating a portal-managed initiative:
 ```sh
 workspace=/home/aither/workspace/ai/vpsfree.cz
 git -C "$workspace" merge-base --is-ancestor \
-  d269a6ca57b46ac0a2c86279ce76120eb0948f3d master
+  58e9b099420c96f594c943c31397b5f133918c6f master
 test "$(git -C "$workspace" show master:bin/dev-session | sha256sum)" = \
-  "$(git -C "$workspace" show d269a6ca57b46ac0a2c86279ce76120eb0948f3d:bin/dev-session | sha256sum)"
+  "$(git -C "$workspace" show 58e9b099420c96f594c943c31397b5f133918c6f:bin/dev-session | sha256sum)"
 ```
 
 From the reviewed configuration worktree:

@@ -23,8 +23,10 @@ lifecycle: active
 - The fourth mandatory review examined workspace
   `d269a6ca57b46ac0a2c86279ce76120eb0948f3d` and configuration
   `7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354`. All four lanes finished before
-  remediation began. Fixes are in progress on the same development branches;
-  no long configuration build or deployment has started.
+  remediation began. The fixes are committed and pushed at workspace
+  `58e9b099420c96f594c943c31397b5f133918c6f` and configuration
+  `1509f7f8c7fd01fc77f3f9d0d53616f5af514a14`. No long configuration build or
+  deployment has started.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
   staged patch.
@@ -331,6 +333,21 @@ lifecycle: active
   Go tests, JavaScript syntax, Ruby syntax, `git diff --check`, Nix formatting,
   and `nix flake check --no-build --show-trace` pass. The ambient Go command
   lacked a C compiler, so Go verification runs through a Nix shell with GCC.
+- Final quick checks at the rewritten head pass with 95 `dev-session` tests and
+  837 assertions, 5 PKI tests and 44 assertions, all Go tests and race tests,
+  Go vet, JavaScript and Ruby syntax, Nix formatting, and no-build flake checks.
+- The exact pinned package builds as
+  `/nix/store/9d4v7106fxhrw3mym77h61dky34clqn5-workspace-portal-0.1.0`; all three
+  packaged commands start or print their expected version or usage.
+- A `confctl inputs channel set --commit` attempt used an unverified expanded
+  workspace SHA and failed with GitHub HTTP 404 before committing. The command
+  was rerun with `git rev-parse HEAD`, producing the single generated pin commit
+  `7eb542fb96235fd01659fb12accf86eade6be28a`.
+- The workspace and configuration branches were force-pushed with exact leases.
+  GitHub reports no Actions runs for either branch, so there were no superseded
+  runs to cancel.
+- The fifth mandatory review must rerun all four high-risk lanes against these
+  final heads before the deferred `confctl build` commands begin.
 
 ## Third-review remediation checkpoint
 
