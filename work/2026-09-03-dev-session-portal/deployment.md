@@ -7,9 +7,9 @@ session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace source branch: `2026-09-03-dev-session-portal`
-- Workspace source: use the final head recorded in `state.md`
+- Workspace source: replace with the exact final reviewed head before deployment
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: use the final head recorded in `state.md`
+- Configuration source: replace with the exact final reviewed head before deployment
 
 Check both revisions against `state.md` before running any helper or deployment
 command:
@@ -28,17 +28,22 @@ output until the portal and both DNS servers pass the smoke tests.
 cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration
 previous_config_revision=$(git rev-parse origin/master)
 previous_aitherdev_system=$(readlink -f /run/current-system)
-printf 'configuration: %s\naitherdev system: %s\nDNS serial: %s\n' \
+previous_prg_dns_system=$(ssh root@172.16.9.90 readlink -f /run/current-system)
+previous_brq_dns_system=$(ssh root@172.19.9.90 readlink -f /run/current-system)
+printf 'configuration reference: %s\naitherdev system: %s\nprg DNS system: %s\nbrq DNS system: %s\n' \
   "$previous_config_revision" \
   "$previous_aitherdev_system" \
-  "$(git show "$previous_config_revision":configs/internal-dns/zone.vpsfree.cz. | sed -n '4s/[^0-9]*\([0-9][0-9]*\).*/\1/p')"
-rollback_checkout=$(mktemp -d)
-rmdir "$rollback_checkout"
-git worktree add --detach "$rollback_checkout" "$previous_config_revision"
+  "$previous_prg_dns_system" \
+  "$previous_brq_dns_system"
+for server in 172.16.9.90 172.19.9.90; do
+  dig "@$server" vpsfree.cz SOA +noall +answer
+  dig "@$server" vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +noall +answer
+done
 ```
 
-The rollback checkout holds the exact previous DNS configuration. Do not
-remove it until deployment is complete.
+Keep this output until deployment is complete. The running system paths, not a
+local Git reference, are the rollback authority for each machine. The live SOA
+and CNAME answers show the DNS state associated with those paths.
 
 ## 2. Prepare authentication and TLS on aitherdev
 
@@ -60,11 +65,15 @@ revision:
 
 ```sh
 cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace
-bin/workspace-pki init
-bin/workspace-pki verify
-bin/workspace-pki inspect
+bin/workspace-pki init \
+  --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
+bin/workspace-pki verify \
+  --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
+bin/workspace-pki inspect \
+  --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
 sudo bin/workspace-pki install-server \
   --state-dir /home/aither/.local/state/vpsfree-workspace-pki \
+  --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz \
   /var/lib/vpsfree-workspace-portal-tls
 ```
 
@@ -96,7 +105,10 @@ Check the local service and the Codex daemon versions:
 
 ```sh
 systemctl status workspace-portal nginx --no-pager
-curl --fail http://127.0.0.1:2460/healthz
+sudo -u nginx curl --fail --unix-socket \
+  /run/vpsfree-workspace-portal/portal.sock http://localhost/healthz
+sudo lxc-attach -n vscode -- \
+  test ! -e /run/vpsfree-workspace-portal/portal.sock
 sudo -u aither -H codex app-server daemon version
 ```
 
@@ -143,13 +155,14 @@ dig @172.19.9.90 vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +short
 Both commands must return `aitherdev.int.vpsfree.cz.`. The zone TTL is one
 hour.
 
-If either DNS deployment or query fails, use the rollback checkout to redeploy
-both DNS servers immediately:
+If either DNS deployment or query fails, switch both DNS servers back to the
+exact running system paths recorded before deployment:
 
 ```sh
-cd "$rollback_checkout"
-nix develop -c confctl deploy -y cz.vpsfree/containers/prg/int.ns1
-nix develop -c confctl deploy -y cz.vpsfree/containers/brq/int.ns1
+ssh root@172.16.9.90 \
+  "$previous_prg_dns_system/bin/switch-to-configuration switch"
+ssh root@172.19.9.90 \
+  "$previous_brq_dns_system/bin/switch-to-configuration switch"
 ```
 
 Verify both servers again against the expected previous state. Keep the portal
@@ -177,12 +190,8 @@ following:
 - archived or finalized sessions do not show mutation controls.
 
 Archive or abandon the disposable initiative through the normal workspace
-workflow. Remove the rollback checkout after all checks pass:
-
-```sh
-cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration
-git worktree remove "$rollback_checkout"
-```
+workflow. Keep the captured system paths in the deployment record after all
+checks pass.
 
 ## Certificate renewal
 
@@ -190,10 +199,13 @@ Use the helper installed by the active NixOS system so renewal uses the pinned
 workspace revision:
 
 ```sh
-workspace-pki renew
-workspace-pki verify
+workspace-pki renew \
+  --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
+workspace-pki verify \
+  --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
 sudo workspace-pki install-server \
   --state-dir /home/aither/.local/state/vpsfree-workspace-pki \
+  --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz \
   /var/lib/vpsfree-workspace-portal-tls
 sudo systemctl reload nginx
 ```
@@ -218,10 +230,10 @@ sudo "$previous_aitherdev_system/bin/switch-to-configuration" switch
 sudo -u aither -H codex app-server daemon restart
 ```
 
-If DNS has been deployed, redeploy both DNS servers from `$rollback_checkout`,
-verify them directly, and wait one hour before restoring the old aitherdev
-system. This ordering keeps cached portal records on the authenticated TLS
-virtual host until they expire.
+If DNS has been deployed, switch each DNS server to its separately captured
+system path, verify its SOA and CNAME answers directly, and wait one hour before
+restoring the old aitherdev system. This ordering keeps cached portal records
+on the authenticated TLS virtual host until they expire.
 
 The portal service uses `KillMode=process` because tmux panes and the managed
 Codex App Server must survive a portal service restart. A portal deployment

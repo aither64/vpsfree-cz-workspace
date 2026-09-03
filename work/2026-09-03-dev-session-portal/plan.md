@@ -27,11 +27,16 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 - Extend `bin/dev-session` to create and resume one named Codex thread per
   initiative through the managed local daemon, persist `portal.yml`, expose the
   stable URL, and launch the tmux TUI against the same daemon. Browser creation
-  will start an empty session and send the supplied goal as the first turn;
-  Codex remains responsible for selecting repositories.
-- Add single-user password authentication, secure cookies, CSRF and origin
-  checks, rate limiting, strict artifact containment, and no raw shell,
-  filesystem, or App Server RPC endpoint.
+  is journaled before other state is created and reconciles a lost
+  `thread/start` result by the unique `work/<slug>` thread directory. The
+  supplied goal is sent once as the first turn, with the same session identity
+  variables available to Codex and tmux. Codex remains responsible for
+  selecting repositories.
+- Put HTTP Basic Authentication and TLS in nginx. Connect nginx to the portal
+  through a permission-restricted host Unix socket that is not mounted into the
+  development LXC. Retain exact-Origin checks for mutations, strict artifact
+  containment, passive download-only artifact formats, sanitized Markdown, and
+  no raw shell, general filesystem, or App Server RPC endpoint.
 - Add an OpenSSL-based PKI helper. The encrypted CA key and unencrypted nginx
   leaf key live under `/home/aither/.local/state/vpsfree-workspace-pki`, never
   in git. The helper supports initialization, inspection, renewal, verification,
@@ -56,18 +61,23 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 - The implementation will prepare and verify configuration only. The user owns
   deployment of both internal DNS servers and the aitherdev NixOS generation,
   as well as CA trust installation on client devices.
-- Rollback consists of reverting the aitherdev generation and normal git
-  reverts. Tracking files and Codex histories remain readable.
+- Rollback uses the exact pre-deployment NixOS system paths captured separately
+  from aitherdev and both internal DNS servers. Tracking files and Codex
+  histories remain readable.
 
 ## Testing plan
 
-- Unit-test manifests, git/GitHub metadata, authentication, CSRF, containment,
-  Markdown sanitization, App Server event mapping, and PKI generation/renewal.
+- Unit-test manifest parity, git/GitHub metadata, origin enforcement, Unix
+  socket permissions, artifact containment and media policy, Markdown
+  sanitization, App Server subscriptions and request mapping, and PKI
+  generation/renewal.
 - Extend `dev-session` tests for thread reuse, URL/JSON output, browser-style
-  start, terminal attach, worktree metadata, and finalization.
+  start, crash recovery, goal identity, terminal attach, worktree metadata, and
+  finalization.
 - Exercise a disposable shared Codex thread through the portal adapter and tmux
   TUI, including messages, steering, interruption, questions, approvals, and
-  reconnects. Verify ChatGPT macOS discovery when the user can participate.
+  reconnects. Confirm native ChatGPT client behavior separately when the user
+  can participate; it is not part of the portal transport contract.
 - Run Go and Ruby tests, skill validation, hooks, Nix checks, internal DNS zone
   validation, and `confctl build` for aitherdev and both internal DNS servers.
 - Run the mandatory change review after intended commits and quick checks, then

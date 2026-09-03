@@ -20,13 +20,11 @@ lifecycle: active
   `01a0678c-baae-7600-bcf6-9a0cb6c83232` and named after the initiative.
 - Configuration worktree created from `origin/master` at
   `57d7c12a2da78d334d338a0e56dd7438376a6973`.
-- Workspace changes are committed and pushed on
-  `2026-09-03-dev-session-portal` through `2c9112da`. At the user's direction,
-  published `master` was force-reset from `ada6db0` to its pre-initiative
-  commit `0d2802f`; no portal implementation remains on `master`.
-- Configuration changes are committed and pushed on
-  `2026-09-03-dev-session-portal` through `2ba6673d`. The branch has four
-  commits on top of current `origin/master`.
+- The second mandatory review examined workspace
+  `6119ef8dbb99fae4bc930f853a02fdb4b3c4e6ee` and configuration
+  `6b07356e04347830cc02385f96f1ce28667bfee3`. Remediation is in progress on
+  both feature worktrees; their pushed heads remain the reviewed revisions
+  until the fixes are committed and repinned.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
   staged patch.
@@ -192,10 +190,46 @@ lifecycle: active
   inspected and removed. Both feature worktrees now have clean tracked and
   untracked status.
 
+## Second mandatory review
+
+- All four fresh lanes completed against workspace `6119ef8` and configuration
+  `6b07356e`, using `gpt-5.6-sol` at `max` effort.
+- Blocking findings cover the non-idempotent `thread/start` result boundary,
+  missing session identity in browser-created Codex turns, incomplete
+  `request_user_input` and command-approval controls, missing browser
+  subscriptions for terminal-originated events, same-origin active artifacts,
+  approvals without their matching thread items, a TCP backend reachable from
+  the shared-network LXC, and a firewall rule that also admitted the aitherdev
+  LAN.
+- Important findings cover connection-generation races, invisible unsupported
+  App Server requests, divergent manifest timestamp validation, stale GitHub
+  default-branch comparisons, closed-session controls, a known Goldmark XSS,
+  stale plan text, and DNS rollback state inferred from Git instead of the
+  running DNS systems.
+- The current remediation journals browser creation before other initiative
+  state, reconciles threads by their unique `work/<slug>` cwd, injects the
+  session environment into the thread, resumes watched threads after App Server
+  reconnects, binds writes and approval responses to one connection generation,
+  rejects and surfaces unsupported requests, and requires server-fetched
+  matching items before approvals become actionable.
+- The portal backend now uses a host runtime Unix socket shared only with nginx.
+  The firewall admits HTTPS only from WireGuard. Curated artifacts use a
+  passive extension allowlist, attachment disposition, and sandboxed CSP.
+  Goldmark is updated to 1.7.17.
+- Shared valid and invalid manifest fixtures now cover goal digests and strict
+  RFC3339 finalization timestamps in both Ruby and Go. The deployment runbook
+  captures independent running system paths and live DNS answers for both DNS
+  servers.
+- Quick remediation checks currently pass: 90 `dev-session` tests with 784
+  assertions, 4 PKI tests with 33 assertions, all Go tests, Go vet, JavaScript
+  syntax validation, and `nix flake check --no-build`. The feature fixes are not
+  committed or pushed yet.
+
 ## Open questions
 
-- All four mandatory review lanes must now be rerun against the remediation
-  heads. The long `confctl build` validation follows a clean rerun.
+- The feature fixes must be committed, the configuration pin regenerated, and
+  affected mandatory review lanes rerun against the new exact heads. The long
+  `confctl build` validation follows a clean rerun.
 - Live ChatGPT macOS/mobile discovery remains an optional deployment smoke test
   because it depends on the installed clients. The VPN portal is the supported
   browser path regardless of native discovery.
