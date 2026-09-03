@@ -25,7 +25,7 @@ lifecycle: active
   published `master` was force-reset from `ada6db0` to its pre-initiative
   commit `0d2802f`; no portal implementation remains on `master`.
 - Configuration changes are committed and pushed on
-  `2026-09-03-dev-session-portal` through `cc33b7ae`. The branch has three
+  `2026-09-03-dev-session-portal` through `2ba6673d`. The branch has four
   commits on top of current `origin/master`.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
@@ -62,6 +62,8 @@ lifecycle: active
 - Regenerated the final workspace input pin with `confctl` from the clean input
   commit, then rewrote the unmerged configuration branch so it contains one
   generated input update instead of three successive revisions.
+- Split aitherdev hosting and internal DNS into separate configuration commits
+  because they have distinct deployment and rollback steps.
 - Re-ran both Ruby suites, all Go tests, `go vet`, the handoff-skill
   validator, `git diff --check`, and `nix flake check --no-build` after the
   workspace history rewrite.
