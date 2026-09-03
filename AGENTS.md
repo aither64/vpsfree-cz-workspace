@@ -129,10 +129,18 @@ For each initiative, maintain:
   results, blockers, and cleanup status.
 
 Treat `work/<slug>/` as active tracking and `archive/<slug>/` as terminal
-tracking. New `state.md` files must contain `- Lifecycle: active` under
-`## Status`. Change it to `complete` only when the requested outcome is
-finished, or to `abandoned` when the initiative is explicitly closed without
-completion.
+tracking. New `state.md` files must begin with this exact YAML front matter:
+
+```yaml
+---
+lifecycle: active
+---
+```
+
+Change it to `complete` only when the requested outcome is finished, or to
+`abandoned` when the initiative is explicitly closed without completion. The
+anchored front matter is the only lifecycle authority; lifecycle-looking text
+in the Markdown body has no effect.
 
 Write a substantive plan and initial state, then commit both in the top-level
 workspace repository before the first project-code commit or external mutation.
@@ -145,11 +153,21 @@ An initiative can leave `work/` only when its lifecycle is `complete` or
 `abandoned` and it has no pending review, CI, merge, user approval, deployment
 step, or cleanup owned by the session. Before archiving, remove credentials,
 caches, reproducible bulk captures, and other transient outputs. Preserve
-`plan.md`, `state.md`, and intentionally useful evidence. Run
+`plan.md`, `state.md`, and intentionally useful evidence. Stop shells, editors,
+builds, and background processes that can still write into an initiative
+worktree; the per-slug lock serializes helper commands, not external writers.
+Every worktree must have an attached branch and ordinary clean `git status`.
+The helper delegates removal to non-force `git worktree remove`; resolve and
+retry any refusal before finalizing.
+Run
 `bin/dev-session finalize <slug> --as-is` to remove clean worktrees, retain
-branches, move the curated directory to `archive/<slug>/`, and stop the managed
-tmux session. Inspect and commit the exact `work/<slug>/` to `archive/<slug>/`
-move in the top-level repository; the helper never stages or commits it.
+branches, and move the curated directory to `archive/<slug>/`. It keeps the
+managed tmux session available so the exact `work/<slug>/` to
+`archive/<slug>/` move can be inspected and committed in the top-level
+repository. The helper never stages or commits it. After that commit, run
+`bin/dev-session stop <slug> --as-is` to close the managed session. The stop
+command must refuse a finalized initiative whose archive move or terminal
+tracking state is not committed.
 
 Do not reuse an archived slug. Start a new dated initiative for follow-up work.
 Do not delete tracking with `dev-session remove --all`; finalization and
