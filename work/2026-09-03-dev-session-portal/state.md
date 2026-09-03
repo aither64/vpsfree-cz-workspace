@@ -21,11 +21,11 @@ lifecycle: active
 - Configuration worktree created from `origin/master` at
   `57d7c12a2da78d334d338a0e56dd7438376a6973`.
 - Workspace changes are committed and pushed on
-  `2026-09-03-dev-session-portal` through `a107a05`. At the user's direction,
+  `2026-09-03-dev-session-portal` through `6371e9c`. At the user's direction,
   published `master` was force-reset from `ada6db0` to its pre-initiative
   commit `0d2802f`; no portal implementation remains on `master`.
 - Configuration changes are committed and pushed on
-  `2026-09-03-dev-session-portal` through `eb5ab525`. The branch has three
+  `2026-09-03-dev-session-portal` through `15b473be`. The branch has four
   commits on top of current `origin/master`.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
@@ -53,6 +53,9 @@ lifecycle: active
   then force-reset `master` to `0d2802f` as explicitly requested.
 - Cancelled the first mandatory-review run because its review packet became
   stale when the workspace history and worktree layout changed.
+- Rebased the workspace feature branch onto the tracking-only `master`, dropped
+  duplicate tracking commits, and force-pushed the rewritten feature history.
+- `confctl inputs channel set --commit workspace-tools vpsfree-workspace 6371e9cad7dec81791a5eb3bf6290aef632dce0d`
 
 ## Results
 
@@ -79,9 +82,8 @@ lifecycle: active
 
 ## Open questions
 
-- The configuration input must be repinned to the final workspace feature head.
-- Mandatory change review must be restarted after that pin and quick checks;
-  the long `confctl build` validation follows review.
+- Mandatory change review must be restarted after quick checks; the long
+  `confctl build` validation follows review.
 - Live ChatGPT macOS/mobile discovery remains an optional deployment smoke test
   because it depends on the installed clients. The VPN portal is the supported
   browser path regardless of native discovery.
