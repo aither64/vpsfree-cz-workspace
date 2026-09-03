@@ -54,24 +54,34 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 ## Compatibility and deployment
 
 - Existing work/state directories and standalone Codex processes are not
-  migrated. New manifests are additive. Before deploying the portal, integrate
-  its workspace helper into the live checkout; an older helper must not mutate
-  a portal-managed initiative.
+  migrated. New manifests are additive, and the helper must refuse to retrofit
+  an already-running unshared tmux session onto a new browser thread. Before
+  deploying the portal, integrate its workspace helper into the live checkout;
+  an older helper must not mutate a portal-managed initiative.
 - The portal remains useful for status and files if GitHub or Codex is offline,
   and reports those integrations as unavailable without failing the page.
 - Active sessions use live branch comparisons. Finalization preserves metadata
   and leaves the same URL read-only under `archive/`.
 - Local tracking, manifest, and journal writes are atomic and recoverable.
-  Worktree metadata is registered before Git creation and finalization requires
-  complete bidirectional coverage and immutable comparison commits.
+  Worktree metadata, including canonical repository identity, is registered
+  before Git creation. Bulk and individual removal capture immutable heads, and
+  finalization requires complete bidirectional coverage and immutable
+  comparison commits.
+- Anchored `state.md` lifecycle is the work-state authority. `active` sessions
+  may be interactive only after local creation is ready; `complete` and
+  `abandoned` sessions are read-only before finalization; archive entries must
+  also contain `finalized_at` and immutable repository commit pairs.
 - Codex App Server `thread/start` and `turn/start` do not accept a caller-owned
   idempotency key. A timeout after remote acceptance is therefore ambiguous.
   Recovery accepts one matching candidate and refuses conflicts; exactly-once
   behavior is guaranteed only for local journaled state, not the remote App
   Server boundary.
-- Browser-created tmux sessions and the App Server use separate systemd units.
-  The web service drains creation requests and kills its complete cgroup during
-  a switch, preventing an old helper from continuing after deployment.
+- Browser-created tmux sessions live on a dedicated keeper whose definition is
+  independent of the workspace source pin and which refuses an already-used
+  socket namespace. Codex CLI's managed daemon remains its own authority and is
+  started lazily for interactive requests. The web service uses main-process-
+  first systemd termination so creation requests drain before residual children
+  are killed at the stop timeout.
 - No database, API, protocol, or persistent project state is changed. Rolling
   compatibility is limited to the local workspace helper and portal protocol;
   explicit schema and control API versions will reject mismatches cleanly.

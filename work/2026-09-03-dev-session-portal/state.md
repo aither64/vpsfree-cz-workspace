@@ -349,6 +349,34 @@ lifecycle: active
 - The fifth mandatory review must rerun all four high-risk lanes against these
   final heads before the deferred `confctl build` commands begin.
 
+## Fifth mandatory review
+
+- The general, architecture/repetition, scope/proportionality, and
+  risk/compatibility lanes completed against workspace
+  `58e9b099420c96f594c943c31397b5f133918c6f`, configuration
+  `1509f7f8c7fd01fc77f3f9d0d53616f5af514a14`, and tracking `dd92765`.
+- Blocking findings cover incorrect nested `thread/items/list` decoding,
+  hard-coupling passive pages to Codex, stale nginx process credentials after
+  first deployment, unsynchronized work/manifest/archive lifecycle, missing
+  canonical repository identity, and a workspace branch that cannot pass its
+  fast-forward-only integration gate without rebasing and repinning.
+- Important findings cover goal-sentinel retry corruption, permissive Ruby
+  RFC3339 normalization, bulk removal without immutable-head capture,
+  half-retrofitted unshared tmux sessions, false App Server unit ownership,
+  workspace-pin churn killing tmux sessions, stop-time interruption of creation
+  helpers, and archive entries without finalization evidence.
+- Advisories cover duplicated protocol-pin ownership, status chronology based
+  only on manifest mtime, and refusing a pre-existing unowned tmux namespace.
+- Decision: fix every Blocking and Important finding before long builds. Make
+  Codex CLI's managed daemon the single daemon authority, keep it a soft/lazy
+  dependency of passive pages, use main-process-first systemd shutdown for web
+  request draining, decouple the tmux keeper from workspace pin changes, and
+  require nginx to restart with the new supplementary group. Rebase the
+  workspace feature branch onto current shared `master`, then regenerate the
+  configuration pin and all exact revision gates.
+- No code changed and no long configuration build ran while the fifth review
+  lanes were active.
+
 ## Third-review remediation checkpoint
 
 - The portal no longer executes Git while rendering active or archived
