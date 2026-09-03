@@ -17,12 +17,12 @@ lifecycle: active
 
 ## Status
 
-The vpsAdmin fix and its focused KB capture contract are implemented and
-committed. The vpsAdmin feature branch is pushed. Mandatory high-risk change
-review is complete and all findings are resolved. Quick checks and the
-corrected bilingual contract captures and the long vpsAdmin browser integration
-test pass. Both feature branches are pushed. The remaining implementation work
-is monitoring the full vpsAdmin integration CI suite to completion.
+The vpsAdmin fix and its focused KB capture contract are implemented, committed,
+and pushed. Mandatory high-risk change review is complete and all findings are
+resolved. Quick checks, the corrected bilingual contract captures, the focused
+vpsAdmin browser integration test, and all GitHub Actions pass. No
+implementation work remains. Merge, deployment, KB publication, and initiative
+finalization remain outside this implementation request.
 
 ## Commands run
 
@@ -127,9 +127,10 @@ is monitoring the full vpsAdmin integration CI suite to completion.
   metadata, two positive scenario assertions, two inventory entries, and the
   two changed bilingual interface screenshots. vpsAdminOS, page-runtime, and
   unrelated screenshot content are unchanged from the base.
-- vpsAdmin GitHub Actions on `d18fe267` currently show RuboCop, i18n health,
-  and API Specs green. CI run `33798687992` is still executing the full
-  `tag=ci` integration suite selected for the requests-plugin override.
+- vpsAdmin GitHub Actions on `d18fe267` passed: RuboCop, i18n health, API Specs,
+  and the full `tag=ci` integration suite. CI run `33798687992` completed
+  successfully; its test step took 3 hours 55 minutes 19 seconds and evaluation,
+  summary, and cleanup also passed.
 - The post-review `webui#vps-user-core` integration passed on its first attempt:
   the Playwright example succeeded in 2,080.94 seconds, the selected script in
   2,478.0 seconds, and the complete 1/1 test in 2,777.61 seconds. The runner
@@ -144,6 +145,6 @@ None.
 
 ## Cleanup
 
-- Both worktrees are active and must remain until CI, integration, and any
-  separately authorized merge are complete.
+- Both worktrees are clean and active and must remain until any separately
+  authorized merge is complete.
 - The initiative is not eligible for finalization or archival.
