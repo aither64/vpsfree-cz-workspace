@@ -177,5 +177,6 @@ None.
 ## Cleanup
 
 - No independent repository worktrees were created.
-- The active tracking directory is ready for `bin/dev-session finalize`.
-- The managed tmux session will be stopped after the archive move is committed.
+- `bin/dev-session finalize` moved terminal tracking to `archive/` after all
+  checks passed; the exact move was committed as `c1f34c4`.
+- `bin/dev-session stop` closed the managed tmux session after that commit.
