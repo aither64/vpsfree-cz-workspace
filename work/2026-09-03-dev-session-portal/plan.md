@@ -21,9 +21,10 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 ## Approach
 
 - Build a small Go service with an embedded responsive UI. It will read active
-  and archived initiative manifests, inspect registered worktrees, query GitHub
-  through `gh`, render sanitized tracking files, and proxy only an allowlisted
-  subset of the local Codex App Server protocol.
+  and archived initiative manifests, derive repository links only from their
+  validated metadata, query GitHub through `gh`, render sanitized tracking
+  files, and proxy only an allowlisted subset of the local Codex App Server
+  protocol. It will not run Git while serving a workspace page.
 - Extend `bin/dev-session` to create and resume one named Codex thread per
   initiative through the managed local daemon, persist `portal.yml`, expose the
   stable URL, and launch the tmux TUI against the same daemon. Browser creation
@@ -39,8 +40,9 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   no raw shell, general filesystem, or App Server RPC endpoint.
 - Add an OpenSSL-based PKI helper. The encrypted CA key and unencrypted nginx
   leaf key live under `/home/aither/.local/state/vpsfree-workspace-pki`, never
-  in git. The helper supports initialization, inspection, renewal, verification,
-  and public CA export.
+  in git. The installed leaf key is copied to a `root:nginx` directory for nginx
+  access. The helper supports initialization, inspection, renewal,
+  verification, and public CA export.
 - Add a compact `dev-session-handoff` skill and workspace rule so handoffs after
   material changes include the stable portal URL.
 - Package an exact coordination-workspace revision as a non-flake input in

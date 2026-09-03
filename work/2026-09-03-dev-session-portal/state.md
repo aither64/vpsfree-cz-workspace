@@ -272,12 +272,53 @@ lifecycle: active
 
 ## Open questions
 
-- Third-review remediation must be committed, tested, repinned, and reviewed.
-  Long `confctl build` validation follows only after all Blocking and Important
-  findings are resolved or explicitly decided as required by the review skill.
+- Third-review remediation is committed, tested, repinned, and ready for a
+  fresh mandatory review. Long `confctl build` validation follows only after
+  the affected review lanes pass.
 - Live ChatGPT macOS/mobile discovery remains an optional deployment smoke test
   because it depends on the installed clients. The VPN portal is the supported
   browser path regardless of native discovery.
+
+## Third-review remediation checkpoint
+
+- The portal no longer executes Git while rendering active or archived
+  sessions. Repository links come only from the strict manifest contract, and
+  archived comparisons use the recorded initial and final commit IDs.
+- Browser creation writes a complete `creating` manifest before external work,
+  blocks interaction until the initial request has been sent, identifies
+  incomplete tmux sessions through their creation environment, kills the whole
+  helper process group on timeout, separates JSON output from diagnostics, and
+  retains a `ready` journal for exact response replay.
+- Permission approval requests are rejected with a terminal-only explanation.
+  Transcript events are normalized into portal-owned data types. Reconnects
+  resume each watched thread independently, and the final browser subscriber
+  sends `thread/unsubscribe`.
+- Ruby and Go enforce the same manifest fields and scalar types. Shared fixtures
+  cover aliases, duplicate keys, explicit nulls, multiple documents, and
+  invalid nested values.
+- The PKI helper rejects existing export directories, Git or symlinked private
+  paths, and installs nginx keys as `root:nginx` mode `0640` beneath traversable
+  mode `0750` directories.
+- The portal has no TCP or insecure serving mode and does not contact Codex at
+  startup. Nginx owns HTTPS, redirects the exact hostname from HTTP, sends HSTS
+  on all responses, clears the upstream Authorization header, and remains
+  limited to WireGuard clients.
+- Workspace history now separates the portal, PKI, shared-session integration,
+  workspace branch policy, concurrent-session safety rule, and operator guide
+  into independently reviewable commits.
+- Quick verification passes: 91 `dev-session` tests with 800 assertions, 5 PKI
+  tests with 44 assertions, all Go tests, Go race tests, Go vet, JavaScript
+  syntax checking, `nix flake check --no-build`, and internal zone validation
+  at serial `2026090300`.
+- The pinned Nix package builds as
+  `/nix/store/jmk7fwrrwwjyskigk7lrs1p29q54m1x9-workspace-portal-0.1.0`.
+- Workspace revision `d269a6ca57b46ac0a2c86279ce76120eb0948f3d`
+  and configuration revision
+  `7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354` are pushed and frozen for the
+  fourth mandatory review. GitHub reports no workflow runs for either branch.
+- An ambient configuration push failed because its mandatory hook gems were not
+  installed outside the Nix shell. The same force-with-lease push passed through
+  the repository's Nix development shell without bypassing hooks.
 
 ## Cleanup
 

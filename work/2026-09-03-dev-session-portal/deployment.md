@@ -7,9 +7,9 @@ session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace source branch: `2026-09-03-dev-session-portal`
-- Workspace source: replace with the exact final reviewed head before deployment
+- Workspace source: `d269a6ca57b46ac0a2c86279ce76120eb0948f3d`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: replace with the exact final reviewed head before deployment
+- Configuration source: `7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354`
 
 Check both revisions against `state.md` before running any helper or deployment
 command:
@@ -17,12 +17,17 @@ command:
 ```sh
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD
+test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD)" = \
+  d269a6ca57b46ac0a2c86279ce76120eb0948f3d
+test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD)" = \
+  7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354
 ```
 
 ## 1. Record rollback state
 
-Run these commands in the configuration worktree before deployment. Keep their
-output until the portal and both DNS servers pass the smoke tests.
+Run these commands in the configuration worktree before deployment. They save
+the rollback paths in a mode-`0600` shell file, so a new shell or
+`nix develop -c` command does not lose them. Keep both files after deployment.
 
 ```sh
 cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration
@@ -30,20 +35,47 @@ previous_config_revision=$(git rev-parse origin/master)
 previous_aitherdev_system=$(readlink -f /run/current-system)
 previous_prg_dns_system=$(ssh root@172.16.9.90 readlink -f /run/current-system)
 previous_brq_dns_system=$(ssh root@172.19.9.90 readlink -f /run/current-system)
-printf 'configuration reference: %s\naitherdev system: %s\nprg DNS system: %s\nbrq DNS system: %s\n' \
-  "$previous_config_revision" \
-  "$previous_aitherdev_system" \
-  "$previous_prg_dns_system" \
-  "$previous_brq_dns_system"
-for server in 172.16.9.90 172.19.9.90; do
-  dig "@$server" vpsfree.cz SOA +noall +answer
-  dig "@$server" vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +noall +answer
-done
+rollback_state=/var/tmp/vpsfree-cz-workspace-portal-rollback.env
+rollback_dns=/var/tmp/vpsfree-cz-workspace-portal-dns-before.txt
+umask 077
+{
+  printf 'previous_config_revision=%q\n' "$previous_config_revision"
+  printf 'previous_aitherdev_system=%q\n' "$previous_aitherdev_system"
+  printf 'previous_prg_dns_system=%q\n' "$previous_prg_dns_system"
+  printf 'previous_brq_dns_system=%q\n' "$previous_brq_dns_system"
+} > "$rollback_state"
+{
+  date --iso-8601=seconds
+  for server in 172.16.9.90 172.19.9.90; do
+    dig "@$server" vpsfree.cz SOA +noall +answer
+    dig "@$server" vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +noall +answer
+  done
+} | tee "$rollback_dns"
+chmod 0600 "$rollback_state" "$rollback_dns"
+test -s "$rollback_state" && test -s "$rollback_dns"
 ```
 
-Keep this output until deployment is complete. The running system paths, not a
-local Git reference, are the rollback authority for each machine. The live SOA
-and CNAME answers show the DNS state associated with those paths.
+Load and validate the saved paths before any deployment:
+
+```sh
+. /var/tmp/vpsfree-cz-workspace-portal-rollback.env
+[[ "$previous_config_revision" =~ ^[0-9a-f]{40}$ ]]
+for path in \
+  "$previous_aitherdev_system" \
+  "$previous_prg_dns_system" \
+  "$previous_brq_dns_system"; do
+  [[ "$path" = /nix/store/*-nixos-system-* ]]
+done
+test -x "$previous_aitherdev_system/bin/switch-to-configuration"
+ssh root@172.16.9.90 \
+  test -x "$previous_prg_dns_system/bin/switch-to-configuration"
+ssh root@172.19.9.90 \
+  test -x "$previous_brq_dns_system/bin/switch-to-configuration"
+```
+
+The running system paths, not a local Git reference, are the rollback authority
+for each machine. The saved SOA and CNAME answers identify the DNS state that
+was active with those paths.
 
 ## 2. Prepare authentication and TLS on aitherdev
 
@@ -82,6 +114,22 @@ The encrypted CA key remains at
 The nginx certificate and key are selected together through
 `/var/lib/vpsfree-workspace-portal-tls/current`.
 
+Confirm that nginx can traverse the installed directories and read the pair:
+
+```sh
+stat -c '%U:%G %a %n' \
+  /var/lib/vpsfree-workspace-portal-tls \
+  /var/lib/vpsfree-workspace-portal-tls/pairs \
+  /var/lib/vpsfree-workspace-portal-tls/current/server-key.pem
+sudo -u nginx test -r \
+  /var/lib/vpsfree-workspace-portal-tls/current/server-key.pem
+sudo -u nginx test -r \
+  /var/lib/vpsfree-workspace-portal-tls/current/server.pem
+```
+
+The directories must be `root:nginx` with mode `0750`; the installed key must
+be `root:nginx` with mode `0640`.
+
 Export the public CA and install it as a trusted TLS root on each VPN client:
 
 ```sh
@@ -96,19 +144,28 @@ From the reviewed configuration worktree:
 
 ```sh
 cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration
-nix develop
-confctl build -y cz.vpsfree/machines/aitherdev
-confctl deploy -y cz.vpsfree/machines/aitherdev
+nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
+nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev
 ```
 
-Check the local service and the Codex daemon versions:
+Check nginx, the local socket, and the TLS files before testing Codex:
 
 ```sh
 systemctl status workspace-portal nginx --no-pager
+sudo nginx -t
 sudo -u nginx curl --fail --unix-socket \
   /run/vpsfree-workspace-portal/portal.sock http://localhost/healthz
 sudo lxc-attach -n vscode -- \
   test ! -e /run/vpsfree-workspace-portal/portal.sock
+sudo -u nginx test -r \
+  /var/lib/vpsfree-workspace-portal-tls/current/server-key.pem
+```
+
+The status pages remain available if the Codex daemon is stopped or has the
+wrong version. Interactive session operations require a matching daemon. Check
+it separately:
+
+```sh
 sudo -u aither -H codex app-server daemon version
 ```
 
@@ -133,16 +190,29 @@ curl --fail --resolve \
 ```
 
 Also confirm that the same request without `-u aither` returns HTTP 401.
+Check the name-specific HTTP redirect and HSTS header as well:
+
+```sh
+curl --silent --show-error --head --resolve \
+  vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:80:172.16.106.40 \
+  http://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz | \
+  grep -i '^location: https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz'
+curl --silent --show-error --head --resolve \
+  vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:443:172.16.106.40 \
+  --cacert /tmp/vpsfree-workspace-ca.pem -u aither \
+  https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz | \
+  grep -i '^strict-transport-security: max-age=31536000'
+```
 
 ## 4. Deploy both internal DNS servers
 
 Deploy DNS only after the pre-DNS HTTPS test succeeds:
 
 ```sh
-confctl build -y cz.vpsfree/containers/prg/int.ns1
-confctl build -y cz.vpsfree/containers/brq/int.ns1
-confctl deploy -y cz.vpsfree/containers/prg/int.ns1
-confctl deploy -y cz.vpsfree/containers/brq/int.ns1
+nix develop -c confctl build -y cz.vpsfree/containers/prg/int.ns1
+nix develop -c confctl build -y cz.vpsfree/containers/brq/int.ns1
+nix develop -c confctl deploy -y cz.vpsfree/containers/prg/int.ns1
+nix develop -c confctl deploy -y cz.vpsfree/containers/brq/int.ns1
 ```
 
 Query both servers directly:
@@ -159,6 +229,9 @@ If either DNS deployment or query fails, switch both DNS servers back to the
 exact running system paths recorded before deployment:
 
 ```sh
+. /var/tmp/vpsfree-cz-workspace-portal-rollback.env
+[[ "$previous_prg_dns_system" = /nix/store/*-nixos-system-* ]]
+[[ "$previous_brq_dns_system" = /nix/store/*-nixos-system-* ]]
 ssh root@172.16.9.90 \
   "$previous_prg_dns_system/bin/switch-to-configuration switch"
 ssh root@172.19.9.90 \
@@ -186,7 +259,10 @@ following:
 - retrying the same short name does not create another session;
 - the terminal attach command resumes the browser thread;
 - messages sent from either client appear in the other;
-- an approval shows the complete request and related item before any decision;
+- a command or file-change approval shows the complete request and related item
+  before any decision;
+- a permission approval is rejected by the portal and remains available in the
+  terminal client;
 - archived or finalized sessions do not show mutation controls.
 
 Archive or abandon the disposable initiative through the normal workspace
@@ -226,6 +302,9 @@ If DNS has not been deployed, restore the exact aitherdev system recorded in
 step 1:
 
 ```sh
+. /var/tmp/vpsfree-cz-workspace-portal-rollback.env
+[[ "$previous_aitherdev_system" = /nix/store/*-nixos-system-* ]]
+test -x "$previous_aitherdev_system/bin/switch-to-configuration"
 sudo "$previous_aitherdev_system/bin/switch-to-configuration" switch
 sudo -u aither -H codex app-server daemon restart
 ```
