@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-03-workspace-review-lifecycle
@@ -10,19 +10,18 @@ lifecycle: active
   - Branch: `master` (shared top-level checkout)
   - Path: `/home/aither/workspace/ai/vpsfree.cz`
   - Initiative base: `b75bc65f436aa58221055162298f3fbebf681dd0`
-  - Current implementation head: `84535d2`
+  - Final rule and implementation head: `05c72b0`
 - No independent project worktrees were created.
 
 ## Status
 
-- The requested review and session-lifecycle rules are implemented and
-  committed.
+- The requested review and session-lifecycle rules are implemented, reviewed,
+  verified, and committed.
 - Mandatory review is complete. The final general and scope reviewers found
   two remnants of the rejected Git-internals direction; both were removed and
   verified directly because the fixes only reduced behavior and surface area.
-- The initiative remains active until the final review is accepted, this file
-  is changed to `lifecycle: complete`, tracking is committed, and `finalize`
-  moves it to `archive/`.
+- No review, implementation, test, approval, deployment, or project-worktree
+  work remains. Tracking is terminal and ready to move to `archive/`.
 
 ## Decisions
 
@@ -106,6 +105,8 @@ another consumer identity.
 - `b22d29c` — plan, decisions, review evidence, and verification state.
 - `84535d2` — remove remaining lock and ignored-file policy duplicated from
   Git.
+- `5258b78` — compact tracking around durable decisions and dispositions.
+- `05c72b0` — prevent recursive reviewer confirmation loops.
 
 ## Verification
 
@@ -176,5 +177,5 @@ None.
 ## Cleanup
 
 - No independent repository worktrees were created.
-- The managed tmux session and active tracking directory remain until final
-  review and archival are complete.
+- The active tracking directory is ready for `bin/dev-session finalize`.
+- The managed tmux session will be stopped after the archive move is committed.
