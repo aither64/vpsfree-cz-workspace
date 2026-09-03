@@ -7,10 +7,10 @@ implementation session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace portal source branch: `2026-09-03-dev-session-portal`
-- Workspace portal source: `6371e9c` (replace with the final head recorded in
+- Workspace portal source: `2c9112da` (replace with the final head recorded in
   `state.md` after review)
 - Configuration feature branch: `2026-09-03-dev-session-portal`
-- Configuration implementation commit: `15b473be`
+- Configuration implementation commit: `cc33b7ae`
 
 Use the final configuration commit recorded in `state.md` if review or test
 fixes add commits after this runbook was written.

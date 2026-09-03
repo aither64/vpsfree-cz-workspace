@@ -21,11 +21,11 @@ lifecycle: active
 - Configuration worktree created from `origin/master` at
   `57d7c12a2da78d334d338a0e56dd7438376a6973`.
 - Workspace changes are committed and pushed on
-  `2026-09-03-dev-session-portal` through `6371e9c`. At the user's direction,
+  `2026-09-03-dev-session-portal` through `2c9112da`. At the user's direction,
   published `master` was force-reset from `ada6db0` to its pre-initiative
   commit `0d2802f`; no portal implementation remains on `master`.
 - Configuration changes are committed and pushed on
-  `2026-09-03-dev-session-portal` through `15b473be`. The branch has four
+  `2026-09-03-dev-session-portal` through `cc33b7ae`. The branch has three
   commits on top of current `origin/master`.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
@@ -56,11 +56,18 @@ lifecycle: active
 - Rebased the workspace feature branch onto the tracking-only `master`, dropped
   duplicate tracking commits, and force-pushed the rewritten feature history.
 - `confctl inputs channel set --commit workspace-tools vpsfree-workspace 6371e9cad7dec81791a5eb3bf6290aef632dce0d`
+- `confctl inputs channel set --commit workspace-tools vpsfree-workspace 2c9112daa50f74dab50ab8983323d040d246f62e`
+- Rewrote the unmerged workspace branch into separate portal, final PKI,
+  shared-session, and workspace-policy commits.
+- Regenerated the final workspace input pin with `confctl` from the clean input
+  commit, then rewrote the unmerged configuration branch so it contains one
+  generated input update instead of three successive revisions.
 - Re-ran both Ruby suites, all Go tests, `go vet`, the handoff-skill
   validator, `git diff --check`, and `nix flake check --no-build` after the
   workspace history rewrite.
-- Built `packages/workspace-portal` from the repinned workspace input with
-  Nix; output: `/nix/store/j1klfhxqwj9vi9lrx0y0hrki56wafsxz-workspace-portal-0.1.0`.
+- Built `packages/workspace-portal` from the final pinned workspace revision
+  with Nix; output:
+  `/nix/store/h05r1jlqydflyrn36xgd2g49m8fj8505-workspace-portal-0.1.0`.
 
 ## Results
 
