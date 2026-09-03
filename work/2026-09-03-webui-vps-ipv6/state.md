@@ -20,9 +20,9 @@ lifecycle: active
 The vpsAdmin fix and its focused KB capture contract are implemented and
 committed. The vpsAdmin feature branch is pushed. Mandatory high-risk change
 review is complete and all findings are resolved. Quick checks and the
-corrected bilingual contract captures pass. The remaining implementation work
-is the long vpsAdmin browser integration test, pushing the contract branch, and
-monitoring both repositories' CI.
+corrected bilingual contract captures and the long vpsAdmin browser integration
+test pass. Both feature branches are pushed. The remaining implementation work
+is monitoring both repositories' CI to completion.
 
 ## Commands run
 
@@ -59,6 +59,9 @@ monitoring both repositories' CI.
   `gpt-5.6-sol` reviewers.
 - Amended the unpushed vpsfree-kb-contracts change to focused revision
   `c7f0baedec7b19f587aefc7c2999f9be3f554754`.
+- Ran `./test-runner.sh test 'webui#vps-user-core'` after mandatory review and
+  pushed the corrected vpsfree-kb-contracts branch after confirming its base
+  still matched current `origin/master`.
 
 ## Results
 
@@ -124,6 +127,12 @@ monitoring both repositories' CI.
 - vpsAdmin GitHub Actions on `d18fe267` currently show RuboCop, i18n health,
   and API Specs green. CI run `33798687992` is still executing its selected
   integration tests.
+- The post-review `webui#vps-user-core` integration passed on its first attempt:
+  the Playwright example succeeded in 2,080.94 seconds, the selected script in
+  2,478.0 seconds, and the complete 1/1 test in 2,777.61 seconds. The runner
+  used cached kernels; no unexpected local kernel compilation occurred.
+- vpsfree-kb-contracts GitHub Actions started on `c7f0baed`: Check run
+  `33813611074` and Managed page runtime run `33813610967` are in progress.
 
 ## Open questions
 
