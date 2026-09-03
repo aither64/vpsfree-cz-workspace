@@ -244,10 +244,36 @@ lifecycle: active
   authentication, a host security boundary, a cross-project protocol adapter,
   deployment, and rollback. The rerun uses `gpt-5.6-sol` at `max` effort.
 
+## Third mandatory review
+
+- General, architecture, scope, and risk lanes completed against workspace
+  `d9260fa562392ce9443af970be826efd4b074a9d` and configuration
+  `bc4f31de0f7175c7aedb4dfea0fbe7e347e2d3d9`. Every lane used
+  `gpt-5.6-sol` at `max` effort.
+- Blocking findings cover repository-controlled Git configuration executing on
+  the host, incomplete crash recovery around manifest/tmux/HTTP boundaries,
+  writable `creating` sessions, permission approvals without matching thread
+  items, one stale thread breaking all reconnects, divergent Ruby/Go manifest
+  contracts, nginx-unreadable TLS keys, unsupported insecure TCP serving, and
+  a commit split that does not keep portal and PKI documentation with their
+  owning changes.
+- Important findings cover archived comparison identity, the reserved
+  `workspace` worktree name, untyped transcript rendering, passive-page
+  coupling to Codex availability, unsafe PKI output and symlink paths, exact
+  reviewed revisions and durable rollback captures in the runbook, an HTTP
+  hostname sink plus HSTS, and a stale configuration commit message.
+- Advisory findings include clearing the proxied Authorization header, aligning
+  exact goal-size accounting, avoiding event streams on closed pages, and
+  removing or documenting smaller stale metadata and commit-boundary details.
+- No long integration build may start until Blocking findings are fixed and
+  Important findings are fixed or explicitly decided. Remediation changes the
+  persistence, protocol, and host-security designs, so affected lanes require a
+  fresh rerun.
+
 ## Open questions
 
-- The four mandatory review lanes must finish against the frozen final heads.
-  Long `confctl build` validation follows after all Blocking and Important
+- Third-review remediation must be committed, tested, repinned, and reviewed.
+  Long `confctl build` validation follows only after all Blocking and Important
   findings are resolved or explicitly decided as required by the review skill.
 - Live ChatGPT macOS/mobile discovery remains an optional deployment smoke test
   because it depends on the installed clients. The VPN portal is the supported
