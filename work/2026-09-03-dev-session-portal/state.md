@@ -377,6 +377,33 @@ lifecycle: active
 - No code changed and no long configuration build ran while the fifth review
   lanes were active.
 
+## Fifth-review remediation in progress
+
+- The workspace feature branch was rebased onto shared `master` at `1f1ff25`,
+  so it can be integrated by fast-forward. Its remediation commit is pushed at
+  `192b540b8b9de8063c9cfb68016449ad8a0c2487`.
+- The configuration branch is pushed at
+  `867235a019bd917142110fc34957d1f6574fa37f`. Commit `bf9ae6e1` changes service
+  ownership and shutdown behavior; generated commit `867235a0` pins workspace
+  `192b540b` through `confctl` without editing `flake.lock` manually.
+- The portal decodes nested App Server thread-item entries, reads its protocol
+  version from source metadata, treats anchored `state.md` lifecycle as the
+  interaction authority, rejects malformed archives, and uses finalization
+  timestamps for archived chronology.
+- `dev-session` now persists canonical project identity, verifies it during
+  cleanup/finalization, snapshots heads during bulk cleanup, strictly validates
+  RFC3339 calendar/time components, reconciles exact tracking skeletons, and
+  refuses to retrofit a running unshared terminal session.
+- NixOS now leaves the detached App Server under Codex CLI ownership, decouples
+  the tmux keeper from workspace-pin changes, refuses a pre-existing tmux
+  socket, drains portal helpers with `KillMode=mixed`, and restarts nginx so
+  live processes acquire the proxy group.
+- Quick verification passes with 99 `dev-session` tests and 891 assertions,
+  5 PKI tests and 44 assertions, all Go tests and Go vet, Ruby/JavaScript syntax,
+  formatting, diff checks, and `nix flake check --no-build --show-trace`.
+- The fifth-review findings require one final review rerun against the new exact
+  heads before long `confctl build` validation begins.
+
 ## Third-review remediation checkpoint
 
 - The portal no longer executes Git while rendering active or archived
