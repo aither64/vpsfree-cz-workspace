@@ -3,7 +3,8 @@
 ## Goal
 
 Provide a VPN-only HTTPS web interface for development initiatives at
-`workspace.aitherdev.int.vpsfree.cz`. Each initiative must have a stable page
+`vpsfree-cz-workspace.aitherdev.int.vpsfree.cz`. Each initiative must have a
+stable page
 with GitHub comparisons and workflow runs, rendered tracking files and curated
 artifacts, live interaction with its Codex thread, and a browser action for
 starting an ordinary `dev-session` that can also be attached from a terminal.

@@ -78,6 +78,9 @@ lifecycle: active
 - User confirmed the portal hostname, custom-CA HTTPS, browser-created empty
   sessions with an initial Codex turn, encrypted CA custody on aitherdev, and
   user-owned deployment of aitherdev and both internal DNS servers.
+- After the initial mandatory review completed, the user changed the hostname
+  to `vpsfree-cz-workspace.aitherdev.int.vpsfree.cz` so future workspaces can
+  use distinct names.
 - `dev-session` suite: 83 tests and 700 assertions passed.
 - PKI suite: 2 tests and 25 assertions passed, including encrypted-key,
   renewal, hostname, chain, permission, and git-worktree refusal checks.
@@ -95,6 +98,36 @@ lifecycle: active
   complete implementation is retained on the pushed workspace feature branch.
   Tracking-only commits now follow that pre-initiative revision on `master`
   without carrying the implementation.
+
+## Mandatory change review
+
+- Overall risk: high, because the feature introduces authentication, local-CA
+  secrets, a local Codex control protocol, host process behavior, TLS,
+  firewall, DNS, deployment ordering, and rollback behavior.
+- Reviewed workspace `2c9112da` and configuration `2ba6673d` with
+  `gpt-5.6-sol` at `max` effort in the general, architecture/repetition,
+  scope/proportionality, and risk/compatibility lanes.
+- Blocking findings: workspace self-worktrees could not be finalized; artifact
+  reads followed ancestor symlinks and raced path replacement; approval prompts
+  hid granted authority and accepted unoffered decisions; App Server messages
+  over 32 KiB disconnected the client; serial GitHub enrichment could hide all
+  local page content during an outage.
+- Important findings: incomplete App Server handshake/resolution/reconnect and
+  response-claim lifecycle; non-retry-safe partial session creation; unbounded
+  full-history refreshes; divergent manifest identity validation; unsafe PKI
+  pair replacement; overbroad `KillMode=process`; incomplete deployment and
+  rollback probes; policy reconciliation with the preserved user change; and a
+  disproportionate bespoke authentication subsystem.
+- Advisory findings cover explicit repository probe failures, authoritative
+  default-branch metadata, no-store responses, proxy-aware throttling, unused
+  interfaces, and pinned PKI invocation in the runbook.
+- Decisions: retain and fully support the workspace feature-branch policy
+  because the user explicitly requires it; replace application-owned password
+  sessions with nginx basic authentication while retaining strict mutation
+  origin checks; address all Blocking and Important findings before long
+  builds; apply low-cost advisory fixes in the same remediation; rerun every
+  review lane because authentication and protocol remediation change design
+  boundaries.
 
 ## Open questions
 

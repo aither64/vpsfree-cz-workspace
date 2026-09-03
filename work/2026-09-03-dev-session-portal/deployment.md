@@ -1,7 +1,7 @@
 # Workspace portal deployment
 
 This runbook deploys the portal at
-`https://workspace.aitherdev.int.vpsfree.cz/`. Run the commands yourself; the
+`https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`. Run the commands yourself; the
 implementation session does not deploy aitherdev or the internal DNS servers.
 
 ## Revisions
@@ -88,8 +88,8 @@ confctl deploy -y cz.vpsfree/containers/brq/int.ns1
 Confirm that both servers return the aitherdev alias:
 
 ```sh
-dig @172.16.9.90 workspace.aitherdev.int.vpsfree.cz CNAME +short
-dig @172.19.9.90 workspace.aitherdev.int.vpsfree.cz CNAME +short
+dig @172.16.9.90 vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +short
+dig @172.19.9.90 vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +short
 ```
 
 Both commands should return `aitherdev.int.vpsfree.cz.`.
@@ -100,7 +100,7 @@ With the public CA installed and trusted:
 
 ```sh
 curl --fail --cacert /path/to/vpsfree-workspace-ca.pem \
-  https://workspace.aitherdev.int.vpsfree.cz/healthz
+  https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz
 ```
 
 Open the portal in a browser, sign in, and check this initiative page. Create a
