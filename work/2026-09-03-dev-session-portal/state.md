@@ -129,6 +129,49 @@ lifecycle: active
   review lane because authentication and protocol remediation change design
   boundaries.
 
+## Review remediation checkpoint
+
+- All four initial reviews finished before the hostname was changed. The
+  implementation and runbook now use only
+  `vpsfree-cz-workspace.aitherdev.int.vpsfree.cz`; the shorter name is not kept
+  as an alias.
+- The workspace feature branch now supports the reserved
+  `worktrees/<slug>/workspace` worktree through creation, manifest recording,
+  final commit capture, non-force removal, and finalization. A regression test
+  exercises the full lifecycle against a real non-bare top-level repository.
+- Browser session creation records a `creating` manifest before external work,
+  persists the thread ID before best-effort naming, checks the thread's first
+  turn before retrying the initial request, and marks the session `ready` only
+  after tmux setup. This makes retries converge without duplicate threads or
+  initial turns.
+- Portal artifact and tracking reads use already-open file descriptors beneath
+  a no-symlink `openat2` boundary, enforce size limits before reading, and
+  reject duplicate active/archive identities and manifest/directory mismatches.
+- The Codex adapter completes the initialize handshake, rejects protocol
+  version skew, accepts 64 MiB frames, limits browser history to 20 recent
+  turns, removes resolved prompts, tags connection generations, claims each
+  response once, and coalesces browser refresh events.
+- Approval controls show the complete request and matching thread item. The
+  application accepts only the string decisions offered by the App Server or
+  defined by the exact file-change and permission response protocols.
+- GitHub enrichment is concurrent under one five-second page budget. Local Git
+  probe failures are shown as unavailable instead of clean.
+- Authentication moved from the Go application to nginx Basic Authentication.
+  Every application mutation still requires the exact HTTPS origin, and all
+  application responses use `Cache-Control: no-store`.
+- CA and server certificate helpers publish versioned certificate/key pairs
+  through an atomic `current` symlink. Root-only installation copies and
+  verifies a complete pair before switching nginx. Previous pair directories
+  remain available for rollback.
+- The runbook now covers root-owned Basic Authentication and TLS preparation,
+  pre-DNS HTTPS and authentication probes, exact rollback capture, partial DNS
+  deployment recovery, one-hour DNS cache handling, pinned renewal tooling,
+  and Codex daemon restart/version checks.
+- Quick checks after remediation: `dev-session` has 87 tests and 740
+  assertions passing; PKI has 4 tests and 33 assertions passing; Go tests and
+  `go vet` pass. The Go race suite and JavaScript syntax check still need their
+  Nix-provided compilers/runtimes before the remediation commits are written.
+
 ## Open questions
 
 - Mandatory change review must be restarted after quick checks; the long
