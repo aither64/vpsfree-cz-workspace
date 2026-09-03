@@ -28,16 +28,18 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 - Extend `bin/dev-session` to create and resume one named Codex thread per
   initiative through the managed local daemon, persist `portal.yml`, expose the
   stable URL, and launch the tmux TUI against the same daemon. Browser creation
-  is journaled before other state is created and reconciles a lost
-  `thread/start` result by the unique `work/<slug>` thread directory. The
-  supplied goal is sent once as the first turn, with the same session identity
-  variables available to Codex and tmux. Codex remains responsible for
-  selecting repositories.
+  is journaled before other state is created and uses the unique `work/<slug>`
+  thread directory for bounded reconciliation. The browser preserves the dated
+  slug across an HTTP retry. The supplied goal and session identity are checked
+  against any recovery candidate before proceeding. Codex remains responsible
+  for selecting repositories.
 - Put HTTP Basic Authentication and TLS in nginx. Connect nginx to the portal
-  through a permission-restricted host Unix socket that is not mounted into the
-  development LXC. Retain exact-Origin checks for mutations, strict artifact
-  containment, passive download-only artifact formats, sanitized Markdown, and
-  no raw shell, general filesystem, or App Server RPC endpoint.
+  through a permission-restricted host Unix socket and dedicated proxy group
+  that are not mounted into the development LXC. Keep the portal and its child
+  processes outside the nginx secret-reading group. Retain exact-Origin checks
+  for mutations, strict artifact containment, passive download-only artifact
+  formats, sanitized Markdown, and no raw shell, general filesystem, or App
+  Server RPC endpoint.
 - Add an OpenSSL-based PKI helper. The encrypted CA key and unencrypted nginx
   leaf key live under `/home/aither/.local/state/vpsfree-workspace-pki`, never
   in git. The installed leaf key is copied to a `root:nginx` directory for nginx
@@ -52,11 +54,24 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 ## Compatibility and deployment
 
 - Existing work/state directories and standalone Codex processes are not
-  migrated. New manifests are additive; older helpers ignore them.
+  migrated. New manifests are additive. Before deploying the portal, integrate
+  its workspace helper into the live checkout; an older helper must not mutate
+  a portal-managed initiative.
 - The portal remains useful for status and files if GitHub or Codex is offline,
   and reports those integrations as unavailable without failing the page.
 - Active sessions use live branch comparisons. Finalization preserves metadata
   and leaves the same URL read-only under `archive/`.
+- Local tracking, manifest, and journal writes are atomic and recoverable.
+  Worktree metadata is registered before Git creation and finalization requires
+  complete bidirectional coverage and immutable comparison commits.
+- Codex App Server `thread/start` and `turn/start` do not accept a caller-owned
+  idempotency key. A timeout after remote acceptance is therefore ambiguous.
+  Recovery accepts one matching candidate and refuses conflicts; exactly-once
+  behavior is guaranteed only for local journaled state, not the remote App
+  Server boundary.
+- Browser-created tmux sessions and the App Server use separate systemd units.
+  The web service drains creation requests and kills its complete cgroup during
+  a switch, preventing an old helper from continuing after deployment.
 - No database, API, protocol, or persistent project state is changed. Rolling
   compatibility is limited to the local workspace helper and portal protocol;
   explicit schema and control API versions will reject mismatches cleanly.

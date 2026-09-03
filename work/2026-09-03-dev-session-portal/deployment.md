@@ -44,13 +44,18 @@ umask 077
   printf 'previous_prg_dns_system=%q\n' "$previous_prg_dns_system"
   printf 'previous_brq_dns_system=%q\n' "$previous_brq_dns_system"
 } > "$rollback_state"
+set -o pipefail
 {
   date --iso-8601=seconds
   for server in 172.16.9.90 172.19.9.90; do
-    dig "@$server" vpsfree.cz SOA +noall +answer
-    dig "@$server" vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +noall +answer
+    soa="$(dig "@$server" vpsfree.cz SOA +time=5 +tries=2 +noall +answer)"
+    test -n "$soa"
+    printf '%s\n' "$soa"
+    cname="$(dig "@$server" vpsfree-cz-workspace.aitherdev.int.vpsfree.cz CNAME +time=5 +tries=2 +noall +answer)"
+    printf '%s\n' "$cname"
   done
 } | tee "$rollback_dns"
+test "${PIPESTATUS[0]}" -eq 0
 chmod 0600 "$rollback_state" "$rollback_dns"
 test -s "$rollback_state" && test -s "$rollback_dns"
 ```
@@ -84,12 +89,13 @@ Create the nginx password file:
 ```sh
 sudo install -d -o root -g nginx -m 0750 \
   /var/lib/vpsfree-workspace-portal-auth
-nix shell nixpkgs#apacheHttpd -c sudo htpasswd -c \
-  /var/lib/vpsfree-workspace-portal-auth/htpasswd aither
-sudo chown root:nginx \
-  /var/lib/vpsfree-workspace-portal-auth/htpasswd
-sudo chmod 0640 \
-  /var/lib/vpsfree-workspace-portal-auth/htpasswd
+auth=/var/lib/vpsfree-workspace-portal-auth/htpasswd
+sudo test ! -e "$auth" || { echo "password file already exists" >&2; exit 1; }
+tmp="$(sudo mktemp /var/lib/vpsfree-workspace-portal-auth/.htpasswd.XXXXXX)"
+nix shell nixpkgs#apacheHttpd -c sudo htpasswd -cB -C 12 "$tmp" aither
+sudo chown root:nginx "$tmp"
+sudo chmod 0640 "$tmp"
+sudo mv -T "$tmp" "$auth"
 ```
 
 Create the private CA and first leaf certificate from the reviewed workspace
@@ -140,6 +146,17 @@ Do not copy the CA key, a server key, or the CA passphrase to a client.
 
 ## 3. Build and deploy aitherdev
 
+First verify that the live workspace has integrated the reviewed helper. This
+prevents an older `bin/dev-session` from mutating a portal-managed initiative:
+
+```sh
+workspace=/home/aither/workspace/ai/vpsfree.cz
+git -C "$workspace" merge-base --is-ancestor \
+  d269a6ca57b46ac0a2c86279ce76120eb0948f3d master
+test "$(git -C "$workspace" show master:bin/dev-session | sha256sum)" = \
+  "$(git -C "$workspace" show d269a6ca57b46ac0a2c86279ce76120eb0948f3d:bin/dev-session | sha256sum)"
+```
+
 From the reviewed configuration worktree:
 
 ```sh
@@ -151,7 +168,11 @@ nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev
 Check nginx, the local socket, and the TLS files before testing Codex:
 
 ```sh
-systemctl status workspace-portal nginx --no-pager
+systemctl status workspace-portal workspace-portal-tmux \
+  workspace-codex-app-server nginx --no-pager
+test "$(systemctl show workspace-portal -p Group --value)" = \
+  workspace-portal-proxy
+test "$(systemctl show workspace-portal -p KillMode --value)" = control-group
 sudo nginx -t
 sudo -u nginx curl --fail --unix-socket \
   /run/vpsfree-workspace-portal/portal.sock http://localhost/healthz
@@ -159,6 +180,18 @@ sudo lxc-attach -n vscode -- \
   test ! -e /run/vpsfree-workspace-portal/portal.sock
 sudo -u nginx test -r \
   /var/lib/vpsfree-workspace-portal-tls/current/server-key.pem
+portal_pid="$(systemctl show workspace-portal -p MainPID --value)"
+portal_groups="$(awk '/^Groups:/{print $0}' "/proc/$portal_pid/status")"
+nginx_gid="$(getent group nginx | cut -d: -f3)"
+case " $portal_groups " in *" $nginx_gid "*) exit 1 ;; esac
+sudo -u aither test ! -r \
+  /var/lib/vpsfree-workspace-portal-auth/htpasswd
+sudo -u aither test ! -r \
+  /var/lib/vpsfree-workspace-portal-tls/current/server-key.pem
+portal_cgroup="$(systemctl show workspace-portal -p ControlGroup --value)"
+mapfile -t portal_processes < "/sys/fs/cgroup${portal_cgroup}/cgroup.procs"
+test "${#portal_processes[@]}" -eq 1
+test "${portal_processes[0]}" = "$portal_pid"
 ```
 
 The status pages remain available if the Codex daemon is stopped or has the
@@ -189,10 +222,18 @@ curl --fail --resolve \
   https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz
 ```
 
-Also confirm that the same request without `-u aither` returns HTTP 401.
-Check the name-specific HTTP redirect and HSTS header as well:
+Assert missing and wrong credentials return HTTP 401. Check the name-specific
+HTTP redirect and HSTS header as well:
 
 ```sh
+test "$(curl --silent --output /dev/null --write-out '%{http_code}' --resolve \
+  vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:443:172.16.106.40 \
+  --cacert /tmp/vpsfree-workspace-ca.pem \
+  https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz)" = 401
+test "$(curl --silent --output /dev/null --write-out '%{http_code}' --resolve \
+  vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:443:172.16.106.40 \
+  --cacert /tmp/vpsfree-workspace-ca.pem -u aither:wrong-password \
+  https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz)" = 401
 curl --silent --show-error --head --resolve \
   vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:80:172.16.106.40 \
   http://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz | \
@@ -252,6 +293,19 @@ curl --fail --cacert /path/to/vpsfree-workspace-ca.pem \
   https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz
 ```
 
+From a test host that is not connected to WireGuard, the direct resolved probe
+must fail to connect:
+
+```sh
+if curl --connect-timeout 5 --resolve \
+  vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:443:172.16.106.40 \
+  --cacert /path/to/vpsfree-workspace-ca.pem \
+  https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz; then
+  echo "portal was reachable outside WireGuard" >&2
+  exit 1
+fi
+```
+
 Open the portal in a browser and check this initiative page. Create a
 disposable session with a harmless initial request. Confirm all of the
 following:
@@ -261,8 +315,8 @@ following:
 - messages sent from either client appear in the other;
 - a command or file-change approval shows the complete request and related item
   before any decision;
-- a permission approval is rejected by the portal and remains available in the
-  terminal client;
+- a permission approval is shown as terminal-only, receives no portal response,
+  and remains available in the terminal client;
 - archived or finalized sessions do not show mutation controls.
 
 Archive or abandon the disposable initiative through the normal workspace
@@ -314,8 +368,7 @@ system path, verify its SOA and CNAME answers directly, and wait one hour before
 restoring the old aitherdev system. This ordering keeps cached portal records
 on the authenticated TLS virtual host until they expire.
 
-The portal service uses `KillMode=process` because tmux panes and the managed
-Codex App Server must survive a portal service restart. A portal deployment
-therefore does not update those long-lived processes. The version checks and
-explicit daemon restart above prevent an old App Server from being used with a
-new portal adapter.
+The portal web service uses `KillMode=control-group` and waits for active HTTP
+creation handlers before stopping. Browser-created tmux sessions and the Codex
+App Server live in separate systemd units, so an ordinary portal restart cannot
+leave an old mutation helper running and does not tear down those sessions.

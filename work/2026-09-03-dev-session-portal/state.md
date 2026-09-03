@@ -20,13 +20,11 @@ lifecycle: active
   `01a0678c-baae-7600-bcf6-9a0cb6c83232` and named after the initiative.
 - Configuration worktree created from `origin/master` at
   `57d7c12a2da78d334d338a0e56dd7438376a6973`.
-- The second mandatory review examined workspace
-  `6119ef8dbb99fae4bc930f853a02fdb4b3c4e6ee` and configuration
-  `6b07356e04347830cc02385f96f1ce28667bfee3`. Its remediation is committed,
-  repinned, and pushed at workspace
-  `d9260fa562392ce9443af970be826efd4b074a9d` and configuration
-  `bc4f31de0f7175c7aedb4dfea0fbe7e347e2d3d9`. These heads are frozen for the
-  mandatory review rerun.
+- The fourth mandatory review examined workspace
+  `d269a6ca57b46ac0a2c86279ce76120eb0948f3d` and configuration
+  `7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354`. All four lanes finished before
+  remediation began. Fixes are in progress on the same development branches;
+  no long configuration build or deployment has started.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
   staged patch.
@@ -278,6 +276,61 @@ lifecycle: active
 - Live ChatGPT macOS/mobile discovery remains an optional deployment smoke test
   because it depends on the installed clients. The VPN portal is the supported
   browser path regardless of native discovery.
+
+## Fourth mandatory review
+
+- The general, architecture/repetition, scope/proportionality, and
+  risk/compatibility lanes completed against workspace `d269a6ca` and
+  configuration `7b7d3489`, using `gpt-5.6-sol` at `max` effort.
+- Blocking findings covered browser-triggered host Git configuration, missing
+  experimental App Server negotiation, terminal-only permissions being denied,
+  non-atomic tracking writes, Ruby/Go manifest divergence, worktree registry
+  recovery, incomplete final comparison evidence, and the portal inheriting
+  nginx secret access.
+- Important findings covered active/archive cache identity, a stale unsubscribe
+  race, midnight retry identity, duplicate browser submissions, service child
+  lifecycle, mixed helper revisions, weak password provisioning, and executable
+  deployment assertions.
+- Advisories covered backend HSTS ownership, stale data fields, reconnect and
+  response feedback, PKI passphrase custody, protocol-pin coupling, native
+  ChatGPT wording, and checked DNS evidence capture.
+- Decision: the local journal guarantees atomic local files and replay of a
+  completed result. Codex App Server does not provide caller idempotency for
+  `thread/start` or `turn/start`, so an acceptance-boundary timeout remains
+  ambiguous. The portal performs bounded single-candidate reconciliation and
+  refuses conflicts; it does not claim exactly-once remote creation.
+
+## Fourth-review remediation checkpoint
+
+- Removed top-level Git history inspection from browser creation and added a
+  hostile `core.fsmonitor` regression. Tracking creation and goal seeding now
+  use fsynced temporary files with atomic link or rename publication.
+- Worktree creation resolves one base commit, persists its registry before Git,
+  recovers a validated partial worktree, and refuses finalization unless every
+  physical worktree is registered and every archived comparison has both commit
+  IDs.
+- Ruby and Go reject the same explicit tags, empty constrained values, legacy
+  YAML boolean spellings, and malformed RFC 3339 timestamps through shared
+  fixtures.
+- The App Server handshake enables its experimental API. Permission approvals
+  remain visible but unanswered for the terminal, and unsubscribe/resubscribe
+  transitions are serialized. Browser controls disable during submissions and
+  reconnects refresh both transcript and pending state.
+- Browser retries retain a server-rendered date in the posted full slug.
+  Repository caching includes manifest time and closed/archive identity, and
+  closed sessions use immutable comparisons immediately.
+- The configuration uses a dedicated nginx socket-sharing group. Browser tmux
+  sessions and App Server use separate systemd units; the web service drains
+  creation handlers and returns to full cgroup cleanup. A Nix assertion ties the
+  packaged Codex version to the portal protocol pin.
+- The operator guide now provisions bcrypt credentials atomically, checks DNS
+  capture failures, asserts missing and wrong-password responses, verifies
+  process groups and secret separation, requires the live helper revision, and
+  includes a non-WireGuard probe.
+- Current quick checks: 94 `dev-session` tests with 833 assertions, all portal
+  Go tests, JavaScript syntax, Ruby syntax, `git diff --check`, Nix formatting,
+  and `nix flake check --no-build --show-trace` pass. The ambient Go command
+  lacked a C compiler, so Go verification runs through a Nix shell with GCC.
 
 ## Third-review remediation checkpoint
 
