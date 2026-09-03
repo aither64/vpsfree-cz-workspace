@@ -22,7 +22,7 @@ committed. The vpsAdmin feature branch is pushed. Mandatory high-risk change
 review is complete and all findings are resolved. Quick checks and the
 corrected bilingual contract captures and the long vpsAdmin browser integration
 test pass. Both feature branches are pushed. The remaining implementation work
-is monitoring both repositories' CI to completion.
+is monitoring the full vpsAdmin integration CI suite to completion.
 
 ## Commands run
 
@@ -62,6 +62,9 @@ is monitoring both repositories' CI to completion.
 - Ran `./test-runner.sh test 'webui#vps-user-core'` after mandatory review and
   pushed the corrected vpsfree-kb-contracts branch after confirming its base
   still matched current `origin/master`.
+- Monitored GitHub Actions for both pushed revisions. The requests-plugin
+  override is a full-suite trigger, so vpsAdmin CI selected all `tag=ci`
+  integration tests instead of only the focused browser scenario.
 
 ## Results
 
@@ -125,14 +128,15 @@ is monitoring both repositories' CI to completion.
   two changed bilingual interface screenshots. vpsAdminOS, page-runtime, and
   unrelated screenshot content are unchanged from the base.
 - vpsAdmin GitHub Actions on `d18fe267` currently show RuboCop, i18n health,
-  and API Specs green. CI run `33798687992` is still executing its selected
-  integration tests.
+  and API Specs green. CI run `33798687992` is still executing the full
+  `tag=ci` integration suite selected for the requests-plugin override.
 - The post-review `webui#vps-user-core` integration passed on its first attempt:
   the Playwright example succeeded in 2,080.94 seconds, the selected script in
   2,478.0 seconds, and the complete 1/1 test in 2,777.61 seconds. The runner
   used cached kernels; no unexpected local kernel compilation occurred.
-- vpsfree-kb-contracts GitHub Actions started on `c7f0baed`: Check run
-  `33813611074` and Managed page runtime run `33813610967` are in progress.
+- vpsfree-kb-contracts GitHub Actions on `c7f0baed` passed: Check run
+  `33813611074` completed in 5 minutes 50 seconds, and Managed page runtime run
+  `33813610967` completed in 27 minutes 20 seconds.
 
 ## Open questions
 
