@@ -69,8 +69,8 @@ lifecycle from `work/` to `archive/`.
 - Existing historical `work/` and `archive/` directories are not reconciled by
   this initiative.
 - Cleanup is serialized per slug and preflights every worktree before removing
-  any. Detached branches, locked worktrees, symlink escapes, and tmux sessions
-  owned by another workspace are safe failures. Worktree cleanliness uses
+  any. Detached branches, symlink escapes, and tmux sessions owned by another
+  workspace are safe failures. Worktree cleanliness uses
   ordinary `git status --porcelain`, then cleanup delegates to non-force
   `git worktree remove`. Git remains the authority for other refusal cases;
   resolve the refusal and retry instead of duplicating Git's recovery-state
@@ -104,8 +104,8 @@ Legacy symlinked workspace paths are normalized automatically.
 - Run Bash syntax checks for both changed `devcluster` consumers.
 - Cover successful finalization, lifecycle validation, prior tracking commits,
   archive collisions including dangling symlinks, ordinary dirty worktrees,
-  detached and locked worktrees, symlink escapes, exact tmux targeting,
-  identity replacement, workspace ownership, committed active and archived
+  detached worktrees, symlink escapes, exact tmux targeting, identity
+  replacement, workspace ownership, committed active and archived
   states, creation replacement, consumer resolution, unsafe explicit slugs,
   archive collision races, lock contention, branch retention, cleanup ordering,
   archived-slug reuse from committed history, lifecycle-looking Markdown body
