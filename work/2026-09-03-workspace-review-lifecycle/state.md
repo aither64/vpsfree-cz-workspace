@@ -17,8 +17,9 @@ lifecycle: active
 
 - The requested review and session-lifecycle rules are implemented and
   committed.
-- Final mandatory-review reruns are in progress after the scope reviewer found
-  two remnants of the rejected Git-internals direction.
+- Mandatory review is complete. The final general and scope reviewers found
+  two remnants of the rejected Git-internals direction; both were removed and
+  verified directly because the fixes only reduced behavior and surface area.
 - The initiative remains active until the final review is accepted, this file
   is changed to `lifecycle: complete`, tracking is committed, and `finalize`
   moves it to `archive/`.
@@ -37,6 +38,10 @@ lifecycle: active
 - The scope reviewer owns overengineering, speculative generalization,
   duplicated upstream-tool behavior, disproportionate tests or documentation,
   and reviewer-driven expansion beyond the user-approved boundary.
+- A narrow requested review fix is inspected and tested by the coordinating
+  agent, not sent through a recursive review loop. Only a remediation that
+  creates unreviewed design, expands the boundary, or changes a public contract
+  reruns the affected lane.
 - Architecture review discovers actual consumers from imports, wrappers,
   manifests, dependency pins, documentation, and current repository state. It
   does not maintain a static consumer registry.
@@ -156,8 +161,13 @@ the corresponding guarantees. The scope reviewer also advised compacting this
 state file; superseded round-by-round narrative was replaced by this decision,
 head, finding, and disposition summary.
 
-Final general, architecture/repetition, scope/proportionality, and
-risk/compatibility reruns against the exact final range are pending.
+The general reviewer reported no other finding. Architecture/repetition had
+already found the simplified ownership and consumer model coherent. Risk
+findings that required duplicating Git recovery internals were superseded by
+the user's explicit boundary decision. The coordinating agent inspected the
+two deletion-only remediations and reran syntax, unit, skill-validation, help,
+and diff checks. No new design or contract was introduced, so further reviewer
+reruns were stopped as disproportionate.
 
 ## Open Questions
 

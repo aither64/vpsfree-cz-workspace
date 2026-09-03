@@ -115,5 +115,6 @@ Legacy symlinked workspace paths are normalized automatically.
 - Run `git diff --check` and inspect CLI help and focused diffs.
 - After all intended changes are committed and quick checks pass, run the new
   mandatory review with general, architecture/repetition,
-  scope/proportionality, and risk reviewers. Address findings and rerun
-  affected lanes before final archival.
+  scope/proportionality, and risk reviewers. Address findings, verify narrow
+  requested fixes directly, and rerun a lane only when its remediation creates
+  unreviewed design or expands the accepted boundary.
