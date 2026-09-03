@@ -17,8 +17,8 @@ lifecycle: active
 
 ## Status
 
-Implementation starting. Root cause and historical session provenance have been
-confirmed. No project code has been changed yet.
+The vpsAdmin fix is implemented, committed, and pushed. The KB contract is now
+being updated against that exact revision.
 
 ## Commands run
 
@@ -27,6 +27,15 @@ confirmed. No project code has been changed yet.
 - Fetched workspace, vpsAdmin, and vpsfree-kb-contracts upstream `master` refs.
 - Created both initiative worktrees with `bin/dev-session worktree add` from
   current `origin/master`.
+- Ran focused API specs with `VPSADMIN_PLUGINS=all` and
+  `VPSADMIN_PLUGINS=none`, RuboCop for all changed Ruby files, Ruby syntax
+  checks, `git diff --check`, and a Node syntax check for the changed
+  Playwright helper.
+- Verified the custom Overcommit hook was unchanged, signed it for the fresh
+  worktree, and ran all declared pre-commit and commit-message hooks in the
+  root vpsAdmin Nix shell.
+- Committed and pushed vpsAdmin revision
+  `d18fe2671abb47deda06ba54b17d5fe68d789478`.
 
 ## Results
 
@@ -42,6 +51,19 @@ confirmed. No project code has been changed yet.
   the tmux Codex frontend has the correct initiative environment, while the
   long-lived external app-server that launches tool shells does not. Use the
   explicit slug with session helpers.
+- The Location and VPS API specs passed: 29 examples with the requests plugin
+  enabled and 16 examples with core-only authorization, with zero failures.
+  The plugin-specific examples were expected pending in each opposite mode.
+- The focused RuboCop and Ruby/JavaScript syntax checks passed, as did all
+  vpsAdmin hooks: Nixfmt, MigrationSpecs, VpsadminWebuiI18n,
+  VpsadminApiI18n, PhpCsFixer, RuboCop, SingleLineSubject, TextWidth, and
+  TrailingPeriod.
+- A root `nix develop --command node` attempt failed because that shell does
+  not include Node.js; `nix shell nixpkgs#nodejs --command node --check` is the
+  appropriate focused syntax-check environment and passed.
+- Running `git commit` outside the Nix shell demonstrated the already
+  documented missing-hook-tool failure. Retrying through `nix develop`
+  executed the full hook suite successfully; no hook was bypassed.
 
 ## Open questions
 
