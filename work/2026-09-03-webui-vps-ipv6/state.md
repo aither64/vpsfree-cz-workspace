@@ -17,9 +17,12 @@ lifecycle: active
 
 ## Status
 
-The vpsAdmin fix and its KB capture contract are implemented and committed.
-The vpsAdmin feature branch is pushed. Mandatory change review is next, before
-the long vpsAdmin browser integration test.
+The vpsAdmin fix and its focused KB capture contract are implemented and
+committed. The vpsAdmin feature branch is pushed. Mandatory high-risk change
+review is complete and all findings are resolved. Quick checks and the
+corrected bilingual contract captures pass. The remaining implementation work
+is the long vpsAdmin browser integration test, pushing the contract branch, and
+monitoring both repositories' CI.
 
 ## Commands run
 
@@ -37,20 +40,25 @@ the long vpsAdmin browser integration test.
   root vpsAdmin Nix shell.
 - Committed and pushed vpsAdmin revision
   `d18fe2671abb47deda06ba54b17d5fe68d789478`.
-- Pinned that exact vpsAdmin revision in vpsfree-kb-contracts with its
-  transitive vpsAdminOS revision
-  `8e44a5124439b1f3048ffc56b1717614a5360358`.
+- Pinned that exact vpsAdmin revision in vpsfree-kb-contracts while preserving
+  its independently advanced vpsAdminOS revision
+  `6bdf458fd9105379860234ff33d352e55844f08f` and associated lock closure.
 - Ran the contract's JavaScript syntax check and `bin/check` before capture.
 - Started the dedicated `screenshots` development cluster using local
   networking because another session's active
   `2026-08-18-vpsadmin-password-reset` cluster occupied the bridge service
   address. The other cluster was not modified.
-- Captured the full networking scenario in Czech and English, ran
-  `bin/validate --update`, strict `bin/validate`, and `bin/check`, generated
-  both networking contact sheets, inspected the sheets and the four directly
-  affected form screenshots, and stopped the cluster cleanly.
-- Committed vpsfree-kb-contracts revision
-  `abf07adc6e6a2e050a8167555eded366dbee6261`.
+- Captured and registered the four affected Czech/English route and interface
+  checkpoints one at a time, ran strict `bin/validate` and `bin/check`, visually
+  inspected all four screenshots, and stopped the cluster cleanly.
+- Reset only this initiative's ephemeral devcluster state after a cross-revision
+  restart exposed a stale node container without a matching services database
+  row. Verified both sides were empty before the successful recapture.
+- Ran mandatory change review at high risk and maximum effort with General,
+  Architecture, Scope, and Risk/compatibility lanes using fresh
+  `gpt-5.6-sol` reviewers.
+- Amended the unpushed vpsfree-kb-contracts change to focused revision
+  `c7f0baedec7b19f587aefc7c2999f9be3f554754`.
 
 ## Results
 
@@ -79,24 +87,43 @@ the long vpsAdmin browser integration test.
 - Running `git commit` outside the Nix shell demonstrated the already
   documented missing-hook-tool failure. Retrying through `nix develop`
   executed the full hook suite successfully; no hook was bypassed.
-- The first contract check after `nix flake update vpsadmin` caught the
-  transitive vpsAdminOS provenance mismatch. The page registry and all five
-  page-runtime action refs now use the lock's exact vpsAdminOS revision. The
-  action implementations were compared with current official `staging` and
-  have not changed since that revision.
-- The Czech and English scenario runs each passed the positive assertions and
-  captured eight checkpoints. The interface-address form grew from 204 to 230
-  pixels and visibly contains the public IPv6 selector in both languages. The
-  route selector's IPv6 option is covered by the browser assertion because a
-  closed select displays only the IPv4 default.
-- Both capture clients reported complete results; two close phases then idled
-  in `epoll`, matching the existing Playwright-close note. Exact result files
-  were verified before interrupting only the clients. Strict validation passed
-  after registering each result.
+- Reviewers found no issue with the Location authorization fix, shared output
+  constants, or anonymous capability exposure. The General, Architecture, and
+  Risk lanes independently identified one blocking contract problem: the
+  initial `nix flake update vpsadmin` had regressed the contract-owned
+  vpsAdminOS test framework from `6bdf458f` to `8e44a512`, where managed-page
+  retry helpers are absent. The base lock closure and all page-runtime refs were
+  restored while retaining the new vpsAdmin pin.
+- The Scope lane also found ten unrelated PNG/hash changes from a full
+  networking recapture. Those artifacts were restored to the base revision;
+  only the interface-address screenshot changes remain because the route
+  selector's closed appearance is byte-identical.
+- The reviewers noted two non-blocking residuals: the unchanged authenticated
+  `remote_console_server` output is not asserted directly, and the positive
+  WebUI contract checks field availability without submitting an allocation.
+  Existing browser/API coverage constrains both paths sufficiently for this
+  additive fix. Remediation restored existing ownership and removed excess
+  scope without adding a new design, so no review-lane rerun was required.
+- The Czech and English focused runs passed the positive assertions. The
+  interface-address form grew from 204 to 230 pixels and visibly contains the
+  public IPv6 selector in both languages. The route selector's IPv6 option is
+  covered by the browser assertion because a closed select displays only the
+  IPv4 default.
+- Three capture clients reported complete results and then exited normally or
+  idled in the known Playwright close phase. Exact result files were verified
+  before interrupting only the two close-hung clients. `bin/validate --update`
+  was run immediately after every checkpoint so no result was overwritten.
 - Final vpsfree-kb-contracts checks passed: 42 controls, 34 paths, 35 capture
   concepts, 3 semantic selectors; all four Ruby test groups passed (60 runs,
   194 assertions total); and the inventory contains 60 concepts and 120
   variants.
+- The final contract diff against its base contains eight intended files: pin
+  metadata, two positive scenario assertions, two inventory entries, and the
+  two changed bilingual interface screenshots. vpsAdminOS, page-runtime, and
+  unrelated screenshot content are unchanged from the base.
+- vpsAdmin GitHub Actions on `d18fe267` currently show RuboCop, i18n health,
+  and API Specs green. CI run `33798687992` is still executing its selected
+  integration tests.
 
 ## Open questions
 
@@ -104,6 +131,6 @@ None.
 
 ## Cleanup
 
-- Both worktrees are active and must remain until review, CI, integration, and
-  any separately authorized merge are complete.
+- Both worktrees are active and must remain until CI, integration, and any
+  separately authorized merge are complete.
 - The initiative is not eligible for finalization or archival.

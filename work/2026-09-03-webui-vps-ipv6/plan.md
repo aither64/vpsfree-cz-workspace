@@ -56,8 +56,9 @@ not part of implementation without separate authorization.
   required Overcommit hooks from the repository Nix environments.
 - Run the vpsAdmin IPv6-disabled member browser assertion.
 - Capture the KB networking scenario in Czech and English against its dedicated
-  bridge-network cluster, then run `bin/validate --update` and `bin/check` and
-  inspect the screenshots.
+  cluster, preferring bridge networking and recording any required local-network
+  fallback, then run `bin/validate --update` and `bin/check` and inspect the
+  screenshots.
 - After all intended commits and quick checks, run the mandatory high-risk
   review with General, Architecture, Scope, and Risk/compatibility lanes.
 - Resolve review findings, run `webui#vps-user-core`, push both feature branches,
