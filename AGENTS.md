@@ -189,17 +189,30 @@ For feature, bugfix, refactor, or cross-project work with relevant code,
 schema, API, protocol, configuration, documentation, deployment, or security
 impact, run the `mandatory-change-review` skill after all intended changes are
 committed and quick local verification has passed, but before starting long
-integration tests. The review must be performed by a standalone agent with
-fresh context.
+integration tests. The review uses an adaptive team of one to three standalone
+agents with fresh context. Every reviewer must use `gpt-5.6-sol` with reasoning
+effort `max`.
 
 The skill file is `skills/mandatory-change-review/SKILL.md`. Follow that file
 for the detailed review workflow and reviewer checklist.
 
-Provide the reviewer with the requested outcome, initiative plan/state files,
+Always launch the general reviewer. Add the architecture and repetition
+reviewer for hand-written implementation, test, build, workflow, or
+configuration logic and for shared components or extension points. Add the risk
+and compatibility reviewer for security, persisted state, public or
+cross-project contracts, protocols, host/node behavior, destructive operations,
+deployment, rollback, or mixed-version behavior. Run applicable reviewers in
+parallel when capacity permits and sequentially otherwise; reviewers must not
+launch nested reviewers.
+
+Provide every reviewer with the requested outcome, initiative plan/state files,
 affected repositories and worktrees, base/head commits, dependency or
 configuration pins, quick verification results, and known compatibility
-assumptions. Record the review result and any follow-up decision in the
-initiative `state.md`.
+assumptions. For a shared component, also identify its owning interface and
+derive actual consumers from imports, pins, wrappers, manifests, documentation,
+and current repository state. The coordinating agent reconciles findings using
+evidence instead of majority voting and records reviewer roles, reviewed heads,
+results, and follow-up decisions in `state.md`.
 
 The review is advisory, but significant findings must be fixed or explicitly
 discussed before continuing. Skip the review only for dependency-only,
