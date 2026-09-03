@@ -17,8 +17,9 @@ lifecycle: active
 
 ## Status
 
-The vpsAdmin fix is implemented, committed, and pushed. The KB contract is now
-being updated against that exact revision.
+The vpsAdmin fix and its KB capture contract are implemented and committed.
+The vpsAdmin feature branch is pushed. Mandatory change review is next, before
+the long vpsAdmin browser integration test.
 
 ## Commands run
 
@@ -36,6 +37,20 @@ being updated against that exact revision.
   root vpsAdmin Nix shell.
 - Committed and pushed vpsAdmin revision
   `d18fe2671abb47deda06ba54b17d5fe68d789478`.
+- Pinned that exact vpsAdmin revision in vpsfree-kb-contracts with its
+  transitive vpsAdminOS revision
+  `8e44a5124439b1f3048ffc56b1717614a5360358`.
+- Ran the contract's JavaScript syntax check and `bin/check` before capture.
+- Started the dedicated `screenshots` development cluster using local
+  networking because another session's active
+  `2026-08-18-vpsadmin-password-reset` cluster occupied the bridge service
+  address. The other cluster was not modified.
+- Captured the full networking scenario in Czech and English, ran
+  `bin/validate --update`, strict `bin/validate`, and `bin/check`, generated
+  both networking contact sheets, inspected the sheets and the four directly
+  affected form screenshots, and stopped the cluster cleanly.
+- Committed vpsfree-kb-contracts revision
+  `abf07adc6e6a2e050a8167555eded366dbee6261`.
 
 ## Results
 
@@ -64,6 +79,24 @@ being updated against that exact revision.
 - Running `git commit` outside the Nix shell demonstrated the already
   documented missing-hook-tool failure. Retrying through `nix develop`
   executed the full hook suite successfully; no hook was bypassed.
+- The first contract check after `nix flake update vpsadmin` caught the
+  transitive vpsAdminOS provenance mismatch. The page registry and all five
+  page-runtime action refs now use the lock's exact vpsAdminOS revision. The
+  action implementations were compared with current official `staging` and
+  have not changed since that revision.
+- The Czech and English scenario runs each passed the positive assertions and
+  captured eight checkpoints. The interface-address form grew from 204 to 230
+  pixels and visibly contains the public IPv6 selector in both languages. The
+  route selector's IPv6 option is covered by the browser assertion because a
+  closed select displays only the IPv4 default.
+- Both capture clients reported complete results; two close phases then idled
+  in `epoll`, matching the existing Playwright-close note. Exact result files
+  were verified before interrupting only the clients. Strict validation passed
+  after registering each result.
+- Final vpsfree-kb-contracts checks passed: 42 controls, 34 paths, 35 capture
+  concepts, 3 semantic selectors; all four Ruby test groups passed (60 runs,
+  194 assertions total); and the inventory contains 60 concepts and 120
+  variants.
 
 ## Open questions
 
