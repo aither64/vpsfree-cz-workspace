@@ -56,6 +56,11 @@ lifecycle: active
 - Rebased the workspace feature branch onto the tracking-only `master`, dropped
   duplicate tracking commits, and force-pushed the rewritten feature history.
 - `confctl inputs channel set --commit workspace-tools vpsfree-workspace 6371e9cad7dec81791a5eb3bf6290aef632dce0d`
+- Re-ran both Ruby suites, all Go tests, `go vet`, the handoff-skill
+  validator, `git diff --check`, and `nix flake check --no-build` after the
+  workspace history rewrite.
+- Built `packages/workspace-portal` from the repinned workspace input with
+  Nix; output: `/nix/store/j1klfhxqwj9vi9lrx0y0hrki56wafsxz-workspace-portal-0.1.0`.
 
 ## Results
 
@@ -65,7 +70,7 @@ lifecycle: active
   sessions with an initial Codex turn, encrypted CA custody on aitherdev, and
   user-owned deployment of aitherdev and both internal DNS servers.
 - `dev-session` suite: 83 tests and 700 assertions passed.
-- PKI suite: 2 tests and 21 assertions passed, including encrypted-key,
+- PKI suite: 2 tests and 25 assertions passed, including encrypted-key,
   renewal, hostname, chain, permission, and git-worktree refusal checks.
 - Portal Go tests and `go vet` passed.
 - The `dev-session-handoff` skill passes the skill creator validator.
@@ -77,8 +82,10 @@ lifecycle: active
 - `nix flake check --no-build --show-trace` passes.
 - No GitHub Actions runs are configured for the pushed configuration feature
   branch.
-- Workspace `master` and `origin/master` both resolve to `0d2802f`; the complete
-  implementation is retained on the pushed workspace feature branch.
+- Workspace `master` and `origin/master` were both reset to `0d2802f`; the
+  complete implementation is retained on the pushed workspace feature branch.
+  Tracking-only commits now follow that pre-initiative revision on `master`
+  without carrying the implementation.
 
 ## Open questions
 
