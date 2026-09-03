@@ -22,9 +22,11 @@ lifecycle: active
   `57d7c12a2da78d334d338a0e56dd7438376a6973`.
 - The second mandatory review examined workspace
   `6119ef8dbb99fae4bc930f853a02fdb4b3c4e6ee` and configuration
-  `6b07356e04347830cc02385f96f1ce28667bfee3`. Remediation is in progress on
-  both feature worktrees; their pushed heads remain the reviewed revisions
-  until the fixes are committed and repinned.
+  `6b07356e04347830cc02385f96f1ce28667bfee3`. Its remediation is committed,
+  repinned, and pushed at workspace
+  `d9260fa562392ce9443af970be826efd4b074a9d` and configuration
+  `bc4f31de0f7175c7aedb4dfea0fbe7e347e2d3d9`. These heads are frozen for the
+  mandatory review rerun.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
   staged patch.
@@ -222,14 +224,31 @@ lifecycle: active
   servers.
 - Quick remediation checks currently pass: 90 `dev-session` tests with 784
   assertions, 4 PKI tests with 33 assertions, all Go tests, Go vet, JavaScript
-  syntax validation, and `nix flake check --no-build`. The feature fixes are not
-  committed or pushed yet.
+  syntax validation, and `nix flake check --no-build`.
+
+## Review rerun checkpoint
+
+- The final remediation was folded into the four owning workspace commits and
+  force-pushed at `d9260fa562392ce9443af970be826efd4b074a9d`.
+- `confctl inputs channel set --commit` regenerated the configuration pin for
+  that exact workspace revision. The host and DNS commits were replayed after
+  the generated input commit, the Go dependency vendor hash was updated, and
+  the configuration branch was force-pushed at
+  `bc4f31de0f7175c7aedb4dfea0fbe7e347e2d3d9`.
+- The pinned portal package builds successfully. `named-checkzone` loads serial
+  `2026090300`, `nix flake check --no-build --show-trace` passes, and repository
+  hooks pass in the configuration development shell.
+- GitHub reports no workflow runs for either feature branch. There are no
+  superseded runs to cancel.
+- All four review lanes apply because this remains a high-risk change affecting
+  authentication, a host security boundary, a cross-project protocol adapter,
+  deployment, and rollback. The rerun uses `gpt-5.6-sol` at `max` effort.
 
 ## Open questions
 
-- The feature fixes must be committed, the configuration pin regenerated, and
-  affected mandatory review lanes rerun against the new exact heads. The long
-  `confctl build` validation follows a clean rerun.
+- The four mandatory review lanes must finish against the frozen final heads.
+  Long `confctl build` validation follows after all Blocking and Important
+  findings are resolved or explicitly decided as required by the review skill.
 - Live ChatGPT macOS/mobile discovery remains an optional deployment smoke test
   because it depends on the installed clients. The VPN portal is the supported
   browser path regardless of native discovery.
