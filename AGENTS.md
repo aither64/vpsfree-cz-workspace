@@ -18,8 +18,8 @@ Use these paths consistently:
 - `notes/`: durable development notes, troubleshooting tips, and reusable
   lessons that should survive beyond one initiative. Store each lesson in its
   own file to reduce conflicts between concurrent Codex instances.
-- `archive/`: optional location for completed initiative notes after worktrees
-  have been removed.
+- `archive/`: committed plan, state, and curated durable artifacts for
+  initiatives that are fully completed or explicitly abandoned.
 
 The initiative slug must be descriptive and dated, for example
 `2026-05-27-api-token-rotation`. For affected project repositories, use the
@@ -99,8 +99,9 @@ For feature work in the independent project repositories:
   remove it after the merge is complete.
 - Record every affected repository, branch, and worktree path in
   `work/<yyyy-mm-dd-slug>/state.md`.
-- Remove worktrees after the work is merged or abandoned. Preserve the plan and
-  state notes, moving them to `archive/` if useful.
+- Remove worktrees after the work is merged or abandoned. Keep branches, then
+  finalize the initiative as described under Planning And Tracking so its
+  durable record is committed under `archive/`.
 - Keep feature branches after merge, both locally and remotely, unless the user
   explicitly asks for branch deletion. Cleanup means removing worktrees and
   transient build/cache files, not deleting branch refs.
@@ -126,6 +127,33 @@ For each initiative, maintain:
   deployment ordering, testing plan, and explicit decisions.
 - `state.md`: branch/worktree locations, current progress, commands run,
   results, blockers, and cleanup status.
+
+Treat `work/<slug>/` as active tracking and `archive/<slug>/` as terminal
+tracking. New `state.md` files must contain `- Lifecycle: active` under
+`## Status`. Change it to `complete` only when the requested outcome is
+finished, or to `abandoned` when the initiative is explicitly closed without
+completion.
+
+Write a substantive plan and initial state, then commit both in the top-level
+workspace repository before the first project-code commit or external mutation.
+Commit tracking updates at meaningful checkpoints: material plan changes,
+review and test or CI outcomes, deployment results, and handoffs where another
+agent would otherwise have to reconstruct the current state. Do not leave the
+only useful copy of active tracking uncommitted.
+
+An initiative can leave `work/` only when its lifecycle is `complete` or
+`abandoned` and it has no pending review, CI, merge, user approval, deployment
+step, or cleanup owned by the session. Before archiving, remove credentials,
+caches, reproducible bulk captures, and other transient outputs. Preserve
+`plan.md`, `state.md`, and intentionally useful evidence. Run
+`bin/dev-session finalize <slug> --as-is` to remove clean worktrees, retain
+branches, move the curated directory to `archive/<slug>/`, and stop the managed
+tmux session. Inspect and commit the exact `work/<slug>/` to `archive/<slug>/`
+move in the top-level repository; the helper never stages or commits it.
+
+Do not reuse an archived slug. Start a new dated initiative for follow-up work.
+Do not delete tracking with `dev-session remove --all`; finalization and
+archival are mandatory even for abandoned initiatives.
 
 Keep these files current enough that a future agent can resume the work without
 guessing. When plans change because code or tests reveal new facts, update the
