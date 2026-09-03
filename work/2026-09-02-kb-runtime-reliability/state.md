@@ -75,6 +75,21 @@ Both project remotes use `git@github.com:vpsfreecz/<project>.git`.
   `34d1a14` (pin), `18cb285` (APT), and `46466e8` (Guix).
 - All focused verification, the three selected APK VM samples, and every
   current-head GitHub Actions workflow are green.
+- Integrated both feature branches using fresh temporary default-branch
+  worktrees. vpsAdminOS `staging` fast-forwarded from `ee6d2f99d` to
+  `6bdf458fd`; vpsfree-kb-contracts `master` fast-forwarded from `5dd94f160`
+  to `46466e8`. Both pushes were non-force, and the temporary merge worktrees
+  were removed afterward. The feature worktrees and branch refs remain.
+- All default-branch workflows passed. vpsAdminOS RuboCop `33726233634` and
+  RSpec `33726231579` passed. Full CI `33726231479` passed, including the OS
+  build, both livepatch jobs, and the full test suite in 49 minutes 5 seconds.
+  KB Check `33726393631` and Managed page runtime `33726393595` passed; the
+  latter completed its integration suite in 40 minutes 46 seconds.
+- After the integration CI completed, vpsAdminOS `staging` advanced to
+  `4493733ff` through the automated `flake: update nixpkgs,
+  nixpkgsUnstable` commit. It changes only `flake.lock`; ancestry verification
+  confirms it is a descendant of `6bdf458fd`, so the merged retry series is
+  preserved unchanged.
 
 ## Commands run
 
@@ -129,6 +144,15 @@ Both project remotes use `git@github.com:vpsfreecz/<project>.git`.
   'kernel/vpsadminos#cpu-view-cgroups-v2'`
 - `nix develop .#test-runner --command bundle exec
   ./test-runner/bin/test-runner test ... 'zfs/ugidmap'`
+- `git merge --ff-only 2026-09-02-kb-runtime-reliability` in fresh
+  vpsAdminOS `staging` and vpsfree-kb-contracts `master` worktrees
+- `nix develop .#test-runner --command env RUBYLIB=... bundle exec rspec
+  -Itest-runner/spec test-runner/spec/test_runner/{retry_classifier,test_evaluator}_spec.rb`
+- `nix develop .#vpsadminos --command overcommit --run`
+- `nix develop --command bin/check --allow-missing` from the KB integration
+  worktree
+- `git push origin staging:staging`
+- `git push origin master:master`
 
 ## Results
 
@@ -302,6 +326,13 @@ Both project remotes use `git@github.com:vpsfreecz/<project>.git`.
   from `test-runner/` then exposed the documented missing local
   `libosctl/native.so` prerequisite. Building the extension with the documented
   `.#test-runner` shell and using `-Itest-runner/spec` fixed the setup.
+- The fresh integration worktree reproduced the missing native extension.
+  Trying the separate `.#libosctl` Bundler shell also exposed an unrelated
+  shared `/tmp/dev-ruby-gems` collision. Compiling `extconf.rb` directly in the
+  `.#test-runner` shell and adding `libosctl/ext` to `RUBYLIB` avoided the
+  shared bundle; all 50 focused examples then passed. The reusable procedure
+  is recorded in
+  `notes/vpsadminos/2026-09-03-fresh-worktree-libosctl-native.md`.
 - A direct `git commit` correctly failed because the ambient shell lacked
   RuboCop. Re-running the commit inside `nix develop .#vpsadminos` executed all
   required hooks successfully; no hook was bypassed.
