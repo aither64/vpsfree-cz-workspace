@@ -169,13 +169,33 @@ lifecycle: active
   and Codex daemon restart/version checks.
 - Quick checks after remediation: `dev-session` has 87 tests and 740
   assertions passing; PKI has 4 tests and 33 assertions passing; Go tests and
-  `go vet` pass. The Go race suite and JavaScript syntax check still need their
-  Nix-provided compilers/runtimes before the remediation commits are written.
+  `go vet` pass.
+- The remediation was folded into the owning workspace commits and force-pushed
+  at `6119ef8dbb99fae4bc930f853a02fdb4b3c4e6ee`. The reconciled branch contains
+  the preserved concurrent-session guard from the shared checkout.
+- `confctl inputs channel set --commit` regenerated the configuration pin from
+  the new workspace revision. The rewritten configuration branch was
+  force-pushed at `6b07356e04347830cc02385f96f1ce28667bfee3` with one generated pin commit,
+  followed by the aitherdev and DNS commits.
+- A first `confctl inputs channel set --commit` attempt used an incorrectly
+  expanded abbreviated SHA and failed with a GitHub 404 before changing the
+  lock file. Re-running it with the exact output of `git rev-parse HEAD`
+  succeeded. The reusable lesson is in
+  `notes/vpsfree-cz-configuration/2026-09-03-confctl-pin-full-revision.md`.
+- Post-commit quick checks pass: Go tests, Go race tests, `go vet`, JavaScript
+  syntax checking through Nix, both Ruby suites, `nix flake check --no-build`,
+  and `named-checkzone` at serial `2026090300`.
+- The pinned Nix package builds as
+  `/nix/store/kfz4ziqbhxr1pzif482sbr0byzdmlrbb-workspace-portal-0.1.0`, and its
+  three packaged commands start or print their expected usage/version.
+- Temporary `.bin/` and `.bundle/` files created by the configuration hook were
+  inspected and removed. Both feature worktrees now have clean tracked and
+  untracked status.
 
 ## Open questions
 
-- Mandatory change review must be restarted after quick checks; the long
-  `confctl build` validation follows review.
+- All four mandatory review lanes must now be rerun against the remediation
+  heads. The long `confctl build` validation follows a clean rerun.
 - Live ChatGPT macOS/mobile discovery remains an optional deployment smoke test
   because it depends on the installed clients. The VPN portal is the supported
   browser path regardless of native discovery.
