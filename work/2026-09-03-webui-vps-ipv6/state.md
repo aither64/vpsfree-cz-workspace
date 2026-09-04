@@ -10,28 +10,31 @@ lifecycle: active
   - branch: `2026-09-03-webui-vps-ipv6`
   - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsadmin`
   - base: `origin/master` at `cbd0fa16434947a4273610389d84216bcde35e72`
+  - integrated `master`: `1acc1955f0e7b4f2b67a18674d02a6da8e9e8da4`
 - `vpsfree-kb-contracts`
   - branch: `2026-09-03-webui-vps-ipv6`
   - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-kb-contracts`
   - base: `origin/master` at `46466e83c2293f47bfef3fe516a3b51c2de14c70`
+  - integrated `master`: `e5ed479f9d4058556dcf225b4c16afd5b9f0051a`
 - `vpsfree-cz-configuration`
   - branch: `2026-09-03-webui-vps-ipv6`
   - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-cz-configuration`
   - base: `origin/master` at `57d7c12a2da78d334d338a0e56dd7438376a6973`
+  - final integration base: `origin/master` at
+    `1139d11d9254cd86ec328a34a760589d4f7ce82c`
+  - integrated `master`: `248e2fc614bb3bc29c0a9c9f910330ade0b3cb80`
 
 ## Status
 
 The vpsAdmin fix, documentation-landmark remediation, focused KB capture
-contract, and consolidated `vpsadminServices` configuration pin are committed.
-The two provider/contract feature branches are pushed, and checks against the
-final revisions pass. Checksummed schema-5 Czech and English KB release
-candidates are prepared locally without publishing them. The first remediation
-review was resolved and the contract history was split as requested; affected
-review lanes passed at `xhigh`, all four affected service-host configurations
-build, and the configuration feature branch is pushed. The user explicitly
-chose not to wait for the remaining long vpsAdmin CI run; provider-first
-default-branch integration is proceeding while that exact-head run remains
-active. Deployment and production KB publication remain out of scope.
+contract, and consolidated `vpsadminServices` configuration pin are integrated
+into all three default branches in provider-first order. Checksummed schema-5
+Czech and English KB release candidates are prepared locally without publishing
+them. Mandatory review and reruns passed at `xhigh`, all four affected
+service-host configurations build on the final configuration base, and quick
+default-branch workflows are green. The user explicitly chose not to wait for
+the remaining long CI runs; they remain active on the exact integrated heads.
+Deployment and production KB publication remain out of scope.
 
 ## Commands run
 
@@ -158,6 +161,23 @@ active. Deployment and production KB publication remain out of scope.
   integration run `33849770155` remained healthy in `Run tests`. The user
   explicitly instructed the session not to wait for that long run before
   integrating the reviewed commits.
+- Created fresh detached integration worktrees from each fetched default
+  branch, fast-forwarded them with `git merge --ff-only`, and preserved the
+  provider-first order. The vpsAdmin integration tree passed the complete
+  Overcommit suite before `master` was pushed to `1acc1955`. The contract
+  integration tree passed complete `bin/check` before `master` was pushed to
+  `e5ed479`.
+- Configuration `origin/master` advanced during the CI wait through unrelated
+  automated nixpkgs, vpsAdminOS, and llm-agents input updates. Rebased the
+  one-commit feature branch inside its required Nix hook environment onto
+  `1139d11d`, producing `248e2fc`; its diff remained only the three
+  `vpsadminServices` lock fields. Force-pushed the rewritten feature branch
+  with an explicit lease against `0e8c2a6e`.
+- Reran the full configuration Overcommit suite and all four focused
+  `confctl build -y` commands after that rebase, both in the feature worktree
+  and again in the fresh detached integration worktree. Fast-forwarded and
+  pushed configuration `master` to `248e2fc`, then removed all three temporary
+  integration worktrees without force.
 
 ## Results
 
@@ -279,6 +299,17 @@ active. Deployment and production KB publication remain out of scope.
   and both WebUI service hosts. They built the API, supervisor, database,
   console-router, and WebUI packages at exact source revision `1acc1955`; no
   deployment was attempted.
+- All three remote default branches resolve to their intended integrated heads:
+  vpsAdmin `1acc1955`, vpsfree-kb-contracts `e5ed479`, and
+  vpsfree-cz-configuration `248e2fc`. The final configuration channel reports
+  role `vpsadmin`, input `vpsadminServices`, revision `1acc1955`.
+- On the integrated vpsAdmin head, WebUI PHPUnit run `33862002052`, RuboCop run
+  `33862002042`, and i18n health run `33862002062` passed. API Specs run
+  `33862002041` and CI run `33862002066` remained active at handoff. On the
+  integrated contract head, Check run `33862106524` passed and Managed page
+  runtime run `33862106472` remained active. The earlier feature-head broad
+  vpsAdmin run `33849770155` also remained active; the user explicitly chose
+  not to wait for these long runs.
 
 ## Open questions
 
@@ -286,9 +317,11 @@ None.
 
 ## Cleanup
 
-- All three feature worktrees must remain until the authorized integrations are
-  complete. The contract worktree is clean; configuration and vpsAdmin
-  cleanliness will be rechecked after review commands.
+- All three feature worktrees are clean. Keep them while the exact-head CI runs
+  remain active; remove them and finalize only after no CI handoff remains.
 - The transient full KB source/candidate fetch, including private production
   snapshots, has been removed. The two tracked public candidates are preserved.
-- The initiative is not eligible for finalization or archival.
+- The temporary detached integration worktrees and their parent directory were
+  removed cleanly. Feature branches remain locally and remotely as required.
+- The initiative is not yet eligible for finalization or archival because the
+  user chose not to wait for the active default-branch CI runs.
