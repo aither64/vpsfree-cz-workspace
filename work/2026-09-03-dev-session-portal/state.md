@@ -479,13 +479,27 @@ lifecycle: active
   directory. The runbook validates all manifests and renders the real
   initiative page before DNS publication, and refuses rollback while
   browser-created sessions remain.
-- Workspace remediation is rebased onto shared `master` at `c36567d` but is not
-  yet committed or pushed. Current quick checks pass with 101 `dev-session`
-  tests and 897 assertions, both manifest readers against the live initiative,
-  and all Go tests through a Nix Go/GCC shell.
-- Next steps are to rewrite both unmerged feature histories, regenerate one
-  exact `confctl` pin, run hooks and quick checks, rerun affected review lanes,
-  and only then start the long configuration builds.
+- Workspace history is rewritten into five owning commits based on shared
+  `master` at `794aabf`. The clean branch is pushed at
+  `e561db24d8ec7aaa4abc0e47a0c40e7284ccaef6`.
+- Configuration history is rewritten into four reproducible commits: channel
+  declaration, one generated exact input pin, complete aitherdev hosting, and
+  DNS last. The clean branch is pushed at
+  `484baf8e48aa05c56a077472d2a4d2fbb0478f8d`; generated commit `e029738a`
+  pins workspace `e561db24` with its `confctl` message unchanged.
+- Quick checks pass with 101 `dev-session` tests and 897 assertions, 5 PKI
+  tests and 44 assertions, all Go tests and race tests, Go vet, Ruby and
+  JavaScript syntax checks, the handoff-skill validator, both manifest readers
+  against the live initiative, `nix flake check --no-build`, and internal DNS
+  zone validation.
+- The exact pinned portal package builds as
+  `/nix/store/naxxjf2rhg7xh51490020pszxrmn12rx-workspace-portal-0.1.0`.
+  Its portal, `dev-session`, and PKI entry points run, and both packaged
+  manifest validators accept the live initiative.
+- GitHub reports no Actions runs for either rewritten feature head, so there
+  are no current or superseded runs to inspect or cancel.
+- Next steps are to rerun the review lanes affected by this remediation and,
+  only after they pass, start the long configuration builds.
 
 ## Cleanup
 
