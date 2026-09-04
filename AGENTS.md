@@ -239,6 +239,9 @@ integration tests. The canonical workflow is
 `skills/mandatory-change-review/SKILL.md`; it owns reviewer model and effort,
 adaptive lane selection, review packets, finding reconciliation, reruns, and
 recording requirements. Follow it exactly, including its skip criteria.
+Always use `xhigh` reasoning effort for review agents and review reruns,
+regardless of a skill's default effort. Do not inherit a lower effort or select
+`max` or `ultra` for review work.
 
 ## Rule Precedence
 
