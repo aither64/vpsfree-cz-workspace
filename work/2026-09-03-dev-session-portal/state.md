@@ -843,6 +843,56 @@ lifecycle: active
   HTTPS/authentication, firewall, DNS, shared browser/terminal behavior, and
   rollback smoke tests remain user-owned deployment validation.
 
+## Twelfth review remediation and xhigh freeze
+
+- The general review's loaded-thread finding is resolved with the App Server's
+  `thread/loaded/list` method. The helper validates every returned identifier,
+  detects repeated IDs and cursors, and checks the newest turn for each loaded
+  portal, exec, subagent, or ephemeral thread. A generated-schema contract test
+  runs against the exact packaged Codex binary.
+- Runtime provenance now has one published 13-key contract. Ruby derives thread
+  creation arguments from its session environment, Go constructs and validates
+  the complete runtime before publishing the same exact keys, and Nix derives
+  the wrapper and service arguments from one structured runtime value. Exact
+  key-set tests cover the Ruby and Go adapters.
+- The shipped browser JavaScript exposes one session client for every HTTP
+  operation. A Node contract test drives that shipped client against the real
+  Go handler and verifies transcript, pending request, message, interrupt,
+  decision, answer, and event-stream behavior.
+- Rollback state capture and updates now use a root-owned mode-0600 stable lock.
+  Initial state publication is atomic and no-replace; updates serialize their
+  full read-modify-write sequence. Concurrent update, duplicate capture, and
+  ambiguous post-activation rollback tests pass. The runbook records the exact
+  built generation before deploying it with `confctl --generation`, then
+  reconciles the observed predecessor, intended target, or an unknown third
+  generation on failure.
+- The workspace feature was rebased onto current workspace `master` and its six
+  focused commits were force-pushed at
+  `b43415a3ca278e487c01f6288f74a5f2cf568594`.
+- Generated configuration commit `038d51cb92fa27ac210145d1f4a394ff4a84d3d4`
+  pins that workspace revision. The deploy-time version assertion exposed that
+  the previous configuration still selected Codex 0.146.0, so generated
+  `confctl` commit `43d357b3fc1cadf9b3d92c21fdc875661a88fd75`
+  now pins the official llm-agents revision containing Codex 0.152.1. The
+  four-commit configuration branch is clean and force-pushed at
+  `cb3aba4cda3152f46ce81ea5481e427d57b0a40d`.
+- Quick verification passes 116 `dev-session` tests with 985 assertions, 7 PKI
+  tests with 64 assertions, 7 rollout tests with 32 assertions, all five Go
+  packages, the Go race detector, Go vet, JavaScript syntax checking, Nix
+  formatting and repository hooks, `nix flake check --no-build --show-trace`,
+  and `named-checkzone` at serial `2026090300`. Neither feature branch has a
+  GitHub Actions run.
+- The exact pinned package builds as
+  `/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0`
+  with NAR hash
+  `sha256-Ui+PEXpv99rcNRtfyM5snNb20cJETLi4FeM4/CxxFYE=`. Its Nix check phase
+  generates the Codex 0.152.1 experimental App Server schema and runs both the
+  protocol and shipped-browser contracts. The deployment runbook has SHA-256
+  `d248b5e4f437bd7b466f556950829152d472d0d540f37d6928ef4a087849e4b3`.
+- Only the general, architecture/repetition, and risk/compatibility lanes need
+  an `xhigh` rerun because the scope/proportionality lane had no findings and
+  its reviewed boundary did not expand. No `max` review will be started.
+
 ## Cleanup
 
 - Keep the tmux session and configuration worktree until implementation,

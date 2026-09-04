@@ -7,9 +7,9 @@ session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace source branch: `2026-09-03-dev-session-portal`
-- Workspace source: `b4873326a56e9ac591be129819977123deceb37a`
+- Workspace source: `b43415a3ca278e487c01f6288f74a5f2cf568594`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: `6a5116a614fd384ceabb55f9cb15e56ccefe6b52`
+- Configuration source: `cb3aba4cda3152f46ce81ea5481e427d57b0a40d`
 
 Check both revisions against `state.md` before running any helper or deployment
 command:
@@ -18,9 +18,9 @@ command:
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD)" = \
-  b4873326a56e9ac591be129819977123deceb37a
+  b43415a3ca278e487c01f6288f74a5f2cf568594
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD)" = \
-  6a5116a614fd384ceabb55f9cb15e56ccefe6b52
+  cb3aba4cda3152f46ce81ea5481e427d57b0a40d
 ```
 
 ## 1. Record rollback state
@@ -31,14 +31,14 @@ closure before it is used with `sudo`:
 
 ```sh
 set -euo pipefail
-config_revision=6a5116a614fd384ceabb55f9cb15e56ccefe6b52
+config_revision=cb3aba4cda3152f46ce81ea5481e427d57b0a40d
 portal_package="$(nix build --no-link --print-out-paths \
   "github:vpsfreecz/vpsfree-cz-configuration/$config_revision#workspace-portal")"
 test "$portal_package" = \
-  /nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0
+  /nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0
 test "$(nix path-info --json-format 1 --json "$portal_package" | \
   jq -r 'to_entries[0].value.narHash')" = \
-  'sha256-WQRJizjZefAd67SnGn/Nz4VX61M46GdE8msakmP9UpA='
+  'sha256-Ui+PEXpv99rcNRtfyM5snNb20cJETLi4FeM4/CxxFYE='
 rollout_helper="$portal_package/bin/workspace-portal-rollout"
 test "$(stat -c %U:%G "$rollout_helper")" = root:root
 test $((8#$(stat -c %a "$rollout_helper") & 8#022)) -eq 0
@@ -50,7 +50,7 @@ is never sourced as shell code:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
 git --git-dir="$config_git" fetch origin master
 previous_config_revision=$(git --git-dir="$config_git" rev-parse origin/master)
@@ -78,6 +78,9 @@ test "${PIPESTATUS[0]}" -eq 0
 sudo install -o root -g root -m 0600 "$dns_capture" \
   /var/lib/vpsfree-workspace-portal-deploy/dns-before.txt
 sudo test -s /var/lib/vpsfree-workspace-portal-deploy/rollback.json
+sudo test -f /var/lib/vpsfree-workspace-portal-deploy/rollback.json.lock
+test "$(sudo stat -c '%U:%G %a' \
+  /var/lib/vpsfree-workspace-portal-deploy/rollback.json.lock)" = 'root:root 600'
 sudo test -s /var/lib/vpsfree-workspace-portal-deploy/dns-before.txt
 ```
 
@@ -86,7 +89,7 @@ that all three captured generations still provide a rollback executable:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
 previous_aitherdev_system="$(sudo "$rollout_helper" get previous_aitherdev_system)"
 previous_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
 previous_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
@@ -122,7 +125,7 @@ leaf certificate. Do not run a writable worktree script as root:
 
 ```sh
 set -euo pipefail
-portal_package=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0
+portal_package=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0
 pki_helper="$portal_package/bin/workspace-pki"
 test "$(stat -c %U:%G "$pki_helper")" = root:root
 test $((8#$(stat -c %a "$pki_helper") & 8#022)) -eq 0
@@ -185,14 +188,16 @@ or mutate a portal-managed initiative:
   awk -F '\t' '$2 == "1" { found = 1; print > "/dev/stderr" } END { exit found }'
 ```
 
-Run every build or deployment from a fresh detached checkout of the exact
-reviewed commit. This keeps dirty tracked files and untracked command shims out
-of privileged Nix and remote-switch operations:
+Start every machine operation from a fresh detached checkout of the exact
+reviewed commit. Build and deploy each machine from that same checkout so
+`confctl deploy --generation` activates the exact generation that was already
+inspected and recorded. Generated `.confctl`, `.bin`, and `.bundle` state may
+appear only after the initial cleanliness check:
 
 ```sh
 set -euo pipefail
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
-config_revision=6a5116a614fd384ceabb55f9cb15e56ccefe6b52
+config_revision=cb3aba4cda3152f46ce81ea5481e427d57b0a40d
 git --git-dir="$config_git" fetch origin 2026-09-03-dev-session-portal
 test "$(git --git-dir="$config_git" rev-parse \
   origin/2026-09-03-dev-session-portal)" = "$config_revision"
@@ -211,27 +216,58 @@ if ! systemctl cat workspace-portal-tmux.service >/dev/null 2>&1; then
     exit 1
   }
 fi
-aitherdev_build_checkout="$(new_reviewed_checkout)"
-(cd "$aitherdev_build_checkout" && \
+aitherdev_checkout="$(new_reviewed_checkout)"
+(cd "$aitherdev_checkout" && \
   nix develop -c confctl build -y cz.vpsfree/machines/aitherdev)
+aitherdev_generation_link="$aitherdev_checkout/.confctl/generations/cz.vpsfree:machines:aitherdev/current"
+test -L "$aitherdev_generation_link"
+aitherdev_generation="$(basename "$(readlink "$aitherdev_generation_link")")"
+target_aitherdev_system="$(readlink -f "$aitherdev_generation_link/toplevel")"
+test -x "$target_aitherdev_system/bin/switch-to-configuration"
 # Abort if another deployment advanced the host after rollback capture. The
 # captured generation must still be the immediate predecessor.
-rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
 captured_aitherdev_system="$(sudo "$rollout_helper" get previous_aitherdev_system)"
 test "$(readlink -f /run/current-system)" = "$captured_aitherdev_system" || {
   echo "aitherdev changed after rollback capture; aborting deployment" >&2
   exit 1
 }
-aitherdev_deploy_checkout="$(new_reviewed_checkout)"
-(cd "$aitherdev_deploy_checkout" && \
-  nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev)
-deployed_aitherdev_system="$(readlink -f /run/current-system)"
+test "$target_aitherdev_system" != "$captured_aitherdev_system"
+# Record the exact built target before activation. A caller can disconnect or
+# return failure after the generation has already become live.
 sudo "$rollout_helper" record-deployed \
-  --machine aitherdev --system "$deployed_aitherdev_system"
+  --machine aitherdev --system "$target_aitherdev_system"
+if ! (cd "$aitherdev_checkout" && \
+  nix develop -c confctl deploy -y \
+    --generation "$aitherdev_generation" cz.vpsfree/machines/aitherdev); then
+  observed_aitherdev_system="$(readlink -f /run/current-system)"
+  case "$observed_aitherdev_system" in
+    "$captured_aitherdev_system")
+      # Activation may have changed services before leaving the profile on the
+      # predecessor. Reapply it instead of treating this as a no-op.
+      sudo "$captured_aitherdev_system/bin/switch-to-configuration" switch
+      ;;
+    "$target_aitherdev_system")
+      portal_command="$(dirname "$rollout_helper")/workspace-portal"
+      sudo "$rollout_helper" rollback-host \
+        --authority-dir /run/vpsfree-workspace-authority \
+        --codex-socket /run/vpsfree-workspace-codex/app-server.sock \
+        --portal-command "$portal_command" \
+        --dedicated-tmux-socket /run/vpsfree-workspace-tmux/tmux.sock
+      ;;
+    *)
+      echo "aitherdev reached an unrecognized generation; manual recovery required" >&2
+      exit 1
+      ;;
+  esac
+  exit 1
+fi
+deployed_aitherdev_system="$(readlink -f /run/current-system)"
+test "$deployed_aitherdev_system" = "$target_aitherdev_system"
 sudo systemctl restart nginx
 ```
 
-Retain the detached checkouts until deployment validation and rollback testing
+Retain the detached checkout until deployment validation and rollback testing
 are complete. They contain no rollback authority; the root-owned JSON record
 does.
 
@@ -404,7 +440,7 @@ own clean checkout:
 ```sh
 set -euo pipefail
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
-config_revision=6a5116a614fd384ceabb55f9cb15e56ccefe6b52
+config_revision=cb3aba4cda3152f46ce81ea5481e427d57b0a40d
 git --git-dir="$config_git" fetch origin 2026-09-03-dev-session-portal
 test "$(git --git-dir="$config_git" rev-parse \
   origin/2026-09-03-dev-session-portal)" = "$config_revision"
@@ -417,37 +453,77 @@ new_reviewed_checkout() {
     --untracked-files=all)"
   printf '%s\n' "$checkout"
 }
-prg_dns_build_checkout="$(new_reviewed_checkout)"
-(cd "$prg_dns_build_checkout" && \
+prg_dns_checkout="$(new_reviewed_checkout)"
+(cd "$prg_dns_checkout" && \
   nix develop -c confctl build -y cz.vpsfree/containers/prg/int.ns1)
-brq_dns_build_checkout="$(new_reviewed_checkout)"
-(cd "$brq_dns_build_checkout" && \
+prg_dns_generation_link="$prg_dns_checkout/.confctl/generations/cz.vpsfree:containers:prg:int.ns1/current"
+test -L "$prg_dns_generation_link"
+prg_dns_generation="$(basename "$(readlink "$prg_dns_generation_link")")"
+target_prg_dns_system="$(readlink -f "$prg_dns_generation_link/toplevel")"
+test -x "$target_prg_dns_system/bin/switch-to-configuration"
+brq_dns_checkout="$(new_reviewed_checkout)"
+(cd "$brq_dns_checkout" && \
   nix develop -c confctl build -y cz.vpsfree/containers/brq/int.ns1)
-rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+brq_dns_generation_link="$brq_dns_checkout/.confctl/generations/cz.vpsfree:containers:brq:int.ns1/current"
+test -L "$brq_dns_generation_link"
+brq_dns_generation="$(basename "$(readlink "$brq_dns_generation_link")")"
+target_brq_dns_system="$(readlink -f "$brq_dns_generation_link/toplevel")"
+test -x "$target_brq_dns_system/bin/switch-to-configuration"
+rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
 captured_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
 test "$(ssh root@172.16.9.90 readlink -f /run/current-system)" = \
   "$captured_prg_dns_system" || {
   echo "prg internal DNS changed after rollback capture; aborting deployment" >&2
   exit 1
 }
-prg_dns_deploy_checkout="$(new_reviewed_checkout)"
-(cd "$prg_dns_deploy_checkout" && \
-  nix develop -c confctl deploy -y cz.vpsfree/containers/prg/int.ns1)
-deployed_prg_dns_system="$(ssh root@172.16.9.90 readlink -f /run/current-system)"
+test "$target_prg_dns_system" != "$captured_prg_dns_system"
 sudo "$rollout_helper" record-deployed \
-  --machine prg-dns --system "$deployed_prg_dns_system"
+  --machine prg-dns --system "$target_prg_dns_system"
+if ! (cd "$prg_dns_checkout" && \
+  nix develop -c confctl deploy -y \
+    --generation "$prg_dns_generation" cz.vpsfree/containers/prg/int.ns1); then
+  observed_prg_dns_system="$(ssh root@172.16.9.90 readlink -f /run/current-system)"
+  case "$observed_prg_dns_system" in
+    "$captured_prg_dns_system"|"$target_prg_dns_system")
+      ssh root@172.16.9.90 \
+        "$captured_prg_dns_system/bin/switch-to-configuration switch"
+      ;;
+    *)
+      echo "prg internal DNS reached an unrecognized generation; manual recovery required" >&2
+      exit 1
+      ;;
+  esac
+  exit 1
+fi
+deployed_prg_dns_system="$(ssh root@172.16.9.90 readlink -f /run/current-system)"
+test "$deployed_prg_dns_system" = "$target_prg_dns_system"
 captured_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
 test "$(ssh root@172.19.9.90 readlink -f /run/current-system)" = \
   "$captured_brq_dns_system" || {
   echo "brq internal DNS changed after rollback capture; aborting deployment" >&2
   exit 1
 }
-brq_dns_deploy_checkout="$(new_reviewed_checkout)"
-(cd "$brq_dns_deploy_checkout" && \
-  nix develop -c confctl deploy -y cz.vpsfree/containers/brq/int.ns1)
-deployed_brq_dns_system="$(ssh root@172.19.9.90 readlink -f /run/current-system)"
+test "$target_brq_dns_system" != "$captured_brq_dns_system"
 sudo "$rollout_helper" record-deployed \
-  --machine brq-dns --system "$deployed_brq_dns_system"
+  --machine brq-dns --system "$target_brq_dns_system"
+if ! (cd "$brq_dns_checkout" && \
+  nix develop -c confctl deploy -y \
+    --generation "$brq_dns_generation" cz.vpsfree/containers/brq/int.ns1); then
+  observed_brq_dns_system="$(ssh root@172.19.9.90 readlink -f /run/current-system)"
+  case "$observed_brq_dns_system" in
+    "$captured_brq_dns_system"|"$target_brq_dns_system")
+      ssh root@172.19.9.90 \
+        "$captured_brq_dns_system/bin/switch-to-configuration switch"
+      ;;
+    *)
+      echo "brq internal DNS reached an unrecognized generation; manual recovery required" >&2
+      exit 1
+      ;;
+  esac
+  exit 1
+fi
+deployed_brq_dns_system="$(ssh root@172.19.9.90 readlink -f /run/current-system)"
+test "$deployed_brq_dns_system" = "$target_brq_dns_system"
 ```
 
 Query both servers directly:
@@ -465,7 +541,7 @@ exact running system paths recorded before deployment:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
 previous_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
 deployed_prg_dns_system="$(sudo "$rollout_helper" get deployed_prg_dns_system)"
 previous_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
@@ -595,7 +671,7 @@ block restarts the App Server and portal and refuses the destructive rollback:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
 portal_command="$(dirname "$rollout_helper")/workspace-portal"
 sudo "$rollout_helper" rollback-host \
   --authority-dir /run/vpsfree-workspace-authority \
@@ -609,11 +685,13 @@ recorded deployment; the recorded predecessor is an idempotent no-op and any
 third generation is refused. It then stops and drains the portal, takes the
 exclusive host lifecycle gate, requires the authority directory to be empty,
 requires the dedicated tmux server to contain only its keeper, verifies every
-thread on the dedicated App Server is idle, stops the App Server, and switches
-to the exact predecessor. Terminal helper commands take a shared gate and use
-this same tmux server. The rollback helper restarts the App Server and portal
-on any failed pre-switch check and never reads rollback authority from the
-workspace.
+thread currently loaded in the dedicated App Server is idle, stops the App
+Server, and switches to the exact predecessor. The loaded-thread enumeration
+includes portal, exec, subagent, and ephemeral in-memory threads without
+depending on persisted-list source or archive filters. Terminal helper commands
+take a shared gate and use this same tmux server. The rollback helper restarts
+the App Server and portal on any failed pre-switch check and never reads
+rollback authority from the workspace.
 
 The DNS-first ordering keeps cached portal records on the authenticated TLS
 virtual host until they expire. Do not restore aitherdev after DNS rollback by
