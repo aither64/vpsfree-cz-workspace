@@ -145,14 +145,27 @@ Completed on the current pushed configuration candidate:
   `@fqdn@` template-name warning.
 - The configured deployment-key fingerprint matches
   `/home/aither/.ssh/id_ed25519.pub`.
+- The restricted authorized-key line parses with the same fingerprint, the
+  local route to `172.16.106.40` selects that allowed source address, and the
+  built root authorized-keys derivation contains the intended verbatim entry.
 - Read-only bootstrap probes confirmed that the current generation rejects the
   key for root SSH and that local non-interactive sudo needs a password. This
   is expected until the user deploys the key-bearing generation once.
 - Feature-branch GitHub Actions queries returned no runs.
 
+Completed long configuration builds, run sequentially to avoid shared confctl
+log collisions:
+
+- `confctl build -y cz.vpsfree/machines/aitherdev` passed and created
+  generation `2026-09-04--15-48-25`. Linux was fetched from the binary cache;
+  no local kernel compilation occurred.
+- `confctl build -y cz.vpsfree/containers/prg/int.ns1` passed and created
+  generation `2026-09-04--15-51-07`.
+- `confctl build -y cz.vpsfree/containers/brq/int.ns1` passed and created
+  generation `2026-09-04--15-52-05`.
+
 Still pending:
 
-- sequential `confctl build` of aitherdev, prg/int.ns1, and brq/int.ns1;
 - user bootstrap deployment of aitherdev, user deployment of both DNS servers,
   and live HTTPS, authentication, browser, and terminal-attach smoke tests.
 
