@@ -37,6 +37,12 @@ the whitelist, which explains the role-dependent behavior.
 - Cover direct Location responses, the exact nested VPS include used by the
   WebUI, an IPv6-disabled vpsAdmin browser fixture, and an IPv6-enabled KB
   contract fixture.
+- Add stable WebUI documentation landmarks for the existing “Manage host
+  addresses” and “Add host addresses” actions. Define a semantic path for that
+  sequence and bind the affected Czech and English IP-address instructions.
+- Fetch the complete production KB inventory read-only, prepare exact bilingual
+  annotation candidates and guarded release manifests, and validate them. Do
+  not publish either production page without separate approval.
 - Record the reusable lesson that output-whitelist reductions require consumer
   discovery and an explicit sensitivity classification for each removed field.
 - Update the configuration channel with `confctl inputs channel set --commit`;
@@ -84,5 +90,9 @@ production KB publication; those remain separate operational actions.
   vpsAdmin service hosts.
 - Review the expanded committed cross-repository series at high risk before any
   new long integration/evaluation run, then monitor feature-branch CI.
+- Resolve the review blocker for unbound host-address instructions with focused
+  vpsAdmin landmark tests, contract checks, and validated bilingual KB
+  candidates. Re-pin both consumers to the remediated vpsAdmin head and rerun
+  every review lane affected by the new documentation contract.
 - From fresh integration worktrees, fast-forward the current default branches,
   run repository-appropriate pre-push checks, push, and monitor resulting CI.

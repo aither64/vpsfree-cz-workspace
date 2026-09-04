@@ -26,7 +26,9 @@ pushed, reviewed, and green in GitHub Actions. The user has now authorized
 adding the exact vpsAdmin revision to the `vpsadmin` configuration channel and
 fast-forwarding all affected repositories into their default branches. The
 configuration pin is committed and scoped to `vpsadminServices`; quick
-verification and expanded mandatory review are next. Deployment and production
+verification passed. Expanded mandatory review found one blocking documentation
+contract gap on the affected bilingual pages. Remediation is now planned before
+configuration builds or default-branch integration. Deployment and production
 KB publication remain out of scope.
 
 ## Commands run
@@ -84,6 +86,13 @@ KB publication remain out of scope.
   exact revision `d18fe2671abb47deda06ba54b17d5fe68d789478` in the configuration
   Nix shell, producing commit
   `8a1666f8f3b14cde8335e7a25e1a1a70becab5a6`.
+- Ran the complete configuration Overcommit suite, confirmed the exact channel
+  pin, and evaluated the inventory of 17 `vpsadmin`-tagged machines. Held the
+  longer configuration build until mandatory review completes.
+- Started expanded mandatory change review at high risk and maximum effort with
+  fresh General, Architecture, Scope, and Risk/compatibility lanes. Read and
+  applied the WebUI change workflow and bilingual user-facing-writing guidance
+  after the General lane identified an affected-page annotation gap.
 
 ## Results
 
@@ -167,6 +176,19 @@ KB publication remain out of scope.
   with only the accepted generated-changelog width warning. The Nix shell's
   untracked `.bin/rubocop` and `.bundle/config` helper files were inspected and
   removed; the configuration worktree is clean.
+- Architecture and Risk reviewers found no Blocking, Important, or Advisory
+  issue in the committed API, contract, or configuration series. They confirmed
+  the output-policy ownership, exact pins, unchanged assignment authorization,
+  additive mixed-version behavior, and provider-first merge order.
+- The General reviewer found one Blocking documentation-contract gap: the
+  affected Czech and English IP-address pages tell members to use “Manage host
+  addresses” and then “Add host addresses”, but those existing actions have no
+  WebUI landmarks or semantic page binding. The gap must be corrected and the
+  affected lanes rerun before the configuration build or any merge.
+- Reviewer read-only Nix commands temporarily recreated `.bin/rubocop` and
+  `.bundle/config` in the shared configuration worktree. Reviewers coordinated
+  ownership and removed the exact generated files; tracked content was never
+  modified. Cleanliness will be rechecked after all lanes finish.
 
 ## Open questions
 
