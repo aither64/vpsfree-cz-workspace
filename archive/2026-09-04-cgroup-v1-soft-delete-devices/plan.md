@@ -58,7 +58,31 @@ itself.
 
 ## Decisions
 
-- Treat `vpsadmin` and `vpsadminos` as candidates until the cross-repository
-  command trace identifies the actual faulty boundary.
 - Keep this turn diagnostic-only, matching the user's request to find the root
   cause.
+- The faulty boundary is vpsAdminOS's cgroup v1 container device
+  configurator. It mutates the per-user ancestor cgroup as if that cgroup were
+  private to one container, although multiple containers can share it.
+- Normal vpsAdmin soft deletion is not the device-policy writer. It stops the
+  VPS, clears routes, and disables resource accounting; it does not run the
+  features command or remove devices. Treat the observed timing as a
+  correlation until the transaction history identifies the device-removal
+  operation that preceded the health-check failure.
+- A later fix should be local to vpsAdminOS unless operational evidence reveals
+  a separate vpsAdmin trigger. It must keep the shared ancestor permissive for
+  every device required by any container below it and reapply affected child
+  cgroups where necessary.
+
+## Result
+
+The failure was reproduced in the cgroup v1 test VM with two containers under
+the same osctl user. Removing promoted TUN access from one container wrote a
+deny rule to their shared `<group>/<user>` devices cgroup. The kernel therefore
+removed access from the sibling's descendant cgroup while the sibling's osctld
+configuration still contained TUN. `osctl healthcheck -a` then reported the
+same `device "c 10:200 rwm" not allowed` error shape as production.
+
+Stopping the container once or twice did not alter its device lists and left
+the health check clean. Re-allowing the device at the ancestor was insufficient
+to update an already-restricted descendant; starting the affected sibling
+reapplied its configured devices and restored a clean health check.
