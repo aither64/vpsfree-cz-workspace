@@ -1004,3 +1004,43 @@ lifecycle: active
   `vpsfree-cz-configuration` worktrees. This continuation is explicitly
   authorized by the user's request to implement the revised plan even though
   the current API shell is outside the managed tmux environment.
+
+## Simplified implementation checkpoint
+
+- Workspace `4a300149052342665233c901fee92e2ec09e4fc9` now owns the flake package,
+  removes the rollout helper and exact Codex rejection, contract-tests the
+  configured App Server methods, and treats stored client versions as
+  diagnostic history after compatible upgrades.
+- Configuration `5fba4dd7733a2a50600cd28c452e8c9ba2ac157a` has three feature commits:
+  the final aitherdev integration, the `confctl`-generated
+  `aitherVpsfreeWorkspace` pin, and internal DNS. It follows the existing
+  `nixpkgsStable` and `llm-agents` inputs and contains neither a copied portal
+  package nor an initiative-specific Codex update.
+- Activation derives bcrypt Basic Auth from the user-owned mode-0600 password,
+  creates or verifies the CA directly in root-owned state, installs the nginx
+  pair, and publishes only the public CA. A weekly timer renews a leaf with
+  less than 30 days remaining.
+- The password is prepared at
+  `/home/aither/.local/state/vpsfree-workspace-portal/password`; validation
+  confirms owner uid 1000, mode 0600, one 64-character hexadecimal line. Its
+  content was not printed or recorded.
+- Root-side CA generation replaced the drafted staging import. This removes an
+  unnecessary privileged ingestion boundary from user-writable private-key
+  state while preserving the one-deploy host setup.
+- Quick checks pass: 118 `dev-session` tests with 996 assertions, 8 PKI tests
+  with 71 assertions, all Go tests, JavaScript syntax, workspace package build,
+  workspace and configuration no-build flake checks, Nix parsing/formatting,
+  configuration hooks, and channel evaluation. The first ambient Go attempt
+  lacked a C compiler and was repeated successfully in a Nix shell with GCC.
+- The first `confctl channel set` attempt exposed the missing-input bootstrap;
+  `confctl inputs update --commit --no-changelog aitherVpsfreeWorkspace`
+  created the required single generated pin commit from the feature-branch
+  input. No lock file was edited manually.
+- The overall review risk is high because authentication, privileged
+  activation, TLS renewal, the Codex protocol boundary, deployment, and
+  rollback are affected. General, architecture/repetition,
+  scope/proportionality, and risk/compatibility lanes will run with
+  `gpt-5.6-sol` at `xhigh`; no `max` or `ultra` review will run.
+- Long `confctl build` validation remains deferred until mandatory review
+  findings are reconciled. The user owns deployment of aitherdev and both DNS
+  containers plus one-time client CA trust.

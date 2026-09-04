@@ -41,11 +41,9 @@ of a session that can also be attached from a terminal.
 - Keep HTTP Basic Authentication in nginx. Prepare a random password in
   `/home/aither/.local/state/vpsfree-workspace-portal/password`, readable only
   by `aither`, and generate the nginx hash from it during activation.
-- Use an unencrypted custom CA key protected by filesystem permissions. Prepare
-  the CA and first leaf certificate in a mode-0700 staging directory under
-  `/home/aither/.local/state`, outside every Git checkout. On first aitherdev
-  activation, validate and import private material into root-owned `/var/lib`,
-  remove the staged private CA key, and retain a user-readable public CA copy.
+- Use an unencrypted custom CA key protected by filesystem permissions. On
+  first aitherdev activation, create the CA and leaf directly in root-owned
+  `/var/lib`, install the nginx pair, and retain a user-readable public CA copy.
   Renew leaf certificates automatically under the same CA and reload nginx.
 - Remove the specialized rollout/rollback helper and its deployment machinery.
   Use ordinary confctl/NixOS generations for deployment and rollback.
@@ -64,10 +62,11 @@ of a session that can also be attached from a terminal.
   rotating credentials. The leaf renewal timer replaces only the server pair.
 - No password, CA private key, or server private key is committed or placed in
   the Nix store. The portal process cannot read the root-owned CA or nginx key.
-- The implementation prepares the user-owned staging credentials on aitherdev.
-  The user only deploys `cz.vpsfree/machines/aitherdev` and the two internal DNS
-  containers. Installing the public custom CA on each client is an unavoidable
-  one-time client action.
+- The implementation prepares the Basic Auth password on aitherdev; activation
+  creates all root-owned authentication and PKI state. The user only deploys
+  `cz.vpsfree/machines/aitherdev` and the two internal DNS containers.
+  Installing the public custom CA on each client is an unavoidable one-time
+  client action.
 - Deploy aitherdev before publishing DNS so the hostname does not resolve until
   HTTPS is ready. Standard confctl generation rollback is sufficient; portal
   state is additive and can remain on disk if the configuration is rolled back.
@@ -80,9 +79,9 @@ of a session that can also be attached from a terminal.
 - Extend `dev-session` tests for compatible version upgrades, runtime endpoint
   authority, session reuse, browser creation, terminal attachment, cleanup,
   and existing manifest compatibility.
-- Test PKI initialization without a passphrase, staging import, repeated
-  activation, file ownership and modes, missing or malformed input, leaf
-  renewal, nginx installation, and public CA export.
+- Test PKI initialization without a passphrase, repeated activation, file
+  ownership and modes, missing or malformed input, leaf renewal, nginx
+  installation, and public CA export.
 - Test Basic Auth bootstrap for initial generation, idempotent reuse, hash
   verification, permissions, and fail-closed malformed credential state.
 - Run Go tests, race tests, vet, JavaScript tests, Ruby tests, workspace flake
