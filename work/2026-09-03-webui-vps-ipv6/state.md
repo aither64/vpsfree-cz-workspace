@@ -21,15 +21,14 @@ lifecycle: active
 
 ## Status
 
-The vpsAdmin fix and its focused KB capture contract are implemented, committed,
-pushed, reviewed, and green in GitHub Actions. The user has now authorized
-adding the exact vpsAdmin revision to the `vpsadmin` configuration channel and
-fast-forwarding all affected repositories into their default branches. The
-configuration pin is committed and scoped to `vpsadminServices`; quick
-verification passed. Expanded mandatory review found one blocking documentation
-contract gap on the affected bilingual pages. Remediation is now planned before
-configuration builds or default-branch integration. Deployment and production
-KB publication remain out of scope.
+The vpsAdmin fix, documentation-landmark remediation, focused KB capture
+contract, and consolidated `vpsadminServices` configuration pin are committed.
+The two provider/contract feature branches are pushed, and checks against the
+final revisions pass. Checksummed schema-5 Czech and English KB release
+candidates are prepared locally without publishing them. Remediation review at
+the workspace-required `xhigh` effort, the long configuration build, feature
+CI, and default-branch integration remain. Deployment and production KB
+publication remain out of scope.
 
 ## Commands run
 
@@ -93,6 +92,29 @@ KB publication remain out of scope.
   fresh General, Architecture, Scope, and Risk/compatibility lanes. Read and
   applied the WebUI change workflow and bilingual user-facing-writing guidance
   after the General lane identified an affected-page annotation gap.
+- Added stable documentation IDs to the existing “Manage host addresses” and
+  “Add host addresses” WebUI links. The focused test, all 88 WebUI unit tests,
+  PHP syntax checks, and the complete vpsAdmin Overcommit suite passed.
+- Committed and pushed vpsAdmin remediation revision
+  `1acc1955f0e7b4f2b67a18674d02a6da8e9e8da4`.
+- Fetched all 114 accessible Czech and 77 English production KB pages, applied
+  the required user-facing-writing guidance to the two affected instructions,
+  and prepared checksummed schema-5 release manifests. No staging or production
+  write has occurred.
+- Added the two host-address controls and their semantic path to the contract,
+  refreshed the full page/discovery inventory to match the production fetch,
+  and preserved the independent vpsAdminOS lock closure. `bin/check` and the
+  candidate-aware KB annotation checker passed.
+- Amended and force-pushed the consolidated vpsfree-kb-contracts revision as
+  `1f7c2bf9dd0d71d8c1aafbd73eda362678af7009`.
+- Generated a fresh one-step configuration channel update from current
+  `origin/master` to final vpsAdmin revision `1acc1955` using
+  `confctl inputs channel set --commit`. Amended the unpushed configuration
+  commit to that exact generated lock and changelog as `0e8c2a6e`; all
+  configuration hooks passed.
+- The user required `xhigh` reasoning for all review work. Updated and pushed
+  the workspace rule in commit `6fb7e15`; the pre-existing unrelated
+  session-detection edit in `AGENTS.md` remains unstaged and untouched.
 
 ## Results
 
@@ -169,9 +191,10 @@ KB publication remain out of scope.
 - The `vpsadmin` channel maps role `vpsadmin` only to `vpsadminServices`; the
   `vpsadminStaging` and `vpsadminProduction` node inputs are separate and were
   not changed.
-- The generated configuration commit updates only the `vpsadminServices`
-  revision, NAR hash, and timestamp from `cbd0fa16` to reviewed vpsAdmin commit
-  `d18fe267`. Its generated changelog contains only the IPv6 capability commit.
+- The consolidated generated configuration commit updates only the
+  `vpsadminServices` revision, NAR hash, and timestamp from `cbd0fa16` to final
+  vpsAdmin commit `1acc1955`. Its generated changelog contains both the IPv6
+  capability fix and the invisible documentation landmarks.
 - The configuration pre-commit hook passed Nixfmt. Commit-message hooks passed
   with only the accepted generated-changelog width warning. The Nix shell's
   untracked `.bin/rubocop` and `.bundle/config` helper files were inspected and
@@ -189,6 +212,14 @@ KB publication remain out of scope.
   `.bundle/config` in the shared configuration worktree. Reviewers coordinated
   ownership and removed the exact generated files; tracked content was never
   modified. Cleanliness will be rechecked after all lanes finish.
+- The complete production fetch found five Czech pages that had already been
+  removed since the last inventory and four unchanged Guix discoveries whose
+  paragraph numbers moved by one. The contract now records the current page set
+  and preserves the existing reasons for those Guix discoveries.
+- The remediated contract contains 44 controls and 35 paths. Its full
+  `bin/check` run passed, including 60 Ruby test runs with 194 assertions and
+  validation of all 120 screenshot variants. The candidate-aware checker
+  reports 92 bindings and 9 explicit exceptions.
 
 ## Open questions
 

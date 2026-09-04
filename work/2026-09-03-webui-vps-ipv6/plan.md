@@ -82,7 +82,8 @@ production KB publication; those remain separate operational actions.
   fallback, then run `bin/validate --update` and `bin/check` and inspect the
   screenshots.
 - After all intended commits and quick checks, run the mandatory high-risk
-  review with General, Architecture, Scope, and Risk/compatibility lanes.
+  review with General, Architecture, Scope, and Risk/compatibility lanes, using
+  `xhigh` reasoning for every reviewer and rerun.
 - Resolve review findings, run `webui#vps-user-core`, push both feature
   branches, and monitor their GitHub Actions results.
 - Run the configuration input update through `confctl`, inspect the generated
