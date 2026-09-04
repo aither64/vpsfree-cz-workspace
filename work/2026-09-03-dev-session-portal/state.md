@@ -20,16 +20,18 @@ lifecycle: active
   `01a0678c-baae-7600-bcf6-9a0cb6c83232` and named after the initiative.
 - Configuration worktree created from `origin/master` at
   `57d7c12a2da78d334d338a0e56dd7438376a6973`.
-- The fourth mandatory review examined workspace
-  `d269a6ca57b46ac0a2c86279ce76120eb0948f3d` and configuration
-  `7b7d3489ab6a079b04a48a2f4a645ed8dfa9c354`. All four lanes finished before
-  remediation began. The fixes are committed and pushed at workspace
-  `58e9b099420c96f594c943c31397b5f133918c6f` and configuration
-  `1509f7f8c7fd01fc77f3f9d0d53616f5af514a14`. No long configuration build or
-  deployment has started.
+- The latest completed mandatory review examined workspace `b345dfed` and
+  configuration `6c6d627b`. All four lanes finished before remediation began.
+  The fixes are committed and pushed at workspace
+  `39d5e3d6d1fb31e56416cb67d9383a279b45d840` and configuration
+  `38dca2988818477739438fcdef069ecb6ab406c2`. Fresh review is pending; no long
+  configuration build or deployment has started.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
-  staged patch.
+  patch. The feature no longer contains that hunk. If its owner has not
+  committed it before integration, preserve it as an exact path-only patch,
+  reverse that patch briefly with an empty index, fast-forward, reapply it, and
+  verify that the resulting `AGENTS.md` diff is byte-for-byte identical.
 
 ## Commands run
 
@@ -86,8 +88,10 @@ lifecycle: active
   renewal, hostname, chain, permission, and git-worktree refusal checks.
 - Portal Go tests and `go vet` passed.
 - The `dev-session-handoff` skill passes the skill creator validator.
-- The current ChatGPT desktop SSH session uses the same Unix App Server socket
-  that the portal adapter successfully connected to.
+- The earlier desktop SSH experiment established App Server connectivity but
+  did not prove that the existing tmux client used the supervised portal
+  socket. Its manifest is intentionally read-only until that session is stopped
+  and restarted after deployment with recorded endpoint and version provenance.
 - The pinned Nix package builds and its packaged portal, `dev-session`, and PKI
   commands start successfully.
 - Internal zone validation passes with serial `2026090300`.
@@ -480,26 +484,159 @@ lifecycle: active
   initiative page before DNS publication, and refuses rollback while
   browser-created sessions remain.
 - Workspace history is rewritten into five owning commits based on shared
-  `master` at `794aabf`. The clean branch is pushed at
-  `e561db24d8ec7aaa4abc0e47a0c40e7284ccaef6`.
+  `master` at `a9a0f55`. The clean branch is pushed at
+  `b345dfed561d09bc3621d49e2c5e60fcccfae92c`. The unrelated concurrent-session
+  identity hunk is not part of the feature, and the portal handoff rule belongs
+  to the session-sharing commit.
 - Configuration history is rewritten into four reproducible commits: channel
   declaration, one generated exact input pin, complete aitherdev hosting, and
   DNS last. The clean branch is pushed at
-  `484baf8e48aa05c56a077472d2a4d2fbb0478f8d`; generated commit `e029738a`
-  pins workspace `e561db24` with its `confctl` message unchanged.
-- Quick checks pass with 101 `dev-session` tests and 897 assertions, 5 PKI
-  tests and 44 assertions, all Go tests and race tests, Go vet, Ruby and
+  `6c6d627ba844d10a32209542417952377988573d`; generated commit `bda43117`
+  pins workspace `b345dfed` with its `confctl` message unchanged.
+- Quick checks pass with 105 `dev-session` tests and 921 assertions, 6 PKI
+  tests and 48 assertions, all Go tests and race tests, Go vet, Ruby and
   JavaScript syntax checks, the handoff-skill validator, both manifest readers
   against the live initiative, `nix flake check --no-build`, and internal DNS
   zone validation.
 - The exact pinned portal package builds as
-  `/nix/store/naxxjf2rhg7xh51490020pszxrmn12rx-workspace-portal-0.1.0`.
+  `/nix/store/aq9w3fham0l42y2jlw1zlfc0kr3h7674-workspace-portal-0.1.0`.
   Its portal, `dev-session`, and PKI entry points run, and both packaged
   manifest validators accept the live initiative.
 - GitHub reports no Actions runs for either rewritten feature head, so there
   are no current or superseded runs to inspect or cancel.
-- Next steps are to rerun the review lanes affected by this remediation and,
-  only after they pass, start the long configuration builds.
+- The remediation makes Ruby and Go reject the same schema/timestamp drift,
+  adds a shared lifecycle corpus, resolves tmux sockets from each manifest for
+  normal lifecycle commands, and binds browser interactivity to matching
+  thread, App Server socket, and Codex client-version provenance.
+- Root PKI commands now use the immutable flake package, the helper verifies
+  state ownership, public export is atomic in a root-owned directory, and both
+  host rollback paths stop and drain the portal before inspecting journals and
+  dedicated tmux sessions.
+- The Nix package now runs every Go package test and includes the shared
+  fixtures. Its build log confirms the command, Codex, repository, session, and
+  web suites all ran.
+- Next steps are fresh review of these exact heads and, only after it passes,
+  the long configuration builds.
+
+## Seventh mandatory review and remediation
+
+- All four lanes finished against workspace `b345dfed` and configuration
+  `6c6d627b` before remediation began. The review was not clean.
+- The blocking architecture finding was that LXC-writable `portal.yml` data
+  could authorize a browser thread or select a host tmux socket. Mutable
+  controls now require a uid-private host record under
+  `/run/vpsfree-workspace-authority`, a matching live tmux identity, the
+  configured App Server socket and Codex version, and an App Server thread cwd
+  equal to the canonical `work/<slug>` path. Workspace manifests remain
+  passive status metadata.
+- The blocking deployment findings were a fail-open rollback snippet,
+  workspace-owned shell data later sourced into privileged rollback commands,
+  and privileged helpers/builds selected from mutable worktrees. A tested
+  `workspace-portal-rollout` helper now stores strict JSON in a root-owned
+  directory, drains and validates before switching, and restarts the portal on
+  any failed pre-switch check. The runbook builds an exact commit, attests its
+  store path and NAR hash, and runs each `confctl` build/deploy from a fresh
+  detached checkout of that revision.
+- All supported terminal and browser sessions now use the dedicated absolute
+  tmux socket in the deployed environment. Session mutations share a host-only
+  lifecycle gate; rollback takes it exclusively before checking that runtime
+  authority is empty and only the keeper remains. This closes terminal
+  creation races between drain validation and the generation switch.
+- Cross-server tmux attachment now nests an attachment instead of issuing an
+  invalid `switch-client`. The helper verifies the exact configured Codex
+  executable and its reported version before publishing provenance. Socket
+  selection happens inside the per-slug lock and rejects explicit mismatches.
+- Ruby and Go validators now agree on plan/state presence, bounded reads,
+  lifecycle placement and finalization, and duplicate identities. PKI commands
+  consistently validate private directory ownership, exact modes, and symlink
+  ancestry before reading or exporting.
+- The runbook checks both firewall ports from a routed non-WireGuard source,
+  requires a positive connectivity control, and corroborates the result with
+  firewall rules and counters. DNS and host rollback paths come only from the
+  root-owned structured capture.
+- An exact package build then exposed a nondeterministic App Server reconnect
+  test timeout. Repeated execution showed that a delayed watcher from the old
+  connection could send `thread/resume` before the replacement connection's
+  `initialized` notification. Normal RPCs are now gated on a ready generation;
+  the reconnect regression passes 100 consecutive iterations and surfaces
+  server protocol errors without waiting for the global Go test timeout.
+- A race-enabled process-group test once reported a surviving child. Repeated
+  isolated runs killed the process group correctly; the assertion now records
+  the descendant's Linux start time and process group so PID reuse or group
+  drift is distinguished from a real survivor. Five race-enabled full-suite
+  iterations pass after that instrumentation.
+- Quick verification passes: 109 `dev-session` tests with 943 assertions, 6
+  PKI tests with 56 assertions, 2 rollout tests with 15 assertions, 20 full Go
+  suite iterations, five race-enabled full Go suite iterations, Go vet,
+  JavaScript syntax, configuration hooks, `nix flake check --no-build`, and
+  internal zone validation at serial `2026090300`.
+- Workspace `39d5e3d6d1fb31e56416cb67d9383a279b45d840` is clean and pushed.
+  Configuration `38dca2988818477739438fcdef069ecb6ab406c2` is clean and pushed
+  with four commits: channel declaration, one generated pin to the exact
+  workspace revision, complete aitherdev hosting, and DNS last.
+- The exact pinned package builds as
+  `/nix/store/idswhbb99ifdygk578hm5dy0cgp8bj6y-workspace-portal-0.1.0` with
+  NAR hash `sha256-Qehg8negveuC2slGDSQG/TyJVLqcl7hGCYkjRBBmWzU=`. Its build
+  runs all five Go packages plus the packaged Ruby session, PKI, and rollback
+  suites.
+- The current deployment runbook has SHA-256
+  `1a4d1655eaa13b34772bdbe34c7c885187a09cebfa7ee4d9c27b29cdd9aff926` before
+  this state update; recompute it for the frozen review packet because exact
+  revision substitutions and runbook hardening are still uncommitted tracking
+  changes in the shared top-level checkout.
+
+## Eighth mandatory review and remediation
+
+- All four review lanes completed against workspace `39d5e3d6` and
+  configuration `38dca298` before files changed. The reports were not clean:
+  they identified five general blocking findings, three architecture blocking
+  findings, one scope blocking finding, and two risk blocking findings.
+- Browser creation now publishes only a non-interactive `creating` authority
+  before the initial turn. Tracking, tmux, and the complete Codex environment
+  exist before that turn begins; the journal, manifest, and private authority
+  advance to `ready` only after the turn is accepted or reconciled.
+- Browser and terminal mutations now serialize on stable host-only lock files
+  rather than LXC-writable workspace inodes. Ruby, Go, and the rollout helper
+  validate the same runtime-authority JSON corpus.
+- Persisted Codex provenance permits a verified read-only transcript for a
+  stopped, completed, or archived initiative. Only a matching live `ready`
+  authority enables events or mutations, and index rendering no longer blocks
+  on serial App Server verification.
+- New thread environments include the authority directory, dedicated tmux
+  socket, exact Codex executable, App Server socket, and Codex version. Stop,
+  remove, finalize, stale recovery, and rollback verify that relevant App
+  Server turns are idle before destroying runtime state.
+- Rollback now drains the portal, takes the exclusive host lifecycle gate,
+  validates journals and authority entries, scans all workspace App Server
+  threads for activity, stops the App Server, and only then changes generation.
+  Every failure before a successful switch attempts to restart both services.
+- The deployment runbook uses the exact attested package rather than building a
+  mutable worktree for privileged helpers, verifies the immediate predecessor
+  immediately before each host deployment, and describes the firewall rule as
+  the exact allowed source subnet.
+- Workspace history was rebuilt as six focused commits on current shared
+  `master`. The branch is clean and force-pushed at
+  `f2c408567ef71568c970d0472ac4e46c049156ee`.
+- Configuration history was rebuilt as four commits. Generated commit
+  `365db8fb` pins the exact workspace head through `confctl`; complete
+  aitherdev hosting is in `566af982` and DNS remains last. The branch is clean
+  and force-pushed at `543a985ef7ee858b05bac78f49851710f692c98e`.
+- Quick checks pass with 113 `dev-session` tests and 956 assertions, 6 PKI
+  tests and 56 assertions, 7 rollout tests and 54 assertions, all Go tests and
+  race tests, Go vet, Ruby and JavaScript syntax, configuration hooks,
+  `nix flake check --no-build --show-trace`, and internal zone validation at
+  serial `2026090300`.
+- The first exact package build exposed a fixture lookup based on
+  `runtime.Caller`, whose path is trimmed by the Nix Go builder. The test now
+  uses its stable package working directory; the exact pinned package builds as
+  `/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0`
+  with NAR hash
+  `sha256-/8NGuYZyaLEcTXonBy7FT7zAHlSgW4R0Z9ECiDe92ZE=`.
+- GitHub reports no Actions runs for either force-pushed feature head, so there
+  are no superseded runs to cancel. The frozen deployment runbook has SHA-256
+  `e1def2787424c5b0fb870c6e2721b05cdda5d558759dbd9e0876abf72c651a7c`.
+- The mandatory review must now be rerun against these exact heads before long
+  `confctl build` validation begins.
 
 ## Cleanup
 

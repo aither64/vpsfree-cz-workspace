@@ -29,10 +29,12 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   initiative through the supervised local App Server, persist `portal.yml`, expose the
   stable URL, and launch the tmux TUI against the same daemon. Browser creation
   is journaled before other state is created and uses the unique `work/<slug>`
-  thread directory for bounded reconciliation. The browser preserves the dated
-  slug across an HTTP retry. The supplied goal and session identity are checked
-  against any recovery candidate before proceeding. Codex remains responsible
-  for selecting repositories.
+  thread directory for bounded reconciliation. Private host authority remains in
+  `creating` state until tracking, tmux, and the initial turn are ready; only a
+  final `ready` record enables mutations. The browser preserves the dated slug
+  across an HTTP retry. The supplied goal and session identity are checked against
+  any recovery candidate before proceeding. Codex remains responsible for
+  selecting repositories.
 - Put HTTP Basic Authentication and TLS in nginx. Connect nginx to the portal
   through a permission-restricted host Unix socket and dedicated proxy group
   that are not mounted into the development LXC. Keep the portal and its child
@@ -70,9 +72,12 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   finalization requires complete bidirectional coverage and immutable
   comparison commits.
 - Anchored `state.md` lifecycle is the work-state authority. `active` sessions
-  may be interactive only after local creation is ready; `complete` and
-  `abandoned` sessions are read-only before finalization; archive entries must
-  also contain `finalized_at` and immutable repository commit pairs.
+  may be interactive only after local creation and private runtime authority are
+  both ready; `complete` and `abandoned` sessions are read-only before
+  finalization; archive entries must also contain `finalized_at` and immutable
+  repository commit pairs. Persisted Codex provenance remains sufficient to
+  display a verified read-only transcript after stop or archival, but never to
+  restore mutation authority.
 - Codex App Server `thread/start` and `turn/start` do not accept a caller-owned
   idempotency key. A timeout after remote acceptance is therefore ambiguous.
   Recovery accepts one matching candidate and refuses conflicts; exactly-once
@@ -84,9 +89,20 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   attach commands work across `TMUX_TMPDIR` differences and are hidden when
   provenance is unknown. A separate systemd service runs the pinned Codex App
   Server directly on an explicit Unix socket; the portal soft-depends on it and
-  has no daemon lifecycle authority. The web service uses main-process-first
+  has no routine daemon lifecycle authority. New browser threads receive the
+  exact authority directory, tmux socket, Codex executable, App Server socket,
+  and Codex version in their environment. Stop, remove, finalization, stale
+  recovery, and host rollback refuse to proceed while an associated turn is
+  active. The web service uses main-process-first
   systemd termination so creation requests drain before residual children are
   killed at the stop timeout.
+- Runtime serialization uses uid-private host locks adjacent to the authority
+  records, under a root-owned parent that is not writable from the development
+  container. Workspace lock files remain only for ordinary local sessions that
+  have no deployed runtime-authority directory. Rollback takes the global host
+  gate exclusively, validates creation journals and runtime records, verifies
+  all workspace App Server threads are idle, then stops the App Server before
+  changing generations. Any pre-switch failure restarts both services.
 - No database, API, protocol, or persistent project state is changed. Rolling
   compatibility is limited to the local workspace helper, its schema-1 manifest,
   and the pinned portal protocol. Explicit validation rejects mismatches before
@@ -102,11 +118,13 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 
 - Unit-test manifest parity, git/GitHub metadata, origin enforcement, Unix
   socket permissions, artifact containment and media policy, Markdown
-  sanitization, App Server subscriptions and request mapping, and PKI
-  generation/renewal.
+  sanitization, App Server subscriptions and request mapping, passive transcript
+  verification, runtime-authority parity, and PKI generation/renewal.
 - Extend `dev-session` tests for thread reuse, URL/JSON output, browser-style
   start, crash recovery, goal identity, terminal attach, worktree metadata, and
-  finalization.
+  finalization. Exercise creating-to-ready publication, host-only serialization,
+  active-turn refusal, stale authority recovery, and service-restoring rollback
+  failure paths.
 - Exercise a disposable shared Codex thread through the portal adapter and tmux
   TUI, including messages, steering, interruption, questions, approvals, and
   reconnects. Confirm native ChatGPT client behavior separately when the user
