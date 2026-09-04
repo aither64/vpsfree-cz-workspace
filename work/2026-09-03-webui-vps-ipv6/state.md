@@ -27,9 +27,9 @@ The two provider/contract feature branches are pushed, and checks against the
 final revisions pass. Checksummed schema-5 Czech and English KB release
 candidates are prepared locally without publishing them. The first remediation
 review was resolved and the contract history was split as requested; affected
-review lanes, the long configuration build, feature CI, and default-branch
-integration remain. Deployment and production KB publication remain out of
-scope.
+review lanes passed at `xhigh`. The long configuration build, feature CI, and
+default-branch integration remain. Deployment and production KB publication
+remain out of scope.
 
 ## Commands run
 
@@ -130,6 +130,11 @@ scope.
   `9732c49` and independent production-inventory refresh commit `e5ed479`, then
   force-pushed the feature branch with an explicit lease against its previous
   remote head `1f7c2bf`.
+- Reran the affected General, Scope, and Risk/compatibility lanes using fresh
+  `gpt-5.6-sol` reviewers at exact `xhigh` reasoning effort. The Architecture
+  lane was not rerun because the fixes changed page-pairing metadata, tracking,
+  and commit boundaries without changing the already reviewed design or final
+  contract tree.
 
 ## Results
 
@@ -240,6 +245,13 @@ scope.
   and compatibility design remain sound. Its actionable findings were confined
   to commit separation, the English language-pair marker, and tracking
   accuracy; all three were corrected before the long configuration build.
+- The General, Scope, and Risk/compatibility reruns reported no Blocking,
+  Important, or Advisory findings. They independently confirmed the focused
+  commit split, reciprocal page markers and regenerated hashes, exact provider
+  pins, unchanged authorization, additive mixed-version behavior, and accurate
+  tracking. The unchanged residual gaps are visibility-only browser coverage,
+  no direct positive `remote_console_server` assertion, and staging verification
+  before any future production KB promotion.
 
 ## Open questions
 
