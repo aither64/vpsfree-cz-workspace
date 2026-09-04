@@ -28,9 +28,10 @@ final revisions pass. Checksummed schema-5 Czech and English KB release
 candidates are prepared locally without publishing them. The first remediation
 review was resolved and the contract history was split as requested; affected
 review lanes passed at `xhigh`, all four affected service-host configurations
-build, and the configuration feature branch is pushed. Final feature CI and
-default-branch integration remain. Deployment and production KB publication
-remain out of scope.
+build, and the configuration feature branch is pushed. The user explicitly
+chose not to wait for the remaining long vpsAdmin CI run; provider-first
+default-branch integration is proceeding while that exact-head run remains
+active. Deployment and production KB publication remain out of scope.
 
 ## Commands run
 
@@ -151,6 +152,12 @@ remain out of scope.
 - Dry-ran and then performed an exact path-scoped `git clean` of this
   initiative's untracked `kb-sources` and unchanged `kb-candidates` copies.
   The two tracked public candidates and all release/review metadata remain.
+- The final vpsfree-kb-contracts feature-head workflows passed: Check run
+  `33852215844` and Managed page runtime run `33852215930` on `e5ed479`.
+  vpsAdmin WebUI PHPUnit and i18n health passed on `1acc1955`; broad
+  integration run `33849770155` remained healthy in `Run tests`. The user
+  explicitly instructed the session not to wait for that long run before
+  integrating the reviewed commits.
 
 ## Results
 
