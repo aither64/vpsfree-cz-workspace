@@ -144,10 +144,23 @@ in the Markdown body has no effect.
 
 Write a substantive plan and initial state, then commit both in the top-level
 workspace repository before the first project-code commit or external mutation.
-Commit tracking updates at meaningful checkpoints: material plan changes,
-review and test or CI outcomes, deployment results, and handoffs where another
-agent would otherwise have to reconstruct the current state. Do not leave the
-only useful copy of active tracking uncommitted.
+After that initial commit, keep plan and state current in the working tree
+without committing every update. A short initiative should normally make no
+further tracking-only commit until its final archive commit. If an initiative
+remains unfinished at the end of an active working day, it may make at most one
+consolidated tracking-only checkpoint for that day when material progress is
+worth preserving. This is a ceiling, not a daily requirement. Material progress
+includes changed implementation heads, durable decisions, completed phases,
+new blockers, and results that change the next step.
+
+An additional same-day tracking checkpoint is allowed only for a genuine
+ownership handoff or an explicit user request. A pause until a future working
+day can justify that day's consolidated checkpoint, but not a second one.
+Individual plan edits, branch-head changes, review findings or remediations,
+commands, test or CI results, deployment actions, and status polls do not by
+themselves require commits; consolidate them into the next daily, handoff, or
+final summary. Functional changes in the workspace repository and normal
+commits in project repositories do not count as tracking-only checkpoints.
 
 An initiative can leave `work/` only when its lifecycle is `complete` or
 `abandoned` and it has no pending review, CI, merge, user approval, deployment
@@ -163,8 +176,12 @@ Run
 `bin/dev-session finalize <slug> --as-is` to remove clean worktrees, retain
 branches, and move the curated directory to `archive/<slug>/`. It keeps the
 managed tmux session available so the exact `work/<slug>/` to
-`archive/<slug>/` move can be inspected and committed in the top-level
-repository. The helper never stages or commits it. After that commit, run
+`archive/<slug>/` move can be inspected and committed once in the top-level
+repository together with the final tracking content. Do not make a separate
+tracking commit merely to set the terminal lifecycle before finalizing; the
+helper requires an earlier committed active lifecycle and accepts later
+tracking edits in the working tree. The helper never stages or commits the
+archive move. After that commit, run
 `bin/dev-session stop <slug> --as-is` to close the managed session. The stop
 command must refuse a finalized initiative whose archive move or terminal
 tracking state is not committed.
