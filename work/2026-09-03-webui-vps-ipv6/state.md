@@ -145,6 +145,12 @@ remain out of scope.
   `0e8c2a6e02ff6f4dd93d786498da5fc66a532682`. The repository has no feature
   branch workflow runs. Removed only the two Nix-shell helper files
   `.bin/rubocop` and `.bundle/config` that were recreated during validation.
+- Checked the global KB staging service read-only. It remains owned by
+  `2026-08-18-vpsadmin-password-reset` with that initiative's pending release,
+  so this initiative did not claim, reset, stage, or otherwise modify it.
+- Dry-ran and then performed an exact path-scoped `git clean` of this
+  initiative's untracked `kb-sources` and unchanged `kb-candidates` copies.
+  The two tracked public candidates and all release/review metadata remain.
 
 ## Results
 
@@ -276,7 +282,6 @@ None.
 - All three feature worktrees must remain until the authorized integrations are
   complete. The contract worktree is clean; configuration and vpsAdmin
   cleanliness will be rechecked after review commands.
-- The full KB source/candidate fetch is intentionally untracked and includes
-  private production snapshots. Remove those exact untracked artifacts before
-  finalization while preserving the two tracked public candidates.
+- The transient full KB source/candidate fetch, including private production
+  snapshots, has been removed. The two tracked public candidates are preserved.
 - The initiative is not eligible for finalization or archival.
