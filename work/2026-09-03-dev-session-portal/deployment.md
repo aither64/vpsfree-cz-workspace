@@ -7,9 +7,9 @@ session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace source branch: `2026-09-03-dev-session-portal`
-- Workspace source: `192b540b8b9de8063c9cfb68016449ad8a0c2487`
+- Workspace source: `72e21da1a52b2c2fb07b8730002e598e9efd82c9`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: `867235a019bd917142110fc34957d1f6574fa37f`
+- Configuration source: `eb1b3aa27e1eff1f6c42549b47e1c922b11ac4f0`
 
 Check both revisions against `state.md` before running any helper or deployment
 command:
@@ -18,9 +18,9 @@ command:
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD)" = \
-  192b540b8b9de8063c9cfb68016449ad8a0c2487
+  72e21da1a52b2c2fb07b8730002e598e9efd82c9
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD)" = \
-  867235a019bd917142110fc34957d1f6574fa37f
+  eb1b3aa27e1eff1f6c42549b47e1c922b11ac4f0
 ```
 
 ## 1. Record rollback state
@@ -103,20 +103,23 @@ revision:
 
 ```sh
 cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace
-bin/workspace-pki init \
+sudo bin/workspace-pki init \
+  --state-dir /var/lib/vpsfree-workspace-pki \
   --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
-bin/workspace-pki verify \
+sudo bin/workspace-pki verify \
+  --state-dir /var/lib/vpsfree-workspace-pki \
   --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
-bin/workspace-pki inspect \
+sudo bin/workspace-pki inspect \
+  --state-dir /var/lib/vpsfree-workspace-pki \
   --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
 sudo bin/workspace-pki install-server \
-  --state-dir /home/aither/.local/state/vpsfree-workspace-pki \
+  --state-dir /var/lib/vpsfree-workspace-pki \
   --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz \
   /var/lib/vpsfree-workspace-portal-tls
 ```
 
-The encrypted CA key remains at
-`/home/aither/.local/state/vpsfree-workspace-pki/authority/ca-key.pem`.
+The encrypted CA key and source leaf key remain in the root-only
+`/var/lib/vpsfree-workspace-pki`. The portal process cannot read either key.
 The nginx certificate and key are selected together through
 `/var/lib/vpsfree-workspace-portal-tls/current`.
 
@@ -139,7 +142,9 @@ be `root:nginx` with mode `0640`.
 Export the public CA and install it as a trusted TLS root on each VPN client:
 
 ```sh
-bin/workspace-pki export-ca /tmp/vpsfree-workspace-ca.pem
+sudo bin/workspace-pki export-ca \
+  --state-dir /var/lib/vpsfree-workspace-pki \
+  /tmp/vpsfree-workspace-ca.pem
 ```
 
 Do not copy the CA key, a server key, or the CA passphrase to a client.
@@ -152,18 +157,17 @@ prevents an older `bin/dev-session` from mutating a portal-managed initiative:
 ```sh
 workspace=/home/aither/workspace/ai/vpsfree.cz
 git -C "$workspace" merge-base --is-ancestor \
-  192b540b8b9de8063c9cfb68016449ad8a0c2487 master
+  72e21da1a52b2c2fb07b8730002e598e9efd82c9 master
 test "$(git -C "$workspace" show master:bin/dev-session | sha256sum)" = \
-  "$(git -C "$workspace" show 192b540b8b9de8063c9cfb68016449ad8a0c2487:bin/dev-session | sha256sum)"
+  "$(git -C "$workspace" show 72e21da1a52b2c2fb07b8730002e598e9efd82c9:bin/dev-session | sha256sum)"
 ```
 
 From the reviewed configuration worktree:
 
 ```sh
 cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration
-tmux_uid="$(id -u aither)"
 if ! systemctl cat workspace-portal-tmux.service >/dev/null 2>&1; then
-  test ! -e "/tmp/tmux-$tmux_uid/vpsfree-workspace-portal" || {
+  test ! -e /run/vpsfree-workspace-tmux/tmux.sock || {
     echo "inspect and remove the pre-existing portal tmux socket first" >&2
     exit 1
   }
@@ -180,7 +184,8 @@ credential boundary unambiguous if deployment tooling behavior changes.
 Check nginx, the local socket, and the TLS files before testing Codex:
 
 ```sh
-systemctl status workspace-portal workspace-portal-tmux nginx --no-pager
+systemctl status workspace-portal workspace-portal-tmux \
+  workspace-codex-app-server nginx --no-pager
 test "$(systemctl show workspace-portal -p Group --value)" = \
   workspace-portal-proxy
 test "$(systemctl show workspace-portal -p KillMode --value)" = mixed
@@ -207,27 +212,48 @@ portal_cgroup="$(systemctl show workspace-portal -p ControlGroup --value)"
 mapfile -t portal_processes < "/sys/fs/cgroup${portal_cgroup}/cgroup.procs"
 test "${#portal_processes[@]}" -eq 1
 test "${portal_processes[0]}" = "$portal_pid"
+codex_pid="$(systemctl show workspace-codex-app-server -p MainPID --value)"
+codex_cgroup="$(systemctl show workspace-codex-app-server -p ControlGroup --value)"
+test "$codex_pid" -gt 1
+test "$codex_cgroup" != "$portal_cgroup"
+sudo -u aither test -S \
+  /run/vpsfree-workspace-codex/app-server.sock
+sudo -u aither test -S \
+  /run/vpsfree-workspace-tmux/tmux.sock
 ```
 
-The Codex CLI, rather than a system service, owns its detached managed daemon.
-Prove that passive pages remain available while it is stopped, then start it
-and check the version separately:
+The independently supervised Codex service runs the same pinned package that
+the Nix assertion checks. Prove that passive pages remain available while it is
+stopped, then let systemd recover it:
 
 ```sh
-sudo -u aither -H codex app-server daemon stop
+sudo systemctl stop workspace-codex-app-server
 sudo -u nginx curl --fail --unix-socket \
   /run/vpsfree-workspace-portal/portal.sock http://localhost/healthz
-sudo -u aither -H codex app-server daemon start
-sudo -u aither -H codex app-server daemon version
+sudo systemctl start workspace-codex-app-server
+systemctl is-active --quiet workspace-codex-app-server
+sudo -u aither test -S \
+  /run/vpsfree-workspace-codex/app-server.sock
 ```
 
-The version result must report `status` as `running`, and `cliVersion` and
-`appServerVersion` must both match the version supported by the deployed
-portal. Restart the daemon after a Codex upgrade or rollback, then check again:
+The service uses the pinned `codex app-server` binary directly; it does not
+depend on an installer-managed standalone Codex path. The portal checks the App
+Server version during its protocol handshake. Restart the service after a Codex
+upgrade or rollback, then check it again:
 
 ```sh
-sudo -u aither -H codex app-server daemon restart
-sudo -u aither -H codex app-server daemon version
+sudo systemctl restart workspace-codex-app-server
+systemctl is-active --quiet workspace-codex-app-server
+```
+
+Validate every persisted manifest through both implementations before DNS is
+published. This catches schema migrations that a health-only probe cannot see:
+
+```sh
+sudo -u aither -H dev-session \
+  --workspace /home/aither/workspace/ai/vpsfree.cz validate
+sudo -u aither -H workspace-portal validate \
+  --workspace /home/aither/workspace/ai/vpsfree.cz
 ```
 
 Test HTTPS and Basic Authentication before publishing DNS. Curl prompts for
@@ -262,6 +288,14 @@ curl --silent --show-error --head --resolve \
   --cacert /tmp/vpsfree-workspace-ca.pem -u aither \
   https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/healthz | \
   grep -i '^strict-transport-security: max-age=31536000'
+curl --fail --resolve \
+  vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:443:172.16.106.40 \
+  --cacert /tmp/vpsfree-workspace-ca.pem -u aither \
+  https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/
+curl --fail --resolve \
+  vpsfree-cz-workspace.aitherdev.int.vpsfree.cz:443:172.16.106.40 \
+  --cacert /tmp/vpsfree-workspace-ca.pem -u aither \
+  https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/2026-09-03-dev-session-portal/
 ```
 
 ## 4. Deploy both internal DNS servers
@@ -348,12 +382,14 @@ Use the helper installed by the active NixOS system so renewal uses the pinned
 workspace revision:
 
 ```sh
-workspace-pki renew \
+sudo workspace-pki renew \
+  --state-dir /var/lib/vpsfree-workspace-pki \
   --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
-workspace-pki verify \
+sudo workspace-pki verify \
+  --state-dir /var/lib/vpsfree-workspace-pki \
   --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
 sudo workspace-pki install-server \
-  --state-dir /home/aither/.local/state/vpsfree-workspace-pki \
+  --state-dir /var/lib/vpsfree-workspace-pki \
   --hostname vpsfree-cz-workspace.aitherdev.int.vpsfree.cz \
   /var/lib/vpsfree-workspace-portal-tls
 sudo systemctl reload nginx
@@ -368,18 +404,29 @@ that target and reload nginx again.
 Inspect failures first:
 
 ```sh
-journalctl -u workspace-portal -u nginx --since today
+journalctl -u workspace-portal -u workspace-codex-app-server \
+  -u workspace-portal-tmux -u nginx --since today
 ```
 
 If DNS has not been deployed, restore the exact aitherdev system recorded in
-step 1:
+step 1. The old system has no keeper service, so first stop, finalize, or move
+every browser-created session that must survive. The guard below refuses a
+destructive rollback while any managed session remains:
 
 ```sh
 . /var/tmp/vpsfree-cz-workspace-portal-rollback.env
 [[ "$previous_aitherdev_system" = /nix/store/*-nixos-system-* ]]
 test -x "$previous_aitherdev_system/bin/switch-to-configuration"
+active_sessions="$(sudo -u aither tmux \
+  -S /run/vpsfree-workspace-tmux/tmux.sock list-sessions \
+  -F '#{session_name}' 2>/dev/null | \
+  grep -vx __workspace_portal_keeper || true)"
+test -z "$active_sessions" || {
+  printf 'refusing rollback with active portal sessions:\n%s\n' \
+    "$active_sessions" >&2
+  exit 1
+}
 sudo "$previous_aitherdev_system/bin/switch-to-configuration" switch
-sudo -u aither -H codex app-server daemon restart
 ```
 
 If DNS has been deployed, switch each DNS server to its separately captured
@@ -391,6 +438,5 @@ The portal web service uses `KillMode=mixed`: systemd signals the Go main
 process first, allowing it to wait for active HTTP creation handlers, then kills
 any residual child only after the stop timeout. Browser-created tmux sessions
 live in a separate keeper whose definition does not depend on the workspace
-source pin. The Codex CLI owns its detached managed App Server. An ordinary
-portal restart therefore neither tears down tmux sessions nor pretends to own a
-daemon started by another client.
+source pin. The App Server has its own systemd unit and cgroup. An ordinary
+portal restart therefore tears down neither tmux sessions nor the App Server.

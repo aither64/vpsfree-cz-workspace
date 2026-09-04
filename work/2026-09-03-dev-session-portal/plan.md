@@ -26,7 +26,7 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   files, and proxy only an allowlisted subset of the local Codex App Server
   protocol. It will not run Git while serving a workspace page.
 - Extend `bin/dev-session` to create and resume one named Codex thread per
-  initiative through the managed local daemon, persist `portal.yml`, expose the
+  initiative through the supervised local App Server, persist `portal.yml`, expose the
   stable URL, and launch the tmux TUI against the same daemon. Browser creation
   is journaled before other state is created and uses the unique `work/<slug>`
   thread directory for bounded reconciliation. The browser preserves the dated
@@ -41,10 +41,10 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   formats, sanitized Markdown, and no raw shell, general filesystem, or App
   Server RPC endpoint.
 - Add an OpenSSL-based PKI helper. The encrypted CA key and unencrypted nginx
-  leaf key live under `/home/aither/.local/state/vpsfree-workspace-pki`, never
-  in git. The installed leaf key is copied to a `root:nginx` directory for nginx
-  access. The helper supports initialization, inspection, renewal,
-  verification, and public CA export.
+  leaf key live in root-only `/var/lib/vpsfree-workspace-pki`, never in git or
+  within reach of the portal process. The installed leaf key is copied to a
+  `root:nginx` directory for nginx access. The helper supports initialization,
+  inspection, renewal, verification, and public CA export.
 - Add a compact `dev-session-handoff` skill and workspace rule so handoffs after
   material changes include the stable portal URL.
 - Package an exact coordination-workspace revision as a non-flake input in
@@ -53,8 +53,10 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 
 ## Compatibility and deployment
 
-- Existing work/state directories and standalone Codex processes are not
-  migrated. New manifests are additive, and the helper must refuse to retrofit
+- Existing work/state directories without portal manifests are not migrated.
+  The one existing schema-1 manifest is migrated with canonical project and
+  tmux-socket provenance before deployment, and both readers validate all
+  manifests before DNS publication. New manifests are additive, and the helper must refuse to retrofit
   an already-running unshared tmux session onto a new browser thread. Before
   deploying the portal, integrate its workspace helper into the live checkout;
   an older helper must not mutate a portal-managed initiative.
@@ -78,13 +80,17 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   Server boundary.
 - Browser-created tmux sessions live on a dedicated keeper whose definition is
   independent of the workspace source pin and which refuses an already-used
-  socket namespace. Codex CLI's managed daemon remains its own authority and is
-  started lazily for interactive requests. The web service uses main-process-
-  first systemd termination so creation requests drain before residual children
-  are killed at the stop timeout.
+  absolute socket path. Every new manifest records the exact tmux socket so
+  attach commands work across `TMUX_TMPDIR` differences and are hidden when
+  provenance is unknown. A separate systemd service runs the pinned Codex App
+  Server directly on an explicit Unix socket; the portal soft-depends on it and
+  has no daemon lifecycle authority. The web service uses main-process-first
+  systemd termination so creation requests drain before residual children are
+  killed at the stop timeout.
 - No database, API, protocol, or persistent project state is changed. Rolling
-  compatibility is limited to the local workspace helper and portal protocol;
-  explicit schema and control API versions will reject mismatches cleanly.
+  compatibility is limited to the local workspace helper, its schema-1 manifest,
+  and the pinned portal protocol. Explicit validation rejects mismatches before
+  deployment.
 - The implementation will prepare and verify configuration only. The user owns
   deployment of both internal DNS servers and the aitherdev NixOS generation,
   as well as CA trust installation on client devices.

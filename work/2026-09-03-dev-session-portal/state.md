@@ -379,13 +379,14 @@ lifecycle: active
 
 ## Fifth-review remediation in progress
 
-- The workspace feature branch was rebased onto shared `master` at `1f1ff25`,
-  so it can be integrated by fast-forward. Its remediation commit is pushed at
-  `192b540b8b9de8063c9cfb68016449ad8a0c2487`.
+- After committing this checkpoint, the workspace feature branch was rebased
+  onto shared `master` at `4264e32`, so it can be integrated by fast-forward.
+  Its final remediation head is pushed at
+  `72e21da1a52b2c2fb07b8730002e598e9efd82c9`.
 - The configuration branch is pushed at
-  `867235a019bd917142110fc34957d1f6574fa37f`. Commit `bf9ae6e1` changes service
-  ownership and shutdown behavior; generated commit `867235a0` pins workspace
-  `192b540b` through `confctl` without editing `flake.lock` manually.
+  `eb1b3aa27e1eff1f6c42549b47e1c922b11ac4f0`. Commit `bf9ae6e1` changes service
+  ownership and shutdown behavior; generated commit `eb1b3aa2` pins workspace
+  `72e21da1` through `confctl` without editing `flake.lock` manually.
 - The portal decodes nested App Server thread-item entries, reads its protocol
   version from source metadata, treats anchored `state.md` lifecycle as the
   interaction authority, rejects malformed archives, and uses finalization
@@ -401,6 +402,10 @@ lifecycle: active
 - Quick verification passes with 99 `dev-session` tests and 891 assertions,
   5 PKI tests and 44 assertions, all Go tests and Go vet, Ruby/JavaScript syntax,
   formatting, diff checks, and `nix flake check --no-build --show-trace`.
+- Exact-head Go race tests also pass. The pinned portal package builds as
+  `/nix/store/y1i4bhk4iaig5f73lnjyi9p4mkqvy1hj-workspace-portal-0.1.0`.
+- GitHub reports no Actions runs for either rewritten feature head, so there
+  are no current or superseded branch runs to inspect or cancel.
 - The fifth-review findings require one final review rerun against the new exact
   heads before long `confctl build` validation begins.
 
@@ -444,6 +449,43 @@ lifecycle: active
 - An ambient configuration push failed because its mandatory hook gems were not
   installed outside the Nix shell. The same force-with-lease push passed through
   the repository's Nix development shell without bypassing hooks.
+
+## Sixth mandatory review and remediation
+
+- General, architecture/repetition, scope/proportionality, and
+  risk/compatibility reviews completed against frozen workspace `72e21da1` and
+  configuration `eb1b3aa2`. No files changed until all four reports finished.
+- Blocking findings were an invalid persisted schema-1 manifest, an App Server
+  launcher that requires an absent standalone Codex installation, tmux attach
+  commands split between `/tmp` and the shell's `TMUX_TMPDIR`, and shared
+  `master` advancing beyond the reviewed workspace base.
+- Important findings require one reproducible configuration pin, remediation
+  folded into owning commits, per-session tmux provenance, and unambiguous
+  top-level workspace integration instructions. Advisories cover bounded
+  in-memory registries, hostname duplication, recent-turn limits, rollback of
+  live tmux sessions, and leaf-key custody.
+- The tracked manifest now includes canonical project identities and the exact
+  live default tmux socket. Both the Ruby and Go readers validate it. New
+  manifests persist their resolved socket path, and the UI suppresses attach
+  commands when that provenance is unavailable.
+- The replacement design runs the pinned `codex app-server` directly in its
+  own systemd service and cgroup. The portal has only a soft dependency and
+  continues serving status while Codex is unavailable. Terminal and browser
+  helpers use the same explicit App Server socket.
+- Browser tmux sessions use an absolute `/run` socket, independent of
+  `TMUX_TMPDIR`. A real tmux regression exercises creation and attachment while
+  the environment points elsewhere.
+- Production CA and source leaf keys are now kept in a root-only state
+  directory. The runbook validates all manifests and renders the real
+  initiative page before DNS publication, and refuses rollback while
+  browser-created sessions remain.
+- Workspace remediation is rebased onto shared `master` at `c36567d` but is not
+  yet committed or pushed. Current quick checks pass with 101 `dev-session`
+  tests and 897 assertions, both manifest readers against the live initiative,
+  and all Go tests through a Nix Go/GCC shell.
+- Next steps are to rewrite both unmerged feature histories, regenerate one
+  exact `confctl` pin, run hooks and quick checks, rerun affected review lanes,
+  and only then start the long configuration builds.
 
 ## Cleanup
 
