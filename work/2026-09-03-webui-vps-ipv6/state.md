@@ -27,7 +27,8 @@ The two provider/contract feature branches are pushed, and checks against the
 final revisions pass. Checksummed schema-5 Czech and English KB release
 candidates are prepared locally without publishing them. The first remediation
 review was resolved and the contract history was split as requested; affected
-review lanes passed at `xhigh`. The long configuration build, feature CI, and
+review lanes passed at `xhigh`, all four affected service-host configurations
+build, and the configuration feature branch is pushed. Final feature CI and
 default-branch integration remain. Deployment and production KB publication
 remain out of scope.
 
@@ -135,6 +136,15 @@ remain out of scope.
   lane was not rerun because the fixes changed page-pairing metadata, tracking,
   and commit boundaries without changing the already reviewed design or final
   contract tree.
+- Ran `confctl build -y` separately for `cz.vpsfree/vpsadmin/int.api1`,
+  `int.api2`, `int.webui1`, and `int.webui2`; all four builds completed and
+  resolved vpsAdmin revision `1acc1955`. An initial non-interactive attempt
+  stopped before building when `confctl` requested confirmation; the documented
+  `--yes` option was used for the successful builds.
+- Pushed configuration feature revision
+  `0e8c2a6e02ff6f4dd93d786498da5fc66a532682`. The repository has no feature
+  branch workflow runs. Removed only the two Nix-shell helper files
+  `.bin/rubocop` and `.bundle/config` that were recreated during validation.
 
 ## Results
 
@@ -252,6 +262,10 @@ remain out of scope.
   tracking. The unchanged residual gaps are visibility-only browser coverage,
   no direct positive `remote_console_server` assertion, and staging verification
   before any future production KB promotion.
+- The four configuration builds produced successful generations for both API
+  and both WebUI service hosts. They built the API, supervisor, database,
+  console-router, and WebUI packages at exact source revision `1acc1955`; no
+  deployment was attempted.
 
 ## Open questions
 
