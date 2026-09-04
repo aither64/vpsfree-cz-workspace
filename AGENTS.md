@@ -26,10 +26,10 @@ The initiative slug must be descriptive and dated, for example
 same slug for the tracking directory, feature branch, and worktree group unless
 a repository-specific rule requires otherwise.
 
-Use `workspace-dev-session start <name>` when
-`VPSFREE_DEV_SESSION_REQUIRE_RUNTIME=1`; the configuration-owned wrapper fixes
-the deployed host authority, tmux, Codex, and portal endpoints. Otherwise,
-prefer `bin/dev-session start <name>` for an ordinary local session. Both forms
+Use the NixOS-installed `dev-session start <name>` when
+`VPSFREE_DEV_SESSION_REQUIRE_RUNTIME=1`; it fixes the deployed host authority,
+tmux, Codex, and portal endpoints. Otherwise, prefer
+`bin/dev-session start <name>` for an ordinary local session. Both forms
 create a dated slug from the short name, open the matching tmux session, and
 can add or remove worktrees under `worktrees/<slug>/` using the canonical bare
 repositories in `repos/`. Use `--as-is` when the full slug has already been
@@ -198,7 +198,7 @@ retry any refusal before finalizing.
 Run the applicable helper's `finalize <slug> --as-is` command to remove clean
 worktrees, retain branches, and move the curated directory to
 `archive/<slug>/`. When `VPSFREE_DEV_SESSION_REQUIRE_RUNTIME=1`, the applicable
-helper is `workspace-dev-session`; otherwise it is checkout-local
+helper is the NixOS-installed `dev-session`; otherwise it is checkout-local
 `bin/dev-session`. It keeps the managed tmux session available so the exact
 `work/<slug>/` to `archive/<slug>/` move can be inspected and committed once in
 the top-level repository together with the final tracking content. Do not make
