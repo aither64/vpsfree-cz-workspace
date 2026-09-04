@@ -21,8 +21,8 @@ active working days.
 - Let unfinished multi-day initiatives make at most one consolidated
   tracking-only checkpoint per active day when material progress occurred.
 - Permit an additional same-day checkpoint only for a genuine ownership
-  handoff, an explicit user request, or a pause until a future working day when
-  resumability matters.
+  handoff or an explicit user request. A pause until a future working day may
+  justify the day's normal consolidated checkpoint, but not another one.
 - Do not make separate tracking commits for individual reviews, remediations,
   tests, CI observations, rebases, deployments, commands, or status polls.
 - Keep ordinary functional commits outside the tracking-only cadence.
