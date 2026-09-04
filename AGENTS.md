@@ -26,40 +26,63 @@ The initiative slug must be descriptive and dated, for example
 same slug for the tracking directory, feature branch, and worktree group unless
 a repository-specific rule requires otherwise.
 
-Prefer `bin/dev-session start <name>` when starting a new development session in
-this workspace. It creates a dated slug from the short name, opens the matching
-tmux session, and can add or remove worktrees under `worktrees/<slug>/` using
-the canonical bare repositories in `repos/`. Use `--as-is` when the full slug
-has already been chosen.
+Use `workspace-dev-session start <name>` when
+`VPSFREE_DEV_SESSION_REQUIRE_RUNTIME=1`; the configuration-owned wrapper fixes
+the deployed host authority, tmux, Codex, and portal endpoints. Otherwise,
+prefer `bin/dev-session start <name>` for an ordinary local session. Both forms
+create a dated slug from the short name, open the matching tmux session, and
+can add or remove worktrees under `worktrees/<slug>/` using the canonical bare
+repositories in `repos/`. Use `--as-is` when the full slug has already been
+chosen.
 
 When running inside an existing development session, do not choose a new slug
-until checking for the active one. Run `bin/dev-session current` from the
-workspace root; if it prints a slug, reuse `work/<slug>/` and
-`worktrees/<slug>/` for the task and record progress in that session's
-`state.md`. Only create a new slug when `current` fails or when the user
-explicitly asks for a separate initiative.
+until checking for the active one. Run the applicable helper's `current`
+command from the workspace root. Treat the printed slug as belonging to the
+current process only when the `VPSFREE_DEV_SESSION_SLUG` environment variable
+is also set to that exact slug. If `current` prints a slug but the environment
+variable is missing or different, assume it belongs to another concurrent
+session and do not touch that session's `work/<slug>/`, `worktrees/<slug>/`,
+branches, or notes. In that case, create a separate initiative unless the user
+explicitly tells you to use that existing slug. Reuse `work/<slug>/` and
+`worktrees/<slug>/` only for the verified current session, and record progress
+in that session's `state.md`.
 
 ## Git And Worktrees
 
-The top-level workspace repository is a shared coordination checkout and is an
-exception to the per-initiative branch workflow:
+The top-level workspace repository has two distinct workflows:
 
-- Keep the shared checkout on `master` at all times. Never create or check out
-  an initiative branch in the top-level repository.
-- Make top-level changes and commits directly on `master`. Do not create
-  top-level repository worktrees under `worktrees/<slug>/`; those paths are
-  reserved for the independent project repositories from `repos/<project>.git`.
-- Multiple sessions share the top-level branch, index, and working tree. Before
-  editing or committing, inspect the current status, preserve unrelated changes,
-  and stage only the paths belonging to the current task. Never use a
-  repository-wide reset, clean, or stash operation, and never switch branches
-  out from under another session.
-- Fetch `origin` before a top-level commit and keep `master` linear. If either
-  local or remote `master` advanced, reconcile it without rewriting published
-  history or discarding shared working-tree changes.
+- Keep the shared checkout on `master` at all times. Ordinary use of the
+  workspace happens there: maintain initiative tracking under `work/`, archive
+  terminal initiatives, add durable notes, and coordinate independent project
+  worktrees. These coordination changes may be committed directly to `master`.
+- Treat changes to the workspace itself as feature work. Changes to its rules,
+  scripts, tests, documentation, skills, or other reusable behavior normally
+  require a dated initiative branch and a dedicated worktree at
+  `worktrees/<slug>/workspace`. Develop and rewrite those commits there before
+  integrating them into `master`.
+- Record the workspace feature branch and worktree in the initiative's
+  `state.md`, which remains part of the shared coordination checkout. Fetch and
+  rebase the workspace feature branch onto current `master` before final review.
+- Integrate a reviewed workspace feature from the shared `master` checkout,
+  after confirming that the feature branch is a descendant of current
+  `master`. Preserve unrelated working-tree changes, stage nothing during the
+  integration, and use `git merge --ff-only <feature-branch>`. Do not try to
+  check out `master` in a second worktree because it is already checked out in
+  the shared root. Keep the feature branch after integration unless the user
+  explicitly asks for its deletion.
+- Multiple sessions share the top-level `master` branch, index, and working
+  tree. Before editing or committing coordination records, inspect the current
+  status, preserve unrelated changes, and stage only the paths belonging to the
+  current task. Never use a repository-wide reset, clean, or stash operation,
+  and never switch branches out from under another session.
+- Fetch `origin` before a top-level `master` commit and keep it linear. If local
+  or remote `master` advanced, reconcile it without discarding shared
+  working-tree changes. Do not rewrite published `master` history unless the
+  user explicitly directs that exact operation.
 
-All feature-branch and worktree rules below apply to the independent project
-repositories, not to the top-level workspace repository.
+The explicit top-level workflow above is complete for workspace changes. The
+bare-repository, per-initiative worktree, and temporary target-worktree rules
+below apply only to the independent project repositories.
 
 Clone and push repositories over SSH. Use remotes in this form:
 
@@ -172,19 +195,20 @@ worktree; the per-slug lock serializes helper commands, not external writers.
 Every worktree must have an attached branch and ordinary clean `git status`.
 The helper delegates removal to non-force `git worktree remove`; resolve and
 retry any refusal before finalizing.
-Run
-`bin/dev-session finalize <slug> --as-is` to remove clean worktrees, retain
-branches, and move the curated directory to `archive/<slug>/`. It keeps the
-managed tmux session available so the exact `work/<slug>/` to
-`archive/<slug>/` move can be inspected and committed once in the top-level
-repository together with the final tracking content. Do not make a separate
-tracking commit merely to set the terminal lifecycle before finalizing; the
-helper requires an earlier committed active lifecycle and accepts later
-tracking edits in the working tree. The helper never stages or commits the
-archive move. After that commit, run
-`bin/dev-session stop <slug> --as-is` to close the managed session. The stop
-command must refuse a finalized initiative whose archive move or terminal
-tracking state is not committed.
+Run the applicable helper's `finalize <slug> --as-is` command to remove clean
+worktrees, retain branches, and move the curated directory to
+`archive/<slug>/`. When `VPSFREE_DEV_SESSION_REQUIRE_RUNTIME=1`, the applicable
+helper is `workspace-dev-session`; otherwise it is checkout-local
+`bin/dev-session`. It keeps the managed tmux session available so the exact
+`work/<slug>/` to `archive/<slug>/` move can be inspected and committed once in
+the top-level repository together with the final tracking content. Do not make
+a separate tracking commit merely to set the terminal lifecycle before
+finalizing; the helper requires an earlier committed active lifecycle and
+accepts later tracking edits in the working tree. The helper never stages or
+commits the archive move. After that commit, run the same applicable helper's
+`stop <slug> --as-is` command to close the managed session. The stop command
+must refuse a finalized initiative whose archive move or terminal tracking
+state is not committed.
 
 Do not reuse an archived slug. Start a new dated initiative for follow-up work.
 Do not delete tracking with `dev-session remove --all`; finalization and
@@ -193,6 +217,12 @@ archival are mandatory even for abandoned initiatives.
 Keep these files current enough that a future agent can resume the work without
 guessing. When plans change because code or tests reveal new facts, update the
 tracking notes.
+
+After material changes, review checkpoints, or user-requested status updates,
+use `skills/dev-session-handoff/SKILL.md`. Keep the initiative portal manifest
+current and include the stable link printed by the applicable helper's
+`url <slug> --as-is` command in the handoff. If the portal has not been
+deployed yet, identify it as the post-deployment URL.
 
 Promote reusable lessons to `notes/`. In particular, write a note when a
 command, shell, test, build, deploy, hook, or worktree operation fails in a
