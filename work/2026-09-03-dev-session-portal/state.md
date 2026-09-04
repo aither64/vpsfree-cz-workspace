@@ -6,18 +6,17 @@ lifecycle: active
 
 ## Current status
 
-The implementation is committed, clean, and pushed on development branches.
-It has not been deployed. The initiative remains active until the user deploys
-aitherdev and both internal DNS containers and installs the public CA on client
-devices.
+The implementation remains on development branches and has not been deployed.
+The initiative stays active until the user deploys aitherdev and both internal
+DNS containers and installs the public CA on client devices.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
-- Workspace head: `0ae37664d211adc4ccf608544ccccbaa0e1d7d5e`
-- Configuration head: `5d4e9eafa67c27ef1ef4913794250806431f1153`
-- The configuration lock pins the exact workspace head through
-  `aitherVpsfreeWorkspace`.
-- No GitHub Actions runs exist for either feature branch.
+- Workspace branch: `2026-09-03-dev-session-portal`.
+- Configuration branch: `2026-09-03-dev-session-portal`.
+- The configuration lock is the authority for the exact workspace revision
+  selected through `aitherVpsfreeWorkspace`. Exact heads are reported at
+  handoff rather than embedded in this same-repository tracking file.
 - The Basic Auth password is prepared at
   `/home/aither/.local/state/vpsfree-workspace-portal/password`, owned by uid
   1000 at mode 0600. Its value has not been printed or recorded.
@@ -33,14 +32,15 @@ devices.
 - Initial base: `ac651305d935e3e78768567b4f18b498037f985a`
 - Worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace`
-- Commits:
-  - `471ca91` PKI and certificate lifecycle tooling
-  - `7f0fd37` Basic Auth password derivation
-  - `b220ffd` shared browser/terminal development sessions
-  - `841d755` authenticated portal and App Server adapter
-  - `639a7a5` workspace development-branch policy
-  - `f9a805e` operator and native-client documentation
-  - `0ae3766` source-owned Nix package and checks
+- Commit subjects:
+  - `pki: add workspace portal certificate tooling`
+  - `auth: add workspace portal password derivation`
+  - `dev-session: share workspace sessions across clients`
+  - `portal: add authenticated development interface`
+  - `workspace: develop reusable changes on feature branches`
+  - `review: standardize mandatory lanes on xhigh`
+  - `docs: explain workspace portal operation`
+  - `flake: package the workspace portal at its source`
 
 ### vpsfree-cz-configuration
 
@@ -49,11 +49,11 @@ devices.
 - Initial base: `248e2fc614bb3bc29c0a9c9f910330ade0b3cb80`
 - Worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration`
-- Commits:
-  - `01f9ec39` declare the `aitherVpsfreeWorkspace` input
-  - `6ff183fe` pin the exact workspace feature revision with `confctl`
-  - `d259432a` configure the aitherdev services and HTTPS proxy
-  - `5d4e9eaf` publish the internal DNS record
+- Commit subjects:
+  - `inputs: add aither workspace source`
+  - generated exact `aitherVpsfreeWorkspace` pin
+  - `aitherdev: host authenticated development workspace portal`
+  - `internal-dns: publish workspace portal`
 
 The top-level shared checkout remains on `master`. Its unrelated modified
 `AGENTS.md` and unrelated untracked files are preserved and are outside this
@@ -74,8 +74,8 @@ initiative.
   goes through `workspace-dev-session attach`, which reconciles the tmux client
   after an App Server restart.
 - The initial and follow-up message limit is one shared 20,000-byte runtime
-  contract consumed and tested by the Ruby session helper, Go portal, HTML
-  forms, and configuration.
+  contract. It also publishes worst-case form and JSON transport expansion;
+  Ruby, Go, HTML, nginx, and their boundary tests consume that contract.
 - The generated schema supplied by the configuration's normal `llm-agents`
   Codex package is checked against every App Server shape consumed by the
   adapter. An incompatible ordinary Codex update fails the aitherdev build;
@@ -84,8 +84,9 @@ initiative.
   require the exact HTTPS origin and all application responses are `no-store`.
 - The custom CA and nginx key material are root-owned and absent from the Nix
   store. Certificate/key pairs are validated and switched atomically, with a
-  predecessor retained. A successful-applied marker makes export or nginx
-  reload failures retryable.
+  predecessor retained. The packaged, directly tested reconciler updates its
+  applied marker only after successful export and nginx reload, so partial
+  failures retry.
 - Only the VPN interface can reach the HTTPS listener. Internal DNS maps the
   portal name to aitherdev at `172.16.106.40`.
 
@@ -110,28 +111,31 @@ initiative.
 
 ## Verification
 
-Completed on the current workspace head:
+Completed on the current workspace candidate:
 
 - `nix build .#workspace-portal --no-link -L`
   - generated Codex schema contract passed
   - all Go packages passed
-  - 121 dev-session tests and 1,021 assertions passed
-  - 11 PKI tests and 76 assertions passed
+  - 121 packaged dev-session tests and 924 assertions passed; 10 real-tmux
+    cases were intentionally skipped by the package build
+  - the ambient suite passed all 121 dev-session tests and 1,021 assertions
+  - 14 PKI tests and 92 assertions passed, including failed CA export, failed
+    nginx reload, retry, atomic marker publication, and inactive nginx
   - 2 password tests and 18 assertions passed
-  - output: `/nix/store/l7yjrrp0pfvq0jvz4cdc4khlb5wswbig-workspace-portal-0.1.0`
+  - output: `/nix/store/vihxms8wyh9431vb48q8cn9ji46rmi4h-workspace-portal-0.1.0`
 
-Completed on the current configuration head:
+Completed on the previous pushed configuration candidate; repeat after its
+final workspace repin:
 
 - `nix flake check --no-build -L` passed.
 - `named-checkzone vpsfree.cz configs/internal-dns/zone.vpsfree.cz.` loaded
   serial `2026090300` successfully. It reports the repository's existing
   `@fqdn@` template-name warning.
-- Feature-branch GitHub Actions queries returned no runs.
+- Feature-branch GitHub Actions queries returned no runs at that checkpoint.
 
 Still pending:
 
-- mandatory-review rerun of the affected General, Architecture, and Risk lanes
-  with fresh `gpt-5.6-sol` xhigh reviewers;
+- final mandatory-review rerun after the current remediation is repinned;
 - sequential `confctl build` of aitherdev, prg/int.ns1, and brq/int.ns1;
 - user-owned deployment and live HTTPS, authentication, DNS, browser, and
   terminal-attach smoke tests.
@@ -159,7 +163,21 @@ workspace initiatives. The native ChatGPT section remains because the user
 explicitly asked about desktop and mobile access; it clearly describes a
 separate SSH-based workflow rather than claiming access to the portal thread.
 
-The affected review lanes are being rerun against the exact current heads.
+The first remediation rerun reviewed workspace `0ae37664` and configuration
+`5d4e9eaf` with fresh General, Architecture, and Risk xhigh lanes. It found:
+
+- the workspace branch needed rebasing after tracking advanced `master`;
+- the review-effort policy needed its own commit;
+- percent-encoded form and escaped JSON requests could hit independent
+  transport caps below the semantic message limit;
+- `thread/start` had to verify its returned working directory before sending
+  the initial turn;
+- the TLS applied-marker retry state machine needed direct regression tests.
+
+The branch is rebased, the policy commit is split, transport ceilings and all
+numeric messages derive from the runtime contract, `thread/start` validates
+the returned cwd, and the tested PKI reconciler now owns the export/reload
+state machine. Final affected-lane review waits for the configuration repin.
 
 ## Handoff and cleanup
 

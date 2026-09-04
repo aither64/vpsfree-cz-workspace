@@ -9,14 +9,15 @@ https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/
 The implementation prepares all local files on aitherdev. This session does
 not deploy aitherdev or either internal DNS server.
 
-## Revisions
+## Branches
 
 - Workspace branch: `2026-09-03-dev-session-portal`
-- Workspace source: `0ae37664d211adc4ccf608544ccccbaa0e1d7d5e`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: `5d4e9eafa67c27ef1ef4913794250806431f1153`
 
-The configuration lock selects the exact workspace revision above. It uses the
+Check out the exact configuration feature-branch head reported in the handoff.
+Its lock selects the corresponding exact workspace revision. Revisions are not
+embedded here because this tracking file belongs to the workspace repository
+whose feature head they would recursively change. The configuration uses the
 ordinary `llm-agents` input, so pulling and deploying normal configuration
 updates Codex as before. The aitherdev build fails if the selected Codex App
 Server protocol is incompatible with the portal.
