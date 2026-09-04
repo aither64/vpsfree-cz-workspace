@@ -6,27 +6,21 @@ lifecycle: active
 
 ## Current status
 
-The empty-thread correction is deployed and the user successfully created the
-new `2026-09-04-testing` session, sent messages, and received Codex responses.
-That live use exposed two follow-up defects: an empty Go pending-request slice
-is encoded as JSON `null`, which Firefox cannot map, and attachment from a
-normal shell derives `nil` from the absent `TMUX` value before calling
-`empty?`. The portal also advertises `--as-is` even though exact known slugs are
-already resolved without it. The next workspace correction will normalize
-empty pending responses to `[]`, retain a browser compatibility fallback,
-treat a missing caller socket as empty, and display the concise exact-slug
-attach command. The host will install that command as `dev-session`, matching
-`./bin/dev-session`; the separate `workspace-dev-session` name will be removed
-because the user does not require backward compatibility. The live testing
-session belongs to the user and will not be reset or recreated during this fix.
-DNS is unchanged. The user also requested a full-width Codex view, so the
-session page will use one top-level tab set for Codex, Handoff, Repositories,
-Plan, State, and curated artifacts instead of a chat sidebar. The index will
-list the newest dated sessions first. The final workspace input pin and
-aitherdev configuration are committed and pushed. Quick tests, mandatory
-review, full builds, the aitherdev-only switch, and read-only live validation
-all pass. The user's `2026-09-04-testing` session and Codex history were not
-mutated.
+The deployed portal now creates and resumes sessions, shares Codex with the
+terminal, renders Codex in a full-width tab, and lists the newest dated sessions
+first. Live use of `2026-09-04-test-session-2` exposed another integration gap:
+the Codex thread followed the older checkout-local `bin/dev-session`, which
+created a clean `vpsadminos` worktree but did not add it to `portal.yml`. The
+worktree remains at its original `origin/staging` commit and can be registered
+without recreation. The next workspace revision will also add sanitized Codex
+Markdown, Enter-to-send behavior, conversation-only forks, App Server model and
+reasoning controls, guarded session archival, and vpsAdmin/vpsAdminOS cluster
+status and release controls. Session archival will first ask Codex to prepare
+the initiative, then release clusters, remove clean worktrees, create the exact
+local archive commit, and stop the runtime. It will not push workspace master.
+DNS, CA state, Basic Auth, and the normal configuration-owned Codex update path
+are unchanged. Implementation, review, aitherdev deployment, and live
+validation are pending.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`

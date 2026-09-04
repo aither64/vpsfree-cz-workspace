@@ -23,6 +23,11 @@ of a session that can also be attached from a terminal.
   active and archived initiative manifests, shows GitHub comparisons and
   workflow state, renders sanitized tracking files and curated artifacts, and
   exposes only the required Codex App Server operations.
+- Discover active worktrees through the installed, immutable helper as well as
+  the portal manifest. Validate every discovered worktree against a canonical
+  repository before showing it. This keeps the live page accurate when an
+  older checkout-local helper creates a valid worktree without registering it
+  in `portal.yml`; archived comparisons continue to use durable manifest data.
 - Replace the side-by-side session layout with one full-width tab set for
   Codex, handoff commands, repositories, plan, state, and curated artifacts.
   Open the Codex tab by default when a thread is available and keep responsive
@@ -34,6 +39,25 @@ of a session that can also be attached from a terminal.
 - Keep the `dev-session` integration that creates and resumes one persisted
   Codex thread per initiative and shares it between the browser and terminal
   client through the supervised host App Server.
+- Render Codex assistant, plan, and reasoning text as sanitized Markdown. Send
+  a composed message with Enter, reserve Shift+Enter for a newline, and leave
+  Enter alone while an input method editor is composing text.
+- Read available models and their supported reasoning efforts from the Codex
+  App Server. Allow both settings at session creation and on idle threads, and
+  persist them on the shared thread so browser and terminal clients agree.
+- Fork idle Codex conversations through the App Server into a fresh dated
+  session. A fork inherits conversation and model settings but starts with new
+  tracking and no repositories, worktrees, artifacts, or development cluster.
+- Show vpsAdmin and vpsAdminOS development clusters for each session on both
+  the index and session page. Use packaged helpers for structured status and
+  controls, expose service links and copyable SSH commands, and keep test
+  credentials behind an explicit disclosure.
+- Add a two-phase session lifecycle control. The first phase asks Codex to
+  prepare the initiative for archival. Once the lifecycle is terminal, the
+  portal releases its development clusters, validates and removes clean
+  worktrees, archives the tracking directory, commits only that archive move,
+  and stops the managed runtime. The final operation is retryable and never
+  pushes the shared workspace branch automatically.
 - Keep empty pending-request collections as JSON arrays across the Go and
   browser boundary, with a browser fallback for a rolling deployment that
   briefly combines an older API response with the corrected asset. Treat an
@@ -84,6 +108,14 @@ of a session that can also be attached from a terminal.
 - Existing schema-1 portal manifests remain readable. Stored Codex versions
   remain diagnostic history; they do not prevent a compatible newer Codex from
   resuming the same thread or validating the same tmux/App Server endpoint.
+- New manifest metadata may identify a source session for conversation forks.
+  Existing manifests remain valid, and active worktree discovery is read-only;
+  durable repository metadata is still captured before worktrees are removed.
+- Model and reasoning changes apply only while the thread is idle and affect
+  later turns. An active turn keeps the settings with which it started.
+- Cluster release stops the runner, removes residual socket processes and GC
+  roots, and deletes transient per-session cluster state. It does not change
+  production services or persistent production data.
 - Pending-response normalization and shell attachment do not change manifests,
   runtime authority, Codex history, or tmux ownership. A corrected portal can
   serve existing live sessions without recreating them. Rolling back the
@@ -144,6 +176,20 @@ of a session that can also be attached from a terminal.
   attach command shown by the portal, and an empty pending-request response in
   both the Go API and browser contract.
 - Cover newest-first index ordering for active and archived sessions.
+- Cover sanitized transcript Markdown, unsafe links and HTML, Enter and
+  Shift+Enter behavior, input method composition, model catalog validation,
+  idle setting changes, and persistence across terminal attachment.
+- Cover conversation-only forks, source attribution, name collisions, active
+  turn rejection, and retry after each partial creation boundary.
+- Cover canonical active-worktree discovery, manifest conflicts, symlink and
+  unmanaged-repository rejection, and the reported unregistered vpsAdminOS
+  worktree.
+- Cover structured vpsAdmin and vpsAdminOS cluster status, stale PID handling,
+  service links, SSH commands, idempotent stop and release, index badges, and
+  automatic release during archival.
+- Cover the two-phase finish flow, unrelated staged and unstaged workspace
+  changes, active Codex turns, dirty worktrees, hook failure, concurrent branch
+  movement, exact archive commits, and interrupted-operation recovery.
 - Test PKI initialization without a passphrase, repeated activation, file
   ownership and modes, missing or malformed input, leaf renewal, nginx
   installation, and public CA export.
