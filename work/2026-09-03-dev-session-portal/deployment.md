@@ -30,6 +30,15 @@ Server protocol is incompatible with the portal.
 From a checkout of the configuration feature branch, use the normal confctl
 workflow:
 
+```sh
+nix develop -c confctl deploy cz.vpsfree/machines/aitherdev switch
+nix develop -c confctl deploy cz.vpsfree/containers/prg/int.ns1 switch
+nix develop -c confctl deploy cz.vpsfree/containers/brq/int.ns1 switch
+```
+
+The first command is the one-time aitherdev bootstrap. Run the DNS commands
+after aitherdev is healthy.
+
 1. The user deploys `cz.vpsfree/machines/aitherdev` once to activate the local
    root deployment key and portal services.
 2. Confirm `nginx`, `workspace-portal`, `workspace-codex-app-server`, and
