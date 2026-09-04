@@ -801,6 +801,48 @@ lifecycle: active
 - The final mandatory review will use fresh `xhigh` reviewers against these
   exact commits, package, and runbook.
 
+## Xhigh mandatory review findings
+
+- Risk remains high. Four fresh standalone reviewers used `gpt-5.6-sol` at
+  `xhigh`; no `max` reviewer was started. General, architecture/repetition,
+  scope/proportionality, and risk/compatibility lanes reviewed workspace
+  `b4873326`, configuration `6a5116a6`, and tracking checkpoint
+  `c6f53b5ad00cd78a66e1cf00c1bd960d05c95b4d`. The longer SHA supplied in the
+  initial packet contained a transcription error; reviewers independently
+  identified the correct committed checkpoint above.
+- General found one Blocking issue: omitting `sourceKinds` from `thread/list`
+  defaults to interactive sources in Codex 0.152.1 and still misses portal,
+  exec, subagent, unknown, archived, and ephemeral loaded threads. The fix will
+  enumerate the App Server's authoritative in-memory IDs with
+  `thread/loaded/list`, fail closed while checking each latest turn, and add a
+  protocol contract test against the pinned generated schema.
+- Architecture found two Blocking contract-drift risks: deployed runtime
+  provenance is reconstructed through several Nix/Ruby/Go adapters without an
+  exact end-to-end key-set assertion, and the shipped JavaScript/Go HTTP
+  operation contract lacks browser-client coverage. Remediation will derive
+  deployment arguments from structured runtime values, add exact adapter
+  contract assertions, and execute the shipped browser operations against the
+  real Go handler. It will not introduce a new general protocol framework.
+- Architecture also found an Important instruction inconsistency: finalization,
+  stopping, and worktree creation still named checkout-local `bin/dev-session`
+  after establishing the immutable-wrapper rule. All lifecycle examples will
+  use the applicable helper and explicitly select `workspace-dev-session` in
+  deployed runtime mode.
+- Risk found two Important rollback defects. An activation that changes a
+  generation and then returns failure can leave the deployed target unrecorded,
+  making rollback refuse the live system. The runbook will build and record the
+  exact target before activation and reconcile the observed live target on
+  failure. Rollback state capture and read-modify-write updates also need a
+  private stable lock plus no-replace initial publication, with concurrent
+  capture and multi-machine update tests.
+- Scope/proportionality reported no findings. It found the safety mechanisms
+  tied to current operational requirements and the compatibility boundary
+  limited to the one known schema and deployment.
+- The unbounded per-session in-memory lock/cache registries were accepted as an
+  Advisory residual risk for this single-user service. Actual NixOS deployment,
+  HTTPS/authentication, firewall, DNS, shared browser/terminal behavior, and
+  rollback smoke tests remain user-owned deployment validation.
+
 ## Cleanup
 
 - Keep the tmux session and configuration worktree until implementation,
