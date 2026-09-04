@@ -1,16 +1,18 @@
 # Workspace portal deployment
 
-The portal will be available at:
+The portal is available at:
 
 ```text
 https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/
 ```
 
-The implementation prepares all local files on aitherdev. The current deployed
-generation does not authorize the local deployment key, so this first
-aitherdev deployment remains a user bootstrap step. After it is active, later
-aitherdev iterations can be deployed locally by the agent. The user continues
-to deploy both internal DNS servers.
+The user has completed the one-time aitherdev bootstrap and deployed both
+internal DNS servers. The restricted local deployment key is active, so the
+agent can deploy later aitherdev iterations locally. The first portal
+activation stopped before credential and certificate creation because a
+wrapped helper could not find Bash. The activation-corrected aitherdev
+generation was followed by the browser form origin fix. The current exact
+configuration pin is deployed and healthy. No DNS redeployment is required.
 
 ## Branches
 
@@ -25,31 +27,38 @@ ordinary `llm-agents` input, so pulling and deploying normal configuration
 updates Codex as before. The aitherdev build fails if the selected Codex App
 Server protocol is incompatible with the portal.
 
-## Deploy
+## Current deployment
 
-From a checkout of the configuration feature branch, use the normal confctl
-workflow:
+The corrected aitherdev generation was built and deployed from the
+configuration feature branch with the normal confctl workflow:
 
 ```sh
-nix develop -c confctl deploy cz.vpsfree/machines/aitherdev switch
-nix develop -c confctl deploy cz.vpsfree/containers/prg/int.ns1 switch
-nix develop -c confctl deploy cz.vpsfree/containers/brq/int.ns1 switch
+nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
+nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev switch
 ```
 
-The first command is the one-time aitherdev bootstrap. Run the DNS commands
-after aitherdev is healthy.
+The bootstrap generation already activated the local root deployment key and
+portal services. The internal DNS name already resolves to aitherdev.
 
-1. The user deploys `cz.vpsfree/machines/aitherdev` once to activate the local
-   root deployment key and portal services.
-2. Confirm `nginx`, `workspace-portal`, `workspace-codex-app-server`, and
-   `workspace-portal-tmux` are running.
-3. Confirm that the local `/home/aither/.ssh/id_ed25519` key can authenticate
-   as root on aitherdev. It is not part of the general `aither.all` key set and
-   is not authorized on other machines by this change. Its authorized-key
-   options accept only local source addresses and disable forwarding and PTY
-   features; ordinary non-interactive confctl commands remain allowed.
-4. The user deploys `cz.vpsfree/containers/prg/int.ns1` and
-   `cz.vpsfree/containers/brq/int.ns1`.
+The completed validation confirmed that the system profile and
+`/run/current-system` select the corrected generation; nginx, the portal,
+Codex App Server, tmux backend, renewal timer, and firewall are healthy; the
+restricted deployment key still authenticates locally; DNS resolves to
+`172.16.106.40`; certificate reconciliation is idempotent; and HTTPS enforces
+Basic Auth. Repeating activation remains safe because password and PKI setup
+validate and reuse complete state, while missing state is created atomically.
+
+The browser-origin correction was built and switched only on aitherdev:
+
+```sh
+nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
+nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev switch
+```
+
+Post-switch validation confirmed that HTTPS responses use
+`Referrer-Policy: same-origin`; missing, literal `null`, and foreign Origin
+values still return 403; and the exact portal Origin reaches ordinary form
+validation. Both internal DNS deployments were left unchanged.
 
 Activation reads the prepared password from
 `/home/aither/.local/state/vpsfree-workspace-portal/password`, derives nginx's
@@ -69,11 +78,13 @@ can use the local deployment key. After bootstrap, portal access is therefore
 effectively root command access to aitherdev. Keep both VPN and Basic Auth in
 place and do not reuse the portal password.
 
-After DNS is deployed, verify that the name resolves to `172.16.106.40`, HTTPS
-fails without credentials, and the portal opens with username `aither` and the
-password at the path above. Create a test session in the browser, send a turn,
-then attach from a terminal with `workspace-dev-session attach <slug> --as-is`
-and confirm that both clients show the same thread.
+## Client handoff
+
+After installing the public CA on a VPN client, open the portal with username
+`aither` and the password at the path above. Retry creating a test session in
+the browser, send a turn, then attach from a terminal with
+`workspace-dev-session attach <slug> --as-is` and confirm that both clients
+show the same thread.
 
 ## Rollback
 

@@ -17,10 +17,13 @@ visible wrapper adjusted `PATH`, but it did not include Bash for this helper.
 
 ## Fix and verification
 
-Patch each installed helper's shebang before calling `wrapProgram`. Add an
-install-time assertion that every hidden wrapped executable has a direct Nix
-store interpreter, and exercise representative installed entry points with an
-empty ambient `PATH` when practical.
+Replace each installed helper's env-based shebang with the exact Nix-store
+interpreter before calling `wrapProgram`. `patchShebangs` is not sufficient
+when that interpreter is unavailable in the build phase's search path; an
+explicit failing substitution is deterministic. Add an install-time assertion
+that every hidden wrapped executable has a direct Nix-store interpreter, and
+exercise representative installed entry points with an empty ambient `PATH`
+when practical.
 
 Inspect the final installed output, not only source files or check-phase test
 entry points. Tests run before wrapping do not cover this failure mode.

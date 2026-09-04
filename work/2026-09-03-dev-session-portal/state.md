@@ -6,14 +6,15 @@ lifecycle: active
 
 ## Current status
 
-The user deployed the aitherdev candidate and both internal DNS containers.
-The bootstrap installed the restricted local root key, so later aitherdev
-iterations can now be deployed by the agent. The first aitherdev activation did
-not complete: the wrapped password helper retained `#!/usr/bin/env bash` behind
-makeWrapper while activation supplied an empty ambient `PATH`. Credential and
-PKI creation stopped before the CA was created, and nginx could not load the
-missing portal certificate. The portal, Codex App Server, and tmux backend are
-running, but HTTPS remains unavailable until the packaging fix is redeployed.
+The browser form origin fix is deployed on aitherdev and all portal services
+are healthy. Firefox submitted the plain new-session form with `Origin: null`
+because the portal served `Referrer-Policy: no-referrer`; the exact-origin CSRF
+check therefore rejected the portal's own form. Workspace commit
+`portal: preserve origin on same-origin forms` changes the policy to
+`same-origin` without relaxing the CSRF check. The exact pinned generation is
+active, the system profile has converged, and live checks confirm that missing,
+literal `null`, and foreign origins still fail while the exact portal origin
+reaches normal form validation. DNS was left unchanged.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
@@ -46,6 +47,8 @@ running, but HTTPS remains unavailable until the packaging fix is redeployed.
   - `review: standardize mandatory lanes on xhigh`
   - `docs: explain workspace portal operation`
   - `flake: package the workspace portal at its source`
+  - `flake: make wrapped helpers activation-safe`
+  - `portal: preserve origin on same-origin forms`
 
 ### vpsfree-cz-configuration
 
@@ -87,7 +90,9 @@ initiative.
   adapter. An incompatible ordinary Codex update fails the aitherdev build;
   there is no initiative-specific Codex pin.
 - nginx provides HTTPS and Basic Auth. Application mutations additionally
-  require the exact HTTPS origin and all application responses are `no-store`.
+  require the exact HTTPS origin, responses use `Referrer-Policy: same-origin`
+  so ordinary same-origin forms retain a verifiable origin without disclosing
+  cross-origin referrer data, and all application responses are `no-store`.
 - The custom CA and nginx key material are root-owned and absent from the Nix
   store. Certificate/key pairs are validated and switched atomically, with a
   predecessor retained. The packaged, directly tested reconciler updates its
@@ -116,9 +121,11 @@ initiative.
   read-only at the same URL.
 - The CA, password, nginx password hash, portal state, and Codex state persist
   across ordinary NixOS redeployments and generation rollbacks.
-- Deployment order is aitherdev first, then both DNS containers. Rollback uses
-  ordinary previous NixOS/confctl generations. See `deployment.md` for CA
-  trust removal, key-bootstrap rollback behavior, and compromise recovery.
+- The initial deployment order was aitherdev first, then both DNS containers.
+  Both DNS deployments are complete and stayed unchanged during the
+  aitherdev-only corrections. Rollback uses ordinary previous NixOS/confctl
+  generations. See `deployment.md` for CA trust removal, key-bootstrap rollback
+  behavior, and compromise recovery.
 - No persisted database, API, protocol between production services, or
   vpsAdminOS node format changes are involved. Mixed versions are safe because
   the portal and DNS entry are additive and a missing portal only makes the
@@ -128,6 +135,9 @@ initiative.
 
 Completed on the current workspace candidate:
 
+- `nix develop -c bash -c 'cd portal && env GOFLAGS=-mod=mod go test
+  ./internal/web'` passed. The explicit module mode avoids the development
+  shell's vendor-mode default in a checkout without a vendor tree.
 - `nix build .#workspace-portal --no-link -L`
   - generated Codex schema contract passed
   - all Go packages passed
@@ -137,7 +147,11 @@ Completed on the current workspace candidate:
   - 14 PKI tests and 92 assertions passed, including failed CA export, failed
     nginx reload, retry, atomic marker publication, and inactive nginx
   - 2 password tests and 18 assertions passed
-  - output: `/nix/store/rdhsmfwnf5k8wxwjfiyvsy8g5dqpg79m-workspace-portal-0.1.0`
+  - the three installed helpers start with an empty ambient `PATH`, and their
+    hidden makeWrapper executables use direct Nix-store Ruby or Bash
+    interpreters
+  - output:
+    `/nix/store/2bi92hhvc7l34j2hbr6g15bvv5nw9xwl-workspace-portal-0.1.0`
 
 Completed on the current pushed configuration candidate:
 
@@ -150,13 +164,67 @@ Completed on the current pushed configuration candidate:
 - The restricted authorized-key line parses with the same fingerprint, the
   local route to `172.16.106.40` selects that allowed source address, and the
   built root authorized-keys derivation contains the intended verbatim entry.
-- Read-only bootstrap probes confirmed that the current generation rejects the
-  key for root SSH and that local non-interactive sudo needs a password. This
-  is expected until the user deploys the key-bearing generation once.
+- Pre-bootstrap probes confirmed that the previous generation rejected the key
+  for root SSH and that local non-interactive sudo needed a password. The user
+  then deployed the key-bearing generation; restricted root SSH now succeeds.
 - Feature-branch GitHub Actions queries returned no runs.
 
-Completed long configuration builds, run sequentially to avoid shared confctl
-log collisions:
+Completed for the currently deployed predecessor pin:
+
+- `confctl build -y cz.vpsfree/machines/aitherdev` passed and created
+  generation `2026-09-04--16-34-31`. It built only the expected portal and
+  system derivations; no kernel compilation occurred.
+- `confctl deploy -y cz.vpsfree/machines/aitherdev switch` completed, followed
+  by two successful confctl health checks for overall systemd state and the
+  firewall.
+- Both `/nix/var/nix/profiles/system` and `/run/current-system` resolve to
+  `/nix/store/rkmbm5s6h13f7xsg199iv9mrqfxp0flv-nixos-system-aitherdev-26.05.20260903.a5cc6f2`.
+- nginx, the portal, Codex App Server, dedicated tmux server, renewal timer,
+  and firewall are active. The configured package is the configuration-input
+  output
+  `/nix/store/av59vxr0pabqrpn73rmfjkxaal8sfx6i-workspace-portal-0.1.0`.
+- Authentication state is `root:nginx` at modes 0750/0640. PKI authority state
+  is `root:root` at mode 0700 with the CA key at 0600. nginx TLS state is
+  `root:nginx` at mode 0750, with the leaf certificate at 0644 and key at
+  0640. The public CA is `root:root` at mode 0644 beneath a 0755 directory.
+- `workspace-pki verify` passed. Starting the certificate-renewal service again
+  completed successfully without changing the certificate pair, and nginx
+  reloaded successfully.
+- Port 443 listens on `172.16.106.40`. The firewall contains only the intended
+  portal acceptance rule from `172.16.107.0/24`; the NixOS module does not open
+  the port generally.
+- DNS resolves the portal hostname to `172.16.106.40`. With the public CA,
+  unauthenticated and invalid-password requests both return 401, while valid
+  authentication returns 200 for the portal root and this initiative page.
+  Plain HTTP redirects with 301. No credential value or generated hash was
+  printed.
+
+Completed for the browser-origin fix:
+
+- `confctl build -y cz.vpsfree/machines/aitherdev` passed and created
+  generation `2026-09-04--17-48-49`. It built the expected portal and system
+  derivations; no kernel compilation occurred.
+- `confctl deploy -y cz.vpsfree/machines/aitherdev switch` completed and both
+  confctl health checks passed: overall systemd state is running and the
+  firewall service is active.
+- Both `/nix/var/nix/profiles/system` and `/run/current-system` resolve to
+  `/nix/store/xqd4iw8n2sh7y194bdqzvpnsb6j6wkal-nixos-system-aitherdev-26.05.20260903.a5cc6f2`.
+  The live portal executable resolves beneath
+  `/nix/store/i537whp14xs770627494428c0bnfrim4-workspace-portal-0.1.0`.
+- nginx, the portal, Codex App Server, dedicated tmux server, renewal timer,
+  and firewall are active. DNS still resolves the portal name to
+  `172.16.106.40`.
+- An authenticated HTTPS response sends `Referrer-Policy: same-origin` while
+  preserving the existing no-store, CSP, and HSTS headers. Deliberately invalid
+  session POSTs returned 403 for a missing Origin, literal `Origin: null`, and
+  a foreign Origin. The exact portal Origin returned 400 from ordinary form
+  validation, proving that it passed the CSRF boundary without creating a
+  session. No credential value was printed.
+- The deployed `workspace-dev-session validate` accepted the initiative's
+  portal manifest, and its URL command returned the stable initiative link.
+
+Completed long configuration builds for the predecessor workspace pin, run
+sequentially to avoid shared confctl log collisions:
 
 - `confctl build -y cz.vpsfree/machines/aitherdev` passed and created
   generation `2026-09-04--15-48-25`. Linux was fetched from the binary cache;
@@ -168,9 +236,22 @@ log collisions:
 
 Still pending:
 
-- package and redeploy the activation-shebang fix on aitherdev;
-- install the public CA on client devices and complete live HTTPS,
-  authentication, browser, and terminal-attach smoke tests.
+- install the public CA on any remaining client devices;
+- create a new session in the browser, send a turn, and attach it from a
+  terminal to complete the real-browser shared-thread client smoke test.
+
+## Browser CSP diagnosis
+
+Firefox reported a blocked inline-script hash when opening the initiative page.
+The live HTML response contains no inline script: its only script element is
+`<script src="/static/app.js" defer>`. The page and JavaScript asset both return
+the intended `script-src 'self'` policy, the asset is served as JavaScript with
+`nosniff`, and the portal's own external script remains allowed. The blocked
+inline body was therefore injected on the client side, most commonly by a
+browser extension or browser customization. The CSP remains unchanged so the
+portal does not authorize unknown injected code. If portal behavior is broken
+rather than merely accompanied by a console warning, capture the console
+entry's source attribution and reproduce in an extension-free browser profile.
 
 ## First deployment diagnosis
 
@@ -188,6 +269,23 @@ Still pending:
 - No workspace PKI, nginx TLS, or public CA directories were created. nginx is
   failed with a missing
   `/var/lib/vpsfree-workspace-portal-tls/current/server.pem` error.
+
+## Current-session runtime handoff
+
+This initiative began before the supervised portal runtime was deployed. Its
+manifest has a historical thread ID but no endpoint provenance or managed tmux
+authority. The status page, comparisons, workflows, and files are available,
+but the portal correctly keeps this thread non-interactive.
+
+After deployment, `workspace-dev-session start
+2026-09-03-dev-session-portal --as-is --no-attach --json` attempted to import
+the historical thread. The supervised App Server refused because this running
+Codex process already owns the thread's active writer. The command did not
+change the manifest or create a tmux session. Once the original writer is no
+longer active, the same command can resume the thread and add trusted runtime
+provenance. New sessions created in the portal or through
+`workspace-dev-session start` use the shared App Server and tmux runtime from
+the outset and do not have this legacy handoff condition.
 
 ## Mandatory change review
 
@@ -244,6 +342,53 @@ documented; `deployment.md` now records both. A final security-only Risk rerun
 reviewed configuration `6f5ce257` after the key was restricted to local source
 addresses and cleared with no Blocking, Important, or Advisory findings. All
 review work used fresh `gpt-5.6-sol` reviewers at xhigh, never max or ultra.
+
+The activation-shebang remediation review classified the change as High risk
+because it affects root host activation, deployment retry behavior, and
+persistent authentication and PKI state. Fresh General, Architecture, Scope,
+and Risk reviewers used `gpt-5.6-sol` at xhigh to review workspace `ba54a9a`
+and configuration `27059095`.
+
+- No lane found a Blocking implementation issue.
+- Scope and Risk found the active deployment runbook's pre-bootstrap and DNS
+  instructions Important because following them would assign already-complete
+  work to the user and expand the current recovery beyond aitherdev. The
+  runbook and plan now record the completed bootstrap and DNS deployments and
+  limit remediation deployment to aitherdev. This tracking-only correction did
+  not require a reviewer rerun.
+- General, Architecture, and Scope noted stale predecessor package evidence in
+  this state file. It now records the corrected standalone package output and
+  distinguishes the earlier long configuration builds from the pending
+  current-pin build.
+- Architecture advised consolidating the finite three-helper catalog. Scope
+  recommended keeping the explicit helper-specific interpreter and expected
+  CLI checks because a registry would add indirection without reducing current
+  risk; that proportionality decision is accepted.
+- Risk additionally built the workspace package with the configuration's
+  followed inputs at
+  `/nix/store/av59vxr0pabqrpn73rmfjkxaal8sfx6i-workspace-portal-0.1.0`.
+  Build-time checks passed. Temporary live aitherdev probes ran the installed
+  password and PKI helpers with `PATH=/empty` without displaying credentials,
+  reloading services, or changing persistent portal state.
+- At review completion, the remaining gaps were the current-pin aitherdev build
+  and switch, generation convergence, protected credential and PKI state,
+  service health, HTTPS and Basic Auth, VPN reachability, and the
+  browser/terminal shared-thread smoke test. All are now verified as recorded
+  above except client CA installation and the shared-thread client smoke test.
+
+The browser-origin remediation review also classified the change as High risk
+because it affects the CSRF mutation boundary and the deployed host service.
+Fresh General, Architecture, Scope, and Risk reviewers used `gpt-5.6-sol` at
+xhigh. No lane found a Blocking implementation issue. General, Architecture,
+and Risk found no Important issue. Scope found that the runbook and current
+status still described the predecessor generation as fully current; those
+files now explicitly keep the aitherdev origin-fix build, switch, and live
+validation pending while leaving DNS unchanged. Risk advised direct coverage
+of the incident's literal `Origin: null`; that regression assertion was added,
+the focused and full package tests passed, and a fresh Risk rerun cleared with
+no Blocking, Important, or Advisory findings. The real-browser form submission
+remains part of the post-deployment smoke test because the repository's browser
+contract test supplies Origin explicitly.
 
 ## Handoff and cleanup
 

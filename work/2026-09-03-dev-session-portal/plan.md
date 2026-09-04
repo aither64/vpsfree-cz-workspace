@@ -73,16 +73,21 @@ of a session that can also be attached from a terminal.
   Codex is therefore intentionally equivalent to local aitherdev root command
   execution after bootstrap. Basic Auth and VPN reachability protect that
   boundary.
-- The implementation prepares the Basic Auth password on aitherdev; activation
-  creates all root-owned authentication and PKI state. The currently deployed
-  generation does not authorize the new deployment key, so the user performs
-  one bootstrap deployment of `cz.vpsfree/machines/aitherdev`. Later aitherdev
-  iterations can be deployed by the agent. The user deploys the two internal
-  DNS containers and installs the public custom CA on each client.
-- Deploy aitherdev before publishing DNS so the hostname does not resolve until
-  HTTPS is ready. Standard confctl generation rollback is sufficient; portal
-  state is additive and can remain on disk if the configuration is rolled back.
-  Rolling aitherdev back before the deployment-key generation also removes that
+- The user completed the one-time aitherdev bootstrap and both internal DNS
+  deployments. The restricted local deployment key is active, so the agent can
+  deploy later aitherdev iterations. The activation and browser-origin
+  corrections have been deployed and validated. Client installation of the
+  public custom CA remains user-owned.
+- The first aitherdev activation failed before authentication and PKI state was
+  created because a wrapped helper retained an env-based Bash shebang. The
+  package now uses direct store interpreters and tests its installed helpers
+  with an empty ambient `PATH`. Repeating activation creates the missing state
+  atomically and reuses any complete state.
+- The initial rollout ordered aitherdev before DNS. The follow-up corrections
+  redeployed only aitherdev and left the working DNS deployments unchanged.
+  Standard confctl generation rollback is sufficient; portal state is additive
+  and can remain on disk if the configuration is rolled back. Rolling
+  aitherdev back before the deployment-key generation also removes that
   authorization. Such a rollback is user-owned unless another root credential
   is available, and another user bootstrap is required before agent deployment
   can resume.
