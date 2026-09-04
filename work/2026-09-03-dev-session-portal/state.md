@@ -721,6 +721,86 @@ lifecycle: active
   directly. The reusable cause and workaround are recorded in
   `notes/cross-project/2026-09-04-nix-build-test-shebang.md`.
 
+## Tenth mandatory review freeze
+
+- Shared workspace `master` is frozen at
+  `015a5be8a8b7684fab3a203e22428960878b9179`. The six focused workspace
+  feature commits are clean and force-pushed at
+  `a030cbe5ff9b3374c9d33c2b0bcc627bab6c8815`.
+- The configuration branch was regenerated with `confctl`, is clean, and is
+  force-pushed at `99401e61ef024fce0d22d94196027e42a2d80266`.
+  Generated commit `85bd4f17` pins the exact workspace feature head.
+- The exact pinned portal package builds successfully as
+  `/nix/store/rbxk2dfq6dp9n5qvsf4bq51x3fjpggnm-workspace-portal-0.1.0`
+  with NAR hash
+  `sha256-5s7T9NTQy/Hyny0J3inxn2OZg7Jfx9Se15F5uWR/FhA=`. Its Nix check phase
+  passes the full Go suite, 115 `dev-session` tests with 874 assertions and
+  10 environment-dependent tmux skips, 7 PKI tests with 64 assertions, and 5
+  rollout tests with 22 assertions.
+- Local quick verification also passes all 115 `dev-session` tests with 969
+  assertions and no skips, all Ruby helper suites, the complete Go suite and
+  race suite, Go vet, and JavaScript syntax checking.
+- Configuration validation passes repository hooks during push,
+  `nix flake check --no-build --show-trace`, and `named-checkzone` at serial
+  `2026090300`. GitHub reports no Actions runs for either exact feature head,
+  so there are no superseded runs to cancel.
+- The exact deployment handoff uses only the immutable package and revisions
+  above and has SHA-256
+  `3506296a2ea8020e0e6fbb7a3884f6824bea1474b0f2c6398ac2dc5b1f10b6a4`.
+  This review freeze remains uncommitted until the mandatory review records
+  its result, avoiding a self-referential tracking rebase and repin cycle.
+
+## Eleventh review remediation and xhigh freeze
+
+- The tenth review initially used `max` under the former high-risk policy. The
+  architecture lane completed and found three blocking integration defects:
+  rollback filtered out non-App-Server source kinds, the resolved session URL
+  was also treated as the reusable portal base, and restart reconciliation did
+  not treat the persisted thread ID as authoritative. It also found that the
+  documented stable-wrapper and concurrent-session rules had drifted. The
+  general, risk, and scope reviewers were still running when the user asked to
+  stop `max` reviews; they were interrupted without findings being inferred.
+- Workspace `AGENTS.md` and `skills/mandatory-change-review/SKILL.md` now
+  require `gpt-5.6-sol` reviewers at `xhigh` for every risk classification and
+  explicitly prohibit `max`. Risk classification remains in the workflow to
+  shape the review packet and select specialist lanes.
+- Rollback now lists every thread on the dedicated Codex server without a
+  `sourceKinds` filter. Tests prove that a `cli` thread is included and blocks
+  a generation change while active.
+- Session environments now distinguish
+  `VPSFREE_DEV_SESSION_PORTAL_BASE_URL` from the resolved
+  `VPSFREE_DEV_SESSION_URL`. The configuration-owned wrapper fixes the base
+  explicitly, so invoking it from inside a managed session cannot append the
+  current slug twice.
+- Restart reconciliation passes the manifest's persisted thread ID to the
+  portal and resumes that exact thread with the refreshed working directory
+  and complete runtime environment. Working-directory discovery remains only
+  for recovery from a lost `thread/start` response before an ID was persisted.
+  The deployment runbook explicitly migrates this initiative through the
+  configuration-owned wrapper after the dedicated runtime is started.
+- Workspace instructions and the handoff skill use `workspace-dev-session`
+  whenever the runtime marker is set, use the checkout-local helper for
+  ordinary local work, and accept `current` only when its result exactly
+  matches `VPSFREE_DEV_SESSION_SLUG`.
+- The six focused workspace commits were rebuilt and force-pushed at
+  `b4873326a56e9ac591be129819977123deceb37a`. Generated configuration commit
+  `f8cac224` pins that exact revision; the four-commit configuration branch was
+  rebuilt and force-pushed at
+  `6a5116a614fd384ceabb55f9cb15e56ccefe6b52`.
+- Local verification passes 116 `dev-session` tests with 983 assertions, every
+  other Ruby helper suite, all five Go packages, the Go race detector, Go vet,
+  and JavaScript syntax checking. Configuration validation passes
+  `nix flake check --no-build --show-trace` and `named-checkzone` at serial
+  `2026090300`. Both feature branches have no GitHub Actions runs.
+- The exact pinned package builds as
+  `/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0`
+  with NAR hash
+  `sha256-WQRJizjZefAd67SnGn/Nz4VX61M46GdE8msakmP9UpA=`. The frozen deployment
+  runbook has SHA-256
+  `ecdf667b5914eb45730ce0d05a630cd5d6c57979b54530a77ba8f127fcdaa40e`.
+- The final mandatory review will use fresh `xhigh` reviewers against these
+  exact commits, package, and runbook.
+
 ## Cleanup
 
 - Keep the tmux session and configuration worktree until implementation,

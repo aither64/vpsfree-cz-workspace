@@ -7,9 +7,9 @@ session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace source branch: `2026-09-03-dev-session-portal`
-- Workspace source: `f2c408567ef71568c970d0472ac4e46c049156ee`
+- Workspace source: `b4873326a56e9ac591be129819977123deceb37a`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: `543a985ef7ee858b05bac78f49851710f692c98e`
+- Configuration source: `6a5116a614fd384ceabb55f9cb15e56ccefe6b52`
 
 Check both revisions against `state.md` before running any helper or deployment
 command:
@@ -18,9 +18,9 @@ command:
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD)" = \
-  f2c408567ef71568c970d0472ac4e46c049156ee
+  b4873326a56e9ac591be129819977123deceb37a
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD)" = \
-  543a985ef7ee858b05bac78f49851710f692c98e
+  6a5116a614fd384ceabb55f9cb15e56ccefe6b52
 ```
 
 ## 1. Record rollback state
@@ -31,14 +31,14 @@ closure before it is used with `sudo`:
 
 ```sh
 set -euo pipefail
-config_revision=543a985ef7ee858b05bac78f49851710f692c98e
+config_revision=6a5116a614fd384ceabb55f9cb15e56ccefe6b52
 portal_package="$(nix build --no-link --print-out-paths \
   "github:vpsfreecz/vpsfree-cz-configuration/$config_revision#workspace-portal")"
 test "$portal_package" = \
-  /nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0
+  /nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0
 test "$(nix path-info --json-format 1 --json "$portal_package" | \
   jq -r 'to_entries[0].value.narHash')" = \
-  'sha256-/8NGuYZyaLEcTXonBy7FT7zAHlSgW4R0Z9ECiDe92ZE='
+  'sha256-WQRJizjZefAd67SnGn/Nz4VX61M46GdE8msakmP9UpA='
 rollout_helper="$portal_package/bin/workspace-portal-rollout"
 test "$(stat -c %U:%G "$rollout_helper")" = root:root
 test $((8#$(stat -c %a "$rollout_helper") & 8#022)) -eq 0
@@ -50,7 +50,7 @@ is never sourced as shell code:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
 git --git-dir="$config_git" fetch origin master
 previous_config_revision=$(git --git-dir="$config_git" rev-parse origin/master)
@@ -86,10 +86,10 @@ that all three captured generations still provide a rollback executable:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0/bin/workspace-portal-rollout
-previous_aitherdev_system="$(sudo "$rollout_helper" get aitherdev_system)"
-previous_prg_dns_system="$(sudo "$rollout_helper" get prg_dns_system)"
-previous_brq_dns_system="$(sudo "$rollout_helper" get brq_dns_system)"
+rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+previous_aitherdev_system="$(sudo "$rollout_helper" get previous_aitherdev_system)"
+previous_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
+previous_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
 test -x "$previous_aitherdev_system/bin/switch-to-configuration"
 ssh root@172.16.9.90 \
   test -x "$previous_prg_dns_system/bin/switch-to-configuration"
@@ -122,7 +122,7 @@ leaf certificate. Do not run a writable worktree script as root:
 
 ```sh
 set -euo pipefail
-portal_package=/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0
+portal_package=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0
 pki_helper="$portal_package/bin/workspace-pki"
 test "$(stat -c %U:%G "$pki_helper")" = root:root
 test $((8#$(stat -c %a "$pki_helper") & 8#022)) -eq 0
@@ -175,15 +175,14 @@ Do not copy the CA key, a server key, or the CA passphrase to a client.
 
 ## 3. Build and deploy aitherdev
 
-First verify that the live workspace has integrated the reviewed helper. This
-prevents an older `bin/dev-session` from mutating a portal-managed initiative:
+Before the first deployment, drain development sessions from the legacy default
+tmux server. The deployed portal uses a separate server and the immutable
+`workspace-dev-session` wrapper. Do not use a checkout-local helper to migrate
+or mutate a portal-managed initiative:
 
 ```sh
-workspace=/home/aither/workspace/ai/vpsfree.cz
-git -C "$workspace" merge-base --is-ancestor \
-  f2c408567ef71568c970d0472ac4e46c049156ee master
-test "$(git -C "$workspace" show master:bin/dev-session | sha256sum)" = \
-  "$(git -C "$workspace" show f2c408567ef71568c970d0472ac4e46c049156ee:bin/dev-session | sha256sum)"
+{ tmux list-sessions -F '#{session_name}\t#{@vpsfree_dev_session}' 2>/dev/null || true; } | \
+  awk -F '\t' '$2 == "1" { found = 1; print > "/dev/stderr" } END { exit found }'
 ```
 
 Run every build or deployment from a fresh detached checkout of the exact
@@ -193,7 +192,7 @@ of privileged Nix and remote-switch operations:
 ```sh
 set -euo pipefail
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
-config_revision=543a985ef7ee858b05bac78f49851710f692c98e
+config_revision=6a5116a614fd384ceabb55f9cb15e56ccefe6b52
 git --git-dir="$config_git" fetch origin 2026-09-03-dev-session-portal
 test "$(git --git-dir="$config_git" rev-parse \
   origin/2026-09-03-dev-session-portal)" = "$config_revision"
@@ -217,8 +216,8 @@ aitherdev_build_checkout="$(new_reviewed_checkout)"
   nix develop -c confctl build -y cz.vpsfree/machines/aitherdev)
 # Abort if another deployment advanced the host after rollback capture. The
 # captured generation must still be the immediate predecessor.
-rollout_helper=/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0/bin/workspace-portal-rollout
-captured_aitherdev_system="$(sudo "$rollout_helper" get aitherdev_system)"
+rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+captured_aitherdev_system="$(sudo "$rollout_helper" get previous_aitherdev_system)"
 test "$(readlink -f /run/current-system)" = "$captured_aitherdev_system" || {
   echo "aitherdev changed after rollback capture; aborting deployment" >&2
   exit 1
@@ -226,6 +225,9 @@ test "$(readlink -f /run/current-system)" = "$captured_aitherdev_system" || {
 aitherdev_deploy_checkout="$(new_reviewed_checkout)"
 (cd "$aitherdev_deploy_checkout" && \
   nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev)
+deployed_aitherdev_system="$(readlink -f /run/current-system)"
+sudo "$rollout_helper" record-deployed \
+  --machine aitherdev --system "$deployed_aitherdev_system"
 sudo systemctl restart nginx
 ```
 
@@ -302,12 +304,21 @@ sudo systemctl restart workspace-codex-app-server
 systemctl is-active --quiet workspace-codex-app-server
 ```
 
+Migrate this initiative onto the dedicated runtime before validating all
+manifests. The recorded thread ID is authoritative: the helper resumes that
+exact conversation and refreshes its working directory and complete deployed
+environment. It does not select another thread by working directory.
+
+```sh
+sudo -u aither -H workspace-dev-session start \
+  2026-09-03-dev-session-portal --as-is --no-attach
+```
+
 Validate every persisted manifest through both implementations before DNS is
 published. This catches schema migrations that a health-only probe cannot see:
 
 ```sh
-sudo -u aither -H dev-session \
-  --workspace /home/aither/workspace/ai/vpsfree.cz validate
+sudo -u aither -H workspace-dev-session validate
 sudo -u aither -H workspace-portal validate \
   --workspace /home/aither/workspace/ai/vpsfree.cz
 ```
@@ -326,20 +337,14 @@ sudo lxc-attach -n vscode -- \
   test ! -e /run/vpsfree-workspace-authority
 sudo lxc-attach -n vscode -- \
   test ! -e /run/vpsfree-workspace-authority.lock
-smoke_session="$(sudo -u aither -H dev-session \
-  --workspace /home/aither/workspace/ai/vpsfree.cz \
-  --tmux-socket /run/vpsfree-workspace-tmux/tmux.sock \
-  --authority-dir /run/vpsfree-workspace-authority \
+smoke_session="$(sudo -u aither -H workspace-dev-session \
   start portal-authority-smoke --no-attach --no-codex --json)"
 smoke_slug="$(printf '%s' "$smoke_session" | jq -er '.slug')"
 test -n "$smoke_slug"
 authority=/run/vpsfree-workspace-authority/$smoke_slug.json
 test "$(stat -c '%U:%G %a' "$authority")" = 'aither:users 600'
 sudo lxc-attach -n vscode -- test ! -e "$authority"
-sudo -u aither -H dev-session \
-  --workspace /home/aither/workspace/ai/vpsfree.cz \
-  --tmux-socket /run/vpsfree-workspace-tmux/tmux.sock \
-  --authority-dir /run/vpsfree-workspace-authority \
+sudo -u aither -H workspace-dev-session \
   stop "$smoke_slug" --as-is
 test ! -e "$authority"
 ```
@@ -399,7 +404,7 @@ own clean checkout:
 ```sh
 set -euo pipefail
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
-config_revision=543a985ef7ee858b05bac78f49851710f692c98e
+config_revision=6a5116a614fd384ceabb55f9cb15e56ccefe6b52
 git --git-dir="$config_git" fetch origin 2026-09-03-dev-session-portal
 test "$(git --git-dir="$config_git" rev-parse \
   origin/2026-09-03-dev-session-portal)" = "$config_revision"
@@ -418,8 +423,8 @@ prg_dns_build_checkout="$(new_reviewed_checkout)"
 brq_dns_build_checkout="$(new_reviewed_checkout)"
 (cd "$brq_dns_build_checkout" && \
   nix develop -c confctl build -y cz.vpsfree/containers/brq/int.ns1)
-rollout_helper=/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0/bin/workspace-portal-rollout
-captured_prg_dns_system="$(sudo "$rollout_helper" get prg_dns_system)"
+rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+captured_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
 test "$(ssh root@172.16.9.90 readlink -f /run/current-system)" = \
   "$captured_prg_dns_system" || {
   echo "prg internal DNS changed after rollback capture; aborting deployment" >&2
@@ -428,7 +433,10 @@ test "$(ssh root@172.16.9.90 readlink -f /run/current-system)" = \
 prg_dns_deploy_checkout="$(new_reviewed_checkout)"
 (cd "$prg_dns_deploy_checkout" && \
   nix develop -c confctl deploy -y cz.vpsfree/containers/prg/int.ns1)
-captured_brq_dns_system="$(sudo "$rollout_helper" get brq_dns_system)"
+deployed_prg_dns_system="$(ssh root@172.16.9.90 readlink -f /run/current-system)"
+sudo "$rollout_helper" record-deployed \
+  --machine prg-dns --system "$deployed_prg_dns_system"
+captured_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
 test "$(ssh root@172.19.9.90 readlink -f /run/current-system)" = \
   "$captured_brq_dns_system" || {
   echo "brq internal DNS changed after rollback capture; aborting deployment" >&2
@@ -437,6 +445,9 @@ test "$(ssh root@172.19.9.90 readlink -f /run/current-system)" = \
 brq_dns_deploy_checkout="$(new_reviewed_checkout)"
 (cd "$brq_dns_deploy_checkout" && \
   nix develop -c confctl deploy -y cz.vpsfree/containers/brq/int.ns1)
+deployed_brq_dns_system="$(ssh root@172.19.9.90 readlink -f /run/current-system)"
+sudo "$rollout_helper" record-deployed \
+  --machine brq-dns --system "$deployed_brq_dns_system"
 ```
 
 Query both servers directly:
@@ -454,13 +465,27 @@ exact running system paths recorded before deployment:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0/bin/workspace-portal-rollout
-previous_prg_dns_system="$(sudo "$rollout_helper" get prg_dns_system)"
-previous_brq_dns_system="$(sudo "$rollout_helper" get brq_dns_system)"
+rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
+previous_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
+deployed_prg_dns_system="$(sudo "$rollout_helper" get deployed_prg_dns_system)"
+previous_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
+deployed_brq_dns_system="$(sudo "$rollout_helper" get deployed_brq_dns_system)"
+current_prg_dns_system="$(ssh root@172.16.9.90 readlink -f /run/current-system)"
+current_brq_dns_system="$(ssh root@172.19.9.90 readlink -f /run/current-system)"
+test "$current_prg_dns_system" = "$previous_prg_dns_system" || \
+  test "$current_prg_dns_system" = "$deployed_prg_dns_system"
+test "$current_brq_dns_system" = "$previous_brq_dns_system" || \
+  test "$current_brq_dns_system" = "$deployed_brq_dns_system"
 ssh root@172.16.9.90 \
-  "$previous_prg_dns_system/bin/switch-to-configuration switch"
+  "current=\$(readlink -f /run/current-system); \
+   test \"\$current\" = '$previous_prg_dns_system' && exit 0; \
+   test \"\$current\" = '$deployed_prg_dns_system' && \
+   exec '$previous_prg_dns_system/bin/switch-to-configuration' switch"
 ssh root@172.19.9.90 \
-  "$previous_brq_dns_system/bin/switch-to-configuration switch"
+  "current=\$(readlink -f /run/current-system); \
+   test \"\$current\" = '$previous_brq_dns_system' && exit 0; \
+   test \"\$current\" = '$deployed_brq_dns_system' && \
+   exec '$previous_brq_dns_system/bin/switch-to-configuration' switch"
 ```
 
 Verify both servers again against the expected previous state. Keep the portal
@@ -565,29 +590,30 @@ This includes terminal-created sessions: the deployed environment records all
 of them in the host-only authority directory.
 
 Stopping the portal drains active creation handlers before the checks. If a
-creation journal, managed session, or workspace Codex turn remains active, the
+host authority record, managed session, or App Server turn remains active, the
 block restarts the App Server and portal and refuses the destructive rollback:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/c42ncdgyia44yf25p0qa9mm3nvfg9xs2-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/wmh6niawh05ffhzbp03qc85sxdgbhzll-workspace-portal-0.1.0/bin/workspace-portal-rollout
 portal_command="$(dirname "$rollout_helper")/workspace-portal"
 sudo "$rollout_helper" rollback-host \
-  --workspace /home/aither/workspace/ai/vpsfree.cz \
   --authority-dir /run/vpsfree-workspace-authority \
   --codex-socket /run/vpsfree-workspace-codex/app-server.sock \
   --portal-command "$portal_command" \
   --dedicated-tmux-socket /run/vpsfree-workspace-tmux/tmux.sock
 ```
 
-The helper stops and drains the portal, strictly parses every creation journal,
-takes the exclusive host lifecycle gate, requires the authority directory to
-be empty, requires the dedicated tmux server to contain only its keeper,
-verifies every App Server thread rooted under workspace `work/` or `archive/`
-is idle, stops the App Server, and switches to the exact captured system.
-Terminal helper commands take a shared gate and use this same tmux server. The
-rollback helper restarts the App Server and portal on any failed pre-switch
-check and never selects a rollback path from workspace-controlled data.
+The helper first verifies that the current host generation is exactly the
+recorded deployment; the recorded predecessor is an idempotent no-op and any
+third generation is refused. It then stops and drains the portal, takes the
+exclusive host lifecycle gate, requires the authority directory to be empty,
+requires the dedicated tmux server to contain only its keeper, verifies every
+thread on the dedicated App Server is idle, stops the App Server, and switches
+to the exact predecessor. Terminal helper commands take a shared gate and use
+this same tmux server. The rollback helper restarts the App Server and portal
+on any failed pre-switch check and never reads rollback authority from the
+workspace.
 
 The DNS-first ordering keeps cached portal records on the authenticated TLS
 virtual host until they expire. Do not restore aitherdev after DNS rollback by
