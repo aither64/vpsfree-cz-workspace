@@ -47,6 +47,8 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   within reach of the portal process. The installed leaf key is copied to a
   `root:nginx` directory for nginx access. The helper supports initialization,
   inspection, renewal, verification, and public CA export.
+  Existing output directories are adopted only when empty with mode `0700` or
+  when they contain the helper's validated marker, before any chmod or chown.
 - Add a compact `dev-session-handoff` skill and workspace rule so handoffs after
   material changes include the stable portal URL.
 - Package an exact coordination-workspace revision as a non-flake input in
@@ -57,11 +59,12 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 
 - Existing work/state directories without portal manifests are not migrated.
   The one existing schema-1 manifest is migrated with canonical project and
-  tmux-socket provenance before deployment, and both readers validate all
+  Codex provenance before deployment, and both readers validate all
   manifests before DNS publication. New manifests are additive, and the helper must refuse to retrofit
   an already-running unshared tmux session onto a new browser thread. Before
-  deploying the portal, integrate its workspace helper into the live checkout;
-  an older helper must not mutate a portal-managed initiative.
+  deploying the portal, drain legacy managed sessions from the default tmux
+  server. Portal-managed operations use a configuration-owned immutable wrapper
+  and fail closed when deployed runtime configuration is incomplete.
 - The portal remains useful for status and files if GitHub or Codex is offline,
   and reports those integrations as unavailable without failing the page.
 - Active sessions use live branch comparisons. Finalization preserves metadata
@@ -82,27 +85,31 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
   idempotency key. A timeout after remote acceptance is therefore ambiguous.
   Recovery accepts one matching candidate and refuses conflicts; exactly-once
   behavior is guaranteed only for local journaled state, not the remote App
-  Server boundary.
+  Server boundary. A completed matching browser request is replayed without
+  recreating runtime authority, tmux, a thread, or its initial turn.
 - Browser-created tmux sessions live on a dedicated keeper whose definition is
   independent of the workspace source pin and which refuses an already-used
-  absolute socket path. Every new manifest records the exact tmux socket so
+  absolute socket path. Host-only authority records the live tmux identity;
   attach commands work across `TMUX_TMPDIR` differences and are hidden when
   provenance is unknown. A separate systemd service runs the pinned Codex App
   Server directly on an explicit Unix socket; the portal soft-depends on it and
   has no routine daemon lifecycle authority. New browser threads receive the
   exact authority directory, tmux socket, Codex executable, App Server socket,
-  and Codex version in their environment. Stop, remove, finalization, stale
-  recovery, and host rollback refuse to proceed while an associated turn is
-  active. The web service uses main-process-first
+  Codex version, stable portal command, and fail-closed runtime marker in their
+  environment. Stop, remove, and finalization quiesce the native terminal
+  client before checking persisted thread state, restore it when refusal is
+  necessary, and cannot race a new managed terminal turn. Stale recovery and
+  host rollback also refuse active turns. The web service uses main-process-first
   systemd termination so creation requests drain before residual children are
   killed at the stop timeout.
 - Runtime serialization uses uid-private host locks adjacent to the authority
   records, under a root-owned parent that is not writable from the development
   container. Workspace lock files remain only for ordinary local sessions that
   have no deployed runtime-authority directory. Rollback takes the global host
-  gate exclusively, validates creation journals and runtime records, verifies
-  all workspace App Server threads are idle, then stops the App Server before
-  changing generations. Any pre-switch failure restarts both services.
+  gate exclusively, requires runtime authority to be empty, verifies every
+  thread on the dedicated App Server is idle, then stops the App Server before
+  changing generations. Root rollback never parses workspace-controlled
+  journals. Any pre-switch failure restarts both services.
 - No database, API, protocol, or persistent project state is changed. Rolling
   compatibility is limited to the local workspace helper, its schema-1 manifest,
   and the pinned portal protocol. Explicit validation rejects mismatches before
@@ -110,9 +117,10 @@ starting an ordinary `dev-session` that can also be attached from a terminal.
 - The implementation will prepare and verify configuration only. The user owns
   deployment of both internal DNS servers and the aitherdev NixOS generation,
   as well as CA trust installation on client devices.
-- Rollback uses the exact pre-deployment NixOS system paths captured separately
-  from aitherdev and both internal DNS servers. Tracking files and Codex
-  histories remain readable.
+- Rollback uses exact pre-deployment and deployed NixOS system paths recorded
+  separately for aitherdev and both internal DNS servers. The predecessor is an
+  idempotent no-op and an unrelated third generation is refused. Tracking files
+  and Codex histories remain readable.
 
 ## Testing plan
 

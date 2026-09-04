@@ -638,6 +638,85 @@ lifecycle: active
 - The mandatory review must now be rerun against these exact heads before long
   `confctl build` validation begins.
 
+## Final review freeze
+
+- The eighth remediation checkpoint advanced shared workspace `master` to
+  `e37b3102`. As required for reusable workspace development, the six focused
+  feature commits were then rebased onto that current master and force-pushed.
+- The frozen workspace head is
+  `176bc5eb8246027785be5222fcc87af32ec648a8`. It is a descendant of current
+  `origin/master`, and its worktree is clean.
+- `confctl inputs channel set --commit` regenerated the configuration pin from
+  the clean channel-declaration commit. Generated commit `100a1840` pins the
+  exact rebased workspace head. The four-commit configuration branch is clean
+  and force-pushed at `8f738ec0caa08536cd80e5c6f91cbbfc328b43dc`.
+- The exact pinned package builds successfully as
+  `/nix/store/2n9airdbsmr8nj2lv6dz60w3zlpwz72f-workspace-portal-0.1.0`
+  with NAR hash
+  `sha256-e6uHG6Clgm9doaZxOAAAT/hNG5dUYRQU9p/OQ5TlJAo=`. The package build runs
+  all Go, `dev-session`, PKI, and rollout tests.
+- The post-rebase deployment runbook has SHA-256
+  `af219f71a39d94c11b9a2a989860bd5243c6d407814809f6047bb770a0fc6971`.
+  These exact substitutions remain uncommitted during review to avoid another
+  coordination-commit/rebase cycle; they will be committed with the review
+  result.
+- Both GitHub repositories report no Actions runs for the current feature
+  branches. The mandatory review packet is now frozen at the two feature heads,
+  shared tracking commit `e37b3102`, and the runbook hash above.
+
+## Ninth mandatory review and remediation
+
+- All four review lanes completed against workspace `176bc5eb` and
+  configuration `8f738ec0` before remediation. The reports were not clean.
+  They identified persistent-service restarts, non-replayable completed
+  browser creation, a native-terminal idle-check race, incomplete App Server
+  rollback coverage, stale rollback records, a mutable host helper boundary,
+  runtime-authority parser drift, unmarked PKI directories, and smaller schema
+  and closure issues.
+- The tmux keeper and Codex App Server units no longer contain the workspace
+  package or its portal command. Workspace input updates therefore restart the
+  portal only. A shared Nix environment defines session provenance once, and a
+  configuration-owned `workspace-dev-session` wrapper supplies the complete
+  deployed contract to terminal commands.
+- Portal runtime mode now fails closed unless host authority, dedicated tmux,
+  Codex executable and socket, client version, and stable portal command are
+  all configured with absolute paths. The marker is propagated into tmux and
+  App Server thread environments. The runbook drains legacy default-server
+  sessions before the first deployment.
+- A matching completed browser POST now returns the durable slug and thread
+  without recreating authority, tmux, a thread, or the initial turn. This also
+  holds after the live authority and tmux session have disappeared; a retry
+  cannot resurrect a stopped session. Mismatched goals are still refused.
+- Lifecycle operations quiesce the exact managed terminal Codex pane before
+  the authoritative App Server idle check. They restore the client if the turn
+  is active or a later operation fails. Persisted manifest provenance is
+  checked even when tmux or runtime authority is absent.
+- Host rollback now requires every thread on the dedicated App Server to be
+  idle, including root, worktree, archive, and outside-workspace directories.
+  It never parses LXC-writable creation journals or authority JSON; any host
+  authority record blocks rollback without being read.
+- Rollback state schema 2 records both predecessor and deployed generations
+  for aitherdev and each DNS server. The predecessor is an idempotent no-op,
+  only the exact deployed generation may switch back, and any third generation
+  is refused. The packaged helper uses an absolute systemd executable from its
+  Nix closure.
+- Runtime authority validation now preserves JSON key presence and rejects
+  explicit empty or null Codex provenance in both Ruby and Go. Redundant tmux
+  metadata was removed from the unreleased workspace manifest, and the unused
+  Go attach-command API and root authority parser were removed.
+- PKI state and nginx leaf destinations now require either a newly adopted
+  empty mode-`0700` directory or the helper's validated marker before changing
+  permissions or ownership.
+- Remediation quick tests currently pass: 115 `dev-session` tests with 969
+  assertions, 7 PKI tests with 64 assertions, 5 rollout tests with 22
+  assertions, and the complete Go package suite. Exact commit, package, NAR,
+  hook, Nix, race, vet, and review results remain to be refreshed after the
+  fixes are committed.
+- The six focused workspace commits were rebuilt locally after remediation;
+  the provisional head is `008f776`. It will be rebased once onto the tracking
+  checkpoint before the configuration input and deployment attestations are
+  refreshed.
+
 ## Cleanup
 
 - Keep the tmux session and configuration worktree until implementation,
