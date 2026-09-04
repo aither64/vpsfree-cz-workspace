@@ -1,26 +1,26 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-03-dev-session-portal
 
 ## Current status
 
-The deployed portal now creates and resumes sessions, shares Codex with the
-terminal, renders Codex in a full-width tab, and lists the newest dated sessions
-first. Live use of `2026-09-04-test-session-2` exposed another integration gap:
-the Codex thread followed the older checkout-local `bin/dev-session`, which
-created a clean `vpsadminos` worktree but did not add it to `portal.yml`. The
-worktree remains at its original `origin/staging` commit and can be registered
-without recreation. The next workspace revision will also add sanitized Codex
-Markdown, Enter-to-send behavior, conversation-only forks, App Server model and
-reasoning controls, guarded session archival, and vpsAdmin/vpsAdminOS cluster
-status and release controls. Session archival will first ask Codex to prepare
-the initiative, then release clusters, remove clean worktrees, create the exact
-local archive commit, and stop the runtime. It will not push workspace master.
-DNS, CA state, Basic Auth, and the normal configuration-owned Codex update path
-are unchanged. Implementation, review, aitherdev deployment, and live
-validation are pending.
+The complete portal is deployed on aitherdev. It discovers active worktrees
+from the canonical bare repositories even when an older session did not update
+`portal.yml`, renders sanitized Codex Markdown in a full-width tab, sends with
+Enter, supports conversation forks and per-thread model and reasoning controls,
+and visualizes vpsAdmin and vpsAdminOS development clusters. Session completion
+is guarded: Codex first prepares the initiative, then the portal can release
+clusters, remove clean worktrees, create an exact local archive commit, and
+stop the runtime. It never pushes workspace `master`. DNS, CA state, Basic
+Auth, and the configuration-owned Codex update path remain unchanged.
+
+The live `2026-09-04-test-session-2` session now shows its previously missing
+`vpsadminos` worktree and GitHub comparison without requiring the worktree to
+be recreated or manually registered. Implementation, review, deployment, and
+live validation are complete. Client CA installation remains a per-device user
+action rather than initiative work.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
@@ -57,6 +57,7 @@ validation are pending.
   - `portal: preserve origin on same-origin forms`
   - `portal: start initial turn before history materializes`
   - `portal: improve live session interaction`
+  - `portal: add complete development session controls`
 
 ### vpsfree-cz-configuration
 
@@ -73,6 +74,8 @@ validation are pending.
   - `internal-dns: publish workspace portal`
   - `aitherdev: authorize local deployment key`
   - `aitherdev: expose one development session command`
+  - `aitherdev: expose workspace development clusters`
+  - generated `inputs: set aitherVpsfreeWorkspace to 85c333ed`
 
 The top-level shared checkout remains on `master`. Its unrelated modified
 `AGENTS.md` and unrelated untracked files are preserved and are outside this
@@ -409,6 +412,56 @@ entry's source attribution and reproduce in an extension-free browser profile.
   failed with a missing
   `/var/lib/vpsfree-workspace-portal-tls/current/server.pem` error.
 
+## Final session-controls implementation and deployment
+
+- Workspace commit `85c333ed8150b102dd78137e4491bd657a85d7f8` is
+  pushed on `2026-09-03-dev-session-portal`. The standalone package build
+  passed at
+  `/nix/store/g5ba4w1chajz5wybv1r4n3kx4cj32jyr-workspace-portal-0.1.0`.
+- Configuration commits `ef2f478ae460298d4fd103cc34dba1e7e251ac11`
+  and `0e89142397f3c065f70c249a1ee0ed5300b90ebf` are pushed on the
+  configuration feature branch. The latter is the exact generated `confctl`
+  input pin for the workspace commit.
+- Go formatting, all Go tests, Go vet, the race detector, Ruby syntax, shell
+  syntax, JavaScript syntax, and diff checks passed. The Ruby suite passed 131
+  runs and 1,025 assertions with no failures or errors and 10 intentional
+  real-tmux skips. The standalone Nix build also passed the generated Codex
+  0.153 protocol contract, all packaged Go and Ruby tests, PKI tests, password
+  tests, and wrapper checks.
+- Active worktree discovery, manifest conflict reporting, Markdown
+  sanitization, Enter/Shift+Enter behavior, model and reasoning selection,
+  native App Server conversation forks, retryable guarded archival, and
+  unrelated-index preservation all have direct regression coverage.
+- Development-cluster discovery verifies exact process arguments through
+  `/proc`. Manual safety checks confirmed that release leaves unrelated
+  processes alive and stops only the matching vpsAdmin or vpsAdminOS cluster.
+- Configuration formatting, Overcommit, `nix flake check --no-build -L`, and
+  `confctl build -y cz.vpsfree/machines/aitherdev` passed. The build created
+  generation `2026-09-04--22-58-56` with 18 expected derivations and no kernel
+  build.
+- The aitherdev switch completed with both systemd and firewall health checks
+  passing. The current system is
+  `/nix/store/ic4mzr4gl3s8fq3y1hwgiznc2hc4hk1a-nixos-system-aitherdev-26.05.20260903.a5cc6f2`.
+  nginx, the portal, Codex App Server, and the dedicated tmux service are
+  active.
+- The global commands are `dev-session`, `workspace-portal`,
+  `vpsadmin-devcluster`, and `vpsadminos-devcluster`;
+  `workspace-dev-session` is intentionally absent. `dev-session validate`
+  accepts all four live manifests.
+- Live authenticated HTTPS checks passed for model and pending-request APIs,
+  the full-width Codex and Clusters tabs, external JavaScript, strict CSP,
+  HSTS, newest-first index ordering, rendered Markdown, and discovery of the
+  unregistered `vpsadminos` worktree in `2026-09-04-test-session-2`.
+  Unauthenticated access returns 401. The Basic Auth password was not printed.
+- A non-interactive attach reached the expected terminal boundary without the
+  former `NoMethodError`; an interactive terminal is required for tmux.
+- Final GitHub Actions queries found no workflow runs for either feature
+  branch, so no superseded runs required cancellation.
+- The General, Scope/Compatibility, and Failure-Risk/Security xhigh follow-up
+  reviews completed with no findings. Subsequent bounded packaging and process
+  matching corrections were self-reviewed and covered by the full race,
+  standalone Nix, configuration build, deployment, and live checks above.
+
 ## Current-session runtime handoff
 
 This initiative began before the supervised portal runtime was deployed. Its
@@ -556,5 +609,8 @@ contract test supplies Origin explicitly.
   `notes/vpsfree-cz-configuration/2026-09-04-aitherdev-self-deploy-key-bootstrap.md`.
 - Keep both feature branches after integration unless the user explicitly asks
   for deletion.
-- Do not finalize or archive this initiative until deployment, CA installation,
-  live smoke tests, and worktree cleanup are complete.
+- The initiative is complete but remains available for user review. Its portal
+  page now offers `Archive session`; use that action when ready to release any
+  clusters, remove clean worktrees, commit only the exact archive move locally,
+  and stop the managed runtime. Feature branches are retained and the portal
+  does not push `master`.
