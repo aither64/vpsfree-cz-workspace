@@ -17,17 +17,16 @@ lifecycle: active
 - `vpsfree-cz-configuration`
   - branch: `2026-09-03-webui-vps-ipv6`
   - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-cz-configuration`
-  - initial local base: `master` at
-    `3d09a0f1e50184e65f2547a0913f4aa76399f66b`; upstream will be fetched before
-    worktree creation
+  - base: `origin/master` at `57d7c12a2da78d334d338a0e56dd7438376a6973`
 
 ## Status
 
 The vpsAdmin fix and its focused KB capture contract are implemented, committed,
 pushed, reviewed, and green in GitHub Actions. The user has now authorized
 adding the exact vpsAdmin revision to the `vpsadmin` configuration channel and
-fast-forwarding all affected repositories into their default branches. Tracking
-has been expanded before configuration work begins. Deployment and production
+fast-forwarding all affected repositories into their default branches. The
+configuration pin is committed and scoped to `vpsadminServices`; quick
+verification and expanded mandatory review are next. Deployment and production
 KB publication remain out of scope.
 
 ## Commands run
@@ -74,6 +73,17 @@ KB publication remain out of scope.
 - On 2026-09-04, the user authorized a `vpsadmin` channel update in
   vpsfree-cz-configuration followed by default-branch integration. Re-read the
   configuration repository guidance and the mandatory-change-review workflow.
+- Fetched all three project remotes over SSH. vpsAdmin and vpsfree-kb-contracts
+  default branches still match the reviewed feature bases; configuration
+  `origin/master` advanced to `57d7c12a` before its worktree was created.
+- Added the configuration worktree from current `origin/master`. The helper
+  returned nonzero after successfully creating it because the ambient shell
+  lacked its Bundler-managed Overcommit gems. Installed Overcommit and signed
+  both custom hook types inside `nix develop`; no hook was bypassed.
+- Ran `confctl inputs channel set --commit` for channel and role `vpsadmin` at
+  exact revision `d18fe2671abb47deda06ba54b17d5fe68d789478` in the configuration
+  Nix shell, producing commit
+  `8a1666f8f3b14cde8335e7a25e1a1a70becab5a6`.
 
 ## Results
 
@@ -147,6 +157,16 @@ KB publication remain out of scope.
 - vpsfree-kb-contracts GitHub Actions on `c7f0baed` passed: Check run
   `33813611074` completed in 5 minutes 50 seconds, and Managed page runtime run
   `33813610967` completed in 27 minutes 20 seconds.
+- The `vpsadmin` channel maps role `vpsadmin` only to `vpsadminServices`; the
+  `vpsadminStaging` and `vpsadminProduction` node inputs are separate and were
+  not changed.
+- The generated configuration commit updates only the `vpsadminServices`
+  revision, NAR hash, and timestamp from `cbd0fa16` to reviewed vpsAdmin commit
+  `d18fe267`. Its generated changelog contains only the IPv6 capability commit.
+- The configuration pre-commit hook passed Nixfmt. Commit-message hooks passed
+  with only the accepted generated-changelog width warning. The Nix shell's
+  untracked `.bin/rubocop` and `.bundle/config` helper files were inspected and
+  removed; the configuration worktree is clean.
 
 ## Open questions
 
@@ -154,7 +174,6 @@ None.
 
 ## Cleanup
 
-- The two existing worktrees are clean. A configuration worktree still has to
-  be created, and all three must remain until the authorized integrations are
-  complete.
+- All three feature worktrees are clean and must remain until the authorized
+  integrations are complete.
 - The initiative is not eligible for finalization or archival.
