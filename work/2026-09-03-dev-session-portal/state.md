@@ -712,10 +712,14 @@ lifecycle: active
   assertions, and the complete Go package suite. Exact commit, package, NAR,
   hook, Nix, race, vet, and review results remain to be refreshed after the
   fixes are committed.
-- The six focused workspace commits were rebuilt locally after remediation;
-  the provisional head is `008f776`. It will be rebased once onto the tracking
-  checkpoint before the configuration input and deployment attestations are
-  refreshed.
+- The six focused workspace commits were rebuilt locally after remediation and
+  rebased onto tracking checkpoint `6bce61e`; the provisional head is
+  `d4d5932`. The exact pin and deployment attestations are being refreshed.
+- The first exact post-remediation package build reached every Go test and then
+  caught a generated Ruby test helper whose `/usr/bin/env ruby` shebang is
+  unavailable in the Nix sandbox. The test now invokes `RbConfig.ruby`
+  directly. The reusable cause and workaround are recorded in
+  `notes/cross-project/2026-09-04-nix-build-test-shebang.md`.
 
 ## Cleanup
 
