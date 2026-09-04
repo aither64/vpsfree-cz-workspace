@@ -6,15 +6,27 @@ lifecycle: active
 
 ## Current status
 
-The browser form origin fix is deployed on aitherdev and all portal services
-are healthy. Firefox submitted the plain new-session form with `Origin: null`
-because the portal served `Referrer-Policy: no-referrer`; the exact-origin CSRF
-check therefore rejected the portal's own form. Workspace commit
-`portal: preserve origin on same-origin forms` changes the policy to
-`same-origin` without relaxing the CSRF check. The exact pinned generation is
-active, the system profile has converged, and live checks confirm that missing,
-literal `null`, and foreign origins still fail while the exact portal origin
-reaches normal form validation. DNS was left unchanged.
+The empty-thread correction is deployed and the user successfully created the
+new `2026-09-04-testing` session, sent messages, and received Codex responses.
+That live use exposed two follow-up defects: an empty Go pending-request slice
+is encoded as JSON `null`, which Firefox cannot map, and attachment from a
+normal shell derives `nil` from the absent `TMUX` value before calling
+`empty?`. The portal also advertises `--as-is` even though exact known slugs are
+already resolved without it. The next workspace correction will normalize
+empty pending responses to `[]`, retain a browser compatibility fallback,
+treat a missing caller socket as empty, and display the concise exact-slug
+attach command. The host will install that command as `dev-session`, matching
+`./bin/dev-session`; the separate `workspace-dev-session` name will be removed
+because the user does not require backward compatibility. The live testing
+session belongs to the user and will not be reset or recreated during this fix.
+DNS is unchanged. The user also requested a full-width Codex view, so the
+session page will use one top-level tab set for Codex, Handoff, Repositories,
+Plan, State, and curated artifacts instead of a chat sidebar. The index will
+list the newest dated sessions first. The final workspace input pin and
+aitherdev configuration are committed and pushed. Quick tests, mandatory
+review, full builds, the aitherdev-only switch, and read-only live validation
+all pass. The user's `2026-09-04-testing` session and Codex history were not
+mutated.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
@@ -49,6 +61,8 @@ reaches normal form validation. DNS was left unchanged.
   - `flake: package the workspace portal at its source`
   - `flake: make wrapped helpers activation-safe`
   - `portal: preserve origin on same-origin forms`
+  - `portal: start initial turn before history materializes`
+  - `portal: improve live session interaction`
 
 ### vpsfree-cz-configuration
 
@@ -59,10 +73,12 @@ reaches normal form validation. DNS was left unchanged.
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration`
 - Commit subjects:
   - `inputs: add aither workspace source`
-  - generated exact `aitherVpsfreeWorkspace` pin
+  - generated exact `aitherVpsfreeWorkspace` pins through the final workspace
+    revision
   - `aitherdev: host authenticated development workspace portal`
   - `internal-dns: publish workspace portal`
   - `aitherdev: authorize local deployment key`
+  - `aitherdev: expose one development session command`
 
 The top-level shared checkout remains on `master`. Its unrelated modified
 `AGENTS.md` and unrelated untracked files are preserved and are outside this
@@ -73,14 +89,24 @@ initiative.
 - The workspace repository owns the Go portal, embedded responsive UI,
   `dev-session` integration, PKI/password helpers, handoff skill, documentation,
   and Nix package.
+- The host package view excludes only the package's unfixed `dev-session`
+  executable so the NixOS-configured wrapper can own that name. The unrelated
+  `workspace-portal`, `workspace-pki`, and `workspace-portal-password-hash`
+  commands remain installed globally.
 - The portal validates active and archived manifests, renders sanitized
   tracking files and curated artifacts, and enriches repository entries with
   GitHub comparisons and workflow status.
 - A root-supervised Codex App Server listens only on a local Unix socket. The
   portal and tmux terminal client share the same persisted thread. The App
   Server is never exposed on the network.
-- Browser-created sessions use a retry-safe creation journal. Terminal attach
-  goes through `workspace-dev-session attach`, which reconciles the tmux client
+- Browser-created sessions use a retry-safe creation journal. Ready sessions
+  reopen only their exact recorded thread. A creating, unsent session may
+  reconcile the union of loaded and materialized threads for its canonical
+  working directory, but a different candidate is accepted only while fresh
+  and unmaterialized. Before the initial `turn/start`, a temporary schema-2
+  manifest records the durable attempt; retries fail closed until exact history
+  appears or an App Server restart permits a replacement. Terminal attach goes
+  through `dev-session attach`, which reconciles the tmux client
   after an App Server restart.
 - The initial and follow-up message limit is one shared 20,000-byte runtime
   contract. It also publishes worst-case form and JSON transport expansion;
@@ -112,8 +138,11 @@ initiative.
 
 ## Compatibility and deployment
 
-- Existing schema-1 manifests remain readable. Recorded Codex versions are
-  diagnostic only, so compatible ordinary upgrades can resume old sessions.
+- Existing schema-1 manifests remain readable. Completed new sessions are also
+  schema 1. Only an unresolved initial-goal delivery uses schema 2; an older
+  portal rejects that in-flight state, so the corrected version must be
+  redeployed before retrying it. Recorded Codex versions are diagnostic only,
+  so compatible ordinary upgrades can resume old completed sessions.
 - Portal status and local files remain available when GitHub or Codex is down;
   the unavailable integration is reported without failing the page.
 - Active sessions compare live feature branches with repository default
@@ -133,7 +162,94 @@ initiative.
 
 ## Verification
 
-Completed on the current workspace candidate:
+Completed on the committed interaction and layout follow-up:
+
+- Workspace head: `b484025cf0221a5e26e7ce6e76495f10a535d385`.
+- Configuration head: `56b91734e8c10d3417d85d4eea53489543f4bfa6`.
+- All Go packages and Go vet passed. The tests cover JSON `[]` for no pending
+  prompts, the browser fallback for a legacy `null`, the full-width tab
+  structure, and dated newest-first ordering.
+- The Ruby suite passed 128 runs and 1,004 assertions with no failures or
+  errors; 10 real-tmux cases were intentionally skipped. The new test attaches
+  an exact known slug from a shell with no `TMUX` environment value and without
+  `--as-is`.
+- Configuration Nix formatting and `nix flake check --no-build -L` passed
+  after the final exact generated workspace input update. The first
+  configuration commit attempt was correctly rejected because the ambient
+  shell lacked `nixfmt`; rerunning inside `nix develop` ran the declared hook
+  successfully.
+- The first two exact pin attempts failed without changing the lock because
+  GitHub's commit tarball endpoint had not exposed the just-pushed revision.
+  Resolving the pushed feature branch populated the archive, and the required
+  `confctl inputs channel set --commit` retry generated the final pin normally.
+  The two superseded development pins were consolidated into one generated
+  update from the previously deployed revision to the four focused final
+  workspace commits.
+- The first review pass required truly single-purpose workspace commits,
+  retention of the unrelated global PKI/password helper commands, current
+  non-mutating deployment instructions, complete rollback effects, and wider
+  ordering coverage. The rewritten history and tracking resolve those
+  findings. The ordering test now covers active-before-archived grouping,
+  equal-time slug ties, and archived finalization metadata.
+
+Completed for the interaction, command, ordering, and layout follow-up:
+
+- `nix build .#workspace-portal --no-link -L` passed. The Codex protocol
+  contract, all Go packages, 128 packaged dev-session tests, 14 PKI tests, and
+  2 password tests passed. The output is
+  `/nix/store/ww6k662i0wk1zjnii2q22g4ndqn4q18k-workspace-portal-0.1.0`.
+- `confctl build -y cz.vpsfree/machines/aitherdev` passed and created
+  generation `2026-09-04--21-24-39`. It built 18 expected portal and system
+  derivations and did not compile a kernel.
+- `confctl deploy -y cz.vpsfree/machines/aitherdev switch` completed. Its
+  systemd and firewall checks both passed. `/run/current-system` and the system
+  profile resolve to
+  `/nix/store/1wx5h42ifsw1p2j2v22xpy3n926lk6n8-nixos-system-aitherdev-26.05.20260903.a5cc6f2`.
+- nginx, the portal, Codex App Server, dedicated tmux server, and firewall are
+  active; certificate renewal is enabled.
+- `dev-session`, `workspace-portal`, `workspace-pki`, and
+  `workspace-portal-password-hash` are present in the system path.
+  `workspace-dev-session` is absent as requested. `dev-session validate`
+  accepted all three live manifests, and exact dated slugs work without
+  `--as-is` for both URL lookups.
+- Authenticated read-only HTTPS checks confirmed the existing testing session's
+  pending response is an array, its thread response is an object, the Codex
+  panel is the default full-width tab, and its handoff shows
+  `dev-session attach 2026-09-04-testing`. The index lists that session before
+  this older initiative. The page has one external script and retains CSP,
+  HSTS, no-store, and a 401 authentication boundary.
+- A non-TTY `dev-session attach 2026-09-04-testing` reached tmux and failed at
+  the expected terminal boundary without the former Ruby exception or a hang.
+  An interactive terminal remains the appropriate place to attach.
+- Final GitHub Actions queries found no runs for either branch, so no
+  superseded runs needed cancellation.
+
+Completed on the pushed empty-thread correction:
+
+- Workspace head: `3c8de8bd55615cb594884945239dfa41d9b4782d`.
+- Configuration head: `30f7feba2da65e577e5db3f314fc9c5e4dcb46f6`.
+- All Go packages passed, including the black-box test against the exact Codex
+  0.153 executable supplied by the development shell. That test confirms fresh
+  metadata, loaded-thread recovery, first-turn materialization, exact paginated
+  history, and exactly one persisted user request.
+- Go vet and the generated App Server protocol contract passed. The contract
+  includes loaded-thread pagination plus all metadata used for the fresh-thread
+  proof.
+- The Ruby suite passed 127 runs and 1,001 assertions with no failures or errors;
+  10 real-tmux cases were intentionally skipped in the quick pass. It covers
+  ready-thread authority, restart replacement, durable attempt state, stable
+  schema-1 completion, the temporary schema-2 boundary, and shared schema
+  fixtures consumed by both the Ruby and Go validators.
+- `nix flake check --no-build -L` passed in the configuration worktree after
+  the exact generated input pin was updated.
+- The mandatory general-correctness, architecture, scope/compatibility, and
+  failure-risk/security lanes all passed at `xhigh` with no remaining findings.
+  Earlier passes found and drove fixes for ready-thread replacement, adoption
+  of unrelated materialized candidates, duplicate initial delivery after a
+  lost response, materialized empty history, rollback compatibility, and the
+  duplicated Ruby/Go schema contract.
+
+Completed by the final standalone package build:
 
 - `nix develop -c bash -c 'cd portal && env GOFLAGS=-mod=mod go test
   ./internal/web'` passed. The explicit module mode avoids the development
@@ -141,9 +257,8 @@ Completed on the current workspace candidate:
 - `nix build .#workspace-portal --no-link -L`
   - generated Codex schema contract passed
   - all Go packages passed
-  - 124 packaged dev-session tests and 952 assertions passed; 10 real-tmux
+  - 127 packaged dev-session tests and 1,000 assertions passed; 10 real-tmux
     cases were intentionally skipped by the package build
-  - the ambient suite passed all 124 dev-session tests and 1,049 assertions
   - 14 PKI tests and 92 assertions passed, including failed CA export, failed
     nginx reload, retry, atomic marker publication, and inactive nginx
   - 2 password tests and 18 assertions passed
@@ -151,7 +266,7 @@ Completed on the current workspace candidate:
     hidden makeWrapper executables use direct Nix-store Ruby or Bash
     interpreters
   - output:
-    `/nix/store/2bi92hhvc7l34j2hbr6g15bvv5nw9xwl-workspace-portal-0.1.0`
+    `/nix/store/g324kfya7wkxg3rxplby5znmw3icxwqy-workspace-portal-0.1.0`
 
 Completed on the current pushed configuration candidate:
 
@@ -220,8 +335,9 @@ Completed for the browser-origin fix:
   a foreign Origin. The exact portal Origin returned 400 from ordinary form
   validation, proving that it passed the CSRF boundary without creating a
   session. No credential value was printed.
-- The deployed `workspace-dev-session validate` accepted the initiative's
-  portal manifest, and its URL command returned the stable initiative link.
+- The then-installed `workspace-dev-session validate` accepted the
+  initiative's portal manifest, and its URL command returned the stable
+  initiative link.
 
 Completed long configuration builds for the predecessor workspace pin, run
 sequentially to avoid shared confctl log collisions:
@@ -234,11 +350,40 @@ sequentially to avoid shared confctl log collisions:
 - `confctl build -y cz.vpsfree/containers/brq/int.ns1` passed and created
   generation `2026-09-04--15-52-05`.
 
-Still pending:
+Completed for the final empty-thread correction:
 
-- install the public CA on any remaining client devices;
-- create a new session in the browser, send a turn, and attach it from a
-  terminal to complete the real-browser shared-thread client smoke test.
+- `nix flake check --no-build -L` and
+  `confctl build -y cz.vpsfree/machines/aitherdev` passed and created generation
+  `2026-09-04--20-07-45`. The build contained 17 expected portal and system
+  derivations and did not compile a kernel.
+- `confctl deploy -y cz.vpsfree/machines/aitherdev switch` completed. Its
+  systemd and firewall health checks both passed.
+- Both `/nix/var/nix/profiles/system` and `/run/current-system` resolve to
+  `/nix/store/hy7cj91l1m8f0js0nk0jy7ahgjfm5wpl-nixos-system-aitherdev-26.05.20260903.a5cc6f2`.
+  The deployed portal executable resolves beneath
+  `/nix/store/3py2zznrny0gc7f4952qmdm6xh0yf324-workspace-portal-0.1.0`.
+- nginx, the portal, Codex App Server, dedicated tmux server, and firewall are
+  active, and certificate renewal is enabled. Restricted root SSH succeeds.
+- The then-installed `workspace-dev-session validate` accepted both existing
+  portal manifests, and the URL helper returned this initiative's stable URL.
+- DNS still resolves the portal name to `172.16.106.40`. With the custom CA,
+  unauthenticated and deliberately invalid authentication return 401, while
+  valid authentication returns 200 for the root and initiative pages.
+- Missing, literal `null`, and foreign origins return 403 for deliberately
+  invalid session POSTs. The exact HTTPS portal origin reaches ordinary form
+  validation and returns 400, proving the CSRF boundary accepts it without
+  creating a session.
+- Live responses contain the expected no-store, HSTS, same-origin referrer,
+  and strict `script-src 'self'` headers. The initiative page loads the
+  reachable `/static/app.js` asset externally and contains no inline script.
+- Final GitHub Actions queries found no workflow runs for either feature
+  branch, so there were no superseded runs to cancel.
+
+The user subsequently created a working `2026-09-04-testing` session and used
+its shared Codex thread from the browser. That live session is user data and
+must remain untouched while the pending-response, terminal-attachment, layout,
+and ordering corrections are deployed. Installing the public CA on any
+remaining client devices remains user-owned.
 
 ## Browser CSP diagnosis
 
@@ -277,17 +422,35 @@ manifest has a historical thread ID but no endpoint provenance or managed tmux
 authority. The status page, comparisons, workflows, and files are available,
 but the portal correctly keeps this thread non-interactive.
 
-After deployment, `workspace-dev-session start
+After deployment, `dev-session start
 2026-09-03-dev-session-portal --as-is --no-attach --json` attempted to import
 the historical thread. The supervised App Server refused because this running
 Codex process already owns the thread's active writer. The command did not
 change the manifest or create a tmux session. Once the original writer is no
 longer active, the same command can resume the thread and add trusted runtime
-provenance. New sessions created in the portal or through
-`workspace-dev-session start` use the shared App Server and tmux runtime from
-the outset and do not have this legacy handoff condition.
+provenance. New sessions created in the portal or through `dev-session start`
+use the shared App Server and tmux runtime from the outset and do not have this
+legacy handoff condition.
 
 ## Mandatory change review
+
+The interaction, command, ordering, and layout follow-up was reviewed at
+`xhigh`, never max or ultra. Architecture passed on the first run. General,
+Scope/Compatibility, and Failure-Risk/Security found issues that were resolved
+before their clean reruns:
+
+- the four workspace commits are independently reviewable and revertible;
+- the ordering test covers active and archived grouping plus deterministic
+  ties;
+- the global package view preserves the PKI and password-hash helpers while
+  replacing only the session command;
+- deployment instructions describe the pending aitherdev-only switch and
+  non-mutating validation of the user's existing live session;
+- rollback documentation includes the defects, command rename, ordering, and
+  layout effects.
+
+All four final lanes report no Blocking, Important, or Advisory findings for
+workspace `b484025c` and configuration `56b91734`.
 
 The final full review used fresh `gpt-5.6-sol` reviewers at xhigh, never max or
 ultra. Its General, Architecture, Scope, and Risk lanes reviewed workspace

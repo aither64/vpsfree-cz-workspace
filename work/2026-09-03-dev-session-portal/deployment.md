@@ -11,8 +11,9 @@ internal DNS servers. The restricted local deployment key is active, so the
 agent can deploy later aitherdev iterations locally. The first portal
 activation stopped before credential and certificate creation because a
 wrapped helper could not find Bash. The activation-corrected aitherdev
-generation was followed by the browser form origin fix. The current exact
-configuration pin is deployed and healthy. No DNS redeployment is required.
+generation was followed by the browser form origin fix. The interaction,
+layout, ordering, and command follow-up is now deployed and healthy. No DNS
+redeployment was required.
 
 ## Branches
 
@@ -29,8 +30,8 @@ Server protocol is incompatible with the portal.
 
 ## Current deployment
 
-The corrected aitherdev generation was built and deployed from the
-configuration feature branch with the normal confctl workflow:
+The current configuration feature-branch head was built and deployed with the
+normal confctl workflow:
 
 ```sh
 nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
@@ -40,13 +41,11 @@ nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev switch
 The bootstrap generation already activated the local root deployment key and
 portal services. The internal DNS name already resolves to aitherdev.
 
-The completed validation confirmed that the system profile and
-`/run/current-system` select the corrected generation; nginx, the portal,
-Codex App Server, tmux backend, renewal timer, and firewall are healthy; the
-restricted deployment key still authenticates locally; DNS resolves to
-`172.16.106.40`; certificate reconciliation is idempotent; and HTTPS enforces
-Basic Auth. Repeating activation remains safe because password and PKI setup
-validate and reuse complete state, while missing state is created atomically.
+The switch preserved the existing `2026-09-04-testing` session and its Codex
+thread. Validation used only its existing page and read-only API responses; it
+did not reset, recreate, delete, or send a test message to that session.
+Repeating activation remains safe because password and PKI setup validate and
+reuse complete state, while missing state is created atomically.
 
 The browser-origin correction was built and switched only on aitherdev:
 
@@ -81,18 +80,19 @@ place and do not reuse the portal password.
 ## Client handoff
 
 After installing the public CA on a VPN client, open the portal with username
-`aither` and the password at the path above. Retry creating a test session in
-the browser, send a turn, then attach from a terminal with
-`workspace-dev-session attach <slug> --as-is` and confirm that both clients
-show the same thread.
+`aither` and the password at the path above. Open the existing
+`2026-09-04-testing` session and confirm that its conversation loads without a
+pending-request console error. From a terminal, run
+`dev-session attach 2026-09-04-testing`; the full dated slug needs no
+`--as-is`. This attaches to the existing thread without sending a new turn.
 
 ## Rollback
 
-Use the ordinary previous NixOS/confctl generation for each affected machine.
-Portal credentials and CA state can remain on aitherdev for a later redeploy;
-they do not affect the previous generation. If DNS was already deployed, roll
-back both DNS containers or expect the hostname to resolve while the portal is
-offline until the DNS TTL expires.
+For this follow-up, use the ordinary previous aitherdev NixOS/confctl
+generation. Portal credentials and CA state can remain for a later redeploy;
+they do not affect the previous generation. Leave both internal DNS containers
+unchanged; their existing record remains correct whether this generation or
+its predecessor serves the portal.
 
 Rolling aitherdev back to a generation before the deployment key was added also
 removes that root authorization. That rollback is user-owned unless another

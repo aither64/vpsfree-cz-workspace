@@ -23,9 +23,34 @@ of a session that can also be attached from a terminal.
   active and archived initiative manifests, shows GitHub comparisons and
   workflow state, renders sanitized tracking files and curated artifacts, and
   exposes only the required Codex App Server operations.
+- Replace the side-by-side session layout with one full-width tab set for
+  Codex, handoff commands, repositories, plan, state, and curated artifacts.
+  Open the Codex tab by default when a thread is available and keep responsive
+  behavior for narrow screens.
+- Sort active and archived session cards by the date at the start of their
+  slug, newest date first. Within one date, use recorded update time and then
+  the slug for deterministic ordering. This keeps a newly dated session above
+  an older initiative whose tracking files were edited more recently.
 - Keep the `dev-session` integration that creates and resumes one persisted
   Codex thread per initiative and shares it between the browser and terminal
   client through the supervised host App Server.
+- Keep empty pending-request collections as JSON arrays across the Go and
+  browser boundary, with a browser fallback for a rolling deployment that
+  briefly combines an older API response with the corrected asset. Treat an
+  absent caller `TMUX` value as an empty string when attaching from a normal
+  shell. Install one host-configured `dev-session` command on aitherdev, matching
+  the checkout's `./bin/dev-session`, and remove the separate
+  `workspace-dev-session` name. Display exact known slugs without the
+  unnecessary `--as-is` option; unique short-name lookup and explicit
+  `--as-is` remain available.
+- Treat a fresh Codex thread as unmaterialized until its announced rollout path
+  exists. Before the one allowed first-turn RPC, atomically write an in-flight
+  schema-2 manifest with a durable attempt marker. A retry of the same
+  unmaterialized thread must fail closed even when its metadata still looks
+  idle; after materialization it must verify exactly one matching initial user
+  request without sending anything. Limit working-directory reconciliation and
+  replacement to a validated creating, unsent session; ready sessions resume
+  only their authoritative thread ID.
 - Make the workspace repository a flake and the sole owner of the portal Nix
   package. Export `packages.x86_64-linux.workspace-portal`; remove the copied
   package expression and package output from `vpsfree-cz-configuration`.
@@ -59,6 +84,21 @@ of a session that can also be attached from a terminal.
 - Existing schema-1 portal manifests remain readable. Stored Codex versions
   remain diagnostic history; they do not prevent a compatible newer Codex from
   resuming the same thread or validating the same tmux/App Server endpoint.
+- Pending-response normalization and shell attachment do not change manifests,
+  runtime authority, Codex history, or tmux ownership. A corrected portal can
+  serve existing live sessions without recreating them. Rolling back the
+  aitherdev generation restores the pending-response and attachment defects,
+  the sidebar layout, the previous index order, and the former
+  `workspace-dev-session` command; the intentional command rename has no
+  compatibility alias.
+- The Codex 0.153 materialization boundary temporarily uses manifest schema 2
+  only while initial-goal delivery is unresolved. Exact-history verification
+  atomically removes the attempt marker and returns the completed session to
+  schema 1, so older portals can read completed sessions. A rollback rejects an
+  in-flight schema-2 session and cannot progress it; redeploy the corrected
+  portal and retry the same recorded request. Existing schema-1 sessions remain
+  readable, and a legacy ambiguous creating session fails closed until an App
+  Server restart permits a fresh replacement.
 - The portal remains useful for status and files when GitHub or Codex is
   unavailable and reports integrations as unavailable without failing pages.
 - Active sessions use live branch comparisons. Finalized sessions preserve
@@ -100,6 +140,10 @@ of a session that can also be attached from a terminal.
 - Extend `dev-session` tests for compatible version upgrades, runtime endpoint
   authority, session reuse, browser creation, terminal attachment, cleanup,
   and existing manifest compatibility.
+- Cover attachment from a shell with no `TMUX` value, the concise exact-slug
+  attach command shown by the portal, and an empty pending-request response in
+  both the Go API and browser contract.
+- Cover newest-first index ordering for active and archived sessions.
 - Test PKI initialization without a passphrase, repeated activation, file
   ownership and modes, missing or malformed input, leaf renewal, nginx
   installation, and public CA export.
