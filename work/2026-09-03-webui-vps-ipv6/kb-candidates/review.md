@@ -4,7 +4,7 @@ Changed pages: 2
 New pages: 0
 Selected media: 0
 Annotation tags: 2
-Content replacements: 1
+Content replacements: 2
 Managed pages: 0
 
 | Language | Page | Semantic path | Count | Existing text | Candidate text |
@@ -17,6 +17,7 @@ Managed pages: 0
 | Language | Page | Count | Existing text | Candidate text |
 | --- | --- | ---: | --- | --- |
 | cs | navody:vps:ip_adresy | 1 | a potom „Přidat adresy hostitelů“. ↵  ↵  ↵  ↵  | a potom „Přidat adresy hostitelů“. ↵  |
+| en | manuals:vps:ip_addresses | 1 | ====== IP Addresses ====== ↵  | <page>manuals:vps:ip_addresses</page> ↵ ====== IP Addresses ====== ↵  |
 
 ## Managed pages
 

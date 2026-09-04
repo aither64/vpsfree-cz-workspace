@@ -25,10 +25,11 @@ The vpsAdmin fix, documentation-landmark remediation, focused KB capture
 contract, and consolidated `vpsadminServices` configuration pin are committed.
 The two provider/contract feature branches are pushed, and checks against the
 final revisions pass. Checksummed schema-5 Czech and English KB release
-candidates are prepared locally without publishing them. Remediation review at
-the workspace-required `xhigh` effort, the long configuration build, feature
-CI, and default-branch integration remain. Deployment and production KB
-publication remain out of scope.
+candidates are prepared locally without publishing them. The first remediation
+review was resolved and the contract history was split as requested; affected
+review lanes, the long configuration build, feature CI, and default-branch
+integration remain. Deployment and production KB publication remain out of
+scope.
 
 ## Commands run
 
@@ -115,6 +116,20 @@ publication remain out of scope.
 - The user required `xhigh` reasoning for all review work. Updated and pushed
   the workspace rule in commit `6fb7e15`; the pre-existing unrelated
   session-detection edit in `AGENTS.md` remains unstaged and untouched.
+- Ran the remediation review with fresh General, Architecture, Scope, and
+  Risk/compatibility reviewers using `gpt-5.6-sol` at the workspace-required
+  `xhigh` effort. Architecture reported no findings. General required the
+  unrelated production inventory refresh to be split from the feature commit;
+  General and Risk required the English page's reciprocal `<page>` marker;
+  Scope requested only a tracking-language correction.
+- Added the missing English `<page>manuals:vps:ip_addresses</page>` marker,
+  regenerated both schema-5 manifests, and reran the candidate-aware annotation
+  checker successfully. The English release manifest now has SHA-256
+  `5b8a1c7e973b0e480ae5e02f6057723eae06f0a3be9c3f74a76fc2c3f25ee93d`.
+- Rewrote the unmerged vpsfree-kb-contracts history into focused feature commit
+  `9732c49` and independent production-inventory refresh commit `e5ed479`, then
+  force-pushed the feature branch with an explicit lease against its previous
+  remote head `1f7c2bf`.
 
 ## Results
 
@@ -169,11 +184,11 @@ publication remain out of scope.
   idled in the known Playwright close phase. Exact result files were verified
   before interrupting only the two close-hung clients. `bin/validate --update`
   was run immediately after every checkpoint so no result was overwritten.
-- Final vpsfree-kb-contracts checks passed: 42 controls, 34 paths, 35 capture
-  concepts, 3 semantic selectors; all four Ruby test groups passed (60 runs,
-  194 assertions total); and the inventory contains 60 concepts and 120
-  variants.
-- The final contract diff against its base contains eight intended files: pin
+- Pre-remediation vpsfree-kb-contracts checks passed: 42 controls, 34 paths,
+  35 capture concepts, 3 semantic selectors; all four Ruby test groups passed
+  (60 runs, 194 assertions total); and the inventory contains 60 concepts and
+  120 variants.
+- The pre-remediation contract diff contained eight intended files: pin
   metadata, two positive scenario assertions, two inventory entries, and the
   two changed bilingual interface screenshots. vpsAdminOS, page-runtime, and
   unrelated screenshot content are unchanged from the base.
@@ -220,6 +235,11 @@ publication remain out of scope.
   `bin/check` run passed, including 60 Ruby test runs with 194 assertions and
   validation of all 120 screenshot variants. The candidate-aware checker
   reports 92 bindings and 9 explicit exceptions.
+- The first `xhigh` remediation review confirmed that the API authorization,
+  public capability classification, provider-first ordering, dependency pins,
+  and compatibility design remain sound. Its actionable findings were confined
+  to commit separation, the English language-pair marker, and tracking
+  accuracy; all three were corrected before the long configuration build.
 
 ## Open questions
 
@@ -227,6 +247,10 @@ None.
 
 ## Cleanup
 
-- All three feature worktrees are clean and must remain until the authorized
-  integrations are complete.
+- All three feature worktrees must remain until the authorized integrations are
+  complete. The contract worktree is clean; configuration and vpsAdmin
+  cleanliness will be rechecked after review commands.
+- The full KB source/candidate fetch is intentionally untracked and includes
+  private production snapshots. Remove those exact untracked artifacts before
+  finalization while preserving the two tracked public candidates.
 - The initiative is not eligible for finalization or archival.
