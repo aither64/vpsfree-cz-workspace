@@ -966,3 +966,41 @@ lifecycle: active
   review, and deployment handoff are complete.
 - Do not finalize until no review, CI, merge, user deployment handoff, or local
   cleanup remains.
+
+## Simplified packaging and deployment revision
+
+- The user rejected the manual deployment runbook as disproportionate. The
+  revised acceptance criterion is that the user performs only the ordinary
+  aitherdev and two internal-DNS deployments; credentials and TLS state are
+  prepared or imported automatically, with only one-time client CA trust left
+  outside deployment.
+- The workspace repository will own and export the Nix package. The
+  configuration input is renamed `aitherVpsfreeWorkspace` and follows the
+  configuration's existing `nixpkgs` and `llm-agents` inputs.
+- The user explicitly rejected an initiative-specific deployed Codex pin.
+  Pulling `vpsfree-cz-configuration` and deploying aitherdev must continue to
+  update Codex normally. The portal will contract-test against that same Codex
+  and fail the host build if its experimental App Server protocol is
+  incompatible; there is no independent production pin.
+- The configuration branch will be rewritten to remove generated commit
+  `da07e6df59572d6a364f2ec4b8aa19ee3c21ef43` and restore the branch base's
+  ordinary `llm-agents` lock state. The copied configuration package is also
+  removed.
+- Basic Auth remains enabled. A random plaintext password will be prepared at
+  `/home/aither/.local/state/vpsfree-workspace-portal/password` with mode 0600
+  for user `aither`; activation derives nginx's hash without committing the
+  secret.
+- The current API shell is running on aitherdev as `aither`, but has no
+  passwordless sudo and cannot write the final root-owned `/var/lib` paths.
+  Private PKI material will therefore be prepared in a mode-0700 user-owned
+  staging directory. The first NixOS activation validates and imports it into
+  root-owned state and removes the staged CA private key. Later leaf renewal is
+  automatic and noninteractive under the unencrypted root-only CA key.
+- The specialized rollout helper, exact NAR attestation, manual rollback
+  capture, and exclusive deployment window are removed. Ordinary confctl/NixOS
+  generations provide the deployment and rollback boundary.
+- The implementation remains on the existing clean development branches
+  `2026-09-03-dev-session-portal` in the workspace and
+  `vpsfree-cz-configuration` worktrees. This continuation is explicitly
+  authorized by the user's request to implement the revised plan even though
+  the current API shell is outside the managed tmux environment.
