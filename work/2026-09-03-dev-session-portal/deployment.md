@@ -12,9 +12,9 @@ deploy aitherdev or either internal DNS server.
 ## Revisions
 
 - Workspace branch: `2026-09-03-dev-session-portal`
-- Workspace source: `4a300149052342665233c901fee92e2ec09e4fc9`
+- Workspace source: `c027bdcbde7d0a323f391733b63ec385544f6426`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: `5fba4dd7733a2a50600cd28c452e8c9ba2ac157a`
+- Configuration source: `8b9adba722112a79a2b289f5b54f1a36a7cd506e`
 
 The configuration lock selects the workspace revision above. It continues to
 use the ordinary `llm-agents` input, so a normal configuration pull and deploy
@@ -34,8 +34,8 @@ confctl workflow used for other aitherdev and internal-DNS changes:
 
 Activation reads the already prepared password from
 `/home/aither/.local/state/vpsfree-workspace-portal/password`, derives nginx's
-Basic Auth file, creates or validates the root-owned CA, installs the server
-certificate, and publishes the public CA at:
+Basic Auth file, atomically creates or reconciles the root-owned CA and leaf,
+installs the server certificate, and publishes the public CA at:
 
 ```text
 /var/lib/vpsfree-workspace-portal-public/ca.pem

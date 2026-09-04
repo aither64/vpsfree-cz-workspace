@@ -13,19 +13,26 @@ lifecycle: active
 
 ## Status
 
-- Portal service, `dev-session` integration, PKI helper, tests, documentation,
-  handoff skill, and workspace branch policy are implemented on the dedicated
-  workspace feature branch.
+- The complete portal implementation is committed, clean, and pushed at
+  workspace `c027bdcbde7d0a323f391733b63ec385544f6426`. The consuming
+  configuration is committed, clean, and pushed at
+  `8b9adba722112a79a2b289f5b54f1a36a7cd506e` and pins that
+  exact workspace revision through the `confctl`-managed
+  `aitherVpsfreeWorkspace` input.
+- Review remediation makes CA initialization atomic, certificate installation
+  convergent and serialized, Basic Auth bootstrap executable-tested, and the
+  workspace/config runtime plus configured-Codex protocol contracts
+  build-checked.
+- The high-risk mandatory review rerun is in progress in all four applicable
+  lanes using `gpt-5.6-sol` at `xhigh`. No `max` or `ultra` review is running.
+- The workspace package build and complete aitherdev derivation evaluation
+  pass. Long `confctl build` checks for aitherdev and both DNS containers wait
+  for review reconciliation. No deployment has been performed.
+- The Basic Auth password is prepared at
+  `/home/aither/.local/state/vpsfree-workspace-portal/password`, owned by uid
+  1000 at mode 0600. Its value has not been printed or recorded.
 - Current Codex thread registered as
   `01a0678c-baae-7600-bcf6-9a0cb6c83232` and named after the initiative.
-- Configuration worktree created from `origin/master` at
-  `57d7c12a2da78d334d338a0e56dd7438376a6973`.
-- The latest completed mandatory review examined workspace `b345dfed` and
-  configuration `6c6d627b`. All four lanes finished before remediation began.
-  The fixes are committed and pushed at workspace
-  `39d5e3d6d1fb31e56416cb67d9383a279b45d840` and configuration
-  `38dca2988818477739438fcdef069ecb6ab406c2`. Fresh review is pending; no long
-  configuration build or deployment has started.
 - The top-level checkout already contained unrelated changes, including a
   modification to `AGENTS.md`; it remains preserved outside this initiative's
   patch. The feature no longer contains that hunk. If its owner has not
@@ -33,7 +40,13 @@ lifecycle: active
   reverse that patch briefly with an empty index, fast-forward, reapply it, and
   verify that the resulting `AGENTS.md` diff is byte-for-byte identical.
 
-## Commands run
+## Historical implementation record
+
+The subsections below preserve chronological evidence from superseded designs
+and earlier review cycles. They do not override the current status above or
+the final handoff section appended after review and integration checks.
+
+### Commands run
 
 - `bin/dev-session current`
 - `bin/dev-session start dev-session-portal --no-attach --no-codex`
@@ -73,7 +86,7 @@ lifecycle: active
   with Nix; output:
   `/nix/store/h05r1jlqydflyrn36xgd2g49m8fj8505-workspace-portal-0.1.0`.
 
-## Results
+### Results
 
 - Active slug: `2026-09-03-dev-session-portal`
 - Managed tmux session created as `$36`.
@@ -103,7 +116,7 @@ lifecycle: active
   Tracking-only commits now follow that pre-initiative revision on `master`
   without carrying the implementation.
 
-## Mandatory change review
+### Mandatory change review
 
 - Overall risk: high, because the feature introduces authentication, local-CA
   secrets, a local Codex control protocol, host process behavior, TLS,
@@ -133,7 +146,7 @@ lifecycle: active
   review lane because authentication and protocol remediation change design
   boundaries.
 
-## Review remediation checkpoint
+### Review remediation checkpoint
 
 - All four initial reviews finished before the hostname was changed. The
   implementation and runbook now use only
@@ -196,7 +209,7 @@ lifecycle: active
   inspected and removed. Both feature worktrees now have clean tracked and
   untracked status.
 
-## Second mandatory review
+### Second mandatory review
 
 - All four fresh lanes completed against workspace `6119ef8` and configuration
   `6b07356e`, using `gpt-5.6-sol` at `max` effort.
@@ -230,7 +243,7 @@ lifecycle: active
   assertions, 4 PKI tests with 33 assertions, all Go tests, Go vet, JavaScript
   syntax validation, and `nix flake check --no-build`.
 
-## Review rerun checkpoint
+### Review rerun checkpoint
 
 - The final remediation was folded into the four owning workspace commits and
   force-pushed at `d9260fa562392ce9443af970be826efd4b074a9d`.
@@ -248,7 +261,7 @@ lifecycle: active
   authentication, a host security boundary, a cross-project protocol adapter,
   deployment, and rollback. The rerun uses `gpt-5.6-sol` at `max` effort.
 
-## Third mandatory review
+### Third mandatory review
 
 - General, architecture, scope, and risk lanes completed against workspace
   `d9260fa562392ce9443af970be826efd4b074a9d` and configuration
@@ -274,7 +287,7 @@ lifecycle: active
   persistence, protocol, and host-security designs, so affected lanes require a
   fresh rerun.
 
-## Open questions
+### Open questions
 
 - Third-review remediation is committed, tested, repinned, and ready for a
   fresh mandatory review. Long `confctl build` validation follows only after
@@ -283,7 +296,7 @@ lifecycle: active
   because it depends on the installed clients. The VPN portal is the supported
   browser path regardless of native discovery.
 
-## Fourth mandatory review
+### Fourth mandatory review
 
 - The general, architecture/repetition, scope/proportionality, and
   risk/compatibility lanes completed against workspace `d269a6ca` and
@@ -306,7 +319,7 @@ lifecycle: active
   ambiguous. The portal performs bounded single-candidate reconciliation and
   refuses conflicts; it does not claim exactly-once remote creation.
 
-## Fourth-review remediation checkpoint
+### Fourth-review remediation checkpoint
 
 - Removed top-level Git history inspection from browser creation and added a
   hostile `core.fsmonitor` regression. Tracking creation and goal seeding now
@@ -353,7 +366,7 @@ lifecycle: active
 - The fifth mandatory review must rerun all four high-risk lanes against these
   final heads before the deferred `confctl build` commands begin.
 
-## Fifth mandatory review
+### Fifth mandatory review
 
 - The general, architecture/repetition, scope/proportionality, and
   risk/compatibility lanes completed against workspace
@@ -381,7 +394,7 @@ lifecycle: active
 - No code changed and no long configuration build ran while the fifth review
   lanes were active.
 
-## Fifth-review remediation in progress
+### Fifth-review remediation in progress
 
 - After committing this checkpoint, the workspace feature branch was rebased
   onto shared `master` at `4264e32`, so it can be integrated by fast-forward.
@@ -413,7 +426,7 @@ lifecycle: active
 - The fifth-review findings require one final review rerun against the new exact
   heads before long `confctl build` validation begins.
 
-## Third-review remediation checkpoint
+### Third-review remediation checkpoint
 
 - The portal no longer executes Git while rendering active or archived
   sessions. Repository links come only from the strict manifest contract, and
@@ -454,7 +467,7 @@ lifecycle: active
   installed outside the Nix shell. The same force-with-lease push passed through
   the repository's Nix development shell without bypassing hooks.
 
-## Sixth mandatory review and remediation
+### Sixth mandatory review and remediation
 
 - General, architecture/repetition, scope/proportionality, and
   risk/compatibility reviews completed against frozen workspace `72e21da1` and
@@ -518,7 +531,7 @@ lifecycle: active
 - Next steps are fresh review of these exact heads and, only after it passes,
   the long configuration builds.
 
-## Seventh mandatory review and remediation
+### Seventh mandatory review and remediation
 
 - All four lanes finished against workspace `b345dfed` and configuration
   `6c6d627b` before remediation began. The review was not clean.
@@ -585,7 +598,7 @@ lifecycle: active
   revision substitutions and runbook hardening are still uncommitted tracking
   changes in the shared top-level checkout.
 
-## Eighth mandatory review and remediation
+### Eighth mandatory review and remediation
 
 - All four review lanes completed against workspace `39d5e3d6` and
   configuration `38dca298` before files changed. The reports were not clean:
@@ -638,7 +651,7 @@ lifecycle: active
 - The mandatory review must now be rerun against these exact heads before long
   `confctl build` validation begins.
 
-## Final review freeze
+### Final review freeze
 
 - The eighth remediation checkpoint advanced shared workspace `master` to
   `e37b3102`. As required for reusable workspace development, the six focused
@@ -664,7 +677,7 @@ lifecycle: active
   branches. The mandatory review packet is now frozen at the two feature heads,
   shared tracking commit `e37b3102`, and the runbook hash above.
 
-## Ninth mandatory review and remediation
+### Ninth mandatory review and remediation
 
 - All four review lanes completed against workspace `176bc5eb` and
   configuration `8f738ec0` before remediation. The reports were not clean.
@@ -721,7 +734,7 @@ lifecycle: active
   directly. The reusable cause and workaround are recorded in
   `notes/cross-project/2026-09-04-nix-build-test-shebang.md`.
 
-## Tenth mandatory review freeze
+### Tenth mandatory review freeze
 
 - Shared workspace `master` is frozen at
   `015a5be8a8b7684fab3a203e22428960878b9179`. The six focused workspace
@@ -750,7 +763,7 @@ lifecycle: active
   This review freeze remains uncommitted until the mandatory review records
   its result, avoiding a self-referential tracking rebase and repin cycle.
 
-## Eleventh review remediation and xhigh freeze
+### Eleventh review remediation and xhigh freeze
 
 - The tenth review initially used `max` under the former high-risk policy. The
   architecture lane completed and found three blocking integration defects:
@@ -801,7 +814,7 @@ lifecycle: active
 - The final mandatory review will use fresh `xhigh` reviewers against these
   exact commits, package, and runbook.
 
-## Xhigh mandatory review findings
+### Xhigh mandatory review findings
 
 - Risk remains high. Four fresh standalone reviewers used `gpt-5.6-sol` at
   `xhigh`; no `max` reviewer was started. General, architecture/repetition,
@@ -843,7 +856,7 @@ lifecycle: active
   HTTPS/authentication, firewall, DNS, shared browser/terminal behavior, and
   rollback smoke tests remain user-owned deployment validation.
 
-## Twelfth review remediation and xhigh freeze
+### Twelfth review remediation and xhigh freeze
 
 - The general review's loaded-thread finding is resolved with the App Server's
   `thread/loaded/list` method. The helper validates every returned identifier,
@@ -893,7 +906,7 @@ lifecycle: active
   an `xhigh` rerun because the scope/proportionality lane had no findings and
   its reviewed boundary did not expand. No `max` review will be started.
 
-## Final xhigh review reconciliation
+### Final xhigh review reconciliation
 
 - Three fresh standalone `gpt-5.6-sol` reviewers reran only the affected
   general, architecture/repetition, and risk/compatibility lanes at `xhigh`.
@@ -960,14 +973,14 @@ lifecycle: active
   `2026-09-04--10-41-56`, respectively. No host or DNS deployment was
   performed.
 
-## Cleanup
+### Cleanup
 
 - Keep the tmux session and configuration worktree until implementation,
   review, and deployment handoff are complete.
 - Do not finalize until no review, CI, merge, user deployment handoff, or local
   cleanup remains.
 
-## Simplified packaging and deployment revision
+### Simplified packaging and deployment revision
 
 - The user rejected the manual deployment runbook as disproportionate. The
   revised acceptance criterion is that the user performs only the ordinary
@@ -1005,13 +1018,13 @@ lifecycle: active
   authorized by the user's request to implement the revised plan even though
   the current API shell is outside the managed tmux environment.
 
-## Simplified implementation checkpoint
+### Simplified implementation checkpoint
 
-- Workspace `4a300149052342665233c901fee92e2ec09e4fc9` now owns the flake package,
+- Workspace `99423bda9f7e74cff6b3ffbf050fc1b94d2556f5` now owns the flake package,
   removes the rollout helper and exact Codex rejection, contract-tests the
   configured App Server methods, and treats stored client versions as
   diagnostic history after compatible upgrades.
-- Configuration `5fba4dd7733a2a50600cd28c452e8c9ba2ac157a` has three feature commits:
+- Configuration `19cc174a455f5fef5d59cabbfd6d09ff18ca209a` has three feature commits:
   the final aitherdev integration, the `confctl`-generated
   `aitherVpsfreeWorkspace` pin, and internal DNS. It follows the existing
   `nixpkgsStable` and `llm-agents` inputs and contains neither a copied portal
@@ -1027,7 +1040,7 @@ lifecycle: active
 - Root-side CA generation replaced the drafted staging import. This removes an
   unnecessary privileged ingestion boundary from user-writable private-key
   state while preserving the one-deploy host setup.
-- Quick checks pass: 118 `dev-session` tests with 996 assertions, 8 PKI tests
+- Quick checks pass: 118 `dev-session` tests with 1000 assertions, 8 PKI tests
   with 71 assertions, all Go tests, JavaScript syntax, workspace package build,
   workspace and configuration no-build flake checks, Nix parsing/formatting,
   configuration hooks, and channel evaluation. The first ambient Go attempt
