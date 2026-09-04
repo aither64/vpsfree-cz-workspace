@@ -102,6 +102,9 @@ of a session that can also be attached from a terminal.
   verification, permissions, and fail-closed malformed credential state.
 - Verify that the configured deployment-key fingerprint matches the local
   public key and that the key is authorized only for aitherdev root.
+- Exercise or inspect the installed wrapped helper entry points under an empty
+  ambient `PATH`, so portable source shebangs cannot survive in makeWrapper's
+  hidden executables and fail during NixOS activation.
 - Run Go tests, race tests, vet, JavaScript tests, Ruby tests, workspace flake
   checks/builds, repository hooks, Nix formatting, internal DNS validation, and
   `confctl build` for aitherdev plus both internal DNS servers.

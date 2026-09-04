@@ -6,12 +6,14 @@ lifecycle: active
 
 ## Current status
 
-The implementation remains on development branches and has not been deployed.
-The current aitherdev generation does not authorize the new local deployment
-key, so the initiative stays active until the user performs one bootstrap
-aitherdev deployment, deploys both internal DNS containers, and installs the
-public CA on client devices. Later aitherdev iterations can be deployed by the
-agent.
+The user deployed the aitherdev candidate and both internal DNS containers.
+The bootstrap installed the restricted local root key, so later aitherdev
+iterations can now be deployed by the agent. The first aitherdev activation did
+not complete: the wrapped password helper retained `#!/usr/bin/env bash` behind
+makeWrapper while activation supplied an empty ambient `PATH`. Credential and
+PKI creation stopped before the CA was created, and nginx could not load the
+missing portal certificate. The portal, Codex App Server, and tmux backend are
+running, but HTTPS remains unavailable until the packaging fix is redeployed.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
@@ -166,8 +168,26 @@ log collisions:
 
 Still pending:
 
-- user bootstrap deployment of aitherdev, user deployment of both DNS servers,
-  and live HTTPS, authentication, browser, and terminal-attach smoke tests.
+- package and redeploy the activation-shebang fix on aitherdev;
+- install the public CA on client devices and complete live HTTPS,
+  authentication, browser, and terminal-attach smoke tests.
+
+## First deployment diagnosis
+
+- Restricted root SSH with `/home/aither/.ssh/id_ed25519` succeeds after the
+  bootstrap deployment.
+- `workspace-portal`, `workspace-codex-app-server`, the dedicated tmux server,
+  and the renewal timer are active.
+- `/run/current-system` stayed on the previous generation because activation
+  failed before its final update, while the system profile and systemd units
+  point at the new candidate.
+- The installed makeWrapper launchers have store-path Bash shebangs, but their
+  hidden `.workspace-*-wrapped` executables retain portable `/usr/bin/env`
+  shebangs. The password helper is the first such executable and cannot find
+  Bash in activation's deliberately minimal path.
+- No workspace PKI, nginx TLS, or public CA directories were created. nginx is
+  failed with a missing
+  `/var/lib/vpsfree-workspace-portal-tls/current/server.pem` error.
 
 ## Mandatory change review
 
