@@ -14,7 +14,8 @@ of a session that can also be attached from a terminal.
   `dev-session` integration, tests, flake packaging, PKI helper, credential
   preparation, documentation, handoff skill, and workspace rules.
 - `vpsfree-cz-configuration`: workspace flake input, aitherdev services and
-  nginx configuration, VPN firewall access, and internal DNS record.
+  nginx configuration, VPN firewall access, internal DNS record, and a
+  narrowly scoped root deployment key for aitherdev.
 
 ## Approach
 
@@ -47,6 +48,11 @@ of a session that can also be attached from a terminal.
   Renew leaf certificates automatically under the same CA and reload nginx.
 - Remove the specialized rollout/rollback helper and its deployment machinery.
   Use ordinary confctl/NixOS generations for deployment and rollback.
+- Add the existing local ED25519 public key to the shared key data without
+  including it in the broad `aither.all` set. Authorize it only for root on
+  aitherdev, restrict it to local source addresses, and disable SSH forwarding
+  and PTY features so later portal iterations can be deployed locally with
+  `confctl` without creating a reusable remote login credential.
 
 ## Compatibility and deployment
 
@@ -62,14 +68,24 @@ of a session that can also be attached from a terminal.
   rotating credentials. The leaf renewal timer replaces only the server pair.
 - No password, CA private key, or server private key is committed or placed in
   the Nix store. The portal process cannot read the root-owned CA or nginx key.
+- The portal, Codex App Server, and terminal Codex share the `aither` account,
+  which owns the local deployment private key. Authenticated browser control of
+  Codex is therefore intentionally equivalent to local aitherdev root command
+  execution after bootstrap. Basic Auth and VPN reachability protect that
+  boundary.
 - The implementation prepares the Basic Auth password on aitherdev; activation
-  creates all root-owned authentication and PKI state. The user only deploys
-  `cz.vpsfree/machines/aitherdev` and the two internal DNS containers.
-  Installing the public custom CA on each client is an unavoidable one-time
-  client action.
+  creates all root-owned authentication and PKI state. The currently deployed
+  generation does not authorize the new deployment key, so the user performs
+  one bootstrap deployment of `cz.vpsfree/machines/aitherdev`. Later aitherdev
+  iterations can be deployed by the agent. The user deploys the two internal
+  DNS containers and installs the public custom CA on each client.
 - Deploy aitherdev before publishing DNS so the hostname does not resolve until
   HTTPS is ready. Standard confctl generation rollback is sufficient; portal
   state is additive and can remain on disk if the configuration is rolled back.
+  Rolling aitherdev back before the deployment-key generation also removes that
+  authorization. Such a rollback is user-owned unless another root credential
+  is available, and another user bootstrap is required before agent deployment
+  can resume.
 
 ## Testing plan
 
@@ -84,6 +100,8 @@ of a session that can also be attached from a terminal.
   installation, and public CA export.
 - Test Basic Auth bootstrap for initial generation, idempotent reuse, hash
   verification, permissions, and fail-closed malformed credential state.
+- Verify that the configured deployment-key fingerprint matches the local
+  public key and that the key is authorized only for aitherdev root.
 - Run Go tests, race tests, vet, JavaScript tests, Ruby tests, workspace flake
   checks/builds, repository hooks, Nix formatting, internal DNS validation, and
   `confctl build` for aitherdev plus both internal DNS servers.

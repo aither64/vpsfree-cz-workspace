@@ -7,8 +7,11 @@ lifecycle: active
 ## Current status
 
 The implementation remains on development branches and has not been deployed.
-The initiative stays active until the user deploys aitherdev and both internal
-DNS containers and installs the public CA on client devices.
+The current aitherdev generation does not authorize the new local deployment
+key, so the initiative stays active until the user performs one bootstrap
+aitherdev deployment, deploys both internal DNS containers, and installs the
+public CA on client devices. Later aitherdev iterations can be deployed by the
+agent.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
@@ -54,6 +57,7 @@ DNS containers and installs the public CA on client devices.
   - generated exact `aitherVpsfreeWorkspace` pin
   - `aitherdev: host authenticated development workspace portal`
   - `internal-dns: publish workspace portal`
+  - `aitherdev: authorize local deployment key`
 
 The top-level shared checkout remains on `master`. Its unrelated modified
 `AGENTS.md` and unrelated untracked files are preserved and are outside this
@@ -89,6 +93,15 @@ initiative.
   failures retry.
 - Only the VPN interface can reach the HTTPS listener. Internal DNS maps the
   portal name to aitherdev at `172.16.106.40`.
+- The local ED25519 public key is a named configuration entry excluded from the
+  broad `aither.all` set and authorized only for root on aitherdev. It enables
+  later local confctl deployments after a one-time user bootstrap. The
+  authorized-key record accepts only local source addresses and disables SSH
+  forwarding and PTY features.
+- Portal and Codex processes intentionally share the `aither` account that owns
+  the deployment private key. Authenticated portal interaction is therefore
+  effectively root command access to aitherdev after bootstrap; VPN reachability
+  and Basic Auth are the controlling boundary.
 
 ## Compatibility and deployment
 
@@ -103,7 +116,7 @@ initiative.
   across ordinary NixOS redeployments and generation rollbacks.
 - Deployment order is aitherdev first, then both DNS containers. Rollback uses
   ordinary previous NixOS/confctl generations. See `deployment.md` for CA
-  trust removal and compromise recovery.
+  trust removal, key-bootstrap rollback behavior, and compromise recovery.
 - No persisted database, API, protocol between production services, or
   vpsAdminOS node format changes are involved. Mixed versions are safe because
   the portal and DNS entry are additive and a missing portal only makes the
@@ -116,29 +129,32 @@ Completed on the current workspace candidate:
 - `nix build .#workspace-portal --no-link -L`
   - generated Codex schema contract passed
   - all Go packages passed
-  - 121 packaged dev-session tests and 924 assertions passed; 10 real-tmux
+  - 124 packaged dev-session tests and 952 assertions passed; 10 real-tmux
     cases were intentionally skipped by the package build
-  - the ambient suite passed all 121 dev-session tests and 1,021 assertions
+  - the ambient suite passed all 124 dev-session tests and 1,049 assertions
   - 14 PKI tests and 92 assertions passed, including failed CA export, failed
     nginx reload, retry, atomic marker publication, and inactive nginx
   - 2 password tests and 18 assertions passed
-  - output: `/nix/store/vihxms8wyh9431vb48q8cn9ji46rmi4h-workspace-portal-0.1.0`
+  - output: `/nix/store/rdhsmfwnf5k8wxwjfiyvsy8g5dqpg79m-workspace-portal-0.1.0`
 
-Completed on the previous pushed configuration candidate; repeat after its
-final workspace repin:
+Completed on the current pushed configuration candidate:
 
 - `nix flake check --no-build -L` passed.
 - `named-checkzone vpsfree.cz configs/internal-dns/zone.vpsfree.cz.` loaded
   serial `2026090300` successfully. It reports the repository's existing
   `@fqdn@` template-name warning.
-- Feature-branch GitHub Actions queries returned no runs at that checkpoint.
+- The configured deployment-key fingerprint matches
+  `/home/aither/.ssh/id_ed25519.pub`.
+- Read-only bootstrap probes confirmed that the current generation rejects the
+  key for root SSH and that local non-interactive sudo needs a password. This
+  is expected until the user deploys the key-bearing generation once.
+- Feature-branch GitHub Actions queries returned no runs.
 
 Still pending:
 
-- final mandatory-review rerun after the current remediation is repinned;
 - sequential `confctl build` of aitherdev, prg/int.ns1, and brq/int.ns1;
-- user-owned deployment and live HTTPS, authentication, DNS, browser, and
-  terminal-attach smoke tests.
+- user bootstrap deployment of aitherdev, user deployment of both DNS servers,
+  and live HTTPS, authentication, browser, and terminal-attach smoke tests.
 
 ## Mandatory change review
 
@@ -177,13 +193,32 @@ The first remediation rerun reviewed workspace `0ae37664` and configuration
 The branch is rebased, the policy commit is split, transport ceilings and all
 numeric messages derive from the runtime contract, `thread/start` validates
 the returned cwd, and the tested PKI reconciler now owns the export/reload
-state machine. Final affected-lane review waits for the configuration repin.
+state machine.
+
+The next General rerun reviewed workspace `71e04754` and configuration
+`f04ea365`. It confirmed the durable current-path, Git-index, and Git-history
+slug tombstone behavior with no Blocking or Important findings. Its two
+Advisories were fixed in the owning `dev-session` commit: invalid
+`--json --attach` input is rejected before any creation side effect, and the
+index-only tombstone path has direct regression coverage.
+
+The final General and first Risk reruns reviewed workspace `7e626dd4` and
+configuration `69d60c27`, including the dedicated aitherdev deployment key.
+The General bootstrap finding is resolved by the explicit one-time user
+deployment and this updated tracking. Risk review additionally required the
+pre-key rollback reconnect failure and authorization-removal behavior to be
+documented; `deployment.md` now records both. A final security-only Risk rerun
+reviewed configuration `6f5ce257` after the key was restricted to local source
+addresses and cleared with no Blocking, Important, or Advisory findings. All
+review work used fresh `gpt-5.6-sol` reviewers at xhigh, never max or ultra.
 
 ## Handoff and cleanup
 
 - User deployment instructions: `deployment.md`.
 - Reusable first-input bootstrap lesson:
   `notes/vpsfree-cz-configuration/2026-09-04-confctl-add-new-input.md`.
+- Reusable local deployment-key bootstrap and rollback lesson:
+  `notes/vpsfree-cz-configuration/2026-09-04-aitherdev-self-deploy-key-bootstrap.md`.
 - Keep both feature branches after integration unless the user explicitly asks
   for deletion.
 - Do not finalize or archive this initiative until deployment, CA installation,

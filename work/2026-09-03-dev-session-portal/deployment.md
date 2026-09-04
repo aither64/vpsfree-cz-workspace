@@ -6,8 +6,11 @@ The portal will be available at:
 https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/
 ```
 
-The implementation prepares all local files on aitherdev. This session does
-not deploy aitherdev or either internal DNS server.
+The implementation prepares all local files on aitherdev. The current deployed
+generation does not authorize the local deployment key, so this first
+aitherdev deployment remains a user bootstrap step. After it is active, later
+aitherdev iterations can be deployed locally by the agent. The user continues
+to deploy both internal DNS servers.
 
 ## Branches
 
@@ -27,10 +30,16 @@ Server protocol is incompatible with the portal.
 From a checkout of the configuration feature branch, use the normal confctl
 workflow:
 
-1. Deploy `cz.vpsfree/machines/aitherdev`.
+1. The user deploys `cz.vpsfree/machines/aitherdev` once to activate the local
+   root deployment key and portal services.
 2. Confirm `nginx`, `workspace-portal`, `workspace-codex-app-server`, and
    `workspace-portal-tmux` are running.
-3. Deploy `cz.vpsfree/containers/prg/int.ns1` and
+3. Confirm that the local `/home/aither/.ssh/id_ed25519` key can authenticate
+   as root on aitherdev. It is not part of the general `aither.all` key set and
+   is not authorized on other machines by this change. Its authorized-key
+   options accept only local source addresses and disable forwarding and PTY
+   features; ordinary non-interactive confctl commands remain allowed.
+4. The user deploys `cz.vpsfree/containers/prg/int.ns1` and
    `cz.vpsfree/containers/brq/int.ns1`.
 
 Activation reads the prepared password from
@@ -46,6 +55,11 @@ Copy only that public certificate to VPN clients and trust it as a TLS root.
 Never copy files from `/var/lib/vpsfree-workspace-pki` or
 `/var/lib/vpsfree-workspace-portal-tls`.
 
+The authenticated portal controls a Codex process running as `aither`, which
+can use the local deployment key. After bootstrap, portal access is therefore
+effectively root command access to aitherdev. Keep both VPN and Basic Auth in
+place and do not reuse the portal password.
+
 After DNS is deployed, verify that the name resolves to `172.16.106.40`, HTTPS
 fails without credentials, and the portal opens with username `aither` and the
 password at the path above. Create a test session in the browser, send a turn,
@@ -60,6 +74,14 @@ they do not affect the previous generation. If DNS was already deployed, roll
 back both DNS containers or expect the hostname to resolve while the portal is
 offline until the DNS TTL expires.
 
+Rolling aitherdev back to a generation before the deployment key was added also
+removes that root authorization. That rollback is user-owned unless another
+root credential is available. An agent-driven `confctl` rollback using only
+this key can activate the old generation, lose access, and then report failure
+when it reconnects to update the system profile. In that case the rollback may
+already be active despite the command failure. The user must bootstrap the next
+aitherdev deployment again.
+
 ## Permanent decommission
 
 1. Roll back or remove the portal configuration on aitherdev and both DNS
@@ -69,6 +91,11 @@ offline until the DNS TTL expires.
    and nginx portal TLS state on aitherdev.
 4. Remove the portal password and any copied public CA files that are no longer
    needed.
+5. Remove the dedicated `confData.sshKeys.aither.aitherdev` authorization if
+   agent-driven aitherdev deployment is no longer wanted.
+
+The existing local private key is not owned by the portal and is not deleted as
+part of portal rollback or decommissioning.
 
 The CA is intentionally not DNS-name-constrained. Client trust removal is
 therefore required for permanent decommission; merely stopping the portal is
