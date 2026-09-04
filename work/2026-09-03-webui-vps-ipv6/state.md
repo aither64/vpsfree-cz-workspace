@@ -14,15 +14,21 @@ lifecycle: active
   - branch: `2026-09-03-webui-vps-ipv6`
   - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-kb-contracts`
   - base: `origin/master` at `46466e83c2293f47bfef3fe516a3b51c2de14c70`
+- `vpsfree-cz-configuration`
+  - branch: `2026-09-03-webui-vps-ipv6`
+  - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-cz-configuration`
+  - initial local base: `master` at
+    `3d09a0f1e50184e65f2547a0913f4aa76399f66b`; upstream will be fetched before
+    worktree creation
 
 ## Status
 
 The vpsAdmin fix and its focused KB capture contract are implemented, committed,
-and pushed. Mandatory high-risk change review is complete and all findings are
-resolved. Quick checks, the corrected bilingual contract captures, the focused
-vpsAdmin browser integration test, and all GitHub Actions pass. No
-implementation work remains. Merge, deployment, KB publication, and initiative
-finalization remain outside this implementation request.
+pushed, reviewed, and green in GitHub Actions. The user has now authorized
+adding the exact vpsAdmin revision to the `vpsadmin` configuration channel and
+fast-forwarding all affected repositories into their default branches. Tracking
+has been expanded before configuration work begins. Deployment and production
+KB publication remain out of scope.
 
 ## Commands run
 
@@ -65,6 +71,9 @@ finalization remain outside this implementation request.
 - Monitored GitHub Actions for both pushed revisions. The requests-plugin
   override is a full-suite trigger, so vpsAdmin CI selected all `tag=ci`
   integration tests instead of only the focused browser scenario.
+- On 2026-09-04, the user authorized a `vpsadmin` channel update in
+  vpsfree-cz-configuration followed by default-branch integration. Re-read the
+  configuration repository guidance and the mandatory-change-review workflow.
 
 ## Results
 
@@ -145,6 +154,7 @@ None.
 
 ## Cleanup
 
-- Both worktrees are clean and active and must remain until any separately
-  authorized merge is complete.
+- The two existing worktrees are clean. A configuration worktree still has to
+  be created, and all three must remain until the authorized integrations are
+  complete.
 - The initiative is not eligible for finalization or archival.

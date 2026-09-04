@@ -12,6 +12,8 @@ existing authorization rules for address discovery and assignment.
   readers and add API/browser regression coverage.
 - `vpsfree-kb-contracts`: pin the vpsAdmin feature revision, assert the restored
   member controls, and regenerate the bound Czech and English screenshots.
+- `vpsfree-cz-configuration`: pin the production `vpsadmin` channel to the
+  reviewed vpsAdmin revision using `confctl`-managed input metadata.
 
 ## Approach
 
@@ -37,6 +39,12 @@ the whitelist, which explains the role-dependent behavior.
   contract fixture.
 - Record the reusable lesson that output-whitelist reductions require consumer
   discovery and an explicit sensitivity classification for each removed field.
+- Update the configuration channel with `confctl inputs channel set --commit`;
+  do not edit its flake lock manually.
+- Integrate the provider and consumers with fresh default-branch worktrees,
+  fetching and rebasing feature branches when required, and use
+  fast-forward-only merges. Merge vpsAdmin first, then the KB contract and
+  configuration consumers that pin the resulting revision.
 
 ## Compatibility and deployment
 
@@ -47,8 +55,16 @@ fixes the existing WebUI; rollback is state-safe but reintroduces the missing
 controls. No coordinated node update is required.
 
 The contract repository pins the pushed vpsAdmin feature commit immutably.
-Merging, deployment, production KB publication, and initiative finalization are
-not part of implementation without separate authorization.
+The configuration channel will pin the same exact commit. The additive API
+response remains safe when API/WebUI/configuration revisions overlap: old
+clients ignore the field, existing WebUI clients recover the IPv6 controls as
+soon as the new API is deployed, and rollback reintroduces only the original
+display regression. The configuration update changes no host protocol, node
+state, database schema, or deployment ordering requirement.
+
+The user authorized merging all affected repositories into their default
+branches. Merging the configuration revision does not authorize deployment or
+production KB publication; those remain separate operational actions.
 
 ## Testing plan
 
@@ -61,5 +77,12 @@ not part of implementation without separate authorization.
   screenshots.
 - After all intended commits and quick checks, run the mandatory high-risk
   review with General, Architecture, Scope, and Risk/compatibility lanes.
-- Resolve review findings, run `webui#vps-user-core`, push both feature branches,
-  and monitor their GitHub Actions results.
+- Resolve review findings, run `webui#vps-user-core`, push both feature
+  branches, and monitor their GitHub Actions results.
+- Run the configuration input update through `confctl`, inspect the generated
+  diff and changelog, and perform focused configuration evaluation for affected
+  vpsAdmin service hosts.
+- Review the expanded committed cross-repository series at high risk before any
+  new long integration/evaluation run, then monitor feature-branch CI.
+- From fresh integration worktrees, fast-forward the current default branches,
+  run repository-appropriate pre-push checks, push, and monitor resulting CI.
