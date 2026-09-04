@@ -7,9 +7,9 @@ session does not deploy aitherdev or the internal DNS servers.
 ## Revisions
 
 - Workspace source branch: `2026-09-03-dev-session-portal`
-- Workspace source: `b43415a3ca278e487c01f6288f74a5f2cf568594`
+- Workspace source: `4dbad1fef784d66bf3c851584498412437a50c46`
 - Configuration branch: `2026-09-03-dev-session-portal`
-- Configuration source: `cb3aba4cda3152f46ce81ea5481e427d57b0a40d`
+- Configuration source: `8f756aca60f3b795694d73d65cfc307dc9be6447`
 
 Check both revisions against `state.md` before running any helper or deployment
 command:
@@ -18,9 +18,52 @@ command:
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD
 git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace rev-parse HEAD)" = \
-  b43415a3ca278e487c01f6288f74a5f2cf568594
+  4dbad1fef784d66bf3c851584498412437a50c46
 test "$(git -C /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/vpsfree-cz-configuration rev-parse HEAD)" = \
-  cb3aba4cda3152f46ce81ea5481e427d57b0a40d
+  8f756aca60f3b795694d73d65cfc307dc9be6447
+```
+
+## 0. Establish an exclusive change window
+
+Current `confctl` releases and older NixOS generations do not share a stable
+per-machine activation mutex. This rollout therefore requires an
+operator-enforced change freeze for aitherdev, `prg/int.ns1`, and `brq/int.ns1`.
+Arrange the freeze with every operator and automation owner before capturing
+rollback state. Pause scheduled or agent-driven deployments to these three
+machines, do not run `confctl deploy`, `nixos-rebuild`, or an unguarded
+`switch-to-configuration` from another shell, and retain the freeze through
+successful validation or complete rollback of all three machines.
+
+The freeze must also exclude unmanaged clients that connect directly to the
+dedicated Codex App Server socket as user `aither`. Portal-managed browser and
+terminal sessions participate in the lifecycle gate; arbitrary same-user
+socket clients do not. Stop those clients before the rollback drain and do not
+start another until the change window is released.
+
+After coordinating the freeze, record the explicit acknowledgement. The
+process checks below catch an activation already in progress; operator
+coordination prevents a new one from starting after the check:
+
+```sh
+set -euo pipefail
+active_pattern='[c]onfctl deploy|[n]ixos-rebuild|[s]witch-to-configuration'
+test -z "$(pgrep -af "$active_pattern" || true)"
+for server in 172.16.9.90 172.19.9.90; do
+  test -z "$(ssh root@"$server" pgrep -af "$active_pattern" || true)"
+done
+read -r -p 'Type EXCLUSIVE-PORTAL-CHANGE-WINDOW to confirm the freeze: ' freeze
+test "$freeze" = EXCLUSIVE-PORTAL-CHANGE-WINDOW
+freeze_dir=/var/lib/vpsfree-workspace-portal-deploy
+freeze_record="$freeze_dir/exclusive-change-window.active"
+sudo install -d -o root -g root -m 0700 "$freeze_dir"
+sudo test ! -e "$freeze_record"
+{
+  date --iso-8601=seconds
+  id
+  printf '%s\n' 'aitherdev prg/int.ns1 brq/int.ns1'
+} | sudo tee "$freeze_record" >/dev/null
+sudo chown root:root "$freeze_record"
+sudo chmod 0600 "$freeze_record"
 ```
 
 ## 1. Record rollback state
@@ -31,14 +74,14 @@ closure before it is used with `sudo`:
 
 ```sh
 set -euo pipefail
-config_revision=cb3aba4cda3152f46ce81ea5481e427d57b0a40d
+config_revision=8f756aca60f3b795694d73d65cfc307dc9be6447
 portal_package="$(nix build --no-link --print-out-paths \
   "github:vpsfreecz/vpsfree-cz-configuration/$config_revision#workspace-portal")"
 test "$portal_package" = \
-  /nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0
+  /nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0
 test "$(nix path-info --json-format 1 --json "$portal_package" | \
   jq -r 'to_entries[0].value.narHash')" = \
-  'sha256-Ui+PEXpv99rcNRtfyM5snNb20cJETLi4FeM4/CxxFYE='
+  'sha256-4wHWkm18tJRikNfkLxVHPa2APCqCdqyio/SR0rqDEFM='
 rollout_helper="$portal_package/bin/workspace-portal-rollout"
 test "$(stat -c %U:%G "$rollout_helper")" = root:root
 test $((8#$(stat -c %a "$rollout_helper") & 8#022)) -eq 0
@@ -50,7 +93,7 @@ is never sourced as shell code:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0/bin/workspace-portal-rollout
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
 git --git-dir="$config_git" fetch origin master
 previous_config_revision=$(git --git-dir="$config_git" rev-parse origin/master)
@@ -89,7 +132,7 @@ that all three captured generations still provide a rollback executable:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0/bin/workspace-portal-rollout
 previous_aitherdev_system="$(sudo "$rollout_helper" get previous_aitherdev_system)"
 previous_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
 previous_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
@@ -125,7 +168,7 @@ leaf certificate. Do not run a writable worktree script as root:
 
 ```sh
 set -euo pipefail
-portal_package=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0
+portal_package=/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0
 pki_helper="$portal_package/bin/workspace-pki"
 test "$(stat -c %U:%G "$pki_helper")" = root:root
 test $((8#$(stat -c %a "$pki_helper") & 8#022)) -eq 0
@@ -197,7 +240,7 @@ appear only after the initial cleanliness check:
 ```sh
 set -euo pipefail
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
-config_revision=cb3aba4cda3152f46ce81ea5481e427d57b0a40d
+config_revision=8f756aca60f3b795694d73d65cfc307dc9be6447
 git --git-dir="$config_git" fetch origin 2026-09-03-dev-session-portal
 test "$(git --git-dir="$config_git" rev-parse \
   origin/2026-09-03-dev-session-portal)" = "$config_revision"
@@ -226,7 +269,7 @@ target_aitherdev_system="$(readlink -f "$aitherdev_generation_link/toplevel")"
 test -x "$target_aitherdev_system/bin/switch-to-configuration"
 # Abort if another deployment advanced the host after rollback capture. The
 # captured generation must still be the immediate predecessor.
-rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0/bin/workspace-portal-rollout
 captured_aitherdev_system="$(sudo "$rollout_helper" get previous_aitherdev_system)"
 test "$(readlink -f /run/current-system)" = "$captured_aitherdev_system" || {
   echo "aitherdev changed after rollback capture; aborting deployment" >&2
@@ -440,7 +483,7 @@ own clean checkout:
 ```sh
 set -euo pipefail
 config_git=/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git
-config_revision=cb3aba4cda3152f46ce81ea5481e427d57b0a40d
+config_revision=8f756aca60f3b795694d73d65cfc307dc9be6447
 git --git-dir="$config_git" fetch origin 2026-09-03-dev-session-portal
 test "$(git --git-dir="$config_git" rev-parse \
   origin/2026-09-03-dev-session-portal)" = "$config_revision"
@@ -469,7 +512,7 @@ test -L "$brq_dns_generation_link"
 brq_dns_generation="$(basename "$(readlink "$brq_dns_generation_link")")"
 target_brq_dns_system="$(readlink -f "$brq_dns_generation_link/toplevel")"
 test -x "$target_brq_dns_system/bin/switch-to-configuration"
-rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0/bin/workspace-portal-rollout
 captured_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
 test "$(ssh root@172.16.9.90 readlink -f /run/current-system)" = \
   "$captured_prg_dns_system" || {
@@ -541,7 +584,7 @@ exact running system paths recorded before deployment:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0/bin/workspace-portal-rollout
 previous_prg_dns_system="$(sudo "$rollout_helper" get previous_prg_dns_system)"
 deployed_prg_dns_system="$(sudo "$rollout_helper" get deployed_prg_dns_system)"
 previous_brq_dns_system="$(sudo "$rollout_helper" get previous_brq_dns_system)"
@@ -624,6 +667,22 @@ Archive or abandon the disposable initiative through the normal workspace
 workflow. Keep the captured system paths in the deployment record after all
 checks pass.
 
+## Release the exclusive change window
+
+Release the externally coordinated freeze only after all aitherdev and DNS
+validation succeeds, or after rollback of every changed machine is complete.
+Retain the acknowledgement as an audit record, then resume paused automation:
+
+```sh
+set -euo pipefail
+freeze_dir=/var/lib/vpsfree-workspace-portal-deploy
+sudo test -f "$freeze_dir/exclusive-change-window.active"
+completed="exclusive-change-window.completed-$(date -u +%Y%m%dT%H%M%SZ)"
+sudo mv -T "$freeze_dir/exclusive-change-window.active" \
+  "$freeze_dir/$completed"
+sudo test -f "$freeze_dir/$completed"
+```
+
 ## Certificate renewal
 
 Use the helper installed by the active NixOS system so renewal uses the pinned
@@ -663,7 +722,11 @@ deployed or not, use the guarded host rollback below immediately before
 restoring aitherdev. The old system has no keeper service, so first stop and
 finalize or abandon every session created after deployment that must survive.
 This includes terminal-created sessions: the deployed environment records all
-of them in the host-only authority directory.
+of them in the host-only authority directory. Keep the exclusive change window
+active until every changed machine has been restored and verified. Also stop
+every unmanaged same-user client of the dedicated App Server socket; such a
+client does not participate in the portal authority gate and could otherwise
+start a turn between the idle scan and service shutdown.
 
 Stopping the portal drains active creation handlers before the checks. If a
 host authority record, managed session, or App Server turn remains active, the
@@ -671,7 +734,7 @@ block restarts the App Server and portal and refuses the destructive rollback:
 
 ```sh
 set -euo pipefail
-rollout_helper=/nix/store/s8bl12zfr4l453l36gbj894xfqjhnniv-workspace-portal-0.1.0/bin/workspace-portal-rollout
+rollout_helper=/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0/bin/workspace-portal-rollout
 portal_command="$(dirname "$rollout_helper")/workspace-portal"
 sudo "$rollout_helper" rollback-host \
   --authority-dir /run/vpsfree-workspace-authority \

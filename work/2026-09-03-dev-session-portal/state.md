@@ -874,7 +874,7 @@ lifecycle: active
   the previous configuration still selected Codex 0.146.0, so generated
   `confctl` commit `43d357b3fc1cadf9b3d92c21fdc875661a88fd75`
   now pins the official llm-agents revision containing Codex 0.152.1. The
-  four-commit configuration branch is clean and force-pushed at
+  five-commit configuration branch is clean and force-pushed at
   `cb3aba4cda3152f46ce81ea5481e427d57b0a40d`.
 - Quick verification passes 116 `dev-session` tests with 985 assertions, 7 PKI
   tests with 64 assertions, 7 rollout tests with 32 assertions, all five Go
@@ -892,6 +892,73 @@ lifecycle: active
 - Only the general, architecture/repetition, and risk/compatibility lanes need
   an `xhigh` rerun because the scope/proportionality lane had no findings and
   its reviewed boundary did not expand. No `max` review will be started.
+
+## Final xhigh review reconciliation
+
+- Three fresh standalone `gpt-5.6-sol` reviewers reran only the affected
+  general, architecture/repetition, and risk/compatibility lanes at `xhigh`.
+  No `max` reviewer was started. The prior clean scope/proportionality lane was
+  not rerun because its reviewed boundary did not expand.
+- General confirmed the `thread/loaded/list` blocker is resolved. It found one
+  new Important output inconsistency: runtime finalization still told the
+  operator to run checkout-local `bin/dev-session stop`. The helper now prints
+  `workspace-dev-session stop` when runtime enforcement is active and retains
+  `bin/dev-session stop` for ordinary local use. Exact output tests cover both
+  modes. This narrow correction does not introduce a new design and does not
+  require another lane rerun under the review skill.
+- Architecture/repetition reported no Blocking, Important, or Advisory
+  findings. It confirmed the exact runtime key contract, shipped browser/API
+  contract, wrapper guidance, component ownership, and commit split resolve
+  its prior findings. Its remaining browser-DOM and deployed-service checks
+  are deployment smoke tests rather than architecture findings.
+- Risk reported no Blocking finding. Its one Important concern is that current
+  and older `confctl`/NixOS generations do not honor a common per-machine
+  activation mutex, so another valid deployment could invalidate the recorded
+  predecessor during this rollout. Adding a partial advisory lock would give
+  false assurance and changing every historical deployment path is outside
+  this feature. The deployment runbook therefore adopts the reviewer's allowed
+  operational resolution: an explicit, acknowledged exclusive change window
+  covering aitherdev and both internal DNS machines from rollback capture
+  through successful validation or complete rollback. It requires operator
+  coordination, paused automation, process checks, and a root-owned audit
+  record before proceeding.
+- Risk's Advisory same-user App Server admission race is accepted and made
+  explicit in the same change window. Portal-managed browser and terminal
+  sessions are excluded by the lifecycle gate; the operator must stop trusted
+  unmanaged clients and prevent new direct socket clients during the drain.
+  A general multi-client admission-control service is disproportionate to this
+  single-user deployment.
+- The final workspace branch is clean and force-pushed at
+  `4dbad1fef784d66bf3c851584498412437a50c46`. Generated configuration commit
+  `0589ee95fb281066e69a4f526bca1471a39347c4` pins that revision, generated
+  commit `da07e6df59572d6a364f2ec4b8aa19ee3c21ef43` pins the official
+  llm-agents/Codex 0.152.1 revision, and the clean configuration branch is
+  force-pushed at `8f756aca60f3b795694d73d65cfc307dc9be6447`.
+- Final quick verification passes 117 `dev-session` tests with 994 assertions,
+  all other Ruby helper suites, all five Go packages, Go race and vet, the
+  shipped JavaScript contract, Nix formatting and repository hooks,
+  `nix flake check --no-build --show-trace`, and `named-checkzone` at serial
+  `2026090300`. Neither feature branch has a GitHub Actions run.
+- The exact final package builds as
+  `/nix/store/6ya1g5alpc99mj8s869n46z4laag7svf-workspace-portal-0.1.0`
+  with NAR hash
+  `sha256-4wHWkm18tJRikNfkLxVHPa2APCqCdqyio/SR0rqDEFM=`. The final deployment
+  runbook has SHA-256
+  `5b5954d7a90f3ab2d329c534ca23f00511fa4fbe3a89ebc45ac1e5608a0240ed`.
+- The first full aitherdev build caught a NixOS module conflict between the
+  dedicated tmux service's intentional login `PATH` and the systemd module's
+  generated default, plus an ordering-only `network-online.target` warning.
+  The host commit now explicitly forces the tmux `PATH` and declares the
+  portal's network dependency. This is a narrow evaluation fix folded into the
+  owning unmerged host commit; it does not change the reviewed architecture or
+  accepted risk boundary.
+- Long integration builds now pass for
+  `cz.vpsfree/machines/aitherdev`,
+  `cz.vpsfree/containers/prg/int.ns1`, and
+  `cz.vpsfree/containers/brq/int.ns1`. The resulting local generations are
+  `2026-09-04--10-38-49`, `2026-09-04--10-40-48`, and
+  `2026-09-04--10-41-56`, respectively. No host or DNS deployment was
+  performed.
 
 ## Cleanup
 
