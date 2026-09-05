@@ -874,3 +874,13 @@ The focused regressions and complete Ruby session suite pass with 142 tests and
 restoration, successful restoration after the authoritative idle check rejects
 a race, and an already-stopped client that must not be marked for restoration.
 Fresh xhigh General and Risk review of this final follow-up remains pending.
+
+The General rerun found no issue. Risk found one Important stale-authority
+case: after removing authority whose tmux session had disappeared, `start`
+retained its thread ID while validating the different manifest thread. The
+helper now clears the discarded runtime thread ID, reloads the materialized
+manifest thread through the App Server, and creates tmux only for that returned
+ID. A regression uses differing stale-authority and manifest IDs and verifies
+both the portal command and rewritten authority. The five focused terminal-gate
+tests pass with 40 assertions. A fresh xhigh Risk rerun and the final complete
+checks remain pending.
