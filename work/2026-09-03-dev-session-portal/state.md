@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-03-dev-session-portal
@@ -884,3 +884,43 @@ ID. A regression uses differing stale-authority and manifest IDs and verifies
 both the portal command and rewritten authority. The five focused terminal-gate
 tests pass with 40 assertions. A fresh xhigh Risk rerun and the final complete
 checks remain pending.
+
+The fresh Risk rerun found no Blocking, Important, or Advisory issue. The final
+workspace package at `36726805` passed the configured Codex protocol contract,
+all Go and browser packages, 143 packaged session tests with 1,106 assertions
+and 10 expected real-tmux skips, 20 cluster tests with 243 assertions, 14 PKI
+tests with 92 assertions, and 2 password tests with 18 assertions. Its output
+is `/nix/store/4jjpv80lxk2qyrjgzjsmfy4sldiqch3k-workspace-portal-0.1.0`.
+Both workspace and configuration flake evaluations passed.
+
+`vpsfree-cz-configuration` commit `2a5bffbd` pins the workspace at the final
+functional revision `36726805`. Its repository hooks passed, the feature branch
+was pushed, and a fresh target worktree fast-forwarded and pushed `master` to
+the same commit. No workflow ran for the feature head or current master. The
+final aitherdev generation `2026-09-05--15-22-47` built and switched
+successfully; confctl reported the system and firewall healthy. The portal,
+Codex App Server, nginx, and portal tmux services are active with no failed
+systemd units. Internal DNS was unchanged.
+
+The creation drain found no terminal session creator, cluster mutation helper,
+or lifecycle-lock waiter. The running
+`2026-08-18-vpsadmin-password-reset` development cluster remained on runner PID
+2700830. The `2026-09-04-cgv1-devices-bug` tmux session remained `$40` with its
+original creation time and attachment, and its plan, state, and manifest hashes
+remained byte-for-byte unchanged. The two existing managed portal sessions are
+still present; `2026-09-04-test-session-2` still reports its live worktree.
+
+Live acceptance used two exact disposable sessions. Terminal creation appeared
+on the authenticated index and Codex page with one matching thread at
+`gpt-6-astra` and `max`. Browser creation returned the expected redirect, and a
+real PTY `dev-session attach` showed the same initial request, response, thread,
+model, and effort. The pending-request API returns an empty array rather than a
+null value. Both smoke tmux sessions, tracking directories, worktree groups,
+authority records, creation journals, lock files, and local response captures
+were removed; their Codex rollouts remain normal App Server history.
+
+The configuration and workspace feature branches are retained remotely at
+their merged heads. Their clean initiative worktrees and generated local caches
+were removed without force. The checked-in user change in
+`work/2026-09-04-test-session-2/state.md`, the legacy cgv session, and the live
+cluster were not modified. The initiative is complete and ready to archive.
