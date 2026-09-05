@@ -858,3 +858,19 @@ rather than the replacement orchestration text supplied directly in this
 turn. The latter explicitly makes the top-level shared checkout a direct
 `master` exception, so no published history is rewritten. Fresh General and
 Risk review reruns remain required for the final follow-up commit.
+
+The fresh General and Risk reruns found two remaining terminal-launch paths
+outside the intended persistence boundary. A ready stopped session could skip
+the history check when its original goal was supplied again without
+`--exclusive`, and lifecycle rollback called the low-level tmux sender after a
+failed idle check. Ready reuse now checks persisted history regardless of goal
+input. Rollback routes through central reconciliation, and quiescing returns a
+restorable session only when the pane was actually running the expected Codex
+client. A failed materialization check therefore leaves the pane safely at its
+shell without sending a resume command.
+
+The focused regressions and complete Ruby session suite pass with 142 tests and
+1,207 assertions. They cover nonexclusive goal replay, fail-closed lifecycle
+restoration, successful restoration after the authoritative idle check rejects
+a race, and an already-stopped client that must not be marked for restoration.
+Fresh xhigh General and Risk review of this final follow-up remains pending.
