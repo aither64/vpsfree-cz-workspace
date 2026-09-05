@@ -1,26 +1,24 @@
 ---
-lifecycle: complete
+lifecycle: active
 ---
 
 # 2026-09-03-dev-session-portal
 
 ## Current status
 
-The complete portal is deployed on aitherdev. It discovers active worktrees
-from the canonical bare repositories even when an older session did not update
-`portal.yml`, renders sanitized Codex Markdown in a full-width tab, sends with
-Enter, supports conversation forks and per-thread model and reasoning controls,
-and visualizes vpsAdmin and vpsAdminOS development clusters. Session completion
-is guarded: Codex first prepares the initiative, then the portal can release
-clusters, remove clean worktrees, create an exact local archive commit, and
-stop the runtime. It never pushes workspace `master`. DNS, CA state, Basic
-Auth, and the configuration-owned Codex update path remain unchanged.
+The initiative is active again for terminal and portal session unification.
+Inspection confirmed that `2026-09-04-cgv1-devices-bug` was started with the
+checkout-local helper on the ordinary tmux server. Its Codex process has no
+`VPSFREE_DEV_SESSION_*` identity, while portal sessions use the NixOS wrapper,
+dedicated tmux socket, and shared App Server. Its schema-2 manifest consequently
+has no thread ID and the portal omits the Codex tab.
 
-The live `2026-09-04-test-session-2` session now shows its previously missing
-`vpsadminos` worktree and GitHub comparison without requiring the worktree to
-be recreated or manually registered. Implementation, review, deployment, and
-live validation are complete. Client CA installation remains a per-device user
-action rather than initiative work.
+The follow-up will remove checkout-local `bin/dev-session` as a public command,
+make the installed `dev-session` the one entry point for both terminal and
+portal creation, default new threads to `max` reasoning, and move idle-thread
+settings into a header dialog. The user chose to leave the existing cgv1
+standalone conversation and tmux session untouched. Implementation, review,
+integration, deployment, and two-way live validation are pending.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`

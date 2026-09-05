@@ -103,6 +103,45 @@ of a session that can also be attached from a terminal.
   and PTY features so later portal iterations can be deployed locally with
   `confctl` without creating a reusable remote login credential.
 
+## 2026-09-05 session unification follow-up
+
+The checkout-local `bin/dev-session` and the NixOS-installed `dev-session`
+became two public entry points with different runtime configuration. A session
+started through the checkout used the ordinary tmux server and launched a
+standalone Codex client without the selected slug in its environment. Its
+incomplete manifest has no shared thread ID, so the portal cannot show an
+interactive Codex tab.
+
+- Make the NixOS-installed `dev-session` the only public entry point. Move the
+  Ruby implementation to private package data, remove `bin/dev-session`
+  without an alias, and update all rules, documentation, skills, and help.
+- Have the portal invoke the same installed command as the terminal. The host
+  wrapper remains the single owner of the workspace path, authority directory,
+  dedicated tmux socket, Codex binary and socket, and portal URL.
+- Require the shared runtime for every supported session operation. A session
+  becomes ready only after its manifest, private authority, tmux metadata, and
+  shell and Codex environments agree on the slug and workspace.
+- Default new sessions to the App Server's default model with `max` reasoning.
+  Explicit selections win. When an explicitly selected model does not support
+  `max`, use its advertised default effort. Forks inherit their source settings
+  unless explicitly overridden.
+- Move the idle-thread model controls into a dialog opened by a compact
+  `Settings` button in the Codex header. Keep creation-time controls on the
+  index and make their displayed defaults match the server-side policy.
+- Leave the existing `2026-09-04-cgv1-devices-bug` standalone conversation,
+  ordinary tmux session, rollout, and incomplete manifest unchanged. Do not add
+  an adoption or compatibility command.
+- After review, integrate the workspace feature into `master`, point the
+  configuration input at the workspace default branch, update its exact pin
+  through `confctl`, deploy aitherdev, and integrate the configuration branch.
+
+Acceptance requires a CLI-created session to expose the same interactive
+thread in the portal and a portal-created session to attach through the same
+terminal command. Tests must start from a shell without pre-exported workspace
+runtime variables, verify `max` defaults and model fallbacks, cover the settings
+dialog, and confirm that the legacy cgv1 process and files survive deployment
+unchanged.
+
 ## Compatibility and deployment
 
 - Existing schema-1 portal manifests remain readable. Stored Codex versions
