@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: active
 ---
 
 # 2026-09-03-dev-session-portal
@@ -924,3 +924,13 @@ their merged heads. Their clean initiative worktrees and generated local caches
 were removed without force. The checked-in user change in
 `work/2026-09-04-test-session-2/state.md`, the legacy cgv session, and the live
 cluster were not modified. The initiative is complete and ready to archive.
+
+The first archive attempt failed closed before moving data because this
+initiative's older schema-1 manifest records a thread ID but predates stored
+socket provenance. The installed host wrapper already supplies the
+authoritative App Server socket. Idle verification now uses that socket only as
+the final fallback when neither private runtime authority nor the manifest has
+one. Manifests with explicit provenance keep precedence, while an unconfigured
+helper still fails closed. A regression exercises an old manifest with only a
+thread ID. Review, package verification, the small aitherdev follow-up switch,
+and archival are pending.
