@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: active
 ---
 
 # 2026-09-03-dev-session-portal
@@ -957,3 +957,15 @@ worktree was clean before its second non-force removal, and its generated
 `.bin` and `.bundle` files were deleted. The terminal lifecycle is complete;
 the archive command remains only to confirm the deployed legacy-manifest
 fallback and move this tracking directory.
+
+That retry reached the configured App Server but its exact cwd check rejected
+the initiative thread: the earliest portal session was created at the workspace
+root before per-session `work/<slug>` binding existed. The same thread ID is
+materialized and idle when checked against the workspace root. Idle validation
+now retries that historical root only after the exact cwd-mismatch diagnostic,
+and only for a stopped manifest with no socket provenance using the
+host-configured socket. Any authority, explicit manifest socket, live tmux
+session, different App Server failure, missing thread, or active turn remains a
+hard failure. A regression verifies both exact cwd attempts and their invariant
+thread and socket arguments. Review, package verification, deployment, and the
+archive retry are pending.
