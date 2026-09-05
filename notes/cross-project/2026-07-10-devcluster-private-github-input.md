@@ -24,7 +24,7 @@ helper detects the worktree and overrides `vpsfreeSmsGateway` with the local
 path, avoiding GitHub API resolution:
 
 ```sh
-bin/dev-session worktree add <slug> vpsfree-sms-gateway --as-is \
+dev-session worktree add <slug> vpsfree-sms-gateway --as-is \
   --base origin/2026-06-15-vpsadmin-events
 ```
 

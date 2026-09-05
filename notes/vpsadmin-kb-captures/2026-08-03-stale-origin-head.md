@@ -2,7 +2,7 @@
 
 ## Symptom
 
-`bin/dev-session worktree add ... vpsadmin-kb-captures` based a new initiative
+`dev-session worktree add ... vpsadmin-kb-captures` based a new initiative
 branch on `origin/2026-07-10-kb-czech-fixes`, leaving it 28 commits behind the
 current master branch.
 

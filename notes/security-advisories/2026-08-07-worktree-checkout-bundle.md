@@ -2,7 +2,7 @@
 
 ## Symptom
 
-`bin/dev-session worktree add` created the `security-advisories` worktree and
+`dev-session worktree add` created the `security-advisories` worktree and
 branch, but Git returned exit 78 from the checkout hook because locked RuboCop
 and parser gems were unavailable.
 

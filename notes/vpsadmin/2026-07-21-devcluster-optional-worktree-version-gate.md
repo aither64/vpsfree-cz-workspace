@@ -11,6 +11,6 @@ running machine was changed.
 
 When the optional component is not part of the deployment being tested, keep
 its clean, pushed branch but temporarily remove its linked worktree with
-`bin/dev-session worktree remove`. Run the scoped cluster update, then restore
-the worktree with `bin/dev-session worktree add` on the existing branch. Do not
+`dev-session worktree remove`. Run the scoped cluster update, then restore the
+worktree with `dev-session worktree add` on the existing branch. Do not
 edit shared devcluster configuration merely to mask this version mismatch.
