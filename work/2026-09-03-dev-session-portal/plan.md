@@ -75,6 +75,11 @@ of a session that can also be attached from a terminal.
   request without sending anything. Limit working-directory reconciliation and
   replacement to a validated creating, unsent session; ready sessions resume
   only their authoritative thread ID.
+- Snapshot the normalized initial request into a private helper-owned file
+  before any mutation. Keep the terminal Codex pane at its shell until
+  `turn/start` has produced a regular rollout and exact first user message,
+  then resume that thread in the terminal. A ready legacy thread with no
+  persisted rollout is rejected instead of being treated as reusable.
 - Make the workspace repository a flake and the sole owner of the portal Nix
   package. Export `packages.x86_64-linux.workspace-portal`; remove the copied
   package expression and package output from `vpsfree-cz-configuration`.
@@ -169,6 +174,10 @@ unchanged.
   portal and retry the same recorded request. Existing schema-1 sessions remain
   readable, and a legacy ambiguous creating session fails closed until an App
   Server restart permits a fresh replacement.
+- Switching between helper generations requires draining session creation.
+  Stop the portal and verify that no `dev-session start` process remains before
+  the aitherdev switch or rollback. Existing ready sessions and active Codex
+  turns stay running during this narrow creation-only drain.
 - The portal remains useful for status and files when GitHub or Codex is
   unavailable and reports integrations as unavailable without failing pages.
 - Active sessions use live branch comparisons. Finalized sessions preserve
@@ -208,6 +217,9 @@ unchanged.
   have an initial request before any tracking or tmux state is written.
   Interactive terminal creation prompts once, noninteractive creation requires
   `--goal-file`, and both paths resume the exact persisted App Server thread.
+  Cover an exact 20,000-byte interactive request, goal snapshot stability,
+  goal-free restart of a ready journal, deferred terminal launch, and rejection
+  of an old ready thread whose rollout is missing.
 - Treat only an exact, proven fresh missing-rollout App Server response as an
   empty diagnostic transcript. Other history errors must remain visible.
 - Extend Go protocol contract tests to validate every request, response, and

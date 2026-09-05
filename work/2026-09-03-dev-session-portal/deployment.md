@@ -49,7 +49,20 @@ Build and deploy only aitherdev from the final configuration feature head:
 
 ```sh
 nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
+ssh root@172.16.106.40 systemctl stop workspace-portal.service
+ssh root@172.16.106.40 \
+  "! pgrep -af 'dev-session[^ ]* .*start([[:space:]]|$)'"
 nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev switch
+```
+
+Do not start a session from another terminal between stopping the portal and
+completing the switch. The process check must have no matches. This drains the
+old browser worker and confirms that no old `dev-session start` process can
+publish creation state through the new `/run/current-system` command. A failed
+deployment can safely restart the previous portal service while investigating:
+
+```sh
+ssh root@172.16.106.40 systemctl start workspace-portal.service
 ```
 
 Before the switch, inspect aitherdev's process table and wait until no
@@ -139,7 +152,8 @@ retried after redeploying the corrected generation. Portal credentials and CA
 state can remain for a later redeploy. Leave both internal DNS containers
 unchanged; their existing record remains correct for either generation.
 
-Run the same development-cluster process preflight before rollback. The new
+Stop the portal and run the same `dev-session start` process check before
+rollback. Also run the same development-cluster process preflight. The new
 generation can have a helper holding a lifecycle lock while it builds or stops
 a cluster, but the previous generation does not honor that lock. Wait for the
 helper and any lock waiter to exit before changing generations.

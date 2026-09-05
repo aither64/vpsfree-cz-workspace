@@ -25,7 +25,9 @@ the user's sessions, and running development clusters remain untouched.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
-- Workspace branch: `2026-09-03-dev-session-portal`.
+- Workspace checkout: shared `master`, following the workspace exception in
+  the orchestration instructions supplied for this turn. The retained
+  `2026-09-03-dev-session-portal` branch remains available for comparison.
 - Configuration branch: `2026-09-03-dev-session-portal`.
 - The configuration lock is the authority for the exact workspace revision
   selected through `aitherVpsfreeWorkspace`. Exact heads are reported at
@@ -41,7 +43,8 @@ the user's sessions, and running development clusters remain untouched.
 ### Workspace
 
 - Repository: `aither64/vpsfree-cz-workspace`
-- Branch: `2026-09-03-dev-session-portal`
+- Checkout branch: `master`
+- Retained comparison branch: `2026-09-03-dev-session-portal`
 - Initial base: `ac651305d935e3e78768567b4f18b498037f985a`
 - Worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-03-dev-session-portal/workspace`
@@ -762,3 +765,55 @@ temporary source-built portal executable were removed. They were uncommitted,
 disposable diagnostics and are not recoverable. The user's two managed portal
 sessions, the legacy cgv1 session, and the unrelated live development cluster
 were verified unchanged.
+
+The mandatory review of the rollout correction used fresh General,
+Architecture, Scope, and Risk lanes at xhigh. Scope and Architecture found no
+Blocking or Important issue. General and Risk identified the following
+correctness boundaries, all addressed in the current remediation:
+
+- a completed goal-bearing creation journal now permits an ordinary later
+  `dev-session start <slug>` without requiring the original goal again;
+- the helper proves that the recorded rollout exists before reusing a stopped
+  ready session, so an empty thread created by the defective predecessor is
+  rejected with recovery guidance;
+- `EnsureInitialMessage` waits for the rollout and verifies the exact first
+  user request before creation becomes ready;
+- the terminal Codex pane stays at its shell until that persistence check
+  succeeds, eliminating the empty-thread resume race;
+- the normalized goal is copied once into a mode-0600 helper-owned temporary
+  file and that snapshot supplies tracking, the journal hash, and the first
+  turn even if the caller's path changes;
+- interactive input no longer adds a byte after validation, so an exact
+  20,000-byte request remains within the shared limit;
+- the diagnostic missing-rollout exception requires an explicit empty `turns`
+  array. Missing or null history continues to fail closed;
+- deployment and rollback stop the portal and drain old `dev-session start`
+  processes before crossing the mutable `/run/current-system` boundary.
+
+General also reported the workspace branch policy from the checked-in
+repository instructions. The orchestration instructions supplied directly for
+this turn explicitly make the shared top-level checkout a `master` exception,
+so the two correction commits and this remediation use that newer rule. No
+published `master` history is rewritten. Independent
+`vpsfree-cz-configuration` work remains on its initiative branch.
+
+Current remediation checks:
+
+- `ruby -Itest test/dev_session_test.rb`: 138 runs, 1,178 assertions, no
+  failures or errors. This includes restart without a repeated goal, deferred
+  terminal launch, exact-limit input, and legacy empty-thread rejection.
+- All Go packages and Go vet passed through a Nix shell with Go and gcc. The
+  JavaScript syntax check, Ruby syntax check, `git diff --check`, and workspace
+  `nix flake check --no-build -L` also passed.
+- The cluster suite passed 20 tests and 243 assertions, KB staging passed 42
+  tests and 194 assertions, and PKI passed 14 tests and 92 assertions. The two
+  password tests skip in the ambient shell and run in the package build.
+- The single real-tmux timing assertion that observed its output file between
+  creation and write passed on immediate isolated rerun; the complete Ruby
+  suite then passed on its next run.
+
+The current configuration feature worktree has an unpushed generated input
+commit selecting the preceding correction. It will be amended through
+`confctl` to the final workspace revision after this remediation is committed
+and pushed. The aitherdev build, creation drain, switch, and live two-way smoke
+test remain pending. Internal DNS needs no change.
