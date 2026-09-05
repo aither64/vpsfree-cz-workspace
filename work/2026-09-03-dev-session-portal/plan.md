@@ -158,10 +158,9 @@ unchanged.
 - Pending-response normalization and shell attachment do not change manifests,
   runtime authority, Codex history, or tmux ownership. A corrected portal can
   serve existing live sessions without recreating them. Rolling back the
-  aitherdev generation restores the pending-response and attachment defects,
-  the sidebar layout, the previous index order, and the former
-  `workspace-dev-session` command; the intentional command rename has no
-  compatibility alias.
+  aitherdev generation restores the predecessor's helper packaging and
+  duplicated runtime projection. The public command remains `dev-session`, but
+  there is intentionally no checkout-local compatibility entry point.
 - The Codex 0.153 materialization boundary temporarily uses manifest schema 2
   only while initial-goal delivery is unresolved. Exact-history verification
   atomically removes the attempt marker and returns the completed session to

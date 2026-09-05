@@ -11,9 +11,11 @@ internal DNS servers. The restricted local deployment key is active, so the
 agent can deploy later aitherdev iterations locally. The first portal
 activation stopped before credential and certificate creation because a
 wrapped helper could not find Bash. The activation-corrected aitherdev
-generation was followed by the browser form origin fix. The interaction,
-layout, ordering, and command follow-up is now deployed and healthy. No DNS
-redeployment was required.
+generation was followed by the browser form origin fix. The previous
+interaction, layout, ordering, and command follow-up is deployed and healthy.
+The 2026-09-05 single-command and session-unification follow-up is committed
+and awaiting final review before its aitherdev-only switch. No DNS redeployment
+is required.
 
 ## Branches
 
@@ -28,7 +30,41 @@ ordinary `llm-agents` input, so pulling and deploying normal configuration
 updates Codex as before. The aitherdev build fails if the selected Codex App
 Server protocol is incompatible with the portal.
 
-## Current deployment
+## Pending 2026-09-05 follow-up
+
+The pending generation replaces both the checkout-local helper and the
+package-exported helper with one host-owned command:
+
+```text
+/run/current-system/sw/bin/dev-session
+```
+
+The same command serves terminal users and every portal mutation. Its private
+workspace, authority, tmux, Codex, and portal values cannot be replaced by
+caller flags or environment variables. New conversations use the configured
+default model at `max`; an explicitly selected model without `max` uses its
+advertised default. The settings form is available from the Codex header.
+
+Build and deploy only aitherdev from the final configuration feature head:
+
+```sh
+nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
+nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev switch
+```
+
+After the switch, verify that the installed command rejects private runtime
+flags, then perform both directions of the shared-session smoke test:
+
+- create a session with `dev-session start`, open its portal page, and confirm
+  that the same interactive Codex thread appears;
+- create a session in the portal, attach with `dev-session attach <slug>`, and
+  confirm that the terminal joins the same thread;
+- confirm the default model starts at `max`, while an explicitly selected
+  bounded model uses an effort it supports;
+- compare the recorded manifest, rollout, tmux, and tracking hashes for
+  `2026-09-04-cgv1-devices-bug`; this legacy session must remain unchanged.
+
+## Previous deployment
 
 The current configuration feature-branch head was built and deployed with the
 normal confctl workflow:
@@ -80,19 +116,20 @@ place and do not reuse the portal password.
 ## Client handoff
 
 After installing the public CA on a VPN client, open the portal with username
-`aither` and the password at the path above. Open the existing
-`2026-09-04-testing` session and confirm that its conversation loads without a
-pending-request console error. From a terminal, run
-`dev-session attach 2026-09-04-testing`; the full dated slug needs no
-`--as-is`. This attaches to the existing thread without sending a new turn.
+`aither` and the password at the path above. A session created in either the
+browser or terminal appears in the same index and uses the same Codex thread.
+From a terminal, run `dev-session attach <slug>`; a full dated slug needs no
+`--as-is`, and attaching does not send a new turn.
 
 ## Rollback
 
-For this follow-up, use the ordinary previous aitherdev NixOS/confctl
-generation. Portal credentials and CA state can remain for a later redeploy;
-they do not affect the previous generation. Leave both internal DNS containers
-unchanged; their existing record remains correct whether this generation or
-its predecessor serves the portal.
+For the 2026-09-05 follow-up, use the ordinary previous aitherdev NixOS/confctl
+generation. It restores the former helper packaging and duplicated runtime
+projection. Existing schema-1 conversations and their model settings remain
+readable; a creation interrupted during its temporary schema-2 state must be
+retried after redeploying the corrected generation. Portal credentials and CA
+state can remain for a later redeploy. Leave both internal DNS containers
+unchanged; their existing record remains correct for either generation.
 
 Rolling aitherdev back to a generation before the deployment key was added also
 removes that root authorization. That rollback is user-owned unless another

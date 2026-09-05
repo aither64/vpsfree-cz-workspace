@@ -13,12 +13,13 @@ checkout-local helper on the ordinary tmux server. Its Codex process has no
 dedicated tmux socket, and shared App Server. Its schema-2 manifest consequently
 has no thread ID and the portal omits the Codex tab.
 
-The follow-up will remove checkout-local `bin/dev-session` as a public command,
-make the installed `dev-session` the one entry point for both terminal and
-portal creation, default new threads to `max` reasoning, and move idle-thread
+The follow-up removes checkout-local `bin/dev-session` as a public command,
+makes the installed `dev-session` the one entry point for both terminal and
+portal creation, defaults new threads to `max` reasoning, and moves idle-thread
 settings into a header dialog. The user chose to leave the existing cgv1
-standalone conversation and tmux session untouched. Implementation, review,
-integration, deployment, and two-way live validation are pending.
+standalone conversation and tmux session untouched. The corrected candidates
+are committed, rebased, pushed, and in final review. Integration, deployment,
+and two-way live validation remain pending.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
@@ -612,3 +613,79 @@ contract test supplies Origin explicitly.
   clusters, remove clean worktrees, commit only the exact archive move locally,
   and stop the managed runtime. Feature branches are retained and the portal
   does not push `master`.
+
+## 2026-09-05 session unification follow-up
+
+The initiative is active again. The user requested one command and one session
+model for browser and terminal creation, a `max` reasoning default for new
+Codex threads, and an on-demand settings dialog that does not consume chat
+height. The standalone conversation and unmanaged tmux session associated with
+`2026-09-04-cgv1-devices-bug` are explicitly legacy and remain untouched.
+
+Current committed candidates after review remediation:
+
+- workspace `5b4c76ed722bae7d0ca424e26016f3348b62e89e`, rebased onto
+  `e280d55b06adb0276acd8088945ac53d0e214f65`;
+- vpsfree-cz-configuration `e8f4a6eeccd5ea3e3813284ceeb85a96249b7b56`,
+  based on `0e891423`, including the generated input pin `e194fc98` for
+  workspace `5b4c76ed`.
+
+The workspace no longer ships `bin/dev-session`. Its implementation is private
+package data under `libexec/workspace-portal/`, and NixOS exposes the sole
+public `dev-session` wrapper with complete host runtime arguments. The portal
+calls that same installed wrapper using only public subcommand arguments. A
+private option separator prevents callers from replacing host-owned paths or
+commands. New threads resolve the current App Server catalog on the server and
+use `max` when the selected model supports it; an explicitly selected model
+without `max` uses its advertised default. Existing resumed threads keep their
+settings. The browser leaves automatic selections unresolved for the server,
+and existing-thread settings are available from a header dialog.
+
+Quick verification completed before mandatory review:
+
+- `ruby test/dev_session_test.rb`: 131 runs, 1,122 assertions;
+- `ruby test/kb_stage_test.rb`: 42 runs, 194 assertions;
+- shell syntax and `git diff --check` passed;
+- committed `nix build .#workspace-portal --no-link -L` passed the Codex schema
+  contract, all Go packages and browser contract tests, 131 packaged session
+  tests, 14 PKI tests, and 2 password tests; output
+  `/nix/store/2wvid33626ymmvrnb0y3kqdxfzb4alz6-workspace-portal-0.1.0`;
+- configuration Nixfmt and RuboCop pre-commit hooks passed.
+
+The first review pass used fresh General, Architecture, Scope, and Risk
+reviewers at xhigh. It found that the NixOS wrapper appended caller arguments
+without terminating private option parsing, the browser duplicated the
+server's model-default policy, several runtime values were still projected by
+both the portal service and the wrapper, two current notes named the removed
+checkout command, and the workspace feature had not yet been rebased. Risk
+also found that the generated pin and consumer-path commits were not
+independently deployable.
+
+The remediation:
+
+- inserts `--` between NixOS-owned runtime arguments and public arguments and
+  tests both split and `--flag=value` override attempts from an empty
+  environment;
+- removes duplicate login/service runtime variables and obsolete portal serve
+  options;
+- leaves automatic model and effort values empty in the browser so the Go
+  resolver is the sole new-thread policy authority;
+- updates all durable runnable workspace notes to use `dev-session`;
+- rebases the workspace branch onto current `master`;
+- rewrites the configuration tail as a deployable wrapper transition, exact
+  generated input pin, and final fallback removal/runtime seal.
+
+Post-remediation focused checks passed with 132 Ruby session tests and 1,131
+assertions, 42 KB staging tests and 194 assertions, and the affected Go and
+browser packages. `nix flake check --no-build -L` passes in the configuration
+worktree. Both rewritten feature refs are pushed and have no GitHub Actions
+runs to cancel. Final General, Architecture, Scope, and Risk reruns are in
+progress against the exact heads above.
+
+The follow-up is High risk because it changes the host-installed CLI contract,
+browser-to-host execution boundary, App Server thread creation, and aitherdev
+deployment wiring. General, Architecture, Scope, and Risk lanes apply. The
+user explicitly prohibited `max` reviews and requested `xhigh`, so fresh
+`gpt-5.6-sol` reviewers use xhigh despite the skill's ordinary High-risk
+default. Long aitherdev integration build and deployment remain pending final
+review clearance.
