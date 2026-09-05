@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-03-dev-session-portal
@@ -967,5 +967,35 @@ and only for a stopped manifest with no socket provenance using the
 host-configured socket. Any authority, explicit manifest socket, live tmux
 session, different App Server failure, missing thread, or active turn remains a
 hard failure. A regression verifies both exact cwd attempts and their invariant
-thread and socket arguments. Review, package verification, deployment, and the
-archive retry are pending.
+thread and socket arguments.
+
+Fresh xhigh General and Risk review of `b950359d` found no Blocking,
+Important, or Advisory issue. Both reviewers confirmed that the retry preserves
+the exact thread and socket, is confined to the legacy stopped-session case,
+and leaves explicit runtime authority, manifest provenance, live tmux sessions,
+unrelated errors, missing threads, and active turns fail-closed. The complete
+local Ruby suite passed 145 tests and 1,237 assertions. The workspace flake
+evaluation and final standalone package build also passed; the latter validated
+the configured Codex protocol, all Go packages, 145 packaged session tests,
+cluster, PKI, and password suites. Its output is
+`/nix/store/jyaigzpns5chh0sh5x8y90khjbyz8wk9-workspace-portal-0.1.0`.
+
+Generated configuration commit `4d570e30` pins the final functional workspace
+revision. The declared pre-commit hooks passed in `nix develop`, as did the
+configuration flake evaluation and the aitherdev build. The retained feature
+branch and a fresh target worktree fast-forwarded and pushed configuration
+`master`. An initial ambient push correctly failed because Overcommit could not
+load its Nix-provided gems; the retry in `nix develop` ran the configured hook
+environment and succeeded. Build generation `2026-09-05--16-06-08` switched
+successfully, and confctl reported both the system and firewall healthy.
+
+After deployment, the portal, Codex App Server, nginx, and portal tmux services
+are active with no failed systemd units. The existing
+`2026-08-18-vpsadmin-password-reset` cluster still uses runner PID 2700830.
+The legacy cgv plan, state, and portal manifest retain hashes `89fc8284`,
+`fcf052be`, and `d069c3ad`. The final configuration and merge worktrees were
+ordinary clean worktrees; their generated `.bin` and `.bundle` caches were
+removed before non-force worktree removal. The implementation, review,
+publication, deployment, compatibility checks, and initiative-owned cleanup
+are complete. The terminal lifecycle step can now verify the deployed legacy
+thread fallback and move this tracking directory to `archive/`.
