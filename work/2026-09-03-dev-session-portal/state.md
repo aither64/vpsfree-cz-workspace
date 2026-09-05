@@ -622,13 +622,12 @@ Codex threads, and an on-demand settings dialog that does not consume chat
 height. The standalone conversation and unmanaged tmux session associated with
 `2026-09-04-cgv1-devices-bug` are explicitly legacy and remain untouched.
 
-Current committed candidates after review remediation:
-
-- workspace `5b4c76ed722bae7d0ca424e26016f3348b62e89e`, rebased onto
-  `e280d55b06adb0276acd8088945ac53d0e214f65`;
-- vpsfree-cz-configuration `e8f4a6eeccd5ea3e3813284ceeb85a96249b7b56`,
-  based on `0e891423`, including the generated input pin `e194fc98` for
-  workspace `5b4c76ed`.
+Exact feature heads are kept in review packets and the final handoff instead
+of this file: the workspace feature branch contains this tracking text, so
+embedding its own final commit ID would recursively change that ID. Reviewed
+checkpoints before the latest remediation were workspace `befeaf37` and
+vpsfree-cz-configuration `30c21ace`; the first remediation checkpoint was
+workspace `4cb0bfb` with generated configuration pin `8ecc05ea`.
 
 The workspace no longer ships `bin/dev-session`. Its implementation is private
 package data under `libexec/workspace-portal/`, and NixOS exposes the sole
@@ -675,17 +674,46 @@ The remediation:
 - rewrites the configuration tail as a deployable wrapper transition, exact
   generated input pin, and final fallback removal/runtime seal.
 
-Post-remediation focused checks passed with 132 Ruby session tests and 1,131
-assertions, 42 KB staging tests and 194 assertions, and the affected Go and
-browser packages. `nix flake check --no-build -L` passes in the configuration
-worktree. Both rewritten feature refs are pushed and have no GitHub Actions
-runs to cancel. Final General, Architecture, Scope, and Risk reruns are in
-progress against the exact heads above.
+Post-remediation focused checks passed with 132 Ruby session tests and 1,132
+assertions, 42 KB staging tests and 194 assertions, all Go packages, the
+browser contract, and 7 development-cluster tests with 104 assertions. Both
+workspace and configuration `nix flake check --no-build -L` evaluations pass.
+Both rewritten feature refs were pushed and had no GitHub Actions runs to
+cancel.
+
+The final full review of `befeaf37..4cb0bfb` and
+`30c21ace..8ecc05ea` used fresh General, Architecture, Scope, and Risk
+reviewers at xhigh. Scope found no issue. General found that the Automatic
+reasoning effort was blocked by native `required` form validation and that a
+test used an overlong Unix socket path; both are fixed with transport and
+template coverage. Architecture found a duplicated vpsAdmin endpoint catalog;
+the helper now owns one catalog used by both terminal and portal output. Risk
+found unchecked state-directory ancestor symlinks and a race between cluster
+starts, resets, and archive finalization. The helpers now reject unsafe
+ancestors, serialize lifecycle operations per provider and slug, require an
+active anchored session before producing state, and archive cleanup resets
+both providers without relying on a status snapshot. Sentinel and queued-start
+tests cover both helpers.
+
+Focused review of that remediation found further lifecycle gaps. State-writing
+`config`, `urls`, and `update` commands and `gcroots --cleanup` now use the same
+lock and active-session policy. Detached runners close the inherited lock FD,
+and the portal runs host helpers in a process group with bounded pipe cleanup,
+so a context deadline also terminates a child waiting in `flock`. The provider
+descriptor is now the single Go declaration used for inspection and release.
+The expanded cluster suite has 10 tests and 131 assertions. General also
+required the combined remediation commit to be split by purpose; that history
+rewrite and the resulting generated configuration pin are pending.
+
+Before switching or rolling back aitherdev, the process table must contain no
+old or new development-cluster state mutation and no lifecycle-lock waiter.
+This drains the mixed-generation window that locks cannot coordinate. The
+preflight excludes the preserved legacy Codex and tmux session.
 
 The follow-up is High risk because it changes the host-installed CLI contract,
 browser-to-host execution boundary, App Server thread creation, and aitherdev
 deployment wiring. General, Architecture, Scope, and Risk lanes apply. The
 user explicitly prohibited `max` reviews and requested `xhigh`, so fresh
 `gpt-5.6-sol` reviewers use xhigh despite the skill's ordinary High-risk
-default. Long aitherdev integration build and deployment remain pending final
-review clearance.
+default. Long aitherdev integration build and deployment remain pending the
+focused remediation review and commit-series cleanup.

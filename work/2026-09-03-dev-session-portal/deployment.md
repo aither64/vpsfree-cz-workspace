@@ -52,6 +52,14 @@ nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
 nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev switch
 ```
 
+Before the switch, inspect aitherdev's process table and wait until no
+`vpsadmin-devcluster` or `vpsadminos-devcluster` command is running `start`,
+`stop`, `reset`, `config`, `urls`, `update`, or `gcroots --cleanup`. Also check
+that no `flock` process is waiting on a development-cluster lifecycle lock.
+The predecessor generation does not use the new locks, so switching while an
+old helper is still running would bypass the archive barrier. This preflight
+does not stop or otherwise change the legacy Codex or tmux session.
+
 After the switch, verify that the installed command rejects private runtime
 flags, then perform both directions of the shared-session smoke test:
 
@@ -130,6 +138,11 @@ readable; a creation interrupted during its temporary schema-2 state must be
 retried after redeploying the corrected generation. Portal credentials and CA
 state can remain for a later redeploy. Leave both internal DNS containers
 unchanged; their existing record remains correct for either generation.
+
+Run the same development-cluster process preflight before rollback. The new
+generation can have a helper holding a lifecycle lock while it builds or stops
+a cluster, but the previous generation does not honor that lock. Wait for the
+helper and any lock waiter to exit before changing generations.
 
 Rolling aitherdev back to a generation before the deployment key was added also
 removes that root authorization. That rollback is user-owned unless another
