@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-03-dev-session-portal
@@ -934,3 +934,26 @@ one. Manifests with explicit provenance keep precedence, while an unconfigured
 helper still fails closed. A regression exercises an old manifest with only a
 thread ID. Review, package verification, the small aitherdev follow-up switch,
 and archival are pending.
+
+Fresh xhigh General and Risk review found no Blocking, Important, or Advisory
+issue. The final package at `bccdd3fa` passed the configured Codex contract,
+all Go and browser packages, 144 packaged session tests with 1,114 assertions
+and 10 expected real-tmux skips, 20 cluster tests with 243 assertions, 14 PKI
+tests with 92 assertions, and 2 password tests with 18 assertions. Its output
+is `/nix/store/1zrg69hmjd0646rzvsqbmfkw9q6x20zj-workspace-portal-0.1.0`.
+
+Configuration commit `90fecb27` pins that exact workspace revision. Hooks and
+the configuration flake check passed, and both the retained feature branch and
+`master` were fast-forwarded and pushed. The aitherdev generation
+`2026-09-05--15-46-50` built and switched successfully after the same clean
+creation and cluster-mutation drain. Confctl again reported the system and
+firewall healthy.
+
+Recreating the configuration worktree initially returned exit 78 because its
+post-checkout Overcommit hook could not see the Nix-provided gems, although Git
+had completed and registered the checkout. Subsequent Git operations ran in
+`nix develop`, matching the existing Overcommit/Nix-shell workspace note. The
+worktree was clean before its second non-force removal, and its generated
+`.bin` and `.bundle` files were deleted. The terminal lifecycle is complete;
+the archive command remains only to confirm the deployed legacy-manifest
+fallback and move this tracking directory.
