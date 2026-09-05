@@ -999,3 +999,13 @@ removed before non-force worktree removal. The implementation, review,
 publication, deployment, compatibility checks, and initiative-owned cleanup
 are complete. The terminal lifecycle step can now verify the deployed legacy
 thread fallback and move this tracking directory to `archive/`.
+
+`dev-session validate` accepted all four portal manifests before finalization.
+The first finalization attempt stopped without moving tracking because the
+removed temporary integration worktree had left an empty unmanaged `merge/`
+directory in this initiative's worktree group. Inspection confirmed that the
+directory was empty; `rmdir` removed only that directory. The immediate retry
+then verified the legacy workspace-root thread as idle and archived the
+initiative successfully at `2026-09-05T14:18:03Z`. The retained workspace
+comparison branch ends at pre-archive tracking commit `118e3383`, and the
+configuration comparison branch ends at `4d570e30`.
