@@ -6,20 +6,22 @@ lifecycle: active
 
 ## Current status
 
-The initiative is active again for terminal and portal session unification.
-Inspection confirmed that `2026-09-04-cgv1-devices-bug` was started with the
-checkout-local helper on the ordinary tmux server. Its Codex process has no
-`VPSFREE_DEV_SESSION_*` identity, while portal sessions use the NixOS wrapper,
-dedicated tmux socket, and shared App Server. Its schema-2 manifest consequently
-has no thread ID and the portal omits the Codex tab.
+The unified portal and terminal session implementation is deployed on
+aitherdev. The host exposes one public `dev-session` command, new App Server
+threads default to `max` reasoning when the selected model supports it, and the
+browser keeps model settings in an on-demand dialog. Portal-created sessions
+can be attached from the terminal, and worktrees created after session startup
+are discovered on reload.
 
-The follow-up removes checkout-local `bin/dev-session` as a public command,
-makes the installed `dev-session` the one entry point for both terminal and
-portal creation, defaults new threads to `max` reasoning, and moves idle-thread
-settings into a header dialog. The user chose to leave the existing cgv1
-standalone conversation and tmux session untouched. The corrected candidates
-are committed, rebased, pushed, and in final review. Integration, deployment,
-and two-way live validation remain pending.
+A terminal-creation smoke test found one remaining materialization boundary:
+Codex App Server does not create a rollout for `thread/start` until the first
+turn starts, and the terminal UI also creates a new thread only after its first
+user message. An empty pre-created thread cannot be resumed. The current
+follow-up makes every new shared session start with an initial request.
+Interactive `dev-session start <name>` prompts for it; scripts use
+`--goal-file`. Both terminal and portal creation then use the same journaled
+thread and first-turn transaction. The existing cgv1 standalone conversation,
+the user's sessions, and running development clusters remain untouched.
 
 - Portal URL after deployment:
   `https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/`
@@ -717,3 +719,46 @@ user explicitly prohibited `max` reviews and requested `xhigh`, so fresh
 `gpt-5.6-sol` reviewers use xhigh despite the skill's ordinary High-risk
 default. Long aitherdev integration build and deployment remain pending the
 focused remediation review and commit-series cleanup.
+
+## 2026-09-05 rollout materialization correction
+
+Live terminal creation found that `thread/start` without a first turn leaves a
+memory-only Codex thread with no rollout. Its transcript fails with the exact
+`missing source rollout` lineage error, and a later terminal client cannot
+resume it. Starting a terminal UI first does not solve the handoff because the
+UI creates its thread only after the first user message. Launching it in the
+initiative directory can also require persistent per-path project trust.
+
+The supported correction requires an initial request for every new shared
+session. Interactive terminal creation prompts for one line before mutation.
+JSON and other noninteractive callers use `--goal-file`; the portal already
+does so. The helper then follows the existing journaled portal path and attaches
+the terminal client to the exact persisted thread. A second check under the
+creation lock prevents a race from creating another empty thread. Retries of an
+incomplete journal prompt again and validate the request against its recorded
+hash.
+
+The Go adapter asks `thread/read` to exclude embedded turns, then obtains the
+bounded recent page through `thread/turns/list`. It returns an empty diagnostic
+transcript only for the exact Codex error together with fresh, idle or unloaded,
+non-ephemeral vscode metadata, empty history, and an absent absolute rollout
+path. Near-matches remain errors.
+
+Quick verification before review:
+
+- `ruby -Itest test/dev_session_test.rb`: 135 runs, 1,158 assertions;
+- `ruby -Itest test/devcluster_status_test.rb`: 20 runs, 243 assertions;
+- `ruby -Itest test/workspace_pki_test.rb`: 14 runs, 92 assertions;
+- `ruby -Itest test/workspace_portal_password_test.rb`: 2 expected skips in
+  the ambient shell;
+- `ruby -Itest test/kb_stage_test.rb`: 42 runs, 194 assertions;
+- `CGO_ENABLED=0 go test ./...` and `CGO_ENABLED=0 go vet ./...` passed;
+- JavaScript syntax, Ruby syntax, shell syntax, `git diff --check`, and
+  `nix flake check --no-build -L` passed.
+
+The two exact `2026-09-05-portal-unification-smoke` test sessions, their
+host-only authority and journal files, their one managed tmux session, and a
+temporary source-built portal executable were removed. They were uncommitted,
+disposable diagnostics and are not recoverable. The user's two managed portal
+sessions, the legacy cgv1 session, and the unrelated live development cluster
+were verified unchanged.

@@ -204,6 +204,12 @@ unchanged.
 
 ## Testing plan
 
+- Cover the Codex rollout materialization boundary. A new shared session must
+  have an initial request before any tracking or tmux state is written.
+  Interactive terminal creation prompts once, noninteractive creation requires
+  `--goal-file`, and both paths resume the exact persisted App Server thread.
+- Treat only an exact, proven fresh missing-rollout App Server response as an
+  empty diagnostic transcript. Other history errors must remain visible.
 - Extend Go protocol contract tests to validate every request, response, and
   notification shape used by the adapter against the currently supplied Codex
   schema. Test a non-matching diagnostic version without rejecting it.
