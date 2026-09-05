@@ -26,18 +26,16 @@ The initiative slug must be descriptive and dated, for example
 same slug for the tracking directory, feature branch, and worktree group unless
 a repository-specific rule requires otherwise.
 
-Use the NixOS-installed `dev-session start <name>` when
-`VPSFREE_DEV_SESSION_REQUIRE_RUNTIME=1`; it fixes the deployed host authority,
-tmux, Codex, and portal endpoints. Otherwise, prefer
-`bin/dev-session start <name>` for an ordinary local session. Both forms
-create a dated slug from the short name, open the matching tmux session, and
-can add or remove worktrees under `worktrees/<slug>/` using the canonical bare
-repositories in `repos/`. Use `--as-is` when the full slug has already been
-chosen.
+Use the NixOS-installed `dev-session start <name>` when starting a development
+session in this workspace. It fixes the deployed host authority, tmux, Codex,
+and portal endpoints, creates a dated slug from the short name, opens the
+matching tmux session, and can add or remove worktrees under
+`worktrees/<slug>/` using the canonical bare repositories in `repos/`. Use
+`--as-is` when the full slug has already been chosen.
 
 When running inside an existing development session, do not choose a new slug
-until checking for the active one. Run the applicable helper's `current`
-command from the workspace root. Treat the printed slug as belonging to the
+until checking for the active one. Run `dev-session current` from the workspace
+root. Treat the printed slug as belonging to the
 current process only when the `VPSFREE_DEV_SESSION_SLUG` environment variable
 is also set to that exact slug. If `current` prints a slug but the environment
 variable is missing or different, assume it belongs to another concurrent
@@ -195,18 +193,16 @@ worktree; the per-slug lock serializes helper commands, not external writers.
 Every worktree must have an attached branch and ordinary clean `git status`.
 The helper delegates removal to non-force `git worktree remove`; resolve and
 retry any refusal before finalizing.
-Run the applicable helper's `finalize <slug> --as-is` command to remove clean
-worktrees, retain branches, and move the curated directory to
-`archive/<slug>/`. When `VPSFREE_DEV_SESSION_REQUIRE_RUNTIME=1`, the applicable
-helper is the NixOS-installed `dev-session`; otherwise it is checkout-local
-`bin/dev-session`. It keeps the managed tmux session available so the exact
+Run `dev-session finalize <slug> --as-is` to remove clean worktrees, retain
+branches, and move the curated directory to `archive/<slug>/`. It keeps the
+managed tmux session available so the exact
 `work/<slug>/` to `archive/<slug>/` move can be inspected and committed once in
 the top-level repository together with the final tracking content. Do not make
 a separate tracking commit merely to set the terminal lifecycle before
 finalizing; the helper requires an earlier committed active lifecycle and
 accepts later tracking edits in the working tree. The helper never stages or
-commits the archive move. After that commit, run the same applicable helper's
-`stop <slug> --as-is` command to close the managed session. The stop command
+commits the archive move. After that commit, run
+`dev-session stop <slug> --as-is` to close the managed session. The stop command
 must refuse a finalized initiative whose archive move or terminal tracking
 state is not committed.
 
@@ -220,8 +216,8 @@ tracking notes.
 
 After material changes, review checkpoints, or user-requested status updates,
 use `skills/dev-session-handoff/SKILL.md`. Keep the initiative portal manifest
-current and include the stable link printed by the applicable helper's
-`url <slug> --as-is` command in the handoff. If the portal has not been
+current and include the stable link printed by
+`dev-session url <slug> --as-is` in the handoff. If the portal has not been
 deployed yet, identify it as the post-deployment URL.
 
 Promote reusable lessons to `notes/`. In particular, write a note when a
