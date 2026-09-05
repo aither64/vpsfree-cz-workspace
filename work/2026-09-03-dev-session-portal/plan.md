@@ -175,9 +175,10 @@ unchanged.
   readable, and a legacy ambiguous creating session fails closed until an App
   Server restart permits a fresh replacement.
 - Switching between helper generations requires draining session creation.
-  Stop the portal and verify that no `dev-session start` process remains before
-  the aitherdev switch or rollback. Existing ready sessions and active Codex
-  turns stay running during this narrow creation-only drain.
+  Stop the portal and verify that no `dev-session start` or `dev-session fork`
+  process remains before the aitherdev switch or rollback. Existing ready
+  sessions and active Codex turns stay running during this narrow
+  creation-only drain.
 - The portal remains useful for status and files when GitHub or Codex is
   unavailable and reports integrations as unavailable without failing pages.
 - Active sessions use live branch comparisons. Finalized sessions preserve

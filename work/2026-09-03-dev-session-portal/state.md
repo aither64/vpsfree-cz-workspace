@@ -799,7 +799,7 @@ published `master` history is rewritten. Independent
 
 Current remediation checks:
 
-- `ruby -Itest test/dev_session_test.rb`: 138 runs, 1,178 assertions, no
+- `ruby -Itest test/dev_session_test.rb`: 141 runs, 1,193 assertions, no
   failures or errors. This includes restart without a repeated goal, deferred
   terminal launch, exact-limit input, and legacy empty-thread rejection.
 - All Go packages and Go vet passed through a Nix shell with Go and gcc. The
@@ -817,3 +817,44 @@ commit selecting the preceding correction. It will be amended through
 `confctl` to the final workspace revision after this remediation is committed
 and pushed. The aitherdev build, creation drain, switch, and live two-way smoke
 test remain pending. Internal DNS needs no change.
+
+The first General and Risk reruns reviewed workspace `0f27a97`. General found
+no remaining functional issue and advised closing private prompt files before
+the attach path replaces the helper process. Interactive prompts now pass
+validated text directly into the Runner, and the one Runner-owned mode-0600
+snapshot is removed as soon as session creation finishes, before attachment.
+The snapshot test records its path and permissions and verifies removal.
+
+Risk found that concurrent `attach` and `sync` could enter while the creator
+had released the slug lock for initial delivery, and that these and existing
+fork destinations could launch a client without the materialization check.
+Terminal reconciliation now centrally requires a ready manifest and persisted
+history. Only the creator's post-delivery path can reconcile a creating
+manifest, after exact history verification. Fork sources and new destinations
+also prove persisted history before terminal launch. Focused tests cover both
+the central gate and a real concurrent attach attempt while delivery is
+blocked.
+
+The standalone package build then exposed two consecutive states of the exact
+Codex first-turn transition: after the rollout appears,
+`thread/turns/list` briefly returns `list_turns is not supported yet`, then can
+return a turn whose user item is not visible yet. The persistence loop now
+retries only that exact RPC response and an empty initial-user view until the
+exact request appears. The fake-server regression covers both transitions,
+and the configured-Codex package contract passes. The reusable rollout note
+records this behavior.
+
+Additional review hardening opens caller goal files once with `NOFOLLOW`,
+binds the descriptor to the current path inode, and reads bounded bytes from
+that descriptor. The deployment drain now includes both `start` and `fork`.
+The final package build passed with the exact configured Codex contract, all Go
+and browser packages, 138 packaged session tests with 1,068 assertions, 20
+cluster tests with 243 assertions, 14 PKI tests with 92 assertions, and 2
+password tests with 18 assertions. Its output is
+`/nix/store/j3fw8lhckpw3icxyznvr7ak2kak50v1z-workspace-portal-0.1.0`.
+
+General's repeated branch-policy finding relies on the checked-in instructions
+rather than the replacement orchestration text supplied directly in this
+turn. The latter explicitly makes the top-level shared checkout a direct
+`master` exception, so no published history is rewritten. Fresh General and
+Risk review reruns remain required for the final follow-up commit.

@@ -51,14 +51,14 @@ Build and deploy only aitherdev from the final configuration feature head:
 nix develop -c confctl build -y cz.vpsfree/machines/aitherdev
 ssh root@172.16.106.40 systemctl stop workspace-portal.service
 ssh root@172.16.106.40 \
-  "! pgrep -af 'dev-session[^ ]* .*start([[:space:]]|$)'"
+  "! pgrep -af 'dev-session[^ ]* .*(start|fork)([[:space:]]|$)'"
 nix develop -c confctl deploy -y cz.vpsfree/machines/aitherdev switch
 ```
 
-Do not start a session from another terminal between stopping the portal and
-completing the switch. The process check must have no matches. This drains the
-old browser worker and confirms that no old `dev-session start` process can
-publish creation state through the new `/run/current-system` command. A failed
+Do not start or fork a session from another terminal between stopping the
+portal and completing the switch. The process check must have no matches. This
+drains the old browser worker and confirms that no old session-creation process
+can publish state through the new `/run/current-system` command. A failed
 deployment can safely restart the previous portal service while investigating:
 
 ```sh
@@ -152,11 +152,11 @@ retried after redeploying the corrected generation. Portal credentials and CA
 state can remain for a later redeploy. Leave both internal DNS containers
 unchanged; their existing record remains correct for either generation.
 
-Stop the portal and run the same `dev-session start` process check before
-rollback. Also run the same development-cluster process preflight. The new
-generation can have a helper holding a lifecycle lock while it builds or stops
-a cluster, but the previous generation does not honor that lock. Wait for the
-helper and any lock waiter to exit before changing generations.
+Stop the portal and run the same `dev-session start` or `fork` process check
+before rollback. Also run the same development-cluster process preflight. The
+new generation can have a helper holding a lifecycle lock while it builds or
+stops a cluster, but the previous generation does not honor that lock. Wait
+for the helper and any lock waiter to exit before changing generations.
 
 Rolling aitherdev back to a generation before the deployment key was added also
 removes that root authorization. That rollback is user-owned unless another
