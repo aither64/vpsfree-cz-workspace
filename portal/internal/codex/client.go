@@ -22,7 +22,8 @@ import (
 const (
 	readLimit                       = 64 * 1024 * 1024
 	recentTurnLimit                 = 20
-	DefaultNewThreadReasoningEffort = "max"
+	DefaultNewThreadModel           = "gpt-6-astra"
+	DefaultNewThreadReasoningEffort = "xhigh"
 )
 
 type rpcMessage struct {
@@ -141,16 +142,20 @@ func ResolveNewThreadSettings(models []Model, requested ThreadSettings) (ThreadS
 				selected = candidate
 				break
 			}
-		} else if candidate.IsDefault {
+		} else if candidate.Model == DefaultNewThreadModel {
 			if selected != nil {
-				return ThreadSettings{}, errors.New("Codex model catalog has more than one default")
+				return ThreadSettings{}, fmt.Errorf(
+					"Codex model catalog has more than one %q model", DefaultNewThreadModel,
+				)
 			}
 			selected = candidate
 		}
 	}
 	if selected == nil {
 		if requested.Model == "" {
-			return ThreadSettings{}, errors.New("Codex model catalog has no default")
+			return ThreadSettings{}, fmt.Errorf(
+				"required default Codex model %q is not available", DefaultNewThreadModel,
+			)
 		}
 		return ThreadSettings{}, fmt.Errorf("Codex model %q is not available", requested.Model)
 	}
@@ -1127,6 +1132,21 @@ func (c *Client) RecoverCreatingThread(ctx context.Context, threadID, cwd string
 func (c *Client) RecoverCreatingThreadWithSettings(
 	ctx context.Context, threadID, cwd string, environment map[string]string, settings ThreadSettings,
 ) (string, error) {
+	return c.RecoverCreatingThreadWithSettingsResolver(
+		ctx, threadID, cwd, environment,
+		func() (ThreadSettings, error) { return settings, nil },
+	)
+}
+
+// RecoverCreatingThreadWithSettingsResolver inspects persisted candidates
+// before resolving settings. Existing threads already own their creation
+// settings, so catalog changes matter only when a replacement must be created.
+func (c *Client) RecoverCreatingThreadWithSettingsResolver(
+	ctx context.Context,
+	threadID, cwd string,
+	environment map[string]string,
+	resolveSettings func() (ThreadSettings, error),
+) (string, error) {
 	candidates := make(map[string]struct{})
 	loaded, err := c.loadedThreadIDs(ctx)
 	if err != nil {
@@ -1192,7 +1212,14 @@ func (c *Client) RecoverCreatingThreadWithSettings(
 		if !materialized {
 			return candidateID, nil
 		}
-		return c.ResumeThreadWithSettings(ctx, candidateID, cwd, environment, settings)
+		// The materialized thread already owns the settings chosen when creation
+		// began. Recovery refreshes only runtime configuration; applying today's
+		// defaults here would silently change a session across a deployment.
+		return c.ResumeThread(ctx, candidateID, cwd, environment)
+	}
+	settings, err := resolveSettings()
+	if err != nil {
+		return "", err
 	}
 	return c.StartThreadWithSettings(ctx, cwd, environment, settings)
 }

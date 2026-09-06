@@ -95,7 +95,7 @@
         if (allowDefault) {
           const fallback = document.createElement("option");
           fallback.value = "";
-          fallback.textContent = "System default";
+          fallback.textContent = "GPT-6 Astra (default)";
           modelSelect.append(fallback);
         }
         for (const model of models) {

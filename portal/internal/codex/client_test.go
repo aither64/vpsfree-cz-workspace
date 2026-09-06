@@ -275,13 +275,13 @@ func TestStartThreadRejectsWrongWorkingDirectory(t *testing.T) {
 	}
 }
 
-func TestResolveNewThreadSettingsDefaultsToMax(t *testing.T) {
+func TestResolveNewThreadSettingsDefaultsToXhigh(t *testing.T) {
 	models := []Model{
 		{
-			Model: "default", DisplayName: "Default", IsDefault: true,
+			Model: DefaultNewThreadModel, DisplayName: "GPT-6 Astra",
 			DefaultReasoningEffort: "medium",
 			SupportedReasoningEfforts: []ReasoningEffortOption{
-				{ReasoningEffort: "medium"}, {ReasoningEffort: "max"},
+				{ReasoningEffort: "medium"}, {ReasoningEffort: "xhigh"},
 			},
 		},
 		{
@@ -293,7 +293,7 @@ func TestResolveNewThreadSettingsDefaultsToMax(t *testing.T) {
 	}
 
 	settings, err := ResolveNewThreadSettings(models, ThreadSettings{})
-	if err != nil || settings.Model != "default" || settings.ReasoningEffort != "max" {
+	if err != nil || settings.Model != DefaultNewThreadModel || settings.ReasoningEffort != "xhigh" {
 		t.Fatalf("default settings = %#v, %v", settings, err)
 	}
 	settings, err = ResolveNewThreadSettings(models, ThreadSettings{Model: "bounded"})
@@ -301,7 +301,7 @@ func TestResolveNewThreadSettingsDefaultsToMax(t *testing.T) {
 		t.Fatalf("bounded settings = %#v, %v", settings, err)
 	}
 	settings, err = ResolveNewThreadSettings(models, ThreadSettings{
-		Model: "default", ReasoningEffort: "medium",
+		Model: DefaultNewThreadModel, ReasoningEffort: "medium",
 	})
 	if err != nil || settings.ReasoningEffort != "medium" {
 		t.Fatalf("explicit settings = %#v, %v", settings, err)
@@ -310,7 +310,7 @@ func TestResolveNewThreadSettingsDefaultsToMax(t *testing.T) {
 
 func TestResolveNewThreadSettingsRejectsInvalidCatalogAndSelections(t *testing.T) {
 	defaultModel := Model{
-		Model: "default", DisplayName: "Default", IsDefault: true,
+		Model: DefaultNewThreadModel, DisplayName: "GPT-6 Astra",
 		DefaultReasoningEffort:    "medium",
 		SupportedReasoningEfforts: []ReasoningEffortOption{{ReasoningEffort: "medium"}},
 	}
@@ -320,11 +320,11 @@ func TestResolveNewThreadSettingsRejectsInvalidCatalogAndSelections(t *testing.T
 		requested ThreadSettings
 		message   string
 	}{
-		{"no default", []Model{{Model: "other"}}, ThreadSettings{}, "no default"},
-		{"duplicate default", []Model{defaultModel, defaultModel}, ThreadSettings{}, "more than one default"},
-		{"default lacks max", []Model{defaultModel}, ThreadSettings{}, "required default reasoning effort"},
+		{"no default", []Model{{Model: "other"}}, ThreadSettings{}, "required default Codex model"},
+		{"duplicate default", []Model{defaultModel, defaultModel}, ThreadSettings{}, "more than one"},
+		{"default lacks xhigh", []Model{defaultModel}, ThreadSettings{}, "required default reasoning effort"},
 		{"missing model", []Model{defaultModel}, ThreadSettings{Model: "missing"}, "not available"},
-		{"unsupported effort", []Model{defaultModel}, ThreadSettings{Model: "default", ReasoningEffort: "max"}, "not available"},
+		{"unsupported effort", []Model{defaultModel}, ThreadSettings{Model: DefaultNewThreadModel, ReasoningEffort: "max"}, "not available"},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			_, err := ResolveNewThreadSettings(testCase.models, testCase.requested)
@@ -1683,6 +1683,12 @@ func TestRecoverCreatingThreadResumesPersistedOwnerWithRuntimeConfiguration(t *t
 			return fmt.Errorf("invalid persisted resume params: %#v", params)
 		}
 		config := params["config"].(map[string]any)
+		if _, ok := config["model"]; ok {
+			return fmt.Errorf("persisted thread model was overwritten: %#v", config)
+		}
+		if _, ok := config["model_reasoning_effort"]; ok {
+			return fmt.Errorf("persisted thread reasoning was overwritten: %#v", config)
+		}
 		policy := config["shell_environment_policy"].(map[string]any)
 		set := policy["set"].(map[string]any)
 		if set["VPSFREE_DEV_SESSION_PORTAL_BASE_URL"] != "https://workspace.example" {
@@ -1698,14 +1704,22 @@ func TestRecoverCreatingThreadResumesPersistedOwnerWithRuntimeConfiguration(t *t
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	id, err := client.RecoverCreatingThread(
+	resolverCalled := false
+	id, err := client.RecoverCreatingThreadWithSettingsResolver(
 		ctx, "thread-original", "/workspace/work/example", environment,
+		func() (ThreadSettings, error) {
+			resolverCalled = true
+			return ThreadSettings{}, errors.New("the old model is no longer in the catalog")
+		},
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if id != "thread-original" {
 		t.Fatalf("persisted thread id = %q", id)
+	}
+	if resolverCalled {
+		t.Fatal("materialized recovery resolved replacement settings")
 	}
 }
 

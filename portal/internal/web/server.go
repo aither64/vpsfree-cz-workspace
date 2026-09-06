@@ -27,6 +27,7 @@ import (
 	"github.com/aither64/vpsfree-cz-workspace/portal/internal/session"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
+	"golang.org/x/sys/unix"
 )
 
 //go:embed templates/*.html static/*
@@ -52,6 +53,7 @@ type Config struct {
 	GH                string
 	Tmux              string
 	AuthorityDir      string
+	TransitionLock    string
 	CodexSocket       string
 	CodexVersion      string
 	VpsadminCluster   string
@@ -201,6 +203,12 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 			s.writeError(w, r, http.StatusForbidden, "request origin is invalid")
 			return
 		}
+		unlock, err := s.lockTransition()
+		if err != nil {
+			s.writeError(w, r, http.StatusServiceUnavailable, "workspace runtime is changing; retry shortly")
+			return
+		}
+		defer unlock()
 	}
 	switch {
 	case r.Method == http.MethodGet && r.URL.Path == "/":
@@ -218,6 +226,32 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+func (s *Server) lockTransition() (func(), error) {
+	return s.lockTransitionMode(unix.LOCK_SH)
+}
+
+func (s *Server) lockTransitionExclusive() (func(), error) {
+	return s.lockTransitionMode(unix.LOCK_EX)
+}
+
+func (s *Server) lockTransitionMode(mode int) (func(), error) {
+	if s.config.TransitionLock == "" {
+		return func() {}, nil
+	}
+	file, err := os.OpenFile(s.config.TransitionLock, os.O_RDWR|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, err
+	}
+	if err := unix.Flock(int(file.Fd()), mode); err != nil {
+		file.Close()
+		return nil, err
+	}
+	return func() {
+		_ = unix.Flock(int(file.Fd()), unix.LOCK_UN)
+		_ = file.Close()
+	}, nil
 }
 
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
@@ -455,9 +489,20 @@ func (s *Server) runDevSession(timeout time.Duration, args ...string) (string, s
 }
 
 func (s *Server) runDevSessionContext(parent context.Context, timeout time.Duration, args ...string) (string, string, error) {
+	return s.runDevSessionContextWithTransition(parent, timeout, false, args...)
+}
+
+func (s *Server) runDevSessionContextHeld(parent context.Context, timeout time.Duration, args ...string) (string, string, error) {
+	return s.runDevSessionContextWithTransition(parent, timeout, true, args...)
+}
+
+func (s *Server) runDevSessionContextWithTransition(parent context.Context, timeout time.Duration, held bool, args ...string) (string, string, error) {
 	commandCtx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
 	command := exec.Command(s.config.DevSession, args...)
+	if held {
+		command.Env = append(os.Environ(), "VPSFREE_WORKSPACE_TRANSITION_HELD=1")
+	}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	command.Stdout = &stdout
@@ -480,6 +525,9 @@ func (s *Server) models(w http.ResponseWriter, r *http.Request) {
 	}
 	if models == nil {
 		models = []codex.Model{}
+	}
+	for index := range models {
+		models[index].IsDefault = models[index].Model == codex.DefaultNewThreadModel
 	}
 	s.writeJSON(w, http.StatusOK, models)
 }
@@ -659,7 +707,7 @@ func (s *Server) sessionAPI(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		messageLock := s.messageLock(threadID)
+		messageLock := s.messageLock(summary.Slug)
 		messageLock.Lock()
 		defer messageLock.Unlock()
 		ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
@@ -771,22 +819,59 @@ func (s *Server) archiveStatus(w http.ResponseWriter, slug string) {
 	s.writeJSON(w, http.StatusOK, operation)
 }
 
-func (s *Server) archiveSession(parent context.Context, slug string) error {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
-	err := s.clusters.ReleaseAll(ctx, slug)
-	cancel()
+func (s *Server) archiveSession(parent context.Context, slug string) (resultErr error) {
+	unlockTransition, err := s.lockTransitionExclusive()
 	if err != nil {
-		return err
+		return fmt.Errorf("lock workspace runtime for archival: %w", err)
 	}
+	defer unlockTransition()
+	mutationLock := s.messageLock(slug)
+	mutationLock.Lock()
+	defer mutationLock.Unlock()
+	prepared := false
+	defer func() {
+		if resultErr == nil || !prepared {
+			return
+		}
+		args := []string{"sync", slug, "--as-is"}
+		stdout, stderr, err := s.runDevSessionContextHeld(context.Background(), 3*time.Minute, args...)
+		if err != nil {
+			resultErr = fmt.Errorf(
+				"%w; additionally failed to restore terminal Codex: %s",
+				resultErr,
+				commandFailure("restore prepared session", stdout, stderr, err),
+			)
+		}
+	}()
+
 	summary, err := session.Find(s.config.Workspace, slug)
 	if err != nil {
 		return err
 	}
 	if !summary.Archived {
+		args := []string{"finalize", slug, "--as-is", "--prepare"}
+		if stdout, stderr, err := s.runDevSessionContextHeld(parent, 5*time.Minute, args...); err != nil {
+			return commandFailure("prepare session finalization", stdout, stderr, err)
+		}
+		prepared = true
+	}
+
+	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
+	err = s.clusters.ReleaseAll(ctx, slug)
+	cancel()
+	if err != nil {
+		return err
+	}
+	summary, err = session.Find(s.config.Workspace, slug)
+	if err != nil {
+		return err
+	}
+	if !summary.Archived {
 		args := []string{"finalize", slug, "--as-is"}
-		if stdout, stderr, err := s.runDevSessionContext(parent, 5*time.Minute, args...); err != nil {
+		if stdout, stderr, err := s.runDevSessionContextHeld(parent, 5*time.Minute, args...); err != nil {
 			return commandFailure("finalize session", stdout, stderr, err)
 		}
+		prepared = false
 	}
 	if err := parent.Err(); err != nil {
 		return err
@@ -803,7 +888,7 @@ func (s *Server) archiveSession(parent context.Context, slug string) error {
 		return err
 	}
 	args := []string{"stop", slug, "--as-is"}
-	if stdout, stderr, err := s.runDevSessionContext(parent, 3*time.Minute, args...); err != nil {
+	if stdout, stderr, err := s.runDevSessionContextHeld(parent, 3*time.Minute, args...); err != nil {
 		message := stderr + stdout
 		if !strings.Contains(message, "tmux session not found") &&
 			!strings.Contains(message, "session authority not found") {

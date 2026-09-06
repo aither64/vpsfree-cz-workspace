@@ -11,6 +11,11 @@ from jsonschema import Draft7Validator
 
 
 SCHEMA_DIR = pathlib.Path(sys.argv[1])
+CLIENT_SOURCE = (
+    pathlib.Path(sys.argv[2])
+    if len(sys.argv) > 2
+    else pathlib.Path(__file__).resolve().parents[1] / "portal/internal/codex/client.go"
+)
 
 
 def validate(file_name, value, label):
@@ -172,9 +177,7 @@ client_requests = [
 ]
 for message in client_requests:
     validate("ClientRequest.json", message, f"client request {message['method']}")
-client_source = (
-    pathlib.Path(__file__).resolve().parents[1] / "portal/internal/codex/client.go"
-).read_text()
+client_source = CLIENT_SOURCE.read_text()
 call_pattern = re.compile(
     r'\b(?:Request|requestConnected|requestOn)\s*\([^)]*?"([a-z]+(?:/[A-Za-z]+)*)"',
     re.DOTALL,

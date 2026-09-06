@@ -19,7 +19,99 @@ import (
 
 	"github.com/aither64/vpsfree-cz-workspace/portal/internal/codex"
 	"github.com/aither64/vpsfree-cz-workspace/portal/internal/session"
+	"golang.org/x/sys/unix"
 )
+
+func TestTransitionLockBlocksPortalMutationsDuringHostChanges(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "transition.lock")
+	owner, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer owner.Close()
+	if err := unix.Flock(int(owner.Fd()), unix.LOCK_EX); err != nil {
+		t.Fatal(err)
+	}
+	server := newTestServer(t)
+	server.config.TransitionLock = path
+	acquired := make(chan func(), 1)
+	failed := make(chan error, 1)
+	go func() {
+		unlock, err := server.lockTransition()
+		if err != nil {
+			failed <- err
+			return
+		}
+		acquired <- unlock
+	}()
+	select {
+	case <-acquired:
+		t.Fatal("shared transition lock ignored the host's exclusive lock")
+	case err := <-failed:
+		t.Fatal(err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	if err := unix.Flock(int(owner.Fd()), unix.LOCK_UN); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case unlock := <-acquired:
+		unlock()
+	case err := <-failed:
+		t.Fatal(err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("portal did not acquire the released transition lock")
+	}
+}
+
+func TestArchiveAcquiresTransitionBeforeTheSessionMutationLock(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "transition.lock")
+	owner, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	owner.Close()
+	server := newTestServer(t)
+	server.config.TransitionLock = path
+	slug := "2026-09-06-lock-order"
+	mutationLock := server.messageLock(slug)
+	mutationLock.Lock()
+	result := make(chan error, 1)
+	go func() { result <- server.archiveSession(context.Background(), slug) }()
+
+	probe, err := os.OpenFile(path, os.O_RDWR, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer probe.Close()
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		err = unix.Flock(int(probe.Fd()), unix.LOCK_SH|unix.LOCK_NB)
+		if errors.Is(err, unix.EWOULDBLOCK) {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := unix.Flock(int(probe.Fd()), unix.LOCK_UN); err != nil {
+			t.Fatal(err)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("archive waited for the session lock before excluding portal mutations")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	mutationLock.Unlock()
+	select {
+	case err := <-result:
+		if err == nil {
+			t.Fatal("archive unexpectedly found the missing test session")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("archive did not release its locks")
+	}
+}
 
 func TestMarkdownIsSanitized(t *testing.T) {
 	server := newTestServer(t)
@@ -818,6 +910,24 @@ func TestCommitArchiveCancellationCleansTheIndexAndCanRetry(t *testing.T) {
 
 func TestCloseCancelsAndDrainsArchiveOperations(t *testing.T) {
 	server := newTestServer(t)
+	slug := "2026-09-05-shutdown"
+	tracking := filepath.Join(server.config.Workspace, "work", slug)
+	if err := os.MkdirAll(tracking, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeWebTrackingFiles(t, tracking, "complete")
+	if err := os.WriteFile(
+		filepath.Join(tracking, "portal.yml"),
+		[]byte("schema: 1\nslug: "+slug+"\n"),
+		0o644,
+	); err != nil {
+		t.Fatal(err)
+	}
+	devSession := filepath.Join(t.TempDir(), "dev-session")
+	if err := os.WriteFile(devSession, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	server.config.DevSession = devSession
 	started := filepath.Join(t.TempDir(), "started")
 	helper := filepath.Join(t.TempDir(), "cluster-helper")
 	script := "#!/bin/sh\nprintf started > \"$STARTED\"\nsleep 30\n"
@@ -829,7 +939,7 @@ func TestCloseCancelsAndDrainsArchiveOperations(t *testing.T) {
 	server.clusters.VpsadminOS = helper
 	response := httptest.NewRecorder()
 	server.startArchive(response, &session.Summary{
-		Manifest:  session.Manifest{Slug: "2026-09-05-shutdown"},
+		Manifest:  session.Manifest{Slug: slug},
 		Lifecycle: "complete",
 	})
 	if response.Code != http.StatusAccepted {
@@ -843,7 +953,10 @@ func TestCloseCancelsAndDrainsArchiveOperations(t *testing.T) {
 			t.Fatal(err)
 		}
 		if time.Now().After(deadline) {
-			t.Fatal("archive helper did not start")
+			server.operationMu.Lock()
+			operation := server.operations[slug]
+			server.operationMu.Unlock()
+			t.Fatalf("archive helper did not start: %#v", operation)
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -865,11 +978,96 @@ func TestCloseCancelsAndDrainsArchiveOperations(t *testing.T) {
 	}
 	retry := httptest.NewRecorder()
 	server.startArchive(retry, &session.Summary{
-		Manifest:  session.Manifest{Slug: "2026-09-05-shutdown"},
+		Manifest:  session.Manifest{Slug: slug},
 		Lifecycle: "complete",
 	})
 	if retry.Code != http.StatusServiceUnavailable {
 		t.Fatalf("archive start during shutdown status/body = %d %q", retry.Code, retry.Body.String())
+	}
+}
+
+func TestArchivePreflightFailureDoesNotReleaseClusters(t *testing.T) {
+	server := newTestServer(t)
+	slug := "2026-09-05-unmerged"
+	tracking := filepath.Join(server.config.Workspace, "work", slug)
+	if err := os.MkdirAll(tracking, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeWebTrackingFiles(t, tracking, "complete")
+	if err := os.WriteFile(
+		filepath.Join(tracking, "portal.yml"),
+		[]byte("schema: 1\nslug: "+slug+"\n"),
+		0o644,
+	); err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	devSession := filepath.Join(directory, "dev-session")
+	if err := os.WriteFile(devSession, []byte("#!/bin/sh\necho unmerged >&2\nexit 1\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	released := filepath.Join(directory, "released")
+	cluster := filepath.Join(directory, "cluster")
+	if err := os.WriteFile(cluster, []byte("#!/bin/sh\nprintf released > \"$RELEASED\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("RELEASED", released)
+	server.config.DevSession = devSession
+	server.clusters.Vpsadmin = cluster
+	server.clusters.VpsadminOS = cluster
+
+	err := server.archiveSession(context.Background(), slug)
+	if err == nil || !strings.Contains(err.Error(), "prepare session finalization") {
+		t.Fatalf("archive preflight result = %v", err)
+	}
+	if _, statErr := os.Stat(released); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatalf("cluster release ran after a failed preflight: %v", statErr)
+	}
+}
+
+func TestArchiveReleaseFailureRestoresThePreparedTerminal(t *testing.T) {
+	server := newTestServer(t)
+	slug := "2026-09-05-release-failure"
+	tracking := filepath.Join(server.config.Workspace, "work", slug)
+	if err := os.MkdirAll(tracking, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeWebTrackingFiles(t, tracking, "complete")
+	if err := os.WriteFile(
+		filepath.Join(tracking, "portal.yml"),
+		[]byte("schema: 1\nslug: "+slug+"\n"),
+		0o644,
+	); err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	logPath := filepath.Join(directory, "dev-session.log")
+	devSession := filepath.Join(directory, "dev-session")
+	script := "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$COMMAND_LOG\"\nexit 0\n"
+	if err := os.WriteFile(devSession, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cluster := filepath.Join(directory, "cluster")
+	if err := os.WriteFile(cluster, []byte("#!/bin/sh\nexit 1\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("COMMAND_LOG", logPath)
+	server.config.DevSession = devSession
+	server.clusters.Vpsadmin = cluster
+	server.clusters.VpsadminOS = cluster
+
+	err := server.archiveSession(context.Background(), slug)
+	if err == nil {
+		t.Fatal("archive unexpectedly survived cluster release failure")
+	}
+	data, readErr := os.ReadFile(logPath)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	commands := string(data)
+	if !strings.Contains(commands, "finalize "+slug+" --as-is --prepare") ||
+		!strings.Contains(commands, "sync "+slug+" --as-is") {
+		t.Fatalf("dev-session commands = %q", commands)
 	}
 }
 

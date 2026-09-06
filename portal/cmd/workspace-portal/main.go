@@ -62,11 +62,13 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: workspace-portal serve|thread|validate|version")
+		return errors.New("usage: workspace-portal serve|router|thread|validate|version")
 	}
 	switch args[0] {
 	case "serve":
 		return serve(args[1:])
+	case "router":
+		return routeWorkspaces(args[1:])
 	case "thread":
 		return threadCommand(args[1:])
 	case "validate":
@@ -81,6 +83,7 @@ func run(args []string) error {
 
 type serveOptions struct {
 	unixSocket, workspace, baseURL, devSession, authorityDir string
+	transitionLock                                           string
 	codexSocket, codexVersion                                string
 	gh, tmux                                                 string
 	vpsadminCluster, vpsadminOSCluster                       string
@@ -91,9 +94,10 @@ func newServeFlagSet() (*flag.FlagSet, *serveOptions) {
 	options := &serveOptions{}
 	flags.StringVar(&options.unixSocket, "unix-socket", "", "required HTTP Unix socket")
 	flags.StringVar(&options.workspace, "workspace", "/home/aither/workspace/ai/vpsfree.cz", "workspace root")
-	flags.StringVar(&options.baseURL, "base-url", "https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz", "external base URL")
+	flags.StringVar(&options.baseURL, "base-url", "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz", "external base URL")
 	flags.StringVar(&options.devSession, "dev-session", "", "absolute installed dev-session command")
 	flags.StringVar(&options.authorityDir, "authority-dir", "", "host-only runtime session authority directory")
+	flags.StringVar(&options.transitionLock, "transition-lock", "", "host-wide runtime transition lock")
 	flags.StringVar(&options.codexSocket, "codex-socket", codex.DefaultSocket(), "Codex App Server Unix socket")
 	flags.StringVar(&options.codexVersion, "codex-version", "", "Codex client version used by attached terminal sessions")
 	flags.StringVar(&options.gh, "gh", "gh", "GitHub CLI executable")
@@ -114,6 +118,7 @@ func serve(args []string) error {
 	application, err := portalweb.New(portalweb.Config{
 		Workspace: options.workspace, BaseURL: options.baseURL, DevSession: options.devSession,
 		GH: options.gh, Tmux: options.tmux, AuthorityDir: options.authorityDir,
+		TransitionLock:  options.transitionLock,
 		CodexSocket:     options.codexSocket,
 		CodexVersion:    options.codexVersion,
 		VpsadminCluster: options.vpsadminCluster, VpsadminOSCluster: options.vpsadminOSCluster,
@@ -176,7 +181,7 @@ func portalListener(socketPath string) (net.Listener, error) {
 
 func threadCommand(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: workspace-portal thread create|fork|set-name|ensure-initial|require-materialized|require-idle")
+		return errors.New("usage: workspace-portal thread create|fork|set-name|models|defaults|ensure-initial|require-materialized|require-idle")
 	}
 	command := args[0]
 	flags := flag.NewFlagSet("thread "+command, flag.ContinueOnError)
@@ -203,11 +208,26 @@ func threadCommand(args []string) error {
 	if err := flags.Parse(args[1:]); err != nil {
 		return err
 	}
+	if command == "defaults" {
+		if flags.NArg() != 0 {
+			return errors.New("thread defaults accepts no positional arguments")
+		}
+		return json.NewEncoder(os.Stdout).Encode(map[string]string{
+			"model":           codex.DefaultNewThreadModel,
+			"reasoningEffort": codex.DefaultNewThreadReasoningEffort,
+		})
+	}
 	client := codex.New(*socket)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	switch command {
+	case "models":
+		models, err := client.ListModels(ctx)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(models)
 	case "create":
 		runtime := threadRuntime{
 			Slug: *sessionSlug, Workspace: *workspace, WorkDir: *cwd,
@@ -222,19 +242,24 @@ func threadCommand(args []string) error {
 		var id string
 		var err error
 		settings := codex.ThreadSettings{Model: *model, ReasoningEffort: *effort}
-		if *threadID == "" || *recoverCreating {
+		resolveSettings := func() (codex.ThreadSettings, error) {
 			models, listErr := client.ListModels(ctx)
 			if listErr != nil {
-				return fmt.Errorf("load Codex models: %w", listErr)
+				return codex.ThreadSettings{}, fmt.Errorf("load Codex models: %w", listErr)
 			}
-			settings, listErr = codex.ResolveNewThreadSettings(models, settings)
-			if listErr != nil {
-				return listErr
-			}
+			return codex.ResolveNewThreadSettings(models, settings)
 		}
 		if *recoverCreating {
-			id, err = client.RecoverCreatingThreadWithSettings(ctx, *threadID, *cwd, runtime.environment(), settings)
+			id, err = client.RecoverCreatingThreadWithSettingsResolver(
+				ctx, *threadID, *cwd, runtime.environment(), resolveSettings,
+			)
 		} else {
+			if *threadID == "" {
+				settings, err = resolveSettings()
+				if err != nil {
+					return err
+				}
+			}
 			id, err = client.OpenThreadWithSettings(ctx, *threadID, *cwd, runtime.environment(), settings)
 		}
 		if err != nil {
