@@ -299,6 +299,15 @@ it leaves the validated candidate installed so the same `switch` can be
 retried. `workspace-host rollback` selects the preceding application and Codex
 pair and refuses while a thread is active.
 
+This clean-restart release does not make its transient reopened-tracking
+metadata readable by the preceding portal generation. Do not roll back between
+`dev-session reopen` and successful creation of that initiative's fresh
+conversation. If a rollback happens in that window, the plan, state, and
+branches remain intact; switch forward to this release and retry the same
+session creation request. The provenance fields are removed when the fresh
+conversation becomes ready, after which the preceding parser can read the
+manifest again.
+
 Before rolling back the NixOS substrate, stop the user layer so two portal
 runtimes cannot run at once:
 

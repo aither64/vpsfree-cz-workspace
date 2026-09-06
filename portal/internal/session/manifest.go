@@ -45,6 +45,9 @@ type Creation struct {
 	InitialGoalSent      bool   `yaml:"initial_goal_sent,omitempty" json:"initialGoalSent,omitempty"`
 	InitialGoalAttempted *bool  `yaml:"initial_goal_attempted,omitempty" json:"initialGoalAttempted,omitempty"`
 	GoalSHA256           string `yaml:"goal_sha256,omitempty" json:"goalSha256,omitempty"`
+	TrackingOrigin       string `yaml:"tracking_origin,omitempty" json:"-"`
+	TrackingPlanSHA256   string `yaml:"tracking_plan_sha256,omitempty" json:"-"`
+	TrackingStateSHA256  string `yaml:"tracking_state_sha256,omitempty" json:"-"`
 }
 
 type Tmux struct {
@@ -120,6 +123,23 @@ func (m *Manifest) Validate(expectedSlug string) error {
 	}
 	if m.Creation.GoalSHA256 != "" && !sha256Pattern.MatchString(m.Creation.GoalSHA256) {
 		return errors.New("invalid creation goal digest")
+	}
+	trackingFields := []string{
+		m.Creation.TrackingOrigin,
+		m.Creation.TrackingPlanSHA256,
+		m.Creation.TrackingStateSHA256,
+	}
+	trackingPresent := 0
+	for _, value := range trackingFields {
+		if value != "" {
+			trackingPresent++
+		}
+	}
+	if trackingPresent != 0 && (trackingPresent != len(trackingFields) ||
+		m.Creation.TrackingOrigin != "reopened" ||
+		!sha256Pattern.MatchString(m.Creation.TrackingPlanSHA256) ||
+		!sha256Pattern.MatchString(m.Creation.TrackingStateSHA256)) {
+		return errors.New("invalid reopened tracking provenance")
 	}
 	if m.Schema == 1 && m.Creation.InitialGoalAttempted != nil {
 		return errors.New("schema 1 must not contain an initial goal attempt marker")
@@ -492,7 +512,10 @@ func validateManifestNode(root *yaml.Node) error {
 	if node := fields["creation"]; node != nil {
 		items, err := strictMapping(
 			node,
-			[]string{"state", "initial_goal_sent", "initial_goal_attempted", "goal_sha256"},
+			[]string{
+				"state", "initial_goal_sent", "initial_goal_attempted", "goal_sha256",
+				"tracking_origin", "tracking_plan_sha256", "tracking_state_sha256",
+			},
 			nil,
 		)
 		if err != nil {
@@ -514,11 +537,15 @@ func validateManifestNode(root *yaml.Node) error {
 				return fmt.Errorf("creation: %w", err)
 			}
 		}
-		if err := optionalString(items, "goal_sha256"); err != nil {
-			return fmt.Errorf("creation: %w", err)
-		}
-		if value := items["goal_sha256"]; value != nil && value.Value == "" {
-			return errors.New("creation: goal_sha256 must not be empty")
+		for _, key := range []string{
+			"goal_sha256", "tracking_origin", "tracking_plan_sha256", "tracking_state_sha256",
+		} {
+			if err := optionalString(items, key); err != nil {
+				return fmt.Errorf("creation: %w", err)
+			}
+			if value := items[key]; value != nil && value.Value == "" {
+				return fmt.Errorf("creation: %s must not be empty", key)
+			}
 		}
 	}
 	if node := fields["repositories"]; node != nil {

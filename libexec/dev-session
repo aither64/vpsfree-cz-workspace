@@ -443,8 +443,25 @@ module VpsfreeDevSession
             model:,
             effort:
           )
-          ensure_tracking_files(slug)
-          validate_creation_tracking_files!(slug) if creation_journal
+          preserve_tracking = creation_journal&.fetch('preserve_tracking', false)
+          ensure_tracking_files(slug, allow_uncommitted_reopen: preserve_tracking)
+          if creation_journal&.fetch('preserve_tracking', false)
+            manifest_before_creation = load_portal_manifest(portal_file(slug), required: true)
+            completed = completed_preserved_creation?(
+              creation_journal,
+              manifest_before_creation
+            )
+            unless completed
+              attempted = manifest_before_creation.dig('creation', 'initial_goal_attempted') == true
+              validate_reopened_tracking_for_conversation!(
+                slug,
+                manifest_before_creation,
+                verify_content: !attempted
+              )
+            end
+          elsif creation_journal
+            validate_creation_tracking_files!(slug)
+          end
           manifest = ensure_portal_manifest(slug, creation_journal:)
           if creation_journal&.fetch('preserve_tracking', false) &&
              manifest.dig('codex', 'thread_id').to_s.empty? &&
@@ -454,8 +471,11 @@ module VpsfreeDevSession
               'state' => 'creating',
               'initial_goal_sent' => false,
               'initial_goal_attempted' => false,
-              'goal_sha256' => creation_journal.fetch('goal_sha256')
-            }
+              'goal_sha256' => creation_journal.fetch('goal_sha256'),
+              'tracking_origin' => manifest.dig('creation', 'tracking_origin'),
+              'tracking_plan_sha256' => manifest.dig('creation', 'tracking_plan_sha256'),
+              'tracking_state_sha256' => manifest.dig('creation', 'tracking_state_sha256')
+            }.compact
             write_portal_manifest(slug, manifest)
           end
           if creation_journal &&
@@ -641,6 +661,7 @@ module VpsfreeDevSession
             current_manifest['creation']['initial_goal_sent'] = true
             current_manifest['creation']['state'] = 'ready'
             current_manifest['creation'].delete('initial_goal_attempted')
+            clear_reopened_tracking_metadata!(current_manifest)
             current_manifest['schema'] = 1
             write_portal_manifest(slug, current_manifest)
             mark_creation_journal_ready(slug, creation_journal) if creation_journal&.fetch('state') == 'creating'
@@ -1249,12 +1270,12 @@ module VpsfreeDevSession
       end
     end
 
-    def ensure_tracking_files(slug)
+    def ensure_tracking_files(slug, allow_uncommitted_reopen: false)
       if path_exists?(work_dir(slug))
         validate_work_directory!(slug)
         validate_tracking_files!(slug)
         if archived_slug_known?(slug) && !committed_path?('HEAD', File.join('work', slug, 'state.md')) &&
-           !valid_uncommitted_reopen?(slug)
+           !allow_uncommitted_reopen && !valid_uncommitted_reopen?(slug)
           raise Error, "archived slug cannot be reused: #{archive_dir(slug)}"
         end
         ensure_worktree_group!(slug, create: true)
@@ -1296,11 +1317,23 @@ module VpsfreeDevSession
           aliases: false
         )
         validate_portal_manifest!(expected, slug, archived_portal)
-        expected.delete('finalized_at')
-        expected.fetch('repositories', []).each { |repository| repository.delete('final_head_sha') }
+        apply_reopened_portal_transition!(
+          expected,
+          slug,
+          archived_portal,
+          plan_sha256: Digest::SHA256.hexdigest(expected_plan),
+          state_sha256: Digest::SHA256.hexdigest(expected_state)
+        )
         actual == expected
       else
-        true
+        actual = load_portal_manifest(portal_file(slug), required: true)
+        expected = reopened_portal_manifest(
+          slug,
+          plan_sha256: Digest::SHA256.hexdigest(expected_plan),
+          state_sha256: Digest::SHA256.hexdigest(expected_state)
+        )
+        expected['repositories'] = actual.fetch('repositories')
+        actual == expected
       end
     rescue Error, Errno::ENOENT, Psych::Exception
       false
@@ -1582,9 +1615,38 @@ module VpsfreeDevSession
           unless valid_stored_creation_journal?(actual, slug, manifest)
             raise Error, "invalid creation journal #{path}"
           end
+          return actual if actual['preserve_tracking'] == true
+
           return nil
         end
-        expected['preserve_tracking'] = true if actual['preserve_tracking'] == true
+        completion_pending = false
+        if actual['preserve_tracking'] == true
+          expected['preserve_tracking'] = true
+          manifest_ready = completed_creation_manifest?(manifest)
+          completed = completed_preserved_creation?(actual, manifest)
+          completion_pending = state == 'creating' && manifest_ready
+          if completion_pending && goal_file.nil? && !exclusive
+            reconciled = actual.merge('state' => 'ready')
+            unless reconciled['run_codex'] == true &&
+                   valid_stored_creation_journal?(reconciled, slug, manifest)
+              raise Error, "invalid creation journal #{path}"
+            end
+            if path_exists?(archive_dir(slug))
+              raise Error, "dev session already exists: #{slug}"
+            end
+            write_creation_journal(path, reconciled, create: false)
+            return reconciled
+          end
+          unless completed
+            unless completion_pending
+              validate_reopened_tracking_for_conversation!(
+                slug,
+                manifest,
+                verify_content: manifest&.dig('creation', 'initial_goal_attempted') != true
+              )
+            end
+          end
+        end
         unless [nil, true].include?(actual['preserve_tracking']) &&
                %w[creating ready].include?(state) &&
                actual.keys.sort == (expected.keys + ['state']).sort
@@ -1600,15 +1662,31 @@ module VpsfreeDevSession
           end
           raise Error, "creation request does not match the recorded request for #{slug}"
         end
+        if completion_pending
+          actual = actual.merge('state' => 'ready')
+          write_creation_journal(path, actual, create: false)
+          state = 'ready'
+        end
         if manifest && !%w[creating ready].include?(manifest.dig('creation', 'state'))
           raise Error, "invalid creation state for #{slug}"
         end
-        return nil if state == 'ready' && manifest&.dig('creation', 'state') == 'ready' && !exclusive
+        if state == 'ready' && manifest&.dig('creation', 'state') == 'ready' && !exclusive
+          return actual if actual['preserve_tracking'] == true
+
+          return nil
+        end
         return actual
       end
 
       if goal_file && adoptable_tracking_for_conversation?(slug)
-        journal = expected.merge('preserve_tracking' => true, 'state' => 'creating')
+        manifest = load_portal_manifest(portal_file(slug), required: true)
+        journal = expected.merge('state' => 'creating')
+        if reopened_tracking_for_conversation?(slug, manifest, verify_content: true)
+          unless valid_uncommitted_reopen?(slug) || committed_reopened_tracking?(slug)
+            raise Error, "reopened tracking provenance cannot be proven: #{slug}"
+          end
+          journal['preserve_tracking'] = true
+        end
         write_creation_journal(path, journal, create: true)
         return journal
       end
@@ -1650,16 +1728,84 @@ module VpsfreeDevSession
       end
     end
 
+    def completed_creation_manifest?(manifest)
+      manifest&.dig('creation', 'state') == 'ready' &&
+        manifest.dig('creation', 'initial_goal_sent') == true &&
+        !manifest.dig('codex', 'thread_id').to_s.empty?
+    end
+
+    def completed_preserved_creation?(journal, manifest)
+      journal&.fetch('preserve_tracking', false) &&
+        journal['state'] == 'ready' && completed_creation_manifest?(manifest)
+    end
+
+    def committed_reopened_tracking?(slug)
+      %w[plan.md state.md portal.yml].all? do |name|
+        path = File.join('work', slug, name)
+        next false unless committed_path?('HEAD', path)
+
+        File.binread(File.join(workspace, path)) == git_capture([
+          'git', '-C', workspace, 'show', "HEAD:#{path}"
+        ])
+      end
+    rescue Error, Errno::ENOENT
+      false
+    end
+
     def adoptable_tracking_for_conversation?(slug)
       return false unless path_exists?(work_dir(slug))
       return false if path_exists?(archive_dir(slug)) || @tmux.session(slug)
 
       manifest = load_portal_manifest(portal_file(slug), required: false)
-      return true unless manifest
+      return false unless manifest
+
+      lifecycle = validate_tracking_files!(slug)
+      unless lifecycle == 'active'
+        raise Error, "cannot create a conversation for a #{lifecycle} initiative: #{slug}"
+      end
 
       manifest.dig('creation', 'state') == 'ready' &&
         manifest.dig('codex', 'thread_id').to_s.empty? &&
         manifest.dig('creation', 'goal_sha256').nil?
+    end
+
+    def reopened_tracking_for_conversation?(slug, manifest, verify_content:)
+      creation = manifest&.fetch('creation', {})
+      return false unless creation['tracking_origin'] == 'reopened'
+
+      validate_reopened_tracking_for_conversation!(
+        slug,
+        manifest,
+        verify_content:
+      )
+      true
+    end
+
+    def validate_reopened_tracking_for_conversation!(slug, manifest, verify_content:)
+      unless manifest && manifest.dig('creation', 'tracking_origin') == 'reopened'
+        raise Error, "preserved tracking has no reopen provenance: #{slug}"
+      end
+      lifecycle = validate_tracking_files!(slug)
+      unless lifecycle == 'active'
+        raise Error, "cannot create a conversation for a #{lifecycle} initiative: #{slug}"
+      end
+      return unless verify_content
+
+      expected_plan = manifest.dig('creation', 'tracking_plan_sha256')
+      expected_state = manifest.dig('creation', 'tracking_state_sha256')
+      plan = read_bounded_file(plan_file(slug), 'plan.md')
+      state = read_bounded_file(state_file(slug), 'state.md')
+      unless Digest::SHA256.hexdigest(plan) == expected_plan &&
+             Digest::SHA256.hexdigest(state) == expected_state
+        raise Error, "reopened tracking changed before conversation creation: #{slug}"
+      end
+    end
+
+    def clear_reopened_tracking_metadata!(manifest)
+      creation = manifest.fetch('creation')
+      creation.delete('tracking_origin')
+      creation.delete('tracking_plan_sha256')
+      creation.delete('tracking_state_sha256')
     end
 
     def mark_creation_journal_ready(slug, journal)
@@ -1719,7 +1865,13 @@ module VpsfreeDevSession
       manifest = load_portal_manifest(path, required: false)
       return manifest if manifest
 
-      manifest = {
+      manifest = new_portal_manifest(slug, creation_journal:)
+      write_portal_manifest(slug, manifest)
+      manifest
+    end
+
+    def new_portal_manifest(slug, creation_journal: nil)
+      {
         'schema' => creation_journal ? 2 : 1,
         'slug' => slug,
         'codex' => {},
@@ -1739,8 +1891,6 @@ module VpsfreeDevSession
         'repositories' => [],
         'artifacts' => []
       }
-      write_portal_manifest(slug, manifest)
-      manifest
     end
 
     def load_portal_manifest(path, required:)
@@ -1849,7 +1999,8 @@ module VpsfreeDevSession
          (!codex_provenance.all? { |key| codex.key?(key) } || codex['thread_id'].to_s.empty?)
         raise Error, "incomplete portal Codex provenance in #{path}"
       end
-      creation_keys = %w[state initial_goal_sent goal_sha256]
+      tracking_keys = %w[tracking_origin tracking_plan_sha256 tracking_state_sha256]
+      creation_keys = %w[state initial_goal_sent goal_sha256] + tracking_keys
       creation_keys << 'initial_goal_attempted' if manifest['schema'] == 2
       validate_mapping_keys!(creation, creation_keys, 'portal creation metadata', path)
       state = creation['state']
@@ -1877,6 +2028,15 @@ module VpsfreeDevSession
       if creation.key?('goal_sha256') &&
          (!goal_sha256.is_a?(String) || !goal_sha256.match?(/\A[0-9a-f]{64}\z/))
         raise Error, "invalid portal goal digest in #{path}"
+      end
+      tracking_present = tracking_keys.count { |key| creation.key?(key) }
+      if tracking_present.positive? &&
+         (tracking_present != tracking_keys.length || creation['tracking_origin'] != 'reopened' ||
+          !creation['tracking_plan_sha256'].is_a?(String) ||
+          !creation['tracking_plan_sha256'].match?(/\A[0-9a-f]{64}\z/) ||
+          !creation['tracking_state_sha256'].is_a?(String) ||
+          !creation['tracking_state_sha256'].match?(/\A[0-9a-f]{64}\z/))
+        raise Error, "invalid reopened tracking provenance in #{path}"
       end
 
       repository_names = repositories.map do |repository|
@@ -2760,18 +2920,34 @@ module VpsfreeDevSession
       state_path = File.join(source, 'state.md')
       state = read_bounded_file(state_path, 'state.md')
       target_state = reopened_state_content(state)
+      plan = read_bounded_file(File.join(source, 'plan.md'), 'plan.md')
       portal_path = File.join(source, PORTAL_MANIFEST)
       portal = path_exists?(portal_path) ? read_bounded_file(portal_path, 'portal manifest') : nil
-      target_portal = portal && reopened_portal_content(portal_path)
+      target_portal = if portal
+                        reopened_portal_content(
+                          portal_path,
+                          plan_sha256: Digest::SHA256.hexdigest(plan),
+                          state_sha256: Digest::SHA256.hexdigest(target_state)
+                        )
+                      else
+                        YAML.dump(
+                          reopened_portal_manifest(
+                            slug,
+                            plan_sha256: Digest::SHA256.hexdigest(plan),
+                            state_sha256: Digest::SHA256.hexdigest(target_state)
+                          )
+                        )
+                      end
       journal = {
         'schema' => 1,
         'slug' => slug,
         'phase' => 'prepared',
         'lifecycle' => lifecycle,
+        'plan_sha256' => Digest::SHA256.hexdigest(plan),
         'state_sha256' => Digest::SHA256.hexdigest(state),
         'target_state_sha256' => Digest::SHA256.hexdigest(target_state),
         'portal_sha256' => portal && Digest::SHA256.hexdigest(portal),
-        'target_portal_sha256' => target_portal && Digest::SHA256.hexdigest(target_portal)
+        'target_portal_sha256' => Digest::SHA256.hexdigest(target_portal)
       }
       write_reopen_journal(reopen_journal_file(slug), journal, create: true)
     end
@@ -2816,6 +2992,7 @@ module VpsfreeDevSession
         fsync_directory(File.dirname(source))
         fsync_directory(File.dirname(destination))
       end
+      verify_reopened_plan!(destination, journal)
 
       finish_reopen_file!(
         File.join(destination, 'state.md'),
@@ -2827,20 +3004,27 @@ module VpsfreeDevSession
           File.join(destination, PORTAL_MANIFEST),
           journal.fetch('portal_sha256'),
           journal.fetch('target_portal_sha256')
-        ) { |_content| reopened_portal_content(File.join(destination, PORTAL_MANIFEST)) }
-      elsif path_exists?(File.join(destination, PORTAL_MANIFEST))
-        raise Error, "portal manifest appeared during reopen: #{destination}"
+        ) do |_content|
+          reopened_portal_content(
+            File.join(destination, PORTAL_MANIFEST),
+            plan_sha256: journal.fetch('plan_sha256'),
+            state_sha256: journal.fetch('target_state_sha256')
+          )
+        end
+      else
+        finish_new_reopened_portal!(slug, journal)
       end
 
-      File.unlink(path)
-      fsync_directory(File.dirname(path))
       validate_work_directory!(slug)
       validate_tracking_files!(slug)
+      File.unlink(path)
+      fsync_directory(File.dirname(path))
       @out.puts "reopened: #{destination}"
       @out.puts "review and commit: archive/#{slug} -> work/#{slug}"
     end
 
     def verify_reopen_originals!(directory, journal)
+      verify_reopened_plan!(directory, journal, label: 'archived plan')
       state = read_bounded_file(File.join(directory, 'state.md'), 'state.md')
       unless Digest::SHA256.hexdigest(state) == journal.fetch('state_sha256')
         raise Error, 'archived state changed after reopen was prepared'
@@ -2853,6 +3037,13 @@ module VpsfreeDevSession
         end
       elsif path_exists?(portal_path)
         raise Error, 'archived portal manifest appeared after reopen was prepared'
+      end
+    end
+
+    def verify_reopened_plan!(directory, journal, label: 'reopened plan')
+      plan = read_bounded_file(File.join(directory, 'plan.md'), 'plan.md')
+      unless Digest::SHA256.hexdigest(plan) == journal.fetch('plan_sha256')
+        raise Error, "#{label} changed after reopen was prepared"
       end
     end
 
@@ -2882,12 +3073,66 @@ module VpsfreeDevSession
       end
     end
 
-    def reopened_portal_content(path)
+    def reopened_portal_content(path, plan_sha256:, state_sha256:)
       manifest = load_portal_manifest(path, required: true)
+      apply_reopened_portal_transition!(
+        manifest,
+        File.basename(File.dirname(path)),
+        path,
+        plan_sha256:,
+        state_sha256:
+      )
+      YAML.dump(manifest)
+    end
+
+    def reopened_portal_manifest(slug, plan_sha256:, state_sha256:)
+      manifest = new_portal_manifest(slug)
+      apply_reopened_portal_transition!(
+        manifest,
+        slug,
+        portal_file(slug),
+        plan_sha256:,
+        state_sha256:
+      )
+      manifest
+    end
+
+    def apply_reopened_portal_transition!(manifest, slug, path, plan_sha256:, state_sha256:)
       manifest.delete('finalized_at')
       manifest.fetch('repositories', []).each { |repository| repository.delete('final_head_sha') }
-      validate_portal_manifest!(manifest, File.basename(File.dirname(path)), path)
-      YAML.dump(manifest)
+      creation = manifest.fetch('creation')
+      clear_reopened_tracking_metadata!(manifest)
+      if manifest.dig('codex', 'thread_id').to_s.empty? &&
+         creation['state'] == 'ready' && creation['goal_sha256'].nil?
+        creation['tracking_origin'] = 'reopened'
+        creation['tracking_plan_sha256'] = plan_sha256
+        creation['tracking_state_sha256'] = state_sha256
+      end
+      validate_portal_manifest!(manifest, slug, path)
+      manifest
+    end
+
+    def finish_new_reopened_portal!(slug, journal)
+      path = portal_file(slug)
+      expected = YAML.dump(
+        reopened_portal_manifest(
+          slug,
+          plan_sha256: journal.fetch('plan_sha256'),
+          state_sha256: journal.fetch('target_state_sha256')
+        )
+      )
+      unless Digest::SHA256.hexdigest(expected) == journal.fetch('target_portal_sha256')
+        raise Error, "reopened portal manifest changed unexpectedly: #{path}"
+      end
+      if path_exists?(path)
+        actual = read_bounded_file(path, 'portal manifest')
+        unless Digest::SHA256.hexdigest(actual) == journal.fetch('target_portal_sha256')
+          raise Error, "portal manifest appeared during reopen: #{path}"
+        end
+        return
+      end
+
+      write_portal_manifest(slug, YAML.safe_load(expected))
     end
 
     def reopen_journal_file(slug)
@@ -2906,20 +3151,20 @@ module VpsfreeDevSession
       end
       journal = JSON.parse(File.binread(path, AUTHORITY_MAX_SIZE + 1))
       keys = %w[
-        schema slug phase lifecycle state_sha256 target_state_sha256
+        schema slug phase lifecycle plan_sha256 state_sha256 target_state_sha256
         portal_sha256 target_portal_sha256
       ]
       unless journal.is_a?(Hash) && journal.keys.sort == keys.sort &&
              journal['schema'] == 1 && journal['slug'] == slug &&
              %w[prepared moved].include?(journal['phase']) &&
              %w[complete abandoned].include?(journal['lifecycle']) &&
-             [journal['state_sha256'], journal['target_state_sha256']].all? do |value|
+             [journal['plan_sha256'], journal['state_sha256'],
+              journal['target_state_sha256'], journal['target_portal_sha256']].all? do |value|
                value.is_a?(String) && value.match?(/\A[0-9a-f]{64}\z/)
              end &&
-             [journal['portal_sha256'], journal['target_portal_sha256']].all? do |value|
+             [journal['portal_sha256']].all? do |value|
                value.nil? || (value.is_a?(String) && value.match?(/\A[0-9a-f]{64}\z/))
-             end &&
-             journal['portal_sha256'].nil? == journal['target_portal_sha256'].nil?
+             end
         raise Error, "invalid reopen journal: #{path}"
       end
       journal

@@ -310,7 +310,10 @@ registration from one unambiguous merge base with the configured default
 branch. Supply `--base REF` if the intended base cannot be inferred uniquely.
 Starting the reopened initiative with an initial request creates a fresh shared
 conversation while leaving its existing plan, state, and repository records
-unchanged.
+unchanged. Reopen records the exact plan and active-state digests until that
+conversation is established. Session creation refuses terminal or changed
+tracking instead of treating a partial or independently edited directory as a
+reopened initiative.
 
 ## Worktree helpers
 

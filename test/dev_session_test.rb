@@ -2260,7 +2260,7 @@ class DevSessionTest < Minitest::Test
       goal = File.join(workspace, 'goal.txt')
       File.write(goal, "Resume after an early crash.\n")
       crashing_runner_class = Class.new(VpsfreeDevSession::Runner) do
-        def ensure_tracking_files(slug)
+        def ensure_tracking_files(slug, **)
           super
           raise VpsfreeDevSession::Error, 'simulated crash after tracking creation'
         end
@@ -2323,7 +2323,7 @@ class DevSessionTest < Minitest::Test
       goal = File.join(workspace, 'goal.txt')
       File.write(goal, "Resume after an early crash.\n")
       crashing_runner_class = Class.new(VpsfreeDevSession::Runner) do
-        def ensure_tracking_files(_slug)
+        def ensure_tracking_files(_slug, **)
           raise VpsfreeDevSession::Error, 'simulated crash before tracking creation'
         end
       end
@@ -5785,7 +5785,14 @@ class DevSessionTest < Minitest::Test
       manifest = YAML.safe_load(File.read(File.join(workspace, 'work', slug, 'portal.yml')))
       refute(manifest.key?('finalized_at'))
       refute(manifest.dig('repositories', 0).key?('final_head_sha'))
+      assert_equal('reopened', manifest.dig('creation', 'tracking_origin'))
       refute(File.exist?(File.join(workspace, 'archive', slug)))
+
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: nil, fetch: false
+      )
+      assert(File.directory?(File.join(workspace, 'worktrees', slug, 'sample')))
     end
   end
 
@@ -5831,6 +5838,53 @@ class DevSessionTest < Minitest::Test
     end
   end
 
+  def test_reopen_journal_rejects_a_changed_plan_after_an_interrupted_move
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-interrupted-plan'
+      archived_runner(workspace, slug)
+      runner = runner_for(workspace)
+      runner.send(:prepare_reopen_journal!, slug, 'complete')
+      File.rename(
+        File.join(workspace, 'archive', slug),
+        File.join(workspace, 'work', slug)
+      )
+      File.write(File.join(workspace, 'work', slug, 'plan.md'), "truncated\n")
+
+      error = assert_raises(VpsfreeDevSession::Error) do
+        runner.reopen(slug, as_is: true)
+      end
+      assert_match(/reopened plan changed after reopen was prepared/, error.message)
+      assert(File.exist?(File.join(workspace, 'worktrees', '.locks', "#{slug}.reopen.json")))
+    end
+  end
+
+  def test_reopen_with_an_existing_thread_does_not_add_adoption_provenance
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-existing-thread'
+      runner = runner_for(workspace)
+      runner.ensure_tracking_files(slug)
+      manifest = runner.send(:ensure_portal_manifest, slug)
+      manifest['codex']['thread_id'] = 'thread-existing'
+      manifest['creation']['initial_goal_sent'] = true
+      runner.send(:write_portal_manifest, slug, manifest)
+      commit_tracking(workspace, slug, lifecycle: 'complete')
+      runner.finalize(slug, as_is: true)
+      commit_archive_move(workspace, slug)
+
+      runner.reopen(slug, as_is: true)
+
+      reopened = YAML.safe_load(File.read(File.join(workspace, 'work', slug, 'portal.yml')))
+      assert_equal('thread-existing', reopened.dig('codex', 'thread_id'))
+      refute(reopened.dig('creation').key?('tracking_origin'))
+      refute(reopened.dig('creation').key?('tracking_plan_sha256'))
+      refute(reopened.dig('creation').key?('tracking_state_sha256'))
+    end
+  end
+
   def test_reopen_legacy_archive_reuses_retained_branch
     skip 'git is not available' unless command_available?('git')
 
@@ -5853,17 +5907,39 @@ class DevSessionTest < Minitest::Test
       runner = runner_for(workspace)
       File.write(
         File.join(tracking, 'plan.md'),
-        runner.send(:plan_skeleton, slug).sub("## Goal\n\n", "## Goal\n\nRetain this plan.\n\n")
+        <<~PLAN
+          # Retained legacy plan
+
+          This substantive plan predates the current tracking template.
+        PLAN
       )
       File.write(
         File.join(tracking, 'state.md'),
-        runner.send(:state_skeleton, slug).sub("## Status\n\n", "## Status\n\n- Retain this state.\n\n")
+        <<~STATE
+          ---
+          lifecycle: active
+          ---
+
+          # Retained legacy state
+
+          This substantive state predates the current tracking template.
+        STATE
       )
       commit_tracking(workspace, slug, lifecycle: 'complete')
       runner.finalize(slug, as_is: true)
       commit_archive_move(workspace, slug)
 
       runner.reopen(slug, as_is: true)
+      reopened = YAML.safe_load(File.read(File.join(workspace, 'work', slug, 'portal.yml')))
+      assert_equal('reopened', reopened.dig('creation', 'tracking_origin'))
+      assert_equal(
+        Digest::SHA256.hexdigest(File.read(File.join(workspace, 'work', slug, 'plan.md'))),
+        reopened.dig('creation', 'tracking_plan_sha256')
+      )
+      assert_equal(
+        Digest::SHA256.hexdigest(File.read(File.join(workspace, 'work', slug, 'state.md'))),
+        reopened.dig('creation', 'tracking_state_sha256')
+      )
       runner.worktree_add(
         slug, 'sample', as_is: true, name: nil, branch: nil,
         base: nil, fetch: false
@@ -5928,6 +6004,165 @@ class DevSessionTest < Minitest::Test
       assert_equal(master, updated.dig('repositories', 0, 'initial_base_sha'))
       assert_equal('thread-fresh', updated.dig('codex', 'thread_id'))
       assert_equal('ready', updated.dig('creation', 'state'))
+      refute(updated.dig('creation').key?('tracking_origin'))
+      refute(updated.dig('creation').key?('tracking_plan_sha256'))
+      refute(updated.dig('creation').key?('tracking_state_sha256'))
+
+      out.truncate(0)
+      out.rewind
+      starter.start(
+        slug,
+        as_is: true,
+        new: false,
+        attach: false,
+        run_codex: true,
+        goal_file: goal,
+        json: true,
+        exclusive: true
+      )
+      assert_equal('thread-fresh', JSON.parse(out.string).fetch('threadId'))
+
+      journal_path = starter.send(:creation_journal_file, slug)
+      interrupted = JSON.parse(File.read(journal_path)).merge('state' => 'creating')
+      File.write(journal_path, JSON.generate(interrupted))
+      File.write(
+        File.join(workspace, 'work', slug, 'plan.md'),
+        "#{plan_before}\nFollow-up recorded after the initial turn.\n"
+      )
+      out.truncate(0)
+      out.rewind
+      starter.start(
+        slug,
+        as_is: true,
+        new: false,
+        attach: false,
+        run_codex: true,
+        goal_file: nil,
+        json: true,
+        exclusive: false
+      )
+      assert_equal('thread-fresh', JSON.parse(out.string).fetch('threadId'))
+      assert_equal('ready', JSON.parse(File.read(journal_path)).fetch('state'))
+    end
+  end
+
+  def test_fresh_conversation_rejects_terminal_reopened_tracking
+    %w[complete abandoned].each do |lifecycle|
+      with_workspace do |workspace|
+        slug = "2026-06-06-#{lifecycle}"
+        tracking = File.join(workspace, 'work', slug)
+        FileUtils.mkdir_p(tracking)
+        FileUtils.mkdir_p(File.join(workspace, 'worktrees', slug))
+        plan = "# Retained plan\n\nContinue this work.\n"
+        state = "---\nlifecycle: #{lifecycle}\n---\n\n# Retained state\n"
+        File.write(File.join(tracking, 'plan.md'), plan)
+        File.write(File.join(tracking, 'state.md'), state)
+        runner = runner_for(workspace)
+        manifest = runner.send(
+          :reopened_portal_manifest,
+          slug,
+          plan_sha256: Digest::SHA256.hexdigest(plan),
+          state_sha256: Digest::SHA256.hexdigest(state)
+        )
+        File.write(File.join(tracking, 'portal.yml'), YAML.dump(manifest))
+        goal = File.join(workspace, 'goal.txt')
+        File.write(goal, "Resume retained work.\n")
+
+        error = assert_raises(VpsfreeDevSession::Error) do
+          runner.start(
+            slug,
+            as_is: true,
+            new: false,
+            attach: false,
+            run_codex: false,
+            goal_file: goal,
+            json: true,
+            exclusive: true
+          )
+        end
+        assert_match(/cannot create a conversation for a #{lifecycle} initiative/, error.message)
+        refute(File.exist?(runner.send(:creation_journal_file, slug)))
+      end
+    end
+  end
+
+  def test_reopened_conversation_replay_rejects_changed_tracking
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-reopened-replay'
+      runner = archived_runner(workspace, slug)
+      runner.reopen(slug, as_is: true)
+      goal = File.join(workspace, 'goal.txt')
+      File.write(goal, "Resume retained work.\n")
+      journal = runner.send(
+        :prepare_creation_journal,
+        slug,
+        goal,
+        exclusive: true,
+        run_codex: false,
+        model: nil,
+        effort: nil
+      )
+      assert(journal.fetch('preserve_tracking'))
+      File.write(File.join(workspace, 'work', slug, 'plan.md'), "x")
+
+      error = assert_raises(VpsfreeDevSession::Error) do
+        runner.start(
+          slug,
+          as_is: true,
+          new: false,
+          attach: false,
+          run_codex: false,
+          goal_file: goal,
+          json: true,
+          exclusive: true
+        )
+      end
+      assert_match(/reopened tracking changed before conversation creation/, error.message)
+    end
+  end
+
+  def test_reopened_conversation_rejects_self_asserted_uncommitted_provenance
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-self-asserted-reopen'
+      runner = archived_runner(workspace, slug)
+      File.rename(
+        File.join(workspace, 'archive', slug),
+        File.join(workspace, 'work', slug)
+      )
+      FileUtils.mkdir_p(File.join(workspace, 'worktrees', slug))
+      plan = "# Replacement plan\n\nThis did not come from the archive.\n"
+      state_path = File.join(workspace, 'work', slug, 'state.md')
+      state = runner.send(:reopened_state_content, File.read(state_path))
+      File.write(File.join(workspace, 'work', slug, 'plan.md'), plan)
+      File.write(state_path, state)
+      manifest = runner.send(
+        :reopened_portal_manifest,
+        slug,
+        plan_sha256: Digest::SHA256.hexdigest(plan),
+        state_sha256: Digest::SHA256.hexdigest(state)
+      )
+      File.write(File.join(workspace, 'work', slug, 'portal.yml'), YAML.dump(manifest))
+      goal = File.join(workspace, 'goal.txt')
+      File.write(goal, "Resume retained work.\n")
+
+      error = assert_raises(VpsfreeDevSession::Error) do
+        runner.start(
+          slug,
+          as_is: true,
+          new: false,
+          attach: false,
+          run_codex: false,
+          goal_file: goal,
+          json: true,
+          exclusive: true
+        )
+      end
+      assert_match(/reopened tracking provenance cannot be proven/, error.message)
+      refute(File.exist?(runner.send(:creation_journal_file, slug)))
     end
   end
 
