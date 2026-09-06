@@ -1641,7 +1641,9 @@ func (c *Client) waitForInitialMessage(ctx context.Context, threadID, cwd, text 
 	for {
 		materialized, err := c.threadHistoryMaterialized(ctx, threadID, cwd)
 		if err != nil {
-			return err
+			if !initialRolloutPending(err) {
+				return err
+			}
 		}
 		if materialized {
 			matched, err := c.initialMessageMatches(ctx, threadID, text)
@@ -1660,6 +1662,14 @@ func (c *Client) waitForInitialMessage(ctx context.Context, threadID, cwd, text 
 		case <-ticker.C:
 		}
 	}
+}
+
+func initialRolloutPending(err error) bool {
+	var rpcErr *rpcCallError
+	return errors.As(err, &rpcErr) && rpcErr.code == -32603 &&
+		strings.HasPrefix(rpcErr.message, "failed to read thread:") &&
+		strings.Contains(rpcErr.message, "rollout at ") &&
+		strings.HasSuffix(rpcErr.message, " is empty")
 }
 
 func initialHistoryPending(err error) bool {

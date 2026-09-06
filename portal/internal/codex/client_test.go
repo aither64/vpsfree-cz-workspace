@@ -847,13 +847,14 @@ func TestFileChangeApprovalRequiresTheMatchingThreadItem(t *testing.T) {
 func TestEnsureInitialMessageIsRetrySafe(t *testing.T) {
 	var turnStarted atomic.Int32
 	var historyAttempts atomic.Int32
+	var rolloutReadAttempts atomic.Int32
 	rollout := filepath.Join(t.TempDir(), "rollout.jsonl")
 	socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
 		if err := handshake(connection); err != nil {
 			return err
 		}
 		initialExists := false
-		for requestNumber := 0; requestNumber < 14; requestNumber++ {
+		for requestNumber := 0; requestNumber < 15; requestNumber++ {
 			request, err := readObject(connection)
 			if err != nil {
 				return err
@@ -864,6 +865,21 @@ func TestEnsureInitialMessageIsRetrySafe(t *testing.T) {
 					return err
 				}
 			case "thread/read":
+				if initialExists && rolloutReadAttempts.Add(1) == 1 {
+					if err := writeObject(connection, map[string]any{
+						"id": request["id"], "error": map[string]any{
+							"code": -32603,
+							"message": "failed to read thread: thread-store internal error: " +
+								"failed to read session metadata " + rollout + ": rollout at " + rollout + " is empty",
+						},
+					}); err != nil {
+						return err
+					}
+					if err := os.WriteFile(rollout, []byte("materialized\n"), 0o600); err != nil {
+						return err
+					}
+					continue
+				}
 				if err := writeObject(connection, map[string]any{
 					"id": request["id"], "result": map[string]any{
 						"thread": freshThreadMetadata("thread-1", "/workspace/work/example", rollout),
@@ -909,11 +925,10 @@ func TestEnsureInitialMessageIsRetrySafe(t *testing.T) {
 			case "turn/start":
 				turnStarted.Add(1)
 				initialExists = true
-				if err := writeObject(connection, map[string]any{"id": request["id"], "result": map[string]any{}}); err != nil {
+				if err := os.WriteFile(rollout, nil, 0o600); err != nil {
 					return err
 				}
-				time.Sleep(50 * time.Millisecond)
-				if err := os.WriteFile(rollout, []byte("materialized\n"), 0o600); err != nil {
+				if err := writeObject(connection, map[string]any{"id": request["id"], "result": map[string]any{}}); err != nil {
 					return err
 				}
 			default:
