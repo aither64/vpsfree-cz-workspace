@@ -54,7 +54,7 @@ module VpsfreeDevSession
     ENV_PORTAL_COMMAND => '--portal-command'
   }.freeze
 
-  DEFAULT_PORTAL_BASE_URL = 'https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz'
+  DEFAULT_PORTAL_BASE_URL = 'https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz'
   PORTAL_MANIFEST = 'portal.yml'
   TRACKING_MAX_SIZE = 1024 * 1024
   AUTHORITY_MAX_SIZE = 64 * 1024
@@ -81,10 +81,12 @@ module VpsfreeDevSession
         [--model MODEL] [--effort EFFORT]
       dev-session attach <name-or-slug> [--as-is]
       dev-session sync <name-or-slug> [--as-is]
+      dev-session quiesce <name-or-slug> [--as-is]
       dev-session stop <name-or-slug> [--as-is]
       dev-session recover-stale <name-or-slug> [--as-is]
       dev-session remove <name-or-slug> [--as-is] [--force]
-      dev-session finalize <name-or-slug> [--as-is]
+      dev-session finalize <name-or-slug> [--as-is] [--check] [--prepare]
+      dev-session reopen <name-or-slug> [--as-is] [--allow-abandoned]
       dev-session list [<name-or-slug>] [--as-is]
       dev-session validate
       dev-session current
@@ -444,6 +446,18 @@ module VpsfreeDevSession
           ensure_tracking_files(slug)
           validate_creation_tracking_files!(slug) if creation_journal
           manifest = ensure_portal_manifest(slug, creation_journal:)
+          if creation_journal&.fetch('preserve_tracking', false) &&
+             manifest.dig('codex', 'thread_id').to_s.empty? &&
+             manifest.dig('creation', 'goal_sha256').nil?
+            manifest['schema'] = 2
+            manifest['creation'] = {
+              'state' => 'creating',
+              'initial_goal_sent' => false,
+              'initial_goal_attempted' => false,
+              'goal_sha256' => creation_journal.fetch('goal_sha256')
+            }
+            write_portal_manifest(slug, manifest)
+          end
           if creation_journal &&
              manifest.dig('creation', 'goal_sha256') != creation_journal.fetch('goal_sha256')
             raise Error, "creation request does not match the recorded goal for #{slug}"
@@ -451,9 +465,11 @@ module VpsfreeDevSession
           if exclusive && creation_journal&.fetch('state', nil) == 'ready' &&
              manifest.dig('creation', 'state') == 'ready'
             trusted_thread_id = manifest.dig('codex', 'thread_id')
-            if run_codex && trusted_thread_id && @portal_command &&
-               codex_provenance_configured?
-              require_portal_thread_materialized(slug, trusted_thread_id)
+            if run_codex && trusted_thread_id
+              require_current_codex_provenance!(slug, manifest, trusted_thread_id)
+              if @portal_command && codex_provenance_configured?
+                require_portal_thread_materialized(slug, trusted_thread_id)
+              end
             end
             replayed = true
             selected = @tmux.session(slug)
@@ -465,7 +481,10 @@ module VpsfreeDevSession
             end
             next nil
           end
-          seed_goal(slug, goal_file) if goal_file && creation_journal&.fetch('state', nil) != 'ready'
+          if goal_file && creation_journal&.fetch('state', nil) != 'ready' &&
+             !creation_journal&.fetch('preserve_tracking', false)
+            seed_goal(slug, goal_file)
+          end
 
           thread_id = @selected_authority&.fetch('codex_thread_id', nil)
           selected = @tmux.session(slug)
@@ -482,9 +501,12 @@ module VpsfreeDevSession
           end
           persisted_thread = manifest.dig('codex', 'thread_id')
           if run_codex && persisted_thread &&
-             manifest.dig('creation', 'state') == 'ready' &&
-             @portal_command && codex_provenance_configured?
-            require_portal_thread_materialized(slug, persisted_thread)
+             manifest.dig('creation', 'state') == 'ready'
+            require_current_codex_provenance!(slug, manifest, persisted_thread)
+            if @portal_command && codex_provenance_configured?
+              require_portal_thread_materialized(slug, persisted_thread)
+              manifest['codex'] = codex_metadata(persisted_thread)
+            end
           end
           recovering_creation = run_codex &&
                                 creation_journal&.fetch('state', nil) == 'creating' &&
@@ -685,6 +707,7 @@ module VpsfreeDevSession
            (creation['goal_sha256'] && !creation['initial_goal_sent'])
           raise Error, "source session creation is incomplete: #{source_slug}"
         end
+        require_current_codex_provenance!(source_slug, manifest, thread_id)
         if @portal_command && codex_provenance_configured?
           require_portal_thread_materialized(source_slug, thread_id)
         end
@@ -725,6 +748,7 @@ module VpsfreeDevSession
           end
 
           thread_id = manifest.dig('codex', 'thread_id')
+          require_current_codex_provenance!(destination_slug, manifest, thread_id) if thread_id
           if thread_id.nil? || thread_id.empty?
             thread_id = create_portal_fork(
               destination_slug,
@@ -767,6 +791,19 @@ module VpsfreeDevSession
         select_tmux_for_slug!(slug)
         session = sync_slug(slug, require_session: true)
         reconcile_native_client!(slug, session)
+      end
+    end
+
+    def quiesce(input, as_is:)
+      slug = lookup_slug(input, as_is:)
+      with_creation_lock(slug) do
+        with_slug_lock(slug) do
+          select_tmux_for_slug!(slug)
+          session = @tmux.session(slug)
+          session = ensure_managed_session!(slug, session:) if session
+          quiesced = quiesce_and_require_idle!(slug, session)
+          @out.puts(quiesced ? "quiesced terminal: #{slug}" : "idle session: #{slug}")
+        end
       end
     end
 
@@ -817,7 +854,9 @@ module VpsfreeDevSession
       end
     end
 
-    def finalize(input, as_is:)
+    def finalize(input, as_is:, check: false, prepare: false)
+      raise Error, '--check and --prepare cannot be combined' if check && prepare
+
       slug = lookup_slug(input, as_is:)
       with_creation_lock(slug) do
         with_slug_lock(slug) do
@@ -827,18 +866,38 @@ module VpsfreeDevSession
 
           raise Error, "archive already exists: #{destination}" if path_exists?(destination)
 
-          validate_tracking_files!(slug)
+          lifecycle = validate_tracking_files!(slug)
           validate_terminal_lifecycle!(slug)
           validate_tracking_committed!(slug)
-          archive_root = ensure_archive_root!
-          unless File.stat(source).dev == File.stat(archive_root).dev
+          archive_root = File.join(workspace, 'archive')
+          archive_device = if File.directory?(archive_root)
+                             File.stat(archive_root).dev
+                           else
+                             File.stat(workspace).dev
+                           end
+          unless File.stat(source).dev == archive_device
             raise Error, 'work and archive directories must be on the same filesystem'
           end
           validate_archive_move_command!
 
           plan = prepare_cleanup(slug, force: false)
+          proven_heads = lifecycle == 'complete' ? prove_registered_branches_merged!(slug, plan) : {}
+          if check
+            ensure_portal_thread_idle!(slug, @selected_authority)
+            @out.puts "finalizable: #{slug}"
+            next
+          end
+
+          if prepare
+            quiesced = quiesce_and_require_idle!(slug, plan.session)
+            @out.puts "prepared for finalization: #{slug}"
+            next
+          end
+
+          ensure_archive_root!
           quiesced = quiesce_and_require_idle!(slug, plan.session)
-          finalize_portal_manifest(slug, plan)
+          verify_proven_heads_unchanged!(slug, plan, proven_heads) if lifecycle == 'complete'
+          finalize_portal_manifest(slug, plan, proven_heads:)
           execute_cleanup(slug, plan, force: false)
           source = validate_work_directory!(slug)
           ensure_archive_root!
@@ -852,6 +911,48 @@ module VpsfreeDevSession
         rescue StandardError
           restore_native_client!(slug, quiesced) if quiesced && @tmux.session_by_id(quiesced.id)
           raise
+        end
+      end
+    end
+
+    def reopen(input, as_is:, allow_abandoned: false)
+      slug = lookup_slug(input, as_is:)
+      with_creation_lock(slug) do
+        with_slug_lock(slug) do
+          select_tmux_for_slug!(slug)
+          if path_exists?(reopen_journal_file(slug))
+            finish_reopen_journal!(slug, allow_abandoned:)
+            next
+          end
+
+          source = archive_dir(slug)
+          destination = work_dir(slug)
+          raise Error, "active tracking already exists: #{destination}" if path_exists?(destination)
+          if path_exists?(worktrees_dir(slug))
+            raise Error, "worktree group already exists: #{worktrees_dir(slug)}"
+          end
+          if @tmux.session(slug)
+            raise Error, "live tmux session already exists: #{slug}"
+          end
+          if @selected_authority
+            raise Error, "session authority still exists: #{slug}"
+          end
+
+          validate_archive_committed!(slug)
+          lifecycle = lifecycle_state(
+            read_bounded_file(File.join(source, 'state.md'), 'state.md')
+          )
+          if lifecycle == 'abandoned' && !allow_abandoned
+            raise Error, 'refusing to reopen an abandoned initiative without --allow-abandoned'
+          end
+
+          ensure_directory!(File.join(workspace, 'work'), 'work root', create: true)
+          unless File.stat(source).dev == File.stat(File.join(workspace, 'work')).dev
+            raise Error, 'work and archive directories must be on the same filesystem'
+          end
+          validate_archive_move_command!
+          prepare_reopen_journal!(slug, lifecycle)
+          finish_reopen_journal!(slug, allow_abandoned:)
         end
       end
     end
@@ -977,7 +1078,7 @@ module VpsfreeDevSession
         @command_runner.run(['git', "--git-dir=#{repo}", 'fetch', 'origin']) if fetch
 
         default_branch = origin_head(repo)
-        base ||= default_branch
+        requested_base = base
         path = File.join(worktrees_dir(slug), name)
         ensure_worktree_group!(slug, create: true)
 
@@ -985,7 +1086,9 @@ module VpsfreeDevSession
         registered = manifest.fetch('repositories', []).find do |item|
           item.is_a?(Hash) && item['name'] == name
         end
-        remote = git_capture(['git', "--git-dir=#{repo}", 'remote', 'get-url', 'origin']).strip
+        remote = git_capture([
+          'git', "--git-dir=#{repo}", 'config', '--get', 'remote.origin.url'
+        ]).strip
         github = github_repository(remote)
         if registered
           unless registered['project'] == project && registered['branch'] == branch &&
@@ -998,7 +1101,14 @@ module VpsfreeDevSession
           end
           default_branch = registered.fetch('default_branch', default_branch.delete_prefix('origin/'))
         else
-          base_sha = git_capture(['git', "--git-dir=#{repo}", 'rev-parse', base]).strip
+          base_sha = if branch_exists?(repo, branch)
+                       existing_branch_base(repo, branch, requested_base, default_branch)
+                     else
+                       git_capture([
+                         'git', "--git-dir=#{repo}", 'rev-parse',
+                         requested_base || default_branch
+                       ]).strip
+                     end
         end
 
         if path_exists?(path)
@@ -1140,6 +1250,17 @@ module VpsfreeDevSession
     end
 
     def ensure_tracking_files(slug)
+      if path_exists?(work_dir(slug))
+        validate_work_directory!(slug)
+        validate_tracking_files!(slug)
+        if archived_slug_known?(slug) && !committed_path?('HEAD', File.join('work', slug, 'state.md')) &&
+           !valid_uncommitted_reopen?(slug)
+          raise Error, "archived slug cannot be reused: #{archive_dir(slug)}"
+        end
+        ensure_worktree_group!(slug, create: true)
+        return
+      end
+
       archived = archive_dir(slug)
       if archived_slug_known?(slug)
         raise Error, "archived slug cannot be reused: #{archived}"
@@ -1150,6 +1271,39 @@ module VpsfreeDevSession
       ensure_worktree_group!(slug, create: true)
       write_once(plan_file(slug), plan_skeleton(slug))
       write_once(state_file(slug), state_skeleton(slug))
+    end
+
+    def valid_uncommitted_reopen?(slug)
+      archived_plan = File.join('archive', slug, 'plan.md')
+      archived_state = File.join('archive', slug, 'state.md')
+      return false unless committed_path?('HEAD', archived_plan) && committed_path?('HEAD', archived_state)
+
+      expected_plan = git_capture(['git', '-C', workspace, 'show', "HEAD:#{archived_plan}"])
+      expected_state = reopened_state_content(
+        git_capture(['git', '-C', workspace, 'show', "HEAD:#{archived_state}"])
+      )
+      return false unless File.binread(plan_file(slug)) == expected_plan
+      return false unless File.binread(state_file(slug)) == expected_state
+
+      archived_portal = File.join('archive', slug, PORTAL_MANIFEST)
+      if committed_path?('HEAD', archived_portal)
+        actual = load_portal_manifest(portal_file(slug), required: true)
+        expected_data = git_capture(['git', '-C', workspace, 'show', "HEAD:#{archived_portal}"])
+        expected = YAML.safe_load(
+          expected_data,
+          permitted_classes: [],
+          permitted_symbols: [],
+          aliases: false
+        )
+        validate_portal_manifest!(expected, slug, archived_portal)
+        expected.delete('finalized_at')
+        expected.fetch('repositories', []).each { |repository| repository.delete('final_head_sha') }
+        actual == expected
+      else
+        true
+      end
+    rescue Error, Errno::ENOENT, Psych::Exception
+      false
     end
 
     def current_slug
@@ -1430,7 +1584,9 @@ module VpsfreeDevSession
           end
           return nil
         end
-        unless %w[creating ready].include?(state) &&
+        expected['preserve_tracking'] = true if actual['preserve_tracking'] == true
+        unless [nil, true].include?(actual['preserve_tracking']) &&
+               %w[creating ready].include?(state) &&
                actual.keys.sort == (expected.keys + ['state']).sort
           raise Error, "invalid creation journal #{path}"
         end
@@ -1449,6 +1605,12 @@ module VpsfreeDevSession
         end
         return nil if state == 'ready' && manifest&.dig('creation', 'state') == 'ready' && !exclusive
         return actual
+      end
+
+      if goal_file && adoptable_tracking_for_conversation?(slug)
+        journal = expected.merge('preserve_tracking' => true, 'state' => 'creating')
+        write_creation_journal(path, journal, create: true)
+        return journal
       end
 
       if slug_state_exists?(slug)
@@ -1470,7 +1632,7 @@ module VpsfreeDevSession
 
     def valid_stored_creation_journal?(journal, slug, manifest)
       required = %w[schema slug goal_sha256 run_codex state]
-      allowed = required + %w[model effort]
+      allowed = required + %w[model effort preserve_tracking]
       return false unless (required - journal.keys).empty? && (journal.keys - allowed).empty?
       return false unless journal['schema'] == 1 && journal['slug'] == slug &&
                           journal['state'] == 'ready' &&
@@ -1480,11 +1642,24 @@ module VpsfreeDevSession
       return false unless goal_sha256.nil? ||
                           (goal_sha256.is_a?(String) && goal_sha256.match?(/\A[0-9a-f]{64}\z/))
       return false unless manifest.dig('creation', 'goal_sha256') == goal_sha256
+      return false unless [nil, true].include?(journal['preserve_tracking'])
 
       %w[model effort].all? do |key|
         !journal.key?(key) ||
           (journal[key].is_a?(String) && !journal[key].empty? && journal[key].bytesize <= 1024)
       end
+    end
+
+    def adoptable_tracking_for_conversation?(slug)
+      return false unless path_exists?(work_dir(slug))
+      return false if path_exists?(archive_dir(slug)) || @tmux.session(slug)
+
+      manifest = load_portal_manifest(portal_file(slug), required: false)
+      return true unless manifest
+
+      manifest.dig('creation', 'state') == 'ready' &&
+        manifest.dig('codex', 'thread_id').to_s.empty? &&
+        manifest.dig('creation', 'goal_sha256').nil?
     end
 
     def mark_creation_journal_ready(slug, journal)
@@ -1944,6 +2119,15 @@ module VpsfreeDevSession
       metadata
     end
 
+    def require_current_codex_provenance!(slug, manifest, thread_id)
+      return unless thread_id && codex_provenance_configured?
+      return if manifest.dig('codex', 'socket_path') == @codex_socket
+
+      raise Error,
+            "recorded Codex endpoint belongs to another runtime; " \
+            "start a new session instead: #{slug}"
+    end
+
     def session_codex_provenance_matches?(session, thread_id)
       session.codex_thread_id == thread_id &&
         session.codex_socket_path == @codex_socket
@@ -2057,7 +2241,7 @@ module VpsfreeDevSession
       match && match[1]
     end
 
-    def finalize_portal_manifest(slug, plan)
+    def finalize_portal_manifest(slug, plan, proven_heads: {})
       path = portal_file(slug)
       manifest = load_portal_manifest(path, required: false)
       return unless manifest
@@ -2066,6 +2250,9 @@ module VpsfreeDevSession
       manifest = load_portal_manifest(path, required: true)
       repositories = manifest.fetch('repositories', [])
       repositories.each do |repository|
+        if proven_heads.key?(repository.fetch('name'))
+          repository['final_head_sha'] = proven_heads.fetch(repository.fetch('name'))
+        end
         if repository['final_head_sha'].nil?
           raise Error,
                 "portal repository has no worktree or recorded final head: #{repository['name']}"
@@ -2077,6 +2264,176 @@ module VpsfreeDevSession
       end
       manifest['finalized_at'] = Time.now.utc.iso8601
       write_portal_manifest(slug, manifest)
+    end
+
+    def prove_registered_branches_merged!(slug, plan)
+      entries = plan.entries.to_h { |entry| [entry.fetch(:name), entry] }
+      failures = []
+      heads = {}
+      finalization_repositories(slug, plan).each do |repository|
+        name = repository.fetch('name')
+        project = repository.fetch('project')
+        branch = repository.fetch('branch')
+        default_branch = repository.fetch('default_branch')
+        label = "#{project}/#{name}: #{branch} -> origin/#{default_branch}"
+        begin
+          validate_git_branch!(branch)
+          validate_git_branch!(default_branch)
+          common_dir = repository_common_dir(project)
+          if (entry = entries[name])
+            validate_portal_repository_identity!(repository, entry.fetch(:common_dir), entry.fetch(:path))
+            worktree_branch = git_capture([
+              'git', '-C', entry.fetch(:path), 'symbolic-ref', '--quiet', '--short', 'HEAD'
+            ]).strip
+            unless worktree_branch == branch
+              raise Error, "worktree uses #{worktree_branch.inspect}"
+            end
+          end
+
+          raw_remote = git_capture([
+            'git', "--git-dir=#{common_dir}", 'config', '--get', 'remote.origin.url'
+          ]).strip
+          actual_github = github_repository(raw_remote)
+          recorded_github = repository['github']
+          if recorded_github && actual_github != recorded_github
+            raise Error, "origin identity is #{actual_github || raw_remote.inspect}"
+          end
+
+          refspecs = [branch, default_branch].uniq.map do |ref|
+            "+refs/heads/#{ref}:refs/remotes/origin/#{ref}"
+          end
+          @command_runner.capture([
+            'git', "--git-dir=#{common_dir}", 'fetch', '--no-tags', 'origin', *refspecs
+          ])
+          local_head = resolve_commit(common_dir, "refs/heads/#{branch}")
+          remote_head = resolve_commit(common_dir, "refs/remotes/origin/#{branch}")
+          default_head = resolve_commit(common_dir, "refs/remotes/origin/#{default_branch}")
+          raise Error, "local head #{local_head} differs from remote head #{remote_head}" unless local_head == remote_head
+
+          if entry
+            worktree_head = git_capture(['git', '-C', entry.fetch(:path), 'rev-parse', 'HEAD']).strip
+            raise Error, "worktree head #{worktree_head} differs from branch head #{local_head}" unless worktree_head == local_head
+          end
+
+          _stdout, stderr, status = @command_runner.capture(
+            ['git', "--git-dir=#{common_dir}", 'merge-base', '--is-ancestor', local_head, default_head],
+            allow_failure: true
+          )
+          unless status.success?
+            detail = status.exitstatus == 1 ? 'feature head is not merged' : stderr.strip
+            raise Error, detail.empty? ? 'merge ancestry cannot be proven' : detail
+          end
+          heads[name] = local_head
+        rescue Error, CommandError => e
+          failures << "#{label}: #{e.message.lines.first.to_s.strip}"
+        end
+      end
+      unless failures.empty?
+        raise Error, "initiative cannot be completed:\n- #{failures.join("\n- ")}"
+      end
+
+      heads
+    end
+
+    def verify_proven_heads_unchanged!(slug, plan, proven_heads)
+      return if proven_heads.empty?
+
+      entries = plan.entries.to_h { |entry| [entry.fetch(:name), entry] }
+      finalization_repositories(slug, plan).each do |repository|
+        name = repository.fetch('name')
+        expected = proven_heads.fetch(name)
+        common_dir = repository_common_dir(repository.fetch('project'))
+        current = resolve_commit(common_dir, "refs/heads/#{repository.fetch('branch')}")
+        if current != expected
+          raise Error, "feature branch changed during finalization: #{name} (#{expected} -> #{current})"
+        end
+        next unless entries[name]
+
+        worktree_head = git_capture(['git', '-C', entries.fetch(name).fetch(:path), 'rev-parse', 'HEAD']).strip
+        if worktree_head != expected
+          raise Error, "worktree changed during finalization: #{name} (#{expected} -> #{worktree_head})"
+        end
+      end
+    end
+
+    def finalization_repositories(slug, plan)
+      manifest = load_portal_manifest(portal_file(slug), required: false)
+      return manifest.fetch('repositories', []) if manifest
+
+      plan.entries.map do |entry|
+        common_dir = entry.fetch(:common_dir)
+        project = legacy_project_name(common_dir)
+        branch = git_capture([
+          'git', '-C', entry.fetch(:path), 'symbolic-ref', '--quiet', '--short', 'HEAD'
+        ]).strip
+        default_branch = origin_head(common_dir).delete_prefix('origin/')
+        raw_remote = git_capture([
+          'git', "--git-dir=#{common_dir}", 'config', '--get', 'remote.origin.url'
+        ]).strip
+        {
+          'name' => entry.fetch(:name),
+          'project' => project,
+          'branch' => branch,
+          'default_branch' => default_branch,
+          'github' => github_repository(raw_remote)
+        }.compact
+      end
+    end
+
+    def legacy_project_name(common_dir)
+      common = File.realpath(common_dir)
+      candidates = Dir[File.join(workspace, 'repos', '*.git')].select do |path|
+        File.directory?(path) && File.realpath(path) == common
+      end
+      if candidates.length == 1
+        return File.basename(candidates.fetch(0), '.git')
+      end
+      if candidates.empty? && File.directory?(File.join(workspace, '.git')) &&
+         File.realpath(File.join(workspace, '.git')) == common
+        return 'workspace'
+      end
+
+      raise Error, "cannot identify legacy worktree repository: #{common_dir}"
+    end
+
+    def resolve_commit(repository, ref)
+      stdout, stderr, status = @command_runner.capture(
+        ['git', "--git-dir=#{repository}", 'rev-parse', '--verify', "#{ref}^{commit}"],
+        allow_failure: true
+      )
+      value = stdout.strip
+      return value if status.success? && value.match?(/\A(?:[0-9a-f]{40}|[0-9a-f]{64})\z/)
+
+      detail = stderr.strip
+      raise Error, detail.empty? ? "cannot resolve #{ref}" : detail
+    end
+
+    def existing_branch_base(repository, branch, requested_base, default_branch)
+      if requested_base
+        base = resolve_commit(repository, requested_base)
+        _stdout, _stderr, status = @command_runner.capture(
+          ['git', "--git-dir=#{repository}", 'merge-base', '--is-ancestor', base, "refs/heads/#{branch}"],
+          allow_failure: true
+        )
+        raise Error, "base #{requested_base} is not an ancestor of retained branch #{branch}" unless status.success?
+
+        return base
+      end
+
+      stdout, stderr, status = @command_runner.capture(
+        [
+          'git', "--git-dir=#{repository}", 'merge-base', '--all',
+          "refs/heads/#{branch}", default_branch
+        ],
+        allow_failure: true
+      )
+      candidates = stdout.lines.map(&:strip).reject(&:empty?).uniq
+      unless status.success? && candidates.length == 1
+        detail = stderr.strip
+        detail = "found #{candidates.length} merge bases" if detail.empty?
+        raise Error, "cannot reconstruct initial base for retained branch #{branch}: #{detail}"
+      end
+      candidates.fetch(0)
     end
 
     def snapshot_portal_repository_heads(slug, plan)
@@ -2389,9 +2746,203 @@ module VpsfreeDevSession
 
     def atomic_archive_move!(source, destination)
       @command_runner.run(archive_move_command(source, destination))
-      return unless path_exists?(source) || !File.directory?(destination)
+      if !path_exists?(source) && File.directory?(destination)
+        fsync_directory(File.dirname(source))
+        fsync_directory(File.dirname(destination))
+        return
+      end
 
       raise Error, "archive move did not complete: #{source} -> #{destination}"
+    end
+
+    def prepare_reopen_journal!(slug, lifecycle)
+      source = archive_dir(slug)
+      state_path = File.join(source, 'state.md')
+      state = read_bounded_file(state_path, 'state.md')
+      target_state = reopened_state_content(state)
+      portal_path = File.join(source, PORTAL_MANIFEST)
+      portal = path_exists?(portal_path) ? read_bounded_file(portal_path, 'portal manifest') : nil
+      target_portal = portal && reopened_portal_content(portal_path)
+      journal = {
+        'schema' => 1,
+        'slug' => slug,
+        'phase' => 'prepared',
+        'lifecycle' => lifecycle,
+        'state_sha256' => Digest::SHA256.hexdigest(state),
+        'target_state_sha256' => Digest::SHA256.hexdigest(target_state),
+        'portal_sha256' => portal && Digest::SHA256.hexdigest(portal),
+        'target_portal_sha256' => target_portal && Digest::SHA256.hexdigest(target_portal)
+      }
+      write_reopen_journal(reopen_journal_file(slug), journal, create: true)
+    end
+
+    def finish_reopen_journal!(slug, allow_abandoned:)
+      path = reopen_journal_file(slug)
+      journal = load_reopen_journal(path, slug)
+      if journal.fetch('lifecycle') == 'abandoned' && !allow_abandoned
+        raise Error, 'refusing to reopen an abandoned initiative without --allow-abandoned'
+      end
+
+      source = archive_dir(slug)
+      destination = work_dir(slug)
+      source_exists = path_exists?(source)
+      destination_exists = path_exists?(destination)
+      if source_exists == destination_exists
+        raise Error, "reopen journal has ambiguous tracking placement for #{slug}"
+      end
+      if path_exists?(worktrees_dir(slug))
+        raise Error, "worktree group already exists: #{worktrees_dir(slug)}"
+      end
+      if @tmux.session(slug)
+        raise Error, "live tmux session already exists: #{slug}"
+      end
+      if @selected_authority
+        raise Error, "session authority still exists: #{slug}"
+      end
+
+      if source_exists
+        verify_reopen_originals!(source, journal)
+        ensure_directory!(File.join(workspace, 'work'), 'work root', create: true)
+        unless File.stat(source).dev == File.stat(File.join(workspace, 'work')).dev
+          raise Error, 'work and archive directories must be on the same filesystem'
+        end
+        validate_archive_move_command!
+        atomic_archive_move!(source, destination)
+        journal['phase'] = 'moved'
+        write_reopen_journal(path, journal, create: false)
+      else
+        # A process may have died after rename(2) but before the directory
+        # durability barrier. Repeat it before the journal can be removed.
+        fsync_directory(File.dirname(source))
+        fsync_directory(File.dirname(destination))
+      end
+
+      finish_reopen_file!(
+        File.join(destination, 'state.md'),
+        journal.fetch('state_sha256'),
+        journal.fetch('target_state_sha256')
+      ) { |content| reopened_state_content(content) }
+      if journal['portal_sha256']
+        finish_reopen_file!(
+          File.join(destination, PORTAL_MANIFEST),
+          journal.fetch('portal_sha256'),
+          journal.fetch('target_portal_sha256')
+        ) { |_content| reopened_portal_content(File.join(destination, PORTAL_MANIFEST)) }
+      elsif path_exists?(File.join(destination, PORTAL_MANIFEST))
+        raise Error, "portal manifest appeared during reopen: #{destination}"
+      end
+
+      File.unlink(path)
+      fsync_directory(File.dirname(path))
+      validate_work_directory!(slug)
+      validate_tracking_files!(slug)
+      @out.puts "reopened: #{destination}"
+      @out.puts "review and commit: archive/#{slug} -> work/#{slug}"
+    end
+
+    def verify_reopen_originals!(directory, journal)
+      state = read_bounded_file(File.join(directory, 'state.md'), 'state.md')
+      unless Digest::SHA256.hexdigest(state) == journal.fetch('state_sha256')
+        raise Error, 'archived state changed after reopen was prepared'
+      end
+      portal_path = File.join(directory, PORTAL_MANIFEST)
+      if journal['portal_sha256']
+        portal = read_bounded_file(portal_path, 'portal manifest')
+        unless Digest::SHA256.hexdigest(portal) == journal.fetch('portal_sha256')
+          raise Error, 'archived portal manifest changed after reopen was prepared'
+        end
+      elsif path_exists?(portal_path)
+        raise Error, 'archived portal manifest appeared after reopen was prepared'
+      end
+    end
+
+    def finish_reopen_file!(path, original_sha, target_sha)
+      content = read_bounded_file(path, File.basename(path))
+      digest = Digest::SHA256.hexdigest(content)
+      return if digest == target_sha
+      unless digest == original_sha
+        raise Error, "tracking file changed during reopen: #{path}"
+      end
+
+      replacement = yield(content)
+      unless Digest::SHA256.hexdigest(replacement) == target_sha
+        raise Error, "reopen transformation changed unexpectedly: #{path}"
+      end
+      atomic_replace(path, replacement)
+    end
+
+    def reopened_state_content(content)
+      lifecycle = lifecycle_state(content)
+      unless %w[complete abandoned].include?(lifecycle)
+        raise Error, "archived initiative is not terminal: #{lifecycle}"
+      end
+
+      content.sub(LIFECYCLE_HEADER) do |header|
+        header.sub("lifecycle: #{lifecycle}", 'lifecycle: active')
+      end
+    end
+
+    def reopened_portal_content(path)
+      manifest = load_portal_manifest(path, required: true)
+      manifest.delete('finalized_at')
+      manifest.fetch('repositories', []).each { |repository| repository.delete('final_head_sha') }
+      validate_portal_manifest!(manifest, File.basename(File.dirname(path)), path)
+      YAML.dump(manifest)
+    end
+
+    def reopen_journal_file(slug)
+      root = File.join(workspace, 'worktrees')
+      ensure_directory!(root, 'worktrees root', create: true)
+      journal_root = File.join(root, '.locks')
+      ensure_directory!(journal_root, 'dev-session journal directory', create: true)
+      File.join(journal_root, "#{slug}.reopen.json")
+    end
+
+    def load_reopen_journal(path, slug)
+      raise Error, "reopen journal is a symlink: #{path}" if File.symlink?(path)
+      stat = File.stat(path)
+      unless stat.file? && stat.uid == Process.euid && (stat.mode & 0o777) == 0o600
+        raise Error, "reopen journal must be a uid #{Process.euid} mode-0600 file: #{path}"
+      end
+      journal = JSON.parse(File.binread(path, AUTHORITY_MAX_SIZE + 1))
+      keys = %w[
+        schema slug phase lifecycle state_sha256 target_state_sha256
+        portal_sha256 target_portal_sha256
+      ]
+      unless journal.is_a?(Hash) && journal.keys.sort == keys.sort &&
+             journal['schema'] == 1 && journal['slug'] == slug &&
+             %w[prepared moved].include?(journal['phase']) &&
+             %w[complete abandoned].include?(journal['lifecycle']) &&
+             [journal['state_sha256'], journal['target_state_sha256']].all? do |value|
+               value.is_a?(String) && value.match?(/\A[0-9a-f]{64}\z/)
+             end &&
+             [journal['portal_sha256'], journal['target_portal_sha256']].all? do |value|
+               value.nil? || (value.is_a?(String) && value.match?(/\A[0-9a-f]{64}\z/))
+             end &&
+             journal['portal_sha256'].nil? == journal['target_portal_sha256'].nil?
+        raise Error, "invalid reopen journal: #{path}"
+      end
+      journal
+    rescue JSON::ParserError => e
+      raise Error, "invalid reopen journal #{path}: #{e.message}"
+    end
+
+    def write_reopen_journal(path, journal, create:)
+      temporary = "#{path}.#{$$}.tmp"
+      begin
+        File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+          file.write(JSON.generate(journal))
+          file.write("\n")
+          file.flush
+          file.fsync
+        end
+        raise Error, "reopen journal already exists: #{path}" if create && path_exists?(path)
+
+        File.rename(temporary, path)
+        fsync_directory(File.dirname(path))
+      ensure
+        File.unlink(temporary) if path_exists?(temporary)
+      end
     end
 
     def validate_archive_move_command!
@@ -3028,6 +3579,11 @@ module VpsfreeDevSession
         raise Error, "tracking files must not be symlinks: #{symlinks.join(', ')}"
       end
 
+      empty = paths.select { |path| File.file?(path) && File.zero?(path) }
+      unless empty.empty?
+        raise Error, "tracking files are empty or truncated: #{empty.join(', ')}"
+      end
+
       missing = paths.reject { |path| File.file?(path) }
       unless missing.empty?
         raise Error, "missing tracking files: #{missing.join(', ')}"
@@ -3124,20 +3680,19 @@ module VpsfreeDevSession
     def ensure_portal_thread_idle!(slug, authority)
       manifest_root = path_exists?(work_dir(slug)) ? work_dir(slug) : archive_dir(slug)
       manifest = load_portal_manifest(File.join(manifest_root, PORTAL_MANIFEST), required: false)
-      thread_id = authority&.fetch('codex_thread_id', nil) || manifest&.dig('codex', 'thread_id')
+      return unless @codex_socket && valid_socket_path?(@codex_socket)
+
+      thread_id = if authority&.fetch('codex_socket_path', nil) == @codex_socket
+                    authority.fetch('codex_thread_id', nil)
+                  elsif manifest&.dig('codex', 'socket_path') == @codex_socket
+                    manifest.dig('codex', 'thread_id')
+                  end
       return unless thread_id
       unless @portal_command && !@portal_command.empty?
         raise Error, "workspace-portal is required to verify that Codex is idle for #{slug}"
       end
 
       cwd = work_dir(slug)
-      socket = authority&.fetch('codex_socket_path', nil) ||
-               manifest&.dig('codex', 'socket_path') ||
-               @codex_socket
-      unless socket && valid_socket_path?(socket)
-        raise Error, "Codex socket provenance is missing for #{slug}"
-      end
-
       command = [
         *@portal_command,
         'thread',
@@ -3147,20 +3702,8 @@ module VpsfreeDevSession
         '--cwd',
         cwd
       ]
-      command += ['--socket', socket]
+      command += ['--socket', @codex_socket]
       @command_runner.capture(command)
-    rescue CommandError => e
-      legacy_root_thread = authority.nil? &&
-                           manifest&.dig('codex', 'socket_path').nil? &&
-                           socket == @codex_socket &&
-                           @tmux.session(slug).nil?
-      cwd_mismatch = e.stderr.strip ==
-                     'workspace-portal: Codex thread does not match the development session directory'
-      raise unless legacy_root_thread && cwd_mismatch
-
-      root_command = command.dup
-      root_command[root_command.index('--cwd') + 1] = workspace
-      @command_runner.capture(root_command)
     end
 
     def quiesce_and_require_idle!(slug, session)
@@ -3242,6 +3785,7 @@ module VpsfreeDevSession
       unless manifest.dig('codex', 'thread_id') == session.codex_thread_id
         raise Error, "session Codex thread does not match the portal manifest for #{slug}"
       end
+      require_current_codex_provenance!(slug, manifest, session.codex_thread_id)
       creation = manifest.fetch('creation', {})
       ready = creation['state'] == 'ready' &&
               (!creation['goal_sha256'] || creation['initial_goal_sent'])
@@ -3368,11 +3912,11 @@ module VpsfreeDevSession
     end
 
     def validate_git_branch!(branch)
-      stdout, _stderr, status = @command_runner.capture(
-        ['git', 'check-ref-format', '--branch', branch],
+      _stdout, _stderr, status = @command_runner.capture(
+        ['git', 'check-ref-format', "refs/heads/#{branch}"],
         allow_failure: true
       )
-      return if status.success? && stdout.strip == branch
+      return if status.success? && branch != 'HEAD' && !branch.start_with?('-')
 
       raise Error, "invalid branch name: #{branch.inspect}"
     end
@@ -3412,6 +3956,7 @@ module VpsfreeDevSession
       @portal_command = nil
       @portal_url = nil
       @require_runtime = nil
+      @transition_lock = nil
     end
 
     def run
@@ -3419,6 +3964,21 @@ module VpsfreeDevSession
       command = @argv.shift
       raise Error, USAGE unless command
 
+      if @transition_lock
+        with_transition_lock { run_command(command) }
+      else
+        run_command(command)
+      end
+
+      0
+    rescue OptionParser::ParseError, Error => e
+      @err.puts "error: #{e.message}"
+      1
+    end
+
+    private
+
+    def run_command(command)
       case command
       when '-h', '--help'
         @out.puts USAGE
@@ -3430,6 +3990,8 @@ module VpsfreeDevSession
         run_single_slug { |runner, slug, opts| runner.attach(slug, as_is: opts[:as_is]) }
       when 'sync'
         run_single_slug { |runner, slug, opts| runner.sync(slug, as_is: opts[:as_is]) }
+      when 'quiesce'
+        run_single_slug { |runner, slug, opts| runner.quiesce(slug, as_is: opts[:as_is]) }
       when 'stop'
         run_single_slug { |runner, slug, opts| runner.stop(slug, as_is: opts[:as_is]) }
       when 'recover-stale'
@@ -3437,9 +3999,11 @@ module VpsfreeDevSession
       when 'remove'
         run_remove
       when 'finalize'
-        run_single_slug do |runner, slug, opts|
-          runner.finalize(slug, as_is: opts[:as_is])
-        end
+        run_finalize
+      when '_finalize-url'
+        run_finalize_url
+      when 'reopen'
+        run_reopen
       when 'list'
         run_list
       when 'validate'
@@ -3453,14 +4017,17 @@ module VpsfreeDevSession
       else
         raise Error, "unknown command: #{command}"
       end
-
-      0
-    rescue OptionParser::ParseError, Error => e
-      @err.puts "error: #{e.message}"
-      1
     end
 
-    private
+    def with_transition_lock
+      directory = File.dirname(@transition_lock)
+      FileUtils.mkdir_p(directory, mode: 0o700)
+      raise Error, "transition lock is a symlink: #{@transition_lock}" if File.symlink?(@transition_lock)
+      File.open(@transition_lock, File::RDWR | File::CREAT, 0o600) do |file|
+        file.flock(File::LOCK_SH)
+        yield
+      end
+    end
 
     def parse_global_options
       until @argv.empty?
@@ -3520,6 +4087,14 @@ module VpsfreeDevSession
           @argv.shift
         when '--require-runtime'
           @require_runtime = true
+          @argv.shift
+        when '--transition-lock'
+          @argv.shift
+          @transition_lock = File.expand_path(
+            @argv.shift || raise(Error, '--transition-lock requires PATH')
+          )
+        when /\A--transition-lock=(.+)\z/
+          @transition_lock = File.expand_path(Regexp.last_match(1))
           @argv.shift
         when '-h', '--help'
           @out.puts USAGE
@@ -3656,6 +4231,41 @@ module VpsfreeDevSession
       require_arity!(1, @argv, 'remove')
 
       runner.remove(@argv.fetch(0), **opts)
+    end
+
+    def run_finalize
+      input, opts = parse_finalize_request
+      runner.finalize(input, **opts)
+    end
+
+    def run_finalize_url
+      input, opts = parse_finalize_request
+      runner.url(input, as_is: opts.fetch(:as_is))
+    end
+
+    def parse_finalize_request
+      opts = { as_is: false, check: false, prepare: false }
+      parser = OptionParser.new do |parser_opts|
+        parser_opts.on('--as-is') { opts[:as_is] = true }
+        parser_opts.on('--check') { opts[:check] = true }
+        parser_opts.on('--prepare') { opts[:prepare] = true }
+      end
+      parser.parse!(@argv)
+      require_arity!(1, @argv, 'finalize')
+
+      [@argv.fetch(0), opts]
+    end
+
+    def run_reopen
+      opts = { as_is: false, allow_abandoned: false }
+      parser = OptionParser.new do |parser_opts|
+        parser_opts.on('--as-is') { opts[:as_is] = true }
+        parser_opts.on('--allow-abandoned') { opts[:allow_abandoned] = true }
+      end
+      parser.parse!(@argv)
+      require_arity!(1, @argv, 'reopen')
+
+      runner.reopen(@argv.fetch(0), **opts)
     end
 
     def run_worktree

@@ -1,9 +1,10 @@
 # Development Tmux Sessions
 
-The NixOS-installed `dev-session` command manages one tmux session per
-development initiative. The
-session name is the resolved slug, and the tool follows the workspace layout
-from `AGENTS.md`.
+The user-profile `dev-session` command manages one tmux session per development
+initiative. It selects a registered workspace from the current directory; use
+`--workspace NAME` before the subcommand to select one explicitly. The session
+name is the resolved slug, and the tool follows the workspace layout from
+`AGENTS.md`.
 
 ## Starting a session
 
@@ -12,6 +13,17 @@ Pass a short name by default:
 ```sh
 dev-session start api-token-rotation
 ```
+
+This works anywhere under the registered root, including `work/` and
+`worktrees/`. From another directory, or whenever you want to be explicit,
+name the workspace before the subcommand:
+
+```sh
+dev-session --workspace vpsfree-cz start api-token-rotation
+```
+
+If only one workspace is registered, it is the fallback outside its root. Once
+two or more are registered, an outside call requires `--workspace`.
 
 For a new Codex session, the command asks for the first request before it
 creates tracking files or tmux panes. In a script or another noninteractive
@@ -61,8 +73,8 @@ Managed tmux panes and worktree windows receive these environment variables:
 - `VPSFREE_DEV_SESSION_URL`, the resolved link for this session.
 
 Do not use `VPSFREE_DEV_SESSION_URL` as the input for another session. Its
-value already contains the current slug. The configuration-owned wrapper
-passes the base URL explicitly and exports both values into each managed pane.
+value already contains the current slug. The registry-backed dispatcher passes
+the base URL explicitly and exports both values into each managed pane.
 
 `start` creates `work/<slug>/plan.md`, `work/<slug>/state.md`,
 `work/<slug>/portal.yml`, and `worktrees/<slug>/` when missing. When
@@ -122,6 +134,8 @@ dev-session sync api-token-rotation
 dev-session stop api-token-rotation
 dev-session remove api-token-rotation
 dev-session finalize api-token-rotation
+dev-session finalize api-token-rotation --check
+dev-session reopen api-token-rotation
 dev-session list
 dev-session current
 dev-session url
@@ -200,8 +214,8 @@ record.
 
 ## Finalizing an initiative
 
-Use `finalize` only after the initiative is fully complete or explicitly
-abandoned:
+Use `finalize` only after the initiative is fully integrated and has no
+session-owned work, or after it is explicitly abandoned:
 
 ```sh
 dev-session finalize api-token-rotation
@@ -212,6 +226,8 @@ Before running it:
 - set the lifecycle field in the exact YAML front matter at the start of
   `state.md` to `complete` or `abandoned`; lifecycle-looking text anywhere in
   the Markdown body has no effect;
+- for `complete`, merge every registered feature branch's exact final head into
+  its configured remote default branch;
 - make sure plan and state have an earlier commit under `work/<slug>/`;
 - make sure that history includes a commit whose front matter has
   `lifecycle: active` before the terminal transition;
@@ -221,6 +237,17 @@ Before running it:
   into an initiative worktree;
 - remove credentials, caches, reproducible bulk captures, and transient
   outputs, keeping plan/state and intentionally durable evidence.
+
+For `complete`, `finalize` fetches every registered feature branch and default
+branch. The local and remote feature tips must be identical, and that exact
+commit must be an ancestor of `origin/<default_branch>`. The command reports
+all branches whose merge status cannot be proven. A squash merge or partial
+cherry-pick does not satisfy this rule. Coordination-only initiatives with no
+registered branches remain valid. Legacy live worktrees without `portal.yml`
+are inferred from their canonical bare repository and checked as branches, not
+treated as coordination-only work. `abandoned` skips only this merge check.
+Use `finalize --check` to run the complete preflight without removing
+worktrees, changing the manifest, or moving tracking.
 
 `finalize` performs all safety checks before cleanup. It refuses missing
 tracking files, an active or ambiguous lifecycle, tracking without a prior
@@ -251,6 +278,39 @@ session remains available for that commit. After the commit,
 `dev-session stop <slug> --as-is` verifies the terminal archive and clean
 task paths before closing the exact workspace-owned tmux identity it resolves
 at stop time.
+
+The portal uses `finalize --prepare` internally before releasing clusters. It
+quiesces the terminal client and proves the thread idle while the host
+transition gate excludes new mutations. If the later release or finalization
+fails, the portal runs `sync` to restore the client.
+
+The public CLI uses that same host-wide gate. It refuses `finalize` while a
+vpsAdmin or vpsAdminOS development cluster for the initiative is still present;
+reset the reported clusters first. Cluster starts and resets hold the shared
+side of the gate for their full command, so none can race the final archive
+move.
+
+If an initiative was archived before its branches were merged, reopen it:
+
+```sh
+dev-session reopen 2026-06-06-api-token-rotation --as-is
+```
+
+The archive move and terminal tracking must already be committed. `reopen`
+refuses a conflicting active directory, worktree group, or live session, then
+atomically moves `archive/<slug>` back to `work/<slug>`. It changes the
+lifecycle to `active`, removes `finalized_at` and stale `final_head_sha` values,
+and preserves branch, base, repository, and Codex identity. It is journaled so
+an interrupted move can be retried. An explicitly abandoned initiative stays
+terminal unless `--allow-abandoned` is supplied.
+
+Legacy archives without `portal.yml` can also be reopened. Add each retained
+feature branch with the normal worktree command; the helper reconstructs its
+registration from one unambiguous merge base with the configured default
+branch. Supply `--base REF` if the intended base cannot be inferred uniquely.
+Starting the reopened initiative with an initial request creates a fresh shared
+conversation while leaving its existing plan, state, and repository records
+unchanged.
 
 ## Worktree helpers
 
@@ -316,24 +376,29 @@ the worktree is intentional.
 
 ## Runtime ownership
 
-The NixOS configuration owns the workspace path, tmux socket, host authority,
-Codex executable and App Server socket, and portal URL. The public command does
-not require callers to repeat these host-specific arguments. Run
+The workspace flake installs the public commands and user systemd units in a
+dedicated user Nix profile. A private registry maps workspace names to roots
+and hostnames. Per-workspace portal, App Server, authority, and tmux state lives
+below `$XDG_RUNTIME_DIR/vpsfree-workspaces/`; the public command derives those
+paths and does not require callers to repeat them. Run
 `dev-session validate` to validate every persisted portal entry, including its
 plan, anchored lifecycle, active/archive placement, and manifest, before
 deployment.
 
 Host-specific runtime options are private implementation details fixed by the
-installed command. Callers cannot replace them with command-line flags or
-environment variables. The recorded Codex version describes how the session
-was created; an existing session remains valid after a compatible client
-upgrade when its thread, App Server socket, working directory, and live host
-authority still match. Use `--no-codex` to start a shell in the left pane
+dispatcher. Callers can select only a registered workspace, not replace its
+runtime paths. The App Server uses the Codex package from the current NixOS
+system. `workspace-host` checks its protocol and model catalog before adopting
+it and retains one tested Codex store path per application profile generation.
+Codex adoption and rollback gate new mutations, quiesce native terminal
+clients, verify all threads are idle, restart App Server and portal pairs, and
+restore the clients. A compatible system update that finds an active turn is
+retried every five minutes. Use `--no-codex` to start a shell in the left pane
 instead.
 
-New conversations use the configured default model with `max` reasoning. When
-an explicitly chosen model does not support `max`, its advertised default
-reasoning effort is used. An explicit reasoning choice always takes precedence.
+New conversations use GPT-6 Astra with `xhigh` reasoning. When an explicitly
+chosen model does not support `xhigh`, its advertised default reasoning effort
+is used. An explicit reasoning choice always takes precedence.
 
 `--goal-file FILE` provides the initial Codex request and seeds the Goal
 section in a new plan. It is required when a noninteractive caller creates a
@@ -357,9 +422,9 @@ midnight.
 
 The private package implementation requires the authority directory, tmux
 socket, Codex command and socket, client version, and portal command to be
-present as absolute paths. Aitherdev exposes it only through the configured
-`dev-session` wrapper, so terminal users and the portal share one command and
-one session model.
+present as absolute paths. The registry-backed dispatcher supplies them to
+both terminal users and the portal, so they share one command and one session
+model.
 
 See [Workspace portal](workspace-portal.md) for the browser interface, manifest
 format, security model, private CA, and deployment responsibilities.
