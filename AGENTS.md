@@ -26,12 +26,12 @@ The initiative slug must be descriptive and dated, for example
 same slug for the tracking directory, feature branch, and worktree group unless
 a repository-specific rule requires otherwise.
 
-Use the NixOS-installed `dev-session start <name>` when starting a development
-session in this workspace. It fixes the deployed host authority, tmux, Codex,
-and portal endpoints, creates a dated slug from the short name, opens the
-matching tmux session, and can add or remove worktrees under
-`worktrees/<slug>/` using the canonical bare repositories in `repos/`. Use
-`--as-is` when the full slug has already been chosen.
+Use the user-profile `dev-session start <name>` when starting a development
+session. It selects the registered workspace from the current directory, fixes
+the matching authority, tmux, Codex, and portal endpoints, and creates a dated
+slug from the short name. Pass `--workspace <name>` when calling it outside a
+registered root or when an explicit selection is clearer. Use `--as-is` when
+the full slug has already been chosen.
 
 When running inside an existing development session, do not choose a new slug
 until checking for the active one. Run `dev-session current` from the workspace
@@ -158,10 +158,16 @@ lifecycle: active
 ---
 ```
 
-Change it to `complete` only when the requested outcome is finished, or to
-`abandoned` when the initiative is explicitly closed without completion. The
-anchored front matter is the only lifecycle authority; lifecycle-looking text
-in the Markdown body has no effect.
+An initiative remains `active` while any registered feature branch is
+unmerged or the session still owns work. Set it to `complete` only after every
+registered branch's exact final head is merged into its configured remote
+default branch and no review, CI, deployment, approval, or cleanup remains.
+Pushing, testing, deploying, or temporarily removing worktrees does not make an
+initiative complete. Use `abandoned` only when the work is explicitly
+discarded; abandoned work does not have to be merged. Coordination-only
+initiatives with no registered branches can still be completed. The anchored
+front matter is the only lifecycle authority; lifecycle-looking text in the
+Markdown body has no effect.
 
 Write a substantive plan and initial state, then commit both in the top-level
 workspace repository before the first project-code commit or external mutation.
@@ -206,7 +212,24 @@ commits the archive move. After that commit, run
 must refuse a finalized initiative whose archive move or terminal tracking
 state is not committed.
 
-Do not reuse an archived slug. Start a new dated initiative for follow-up work.
+For `complete`, finalization fetches each registered feature and default branch
+and proves that the exact local and remote feature head is an ancestor of
+`origin/<default_branch>`. It refuses unmerged, divergent, missing, or
+unprovable refs and reports every offending repository. This check is skipped
+only for `abandoned`. Use `dev-session finalize <slug> --as-is --check` for the
+same non-mutating preflight.
+
+Follow-up work before merge must reuse the same slug and retained branches. If
+an initiative was archived prematurely, run `dev-session reopen <slug>
+--as-is`. Reopening moves its committed archive back to `work/`, restores the
+active lifecycle, clears terminal repository heads, and preserves repository,
+branch, base, and conversation identity. It refuses abandoned initiatives
+unless `--allow-abandoned` is explicit, as well as dirty, duplicated,
+ambiguous, or live state. Legacy archives without `portal.yml` are supported;
+re-adding their retained branches reconstructs registration metadata. Do not
+create a replacement initiative merely because the original was prematurely
+archived.
+
 Do not delete tracking with `dev-session remove --all`; finalization and
 archival are mandatory even for abandoned initiatives.
 
@@ -368,6 +391,17 @@ when they are useful; skip them for noisy `nixpkgs` and `llm-agents` updates.
 Keep automated `confctl ... --commit` commit messages exactly as generated;
 do not amend or rewrap them to satisfy generic commit-message line length
 rules. Edit them only when intentionally making a concise changelog edit.
+
+Deployment does not authorize integration into a configuration repository's
+default branch. Build and deploy development configurations directly from the
+initiative worktree and feature branch. In particular, while the workspace
+portal is still under development, keep its `vpsfree-cz-configuration` changes
+on the dated initiative branch. The workspace application itself is deployed
+from its own user profile and must not be added to, pinned by, or iterated
+through the system configuration. Do not merge or push configuration changes
+to `master` merely to deploy aitherdev. Integrate that branch only after the
+user explicitly accepts the portal work for integration or explicitly directs
+the merge.
 
 DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
 `kb.vpsfree.org`. Their review instances are
