@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: active
 ---
 
 # Current state
