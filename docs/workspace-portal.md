@@ -3,8 +3,11 @@
 The workspace portal is the browser view for development initiatives:
 
 ```text
-https://vpsfree-cz-workspace.aitherdev.int.vpsfree.cz/
+https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/
 ```
+
+The former
+`vpsfree-cz-workspace.aitherdev.int.vpsfree.cz` address redirects here.
 
 It lists active and archived initiatives that contain `portal.yml`, with the
 newest dated sessions first. Each initiative uses full-width tabs for its Codex
@@ -50,9 +53,9 @@ An existing session that already has a persisted thread can be attached without
 another request.
 
 Codex receives the workspace instructions and selects affected repositories.
-The terminal and browser share one App Server thread and a dedicated tmux
-server at `/run/vpsfree-workspace-tmux/tmux.sock`. Use the immutable host
-wrapper for terminal actions:
+The terminal and browser share one App Server thread and a dedicated
+per-workspace tmux server. Use the registry-backed command for terminal
+actions:
 
 ```sh
 dev-session attach 2026-09-03-example
@@ -85,25 +88,30 @@ clusters.
 
 Prepare to finish asks Codex to complete work that is already in scope and set
 the tracking lifecycle to `complete` only when no work remains. Archive session
-then releases development clusters, validates and removes clean worktrees,
-moves tracking to `archive/`, commits only that archive move on the shared
-workspace `master`, and stops the session. It never pushes `master`. Every step
-can be retried after an interruption.
+first proves that every registered feature head is merged when the lifecycle is
+`complete`. It stops the terminal client and proves the shared thread idle while
+browser mutations are gated, then releases development clusters, validates and
+removes clean worktrees, moves tracking to `archive/`, commits only that archive
+move on the shared workspace `master`, and stops the session. If release or
+finalization fails, it restores the terminal client. It never pushes `master`.
 
 The page shows attach and conversation controls only when host-only authority
-under `/run/vpsfree-workspace-authority` is ready and matches the live tmux
-session, App Server socket, and persisted thread working directory. Stopped,
+under the private per-workspace runtime directory is ready and matches the live
+tmux session, App Server socket, and persisted thread working directory. Stopped,
 archived, forged, or stale sessions remain passive. A verified persisted thread
 can still provide a read-only transcript after stop, reboot, completion, or
 archival.
 
-Terminal and browser sessions use the App Server socket at
-`/run/vpsfree-workspace-codex/app-server.sock`. The App Server runs the Codex
-package selected by `vpsfree-cz-configuration`. The workspace package is
-contract-tested against that same Codex during the aitherdev build, so an
-incompatible experimental protocol change fails the build instead of requiring
-a separate production pin. Stored client versions are diagnostic history and
-do not invalidate sessions after a compatible upgrade.
+Terminal and browser sessions use the App Server socket below
+`$XDG_RUNTIME_DIR/vpsfree-workspaces/<name>/`. The App Server runs the Codex
+package from the current aitherdev system. The user service validates a new
+system Codex against the bundled protocol contract and model catalog before it
+adopts it. The transition gate blocks new browser and CLI mutations, quiesces
+terminal clients, checks every thread for idleness, restarts each App Server and
+portal as a pair, and then restores the clients. A compatible update waits on a
+five-minute retry timer while a turn is active. An incompatible update leaves
+the last compatible store path active. Stored client versions are diagnostic
+history and do not invalidate sessions after a compatible upgrade.
 
 `stop`, `remove`, and `finalize` quiesce the managed terminal client and refuse
 an active turn. If tmux disappears before authority cleanup, inspect the
@@ -152,7 +160,7 @@ slug: 2026-09-03-example
 forked_from: 2026-09-03-original
 codex:
   thread_id: 01a00000-0000-0000-0000-000000000000
-  socket_path: /run/vpsfree-workspace-codex/app-server.sock
+  socket_path: /run/user/1000/vpsfree-workspaces/vpsfree-cz/app-server.sock
   client_version: 0.152.1
 creation:
   state: ready
@@ -180,9 +188,10 @@ invalid.
 ## Authentication and security boundary
 
 nginx accepts HTTPS only from the WireGuard network and requires Basic
-Authentication. The Go service listens on a permission-restricted Unix socket.
-The portal cannot read nginx's password hash, TLS key, or CA key, and the socket
-is not mounted into the development LXC.
+Authentication. It proxies to a group-restricted Host router socket; each
+portal listens on a user-private Unix socket. The portal cannot read nginx's
+password hash, TLS key, or CA key, and its sockets are not mounted into the
+development LXC.
 
 The portal rejects mutations without the exact origin, uses a restrictive
 content security policy and sanitized Markdown, and does not expose general
@@ -193,10 +202,11 @@ worktrees. Workspace manifests are display metadata; Codex mutations also
 check uid-private host authority against tmux and the App Server.
 
 The Basic Auth username is `aither`. Its random plaintext password is stored at
-`/home/aither/.local/state/vpsfree-workspace-portal/password`, readable only by
-`aither`. NixOS activation derives the root-owned nginx hash from this file.
-Neither value enters Git or the Nix store. Browsers commonly cache Basic Auth
-credentials until their session is closed.
+`/var/lib/vpsfree-workspace-portal-password/password`. It is owned by root and
+readable only by the dedicated group containing `aither`; the portal services
+cannot modify it. NixOS activation derives the root-owned nginx hash from this
+file. Neither value enters Git or the Nix store. Browsers commonly cache Basic
+Auth credentials until their session is closed.
 
 Portal access grants control comparable to an interactive Codex client running
 as `aither`. Keep the password unique, keep the hostname VPN-only, and remove
@@ -209,6 +219,15 @@ The first aitherdev activation creates the CA and leaf directly in root-owned
 `/var/lib/vpsfree-workspace-pki`, installs the nginx leaf pair, and exports the
 public CA to the user-readable
 `/var/lib/vpsfree-workspace-portal-public/ca.pem`.
+
+The NixOS configuration installs the single host-side reconciler. Run it as
+root to validate the password and CA state, create missing credentials, or
+renew an expiring leaf:
+
+```sh
+sudo workspace-portal-substrate-reconcile
+sudo systemctl reload nginx.service
+```
 
 The unencrypted CA key is protected by root ownership and mode `0600`; the
 portal cannot read it. The nginx key is `root:nginx` mode `0640`. Certificates
@@ -229,19 +248,68 @@ CA. Trust the replacement public CA only after checking it on aitherdev.
 ## Packaging and deployment
 
 The workspace flake owns `packages.x86_64-linux.workspace-portal`.
-`vpsfree-cz-configuration` consumes it through `aitherVpsfreeWorkspace`, whose
-`nixpkgs` and `llm-agents` inputs follow the configuration's existing inputs.
-Updating the ordinary `llm-agents` channel therefore updates terminal Codex,
-the App Server, and the package's protocol contract test together.
+`vpsfree-cz-configuration` does not consume or pin it. NixOS owns only nginx,
+VPN exposure, TLS and Basic Auth credentials, user lingering, and the ordinary
+system Codex package. The workspace flake owns the router, portal, session and
+cluster commands, and user systemd units.
 
-Deploy aitherdev first, then deploy both internal DNS servers through normal
-confctl generations. Host activation creates or reuses credentials and starts
-the portal. Before an aitherdev switch or rollback that changes session
-creation, stop the portal and confirm that no `dev-session start` or
-`dev-session fork` process is running. This prevents a request handled by the
-old generation from crossing the mutable `/run/current-system` boundary. No
-NAR attestation or manual rollback capture is needed. Ordinary NixOS generation
-rollback removes the service while leaving reusable credentials on disk.
+Deploy the aitherdev substrate and wildcard internal DNS first. This stops the
+former system-owned portal runtime; existing portal and terminal sessions are
+not migrated. Initiative tracking and project branches remain on disk and can
+be reopened from the new runtime.
+
+Register the workspace once and install the user application from the reviewed
+workspace feature worktree:
+
+```sh
+nix run /path/to/workspace-feature#workspace-host -- register vpsfree-cz \
+  /home/aither/workspace/ai/vpsfree.cz \
+  --hostname vpsfree-cz.workspace.aitherdev.int.vpsfree.cz \
+  --alias vpsfree-cz-workspace.aitherdev.int.vpsfree.cz
+nix run /path/to/workspace-feature#workspace-host -- switch \
+  --source /path/to/workspace-feature
+```
+
+To retire a registered workspace, first finish or stop its sessions, then run
+`workspace-host unregister NAME`. The command quiesces its terminal clients,
+disables the three instance services, updates the registry atomically, and
+restarts the router. It also retires that name's runtime sockets and session
+authority before the name can be registered for another workspace root.
+
+The DNS wildcard is `*.workspace.aitherdev.int.vpsfree.cz`; point it at
+aitherdev's VPN address. NixOS creates the password, CA, wildcard certificate,
+and nginx proxy automatically. `workspace-host status` shows the active user
+package, Codex path, and registered workspace URLs.
+
+The first user-profile switch starts the router, App Server, tmux server, and
+portal. Start a fresh session for browser or terminal testing. Existing
+initiative directories and retained feature branches can be reopened without
+preserving their old Codex process or conversation.
+
+Later portal changes need only `workspace-host switch --source PATH`. The
+command builds a candidate, checks it against the system Codex, adds a user
+profile generation, updates stable commands and units, and restarts the router
+and portal as one transaction. It has no nonactivating mode because changing
+the stable commands without restarting the services would mix two application
+generations. Each profile generation retains the Codex store path it was tested
+with. Failed updates restore the preceding profile, Codex root, links, and
+services, then remove the rejected profile generation so rollback cannot select
+it later. A failed first installation has no preceding generation to restore;
+it leaves the validated candidate installed so the same `switch` can be
+retried. `workspace-host rollback` selects the preceding application and Codex
+pair and refuses while a thread is active.
+
+Before rolling back the NixOS substrate, stop the user layer so two portal
+runtimes cannot run at once:
+
+```sh
+workspace-host suspend
+```
+
+No conversation migration is attempted in either direction. Redeploying the
+hybrid substrate and running `workspace-host switch` recreates the user
+services. Routine portal iteration does not need a NixOS rebuild or a
+configuration input update.
 
 The portal continues serving initiative status when GitHub or the App Server is
 temporarily unavailable. Only the affected integration reports an error. The
