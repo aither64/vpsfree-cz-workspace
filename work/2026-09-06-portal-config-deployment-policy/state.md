@@ -12,7 +12,7 @@ lifecycle: active
 - Registered workspace base:
   `c561cb9859b3217c0a8e5476af37c07a4332f060`; the reviewed branch was
   rebuilt as a linear series on current `master` at
-  `214f94c94e6a9e66d43f03a114350de696199794`.
+  `214f94c466dd9356c7d984f79b60acc8257d35ab`.
 - Configuration branch: `2026-09-06-portal-config-deployment-policy`
 - Planned configuration worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/vpsfree-cz-configuration`
@@ -45,6 +45,16 @@ lifecycle: active
   obsolete helpers, and non-reviewable intermediate commits. The implementation
   now addresses every blocking and important finding, and both unpublished
   feature branches have been rebuilt into coherent commits for review reruns.
+- The general and architecture reruns found that the first hybrid draft would
+  rotate the existing Basic Auth password, remove the legacy runtime before
+  proving active turns idle, leave failed profile/Codex transitions partially
+  applied, strand interrupted session migrations, miss offline system Codex
+  changes, consult the current model catalog during materialized recovery, and
+  omit directory fsyncs around archive moves. Remediation is in progress before
+  the remaining review lanes and full tests.
+- The user selected `gpt-6-astra` with `xhigh` reasoning as the new-session
+  default. The live system Codex catalog advertises that exact model ID and
+  effort.
 
 ## Commands run
 

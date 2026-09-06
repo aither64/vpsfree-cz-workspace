@@ -47,9 +47,10 @@ requests integration.
 - Preserve the existing root-owned unencrypted CA and Basic Auth credentials.
   Remove the workspace flake input, CLI wrappers, portal package, and application
   services from the system configuration.
-- Keep new-session reasoning at `xhigh`. Resume an already materialized partial
-  creation without reapplying current defaults; apply resolved settings only to
-  genuinely new or replacement threads.
+- Keep the new-session default at `gpt-6-astra` with `xhigh` reasoning. Resume
+  an already materialized partial creation without consulting or reapplying the
+  current catalog; resolve settings only for genuinely new or replacement
+  threads.
 - For `complete`, fetch every registered repository, require local and remote
   feature tips to agree, and require that exact head to be an ancestor of the
   configured `origin/<default_branch>`. Report all unmerged or unprovable refs.
@@ -64,11 +65,14 @@ requests integration.
 
 ## Compatibility and deployment
 
-The one-time service migration quiesces existing Codex activity, replaces the
-system portal services with user services, and recreates terminal tmux clients
-without changing stored conversations or project worktrees. Historical socket
-paths in manifests become diagnostic; live registry and authority data select
-the current endpoint.
+The one-time service migration is explicitly drained before the NixOS switch:
+the legacy portal stops accepting mutations, terminal clients are quiesced, and
+every shared thread is proved idle. The substrate activation requires that
+marker while preserving the old services through its stop phase. The first user
+switch recreates terminal tmux clients without changing stored conversations or
+project worktrees and retains the marker until every authority record is ready.
+Historical socket paths in manifests become diagnostic; live registry and
+authority data select the current endpoint.
 
 The existing CA and password remain valid. The server leaf is renewed when its
 SAN set changes. Unknown workspace hosts remain inaccessible, nginx continues
