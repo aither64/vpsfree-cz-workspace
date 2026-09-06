@@ -9,7 +9,10 @@ lifecycle: active
 - Workspace branch: `2026-09-06-portal-config-deployment-policy`
 - Planned worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/workspace`
-- Initial base: workspace `master` at `cf3e0809b30b0d144f10e2b81aa27ba4e431de87`
+- Registered workspace base:
+  `c561cb9859b3217c0a8e5476af37c07a4332f060`; the reviewed branch was
+  rebuilt as a linear series on current `master` at
+  `214f94c94e6a9e66d43f03a114350de696199794`.
 - Configuration branch: `2026-09-06-portal-config-deployment-policy`
 - Planned configuration worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/vpsfree-cz-configuration`
@@ -33,6 +36,15 @@ lifecycle: active
   the implementation and configuration feature branches now require a larger
   refactor. The generated configuration pin is obsolete under the chosen
   architecture and will be replaced before the branch is pushed.
+- The hybrid implementation is committed on both feature branches and is ready
+  for mandatory review. Neither default branch has been changed.
+- An initial four-lane mandatory review of the earlier commit series found
+  unsafe unpaired Codex switching and rollback, a volatile reopen journal, a
+  finalization/cluster-release race, privileged password ownership assigned to
+  the user, a per-request router keepalive leak, incomplete legacy migration,
+  obsolete helpers, and non-reviewable intermediate commits. The implementation
+  now addresses every blocking and important finding, and both unpublished
+  feature branches have been rebuilt into coherent commits for review reruns.
 
 ## Commands run
 
@@ -53,32 +65,50 @@ lifecycle: active
   `2026-09-05-cgroup-v1-shared-device-fix`, its committed legacy archive, its
   lack of a portal manifest or live runtime conflicts, and its original merge
   bases.
+- Built the workspace package in a clean Nix sandbox. Its Go, Ruby, JavaScript,
+  PKI, password, and installed-wrapper checks passed.
+- Validated the packaged App Server protocol contract and default `xhigh`
+  support against system Codex `0.153.4`.
+- Ran the configuration Overcommit hooks successfully in `nix develop` and
+  built the aitherdev configuration generation with `confctl build`.
+- Re-ran all Go package tests after adding the host transition gate and router;
+  all packages passed. The final `workspace-host` suite passed 8 tests with 66
+  assertions. The full `dev-session` suite reached 157 tests and exposed only a
+  test-fixture value missing for the new transition flag; the corrected focused
+  regression passed and a final full package run remains pending after review.
 
 ## Results
 
 - No existing development session belongs to this process.
-- Workspace code and rules require changes. Configuration receives one durable
-  policy-only commit eligible for integration, followed by an exact development
-  pin that remains only on the initiative branch for deployment.
+- Workspace code and rules now implement the hybrid runtime. Configuration
+  contains only the privileged substrate and ordinary system Codex package;
+  its obsolete workspace flake input and development pin have been removed.
 - Workspace commits:
-  - `6c6ade3`: durable top-level deployment/integration rule;
-  - `9251c2b`: shared portal and CLI default changed to `xhigh`, with tests and
-    documentation.
+  - `333983c`: durable top-level deployment/integration rule;
+  - `c61d691`: shared portal and CLI default changed to `xhigh`;
+  - `18c6985`: exact merged-head completion proof, archive reopening, and
+    portal finalization gating;
+  - `124bc79`: mixed-version creation recovery preserves stored settings;
+  - `c6d6f4b`: registry-backed user runtime, router, profile deployment, paired
+    Codex adoption and rollback, and one-time migration.
 - Configuration commits:
-  - `a3e4276b`: durable repository-local deployment/integration rule;
-  - `bf8a0b61`: generated development pin for workspace `9251c2be`.
-- The configuration policy commit and branch were pushed before the generated
-  pin. Configuration `master` remains at its baseline `4d570e30`; the generated
-  pin is local and unmerged.
-- All portal Go packages and Go vet passed. Workspace and configuration
-  `nix flake check --no-build -L` both passed. The resolver regression verifies
-  `xhigh` for the default model, an explicit effort override, and fallback to
-  an explicitly selected model's advertised default when it lacks `xhigh`.
+  - `e06c183e`: durable repository-local deployment/integration rule;
+  - `66f73bc5`: privileged wildcard HTTPS, credentials, router socket, linger,
+    and removal of the system-owned workspace application.
+- Configuration `master` remains at `4d570e30`; the implementation is unmerged.
+- All portal Go packages passed. Workspace and configuration flake evaluation
+  passed. The resolver regression verifies `xhigh` for the default model, an
+  explicit effort override, and fallback to an explicitly selected model's
+  advertised default when it lacks `xhigh`.
+- The obsolete workspace-side PKI and password helpers and their tests have
+  been removed because NixOS is now the sole privileged substrate owner.
+- The aitherdev build produced generation `2026-09-06--17-33-25` from the
+  configuration feature worktree. It was built only, not deployed.
 - Configuration worktree creation again completed in Git but returned exit 78
   because its post-checkout Overcommit hook could not load Nix-provided gems in
-  the ambient shell. The worktree is registered and clean apart from generated
-  `.bin` and `.bundle` development-shell caches. Both configuration commits ran
-  their declared hooks successfully inside `nix develop`.
+  the ambient shell. Both configuration commits ran their declared hooks
+  successfully inside `nix develop`; its untracked `.bin/` and `.bundle/`
+  development-shell caches are excluded from commits.
 
 ## Open questions
 

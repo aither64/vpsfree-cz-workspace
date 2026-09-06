@@ -34,9 +34,9 @@ requests integration.
   `~/.config/vpsfree-workspaces/registry.json`. Select a workspace from the
   longest matching root or explicit `--workspace NAME`; require the flag outside
   all roots once multiple workspaces exist.
-- Run a loopback router plus per-workspace portal, Codex App Server, and tmux
-  user services. Derive private runtime paths below `/run/user/1000` and reject
-  unknown Host headers.
+- Run a Host router on a group-restricted Unix socket plus per-workspace portal,
+  Codex App Server, and tmux user services. Derive private application runtime
+  paths below `/run/user/1000` and reject unknown Host headers.
 - Keep Codex sourced from `/run/current-system/sw/bin/codex`. Validate its App
   Server schema and model catalog before adoption, retain a user GC root for the
   last compatible version, and reconcile compatible NixOS updates only after
@@ -72,8 +72,8 @@ the current endpoint.
 
 The existing CA and password remain valid. The server leaf is renewed when its
 SAN set changes. Unknown workspace hosts remain inaccessible, nginx continues
-to strip Basic Auth before proxying, and all application sockets remain
-user-private.
+to strip Basic Auth before proxying, the shared router socket is limited to
+nginx and `aither`, and per-workspace application sockets remain user-private.
 
 The workspace user package is deployed from its unmerged feature worktree. The
 configuration feature branch is deployed directly to aitherdev. The user owns
