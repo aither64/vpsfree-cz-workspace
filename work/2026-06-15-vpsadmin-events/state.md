@@ -1,3 +1,7 @@
+---
+lifecycle: active
+---
+
 # 2026-06-15-vpsadmin-events
 
 ## 2026-08-03 Declarative Event And Delivery Architecture

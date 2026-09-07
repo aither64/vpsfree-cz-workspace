@@ -1,3 +1,7 @@
+---
+lifecycle: active
+---
+
 # 2026-08-18-vpsadmin-password-reset
 
 ## Repositories

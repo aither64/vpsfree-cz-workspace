@@ -1,3 +1,7 @@
+---
+lifecycle: active
+---
+
 # 2026-08-12 DNS secondary transfer monitoring
 
 ## Repositories and worktrees

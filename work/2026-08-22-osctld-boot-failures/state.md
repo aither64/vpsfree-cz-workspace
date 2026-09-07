@@ -1,3 +1,7 @@
+---
+lifecycle: active
+---
+
 # 2026-08-22-osctld-boot-failures
 
 ## Repositories
