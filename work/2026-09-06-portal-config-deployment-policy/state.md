@@ -12,7 +12,7 @@ lifecycle: active
 - Registered workspace base:
   `c561cb9859b3217c0a8e5476af37c07a4332f060`; the feature was rebased and
   rebuilt as a clean linear series on current workspace `master` at
-  `0fb8e95dcd4271e5ca75d4738a4d16d1c1a15dd2`.
+  `3415971d361e79e15fa41ba0a7918cb77d65ad7e`.
 - Configuration branch: `2026-09-06-portal-config-deployment-policy`
 - Planned configuration worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/vpsfree-cz-configuration`
@@ -76,14 +76,32 @@ lifecycle: active
 - The archived cgroup initiative has been recovered under its original slug,
   exact retained branches, and exact branch heads. It now has a fresh shared
   Codex thread using `gpt-6-astra` at `xhigh`.
-- The browser extension and retained-initiative adoption are committed and
-  pushed at workspace head
+- The initial browser extension and retained-initiative adoption checkpoint was
+  committed and pushed at workspace head
   `223fc5b69e8d305d5f768b1a5dd9f0054e012920`. The feature remains unmerged;
   live deployment uses that worktree directly through `workspace-host`.
 - The six named legacy tmux sessions have been stopped and recreated as shared
   portal/CLI sessions under their original slugs. The unrelated legacy tmux
   session `34` remains attached on the old socket, and the password-reset
   development cluster was neither stopped nor recreated.
+- The user reported that Codex 0.153.4 now returns an object in `thread.source`,
+  while creation recovery still decodes it as a string. Browser and CLI session
+  creation therefore fail before recovery can complete, leaving schema-2
+  tracking and exclusive creation journals behind.
+- The failed slugs `2026-09-07-vpsfstatus-index-stale` and
+  `2026-09-07-vpsfstatus-index-stale-alert` currently remain untracked in the
+  shared workspace. They must not be deleted or retried by this implementation
+  without a direct user action after the fix is deployed.
+- The user clarified that `dev-session remove` must remove a session rather
+  than merely clean its worktrees. The new destructive meaning will require
+  confirmation, retain repository branches, and preserve discarded tracking in
+  a private recovery location. Normal agent-led completion remains `finalize`.
+- The requested browser follow-up includes a CLI-like request-input wizard,
+  same-thread and named-fresh-session plan implementation, a purple bottom Plan
+  control, visible pending steers, and scroll-position preservation. File
+  uploads are deferred.
+- Rebased the clean unpublished workspace feature branch onto current
+  `origin/master` before this follow-up. No live service or session was touched.
 
 ## Commands run
 
@@ -221,10 +239,11 @@ lifecycle: active
   worktrees without registering them. RBAC remains coordination-only. The IPv6
   initiative's three retained, already-merged branches were registered manually
   because their worktrees had already been removed.
-- Verified all 12 portal manifests, authenticated HTTPS, browser controls,
+- At that checkpoint, verified all 12 portal manifests, authenticated HTTPS,
+  browser controls,
   rendered Markdown history, a non-null pending-request array, latest-first
   index ordering, GPT-6 Astra at `xhigh`, Default mode, and the running cluster
-  badge. The password-reset runner remains PID `2700830`, PPID 1, with its
+  badge. The password-reset runner was PID `2700830`, PPID 1, with its
   original August 24 start time and ready file.
 - A shell diagnostic trace accidentally exposed the old Basic Auth password in
   local command output. The password file was immediately replaced, the
@@ -233,6 +252,66 @@ lifecycle: active
   unaffected.
 - Rechecked GitHub Actions after the final force-push. There are no runs for the
   workspace feature branch, so no superseded jobs required cancellation.
+- Committed the urgent structured-thread-source creation fix as pre-rebase
+  revision `e604a1b` and
+  switched the live user runtime to
+  `/nix/store/mgddv9ws3mnxwv740mza2yfck9vq2iwq-workspace-portal-0.1.0`.
+  The portal, router, App Server, and tmux user services are active; the App
+  Server process was preserved across the switch. Browser and CLI creation can
+  now read Codex 0.153.4's structured source objects.
+- Implemented the remaining browser follow-up without switching the live
+  runtime: CLI-style paged input questions, exact-plan actions, a purple Plan
+  control in the composer, correlated send and steer receipts, and scroll
+  preservation with an explicit New output control.
+- Redefined explicitly confirmed `dev-session remove` as a complete session
+  discard. It retires the Codex thread, releases both cluster types, removes
+  worktrees, moves tracking and creation state into private recovery storage,
+  and retires managed runtime while retaining Git branches. Browser deletion
+  uses the same command under an exclusive host transition so a new cluster or
+  replacement session cannot race cleanup.
+- Quick verification after the follow-up passed all Go packages, JavaScript
+  syntax and browser-contract tests, 189 `dev-session` tests with 1,798
+  assertions, 22 `workspace-host` tests with 146 assertions, and 20 cluster
+  status tests with 243 assertions. Neither failed creation slug was removed or
+  retried.
+- Committed the complete browser and deletion follow-up, then rebased it onto
+  current shared `master`. The final consolidated feature head is
+  `6be8e29557c90fa4c0a584947523e45e1f9408a2`; the feature remains unmerged.
+- The package-transition preflight found an invalid historical vpsAdmin state
+  directory named `--help`, containing only `config.json`. It was moved
+  recoverably to private user state before retrying; no real cluster state was
+  removed.
+- The first deployment attempt then stopped before profile mutation because
+  the live Codex protocol corpus lacked samples for five already implemented
+  request call sites. Added their exact request shapes and verified the corpus
+  against Codex 0.153.4's generated schema.
+- A packaged check reproduced a scheduler-sensitive two-second limit in the
+  simulated runner-exit race. Raising only the test's polling ceiling to ten
+  seconds passed 20 focused repetitions and the final package build; production
+  signal behavior is unchanged.
+- Final verification passed all Go packages and the race-enabled Codex/web
+  packages, 205 `dev-session` tests with 1,961 assertions, 32 `workspace-host`
+  tests with 198 assertions, and 34 cluster tests with 364 assertions. The Nix
+  package build passed at
+  `/nix/store/zal6c09n4c0xvva72yg2xfvf2q3g1v3j-workspace-portal-0.1.0`.
+- Mandatory review used `gpt-5.6-sol` at `xhigh`. Architecture, risk, and scope
+  reruns reported no Blocking or Important findings on exact range
+  `784692786c6eff7def52bc3ac49548e87c19b4bf..6be8e29557c90fa4c0a584947523e45e1f9408a2`.
+- Before activation, all five materialized managed threads were idle and there
+  were no durable submission ledgers or session-removal journals. User-profile
+  generation 7 is now active at the final package. The portal/router restarted;
+  Codex PID `2323118` and tmux PID `2323117` were preserved.
+- The password-reset cluster had been accidentally interrupted during a
+  predeployment migration diagnostic and was immediately restored. It remained
+  running and ready through the actual switch at PID `3779261`, with its exact
+  legacy socket identity retained and owner-proven.
+- The events and DNS-transfer clusters remain as stale durable state. Their
+  unreferenced transient legacy socket directories were retired and their
+  workspace-scoped socket identities recorded, without removing state or
+  images. Provider status and cleanup now consume those canonical identities.
+- Post-deployment checks found all four user services active, validated all 15
+  portal manifests, and returned HTTP 200 through both the private Unix socket
+  and authenticated VPN HTTPS. The default remains `gpt-6-astra` at `xhigh`.
 
 ## Results
 
@@ -272,7 +351,7 @@ lifecycle: active
   successfully inside `nix develop`; its untracked `.bin/` and `.bundle/`
   development-shell caches are excluded from commits.
 - The committed and pushed workspace head is
-  `223fc5b69e8d305d5f768b1a5dd9f0054e012920`; the committed and pushed
+  `6be8e29557c90fa4c0a584947523e45e1f9408a2`; the committed and pushed
   configuration head is
   `e96431958b058ef495f491420655cfb7a4085fde`.
 - The handoff helper cannot bind this API-owned process to an initiative because
