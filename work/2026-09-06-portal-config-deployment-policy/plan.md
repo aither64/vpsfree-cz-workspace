@@ -22,6 +22,13 @@ the workspace namespace, and complete the browser interaction model with a
 CLI-like request-input wizard, plan implementation actions, visible steer
 receipts, and non-disruptive transcript scrolling. File uploads are deferred.
 
+Prevent agents from closing a conversational session after answering a request.
+A terminal lifecycle only makes the initiative eligible for explicit archival;
+it does not make an unarchived session read-only or authorize `finalize` or
+`stop`. Recover the prematurely archived
+`2026-09-07-vpsfstatus-index-stale-2` session under its original slug and exact
+Codex thread. Also render GitHub-style pipe tables in chat and artifact Markdown.
+
 ## Affected repositories
 
 - Coordination workspace (`aither64/vpsfree-cz-workspace`): hybrid user runtime,
@@ -104,6 +111,25 @@ requests integration.
   a distinct pending-steer area until the matching transcript item arrives.
   Preserve a reader's transcript position unless it was already following the
   bottom, and expose a New output control while detached.
+- Keep terminal but unarchived initiatives interactive. Show their terminal
+  lifecycle as ready for an explicit archive operation, and use the actual
+  archive location rather than lifecycle alone when deciding whether repository
+  state is immutable.
+- Require exact-slug confirmation on a terminal for mutating `finalize` and
+  `stop`. Keep `finalize --check` non-mutating and non-interactive. Give the
+  portal a narrowly scoped internal authorization path that is accepted only
+  from its own systemd service cgroup, and validate the exact slug again on the
+  browser archive request.
+- State in durable workspace rules that completing a response or preparing an
+  initiative for handoff never authorizes an agent to archive or stop it. The
+  user must explicitly request session closure; agents must not schedule
+  post-turn cleanup processes.
+- Recover archived Codex history by exact thread identity with
+  `thread/unarchive`, followed by a verified resume. Make interrupted retries
+  idempotent, reject ambiguous or foreign identities, preserve the original
+  thread ID, and never resend the initial goal.
+- Enable Goldmark table parsing in the shared sanitized Markdown renderer and
+  style tables so wide content scrolls horizontally in chat and artifact views.
 - Reconcile only the six user-named unfinished sessions. Stop their old tmux
   clients, create fresh shared threads from the existing tracking, and leave
   the unrelated `34` session untouched. Keep the password-reset dev cluster
@@ -199,3 +225,12 @@ squash-only or cherry-picked integration does not qualify.
 - Reconcile the six explicitly named unfinished sessions after deployment and
   verify browser and CLI attachment, portal repository discovery, and continued
   visualization of the running password-reset cluster.
+- Test terminal-but-unarchived browser and CLI interactivity, exact-slug
+  confirmation for mutating finalization and stop, portal-only internal
+  authorization, and rejection from foreign cgroups and non-interactive agent
+  processes.
+- Test exact archived-thread recovery, identity mismatches, ambiguous and
+  already-unarchived retry states, interrupted recovery, and preservation of the
+  thread ID without another initial request.
+- Test table elements in chat and artifact Markdown, horizontal overflow styles,
+  and continued removal of unsafe HTML and JavaScript URLs.

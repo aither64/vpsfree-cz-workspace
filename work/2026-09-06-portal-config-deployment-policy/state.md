@@ -100,6 +100,28 @@ lifecycle: active
   same-thread and named-fresh-session plan implementation, a purple bottom Plan
   control, visible pending steers, and scroll-position preservation. File
   uploads are deferred.
+- The user reported that `2026-09-07-vpsfstatus-index-stale-2` answered once and
+  then archived and stopped itself. Inspection of its exact rollout showed that
+  the agent deliberately started a background finalizer after the turn became
+  idle; the portal did not race or infer completion. Current lifecycle and CLI
+  rules allowed that process to call `finalize` and `stop` without direct user
+  authorization.
+- The fix must keep every unarchived session conversational, even when its
+  tracking lifecycle says `complete` or `abandoned`. Mutating `finalize` and
+  `stop` will require an exact-slug terminal confirmation or a portal-only
+  service-cgroup authorization. Agents may prepare terminal tracking but must
+  never launch delayed cleanup or interpret a completed answer as permission to
+  close a session.
+- The archived session retains Codex thread
+  `01a07c42-a006-77e2-b4cd-5424d3acdd07` and its rollout. It will be reopened
+  under the same slug and recovered through Codex `thread/unarchive`; retries
+  must preserve that identity and must not submit the recorded goal again.
+- The shared Markdown renderer currently enables base Goldmark only. It will
+  enable the table extension and add overflow-safe table styling for transcript
+  and artifact views while keeping the existing sanitizer.
+- The user selected the strict "never auto-close" policy and terminal exact-slug
+  confirmation without a public `--yes` bypass. Live deployment remains gated
+  on a separate restart approval after tests and review.
 - Rebased the clean unpublished workspace feature branch onto current
   `origin/master` before this follow-up. No live service or session was touched.
 
