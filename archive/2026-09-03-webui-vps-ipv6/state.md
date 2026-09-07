@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-03-webui-vps-ipv6
@@ -8,17 +8,19 @@ lifecycle: active
 
 - `vpsadmin`
   - branch: `2026-09-03-webui-vps-ipv6`
-  - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsadmin`
+  - former worktree (removed): `worktrees/2026-09-03-webui-vps-ipv6/vpsadmin`
   - base: `origin/master` at `cbd0fa16434947a4273610389d84216bcde35e72`
   - integrated `master`: `1acc1955f0e7b4f2b67a18674d02a6da8e9e8da4`
 - `vpsfree-kb-contracts`
   - branch: `2026-09-03-webui-vps-ipv6`
-  - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-kb-contracts`
+  - former worktree (removed):
+    `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-kb-contracts`
   - base: `origin/master` at `46466e83c2293f47bfef3fe516a3b51c2de14c70`
   - integrated `master`: `e5ed479f9d4058556dcf225b4c16afd5b9f0051a`
 - `vpsfree-cz-configuration`
   - branch: `2026-09-03-webui-vps-ipv6`
-  - worktree: `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-cz-configuration`
+  - former worktree (removed):
+    `worktrees/2026-09-03-webui-vps-ipv6/vpsfree-cz-configuration`
   - base: `origin/master` at `57d7c12a2da78d334d338a0e56dd7438376a6973`
   - final integration base: `origin/master` at
     `1139d11d9254cd86ec328a34a760589d4f7ce82c`
@@ -26,15 +28,25 @@ lifecycle: active
 
 ## Status
 
-The vpsAdmin fix, documentation-landmark remediation, focused KB capture
-contract, and consolidated `vpsadminServices` configuration pin are integrated
-into all three default branches in provider-first order. Checksummed schema-5
-Czech and English KB release candidates are prepared locally without publishing
-them. Mandatory review and reruns passed at `xhigh`, all four affected
-service-host configurations build on the final configuration base, and quick
-default-branch workflows are green. The user explicitly chose not to wait for
-the remaining long CI runs; they remain active on the exact integrated heads.
-Deployment and production KB publication remain out of scope.
+Complete and ready for user-controlled archival. The vpsAdmin fix,
+documentation landmarks, focused KB capture contract, and `vpsadminServices`
+pin are integrated into all three default branches. Mandatory review and
+reruns passed at `xhigh`, all four service-host configurations built, and every
+previously pending integration CI run succeeded. Production already serves
+vpsAdmin `1acc1955`; read-only checks on 2026-09-07 confirmed the restored
+public IPv6 capability and continued restriction of `Location#domain`.
+
+The two prepared, validated schema-5 KB release candidates remain unpublished
+reference deliverables, as production KB publication was outside the original
+scope. No release is staged or pending under this initiative. A later scheduled
+Guix runtime failure was traced to an unavailable dated container image in an
+unchanged test and recorded as unrelated maintenance below.
+
+All initiative worktrees were removed before this conversation. Local and
+remote feature branches are retained. There is no remaining implementation,
+review, CI, push, deployment, approval, or cleanup owned by this session.
+The user explicitly reserved finalization, archival, and session shutdown;
+none of those actions has been performed.
 
 ## Commands run
 
@@ -311,17 +323,84 @@ Deployment and production KB publication remain out of scope.
   vpsAdmin run `33849770155` also remained active; the user explicitly chose
   not to wait for these long runs.
 
+## Completion verification on 2026-09-07
+
+- Reconnected to the existing initiative. `dev-session current` and
+  `VPSFREE_DEV_SESSION_SLUG` both identify `2026-09-03-webui-vps-ipv6` after
+  the runtime cutover. Read `plan.md` and `state.md` completely.
+- The user requested archival preparation and confirmed that the work was
+  already finished. No new slug, branch, worktree, implementation commit,
+  deployment, or KB write was necessary.
+- Rechecked GitHub Actions using `gh run view` and `gh run list` for the
+  integrated commits. Previously pending runs all completed successfully:
+  - vpsAdmin API Specs: `33862002041`;
+  - vpsAdmin default-branch CI: `33862002066`;
+  - vpsAdmin feature-branch CI: `33849770155`;
+  - KB default-branch Managed page runtime: `33862106472`.
+  The other feature/default-branch checks on these heads also succeeded.
+- The broader run inventory exposed subsequent scheduled KB runtime run
+  `34020694050` (2026-09-06), which failed only `kb/guix#reconfigure`.
+  Read its failed logs and artifact `9986991982` in memory. The command
+  `osctl ct new --repository default --vendor vpsadminos --variant minimal
+  --distribution guix --version 20260819 kb-guix` failed because that image
+  was absent from the default repository, before the test examples ran.
+  GRE, firewall, and KVM suites passed. The Guix test and fixtures are unchanged
+  by this initiative, and the independent vpsAdminOS pin remains `6bdf458f`.
+  This is a dated-image availability problem independent of the IPv6 fix;
+  no blind rerun or unrelated implementation expansion was performed.
+  See `notes/vpsfree-kb-contracts/2026-09-07-guix-runtime-image-unavailable.md`.
+- Read-only live assertions passed against
+  `https://api.vpsfree.cz/v7.0/locations` (five locations) and
+  `https://api.vpsfree.cz/v7.0/locations/3`: successful responses contain a
+  boolean `has_ipv6` and omit `domain`, without authentication.
+  `https://vpsadmin.vpsfree.cz/` links its running version to exact commit
+  `1acc1955f0e7b4f2b67a18674d02a6da8e9e8da4`. These checks confirm that the
+  requested fix is already deployed. They do not identify the deployment
+  operator/date or independently inspect every backend host generation.
+- Direct read-only SSH inspection was unavailable: API1 rejected the ambient
+  identity and API2 failed host-key verification. No SSH settings or credentials
+  were changed. The successful public behavior/version checks satisfy this
+  initiative's deployment verification without repeating deployment.
+- Confirmed the three integrated commits are ancestors of locally recorded
+  `origin/master` refs. SSH `git ls-remote` confirms all retained remote feature
+  branches still point to `1acc1955`, `e5ed479`, and `248e2fc`, respectively.
+  There are no outstanding project pushes.
+- `git worktree list --porcelain` confirms this initiative has no registered
+  worktrees. The runtime-cutover record independently records their earlier
+  removal. The portal retains all three repository/branch identities.
+- `bin/kb-stage status` confirms the global staging service and pending release
+  belong to `2026-08-18-vpsadmin-password-reset`. No staging ownership or data
+  was changed. Future publication of the preserved candidates is a separate
+  operator decision and requires renewed source/staging checks and approval.
+- Prior reviews remain applicable: no implementation, contract, candidate,
+  dependency pin, or deployment behavior changed during completion checks.
+  No further test or review rerun is required.
+- Updated plan, terminal state, and portal artifacts. Leave these tracking
+  changes and the concise CI investigation note for the eventual archive
+  commit, following the workspace rule against a separate terminal-state
+  checkpoint. Do not finalize, archive, or stop this session.
+- Final checks passed: scoped `git diff --check`, exact terminal front matter,
+  both preserved candidate hashes, portal artifact paths, absent initiative
+  worktrees, and `dev-session list` showing zero worktrees with managed tmux
+  still available. No file under the Guix test tree changed in the integrated
+  contract series.
+
 ## Open questions
 
 None.
 
 ## Cleanup
 
-- All three feature worktrees are clean. Keep them while the exact-head CI runs
-  remain active; remove them and finalize only after no CI handoff remains.
+- All three feature worktrees were removed before reconnection. No worktree
+  recreation or further removal is needed; no process from this completion
+  check can write to an initiative worktree.
 - The transient full KB source/candidate fetch, including private production
   snapshots, has been removed. The two tracked public candidates are preserved.
 - The temporary detached integration worktrees and their parent directory were
   removed cleanly. Feature branches remain locally and remotely as required.
-- The initiative is not yet eligible for finalization or archival because the
-  user chose not to wait for the active default-branch CI runs.
+- No CI from the integration handoff remains active. The later unrelated Guix
+  image failure is documented with evidence and is not an initiative blocker.
+- No credentials, bulk CI artifacts, or new caches were saved in the tracking
+  directory. The curated public KB candidates and release/review records remain.
+- The initiative is eligible for archival. Finalization, archive movement,
+  the combined archive commit, and session shutdown are reserved to the user.

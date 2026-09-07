@@ -72,6 +72,19 @@ The user authorized merging all affected repositories into their default
 branches. Merging the configuration revision does not authorize deployment or
 production KB publication; those remain separate operational actions.
 
+On 2026-09-07, the user requested preparation for archival, including any
+remaining deployment work, then confirmed that the work was already finished.
+Read-only production checks confirmed that the WebUI already runs `1acc1955`
+and that anonymous Location Index/Show responses expose `has_ipv6` while
+omitting `domain`. No further deployment is needed for this initiative.
+The deployment date and operator were not recovered from the old tracking.
+
+The original KB deliverable is the prepared and validated bilingual candidates;
+production publication was explicitly excluded. Preserve these unpublished
+candidates as reference material. There is no pending KB release owned by this
+session. Any future publication needs fresh source checks, staging verification,
+and direct approval under the KB workflow.
+
 ## Testing plan
 
 - Run focused Location and VPS API specs, Ruby syntax/style checks, and all
@@ -97,3 +110,18 @@ production KB publication; those remain separate operational actions.
   every review lane affected by the new documentation contract.
 - From fresh integration worktrees, fast-forward the current default branches,
   run repository-appropriate pre-push checks, push, and monitor resulting CI.
+
+## Completion and archival boundary
+
+Implementation, required reviews, integration checks, project pushes, and the
+production IPv6 fix are complete. The previously pending CI runs succeeded.
+A later scheduled Guix runtime failure was investigated from its uploaded
+artifact: the unchanged test could not find its dated `guix:20260819` container
+image. This is independent image-lifecycle maintenance, not an IPv6 regression;
+record the evidence without reopening this initiative or rerunning it blindly.
+
+All three repository worktrees were removed before reconnection; retain their
+local and remote feature branches. Set the lifecycle to `complete` after the
+closing checks and leave the updated tracking in `work/` for the eventual
+archive commit. Per the user's explicit instruction, do not finalize, move the
+initiative to `archive/`, or stop the session.
