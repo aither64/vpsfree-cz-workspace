@@ -1,41 +1,165 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Current state
 
 ## Outcome
 
-The approved v2 shared-user regression follow-up is complete. Both local VM
-suites, all required review lanes, and pushed-head CI passed. Both retained
-feature branches are pushed; the production input selects the exact tested
-vpsadminos revision. Nothing was merged, deployed, activated, or dry-activated.
+Both default branches are merged and pushed: vpsAdminOS `staging` at
+`2166e5934` and configuration `master` at `e26f0a33`. Both configuration pins
+select the merged vpsAdminOS revision. Local checks, all 13 unit suites, and
+both feature-branch and default-branch CI passed on the exact integrated head.
+Nothing has been deployed or activated.
 
-Keep this initiative active for all remaining pre-merge follow-up. Do not
-archive it or create replacement branches. There are no outstanding checks,
-review findings, or cleanup tasks for the requested follow-up; the next change
-or integration action requires the user's next instruction.
+Finalization status: the normal helper removed both clean retained
+worktrees and archived the curated tracking directory. The finishing
+service commits this archive and then invokes `dev-session stop`;
+its journal records the final result.
+
+Temporary integration worktrees and generated local artifacts are removed.
+Both retained feature worktrees passed clean ordinary and ignored status
+checks before finalization. All local and remote feature branch refs are
+retained. No code, review, CI, merge, or deployment action remains owned by this
+initiative.
 
 ## Repositories
 
 Both repositories retain branch `2026-09-05-cgroup-v1-shared-device-fix`.
 
 - `vpsadminos`:
-  - worktree: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsadminos`
-  - base: `ec7dc42da33cd963fe63d8dde281b0e88fe790c2`
-  - local and remote head: `5e31378ae42f253b4878940e3462f6e40b214fb4`
-  - original runtime fix remains unchanged at `9fb79eb68`; the only new commit
-    adds the cgroups-v2 tests.
+  - feature worktree before finalization: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsadminos`
+  - integration base: `32767c7de657ce0a2f197a944707e4c60cb6db05`
+  - local and remote head: `2166e5934fe1167ed4c5af67c744bdf3b12df0d5`
+  - patch-identical runtime fix `432aef216` followed by the cgroups-v2 tests.
+  - temporary target worktree: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsadminos-merge`
+    was on local `staging`; removed after the successful fast-forward push.
 - `vpsfree-cz-configuration`:
-  - worktree: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsfree-cz-configuration`
-  - base: `248e2fc614bb3bc29c0a9c9f910330ade0b3cb80`
-  - local and remote head: `bc6071114994e4b481d3dc577adfeb6d98dafd16`
-  - one consolidated generated production-input commit above the retained base.
+  - feature worktree before finalization: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsfree-cz-configuration`
+  - integration base: `4d570e3053b114518ada59c2a45d5e9d8644347b`
+  - local and remote head: `e26f0a3360e1a20e76c3c0ef4193448584a8c1bb`
+  - generated production-input commit `433e7fab`, followed by staging-input
+    commit `e26f0a33`, both selecting `2166e5934`.
+  - temporary target worktree: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsfree-cz-configuration-merge`
+    was on local `master`; removed after the successful fast-forward push.
 
-Fetched upstream before pushes. Upstream staging advanced to `32767c7de` with
-unrelated dependency updates; configuration master advanced to `4d570e30` with
-workspace-host and unrelated input changes. Retained the authoritative bases
-for this bounded follow-up instead of importing unrelated updates.
+During the initial v2 follow-up, retained the authoritative bases while
+upstream staging advanced to `32767c7de` and configuration master to `4d570e30`.
+The later authorized integration rebased both retained branches onto those
+defaults, as recorded below.
+
+## Integration and verification
+
+- Authorized by the user's request to merge into defaults and clean up.
+- Fresh defaults: vpsAdminOS `staging` at `32767c7de` and configuration
+  `master` at `4d570e30`. The new upstream vpsAdminOS commits only update Nix
+  inputs and packaged gem dependencies; configuration also advances staging
+  inputs and adds unrelated workspace-host changes.
+- Rebased the retained vpsAdminOS branch without conflicts to
+  `2166e5934fe1167ed4c5af67c744bdf3b12df0d5`, with runtime fix `432aef216`.
+  `git range-diff` reports both commits patch-identical to the reviewed series.
+  Focused RuboCop, Nixfmt, and whitespace checks passed.
+- No implementation, interface, or policy changed during the rebase. Existing
+  mandatory review remains applicable; no review lane needs a duplicate run.
+  Exact rebased-head CI validated the dependency updates before merging.
+- Regenerated the configuration's two input-only commits from current master
+  with `confctl`. Moving the same retained branch onto master with an empty
+  rebase removed the obsolete generated commits before recreating them. Their
+  old heads and messages were preserved in the recorded history and remote
+  until the replacement series was verified and pushed with an explicit lease.
+- On the rebased vpsAdminOS head, `bundle exec overcommit --run` passed the
+  complete Nixfmt and RuboCop hook checks. The repository's CI RSpec script ran
+  locally under the updated Nix shell: all 13 suites passed, including 1,017
+  osctld examples and 212 test-runner examples. Development dependencies were
+  fetched/built normally; no local kernel build occurred.
+- Pushed the rebased vpsAdminOS branch over SSH with an explicit lease on
+  `5e31378ae`. Exact-head runs RuboCop `34141301429`, RSpec `34141301423`,
+  and CI `34141301459` all passed. All older branch runs were
+  already complete, so there were no superseded runs to cancel.
+- Regenerated production (`433e7fab`) and staging (`e26f0a33`) pins using
+  `confctl inputs channel set --commit ... vpsadminos 2166e5934...` and kept
+  both generated messages unchanged. Hooks, whitespace checks, and
+  `nix flake check --no-build --no-update-lock-file` passed.
+- Compared every lock node with current master: only the two requested input
+  nodes changed. Both locked source identities match independent Nix metadata,
+  including NAR hash `sha256-dY3gJ1VwqLyvU10IYLah5fsGNTOepwXbMUyAE9SiuM8=`.
+  Upstream `vpsadminosOsStaging` and all other inputs were preserved.
+- Pushed configuration over SSH with an explicit lease on `5250ec54`.
+  Configuration has no push-triggered workflows. Created fresh target
+  worktrees on the existing local default branches, preserving both retained
+  feature branch names and avoiding any replacement branch.
+- Checked the finalization guard directly with `workspace-portal thread
+  require-idle` for this exact thread/cwd/socket. It rejects the current active
+  turn as `inProgress`. After all merges and CI finish, final archival and
+  session closure must run through the normal helper once this closing reply
+  has ended; do not bypass or weaken the idle guard.
+- Prepared an independent finishing script to wait for this exact idle
+  identity, verify prepared-file hashes, run normal finalization, commit only
+  the archive and its related lesson, then stop the session. Syntax and
+  read-only user-service preflight passed, including GitHub SSH access and
+  the installed session helper. A disposable git check confirmed the archive
+  commit preserves unrelated staged edits. Required all integration CI to
+  finish successfully before launching the finishing service.
+- Feature CI `34141301459` passed on the exact rebased head. Its full suite
+  ran 266 scripts across 76 tests in 3244.25 seconds; devices-v1 passed in
+  287.93 seconds and devices-v2 in 153.18 seconds. The only retry was the
+  intentional driver `script-attempts` scenario. The openSUSE device-unit
+  failure is explicitly marked `expectFailure` in the existing suite. No
+  unexplained retry or workflow rerun was used as validation.
+- Fetched both origins immediately before integration; defaults had not
+  advanced. In fresh target worktrees on actual `staging`/`master` branches,
+  used `git merge --ff-only` to integrate the retained features. Rechecked
+  Ruby syntax and Nix parsing/formatting in the vpsAdminOS target worktree and
+  flake evaluation in the configuration target worktree, then pushed each
+  default over SSH in provider-before-configuration order.
+- Remote vpsAdminOS `staging` now matches `2166e5934`; remote configuration
+  `master` matches `e26f0a33`. No merge commits or replacement feature branches
+  were created. Both pins in the merged configuration select `2166e5934`.
+- The default push started vpsAdminOS CI `34145897494`, RSpec `34145897550`,
+  and RuboCop `34145897553`, all on the same already validated SHA. All three
+  completed successfully before finalization. Configuration has no workflow
+  triggered by the push; its pre-existing scheduled runs belong to old heads.
+- Removed both clean temporary target worktrees with non-force
+  `git worktree remove`. Removed only verified untracked/ignored build and
+  development-shell artifacts from the retained feature worktrees. Both now
+  have clean ordinary and ignored status; no local build/test process remains.
+- Inspected the existing configuration scheduled-run failure `34106919917`
+  on pre-integration head `4d570e30`: its 39 unit examples, 34-file RuboCop
+  check, and dependency audit passed, then the automated gem-update commit
+  failed with an Overcommit configuration-signature mismatch after updating
+  the bundle. This predates the merge, and this initiative changes neither
+  that workflow nor its bundle. No rerun of that unrelated scheduled job was
+  used as validation. Current-head configuration evaluation and hooks passed.
+- Default-branch RuboCop `34145897553` and RSpec `34145897550` passed. CI
+  `34145897494` passed its OS build/cache, both livepatch jobs, and the full VM
+  suite. The full suite ran 266 scripts across 76 tests in 2488.21 seconds;
+  devices-v1 passed in 94.85 seconds and devices-v2 in 168.8 seconds. Inspected
+  its logs: only the same intentional driver retry and declared openSUSE
+  expected failure occurred. No workflow rerun was needed.
+- Found three idle tmux shells still positioned in the initiative worktree
+  group. Verified their exact session slug, pane PID, shell command, and lack
+  of child processes, then closed only those three panes. The managed Codex
+  pane remains available until normal finalization quiesces it after this
+  turn becomes idle.
+- Final remote reads confirmed both feature/default pairs still match their
+  recorded integrated heads. The shared workspace remains on linear `master`;
+  unrelated working-tree changes and the shared index are preserved.
+
+## Final archival sequence
+
+The independent user service
+`vpsfree-finalize-2026-09-05-cgroup-v1-shared-device-fix.service` waits for the
+exact Codex thread/cwd/socket to become idle, verifies hashes of the prepared
+tracking files, and uses `dev-session finalize <slug> --as-is`. It commits only
+the curated archive move and the related idle-finalization lesson, then invokes
+`dev-session stop <slug> --as-is`. Its user journal records the final archive
+commit and session-closure result. The service removes its transient script
+files after success; raw CI logs are excluded from the archive.
+
+The workspace declares no hook framework and has no active pre-commit hook.
+The archive commit uses an explicit message file and `git commit --only` to
+preserve unrelated staged edits. The earlier committed active lifecycle is
+retained in history; no separate terminal tracking commit is needed.
 
 ## V2 test implementation and review
 
@@ -127,7 +251,45 @@ for this bounded follow-up instead of importing unrelated updates.
   in normal feature worktrees. The approved follow-up did not repeat that
   known failed build or perform any deployment/activation.
 
-## Session, tracking, and cleanup
+## Staging pin correction
+
+- The user clarified that `vpsadminosStaging` should also select the tested
+  fix. The original plan had selected only production; that scope was carried
+  into the first v2 follow-up. Updated the plan to include both named inputs.
+- Confirmed `staging.vpsadminos` maps to `vpsadminosStaging`, originally pinned
+  to `ec7dc42da33cd963fe63d8dde281b0e88fe790c2`. The separate `os-staging`
+  channel maps to `vpsadminosOsStaging` and is outside this correction.
+- Fetched upstream and verified the configuration feature branch still matched
+  remote head `bc607111` before editing. Retained the authoritative base.
+- Ran `confctl inputs channel set --commit staging vpsadminos
+  5e31378ae42f253b4878940e3462f6e40b214fb4` in `nix develop`, producing
+  `5250ec54085aa104dc618d26dbb3af053accc1aa`. Preserved its generated message
+  and two-commit changelog. Active pre-commit and commit-message hooks passed,
+  with only the permitted generated-message text-width warning.
+- Compared every lock node against `bc607111`: only `vpsadminosStaging`
+  changed. Its full locked source identity equals `vpsadminosProduction`,
+  including the tested `5e31378ae` revision and previously verified NAR hash.
+  `vpsadminosOsStaging` remains at `ec7dc42d`; all other nodes are unchanged.
+- `git diff HEAD^ HEAD --check` and
+  `nix flake check --no-build --no-update-lock-file` passed. No node build or
+  activation was attempted; the established deployment-key limitation remains.
+- The only addition since completed source review is this generated dependency
+  pin selecting the same reviewed and tested provider revision. Applied the
+  mandatory-review dependency-only skip criteria; no duplicate review or VM
+  run was needed.
+- Fetched again, verified the expected remote head, and pushed the new commit
+  over SSH without rewriting history. Local and remote heads match `5250ec54`.
+  GitHub Actions returned no branch runs, so none needed monitoring or
+  supersession cancellation.
+- Removed only the verified untracked `.bin/`, `.bundle/`, and `.gems/`
+  artifacts after commands finished. Both retained project worktrees are clean.
+- The earlier consolidated tracking checkpoint is workspace commit `723e156`.
+  This correction's plan/state updates were left in the working tree for
+  consolidation under the policy against committing every tracking update.
+  The existing portal manifest remained current and its stable URL was re-read
+  with `dev-session url`.
+
+## Session resume and pre-merge cleanup history
 
 - Resumed the explicitly requested initiative. Reopened active tracking was
   already committed as workspace `02a456c` before follow-up project changes.
@@ -145,8 +307,9 @@ for this bounded follow-up instead of importing unrelated updates.
   vpsadminos `.gems/`, `Gemfile.lock`, and `result/`, and configuration `.bin/`,
   `.bundle/`, and `.gems/` using verified untracked exact paths. No process
   remains that can write to either worktree.
-- Preserved unrelated shared workspace changes. The initiative stays active
-  with both worktrees and branches retained for the user's next instruction.
+- Preserved unrelated shared workspace changes. At the pre-merge handoff, the
+  initiative stayed active with both worktrees and branches retained for the
+  user's next instruction; the later merge-and-cleanup request superseded it.
 - Durable lessons:
   `notes/vpsadminos/2026-09-07-cgroup-v2-parent-device-denial.md`,
   `notes/cross-project/2026-09-07-completed-legacy-session-journal.md`,
