@@ -5,8 +5,8 @@
 Fix vpsAdminOS cgroup v1 device handling so removing or narrowing a promoted
 device on one container never revokes that device from sibling containers that
 share the same osctl user. Preserve group-level restriction semantics, keep
-cgroup v2 unchanged, and pin the tested staging-based fix to the production
-vpsAdminOS input without merging or deploying it.
+cgroup v2 runtime behavior unchanged, and pin the tested staging-based fix to
+the production vpsAdminOS input without merging or deploying it.
 
 ## Affected repositories
 
@@ -75,3 +75,32 @@ general osctld device API.
   `confctl inputs channel set --commit production vpsadminos <revision>`, keep
   its generated commit unchanged, and build all production-channel vpsAdminOS
   nodes without activating them.
+
+## Approved cgroup v2 follow-up (2026-09-07)
+
+- Keep this active initiative and both retained, unmerged feature branches.
+  Add a focused vpsAdminOS test commit after the original v1 fix.
+- Extend `cgroups/devices-v2` with ordered RSpec examples for two containers
+  under one osctl user: local device deletion, local chmod from `rwm` to `r`,
+  and recursive deletion from `/default`.
+- Use promoted TUN device `char 10:200` and persistent test device nodes in
+  both containers. Verify read-only and write-only opens without transferring
+  data, including successful baseline opens and explicit permission-denial
+  messages. Check BPF attachments and health after every mutation.
+- Preserve sibling and parent BPF programs for local operations; recursive
+  removal must restore `/default` to its default program and deny effective
+  access in both containers. On v2 the parent BPF program enforces that denial
+  without replacing the container programs; do not require their names to
+  return to the original defaults (confirmed by the first VM run).
+- Run quick Nix/Ruby checks and active hooks, commit, complete mandatory review,
+  then run both v1 and v2 VM tests and monitor pushed-head GitHub Actions.
+- Update the production pin to the exact validated new head with `confctl` on
+  the retained configuration branch. Consolidate its unmerged input update
+  into one generated commit, preserving the generated message.
+- Verify the lockfile and run `nix flake check --no-build
+  --no-update-lock-file`. Retain the established full-node-build limitation
+  from the missing deployment-only initrd key; do not repeat the known failure.
+- No runtime, API, CLI, protocol, schema, state-format, or Nix module contract
+  changes are planned. No coordinated node update is required. Mixed-version
+  operation and rollback have the original fix's compatibility properties.
+- Push both retained branches; do not merge, deploy, activate, or archive.

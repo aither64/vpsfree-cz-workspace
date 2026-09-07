@@ -4,44 +4,156 @@ lifecycle: active
 
 # Current state
 
+## Outcome
+
+The approved v2 shared-user regression follow-up is complete. Both local VM
+suites, all required review lanes, and pushed-head CI passed. Both retained
+feature branches are pushed; the production input selects the exact tested
+vpsadminos revision. Nothing was merged, deployed, activated, or dry-activated.
+
+Keep this initiative active for all remaining pre-merge follow-up. Do not
+archive it or create replacement branches. There are no outstanding checks,
+review findings, or cleanup tasks for the requested follow-up; the next change
+or integration action requires the user's next instruction.
+
 ## Repositories
 
+Both repositories retain branch `2026-09-05-cgroup-v1-shared-device-fix`.
+
 - `vpsadminos`:
-  - branch: `2026-09-05-cgroup-v1-shared-device-fix`
-  - worktree:
-    `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsadminos`
+  - worktree: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsadminos`
   - base: `ec7dc42da33cd963fe63d8dde281b0e88fe790c2`
-    (`origin/staging` at creation)
+  - local and remote head: `5e31378ae42f253b4878940e3462f6e40b214fb4`
+  - original runtime fix remains unchanged at `9fb79eb68`; the only new commit
+    adds the cgroups-v2 tests.
 - `vpsfree-cz-configuration`:
-  - branch: `2026-09-05-cgroup-v1-shared-device-fix`
-  - worktree:
-    `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsfree-cz-configuration`
+  - worktree: `worktrees/2026-09-05-cgroup-v1-shared-device-fix/vpsfree-cz-configuration`
   - base: `248e2fc614bb3bc29c0a9c9f910330ade0b3cb80`
-    (`origin/master` at creation and before push)
+  - local and remote head: `bc6071114994e4b481d3dc577adfeb6d98dafd16`
+  - one consolidated generated production-input commit above the retained base.
 
-## Status
+Fetched upstream before pushes. Upstream staging advanced to `32767c7de` with
+unrelated dependency updates; configuration master advanced to `4d570e30` with
+workspace-host and unrelated input changes. Retained the authoritative bases
+for this bounded follow-up instead of importing unrelated updates.
 
-- Initiative started for implementation of the approved plan.
-- Root cause and reproduction are archived under
-  `archive/2026-09-04-cgroup-v1-soft-delete-devices/`.
-- User decisions:
-  - prevent future corruption without automatic reconciliation;
-  - base the fix on latest vpsAdminOS staging;
-  - pin that exact revision to the production configuration channel;
-  - push feature branches, but do not merge or deploy.
-- The cgroup-v1 container configurator now applies device denials only to the
-  container-private cgroup subtree. Device allowances still propagate through
-  the shared user cgroup so descendants can receive them.
-- Unit coverage checks the shared/private write split. The cgroup-v1 VM test
-  now covers two containers under one user, per-container removal and mode
-  restriction, sibling health, and explicit recursive group removal.
-- The production configuration channel is pinned from vpsAdminOS
-  `3bf14ec679229ab6c19387593e3a34db2da20220` to the exact reviewed and tested
-  feature revision `9fb79eb68ba4f7b9d9a9c6e2e985556a10aa725e`.
-- Both feature branches are pushed. Nothing was merged, deployed, activated,
-  or dry-activated.
+## V2 test implementation and review
 
-## Commands run
+- Added three ordered RSpec examples with two running Alpine containers sharing
+  one osctl user: local TUN device deletion, chmod from `rwm` to `r`, and
+  recursive removal from `/default`.
+- Persistent `/root/test-tun` nodes and read-only/write-only opens verify real
+  device access independently of configuration or TUN I/O. Denials require
+  `Operation not permitted`. Assertions also cover BPF attachment shape,
+  sibling/parent program stability for local changes, and health checks.
+- Initial test commit `19e7601e` passed formatting/parsing, embedded Ruby syntax,
+  whitespace checks, and active Nixfmt/commit-message hooks. Overcommit was
+  installed and its reviewed configuration signature refreshed; RuboCop stays
+  enabled but no Ruby source file was changed.
+- Mandatory review classified the overall initiative high risk because of
+  device isolation and production revision selection. Four fresh standalone
+  `gpt-5.6-sol` reviewers at `xhigh` covered general, architecture/repetition,
+  scope/proportionality, and risk/compatibility. All reported no findings.
+- The first v2 VM run failed after 471.28 seconds. Both sibling-isolation cases
+  passed, as did all four denied opens after recursive removal. The failing
+  assertion expected a container program to reset from read-only TUN hash
+  `858012c51ba` to default `946a3e34004`.
+- Source and VM logs established that v2 group traversal visits child groups,
+  unlike v1 which also visits containers. The v2 parent filter enforces the
+  group denial without rewriting container-local programs. Corrected the test
+  to retain effective denials, container attachment checks, restored parent
+  policy, and final health checks; no runtime behavior changed.
+- Amended the test commit to `5e31378ae`. Quick checks and active hooks passed
+  again. Fresh general and risk reviewers at `xhigh` accepted the correction
+  without findings. Architecture/scope were not rerun because no abstraction,
+  interface, runtime behavior, or scope changed.
+- Review packet and reconciliation: `review-v2-packet.md` and
+  `review-v2-results.md`, both linked in the portal.
+- Accepted limit: this covers immediate policy on running containers. It does
+  not pin descendant program identities after parent removal or cover later
+  parent re-expansion, restart, or reconfiguration.
+
+## Local and GitHub verification
+
+- `./test-runner.sh ls 'cgroups/devices-*'`: discovered both suites.
+- `./test-runner.sh test 'cgroups/devices-v*'` on amended head `5e31378ae`:
+  cgroups/devices-v2 passed in 439.27 seconds, cgroups/devices-v1 passed in
+  442.22 seconds; total 881.49 seconds. All six shared-user examples passed,
+  including the corrected final v2 parent/attachment/health assertions.
+- Both local VM configurations used cached Linux 6.12.95; no local kernel
+  compilation occurred. Both VMs shut down normally.
+- Pushed vpsadminos over SSH from `9fb79eb68` to `5e31378ae`.
+- [CI 34131696175](https://github.com/vpsfreecz/vpsadminos/actions/runs/34131696175)
+  passed on the exact amended head: OS build/cache, Intel livepatch lifecycle,
+  AMD livepatch lifecycle, and full test suite.
+- Full CI suite: 266 scripts across 76 tests, all successful, in 2696.21
+  seconds. CI devices-v2 passed in 148.10 seconds and devices-v1 in 94.04
+  seconds. This test-only push did not trigger separate RuboCop/RSpec jobs.
+- Inspected the full-suite log: its only script retry was the intentional
+  `driver/rspec#script-attempts` test, which sets two attempts and deliberately
+  fails the first using a marker. No workflow rerun or unexplained retry was
+  used as validation. No superseded branch runs existed to cancel.
+
+## Production input refresh
+
+- Verified the retained configuration branch and remote were both `72af910e5`
+  before changing the input.
+- Used `confctl inputs channel set production vpsadminos 3bf14ec6...` without
+  committing to restore the original input baseline locally, then
+  `confctl inputs channel set --commit production vpsadminos 5e31378ae...` to
+  generate the complete original-to-final changelog. No manual lockfile edit.
+- Generated intermediate commit `45b05dcf`, then consolidated it with the
+  original unmerged input update via an interactive `fixup -C` rebase onto the
+  retained base. Final commit is `bc607111`. Verified its tree and generated
+  message are byte-for-byte unchanged by consolidation, and exactly one
+  input-update commit remains above the base.
+- Applicable pre-commit and commit-message hooks passed. The generated message
+  retained its text-width warning under the documented confctl exception.
+- Verified only the production vpsadminos input node differs from the original
+  configuration base. Every source identity field matches independent
+  `nix flake metadata`: revision `5e31378ae42f253b4878940e3462f6e40b214fb4`,
+  NAR hash `sha256-YU4USvAAIo1bes/kiMzqxtUH8lF0Gs0thiqpg2u1CCo=`.
+  The independent metadata's `__final: true` bookkeeping marker is absent from
+  lockfiles; verified and excluded it when comparing source fields.
+- `nix flake check --no-build --no-update-lock-file`: all checks passed.
+- The generated pin is a mechanical selection of already reviewed provider
+  code and meets the review workflow's dependency-only skip criteria; no
+  duplicate source review was needed.
+- Fetched again and pushed over SSH with an explicit lease on old remote head
+  `72af910e51cc729e65faa4a8507b9e3e0649be8b`. Remote now matches `bc607111`.
+  This configuration branch has no triggered workflows or superseded runs.
+- Full production node builds retain the established external limitation:
+  deployment-only `/secrets/nodes/initrd/ssh_host_ed25519_key` is unavailable
+  in normal feature worktrees. The approved follow-up did not repeat that
+  known failed build or perform any deployment/activation.
+
+## Session, tracking, and cleanup
+
+- Resumed the explicitly requested initiative. Reopened active tracking was
+  already committed as workspace `02a456c` before follow-up project changes.
+- `dev-session start <slug> --as-is --no-attach --no-codex` initially rejected
+  an old completed creation journal lacking newer provenance fields. Preserved
+  it under a dated legacy filename while holding the per-slug lock, then the
+  normal helper resumed the existing ready session. Verified current-session
+  identity with both explicit slug and workspace environment variables.
+- Stable portal:
+  https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-05-cgroup-v1-shared-device-fix/
+  Verified TLS with the documented public CA; the protected listener returned
+  its expected HTTP 401 challenge without using credentials.
+- Both project worktrees have attached retained branches, clean ordinary and
+  ignored status, and heads matching their remote feature branches. Removed
+  vpsadminos `.gems/`, `Gemfile.lock`, and `result/`, and configuration `.bin/`,
+  `.bundle/`, and `.gems/` using verified untracked exact paths. No process
+  remains that can write to either worktree.
+- Preserved unrelated shared workspace changes. The initiative stays active
+  with both worktrees and branches retained for the user's next instruction.
+- Durable lessons:
+  `notes/vpsadminos/2026-09-07-cgroup-v2-parent-device-denial.md`,
+  `notes/cross-project/2026-09-07-completed-legacy-session-journal.md`,
+  `notes/cross-project/2026-09-07-portal-curl-private-ca.md`, and
+  `notes/cross-project/2026-09-07-nix-final-source-metadata.md`.
+
+## Original v1 implementation and validation history
 
 - `bin/dev-session current`: no owned prior session.
 - `bin/dev-session start cgroup-v1-shared-device-fix --no-attach --no-codex`:
@@ -129,28 +241,3 @@ lifecycle: active
   update (`09a29c7bb`). The feature and production pin intentionally retain the
   exact fully reviewed and green-CI SHA instead of invalidating that evidence
   to chase a moving scheduled-update target.
-
-## Results
-
-- The cgroup-v1 fix, regression coverage, full local and GitHub validation,
-  exact production-channel pin, and both requested feature-branch pushes are
-  complete.
-- Complete production node closures cannot be built in this normal feature
-  worktree because the deployment-only initrd host key is deliberately absent.
-  The build reached the expected pinned system derivation before that external
-  boundary and did not compile a kernel.
-
-## Open questions
-
-- None. The implementation plan is decision complete.
-
-## Cleanup
-
-- Removed all test-generated vpsAdminOS gem caches, lock files, native build
-  outputs, and result links using verified exact paths.
-- Removed configuration development-shell `.bin/`, `.bundle/`, and `.gems/`
-  trees plus the failed-build `.confctl/` log using verified exact paths.
-- Both worktrees have attached feature branches, clean ordinary and ignored
-  status, and local heads exactly matching their remote feature branches.
-- Feature branches are intentionally retained locally and remotely. No
-  process remains that can write to either worktree.
