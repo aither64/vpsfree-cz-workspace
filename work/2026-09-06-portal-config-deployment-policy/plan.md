@@ -11,6 +11,11 @@ completion mean that every registered feature head is provably merged.
 Also provide a safe `dev-session reopen` workflow and use it to restore
 `2026-09-05-cgroup-v1-shared-device-fix` with its original retained branches.
 
+Extend the browser Codex client with plan-mode and queued-message controls, and
+reconcile the six named unfinished tmux sessions into the shared browser/CLI
+runtime without disturbing their tracking, worktrees, retained branches, or the
+password-reset development cluster.
+
 ## Affected repositories
 
 - Coordination workspace (`aither64/vpsfree-cz-workspace`): hybrid user runtime,
@@ -44,9 +49,9 @@ requests integration.
 - Make `vpsfree-cz.workspace.aitherdev.int.vpsfree.cz` canonical. Keep
   `vpsfree-cz-workspace.aitherdev.int.vpsfree.cz` as a redirecting alias and use
   a leaf certificate with both the wildcard workspace SAN and legacy hostname.
-- Preserve the existing root-owned unencrypted CA and Basic Auth credentials.
-  Remove the workspace flake input, CLI wrappers, portal package, and application
-  services from the system configuration.
+- Keep the root-owned unencrypted CA and create a root-owned Basic Auth
+  password readable by `aither`. Remove the workspace flake input, CLI wrappers,
+  portal package, and application services from the system configuration.
 - Keep the new-session default at `gpt-6-astra` with `xhigh` reasoning. Resume
   an already materialized partial creation without consulting or reapplying the
   current catalog; resolve settings only for genuinely new or replacement
@@ -62,29 +67,48 @@ requests integration.
 - Reconstruct legacy repository registrations from retained branches when
   worktrees are re-added. Use an explicit base when supplied, otherwise require
   one unambiguous merge base with the configured default branch.
+- Expose the App Server's collaboration mode and queue APIs in the portal. Keep
+  model and reasoning settings unchanged when switching between Default and
+  Plan mode. Immediate messages steer the active turn, while an explicit queue
+  action appends FIFO work for later execution.
+- Allow `dev-session start <slug> --as-is` to adopt committed active tracking
+  that predates a portal manifest. Preserve `plan.md` and `state.md` byte for
+  byte, create a fresh shared thread, register canonical existing worktrees,
+  and make interrupted retries journaled and idempotent.
+- Reconcile only the six user-named unfinished sessions. Stop their old tmux
+  clients, create fresh shared threads from the existing tracking, and leave
+  the unrelated `34` session untouched. Keep the password-reset dev cluster
+  running throughout the cutover.
 
 ## Compatibility and deployment
 
-The one-time service migration is explicitly drained before the NixOS switch:
-the legacy portal stops accepting mutations, terminal clients are quiesced, and
-every shared thread is proved idle. The substrate activation requires that
-marker while preserving the old services through its stop phase. The first user
-switch recreates terminal tmux clients without changing stored conversations or
-project worktrees and retains the marker until every authority record is ready.
-Historical socket paths in manifests become diagnostic; live registry and
-authority data select the current endpoint.
+The one-time architecture change is a clean restart, not a compatibility
+migration. Deploying the NixOS substrate stops the former system-owned portal,
+Codex, and tmux services. The user-profile switch starts a new runtime; old
+Codex processes, conversations, and socket metadata do not have to survive.
+Initiative tracking, canonical repositories, worktrees, and retained feature
+branches remain on disk. The cgroup initiative is reopened under its original
+slug and branches, then receives a fresh Codex session if needed.
 
-The existing CA and password remain valid. The server leaf is renewed when its
-SAN set changes. Unknown workspace hosts remain inaccessible, nginx continues
-to strip Basic Auth before proxying, the shared router socket is limited to
-nginx and `aither`, and per-workspace application sockets remain user-private.
+The unfinished-session reconciliation follows the same clean-restart rule for
+conversation state. It does not import old rollouts or infer arbitrary tmux
+sessions. Durable tracking and repository state remain authoritative. The six
+new conversations start with that existing context, and their old rollout
+files remain unbound. The independently running password-reset cluster is not
+stopped or recreated.
+
+The existing CA remains valid and the Basic Auth password may change at the
+architecture cutover. The server leaf is renewed when its SAN set changes.
+Unknown workspace hosts remain inaccessible, nginx continues to strip Basic
+Auth before proxying, the shared router socket is limited to nginx and `aither`,
+and per-workspace application sockets remain user-private.
 
 The workspace user package is deployed from its unmerged feature worktree. The
-configuration feature branch is deployed directly to aitherdev. The user owns
-the internal wildcard DNS and aitherdev deployment; portal iteration afterward
-requires only `workspace-host switch`, not a NixOS rebuild. Rollback selects the
-previous user profile generation and retains the last compatible Codex store
-path.
+configuration feature branch is deployed directly to aitherdev. The agent can
+deploy aitherdev from that feature worktree; the user owns deployment of the
+internal wildcard DNS. Portal iteration afterward requires only
+`workspace-host switch`, not a NixOS rebuild. Rollback selects the previous user
+profile generation and retains the last compatible Codex store path.
 
 An initiative stays active until all registered branches are merged. Pushing,
 testing, deploying, or removing a worktree does not complete it. Pre-merge
@@ -96,17 +120,31 @@ squash-only or cherry-picked integration does not qualify.
 - Cover workspace registry validation, Host routing, PWD/flag selection,
   profile switching/rollback, user service arguments, and Codex reconciliation.
 - Run Go, Ruby, JavaScript, protocol-contract, and Nix package checks, including
-  a mixed-version creation recovery regression and `xhigh` resolver coverage.
+  creation recovery and GPT-6 Astra `xhigh` resolver coverage.
 - Test finalization with unmerged, merged, divergent, missing, and unprovable
   feature refs; abandoned and coordination-only initiatives; and aggregate
   diagnostics.
 - Test reopening current and legacy archives, metadata cleanup, abandoned
   override, dirty/duplicate/live/symlink states, interrupted recovery, and
   retained-branch worktree reuse.
-- Evaluate the aitherdev NixOS configuration and verify wildcard/legacy TLS,
+- Test collaboration-mode discovery and updates, preservation of model and
+  reasoning settings, queue CRUD/start behavior, notification refresh, and the
+  idle/immediate versus active/steer message paths.
+- Test adoption of substantive active tracking without a manifest, exact-file
+  preservation, interrupted retry recovery, canonical existing-worktree
+  registration, and rejection of uncommitted tracking, unsafe worktree
+  provenance, or ambiguous bases. Active project worktrees may remain dirty;
+  unsafe, detached, and noncanonical worktrees are preserved but omitted with
+  diagnostics.
+- Evaluate and deploy the aitherdev NixOS configuration and verify
+  wildcard/legacy TLS,
   VPN-only nginx, credential permissions, lingering, and absence of system-owned
   portal services.
 - Run mandatory change review at `xhigh` after quick checks, then full package
-  checks. Deploy the configuration feature branch and wildcard DNS, validate
-  both URLs and CLI/browser interoperability, then recover the legacy cgroup
-  initiative and verify its two exact branch heads and original base commits.
+  checks. Deploy the configuration feature branch, leave wildcard DNS deployment
+  to the user, validate HTTPS and CLI/browser interoperability, then recover the
+  legacy cgroup initiative and verify its two exact branch heads and original
+  base commits.
+- Reconcile the six explicitly named unfinished sessions after deployment and
+  verify browser and CLI attachment, portal repository discovery, and continued
+  visualization of the running password-reset cluster.
