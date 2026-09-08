@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: active
 ---
 
 # 2026-09-07-vpsfstatus-index-stale-2
