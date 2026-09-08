@@ -1,8 +1,9 @@
 # Repeated status index render alerts
 
 Follow-up on 2026-09-08: the user requires 60-second scrapes and prefers enough
-margin to signal a serious issue. A configuration change is prepared at commit
-`08dae58b16abdde30cff1572478b29343ed32fc4`: ten-minute render-age threshold,
+margin to signal a serious issue. The configuration change is merged into
+`master` at commit
+[`08dae58b`](https://github.com/vpsfreecz/vpsfree-cz-configuration/commit/08dae58b16abdde30cff1572478b29343ed32fc4): ten-minute render-age threshold,
 two-minute confirmation, and one-minute alert evaluation. It retains the
 five-minute missing-metric window and four-minute body cache. The graph will
 still be a sawtooth, but its normal peaks will be well below the threshold.
@@ -118,7 +119,7 @@ that timestamp is already close to 300 seconds old.
   alert or scrape data has been read. Zero failures in the current process does
   not establish that every past notification was false.
 
-## Prepared improvement
+## Merged improvement
 
 The updated policy keeps scrapes every 60 seconds and body caching unchanged.
 It requires an observed render age above 600 seconds, or five minutes without
@@ -158,7 +159,7 @@ while its annotation's query-label map still contains only `job`. A large age
 with stale attempts or new failures needs a renderer or service diagnosis.
 
 The implementation passed change review, all seven promtool scenarios and full
-configuration builds for both monitor containers. It is committed locally;
+configuration builds for both monitor containers. It is merged and pushed;
 no deployment has been performed.
 It requires no data migration or coordinated status-service update. Both
 Prometheus instances can update independently and roll back through

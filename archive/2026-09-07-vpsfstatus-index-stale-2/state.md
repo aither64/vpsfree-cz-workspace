@@ -1,10 +1,58 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-07-vpsfstatus-index-stale-2
 
-## Current follow-up: 2026-09-08
+## Integration and cleanup: 2026-09-08
+
+- User explicitly requested merging into the default branch and cleaning up.
+  Deployment remains outside this request; this session owns no deployment step.
+- Reconfirmed the restored thread and used its exact slug for helper commands.
+  `dev-session current` agrees when the verified session environment is set.
+- Fetched configuration origin and checked its advertised default: `master`
+  remains at `e26f0a33`, with the reviewed feature one commit ahead and zero
+  behind. No rebase or implementation change is needed.
+- Temporary integration worktree:
+  `worktrees/2026-09-07-vpsfstatus-index-stale-2/vpsfree-cz-configuration-merge`,
+  attached to the otherwise unchecked-out local `master` branch. Installed and
+  signed Overcommit in the Nix shell, then merged with `git merge --ff-only`.
+- The focused Nix promtool check passed from the integration worktree. The
+  reviewed commit is unchanged, so prior seven-scenario results and both full
+  monitor builds still apply; no new review or full rebuild was necessary.
+- Pushed `HEAD:refs/heads/master` over SSH. `git ls-remote` confirms remote
+  `master` is `08dae58b16abdde30cff1572478b29343ed32fc4`. GitHub Actions lists
+  no runs for this commit, consistent with the absence of push/PR workflows.
+  Historical scheduled updater failures precede this change and were not rerun.
+- Removed the clean temporary integration worktree with non-force
+  `git worktree remove`. The local `master` and feature branches are retained.
+  Removed generated untracked dev-shell files from the feature worktree; its
+  ordinary Git status is clean. The finalizer will remove that worktree and
+  its ignored development/build caches.
+- Merge and cleanup were explicitly authorized in this conversation. All
+  implementation, review, verification, merge and push work is complete.
+  Production deployment was not requested and is not pending within this
+  initiative. Both monitors still require a later operational deployment to
+  use the new policy.
+- Final archival cleanup is prepared and waits for the current conversation
+  turn to become idle, as required by the installed session helper. It will
+  verify unchanged tracking, use normal finalization, commit the exact archive
+  move and final records, then stop the session. No branch refs will be deleted.
+- The wrapper's `dev-session finalize --help` unexpectedly treats help output
+  as a URL and fails; implementation/docs inspection established the supported
+  CLI. Recorded this lesson in the task-owned cross-project note.
+- The first finalization check required the feature ref on origin even though
+  its commit was already on remote `master`. Published the retained feature
+  branch at the identical commit, as required by the helper's merge proof.
+  Both local and remote feature refs are retained. No branch deletion is part
+  of cleanup. Recorded the remote-ref prerequisite in a separate durable note.
+- After publishing the feature branch, the normal finalization check passed
+  its merge prerequisites and refused only this thread's `inProgress` turn.
+  The bounded cleanup process waits for the normal idle check; it aborts if
+  prepared records change or an unrelated error occurs. Its log is
+  `tmp/vpsfstatus-index-stale-2-merge-cleanup.log`.
+
+## Implementation record before integration: 2026-09-08
 
 - User requires keeping the 60-second scrape interval and asks for improvement
   within that constraint. Prepare the alert fix described in the updated plan.

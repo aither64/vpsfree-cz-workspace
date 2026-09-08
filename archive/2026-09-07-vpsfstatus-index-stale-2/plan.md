@@ -1,5 +1,13 @@
 # 2026-09-07-vpsfstatus-index-stale-2
 
+## Completion: 2026-09-08
+
+The user approved merging into the default branch and cleanup. The reviewed
+commit `08dae58b16abdde30cff1572478b29343ed32fc4` was fast-forwarded and pushed
+to configuration `master`. Preserve branch refs, archive the curated record,
+and close this initiative. Production deployment remains a later operational
+action outside the requested scope.
+
 ## Follow-up accepted on 2026-09-08
 
 Keep Prometheus scrapes at 60 seconds. Prepare a configuration-only fix for the
