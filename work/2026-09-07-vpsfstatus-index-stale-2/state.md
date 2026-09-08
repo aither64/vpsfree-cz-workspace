@@ -4,6 +4,96 @@ lifecycle: active
 
 # 2026-09-07-vpsfstatus-index-stale-2
 
+## Current follow-up: 2026-09-08
+
+- User requires keeping the 60-second scrape interval and asks for improvement
+  within that constraint. Prepare the alert fix described in the updated plan.
+- The portal restored this exact retained conversation under the original slug
+  in workspace commit `958688c`. Its manifest still identifies thread
+  `01a07c42-a006-77e2-b4cd-5424d3acdd07`. The resumed tool environment lacked
+  session variables, so `dev-session current` initially reported none.
+- `dev-session list` confirmed the restored managed session; `dev-session start
+  2026-09-07-vpsfstatus-index-stale-2 --as-is --no-attach` resumed it. Restoring
+  the verified slug/workspace environment for helper commands makes `current`
+  report the matching slug. No other initiative was reused.
+- Scope: configuration-only rule adjustment, focused promtool regression tests,
+  mandatory review and scoped monitoring builds. No production deployment.
+- Current decision after the user's larger-margin request: separate 60-second
+  rule group, 600-second render-age threshold, unchanged five-minute
+  missing-metric window, and `for = "2m"` for either condition. The former
+  15-second scrape recommendation in the investigation is superseded.
+- Configuration branch: `2026-09-07-vpsfstatus-index-stale-2`; worktree:
+  `worktrees/2026-09-07-vpsfstatus-index-stale-2/vpsfree-cz-configuration`;
+  fetched base: `e26f0a3360e1a20e76c3c0ef4193448584a8c1bb`.
+- `dev-session worktree add` created the checkout but its post-checkout
+  Overcommit hook failed in the ambient environment because gems were missing.
+  Entered `nix develop`, installed and signed hooks with `overcommit --install`
+  and `overcommit --sign`. Repeating the helper registered the existing
+  worktree. This is the known Nix-shell/worktree-hook setup issue.
+- Added production-rule tests for scrape/evaluation phase mismatch, one failed
+  scrape, sustained stalls, sustained absence, confirmation and recovery.
+- Committed head: `0297b0c3bfcec0a4cc0e32fa294c996bfe978afa`.
+- Quick verification: `nix build
+  .#checks.x86_64-linux.vpsf-status-prometheus-rules --no-link -L` passed all six
+  scenarios; `overcommit --run` passed Nixfmt/RuboCop; commit hooks passed.
+  The first fixture run exposed incorrect expectations for `$labels` in
+  annotations; corrected those expected strings and recorded the lesson in
+  `notes/vpsfree-cz-configuration/2026-09-08-prometheus-template-labels.md`.
+- Applied the user-facing writing skill to the final alert description before
+  committing. Both age/absence branches and the confirmation period are
+  described explicitly.
+- Mandatory review packet: `review-packet.md`. Classification high because of
+  critical alert timing and rollout implications. All four lanes use
+  `gpt-5.6-sol` with `xhigh` effort; scoped builds wait for their findings.
+- General review completed for `0297b0c3` with no findings. Residual risks are
+  unavailable historical alert evidence, alert-state reset during the rule-group
+  move, and noise from a monitor still running the old policy during rollout.
+- Read the generated JSON: the new group contains only the render alert at
+  60-second evaluation, with threshold 600 and confirmation 2m. The original
+  group retains its six existing alerts and 300-second interval. The scrape
+  module has no diff. `confctl ls 'cz.vpsfree/containers/prg/int.mon*'` selected
+  exactly mon1 and mon2 for the planned scoped builds.
+- Architecture and scope lanes also completed with no findings. The risk lane
+  found an Important label-identity transition issue; see `review-results.md`.
+  Corrected it with static service labels and a transition regression case.
+  Missing-metric alerts now retain the same service identity as stale renders.
+- Amended head: `08dae58b16abdde30cff1572478b29343ed32fc4`. All seven promtool
+  scenarios and commit hooks pass; commit message now also satisfies the hook's
+  advisory 72-column width. New risk and architecture reviewers inspect the
+  bounded label remediation via `review-rerun-packet.md`, with the same required
+  model/effort. General and scope do not require reruns for this targeted fix.
+- Both affected-lane reruns completed with no findings for `08dae58b`.
+  Singleton target-label coupling and temporary grouping differences during a
+  mixed rollout are accepted and documented. No Blocking or Important finding
+  remains. Full reconciliation is in `review-results.md`.
+- Fetched configuration origin again after review: feature branch is one commit
+  ahead and zero behind `origin/master`. The repository has only a scheduled
+  and manually triggered daily-update workflow, with no push/PR check workflow.
+- Completed `nix develop -c confctl build --yes
+  'cz.vpsfree/containers/prg/int.mon*'` after review completion, scoped to both
+  Prometheus containers. Exit status 0; both systems and their full Prometheus
+  configurations/rules passed the build checks. Local generation:
+  `2026-09-08--09-48-32`. No deploy command was run.
+- Built system outputs:
+  - mon1: `/nix/store/rifgphs98ksfm3yms1wvkw4537dzr7bj-nixos-system-mon1-26.05.20260903.a5cc6f2`
+  - mon2: `/nix/store/igl5vi8582582d7ykf3zkih8bg3m4r5n-nixos-system-mon2-26.05.20260903.a5cc6f2`
+- Implementation and local verification are complete at `08dae58b`; the branch
+  is committed locally, not pushed or merged. No production change has occurred.
+  The next operator action is to integrate the prepared commit and deploy both
+  monitor containers when requested. The branch/worktree remain available.
+- Removed only this worktree's generated untracked `.bin/`, `.bundle/` and
+  `.rubocop_cache/` directories after tooling finished. Build generations and
+  logs remain in the ignored `.confctl/` directory for the next step.
+- Handoff uses the stable portal URL below. This is the consolidated September
+  8 tracking checkpoint; preserve other initiatives' shared-master changes.
+- Initiative remains active for handoff and any subsequent integration or
+  deployment. No automatic finalization is scheduled.
+
+## Historical investigation record: 2026-09-07
+
+The sections below preserve the original read-only investigation. The current
+follow-up above supersedes its proposed scrape interval and completion status.
+
 ## Repositories
 
 - Canonical bare repositories: `repos/vpsf-status.git` and

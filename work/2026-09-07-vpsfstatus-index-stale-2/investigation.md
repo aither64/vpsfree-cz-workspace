@@ -1,5 +1,13 @@
 # Repeated status index render alerts
 
+Follow-up on 2026-09-08: the user requires 60-second scrapes and prefers enough
+margin to signal a serious issue. A configuration change is prepared at commit
+`08dae58b16abdde30cff1572478b29343ed32fc4`: ten-minute render-age threshold,
+two-minute confirmation, and one-minute alert evaluation. It retains the
+five-minute missing-metric window and four-minute body cache. The graph will
+still be a sawtooth, but its normal peaks will be well below the threshold.
+Verification and deployment status are maintained in `state.md`.
+
 The sawtooth is expected for the age of a cached render. The alert threshold
 leaves too little room for the render schedule and Prometheus scrape delay.
 This provides a concrete mechanism for brief false stale alerts during healthy
@@ -47,7 +55,7 @@ change chose a 240-second keepalive against the existing 300-second alert.
 
 ## Why the graph reaches 300 seconds
 
-| Setting | Current source value |
+| Setting | Investigated policy before this fix |
 | --- | --- |
 | Unchanged-body keepalive | 240 seconds |
 | Public metrics scrape interval | 60 seconds |
@@ -110,21 +118,27 @@ that timestamp is already close to 300 seconds old.
   alert or scrape data has been read. Zero failures in the current process does
   not establish that every past notification was false.
 
-## Recommended follow-up
+## Prepared improvement
 
-A monitoring-only fix can preserve body caching and the 300-second threshold:
-scrape `vpsf-status` every 15 seconds, move this alert to a group evaluated every
-30 seconds, and require one minute of sustained failure with `for = "1m"`.
-This gives the normal render cycle more room and lets a fresh scrape clear a
-brief crossing before notification. The confirmation period deliberately adds
-one minute before notifying about a sustained problem. These values should be
-validated against actual alert and scrape history before deployment.
+The updated policy keeps scrapes every 60 seconds and body caching unchanged.
+It requires an observed render age above 600 seconds, or five minutes without
+metric samples, and then two minutes of sustained failure. Only this alert
+moves to a group evaluated every 60 seconds. Rule evaluation uses stored
+samples and adds no HTTP requests to the status service.
 
-Adding `for` to the existing five-minute group alone would defer confirmation
-to the next five-minute evaluation. A smoother display would not address the
-timing problem. A shorter application keepalive is another option, at the cost
-of more render CPU time; raising the stale threshold changes the freshness
-objective.
+A stalled renderer with continuing scrapes therefore fires roughly 12 to 13
+minutes after the last observed render. Missing metrics fire roughly seven to
+eight minutes after the last sample. Alertmanager notification waits are
+additional. Recovery clears at the next minute evaluation. The user explicitly
+accepts the larger margin so the alert signals a serious issue.
+
+Both conditions use the same public service labels. If stale metrics disappear
+or return still stale, the ongoing alert keeps its confirmation and firing
+state. Only recovery clears it. The transition fixture checks both directions.
+
+Adding a short `for` to the original five-minute group would still defer its
+confirmation and recovery checks to that coarse schedule. Keeping this rule in
+its own one-minute group leaves unrelated web alerts on their current schedule.
 
 For correlation around a notification, graph the current age expression with:
 
@@ -136,15 +150,20 @@ up{job="vpsf-status"}
 ALERTS{alertname="VpsfStatusIndexRenderStale",alertstate="firing"}
 ```
 
-An alert VALUE just above 300 with fresh attempts and no failures fits the
-sampling mechanism. VALUE 1 with only the `job` target label identifies the
-`absent_over_time` branch; that needs a missing-metrics investigation. A large
-age with stale attempts or new failures needs a renderer or service diagnosis.
+For notifications from the original policy, a VALUE just above 300 with fresh
+attempts and no failures fits the sampling mechanism. Under either policy,
+VALUE 1 identifies the `absent_over_time` branch and needs a missing-metrics
+investigation. The new rule adds the service labels to that alert identity,
+while its annotation's query-label map still contains only `job`. A large age
+with stale attempts or new failures needs a renderer or service diagnosis.
 
-No implementation or deployment was performed. Monitoring-only changes would
-require no data migration or coordinated status-service update; they could be
-deployed independently to both Prometheus instances and rolled back through
-configuration.
+The implementation passed change review, all seven promtool scenarios and full
+configuration builds for both monitor containers. It is committed locally;
+no deployment has been performed.
+It requires no data migration or coordinated status-service update. Both
+Prometheus instances can update independently and roll back through
+configuration, although the instance on the old policy can keep sending noisy
+alerts until it updates.
 
 ## Source locations
 
