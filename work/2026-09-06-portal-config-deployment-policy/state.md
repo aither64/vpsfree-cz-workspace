@@ -12,7 +12,7 @@ lifecycle: active
 - Registered workspace base:
   `c561cb9859b3217c0a8e5476af37c07a4332f060`; the feature was rebased and
   rebuilt as a clean linear series on current workspace `master` at
-  `3415971d361e79e15fa41ba0a7918cb77d65ad7e`.
+  `531fbf857f7a6797d4a79e208bebbf62e6347eb7`.
 - Configuration branch: `2026-09-06-portal-config-deployment-policy`
 - Planned configuration worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/vpsfree-cz-configuration`
@@ -334,6 +334,87 @@ lifecycle: active
 - Post-deployment checks found all four user services active, validated all 15
   portal manifests, and returned HTTP 200 through both the private Unix socket
   and authenticated VPN HTTPS. The default remains `gpt-6-astra` at `xhigh`.
+- Reproduced the automatic closure from the retained rollout for
+  `2026-09-07-vpsfstatus-index-stale-2`: the agent scheduled an unattended
+  `finalize`/`stop` process after replying. The browser was not the initiator.
+- Implemented explicit closure authorization. Terminal `finalize`, `stop`, and
+  `remove` require an interactive exact-slug confirmation; `remove --yes` no
+  longer exists. Browser archive and delete validate the exact slug and invoke
+  the helper through a portal-service-only internal path. Complete and
+  abandoned tracking remains conversational until it is actually archived.
+- Renamed the portal's lifecycle-derived `Closed` state to `Terminal` and made
+  repository immutability depend on the archive location. Added durable rules
+  forbidding agents and background processes from inferring closure permission
+  from lifecycle state, a completed answer, or a handoff.
+- Added exact archived-thread restoration with `thread/unarchive` and resume.
+  Reopen provenance and the old client version remain unchanged until tmux and
+  manifest synchronization succeed, so a failed start can retry the same
+  already-active thread without replaying the initial request.
+- Enabled sanitized Goldmark pipe tables for plans, artifacts, and transcripts,
+  added overflow-safe table styles, and refreshed the Nix Go dependency hash.
+- Initial mandatory review found a public `remove --yes` closure bypass, the
+  misleading `Closed` model, mixed closure/recovery concerns in one commit, a
+  partial fake-Codex log race, version-drift recovery that could become
+  unretryable, and ambiguous legacy-reopen documentation. All were remediated;
+  the feature was rebuilt into separate closure, recovery, table, and test-race
+  commits before targeted review reruns.
+- The risk review also observed that a hostile same-uid process could call the
+  authenticated browser endpoint. This deployment intentionally trusts the
+  `aither` uid, which already reads the Basic Auth password and owns the tmux
+  server and session files. The portal now documents that exact prompts and
+  service-cgroup checks prevent supported unattended or accidental closure,
+  not adversarial same-uid activity; stronger isolation would require a
+  separate user-held credential.
+- Final local verification passed 212 `dev-session` tests with 2,038
+  assertions, 32 `workspace-host` tests with 198 assertions, 34 development
+  cluster tests with 364 assertions, all Go packages, the Node browser contract,
+  and JavaScript syntax. The cluster suite's runner-exit test flaked once under
+  the first parallel run, passed immediately in isolation, and passed in the
+  repeated complete suite.
+- The first package build exposed the missing fixed-output dependency for
+  Goldmark's table subpackage. After updating the dependency hash, the complete
+  Nix package build passed. The bundled protocol contract also passed against
+  live system Codex `0.153.4`.
+- The targeted scope and architecture reruns were clean. Risk found one final
+  publication window after tmux synchronization; ready authority is now
+  written before the reopen marker is cleared, and a focused failure/retry test
+  covers that boundary. The final risk rerun reported no Blocking or Important
+  findings. Synthetic cgroup evidence rather than a live unit remains a
+  deployment-time verification item.
+- Rebased the unmerged feature on shared workspace `master`, preserving the
+  reviewed patch exactly, and rebuilt the commits as `0e662e2` (explicit
+  closure), `7143e34` (exact archived-thread recovery), `cd64479` (Markdown
+  tables and dependency closure), and `050eca2` (atomic fake-Codex launch
+  logging). The feature was force-pushed with an exact lease; GitHub has no
+  workflow runs for the branch.
+- The final package passed all sandbox checks at
+  `/nix/store/d7p927w8dmh3iasm60i8c10s6jgnn1rs-workspace-portal-0.1.0`. No live
+  service, thread, tmux session, or tracking archive was changed.
+- Predeployment audit found all five materialized managed Codex threads idle,
+  with no pending requests and no queued messages. No durable submission or
+  removal journal exists. The portal and router are generation 7 processes;
+  Codex PID `2323118` and tmux PID `2323117` remain unchanged. Browser-local
+  drafts cannot be inspected from the host, but the server reports no accepted
+  work awaiting delivery.
+- The user approved activation after the audit. Switched the user application
+  to profile generation 8 at the reviewed package. Portal and router restarted
+  as expected; Codex PID `2323118`, tmux PID `2323117`, and development clusters
+  were preserved.
+- The live portal runs in
+  `workspace-portal@vpsfree-cz.service`; its real cgroup contains that exact
+  service component. A hidden portal lifecycle request from this ordinary shell
+  was rejected before finalization because it lacks deployed runtime authority,
+  confirming that the public CLI cannot use the service-only path.
+- Reopened `2026-09-07-vpsfstatus-index-stale-2` and started it without an
+  initial request. Codex unarchived and resumed exact retained thread
+  `01a07c42-a006-77e2-b4cd-5424d3acdd07`; the manifest is active and ready,
+  reopen provenance is cleared, runtime authority points to managed tmux
+  session `$10`, and the thread is idle with its retained 93-entry transcript.
+- Committed only that archive-to-work tracking move on shared workspace
+  `master` as `958688c`. Other sessions' working-tree changes remain untouched.
+  Direct portal HTTP and authenticated VPN HTTPS return 200, unauthenticated
+  HTTPS returns 401, and the live restored transcript includes a rendered
+  Markdown table.
 
 ## Results
 
@@ -372,9 +453,9 @@ lifecycle: active
   the ambient shell. Both configuration commits ran their declared hooks
   successfully inside `nix develop`; its untracked `.bin/` and `.bundle/`
   development-shell caches are excluded from commits.
-- The committed and pushed workspace head is
-  `6be8e29557c90fa4c0a584947523e45e1f9408a2`; the committed and pushed
-  configuration head is
+- The committed and pushed workspace feature head is
+  `050eca27c95e557357c84339c0d86ee1ffa35325`; the committed and pushed
+  configuration feature head is
   `e96431958b058ef495f491420655cfb7a4085fde`.
 - The handoff helper cannot bind this API-owned process to an initiative because
   `VPSFREE_DEV_SESSION_SLUG` is unset. The explicit initiative is unchanged;
