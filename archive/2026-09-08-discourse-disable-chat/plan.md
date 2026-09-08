@@ -51,3 +51,30 @@ disable chat on discourse in vpsfree-cz-configuration. evaluate whether we shoul
 - Runtime verification must distinguish generated defaults, stored database
   overrides, and the effective setting. Do not claim a live change from a
   successful evaluation/build alone.
+
+## Decision
+
+Use `services.discourse.siteSettings.chat.chat_enabled = false` in the
+existing container configuration. This records a reproducible default in Git
+and keeps the normal admin override mechanism. The pinned package applies
+NixOS defaults after plugin settings; the bundled chat default is otherwise
+true. A UI-only change is appropriate for immediate effect, but would leave
+this policy solely in the database.
+
+At deployment, check Admin settings for `chat enabled` and ensure it is false.
+If a stored true override exists, disable it in the UI or reset it after the
+new default is active. No custom startup Rails task, environment enforcement,
+or plugin removal is warranted. Rolling back the config restores the old
+default only where there is no database override; a false UI override must
+be explicitly changed/reset to re-enable chat.
+
+Discourse skips scheduled old-chat-message deletion while chat is disabled.
+Re-enabling resumes deletion according to the existing retention settings;
+check those settings and back up messages that need preserving first.
+
+## Closure scope
+
+The user requested default-branch integration and cleanup on 2026-09-08.
+Fast-forward and push the reviewed commit, remove worktrees while retaining
+branches, and archive the initiative. Production activation and runtime UI
+verification are separate operator work, not session-owned pending steps.
