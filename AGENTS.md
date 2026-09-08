@@ -26,12 +26,16 @@ The initiative slug must be descriptive and dated, for example
 same slug for the tracking directory, feature branch, and worktree group unless
 a repository-specific rule requires otherwise.
 
-Use the NixOS-installed `dev-session start <name>` when starting a development
-session in this workspace. It fixes the deployed host authority, tmux, Codex,
-and portal endpoints, creates a dated slug from the short name, opens the
-matching tmux session, and can add or remove worktrees under
-`worktrees/<slug>/` using the canonical bare repositories in `repos/`. Use
-`--as-is` when the full slug has already been chosen.
+Use the user-profile `dev-session start <name>` when starting a development
+session. It selects the registered workspace from the current directory, fixes
+the matching authority, tmux, Codex, and portal endpoints, and creates a dated
+slug from the short name. Pass `--workspace <name>` when calling it outside a
+registered root or when an explicit selection is clearer. Use `--as-is` when
+the full slug has already been chosen. An exact active slug with committed
+`plan.md` and `state.md` but no portal manifest can be restarted this way after
+its old writers are stopped. The helper preserves both tracking files, creates
+a fresh shared conversation, and registers canonical worktrees it finds under
+that slug.
 
 When running inside an existing development session, do not choose a new slug
 until checking for the active one. Run `dev-session current` from the workspace
@@ -120,8 +124,8 @@ For feature work in the independent project repositories:
   remove it after the merge is complete.
 - Record every affected repository, branch, and worktree path in
   `work/<yyyy-mm-dd-slug>/state.md`.
-- Remove worktrees after the work is merged or abandoned. Keep branches, then
-  finalize the initiative as described under Planning And Tracking so its
+- Archive the initiative after the work is merged or abandoned, as described
+  under Planning And Tracking, so its clean worktrees are removed and its
   durable record is committed under `archive/`.
 - Keep feature branches after merge, both locally and remotely, unless the user
   explicitly asks for branch deletion. Cleanup means removing worktrees and
@@ -158,10 +162,16 @@ lifecycle: active
 ---
 ```
 
-Change it to `complete` only when the requested outcome is finished, or to
-`abandoned` when the initiative is explicitly closed without completion. The
-anchored front matter is the only lifecycle authority; lifecycle-looking text
-in the Markdown body has no effect.
+An initiative remains `active` while any registered feature branch is
+unmerged or the session still owns work. Set it to `complete` only after every
+registered branch's exact final head is merged into its configured remote
+default branch and no review, CI, deployment, approval, or cleanup remains.
+Pushing, testing, deploying, or temporarily removing worktrees does not make an
+initiative complete. Use `abandoned` only when the work is explicitly
+discarded; abandoned work does not have to be merged. Coordination-only
+initiatives with no registered branches can still be completed. The anchored
+front matter is the only lifecycle authority; lifecycle-looking text in the
+Markdown body has no effect.
 
 Write a substantive plan and initial state, then commit both in the top-level
 workspace repository before the first project-code commit or external mutation.
@@ -183,32 +193,81 @@ themselves require commits; consolidate them into the next daily, handoff, or
 final summary. Functional changes in the workspace repository and normal
 commits in project repositories do not count as tracking-only checkpoints.
 
-An initiative can leave `work/` only when its lifecycle is `complete` or
-`abandoned` and it has no pending review, CI, merge, user approval, deployment
-step, or cleanup owned by the session. Before archiving, remove credentials,
-caches, reproducible bulk captures, and other transient outputs. Preserve
-`plan.md`, `state.md`, and intentionally useful evidence. Stop shells, editors,
-builds, and background processes that can still write into an initiative
-worktree; the per-slug lock serializes helper commands, not external writers.
-Every worktree must have an attached branch and ordinary clean `git status`.
-The helper delegates removal to non-force `git worktree remove`; resolve and
-retry any refusal before finalizing.
-Run `dev-session finalize <slug> --as-is` to remove clean worktrees, retain
-branches, and move the curated directory to `archive/<slug>/`. It keeps the
-managed tmux session available so the exact
-`work/<slug>/` to `archive/<slug>/` move can be inspected and committed once in
-the top-level repository together with the final tracking content. Do not make
-a separate tracking commit merely to set the terminal lifecycle before
-finalizing; the helper requires an earlier committed active lifecycle and
-accepts later tracking edits in the working tree. The helper never stages or
-commits the archive move. After that commit, run
-`dev-session stop <slug> --as-is` to close the managed session. The stop command
-must refuse a finalized initiative whose archive move or terminal tracking
-state is not committed.
+An initiative can leave `work/` only through an explicitly requested archive or
+delete action. Completing the requested work, answering the current message,
+setting a terminal lifecycle, and preparing a handoff all leave the session
+open for follow-up conversation. Do not infer permission to archive, delete, or
+stop a session from phrases such as "finish the work" or "implement the plan",
+and do not schedule delayed cleanup after the current turn.
 
-Do not reuse an archived slug. Start a new dated initiative for follow-up work.
-Do not delete tracking with `dev-session remove --all`; finalization and
-archival are mandatory even for abandoned initiatives.
+Run `dev-session archive <slug> --as-is` for a completed initiative, or add
+`--abandoned` when the user explicitly discards the work. Archival is one
+deterministic, journaled operation. It verifies that the Codex thread has no
+active turn, pending request, or queued message; releases development clusters;
+removes clean attached worktrees with non-force `git worktree remove`; retains
+branches; writes terminal lifecycle and manifest metadata; moves
+`work/<slug>/` atomically to `archive/<slug>/`; commits only that tracking
+transition on a compatible shared `master`; and retires the Codex thread, tmux
+session, and runtime authority. Preserve unrelated working-tree and index
+changes. Resolve any refusal and retry the same command, which resumes its
+private journal. The CLI and portal each ask for one yes/no confirmation; they
+do not require the slug to be typed.
+
+For a completed initiative, archival fetches each registered feature and
+default branch and proves that the exact local and remote feature head is an
+ancestor of `origin/<default_branch>`. It refuses unmerged, divergent, missing,
+or unprovable refs and reports every offending repository. An interrupted
+archive reproves those exact journaled heads before each remaining destructive
+phase and verifies the exact projected archive tree and retained thread identity
+before committing or retiring runtime state. Pushing, testing, deploying, or
+removing a worktree does not satisfy this rule. The merge check is skipped only
+for an explicitly abandoned initiative. Coordination-only initiatives with no
+registered branches remain valid. Before archiving, remove credentials, caches,
+reproducible bulk captures, and other transient outputs; preserve the plan,
+state, and intentionally useful evidence.
+
+Follow-up work before merge must reuse the same slug and retained branches. Run
+`dev-session revive <slug> --as-is` to restore a prematurely archived
+initiative. Reviving commits the move from `archive/<slug>/` back to
+`work/<slug>/`, restores the active lifecycle, clears terminal repository
+heads, preserves repository, branch, base, and conversation identity, and
+starts the exact retained Codex thread. It does not recreate worktrees. The
+confirmation uses a stronger warning for an abandoned initiative and is stored
+in the revive journal so a retry does not ask again. Recovery verifies the
+complete restored tracking tree before committing it. Legacy archives without
+`portal.yml` receive a recoverable new shared conversation;
+re-adding retained branches reconstructs their registration metadata. Revive
+refuses dirty, duplicated, ambiguous, or live state.
+
+`dev-session delete` is the user-directed destructive discard. Agents must not
+run it unless the user explicitly asks to delete that session. It requires an
+interactive terminal and the full slug as confirmation; `--force` additionally
+authorizes dirty worktree removal and interruption of an active turn. Delete
+releases cluster and runtime state, removes worktrees, retires the Codex thread,
+and moves tracking plus creation state into private XDG recovery storage. It is
+journaled and retryable, retains Git branches, and commits only an already
+committed tracking deletion. Never-committed tracking disappears without a Git
+commit. Unfinished lifecycle journals reserve their slug; resume the matching
+`archive`, `delete`, or `revive` command before other session or cluster
+mutations, workspace package changes, workspace unregister or suspension, or
+Codex reconciliation.
+Stable session and cluster commands must verify their originating workspace
+package generation after acquiring the shared transition lock. If a command
+waited across a successful or compensated package switch, reject it as
+superseded and require the stable command to be run again.
+When development cluster state exists, package switches and rollbacks require
+the target generation to publish the matching state schema, transition policy,
+and tracking-size contract, and prove that every existing cluster already has
+an explicit recorded socket identity.
+Pre-contract cluster state without that identity fails closed and must be reset;
+never infer or migrate its ownership during a package transition. This avoids a
+race with an old helper that was already waiting on its per-cluster lock.
+Candidate activation must repeat the same check so a pre-contract installed
+switch command cannot bypass it. The one retained password-reset legacy socket
+is supported only while its recorded identity and complete owner record prove
+the known runner tuple. Other legacy socket state fails closed.
+Workspace unregister is refused until that workspace's cluster state is reset.
+Never use `delete` as a substitute for archiving completed or abandoned work.
 
 Keep these files current enough that a future agent can resume the work without
 guessing. When plans change because code or tests reveal new facts, update the
@@ -368,6 +427,17 @@ when they are useful; skip them for noisy `nixpkgs` and `llm-agents` updates.
 Keep automated `confctl ... --commit` commit messages exactly as generated;
 do not amend or rewrap them to satisfy generic commit-message line length
 rules. Edit them only when intentionally making a concise changelog edit.
+
+Deployment does not authorize integration into a configuration repository's
+default branch. Build and deploy development configurations directly from the
+initiative worktree and feature branch. In particular, while the workspace
+portal is still under development, keep its `vpsfree-cz-configuration` changes
+on the dated initiative branch. The workspace application itself is deployed
+from its own user profile and must not be added to, pinned by, or iterated
+through the system configuration. Do not merge or push configuration changes
+to `master` merely to deploy aitherdev. Integrate that branch only after the
+user explicitly accepts the portal work for integration or explicitly directs
+the merge.
 
 DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
 `kb.vpsfree.org`. Their review instances are

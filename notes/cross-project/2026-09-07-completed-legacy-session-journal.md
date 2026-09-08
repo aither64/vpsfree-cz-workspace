@@ -5,7 +5,7 @@ Initiative: `work/2026-09-05-cgroup-v1-shared-device-fix`.
 `dev-session start <slug> --as-is --no-attach --no-codex` rejected an old
 schema-1 creation journal as invalid. It had `state: ready` and
 `preserve_tracking: true`, but lacked provenance fields required by the newer
-deployed helper. The existing portal was ready and reopened active tracking
+deployed helper. The existing portal was ready and revived active tracking
 had already been committed.
 
 For this explicitly user-requested resumption, inspected the deployed helper
