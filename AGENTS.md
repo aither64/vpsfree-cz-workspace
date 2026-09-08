@@ -262,6 +262,11 @@ an explicit recorded socket identity.
 Pre-contract cluster state without that identity fails closed and must be reset;
 never infer or migrate its ownership during a package transition. This avoids a
 race with an old helper that was already waiting on its per-cluster lock.
+New helpers create the state directory and record its workspace-scoped socket
+identity in one locked initialization step. Ordinary access must reject an
+existing state directory without that record. Explicit reset may clean such
+state only when the complete runner tuple and its process tree prove ownership;
+ambiguous legacy state must remain untouched.
 Candidate activation must repeat the same check so a pre-contract installed
 switch command cannot bypass it. The one retained password-reset legacy socket
 is supported only while its recorded identity and complete owner record prove
