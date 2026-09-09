@@ -26,7 +26,7 @@ running development cluster untouched.
 - Verify and review before long tests, push and monitor CI, then fetch master
   again and integrate only this fix using a temporary target worktree and a
   fast-forward-only merge. Retain branch refs after cleanup and archive this
-  completed initiative using the guarded workspace finalizer.
+  completed initiative using the installed guarded archive workflow.
 
 ## Compatibility and deployment
 
@@ -51,3 +51,21 @@ and unmerged, and its cluster must not be modified or stopped.
 - Require static and full managed-page runtime CI on the feature and merged
   master. Investigate logs and artifacts before any rerun. Stop and investigate
   an unexpected local kernel build; use cached kernels for this test-only fix.
+
+## Cleanup decision after the runtime cutover
+
+The deployed profile exposes `dev-session archive`, which verifies merged
+remote branches, removes clean worktrees, retains branches, archives and commits
+only this initiative's tracking, and retires its session. Its live authority
+includes `tmux_identity`, which the older checkout finalizer does not understand.
+Use the installed archive command, without changing authority metadata or
+bypassing its checks. It resets only cluster resources belonging to this exact
+fork slug; both fork cluster helpers report stopped and no such cluster was
+started for this task.
+
+The archive command requires the owning conversation to be idle. After all
+merged-master CI passes, prepare final tracking and queue an independent user
+service to wait for that ordinary guard, recheck the prepared input hashes and
+clean worktree, and invoke archive after the final reply. Stop on unexpected
+state or changed inputs. Keep its logs outside the worktree and tracking tree.
+This preserves the parent password-reset session and its running cluster.
