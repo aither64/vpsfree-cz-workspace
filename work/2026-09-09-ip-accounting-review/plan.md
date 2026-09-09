@@ -47,3 +47,14 @@ resource-use confirmation/enabled states, ownership and charging environments,
 IPv4/private IPv4/IPv6 size accounting, missing charging/resource records, exact
 JSON values and output/error handling. Run syntax/diff checks, then commit and
 perform the mandatory adaptive change review before any longer tests.
+
+## Review decisions
+
+Recorded totals delegate to UserClusterResource.used. The audit follows the
+existing User scope (including suspended/soft-deleted users, excluding
+hard-deleted users); discovering orphaned ownership/assignment chains is outside
+this user-account audit and is explicitly documented. Retain the per-user
+traversal: a 1,000-user synthetic workload with six IP resource limits each
+completed in 43.259 seconds and 14,046 queries. Production load remains
+unmeasured. See review-resolution.md for the architecture findings and their
+reconciliation. The report is a point-in-time aid to human reconciliation.
