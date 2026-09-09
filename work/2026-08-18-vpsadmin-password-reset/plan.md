@@ -589,3 +589,50 @@ whether an account exists or can use recovery.
   configuration without deployment, refresh the existing bridge cluster
   without resetting its database, restore its acceptance fixtures, and leave
   it running. Production deployment and KB publication remain operator-only.
+
+## Current-default rebase after runtime cutover (2026-09-08)
+
+- Reuse the four retained feature branches and worktrees. Fetch their default
+  branches, retain backup refs, and rebase without changing the reviewed
+  password-recovery behavior or schema-native notification-template history.
+- Preserve upstream KB IPv6 controls, captures, inventory corrections, and
+  classified APT/Guix retry support while retaining the feature's metrics and
+  password-history bindings. Repin the final vpsAdmin revision while preserving
+  the KB-owned vpsAdminOS `6bdf458f` lock closure and matching workflow actions.
+- Regenerate production service and notification-template pins through
+  `confctl`, consolidate superseded pin commits, and update the runbook. Keep
+  all unrelated upstream configuration and dependency changes.
+- No new API, schema, or authentication-policy change is intended. Preserve
+  the five additive migrations, feature-disable gating, template-first rollout,
+  accepted rolling audit gap, and rollback behavior already documented.
+- Run focused API, migration, template, PHPUnit, localization, lint, hook, KB,
+  and documentation checks, followed by the current mandatory review workflow
+  at high risk with general, architecture, scope, and compatibility lanes.
+  Run the three WebUI VM suites and seven production builds after review.
+- Push with explicit lease protection, cancel only superseded feature-branch
+  CI, and investigate exact-head failures before accepting reruns. Preserve
+  evidence of unrelated Guix image availability failures without expanding
+  this rebase into image-publication maintenance.
+- The user requested a development-cluster refresh and explicitly authorized
+  resetting it if needed. Prefer updating the existing single-node bridge
+  cluster in place, restore acceptance fixtures, verify live recovery and
+  password history, and leave it running. Production deployment, merging, and
+  KB publication remain outside this task.
+
+- CI revealed that the current default's JSON 3 dependency cannot load the
+  ActiveSupport 8.1 API. Bound the API JSON dependency below version 3 and
+  regenerate its package metadata in a separate generated commit. Validate a
+  fresh dependency resolution as well as the retained development lock; no
+  application policy, schema, or public interface change is needed.
+
+- The risk review supersedes permission for overlapping old/new API writers
+  during production rollout. An old process can issue a session from a stale
+  password check after a new process closes sessions; the recovery flag does
+  not gate ordinary password changes. Stop and runtime-mask the remaining old
+  api2 before starting upgraded api1, verify both old API processes have
+  exited, and switch api2 while it remains masked. Pause manual authentication
+  or password-writing scripts. This introduces a brief API maintenance window
+  but keeps existing sessions and requires no application or schema change.
+  Use the same no-overlap boundary during rollback, then explicitly restore
+  the preceding release's authentication behavior. The earlier audit-gap note
+  applies to changes made before the old API processes are stopped.

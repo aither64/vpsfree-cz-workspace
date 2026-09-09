@@ -4,6 +4,54 @@ lifecycle: active
 
 # 2026-08-18-vpsadmin-password-reset
 
+## Current handoff — September 9 rebase completion
+
+The existing initiative was reconnected after the runtime cutover and rebased
+in its four retained worktrees. No new slug, branch or worktree was created.
+All four feature heads are pushed and project worktrees are clean:
+
+| Repository | Current feature head | Default-branch base |
+| --- | --- | --- |
+| vpsadmin | `9f30c1fe095a66315a293c8a45e5c4a9f8ec2819` | `438d946482801b7229c7535935c3b7e45f6760b8` |
+| vpsfree-mail-templates | `f944ba03eba5d0d6b58b7eb856f251d1c96f2c11` | `9e1ddbd973703cf48a43f0e5afc2bfb392a8b676` |
+| vpsfree-kb-contracts | `344d3809b1b058acfaa14f0cfc9fd066901e673f` | `e5ed479f9d4058556dcf225b4c16afd5b9f0051a` |
+| vpsfree-cz-configuration | `6580971b22ccf9b4f5c6aef8171102710e4f5b12` | `7cfe38378a1b40952b8019cd895942cda7c32233` |
+
+The feature patches are preserved. Two new commits repair the rebased default's
+JSON 3 / ActiveSupport 8.1 startup incompatibility by constraining JSON below 3
+and regenerating API package metadata. Both downstream repositories pin the
+final vpsAdmin head; the KB-owned OS closure remains at `6bdf458f`.
+
+All four mandatory review lanes are complete; see `review-2026-09-08/`.
+The one Important finding is fixed in the production runbook: stop both old
+API writers before starting either upgraded writer, and apply the same barrier
+during rollback. This requires a brief API maintenance window. Earlier notes
+permitting old/new writer overlap are superseded.
+
+Quick verification, API/i18n CI, KB Check, all seven production configuration
+builds and all three WebUI VM suites pass: 24 authentication, 11 self-service
+and six administrator browser tests, 41 total. Broad vpsAdmin CI also passes:
+118 tests, with 135 test scripts, on the final feature head. The existing
+development cluster is refreshed and live recovery acceptance passes.
+KB runtime CI has three passing suites and the independently confirmed
+pre-existing missing Guix `20260819` image failure.
+
+The existing bridge cluster was updated through services, node1 and refresh,
+without a database reset or VM recreation, and remains running on clean
+vpsAdmin `9f30c1fe0`. Services, node daemons and the pool are healthy. The schema
+remains `20260831220000`; recovery is enabled, both test users share the fixture
+email, and only test-user1 has MFA enabled with its established TOTP seed.
+The complete mail/TOTP/password/sign-in flow passed, including one sessionless
+recovery history entry with client metadata and the captured security notice.
+No production deployment, merge or KB publication is authorized by this task.
+The approved rebase work is complete. The initiative remains active, with its
+branches, worktrees and cluster retained for the user's next instruction.
+
+Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-08-18-vpsadmin-password-reset/
+
+The following sections preserve the chronological initiative history; use this
+handoff and the latest dated entries when older status statements conflict.
+
 ## Repositories
 
 - `vpsadmin`
@@ -2928,3 +2976,248 @@ lifecycle: active
   These two failures are therefore evidenced external/unrelated failures, not
   password-reset regressions. No rerun was initiated during this read-only CI
   result check.
+
+### Current-default rebase after runtime cutover (2026-09-08)
+
+- The user approved rebasing all retained feature branches, updating exact
+  downstream pins, full validation and CI, and refreshing the development
+  cluster. A development reset is authorized if needed; prefer preserving its
+  database and VM disks. Production deployment, merging, and KB publication
+  remain out of scope.
+- Verified the current process and managed session both identify this slug.
+  The four worktrees are clean at starting heads vpsAdmin `227dab2f6`,
+  notification templates `f944ba03e`, KB contracts `2e882ad64`, and production
+  configuration `702f99803`. The existing repository hooks are installed and
+  executable; their declared checks will run inside repository Nix shells.
+- Read current repository rules, review lane instructions, and the KB workflow.
+  The KB default independently pins vpsAdminOS `6bdf458f` for classified retry
+  support; preserve that lock closure and action references when repinning
+  vpsAdmin. See `notes/vpsfree-kb-contracts/2026-09-03-preserve-independent-vpsadminos-pin.md`.
+- The shared workspace remains on `master` with unrelated session edits and
+  existing local commits. They are outside this task and will be preserved.
+  No new initiative, branch, or worktree is required for these rebases.
+- Fetched the four canonical bare repositories over SSH and recorded every
+  starting feature head under
+  `refs/backup/2026-09-08-password-reset-before-default-rebase`. Defaults are
+  vpsAdmin `438d946482`, templates `9e1ddbd973`, KB `e5ed479f9d`, and
+  configuration `7cfe38378a`. All starting remote feature heads matched.
+- vpsAdmin rebased cleanly to `aa81d2a830237df46d51ecb42a033ed946501121`;
+  range-diff marks all 41 feature patches unchanged. The API verification
+  batch covers 45 ordinary spec files and five migration files in separate
+  processes, then localization health and full API RuboCop.
+- KB's two content commits rebased successfully. The obsolete final pin was
+  dropped after its expected pin-only conflicts; a fresh final pin will be
+  committed after vpsAdmin verification and publication. Upstream inventory
+  corrections are retained, with only feature metrics and history additions
+  remaining in the content diff.
+- Notification templates need no rebase. Both `nix run .#check` and
+  `nix flake check` pass at unchanged `f944ba03e`.
+- Configuration's prepare-commit-msg hook initially failed because the target
+  master requires `rubyzip-3.6.0` absent from the old checkout's bundle. The
+  target bundle is installed and the rescheduled replay resumed without any
+  hook bypass. The staged-patch recovery procedure is recorded in
+  `notes/vpsfree-cz-configuration/2026-09-08-rebase-hook-bundle-change.md`.
+- Current rebase and verification logs are transient under
+  `/tmp/password-reset-rebase-20260908.IuiV71/`; `refs.json` records exact
+  starting heads, bases, remote leases, and backup refs.
+
+- All four feature branches were pushed with explicit remote leases. Before
+  CI remediation their heads are vpsAdmin `aa81d2a830237df46d51ecb42a033ed946501121`,
+  templates `f944ba03eba5d0d6b58b7eb856f251d1c96f2c11`, KB
+  `b1d2a2b686d8180ccb5465de451e6624ab7c58a7`, and configuration
+  `b9cb512c4f77bb0d036427bb1aacc68dd47d1683`. Superseded KB runs were cancelled.
+- Quick validation passes: API 548 examples, zero failures, two expected
+  plugin-dependent pending cases; five migration files / ten examples in a
+  separate process; API i18n; API RuboCop 1,512 files; WebUI 90 tests / 376
+  assertions; built-in notification templates 54 templates / 172 files; full
+  external template checks; full KB check including 120 PNGs; configuration
+  Overcommit and strict MkDocs. Root hooks and CI selector also pass (16 tests,
+  55 assertions) when Overcommit runs directly in the full development shell.
+- The first root hook invocation used `bundle exec overcommit`, which leaked
+  the root Bundler setup into the API hook and failed gem resolution. Direct
+  `nix develop .#vpsadmin -c overcommit --run` passes every declared hook;
+  hooks were not bypassed or changed.
+- Exact-head CI exposed an upstream dependency incompatibility: API topic run
+  `34274171719` and i18n run `34274171547` fail during model loading because
+  ActiveSupport 8.1.3.1 passes a second positional options argument to
+  JSON 3.0.1, whose parser accepts keyword options. Failed logs were downloaded
+  and inspected. The packaged API from current master also pins JSON 3.0.1;
+  the retained local API lock used JSON 2.21.2, explaining the local passes.
+  Add an API `json < 3` constraint and regenerate only API package metadata;
+  this is a required compatibility repair for the rebased dependency set.
+  Fresh dependency installation and API startup checks will verify the fix
+  before new exact pins and CI are accepted.
+
+- JSON compatibility repair is committed as source constraint `2ad6ec93e`
+  and generated package metadata `9f30c1fe0`; all normal commit hooks pass.
+  Fresh dependency installation passes 50 focused examples, JSON decode, and
+  API i18n. Its unbounded development RuboCop resolved 1.90 and found 25
+  unrelated new-cop offenses; the repository CI-declared 1.85 command passes
+  all 2,144 files. No unrelated formatting change was made.
+- Final review heads and bases are recorded in `review-2026-09-08/packet.md`.
+  All four worktrees are clean. Risk is high because the retained series owns
+  authentication, MFA, schema, audit and cross-project rollout behavior. The
+  required general, architecture, scope and risk lanes use fresh standalone
+  `gpt-5.6-sol` reviewers at `xhigh`; long integration remains gated on review.
+
+- The handoff portal now includes the already-retained KB repository registration;
+  no branch or worktree was created. Its original base is preserved as metadata.
+- Pre-refresh read-only runtime checks found that acceptance data has changed
+  independently since the earlier retained state: all three development users
+  currently have MFA disabled, no enabled confirmed TOTP exists for test-user1,
+  and neither test user's email is the shared fixture address. The recovery
+  flag is unset and the public route returns 404. Restore those fixtures after
+  activation, retaining an existing TOTP if found or creating a development
+  factor if the previously retained factor is absent. No database reset is
+  necessary solely to restore these fixture rows.
+- A root-owned mode-0600 temporary Ruby probe could not be loaded by
+  `vpsadmin-api-ruby`, which runs as `vpsadmin-api`. Giving that group read
+  access (root:vpsadmin-api, 0640) allows the wrapper to load the prepared
+  script; the probe is removed afterward. Keep generated codes and mail/token
+  content in process memory and out of command output and tracking.
+
+- A second read-only model check confirms no TOTP row at all for test-user1,
+  an unset existing recovery config row, zero password-history rows, and the
+  already-migrated schema at `20260831220000`. The retained historical
+  development TOTP seed is available and consistent, so reconstructing the
+  fixture can retain its established secret without printing or recording it
+  again. These runtime changes predate this session's cluster mutations.
+- General and architecture reviews report no findings. Their evidence and
+  residual validation gates are recorded under `review-2026-09-08/`. Scope and
+  risk review remain pending.
+
+- Risk review identified one Important deployment finding: with old api2 still
+  serving, a request that verified an old password can publish a session after
+  upgraded api1 has changed the password and closed the user's sessions. Old
+  token issuance lacks the generation recheck; resuming the resulting session
+  after upgrade does not repair it. The recovery-disabled flag does not gate
+  ordinary password changes. Fix the runbook to drain both old API writers
+  before any upgraded writer starts, preserve runtime masks across api2's
+  switch, and apply the same no-overlap rule to rollback. This is a narrower
+  supported rollout with a brief maintenance window, not a schema/code change.
+  Long integration remains gated until this finding is addressed.
+
+- All four mandatory lanes are complete at `gpt-5.6-sol` / `xhigh`. General,
+  architecture and scope have no findings. Risk's sole Important finding is
+  fixed by amended runbook commit `4fa3aa57` and configuration head `6580971b22ccf9b4f5c6aef8171102710e4f5b12`.
+  The final diff from reviewed `9c98cdc9` changes only the runbook; pins and
+  application behavior are unchanged. The direct narrower rollout remediation
+  passes amendment hooks, full configuration Overcommit and strict MkDocs.
+  No lane rerun is needed under the skill's narrow-remediation rule. Evidence
+  and reconciliation are in `review-2026-09-08/`; long validation may proceed.
+
+- Final configuration head `6580971b22ccf9b4f5c6aef8171102710e4f5b12` is pushed
+  with the expected remote lease. An ambient-shell push first failed its
+  pre-push Bundler hook after local bundle metadata cleanup; repeating the
+  push inside `nix develop` succeeded without bypassing hooks.
+- Long validation started after review reconciliation. Three VM suites run
+  serially from vpsAdmin `9f30c1fe0`, with state under `/tmp/prr-vm.T3vVpl`
+  and per-suite logs under the previously recorded temporary log directory.
+  Seven build-only configuration targets run serially in a second process
+  from configuration `6580971b`; api1 and api2 have passed. No production
+  deployment or development-cluster refresh has started.
+- The exact-head API/i18n workflow is green after the dependency repair;
+  API topics `34276294946`, broad vpsAdmin CI `34276294973` and KB runtime
+  `34276611772` are monitored. Final KB Check `34276611751` is green.
+- Five concise reusable notes were committed separately on shared workspace
+  master: configuration hook-bundle rebase recovery, JSON/ActiveSupport
+  startup, direct Overcommit invocation, API runner file access, and Python
+  strict verification against the retained development CA. No unrelated
+  shared changes were staged, committed, reset or stashed; workspace master
+  commits were not pushed.
+
+- All seven configuration builds passed at `6580971b`: api1, api2, webui1,
+  webui2, authentication proxy, mon1 and mon2. These were builds only.
+- Final API topics run `34276294946` is green. Final KB runtime run
+  `34276611772` finished with three successes (GRE, firewall and KVM) and one
+  failure. Both failed job output and its full uploaded artifact were inspected:
+  Guix stops at `osctl ct new ... --distribution guix --version 20260819`
+  because that image is absent from the default repository. This reproduces the
+  pre-existing September 7 blocker before any page assertions run; no rerun or
+  unrelated image update was made. Final KB Check remains green.
+  Artifact logs are retained under the temporary log directory's
+  `ci-kb-artifacts/kb-test-logs-34276611772/`. Broad vpsAdmin CI remains active.
+
+- `webui#auth` passed at `9f30c1fe0`: all 24 Playwright tests passed
+  in six minutes after VM setup. `webui#users-self-service` started next;
+  the three suites remain serialized. Removed only this task's generated
+  configuration `.bin/rubocop` and `.bundle/config` after builds and pushes;
+  all four project worktrees are clean.
+
+- `webui#users-self-service` passed at the final vpsAdmin head. The final
+  serialized local gate, `webui#users-admin`, has started. The portal now links
+  to the exact review packet and finding/remediation record.
+
+- The final `webui#users-admin` suite passed after midnight on September 9:
+  all six Playwright cases passed in six minutes, and the runner completed
+  normally. All three local VM gates now pass, 41 browser tests total, with no
+  kernel source build. Begin the authorized existing-cluster activation,
+  preserving its database and VM disks. The shared bare OS staging ref used by
+  the helper currently resolves to `2166e5934fe1167ed4c5af67c744bdf3b12df0d5`;
+  the independent KB OS pin remains unchanged.
+
+
+### September 9 development activation and acceptance
+
+- `devcluster update ... services`, `devcluster update ... node1` and
+  `devcluster refresh ...` all succeeded. No database reset, VM stop,
+  recreation or release was performed. No kernel source build occurred.
+  The services build reports exact vpsAdmin `9f30c1fe0`, `revisionDirty: false`.
+- API, supervisor, recovery worker, console router, nginx and MySQL are healthy;
+  database setup and template reconciliation succeeded, and no services unit
+  is failed. The node's osctld and nodectld are running and `tank` is active.
+  osctld retained its existing process across the update.
+- Restored the shared email fixture for test-user1/test-user2, MFA only on
+  test-user1, its established deterministic TOTP seed, no passkeys, recovery
+  enabled, and the default WebUI OAuth authorization-start URI. Both mail
+  templates have their expected Czech/English variants. The maintenance probe
+  initially passed keywords to `update_with_default!`, whose attributes are a
+  positional hash; correcting the probe's argument form completed setup. No
+  application change was required.
+- The live HTTPS recovery smoke passes: neutral public submission, one grouped
+  mail naming both accounts with one eligible link, email-token exchange,
+  retained TOTP verification, password reset back to the configured fixture
+  password, normal OAuth sign-in completion alert, sessionless recovery history
+  with client IP and normalized user-agent snapshot, and the security notice
+  delivered to development Mailpit. Tokens, credentials and codes were kept out
+  of output and tracking.
+- Independent final checks confirm unchanged schema `20260831220000`, the
+  retained TOTP seed, the expected MFA/passkey fixture matrix, one recovery
+  history event, no pending submissions and no active recoverable authority.
+  The grouped request retains one expected `no_mfa` informational row for
+  test-user2 with no email/session digest and neither usability predicate true.
+  A broad active-row-count assertion in the temporary probe was corrected to
+  check actual authority after inspecting the model scope and request operation.
+  This behavior is recorded in durable note commit `b3c0fbb`.
+- Activation, fixture and sanitized acceptance logs are under the existing
+  temporary log directory (`cluster-update-services.log`,
+  `cluster-update-node1.log`, `cluster-refresh.log`, `cluster-health-final.log`,
+  `acceptance-fixtures.log`, `live-recovery-smoke.log`, `acceptance-final.log`).
+  The cluster remains running for user acceptance. Broad vpsAdmin CI remains
+  monitored before the consolidated tracking checkpoint.
+
+### September 9 final CI and handoff
+
+- Broad vpsAdmin CI run `34276294973` completed successfully at
+  `2026-09-09T02:46:57Z` on exact head
+  `9f30c1fe095a66315a293c8a45e5c4a9f8ec2819`. Its downloaded log confirms
+  135 test scripts across 118 successful tests in 21,607 seconds, with no
+  unexpected failures. No rerun was needed. The final log is retained as
+  `ci-vpsadmin-final.log` in the existing temporary log directory.
+  Run: https://github.com/vpsfreecz/vpsadmin/actions/runs/34276294973
+- Final read-only checks confirm all four project worktrees are clean on the
+  recorded feature heads. The existing cluster still serves clean vpsAdmin
+  `9f30c1fe0`; its services, node daemons and pool remain healthy. The local
+  integration-test VMs completed their own cleanup. Retain the initiative's
+  worktrees, feature branches, backup refs and independent development cluster.
+- The approved rebase, exact downstream pins, review remediation, builds and
+  development acceptance are complete. The only known validation limitation
+  is the separately investigated missing Guix image in KB runtime CI; its
+  evidence and unchanged scope are recorded above. There is no pending CI
+  run owned by this rebase.
+- This consolidated handoff checkpoint contains only this initiative's plan,
+  state, portal and six review records. Unrelated shared workspace changes and
+  the retained KB candidate files are preserved. Lifecycle remains active;
+  the next action belongs to the user after reviewing the running
+  development environment. Production rollout requires the documented brief
+  API maintenance window and separate authorization.
