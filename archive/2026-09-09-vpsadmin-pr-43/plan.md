@@ -1,6 +1,10 @@
-# Prepare vpsAdmin PR #43 for approval
+# Review and merge vpsAdmin PR #43
 
 ## Goal and affected repositories
+
+Completed: after preparation, successful checks and explicit user approval,
+vpsadmin master fast-forwarded to 19971f039 on 2026-09-09. The plan below records
+the approved implementation and integration approach. No deployment is included.
 
 Prepare and push `2026-09-09-vpsadmin-pr-43` in vpsadmin with the reviewed
 payment-history feature, an API JSON compatibility fix, and bilingual cursor
@@ -39,6 +43,10 @@ Nix option, client pin, or WebUI behavior changes are included.
 No production deployment or migration execution is authorized. Future rollout
 uses the usual index-migration window and completes API rollout before the
 dependent WebUI Next feature. Old code can read data produced by this change.
+Before rolling back the API, disable client use of the new date filters.
+Retain the JSON compatibility fix or select an earlier known-bootable API
+artifact: the exact current-master base packages incompatible JSON 3 and is
+not a suitable freshly built rollback target.
 
 ## Verification and review
 
@@ -58,6 +66,12 @@ Do not wait for CI / Run selected ci-tagged tests. Leave current integration
 runs running and report their status in the review handoff.
 
 ## Approval and eventual integration
+
+The user explicitly approved merging the reviewed head 19971f039 on
+2026-09-09. Re-fetch confirmed master is still 41af23e20 and the PR source
+is still 44cfb4357, so no rebase or implementation change is needed. Integrate
+the approved head with local Git fast-forward and SSH push, then retain
+branches and clean up the initiative worktrees and tracking.
 
 After validation, provide the development branch, exact commits, comparison
 link, checks and findings. Keep tracking/worktree active and wait for explicit
