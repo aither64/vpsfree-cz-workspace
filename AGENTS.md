@@ -241,16 +241,20 @@ refuses dirty, duplicated, ambiguous, or live state.
 
 `dev-session delete` is the user-directed destructive discard. Agents must not
 run it unless the user explicitly asks to delete that session. It requires an
-interactive terminal and the full slug as confirmation; `--force` additionally
-authorizes dirty worktree removal and interruption of an active turn. Delete
-releases cluster and runtime state, removes worktrees, retires the Codex thread,
-and moves tracking plus creation state into private XDG recovery storage. It is
-journaled and retryable, retains Git branches, and commits only an already
-committed tracking deletion. Never-committed tracking disappears without a Git
-commit. Unfinished lifecycle journals reserve their slug; resume the matching
-`archive`, `delete`, or `revive` command before other session or cluster
-mutations, workspace package changes, workspace unregister or suspension, or
-Codex reconciliation.
+interactive yes/no confirmation; `--force` additionally authorizes dirty
+worktree removal and interruption of an active turn. Delete independently
+inventories canonical worktrees owned by the exact session, so missing or stale
+portal repository registrations do not prevent an explicit discard. It always
+refuses symlinks, path escapes, foreign repositories, and ambiguous worktree
+entries. Delete releases cluster and runtime state, removes verified worktrees,
+retires the Codex thread, and moves tracking plus creation state into private
+XDG recovery storage together with the actual worktree identities, branches,
+heads, and dirty state. It is journaled and retryable, retains Git branches, and
+commits only an already committed tracking deletion. Never-committed tracking
+disappears without a Git commit. Unfinished lifecycle journals reserve their
+slug; resume the matching `archive`, `delete`, or `revive` command before other
+session or cluster mutations, workspace package changes, workspace unregister
+or suspension, or Codex reconciliation.
 Stable session and cluster commands must verify their originating workspace
 package generation after acquiring the shared transition lock. If a command
 waited across a successful or compensated package switch, reject it as
