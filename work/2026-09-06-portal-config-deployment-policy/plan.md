@@ -29,6 +29,20 @@ runtime cleanup. Recover the prematurely archived
 `2026-09-07-vpsfstatus-index-stale-2` session under its original slug and exact
 Codex thread. Also render GitHub-style pipe tables in chat and artifact Markdown.
 
+Repair the retained password-reset session without changing its conversation,
+worktrees, or development cluster. Recognize its verified
+`vpsfree-kb-contracts`/`vpsadmin-kb-captures` repository alias, keep any genuine
+repository registration conflict local to its session instead of degrading the
+whole index, and make conversations longer than ten item pages interactive.
+Fresh messages must not scan the complete history. Accepted messages retain a
+durable turn receipt for idempotent retry until the browser observes the
+matching transcript message and acknowledges it. Before compacting any receipt,
+the server must independently prove the exact transcript client identity and
+canonical text digest, plus the recorded turn for an accepted receipt;
+genuinely uncertain outcomes use cursor-safe streamed reconciliation. Render
+structured Codex turn failures as readable errors and show cluster service
+destinations as labelled URLs.
+
 ## Affected repositories
 
 - Coordination workspace (`aither64/vpsfree-cz-workspace`): hybrid user runtime,

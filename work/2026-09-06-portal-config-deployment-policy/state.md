@@ -9,9 +9,9 @@ lifecycle: active
 - Workspace branch: `2026-09-06-portal-config-deployment-policy`
 - Worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/workspace`
-- Current workspace base: `b265b22ca0549a5a3574100ecdd7a2ae8d95b880`.
-- Current reviewed workspace head:
-  `c97b5d8b3ac3d58263f966edd6449c521524a8af`.
+- Current workspace base: `21b888d2c5fa4cd2164ca23a9eeee8f13847fa59`.
+- Current workspace review candidate:
+  `cbaa621fb9b0b89ad4fba24a503b030927346a6b`.
 - Current change and review scope: workspace repository only. The historical
   configuration substrate branch remains unmerged but is not changed, pinned,
   built, or deployed by this follow-up.
@@ -258,6 +258,110 @@ lifecycle: active
   Auth and 200 with the root-managed credential. The live password-reset page
   contains the service-tab UI. The initial index HTML rendered in 0.03 seconds,
   and cached/enriched index status rendered in 1.10 seconds.
+- The retained password-reset session exposed three follow-up defects in the
+  deployed package: its renamed `vpsfree-kb-contracts` clone was rejected only
+  because discovery reported the older local `vpsadmin-kb-captures` project
+  name; that per-session conflict also produced a workspace-wide index warning;
+  and a fresh message scanned more than ten history pages before submission,
+  leaving the long thread unable to continue after a model-capacity failure.
+- Rebased the still-unmerged workspace feature onto current `origin/master` and
+  committed the fixes at `9b630bb`. Repository aliases now require exact
+  nonempty branch and GitHub identity, accepted Codex sends retain durable
+  schema-3 turn receipts, targeted reconciliation streams all cursor pages
+  within its request deadline, structured failures render as readable errors,
+  and cluster services show labelled visible URLs.
+- The first mandatory-review pass found no blocking defect and one important
+  ledger-growth issue: accepted receipts remained until thread retirement. The
+  browser now acknowledges a send only after observing its user message in the
+  transcript; the server atomically removes only accepted receipts while
+  retaining prepared and submitting attempts. Focused tests cover compaction,
+  restart persistence, idempotent acknowledgement, and malformed or repeated
+  item-list pagination.
+- The first remediation rerun found two blocking acknowledgement handoff
+  cases, an important loss of diagnostics for unknown errors, and a commit
+  boundary issue. Acknowledgements are now restricted to retry records owned
+  by that browser, unresolved acknowledgements are verified against exact
+  transcript identity and text, and retries retained after compaction are
+  explicitly reconciled before submission. Failed local-record deletion keeps
+  the receipt visible and safely retryable. Error presentation is a separate
+  commit and preserves collapsed diagnostics for unknown structured shapes;
+  the visible cluster label now includes `Link:`.
+- The next rerun found that full message texts could overrun the JSON limit and
+  two browser/server interleavings remained possible. Acknowledgements now use
+  fixed-size SHA-256 digests, and a maximum 100-item batch is covered below the
+  transport ceiling. Retry records are tab-scoped, in-flight sends cannot be
+  acknowledged, lost responses trigger a fresh transcript check, and the
+  server serializes acknowledgement with the complete retry-and-send sequence.
+- Final affected-lane review found a cross-language whitespace mismatch in
+  browser-computed digests and an ordering error that made an observed
+  in-flight message eligible too early. Digests now derive from Codex's
+  canonical transcript text, with U+0085 boundary coverage, and transcript
+  observation preserves `sending` until the originating request settles.
+- The final architecture check identified that plan implementation did not
+  schedule the same lost-response reconciliation and that browser-visible text
+  had a second decoder. Both send flows now share the unknown-outcome refresh,
+  and the Go transcript decoder publishes the exact canonical digest used by
+  server reconciliation for the browser to return unchanged.
+- Final general and architecture reruns found no Blocking, Important, or
+  Advisory issues. The scope rerun found only a duplicated compatibility
+  decoder for structured Codex errors in browser JavaScript. Because the
+  server now owns this conversion and backward compatibility was explicitly
+  waived, the duplicate decoder and its legacy-shaped tests were removed and
+  folded into the error-presentation commit. Focused browser verification
+  passed afterward; affected review reruns are pending on the rewritten exact
+  head.
+- The risk rerun then found one Blocking response-loss gap: an accepted receipt
+  could be compacted from browser evidence without the server independently
+  proving the transcript item. A later retry after a lost acknowledgement
+  response could therefore submit again if Codex history were temporarily
+  incomplete. The server now verifies every acknowledgement against the exact
+  transcript client identity and canonical text digest, and accepted receipts
+  additionally require their recorded turn identity, before removing durable
+  state. Missing history retains the receipt; mismatched text or turns fail
+  closed. Focused tests cover all three cases, acknowledgement-response loss,
+  and serialization against a concurrent browser-tab retry. The remediation
+  is folded into the long-thread commit. Exact-head general,
+  architecture/concurrency, and risk reruns found no Blocking, Important, or
+  Advisory issues at `cbaa621`; the earlier scope rerun was also clean after
+  its sole advisory was applied.
+- Quick verification after the rebase passed all portal Go packages, the
+  browser unit contract, and `git diff --check`. The live portal, Codex, tmux,
+  worktrees, and password-reset cluster have not been changed by this follow-up.
+- Exact-head verification at `cbaa621` passed all portal Go packages; the
+  race-enabled Codex, Web, session, repository, and cluster packages; the
+  browser unit contract; 272 `dev-session` tests with 2,679 assertions; 45
+  development-cluster tests with 512 assertions; 50 `workspace-host` tests
+  with 309 assertions; and `git diff --check`. The complete Nix sandbox package
+  build passed at
+  `/nix/store/01k9qdrg11sh0lf8rk0d1gxb5s8if6n4-workspace-portal-0.1.0`.
+- Force-pushed the rewritten unpublished feature branch with an exact lease
+  from deployed head `4ef0e6e` to reviewed head `cbaa621`. `origin/master`
+  remained the reviewed base. GitHub reports no workflow run for the branch,
+  so no current or superseded run required action.
+- The final predeployment audit found all six materialized Codex threads idle,
+  with no pending prompt, queued message, lifecycle operation, or lifecycle
+  journal. The remaining managed session has no Codex thread. The schema-2
+  submission ledger contained no attempts, sends, deletions, or retirements;
+  no schema-3 ledger existed yet. The running password-reset cluster retained
+  PID `3779261`.
+- Switched the aitherdev user runtime from the unmerged workspace feature
+  worktree to package
+  `/nix/store/01k9qdrg11sh0lf8rk0d1gxb5s8if6n4-workspace-portal-0.1.0`.
+  Portal PID `3178882` changed to `3412771` and router PID `3178880` changed to
+  `3412769`, as intended. Codex PID `2323118`, tmux PID `2323117`, and the
+  password-reset cluster PID `3779261` were preserved.
+- Post-deployment Unix health returns 200. VPN HTTPS validates against the
+  published private CA, returns 401 without credentials, and returns 200 with
+  the root-managed Basic Auth credential. The new portal and router have no
+  warning-or-higher journal entries.
+- The live index now reports an empty global warning, 17 sessions, four
+  password-reset repositories, and its one running cluster. The password-reset
+  page accepts the verified `vpsfree-kb-contracts` alias and renders labelled
+  cluster links. Its 719-entry Codex transcript loads without a pagination
+  error; the retained model-capacity failure is presented as the readable
+  message `Selected model is at capacity. Please try a different model.` with
+  no raw JSON details. No message was sent and no session or cluster state was
+  mutated during verification.
 
 ## Commands run
 
@@ -728,7 +832,11 @@ lifecycle: active
   - `66a7415`: journal-bound adoption of retained legacy tracking and safe
     interrupted-reopen recovery;
   - `26ce0dc`: bounded handling of Codex's initial empty-rollout persistence
-    race without another initial submission.
+    race without another initial submission;
+  - `190974d`: strict repository-alias identity and session-local conflicts;
+  - `4cb8638`: cursor-safe long-thread reconciliation and durable send receipts;
+  - `b9cdb94`: structured Codex failure presentation;
+  - `cbaa621`: labelled cluster service links.
 - Configuration commits:
   - `e06c183e`: durable repository-local deployment/integration rule;
   - `f66ba792`: privileged wildcard HTTPS, credentials, router socket, linger,
@@ -749,7 +857,7 @@ lifecycle: active
   successfully inside `nix develop`; its untracked `.bin/` and `.bundle/`
   development-shell caches are excluded from commits.
 - The current reviewed workspace feature head is
-  `4ef0e6ef1b6422022549a690425ef8c0dc06854f`. It is pushed and deployed from
+  `cbaa621fb9b0b89ad4fba24a503b030927346a6b`. It is pushed and deployed from
   the unmerged feature worktree; it remains unmerged. The historical
   configuration feature head
   remains `e96431958b058ef495f491420655cfb7a4085fde`; it is outside this
