@@ -9,9 +9,17 @@ before examples: `JSON.parse: wrong number of arguments (given 2, expected 1)`.
 ActiveSupport JSON decoding supplies the options hash positionally, whereas
 that JSON release expects keyword arguments.
 
-For review against the committed packaged dependency set, seed the ignored
+For review against a compatible packaged dependency set, seed the ignored
 lockfile with `cp packages/api/Gemfile.lock api/Gemfile.lock`, then reenter
-`nix develop .#api`. The packaged lock selects JSON 2.21.2; Bundler installs
+`nix develop .#api`. The original PR lock selects JSON 2.21.2; Bundler installs
 the recorded 2.7.2 version if necessary. The rerun passed 20 payment examples
 and one isolated migration example. A later combined run passed all 27 payment
 and boundary-probe examples. This changes no tracked dependency files.
+
+Later master 41af23e20 also packaged the incompatible JSON 3.0.2 pair, so
+copying that newer lock is insufficient. The implementation constrains
+`json`, `< 3` in `api/Gemfile` and regenerates only the API package with
+`nix develop .#vpsadmin -c rake vpsadmin:gems:api`. The resulting lock and
+gemset select JSON 2.21.2 without changing other versions. The Nix API package
+build and packaged ActiveSupport decode / ActiveRecord serialization probe
+both passed. This fixes dependency resolution without converting stored JSON.
