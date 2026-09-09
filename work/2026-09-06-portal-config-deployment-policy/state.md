@@ -7,18 +7,14 @@ lifecycle: active
 ## Repositories
 
 - Workspace branch: `2026-09-06-portal-config-deployment-policy`
-- Planned worktree:
+- Worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/workspace`
-- Registered workspace base:
-  `c561cb9859b3217c0a8e5476af37c07a4332f060`; the feature was rebased and
-  rebuilt as a clean linear series on current workspace `master` at
-  `531fbf857f7a6797d4a79e208bebbf62e6347eb7`.
-- Configuration branch: `2026-09-06-portal-config-deployment-policy`
-- Planned configuration worktree:
-  `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/vpsfree-cz-configuration`
-- Configuration `master` baseline:
-  `4d570e3053b114518ada59c2a45d5e9d8644347b`. It may advance only to the
-  isolated repository-rule commit, never to the later portal pin.
+- Current workspace base: `b265b22ca0549a5a3574100ecdd7a2ae8d95b880`.
+- Current reviewed workspace head:
+  `c97b5d8b3ac3d58263f966edd6449c521524a8af`.
+- Current change and review scope: workspace repository only. The historical
+  configuration substrate branch remains unmerged but is not changed, pinned,
+  built, or deployed by this follow-up.
 
 ## Status
 
@@ -124,10 +120,166 @@ lifecycle: active
   on a separate restart approval after tests and review.
 - Rebased the clean unpublished workspace feature branch onto current
   `origin/master` before this follow-up. No live service or session was touched.
+- The user approved the final navigation and lifecycle design. Implementation
+  continues on the existing unpublished workspace feature branch. The scope is
+  empty reasoning-summary suppression, one lazy `Artifacts` tab, deterministic
+  journaled `archive`/`delete`/`revive` commands shared by browser and CLI, and
+  active-session ordering by real Codex or tracking activity. Archived sessions
+  are also ordered by their latest tracking activity. No compatibility aliases
+  are kept for the former public command names.
+- File upload remains deferred. The current aitherdev portal, Codex processes,
+  tmux sessions, and development clusters remain untouched during
+  implementation and local verification.
+- The final implementation is consolidated into seven coherent commits on
+  workspace base `b265b22`: Codex browser interaction, durable portal work
+  surface, deterministic lifecycle, user-profile deployment, and operating
+  documentation, followed by the strict package-transition runtime contract.
+  No configuration repository commit is mixed into this range.
+- Exact-head mandatory review found and remediated four cross-process contract
+  issues: lifecycle journal producers now derive paths from the shared command
+  map; cluster compatibility includes the shared tracking-size limit; every
+  mutating host command revalidates its package generation after acquiring the
+  transition lock; and custom runtime lifecycle locks use the host's canonical
+  runtime root. The unused eager artifact reader was removed.
+- The user-profile runtime on aitherdev remains at the previously deployed
+  package while review and sandbox verification finish. No live session,
+  Codex/tmux process, or development cluster has been restarted by this
+  follow-up.
+- A clean exact-head review rerun found that portal-owned lifecycle requests
+  did not retain the accepting portal's profile identity across their exclusive
+  lock wait, and that fail-closed cluster transition semantics were not part of
+  the rollback compatibility identity. The portal now binds its startup
+  profile-link identity to every mutation, including successful and compensated
+  A-to-B-to-A lifecycle waits. The shared cluster contract now versions the
+  transition policy independently of the persisted-state schema, so the new
+  host refuses rollback to permissive helpers while an old host can still
+  accept the forward package.
+- The duplicated Ruby profile-token wire format now has one shared source used
+  by both the stable host and private session CLI, and the package installs that
+  source beside both consumers.
+- Exact-head verification passed 233 `dev-session` tests with 2,483 assertions,
+  42 development-cluster tests with 464 assertions, and 42 `workspace-host`
+  tests with 281 assertions. All portal Go packages, Codex/Web race tests, the
+  shipped browser contract, Ruby and shell syntax, diff checks, and the complete
+  Nix sandbox build passed. The final package is
+  `/nix/store/a44hf7qh4aqq6sb8dpc0nhsgbw21rxl2-workspace-portal-0.1.0`.
+- A read-only predeployment audit found all six current-runtime Codex threads
+  idle with no pending request or queued message and found no archive, delete,
+  or revive journal. The portal/router and Codex/tmux services are active; the
+  Codex and tmux processes have not been restarted. The password-reset cluster
+  remains running at PID `3779261` with its recorded legacy socket identity.
+- The same audit found stopped, stale cluster state for
+  `2026-06-15-vpsadmin-events` and
+  `2026-08-12-dns-secondary-zone-transfer-failure`. Both retain generic legacy
+  socket identities, so the final fail-closed transition policy correctly
+  blocks deployment until those session-owned cluster states are explicitly
+  reset. No cluster state has been changed.
+
+- The user approved the lifecycle, Codex, repository, cluster, linkable-tab,
+  and nonblocking-index plan. Deployment from the unmerged development branch
+  is authorized without a separate prompt, but unrelated live sessions and
+  clusters must remain intact.
+- Archival of `2026-09-08-discourse-disable-chat` is stuck at durable phase
+  `thread_retired`. Its archive is committed at workspace head `3a40734`, its
+  work path and tmux session `$11` are absent, and no related process remains.
+  tmux 3.6a returns success with blank output for the missing `$11` target;
+  the current parser turns that blank response into a truthy empty session and
+  therefore refuses every retry.
+- The next deployment will first fix exact tmux identity validation, recover
+  only that stale authority under all lifecycle locks, finish its existing
+  archive journal, and deploy the already reviewed index change at workspace
+  head `30f8fd3` together with the repair.
+- The remaining implementation is split into non-overlapping lifecycle, Codex
+  protocol, and repository/cluster backend work. The primary agent owns the
+  shared web integration, full review, and live deployment.
+- Commit `c97b5d8` binds every managed tmux session to a random identity token,
+  journals creation before mutation, and makes start and fork retries
+  package-transition safe. Final `xhigh` review reproduced tmux 3.6a expanding
+  server-global environment fields for a missing exact target; the parser now
+  treats simultaneous empty session ID and name as absence while continuing to
+  reject partial or mismatched identities. All three final review reruns are
+  clean.
+- The supported archive retry completed
+  `2026-09-08-discourse-disable-chat`. Its stale archive journal and runtime
+  authority are gone, its committed archive at `3a40734` is unchanged, and no
+  unrelated tmux session or cluster was changed.
+- The reviewed repair was pushed and deployed as workspace profile package
+  `/nix/store/kralf8myf6x3yw5whwd0vhy409l22wll-workspace-portal-0.1.0`.
+  Portal and router are active, Codex retained PID `2323118`, every managed tmux
+  ID is unchanged, and the password-reset cluster retained PID `3779261`.
+  Direct portal access and authenticated VPN HTTPS return 200; unauthenticated
+  HTTPS returns 401. The live index renders in about 1.7--1.9 seconds.
+- Commit `315473b` implements asynchronous lifecycle progress with journaled
+  retry parameters, a filesystem-only initial index with bounded cached
+  enrichment, exact local-versus-GitHub repository head status, schema-2
+  cluster service/account presentation, fragment-linked session tabs, compact
+  Codex controls, transcript views, elapsed work status, and colorized diffs.
+  It remains on the unmerged workspace feature branch pending exact-head review
+  and live activation.
+- Quick verification passed all portal Go packages, 272 `dev-session` tests
+  with 2,679 assertions, 45 development-cluster tests with 509 assertions,
+  JavaScript contracts, shell/Ruby syntax, and diff checks. The complete Nix
+  sandbox build passed at
+  `/nix/store/gzipi6cp5kd84p5pm7rs4n4jy9allwji-workspace-portal-0.1.0`.
+- A separate candidate portal rendered the initial live index in 0.04 seconds
+  and its enriched status in 1.04 seconds. The password-reset session page
+  rendered in 2.69 seconds with grouped accounts, masked secrets, exact pushed
+  revisions, and current-revision workflow results. The candidate was stopped
+  afterward; the live portal, Codex, tmux, and cluster processes were not
+  changed.
+- The unpublished mixed UI change was rebuilt on `c97b5d8` as five focused
+  commits. Final head `4ef0e6e` includes deterministic lifecycle progress,
+  exact repository revision status, structured cluster services, responsive
+  session/index state, and separated Codex message/activity views.
+- Final browser reconciliation fixes make revive retry independent of
+  conditionally rendered header controls, keep an initially empty index
+  polling, and reload membership only from a complete status listing generated
+  after the current HTML. Membership includes active/archive placement, so
+  completed deletion, creation, archive, and revive changes cannot leave stale
+  cards or loop against an older five-second cache.
+- Exact-head verification passed all portal Go packages; race-enabled Codex,
+  cluster, repository, session, and Web packages; 272 `dev-session` tests with
+  2,679 assertions; 45 development-cluster tests with 512 assertions; the
+  browser contract; diff checks; and the full Nix sandbox package build.
+  General, architecture/concurrency, and risk/compatibility reviews at `xhigh`
+  reported no Blocking or Important findings on `4ef0e6e`.
+- Pushed exact head `4ef0e6e`. GitHub reports no workflow run for the branch.
+  The final pre-switch audit found no active Codex turn, pending prompt, queued
+  message, unresolved submission attempt, or lifecycle journal. One retained
+  password-reset thread was already in terminal `systemError`; the other
+  readable managed threads were idle.
+- Switched the aitherdev user runtime from the unmerged workspace feature
+  worktree to package
+  `/nix/store/qs9avkiqqvbq1467mbjk2vs71qvafq0x-workspace-portal-0.1.0`.
+  Portal and router restarted normally. Codex retained PID `2323118`, tmux
+  retained PID `2323117`, every managed tmux session ID is unchanged, and the
+  password-reset cluster retained PID `3779261`.
+- Post-deployment Unix health returns 200. VPN HTTPS returns 401 without Basic
+  Auth and 200 with the root-managed credential. The live password-reset page
+  contains the service-tab UI. The initial index HTML rendered in 0.03 seconds,
+  and cached/enriched index status rendered in 1.10 seconds.
 
 ## Commands run
 
+- Rebuilt the final feature history into five focused commits, compared its
+  tree byte-for-byte with the reviewed candidate, and pushed it normally as a
+  fast-forward from the last deployed feature head.
+- Ran the complete Go, race-enabled Go, Ruby lifecycle, Ruby cluster, browser,
+  diff, and Nix sandbox verification at exact head `4ef0e6e`.
+- Audited live Codex, queue, pending-request, submission, lifecycle, tmux, and
+  cluster state, then ran `workspace-host switch --source` from the unmerged
+  feature worktree and repeated process, service, HTTPS, and response-time
+  checks.
 - `dev-session current`
+- Re-ran the final tmux/session suite after the missing-target regression: 272
+  tests with 2,679 assertions passed. Workspace-host tests passed with 50 runs
+  and 309 assertions, all Go packages passed, and the final Nix package build
+  completed.
+- Recovered the stuck Discourse archive through the candidate generation's
+  public `dev-session archive` command under its normal transition and session
+  locks, then verified journal, authority, tmux, cluster, and Git state.
+- Pushed workspace head `c97b5d8` and switched the aitherdev user runtime from
+  the unmerged feature worktree with `workspace-host switch`.
 - `dev-session start portal-config-deployment-policy --no-codex --no-attach`
 - Inspected the current workspace rules and the configuration repository's
   local instruction topics.
@@ -415,6 +567,149 @@ lifecycle: active
   Direct portal HTTP and authenticated VPN HTTPS return 200, unauthenticated
   HTTPS returns 401, and the live restored transcript includes a rendered
   Markdown table.
+- The user reported that the deployed table styling made Codex messages overlap
+  in Firefox and that command-output disclosures did not behave reliably.
+  Reproduction against the live transcript confirmed that `overflow-x: auto`
+  on each Markdown message also made it a vertical overflow container, allowing
+  the transcript grid to collapse message rows.
+- The unpublished workspace feature now confines horizontal scrolling to
+  dedicated table wrappers, constrains transcript grid items, keeps command
+  details collapsed with a compact summary, and preserves disclosure and scroll
+  state across transcript refreshes. The transcript API and stored session data
+  are unchanged.
+- The focused Go test first failed because a minimal `nix shell` supplied Go but
+  no C compiler for cgo. Re-running with `nixpkgs#gcc` passed, and the reusable
+  shell requirement is recorded in
+  `notes/cross-project/2026-09-08-workspace-go-cgo-shell.md`.
+- JavaScript syntax and every Go package passed. The Ruby session, cluster, and
+  host suites passed with 278 tests and 2,601 assertions. A read-only Chromium
+  smoke test against the feature build rendered 248 live transcript entries
+  with no overlapping message rectangles, one correctly wrapped Markdown
+  table, hidden collapsed output, and retained expansion and scroll state after
+  refresh. The deployed portal and all live Codex and tmux processes remained
+  untouched.
+- Mandatory review classified the fix as low risk and used the general and
+  architecture/repetition lanes with `gpt-5.6-sol` at `xhigh`. Both lanes found
+  no Blocking or Important issues. General review was clean. Architecture
+  review advised collision-safe transcript invalidation and a stable fallback
+  key for the rare entry without upstream IDs.
+- Both advisories were folded into the owning unpublished commit. Transcript
+  invalidation now serializes the complete entry array, and ID-less entries use
+  their occurrence within a turn and event kind rather than their position in
+  the sliding transcript window. Focused JavaScript and web tests passed after
+  remediation. The narrow changes reduced the reviewed risk and did not require
+  a reviewer rerun.
+- The complete sandboxed package build passed at
+  `/nix/store/mh5dasqldyiz6q35gm0h9l0198fbjsc7-workspace-portal-0.1.0`.
+  Workspace commit `4eb6f80` was pushed normally; GitHub has no workflow runs
+  for the branch. Live profile generation 8 remains active pending explicit
+  approval for the brief portal/router restart.
+- The predeployment audit found six managed sessions with Codex threads. Every
+  thread is idle, with no pending request, queued message, or lifecycle
+  operation. The seventh managed tmux session has no Codex thread and has no
+  lifecycle operation. No removal, archive, or transition journal was found.
+  Browser-local drafts remain outside host visibility. The temporary test
+  portal, proxy, and browser were stopped after verification.
+- The user approved activation of the transcript readability fix. A fresh
+  pre-switch audit again found all six browser-managed Codex threads idle with
+  no pending requests, queued messages, or lifecycle operations. Switched the
+  user application to package
+  `/nix/store/mh5dasqldyiz6q35gm0h9l0198fbjsc7-workspace-portal-0.1.0`.
+  Portal and router restarted as expected; Codex PID `2323118` and tmux PID
+  `2323147` were preserved. The password-reset vpsAdmin cluster remained
+  running and ready at PID `3779261`.
+- Post-activation Firefox verification rendered 314 real transcript entries,
+  including user messages, with no adjacent message overlap and no
+  message-level vertical scrollboxes. All 160 command disclosures were hidden
+  while closed, visible while open, and hidden again after closing. The live
+  Markdown table was wrapped in its dedicated horizontal scroller. The live
+  stylesheet no longer makes whole Markdown messages overflow containers.
+- The final full local verification passed 233 `dev-session` tests with 2,483
+  assertions, 42 development-cluster tests with 466 assertions, and 40
+  `workspace-host` tests with 261 assertions across six seeds. All Go packages
+  passed, and the Codex and Web packages also passed with the race detector.
+- One initial sandbox build exposed a failure in the inherited transition-lock
+  test. The exact seed and 20 focused repetitions passed locally; after the
+  review remediations the complete host suite passed repeatedly.
+- The final compatibility review found that an intermediate commit advertised
+  transition policy 2 before the strict helper behavior existed. The unpublished
+  series was rewritten so intermediate commits carry no transition-policy
+  declaration; final commit `c7ac48f` introduces policy 2, monotonic forward
+  compatibility, fail-closed socket identity enforcement, and rollback tests
+  together. Duplicated legacy socket derivation was also centralized.
+- Exact-head verification passed 233 `dev-session` tests with 2,483 assertions,
+  44 development-cluster tests with 495 assertions, and 43 `workspace-host`
+  tests with 283 assertions. All portal Go packages, race-enabled Codex and Web
+  packages, JavaScript and shell/Ruby syntax, diff checks, and the complete Nix
+  sandbox build passed. The package is
+  `/nix/store/2b90h7bs1sp93npjxnmdz1svqhxa96jf-workspace-portal-0.1.0`.
+- General, architecture/repetition, and risk/compatibility review reruns used
+  `gpt-5.6-sol` at `xhigh` and found no actionable findings on exact head
+  `c7ac48f`. The final scope/proportionality rerun is in progress. No live
+  service, session, Codex/tmux process, or development cluster was changed.
+- The scope rerun advised removing the unused archived-lifecycle reader and the
+  private finalization wrapper that retained obsolete `check` and `prepare`
+  modes. Commit `61295dc` removes that production surface, keeps isolated move
+  testing in a test-only core helper, and routes the active-turn refusal test
+  through supported `archive`. The exact-head `dev-session` suite now passes
+  230 tests with 2,435 assertions, and the final package passes at
+  `/nix/store/lgh2l8ab6af96zngap2crc43c1m84lxg-workspace-portal-0.1.0`.
+- General, architecture/repetition, scope/proportionality, and
+  risk/compatibility review reruns are clean on exact head `61295dc`. All used
+  `gpt-5.6-sol` at `xhigh`.
+- Force-pushed the rewritten unpublished feature branch with an exact lease.
+  GitHub reports no workflow run for the branch, so there is no superseded run
+  to cancel and no CI result to await.
+- A final read-only activation audit found all eight materialized Codex threads
+  idle, with no pending request, queued message, or unresolved submission. No
+  archive, delete, revive, or submission journal exists. The two stopped
+  vpsAdmin cluster states have canonical workspace-scoped socket identities;
+  the running password-reset cluster retains its explicit owner-proven legacy
+  socket identity. No session or cluster state was changed.
+- Activation now requires the user's explicit approval for the brief portal and
+  router restart. The switch is designed to preserve the Codex App Server,
+  managed tmux server, conversations, and all development clusters.
+- The user approved activation. The first real command contained a mistyped
+  worktree path and stopped before doing anything. The corrected switch passed
+  package selection but its Codex preflight found that the new activity-index
+  `thread/list` call was absent from the protocol request corpus. It stopped
+  before profile mutation or service restart.
+- Commit `00f75ce` adds the exact request sample and a schema-independent corpus
+  coverage mode to the sandbox package checks. The complete package rebuilt at
+  `/nix/store/k3xysa77lwqw20zhnhqcqv534rpm5fs1-workspace-portal-0.1.0`, and
+  its full activation-time validator accepts installed Codex 0.153.4. A narrow
+  general and risk/compatibility review at `xhigh` found no actionable finding.
+- Repeated the idle, journal, cluster, and GitHub Actions audit, then switched
+  user profile generation 10 from the unmerged feature worktree. The deployed
+  package is
+  `/nix/store/zcpy4xp2ivs348b66rg5zdnx79z2wvnc-workspace-portal-0.1.0`.
+  Portal and router restarted successfully. Codex PID `2323118`, tmux PID
+  `2323117`, and password-reset cluster PID `3779261` were preserved; both stale
+  cluster states also remain unchanged.
+- Direct Unix-socket access returns 200. VPN HTTPS returns 401 without
+  credentials and 200 with the root-managed Basic Auth credential; the deployed
+  session page contains the Artifacts interface. The current long-lived shell
+  predates membership in `workspace-portal-owner`, so the authenticated check
+  used a fresh process with that supplementary group and did not print the
+  password.
+- A post-switch read-only audit found a newly active turn in
+  `2026-06-15-vpsadmin-events`; it became active after the clean pre-switch
+  audit and continues on the preserved App Server. It was not interrupted or
+  inspected. The other seven materialized threads are idle, and no lifecycle
+  or submission journal exists.
+- A direct post-deployment index probe then exposed a live performance defect:
+  the request spent its deadline starting both cluster helpers for every active
+  and archived session, and the unscoped Codex `thread/list` activity scan could
+  not finish against the long-lived rollout store. Session pages and exact
+  thread RPCs remained responsive; no Codex or cluster process failed.
+- Commit `30f8fd3` reads activity only for exact manifest thread identities,
+  skips cluster helpers when no provider state entry exists, and inspects the
+  two providers concurrently. The shared lock-directory initializer now safely
+  postvalidates a concurrent creator. Race-enabled cluster/Codex/Web tests, all
+  44 cluster tests with 495 assertions, and the complete package build passed.
+  A separate candidate portal rendered the live index in 1.716 seconds while
+  the events turn remained active. Review is in progress before redeployment;
+  the temporary portal and its socket were removed.
 
 ## Results
 
@@ -453,10 +748,12 @@ lifecycle: active
   the ambient shell. Both configuration commits ran their declared hooks
   successfully inside `nix develop`; its untracked `.bin/` and `.bundle/`
   development-shell caches are excluded from commits.
-- The committed and pushed workspace feature head is
-  `050eca27c95e557357c84339c0d86ee1ffa35325`; the committed and pushed
-  configuration feature head is
-  `e96431958b058ef495f491420655cfb7a4085fde`.
+- The current reviewed workspace feature head is
+  `4ef0e6ef1b6422022549a690425ef8c0dc06854f`. It is pushed and deployed from
+  the unmerged feature worktree; it remains unmerged. The historical
+  configuration feature head
+  remains `e96431958b058ef495f491420655cfb7a4085fde`; it is outside this
+  follow-up.
 - The handoff helper cannot bind this API-owned process to an initiative because
   `VPSFREE_DEV_SESSION_SLUG` is unset. The explicit initiative is unchanged;
   its canonical post-deployment URL is
