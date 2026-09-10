@@ -1,32 +1,54 @@
 {
-  description = "vpsFree.cz development workspace tools";
+  description = "vpsFree.cz development workspace policy and records";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/a8be458b9db18033bc468a57de4981cf9d52979e";
   };
 
   outputs =
-    inputs@{
-      self,
+    {
       nixpkgs,
+      vpsfree-dev-workspace,
       ...
     }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
-      workspacePortal = pkgs.callPackage ./nix/workspace-portal.nix {
-        src = self;
+      siteConfig = {
+        kb = {
+          cz = {
+            url = "https://kb.vpsfree.cz";
+            tokenPath = "/home/aither/.codex/codex-kb-vpsfree-cz-aither-key";
+            stagingUrl = "http://kb-cs.aitherdev.int.vpsfree.cz";
+            stagingPasswordPath = "/home/aither/.codex/codex-kb-staging-cz-aither-password";
+          };
+          org = {
+            url = "https://kb.vpsfree.org";
+            tokenPath = "/home/aither/.codex/codex-kb-vpsfree-org-aither-key";
+            stagingUrl = "http://kb-en.aitherdev.int.vpsfree.cz";
+            stagingPasswordPath = "/home/aither/.codex/codex-kb-staging-org-aither-password";
+          };
+          stagingUsername = "aither";
+          stageContainerctl = "/run/current-system/sw/bin/kb-staging-containerctl";
+        };
+        clusterDefaults = {
+          vpsadmin = ./config/vpsadmin-devcluster.json;
+          vpsadminos = ./config/vpsadminos-devcluster.json;
+        };
+      };
+      package = vpsfree-dev-workspace.lib.mkPackage {
+        inherit pkgs siteConfig;
       };
     in
     {
       packages.${system} = {
-        default = workspacePortal;
-        workspace-host = workspacePortal;
-        workspace-portal = workspacePortal;
+        default = package;
+        vpsfree-dev-workspace = package;
       };
       apps.${system}.workspace-host = {
         type = "app";
-        program = "${workspacePortal}/bin/workspace-host";
+        program = "${package}/bin/workspace-host";
       };
     };
 }
