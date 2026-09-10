@@ -2,131 +2,162 @@
 
 ## Goal
 
-Split the development workspace into three components:
+Split the development environment into four layers:
 
-- `vpsfree-cz-workspace`: initiative records, durable notes, workspace policy,
-  local bare repositories and worktrees, plus a thin flake that selects the
-  installed tooling.
-- `dev-workspace`: reusable development-session lifecycle, portal shell,
-  host/profile management, packaged workspace skills, and optional
-  vpsAdmin/vpsAdminOS cluster providers.
-- `codex-web`: reusable Go and browser integration for Codex App Server
-  conversations, with an example application.
+- `codex-web`: reusable Codex App Server conversation integration.
+- `dev-workspace`: reusable session, portal, profile and host runtime.
+- `vpsfreecz/dev-workspace`: vpsFree-specific commands, skills and development
+  cluster providers, parameterized by a consuming workspace.
+- `vpsfree-cz-workspace`: development records, policy and the concrete
+  aitherdev/domain configuration.
 
-The new repositories are public and MIT licensed. Their SSH remotes are:
+The final dependency direction is:
 
 ```text
-git@github.com:aither64/dev-workspace.git
-git@github.com:aither64/codex-web.git
+vpsfree-cz-workspace
+  -> vpsfreecz/dev-workspace
+  -> aither64/dev-workspace
+  -> aither64/codex-web
 ```
 
-Both new repositories use `master` as the default branch. The workspace
-`AGENTS.md` will list them in the Project Map and record these exact remotes as
-narrow exceptions to the normal `vpsfreecz` organization rule.
+`vpsfree-cz-configuration` separately consumes the same generic
+`aither64/dev-workspace` revision for the privileged host module.
 
-## Affected repositories
+## Repositories
 
-- `vpsfree-cz-workspace`, branch `2026-09-09-workspace-components` in
-  `worktrees/2026-09-09-workspace-components/workspace`.
-- `dev-workspace`, branch `2026-09-09-workspace-components` in
-  `worktrees/2026-09-09-workspace-components/dev-workspace`.
-- `codex-web`, branch `2026-09-09-workspace-components` in
-  `worktrees/2026-09-09-workspace-components/codex-web`.
-- `vpsfree-cz-configuration`, branch `2026-09-09-workspace-components` in
-  `worktrees/2026-09-09-workspace-components/vpsfree-cz-configuration`.
+Use these SSH remotes:
 
-The dependency direction is
-`vpsfree-cz-workspace -> dev-workspace -> codex-web`.
+```text
+git@github.com:aither64/codex-web.git
+git@github.com:aither64/dev-workspace.git
+git@github.com:vpsfreecz/dev-workspace.git
+git@github.com:aither64/vpsfree-cz-workspace.git
+git@github.com:vpsfreecz/vpsfree-cz-configuration.git
+```
+
+The two `dev-workspace` repositories share a basename. Keep the existing
+generic repository under local project name `dev-workspace` and use local
+project name `vpsfree-dev-workspace` for `vpsfreecz/dev-workspace`.
 
 ## Implementation
 
-1. Seed both empty repositories from disposable, path-filtered clones of
-   workspace baseline `3580e60bb035c2d0ba5be6f0d2489bbbf30ded3d`. Add MIT
-   licenses, provenance READMEs, repository-specific `AGENTS.md` files and
-   verified CI before starting their dated feature branches.
-2. Extract the portal, session helpers, host/profile manager, cluster sources,
-   tests and operational documentation into `dev-workspace`. Package the KB
-   helpers and reusable vpsFree skills as a separate compatibility output so
-   the core application remains reusable.
-3. Export `nixosModules.host` under `services.dev-workspaces`. Its secure
-   preset provides generated basic authentication, local-CA TLS, nginx
-   proxying and a closed firewall until source networks are configured. The
-   module owns stable host resources, not the user application.
-4. Source Codex unchanged from
-   `numtide/llm-agents.nix@c2a308c84bbfa9f30827344219b7284f8104bdd8`,
-   currently version 0.153.4. Preserve Numtide's pinned nixpkgs and package
-   derivation. The user-profile application owns this runtime and retains the
-   preceding profile generation for rollback.
-5. Convert `vpsfree-cz-workspace` to a records and policy checkout. Its thin
-   flake re-exports `dev-workspace-vpsfree` with the current package and app
-   names. Remove executable tooling only after the installed package and a
-   second empty workspace pass compatibility tests.
-6. Add `devWorkspace` to `vpsfree-cz-configuration` through `confctl`, replace
-   aitherdev's inline workspace substrate with the host module and preserve all
-   existing credentials, paths, hostnames, groups, sockets and network policy.
-   Keep the shared bridge, DHCP and NAT configuration owned by aitherdev.
-7. Deploy this parity-preserving `dev-workspace` stage and test a rollback.
-   Then extract `codex-web`, port the portal to its public Go and ES-module API,
-   deploy the second profile generation and test rollback again.
+1. Make the tracked trees of `codex-web` and generic `dev-workspace` contain
+   no case-insensitive `vpsfree` or `aitherdev` matches. Preserve published Git
+   history and enforce the current-tree boundary in flake checks.
+2. Rename the generic runtime namespaces: `VPSFREE_DEV_SESSION_*` becomes
+   `DEV_SESSION_*`, `VPSFREE_WORKSPACES_*` becomes `DEV_WORKSPACES_*`, and the
+   singleton workspace, host-mode and dev-cluster variables receive equivalent
+   generic names. Rename Ruby modules and tmux metadata in the same change.
+3. Replace the hard-coded vpsAdmin/vpsAdminOS integration with a package-owned,
+   strictly validated extension catalog. The catalog declares exported
+   commands, installed Codex skills and development-cluster providers. A
+   workspace may select provider IDs, but executable paths and labels come
+   only from the immutable package catalog.
+4. Expose a Nix package-construction interface from generic `dev-workspace`.
+   Remove its vpsFree package variant, KB tooling, skills, provider sources and
+   organization-specific documentation.
+5. Bootstrap the empty public `vpsfreecz/dev-workspace` repository from
+   filtered relevant history. Keep a neutral default-branch root and replay
+   the extracted history on the dated feature branch so later integration can
+   fast-forward. The repository owns KB tooling, all currently bundled skills,
+   vpsAdmin/vpsAdminOS providers and the one-time namespace migration helper.
+   Its tracked tree must contain no case-insensitive `aitherdev` matches.
+6. Require concrete site configuration when building the vpsFree package.
+   Move aitherdev KB endpoints and vpsAdmin cluster defaults into
+   `vpsfree-cz-workspace`. Extend `.dev-workspace.json` to carry the portal
+   hostname and aliases as workspace configuration. Keep privileged TLS,
+   nginx, firewall and DNS values in `vpsfree-cz-configuration`.
+7. Move the inline host checks out of generic `flake.nix`: evaluation checks
+   go in `nix/tests/host-module.nix` and the NixOS VM goes in
+   `nix/tests/host-module-idempotency.nix`.
+8. Keep the existing GitHub Actions checks in `codex-web` and generic
+   `dev-workspace`. Add the same complete flake check to
+   `vpsfreecz/dev-workspace`, using verified current official actions.
 
 ## Public interfaces
 
-`dev-workspace` exports the `dev-workspace` and `dev-workspace-vpsfree`
-packages, compatibility aliases `workspace-portal` and `workspace-host`, the
-current commands and user units, `nixosModules.host`, and
-`nixosConfigurations.example`. Existing `VPSFREE_*` environment variables,
-runtime paths and command contracts remain unchanged during the split.
+Generic runtime variables use the prefixes `DEV_SESSION_*` and
+`DEV_WORKSPACES_*`. The remaining public names are `DEV_WORKSPACE_NAME`,
+`DEV_WORKSPACE_HOST_MODE`, `DEVCLUSTER_WORKSPACE` and
+`DEV_SESSION_LIFECYCLE_*`. Generic tmux options use `@dev_session*` names.
+There are no legacy environment or tmux aliases after cutover.
 
-`codex-web` uses module path `github.com/aither64/codex-web`. It exports a Go
-App Server client, secured conversation HTTP handlers and embedded assets. The
-browser entry point is `mountConversation(element, options)` and returns an
-unmount function. An application resolver maps an opaque conversation ID to a
-trusted App Server connection, thread ID, canonical working directory and
-explicit capabilities on every request. Browser input cannot select these
-resources. Version 0.1 supports Unix sockets only.
+Generic user state defaults to:
 
-Workspace actions such as session creation, plan implementation, archive,
-delete, artifacts, repositories and clusters remain in `dev-workspace`.
-`codex-web` exposes callbacks for application actions without implementing
-workspace policy.
+```text
+~/.config/dev-workspaces
+~/.local/state/dev-workspaces
+$XDG_RUNTIME_DIR/dev-workspaces
+```
 
-## Compatibility and deployment
+Generic host state defaults to:
 
-The first two deployments do not change manifest schemas, lifecycle or
-creation journals, runtime authorities, operation receipts, submission-ledger
-schema v3, cluster state/socket identities, registry data, profile-generation
-identity, thread IDs, working directories, tmux identities, URLs or credential
-material. New code must read state created by the deployed package, and the
-previous profile generation must read all state written during the test.
+```text
+/run/dev-workspaces/router.sock
+/run/lock/dev-workspaces-substrate.lock
+/var/lib/dev-workspaces/password/password
+/var/lib/dev-workspaces/auth/htpasswd
+/var/lib/dev-workspaces/pki
+/var/lib/dev-workspaces/tls
+/var/lib/dev-workspaces/public/ca.pem
+```
 
-Run profile transitions only when no lifecycle journal is unfinished and every
-managed conversation is idle. Recheck that the independent controller is
-outside the managed Codex and tmux service cgroups before each transition.
+The extension catalog is package-owned and schema-versioned. Provider entries
+contain an ID, display label, executable and state-directory identity. Helpers
+retain the existing `status`, `reset`, `cleanup-paths` and `transition-adopt`
+protocol, but receive the workspace through `DEVCLUSTER_WORKSPACE`.
 
-Deployment to aitherdev is authorized. Default-branch integration, releases,
-archival, deletion and session stopping require a separate explicit request.
-When integration is authorized, fast-forward in this order: `codex-web`,
-`dev-workspace`, `vpsfree-cz-workspace`, then `vpsfree-cz-configuration`.
+Workspace configuration schema 2 retains display, host and SSH labels, adds a
+`portal` mapping with `hostname` and `aliases`, and selects provider IDs. The
+registry stores the resolved domain snapshot. CLI hostname flags remain
+available as explicit overrides.
+
+## Compatibility and migration
+
+This is an intentional one-time incompatible namespace cutover. Mixed old and
+new runtime clients are unsupported. The migration must run only when all
+conversations are idle and no lifecycle operation is unfinished.
+
+A journaled vpsFree migration helper moves the user registry, profile and
+runtime roots; updates live tmux environment/options and runtime authority
+paths; and supports an exact reverse operation. Machine-consumed `portal.yml`
+socket paths are updated in the coordination checkout after a fresh inventory.
+Historical prose remains unchanged.
+
+The root-owned password, auth, CA, TLS and public-CA directories move into the
+generic host state layout. The exact password, CA, leaf certificate, private
+keys, selected pair, ownership and modes must be preserved. New targets must
+be absent before migration. Keep a private rollback journal until the user
+accepts the deployed result.
+
+Deployment order is `codex-web`, generic `dev-workspace`, vpsFree
+`dev-workspace`, `vpsfree-cz-workspace`, then `vpsfree-cz-configuration` and
+the user-profile cutover. On failure, stop new services, reverse the journaled
+state move, select the previous system and profile generations, and verify the
+original hashes before restart.
+
+Deployment to aitherdev is authorized. Default-branch integration of the
+feature repositories, releases, archival, deletion and session stopping are
+not authorized.
 
 ## Testing and review
 
-- Run race-enabled Go tests, Ruby helper suites, browser contract tests,
-  JavaScript checks through Nix, Codex protocol-corpus coverage, shell checks,
-  Nix formatting/evaluation and complete flake/package builds.
-- Test exact-origin and per-operation authorization, rejection of arbitrary
-  thread/socket/cwd selection, payload limits, Markdown sanitization,
-  interactions, durable retry receipts and private state permissions.
-- Exercise send, steer, queue/retry, reconnect, settings, questions, approvals,
-  interrupt and event-stream recovery through the standalone `codex-web`
-  example.
-- Register a second empty workspace using only installed packages and verify
-  that current sessions retain their identities and transcripts through both
-  upgrades and rollbacks.
-- Before long integration tests for each deployable stage, commit all intended
-  changes, run quick checks, then perform the mandatory high-risk review using
-  General, Architecture, Scope and Risk lanes with `gpt-5.6-sol` at `xhigh`.
-- Push dated branches, monitor GitHub Actions, investigate every failure and
-  cancel only superseded runs whose SHA is no longer current.
+- Run focused Go, Ruby, Node and Nix checks in each repository.
+- Test strict extension-catalog validation, collisions, provider selection,
+  absent providers and transitions with existing provider state.
+- Test the namespace migration and reversal in isolated fixtures, including
+  occupied targets, unsafe links or mounts, interrupted retries, malformed
+  authorities and exact credential/CA preservation.
+- Test the extracted host module checks, then commit and push immutable heads.
+- Run the mandatory high-risk General, Architecture, Scope and Risk review
+  lanes with `gpt-5.6-sol` at `xhigh` before long NixOS VM and full integration
+  checks.
+- Require successful exact-head GitHub Actions in both generic repositories
+  and `vpsfreecz/dev-workspace`.
+- Live acceptance requires the same domains, TLS identity, credentials,
+  conversation thread IDs and workspace roots; restored terminal sessions;
+  working KB commands and both cluster providers; and no active old runtime
+  paths.
 
-No database, vpsAdmin API, daemon protocol, deployed node or coordinated
-vpsAdminOS machine change is part of this initiative.
+No database, vpsAdmin API, daemon protocol or deployed vpsAdminOS node change
+is part of this initiative.
