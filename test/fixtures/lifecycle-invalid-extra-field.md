@@ -1,4 +1,0 @@
----
-lifecycle: active
-owner: agent
----

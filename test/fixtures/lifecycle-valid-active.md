@@ -1,5 +1,0 @@
----
-lifecycle: active
----
-
-# Active initiative

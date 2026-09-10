@@ -1,5 +1,0 @@
----
-lifecycle: complete
----
-
-# Complete initiative
