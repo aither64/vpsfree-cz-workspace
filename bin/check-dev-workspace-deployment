@@ -1,0 +1,140 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'open3'
+require 'optparse'
+require 'pathname'
+
+module DevWorkspaceDeploymentContract
+  class Error < StandardError; end
+
+  class Checker
+    def initialize(argv, out: $stdout)
+      @options = {
+        workspace_root: File.expand_path('..', __dir__),
+        nix: ENV.fetch('NIX_COMMAND', 'nix')
+      }
+      @out = out
+      parse!(argv)
+    end
+
+    def run
+      workspace = load_json(File.join(@options.fetch(:workspace_root), '.dev-workspace.json'))
+      site = evaluate_site
+      verify_site!(workspace, site)
+      workspace_generic = locked_input(
+        load_lock(@options.fetch(:workspace_root)),
+        %w[vpsfree-dev-workspace dev-workspace]
+      )
+      configuration_generic = locked_input(
+        load_lock(@options.fetch(:configuration_root)),
+        %w[devWorkspace]
+      )
+      unless workspace_generic == configuration_generic
+        raise Error, 'workspace and host configuration select different generic runtimes'
+      end
+
+      @out.puts "deployment contract passed for #{site.fetch('hostName')} at #{workspace_generic.fetch('rev')}"
+    end
+
+    private
+
+    def parse!(argv)
+      parser = OptionParser.new do |opts|
+        opts.banner = 'Usage: check-dev-workspace-deployment --configuration-root PATH [options]'
+        opts.on('--workspace-root PATH') { |value| @options[:workspace_root] = absolute(value) }
+        opts.on('--configuration-root PATH') { |value| @options[:configuration_root] = absolute(value) }
+      end
+      parser.parse!(argv)
+      raise Error, '--configuration-root is required' unless @options[:configuration_root]
+      raise Error, 'unexpected arguments' unless argv.empty?
+    rescue OptionParser::ParseError => e
+      raise Error, e.message
+    end
+
+    def absolute(path)
+      raise Error, "path must be absolute: #{path}" unless Pathname.new(path).absolute?
+
+      File.realpath(path)
+    rescue Errno::ENOENT, Errno::EACCES, Errno::ELOOP => e
+      raise Error, "cannot resolve path #{path}: #{e.message}"
+    end
+
+    def evaluate_site
+      path = File.join(
+        @options.fetch(:configuration_root),
+        'cluster/cz.vpsfree/machines/aitherdev/dev-workspace-site.nix'
+      )
+      output, error, status = Open3.capture3(@options.fetch(:nix), 'eval', '--json', '--file', path)
+      raise Error, "cannot evaluate aitherdev site contract: #{error.strip}" unless status.success?
+
+      JSON.parse(output)
+    rescue JSON::ParserError => e
+      raise Error, "aitherdev site contract is malformed: #{e.message}"
+    end
+
+    def verify_site!(workspace, site)
+      unless workspace.is_a?(Hash) && site.is_a?(Hash)
+        raise Error, 'workspace registration or aitherdev portal identity is malformed'
+      end
+
+      portal = workspace['portal']
+      unless workspace['schema'] == 2 && portal.is_a?(Hash) &&
+             site.keys.sort == %w[aliases hostName wildcardHost] &&
+             portal['hostname'] == site['hostName'] && portal['aliases'] == site['aliases']
+        raise Error, 'workspace registration and aitherdev portal identity differ'
+      end
+      wildcard = site.fetch('wildcardHost').split('.')
+      hostname = site.fetch('hostName').split('.')
+      unless wildcard.first == '*' && wildcard.drop(1) == hostname.drop(1)
+        raise Error, 'aitherdev wildcard does not cover the canonical workspace hostname'
+      end
+    rescue KeyError, NoMethodError
+      raise Error, 'workspace registration or aitherdev portal identity is malformed'
+    end
+
+    def load_lock(root)
+      lock = load_json(File.join(root, 'flake.lock'))
+      unless lock.is_a?(Hash) && lock['root'].is_a?(String) && lock['nodes'].is_a?(Hash)
+        raise Error, "flake lock is malformed: #{root}"
+      end
+      lock
+    end
+
+    def load_json(path)
+      JSON.parse(File.binread(path, 16 * 1024 * 1024 + 1))
+    rescue JSON::ParserError, Errno::ENOENT, Errno::EACCES => e
+      raise Error, "cannot read JSON #{path}: #{e.message}"
+    end
+
+    def locked_input(lock, path)
+      node = lock.fetch('nodes').fetch(lock.fetch('root'))
+      path.each do |name|
+        reference = node.fetch('inputs').fetch(name)
+        raise Error, "indirect flake input is unsupported: #{name}" unless reference.is_a?(String)
+
+        node = lock.fetch('nodes').fetch(reference)
+      end
+      locked = node.fetch('locked')
+      identity = locked.slice('type', 'owner', 'repo', 'rev')
+      unless identity.keys.sort == %w[owner repo rev type] &&
+             identity['type'] == 'github' && identity['owner'] == 'aither64' &&
+             identity['repo'] == 'dev-workspace' && identity['rev'].to_s.match?(/\A[0-9a-f]{40}\z/)
+        raise Error, 'flake input has no exact GitHub identity'
+      end
+      identity
+    rescue KeyError => e
+      raise Error, "flake input path is missing: #{e.message}"
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  begin
+    DevWorkspaceDeploymentContract::Checker.new(ARGV).run
+  rescue DevWorkspaceDeploymentContract::Error => e
+    warn "check-dev-workspace-deployment: #{e.message}"
+    exit 1
+  end
+end
