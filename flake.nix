@@ -40,24 +40,15 @@
       package = vpsfree-dev-workspace.lib.mkPackage {
         inherit pkgs siteConfig;
       };
-      migrationBridge = vpsfree-dev-workspace.lib.mkPackage {
-        activationEnvironmentAliases = [ "VPSFREE_WORKSPACE_ACTIVATION" ];
-        inherit pkgs siteConfig;
-        routerSocket = "/run/vpsfree-workspace-router/router.sock";
-        userNamespace = "vpsfree-workspaces";
-      };
     in
     {
       packages.${system} = {
-        default = migrationBridge;
-        migration-bridge = migrationBridge;
-        vpsfree-dev-workspace = migrationBridge;
-        workspace-host = migrationBridge;
-        workspace-portal = migrationBridge;
+        default = package;
+        vpsfree-dev-workspace = package;
       };
       apps.${system}.workspace-host = {
         type = "app";
-        program = "${migrationBridge}/bin/workspace-host";
+        program = "${package}/bin/workspace-host";
       };
     };
 }
