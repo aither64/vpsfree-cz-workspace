@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
-    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/a8be458b9db18033bc468a57de4981cf9d52979e";
+    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/3e3f0ff7c2d23f08f19887822efa12f969bbb56f";
   };
 
   outputs =
@@ -40,15 +40,24 @@
       package = vpsfree-dev-workspace.lib.mkPackage {
         inherit pkgs siteConfig;
       };
+      migrationBridge = vpsfree-dev-workspace.lib.mkPackage {
+        activationEnvironmentAliases = [ "VPSFREE_WORKSPACE_ACTIVATION" ];
+        inherit pkgs siteConfig;
+        routerSocket = "/run/vpsfree-workspace-router/router.sock";
+        userNamespace = "vpsfree-workspaces";
+      };
     in
     {
       packages.${system} = {
-        default = package;
-        vpsfree-dev-workspace = package;
+        default = migrationBridge;
+        migration-bridge = migrationBridge;
+        vpsfree-dev-workspace = migrationBridge;
+        workspace-host = migrationBridge;
+        workspace-portal = migrationBridge;
       };
       apps.${system}.workspace-host = {
         type = "app";
-        program = "${package}/bin/workspace-host";
+        program = "${migrationBridge}/bin/workspace-host";
       };
     };
 }
