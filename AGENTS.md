@@ -40,7 +40,7 @@ that slug.
 When running inside an existing development session, do not choose a new slug
 until checking for the active one. Run `dev-session current` from the workspace
 root. Treat the printed slug as belonging to the
-current process only when the `VPSFREE_DEV_SESSION_SLUG` environment variable
+current process only when the `DEV_SESSION_SLUG` environment variable
 is also set to that exact slug. If `current` prints a slug but the environment
 variable is missing or different, assume it belongs to another concurrent
 session and do not touch that session's `work/<slug>/`, `worktrees/<slug>/`,
@@ -91,6 +91,19 @@ Clone and push repositories over SSH. Use remotes in this form:
 ```text
 git@github.com:vpsfreecz/<project>.git
 ```
+
+The reusable workspace components are narrow exceptions to the organization
+rule above. Use these exact SSH remotes:
+
+```text
+git@github.com:aither64/dev-workspace.git
+git@github.com:aither64/codex-web.git
+```
+
+The organization extension repository has the same basename as the generic
+runtime. Refer to it as `vpsfree-dev-workspace` in local project names,
+worktrees, and session registration, while keeping its canonical remote as
+`git@github.com:vpsfreecz/dev-workspace.git`.
 
 Do not use HTTPS remotes for normal development pushes. If an existing checkout
 uses HTTPS, switch `origin` to the SSH URL before pushing. GitHub tokens may be
@@ -283,7 +296,7 @@ guessing. When plans change because code or tests reveal new facts, update the
 tracking notes.
 
 After material changes, review checkpoints, or user-requested status updates,
-use `skills/dev-session-handoff/SKILL.md`. Keep the initiative portal manifest
+use `~/.codex/skills/dev-session-handoff/SKILL.md`. Keep the initiative portal manifest
 current and include the stable link printed by
 `dev-session url <slug> --as-is` in the handoff. If the portal has not been
 deployed yet, identify it as the post-deployment URL.
@@ -347,7 +360,7 @@ schema, API, protocol, configuration, documentation, deployment, or security
 impact, run the `mandatory-change-review` skill after all intended changes are
 committed and quick local verification has passed, but before starting long
 integration tests. The canonical workflow is
-`skills/mandatory-change-review/SKILL.md`; it owns reviewer model and effort,
+`~/.codex/skills/mandatory-change-review/SKILL.md`; it owns reviewer model and effort,
 adaptive lane selection, review packets, finding reconciliation, reruns, and
 recording requirements. Follow it exactly, including its skip criteria.
 Always use `xhigh` reasoning effort for review agents and review reruns,
@@ -388,7 +401,7 @@ If the work needs an additional kernel output, update the vpsAdminOS CI builder
 to build and publish that output as part of the same initiative instead of
 relying on recurring local builds.
 
-When running `dev-clusters/vpsadmin/bin/devcluster`, use the bridge network by
+When running `vpsadmin-devcluster`, use the bridge network by
 default. Do not choose `--network local` unless the user explicitly asks for it
 or the bridge network is genuinely unavailable; if local networking is used,
 record the reason in the initiative state.
@@ -463,7 +476,7 @@ Use the same tag value in every language variant, and always derive it from the
 English KB page ID. The real DokuWiki page IDs remain language-specific.
 
 For all user-facing prose, use the workspace skill in
-`skills/vpsfree-user-facing-writing/SKILL.md`. This applies to KB pages,
+`~/.codex/skills/vpsfree-user-facing-writing/SKILL.md`. This applies to KB pages,
 vpsAdmin documentation and interface copy, user-visible errors and help, mail
 templates, website copy, and member-facing release or operational messages.
 The agent that owns the task context must apply the skill directly after the
@@ -482,8 +495,8 @@ prose.
 
 For vpsAdmin changes that can affect visible WebUI documentation, follow the
 canonical workflow in `vpsfree-kb-contracts/docs/webui-change-workflow.md`.
-Use `bin/kb-contract-fetch`, `bin/kb-contract-build`, and
-`bin/kb-contract-manifest` for durable all-page candidate preparation; keep
+Use `kb-contract-fetch`, `kb-contract-build`, and
+`kb-contract-manifest` for durable all-page candidate preparation; keep
 capture generation and the documentation contract in the independent capture
 repository.
 
@@ -500,17 +513,17 @@ remote `master` before it writes production pages.
   `/home/aither/.codex/codex-kb-vpsfree-org-aither-key`
 
 Never copy credentials into notes, commits, command output, URLs, or prompts.
-Always prepare wiki changes as local candidate files first. Use `bin/kb-page`
-for individual DokuWiki operations and `bin/kb-release` for a review bundle
+Always prepare wiki changes as local candidate files first. Use `kb-page`
+for individual DokuWiki operations and `kb-release` for a review bundle
 instead of hand-crafting API calls.
 
 The declarative `kb-staging` NixOS container on aitherdev is global and
-on-demand. Its data and ownership survive `bin/kb-stage stop`; only
-`bin/kb-stage reset --yes` discards staging content and mirrors the current
+on-demand. Its data and ownership survive `kb-stage stop`; only
+`kb-stage reset --yes` discards staging content and mirrors the current
 production pages and shared media. A development session must claim staging
-with `bin/kb-stage start` before it can write. Staging ownership is serialized
-by the active `VPSFREE_DEV_SESSION_SLUG`; do not manipulate another session's
-staging data or ownership. `bin/kb-stage release --yes` stops the container and
+with `kb-stage start` before it can write. Staging ownership is serialized
+by the active `DEV_SESSION_SLUG`; do not manipulate another session's
+staging data or ownership. `kb-stage release --yes` stops the container and
 releases ownership while retaining the data. It refuses a pending review
 bundle unless `--discard-pending` is explicit.
 
@@ -518,9 +531,9 @@ Stage complete pages at their real page IDs so links and language mappings are
 reviewed exactly as they will appear in production. For every new release,
 prepare one bilingual `release-changes.yml` with an informative localized
 summary for each page write or deletion, then generate checksummed schema-5
-manifests with `bin/kb-contract-manifest --changes FILE`. Stage them with
-`bin/kb-release stage --manifest FILE --yes` and verify them with
-`bin/kb-release verify --manifest FILE`. The verification output must expose
+manifests with `kb-contract-manifest --changes FILE`. Stage them with
+`kb-release stage --manifest FILE --yes` and verify them with
+`kb-release verify --manifest FILE`. The verification output must expose
 each exact summary and its clickable staging revision-history URL so the user
 can review revision metadata before publication. Do not use the production
 `drafts:` namespace for routine review. The release tool verifies that
@@ -528,8 +541,8 @@ production still matches the recorded source revision and content before
 staging or promotion.
 
 Production writes always require direct user approval. After approval, promote
-the exact staged manifest with `bin/kb-release promote --manifest FILE --yes`
-and `--approved-production`. Individual production writes with `bin/kb-page`
+the exact staged manifest with `kb-release promote --manifest FILE --yes`
+and `--approved-production`. Individual production writes with `kb-page`
 also require `--approved-production`, including writes in `drafts:`. Read-only
 production checks do not require approval. Before every write, verify
 authentication and page permission against the exact target wiki.
@@ -555,16 +568,16 @@ every page deletion its own summary; media deletions do not have summaries.
 Common KB tool examples:
 
 ```sh
-bin/kb-page whoami --wiki cz
-bin/kb-stage start
-bin/kb-stage reset --yes
-bin/kb-release stage --manifest work/example/kb-release.yml --yes
-bin/kb-release verify --manifest work/example/kb-release.yml
-bin/kb-page save --wiki cz information:published-page preview.txt \
+kb-page whoami --wiki cz
+kb-stage start
+kb-stage reset --yes
+kb-release stage --manifest work/example/kb-release.yml --yes
+kb-release verify --manifest work/example/kb-release.yml
+kb-page save --wiki cz information:published-page preview.txt \
   --summary "Aktualizace dokumentace" --update --approved-production
-bin/kb-release promote --manifest work/example/kb-release.yml --yes \
+kb-release promote --manifest work/example/kb-release.yml --yes \
   --approved-production
-bin/kb-stage release --yes
+kb-stage release --yes
 ```
 
 Do not assume that commands from one repository apply to another. Use the local
@@ -614,6 +627,16 @@ Rules:
 
 These repositories are in scope for this workspace:
 
+- `dev-workspace`: reusable development-session lifecycle, user-profile
+  runtime, host module and portal shell. Its
+  canonical remote is `git@github.com:aither64/dev-workspace.git`.
+- `vpsfree-dev-workspace`: vpsFree.cz KB commands, workspace skills,
+  development-cluster providers and migration tooling. Its canonical remote is
+  `git@github.com:vpsfreecz/dev-workspace.git`; concrete site configuration is
+  supplied by this workspace.
+- `codex-web`: reusable Go client, capability-checked HTTP integration and
+  framework-free browser module for Codex App Server. Its canonical remote is
+  `git@github.com:aither64/codex-web.git`.
 - `vpsadminos`: NixOS, ZFS, and LXC-based host OS for containers. It is the
   core runtime for vpsFree.cz nodes and many integration tests.
 - `vpsadmin`: Ruby/PHP control panel and API for managing VPSes on top of
@@ -662,4 +685,6 @@ model. vpsAdmin consumes HaveAPI and manages infrastructure running on
 vpsAdminOS. The Go client, Ruby client, and Terraform provider consume the
 vpsAdmin API. The configuration repositories deploy NixOS and vpsAdminOS
 systems, usually with confctl. Status, exporters, web, IRC bot, mail templates,
-and maintenance tasks support operations around the core platform.
+and maintenance tasks support operations around the core platform. This
+coordination workspace selects `dev-workspace`, which in turn consumes
+`codex-web`; keep that dependency direction one-way.
