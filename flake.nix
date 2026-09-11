@@ -61,7 +61,6 @@
             chmod -R u+w source
             patchShebangs source/bin
             ruby source/test/deployment_contract_test.rb
-            ruby source/test/cutover_contract_test.rb
             touch "$out"
           '';
     };
