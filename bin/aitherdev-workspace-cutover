@@ -236,8 +236,9 @@ force_stop_audited_authorities() {
     test "$recorded_slug" = "$slug" || fail "tmux session slug differs: $slug"
     identity=$(jq -er '.tmux_identity // empty' "$authority")
     if test -n "$identity"; then
-      live_identity=$(tmux -S "$OLD_TMUX_SOCKET" show-environment -t "$session_id" -v \
+      live_identity=$(tmux -S "$OLD_TMUX_SOCKET" show-environment -t "$session_id" \
         VPSFREE_DEV_SESSION_TMUX_IDENTITY)
+      live_identity=${live_identity#*=}
       test "$live_identity" = "$identity" || fail "tmux session identity differs: $slug"
     fi
     tmux -S "$OLD_TMUX_SOCKET" kill-session -t "$session_id"
@@ -260,8 +261,9 @@ assert_stoppable_authorities() {
     test "$recorded_slug" = "$slug" || fail "tmux session slug differs: $slug"
     identity=$(jq -er '.tmux_identity // empty' "$authority")
     if test -n "$identity"; then
-      live_identity=$(tmux -S "$OLD_TMUX_SOCKET" show-environment -t "$session_id" -v \
+      live_identity=$(tmux -S "$OLD_TMUX_SOCKET" show-environment -t "$session_id" \
         VPSFREE_DEV_SESSION_TMUX_IDENTITY)
+      live_identity=${live_identity#*=}
       test "$live_identity" = "$identity" || fail "tmux session identity differs: $slug"
     fi
   done

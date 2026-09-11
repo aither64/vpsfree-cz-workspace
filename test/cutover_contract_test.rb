@@ -59,6 +59,7 @@ class CutoverContractTest < Minitest::Test
     assert_includes(body, 'for slug in "${AUDITED_AUTHORITIES[@]}"')
     assert_includes(body, "'@vpsfree_dev_session_slug'")
     assert_includes(body, 'VPSFREE_DEV_SESSION_TMUX_IDENTITY')
+    refute_includes(body, 'show-environment -t "$session_id" -v')
     assert_includes(body, 'kill-session -t "$session_id"')
     assert_includes(body, 'if ! tmux -S "$OLD_TMUX_SOCKET" has-session')
     assert_includes(function_body('assert_stoppable_authorities'),
