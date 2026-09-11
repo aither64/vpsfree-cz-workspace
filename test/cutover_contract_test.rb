@@ -89,6 +89,16 @@ class CutoverContractTest < Minitest::Test
     assert_operator(accept.index('credential_inventory new'), :<, router)
   end
 
+  def test_certificate_writer_uses_an_independent_runtime_condition_gate
+    stop = function_body('certificate_writer_stop')
+    start = function_body('certificate_writer_start')
+    assert_includes(stop, 'ConditionPathExists=%s')
+    assert_includes(stop, '90-aitherdev-cutover.conf')
+    refute_includes(stop, 'systemctl mask --runtime')
+    assert_includes(start, '90-aitherdev-cutover.conf')
+    assert_includes(start, 'systemctl daemon-reload')
+  end
+
   def test_acceptance_checks_conversation_and_authenticated_tls_continuity
     assert_includes(function_body('assert_recreated_session_contract'), 'recreated manifest and authority thread differ')
     accept = function_body('accept')

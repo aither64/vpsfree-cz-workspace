@@ -22,6 +22,8 @@ readonly NEW_ROUTER_SOCKET=/run/dev-workspaces/router.sock
 readonly ROUTER_GATE_DIR="$XDG_RUNTIME_DIR/systemd/user/workspace-router.service.d"
 readonly ROUTER_GATE_FILE="$ROUTER_GATE_DIR/90-aitherdev-cutover.conf"
 readonly ROUTER_ADMISSION_FLAG="$XDG_RUNTIME_DIR/aitherdev-workspace-router-admission-20260911"
+readonly CERTIFICATE_GATE_ROOT=/run/systemd/system
+readonly CERTIFICATE_ADMISSION_FLAG=/run/aitherdev-workspace-certificate-admission-20260911
 readonly CUTOVER_STATE="$HOME/.local/state/aitherdev-workspace-cutover-20260911.json"
 readonly RECOVERY_BACKUP="$HOME/.local/state/dev-workspaces-test-recovery-20260911"
 readonly RECOVERY_MANIFEST="$MIGRATION_SOURCE/docs/test-recovery-inventory-20260911.tsv"
@@ -504,25 +506,46 @@ assert_tmux_stopped() {
 }
 
 certificate_writer_stop() {
-  root_run systemctl mask --runtime workspace-portal-certificate-renewal.timer \
-    workspace-portal-certificate-renewal.service
+  local expected unit gate_dir gate_file
+  expected=$(printf '[Unit]\nConditionPathExists=%s\n' "$CERTIFICATE_ADMISSION_FLAG")
+  test ! -e "$CERTIFICATE_ADMISSION_FLAG" ||
+    fail "certificate admission flag unexpectedly exists"
+  root_run systemctl unmask --runtime workspace-portal-certificate-renewal.timer \
+    workspace-portal-certificate-renewal.service >/dev/null
+  for unit in workspace-portal-certificate-renewal.timer \
+    workspace-portal-certificate-renewal.service; do
+    gate_dir="$CERTIFICATE_GATE_ROOT/$unit.d"
+    gate_file="$gate_dir/90-aitherdev-cutover.conf"
+    root_run install -d -m 0755 "$gate_dir"
+    printf '%s\n' "$expected" | root_run tee "$gate_file" >/dev/null
+    root_run chmod 0644 "$gate_file"
+  done
+  root_run systemctl daemon-reload
   root_run systemctl stop workspace-portal-certificate-renewal.timer \
     workspace-portal-certificate-renewal.service
   ! systemctl is-active --quiet workspace-portal-certificate-renewal.timer ||
     fail "certificate renewal timer remained active"
   ! systemctl is-active --quiet workspace-portal-certificate-renewal.service ||
     fail "certificate renewal service remained active"
-  test "$(systemctl is-enabled workspace-portal-certificate-renewal.timer)" = masked-runtime ||
-    fail "certificate renewal timer is not runtime-masked"
-  test "$(systemctl is-enabled workspace-portal-certificate-renewal.service)" = masked-runtime ||
-    fail "certificate renewal service is not runtime-masked"
+  for unit in workspace-portal-certificate-renewal.timer \
+    workspace-portal-certificate-renewal.service; do
+    gate_file="$CERTIFICATE_GATE_ROOT/$unit.d/90-aitherdev-cutover.conf"
+    test "$(root_run cat "$gate_file")" = "$expected" ||
+      fail "certificate writer gate has unexpected content: $unit"
+  done
   ! pgrep -af '[w]orkspace-portal-substrate-reconcile' ||
     fail "a privileged workspace reconciler is still running"
 }
 
 certificate_writer_start() {
-  root_run systemctl unmask --runtime workspace-portal-certificate-renewal.timer \
-    workspace-portal-certificate-renewal.service
+  local unit gate_dir
+  for unit in workspace-portal-certificate-renewal.timer \
+    workspace-portal-certificate-renewal.service; do
+    gate_dir="$CERTIFICATE_GATE_ROOT/$unit.d"
+    root_run rm -f -- "$gate_dir/90-aitherdev-cutover.conf"
+    root_run rmdir -- "$gate_dir" 2>/dev/null || true
+  done
+  root_run systemctl daemon-reload
   root_run systemctl start workspace-portal-certificate-renewal.timer
   systemctl is-active --quiet workspace-portal-certificate-renewal.timer ||
     fail "certificate renewal timer did not start"

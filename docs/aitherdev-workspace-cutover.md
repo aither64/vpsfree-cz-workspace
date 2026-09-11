@@ -37,7 +37,7 @@ Codex/shell-only classification described above, including the one dormant
 active tracking set. It then closes an independent systemd admission gate,
 records credential and TLS state, resets the clusters,
 stops every audited authority and service, selects the compatibility package,
-preserves the stray test recovery tree, masks certificate renewal, and runs
+preserves the stray test recovery tree, gates certificate renewal, and runs
 both migration preflights.
 
 `forward` repeats all stopped-state and migration gates, performs both
@@ -45,7 +45,7 @@ journaled state migrations, builds and switches the aitherdev configuration,
 selects the final registered-root package, and starts fresh processes for the
 nine active sessions. The archived authority remains retired and dormant
 tracking remains dormant. The router stays behind
-the systemd admission gate and certificate renewal remains masked.
+the systemd admission gate and certificate renewal remains gated.
 
 `accept` verifies the final package, exact conversation identities, authority
 and process environments, extension commands, credential/TLS inventory and an
