@@ -72,7 +72,8 @@ class CutoverContractTest < Minitest::Test
     forward = function_body('forward')
     assert_includes(prepare, 'test "$(current_stage)" = preparing')
     assert_includes(forward, 'test "$stage" = prepared || test "$stage" = forwarding')
-    assert_includes(function_body('write_state'), 'File.open(ARGV.fetch(0), "r")(&:fsync)')
+    assert_includes(function_body('write_state'),
+                    'File.open(ARGV.fetch(0), "r") { |file| file.fsync }')
   end
 
   def test_router_opens_only_in_accept_after_local_gates

@@ -153,8 +153,8 @@ write_state() {
   chmod 0600 "$temporary"
   mv -T "$temporary" "$CUTOVER_STATE"
   ruby -e '
-    File.open(ARGV.fetch(0), "r")(&:fsync)
-    File.open(File.dirname(ARGV.fetch(0)), "r")(&:fsync)
+    File.open(ARGV.fetch(0), "r") { |file| file.fsync }
+    File.open(File.dirname(ARGV.fetch(0)), "r") { |directory| directory.fsync }
   ' "$CUTOVER_STATE"
 }
 
