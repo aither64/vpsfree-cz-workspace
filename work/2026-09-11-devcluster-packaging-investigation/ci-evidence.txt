@@ -1,0 +1,64 @@
+# Curated CI evidence
+
+Full source artifacts: os-test-logs-34630335805 and os-test-logs-34398676068.
+Nix store prefixes normalized; only relevant excerpts retained.
+
+## Feature: os-test-kernel__livepatch-kernel-identity-01903708
+
+[2026-09-11 20:07:40 +0200] Exception occurred while running script default in 21.36s
+[2026-09-11 20:07:40 +0200] /nix/store/…-osvm/lib/osvm/shell.rb:153:in 'OsVm::Shell#succeeds': Command 'cat /etc/vpsadminos/livepatch-monitor.json' failed with status 1. Output: (OsVm::CommandFailed)
+ cat: /etc/vpsadminos/livepatch-monitor.json: No such file or directory
+
+
+## Feature: os-test-osctl__nfs-cancellation-e35cd711
+
+[2026-09-11 20:08:17 +0200] Exception occurred while running script default in 104.16s
+[2026-09-11 20:08:17 +0200] /nix/store/…-ruby3.4-rspec-support-3.13.7/lib/ruby/gems/3.4.0/gems/rspec-support-3.13.7/lib/rspec/support.rb:110:in 'block in <module:Support>': expected ["rw", "relatime", "vers=4.2", "rsize=1048576", "wsize=1048576", "namlen=255", "soft", "proto=tcp", "timeo=10", "retrans=2", "sec=sys", "clientaddr=192.168.1.21", "local_lock=none", "addr=10.0.0.10"] to include "hard" (RSpec::Expectations::ExpectationNotMetError)
+	from /nix/store/…-ruby3.4-rspec-support-3.13.7/lib/ruby/gems/3.4.0/gems/rspec-support-3.13.7/lib/rspec/support.rb:119:in 'RSpec::Support.notify_failure'
+	from /nix/store/…-ruby3.4-rspec-expectations-3.13.5/lib/ruby/gems/3.4.0/gems/rspec-expectations-3.13.5/lib/rspec/expectations/fail_with.rb:35:in 'RSpec::Expectations.fail_with'
+
+## Previous staging: os-test-kernel__livepatch-kernel-identity-01903708
+
+[2026-09-10 02:03:14 +0200] Exception occurred while running script default in 22.88s
+[2026-09-10 02:03:14 +0200] /nix/store/…-osvm/lib/osvm/shell.rb:153:in 'OsVm::Shell#succeeds': Command 'cat /etc/vpsadminos/livepatch-monitor.json' failed with status 1. Output: (OsVm::CommandFailed)
+ cat: /etc/vpsadminos/livepatch-monitor.json: No such file or directory
+
+
+## Previous staging: os-test-osctl__nfs-cancellation-e35cd711
+
+[2026-09-10 02:28:55 +0200] Exception occurred while running script default in 109.3s
+[2026-09-10 02:28:55 +0200] /nix/store/…-ruby3.4-rspec-support-3.13.7/lib/ruby/gems/3.4.0/gems/rspec-support-3.13.7/lib/rspec/support.rb:110:in 'block in <module:Support>': expected ["rw", "relatime", "vers=3", "rsize=1048576", "wsize=1048576", "namlen=255", "soft", "proto=tcp", "ti...10.0.0.10", "mountvers=3", "mountport=58373", "mountproto=tcp", "local_lock=none", "addr=10.0.0.10"] to include "hard" (RSpec::Expectations::ExpectationNotMetError)
+	from /nix/store/…-ruby3.4-rspec-support-3.13.7/lib/ruby/gems/3.4.0/gems/rspec-support-3.13.7/lib/rspec/support.rb:119:in 'RSpec::Support.notify_failure'
+	from /nix/store/…-ruby3.4-rspec-expectations-3.13.5/lib/ruby/gems/3.4.0/gems/rspec-expectations-3.13.5/lib/rspec/expectations/fail_with.rb:35:in 'RSpec::Expectations.fail_with'
+
+## Feature: Alpine package installation
+
+[2026-09-11 20:29:36 +0200] Exception occurred while running script memory-view-cgroups-v2 in 179.59s
+[2026-09-11 20:29:36 +0200] /nix/store/…-osvm/lib/osvm/shell.rb:153:in 'OsVm::Shell#succeeds': Command 'osctl ct exec kmemv2-dc40 apk --no-interactive --timeout 60 add python3' failed with status 1. Output: (OsVm::CommandFailed)
+ WARNING: updating http://mirror.fel.cvut.cz/alpine/v3.24/main/x86_64/APKINDEX.tar.gz: DNS: transient error (try again later)
+( 1/15) Installing libexpat (2.8.4-r0)
+( 2/15) Installing libbz2 (1.0.8-r6)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+ERROR: xz-libs-5.8.3-r0: HTTP 404: Not Found
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.4-r0)
+(12/15) Installing python3 (3.14.7-r1)
+(13/15) Installing python3-pycache-pyc0 (3.14.7-r1)
+(14/15) Installing pyc (3.14.7-r1)
+(15/15) Installing python3-pyc (3.14.7-r1)
+Executing busybox-1.37.0-r31.trigger
+
+## Feature: NFS teardown kernel fault
+
+[  110.054212] BUG: kernel NULL pointer dereference, address: 0000000000000028
+[  110.058332] CPU: 0 UID: 0 PID: 5025 Comm: master.rb:47 Not tainted 6.12.109 #1-vpsAdminOS
+[  110.061190] In memory cgroup /system/service/osctld
+[  110.061946] RIP: 0010:rpc_cancel_tasks+0x4f/0xb0
+[  110.075914]  shutdown_store+0x103/0x1b0
+[  110.091250] RIP: 0010:rpc_cancel_tasks+0x4f/0xb0

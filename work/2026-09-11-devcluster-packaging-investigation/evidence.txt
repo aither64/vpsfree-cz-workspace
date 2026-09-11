@@ -1,0 +1,259 @@
+September 11, 2026: selected actual probe outputs.
+Source and interpretation: investigation.md.
+Nix source-lock warnings omitted; fixture credentials are not included.
+
+vpsadmin-cluster-config
+• Added input 'vpsfStatus/vpsadmin':
+    follows 'vpsadmin'
+• Added input 'vpsfStatus/vpsadminos':
+    follows 'vpsadminos'
+error:
+       … while evaluating the attribute 'json'
+         at /nix/store/1hv3xc03872y86mhnm8irk61p1g8mn42-source/tests/make-test.nix:345:3:
+          344|   config = renderedTestConfig;
+          345|   json = jsonConfig;
+             |   ^
+          346| }
+
+       … in the condition of the assert statement
+         at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/build-support/trivial-builders/default.nix:187:5:
+          186|     # TODO: To fully deprecate, replace the assertion with `lib.isString` and remove the warning
+          187|     assert lib.assertMsg (lib.strings.isConvertibleWithToString text)
+             |     ^
+          188|       "pkgs.writeText ${lib.strings.escapeNixString name}: The second argument should be a string, but it's a ${builtins.typeOf text} instead.";
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: path '/nix/store/bw483rshpfl3j17fvbajsyx59dvz43y9-source/default-config.json' does not exist
+
+vpsadmin-runner
+    follows 'vpsadminos'
+error:
+       … while calling the 'derivationStrict' builtin
+         at «nix-internal»/derivation-internal.nix:37:12:
+           36|
+           37|   strict = derivationStrict drvAttrs;
+             |            ^
+           38|
+
+       … while evaluating derivation 'vpsadmin-devcluster-runner'
+         whose name attribute is located at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/stdenv/generic/make-derivation.nix:647:11
+
+       … while evaluating attribute 'text' of derivation 'vpsadmin-devcluster-runner'
+         at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/build-support/trivial-builders/default.nix:127:11:
+          126|           name
+          127|           text
+             |           ^
+          128|           executable
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: 'lib' is too short to be a valid store path
+
+vpsadminos-cluster-config
+• Added input 'vpsadminos/nixpkgsUnstable':
+    'github:NixOS/nixpkgs/c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0?narHash=sha256-7QYjT2vHLuX9Z1pdxHXDKCbh1CR3D/2rywB9Tx0MPRg%3D' (2026-09-05)
+• Added input 'vpsadminos/ruby-lxc':
+    'github:vpsfreecz/ruby-lxc/004bf35eb90d41ba60b347b5b1e73d868a4f95d9?narHash=sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE%3D' (2026-06-03)
+error:
+       … while evaluating the attribute 'json'
+         at /nix/store/1hv3xc03872y86mhnm8irk61p1g8mn42-source/tests/make-test.nix:345:3:
+          344|   config = renderedTestConfig;
+          345|   json = jsonConfig;
+             |   ^
+          346| }
+
+       … in the condition of the assert statement
+         at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/build-support/trivial-builders/default.nix:187:5:
+          186|     # TODO: To fully deprecate, replace the assertion with `lib.isString` and remove the warning
+          187|     assert lib.assertMsg (lib.strings.isConvertibleWithToString text)
+             |     ^
+          188|       "pkgs.writeText ${lib.strings.escapeNixString name}: The second argument should be a string, but it's a ${builtins.typeOf text} instead.";
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: path '/nix/store/yi2nps08kp5w9gc2h84xcyqvb6mar4nd-source/default-config.json' does not exist
+
+vpsadminos-runner
+    'github:nix-community/home-manager/c47b2cc64a629f8e075de52e4742de688f930dc6?narHash=sha256-kkgA32s/f4jaa4UG%2B2f8C225Qvclxnqs76mf8zvTVPg%3D' (2026-01-16)
+• Added input 'vpsadminos/impermanence/home-manager/nixpkgs':
+    follows 'vpsadminos/impermanence/nixpkgs'
+• Added input 'vpsadminos/impermanence/nixpkgs':
+    'github:nixos/nixpkgs/e4bae1bd10c9c57b2cf517953ab70060a828ee6f?narHash=sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc%3D' (2026-01-16)
+• Added input 'vpsadminos/netlinkrb':
+    'github:vpsfreecz/netlinkrb/d9de53d843d2586ffa5b7b404887fa801c697ddf?narHash=sha256-0bXTWUdUDr2XP%2BbEIfIbxXap8Niva/IoPXTxFeXXImg%3D' (2019-07-11)
+• Added input 'vpsadminos/nixpkgs':
+    'github:NixOS/nixpkgs/c25784012c9982bca5b3e0de87e90bbdac8927d3?narHash=sha256-%2Bv4I4LawmRD/mVxO7QIAerRrCkElp3YImzWkkUnvOTg%3D' (2026-09-06)
+• Added input 'vpsadminos/nixpkgsUnstable':
+    'github:NixOS/nixpkgs/c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0?narHash=sha256-7QYjT2vHLuX9Z1pdxHXDKCbh1CR3D/2rywB9Tx0MPRg%3D' (2026-09-05)
+• Added input 'vpsadminos/ruby-lxc':
+    'github:vpsfreecz/ruby-lxc/004bf35eb90d41ba60b347b5b1e73d868a4f95d9?narHash=sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE%3D' (2026-06-03)
+error:
+       … while calling the 'throw' builtin
+         at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/lib/trivial.nix:982:50:
+          981|   */
+          982|   throwIfNot = cond: msg: if cond then x: x else throw msg;
+             |                                                  ^
+          983|
+
+       error: The overlays argument to nixpkgs must be a list.
+
+vpsadmin-cluster-config-candidate
+/nix/store/54v4rmfgd2gq58j8klk1q5za1nhfy7gm-os-test-vpsadmin-devcluster-packaging-probe.json.drv
+
+vpsadmin-runner-candidate
+/nix/store/0il7pdg87i8kll0g7887gqki9d302qgw-vpsadmin-devcluster-runner.drv
+
+vpsadminos-cluster-config-candidate
+/nix/store/263pvmfkhpzld0m05600zn9drihwds1d-os-test-vpsadminos-devcluster-packaging-probe.json.drv
+
+vpsadminos-runner-candidate
+           37|   strict = derivationStrict drvAttrs;
+             |            ^
+           38|
+
+       … while evaluating derivation 'vpsadminos-devcluster-runner'
+         whose name attribute is located at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/stdenv/generic/make-derivation.nix:647:11
+
+       … while evaluating attribute 'text' of derivation 'vpsadminos-devcluster-runner'
+         at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/build-support/trivial-builders/default.nix:127:11:
+          126|           name
+          127|           text
+             |           ^
+          128|           executable
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: attribute 'sha256' missing
+       at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/development/ruby-modules/gem/default.nix:74:36:
+           73|             );
+           74|             inherit (attrs.source) sha256;
+             |                                    ^
+           75|           }
+
+vpsadminos-runner-candidate-gem-config
+/nix/store/al6wqqzbf7cdysza4cd0msb9acv8cr2i-vpsadminos-devcluster-runner.drv
+
+vpsadminos-library-probe
+    'github:vpsfreecz/ruby-lxc/004bf35eb90d41ba60b347b5b1e73d868a4f95d9?narHash=sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE%3D' (2026-06-03)
+error:
+       … while calling the 'derivationStrict' builtin
+         at «nix-internal»/derivation-internal.nix:37:12:
+           36|
+           37|   strict = derivationStrict drvAttrs;
+             |            ^
+           38|
+
+       … while evaluating derivation 'vpsadminos-devcluster-runner'
+         whose name attribute is located at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/stdenv/generic/make-derivation.nix:647:11
+
+       … while evaluating attribute 'text' of derivation 'vpsadminos-devcluster-runner'
+         at /nix/store/b4g939801j1k7k49qlj2z0m90cg6f4qh-source/pkgs/build-support/trivial-builders/default.nix:127:11:
+          126|           name
+          127|           text
+             |           ^
+          128|           executable
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: 'lib' is too short to be a valid store path
+
+lock-errexit-probe
+exit=0
+continued-after-failed-build
+
+devcluster-status-tests
+Run options: --seed 26910
+
+# Running:
+
+..............................................
+
+Finished in 49.202217s, 0.9349 runs/s, 10.4873 assertions/s.
+
+46 runs, 516 assertions, 0 failures, 0 errors, 0 skips
+
+runner-builds
+[{"drvPath":"/nix/store/0il7pdg87i8kll0g7887gqki9d302qgw-vpsadmin-devcluster-runner.drv","outputs":{"out":"/nix/store/yj9d8risilqg05ja6llhfwz92bcn1m6h-vpsadmin-devcluster-runner"}},{"drvPath":"/nix/store/al6wqqzbf7cdysza4cd0msb9acv8cr2i-vpsadminos-devcluster-runner.drv","outputs":{"out":"/nix/store/q2k100n3fj38d1i1r459mf15h79ysg5c-vpsadminos-devcluster-runner"}}]
+these 4 derivations will be built:
+  /nix/store/0il7pdg87i8kll0g7887gqki9d302qgw-vpsadmin-devcluster-runner.drv
+  /nix/store/il93yd0x4z1vwznpggq3frddskmm982s-gen-bin-stubs.drv
+  /nix/store/pkiy6a4pyfbj4v57n5lmw76yhhdd81s2-vpsadminos-devcluster-runner-deps.drv
+  /nix/store/al6wqqzbf7cdysza4cd0msb9acv8cr2i-vpsadminos-devcluster-runner.drv
+building '/nix/store/0il7pdg87i8kll0g7887gqki9d302qgw-vpsadmin-devcluster-runner.drv'...
+building '/nix/store/il93yd0x4z1vwznpggq3frddskmm982s-gen-bin-stubs.drv'...
+building '/nix/store/pkiy6a4pyfbj4v57n5lmw76yhhdd81s2-vpsadminos-devcluster-runner-deps.drv'...
+building '/nix/store/al6wqqzbf7cdysza4cd0msb9acv8cr2i-vpsadminos-devcluster-runner.drv'...
+
+vpsadmin-devcluster-runner-smoke
+exit=2
+Usage: /nix/store/lrqgsp0412jcp6bcbbd2m8bhdw055jrr-devcluster-runner.rb start --config PATH --state-dir DIR --sock-dir DIR --pid-file PATH --ready-file PATH
+
+vpsadminos-devcluster-runner-smoke
+exit=2
+Usage: /nix/store/00ly664nysdy49r499qp5g9zmalx4lm3-devcluster-runner.rb start --config PATH --state-dir DIR --sock-dir DIR --pid-file PATH --ready-file PATH
+
+Original installed-package evaluation command vectors:
+[
+  "nix",
+  "eval",
+  "--offline",
+  "--impure",
+  "--no-write-lock-file",
+  "--override-input",
+  "vpsadminos",
+  "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsadminos.git?ref=refs/remotes/origin/staging&rev=2166e5934fe1167ed4c5af67c744bdf3b12df0d5",
+  "--override-input",
+  "vpsadmin",
+  "path:/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-08-18-vpsadmin-password-reset/vpsadmin",
+  "--override-input",
+  "vpsadmin/vpsadminos",
+  "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsadminos.git?ref=refs/remotes/origin/staging&rev=2166e5934fe1167ed4c5af67c744bdf3b12df0d5",
+  "--raw",
+  "path:/nix/store/824x3n05bh7zichkak2mp41j883cixxc-vpsfree-dev-workspace-tools-0.1.0/share/vpsfree-dev-workspace/dev-clusters/vpsadmin#cluster-config.drvPath"
+]
+
+[
+  "nix",
+  "eval",
+  "--offline",
+  "--impure",
+  "--no-write-lock-file",
+  "--override-input",
+  "vpsadminos",
+  "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsadminos.git?ref=refs/remotes/origin/staging&rev=2166e5934fe1167ed4c5af67c744bdf3b12df0d5",
+  "--override-input",
+  "vpsadmin",
+  "path:/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-08-18-vpsadmin-password-reset/vpsadmin",
+  "--override-input",
+  "vpsadmin/vpsadminos",
+  "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsadminos.git?ref=refs/remotes/origin/staging&rev=2166e5934fe1167ed4c5af67c744bdf3b12df0d5",
+  "--raw",
+  "path:/nix/store/824x3n05bh7zichkak2mp41j883cixxc-vpsfree-dev-workspace-tools-0.1.0/share/vpsfree-dev-workspace/dev-clusters/vpsadmin#runner.drvPath"
+]
+
+[
+  "nix",
+  "eval",
+  "--offline",
+  "--impure",
+  "--no-write-lock-file",
+  "--override-input",
+  "vpsadminos",
+  "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsadminos.git?ref=refs/remotes/origin/staging&rev=2166e5934fe1167ed4c5af67c744bdf3b12df0d5",
+  "--raw",
+  "path:/nix/store/824x3n05bh7zichkak2mp41j883cixxc-vpsfree-dev-workspace-tools-0.1.0/share/vpsfree-dev-workspace/dev-clusters/vpsadminos#cluster-config.drvPath"
+]
+
+[
+  "nix",
+  "eval",
+  "--offline",
+  "--impure",
+  "--no-write-lock-file",
+  "--override-input",
+  "vpsadminos",
+  "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsadminos.git?ref=refs/remotes/origin/staging&rev=2166e5934fe1167ed4c5af67c744bdf3b12df0d5",
+  "--raw",
+  "path:/nix/store/824x3n05bh7zichkak2mp41j883cixxc-vpsfree-dev-workspace-tools-0.1.0/share/vpsfree-dev-workspace/dev-clusters/vpsadminos#runner.drvPath"
+]
