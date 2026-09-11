@@ -4,83 +4,144 @@ lifecycle: active
 
 # 2026-09-09-workspace-components
 
+## Current deployment checkpoint (2026-09-11)
+
+- The aitherdev cutover is accepted. The live NixOS generation is
+  `/nix/store/r43gb0agv9zhh0rxrlk8s5nw13mq890i-nixos-system-aitherdev-26.05.20260903.a5cc6f2`
+  and the selected user package is
+  `/nix/store/41mxyvi54bb6w1y5x959j184b6qlhlfi-dev-workspace-0.2.0`.
+- The deployed dependency chain is `workspace@d00f8ee ->
+  organization@3e3f0ff -> generic@4b3d426 -> codex-web@7a05da0`;
+  configuration `6956ff4` pins the same generic and Codex heads. Workspace
+  cleanup commit `b5aae3d` removed the completed one-time aitherdev cutover
+  script, runbook and contract test and is fast-forwarded to local and remote
+  `master`.
+- All old user, runtime, router and root-owned credential paths are absent.
+  Router, portal, Codex App Server and tmux services are active under the new
+  namespace, certificate renewal is active, and authenticated HTTPS access to
+  the stable portal succeeds with the expected TLS identity.
+- The three audited development clusters were reset. Nine intended active
+  session authorities were recreated: eight Codex sessions and one shell-only
+  session. All 18 portal manifests and every recorded thread materialization
+  validate; the archived authority was not recreated.
+- Forward-only deployment recovery handled two concrete activation races in
+  place: migrated absolute systemd instance links were re-enabled from the new
+  package, and router admission waited for the socket after systemd reported
+  the service started. Credential contents, modes and ownership matched the
+  migration journal, and the post-activation tar inventory remained stable.
+- `codex-web`, generic `dev-workspace`, organization `dev-workspace`, and the
+  configuration worktrees are clean at their pushed heads. The configuration
+  branch remains deliberately unmerged. No further review cycle will be run,
+  per the user's instruction.
+
+## Superseded review v42 checkpoint
+
+- All v41 Blocking and Important findings are remediated, committed and pushed
+  at the exact heads prepared for `review-packet-v42.md`.
+- The final dependency chain is `workspace@7be93a1 -> organization@0d3fbb1 ->
+  generic@2e43821 -> codex-web@7a05da0`; configuration `c75b9e9f` pins the same
+  generic and Codex heads. Compatibility source `57ffc0b` is immutable and not
+  exported by the final workspace flake.
+- Both generic repositories retain enforced case-insensitive source scans for
+  `vpsfree` and `aitherdev`. The organization tree retains its `aitherdev`
+  exclusion. Workspace presentation and provider selection now have one
+  authority: `.dev-workspace.json` in the registered workspace root.
+- The concrete deployment is now one strict workspace-owned operator script.
+  It checks the exact live inventory before any mutation, stops every managed
+  session and old tmux/App Server process, drives concrete forward and reverse
+  migrations and system/profile activation, and recreates every session before
+  reopening either router. Interrupted final recreation stops only actual
+  authorities proven to be a subset of the reviewed inventory.
+- Generic `dev-session start --replace-missing-thread` resumes the recorded
+  thread when present and creates a fresh one only when absent. The
+  compatibility restart runs before migration preflight, so any replacement
+  manifest is journaled and exactly reversible. The complete restart command
+  now tests both portal URL fields and the required-runtime flag.
+- Certificate renewal remains runtime-masked through forward acceptance or
+  completed rollback. The recovery TSV uses `-` for an empty link target, so
+  exact-range whitespace validation passes. The workspace deployment checker
+  now rejects a non-object registration with a concise contract error.
+- General's GitHub-default finding remains an explicitly accepted
+  repository-metadata deviation after the administrative update returned HTTP
+  403; neutral `master` exists and exact consumer pins are unaffected.
+- Generic host tests pass with 73 runs / 453 assertions. Organization migration
+  tests pass with 43 runs / 831 assertions. Generic dev-session tests pass with
+  286 runs / 2887 assertions and all portal Go packages pass. Workspace
+  deployment tests pass with 3 runs / 14 assertions; its cutover contract passes
+  with 5 runs / 29 assertions, and the changed flakes pass no-build evaluation.
+- The committed 37-line recovery manifest exactly matches all 11 live target
+  recovery roots and aggregate hash
+  `837e40a5f9754a9f9ae6442dfebc356288d9f32d0d3c8e58123c9d5eb1cbe917`.
+- Exact `codex-web` Actions run `34555724208` is green. Exact-head generic run
+  `34572091420` and organization run `34572849148` are in progress. Generic run
+  `34568265248` failed only because a new test repeated the forbidden legacy
+  prefix; its logs were inspected, the redundant literal was removed and the
+  exact source scan passes. Cancellation was submitted for superseded
+  organization runs `34569805854`, `34569273665`, `34568494154` and
+  `34564709694`; superseded generic run `34569227294` could not be cancelled
+  because the token returned HTTP 403.
+- Review v41 found three General Blocking issues, one Risk Blocking issue and
+  three Important issues: late inventory admission, non-gating shell snippets,
+  missing concrete activation/reverse commands, missing ready-thread
+  replacement, partial session-recreation rollback and stale tracking. The
+  workspace-owned script and generic restart support remediate all of them;
+  v42 reruns all four lanes from fresh context. Long NixOS VM/integration builds,
+  host activation, user-profile migration and default-branch integration have
+  not started.
+
 ## Repositories
 
 - Coordination checkout: `/home/aither/workspace/ai/vpsfree.cz`, branch
   `master`.
-- Workspace source baseline:
-  `3580e60bb035c2d0ba5be6f0d2489bbbf30ded3d`.
-- Configuration source baseline:
-  `7481618dacab04bfd5b09bc730c373c2d2bf14d7` from remote `master`.
+- Workspace review base:
+  `a3a3804a2acfd114796a63995b8f16ca3537f4a4` on shared `master`.
+- Configuration review base:
+  `e5458562a2a8cb12fe002be20b2d82e6a741f7ee` from remote `master`.
 - Initial tracking commit:
   `58ccb4da27d6e1ef26c330662b2471d559d2c437`.
 - `dev-workspace`: branch `2026-09-09-workspace-components`, worktree
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-09-workspace-components/dev-workspace`,
   base `f39f8e62097b5e9da9de8a5eb678131b1e478e35`, remote
   `git@github.com:aither64/dev-workspace.git`, head
-  `e4c75076573ed2e986298626a80309a93e07d93a`.
+  `4b3d426d0484a62bac5bcfc7d5c7b6ff2140b045`.
 - `codex-web`: branch `2026-09-09-workspace-components`, worktree
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-09-workspace-components/codex-web`,
   base `dc5cdf8deb10abfd9f631428d051bfb087a2c5b8`, remote
   `git@github.com:aither64/codex-web.git`, head
-  `e8655b7b2689da9b1aabe10df69858c32725dd61`.
+  `7a05da0cd79b19f3c9a0a8fa23b7043a1f984d4e`.
 - `vpsfree-cz-configuration`: branch
   `2026-09-09-workspace-components`, worktree
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-09-workspace-components/vpsfree-cz-configuration`,
-  base `7481618dacab04bfd5b09bc730c373c2d2bf14d7`, head
-  `afc5a3f30aee330ddcceafbd8fe9a4b7236a4d3f`.
+  base `e5458562a2a8cb12fe002be20b2d82e6a741f7ee`, head
+  `6956ff4197d36e731084b3167b0d5e76b5003583`.
 - `vpsfree-cz-workspace`: branch `2026-09-09-workspace-components`, worktree
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-09-workspace-components/workspace`,
-  review base `26606cfa0134ce3680cf592f9ab3c345683fbdc2`, head
-  `42729432a8723648112cdd176497569d86bc23c2`.
+  review base `a3a3804a2acfd114796a63995b8f16ca3537f4a4`, deployed head
+  `d00f8ee6bf187850159ffee42d2b8f617d6d2243`, cleanup/current head
+  `b5aae3d9fd412bea5bd04653c223cc9161952cc9` (fast-forwarded to `master`).
 - `vpsfreecz/dev-workspace`: branch `2026-09-09-workspace-components`,
   worktree
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-09-workspace-components/vpsfree-dev-workspace`,
   neutral base `9b8d07e12c1115aef1c09cfafbc71ba10e167853`, filtered-history head
-  `62ea5a17be81636e2e1e4c97742cc99800087a2c`, remote
+  `3e3f0ff7c2d23f08f19887822efa12f969bbb56f`, remote
   `git@github.com:vpsfreecz/dev-workspace.git`, and local project name
   `vpsfree-dev-workspace`.
 
 ## Status
 
-- The user replaced the compatibility-output design with a strict four-layer
-  split. Generic `codex-web` and `dev-workspace` must have zero current-tree
-  references to vpsFree or aitherdev. Organization tools move to the new
-  `vpsfreecz/dev-workspace`, while personal host/domain configuration remains
-  in `vpsfree-cz-workspace` and the privileged configuration repository.
-- The user selected a one-time namespace and path migration with no legacy
-  runtime aliases. Published history remains intact. The new organization
-  repository will preserve filtered source history and must itself contain no
-  aitherdev references.
-- Both generic repositories already contain GitHub Actions workflows running
-  the complete flake check. The new organization repository needs the same
-  coverage.
-- Constructed the new organization repository locally with a neutral default
-  branch and 134 relevant commits filtered from `dev-workspace`, then replayed
-  that history on the dated feature branch. No remote refs have been written
-  yet.
-- The user accepted the three-component split and requested implementation.
-- Seeded both public repositories from path-filtered workspace history. Their
-  default branch is `master`; both use the MIT license and have passing Nix
-  bootstrap checks.
-- `dev-workspace` now ships the core tooling and a separate vpsFree
-  compatibility output containing KB commands and packaged workspace skills.
-- `codex-web` now provides the public Go App Server client, secured conversation
-  handler, framework-free ES module and a loopback example. It does not run as
-  a separate service.
-- The NixOS host module provides generated basic authentication, local-CA TLS,
-  nginx and a closed firewall unless source ranges are configured.
-- The workspace feature is a thin consumer that retains coordination records
-  and policy while re-exporting the pinned `dev-workspace-vpsfree` package.
-- The aitherdev feature configuration consumes the reusable host module and
-  preserves the existing identities, state paths, socket, hosts and source
-  network rule.
-- This standalone Codex CLI owns implementation. It is intentionally not a
-  managed development session and does not use the retained portal thread.
-- Created canonical bare clones and all four dated feature worktrees. The four
-  exact heads above are committed, pushed and clean. The reusable NixOS
-  substrate and user-profile generation 16 are deployed on aitherdev; the
-  final idempotency remediation is committed and pending review and deployment.
+- The requested four-layer ownership split is implemented. Generic components
+  contain no organization or host naming; concrete domains live in the
+  workspace consumer and privileged NixOS values live in configuration.
+- Both generic repositories and the organization repository have GitHub
+  workflows running their full flake checks with the verified current official
+  checkout and Nix-install actions.
+- The final runtime has no legacy environment, tmux or path aliases. The
+  compatibility generation is retained only as historical package state and
+  is no longer selected.
+- The workspace feature is integrated into `master` and the one-time cutover
+  implementation is removed. Component feature branches remain retained and
+  unmerged; the configuration feature branch was deployed directly and remains
+  unmerged as required.
 
 ## Commands run
 
@@ -645,14 +706,192 @@ lifecycle: active
   Superseded run `34483741579` remains in progress because its cancellation
   returned HTTP 403; a durable cross-project note records the missing Actions
   write permission.
+- Review v28 found one final compatibility export, unsafe migration preflight
+  ordering, missing generic/runtime and organization/site contract checks,
+  bundled histories and missing nontrivial commit rationale. The final
+  workspace now exports only its default and organization package. Generic
+  validation reserves `workspace-portal`; site configuration has exact nested
+  keys and immutable JSON-object inputs; migration journals and validates all
+  rewrites before any keeper or namespace mutation.
+- The new migration regressions pass with 13 runs and 123 assertions. Generic
+  host tests pass with 71 runs and 446 assertions. Both exact no-build flake
+  evaluations pass, as do the final workspace and exact bridge evaluations.
+- Rebuilt the generic contract hardening into focused commits and the workspace
+  delegation into separate policy, configuration, dependency, source-removal,
+  bridge and final commits, all with required rationale. Updated both downstream
+  pins and pushed the exact v29 chain
+  `workspace@2276ccd -> organization@4dd1e54 -> generic@ddba3ca ->
+  codex-web@c3200c4`; configuration `b85582e` pins `ddba3ca` via `confctl`.
+- Current exact-head Actions runs are generic `34527817922` and organization
+  `34528090696`, both in progress. Organization superseded run `34525161667`
+  accepted cancellation; generic superseded run `34524824514` again returned
+  HTTP 403.
+- Review v29 found an accidental `~/bin/workspace-portal` link, repeated input
+  updates, an omitted occupied registry path, and migration rollback/preflight,
+  locking, retry and metadata gaps. All Blocking and Important findings are
+  remediated in the exact v30 heads.
+- Generic activation now separates public home commands from reserved private
+  executables. Organization migration tests cover complete move and reverse
+  rewrite preflight, required transition-lock ordering, bridge-current and
+  compensated rollback, interrupted tmux convergence, invalid registry types,
+  supplementary groups and read-only user/host preflights. They pass with 23
+  runs and 264 assertions.
+- Repeated organization and configuration input updates were consolidated into
+  their original dependency commits. The pushed exact chain is
+  `workspace@7bd8f5c -> organization@e399c86 -> generic@ee4e282 ->
+  codex-web@c3200c4`; configuration `031104a` pins `ee4e282`.
+- Exact no-build flake checks pass for generic, organization, workspace and
+  configuration, all worktrees are clean, and forbidden-name scans are empty.
+  Codex-web Actions `34512598834` is green. Current generic Actions
+  `34529633403` and organization Actions `34531031684` are in progress.
+  Superseded organization runs accepted cancellation; generic cancellation
+  still returns HTTP 403 under the available token.
+- Review v30 found stale legacy-link cleanup, stale tmux socket identity,
+  incomplete window metadata migration and reverse preflight, mutable rollback
+  inventories, duplicated host-path/domain contracts, inaccurate constructor
+  documentation and one misleading dependency commit message. The v31 heads
+  remediate every Blocking and Important finding.
+- Generic `dev-workspace` tests now pass with 73 runs / 454 assertions for the
+  host and 285 runs / 2,852 assertions for dev-session. Organization migration
+  tests pass with 27 runs / 313 assertions, and its packaged Nix check passes
+  all tool suites. The workspace deployment checker passes 2 runs / 9
+  assertions and the live cross-worktree contract check. Exact no-build flake
+  evaluation passes for all four Nix consumers.
+- The pushed v31 chain is
+  `workspace@83d14b7 -> organization@5243d50 -> generic@868826d ->
+  codex-web@c3200c4`; configuration `55b87fa` pins `868826d` via `confctl`.
+  Codex-web Actions `34512598834` is green. Exact-head generic Actions
+  `34534735689` and organization Actions `34535187363` are still running.
+- Review v31 found missing absence records for managed tmux metadata, one
+  bundled generic remediation commit, an incorrect compatibility-bridge SHA,
+  incomplete user-state-root propagation, duplicated router defaults, unsafe
+  migration socket handling and an oversized-journal write/load mismatch.
+  It also identified the organization repository's feature-branch default as
+  an administrative follow-up and two history/documentation advisories.
+- Generic portal lifecycle receipts, removal records and dev-session recovery
+  now share one explicit namespace state root. Package router metadata derives
+  from the exported host path contract. Stale-socket cleanup probes the exact
+  UNIX endpoint and rechecks its identity, including a live-server regression.
+  The remediation was folded or split into the commits owned by each affected
+  subsystem instead of remaining as one catch-all follow-up.
+- Organization migration schema 4 journals tmux option/environment absences,
+  the exact server-socket identity and all serialized journal bytes before any
+  write. Forward and reverse preflights reject late metadata, symlinked or
+  replaced sockets and aggregate journals above 16 MiB. The exact migration
+  suite passes with 31 runs / 358 assertions.
+- The final generated configuration pin was consolidated without editing its
+  `confctl` message. All exact heads were force-pushed with leases. The pushed
+  v32 chain is `workspace@7c1ea44 -> organization@bc33735 -> generic@a6713ba
+  -> codex-web@c3200c4`; configuration `ebc3de33` pins `a6713ba`.
+- Exact-head quick verification passes: generic workspace-host 74 runs / 457
+  assertions, dev-session 285 runs / 2,852 assertions, focused Go packages,
+  organization migration and no-build checks, workspace deployment contract
+  2 runs / 9 assertions, and workspace/configuration no-build evaluations.
+  The live checker confirms domain identity and the exact `a6713ba` pin.
+- Exact-head Actions runs are codex-web `34512598834` (green), generic
+  `34539084838` (running) and organization `34539152574` (running).
+  Superseded organization run `34535187363` accepted cancellation; generic run
+  `34534735689` could not be cancelled because the token returned HTTP 403.
+- Review v32 found two Blocking history issues: the first organization
+  migration commit introduced schema 3 and was followed by repair commits, and
+  organization/configuration dependency updates were repeated. The current
+  initiative tail is rewritten so its first migration commit contains the
+  complete schema-4 design, the organization history has one generic input
+  update, and configuration has one unchanged-message `confctl` dependency
+  commit. Generic documentation commits were also rewrapped without tree
+  changes.
+- Review v32 found an Important command-boundary issue. The destructive
+  migration helper now exists only at
+  `libexec/vpsfree-dev-workspace-migrate`; an explicit eight-command allowlist
+  controls public KB extension commands. Package checks prove the helper is
+  executable at the private path and absent from `bin`, the catalog and home
+  links.
+- Review v32 found a Blocking journal-capacity gap. Migration now projects the
+  largest reachable forward/reverse/retry journal state and checks both current
+  and projected serialization before any write or preflight mutation. The
+  migration suite passes 33 runs / 370 assertions, including an exact boundary
+  case and a six-file near-limit forward/reverse/retry scenario.
+- Scope review noted that the 135 retained predecessor commits contain selected
+  path histories that were later deleted. This is accepted intentionally: they
+  preserve original source provenance and ancestry before the initiative, have
+  no final-tree or runtime effect, and re-filtering them would destroy useful
+  commit identity. The current initiative tail, where ownership and deployment
+  behavior are introduced, was rewritten into clean functional commits.
+- The pushed v33 chain is `workspace@1d8b322 -> organization@f7c300c ->
+  generic@086e3d8 -> codex-web@c3200c4`; configuration `f26ea40a` pins
+  `086e3d8`. The immutable bridge is workspace commit `a05abc1`.
+- Post-remediation quick checks pass: organization migration 33 runs / 370
+  assertions, organization package metadata, organization/workspace/configuration
+  no-build flake evaluation, workspace deployment contract 2 runs / 9
+  assertions and the cross-worktree checker at exact generic revision
+  `086e3d8`.
+- Current exact-head Actions runs are generic `34542903217` and organization
+  `34543301253`, both in progress when last checked. Superseded organization
+  run `34539152574` accepted cancellation; superseded generic run `34539084838`
+  could not be cancelled because the token returned HTTP 403.
+- Review v33 found two invalid generated/history boundaries, one duplicated
+  migration-state declaration, an unnecessary public constructor, missing
+  two-parent rename durability, incomplete authority validation, unsafe host
+  ancestors, incorrect quiescence ordering and stale deployment wording. All
+  Blocking and Important findings are remediated in the v34 heads.
+- The complete private migration package now exists in its owning migration
+  commit. The configuration history declares its channel separately and then
+  contains the exact untouched lock-only commit produced by
+  `confctl inputs channel set --commit`.
+- Migration validation and worst-case journal projection share one exhaustive
+  `PERSISTED_STATE_FIELDS` declaration. Forward, reverse and recovery renames
+  durably synchronize both parents before journal advance. Authority preflight
+  enforces the actual schema, identities, modes and size limit, and the
+  organization package asserts generic authority policy version 1.
+- The flake exports only `mkPackage`, unsafe host-root ancestors are rejected
+  before any mutation, and the runbook quiesces the old runtime before the
+  compatibility switch and stops compatibility services again before
+  preflight. The focused migration suite passes with 38 runs / 485 assertions.
+- Scope's direct-lock traversal advisory is accepted intentionally. Both
+  deployment consumers are required to publish direct immutable GitHub refs;
+  a `follows` or indirect topology must fail closed until the deployment proof
+  is deliberately updated.
+- The pushed v34 chain is `workspace@761d940 -> organization@57a491f ->
+  generic@086e3d8 -> codex-web@c3200c4`; configuration `580edfc` pins
+  `086e3d8`. The immutable bridge is workspace commit `7f4cf74`.
+- All five remote feature refs match their clean local heads. Codex-web Actions
+  `34512598834` is green; generic `34542903217` and organization `34547074046`
+  are running. Superseded organization run `34543301253` accepted
+  cancellation.
+- Review v34 found a Blocking authority-policy gap and one tracking Important:
+  JSON coercions differed from the destination runtime, ready authorities were
+  not correlated with their live tmux identity, the allowed path spelling was
+  narrower than the generic slug contract, and the durable plan retained the
+  old unsafe bridge order. Scope also advised consolidating three overlapping
+  internal site validators.
+- Migration now consumes the generic shared authority corpus, requires exact
+  JSON types and the complete supported slug domain, and binds every authority
+  to one frozen live tmux session before journaling or keeper handoff. The live
+  test uses consistent session/Codex metadata; mismatch regressions cover the
+  socket, stable ID, name, workspace, tmux identity and Codex triple. The suite
+  passes with 41 runs / 678 assertions.
+- Site validation now has one authoritative public boundary, while the private
+  tools derivation retains only the independent authority-policy assertion.
+  The plan and runbook now specify the same build, quiesce, compatibility
+  switch, second service stop, preflight, migration, host activation and final
+  profile ordering.
+- The pushed v35 chain is `workspace@204d78a -> organization@c93ae3f ->
+  generic@086e3d8 -> codex-web@c3200c4`; configuration remains `580edfc` at
+  generic `086e3d8`. The immutable bridge is workspace commit `4c7a5ab`.
+- Organization and workspace no-build flake evaluations, the 2-run/9-assertion
+  deployment checker and the live cross-worktree contract pass at the v35
+  heads. New organization Actions run `34549692881` is active; superseded run
+  `34547074046` accepted cancellation.
 
 ## Compatibility decisions
 
 - Intentionally replace the old environment, tmux and state-path namespaces
   in one coordinated cutover. No mixed-version alias remains after migration.
 - Preserve manifest meaning, journals, operation receipts, submission ledgers,
-  registry entries, thread IDs, working directories and tmux identities while
-  rewriting their machine-consumed runtime paths and metadata names.
+  registry entries and working directories while rewriting machine-consumed
+  runtime paths and metadata names. Stop and replace all tmux processes.
+  Preserve a thread ID when it remains available; explicitly replace only a
+  missing ID before the migration inventory is journaled.
 - Pin Numtide `llm-agents.nix` revision
   `c2a308c84bbfa9f30827344219b7284f8104bdd8` and Codex 0.153.4 for the first
   cutover. Do not override Numtide's package or nixpkgs.
@@ -660,37 +899,74 @@ lifecycle: active
   NixOS module migration.
 - Keep shared bridge, DHCP and NAT configuration in
   `vpsfree-cz-configuration`; the reusable module accepts existing bridges.
-- Default-branch integration, releases, archival, deletion and session stop
-  are not authorized. aitherdev deployment is authorized.
+- Default-branch integration, releases, archival and deletion are not
+  authorized. aitherdev deployment, development-cluster reset and stopping or
+  recreating every managed session are authorized.
 
 ## Review and testing
 
 - Risk classification: high, because the change affects authentication,
   persisted runtime state, public interfaces, destructive lifecycle helpers,
   host deployment, rollback and mixed package generations.
-- Mandatory review v11 used General, Architecture, Scope and Risk lanes with
-  `gpt-5.6-sol` at `xhigh`; all four lanes completed cleanly. Live rollback
-  testing then found the target-generation restoration defect. All findings
-  through v24 are remediated; affected lanes will review packet v25 before
-  corrected live deployment.
-- Current review packet:
-  `work/2026-09-09-workspace-components/review-packet-v25.md`.
-- Final idempotency deployment, restored-leaf verification and current-head CI
-  remain pending.
+- Reviews v4 through v26 cover the preceding implementation. Review v27 found
+  final-package activation alias leakage, catalog/default immutability gaps,
+  remaining inline host-test logic, superseded unmerged history, archived
+  revive incompatibility and the registered-root policy deployment gate. The
+  code/history findings are remediated in the exact heads above. Review v28
+  then found a final-head bridge export, a missing core-command collision,
+  incomplete site-configuration validation, unsafe migration preflight order,
+  bundled commit boundaries and missing commit rationale. All are remediated
+  in the v29 heads and focused tests.
+- Review v36 found unsafe global string substitution in structured state,
+  lossy tmux value handling, missing exact tuple arity, overbroad/retry-unsafe
+  parent cleanup, duplicated tmux metadata ownership, incomplete inverse-corpus
+  and filename coverage, repair history and stale tracking. All findings are
+  remediated in the v37 heads and packet.
+- Review v37 found a known-unbuildable generic pin hidden in a later
+  organization commit, stale schema wording, retained inline/extracted test
+  churn, an incorrect tmux window-path classification, one unisolated deletion
+  test and a runtime error-path `NoMethodError`. Every finding is folded into
+  its owning commit in the v38 heads. The previously created test-recovery tree
+  was inventoried and will be preserved under a separate backup name during
+  deployment rather than deleted.
+- Review v38 found one bundled generic history commit, two stale history/test
+  artifacts, a wrong bridge SHA, incomplete preservation and registered-root
+  deployment instructions, and non-exact authority-format validation. All
+  findings are remediated in the v39 heads. The Risk lane did not start before
+  remediation because only three reviewer slots were available, so v39 runs
+  all four required lanes from fresh context.
+- Review v39 found an unsafe sibling-prefix path rewrite, a duplicated
+  workspace-configuration authority, stale commit wording, incomplete
+  occupied-target evidence and operator commands, open user/root writer races,
+  and a missing whole-host migration/reconciliation fixture. The v40 heads fix
+  all code, history, documentation and test findings. The repository default
+  remains the dated organization branch only because the administrative GitHub
+  update returned HTTP 403; accepting that external metadata temporarily is an
+  explicit decision and an administrator follow-up.
+- Review v41 found executable-cutover, fail-closed admission, reverse
+  activation, missing-thread and interrupted-recreation findings. The user then
+  simplified the deployment contract: processes and tmux state may be discarded,
+  the currently materialized active conversations use the normal restart path,
+  and the archived authority remains stopped. The v43 heads and packet reflect
+  that final scope.
+- Final review packet retained for history:
+  `work/2026-09-09-workspace-components/review-packet-v44.md`. The user ended
+  further review cycles before deployment.
+- The user authorized Codex-session restarts, cluster resets and fast-forward
+  workspace integration. The journaled forward cutover and live acceptance are
+  complete.
 
 ## Open work
 
-1. Create the filtered `vpsfree-dev-workspace` history, bare clone and feature
-   worktree, then register it in `portal.yml` and this state file.
-2. Implement generic namespace and extension contracts, move organization
-   tooling/configuration, extract the inline Nix tests and update exact pins.
-3. Run quick checks, mandatory review and all affected review reruns.
-4. Run full component and migration integration tests, then perform the
-   journaled aitherdev namespace/state cutover and final service checks.
-5. Monitor exact-head GitHub Actions and investigate every failure.
+1. Let the user inspect the accepted aitherdev deployment.
+2. Decide separately whether and when to integrate the retained component
+   feature branches. Keep `vpsfree-cz-configuration` unmerged until explicitly
+   accepted for integration.
 
 ## Cleanup
 
+- The completed one-time aitherdev cutover script, runbook and contract test
+  were removed from workspace `master` in `b5aae3d` after live acceptance.
 - Session remains active. No lifecycle action or delayed cleanup is authorized.
 - Stable portal URL:
   https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-09-workspace-components/
