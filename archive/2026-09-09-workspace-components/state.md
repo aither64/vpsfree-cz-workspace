@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-09-workspace-components
@@ -32,9 +32,11 @@ lifecycle: active
 - `codex-web`, generic `dev-workspace`, organization `dev-workspace`, and the
   configuration worktrees are clean at their pushed heads. Every exact feature
   head is now merged into and equals its remote `master`; retained feature
-  branches were not deleted. The post-merge `codex-web` Actions run is green,
-  while the generic and organization runs are in progress. No configuration
-  workflow run appeared for the exact head when checked.
+  branches were not deleted. The post-merge `codex-web` Actions run is green.
+  Duplicate master-branch runs for the already-green exact generic and
+  organization heads were still in progress when the user explicitly directed
+  cleanup to proceed without waiting. No configuration workflow run appeared
+  for the exact head when checked.
 - GitHub still advertises `2026-09-09-workspace-components` as the default
   branch of `vpsfreecz/dev-workspace`, although both that branch and `master`
   point at `3e3f0ff`. Changing the repository default to `master` was attempted
@@ -962,19 +964,22 @@ lifecycle: active
   workspace integration. The journaled forward cutover and live acceptance are
   complete.
 
-## Open work
+## External follow-up
 
-1. Let the user inspect the accepted aitherdev deployment.
-2. An organization owner can change the GitHub default-branch setting of
-   `vpsfreecz/dev-workspace` from the dated feature branch to `master`; both
-   names already resolve to the same integrated commit.
-3. Observe the post-merge generic and organization GitHub Actions runs. No
-   additional review cycle is requested.
+- An organization owner may change the GitHub default-branch setting of
+  `vpsfreecz/dev-workspace` from the dated feature branch to `master`; both
+  names already resolve to the same integrated commit. The available token
+  returned HTTP 403, and this repository-metadata preference does not affect
+  the merged code or deployed runtime.
 
 ## Cleanup
 
 - The completed one-time aitherdev cutover script, runbook and contract test
   were removed from workspace `master` in `b5aae3d` after live acceptance.
-- Session remains active. No lifecycle action or delayed cleanup is authorized.
+- The clean detached compatibility worktree, generated configuration caches,
+  preserved test-recovery tree, and accepted user/host migration journals were
+  removed after successful deployment. All feature branches are retained.
+- The user explicitly requested cleanup and then directed archival to proceed
+  without waiting for duplicate exact-head master workflows.
 - Stable portal URL:
   https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-09-workspace-components/
