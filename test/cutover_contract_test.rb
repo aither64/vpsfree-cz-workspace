@@ -40,6 +40,9 @@ class CutoverContractTest < Minitest::Test
     assert_includes(prepare, 'assert_exact_clean_checkout "$MIGRATION_SOURCE"')
     assert_includes(prepare, 'assert_exact_clean_checkout "$COMPATIBILITY_WORKTREE"')
     assert_includes(function_body('forward'), '--scope user --workspace-root "$WORKSPACE_ROOT" --yes')
+    assert_includes(function_body('assert_exact_workspace_checkout'),
+                    "':(exclude)tmp/**'")
+    refute_includes(function_body('assert_exact_workspace_checkout'), 'grep -Ev')
   end
 
   def test_session_classification_uses_tracking_lifecycle_and_has_no_legacy_restart

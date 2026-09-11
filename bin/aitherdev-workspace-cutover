@@ -560,8 +560,10 @@ assert_exact_workspace_checkout() {
     ':(exclude)work/**' ':(exclude)archive/**' ':(exclude)notes/**' \
     ':(exclude)tmp/**' ':(exclude)dev-clusters/**' ':(exclude).dev-clusters/**' ||
     fail "registered workspace code differs from the reviewed commit"
-  unexpected=$(git -C "$WORKSPACE_ROOT" ls-files --others --exclude-standard | \
-    grep -Ev '^(work|archive|notes|tmp|dev-clusters|\.dev-clusters)/' || true)
+  unexpected=$(git -C "$WORKSPACE_ROOT" ls-files --others --exclude-standard -- \
+    . ':(exclude)work/**' ':(exclude)archive/**' ':(exclude)notes/**' \
+    ':(exclude)tmp/**' ':(exclude)dev-clusters/**' \
+    ':(exclude).dev-clusters/**')
   test -z "$unexpected" || fail "unreviewed workspace source exists: $unexpected"
 }
 
