@@ -200,13 +200,15 @@ remains implemented, but this deployment neither invokes nor validates an
 automated rollback. Certificate renewal remains runtime-masked from host
 preflight until forward acceptance.
 
-Deployment to aitherdev and fast-forward integration of the workspace feature
-into its `master` branch were authorized and completed. Default-branch
-integration of the component and configuration feature branches, releases,
-archival and deletion remain outside this deployment. The user explicitly
-permitted stopping and recreating all aitherdev workspace/Codex sessions and
-resetting the running development clusters; durable worktrees and tracking were
-preserved.
+Deployment to aitherdev and fast-forward integration of every feature head into
+its remote `master` branch were authorized and completed. Releases, archival
+and deletion remain outside this deployment. The user explicitly permitted
+stopping and recreating all aitherdev workspace/Codex sessions and resetting
+the running development clusters; durable worktrees, retained feature branches
+and tracking were preserved. GitHub still advertises the dated feature branch
+as the default for `vpsfreecz/dev-workspace`; both it and `master` point at the
+same commit, and changing the repository setting requires credentials with
+organization administration permission.
 
 ## Testing and review
 

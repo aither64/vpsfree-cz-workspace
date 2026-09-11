@@ -30,9 +30,16 @@ lifecycle: active
   the service started. Credential contents, modes and ownership matched the
   migration journal, and the post-activation tar inventory remained stable.
 - `codex-web`, generic `dev-workspace`, organization `dev-workspace`, and the
-  configuration worktrees are clean at their pushed heads. The configuration
-  branch remains deliberately unmerged. No further review cycle will be run,
-  per the user's instruction.
+  configuration worktrees are clean at their pushed heads. Every exact feature
+  head is now merged into and equals its remote `master`; retained feature
+  branches were not deleted. The post-merge `codex-web` Actions run is green,
+  while the generic and organization runs are in progress. No configuration
+  workflow run appeared for the exact head when checked.
+- GitHub still advertises `2026-09-09-workspace-components` as the default
+  branch of `vpsfreecz/dev-workspace`, although both that branch and `master`
+  point at `3e3f0ff`. Changing the repository default to `master` was attempted
+  and returned HTTP 403 for the available token. No further review cycle will
+  be run, per the user's instruction.
 
 ## Superseded review v42 checkpoint
 
@@ -139,9 +146,9 @@ lifecycle: active
   compatibility generation is retained only as historical package state and
   is no longer selected.
 - The workspace feature is integrated into `master` and the one-time cutover
-  implementation is removed. Component feature branches remain retained and
-  unmerged; the configuration feature branch was deployed directly and remains
-  unmerged as required.
+  implementation is removed. All four remaining exact feature heads are also
+  fast-forwarded into their remote `master` branches. Feature branches remain
+  retained.
 
 ## Commands run
 
@@ -899,9 +906,8 @@ lifecycle: active
   NixOS module migration.
 - Keep shared bridge, DHCP and NAT configuration in
   `vpsfree-cz-configuration`; the reusable module accepts existing bridges.
-- Default-branch integration, releases, archival and deletion are not
-  authorized. aitherdev deployment, development-cluster reset and stopping or
-  recreating every managed session are authorized.
+- Default-branch integration and aitherdev deployment were authorized and are
+  complete. Releases, archival and deletion remain unauthorized.
 
 ## Review and testing
 
@@ -959,9 +965,11 @@ lifecycle: active
 ## Open work
 
 1. Let the user inspect the accepted aitherdev deployment.
-2. Decide separately whether and when to integrate the retained component
-   feature branches. Keep `vpsfree-cz-configuration` unmerged until explicitly
-   accepted for integration.
+2. An organization owner can change the GitHub default-branch setting of
+   `vpsfreecz/dev-workspace` from the dated feature branch to `master`; both
+   names already resolve to the same integrated commit.
+3. Observe the post-merge generic and organization GitHub Actions runs. No
+   additional review cycle is requested.
 
 ## Cleanup
 
