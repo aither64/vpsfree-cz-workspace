@@ -6,141 +6,152 @@ lifecycle: active
 
 ## Current status
 
-The approved follow-up is implemented, committed, reviewed, pushed and deployed
-to aitherdev as user profile 30. All final CI, package and browser checks pass.
-The deployed package is
-`/nix/store/8a2c8nbpkfig5vc71jl5ir4wbxpxqkpr-dev-workspace-0.2.0`.
-See follow-up-verification.md for exact results, commands, limits and screenshots.
-This is a consolidated handoff of the deployed follow-up for user review.
+The approved file-tree and parent-navigation extension is implemented, reviewed,
+committed, pushed and deployed to aitherdev as user profile 31. The exact package
+is `/nix/store/4zjl93s2i42zzdbfv4jv1b8s0000b8wd-dev-workspace-0.2.0`.
+Package, quick checks, live browser acceptance and both final CI runs pass.
+See tree-verification.md and tree-review-reconciliation.md.
 
-The initiative remains active: all feature branches are unmerged and retained,
-and the session stays open for follow-up. No merge, archive, delete, branch
-removal or system-configuration change was performed. Shared coordination
-checkout remains on master; preserve unrelated changes.
+The initiative stays active and open. All feature branches remain unmerged and
+retained. No merge, archive, delete or branch deletion was performed or authorized.
+Shared coordination checkout remains on master; preserve unrelated working-tree
+and index changes. The deployed extension is ready for user review.
 
 Stable portal:
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-12-portal-review-experience/
 
 ## Session and repositories
 
-Session slug: `2026-09-12-portal-review-experience`.
+Slug: `2026-09-12-portal-review-experience`.
 Workspace: `/home/aither/workspace/ai/vpsfree.cz`.
 Shared thread: `01a09541-d1ba-7e32-a634-6f915c2da0a4`.
-Initial tracking commit: `e0d3dee`; baseline deployment checkpoint: `2a83eff`.
-Explicit approval reused this initiative after shell environment was lost.
-Setting DEV_SESSION_SLUG and DEV_SESSION_WORKSPACE to the recorded values makes
-`dev-session current` match. `dev-session url <slug> --as-is` confirms the link.
+Initial tracking commit: `e0d3dee`; profile 29 checkpoint: `2a83eff`;
+profile 30 handoff: `44cfd5f`. This approved follow-up reuses the verified session
+and branches. DEV_SESSION_SLUG and DEV_SESSION_WORKSPACE set to these values make
+`dev-session current` match. New session creation is not needed.
 
-All branches are named `2026-09-12-portal-review-experience`. Worktrees remain in
+All branches are `2026-09-12-portal-review-experience`. Worktrees are under
 `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-12-portal-review-experience/`.
-All four are registered in portal.yml, clean and pushed over SSH.
+All four remain registered in portal.yml and are clean/pushed over SSH.
 
 | Project/worktree | Final head |
 | --- | --- |
 | codex-web | de83e9c72dec6cb5ff8ec13d5b0b21ed60148117 |
-| dev-workspace | 820277e6cc3aa7ff9acb0396feb3314e7f84996a |
-| vpsfree-dev-workspace | ee9c55b3c25fd0b0002b3ce4796167d27378cd3a |
-| workspace | 082c4c920f80ac8ef882bb59647bada4324094ce |
+| dev-workspace | 41c6d75e8f7cdea1e5cbced7d0106d072d56484d |
+| vpsfree-dev-workspace | 6c98b3676a46c9a9c2830198eae9042b064a71e7 |
+| workspace | cd648e2bd31e3b5d43703320be7967a92bd1e06b |
 
-Upstreams were fetched before final feature pushes and had not advanced.
-The workspace feature rebased onto coordination master 2a83eff with its two
-previous feature patches unchanged. Initial repository bases remain in portal.yml.
-Follow-up ranges and the source-identical runtime commit reconstruction are in
-follow-up-review-packet.md and follow-up-series-reconstruction.md/json.
+Upstream master was explicitly fetched before final feature pushes. Runtime and
+organization heads include their current upstream bases. The workspace feature
+was rebased onto shared master 44cfd5f; range-diff proved all three prior deployment
+patches unchanged. Its source-equivalent predecessor is cc5f495. Only its new pin
+commit changes the source for this extension. Shared master has no feature merge.
 
-## Delivered follow-up
+## Current delivered behavior
 
-- Accepted steers appear immediately above the composer and survive same-tab
-  reload until their exact message ID and digest appear in the transcript.
-  Queue deletion remains separate. Waiting says "Waiting for instructions".
-- Shared accessible copy icons copy Codex Markdown, full commit hashes and
-  comparison links. Commit lists use subject/ellipsis/arrow controls; details
-  show the full commit message. The branch action says Compare.
-- Comparison totals and each file show changed-file/line counts and change
-  status. Split, unified and whole-file Before/After views have language syntax.
-- Frozen URLs identify comparisons, commits, files, layout, file version and
-  old/new source lines. Direct navigation, Back/Forward and hidden context work.
-- Registered lookups avoid broad workspace discovery. Batches, first-file
-  previews, bounded immutable caches and coalescing reduce repeated Git work.
+Directories in branch/commit file trees start expanded, support native keyboard
+and collapse controls, and retain collapse choices through layout/version changes.
+File/history navigation reveals the selected path. Compact colored status letters,
+green/red statistics and repository-relative path copy icons keep the navigator
+small; headers retain full status descriptions. The full-file back arrow returns
+to the exact file/comparison/layout and clears version/line selection.
 
-Native Git is retained. Maintained Shiki 4.4.3 joins CodeMirror as a bundled,
-same-origin worker using its JS regex engine. No diff2html, CDN, WASM or eval.
-Dependency maintenance and rejected alternatives are in follow-up-plan.md.
+Parent hashes open complete commit pages, including all parents of merges and
+ancestors before the feature base. Root commits show No parent; diffs stay
+first-parent. Parent links clear file/view/version/line while retaining the frozen
+review and layout. Feature commit history remains limited to its comparison range.
+No dependency, API route, URL key, persisted format or system configuration changed.
+The JSON parents array is additive. Older packages ignore it and report new
+ancestor links outside their old range as unavailable until rollforward.
 
-## Review and verification
+## Review and validation
 
-All four mandatory lanes used fresh gpt-5.6-sol reviewers at xhigh. Every
-Blocking/Important finding is resolved. Fixed editor retention, eager asset
-loading, logical-line boundary, added/deleted URL normalization, license
-whitespace and independently reversible commit ordering. Accepted small helper
-API and durable-record retention advisories are documented in
-follow-up-review-reconciliation.md. No unresolved implementation blocker remains.
+The runtime series is dependency ordered: native backend 4e714b7, parent UI 9490e1e,
+then tree/controls 41c6d75. The intermediate parent UI was tested separately in a
+clean detached worktree and removed afterward. No prior deployed commit was
+rewritten. Only the current extension's unmerged parent/tree and downstream pin
+commits were amended, using exact force-with-lease pushes.
 
-Provider and runtime Go/contracts, focused race checks, seven packaged editor
-tests, fifteen actual Chromium component checks and all committed-range
-whitespace checks pass. Runtime full Go verification used GOWORK=off.
-Runtime, organization and workspace `nix flake check --print-build-logs` pass.
-The host-module VM passed in 193.93 seconds with a substituted kernel. The exact
-site `nix build` passes; expected existing Ruby skips are recorded in the report.
+All four required reviewers were fresh gpt-5.6-sol at xhigh. General and architecture
+found no issues. Scope found one Important URL mismatch: view=diff was present in
+parent links despite the plan's cleared selection. It was omitted, the browser
+assertion strengthened, all 21 checks passed, and the fix folded into its owner.
+Risk found no Blocking/Important issue. Its Advisory on recursive trees for Git
+paths thousands of directories deep is accepted as a comparison-local availability
+limit. Normal filesystem paths are constrained; this does not claim the server's
+4 MiB/5,000-file bounds also constrain Git directory depth. Iterative rendering of
+such historical paths is a possible future improvement. No real 5,000-file DOM
+stress or shallow-repository acceptance is claimed.
 
-Full-handler Firefox acceptance with controlled Codex RPC passed immediate
-steers, reload without resending, exact observation, acknowledgement-failure
-recovery, native clipboard, copy errors and waiting time. The private fixture
-was removed; useful evidence is under artifacts/follow-up/.
+Quick checks passed: full Go (repository 7.722s/web 27.742s), focused parent/durable
+checks 0.630s/1.147s after final native simplification, review-related race checks
+6.125s/6.939s, JS parsing, committed-range whitespace and workspace Ruby 3/14.
+Actual Chromium component acceptance passed 21 checks with real pinned editor,
+syntax and clipboard code, including tree/keyboard/history, paths/colors/arrows,
+parent/root/merge links, frozen lines, responsive layout, CSP and 8-editor retention.
+Root inspected desktop/mobile screenshots. A launch-path harness mistake was
+fixed by using Chromium's bin/chromium executable; no product change was needed.
 
-Live Chromium checks passed branch/commit views, syntax, full-file Before,
-reload at an old-line anchor, full-hash clipboard, full messages, unified,
-read-only behavior, desktop/mobile layout and zero CSP/page errors. Root inspected
-all three screenshots. Two initial harness selector/fixture mistakes were
-corrected after diagnosis; no product change was needed.
+All required reviews were reconciled before manual package/live acceptance.
+The exact package passed Go (repository 10.278s/web 32.932s), session 296 runs/2,979
+assertions with 12 existing skips, and host 73 runs/438 assertions with 3 existing
+skips. There were zero failures/errors. Its check phase took 2 minutes 13 seconds.
+The final workspace flake deployment-contract check passed 3/14. Generic runtime
+and organization flake checks are supplied by exact feature-head CI, avoiding
+redundant local runs. No local kernel build was needed.
 
-Live TLS/authentication, assets and exact conversation identity checks pass.
-Direct repository-state median improved from 615.8 ms to 24.98 ms (95.94%),
-exceeding the 75% target. HTTPS metadata median is 429.20 ms; authentication/
-proxy/TLS overhead remains. This is not a whole-page loading improvement claim.
-Branch plus preview took 102.12 ms direct/402.99 ms HTTPS; commit first-open
-78.58/388.14 ms and repeat-open median 18.28/384.19 ms. Full samples are retained.
+Final runtime CI 34711167462 passed on 41c6d75. Organization CI 34711209482 passed
+on 6c98b36, including flake and devcluster checks. Earlier original candidate CI
+34710527917 and 34710592527 both passed;
+all superseded runs had already completed, so none needed cancellation. Workspace
+has no matching Actions workflow. Exact results/links are in tree-ci-results.json.
 
-Final CI passed: provider 34707084076, runtime 34708694751 and organization 34708731240
-(including devcluster). The workspace has no matching workflow. No superseded
-queued/in-progress run remains. Exact links are in follow-up-verification.md.
+## Deployment and cleanup
 
-## Deployment, compatibility and cleanup
+Normal `workspace-host switch --source <initiative>/workspace` installed profile 31.
+Generation/runtime/cluster checks and the Codex App Server contract passed. Codex
+remains 0.154.0. Router, portal, Codex and tmux services are active; the actual portal
+executable matches the expected 4zjl93s package. Strict-TLS/authentication smoke
+passed, including unauthenticated 401, Messages default, counters/assets and exact
+conversation identity. tree-deployment-results.json records the installed package.
+Previous profile 30 retains 8a2c8nb; no live rollback or forced interruption was used.
 
-`workspace-host switch --source <initiative>/workspace` installed profile 30
-through normal runtime/cluster/generation and Codex preflights. Router, portal,
-Codex and tmux user services are healthy. Installed Codex remains 0.154.0.
-Previous profile 29 retains
-`/nix/store/prpvck3v35xbvyz60gfwprz9p3lsagal-dev-workspace-0.2.0`.
-No live rollback or forced interruption was attempted for this follow-up.
+The first live browser run passed all 16 checks in 139.141 seconds on exact runtime
+41c6d75. It verified native clipboard copying, expanded tree/collapse/keyboard,
+colored statuses/counts, retained syntax, layout/history navigation, cold full-file
+links and back arrows, actual parent new-tab opening, full parent messages,
+reload/Back/Forward, navigation before the saved base, and 390px mobile layout.
+No page errors or CSP violations occurred. Root inspected all four screenshots.
+The browser ignored certificate errors; strict TLS was checked independently.
+No Git refs or conversation state were changed. Evidence and frozen URLs are in
+artifacts/tree/tree-live-browser-results.json; merge/root/status edges remain
+covered by component/Go fixtures.
 
-Canonical session/lifecycle/journal formats are unchanged. New private comparison
-descriptors are additive and older packages ignore them. They deliberately have
-no automatic expiry; missing Git objects show an unavailable result and are not
-fetched/pinned solely to preserve links. Blob/syntax/cache/editor limits remain
-bounded. Full behavior and compatibility decisions are in follow-up-plan.md.
+The temporary detached parent worktree, browser/component processes, build
+outlink, logs, temporary screenshots, duplicate harness and commit-message files
+were cleaned. Registered worktrees, branches and the installed package remain.
+One consolidated coordination handoff records the delivered extension; no feature
+integration or session cleanup is implied.
 
-The detached series-reconstruction worktree and private conversation fixture are
-removed. Root removed 22 owned temporary files/directories and GC roots after final
-acceptance and checking process references, including ignored node_modules/dist. Registered worktrees, all branches and the installed profile remain.
+## Previous deliveries and preserved limitations
 
-## Previous delivery and retained limitations
+Profile 30 delivered immediate accepted-steer receipts, Waiting for instructions,
+shared copy icons, faster native repository lookup/batches/cache, full messages,
+syntax-highlighted split/unified/full-file views, statistics/statuses and frozen
+URLs for commits/files/source lines. Direct metadata median improved from 615.8 ms
+to 24.98 ms; HTTPS still had about 0.4s overhead. This was not a whole-page latency
+claim. Evidence is retained in follow-up-verification.md and linked artifacts.
 
-Profile 29 delivered the larger question layout with fixed actions, immediate
-new/fork/plan-new navigation and initialization progress, two-column repository
-histories with local comparisons, typed web-search/subagent events, root-turn
-message/tool counters, working/closed-wait/current-wait timing and Messages as
-the initial filter. Its detailed evidence remains in packaged-validation.md,
-conversation-browser-verification.md, repository-review-verification.md,
-creation-integration-results.md, deployment-results.md and ci-final.json.
+Profile 29 delivered fixed question actions, immediate new/fork/plan navigation
+with initialization progress, repository histories/local diffs, web-search and
+subagent events, root-turn counters/timing, and the Messages default. Earlier
+real creation/recovery, protocol and browser evidence remains in the original
+verification reports. The real blocking-question observation passed but answering
+after its isolated portal reconnected was unverified; controlled answer tests
+passed. Large-history missing-cwd and private Plan-mode reconnect limitations
+remain documented in creation-integration-results.md. No shared Codex settings
+were changed. Unobserved timing stays unclassified; private timing/comparison
+retention and missing Git object limits remain documented.
 
-The earlier real blocking-question check proved waiting observation; answering
-after its isolated portal reconnected was unverified. Controlled answer tests
-passed. A large-history missing-cwd lookup timeout and private Plan-mode reconnect
-inconsistency are documented in creation-integration-results.md. No shared Codex
-settings were changed. Timing without complete observation stays unclassified;
-retained timing/descriptors have documented scaling limits. Those prior limits
-are not claimed resolved by this follow-up.
-
-Next action: user review of the deployed follow-up. Keep the initiative active
-and open; do not merge or archive without an explicit request.
+Next action: user review of the deployed extension. Keep the initiative open.
+Do not merge or archive without a request.
