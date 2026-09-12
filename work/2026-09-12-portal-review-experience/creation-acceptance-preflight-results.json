@@ -1,0 +1,27 @@
+{
+  "outcome": "fixture expectation corrected before thread creation",
+  "package": "/nix/store/5jdmg0bnxf61jn8yq11bwjq4iy17rlql-dev-workspace-0.2.0",
+  "codexVersion": "0.154.0",
+  "checks": [
+    {
+      "check": "fixture prepared",
+      "codexVersion": "0.154.0",
+      "base": "https://127.0.0.1:32963"
+    },
+    {
+      "check": "immediate 2026-09-12-Accept_New",
+      "responseSeconds": 0.018781857565045357,
+      "navigationSeconds": 0.30659934505820274,
+      "shellSeconds": 0.002836313098669052,
+      "httpStatus": 303
+    },
+    {
+      "check": "progress heartbeat",
+      "polls": 5
+    }
+  ],
+  "threads": {},
+  "cause": "Direct conversation resolver refusals intentionally return HTTP 404, while the initial harness expected 409. The private portal log confirmed session initialization has not finished. No CLI destination journal, binding, tracking directory, tmux socket or thread existed.",
+  "correction": "Expect 404 for the canonical conversation message route and retain 409 for fork.",
+  "cleanup": "Unused isolated fixture removed after verifying the CLI delay gate never released."
+}

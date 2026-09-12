@@ -1,0 +1,25 @@
+# Scope and proportionality review
+
+No Blocking findings.
+
+## Important findings
+
+1. **Completed creation receipts permanently consume a 512-session lifetime limit.**  
+   Commit `5bcf254fa36c305d496f8d762bf0ae7e5f4dccf3` loads every receipt—including `ready` receipts—into memory and makes the 513th receipt fatal during startup (`portal/internal/web/creation_store.go:112-145`, especially lines 126-127). New creation is also rejected once the map reaches 512 (`portal/internal/web/creation.go:95-137`, especially lines 121-123), while reconciliation only changes a receipt to `ready`, never retires it (`creation.go:140-156`). The load failure aborts portal construction (`portal/internal/web/server.go:277-279`). No archive/delete lifecycle path removes the receipt or its completion/request sidecars. Consequently, normal accumulated use eventually rejects all new sessions; after one additional persisted receipt, the portal cannot restart. Retire terminal receipt state when retry/deduplication is no longer needed, or retain only recoverable receipts plus a bounded replay window.
+
+2. **The optional activity feature unnecessarily makes ordinary transcript reads paginate and return complete history.**  
+   Commit `bba2ae1d9796dc7267c0bfc5ee9f072f43d6e92e` adds `Turns` to both `Transcript` and `ActivitySnapshot` (`codex/client.go:110-116`, `codex/activity.go:23-44`). `ReadThread` now calls `readAllTurns` and serializes metadata for every turn while still rendering only the latest 20 (`codex/client.go:2878-2900`). That helper walks every cursor in 20-turn pages, up to 100,000 turns (`codex/turn_history.go:71-169`). This affects every `/thread` request (`conversation/handler.go:362-370`), including the standalone consumer, which does not configure activity (`cmd/codex-web-example/main.go:62-75`). The portal’s activity UI consumes only aggregates and current-turn fields, not either `turns` array (`dev-workspace` commit `774c208`, `portal/internal/web/static/app.js:168-189, 1637-1647`). Thus an optional metric adds serial RPCs, larger responses, experimental pagination failure modes, and possible 30-second handler timeouts to the established conversation path without a current consumer. Keep full pagination internal to `ReadActivity`, restore the bounded recent-page `ReadThread` behavior, and omit public turn arrays unless a concrete consumer is documented.
+
+3. **The supported comparison boundary silently weakens rename metadata.**  
+   Commit `6dcf75681f936872d772df6f44a676cbf70781d3` accepts up to 5,000 changed files but invokes Git rename detection with `-l1000` (`portal/internal/repository/review.go:24-30, 317-349`). Above that threshold Git may skip exhaustive similarity detection while succeeding, causing supported similar renames to appear as unrelated deletion/addition records. `ReviewFile` has no degraded-detection indicator (`review.go:63-72`), and the test covers only one exact rename (`portal/internal/repository/review_test.go:108-146`). This contradicts the explicit requirement to preserve rename metadata. Align the supported file and rename-analysis limits, or reject/label comparisons where complete rename detection is unavailable.
+
+## Advisory finding
+
+4. **Closed request boundaries form a durable registry with no runtime consumer or retention rule.**  
+   Commit `bba2ae1d` persists every request boundary in `activityLedger.Requests` (`codex/activity.go:54-67, 345-390, 404-415`) but never deletes closed entries. Recorder restoration validates and uses only thread intervals (`activity.go:122-143`), and snapshots likewise read only intervals and live state (`activity.go:494-510`); outside this file, only a test inspects the persisted request map. Every checkpoint nevertheless marshals and fsyncs the complete registry, and exceeding the shared 64 MiB limit disables recording (`codex/client.go:26`, `codex/activity.go:180-227`). Unless durable closed-request identities have a documented consumer, compact or remove them after their interval is durably represented. Otherwise define an explicit bounded retention contract.
+
+## Proportionality and gaps
+
+The native-Git/CodeMirror division, self-hosted asset bundle, receipt-backed asynchronous creation, and provider → runtime → organization wrapper → workspace pin chain are otherwise proportional to the approved requirements. The four ranges are linear and the feature/pin split is coherent.
+
+Review used the packet’s exact commit objects with replacement processing disabled; later coordinator remediations were not credited. No live tests were run. Full portal browser/App Server, packaged Nix, upgrade/rollback, and deployment verification remain pending as recorded in the packet. Consumer discovery was limited to local repository state. The trusted-local-operator boundary was respected; no finding assumes a hostile local administrator.

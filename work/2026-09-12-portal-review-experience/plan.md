@@ -96,7 +96,7 @@ Add pre-manifest /api/sessions/{slug}/creation status/retry, session-scoped loca
 repository review endpoints, and optional read-authorized /codex/{id}/activity.
 Preserve public client source compatibility and existing transcript fallback fields.
 Validate consumed protocol fields against schemas from the exact selected Codex.
-Keep that Codex version unchanged. New private receipts/comparisons/activity ledgers
+Keep that Codex version unchanged. New private receipts/comparisons/activity directories
 are separate from existing strict manifests and journals, so old packages ignore
 them. No database/schema migration, node protocol, generated node config, or
 coordinated machine update is required. Test additive-state upgrade and rollback.
@@ -119,3 +119,67 @@ unusual paths, missing worktrees, binary/nontext/large data, split/unified and C
 timing blocking vs nonblocking/overlap/terminal/replay/browser absent/restart/missing
 history/more-than-20-turn/fork/revert cases. Verify local-only dependency assets and
 reproducible bundle. Retain useful concise evidence in state/artifacts.
+
+## Review-driven implementation details
+
+Activity recording uses per-thread asynchronous writers, bounded current state and
+compact per-turn summary files. Snapshots include only durable coverage; slow writes
+and missing history stay unclassified. Resolved request IDs are discarded. Ordinary
+transcript reads remain limited to the recent 20 turns; optional timing history
+paginates independently per thread and resumes interrupted backfills.
+
+Completed creation receipts are a bounded retry cache, while canonical manifests
+and strict CLI journals retain authority. An accepted request that loses its name
+to a separately completed session across rollback becomes an explicit conflict;
+the canonical session remains usable. A private binding alone does not prove
+completion. Established exact fork journals can recover after their source is
+archived or deleted. Cleanup preserves pending lifecycle journals and attempts.
+
+Git performs complete rename detection within its existing process deadline. A
+comparison exceeding the time bound reports unavailable instead of silently losing
+rename metadata. The supported file count and blob limits remain unchanged.
+
+The follow-up review tightens history cache ownership: active watches and readers
+retain one shared per-thread gate; completed unwatched caches retire; at most
+eight unpinned incomplete histories retain pagination progress for retry. Portal
+startup and browser history reads share four authority-local slots. Noninteractive
+pages retain their first successful snapshot without projecting or polling it.
+
+The CLI remains the sole strict authority for destination start/fork journal
+recovery. A validated portal retry supplies its frozen receipt arguments and
+lets that CLI distinguish existing journal recovery from a fresh source check.
+Canonical archived sessions remain accessible even when an earlier receipt was
+not finalized. Private timing summaries have no automatic expiry, consistent
+with retained archived Codex conversations and deleted-session recovery metadata;
+per-turn disk/inode growth is a recorded operational limitation.
+
+Passive-client RPC admission also bounds reconnect subscriptions, using four
+shared request slots and a fixed generation-cancelled restoration pool. Portal
+readers acquire their per-thread queue before an authority slot. This prevents
+duplicate reads of one long history from excluding unrelated conversations.
+Interactive clients retain their existing admission and timeout behavior.
+
+Creation acceptance records a fixed SHA-256 fingerprint of the sorted unique
+completed deletion operation IDs for its workspace and slug, under the destination
+runtime lock. The private receipt and CLI binding freeze that fingerprint.
+Receipt-bound workers require the exact current receipt and unchanged deletion
+history under destination locks, including both fork lock phases. Missing or
+replaced receipts fail; wall-clock timestamps never establish causal ordering.
+Fresh requests snapshot the current history and can reuse a deleted name even
+after clock corrections. Startup and capacity reclamation retire superseded
+non-running receipts only after proving destination, authority and journal absence.
+Normal cache retirement is sufficient because queued CLI workers require that
+same live receipt; canonical tracking and strict journals remain in the existing
+deletion recovery. No new persistent bucket, lifecycle/journal/manifest field or
+CLI flag is needed. The private receipt/binding format was deployed as one
+compatible unit in profile28; no fallback for undeployed intermediate designs
+is supported.
+Archive-conflict copy describes the historical event and stays accurate after revive.
+
+Derived plan goals use the Ruby CLI's exact boundary whitespace normalization
+before freezing. Captured plan text, turn and digest remain byte-exact. Goal
+hashing during conflict, binding and completion checks applies that same
+normalization to existing frozen receipts from profile28, so already-created
+sessions recover without another thread or initial submission. Canonical state
+and private file schemas remain unchanged. Rollback can prove newly normalized
+receipts; older raw receipts retain their prior behavior until rolling forward.
