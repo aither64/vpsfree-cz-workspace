@@ -636,3 +636,71 @@ whether an account exists or can use recovery.
   Use the same no-overlap boundary during rollback, then explicitly restore
   the preceding release's authentication behavior. The earlier audit-gap note
   applies to changes made before the old API processes are stopped.
+
+## Follow-up default-branch rebase (2026-09-09)
+
+- The user requested another rebase and assigned the Guix test fix to a
+  separate initiative. Reuse the existing four branches and worktrees, retain
+  backup refs, and preserve the running development cluster and its data.
+- Current defaults add JSON 3.0.2 package metadata and PHPUnit 13.3.3 in
+  vpsAdmin. Keep this initiative's API `json < 3` compatibility repair and its
+  JSON 2.21.2 package resolution. Other packages adopt their upstream updates.
+- KB master now contains the separate initiative's latest-Guix-image fix;
+  inherit it through the rebase without editing or owning that implementation.
+  The mail-template and production-configuration defaults are unchanged.
+- Preserve the reviewed application/schema/runbook patches, refresh the exact
+  downstream vpsAdmin pins, and retain the independent KB OS closure. No new
+  compatibility or deployment design is intended; the coordinated API writer
+  barrier remains required for production rollout and rollback.
+- Verify range-diffs, hooks, relevant package/runtime checks, the full KB
+  contract and configuration evaluation/builds. Use the mandatory review
+  skill's mechanical/dependency-only exception if the final incremental delta
+  has no new code or design; otherwise review the affected changes before long
+  integration tests. Push with recorded explicit leases and monitor current
+  CI, investigating failures before reruns. Refresh the existing development
+  cluster in place when the new head is validated, then leave it running.
+
+## Default-branch rebase and development deployment (2026-09-11)
+
+- Reuse all four retained branches and worktrees, fetch current defaults,
+  preserve backup refs, and replay the reviewed feature commits. Resolve any
+  upstream overlaps without changing the accepted recovery behavior.
+- Refresh exact vpsAdmin and template pins through the established repository
+  workflows, preserving independently owned inputs. Reassess compatibility
+  against new upstream changes, including migrations and deployment modules.
+- Run hooks and focused checks, apply the mandatory review workflow when the
+  incremental change needs review, and validate current CI and relevant builds.
+- Deploy the development cluster using the installed `vpsadmin-devcluster`
+  command and bridge networking. Inspect its retained state first: the current
+  helper reports it stopped. Preserve existing disks and ownership records;
+  do not reset, release or recreate the cluster to bypass a runtime mismatch.
+  Inspection found that this slug has no remaining cluster state or running
+  VMs. Initialize the requested deployment under the same slug with retained
+  certificates/SSH keys and restore the established acceptance fixtures.
+  Verify live recovery and leave the cluster running.
+- Production deployment, default-branch integration, KB publication and
+  session archival remain outside this request. The reviewed production API
+  writer barrier remains required.
+
+## September 12 default rebase and repaired cluster runtime
+
+- Rebase the same four retained branches onto freshly fetched defaults, keeping
+  feature patches and exact downstream pins. Defaults advance only packaged
+  API JWT (3.2.0 to 3.3.0) and configuration inputs; template/KB defaults stay
+  unchanged. No recovery schema, public interface or deployment ordering changes.
+- Use the installed repaired provider and current OS staging, including the
+  companion OSVM retained-root support from the packaging initiative. Preserve
+  this session's existing state identity; start its bridge cluster and leave it
+  running. Its September 11 attempt stopped before creating VM disks.
+- Validate the new package and configuration inputs, preserve the independent
+  KB OS lock, run current-head CI, and verify recovery mail/MFA/history against
+  the live deployment. Restore established development acceptance fixtures on
+  the newly initialized database. No production deployment or publication.
+
+- Runtime compatibility follows the separately reviewed packaging repair:
+  retain the matched provider/OSVM support for persistent NixOS roots. Future
+  configuration updates must activate the selected closure in a running guest
+  before booting that changed configuration. An older runner that replaces
+  NixOS root disks is not a data-preserving rollback path. The production API
+  migration and rollout contract is unchanged by this development-only runtime
+  dependency; no coordinated production-node update is required.
