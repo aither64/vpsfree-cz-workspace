@@ -1,0 +1,62 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE);
+const fs=require('node:fs');
+const crypto=require('node:crypto');
+const assert=require('node:assert/strict');
+const base='https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz';
+const slug='2026-09-12-portal-review-experience';
+const output=process.env.REVIEW_BROWSER_OUTPUT;
+const repository=crypto.createHash('sha256').update('dev-workspace').digest('hex').slice(0,32);
+(async()=>{
+  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE,headless:true,args:['--no-sandbox']});
+  try {
+    const context=await browser.newContext({viewport:{width:1600,height:1000},ignoreHTTPSErrors:true,
+      httpCredentials:{username:'aither',password:fs.readFileSync('/var/lib/dev-workspaces/password/password','utf8').trim()}});
+    await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:base});
+    const page=await context.newPage(), errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    await page.addInitScript(()=>{window.reviewViolations=[];document.addEventListener('securitypolicyviolation',event=>window.reviewViolations.push(event.violatedDirective));});
+    await page.goto(base+'/'+slug+'/?tab=repositories',{waitUntil:'domcontentloaded'});
+    const card=page.locator('[data-repository-id="'+repository+'"]');
+    await card.locator('.repository-commit-subject').first().waitFor({timeout:30000});
+    assert.equal(await page.locator('#repositories .repo-grid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),2);
+    const comparisonLink=await card.locator('[data-review-branch]').getAttribute('href');
+    await card.locator('[data-review-branch]').click();
+    await page.locator('.repository-comparison-stats').waitFor();
+    await page.locator('.repository-file').first().waitFor();
+    const goFile=page.locator('.repository-file').filter({hasText:'portal/internal/web/server.go'}).first();
+    await goFile.click();
+    const fileID=new URL(page.url()).searchParams.get('file');
+    const section=page.locator('.repository-file-section[data-file-id="'+fileID+'"]');
+    await section.locator('.cm-editor').first().waitFor();
+    await page.waitForFunction(id=>new Set([...document.querySelectorAll('.repository-file-section[data-file-id="'+id+'"] [class*="review-token-"]')].map(el=>getComputedStyle(el).color)).size>=3,fileID);
+    const branchURL=page.url();
+    assert(new URL(branchURL).searchParams.get('review'));
+    await page.screenshot({path:output+'/repository-followup-desktop.png'}); console.log('Live branch and syntax passed');
+    await section.getByRole('link',{name:'View file',exact:true}).click();
+    await section.locator('.cm-editor').waitFor();
+    await section.getByRole('button',{name:'Before',exact:true}).click();
+    const precise=new URL(page.url()); precise.hash='old-L25';
+    await page.goto(precise.href,{waitUntil:'domcontentloaded'});
+    await page.locator('.repository-file-section[data-file-id="'+fileID+'"] .cm-gutters a[href$="#old-L25"]').waitFor();
+    assert.equal(new URL(page.url()).searchParams.get('version'),'old');
+    await page.screenshot({path:output+'/repository-followup-full-file.png'}); console.log('Live full-file and cold line link passed');
+    await page.getByRole('button',{name:'← Repositories',exact:true}).click();
+    const commitLink=card.locator('.repository-commit-subject').first();
+    const commitURL=new URL(await commitLink.getAttribute('href'),page.url());
+    await card.getByRole('button',{name:'Copy commit hash',exact:true}).first().click();
+    assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),commitURL.searchParams.get('commit'));
+    await commitLink.click();
+    await page.locator('.repository-commit-full-message').waitFor();
+    assert((await page.locator('.repository-commit-full-message').textContent()).trim().length>0);
+    await page.getByRole('button',{name:'Unified',exact:true}).click();
+    await page.locator('.cm-editor').first().waitFor();
+    assert.equal(new URL(page.url()).searchParams.get('layout'),'unified');
+    assert.equal(await page.locator('[contenteditable="true"]').count(),0);
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:output+'/repository-followup-mobile.png'});
+    assert.deepEqual(errors,[]);
+    assert.deepEqual(await page.evaluate(()=>window.reviewViolations),[]);
+    fs.writeFileSync(output+'/live-browser-results.json',JSON.stringify({passed:true,branchURL,fullFileURL:precise.href,commitURL:commitURL.href,
+      checks:['real portal handlers','two columns','syntax colors','frozen branch URL','full file before','cold old line anchor','clipboard hash','full commit message','unified','readonly','mobile','zero CSP violations','zero page errors']},null,2)+'\n');
+  } finally {await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

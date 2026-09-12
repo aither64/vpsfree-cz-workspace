@@ -183,3 +183,8 @@ normalization to existing frozen receipts from profile28, so already-created
 sessions recover without another thread or initial submission. Canonical state
 and private file schemas remain unchanged. Rollback can prove newly normalized
 receipts; older raw receipts retain their prior behavior until rolling forward.
+
+## Approved repository and conversation follow-up
+
+See [follow-up-plan.md](follow-up-plan.md) for the 2026-09-12 implementation,
+interfaces, dependency decision, compatibility, validation and rollout.
