@@ -188,3 +188,6 @@ receipts; older raw receipts retain their prior behavior until rolling forward.
 
 See [follow-up-plan.md](follow-up-plan.md) for the 2026-09-12 implementation,
 interfaces, dependency decision, compatibility, validation and rollout.
+
+The approved compact-tree and scrolling-details follow-up is specified in
+[compact-plan.md](compact-plan.md). It reuses the current branches and deployment.
