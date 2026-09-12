@@ -6,7 +6,7 @@ Add resumable prompt attachments to existing conversations and the new-session
 form. Implement shared attachment HTTP/browser support in codex-web; keep private
 storage, authorization scopes, creation and lifecycle policy in dev-workspace.
 Affected projects: codex-web, dev-workspace, vpsfree-dev-workspace (runtime pin),
-and workspace (organization package pin). Use branch/worktree group
+workspace (organization package pin), and vpsfree-cz-configuration (host-module pin). Use branch/worktree group
 2026-09-12-portal-file-uploads. The user authorized implementation and subsequent
 deployment to aitherdev. Default-branch integration and archival are excluded.
 
@@ -55,8 +55,8 @@ database/client/daemon/NixOS option migration or coordinated node update is need
 Four MiB requests fit the existing nginx 16 MiB bound; keep prompt JSON limits.
 
 Commit/pin providers before consumers: codex-web -> dev-workspace -> organization
-package -> workspace package. Deploy from the feature worktrees through the user
-profile on aitherdev, not through system configuration. Preserve rollback state
+package -> workspace package. Deploy the aitherdev host-module pin from the configuration feature worktree
+and the application from the workspace user-profile package. Preserve rollback state
 and leave branches and session open for follow-up.
 
 ## Verification
@@ -74,3 +74,22 @@ high risk; general, architecture, scope and risk lanes; gpt-5.6-sol xhigh.
 Reconcile findings before long integration/package/live App Server checks.
 Push feature branches, investigate and monitor CI, then deploy and verify the
 live portal. Maintain tracking and the stable session URL; do not archive.
+
+## Deployment clarification
+
+The user additionally requested deployment through vpsfree-cz-configuration.
+Its aitherdev host-module input is pinned through confctl on this initiative
+branch. The application still deploys from the workspace user-profile package.
+Build and deploy both from their feature worktrees, retaining default branches.
+
+
+## Review decisions
+
+Reclaim obsolete metadata while retaining sent history and fork tombstones.
+Use the existing Codex deletion ledger for recoverable provider completion;
+editable queue refresh reconciles already absent entries through an explicit
+POST under mutation authority; GET remains observational. Finish pending queue
+cancellations before rollback. If an older generation clears such a receipt,
+rolling forward retains the file until owner-session deletion. This is a
+retention-only limit, with no state-format change or loss of file contents.
+See review-reconciliation.md for findings, fixes and focused regression results.
