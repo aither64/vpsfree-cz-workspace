@@ -4,7 +4,83 @@ lifecycle: active
 
 # 2026-08-18-vpsadmin-password-reset
 
-## Current work — September 12 rebase and deployed development cluster
+## Current work — September 13 merge-readiness review complete
+
+**Not ready for merge.** The fresh mandatory review covered the complete
+committed series across all four retained repositories. After reconciliation:
+two Blocking findings, four Important findings and two Advisory follow-ups.
+All project heads remain exactly as listed in the September 12 table below;
+worktrees are clean and match their remote feature heads. They include the
+defaults fetched at the start of this review. No rebase, project-code change,
+push, merge, deployment, or cluster/session lifecycle action was performed.
+
+Risk: HIGH (authentication/MFA, persisted state, authorization, public and
+cross-project contracts, rollout/rollback). Four fresh standalone reviewers used
+`gpt-5.6-sol` with `xhigh` reasoning: general, architecture/repetition,
+scope/proportionality and risk/compatibility. No nested reviewers or reruns.
+General/architecture/risk ran concurrently; scope followed in a freed slot.
+
+Required remediations, grouped after merging duplicate lane findings:
+
+- Blocking, risk: generation-less predecessor AuthToken records default to
+  generation zero and remain usable after an old-writer password change across
+  the documented cutover. Root reproduced a stale reset overwriting the
+  intervening password in an isolated test database. Reject unstamped pending
+  authority or revoke it after the old-writer barrier; preserve established
+  sessions.
+- Blocking, architecture: recovery expands the password minimum into a fourth
+  independent public runtime check. Current paths all use eight characters;
+  there is no current policy mismatch. Consolidate the rule in the existing
+  PasswordChanges owner, as required by the lane's expanded-public-contract
+  duplication rubric, without a general policy framework.
+- Important, general+risk: Basic hash upgrades omit request-backed audit
+  metadata; root reproduced null IP/PTR/UA despite a populated Basic session.
+- Important, general+risk: a 256-character User-Agent makes passkey challenge
+  persistence fail and the broad rescue returns 422. Root reproduced this with
+  a successful short-header control. Bound the metadata and narrow the rescue.
+- Important, risk: MailLog returns user:null but both Index and Show metadata
+  declare it nonnullable. Root confirmed the metadata; mark it nullable and
+  cover the description. No failure in the current Go pointer consumer is
+  claimed.
+- Important, general+scope: consolidate final migration definitions, the CI
+  topic/sessionless-WebUI repair commits, and the final runbook so the series
+  does not retain unsupported intermediate schemas and rollout instructions.
+  Preserve independent functional changes and generated pin messages; refresh
+  exact downstream pins after any history rewrite.
+
+No required finding is fixed or waived in this review-only request. The root
+accepts two Advisory deferrals: a stale-retention/claimed-submission race can
+restart the worker after 30 seconds; and old untracked bilingual KB candidates
+must be corrected and their manifests regenerated before publication. The
+latter does not block code merge. Preliminary final-lifecycle-check and retained
+hard-deleted-user concerns were withdrawn after code inspection; the risk
+report records the narrower unmeasured deletion interleaving as a residual gap.
+
+Validation: all nine current-head CI workflows pass. Full integration
+`34715749842` completed at `2026-09-13T00:35:49Z` on exact API `a2e6d803`,
+with 118 tests successful. New quick checks pass: four committed diff checks,
+selector 16 tests / 55 assertions, external templates 71 templates / 349 files.
+Existing exact-head hooks, seven builds and live acceptance remain applicable.
+
+Root's isolated characterization probes reproduce legacy-token acceptance
+(two examples), missing Basic audit fields, MailLog metadata, and long-UA
+passkey failure. The first UA probe also made an unrelated rollback-retention
+assertion inside RSpec's outer transaction; that assertion failed because the
+application transaction joined it. Removed that assumption and reran only the
+UA example, which confirmed ValueTooLong/422 again. No production rollback
+claim is based on that assertion. The separate durable note explains the
+transaction-boundary trap. These probes intentionally assert observed defects,
+so their passing results are not passing security requirements.
+
+Full packet, reports, reconciliation and reproducible probes are under
+`review-2026-09-13/`; `ci-results.json` contains safe workflow metadata.
+Next action: remediate the required findings and history, verify fixes, refresh
+pins and apply the skill's targeted-review rules where designs/contracts change.
+Keep the initiative active and the existing bridge cluster untouched.
+
+Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-08-18-vpsadmin-password-reset/
+
+## Previous handoff — September 12 rebase and deployed development cluster
 
 The requested rebase, pushes and development deployment are complete. The
 same four branches/worktrees are retained; all are clean and match their remote

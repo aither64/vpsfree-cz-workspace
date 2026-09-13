@@ -43,9 +43,10 @@ pass, including all four runtime suites / 12 scripts and the inherited Guix fix.
 The five fast vpsAdmin workflows and
 [API topics](https://github.com/vpsfreecz/vpsadmin/actions/runs/34715749822) pass.
 [Full integration](https://github.com/vpsfreecz/vpsadmin/actions/runs/34715749842)
-is still running; no failure is reported at the latest check. The user chose
-to check its result later and waived waiting before this handoff. Only the
-local status watcher was stopped; the GitHub workflow remains running.
+was left running at the September 12 handoff at the user's request. On
+September 13 it was confirmed successful on the same head, with 118 tests
+successful. Fresh merge-readiness findings are recorded separately in
+[the September 13 review](review-2026-09-13/reconciliation.md).
 
 The preceding intermittent local metrics-token HTTP 500 was not reproduced by
 its diagnostic rerun or subsequent CI. Its root cause remains unknown; details

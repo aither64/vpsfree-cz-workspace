@@ -704,3 +704,15 @@ whether an account exists or can use recovery.
   NixOS root disks is not a data-preserving rollback path. The production API
   migration and rollout contract is unchanged by this development-only runtime
   dependency; no coordinated production-node update is required.
+
+## Fresh merge-readiness review (2026-09-13)
+
+- The user requests fresh mandatory reviews of the complete committed feature
+  series across the four retained repositories, assessing readiness for merge.
+- Keep exact branch heads fixed; fetch defaults and confirm cleanliness/pins,
+  recheck quick verification, and collect final current-head CI results.
+- Classify as high risk and run all four fresh standalone lanes using
+  gpt-5.6-sol at xhigh: general, architecture, scope, and risk/compatibility.
+  Reconcile findings against code and record required remediations or residual
+  risks. This assessment does not authorize merging or a production rollout.
+- Leave the existing bridge development cluster and session running.
