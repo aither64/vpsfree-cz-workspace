@@ -1,6 +1,7 @@
 package web
 
 import (
+ "bytes"
  "context"
  "crypto/sha256"
  "encoding/json"
@@ -27,6 +28,8 @@ type uploadBrowserCodex struct {
  queue []codex.QueueEntry
  busy bool
 }
+// Keep this fixture free of unrelated approval prompts.
+func(c *uploadBrowserCodex) PromptsWithItems(context.Context,string)([]codex.Prompt,error){return nil,nil}
 func(c *uploadBrowserCodex) ReadThread(context.Context,string)(codex.Transcript,error){
  c.lock.Lock();defer c.lock.Unlock();status:="idle";if c.busy{status="active"}
  return codex.Transcript{ThreadID:"thread-1",Status:status,Model:"model-1",ReasoningEffort:"medium",CollaborationMode:"default",Entries:append([]codex.TranscriptEntry{},c.entries...)},nil
@@ -60,10 +63,19 @@ func TestUploadBrowserFixture(t *testing.T){
  server.conversation,err=conversation.NewHandler(conversation.Options{AllowedOrigins:[]string{server.config.BaseURL},BasePath:"/codex",Shutdown:server.stopping,Resolver:conversation.ResolverFunc(server.resolveConversation)})
  if err!=nil{t.Fatal(err)}
  if err=server.initUploads();err!=nil{t.Fatal(err)}
- handler:=server.Handler();stop:=make(chan struct{});var slow atomic.Bool
+ handler:=server.Handler();stop:=make(chan struct{});var slow atomic.Bool; var baseline atomic.Bool
+ legacyAssets:=os.Getenv("PORTAL_UPLOAD_LEGACY_ASSETS")
  httpServer.Config.Handler=http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
   if strings.HasPrefix(r.URL.Path,"/fixture/"){
    switch strings.TrimPrefix(r.URL.Path,"/fixture/"){
+   case "shared-composer.js":
+    w.Header().Set("Content-Type","text/javascript")
+    w.Write([]byte(`import {mountConversation} from '/codex/assets/conversation.js?v=6';
+const root=document.createElement('div');root.id='shared-acceptance';document.body.append(root);
+window.destroySharedAcceptance=mountConversation(root,{id:'shared-acceptance',basePath:'/codex',uploadBasePath:'/uploads/s-example',
+ client:{thread:async()=>({status:'idle',entries:[]})},capabilities:{pending:false,queueRead:false,queue:false,interrupt:false,settings:false,respond:false,eventStream:false}});`));return
+   case "baseline":baseline.Store(true)
+   case "current":baseline.Store(false)
    case "busy":client.lock.Lock();client.busy=true;client.lock.Unlock()
    case "idle":client.lock.Lock();client.busy=false;client.lock.Unlock()
    case "slow":slow.Store(true)
@@ -73,6 +85,18 @@ func TestUploadBrowserFixture(t *testing.T){
    }
    select{case changes<-struct{}{}:default:}
    w.Header().Set("Content-Type","application/json");w.Write([]byte("{}"));return
+  }
+  if baseline.Load() && legacyAssets!="" {
+   if strings.HasPrefix(r.URL.Path,"/codex/assets/") || r.URL.Path=="/static/app.js" {
+    if r.URL.Path=="/static/app.js" {w.Header().Set("Cache-Control","no-store")} else {w.Header().Set("Cache-Control","public, max-age=300")}
+    http.ServeFile(w,r,filepath.Join(legacyAssets,filepath.Base(r.URL.Path)));return
+   }
+   if r.URL.Path=="/" || r.URL.Path=="/example/" {
+    capture:=httptest.NewRecorder();handler.ServeHTTP(capture,r)
+    for name,values:=range capture.Header(){w.Header()[name]=values}
+    w.Header().Del("Content-Length");w.WriteHeader(capture.Code)
+    w.Write(bytes.ReplaceAll(capture.Body.Bytes(),[]byte("/codex/assets/uploads.css?v=2"),[]byte("/codex/assets/uploads.css")));return
+   }
   }
   if r.Method=="PATCH" && slow.Load(){time.Sleep(750*time.Millisecond)}
   handler.ServeHTTP(w,r)

@@ -93,3 +93,25 @@ cancellations before rollback. If an older generation clears such a receipt,
 rolling forward retains the file until owner-session deletion. This is a
 retention-only limit, with no state-format change or loss of file contents.
 See review-reconciliation.md for findings, fixes and focused regression results.
+
+## Follow-up: compact attachment menu (2026-09-13)
+
+The user accepted placing a + icon beside Send and Create session in both
+forms. It opens an overlay with Attach files; the picker still accepts multiple
+files. Empty card/error areas are hidden and the permanent limits prose is
+removed. Actual rejection errors and all limits remain enforced.
+
+The reusable menu belongs to codex-web mountUploads, with optional controlsRoot
+to place controls independently of cards. Existing callers retain a working
+default root. Native popover dismissal plus keyboard/focus behavior is shared;
+destroy removes only owned controls. No upload protocol, persisted state, Codex
+version, security policy, or server behavior changes. Browser assets deploy
+together through existing pins; rollback can read the unchanged upload state.
+
+Verify quick syntax/contract/Go checks, commit and run all applicable required
+review lanes, then desktop and narrow Firefox acceptance covering both forms,
+menu placement/focus, picker/drop/removal, empty layout, limit errors and lock/
+cleanup behavior. Repeating large-file and live Codex lifecycle acceptance is
+unnecessary for this UI-only follow-up. Push retained feature branches, update
+downstream pins, build/deploy user profile and aitherdev from the configuration
+feature worktree. Keep all branches unmerged and the initiative open.

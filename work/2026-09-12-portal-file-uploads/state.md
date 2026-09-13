@@ -176,3 +176,81 @@ is scheduled. See deployment-results.md for the compact deployment evidence.
 
 Stable portal:
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-12-portal-file-uploads/
+
+## Compact menu follow-up (2026-09-13)
+
+User approved the action-row + menu for both existing and new sessions and
+authorized implementation/deployment as a continuation of this initiative.
+Baseline heads: codex-web 7b79942, dev-workspace 30bfb2a, organization 9db07ad,
+workspace fb33998, configuration 6365272. Reusing all registered feature worktrees.
+Implementing shared optional controlsRoot, native attachment popover, hidden empty
+card/error roots, and host action slots. All upload limits remain enforced without
+the persistent limits sentence. No backend/state changes. Verification/review/
+CI and deployment pending.
+
+Follow-up committed heads are in menu-revisions.json. Upstream masters fetched;
+project feature branches remain descendants. Workspace feature rebased onto
+shared master 6f47880; its prior deployed pin commits are retained unchanged in
+content. All five feature branches pushed. Quick syntax/provider Node contracts
+(5 passing), provider conversation Go and runtime web Go checks passed. Vendor
+hash remeasured with an intentional fixed-output mismatch, then aligned with
+the Go/flake provider pin. Provider and runtime head CI green; organization CI
+pending. General, architecture and risk reviews running; scope lane queued for
+capacity. All use gpt-5.6-sol xhigh with fresh context per required review skill.
+Overall risk high due to cross-project API/deployment boundary, with unchanged
+state/transport formats. Labels directly reviewed with the user-facing writing
+skill. Long local integration/browser checks and deployment await review.
+
+Review findings and direct fixes are consolidated in menu-review-reconciliation.md.
+General Important visibility cleanup fixed and tested; Advisory old sums removed.
+Architecture no findings. Risk Important warmed browser cache/hidden-markup issue
+fixed with initially visible roots, :empty styling, and coordinated module/style
+cache identities. Scope reviewer is checking final committed heads. No new state
+contract. Follow-up commits/pins consolidated and pushed; exact revisions in
+menu-revisions.json. Config generated changelog intentionally corrected to the
+consolidated actual baseline, without formatting changes. No superseded CI runs
+needed cancellation: all earlier heads had already finished.
+
+Scope review completed at the final heads with no findings. All four lanes are
+complete; all Important and Advisory findings are fixed. Post-review Firefox
+acceptance, provider packaged checks, workspace package build and configuration
+build started. No review reruns required for direct fixes.
+
+Post-review Firefox acceptance passed all 11 checks at 1280 and 390 CSS pixels:
+both forms, cached forward/rollback, keyboard/light dismissal, no layout growth,
+picker/drop/removal, exact sent bytes, limits errors, lock/destroy, fallback root,
+shared composer and attachment-only initial submission. Test harness fixes:
+choose an uncovered textarea corner for outside click; use the current versioned
+module after warming legacy cache; run shared mount from a same-origin module
+script so Firefox binds fetch in the page realm. No product changes were needed.
+Provider nix flake check passed. Workspace package built with all Go packages and
+Ruby suites passing (297/2989 assertions, 73/438 assertions; expected existing
+skips). Package /nix/store/65zp6sd9qrmzz572x62ia1d2brmfd07f-dev-workspace-0.2.0.
+System build and dry-activate passed for generation 2026-09-13--10-05-18; only
+configuration metadata rebuilt, no kernel build. User profile switch started.
+
+## Compact menu delivered (2026-09-13)
+
+Deployed user profile 34 and system generation 2026-09-13--10-05-18 through
+normal workspace-host and confctl commands. Package:
+/nix/store/65zp6sd9qrmzz572x62ia1d2brmfd07f-dev-workspace-0.2.0. System:
+/nix/store/m3f33jsmi18b3p7xkzzpj2k4lb6wdq4s-nixos-system-aitherdev-26.05.20260911.21a67dc.
+Both confctl health checks passed. Codex 0.154.0 remained at MainPID 1090021;
+portal/router/Codex/nginx active. Live authenticated index, session, health and
+versioned assets returned 200; unauthenticated health 401. Live 8 MiB upload
+passed all three chunks/checksums, exact download and removal.
+
+Provider and workspace nix flake check passed. Current-head CI green for
+codex-web, dev-workspace and organization package; workspace/configuration have
+no configured feature-branch runs. Exact CI URLs and revisions are recorded in
+menu-ci-results.json and menu-revisions.json. All required review lanes complete,
+all findings fixed; see menu-review-reconciliation.md and menu-deployment-results.md.
+All 11 real-browser checks passed; screenshots and results retained. Owned
+fixture processes, temporary module assets, file inputs and transient Go test
+are removed; no product changes were necessary for harness corrections. Tracked
+project worktrees clean; pre-existing configuration .bin/.bundle caches retained.
+
+This is the explicit user-requested follow-up handoff checkpoint. All feature
+branches remain pushed and unmerged. Keep this initiative active and open for
+follow-up; integration is the only optional next user decision. No closure or
+cleanup of the real session is scheduled.
