@@ -13,9 +13,10 @@ URLs containing the absolute filesystem path must work too.
 - vpsfree-dev-workspace and workspace consume the generic package through exact
   input updates. Use dedicated feature worktrees for both consumers.
 - codex-web needs no change: the portal already supplies transcript HTML through
-  its transformation hook. vpsfree-cz-configuration is authorized for aitherdev
-  deployment if a system configuration change proves necessary; the application
-  itself must continue to come from the user profile.
+  its transformation hook. vpsfree-cz-configuration needs the same generic
+  revision because the workspace deployment contract requires exact host/runtime
+  pins. This updates the host-module input through confctl; the application
+  itself continues to come from the user profile.
 
 ## Approach and decisions
 
@@ -50,10 +51,13 @@ transcripts and manifests remain unchanged. New and old package generations can
 load the same state; rollback restores the old rendering/404 behavior.
 
 The user authorized aitherdev deployment. Update generic -> organization ->
-workspace package pins, build the complete package, then use workspace-host
-switch from the workspace feature worktree. Do not merge configuration default
-branches as a deployment shortcut. No nginx route change is expected. Keep the
-session and branches open; integration/archival is not part of this request.
+workspace package pins, set the matching devWorkspace input with confctl, build
+the complete package and aitherdev configuration, dry-activate, use workspace-host
+switch from the workspace feature worktree, then activate the host configuration.
+Do not merge configuration default branches as a deployment shortcut. No nginx
+route change is needed. Keep the
+session and branches open. The user subsequently authorized default-branch
+integration and cleanup; archive/delete remains outside the requested cleanup.
 
 ## Testing plan
 
@@ -65,3 +69,14 @@ authorization; general, architecture, scope and risk lanes, sol/xhigh) before
 long packaged and live browser integration tests. Resolve findings and inspect
 branch GitHub Actions results. Verify authenticated viewer/API access and line
 anchoring through the deployed portal, including normal navigation and new tabs.
+
+## Integration and cleanup
+
+The user requested merging into default branches and cleaning up. Fetch every
+default branch, preserve newer work, integrate independent repositories from
+fresh temporary worktrees with fast-forward-only merges, and integrate the
+workspace feature through the shared master checkout without staging unrelated
+changes. Keep local and remote feature branches. Remove the clean initiative
+worktrees and transient captures after validation, retain curated evidence and
+commit one consolidated integration/cleanup record. Leave the session available
+for follow-up; no archive or delete is requested.
