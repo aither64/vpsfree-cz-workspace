@@ -6,8 +6,8 @@ Implement the approved plan and deploy both changes to aitherdev. The user
 authorized deployment through the configuration feature branch and chose to
 keep message controls usable during an outage. Repository totals match the
 existing commit list and Compare view, including preserved comparisons after
-integration. Default-branch integration, archival and session deletion are not
-part of this request.
+integration. The subsequent follow-up authorizes default-branch integration and clean
+worktree/cache removal. Archival and session deletion remain unrequested.
 
 ## Components
 
@@ -32,7 +32,7 @@ Refresh on stream opening, window focus, visibility, pageshow, and online
 events. Coalesce simultaneous triggers; after sleep replace stale requests and
 connections. Emit named ready and heartbeat SSE events, retaining update
 messages. Heartbeats every 20 seconds, watchdog every 5 seconds, stale after
-45 seconds. Retry with exponential backoff from 1 to 30 seconds with jitter.
+two advertised intervals plus five seconds (45 seconds at the current interval). Retry with exponential backoff from 1 to 30 seconds with jitter.
 Refresh full snapshots every 60 seconds while visible, suspend periodic reads
 while hidden, and refresh on return. Enable heartbeat enforcement only after
 the server advertises it so old servers remain usable.
@@ -86,3 +86,16 @@ binary files, unpushed/rebased/integrated comparisons, batch equivalence, summar
 failure, and narrow layout. Browser acceptance in Firefox and Chromium includes
 offline and silent stalls, missed final reply, preserved composer/answers/scroll.
 After activation verify authenticated pages/assets, SSE recovery and summaries.
+
+## Accepted integration and cleanup
+
+The user now explicitly authorizes merging all five branches into their remote
+default branches and removing clean feature/temporary worktrees and tool caches.
+Retain branch refs and the open session/tracking directory. Integrate provider,
+runtime, organization, workspace and configuration using fast-forward merges;
+fetch current defaults, rebase only where needed, and prove exact final feature
+heads are included in remote master. Independent projects use fresh temporary
+target worktrees. Shared workspace remains on master and preserves unrelated
+changes and index entries. Monitor default-branch CI, including its additional
+host smoke test, and address any failures. Existing deployed package stays at
+the same runtime revision; no additional deployment is needed for pure merge.
