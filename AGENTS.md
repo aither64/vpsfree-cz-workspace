@@ -65,6 +65,9 @@ The top-level workspace repository has two distinct workflows:
 - Record the workspace feature branch and worktree in the initiative's
   `state.md`, which remains part of the shared coordination checkout. Fetch and
   rebase the workspace feature branch onto current `master` before final review.
+- After the workspace feature's final rebase and review, run
+  `dev-session worktree capture-comparison <slug> workspace --as-is` before
+  integration. Repeat the capture after any head change.
 - Integrate a reviewed workspace feature from the shared `master` checkout,
   after confirming that the feature branch is a descendant of current
   `master`. Preserve unrelated working-tree changes, stage nothing during the
@@ -128,6 +131,13 @@ For feature work in the independent project repositories:
   different name.
 - Create worktrees under `worktrees/<yyyy-mm-dd-slug>/<project>` so all changes
   for one initiative are easy to inspect together.
+- After the final rebase and commit, and before integrating each feature
+  branch, save its comparison with
+  `dev-session worktree capture-comparison <slug> <name> --as-is`. Repeat after
+  any head change. This keeps the Repositories tab useful after integration
+  even if nobody opened it before merging. For a historical recovery, supply
+  both `--base <SHA>` and `--head <SHA>` from recorded integration revisions;
+  never guess the pre-merge base from the current default branch.
 - When merging a feature back, create a fresh temporary worktree from the target
   branch, usually the upstream default branch. Fetch the target branch first,
   rebase the feature branch onto the current target branch if needed, and merge
