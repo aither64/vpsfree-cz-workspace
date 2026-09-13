@@ -115,3 +115,46 @@ cleanup behavior. Repeating large-file and live Codex lifecycle acceptance is
 unnecessary for this UI-only follow-up. Push retained feature branches, update
 downstream pins, build/deploy user profile and aitherdev from the configuration
 feature worktree. Keep all branches unmerged and the initiative open.
+
+## Follow-up: current plan decisions (2026-09-13)
+
+User confirmed an earlier plan existed before an ordinary reply. Enabling Plan
+mode must not revive that historical plan. A real proposal must replace the
+normal composer, including attachments and settings, until Keep planning or
+implementation restores it. Preserve drafts/uploads; dismiss by turn and text
+identity for the page lifetime; hide redundant waiting status while deciding.
+
+Add latestTurnId to the shared transcript from actual latest raw turn, including
+empty turns. Browser and server accept a nonempty explicit completed plan only
+from that turn. Missing identity fails closed for the shortcut, with the normal
+composer usable. Separate non-submitting send-receipt reconciliation from fresh
+plan validation so lost replies can be recovered without implementing stale plans.
+No on-disk migration or Codex version change. Portal app/style already use no-store; shared cached assets are unchanged.
+Old consumers ignore additive metadata.
+
+Provider metadata/reconciliation contracts, portal eligibility/actions, and
+composer visibility/draft/focus behavior receive focused tests. Required adaptive
+review follows commits and quick checks; browser fixture verifies both mode
+transitions and desktop/narrow layout with uploads. Update existing five-repo pin
+chain, build and deploy to aitherdev through user profile and configuration
+feature branch. Retain unmerged branches and keep the initiative open.
+
+The review exposed a repeated-identical-plan receipt collision. New implementation
+identities now include turn and digest, with planContextVersion=2 on same-thread
+requests. Unversioned old pages must reload before implementation. The separate recovery
+action can recover submitted receipts or retire exact legacy prepared attempts
+without starting work. It can retire v2 prepared attempts only when a known latest
+turn differs from the source turn. Current or unproven attempts remain retryable.
+This changes no ledger schema. Rollback rejects unfamiliar contexts and may need
+a page reload; observed receipts still use existing transcript acknowledgement.
+
+## Integration and cleanup (user approved 2026-09-13)
+
+Merge all five feature branches into their remote default branches with only
+fast-forwards. Rebase configuration onto current upstream dependency updates;
+retain the reviewed provider/runtime/organization/workspace heads when unchanged.
+Verify from fresh temporary target worktrees and monitor default-branch CI.
+The deployed portal behavior and data formats remain as previously verified.
+Remove clean feature/temporary worktrees and initiative caches, retaining branch
+refs and durable tracking. Keep the conversation/tracking available; archive or
+delete remains a separate explicit lifecycle action under workspace policy.

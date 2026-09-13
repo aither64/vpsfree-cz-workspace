@@ -254,3 +254,183 @@ This is the explicit user-requested follow-up handoff checkpoint. All feature
 branches remain pushed and unmerged. Keep this initiative active and open for
 follow-up; integration is the only optional next user decision. No closure or
 cleanup of the real session is scheduled.
+
+## Current-plan decision follow-up started (2026-09-13)
+
+Approved plan now in plan.md. Baselines: codex-web 4a4c77b, dev-workspace 14871f5,
+organization 6063618, workspace 58bc7ea, configuration c79a68ea. Reusing retained
+registered branches/worktrees, with explicit DEV_SESSION_SLUG verified by helper.
+Implementation, quick checks, required review, browser acceptance, CI and
+deployment pending. Existing upload/menu work remains deployed and unchanged.
+
+Current-plan implementation and pins committed/pushed; exact heads in
+plan-decision-revisions.json. Provider and runtime full Go suites and browser
+contract passed, JavaScript syntax passed. No persisted-format or App Server protocol change.
+Workspace branch rebased onto shared master; previous deployed content preserved.
+Review HIGH for API/recovery/deployment boundary; all four lanes at sol xhigh,
+packet in plan-decision-review-packet.md. Browser/package/deploy checks await review.
+
+Reviewer orchestration hit the tool's total agent-thread limit after starting
+fresh general/architecture reviewers. Risk review runs as a fresh ephemeral
+Codex CLI process (gpt-5.6-sol, xhigh, read-only) with the same packet/skill and
+no inherited conversation. Scope will use the same method when capacity frees.
+This preserves fresh standalone review; no older reviewer is reused. Provider
+and runtime CI are green at current heads; organization checks still running.
+
+Risk review Blocking: equal plan text in later turns could reuse earlier pending
+IDs. Fixed by binding new identities to turn+digest and explicit context version 2.
+Legacy requests are recovery-only for submitted receipts, with reload for new or
+prepared requests. Focused server/browser tests pass; risk/architecture re-review
+required for this request contract. Scope is inspecting the advancing final heads.
+
+Current runtime CI run 34748661118 failed at workflow startup with zero jobs,
+zero check runs, zero artifacts and no log available (gh --log-failed returned
+log not found). Workflow files are identical to the immediately preceding green
+head 9ed5ff5. This is before any project test/runner diagnostics can execute;
+no code/test failure was reported, and the platform did not expose a root cause.
+GitHub also returned HTTP 502 then 500 while canceling obsolete organization run
+34748496749. Retrying startup after inspecting the empty run metadata; local
+final-head Go suite already passed. Do not characterize the rerun as evidence
+that an unidentified test failure was fixed.
+
+V2 architecture/risk found two remaining legacy transition issues: an already
+open old page could mistake receipt recovery for approval of a later identical
+plan; refusing prepared legacy attempts left an unresolved lifecycle blocker.
+Fixed with explicit recovery-only action and exact provider-owned prepared
+retirement. Old unversioned implementation requests always require reload.
+Fresh pages recover/retire legacy browser retries without starting work or changing
+mode; legacy receipts cannot approve a current v2 plan. Submitting/accepted ledger
+entries cannot be discarded. Provider lifecycle/identity/state regressions and
+runtime focused/full suites pass. Provider pin is consolidated into the original
+follow-up dependency commit; deployed predecessors remain intact.
+
+CI startup retry was denied by token permissions. Triggered an exact-head check
+through the SSH-pushed ci/2026-09-12-portal-file-uploads-plan-decision tag, preserving
+the tag. That head is now superseded by the retirement correction. Final branch
+pushes trigger fresh checks; obsolete organization cancellation returned 502/500.
+
+Organization final-head CI 34749184468 failed fetching shiki-4.4.3.tgz from
+registry.npmjs.org during the fixed-output npm dependency build: curl error 56,
+Failure when receiving data from the peer. No project tests had run. Opened the
+failed job logs; npm lockfile/hash are unchanged by this follow-up. The same
+asset derivation built locally during Go vendor-hash measurement. Retry is for
+the identified external transfer failure, not a hidden test failure.
+
+Final review v3: architecture has no findings. General found the v2 retirement
+proof admitted padded source IDs and an unproven plan in the same source turn.
+Narrow correction now requires known LatestTurnID different from trimmed source
+ID, exactly matching browser retirement eligibility; current/missing identity
+remains retryable. Added whitespace and same-turn/missing-entry regressions;
+focused test passed. No new design or review rerun is needed for this correction.
+Final scope/risk review remains in progress. Runtime 7f0d1ab CI had the same
+platform startup_failure with zero jobs; new amended head triggers fresh CI.
+
+V3 risk duplicates the general retention finding (Blocking); fixed by known
+latest/source turn inequality. It also found Important missing acknowledgement
+when recovery resolves after transcript observation. Added existing digest-proven
+acknowledgement after in-flight recovery ends; shipped-browser contract test and
+syntax pass. The manual browser scenario holds a submitted recovery response and
+then releases it without any new event to verify acknowledgement. This is a
+narrow restoration of the existing receipt contract, no new abstraction/rerun.
+The organization npm-transfer retry passed before being superseded. CI checks
+now target the final heads recorded in plan-decision-revisions.json.
+
+All required review lanes complete. V3 scope has no findings and inspected final
+8a43d3b narrowing/acknowledgement plus mechanical pins. All Blocking/Important
+findings addressed with focused checks; long acceptance/build/deploy phase begins.
+
+Post-review acceptance passed: all 10 Firefox scenarios at 1280x900 and 390x844,
+including held recovery acknowledgement, visible earlier receipt and identical
+later plan, upload progress while hidden, drafts/focus, queue/dialog behavior and
+newer empty/failed/interrupted/missing-turn suppression. Transcript height grows
+from 546 to 739px desktop and 274 to 473px narrow in the fixture. Curated browser
+script/results/screenshots retained; transient Go test copies and server removed.
+Two harness corrections were needed: transport was captured before fetch injection,
+and observed receipts intentionally have no duplicate receipt banner, so the final
+fixture holds first implementation correlation to test visible accepted receipts.
+No product defect was hidden by either fixture correction.
+Provider flake checks, workspace build and deployment-contract flake check passed.
+Packaged Go suite passed; Ruby suites: 297 runs/2989 assertions and 73/438, no
+failures/errors (12 and 3 existing skips). Configuration build and dry activation
+passed at generation 2026-09-13--11-33-55, no kernel rebuild. User profile switched
+to generation 35 at cgllc6zfnab06ah8w17izn4hmj80mhia-dev-workspace-0.2.0;
+protocol preflight confirms Codex 0.154.0 unchanged. System switch running.
+
+Deployment finished: system 2026-09-13--11-33-55 at
+jvi5n2bbp0li9w2xikh5kgwqnnzgy7g7-nixos-system-aitherdev-26.05.20260911.21a67dc.
+Both configured health checks passed. Portal/router/Codex/tmux/nginx are active;
+Codex MainPID remains 1090021. Live authenticated index, initiative, assets and
+thread/newest-turn metadata passed, including index/page after artifact manifest
+updates. Current feature refs exactly match all five local heads. All project
+tracked trees are clean; original configuration .bin/.bundle caches retained.
+Current provider/runtime CI passed. Organization flake checks passed and its
+final devcluster-check job is running. No default branches merged; no archive,
+stop, deletion or cleanup of the live initiative. Coordination records remain
+current in the working tree without another same-day tracking-only commit.
+
+Final validation complete: organization CI 34749656654 passed at 37f3bfa,
+including devcluster-check. All configured current-head CI is green, recorded
+with exact revisions and URLs in plan-decision-ci-results.json. Requested plan
+freshness/composer behavior is implemented and deployed. The initiative stays
+active because feature branches are retained and unmerged; no task verification,
+review or deployment remains pending. Tracking is ready for the next follow-up.
+
+User approved merging all default branches and cleanup. Fetched authoritative
+origin/master for all five repositories. Provider/runtime/organization/workspace
+have no upstream functional divergence; configuration adds upstream d697bb6b
+(vpsAdminOS staging) and 5356d77b (nixpkgsUnstable). Rebase only the configuration
+feature, verify unchanged devWorkspace pin, and build aitherdev before integration.
+All other reviewed heads are unchanged. Final merge results will be recorded in
+merge-results.json/md. No archive/delete or branch deletion inferred from cleanup.
+
+Configuration rebase completed with all six commits patch-equivalent (git
+range-diff reports = throughout). Its final head is b0252827; no conflict or
+functional change beyond the already merged upstream dependencies. Existing
+review remains applicable; mechanical dependency integration needs no new review.
+Provider merged/pushed at ee9ab42; its master CI 34761748096 is green.
+
+Temporary configuration worktree add returned 78 from its post-checkout
+Overcommit hook because the new checkout had no local bundle. The worktree did
+exist at origin/master; the chained merge had not run. Stopped a prematurely
+started base-only build, installed that temporary checkout's bundle in nix
+develop, then require explicit final-HEAD equality before starting its build.
+This matches existing notes/cross-project/2026-06-07-overcommit-worktree-add.md
+and notes/confctl/2026-06-09-temp-worktree-bundle-ruby.md; no hooks bypassed.
+The first configuration-rebase shell was accidentally invoked from shared root;
+it failed before Git rebased anything. Shared master/index stayed unchanged.
+
+Provider/runtime/organization passed nix flake check in fresh detached target
+worktrees. Runtime includes successful NixOS VM host-module/idempotency checks.
+All three application repositories were fast-forwarded and pushed to master.
+Shared workspace master integrated 0dbe399 with --ff-only, touching only flake
+pins and staging nothing; unrelated working-tree changes were preserved. Pushed
+shared master linearly. Deployment pin/hostname contract passed against the
+rebased configuration target. Application source/version is still the deployed
+one, so merging requires no application profile switch.
+
+All five default branches are now merged and pushed. Configuration target build
+passed at generation 2026-09-13--16-11-38 before pushing b0252827 to master; no
+kernel rebuild. The application's deployed revisions are unchanged. Existing
+live profile/system generation remains as recorded; the upstream dependency
+rebase was build-verified and does not require a new application deployment.
+Provider/runtime master CI passed. Organization master CI 34761953309 is running.
+Cleanup now removes only this initiative's clean feature/temporary worktrees and
+local build-tool caches. Uploaded files in private workspace state are retained.
+
+Cleanup completed: removed all nine initiative feature/temporary worktrees with
+non-force git worktree remove after proving exact local/remote feature heads
+are ancestors of origin/master. Retained all local/remote branches. Removed
+configuration-local .bin/.bundle/.gems/.confctl caches; worktrees/<slug> is gone.
+Portal health, index and initiative page still pass after removal. Uploaded files
+were untouched; user questions were answered from store/collector implementation:
+private uploads root, startup/hourly collection, seven-day unused/incomplete
+expiry, and no time-based expiry for sent/queued files. Archive/worktree removal
+retains files, while owning-session deletion or explicit file removal deletes.
+
+User requested not waiting for workflows. Stopped only the local gh run watch;
+remote organization workflow 34761953309 remains running independently, last
+known status in_progress. All merges, cleanup and local verification are complete.
+No further monitoring is scheduled. Lifecycle remains active because final CI
+completion is unverified; this does not block the requested handoff. Session,
+branches and uploaded files are retained. Final tracking checkpoint records the
+explicit user-directed merge/cleanup handoff.
