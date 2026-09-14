@@ -203,3 +203,13 @@ supervisor runtime-ingestion scenario with synthetic reports, restart, and
 repair on disposable data. Run canonical KB contract impact checks, GitHub
 Actions to completion, and confctl builds for channel consumers. Investigate
 unexpected local kernel builds before continuing.
+
+## Follow-up status-history audit
+
+After CI completed, the user asked whether the same timestamp problem affects
+software versions and other nodectld status histories, and why kernel history
+uses different logic. A read-only code audit and 13 disposable-database examples
+answer that question in status-timestamp-audit.md. They found a separate existing
+invalid-evidence recovery gap, including the application-specific previous-report
+branch. That finding is retained as an open follow-up; the audit changes no
+project revision or configuration pin.
