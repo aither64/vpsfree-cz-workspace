@@ -9,6 +9,8 @@ recovery after inactive tabs, and reliable planning-answer submission.
 - Git supplies exact changed-line ranges for Unified and Split; CodeMirror
   remains the display and Shiki remains the syntax highlighter. Character
   highlighting stays inside the changed ranges.
+- Put Automatic archival under Session settings in the left sidebar, leaving
+  the conversation height available to Codex (additional user request).
 - Unified is the fallback; explicit URLs and saved Split choices take priority.
 - Files with more than 2,000 added plus deleted lines start hidden and do not
   fetch content or initialize editors until requested. Every diff is collapsible.
@@ -33,7 +35,9 @@ and browser contracts. dev-workspace owns repository reading/rendering, timing,
 session details, question UI and the consuming provider pin. vpsfree-dev-workspace
 and the workspace consume the runtime through Nix pins. Use the initiative slug
 2026-09-14-portal-review-fixes for all branches/worktrees. No configuration
-repository change is currently required.
+repository change is currently required. The organization extension also updates
+the mandatory review instructions to gpt-6-astra, retaining xhigh effort, as
+requested by the user.
 
 ## Evidence
 
@@ -76,7 +80,7 @@ Use deterministic transport tests for retired readers, reissued request IDs,
 claims and unknown sends. Browser checks cover retained answer drafts, inline
 recovery, no duplicate answers, Firefox/Chromium navigation and hidden-tab timing.
 
-Run focused checks before commits and mandatory adaptive review (gpt-5.6-sol,
+Run focused checks before commits and mandatory adaptive review (gpt-6-astra,
 xhigh, all applicable lanes) before long packaged/live tests. Apply the user-facing
 writing skill directly to final copy. Push feature branches, inspect CI and fix
 failures; validate an isolated App Server before profile deployment and then
