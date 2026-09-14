@@ -3,9 +3,9 @@
 ## Goal and current scope
 
 Propose an extension to the vpsAdmin daily report covering session counts,
-current sessions, password recoveries, and manual password changes. The current
-request is for a solution proposal and useful additional metrics. Implementation
-has not started.
+current sessions, password recoveries, and manual password changes. The user approved implementation, including the additional metrics and updates
+to both configuration channels. Delivery ends with validated, pushed feature
+branches. Do not merge or deploy.
 
 ## Affected repositories
 
@@ -13,8 +13,8 @@ has not started.
   template, and test the counts and rendering.
 - `vpsfree-notification-templates`: extend the English HTML daily report used by
   vpsFree.cz. Its current template metadata labels this as an admin report.
-- A later deployment may update notification and vpsAdmin pins in the
-  configuration repository through confctl. Deployment is outside this proposal.
+- `vpsfree-cz-configuration`: pin both feature revisions with confctl channel
+  set, commit the generated changes, and build both API configurations.
 
 Inspected fetched `origin/master` revisions on 2026-09-14:
 
@@ -60,10 +60,9 @@ report must account for expiry without changing existing API filter behavior.
 
 The recorded session `auth_type` is `basic`, `token`, or `oauth2`. It does not
 record whether a successful login used password alone, TOTP, WebAuthn, or SSO.
-An optional clarification asks whether the user also wants that factor
-breakdown. Assume session types for the proposal unless the user requests
-factors; factors need a separate logging design and cannot be reconstructed
-reliably from current user MFA settings.
+The accepted breakdown uses these session types. Successful login factors
+need a separate logging design and cannot be reconstructed reliably from
+current user MFA settings.
 
 ## Password changes
 
@@ -90,19 +89,19 @@ Label parent request counts and account recovery counts accordingly. A parent
 request represents processed recovery work with a queued notification; it is
 not proof of email delivery or a count of all public form submissions.
 
-Recommended recovery metrics:
+Recovery metrics:
 
 - Processed recovery requests during the period, plus recoverable account
   attempts created during the period.
 - Successful recoveries during the period from the password-change log above.
 - Unfulfilled recoverable attempts: expired or invalidated during the period,
-  shown separately and optionally summed.
+  shown separately and summed.
 - Recovery unavailable at request time during the period: no MFA, and other
   unavailable accounts, shown separately. These records never had a usable
   recovery link, so exclude them from expired attempts.
 - Pending recoverable attempts now: incomplete, not invalidated, and before
-  the applicable deadline. Optionally split into Awaiting email link and
-  Recovery in progress.
+  the applicable deadline. Split into Awaiting email link and Recovery in
+  progress.
 
 For unfulfilled attempts, determine the applicable deadline from
 `email_expires_at` until the link is consumed, then `session_expires_at`.
@@ -125,17 +124,17 @@ Prioritize distinct users alongside Created and Active session counts. Compute
 the overall distinct-user total independently; a user may appear in multiple
 auth-type rows.
 
-Recorded failed login attempts during the period, grouped by mechanism and
-reason, are a useful optional addition. `UserFailedLogin` includes incomplete
+Include recorded failed login attempts during the period, grouped by mechanism
+and reason. `UserFailedLogin` includes incomplete
 MFA flows and some recovery TOTP failures. It requires a known user, so its
 count does not cover every rejected login or unknown-account attempt. Keep
 those qualifications in the label/help and group incomplete/expired flows
 separately where the stored reason permits.
 
-Other optional snapshots include active permanent-token sessions and
-administrator-created sessions. An activity metric based on `last_request_at`
-could distinguish recently used sessions from credentials that merely remain
-valid; account for Basic's immediate close and missing last-request timestamp.
+Include active permanent-token sessions and administrator-created sessions as
+overlapping subsets. The active metric measures credential validity. A future
+activity metric based on `last_request_at` would need to account for Basic's
+immediate close and missing last-request timestamps.
 
 Defer per-day recovery rate-limit and queue-full counts. The existing
 `PasswordEventCounter` stores cumulative counts and the last event time only,
@@ -201,5 +200,39 @@ of live-table locking and rollback cost. Old code can read the same data.
 - Commit intended changes, then run mandatory-change-review with xhigh review
   agents before longer integration checks. Extend the existing
   `tests/suite/alerts/lifetime-and-daily-report.nix` scenario if needed and
-  follow selective CI rules. No implementation tests are needed for this
-  coordination-only proposal.
+  follow selective CI rules. Run the focused integration test and both API configuration builds before
+  handing off the validated branches.
+
+## Accepted implementation decisions
+
+- Include unique-user counts for both created and active sessions, failed-login
+  counts by mechanism/reason with distinct users, and active permanent and
+  administrator-created subsets. Subsets overlap and are already in the total.
+- Include both pending recovery stages and the unfulfilled total.
+- Add indexes on user_sessions.created_at, user_sessions.closed_at,
+  password_change_logs.created_at, and user_failed_logins.created_at.
+- Use auth types Basic/token/OAuth2; factor logging and daily rejection counters
+  remain outside scope.
+- Update exact pushed revisions with `confctl inputs channel set --commit
+  vpsadmin vpsadmin REV` and `confctl inputs channel set --commit
+  vpsfree-notification-templates vpsfree-notification-templates REV`.
+- Build `cz.vpsfree/vpsadmin/int.api*`. API1 owns report scheduling and managed
+  templates. Keep template input following vpsadminServices.
+- Extend the existing daily-report integration test to check delivered content.
+- User selected validated branches as the stopping point, with no merges or
+  live deployments. Keep the session open.
+
+## Review decisions and rollout detail
+
+All four mandatory review lanes completed at xhigh. Keep the report's bounded
+SQL projections separate from authentication and cleanup: they currently match
+the relevant rules, while sharing them would require changing security-sensitive
+callers outside this report feature. Comments and fixed-time tests identify the
+parity requirement. Revisit domain-owned eligibility/deadline relations and the
+auth-type catalog before later authentication or recovery policy changes.
+
+Production has `vpsadmin.databaseSetup.autoSetup = false`. A later authorized
+rollout must run `vpsadmin-api-migrate-db.service` once from the new package,
+monitoring metadata locks and I/O during index creation, before relying on
+indexed report performance. Old code remains compatible with the extra indexes;
+rollback can leave them installed. No migration or activation runs in this task.
