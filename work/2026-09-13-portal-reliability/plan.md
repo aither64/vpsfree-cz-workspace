@@ -8,21 +8,21 @@ User choices: ten-second background reconnection grace; saved prompt visible wit
 
 ## Affected components
 
-- aither64/codex-web: indexed thread-list option and browser synchronization.
+- aither64/codex-web: browser synchronization.
 - aither64/dev-workspace: recovery policy, creation prompt/drafts, cluster status, comparison capture CLI and portal.
 - vpsfreecz/dev-workspace (local vpsfree-dev-workspace): concurrent bounded shutdown, nonblocking status, package pins.
 - workspace: integration capture workflow and user-profile source pin in a dedicated feature worktree.
 - vpsfree-cz-configuration: matching devWorkspace input and aitherdev deployment through confctl.
 
-Use branch/worktree group 2026-09-13-portal-reliability throughout. Bootstrap the initiative with --no-codex because ordinary initialization is broken; do not reuse another session. Repair target 2026-09-13-auth-email through its existing creation receipt after deployment.
+Use branch/worktree group 2026-09-13-portal-reliability throughout. Bootstrap the initiative with --no-codex because ordinary initialization is broken; do not reuse another session. Recover 2026-09-13-auth-email through its existing journal and receipt using the reviewed candidate portal with the installed generation; then activate the profile through workspace-host.
 
 ## Implementation
 
-Expose optional UseStateDBOnly (default false) in codex-web and use indexed directory discovery in workspace recovery, preserving loaded/unmaterialized, recorded identity, ambiguity and pagination checks. Keep inconsistent index results retryable. Name failed initialization phases. Render accepted initial prompt in the creation page with copy. Preserve form drafts through validation/network failures and clear only after confirmed acceptance.
+Keep authoritative Codex thread discovery, preserving loaded/unmaterialized, recorded identity, ambiguity and pagination checks. A measured filtered scan takes 61.265 seconds, beyond the old 60-second deadline. Allow 180 seconds for the thread command, 210 for dev-session and 240 for receipt reconciliation. Reject the indexed shortcut: even a nonempty index can omit existing rollout history and cannot prove uniqueness. Render accepted initial prompt in the creation page with copy. Preserve form drafts through validation/network failures and clear only after confirmed acceptance.
 
 Keep healthy event streams across tab focus; background recovery warnings appear only after ten visible seconds. Access errors appear immediately. Preserve conversation/drafts/send receipts.
 
-Stop independent VMs concurrently with a 120-second complete per-machine grace and 150-second wrapper deadline; reset uses the same routine and the portal allows cleanup margin. Nonblocking status returns dedicated busy exit status; show busy/errors per session/provider without a global generic cluster warning. Verify processes are gone before clearing runtime markers.
+Stop independent VMs concurrently with a 120-second complete per-machine grace, 10-second forced reaping and 20-second cleanup margin. Share provider-owned budgets between Ruby and shell; validate the 150-second wrapper budget against the published 180-second portal release deadline. Reset uses the same routine. The additive runtime contract publishes busy exit code 75 and the release deadline. Nonblocking status returns the dedicated busy exit status; show busy/errors per session/provider without a global generic cluster warning. Verify processes are gone before clearing runtime markers.
 
 Add dev-session worktree capture-comparison <slug> <name> --as-is [--base SHA --head SHA]. Persist validated immutable base/head pairs using existing private comparison storage. Capture after final rebase and before integration via workspace workflow, plus observed unmerged heads during status refresh. Preserve historical review links. Recover password-reset pairs from its merge-revisions-20260913.json using previous_default and feature_head. Clearly label fallback when no trustworthy pair is available.
 
@@ -32,4 +32,4 @@ Retain Codex 0.154.0, validate its generated request schema. Keep manifests/life
 
 ## Verification
 
-Run focused Go/Ruby/browser tests for indexed lookup, ambiguity/retry/prompt preservation, ten-second reconnection grace, slow/stuck concurrent guests and busy probes, and capture/rebase/merge/archive comparisons. Apply writing skill before committing. Commit all intended changes, quick verify, mandatory general/architecture/scope/risk review with gpt-5.6-sol xhigh, reconcile findings, then packaged/live integration checks. Monitor pushed branch CI. Retry auth-email exactly once via receipt, verify single original prompt submission, verify password-reset comparisons and cross-tab cluster behavior. Record deployment and rollback compatibility, keep initiative open, include stable portal URL.
+Run focused Go/Ruby/browser tests for authoritative lookup, ambiguity/retry/prompt preservation, ten-second reconnection grace, slow/stuck concurrent guests and busy probes, and capture/rebase/merge/archive comparisons. Apply writing skill before committing. Commit all intended changes, quick verify, mandatory general/architecture/scope/risk review with gpt-5.6-sol xhigh, reconcile findings, then packaged/live integration checks. Monitor pushed branch CI. Retry auth-email exactly once via receipt, verify single original prompt submission, verify password-reset comparisons and cross-tab cluster behavior. Record deployment and rollback compatibility, keep initiative open, include stable portal URL.
