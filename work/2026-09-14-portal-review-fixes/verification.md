@@ -78,7 +78,7 @@ The organization run includes the development-cluster check.
 | codex-web | `882c88ccfbebfb646fb2cafbe9bc6790141b2d13` |
 | dev-workspace | `227bcfc1b989407582d3b022f8b388ac29972c16` |
 | vpsfree-dev-workspace | `08d691cfd239260ce5bf7c269a44a49ce8de41e7` |
-| workspace | `d53014fd4b589a9de56febfc880aae7c4179b11c` |
+| workspace | `fb33bc301bf436e5652d58f47ea50e34b208dfdf` |
 
 All four mandatory review lanes ran with fresh gpt-6-astra/xhigh reviewers.
 Findings and remediation decisions are recorded in state.md, review/ and
@@ -94,4 +94,8 @@ fixture, matching another bulk Git fixture. All 50 subsequent repetitions and
 the complete repository suite pass. Production Git configuration is unchanged,
 and future failures retain Git's bounded stderr.
 
-Feature branches and worktrees remain open for review and integration.
+All four default branches are merged and pushed. Feature and temporary
+integration worktrees are removed; feature branches and comparison snapshots
+are retained. The workspace rebase leaves the deployed package unchanged.
+See [integration and cleanup](integration.md) for merge proofs and CI links.
+Default-branch CI continues without waiting, as requested by the user.

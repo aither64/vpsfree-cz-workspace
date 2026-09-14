@@ -6,35 +6,32 @@ lifecycle: active
 
 ## Status
 
-Implementation is committed on all four feature branches. Initial tracking was
-committed as 8f31bab. This shell-only session belongs to the current API
-conversation (tmux $29; no separate Codex thread). Current session commands use
-matching DEV_SESSION_SLUG and DEV_SESSION_WORKSPACE. Shared master and unrelated
-working-tree changes are preserved.
+All four default branches are merged and pushed. All four feature worktrees,
+three temporary integration worktrees and the empty worktree group are removed.
+Feature branches, comparison snapshots, review reports and screenshots are retained.
+The deployed package remains unchanged and the portal and Codex services are active.
+All local integration checks and the earlier exact-head feature CI passed.
 
-The user additionally requested gpt-6-astra for reviews (retain xhigh) and moved
-Automatic archival under a sidebar Session settings tab. Both are implemented.
-The initial fixes are deployed and verified against the original user URL.
-The presentation follow-up is committed and passes browser checks in both engines.
-The complete presentation follow-up, including the mobile heading correction,
-is deployed as 243g1pc and live checks pass. Provider, runtime and organization
-CI all pass, including the development-cluster check. All required reviews and
-verification are complete. Feature branches and this session remain open.
+The user explicitly requested no waiting for CI. Default-branch CI is left running;
+no further polling or CI gate is part of this handoff. Lifecycle remains active
+while those runs are unresolved, as required by the workspace lifecycle rule.
+The merge and cleanup request is fully handled. The session remains available.
 
 ## Repositories
 
-All branches: 2026-09-14-portal-review-fixes. Worktrees: /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-14-portal-review-fixes/<name>.
+Retained branches: 2026-09-14-portal-review-fixes. All feature worktrees are removed.
+Their former paths were /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-14-portal-review-fixes/<name>.
 
 | Repository | Review base | Current head |
 | --- | --- | --- |
 | codex-web | `6335da93acdcc82cc26200d2fbc7f479655aa7c3` | `882c88ccfbebfb646fb2cafbe9bc6790141b2d13` |
 | dev-workspace | `83136101866eb42d9e079f47191308c0549ac9e7` | `227bcfc1b989407582d3b022f8b388ac29972c16` |
 | vpsfree-dev-workspace | `a08a40eeff124bdbcc1ce6b6b06aed1839a9d9fc` | `08d691cfd239260ce5bf7c269a44a49ce8de41e7` |
-| workspace | `d926aa2` | `d53014fd4b589a9de56febfc880aae7c4179b11c` |
+| workspace | `c3dd4ae` | `fb33bc301bf436e5652d58f47ea50e34b208dfdf` |
 
-Workspace registration originally started at efd65e4; the branch is now rebased
-onto shared master d926aa2. All code changes and dependency pins are committed and pushed on the four
-feature branches. No default branch integration is authorized.
+Workspace registration originally started at efd65e4. Its final pin commits
+were rebased onto shared master c3dd4ae with identical patches and package output.
+All four exact retained feature heads are merged into their remote master branches.
 
 ## Investigation and commands
 
@@ -395,3 +392,64 @@ portal.yml. The shared-root checkpoint records this genuine presentation handoff
 Temporary browser/proxy processes ended, and only this task's temporary Nix
 GC-root symlinks were removed. Runtime profile retains the deployed package.
 Stable URL: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-14-portal-review-fixes/
+
+## Authorized integration and cleanup
+
+User requested merging default branches and cleanup. Integrate all four
+registered projects, preserving feature branches and comparison snapshots.
+Remove clean feature and temporary integration worktrees after remote merge
+proofs and CI. Keep the session available; this request does not explicitly
+ask for archive or deletion. Refresh upstream refs before integration, rebase
+where needed, and use fast-forward-only merges.
+
+Integration preparation: upstream defaults for codex-web, dev-workspace and
+vpsfree-dev-workspace remain at their recorded bases, so their exact tested
+heads fast-forward without code changes. Fresh detached target worktrees were
+created under /tmp/portal-review-fixes-merge-<project>, fast-forwarded to the
+feature branches, and are running nix flake check before pushing defaults.
+
+Workspace rebased two pin commits onto shared master c3dd4ae. git range-diff
+reports both patches identical, and flake.nix/flake.lock are byte-identical to
+the deployed source. Final head fb33bc301bf436e5652d58f47ea50e34b208dfdf.
+Final rebase review is a mechanical patch/pin comparison: the existing reviews
+remain applicable, with no new implementation or changed contract requiring
+a lane rerun. Workspace flake check passes and its output remains the deployed
+243g1pcykrjq7alpvk9f1n81yfxcfimd package. Feature pushed with exact lease and
+comparison recaptured before integration.
+
+Workspace fast-forwarded from shared c3dd4ae to fb33bc3 and pushed master
+(origin previously efd65e4). The shared working tree and index were preserved;
+only flake.nix/flake.lock changed in the merge. Provider flake checks pass from
+its target worktree; runtime and organization checks are running.
+
+All four integration-worktree flake checks passed, including the runtime host
+activation/rollback VM. No local kernel build occurred. Provider master CI
+34890587001 passed at 882c88c. Runtime and organization masters are being
+fast-forwarded and pushed from their clean tested target worktrees. Local bare
+master refs are also fast-forwarded through these worktrees; feature refs stay.
+The stable workspace-host switch requires an explicit source and retains the
+package output, so removing the feature workspace does not invalidate deployment.
+
+Remote merge proof: each local retained feature head exactly equals its remote
+feature and remote master, verified via git ls-remote after all pushes. Heads:
+codex-web 882c88c, dev-workspace 227bcfc, organization 08d691c, workspace fb33bc3.
+
+All four registered feature worktrees were removed with non-force
+dev-session worktree remove, preserving their repository registrations, retained
+heads and comparisons. The three temporary integration worktrees were removed
+with non-force git worktree remove. The empty initiative worktree directory was
+removed. No branch refs, session, tracking records or other initiatives changed.
+Runtime master CI 34890879948 and organization master CI 34890894344 remain
+pending; provider master CI passed. All local checks have passed.
+
+Cleanup verification confirms no initiative feature or target worktree remains
+in any Git worktree registry, and all four local feature branches remain.
+Temporary presentation scripts, screenshots, logs and test captures were removed
+after their findings and useful screenshots were retained in tracking. Only the
+exact current integration logs were removed; similarly named older files from
+other initiatives were preserved. No global Nix/Git cache cleanup was performed.
+
+Final user instruction: “no waiting for CI”. Stop monitoring the pending default
+runs; do not cancel them. Merge proofs and cleanup are complete. Preserve the
+active lifecycle while CI remains unresolved; no review, deployment, integration,
+worktree cleanup or operator approval is left for the requested work.

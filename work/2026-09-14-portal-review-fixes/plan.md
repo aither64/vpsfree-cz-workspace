@@ -117,3 +117,13 @@ boundary. Disable maintenance only in that disposable fixture, consistent with
 the existing bulk-rename test; keep production Git configuration unchanged.
 These small CI remediations are separate from the presentation commits and get
 focused checks and a bounded General/Architecture review before final deployment.
+
+
+## Accepted integration
+
+The user authorized integration into all default branches and worktree cleanup.
+Fetch defaults, rebase if necessary, capture final comparisons, and fast-forward
+the independent projects through temporary target worktrees. Integrate workspace
+from the shared master checkout, preserving unrelated changes. Retain feature
+branches and the session. No behavior, API, state or deployment change is intended
+by integration; verify any rebased source against the reviewed package.
