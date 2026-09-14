@@ -2,13 +2,19 @@
 
 ## Goal and scope
 
-Propose optional email verification after a correct password for accounts
+Implement optional email verification after a correct password for accounts
 without effective TOTP/passkey authentication. Users enable it in profile
 settings; it defaults to off. Recognized devices keep their existing login
 behavior. An account without any successful known-device login is exempt.
 
-The current request is a solution proposal. Implementation and deployment have
-not been requested. Recommendations below remain open to design feedback.
+Implementation was authorized on 2026-09-14 after the user accepted the plan.
+Production deployment and KB promotion are not part of this implementation.
+
+Confirmed decisions: 30-minute email challenges; retained successful device
+history counts after expiry/revocation; password reauthentication but no email
+confirmation when enabling; normal administrator-only outgoing mail history.
+Use existing bcrypt for the challenge code hash and the existing mail queue.
+No new delivery service, secret provisioning, or node protocol is needed.
 
 ## Affected repositories and existing behavior
 
@@ -33,6 +39,10 @@ page, PHP profile setting, translations, and tests. Inspected fetched
   `Transactions::Mail::Send` persist rendered mail bodies.
 - Regular users request administrator approval to change their primary email;
   they cannot directly replace it through `User.Update`.
+
+`vpsfree-notification-templates` owns the production English/Czech login-code
+emails, as explicitly requested by the user. Keep its variable contract and
+expiry wording synchronized with the built-in templates.
 
 Check `haveapi` and `haveapi-client-php` consumer compatibility during
 implementation. The inspected Ruby/JS/PHP clients support arbitrary
@@ -64,7 +74,7 @@ token belonging to that user with `known: true`. An IP address, user agent,
 device ID, active-but-unconfirmed device row, or another user's token is not
 sufficient. Trust is established only after the full login succeeds.
 
-Recommended clarification: interpret "already has at least one known device"
+Confirmed interpretation: treat "already has at least one known device"
 as successful login history, including retained revoked/expired known-device
 records. Revoking the last device or waiting for its token to expire should
 not silently disable email protection. Existing retained records support this
@@ -88,9 +98,9 @@ restore password-only bootstrap after the last token expires or is revoked.
    Preserve the existing point at which session creation marks the device known.
 
 Reuse `AuthToken` with an appended `email_login` purpose, preserving existing
-enum values. A linked `LoginEmailChallenge` record holds a keyed code digest,
-recipient snapshot, fixed expiry, failed attempts, send/resend state, and flow
-binding. TOTP, WebAuthn, and password-reset actions must reject this purpose.
+enum values. Existing serialized options hold a bcrypt code hash, recipient
+snapshot, fixed expiry, failed attempts, send/resend state, and flow binding.
+Add database-backed rate-limit buckets shared by all API workers. TOTP, WebAuthn, and password-reset actions must reject this purpose.
 
 Bind the challenge to the initiating browser and validated OAuth2 context:
 client, redirect URI, requested scope, state and PKCE as applicable. The code
@@ -98,7 +108,7 @@ alone cannot resume another browser's login or change the requested authority.
 Token authentication binds its own requested scope/lifetime. Use CSRF-protected
 POSTs, no-store responses, and keep secrets out of URLs and referrers.
 
-Suggested starting limits: random six-digit code, five-minute fixed lifetime,
+Confirmed starting limits: random six-digit code, 30-minute fixed lifetime,
 five incorrect attempts, 60-second resend cooldown, and three sends per
 challenge. Resend rotates the code without resetting attempts or extending
 expiry. Shared per-account issuance/guess limits across challenges, plus IP
@@ -106,8 +116,7 @@ limits, prevent fresh logins from resetting the budget. Email throttling must
 not deny known-device logins. Bound pending challenges without allowing every
 new attempt to cancel a legitimate pending login.
 
-Store an HMAC of the code with a server secret and challenge identity. A plain
-hash of six digits is cheap to brute-force offline. Lock consumption, wrong
+Store a bcrypt hash using the existing crypto provider. Lock consumption, wrong
 attempt increments, resend rotation, and send-budget reservation. At completion,
 recheck password generation, email snapshot, eligibility, device revocation,
 and current authentication policy. Restart if the security context changed.
@@ -119,17 +128,13 @@ security-setting change cannot leave an old password-only attempt exempt.
 Use only `User.email`, with `exclusive_recipients: true` and explicit empty
 CC/BCC. Role/template recipients must never receive the code. Authentication
 mail is independent of optional notifications and the new-login notification
-switch. Validate a single usable primary mailbox when enabling. Initial mailbox
-confirmation is an optional extension, not a requirement of the minimum design.
+switch. Validate a single usable primary mailbox when enabling. Do not send an initial mailbox confirmation when enabling the setting.
 
-Reuse mail transport with a sensitive-message path: exclude the code from
-ordinary mail history, API transaction inspection, request logs, and
-diagnostics. Any temporary delivery payload needs restricted access and bounded
-retention. A challenge digest alone does not protect plaintext outgoing-mail
-copies. Inspect both current mail storage paths before choosing the smallest
-transport change. Drop stale queued code generations where possible; delivery
-delay never extends validity. Missing templates or mail failure leave login
-pending/failed with bounded retry, never password-only completion.
+Use the existing mail queue and normal administrator-only mail history and
+transaction inspection, retaining complete verification messages as explicitly
+chosen by the user. Do not add code values to request or diagnostic logs.
+Delivery delay never extends validity. Missing templates or queue failures
+never permit password-only completion; failed resends preserve the old code.
 
 Suggested profile label: "Verify new devices by email".
 
@@ -173,15 +178,14 @@ recovery shortcut is added to the challenge page.
 ## Compatibility and deployment
 
 Use additive core migrations from the exact preceding schema: default-off user
-column, challenge table/indices, and appended purpose. Do not add guards for
+column, rate-limit table/indices, and appended purpose. Do not add guards for
 stale disposable databases. Existing device cookies, MFA settings, session
 tokens, API resources, recovery state, and node formats remain compatible.
 
-Deploy schema/templates first, then all API authentication workers and any mail
-transport changes. Allow opt-in and expose the profile setting only after every
+Deploy schema/templates first, then all API authentication workers. Allow opt-in and expose the profile setting only after every
 password entry point enforces the policy. Old workers would ignore the setting;
-mixed enforcement after opt-in is unsafe. Use a rollout activation gate or drain
-old workers before enabling opt-in.
+mixed enforcement after opt-in is unsafe. Add a default-off enrollment availability gate controlling new opt-ins only;
+already enabled accounts remain enforced regardless of this gate.
 
 Older code may read the additive schema but cannot preserve email enforcement.
 For downgrade, drain/invalidate pending challenges and explicitly accept loss
@@ -205,7 +209,7 @@ retains its direct-approval requirement.
   revocation, email/password/MFA changes, and forced password changes.
   One challenge cannot mint two independent authorizations.
 - Shared rate budgets across workers and new challenges; exclusive recipient
-  handling; secret exclusion from mail history, transaction/API/log output.
+  handling; existing admin-only mail-history access; no extra diagnostic leaks.
 - Token/Basic bypass cases, client callback compatibility, unattended failure,
   SSO/refresh continuity, and password-recovery regression.
 - Profile authorization/reauthentication/CSRF; browser tests for code entry,
@@ -222,3 +226,41 @@ described in [OWASP's email authentication guidance](https://cheatsheetseries.ow
 Keep active TOTP/passkey requirements authoritative. This feature makes no NIST
 MFA assurance claim: [NIST SP 800-63B-4](https://pages.nist.gov/800-63-4/sp800-63b/authenticators/#out-of-band)
 does not permit email as an out-of-band authenticator in that model.
+
+## Locked implementation defaults
+
+- Per challenge: 30 minutes from creation, five wrong guesses, 60-second resend
+  cooldown, three total sends, at most three active challenges per account.
+- Per account: five sends/15 minutes, 20 sends/day, ten wrong guesses/15 minutes.
+- Per trusted source IP: 60 sends and 100 wrong guesses/15 minutes.
+- Fixed UTC database-backed buckets; atomic cross-worker updates and cleanup.
+- Email auth token and browser binding share the original 30-minute deadline.
+  Resend changes neither that deadline nor the failure count. After email
+  verification, forced password changes receive a fresh five-minute token and
+  renew the browser binding so a late verification can finish the reset.
+- Token actions: `email_code` with protected string `code`, and `email_resend`.
+  Retain requested scope/lifetime. Basic rejects without sending mail.
+- Self-service changes require current password including self-admin changes;
+  another-account administrator override is explicit and audited.
+- Tests cover 5/15 minutes, just before and exactly at 30 minutes, delayed
+  messages, resend near expiry, and subsequent forced-reset validity.
+- HaveAPI CLI already prompts for arbitrary steps. Terraform uses an existing
+  supplied token. Validate these consumers without adding new protocols.
+
+## Consumer compatibility clarification from implementation review
+
+Terraform's provider accepts existing tokens. Its separate get-token utility
+and pinned Go client only support TOTP/password reset and fail explicitly on
+email_code. Members who opt in must use the Ruby HaveAPI CLI to issue tokens
+for these consumers, or keep using a provisioned token. This is the explicit
+unsupported-client boundary allowed above; generating and updating the Go
+client/helper is separate work. Communicate this before enabling enrollment.
+
+## Documentation delivery
+
+Prepare and stage four public page candidates: Czech and English account
+settings and API guides. The account pages cover opt-in, lifetime, known devices
+and MFA precedence; the API guides cover token continuation, Basic refusal and
+the supported CLI replacement for the Go helper. Preserve existing navigation
+annotations and bilingual links. Pin the KB contract to the exact tested API
+revision while retaining its deliberate newer vpsAdminOS test framework pin.
