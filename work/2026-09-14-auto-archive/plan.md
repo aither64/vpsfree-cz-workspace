@@ -68,13 +68,3 @@ crash recovery and unrelated shared changes. Commit and run mandatory high-risk
 review in all four lanes (gpt-5.6-sol xhigh) before packaged/live integration.
 Validate disposable sessions, timer lifecycle, upgrade and rollback. Inspect
 branch GitHub Actions, dry-run deployed candidates, then enable fresh observation.
-
-## Goal
-
-## Affected repositories
-
-## Approach
-
-## Compatibility and deployment
-
-## Testing plan
