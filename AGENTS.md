@@ -216,12 +216,26 @@ themselves require commits; consolidate them into the next daily, handoff, or
 final summary. Functional changes in the workspace repository and normal
 commits in project repositories do not count as tracking-only checkpoints.
 
-An initiative can leave `work/` only through an explicitly requested archive or
-delete action. Completing the requested work, answering the current message,
+An initiative can leave `work/` through an explicitly requested archive or
+delete action, or through the enabled automatic archive policy below. Completing
+the requested work, answering the current message,
 setting a terminal lifecycle, and preparing a handoff all leave the session
 open for follow-up conversation. Do not infer permission to archive, delete, or
 stop a session from phrases such as "finish the work" or "implement the plan",
 and do not schedule delayed cleanup after the current turn.
+
+Enabling `dev-session auto-archive` is standing authorization for its scheduled
+worker to archive eligible sessions. Apply tiers in order: explicit
+`lifecycle: complete` after 1 inactive day; active sessions with every registered
+branch merged after 7 inactive days; active sessions without registered
+repositories or owned worktrees after 14 inactive days, archived as abandoned.
+The first two tiers retain all normal merge proofs. Already abandoned sessions
+require manual archival. A `Keep open` hold prevents automatic archival, and
+removing worktrees does not remove the obligations of registered branches.
+First enablement, re-enablement, releasing a hold and revival start fresh
+inactivity periods. The worker preserves the existing archive checks and
+journal recovery. This authorization does not permit an agent to bypass the
+worker, abandon other work, delete sessions, or schedule its own delayed cleanup.
 
 Run `dev-session archive <slug> --as-is` for a completed initiative, or add
 `--abandoned` when the user explicitly discards the work. Archival is one
