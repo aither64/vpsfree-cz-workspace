@@ -2,7 +2,7 @@
 
 ## Goal and decisions
 
-Implement the accepted September 13 plan: recover failed session creation and retain its prompt in the portal; quiet brief conversation reconnections; report cluster operations accurately and stop development VMs concurrently; retain exact repository comparisons after integration. Deploy the workspace user profile and matching aitherdev configuration. User explicitly authorized deployment through vpsfree-cz-configuration. Integration into default branches and archival are not authorized.
+Implement the accepted September 13 plan: recover failed session creation and retain its prompt in the portal; quiet brief conversation reconnections; report cluster operations accurately and stop development VMs concurrently; retain exact repository comparisons after integration. Deploy the workspace user profile and matching aitherdev configuration. User explicitly authorized deployment through vpsfree-cz-configuration. On September 14 the user explicitly requested integration into all default branches, including configuration. Preserve the open session and retained branches; archival is not requested.
 
 User choices: ten-second background reconnection grace; saved prompt visible with copy, no editing of accepted requests; fix shutdown and status together; parallel VM shutdown.
 
@@ -33,3 +33,7 @@ Retain Codex 0.154.0, validate its generated request schema. Keep manifests/life
 ## Verification
 
 Run focused Go/Ruby/browser tests for authoritative lookup, ambiguity/retry/prompt preservation, ten-second reconnection grace, slow/stuck concurrent guests and busy probes, and capture/rebase/merge/archive comparisons. Apply writing skill before committing. Commit all intended changes, quick verify, mandatory general/architecture/scope/risk review with gpt-5.6-sol xhigh, reconcile findings, then packaged/live integration checks. Monitor pushed branch CI. Retry auth-email exactly once via receipt, verify single original prompt submission, verify password-reset comparisons and cross-tab cluster behavior. Record deployment and rollback compatibility, keep initiative open, include stable portal URL.
+
+## Default-branch integration
+
+Fetch each default branch, preserve the reviewed implementation, capture the final exact comparison, and integrate with fast-forward-only merges. Use fresh temporary target worktrees for independent repositories and the shared master checkout for workspace integration. Rebase the workspace feature over the latest coordination commits; confirm its two functional patches are unchanged. Run packaged checks and aitherdev configuration build from the integration worktrees, push defaults, monitor CI, and prove every final feature head is contained in its remote master. Keep deployment generations because the application and configuration revisions remain unchanged. Remove only temporary integration worktrees and generated files.

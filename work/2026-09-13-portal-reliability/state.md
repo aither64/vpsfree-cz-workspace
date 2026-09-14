@@ -1,12 +1,14 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # Portal reliability implementation
 
-Implementation, requested recovery and deployment are complete. The initiative
-remains active because its feature branches are unmerged. No merge, archive,
-delete or session stop was requested. Keep the session and clean worktrees for
-follow-up. User authorized aitherdev deployment from the configuration feature.
+Implementation, requested recovery and deployment are complete. On September 14
+the user requested merging all five repositories into their default branches.
+All five default branches have been fast-forwarded and pushed. All default-branch
+CI passed; no implementation, review, deployment or cleanup work remains. Keep
+the session and feature branches for follow-up; no archive, delete or session
+stop was requested.
 
 Stable portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-13-portal-reliability/
 
@@ -24,13 +26,16 @@ on master with unrelated concurrent edits preserved.
 | codex-web | `6335da93acdcc82cc26200d2fbc7f479655aa7c3` |
 | dev-workspace | `e9ed544bf66ba8be07b4fca27aede6e6fd1bfe0a` |
 | vpsfree-dev-workspace | `916223fce1c5b7b78578ca8a16aaaa472c68b08c` |
-| workspace | `242af5caa10832436a55f953df2c5001274dd31f` |
+| workspace | `9638606e9a6070def6604eac07dfe9c0d300e64f` |
 | vpsfree-cz-configuration | `249bed1ee28e69a907edd09ea97a1144dbcdefeb` |
 
 Reviewed bases: codex-web aec4ea2; runtime f41d422; organization initially 213a3db,
 then explicitly fetched/rebased onto 9f31422; workspace final review over 7b00c83;
 configuration 3d9ffa45. The workspace feature was rebased as shared master advanced.
-No default-branch integration or feature-ref deletion occurred.
+All five exact final feature heads are merged into remote master.
+Workspace integration reached master at 9638606. The final rebase over bf177af
+retained both functional patches exactly, as verified with git range-diff.
+The other four final feature heads did not need rebasing.
 
 ## Decisions and review reconciliation
 
@@ -101,11 +106,11 @@ Live browser saw scoped transitions, stopped and absent states without JS errors
 Our test cluster was reset, and all of its VM/runner/socket/state resources are gone.
 Other sessions' clusters were untouched.
 
-No superseded active CI remained to cancel. All product worktrees are clean; remove
-only own temporary testing scripts/binary and generated configuration shell helpers.
+No superseded active CI remained to cancel. All product worktrees are clean.
+Temporary testing scripts/binary, generated
+configuration shell helpers and the four temporary integration worktrees are removed.
 Keep retained feature branches, worktrees, private comparison data and this initiative.
-No further approval is needed for the completed work; integration remains a future
-user decision.
+The user has authorized default-branch integration. No additional approval is pending.
 
 ## Operational lessons
 
@@ -120,3 +125,19 @@ user decision.
   all checks pass; see notes/dev-workspace/2026-09-14-repository-browser-sync-route.md.
 - HTTPS routing returned expected unauthenticated 401; the local curl CA bundle
   lacks the portal issuer. Browser application checks used the portal Unix socket.
+
+## September 14 default-branch integration
+
+User explicitly requested all default branches, including configuration. See
+integration.md and merge-verification.json for final heads, captured comparisons,
+validation and exact remote ancestry proofs. All five merges are pushed; all local
+packaged checks and aitherdev configuration build passed. The application and
+system store paths exactly match the active deployment, so no restart or switch
+was needed. All five Repositories views preserve their saved comparison without
+warnings. Default-branch CI passed: codex-web 34820231658, runtime 34820446172
+(both fast and host jobs), organization 34820482649 (including packaged provider
+evaluation and runner loading). merge-ci.json records exact heads, job results
+and links. No superseded active runs require cancellation. Lifecycle is complete,
+but tracking stays under work/ and the session remains open for follow-up.
+Retain all feature branches and original feature worktrees until the user asks
+for archival. No next operator action is required.
