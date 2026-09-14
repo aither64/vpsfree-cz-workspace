@@ -85,3 +85,35 @@ xhigh, all applicable lanes) before long packaged/live tests. Apply the user-fac
 writing skill directly to final copy. Push feature branches, inspect CI and fix
 failures; validate an isolated App Server before profile deployment and then
 exercise the original URL and question recovery on the deployed package.
+
+## Approved presentation follow-up
+
+Reuse this initiative and retained branches for three focused presentation commits:
+keep file headings sticky in Unified, Split and full-file views, with compact
+paths and visible linked lines; automatically use the 58px sidebar only while
+an open repository comparison is visible; format Automatic archival as labelled
+fields and readable blockers with a closed Technical details disclosure.
+Keep the file tree, accessible sidebar actions and limits popover. Restore the
+normal sidebar on overview/other tabs and retain existing mobile behavior.
+No fullscreen toggle or new preference is needed.
+
+Archival presentation remains a browser adapter over the existing API. Preserve
+raw diagnostics in the disclosure, retain the last successful settings on read
+failure, label scan time, and show Not before only when enabled and not held.
+The merged tier describes a conditional policy, not evidence of merged branches.
+No state, API, archival decisions, fingerprint or schema changes are intended.
+
+Verify sticky boundaries, line links, long paths, keyboard navigation, compact
+sidebar transitions and archival states. Run gpt-6-astra/xhigh review after quick
+checks and committed changes, then browser/package checks and CI. Update runtime
+pins through the organization extension and workspace and deploy the user-profile
+package. Leave branches unmerged and session open; refresh verification artifacts.
+
+The final CI check exposed a pre-existing pagination-fixture failure. Its Git
+runner discarded bounded stderr, so add standard exec.ExitError diagnostic
+metadata without changing public error text, and report it in the failing test.
+Trace evidence shows background commit-graph maintenance at the 100-commit
+boundary. Disable maintenance only in that disposable fixture, consistent with
+the existing bulk-rename test; keep production Git configuration unchanged.
+These small CI remediations are separate from the presentation commits and get
+focused checks and a bounded General/Architecture review before final deployment.
