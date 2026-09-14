@@ -264,3 +264,24 @@ and MFA precedence; the API guides cover token continuation, Basic refusal and
 the supported CLI replacement for the Go helper. Preserve existing navigation
 annotations and bilingual links. Pin the KB contract to the exact tested API
 revision while retaining its deliberate newer vpsAdminOS test framework pin.
+
+## Accepted email refinement follow-up
+
+On 2026-09-14 the user approved rewriting the Czech password warning, removing
+resend mechanics from both languages, matching the existing new-device mail's
+service/time/device/IP/PTR layout, and adding verification-only HTML variants in
+both template repositories. Suppress the new-device notification only after
+successful email-code verification, including the forced-reset continuation;
+password-only, TOTP and passkey notifications retain their behavior. Preserve
+successful-session device trust timing and existing challenge limits.
+
+Snapshot the initiating request's display metadata for resends. Add template
+variables without removing old ones; use the existing user-agent formatter and
+DNS helper. API workers must supply new variables before updated production
+templates are installed; restore the earlier templates before rolling back any
+API workers. Resolve PTR before taking account or budget locks, with an early
+read-only budget check and the original locked budget check remaining
+authoritative. This follow-up needs no schema or public auth API
+change. Validate both renderings/languages, exclusive delivery, notification
+suppression and the browser flow; run mandatory review before integration.
+Prepare synthetic HTML previews and advance the KB contract's final API pin.

@@ -4,11 +4,14 @@ lifecycle: active
 
 # 2026-09-13-auth-email
 
-Implementation and production mail templates are committed, reviewed and pushed.
-The focused browser integration passed, and all API topic jobs and coverage
-checks passed on the final production code. All four account/API documentation
-candidates are staged and verified. The final exact documentation pin is pushed. Its CI and the broader
-vpsAdmin integration CI run are still in progress.
+The implementation and email refinements are committed, reviewed and pushed.
+The follow-up standardizes login details, adds Czech/English HTML variants in
+both template repositories, improves Czech wording and suppresses the separate
+new-device notice after email verification. Quick tests and template CI pass.
+The revised browser integration and final local contract check passed. All
+three branches are pushed at the heads below. Current API and documentation
+CI are still running; no failures have been reported.
+All four account/API documentation candidates remain staged and verified.
 
 No default-branch integration, production deployment or KB publication has been
 performed. The session and staging remain open for follow-up.
@@ -21,15 +24,17 @@ three repositories are registered in `portal.yml`.
 
 | Repository | Base | Current head |
 | --- | --- | --- |
-| vpsadmin | 791ab3aa89e2f613979da6090b89785c78245db5 | 1b82f44b88663b9a50e82012c1e77f561b294bc5 |
-| vpsfree-notification-templates | f944ba03eba5d0d6b58b7eb856f251d1c96f2c11 | 06f03bad4294b6f28ca9478e907f43967ebeb7d0 |
-| vpsfree-kb-contracts | 919577d0c770e47b623c591f8bf0cce4e8d30666 | cdc4fa967ad1b8e9daa665e6760db624e736c1fd |
+| vpsadmin | 5ac49802f892da6fd37a88c8349b9cc7ea826538 | a9fbd18634d3ad0c0220d8f46964629b26d64f75 |
+| vpsfree-notification-templates | f944ba03eba5d0d6b58b7eb856f251d1c96f2c11 | 97ac666a390fc028c5b610b48c9963adb9e0b4ef |
+| vpsfree-kb-contracts | 919577d0c770e47b623c591f8bf0cce4e8d30666 | 8c96414eb28ca20714b10968caf823ccc2818361 |
 
-vpsAdmin commits: API `24d7897a2a56c061831de7d6d3ecac12c02c3ef3`, WebUI
-`f7a4b68d8695f0958a2badd4e1897915d98cdcae`, and CI regression correction
-`ddd01f59ca533c030f29b9b8a75984699e5dc581`, followed by browser test isolation
-`1b82f44b88663b9a50e82012c1e77f561b294bc5`. Fetches before pushing found the
-recorded upstream bases unchanged. Feature branches remain unmerged.
+The API feature was rebased onto the fetched upstream dependency updates.
+Final follow-up commits are mail/metadata `20ef693b2` and notification suppression
+`a9fbd1863`. The production-template follow-up is `97ac666a3`. The KB contract
+pins the final tested API revision in `8c96414eb`. All three project worktrees
+are clean.
+All feature branches remain unmerged. Earlier commit IDs and results below are
+historical evidence; the table above and follow-up section describe current work.
 
 ## Accepted scope and implementation
 
@@ -48,7 +53,10 @@ notification templates in `vpsfree-notification-templates`.
   resetting guesses. Bcrypt hash in authentication state; normal full
   administrator-only mail/queue history retained by explicit design.
 - Primary recipient only. Bilingual built-in and production notification
-  templates include the code, expiry, IP, client and support contact.
+  templates have plain-text and HTML variants with code, expiry, service,
+  request time, readable device, IP, reverse record and support contact.
+  Successful email verification suppresses the separate new-device notice.
+  Password-only, TOTP and passkey notices retain their existing behavior.
 - Current-password reauthentication for self-service changes, including a
   self-admin; audited administrator override for another account. No separate
   enrollment email. User creation cannot bypass the enrollment gate.
@@ -69,8 +77,11 @@ notification templates in `vpsfree-notification-templates`.
 
 ## Compatibility and deployment
 
-Deploy additive schema and both template sets before enforcing API workers.
-Update every API worker, then WebUI, then enable new enrollment. The gate
+For a first installation, deploy additive schema and both template sets before
+enabling enrollment; update every API worker, then WebUI. If upgrading an
+installation already sending verification mail, update all API workers before
+installing templates with the new login details. Restore earlier templates
+before rolling those workers back. The gate
 controls enrollment only; opted-in accounts remain enforced when it is closed.
 Old workers and application rollback lose enforcement. Keep the new API version
 while users remain opted in. The additive migration has a tested rollback; no
@@ -86,7 +97,7 @@ email continuation. The explicit compatibility boundary is documented in
 replacement. Communicate it before enrollment; do not silently fall back to
 password-only authentication. No Go/client repository is added to this scope.
 
-## Quick verification
+## Initial implementation quick verification
 
 All intended changes were committed and quick checks passed before mandatory
 review and long integration testing.
@@ -145,7 +156,7 @@ regressions stay within the reviewed behavior; no new design or public contract
 required reviewer reruns. Fixes were consolidated into the final API/WebUI
 commits before integration began.
 
-## CI failure investigation and correction
+## Initial implementation CI investigation and correction
 
 First vpsAdmin push was `f7a4b68d`. API topic run 34832422263 failed routes
 (core/full jobs 103938579030/103938579190) and engine (core/full
@@ -188,7 +199,7 @@ The long API platform jobs were healthy: the prior successful upstream run
 in about 42 minutes. Failed jobs were investigated as described above; no
 blind reruns were accepted as validation.
 
-## Browser integration
+## Initial implementation browser integration
 
 The two local `./test-runner.sh test 'webui#auth'` runs each passed all 24
 existing browser scenarios. The new scenario exposed two test-expectation
@@ -311,13 +322,144 @@ blank YAML indentation after proving identical parsed replacement values.
 
 ## Remaining work
 
-Monitor vpsAdmin integration CI 34838666221 and contract workflows
-34839179515 / 34839179476; investigate any failure before integration.
-All implementation, templates and exact contract pins are committed and pushed.
-The scoped handoff checkpoint contains only this initiative's public candidates,
-reviews, tracking and seven reusable notes; private inventories remain ignored. Implementation does not authorize default-branch
-integration, production deployment, wiki promotion or session cleanup. Keep all
-branches, worktrees, staging and this session open.
+Monitor API topics 34850178293, integration 34850178190, KB Check
+34851914024 and Managed page runtime 34851913942; investigate any failure
+before integration. The implementation, final contract pin, review findings and
+focused integration are complete.
+The previous scoped handoff checkpoint contains this initiative's public
+candidates, reviews, tracking and seven reusable notes; private inventories
+remain ignored. The consolidated follow-up handoff adds the email previews, four review
+reports, reconciliation, current CI snapshot and fixture lesson. It follows the
+user's review of the earlier implementation handoff and accepted refinements.
+Implementation does not authorize default-branch integration, production
+deployment, wiki promotion or session cleanup. Keep all branches, worktrees,
+staging and this session open.
 
 Stable portal:
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-13-auth-email/
+
+## Email refinement follow-up
+
+Implementation authorized after the follow-up plan. Starting heads: vpsAdmin
+`1b82f44b88663b9a50e82012c1e77f561b294bc5`, templates
+`06f03bad4294b6f28ca9478e907f43967ebeb7d0`, KB
+`cdc4fa967ad1b8e9daa665e6760db624e736c1fd`. All worktrees started clean.
+The user confirmed HTML for verification emails only and suppression only after
+successful email verification. Prior final KB Check 34839179515 and Managed
+page runtime 34839179476 have both passed. Prior integration 34838666221 was superseded and cancelled after verifying
+that its head remained `1b82f44b8`, following the final API push.
+
+Refinement quick verification: 96 focused API examples passed. Four final mail
+examples passed again after adding readable Firefox/Linux rendering coverage.
+The existing DNS helper is used before shared rate-budget locks are acquired.
+All four synthetic language/repository previews render successfully with exact
+plain-text/HTML visible-content parity. Production `nix flake check` passes;
+built-in checker validates 55 templates / 179 files. JavaScript syntax and Nix
+parsing pass. A RuboCop hash-alignment finding was corrected. Standard hooks
+pass (commit text-width advisory uses 72; repository allows 80).
+
+Fetched upstream vpsAdmin advanced to `5ac49802f892da6fd37a88c8349b9cc7ea826538`
+with only io-console 0.9.3 and PHP parser 5.9.0 dependency updates. The
+completed follow-up commits were rebased before review/push. Production template base remains
+unchanged. Keep the two API follow-up concerns separate: message presentation
+and metadata, then suppression and its integration assertions.
+
+Rebase onto upstream `5ac49802f` completed without conflicts. The rebased final
+API suite passed again: 96 examples, zero failures (seed 49818). Confirmed that
+raw HaveAPI resource references expose `{id, label, _meta}`, matching the browser
+mail-template assertion. The shared browser fixture disables ordinary mail;
+explicitly enabled it for the email-verification account so the test proves one
+baseline new-device notice and suppression after verification, not a no-mail
+configuration. Nix parsing passed after that test-only adjustment.
+
+Mandatory follow-up review started on committed API
+`d6f51b6e8ad9d78c68e6d0f0ce5276ca610e7bf8` and templates
+`97ac666a390fc028c5b610b48c9963adb9e0b4ef`, against follow-up bases
+`cf2c8734c` and `06f03bad4`. Classification: high, because of security notices,
+untrusted HTML, pending authentication metadata and cross-repository deployment.
+All four lanes use fresh gpt-5.6-sol/xhigh; three run concurrently and scope
+follows when a slot is free. Packet: `review-email-packet.md`.
+
+Follow-up review reconciliation:
+- GENERAL and ARCHITECTURE Important: DNS still held the account lock and ran
+  before rate-limited sends were rejected. Moved it outside user.with_lock and
+  added a read-only available? precheck. Both checks share one limit/window
+  definition; the existing locked with_limits remains authoritative. No new
+  budget, reservation or persisted state was added. Focused tests prove no DNS
+  on exhausted budget, resolver-before-lock order and rejection after a stale
+  preliminary result. The full shared-budget/concurrency suite remains green.
+- RISK Important: documented restoring earlier templates before rolling back
+  any API worker, since older workers lack new template values.
+
+Remediation verification: 32 examples, zero failures (seed 15827), including
+independent-connection shared-IP contention. These are direct requested fixes
+within the reviewed contract; no specialist rerun is needed. Scope review subsequently completed without additional findings. The
+remediation was folded into the owning mail commit before push.
+
+All four follow-up review lanes are complete. Scope found no additional issue.
+Both distinct Important findings are fixed and verified; there are no unresolved
+Blocking or Important findings in this follow-up. See
+`review-email-reconciliation.md` for focused inspection and the no-rerun rationale.
+
+Final follow-up commits after folding direct review fixes:
+- vpsAdmin mail/metadata: `20ef693b2`.
+- vpsAdmin notification suppression/head:
+  `a9fbd18634d3ad0c0220d8f46964629b26d64f75`.
+- Production templates: `97ac666a390fc028c5b610b48c9963adb9e0b4ef`.
+Rebase retained the earlier reviewed feature on upstream `5ac49802f`; all
+project worktrees are clean. Exact-lease API force-push and normal template push
+completed successfully. Focused `./test-runner.sh test 'webui#auth-email'` started only after
+all review reconciliation; log `/tmp/auth-email-refinement-browser.log`.
+The browser and final KB pin checks passed; the final pin is committed and
+pushed as recorded below.
+
+Current-head CI after the push:
+- Production template Check 34850165153 passed.
+- API RuboCop 34850178125, migrations 34850178163, PHPUnit 34850178127 and
+  libnodectld 34850178479 passed.
+- API topic suite 34850178293 and integration CI 34850178190 are queued/running.
+Only the obsolete integration run 34838666221 was cancelled; current-head runs
+are retained.
+
+The follow-up browser integration passed at `a9fbd1863`. The example took
+103.77 seconds; full runner execution took 651.72 seconds and completed at
+2026-09-14 15:48:52 +0200. It proves the ordinary first login emits one
+new-device notice, the challenge delivers an HTML code, and email-verified
+completion emits no duplicate notice. Existing enrollment, known-device,
+resend-throttle and wrong-code checks also passed. Runner-owned VM lifecycle
+completed normally; kernels came from cache.
+
+KB upstream fetch is still `919577d0c`. Updated all five API references to
+`a9fbd1863` and restored the deliberate `6bdf458f` OS pin using Nix's nested
+input override. Structural validation passed: only the vpsAdmin lock node
+changed. Contract checking passed. No documented UI control, page content,
+screenshot or staged manifest changed in this refinement.
+
+The portal responds through verified TLS using the workspace's public CA,
+`/var/lib/dev-workspaces/public/ca.pem`; unauthenticated requests correctly
+receive HTTP 401. Synthetic mail previews and all follow-up review reports are
+registered in its manifest. The ambient public CA bundle alone cannot verify
+this internal portal; the existing browser/private-CA note documents its trust
+setup. The new WebUI notification-fixture note records the positive mail
+baseline and the successful browser result.
+
+Final KB pin commit `8c96414eb28ca20714b10968caf823ccc2818361` is pushed.
+`nix develop -c ruby tools/check-contract.rb` passed: 46 controls, 37 paths,
+35 capture concepts and three semantic selectors. This is a mechanical exact
+revision update after the reviewed browser behavior passed; no new review lane
+is needed. Current KB Check is 34851914024 and Managed page runtime is
+34851913942; both remain in progress/queued.
+
+Final visual check rendered all four HTML variants in Chromium at 390px width
+with no horizontal overflow. Inspected the Czech and English vpsFree.cz images:
+code, details, warning and footer are readable and fit the viewport. The HTML
+files are the durable previews; browser screenshots remain reproducible files
+under `/tmp/`.
+
+As of the follow-up handoff, 18 API topic jobs have passed, including both mail
+jobs, with no failures. Authentication and broader topics remain running;
+`ci-email.json` is the durable snapshot for current API head `a9fbd1863`.
+All quick workflows passed: RuboCop, migrations, WebUI PHPUnit, libnodectld and
+i18n. Production template Check passed. The broad integration workflow and
+final KB workflows are still pending, so this record does not claim full
+current-head CI completion. No CI rerun was used to dismiss a failure.
