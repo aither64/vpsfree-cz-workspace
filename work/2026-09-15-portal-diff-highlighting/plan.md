@@ -1,52 +1,70 @@
-# Portal changed-character highlighting investigation
+# Portal changed-character highlighting fix
 
-## Goal
+## Goal and authorization
 
-Explain the fragmented changed-character backgrounds in the supplied portal
-screenshot and the immutable review of `configs/vpsadmin/api/abuse_notice_parser/master_dc.rb`.
-The request is an investigation; collect a reproducible diagnosis and a concrete
-repair recommendation before any implementation or deployment.
+The user accepted the investigation and requested implementation and deployment
+to aitherdev, then explicitly requested default-branch integration and cleanup.
+Restore readable character highlights in the reported comparison,
+while retaining Git-authoritative lines, counts, source text and line links.
+See [diagnosis.md](diagnosis.md) for the reproduced regression.
 
 ## Affected repositories
 
-- `aither64/dev-workspace`: portal review model, editor decorations, locked
-  CodeMirror diff dependency, and regression coverage.
-- `vpsfreecz/vpsfree-cz-configuration`: immutable before/after Git objects used
-  only as evidence. Do not modify the source session or its worktree.
+- `aither64/dev-workspace`: use existing `presentableDiff` in the review model,
+  add regression assertions, and document why visual cleanup is necessary.
+- `vpsfreecz/dev-workspace` (`vpsfree-dev-workspace` locally): pin the runtime fix.
+- Shared coordination repository, feature worktree `workspace`: pin the extension
+  to produce the deployed site package with existing site configuration.
+- `vpsfree-cz-configuration` is evidence only. The user permits its use for
+  deployment, but application deployment belongs to the user profile and needs
+  no host change or system-config pin.
 
-## Approach
+## Approach and decisions
 
-1. Compare the supplied screenshot with the exact review payload.
-2. Trace Git line classification, character comparison, syntax coloring, and
-   editor decoration rendering independently.
-3. Reproduce the marked ranges using the locked dependency and exact sources;
-   test whether the behavior is deterministic and how it handles unrelated code.
-4. Record the root cause, impact, coverage gap, and bounded repair options.
+1. Reuse this slug and create isolated feature worktrees for the three packages.
+2. Add semantic regression coverage that fails on raw character splitting:
+   identifier replacements and unrelated multiline rewrites in both layouts.
+3. Use the already locked CodeMirror `presentableDiff`; retain Git boundaries,
+   bounded diff config and current rendering. A short code comment owns rationale.
+4. Commit the fix, update the two downstream pins in separate commits, run quick
+   checks and the mandatory adaptive review before package/integration checks.
+5. Push feature branches, inspect CI, build the exact consuming workspace package,
+   and activate with `workspace-host switch --source <workspace-worktree>`.
+6. Verify the served bundle and the original comparison in a real browser; record
+   deployment revision, package, predecessor and recovery instructions.
+7. Merge the unchanged reviewed heads into all three `master` branches, inspect
+   default-branch CI, and clean owned worktrees and transient files.
 
-## Decisions
-
-- Reuse verified current session `2026-09-15-portal-diff-highlighting`.
-- Keep the user attachment and reproducible source snapshots outside Git.
-- No project feature branch is required for this read-only investigation.
+A new line-pairing algorithm or similarity policy is outside this bounded repair.
+The existing presentation cleanup is still heuristic and may retain common
+punctuation/indentation in rewritten blocks. Assess the actual repaired view.
+Integrate the reviewed heads by fast-forward, retain feature branches and saved
+comparisons, and remove the initiative’s clean worktrees and transient captures.
+Keep the session open for follow-up; no lifecycle action.
 
 ## Compatibility and deployment
 
-No application, database, API, protocol, Nix configuration, persistent format,
-or deployment changes are planned. A potential rendering repair should preserve
-Git line classification, immutable review identities, source contents and line
-links in both layouts. Browser-only changes can be rolled back without migration.
+No API, protocol, schema, migration, manifest, journal, cluster contract, Codex
+version, NixOS module or persistent-state changes. Old and new browser bundles
+consume the same source/range payload. Reloading a page loads the fixed bundle.
+There is no mixed-version ordering requirement beyond publishing runtime then
+extension then the site package. Existing stable profile activation owns service
+reconciliation and retains the previous generation for `workspace-host rollback`.
+The application rollback reverts visual behavior without state conversion.
+Do not change or interrupt unrelated sessions to bypass an activation refusal.
 
 ## Documentation
 
-Readers are the user and future portal maintainers. Read the runtime README,
-portal guide and repository instructions. Keep diagnosis and evidence in this
-initiative; promote a concise reusable lesson to `notes/dev-workspace/` if useful.
-No supported behavior change requires project documentation in this phase.
+Runtime's adjacent model comment will explain why raw diffs are unsuitable for
+visible highlights. Existing README covers source rendering and exact Git ranges;
+no new operator procedure is needed there. This session owns diagnosis, review,
+verification and exact deployment record. Reconcile the existing investigation
+notes to distinguish historical findings from the implemented fix.
 
-## Testing plan
+## Verification
 
-Inspect deployed assets and API payloads, run the existing projection with the
-locked CodeMirror version against the reported immutable sources, inspect
-representative ranges and compare repeated runs. Use focused existing tests if
-helpful to establish why this case escaped coverage. Do not deploy or run long
-integration suites for this investigation.
+Run new regression tests before and after the fix, build review UI then run its
+full tests, verify exact-source projection invariants and line counts, check
+pin changes and flake evaluation. After required review, run package checks and
+consumer build, inspect CI, verify the deployed asset and original saved review
+in unified and split layouts. Avoid redundant unrelated integration suites.
