@@ -377,6 +377,48 @@ that compatibility requirement in the initiative plan and test every supported
 path. Keep data-integrity and conversion checks that validate real persisted
 content.
 
+## Documentation During Development
+
+Use the generic `dev-session-documentation` skill for substantive development,
+investigation, and operational work. It is supplied by dev-workspace at
+`~/.codex/skills/dev-session-documentation/SKILL.md`; its canonical source and
+human guide are in the generic runtime repository. The agent that owns the task
+context maintains the documentation while decisions and evidence are available.
+
+Read the relevant project docs at the start. Choose the smallest useful update
+and maintain it with the implementation. Record consequential rationale,
+constraints, supported version combinations, and applicable deployment,
+verification, and recovery instructions. Follow the project's existing layout
+and add an entry-point link when needed. Improve older material as related work
+touches it; do not launch a historical backfill without a request.
+
+Keep current intent and unresolved choices in `plan.md`. Put a concise current
+summary, next actions, documentation links, and verification evidence in
+`state.md`; link detailed history and artifacts. Follow the existing tracking
+commit cadence and lifecycle rules.
+
+Use these destinations:
+
+- Project behavior, design rationale, and accepted decisions belong in that
+  project's documentation, understandable without this coordination workspace.
+- Site-specific operations belong in the configuration repository that owns the
+  deployment. Generic runtime and extension docs link to their respective
+  contracts without copying concrete host details.
+- Cross-project contracts have one authoritative home in the owning project;
+  workspace-level designs belong in this workspace's documentation. Link the
+  participating projects to that home.
+- Exact rollout revisions, prepared steps, and execution results belong in a
+  session rollout record or an explicitly versioned release runbook.
+- Reusable development-environment lessons belong in `notes/` under the existing
+  convention. General project setup instructions should also reach project docs.
+- Member-facing guidance follows the existing KB/product documentation and
+  user-facing writing workflows below, including publication approvals.
+
+Before mandatory review and handoff, reconcile documentation with the final
+implementation and actual deployment evidence. Identify changed or checked docs,
+or briefly explain why no update was useful. Writing operational instructions
+remains distinct from authorization to execute them.
+
 ## Mandatory Change Review
 
 For feature, bugfix, refactor, or cross-project work with relevant code,
