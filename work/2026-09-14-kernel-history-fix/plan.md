@@ -213,3 +213,50 @@ answer that question in status-timestamp-audit.md. They found a separate existin
 invalid-evidence recovery gap, including the application-specific previous-report
 branch. That finding is retained as an open follow-up; the audit changes no
 project revision or configuration pin.
+
+## Accepted follow-up implementation
+
+The user approved preserving valid evidence through rejected reports and moving
+the one-time historical repair into vpsfree-maintenance-tasks. This supersedes
+the original single-node Rake interface and the audit's open-follow-up status.
+
+- Add a private, one-row-per-node checkpoint holding the comparable normalized
+  report and its actual observation time before an invalid report overwrites
+  current evidence. Retain it through invalid reports and supervisor restarts;
+  consume it atomically on valid recovery. Keep rejected current evidence visible
+  and checkpoint data outside public evidence APIs. Prefer newer retained event
+  evidence over a stale checkpoint after rollback/mixed-version writes.
+- Preserve application bounds from newer proven kernel confirmations even when
+  the preceding-report fallback is older. Keep completeness and boot rules.
+- Add an empty checkpoint table through a schema-only migration, regenerate the
+  core schema, and test old-schema upgrade and rollback. Do not reconstruct lost
+  reports, backfill observation times, or change the node protocol.
+- Add the session-owned vpsfree-maintenance-tasks worktree and dated task folder
+  2026-09-14-repair-kernel-history-bounds. Move repair implementation, tests and
+  operator documentation out of vpsAdmin. The command defaults to all eligible
+  node/storage hosts, including inactive hosts; --apply writes and repeatable
+  --node ID selects a subset. --batch-size is positive and defaults to 1000.
+- Freeze node/event candidate IDs before processing. Keep immutable-snapshot
+  proof, per-write node-lock revalidation, strict bounds, revision invalidation,
+  idempotence, explicit skip reasons and per-node/global output. Checkpoints and
+  mutable snapshots are never historical repair evidence. Historical repair
+  remains limited to public kernel release/livepatch events.
+- Extend real supervisor and database tests across software/deployment, sysctl,
+  module, eBPF inventory and kernel histories. Test maintenance CLI against
+  disposable data. Update CI topic patterns and synthetic runtime ingestion.
+- Repeat quick checks, four mandatory review lanes, integration, CI, exact
+  vpsadminServices pin/builds and KB impact validation before final handoff.
+  The user corrected the review model to gpt-6-astra; use xhigh for all review
+  lanes, overriding the older user request and skill's gpt-5.6-sol default.
+- Keep deployment and all-node repair as prepared instructions. Both additive
+  schema changes remain on application rollback; old recording behavior returns.
+  Never reverse evidence-supported repairs automatically. Session stays open.
+
+## Default-branch integration authorized on 2026-09-15
+
+The user requested merging this work into the default branches. Integrate V/M/C/K
+with fresh target worktrees, current upstream, fast-forward-only pushes and
+retained feature branches. V rebases over the upstream DDNS check without changing
+our two patches; verify the combined code and regenerate exact C/K pins. Keep
+rollout and production repair as prepared instructions and leave this session
+open. The unused extension worktree remains outside this integration.

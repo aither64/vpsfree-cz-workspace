@@ -1,3 +1,8 @@
+This audit records the behavior before the fix. The private invalid-evidence
+checkpoint and regression tests are now merged in vpsAdmin
+`c38839d5be62e9d40d055b23a84844e2037ba4db`; the one-time kernel repair is in
+vpsfree-maintenance-tasks. Deployment and historical repair remain pending.
+
 # Status-history timestamp audit
 
 ## Result
