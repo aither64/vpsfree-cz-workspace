@@ -1,8 +1,48 @@
+Final removal-correction pin: vpsAdmin `a75bb80d5d4ce76e95c766199bc35e798fab956e`,
+KB `7222baa580476ce7f9c5c02deabece2744d92f9b`. Full bin/check passed. No page,
+control or image changes were needed; the OS runtime pin remains 6bdf458.
+
+Current exact-pin update: vpsAdmin `5e15045a67278569ef45fb5a2246291ff510887e`,
+KB `46279da7f53a3f2620d263696422fd7fb828b1b6`. Full bin/check passed again
+with the narrow review fixes: no existing page or control drift. The preserved
+catalog images were validated, not regenerated. No screenshot deliverables.
+
 # Documentation impact assessment
 
-Affected vpsAdmin revision: 1e2d2d7c9bec10d7eb06feaa2c172d10d9fb7a15.
+Current vpsAdmin: `43530927dc814780e8b641fd5e5ce846bd9f4b79`.
+Current KB contract: `2dfe4c7c3ba8e1e9675647eb100cf39e7a42ec3c`.
+The complete local `nix develop -c bin/check` passed for the unified campaign UI,
+including 45 controls/36 paths and the managed-page and image inventory checks.
+Existing pages, controls and crops do not change. No KB page/media publication or
+new screenshot generation is needed. The user explicitly wants live UI review
+without screenshot deliverables. The API pin is updated and OS runtime remains
+6bdf458. Canonical docs/ip-release.md explains navigation, bulk action atomicity,
+actor privacy, closure, and additive rollout; its index link moved to the new
+upstream docs/README.md.
+
+## Previous assessments
+
+Current vpsAdmin revision: `aa9ac1e3af0acde65e15fd2c9758d1613689fed0`.
+Current contract revision: `243b15895e7a0f7b13eb63b96c348df309e2e2e5`.
+Both are published on the initiative feature branches.
+
+The full local contract and hosted Check pass. There is no existing page,
+control or screenshot drift: 45 controls, 36 paths, 35 capture concepts,
+94 annotation bindings, 4 managed pages/8 variants, 60 tests/194 assertions,
+and 60 screenshot concepts/120 PNGs. No KB page or media publication is needed.
+The managed runtime workflow is queued; state.md tracks its result.
+
+The new campaign pages sit outside the existing screenshot crops. Current
+networking controls retain their meaning. The final page-local form reset fixes
+campaign form boundaries without changing shared rendering or managed pages.
+The vpsAdminOS runtime stays pinned at 6bdf458. The lockfile update changes only
+the exact vpsAdmin revision.
+
+## Earlier assessments
+
+Affected vpsAdmin revision: 871fa3dae787678ceea7f36ba5cbec139c93e5ee.
 Contract repository: worktrees/2026-09-09-ip-release-mechanism/vpsfree-kb-contracts
-at head 9d79ff9d04d9df852898042aecf69b5e4c74567f (base81d6d7d).
+at head 87bc0fbcb267292a30867d7a5f90eee92552fc10 (base81d6d7d).
 
 The final documentation contract check against the exact pushed feature revision passes:
 44 controls, 35 paths, 35 capture concepts and 3 semantic selectors. No existing
@@ -31,3 +71,43 @@ nested-lock reset to the provider's older embedded runtime. No platform version
 or runtime action change is made.
 
 No production page/media write or new documentation release is needed.
+
+Follow-up check on 2026-09-10 includes reminder controls, the planned-date label,
+deleted-user display and permanent-exclusion status in the new IP release
+screens. No existing managed navigation path or screenshot crop covers these
+screens. Full bin/check passed again with the same counts and no drift.
+The final pin includes a DNS integration-test endpoint correction; API and WebUI
+component trees remain identical to 473b5c62a. The managed-page runtime passed
+on that product tree, and bin/check passed again at the final exact revision.
+
+The later feccc0073 commit only corrects CLI response handling in vpsAdmin's
+networking Playwright spec. KB does not consume that spec; its API, WebUI and
+shared runtime inputs remain byte-identical. The exact 871fa3dae product pin
+therefore remains the documentation revision without another metadata update.
+
+Hosted Check 34470210306 and Managed page runtime 34470210256 both passed on
+final contract head 87bc0fbcb.
+
+The later email-only wording follow-up removes a sentence in built-in/overlay
+notifications and updates an existing render expectation. It changes no WebUI
+labels, routes, controls or screenshots; no new KB pin or runtime check is
+needed for this copy deletion.
+
+The final follow-up omits the exemption paragraph entirely when opt-outs are
+disabled. Only notification prose/its ERB branch and an existing render
+assertion change; the WebUI documentation contract is still unaffected.
+
+Rebuilt-series follow-up (2026-09-15): pinned exact vpsAdmin
+4d53fa1573bf5d0ba8de5d896153e4ca21dcfb5a on current KB base 8789cc1.
+The complete bin/check passes and reports no control/page/screenshot drift.
+All 60 concepts and 120 PNG variants remain valid. The lockfile changes only
+the vpsAdmin node; its inherited vpsAdminOS 6bdf458 runtime pin is retained
+with the Nix override-input update workflow. No page publication is needed.
+
+Final form/rebase check (2026-09-15): exact pin
+`aa9ac1e3af0acde65e15fd2c9758d1613689fed0` passes full bin/check with the same
+45 controls, 94 bindings, 4 pages/8 variants, 60 tests/194 assertions and
+60 concepts/120 PNGs. The form-context reset is confined to new campaign pages
+outside existing screenshot crops. Upstream's doc/ to docs/ rename and PHPUnit
+update do not change any managed page or capture. No content regeneration or
+publication is required.

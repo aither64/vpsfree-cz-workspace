@@ -6,60 +6,392 @@ lifecycle: active
 
 ## Current status
 
-Implementation and all mandatory review corrections are committed and pushed.
-The full local browser flow and all hosted CI checks passed. Broader WebUI,
-networking and DNS integration is running on the shared runner; the managed KB
-runtime check is queued. No production writes, merge, or deployment occurred.
+The WebUI redesign is implemented and deployed in the accepted eight-commit
+series. Current vpsAdmin head is a75bb80d5d4ce76e95c766199bc35e798fab956e,
+pushed with an explicit lease on 564cc80ea5d4420d0f2441c996fb0df2f82bb39c.
+KB pin 7222baa580476ce7f9c5c02deabece2744d92f9b is pushed; full contract passes.
+All mandatory reviews and targeted checks passed. The final isolated browser
+scenario passed (all five Playwright tests, including teardown, 1403.61 s).
+All 26 hosted API Specs jobs passed on the final revision. The hosted integration
+and KB managed-runtime workflows are still running.
 
-Current vpsadmin head: 1e2d2d7c9bec10d7eb06feaa2c172d10d9fb7a15.
-Its three commits separate existing ownership/accounting safety, campaign API,
-and WebUI. The final amendment changed only two browser fixture/spec files;
-API, WebUI product code and node code remain identical to 42ccae0c. All hooks
-passed. Earlier tree-preserving history rewrites are recorded below.
-Notification overlay remains 420c98c51ed3db015a366a5564e2128fc83a91b4,
-with successful current-head CI. KB contract
-9d79ff9d04d9df852898042aecf69b5e4c74567f is pushed and pins 1e2d2d7c9 exactly, preserving its existing vpsAdminOS runtime pin. Full local
-contract checks and current-head Check CI passed.
+Live browser verification passed for test-admin and both members: sidebar
+navigation, creation preview, column headers, cross-owner bulk setting/removal,
+restored selection, actor attribution, edit/release/close confirmation forms,
+Notice history, and member isolation. Fixture verification confirms campaign 1
+is unsent with five eligible allocations, two owners, no trial reasons or
+exemptions, and exact IPv4/IPv6 accounting. Both member VPSes are running.
+Actual DNS queries return review-ip.example.test. for .20 and no PTR for the
+previously released .27. No further fixture mutation is planned.
 
-Initial coordination plan/state were committed in 767669d. Ongoing records below
-are chronological evidence; this status and the final handoff section take
-precedence over older pending-task entries. This is the consolidated
-implementation handoff checkpoint for 2026-09-10.
+Evidence: review-bulk-remove-results.md, /tmp/ip-release-remove-live-browser.log,
+/tmp/ip-release-redesign-final-fixtures.log. Guide/inventory reflect the latest
+fixture deadline: 22 September 2026, 14:44 UTC. Private access files are unchanged
+and mode 0600. Session and review cluster remain open.
+
+The user explicitly authorized resetting this initiative's dev cluster and
+confirmed no fixture changes. They do not want screenshot deliverables; provide
+live review links, a guide and private account details. Notice history keeps its
+label. No merge or session lifecycle closure is authorized.
+
+Published final-head workflows: API Specs 34982706137; CI 34982706278;
+WebUI PHPUnit 34982706277; i18n 34982707003; RuboCop 34982706298;
+migrations 34982706162; libnodectld 34982706251. All quick hosted workflows
+passed, including all API Specs jobs; integrations are running. Previous workflow failures were
+investigated from logs/artifacts and addressed (endpoint inventory and preview
+submit timing). Superseded active runs were cancelled after each explicit-lease
+push. Use gh api with exact head_sha filters for current runs.
+
+## Previous status before WebUI redesign
+
+The accepted eight-commit separation and locking hardening are implemented.
+The single/bridge review cluster is running with two working member VPSes,
+private access details and an unsent campaign. The final API, overlay and KB
+heads are published. The user then reported a server error on the campaign list
+page. A one-line HaveAPI invocation fix and admin/member list browser coverage
+are being verified and folded into the WebUI commit; prior validation below
+refers to the preceding head.
+The session remains active;
+no merge or lifecycle closure is authorized.
+
+Current feature branch: `2026-09-09-ip-release-mechanism` in all three worktrees.
+
+- vpsAdmin: `aa9ac1e3af0acde65e15fd2c9758d1613689fed0`, pushed with an explicit
+  lease, eight commits on `ff5d5e5914bf5746e649f3a986659e4193717044`.
+- Notification overlay: `715c063396fa49277852b98d36347c8bec5160d3`, pushed,
+  one commit on `6ebfb6f11c1ba00ae9dc7868ac0b3c42d30e5333`.
+- KB contracts: `243b15895e7a0f7b13eb63b96c348df309e2e2e5`, pushed with an
+  explicit lease, exact aa9ac1e3a pin on
+  `8789cc1f5aeb3b19cbff13f741d6dd9960f14567`; OS runtime 6bdf458 retained.
+
+The prerequisites are separate: relative resource provider, charge provenance,
+network identity, shared IP reservation/current-read helpers, composite relative
+IP accounting, cleanup before disownership; then campaign API and WebUI.
+No generic Lockable or TransactionChain locking interface changed. Both SQL
+row locks and existing vpsAdmin resource reservations are used, for different
+lifetimes, as explained in `docs/ip-locking.md` and locking-refactor-audit.md.
+
+Original API/overlay `-before-split` refs and construction `-split` refs remain.
+Four mandatory astra/xhigh review lanes completed; four Important findings were
+fixed and verified. See review-split-results.md. Live inspection then found stale
+XTemplate form wrappers; a bounded fix was folded into the WebUI commit and
+reviewed by all four fresh astra/xhigh lanes with no findings. See
+review-form-results.md. The final rebase only incorporated upstream's docs/
+rename and PHPUnit update; range-diff verified unchanged implementation.
+
+Validation completed:
+
+- All eight local network/DNS/browser integration scenarios passed (4279.21 s),
+  including live PTR-before-release and assignment paths. Log:
+  `/tmp/ip-release-split-integration.log`. No local kernel build.
+- Actual API/NodeCtld confirmations: 12/0 (seed 63630), covering successful
+  cleanup, failure, rollback and retry. Generic provider and non-IP consumers
+  passed the focused checks in review-split-results.md.
+- All 26 hosted API Specs jobs passed at 4d53fa157 (34960278822); API code is
+  byte-identical at final aa9ac1e3a. Lint, i18n, migrations, libnodectld,
+  WebUI PHPUnit and overlay Check also passed there.
+- Final form syntax and capacity contract pass, including upstream PHPUnit
+  13.3.4 (1 test, 2 assertions).
+- Full KB contract passed on 4d53fa157 with no page or screenshot drift;
+  final exact pin check also passed (same counts, no drift).
+- Real OAuth logins work for test-admin, test-user1 (CS), test-user2 (EN).
+  Live campaign/member form checks pass; screenshots are in review-screenshots/.
+- Separate live smoke campaign 2 sent an initial notice and two reminders,
+  delivered to Mailpit with plain/HTML parts, correct location/IPv4 context and
+  approved closing. Early release removed IPv4 .27 and its PTR. A changed policy
+  released retained IPv6, while an admin exemption remained. Quota equals owned
+  allocation totals. Main campaign 1 and its eight unassigned addresses remain
+  untouched. Final smoke log: `/tmp/ip-release-smoke-final.log`.
+- Actual DNS queries confirm review PTR .20 remains and smoke PTR .27 is absent.
+- A delivered HTML button was clicked in a fresh browser. The guest page
+  requested sign-in; using its login control completed real OAuth and returned
+  test-user2 to the correct request.
+
+The updated isolated browser scenario `webui#networking-dns` passed, including
+VM teardown (1242.72 seconds total; example 435.37 seconds), at 14:44 CEST. Its
+immutable Playwright suite, campaign form, API models and API library match
+the final source byte for byte. Log:
+`/tmp/ip-release-form-integration.log`.
+
+Pending hosted validation: final-head API Specs 34968848791 (24/26 jobs green
+as of 14:51 CEST; both platform jobs still running), CI 34968848861 and
+KB managed runtime 34969414263 (both queued). Previous successful platform
+jobs took 31–35 minutes; the current durations are within that range.
+Final KB Check 34969414240 passed. Old
+in-progress CI 34960278529 was cancelled after the explicit-lease push because
+its head was superseded. Superseded KB runtime 34960640899 was also cancelled
+after the final pin push.
+
+The services update to aa9ac1e3a completed successfully. The development seed
+reapplied nil owners to its two declared assigned IPs while preserving their
+quota; their recorded owners were restored under the shared IP lock. Review
+policy, languages, IP free-chain definitions and overlay were reapplied.
+Post-update checks pass: both VPSes running, all eight custom review addresses
+unassigned, campaign 1 unsent, both members' exact ownership accounting and
+separate smoke outcomes preserved. No further fixture mutation is planned
+after access was handed to the user at approximately 14:38 CEST.
+
+See review-guide.md and review-inventory.json for the campaign, addresses and
+suggested manual flow. Private credentials are outside tracking under
+`/home/aither/.local/state/ip-release-review/2026-09-09-ip-release-mechanism/`
+(mode 0600 in a 0700 directory), never portal artifacts. Keep the cluster running
+and the session open after handoff.
+
+Stable portal:
+https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-09-ip-release-mechanism/
+
+## Earlier progress notes
+
+Validation checkpoint: current-head CI is green for RuboCop, i18n, API
+migrations, libnodectld specs and WebUI PHPUnit; overlay Check and KB Check
+are green. API topic jobs and full CI/KB managed runtime are still running or
+queued. The first local network scenario (export enable/disable/hosts) passed
+including teardown, in 928.7 seconds. Initial VM/API startup was slow but
+completed; KVM acceleration was confirmed and no local kernel build occurred.
+Fixture setup is prepared in review-fixtures.rb and syntax-checked, not executed.
+
+
+Node confirmation engine verification passed all 12 IPv4/IPv6 success, failure,
+rollback and retry cases (seed 63630). The first harness launch loaded the wrong
+bundle because the component shell hook overwrote pre-set BUNDLE_* variables;
+post-hook exports fixed it, as recorded in the existing durable note.
+KB contract passed: 45 controls/36 paths/35 capture concepts/3 selectors,
+94 bindings/9 exceptions, 4 pages/8 variants/12 tests/21 executable samples,
+60 test cases/194 assertions, and 60 concepts/120 PNGs. Exact pin commit
+dfebd25c2c782cffc893adf83f57306b0216b42d is pushed. A plain input update
+initially reverted the inherited OS pin; a Nix override-input update restored
+6bdf458, leaving only the intended vpsAdmin node changed in flake.lock.
+
+
+The reviewed series is now published on the canonical feature branches:
+
+- vpsAdmin: `4d53fa1573bf5d0ba8de5d896153e4ca21dcfb5a` (eight commits on
+  `c38839d5b`). Final prerequisite heads: ffffa52f2, f3cef8d15, 316e92c0e,
+  b7e625f87, 4b419cc24, e5a7202ef; campaign API 5188056bd, WebUI 4d53fa157.
+- Notification overlay: `715c063396fa49277852b98d36347c8bec5160d3` (one commit
+  on `6ebfb6f`). Original API/overlay heads remain in local `-before-split`
+  refs, and construction `-split` refs are retained.
+- KB exact pin update to the new API head is in progress on base `8789cc1`.
+
+All four Important review findings are resolved and tested; details are in
+review-split-results.md. Direct fixes were folded into their owning commits.
+Two expected conflicts in the IP Free spec were resolved while folding;
+final Git tree 5a8cd4a4bb531e082e732a9bf3e65083f0b65aa9 is byte-identical to the
+verified pre-fold tree. All commit hooks passed. A fresh upstream fetch found
+no further movement. Pushes used explicit leases for the original feature heads.
+
+Current-head CI started (API Specs 34960278822, CI 34960278529); superseded
+original-head in-progress CI 34943116818 was cancelled after the rewrite push.
+Long local integration started with network/*, dns/zone-transfer-config,
+tasks/dns-reverse-record-check and webui#networking-dns, jobs=2, state directory
+/tmp/ip-release-split-integration-state, log /tmp/ip-release-split-integration.log.
+Actual API/NodeCtld confirmation/rollback check is running separately in the
+combined temporary Gemfile environment. Review cluster remains stopped until
+validation completes.
+
+
+All four mandatory review lanes completed on the split series; see
+[review-split-results.md](review-split-results.md). Four Important findings are
+being fixed directly: legacy teardown, current assignment policy, compatible
+automatic charge selection and teardown dependency ordering. Scope passed.
+The first 14 focused regressions passed; expanded/final checks are in progress.
+No long integration or cluster startup has begun yet.
+
+Implementation of the accepted commit-separation/hardening/review-cluster plan
+has started. The previous status below describes the preserved input heads.
+Initial project worktrees are clean at vpsAdmin 395bf80b7, overlay 51c8f2c3 and
+KB 87bc0fbc. The user explicitly selected this existing initiative; process
+DEV_SESSION_SLUG remains unset and dev-session current finds none, so no new
+session or lifecycle operation is performed. Cluster startup is now explicitly
+authorized after validation. See plan.md's accepted follow-up for scope.
+
+Construction branch: 2026-09-09-ip-release-mechanism-split in the existing
+vpsAdmin worktree. Refreshed/rebased onto current origin/master
+c38839d5be62e9d40d055b23a84844e2037ba4db. The six prerequisite heads are now
+ffffa52f2 (provider), f3cef8d15 (provenance), 316e92c0e (network identity),
+a9dd51bb1 (IP helpers), fc1640374 (relative IP accounting), 77ee3ca3a (cleanup).
+All commit hooks passed. Canonical feature remains preserved at original
+395bf80b76b2e715fbad25f7c637c5763dc35ad5 until the complete series is verified.
+
+Campaign API step is committed as 40ca8c082, with final approved mail/spec changes
+folded in and release using the shared IP helper. The schema merge retained the
+new upstream version and only adds the four campaign tables. The 48-example
+model run had one imported test still calling reallocate_resource!(delta:);
+updated it to adjust_resource! and the focused example passed (see /tmp/ip-release-campaign-focused.log). Migration checks run in a
+separate process and pass 2/0 seed 533. API authorization passed 9/0 seed 42032; all 24 overlay render
+cases passed, seed 57865. Full-plugin locale regeneration preserves upstream keys.
+Accidental generated-schema lint formatting was restored from the resolved
+index; only the intended new tables remain. See the new verification note.
+
+WebUI step is committed as 201c263919049792315598efd4fea5d1a5cfe950, with the original browser correction folded in. The
+translation merge removed an obsolete duplicate Disabled entry and regenerated
+PO/POT/MO from current sources. Three relevant PHP tests pass (12 assertions);
+a CLI flag deprecation was diagnostic-only (--do-not-cache-result is renamed
+--do-not-record-test-run-history in PHPUnit 13). Browser JS syntax passed using
+Nix-provided nodejs. CI selection: 16 tests/55 assertions pass; all 413 ordinary
+API spec files map to exactly one of 13 topics. Migration specs are correctly
+excluded from that matrix and covered by their separate workflow. Representative
+network/DNS selector enumeration passed, including network lifecycle/route/host,
+export, DNS/PTR and webui#networking-dns cases; only runner Ruby packages built.
+All WebUI commit hooks passed. All three project worktrees are clean.
+Four-lane high-risk mandatory review is being launched against the exact
+heads in review-split-packet.md, gpt-6-astra/xhigh with fresh context. No long
+integration test started yet.
+
+Overlay construction head remains 715c063 on upstream 6ebfb6f11c1ba00ae9dc7868ac0b3c42d30e5333.
+KB fetched/rebased onto 8789cc1 (current upstream). Its only old feature commit
+was an obsolete pin that conflicted with all five newer upstream pin files;
+it was dropped during rebase. Current KB branch is clean at upstream and will
+receive a new exact feature pin after the reviewed vpsAdmin head is pushed.
+This also removes the old explicit OS pin override; preserve the current
+upstream runtime dependency when updating the feature pin.
+
+Fourth rebuilt vpsAdmin commit: b5781fdce (shared IP/host reservations and
+writer checks), root hooks passed. Current-owner checks use shared SQL reads
+for the effective VPS owner; staged export grants have an explicit reserved
+path. Separate-connection host/export/DNS grant ownership cases pass. Final
+focused sets: 10/0 seed 14321 and 28/0 seed 4487; original broad writer check
+114 examples included two corrected fixture errors and one existing pending.
+No generic Lockable or transaction-engine lock contract was changed.
+
+Fifth rebuilt commit: c4c7cac65 (relative IP callers and composite totals).
+Concurrent ownership/allocation checks passed in the 44-example run, with two
+existing pending contracts. Corrected new fixture joins and created the clone
+fixture's missing usage row; focused Clear/SoftDelete/Destroy checks passed
+(seed 3606), and two-interface clone passed (seed 6221). Root hooks passed
+after correcting one final test hash alignment. No runtime fix was needed
+for those fixture/style failures.
+
+Sixth step: cleanup now precedes final disownership and quota deduction; Free
+uses the common cleanup chain. Host deletion waits for transfer cleanup even
+without a PTR. 21 relevant model/concurrency checks passed (seed 3078), touched
+Ruby lint passed, and the WebUI completion test passed (2 tests/10 assertions).
+Czech cleanup translations regenerated; commit hooks are running.
+
+Third rebuilt vpsAdmin commit: f9f73b771 (network registration/resource
+identity), root hooks passed. It reloads current cached network metadata and
+releases only its successfully acquired resource reservation. The original
+IP hardening is separated from accounting, cleanup and campaign behavior.
+
+Second rebuilt vpsAdmin commit: de251e883 (charge provenance). Focused model
+and full Network/IpAddress API resource checks passed: 74 examples, zero
+failures (seed 22571); touched RuboCop and root commit hooks passed. An initial
+command used a nonexistent ip_address_write_spec.rb path and aborted before
+running examples; corrected to the actual ip_address_spec.rb.
+
+Network registration step: eight model/concurrency examples passed (seed
+59864), plus three targeted API cases (seed 62742) and touched RuboCop. In
+addition to the original role/family barrier, it reloads cached network metadata
+before selecting a batch and only releases its successfully acquired resource
+lock. Original-head integration CI 34943116818 remains in progress at the last
+read-only check; no failure result to investigate or rerun was reported.
+
+First rebuilt vpsAdmin commit: f6bf88c21 (generic relative accounting), with
+root commit hooks passed. Overlay reconstructed on its refreshed upstream as
+construction branch 2026-09-09-ip-release-mechanism-split, commit 715c063
+(single consolidated template change); original canonical overlay branch/head
+51c8f2c3 remains retained. Overlay flake check passed. Its final member-facing
+wording was reviewed directly and remains unchanged from the approved versions.
+Read-only devcluster status reports this initiative stopped; no startup or
+lifecycle mutation has been performed yet.
+
+Accounting step verification: 82 provider/concurrency examples passed (seed
+64009); 35 absolute-contract examples also passed against the original upstream
+provider (seed 54415); 110 provider and real VPS/dataset consumer examples passed
+(seed 43556). New coverage includes refquota rejection/override, automatic
+expansion beyond the allowance, first-use races, stale usage and stale budget
+snapshots. The first run failed because new numeric-budget fixtures omitted the
+required value and confirmation expectations used strings instead of symbols;
+those fixture errors were fixed. Source behavior was not changed to satisfy them.
+API topic coverage already includes these new files through the engine glob.
+Post-checkout reported an Overcommit signature error after successfully switching;
+reviewed unchanged hook configuration and signed it in the root Nix shell.
+
+The IP release mechanism is implemented on retained feature branches. The
+September 15 follow-up replaces the presumptive email closing with “Děkujeme
+za tvůj čas.” / “Thank you for your time.” across built-in and overlay EN/CS
+text/HTML notices and reminders. Forced-release notices still omit exemption
+advice; shared VPS-assignment guidance and opt-out policy gating are unchanged.
+
+The failed API Specs workflow 34491288836 was a test assertion false positive:
+192.0.2.20 matched eligible 192.0.2.200/32. Explicit overlapping fixtures
+reproduce both affected initial/reminder tests; CIDR assertions fix them.
+The complete core-engine suite passed the original CI seed 24922: 912 examples,
+zero failures, 50 existing pending. All 24 overlay render cases, overlay flake
+check, touched spec RuboCop and commit hooks passed. Prior complete integration
+CI 34491288911 passed on 7483c4d25. See ci-investigation.md for all findings.
+
+Current local and pushed vpsAdmin head: 395bf80b76b2e715fbad25f7c637c5763dc35ad5,
+including spec fix 36a6869fe93b2699eafa2f75a8ae1ecf7be38d15. Current local and pushed
+overlay head: 51c8f2c3f94b094ca93e1bddb719e0b23a9e04ab. Both worktrees are
+clean and pushed. V8 general and architecture reviews passed without findings.
+Current-head core-engine CI (the previously failed job), RuboCop, i18n and
+notification overlay checks passed. The remaining API matrix and integration
+run are still in progress, with no reported failures. KB contract
+87bc0fbcb267292a30867d7a5f90eee92552fc10 remains clean and pushed, pinning
+871fa3dae for the unchanged WebUI contract. No new KB pin or capture is needed.
+
+locking-notes.md explains existing prerequisite commit 664e1e184: both vpsAdmin
+resource locks and short SQL row locks, their race coverage, contention costs,
+and the additional accounting/validation behavior bundled there. No locking
+implementation was changed in this follow-up. Refreshed upstream master has
+advanced substantially; reconcile with it before future integration.
+
+No production writes, merge, deployment or session lifecycle operation occurred.
+The session remains active and open. Historical sections below retain previous
+heads/results; this status takes precedence over them.
 
 ## Verification summary
 
-- All four mandatory review lanes completed at gpt-5.6-sol/xhigh. Blocking and
-  Important findings were fixed; narrow corrections received focused checks.
-  The chronological review sections and immutable packets preserve the audit.
-- Actual API + NodeCtld confirmation checks passed success, failure and rollback
-  (3 examples), including cleanup, ownership/quota retention and manual retry.
-- Independent SQL connection tests passed for ownership/assignment, quota updates,
-  policy/reason/exemption races and network-registration ordering. Capacity tests
-  exercise 100 allocations, repeat release, IPv6 prefixes and legacy provenance.
-- Existing writer/API coverage passed 110 examples; direct IpAddress API coverage
-  passed 47; final Network invariant corrections passed 35. The broader deferred
-  API/model run passed 120 with one existing pending migration contract.
-- PHP regression suite passed 91 tests/368 assertions; current-head PHP and i18n
-  CI passed. Migration CI, RuboCop and libnodectld CI passed on the identical
-  component trees before the final browser-fixture-only amendment.
-- Notification overlay checks passed, including 8 real reconciliation/rendering
-  combinations across CS/EN, initial/update notices and both retention policies.
-  Overlay current-head CI passed; no mail was sent to real recipients.
-- Full KB checks passed 60 tests/194 assertions, navigation/page bindings and all
-  120 screenshot files. No existing reader-visible documentation/capture drift.
-  Exact API pin 1e2d2d7c9 is committed and pushed in contract 9d79ff9.
-- Browser v3 passed all five tests. All 26 API topic jobs and their coverage
-  check passed on the final head. Broader shared-runner integration is running;
-  the managed KB runtime check is queued.
+- September 15 copy/spec correction: 912 core-engine examples, zero failures,
+  50 existing pending; 24 localized rendering examples, zero failures; flake,
+  touched RuboCop and hooks passed. V8 general/architecture review passed.
+- Previous forced-mode copy: 25 notification/render examples passed, overlay
+  flake and hooks passed, v7 general review had no findings. Hosted integration
+  34491288911, RuboCop 34491288966, i18n 34491288907 and overlay Check
+  34491267241 passed; API 34491288836 failed only the assertion fixed above.
+- Email-copy follow-up: 38 campaign examples and 24 localized render/routing
+  combinations passed; overlay flake check, touched RuboCop and hooks passed.
+  General v6 review found no issues. Copy-head CI is running: vpsAdmin
+  integration 34484865348, API topics 34484865323, RuboCop 34484865318,
+  i18n 34484865320. Overlay Check 34484854385 passed.
+- Four v5 review lanes completed at gpt-5.6-sol/xhigh. Reminder template metadata
+  and the directly owned browser fixture's charge environment were corrected.
+  Earlier ownership/accounting changes retain their v1-v4 review evidence.
+- Final focused API resources: 9 passing; models/concurrency: 48 passing;
+  migration tests: 2 passing in a separate process. Earlier broader writer,
+  authorization and quota regression results are recorded below.
+- Actual API + NodeCtld confirmation harness: 12 passing combinations covering
+  success/failure/rollback, IPv4/IPv6 and default/user-created host addresses.
+- Overlay: 24 passing render/routing combinations across CS/EN, initial/reminder,
+  both policies and IPv4/IPv6/mixed lists, plus HTML escaping and absolute URLs.
+  Flake check and current-head hosted Check 34466827250 passed.
+- PHP: 91 tests/368 assertions; touched Ruby, JS, Nix and localization checks
+  passed. Hosted migration, RuboCop, PHP, i18n and libnodectld checks passed.
+- Hosted API matrix 34466834918 passed all 26 core/full topics and coverage.
+  Product component trees are unchanged by the two later test-only commits.
+- Hosted integration 34469920231 passed all four task scenarios on 871fa3dae,
+  including real authoritative PTR removal and ownership finalization.
+- Local webui#vps-user-core passed all four browser tests. The focused
+  webui#networking-dns rerun passed all five tests, including the actual HTML
+  email button/login, no GET mutation, retention, assignment, policy override,
+  eligible-only reminder, manual/repeat release and notice history.
+- Hosted integration 34474145934 passed all 12 selected network/DNS tests on
+  feccc0073. No stale in-flight branch run needed cancellation.
+- Full KB bin/check passed: 60 tests/194 assertions, navigation/page bindings
+  and 120 screenshots. No existing documentation/capture drift. Current-head
+  Check 34470210306 and managed runtime 34470210256 both passed. The
+  preceding runtime 34467150396 also passed on the identical product trees.
 
 ## Repositories
 
-- vpsadmin: branch 2026-09-09-ip-release-mechanism at
-  worktrees/2026-09-09-ip-release-mechanism/vpsadmin; base 19971f039.
-- vpsfree-notification-templates: same branch/worktree group; base 9e1ddbd.
-- vpsfree-kb-contracts: same branch/worktree group; base81d6d7d.
-  Exact-pin checks passed at 1e2d2d7c9; contract head 9d79ff9 is pushed.
-- Shared workspace remains master; unrelated tracking changes preserved.
+All three use branch 2026-09-09-ip-release-mechanism and worktrees beneath
+worktrees/2026-09-09-ip-release-mechanism/:
+
+- vpsadmin: base 19971f039771500d5d0304610f91fe6f4af5fed3.
+- vpsfree-notification-templates: base 9e1ddbd973703cf48a43f0e5afc2bfb392a8b676.
+- vpsfree-kb-contracts: base 81d6d7dfe530884aff3e1d2634e02e4b12fe28e8.
+- Shared workspace remains master; unrelated working-tree changes are preserved.
 
 ## Setup and observations
 
@@ -102,14 +434,16 @@ implementation handoff checkpoint for 2026-09-10.
 - Whole-campaign admin release, any time; advisory deadline, no mail gates.
 - Campaign-wide editable policy; current policy overrides/restores user reasons.
 - Separate admin exemptions; user reasons accepted until release or close.
-- Initial and explicit update mail only; no automatic campaign actions.
+- Initial notices and repeatable explicit reminders; no update mail or automatic campaign actions.
 
 ## Next steps
 
-Review the pushed implementation. Follow the two shared-runner jobs below
-before merging or deploying; investigate any failure before accepting a rerun. Production merge/deployment remains
-outside this implementation request; the documented writer rollout and legacy
-quota reconciliation are prerequisites for later operational use.
+The requested final wording is implemented, reviewed, tested and pushed. New
+hosted checks on the exact heads are running/queued; inspect results before
+integration and investigate any failure. All feature branches and this session
+remain open. Merge/deployment remain outside this request; the documented
+writer rollout and legacy quota reconciliation are prerequisites for later
+operational use. Refresh against current upstream before integration.
 
 ## Portal / cleanup
 
@@ -695,3 +1029,557 @@ legacy charge-environment and quota-resource history. No node protocol or
 vpsAdminOS fleet upgrade is introduced by this feature.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-09-ip-release-mechanism/
+
+## Follow-up implementation — 2026-09-10
+
+User approved revised plan: empathetic bilingual text/HTML notices with locations
+and conditional public IPv4 scarcity; admin reminders only for still-eligible
+addresses of previously notified users; permanent exclusions for deleted owners
+and changed allocations; PTR/ownership regression coverage. Reusing the exact
+initiative/worktrees explicitly selected by the ongoing conversation. This shell
+has no VPSFREE_DEV_SESSION_SLUG and dev-session current reports none; read-only
+list confirms this exact initiative is managed with its three registered repos.
+No session lifecycle mutation is needed or authorized. Existing initial tracking
+commit remains in place; ongoing follow-up records are uncommitted.
+
+Follow-up quick verification in progress. First pass: 53 examples, 5 failures
+(all 9 API examples passed). Four failures were fixture setup: IPv6 helper
+defaults to IPv4 text and an allocation-drift fixture hit model validation.
+Corrected explicit IPv6 addresses and direct persisted-drift setup. Second pass:
+47 model/concurrency examples, 2 failures, both PTR fixtures lacked a live node
+for the existing deferred database confirmation. Corrected these to assert the
+staged PTR destroy and retained default host; actual completion is covered by
+the expanded API/NodeCtld harness and the new live DNS integration example.
+The newly added owner-change race and user lifecycle locking checks passed.
+Notification overlay flake check passed. Core-only schema regenerated; retained
+only the changed table because this dumper reordered unrelated existing tables.
+
+Final focused checks: 48 model/concurrency examples passed; migration checks
+passed 2/2 independently. PHP regression passed 91 tests/368 assertions.
+Overlay rendering passed 24 combinations (CS/EN, initial/reminder, both policies,
+IPv4/IPv6/mixed), plus 2 default-host PTR staging examples. RuboCop passed all
+11 touched Ruby implementation/spec files. Gettext health and CI selection
+passed (16 tests/55 assertions); JS syntax passed. The DNS runtime example adds
+the dns tag so IP-release changes select it. A Ruby empty single-quoted string
+inside Nix's indented string needed double quotes; corrected before nixfmt and
+selector validation. No kernel build occurred.
+
+Overlay history consolidated to fd58bc0 (unpushed). API and WebUI corrections
+are being folded into their existing unpublished functional commits.
+
+Expanded API/NodeCtld confirmation checks passed 12/12: execute success, execute
+failure, rollback; IPv4 and IPv6; default and user-created host addresses. PTR
+records are removed only on completion, restored on rollback/failure, and the
+user lifecycle lock is released with the chain. Exact once quota accounting and
+manual retries pass. Final overlay render rerun with absolute test URLs passed
+24/24. Bilingual HTML previews are saved under email-previews/.
+
+API fixup 91f84d2f7 and WebUI fixup 5dbade8c4 passed all commit hooks. Consolidating
+these into the original API/UI commits before mandatory review; pre-rewrite tree
+is 22d953df92b6d358c7d9c368cb76045258db59cf. No branch has been merged/deployed.
+
+Final follow-up heads before review: vpsadmin d21a376be6e708b289d4b32f2a0d1760ac3ae295
+(API 74172b64d, original ownership prerequisite 664e1e184); overlay
+fd58bc05cceb883d41f98c568069dc30a0d6a3eb. Rebase preserved the verified tree and
+all hooks passed. Both feature worktrees are clean. Upstream bases are unchanged
+after fetch. Starting mandatory high-risk review in all four lanes using fresh
+gpt-5.6-sol/xhigh agents; packet v5 describes the bounded follow-up and earlier
+review baseline. No long integration has started for this follow-up.
+
+Earlier hosted results resolved during follow-up review: KB managed runtime
+34414445897 passed on 9d79ff9. vpsAdmin integration 34412825378 failed with
+116 passing tests and two failures. Downloaded its failed logs and artifact
+vpsadmin-test-logs-34412825378 before considering another run. The network
+shaper/rename example passed its assertions, then the runner timed out waiting
+for `poweroff -f` during VM teardown. WebUI vps-user-core selected the directly
+inserted owned fixture 203.0.113.137, which lacks charged_environment; the new
+ownership safeguard correctly rejects it (the resource maps this exception to
+the generic wrong-location message). The other networking fixtures already set
+this field. A narrow fixture correction and a focused vps-user-core run are
+needed in addition to the planned browser and live DNS checks. Artifact/log
+copies are temporary under /tmp, not part of the durable portal.
+
+Architecture v5 finished (gpt-5.6-sol/xhigh); scope lane launched when its slot
+freed. Architecture and general independently found the same stale overlay
+metadata ID: reminder directory still declared ip_release_updated. Reconciled
+severity: Blocking, because this silently drops the registered admin recipient
+role and can use the primary address instead. Extended overlay harness to assert
+template_id, descriptor roles, and a configured role destination. Reproduced two
+failing reminder examples at the exact stale-ID assertion, then corrected the
+ID. Full 24-case render/routing matrix and overlay flake check are running.
+
+Architecture advisory: active/suspended owner eligibility is repeated in preview,
+locked creation, and request status. Current values agree and the checks cover
+these paths. Accepted for this bounded feature without adding a new abstraction;
+future lifecycle-policy changes must update the three checks together. Repeated
+notification lookups are bounded by the existing 100-address cap; performance
+measurement is a residual gap, not a delivery gate. No reviewer rerun is needed
+for the direct metadata correction. A packet wording error about historical
+login snapshots was corrected: the accepted contract preserves original user ID
+and allocation snapshots, with nullable current login and a deleted-ID fallback.
+General withdrew that finding after checking plan.md.
+
+Risk v5 finished (gpt-5.6-sol/xhigh): same Blocking metadata finding, no others.
+The fixed overlay passed all 24 render/routing combinations and flake checks.
+Residuals recorded: live DNS test covers IPv4 default-host cleanup, with IPv6
+and user-created variants covered through the actual NodeCtld confirmation
+harness; notices use eligibility at preparation time and can become stale before
+asynchronous delivery, while destructive release rechecks locked current state.
+This matches the explicitly accepted absence of delivery gates. General also
+records the proven missing-charge browser fixture as Important; corrected with
+the known seed environment and folded into the WebUI commit.
+
+General v5 completed: same metadata and fixture findings, no additional issues.
+Direct fixes are committed with clean worktrees: vpsadmin
+473b5c62aae74734a1b57d7780b75c906400a8d4; notification overlay
+0c80160f92a5ae81b33cc1dc2441b00e10c9eeb9. The API implementation commit remains
+74172b64d. Fixture Nix formatting and commit hooks passed. Scope review remains
+pending; no long integration or follow-up push yet.
+
+Scope v5 completed (gpt-5.6-sol/xhigh): same resolved Blocking metadata issue,
+no additional findings. All four mandatory lanes are complete with no unresolved
+Blocking/Important findings. Narrow remediations are verified without rerunning
+reviewers; no new design or contract was introduced. Starting long integration
+on clean corrected heads, then exact KB repin and hosted CI follow-up.
+
+Fetched all three upstreams: bases unchanged. Pushed vpsadmin 473b5c62a and
+overlay 0c80160 using explicit leases for the previous feature heads. No
+superseded queued/running branch workflows remained to cancel. Hosted checks
+started on the new exact heads (vpsAdmin CI 34466834808, API 34466834918;
+overlay Check 34466827250). Local combined integration command:
+`./test-runner.sh test --state-dir /tmp/ip-release-followup-integration-state
+--fresh --jobs 2 --status-interval 60
+'{webui#{networking-dns,vps-user-core},tasks/dns-reverse-record-check}'`.
+
+Updated the KB exact API revision in its four manifests, then ran
+`nix flake update vpsadmin`. Diff confirms only the API node changed in the
+lockfile; the existing vpsAdminOS 6bdf458f runtime pin is preserved. Full
+`nix develop -c bin/check` is running. This is mechanical revision metadata,
+so no additional review lane is required if the documentation contract stays
+green.
+
+KB full check passed: 44 controls/35 paths/35 capture concepts/3 selectors;
+92 annotation bindings/9 exceptions; 4 managed pages/8 variants/12 tests/
+21 executable samples; 60 regression tests/194 assertions; 60 concepts/120 PNGs.
+No documentation or screenshot drift. Updated kb-impact.md. KB commit
+614442a9f06422646d12086353d95572f099e354 is pushed; hosted Check 34467150390
+and Managed page runtime 34467150396 are on this exact head. No stale in-flight
+KB workflow required cancellation. The local integration selector confirmed all
+three intended scripts. Resource limits correctly serialize DNS (10 GiB shared
+memory) and WebUI (24 GiB), with 25.9 GiB available after the runner reserve.
+Build logs show cached kernels plus normal initrd/module-pruning derivations;
+no Linux kernel compilation occurred.
+
+Hosted final-head migration, RuboCop, WebUI PHPUnit, i18n health and libnodectld
+specs have passed. API topic matrix, integration and KB runtime are in progress.
+
+Local DNS integration: original drift-check example passed; the added release
+example failed before release at its first dig query, with localhost:53 connection
+refused. The fixture BIND configuration deliberately listens only on
+dnsNode.ipAddr (192.168.10.31), not loopback. The new test now uses the existing
+dns_query_short helper and the configured fixture address for both assertions.
+This is a direct test-endpoint correction, not a release or DNS behavior change;
+focused Nix formatting/commit checks suffice before rerunning the scenario, with
+no additional review lane. Original test logs are retained under the private
+integration state. The browser scripts continue against the unchanged product
+tree; DNS will be rerun after they release the required shared memory.
+
+The DNS-only test correction is committed as
+871fa3dae787678ceea7f36ba5cbec139c93e5ee, currently unpushed. All hooks passed
+(commit text-width advisory only; lines satisfy the repository's 80-column
+requirement). The product component trees are identical to pushed 473b5c62a.
+Keeping this direct runtime-test correction as a separate functional test commit
+preserves its failure rationale. Waiting for the existing API matrix to finish
+before the follow-up push, then cancel any remaining superseded workflows as
+required and refresh the exact KB pin once more. Current API matrix: 24 topics
+passed including both core/full network and mail; only core/full platform remain
+in the RSpec step. Their preceding successful run took 30–35 minutes, so the
+current duration is not yet abnormal. KB Check passed on 614442a; its runtime
+suite is still running (previous successful runtime was about 41 minutes).
+
+Hosted API run 34466834918 completed successfully: all 26 core/full topics and
+the topic-coverage check passed. KB managed runtime 34467150396 also passed on
+614442a (API 473b5c62a). These product trees are unchanged by the DNS-only test
+correction 871fa3dae. Pushing that correction now and canceling only remaining
+queued/running workflows for superseded heads of this exact feature branch.
+
+Pushed vpsadmin 871fa3dae with a fast-forward update. Canceled superseded
+integration run 34466834808 after verifying its head was 473b5c62a; no other
+stale jobs remained. New integration run 34469920231 uses 871fa3dae. Final KB
+repin and full bin/check passed with the same contract/regression counts;
+vpsAdminOS runtime remains 6bdf458f. KB head is
+87bc0fbcb267292a30867d7a5f90eee92552fc10, being pushed with an explicit lease
+for previous head 614442a. Its previous hosted Check/runtime were both complete
+and successful, so no stale KB run needs cancellation. No new product behavior
+has changed since the reviewed implementation and matching hosted API results.
+
+Hosted follow-up integration 34469920231 passed on exact head 871fa3dae:
+all four task scripts passed. Downloaded the completed job log and verified
+the new live-DNS release example explicitly succeeded in 36.12 seconds;
+the full DNS scenario passed in 304.53 seconds. This confirms PTR answers
+disappear and owner/record state is finalized correctly using the configured
+server endpoint. No identical local DNS rerun is necessary. The combined local
+run retains the already diagnosed pre-fix DNS failure, while its two browser
+scripts continue against the identical API/WebUI component trees.
+
+Final KB push 87bc0fb succeeded. Its hosted Check 34470210306 passed; managed
+runtime 34470210256 is a repeat after a mechanical pin to the test-only API
+commit. The same product component trees already passed managed runtime on
+614442a. No production deployment, wiki write, branch merge or lifecycle action
+has been performed.
+
+Local webui#vps-user-core passed all four Playwright tests after the charge-
+environment fixture correction. Browser execution took 1944.17 seconds; the
+full script including setup took 2303.26 seconds. This completes the regression
+for the earlier hosted failure and exercises the remaining VPS form/reinstall
+steps that had previously been skipped. The runner has moved on to
+webui#networking-dns, including the real HTML email button/login and reminders.
+
+The networking browser script passed its four existing tests, then the IP
+release scenario failed while reading the initial queued email, before clicking
+the button. The new test incorrectly assumed runVpsadminctl always returned a
+response wrapper; the CLI returned the unwrapped payload. Existing transaction
+browser helpers already normalize `response.response || response`. Added that
+same normalization to a small local showApiResource helper for the four request/
+mail reads. JS syntax and diff checks pass; this narrow test-harness correction
+does not change production code or require another review lane. Rerun only
+webui#networking-dns; VPS core and live DNS are already verified. The original
+combined runner has exited with its two diagnosed failures and retained logs.
+
+Browser-harness correction committed as
+feccc00735c1d6323732ca39ef2aced8691d0432 (currently unpushed); hooks passed.
+Started `./test-runner.sh test --state-dir
+/tmp/ip-release-followup-browser-v2-state --fresh --status-interval 60
+'webui#networking-dns'`, logging to /tmp/ip-release-followup-browser-v2.log.
+No need to rerun the already passing 32-minute VPS form scenario.
+
+Documentation pin decision for this last test-only correction: retain the KB
+input at exact product revision 871fa3dae. feccc0073 changes only the vpsAdmin
+networking Playwright spec; API, WebUI, libnodectld, and shared test-runner/
+machine/configuration trees are byte-identical (verified with git diff). KB owns
+its own browser/page scenarios and does not consume this spec. No visible WebUI
+change or documentation contract change occurs, so another mechanical pin and
+repeat KB runtime cycle would add no validation. The existing 87bc0fb contract
+head already pins and verifies the final product tree.
+
+Final KB managed runtime 34470210256 completed successfully on exact contract
+head 87bc0fbcb. All KB validation is complete. A fresh upstream fetch found
+vpsAdmin master advanced from 19971f039 to c975544fe with an automated package
+dependency update only. This implementation remains on its reviewed/tested base;
+no integration is being performed. Refresh/rebase against the then-current
+default branch before a later merge, as required by workspace rules. Notification
+and KB upstream bases are unchanged.
+
+Final focused networking browser rerun passed all five Playwright tests in
+6.9 minutes (426.93-second example, 820.98-second script including setup).
+This explicitly verifies the actual queued HTML email button through login,
+no mutation from GET, reason submission, VPS assignment, exemption, a forced
+policy reminder containing only the remaining eligible IP, manual release
+before the advisory date, repeat release and user notice history. Final
+vpsAdmin head feccc00735c1d6323732ca39ef2aced8691d0432 is pushed by fast-forward;
+all three project worktrees are clean. Its new hosted CI 34474145934 is running.
+No superseded queued/in-progress runs remained. The final test-only push does
+not change the already verified product component trees or the KB pin decision.
+Portal URL confirmed and email preview/review artifacts are registered.
+
+Focused browser runner exited 0 after normal VM teardown: one script/test
+successful, total 1055.68 seconds. No runner or session lifecycle command was
+used to terminate it. Final tracking diff whitespace check passed.
+
+## Follow-up: remove policy-history sentence and investigate CI
+
+User requested removal of the previous-reasons sentence from emails and
+investigation of failed vpsAdmin CI. Removed it from all built-in EN and overlay
+EN/CS requested/reminder text/HTML variants; updated existing forced-policy
+render assertions to the retained admin-exemption instructions. Current branch
+CI 34474145934 is now successful. Latest failed CI is the earlier feature run
+34412825378 (1e2d2d7c9); inspecting both failing scenarios and retained artifacts
+before deciding on further runtime validation.
+
+Rechecked the old CI artifacts: the shaper example and script passed before
+OsVm::Machine#stop blocked in the poweroff command channel for about 15 minutes.
+No guest kernel panic/backtrace was captured, so the underlying guest/channel
+hang remains unknown; no speculative product/runner fix is warranted. Current
+CI 34474145934 passed all 12 selected network/DNS tests, including this same
+shaper scenario and its teardown in 320.98 seconds. The missing-charge fixture
+was already corrected and the full four-test VPS browser regression passed.
+Detailed evidence is in ci-investigation.md and registered on the portal.
+
+Email copy follow-up committed: vpsadmin
+37e08d8be10c2f38138f5511403c94523126d033; overlay
+ff5cc7c474cab76dbdebabcd706b5d43c8d5319a. Quick checks passed: 38 campaign
+examples, 24 localized render/routing combinations, overlay flake check, touched
+RuboCop and all commit hooks. The delta is low-risk prose deletion; the existing
+assertions changed only their expected literals. General-only review v6 is
+required at gpt-5.6-sol/xhigh; no runtime/test logic, abstraction or contract
+change triggers another lane. Existing v1-v5 reviews remain authoritative for
+the unchanged implementation. No long integration rerun started for this copy
+edit; the failed scenarios were investigated from existing completed artifacts.
+
+General review v6 completed at gpt-5.6-sol/xhigh on exact heads 37e08d8be and
+ff5cc7c4: no Blocking, Important or Advisory findings. Reviewer verified all
+12 variants, retained instructions, quick-check evidence and CI artifacts.
+Residuals accepted: absence of deleted prose is checked directly rather than
+adding brittle permanent copy assertions; underlying old guest shutdown hang
+remains unexplained; new hosted checks begin after pushing the copy-only heads.
+No additional review lanes or long local integration tests are warranted for
+this literal deletion. Pushing the two commits by fast-forward now.
+
+Pushed vpsadmin 37e08d8be and overlay ff5cc7c4 with fast-forward updates; both
+worktrees are clean. Current-head workflows: vpsAdmin CI 34484865348, API topic
+matrix 34484865323, RuboCop 34484865318, i18n 34484865320; overlay Check
+34484854385. No superseded queued/running workflow remained to cancel. Upstream
+vpsAdmin master remains the unrelated dependency-only c975544fe; retain the
+reviewed base for this bounded follow-up and refresh before later integration.
+New CI runs are additional validation of the copy-only commit; all targeted
+checks and the failed-scenario investigation are complete. No new local long
+integration run was necessary. Session remains active and open.
+
+Current-head overlay Check 34484854385 completed successfully on ff5cc7c4.
+Current-head vpsAdmin RuboCop 34484865318 also passed; API topics remain
+queued and integration/i18n are in progress at handoff.
+
+## Follow-up: direct support instructions
+
+User requested replacing the abstract administrator-exemption sentence with
+direct instructions to reply to the email, which reaches support and allows
+support to grant an exemption. Updated all 12 built-in/overlay EN/CS text/HTML
+variants and existing render expectations. Applied the previously read workspace
+writing/humanizer guidance directly; no new behavior or public contract. Will
+fold this wording into the latest unmerged prose-only commit per repository.
+Before this edit, API topic CI 34484865323, RuboCop and i18n passed on 37e08d8be;
+integration 34484865348 is still running. No new failure is reported.
+
+The user immediately corrected the support wording: forced-release mode should
+omit the exemption paragraph entirely. Removed the else branch from all 12
+email variants; the common assignment instructions remain and reason-form
+instructions appear only with opt-outs enabled. No support wording was committed
+or pushed. Updated the existing forced-policy render assertion to check that
+the user reason form is not offered. Verification now targets this final copy.
+
+Final forced-mode paragraph removal passed 25 examples (one existing campaign
+notification test plus the 24 localized rendering/routing combinations), overlay
+flake checks, diff whitespace checks and every commit hook. Source searches
+confirm the absence of exemption/policy-history/proposed support instructions
+in all 12 variants. Latest prose-only commits amended to vpsAdmin
+7483c4d2535b994a10ea3a82856052bd78c4913c and overlay
+00519f79fa9a5073eb83f41bae3857bc66229e17. General-only v7 review is low risk,
+gpt-5.6-sol/xhigh, scoped to the delta from reviewed 37e08d8be/ff5cc7c4.
+No new runtime behavior or compatibility contract changes.
+
+V7 general review completed at gpt-5.6-sol/xhigh on exact heads 7483c4d25 and
+00519f79: no Blocking, Important or Advisory findings. The reviewer verified
+all 12 else-branch deletions, unchanged assignment guidance, allow_keep gating,
+ERB structure, focused amended commits and passing verification. Accepted
+residual: direct searches cover the removed prose on these heads; no brittle
+permanent assertion naming deleted wording is added for this copy-only edit.
+
+Pushed final heads 7483c4d25 and 00519f79 using explicit leases for the prior
+37e08d8be/ff5cc7c4 feature heads after a fresh upstream fetch. Both worktrees are
+clean. Requested cancellation of only the still-running old-head integration
+34484865348; all other superseded checks had completed successfully. Current
+workflows: vpsAdmin CI 34491288911, API topics 34491288836, RuboCop 34491288966,
+i18n 34491288907; overlay Check 34491267241. No new production or session
+lifecycle action was performed.
+
+Current-head overlay Check 34491267241 passed on 00519f79. The old-head CI
+cancellation request has been accepted but is still in progress as of handoff;
+no current-head workflow was canceled.
+
+## 2026-09-15: closing wording, API specs and locking explanation
+
+User requested a neutral email closing, investigation of failed API specs, and
+an explanation/justification of locking prerequisite commit 664e1e184. Reusing
+the explicitly selected existing initiative; dev-session current finds no
+process session and DEV_SESSION_SLUG is unset, so no lifecycle/start operation
+is performed. Project worktrees began clean at 7483c4d25/00519f79.
+
+Current complete integration CI 34491288911 passed. API workflow 34491288836
+failed only core-engine job 102918382409: 912 examples, one failure, 50 pending,
+seed 24922. The failure is the initial-notice negative substring assertion for
+192.0.2.20. The fixture helper derives addresses from max(id), while rolled-back
+inserts advance auto-increment IDs, so the next IP can be 192.0.2.200. Reproducing
+with explicit overlapping address strings before changing the assertions.
+No blind rerun or change to locking behavior is planned.
+
+Explicit overlapping addresses reproduced two failures with the original
+initial-notice and reminder assertions. The assertions now include the IP
+prefix, preserving deterministic regression fixtures. Full core-engine rerun
+with the failed CI seed passed: VPSADMIN_PLUGINS=none nix develop .#api -c
+bundle exec rspec spec/models --seed 24922; 912 examples, zero failures, 50
+existing pending examples, 4m51.6s. Overlay nix flake check passed. The neutral
+closing is “Děkujeme za tvůj čas.” / “Thank you for your time.” in all 12
+built-in/overlay EN/CS text/HTML notice/reminder variants. Render matrix pending.
+
+Added locking-notes.md with verified call-site distinctions, lifetimes, race
+examples, contention costs and bundled accounting/validation behavior. No
+locking implementation change is included in this follow-up. A new durable
+note records the substring-assertion trap and deterministic reproduction.
+
+Fetched upstream before preparing pushes. vpsAdmin master is now f7a17d6e5
+(authentication/recovery/daily-report/DDNS work and dependency updates); overlay
+master is 6ebfb6f (recovery and daily-report templates). Retain the established
+reviewed base for this bounded copy/spec correction; integration will require
+a refreshed base and assessment of the newer authentication/lifecycle paths.
+No merge or deployment is authorized or performed here.
+
+The 24-case localized render matrix passed; safe HTML previews regenerated.
+Touched spec RuboCop, whitespace checks and every commit hook passed. Committed
+test fix 36a6869fe93b2699eafa2f75a8ae1ecf7be38d15 and built-in copy
+395bf80b76b2e715fbad25f7c637c5763dc35ad5 separately; overlay copy is
+51c8f2c3f94b094ca93e1bddb719e0b23a9e04ab. Both worktrees are clean, not yet
+pushed. V8 review is low risk, general + architecture for the handwritten
+test changes. The current mandatory-change-review skill specifies gpt-6-astra
+with xhigh effort, which supersedes the model recorded for earlier reviews.
+
+V8 architecture review completed at gpt-6-astra/xhigh with no findings. It
+verified the deterministic CIDR regression fixtures, all 12 literal template
+edits, existing provider/overlay boundary, and the accuracy of locking-notes.md
+against the cited code. Accepted residuals: new prose is checked in source and
+previews without brittle permanent wording assertions; no compatibility claim
+for newer upstream code or reopened full-feature audit. General review pending.
+
+V8 general review completed at gpt-6-astra/xhigh with no findings. Reviewer
+independently ran the two changed examples with seed 24922 (two passing),
+verified separate commit purposes, all literal closing edits, full-suite and
+render logs, and the factual locking explanation. Both required lanes passed;
+no remediation or rerun is needed. Fetched both upstreams again before push.
+
+Pushed exact reviewed heads by fast-forward over SSH: vpsAdmin 395bf80b7,
+overlay 51c8f2c3. Both local heads match the remote feature refs and both
+worktrees are clean. No superseded queued/in-progress workflow remains on this
+branch; no cancellation was needed. New hosted checks: API Specs 34943116908,
+RuboCop 34943116885, integration CI 34943116818, i18n 34943116902; overlay
+Check 34943088429. API is queued; the other checks have started. No new local
+long integration tests were needed for this copy/spec-only correction.
+
+Current-head overlay Check 34943088429 and vpsAdmin RuboCop 34943116885 passed.
+API Specs has started both core and full engine jobs; nine jobs have completed
+without a failure so far. Waiting for the previously failed engine job before
+reporting the hosted regression result. Integration and i18n remain running.
+
+Final September 15 regression status: the previously failed API core-engine job
+passed on pushed head 395bf80b7 in workflow 34943116908. i18n 34943116902,
+RuboCop 34943116885 and overlay Check 34943088429 also passed. The API matrix
+has ten completed jobs with no failures; full-engine and remaining topics are
+still running, as is integration 34943116818. This is not a claim that the
+whole new workflow has completed. The exact original-seed core suite also
+passed locally (912/0/50 pending), and both v8 review lanes passed.
+
+Handoff includes the neutral email previews, CI root-cause evidence and
+locking-notes.md. The broader locking prerequisite is unchanged. Its shared
+IP/host reservation has a concrete race/rollback rationale; quota/provenance
+and network validation remain explicitly identified as additional behavior to
+present separately before integration. Follow-up integration must reconcile
+new upstream changes and finish outstanding CI; no merge, deployment, real
+email, archival, cleanup scheduling or session lifecycle action was performed.
+Stable portal confirmed with dev-session url:
+https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-09-ip-release-mechanism/
+
+
+Split review launch: general and architecture lanes are active at the exact
+packet heads, gpt-6-astra/xhigh/fresh context. A third concurrent spawn was
+refused by the tool thread limit despite the nominal four-slot catalog. Risk
+and scope remain required and will run as slots become available; none is
+skipped. Read-only devcluster status still reports stopped and there is no
+config at the legacy workspace-local path. No startup or lifecycle change yet.
+
+## WebUI redesign implementation checkpoint (2026-09-15)
+
+Implemented campaign-scoped address/notices and atomic bulk exemptions, shared
+single/batch validation, raw historical actor IDs with admin-only visibility,
+rendered sidebars, standard headers, unified admin address table and separate
+action forms. Retain Notice history. Added two-owner browser fixtures and
+navigation-driven coverage. Existing mail templates are unchanged.
+
+Quick verification: API/model specs 52/0 seed 55547; concurrency 13/0 seed 5672;
+WebUI PHPUnit 93 tests/388 assertions; PHP and JS syntax passed. Touched Ruby
+formatting passed. Locale regeneration/check passed after translating the new
+CS entries. No long integration has started before required review.
+
+Tool corrections: component Nix shells already change directory; do not `cd api`
+again. PHP CS Fixer lives in the root shell, node is available through
+`nix shell nixpkgs#nodejs`. Existing workspace notes cover these shell details.
+`git commit --fixup TARGET -F FILE` is rejected by Git; use a literal `fixup!`
+subject in the required message file and autosquash later. This failed before
+any commit. Upstream added two documentation commits, requiring the feature's
+index links to move from deleted docs/index.mdwn to docs/README.md on rebase.
+
+Review started on vpsAdmin 43530927d and KB 2dfe4c7. General and architecture use
+fresh collaboration agents, gpt-6-astra/xhigh. Launching the risk reviewer through
+collaboration hit the retained agent-thread limit (an older completed reviewer
+still occupies a thread). To preserve fresh context, risk uses a standalone
+`codex exec --ephemeral --sandbox read-only`, same gpt-6-astra/xhigh model/effort,
+packet and no-subagents instruction. Its log/result are temporary; findings will
+be consolidated here. Scope lane will run when capacity is available. No review
+lane is omitted and no long local integration has started.
+
+Redesign review remediation: general and architecture both found three omitted
+covered endpoint scopes. The hosted full coverage job 104407949077 in run
+34977231855 confirms exactly that failure in its downloaded log. Added the three
+already-tested scopes; plugin-enabled inventory passes 1/0 seed 8975. General's
+advisory Select all restoration issue is also fixed and browser assertions added.
+Narrow remediations are folded into API 2f2fefeb5 and WebUI 5e15045a6. Risk review
+has no findings; scope review is finishing against the original committed heads.
+GitHub log retrieval required --allow-escape-sequences; local saved output was
+stripped of ANSI control sequences before inspection.
+
+All four redesign review lanes completed. Scope and risk found no issues;
+general/architecture findings are fixed as recorded in review-redesign-results.md.
+Browser integration webui#networking-dns started on 5e15045a6 after reconciliation.
+The existing single/bridge cluster is receiving a services update; a full reset
+is unnecessary because the redesign adds no migration. Prepared restoration
+checks seed-managed ownership/quota, reapplies the overlay and extends the unsent
+review campaign to both members. The main campaign will remain unsent.
+
+Live browser checks verified navigation, creation preview, restored selection,
+whole-campaign bulk setting and actor attribution, but removal failed locally in
+the PHP client: required nullable input was rejected before HTTP. Confirmed in
+haveapi/client 0.29.6 and upstream 0.29.8. Implementing an explicit remove flag
+on the new bulk API, preserving nonblank reasons for setting and model atomicity.
+The main campaign temporarily has the test exemptions on all five rows; clear
+them after the corrected live check and verify the unsent fixture before handoff.
+
+The first redesigned integration attempt completed with four browser tests
+passing and the campaign test stopping at the preview step (1051.12 s total,
+including teardown). The submitForm helper snapshots controls with Locator.all()
+without waiting after navigation; the failure capture already shows the Preview
+addresses button. The live browser reached this form successfully. Replaced the
+three new creation submits with scoped getByRole(...).click() calls, which wait
+for the control. The next integration attempt will also cover explicit removal.
+Failure evidence: /tmp/ip-release-redesign-browser.log and the runner's recorded
+services-shell.log. No screenshots were added to review deliverables.
+
+The explicit-removal correction passed all 12 campaign API request examples
+(seed 58936, 7m08s), plus the focused missing/null/blank-reason case with the
+final null assertion (1/0, seed 9059, 58s). Ruby lint and PHP/JS syntax passed.
+Hosted CI 34978785877 failed only webui#networking-dns; downloaded artifact
+10402055358 confirms the same No submit button matched Preview addresses error.
+The other eleven selected integration scripts passed. A separate live DOM
+check confirms the named filter form contains the button after waiting; the
+scoped waiting locator finds exactly one matching control.
+
+Removal correction a75bb80d5 is pushed with an explicit lease; base remains
+564cc80ea. General/architecture/risk reruns found no issues, including isolated
+PHP client and stale-discovery checks. See review-bulk-remove-results.md.
+Superseded 5e15045 API Specs run 34978785866 was cancelled after the push;
+24 jobs had passed and the two long platform jobs were still running.
+Browser rerun and services update started after reconciliation; KB repin/check
+is in progress. Main fixture cleanup is still pending the new live API.
+
+Final services deployment: /nix/store/gmqgr5szpvbspn7wy5yv7s9vm41pzki5-nixos-system-vpsadmin-services-26.05pre-git.
+The development API signing key was unlocked through the configured admin CLI.
+After seed reconciliation, the corrected live UI set and removed all five trial
+exemptions; read-only checks verified fixture eligibility, quota and PTR.
+Both node containers report running. No reset was needed; account secrets stayed
+private and were not rotated. Use pinned Nix shells for browser tools: a store
+path reported by a finished review process was unavailable later (exit 127);
+reentering the repository-pinned Node shell worked.
+
+Final local integration: webui#networking-dns passed at 17:01 CEST on a75bb80d5.
+All five Playwright tests passed. Example 549.19 s; full script 1112.28 s;
+total including build and teardown 1403.61 s. Log:
+/tmp/ip-release-redesign-browser-final.log. This covers the complete revised
+flow through real email login, member reasons, VPS assignment, policy change,
+reminder, early release, repeated release, bulk exemptions and closure.
+No local kernel build was needed. No screenshots are included in deliverables.

@@ -1,5 +1,90 @@
 # Admin-managed IP release campaigns
 
+## Accepted WebUI redesign (2026-09-15)
+
+Rework the campaign pages using rendered sidebars, standard tables with
+`table_add_category`, read-only summaries and separate action forms. Reserve
+perexes for errors and action confirmations. Admin navigation includes Cluster,
+campaign list/create, details/edit, initial notices/reminders, release, close,
+and Notice history (retain that exact label). Explain closing without initiating
+release and that already-running release chains continue.
+
+Use one campaign-wide IP table across owners (up to the existing 100 allocations)
+with bulk set/remove administrator exemptions. Add campaign-scoped address and
+notice list endpoints and an atomic bulk exemption action; retain the existing
+single-address endpoint by delegating to shared validation. Reuse current
+campaign/row locking, without generic locking changes. Expose persisted actor IDs,
+login and timestamps to admins only; members see the exemption source without
+administrator identity. No new schema migration is needed.
+
+Test navigation beginning at Cluster, creation and failed-form redisplay, headers,
+bulk selection across users, attribution/privacy, Notice history, policy/closure,
+authorization, atomic rejection and release/close concurrency. Apply the writing
+skill to EN/CS copy. Fold API changes into commit 7 and WebUI into commit 8; run
+quick checks, mandatory review, integrations, CI and KB impact workflow.
+
+The user explicitly permits resetting this initiative's dev cluster and reports
+no fixture changes. Recreate it on bridge networking with review accounts,
+campaigns and free IPv4/IPv6 allocations; leave it running. Do not archive,
+remove worktrees, merge or close the session. API must precede the new UI; refresh
+client discovery. Preserve the existing approved mail templates. The user does not want screenshot
+deliverables; provide the live WebUI and review instructions instead.
+
+## Accepted follow-up: commit separation, hardening and review cluster
+
+The user approved splitting and hardening the prerequisite, not merely moving
+history. Keep accounting unified: add an explicit generic
+adjust_resource!(resource, delta:, ...) operation sharing validation/allocation
+internals, and preserve the absolute reallocate_resource! contract. Do not
+introduce an independent IP accounting implementation.
+
+Rebuild the series on refreshed upstream, preserving the original head for
+comparison. Commit boundaries, with matching tests/docs/fixtures, are:
+1. Generic relative accounting and non-IP regression coverage.
+2. IP charge provenance and owner/environment validation.
+3. Populated-network resource identity and registration serialization.
+4. Shared IP/host reservation/current-read helpers and writer hardening.
+5. IP relative accounting adoption and combined composite-operation deltas.
+6. Cleanup before disownership, including existing WebUI completion behavior.
+7. Campaign API/schema/notifications and final notification/spec corrections.
+8. Campaign WebUI/translations/browser checks and their follow-up fixes.
+Consolidate final overlay wording in its template feature commit; refresh the
+KB contract pin and verify it against the rewritten feature.
+
+Audit all manual and automatic route/host, export, VPS create/clone/migration/
+replacement/swap/chown/delete, resource-free, PTR and grant paths. Helpers must
+distinguish current-state entry points from explicitly reserved staged objects,
+preserve pending in-memory state, and use ordered parent/host/accounting locks.
+Fix demonstrated gaps, including stale export selection and pre-lock internal
+route accounting. Aggregate composite IP deltas before confirmations so
+multiple interfaces or direct/routed groups cannot overwrite one another.
+
+Test generic CPU/memory/swap/diskspace/IP accounting contracts, quota limits,
+overrides, confirmation states and existing consumers (including automatic
+disk expansion); use separate DB connections for concurrency and actual node
+confirmations/rollback. Every intermediate commit must pass relevant checks.
+Run all four mandatory review lanes after quick checks and before long
+integration tests. Inspect current-head CI failures before accepting reruns.
+
+After implementation/review/tests, start this initiative's dev cluster with
+single topology and bridge networking. The user explicitly authorized this
+development deployment and captured test mail; no production deployment or
+merge is authorized. Prepare admin plus Czech/English member accounts and
+working VPSes, six unassigned public IPv4 and two IPv6 allocations for the
+primary member, additional second-owner and assigned controls, and a PTR on a
+releasable address. Use real model/API/chain paths and correct provenance/quota.
+Create one unsent, opt-out-enabled seven-day campaign with three IPv4 and one
+IPv6 allocations, leaving other candidates for manual campaign creation.
+Load the final overlay through the supported reconciler and verify actual
+WebUI URLs and Mailpit capture. Smoke-test on separate fixtures; preserve the
+user's prepared fixtures. Repeat setup must not reset later review decisions.
+Hand off URLs, private access details, fixture inventory, suggested review
+steps and stable portal. Leave the cluster and session running/open.
+
+Existing campaign policy, manual contention retries, legacy provenance
+reconciliation and compatible writer-rollout requirements remain unchanged.
+No automatic retry worker, guessed backfill or new daemon protocol.
+
 ## Goal and accepted decisions
 
 Implement persistent IP release campaigns with per-user requests and per-IP
@@ -16,8 +101,8 @@ release proposal. The user approved implementation after deciding:
 - Current policy governs. Disabling opt-outs overrides existing user reasons;
   re-enabling restores their effect for unreleased IPs. Keep the reasons.
 - Independent per-IP admin exemptions always prevent release until revoked.
-- Edits send no email. Initial notices and explicit updated notices only.
-  No mail delivery checks, delayed submission logic, reminders or result email.
+- Edits send no email. Initial notices and repeatable admin reminders only.
+  No mail delivery checks, delayed submission logic or result email.
 - Assigned addresses always remain protected, including stopped VPSes and
   export interfaces. Assignment is evaluated at each release action.
 
@@ -25,7 +110,7 @@ release proposal. The user approved implementation after deciding:
 
 - vpsadmin: additive core schema/models, API, transaction chains, WebUI,
   translations, built-in notifications, and focused/integration tests.
-- vpsfree-notification-templates: Czech and English initial/update notices.
+- vpsfree-notification-templates: Czech and English initial/reminder notices with text and HTML variants.
 - vpsfree-kb-contracts: WebUI impact assessment and affected contracts/captures.
 - Production configuration/deployment and merge are not part of the requested
   implementation. Prepare reviewable pushed feature branches and validation.
@@ -48,7 +133,7 @@ unique nullable active-IP claim separate from historical identity. Release or
 close frees the claim. Retain history after IP reassignment or deletion.
 
 Admins: candidate preview, campaign create/index/show/update/close, initial and
-update notice actions, whole-campaign release, add/remove IP exemption.
+reminder actions, whole-campaign release, add/remove IP exemption.
 Users: owner-scoped request/index/show and reason submission/update on selected
 unreleased items. Required nonblank reasons, maximum 2,000 characters. Require
 an admin exemption reason as well. Use standard audit facilities for actors,
@@ -92,9 +177,14 @@ Users reach their request after login through an ordinary link, see current
 policy/outcomes, can assign using existing networking flow or retain selected
 IPs with a reason. GET never mutates; use existing CSRF and owner scoping.
 
-Add ip_release_requested and ip_release_updated registry/built-in English
-mail templates and matching CS/EN overlay templates. Include affected prefixes,
-response date/timezone, current policy and authenticated request URL. Do not
+Add ip_release_requested and ip_release_reminder registry/built-in English
+mail templates and matching CS/EN text and HTML overlay templates. Include affected
+prefixes with location labels, planned release date/timezone, current policy and
+an authenticated request URL/button. Explain cooperation and redistribution,
+without asking for a response. Mention public IPv4 scarcity only when present
+in the actual recipient address list. Initial notices and reminders include only
+currently eligible addresses; reminders require a queued initial notice. Preserve
+append-only mail history and send nothing for an empty list. Do not
 promise automatic release. Use normal mail queue/logs without gating release.
 Apply the workspace writing skill directly to final UI/errors/email prose.
 
@@ -132,7 +222,7 @@ is authorized by this implementation request.
 
 1. Focused API/model/migration specs: ownership/auth/nested IDs, reason limits,
    forced policy changes/restoration, admin exemption precedence, duplicate
-   claims, closure, snapshots and manual initial/update mail without delivery
+   claims, closure, snapshots and manual initial/reminder mail without delivery
    gates. Check CS/EN rendering and API locale/catalog generation.
 2. Release tests: early/unsent/after deadline, stopped/assigned VPS and exports,
    owner changes, deleted IPs, partial failures, retry idempotency, quota once,
@@ -149,3 +239,72 @@ is authorized by this implementation request.
 6. Notification flake checks and targeted integration/CI. Fetch/rebase before
    pushing. Monitor current-head CI; investigate failures. Record all results
    and outstanding review/deployment work in state; leave session active.
+
+## Follow-up accepted on 2026-09-10
+
+Replace update notices with manual reminders, remove response/manual-release
+wording from member notices, and add empathetic bilingual HTML/text content.
+Primary network location labels appear in parentheses; fall back to associated
+locations or a localized unavailable label. Dynamic HTML content is escaped.
+
+Permanently exclude items when the original user is missing/in a deletion state
+or ownership/allocation identity changed. Persist exclusion time/reason and free
+its active claim. Preserve snapshots/history and tolerate deleted user references
+in API/WebUI. Suspension alone does not exclude an owner. Release acquires the
+existing user lifecycle resource lock before fresh owner/IP checks and retains
+locks through cleanup. Skipped items must not alter the new owner's quota or DNS.
+Retain existing PTR cleanup, adding explicit default-host/IPv6 and node/DNS
+regressions for completion, rollback and reassignment.
+
+This branch is unpublished/unmerged. Extend its additive migration directly;
+reset disposable test schemas instead of adding compatibility guards. No legacy
+updated-event alias is needed. Registry/overlay/API/WebUI deploy together.
+
+## Follow-up: email wording and failed CI investigation
+
+Remove the sentence about previously submitted reasons from requested/reminder
+emails in EN/CS and text/HTML, including built-in templates. Preserve current
+retention behavior and the remaining assignment/admin-exemption instructions.
+Investigate the failed vpsAdmin CI run using logs/artifacts, distinguish fixed
+fixture failures from infrastructure failures, and verify affected scenarios.
+This follow-up does not change API/schema or deployment compatibility.
+
+When user opt-outs are disabled, omit the entire exemption paragraph. Do not
+add support/reply instructions for this mode. Keep the shared VPS-assignment
+instructions; describe the unassigned-address reason form only when opt-outs
+are enabled. This supersedes the briefly proposed support-reply wording.
+
+## 2026-09-15 follow-up
+
+Use a neutral thank-you closing that does not assume the member will release
+addresses. Investigate and fix the API spec failure using its logs and a
+deterministic reproducer. Explain commit 664e1e184 by lock type, lifetime,
+concrete races, operational cost, and scope beyond locking. Do not silently
+rewrite or expand the locking design merely to answer the user's question.
+Email/test-only corrections have no schema, runtime or rollout impact.
+
+Review decisions for the rebuilt series (2026-09-15): automatic allocation and
+migration replacement may reuse owned IPs only in ownership-enabled destinations
+where those addresses are already charged. Explicit assignment retains its
+existing cross-environment recharge path. This avoids adding transfer accounting
+to the Create/Clone return-value contract and protects later VPS chown/migration.
+Legacy charge provenance must be reconciled before account/resource teardown.
+Teardown cleanup precedes the final quota/account confirmation in the actual
+transaction dependency chain.
+
+## Bulk exemption removal correction
+
+Live browser validation found that haveapi/client 0.29.6 rejects a required
+nullable reason before sending the bulk removal request. Current upstream
+0.29.8 has the same behavior. The new, unmerged Campaign.Exempt API now uses an
+explicit remove boolean (default false); reason is optional at parameter parsing
+but a nonblank value is still required by the model when remove is false.
+Missing/blank reasons never remove or overwrite an existing exemption.
+This stays in the new campaign action and shared batch operation; no generic
+client change, dependency release or additional repository is required.
+
+This replaces the briefly deployed bulk reason:null request in the disposable
+review cluster. The pre-existing single-address HTTP API continues to accept a
+null reason; the WebUI uses the campaign action. Deploy the API before the WebUI
+and refresh discovery. A mismatched version rejects removal and retains the
+exemption. Persisted state, ownership and locking are unchanged.

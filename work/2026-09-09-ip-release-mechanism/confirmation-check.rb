@@ -29,14 +29,15 @@ RSpec.describe IpReleaseCampaign do
     raw.query_options.replace(previous_options) if raw && previous_options
   end
 
-  [[:execute, true], [:execute, false], [:rollback, true]].each do |direction, success|
-    it "preserves ownership safely through #{direction}, success=#{success}" do
+  [[:execute, true], [:execute, false], [:rollback, true]].product([true, false], [4, 6]).each do |(direction, success), user_created, version|
+    it "preserves ownership safely through #{direction}, success=#{success}, user_created=#{user_created}, IPv#{version}" do
       ensure_available_node_status!(SpecSeed.node)
-      ip = create_ip_address!(user: SpecSeed.user)
+      ip = create_ip_address!(network: version == 4 ? SpecSeed.network_v4 : SpecSeed.network_v6,
+                              user: SpecSeed.user, addr: version == 4 ? '192.0.2.25' : '2001:db8::')
       reverse_zone = create_reverse_dns_zone!
       ip.update!(charged_environment: SpecSeed.environment, reverse_dns_zone: reverse_zone)
       host = ip.host_ip_addresses.first
-      host.update!(user_created: true)
+      host.update!(user_created:)
       server = create_dns_server!(node: SpecSeed.node)
       zone = create_dns_zone!(user: SpecSeed.user, source: :internal_source)
       [zone, reverse_zone].each do |z|
@@ -46,27 +47,30 @@ RSpec.describe IpReleaseCampaign do
       host.update!(reverse_dns_record: ptr)
       transfer = create_dns_zone_transfer!(dns_zone: zone, host_ip_address: host, peer_type: :secondary_type)
       config = SpecSeed.user.environment_user_configs.find_by!(environment: SpecSeed.environment)
-      usage = config.ipv4
+      resource = version == 4 ? :ipv4 : :ipv6
+      usage = config.public_send(resource)
       campaign = described_class.create_selected!(ids: [ip.id], actor: SpecSeed.admin,
                                                   label: 'Confirmation check', deadline: Time.now + 604_800)
       campaign.release!(actor: SpecSeed.admin)
       item = campaign.ip_release_request_addresses.first
       expect(item.last_result).to eq('releasing'), item.last_error
       expect(ip.reload.user_id).to eq(SpecSeed.user.id)
-      expect(config.reload.ipv4).to eq(usage)
+      expect(config.reload.public_send(resource)).to eq(usage)
       expect(item.released_at).to be_nil
       expect(ip).to be_locked
 
       finish_chain(item.release_chain, direction:, success:)
       completed = direction == :execute && success
       expect(ip.reload.user_id).to eq(completed ? nil : SpecSeed.user.id)
-      expect(config.reload.ipv4).to eq(usage - (completed ? ip.size : 0))
+      expect(config.reload.public_send(resource)).to eq(usage - (completed ? ip.size : 0))
       expect(item.reload.released_at.present?).to eq(completed)
       expect(item.active_ip_address_id).to eq(completed ? nil : ip.id)
       expect(ip).not_to be_locked
       expect(DnsZoneTransfer.exists?(transfer.id)).to eq(!completed)
       expect(DnsRecord.exists?(ptr.id)).to eq(!completed)
-      expect(HostIpAddress.exists?(host.id)).to eq(!completed)
+      expect(HostIpAddress.exists?(host.id)).to eq(!completed || !user_created)
+      expect(host.reload.reverse_dns_record_id).to be_nil if completed && !user_created
+      expect(SpecSeed.user).not_to be_locked
 
       unless completed
         expect(host.reload.reverse_dns_record_id).to eq(ptr.id)
@@ -77,13 +81,13 @@ RSpec.describe IpReleaseCampaign do
       end
 
       expect(ip.reload.user_id).to be_nil
-      expect(config.reload.ipv4).to eq(usage - ip.size)
+      expect(config.reload.public_send(resource)).to eq(usage - ip.size)
       expect(item.reload.released_by_id).to eq(SpecSeed.admin.id)
       expect(item.ip_release_request.user_id).to eq(SpecSeed.user.id)
       expect(item.release_chain.user_id).to eq(SpecSeed.admin.id)
       expect(item.released_at).not_to be_nil
       campaign.release!(actor: SpecSeed.admin)
-      expect(config.reload.ipv4).to eq(usage - ip.size)
+      expect(config.reload.public_send(resource)).to eq(usage - ip.size)
     end
   end
 end

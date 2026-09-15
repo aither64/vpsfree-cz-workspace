@@ -21,3 +21,10 @@ harness issue, not a database rollback failure.
 Verification: the initiative's actual API/NodeCtld confirmation and close-chain
 check passes execute success, execute failure and rollback, including preserved
 ownership/quota, restored DNS/PTR/host records, manual retry and final audit.
+
+The component shell sets BUNDLE_GEMFILE and BUNDLE_PATH in its shell hook.
+Export the temporary combined Gemfile and API .gems path inside the shell's
+`bash -c` command, after that hook, then run bundle install and RSpec from api/.
+Passing them only before nix develop was overwritten and loaded the libnodectld
+bundle, causing `cannot load such file -- rack/test`. With the post-hook exports,
+the rebuilt series passes all 12 confirmation/rollback cases (seed 63630).
