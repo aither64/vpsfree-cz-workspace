@@ -38,7 +38,8 @@ prompt serialization and MIME-formatted download names.
 
 - The user selected punctuation support with control characters still rejected,
   and specifically requested careful escaping.
-- No new HTTP endpoint or catalog schema is planned.
+- No new HTTP endpoint or catalog schema is planned. Enforce valid UTF-8 before
+  the bounded JSON decoder can substitute invalid filename bytes.
 - No original emails or SQL payload logs are needed for testing: use synthetic
   filenames and contents.
 - Investigation reproduced repeated POST on Remove, persistent failed cards,
