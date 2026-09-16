@@ -5,7 +5,9 @@
 Make rejected and expired prompt attachments removable before and after reload,
 and accept punctuation in original filenames without using those names as paths.
 The user approved implementation and deployment to aitherdev through
-vpsfree-cz-configuration. Do not integrate default branches or archive.
+vpsfree-cz-configuration. The follow-up request authorizes merging all five
+default branches and removing clean worktrees/tool caches. Retain branches and
+session records; no archive or session deletion is requested.
 
 ## Affected repositories
 

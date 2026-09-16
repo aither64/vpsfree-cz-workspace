@@ -4,7 +4,9 @@
 
 User authorized deployment to aitherdev using vpsfree-cz-configuration. Build and
 deploy from feature worktrees; application remains in the user-profile package.
-Do not integrate defaults or archive. Exact candidate heads: revisions.json.
+Initial deployment left defaults unmerged. The later user-requested integration
+and cleanup are recorded in integration.md. No archive was requested. Exact
+deployment heads: revisions.json.
 
 ## Previous installed generations
 
@@ -74,5 +76,14 @@ nix develop --command confctl deploy --yes --generation 2026-09-16--08-59-31 cz.
   previous paths above. `workspace-host rollback` restores the preceding
   application/Codex pair. System profile 147 remains the known prior generation
   for ordinary operator rollback. No rollback was needed or performed.
-- Final refs remain pushed and unmerged. Source and configuration defaults were
-  not changed. See revisions.json, ci-results.json and live-smoke.log.
+- At deployment, feature refs were pushed and unmerged. The later merge request
+  is recorded in integration-revisions.json and integration.md. See
+  revisions.json, ci-results.json and live-smoke.log for deployment evidence.
+
+## Integration verification
+
+The configuration pin rebased without changing its patch onto scheduled upstream
+updates. The resulting aitherdev generation `2026-09-16--15-30-55` built as
+`/nix/store/67qww05a1kp0q5kd391v0mm2w4prh00r-nixos-system-aitherdev-26.05.20260915.b67c7a6`.
+It was a build check for merging, not another deployment. The running application
+and system remain the verified profiles 47 and 148 above.
