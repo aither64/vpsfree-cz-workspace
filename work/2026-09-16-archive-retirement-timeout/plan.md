@@ -58,8 +58,9 @@ writing skill to final UI/docs text before committing.
 ## Testing plan
 
 Subprocess regression with short test-only deadlines proves slow retirement passes,
-real timeout remains bounded and restores ordinary limits; separately assert
-60/180/210 production hierarchy. Test retry from tracking_committed without another
+real timeout remains bounded and restores ordinary limits; separately inspect
+the 60/180/210 production hierarchy. Review accepted the lack of an automated
+cross-language deadline-drift check; keep the hierarchy documented together. Test retry from tracking_committed without another
 tracking commit. Test stage errors and identity-bound UI diagnostics, refresh errors,
 running retry, completion and missing composer. Run Nix-based focused Ruby/Go/browser
 checks, commit, all four gpt-6-astra/xhigh review lanes, then packaged and isolated
