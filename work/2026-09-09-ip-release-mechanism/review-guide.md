@@ -1,16 +1,17 @@
 # Try the IP release flow
 
-The single-node development cluster uses the bridge network. The API runs
-vpsAdmin `58a9b71ea` with the matching WebUI and notification templates. Campaign addresses use 500-row pages.
+The development cluster was reset and runs the final batch-release implementation
+on a single node with bridge networking. Both review VPSes are running. The
+existing private credentials still work.
 
+- [Campaign 1](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=show&id=1)
 - [Campaign list](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=list)
 - [Create campaign](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=new)
 - [Mailpit](https://mailpit.aitherdev.int.vpsfree.cz/) collects development email.
 - [API](https://api.aitherdev.int.vpsfree.cz/)
 
-Sign out and in once to refresh an existing WebUI session after the API update. Login refreshes its cached API description.
-
-Credentials remain in the private file
+Sign out and back in to refresh any browser session from before the reset.
+Credentials are in the private file
 `/home/aither/.local/state/ip-release-review/2026-09-09-ip-release-mechanism/access.md`.
 They are not included in this portal.
 
@@ -20,88 +21,79 @@ They are not included in this portal.
 | `test-user1` | Member, Czech | 1, `ip-review-cs` |
 | `test-user2` | Member, English | 2, `ip-review-en` |
 
-## Review campaign
+## Fresh campaign
 
-Open [campaign 3](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=show&id=3)
-as `test-admin`. User opt-outs are enabled; the planned release date is
-**22 September 2026, 17:38 UTC** (19:38 CEST). It contains:
+Campaign 1 is open with user opt-outs enabled. Its planned release date is
+**23 September 2026, 22:08 UTC** (24 September, 00:08 CEST). No notices have been
+sent, and there are no reasons, exemptions or release attempts. It shows
+**Total: 5**, **Release: 5**, **Keep: 0**.
 
-| Address | Owner |
-| --- | --- |
-| `198.51.100.23/32` | `test-user1` |
-| `2001:db8:106:1::/64` | `test-user1` |
-| `10.106.0.20/32` | `test-user1`, private IPv4 |
-| `10.106.0.22/32` | `test-user2`, private IPv4 |
+| Address | Owner | Fixture detail |
+| --- | --- | --- |
+| `198.51.100.20/32` | `test-user1` | Real, completed assignment to VPS 1 |
+| `198.51.100.21/32` | `test-user1` | PTR: `review-ip.example.test.` |
+| `2001:db8:106::/64` | `test-user1` | Public IPv6 allocation |
+| `10.106.0.20/32` | `test-user1` | Private IPv4 |
+| `198.51.100.22/32` | `test-user2` | Public IPv4 |
 
-Both members have received an initial notice. The saved reason for
-`198.51.100.23/32` is preserved: the campaign currently shows **Total: 4**,
-**To be released: 3**, **Kept: 1**.
+All five are owned and currently unassigned. Their charged environment and quota
+usage have been checked. Addresses `.10` and `.11` remain assigned to the two
+VPSes and are outside the campaign.
 
-1. Review the separate navigation and campaign sections in the sidebar.
-   **Send initial notices** appears while eligible members remain without an
-   initial notice. **Send reminders** appears for previously notified members
-   with eligible addresses.
-2. Select addresses from both members, enter one exemption reason and click
-   **Set exemption**. Rows identify the administrator by login and numeric ID.
-   Select them again and use **Remove exemption** to undo the trial.
-3. Send an initial notice or reminder, then open the messages in Mailpit.
-   Subjects and text/HTML bodies use singular or plural wording for the actual
-   address list. Locations appear in parentheses, and the button opens the
-   member request.
-4. In separate browser sessions, sign in as each member and open
-   [request 4](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=request&id=4)
-   for `test-user1` or
-   [request 5](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=request&id=5)
-   for `test-user2`. Each member sees their own addresses, release date and
-   retention controls. Try saving a reason or assigning an address to a VPS.
-5. As administrator, try a reminder or change the policy through **Edit
-   campaign**. Disabling user opt-outs leaves saved reasons visible but changes
-   whether they protect the addresses. Assignments and administrator exemptions
-   still protect them.
-6. Use **Release eligible addresses** to trigger release. The date warning is
-   advisory. Refresh to inspect the result and any cleanup transaction.
+The [assignment history for 198.51.100.20](https://webui.aitherdev.int.vpsfree.cz/?page=networking&action=assignments&ip_addr=198.51.100.20&ip_prefix=32&list=1)
+contains assignment chain **8** and removal chain **9**. The previous fixture
+had no entry because it had never been assigned. Releasing ownership does not
+remove assignment history.
 
-**Notice history** records initial notices and reminders. Administrators can
-inspect recipients and who sent them. Members have no notice-history access;
-their sidebar links to Networking and their own request list, including closed
-requests.
-**Close without releasing IPs** ends campaign actions without changing remaining
-ownership. Existing releases continue. A closed campaign cannot be reopened.
+1. As administrator, open campaign 1 and use **Send initial notices**. Open the
+   resulting messages in Mailpit. Reminders become available after initial
+   notices have been sent. **Notice history** records recipients and senders.
+2. Sign in separately as each member. Open
+   [request 1](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=request&id=1)
+   for `test-user1`, or
+   [request 2](https://webui.aitherdev.int.vpsfree.cz/?page=ip_release&action=request&id=2)
+   for `test-user2`. Members see only their own addresses and release date.
+   Try saving a reason or assigning an address to a VPS.
+3. Administrators can select multiple addresses and set one exemption reason.
+   Rows show who granted each exemption. Removing an exemption preserves any
+   separately submitted user reason.
+4. **Edit campaign** changes the date or user opt-out policy. Edits do not send
+   email. Administrator exemptions and VPS assignments protect addresses under
+   either policy. Reminders use the current date and policy.
+5. **Release eligible addresses** starts one transaction chain for the entire
+   eligible batch. The early-release warning is advisory. Every selected address
+   stays owned and charged until the final successful confirmation applies the
+   whole batch. Refresh to inspect the campaign-level result and numbered chain
+   link. The PTR on `.21` should disappear when that address is released.
 
-The admin campaign list and details show **Total**, **To be released** and
-**Kept**. Kept includes addresses in use, administrator exemptions and reasons
-honored under the current policy. Total also includes historical rows, so the
-figures need not add up. Each subnet counts once. Hover over a count for its
-explanation. Members do not see these campaign totals.
+A preparation failure releases nothing and records the cause. After a completed
+rollback, ownership and quota remain intact and an administrator can retry.
+Repeated submissions while a batch is active return that attempt. An outcome
+requiring operator attention prevents another release until the chain has been
+reconciled. Changing the policy or closing the campaign does not cancel an
+already prepared batch.
 
-Use the checkbox in the first table header to select editable addresses on the
-current page. It has no visible label; its tooltip explains the scope.
+**Close without releasing IPs** ends further campaign actions and retains
+history. Remaining addresses stay owned. A closed campaign cannot be reopened.
+Members have no access to notice history, release attempts or other users' IPs.
 
-## Creation and filters
+## Selection and counts
 
-The preview includes only user-owned addresses that are unassigned and unused.
-Assigned host addresses, routing dependencies, export grants and active resource
-locks exclude an allocation. The release action checks eligibility again.
-
-The default filter is public IPv4. Networks, locations and IP versions allow
+Creation selects only owned, unassigned and unused allocations. VPS assignments,
+routing dependencies, export grants and active resource locks exclude an
+allocation. Release rechecks current ownership and use before changing anything.
+The default filter is public IPv4. Networks, locations and IP versions support
 multiple selections; user ID and public/private access can also be filtered.
-There is no campaign allocation limit. **Select all matches** and **Clear
-selection** apply across the entire preview, with 500 addresses per page.
 
-`10.106.0.21/32` is a spare private address owned by `test-user1` and outside
-campaign 3. Select private access and user ID `2` to preview it. Public addresses
-`198.51.100.24/32` and `198.51.100.25/32` also remain available for another campaign.
+Campaign address pages contain 500 rows. There is no campaign allocation limit.
+The header checkbox selects editable rows on the current page; the creation
+preview also supports selecting all matches across pages.
 
-## Preserved campaigns
+The administrator list has separate **Total**, **Release** and **Keep** columns.
+Details show **Total**, **To be released** and **Kept**. Each subnet counts once.
+Total includes historical rows, so the other two figures need not add up to it.
+Tooltips explain each count.
 
-Campaign 1 retains its notices and the user's saved reasons. It contains `.20`,
-`.21`, `.22`, `2001:db8:106::/64` and the second member's `.26`. The PTR on `.20`
-is `review-ip.example.test.`.
-
-Campaign 2 retains the earlier release validation: `.27` and
-`2001:db8:106:2::/64` were released, the PTR on `.27` was removed, and `.28`
-remains administrator-exempted. Assigned controls are `.10` on VPS 1 and `.11`
-on VPS 2. The update preserved both VPSes and all existing campaign records.
-
-Allocation IDs and the campaign inventory are in
-[review-inventory.json](review-inventory.json).
+Allocation IDs and fixture details are in
+[review-inventory.json](review-inventory.json). Implementation commits and locking
+boundaries are in [commit-map.md](commit-map.md).

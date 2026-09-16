@@ -2,7 +2,173 @@
 lifecycle: active
 ---
 
-## Current follow-up (2026-09-16)
+## Atomic batch release implementation (2026-09-17, live; final CI running)
+
+Published vpsAdmin: `35e400de26d3cca2be079c1d426d8658d6a1fa13`.
+Published KB contract: `13fdab021319c3654b86175095a62e3365d322e9`, pins that exact
+vpsAdmin head and preserves the explicit OS override. Notification overlay stays
+at `f275bf35abc0dc501881b5af78b1e19fb98aec68`. All branches remain unmerged.
+See commit-map.md for the split series; the first six prerequisite hashes are
+unchanged. Shared batch disown helper40794b31a, campaign API5dab29165,
+WebUIc83910d2a, separate fixture fixes8edb60763/35e400de2.
+
+The user authorized one transaction chain per release attempt and resetting this
+exact review cluster. Original campaign1 released .20 in chain63, then another
+IP failed reserving the same User2. New attempts share owner/IP/quota locks and
+apply all selected ownership, quota and release markers at final confirmation.
+The admin sees persistent attempt history and numbered chain links at campaign
+level. Repeated submissions return the active attempt. Ordinary disown uses the
+same helper and preserves immediate no-cleanup behavior. No new generic quota
+API or generic locking interface was introduced.
+
+The empty .20 assignment history was fixture data: it had never been assigned to
+a VPS. Release does not delete assignment history. Fresh fixtures will assign
+and remove .20 through real node chains, leaving a closed history entry.
+
+Mandatory high-risk general, architecture, risk and scope reviews completed.
+All findings have direct fixes, covered by focused checks; see
+review-batch-results.md. A separate general/architecture review of the final
+15-line test-only isolation fix found no issues. Reviewers used gpt-6-astra/xhigh;
+retained-agent limits required fresh ephemeral read-only reviewers. No nested
+agents. The final tree was preserved through autosquash. All commit hooks pass;
+push uses the root Nix shell so Overcommit approves the correct configuration.
+
+Quick verification passed: concurrency14/0; critical recovery/endpoint subset
+12/0; API authorization2/0 and nested-resource traversal1/0; migrations2/0;
+shared helper mixed-owner/environment/resource cases; real libnodectld
+success/rollback/fatal3/0; PHPUnit96 tests/398 assertions; JavaScript syntax;
+gettext/API locale checks; CI selector16 runs/55 assertions. Earlier broad90
+run had87 passing plus three stale assertions from pre-fix code; corrected
+focused4/0 covers those failures. Do not describe broad90 as a green run.
+Full KB bin/check passes on the final pin, including source documentation and
+managed inventory checks; no page/capture content or screenshots changed.
+
+CI investigation: old CI35126167637 failed only storage-backup-export because
+owned fixture addresses lacked charged_environment. The separate fixture commit
+repairs accounting/provenance, including clearing both on export server IPs.
+Old API35126167621 was green. Batch CI engine topics on d2ebb98f4 then exposed a
+new independent-connection fixture leak: setup refreshed node liveness, making
+GenerateMigrationKeys generate an extra key. Downloaded completed job logs
+104986484024/104986484549; reproduced17 examples/3 failures by ordering concurrency
+before migration keys, then verified17/0 after restoring node/status/audit state.
+No production migration-key code or assertions changed. Final-head core and full
+engine jobs now pass; migrations, libnodectld, PHPUnit, i18n and RuboCop pass.
+
+Hosted status at final verification: vpsAdmin CI35154673050 and API
+Specs35154673084 remain running, with24/26 API topic jobs passed and only the
+two platform jobs still running. Their earlier green baseline took35–37min,
+so the current duration is normal. KB Check35155261758 passes; managed runtime
+35155261704 remains running. No current-head failure at last check. Superseded
+active vpsAdmin CI35153252884 and KB runtime35153501829 were cancelled after
+checking their failure inventory; old API35153252867 was already cancelled.
+Current-head runs were not cancelled.
+
+Focused integrations all passed:
+- Live DNS task: both examples, including PTR removal and same-owner batch final
+  confirmation;740.97s on runtime-equivalent d2ebb98f4.
+- Networking/DNS browser: campaign batch flow and numeric chain links;
+  623.93s browser execution,1454.48s overall, on runtime-equivalent d2ebb98f4.
+- Storage/backup/export browser: both broad Playwright examples passed against
+  final35e;421.13s browser execution,1193.16s overall. This verifies the owned
+  export-pool accounting fixture repair that caused the earlier CI failure.
+
+Final-only delta from d2 to35e is API test fixture isolation, not runtime code.
+Outer logs are /tmp/ip-release-batch-{dns-integration,networking-integration,
+storage-final}.log. The WebUI runner reuses its fd1a3b33 state directory, which
+now contains the storage run. Separate WebUI runners must run sequentially:
+each reserves24GiB shared memory and their schedulers do not coordinate. The
+initial storage attempt was interrupted before VM boot and is not validation.
+
+The explicitly authorized dev-cluster reset and single/bridge start succeeded.
+The installed helper selected vpsAdminOS staging
+`d4012a7234bc849bb9253efabf229e73011437c3`. Build metadata reports
+pre-autosquash2a9fdf2dd with a dirty path input; `git diff --quiet 2a9fdf2dd
+35e400de2` proves identical trees. No local kernel build occurred.
+
+Private credentials and notification overlay were restored. Both VPS1/ip-review-cs
+and VPS2/ip-review-en are running. Fixture setup created untouched campaign1,
+requests1/2, due2026-09-23T22:08:50Z, with allow_keep=true. It contains public
+.20/.21 and IPv6 2001:db8:106::/64 plus private10.106.0.20 for user2, and public
+.22 for user3. All five were verified eligible, owned, unassigned and correctly
+charged. PTR .21 is review-ip.example.test.; .20 has real assignment history3
+from assignment chain8 and removal chain9. No campaign notices, reasons,
+exemptions or attempts existed at handoff preparation. See review-inventory.json.
+
+Live browser checks passed on the reset cluster: admin totals5/5/0 and relevant
+sidebar controls; real assignment history visible; Czech member sees only own4
+addresses and English member only own1; neither sees notice history. Read-only
+post-check confirmed all five still eligible with zero notices/attempts. Browser
+helper selectors were corrected to scope chain links to campaign content and
+use the existing adminvps/veid URL; no product change was needed. No screenshots
+were generated. Log /tmp/ip-release-batch-live.log and verification JSON in
+/tmp/ip-release-batch-verify.log. The user was given the campaign link before the
+independent storage integration finished; do not reset or overwrite subsequent
+review changes.
+
+Bootstrap corrections are recorded in
+notes/vpsadmin/2026-09-17-review-bootstrap-api-inputs.md: use User#set_password,
+wrap signing-key action input under api_server, and query owned IPs directly.
+Fixture setup runs after final API seed. Do not restart API unnecessarily: its
+dev seed can overwrite ownership data. The review guide and inventory now
+replace all previous campaign3/preserved-campaign instructions.
+
+The session selection is explicitly authorized despite absent DEV_SESSION_SLUG.
+The session remains active; no merge, archive, delete or lifecycle action is
+authorized. Leave the review cluster running. The September16 checkpoint was
+not repeated; one consolidated September17 checkpoint records this completed
+implementation and review reset. Remaining hosted CI is explicitly pending,
+not claimed green. Continue monitoring35154673050/35154673084/35155261704 and
+investigate any failed attempt before rerunning it.
+Logs are /tmp/ip-release-batch-*; private credentials remain outside tracking.
+
+## Compact columns follow-up (2026-09-16)
+
+The accepted administrator campaign-list layout is implemented and live:
+Total / Release / Keep, localized headers/tooltips and right-aligned values.
+Starting vpsAdmin 58a9b71ea, KB 2e5cb3b0; API and overlay unchanged. Low-risk
+presentation delta; general and architecture reviews passed. No new abstraction,
+state/API change or deployment dependency; scope/risk lanes were not triggered.
+The existing WebUI bind mount exposes source edits; only WebUI workers were
+refreshed for gettext. No API/service-cluster restart or fixture reset was needed.
+
+Quick checks passed: PHP syntax/style, gettext health, PHPUnit96 tests/398
+assertions, Node syntax for updated/browser smoke scripts, all commit hooks,
+and full KB bin/check. Published heads: vpsAdminb76affa12 (WebUI0d532b15a),
+KBc4c4ba46. Exact API/precondition patches and fixture patch are unchanged.
+General and architecture reviews completed without findings. The retained-thread
+limit blocked architecture spawning, so that lane used a fresh ephemeral
+read-only Codex process. Both used gpt-6-astra/xhigh without nested reviewers.
+Packet and reconciliation: review-columns-{packet,results}.md.
+
+The live WebUI PHP worker pool was reloaded successfully. English and Czech
+browser checks passed for compact headers/tooltips, numeric alignment, counts
+matching details, empty rows, pagination and the unchanged member list. The
+administrator's original language was restored. No campaign records, fixtures,
+API or other cluster services were changed, and no screenshots were generated.
+Logs: /tmp/ip-release-columns-{refresh,live}.log. Hosted PHPUnit 35126167693,
+i18n 35126167558, RuboCop 35126167622, KB Check 35126418141 and KB managed
+runtime 35126418306 passed. API Specs 35126167621 passed all 26 topics and the
+coverage job. Integration 35126167637 is still running. The catalog delta
+selects the broad `webui` tag as well as networking/DNS through the existing
+tests/ci-selection.yml rules; this workflow is broader than the focused live
+checks or the single networking browser scenario.
+
+Handoff status at 18:13 UTC: the requested change and focused verification are
+complete, but the broader integration workflow is still in progress and is not
+claimed as passing. No current-head workflow was cancelled. Resume CI monitoring
+with `gh run view 35126167637`; inspect any failed attempt before deciding on a
+rerun. A previous full CI run (34491288911) lasted roughly six hours, so the
+remaining runtime alone is not evidence of a regression. The user can review
+the live interface while that workflow continues. Reusable selection/runtime
+note: notes/vpsadmin/2026-09-16-webui-catalog-ci-selection.md.
+
+Current guide, commit map, documentation impact and portal review artifact
+reflect the published revisions. Today's consolidated tracking checkpoint
+already exists, so this follow-up remains in the coordination working tree.
+No integration, archive, deletion, shutdown or other lifecycle action was
+performed. The session and bridge development cluster remain open.
+
+## Previous completed follow-up (2026-09-16)
 
 The mail grammar, header selection, member navigation/history and administrator
 counts follow-up is implemented, pushed and deployed. The session and bridge

@@ -1,5 +1,5 @@
 # Run once after the final devcluster seed and creation of the two review VPSes.
-# This script contains no credentials. Mail and release smoke tests use other IPs.
+# This script contains no credentials. Leave the resulting campaign untouched.
 require 'json'
 
 raise 'Review campaign already exists; inspect it instead of reseeding' if IpReleaseCampaign.exists?
@@ -55,32 +55,86 @@ location.update!(has_ipv6: true)
   allowance.save!
 end
 
-primary_v4 = ipv4.add_ips(6, user: primary, environment:)
-primary_v6 = ipv6.add_ips(2, user: primary, environment:)
-secondary_control = ipv4.add_ips(1, user: secondary, environment:)
-smoke_v4 = ipv4.add_ips(2, user: secondary, environment:)
-smoke_v6 = ipv6.add_ips(1, user: secondary, environment:)
+private_network = Network.find_by!(address: '10.106.0.0', prefix: 24)
 
-campaign = IpReleaseCampaign.create_selected!(
-  ids: (primary_v4.first(3) + primary_v6.first(1) + secondary_control).map(&:id), actor: admin,
-  deadline: Time.now + 7.days, allow_keep: true
-)
+def wait_review_chain(chain)
+  return unless chain
 
-raise 'Prepared campaign must remain unsent' if campaign.ip_release_requests.any? { |r| r.ip_release_request_notices.exists? }
-raise 'Primary fixture count differs' unless primary_v4.length == 6 && primary_v6.length == 2
-raise 'Prepared IPs must be unassigned' unless (primary_v4 + primary_v6).all?(&:free?)
-raise 'Prepared ownership differs' unless (primary_v4 + primary_v6).all? { |ip| ip.user_id == primary.id && ip.charged_environment_id == environment.id }
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 240
+  loop do
+    chain.reload
+    return if chain.state == 'done'
+    raise "Chain #{chain.id} failed: #{chain.state}" unless %w[staged queued].include?(chain.state)
+    raise "Chain #{chain.id} timed out" if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
-def describe_ips(ips)
-  ips.map { |ip| { id: ip.id, address: ip.to_s, owner_id: ip.user_id, charge_environment_id: ip.charged_environment_id } }
+    sleep 2
+  end
 end
 
-puts JSON.pretty_generate(
-  campaign_id: campaign.id, request_ids: campaign.ip_release_requests.pluck(:id),
+private_resource = ClusterResource.find_by!(name: 'ipv4_private')
+[primary, secondary].each do |user|
+  user.user_cluster_resources.find_by!(environment:, cluster_resource: private_resource).update!(value: 16)
+end
+
+primary_v4 = ipv4.add_ips(2, user: primary, environment:)
+primary_v6 = ipv6.add_ips(1, user: primary, environment:)
+primary_private = [IpAddress.register(IPAddress.parse('10.106.0.20/32'),
+                                    network: private_network, user: primary, environment:, prefix: 32, size: 1)]
+secondary_v4 = ipv4.add_ips(1, user: secondary, environment:)
+selected = primary_v4 + primary_v6 + primary_private + secondary_v4
+
+# Produce real assignment history through the same chains as the public API.
+history_ip = primary_v4.first
+netif = primary.vpses.order(:id).first!.network_interfaces.first!
+assignment, = TransactionChains::NetworkInterface::AddRoute.fire(
+  netif, [history_ip], actor: primary, host_addrs: history_ip.host_ip_addresses.to_a
+)
+wait_review_chain(assignment)
+raise 'Fixture was not assigned' unless history_ip.reload.network_interface_id == netif.id
+unassignment, = TransactionChains::NetworkInterface::DelRoute.fire(netif, [history_ip], actor: primary)
+wait_review_chain(unassignment)
+history = history_ip.ip_address_assignments.order(:id).last!
+raise 'Missing completed assignment history' unless history.from_date && history.to_date &&
+                                                  history.assigned_by_chain_id == assignment.id &&
+                                                  history.unassigned_by_chain_id == unassignment.id
+
+ptr_host = primary_v4.last.host_ip_addresses.first!
+raise 'Public IPv4 network needs a reverse zone' unless ptr_host.ip_address.reverse_dns_zone
+ptr_chain, = TransactionChains::DnsZone::SetReverseRecord.fire(ptr_host, 'review-ip.example.test.', actor: admin)
+wait_review_chain(ptr_chain)
+raise 'Review PTR missing' unless ptr_host.reload.reverse_dns_record&.content == 'review-ip.example.test.'
+
+campaign = IpReleaseCampaign.create_selected!(
+  ids: selected.map(&:id), actor: admin, deadline: Time.now + 7.days, allow_keep: true
+)
+raise 'Expected fresh campaign #1' unless campaign.id == 1
+raise 'Prepared campaign must remain unsent' if campaign.ip_release_requests.any? { |r| r.ip_release_request_notices.exists? }
+raise 'Prepared campaign has an attempt' if campaign.ip_release_attempts.exists?
+raise 'Prepared IPs must be eligible' unless campaign.ip_release_request_addresses.all? { |item| item.protection == 'eligible' }
+raise 'Prepared fixture count differs' unless selected.length == 5
+raise 'Prepared IPs must be unassigned' unless selected.all? { |ip| ip.reload.free? }
+[primary, secondary].each do |user|
+  config = user.environment_user_configs.find_by!(environment:)
+  %i[ipv4 ipv4_private ipv6].each do |resource|
+    owned = IpAddress.where(user: user, charged_environment: environment).select { |ip| ip.cluster_resource == resource }
+    raise "User #{user.id} #{resource} quota differs from ownership" unless config.public_send(resource) == owned.sum { |ip| ip.size.to_i }
+  end
+end
+
+def describe_ips(ips)
+  ips.map do |ip|
+    { id: ip.id, address: ip.to_s, owner_id: ip.user_id,
+      charge_environment_id: ip.charged_environment_id, resource: ip.cluster_resource }
+  end
+end
+
+puts 'REVIEW_INVENTORY=' + JSON.generate(
+  campaign_id: campaign.id, request_ids: campaign.ip_release_requests.order(:user_id).pluck(:id),
   deadline: campaign.deadline.iso8601, primary_user_id: primary.id, secondary_user_id: secondary.id,
   primary_ipv4: describe_ips(primary_v4), primary_ipv6: describe_ips(primary_v6),
-  secondary_control: describe_ips(secondary_control), smoke_ipv4: describe_ips(smoke_v4), smoke_ipv6: describe_ips(smoke_v6),
-  ptr_host_id: primary_v4.first.host_ip_addresses.first!.id,
-  smoke_ptr_host_id: smoke_v4.first.host_ip_addresses.first!.id,
+  primary_private_ipv4: describe_ips(primary_private), secondary_ipv4: describe_ips(secondary_v4),
+  ptr_host_id: ptr_host.id, ptr_address: primary_v4.last.to_s,
+  history_address: history_ip.to_s, history_assignment_id: history.id,
+  assignment_chain_id: assignment.id, unassignment_chain_id: unassignment.id,
   vpses: [primary, secondary].flat_map { |u| u.vpses.map { |vps| { id: vps.id, user_id: u.id, hostname: vps.hostname } } }
 )

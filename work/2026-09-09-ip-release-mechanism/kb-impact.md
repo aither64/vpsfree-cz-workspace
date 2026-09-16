@@ -1,3 +1,29 @@
+## Final batch revision (2026-09-16)
+
+KB `13fdab021319c3654b86175095a62e3365d322e9` pins published vpsAdmin
+`35e400de26d3cca2be079c1d426d8658d6a1fa13`. Full `bin/check` passes.
+Only the five revision-pin files changed; the explicit vpsAdminOS override,
+managed page content and capture bindings are preserved. No screenshots were
+generated. The final vpsAdmin follow-up fixes test-fixture teardown only.
+
+Atomic batch release follow-up (2026-09-16): published vpsAdmin
+`d2ebb98f4b9d86ae913ae42ee2c8c2bbfe34d5f4`, exact KB pin
+`2006e6d0f8ba354483b5433e14120a0274d6dfce`. Full `bin/check` passed
+against the final source: 45 controls, 36 paths, 35 capture concepts, 3 selectors;
+94 annotation bindings/9 exceptions; 4 pages/8 variants; all contract checks.
+New administrator attempt summaries/history do not alter an existing managed
+page or capture binding. Member route intent and semantic IDs are unchanged.
+No page edits, production publication or screenshots are needed. The existing
+vpsAdminOS6bdf458 pin is preserved. Owning vpsAdmin docs/ip-release.md and
+docs/ip-locking.md now describe the shared batch, attempt recovery and quota
+confirmation boundary. Hosted KB Check35153501779 and runtime35153501829 are
+in progress.
+
+Compact list-columns follow-up (2026-09-16): vpsAdminb76affa12 and exact
+KB pinc4c4ba46 pass the full local contract. No existing managed page or
+capture documents the administrator campaign list. No semantic IDs, page
+content, screenshots, OS/nixpkgs pins or production wiki content changed.
+
 Current follow-up pin: vpsAdmin `58a9b71eae255fb2c5547b8be4c41d968ab4dc22`,
 KB `2e5cb3b078ff99805fbc42075ed45a05b576a8f2`. Full `bin/check` passed.
 Campaign header selection, admin counts and member sidebar/history refinements

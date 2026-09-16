@@ -12,19 +12,21 @@ remain in local `-before-split` refs. Nothing has been merged into master.
 | [d04af1047](https://github.com/vpsfreecz/vpsadmin/commit/d04af1047) | Shared IP/host reservation helpers and current ownership/assignment checks |
 | [c2a2a1468](https://github.com/vpsfreecz/vpsadmin/commit/c2a2a1468) | Adopt relative IP accounting and combine deltas before deferred confirmation |
 | [70b672da4](https://github.com/vpsfreecz/vpsadmin/commit/70b672da4) | Keep ownership until cleanup succeeds; preserve PTR/grant rollback and existing WebUI completion handling |
-| [dc483b57a](https://github.com/vpsfreecz/vpsadmin/commit/dc483b57a) | Campaign API, schema, notices/reminders, current allocation counts, admin-only history, release safety, atomic bulk exemptions and operational documentation |
-| [a8fa57999](https://github.com/vpsfreecz/vpsadmin/commit/a8fa57999) | Administrator/member WebUI, relevant sidebar actions, header selection, admin counts, attribution, translations and browser coverage |
-| [58a9b71ea](https://github.com/vpsfreecz/vpsadmin/commit/58a9b71ea) | Separate test-only repair: skip occupied default IP fixture addresses after rolled-back examples advance auto-increment IDs |
+| [40794b31a](https://github.com/vpsfreecz/vpsadmin/commit/40794b31a) | Shared IP disown helper; aggregate quota and final confirmation for ordinary disown and campaign batches |
+| [5dab29165](https://github.com/vpsfreecz/vpsadmin/commit/5dab29165) | Campaign API/schema, one atomic release chain per attempt, persistent membership/outcomes, recovery guards, notices/reminders and member isolation |
+| [c83910d2a](https://github.com/vpsfreecz/vpsadmin/commit/c83910d2a) | Administrator/member WebUI, campaign-level attempt outcomes and numbered chain links, sidebar actions, counts, attribution, translations and browser coverage |
+| [8edb60763](https://github.com/vpsfreecz/vpsadmin/commit/8edb60763) | Separate test-only repair: skip occupied default IP fixture addresses after rolled-back examples advance auto-increment IDs |
+| [35e400de2](https://github.com/vpsfreecz/vpsadmin/commit/35e400de2) | Separate storage export test-fixture repair: charge owned allocations and clear provenance with ownership |
 
-The eight feature commits above retain their split; the ninth commit repairs an
-unrelated CI fixture failure without changing production locking. The September 16
-rebase preserves all six prerequisite patches and the fixture correction exactly;
-only campaign API, WebUI and mail behavior changed in this follow-up.
+The first six prerequisite hashes are unchanged. The batch disown helper is
+separate from campaign API and WebUI. Both independent CI fixture repairs stay
+separate. The two campaign commits introduce the final unmerged schema directly,
+including the review fixes; there are no legacy per-IP-attempt migrations.
 
 The notification overlay is consolidated in
 [f275bf35a](https://github.com/vpsfreecz/vpsfree-notification-templates/commit/f275bf35abc0dc501881b5af78b1e19fb98aec68).
 The documentation contract pins the exact vpsAdmin head in
-[2e5cb3b0](https://github.com/vpsfreecz/vpsfree-kb-contracts/commit/2e5cb3b078ff99805fbc42075ed45a05b576a8f2).
+[13fdab02](https://github.com/vpsfreecz/vpsfree-kb-contracts/commit/13fdab021319c3654b86175095a62e3365d322e9).
 
 ## Locking boundaries
 

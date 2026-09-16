@@ -1,5 +1,43 @@
 # Admin-managed IP release campaigns
 
+## Accepted atomic release and review reset (2026-09-16)
+
+Supersedes per-address release attempts and preservation of current review data.
+Prepare one transaction chain per manual campaign release, reserving current
+eligible owners, allocations and quota rows in deterministic order. Exclude
+changed/deleted/protected allocations; contention on an eligible allocation
+aborts preparation of the complete batch. Aggregate deferred accounting by
+owner, recorded environment and resource. A shared IP disown helper preserves
+ordinary single-IP behavior; campaign batches always defer all ownership,
+accounting and release markers to the final successful confirmation. No generic
+cluster-resource contract change is needed. Cleanup rollback retains ownership;
+fatal chains require operator recovery before retry.
+
+Persist admin-only attempt records and membership, including preparation errors
+and empty attempts. Return the existing attempt on repeated submission while it
+is active. Show the latest outcome and attempt history in campaign details,
+with one transaction-chain link containing its ID per attempt. Remove repeated
+per-IP links. Policy changes and closure do not cancel in-flight work. Keep
+member isolation and Notice history unchanged.
+
+Extend the unmerged campaign migration directly. Deploy matching schema/API/UI;
+there is no legacy review-data conversion. Existing charge-provenance migration
+and production reconciliation requirements remain. Separate the batch helper,
+campaign changes, and storage-export fixture correction into reviewable commits.
+Update owning developer documentation, API specs, EN/CS copy and KB exact pin.
+Run quick checks, all four mandatory review lanes, focused integration and CI.
+
+After quick verification and production review, reset only this initiative's
+single/bridge dev cluster while isolated integration checks can continue,
+and rebuild at final revisions and recreate the existing private review accounts
+and two running VPSes. Leave campaign #1 open, due in seven days, allow_keep=true,
+with no notices, reasons, exemptions or attempts. Include five eligible owned
+unassigned allocations: user1 gets two public IPv4, IPv6 and private IPv4;
+user2 gets one public IPv4. Include a PTR and a real closed VPS-assignment
+history produced through normal assignment/unassignment operations. Verify the
+final fixtures read-only. Leave cluster and session open. No screenshots,
+production writes, integration or archival.
+
 ## Accepted selection and member-view refinement (2026-09-15)
 
 Supersedes the earlier label and capacity decisions below. Remove custom campaign
@@ -380,3 +418,15 @@ Verify API scoping, count states and 501 rows, EN/CS 1/2/5 address rendering,
 shrinking reminders, and browser header/sidebar/stats without screenshots.
 Run mandatory review before long integrations, monitor final-head CI and
 refresh the KB contract pin. Leave the session and review cluster open.
+
+## Compact campaign-list count columns (2026-09-16)
+
+Replace the administrator list's combined IPs cell with Total, Release and
+Keep columns (Celkem, Uvolnit, Ponechat), showing right-aligned integer counts
+and existing explanatory header tooltips. Use standard table headers and a
+seven-column empty row. Details, member lists and API count behavior stay as-is.
+Update existing browser assertions; verify both locales, empty/paginated lists
+and unchanged details using DOM checks without screenshots. Fold into the WebUI
+commit, preserve API/locking patches, refresh the exact KB pin, run the required
+review and relevant checks/CI. The live WebUI bind mount needs no API restart or
+seed reconciliation for this presentation-only change. Preserve all review data.
