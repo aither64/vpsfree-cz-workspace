@@ -1,3 +1,27 @@
+Current follow-up pin: vpsAdmin `58a9b71eae255fb2c5547b8be4c41d968ab4dc22`,
+KB `2e5cb3b078ff99805fbc42075ed45a05b576a8f2`. Full `bin/check` passed.
+Campaign header selection, admin counts and member sidebar/history refinements
+have no bindings to existing managed pages or capture concepts. Existing
+navigation intent and documentation IDs remain unchanged; no page edits or
+screenshots are needed. `docs/ip-release.md` describes the current API/UI
+behavior and deployment order. The consumer now declares the existing
+`6bdf458` OS pin explicitly so API pin refreshes preserve its runtime.
+Hosted Check and Managed page runtime are in progress.
+
+Final test-fixture pin: vpsAdmin `46acba869d319726126e8d9337e9d53fcea7aa6d`,
+KB `d76608007bf20710c16058ad7f1fe6b9d81fd4c9`. Full `bin/check` passed.
+Only tests differ from the deployed be21 runtime; existing pages, controls and
+images remain valid. No screenshots were generated. Hosted Check35003281480
+and Managed runtime35003281177 both passed on d7660800.
+
+Selection/member-view refinement pin: vpsAdmin `be21bc8b9e4101ca6b35654ad6f52147dea87213`,
+KB `bce530f8af8778ddc77fae9b89510f50225d4a5d`. Full bin/check passes. Existing
+managed pages, controls and images remain valid; no screenshots are generated.
+OS runtime pin remains 6bdf458. The campaign feature documentation is maintained
+in vpsAdmin docs/ip-release.md, including filters and member response boundaries.
+
+Previous checkpoints follow.
+
 Final removal-correction pin: vpsAdmin `a75bb80d5d4ce76e95c766199bc35e798fab956e`,
 KB `7222baa580476ce7f9c5c02deabece2744d92f9b`. Full bin/check passed. No page,
 control or image changes were needed; the OS runtime pin remains 6bdf458.

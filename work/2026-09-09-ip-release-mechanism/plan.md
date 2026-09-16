@@ -1,6 +1,49 @@
 # Admin-managed IP release campaigns
 
-## Accepted WebUI redesign (2026-09-15)
+## Accepted selection and member-view refinement (2026-09-15)
+
+Supersedes the earlier label and capacity decisions below. Remove custom campaign
+labels from schema/API/UI; administrators use translated headings with numeric
+IDs. Members receive only deadline, request/action identity and their own address
+status/reasons, without campaign metadata or release-attempt diagnostics.
+
+Use separate navigation and campaign-action sidebars. Initial notices and
+reminders depend on actual per-recipient eligibility and prior initial notices;
+closed campaigns expose history only. Keep Notice history named as-is. Use a
+narrow blank checkbox header, select-all above the table, and a full-width reason
+textarea with localized placeholder and accessible label.
+
+Creation supports multi-select versions/networks/locations, optional user ID and
+public/private/both access. Defaults: public IPv4 and unrestricted owners,
+networks and locations. OR within each filter, AND across filters. Preview and
+creation share unassigned/owned/unused eligibility, including host-routing and
+NFS export exclusions. Add private access using existing ipv4_private accounting.
+Use comma-separated scalar query values for the three multi-value filters,
+matching the pinned PHP client’s GET transport.
+
+There is no campaign allocation cap. Expected scale is hundreds; display 500 IPs
+per page in previews, campaigns and member requests. Select all matching preview
+IDs with exclusions, preserving selection in authenticated per-preview session
+state across pages. Changing filters starts a new preview. Keep API creation
+atomic and explicit-ID based; new matches never silently expand the selection.
+Use existing synchronous API and mail/transaction queues, bounded enumeration,
+and no additional worker framework or generic lock changes.
+
+Keep the accepted eight-commit split, amend the unmerged campaign migration and
+reset/reseed the disposable review cluster if needed (already authorized).
+Deploy matching API/WebUI with refreshed discovery. Update developer docs,
+translations and KB contract pin; no screenshots. Verify >100 and multi-page
+selections, availability transitions, member response whitelists, private/public
+IPv4 and IPv6 quota, stale ownership and cleanup failures. Run quick checks,
+mandatory astra/xhigh reviews, integration and current-head CI. Leave session
+and review cluster running.
+
+CI exposed an unrelated collision in the shared spec IP generator. Keep its
+repair and deterministic regression in a separate ninth, test-only commit. The
+eight feature commits retain their boundaries and all production locking code
+stays unchanged by this CI repair.
+
+## Earlier accepted WebUI redesign (2026-09-15)
 
 Rework the campaign pages using rendered sidebars, standard tables with
 `table_add_category`, read-only summaries and separate action forms. Reserve
@@ -308,3 +351,32 @@ review cluster. The pre-existing single-address HTTP API continues to accept a
 null reason; the WebUI uses the campaign action. Deploy the API before the WebUI
 and refresh discovery. A mismatched version rejects removal and retains the
 exemption. Persisted state, ownership and locking are unchanged.
+
+## Accepted follow-up: counts, member navigation and mail grammar (2026-09-16)
+
+Render singular/plural requested and reminder messages from the allocations
+included in each message, in EN/CS subject, text and HTML. Preserve public IPv4
+scarcity conditions, location labels, policy paragraphs and approved tone.
+Move page selection into an unlabeled header checkbox with localized tooltip
+and accessible name; retain preview-wide selection buttons and 500-row pages.
+Members retain access to all of their own requests, including closed requests;
+remove their current-request sidebar link and notice history in UI and API.
+
+Admin campaign Index/Show gain total_ip_count, to_release_ip_count and
+kept_ip_count. Count snapshot rows, not allocation sizes, using current
+protection classification once per response with bounded iteration. Eligible
+rows on open campaigns and all releases in progress count as to release.
+Assigned, routed, exported, exempted and policy-honored user reasons count as
+kept. Changed, released and unresolved closed rows remain in total only.
+Explain the non-partition with localized tooltips. Display one IPs column in
+the admin list and the same labeled summary in campaign details.
+
+No schema, ownership, release, locking or daemon changes. API fields are
+additive; member notice history intentionally becomes admin-only. Deploy API
+before WebUI and refresh discovery; reconcile templates after final API start
+without resetting existing review data. Keep locking prerequisites and the
+independent fixture correction separate when folding feature follow-ups.
+Verify API scoping, count states and 501 rows, EN/CS 1/2/5 address rendering,
+shrinking reminders, and browser header/sidebar/stats without screenshots.
+Run mandatory review before long integrations, monitor final-head CI and
+refresh the KB contract pin. Leave the session and review cluster open.

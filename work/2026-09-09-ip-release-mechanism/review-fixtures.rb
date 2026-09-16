@@ -2,8 +2,7 @@
 # This script contains no credentials. Mail and release smoke tests use other IPs.
 require 'json'
 
-label = 'Unassigned IP review'
-raise 'Review campaign already exists; inspect it instead of reseeding' if IpReleaseCampaign.exists?(label:)
+raise 'Review campaign already exists; inspect it instead of reseeding' if IpReleaseCampaign.exists?
 
 admin = User.find_by!(login: 'test-admin')
 primary = User.find_by!(login: 'test-user1')
@@ -64,7 +63,7 @@ smoke_v6 = ipv6.add_ips(1, user: secondary, environment:)
 
 campaign = IpReleaseCampaign.create_selected!(
   ids: (primary_v4.first(3) + primary_v6.first(1) + secondary_control).map(&:id), actor: admin,
-  label:, deadline: Time.now + 7.days, allow_keep: true
+  deadline: Time.now + 7.days, allow_keep: true
 )
 
 raise 'Prepared campaign must remain unsent' if campaign.ip_release_requests.any? { |r| r.ip_release_request_notices.exists? }
