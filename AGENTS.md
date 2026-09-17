@@ -468,6 +468,16 @@ analysis, and SSH-based Git remotes.
 
 ## Development Environment
 
+Use the generic `dev-session-monitor` skill for authorized tests, CI checks and
+builds expected to exceed one minute, and delegate uncertain-duration integration
+tests and builds before launching them. This explicitly authorizes its fresh
+`gpt-5.6-luna`/`low` monitoring subagent. Keep known quick checks inline and keep
+planning, implementation, diagnosis and review on `gpt-6-astra`/`xhigh`. Pass
+project escalation rules, including unexpected local kernel builds, in the
+watcher's brief. The parent continues automatically on completion or escalation.
+If the skill or delegation is unavailable, report that once and use minimal-output
+parent monitoring. A user's instruction not to wait for CI takes precedence.
+
 Development is generally Nix-based. Prefer each repository's `nix develop`,
 `nix-shell`, flake outputs, or documented development shell before running
 language-specific tools. Deployment is usually to NixOS or vpsAdminOS systems,
