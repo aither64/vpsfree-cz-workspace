@@ -57,3 +57,26 @@ Deployment-contract check passed 3 runs/14 assertions. Profile 48 activation and
 live asset/health/identity checks passed; exact evidence is in rollout.md.
 
 Current extension head 90ce0cf passed [CI 35148442339](https://github.com/vpsfreecz/dev-workspace/actions/runs/35148442339) at 20:53:58 UTC, including full flake checks and cluster-packaging smoke tests. All required checks are complete.
+
+## Default-branch integration, 2026-09-17
+
+Runtime and extension heads are unchanged from the reviewed, tested deployment.
+Workspace rebased over coordination-only changes; range-diff proves its pin patch
+unchanged. Final integration inspection confirmed the same dependency revisions.
+Runtime generic-source, extension organization-source and workspace deployment-
+contract checks passed. All three merges were fast-forward-only.
+
+Runtime master CI: [35193656065](https://github.com/aither64/dev-workspace/actions/runs/35193656065).
+Extension master CI: [35193746897](https://github.com/vpsfreecz/dev-workspace/actions/runs/35193746897).
+Runtime host activation, renewal and rollback VM smoke test passed. Runtime package/focused checks also passed. Extension flake checks passed; its
+cluster-packaging smoke test was still running when the user requested no further
+waiting. The GitHub workflow was left running, and no result is claimed for that
+last step. Workspace has no GitHub workflow; its local contract check passed.
+
+Runtime master CI completed successfully: both package/focused and host VM jobs
+passed. Remote ls-remote verification after integration reports matching default
+and retained feature heads in all three repositories:
+- dev-workspace: 0bd68efa9cadb0589148fac40de7645a06b03468.
+- vpsfree-dev-workspace: 90ce0cfe7c39c944aca0c7b27fe1e53a719075a3.
+- workspace: eca34d047621ba42de3bd48e23e26b88d5f4d3fb.
+All three canonical feature paths and both temporary integration paths are absent.

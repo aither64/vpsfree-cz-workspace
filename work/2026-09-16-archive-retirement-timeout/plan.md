@@ -3,8 +3,8 @@
 ## Goal
 
 Fix automatic archive retirement timing and surface worker failures in the portal.
-Recover 2026-09-15-abuse-uceprotect and leave it archived. Deployment is authorized;
-default-branch integration and archival of this new initiative are not requested.
+Recover 2026-09-15-abuse-uceprotect and leave it archived. Deployment and subsequent
+default-branch integration/cleanup are authorized. Keep this initiative open.
 
 ## Affected repositories
 
@@ -66,3 +66,18 @@ running retry, completion and missing composer. Run Nix-based focused Ruby/Go/br
 checks, commit, all four gpt-6-astra/xhigh review lanes, then packaged and isolated
 archive acceptance checks. Push feature branches and inspect applicable CI. Verify
 deployed package/assets/services and the recovered source archive before handoff.
+
+## Authorized integration, 2026-09-17
+
+User requested merging all feature branches into their default branches and
+cleaning up. Integrate runtime, extension, then workspace using fast-forward-only
+merges. Preserve branch refs and comparison snapshots. Remove clean feature and
+temporary integration worktrees; leave this session open. Existing deployment
+already selects the exact code and pins, so no profile switch is necessary unless
+upstream reconciliation changes those inputs. Finish required default-branch CI
+and record exact merge proofs before setting lifecycle complete.
+
+The user subsequently requested no waiting for CI. Leave the already-running
+extension workflow alone, stop local monitoring and hand off the completed merges
+and cleanup. Record its unfinished result without claiming success or scheduling
+follow-up monitoring.

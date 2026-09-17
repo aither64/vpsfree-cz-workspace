@@ -80,3 +80,18 @@ Verified after activation:
 - Source archived page retains verified thread identity, remains read-only with
   no composer, empty pending lifecycle and a hidden last-failure banner.
 - Source operation remains archive/complete with the exact original journal ID.
+
+## Integration and cleanup, 2026-09-17
+
+User authorized default-branch merges and cleanup. Runtime master fast-forwarded
+from eb658d49 to 0bd68ef; extension from 17da396e to 90ce0cf. Workspace pin commit
+rebased unchanged over shared coordination master 33f0657 to eca34d0, then merged
+fast-forward from the shared checkout and pushed. No merge commits were created.
+The deployed runtime, extension and site configuration are unchanged, so profile 48
+was retained without another switch or service restart.
+
+Captured repository comparisons before integration, then removed all three clean
+feature worktrees with dev-session worktree remove and both clean temporary merge
+worktrees with git worktree remove. Retained local/remote feature refs, final heads
+in portal.yml and saved comparisons. Session remains open; no archive/delete/stop
+command was run for this initiative. Post-merge evidence is in verification.md.
