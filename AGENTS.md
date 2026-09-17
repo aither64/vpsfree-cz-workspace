@@ -397,27 +397,46 @@ summary, next actions, documentation links, and verification evidence in
 `state.md`; link detailed history and artifacts. Follow the existing tracking
 commit cadence and lifecycle rules.
 
-Use these destinations:
+Apply the generic skill's placement rules across all repositories: classify
+material by applicability, useful lifetime and owner. Feature explanations
+describe the system at the documented revision. Keep individual rollout
+checklists and temporary branch state in operational/session records, even when
+they contain no dates or revision hashes. Preserve lasting compatibility and
+failure semantics with their owning component; link procedures to them.
+
+Use these local destinations:
 
 - Project behavior, design rationale, and accepted decisions belong in that
   project's documentation, understandable without this coordination workspace.
-- Site-specific operations belong in the configuration repository that owns the
-  deployment. Generic runtime and extension docs link to their respective
-  contracts without copying concrete host details.
+- Repeatable operations belong in separate project operations documentation;
+  site-specific procedures belong in the configuration repository that owns the
+  deployment. Generic runtime and extension docs link to their contracts
+  without copying concrete host details.
+- Supported upgrade instructions belong in the owning project's upgrade
+  guidance, scoped to source/target versions or schema boundaries and retained
+  while that path needs support. Do not invent release versions or hide guidance
+  needed by other upgraders in private session records.
 - Cross-project contracts have one authoritative home in the owning project;
   workspace-level designs belong in this workspace's documentation. Link the
   participating projects to that home.
-- Exact rollout revisions, prepared steps, and execution results belong in a
-  session rollout record or an explicitly versioned release runbook.
+- An individual rollout's plan, exact revisions, prepared steps, execution
+  results and rollback preparation belong in a session rollout record or a
+  dated record in the deployment repository. Temporary branch state, review
+  fixtures and disposable database resets belong in session records.
 - Reusable development-environment lessons belong in `notes/` under the existing
   convention. General project setup instructions should also reach project docs.
 - Member-facing guidance follows the existing KB/product documentation and
   user-facing writing workflows below, including publication approvals.
 
 Before mandatory review and handoff, reconcile documentation with the final
-implementation and actual deployment evidence. Identify changed or checked docs,
-or briefly explain why no update was useful. Writing operational instructions
-remains distinct from authorization to execute them.
+implementation and actual deployment evidence. Check placement as well as
+completeness. Split mixed passages without burying feature contracts or losing
+recovery requirements; application transaction rollback is feature behavior,
+while reverting deployed software is an operational procedure. Identify changed
+or checked docs, or briefly explain why no update was useful. Follow existing
+layouts without requiring a fixed file bundle or a deployment heading on every
+feature page. Writing instructions remains distinct from authorization to
+execute them.
 
 ## Mandatory Change Review
 
