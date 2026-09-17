@@ -1,0 +1,15 @@
+[vpsAdminOS] NFS: refresh RPC sysfs links during migration
+
+Keeping the server kobject across NFSv4 migration requires refreshing both
+RPC links. The state client is replaced, while transport replacement removes
+the mount client's sysfs object. Let RPC registration own sysfs setup and
+failure cleanup for initial creation, replacement and rollback, so the mount
+link has a valid target on every registration path.
+
+Replace links using their namespace tag, refresh after successful or failed
+transport replacement, and tolerate failed optional sysfs allocation. Export
+sysfs_delete_link for modular NFS and skip unpublished server directories.
+
+The NFS link refresh and SUNRPC object recreation are paired because linking
+after transport replacement without recreation dereferences a NULL object.
+Two-server migration tests check both RPC links and payload integrity.

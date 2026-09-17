@@ -1,0 +1,94 @@
+diff --git a/fs/nfs/nfs4client.c b/fs/nfs/nfs4client.c
+index 4888ff17c72b..ae372f47832d 100644
+--- a/fs/nfs/nfs4client.c
++++ b/fs/nfs/nfs4client.c
+@@ -1358,6 +1358,8 @@ int nfs4_update_server(struct nfs_server *server, const char *hostname,
+ 		return -EINVAL;
+ 
+ 	error = rpc_switch_client_transport(clnt, &xargs, clnt->cl_timeout);
++	/* A failed switch can also recreate the original RPC sysfs object. */
++	nfs_sysfs_link_rpc_client(server, clnt, NULL);
+ 	if (error != 0)
+ 		return error;
+ 
+diff --git a/fs/nfs/sysfs.c b/fs/nfs/sysfs.c
+index 17675330e1ab..596768c145e3 100644
+--- a/fs/nfs/sysfs.c
++++ b/fs/nfs/sysfs.c
+@@ -392,10 +392,16 @@ void nfs_sysfs_link_rpc_client(struct nfs_server *server,
+ 	char name[RPC_CLIENT_NAME_SIZE];
+ 	int ret;
+ 
++	/* RPC sysfs allocation is optional and may have failed. */
++	if (!server->kobj.state_in_sysfs || !clnt->cl_sysfs)
++		return;
++
+ 	strscpy(name, clnt->cl_program->name, sizeof(name));
+ 	strncat(name, uniq ? uniq : "", sizeof(name) - strlen(name) - 1);
+ 	strncat(name, "_client", sizeof(name) - strlen(name) - 1);
+ 
++	/* Migration keeps this directory but can replace either RPC client. */
++	sysfs_delete_link(&server->kobj, &clnt->cl_sysfs->kobject, name);
+ 	ret = sysfs_create_link_nowarn(&server->kobj,
+ 						&clnt->cl_sysfs->kobject, name);
+ 	if (ret < 0)
+diff --git a/fs/sysfs/symlink.c b/fs/sysfs/symlink.c
+index 5603530a1a52..172787137c6e 100644
+--- a/fs/sysfs/symlink.c
++++ b/fs/sysfs/symlink.c
+@@ -134,6 +134,7 @@ void sysfs_delete_link(struct kobject *kobj, struct kobject *targ,
+ 	spin_unlock(&sysfs_symlink_target_lock);
+ 	kernfs_remove_by_name_ns(kobj->sd, name, ns);
+ }
++EXPORT_SYMBOL_GPL(sysfs_delete_link);
+ 
+ /**
+  *	sysfs_remove_link - remove symlink in object's directory.
+diff --git a/net/sunrpc/clnt.c b/net/sunrpc/clnt.c
+index db30823d8949..2b5b19048bb0 100644
+--- a/net/sunrpc/clnt.c
++++ b/net/sunrpc/clnt.c
+@@ -327,6 +327,7 @@ static void rpc_clnt_set_nodename(struct rpc_clnt *clnt, const char *nodename)
+ }
+ 
+ static int rpc_client_register(struct rpc_clnt *clnt,
++			       struct rpc_xprt_switch *xps,
+ 			       rpc_authflavor_t pseudoflavor,
+ 			       const char *client_name)
+ {
+@@ -339,6 +340,7 @@ static int rpc_client_register(struct rpc_clnt *clnt,
+ 	struct super_block *pipefs_sb;
+ 	int err;
+ 
++	rpc_sysfs_client_setup(clnt, xps, net);
+ 	rpc_clnt_debugfs_register(clnt);
+ 
+ 	pipefs_sb = rpc_get_sb_net(net);
+@@ -466,8 +468,7 @@ static struct rpc_clnt * rpc_new_client(const struct rpc_create_args *args,
+ 	/* save the nodename */
+ 	rpc_clnt_set_nodename(clnt, nodename);
+ 
+-	rpc_sysfs_client_setup(clnt, xps, rpc_net_ns(clnt));
+-	err = rpc_client_register(clnt, args->authflavor, args->client_name);
++	err = rpc_client_register(clnt, xps, args->authflavor, args->client_name);
+ 	if (err)
+ 		goto out_no_path;
+ 	if (parent)
+@@ -810,7 +811,7 @@ int rpc_switch_client_transport(struct rpc_clnt *clnt,
+ 	 * contexts in particular are between a single
+ 	 * client and server.
+ 	 */
+-	err = rpc_client_register(clnt, pseudoflavor, NULL);
++	err = rpc_client_register(clnt, xps, pseudoflavor, NULL);
+ 	if (err)
+ 		goto out_revert;
+ 
+@@ -826,7 +827,7 @@ int rpc_switch_client_transport(struct rpc_clnt *clnt,
+ 	xps = xprt_iter_xchg_switch(&clnt->cl_xpi, oldxps);
+ 	rpc_clnt_set_transport(clnt, old, old_timeo);
+ 	clnt->cl_parent = parent;
+-	rpc_client_register(clnt, pseudoflavor, NULL);
++	rpc_client_register(clnt, oldxps, pseudoflavor, NULL);
+ 	xprt_switch_put(xps);
+ 	xprt_put(xprt);
+ 	trace_rpc_clnt_replace_xprt_err(clnt);
