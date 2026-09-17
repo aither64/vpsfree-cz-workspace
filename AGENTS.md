@@ -5,340 +5,90 @@ multiple independent git repositories. It is not a monorepo. Use it to track
 what is being developed, which repositories are affected, where the worktrees
 are, and what compatibility and deployment constraints are known.
 
-## Workspace Layout
+## Required procedure routing
 
-Use these paths consistently:
+The procedures below are mandatory parts of these workspace instructions, not
+optional reference material. Before the listed activity, read every applicable
+file in full. Paths in this table are relative to this AGENTS.md; other paths
+follow the workspace layout. Do not treat a link, prior summary, or skill catalog
+entry as having read the procedure. Reuse an already-read, unchanged procedure
+within the current context; reread it if its contents changed or were lost from
+context. Recheck this table when the task expands or changes phase. If a required
+file cannot be read, stop the affected action and report the missing guidance.
 
-- `repos/<project>.git`: canonical bare clone of an upstream repository.
-- `worktrees/<yyyy-mm-dd-slug>/<project>`: per-initiative feature worktree.
-- `work/<yyyy-mm-dd-slug>/plan.md`: durable plan, affected repositories,
-  compatibility notes, and decisions.
-- `work/<yyyy-mm-dd-slug>/state.md`: current status, branch names, commands
-  run, test results, open questions, and cleanup notes.
-- `notes/`: durable development notes, troubleshooting tips, and reusable
-  lessons that should survive beyond one initiative. Store each lesson in its
-  own file to reduce conflicts between concurrent Codex instances.
-- `archive/`: committed plan, state, and curated durable artifacts for
-  initiatives that are fully completed or explicitly abandoned.
+| Before this activity | Read |
+| --- | --- |
+| Selecting affected projects or changing cross-project scope | [Project map](docs/agent-instructions/projects.md) |
+| Starting/resuming an initiative; writing plans, state, notes or handoffs | [Session setup and tracking](docs/agent-instructions/sessions.md) |
+| Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records | [Git and worktrees](docs/agent-instructions/git.md) |
+| Any session mutation; archiving, deleting, reviving, enabling auto-archive or changing its hold; creating/accessing/resetting development clusters; implementing/reviewing session, cluster or package-transition behavior; switching/rolling back workspace packages; suspending/unregistering workspaces or reconciling Codex | [Lifecycle and package transitions](docs/agent-instructions/lifecycle.md) |
+| Planning substantive development, investigation or operations; writing/reorganizing docs; preparing review or handoff | [Development documentation](docs/agent-instructions/documentation.md) |
+| Pushing branches (including force-pushes and follow-up fixes); selecting/running builds, tests or CI; editing test runners, image verification or GitHub workflows; handling failed checks | [Environment and verification](docs/agent-instructions/verification.md) |
+| Changing configuration inputs, building/deploying configurations, deploying the workspace application or integrating configuration changes | [Deployment](docs/agent-instructions/deployment.md) |
+| Authoring/reviewing user-facing prose, translations, examples, KB pages or media; changing visible WebUI behavior that can affect KB text/screenshots; using KB staging/publication tools | [Knowledge base and writing](docs/agent-instructions/knowledge-base.md) |
+| Creating or amending any commit, installing hooks, or preparing commit messages | [Commits and hooks](docs/agent-instructions/commits.md) |
 
-The initiative slug must be descriptive and dated, for example
-`2026-05-27-api-token-rotation`. For affected project repositories, use the
-same slug for the tracking directory, feature branch, and worktree group unless
-a repository-specific rule requires otherwise.
+Read the affected repository's AGENTS.md before changing its content and follow
+its required procedure routes too. Shell working-directory changes do not prove
+that repository instructions were loaded. For an authorized subagent, include
+its task scope, applicable instruction/procedure paths and constraints; require
+it to read the applicable guidance before acting. Delegation does not transfer
+the parent's responsibility for choosing scope or accepting results.
 
-Use the user-profile `dev-session start <name>` when starting a development
-session. It selects the registered workspace from the current directory, fixes
-the matching authority, tmux, Codex, and portal endpoints, and creates a dated
-slug from the short name. Pass `--workspace <name>` when calling it outside a
-registered root or when an explicit selection is clearer. Use `--as-is` when
-the full slug has already been chosen. An exact active slug with committed
-`plan.md` and `state.md` but no portal manifest can be restarted this way after
-its old writers are stopped. The helper preserves both tracking files, creates
-a fresh shared conversation, and registers canonical worktrees it finds under
-that slug.
+## Always-applicable workspace boundaries
 
-When running inside an existing development session, do not choose a new slug
-until checking for the active one. Run `dev-session current` from the workspace
-root. Treat the printed slug as belonging to the
-current process only when the `DEV_SESSION_SLUG` environment variable
-is also set to that exact slug. If `current` prints a slug but the environment
-variable is missing or different, assume it belongs to another concurrent
-session and do not touch that session's `work/<slug>/`, `worktrees/<slug>/`,
-branches, or notes. In that case, create a separate initiative unless the user
-explicitly tells you to use that existing slug. Reuse `work/<slug>/` and
-`worktrees/<slug>/` only for the verified current session, and record progress
-in that session's `state.md`.
-
-## Git And Worktrees
-
-The top-level workspace repository has two distinct workflows:
-
-- Keep the shared checkout on `master` at all times. Ordinary use of the
-  workspace happens there: maintain initiative tracking under `work/`, archive
-  terminal initiatives, add durable notes, and coordinate independent project
-  worktrees. These coordination changes may be committed directly to `master`.
-- Treat changes to the workspace itself as feature work. Changes to its rules,
-  scripts, tests, documentation, skills, or other reusable behavior normally
-  require a dated initiative branch and a dedicated worktree at
-  `worktrees/<slug>/workspace`. Develop and rewrite those commits there before
-  integrating them into `master`.
-- Record the workspace feature branch and worktree in the initiative's
-  `state.md`, which remains part of the shared coordination checkout. Fetch and
-  rebase the workspace feature branch onto current `master` before final review.
-- After the workspace feature's final rebase and review, run
-  `dev-session worktree capture-comparison <slug> workspace --as-is` before
-  integration. Repeat the capture after any head change.
-- Integrate a reviewed workspace feature from the shared `master` checkout,
-  after confirming that the feature branch is a descendant of current
-  `master`. Preserve unrelated working-tree changes, stage nothing during the
-  integration, and use `git merge --ff-only <feature-branch>`. Do not try to
-  check out `master` in a second worktree because it is already checked out in
-  the shared root. Keep the feature branch after integration unless the user
-  explicitly asks for its deletion.
-- Multiple sessions share the top-level `master` branch, index, and working
-  tree. Before editing or committing coordination records, inspect the current
-  status, preserve unrelated changes, and stage only the paths belonging to the
-  current task. Never use a repository-wide reset, clean, or stash operation,
-  and never switch branches out from under another session.
-- Fetch `origin` before a top-level `master` commit and keep it linear. If local
-  or remote `master` advanced, reconcile it without discarding shared
-  working-tree changes. Do not rewrite published `master` history unless the
-  user explicitly directs that exact operation.
-
-The explicit top-level workflow above is complete for workspace changes. The
-bare-repository, per-initiative worktree, and temporary target-worktree rules
-below apply only to the independent project repositories.
-
-Clone and push repositories over SSH. Use remotes in this form:
-
-```text
-git@github.com:vpsfreecz/<project>.git
-```
-
-The reusable workspace components are narrow exceptions to the organization
-rule above. Use these exact SSH remotes:
-
-```text
-git@github.com:aither64/dev-workspace.git
-git@github.com:aither64/codex-web.git
-```
-
-The organization extension repository has the same basename as the generic
-runtime. Refer to it as `vpsfree-dev-workspace` in local project names,
-worktrees, and session registration, while keeping its canonical remote as
-`git@github.com:vpsfreecz/dev-workspace.git`.
-
-Do not use HTTPS remotes for normal development pushes. If an existing checkout
-uses HTTPS, switch `origin` to the SSH URL before pushing. GitHub tokens may be
-used for API access, metadata, pull requests, and CI checks, but must not be
-embedded in remotes, committed to files, or recorded in work notes.
-
-Multiple Codex instances may work in this workspace at the same time. Keep
-`repos/<project>.git` bare, and do not reuse another initiative's branch or
-worktree. Use feature branches and separate worktrees so concurrent work does
-not conflict over checked-out branches, index state, or uncommitted changes.
-
-For feature work in the independent project repositories:
-
-- Keep `repos/<project>.git` as the canonical bare clone for fetching,
-  inspecting refs, and creating worktrees.
-- Before pushing or updating downstream configuration pins, fetch upstream
-  and rebase feature branches when appropriate. Several repositories use
-  scheduled GitHub workflows to update dependencies, inputs, or generated
-  metadata, so default branches may advance while feature work is in progress.
-- Create feature branches named `<yyyy>-<mm>-<dd>-<slug>`, for example
-  `2026-05-27-api-token-rotation`, unless a repository-local rule requires a
-  different name.
-- Create worktrees under `worktrees/<yyyy-mm-dd-slug>/<project>` so all changes
-  for one initiative are easy to inspect together.
-- After the final rebase and commit, and before integrating each feature
-  branch, save its comparison with
-  `dev-session worktree capture-comparison <slug> <name> --as-is`. Repeat after
-  any head change. This keeps the Repositories tab useful after integration
-  even if nobody opened it before merging. For a historical recovery, supply
-  both `--base <SHA>` and `--head <SHA>` from recorded integration revisions;
-  never guess the pre-merge base from the current default branch.
-- When merging a feature back, create a fresh temporary worktree from the target
-  branch, usually the upstream default branch. Fetch the target branch first,
-  rebase the feature branch onto the current target branch if needed, and merge
-  only when it can fast-forward, using `git merge --ff-only <feature-branch>` or
-  an equivalent fast-forward-only command. Do not create merge commits in normal
-  feature integration history. Test and push from the temporary worktree, then
-  remove it after the merge is complete.
-- Record every affected repository, branch, and worktree path in
-  `work/<yyyy-mm-dd-slug>/state.md`.
-- Archive the initiative after the work is merged or abandoned, as described
-  under Planning And Tracking, so its clean worktrees are removed and its
-  durable record is committed under `archive/`.
-- Keep feature branches after merge, both locally and remotely, unless the user
-  explicitly asks for branch deletion. Cleanup means removing worktrees and
-  transient build/cache files, not deleting branch refs.
-
-Feature branch history may be rewritten while the branch is under development
-and has not been merged into the main branch. Use this to keep functional
-commits, generated updates, and follow-up fixes reviewable. Do not rewrite
-history that has already been merged.
-
-Before changing code in a repository, read its local `AGENTS.md` if present.
-When a repository has no `AGENTS.md`, infer commands and style from its
-existing files, history, and manifests.
-
-## Planning And Tracking
-
-Start each requested feature or fix by identifying the affected projects. Some
-features span multiple repositories; plan the cross-repository shape before
-editing any one component.
-
-For each initiative, maintain:
-
-- `plan.md`: the goal, affected components, approach, compatibility analysis,
-  deployment ordering, testing plan, and explicit decisions.
-- `state.md`: branch/worktree locations, current progress, commands run,
-  results, blockers, and cleanup status.
-
-Treat `work/<slug>/` as active tracking and `archive/<slug>/` as terminal
-tracking. New `state.md` files must begin with this exact YAML front matter:
-
-```yaml
----
-lifecycle: active
----
-```
-
-An initiative remains `active` while any registered feature branch is
-unmerged or the session still owns work. Set it to `complete` only after every
-registered branch's exact final head is merged into its configured remote
-default branch and no review, CI, deployment, approval, or cleanup remains.
-Pushing, testing, deploying, or temporarily removing worktrees does not make an
-initiative complete. Use `abandoned` only when the work is explicitly
-discarded; abandoned work does not have to be merged. Coordination-only
-initiatives with no registered branches can still be completed. The anchored
-front matter is the only lifecycle authority; lifecycle-looking text in the
-Markdown body has no effect.
-
-Write a substantive plan and initial state, then commit both in the top-level
-workspace repository before the first project-code commit or external mutation.
-After that initial commit, keep plan and state current in the working tree
-without committing every update. A short initiative should normally make no
-further tracking-only commit until its final archive commit. If an initiative
-remains unfinished at the end of an active working day, it may make at most one
-consolidated tracking-only checkpoint for that day when material progress is
-worth preserving. This is a ceiling, not a daily requirement. Material progress
-includes changed implementation heads, durable decisions, completed phases,
-new blockers, and results that change the next step.
-
-An additional same-day tracking checkpoint is allowed only for a genuine
-ownership handoff or an explicit user request. A pause until a future working
-day can justify that day's consolidated checkpoint, but not a second one.
-Individual plan edits, branch-head changes, review findings or remediations,
-commands, test or CI results, deployment actions, and status polls do not by
-themselves require commits; consolidate them into the next daily, handoff, or
-final summary. Functional changes in the workspace repository and normal
-commits in project repositories do not count as tracking-only checkpoints.
-
-An initiative can leave `work/` through an explicitly requested archive or
-delete action, or through the enabled automatic archive policy below. Completing
-the requested work, answering the current message,
-setting a terminal lifecycle, and preparing a handoff all leave the session
-open for follow-up conversation. Do not infer permission to archive, delete, or
-stop a session from phrases such as "finish the work" or "implement the plan",
-and do not schedule delayed cleanup after the current turn.
-
-Enabling `dev-session auto-archive` is standing authorization for its scheduled
-worker to archive eligible sessions. Apply tiers in order: explicit
-`lifecycle: complete` after 1 inactive day; active sessions with every registered
-branch merged after 7 inactive days; active sessions without registered
-repositories or owned worktrees after 14 inactive days, archived as abandoned.
-The first two tiers retain all normal merge proofs. Already abandoned sessions
-require manual archival. A `Keep open` hold prevents automatic archival, and
-removing worktrees does not remove the obligations of registered branches.
-First enablement, re-enablement, releasing a hold and revival start fresh
-inactivity periods. The worker preserves the existing archive checks and
-journal recovery. This authorization does not permit an agent to bypass the
-worker, abandon other work, delete sessions, or schedule its own delayed cleanup.
-
-Run `dev-session archive <slug> --as-is` for a completed initiative, or add
-`--abandoned` when the user explicitly discards the work. Archival is one
-deterministic, journaled operation. It verifies that the Codex thread has no
-active turn, pending request, or queued message; releases development clusters;
-removes clean attached worktrees with non-force `git worktree remove`; retains
-branches; writes terminal lifecycle and manifest metadata; moves
-`work/<slug>/` atomically to `archive/<slug>/`; commits only that tracking
-transition on a compatible shared `master`; and retires the Codex thread, tmux
-session, and runtime authority. Preserve unrelated working-tree and index
-changes. Resolve any refusal and retry the same command, which resumes its
-private journal. The CLI and portal each ask for one yes/no confirmation; they
-do not require the slug to be typed.
-
-For a completed initiative, archival fetches each registered feature and
-default branch and proves that the exact local and remote feature head is an
-ancestor of `origin/<default_branch>`. It refuses unmerged, divergent, missing,
-or unprovable refs and reports every offending repository. An interrupted
-archive reproves those exact journaled heads before each remaining destructive
-phase and verifies the exact projected archive tree and retained thread identity
-before committing or retiring runtime state. Pushing, testing, deploying, or
-removing a worktree does not satisfy this rule. The merge check is skipped only
-for an explicitly abandoned initiative. Coordination-only initiatives with no
-registered branches remain valid. Before archiving, remove credentials, caches,
-reproducible bulk captures, and other transient outputs; preserve the plan,
-state, and intentionally useful evidence.
-
-Follow-up work before merge must reuse the same slug and retained branches. Run
-`dev-session revive <slug> --as-is` to restore a prematurely archived
-initiative. Reviving commits the move from `archive/<slug>/` back to
-`work/<slug>/`, restores the active lifecycle, clears terminal repository
-heads, preserves repository, branch, base, and conversation identity, and
-starts the exact retained Codex thread. It does not recreate worktrees. The
-confirmation uses a stronger warning for an abandoned initiative and is stored
-in the revive journal so a retry does not ask again. Recovery verifies the
-complete restored tracking tree before committing it. Legacy archives without
-`portal.yml` receive a recoverable new shared conversation;
-re-adding retained branches reconstructs their registration metadata. Revive
-refuses dirty, duplicated, ambiguous, or live state.
-
-`dev-session delete` is the user-directed destructive discard. Agents must not
-run it unless the user explicitly asks to delete that session. It requires an
-interactive yes/no confirmation; `--force` additionally authorizes dirty
-worktree removal and interruption of an active turn. Delete independently
-inventories canonical worktrees owned by the exact session, so missing or stale
-portal repository registrations do not prevent an explicit discard. It always
-refuses symlinks, path escapes, foreign repositories, and ambiguous worktree
-entries. Delete releases cluster and runtime state, removes verified worktrees,
-retires the Codex thread, and moves tracking plus creation state into private
-XDG recovery storage together with the actual worktree identities, branches,
-heads, and dirty state. It is journaled and retryable, retains Git branches, and
-commits only an already committed tracking deletion. Never-committed tracking
-disappears without a Git commit. Unfinished lifecycle journals reserve their
-slug; resume the matching `archive`, `delete`, or `revive` command before other
-session or cluster mutations, workspace package changes, workspace unregister
-or suspension, or Codex reconciliation.
-Stable session and cluster commands must verify their originating workspace
-package generation after acquiring the shared transition lock. If a command
-waited across a successful or compensated package switch, reject it as
-superseded and require the stable command to be run again.
-When development cluster state exists, package switches and rollbacks require
-the target generation to publish the matching state schema, transition policy,
-and tracking-size contract, and prove that every existing cluster already has
-an explicit recorded socket identity.
-Pre-contract cluster state without that identity fails closed and must be reset;
-never infer or migrate its ownership during a package transition. This avoids a
-race with an old helper that was already waiting on its per-cluster lock.
-New helpers create the state directory and record its workspace-scoped socket
-identity in one locked initialization step. Ordinary access must reject an
-existing state directory without that record. Explicit reset may clean such
-state only when the complete runner tuple and its process tree prove ownership;
-ambiguous legacy state must remain untouched.
-Candidate activation must repeat the same check so a pre-contract installed
-switch command cannot bypass it. The one retained password-reset legacy socket
-is supported only while its recorded identity and complete owner record prove
-the known runner tuple. Other legacy socket state fails closed.
-Workspace unregister is refused until that workspace's cluster state is reset.
-Never use `delete` as a substitute for archiving completed or abandoned work.
-
-Keep these files current enough that a future agent can resume the work without
-guessing. When plans change because code or tests reveal new facts, update the
-tracking notes.
-
-After material changes, review checkpoints, or user-requested status updates,
-use `~/.codex/skills/dev-session-handoff/SKILL.md`. Keep the initiative portal manifest
-current and include the stable link printed by
-`dev-session url <slug> --as-is` in the handoff. If the portal has not been
-deployed yet, identify it as the post-deployment URL.
-
-Promote reusable lessons to `notes/`. In particular, write a note when a
-command, shell, test, build, deploy, hook, or worktree operation fails in a
-non-obvious way; when a workaround saves future time; when a repository has
-undocumented setup or ordering requirements; or when an investigation finds a
-dead end worth avoiding later.
-
-Keep `state.md` detailed for the current initiative and keep durable notes
-concise for future reuse. Store each lesson in a separate file, using
-`notes/cross-project/<yyyy-mm-dd-short-topic>.md` for cross-project notes and
-`notes/<project>/<yyyy-mm-dd-short-topic>.md` for repository-specific notes.
-Record the command or workflow, symptom, cause if known, fix or workaround,
-verification result, and related initiative path. Summarize long logs instead
-of pasting them. Redact secrets and avoid recording temporary local paths unless
-the path itself matters.
+- Use `repos/<project>.git` for canonical bare clones, `worktrees/<dated-slug>/<project>`
+  for feature worktrees, and `work/<dated-slug>/{plan,state}.md` for active records.
+  Terminal records belong in `archive/`; reusable lessons belong in `notes/`.
+- Check `dev-session current` before selecting an initiative. It belongs to this
+  process only if DEV_SESSION_SLUG matches. Otherwise create a separate initiative
+  unless the user explicitly selects that session. Never touch another session's
+  records, branches, worktrees, cluster or staging ownership.
+- Keep the shared checkout on master. Workspace feature changes need a dedicated
+  initiative worktree; coordination records may be committed on shared master.
+  Preserve unrelated files/index changes; stage only owned paths. Never use a
+  repository-wide reset, clean or stash, or switch a shared branch underneath
+  another session. Keep integration fast-forward-only and retain feature refs
+  unless the user explicitly requests deletion. Do not rewrite published master
+  or already-merged history without the required explicit direction.
+- Clone/push over SSH. Canonical project remotes are `git@github.com:vpsfreecz/<project>.git`;
+  generic dev-workspace and codex-web use `git@github.com:aither64/<project>.git`.
+  The vpsFree extension is locally vpsfree-dev-workspace and remotely
+  `git@github.com:vpsfreecz/dev-workspace.git`.
+- Commit a substantive initial plan/state before the first project-code commit
+  or external mutation. State begins with YAML front matter `lifecycle: active`.
+  Completion requires every registered exact final feature head merged into its
+  remote default branch and no remaining work. Pushing/testing/deploying alone
+  does not complete an initiative. Preserve the tracking commit cadence in the
+  session procedure.
+- Finishing work or handing off does not authorize archive, delete or stopping a
+  session. Archive only on explicit request or through the enabled auto-archive
+  worker under its policy. Delete requires explicit user direction and must never
+  substitute for archive. Retain branches. Resume unfinished lifecycle journals
+  before conflicting mutations. Package/cluster transitions must preserve the
+  generation, ownership, schema, rollback and recovery rules in the lifecycle
+  procedure; do not infer ownership or bypass refusals.
+- Deployment does not authorize configuration master integration. Keep development
+  configuration on its feature branch until explicit integration direction. The
+  workspace application is deployed from its user profile, not system pins.
+- Never expose credentials in notes, commits, output, URLs or prompts. Production
+  KB writes require direct user approval of the exact staged changes. Prepare
+  local candidates and use the guarded KB release workflow; read-only production
+  checks do not require approval. Respect session-owned staging.
+- Use each repository's Nix environment and declared hooks. Do not bypass hooks
+  without the user's explicit authorization for that commit. Prefer bridge
+  networking for development clusters; use local only if explicitly requested or
+  the bridge is unavailable, recording why. Stop unexpected local kernel builds
+  and investigate under the verification procedure's documented exceptions.
+- Planning, implementation, diagnosis and review stay on gpt-6-astra/xhigh.
+  Automatically use `~/.codex/skills/dev-session-monitor/SKILL.md` for long or
+  uncertain-duration verification, retaining its fresh Luna/low watcher scope,
+  cancellation rules and visible fallback. Respect instructions not to await CI.
+- Use the dev-session-documentation skill for substantive work, and the
+  dev-session-handoff skill after material changes/review/status requests. Keep
+  tracking and the portal manifest current and include the stable session URL.
+  Apply vpsfree-user-facing-writing directly to user-facing prose after technical
+  facts are settled and before committing; preserve its main-agent ownership.
 
 ## Compatibility And Deployment
 
@@ -377,67 +127,6 @@ that compatibility requirement in the initiative plan and test every supported
 path. Keep data-integrity and conversion checks that validate real persisted
 content.
 
-## Documentation During Development
-
-Use the generic `dev-session-documentation` skill for substantive development,
-investigation, and operational work. It is supplied by dev-workspace at
-`~/.codex/skills/dev-session-documentation/SKILL.md`; its canonical source and
-human guide are in the generic runtime repository. The agent that owns the task
-context maintains the documentation while decisions and evidence are available.
-
-Read the relevant project docs at the start. Choose the smallest useful update
-and maintain it with the implementation. Record consequential rationale,
-constraints, supported version combinations, and applicable deployment,
-verification, and recovery instructions. Follow the project's existing layout
-and add an entry-point link when needed. Improve older material as related work
-touches it; do not launch a historical backfill without a request.
-
-Keep current intent and unresolved choices in `plan.md`. Put a concise current
-summary, next actions, documentation links, and verification evidence in
-`state.md`; link detailed history and artifacts. Follow the existing tracking
-commit cadence and lifecycle rules.
-
-Apply the generic skill's placement rules across all repositories: classify
-material by applicability, useful lifetime and owner. Feature explanations
-describe the system at the documented revision. Keep individual rollout
-checklists and temporary branch state in operational/session records, even when
-they contain no dates or revision hashes. Preserve lasting compatibility and
-failure semantics with their owning component; link procedures to them.
-
-Use these local destinations:
-
-- Project behavior, design rationale, and accepted decisions belong in that
-  project's documentation, understandable without this coordination workspace.
-- Repeatable operations belong in separate project operations documentation;
-  site-specific procedures belong in the configuration repository that owns the
-  deployment. Generic runtime and extension docs link to their contracts
-  without copying concrete host details.
-- Supported upgrade instructions belong in the owning project's upgrade
-  guidance, scoped to source/target versions or schema boundaries and retained
-  while that path needs support. Do not invent release versions or hide guidance
-  needed by other upgraders in private session records.
-- Cross-project contracts have one authoritative home in the owning project;
-  workspace-level designs belong in this workspace's documentation. Link the
-  participating projects to that home.
-- An individual rollout's plan, exact revisions, prepared steps, execution
-  results and rollback preparation belong in a session rollout record or a
-  dated record in the deployment repository. Temporary branch state, review
-  fixtures and disposable database resets belong in session records.
-- Reusable development-environment lessons belong in `notes/` under the existing
-  convention. General project setup instructions should also reach project docs.
-- Member-facing guidance follows the existing KB/product documentation and
-  user-facing writing workflows below, including publication approvals.
-
-Before mandatory review and handoff, reconcile documentation with the final
-implementation and actual deployment evidence. Check placement as well as
-completeness. Split mixed passages without burying feature contracts or losing
-recovery requirements; application transaction rollback is feature behavior,
-while reverting deployed software is an operational procedure. Identify changed
-or checked docs, or briefly explain why no update was useful. Follow existing
-layouts without requiring a fixed file bundle or a deployment heading on every
-feature page. Writing instructions remains distinct from authorization to
-execute them.
-
 ## Mandatory Change Review
 
 For feature, bugfix, refactor, or cross-project work with relevant code,
@@ -466,320 +155,6 @@ When rules conflict, follow the repository-local rule for repository content
 while preserving the top-level requirements for tracking, compatibility
 analysis, and SSH-based Git remotes.
 
-## Development Environment
-
-Use the generic `dev-session-monitor` skill for authorized tests, CI checks and
-builds expected to exceed one minute, and delegate uncertain-duration integration
-tests and builds before launching them. This explicitly authorizes its fresh
-`gpt-5.6-luna`/`low` monitoring subagent. Keep known quick checks inline and keep
-planning, implementation, diagnosis and review on `gpt-6-astra`/`xhigh`. Pass
-project escalation rules, including unexpected local kernel builds, in the
-watcher's brief. The parent continues automatically on completion or escalation.
-If the skill or delegation is unavailable, report that once and use minimal-output
-parent monitoring. A user's instruction not to wait for CI takes precedence.
-
-Development is generally Nix-based. Prefer each repository's `nix develop`,
-`nix-shell`, flake outputs, or documented development shell before running
-language-specific tools. Deployment is usually to NixOS or vpsAdminOS systems,
-often through `confctl` and the configuration repositories.
-
-Treat an unexpected local Linux kernel build in vpsAdminOS development or test
-workflows as a bug unless the current work intentionally changes kernel sources
-or configuration. vpsAdminOS kernels should normally be substituted from the
-vpsAdminOS binary cache after GitHub Actions or its runners build them. When a
-command starts building a kernel, stop it and investigate why the derivation
-missed the cache. A local rebuild is acceptable only when the kernel or its
-configuration is intentionally changed, or when the responsible runner has not
-yet built and published the expected derivation; record the justification in
-the initiative `state.md`.
-If the work needs an additional kernel output, update the vpsAdminOS CI builder
-to build and publish that output as part of the same initiative instead of
-relying on recurring local builds.
-
-When running `vpsadmin-devcluster`, use the bridge network by
-default. Do not choose `--network local` unless the user explicitly asks for it
-or the bridge network is genuinely unavailable; if local networking is used,
-record the reason in the initiative state.
-
-Use GitHub Actions as a feedback loop after pushing branches. If `gh` is not
-available in the current shell, run it through Nix, for example
-`nix shell nixpkgs#gh -c gh run list ...`. Inspect failed logs, monitor reruns,
-and resolve failures instead of leaving CI for the user to chase.
-
-After a force-push or a follow-up fix push, cancel superseded queued or
-in-progress GitHub Actions workflow runs for the same branch. Only cancel runs
-whose `headSha` no longer matches the current branch head; do not cancel
-workflows for other branches or workflows already running on the current head.
-
-When creating or editing GitHub workflows, verify the latest upstream version of
-each imported action from its official repository before choosing the `uses:`
-ref. Do not rely on remembered version numbers; use the newest compatible
-version unless the workflow records a specific reason to pin an older one.
-
-Rerunning a failed GitHub Actions job is not a substitute for investigation.
-Before accepting a rerun as validation, download or open the failed attempt's
-logs and artifacts, identify the root cause as far as the available evidence
-allows, and record the finding in the initiative `state.md`. If the artifacts
-are insufficient, improve the test or runner diagnostics rather than treating a
-green rerun as proof that the failure did not matter. Prefer fixing the
-underlying problem; when the failure is unrelated to the current change, record
-the evidence for that conclusion.
-
-When a repository is missing a tool in the ambient shell, enter the repository's
-Nix shell or use an appropriate `nix shell` command. Do not work around missing
-tooling by recording local environment limitations in commit messages.
-
-When adding new integration tests that use the vpsAdminOS test-runner, write
-test scripts in the current RSpec-style structure with examples and
-expectations, such as `describe`, `it`, and `expect`. Do not refactor existing
-tests solely to convert their style unless the user explicitly asks for that
-refactor.
-
-For `vpsfree-cz-configuration`, update flake inputs through `confctl`, not by
-manually editing `flake.lock`. Use
-`confctl inputs channel update --commit <channel> [role]` for normal channel
-updates. Use `confctl inputs channel set --commit <channel> <role> <rev>` when
-an exact unmerged feature revision has to be pinned. Keep changelogs enabled
-when they are useful; skip them for noisy `nixpkgs` and `llm-agents` updates.
-Keep automated `confctl ... --commit` commit messages exactly as generated;
-do not amend or rewrap them to satisfy generic commit-message line length
-rules. Edit them only when intentionally making a concise changelog edit.
-
-Deployment does not authorize integration into a configuration repository's
-default branch. Build and deploy development configurations directly from the
-initiative worktree and feature branch. In particular, while the workspace
-portal is still under development, keep its `vpsfree-cz-configuration` changes
-on the dated initiative branch. The workspace application itself is deployed
-from its own user profile and must not be added to, pinned by, or iterated
-through the system configuration. Do not merge or push configuration changes
-to `master` merely to deploy aitherdev. Integrate that branch only after the
-user explicitly accepts the portal work for integration or explicitly directs
-the merge.
-
-DokuWiki user documentation is hosted at `kb.vpsfree.cz` and
-`kb.vpsfree.org`. Their review instances are
-`kb-cs.aitherdev.int.vpsfree.cz` and `kb-en.aitherdev.int.vpsfree.cz`. API
-access to production uses one token per wiki:
-
-When authoring or translating Czech KB pages, address the reader using
-informal singular forms (`tykání`), for example `můžeš`, `potřebuješ`,
-`nainstaluj`, and `použij`. Do not use formal `vy` or plural imperatives as a
-polite form; use plural only when genuinely addressing multiple people.
-
-The invisible DokuWiki `<page>` tag connects Czech and English translations.
-Use the same tag value in every language variant, and always derive it from the
-English KB page ID. The real DokuWiki page IDs remain language-specific.
-
-For all user-facing prose, use the workspace skill in
-`~/.codex/skills/vpsfree-user-facing-writing/SKILL.md`. This applies to KB pages,
-vpsAdmin documentation and interface copy, user-visible errors and help, mail
-templates, website copy, and member-facing release or operational messages.
-The agent that owns the task context must apply the skill directly after the
-technical content is settled and before committing. Do not delegate the main
-rewrite to a context-poor subagent; a fresh agent may review the finished text.
-Human-readable comments in bilingual scripts and configuration examples must
-use the language of the surrounding page while commands and machine-significant
-content remain equivalent.
-
-Write KB pages as documentation of the current supported state. Do not
-mention obsolete distributions, former defaults, superseded commands, or
-historical workarounds unless readers of a still-supported installation need
-that history to migrate or recover. Record removal rationale in commit
-messages, DokuWiki revision summaries, or initiative notes instead of page
-prose.
-
-For vpsAdmin changes that can affect visible WebUI documentation, follow the
-canonical workflow in `vpsfree-kb-contracts/docs/webui-change-workflow.md`.
-Use `kb-contract-fetch`, `kb-contract-build`, and
-`kb-contract-manifest` for durable all-page candidate preparation; keep
-capture generation and the documentation contract in the independent capture
-repository.
-
-Do not merge a `vpsfree-kb-contracts` feature branch merely to make managed-page
-links work in staging. Managed release manifests pin the committed and pushed
-feature revision, and staging resolves `<kb-managed>` links at that exact
-commit. Before production promotion, integrate the contract changes into
-`master`; the release tool verifies the recorded page and test files against
-remote `master` before it writes production pages.
-
-- `kb.vpsfree.cz`:
-  `/home/aither/.codex/codex-kb-vpsfree-cz-aither-key`
-- `kb.vpsfree.org`:
-  `/home/aither/.codex/codex-kb-vpsfree-org-aither-key`
-
-Never copy credentials into notes, commits, command output, URLs, or prompts.
-Always prepare wiki changes as local candidate files first. Use `kb-page`
-for individual DokuWiki operations and `kb-release` for a review bundle
-instead of hand-crafting API calls.
-
-The declarative `kb-staging` NixOS container on aitherdev is global and
-on-demand. Its data and ownership survive `kb-stage stop`; only
-`kb-stage reset --yes` discards staging content and mirrors the current
-production pages and shared media. A development session must claim staging
-with `kb-stage start` before it can write. Staging ownership is serialized
-by the active `DEV_SESSION_SLUG`; do not manipulate another session's
-staging data or ownership. `kb-stage release --yes` stops the container and
-releases ownership while retaining the data. It refuses a pending review
-bundle unless `--discard-pending` is explicit.
-
-Stage complete pages at their real page IDs so links and language mappings are
-reviewed exactly as they will appear in production. For every new release,
-prepare one bilingual `release-changes.yml` with an informative localized
-summary for each page write or deletion, then generate checksummed schema-5
-manifests with `kb-contract-manifest --changes FILE`. Stage them with
-`kb-release stage --manifest FILE --yes` and verify them with
-`kb-release verify --manifest FILE`. The verification output must expose
-each exact summary and its clickable staging revision-history URL so the user
-can review revision metadata before publication. Do not use the production
-`drafts:` namespace for routine review. The release tool verifies that
-production still matches the recorded source revision and content before
-staging or promotion.
-
-Production writes always require direct user approval. After approval, promote
-the exact staged manifest with `kb-release promote --manifest FILE --yes`
-and `--approved-production`. Individual production writes with `kb-page`
-also require `--approved-production`, including writes in `drafts:`. Read-only
-production checks do not require approval. Before every write, verify
-authentication and page permission against the exact target wiki.
-
-Every production page edit must have an informative, single-line change
-summary that describes the actual content change. Do not use generic summaries
-such as "Publish reviewed KB release" for new edits. Write summaries for
-`kb.vpsfree.cz` in Czech and summaries for `kb.vpsfree.org` in English.
-Because each summary already belongs to one page, do not repeat that page's
-title or subject. Describe only the resulting content changes.
-Write Czech summaries as noun phrases that name the resulting changes, not as
-infinitive instructions. For example, use `Doplnění síťové konfigurace a
-vysvětlení správy obsahu v repozitáři`, not `Doplnit síťovou konfiguraci a
-vysvětlit správu obsahu v repozitáři`. Do not rewrite existing DokuWiki
-revision summaries merely to adopt this convention.
-
-Page deletions belong in the same guarded schema-5 release manifest as page
-writes. Stage and review their localized summaries and revision histories, then
-promote the exact manifest after approval. Do not delete release pages with
-separate `kb-page` calls. New `kb-cleanup` manifests must use schema 2 and give
-every page deletion its own summary; media deletions do not have summaries.
-
-Common KB tool examples:
-
-```sh
-kb-page whoami --wiki cz
-kb-stage start
-kb-stage reset --yes
-kb-release stage --manifest work/example/kb-release.yml --yes
-kb-release verify --manifest work/example/kb-release.yml
-kb-page save --wiki cz information:published-page preview.txt \
-  --summary "Aktualizace dokumentace" --update --approved-production
-kb-release promote --manifest work/example/kb-release.yml --yes \
-  --approved-production
-kb-stage release --yes
-```
-
 Do not assume that commands from one repository apply to another. Use the local
 `AGENTS.md`, README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer
 configuration, and existing CI definitions as the source of truth.
-
-## Commits
-
-Write informative commits. A commit message must explain what is changing and
-why it is needed. The subject should summarize the change; the body should
-explain the problem, rationale, and deployment or compatibility notes when that
-context matters. Do not add command transcripts, "Checks:", "Tests:",
-"Syntax checks:", "Validated with:", or local tool availability notes to commit
-messages; record validation in `state.md` or PR notes instead.
-
-Rules:
-
-- Wrap every commit message line at 80 characters or fewer. Generated
-  `confctl ... --commit` messages in `vpsfree-cz-configuration` are the
-  exception: keep them exactly as generated, even when they exceed this limit.
-- Always write the commit message to a temporary file and commit with
-  `git commit -F <tmpfile>`.
-- Do not use `git commit -m` for final commits.
-- Pre-commit hooks are mandatory, not advisory. Before the first commit in a
-  repository or worktree, verify that the repository's hook framework is
-  installed and active when the repository declares one, for example
-  `.overcommit.yml`, `.pre-commit-config.yaml`, `lefthook.yml`, or Husky
-  configuration. Install hooks with the repository-documented command, or infer
-  the standard framework command when documentation is missing.
-- Do not commit when expected hooks are absent, fail, or cannot be run. Fix the
-  hook setup or the reported offenses first. Only continue without hooks when
-  the user explicitly authorizes it for that commit, and record the reason and
-  replacement checks in the initiative state.
-- Running syntax checks or selected tests is not a substitute for hook-managed
-  lint/format checks. If a hook framework cannot be installed but the
-  equivalent command is known, run that command manually before committing and
-  record that fallback in state.
-- Do not bypass git hooks unless the user explicitly authorizes it and the
-  reason is recorded in the initiative state.
-- Keep commits focused. Split generated updates, dependency bumps, release
-  metadata, and functional changes when repository rules or review clarity call
-  for it.
-- Respect each repository's local commit subject style and special release or
-  generated-file rules.
-
-## Project Map
-
-These repositories are in scope for this workspace:
-
-- `dev-workspace`: reusable development-session lifecycle, user-profile
-  runtime, host module and portal shell. Its
-  canonical remote is `git@github.com:aither64/dev-workspace.git`.
-- `vpsfree-dev-workspace`: vpsFree.cz KB commands, workspace skills,
-  development-cluster providers and migration tooling. Its canonical remote is
-  `git@github.com:vpsfreecz/dev-workspace.git`; concrete site configuration is
-  supplied by this workspace.
-- `codex-web`: reusable Go client, capability-checked HTTP integration and
-  framework-free browser module for Codex App Server. Its canonical remote is
-  `git@github.com:aither64/codex-web.git`.
-- `vpsadminos`: NixOS, ZFS, and LXC-based host OS for containers. It is the
-  core runtime for vpsFree.cz nodes and many integration tests.
-- `vpsadmin`: Ruby/PHP control panel and API for managing VPSes on top of
-  vpsAdminOS.
-- `security-advisories`: evidence-backed vpsFree.cz platform security
-  assessments, including vpsAdmin Node evidence collection, advisory
-  evaluation, and preparation of unpublished vpsAdmin drafts.
-- `vpsfree-kb-contracts`: independent, reproducible Czech/English page,
-  runtime-test, screenshot, and WebUI documentation contracts for an explicit
-  subset of the vpsFree.cz knowledge bases. Its canonical
-  `docs/webui-change-workflow.md` must be followed when a vpsAdmin feature can
-  change visible labels, navigation, forms, layout, or screenshots.
-- `ruby-lxc`: Ruby native extension wrapping liblxc. It is consumed by
-  vpsAdminOS `osctld` and may need coordinated gem releases for Ruby or LXC
-  upgrades.
-- `haveapi`: framework for self-describing APIs. It underpins vpsAdmin's API
-  shape and client generation.
-- `vpsf-status`: Go status page and monitoring-facing status service for
-  vpsFree.cz.
-- `vpsadmin-go-client`: generated Go client library for the vpsAdmin API.
-- `confctl`: Ruby/Nix deployment management tool used with NixOS and
-  vpsAdminOS fleets.
-- `vpsfree-cz-configuration`: production vpsFree.cz cluster configuration in
-  Nix.
-- `vpsadminos-org-configuration`: vpsadminos.org cluster configuration in Nix.
-- `vpsfree-irc-bot`: IRC bot for vpsFree.cz channels and infrastructure
-  integration.
-- `vpsfree-mail-templates`: localized mail templates consumed by vpsAdmin.
-- `terraform-provider-vpsadmin`: Go Terraform/OpenTofu provider for vpsAdmin.
-- `web`: PHP and server-side-include website for vpsFree.cz and its
-  translations.
-- `ssh-exporter`: Prometheus exporter that checks systems over SSH and exports
-  metrics.
-- `syslog-exporter`: Prometheus exporter that parses syslog streams into
-  metrics.
-- `vpsfree-client`: Ruby CLI and client library for the vpsFree.cz API, built
-  on vpsAdmin and HaveAPI clients.
-- `vpsfree-maintenance-tasks`: dated operational scripts for maintenance work.
-- `linux`: Linux kernel tree used by vpsAdminOS. Treat it as reference material
-  unless the task explicitly targets kernel work.
-- `zfs`: OpenZFS tree used by vpsAdminOS. Treat it as reference material unless
-  the task explicitly targets ZFS work.
-
-Common dependency flow: HaveAPI defines the API framework and client-generation
-model. vpsAdmin consumes HaveAPI and manages infrastructure running on
-vpsAdminOS. The Go client, Ruby client, and Terraform provider consume the
-vpsAdmin API. The configuration repositories deploy NixOS and vpsAdminOS
-systems, usually with confctl. Status, exporters, web, IRC bot, mail templates,
-and maintenance tasks support operations around the core platform. This
-coordination workspace selects `dev-workspace`, which in turn consumes
-`codex-web`; keep that dependency direction one-way.

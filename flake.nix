@@ -51,17 +51,28 @@
         type = "app";
         program = "${package}/bin/workspace-host";
       };
-      checks.${system}.deployment-contract =
-        pkgs.runCommand "dev-workspace-deployment-contract-tests"
-          {
-            nativeBuildInputs = [ pkgs.ruby ];
-          }
-          ''
-            cp -R ${self} source
-            chmod -R u+w source
-            patchShebangs source/bin
-            ruby source/test/deployment_contract_test.rb
-            touch "$out"
-          '';
+      checks.${system} = {
+        deployment-contract =
+          pkgs.runCommand "dev-workspace-deployment-contract-tests"
+            {
+              nativeBuildInputs = [ pkgs.ruby ];
+            }
+            ''
+              cp -R ${self} source
+              chmod -R u+w source
+              patchShebangs source/bin
+              ruby source/test/deployment_contract_test.rb
+              touch "$out"
+            '';
+        agent-instructions =
+          pkgs.runCommand "workspace-agent-instructions-tests"
+            {
+              nativeBuildInputs = [ pkgs.ruby ];
+            }
+            ''
+              ruby ${self}/test/agent_instructions_test.rb
+              touch "$out"
+            '';
+      };
     };
 }
