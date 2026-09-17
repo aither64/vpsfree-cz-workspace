@@ -30,7 +30,8 @@ same commits. Older revisions remain self-contained; mixed worktree revisions
 read their own guidance. Existing sessions must reread changed instructions;
 do not interrupt unrelated sessions. No host deployment or coordinated node
 upgrade is needed. Retain source text and Git history for rollback. Configuration
-master integration is not authorized. No CI wait, per standing user instruction.
+master integration is authorized by the latest user instruction. No CI wait, per
+standing user instruction.
 
 ## Verification and documentation
 Readers are development agents and maintainers reviewing instruction coverage.
@@ -42,3 +43,7 @@ then harmless fresh-session scenarios proving actual prerequisite file reads,
 standalone operation, indirect triggers, scope expansion and missing-file stop.
 No semantic rule may be discarded to meet a size target. Procedures live with
 their owner; source mapping and one-off verification remain in this initiative.
+
+User now explicitly authorizes merging both Luna monitoring and instruction
+routing into all default branches, including configuration. Complete reviews
+and verification first; do not wait for CI or close the sessions.

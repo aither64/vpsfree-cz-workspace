@@ -12,8 +12,8 @@ diagnosis and review on gpt-6-astra/xhigh in the original parent conversation.
   the generic skill.
 - workspace owns its automatic-use/model policy and downstream extension pin.
 - vpsfree-cz-configuration aligns its devWorkspace host input using confctl and
-  may deploy aitherdev from this initiative branch; configuration integration
-  into master is not authorized.
+  deploys aitherdev from this initiative branch. The latest user instruction
+  explicitly authorizes configuration integration into master.
 
 Use native delegation, fresh context and explicit model/effort. Delegate expected
 waits over one minute and uncertain integration tests/builds before starting them.
@@ -41,7 +41,8 @@ Validate skill front matter/UI metadata, meaningful core/extended catalog and
 collision checks, focused local checks, committed mandatory Astra/xhigh review,
 then package checks and live delegation scenarios. Verify real model metadata,
 fresh watcher context, automatic parent continuation, success/failure evidence,
-CI completion, quick-check exclusion, fallback and deadline/escalation behavior.
+quick-check exclusion, fallback and caller-directed escalation behavior. Review
+the CI monitoring contract without waiting for CI, as requested by the user.
 Do not claim a fixed weekly saving. Keep recorded logs bounded and secrets absent.
 
 ## Documentation and decisions
@@ -51,3 +52,7 @@ workspace holds its concise policy. Exact heads, review, deployment and recovery
 evidence belong in this initiative. Native Luna delegation for tests, CI and
 builds was explicitly selected by the user; generic ownership was explicitly
 corrected and accepted. Keep sessions and branches for follow-up.
+
+User now explicitly authorizes merging both Luna monitoring and instruction
+routing into all default branches, including configuration. Complete reviews
+and verification first; do not wait for CI or close the sessions.
