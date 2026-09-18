@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Codex 0.155.0 rollout for aitherdev
@@ -7,16 +7,20 @@ lifecycle: active
 ## Status
 
 Codex 0.155.0 is deployed on aitherdev and active in the shared workspace
-profile, portal and App Server. The feature branches remain intentionally
-unmerged. One unrelated development cluster was terminated during the App
-Server systemd-service restart; its terminal client was restored, but the
-cluster is not this initiative's ownership to recreate.
+profile, portal and App Server. The exact final heads of all four feature
+branches are fast-forwarded to their remote `master` branches. The source
+feature branches are intentionally retained; their clean worktrees were
+removed as the requested cleanup.
+
+One unrelated development cluster was terminated during the App Server
+systemd-service restart. Its terminal client was restored, but the cluster is
+not this initiative's ownership to recreate.
 
 ## Next actions
 
-Keep the feature branches and initiative active until a later integration or
-cleanup request. Investigate App Server cgroup ownership before a future
-profile switch is allowed to coexist with long-running development clusters.
+No operator action remains for this rollout. Investigate App Server cgroup
+ownership in a separate initiative before a future profile switch is allowed
+to coexist with long-running development clusters.
 
 ## Documentation
 
@@ -45,18 +49,18 @@ the one-time site rollout and its evidence.
 
 - Upstream `github:numtide/llm-agents.nix` revision
   `ddc89534b9a73cd99ff4d33656569ce3be6e6490` evaluates Codex to `0.155.0`.
-- `workspace-host status` reports the current 0.154.0 profile package and
-  active Codex path.
+- `workspace-host status` reports the active profile package and its Codex
+  executable; the system and active App Server use Codex 0.155.0.
 
 ## Open questions
 
-None. Existing active App Server work determines when pending reconciliation can
-restart the shared service; the user selected waiting for idle clients.
+None.
 
 ## Cleanup
 
-Retain feature branches and keep the initiative active. Do not archive,
-delete worktrees, or merge default branches without a later explicit request.
+The user explicitly requested integration and cleanup. Retain the four local
+and remote feature branches, remove their clean worktrees, and do not archive
+the session because archival was not requested.
 
 ## Review preparation
 
@@ -121,3 +125,32 @@ clients, but it did not restore those cluster processes. This initiative must
 not alter another session's cluster; the observed cgroup-coupling behavior is
 recorded in `notes/cross-project/2026-09-18-profile-switch-devcluster-cgroup.md`
 for follow-up.
+
+## Default-branch integration and completion
+
+All integration was fast-forward-only. Remote `master` contains the exact
+final feature head for each repository:
+
+- `dev-workspace`: `18817f4bf60f9918932d980d5c91b92852ba3cfa`
+- `vpsfree-dev-workspace`: `e170ea0ead2babef823aa415e2d1b354d1648173`
+- `vpsfree-cz-configuration`: `c7ed1210fc90434e50de2b1e4752a7ae38d9a491`
+- `workspace`: `dbbd29e6d64debde26a75113f339e77e6331891d`
+
+`git ls-remote` confirmed every remote default head above. The workspace
+feature was rebased onto the shared master before its fast-forward integration;
+the reviewed package change remains the same `flake.lock` pin. The deployed
+profile was built from the pre-rebase workspace feature tree, whose package
+inputs are identical. A second profile switch was deliberately avoided because
+the first switch restarted the shared App Server and terminated another
+initiative's development cluster.
+
+No review rerun is needed for the rebase because it changed only the workspace
+feature parent to include tracking commits; the reviewed package diff, Nix
+checks, configuration deployment and live protocol verification are unchanged.
+
+## Final cleanup
+
+All four feature worktrees were clean and have been removed. Their branches
+remain both locally and remotely as rollback references. The session remains in
+`work/` until an explicit archive request or the configured auto-archive policy
+acts.
