@@ -22,9 +22,9 @@ aitherdev without waiting for CI.
 - Use Apache License 2.0's unmodified text for codex-web. Preserve existing
   project copyright attribution and third-party notices.
 - Make the README a practical entry point: purpose, capabilities, trusted
-  deployment model, standalone quick start, embedding overview, links to the
-  detailed API guides, development checks, and license. Move, rather than
-  remove, the existing technical contracts into topic-specific Markdown pages.
+  deployment model, standalone quick start, embedding overview, browser API,
+  development checks, and license. Move, rather than remove, the former
+  technical contract intact to `docs/reference.md`.
 - Show an amber overlay dot on the existing Codex rail icon when the portal's
   current synchronized state proves an interactive session is idle or has a
   blocking request. Do not add server state, an endpoint, or polling. Do not
@@ -61,7 +61,7 @@ documentation, but its compatibility entry points will be documented in the
 test support layout.
 
 Capture the pre-refactor Ruby run/assertion counts; after the move, require
-matching counts from the old entry commands and run every focused group. Add
+matching counts from the old entry commands. Add
 browser coverage for waiting, blocking prompts, nonblocking prompts, resumed
 work, unavailable state, and compact Repositories navigation. Run quick checks
 before Terra mandatory review, then long package/build/deployment checks using
