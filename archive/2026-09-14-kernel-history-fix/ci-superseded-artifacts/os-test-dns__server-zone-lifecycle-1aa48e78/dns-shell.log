@@ -1,0 +1,617 @@
+SHELL: 0
+
+START: 2026-09-14 11:50:52 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-09-14 11:50:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:52 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-09-14 11:50:52 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:52 +0200
+COMMAND: systemctl is-active --quiet bind.service
+END: 2026-09-14 11:50:52 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:52 +0200
+COMMAND: systemctl reset-failed vpsadmin-nodectld.service
+END: 2026-09-14 11:50:52 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:52 +0200
+COMMAND: systemctl restart vpsadmin-nodectld.service
+END: 2026-09-14 11:50:52 +0200
+ELAPSED: 0.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:52 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:50:52 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:52 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:50:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:53 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:50:53 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:54 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:50:54 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:54 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:50:54 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:55 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:50:55 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:55 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:50:55 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:56 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:50:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:50:56 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:50:56 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:51:42 +0200
+COMMAND: cat /var/named/vpsadmin/db/example.test.json
+END: 2026-09-14 11:51:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+{
+  "name": "example.test.",
+  "source": "internal_source",
+  "type": "primary_type",
+  "default_ttl": 3600,
+  "nameservers": [
+    "ns1.dns.test"
+  ],
+  "serial": 1,
+  "email": "dns@example.test",
+  "primaries": [],
+  "secondaries": [],
+  "dnssec_enabled": false,
+  "enabled": true,
+  "records": []
+}
+---
+
+START: 2026-09-14 11:51:42 +0200
+COMMAND: cat /var/named/vpsadmin/primary_type/example.test.zone
+END: 2026-09-14 11:51:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+$ORIGIN example.test.
+$TTL 3600
+@ IN SOA ns1.dns.test. dns.example.test. 1 1D 2H 4W 1H
+@ IN  NS ns1.dns.test.
+---
+
+START: 2026-09-14 11:51:42 +0200
+COMMAND: cat /var/named/vpsadmin/named.conf
+END: 2026-09-14 11:51:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+zone "example.test." {
+  type primary;
+  allow-transfer {  };
+  notify yes;
+  notify-to-soa yes;
+  file "/var/named/vpsadmin/primary_type/example.test.zone";
+  allow-query { any; };
+};
+---
+
+START: 2026-09-14 11:51:52 +0200
+COMMAND: cat /var/named/vpsadmin/primary_type/example.test.zone
+END: 2026-09-14 11:51:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+$ORIGIN example.test.
+$TTL 3600
+@ IN SOA ns1.dns.test. dns.example.test. 2 1D 2H 4W 1H
+@ IN  NS ns1.dns.test.
+@                          600  IN  CAA         0 issue "letsencrypt.org"
+---
+
+START: 2026-09-14 11:51:52 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 example.test. CAA
+END: 2026-09-14 11:51:52 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+0 issue "letsencrypt.org"
+---
+
+START: 2026-09-14 11:52:01 +0200
+COMMAND: cat /var/named/vpsadmin/primary_type/example.test.zone
+END: 2026-09-14 11:52:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+$ORIGIN example.test.
+$TTL 3600
+@ IN SOA ns1.dns.test. dns.example.test. 3 1D 2H 4W 1H
+@ IN  NS ns1.dns.test.
+@                         1200  IN  CAA         0 issuewild "letsencrypt.org; account=example"
+---
+
+START: 2026-09-14 11:52:01 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 example.test. CAA
+END: 2026-09-14 11:52:01 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+0 issuewild "letsencrypt.org; account=example"
+---
+
+START: 2026-09-14 11:52:12 +0200
+COMMAND: cat /var/named/vpsadmin/primary_type/example.test.zone
+END: 2026-09-14 11:52:12 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+$ORIGIN example.test.
+$TTL 7200
+@ IN SOA ns1.dns.test. hostmaster.example.test. 3 1D 2H 4W 1H
+@ IN  NS ns1.dns.test.
+@                         1200  IN  CAA         0 issuewild "letsencrypt.org; account=example"
+---
+
+START: 2026-09-14 11:52:22 +0200
+COMMAND: cat /var/named/vpsadmin/primary_type/example.test.zone
+END: 2026-09-14 11:52:22 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+$ORIGIN example.test.
+$TTL 7200
+@ IN SOA ns1.dns.test. hostmaster.example.test. 4 1D 2H 4W 1H
+@ IN  NS ns1.dns.test.
+---
+
+START: 2026-09-14 11:52:30 +0200
+COMMAND: test ! -e /var/named/vpsadmin/primary_type/example.test.zone
+END: 2026-09-14 11:52:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:52:30 +0200
+COMMAND: test ! -e /var/named/vpsadmin/db/example.test.json
+END: 2026-09-14 11:52:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:52:30 +0200
+COMMAND: cat /var/named/vpsadmin/named.conf
+END: 2026-09-14 11:52:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:52:48 +0200
+COMMAND: cat /var/named/vpsadmin/primary_type/records.test.zone
+END: 2026-09-14 11:52:48 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+$ORIGIN records.test.
+$TTL 3600
+@ IN SOA ns1.dns.test. dns.example.test. 1 1D 2H 4W 1H
+@ IN  NS ns1.dns.test.
+---
+
+START: 2026-09-14 11:52:56 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 www.records.test. A
+END: 2026-09-14 11:52:56 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+192.0.2.10
+---
+
+START: 2026-09-14 11:53:07 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 v6.records.test. AAAA
+END: 2026-09-14 11:53:07 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+2001:db8::10
+---
+
+START: 2026-09-14 11:53:17 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 records.test. CAA
+END: 2026-09-14 11:53:17 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+0 issue "letsencrypt.org"
+---
+
+START: 2026-09-14 11:53:26 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 alias.records.test. CNAME
+END: 2026-09-14 11:53:26 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+www.records.test.
+---
+
+START: 2026-09-14 11:53:34 +0200
+COMMAND: dig +time\=2 +tries\=1 +norecurse +noall +answer +authority @192.168.10.31 child.records.test. NS
+END: 2026-09-14 11:53:34 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+child.records.test.	600	IN	NS	ns2.records.test.
+---
+
+START: 2026-09-14 11:53:44 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 child.records.test. DS
+END: 2026-09-14 11:53:45 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+60485 13 2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA AAAAAAAA
+---
+
+START: 2026-09-14 11:53:53 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 records.test. MX
+END: 2026-09-14 11:53:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+10 mail.records.test.
+---
+
+START: 2026-09-14 11:54:03 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 ptr.records.test. PTR
+END: 2026-09-14 11:54:03 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+target.records.test.
+---
+
+START: 2026-09-14 11:54:14 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 _sip._tcp.records.test. SRV
+END: 2026-09-14 11:54:14 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+20 5 5060 sip.records.test.
+---
+
+START: 2026-09-14 11:54:23 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 ssh.records.test. SSHFP
+END: 2026-09-14 11:54:23 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+4 2 BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB BBBBBBBB
+---
+
+START: 2026-09-14 11:54:32 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 _443._tcp.www.records.test. TLSA
+END: 2026-09-14 11:54:32 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+3 1 1 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC CCCCCCCC
+---
+
+START: 2026-09-14 11:54:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 txt.records.test. TXT
+END: 2026-09-14 11:54:41 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+"hello world"
+---
+
+START: 2026-09-14 11:54:41 +0200
+COMMAND: systemctl is-active --quiet bind.service
+END: 2026-09-14 11:54:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:54:41 +0200
+COMMAND: rndc status
+END: 2026-09-14 11:54:41 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+WARNING: key file (/etc/bind/rndc.key) exists, but using default configuration file (/nix/store/jjs4zg4djm5305jwcg51zphq1lwkxyn5-bind-9.20.26/etc/rndc.conf)
+version: BIND 9.20.26 (Stable Release) <id:5a605f8>
+running on vpsadmin-dns1: Linux x86_64 6.12.104 #1-NixOS SMP PREEMPT_DYNAMIC Wed Aug 19 16:14:32 UTC 2026 (NixOS 26.05 (Yarara))
+boot time: Mon, 14 Sep 2026 09:49:50 GMT
+last configured: Mon, 14 Sep 2026 09:52:45 GMT
+configuration file: /nix/store/4l6m0crqnylhrlkvxkjvgqnzp73j7fg7-vpsadmin-test-named.conf
+CPUs found: 2
+worker threads: 2
+number of zones: 1 (0 automatic)
+debug level: 0
+xfers running: 0
+xfers deferred: 0
+xfers first refresh: 0
+soa queries in progress: 0
+query logging is OFF
+response logging is OFF
+memory profiling is UNSUPPORTED
+recursive clients: 0/900/1000
+recursive high-water: 0
+tcp clients: 0/150
+TCP high-water: 0
+server is up and running
+---
+
+START: 2026-09-14 11:54:41 +0200
+COMMAND: named-checkzone records.test /var/named/vpsadmin/primary_type/records.test.zone
+END: 2026-09-14 11:54:41 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+zone records.test/IN: records.test/MX 'mail.records.test' has no address records (A or AAAA)
+zone records.test/IN: _sip._tcp.records.test/SRV 'sip.records.test' has no address records (A or AAAA)
+zone records.test/IN: child.records.test/NS 'ns2.records.test' has no address records (A or AAAA)
+zone records.test/IN: loaded serial 13
+OK
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: systemctl is-active --quiet bind.service
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: rndc status
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+WARNING: key file (/etc/bind/rndc.key) exists, but using default configuration file (/nix/store/jjs4zg4djm5305jwcg51zphq1lwkxyn5-bind-9.20.26/etc/rndc.conf)
+version: BIND 9.20.26 (Stable Release) <id:5a605f8>
+running on vpsadmin-dns1: Linux x86_64 6.12.104 #1-NixOS SMP PREEMPT_DYNAMIC Wed Aug 19 16:14:32 UTC 2026 (NixOS 26.05 (Yarara))
+boot time: Mon, 14 Sep 2026 09:49:50 GMT
+last configured: Mon, 14 Sep 2026 09:52:45 GMT
+configuration file: /nix/store/4l6m0crqnylhrlkvxkjvgqnzp73j7fg7-vpsadmin-test-named.conf
+CPUs found: 2
+worker threads: 2
+number of zones: 1 (0 automatic)
+debug level: 0
+xfers running: 0
+xfers deferred: 0
+xfers first refresh: 0
+soa queries in progress: 0
+query logging is OFF
+response logging is OFF
+memory profiling is UNSUPPORTED
+recursive clients: 0/900/1000
+recursive high-water: 0
+tcp clients: 0/150
+TCP high-water: 0
+server is up and running
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: named-checkzone records.test /var/named/vpsadmin/primary_type/records.test.zone
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+zone records.test/IN: records.test/MX 'mail.records.test' has no address records (A or AAAA)
+zone records.test/IN: _sip._tcp.records.test/SRV 'sip.records.test' has no address records (A or AAAA)
+zone records.test/IN: child.records.test/NS 'ns2.records.test' has no address records (A or AAAA)
+zone records.test/IN: loaded serial 13
+OK
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 www.records.test. A
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+192.0.2.10
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 v6.records.test. AAAA
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+2001:db8::10
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 records.test. CAA
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0 issue "letsencrypt.org"
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 alias.records.test. CNAME
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+www.records.test.
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +norecurse +noall +answer +authority @192.168.10.31 child.records.test. NS
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+child.records.test.	600	IN	NS	ns2.records.test.
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 child.records.test. DS
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+60485 13 2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA AAAAAAAA
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 records.test. MX
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+10 mail.records.test.
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 ptr.records.test. PTR
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+target.records.test.
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 _sip._tcp.records.test. SRV
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+20 5 5060 sip.records.test.
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 ssh.records.test. SSHFP
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+4 2 BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB BBBBBBBB
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 _443._tcp.www.records.test. TLSA
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+3 1 1 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC CCCCCCCC
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: dig +time\=2 +tries\=1 +short @192.168.10.31 txt.records.test. TXT
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+"hello world"
+---
+
+START: 2026-09-14 11:55:41 +0200
+COMMAND: poweroff
+END: 2026-09-14 11:55:41 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+

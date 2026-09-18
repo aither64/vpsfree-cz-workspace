@@ -1,0 +1,151 @@
+SHELL: 0
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: systemctl is-active --quiet bind.service
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: systemctl reset-failed vpsadmin-nodectld.service
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: systemctl restart vpsadmin-nodectld.service
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:21 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:42:21 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:22 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:42:22 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:22 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:42:22 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:23 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:42:23 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:42:23 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:42:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:43:20 +0200
+COMMAND: cat /var/named/vpsadmin/named.conf
+END: 2026-09-14 11:43:20 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+zone "transfer.test." {
+  type primary;
+  allow-transfer { 203.0.113.250; };
+  notify yes;
+  notify-to-soa yes;
+  file "/var/named/vpsadmin/primary_type/transfer.test.zone";
+  allow-query { any; };
+};
+---
+
+START: 2026-09-14 11:43:31 +0200
+COMMAND: cat /var/named/vpsadmin/named.conf
+END: 2026-09-14 11:43:31 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+zone "transfer.test." {
+  type primary;
+  allow-transfer {  };
+  notify yes;
+  notify-to-soa yes;
+  file "/var/named/vpsadmin/primary_type/transfer.test.zone";
+  allow-query { any; };
+};
+---
+
+START: 2026-09-14 11:43:31 +0200
+COMMAND: poweroff
+END: 2026-09-14 11:43:31 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+

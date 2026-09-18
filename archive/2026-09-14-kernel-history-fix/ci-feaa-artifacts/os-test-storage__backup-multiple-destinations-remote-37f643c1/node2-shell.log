@@ -1,0 +1,207 @@
+SHELL: 0
+
+START: 2026-09-14 13:00:41 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-09-14 13:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:00:41 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-09-14 13:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:00:41 +0200
+COMMAND: sv check nodectld
+END: 2026-09-14 13:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2650) 70s
+---
+
+START: 2026-09-14 13:00:41 +0200
+COMMAND: sv check nodectld
+END: 2026-09-14 13:00:41 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2650) 70s
+---
+
+START: 2026-09-14 13:00:41 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 13:00:41 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:00:42 +0200
+COMMAND: sv check nodectld
+END: 2026-09-14 13:00:42 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2650) 71s
+---
+
+START: 2026-09-14 13:00:42 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 13:00:43 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:00:44 +0200
+COMMAND: sv check nodectld
+END: 2026-09-14 13:00:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2650) 72s
+---
+
+START: 2026-09-14 13:00:44 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 13:00:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:00:44 +0200
+COMMAND: nodectl status
+END: 2026-09-14 13:00:45 +0200
+ELAPSED: 1.28s
+STATUS: 0
+OUTPUT:
+   Version: 4.2.1
+     State: initializing
+    Uptime: 00:00:02
+  Consoles: 0
+  Subtasks: 0
+Queue size: 0
+    Queues:
+       general  0 / 6 (+6) 
+       storage  0 / 2 (+2) 
+       network  0 / 1 (+0) 
+           vps  0 / 4 (+4) 
+      zfs_send  0 / 3 (+0) opens in 01:29:58
+      zfs_recv  0 / 3 (+0) opens in 01:29:58
+          mail  0 / 2 (+2) 
+           dns  0 / 1 (+0) 
+        outage  0 / 128 (+0) 
+         queue  0 / 256 (+16) 
+      rollback  0 / 6 (+6) 
+---
+
+START: 2026-09-14 13:00:46 +0200
+COMMAND: sv check nodectld
+END: 2026-09-14 13:00:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2650) 75s
+---
+
+START: 2026-09-14 13:00:46 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 13:00:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:00:46 +0200
+COMMAND: nodectl status
+END: 2026-09-14 13:00:47 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+   Version: 4.2.1
+     State: running
+    Uptime: 00:00:04
+  Consoles: 0
+  Subtasks: 0
+Queue size: 0
+    Queues:
+       general  0 / 6 (+6) 
+       storage  0 / 2 (+2) 
+       network  0 / 1 (+0) 
+           vps  0 / 4 (+4) 
+      zfs_send  0 / 3 (+0) opens in 01:29:56
+      zfs_recv  0 / 3 (+0) opens in 01:29:56
+          mail  0 / 2 (+2) 
+           dns  0 / 1 (+0) 
+        outage  0 / 128 (+0) 
+         queue  0 / 256 (+16) 
+      rollback  0 / 6 (+6) 
+---
+
+START: 2026-09-14 13:01:11 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 13:01:11 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:01:11 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-09-14 13:01:12 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-09-14 13:01:12 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-09-14 13:01:13 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-09-14 13:01:13 +0200
+COMMAND: nodectl queue resume all
+END: 2026-09-14 13:01:14 +0200
+ELAPSED: 1.32s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 13:04:15 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup-a/1
+END: 2026-09-14 13:04:15 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+tank/backup-a/1
+---
+
+START: 2026-09-14 13:04:15 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup-b/1
+END: 2026-09-14 13:04:15 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+tank/backup-b/1
+---
+

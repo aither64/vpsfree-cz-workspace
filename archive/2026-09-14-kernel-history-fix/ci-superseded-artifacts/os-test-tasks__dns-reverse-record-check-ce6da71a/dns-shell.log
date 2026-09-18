@@ -1,0 +1,132 @@
+SHELL: 0
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: systemctl is-active --quiet bind.service
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: systemctl reset-failed vpsadmin-nodectld.service
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: systemctl restart vpsadmin-nodectld.service
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:44 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:46:44 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:45 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:46:45 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:45 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:46:45 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:46 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-nodectld.service
+END: 2026-09-14 11:46:46 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:46:46 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-09-14 11:46:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-09-14 11:47:50 +0200
+COMMAND: cat /var/named/vpsadmin/primary_type/113.0.203.in-addr.arpa.zone
+END: 2026-09-14 11:47:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+$ORIGIN 113.0.203.in-addr.arpa.
+$TTL 3600
+@ IN SOA ns-reverse.dns.test. dns.example.test. 2 1D 2H 4W 1H
+@ IN  NS ns-reverse.dns.test.
+25                              IN  PTR         host.example.test.
+---
+
+START: 2026-09-14 11:48:04 +0200
+COMMAND: poweroff
+END: 2026-09-14 11:48:04 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+

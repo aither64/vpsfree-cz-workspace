@@ -1,0 +1,33 @@
+Successfully installed bundler-4.0.20
+1 gem installed
+Bundle complete! 7 Gemfile dependencies, 46 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+Preparing worktree (detached HEAD f7a17d6e5)
+HEAD is now at f7a17d6e5 api: fix anonymous DDNS account-state checks
+Updating f7a17d6e5..c38839d5b
+Fast-forward
+ ...0000_add_node_kernel_event_last_confirmed_at.rb |   5 +
+ ...4190000_add_node_kernel_evidence_checkpoints.rb |  11 +
+ api/db/schema.rb                                   | 333 +++++++++++----------
+ .../api/kernel_evidence/snapshot_reader.rb         |   7 +-
+ .../vpsadmin/api/kernel_evidence/stable_state.rb   |  54 ++++
+ .../api/operations/node/record_kernel_evidence.rb  |  51 ++--
+ api/lib/vpsadmin/supervisor/node/status.rb         |  21 ++
+ api/models/node.rb                                 |   1 +
+ api/models/node_kernel_evidence_checkpoint.rb      |  11 +
+ .../api/resources/node_kernel_evidence_spec.rb     |  18 ++
+ .../api/kernel_evidence/stable_state_spec.rb       |  95 ++++++
+ ...add_node_kernel_event_last_confirmed_at_spec.rb |  30 ++
+ ...00_add_node_kernel_evidence_checkpoints_spec.rb |  32 ++
+ .../operations/node/record_kernel_evidence_spec.rb | 140 ++++++++-
+ api/spec/supervisor/node/status_spec.rb            | 256 ++++++++++++++++
+ tests/ci-selection.yml                             |   3 +
+ tests/suite/supervisor/runtime-ingestion.nix       | 142 ++++++++-
+ 17 files changed, 1017 insertions(+), 193 deletions(-)
+ create mode 100644 api/db/migrate/20260914180000_add_node_kernel_event_last_confirmed_at.rb
+ create mode 100644 api/db/migrate/20260914190000_add_node_kernel_evidence_checkpoints.rb
+ create mode 100644 api/lib/vpsadmin/api/kernel_evidence/stable_state.rb
+ create mode 100644 api/models/node_kernel_evidence_checkpoint.rb
+ create mode 100644 api/spec/lib/vpsadmin/api/kernel_evidence/stable_state_spec.rb
+ create mode 100644 api/spec/migrations/20260914180000_add_node_kernel_event_last_confirmed_at_spec.rb
+ create mode 100644 api/spec/migrations/20260914190000_add_node_kernel_evidence_checkpoints_spec.rb
