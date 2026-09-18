@@ -48,12 +48,16 @@ destinations as labelled URLs.
 - Coordination workspace (`aither64/vpsfree-cz-workspace`): hybrid user runtime,
   registry and routing, CLI dispatch, lifecycle enforcement and recovery,
   tests, documentation, and durable agent rules.
+- `vpsfree-cz-configuration`: generic feature-deployment policy, privileged
+  nginx/TLS/Basic Auth substrate, user-service socket boundary, and internal
+  workspace DNS.
 
-The current implementation and review scope is the workspace repository only,
-on its existing `2026-09-06-portal-config-deployment-policy` feature branch.
-The privileged nginx/TLS/Basic Auth substrate was deployed earlier from an
-unmerged `vpsfree-cz-configuration` feature branch; this follow-up neither
-changes nor pins that repository and requires no NixOS deployment.
+The final integration covers the existing
+`2026-09-06-portal-config-deployment-policy` feature branch in both
+repositories. The configuration branch keeps only a generic rule separating
+development deployment from integration; portal-specific policy remains in
+the workspace. Integrating the already deployed substrate requires no NixOS
+deployment.
 
 ## Approach
 
@@ -133,9 +137,10 @@ changes nor pins that repository and requires no NixOS deployment.
   state is immutable.
 - Give terminal and browser callers the same high-level `archive`, `delete`,
   and `revive` operations. Archival uses one explicit confirmation without a
-  typed slug; deletion keeps typed-slug confirmation because it is destructive.
-  Give the portal a narrowly scoped internal authorization path that is
-  accepted only from its own systemd service cgroup.
+  typed slug; deletion also uses one explicit yes/no confirmation, with a
+  separate force choice for dirty worktrees or an active turn. Give the portal
+  a narrowly scoped internal authorization path that is accepted only from its
+  own systemd service cgroup.
 - State in durable workspace rules that completing a response or preparing an
   initiative for handoff never authorizes an agent to archive or stop it. The
   user must explicitly request session closure; agents must not schedule
@@ -194,8 +199,8 @@ changes nor pins that repository and requires no NixOS deployment.
 - Give archive, delete, and revive one durable operation contract. Make all
   three browser actions asynchronous, expose journal phase, progress, elapsed
   time, paused/failed state, and deterministic retry, and print the same phase
-  labels in the CLI. Keep archive confirmation simple and retain typed
-  confirmation for destructive deletion.
+  labels in the CLI. Use one explicit confirmation for archive and deletion;
+  keep deletion's independent force choice for dirty or active state.
 - Replace the settings dialog with compact model and reasoning selectors beside
   the Default/Plan and Interrupt controls. Show the active turn and elapsed
   time below the transcript.
@@ -222,6 +227,31 @@ changes nor pins that repository and requires no NixOS deployment.
 - Deliver an initial tmux/index repair first, then the larger interface update.
   Use independent agents for non-overlapping backend changes and integrate the
   shared server, template, JavaScript, and CSS changes in the primary worktree.
+
+## Lifecycle operation and navigation follow-up
+
+- Put archive, delete, and revive progress on the index. Return there as soon
+  as the portal accepts an operation, keep successful outcomes for 15 minutes,
+  and retain failures until retry, replacement by success, or dismissal.
+- Persist bounded operation receipts in private per-workspace XDG state and
+  reconcile them with lifecycle journals and authoritative tracking. A later
+  successful CLI or agent action must supersede an earlier portal failure.
+- Keep deletion's force choice, but replace typed-slug confirmation with one
+  browser confirmation and one terminal yes/no prompt. Deletion must inventory
+  exact canonical session worktrees without requiring complete portal
+  registration, while retaining branches and recovery metadata.
+- Stop index refresh as soon as session creation starts so it cannot abort the
+  pending redirect. Give session creation, forks, and new-session plan
+  implementation visible progress and elapsed time.
+- Pass an explicit no-implicit-closure developer instruction through Codex
+  thread start, resume, fork, and mode changes while the corrected workspace
+  rules remain unmerged.
+- Render cluster service links as a `Link` heading with the URL beneath it.
+  Distinguish queued and running GitHub workflows for the exactly pushed
+  current revision, and never render an empty lifecycle badge.
+- Leave `2026-09-07-fix-ip-charged-environments` archived. Its archive is
+  valid; only the stale failed portal operation is wrong. After deployment,
+  delete `2026-09-04-test-session-2` with force through the repaired workflow.
 
 ## Compatibility and deployment
 

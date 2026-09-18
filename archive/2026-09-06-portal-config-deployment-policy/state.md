@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-06-portal-config-deployment-policy
@@ -9,14 +9,141 @@ lifecycle: active
 - Workspace branch: `2026-09-06-portal-config-deployment-policy`
 - Worktree:
   `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/workspace`
-- Current workspace base: `21b888d2c5fa4cd2164ca23a9eeee8f13847fa59`.
-- Current workspace review candidate:
-  `cbaa621fb9b0b89ad4fba24a503b030927346a6b`.
-- Current change and review scope: workspace repository only. The historical
-  configuration substrate branch remains unmerged but is not changed, pinned,
-  built, or deployed by this follow-up.
+- Final workspace integration base:
+  `2c2d1f9e5fbc557ddb3e7854fc18e85dd9fff7c3`.
+- Final workspace feature and `master` head:
+  `3580e60bb035c2d0ba5be6f0d2489bbbf30ded3d`.
+- Configuration branch:
+  `2026-09-06-portal-config-deployment-policy`.
+- Configuration worktree:
+  `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-06-portal-config-deployment-policy/vpsfree-cz-configuration`.
+- Final configuration feature and `master` head:
+  `7481618dacab04bfd5b09bc730c373c2d2bf14d7`.
 
 ## Status
+
+- Both feature branches were integrated into their remote `master` branches by
+  fast-forward. Feature branches and worktrees are retained; no deployment,
+  session archival, or runtime restart was performed during integration.
+- The configuration policy commit was rewritten as `74734b64` to retain only
+  the generic rule that deploying a feature branch does not authorize its
+  integration. Portal-specific guidance remains in the workspace repository.
+  A focused mandatory General review with `gpt-5.6-sol` at `xhigh` found no
+  Blocking, Important, or Advisory issues in `7cfe3837..7481618d`.
+- Final configuration validation passed all Overcommit hooks and built
+  aitherdev plus both internal DNS nodes at generation
+  `2026-09-09--18-44-16`. Parallel builds initially collided on ConfCtl's
+  second-resolution log filename; the aitherdev build was rerun alone and
+  exited successfully.
+- The reviewed workspace implementation at `15e0ebb` was rebased
+  patch-identically onto current shared `master`, producing final head
+  `3580e60bb035c2d0ba5be6f0d2489bbbf30ded3d`. Its complete Nix sandbox build
+  passed at `/nix/store/ixnq4l04xz2irsfi3dwyk832xhnbpdms-workspace-portal-0.1.0`.
+- Follow-up implementation was originally committed on the workspace feature
+  branch at `15e0ebbcbee442786c03affc485dede4939d9b7b` as eight focused commits: sealed
+  canonical deletion, the Codex no-implicit-closure policy, exact-revision
+  workflow states, cluster-link presentation, fork/plan progress, durable
+  index-visible portal operations, and a deterministic cluster signal fixture.
+- Preliminary integrated verification passed all portal Go packages, focused
+  Codex, repository, and Web tests, the browser JavaScript syntax/unit
+  contract, Ruby syntax, and diff checks. The complete deletion/session suite
+  passed 282 tests with 2,813 assertions; the Codex and Web packages also
+  passed with the race detector.
+  The Codex protocol corpus check passed in the implementation worker's Nix
+  Python environment. A later ambient invocation failed only because that
+  Python lacked `jsonschema`; the final sandbox package check below used the
+  declared dependency.
+- Initial mandatory review found retry inventory drift, pre-quiesce mutable
+  recovery metadata, weak portal success inference, terminal receipt capacity,
+  partial-list Codex reconciliation, browser-storage cleanup, and commit
+  cohesion problems. Those findings were remediated and regression-tested.
+  The first reruns found two remaining cross-component boundaries: the Ruby
+  deletion marker lacked a producer-to-consumer contract test, and a completed
+  delete receipt cleared browser data for every thread under a reusable slug.
+  The marker now has a real Ruby-to-Go contract test, and deletion receipts
+  retain the exact retired Codex thread so replacement-thread data is never
+  cleared. A later architecture rerun found that a retained failed deletion
+  could still be retried against a recreated slug. Receipt retries now prove
+  the same thread both when accepted and again under the exclusive transition
+  lock immediately before the CLI runs; mismatches require a fresh confirmed
+  deletion. The cross-language test now uses Ruby's real preparation, phase,
+  preservation, and finalization methods. The next risk rerun found that a
+  stale browser page could still initiate a fresh deletion after its slug was
+  recreated. Browser confirmation is now bound to a non-Codex tracking
+  incarnation identity and rechecked under the transition lock, including for
+  threadless sessions; absent targets fail closed. The persisted identity is
+  computed before read-only presentation normalization, with a page-to-delete
+  regression for unavailable Codex threads. A final architecture advisory
+  found that a later CLI journal could inherit an older completed receipt for
+  the same slug. A subsequent risk check showed that hydrating a new external
+  journal from current tracking was itself racy. New external journal receipts
+  therefore never inherit or synthesize browser identity; they remain fully
+  retryable through their CLI journal but skip browser-storage cleanup. The
+  final reruns then found that receipt correlation still depended on mutable
+  tracking metadata and that a queued retry could cross from deletion journal
+  A to a replacement journal B for the same slug. Each deletion now receives a
+  cryptographic operation ID before execution; the portal persists and submits
+  it, Ruby retains it through every atomic journal rewrite, and reconciliation
+  plus the exclusive-lock pre-command check require an exact match. Stale retry
+  controls also submit the displayed journal ID. Regression tests cover both
+  same-journal tracking rewrites and an A-to-B replacement while waiting for
+  the lock. Follow-up review also found that an older in-process completion
+  could overwrite the replacement receipt and that the session page had a
+  second, divergent delete-retry path. Unique receipt IDs now make terminal
+  updates compare-and-swap, and pending deletion uses the same ID-bound retry
+  endpoint as the index. Every retry, including a failure before its journal
+  exists, must submit the displayed journal ID; all lifecycle retries also
+  submit the displayed receipt ID so a stale archive or revive card cannot act
+  on a replacement receipt. Final review also bound pre-journal archive and
+  revive retries to the exact tracking incarnation, made terminal deletion
+  proof require the exact journal identity and original operation time, let
+  failed deletion retries upgrade to force, and correlated lost-response
+  recovery by target/options or exact journal. A sandbox-only signal test race
+  was fixed with a child readiness handshake after resetting inherited TERM.
+  General, architecture, and risk reruns found no actionable issue at exact
+  range `4cb086b84434abb4f62270e50984f650291e9cdf` through
+  `15e0ebbcbee442786c03affc485dede4939d9b7b`. The change is high risk because
+  it changes destructive cleanup, persistent operation receipts, public CLI and
+  browser APIs, and Codex protocol instructions. General, architecture, and
+  risk lanes used `gpt-5.6-sol` at `xhigh`.
+- The user approved a follow-up for durable index-visible lifecycle operations,
+  one-confirmation deletion, legacy manifest-tolerant cleanup, creation and
+  fork progress, current-revision queued/running workflows, stacked cluster
+  links, and Codex no-implicit-closure instructions.
+- Shared `master` advanced to `7c784f9` when another Codex archived
+  `2026-09-07-fix-ip-charged-environments` after completing its project work.
+  Its earlier browser archive had failed correctly on unmerged branches, but
+  the portal retained that failed operation in memory after the later archive
+  succeeded. The feature branch was rebased onto this shared commit before the
+  follow-up implementation.
+- The former deletion failure for `2026-09-04-test-session-2` came from its
+  unregistered canonical vpsAdminOS worktree. The repaired force path sealed
+  that exact worktree before cleanup; the successful deletion is recorded
+  below.
+- The shared checkout contains unrelated modified and untracked session files.
+  They must remain untouched; implementation is confined to the existing
+  workspace feature worktree and narrowly scoped tracking updates here.
+- Exact-head validation passed all portal Go packages, `go vet`, race-enabled
+  session/Codex/repository/cluster/Web packages, 285 `dev-session` tests with
+  2,855 assertions, 45 cluster tests with 512 assertions, 50 host tests with
+  309 assertions, JavaScript syntax and browser contracts, and the complete
+  Nix sandbox build. The sandbox package is
+  `/nix/store/n24yw33zw36qm0xyv9s693kkk0y7m7lm-workspace-portal-0.1.0`.
+- Force-pushed the rewritten unpublished workspace branch with the exact remote
+  lease. GitHub reports no workflow runs for the branch.
+- Activated the reviewed package as user profile generation 14. The portal and
+  router restarted successfully; Codex App Server PID `2323118`, managed tmux
+  PID `2323147`, and password-reset cluster PID `3779261` were preserved while
+  that session had an active turn. Unix health and authenticated VPN HTTPS
+  return 200; unauthenticated VPN HTTPS returns 401. The filesystem-only index
+  HTML responds in 0.04 seconds and the asynchronous status endpoint in about
+  1.1 seconds on the current 15-session workspace.
+- Deleted only `2026-09-04-test-session-2` through the deployed force-delete
+  workflow. Its tracking and worktree are absent from discovery, its
+  vpsAdminOS branch remains at `ec7dc42`, and its private owner-only recovery
+  record is retained below `~/.local/state/vpsfree-workspaces/removed/`.
+  The helper committed the exact tracking deletion on shared `master` as
+  `125407a`; unrelated shared working-tree changes remain untouched.
 
 - Session created without launching a duplicate Codex client. The current API
   agent owns implementation.
@@ -837,12 +964,13 @@ lifecycle: active
   - `4cb8638`: cursor-safe long-thread reconciliation and durable send receipts;
   - `b9cdb94`: structured Codex failure presentation;
   - `cbaa621`: labelled cluster service links.
-- Configuration commits:
-  - `e06c183e`: durable repository-local deployment/integration rule;
-  - `f66ba792`: privileged wildcard HTTPS, credentials, router socket, linger,
+- Configuration commits after final rebase:
+  - `74734b64`: generic feature deployment/integration rule;
+  - `cf77f8d5`: privileged wildcard HTTPS, credentials, router socket, linger,
     and removal of the system-owned workspace application;
-  - `e9643195`: declarative workspace DNS wildcard and updated SOA serial.
-- Configuration `master` remains at `4d570e30`; the implementation is unmerged.
+  - `7481618d`: declarative workspace DNS wildcard and updated SOA serial.
+- Configuration `master` and its retained feature branch both point to
+  `7481618dacab04bfd5b09bc730c373c2d2bf14d7`.
 - All portal Go packages passed. Workspace and configuration flake evaluation
   passed. The resolver regression verifies `xhigh` for the default model, an
   explicit effort override, and fallback to an explicitly selected model's
@@ -856,12 +984,10 @@ lifecycle: active
   the ambient shell. Both configuration commits ran their declared hooks
   successfully inside `nix develop`; its untracked `.bin/` and `.bundle/`
   development-shell caches are excluded from commits.
-- The current reviewed workspace feature head is
-  `cbaa621fb9b0b89ad4fba24a503b030927346a6b`. It is pushed and deployed from
-  the unmerged feature worktree; it remains unmerged. The historical
-  configuration feature head
-  remains `e96431958b058ef495f491420655cfb7a4085fde`; it is outside this
-  follow-up.
+- The workspace feature and `master` both point to
+  `3580e60bb035c2d0ba5be6f0d2489bbbf30ded3d`. The retained configuration
+  feature and `master` both point to
+  `7481618dacab04bfd5b09bc730c373c2d2bf14d7`.
 - The handoff helper cannot bind this API-owned process to an initiative because
   `VPSFREE_DEV_SESSION_SLUG` is unset. The explicit initiative is unchanged;
   its canonical post-deployment URL is
@@ -898,7 +1024,6 @@ lifecycle: active
 
 ## Cleanup
 
-- Keep both portal feature worktrees and branches while they remain unmerged.
-  Remove the worktrees without force only after integration or explicit
-  abandonment, retain the branches, and archive this initiative only after the
-  final merged-head checks pass.
+- Both feature branches are merged and retained. Keep the worktrees and active
+  session until the user explicitly requests archival; archival will perform
+  the final merged-head checks and non-force cleanup.
