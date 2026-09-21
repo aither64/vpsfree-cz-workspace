@@ -1,21 +1,17 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-18-aitherdev-codex-deepseek
 
 ## Status
 
-The native DeepSeek Codex configuration was deployed to aitherdev. Build,
-dry activation, switch deployment, and host health checks passed. The one
-provider smoke test is blocked because the existing DeepSeek API key is
-rejected upstream.
+The native DeepSeek Codex configuration is deployed to aitherdev, verified
+against DeepSeek, and merged into `vpsfree-cz-configuration` `master`.
 
 ## Next actions
 
-- Replace `/home/aither/.codex/deepseek-key` with a valid DeepSeek API key.
-- Re-run one `codex-ds exec --ephemeral` smoke request after rotating the key.
-- Keep the feature branch unmerged until explicit integration direction.
+- No further action. The user requested integration and owned-worktree cleanup.
 
 ## Documentation
 
@@ -30,6 +26,7 @@ rejected upstream.
   - worktree: `worktrees/2026-09-18-aitherdev-codex-deepseek/vpsfree-cz-configuration`
   - base: `dea3e00462e39c0141481a714b5dbabf6562b353`
   - head: `3e51235d`
+  - integrated remote default head: `3e51235d`
 
 ## Commands run
 
@@ -42,6 +39,9 @@ rejected upstream.
 - `nix develop --command confctl build -y cz.vpsfree/machines/aitherdev`
 - `nix develop --command confctl deploy -y cz.vpsfree/machines/aitherdev dry-activate`
 - `nix develop --command confctl deploy -y cz.vpsfree/machines/aitherdev switch`
+- `codex-ds exec --ephemeral --skip-git-repo-check --sandbox read-only ...`
+- `git merge --ff-only 3e51235d...` in a fresh worktree at `origin/master`
+- `git push origin HEAD:master`
 
 ## Results
 
@@ -59,16 +59,22 @@ rejected upstream.
 - The deployed profile parses, the wrapper is available from the aither user
   profile, and the legacy proxy service, listener, and state directory are
   absent. The first Codex invocation cleared a conflicting inherited ChatGPT
-  login. A subsequent native request retried without a response; a direct,
-  redacted Responses API probe returned HTTP 401 `authentication_error` for the
-  installed key. No credential value was recorded.
+  login. After the user rotated the key, a native request to `deepseek-v4-pro`
+  returned exactly `OK` using the `ds` profile.
+- A fresh detached worktree fast-forwarded `origin/master` from `dea3e004` to
+  `3e51235d`. Hooks, model-catalog JSON validation, and diff checks passed;
+  the update was pushed to `git@github.com:vpsfreecz/vpsfree-cz-configuration.git`.
+- Git confirms `3e51235d` is an ancestor of current `origin/master`. The
+  temporary merge worktree and initiative configuration worktree were removed.
+  The feature branch was retained.
 
 ## Open questions
 
-- The existing `/home/aither/.codex/deepseek-key` is invalid at DeepSeek. A
-  valid API key is required to complete the live request acceptance check.
+- None.
 
 ## Cleanup
 
-- Do not touch unrelated dirty coordination paths or other initiative
-  worktrees.
+- The temporary merge worktree and the initiative configuration worktree were
+  removed. The feature branch remains retained after integration. The completed
+  session record remains in `work/` because archival was not explicitly
+  requested.
