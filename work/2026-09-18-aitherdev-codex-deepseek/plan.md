@@ -53,6 +53,6 @@ localhost DeepSeek proxy with DeepSeek's native Responses API integration.
 - Run `dry-activate`, then deploy with `switch`.
 - Verify the proxy service/listener is absent and run one minimal
   `codex-ds exec --ephemeral` request.
-- Run the required fast concurrent change review before long verification;
-  review agents remain `gpt-6-astra`/`xhigh` under workspace policy, while
-  long-running build/deploy monitoring uses the fresh Luna/low watcher.
+- Run one general review before long verification, using `gpt-5.6-terra` at
+  high effort as explicitly directed; use the fresh Luna/low watcher for
+  long-running build and deployment monitoring.
