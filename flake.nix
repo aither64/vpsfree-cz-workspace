@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
-    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/298a8a42282f193c82a24e87a95300548a4d5903";
+    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/e36a0dd0f7b6a3ceb92cb154849b447e465949a0";
   };
 
   outputs =
@@ -16,6 +16,7 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
+      teamConfig = import ./config/agent-teams.nix;
       siteConfig = {
         kb = {
           cz = {
@@ -39,7 +40,7 @@
         };
       };
       package = vpsfree-dev-workspace.lib.mkPackage {
-        inherit pkgs siteConfig;
+        inherit pkgs siteConfig teamConfig;
       };
     in
     {
@@ -73,6 +74,100 @@
               ruby ${self}/test/agent_instructions_test.rb
               touch "$out"
             '';
+        agent-team-policy = pkgs.runCommand "workspace-agent-team-policy-tests" {
+          nativeBuildInputs = [ pkgs.jq ];
+        } ''
+          catalog=${package}/share/dev-workspace/agent-teams.json
+          metadata=${package}/share/dev-workspace/package.json
+          test -f "$catalog"
+          ${pkgs.jq}/bin/jq -e '
+            .schema_version == 3 and
+            .default_team == "delegated" and
+            .default_development_team == "delegated" and
+            .capacity.required_native_child_threads == 4 and
+            .work_policy.design.default == "xhigh" and
+            .work_policy.design.simple == "high" and
+            .work_policy.design.allowed == ["high", "xhigh"] and
+            .work_policy.design.simple_requires_reason == true and
+            .work_policy.design.followup == "retain" and
+            .work_policy.implementation.default == "xhigh" and
+            .work_policy.implementation.simple == "high" and
+            .work_policy.implementation.allowed == ["high", "xhigh"] and
+            .work_policy.implementation.simple_requires_reason == true and
+            .work_policy.implementation.followup == "retain" and
+            .teams.solo.max_open_agents == 0 and
+            .teams.solo.roles.team_lead.model == "gpt-6-sol" and
+            .teams.delegated.max_open_agents == 3 and
+            .teams.delegated.roles.team_lead.model == "gpt-6-sol" and
+            .teams.delegated.roles.designer.model == "gpt-6-sol" and
+            .teams.delegated.roles.designer.effort == "xhigh" and
+            .teams.delegated.roles.designer.allowed_efforts == ["high", "xhigh"] and
+            .teams.delegated.roles.designer.lifetime == "session" and
+            .teams.delegated.roles.implementer.model == "gpt-6-sol" and
+            .teams.delegated.roles.implementer.effort == "xhigh" and
+            .teams.delegated.roles.implementer.allowed_efforts == ["high", "xhigh"] and
+            .teams.delegated.roles.implementer.lifetime == "session" and
+            .teams.delegated.roles.reviewer.model == "gpt-6-sol" and
+            .teams.delegated.roles.reviewer.effort == "xhigh" and
+            .teams.delegated.roles.reviewer.allowed_efforts == ["xhigh"] and
+            .teams.delegated.roles.reviewer.lifetime == "session" and
+            .teams.delegated.roles.reviewer.fresh_context == true and
+            ([.teams[].roles[].model] | all(. == "gpt-6-sol")) and
+            .teams.lead_designed.roles.team_lead.model == "gpt-6-sol" and
+            .teams.lead_designed.roles.team_lead.effort == "xhigh" and
+            (.teams.lead_designed.roles | has("designer") | not) and
+            .utilities.verification_watcher.model == "gpt-6-luna" and
+            .utilities.verification_watcher.effort == "low" and
+            .utilities.verification_watcher.behavior == "verification_watcher" and
+            .utilities.verification_watcher.lifetime == "operation" and
+            .utilities.verification_watcher.required_for == [
+              "long_check", "uncertain_check", "workflow_wait", "ci_wait", "deployment_wait"
+            ] and
+            ([.teams[].roles | keys[]] | index("verification_watcher") | not) and
+            ([.. | strings] | all(contains("gpt-5.6-") | not)) and
+            ([.. | strings] | all(contains("gpt-6-astra") | not))
+          ' "$catalog" >/dev/null
+          ${pkgs.jq}/bin/jq -e '
+            .agent_teams.managed == true and
+            .agent_teams.catalog.schema_version == 3 and
+            .agent_teams.native_capacity.config_key == "agents.max_concurrent_threads_per_session" and
+            .agent_teams.native_capacity.required_value == 4
+          ' "$metadata" >/dev/null
+          ${pkgs.jq}/bin/jq -r '.agent_teams.native_role_configs[].path' "$metadata" |
+            while IFS= read -r path; do
+              config=${package}/$path
+              test -f "$config"
+              if grep -Eq "^(model|model_reasoning_effort|sandbox_mode) =" "$config"; then
+                echo "native role configuration overrides runtime settings" >&2
+                exit 1
+              fi
+            done
+          touch "$out"
+        '';
+        cluster-provider-composition = pkgs.runCommand
+          "workspace-cluster-provider-composition-tests"
+          {
+            nativeBuildInputs = [ pkgs.jq ];
+          }
+          ''
+            workspace=${self}/.dev-workspace.json
+            catalog=${package}/share/dev-workspace/extensions.json
+            expected=$(${pkgs.jq}/bin/jq -c \
+              '.developmentClusterProviders | sort' "$workspace")
+            actual=$(${pkgs.jq}/bin/jq -c \
+              '[.clusterProviders[].id] | sort' "$catalog")
+            test "$expected" = "$actual"
+            for provider in $(${pkgs.jq}/bin/jq -r \
+              '.developmentClusterProviders[]' "$workspace"); do
+              command=$(${pkgs.jq}/bin/jq -er \
+                --arg provider "$provider" \
+                '.clusterProviders[] | select(.id == $provider) | .command' \
+                "$catalog")
+              test -x "$command"
+              test -x ${package}/libexec/workspace-portal/"$provider"-devcluster
+            done
+            touch "$out"
+          '';
       };
     };
 }
