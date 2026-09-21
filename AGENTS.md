@@ -80,10 +80,19 @@ the parent's responsibility for choosing scope or accepting results.
   networking for development clusters; use local only if explicitly requested or
   the bridge is unavailable, recording why. Stop unexpected local kernel builds
   and investigate under the verification procedure's documented exceptions.
-- Planning, implementation, diagnosis and review stay on gpt-6-astra/xhigh.
-  Automatically use `~/.codex/skills/dev-session-monitor/SKILL.md` for long or
-  uncertain-duration verification, retaining its fresh Luna/low watcher scope,
-  cancellation rules and visible fallback. Respect instructions not to await CI.
+- For a direct team, use the session's retained roster settings for members
+  and the installed catalog for new presets. The vpsFree.cz policy selects
+  GPT-6 Sol for retained roles and GPT-6 Luna/low for verification watchers.
+  Substantive design and independent review use xhigh. High is allowed for a
+  bounded simple design or implementation unit only with a recorded reason.
+  Never select or fall back to Astra automatically. Sessions without a roster
+  retain ordinary supported
+  Codex resolution; do not invent a team, role lineup, or fallback model for
+  them. Long or uncertain-duration builds, tests, workflows, CI and deployment
+  waits must be launched and monitored by a fresh Luna/low utility subagent
+  through `~/.codex/skills/dev-session-monitor/SKILL.md`. The watcher is not a
+  team member; retain the skill's ownership, cancellation and visible-fallback
+  rules. Respect instructions not to await CI.
 - Use the dev-session-documentation skill for substantive work, and the
   dev-session-handoff skill after material changes/review/status requests. Keep
   tracking and the portal manifest current and include the stable session URL.

@@ -8,13 +8,18 @@ to the coordination workspace unless the text specifies another repository.
 
 Use the generic `dev-session-monitor` skill for authorized tests, CI checks and
 builds expected to exceed one minute, and delegate uncertain-duration integration
-tests and builds before launching them. This explicitly authorizes its fresh
-`gpt-5.6-luna`/`low` monitoring subagent. Keep known quick checks inline and keep
-planning, implementation, diagnosis and review on `gpt-6-astra`/`xhigh`. Pass
-project escalation rules, including unexpected local kernel builds, in the
-watcher's brief. The parent continues automatically on completion or escalation.
-If the skill or delegation is unavailable, report that once and use minimal-output
-parent monitoring. A user's instruction not to wait for CI takes precedence.
+tests and builds before launching them. Resolve the fresh verification watcher
+from the installed catalog's separate utility policy. It is not a team member
+and must not edit source, diagnose, retry, approve, or deploy.
+Keep known quick checks inline. Resolve planning, implementation, diagnosis and
+review settings from the retained team roster, with xhigh review effort. For
+sessions without a roster, retain ordinary supported Codex resolution. Do not
+invent a team or fallback model. Pass project escalation rules, including
+unexpected local kernel builds, in the watcher's brief. The parent continues
+automatically on completion or escalation. If the skill or delegation is
+unavailable, report
+that once and use minimal-output parent monitoring. A user's instruction not to
+wait for CI takes precedence.
 
 Development is generally Nix-based. Prefer each repository's `nix develop`,
 `nix-shell`, flake outputs, or documented development shell before running
