@@ -4,7 +4,7 @@
   inputs = {
     workspace.url = "git+file:///home/aither/workspace/ai/vpsfree.cz?rev=0ccd1101f56499b69312c72de82f4171dde08762";
     vpsfree-dev-workspace.url = "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-dev-workspace.git?rev=583647dd998e5b4cb0e9fa6833e29bb5aec757b8";
-    dev-workspace.url = "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/dev-workspace.git?rev=e33344f1e6bb70257ab0024c50b08fb87e6947e0";
+    dev-workspace.url = "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/dev-workspace.git?rev=6d4ce3571614d44b6527104c4b436d148b2fd96e";
     codex-web = {
       url = "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/codex-web.git?rev=52b8ca6e9ddf2175d1a9163996fa9073f9c1882d";
       flake = false;

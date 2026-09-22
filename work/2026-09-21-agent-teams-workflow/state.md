@@ -52,7 +52,7 @@ selection change. The portal now exposes the corresponding managed-team
 controls while retaining restrictions for legacy, unmanaged, recovery, corrupt,
 uncertain and otherwise ineligible states. C1–C3 together form the deployed
 feedback release candidate. The repaired wrapper was built and selected in the
-user profile at `/nix/store/aavh5axl72bv9ivxb85yjyr79rxdp9z0-dev-workspace-0.2.0`;
+user profile at `/nix/store/1brckah10slq10gphycd213xr5p3wj49-dev-workspace-0.2.0`;
 a fresh managed delegated feedback session `2026-09-22-team-test` was then
 created successfully. The user-feedback stage is now open. No approval,
 publication or default-branch integration is recorded.
@@ -77,13 +77,19 @@ publication or default-branch integration is recorded.
 - The authorized aitherdev deployment path is the local-input wrapper at
   `work/2026-09-21-agent-teams-workflow/deployment-wrapper`.
 - Its intended exact inputs are `codex-web` `52b8ca6`, generic
-  `dev-workspace` `e33344f`, organization extension
+  `dev-workspace` `6d4ce35`, organization extension
   `vpsfree-dev-workspace` `583647dd`, and site workspace `0ccd1101`.
 - The local wrapper built successfully and `workspace-host switch --source`
-  selected `/nix/store/aavh5axl72bv9ivxb85yjyr79rxdp9z0-dev-workspace-0.2.0`.
+  selected `/nix/store/1brckah10slq10gphycd213xr5p3wj49-dev-workspace-0.2.0`.
   The post-switch router, Codex and portal services are active; `dev-session
-  validate` passed with 55 manifests. A fresh delegated managed session was
-  created at the feedback URL above. No configuration repository was changed.
+  validate` passed with 55 manifests. The fresh delegated managed session was
+  created at the feedback URL above. Its initial portal feedback exposed a
+  separate alias-origin defect: a registered alias served the page but was
+  absent from the conversation handler's origin allowlist. Generic `6d4ce35`
+  passes exact HTTPS origins only from the registered aliases, verifies both
+  the alias and canonical session transcript paths at HTTP 200, and never
+  trusts a request Host or Origin to expand that set. No configuration
+  repository was changed.
 
 ## Documentation
 
@@ -316,8 +322,8 @@ publication or default-branch integration is recorded.
   fixture and makes no product-behavior change. Its focused verification passed
   2 runs/14 assertions, and fresh Luna/low generic-package verification passed
   92 runs/508 assertions. The later aitherdev wrapper build and user-profile
-  switch succeeded; the current package is
-  `/nix/store/aavh5axl72bv9ivxb85yjyr79rxdp9z0-dev-workspace-0.2.0`.
+  switch succeeded; the later alias-origin correction is current at
+  `/nix/store/1brckah10slq10gphycd213xr5p3wj49-dev-workspace-0.2.0`.
   By user decision, no Phase 2C.3 review has run yet; C1–C3 are the combined
   deployed feedback release candidate. No review approval, publication or
   default-branch integration is recorded.
@@ -331,6 +337,14 @@ publication or default-branch integration is recorded.
   watchers then passed the wrapper build (about 4m26s), profile switch (43.5s),
   and fresh managed creation (91s). This is deployment and feedback-session
   evidence, not consolidated-review evidence.
+- Generic commit `6d4ce35` fixes the user-observed portal alias-origin failure.
+  The exact registered alias was rejected at HTTP 403 after its page loaded;
+  the public reverse proxy's unauthenticated HTTP 401 is separate and expected.
+  Fresh Luna/low checks passed focused Go portal packages and the full
+  `workspace_host_test.rb` suite (92 runs/528 assertions). A fresh Luna/low
+  wrapper build passed in about 4m25s and a fresh Luna/low profile switch passed
+  in about 61s. Post-switch direct browser-path checks return HTTP 200 for both
+  the alias and canonical origins against the retained managed session.
 
 ## Cleanup
 
