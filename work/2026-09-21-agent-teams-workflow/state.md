@@ -35,25 +35,30 @@ catalog provenance, and replacement links. Member operations use strict CAS
 `prepare`/`submitting`/`accepted`-or-`unknown` records; unknown native outcomes
 block replacement until exact-root observation and reconciliation establish the
 result. The portal presents managed-team status read-only. C1 adds no native
-portal spawn, dispatch, or team-transition path.
+portal spawn, dispatch, or team-transition path. Phase 2C.2 managed selection
+transitions is complete at generic head
+`394884b8c1e62e868625b1911eaca3c2c98a85fe`: it applies pinned-catalog team
+changes with public selection CAS, exact request replay, and an exact-root,
+turn-bound pending boundary. Its non-sending `ApplyPendingBeforeSend` helper
+revalidates the boundary and applies a valid pending transition atomically for
+the later C3 managed-send path. It adds neither portal controls, native member
+actions nor dispatch; schema-1 and unmanaged sessions retain their legacy path.
 
 ## Next actions
 
-1. Implement Phase 2C.2 CAS team transitions next, using C1's authoritative
-   member observation, unknown-operation blockers and reconciliation rules;
-   it must remain free of scheduler, native spawn, follow-up and portal-side
-   member actions.
-2. Complete the remaining runtime-team implementation, including 2C.3 managed
-   dispatch and controls, as one usable release candidate. Do not schedule
-   further independent reviewer gates during its implementation slices.
-3. Deploy that release candidate to aitherdev for user feedback on the portal
-   controls and team selections; this is a planned step, not recorded as an
-   approval or completed deployment.
-4. After the feedback stage, run one mandatory independent consolidated
+1. Implement Phase 2C.3 managed dispatch and feedback controls next. It must
+   consume C2's same-fence `ApplyPendingBeforeSend` boundary, bind every real
+   send to its exact selection identity, and retain C2's fail-closed legacy,
+   recovery and unknown-operation behavior. Do not schedule a new independent
+   reviewer gate during this release-candidate slice.
+2. Complete the resulting runtime-team release candidate, then deploy it to
+   aitherdev for user feedback on the portal controls and team selections. This
+   is the next portal milestone; no deployment is recorded here.
+3. After the feedback stage, run one mandatory independent consolidated
    Sol/xhigh review across all completed implementation phases. Apply reviewer
    fixes only after that review, following its required reruns; route long or
    uncertain verification to fresh Luna/low watchers.
-5. Publish the reviewed generic feature series when authorized, while retaining
+4. Publish the reviewed generic feature series when authorized, while retaining
    the branch; default-branch integration remains out of scope.
 
 ## Documentation
@@ -70,6 +75,8 @@ portal spawn, dispatch, or team-transition path.
 - Phase 2B.3 verification: `verification-phase2b3.md`
 - Phase 2C.0 review packet and results: `review-packet-phase2c0.md` and
   `review-results-phase2c0.md`
+- Phase 2C.2 focused module-mode check:
+  `logs/phase2c2-agentteams-module-mode.log`
 - Phase 1 mandatory review evidence: `review-packet-phase1.md`
 - Phase 1 review findings and decisions: `review-results-phase1.md`
 - Phase 1 focused and long verification: `verification-phase1.md`
@@ -243,6 +250,30 @@ portal spawn, dispatch, or team-transition path.
   transition. Phase 2C.2 is next and its existing detailed contract in
   `design-phase2c-runtime-dispatch.md` correctly depends on these C1
   observation, unresolved-operation and reconciliation invariants.
+- Phase 2C.2 is complete at generic head
+  `394884b8c1e62e868625b1911eaca3c2c98a85fe`. It resolves a managed target
+  only from the pinned catalog after runtime-authority and host-registration
+  evidence validate, then uses the public `selection_revision` CAS while the
+  private state revision advances for durable writes. At a fully quiescent idle
+  root it applies the transition immediately and records exact
+  before/requested/after state with bounded replay history; compatible retained
+  members remain eligible and incompatible members become inactive, without any
+  member create, close, retask or wake action. Only the authenticated exact-root
+  path may record one pending transition while its observed turn is active; its
+  root-and-turn boundary is later revalidated by the non-sending
+  `ApplyPendingBeforeSend` helper before C3 prepares a real send. Other active
+  or uncertain work, stale or mismatched requests, legacy/unmanaged/recovery or
+  corrupt evidence, and invalid registration all refuse without a fallback.
+  No portal control, native dispatch, native member action, deployment or
+  review is recorded for C2.
+- The focused exact-head check in
+  `logs/phase2c2-agentteams-module-mode.log` passed
+  `portal/internal/agentteams` in 1.115 seconds. The repository's pre-existing
+  stale local vendor tree remains unsuitable for this check, so it was run in
+  module mode; no vendor files were changed. The current uncommitted C3 contract
+  in `design-phase2c-runtime-dispatch.md` remains consistent with C2: it calls
+  `ApplyPendingBeforeSend` under the managed submission fence and cannot report
+  a switch as applied while sending under the old selection.
 
 ## Cleanup
 

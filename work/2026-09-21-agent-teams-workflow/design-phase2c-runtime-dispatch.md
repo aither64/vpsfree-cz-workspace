@@ -171,13 +171,48 @@ request as pending rather than as an applied switch.
 
 ## 2C.3: managed dispatch and controls
 
-Persist dispatch preparation and option/context digests before
-`PrepareSendWithOptions`, mark submitting before sending, then record accepted
-or unknown. Unknown blocks resend and transitions until both ledgers reconcile.
-Steering is only allowed under the same selection; queued starts and independent
-model/effort settings are initially refused because they cannot bind a selection
-revision safely. Portal controls expose active/pending team, pinned digest,
-next-turn lead and observed members as distinct values.
+2C.3 is the sole managed-start path. It accepts a real root input only after
+the dispatcher has revalidated the managed runtime authority, removal epoch,
+creation/root identity, pinned catalog and current selection. Its immutable
+dispatch identity binds the caller request, root/thread and turn-submission
+identity, `selection_revision`, effective lead/settings, and digests of the
+input, options and application context. A stale or incomplete identity is a
+controlled refusal, never a remap to current defaults.
+
+Under the same submission fence, a managed start must call C2's
+`ApplyPendingBeforeSend` after the root is observed idle and before it prepares
+the real send. Thus a valid boundary transition is applied to this next turn,
+not reported as applied while the old selection sends. A changed user request,
+failed boundary revalidation or blocked pending record returns its explicit
+outcome and does not submit a turn under either selection.
+
+The managed dispatch ledger and the native/retry ledger are distinct, but must
+agree on that identity. Persist the managed preparation and option/context
+digests, CAS it to `submitting`, then call `PrepareSendWithOptions`; record the
+accepted native result or `unknown` afterwards. Recovery reads and reconciles
+both ledgers plus authoritative root observation before retrying: an established
+turn is replayed as its prior outcome, while an uncertain or divergent outcome
+blocks resend and team transition. It must never create a duplicate turn, fall
+back to earlier settings, or roll back an already-applied selection.
+
+Steering may deliver a follow-up only to the same root under the exact same
+selection identity; it may not change team, lead, model or effort in flight.
+Queued starts, queue-only dispatch as a substitute for a real start, and
+per-send independent model/effort choices are refused until a design can bind
+them safely to a selection revision. This slice adds neither a scheduler nor
+member spawn/reuse/close/retask behavior, and it does not implement managed
+lifecycle operations.
+
+The portal exposes separate active and pending team/revision, pinned catalog
+digest, next-turn effective lead, dispatch state and observed members. Feedback
+controls use the same managed-send/request identity and show a pending or
+blocked result without claiming a switch or delivery completed. The composer is
+read-only whenever there is no safe real-root send boundary (including recovery,
+unknown dispatch or transition blockers); it cannot queue a later start or
+override model/effort. Legacy/schema-1 and unmanaged-source sessions keep their
+existing paths. `managed_recovery` and corrupt sessions expose diagnostic status
+only and refuse dispatch, steering and team controls; no migration or adoption
+is introduced.
 
 ## Verification and rollout
 
@@ -188,5 +223,10 @@ Important review changes that materially alter the phase require a focused
 rerun; reviewer-fix amendments do not restart review or verification on their
 own. Aitherdev deployment is a forward, quiesced user-profile switch and one
 portal/App Server restart; no configuration, migration or rollback work is
-added. Durable behavior belongs in `docs/workspace-portal.md`; command behavior
-belongs in `docs/dev-sessions.md`.
+added. Its smoke scenarios cover: an idle managed root sending with its selected
+lead; a root-bound pending transition applied before the next idle send; a
+same-selection steering follow-up; recovery after prepared/submitting/accepted
+or unknown dispatch evidence without a duplicate send; and visible refusals for
+legacy, recovery/corrupt, queued and independent-settings requests. Durable
+behavior belongs in `docs/workspace-portal.md`; command behavior belongs in
+`docs/dev-sessions.md`.
