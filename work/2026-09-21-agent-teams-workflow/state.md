@@ -50,16 +50,21 @@ send through C2's `ApplyPendingBeforeSend` fence, binds every managed send to
 the exact selection identity, and supports same-selection steering without a
 selection change. The portal now exposes the corresponding managed-team
 controls while retaining restrictions for legacy, unmanaged, recovery, corrupt,
-uncertain and otherwise ineligible states. C1–C3 together form the feedback
-release candidate, ready for an authorized aitherdev preflight and deployment;
-no deployment, approval, publication or default-branch integration is recorded.
+uncertain and otherwise ineligible states. C1–C3 together form the deployed
+feedback release candidate. The repaired wrapper was built and selected in the
+user profile at `/nix/store/aavh5axl72bv9ivxb85yjyr79rxdp9z0-dev-workspace-0.2.0`;
+a fresh managed delegated feedback session `2026-09-22-team-test` was then
+created successfully. The user-feedback stage is now open. No approval,
+publication or default-branch integration is recorded.
 
 ## Next actions
 
-1. Rebuild and switch the local-input deployment wrapper with generic
-   `dev-workspace` `e33344f`, then resume the existing failed feedback session
-   `2026-09-22-team-test`. The wrapper build, switch, and resume are pending;
-   this is not deployment or recovery evidence.
+1. Collect the user's feedback from the managed delegated session at
+   `https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-22-team-test/`.
+   The prior failed managed-creation receipt was the sole artifact (no
+   manifest, tracking directory, worktree, process, retained state or
+   lifecycle journal); after its older-package decoder deadlock was confirmed,
+   the user explicitly authorized removal of that exact receipt on 2026-09-22.
 2. After that feedback stage, run one mandatory independent consolidated
    Sol/xhigh review across all completed implementation phases. Apply reviewer
    fixes only after that review, following its required reruns; route long or
@@ -74,10 +79,11 @@ no deployment, approval, publication or default-branch integration is recorded.
 - Its intended exact inputs are `codex-web` `52b8ca6`, generic
   `dev-workspace` `e33344f`, organization extension
   `vpsfree-dev-workspace` `583647dd`, and site workspace `0ccd1101`.
-- The local wrapper input has been updated to that generic revision. Its
-  rebuild and switch, followed by resuming the failed existing session, remain
-  pending. This record makes no configuration change and does not claim
-  deployment or recovery.
+- The local wrapper built successfully and `workspace-host switch --source`
+  selected `/nix/store/aavh5axl72bv9ivxb85yjyr79rxdp9z0-dev-workspace-0.2.0`.
+  The post-switch router, Codex and portal services are active; `dev-session
+  validate` passed with 55 manifests. A fresh delegated managed session was
+  created at the feedback URL above. No configuration repository was changed.
 
 ## Documentation
 
@@ -309,19 +315,22 @@ no deployment, approval, publication or default-branch integration is recorded.
   The verified follow-up from the former C3 head changes only a stale test
   fixture and makes no product-behavior change. Its focused verification passed
   2 runs/14 assertions, and fresh Luna/low generic-package verification passed
-  92 runs/508 assertions. These checks do not constitute review or deployment:
-  aitherdev preflight, build and switch remain pending.
+  92 runs/508 assertions. The later aitherdev wrapper build and user-profile
+  switch succeeded; the current package is
+  `/nix/store/aavh5axl72bv9ivxb85yjyr79rxdp9z0-dev-workspace-0.2.0`.
   By user decision, no Phase 2C.3 review has run yet; C1–C3 are the combined
-  feedback release candidate, ready for an authorized aitherdev preflight and
-  deployment. No deployment, approval, publication or default-branch
-  integration is recorded.
-- The user confirmed that the failed feedback creation is the existing session
-  `2026-09-22-team-test`; it must be resumed after the updated wrapper is
-  built and switched, not represented as a no-session retry.
+  deployed feedback release candidate. No review approval, publication or
+  default-branch integration is recorded.
+- The original `2026-09-22-team-test` managed creation left only a failed
+  receipt and no session state. Its installed-package decoder could not resume
+  it. The user authorized removal of that exact failed receipt; after the
+  forward deployment, a fresh managed delegated session with that slug was
+  created successfully.
 - Generic commit `e33344f` contains the identified root-cause fix. Focused
-  regression verification passed 10 runs with 202 assertions. This is test
-  evidence only: no build, switch, session resume, recovery, deployment, or
-  review result is recorded.
+  regression verification passed 10 runs with 202 assertions. Fresh Luna/low
+  watchers then passed the wrapper build (about 4m26s), profile switch (43.5s),
+  and fresh managed creation (91s). This is deployment and feedback-session
+  evidence, not consolidated-review evidence.
 
 ## Cleanup
 
