@@ -21,9 +21,9 @@ session.
   same durable roster. There is no separate agent simulator, message broker,
   database, or background scheduler.
 - `dev-session team assign --to architect0` submits a correlated App Server
-  turn to that member. `report` and `question` submit a correlated turn or
-  steer to `lead`; `progress` is visible without waking another agent. Busy
-  members reject a new assignment rather than accumulating a hidden queue.
+  turn to that member. A member reports to `lead` through the same assignment
+  command. There is no separate broker, queue, report, question, or progress
+  protocol; a busy target uses App Server's ordinary turn/steer behavior.
 - A new member receives a real configured thread but no model turn until its
   first assignment. Member model and reasoning-effort settings apply to its
   next turn; a single assignment may override them. Long builds and tests use
@@ -35,20 +35,20 @@ session.
 
 ## Phases
 
-1. Remove managed virtual-team restrictions and restore normal root
-   conversation access. Reset existing v1 team state while preserving its root
-   conversation and tmux identity. Update the App Server client to use only
-   generated-schema-supported operations.
-2. Implement the shared roster/runtime and its terminal commands: list, add,
-   edit, remove, inspect, assign, report, question, and progress. Add real
-   thread creation, direct App Server delivery, retry recovery, compact member
-   addressing, and per-member next-turn settings.
-3. Replace the creation and session team UI with formatted presets, roster
-   cards, model/effort controls, member activity, transcript inspection, and
-   add/remove actions. Normal user instructions remain lead-mediated.
-4. Extend fork, archive, revive, delete, and auto-archive to every active
-   member. Fork materialized member history, create fresh target threads for
-   blank members, and journal each member operation for recovery.
+1. Complete — remove managed virtual-team restrictions and restore normal root
+   conversation access. Existing virtual state is ignored while preserving the
+   root conversation and tmux identity.
+2. Complete — implement the shared roster/runtime and terminal commands:
+   list, preset, add, configure, remove, and assign. Creation and fork reserve
+   an address before thread creation and retain incomplete records for safe
+   retirement; model and effort defaults are applied to the next assignment.
+3. Complete — replace the creation-time virtual selection and session Team UI
+   with formatted presets, roster controls, model/effort controls, add/remove
+   actions, direct assignment, and roster-address-only transcript inspection.
+4. Complete — synchronize fork, archive, revive, delete, and auto-archive
+   with member threads. The root lifecycle journal retries the roster operation;
+   the roster itself records member state. There is no separate member-operation
+   journal or automatic repair of a failed App Server call.
 
 ## Compatibility and deployment
 
@@ -62,11 +62,12 @@ configuration-master integration or rollback support is required.
 
 ## Verification and review
 
-- Test portal/CLI parity, root tmux attachment, direct assignment/result
-  delivery, addresses, model/effort validation, removal, and retry recovery.
-- Test full-team fork, archive/revive/delete, and auto-archive.
+- Test portal/CLI parity, root tmux attachment, roster-local assignment,
+  addresses, model/effort defaults, removal, and incomplete-create recovery.
+- Test full-team fork, archive/revive/delete, and auto-archive through the
+  existing lifecycle suite.
 - Exercise the public workspace alias in a browser: lead conversation access,
   `architect1` creation, delegation, activity, and result delivery.
 - Use fresh Luna/low watchers for every long or uncertain build, test, or
-  deployment operation. Run one consolidated Terra/xhigh review after all
+  deployment operation. Run one consolidated Sol/xhigh review after all
   implementation phases, then integration and deployment checks.

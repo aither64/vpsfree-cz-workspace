@@ -19,6 +19,37 @@ uses direct correlated App Server turns as the team transport. `lead` remains
 the attached terminal conversation; specialist members use compact stable
 addresses such as `architect0` and are headless until assigned work.
 
+Implementation is complete on `2026-09-21-agent-teams-workflow` in the
+`dev-workspace` feature worktree at `4c5b9e2` (`teams: preserve roster and
+lifecycle invariants`), following `f597c1d` (`teams: use independent Codex
+member threads`). The direct roster, portal Team tab, terminal commands,
+roster-address-only member transcript reader, and root lifecycle synchronization
+are committed. The legacy managed access gate is disabled so old virtual state
+no longer denies a root conversation. New sessions start with their normal
+lead and add a direct roster afterwards.
+
+Quick verification passed under a fresh Luna/low watcher:
+
+- `nix develop -c bash -lc 'cd portal && GOFLAGS=-mod=mod go test
+  ./internal/teamruntime ./internal/web && node --check internal/web/static/app.js
+  && cd .. && ruby test/dev_session_test.rb'`
+- Go packages and browser syntax passed; Ruby result: 332 runs, 3694
+  assertions, 0 failures, 0 errors, 0 skips.
+
+The repository's normal vendored Go invocation remains blocked before
+compilation by an existing vendor metadata mismatch with `portal/go.mod`;
+focused verification deliberately uses Go module mode. The consolidated
+Sol/xhigh review covered general, architecture, scope, and
+risk/compatibility lanes. It found and the lead corrected: lost roster data in
+the automatic Team refresh; removed members being revived or forked as active;
+team mutations racing lifecycle transitions; report sender attribution; preset
+reapplication adding duplicate members; public retention of the retired
+selection flags; and inaccurate busy-member documentation. The fixes stay
+within the reviewed direct-thread contract. Post-fix focused verification passed
+with the same zero-failure result. Packaged `nix flake check --print-build-logs`
+is under way under a fresh Luna/low watcher. No deployment or configuration pin
+change has occurred.
+
 ## Current implementation scope
 
 - `dev-workspace` is the primary implementation repository.
@@ -36,13 +67,11 @@ addresses such as `architect0` and are headless until assigned work.
 - Existing virtual team state is reset at the forward-only aitherdev cutover.
   Root conversations, worktrees, tracking, and tmux sessions are retained.
 - Long verification always uses a fresh Luna/low watcher and is not a member.
-- Implement all phases before a single consolidated Terra/xhigh review. Do not
+- Implement all phases before a single consolidated Sol/xhigh review. Do not
   request review for intermediate commits or phases.
 
 ## Next actions
 
-1. Inventory the virtual-team touchpoints and current App Server client
-   contract, then replace the old state/runtime boundary.
-2. Implement the shared CLI/portal runtime and direct member thread transport.
-3. Complete portal UX and session lifecycle support, then run the consolidated
-   verification, review, and aitherdev deployment.
+1. Collect packaged flake-check evidence.
+2. Deploy the committed `dev-workspace` feature branch to aitherdev, exercise
+   the portal controls, and record the outcome before configuration integration.
