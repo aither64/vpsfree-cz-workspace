@@ -20,7 +20,7 @@ the attached terminal conversation; specialist members use compact stable
 addresses such as `architect0` and are headless until assigned work.
 
 Implementation is complete on `2026-09-21-agent-teams-workflow` in the
-`dev-workspace` feature worktree at `4c5b9e2` (`teams: preserve roster and
+`dev-workspace` feature worktree at `269799d` (`teams: preserve roster and
 lifecycle invariants`), following `f597c1d` (`teams: use independent Codex
 member threads`). The direct roster, portal Team tab, terminal commands,
 roster-address-only member transcript reader, and root lifecycle synchronization
@@ -47,8 +47,10 @@ reapplication adding duplicate members; public retention of the retired
 selection flags; and inaccurate busy-member documentation. The fixes stay
 within the reviewed direct-thread contract. Post-fix focused verification passed
 with the same zero-failure result. Packaged `nix flake check --print-build-logs`
-is under way under a fresh Luna/low watcher. No deployment or configuration pin
-change has occurred.
+also passed under a fresh Luna/low watcher; the complete log is
+`logs/direct-team-flake-retry.log`. VM boot logs were expected and no unexpected
+local kernel build occurred. Deployment of this exact worktree to the aitherdev
+user profile is prepared; no configuration pin change is planned.
 
 ## Current implementation scope
 
@@ -72,6 +74,5 @@ change has occurred.
 
 ## Next actions
 
-1. Collect packaged flake-check evidence.
-2. Deploy the committed `dev-workspace` feature branch to aitherdev, exercise
+1. Switch the aitherdev profile from `269799d` and exercise
    the portal controls, and record the outcome before configuration integration.
