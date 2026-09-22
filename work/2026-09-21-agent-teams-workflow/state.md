@@ -56,10 +56,11 @@ no deployment, approval, publication or default-branch integration is recorded.
 
 ## Next actions
 
-1. Perform the authorized aitherdev preflight, build and switch through the
-   local-input deployment wrapper for the combined C1–C3 feedback release
-   candidate, then collect user feedback on the portal controls and team
-   selections. None of those deployment actions has been performed yet.
+1. Rebuild and switch the local-input deployment wrapper with generic
+   `dev-workspace` `cf778e0559c39f88125d96e0e121b9470cad9ef5`, then retry
+   feedback-session creation. The preceding creation attempt failed before a
+   session was created; this pending retry is not deployment or recovery
+   evidence.
 2. After that feedback stage, run one mandatory independent consolidated
    Sol/xhigh review across all completed implementation phases. Apply reviewer
    fixes only after that review, following its required reruns; route long or
@@ -72,10 +73,11 @@ no deployment, approval, publication or default-branch integration is recorded.
 - The authorized aitherdev deployment path is the local-input wrapper at
   `work/2026-09-21-agent-teams-workflow/deployment-wrapper`.
 - Its intended exact inputs are `codex-web` `52b8ca6`, generic
-  `dev-workspace` `0594e3f9c175bdb617a17fddb1dee8cccaec0156`, organization extension
+  `dev-workspace` `cf778e0559c39f88125d96e0e121b9470cad9ef5`, organization extension
   `vpsfree-dev-workspace` `583647dd`, and site workspace `0ccd1101`.
-- This deployment record makes no configuration change. Aitherdev preflight,
-  build and switch are authorized, but have not been performed or verified.
+- The local wrapper input has been updated to that generic revision. Its
+  rebuild and switch, followed by a creation retry, remain pending. This record
+  makes no configuration change and does not claim deployment or recovery.
 
 ## Documentation
 
@@ -313,6 +315,19 @@ no deployment, approval, publication or default-branch integration is recorded.
   feedback release candidate, ready for an authorized aitherdev preflight and
   deployment. No deployment, approval, publication or default-branch
   integration is recorded.
+- The feedback-session creation attempt failed before any session was created.
+  `workspace-portal agent-teams resolve-current-creation` rejected its
+  schema-only default request (`{"schema":1}`) as an object with missing or
+  unknown fields. The default-selection path intentionally omits `team`,
+  `model`, and `reasoning_effort`; the direct creation decoder had incorrectly
+  required every allowed key to be present.
+- Generic commit `cf778e0559c39f88125d96e0e121b9470cad9ef5` fixes that decoder:
+  `schema` remains required, while omitted default-selection fields are
+  accepted. Unknown fields, duplicate keys, explicit nulls, and an omitted
+  schema remain rejected. Its focused regression evidence is the added
+  `binding_test.go` schema-only acceptance case plus the four invalid-request
+  cases for unknown field, duplicate schema, null team, and missing schema.
+  No new session, recovery, deployment, or review result is recorded here.
 
 ## Cleanup
 
