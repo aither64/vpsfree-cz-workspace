@@ -43,22 +43,28 @@ turn-bound pending boundary. Its non-sending `ApplyPendingBeforeSend` helper
 revalidates the boundary and applies a valid pending transition atomically for
 the later C3 managed-send path. It adds neither portal controls, native member
 actions nor dispatch; schema-1 and unmanaged sessions retain their legacy path.
+Phase 2C.3 managed dispatch and feedback controls are complete at generic head
+`2fd2dc78d024c554da94e34fa83b5bad7dea32f3`. It adds managed dispatch-ledger
+and dual-ledger recovery records, persists the pending transition before a real
+send through C2's `ApplyPendingBeforeSend` fence, binds every managed send to
+the exact selection identity, and supports same-selection steering without a
+selection change. The portal now exposes the corresponding managed-team
+controls while retaining restrictions for legacy, unmanaged, recovery, corrupt,
+uncertain and otherwise ineligible states. C1–C3 together form the feedback
+release candidate, ready for an authorized aitherdev preflight and deployment;
+no deployment, approval, publication or default-branch integration is recorded.
 
 ## Next actions
 
-1. Implement Phase 2C.3 managed dispatch and feedback controls next. It must
-   consume C2's same-fence `ApplyPendingBeforeSend` boundary, bind every real
-   send to its exact selection identity, and retain C2's fail-closed legacy,
-   recovery and unknown-operation behavior. Do not schedule a new independent
-   reviewer gate during this release-candidate slice.
-2. Complete the resulting runtime-team release candidate, then deploy it to
-   aitherdev for user feedback on the portal controls and team selections. This
-   is the next portal milestone; no deployment is recorded here.
-3. After the feedback stage, run one mandatory independent consolidated
+1. Perform the authorized aitherdev preflight and deployment of the combined
+   C1–C3 feedback release candidate, then collect user feedback on the portal
+   controls and team selections. Neither deployment nor approval is recorded
+   here.
+2. After that feedback stage, run one mandatory independent consolidated
    Sol/xhigh review across all completed implementation phases. Apply reviewer
    fixes only after that review, following its required reruns; route long or
    uncertain verification to fresh Luna/low watchers.
-4. Publish the reviewed generic feature series when authorized, while retaining
+3. Publish the reviewed generic feature series when authorized, while retaining
    the branch; default-branch integration remains out of scope.
 
 ## Documentation
@@ -77,6 +83,8 @@ actions nor dispatch; schema-1 and unmanaged sessions retain their legacy path.
   `review-results-phase2c0.md`
 - Phase 2C.2 focused module-mode check:
   `logs/phase2c2-agentteams-module-mode.log`
+- Phase 2C.3 final explicit verification:
+  `logs/phase2c3-final-explicit-verify.log`
 - Phase 1 mandatory review evidence: `review-packet-phase1.md`
 - Phase 1 review findings and decisions: `review-results-phase1.md`
 - Phase 1 focused and long verification: `verification-phase1.md`
@@ -274,6 +282,22 @@ actions nor dispatch; schema-1 and unmanaged sessions retain their legacy path.
   in `design-phase2c-runtime-dispatch.md` remains consistent with C2: it calls
   `ApplyPendingBeforeSend` under the managed submission fence and cannot report
   a switch as applied while sending under the old selection.
+- Phase 2C.3 is complete at generic head
+  `2fd2dc78d024c554da94e34fa83b5bad7dea32f3`. It records managed dispatch in
+  a durable dispatch ledger and preserves/reconciles the related dual-ledger
+  recovery state. Under the managed submission fence it persists and applies a
+  valid pending selection with `ApplyPendingBeforeSend` before issuing the real
+  send, so the send is bound to its exact selection identity. A same-selection
+  steer follows the managed dispatch path without changing selection. Portal
+  controls expose only the permitted managed feedback actions and remain
+  restricted for legacy, unmanaged, recovery, corrupt, uncertain and otherwise
+  ineligible states. Fresh Luna/low verification in
+  `logs/phase2c3-final-explicit-verify.log` passed
+  `portal/internal/agentteams` and `portal/internal/web` in 48.140 seconds.
+  By user decision, no Phase 2C.3 review has run yet; C1–C3 are the combined
+  feedback release candidate, ready for an authorized aitherdev preflight and
+  deployment. No deployment, approval, publication or default-branch
+  integration is recorded.
 
 ## Cleanup
 
