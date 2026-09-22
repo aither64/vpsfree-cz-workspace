@@ -44,7 +44,7 @@ revalidates the boundary and applies a valid pending transition atomically for
 the later C3 managed-send path. It adds neither portal controls, native member
 actions nor dispatch; schema-1 and unmanaged sessions retain their legacy path.
 Phase 2C.3 managed dispatch and feedback controls are complete at generic head
-`2fd2dc78d024c554da94e34fa83b5bad7dea32f3`. It adds managed dispatch-ledger
+`0594e3f9c175bdb617a17fddb1dee8cccaec0156`. It adds managed dispatch-ledger
 and dual-ledger recovery records, persists the pending transition before a real
 send through C2's `ApplyPendingBeforeSend` fence, binds every managed send to
 the exact selection identity, and supports same-selection steering without a
@@ -72,7 +72,7 @@ no deployment, approval, publication or default-branch integration is recorded.
 - The authorized aitherdev deployment path is the local-input wrapper at
   `work/2026-09-21-agent-teams-workflow/deployment-wrapper`.
 - Its intended exact inputs are `codex-web` `52b8ca6`, generic
-  `dev-workspace` `2fd2dc7`, organization extension
+  `dev-workspace` `0594e3f9c175bdb617a17fddb1dee8cccaec0156`, organization extension
   `vpsfree-dev-workspace` `583647dd`, and site workspace `0ccd1101`.
 - This deployment record makes no configuration change. Aitherdev preflight,
   build and switch are authorized, but have not been performed or verified.
@@ -293,7 +293,7 @@ no deployment, approval, publication or default-branch integration is recorded.
   `ApplyPendingBeforeSend` under the managed submission fence and cannot report
   a switch as applied while sending under the old selection.
 - Phase 2C.3 is complete at generic head
-  `2fd2dc78d024c554da94e34fa83b5bad7dea32f3`. It records managed dispatch in
+  `0594e3f9c175bdb617a17fddb1dee8cccaec0156`. It records managed dispatch in
   a durable dispatch ledger and preserves/reconciles the related dual-ledger
   recovery state. Under the managed submission fence it persists and applies a
   valid pending selection with `ApplyPendingBeforeSend` before issuing the real
@@ -304,6 +304,11 @@ no deployment, approval, publication or default-branch integration is recorded.
   ineligible states. Fresh Luna/low verification in
   `logs/phase2c3-final-explicit-verify.log` passed
   `portal/internal/agentteams` and `portal/internal/web` in 48.140 seconds.
+  The verified follow-up from the former C3 head changes only a stale test
+  fixture and makes no product-behavior change. Its focused verification passed
+  2 runs/14 assertions, and fresh Luna/low generic-package verification passed
+  92 runs/508 assertions. These checks do not constitute review or deployment:
+  aitherdev preflight, build and switch remain pending.
   By user decision, no Phase 2C.3 review has run yet; C1–C3 are the combined
   feedback release candidate, ready for an authorized aitherdev preflight and
   deployment. No deployment, approval, publication or default-branch
