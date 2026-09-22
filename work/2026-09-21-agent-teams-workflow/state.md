@@ -49,8 +49,14 @@ within the reviewed direct-thread contract. Post-fix focused verification passed
 with the same zero-failure result. Packaged `nix flake check --print-build-logs`
 also passed under a fresh Luna/low watcher; the complete log is
 `logs/direct-team-flake-retry.log`. VM boot logs were expected and no unexpected
-local kernel build occurred. Deployment of this exact worktree to the aitherdev
-user profile is prepared; no configuration pin change is planned.
+local kernel build occurred. The aitherdev user profile was switched from this
+exact worktree successfully. The switch initially refused two stopped stale
+vpsAdmin development clusters, so their exact disposable states were reset:
+`2026-08-18-vpsadmin-password-reset` and
+`2026-09-09-ip-release-mechanism`. The new router and portal service are
+active; `dev-session validate` validated 55 manifests and the stable portal URL
+returns its expected Basic Auth challenge. No configuration pin change is
+planned.
 
 ## Current implementation scope
 
@@ -74,5 +80,7 @@ user profile is prepared; no configuration pin change is planned.
 
 ## Next actions
 
-1. Switch the aitherdev profile from `269799d` and exercise
-   the portal controls, and record the outcome before configuration integration.
+1. Obtain user feedback from the deployed Team controls, including creating a
+   member, assigning work, inspecting its messages, and root conversation
+   access.
+2. Address any deployment feedback before any configuration integration.
