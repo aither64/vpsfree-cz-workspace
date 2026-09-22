@@ -2,11 +2,11 @@
   description = "Local-input aitherdev deployment wrapper for agent teams";
 
   inputs = {
-    workspace.url = "path:../../../worktrees/2026-09-21-agent-teams-workflow/workspace";
-    vpsfree-dev-workspace.url = "path:../../../worktrees/2026-09-21-agent-teams-workflow/vpsfree-dev-workspace";
-    dev-workspace.url = "path:../../../worktrees/2026-09-21-agent-teams-workflow/dev-workspace";
+    workspace.url = "git+file:///home/aither/workspace/ai/vpsfree.cz?rev=0ccd1101f56499b69312c72de82f4171dde08762";
+    vpsfree-dev-workspace.url = "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-dev-workspace.git?rev=583647dd998e5b4cb0e9fa6833e29bb5aec757b8";
+    dev-workspace.url = "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/dev-workspace.git?rev=2fd2dc78d024c554da94e34fa83b5bad7dea32f3";
     codex-web = {
-      url = "path:../../../worktrees/2026-09-21-agent-teams-workflow/codex-web";
+      url = "git+file:///home/aither/workspace/ai/vpsfree.cz/repos/codex-web.git?rev=52b8ca6e9ddf2175d1a9163996fa9073f9c1882d";
       flake = false;
     };
 
