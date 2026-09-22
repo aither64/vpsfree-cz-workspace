@@ -21,15 +21,28 @@ and Ruby suites pass. Phase 2B.3 managed creation is complete at generic head
 `6aa9be1`: mandatory high-risk review and every affected rerun are clean,
 Chromium acceptance passes, the default package builds, and `nix flake check`
 passes. The reviewed `codex-web` feature branch is published; no deployment or
-default-branch integration has been performed.
+default-branch integration has been performed. Phase 2C.0 durable provenance
+dispatch is complete at generic head `bb3de38`: its high-risk Sol/xhigh
+General, Architecture/repetition, Scope/proportionality and Risk/compatibility
+review findings were fixed before phase consolidation, and final fresh
+Luna/low watchers passed the focused Go packages, agent-team creation 12/148,
+and workspace host 92/524. It permits four strictly validated recovery windows
+while preserving schema-1 and `--no-codex` legacy sessions without migration.
 
 ## Next actions
 
-1. Publish the reviewed generic feature series when authorized, while retaining
+1. Complete the remaining runtime-team implementation as one usable release
+   candidate. Do not schedule further independent reviewer gates during its
+   implementation slices.
+2. Deploy that release candidate to aitherdev for user feedback on the portal
+   controls and team selections; this is a planned step, not recorded as an
+   approval or completed deployment.
+3. After the feedback stage, run one mandatory independent consolidated
+   Sol/xhigh review across all completed implementation phases. Apply reviewer
+   fixes only after that review, following its required reruns; route long or
+   uncertain verification to fresh Luna/low watchers.
+4. Publish the reviewed generic feature series when authorized, while retaining
    the branch; default-branch integration remains out of scope.
-2. Continue Phase 2C–2D through durable managed dispatch, member observation,
-   safe transitions and legacy-session preservation before deterministic
-   workflow/integration phases.
 
 ## Documentation
 
@@ -43,6 +56,8 @@ default-branch integration has been performed.
 - Phase 2B.3 review evidence: `review-packet-phase2b3.md` and
   `review-results-phase2b3.md`
 - Phase 2B.3 verification: `verification-phase2b3.md`
+- Phase 2C.0 review packet and results: `review-packet-phase2c0.md` and
+  `review-results-phase2c0.md`
 - Phase 1 mandatory review evidence: `review-packet-phase1.md`
 - Phase 1 review findings and decisions: `review-results-phase1.md`
 - Phase 1 focused and long verification: `verification-phase1.md`
@@ -179,6 +194,27 @@ default-branch integration has been performed.
 - The reviewed `codex-web` feature head `52b8ca6` is published to its feature
   branch and the generic Go/Nix pins now use that exact head. Default-branch/
   configuration integration, archive and deletion remain unauthorized.
+- Phase 2C.0 is complete at generic head `bb3de38`. Its durable provenance
+  classifier recognizes only legacy unmanaged, managed, managed recovery and
+  corrupt state. The four allowed recovery windows are the valid schema-2
+  pre-publication record, post-publication/pre-authority-record state, and the
+  two ordered finalization prefixes ending with runtime authority `creating`
+  and `ready`, respectively. Schema-1 and `--no-codex` sessions remain legacy
+  without migration or adoption. The high-risk Sol/xhigh General,
+  Architecture/repetition, Scope/proportionality and Risk/compatibility review
+  findings were fixed before final phase consolidation. Fresh Luna/low watcher
+  evidence is focused Go pass, agent-team creation 12/148 and workspace host
+  92/524. No deployment, publication or default-branch integration is recorded
+  for C0.
+- The per-numbered-phase review cadence was superseded for the remaining work.
+  Complete the remaining runtime-team slices as one release candidate, deploy
+  it to aitherdev for user feedback on portal controls and team selections, then
+  run one mandatory independent consolidated Sol/xhigh review across all
+  completed implementation phases. Reviewer fixes follow that review under its
+  required reruns. Long or uncertain verification remains owned by fresh
+  Luna/low watchers. The completed Phase 2C.0 review remains historical
+  evidence and does not record approval, deployment, publication or
+  default-branch integration.
 
 ## Cleanup
 

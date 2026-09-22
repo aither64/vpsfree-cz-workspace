@@ -52,10 +52,19 @@ with a recorded reason. No automatic path may select or fall back to Astra.
    user profile to aitherdev, and exercise creation, switching, persistence,
    watcher and legacy-session preservation scenarios.
 
-Each phase is committed and given quick verification before the mandatory
-independent Sol/xhigh review. Long or uncertain builds/tests after that review
-are launched and monitored by a fresh Luna/low subagent. Dependency order is
-generic, organization extension, site workspace, then configuration if needed.
+Implementation may use coherent local commits or slices. The remaining
+runtime-team work is one release-candidate implementation span: do not schedule
+another independent reviewer gate at an internal slice or numbered-phase
+boundary. Complete that span as a usable release candidate, then deploy it to
+aitherdev for user feedback on the portal controls and team selections. After
+that feedback stage, run one mandatory independent consolidated Sol/xhigh
+review across all completed implementation phases. Reviewer fixes follow that
+review and use the mandatory review workflow's required reruns. Long or
+uncertain verification for the consolidated gate or its fixes is launched and
+monitored by a fresh Luna/low subagent. This supersedes only the future
+phase-boundary cadence; the completed Phase 2C.0 review remains historical
+evidence. Dependency order is generic, organization extension, site workspace,
+then configuration if needed.
 
 ## Decisions and invariants
 
