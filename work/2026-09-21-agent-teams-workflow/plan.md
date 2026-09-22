@@ -25,8 +25,9 @@ with a recorded reason. No automatic path may select or fall back to Astra.
 - workspace repository (`vpsfree-cz-workspace`): authoritative
   `config/agent-teams.nix`, site instruction routing, downstream pins and site
   assertions.
-- `codex-web`: only if capability proof finds that the installed client cannot
-  submit or observe the required per-turn settings/member events.
+- `codex-web`: add the capability-proofed bounded option-aware real-turn API;
+  the current pin observes member events but cannot submit per-turn
+  model/effort and application context through its send/initial-message paths.
 - `vpsfree-cz-configuration`: only if aitherdev needs a host-level native child
   capacity or runtime setting. The workspace application remains a user-profile
   deployment and is never system-pinned here.
@@ -49,7 +50,7 @@ with a recorded reason. No automatic path may select or fall back to Astra.
    tests.
 7. Integrate pins in dependency order, build the combined package, deploy the
    user profile to aitherdev, and exercise creation, switching, persistence,
-   watcher and rollback scenarios.
+   watcher and legacy-session preservation scenarios.
 
 Each phase is committed and given quick verification before the mandatory
 independent Sol/xhigh review. Long or uncertain builds/tests after that review
@@ -87,17 +88,29 @@ generic, organization extension, site workspace, then configuration if needed.
 
 ## Compatibility and deployment
 
-All new state is private, additive and versioned. Existing sessions stay
-unmanaged or legacy-bound until explicit adoption. `teamConfig = null` retains
-ordinary supported Codex resolution without inventing a lineup or Astra
-fallback. Old package generations may ignore new private records but must not
-corrupt them. Session catalog GC roots keep rollback/loadability intact.
+The user confirmed that aitherdev is the only deployment of `dev-workspace` and
+does not require rollback or mixed-generation support. To minimize delivery time
+and cost, deployment installs the new package forward without an offline
+session migration. Existing sessions remain on their already-supported
+schema-1/unmanaged path; new sessions select a team. There is no automatic
+adoption, thread retasking or change to an existing session's model/effort.
 
-No vpsAdmin API, database, node protocol or vpsAdminOS format changes are
-planned. Mixed package generations remain supported because each session uses
-its pinned catalog/runtime identity. Transition and integration records use
-compare-and-set revisions and explicit unknown/blocked states for interrupted
-operations.
+New formats remain versioned and strictly validated for current-state integrity
+and future explicit forward migrations, but old binaries do not need to read
+them. `teamConfig = null` remains useful for construction and tests; it is not a
+production rollback mechanism. No vpsAdmin API, database, node protocol or
+vpsAdminOS format changes are planned. Transition and integration records still
+use compare-and-set revisions and explicit unknown/blocked states for
+interrupted operations.
+
+Schema-1 receipt/journal readers, recovery, conversation and lifecycle remain
+the supported legacy-session path. Ordinary new `start` and plan-to-new
+destinations are team-bound; an unmanaged-source fork remains a continuation of
+the legacy workflow until managed forks are separately implemented. Legacy
+sessions have no team transition or managed-member semantics, and new
+team-aware functionality must not require their conversion. Revisit reader
+removal only when the platform intentionally retires every active, archived and
+recoverable legacy record; that is out of this initiative.
 
 The user authorizes user-profile deployment to aitherdev and necessary
 development configuration build/dry-activation/deployment from the
@@ -132,9 +145,10 @@ the private initiative record.
   tri-state lead overrides and existing-session transitions.
 - Transition/recovery tests for compare-and-set races, interruption, next-turn
   settings, member reuse/replacement, fresh reviewer independence and legacy
-  adoption.
-- Catalog retention tests across two package generations and garbage
-  collection.
+  sessions remaining unmanaged, including durable provenance when managed
+  lifecycle operations are enabled.
+- Catalog retention tests across current managed pinned sessions and
+  garbage collection.
 - Snapshot/check/CI tests for bounded valid output, streaming logs, revision
   applicability, interruption, pagination, superseded runs and no model polling.
 - Real-Git integration tests for main/master discovery, fast-forward-only
@@ -144,4 +158,4 @@ the private initiative record.
   long or uncertain build/test/CI/deployment wait.
 - Aitherdev smoke test for solo creation, first-turn settings, same-root
   switching, retained designer/reviewer follow-ups, watcher cleanup, catalog
-  retention and profile/configuration rollback.
+  retention and coordinated stop/migrate/restart recovery.
