@@ -91,14 +91,83 @@ implementation, and no 2C.3 managed dispatch or controls.
 
 ## 2C.2: CAS team transitions
 
-Resolve against the session-pinned catalog and current registration evidence.
-The public CAS key is `selection_revision`; internal state writes use
-`state_revision`. Apply immediately only when root and members are idle. A
-pending next-turn boundary is allowed only from the exact active root runtime;
-browser requests during an active turn return controlled busy. Applying a
-pending change is atomic before the next real idle send: it updates selection,
-member eligibility and bounded history but never opens a blank turn or spawns
-members.
+This slice depends on 2C.0's managed-session dispatcher and runtime-authority
+checks, and on 2C.1's authoritative member observation, unknown-operation
+blockers and reconciliation rules. It adds no scheduler, native spawn, follow-up
+or portal-side member action.
+
+### 2C.2 implementation contract
+
+- `selection_revision` is the public selection CAS version. It changes only
+  when a transition is applied. `state_revision` is the private document CAS
+  version and advances for every retained-state write, including observations
+  and publication/resolution of a pending transition. Do not substitute one for
+  the other or require consecutive state revisions in transition history.
+- Resolve the requested team, effective lead and role eligibility from the
+  session's retained catalog, never the currently installed catalog. Before
+  writing, verify the exact managed root/session identity and current immutable
+  registration evidence for its retained catalog/native variants. Missing,
+  changed, ambiguous or unregistered evidence is a controlled blocker, not a
+  reason to remap a team or regenerate a variant.
+- A request supplies a caller request ID, expected `selection_revision`, target,
+  tri-state lead-override action, actor and non-empty reason. Validate target
+  and runtime support before mutation. A request for the already-effective
+  selection is a no-op. An exact replay of a retained pending or completed
+  request returns the original transition/outcome; a reuse of that ID with any
+  materially different request is a hard conflict. A distinct request at a
+  stale expected selection revision conflicts. With one pending request, only
+  its exact replay is accepted; a different request conflicts until it is
+  resolved or cancelled. Deduplication is bounded by retained history: after
+  pruning, do not promise session-lifetime replay protection.
+- Apply directly only after authoritative reconciliation finds the root idle,
+  all retained members idle or completed, no writer/check/lifecycle operation,
+  no pending native approval/input and no `submitting`/`unknown` member or
+  dispatch operation. Commit the new selection, incremented
+  `selection_revision`, member eligibility/reuse-or-inactivation plan and
+  history outcome in one state CAS. The plan changes assignment eligibility
+  only; it never creates, closes, retasks or wakes a member.
+- The sole deferrable boundary is the exact active managed root turn, requested
+  by that root through its authenticated runtime path, after every other
+  prerequisite is clear. Persist one `pending_boundary` record with its original
+  public and private bases, root/turn observation and any trusted same-root
+  continuation provenance, then return promptly. An external/browser/CLI
+  request while that root is active returns controlled busy; active members,
+  writers, unresolved work or a lifecycle boundary also return a blocker and do
+  not silently arm a future transition. Never interrupt, poll, cancel or wait
+  for a boundary.
+- Provide `ApplyPendingBeforeSend` for 2C.3's managed start path. Under the
+  same state and turn-submission fencing used for dispatch, it first reloads and
+  revalidates authority, root identity, pinned catalog/registration, expected
+  selection and the now-idle boundary. If no pending transition exists, it
+  returns the current selection. If one exists, it atomically applies it before
+  preparing the send: increment the public selection revision, retain the
+  original request/base in bounded history with its completion state revision,
+  set eligible members/reuse intent, clear pending, and return the exact new
+  effective lead/settings. It does not create a synthetic turn, inject a user
+  message, spawn/follow up/close a member, or submit dispatch itself. A failed
+  revalidation leaves the transition pending with a reported blocker; an
+  uncertain subsequent send is handled by 2C.3's dispatch ledger and cannot
+  roll the applied selection back or fall back to old settings.
+- Retain compact applied/cancelled outcomes with exact before, requested and
+  actual-after selections, actor/reason, original base and completion
+  `state_revision`. Preserve selection chaining: completion revisions strictly
+  increase and each later base is at least the preceding completion; a pending
+  record's original base may be below the current `state_revision`. Prune only
+  oldest terminal entries to the existing bounded limit, never the active
+  pending record, and preserve the current selection as the post-prune anchor.
+- Schema-1/legacy and unmanaged-source sessions remain on their existing path:
+  `team set`, pending application and managed send refuse rather than fabricating
+  state. `managed_recovery` and corrupt classifications admit no transition.
+  After a crash or lost response, read authoritative state and native/root
+  evidence: an exact committed/pending record is replayed, any divergent record
+  is conflict, and an unestablished native boundary blocks until reconciliation.
+
+2C.3 exposes these results without conflating them: active selection,
+`selection_revision`, pending target/reason/boundary, pinned catalog digest,
+next-turn effective lead and last observed native settings are separate
+user-visible values. Its Change-team, cancellation and send controls use the
+same CAS/request IDs and `ApplyPendingBeforeSend`; they must label a pending
+request as pending rather than as an applied switch.
 
 ## 2C.3: managed dispatch and controls
 

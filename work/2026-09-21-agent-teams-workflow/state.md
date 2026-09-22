@@ -28,20 +28,32 @@ review findings were fixed before phase consolidation, and final fresh
 Luna/low watchers passed the focused Go packages, agent-team creation 12/148,
 and workspace host 92/524. It permits four strictly validated recovery windows
 while preserving schema-1 and `--no-codex` legacy sessions without migration.
+Phase 2C.1 retained members is complete at generic head
+`abbbb3e9e58757337902739462d1174691002a3b`. It persists append-only retained
+assignment provenance, including immutable requested task names, selection and
+catalog provenance, and replacement links. Member operations use strict CAS
+`prepare`/`submitting`/`accepted`-or-`unknown` records; unknown native outcomes
+block replacement until exact-root observation and reconciliation establish the
+result. The portal presents managed-team status read-only. C1 adds no native
+portal spawn, dispatch, or team-transition path.
 
 ## Next actions
 
-1. Complete the remaining runtime-team implementation as one usable release
-   candidate. Do not schedule further independent reviewer gates during its
-   implementation slices.
-2. Deploy that release candidate to aitherdev for user feedback on the portal
+1. Implement Phase 2C.2 CAS team transitions next, using C1's authoritative
+   member observation, unknown-operation blockers and reconciliation rules;
+   it must remain free of scheduler, native spawn, follow-up and portal-side
+   member actions.
+2. Complete the remaining runtime-team implementation, including 2C.3 managed
+   dispatch and controls, as one usable release candidate. Do not schedule
+   further independent reviewer gates during its implementation slices.
+3. Deploy that release candidate to aitherdev for user feedback on the portal
    controls and team selections; this is a planned step, not recorded as an
    approval or completed deployment.
-3. After the feedback stage, run one mandatory independent consolidated
+4. After the feedback stage, run one mandatory independent consolidated
    Sol/xhigh review across all completed implementation phases. Apply reviewer
    fixes only after that review, following its required reruns; route long or
    uncertain verification to fresh Luna/low watchers.
-4. Publish the reviewed generic feature series when authorized, while retaining
+5. Publish the reviewed generic feature series when authorized, while retaining
    the branch; default-branch integration remains out of scope.
 
 ## Documentation
@@ -215,6 +227,22 @@ while preserving schema-1 and `--no-codex` legacy sessions without migration.
   Luna/low watchers. The completed Phase 2C.0 review remains historical
   evidence and does not record approval, deployment, publication or
   default-branch integration.
+- Phase 2C.1 is complete at generic head
+  `abbbb3e9e58757337902739462d1174691002a3b`. It retains append-only member
+  assignment evidence with immutable requested task, selection/catalog and
+  replacement provenance; a historical completed assignment remains evidence
+  after a selection changes, but cannot authorize current work or writes.
+  Strict CAS records move an operation through `prepared`, `submitting` and
+  `accepted` or blocking `unknown`; exact-root observation/reconciliation is
+  required before an uncertain member can be replaced, reused or closed. The
+  focused generic Go checks passed in module mode. The ordinary unflagged Go
+  invocation encountered the repository's stale local vendor tree; module mode
+  resolved that verification-environment issue without changing vendor files.
+  The C1 portal view is read-only status for selection and observed member
+  state. It neither spawns nor dispatches native members and implements no team
+  transition. Phase 2C.2 is next and its existing detailed contract in
+  `design-phase2c-runtime-dispatch.md` correctly depends on these C1
+  observation, unresolved-operation and reconciliation invariants.
 
 ## Cleanup
 
