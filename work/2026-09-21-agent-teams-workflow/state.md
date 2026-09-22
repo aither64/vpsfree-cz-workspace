@@ -56,16 +56,26 @@ no deployment, approval, publication or default-branch integration is recorded.
 
 ## Next actions
 
-1. Perform the authorized aitherdev preflight and deployment of the combined
-   C1–C3 feedback release candidate, then collect user feedback on the portal
-   controls and team selections. Neither deployment nor approval is recorded
-   here.
+1. Perform the authorized aitherdev preflight, build and switch through the
+   local-input deployment wrapper for the combined C1–C3 feedback release
+   candidate, then collect user feedback on the portal controls and team
+   selections. None of those deployment actions has been performed yet.
 2. After that feedback stage, run one mandatory independent consolidated
    Sol/xhigh review across all completed implementation phases. Apply reviewer
    fixes only after that review, following its required reruns; route long or
    uncertain verification to fresh Luna/low watchers.
 3. Publish the reviewed generic feature series when authorized, while retaining
    the branch; default-branch integration remains out of scope.
+
+## Deployment preparation
+
+- The authorized aitherdev deployment path is the local-input wrapper at
+  `work/2026-09-21-agent-teams-workflow/deployment-wrapper`.
+- Its intended exact inputs are `codex-web` `52b8ca6`, generic
+  `dev-workspace` `2fd2dc7`, organization extension
+  `vpsfree-dev-workspace` `583647dd`, and site workspace `0ccd1101`.
+- This deployment record makes no configuration change. Aitherdev preflight,
+  build and switch are authorized, but have not been performed or verified.
 
 ## Documentation
 
