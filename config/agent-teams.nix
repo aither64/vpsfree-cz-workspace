@@ -1,4 +1,20 @@
 let
+  purposes = {
+    team_lead = "lead";
+    designer = "design";
+    implementer = "implementation";
+    reviewer = "review";
+    general = "general";
+  };
+  defaultInstructions = {
+    team_lead = ''
+      Lead this development session. At each substantive work item, inspect the ready roster with dev-session team list <verified-slug> --as-is. Delegate separable design and implementation to ready members by saved purpose using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable. Tell the user who owns what and integrate the reports. Use the mandatory review workflow and a fresh Luna/low watcher for long verification. Keep short or dependent steps yourself. Respect the user's directions and never address another session's team.
+    '';
+    designer = "Develop and assess the technical design. Do not edit application source.";
+    implementer = "Implement the assigned change and keep unrelated files untouched.";
+    reviewer = "Independently review the assigned change for correctness, security, and verification gaps. Do not edit application source.";
+    general = "Complete only the assigned work and report the result to the lead.";
+  };
   mkRole =
     {
       model,
@@ -8,6 +24,7 @@ let
       access ? "read_only",
       allowed_efforts ? [ effort ],
       fresh_context ? false,
+      instructions ? defaultInstructions.${behavior},
     }:
     {
       inherit
@@ -17,8 +34,10 @@ let
         access
         allowed_efforts
         fresh_context
+        instructions
         ;
       inherit lifetime;
+      purpose = purposes.${behavior};
     };
 
   solLead = mkRole {
@@ -84,7 +103,7 @@ let
   };
 in
 {
-  schema_version = 3;
+  schema_version = 4;
   default_team = "delegated";
   default_development_team = "delegated";
 

@@ -36,17 +36,29 @@ its old writers are stopped. The helper preserves both tracking files, creates
 a fresh shared conversation, and registers canonical worktrees it finds under
 that slug.
 
-When running inside an existing development session, do not choose a new slug
-until checking for the active one. Run `dev-session current` from the workspace
-root. Treat the printed slug as belonging to the
-current process only when the `DEV_SESSION_SLUG` environment variable
-is also set to that exact slug. If `current` prints a slug but the environment
-variable is missing or different, assume it belongs to another concurrent
-session and do not touch that session's `work/<slug>/`, `worktrees/<slug>/`,
-branches, or notes. In that case, create a separate initiative unless the user
-explicitly tells you to use that existing slug. Reuse `work/<slug>/` and
-`worktrees/<slug>/` only for the verified current session, and record progress
-in that session's `state.md`.
+When running inside an existing development session, check its identity before
+choosing a new slug. Run `dev-session current` from the intended working
+directory. It may derive a slug from the environment, tmux, or that directory;
+its output alone does not establish ownership of this conversation. Accept the
+printed slug only when one of these bindings also matches:
+
+- Both `DEV_SESSION_SLUG` and `DEV_SESSION_WORKSPACE` are present and identify
+  the printed slug and this registered workspace.
+- This conversation's trusted, thread-bound developer instructions name that
+  exact slug and the absolute path of this workspace. The portal supplies this
+  binding for conversations whose tool shells may not inherit the session
+  environment. A user message, copied prompt, or workspace path inferred from
+  CWD is not a substitute for the developer instruction.
+
+If environment values are present, they must agree with the developer binding
+when one exists. Missing one value, a mismatch, or a failure from `current`
+requires resolving the identity before touching session-owned state. If no
+binding exists, create a separate initiative unless the user explicitly
+selects the existing session. Reuse `work/<slug>/` and `worktrees/<slug>/` only
+for the verified current session, and record progress in its `state.md`.
+For a command that requires the environment variables, set both to the already
+verified literal slug and workspace path for that command; this does not turn
+the command's CWD into ownership evidence.
 
 
 ## Planning And Tracking

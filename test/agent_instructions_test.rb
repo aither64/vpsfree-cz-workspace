@@ -44,7 +44,7 @@ class AgentInstructionsTest < Minitest::Test
     verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'))
 
     assert_match(/retained reviewers, honor the member's saved model and reasoning effort/, core)
-    assert_match(/installed catalog's default development reviewer/, verification)
+    assert_match(/review-purpose role from the installed catalog's default development team/, verification)
     assert_match(/including for solo sessions/, verification)
   end
 end

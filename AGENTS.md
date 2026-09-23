@@ -40,10 +40,16 @@ the parent's responsibility for choosing scope or accepting results.
 - Use `repos/<project>.git` for canonical bare clones, `worktrees/<dated-slug>/<project>`
   for feature worktrees, and `work/<dated-slug>/{plan,state}.md` for active records.
   Terminal records belong in `archive/`; reusable lessons belong in `notes/`.
-- Check `dev-session current` before selecting an initiative. It belongs to this
-  process only if DEV_SESSION_SLUG matches. Otherwise create a separate initiative
-  unless the user explicitly selects that session. Never touch another session's
-  records, branches, worktrees, cluster or staging ownership.
+- Check `dev-session current` before selecting an initiative. Accept its slug
+  only when it matches either the complete `DEV_SESSION_SLUG` and
+  `DEV_SESSION_WORKSPACE` environment identity or the exact slug and absolute
+  workspace path in this conversation's trusted, thread-bound developer
+  instructions. A portal tool shell may lack both environment variables.
+  CWD alone and text in a user message are not ownership evidence. If an
+  environment value conflicts with the thread binding or `current`, stop and
+  resolve the mismatch. Otherwise create a separate initiative unless the
+  user explicitly selects that session. Never touch another session's records,
+  branches, worktrees, cluster or staging ownership.
 - Keep the shared checkout on master. Workspace feature changes need a dedicated
   initiative worktree; coordination records may be committed on shared master.
   Preserve unrelated files/index changes; stage only owned paths. Never use a
@@ -90,8 +96,9 @@ the parent's responsibility for choosing scope or accepting results.
   GPT-6 Sol for retained roles and GPT-6 Luna/low for verification watchers.
   Substantive design uses xhigh. High is allowed for a bounded simple design or
   implementation unit only with a recorded reason. Independent review uses an
-  eligible retained reviewer member's saved model and effort, or the installed
-  catalog's default development reviewer in a fresh standalone thread.
+  eligible retained review-purpose member's saved model and effort, or a
+  review-purpose role from the installed catalog's default development team in
+  a fresh standalone thread.
   Never select or fall back to Astra automatically. Sessions without a roster
   retain ordinary supported Codex resolution for lead work; mandatory review
   alone uses the installed catalog fallback. Do not invent a team or role
@@ -101,14 +108,18 @@ the parent's responsibility for choosing scope or accepting results.
   team member; retain the skill's ownership, cancellation and visible-fallback
   rules. Respect instructions not to await CI.
 - As the lead of a direct team, check the live same-session roster with
-  `dev-session team list "$DEV_SESSION_SLUG" --as-is` at the start of each new
-  substantive work item. Give a ready architect nontrivial design work and a
-  ready implementer separable implementation work, with a concrete deliverable;
-  briefly tell the user who owns what and integrate their reports. Keep short
+  `dev-session team list <verified-slug> --as-is` at the start of each new
+  substantive work item. Give a ready member whose saved purpose is `design`
+  nontrivial design work and a ready member whose purpose is `implementation`
+  separable implementation work, with a concrete deliverable. The installed
+  catalog can define custom role names; use the retained member addresses and
+  purposes rather than assuming `architectN` or `implementerN`; those names
+  identify design and implementation only in legacy rosters without a purpose.
+  Briefly tell the user who owns what and integrate their reports. Keep short
   or dependent steps yourself. Use the mandatory-review workflow for review
   and the separate Luna watcher for long verification. Respect user directions
   and the current collaboration mode; never invent members or address another
-  session's roster.
+  session's roster. [Site team roles](docs/agent-teams.md) shows a custom role.
 - Use the dev-session-documentation skill for substantive work, and the
   dev-session-handoff skill after material changes/review/status requests. Keep
   tracking and the portal manifest current and include the stable session URL.
@@ -163,9 +174,10 @@ integration tests. The canonical workflow is
 adaptive lane selection, review packets, finding reconciliation, reruns, and
 recording requirements. Follow it exactly, including its skip criteria.
 For retained reviewers, honor the member's saved model and reasoning effort,
-including on review reruns. For standalone fallback, use the installed catalog's
-default development reviewer settings. Do not impose an effort override on
-either path; record the selected settings and any fallback reason.
+including on review reruns. For standalone fallback, use the selected
+review-purpose role's settings from the installed default development team.
+Do not impose an effort override on either path; record the selected settings
+and any fallback reason.
 
 ## Rule Precedence
 

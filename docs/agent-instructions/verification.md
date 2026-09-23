@@ -13,9 +13,10 @@ from the installed catalog's separate utility policy. It is not a team member
 and must not edit source, diagnose, retry, approve, or deploy.
 Keep known quick checks inline. Resolve planning, implementation and diagnosis
 settings from the retained team roster. Mandatory review uses an eligible
-retained reviewer member's saved model and effort; without one, use the
-installed catalog's default development reviewer in a fresh standalone thread,
-including for solo sessions. Do not invent a team or change the roster. Pass
+retained review-purpose member's saved model and effort; without one, use a
+review-purpose role from the installed catalog's default development team in a
+fresh standalone thread, including for solo sessions. Do not invent a team or
+change the roster. Pass
 project escalation rules, including
 unexpected local kernel builds, in the watcher's brief. The parent continues
 automatically on completion or escalation. If the skill or delegation is
