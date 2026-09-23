@@ -1,7 +1,8 @@
 # Team lead delegation rollout — 2026-09-23
 
-The approved change was deployed to aitherdev's user-profile workspace package;
-no feature branch was integrated into a default branch.
+The approved change was deployed to aitherdev's user-profile workspace package
+before default-branch integration. All three feature branches were subsequently
+integrated as described below.
 
 The first switch used the generic `dev-workspace` worktree and selected
 `/nix/store/24khk7g30m929ig8kdkn2rgyrrxwcqk6-dev-workspace-0.2.0`.
@@ -36,5 +37,19 @@ not part of this rollout.
 The first dev-workspace GitHub CI attempt failed in an unchanged, tight
 transition-lock timing test under parallel package builds. Focused local
 repetition passed 20 times. The available GitHub token cannot request a rerun
-or dispatch (HTTP 403), so CI is not recorded as green. This does not change
-the successful local packaged and site-composed builds.
+or dispatch (HTTP 403), so that attempt is recorded as failed. It did not
+change the successful local packaged and site-composed builds.
+
+## Default-branch integration
+
+After the user's explicit "merge to default branches" approval, the workspace
+feature was rebased onto the shared tracking checkpoint from `8fe84327` to
+`22db2173`; `git range-diff` showed an identical patch. Its instruction check
+passed (4 runs, 47 assertions). All three reviewed heads were then merged by
+fast-forward and pushed to remote `master`: `codex-web` `01e75798`,
+`dev-workspace` `1b836baf`, and workspace `22db2173`. The two code repositories
+also passed packaged checks from clean temporary merge-target worktrees. Their
+default-branch GitHub CI runs passed at those exact heads: codex-web
+35911608188 and dev-workspace 35911621169. The earlier feature-branch CI
+failure therefore remains historical, not an outstanding check. Feature refs
+are retained; temporary merge-target worktrees were removed.

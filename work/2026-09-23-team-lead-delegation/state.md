@@ -1,24 +1,31 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-23-team-lead-delegation
 
 ## Status
 
-Ready, awaiting merge approval for three pushed feature branches. Mandatory
-review, packaged and site-composed local builds, deployment, and a live
-full-team delegation canary are complete. CI rerun is unavailable with this
-token. The tracking session has no second Codex worker; this conversation
-remains the implementation owner. Portal:
+All three approved feature heads are merged into their remote `master` branches
+by fast-forward, and both default-branch CI runs passed. Mandatory review,
+local and merge-target packaged checks, deployment, and the live full-team
+delegation canary passed. The session remains open for follow-up. Portal:
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-23-team-lead-delegation/
 
 ## Next actions
 
-- Obtain explicit approval before integrating `codex-web`, `dev-workspace`, or
-  workspace feature content into their respective `master` branches.
-- Treat the canary's separate specialist-model preflight finding as follow-up
-  work only if the user wants to pursue it.
+No remaining work for this initiative. The canary's separate specialist-model
+preflight finding can be pursued as a new task if requested. Do not archive this
+session without an explicit request or the enabled auto-archive worker's policy.
+
+## Integration approval
+
+The user explicitly said "merge to default branches" after the handoff for
+this initiative, which named the three unmerged feature branches. This grants
+integration of `codex-web`, `dev-workspace`, and workspace into each repository's
+`master`, and no other repository or target. The workspace feature was cleanly
+rebased from `8fe84327` to `22db2173`; `git range-diff` reported an identical
+patch, so the approval remained valid.
 
 ## Documentation
 
@@ -30,13 +37,13 @@ record: `rollout.md`.
 
 - `codex-web`: `worktrees/2026-09-23-team-lead-delegation/codex-web`, branch
   `2026-09-23-team-lead-delegation`, head `01e75798654b5c56535646dea687468a358408fb`
-  (pushed for dependency pinning).
+  (exact remote `master` head).
 - `dev-workspace`: matching worktree/branch, head
-  `1b836baf85e8486e0455ce2a70f9c4423328ac22`.
+  `1b836baf85e8486e0455ce2a70f9c4423328ac22` (exact remote `master` head).
 - `workspace`: matching worktree/branch, head
-  `8fe84327f656f1112b860a26b1e1ebd42bccc8ff` after rebase onto the
-  shared master's initial tracking commit. The shared `master` tracking-only
-  commit `ede06b62` was pushed separately; no feature content was merged.
+  `22db2173dcbe668d6e1bf8d6bddbc320fa37d333` (merged into remote
+  `master`). Its parent is the shared tracking-only checkpoint `ceb4c980`;
+  later tracking-only checkpoints may advance `master` beyond the feature head.
 
 ## Commands run
 
@@ -50,6 +57,18 @@ record: `rollout.md`.
   through a fresh Luna/low verification watcher; both passed.
 - Fetched remote `master` in all three repositories; each feature head is
   current and ahead without divergence. Pushed all three feature branches.
+- Rebased the workspace feature onto the tracking checkpoint; `git range-diff`
+  showed the same patch. The workspace Nix instruction check passed (4 runs,
+  47 assertions). Refreshed all three portal comparisons.
+- Fast-forwarded workspace shared `master`, and fast-forwarded `codex-web` and
+  `dev-workspace` through clean temporary target worktrees. Merge-target
+  `nix flake check --print-build-logs` passed for both code repositories.
+  Pushed all three remote `master` branches; each now equals its exact feature
+  head. Removed the clean temporary target worktrees, retaining feature refs.
+- Fetched all three remotes after integration and proved each exact local and
+  remote feature head is contained in remote `master`. Default-branch CI
+  passed: `codex-web` run 35911608188 at `01e75798`; `dev-workspace` run
+  35911621169 at `1b836baf`.
 
 ## Results
 
@@ -109,9 +128,11 @@ https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-23-lead-policy-can
 
 ## Open questions
 
-CI remains red due to the investigated timing failure and unavailable rerun
-permission. The independent canary finding is recorded for possible follow-up.
+None for this initiative. The earlier feature-branch CI timing failure was
+investigated; default-branch CI passed at the same patch. The independent
+canary finding is recorded for possible future work.
 
 ## Cleanup
 
-Retain the session and feature refs. Do not archive or integrate automatically.
+Retain the open session and feature refs. Temporary merge worktrees were removed.
+No archive or delete was requested.
