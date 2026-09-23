@@ -40,7 +40,10 @@ No persisted format or cross-service protocol change is intended. The new
 the old method. A compatible user-profile `dev-workspace` switch applies the
 policy to idle existing root threads; active turns are left alone and retried.
 Member threads and their saved model/effort remain unchanged. The portal and
-terminal continue to share the root thread. Deployment does not integrate any
+terminal continue to share the root thread. Deploy through the site-composed
+workspace package, with the feature `dev-workspace` and `codex-web` heads
+pinned in a local deployment wrapper; the generic runtime package alone omits
+the site team catalog and cluster providers. Deployment does not integrate any
 feature branch to a default branch; that requires separate approval.
 
 ## Documentation
