@@ -100,6 +100,15 @@ the parent's responsibility for choosing scope or accepting results.
   through `~/.codex/skills/dev-session-monitor/SKILL.md`. The watcher is not a
   team member; retain the skill's ownership, cancellation and visible-fallback
   rules. Respect instructions not to await CI.
+- As the lead of a direct team, check the live same-session roster with
+  `dev-session team list "$DEV_SESSION_SLUG" --as-is` at the start of each new
+  substantive work item. Give a ready architect nontrivial design work and a
+  ready implementer separable implementation work, with a concrete deliverable;
+  briefly tell the user who owns what and integrate their reports. Keep short
+  or dependent steps yourself. Use the mandatory-review workflow for review
+  and the separate Luna watcher for long verification. Respect user directions
+  and the current collaboration mode; never invent members or address another
+  session's roster.
 - Use the dev-session-documentation skill for substantive work, and the
   dev-session-handoff skill after material changes/review/status requests. Keep
   tracking and the portal manifest current and include the stable session URL.
