@@ -52,7 +52,41 @@ session.
   operation-scoped verification watcher. GPT-6 Astra is not selected
   automatically.
 
-## Remaining phases after deployed feedback
+## Portal feedback follow-up (2026-09-23)
+
+The next deployment is one review unit, not a new team transport. Finish these
+steps before another consolidated Sol/xhigh review:
+
+1. Replace preset option rosters with total member counts and role counts;
+   keep exact model and effort controls visible elsewhere. Show a copyable,
+   live `dev-session start` command on the new-session form. An interactive
+   CLI invocation asks for the initial request; portal uploads are not part
+   of the command.
+2. Keep Add member available after every Team tab refresh, populate newly
+   inserted model and effort selectors from the live catalog, and collapse
+   removed members below the active roster. Bound the member-message pane's
+   scroll area and show timestamps.
+3. Add a ready-member selector to the Codex tab. Selecting a member opens its
+   complete independent conversation, with direct chat and uploads scoped to
+   its thread. Browser writes share the team operation lock with add, remove,
+   and configure; direct sends and queued turns rebind the saved per-member
+   policy and model settings. Reject removed, unknown, or cross-session
+   addresses. Keep `lead` as the tmux-attached root conversation.
+4. Update the codex-web, generic, extension, and workspace package pins;
+   perform quick checks, one consolidated review, then Luna-watched packaged
+   checks and aitherdev deployment. Verify the controls in the deployed portal
+   without modifying the unrelated test session.
+
+The opaque browser conversation ID is session slug plus `~` and the member
+address; it is not persisted and never substitutes for the roster identity.
+The roster schema, App Server thread format, CLI interface, creation receipt,
+and session lifecycle format do not change. Existing ready members become
+selectable after deployment; removed members remain visible only as history.
+Rolling back this browser feature would remove direct member chat but leave
+their threads and messages intact. This development host remains a forward-only
+deployment; no coordinated machine or database update is required.
+
+## Earlier deployment phases (historical)
 
 The initial direct-thread runtime is committed, but the deployed system is not
 accepted: creation deliberately rejects team selection, the Add member action

@@ -7,7 +7,12 @@ lifecycle: active
 ## Status
 
 The direct-thread team transport is implemented and deployed on aitherdev.
-The active package is
+A portal feedback follow-up is committed on feature branches but is not yet
+deployed: it adds counted preset labels, a live CLI command preview, stable
+Add member/model selectors, collapsed removed members, timestamped member
+messages, and full Codex conversations for ready members. It awaits downstream
+package pins, one consolidated review, packaged verification, and aitherdev
+switch. The currently active package is
 `/nix/store/wxh93a4fmmmp94dd6g11z0n6nfmvyppk-dev-workspace-0.2.0`.
 Both read-only `architect2` and workspace-write `implementer1` delivered
 reports through the installed `report_to_lead` tool to their own session's
@@ -19,16 +24,26 @@ All retained roles default to GPT-6 Sol; only operation-scoped monitoring
 uses GPT-6 Luna/low. The initiative stays `active` for user UI feedback and
 later feature-branch integration. No session was archived or deleted.
 
-Current feature heads: codex-web `ef4cd581b1c0`, generic dev-workspace
-`b7883bee18fb`, vpsFree extension `08f576a8e8c4`, workspace configuration
-`7db87792ccbb`. The first three are published over SSH; the workspace head
-is local. Downstream package pins intentionally select the reviewed code
-heads codex-web `2a228e70de42` and generic `04bb52a1f901`; later changes
-there are documentation and opt-in test-fixture corrections only.
+Current feature heads: codex-web `bd8cb096f110`, generic dev-workspace
+`ecddc8e`, vpsFree extension `08f576a8e8c4`, workspace configuration
+`7db87792ccbb`. Codex-web is published over SSH; the generic follow-up is
+local pending push. The extension and workspace pins still select the previous
+reviewed package chain until this follow-up is ready for deployment.
 
 ## Rollout log
 
-The entries below are chronological checkpoints; statements about work still
+Portal feedback follow-up (2026-09-23 local): codex-web `bd8cb096f110`
+rebinds the per-member policy before queued turns and is published on its
+feature branch. Generic `ecddc8e` adds full member conversations and the
+requested portal controls, pins that client, and has the new Go vendoring
+hash. Focused codex-web queue and generic teamruntime/web suites pass; browser
+JavaScript syntax and the CLI preview helper pass. A direct browser-suite
+invocation lacks its required server URL and Playwright dependency, so the
+packaged browser check remains for post-review verification. The next action
+is to publish the generic branch, update extension and workspace pins, run one
+consolidated review, then perform Luna-watched packaged checks and deployment.
+
+The earlier entries below are chronological checkpoints; statements about work still
 pending describe their point in time, not the current status above.
 
 Initial transport checkpoint (2026-09-23 local): the final communication
