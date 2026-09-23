@@ -30,11 +30,13 @@ source's member policy but use the destination session identity.
 
 ## Compatibility and deployment
 
-The catalog and direct-creation snapshot gain a new schema version. Readers
-continue to accept existing receipts and rosters and apply the exact legacy
-instructions when prompt fields are absent. The installed package on aitherdev
-is upgraded forward only; rolling back to an older package after creating a
-custom-role session is unsupported. This affects one development host only.
+The installed catalog moves to schema 4. Direct-creation receipts retain their
+schema-3 envelope, with a strict expanded prompt snapshot; new readers accept
+both the old and expanded shapes. Existing rosters and receipts use the exact
+legacy behavioral instructions when prompt fields are absent. An older package
+cannot read expanded snapshots, so the installed aitherdev package is upgraded
+forward only; rolling back after creating a new-prompt session is unsupported.
+This affects one development host only.
 No vpsAdmin, database, service protocol, generated client, cluster format or
 NixOS node configuration changes. The dependency order is generic runtime,
 extension, then site package pin and aitherdev user-profile switch. The user
