@@ -6,19 +6,17 @@ lifecycle: active
 
 ## Status
 
-The direct-thread team transport is implemented and deployed on aitherdev.
-A portal feedback follow-up is committed and pinned through the workspace
-feature worktree but is not yet deployed: it adds counted preset labels, a live CLI command preview, stable
-Add member/model selectors, collapsed removed members, timestamped member
-messages, and full Codex conversations for ready members. It awaits downstream
-one consolidated review rerun, packaged verification, and aitherdev switch.
-The currently active package is
-`/nix/store/wxh93a4fmmmp94dd6g11z0n6nfmvyppk-dev-workspace-0.2.0`.
+The direct-thread team transport and portal feedback follow-up are deployed
+on aitherdev. The portal now shows counted team presets and a live CLI command,
+keeps Add member and model/effort controls after refresh, collapses removed
+members, timestamps their messages, and opens full ready-member conversations
+with direct chat. The active package is
+`/nix/store/10gdqxnmnlzh25i14s4cbnhdy4k22kc6-dev-workspace-0.2.0`.
 Both read-only `architect2` and workspace-write `implementer1` delivered
 reports through the installed `report_to_lead` tool to their own session's
-lead; removed-member and wrong-session bindings were rejected. The final
-Sol/xhigh review is resolved, the full packaged check and pinned Codex MCP
-contract pass, and the portal is available at
+lead; removed-member and wrong-session bindings were rejected. The Sol/xhigh
+review is resolved, the explicit package/check builds and final-head CI passed,
+and the portal is available at
 `https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-21-agent-teams-workflow/`.
 All retained roles default to GPT-6 Sol; only operation-scoped monitoring
 uses GPT-6 Luna/low. The initiative stays `active` for user UI feedback and
@@ -27,9 +25,41 @@ later feature-branch integration. No session was archived or deleted.
 Current feature heads: codex-web `d542e767310d`, generic dev-workspace
 `c0217744b2c9`, vpsFree extension `0331b17bb2b3`, workspace configuration
 `964fd340f8d5`. The first three are published over SSH; the workspace pin
-remains local, pending review and deployment. None is integrated into master.
+remains local by design. None is integrated into master. Browser-authenticated
+visual acceptance and direct-send mutation remain for user feedback; the
+acceptance checks did not mutate a test-session roster or conversation.
 
 ## Rollout log
+
+Portal feedback deployment (2026-09-23 local): an explicit Nix build of the
+workspace package and all four workspace check outputs passed at `964fd34`,
+with package output
+`/nix/store/10gdqxnmnlzh25i14s4cbnhdy4k22kc6-dev-workspace-0.2.0`.
+The preceding `nix flake check` evaluated the derivations but reported zero
+checks run, so it is not counted as executed verification. Fresh Luna/low
+watchers monitored both operations, with evidence in
+`logs/portal-feedback-final-flake.log`,
+`logs/portal-feedback-explicit-build.log` and
+`logs/portal-feedback-switch.log`. The normal
+`workspace-host switch --source` completed with exit 0; it only warned about
+unrelated unproven legacy worktrees that were not registered. No cluster reset
+or configuration
+master integration occurred. `workspace-host status` selected the exact new
+package; the portal and router units are active. `dev-session validate`
+validated 55 manifests. The public URL returned its expected authentication
+challenge, while the internal portal socket returned HTTP 200 for the
+initiative and interactive `2026-09-22-team-test-2` pages. Live read-only
+checks found the counted Full team label and CLI preview on the creation page,
+the Add control, removed-member fold, Settings label and Codex member selector
+on the interactive page, and a working model catalog. Existing ready member
+`architect2` resolved its transcript with HTTP 200; removed `architect0`
+was rejected with HTTP 404. No direct message or roster mutation was sent.
+Final-head GitHub Actions succeeded for codex-web `d542e76`, generic
+`c021774` and extension `0331b17`. Optional Playwright browser tests were not
+run because the development shell lacks the Playwright package; visual browser
+behavior is therefore the remaining acceptance gap. The user can try
+`https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-22-team-test-2/`
+without changing this initiative's noninteractive coordination session.
 
 Final portal feedback review (2026-09-23 local): the retained independent
 reviewer reran General, Architecture, Scope and Risk at GPT-6 Sol/xhigh against
