@@ -25,11 +25,23 @@ uses GPT-6 Luna/low. The initiative stays `active` for user UI feedback and
 later feature-branch integration. No session was archived or deleted.
 
 Current feature heads: codex-web `d542e767310d`, generic dev-workspace
-`58fa8d52b382`, vpsFree extension `160a86837571`, workspace configuration
-`a9767ac137a8`. The first three are published over SSH; the workspace pin
+`c0217744b2c9`, vpsFree extension `0331b17bb2b3`, workspace configuration
+`964fd340f8d5`. The first three are published over SSH; the workspace pin
 remains local, pending review and deployment. None is integrated into master.
 
 ## Rollout log
+
+Final portal feedback review (2026-09-23 local): the retained independent
+reviewer reran General, Architecture, Scope and Risk at GPT-6 Sol/xhigh against
+codex-web `d542e767`, generic `58fa8d5`, extension `160a868` and workspace
+`a9767ac`. All first-review findings were resolved. Its sole new Important
+General finding was the plan-to-new-session dialog's preset label missing the
+total team size. Generic `c021774` changes that one label to match the main
+creation form and adds a focused template test; the test passes. This direct
+presentation fix adds no design or accepted boundary, so the mandatory review
+procedure does not call for a reviewer rerun. Extension `0331b17` and
+workspace `964fd34` pin that final generic head; both no-build flake checks
+pass. Packaged and live checks remain pending.
 
 Portal feedback review-remediation checkpoint (2026-09-23 local): the first
 consolidated Sol/xhigh review (General, Architecture, Scope, Risk;
