@@ -82,6 +82,13 @@ address; it is not persisted and never substitutes for the roster identity.
 The roster schema, App Server thread format, CLI interface, creation receipt,
 and session lifecycle format do not change. Existing ready members become
 selectable after deployment; removed members remain visible only as history.
+The codex-web submission ledger retains its schema but adds an optional
+snapshot of nonempty model/effort options. This ensures an uncertain member
+send retries with the original policy even if the saved member setting has
+changed. Old attempts without options continue in their previous wire form;
+an old nonempty attempt lacking a snapshot fails closed. The single aitherdev
+host is quiesced during the forward-only package switch, so no cross-version
+ledger writer is supported; rollback is not required.
 Rolling back this browser feature would remove direct member chat but leave
 their threads and messages intact. This development host remains a forward-only
 deployment; no coordinated machine or database update is required.

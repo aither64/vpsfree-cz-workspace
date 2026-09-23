@@ -7,12 +7,12 @@ lifecycle: active
 ## Status
 
 The direct-thread team transport is implemented and deployed on aitherdev.
-A portal feedback follow-up is committed on feature branches but is not yet
-deployed: it adds counted preset labels, a live CLI command preview, stable
+A portal feedback follow-up is committed and pinned through the workspace
+feature worktree but is not yet deployed: it adds counted preset labels, a live CLI command preview, stable
 Add member/model selectors, collapsed removed members, timestamped member
 messages, and full Codex conversations for ready members. It awaits downstream
-package pins, one consolidated review, packaged verification, and aitherdev
-switch. The currently active package is
+one consolidated review rerun, packaged verification, and aitherdev switch.
+The currently active package is
 `/nix/store/wxh93a4fmmmp94dd6g11z0n6nfmvyppk-dev-workspace-0.2.0`.
 Both read-only `architect2` and workspace-write `implementer1` delivered
 reports through the installed `report_to_lead` tool to their own session's
@@ -24,13 +24,30 @@ All retained roles default to GPT-6 Sol; only operation-scoped monitoring
 uses GPT-6 Luna/low. The initiative stays `active` for user UI feedback and
 later feature-branch integration. No session was archived or deleted.
 
-Current feature heads: codex-web `bd8cb096f110`, generic dev-workspace
-`ecddc8e`, vpsFree extension `08f576a8e8c4`, workspace configuration
-`7db87792ccbb`. Codex-web is published over SSH; the generic follow-up is
-local pending push. The extension and workspace pins still select the previous
-reviewed package chain until this follow-up is ready for deployment.
+Current feature heads: codex-web `d542e767310d`, generic dev-workspace
+`58fa8d52b382`, vpsFree extension `160a86837571`, workspace configuration
+`a9767ac137a8`. The first three are published over SSH; the workspace pin
+remains local, pending review and deployment. None is integrated into master.
 
 ## Rollout log
+
+Portal feedback review-remediation checkpoint (2026-09-23 local): the first
+consolidated Sol/xhigh review (General, Architecture, Scope, Risk;
+`review-portal-feedback-packet.md`, catalog digest `bc7e3a3c`) found three
+Blocking issues and two lower-severity issues. The new codex-web head
+`d542e767` persists nonempty turn options with the attempt and recovers them
+for retry after a member setting change; old zero-option attempts retain their
+wire form and old nonzero attempts without snapshots fail closed. The generic
+series is now three focused commits: `e473547` (creation labels and CLI preview),
+`55b44f6` (Team-tab refresh, saved effort, message presentation), and
+`58fa8d5` (ready-member transcript/send and wrapper capability forwarding).
+Its downstream extension and workspace pins are `160a868` and `a9767ac`.
+Focused codex-web retry/queue tests, generic teamruntime/web tests and
+JavaScript syntax, extension and workspace no-build flake checks, and diff
+whitespace checks pass. The generic Go suite completed in 35.3 seconds.
+The revised review packet calls for all four Sol/xhigh lanes to rerun on these
+exact heads. Long packaged checks and the aitherdev switch are still pending.
+No unrelated test session, cluster, or shared configuration master changed.
 
 Portal feedback follow-up (2026-09-23 local): codex-web `bd8cb096f110`
 rebinds the per-member policy before queued turns and is published on its
