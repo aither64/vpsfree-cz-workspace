@@ -26,4 +26,25 @@ class AgentInstructionsTest < Minitest::Test
                    "Empty procedure: #{path}")
     end
   end
+
+  def test_feature_merge_needs_explicit_user_direction
+    core = File.read(File.join(ROOT, 'AGENTS.md'))
+    git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'))
+    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'))
+
+    assert_match(/Feature content may enter a repository's default branch only after the user/, core)
+    assert_match(/direct default-branch pushes.*\n.*pull-request merges/m, git)
+    assert_match(/tracking-only coordination commits/, git)
+    assert_match(/patch\s+equivalence/, git)
+    assert_match(/ready, awaiting merge approval/, sessions)
+  end
+
+  def test_review_uses_saved_member_settings_or_catalog_fallback
+    core = File.read(File.join(ROOT, 'AGENTS.md'))
+    verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'))
+
+    assert_match(/retained reviewers, honor the member's saved model and reasoning effort/, core)
+    assert_match(/installed catalog's default development reviewer/, verification)
+    assert_match(/including for solo sessions/, verification)
+  end
 end

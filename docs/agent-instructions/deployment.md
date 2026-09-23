@@ -14,13 +14,15 @@ Keep automated `confctl ... --commit` commit messages exactly as generated;
 do not amend or rewrap them to satisfy generic commit-message line length
 rules. Edit them only when intentionally making a concise changelog edit.
 
-Deployment does not authorize integration into a configuration repository's
-default branch. Build and deploy development configurations directly from the
-initiative worktree and feature branch. In particular, while the workspace
+Deployment does not authorize integration into any repository's default branch;
+the Git procedure requires explicit user direction for the repository/target
+set before feature-content integration. Build and deploy development
+configurations directly from the initiative worktree and feature branch. In
+particular, while the workspace
 portal is still under development, keep its `vpsfree-cz-configuration` changes
 on the dated initiative branch. The workspace application itself is deployed
 from its own user profile and must not be added to, pinned by, or iterated
 through the system configuration. Do not merge or push configuration changes
 to `master` merely to deploy aitherdev. Integrate that branch only after the
-user explicitly accepts the portal work for integration or explicitly directs
-the merge.
+user explicitly directs the merge; accepting a plan or deployment result alone
+is insufficient.

@@ -4,6 +4,29 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
+## Feature integration approval
+
+Before any operation that places feature content on a repository's default
+branch, obtain the user's explicit direction to integrate the named repository
+and target branch. This applies to local merges, direct default-branch pushes,
+and pull-request merges, even when review and CI have passed. An up-front
+instruction that explicitly directs that integration counts; accepting a plan,
+asking to implement it, accepting review, or authorizing deployment does not.
+Do not infer approval from completion criteria or from a prior merge of a
+different initiative. If approval is missing, push only feature branches and
+leave the initiative active as ready for integration, awaiting user approval.
+
+Approval covers the named repository/target set, not exact commit IDs. Record
+its source and scope in the initiative state before integration. A clean rebase
+that preserves the reviewed patch may keep that approval: verify patch
+equivalence with `git range-diff` or patch IDs, re-run checks and CI for the new
+head as appropriate, and record the new final head. If conflict resolution or
+another edit materially changes the patch, scope, repository set, or target,
+obtain renewed approval. Do not silently expand a multi-repository approval.
+This gate does not apply to tracking-only coordination commits on the shared
+workspace `master`; stage only owned tracking paths and never include feature
+content in that exception.
+
 ## Git And Worktrees
 
 The top-level workspace repository has two distinct workflows:
@@ -23,8 +46,8 @@ The top-level workspace repository has two distinct workflows:
 - After the workspace feature's final rebase and review, run
   `dev-session worktree capture-comparison <slug> workspace --as-is` before
   integration. Repeat the capture after any head change.
-- Integrate a reviewed workspace feature from the shared `master` checkout,
-  after confirming that the feature branch is a descendant of current
+- After feature integration approval, integrate a reviewed workspace feature
+  from the shared `master` checkout after confirming that it descends from current
   `master`. Preserve unrelated working-tree changes, stage nothing during the
   integration, and use `git merge --ff-only <feature-branch>`. Do not try to
   check out `master` in a second worktree because it is already checked out in
@@ -93,8 +116,8 @@ For feature work in the independent project repositories:
   even if nobody opened it before merging. For a historical recovery, supply
   both `--base <SHA>` and `--head <SHA>` from recorded integration revisions;
   never guess the pre-merge base from the current default branch.
-- When merging a feature back, create a fresh temporary worktree from the target
-  branch, usually the upstream default branch. Fetch the target branch first,
+- After feature integration approval, create a fresh temporary worktree from
+  the target branch, usually the upstream default branch. Fetch it first,
   rebase the feature branch onto the current target branch if needed, and merge
   only when it can fast-forward, using `git merge --ff-only <feature-branch>` or
   an equivalent fast-forward-only command. Do not create merge commits in normal

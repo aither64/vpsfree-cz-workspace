@@ -82,6 +82,14 @@ initiatives with no registered branches can still be completed. The anchored
 front matter is the only lifecycle authority; lifecycle-looking text in the
 Markdown body has no effect.
 
+Completion criteria do not authorize integration. When feature work is ready
+but the user has not explicitly approved its repository/target set for merging,
+keep `lifecycle: active` and put "ready, awaiting merge approval" near the top
+of `state.md`. Record any approval's wording/source, repository and target
+branches, whether a later rebase preserved patch equivalence, and the exact
+final heads once integrated. Do not mark an initiative complete merely because
+review, CI, or deployment succeeded.
+
 Write a substantive plan and initial state, then commit both in the top-level
 workspace repository before the first project-code commit or external mutation.
 After that initial commit, keep plan and state current in the working tree

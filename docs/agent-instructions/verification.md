@@ -11,10 +11,12 @@ builds expected to exceed one minute, and delegate uncertain-duration integratio
 tests and builds before launching them. Resolve the fresh verification watcher
 from the installed catalog's separate utility policy. It is not a team member
 and must not edit source, diagnose, retry, approve, or deploy.
-Keep known quick checks inline. Resolve planning, implementation, diagnosis and
-review settings from the retained team roster, with xhigh review effort. For
-sessions without a roster, retain ordinary supported Codex resolution. Do not
-invent a team or fallback model. Pass project escalation rules, including
+Keep known quick checks inline. Resolve planning, implementation and diagnosis
+settings from the retained team roster. Mandatory review uses an eligible
+retained reviewer member's saved model and effort; without one, use the
+installed catalog's default development reviewer in a fresh standalone thread,
+including for solo sessions. Do not invent a team or change the roster. Pass
+project escalation rules, including
 unexpected local kernel builds, in the watcher's brief. The parent continues
 automatically on completion or escalation. If the skill or delegation is
 unavailable, report
@@ -48,6 +50,8 @@ Use GitHub Actions as a feedback loop after pushing branches. If `gh` is not
 available in the current shell, run it through Nix, for example
 `nix shell nixpkgs#gh -c gh run list ...`. Inspect failed logs, monitor reruns,
 and resolve failures instead of leaving CI for the user to chase.
+Successful checks, review, and CI are verification evidence, not permission to
+merge or push feature content to a default branch; follow the Git approval gate.
 
 After a force-push or a follow-up fix push, cancel superseded queued or
 in-progress GitHub Actions workflow runs for the same branch. Only cancel runs
