@@ -52,6 +52,34 @@ session.
   operation-scoped verification watcher. GPT-6 Astra is not selected
   automatically.
 
+## Final portal cleanup and integration (2026-09-23)
+
+- Remove the Team tab's redundant Assign work form and its browser-only retry
+  code. Retain the team assignment API, CLI command, and member reporting path;
+  users can message a ready member directly from the Codex tab. Align the
+  Codex-tab Member label and selector, including at narrow widths. Keep the
+  index-page host label supplied by workspace configuration.
+- Audit the dirty shared workspace checkout by owner and provenance. The
+  archive worker is not presumed to own old records or generated captures.
+  Preserve unrelated session files; only their owners may curate or commit
+  them. Keep confirmed generated artifacts in place but allow exact-path,
+  local-only excludes to make status usable; record these paths. Do not bulk
+  stage, delete, or archive unresolved evidence. A dirty shared checkout must
+  not cause data loss during integration.
+- After code and documentation commits pass quick checks, run one consolidated
+  Sol/xhigh review, then use fresh Luna/low utilities for long packaged checks
+  and the aitherdev switch. Check the live Team and Codex tabs before merging.
+  The user has approved integration into the affected default branches after
+  these final fixes. Rebase and capture the exact final feature heads, then
+  fast-forward codex-web, generic dev-workspace, the vpsFree extension, and
+  this workspace in dependency order. Retain feature refs and do not integrate
+  an unrelated configuration branch.
+
+This cleanup changes no roster, ledger, session, database, CLI, or API format.
+Old and new browser assets use the same server contract; existing sessions and
+member threads remain readable. The forward-only aitherdev package deployment
+still requires the active generation to satisfy cluster transition checks.
+
 ## Portal feedback follow-up (2026-09-23)
 
 The next deployment is one review unit, not a new team transport. Finish these

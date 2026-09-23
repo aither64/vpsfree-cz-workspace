@@ -6,6 +6,36 @@ lifecycle: active
 
 ## Status
 
+Final portal cleanup is committed in the same four feature branches. The
+Team-tab assignment form is gone, its API/CLI contract remains, and the
+Codex-tab Member control has an alignment fix. The index-page `aitherdev`
+label comes from this workspace's configured `hostLabel`, not a hardcoded
+portal string. The consolidated Sol/xhigh review and narrow remediation are
+complete. Focused tests, final no-build evaluations, the explicit package
+build, final-head and same-head master CI, and the aitherdev profile switch
+passed. Live read-only portal checks passed. All four feature heads are
+fast-forwarded to their remote `master` branches. The session remains open
+for browser-authenticated visual feedback; it has not been archived.
+
+Shared-checkout audit: `master` is 28 commits ahead of its remote;
+54 tracked files are modified and 15,337 files are untracked. Six archived
+manifest edits are September 11 socket-namespace rewrites, not output from
+the auto-archive worker. Seven untracked archived directories are older
+plan/state pairs. The largest untracked groups are retained test artifacts;
+other groups include KB candidates and mail/security captures. None was
+bulk-staged, moved, or deleted. Two confirmed generated `artifacts/` trees
+(`2026-06-03-nixos-26-05-port` and
+`2026-06-11-vpsadminos-ci-conntrack-failure`) are preserved in place and
+excluded only through this checkout's `.git/info/exclude`; Git can still show
+them with `git status --ignored`. This reduces ordinary untracked status to 2,325
+files, without altering another session's records. Other sessions own most
+remaining paths and must curate them separately. The 28 ahead commits contain
+tracking and one note, with no obvious credential found in a focused scan.
+Their local deployment-wrapper `file:///home/aither/...` inputs are absolute
+development-host paths, not credentials; they are retained historical
+session artifacts rather than portable package inputs. No shared-master
+history rewrite is warranted for these non-secret records.
+
 The direct-thread team transport and portal feedback follow-up are deployed
 on aitherdev. The portal now shows counted team presets and a live CLI command,
 keeps Add member and model/effort controls after refresh, collapses removed
@@ -23,11 +53,77 @@ uses GPT-6 Luna/low. The initiative stays `active` for user UI feedback and
 later feature-branch integration. No session was archived or deleted.
 
 Current feature heads: codex-web `d542e767310d`, generic dev-workspace
-`c0217744b2c9`, vpsFree extension `0331b17bb2b3`, workspace configuration
-`964fd340f8d5`. The first three are published over SSH; the workspace pin
-remains local by design. None is integrated into master. Browser-authenticated
-visual acceptance and direct-send mutation remain for user feedback; the
-acceptance checks did not mutate a test-session roster or conversation.
+`ec8cb4211111`, vpsFree extension `ecd56fb91e79`, workspace configuration
+`5826554ea134`. All four are the exact remote `master` heads and their feature
+refs remain available. Browser-authenticated visual acceptance and direct-send
+mutation remain for user feedback; the acceptance checks did not mutate
+another session's roster or conversation.
+
+Final integration review checkpoint (2026-09-23 local): the independent
+Sol/xhigh General, Architecture, Scope and Risk review found one Blocking
+pin-history issue and two Important runtime issues: HTTP assignment sender
+spoofing and non-atomic unmanaged preset creation. Intermediate pin commits
+were consolidated into one final pin per downstream repository, with matching
+pre/post trees; the HTTP Team endpoint now fixes the sender as `lead` and
+rejects an explicit different sender; the fallback preset reserves its exact
+roster atomically before thread starts. The retained reviewer confirmed these
+fixes in General, Architecture and Risk. Its follow-up found an ambiguous
+shorter creating prefix, which can belong to concurrent manual Add; the final
+`ec8cb42` rejects such prefixes and adds focused tests. This narrow removal of
+rejected behavior needs no further reviewer rerun. An Advisory about the
+missing-thread classifier remains accepted: the live member conversation is
+resolved through the roster-bound wrapper, and removed/wrong-session member
+IDs fail closed. The review packets are
+`review-final-integration-packet.md` and
+`review-final-remediation-packet.md`. Twenty repetitions of the concurrent
+reservation test, focused HTTP/preset/partial-prefix Go tests, both downstream
+`nix flake check --no-build` evaluations and diff whitespace checks pass.
+
+Final package/deployment checkpoint (2026-09-23 local): a fresh Luna/low
+watcher ran the explicit workspace package and four checks at `5826554`
+(`logs/final-package-build-5826554.log`); it passed in 218 seconds without an
+unexpected kernel build. The normal `workspace-host switch --source` from the
+workspace feature worktree completed with exit 0, selecting
+`/nix/store/0fb5jvgq2y2y1la0pfsafjf8kdy6yg20-dev-workspace-0.2.0`
+(`logs/final-switch-5826554.log`). The switch warned about pre-existing
+unproven legacy worktrees and restarted terminal clients after App Server
+disconnects; no cluster reset or system-configuration master integration
+occurred. `workspace-host status` selected that package; the portal, router,
+and workspace Codex user units are active; `dev-session validate` passed all
+55 manifests. Direct local-socket GETs returned HTTP 200 for the index,
+initiative page and interactive `2026-09-22-team-test-2` page. The index
+renders `Full team (4): 1 lead, 1 architect, 1 implementer, 1 reviewer`,
+the CLI command preview and configured `aitherdev` label. The interactive
+page renders Add member, Settings, and the Codex Member selector, without
+the removed Assign work form; the catalog returns eight models. Ready
+`architect2`'s thread GET returned 200, while removed `architect0` and the
+same address under this initiative returned 404. No direct message or roster
+mutation was sent. Browser-authenticated visual behavior remains for user
+acceptance; no browser automation is installed. Final generic CI run
+`35850518823` at `ec8cb42` passed; extension run `35850615706` at
+`ecd56fb` is still in its devcluster check under a fresh Luna/low watcher.
+`dev-session worktree capture-comparison` recorded all four exact final
+feature heads before integration.
+
+Final integration checkpoint (2026-09-23 local): the exact feature heads were
+fast-forwarded and pushed to remote `master` in dependency order: codex-web
+`d542e76`, generic dev-workspace `ec8cb42`, vpsFree extension `ecd56fb`, and
+the shared workspace `5826554`. Each push used SSH; final `ls-remote`
+checks matched the reviewed heads. The independent repositories used fresh
+temporary target worktrees that were removed cleanly after each push. The
+shared workspace merge ran from its `master` checkout and preserved all
+unrelated dirty files. Its earlier 28 unpublished coordination commits were
+linear ancestors, so they were published along with the workspace feature;
+a focused secret-marker scan found no obvious credential and their absolute
+`git+file` deployment-wrapper pins are retained historical local artifacts.
+No feature ref was deleted. Codex-web master Check run `35851666506` passed at
+the exact head. The generic and extension master Check runs `35851715372`
+and `35851735754` also passed on the same already-green feature SHAs under a
+fresh Luna/low watcher, in 5m22s and 8m17s respectively. Their logs are
+`logs/merged-master-ci-generic.log` and
+`logs/merged-master-ci-extension.log`. The status of unrelated owner-owned
+workspace files is unchanged, apart from this initiative's tracking and
+portal manifest.
 
 ## Rollout log
 
@@ -627,13 +723,9 @@ head was still running at the last snapshot.
 
 ## Next actions
 
-1. Complete the focused unmaterialized-thread correction and its narrow
-   independent review and checks. Reconcile the unused `architect1` under
-   the lifecycle contract before the next package switch, preserving the
-   failed assignment's exact message ID.
-2. Perform live portal and CLI acceptance, including creation, member
-   configuration, tmux attachment and representative lifecycle/cluster paths.
-   Verify the browser-authenticated conversation path with the user.
-3. Capture comparisons, integrate reviewed feature heads fast-forward-only,
-   preserve branches, and update tracking/handoff. Do not archive this session
-   without an explicit request.
+1. Ask the user to inspect the Team and Codex tabs in an authenticated browser,
+   especially selector alignment and message-pane scrolling. Direct chat and
+   roster changes were deliberately not exercised against the existing test
+   session during this cleanup.
+2. Keep the initiative open for feedback. Its exact branches are merged, but
+   do not archive or delete it without an explicit request.
