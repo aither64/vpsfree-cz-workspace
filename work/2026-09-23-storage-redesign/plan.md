@@ -53,7 +53,9 @@ slice below is implemented; no live data has been changed in this session.
 ## Current implementation slice: offline inventory
 
 The dated standalone task in `vpsfree-maintenance-tasks` has separate
-read-only DB and ZFS collectors and an offline comparator. The operator will
+read-only DB and ZFS collectors and an offline comparator. The DB collector
+uses vpsAdmin API models for application rows and a read-only consistent
+database transaction. The operator will
 run the collectors using production DB access and on `backuper2.prg`; this
 session will not connect to production. The DB collector must retain every
 confirmation state and relevant dataset locks. The ZFS collector must scan
