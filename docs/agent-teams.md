@@ -25,3 +25,11 @@ Add `security` to a team's `roles` attribute set to make members such as
 review workflow can select it independently of its role name. Existing session
 members keep their saved instructions and settings; a member added later uses
 the currently installed catalog.
+
+The site catalog gives architects (`designer` in the catalog) and implementers
+workspace-write access. Architects can edit assigned design documents and
+prototypes; the lead remains responsible for assigning implementation work.
+Reviewers stay read-only. The portal shows each member's saved access, which
+may differ from the current catalog for members created before a policy change.
+Changing the catalog does not alter existing rosters; recreate or add a member
+to use the new role settings.
