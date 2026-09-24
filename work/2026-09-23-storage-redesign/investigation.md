@@ -1,8 +1,10 @@
 # Storage reliability investigation (proposal)
 
-This is a source review, not a production inventory. The reported scale of
-approximately 20,000 snapshots is a planning input; no live dataset or
-snapshot was changed. Source inspected: canonical `vpsadmin` head
+This combines source review with the operator-supplied read-only production
+inventory below. No live dataset or snapshot was changed by this session.
+The original estimate of approximately 20,000 snapshots was a planning
+input; one captured backup node alone had 39,576 physical snapshots.
+Source inspected: canonical `vpsadmin` head
 `9fc0648accd4` and `vpsadminos` head `2166e5934fe1` on 2026-09-24.
 The older session named in the request was
 not accessed because this conversation is bound to `2026-09-23-storage-redesign`.
@@ -45,6 +47,11 @@ not accessed because this conversation is bound to `2026-09-23-storage-redesign`
 
 ## Recommended sequence
 
+The concrete first-phase data model, write fence, migration and repair rules
+are in [storage-integrity-design.md](storage-integrity-design.md). The
+sequence below is the original outline; that proposal supersedes it where
+the live inventory and osctld mutation audit supplied stronger evidence.
+
 ### 1. Inventory and classify, without deleting
 
 Add a read-only node inventory operation scoped to a managed pool/dataset. It
@@ -81,7 +88,8 @@ write a versioned observation and validate one-to-one/known many-to-one
 matches and inverse clone edges. Use a short per-dataset mutation fence for
 the final stable scan; replay or invalidate observations if a supported ZFS
 operation happened meanwhile. Keep a migration cursor and mismatch count.
-At 20,000 snapshots, benchmark scan time, query plans and index sizes on a
+At the observed 39,576 backup-node snapshots, benchmark scan time, query plans
+and index sizes on a
 representative copy before choosing batch size. Avoid one ZFS subprocess or
 SQL query per snapshot. A dry run must report every unresolved mapping. No
 destructive repair should be automatic.
@@ -118,6 +126,56 @@ retry. This should follow topology reconciliation,
 because removing the blanket backup check before that would trust the broken
 dependency representation.
 
+## Read-only production inventory, 2026-09-24
+
+One backup pool on `backuper2.prg` was captured separately from the API
+database and ZFS. The database observation ran from 13:00:05 to 13:00:12 UTC;
+the two ZFS passes ran from 13:03:49 to 13:25:42 UTC and reported no change
+between passes. There is no shared generation token, so these observations do
+not prove one simultaneous DB/ZFS state. The ZFS scan took about 22 minutes;
+future diagnosis should favor targeted follow-up reads over another full scan.
+Raw captures and the exact-path report remain private outside this record.
+
+The corrected comparator produced 660 findings. Its most relevant physical
+evidence is 26 distinct reciprocal ZFS clone-origin edges for branches with
+no DB parent-entry pointers. Each edge yields an origin and clone finding;
+the 52 findings are 26 dependencies, not 52 faults. The physical source
+snapshots are represented in the captured DB. Their `reference_count` values
+are positive, so the counters carry some dependency evidence, but they do not
+replace an explicit physical graph. The observed eight confirmed
+`SnapshotInPoolClone` rows for export/download clones produced no missing
+clone or source-origin finding. Any later deletion design must include these
+clones and verify the actual ZFS clone list before destroying a snapshot.
+
+The DB describes 39,571 snapshot placements, while ZFS has 39,576 snapshots:
+five snapshots on DB-known branches are ZFS-only in this capture. Four
+additional ZFS-only filesystems and one DB-only empty branch filesystem need
+classification; some extra filesystems may be valid structural parents.
+Changes between observation windows or incomplete cleanup remain possible.
+Repeat the affected subset with path, GUID and ZFS creation/transaction times
+before calling these persistent orphans. The current capture has GUIDs but
+does not include ZFS creation time or transaction group.
+
+Other findings need narrower interpretation: 251 logical Datasets have
+`confirmed=0`, of which 248 already have backup snapshots; 150 backup DIPs
+have no head tree, 128 of those still contain trees. The latter can be an
+intentional result of `DetachBackupHeads` during migrate/reinstall; only four
+headless DIPs overlap the unconfirmed Dataset set. All 161 original
+head-branch alerts were on nonhead trees, where no head branch is required;
+the comparator correction removed them. Stored reference counts exceed the
+confirmed incoming references visible in this one-node capture for 195 SIPs.
+That is an inconclusive lower-bound comparison because incoming references
+from other pools are outside scope. One parent-entry ID is unresolved within
+the node capture, not proven missing in the full DB. Query full-scope inbound
+references and transaction history before considering counter repair.
+
+No captured snapshot had a reported hold or deferred destroy state, and no
+captured clone row differed from its physical clone source. This is
+observation only, not deletion eligibility. The current blanket user deletion
+restriction on backup snapshots should remain until physical dependencies,
+incremental-send bases and in-flight operations can be checked under a
+guarded, current view.
+
 ## Compatibility and rollout constraints
 
 - Deploy additive schema and read-only node inventory first. Old nodes must
@@ -151,8 +209,9 @@ operator handling for quarantined datasets before enabling deletion.
 
 ## Open questions
 
-- How many of the approximately 20,000 snapshots are physical copies across
-  pools/branches, and what fraction have DB/ZFS mismatches?
+- How many physical snapshot occurrences exist across *all* nodes and pools?
+  The captured backup node alone has 39,576. What fraction of scoped
+  anomalies persists in tightly paired observations?
 - Are all relevant clones inside managed pool subtrees? If not, the node
   inventory must query dependencies across the pool.
 - Which snapshots are intentionally held, mounted, exported, or used as

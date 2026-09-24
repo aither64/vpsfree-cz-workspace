@@ -1,124 +1,139 @@
 # 2026-09-23-storage-redesign
 
-## Goal and scope
+## Approved implementation scope
 
-Improve vpsAdmin storage reliability by representing actual ZFS dataset,
-branch, snapshot and clone dependencies, then allow deletion and rotation only
-when physical state permits it. Preserve and migrate the existing estate of
-approximately 20,000 snapshots. Add safe user deletion of snapshots with
-backup copies. Investigate a bounded daily-backup dispatcher that avoids
-locking all datasets hours before their transfers run.
+Improve the vpsAdmin-owned storage catalog so it records and checks the ZFS
+state that vpsAdmin commands create. Deliver one rerunnable reconciliation
+engine. Its first approved production apply will backfill and correct legacy
+metadata; later runs use the same capture, matching, planning, approval,
+application and verification code. Ship the code and exercise audit/dry-run
+before a separately approved production maintenance window. Do not add a
+standalone legacy correction script.
 
-This conversation is bound to this session. The older
-`2026-06-08-vpsadmin-storage-redesign` session named in the request was not
-accessed; any unpublished findings there need to be supplied separately.
+This implementation does not add user snapshot deletion or change daily backup
+scheduling. Those improvements follow only after the storage model and
+reconciliation are verified. The user-data boundary covers commands initiated
+by vpsAdmin, including its osctl wrappers. Independent osctld and root ZFS
+changes are outside the guarantee, but a later audit can detect them.
 
-## Affected projects and readers
+The previous `2026-06-08-vpsadmin-storage-redesign` session was not accessed;
+this conversation is bound to the verified current session. The read-only
+operator inventory and its findings are in [investigation.md](investigation.md).
+The owning vpsAdmin implementation rationale is being reconciled in
+[storage-integrity-design.md](storage-integrity-design.md).
 
-- `vpsadmin`: primary owner. API schema/models, transaction chains, scheduler,
-  nodectld integration, WebUI eligibility feedback, storage tests and docs.
-- `vpsadminos`: reference for generic ZFS behavior and integration tests.
-  No vpsAdminOS code change is proposed. If one becomes necessary, provide a
-  general-purpose primitive, with its own compatibility plan.
-- `vpsfree-maintenance-tasks`: owns the first, read-only inventory scripts
-  that an operator can run against production DB and on `backuper2.prg`.
-- Operators need read-only audit, migration and recovery instructions. Future
-  developers need graph invariants and the boundary between logical snapshots
-  and physical ZFS occurrences in vpsAdmin storage docs. Members need clear
-  deletion eligibility text in API/WebUI documentation once implemented.
+## Data model and invariants
 
-The source review and detailed rationale are in [investigation.md](investigation.md).
+- Preserve `Snapshot` as logical user/history identity, `SnapshotInPool` (SIP)
+  as one placement per snapshot and dataset in pool, and
+  `SnapshotInPoolInBranch` (SIPB) as one backup-branch occurrence. Add nullable
+  exact physical path, ZFS snapshot GUID, owner filesystem GUID and verification
+  provenance to nonbackup SIPs and backup SIPBs. Null means unverified, not
+  absent. GUID is not unique, including within a pool after receive.
+- Add `storage_filesystem_identities`, each row owned by exactly one existing
+  Pool managed root, DatasetInPool, DatasetTree, Branch or SnapshotInPoolClone.
+  It stores node/pool, current path, filesystem GUID, verification evidence
+  and the filesystem's
+  ZFS clone origin as either none, unverified, unresolved or a real FK to the
+  source SIP/SIPB occurrence. This replaces the earlier standalone origin-edge
+  proposal. Claim exact current paths uniquely per node, comparing the full
+  path when its indexed digest matches. Pool rows retain managed-root path;
+  its filesystem identity records the managed-root GUID and Pool records the
+  actual zpool-root GUID. SIPB's parent pointer remains logical history, not ZFS
+  origin. A known catalog row and an unknown disk-only object must never share
+  an invented catalog identity.
+- Retain `SIP.reference_count` for old chains. Reconciliation calculates its
+  established logical semantics using inbound SIPB references across all
+  pools, persistent clone rows and confirmation state. It never resets counts
+  to a one-node lower bound. ZFS clone dependencies are checked separately.
+- Scope status is unverified, verified or exceptional needs_reconcile.
+  Successful commands and ordinary failures with proven no effect or exact
+  rollback preserve verification; only an unexpected or unprovable physical
+  result enters needs_reconcile.
 
-## Proposed phases
+## One reconciler and mutation contract
 
-1. Extend the existing read-only topology fixture and add a bounded node
-   inventory of exact physical objects, GUIDs, origin/clone edges, holds and
-   operation state. Audit real pools without writes; classify mismatches.
-2. Add a shadow physical-object/edge model with durable per-dataset
-   reconciliation status. Backfill it in resumable batches, then perform a
-   fenced final scan for each dataset. Keep ambiguous datasets quarantined.
-3. Replace reference-count-only deletion ordering with graph-aware, guarded
-   nonrecursive operations. Make pending complex-topology integration
-   contracts pass. Journal partial progress.
-4. Reuse the existing authorized snapshot DELETE API for eligible snapshots
-   on validated datasets, checking every physical occurrence and replication
-   base under the same lock. Return specific blockers and add UI feedback.
-5. Separately introduce durable due backup runs and a bounded per-node
-   dispatcher, preserving nodectld send/receive queue reservations. This is
-   feasible but larger, so it need not delay the topology repair.
+- An API-runtime CLI captures a consistent read-only DB view and bounded,
+  signed nodectld ZFS inventory. Stream private numbered, hashed chunks to a
+  CLI-owned durable spool; incomplete, stale or conflicting captures cannot
+  authorize a repair. Report disk-only objects privately and never import or
+  destroy them. Bootstrap and steady policies share one matcher and action
+  implementation: bootstrap expects null legacy identity; steady treats it as
+  unresolved.
+- Deterministic plans contain exact target IDs, row versions, before/after
+  values, evidence and dependency proof. Admin approval binds selected actions
+  to a complete run digest. Apply uses a durable journal and bounded CAS
+  transactions; restart verifies committed after-states before resuming. A
+  changed freeze epoch or disk/DB evidence requires a new run and approval.
+  Reaudit after apply; only complete matching closures become verified.
+- Implement a durable global storage-read-only toggle. All new vpsAdmin
+  storage-mutating chain admissions and retries check it atomically while
+  queuing. Already admitted chains finish or roll back. Authoritative apply
+  waits for no relevant queued, executing, rollbacking or unsettled chain or
+  invoked subprocess. API reads and signed inventory continue.
+- Every vpsAdmin topology command gets a durable intent/token and bounded
+  permitted-effect manifest. The node checks exact path, GUID, owner, origin
+  and clones before execution and observes the result afterward. Receipts and
+  identity changes participate in normal command confirmation. Retry observes
+  state before repeating any effect. Strict mode rejects old unguarded mutating
+  handles and opaque osctl effects whose footprint cannot be bounded.
+- Incremental send/receive pins exact source, base, end and destination
+  occurrences. Existing `zfs recv -F` is allowed in strict mode only when a
+  complete preflight proves its removal set empty and the destination tip is
+  the confirmed common base. Rollback removes only objects proved to have been
+  created by that attempt. Preserve normal incremental transfer payloads.
 
-These remain proposals, not approved rollout steps. The read-only inventory
-slice below is implemented; no live data has been changed in this session.
+## Production finding contract
 
-## Current implementation slice: offline inventory
+The supplied DB/ZFS observations were minutes apart; none alone authorizes a
+correction. On a complete frozen run, the same engine must:
 
-The dated standalone task in `vpsfree-maintenance-tasks` has separate
-read-only DB and ZFS collectors and an offline comparator. The DB collector
-uses vpsAdmin API models for application rows and a read-only consistent
-database transaction. The operator will
-run the collectors using production DB access and on `backuper2.prg`; this
-session will not connect to production. The DB collector must retain every
-confirmation state and relevant dataset locks. The ZFS collector must scan
-only explicit backup roots, capture exact paths and dependency properties,
-and mark a scan that changed during collection. Capture metadata records both
-observation windows. Outputs are private, complete-only artifacts; raw files
-must not be committed. Comparison reports exact mismatch classes and
-volatility evidence without claiming deletion safety or modifying either
-system. Offline fixture tests and source review are complete; live behavior
-and scan cost await the operator capture.
+- map the 26 reciprocal branch clone origins to filesystem-origin FKs when
+  uniquely proved, without inferring SIPB logical parent pointers;
+- list five disk-only snapshots and four disk-only filesystems privately,
+  classify proven structural ancestors, and keep unknown objects unresolved;
+- remove the one DB-only empty branch only with completed-destroy proof,
+  physical absence and no incoming/outgoing dependencies;
+- resolve the one parent ID against the full DB, treating a valid out-of-scope
+  row as a capture artifact;
+- investigate 195 counter surpluses using full cross-pool refs and clones,
+  correcting individual counts only when exact semantics are proved;
+- reconcile 251 pending Dataset confirmations against chains and physical
+  state, never using descendant snapshots alone as proof; and
+- accept proven detached headless backup placements among the 150 findings;
+  restore a head only when unique lifecycle evidence identifies it. Nonhead
+  trees need no head branch.
 
-## Decisions for a future implementation
+Ambiguous findings have no automatic DB action. Any DB-only catalog removal
+requires completed transaction evidence, complete frozen disk absence and
+full dependency checks. Reconciliation never changes ZFS.
 
-- Use additive shadow schema before replacing any legacy metadata. This
-  supports observation and comparison without a destructive migration.
-- Treat ZFS state as the authority for whether a physical snapshot can be
-  destroyed; treat DB rows as intent and user-visible catalog. A mismatch
-  blocks new deletion until reconciled.
-- Make logical snapshot deletion all-or-nothing across pool and branch copies.
-  Preserve an explicit pending result on partial failure; do not cascade to
-  dependent datasets or silently defer physical deletion.
-- Preserve a confirmed common send base for each active backup by default.
-  A deliberate full reseed, if desired, should be a separate operator flow.
-- Keep scheduler dispatch distinct from node queue reservation: admission
-  limits outstanding chains, while nodectld limits running transfers.
+## Compatibility, delivery and verification
 
-## Compatibility and deployment
+`vpsadmin` owns schema, API, nodectld, CLI, tests and durable design/operations
+documentation. `vpsadminos` is reference material for invoked osctl effects;
+no vpsAdminOS on-disk format or all-node OS change is currently planned.
+`vpsfree-maintenance-tasks` retains the already-published standalone read-only
+inventory feature branch, awaiting separate merge approval.
 
-- Persisted state: additive tables and dual maintenance of legacy tables
-  during transition. Backfill is a restartable operation, not part of a long
-  schema migration transaction. No automatic destructive repair.
-- Database: create indexes for bounded per-dataset and per-pool graph queries;
-  benchmark and rehearse against a representative copy. Old binaries ignore
-  new tables. Old writers invalidate shadow validation.
-- API, clients, CLI and Terraform: retain existing endpoints and request
-  shapes. Successful deletion of snapshots with backups is a behavior change;
-  surface precise denial reasons without changing unrelated clients.
-- Node protocol: add capability-advertised inventory and a new guarded
-  destroy transaction; do not extend the old transaction and assume older
-  nodectld will enforce the guard. Roll node support out before API use.
-- vpsAdminOS configuration: no option or on-disk format change is currently
-  proposed, so no coordinated all-node OS update is expected.
-- Mixed versions: observation-only phases are safe with old APIs/nodes.
-  Enable graph-based deletion only when every possible storage writer and
-  relevant node supports the guard, or route through a single upgraded
-  writer. Keep disabled for unknown or unvalidated DIPs.
-- Rollback: disable new deletion and drain guarded chains first. Legacy
-  records must remain coherent with completed deletes. On re-upgrade,
-  reconcile DIPs touched by old writers again. Test old software reading
-  state created by the new software before claiming rollback support.
-- Scheduler cutover: persist due rows first, then switch off per-action cron
-  only after old schedulers and queued chains drain. Deduplicate the cutover
-  day and restore old tasks before scheduler rollback.
+Deploy additive schema and observer-mode readers/writers first. Old API and
+node versions ignore new nullable fields; their writes cannot certify a scope.
+Do not publish owner-linked identities or origin FKs while old writers can
+execute: those FKs could block an old chain's DB confirmation after its ZFS
+effect. Before strict enforcement, upgrade all API/scheduler/nodectld writers,
+drain old queued work, activate strict legacy-handle refusal, freeze storage
+writes, then perform the first approved reconciliation and verify closures.
+After linked identities are published, an old-version rollback remains
+read-only until a compatible writer returns; observer mode cannot safely
+re-enable old writes. No feature content is merged into a default branch
+without explicit repository/target approval; implementing and reviewing this
+plan are not merge approval.
 
-## Verification plan
-
-Audit all managed pools read-only, count each mismatch class, and assess scan
-latency at the reported scale. Unit-test graph matching and deletion
-eligibility on synthetic and sanitized real fixtures. Make repeated rollback
-and complex rotation integration contracts pass, including duplicate snapshot
-names, promotion, external clones, holds, interrupted transfers and payload
-integrity. Rehearse migration, mixed-version behavior and software rollback on
-a representative database copy. Test dispatcher admission, fairness, restart,
-duplicate schedulers, missed daily snapshots and fatal-chain handling in a
-two-node setup. Use mandatory review after implementation commits and quick
-checks, before long integration tests.
+Test schema cardinality and cross-table identity, promotion, duplicate GUIDs,
+clone origins, every observed finding class, ordinary transaction failure,
+exact rollback, exceptional unresolved effects, manifest retry, freeze races,
+legacy-handle rejection, signed inventory chunk loss/replay at about 40,000
+snapshots, and full/incremental transfer payload integrity. Use required hooks,
+quick component checks, mandatory independent review, then longer integration
+tests with a verification watcher. Rehearse bootstrap on a representative
+database/ZFS copy before an operator authorizes production apply.
