@@ -103,14 +103,17 @@
             .teams.delegated.roles.team_lead.model == "gpt-6-sol" and
             .teams.delegated.roles.designer.model == "gpt-6-sol" and
             .teams.delegated.roles.designer.purpose == "design" and
+            .teams.delegated.roles.designer.access == "workspace_write" and
             .teams.delegated.roles.designer.effort == "xhigh" and
             .teams.delegated.roles.designer.allowed_efforts == ["high", "xhigh"] and
             .teams.delegated.roles.designer.lifetime == "session" and
             .teams.delegated.roles.implementer.model == "gpt-6-sol" and
+            .teams.delegated.roles.implementer.access == "workspace_write" and
             .teams.delegated.roles.implementer.effort == "xhigh" and
             .teams.delegated.roles.implementer.allowed_efforts == ["high", "xhigh"] and
             .teams.delegated.roles.implementer.lifetime == "session" and
             .teams.delegated.roles.reviewer.model == "gpt-6-sol" and
+            .teams.delegated.roles.reviewer.access == "read_only" and
             .teams.delegated.roles.reviewer.effort == "xhigh" and
             .teams.delegated.roles.reviewer.allowed_efforts == ["xhigh"] and
             .teams.delegated.roles.reviewer.lifetime == "session" and
