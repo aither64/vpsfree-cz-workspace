@@ -20,6 +20,8 @@ accessed; any unpublished findings there need to be supplied separately.
 - `vpsadminos`: reference for generic ZFS behavior and integration tests.
   No vpsAdminOS code change is proposed. If one becomes necessary, provide a
   general-purpose primitive, with its own compatibility plan.
+- `vpsfree-maintenance-tasks`: owns the first, read-only inventory scripts
+  that an operator can run against production DB and on `backuper2.prg`.
 - Operators need read-only audit, migration and recovery instructions. Future
   developers need graph invariants and the boundary between logical snapshots
   and physical ZFS occurrences in vpsAdmin storage docs. Members need clear
@@ -45,8 +47,23 @@ The source review and detailed rationale are in [investigation.md](investigation
    dispatcher, preserving nodectld send/receive queue reservations. This is
    feasible but larger, so it need not delay the topology repair.
 
-These are proposals, not approved rollout steps. No project code or live data
-has been changed in this investigation.
+These remain proposals, not approved rollout steps. The read-only inventory
+slice below is implemented; no live data has been changed in this session.
+
+## Current implementation slice: offline inventory
+
+The dated standalone task in `vpsfree-maintenance-tasks` has separate
+read-only DB and ZFS collectors and an offline comparator. The operator will
+run the collectors using production DB access and on `backuper2.prg`; this
+session will not connect to production. The DB collector must retain every
+confirmation state and relevant dataset locks. The ZFS collector must scan
+only explicit backup roots, capture exact paths and dependency properties,
+and mark a scan that changed during collection. Capture metadata records both
+observation windows. Outputs are private, complete-only artifacts; raw files
+must not be committed. Comparison reports exact mismatch classes and
+volatility evidence without claiming deletion safety or modifying either
+system. Offline fixture tests and source review are complete; live behavior
+and scan cost await the operator capture.
 
 ## Decisions for a future implementation
 
