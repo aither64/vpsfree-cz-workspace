@@ -1,5 +1,44 @@
 # 2026-09-23-storage-redesign
 
+## Completion decision, 2026-09-25
+
+The user requested completion of the guarded writer and one repair engine,
+an early disposable dev-cluster trial of authenticated storage freeze, a
+reviewable vpsAdmin history and migration set, a prepared configuration
+channel pin and site runbook, and permanent lead/reviewer instruction fixes.
+No feature migration has been deployed. The reviewed observer branch is not
+repair-ready: production strict dispatch and APPLY remain disabled.
+
+First, consolidate unpublished vpsAdmin history and schema. Replace the five
+transitional migrations with one final additive foundation migration, retain
+fresh-schema singleton bootstrap, and remove superseded host-operator code and
+unused approval/action schema. Keep project documentation about lasting
+behavior separate from the dated rollout record. The dedicated reviewer must
+review the complete rewritten branch, including the migration inventory,
+before the early trial.
+
+Next, start the session's disposable storage-topology dev cluster on bridge
+networking. Verify schema setup, authenticated API/WebUI mode changes,
+read-only admission, audit and bounded catch-up. Return it to read_write and
+leave it available to the user. This demonstrates DB admission, not node
+quiescence or repair readiness.
+
+Complete strict signed execute/rollback receipts, child and delayed-osctld
+quiescence, whole-chain identity publication, and a frozen approval/apply/
+resume/verify path in the same reconciler. A non-linking DB repair policy may
+be exercised first; publishing physical identity or origin links and then
+resuming writes requires full strict coverage. No production APPLY is
+authorized. Prepare the vpsadmin channel pin on a configuration feature
+branch after the reviewed vpsAdmin SHA is fetchable, but do not deploy shared
+int hosts. Add the site deployment and rollback runbook there.
+
+Update workspace and repository instructions and the canonical independent
+review skill so leads report done/remaining/blockers/next action and final
+branch-wide reviews explicitly reject obsolete unmerged history and schema.
+The lead supplies the review packet and resolves findings; the dedicated
+reviewer performs the independent assessment. No default-branch integration
+is authorized by this plan.
+
 ## Approved implementation scope
 
 Improve the vpsAdmin-owned storage catalog so it records and checks the ZFS
@@ -82,6 +121,29 @@ The owning vpsAdmin implementation rationale is being reconciled in
   complete preflight proves its removal set empty and the destination tip is
   the confirmed common base. Rollback removes only objects proved to have been
   created by that attempt. Preserve normal incremental transfer payloads.
+
+### Storage freeze operator interface correction
+
+The user chose the normal authenticated API and WebUI path instead of the
+local root/sudo launcher. A singular admin-only `storage_freeze` API resource
+will show the complete bounded DB status, switch modes with a reason and
+expected epoch, and run explicit bounded observer catch-up. The Cluster WebUI
+will show the same status and allow freeze/unfreeze with CSRF protection; it
+will poll the status action for DB drain progress. Catch-up remains API-only.
+Retire both storage-freeze CLIs, the launcher, and its sudo policy. The API
+must derive the actor from the active admin session and reject impersonated
+sessions. Since this feature was never deployed, consolidate the schema to
+record only supported API-user transitions. Neither the WebUI nor a true
+`db_drained` response claims node
+quiescence or physical repair readiness.
+
+Apply the consolidated additive foundation migration before new API code. All API workers
+must be upgraded before operators rely on the freeze: old workers can still
+admit writers. Removing the CLIs leaves no
+supported mode switch while the API is unavailable. No production strict
+dispatch, verified scope publication, or repair APPLY is enabled by this
+interface change. Review WebUI labels and screenshots through the separate KB
+contract workflow; do not publish KB changes without exact approval.
 
 ## Production finding contract
 
