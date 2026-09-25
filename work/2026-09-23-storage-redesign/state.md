@@ -36,10 +36,11 @@ requested/completed audit pair at epoch 1, while a stale request wrote none.
 `db_drained` became true only after the chain finished; `repair_ready` stayed
 false. Both queue and mode are restored; a new snapshot completed after
 unfreeze. The fixture used two stopped VPS roots on a seeded hypervisor Pool,
-not the checklist's primary-Pool fixture. Live WebUI control interaction and
-the remaining support/delegated/scope negative cases still need a cluster
-check, so record this as a partial G0 trial. The WebUI endpoint responds; the
-user can inspect it at `https://webui.aitherdev.int.vpsfree.cz/` with the
+not the checklist's primary-Pool fixture. Live WebUI login, status warning,
+epoch-2 display and review form passed in a headless browser without a final
+mode-change submission. The remaining support/delegated/scope negative cases
+still need a cluster check, so record this as a partial G0 trial. The user can
+inspect the control at `https://webui.aitherdev.int.vpsfree.cz/` with the
 session dev-cluster credentials. No repair/APPLY or production strict mode is
 enabled. Details are in [g0-dev-cluster-trial.md](g0-dev-cluster-trial.md).
 

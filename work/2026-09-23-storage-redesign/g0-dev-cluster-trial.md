@@ -112,10 +112,14 @@ open and empty. A post-unfreeze snapshot on B completed as chain 11 and both
 physical snapshots were visible in ZFS. The final control row is
 `read_write`, epoch 2; there are two transition rows and two catch-up rows.
 
-The live WebUI form, CSRF review flow and support/delegated/show-only scope
-negative cases were not exercised in this cluster. Focused API/WebUI specs
-cover those paths, but they do not substitute for a live browser check. The
-fixture's stopped VPS and snapshots are retained as disposable cluster data.
+The live WebUI login, safety warning, read-write status and epoch-2 review
+form passed in a headless browser. The review preserved its reason and did
+not submit the final mode change; the DB remained at epoch 2 with two
+transitions. The browser used the disposable cluster's HTTPS exception, so
+this run did not validate certificate trust. Support, delegated and show-only
+scope negative cases remain covered by focused specs but were not exercised
+in the live cluster. The fixture's stopped VPS and snapshots are retained as
+disposable cluster data.
 Private request/response evidence is under
 `/tmp/storage-review-split-2026-09-23/` with restricted permissions; no
 credentials or signing material are in this record. No identity publication,
