@@ -6,26 +6,141 @@ lifecycle: active
 
 ## Current status
 
-2026-09-25 checkpoint: vpsAdmin has a proposed single foundation migration
-and API-only audit shape in the feature worktree. The predecessor-schema
-upgrade migration spec passed 4/0, a fresh core-only migrate/dump generated
-schema version 20260924210000, and the separate fresh-schema bootstrap spec
-passed 2/0. The ordinary API selection passed 74 of 75 examples before an
-order-dependent authentication fixture failed; implementer0 is correcting
-that fixture. The resource file passed 13/0 alone, and a two-example run
-with the preceding insertion-failure case passed 2/0; the broader suite is
-the remaining API test gate. WebUI focused PHPUnit passed 5 tests and 17
-assertions. The
-source consolidation is uncommitted, no history has been rewritten, and the
-full branch review and dev-cluster trial remain ahead.
+Latest 2026-09-25 checkpoint: the reviewed, cleaned vpsAdmin series is
+published at `5b2814cac97f9645f6a95bb8da549087a712b9da`. It has six
+thematic commits and one final additive migration. Two Node test-only fixes
+were folded into their owning commits after CI exposed a missing DB fixture
+and a subprocess timing race; the focused selection passed 12/0 and the full
+Node suite passed 570/0 at seed 24542. Reviewer0 reran the affected lanes and
+found no Blocking or Important issue. Push-triggered CI at this exact SHA is
+still running; the superseded in-progress CI and API-spec runs were cancelled.
+The earlier `a15afb518` head is retained in a backup ref and recovery bundle.
+
+The configuration feature branch is published at `40133f55b844a8224f8991976608a6eac66ee786`.
+Its reviewed confctl-generated `vpsadminServices` pin points exactly to the
+published `5b2814cac` vpsAdmin head. The commit records the real prior pin
+`a65a4dfe`, including the foundation migration in its complete changelog;
+reviewer0 cleared the corrected message and lock diff. No shared host has
+been switched, and the separate Node channel has not been updated.
+
+The session-owned disposable storage-topology cluster is running on bridge
+networking from the preceding runtime-equivalent `a15afb518` package. Its DB
+has the final `20260924210000` schema and singleton control row. A bounded
+authenticated API freeze trial passed: `read_write` epoch 0 became
+`read_only` epoch 1 with one actor/session audit row, then returned to
+`read_write` epoch 2 with a second row. A real snapshot chain remained queued
+on node1's paused storage queue during the freeze; a new independent snapshot
+was refused with HTTP 423 before chain/catalog/intent/ZFS effect. The queued
+chain finished after queue resume. An empty cursor-bounded catch-up wrote one
+requested/completed audit pair at epoch 1, while a stale request wrote none.
+`db_drained` became true only after the chain finished; `repair_ready` stayed
+false. Both queue and mode are restored; a new snapshot completed after
+unfreeze. The fixture used two stopped VPS roots on a seeded hypervisor Pool,
+not the checklist's primary-Pool fixture. Live WebUI control interaction and
+the remaining support/delegated/scope negative cases still need a cluster
+check, so record this as a partial G0 trial. The WebUI endpoint responds; the
+user can inspect it at `https://webui.aitherdev.int.vpsfree.cz/` with the
+session dev-cluster credentials. No repair/APPLY or production strict mode is
+enabled. Details are in [g0-dev-cluster-trial.md](g0-dev-cluster-trial.md).
+
+The paragraphs below preserve earlier checkpoints and are superseded where
+their refs or in-progress statements differ from this latest checkpoint.
+
+2026-09-25 checkpoint: the unpublished vpsAdmin feature ref and registered
+worktree now point to the reviewed six-commit head `a15afb518`, above
+`origin/master` `7045c81b3`. The isolated replay branch remains at that head.
+Its single final foundation migration is
+`api/db/migrate/20260924210000_add_storage_integrity_foundation.rb`; four
+transitional migrations, the host freeze launcher and unused reconciliation
+decision/action schema are absent. The former 25-commit unpublished history
+was replaced in an isolated replay; the replacement series preserves the
+final 163-path feature patch except for two corrected v4 registry test fixtures.
+The old head is preserved in a verified recovery bundle and local
+`backup/2026-09-23-storage-redesign-pre-six-commit` ref. All six focused
+commits passed normal Nix/Overcommit hooks, and both worktrees are clean.
+
+Clean-head quick verification: focused ordinary API/model/resource specs
+passed 76/0 and focused Node registry/receipt/settlement/inventory/Command
+specs passed 122/0 using an isolated Bundler directory; the predecessor
+migration passed 4/0 and fresh-schema bootstrap 2/0 on the clean head;
+attempt provenance passed 3/0 on the identical source patch,
+WebUI PHPUnit 5 tests/17 assertions, and CI selector 18 runs/77 assertions.
+The initial shared Node gem directory could not load `i18n` before any test;
+the isolated rerun is green. Retained reviewer0 (GPT-6 Sol/xhigh) completed
+the independent high-risk four-lane review of `7045c81b3..175111ee7`.
+It found one **Blocking general/architecture/scope history issue**: the
+17,073-line functional commit combines independently reviewable foundation,
+observer, advisory, freeze UI/API and test-only strict work. It found no other
+Blocking or Important functional defect. Reviewer0 then reviewed the six-commit
+replacement across all four lanes and found the history finding resolved,
+with no remaining Blocking or Important finding. The final feature ref was
+moved only after that review and exact final-tree comparison.
+
+The isolated replay has six committed groups. It starts with
+foundation/bootstrap commit `0ebec78ec`, paired
+observer writer/settlement commit `a669bc76e`, advisory
+inventory/reconciler commit `163bf3457`, authenticated API/WebUI freeze
+commit `f07b23899`, test-only strict/contract commit `0aa5d334c`, and lasting
+docs/AGENTS commit `a15afb518` at
+`/tmp/storage-review-split-2026-09-23/vpsadmin`. All normal Nix/Overcommit
+hooks passed; group-2 focused API and Node selections passed 72/0 and 82/0,
+group-3 selections passed 65/0 and 54/0, and group-4 API/WebUI checks passed
+36/0 and 5 tests/17 assertions. Group-5 focused API and Node selections
+passed 11/0 and 107/0. The group-3 API watcher did not
+retain its log despite reporting an exit-0 RSpec summary; the Node log is
+retained. Final-headed migration and bootstrap checks passed 4/0 and 2/0 in
+separate disposable DB processes. The real API-to-Node v4 contract passed
+1 API and 3 Node examples (0 failures) on `a15afb518`; its private DB teardown
+succeeded. The final 163-path
+name/status manifest matches the old reviewed head exactly, as does every
+binary patch outside the two authorized Transaction fixture lines. Retained
+reviewer0 cleared all four lanes on the six-commit series and intermediate
+dependencies; [final-vpsadmin-series-rerun-packet.md](final-vpsadmin-series-rerun-packet.md)
+records the evidence.
+Push-triggered CI then found two failures in the full libnodectld spec run
+`36179658050` (569 examples, 2 failures, seed 58529): both DatasetExpander
+examples call the new freeze-row DB check through `NodeCtld::Db.open`, while
+their `FakeCfg` has no `db` key. The failed-attempt log was downloaded before
+any rerun to private `ci-node-failed.log`. Implementer0 is investigating and
+preparing a narrow correction in the isolated replay worktree so the running
+dev-cluster build continues from the reviewed clean head. The CI run is not
+accepted as green.
+During group-2 staging, implementer0 found two Transaction/TransactionChain
+test fixtures still construct an eight-field registry entry after v4 added
+two strict-direction fields. The lead authorized the narrow two-spec fixture
+correction in the owning observer commit, with a documented final-patch delta
+and focused test run. No production runtime difference is planned.
+
+The branch is **not ready for production repair or merge**. Production strict
+dispatch, verified-scope publication and repair APPLY remain disabled;
+`db_drained` is DB-only. The next integration gate is a disposable
+storage-topology dev-cluster API/WebUI freeze trial after review, ending back
+in `read_write`. Architect0 prepared a G0 checklist covering admin auth/CAS,
+a paused preexisting chain, new admission refusal, DB-only status, audit and
+queue/mode recovery. Node/child/GC quiet and repair remain outside G0. The
+reviewed vpsAdmin feature branch was pushed at `a15afb518`; the session-owned
+storage-topology cluster start is running on bridge after a fresh no-disk/no-VM
+preflight. No shared host has been switched. See
+[final-vpsadmin-review-packet.md](final-vpsadmin-review-packet.md) for the
+full branch inventory, [g0-dev-cluster-trial.md](g0-dev-cluster-trial.md) for
+the session trial checklist, and the separate configuration deployment guide
+for prepared site ordering.
 
 The lasting storage explanation and schema reference are committed in
-vpsAdmin `21fcf7b` after normal hooks. The site rollout guide is committed
+vpsAdmin `a15afb518` after normal hooks. The site rollout guide is committed
 in configuration `57c6cb9c`; independent affected-lane review cleared its
 host-specific writer hold after the guide added active API task timer and
-service holds, and post-switch verification. The configuration
-channel has not been pinned to vpsAdmin because its final reviewed SHA is
-not yet available. No shared host or dev cluster was switched.
+service holds, and post-switch verification. The configuration feature branch
+now has generated `confctl` channel-pin commit `3b492f0d` for exact
+`a15afb518`; only the `vpsadminServices` lock entry changed. Reviewer0
+cleared the full configuration feature series with no Blocking or Important
+finding, and the feature branch was pushed. No shared host was switched.
+
+Architect0 checked the canonical KB WebUI contract against this
+superadmin-only Cluster control. Its member-page and capture routes do not
+include this action, so no bilingual KB candidate or capture-contract change
+is required for G0 or solely for this control's later release. Any later
+member-visible denial or navigation change needs a fresh visibility check.
 
 Lead/reviewer rules are committed in workspace `04b0e5c6` and canonical
 extension `dcb2762`; workspace `3f539b0` pins the published extension SHA.
