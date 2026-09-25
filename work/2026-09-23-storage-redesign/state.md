@@ -12,14 +12,18 @@ upgrade migration spec passed 4/0, a fresh core-only migrate/dump generated
 schema version 20260924210000, and the separate fresh-schema bootstrap spec
 passed 2/0. The ordinary API selection passed 74 of 75 examples before an
 order-dependent authentication fixture failed; implementer0 is correcting
-that fixture. WebUI focused PHPUnit passed 5 tests and 17 assertions. The
+that fixture. The resource file passed 13/0 alone, and a two-example run
+with the preceding insertion-failure case passed 2/0; the broader suite is
+the remaining API test gate. WebUI focused PHPUnit passed 5 tests and 17
+assertions. The
 source consolidation is uncommitted, no history has been rewritten, and the
 full branch review and dev-cluster trial remain ahead.
 
 The lasting storage explanation and schema reference are committed in
 vpsAdmin `21fcf7b` after normal hooks. The site rollout guide is committed
-in configuration `24da2180`; reviewer0's two host-service corrections were
-incorporated and its affected-lane rerun is pending. The configuration
+in configuration `57c6cb9c`; independent affected-lane review cleared its
+host-specific writer hold after the guide added active API task timer and
+service holds, and post-switch verification. The configuration
 channel has not been pinned to vpsAdmin because its final reviewed SHA is
 not yet available. No shared host or dev cluster was switched.
 
@@ -33,6 +37,12 @@ shared-root AGENTS remain old. Existing retained members also keep their
 saved role instructions, so the lead must send the final branch-review
 packet explicitly. Package activation and default-branch integration remain
 separate later steps; neither has been claimed complete.
+
+Architect0 recorded the next node-inclusive quiet-observation design in
+`storage-integrity-design.md`. It requires a read-only osctld activity signal
+and cannot turn the current DB-only `db_drained` result into repair readiness.
+No G1 probe, osctld interface, repair APPLY or strict production dispatch is
+implemented by this checkpoint.
 
 ## Earlier verified observer work and completion decision
 
