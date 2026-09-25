@@ -12,6 +12,9 @@ lifecycle: active
 - The fix is justified but the PR has a blocking first-page PHP WebUI
   regression and a blocking commit split issue. It needs companion client and
   API-description work before integration. No project branch was changed.
+- On 2026-09-25, PR base/head remained unchanged. A complete proposed comment
+  is in [pr-comment-draft.md](pr-comment-draft.md), awaiting user approval to
+  post. No GitHub response has been sent.
 
 ## Next actions
 
@@ -22,6 +25,8 @@ lifecycle: active
 - Re-review changed lanes after any public-contract or behavior change, then
   verify the joint API/WebUI flows. Await explicit user direction before any
   repository integration; keep this review session open.
+- Show the exact draft PR comment to the user. Post only after their approval,
+  checking the PR head and comments again first.
 
 ## Documentation
 
@@ -46,6 +51,8 @@ lifecycle: active
   bare repository; inspected individual commit diffs, API/WebUI callers,
   HaveAPI pagination, pinned PHP client, and related frontend PRs.
 - `git diff --check` for PR base/head: passed.
+- On 2026-09-25, inspected the failed selected-integration check and its
+  uploaded webui test log without starting or rerunning a job.
 
 ## Results
 
@@ -56,8 +63,10 @@ lifecycle: active
   Verified session roster remained solo. Findings reconciled in [review.md](review.md):
   two Blocking, two Important, one Advisory. No authorization bypass found.
 - Author reports 133 focused examples and clean RuboCop at `ee81404ca`.
-  Current-head GitHub checks at last read: 59 successful, one integration
-  check still in progress. No long local integration test was started.
+  Current-head GitHub checks at last read: 59 successful, one failed
+  integration job. Its member/admin networking browser cases fail with
+  `Invalid pagination cursor`, corroborating the `from_id=0` finding.
+  No long local integration test was started.
 - Related open beta frontend PRs #496, #507 and #509 depend on this API head.
 
 ## Open questions

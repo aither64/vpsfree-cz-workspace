@@ -78,8 +78,13 @@ affected Czech and English KB material.
 
 - `git diff --check` for the exact base/head passed.
 - PR description reports 133 focused Ruby examples and clean RuboCop at
-  `ee81404ca`; current-head GitHub status showed 59 completed successful
-  checks and one integration check still in progress at the last read.
+  `ee81404ca`. At the 2026-09-25 check, the head was unchanged. GitHub had
+  59 successful checks and one failed
+  [integration job](https://github.com/vpsfreecz/vpsadmin/actions/runs/36042538538/job/107777985029).
+  The uploaded `webui` test log shows member/admin networking browser cases
+  reaching `Invalid pagination cursor` on the IP assignment page, directly
+  reproducing finding 1. The remaining webui scripts in that integration run
+  passed; no rerun was treated as a substitute for investigating the failure.
 - No new local integration test or deployment was run for this review.
 - Overall risk: **high**, because public pagination and HTTP error behavior
   changes across API clients and deployment versions.
