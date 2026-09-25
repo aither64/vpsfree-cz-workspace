@@ -6,22 +6,28 @@ lifecycle: active
 
 ## Current status
 
-Latest 2026-09-25 checkpoint: the reviewed, cleaned vpsAdmin series is
-published at `5b2814cac97f9645f6a95bb8da549087a712b9da`. It has six
-thematic commits and one final additive migration. Two Node test-only fixes
-were folded into their owning commits after CI exposed a missing DB fixture
-and a subprocess timing race; the focused selection passed 12/0 and the full
-Node suite passed 570/0 at seed 24542. Reviewer0 reran the affected lanes and
-found no Blocking or Important issue. Push-triggered CI at this exact SHA is
-still running; the superseded in-progress CI and API-spec runs were cancelled.
-The earlier `a15afb518` head is retained in a backup ref and recovery bundle.
+Latest 2026-09-26 checkpoint: the reviewed six-commit vpsAdmin feature branch
+is published at `e29c82cfc81ba956e89238f9e76d947b2f7075d2` with one
+final additive migration. The preceding `5b2814cac` head exposed only three
+API test-fixture/coverage gaps in push CI. The six-line correction was folded
+into the observer and freeze commits; reviewer0 cleared the rewritten full
+series and final diff without a Blocking or Important finding. Focused final
+head API plugin-all and core selections each passed 9/0 with one pending.
+Push-triggered migration, i18n, RuboCop, WebUI, Node specs and the API-to-Node
+group-snapshot contract are green. API topic specs and the broad CI suite are
+still running. The obsolete `5b2814cac` broad CI run remains incomplete and
+is not evidence for the final head. The earlier `a15afb518` head and `5b2814cac`
+are retained in backup refs/recovery material.
 
-The configuration feature branch is published at `40133f55b844a8224f8991976608a6eac66ee786`.
-Its reviewed confctl-generated `vpsadminServices` pin points exactly to the
-published `5b2814cac` vpsAdmin head. The commit records the real prior pin
-`a65a4dfe`, including the foundation migration in its complete changelog;
-reviewer0 cleared the corrected message and lock diff. No shared host has
-been switched, and the separate Node channel has not been updated.
+The configuration feature branch is published at
+`e6932ddd321a29d13d33de17b142d07fd02dff03`
+with a confctl-generated `vpsadminServices` pin to the exact published
+`e29c82cfc` head. Its parent really pins `a65a4dfe`, and the generated
+changelog includes the foundation migration. The guide now accounts for
+`int.vpsadmin1`, whose minimal NodeCtld also follows the service channel.
+Reviewer0 cleared the rewritten two-commit guide/pin history without a
+Blocking or Important finding. No shared host has been switched, and the
+separate staging/production Node channels are unchanged.
 
 The session-owned disposable storage-topology cluster is running on bridge
 networking from the preceding runtime-equivalent `a15afb518` package. Its DB
@@ -43,6 +49,36 @@ still need a cluster check, so record this as a partial G0 trial. The user can
 inspect the control at `https://webui.aitherdev.int.vpsfree.cz/` with the
 session dev-cluster credentials. No repair/APPLY or production strict mode is
 enabled. Details are in [g0-dev-cluster-trial.md](g0-dev-cluster-trial.md).
+
+The next G1 slice is a separate vpsAdminOS read-only osctld per-zpool GC/trash
+activity signal. Architect0 specified a daemon-lifetime generation and
+fail-closed unknown result; implementer0 has been assigned a session-owned
+worktree from the currently pinned vpsAdminOS revision. The worktree is
+registered at `worktrees/2026-09-23-storage-redesign/vpsadminos` on branch
+`2026-09-23-storage-redesign`, based on
+`8e44a5124439b1f3048ffc56b1717614a5360358`; the later upstream staging
+rebase is still to be checked. This signal alone cannot make `repair_ready`
+true or prove all node children quiet. The provider-side osctld slice is
+published on that branch at `dcad075a171244cc17d67d625ab89c402d11781e`.
+Its focused unit selection passed 26/0. The real UNIX-command VM case passed
+all three examples after two test-fixture-only corrections, and normal
+Nixfmt/RuboCop hooks passed on the amended commit. Reviewer0 cleared the
+initial high-risk four-lane review and the affected-lane rerun without a
+Blocking or Important finding. See
+[g1-osctld-review-packet.md](g1-osctld-review-packet.md). The vpsAdminOS pin
+and node rollout remain unchanged; this provider proves only GC/trash
+activity, not all NodeCtld workers or child lifetime.
+Push-triggered RSpec and RuboCop at `dcad075a1` are green; the full VM CI run
+is still active. The prior export fake failure was corrected in the same
+reviewed provider commit. The NodeCtld-local `node_activity_v1` observer is
+committed only in an isolated temporary worktree at
+`/tmp/storage-g1-node-activity-2026-09-23-vpsadmin`, branch
+`2026-09-23-storage-redesign-node-activity-v1`, from old vpsAdmin `5b2814cac`.
+Focused Node tests passed 41/0 and normal hooks passed. The unchanged patch
+was rebased as one commit `2e4078166` on `e29c82cfc`. Architect conformance
+and independent mandatory review are pending; nothing from this G1 consumer
+has been pushed or deployed. It reports child coverage
+as unknown and cannot set `node_quiet` or `repair_ready`.
 
 The paragraphs below preserve earlier checkpoints and are superseded where
 their refs or in-progress statements differ from this latest checkpoint.

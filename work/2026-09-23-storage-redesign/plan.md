@@ -9,6 +9,26 @@ channel pin and site runbook, and permanent lead/reviewer instruction fixes.
 No feature migration has been deployed. The reviewed observer branch is not
 repair-ready: production strict dispatch and APPLY remain disabled.
 
+## Current next gates, 2026-09-26
+
+The six-commit vpsAdmin observer/freeze series and the configuration guide/pin
+are published on feature branches and independently reviewed. The disposable
+API/WebUI freeze trial passed its main admission and recovery path; the exact
+primary-Pool and live delegated/support cases remain partial. Finish the
+push-triggered API topic and broad CI runs at the final vpsAdmin head, and the
+vpsAdminOS GC/trash VM suite at its final head. No shared host switch follows
+from these results.
+
+G1 continues with the Node-local activity observer, then a signed 5291
+API/Node/osctld probe that can report only bounded advisory observations.
+Review each coherent commit before long integration. Close Node worker/child
+and delayed osctld coverage gaps before any `node_quiet` or `repair_ready`
+claim. Production strict receipt coverage, identity publication and the
+frozen approval/APPLY engine remain later gates; the same reconciler must
+handle legacy backfill and later runs. The site configuration guide requires
+schema-first rollout and an explicit decision for `int.vpsadmin1`, whose
+NodeCtld follows the service channel.
+
 First, consolidate unpublished vpsAdmin history and schema. Replace the five
 transitional migrations with one final additive foundation migration, retain
 fresh-schema singleton bootstrap, and remove superseded host-operator code and
@@ -173,8 +193,13 @@ full dependency checks. Reconciliation never changes ZFS.
 ## Compatibility, delivery and verification
 
 `vpsadmin` owns schema, API, nodectld, CLI, tests and durable design/operations
-documentation. `vpsadminos` is reference material for invoked osctl effects;
-no vpsAdminOS on-disk format or all-node OS change is currently planned.
+documentation. `vpsadminos` now owns the proposed first G1 slice: a read-only,
+per-zpool osctld GC/trash activity status. It adds no write fence or on-disk
+format. New osctld with an old consumer is inert; an old or unreachable osctld
+must produce unknown activity, never an idle claim. Complete G1 observation
+will require the relevant nodes to run the compatible vpsAdminOS version and
+a later NodeCtld adapter. See [storage-integrity-design.md](storage-integrity-design.md)
+for the bounded status and generation contract.
 `vpsfree-maintenance-tasks` retains the already-published standalone read-only
 inventory feature branch, awaiting separate merge approval.
 
