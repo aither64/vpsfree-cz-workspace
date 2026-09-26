@@ -1,27 +1,34 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Codex submission-ledger capacity
 
 Initial tracking was committed as `173de66`. The exact session has started at
 <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-26-codex-queue-ledger-capacity/>.
-Ready, awaiting merge approval. The complete implementation and package pin
-chain are committed and pushed; mandatory full-change review found one issue,
-now remediated. All four full Nix checks and exact-head CI passed. The
-user-profile workspace package is deployed, and the storage-session team
-assignment smoke test passed. The shared
-checkout has extensive unrelated changes; stage only this initiative's owned
-paths.
+Integration approved by the user's current instruction, "merge into default
+branches," for this initiative's four registered repositories and their
+`master` targets: `aither64/codex-web`, `aither64/dev-workspace`,
+`vpsfreecz/dev-workspace`, and `aither64/vpsfree-cz-workspace`. The latter
+three feature heads include the earlier unmerged Team-settings chain; the
+user was told that this integration includes it. All four exact feature heads
+are now on their remote `master` branches. The workspace branch was rebased
+patch-equivalently onto shared `master` before integration. Codex-web's new
+`master` CI passed in all three repositories with matching workflows. The
+extension's first `master` attempt failed in temporary test fixture cleanup;
+after inspecting the failure, its exact-head rerun passed both checks.
+The reviewed package remains deployed and the storage-session assignment
+smoke test passed. The shared checkout has extensive unrelated changes; stage
+only this initiative's owned paths.
 
 ## Next actions
 
-1. Obtain explicit repository/target approval before integrating either this
-   initiative or the older Team-settings feature branches. Do not merge merely
-   because this deployment passed.
-2. Preserve the live schema-3 ledger. Older 1 MiB binaries cannot read it
+1. Preserve the live schema-3 ledger. Older 1 MiB binaries cannot read it
    after future growth beyond that bound; recover with this or a newer fixed
    package, never by truncating or deleting the active file.
+2. Leave the session open for follow-up; completion does not authorize manual
+   archive or deletion. The enabled auto-archive worker may apply its normal
+   inactivity policy later.
 
 ## Worktrees and team
 
@@ -35,13 +42,9 @@ paths.
   from `ff0cc0a`.
 - The retained `delegated` roster has ready `architect0` (design,
   workspace-write), `implementer0` (implementation, workspace-write), and
-  `reviewer0` (review, read-only), all Sol/xhigh. A direct assignment would
-  use the failing ledger path while it is nearly full, so bounded native
-  Sol/xhigh implementation subagents are handling the two independent source
-  areas until that path is repaired. The retained reviewer cannot receive a
-  pre-deployment assignment through the full ledger. Mandatory review will
-  therefore use the installed catalog's fresh standalone Sol/xhigh reviewer
-  fallback before long tests and deployment.
+  `reviewer0` (review, read-only), all Sol/xhigh. Before deployment, the full
+  ledger prevented assigning the retained reviewer, so mandatory review used
+  the installed catalog's fresh standalone Sol/xhigh reviewer fallback.
 
 ## Baseline
 
@@ -67,8 +70,11 @@ paths.
   passed. Pushed.
 - `vpsfree-dev-workspace` `47d9d93cc2373f010a3e6963f76b1cb57bbc1240`:
   exact generic pin; `nix flake check --no-build` passed. Pushed.
-- Workspace `179ee440d693f2f6481bfa89bef2dff7b00bfee7`:
-  exact extension pin; `nix flake check --no-build` passed. Pushed.
+- Workspace `6c7e2c24d8811b8a04e5e65f526ee83d61d96bcf`:
+  exact extension pin; rebased from `179ee440d693f2f6481bfa89bef2dff7b00bfee7`
+  onto shared `master`. `git range-diff` proved all three stacked commits
+  patch-equivalent; `nix flake check --no-build` and the full check passed at
+  the new head. Pushed.
 - The normal generic `nix develop` bootstrap failed while Go and Nix pins were
   temporarily inconsistent. The dependency sum was generated with Nix Go
   1.25, and a fresh Luna/low watcher obtained the vendor hash via the
@@ -80,8 +86,7 @@ paths.
   installed ledger was full, so the installed catalog's fresh standalone
   Sol/xhigh reviewer performed the complete review. It found one Blocking
   risk: an already-archived member could bypass the unresolved-attempt gate
-  before new cleanup erased retry markers. The generic implementer is adding
-  a narrow fail-closed gate and regression test before long checks. No other
+  before new cleanup erased retry markers. No other
   distinct finding was reported; exact pins, commit split, and deleted-fresh
   member proof were accepted. The generic remediation `3b570f0` now refuses
   ordinary cleanup for archived and already-terminal members while their
@@ -125,5 +130,43 @@ paths.
 - The temporary package-build failure and retry lesson is recorded at
   `notes/dev-workspace/2026-09-26-unrooted-switch-output.md`. Lasting
   compaction and cleanup semantics are in the owning codex-web and generic
-  dev-workspace documentation. No default-branch feature integration or
-  configuration pin change was performed.
+  dev-workspace documentation. No configuration pin change was performed.
+
+## Default-branch integration
+
+- `aither64/codex-web` `master` fast-forwarded to
+  `e92dd887c888d5a9f50c70febc714f875cb44378`; target-worktree
+  `CGO_ENABLED=0 go test ./...` passed. Its exact-head `master` CI run
+  `36249633601` passed.
+- `aither64/dev-workspace` `master` fast-forwarded to
+  `3b570f0a8b75d809a2753177590158e9dc4639f1`; target-worktree
+  `nix flake check --no-build` and focused teamruntime tests passed. Its
+  exact-head `master` CI run `36249685897` passed.
+- `vpsfreecz/dev-workspace` `master` fast-forwarded to
+  `47d9d93cc2373f010a3e6963f76b1cb57bbc1240`; target-worktree
+  `nix flake check --no-build` passed. Its exact-head `master` CI run
+  `36249774435` failed in `DevSessionTest#test_session_closing_rejects_ambiguous_or_missing_tracking`:
+  `FileUtils.remove_entry` raised `Errno::ENOENT` for a loose Git object path
+  while `Dir.mktmpdir` cleaned a temporary fixture. All test assertions up
+  to cleanup passed (336 runs, 3,484 assertions, 0 failures, 1 error, 12
+  skips). The failure is in the unchanged generic runtime's inherited test
+  helper, not in the extension pin. The same exact extension head passed its
+  feature-branch CI and local full Nix check, while generic runtime `master`
+  CI passed. A race with Git changing loose objects during recursive fixture
+  removal is the current inference; the runner log does not identify the
+  competing process. This evidence warrants one exact-run rerun, not treating
+  a green rerun alone as proof that the test harness has no race. Attempt 2
+  passed at the same exact head: `nix flake check --print-build-logs` and
+  `nix run .#devcluster-check` both passed (job `108426323414`). The first
+  failure remains documented at
+  `notes/dev-workspace/2026-09-26-git-fixture-cleanup-ci.md`.
+- Shared workspace `master` fast-forwarded to
+  `6c7e2c24d8811b8a04e5e65f526ee83d61d96bcf`, then pushed over SSH.
+  The rebase changed commit identities but not patches; the full workspace
+  check passed at that exact new head (`/tmp/ledger-workspace-rebase-check.log`).
+  The workspace has no matching GitHub Actions workflow.
+- Captured final repository comparisons before integration. Remote feature
+  refs remain at the same final heads as remote `master`; no feature branch was
+  deleted. Fresh temporary integration worktrees were removed cleanly. The
+  initiative's own feature worktrees remain for the session's eventual
+  authorized archival.
