@@ -6,6 +6,37 @@ lifecycle: active
 
 ## Current status
 
+2026-09-26 G1a checkpoint: the registered vpsAdmin feature branch is clean
+and published at reviewed `fa7cec3a89e433e91516a369f10b1b17b6eddfef`.
+Nine focused commits since `fe4f9b0f9` now bound current diagnosis capture,
+keep lifetime terminal history explicitly unknown, restore pooled MariaDB
+isolation, and use the existing transient RabbitMQ node exchange for signed
+5290 inventory. The independently reviewed final nine-commit series has no
+Blocking or Important finding. Focused API/Node specs and normal hooks passed;
+exact-head API Specs and broad CI are still in progress under a dedicated
+watcher. The site configuration feature remains pinned to older `fe4f9b0f9`;
+no shared or production host was switched.
+
+The disposable bridge/storage cluster was updated to `fa7cec3` under
+`read_only` epoch 3. A real signed 5291 activity report completed two signed
+5290 captures and returned the expected `sampled_incomplete` result because
+child lifetime is unproved. Both source `(2,2)` manifests sealed complete
+diagnostic captures; fresh offline compare, dry-run and plan produced six
+nonexecutable candidates, each blocked by unknown historical terminal
+coverage. Services and nodes were healthy, and authenticated CAS restored
+`read_write` epoch 4 with one audited transition. The detailed executed trial,
+failure/recovery sequence and private evidence locations are in
+[g1a-dev-cluster-trial.md](g1a-dev-cluster-trial.md). This did not enable
+node quiet, repair readiness, strict production dispatch or APPLY.
+
+The 40k-object scale result covers a graph without retained locks. A global
+retained-lock fan-out case, including unrelated nodes, remains unmeasured and
+could make diagnosis fail incomplete under the statement timeout. The G1b
+manual maintenance exclusion and API owner interlock remain unimplemented.
+The queue-ledger capacity issue was resolved in its separate session; it no
+longer blocks retained team review. The older chronology below is preserved
+as history, including checkpoints that were pending when written.
+
 2026-09-26 architecture checkpoint: the user-requested Astra assessment is
 recorded in [plan.md](plan.md) and the current section of
 [storage-integrity-design.md](storage-integrity-design.md). Milestone A is a
@@ -964,28 +995,23 @@ with the final version 2 format and must be recaptured.
 
 ## Next actions
 
-1. Finish and verify the unsigned production 5204 observer correction. Rerun
-   representative snapshot integration on two Puma workers without a signing
-   unlock, then obtain independent review and update the configuration feature
-   pin to the accepted vpsAdmin head. Keep strict 5204 signed and test-only.
-2. Correct the 5291 bounded UNIX EOF case, rerun focused API/Node tests,
-   commit and review the signed advisory probe/report. Coordinate the reviewed
-   osctld provider revision with vpsAdmin's vpsAdminOS pin only after its
-   staging-base compatibility check. Old/mixed components must report unknown.
-3. Complete G1 child-process and all-queue coverage before any node-quiet or
-   physical repair-ready claim. Complete strict execute/rollback receipts for
-   remaining topology and dependency directions, including osctl and
-   `zfs recv -F`, before verified identities or scopes can be published.
-   The current 5215 contract uses fake ZFS and does not prove host behavior.
-4. Keep the reconciler advisory until one-engine frozen approval, bounded
-   DB-only apply, crash resume and final verification are implemented and
-   reviewed. Do not use the time-separated inventory as an apply gate.
-5. Before any shared-host switch, build all channel consumers and dry-activate
-   selected hosts, hold all writers, migrate the database first, then update
-   NodeCtld and both API workers before relying on the freeze. The completed
-   disposable G0 trial is partial and does not authorize production deployment.
-   Keep configuration on its feature branch and seek explicit integration
-   direction before merging affected feature branches to default branches.
+1. Finish exact-`fa7cec3` API Specs and broad CI monitoring. Investigate any
+   failure against that head before treating the branch as verified.
+2. Benchmark a populated global retained-lock cohort, including unrelated
+   nodes, before live diagnostic use. Keep query timeout failures incomplete;
+   do not infer performance from the lock-free 40k-object case. Add focused
+   pooled-session failure/restore tests before wider rollout.
+3. Implement and review G1b's active freeze owner, manual storage-only
+   maintenance generation and isolated signed inventory runner. Prove stopped
+   daemon and child/delegated-work exclusion in a disposable VM before any
+   `node_quiet` or repair-ready claim.
+4. Keep the reconciler advisory until one-engine approval, bounded DB-only
+   apply, crash resume and final verification are implemented and reviewed.
+   Do not use two inventory passes or 5291 observation as an apply gate.
+5. Prepare the separate staging OS provider port/pin and final service pin
+   only after its own CI and build/dry-activation gates. Keep production pins
+   and hosts unchanged. Default-branch integration needs explicit direction;
+   the session remains active.
 
 The task guide owns repeatable operator instructions. The source investigation
 and proposed future compatibility/deployment sequence remain in this session;
