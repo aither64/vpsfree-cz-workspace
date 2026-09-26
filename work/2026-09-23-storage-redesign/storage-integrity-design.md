@@ -1,4 +1,796 @@
-# Storage integrity foundation (proposal)
+# Storage integrity design
+
+## Current design contract, 2026-09-26
+
+**Lead-recommended working direction, subject to user correction; remaining
+implementation is a proposal, with no repair/APPLY authorization.** Milestone A
+provides exclusive frozen maintenance diagnosis and provable corrections to
+existing catalog semantics, followed by compatible resumption. Milestone B
+adds continuously verified physical identities and strict writer families.
+A does not require all of B, and it does not confer B's online guarantees.
+The present observer release is not repair-ready.
+
+Reader map:
+
+- [Plan](plan.md): G0, G1a, G1b, G2, G3 and G4 sequence and open choices.
+- [State](state.md) and [G0 trial](g0-dev-cluster-trial.md): actual heads,
+  review/test results and deployment status.
+- [Investigation](investigation.md): historical inventory counts and evidence,
+  with private paths retained outside these records.
+- Current vpsAdmin references:
+  [model](../../worktrees/2026-09-23-storage-redesign/vpsadmin/docs/storage/integrity-model.md),
+  [schema](../../worktrees/2026-09-23-storage-redesign/vpsadmin/docs/storage/integrity-foundation.md),
+  [reconciler](../../worktrees/2026-09-23-storage-redesign/vpsadmin/docs/storage/integrity-reconciler.md).
+  They describe the published implementation; future A/B contracts here are
+  not implemented merely because this document states them.
+- [Site rollout guide](../../worktrees/2026-09-23-storage-redesign/vpsfree-cz-configuration/docs/operations/vpsadmin-storage-integrity-deployment.md):
+  configuration scope and supported deployment procedure.
+- [Historical design record](#historical-design-record-superseded): preserved
+  implementation packets and alternatives. Where they disagree, this current
+  contract and the plan supersede them. Do not execute their old rollout steps.
+
+No user snapshot deletion, scheduler redesign, disk-only catalog import or ZFS
+correction is included. Preserve logical Snapshot identity and backup history.
+The integrity boundary is vpsAdmin-initiated work, including osctl wrappers
+and delayed effects they initiate. Independent root/unrelated osctld changes
+remain outside prevention; maintenance additionally requires an explicit
+operator no-out-of-band-write assumption. Read-only observation does not
+enforce that assumption.
+
+### Present implementation and retained model
+
+At assessed vpsAdmin `fe4f9b0f9`, one consolidated additive migration and
+fresh-schema singleton bootstrap exist. Observer admission/settlement,
+authenticated freeze, advisory reconciliation, test-only strict 5204/5215,
+NodeActivity and signed 5291 are implemented. Executable approval/APPLY,
+physical identity publication, production strict activation, `node_quiet`
+and `repair_ready` remain unavailable. The disposable cluster's recorded
+services are `ebe4d8834`; do not confuse published with deployed code.
+
+The final foundation contains these eleven new tables, in addition to
+nullable physical fields on SIP/SIPB and Pool:
+
+| Tables | Present purpose and limit |
+| --- | --- |
+| `storage_integrity_scopes` | Pool/DIP epoch and unverified/verified/needs_reconcile state; observer code does not publish verified. |
+| `storage_observation_runs` | Bounded capture metadata, counts, digest and completion, not raw disk-only objects. |
+| `storage_filesystem_identities` | Optional existing-catalog owner/path/GUID and physical origin; observer release leaves owner-linked identity/origin publication off. |
+| `storage_freeze_controls` | Singleton row 1, read_write/read_only and epoch; admission and both mode changes lock it. |
+| `storage_freeze_transitions`, `storage_observer_catch_up_audits` | Application-append-only copied API user/session/login audit. No supported OS actor or launcher remains. |
+| `storage_mutation_intents`, `storage_mutation_intent_scopes` | Intent-before-effect and affected scope epochs, including opaque observer work. |
+| `storage_mutation_targets` | Immutable expected target shape; distinct from observations. |
+| `storage_mutation_attempts`, `storage_mutation_target_observations` | Per-attempt start and terminal evidence; strict provenance is nullable and never inferred from an observer receipt. |
+
+There are **no current executable reconciliation decision/action tables**.
+Their G2 replacement must implement the selected policy, rather than revive
+the historical first physical-identity pilot schema unquestioningly. The old
+OS UID/source actor migrations, two storage-freeze CLIs and sudo launcher were
+superseded before the final foundation. Current API mode changes derive an
+active direct-admin actor, session and action scope, reject delegated sessions,
+and CAS the expected epoch in both directions. Catch-up is API-only; WebUI
+status is bounded and DB-only. Privileged SQL remains inside the trusted
+writer boundary; these application journals are not tamper-proof.
+
+Keep Snapshot logical, SIP unique per (Snapshot,DIP), and backup occurrences
+in SIPB per (SIP,Branch). Nonbackup SIP and backup SIPB are the physical
+occurrence rows; an additional physical snapshot table is not required by
+the observed cardinality. For example SIP 800 can have SIPB 901 at branch A
+and SIPB 902 at branch B. Equal received snapshot GUIDs do not merge those rows.
+Exact path/type/GUID/owner-filesystem GUID and unique catalog ownership
+establish the match. Promotion can instead reassign an existing SIPB to a
+different branch; it does not necessarily create a second SIPB.
+
+A filesystem identity has one existing Pool-root/DIP/Tree/Branch/SIPClone
+owner. The zpool GUID and managed-root filesystem GUID are distinct anchors.
+Its physical ZFS `origin` may link to a source SIP/SIPB; no standalone origin
+edge table is needed. For B, a post-promotion A.origin=B@S links filesystem A
+to the source occurrence at B@S. This says nothing by itself about every
+legacy SIPB.parent or historical branch transition. Path claims require
+full-node negative owner/path checks, including same-node cross-Pool claims;
+a digest match always checks raw path bytes. MariaDB retains FKs, scalar
+CHECKs and unique indexes; cross-FK consistency needs checked application
+writes and reconciliation. A quarantined or disk-only object gets no invented
+catalog row.
+
+The paired registry is **version 5**, with three separate questions:
+read_only admission, direction-specific verification impact
+(none/dependency/catalog_identity/physical_topology), and direction-specific
+strict support. A password or completed file/download operation can require
+admission without invalidating physical topology; active work still blocks
+drain. A harmless rollback cannot prove an earlier destructive execute
+harmless. Keep these distinctions and paired route tests. Simplifying
+duplicated registry metadata or Pool observer targets is optional later work,
+not a prerequisite for maintenance repair.
+
+Production 5204 may carry an **unsigned advisory** DB-bound guard, intent and
+receipt. Do not enable signing in all Puma workers to satisfy A. Signed 5290/
+5291 operator requests unlock the existing key in their own CLI process;
+test-only strict receipts bind exact signed input and registry provenance.
+Stored receipts are DB evidence, not independently signed node attestations;
+A trusts the established API/Node DB-writer boundary and fresh physical checks.
+A signature authenticates a request, not the physical result. Old/unsigned
+observer evidence never becomes strict merely by adding a signature later.
+B still needs an explicit authenticity decision: a designed trusted-DB guard
+boundary or an approved multi-worker signer deployment.
+
+### G1a: capture correctness and bounded lifetime cost
+
+These are source-backed defects/risks at `fe4f9b0f9`, not fixes completed by
+this documentation change. Paths below are relative to the vpsAdmin tree.
+The [plan](plan.md#g1a--make-capture-reliable-and-genuinely-offline) owns the
+delivery sequence; [state](state.md) records actual implementation and review.
+
+| Issue and evidence | Required correction and acceptance |
+| --- | --- |
+| Informational cap blocks activity report: `api/lib/vpsadmin/storage_reconciler/activity_report.rb:174-178` requires every count cap empty, but `api/models/storage_freeze_status.rb:81-106` deliberately excludes settled-unverified history from drain blockers. | More than 1,000 ordinarily settled intents must not block a drained capture. Only caps hiding relevant blockers invalidate proof; retain informational cap reporting. |
+| Completed rollback misclassified as overlap: `db_capture.rb:78-82,288-300` selects/tests done 0 or 2; `libnodectld/lib/nodectld/command.rb:179-185` writes 2 for completed rollback. | Classify active/terminal chain, direction, attempts and confirmations together. A proved normally failed/rolled-back chain must not poison all later captures. A bare done value must not certify quiet either. |
+| Lifetime journal expansion: `db_capture.rb:319-354` loads all selected-scope intent links and descendants; `:403-405` enforces a fixed 300k total cap. | Capture all live/unresolved relevant work, interval evidence and explicitly needed historical proof with bounded queries. Keep old audit history, but do not read all of it on each scan. Test approximately 40k live objects with growing settled history. Missing historical proof yields a per-action blocker; never silently truncate required closure. |
+| Non-Pool DECIMAL GUID normalization: `db_capture.rb:408-446` special-cases only Pool while generic BigDecimal uses `to_s`. Exact matcher comparisons can see exponent notation. | Canonicalize every known uint64 GUID/owner field in SIP, SIPB, filesystem identities and receipt observations, preserving null and rejecting invalid range/type. Test max uint64 and populated capture/compare round-trip, not only null bootstrap rows. |
+
+Isolated vpsAdmin commits through `53a9768d8` address the informational cap,
+completed rollback classification, cold offline loading and GUID values;
+they are not yet on the registered feature ref. The remaining lifetime bound
+has two sources: all selected-scope settled intents and all historical
+`done=2` rollback transactions. An indexed failed-chain state filter cannot
+replace terminal proof: a malformed result and a fully proved rollback can
+share those indexed values. A safe bounded design needs indexed current-graph
+and pending-SIP evidence closure plus all observable node work. The first
+bounded diagnosis profile deliberately does not enumerate lifetime terminal
+history: sealed manifest v2 records `historical_terminal_coverage=unknown`,
+while JSONL records and Node inventory frames stay at protocol v1. Offline
+policy v2 and plan v3 propagate this as a blocker to every proposed action;
+no action becomes executable. A v1 manifest is read without changing its
+sealed bytes and has unknown effective historical coverage. Required current
+catalog, pending-SIP and observable-work closure must finish within bounds;
+failure or truncation is incomplete. An intentionally omitted old terminal
+row is different: it remains unknown and cannot prove settlement. A future
+held maintenance-window checkpoint may classify retained history for an
+action that needs it. A live unresolved registry is deferred until every
+direct-SQL and mixed-version writer can invalidate it. The real-MariaDB red
+fixture at `53a9768d8` confirms both lifetime paths exceed a reduced capture
+budget; 12 examples ran, with exactly those two expected failures.
+
+Additionally, `api/bin/vpsadmin-storage-reconcile:5` loads full API before
+argument dispatch. `api/models/sys_config.rb:102-135` registration can SELECT,
+UPDATE or INSERT on cold load. Parse the offline command first and load pure
+artifact/comparison dependencies without API model bootstrap. A cold process
+with missing DB/config/broker credentials must still compare a valid private
+capture without DML; normal API SysConfig registration must remain unchanged.
+These anchors describe the `fe4f9b0f9` defect; the isolated offline-loading
+fix is included in the checkpoint above.
+
+Retain one capture/matcher/planner, bootstrap/steady policy configuration,
+private HMAC finding IDs and bounded two-pass ZFS inventory. CLI-owned Rabbit
+queues, fsync before manual broker ACK, sealed final count/digest and exact
+intra-attempt deduplication are sufficient for this delivery; no reverse
+application ACK or process-restart capture resume is required. A crash leaves
+the attempt incomplete and a new capture gets fresh DB/attempt IDs. Offline
+reruns must reproduce sealed artifacts, not overwrite different output.
+Selected-chain confirmation coverage and omitted signed payloads are explicit
+limits, not evidence that historical operations never happened.
+
+#### Bounded diagnosis selectors
+
+Use one explicit repeatable-read, read-only DB snapshot. Keep current catalog
+closure IDs separate from contextual evidence IDs: a historical target must
+not restart a scan of every scope's lifetime history. Select initial scopes
+by current Pool/DIP keys, then load exact evidence-linked scope IDs.
+
+- **P, pending snapshot evidence:** all extant SIPs in the catalog closure
+  whose SIP or logical Snapshot is unconfirmed, plus SIPs of unconfirmed
+  SIPBs. Do not restrict P by name suffix, age, intent phase or a matching
+  receipt. Select every target through SIP/SIPB FKs **and** copied
+  `catalog_kind/catalog_id` bindings, preserving disagreements. For each
+  reached intent, include all sibling targets, scope links, attempts in both
+  directions, and observations. Query observations by target as well as
+  attempt so conflicting cross-intent references remain visible. Include
+  linked transactions and complete chain membership. An early matching
+  receipt never hides a later uncertain attempt or conflicting target.
+- **U, observable node work:** select node-wide intents in phases 0/1/5,
+  unknown phases, and intents owning started/uncertain attempts regardless
+  of intent phase. Match live `node_id` or copied `node_catalog_id`; do not
+  restrict this set to selected-Pool scopes. Add staged/queued/rollbacking/
+  fatal/resolved chains, waiting transactions even with a terminal/missing
+  chain, pending confirmations, retained relevant locks, and chains reached
+  through P. Start queries from indexed state/done/attempt predicates;
+  `done=2` is not an unrestricted seed. Use registry admission relevance,
+  including active off-graph work, rather than topology impact alone.
+- Include all members of reached chains, including remote members, without
+  recursively selecting unrelated work on those remote nodes. U's declared
+  selector scope is the selected node only. Cross-node dependencies retain
+  explicit missing physical/drain proof; scanning a whole zpool does not
+  imply a complete catalog of every managed root.
+- Expand only these evidence roots. Never select all historical intent-scope
+  links, use a time cutoff, retain only the latest receipt, or interpret
+  phase 6/failed-chain state as terminal proof. At `53a9768d8`, the exact
+  terminal classifier is `db_capture.rb:474-529`; observer settlement is not
+  an equivalent certificate, particularly for previously started skipped
+  followers. Unmarked malformed old terminal rows can remain undiscovered:
+  lifetime terminal coverage is explicitly unknown.
+
+Retain the 300,000-row, 900-second, 10-second statement, 256-member chain and
+64-KiB record limits. Budget examined rows as well as emitted records; use
+keyset pages, bounded output projections and no unbounded signed-input fetch.
+The proposed additional artifact-byte ceiling is 1 GiB. Add nonunique indexes
+on `transactions(node_id,done,id)`,
+`storage_mutation_intents(node_catalog_id,phase,id)` and
+`storage_mutation_targets(catalog_kind,catalog_id,id)`; reuse existing
+target/attempt/observation, chain, scope-key and confirmation indexes.
+
+Required catalog, P and U query/closure truncation, timeout or connection loss
+makes the capture incomplete. A referenced row proved absent in the same
+snapshot is instead an observed inconsistency and action blocker. Intentionally
+omitted lifetime history does not invalidate an otherwise complete diagnosis.
+Missing optional historical lineage blocks the action that needs it; an
+unlocalizable historical effect remains a conservative node-wide blocker for
+any policy requiring its exclusion. Existing positive overlap and epoch-change
+checks still apply. No result here establishes drain, verified scopes or APPLY.
+
+#### Artifact compatibility and delivery boundary
+
+Keep `Format::VERSION=1` for JSONL records and Node frames and
+`PROTOCOL_VERSION=1`; the transport currently shares the record-version
+constant. Introduce a separate manifest version. Comparator policy 2 and
+planner policy 3 accept exactly these source pairs:
+
+| Manifest `version,policy_version` | Reader contract |
+| --- | --- |
+| `(1,1)` | Verify original seal/digest/key/records, then derive the legacy effective coverage below without modifying source bytes. |
+| `(2,2)` | Require `record_version=1` and the explicit bounded-selector coverage below. |
+| Other/crossed pairs | Refuse as unsupported. |
+
+Both effective views have `db.historical_terminal_coverage="unknown"`.
+The exact `db.evidence_selection` object is:
+
+| Key | Effective legacy v1 | Explicit bounded v2 |
+| --- | --- | --- |
+| `version` | `0` | `1` |
+| `strategy` | `legacy_unspecified` | `current_graph_and_observable_node_work` |
+| `node_ids` | `[node_id]`, using the validated canonical decimal string from `manifest.scope.node_id` | The same explicit selected-node array |
+| `catalog_closure` | `legacy_unspecified` | `complete` |
+| `pending_snapshot_evidence` | `legacy_unspecified` | `complete` |
+| `observable_node_work` | `legacy_unspecified` | `complete` |
+| `terminal_history` | `legacy_unspecified` | `not_enumerated` |
+
+Missing/invalid scope identity is invalid input. Do not infer node coverage
+from incidental captured rows. Legacy defaults apply even if a v1 manifest
+contains extra coverage-looking keys; no old broad scan is upgraded to complete
+history. Preserve `confirmation_coverage="selected_chains_only"` separately.
+This G1a producer supports no complete-terminal-history claim.
+
+**Commit 1, coverage prerequisite:** add v1/v2 reading and offline policy 2 /
+plan 3, but keep the actual Capture writer, seal and collector metadata at
+source `(1,1)`. Separate writer constants from report-policy constants. The
+existing selectors cannot truthfully emit v2 `complete` coverage.
+
+**Commit 2, selectors/indexes:** switch the writer atomically to `(2,2)` only
+with completed P/U selectors, indexes, limits and coverage tests. Schema goes
+first; old API/Node observers remain compatible and the Node wire stays v1.
+An old offline reader refuses a new v2 manifest; rollback does not rewrite it.
+
+Report policy 2 carries effective coverage, original source versions/capture
+digest and a deterministic coverage digest. Comparator repair blockers and
+every planner candidate explicitly retain
+`historical_terminal_coverage_unknown`; legacy unspecified selector coverage
+also remains visible as a blocker. Emit a run-level coverage warning even
+when there are no structural findings. All actions remain `executable=false`
+and summaries have `executable_count=0`. A sealed `state=complete` describes
+completed requested collection with the existing freshness checks satisfied;
+it never certifies complete historical terminal evidence for approval.
+
+Write `findings-v2.jsonl` / `report-v2.json`, then plan
+`candidate-actions-v3.jsonl` / `dry-run-v3.json`. The simple advisory dry-run
+uses `advisory-actions-v2.jsonl` / `advisory-dry-run-v2.json`, avoiding the
+existing planner's `candidate-actions-v2` / `dry-run-v2` names. Preserve old
+outputs. Re-comparing v1 evidence under policy 2 writes new output names;
+an old policy-1 report is not policy-2 evidence. Bind effective coverage and
+algorithm versions into report/action digests. The same capture, key and
+algorithm versions produce identical sorted output; interrupted/concurrent
+publication either verifies identical existing bytes or refuses a mismatch.
+All adaptation and comparison remain offline, without DB/broker/signer access.
+
+#### Deferred historical proof
+
+Do not add a live unresolved registry in G1a. A later G2 action may request
+bounded specific-chain proof from the same engine. If a full retained-history
+sweep is necessary, an optional G1b-held checkpoint binds owner/run, freeze
+epoch, DB/schema/validator identity, selected nodes, fixed high-water bounds,
+cursor, page digests and unresolved exceptions. Fsync evidence before advancing
+the checkpoint; resume only under unchanged exclusion of relevant DB writers
+as well as physical writers. Release, restart/failover, changed scope/owner or
+loss of writer exclusion invalidates its authority. Completing classification
+with unresolved exceptions is not proof that all chains settled. Reuse after
+unfreeze requires a different, explicitly designed invalidation mechanism.
+
+Application callbacks cannot maintain such a live mechanism across old Node
+direct SQL, retry, confirmation or rollback writers. Supporting it later needs
+either every relevant writer upgraded and fenced, with transactional
+invalidation on every proof-input change, or tested database-side invalidation
+covering legacy writes and fresh schema loads. Missing registry rows never
+prove absence. This extra runtime contract is unnecessary for honest bounded
+diagnosis and does not belong in the current slice.
+
+Focused acceptance includes a small current graph with large settled history;
+many proved old rollbacks plus one malformed history row (unknown unless
+selected, never exonerated); a pending SIP with early matching/later uncertain
+attempts and conflicting targets; another-Pool unresolved work on the selected
+node; required-closure limits versus observed missing rows; v1 adaptation and
+v2 claim rejection before selector completion; and deterministic offline replay.
+Later checkpoint tests must cover interrupted publication and an old writer
+invalidating the held proof. No production strict, repair approval or APPLY is
+enabled by these changes.
+
+### G1b: exclusion, maintenance ownership and applicability
+
+Two quiet probes around a scan prove only a sampled interval. A needs an
+exclusive interval that lasts through DB apply and final verification.
+Do not derive `repair_ready` from equal 5291 generations. The minimal
+implementation must:
+
+1. Account for every API/scheduler writer honoring the global admission lock;
+   reject new work, and drain or settle already staged/queued/executing/
+   rollbacking chains rather than park a partly executed chain.
+2. Hold selected Node mutation dispatch and relevant delayed producers after
+   their work drains. Account for child processes, descendants and startup
+   orphans until they terminate; generation changes bracket effects, not
+   merely Ruby thread lifetime. Observe and hold relevant osctld GC/trash
+   effects initiated by vpsAdmin.
+3. Bind an active maintenance owner to freeze epoch, selected node/zpool
+   identities, daemon boot/instance, effect generations and hold tokens.
+   Acquire/validate ownership with the singleton SQL lock. Future read_write
+   must refuse while approved apply/recovery/verification owns that freeze,
+   even when the caller supplies the right epoch.
+4. On timeout, unreachable component, boot change, generation overflow, lost
+   hold or incomplete child coverage, stop and invalidate executable evidence.
+   Do not auto-unfreeze on lease expiry or CLI death. Recovery first establishes
+   exclusion and reconciles committed actions; a changed baseline needs fresh
+   capture/approval.
+
+This is a requirement, **not an implemented exclusion protocol**.
+Proposed default: a bounded maintenance hold/drain plus explicit delayed
+producer exclusion, with generic vpsAdminOS primitives only where needed.
+The exact mechanism remains an implementation decision requiring source and
+VM proof. A read-only cgroup census is useful partial detection, not proof of
+containment or absence of effects. Current Worker.kill stops a thread then
+signals one PID without waiting (`libnodectld/lib/nodectld/worker.rb:21-31`);
+runit's process kill mode can leave descendants. A daemon restart/empty queue
+cannot discard that uncertainty. No guarantee is made against independent
+root operations or an independent osctld writer outside the agreed window.
+
+Choose complete physical zpools, not an arbitrary subtree with unseen clone
+dependencies. Bind every selected Pool root and full global DB dependency
+closure; deduplicate scans by (node,zpool GUID) across multiple managed roots.
+Expand the selection for a relevant dependency or refuse it. Unrelated offline
+nodes need not make a closed selection impossible. Current ActivityReport
+enumerates every Pool (`activity_report.rb:123-135`) and performs per-Pool
+captures; selected closure/deduplication is future work. Node-wide generation
+changes and daemon-wide GC timer generations may conservatively invalidate
+samples even for unrelated/no-op work; they are not proof of a disk change.
+
+For storage-only backup nodes, a missing osctld socket or absent pool is
+unknown. An explicit reviewed node-role/capability declaration plus an audit
+of all applicable storage routes can establish gc_trash not applicable.
+ZFS/Node child proof and selected-zpool closure are still mandatory.
+Do not require deployment of an irrelevant provider solely to make that
+role report idle.
+
+Execution quietness and a correct catalog are distinct. Current
+`storage_freeze_status.rb:54-80` blocks fatal/unreviewed-resolved chains,
+phase-5 intents, unfinished attempts and locks. Add a separately audited
+physical-resolution contract under exclusion for legacy exceptional work;
+retain original failure/receipts rather than fabricating ordinary success.
+Otherwise requiring every inconsistency already resolved before capture
+would prevent the engine from diagnosing it. Until that resolution path is
+implemented, those current blockers remain blockers.
+
+#### G1b working default: manual storage-only maintenance profile
+
+For milestone A, prefer a deliberately manual selected-node interval over a
+new generic hold protocol. A prepared NixOS maintenance generation removes
+normal NodeCtld and applicable osctld runlevel starts while preserving zpool
+import, packages and credentials. Activate it as the boot default, drain
+ordinary chains, stop both daemons, and prove their complete service cgroups
+and delegated work empty before taking the physical baseline. A transient
+service stop or `svctl disable` does not survive configuration activation
+or reboot. Reject active hypervisor, export, runtime-start or escaped-child
+profiles whose effects cannot be excluded.
+
+The API must acquire a retained authenticated maintenance owner under the
+freeze-control SQL lock; `read_write` refuses while it is active. A narrow
+one-shot signed 5290 runner, isolated from normal Daemon initialization,
+must execute the exact API-staged transaction and complete its existing DB
+and Rabbit result path. Capture/approval binds owner, epoch, selected scope,
+host boot, system generation and zpool identity. Reboot, changed generation,
+lost containment or producer restart invalidates evidence. After final
+verification, end apply authority before restarting services, then release
+the owner with an audited fresh-epoch transition. None of this runner,
+interlock or VM proof exists yet; no current capture is repair authority.
+
+The automatic hold protocol below remains a later option for profiles that
+cannot stop applicable daemons. Its rows and commands are proposals, not
+requirements of the manual first milestone.
+
+#### Later automatic option: held maintenance runtime
+
+Source assessment: vpsAdmin `fe4f9b0f9` and the reviewed staging-lineage
+osctld provider `107cef01f`. This is a proposed implementation boundary,
+not a claim that either revision implements exclusion. Prefer a coarse hold
+on each selected node over per-handle online proof: retire its normal Node
+runtime after drain, then run only the bounded inventory/control paths in a
+separate maintenance runtime. Unrelated nodes are not participants. This
+costs a selected node's normal background service during maintenance but
+avoids treating every queue name or background task as implicitly harmless.
+
+**Why the existing controls cannot implement this alone.**
+
+- `Queues#execute` centralizes dispatch, but its twelve queues include
+  rollback, VPS, general and both transfer directions
+  (`libnodectld/lib/nodectld/queues.rb:5-18,43-58,175-182`). Queue pause is
+  volatile and can be undone by local resume/pool-import hooks. Reservations
+  can wait while the outer queue mutex is held; never wait for drain while
+  holding that mutex (`transaction_queue.rb:177-191`, `queues.rb:51-60`).
+- The daemon saves finished workers before removing them; `empty?` alone
+  does not include reservations, detached descendants or DB closure
+  (`daemon.rb:130-143,433-434`; `transaction_queue.rb:232-234`). Freeze must
+  let existing chains finish across every queue and both directions first.
+- Node startup runs `Export.init`, which can create/start an export server
+  (`daemon.rb:81-103`; `export.rb:11-59`). DatasetExpander already checks
+  the SQL freeze row under lock (`dataset_expander.rb:131-145`). Retiring
+  the normal runtime also closes future background starts; an inventory-only
+  runtime must not invoke normal `Daemon#init`/`run_threads` implicitly.
+- Worker.kill and wrapper stop do not prove descendant exit
+  (`worker.rb:21-31`; `nodectld/lib/nodectld/cli.rb:183-191`). Recv 5220
+  forks a shell pipeline and watches its leader (`commands/dataset/recv.rb:
+  26-35`; `utils/subprocess.rb:9-15`). libosctl `syscmd`/Open3, direct forks,
+  downloads and monitors are additional paths. A process group signal alone
+  is not proof that every descendant exited.
+
+**Owner and handshake.** Proposed minimal persistent API model:
+`storage_maintenance_runs` records an opaque run UUID, immutable freeze epoch,
+selected-closure digest, actor/session/reason, state and revision;
+`storage_maintenance_participants` records bounded per-node hold attempts and
+their selected zpool claims, protocol/profile, generations, boot/instance IDs,
+opaque hold tokens and result. Keep prior attempts as evidence. Add nullable
+`storage_freeze_controls.active_maintenance_run_id`; create/acquire it with
+the singleton row lock only in read_only at the caller's expected epoch.
+Completed evidence and copied actor/catalog IDs do not cascade with catalog
+deletion. These are future rows, not part of the current eleven-table schema.
+
+Use run states `acquiring`, `held`, `recovery_required`, `releasing`, `closed`;
+future G2 apply/verify is permitted only within `held`. Acquisition and all
+state changes require the normal direct-admin API action/session policy.
+`StorageMutationAdmission.change_mode!` must reject ordinary read_write when
+the owner pointer is nonnull, even with the correct epoch. Acquisition may
+precede full drain so that another operator cannot unfreeze while drain is
+being established. It does not authorize pausing half-executed chains.
+
+The smallest transport need not add another Rabbit service: hold-aware Node
+supervision can consume the desired participant state through its existing
+trusted DB connection, with compare-and-set participant revisions and copied
+request digests. A persisted local latch is mandatory before normal dispatch
+is inhibited. It is root-owned, atomically replaced and fsynced with its
+directory, outside ephemeral `/run`; malformed/unreadable state refuses
+normal startup. Control requests and acknowledgements bind run UUID, epoch,
+node, exact ordered zpool GUID/Pool-root claims and request generation.
+The token is correlation, not authentication; API/Node DB credentials and the
+local root-only osctld socket remain the trust boundary. 5290/5291 stay signed
+read-only requests; do not redefine 5291 v1 as a write/hold operation.
+Each response binds protocol/coverage version, run/participant attempt,
+request digest, freeze epoch, host boot ID, daemon UUID, hold generation/token,
+ordered zpool GUIDs, state, active/deferred counts and bounded unknown reasons.
+Generations are monotonic within their declared incarnation; reject overflow
+instead of wrapping. Neither timestamps nor a reused PID establish continuity.
+
+1. Freeze API admission, acquire the owner, enumerate all existing relevant
+   chains and account for every writer version. Allow admitted chains and
+   their rollback to settle. Never-started chains must also drain or be
+   explicitly cancelled before repair; a parked queue is not DB drain.
+2. After that drain, latch selected Node dispatch closed under the same local
+   gate used immediately before worker/reservation creation. Refuse newly
+   discovered old work and leave its state intact; it invalidates readiness.
+   Check all queues, reservations, saves and detached blockers. The node-wide
+   gate wins over urgent work, rollback, pool hooks and manual queue resume.
+3. Stop normal background producers and retire the normal daemon. A supervisor
+   proves its entire runtime cgroup subtree empty, then starts an isolated
+   maintenance runner permitting only signed 5290/5291 and hold/status/release
+   processing. No normal startup export, monitor callback, queued chain or
+   arbitrary remote-control dispatch is loaded. Preserve existing inventory
+   streaming, results and signing checks; give the maintenance runner its own
+   child domain. It is not the existing `minimal` mode, which is explicitly
+   for nodes without storage (`config.rb:30-35`).
+4. Acquire applicable server-side osctld holds, or prove the explicit N/A
+   profile below. Wait for all old physical operations and their descendants
+   to settle. Only then record `held` participant bindings and start the
+   complete DB/two-pass-ZFS observation. Inventory requests and seals must be
+   bound to this owner/participant-attempt set; additive new protocol/format
+   versions fail closed against old readers. Hold-status remains bounded and
+   contains IDs/digests/counts, not private disk paths.
+5. Keep all latches while capturing, planning, approving, applying and
+   verifying. No TTL, client disconnect, missed heartbeat or daemon death
+   releases them. Deadlines bound requests, not the lifetime of the hold.
+
+**Child and restart prerequisite.** Put each normal daemon incarnation and
+all its local descendants in a dedicated cgroup before `run_daemon`/startup;
+the supervising wrapper remains outside that child domain. Reuse the
+declared runit service hierarchy, with a tested v1/v2 adapter. Staging supports
+both layouts (`os/modules/config/runit.nix:116-147`); do not assume v2-only
+`cgroup.kill` or that `setsid` descendants remain in one process group.
+First installation must account for children from the preceding ungated
+service too. Recursively enumerate the old service domain with bounded
+depth/count/time; overflow, PID ambiguity, unsupported mount or an escaped/
+delegated effect is unknown. A known supervisor is excluded by exact process
+identity, never by a process-name allowlist.
+
+Readiness requires no remaining normal-runtime process and a disabled source
+of future normal-runtime starts. Do not automatically kill unknown residual
+children to obtain an empty count. Known read-only monitors may be stopped
+and reaped normally; an uncertain storage child requires recovery and fresh
+evidence. On restart the supervisor loads the latch before normal startup;
+DB unavailability cannot reopen it. A new host boot, daemon incarnation,
+zpool GUID or lost domain changes proof identity and invalidates the capture,
+even if the persisted hold still prevents writes. Two empty censuses without
+this start gate and containment contract remain advisory.
+
+Current Node and osctld services use `killMode="process"`; the runit
+`control-group` alternative only sends TERM to a sampled PID list and does
+not wait for recursive emptiness (`os/modules/system/boot/runit/default.nix:
+316-331`, `os/modules/osctl/osctld.nix:123`). Merely changing that option is
+not this prerequisite. Processes delegated into osctld/export servers need
+their own server-side barrier; they cannot be certified by Node's cgroup.
+
+**Generic osctld hold extension, with explicit coverage.** Add versioned
+root-socket operations `pool_storage_hold`, `pool_storage_hold_status` and
+`pool_storage_hold_release`, taking opaque owner/token, generation and exact
+zpool name/GUID. Persist the hold before acknowledging; restore it before
+pool import starts producers. A duplicate request is idempotent only for the
+same complete binding; mismatched owner/token/GUID is a refusal.
+
+Use one per-pool entrant gate for timer, queued and synchronous paths:
+GC `prune`, `free_container_run_dataset`, `add_container_run_dataset` and
+`run_gc`; TrashBin `prune`, `add_dataset` and timer `run_gc`. In `closing`,
+existing entrants finish, including nested GC-to-trash calls using their
+existing permit; new entrants cannot start ZFS work. Never hold the gate
+mutex during ZFS/child wait. Suppress/coalesce timer wakeups. Do not drop a
+queued free or direct trash request or return false success: either retain it
+as explicitly deferred work, or reject before any caller effect. Deferred
+work is not an active effect and resumes only on explicit release. Its
+persistence/recovery must be proved, otherwise that route remains unsupported.
+Registered live run datasets alone do not prevent a hold.
+
+Anchors at `107cef01f`: `garbage_collector.rb:108-131,170-195,251-252`;
+`trash_bin.rb:43-54,97-116`; `pool.rb:323-330`; current
+`storage_activity.rb` only counts these operations. A hold must additionally
+prove spawned descendants finished, and persist a recovery-required latch
+after unknown child termination. `gc_trash_v1` may remain available unchanged;
+only a new explicit hold coverage version proves exclusion.
+
+**Do not advertise this limited hold as full active-hypervisor exclusion.**
+`commands/container/start.rb:295-306` creates an impermanence dataset before
+GC registration; `boot.rb:57-105` creates/imports before registration;
+`auto_start/plan.rb:145-168` can start/reboot containers asynchronously.
+Killing the Node osctl client does not prove its server command stopped.
+Supporting these pools requires a server-side pool command/runtime-start
+gate, nested-command permits and async-operation/child completion, including
+startup import/recovery. Gating only `Commands::Logged` misses Base commands
+and internal calls. Until that work is audited and tested, reject such a
+participant; a GC-only hold is insufficient. This is a concrete coverage
+limit, not a requirement to redesign independent root/osctld administration.
+
+**First supported profile and scope.** Propose the initial proof for reviewed
+storage-only backup participants, holding all Node work on those selected
+nodes. Selection is complete (node,zpool GUID) plus all managed roots,
+same-node path/owner claims and transitive DB/physical dependencies. Include
+another participant when a dependency requires it; unrelated offline nodes
+do not enter the selection. Multiple roots share one zpool scan. Unknown
+footprints on a selected node conservatively block that node.
+The selected DB drain query must follow whole chains and all incoming/outgoing
+catalog dependencies, including other-node chain members; it is new proof,
+not a reinterpretation of today's global `db_drained` boolean. Unassignable
+footprints that may reach the selection block closure. A legacy null
+Pool.zpool_guid is anchored by a private read-only preflight GUID, rechecked
+when acquiring the hold and sealed before capture; it is not backfilled into
+the catalog merely to obtain a hold.
+
+osctld N/A needs an explicit deployment capability/profile digest proving no
+applicable osctld/runtime/export producer, no active delegated command or
+orphan, and no automatic service start during the held interval. Neither a
+Pool role, Node `minimal` mode nor a missing socket suffices. In particular
+5203 uses `Dataset#destroy(...trash:true)` and 5211 uses trash-bin directly
+(`commands/dataset/destroy.rb:6`, `dataset.rb:27-38`,
+`commands/dataset/apply_rollback.rb:60`). Audit those routes and historical
+in-flight effects before approving N/A. If the profile cannot be proved,
+require the provider or refuse; do not assume the production backup node fits.
+
+**Loss and release.** Connection loss makes coordinator status unknown but
+keeps local exclusion. A failed acquire keeps successfully acquired holds;
+resume acquisition by exact binding or explicitly abandon before capture.
+Boot/instance/generation or scope changes require a new participant attempt,
+fresh capture and later reapproval. Preserve old receipts. API/DB outage and
+operator death do not transfer ownership or authorize an unfreeze. Reviewed
+recovery may change the owner under the singleton CAS lock, with actor/reason,
+but cannot reuse old approval after a changed physical baseline.
+
+After final verify, enter `releasing` under the owner lock; this permanently
+ends that run's apply authority. Release osctld holds by exact token and
+record acknowledgements. Node remains inventory-only until all participant
+releases are acknowledged and an authenticated expected-epoch read_write
+transition closes/clears the owner atomically. It can then retire the
+maintenance runner and start normal service. If a release ACK is lost, query
+the same token; do not guess or issue a different owner's release. Partial
+release permits no more apply; a new held interval is needed. An abort with
+partial DB repair must first complete verification or checked inverse repair.
+
+**Reviewable delivery order.** (1) API owner/CAS interlock plus model/auth
+tests, no acquisition-ready status; (2) selected Node persistent gate,
+normal-runtime containment and inventory-only handoff, still unknown for
+uncovered delegated effects; (3) independent generic osctld GC/trash hold
+with durable startup and child semantics, explicitly limited coverage;
+(4) selected-zpool coordinator, explicit profile/N/A validation and capture
+binding, initially only for the proved storage-only profile. Active runtime
+pool support is a further provider gate, not implied by (3). Keep each
+component's source, module and focused tests together; deploy providers before
+consumers and all API interlock readers before owner acquisition.
+
+VM acceptance must race dispatch/reservation/urgent/rollback against hold,
+drain a multi-step chain normally, exercise a 5220-style shell grandchild,
+kill a worker, kill/restart both daemons and the wrapper, lose DB/Rabbit/socket
+connections, trigger timer/direct/nested trash work, and replay stale release
+tokens. Prove no normal-runtime child/start while held, no timer effect after
+ACK, old-boot evidence rejection, retained holds after coordinator death and
+payload-preserving normal service after explicit release. Test both cgroup
+layouts or explicitly limit capability. Old Node/osctld must return unsupported/
+unknown; a downgrade ignoring the latch is unsupported while owned. Retain
+the hold-aware launcher/provider or keep the relevant services stopped until
+reviewed recovery; an old software generation is not a safe escape hatch.
+No component may set production strict, repair_ready or APPLY merely because
+one of these commits passes tests.
+
+### Milestone A finding policy
+
+The historical counts are questions from captures taken at different times.
+Only new complete exclusive evidence and approved policy can authorize an
+action. All classes use the same matcher/proof/action framework; there is no
+standalone legacy repair script.
+
+| Historical class | A disposition and evidence |
+| --- | --- |
+| 26 reciprocal physical clone origins without DB parents | Exact source/clone path, type, GUID, owner GUID and reciprocal edge uniquely mapped to existing rows can remain private observations. No new identity/origin FK is required at A. Legacy parent/count projection is a separate proposed policy below. |
+| Five disk-only snapshots and four filesystems | Private findings only; recognize exact Pool::Create structural support paths from catalog semantics. No import, synthesized catalog owner or destruction. An unknown object blocks actions whose dependency closure could include it, not unrelated scopes by default. |
+| One DB-only empty Branch | Remove an existing catalog row only with completed destroy/confirmation evidence, frozen physical absence, no incoming/outgoing dependency or pending intent, and exact locked row/dependency CAS plus fresh targeted recheck. Missing historical proof means no action. |
+| 195 SIP reference-count surpluses over a node-scoped minimum | Recompute established full-DB incoming SIPB parent references and persistent clone contributions with confirmation/lifecycle semantics settled. Per-count before-value CAS; parent edits and corresponding counter deltas form one atomic action. A lower bound cannot authorize a reset. |
+| One parent outside the captured scope | Resolve against full DB; a valid row closes a capture gap without editing it. Missing/conflicting target remains unresolved; never guess a replacement. |
+| 251 Dataset confirm-create rows | Correct only with all intended placements and exact completed transaction/confirmation outcomes proved. Existing descendants or a disk match alone are insufficient. Current selected-history capture may not contain the necessary evidence. |
+| 150 headless backup DIPs and nonhead branch-head findings | Proven detach is valid; nonhead trees need no head branch. Restore head metadata only when a unique lifecycle outcome proves it. Missing history stays report-only, not a guessed head. |
+
+**Proposed dependency-projection policy, not yet approved for execution.**
+Source suggests SIPB.parent participates in current clone dependency accounting:
+`api/models/transaction_chains/dataset/rollback.rb:239-258` reparents remaining
+old-branch entries after promotion and adjusts the source SIP count;
+`dataset/send.rb:73-123` carries that dependency to appended entries;
+`snapshot_in_pool/destroy.rb:36-37` decrements it. Therefore calling the
+column immutable historical ancestry is too strong. It is still distinct
+from a filesystem's one physical ZFS origin.
+
+A possible policy fills only null legacy parents for the exact eligible
+entries on a uniquely identified clone branch, paired with the proven source
+SIPB in the same DIP and exact full-DB counter consequences. It needs all
+affected entries/owners settled, no conflicting existing parent and proof that
+every affected entry's semantics require that source. Do not change history
+IDs, branch ownership, head flags or nonnull parents merely from an origin
+edge. Current physical matching does not require guessed promotion history;
+legacy metadata projection does require semantic validation.
+
+**Decision still required:** adopt this projection only after rollback,
+promotion, resumed incremental receive, multiple backup occurrences and
+deletion-accounting fixtures prove the invariant, followed by explicit policy
+approval and per-run action approval. Default for A is private origin evidence
+and no parent edit. If that default remains, report the 26 as observed but
+not operationally repaired; do not claim all inconsistencies corrected.
+
+### G2: approval, apply, restart and recovery
+
+Implement this in the same engine after G1, using versioned scoped policies.
+Future persistence needs an immutable approval record plus a per-action
+journal, with copied target IDs so catalog deletion cannot erase history.
+Bind approval to exact run/capture/report/action-set/evidence digests, HMAC
+key ID/canonicalization, policy version, selected closure, freeze epoch and
+authenticated direct-admin user/session. HMAC keys protect opaque private
+labels, not authority. Key loss/rotation or changed evidence requires a new
+approval epoch/run, not remapping an old approval.
+
+An executor may apply only the approved action IDs under the active freeze
+owner, exclusion and full dependency/targeted ZFS rechecks. Start with small
+bounded action groups; a parent/count correction must be atomic even if it
+spans several rows. Lock rows and CAS exact before-values and relevant
+dependency versions/sets. Write after-values, copied before/after audit and
+checkpoint in the same SQL transaction. Action IDs are deterministic over
+the immutable plan; replay cannot change their policy or targets.
+
+A process crash after an uncertain COMMIT reads committed journal/after-state
+before retrying. Resume only under unchanged freeze, physical baseline and
+hold identity, accounting for previously committed actions. Otherwise stop,
+recapture and approve a new remaining plan. Keep exclusion through recovery.
+An inverse action must CAS the exact committed after-state and recheck
+dependencies; never restore a whole old DB over resumed service. Final
+same-engine full verification checks both intended edits and untouched
+dependency closure before ownership release and compatible unfreeze.
+Scopes remain unverified for online purposes in A.
+
+A makes no ZFS changes and publishes no restrictive authoritative physical
+identity/origin FKs. These existing nullable fields may remain null while
+private artifacts carry exact physical observations. Approved legacy metadata
+edits must be understood by the normal writer version resumed afterward;
+test that version, not just the repair executor. A fix for a recurring legacy
+writer bug may be a prerequisite to that policy without requiring all strict
+families.
+
+### G3/G4 and the later B boundary
+
+G3 rehearses the actual A sequence on the disposable topology cluster:
+clone/promote, rollback, full/incremental backup, synthetic catalog defects,
+approval, interrupted batch commit, restart/reapproval, final audit and normal
+unfreeze. Verify subsequent backup/rotation and preserved payloads, not just
+a green comparator. Include legitimate headless/detached and outside-capture
+parents, ambiguous identity, duplicate GUIDs, stale epoch/boot, lost hold and
+counter conflicts. The cluster must remain usable after recovery.
+
+G4 is a separately approved production window with fresh evidence, exact
+selected action approval and recorded unresolved findings. Expect the whole
+approximately 22-minute final scan and repair/verification time; API reads
+remain available. Existing scheduler work may skip that day's due task during
+read_only without automatic catch-up, so plan manual retry or next-day
+behavior. No production access or repair is authorized by this document.
+
+B requires compatible execute/rollback/retry/kill behavior for every writer
+family touching published identity/source rows, including legacy handles,
+osctl wrappers and delayed effects. Node refusal must precede the effect;
+an FK rejection during final confirmation is too late. Durable per-attempt
+observations feed later steps, with final identities published atomically
+only at whole-chain closure. Ordinary success, proved no-effect failure and
+proved compensation settle normally; only physically unprovable outcomes
+need reconcile. Old/observer attempts cannot be relabeled strict.
+
+After B link publication an incompatible old API cannot safely resume writes;
+keep ingress/read_only protection until compatible writers return or a
+separately proved downgrade is performed. A compatible unfreeze does not
+weaken this B rule. Whole-fleet strict coverage is not a prerequisite for A's
+limited non-linking policies.
+
+**Receive -F caveat:** proving an empty snapshot-destruction set is not enough.
+`libnodectld/lib/nodectld/commands/dataset/recv.rb` and the local-send
+libosctl stream use forced receive; the local OpenZFS
+`man/man8/zfs-receive.8:239-246` describes rollback of the destination
+filesystem. Unsnapshotted live head changes can be discarded even with no
+extra snapshot. A later strict transfer contract must prove a receive-only/
+disposable head or explicitly authorize that live-content rollback; prefer
+no-force receive/fresh staging where feasible. Removing newly received
+snapshots cannot restore discarded head content. Include a divergent live
+file with no extra snapshot in transfer tests. A's DB-only repairs do not
+certify the safety of every existing forced receive.
+
+Provider-first rollout remains separate from schema/API deployment.
+Published vpsAdmin `fe4f9b0f9` includes signed 5291; its internal provider pin
+does not change the site's actual OS daemon when configuration follows
+`vpsadminosStaging`. Port the generic provider onto current staging lineage,
+review/test it and deploy only to the relevant selected hosts before relying
+on it. Do not discard intervening staging commits by pinning the disposable
+cluster's old-base feature. Missing/old providers stay unknown; rollback
+invalidates their proof. No production strict toggle, shared-host switch or
+APPLY is implied.
+
+## Historical design record (superseded)
+
+The remainder preserves earlier design/implementation packets, including
+their original dates and source anchors. **It is historical, not an additional
+set of current requirements.** In particular the old OS actor/launcher schema,
+preliminary approval/action tables, signed-all-writers language, old registry
+versions, physical-identity-first apply pilot and full-strict-before-any-repair
+sequence are superseded by the current contract above. Other details remain
+useful rationale but must be checked against current source before reuse.
+The previously added advisory child-census proposal is preserved; it is one
+possible partial observation slice, not completion of G1b exclusion.
+
+### Original first-phase proposal
 
 Status: first-phase design proposal, revised 2026-09-24. This is an implementation
 contract, not evidence that the code has shipped or that production data has
@@ -14,7 +806,7 @@ detect their effects later. No shared vpsAdminOS fence is required under this
 boundary; an osctl operation with unbounded or unobservable effects must be
 refused in strict mode until its vpsAdmin wrapper can prove them.
 
-## Evidence and design goals
+## Historical: Evidence and design goals
 
 The corrected read-only comparison in [investigation.md](investigation.md#read-only-production-inventory-2026-09-24)
 found 39,576 physical snapshots on one backup node and took about 22 minutes
@@ -32,7 +824,7 @@ cannot be safely proved or compensated enters needs_reconcile. A complete
 unmatched ZFS object stays in private findings; it never becomes a catalog row
 merely because it exists, and reconciliation never destroys it.
 
-## Existing catalog and physical cardinality
+## Historical: Existing catalog and physical cardinality
 
 Snapshot is the logical object and retains its ID, history, name, label and
 confirmation semantics. SnapshotInPool (SIP) is unique by
@@ -75,7 +867,7 @@ fixtures before claiming verified scopes. A counterexample requires a revised
 physical occurrence representation before strict protection, not a guessed
 many-to-one match.
 
-## Additive relational schema
+## Historical: Additive relational schema
 
 The following is a conceptual schema; migration DDL must check existing data
 and MariaDB index/constraint behavior. Existing catalog keys and transaction
@@ -165,7 +957,7 @@ inactive clones until purge. It is not the count of physical ZFS clone edges.
 Keep it synchronized on new writes, but never reset it from a one-node lower
 bound or use zero alone as a physical destruction certificate.
 
-## Node inventory and one reconciliation engine
+## Historical: Node inventory and one reconciliation engine
 
 An operator CLI using the API model runtime under the Supervisor service
 identity owns each run. It opens a restricted
@@ -843,7 +1635,7 @@ modifies ZFS. A DB-only catalog removal needs completed transaction proof,
 complete frozen physical absence and full inbound/outbound dependency
 validation. Unresolved findings remain visible to operators.
 
-## Guarded vpsAdmin write flow and ordinary outcomes
+## Historical: Guarded vpsAdmin write flow and ordinary outcomes
 
 TransactionChain.fire2 is the normal API chain admission point. In the same
 short SQL transaction that stages/queues a storage-mutating chain, lock the
@@ -1556,7 +2348,7 @@ Full transfer/restore tests check user payload integrity. A mixed-version VM
 test submits old 5212/5220 and osctl handles against a strict node and proves
 refusal before effect; rollback to old API stays read_only after FK publication.
 
-## G1: node-inclusive observation during a global storage freeze
+## Historical: G1: node-inclusive observation during a global storage freeze
 
 This is the next design gate after the disposable-cluster API freeze trial. It
 adds **bounded evidence about node and delayed work**, not a new freeze mode,
@@ -1704,6 +2496,55 @@ incomplete child coverage; it must never derive `node_quiet` from a missing
 worker. A later child-supervision or isolation change must close every
 storage-affecting spawn path and startup orphan gap before complete G1 proof.
 
+**Next G1 child slice (proposal, advisory only).** Add a bounded, read-only
+NodeCtld service-cgroup census before queue dispatch at daemon startup and
+again inside each local activity sample. Resolve the service cgroup from
+`/proc/self/cgroup`, verify that the running daemon belongs to the expected
+`nodectld` runit service, and enumerate its subtree with a deadline and PID
+cap. Pair PID with the host boot ID and `/proc` process start time, read twice
+to reject a changing or reused identity, and return only counts and reason
+codes. Any inaccessible cgroup, unsupported layout, uncertain wrapper PID,
+extra process, overflow or unstable scan is unknown. A predecessor candidate
+seen at startup stays an unknown reason for this daemon boot even if it later
+exits. Keep `child_coverage=unknown`, the existing 5291 wire contract,
+`node_quiet=false` and `repair_ready=false`; the census adds detection, not
+complete child proof. Add bounded census failures as extra unknown reason
+codes: current 5291 accepts them and then withholds even its advisory
+`node_activity_observed` claim. It must not kill, reap or silently whitelist a
+process.
+
+This narrow slice is useful because runit already places the service in
+`/run/runit/cgroup.service/nodectld`, while its current `killMode="process"`
+does not terminate descendants on daemon exit
+(`vpsadminos/os/modules/system/boot/runit/default.nix:257,283-287`,
+`vpsadmin/nixos/modules/vpsadmin/nodectld/vpsadminos.nix:34-54`). NodeCtld's
+wrapper may fork and restart the daemon, and its stop path signals only that
+daemon PID (`nodectld/lib/nodectld/cli.rb:92-106,142-163,183-192`). A normal
+worker kill stops its Ruby thread and sends TERM to one `subtask` PID without
+waiting (`libnodectld/lib/nodectld/worker.rb:21-31`). Existing detached
+`blocking_fork` waits for its leader, but receive runs a shell pipeline and
+could leave descendants; direct download and inventory spawns and libosctl
+`syscmd`/Open3 calls are separate lifetime paths. An empty worker table or a
+single reaped leader is therefore insufficient. The service census cannot
+prove that a child did not move to another cgroup, that a library spawn was
+fully reaped, or that an osctl request left no active osctld command.
+
+After this census, complete Node child proof needs an audited common
+spawn/reap boundary for libosctl `IO.popen`, `Open3` and ZFS stream helpers,
+NodeCtld direct forks/pipelines and detached blockers. Every start must
+advance the Node effect generation before a storage effect, and every finish
+must advance it only after the relevant child or process group has exited;
+failed wait, hard kill, uncertain descendant or uninstrumented spawn remains
+unknown. Test a daemon restart with an inherited live child and a child that
+survives a killed worker, alongside normal spawn, timeout, failed wait and
+bounded cgroup scans. A VM test must demonstrate that the read-only 5291
+report stays blocked across restart and after an observed predecessor exits;
+this slice cannot assert `node_quiet`. Changing runit's kill mode or claiming complete
+containment requires a separate review and real-node test of transfer restart
+semantics. On storage-only nodes, an absent osctld pool is still unknown until
+a node-role and per-handle proof establishes that `gc_trash_v1` is genuinely
+not applicable; do not turn `absent` into `idle` in this child slice.
+
 The subsequent vpsAdmin consumer commit adds one signed read-only 5291
 activity-probe transaction and chain, its NodeCtld handler, API report
 orchestration and focused tests. It combines the Node observer with osctld
@@ -1762,7 +2603,7 @@ generation coverage, a resolution for storage-only nodes, and a final
 recheck/DB-CAS boundary before any repair APPLY claim. Rollback of either
 component removes evidence and never widens authority.
 
-## Delivery, compatibility and verification gates
+## Historical: Delivery, compatibility and verification gates
 
 1. Add nullable schema, the one reconciler and private bounded collector.
    Origin and filesystem-owner FKs use RESTRICT; observer mode creates no
@@ -1827,7 +2668,7 @@ linked origin. A strict cutover is blocked if any required writer
 route is unclassified or a routine transfer still needs an unsupported
 destructive -F path.
 
-## Source audit gates and open assumptions
+## Historical: Source audit gates and open assumptions
 
 The earlier vpsAdmin source audit used base 486350466. Storage documentation
 is under docs/storage/README.md and docs/storage/branching.md; the older

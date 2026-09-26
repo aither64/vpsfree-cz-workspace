@@ -124,3 +124,55 @@ Private request/response evidence is under
 `/tmp/storage-review-split-2026-09-23/` with restricted permissions; no
 credentials or signing material are in this record. No identity publication,
 repair action, strict production dispatch or node/GC quietness was tested.
+
+## 2026-09-26 reviewed-head refresh
+
+Before switching VMs, the retained cluster was running on the bridge with
+storage topology. The freeze control remained `read_write`, epoch 2. SQL
+preflight found zero unfinished transactions, active chains and blocking
+intents. A private mode-0600 database dump is stored at
+`/tmp/storage-g0-preupdate-vpsadmin-20260926.sql.gz`; it contains development
+credentials and must not be published. The previous system generations are:
+
+| Machine | `/run/current-system` before refresh |
+| --- | --- |
+| services | `/nix/store/f5qh96dpb2461r9bbhx4asc6p4zapj7s-nixos-system-vpsadmin-services-26.05pre-git` |
+| node1 | `/nix/store/l8dvg4vc2635as29cy8lw30hpynsz9bp-vpsadminos-system-dev-node1-26.05pre-git` |
+| node2 | `/nix/store/7plhgy2gfdpy9ig8qji9w6w8kvdy85wp-vpsadminos-system-dev-node2-26.05pre-git` |
+| storage1 | `/nix/store/xml3dv479nb6j7ns14skqxdqriv4la85-vpsadminos-system-dev-storage1-26.05pre-git` |
+
+The update targets reviewed vpsAdmin `ebe4d8834` and reviewed vpsAdminOS
+`dcad075a1` from the session worktrees. Node1, node2 and storage1 updated
+sequentially. Their new system generations are respectively
+`fbny0b6jcc9jinzm35yy9yn3y483by03`,
+`iwiy9nl3n0q7qsidd2f7sa7mqc3kc5c3`, and
+`pini6v3liky8vhs22hyrnqdjfybm17zd`; NodeCtld and osctld were running
+on each node after its switch.
+
+The services switch installed system generation
+`s6a5yqp8ihh67aliin0kjdp11s6rhqnp`, containing the `ebe4d8834`
+API. The update helper returned failure because a payments timer ran during
+a brief MariaDB connection interruption. After the database and API were
+healthy, the same payments task succeeded on explicit retry; its failed
+systemd state was cleared. The helper had stopped before its refresh step,
+so `vpsadmin-devcluster refresh` was run explicitly and completed. The
+cluster then reported running and ready on the bridge with storage topology.
+The API, supervisor, nginx, NodeCtld and osctld services were healthy.
+
+The database retained migration `20260924210000`, control row
+`read_write` at epoch 2, and no unfinished transaction or active chain.
+Authenticated freeze status returned HTTP 200 with `repair_ready=false`
+and no blocking counts. A live headless browser login showed the safety
+warning and epoch-2 review form, then returned without submitting a mode
+change. An ordinary snapshot request through the updated two-worker API
+completed without unlocking the process-local signer: chain 24 was terminal,
+snapshot 5 was confirmed, observer intent 12 was terminal, and
+`tank/ct/2@2026-09-26T09:53:59` existed on node1. The final freeze mode
+remains `read_write` at epoch 2 so the user can try the control.
+
+This refresh confirms the updated API/WebUI/Node packages run together in
+the disposable cluster and that ordinary unsigned observer snapshots work.
+The earlier bounded freeze trial used the prior runtime-equivalent package;
+the new browser run checked the updated UI but did not repeat the mode
+toggle. G1 child lifetime, full node quietness, verified scopes and repair
+remain unproved.

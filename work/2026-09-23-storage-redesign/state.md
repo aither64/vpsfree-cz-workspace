@@ -6,7 +6,212 @@ lifecycle: active
 
 ## Current status
 
-Latest 2026-09-26 checkpoint: the reviewed six-commit vpsAdmin feature branch
+2026-09-26 architecture checkpoint: the user-requested Astra assessment is
+recorded in [plan.md](plan.md) and the current section of
+[storage-integrity-design.md](storage-integrity-design.md). Milestone A is a
+bounded, exclusive frozen maintenance workflow for provable existing-catalog
+corrections and compatible service resumption. Continuously verified physical
+identities and strict writer families are a separate milestone B. The review
+identified four concrete G1a capture defects, a cold-offline CLI startup
+effect, and the need for a held Node/osctld exclusion plus an active freeze
+owner before executable repair. It proposed a separately tested current SIPB
+dependency-projection policy; the default remains private physical-origin
+evidence with no legacy parent edit. No repair approval/APPLY or production
+window is authorized by the design update. A follow-up source check selected a
+manual storage-only maintenance generation, stopped-daemon child proof,
+one-shot signed 5290 runner and active API owner as G1b's working default;
+the automatic Node/osctld hold protocol remains a later option. This is a
+design decision, not an implemented exclusion gate. Implementer0 prepared two
+separate G1a liveness fixes in an isolated worktree from published
+`fe4f9b0f9`; fix 1 focused API specs passed 17/0, with its normal-hook
+commit now at isolated `13368304d`. Fix 2 passed focused DbCapture specs
+8/0 after correcting a missing STI type in the new fixture. Independent
+four-lane review found one Important case: an old Node retry can overwrite a
+previously started member with a skipped result. The amended second commit
+`32f9875eb` rejects that as terminal proof; its mixed-member regression
+passed 9/0, normal hooks passed, and the reviewer reran affected lanes with
+no remaining Blocking or Important finding. The registered vpsAdmin tree
+remains clean at `fe4f9b0f9`; broader tests and publication remain pending.
+Retained reviewer0 assignment failed before submission because the portal's
+queue-attempt ledger reached its hard-coded 1 MiB limit. The mandatory-review
+standalone fallback used the installed default-team reviewer role with exact
+gpt-6-sol/xhigh settings. Its review packet is at
+`/tmp/storage-g1a-liveness-review-packet.txt`; no ledger file was altered.
+Cold offline replay is committed separately at isolated `d533116` on
+`32f9875eb`: a pure artifact loader replaces full API boot for
+`compare|dry-run|plan`. A sealed artifact passed all three commands in a fresh
+Ruby process without ActiveRecord; focused CLI specs 8/0, selector 18/77 and
+normal hooks and independent four-lane review passed with no Blocking or
+Important finding. GUID normalization was committed at isolated `b3f1bc260`
+and cleanly replayed after the offline change, with an operator recapture
+clarification amended into final `53a9768d8`. All 12 known
+storage GUID DECIMAL fields use exact bounded uint64 digits; focused
+DbCapture/ProofPlanner specs passed 37/0, targeted RuboCop and normal hooks
+passed. Independent four-lane and final affected-lane reviews found no
+Blocking or Important item; the documentation advisory was resolved. The
+combined four-commit branch is clean at `53a9768d8`, with lifetime journal
+capture volume still unresolved. Read-only design analysis found both the
+scope-intent history fan-out and accumulated terminal `done=2` rollback rows;
+exact rollback proof cannot be preserved by an indexed state filter alone.
+The next G1a slice needs bounded current-graph/pending-SIP evidence closure
+with explicit unknown lifetime-terminal coverage. Architect0 found that a
+live unresolved registry cannot be trusted while old and direct-SQL writers
+can change results without invalidating it; a full retained-history checkpoint
+is deferred to a held maintenance window if an action needs that proof. A
+one-file real-MariaDB red fixture at isolated `53a9768d8` ran 12 examples:
+the two new settled-history/terminal-rollback-history cases failed exactly
+with `DbCapture::Incomplete: DB capture row limit exceeded`; the other ten
+passed. The first prerequisite is now isolated commit `543634b76` on
+`53a9768d8`: offline readers validate source `(1,1)` and future `(2,2)`, adapt
+legacy coverage to explicit unknown, and produce policy-2 reports and
+policy-3 nonexecutable plans under collision-free names. The capture writer
+still seals `(1,1)` because its present selector cannot claim complete
+node-wide work. Focused four-spec API selection ran 57 examples with one
+synthetic fixture run-ID error; the corrected affected artifacts spec passed
+12/0, while the other 56 were green in the first run. Ruby syntax, targeted
+RuboCop 8/0, diff --check and normal Nix pre-commit/commit-message hooks
+passed. Reviewer0 independently cleared this HIGH-risk artifact-contract
+commit in general, architecture,
+scope and risk/compatibility lanes with no Blocking, Important or Advisory
+finding. Reviewer0 retained saved gpt-6-sol/xhigh/read-only settings. That
+prerequisite deliberately left the writer at `(1,1)` until the selector could
+support a `(2,2)` coverage claim.
+
+The dependent bounded-selector commit `e7f91a221` is clean in isolated
+`/tmp/storage-g1a-bounded-capture-2026-09-23-vpsadmin`, based on
+`543634b76`. It adds three nonunique query indexes, selects current catalog
+and pending SIP evidence plus observable node work, bounds rows visited and
+artifact bytes, and seals source `(2,2)` with historical terminal coverage
+explicitly unknown. It includes exact current scope keys, same-node retained
+locks, cross-intent malformed-reference closure and frontiers that avoid
+repeated ID queries. Corrected focused DbCapture specs passed 23/0; unchanged
+Artifacts 12/0 and migration 2/0 passed. Normal Nix pre-commit and
+commit-message hooks passed. Independent reviewer0, using its saved
+gpt-6-sol/xhigh/read-only settings, reviewed all four HIGH-risk lanes and
+found no Blocking or Important issue. The reviewer confirmed that mandatory
+selector failure cannot seal a complete artifact, while a complete diagnostic
+capture still does not prove lifetime terminal history or permit APPLY. A
+disposable 40k-object MariaDB capture passed on this head: 40,007 rows emitted,
+40,009 returned rows visited, a 16,427,918-byte artifact and 13.33 seconds
+for capture, with 20,000 unrelated settled intents omitted. Its private
+database stopped and TCP port closed. The original EXPLAIN subprocess returned
+zero without plans; a separate read-only retry produced six parsed JSON plans
+and stopped the database again. SIP, target and waiting-transaction selectors
+use their expected indexes. The retained-lock query plans an estimated
+~19,910-row scan for its intent EXISTS arm on this fixture despite the chain
+index. Its outer ResourceLock scan is global; the fixture has no retained-lock
+cohort, so it does not measure repeated correlated probes from selected or
+unrelated nodes. Architect0 recommends recording this as an advisory liveness
+limit under the 10-second statement and 15-minute capture fail-incomplete
+bounds, and measuring a populated cohort, including unrelated-node locks,
+before live use or any index/query hint. Reviewer0 then inspected the complete
+six-commit `fe4f9b0f9..e7f91a221` series, its sole additive migration, final
+schema and offline artifact consumers. The independent final-series review
+found no Blocking or Important interaction or history issue and retained the
+lock-cohort performance and end-to-end/mixed-reader tests as advisory gates.
+The clean registered vpsAdmin feature branch was fast-forwarded from
+`fe4f9b0f9` to `e7f91a221`, preserving the former head under
+`backup/2026-09-23-storage-redesign-before-g1a-bounded`. The new head was
+pushed over SSH and verified at the exact remote feature ref. Push-triggered
+API specs, migration specs, CI, libnodectld specs, i18n, storage group snapshot
+contract and RuboCop runs were queued/running at this checkpoint; a fresh
+verification watcher owns their exact run IDs. Cross-component integration
+has not run on this head, and no configuration pin or running host was
+changed. The queue-ledger capacity issue was handled in a separate session,
+so managed team assignments work again.
+
+The staging-lineage vpsAdminOS provider port `107cef01f` passed focused
+osctld specs 36/0, independent four-lane review with no Blocking/Important
+finding, and its real `osctld/storage-activity` VM test 3/0. The separate
+feature branch `2026-09-23-storage-redesign-staging-provider` is published
+over SSH and its remote head verified exactly; push-triggered RuboCop and
+RSpec passed. Its broad VM CI run `36236936656` had 78 expected successes and
+three unexpected failures: `osctl/nfs-cancellation`, `kernel/vpsadminos` and
+`kernel/livepatch-kernel-identity`; the port's `osctld/storage-activity`
+result was `expected_success`. The NFS fixture expected a `hard` mount option
+but the captured assertion saw `soft`. The kernel cases have a build/store
+failure and a missing livepatch file respectively; their causes and rerun
+disposition still need investigation. The provider patch does not touch the
+NFS-specific test or kernel code.
+The private test artifact is under
+`/tmp/storage-os-port-ci-diagnosis/artifact`; no credential-bearing log was
+copied into this record. This remains a publication/verification gate, not
+evidence of a provider protocol failure. Neither the site OS pin nor a running
+host was changed. vpsAdmin `fe4f9b0f9` push CI has seven successful workflows;
+run 36234909917 was still in progress after 2h46m with no observed failure,
+so the watcher returned an incomplete result without cancellation. The
+session-owned disposable cluster
+still runs the earlier reviewed `ebe4d8834` services and old-lineage
+`dcad075a1` osctld, remains `read_write` at epoch 2, and can be used for
+bounded freeze UI/admission testing; 5291 end-to-end trial has not run.
+
+2026-09-26 latest checkpoint: vpsAdmin is clean and published at rewritten
+feature head `ebe4d8834`, with unsigned production 5204 observer guards and a
+bounded per-Dataset snapshot-name allocator folded into the owning commits.
+The seven-commit history, one final additive migration and final tree passed
+independent four-lane review with no Blocking or Important finding. Focused API
+RSpec passed 35/0, then boundary 2/0 and separate-pool-copy 3/0; focused Node
+observer/strict specs passed 88/0. The real backup-full-incremental VM passed
+six examples, and dataset-migrate-retain-source passed its data-preservation
+case at exact `ebe4d8834`. Push-triggered migration, RuboCop, WebUI PHPUnit,
+i18n, group-snapshot contract and Node specs passed. API Specs `36230929375`
+passed; selected broad CI `36230929362` remains under its watcher.
+Production 5204 keeps its DB-staged guard, intent and started attempt without
+a signature; 5290 and test-only strict paths still require signatures. No
+production signer activation is planned.
+
+The registered vpsAdmin feature ref fast-forwarded to the reviewed 5290/5291
+commits and is clean and published at `fe4f9b0f9`. Commit `554850a49`
+corrects the
+existing 5290 Node catalog iteration and canonicalizes Pool GUIDs in
+API capture; focused API 7/0 and Node 9/0 passed. Commit `ffcdb3774`
+adds the signed 5291 API/Node probe and private advisory ActivityReport;
+focused API 25/0 and Node 64/0 passed. Normal hooks passed for both commits.
+Independent affected-lane review cleared the two-commit series with no
+Blocking or Important finding, resolving the earlier history-split and GUID
+issues. The reviewer noted advisory duplication in API GUID normalization
+and the ActivityReport/Capture signer-prompt coupling. A separate,
+normal-hooked `fe4f9b0f9` commit pins reviewed vpsAdminOS `dcad075a1`
+provider; only its lock node rev/hash/timestamp changed. Independent
+affected-lane final-head review found no Blocking or Important issue.
+Push-triggered API, Node, i18n, WebUI, RuboCop, contract and selected CI
+workflows are in progress. No 5291 long integration test has started.
+Its report keeps `node_quiet`, `repair_ready` and executable repair false
+because child lifetime is unproved.
+
+The configuration feature branch is clean and published at `fc203cb0`:
+an amended, independently reviewed guide commit and one confctl-generated
+pin from the true `a65a4dfe` parent to exact reviewed vpsAdmin
+`fe4f9b0f9`. The prior local `f5f107b0b` and published sibling
+`e6932ddd` are retained in backup refs after an exact-lease feature push.
+No shared host has been switched.
+Staging/production OS pins remain unchanged. The guide accounts for
+`int.vpsadmin1`, writer holds, schema-first order and rollback. It now
+requires porting the osctld provider onto the current site staging OS
+lineage before any staging OS pin: direct use of `dcad075a1` would discard
+54 intervening staging commits. Current origin/staging is `af9543a54`,
+one commit after the site OS pin. A one-commit provider port on that
+lineage is prepared in an isolated worktree at `107cef01f`; focused
+osctld specs passed 36/0 and normal hooks passed. Independent review and
+its real VM test passed, as recorded above. Builds and dry activation of all affected
+hosts remain outstanding.
+
+The authorized disposable-cluster refresh is complete at vpsAdmin
+`ebe4d8834` and vpsAdminOS `dcad075a1` on the services VM and all three
+nodes. A private mode-0600 MariaDB pre-update dump remains at
+`/tmp/storage-g0-preupdate-vpsadmin-20260926.sql.gz`, and old generations
+were recorded. The services helper exited unsuccessfully after switching
+because a payments timer hit a transient database connection interruption;
+the task succeeded on retry and an explicit helper refresh restored the
+cluster's ready marker. API/WebUI status and live browser login/review passed.
+A new ordinary snapshot completed through the updated two-worker API without
+signer unlock and exists on node1. The cluster remains `read_write`, epoch
+2, with no active chains or unfinished transactions. An earlier mistaken
+`update <slug> --help` was stopped during configuration build without a
+switch. No shared host or production deployment occurred. See
+[g0-dev-cluster-trial.md](g0-dev-cluster-trial.md).
+
+Earlier 2026-09-26 checkpoint: the reviewed six-commit vpsAdmin feature branch
 has one final additive migration. API fixture and endpoint-coverage corrections
 were folded into their owning commits; reviewer0 cleared the rewritten series.
 At `e29c82cfc`, the complete API topic run `36195794498` and selected broad
