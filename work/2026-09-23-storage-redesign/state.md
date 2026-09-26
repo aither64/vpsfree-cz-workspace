@@ -7,17 +7,23 @@ lifecycle: active
 ## Current status
 
 Latest 2026-09-26 checkpoint: the reviewed six-commit vpsAdmin feature branch
-is published at `e29c82cfc81ba956e89238f9e76d947b2f7075d2` with one
-final additive migration. The preceding `5b2814cac` head exposed only three
-API test-fixture/coverage gaps in push CI. The six-line correction was folded
-into the observer and freeze commits; reviewer0 cleared the rewritten full
-series and final diff without a Blocking or Important finding. Focused final
-head API plugin-all and core selections each passed 9/0 with one pending.
-Push-triggered migration, i18n, RuboCop, WebUI, Node specs and the API-to-Node
-group-snapshot contract are green. API topic specs and the broad CI suite are
-still running. The obsolete `5b2814cac` broad CI run remains incomplete and
-is not evidence for the final head. The earlier `a15afb518` head and `5b2814cac`
-are retained in backup refs/recovery material.
+has one final additive migration. API fixture and endpoint-coverage corrections
+were folded into their owning commits; reviewer0 cleared the rewritten series.
+At `e29c82cfc`, the complete API topic run `36195794498` and selected broad
+CI run `36195794538` passed, as did migration, i18n, RuboCop, WebUI, Node
+specs and the API-to-Node group-snapshot contract. The later published
+`2e4078166` adds the reviewed Node-local G1 activity observer; focused Node
+tests passed 41/0, the full private-bundle Node suite passed 579/0, and its
+push Node-spec and RuboCop runs passed. Its selected broad integration run
+`36197858268` failed 35 storage tests. In 34 cases an ordinary snapshot got
+HTTP 503: the branch made 5204 observer guards require a signature although
+production has no active transaction signer. The test's single unlock reaches
+only one of two Puma workers. One other test reported an unknown 5204 snapshot
+preflight. This is a feature compatibility blocker, not a reason to enable
+production signing. An uncommitted API/Node correction now permits unsigned
+production 5204 observer receipts while retaining signed strict and operator
+paths; focused verification and independent review remain pending. Old heads
+`a15afb518` and `5b2814cac` remain in backup refs/recovery material.
 
 The configuration feature branch is published at
 `e6932ddd321a29d13d33de17b142d07fd02dff03`
@@ -50,10 +56,9 @@ inspect the control at `https://webui.aitherdev.int.vpsfree.cz/` with the
 session dev-cluster credentials. No repair/APPLY or production strict mode is
 enabled. Details are in [g0-dev-cluster-trial.md](g0-dev-cluster-trial.md).
 
-The next G1 slice is a separate vpsAdminOS read-only osctld per-zpool GC/trash
-activity signal. Architect0 specified a daemon-lifetime generation and
-fail-closed unknown result; implementer0 has been assigned a session-owned
-worktree from the currently pinned vpsAdminOS revision. The worktree is
+The G1 provider slice is a separate vpsAdminOS read-only osctld per-zpool
+GC/trash activity signal with a daemon-lifetime generation and fail-closed
+unknown result. Its worktree is
 registered at `worktrees/2026-09-23-storage-redesign/vpsadminos` on branch
 `2026-09-23-storage-redesign`, based on
 `8e44a5124439b1f3048ffc56b1717614a5360358`; the later upstream staging
@@ -68,17 +73,17 @@ Blocking or Important finding. See
 [g1-osctld-review-packet.md](g1-osctld-review-packet.md). The vpsAdminOS pin
 and node rollout remain unchanged; this provider proves only GC/trash
 activity, not all NodeCtld workers or child lifetime.
-Push-triggered RSpec and RuboCop at `dcad075a1` are green; the full VM CI run
-is still active. The prior export fake failure was corrected in the same
-reviewed provider commit. The NodeCtld-local `node_activity_v1` observer is
-committed only in an isolated temporary worktree at
-`/tmp/storage-g1-node-activity-2026-09-23-vpsadmin`, branch
-`2026-09-23-storage-redesign-node-activity-v1`, from old vpsAdmin `5b2814cac`.
-Focused Node tests passed 41/0 and normal hooks passed. The unchanged patch
-was rebased as one commit `2e4078166` on `e29c82cfc`. Architect conformance
-and independent mandatory review are pending; nothing from this G1 consumer
-has been pushed or deployed. It reports child coverage
-as unknown and cannot set `node_quiet` or `repair_ready`.
+Push-triggered RSpec, RuboCop and the full VM workflow at `dcad075a1` are
+green. The prior export fake failure was corrected in the same reviewed
+provider commit. The vpsAdmin NodeCtld-local `node_activity_v1` observer is
+reviewed, published as `2e4078166`, and still reports child coverage unknown;
+it cannot set `node_quiet` or `repair_ready`. A separate isolated 5291
+API-to-Node probe and private advisory report draft is uncommitted at
+`/tmp/storage-g1-activity-probe-2026-09-23-vpsadmin`. Its first focused API
+selection passed 22/0. Node ran 83 examples with one bounded UNIX parser EOF
+failure; implementer0 corrected that failure and a narrow rerun is pending.
+The report always marks quiet/readiness/apply false, even on complete
+`gc_trash_v1` evidence, because child lifetime remains unproved.
 
 The paragraphs below preserve earlier checkpoints and are superseded where
 their refs or in-progress statements differ from this latest checkpoint.
@@ -754,33 +759,28 @@ with the final version 2 format and must be recaptured.
 
 ## Next actions
 
-1. Prepare the authenticated API/WebUI freeze replacement for a separately
-   authorized rollout. Apply its additive audit migration before the new API,
-   then upgrade every API worker before relying on read-only admission; old
-   workers may still admit writes. The API is the sole supported mode-change
-   path, so an API outage leaves no supported toggle. Report DB drain
-   separately from physical readiness. The passing disposable VM test does
-   not authorize production switching or deployment.
-2. Keep production strict activation disabled while the remaining guarded
-   writer and node quiescence contracts are developed. The reviewed 5204
-   provenance slice has focused API and Node coverage. The 5215 contract
-   consumed a real API-staged command through strict Node dispatch against
-   disposable MariaDB with fake ZFS. Real ZFS has not been integration tested;
-   the earlier retired launcher's VM test was not a node-inclusive
-   repair-ready gate.
-   Do not infer safe correction from the time-separated inventory.
-3. Complete strict guarded writer coverage, including osctl wrappers and
-   `zfs recv -F`, before any verified-scope or deletion claim. Add approved
-   DB-only apply and verify through the same reconciler, then run the required
-   tests and review gates. Do not run production apply as part of
-   implementation.
-   The bounded test-only 5215 group-snapshot slice and its API-to-Node
-   disposable-DB contract have passed. Use that contract as a regression gate
-   while developing broader strict coverage. Host-ZFS behavior, physical
-   quiescence and mixed-version cutover remain unverified.
-4. Obtain explicit direction before merging either feature branch into its
-   named default branch; in particular the inventory branch remains outside
-   `vpsfree-maintenance-tasks` `master`. Keep this session active.
+1. Finish and verify the unsigned production 5204 observer correction. Rerun
+   representative snapshot integration on two Puma workers without a signing
+   unlock, then obtain independent review and update the configuration feature
+   pin to the accepted vpsAdmin head. Keep strict 5204 signed and test-only.
+2. Correct the 5291 bounded UNIX EOF case, rerun focused API/Node tests,
+   commit and review the signed advisory probe/report. Coordinate the reviewed
+   osctld provider revision with vpsAdmin's vpsAdminOS pin only after its
+   staging-base compatibility check. Old/mixed components must report unknown.
+3. Complete G1 child-process and all-queue coverage before any node-quiet or
+   physical repair-ready claim. Complete strict execute/rollback receipts for
+   remaining topology and dependency directions, including osctl and
+   `zfs recv -F`, before verified identities or scopes can be published.
+   The current 5215 contract uses fake ZFS and does not prove host behavior.
+4. Keep the reconciler advisory until one-engine frozen approval, bounded
+   DB-only apply, crash resume and final verification are implemented and
+   reviewed. Do not use the time-separated inventory as an apply gate.
+5. Before any shared-host switch, build all channel consumers and dry-activate
+   selected hosts, hold all writers, migrate the database first, then update
+   NodeCtld and both API workers before relying on the freeze. The completed
+   disposable G0 trial is partial and does not authorize production deployment.
+   Keep configuration on its feature branch and seek explicit integration
+   direction before merging affected feature branches to default branches.
 
 The task guide owns repeatable operator instructions. The source investigation
 and proposed future compatibility/deployment sequence remain in this session;
