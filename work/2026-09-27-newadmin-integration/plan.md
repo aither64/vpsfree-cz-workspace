@@ -16,10 +16,29 @@ we will also move the repo to vpsfreecz/ namespace on github, I haven't decided 
 
 ## Affected repositories
 
+Current implementation scope and operator decisions are in
+[implementation-plan.md](implementation-plan.md). The original review approach
+below remains the record of the initial assessment.
+
+The user selected `vpsfreecz/vpsadmin-webui`, one instance on VPS 30431,
+`172.16.9.170`, `vpsadmin-webui1.int.vpsfree.cz`, machine
+`cz.vpsfree/vpsadmin/int.vpsadmin-webui1`, public `newadmin.vpsfree.cz`.
+The user will deploy and will add the implementation team after planning.
+Keep the existing OpenStreetMap call; do not recover `UI_REDESIGN.md`.
+Use the replacement upstream design handbook. Add English/Czech localization
+review against vpsAdmin's guide and require it in the UI repository instructions.
+The guide and API compatibility reference will come from a locked `vpsadmin`
+flake input, overridden in site configuration to follow `vpsadminServices`
+from channel `vpsadmin`.
+
 - `Kerrycek/clankerdev`: primary review target; SSH clone and detached review
   snapshot at `fd290b5ec1b22900e704e8cb990c5ba050af2394`.
 - `vpsadmin`: read-only reference for API contracts and NixOS packaging.
 - `vpsfree-cz-configuration`: read-only reference for proxy, DNS and deployment.
+- `vpsadmin-webui`: canonical adoption repository; current upstream source
+  `49c6a51d0b32c4a6d5dd1df426e0bac1d8066115`, new origin still empty.
+- `aither64/vpsfree-cz-workspace`: small project-map addition on the session
+  feature branch, committed/pushed separately from shared tracking records.
 
 ## Approach
 
