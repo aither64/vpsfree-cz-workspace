@@ -6,6 +6,26 @@ lifecycle: active
 
 ## Current status
 
+2026-09-27 coordination-policy reconciliation: workspace `master`
+`74f830c7` and vpsfree-dev-workspace `master` `bd961682` already provide the
+updated architect design brief, lead progress and whole-branch review rules,
+and current team defaults. The installed mandatory-review skill is byte-for-byte
+the extension's current master version; the workspace package pins that master
+revision. This session's older instruction-only feature heads, workspace
+`3f539b0` and extension `dcb2762`, are superseded release candidates. Their
+clean worktrees and branch refs are retained for provenance; do not merge or
+repin them. No branch was deleted or rewritten.
+
+The verified session roster retains its saved settings and prompts:
+`architect0` is Astra/xhigh with workspace write access, `implementer0` is
+Sol/xhigh with workspace write access, and `reviewer0` is Sol/xhigh and
+read-only. The new defaults did not migrate those members. Future assignments
+must give the architect the design and verification brief explicitly and keep
+application edits with the implementer. This instruction reconciliation made
+no vpsAdmin, cluster or production change. The active storage phase remains
+G1a advisory diagnosis; maintenance exclusion and executable repair remain
+future work.
+
 2026-09-26 G1a checkpoint: the registered vpsAdmin feature branch is clean
 and published at reviewed `fa7cec3a89e433e91516a369f10b1b17b6eddfef`.
 Nine focused commits since `fe4f9b0f9` now bound current diagnosis capture,
