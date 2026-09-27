@@ -42,7 +42,9 @@ belongs in `state.md`.
 4. Set the new architect role (internally `designer`) to
    `gpt-6-astra/xhigh`, retaining the documented `high` simple-design option.
    Keep lead, implementer, reviewer, and Luna watcher defaults unchanged.
-   Update catalog assertions and preset description.
+   Keep the `lead_designed` preset key but give new instances an architect-led
+   topology; retain `solo` for discussion and investigation, not application
+   editing. Update catalog assertions and preset descriptions.
 
 ## Compatibility and deployment
 
