@@ -22,6 +22,10 @@ These repositories are in scope for this workspace:
   core runtime for vpsFree.cz nodes and many integration tests.
 - `vpsadmin`: Ruby/PHP control panel and API for managing VPSes on top of
   vpsAdminOS.
+- `vpsadmin-webui`: React/TypeScript web interface and OAuth session service
+  for vpsAdmin. Reusable UI packaging and NixOS modules belong here; site
+  deployment belongs in `vpsfree-cz-configuration`. Its canonical remote is
+  `git@github.com:vpsfreecz/vpsadmin-webui.git`.
 - `security-advisories`: evidence-backed vpsFree.cz platform security
   assessments, including vpsAdmin Node evidence collection, advisory
   evaluation, and preparation of unpublished vpsAdmin drafts.
