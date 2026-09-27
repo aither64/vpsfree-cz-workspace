@@ -137,6 +137,15 @@ and has not been merged into the main branch. Use this to keep functional
 commits, generated updates, and follow-up fixes reviewable. Do not rewrite
 history that has already been merged.
 
+Before final review of an unmerged branch, compare its complete base-to-head
+commit series and final diff with the intended result. Identify superseded
+approaches, follow-up fixes, unused compatibility paths, and every migration.
+Establish whether each migration version was merged, released, deployed, or
+externally consumed before rewriting it. Consolidate obsolete, unapplied branch
+history while preserving supported paths. Give this inventory to the dedicated
+independent reviewer for a whole-branch assessment. Earlier incremental
+reviews do not complete this gate.
+
 Before changing code in a repository, read its local `AGENTS.md` if present.
 When a repository has no `AGENTS.md`, infer commands and style from its
 existing files, history, and manifests.

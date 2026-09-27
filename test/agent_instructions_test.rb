@@ -47,4 +47,32 @@ class AgentInstructionsTest < Minitest::Test
     assert_match(/review-purpose role from the installed catalog's default development team/, verification)
     assert_match(/including for solo sessions/, verification)
   end
+
+  def test_team_ownership_and_progress_policy_is_routed_consistently
+    core = File.read(File.join(ROOT, 'AGENTS.md'))
+    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'))
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'))
+
+    assert_match(/architect records the design and verification brief/, core)
+    assert_match(/implementers edit application code/, core)
+    assert_match(/resolve that failure\s+rather than taking over delegated application work/, core)
+    assert_match(/At the end of every lead turn.*current\s+phase.*completed work.*remaining work.*next\s+action/m, core)
+    assert_match(/phase\s+checklist in `state\.md`/, sessions)
+    assert_match(/`solo` is for discussion\s+and read-only investigation/, teams)
+  end
+
+  def test_final_readiness_requires_complete_history_and_migration_lineage
+    core = File.read(File.join(ROOT, 'AGENTS.md'))
+    git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'))
+    verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'))
+
+    [core, git, verification].each do |text|
+      assert_match(/base-to-head/, text)
+      assert_match(/independent reviewer/, text)
+      assert_match(/migration/, text)
+    end
+    assert_match(/merged, released, deployed, or\s+externally consumed/, core)
+    assert_match(/Earlier incremental\s+reviews do not complete this gate/, git)
+    assert_match(/"no migrations"/, verification)
+  end
 end

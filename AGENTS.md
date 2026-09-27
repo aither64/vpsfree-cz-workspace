@@ -92,16 +92,18 @@ the parent's responsibility for choosing scope or accepting results.
   the bridge is unavailable, recording why. Stop unexpected local kernel builds
   and investigate under the verification procedure's documented exceptions.
 - For a direct team, use the session's retained roster settings for members
-  and the installed catalog for new presets. The vpsFree.cz policy selects
-  GPT-6 Sol for retained roles and GPT-6 Luna/low for verification watchers.
+  and the installed catalog for new presets. New architects use GPT-6 Astra
+  with xhigh effort; the lead, implementer, and reviewer use GPT-6 Sol, and
+  verification watchers use GPT-6 Luna/low. Existing members retain their
+  saved model, effort, access, and instructions.
   Substantive design uses xhigh. High is allowed for a bounded simple design or
   implementation unit only with a recorded reason. Independent review uses an
   eligible retained review-purpose member's saved model and effort, or a
   review-purpose role from the installed catalog's default development team in
   a fresh standalone thread.
-  Never select or fall back to Astra automatically. Sessions without a roster
-  retain ordinary supported Codex resolution for lead work; mandatory review
-  alone uses the installed catalog fallback. Do not invent a team or role
+  Do not use Astra as an automatic fallback for another role. Sessions without
+  a roster retain ordinary supported Codex resolution for lead work; mandatory
+  review alone uses the installed catalog fallback. Do not invent a team or role
   lineup. Long or uncertain-duration builds, tests, workflows, CI and deployment
   waits must be launched and monitored by a fresh Luna/low utility subagent
   through `~/.codex/skills/dev-session-monitor/SKILL.md`. The watcher is not a
@@ -111,20 +113,51 @@ the parent's responsibility for choosing scope or accepting results.
   `dev-session team list <verified-slug> --as-is` at the start of each new
   substantive work item. Give a ready member whose saved purpose is `design`
   nontrivial design work and a ready member whose purpose is `implementation`
-  separable implementation work, with a concrete deliverable. The installed
+  application edits, with a concrete deliverable. Check saved access before
+  assigning edits. If access or session identity fails, resolve that failure
+  rather than taking over delegated application work. The installed
   catalog can define custom role names; use the retained member addresses and
   purposes rather than assuming `architectN` or `implementerN`; those names
   identify design and implementation only in legacy rosters without a purpose.
-  Briefly tell the user who owns what and integrate their reports. Keep short
-  or dependent steps yourself. Use the mandatory-review workflow for review
-  and the separate Luna watcher for long verification. Respect user directions
-  and the current collaboration mode; never invent members or address another
+  Briefly tell the user who owns what and integrate their reports. Keep
+  coordination records and short dependent coordination steps yourself;
+  assign bounded application edits to an implementer. Use the mandatory-review
+  workflow for review and the separate Luna watcher for long verification.
+  Respect user directions and the current collaboration mode; never invent
+  members or address another
   session's roster. [Site team roles](docs/agent-teams.md) shows a custom role.
+- The architect records the design and verification brief in
+  `work/<slug>/design.md` before substantive implementation. It covers scope,
+  interfaces, invariants, compatibility, deployment and recovery, acceptance
+  criteria, and quick and longer checks. Architects may edit assigned design
+  documents and prototypes; implementers edit application code. Route material
+  design deviations through the lead. A small bounded edit may go straight to
+  an implementer without a separate design document. A solo session is for
+  discussion and read-only investigation; set up an appropriate team before
+  substantive development.
 - Use the dev-session-documentation skill for substantive work, and the
   dev-session-handoff skill after material changes/review/status requests. Keep
   tracking and the portal manifest current and include the stable session URL.
   Apply vpsfree-user-facing-writing directly to user-facing prose after technical
   facts are settled and before committing; preserve its main-agent ownership.
+
+## Lead progress and branch readiness
+
+At the end of every lead turn, give a compact checklist stating the current
+phase, completed work, remaining work, blockers or material risks, and next
+action. Report material milestones during long turns. Distinguish implementation,
+local checks, independent review, deployment, and readiness for use. Update the
+durable phase checklist in `state.md` when a phase changes, under the normal
+tracking-commit cadence. Integrate member reports into the lead's account.
+
+Before calling an unmerged feature branch ready, inventory its complete
+base-to-head commit series and final diff. Identify superseded approaches,
+follow-up fixes, unused compatibility paths, and migrations. Establish whether
+each migration version was merged, released, deployed, or externally consumed.
+Consolidate obsolete, unapplied branch history while preserving supported
+paths. Give the inventory to the dedicated independent reviewer for an explicit
+whole-branch history and migration conclusion under the mandatory-change-review
+workflow. Earlier incremental reviews do not complete this gate.
 
 ## Compatibility And Deployment
 

@@ -53,6 +53,12 @@ available in the current shell, run it through Nix, for example
 and resolve failures instead of leaving CI for the user to chase.
 Successful checks, review, and CI are verification evidence, not permission to
 merge or push feature content to a default branch; follow the Git approval gate.
+Before calling an unmerged feature branch ready, give the independent reviewer
+its complete cleaned base-to-head commit series, final diff, and migration
+provenance under the mandatory-change-review workflow. Require explicit
+conclusions on obsolete history and migration lineage, including "no migrations"
+when applicable.
+Record findings and remaining deployment limits in the initiative state.
 
 After a force-push or a follow-up fix push, cancel superseded queued or
 in-progress GitHub Actions workflow runs for the same branch. Only cancel runs
