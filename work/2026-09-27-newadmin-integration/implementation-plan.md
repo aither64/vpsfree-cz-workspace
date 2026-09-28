@@ -1,10 +1,11 @@
 # vpsAdmin WebUI implementation and NixOS integration plan
 
 Prepared 27 September 2026. Status: active implementation brief for the retained
-team. The WebUI source baseline, verification repairs and BFF bootstrap are
-committed; NixOS packaging and site configuration remain to be implemented.
-The user will deploy. Build verification is authorized; host activation is not
-part of the agents' deliverable.
+team. The WebUI, NixOS packages/module and site configuration are committed on
+feature branches. Controlled browser verification, packaged browser smoke and
+final exact-head builds remain. The user will deploy. Build verification is
+authorized; host activation is not part of the agents' deliverable.
+See [current session status](state.md) for exact revisions and verification.
 
 ## Decisions and fixed deployment identity
 

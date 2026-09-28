@@ -1,9 +1,10 @@
 # Operator deployment runbook: newadmin.vpsfree.cz
 
-Status: proposed runbook for the implementation plan. The user performs all
-production actions. No new service, NixOS module or site configuration has been
-deployed. Reconcile unit/option names with the completed implementation and
-attach its exact source and configuration revisions before using these steps.
+Status: the WebUI module and site configuration are prepared on their feature
+branches, with build evidence recorded in `state.md`. Nothing has been deployed.
+The user performs the production actions. Before using these steps, record the
+reviewed WebUI and configuration revisions and verify the remaining operator
+prerequisites.
 
 ## Target and responsibilities
 
@@ -13,6 +14,7 @@ attach its exact source and configuration revisions before using these steps.
 - Public origin: `https://newadmin.vpsfree.cz`.
 - Edge: `cz.vpsfree/containers/prg/proxy`, private IPv4 `172.16.9.140`.
 - Expected service: `vpsadmin-webui-bff.service`, one process on loopback 3001.
+- Fixed state root: `/var/lib/vpsadmin-webui`; account/group `vpsadmin-webui-bff`.
 - Sessions: `/var/lib/vpsadmin-webui/sessions`, private and persistent.
 
 Agents prepare code, review, builds and isolated tests. The operator supplies
@@ -35,10 +37,10 @@ SESSION_SECRET=REPLACE_WITH_A_SEPARATE_RANDOM_SECRET
 | Value | Where it comes from | Persistence/rotation |
 | --- | --- | --- |
 | `OAUTH_CLIENT_ID` | Dedicated vpsAdmin OAuth client for newadmin | Public identifier; must match the registration |
-| `OAUTH_CLIENT_SECRET` | Secret supplied when creating that client; at least 32 UTF-8 bytes with varied characters for W3a production startup | Update registration and service together; keep outside Git/Nix store |
+| `OAUTH_CLIENT_SECRET` | Secret supplied when creating that client; at least 32 UTF-8 bytes with varied characters for production startup | Update registration and service together; keep outside Git/Nix store |
 | `SESSION_SECRET` | Independent cryptographically random secret, e.g. 48 random bytes encoded as hex | Keep stable across redeployments; changing it invalidates signed browser sessions |
 
-Both secret values must satisfy W3a's production strength check: at least 32
+Both secret values must satisfy the BFF's production strength check: at least 32
 UTF-8 bytes, varied characters and no placeholder prefix. A short or placeholder
 value prevents the service from listening. Check the OAuth client's generated
 secret meets this contract before registering it; generate a suitable one
@@ -48,17 +50,27 @@ Use systemd environment-file syntax, not shell code: no `export`, command
 substitution or shell expansion. Using generated hex values for secrets avoids
 quoting ambiguity. Replace placeholders before starting the service.
 
-An operator can prepare the initial file locally on the VPS without displaying
-the session secret. Run once as root; it refuses to overwrite an existing file:
+Before using the example, inspect `/private` and its parent path to confirm the
+intended root-owned directory and mount, with no symlink or unexpected writable
+parent. An operator can then prepare the initial file locally on the VPS
+without displaying the session secret. Run once as root; it refuses to use an
+unsafe `/private` directory or overwrite an existing file:
 
 ```sh
 python3 - <<'PY'
 import os
 import secrets
+import stat
 from pathlib import Path
 
 directory = Path('/private')
-directory.mkdir(mode=0o700, exist_ok=True)
+try:
+    directory.mkdir(mode=0o700)
+except FileExistsError:
+    pass
+metadata = directory.lstat()
+if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != 0 or metadata.st_mode & 0o022:
+    raise SystemExit('Refusing unsafe /private directory')
 path = directory / 'vpsadmin-webui.env'
 fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
 os.fchown(fd, 0, 0)
@@ -71,7 +83,10 @@ PY
 
 Use an available Python interpreter or the site's approved secret-generation
 tool, then fill in the client values through a private editor/secret workflow.
-Verify ownership/mode and placeholder removal without printing file contents.
+Verify `/private` itself remains private under the site's directory policy,
+and that the environment file is owned by `root:root` with mode 0600. The
+example leaves an existing directory's mode unchanged. Check placeholder
+removal without printing file contents.
 Never paste the values into this session, a commit, a build command argument or
 a deployment log. Back up the file through the normal private-secret process.
 
@@ -104,12 +119,12 @@ back. Do not rely on retrieving it after creation. Confirm password-recovery and
 SSO options exist on the deployed revision before registration. Existing source
 configuration alone is not proof of deployment/schema state.
 
-Public service settings belong in the Nix configuration. Proposed values:
+The module derives these public service settings from the site configuration:
 
 ```ini
 BFF_RUNTIME_MODE=production
+NODE_ENV=production
 PUBLIC_ORIGIN=https://newadmin.vpsfree.cz
-DOMAIN=newadmin.vpsfree.cz
 API_URL=https://api.vpsfree.cz
 API_VERSION=7.0
 OAUTH_AUTHORIZE_URL=https://auth.vpsfree.cz/_auth/oauth2/authorize
@@ -127,17 +142,21 @@ SESSION_COOKIE_NAME=vpsadmin_webui_session
 PORT=3001
 ```
 
-The NixOS module must set `BFF_RUNTIME_MODE=production` and the explicit
-`PUBLIC_ORIGIN` in the service environment. W3a's production BFF validates all
+The NixOS module sets `BFF_RUNTIME_MODE=production` and the explicit
+`PUBLIC_ORIGIN` in the service environment. The production BFF validates all
 listed public settings, the exact callback origin/path, the three matching
 OAuth-provider origins, bounded numeric settings, both strong secrets and the
 writable session directory before opening its listener. It does not fill in
-missing production settings from legacy defaults. The module must create and
-grant access to the persistent session directory before service startup; the
+missing production settings from legacy defaults. The module creates the
+persistent session directory and grants access before service startup; the
 operator's environment file supplies only the three secret-bearing values
-shown above. The optional `DOMAIN`, when set, must equal the public origin's
-host. `BFF_RUNTIME_MODE=legacy-test` is only for isolated fixtures and cannot
-run with `NODE_ENV=production`.
+shown above. Do not add `SESSION_STORE_PATH` or other public settings to that
+file: systemd environment-file assignments override the module's environment.
+The state root and session path are fixed by the module; the site must not set
+`services.vpsadmin-webui.stateDirectory`, including an explicit old default.
+The module does not set the optional `DOMAIN`; if supplied elsewhere, it must
+equal the public origin's host. `BFF_RUNTIME_MODE=legacy-test` is only for
+isolated fixtures and cannot run with `NODE_ENV=production`.
 
 The password-recovery path intentionally has no `/_auth` prefix; the inspected
 auth frontend routes it separately. The BFF appends its client ID. Verify all
@@ -146,22 +165,73 @@ Keep passkeys at the authentication origin; do not change the WebAuthn relying
 party merely because the UI uses a new hostname. Expose the legacy UI URL through
 the new module/runtime option for remaining legacy links and heatmaps.
 
+## Host baseline before activation
+
+The user identifies VPS 30431 as a fresh NixOS container on vpsAdminOS and
+selects 26.05. The host configuration uses `system.stateVersion = "26.05"`, the
+existing `environments/base.nix` and `profiles/ct.nix` imports, and channels
+`nixos-stable`, `os-staging`, `vpsadmin-webui`. The channel selects current
+software; `stateVersion` preserves compatibility with state from the original
+installation and must not advance with later channel updates. The older service
+hosts' `22.05` values are not this fresh host's baseline.
+
+The site feature head `6586b383` sets that value and omits the
+obsolete `services.vpsadmin-webui.stateDirectory` option. Keep the module's
+fixed state/session paths, account and secret handling. Base/container/shared
+modules already supply the established container policy, DNS/SSH and
+monitoring/logging; do not copy extra boot/network settings or the blog host's
+monitoring exceptions. Use the existing registered site and WebUI checkouts
+with clean exact heads. The new host derivation evaluates for `x86_64-linux`;
+installed-machine verification below is an activation prerequisite, and
+the channel lock pins the published WebUI commit `aff1e4b0`. The final
+seven-machine build passed at site head `6586b383`. The rendered backend and
+edge nginx configurations were checked. This build has not been activated.
+
 ## Preflight before any activation
 
 1. Obtain the reviewed UI/configuration revisions, successful build results,
-   full release limitations and the final version of this runbook. Pin the exact
-   source using the configuration channel; do not deploy floating checkout files.
-2. Verify VPS identity/address, SSH access and host key. Inspect installed NixOS
-   architecture, container networking/boot requirements and `system.stateVersion`.
-   Preserve the host's existing network configuration where required.
-3. Confirm connectivity from `proxy.prg` to 172.16.9.170 and from the UI VPS to
+   full release limitations and the final version of this runbook. Confirm the
+   published WebUI feature ref still contains `aff1e4b0` and that the site's
+   `vpsadmin-webui` channel lock selects its full SHA. Verify that the frontend,
+   BFF and module resolve to that one revision. For a later WebUI revision, use
+   `confctl inputs channel set --commit vpsadmin-webui vpsadmin-webui
+   FULL_COMMIT` in the configuration feature checkout's `nix develop` shell,
+   then inspect the generated lock diff and rebuild. Do not deploy floating
+   checkout files or a local Nix input override. Integrating a default branch
+   remains a separate decision from this rollout.
+2. Verify VPS identity/address, SSH access and host key. Confirm the installed
+   architecture matches the build target and inspect provisioned container
+   interfaces/routes and boot configuration. Confirm the actual first-install
+   `system.stateVersion` from the original provisioning/configuration record
+   against the candidate's `26.05`; the current channel or `nixos-version` alone
+   is insufficient. If it differs, stop activation, reconcile the configuration
+   with that original baseline and rebuild. Preserve any required existing
+   network configuration; do not invent interface or gateway values.
+3. **Before first activation or any BFF start**, inspect the reserved
+   `/var/lib/vpsadmin-webui` path and its `sessions/` child using filesystem
+   metadata, without printing session contents. Confirm they are absent
+   (including no dangling symlink), or are documented state from this BFF,
+   owned by `vpsadmin-webui-bff:vpsadmin-webui-bff` with directory mode 0700.
+   Inspect path components and resolved mount/source identity, including bind
+   mounts and symlinks; neither reserved directory may be a symlink or alias
+   legacy PHP state (`/var/lib/vpsadmin/webui`) or unrelated data. Metadata tools
+   such as `namei -l`, `stat` and `findmnt -T` help establish this; for an absent
+   path, inspect its nearest existing parent and the configured mounts.
+   Stop on foreign ownership, unexpected contents/provenance, an alias or an
+   unexplained mount. Resolve the collision explicitly before activation;
+   do not delete, move or recursively chown the tree as an automatic repair.
+   Systemd can change ownership during `StateDirectory` setup, before
+   `ExecStartPre` or BFF validation, so a successful application check cannot
+   replace this prerequisite. Let the module create new private state after
+   the check; preserve any confirmed existing BFF sessions and signing secret.
+4. Confirm connectivity from `proxy.prg` to 172.16.9.170 and from the UI VPS to
    API/auth/DNS. The backend HTTP listener is private; do not expose the BFF port.
-4. Install the environment file and OAuth registration. Check that no placeholder
+5. Install the environment file and OAuth registration. Check that no placeholder
    remains and that the configured secret path matches the deployed service.
-5. Save the existing system generation IDs for each affected host and retain
+6. Save the existing system generation IDs for each affected host and retain
    their closures. The first UI deployment has no earlier UI release to restore;
    its rollback is disabling the new service/vhost while keeping legacy access.
-6. Preview changes with scoped `confctl deploy MACHINE dry-activate`. This is an
+7. Preview changes with scoped `confctl deploy MACHINE dry-activate`. This is an
    operator action on real machines, even though it does not activate the result.
    Inspect service restarts/reloads and stop if unrelated changes appear.
 
@@ -171,9 +241,10 @@ Run confctl commands from the reviewed `vpsfree-cz-configuration` feature worktr
 inside `nix develop`. Source integration into master is a separate decision.
 
 1. **UI VPS:** activate `cz.vpsfree/vpsadmin/int.vpsadmin-webui1` using
-   `confctl deploy cz.vpsfree/vpsadmin/int.vpsadmin-webui1`. Verify nginx and BFF
-   locally, anonymous session behavior and restricted backend access. Exercise
-   the approved proxy-header contract from the edge before opening the hostname.
+   `confctl deploy cz.vpsfree/vpsadmin/int.vpsadmin-webui1 switch`. Verify nginx
+   and BFF locally, anonymous session behavior and restricted backend access.
+   Exercise the approved proxy-header contract from the edge before opening
+   the hostname.
 2. **DNS:** deploy the public primary `cz.vpsfree/containers/ns1`. Deploy the
    internal zone consumers `cz.vpsfree/containers/prg/int.ns1`,
    `cz.vpsfree/containers/brq/int.ns1`, `cz.vpsfree/containers/prg/int.mon1` and
@@ -188,10 +259,10 @@ inside `nix develop`. Source integration into master is a separate decision.
 4. **Acceptance:** verify the public URL and complete the checks below. Confirm
    monitoring is green after all components are live.
 
-Apply `confctl deploy <exact-machine>` to each named host; avoid wildcard deploys.
+Apply `confctl deploy <exact-machine> switch` to each named host; avoid wildcard deploys.
 The secondaries need propagation checks, not necessarily fresh configurations for
 this zone-only change. Re-evaluate the list if the final implementation changes
-other hosts. No provisioning, deploy or live-login command was run during planning.
+other hosts. This session has not deployed any system or run a live login.
 
 ## Post-deployment checks
 
@@ -227,8 +298,15 @@ limits in a deployment receipt. Do not include cookies, tokens or user data.
 For a bad UI release, restore the previously recorded UI/BFF and system
 configuration generation through the site's normal confctl generation workflow.
 Use the exact recorded generation rather than an assumed previous number. Keep
-the environment file and compatible session directory. Validate the service
-after restoration and retain old hashed assets for already-open tabs.
+the environment file, stable signing secret and compatible session directory
+with its dedicated owner. Fixing the state path does not change the cookie,
+session format or default storage location, and needs no session migration or
+reauthentication. An installation using a former custom path requires its own
+explicit migration plan; do not silently select, copy or recreate its sessions.
+Validate the service after restoration. Test an already-open tab against the
+restored immutable asset package; if a chunk is unavailable, reload after
+preserving any unsaved work. Do not assume assets from another generation remain
+available.
 
 If the state format/signing contract changed, follow that release's explicit
 recovery instructions. Do not overwrite current sessions with a stale snapshot

@@ -6,6 +6,62 @@ The chained mobile stage did not run. This inventory records failures, not 29
 independently confirmed application bugs. See [verification](verification.md)
 for investigation and focused follow-up results.
 
+## Controlled branch run before fixture reconciliation
+
+At clean WebUI revision `ee04abc3266835347f086a4523dbfc9cca1366dc`,
+the pinned Chromium 149.0.7827.55 headless shell ran the PR suites with two
+workers and no retries. Desktop finished in 22.4 minutes with 372 passed and
+six failed; mobile finished in 18.5 minutes with 300 passed and three failed.
+Five representative failures from the initial inventory passed in a separate
+one-worker run. These results do not by themselves prove that every initial
+failure was resolved, since the suites now run under a different worker limit
+and revision.
+
+The six distinct remaining failures were reproduced together on desktop with
+one worker and no retries. Three also failed on mobile:
+
+| Failing fixture | Desktop | Mobile | Contract observed in the current source |
+| --- | --- | --- | --- |
+| `admin/host_ip_addresses_responsive_actions.spec.ts` | yes | yes | PTR action fetches the exact `/host_ip_addresses/501` detail before opening; fixture only mocked the list. |
+| `admin/ip_addresses_filters_pagination.spec.ts`, exact-login and unknown-login cases | yes (2) | yes (2) | The page removes legacy `page`/`from_id` URL parameters and keeps pagination local; fixtures expected `page=1`. |
+| `app/vps_lifecycle_tab_actions.spec.ts`, forced stop | yes | no | A newly tracked forced stop is labeled `Poweroff`; fixture expected `Stop`. |
+| `app/vps_power_stop_confirm.spec.ts`, forced stop and immediate-rejection cases | yes (2) | no | Newly tracked forced stops are labeled `Poweroff`; fixtures expected `Stop`. Historical records without force remain neutral `Stop`. |
+
+The owning unpublished host/IP and VPS power commits were corrected in
+the canonical WebUI checkout. Product behavior, retry policy, timeout and
+assertion strength remained unchanged. Full logs and Playwright traces are retained under
+`/tmp/newadmin-webui-browser-desktop-pr-gate/`,
+`/tmp/newadmin-webui-browser-mobile-pr-gate/` and
+`/tmp/newadmin-webui-browser-six-repro-gate/` in this session environment.
+
+At rewritten head `fa35d797095881a016462b0aab22fbfe927e4727`, focused
+one-worker/no-retry runs passed five of six desktop cases and two of three
+mobile cases. Both remaining failures are the same exact-login test: its API
+request assertion expects `limit=25`, while the application correctly requests
+250 for the bounded ascending-ID inventory and uses URL `limit=25` only for
+local display pagination. The same fixture later expects API limit 50. The
+untagged first test in that file still models descending keyset pagination and
+expects no ascending order, although the current admin page uses ascending
+inventory plus local pages. The owning test needed those assertions and mock
+data reconciled with the supported behavior before the full-suite rerun.
+Evidence is under `/tmp/newadmin-webui-browser-rewrite-focused-gate/`.
+
+The correction was folded into the unpublished host/IP and E2E coverage
+introducing commits at clean head `0d9d5791a07d8a02d905ce34f12666b847818492`.
+The IP spec now checks a 250+25 ascending API traversal, local pagination and
+exact filtering; its API-limit assertions use 250 while its URL display limit
+remains 25. The locked quick gate and targeted independent review passed.
+Focused desktop tests passed 2/2 and the mobile case passed 1/1 without retries
+(`/tmp/newadmin-webui-ip-fixture-focused-browser/`). The complete two-worker
+desktop and mobile PR selections then passed on this same clean head: desktop
+378/378 in 21.7 minutes and mobile 303/303 in 18.3 minutes, with no retries.
+The saved HTML reports and logs are under
+`/tmp/newadmin-webui-browser-final-pr-gate/`. Matching the original 29
+failure headings by exact test file and title against the saved desktop report
+found 29 expected outcomes, so this fixture-failure
+inventory is closed. This browser suite uses mocked API fixtures and does not
+establish packaged HTTPS/BFF browser behavior or live API compatibility.
+
 ## 1. e2e/specs/admin/cluster_dns_resolvers_smoke.spec.ts:36:3 › @smoke @pr-smoke @pr-smoke-mobile Admin cluster DNS resolvers › lists with the real API contract and removes stale unsupported filters
 
 expect(locator).toBeVisible() failed
