@@ -6,7 +6,10 @@ lifecycle: active
 
 ## Status
 
-- Phase: corrected recovery candidate built and verified; authorized journal replay is next. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final-review gates.
+- Phase: bounded partial-team recovery correction designed; implementation and review are next. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final-review gates.
+- The corrected live replay proved the September 26 journal is a legitimate partial team archive: the retained root and architect are archived, while the implementer and reviewer remain active materialized rollouts with unchanged retained identities. The September 27 root and all three members are archived, but its roster still records the members as ready.
+- Read-only SQLite rows and pinned Codex 0.155.0 source establish filesystem-consistent archive state; no Codex storage patch or version change is needed. The old package moved threads successfully but its incomplete listing proof could fail before roster bookkeeping, and later retries then treated already-archived members as active.
+- The existing recovery adapter is correctly journal- and generation-bound but prematurely requires every member to be archived before the selected predecessor can run. The architect amended `design.md` to add a retained-only, exact, idempotent team completion step inside that adapter, followed by the existing all-archived proof and predecessor replay. It forbids replacement, fresh bootstrap, unarchive, interruption, manual database/filesystem edits, profile selection, and mutation outside the owning journal.
 - The first authorized packaged recovery attempt failed safely before proof or mutation because the adapter classified the sessions' normal retained `creation.json` records in `state: ready` as conflicting operations. The selected profile and both archive/creation journals remained unchanged.
 - Dev-workspace correction `e58f8f61ce43058aba49361a0b3bd1ecd98af866` now accepts an absent legacy creation record or validates a present private bounded record through the existing schema reader, requires `ready`, and binds its goal digest to archived tracking before proof/executor work. Focused checks pass with 10 runs and 170 assertions plus Ruby syntax and whitespace checks.
 - Mandatory incremental review classified the correction High risk and covered all four lanes with retained `reviewer0` on saved `gpt-6-sol`/xhigh. It found no Blocking, Important, or Advisory issue, no migration, and no superseded committed recovery approach.
@@ -35,12 +38,15 @@ lifecycle: active
 - [x] Implementation and focused local checks.
 - [x] Independent review and long verification/CI.
 - [x] Archive-proof recovery fix, quick checks, and independent review.
+- [x] Exact partial-journal diagnosis and retained-only recovery design.
+- [ ] Retained-only recovery implementation, quick checks, and independent review.
 - [ ] Live user-profile deployment and acceptance.
 - [ ] Final whole-history readiness review and authorized default-branch integration.
 
 ## Next actions
 
-- Use the rooted candidate's supported adapter to resume the two user-authorized journals, one at a time, preserving the selected profile and recorded complete mode.
+- Implement and review the adapter's retained-only team completion step, rebuild the exact consuming candidate, and preserve the selected predecessor throughout verification.
+- Use the corrected candidate's supported adapter to resume the two user-authorized journals, one at a time, preserving the selected profile and recorded complete mode.
 - Retry the reviewed user-profile switch, then execute live latency, scan-contention, and metadata-rebuild acceptance.
 - Perform the final complete-history and migration-readiness review after the whole pin chain and live evidence are complete, then integrate the authorized feature heads into their default branches in dependency order.
 
