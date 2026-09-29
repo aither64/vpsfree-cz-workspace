@@ -1,6 +1,6 @@
 # Aitherdev portal rollout
 
-Status: reviewed recovery candidate built and rooted; two authorized paused
+Status: corrected and reviewed recovery candidate built and rooted; two authorized paused
 archive journals must complete before the user-profile switch. The site application is selected from the user
 profile, not from `vpsfree-cz-configuration` system pins. No NixOS, nginx or
 `confctl` change is part of this rollout.
@@ -46,7 +46,7 @@ markers or truncate state by hand.
 ## Execution record
 
 - Pre-switch package: `/nix/store/zpfyl4kkdmv6c7r8a0r6rl1s4wpikkla-dev-workspace-0.2.0`.
-- Exact feature chain: `codex-web` `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`, `dev-workspace` `fbd7a9e390b563f83d1787e2cddbd516eefeb558`, `vpsfree-dev-workspace` `02e88f5b3bce74354d885033b30224df2ba3448f`, workspace `7a6289a683720a266b7c2a919589d0e8319548ac`.
+- Exact feature chain: `codex-web` `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`, `dev-workspace` `e58f8f61ce43058aba49361a0b3bd1ecd98af866`, `vpsfree-dev-workspace` `9c9833579e148e108b5811d618c81ec497b809bf`, workspace `50c3dcf74f7eb816671caf4efd365f9c466e387a`.
 - The generic runtime package build passed in 3m14s. Codex-web, generic runtime, and vpsFree extension CI passed for their exact feature heads.
 - The complete consuming workspace package build passed at `238ee9a684579e732fd3bab3c37409c892a05ebe` in approximately 176 seconds.
 - `workspace-host status` confirmed the old package is active and the portal, App Server, router, and tmux services are running. No unfinished package-transition artifact was found before the switch.
@@ -54,4 +54,4 @@ markers or truncate state by hand.
 - The corrected switch verified clean source head `238ee9a684579e732fd3bab3c37409c892a05ebe`, then failed closed before activation because archive journals for `2026-09-26-codex-queue-ledger-capacity` and `2026-09-27-architect-lead-policy` remain paused at `tracking_committed`.
 - Both affected records are already under `archive/` with `lifecycle: complete`; the remaining journal work is runtime retirement. The latest scheduled worker retry deferred the first because a team member thread is already archived and the second because multiple threads share its archived tracking cwd.
 - The old package remains active. Manual repair/resumption touches other sessions and requires explicit user direction; do not bypass the lifecycle gate.
-- The user explicitly authorized recovery of both named journals. The rebuilt consuming package passed at `7a6289a683720a266b7c2a919589d0e8319548ac`; `candidate-workspace-package` resolves to `/nix/store/q7p3cli02ry7a6ybfknbk80nddbb1w78-dev-workspace-0.2.0`, and its runtime contract matches the selected predecessor byte-for-byte. The new dev-workspace and vpsFree extension CI runs passed at their exact heads.
+- The user explicitly authorized recovery of both named journals. The corrected consuming package passed at `50c3dcf74f7eb816671caf4efd365f9c466e387a`; `candidate-workspace-package` resolves to `/nix/store/yhnzp6nmq4ngmlvh0wxxhzkbpzda4c0y-dev-workspace-0.2.0`, and its runtime contract matches the selected predecessor byte-for-byte. Dev-workspace Actions run `36641815619` and vpsFree extension run `36641987050` passed at their exact corrected heads.

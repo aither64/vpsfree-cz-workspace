@@ -6,10 +6,13 @@ lifecycle: active
 
 ## Status
 
-- Phase: reviewed ready-creation recovery correction pending downstream repins and candidate rebuild. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final-review gates.
+- Phase: corrected recovery candidate built and verified; authorized journal replay is next. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final-review gates.
 - The first authorized packaged recovery attempt failed safely before proof or mutation because the adapter classified the sessions' normal retained `creation.json` records in `state: ready` as conflicting operations. The selected profile and both archive/creation journals remained unchanged.
 - Dev-workspace correction `e58f8f61ce43058aba49361a0b3bd1ecd98af866` now accepts an absent legacy creation record or validates a present private bounded record through the existing schema reader, requires `ready`, and binds its goal digest to archived tracking before proof/executor work. Focused checks pass with 10 runs and 170 assertions plus Ruby syntax and whitespace checks.
-- Mandatory incremental review classified the correction High risk and covered all four lanes with retained `reviewer0` on saved `gpt-6-sol`/xhigh. It found no Blocking, Important, or Advisory issue, no migration, and no superseded committed recovery approach. Downstream pins and the rooted package still point to the pre-correction recovery head until the next mechanical repin/build step.
+- Mandatory incremental review classified the correction High risk and covered all four lanes with retained `reviewer0` on saved `gpt-6-sol`/xhigh. It found no Blocking, Important, or Advisory issue, no migration, and no superseded committed recovery approach.
+- The corrected exact chain is now pushed: dev-workspace `e58f8f61ce43058aba49361a0b3bd1ecd98af866`, vpsFree extension `9c9833579e148e108b5811d618c81ec497b809bf`, and workspace `50c3dcf74f7eb816671caf4efd365f9c466e387a`. Dev-workspace Actions run `36641815619` and extension run `36641987050` passed.
+- The exact workspace package rebuilt successfully at `/nix/store/yhnzp6nmq4ngmlvh0wxxhzkbpzda4c0y-dev-workspace-0.2.0`; `candidate-workspace-package` resolves there. Its runtime contract is byte-identical to the selected predecessor `/nix/store/zpfyl4kkdmv6c7r8a0r6rl1s4wpikkla-dev-workspace-0.2.0`.
+- Read-only replay preflight confirms both authorized archive journals remain `tracking_committed/complete`; their schema-1 creation records are `ready`, private mode 0600, goal-bound to archived tracking, and root-thread-bound. The selected profile remains the predecessor and the auto-archive service is inactive.
 - The archive blocker is isolated and the recovery amendment is committed at dev-workspace `fbd7a9e390b563f83d1787e2cddbd516eefeb558`: Codex 0.155.0 `thread/list` omits some archived team-member threads, so the package now uses exact `thread/read` metadata and bounded rollout-header proof plus a narrow packaged `recover-archive` adapter. The high-risk four-lane review found one Blocking and two Important issues; all three were corrected and their focused host tests pass. No live journal mutation is in progress.
 - Current selected package pins `codex-web` e92dd887c888 and `dev-workspace` 3b570f0a8b75; App Server is 0.155.0.
 - Pre-rollout `workspace-host status` package: `/nix/store/zpfyl4kkdmv6c7r8a0r6rl1s4wpikkla-dev-workspace-0.2.0`; retain its revision as recovery evidence. Earlier-profile `workspace-host rollback` is intentionally refused for team compatibility; recovery needs a newer forward-compatible package.
@@ -48,9 +51,9 @@ lifecycle: active
 ## Repositories
 
 - `codex-web`: `worktrees/2026-09-29-portal-performance/codex-web`, branch `2026-09-29-portal-performance`, base `e92dd88`, pushed feature head `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`.
-- `dev-workspace`: `worktrees/2026-09-29-portal-performance/dev-workspace`, same branch, base `3b570f0`, committed local head `fbd7a9e390b563f83d1787e2cddbd516eefeb558` with the exact `d210d3f7` pin, archive-proof recovery amendment, final vendor hash, and exact parsed pin-selection guard.
-- `vpsfree-dev-workspace`: `worktrees/2026-09-29-portal-performance/vpsfree-dev-workspace`, same branch, base `bd96168`, pushed dependency-only pin head `02e88f5b3bce74354d885033b30224df2ba3448f`.
-- Workspace: `worktrees/2026-09-29-portal-performance/workspace`, same branch, base `979ef666`, pushed dependency-only pin head `7a6289a683720a266b7c2a919589d0e8319548ac`.
+- `dev-workspace`: `worktrees/2026-09-29-portal-performance/dev-workspace`, same branch, base `3b570f0`, pushed reviewed head `e58f8f61ce43058aba49361a0b3bd1ecd98af866` with the exact `d210d3f7` pin and corrected archive recovery adapter.
+- `vpsfree-dev-workspace`: `worktrees/2026-09-29-portal-performance/vpsfree-dev-workspace`, same branch, base `bd96168`, pushed dependency-only pin head `9c9833579e148e108b5811d618c81ec497b809bf`.
+- Workspace: `worktrees/2026-09-29-portal-performance/workspace`, same branch, base `979ef666`, pushed dependency-only pin head `50c3dcf74f7eb816671caf4efd365f9c466e387a`.
 
 ## Commands run
 
