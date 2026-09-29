@@ -6,7 +6,7 @@ lifecycle: active
 
 ## Status
 
-- Phase: the OAuth session identity change is implemented, reviewed, built and published on both development branches. WebUI `534caa83` passes pinned BFF/quick gates, packages, HTTPS VM and GitHub CI. Configuration `a4336908` pins it and passes build-free evaluation, independent review and the exact UI-host build. Ready for the user's controlled deployment and fresh-login acceptance; default-branch integration still awaits explicit approval. The live frontend previously reported WebUI `b86e202d`; the exact active site generation has not been independently established. Earlier optional packaged-browser VM aborts remain a coverage gap, not a proven product defect.
+- Phase: the user reports the OAuth session identity follow-up deployed and working. Read-only public requests on 2026-09-29 returned WebUI `534caa83` from `build-info.json` and HTTP 200 `ok` from `/healthz`; the static CSP contains the expected console and heatmap frame origins. On 2026-09-29 the user explicitly directed integration of the WebUI and configuration feature branches. `vpsadmin-webui/main` now equals reviewed head `534caa83`; all three default-branch CI/smoke workflows pass. `vpsfree-cz-configuration/master` now equals reviewed head `6c827ca2`; its exact-head no-build check and UI-host build pass. Feature refs are retained. The agent has not independently inspected an authenticated vpsAdmin session row or the exact running site generation; live behavior is operator-reported. Earlier optional packaged-browser VM aborts remain a coverage gap, not a proven product defect.
 - Identity verified with `dev-session current` and both environment markers.
 - Retained roster: `architect0` (design), `implementer0` (implementation),
   `reviewer0` (independent review). The one active WebUI checkout is
@@ -15,9 +15,10 @@ lifecycle: active
   package, module, VM and reconciliation worktrees are retained inactive
   snapshots, not competing candidates. The one active site checkout is
   `vpsfree-cz-configuration`, clean at
-  `a433690828a23c13a8ccb3df0c07b9f2d915f0ca` after the generated
-  `534caa83` pin and prior CSP, credential-source, missing-probe-series and
-  host-only SSH authorization commits; `6586b383` was the last previously recorded deployed
+  `6c827ca2c1b18fe79171ecc8fea03ad80b803f82` after the generated
+  `534caa83` pin, canonical default-source cleanup and prior CSP,
+  credential-source, missing-probe-series and host-only SSH authorization
+  commits; `6586b383` was the last previously recorded deployed
   site revision, but the exact current site generation needs operator confirmation.
   Its newly registered
   reconciliation worktree is inactive and must not be used for edits.
@@ -92,10 +93,25 @@ lifecycle: active
 - [x] Authorize Kerry's new deployment key only on the UI host; verify rendered SSH keys and publish the configuration branch.
 - [x] Correct OAuth session client IP and WebUI User-Agent; review, test and pin the new WebUI revision.
 - [x] Build the pinned host, finish exact-revision CI and publish the configuration development branch.
-- [ ] Operator acceptance on the actual VPS, API and browser.
-- [ ] Explicit default-branch integration; user reports an initial deployment.
+- [x] Operator reports this OAuth metadata follow-up deployed and working; public build-info confirms exact WebUI revision.
+- [ ] Complete broader new-WebUI operator acceptance on the actual VPS, API and browser before replacing the legacy UI.
+- [x] Integrate `vpsadmin-webui` into `main` and `vpsfree-cz-configuration` into `master` under the user's explicit 2026-09-29 direction.
 
 ## Next actions
+
+Default-branch integration is complete. WebUI `main` and its retained feature
+ref both resolve to `534caa83`; configuration `master` and its retained feature
+ref both resolve to `6c827ca2`. Before the configuration merge, the branch was
+rebased patch-equivalently over current `master`; all 11 prior commits mapped
+`=` in range-diff. Commit `6c827ca2` changes the WebUI input source from the
+temporary feature ref to canonical `github:vpsfreecz/vpsadmin-webui`, while
+the generated lock retains exact rev/hash/timestamp and both follows. Independent
+four-lane review found no findings, no obsolete unmerged approach and no
+migrations. Exact-head flake no-build passed; the UI-host build passed in 77
+seconds and produced generation `2026-09-29--18-39-06`. WebUI default-branch
+CI, broad smoke and smoke all passed on the exact merged SHA. Configuration has
+no push-triggered verification workflow. No additional deployment was performed
+for the source-ref cleanup; the locked WebUI revision is unchanged.
 
 The live frontend previously reported WebUI source `b86e202d` through its
 public `build-info.json`. The session identity defect was traced to the BFF's
