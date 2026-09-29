@@ -6,7 +6,7 @@ lifecycle: active
 
 ## Status
 
-- Phase: reviewed recovery amendment and downstream repinning before deployment. All four original feature heads are reviewed, pushed, and built; Codex-web, generic runtime, and vpsFree extension CI are green. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final-review gates.
+- Phase: built recovery candidate and authorized journal recovery before deployment. All four current feature heads are reviewed as required, pushed, and built; Codex-web, generic runtime, and vpsFree extension CI are green. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final-review gates.
 - The archive blocker is isolated and the recovery amendment is committed at dev-workspace `fbd7a9e390b563f83d1787e2cddbd516eefeb558`: Codex 0.155.0 `thread/list` omits some archived team-member threads, so the package now uses exact `thread/read` metadata and bounded rollout-header proof plus a narrow packaged `recover-archive` adapter. The high-risk four-lane review found one Blocking and two Important issues; all three were corrected and their focused host tests pass. No live journal mutation is in progress.
 - Current selected package pins `codex-web` e92dd887c888 and `dev-workspace` 3b570f0a8b75; App Server is 0.155.0.
 - Pre-rollout `workspace-host status` package: `/nix/store/zpfyl4kkdmv6c7r8a0r6rl1s4wpikkla-dev-workspace-0.2.0`; retain its revision as recovery evidence. Earlier-profile `workspace-host rollback` is intentionally refused for team compatibility; recovery needs a newer forward-compatible package.
@@ -20,6 +20,7 @@ lifecycle: active
 - Codex-web GitHub Actions `Check` run `36620678434` passed for corrected feature head `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`.
 - The full `dev-workspace` package build passed at `9db7bc844a0332b7e00d21536c3bebf835928ece` in 3m14s. Its primary suite completed 342 runs and 3,611 assertions with zero failures or errors; adjacent suites completed 8/33 and 97/544 with zero failures or errors. The logged Git identity error is an expected exercised subprocess failure inside the passing test suite, not a build failure.
 - Dev-workspace GitHub Actions `Check` run `36624756200` passed for exact feature head `9db7bc844a0332b7e00d21536c3bebf835928ece`. vpsFree extension `Check` run `36625520975` passed for exact feature head `7e6fdd140e144611658acb6e7610a5ccf668a0f2` after an 8m55s flake job.
+- The rebuilt consuming candidate at workspace head `7a6289a683720a266b7c2a919589d0e8319548ac` passed in about four minutes and is rooted at `candidate-workspace-package`, resolving to `/nix/store/q7p3cli02ry7a6ybfknbk80nddbb1w78-dev-workspace-0.2.0`. Its runtime contract is byte-identical to the selected predecessor. Dev-workspace `Check` run `36638315783` passed at `fbd7a9e390b563f83d1787e2cddbd516eefeb558`; vpsFree extension `Check` run `36638626741` passed at `02e88f5b3bce74354d885033b30224df2ba3448f`.
 
 ## Phase checklist
 
@@ -33,7 +34,7 @@ lifecycle: active
 
 ## Next actions
 
-- Push the reviewed dev-workspace recovery head, repin the vpsFree extension and workspace package, then build a rooted candidate and use the supported adapter to resume the two user-authorized journals.
+- Use the rooted candidate's supported adapter to resume the two user-authorized journals, one at a time, preserving the selected profile and recorded complete mode.
 - Retry the reviewed user-profile switch, then execute live latency, scan-contention, and metadata-rebuild acceptance.
 - Perform the final complete-history and migration-readiness review after the whole pin chain and live evidence are complete, then integrate the authorized feature heads into their default branches in dependency order.
 
@@ -45,8 +46,8 @@ lifecycle: active
 
 - `codex-web`: `worktrees/2026-09-29-portal-performance/codex-web`, branch `2026-09-29-portal-performance`, base `e92dd88`, pushed feature head `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`.
 - `dev-workspace`: `worktrees/2026-09-29-portal-performance/dev-workspace`, same branch, base `3b570f0`, committed local head `fbd7a9e390b563f83d1787e2cddbd516eefeb558` with the exact `d210d3f7` pin, archive-proof recovery amendment, final vendor hash, and exact parsed pin-selection guard.
-- `vpsfree-dev-workspace`: `worktrees/2026-09-29-portal-performance/vpsfree-dev-workspace`, same branch, base `bd96168`, reviewed and pushed pin head `7e6fdd140e144611658acb6e7610a5ccf668a0f2`.
-- Workspace: `worktrees/2026-09-29-portal-performance/workspace`, same branch, base `979ef666`, reviewed local pin head `238ee9a684579e732fd3bab3c37409c892a05ebe`.
+- `vpsfree-dev-workspace`: `worktrees/2026-09-29-portal-performance/vpsfree-dev-workspace`, same branch, base `bd96168`, pushed dependency-only pin head `02e88f5b3bce74354d885033b30224df2ba3448f`.
+- Workspace: `worktrees/2026-09-29-portal-performance/workspace`, same branch, base `979ef666`, pushed dependency-only pin head `7a6289a683720a266b7c2a919589d0e8319548ac`.
 
 ## Commands run
 
