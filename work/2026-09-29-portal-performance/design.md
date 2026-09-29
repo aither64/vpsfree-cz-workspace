@@ -1098,110 +1098,257 @@ error does not mean the reviewer is archived. Do not classify an active path as
 archived, fall back to an archived-looking filename, swallow an archive error,
 or edit the roster to meet the adapter's prerequisite.
 
-The selected old worker's `auto_archive_scan_session` resumes a recorded archive
-operation before ordinary observation; `auto_archive_resume` invokes the normal
-archive executor. The inspected `origin/master` team loop archives each member,
-checks listing proof, then cleans attempts and updates the roster, stopping on
-the first error. The known incomplete-list defect can therefore leave the first
-member archived with its roster still ready and later members untouched. This
-explains a possible partial outcome and the old worker's retry role. It does not
-prove a particular scan moved any file or reversed archival. Per-ID historical
-error/path evidence was not preserved, so reports of already-archived responses
-for the two currently active-path members remain unresolved; do not invent an
-unarchive, replacement or filesystem-move history to reconcile them.
+#### Corrected evidence and root cause
 
-The lead completed a repair-free diagnostic cross-check to distinguish a
-state-DB/archive-path disagreement from an imprecise earlier narrative:
-`thread/list` twice for each of the two exact projects above, with:
+The lead's subsequent read-only `state_5.sqlite` inspection supersedes the
+earlier inconclusive escalation: September 26 root and architect rows are archived
+with archived paths; implementer and reviewer rows are active, with
+`archived_at NULL` and the same active paths as exact metadata/filesystem proof.
+September 27 root and all three members are archived with archived paths, while
+its roster members remain ready. Database, exact reads and filesystem placement
+agree. These are lead-supplied exact-row facts; this architect did not open the
+production database. The earlier blanket claim that all September 26 members
+were archived was wrong. There is no observed rematerialization, replacement,
+retained-identity change or Codex archive-state inconsistency.
 
-```json
-{"cwd":"/home/aither/workspace/ai/vpsfree.cz/work/2026-09-26-codex-queue-ledger-capacity","projectId":"EXACT_RETAINED_PROJECT","sourceKinds":["vscode"],"archived":false,"useStateDbOnly":true,"limit":100,"sortDirection":"asc"}
-```
+The four empty responses in `sep26-member-list-state-db.jsonl` used exact cwd,
+project, `sourceKinds:["vscode"]`, both archive flags, `useStateDbOnly:true`,
+limit 100 and ascending cursor exhaustion. They **omitted `modelProviders`**.
+The pinned App Server's `list_threads_common` defaults that filter to its
+configured provider; the inspected rows have `model_provider=openai`. They were
+therefore not an exhaustive state-table query. Do not infer missing rows or
+archive corruption from those responses. A future metadata-only diagnostic,
+if needed, must specify `modelProviders:["openai"]` for these records (or an
+explicit empty provider array when testing the pinned all-provider contract),
+keep `useStateDbOnly:true`, and project only ID/project/cwd/path/source and cursor.
+No further production list probe is required to choose this fix.
 
-The paired request used `archived:true`, with cursor exhaustion and repeated/
-empty-cursor guards. All four requests returned `data:[]`, `nextCursor:null`;
-the exact projections are in `sep26-member-list-state-db.jsonl`, without preview
-or turns. The pinned schema
-explicitly says `useStateDbOnly:true` prevents JSONL scan-and-repair; use that
-flag because the default listing can repair metadata. These listings are a
-diagnostic cross-check, not a replacement archive proof. This result supplies
-no positive active or archived row for either member. It does not prove the
-database physically lacks records, explain why filtering omits them, or make
-an active-path thread archived. Exact metadata resolves retained materialized
-rollouts while filtered discovery cannot classify them; the internal Codex
-cause and the reported historical archive-error identity remain unestablished.
+The pinned source inspected for this investigation is
+`/nix/store/z9n086iaxqm6731352hgrx7zz06vddj3-source/codex-rs`, rust-v0.155.0.
+That source path was unavailable on the final reread; the references below are
+from the earlier source inspection, with the provider-default behavior confirmed
+by the lead. Do not substitute another Codex version when reproducing it.
 
-No proof or roster correction is justified by the current evidence. Do not
-unarchive, rename/move rollouts, repair SQLite, restart the App Server or invoke
-`thread/archive` experimentally. Even a coherent active listing would leave
-the existing adapter's all-archived prerequisite unmet and would not prove
-idleness. Further mutation requires a supported, explicitly scoped archive
-operation with fresh identity, turn/prompt/queue/ledger checks under the normal
-generation/lifecycle ownership. The public `dev-session team` interface has no
-archive action, and calling a private candidate team helper or editing old
-invocation arguments by hand is not that supported operation. Refer any proposed
-mixed-state journal replay through the lead as a separate consequential design
-revision; do not silently broaden this adapter during diagnosis.
+| Source reference beneath `codex-rs` | Consequence |
+| --- | --- |
+| `app-server/src/request_processors/thread_processor.rs`, `list_threads_common` | Omitted provider filters use the server's configured provider. Discovery is filtered, even when project/cwd are exact. |
+| `state/src/runtime/threads.rs:1255` and `:1417` | Ordinary state listing also excludes empty previews; relation/section exceptions do not make every project query exhaustive. Empty preview is a separate source-supported omission mechanism, not a measured claim about these production rows. |
+| `thread-store/src/local/list_threads.rs:256` and `rollout/src/list.rs:820` | Project-filtered listing uses state DB; filesystem discovery also requires a discoverable preview. Changing only sourceKinds cannot supply exhaustive proof. |
+| `thread-store/src/local/read_thread.rs:30`, `:92`, `:260`; `thread_rollout_resolver.rs:94` | Exact read uses retained metadata/current rollout resolution and can read header-only histories omitted by discovery. Paginated current-path selection intentionally avoids arbitrary stale fallback. |
+| `app-server/src/request_processors/thread_processor.rs:1691`, `:1701`, `:1754`, `:2993` | Archive reads the exact unarchived thread and delegates locked archival; metadata-only read includes archived threads. Archive does not depend on thread/list. |
+| `thread-store/src/local/archive_thread.rs:16`, `:75`, `:132` | Archival takes lifecycle/writer locks, moves exact selected/owned rollout paths, marks state archived, and compensates filesystem moves if the state update fails. |
 
-**Operational decision: stop archive recovery and deployment.** The initiative
-can continue local investigation and verification, but neither ordinary switch
-nor `--from-candidate` can select the new profile while these lifecycle journals
-remain unfinished. The adapter may not bypass its failed member proof, select
-the candidate first, or run a different lifecycle owner to make progress.
+The old worker resumes an existing journal before passive observation. Its old
+team idle check treats a member omitted by archived discovery as nonarchived;
+queue inspection then reaches Codex's archived-session error. That error is not
+evidence that the currently active implementer/reviewer was archived. The old
+team loop can archive a member successfully and fail the subsequent listing
+proof before updating its ready roster state; later members remain untouched.
+Normal lifecycle order is root retirement, then team archive, then the
+`thread_retired` checkpoint. This explains both a mixed partial team phase and
+an all-archived team with stale ready bookkeeping. No specific historic scan is
+claimed to have moved a particular file without its per-ID trace.
 
-Codex exposes a normal exact `thread/archive` operation. That is not a validated
-repair procedure for these members: no current per-ID successful archive result
-is established, earlier already-archived errors are only narrative evidence,
-the state-only views are empty, and metadata `notLoaded` does not establish
-idleness or resolved receipts. There is **no demonstrated supported Codex
-recovery operation for this exact state** in the inspected contract. Do not
-infer one from `thread/unarchive`, a replay, filesystem movement, state-DB repair
-or restarting the server. This does not claim that Codex has no possible fix;
-it identifies the limit of the verified support contract.
+**Decision:** retain the exact archive proof. Fix the recovery adapter in
+`dev-workspace`; no Codex patch, packaging patch, version change or separate
+Codex repair/escalation is needed. No further codex-web behavior change is
+required. The supported primitive for a verified idle active member is normal
+exact `thread/archive`, followed by positive exact proof. Use it through the
+owning recovery operation, not an ad hoc private helper command. Existing
+`ArchiveAll` already implements the idempotent mixed-state proof/receipt/roster
+sequence. The remaining defect is the adapter requiring every member already
+archived before it can reach that sequence.
 
-Escalate separately to the owner of the pinned Codex 0.155.0 runtime/protocol
-before another live mutation. The content-free escalation packet is the exact
-ID/project/cwd/path table above, authority socket
-`/run/user/1000/dev-workspaces/vpsfree-cz/app-server.sock`, Codex home
-`/home/aither/.codex`, both metadata evidence files, first-header/stat evidence,
-the failed adapter log, and the explicit lack of historical per-ID error
-captures. Establish why exact read resolves a materialized thread omitted by
-both state-only list filters and how exact archival behaves in that condition,
-using the pinned source and a disposable synthetic fixture. Do not reproduce
-the failure by sending mutating requests to these production members. A Codex
-code change is not yet proven necessary; the escalation must determine whether
-an existing supported exact archive path suffices, a Codex fix is required, or
-stronger diagnostic evidence is needed. Any new Codex version is a separately
-reviewed protocol/package change, not an incidental recovery shortcut.
+#### Selected recovery sequence and implementation boundary
 
-If that investigation validates ordinary exact archival, return the concrete
-operator procedure through the lead: fresh identity/project/materialization and
-turn/prompt/queue/ledger checks, explicit authorization and the owning journal's
-generation/transition/session locks, successful exact archive proof, then normal
-selected-predecessor replay. A standalone private-helper call is not a substitute
-for that ownership. If supporting mixed archived/nonarchived journal members
-needs application changes, design and review that bounded transition explicitly,
-including the root's active-sibling refusal and interrupted member completion;
-do not relabel nonarchived members to fit the existing adapter.
+Put the member action **inside `workspace-host recover-archive`**, after the
+existing candidate/source, selected generation/token/Codex, registered workspace,
+archive journal and ready-creation checks. The archive journal remains the
+operation authority. The candidate remains unselected throughout. Preserve the
+existing CLI's explicit named-session authorization; a deployment request or an
+ordinary switch must not invoke this exception automatically.
 
-Compatibility and acceptance are unchanged: preserve both package generations,
-all durable IDs/projects/receipts, journal phase and roster contents. A focused
-fixture with one archived and two active-path ready members must refuse before
-executor invocation and without archive/start/resume/roster writes; existing
-all-archived and ready-creation success/retry tests remain valid. Add a conflict
-fixture if later evidence demonstrates contradictory positive archive metadata;
-the current empty state-only result is not such a contradiction. A future Codex
-fix or supported-procedure test must cover exact identity preservation, no new
-thread/bootstrap, pending/queue/ledger refusal, archive acknowledgement loss,
-repeat proof, unchanged receipt data until normal cleanup, and the complete
-old-executor/new-helper replay before permitting normal profile selection.
-No persistent format or deployment change is proposed by this investigation.
-Acceptance remains positive current archive proof for every outstanding retained
-member, successful ordinary journal completion and then the normal package
-switch. Treat the contradictory historical report as unverified until supported
-by exact evidence. No live retry is justified by the completed diagnostic alone.
-The reported failed preflight needs no compensation and does not authorize
-profile selection.
+The ordered sequence is:
+
+1. Hold the existing exclusive transition lock. Acquire creation then slug
+   locks in the normal lifecycle order for the helper phase. Re-read the exact
+   journal/manifest/optional ready creation record under those locks; require
+   the same operation ID, schema, mode, root, `tracking_committed` phase and
+   generation observed at entry. Reject competing operations as before.
+2. Before the newly introduced member mutation, re-use the lifecycle verifier
+   for the committed archive tree and exact recorded merged heads. The previous
+   adapter deferred this to the predecessor because its preflight was read-only;
+   that deferral is no longer sufficient. Use the existing
+   `verify_committed_archive_tracking!` logic, including ordinary complete versus
+   abandoned semantics. Do not merely trust the phase string or duplicate the
+   Git/tree/manifest algorithm in the host command. A small candidate-packaged
+   verification entry around `DevSession::Runner` may expose these existing
+   checks and locks; it must only load an existing journal, never create,
+   reconcile, advance or finish one. This is verification reuse, not permission
+   to execute the candidate's lifecycle command. Preserve predecessor contract
+   compatibility, and test this verifier against the selected generation.
+3. Run the existing candidate `thread require-archived` on the exact root and
+   selected authority/home. An active/missing/ambiguous root refuses before any
+   member mutation. This preserves the normal root-before-team ordering. Keep
+   the root retirement active-sibling refusal in the predecessor's ordinary
+   replay; do not weaken it or rely on discovery hiding siblings.
+4. Run the same candidate helper's **nonforced retained-only** team archive on
+   the exact workspace/slug/root/cwd/socket/home/authority tuple. Proposed private
+   invocation is `workspace-portal team archive --retained-only` with the same
+   identity arguments as the existing `team require-archived` call. Retain the
+   normal bounded command context. Do not let the operator select an arbitrary
+   executable, roster path, socket or shell fragment.
+5. Run `team require-archived` after successful helper completion. It remains a
+   strict proof gate; do not redefine active as archived or replace it with
+   successful helper exit alone. Release creation/slug locks before predecessor
+   invocation so it can acquire its normal locks. The parent retains the
+   exclusive transition lock across this handoff.
+6. Replay the exact selected predecessor's `dev-session archive` with the
+   journal's existing mode and only its portal helper substituted. It rechecks
+   tracking/merge/runtime identity, repeats ordinary root/team retirement
+   idempotently, advances checkpoints, retires runtime and removes the journal.
+   The candidate helper phase does none of those journal/runtime actions.
+7. Verify unchanged selected profile/token/Codex and completion of the exact
+   journal. Only after all authorized paused journals complete may ordinary
+   preselection quiesce and package selection proceed. Deployment remains blocked
+   until then; this amendment is a supported completion path, not a bypass.
+
+The retained-only guard is necessary despite the current members being
+materialized. `teamruntime/runtime.go:1611`'s normal `archiveAllLocked` can call
+`recycleFreshMemberLocked` and `retryCreatingLocked` before idle checks. Recovery
+must never enter that branch. Add a narrow policy/entry sharing the existing
+archive implementation, rather than copying its archive/receipt logic. Under
+one team operation lock, load the roster and validate **all** outstanding members
+before any Codex or roster mutation: ready, retained thread ID, no retirement
+intent, expected project where recorded, exact metadata/cwd/authority binding,
+and either positive archived proof or a positively materialized active rollout.
+Existing terminal members retain their ordinary exact retired-identity and
+receipt-cleanup checks. An absent roster retains the supported root-only case;
+malformed/ambiguous state is not absence.
+
+For active members, combine existing exact archive classification with
+`HeadlessThreadMaterialized` for current project-backed members; retain the
+existing legacy identity contract where applicable. Missing rollout, fresh
+metadata, pending replacement/removal, unknown/creating state or any identity
+conflict refuses. Recheck through normal idle/archive/proof calls under the same
+operation lock. An explicit retained-only policy must continue to refuse if a
+file disappears after initial validation; do not fall through to fresh-member
+recovery. Do not expand active compatibility by creating a missing project or
+by accepting an unproved format. No turn content is needed for the materialization
+check. Normal turn-status/prompt/queue/receipt inspection remains mandatory.
+
+Then reuse the existing nonforced idle sweep: already-archived members require
+resolved submission attempts without querying an archived queue; active members
+require exact identity, idle turns, no pending prompt, no queued message and
+resolved submission attempts. `notLoaded` alone is insufficient. Only active
+members receive `ArchiveThread`. On success or uncertain response, require fresh
+exact archive proof. Clear attempts only through existing resolved-attempt cleanup
+after proof, then persist that same member as archived. Keep all IDs/projects
+and unresolved receipts. Never call interrupt, unarchive, start, resume, injection,
+project creation/deletion or member replacement from this route.
+
+A process interruption can leave more members archived, some ready bookkeeping,
+and the same `tracking_committed` journal. Retry re-proves exact states and
+continues: it does not unarchive to compensate or repeat archive for a member
+already proved archived. Helper/proof failure prevents predecessor execution;
+predecessor failure leaves ordinary journal recovery intact. Completed member
+retirements are durable forward progress, not a transaction to reverse.
+
+Exact implementer file brief:
+
+- `libexec/workspace-host`: insert guarded retained-team completion between root
+  proof and final team proof; retain all source/profile/journal/creation guards,
+  predecessor invocation and postcondition checks. Use the existing session
+  verifier/lock implementation for the new pre-mutation check.
+- `libexec/dev-session`: only a small reusable verification/lock entry if needed
+  to call the existing committed-archive verifier without journal/runtime
+  mutation. Do not introduce a second lifecycle executor or broaden archive
+  command flags for the predecessor. Keep journal/schema contracts unchanged.
+- `portal/internal/teamruntime/runtime.go` and
+  `portal/cmd/workspace-portal/main.go`: expose the retained-only nonforced policy
+  privately and reject it on unrelated commands; share normal archive logic.
+  Require the same deployed authority arguments as archive preflight. Ordinary
+  archive and forced deletion keep their existing fresh-member contracts.
+- Tests: `test/workspace_host/archive_recovery_test.rb`, existing session archive
+  verifier tests, `portal/internal/teamruntime/runtime_test.go` and focused CLI
+  tests. `docs/workspace-portal.md` must explain partial-team recovery and its
+  failure/retry boundaries. The architect edits only this design document;
+  application/tests/project docs belong to the implementer.
+
+#### Focused tests and disposable reproduction
+
+Required regressions before another live attempt:
+
+- One archived plus two materialized active ready members: root proof precedes
+  the helper; only the two active exact IDs receive archive requests; all three
+  reach archived bookkeeping without changed thread/project identity. Final
+  proof precedes the selected executor. Include provider-filtered empty lists.
+- All members archived but ready roster: no archive/start/resume calls; resolved
+  receipts are reconciled and roster states persist. Exercise the September 27
+  shape independently of the mixed case.
+- Interrupt after archive acknowledgement, after proof but before cleanup, after
+  cleanup but before roster write, between members, and before executor entry.
+  Repeat the same recovery and preserve exact identity and the existing journal;
+  no duplicate archival of proven archived members or loss of unresolved attempts.
+- Wrong/missing root proof, journal phase/operation/root/workspace, incompatible
+  predecessor, changed generation/token, unfinished creation or competing
+  operation, dirty/mismatched committed archive and changed recorded merge proof
+  all refuse **before the team mutation**. Ready creation records remain byte
+  identical. Predecessor is never called on failed final team proof.
+- Active turns, pending prompts, queued messages, unresolved attempts, missing
+  active rollout, fresh/unmaterialized member, replacement/removal intent,
+  malformed roster and metadata/header/authority disagreement refuse. Assert
+  zero fresh-member recycle/start/resume/inject/project calls. Add a disappearance
+  between precheck and archive to prove it cannot activate the ordinary recycle
+  branch. Keep unrelated normal archive/fresh-member tests passing.
+- Verify transition -> creation -> slug -> team-operation lock order, release of
+  creation/slug locks before predecessor reacquisition, and generation rejection
+  after a wait. Existing normal switch/candidate switch still refuse unfinished
+  journals; root active-sibling rejection and unsupported predecessor rejection
+  remain intact. No profile/service/Codex mutation during helper recovery.
+
+A synthetic pinned-App-Server reproduction can corroborate the source without
+production access. It is a verification brief, not a run performed here:
+
+1. Allocate a fresh disposable directory containing synthetic workspace, isolated
+   `CODEX_HOME`, socket and application state. Assert no path/ID equals a real
+   session or production home/socket. Use exact pinned 0.155.0 binary
+   `/nix/store/5ic3470w8g40xyzqypbdzsvz9y3251ky-codex-0.155.0/bin/codex` and generated
+   schemas. Copy no production database, rollout, config or credentials. Use the
+   App Server test harness/mock provider; model network calls are unnecessary.
+2. With the normal app-owned headless setup, create one synthetic root and three
+   project-bound members, paginated persistent histories, and fixed developer
+   bootstrap markers. Save only generated IDs, metadata/header identity and
+   operation results. Archive the root and one member through supported exact
+   requests; keep the roster ready to model interruption before bookkeeping.
+   A second fixture archives all members while retaining ready bookkeeping.
+3. Compare exact reads with state-only listings using omitted, mismatching and
+   explicit matching provider filters, both archive flags and bounded cursor
+   exhaustion. Record source/preview policy independently; developer-only
+   fixtures may be omitted even with a matching provider. Do not insert a fake
+   production user turn or change a production provider to make a list pass.
+4. Run the packaged recovery against disposable predecessor/candidate profiles
+   and a valid committed synthetic late journal. Verify mixed and all-archived
+   completion, lost responses and helper interruption/retry. Confirm unchanged
+   predecessor selection until its exact journal completes, then exercise normal
+   switch. Any App Server restart or fixture corruption injection is confined to
+   these disposable test resources. Nothing runs against production members.
+
+Quick checks use the declared Nix environment: focused Ruby recovery/session
+verifier tests and syntax, focused Go teamruntime/CLI tests, and `git diff --check`.
+After committed implementation and independent lifecycle/mixed-generation review,
+use the required fresh verification watcher for complete Nix/package checks and
+this disposable end-to-end test. If a future fixture actually contradicts exact
+Codex archive/read state, preserve it and reopen a separate upstream issue; the
+current evidence does not justify a speculative Codex patch.
+
+Acceptance is the tested ordered helper sequence, fresh proof for each archived
+identity before receipt cleanup, successful selected-predecessor journal
+completion, unchanged profile/Codex during bootstrap, and a subsequent ordinary
+package switch. Live recovery remains separately authorized and was not attempted
+by this architect. No manual database/filesystem/journal/roster repair, no
+unarchive, no candidate selection before recovery, and no host configuration
+change is part of this design.
 
 ### Compatibility, rollback and verification
 
@@ -1264,11 +1411,12 @@ no new Codex archival attempt for already-archived members, unchanged profile
 during bootstrap, and a subsequent normal package switch. Existing portal
 functional and performance acceptance still applies, including metadata-cache
 periodic full-scan cost in the latency benchmark. Exact archive proof remains the
-selected implementation. The completed September 30 investigation establishes
-that the current live state does not meet its recovery prerequisite; Codex-level
-escalation and a supported completion path are required before another retry or
-deployment. Predecessor/helper compatibility and crash/retry preservation remain
-verification requirements. A plausible path name or an empty listing is not
-acceptance evidence.
+selected implementation. The September 30 database/source evidence closes the
+suspected Codex inconsistency: the adapter must complete the legitimate partial
+team phase under the guarded retained-only contract above. No Codex patch or
+version change is needed. Review and verify that correction before another live
+retry; unfinished journals still block deployment. Predecessor/helper
+compatibility and crash/retry preservation remain verification requirements.
+A plausible path name or an empty listing is not acceptance evidence.
 
 Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-29-portal-performance/
