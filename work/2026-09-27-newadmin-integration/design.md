@@ -7,6 +7,15 @@ and attributes implementation/check evidence where available; it does not
 certify independent review, NixOS package builds or deployment.
 The operator retains production activation and secret installation.
 
+The **Credential-file cutover and verified frame origins** section below
+supersedes earlier `environmentFile` contracts and
+unresolved console/heatmap origin notes. Those passages describe the deployed
+pre-cutover baseline. The user now requires direct systemd credential loading
+with no environment-secret compatibility path.
+
+Current bounded follow-up: **OAuth session client metadata** records the accepted
+service User-Agent and trusted callback-address contract before implementation.
+
 ## 1. Scope, source and decisions for the lead
 
 Implement the existing React/TypeScript frontend and Node OAuth BFF as one
@@ -3007,3 +3016,384 @@ independently inspected the committed URL, lock diff and clean site head. It
 changed only this design section and ran no bootstrap command, source/lock edit,
 build or deployment. The initial-lock blocker is resolved; subsequent exact-head
 verification and operator activation gates remain separate.
+
+## Credential-file cutover and verified frame origins
+
+**Implementation brief before credential changes.** The user explicitly directs
+the retained team to fix console CSP and replace the deployed environment-file
+transport with `LoadCredential`, with a direct cutover and no migration fallback.
+The verified source baselines are clean WebUI `aff1e4b0` and site `6586b383`.
+Both were published and the user reports them deployed at newadmin. Preserve
+those commits unchanged: this work uses follow-up commits, with no amend,
+rebase or rewrite of the deployed revisions. Implementer owns application,
+module and site changes; lead coordinates review and pins; the user supplies
+credential files and deploys. No API, proxy topology,
+DNS, account, state-directory, package-dependency or session-schema change is
+included. This decision supersedes the earlier suggestion to retain an
+environment-secret mode in the new BFF.
+
+The exact site values under `services.vpsadmin-webui.security` are:
+
+```nix
+consoleOrigins = [ ];
+frameOrigins = [
+  "https://console.vpsfree.cz"
+  "https://goresheat.vpsfree.cz"
+];
+```
+
+The user supplied a browser `frame-src` violation for the first origin; lead
+confirmed the second from the public API. Both integrations are iframes in this
+WebUI, so parent-page connection permissions need no expansion. Keep OSM and the
+current inline-script hash unchanged. The separate inline warning is unidentified;
+do not add `unsafe-inline` or a guessed hash to address it. This scoped change
+does not certify each iframe's own response headers, redirects or WebSocket
+connection; the operator checks the actual console/heatmap after activation.
+
+### Credential layout and module interface
+
+Use three operator-owned raw UTF-8 files, not environment assignment syntax:
+
+| Required module option | Site source file | Fixed systemd credential name |
+| --- | --- | --- |
+| `credentialFiles.oauthClientId` | `/private/vpsadmin-webui/oauth-client-id` | `oauth-client-id` |
+| `credentialFiles.oauthClientSecret` | `/private/vpsadmin-webui/oauth-client-secret` | `oauth-client-secret` |
+| `credentialFiles.sessionSecret` | `/private/vpsadmin-webui/session-secret` | `session-secret` |
+
+The options are nullable strings defaulting to null and required when enabled.
+Validate them as absolute runtime file paths using the existing restrictive
+path checks: no control characters, delimiter colon, parent traversal, repeated
+slash or `/nix/store` paths. Do not use Nix path values, `builtins.readFile`,
+generated secret text, or evaluation-time file existence/content checks. A build
+must succeed without production credential files. Remove the public
+`environmentFile` option and its service assignment; an old option assignment
+must fail evaluation rather than silently work or be ignored. Do not add a
+secret-source mode switch or fallback path.
+
+Emit exactly three `LoadCredential` entries, each
+`<fixed-name>:<configured-source-path>`. Let systemd set `CREDENTIALS_DIRECTORY`;
+do not hardcode its runtime mount path. The BFF reads the fixed names below that
+directory. Keep public URLs and other nonsecret configuration in the existing
+service `Environment`. Add `UnsetEnvironment` for `OAUTH_CLIENT_ID`,
+`OAUTH_CLIENT_SECRET` and `SESSION_SECRET`, so an accidentally inherited value
+cannot reach this unit's startup helper or server. The BFF must also reject
+these retired variables when invoked directly outside systemd. No secret value
+belongs in environment assignments, argv, a wrapper, Nix store output, errors,
+logs or public JSON.
+
+The operator prepares `/private` and `/private/vpsadmin-webui` as root-owned
+private directories (0700), and the three regular source files as root:root
+0600, before activation. Inspect existing ownership, mounts and symlink identity;
+do not automatically chmod/chown a pre-existing directory or follow an unexpected
+symlink. Do not grant the BFF account access to `/private`; systemd reads the
+source files and provides its credential copies. Keep source and session paths
+separate. Missing/inaccessible sources must prevent service startup, without a
+shell preprocessor or automatic file conversion.
+
+The pinned Nixpkgs service uses systemd 260.4. Its
+[`write_credential` implementation](https://github.com/systemd/systemd/blob/v260.4/src/core/exec-credential.c#L384-L422)
+creates a new regular file, writes the credential bytes and removes write
+permission before granting service access. Thus rejecting symlinked credential
+entries is compatible with systemd's copied files; they are not symlinks back to
+`/private`. This is source verification, not an observation of the deployed
+container. The ordinary VM must assert each runtime entry is regular and not a
+symlink, using metadata only, before exercising the BFF reader.
+
+### Startup, validation and security boundary
+
+Add a small credential reader (for example `bff/credentials.js`) called by
+`loadBffConfig` before app construction/listening. Require an absolute existing
+`CREDENTIALS_DIRECTORY`, all three fixed files and bounded regular-file reads.
+Reject missing, unreadable, symlinked, nonregular, oversized and invalid-UTF-8
+input with errors naming only the credential and failure class. Avoid blocking
+on a FIFO before its type can be rejected. Bound each raw file to 16 KiB, then
+apply the existing client-ID and secret length/strength validators. This bound
+accommodates the existing maximum string lengths without making reads unbounded.
+Permit one optional terminal LF or CRLF for normal file creation; reject BOM,
+remaining newlines/control characters and leading/trailing whitespace. Never
+trim arbitrary bytes or parse these files as shell/dotenv/JSON assignments.
+Preserve exact accepted secret values after the documented terminal-newline rule.
+
+Return a private configuration object; never assign its values to `process.env`
+or pass them to a child command. Preserve current production checks for client
+ID, OAuth secret, signing secret, URLs and writable session storage. Credential
+files are required in every launch mode, including existing test/development
+fixtures; their nonsecret runtime-mode behavior need not be rewritten. Synthetic
+tests supply temporary credential directories. There is no fallback to retired
+environment variables when the directory/file is absent or invalid. Read once
+at startup; updating source files requires a controlled service restart because
+systemd credentials are acquired at activation.
+
+The current application has no active runtime subprocess calls. Its pinned
+`session-file-store` 1.5.0 dependency imports `child_process` and can `execFile`
+an asynchronous reaper, but `reapAsync` defaults to false and current BFF options
+do not enable it. Make `reapAsync: false` explicit while touching store setup;
+do not patch the dependency or add a worker. A focused assertion should preserve
+this choice across dependency/configuration changes. The current
+`ExecStartPre=install` receives environment secrets; after this cutover it gets
+only a credential-directory path, not credential contents in its environment.
+
+The [systemd credential interface](https://systemd.io/CREDENTIALS/) avoids
+automatic propagation of credential contents down the process tree and restricts
+file access to the service identity. This reduces environment/diagnostic exposure;
+it cannot protect secrets from compromised BFF code, root, or a malicious process
+with equivalent access to the credential files. Do not claim that file loading
+eliminates all child-process access or requires rotation solely because the old
+transport existed. No real secret is needed for implementation or verification.
+
+### Implementation boundaries and checks
+
+| Slice | Owned files and acceptance |
+| --- | --- |
+| BFF loader | `bff/credentials.js` and focused tests if extracted; `bff/runtime-config.js`, `bff/server.js`, runtime-config/server/session-concurrency fixtures. File-only loading, preserved validation and response contracts, explicit in-process reap. |
+| Immutable package/module | `packages/bff-runtime-files.json` includes any new runtime file; `nixos/modules/webui.nix`; `tests/nixos/module-eval.nix`. Remove old option/EnvironmentFile, require three runtime paths, emit LoadCredential/UnsetEnvironment, preserve disabled/coexistence behavior and account/state restrictions. No npm dependency change is expected. |
+| Site | `cluster/cz.vpsfree/vpsadmin/int.vpsadmin-webui1/config.nix`: replace old environmentFile assignment with the three credentialFiles values and set the exact frame origins above. Pin reviewed WebUI source through owning channel; preserve API/Nixpkgs follows. |
+| Operations/docs | WebUI `bff/README.md`, `docs/design/NIXOS_SERVICE.md`, relevant requirement/work-log entries; site `docs/operations/newadmin-webui.md`. Lead updates the session runbook/state. Document raw-file format, preparation before activation, unchanged signing key and explicit old-generation recovery. |
+
+Quick checks, in order: focused credential/runtime-config tests; complete BFF
+tests and its static check; package-source/runtime-manifest check; Nix formatting,
+module-evaluation assertions and flake no-build; site no-build/render evaluation
+with the exact reviewed candidate; documentation checks and declared hooks.
+Verify that enabling the old `environmentFile` option fails, all three paths are
+required, no secret content is evaluated, and the rendered unit contains neither
+an EnvironmentFile nor plaintext secret assignments. Disabled/coexisting legacy
+PHP modules, dedicated Unix identity and fixed session paths must still pass.
+Frontend runtime code and lockfiles need no changes for the CSP correction.
+
+Focused BFF negatives cover every missing file, empty/weak/placeholder values,
+oversize, malformed UTF-8/BOM, whitespace/multiline input, symlink/directory/FIFO,
+and old-variable-only or mixed old-variable/file configuration. Positives cover
+exact bytes and the allowed terminal newline. Assert failures happen before a
+listener opens and never include synthetic marker values in stdout/stderr.
+Verify loading leaves `process.env` unchanged and a test-only spawned child
+reports only booleans proving no raw credential variables were inherited. Do not
+print environments or credentials. Existing login, one-use state, refresh,
+logout, passkey CSP and session-concurrency tests must keep their contracts.
+
+After committed quick checks and independent review, use the required watcher
+for package builds and the **existing ordinary curl NixOS VM**. Replace its old
+environment-file setup with runtime-created synthetic credential files; exercise
+systemd missing-source rejection, reader validation, successful startup and
+absence of raw credential variables in the service process/startup helper.
+Retain login and restart of an authenticated session, unchanged state ownership,
+legacy PHP sentinel, OAuth-log suppression and both-hop HTTPS checks. Verify
+the served index's CSP has both exact frame origins, no new connect origin or
+wildcard, unchanged OSM and inline hash. No optional packaged-browser lane or
+full browser rerun is required solely for these server/module changes; record
+the operator's actual iframe check separately. Final remote-pin builds must have
+no local overrides and certify the reviewed package pair and affected UI host.
+
+### Direct deployment, session compatibility and recovery
+
+1. Review and push the credential-capable WebUI **follow-up** feature revision
+   first, so the site can fetch it. Prepare the matching site option/frame edit
+   and use `confctl inputs channel set --commit vpsadmin-webui vpsadmin-webui
+   FULL_REVIEWED_WEBUI_SHA` in the pinned site shell to generate its exact lock
+   update. Retain the generated input commit and matching site-source follow-up
+   commits as one reviewed deployment candidate; never activate an intermediate
+   revision with only half the contract changed. Inspect the complete lock diff
+   and require unchanged root API/Nixpkgs follows, then verify/build the completed
+   candidate without local overrides. Do not hand-edit the lock or rewrite the
+   deployed site/WebUI commits. An old BFF with
+   a new credential-only unit, or a new BFF with an old environment-only unit,
+   is intentionally unsupported. Preserve the exact build provenance contract
+   for the frontend/BFF package pair and existing API input follows.
+2. Before user activation, the operator installs all three files with the same
+   **effective values** used by the deployed service, checks their metadata and
+   records a recovery generation. Preserve the existing root-only
+   `/private/vpsadmin-webui.env` until the new generation is verified, so the
+   previous generation remains recoverable; the new unit does not reference
+   that file. Preserve the signing key, cookie name, public
+   origin, dedicated account and `/var/lib/vpsadmin-webui/sessions`. Do not copy
+   shell quoting or `KEY=` syntax from the old environment file into raw files,
+   rotate the signing key, or recreate the session store as part of this change.
+3. The user activates the matched module/package/site configuration. This is a
+   one-instance controlled restart; no concurrent BFF writers. Check health,
+   anonymous JSON, an existing authenticated browser session, login/logout,
+   console and heatmap frames. Confirm clean CSP/credential failure diagnostics
+   without capturing token-bearing URLs, credentials or complete environments.
+
+The persisted sessions and cookies have no format change: retaining their
+existing signing key and storage permits sessions to survive the cutover and
+restart. There is no database or API migration. Credential source files must
+be ready before activation; their absence does not block evaluation/builds but
+does block a successful service start. The old `.env` is neither read nor created
+by the new release, and there is no runtime compatibility option or automatic
+converter.
+
+If activation fails, first distinguish missing/invalid credentials from package
+or routing failure without printing their contents. Prefer correcting the
+prepared files and restarting the credential-capable generation. Reverting to
+the pre-cutover generation is separate operator recovery: use the preserved
+old `/private/vpsadmin-webui.env` and confirm it is still available **before**
+activating that generation. Its temporary retention does not add a second
+runtime source to the new release. Do not invent a fallback in the new
+application or delete recovery material as part of activation. After verifying
+the new generation, the operator can decide whether to remove the old file;
+removal ends immediate rollback to generations that require it unless the
+operator restores their input first. Keep session state and signing key
+unchanged. The user owns activation, recovery-file retention/removal and
+rollback; this brief performs none of them.
+
+## OAuth session client metadata
+
+**Accepted scope, 2026-09-29.** The user requests correct newadmin OAuth session
+metadata and selects the exact outbound service User-Agent `vpsadmin-webui`.
+Read-only baselines are clean WebUI `b86e202d039cbe1aa89f1ad0b7edf58808028a5f`
+and site `c95890ec8b9a8e8b9fa442935e946f7d0a20ffd7`. Both lock the relevant API
+input to `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`. This is a BFF request-header
+change and subsequent site pin, with no API/frontend implementation, trust
+configuration, credential interface, session format or database migration.
+Published history remains unchanged; use follow-up commits in the original
+registered checkouts. The user retains deployment ownership.
+
+### Source contract and trust boundary
+
+| Boundary | Inspected behavior and required invariant |
+| --- | --- |
+| Public edge | Site `cluster/cz.vpsfree/containers/prg/proxy/config.nix:79–100` overwrites `X-Forwarded-For` with `$remote_addr`. Browser-supplied forwarding lists cannot choose the forwarded client address. Preserve this configuration. |
+| Private backend | WebUI `nixos/modules/webui.nix:137–155,495–520` restricts peers, accepts one forwarding value from a configured trusted edge, and passes the normalized address to loopback BFF. Its IPv6 shape check is not a complete IP parser; BFF validation remains necessary. |
+| Express | `bff/server.js:200` trusts loopback; the process listens only on `127.0.0.1`. Consume only Express `req.ip` from the validated callback request. Never read inbound `Client-IP`, `X-Real-IP`, `Forwarded`, raw `X-Forwarded-For`, or browser `User-Agent` to construct provider headers. An authorized loopback process/trusted edge remains inside this trust boundary. |
+| Token request | `bff/server.js:67–103,158–184,358–373` shares the token request helper between code exchange and refresh. Add request-local metadata; do not mutate shared headers or store the address in the file session. |
+| API session creation | Pinned `api/lib/vpsadmin/api/authentication/oauth2_config.rb:214–254` calls `Operations::UserSession::NewOAuth2Login` with the token request. `operations/user_session/utils.rb:16–39` selects `HTTP_CLIENT_IP`, then `HTTP_X_REAL_IP`, then request IP, and derives user-agent/client-version/default label from that request's User-Agent. |
+| API refresh and browser authorization | `oauth2_config.rb:257–296` refreshes the existing session/token without replacing its initial metadata. Browser authorization/device metadata is collected separately, including `create_device` around line 864. Preserve that distinction. |
+
+The [Express proxy contract](https://expressjs.com/en/guide/behind-proxies/)
+requires its trust setting to match the actual forwarding topology. A direct
+loopback BFF fixture can supply normalized XFF as the trusted backend; that
+fixture alone cannot prove the public edge discards hostile forwarding headers.
+The HTTPS VM supplies that separate proof. Inbound `Client-IP` may survive the
+existing nginx hops, but must be ignored, never copied or merged into outbound
+headers. No proxy change is needed for this bounded implementation.
+
+### Exact outbound interface and failure behavior
+
+| Outbound request | User-Agent | Client-IP |
+| --- | --- | --- |
+| Authorization-code exchange after valid one-use OAuth state | Exactly `vpsadmin-webui` | Required validated callback `req.ip`, one bare address; otherwise no provider request |
+| Refresh-token exchange, including refresh triggered by session/passkey reads | Exactly `vpsadmin-webui` | Absent |
+| Revocation of either access or refresh token | Exactly `vpsadmin-webui` | Absent |
+
+Use Node's `net.isIP` for IPv4/IPv6 validation, with an explicit bare-address
+constraint excluding zone identifiers, whitespace, brackets, ports, CIDR,
+commas and control characters. Accept ordinary IPv4, IPv6 and IPv4-mapped IPv6;
+do not resolve hostnames, trim malformed input, pick an address from a list,
+or invent a public-address-only rule. IPv6 address colons are valid. Preserve
+the accepted address string; no reverse DNS or network lookup belongs in BFF.
+
+For missing/non-string/invalid `req.ip`, reject the authorization-code exchange
+before sending any credential-bearing provider request. The accepted private
+proxy contract requires a valid derived address; invalid input indicates a
+broken trust boundary. Use the existing sanitized OAuth failure/recovery path,
+with no rejected address or provider credentials in diagnostics. Do not silently
+omit `Client-IP`, fall back to another inbound header or the provider's peer IP,
+manufacture an address, or automatically retry the consumed OAuth state. The
+operator must fix the trust boundary before a new login. No concrete production
+path requiring a deviation from this accepted fail-closed behavior was found.
+
+A small pure header builder in existing `bff/security.js` is sufficient; keep
+the `req.ip` read at the callback boundary in `bff/server.js`. The token helper
+may accept an explicit client-IP value, required and validated before fetch for
+`grant_type=authorization_code`. It must not attach an IP for refresh, even if a
+refresh caller accidentally supplies one. Construct a fresh allowlisted header
+object per request. Keep existing content type, Accept, POST bodies, validated
+provider URLs, TLS verification,
+timeout/response-size limits, state persistence, session-ID rotation, refresh
+serialization, and best-effort revocation. Do not introduce configurable or
+version-derived User-Agents, browser-UA forwarding, new public JSON fields,
+generic forwarding-header propagation or provider redirect-policy changes.
+
+Expected visible scope is the metadata of newly created API sessions. This
+does not rewrite old records or change browser authorization/device identity.
+`api_ip_addr` remains the API-observed request address. Separately,
+`operations/user/login.rb:14` sets `current_login_ip` from `request.ip`; this
+follow-up does not promise to change that field. The recorded client address
+is the peer observed by the edge at callback time, which can be a NAT/proxy
+address and need not equal the browser's earlier authorization address.
+These values are descriptive metadata, not an additional authorization factor.
+
+### Ownership, acceptance and ordered checks
+
+Implementer owns `bff/server.js`, a bounded helper/test in `bff/security.js`
+and `bff/security.test.js` if useful, HTTP/provider assertions in
+`bff/server.test.js` and existing refresh/logout concurrency fixtures, and
+`tests/nixos/webui-vm.nix`. Prefer existing runtime files; only an actual new
+runtime module requires changing `packages/bff-runtime-files.json`. No WebUI
+dependency, lockfile, frontend or module-option change is expected. Record the
+lasting contract in `bff/README.md`, the relevant `docs/design/API_CONTRACTS.md`
+or architecture passage, requirements REQ-007/040/069, and `WORK_LOG.md`.
+The lead owns session records and site pin coordination.
+
+1. In the pinned WebUI shell, run focused helper/provider tests, then all
+   `npm run test:bff`. Cover IPv4, compressed IPv6, mapped IPv6, invalid values,
+   lists/ports/zones/control characters, and missing values. Valid code exchange
+   must emit the correct address despite conflicting inbound `Client-IP`,
+   X-Real-IP and browser User-Agent; refresh and both revocations must omit it
+   and always use the exact service User-Agent. Capture only reviewed synthetic
+   fields in provider fixtures. Include two distinct concurrent login addresses
+   to catch shared-header leakage. For missing/invalid addresses, including a
+   case after a valid exchange, assert zero provider requests and sanitized
+   recovery; no previously valid header value may be reused.
+2. Preserve invalid/replayed-state rejection before any provider call, token
+   error redaction, login/session/restart behavior and refresh/logout queue
+   tests. Invalid metadata must take the controlled recovery path before fetch,
+   never become an outbound header-injection attempt or an arbitrary
+   inbound-header fallback. Assertions should fail if forwarding spoofed
+   headers, sending a code exchange without valid IP, omitting the service UA,
+   or attaching IP to refresh/revoke is reintroduced.
+3. Run scoped lint/format and design audit, the locked quick gate, BFF static
+   gate within its declared coverage, source/runtime-manifest checks, Nix
+   formatting and flake/module no-build evaluation. Commit and obtain required
+   independent review before long checks; do not enlarge static-check coverage
+   or weaken existing budgets as a side effect of this change.
+4. A fresh verification watcher runs package checks and the existing ordinary
+   HTTPS curl VM on the exact reviewed head. Extend its synthetic provider to
+   observe only URI without query, Client-IP and User-Agent, never form bodies,
+   cookies, authorization headers or callback query strings. Send conflicting
+   browser headers through the public edge on the callback and prove the
+   provider receives the actual VM client address and `vpsadmin-webui`; verify
+   both logout revocations omit IP. Refresh and IPv6 request cases belong in
+   focused BFF fixtures unless the VM already supports a bounded equivalent;
+   do not claim end-to-end IPv6 proof from a loopback header fixture. Retain
+   TLS, private-peer rejection, credential isolation, session persistence,
+   OAuth log suppression and existing health checks. No optional packaged
+   browser, new live credentials or broad UI rewrite is part of this slice.
+
+Fixture success proves emitted headers and topology, not production database
+metadata. After user activation, the operator can perform one fresh ordinary
+login and inspect that new session's IP and service identity using their
+existing authorized session view. Do not expose tokens or raw production
+responses. No privileged API credential is a build prerequisite. If production
+metadata is still wrong, inspect the deployed pin and provider ingress/header
+handling with the operator; do not broaden API trust or invent a backend patch.
+
+### Publication, activation and recovery
+
+Push the reviewed WebUI follow-up before pinning it in the original site
+checkout. In its pinned Nix shell use
+`confctl inputs channel set --commit vpsadmin-webui vpsadmin-webui FULL_WEBUI_SHA`.
+Keep the generated commit and inspect the whole lock diff: only the intended
+WebUI revision/hash changes; `nixpkgsStable` and `vpsadminServices` follows stay
+unchanged. Evaluate and build `cz.vpsfree/vpsadmin/int.vpsadmin-webui1` without
+local overrides. No proxy/DNS/monitoring activation is needed for this metadata
+change; the user deploys the reviewed host generation.
+
+If the user's host still runs pre-credential-cutover `aff1e4b0`/site `6586b383`,
+this new pin also contains the previously reviewed credential/CSP follow-up.
+Its three credential files must be prepared before activation; preserve the
+signing key, fixed session directory, cookie and old environment file for
+rollback as specified above. Do not infer that the credential cutover was
+activated merely because its source was published and built.
+
+Old/new BFF versions use the same session format and API contract. Existing
+sessions retain their original metadata; only a new login demonstrates this
+fix. Rollback to the preceding credential-capable generation restores the old
+header behavior without undoing already recorded metadata or losing sessions.
+Rollback all the way to the deployed environment-file generation retains the
+separate operator prerequisite above. No migration, forced logout, secret
+rotation, source-history rewrite or automatic deployment is required.
+
+No scope deviation is required by the inspected contract. Invalid-IP rejection
+before provider contact is the accepted failure disposition. Implementation,
+independent review, exact-head tests/builds and operator confirmation remain;
+this brief records source inspection only.

@@ -6,16 +6,20 @@ lifecycle: active
 
 ## Status
 
-- Phase: implementation, independent review and exact pinned builds are complete. The WebUI feature branch is published at `aff1e4b0`; its locked quick gate, ordinary HTTPS VM, GitHub CI and desktop/mobile smoke passed. The configuration feature branch is published at `6586b383` with a confctl-generated lock on that WebUI revision. Its no-build flake check and all seven affected NixOS machine builds passed, and the rendered backend and edge nginx configurations were inspected. The earlier Important OAuth logging finding is fixed at both hops and independently reviewed. The separate optional packaged-browser VM saw an unattributed `net::ERR_ABORTED` and its unpublished test-only commit was dropped; this remains a coverage gap, not a proven product defect. Operator checks for the installed host, secrets, API frame origins and real HTTPS browser flow remain. Nothing has been deployed or merged to a default branch. Feature branches are ready, awaiting merge approval.
+- Phase: the OAuth session identity change is implemented, reviewed, built and published on both development branches. WebUI `534caa83` passes pinned BFF/quick gates, packages, HTTPS VM and GitHub CI. Configuration `a4336908` pins it and passes build-free evaluation, independent review and the exact UI-host build. Ready for the user's controlled deployment and fresh-login acceptance; default-branch integration still awaits explicit approval. The live frontend previously reported WebUI `b86e202d`; the exact active site generation has not been independently established. Earlier optional packaged-browser VM aborts remain a coverage gap, not a proven product defect.
 - Identity verified with `dev-session current` and both environment markers.
 - Retained roster: `architect0` (design), `implementer0` (implementation),
   `reviewer0` (independent review). The one active WebUI checkout is
   `vpsadmin-webui`, clean on branch `2026-09-27-newadmin-integration` at
-  `aff1e4b0afa61de8474da2b5c8d9fcd2986f0cc2`. Its earlier history,
+  `534caa83a5f97d2b40b4a126886649b14dc9e8d3`. Its earlier history,
   package, module, VM and reconciliation worktrees are retained inactive
   snapshots, not competing candidates. The one active site checkout is
   `vpsfree-cz-configuration`, clean at
-  `6586b3839908f2e07a4b1601e8cf88c6446ad0cd`; its newly registered
+  `a433690828a23c13a8ccb3df0c07b9f2d915f0ca` after the generated
+  `534caa83` pin and prior CSP, credential-source, missing-probe-series and
+  host-only SSH authorization commits; `6586b383` was the last previously recorded deployed
+  site revision, but the exact current site generation needs operator confirmation.
+  Its newly registered
   reconciliation worktree is inactive and must not be used for edits.
 - Recommendation: adopt incrementally after the documented fixes; no rewrite
   is justified, and replacement of the legacy UI is not yet ready.
@@ -80,17 +84,144 @@ lifecycle: active
 - [x] Application/configuration implementation, independent review and builds.
 - [x] Publish both development branches and pin the exact WebUI revision through the configuration channel.
 - [x] Finish published-branch GitHub desktop/mobile smoke.
+- [x] Diagnose the live console CSP failure and verify the public heatmap origin.
+- [x] Add exact frame origins and replace environment secrets with systemd credentials in committed WebUI/site source.
+- [x] Complete independent four-lane follow-up and whole-branch review; no Blocking or Important findings.
+- [x] Add absent-series coverage for both newadmin public probes and pass its focused Prometheus fixture.
+- [x] Review and verify both follow-up branches, then provide operator credential and deployment instructions.
+- [x] Authorize Kerry's new deployment key only on the UI host; verify rendered SSH keys and publish the configuration branch.
+- [x] Correct OAuth session client IP and WebUI User-Agent; review, test and pin the new WebUI revision.
+- [x] Build the pinned host, finish exact-revision CI and publish the configuration development branch.
 - [ ] Operator acceptance on the actual VPS, API and browser.
-- [ ] Explicit default-branch integration and user-run deployment.
+- [ ] Explicit default-branch integration; user reports an initial deployment.
 
 ## Next actions
 
-The current published WebUI source is `aff1e4b0afa61de8474da2b5c8d9fcd2986f0cc2`
+The live frontend previously reported WebUI source `b86e202d` through its
+public `build-info.json`. The session identity defect was traced to the BFF's
+server-side OAuth token request: the trusted edge supplies the browser IP to
+`req.ip`, but the old BFF omitted `Client-IP` and sent Node's default
+User-Agent. The accepted `design.md` brief required a validated callback IP
+only for code exchange and the fixed `vpsadmin-webui` User-Agent on every
+provider token request. `implementer0` committed that BFF/test/docs change at
+WebUI `534caa83`. Pinned BFF tests passed 57/57, `ci:quick` passed, all 11
+module-eval results are true, and the flake no-build check passed. Exact-head
+frontend/BFF packages and package-content checks passed, followed by the
+ordinary HTTPS VM in 77 seconds. The first VM attempt was stopped before
+testing at a kernel-modules derivation; inspection proved it only assembled
+already-substituted inputs and did not compile kernel source. Logs are under
+`/tmp/newadmin-oauth-metadata-{quick-gate,flake-eval,packages-vm,vm-retry}/`.
+
+The fallback independent reviewer examined all 21 WebUI feature commits and
+the complete diff in four lanes, finding no Blocking or Important issue,
+obsolete branch history or migration. One Advisory remains: inherited
+`UserSessionsModel` displays the API IP first when both API and client IPs
+exist, while details/search include the client IP. The accepted OAuth brief
+has no SPA change, so this is a separate presentation follow-up. The same
+reviewer examined all 11 site feature commits and final diff after the exact
+`534caa83` generated pin at `a4336908`, with no findings, obsolete source
+approach or migration. Earlier generated pins are retained because their
+revisions were published/deployed. The exact site flake no-build check passed.
+The first host build exited at confctl's interactive confirmation without
+building. The noninteractive exact-head `confctl build --yes` then passed in
+109 seconds, producing generation `2026-09-29--15-33-14` for
+`cz.vpsfree/vpsadmin/int.vpsadmin-webui1`; no unexpected kernel compilation
+occurred (`/tmp/newadmin-oauth-metadata-site-host-build-retry/`). GitHub CI run
+`36575754287` was explicitly dispatched for the WebUI head and all three jobs
+passed: required nonbrowser checks, Chromium script regression and production
+build (`/tmp/newadmin-oauth-metadata-ci/`). Both development branches are
+published at the exact reviewed heads. The user retains deployment ownership.
+
+Before activation, use the site operations guide to verify the existing three
+`/private/vpsadmin-webui/` credential files and preserve the signing key, then
+run the normal dry-activate and switch against the pinned feature branch. After
+activation, verify build-info, health, a fresh OAuth login, a newly created
+vpsAdmin session's client IP and exact `vpsadmin-webui` User-Agent, and logout.
+Older session records retain their original metadata; do not use one as proof
+of the new code exchange. Roll back the paired host/WebUI generation if the
+new login fails, retaining the compatible session store and signing secret.
+
+The site feature branch is published at `c95890ec`. Its SSH authorization
+commit adds only the new public key in `data/ssh-keys.nix` and binds it to
+`kerrycze` on `int.vpsadmin-webui1`. Independent four-lane review found no
+Blocking, Important or Advisory findings and confirmed no migration. The
+exact target and control-host NixOS system builds passed. In their rendered
+root authorized-key files, the old Kerry fingerprint occurs once on each
+host; the new fingerprint `SHA256:OealF7ki4iyhmZ5Ogp74K/cP9hsDEgMC6n5YV6j3xeA`
+occurs once on the UI host and not on the control host. Both Kerry keys retain
+the expected admin identity options. The new key is not active until the user
+deploys this generation using existing access. After activation, verify login
+with the new key and keep the prior generation available for rollback.
+
+The follow-up review packet covers all 20 WebUI commits from `origin/main` to
+`b86e202d` and the eight site commits from `origin/master` to `4ed64fff`,
+with no database or persisted-format migration. Retained `reviewer0`
+(`gpt-6-sol`, xhigh, read-only) completed the general, architecture, scope and
+risk lanes with no Blocking or Important findings. Its two Advisories were
+missing absent-series alert coverage for the two public probes and a stale
+`docs/design/OPERATIONS.md` pointer. The former is corrected by a ninth site
+commit, `fcd5e673`, with its pinned Prometheus 3.12 fixture passing; the latter
+is accepted for this deployment because it changes no
+runtime or operator guide and a WebUI docs-only SHA change would require a new
+pin and rebuild. Revisit the pointer before default-branch integration. The
+reported inline-script CSP warning remains unattributed and needs controlled
+browser evidence after activation. The initial WebUI `aff1e4b0` and site `6586b383`
+revisions were already published and user-reported deployed; preserving those
+exact revisions is the reason for separate follow-up commits despite the
+branches being unmerged. The removed experimental packaged-browser check is
+absent from the current heads.
+
+Exact WebUI `b86e202d` quick evidence: pinned Node 24.21 BFF tests 53/53;
+`nix develop --command npm run ci:quick` passed in 88 seconds (log
+`/tmp/newadmin-webui-credentials-quick/ci-quick.log`); module-eval returned
+11 true results including credential interface and legacy coexistence;
+`nix flake check --no-build --impure --no-write-lock-file --option
+allow-import-from-derivation false` passed. Exact site `fcd5e673` no-override
+flake no-build passed, and the UI-host toplevel derivation evaluated to
+`/nix/store/x2b70na319l36cn1nss5dmx20rxhy40x-nixos-system-vpsadmin-webui1-26.05.20260927.cf5e765.drv`.
+The generated lock changed only WebUI `rev`, `narHash` and `lastModified`;
+root API/Nixpkgs follows are untouched. Site source hooks and both branch
+diff checks passed. Exact WebUI frontend/BFF and source/package-content builds
+passed, followed by the ordinary NixOS VM in 184 seconds at `b86e202d`.
+The pinned site-host build passed at `fcd5e673` in 31 seconds and rendered the
+BFF unit with exactly three `/private/vpsadmin-webui/` `LoadCredential` paths,
+no `EnvironmentFile`, and `UnsetEnvironment` for retired secret names. The
+rendered nginx static CSP contains the exact console and heatmap frame origins,
+retains the map origin and original script hash, and leaves console outside
+`connect-src`. Both development branches are published at the exact heads.
+During publication, `origin/master` of the site repo advanced from `46c6ae81`
+to `e47474e4` with unrelated staging/unstable input and Gemfile.lock updates.
+The feature branch remains based on its published/deployed baseline; reconcile
+that default-branch drift before any later integration, not during this scoped
+activation.
+The exact WebUI branch [CI run](https://github.com/vpsfreecz/vpsadmin-webui/actions/runs/36559880025)
+passed on `b86e202d`: required nonbrowser checks, production build and Chromium
+script regression. The remaining sequence is the user's credential preparation
+and controlled activation, followed by real browser and live API acceptance.
+
+The site now pins WebUI `b86e202d` through a confctl-generated lock commit;
+the exact pinned no-build flake check and UI-host derivation evaluation pass.
+The WebUI's pinned `ci:quick` and all 53 BFF tests pass; its reusable module
+evaluation passes all 11 cases, including removed `environmentFile`, mandatory
+credential paths and legacy PHP coexistence. The package, ordinary VM and
+pinned site-host builds passed. The separate inline-script CSP warning
+does not match the deployed index's allowed inline bootstrap hash, so this
+change does not widen `script-src`. The updated credential instructions are in
+`deployment-runbook.md` and the site operations guide; no real values are
+recorded here.
+An unauthenticated read-only HEAD of the live top-level document on 2026-09-29
+still returned `frame-src 'self' https://www.openstreetmap.org` without the two
+new origins, consistent with this follow-up not yet being deployed. The
+separate `https://console.vpsfree.cz/` root returned 404 and does not establish
+the tokenized console page's own CSP behavior.
+
+The current published WebUI source is `b86e202d039cbe1aa89f1ad0b7edf58808028a5f`
 on `vpsfreecz/vpsadmin-webui` branch `2026-09-27-newadmin-integration`.
-The published site configuration is `6586b3839908f2e07a4b1601e8cf88c6446ad0cd`
+The current published site configuration is `c95890ec8b9a8e8b9fa442935e946f7d0a20ffd7`
 on the branch of the same name in `vpsfreecz/vpsfree-cz-configuration`.
 The user authorized development-branch pushes; neither repository has approval
-for feature integration into `main` or `master`, and no deployment was run.
+for feature integration into `main` or `master`. No deployment was run by this
+session; the user reports an initial deployment of `newadmin.vpsfree.cz`.
 The first `vpsadmin-webui` channel update created only the new lock node/root
 edge; an exact-SHA channel set confirmed the revision. The existing
 `vpsadminServices` input remains at `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`.

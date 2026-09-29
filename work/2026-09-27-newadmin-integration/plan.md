@@ -14,6 +14,51 @@ After review and fixes, we will focus on integration of the new interface into v
 
 we will also move the repo to vpsfreecz/ namespace on github, I haven't decided on proper repo name yet... feel free to make suggestions. we're considering newadmin.vpsfree.cz, newui.vpsfree.cz, etc. in the future, it will replace vpsadmin.vpsfree.cz (current webui).
 
+## Deployed-service follow-up (2026-09-29)
+
+The user deployed `newadmin.vpsfree.cz` and observed a browser `frame-src`
+violation for `https://console.vpsfree.cz`. Add that exact origin and the
+public-API-confirmed `https://goresheat.vpsfree.cz` origin to the site's frame
+allowlist; leave the parent page's console connection allowlist empty. The
+separate blocked inline-script hash does not match the deployed application's
+one allowed inline bootstrap and is not an authorization to widen script CSP.
+
+Replace the three BFF secret values currently supplied through
+`/private/vpsadmin-webui.env` with systemd `LoadCredential` and application
+startup reads of credential files. This is a direct cutover, with no dual-format
+runtime migration path. The operator will supply the exact credential files
+under `/private/` before deploying the new generation; preserve the signing
+secret and session state to retain login sessions. Keep the already deployed
+feature history and default branches intact, and provide explicit file layout,
+validation, activation and rollback instructions. The architect owns the
+technical brief; the implementer owns code/configuration; the lead coordinates
+review, verification and operator handoff. The user deploys.
+
+## Deployment SSH key follow-up (2026-09-29)
+
+Authorize the two public keys in the user-supplied paste for deployment of
+`cz.vpsfree/vpsadmin/int.vpsadmin-webui1` as `kerrycze`. The first key already
+exists in `data/ssh-keys.nix`; add only the new deploy key there and reference it
+from this host's `vpsfconf.admins.kerrycze.publicKeys`. Preserve the existing
+key and SSH identity metadata, and do not extend the new key to other machines.
+Verify the resulting root authorized keys by evaluating the host and a control
+host. The user will deploy the configuration; this task does not activate it.
+
+## OAuth session identity follow-up (2026-09-29)
+
+The deployed WebUI's new OAuth sessions show the UI server's address and Node's
+default User-Agent. The edge and private nginx already pass a normalized client
+address to the BFF; its server-side authorization-code exchange does not send
+that address or an explicit User-Agent to vpsAdmin. Send the BFF's validated
+`req.ip` as vpsAdmin's existing `Client-IP` header for that exchange and identify
+all outbound BFF OAuth calls with the stable `vpsadmin-webui` User-Agent. The
+user chose the WebUI service identity rather than the browser's User-Agent for
+new sessions. Do not trust inbound `Client-IP` or raw forwarding headers, change
+the API's session contract, or widen proxy trust. Verify spoofing and both IP
+families in tests, pin the reviewed WebUI revision through the configuration
+channel, and build the affected host. The user deploys and verifies a fresh
+login. Existing session rows are unchanged; no migration is needed.
+
 ## Affected repositories
 
 Current implementation scope and operator decisions are in
@@ -51,7 +96,9 @@ part of this initial review. Set up a development team before later code work.
 
 ## Decisions
 
-- Preserve the existing solo roster for read-only investigation.
+- The initial review used a solo policy. The user's deployed-service follow-up
+  explicitly activates the already retained design, implementation and review
+  members for substantive changes.
 - Review immutable revisions; distinguish source findings, locally reproduced
   failures and operational assumptions.
 - Naming and hostname suggestions are proposals for user selection.
