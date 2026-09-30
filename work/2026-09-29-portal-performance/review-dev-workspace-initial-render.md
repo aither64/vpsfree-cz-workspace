@@ -13,9 +13,9 @@ commit is ready for package build and live acceptance.
 
 - Worktree: `worktrees/2026-09-29-portal-performance/dev-workspace`
 - Base: `ec05cb9f008cc8d6bccfd23e9b15a69d9a66fa40`
-- Head: `11928f2b657fa480493075521828899e88c1bdf2`
-- Commit: `11928f2 portal: defer live repository discovery`
-- Diff: `git diff ec05cb9f008cc8d6bccfd23e9b15a69d9a66fa40..11928f2b657fa480493075521828899e88c1bdf2`
+- Head: `d20bb64c45db1d803fc3b7a8c2956049860d72dd`
+- Commit: `d20bb64 portal: defer live repository discovery`
+- Diff: `git diff ec05cb9f008cc8d6bccfd23e9b15a69d9a66fa40..d20bb64c45db1d803fc3b7a8c2956049860d72dd`
 
 ## Intent and observed cause
 
@@ -53,9 +53,24 @@ verified live worktrees and report discovery warnings.
 - `portal/internal/web/details_test.go`: proves initial HTML keeps a stored
   repository without invoking discovery, then proves the details refresh
   invokes discovery and surfaces its warning.
+- `portal/internal/web/static/repository-review.js`: reconciles the refreshed
+  top-level discovery warning when the repository review panel is mounted.
+- `portal/internal/web/repository_review_browser_test.cjs`: covers warning
+  appearance, replacement and clearing while preserving the mounted card.
 - Focused tests passed with a writable temporary Go cache and `CGO_ENABLED=0`:
   `go test ./internal/web -run 'TestSession(PageUsesStoredRepositoriesWithoutDiscovery|DetailsDiscoversLateWorktreesAndCuratedArtifacts)$' -count=1`
 - `gofmt` and `git diff --check` passed.
+
+## Review finding and remediation
+
+The first review of unpushed head `11928f2` found one Blocking issue: the
+mounted repository review panel reconciled refreshed cards and counts but did
+not apply the details response's discovery warning. The remediation moves the
+refreshed warning into the mounted overview, replacing or clearing the prior
+warning while preserving hydrated cards. The focused Node mounted-panel
+contract, JavaScript syntax checks, focused Go tests and whitespace checks pass.
+The fix was folded into the same unpushed commit as `d20bb64`; mandatory review
+must rerun before package build.
 
 ## Remaining gates
 
