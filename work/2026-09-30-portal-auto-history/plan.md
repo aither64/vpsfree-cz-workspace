@@ -25,7 +25,10 @@ Replace the portal's persistent Load older transcript button with automatic, use
   Programmatic scroll restoration, resize, rendering, and filter changes must
   not create a request cascade.
 - Stop automatic retries after an error. Keep a centered `Retry` action that
-  repeats the failed older-page or continuity-repair read.
+  repeats the failed older-page or continuity-repair read. Preserve that failed
+  operation across unrelated newest-page refreshes.
+- Keep status-row transitions from shifting the visible-message anchor, including
+  while a request is pending or has failed.
 
 ## Decisions
 
@@ -34,8 +37,8 @@ Replace the portal's persistent Load older transcript button with automatic, use
 - The existing history row remains the accessible status region. Loading copy
   is `Loading earlier messages…`; existing reconnect, unavailable-server, and
   continuity-repair messages remain intact.
-- This is a bounded portal edit and goes directly to the ready implementation
-  member. No separate architecture brief is needed.
+- The ready architect records the event, state, anchor, and verification brief
+  in `design.md` before the implementation member edits application files.
 - The previous portal-performance initiative is complete. This follow-up uses a
   new branch and does not inherit its default-branch merge authorization.
 
@@ -45,8 +48,9 @@ Replace the portal's persistent Load older transcript button with automatic, use
   required. The browser continues to use the existing optional transcript-page
   endpoint and legacy fallback.
 - Browser and server assets ship in the same user-profile package generation.
-  Rolling back selects the previous UI and does not need data conversion or
-  cleanup because the change creates no state.
+  Workspace package switches are forward-only. Recovery builds and switches to
+  a newer package revision that restores the previous browser behavior; no data
+  conversion or cleanup is needed because the change creates no state.
 - Build and deploy the reviewed feature branch through the aitherdev workspace
   user profile. Do not change `vpsfree-cz-configuration` for this application
   iteration.
