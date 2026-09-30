@@ -8,7 +8,7 @@ reviewer in the file's `let` block:
 
 ```nix
 security = mkRole {
-  model = "gpt-6-sol";
+  model = "gpt-6.1-sol";
   effort = "xhigh";
   behavior = "reviewer";
   lifetime = "session";
@@ -27,12 +27,12 @@ members keep their saved instructions and settings; a member added later uses
 the currently installed catalog.
 
 The site catalog gives architects (`designer` in the catalog) and implementers
-workspace-write access. In new development teams, the lead uses GPT-6 Sol,
-the architect uses GPT-6 Astra/xhigh, and the implementer and independent
-reviewer use GPT-6 Sol. The architect writes the design and verification brief
-before substantive implementation and may edit assigned design documents and
-prototypes. The implementer makes application edits. The lead coordinates
-their work and reports a compact progress checklist at the end of every turn.
+workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`) for the lead,
+implementer and independent reviewer. Architects use GPT-6 Astra/xhigh. The
+architect writes the design and verification brief before substantive
+implementation and may edit assigned design documents and prototypes. The
+implementer makes application edits. The lead coordinates their work and reports
+a compact progress checklist at the end of every turn.
 Reviewers stay read-only, and a separate GPT-6 Luna/low utility watches long
 checks.
 

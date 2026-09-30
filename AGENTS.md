@@ -93,9 +93,9 @@ the parent's responsibility for choosing scope or accepting results.
   and investigate under the verification procedure's documented exceptions.
 - For a direct team, use the session's retained roster settings for members
   and the installed catalog for new presets. New architects use GPT-6 Astra
-  with xhigh effort; the lead, implementer, and reviewer use GPT-6 Sol, and
-  verification watchers use GPT-6 Luna/low. Existing members retain their
-  saved model, effort, access, and instructions.
+  with xhigh effort. New leads, implementers and reviewers use
+  `gpt-6.1-sol`; verification watchers use GPT-6 Luna/low.
+  Existing members retain their saved model, effort, access, and instructions.
   Substantive design uses xhigh. High is allowed for a bounded simple design or
   implementation unit only with a recorded reason. Independent review uses an
   eligible retained review-purpose member's saved model and effort, or a
