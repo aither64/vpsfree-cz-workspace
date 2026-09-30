@@ -35,10 +35,10 @@ head is approved and pushed.
 - Repository/worktree:
   `worktrees/2026-09-29-portal-performance/dev-workspace`
 - Base: `b9465ab61dfc4e9820e312b062cb7b96ed3f09b0`
-- Head: `4442cc9812b1ce63d11efe7d8a21ad7609028f0b`
+- Head: `ec05cb9f008cc8d6bccfd23e9b15a69d9a66fa40`
 - Commit under review:
-  `4442cc9 host: make portal bcrypt cost configurable`
-- Diff: `git diff b9465ab61dfc4e9820e312b062cb7b96ed3f09b0..4442cc9812b1ce63d11efe7d8a21ad7609028f0b`
+  `ec05cb9 host: make portal bcrypt cost configurable`
+- Diff: `git diff b9465ab61dfc4e9820e312b062cb7b96ed3f09b0..ec05cb9f008cc8d6bccfd23e9b15a69d9a66fa40`
 
 The single commit intentionally bundles the option, reconciliation behavior,
 provider-level evaluation/VM coverage, deterministic synthetic harness and
@@ -134,6 +134,13 @@ the implementer replaced it with a concrete Nix-computed pattern. The next
 build exposed the dropped intentional ShellCheck suppression; it was restored.
 Both findings were fixed before commit, so there is no superseded committed
 auth implementation in this incremental commit.
+
+The first long-VM attempt stopped before boot because Ruff reported two F541
+violations in the embedded Python test: two concatenated string fragments kept
+an unnecessary `f` prefix. The exact two-prefix removal was checked with
+Nix parsing, nixfmt, Ruff F541 selection and `git diff --check`, then folded
+into the still-unmerged commit as `ec05cb9`. It changes no test behavior or
+reviewed host-module contract, so the mandatory review did not need a rerun.
 
 ## Remaining checks after review
 

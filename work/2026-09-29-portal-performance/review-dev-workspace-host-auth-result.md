@@ -5,7 +5,7 @@
 - Model/effort: saved `gpt-6-sol` / `xhigh`
 - Lanes: General, Architecture and repetition, Scope and proportionality,
   Risk and compatibility
-- Commit: `4442cc9812b1ce63d11efe7d8a21ad7609028f0b`
+- Commit: `ec05cb9f008cc8d6bccfd23e9b15a69d9a66fa40`
 - Findings: none
 
 The reviewer confirmed that generated scripts contain matching concrete
@@ -21,3 +21,9 @@ regenerates cost 12 from the unchanged password and can restore the old latency.
 There are no migrations. The long NixOS VM test, CI, configuration review and
 build, deployment checks, and repeated live latency acceptance remain separate
 gates. This incremental review does not establish final branch readiness.
+
+After review, the first VM invocation stopped in its pre-VM Ruff check on two
+unnecessary `f` prefixes in concatenated test strings. Removing only those
+prefixes was directly verified and folded into the unmerged commit. The change
+is lint-only and does not alter the reviewed behavior, so no review rerun was
+required.
