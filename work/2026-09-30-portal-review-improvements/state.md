@@ -6,21 +6,34 @@ lifecycle: active
 
 ## Status
 
-- Phase: reviewed implementation and package verification complete; deployment
-  and live bridge-cluster verification are gated on model access.
-- Final clean published feature heads are generic `41c648c`, extension
-  `67bfbbd` and workspace `99e38751`. Their exact downstream pins agree.
+- Phase: reviewed Codex 0.159.2 candidate and aitherdev host generation
+  verified; portal user-profile transition awaits an idle session turn.
+- Clean feature heads are generic `41c648c`, extension `67bfbbd` and workspace
+  `0e00eab5`. The workspace head retains the reviewed downstream pins and adds
+  only the Nix-generated nested Codex dependency update. Its exact feature ref
+  is published at `0e00eab5`.
 - Mandatory four-lane review has no Blocking, Important or new Advisory
-  findings. Final-head GitHub checks, the six-case Playwright suite, generic
-  and workspace flake checks, the complete workspace package build, and the
-  locked WebUI frontend/BFF builds all pass.
+  findings. Generic/extension GitHub checks, the six-case Playwright suite,
+  generic flake check and locked WebUI frontend/BFF builds pass at their exact
+  unchanged heads. The workspace package build and all four flake checks pass
+  at new `0e00eab5`.
+- Retained reviewer0 rechecked all four lanes at workspace `0e00eab5` with its
+  saved GPT-6 Sol/xhigh settings. It found no Blocking or Important issue. The
+  existing aggregate deployment helper mismatch is an Advisory limitation:
+  configuration `devWorkspace` still selects the older generic runtime, but the
+  scoped aitherdev build/deploy takes system Codex from its separate root
+  `llm-agents` input and does not invoke that equality helper. The earlier
+  duplicated WebUI-pin Advisory remains accepted. Long candidate verification
+  may proceed; no migrations or obsolete feature history were found.
 - The portal user profile has not been switched and no session cluster state
   has been created. The candidate generation's cluster command correctly
   refuses use before activation.
-- The active account catalog still omits exact `gpt-6.1-sol`. Keep the current
-  profile and cluster untouched until that model is available; then activate
-  the candidate package and run the live bridge, TLS, OAuth, refresh, logout,
-  restart, seed-idempotence, PHP coexistence and provenance checks.
+- The installed portal profile still uses Codex 0.155.0; the running aitherdev
+  system now resolves Codex 0.159.2 at the exact binary proved by the isolated
+  same-account model probe. The corrected portal package and its protocol
+  checks pass. Portal profile activation has not happened yet: a read-only
+  `thread require-idle` check rejects this active conversation turn as
+  `inProgress`, which is the package switch's required session preflight.
 
 ## Development record
 
@@ -210,12 +223,62 @@ lifecycle: active
   package generation.
 - Active portal `/api/models` (read over its local Unix socket on 2026-09-30)
   lists eight models and does not include the requested `gpt-6.1-sol`. The
-  workspace policy retains that exact requested name; deployment requires
-  rechecking the candidate App Server account catalog and must not substitute
-  another model. [Official OpenAI model documentation](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
-  lists the exact model and supports the retained high/xhigh effort settings,
-  but does not establish this Codex account's access. Current availability is a
-  material deployment risk.
+  workspace policy retains that exact requested name. The separate 0.159.2
+  candidate probe below establishes account access for that binary; deployment
+  still requires packaged and active portal checks without substituting a
+  different model.
+- An isolated same-account App Server probe established the upgrade boundary:
+  installed 0.155.0 and system 0.158.0 omit exact `gpt-6.1-sol`, while the
+  `af40d966` package's Codex 0.159.2 returns that exact model. Architect0 added
+  the separate system/profile rollout and forward-recovery design. Implementer0
+  inspected the Nix-generated workspace lock update; because its sandbox could
+  not reach the Nix daemon or shared Git index, the lead executed the exact
+  requested generation and commit steps. Workspace commit `0e00eab5` changes
+  only `llm-agents` `ddc89534` to `af40d966` and its nested `bun2nix`/`nixpkgs`
+  closure. JSON, whitespace, flake metadata and package drv/out-path evaluation
+  pass. The existing top-level Ruby candidate-switch harness passed four
+  focused cases and 26 assertions; invoking its individual file alone failed
+  because the test's shared `TransitionHost` helper is loaded by the harness.
+  The mandatory related-revision review has since completed; candidate build,
+  packaged protocol check and active portal catalog were the next gates.
+- A fresh Luna/low watcher built the complete workspace package at exact
+  `0e00eab5` (exit 0, 237 seconds); the candidate link now resolves to
+  `/nix/store/aidlqw1p8dxijyd35jn7fxr6avzkqvc9-dev-workspace-0.2.0`.
+  Its packaged Codex resolves to the identical 0.159.2 store binary used by
+  the successful isolated catalog probe. Full build output is at
+  `/tmp/portal-review-workspace-build-0e00eab5.log`.
+- The same watcher ran `nix flake check --print-build-logs` at exact
+  `0e00eab5`; all four checks passed. Candidate `workspace-host check-codex`
+  accepts both the installed 0.155.0 transition source and candidate 0.159.2.
+  A same-account probe through pinned codex-web `d210d3f` returns one visible
+  exact `gpt-6.1-sol` with high/xhigh support. Logs are
+  `/tmp/portal-review-workspace-flake-check-0e00eab5.log` and
+  `/tmp/portal-model-probe-candidate-0e00eab5.log`.
+- Fresh Luna/low watchers built only `cz.vpsfree/machines/aitherdev` from clean
+  configuration head `ee99382`, dry-activated generation
+  `2026-09-30--21-42-52`, then switched that exact generation. All three
+  commands passed. The running system is
+  `/nix/store/cb7sziy9ijyf2sxw1ajdbjwrzj2ac591-nixos-system-aitherdev-26.05.20260928.7fc6f2c`,
+  reports Codex 0.159.2, remains `running`, has an active firewall and no
+  failed system/user units, and keeps the router/portal/Codex user services
+  active. Complete logs are `/tmp/portal-review-aitherdev-build-ee99382c.log`,
+  `/tmp/portal-review-aitherdev-dry-activate-2026-09-30--21-42-52.log` and
+  `/tmp/portal-review-aitherdev-switch-2026-09-30--21-42-52.log`.
+- Confctl's generation summary labels the `llm-agents` revision as nested node
+  `ddc89534` because its metadata lookup uses the colliding lock-node name. The
+  generation's actual `llm-agents.input` symlink equals the root input's
+  `af40d966` source; the built and activated system executables both proved
+  Codex 0.159.2. Treat the label as evidence-quality metadata, not package
+  selection evidence.
+- The candidate-initiated profile switch performed its preselection checks and
+  correctly refused because this bound thread's current turn is `inProgress`.
+  It restored the terminal client and left the old profile selected. Exact
+  retry after this conversation becomes idle:
+  `/nix/store/aidlqw1p8dxijyd35jn7fxr6avzkqvc9-dev-workspace-0.2.0/bin/`
+  `workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/`
+  `worktrees/2026-09-30-portal-review-improvements/workspace --from-candidate`.
+  The refusal log is `/tmp/portal-review-profile-switch-0e00eab5.log`. Do not
+  bypass the idle gate or invoke the ordinary old-helper switch.
 - An early capture review found a full tracked-file scan in the draft reader.
   The member proved Git's `ls-files -m`, `diff-files --name-only` and porcelain
   status can invoke hostile clean filters. The accepted [design clarification](design.md)
@@ -259,11 +322,16 @@ lifecycle: active
 
 ## Next actions
 
-- Complete the live bridge-cluster checks. Candidate portal activation, and
-  therefore use of its generation-bound cluster command,
-  remains gated on the exact `gpt-6.1-sol` appearing in this account's model
-  catalog. Keep the current user profile and cluster state untouched while that
-  prerequisite is absent.
+- In an idle window for this session, run the documented candidate entry from
+  the clean workspace feature source using the exact realized candidate command
+  recorded above.
+  The account model and packaged protocol gates now pass; retain the ordinary
+  journal, registration and generation preflights. If the candidate is selected
+  before an error, continue only through the newly selected installed helper,
+  never an older profile rollback. Then verify active portal models/settings,
+  boot only this session's bridge cluster and complete React OAuth/BFF/PHP
+  coexistence checks. Leave all feature heads unmerged pending explicit
+  default-branch integration approval.
 
 ## Documentation
 
@@ -271,6 +339,7 @@ lifecycle: active
 - [Final committed-change review packet](review-packet.md)
 - [Team sandbox verification note](../../notes/dev-workspace/2026-09-30-team-sandbox-verification.md)
 - [Git clean-filter fixture lesson](../../notes/dev-workspace/2026-09-30-git-clean-filter-control.md)
+- [Confctl input metadata alias lesson](../../notes/cross-project/2026-09-30-confctl-input-info-lock-alias.md)
 
 ## Repositories
 
@@ -287,7 +356,7 @@ lifecycle: active
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `99e387511cd9d6beac2b9cbb4a7c49306b394ab5`.
+  `0e00eab555f9a41136f13cad0f82662f5c2f717b`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
@@ -295,6 +364,11 @@ lifecycle: active
 - `vpsadmin`: same branch name and clean worktree under that initiative group,
   base/current head `5c76e3290481b297dcd0baa76d246133f0353d8f`;
   read-only source required by the cluster runner.
+- `vpsfree-cz-configuration`: same branch name and clean worktree under the
+  initiative group at existing upstream head
+  `ee99382c8c448a15347052a6964030f838cb0381`; it has no feature diff. Exact
+  aitherdev generation `2026-09-30--21-42-52` was built, dry-activated and
+  switched without integrating configuration history.
 
 ## Commands run
 

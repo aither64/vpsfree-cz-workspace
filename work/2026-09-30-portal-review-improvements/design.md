@@ -955,6 +955,233 @@ WebUI/API contract, trustworthy source override or OAuth/network proof is a
 concrete blocker for that feature's readiness, not a reason to silently broaden
 scope or mark the entire initiative complete.
 
+## Addendum: Codex 0.159.2 and exact GPT-6.1 Sol availability
+
+This authorized follow-up supersedes the earlier assumption that no Codex
+version change is needed. The implementation edit is confined to the workspace
+feature worktree's `flake.lock`. Deploy the existing configuration feature head
+to aitherdev separately; no generic runtime, extension, codex-web, configuration
+application code, model substitution or account configuration change is in scope.
+
+### Evidence and package ownership
+
+At inspection on 2026-09-30:
+
+| Consumer | Current selection | Required selection |
+| --- | --- | --- |
+| Workspace at `99e387511cd9d6beac2b9cbb4a7c49306b394ab5` | `vpsfree-dev-workspace` `67bfbbd653694e13e8d5aee53ef0f8e283694bf5` → `dev-workspace` `41c648cd92cb324037778be165e45e17c46bbc75` → lock node `llm-agents` `ddc89534b9a73cd99ff4d33656569ce3be6e6490`; built package reports Codex 0.155.0 | Change only the nested `vpsfree-dev-workspace/dev-workspace/llm-agents` input to `af40d966859ec4075ecc172dbb39e53f474dc5d9`, including its required dependency closure; Codex 0.159.2 |
+| Configuration at `ee99382c8c448a15347052a6964030f838cb0381` | Root `llm-agents` input resolves to lock node `llm-agents_2` at `af40d966859ec4075ecc172dbb39e53f474dc5d9`, already updated by generated commit `7ef14716c9da6b85c2edf7750de31ff40fe49c5d` | Deploy this existing head; no new input commit expected |
+| Configuration's separate `devWorkspace` input | `ec05cb9f008cc8d6bccfd23e9b15a69d9a66fa40` → its own `llm-agents` node at `ddc89534…` | Leave unchanged for this bounded correction; assess the existing host-contract mismatch below |
+| Running system executable | `/run/current-system/sw/bin/codex` reports 0.158.0 | 0.159.2 after the aitherdev system switch |
+
+The lock graph and current 0.155.0/0.158.0 executables were inspected directly.
+The lead evaluated and built the existing configuration channel at `af40d966`
+as `/nix/store/4mxlhqv9angcqgjw4c067nfpjlxv3d4h-codex-0.159.2`; the older
+running system has not deployed that head. A temporary probe called the
+existing codex-web `Client.ListModels` against an isolated App Server from that
+exact package using the same `/home/aither/.codex` account. It therefore used
+the actual client path below (`limit: 100`, `includeHidden: false`, cursor
+handling), rather than a separate model-list implementation. The lead's
+successful log, `/tmp/portal-model-probe-1592-cgo0.log`, was also read by the
+architect: nine models, exactly one matching `gpt-6.1-sol`, `isDefault: true`,
+`defaultReasoningEffort: low`, and supported efforts
+`low/medium/high/xhigh/max/ultra`. Both required `high` and `xhigh` are present.
+The reported catalog default does not replace this workspace's explicit role
+efforts. Nine returned models do not constitute a multi-page pagination test.
+
+The first probe failed to build Go because ambient cgo/gcc was unavailable;
+the probe passed with `CGO_ENABLED=0`. That first failure was a probe-toolchain
+issue, not an App Server or model-availability failure. The earlier isolated
+0.158.0 probe did not expose the exact model. This establishes picker-visible
+catalog support for the proved 0.159.2 binary/account/client combination, not
+universal account availability or a successful deployed turn. No live probe
+was repeated by the architect. The lead also reports that the nested workspace
+lock has been generated with `af40d966` and its transitive bun2nix/nixpkgs changes;
+the implementer inspected the graph and is awaiting this brief before commit.
+
+In configuration, `flake.nix` maps the `llm-agents` channel to the root input;
+`cluster/cz.vpsfree/machines/aitherdev/module.nix` selects it, and `config.nix`
+lines 15–18 and 247 install that input's Codex as a system package. Its
+`devWorkspace` input supplies the host module, not the user-profile application.
+The workspace calls extension `lib.mkPackage`, which calls generic
+`lib.mkPackage`; generic `flake.nix:36` passes its own llm-agents Codex to
+`nix/workspace-portal.nix:260`, installing `libexec/codex`. The host helper
+adopts this package binary into the retained active Codex root. Changing only
+the system package therefore cannot fix the portal's catalog.
+
+### Catalog and compatibility invariants
+
+Pinned codex-web `codex/client.go:3288-3318` requests `model/list` with
+`limit: 100, includeHidden: false`, follows every non-null `nextCursor`, and
+rejects missing data, empty cursors and repeated cursors. The portal exposes
+that result through `/api/models`; settings validators compare the exact
+`.model` string and each requested `supportedReasoningEfforts[].reasoningEffort`.
+Require exactly one visible `gpt-6.1-sol` with `high` and `xhigh`; a display name,
+upgrade hint, hidden-only entry or similar model is insufficient. Keep saved
+rosters unchanged and verify their existing models/efforts still work.
+
+[Official model documentation](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
+confirms the exact name and high/xhigh support. The
+[App Server documentation](https://learn.chatgpt.com/docs/app-server#list-models-modellist)
+states that returned models and efforts depend on client and account. Neither
+page proves this deployed account's access. Treat the new package's exact
+catalog and subsequent successful runtime behavior as separate acceptance gates.
+
+Every Codex version change is a protocol compatibility change. Keep browser,
+portal and terminal consumers on the same validated App Server binary. No
+workspace state schema changes are proposed; Codex may change its own retained
+state, so backward readability by 0.155.0/0.158.0 is not assumed. Do not edit
+authentication, force a catalog, disable validation, or rewrite retained roles
+to make the probe pass. Preserve credentials, retained roots and journals.
+
+### Pin, verification and deployment sequence
+
+1. In `worktrees/2026-09-30-portal-review-improvements/workspace`, update only
+   the nested input with Nix, for example
+   `nix flake update vpsfree-dev-workspace/dev-workspace/llm-agents` while it
+   resolves to the selected `af40d966…`. Verify the resulting exact revision
+   before accepting the lock: a later upstream head is not implicitly approved.
+   Review transitive changes, including llm-agents' nixpkgs closure, while
+   retaining extension `67bfbbd…`, generic `41c648c…`, codex-web and cluster pins.
+   Do not hand-edit hashes or use an unpersisted override as deployment evidence.
+   The configuration channel already owns its correct pin; no confctl input
+   update is needed. If that premise changes, stop and use the channel procedure.
+2. Run whitespace/lock-graph and workspace policy checks. Build the complete
+   workspace candidate and run its four flake checks through the authorized
+   verification lane. Use a fresh Luna watcher for long/uncertain checks after
+   the applicable review gate. Record exact source, store paths and versions;
+   earlier 0.155.0 package results do not validate this candidate. Confirm its
+   packaged Codex resolves to the proved 0.159.2 store path above.
+3. Run the candidate's own
+   `bin/workspace-host check-codex --codex <candidate>/libexec/codex/bin/codex`.
+   It generates the experimental JSON schema, validates the packaged codex-web
+   request corpus, and probes App Server startup. Also retain compatibility with
+   the currently active binary for transition preflight. Using the selected
+   account and candidate binary, initialize an isolated App Server and request
+   every `model/list` page with the exact flags above. Record only model IDs,
+   effort options, binary/source identity and pass/fail; never credentials.
+   A successful schema/startup check alone does not establish catalog access.
+   The recorded `Client.ListModels` probe already supplies isolated catalog
+   evidence if the final candidate retains that exact binary, client and
+   account configuration; repeat it if those inputs change. The deployed
+   portal catalog and live-turn checks remain required after activation.
+4. From the clean same-session configuration worktree at `ee99382c…`, enter
+   `nix develop`, then build only `cz.vpsfree/machines/aitherdev` with
+   `confctl build cz.vpsfree/machines/aitherdev`. Inspect the system closure and
+   activation delta; this deploys a complete host configuration, not a single
+   executable. Run `confctl deploy cz.vpsfree/machines/aitherdev dry-activate`,
+   review affected services, then the authorized
+   `confctl deploy cz.vpsfree/machines/aitherdev switch`. Check system Codex
+   0.159.2, host proxy/TLS/auth and user-service reachability. Stop at a failed
+   build/dry activation. Do not merge a branch or select other hosts.
+5. Only after candidate protocol/catalog checks and the host checks pass,
+   perform the separate forward user-profile switch from the workspace feature
+   source using the exact candidate entry:
+   `nix run .#workspace-host -- switch --source "$PWD" --from-candidate`.
+   All lifecycle journals, session/cluster ownership and generation
+   checks remain mandatory; busy sessions must reach the supported idle boundary.
+   Do not force-stop this session or clear journals. Verify registered agent
+   configuration/capacity, retained Codex root, running service executable,
+   portal and terminal versions, and absence of pending reconciliation.
+   Recheck `/api/models` on the actual portal, not merely the isolated process.
+6. Test new role defaults and an explicitly authorized live model/effort Apply:
+   exact model, high/xhigh availability, refresh-stable draft, successful
+   read-back and the next authorized turn. Preserve existing roster selections.
+   Then continue the previously required bridge-cluster verification gate:
+   successful services activation, legacy PHP availability, new React/BFF
+   health, correct origins, separate-client OAuth callback and refresh flow.
+   A healthy Codex/catalog or built WebUI package does not establish live cluster
+   readiness. No cluster reset, secret rotation or local-mode expansion follows.
+
+### Preflight concerns and recovery
+
+Workspace `bin/check-dev-workspace-deployment:28-35` requires
+exact generic runtime equality, so workspace `41c648c…` versus configuration
+`ec05cb9…` fails that existing check. This blocks that helper, not confctl
+deployment itself: the configuration does not invoke it, and the workspace
+flake check exercises it on fixtures rather than these two real checkouts.
+Source comparison found no differences under generic `nix/` between those
+exact revisions, including the consumed `nix/host-module.nix` and its imported
+`nix/host-paths.nix`. The host boundary is unchanged despite unequal complete
+runtime revisions. Record the helper as a known failing exact-equality check;
+validate site identity, socket/proxy/TLS/auth contracts in the actual host
+evaluation, dry activation and live checks. Do not bump configuration
+`devWorkspace` or weaken the helper merely to silence this limitation.
+
+Generic `libexec/workspace-host:582-665` uses the initiating helper's package
+Codex for registration probes/final marker comparison, while candidate
+activation adopts the candidate package Codex. `marker_has_semantics?` compares
+the exact binary path. A cross-version normal switch therefore has a source-level
+risk of reporting failure after selecting/activating the candidate. This was
+not reproduced live. Inspection of the installed package
+`/nix/store/8s0kg785hmz72law9psk19y8a2rig7gb-dev-workspace-0.2.0` followed the
+outer Nix wrapper into `libexec/.workspace-host-wrapped` and confirmed the same
+relevant dispatch/switch/reconciliation logic. Generic `41c648c…` source uses
+that logic too; the final lock-only candidate must retain it. The explicit entry,
+`nix run .#workspace-host -- switch --source "$PWD" --from-candidate`, is the
+planned route: it makes the initiating and activated package identical.
+
+The source proof is:
+
+- Dispatch at `libexec/workspace-host:417-422` enters the candidate path only
+  for `switch --from-candidate`. `with_candidate_generation_lock:2656-2664`
+  requires a valid installed profile and unchanged profile token under the
+  normal exclusive transition lock. The candidate must equal the single
+  package built from `--source` and must still be unselected (`603-607`).
+- Candidate journal preflight remains mandatory (`607`, `1913-1955`): lifecycle,
+  unfinished creation, portal-managed creation, fork/start and agent-registration
+  migration records block it. Cluster and runtime-authority checks follow.
+  Candidate `check-codex` validates the currently active binary and its own
+  target binary; `probe_registration_plans!` tests candidate argv/capacity
+  against target Codex before profile selection (`609-618`).
+- Quiescing and preselection failure restoration use the selected predecessor's
+  session helper (`1877-1910`), preserving its generation authority. Candidate
+  activation adopts target Codex, restarts consumers, and checks exact binary
+  path plus registration digest/inventory (`1758-1815`). The initiator now
+  expects that same target at the final marker check (`655`); no old/new binary
+  mismatch is introduced by this route.
+
+Before activation, run the existing disposable Ruby candidate-switch fixtures
+in the repository Nix environment:
+`ruby test/workspace_host/profile_transition_test.rb -n '/candidate_switch/'`.
+They cover exact-source success with a ready expanded team, source mismatch,
+missing installed profile, unfinished creation, and predecessor restoration on
+prepublication failure. The package's full tests cover the other transition
+failure cases. These fixture checks do not replace real target schema/startup,
+registration-argv, model/effort and account-state checks; actual selection and
+service adoption can only be accepted after the live switch. The architect
+inspected these tests and source without running a transition or test suite.
+GO for this existing route after all preceding gates pass; otherwise NO-GO
+and report the specific failure before considering a runtime code correction.
+Do not introduce an environment override or bypass a refusal.
+An older archive-recovery helper is
+explicitly tied to 0.155.0; unfinished lifecycle work requires its authorized
+recovery path, not an opportunistic upgrade or newly initiated archival.
+
+Before profile publication, preserve the working selected profile on failure
+and retry the same candidate command after the refusal is resolved. A busy
+session may leave a pending target; do not replace or delete it manually.
+After publication/adoption, a failure may leave the new profile selected and
+reconciliation pending. The candidate flag now deliberately refuses because
+its package is selected. Inspect the retained transition evidence, then use
+the installed `workspace-host switch --source <same-feature-source>` to retry
+from the selected candidate, or build a newer compatible recovery package.
+Use ordinary selected-generation reconciliation or session sync only for the
+specific recovery state reported by that operation; never call private helpers.
+`workspace-host rollback` remains refused. Never point the active Codex root
+back to an older binary or assume it can consume newly written account state.
+If system deployment needs recovery, assess the previous NixOS generation's
+host-module and account-state compatibility separately; a system rollback does
+not roll back the user-profile package, and returning to system 0.158.0 would
+remove the demonstrated exact-model support. Prefer a corrected forward host
+build when those conditions are not proven. Retain compatible API/schema and
+WebUI credentials/BFF state during any independent cluster recovery.
+
+The architect performed source/lock/version and supplied-log inspection plus
+this design update. The isolated catalog proof above is complete. Remaining
+candidate package/protocol checks, host build/deployment, profile transition
+and live cluster checks are pending operator/verification work.
+
 ## Lead decisions and handoff
 
 The lead accepted the three-repository edit boundary, forward-only portal

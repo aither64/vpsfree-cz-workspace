@@ -9,10 +9,11 @@
 - Reviewer: retained `reviewer0`, purpose `review`, read-only access,
   `gpt-6-sol`, xhigh effort. Use its saved settings without overrides.
 - Recheck lanes: general, architecture and repetition, scope and
-  proportionality, and risk and compatibility for the browser retry behavior
-  and final pin graph. The earlier whole-branch review covered all four lanes;
-  the immutable-result and deterministic Git fixture corrections were reviewed
-  separately.
+  proportionality, and risk and compatibility. The earlier whole-branch review
+  covered all four lanes. This related recheck adds the workspace-only
+  `llm-agents` pin correction and the two-stage system/profile rollout design;
+  it must confirm protocol, deployment and forward-recovery assumptions before
+  the candidate is built or activated.
 - Required workflow: read
   `~/.codex/skills/mandatory-change-review/SKILL.md` and all four selected lane
   references. Perform the review directly without subagents.
@@ -126,7 +127,7 @@ test revision. Final diff: 13 files, 1,213 insertions and 40 deletions.
 
 - Worktree: `worktrees/2026-09-30-portal-review-improvements/workspace`
 - Base after required rebase: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`
-- Head: `99e387511cd9d6beac2b9cbb4a7c49306b394ab5`
+- Head: `0e00eab555f9a41136f13cad0f82662f5c2f717b`
 - Published feature ref: `origin/2026-09-30-portal-review-improvements`
 
 Complete series, oldest first:
@@ -137,10 +138,16 @@ Complete series, oldest first:
    enablement, with a focused deployment-contract test.
 3. `99e387511cd9d6beac2b9cbb4a7c49306b394ab5` — exact extension, generic,
    selected API and WebUI lock resolution.
+4. `0e00eab555f9a41136f13cad0f82662f5c2f717b` — Nix-generated nested
+   `llm-agents` update to `af40d966859ec4075ecc172dbb39e53f474dc5d9`
+   (Codex 0.159.2), including only its `bun2nix` and `nixpkgs` dependency
+   closure.
 
-The behavior, site enablement and generated dependency composition are separate
-commits. The final lock resolves exact generic `41c648cd` and extension
-`67bfbbd6` revisions. Final diff: 8 files, 89 insertions and 34 deletions.
+The behavior, site enablement, generated dependency composition and Codex
+runtime correction are separate commits. The final lock retains exact generic
+`41c648cd` and extension `67bfbbd6` revisions while changing only the nested
+`llm-agents`, `bun2nix` and `nixpkgs` nodes. Final diff: 8 files, 99 insertions
+and 44 deletions.
 
 ## Migration and obsolete-history inventory
 
@@ -204,7 +211,12 @@ being preserved.
 - vpsAdmin WebUI: exact reviewed
   `534caa83a5f97d2b40b4a126886649b14dc9e8d3`; its Nix inputs follow the
   selected API and vpsAdminOS nixpkgs inputs.
-- Workspace policy/config consumer: head `99e387511cd9d6beac2b9cbb4a7c49306b394ab5`.
+- Workspace policy/config consumer: head `0e00eab555f9a41136f13cad0f82662f5c2f717b`.
+- The clean `vpsfree-cz-configuration` worktree remains at existing upstream
+  head `ee99382c8c448a15347052a6964030f838cb0381`. Its generated commit
+  `7ef14716c9da6b85c2edf7750de31ff40fe49c5d` already pins the aitherdev
+  system `llm-agents` channel to the same `af40d966` revision; no configuration
+  content change is proposed.
 
 Review representative provider and consumer contracts together: repository
 review APIs/manifest compatibility in the generic project, cluster provider
@@ -255,13 +267,30 @@ Quick checks completed before this review:
   `ruby test/deployment_contract_test.rb` passed 4/19; direct generated-catalog
   evaluation and `git diff --check` passed. After final pins,
   `nix eval --raw .#packages.x86_64-linux.default.drvPath` passed.
-- All three feature worktrees are clean and their exact heads are published.
+- Codex follow-up: the Nix-generated lock changes exactly `llm-agents`
+  `ddc89534` to `af40d966`, nested `bun2nix` `5765b061` to `07a5bfc8`, and
+  nested `nixpkgs` `c7def046` to `f45c6f04`; the node set, root ancestry and
+  all extension/generic/codex-web/WebUI pins are retained. `jq`,
+  `git diff --check`, `nix flake metadata --json` and package drv/out-path
+  evaluation pass. The candidate output is not yet realized, so candidate
+  protocol/schema/catalog checks remain after this review.
+- The configuration's existing `af40d966` input built Codex 0.159.2. An
+  isolated App Server using this account and the existing Codex Web
+  `ListModels` client returned nine models, including exact `gpt-6.1-sol`
+  with high and xhigh effort support. This proves source/account availability;
+  packaged candidate and active portal validation remain pending. The probe
+  output is at `/tmp/portal-model-probe-1592-cgo0.log`.
+- All three feature worktrees are clean. Generic and extension exact heads are
+  published; workspace `0e00eab5` is committed locally and awaits its
+  post-review feature push.
 
 Final-head generic Check run `36759668293` passed at `41c648cd`, and extension
 Check run `36759784918` passed at `67bfbbd6`, including its packaged
-`devcluster-check`. Generic `nix flake check`, workspace package build and
-workspace `nix flake check` passed at the exact heads; the workspace candidate
-is `/nix/store/j0d65mfyh3wi208iqzqk4cwnshyl473w-dev-workspace-0.2.0`.
+`devcluster-check`. Generic `nix flake check` passed at its exact head.
+Workspace package build and `nix flake check` passed at the prior `99e38751`
+head; the new `0e00eab5` Codex input requires a fresh package build and
+packaged protocol checks before deployment. The prior workspace candidate is
+`/nix/store/j0d65mfyh3wi208iqzqk4cwnshyl473w-dev-workspace-0.2.0`.
 The exact locked WebUI frontend and BFF also built at extension head. These
 checks establish package and test results; they do not establish a booted
 cluster or activated portal. Pending evidence is enabled cluster rendering

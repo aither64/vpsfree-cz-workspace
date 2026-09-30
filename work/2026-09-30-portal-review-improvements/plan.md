@@ -11,7 +11,13 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
 - `vpsfree-dev-workspace`: vpsAdmin development-cluster integration and the
   downstream runtime pin.
 - `workspace`: GPT-6.1 Sol team defaults, policy/docs, cluster domain and the
-  downstream vpsFree extension pin.
+  downstream vpsFree extension pin; update its transitive `llm-agents` lock so
+  the user-profile package contains a Codex build that exposes the requested
+  model.
+- `vpsfree-cz-configuration`: deploy only `aitherdev` from the registered
+  feature worktree at the existing head, which already pins the required
+  `llm-agents` revision; do not make a redundant input update or integrate the
+  configuration branch without separate approval.
 - `codex-web`: read-only protocol dependency; its existing settings request is
   atomic, so the portal draft and refresh fix belongs in `dev-workspace`.
 - `vpsadmin-webui`: read-only package/module dependency at reviewed head
@@ -28,7 +34,11 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
    vpsFree extension and workspace configuration/policy consumers.
 3. Run focused quick checks, commit each coherent repository change and perform
    the mandatory independent review before long Nix and cluster checks.
-4. Deploy the reviewed portal package through the user profile. Keep feature
+4. Prove the newer Codex model catalog and protocol compatibility, update the
+   workspace package lock, then build and deploy the existing aitherdev
+   configuration head whose configuration-owned `llm-agents` channel already
+   selects that revision.
+5. Deploy the reviewed portal package through the user profile. Keep feature
    branches unmerged until the user explicitly approves each default-branch
    integration.
 
@@ -52,6 +62,15 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
 - Run the React WebUI beside the PHP WebUI at
   `newadmin.aitherdev.int.vpsfree.cz`, using a separate newadmin container and
   loopback-only private listeners behind the existing services TLS edge.
+- Codex 0.155.0 does not expose `gpt-6.1-sol` for the active account, while an
+  isolated 0.159.2 App Server using the same account does. Update the user-profile
+  package lock to the proved `af40d966` revision and deploy configuration head
+  `ee99382c`, which already selects it. The running system is still 0.158.0
+  because that head has not been deployed. Preserve exact model validation.
+- `check-dev-workspace-deployment` rejects unequal complete generic revisions
+  (`41c648c` in workspace, `ec05cb9` in configuration). Their consumed host
+  module and paths are unchanged. Record this helper limitation and verify
+  actual host contracts; do not bump unrelated configuration `devWorkspace`.
 
 ## Compatibility and deployment
 
@@ -71,6 +90,14 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   reverting an older API/schema generation needs separate compatibility proof.
 - The portal is deployed from the workspace user profile. Deployment does not
   authorize integration of any feature branch.
+- The Codex update must pass the exact App Server protocol/schema contracts and
+  package-transition preflight before activation. Deploy aitherdev from the
+  configuration feature worktree with dry activation first. Retain the previous
+  system generation as recovery evidence; its use requires separate host and
+  Codex-state compatibility proof and does not roll back the user profile.
+  The user-profile application remains a separate forward-only transition with
+  its own generation and recovery journal, using the documented candidate entry
+  and failure boundaries in the design addendum.
 
 ## Documentation
 
@@ -92,4 +119,9 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
 - Cluster source/override tests, Nix evaluation and builds, then a booted-cluster
   check of TLS, build metadata, health/session endpoints, OAuth callback, local
   source override and the unchanged PHP WebUI.
+- Compare live model catalogs from the old and candidate Codex builds using the
+  same account, run the candidate package's protocol and flake checks, build and
+  dry-activate aitherdev, deploy it, and verify the running system and candidate
+  user-profile package use the intended Codex revision before switching the
+  portal profile.
 - Use the required Luna/low watcher for long builds and cluster verification.
