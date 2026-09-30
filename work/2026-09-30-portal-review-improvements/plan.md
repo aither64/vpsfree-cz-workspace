@@ -12,8 +12,12 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   downstream runtime pin.
 - `workspace`: GPT-6.1 Sol team defaults, policy/docs, cluster domain and the
   downstream vpsFree extension pin.
+- `codex-web`: read-only protocol dependency; its existing settings request is
+  atomic, so the portal draft and refresh fix belongs in `dev-workspace`.
 - `vpsadmin-webui`: read-only package/module dependency at reviewed head
   `534caa83a5f97d2b40b4a126886649b14dc9e8d3`.
+- `vpsadmin`: read-only same-session worktree required by the cluster runner;
+  its selected API source must support the new nondefault OAuth client seed.
 
 ## Approach
 
@@ -46,7 +50,8 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   exposing an origin-neutral internal/API representation. GitHub is the only
   provider in this change.
 - Run the React WebUI beside the PHP WebUI at
-  `newadmin.aitherdev.int.vpsfree.cz`.
+  `newadmin.aitherdev.int.vpsfree.cz`, using a separate newadmin container and
+  loopback-only private listeners behind the existing services TLS edge.
 
 ## Compatibility and deployment
 
@@ -59,13 +64,17 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
 - The development cluster seeds a separate non-default OAuth client and keeps
   its credentials/session secret outside the Nix store in ignored cluster
   state. The legacy PHP client and hostname remain active.
-- Portal rollback restores the previous UI/API together. Cluster rollback uses
-  the previous generation while retaining credential and BFF session state.
+- User-profile switches are forward-only. Portal recovery requires a newer
+  compatible forward switch, not selecting an older profile generation. If the
+  new cluster UI fails, update services with a known-good matching build or
+  disable only React while retaining its credentials and BFF session state;
+  reverting an older API/schema generation needs separate compatibility proof.
 - The portal is deployed from the workspace user profile. Deployment does not
   authorize integration of any feature branch.
 
 ## Documentation
 
+- The accepted technical and verification brief is [design.md](design.md).
 - Update workspace team-policy documentation for GPT-6.1 Sol.
 - Update generic portal and cluster documentation for origin links,
   uncommitted comparisons, atomic Codex settings and the new WebUI component.
