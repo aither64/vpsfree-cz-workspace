@@ -403,6 +403,132 @@ hosts/DNS and certificate SANs, reusing the existing CA-preserving leaf renewal.
 Add a distinct React WebUI service link alongside the legacy Web UI link in
 status/portal output; it uses the same seeded user accounts, never OAuth secrets.
 
+### Atomic build provenance, status and failure recovery
+
+Review correction at clean extension head `9e7ebebf611bd080fbfc8fca4253e5eab4cb9939`:
+`dev-clusters/vpsadmin/bin/devcluster:785-807` first lets Nix advance
+`result-config`, then writes or removes `webui-source.json`. A failure in that
+second publication aborts start/update but leaves the selected build and its
+status provenance inconsistent. The separate sidecar must stop being an
+authority. No compensating two-file rollback or new lifecycle journal is needed.
+
+Use the immutable JSON selected by `result-config` as the sole build/provenance
+record. `dev-clusters/vpsadmin/flake.nix:130-133` already exports
+`clusterConfig.json`; `nix/test.nix:1864-1867` already emits source revision and
+dirty labels. In the selected smoke input `vpsadminos` at `15802517`,
+`tests/make-test.nix:331-352` serializes `machines` and top-level `labels`
+together with `writeText`. The shared runner reads `machines` from that JSON
+(`dev-clusters/lib/devcluster_runner.rb:150-158`), while update reads its
+`.machines[<name>].toplevel` (`bin/devcluster:1371-1386`). Keep that output and
+runner interface intact; add source kind to the existing label object:
+
+```json
+{
+  "labels": {
+    "webuiSourceRevision": "<40 lowercase hexadecimal characters>",
+    "webuiSourceDirty": "false",
+    "webuiSourceKind": "pinned"
+  }
+}
+```
+
+The permitted dirty strings are exactly `"true"` and `"false"`; source kind is
+exactly `"pinned"` or `"worktree"`. Emit all three labels only for an enabled
+WebUI and force their validation during Nix evaluation before output
+publication. Disabled builds omit all three. Preserve the runner's string-label
+convention. Labels contain no credentials or mutable metadata-file paths.
+
+The launcher supplies kind from its actual source selection alongside the
+existing revision/dirty inputs, using
+`VPSADMIN_DEVCLUSTER_VPSADMIN_WEBUI_SOURCE_KIND` and the flake/module argument
+`vpsadminWebuiSourceKind`. Set it explicitly on every build (`worktree` for the
+same-session override, otherwise `pinned`); do not inherit a stale caller value
+or infer kind from a revision string. Explicit smoke path overrides also provide
+their intended source kind. Failed source inspection must fail the preparation
+instead of reporting clean state. Preserve the observed revision/dirty evidence
+in the output; status must not recompute it from the now-current worktree.
+The immutable output path identifies the built configuration. A dirty boolean
+is diagnostic evidence, not a replacement for artifact identity or a claim
+that a mutable worktree cannot change during a build.
+
+Remove post-build creation, replacement and removal of `webui-source.json`.
+Existing sidecars are ignored, including malformed or stale files, and are not
+deleted as a prerequisite to building, status or activation. Keep the existing
+single-output `nix build --out-link <result-config>` publication and Nix-managed
+GC-root behavior; do not rename a temporary Nix root into the live root or
+invent a second root/manifest transaction. Any selected-result validation after
+the build is read-only and must abort start/update before runner launch, copy
+or activation when it fails. It must never substitute an older build as if the
+requested build succeeded.
+
+For `status --json`, resolve `result-config` once and read that immutable target
+once. Validate and translate its three string labels into the existing schema-2
+`webuiSource: {revision, dirty, kind}`, with `dirty` a JSON boolean. Never combine
+labels from repeated resolutions or supplement them from a sidecar, current
+Git state, environment, or desired `config.json`. No root yet means source
+metadata is unavailable and the optional field is omitted. A legacy result
+with no WebUI labels also omits it. A present but unreadable/invalid result,
+partial label set, malformed revision/dirty value or unknown kind fails source
+reporting clearly; do not manufacture a valid provenance object. A legacy
+two-label WebUI result needs a normal rebuild to obtain kind, not a guess from
+its potentially stale sidecar.
+
+`webuiSource` describes the selected built configuration, not proof of the
+currently activated services VM. Derive its presence from result labels, not
+the mutable desired enable flag: changing that flag after a build cannot change
+the source of the selected result. Disabled legacy/new builds still emit no
+source field. Existing service links/accounts retain their configuration-based
+contract; a link and a running runner do not prove the new UI was activated.
+No portal schema bump, VM protocol, database or persistent cluster-identity
+migration is required.
+
+Publication and deployment have distinct failure boundaries:
+
+| Failure point | Selected result and required behavior |
+| --- | --- |
+| Credential/source preparation, evaluation or build fails before link publication | Preserve the previous result, or no result on first build; return failure and perform no runner/copy/activation action. |
+| Process interruption during result-link replacement | The result names a complete old or new immutable JSON, never new machines with old sidecar provenance. Resolve and validate it on retry; do not infer deployment from its presence. |
+| Link published, then Nix GC-root registration, read-only result validation or a later start/update step fails | A complete new result may remain selected. Return failure, report the failed phase, and stop before subsequent deployment actions. Do not promise restoration of the previous link. Retry the normal build to establish successful rooting/validation before using the selected result. |
+| Copy/activation/refresh fails after build success | Keep selected build provenance truthful; earlier machine updates may have completed. Preserve the existing partial-update reporting and verify actual VM state before retrying. |
+| Status read/parse fails | Return an explicit status error without fabricated or sidecar-derived provenance; status does not mutate the result or trigger a build. |
+
+This distinction follows the installed Nix 2.34.8 implementation:
+[`IndirectRootStore::makeSymlink` and `addPermRoot`](https://github.com/NixOS/nix/blob/2.34.8/src/libstore/indirect-root-store.cc#L4-L38)
+replace the out-link with a same-directory rename, then register its indirect
+root. Consequently even a nonzero Nix return can occur after link replacement.
+The guarantee is coherent configuration/provenance and no automatic deployment
+after failure, not rollback of every side effect or power-loss durability.
+
+Owning files are `dev-clusters/vpsadmin/bin/devcluster` (source selection,
+build path and status parser), `dev-clusters/vpsadmin/flake.nix` (kind input),
+`dev-clusters/vpsadmin/nix/test.nix` (validated labels),
+`test/{devcluster_commands_test.rb,devcluster_status_test.rb,devcluster_nix_smoke.rb}`
+and `dev-clusters/vpsadmin/README.md`. The shared runner and GC-root helper need
+no interface change. README recovery must say that failures before publication
+retain the prior result, while failures after publication can leave a complete
+new build selected without successful activation. Record the selected output
+path and failure phase for recovery; retry through the normal helper, retain
+credentials/BFF state, and preserve the compatible API/schema. Removing old
+sidecars, resetting the cluster or reverting the API is not a recovery step.
+
+Quick fixtures must inject failures after a successful mock build, not only
+before Nix changes its out-link. Cover both retained/no-prior-result cases,
+start/update, and enabled pinned/worktree/dirty/disabled variants. A mock Nix
+that publishes complete new JSON and then returns nonzero must leave status
+reading its coherent new labels and perform no runner/copy/activation. Inject
+post-build result-read/parser failure and verify the same stop boundary. Traps
+for the former sidecar `mktemp`/`jq -n`/`mv`/`rm` paths must prove those writes
+are no longer attempted. Stale/malformed sidecars must not affect status.
+Also test no-result and no-label legacy cases, partial/invalid labels, explicit
+kind, disabled builds, a desired-config edit after building, and link replacement
+between status resolution and reading: status returns one complete result or a
+clear read failure. No combination may report the new result with old metadata.
+Nix smoke evaluation must assert all three labels and their validation, reject
+invalid kind/revision/dirty inputs for enabled builds, and retain disabled old
+config coverage. Run package/build verification only through the existing
+post-review watcher workflow; no long checks or deployment are part of this
+design correction.
+
 ### Runtime settings, network trust and OAuth
 
 Configure the reviewed module with the HTTPS public origin, cluster API URL and
@@ -601,12 +727,14 @@ Data-format compatibility with earlier code remains valuable but is not
 authorization to bypass this transition policy. This corrects the plan's
 shorthand about restoring the previous portal generation.
 
-For a cluster service failure, retain previous successful VM build/result and
-the new credential/session state. Recover through the supported services update
-with a known-good matching frontend/BFF pair or a new config disabling only the
-React service, while retaining its state for later recovery. Confirm the runner's
-partial-update report before repeating. Do not reset the cluster, delete the
-OAuth client, rotate secrets, or touch another session to recover the PHP UI.
+For a cluster service failure after publication, the selected result may already
+be a complete new build; verify actual VM activation and the partial-update
+report separately. Retry the normal build to establish successful rooting and
+validation, then recover through the supported services update with a known-good
+matching frontend/BFF pair or a new config disabling only the React service.
+Retain credentials and BFF session state throughout recovery. Do not reset the
+cluster, delete the OAuth client, rotate secrets, or touch another session to
+recover the PHP UI.
 Keep the compatible selected API/schema when disabling React. Updating an older
 API can run its existing upstream migrations; this design introduces none and
 does not prove that a prior API/VM generation can read the resulting database.
@@ -662,14 +790,27 @@ Do not expand to long suites before the mandatory committed-change review.
 4. Verify real index, refs/reflogs, object inventory and working content are
    unchanged after capture/read/error/cancel. Configure hostile external diff,
    textconv/clean filters and fsmonitor in a fixture and prove none execute.
-   Preserve the clean-filter regression proof: in a disposable fixture, use
-   `ls-files -m`, `diff-files --name-only` and `status --porcelain` as positive
-   controls for the hostile filter despite disabled global attributes and
-   fsmonitor. Then assert the actual snapshot reader's stage/debug plus
-   no-follow stat discovery, capture and revalidation never execute it.
+   Prove the hostile clean filter is live with a deterministic disposable-fixture
+   control: `git -C <fixture> -c core.fsmonitor=false
+   -c core.attributesFile=/dev/null hash-object --path=README README`, without
+   `-w` or `--no-filters`. Require the filter marker, remove it, then assert the
+   actual snapshot reader's stage/debug plus no-follow stat discovery, capture
+   and revalidation leave all clean-filter/fsmonitor/external-diff/textconv
+   markers absent. Retain the hostile repository configuration and local
+   `.gitattributes` during capture; command-local control overrides must not
+   disable the fixture globally. Check forbidden markers after each capture.
+   Do not require `ls-files -m`, `diff-files --name-only` or `status --porcelain`
+   to run the filter on every fixture: their stat shortcuts can avoid content
+   comparison. They remain prohibited in snapshot discovery/revalidation.
+   Independently guard both actual `CaptureWorktree` calls with a test-local
+   PATH Git wrapper that records and rejects excluded commands before Git runs.
+   Require no rejection record and observed safe stage/debug calls after each
+   capture; marker absence alone does not prove command exclusion. Use the
+   bounded wrapper contract below, without changing the production runner.
    Snapshot reads stay byte-identical after the worktree/index changes. Test
    expiration, admission quotas, active-reader eviction, failed capture cleanup,
    archived/foreign IDs and retargeted worktree/registration denial.
+
 5. Provider fixtures prove current GitHub link/status/workflow behavior,
    unsupported origin denial, local review during GitHub failure, URL escaping,
    archived links and old manifest parsing. Existing durable review IDs must
@@ -690,6 +831,80 @@ Do not expand to long suites before the mandatory committed-change review.
    package provenance, listeners, normalized proxy headers, CA trust, credential
    path-only derivations, service ordering and PHP coexistence. No new kernel
    build is acceptable as an incidental effect of these changes.
+
+#### Clean-filter control and command-exclusion evidence
+
+The control clarification comes from the bounded CI investigation of
+`TestWorktreeCaptureSkipsUnchangedLargeFilesAndFilters` at generic head
+`13383c0`, with implementer-owned test edits present. In 20 fresh disposable
+repositories per case using installed Git 2.54.0, filter invocation counts were:
+
+| Working content | `ls-files -m` | `diff-files --name-only` | `status --porcelain` | `hash-object --path=README README` |
+| --- | --- | --- | --- | --- |
+| Unchanged | 20/20 | 20/20 | 20/20 | 20/20 |
+| Same-size edit | 20/20 | 19/20 | 20/20 | 20/20 |
+| Different-size edit | 0/20 | 0/20 | 0/20 | 20/20 |
+
+Each hash control left index bytes and object inventory unchanged; stage/debug
+reads left the filter marker absent in all 60 cases. These are scratch
+observations, not guaranteed invocation rates or a packaged test result.
+Git's [`ie_modified`/`ie_match_stat` paths](https://github.com/git/git/blob/v2.54.0/read-cache.c#L358-L461)
+can conclude from stat information or enter content comparison depending on
+size, mode and racy timestamps. In contrast,
+[`hash-object --path`](https://git-scm.com/docs/git-hash-object#Documentation/git-hash-object.txt---path)
+explicitly selects path-based conversion without needing an index comparison;
+omitting `-w` avoids writing an object. Replace the timing-dependent positive
+control loop, not the production reader or its negative safety assertions.
+No sleeps, index-stat rewriting, per-command retry-until-marker loop or reduced
+filter coverage is required. Keep same-size/racy and oversized-file behavior
+tests independent of this filter-liveness control.
+
+Filter liveness and excluded-command absence are separate assertions. A reader
+regression that calls a prohibited command on a stat-shortcut path can leave
+every hook marker absent. Add a narrow wrapper in the existing Go test:
+
+- Resolve the absolute real Git executable before prepending the wrapper's
+  temporary directory to PATH. Scope PATH with `t.Setenv` to a nonparallel
+  capture subtest; setup, commits and the `hash-object --path` control remain
+  outside it. Keep the hostile repository configuration and attributes active.
+- Parse the actual global prefix, skipping `--no-pager`,
+  `--no-replace-objects`, and the values paired with `-c`/`-C`. Fail unknown
+  prefixes rather than silently missing the subcommand. Match the command
+  position, not arbitrary argument substrings or paths.
+- Record and reject any `status` or `diff-files`. For `ls-files`, permit only
+  the four existing argument forms: `--stage -z`, `--debug -z`, `-v -z`, and
+  `--others --exclude-standard -z`. This excludes `-m`, `--modified`, combined
+  short flags such as `-mz`, and modified mode mixed with a permitted option.
+  Forward the current read-only commands, including the private `diff
+  --no-index --no-ext-diff --no-textconv`, with original arguments and exit
+  status intact. This is a fixture guard, not a general Git policy parser.
+- Write a rejection record before a distinct failing exit (for example 97),
+  and assert it is absent after each actual capture even if capture could
+  swallow or retry an error. Record permitted commands too; require observed
+  stage/debug reads so an unused wrapper cannot pass. Verify representative
+  excluded forms are rejected by the wrapper, then clear those self-check
+  records before capture. Keep all existing hook-marker checks after both
+  captures and do not clear capture violations between assertions.
+- Embed safely shell-quoted absolute executable and record paths in the
+  generated script. Do not depend on custom environment variables: the main
+  runner at `portal/internal/repository/review.go:162-170` retains PATH, while
+  the text-diff child at `review_worktree.go:761-764` supplies a restricted
+  explicit environment that also retains PATH. No production runner injection
+  interface or application change is needed.
+
+A separate disposable wrapper experiment rejected and recorded all six tested
+forms (`status --porcelain`, `diff-files --name-only`, and `ls-files` with `-m`,
+`--modified`, `-mz`, or `--stage -m -z`); forwarded all four safe index forms;
+and forwarded a private no-index diff with the reader's restricted environment
+and exit status 1. Quoted paths containing spaces and a single quote worked.
+No clean-filter marker appeared during guarded commands. This validates the
+wrapper approach, not the still-to-be-implemented Go capture assertion.
+The narrow implementation belongs in
+`portal/internal/repository/review_worktree_test.go`, reusing existing fixture
+helpers. It changes test observability only: snapshot quotas, filter prohibition,
+API/storage behavior, compatibility, deployment and recovery remain unchanged.
+Nix shell entry was blocked by the sandbox's read-only fetcher-cache SQLite
+path; repository toolchain/CI verification remains with the lead and implementer.
 
 ### Review and longer checks
 

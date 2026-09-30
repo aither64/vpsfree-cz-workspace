@@ -6,7 +6,24 @@ lifecycle: active
 
 ## Status
 
-- Phase: mandatory independent review.
+- Phase: reviewed implementation and package verification complete; deployment
+  and live bridge-cluster verification are gated on model access.
+- Final clean published feature heads are generic `41c648c`, extension
+  `67bfbbd` and workspace `99e38751`. Their exact downstream pins agree.
+- Mandatory four-lane review has no Blocking, Important or new Advisory
+  findings. Final-head GitHub checks, the six-case Playwright suite, generic
+  and workspace flake checks, the complete workspace package build, and the
+  locked WebUI frontend/BFF builds all pass.
+- The portal user profile has not been switched and no session cluster state
+  has been created. The candidate generation's cluster command correctly
+  refuses use before activation.
+- The active account catalog still omits exact `gpt-6.1-sol`. Keep the current
+  profile and cluster untouched until that model is available; then activate
+  the candidate package and run the live bridge, TLS, OAuth, refresh, logout,
+  restart, seed-idempotence, PHP coexistence and provenance checks.
+
+## Development record
+
 - The portal performance and automatic-history changes are merged on
   `dev-workspace/master` through `7c133c5`.
 - Retained delegated roster is ready: `architect0` (design, GPT-6 Astra/xhigh,
@@ -35,25 +52,24 @@ lifecycle: active
 - First-unit follow-up adds live browser fixtures for Load-all retention,
   bounded batching, failure retry and stale settings reads. Node syntax, Ruby
   creation tests (11 runs/73 assertions), repository navigation contracts and
-  `git diff --check` pass. The new Playwright fixture has not yet run; it is
-  reserved for the post-review browser check. The lead applied the required
+  `git diff --check` pass. The later Playwright result is recorded below. The lead applied the required
   user-facing-writing pass to the new guide paragraph and settings error.
 - The GitHub-only repository origin boundary preserves manifest and API
   compatibility.
   It is committed at `91cd9fbb3971f6b1c5227204b02df32ceb1d6c64` with
   a clean worktree. Repository, manifest, web/template and browser-navigation
   quick checks pass. The lead applied the user-facing-writing pass before
-  commit. Its live Playwright fixture remains for post-review verification.
-- The immutable staged/unstaged snapshot unit is committed at `13383c0` with
+  commit. Its live Playwright result is recorded below.
+- The immutable staged/unstaged snapshot unit is committed at `41c648c` with
   a clean `dev-workspace` feature worktree. It includes
   non-ignored untracked files, ephemeral comparison IDs and frozen previews.
   The full repository and web Go packages, focused worktree tests, Node syntax,
   browser navigation contract, formatting and diff checks pass. Early capture
   admission and in-progress reservations guard the 64/256 MiB quotas. Live
-  Playwright coverage remains for post-review verification. The lead applied
+  Playwright coverage is summarized below. The lead applied
   the user-facing-writing pass to snapshot errors, notices and guide text.
-- The side-by-side React WebUI cluster unit is committed at `6d233b8`; exact
-  generic runtime pin `9e7ebeb` completes the clean, published
+- The side-by-side React WebUI cluster unit is committed at `1d76d60`; exact
+  generic runtime pin `67bfbbd` completes the clean, published
   `vpsfree-dev-workspace` feature branch. Focused runner, status and
   seed Ruby fixtures, Nix parsing, shell syntax and the package derivation
   evaluation passed. The lead updated the root flake lock to the selected vpsAdmin API
@@ -63,27 +79,135 @@ lifecycle: active
   subflake instead pins the two selected source URLs in `flake.nix`, preserving
   its existing lock behavior. The lead applied the user-facing-writing pass to
   the extension README and checked visible errors/labels; no product WebUI
-  source or KB navigation contract changed. No build or cluster boot has run.
+  source or KB navigation contract changed. No live cluster boot has run;
+  package evidence at the final head is pending.
 - The workspace branch is committed, rebased on current shared master and
-  published at `db466845`. Separate commits select exact `gpt-6.1-sol` policy,
+  published at `99e38751`. Separate commits select exact `gpt-6.1-sol` policy,
   enable the distinct `newadmin` bridge site and pin the complete extension,
   generic runtime, API and WebUI dependency graph. Focused Ruby tests, direct
   catalog checks, lock inspection and package derivation evaluation pass.
   Existing roster state and all unrelated site settings are unchanged.
 - The [final review packet](review-packet.md) inventories every base-to-head
-  commit and final diff. Overall risk is high. All four mandatory lanes apply;
-  retained read-only `reviewer0` will review with its saved GPT-6 Sol/xhigh
-  settings. The inventory has no new migrations or obsolete branch history.
+  commit and final diff. Overall risk is high. Retained read-only `reviewer0`
+  completed all four mandatory lanes at the prior heads with its saved GPT-6
+  Sol/xhigh settings. The final test-only fixture amendment and exact pin
+  refresh are queued for an affected-lane recheck. The inventory has no new
+  migrations or obsolete history.
 - The automatically triggered extension Check run `36739199046` failed in the
   packaged enabled cluster evaluation: the selected NixOS module has no
   `systemd.services.<name>.requiresMountsFor` option. The failed log was
   inspected. The supported `unitConfig.RequiresMountsFor` correction was first
   committed as `ce596df6`. Reviewer0 classified the stale downstream pin as
   Blocking and requested clean-history consolidation. The correction is now
-  folded into owning cluster commit `6d233b8`; the exact extension and workspace
-  feature refs were force-updated with leases to `9e7ebeb` and `db466845`.
-  Workspace evaluation passes against the corrected pin. No long smoke rerun
-  has started.
+  folded into owning cluster commit `1d76d60`; the exact extension and workspace
+  feature refs were force-updated with leases to `0965e73` and `feda1f39`.
+  Workspace evaluation passes against the corrected pin. A fresh Luna/low
+  watcher observed replacement Check run `36742275523` to success at exact
+  superseded extension head `9e7ebeb`; its packaged devcluster smoke passed. Full output
+  is retained at `/tmp/portal-review-ci-36742275523.log`.
+- Reviewer0 completed the high-risk four-lane review of the earlier complete
+  series. It found no Blocking issue and one Important extension finding:
+  post-build `webui-source.json` publication could leave stale provenance after
+  `result-config` advanced. Architect0 recorded the immutable-result correction
+  in [design.md](design.md); implementer0 implemented it. The correction and
+  README entry-point link are folded into `1d76d60`; the then-current workspace
+  pin selected `0965e73`. Focused lead checks passed: status 3/45, runner 6/94, Bash/Nix
+  parsing, Ruby syntax and diff checks. The earlier snapshot TTL concern was
+  withdrawn because the accepted contract is process-local LRU/quota retention.
+  Reviewer0's affected-lane recheck at those heads found no Blocking or
+  Important issue. It confirmed the corrected source/result contract, clean
+  branch histories and sound selected-API migration lineage. Its Advisory is
+  that a future WebUI input-pin update could drift from the runner's hard-coded
+  pinned revision; they agree at this exact head. This is accepted for the
+  current review and should be checked on the next WebUI pin update. A fresh
+  Luna/low watcher observed extension Check run
+  `36749437628` to success at the exact `0965e73` head, including the packaged
+  `devcluster-check`; full output is at
+  `/tmp/portal-review-ci-36749437628.log`.
+- A fresh Luna/low watcher built the complete workspace package at `feda1f39`
+  to `candidate-workspace-package` (`/nix/store/n00scmqfidkwn0fw8i54c3dg8lz42f0d-dev-workspace-0.2.0`);
+  its package checks passed. This build is superseded by the corrected generic
+  test fixture and downstream pin refresh, so it must be repeated.
+- The post-review generic `nix flake check --print-build-logs` failed at
+  `TestWorktreeCaptureSkipsUnchangedLargeFilesAndFilters`: the test's own
+  `git diff-files --name-only` positive control did not always invoke the
+  hostile clean filter. The same focused test failed 2/10 repeated host runs.
+  The fixture writes same-length tracked and working README content, making
+  its control depend on Git's stat/racy handling. The corrected test uses
+  `hash-object --path` for deterministic filter liveness and a test-local PATH
+  guard that rejects unsafe Git commands on both captures. Twenty repeated
+  focused runs passed. This test-only correction was folded into the snapshot
+  commit and the exact downstream pins were refreshed with lease-protected
+  feature pushes. No application capture behavior failed in the original log.
+  Full check output is `/tmp/portal-review-generic-flake-check-13383c0.log`.
+- Generic `41c648c`, extension `67bfbbd` and workspace `99e38751` are the
+  current clean published feature heads. The Load all browser correction is
+  folded into its owning generic commit; later commits were replayed and the
+  final tree matches the locally tested fix exactly. Extension and workspace
+  locks select these exact sources. Earlier CI/build results were superseded;
+  final-head results are recorded below.
+- Retained independent `reviewer0` completed the final exact-head affected-lane
+  recheck using saved GPT-6 Sol/xhigh settings. It found no Blocking,
+  Important or new Advisory issue. It confirmed the generic test-only change,
+  exact downstream pins, clean complete histories, and sound selected-API
+  migration lineage. The earlier hard-coded WebUI-pin drift Advisory remains
+  accepted for these matching exact revisions.
+- GitHub Check run `36755854565` completed successfully at former generic
+  `9ef5858` (fast job; host job skipped by branch policy). Extension Check run
+  `36756041388` completed successfully at former `87f6133`, including its
+  packaged cluster check. Both heads were later superseded. The workspace
+  repository has no branch Check run.
+- A fresh GPT-6 Luna/low watcher ran generic `nix flake check
+  --print-build-logs` at exact `9ef5858`: exit 0 after 334 seconds, all checks
+  passed. Its VM test used a prebuilt kernel; no unexpected kernel build began.
+  Full output: `/tmp/portal-review-generic-flake-check-9ef5858.log`.
+- The post-review Playwright `TestQuestionBrowser` run at `9ef5858` failed in
+  `repository_review_live_browser_test.cjs`: the fixture expected one failed
+  preview with 11/12 loaded, but observed 12/12 loaded. The other five browser
+  subtests passed. The cause and correction are recorded in the next item.
+  Full output:
+  `/tmp/portal-review-playwright-9ef5858.log`.
+- The browser failure came from an IntersectionObserver read silently retrying
+  a failed preview. Generic `41c648c` leaves failed records alone during
+  automatic reads while retaining explicit Retry and priority file actions.
+  The live fixture now verifies the injected failure and uses a precise
+  submodule-notice selector. The focused Playwright repository scenario passes
+  at the final generic head; Node syntax, repository browser contracts and
+  diff checks pass. The full rerun result is recorded below.
+- Retained independent `reviewer0` completed all four affected lanes at exact
+  `41c648c` / `67bfbbd` / `99e38751` using saved GPT-6 Sol/xhigh settings.
+  There are no Blocking, Important or new Advisory findings. It confirmed the
+  explicit retry guard, asset versions, exact pins, five/two/three coherent
+  feature commits and no new migration. The earlier matching WebUI pin
+  duplication Advisory remains accepted. Selected API lineage supports the
+  fresh disposable cluster; older-API database rollback is not proved.
+- A fresh GPT-6 Luna/low watcher ran the full Playwright
+  `TestQuestionBrowser` suite at exact generic `41c648c`: all six browser
+  subtests passed (Go test 83.390 seconds). Full output:
+  `/tmp/portal-review-playwright-41c648c.log`.
+- A fresh GPT-6 Luna/low watcher reran generic `nix flake check
+  --print-build-logs` at exact `41c648c`: exit 0 after about 3m13s, all checks
+  passed. Full output: `/tmp/portal-review-generic-flake-check-41c648c.log`.
+- Generic GitHub Check run `36759668293` succeeded at exact `41c648c` (fast
+  job; host job skipped by branch policy). Extension Check run `36759784918`
+  also succeeded at exact `67bfbbd`, including its packaged cluster check.
+- A fresh GPT-6 Luna/low watcher built the complete workspace package at exact
+  `99e38751`: exit 0 after 241 seconds. The candidate link resolves to
+  `/nix/store/j0d65mfyh3wi208iqzqk4cwnshyl473w-dev-workspace-0.2.0`.
+  Packaged Ruby, Go and asset checks passed; full output is at
+  `/tmp/portal-review-workspace-build-99e38751.log`. A separate final-head
+  `nix flake check --print-build-logs` also passed (four checks); its output is
+  `/tmp/portal-review-workspace-flake-check-99e38751.log`.
+- The extension's exact locked WebUI frontend and BFF both evaluate to build
+  metadata for revision `534caa83a5f97d2b40b4a126886649b14dc9e8d3`.
+  A fresh GPT-6 Luna/low watcher built both exact locked packages at extension
+  head `67bfbbd` (exit 0, 48 seconds): frontend
+  `/nix/store/k9cd0z3iad2wysqps4xjzvfx7vcz9irq-vpsadmin-webui-frontend-1.0.0`
+  and BFF `/nix/store/5aifx8zh3s3da64qa0b6r282nwygy204-vpsadmin-webui-bff-0.1.0`.
+  Full output: `/tmp/portal-review-webui-package-build-67bfbbd.log`. Live
+  bridge-cluster proof remains pending. The candidate `vpsadmin-devcluster`
+  command correctly refuses before activation because it belongs to a newer
+  package generation.
 - Active portal `/api/models` (read over its local Unix socket on 2026-09-30)
   lists eight models and does not include the requested `gpt-6.1-sol`. The
   workspace policy retains that exact requested name; deployment requires
@@ -126,38 +250,44 @@ lifecycle: active
 - [x] Complete and accept the architecture/verification brief.
 - [x] Create/register project worktrees from current remote defaults.
 - [x] Implement and commit all intended changes with quick checks.
-- [ ] Complete mandatory independent review and reconcile findings.
-- [ ] Run long integration/build verification through a Luna watcher.
+- [x] Complete mandatory independent review and reconcile findings.
+- [ ] Finish long integration/build verification through Luna watchers (final
+  generic/browser/workspace, extension CI and WebUI package checks passed; live
+  bridge checks remain).
 - [ ] Deploy the reviewed portal package and verify it is ready for use.
-- [ ] Prepare whole-branch history/migration inventory and handoff.
+- [x] Prepare the whole-branch history and migration inventory for handoff.
 
 ## Next actions
 
-- Reconcile all four mandatory review lanes, including the Nix unit-option fix
-  and downstream pin, before rerunning the packaged smoke and other long checks.
+- Complete the live bridge-cluster checks. Candidate portal activation, and
+  therefore use of its generation-bound cluster command,
+  remains gated on the exact `gpt-6.1-sol` appearing in this account's model
+  catalog. Keep the current user profile and cluster state untouched while that
+  prerequisite is absent.
 
 ## Documentation
 
 - [Design and verification brief](design.md)
 - [Final committed-change review packet](review-packet.md)
 - [Team sandbox verification note](../../notes/dev-workspace/2026-09-30-team-sandbox-verification.md)
+- [Git clean-filter fixture lesson](../../notes/dev-workspace/2026-09-30-git-clean-filter-control.md)
 
 ## Repositories
 
 - `dev-workspace`: branch `2026-09-30-portal-review-improvements`, worktree
   `worktrees/2026-09-30-portal-review-improvements/dev-workspace`, initial base
   `7c133c562ac51076c1f45af46e180f8bfbabe836`, published head
-  `13383c08a6483d0cf3f37d24548d317fc82461dd`.
+  `41c648cd92cb324037778be165e45e17c46bbc75`.
 - `vpsfree-dev-workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
   `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
-  head `9e7ebebf611bd080fbfc8fca4253e5eab4cb9939`.
+  head `67bfbbd653694e13e8d5aee53ef0f8e283694bf5`.
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `db4668453f2f36785beec4d3396b1fc6ccc9502f`.
+  `99e387511cd9d6beac2b9cbb4a7c49306b394ab5`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
