@@ -52,8 +52,8 @@ lifecycle: active
   admission and in-progress reservations guard the 64/256 MiB quotas. Live
   Playwright coverage remains for post-review verification. The lead applied
   the user-facing-writing pass to snapshot errors, notices and guide text.
-- The side-by-side React WebUI cluster unit is committed at `d235836`; exact
-  generic runtime pin `516b3c8` completes the clean, published
+- The side-by-side React WebUI cluster unit is committed at `6d233b8`; exact
+  generic runtime pin `9e7ebeb` completes the clean, published
   `vpsfree-dev-workspace` feature branch. Focused runner, status and
   seed Ruby fixtures, Nix parsing, shell syntax and the package derivation
   evaluation passed. The lead updated the root flake lock to the selected vpsAdmin API
@@ -65,7 +65,7 @@ lifecycle: active
   the extension README and checked visible errors/labels; no product WebUI
   source or KB navigation contract changed. No build or cluster boot has run.
 - The workspace branch is committed, rebased on current shared master and
-  published at `0cf75120`. Separate commits select exact `gpt-6.1-sol` policy,
+  published at `db466845`. Separate commits select exact `gpt-6.1-sol` policy,
   enable the distinct `newadmin` bridge site and pin the complete extension,
   generic runtime, API and WebUI dependency graph. Focused Ruby tests, direct
   catalog checks, lock inspection and package derivation evaluation pass.
@@ -74,6 +74,16 @@ lifecycle: active
   commit and final diff. Overall risk is high. All four mandatory lanes apply;
   retained read-only `reviewer0` will review with its saved GPT-6 Sol/xhigh
   settings. The inventory has no new migrations or obsolete branch history.
+- The automatically triggered extension Check run `36739199046` failed in the
+  packaged enabled cluster evaluation: the selected NixOS module has no
+  `systemd.services.<name>.requiresMountsFor` option. The failed log was
+  inspected. The supported `unitConfig.RequiresMountsFor` correction was first
+  committed as `ce596df6`. Reviewer0 classified the stale downstream pin as
+  Blocking and requested clean-history consolidation. The correction is now
+  folded into owning cluster commit `6d233b8`; the exact extension and workspace
+  feature refs were force-updated with leases to `9e7ebeb` and `db466845`.
+  Workspace evaluation passes against the corrected pin. No long smoke rerun
+  has started.
 - Active portal `/api/models` (read over its local Unix socket on 2026-09-30)
   lists eight models and does not include the requested `gpt-6.1-sol`. The
   workspace policy retains that exact requested name; deployment requires
@@ -123,8 +133,8 @@ lifecycle: active
 
 ## Next actions
 
-- Run all four mandatory review lanes against the complete three-branch packet,
-  reconcile findings and only then begin long verification.
+- Reconcile all four mandatory review lanes, including the Nix unit-option fix
+  and downstream pin, before rerunning the packaged smoke and other long checks.
 
 ## Documentation
 
@@ -142,12 +152,12 @@ lifecycle: active
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
   `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
-  head `516b3c83aaa2fba6379570412d0014d9210932bc`.
+  head `9e7ebebf611bd080fbfc8fca4253e5eab4cb9939`.
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `0cf751208472bbceb2e9f027e90c7c6682a600d6`.
+  `db4668453f2f36785beec4d3396b1fc6ccc9502f`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.

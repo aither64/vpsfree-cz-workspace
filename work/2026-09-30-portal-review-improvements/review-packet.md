@@ -78,27 +78,30 @@ remains. Final diff: 30 files, 3,365 insertions and 361 deletions.
 
 - Worktree: `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`
 - Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`
-- Head: `516b3c83aaa2fba6379570412d0014d9210932bc`
+- Head: `9e7ebebf611bd080fbfc8fca4253e5eab4cb9939`
 - Published feature ref: `origin/2026-09-30-portal-review-improvements`
 
 Complete series, oldest first:
 
-1. `d235836ba8a66e9805b1ab24999d0401d996729a` — optional React Web UI cluster
+1. `6d233b8249b6ec3f8d02b9685a0349d699467376` — optional React Web UI cluster
    service, credential lifecycle, OAuth seed, proxying, status and tests.
-2. `516b3c83aaa2fba6379570412d0014d9210932bc` — exact generic runtime pin to
+2. `9e7ebebf611bd080fbfc8fca4253e5eab4cb9939` — exact generic runtime pin to
    the reviewed portal branch.
 
 The cluster implementation and its downstream dependency pin remain separate
 for review and revert. The generated nested cluster `flake.lock` was deliberately
 omitted because that subflake previously floated unrelated vpsAdminOS/status
 inputs; the root lock owns the exact selected API/WebUI/runtime resolution.
-Final diff: 12 files, 879 insertions and 29 deletions.
+An automatically triggered check against the first published head found that
+the selected NixOS module exposes `RequiresMountsFor` through `unitConfig`. The
+one-line correction was folded into the owning unmerged cluster commit before
+this final history. Final diff: 12 files, 879 insertions and 29 deletions.
 
 ### Coordination workspace policy and site configuration
 
 - Worktree: `worktrees/2026-09-30-portal-review-improvements/workspace`
 - Base after required rebase: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`
-- Head: `0cf751208472bbceb2e9f027e90c7c6682a600d6`
+- Head: `db4668453f2f36785beec4d3396b1fc6ccc9502f`
 - Published feature ref: `origin/2026-09-30-portal-review-improvements`
 
 Complete series, oldest first:
@@ -107,7 +110,7 @@ Complete series, oldest first:
    catalog assertions and owning policy documentation.
 2. `bcba17a00335874eaa8ffe664a279637a0ab01ee` — site domain and bridge cluster
    enablement, with a focused deployment-contract test.
-3. `0cf751208472bbceb2e9f027e90c7c6682a600d6` — exact extension, generic,
+3. `db4668453f2f36785beec4d3396b1fc6ccc9502f` — exact extension, generic,
    selected API and WebUI lock resolution.
 
 The behavior, site enablement and generated dependency composition are separate
@@ -163,13 +166,13 @@ being preserved.
 - Generic portal owner: `aither64/dev-workspace`, head `13383c08...`.
   Consumers in this change are the vpsFree extension and final workspace
   package.
-- vpsFree cluster provider owner: `vpsfreecz/dev-workspace`, head `516b3c83...`.
+- vpsFree cluster provider owner: `vpsfreecz/dev-workspace`, head `9e7ebebf...`.
   Consumer is the workspace package/site configuration.
 - vpsAdmin API: exact `5c76e3290481b297dcd0baa76d246133f0353d8f`.
 - vpsAdmin WebUI: exact reviewed
   `534caa83a5f97d2b40b4a126886649b14dc9e8d3`; its Nix inputs follow the
   selected API and vpsAdminOS nixpkgs inputs.
-- Workspace policy/config consumer: head `0cf751208472bbceb2e9f027e90c7c6682a600d6`.
+- Workspace policy/config consumer: head `db4668453f2f36785beec4d3396b1fc6ccc9502f`.
 
 Review representative provider and consumer contracts together: repository
 review APIs/manifest compatibility in the generic project, cluster provider
