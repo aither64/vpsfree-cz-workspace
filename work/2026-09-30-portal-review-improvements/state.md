@@ -365,6 +365,7 @@ lifecycle: active
 
 - [Design and verification brief](design.md)
 - [Final committed-change review packet](review-packet.md)
+- [Aitherdev rollout record](rollout.md)
 - [Team sandbox verification note](../../notes/dev-workspace/2026-09-30-team-sandbox-verification.md)
 - [Git clean-filter fixture lesson](../../notes/dev-workspace/2026-09-30-git-clean-filter-control.md)
 - [Confctl input metadata alias lesson](../../notes/cross-project/2026-09-30-confctl-input-info-lock-alias.md)
