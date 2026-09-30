@@ -43,6 +43,14 @@ whitespace checks are sufficient; no lane rerun is required.
 - No code or dependency barrier prevents fast-forward integration of all five
   reviewed heads.
 
+After these coordination-record corrections advanced shared `master`, the
+single workspace feature commit was cleanly rebased from reviewed head
+`c3944c68e7efc29de9219862074defe8d6547ebc` to
+`35bd0094dcca589de1e9d32a559b383c684faa2c`. `git range-diff` reports an exact
+match, both feature-owned flake blob IDs are unchanged, the flake check passes,
+and the derivation and package output remain identical. This is the clean
+review-preserving rebase allowed by the Git procedure, not a behavioral change.
+
 ## Residual gaps
 
 - Live older-history cursor traversal has less coverage than recent-page loading.
