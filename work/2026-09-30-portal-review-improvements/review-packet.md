@@ -58,7 +58,10 @@ builds and the corrected services update follow this review.
 ## Exact repositories, histories and final diffs
 
 All four feature refs are published and match the clean local heads listed
-below.
+below. The complete file inventory is in [final-diff-inventory.md](final-diff-inventory.md).
+These heads are candidates for deployment. Default-branch integration is still
+unapproved; the workspace will need a current-master compatibility/rebase gate
+before any fast-forward integration, while retaining the actual deployed refs.
 
 ### Generic `dev-workspace`
 
@@ -91,17 +94,19 @@ snapshot protocol, provider shim or fixup commit remains.
 - Worktree:
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`
 - Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`
-- Head: `111614244daba59f2d347ac2fd222a0df1349ea0`
+- Head: `8e04f2626a3abd492768f15ae8d843c8e527f2cd`
 
 Complete series, oldest first:
 
-1. `673f7c3fbc527168eb4e22ddd9121f8046bfa0e8` — optional React WebUI cluster
+1. `1d76d6032b40cd5fb035c26a6b9c94c4aa48e109` — optional React WebUI cluster
    service, credential lifecycle, OAuth seed, edge/private proxying, immutable
-   source provenance, enabled-container autostart and tests.
-2. `8229bab178f9a1e46d33e96b2c812b85d5aad651` — select the reviewed generic
+   source provenance and tests.
+2. `67bfbbd653694e13e8d5aee53ef0f8e283694bf5` — select the reviewed generic
    portal runtime.
-3. `111614244daba59f2d347ac2fd222a0df1349ea0` — select the final generic
+3. `e0f98557d688d8561be97d3dc6b1964a0304e383` — select the final generic
    Origin-label refinement.
+4. `8e04f2626a3abd492768f15ae8d843c8e527f2cd` — start the optional React
+   container on boot and assert enabled ordering and disabled absence.
 
 Final diff: 13 files, 1,236 insertions and 49 deletions. Cluster behavior and
 dependency selection remain separate for review/revert. The generated nested
@@ -111,17 +116,20 @@ existing resolution contract; the root lock owns exact API/WebUI/runtime pins.
 The live cluster exposed that the first implementation left
 `container@newadmin.service` linked but not wanted by `machines.target`. The
 final tree sets `containers.newadmin.autoStart = true` and asserts enabled
-autostart, seed ordering and disabled absence. The temporary corrective commit
-`8e04f262` was folded into the owning first commit; the final tree is identical
-to that validated pre-consolidation tree. Earlier unsupported Nix option and
-mutable provenance-sidecar approaches were also folded out. No fourth fixup
-commit or obsolete boot path remains.
+autostart, seed ordering and disabled absence. This focused post-deployment fix
+is separate: the deployed `1d76d60`/`67bfbbd` chain must remain available as
+actual consumption provenance. A conflicting consolidation produced `11161424`
+with an identical final tree; its local and remote refs were restored to
+`8e04f262` using checked updates. No selected package used the consolidated
+chain. Earlier unsupported Nix option and mutable provenance-sidecar approaches
+were removed before the first deployment. No unused boot compatibility path
+remains.
 
 ### Coordination workspace policy and site configuration
 
 - Worktree: `worktrees/2026-09-30-portal-review-improvements/workspace`
 - Review base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`
-- Head: `ebdfa262e61c889258b25f0569f2ca0581c884f2`
+- Head: `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154`
 
 Complete series, oldest first:
 
@@ -133,13 +141,13 @@ Complete series, oldest first:
    portal, API and WebUI graph.
 4. `0e00eab555f9a41136f13cad0f82662f5c2f717b` — select `llm-agents`
    `af40d966` and its exact `bun2nix`/`nixpkgs` closure for Codex 0.159.2.
-5. `ebdfa262e61c889258b25f0569f2ca0581c884f2` — select final generic
-   `50af66d9` and extension `11161424` heads while preserving the Codex closure.
+5. `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154` — select final generic
+   `50af66d9` and extension `8e04f262` heads while preserving the Codex closure.
 
 Final diff: 8 files, 99 insertions and 44 deletions. Policy, site enablement,
 initial composition, Codex runtime and final pin refresh are independently
 reviewable. The final lock retains exact generic `50af66d9`, extension
-`11161424` and `llm-agents` `af40d966`; the final pin commit contains no
+`8e04f262` and `llm-agents` `af40d966`; the final pin commit contains no
 unrelated node change.
 
 ### `vpsfree-cz-configuration`
@@ -187,11 +195,12 @@ live execution completed successfully. The DNS serial change is required
 protocol state; after publication, correction/removal must use a newer serial
 instead of rolling the zone file back to a lower serial.
 
-No obsolete branch iteration remains. Temporary corrective extension commit
-`8e04f262`, unsupported `requiresMountsFor` use, mutable provenance sidecar,
-early Git porcelain/status snapshot selection and implicit failed-preview retry
-were all folded out of the final histories. The separate Origin-label commits
-remain because they are reviewable post-deployment UI/pin refinements.
+No obsolete unapplied implementation remains. Unsupported `requiresMountsFor`
+use, mutable provenance sidecar, early Git porcelain/status snapshot selection
+and implicit failed-preview retry were removed before deployment. The separate
+Origin-label and boot-fix commits remain because they correct the externally
+consumed composition. The final workspace consumer amendment replaces only an
+unselected pin commit, preserving deployed parent `0e00eab5`.
 
 ## Commit split and deliberate boundaries
 
@@ -264,7 +273,7 @@ commit.
   label-only commit.
 - Extension final tree: enabled and disabled full cluster-config evaluations
   passed with the autostart/unit assertions. Nix parsing, exact generic pin,
-  `git diff --check` and equality with the validated pre-consolidation final
+  `git diff --check` and equality with the validated startup-fix final
   tree pass. Earlier focused runner/status/seed suites and packaged check passed
   at the owning implementation before the autostart correction.
 - Workspace final head: `agent_instructions_test.rb` passes 7 runs/96

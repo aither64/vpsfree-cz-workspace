@@ -9,13 +9,14 @@ lifecycle: active
 - Phase: live acceptance and correction verification. The reviewed portal user
   profile and bridge cluster are active; final Origin-label and React-container
   autostart corrections await independent review, build and activation.
-- Clean published heads are generic `50af66d`, extension `11161424`, workspace
-  `ebdfa262` and configuration `d24b2515`. The latest generic change labels the
-  repository link `Origin ↗`; the extension folds the newadmin autostart
-  correction into its owning cluster commit; the workspace pin preserves the
-  approved Codex 0.159.2 dependency closure; and the configuration branch adds
-  only the reviewed internal-DNS candidate. These refinements remain separate
-  from the deployed composition.
+- Clean published candidates are generic `50af66d`, extension `8e04f262`,
+  workspace `45cce0a8` and configuration `d24b2515`. A conflicting brief
+  temporarily published a consolidated extension chain and its consumer.
+  Recovery restored the original deployed ancestry locally and remotely with
+  checked ref updates, then amended only the unselected consumer. Its exact
+  parent remains deployed `0e00eab5`; the Codex 0.159.2 closure is unchanged.
+  The final packet is synchronized to these preserved histories. No selected
+  package or running cluster changed during recovery.
 - Mandatory four-lane review has no Blocking, Important or new Advisory
   findings. Generic/extension GitHub checks, the six-case Playwright suite,
   generic flake check and locked WebUI frontend/BFF builds pass at their exact
@@ -55,8 +56,8 @@ lifecycle: active
   `newadmin.aitherdev.int.vpsfree.cz` is absent from both internal authoritative
   DNS copies even though the running cluster's guest DNS has the record. A
   bounded configuration candidate adds one CNAME to the existing aitherdev
-  frontend and advances the zone serial. It will be committed, reviewed and
-  built locally; publication to `prg/int.ns1`, `brq/int.ns1`, `prg/int.mon1`
+  frontend and advances the zone serial. It is committed and zone-checked; independent review and
+  local builds remain; publication to `prg/int.ns1`, `brq/int.ns1`, `prg/int.mon1`
   and `prg/int.mon2` requires separate exact-target approval because the user
   authorized deployment of aitherdev, not those four shared DNS consumers.
 
@@ -364,11 +365,10 @@ lifecycle: active
 
 ## Next actions
 
-- Finish and review the autostart correction and exact downstream pin, then
+- Review the committed autostart correction, DNS candidate and exact downstream pin, then
   build the final composition. Update the user profile through the supported
   guarded entry and run the supported cluster services update, proving enabled
-  autostart, local WebUI-source provenance and session persistence. Commit,
-  review and build the internal-DNS candidate, then request exact publication
+  autostart, local WebUI-source provenance and session persistence. Build the reviewed internal-DNS candidate locally, then request exact publication
   approval for its four shared consumers. Leave all feature heads unmerged
   pending explicit default-branch integration approval.
 
@@ -391,12 +391,12 @@ lifecycle: active
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
   `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
-  head `111614244daba59f2d347ac2fd222a0df1349ea0`.
+  head `8e04f2626a3abd492768f15ae8d843c8e527f2cd`.
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `ebdfa262e61c889258b25f0569f2ca0581c884f2`.
+  `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
