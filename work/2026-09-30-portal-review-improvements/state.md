@@ -6,9 +6,10 @@ lifecycle: active
 
 ## Status
 
-- Phase: live acceptance and correction verification. The reviewed portal user
-  profile and bridge cluster are active; final Origin-label and React-container
-  autostart corrections await independent review, build and activation.
+- Phase: final verification and activation. The reviewed portal user profile
+  and bridge cluster are active; final Origin-label and React-container
+  autostart corrections passed independent review and long checks and now
+  await activation.
 - Clean published candidates are generic `50af66d`, extension `8e04f262`,
   workspace `45cce0a8` and configuration `d24b2515`. A conflicting brief
   temporarily published a consolidated extension chain and its consumer.
@@ -17,14 +18,19 @@ lifecycle: active
   parent remains deployed `0e00eab5`; the Codex 0.159.2 closure is unchanged.
   The final packet is synchronized to these preserved histories. No selected
   package or running cluster changed during recovery.
-- Mandatory four-lane review has no Blocking, Important or new Advisory
-  findings. Generic/extension GitHub checks, the six-case Playwright suite,
-  generic flake check and locked WebUI frontend/BFF builds pass at their exact
-  unchanged heads. The workspace package build and all four flake checks pass
-  at new `0e00eab5`.
-- Retained reviewer0 rechecked all four lanes at workspace `0e00eab5` with its
-  saved GPT-6 Sol/xhigh settings. It found no Blocking or Important issue. The
-  existing aggregate deployment helper mismatch is an Advisory limitation:
+- Mandatory final four-lane review at exact generic `50af66d`, extension
+  `8e04f262`, workspace `45cce0a8` and configuration `d24b2515` has no
+  Blocking or Important findings. The retained reviewer accepted the two
+  existing Advisories: the duplicated exact WebUI revision and the aggregate
+  deployment checker that rejects the documented scoped host/profile pin
+  mismatch. The complete histories contain no obsolete unapplied approach or
+  transitional migration. Generic/extension GitHub checks, the six-case
+  Playwright suite, locked WebUI frontend/BFF builds and final generic,
+  extension and workspace flake checks pass. The final workspace package built
+  at `45cce0a8` as `/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`.
+- Retained reviewer0 completed the final all-lane review with its saved GPT-6
+  Sol/xhigh settings. The existing aggregate deployment helper mismatch is an
+  Advisory limitation:
   configuration `devWorkspace` still selects the older generic runtime, but the
   scoped aitherdev build/deploy takes system Codex from its separate root
   `llm-agents` input and does not invoke that equality helper. The earlier
@@ -48,16 +54,24 @@ lifecycle: active
   authenticated API access, forced access-token refresh, stable session
   identity across BFF restart, repeated seed execution, logout and access-token
   revocation all passed without recording credentials or tokens.
-- The final composition needs mandatory review, long package checks, a normal
-  guarded user-profile update and a supported cluster services update. The
+- A fresh real OAuth login produced an authenticated BFF session before final
+  activation. Its cookie and session-key hash remain only in mode-0600
+  temporary files for the post-update persistence comparison; no credential,
+  cookie, authorization code, state or token was printed or recorded.
+- The final composition needs a normal guarded user-profile update and a
+  supported cluster services update. An attempted services update through the
+  candidate correctly refused because the candidate is not yet the selected
+  profile generation. The
   active-turn idle gate still applies to the profile transition; no bypass or
   delayed switch is authorized.
 - Ordinary host and VPN-client resolution for
   `newadmin.aitherdev.int.vpsfree.cz` is absent from both internal authoritative
   DNS copies even though the running cluster's guest DNS has the record. A
   bounded configuration candidate adds one CNAME to the existing aitherdev
-  frontend and advances the zone serial. It is committed and zone-checked; independent review and
-  local builds remain; publication to `prg/int.ns1`, `brq/int.ns1`, `prg/int.mon1`
+  frontend and advances the zone serial. It is committed, independently
+  reviewed and zone-checked. Build-only evaluation passed for all four exact
+  consumers. Publication to
+  `prg/int.ns1`, `brq/int.ns1`, `prg/int.mon1`
   and `prg/int.mon2` requires separate exact-target approval because the user
   authorized deployment of aitherdev, not those four shared DNS consumers.
 
@@ -348,25 +362,37 @@ lifecycle: active
 
 ## Phase checklist
 
+Final candidate verification is scoped to generic `50af66d`, extension
+`8e04f262`, workspace `45cce0a8` and configuration `d24b2515`. The complete
+series and changed paths are in [final-diff-inventory.md](final-diff-inventory.md).
+Reviewer0 completed all four lanes at those clean published heads with no
+Blocking or Important finding. Exact generic CI run `36771070080` and extension
+CI run `36774580291` passed;
+superseded consolidated-chain run `36776380225` was cancelled. The evaluated
+workspace candidate is
+`/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`, derivation
+`/nix/store/zjpfzn5k6y6mw7lbyzn7pg2g29p3y6rr-dev-workspace-0.2.0.drv`.
+The package build and final flake check passed. Final generic `50af66d` and
+extension `8e04f262` flake checks also passed. Build-only evaluation passed for
+all four internal DNS consumers at configuration `d24b2515`; no shared DNS
+activation is authorized.
+
 - [x] Verify there is no current initiative and create an isolated session.
 - [x] Verify the retained roster and saved access.
 - [x] Record the approved plan and compatibility/deployment constraints.
 - [x] Complete and accept the architecture/verification brief.
 - [x] Create/register project worktrees from current remote defaults.
 - [x] Implement and commit all intended changes with quick checks.
-- [ ] Complete mandatory independent review and reconcile findings (baseline
-  complete; final label, autostart and pin refinement review pending).
-- [ ] Finish long integration/build verification through Luna watchers (prior
-  generic/browser/workspace, extension CI and WebUI package checks passed; final
-  corrected heads and cluster services update remain).
+- [x] Complete mandatory independent review and reconcile findings.
+- [x] Finish long integration/build verification through Luna watchers.
 - [ ] Verify the active deployment is ready for use and activate the final
   label refinement (baseline portal and bridge cluster are active).
 - [x] Prepare the whole-branch history and migration inventory for handoff.
 
 ## Next actions
 
-- Review the committed autostart correction, DNS candidate and exact downstream pin, then
-  build the final composition. Update the user profile through the supported
+- Complete the running final checks and build the DNS candidate. Update the
+  user profile through the supported
   guarded entry and run the supported cluster services update, proving enabled
   autostart, local WebUI-source provenance and session persistence. Build the reviewed internal-DNS candidate locally, then request exact publication
   approval for its four shared consumers. Leave all feature heads unmerged

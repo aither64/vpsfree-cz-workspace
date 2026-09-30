@@ -20,6 +20,12 @@ React-container autostart corrections are not yet selected in the user profile
 or cluster. The internal-DNS candidate is committed but publication to its four
 shared consumers remains unapproved.
 
+Mandatory final review found no Blocking or Important issue at those four
+heads. Final generic, extension and workspace flake checks pass, and the final
+workspace package is
+`/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`. Build-only
+evaluation also passes for each of the four exact internal-DNS consumers.
+
 ## Executed system and profile rollout
 
 Fresh Luna/low watchers built only `cz.vpsfree/machines/aitherdev`, dry-activated
@@ -68,7 +74,13 @@ recorded in session artifacts or command output.
 
 ## Pending final activation
 
-After the final commits pass mandatory review and long package checks:
+The final commits passed mandatory review and long package checks. A fresh real
+OAuth login established an authenticated session in private temporary files for
+the post-update persistence comparison. A services update invoked through the
+candidate correctly refused while that candidate was not the selected profile
+generation.
+
+Remaining activation steps are:
 
 1. select the new workspace package with the guarded profile transition;
 2. update the running cluster services through `vpsadmin-devcluster`;
