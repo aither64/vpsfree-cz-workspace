@@ -6,12 +6,15 @@ lifecycle: active
 
 ## Status
 
-- Phase: reviewed Codex 0.159.2 candidate and aitherdev host generation
-  verified; portal user-profile transition awaits an idle session turn.
-- Clean feature heads are generic `41c648c`, extension `67bfbbd` and workspace
-  `0e00eab5`. The workspace head retains the reviewed downstream pins and adds
-  only the Nix-generated nested Codex dependency update. Its exact feature ref
-  is published at `0e00eab5`.
+- Phase: live acceptance and correction verification. The reviewed portal user
+  profile and bridge cluster are active; final Origin-label and React-container
+  autostart corrections await independent review, build and activation.
+- Clean published heads are generic `50af66d` and workspace `f2aef2fd`.
+  Extension head `e0f9855` has the bounded autostart correction under assigned
+  implementation and verification. The latest generic change labels the
+  repository link `Origin ↗`; consumer pin updates preserve the approved Codex
+  0.159.2 dependency closure. These refinements remain separate from the
+  deployed composition.
 - Mandatory four-lane review has no Blocking, Important or new Advisory
   findings. Generic/extension GitHub checks, the six-case Playwright suite,
   generic flake check and locked WebUI frontend/BFF builds pass at their exact
@@ -25,15 +28,28 @@ lifecycle: active
   `llm-agents` input and does not invoke that equality helper. The earlier
   duplicated WebUI-pin Advisory remains accepted. Long candidate verification
   may proceed; no migrations or obsolete feature history were found.
-- The portal user profile has not been switched and no session cluster state
-  has been created. The candidate generation's cluster command correctly
-  refuses use before activation.
-- The installed portal profile still uses Codex 0.155.0; the running aitherdev
-  system now resolves Codex 0.159.2 at the exact binary proved by the isolated
-  same-account model probe. The corrected portal package and its protocol
-  checks pass. Portal profile activation has not happened yet: a read-only
-  `thread require-idle` check rejects this active conversation turn as
-  `inProgress`, which is the package switch's required session preflight.
+- Normal `workspace-host status` now selects the realized `aidlqw1…` package
+  from workspace `0e00eab5`. The running host uses the reviewed Codex 0.159.2
+  binary. Live portal `/api/models` exposes exact `gpt-6.1-sol` with high and
+  xhigh; this authorized lead turn reads back that model with xhigh effort.
+- Filtered normal cluster status proves this exact session is running and ready
+  on single/bridge networking. PHP and React service links coexist; selected
+  build provenance is clean pinned WebUI `534caa83`. The first React request
+  exposed a real lifecycle defect: the enabled `newadmin` container had no
+  autostart target. A manual diagnostic start restored it and the assigned
+  correction sets `containers.newadmin.autoStart = true` with enabled and
+  disabled evaluation assertions.
+- Live React acceptance now passes for TLS trust/SANs, static assets, public
+  config, health, CORS, loopback-only private listeners, nginx configuration,
+  BFF service hardening, legacy PHP coexistence and exact clean build metadata.
+  Real OAuth authorization, callback exchange, one-use state rejection,
+  authenticated API access, forced access-token refresh, stable session
+  identity across BFF restart, repeated seed execution, logout and access-token
+  revocation all passed without recording credentials or tokens.
+- The final composition needs mandatory review, long package checks, a normal
+  guarded user-profile update and a supported cluster services update. The
+  active-turn idle gate still applies to the profile transition; no bypass or
+  delayed switch is authorized.
 
 ## Development record
 
@@ -304,6 +320,21 @@ lifecycle: active
   the acceptance path; enabled local mode must refuse until both browser and
   BFF can reach one exact provider origin. Recovery keeps the selected
   compatible API/schema while disabling React if needed.
+- The live bridge start completed successfully through a fresh Luna/low
+  watcher. Its initial public React probe returned 502 because
+  `container@newadmin.service` was linked but had no `WantedBy` target and was
+  inactive. Manual diagnostic start proved the application stack itself;
+  final acceptance requires the corrected unit to be enabled for
+  `machines.target` after the supported services update.
+- The deployed portal accepted one atomic settings write from GPT-6 Sol/high to
+  exact `gpt-6.1-sol`/xhigh and retained both values on readback. Staged and
+  unstaged endpoints returned immutable snapshots for disposable test changes,
+  which were removed afterward. The deployed repository viewer includes
+  retained loaded diffs and `Load all diffs`.
+- A clean session-owned `vpsadmin-webui` worktree is now registered at exact
+  reviewed head `534caa83a5f97d2b40b4a126886649b14dc9e8d3`. The final cluster services
+  update will exercise the documented local-source override and must report
+  that exact clean revision.
 
 ## Phase checklist
 
@@ -313,25 +344,22 @@ lifecycle: active
 - [x] Complete and accept the architecture/verification brief.
 - [x] Create/register project worktrees from current remote defaults.
 - [x] Implement and commit all intended changes with quick checks.
-- [x] Complete mandatory independent review and reconcile findings.
-- [ ] Finish long integration/build verification through Luna watchers (final
-  generic/browser/workspace, extension CI and WebUI package checks passed; live
-  bridge checks remain).
-- [ ] Deploy the reviewed portal package and verify it is ready for use.
+- [ ] Complete mandatory independent review and reconcile findings (baseline
+  complete; final label, autostart and pin refinement review pending).
+- [ ] Finish long integration/build verification through Luna watchers (prior
+  generic/browser/workspace, extension CI and WebUI package checks passed; final
+  corrected heads and cluster services update remain).
+- [ ] Verify the active deployment is ready for use and activate the final
+  label refinement (baseline portal and bridge cluster are active).
 - [x] Prepare the whole-branch history and migration inventory for handoff.
 
 ## Next actions
 
-- In an idle window for this session, run the documented candidate entry from
-  the clean workspace feature source using the exact realized candidate command
-  recorded above.
-  The account model and packaged protocol gates now pass; retain the ordinary
-  journal, registration and generation preflights. If the candidate is selected
-  before an error, continue only through the newly selected installed helper,
-  never an older profile rollback. Then verify active portal models/settings,
-  boot only this session's bridge cluster and complete React OAuth/BFF/PHP
-  coexistence checks. Leave all feature heads unmerged pending explicit
-  default-branch integration approval.
+- Finish and review the autostart correction and exact downstream pin, then
+  build the final composition. Update the user profile through the supported
+  guarded entry and run the supported cluster services update, proving enabled
+  autostart, local WebUI-source provenance and session persistence. Leave all
+  feature heads unmerged pending explicit default-branch integration approval.
 
 ## Documentation
 
@@ -360,7 +388,9 @@ lifecycle: active
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
-- Read-only dependency: `vpsadmin-webui` at reviewed head `534caa83`.
+- `vpsadmin-webui`: same branch name and clean session worktree at reviewed head
+  `534caa83a5f97d2b40b4a126886649b14dc9e8d3`; read-only dependency with no
+  feature diff.
 - `vpsadmin`: same branch name and clean worktree under that initiative group,
   base/current head `5c76e3290481b297dcd0baa76d246133f0353d8f`;
   read-only source required by the cluster runner.
