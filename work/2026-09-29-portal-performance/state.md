@@ -6,7 +6,7 @@ lifecycle: active
 
 ## Status
 
-- Phase: retained-only recovery is implemented, locally checked, and clean after reconciled independent review; downstream pinning, exact package verification, and authorized journal replay are next. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final whole-history gates.
+- Phase: retained-only recovery, downstream pinning, exact package verification, both authorized journal replays, and user-profile deployment are complete. Functional paging passes, but the 30-load latency gate fails because system nginx Basic Auth verifies a cost-12 bcrypt hash on every asset/API request. Host-auth remediation through dev-workspace plus `vpsfree-cz-configuration` is being designed before acceptance and final whole-history review. The user authorized default-branch integration after the remaining gates.
 - The corrected live replay proved the September 26 journal is a legitimate partial team archive: the retained root and architect are archived, while the implementer and reviewer remain active materialized rollouts with unchanged retained identities. The September 27 root and all three members are archived, but its roster still records the members as ready.
 - Read-only SQLite rows and pinned Codex 0.155.0 source establish filesystem-consistent archive state; no Codex storage patch or version change is needed. The old package moved threads successfully but its incomplete listing proof could fail before roster bookkeeping, and later retries then treated already-archived members as active.
 - The existing recovery adapter is correctly journal- and generation-bound but prematurely requires every member to be archived before the selected predecessor can run. The architect amended `design.md` to add a retained-only, exact, idempotent team completion step inside that adapter, followed by the existing all-archived proof and predecessor replay. It forbids replacement, fresh bootstrap, unarchive, interruption, manual database/filesystem edits, profile selection, and mutation outside the owning journal.
@@ -14,6 +14,13 @@ lifecycle: active
 - Dev-workspace correction `e58f8f61ce43058aba49361a0b3bd1ecd98af866` now accepts an absent legacy creation record or validates a present private bounded record through the existing schema reader, requires `ready`, and binds its goal digest to archived tracking before proof/executor work. Focused checks pass with 10 runs and 170 assertions plus Ruby syntax and whitespace checks.
 - Mandatory incremental review classified the correction High risk and covered all four lanes with retained `reviewer0` on saved `gpt-6-sol`/xhigh. It found no Blocking, Important, or Advisory issue, no migration, and no superseded committed recovery approach.
 - Dev-workspace local candidate `b9465ab61dfc4e9820e312b062cb7b96ed3f09b0` adds the retained-only partial-team completion route, exact journal verification, focused Go/Ruby coverage, and operator documentation. The required High-risk four-lane incremental review initially found two Blocking issues in packaged lazy loading and final archived-member proof. Separate commits `47716d9e` and `b9465ab6` correct them; reviewer0 confirmed both are resolved with no new finding or migration. Lead reruns pass focused Go tests and 11 aggregate Ruby recovery/lazy-loader tests with 180 assertions. Full package verification, downstream pins, and live recovery remain gated next.
+- The reviewed chain is pushed at dev-workspace `b9465ab61dfc4e9820e312b062cb7b96ed3f09b0`, vpsFree extension `dd09ec08dd2e6081fe82a4365af02113c9300189`, and workspace `4ba6ea9629b309f854e7790d37e2b3ad2d94a6aa`. Focused pin reviews found no issues. Dev-workspace Actions run `36650131855` and extension run `36650714334` passed at the exact heads.
+- The exact consuming package built in 239 seconds at `/nix/store/bn4wz9lbvikp8bkfv10xaw8i4v9ffzl4-dev-workspace-0.2.0`; the candidate link resolves there, its host/session executables are present, and its private runtime contract is byte-identical to the selected predecessor.
+- Both user-authorized archive journals completed through the reviewed candidate. September 26 first made durable retained-team progress under a watcher, then the authoritative PTY replay supplied the selected predecessor's standard archive confirmation and completed thread/runtime retirement. September 27 completed the same way. Both archive journals are absent, both archived tracking directories are present, every retained roster member is archived, and the old selected profile remained unchanged throughout recovery.
+- The normal profile switch then selected `/nix/store/bn4wz9lbvikp8bkfv10xaw8i4v9ffzl4-dev-workspace-0.2.0`; portal, App Server, router, and tmux services are active. The App Server remains Codex 0.155.0.
+- Live functional acceptance succeeds: every one of 30 authenticated loads rendered the target conversation, used the paged endpoint, rendered 11 recent messages, and used no legacy transcript response. Latency still fails: p95 usable is 8.725 seconds against the 2-second target, with no load failure and one incidental HTTP error response.
+- Browser resource timing isolates the remaining latency before transcript paging: document authentication TTFB is about 1.49 seconds, static assets arrive in additional 1.17/0.83-second authentication waves, and ten concurrent API requests wait about 3.35 seconds before responding; the successful transcript page itself then takes about 0.69 seconds. The host module uses bcrypt cost 12 for nginx Basic Auth. Synthetic `htpasswd` verification measured about 336 ms per cost-12 check and 14 ms per cost-5 check; ten cost-12 checks take 3.36 seconds, matching the live API wave.
+- The authentication secret is a generated 64-hex-character random value, while system configuration owns the htpasswd hash and deployment. Scope now includes a configuration-specific, security-reviewed bcrypt-cost migration in dev-workspace and an exact `vpsfree-cz-configuration` pin/deployment. No manual htpasswd rewrite is permitted.
 - The corrected exact chain is now pushed: dev-workspace `e58f8f61ce43058aba49361a0b3bd1ecd98af866`, vpsFree extension `9c9833579e148e108b5811d618c81ec497b809bf`, and workspace `50c3dcf74f7eb816671caf4efd365f9c466e387a`. Dev-workspace Actions run `36641815619` and extension run `36641987050` passed.
 - The exact workspace package rebuilt successfully at `/nix/store/yhnzp6nmq4ngmlvh0wxxhzkbpzda4c0y-dev-workspace-0.2.0`; `candidate-workspace-package` resolves there. Its runtime contract is byte-identical to the selected predecessor `/nix/store/zpfyl4kkdmv6c7r8a0r6rl1s4wpikkla-dev-workspace-0.2.0`.
 - Read-only replay preflight confirms both authorized archive journals remain `tracking_committed/complete`; their schema-1 creation records are `ready`, private mode 0600, goal-bound to archived tracking, and root-thread-bound. The selected profile remains the predecessor and the auto-archive service is inactive.
@@ -41,14 +48,14 @@ lifecycle: active
 - [x] Archive-proof recovery fix, quick checks, and independent review.
 - [x] Exact partial-journal diagnosis and retained-only recovery design.
 - [x] Retained-only recovery implementation correction, quick checks, and clean independent review.
-- [ ] Live user-profile deployment and acceptance.
+- [x] Exact package build, authorized journal recovery, and user-profile deployment.
+- [ ] Host authentication latency remediation and repeated live acceptance.
 - [ ] Final whole-history readiness review and authorized default-branch integration.
 
 ## Next actions
 
-- Push the reviewed dev-workspace head, update and review the two downstream dependency pins, then rebuild the exact consuming candidate while preserving the selected predecessor throughout verification.
-- Use the corrected candidate's supported adapter to resume the two user-authorized journals, one at a time, preserving the selected profile and recorded complete mode.
-- Retry the reviewed user-profile switch, then execute live latency, scan-contention, and metadata-rebuild acceptance.
+- Finalize the architect's host-auth amendment, implement and independently review the bounded module/configuration change, and deploy it through `vpsfree-cz-configuration` without manual state edits.
+- Repeat the 30-load no-scan benchmark, then the authorized dry-run observation overlap and metadata due-rebuild acceptance. Both p95 values must be at most two seconds with no page-load failures.
 - Perform the final complete-history and migration-readiness review after the whole pin chain and live evidence are complete, then integrate the authorized feature heads into their default branches in dependency order.
 
 ## Documentation
@@ -58,9 +65,10 @@ lifecycle: active
 ## Repositories
 
 - `codex-web`: `worktrees/2026-09-29-portal-performance/codex-web`, branch `2026-09-29-portal-performance`, base `e92dd88`, pushed feature head `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`.
-- `dev-workspace`: `worktrees/2026-09-29-portal-performance/dev-workspace`, same branch, base `3b570f0`, pushed reviewed head `e58f8f61ce43058aba49361a0b3bd1ecd98af866`; local reviewed retained-only head `b9465ab61dfc4e9820e312b062cb7b96ed3f09b0` is ready for feature-branch push and downstream pinning.
-- `vpsfree-dev-workspace`: `worktrees/2026-09-29-portal-performance/vpsfree-dev-workspace`, same branch, base `bd96168`, pushed dependency-only pin head `9c9833579e148e108b5811d618c81ec497b809bf`.
-- Workspace: `worktrees/2026-09-29-portal-performance/workspace`, same branch, base `979ef666`, pushed dependency-only pin head `50c3dcf74f7eb816671caf4efd365f9c466e387a`.
+- `dev-workspace`: `worktrees/2026-09-29-portal-performance/dev-workspace`, same branch, base `3b570f0`, pushed reviewed retained-only head `b9465ab61dfc4e9820e312b062cb7b96ed3f09b0`; host-auth follow-up is pending design.
+- `vpsfree-dev-workspace`: `worktrees/2026-09-29-portal-performance/vpsfree-dev-workspace`, same branch, base `bd96168`, pushed reviewed dependency-only pin head `dd09ec08dd2e6081fe82a4365af02113c9300189`.
+- Workspace: `worktrees/2026-09-29-portal-performance/workspace`, same branch, base `979ef666`, pushed reviewed dependency-only pin head `4ba6ea9629b309f854e7790d37e2b3ad2d94a6aa` and selected package `/nix/store/bn4wz9lbvikp8bkfv10xaw8i4v9ffzl4-dev-workspace-0.2.0`.
+- `vpsfree-cz-configuration`: `worktrees/2026-09-29-portal-performance/vpsfree-cz-configuration`, same branch, base `6c827ca2c1b18fe79171ecc8fea03ad80b803f82`, added for system-auth pinning and aitherdev deployment after the live latency diagnosis.
 
 ## Commands run
 
@@ -88,6 +96,7 @@ lifecycle: active
 - Initial team roster: `architect0` (Astra/xhigh, write), `implementer0` (Sol/xhigh, write), `reviewer0` (Sol/xhigh, read-only).
 - Mandatory recovery review: High risk; General, Architecture and repetition, Scope and proportionality, and Risk and compatibility lanes; retained `reviewer0` on saved `gpt-6-sol`/xhigh. One Blocking active-sibling regression and two Important source/root-only compatibility findings were fixed in `fbd7a9e` and directly reverified. No migrations; no superseded committed recovery approach.
 - Mandatory retained-only recovery review: High risk; the same four lanes and retained reviewer settings. Two Blocking findings at `b36691d5` were corrected separately at `47716d9e` and `b9465ab6`. Reviewer0 confirmed exact archived-member re-proof, real Nix wrapper layout handling, source-tree laziness, and stable missing-source failure; no remaining/new finding and no migration.
+- Live acceptance conclusion: paging and controls are functionally correct, but the 2-second latency criterion is not met. The next design/implementation unit is system authentication, not further transcript truncation or an unsafe cursor shortcut.
 
 ## Open questions
 
