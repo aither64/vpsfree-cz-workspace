@@ -42,7 +42,7 @@ let
     };
 
   solLead = mkRole {
-    model = "gpt-6-sol";
+    model = "gpt-6.1-sol";
     effort = "high";
     allowed_efforts = [
       "high"
@@ -66,7 +66,7 @@ let
   };
 
   implementer = mkRole {
-    model = "gpt-6-sol";
+    model = "gpt-6.1-sol";
     effort = "xhigh";
     allowed_efforts = [
       "high"
@@ -78,7 +78,7 @@ let
   };
 
   reviewer = mkRole {
-    model = "gpt-6-sol";
+    model = "gpt-6.1-sol";
     effort = "xhigh";
     behavior = "reviewer";
     lifetime = "session";

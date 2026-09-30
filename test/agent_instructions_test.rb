@@ -48,6 +48,18 @@ class AgentInstructionsTest < Minitest::Test
     assert_match(/including for solo sessions/, verification)
   end
 
+  def test_default_sol_policy_documents_exact_requested_model
+    core = File.read(File.join(ROOT, 'AGENTS.md'))
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'))
+
+    assert_includes(core, '`gpt-6.1-sol`')
+    assert_includes(teams, 'model = "gpt-6.1-sol";')
+    refute_includes(core, 'gpt-6-sol')
+    refute_includes(teams, 'gpt-6-sol')
+    assert_match(/Existing members\s+retain their saved model, effort, access, and instructions\./, core)
+    assert_includes(teams, 'Existing members retain their saved model')
+  end
+
   def test_team_ownership_and_progress_policy_is_routed_consistently
     core = File.read(File.join(ROOT, 'AGENTS.md'))
     sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'))

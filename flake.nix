@@ -96,13 +96,13 @@
             .work_policy.implementation.simple_requires_reason == true and
             .work_policy.implementation.followup == "retain" and
             .teams.solo.max_open_agents == 0 and
-            .teams.solo.roles.team_lead.model == "gpt-6-sol" and
+            .teams.solo.roles.team_lead.model == "gpt-6.1-sol" and
             .teams.solo.roles.team_lead.purpose == "lead" and
             (.teams.solo.roles.team_lead.instructions | contains("Set up an appropriate team before substantive development")) and
             (.teams.solo.roles.team_lead.instructions | contains("At the end of every turn")) and
             .teams.delegated.max_open_agents == 3 and
             .teams.delegated.design_owner == "designer" and
-            .teams.delegated.roles.team_lead.model == "gpt-6-sol" and
+            .teams.delegated.roles.team_lead.model == "gpt-6.1-sol" and
             .teams.delegated.roles.team_lead.effort == "high" and
             (.teams.delegated.roles.team_lead.instructions | contains("At the end of every turn")) and
             (.teams.delegated.roles.team_lead.instructions | contains("do not take over delegated application edits")) and
@@ -115,20 +115,20 @@
             .teams.delegated.roles.designer.lifetime == "session" and
             (.teams.delegated.roles.designer.instructions | contains("work/<slug>/design.md")) and
             (.teams.delegated.roles.designer.instructions | contains("application implementation belongs to implementers")) and
-            .teams.delegated.roles.implementer.model == "gpt-6-sol" and
+            .teams.delegated.roles.implementer.model == "gpt-6.1-sol" and
             .teams.delegated.roles.implementer.access == "workspace_write" and
             .teams.delegated.roles.implementer.effort == "xhigh" and
             .teams.delegated.roles.implementer.allowed_efforts == ["high", "xhigh"] and
             .teams.delegated.roles.implementer.lifetime == "session" and
             (.teams.delegated.roles.implementer.instructions | contains("Refer consequential design deviations through the lead")) and
-            .teams.delegated.roles.reviewer.model == "gpt-6-sol" and
+            .teams.delegated.roles.reviewer.model == "gpt-6.1-sol" and
             .teams.delegated.roles.reviewer.access == "read_only" and
             .teams.delegated.roles.reviewer.effort == "xhigh" and
             .teams.delegated.roles.reviewer.allowed_efforts == ["xhigh"] and
             .teams.delegated.roles.reviewer.lifetime == "session" and
             .teams.delegated.roles.reviewer.fresh_context == true and
             (.teams.delegated.roles.reviewer.instructions | contains("complete base-to-head history")) and
-            .teams.lead_designed.roles.team_lead.model == "gpt-6-sol" and
+            .teams.lead_designed.roles.team_lead.model == "gpt-6.1-sol" and
             .teams.lead_designed.roles.team_lead.effort == "xhigh" and
             .teams.lead_designed.design_owner == "designer" and
             .teams.lead_designed.max_open_agents == 3 and
@@ -136,8 +136,8 @@
             .teams.lead_designed.roles.designer.model == "gpt-6-astra" and
             .teams.lead_designed.roles.designer.effort == "xhigh" and
             .teams.lead_designed.roles.designer.access == "workspace_write" and
-            .teams.lead_designed.roles.implementer.model == "gpt-6-sol" and
-            .teams.lead_designed.roles.reviewer.model == "gpt-6-sol" and
+            .teams.lead_designed.roles.implementer.model == "gpt-6.1-sol" and
+            .teams.lead_designed.roles.reviewer.model == "gpt-6.1-sol" and
             .utilities.verification_watcher.model == "gpt-6-luna" and
             .utilities.verification_watcher.effort == "low" and
             .utilities.verification_watcher.behavior == "verification_watcher" and
@@ -146,7 +146,7 @@
               "long_check", "uncertain_check", "workflow_wait", "ci_wait", "deployment_wait"
             ] and
             ([.teams[].roles | keys[]] | index("verification_watcher") | not) and
-            ([.teams[].roles[].model] | all(. == "gpt-6-sol" or . == "gpt-6-astra")) and
+            ([.teams[].roles[].model] | all(. == "gpt-6.1-sol" or . == "gpt-6-astra")) and
             ([.. | strings] | all(contains("gpt-5.6-") | not))
           ' "$catalog" >/dev/null
           ${pkgs.jq}/bin/jq -e '
