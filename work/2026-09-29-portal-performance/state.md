@@ -1,12 +1,12 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-29-portal-performance
 
 ## Status
 
-- Phase: implementation, focused and integration verification, independent incremental and whole-history reviews, configuration deployment, application profile switch, both live 30-load performance gates, and the user-authorized five-repository fast-forward integration are complete. Exact post-merge CI for generic dev-workspace and the vpsFree extension is running; no archive, deletion, or session stop is authorized.
+- Phase: complete. Implementation, focused and integration verification, independent incremental and whole-history reviews, configuration deployment, application profile switch, both live 30-load performance gates, user-authorized five-repository fast-forward integration, exact remote-head verification and post-merge CI all pass. The session, branches and worktrees remain available; no archive, deletion or session stop is authorized.
 - The corrected live replay proved the September 26 journal is a legitimate partial team archive: the retained root and architect are archived, while the implementer and reviewer remain active materialized rollouts with unchanged retained identities. The September 27 root and all three members are archived, but its roster still records the members as ready.
 - Read-only SQLite rows and pinned Codex 0.155.0 source establish filesystem-consistent archive state; no Codex storage patch or version change is needed. The old package moved threads successfully but its incomplete listing proof could fail before roster bookkeeping, and later retries then treated already-archived members as active.
 - The existing recovery adapter is correctly journal- and generation-bound but prematurely requires every member to be archived before the selected predecessor can run. The architect amended `design.md` to add a retained-only, exact, idempotent team completion step inside that adapter, followed by the existing all-archived proof and predecessor replay. It forbids replacement, fresh bootstrap, unarchive, interruption, manual database/filesystem edits, profile selection, and mutation outside the owning journal.
@@ -35,7 +35,8 @@ lifecycle: active
 - The final overlap gate first seeded the target and waited 65 seconds so the non-renewable 60-second rollout-metadata age was due. The observation-only `dev-session auto-archive scan --dry-run --json` then ran for about 14.3 seconds wholly while the 30-load browser process remained active. Both commands exited zero; the browser had zero failures, p95 usable 1.558 seconds, 35 paged responses, zero legacy responses, one incidental HTTP error response and no page exception. Evidence is retained under `~/.local/state/dev-workspaces/verification/2026-09-29-portal-performance-{browser-overlap-final.log,auto-archive-overlap-final.json,overlap-timeline.log}`.
 - Pre-review SSH fetches showed `codex-web`, `dev-workspace`, `vpsfree-dev-workspace` and `vpsfree-cz-configuration` clean with zero target-side divergence and direct fast-forward histories from their recorded bases. The workspace feature's historically consumed package pins were then rebased onto shared coordination `master` as required by the workspace Git procedure.
 - Final history preparation consolidated the five repeated extension pins and five repeated consuming-workspace pins into one logical commit per repository. Extension tree `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is byte-identical to `c69343869c6f58e0c1585dc6784e771034e915d3`. After review-record corrections advanced shared `master`, a final clean range-diff-equivalent rebase changed workspace head from reviewed `c3944c68e7efc29de9219862074defe8d6547ebc` to merged `35bd0094dcca589de1e9d32a559b383c684faa2c`; both feature-owned flake blobs are identical. Fresh extension/workspace flake checks pass, the workspace derivation remains `/nix/store/9maspddjxs6v4j9ffl0wqkgzv89mfi9s-dev-workspace-0.2.0.drv`, and its output remains the selected `/nix/store/5dzn1p13lcqfgp6lqdii20swa0v3346g-dev-workspace-0.2.0`; no redeployment is needed for commit-identity-only cleanup. Required comparisons were recaptured after every head change.
-- User-authorized integration fast-forwarded and verified exact remote `master` heads in dependency order: codex-web `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`, dev-workspace `d20bb64c45db1d803fc3b7a8c2956049860d72dd`, vpsfree-dev-workspace `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`, workspace `35bd0094dcca589de1e9d32a559b383c684faa2c`, and vpsfree-cz-configuration `bfb7b883f02df270cb93fb984793ef287c191b5a`. Feature branches remain retained. Codex-web post-merge Actions run `36665559076` passed; generic runtime run `36665563820` and extension run `36665570069` are being monitored at those exact heads.
+- User-authorized integration fast-forwarded and verified exact remote `master` heads in dependency order: codex-web `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`, dev-workspace `d20bb64c45db1d803fc3b7a8c2956049860d72dd`, vpsfree-dev-workspace `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`, workspace `35bd0094dcca589de1e9d32a559b383c684faa2c`, and vpsfree-cz-configuration `bfb7b883f02df270cb93fb984793ef287c191b5a`. Feature branches remain retained.
+- Generic dev-workspace post-merge Actions run `36665563820` and vpsFree extension run `36665570069` both passed at their exact merged heads. Along with codex-web run `36665559076`, every repository with an applicable GitHub workflow has a successful post-merge result; the workspace and configuration repositories expose no workflow run for these heads.
 - The corrected exact chain is now pushed: dev-workspace `e58f8f61ce43058aba49361a0b3bd1ecd98af866`, vpsFree extension `9c9833579e148e108b5811d618c81ec497b809bf`, and workspace `50c3dcf74f7eb816671caf4efd365f9c466e387a`. Dev-workspace Actions run `36641815619` and extension run `36641987050` passed.
 - The exact workspace package rebuilt successfully at `/nix/store/yhnzp6nmq4ngmlvh0wxxhzkbpzda4c0y-dev-workspace-0.2.0`; `candidate-workspace-package` resolves there. Its runtime contract is byte-identical to the selected predecessor `/nix/store/zpfyl4kkdmv6c7r8a0r6rl1s4wpikkla-dev-workspace-0.2.0`.
 - Read-only replay preflight confirms both authorized archive journals remain `tracking_committed/complete`; their schema-1 creation records are `ready`, private mode 0600, goal-bound to archived tracking, and root-thread-bound. The selected profile remains the predecessor and the auto-archive service is inactive.
@@ -67,11 +68,11 @@ lifecycle: active
 - [x] Host authentication latency remediation and repeated live acceptance.
 - [x] Final whole-history and migration-readiness review.
 - [x] Authorized default-branch integration and exact merged-head checks.
-- [ ] Exact post-merge CI and final completion record.
+- [x] Exact post-merge CI and final completion record.
 
 ## Next actions
 
-- Confirm post-merge GitHub Actions runs `36665563820` and `36665570069`, then record final completion without archiving or stopping the session.
+- No development or operator action remains. Keep this completed session available until a separately authorized archive action or the enabled auto-archive policy handles it.
 
 ## Documentation
 

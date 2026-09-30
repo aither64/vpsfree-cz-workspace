@@ -56,5 +56,6 @@ review-preserving rebase allowed by the Git procedure, not a behavioral change.
 - Live older-history cursor traversal has less coverage than recent-page loading.
 - The passing overlap run counted one incidental HTTP error but no failed load,
   page exception or legacy transcript response.
-- The rewritten extension commit identity needs its exact GitHub Actions result;
-  its tree is identical to the previously passing head.
+
+The previously open exact-CI gap is closed: post-merge generic dev-workspace run
+`36665563820` and vpsFree extension run `36665570069` passed at the merged heads.
