@@ -14,9 +14,11 @@ project documentation.
 - vpsAdmin API: `5c76e3290481b297dcd0baa76d246133f0353d8f`
 - vpsAdmin WebUI: `534caa83a5f97d2b40b4a126886649b14dc9e8d3`
 
-The Origin-label and React-container autostart corrections are not yet selected
-in the user profile or cluster at this checkpoint. Their exact final revisions
-will be added after mandatory review and package verification.
+The final unselected revisions are generic `50af66d9`, extension `11161424`,
+workspace `ebdfa262` and configuration `d24b2515`. The Origin-label and
+React-container autostart corrections are not yet selected in the user profile
+or cluster. The internal-DNS candidate is committed but publication to its four
+shared consumers remains unapproved.
 
 ## Executed system and profile rollout
 

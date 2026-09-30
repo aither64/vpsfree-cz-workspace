@@ -9,12 +9,13 @@ lifecycle: active
 - Phase: live acceptance and correction verification. The reviewed portal user
   profile and bridge cluster are active; final Origin-label and React-container
   autostart corrections await independent review, build and activation.
-- Clean published heads are generic `50af66d` and workspace `f2aef2fd`.
-  Extension head `e0f9855` has the bounded autostart correction under assigned
-  implementation and verification. The latest generic change labels the
-  repository link `Origin ↗`; consumer pin updates preserve the approved Codex
-  0.159.2 dependency closure. These refinements remain separate from the
-  deployed composition.
+- Clean published heads are generic `50af66d`, extension `11161424`, workspace
+  `ebdfa262` and configuration `d24b2515`. The latest generic change labels the
+  repository link `Origin ↗`; the extension folds the newadmin autostart
+  correction into its owning cluster commit; the workspace pin preserves the
+  approved Codex 0.159.2 dependency closure; and the configuration branch adds
+  only the reviewed internal-DNS candidate. These refinements remain separate
+  from the deployed composition.
 - Mandatory four-lane review has no Blocking, Important or new Advisory
   findings. Generic/extension GitHub checks, the six-case Playwright suite,
   generic flake check and locked WebUI frontend/BFF builds pass at their exact
@@ -351,8 +352,7 @@ lifecycle: active
 - [x] Record the approved plan and compatibility/deployment constraints.
 - [x] Complete and accept the architecture/verification brief.
 - [x] Create/register project worktrees from current remote defaults.
-- [ ] Implement and commit all intended changes with quick checks (portal and
-  cluster code complete; bounded internal-DNS candidate remains to commit).
+- [x] Implement and commit all intended changes with quick checks.
 - [ ] Complete mandatory independent review and reconcile findings (baseline
   complete; final label, autostart and pin refinement review pending).
 - [ ] Finish long integration/build verification through Luna watchers (prior
@@ -386,17 +386,17 @@ lifecycle: active
 - `dev-workspace`: branch `2026-09-30-portal-review-improvements`, worktree
   `worktrees/2026-09-30-portal-review-improvements/dev-workspace`, initial base
   `7c133c562ac51076c1f45af46e180f8bfbabe836`, published head
-  `41c648cd92cb324037778be165e45e17c46bbc75`.
+  `50af66d9cfc1be07dcc4cb084de4887dd97a343c`.
 - `vpsfree-dev-workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
   `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
-  head `67bfbbd653694e13e8d5aee53ef0f8e283694bf5`.
+  head `111614244daba59f2d347ac2fd222a0df1349ea0`.
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `0e00eab555f9a41136f13cad0f82662f5c2f717b`.
+  `ebdfa262e61c889258b25f0569f2ca0581c884f2`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
@@ -407,10 +407,11 @@ lifecycle: active
   base/current head `5c76e3290481b297dcd0baa76d246133f0353d8f`;
   read-only source required by the cluster runner.
 - `vpsfree-cz-configuration`: same branch name and clean worktree under the
-  initiative group at existing upstream head
-  `ee99382c8c448a15347052a6964030f838cb0381`. Its pending bounded feature diff
-  adds the newadmin internal-DNS CNAME and advances the zone serial; it has not
-  been committed or deployed. Exact aitherdev generation
+  initiative group from upstream base
+  `ee99382c8c448a15347052a6964030f838cb0381`, with published feature head
+  `d24b251531a9a482b8f1b5dd81540da85981189f`. Its bounded diff adds the
+  newadmin internal-DNS CNAME and advances the zone serial; it has not been
+  deployed. Exact aitherdev generation
   `2026-09-30--21-42-52` was built, dry-activated and switched without
   integrating configuration history.
 
