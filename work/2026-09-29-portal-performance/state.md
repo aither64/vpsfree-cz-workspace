@@ -6,7 +6,7 @@ lifecycle: active
 
 ## Status
 
-- Phase: retained-only recovery, downstream pinning, exact package verification, both authorized journal replays, and user-profile deployment are complete. Functional paging passes, but the 30-load latency gate fails because system nginx Basic Auth verifies a cost-12 bcrypt hash on every asset/API request. Host-auth remediation through dev-workspace plus `vpsfree-cz-configuration` is being designed before acceptance and final whole-history review. The user authorized default-branch integration after the remaining gates.
+- Phase: retained-only recovery, downstream pinning, exact package verification, both authorized journal replays, and user-profile deployment are complete. Functional paging passes, but the 30-load latency gate fails because system nginx Basic Auth verifies a cost-12 bcrypt hash on every asset/API request. The architect completed the bounded host-auth amendment: generic default 12, integer bounds 4 through 17, and aitherdev-only cost 5 for the generated 256-bit random credential. Implementation and review in dev-workspace plus `vpsfree-cz-configuration` now precede system deployment, repeated acceptance and final whole-history review. The user authorized default-branch integration after the remaining gates.
 - The corrected live replay proved the September 26 journal is a legitimate partial team archive: the retained root and architect are archived, while the implementer and reviewer remain active materialized rollouts with unchanged retained identities. The September 27 root and all three members are archived, but its roster still records the members as ready.
 - Read-only SQLite rows and pinned Codex 0.155.0 source establish filesystem-consistent archive state; no Codex storage patch or version change is needed. The old package moved threads successfully but its incomplete listing proof could fail before roster bookkeeping, and later retries then treated already-archived members as active.
 - The existing recovery adapter is correctly journal- and generation-bound but prematurely requires every member to be archived before the selected predecessor can run. The architect amended `design.md` to add a retained-only, exact, idempotent team completion step inside that adapter, followed by the existing all-archived proof and predecessor replay. It forbids replacement, fresh bootstrap, unarchive, interruption, manual database/filesystem edits, profile selection, and mutation outside the owning journal.
@@ -54,7 +54,7 @@ lifecycle: active
 
 ## Next actions
 
-- Finalize the architect's host-auth amendment, implement and independently review the bounded module/configuration change, and deploy it through `vpsfree-cz-configuration` without manual state edits.
+- Implement and independently review the architect's bounded host-module/configuration amendment, then deploy it through `vpsfree-cz-configuration` without manual state edits.
 - Repeat the 30-load no-scan benchmark, then the authorized dry-run observation overlap and metadata due-rebuild acceptance. Both p95 values must be at most two seconds with no page-load failures.
 - Perform the final complete-history and migration-readiness review after the whole pin chain and live evidence are complete, then integrate the authorized feature heads into their default branches in dependency order.
 

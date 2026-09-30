@@ -5,6 +5,12 @@ Scope and acceptance target come from [plan.md](plan.md). The lead owns
 implementation assignments, verification evidence, pin updates and rollout.
 This brief does not authorize any lifecycle operation or deployment.
 
+Latest scope amendment: the deployed pagination passed functional checks but
+failed the live latency gate. The host-auth amendment at the end adds a bounded
+bcrypt-cost option and an aitherdev-only system configuration change. It
+supersedes the earlier exclusion of host-module/system-pin work for this narrow
+purpose; the workspace application still belongs to its user profile.
+
 ## Evidence and decisions requiring lead attention
 
 Session identity was verified with `dev-session current` from this tracking
@@ -63,12 +69,14 @@ normalization and DOM work; do not attribute all 12 seconds to one cause.
 | dev-workspace portal | Consume the page API in `portal/internal/web/static/app.js`, templates and the generic mounted/member conversation surfaces. Update activity scheduling, diagnostics and browser tests. Explicitly forward the optional paging interface through `member_conversation.go`; embedding the old `conversation.Client` interface does not expose new optional methods. Preserve roster policy and model/effort presentation. |
 | dev-workspace lifecycle | Change passive observation locking in `libexec/workspace-auto-archive.rb` and lock helpers in `libexec/dev-session`. Add combined observation to `portal/internal/workspacecodex/client.go` and `portal/cmd/workspace-portal/main.go`. Extend `test/auto_archive_test.rb`, `test/dev_session/automatic_archive_test.rb`, lock/concurrency and CLI tests. |
 | Package owners | Align dev-workspace `portal/go.mod`, `portal/go.sum`, `flake.nix` and `flake.lock` with the exact codex-web revision; then update vpsfree-dev-workspace and the coordination workspace feature worktree pin chain. |
+| Host-auth follow-up | dev-workspace `nix/host-module.nix`, host module checks/VM tests and host documentation; vpsfree-cz-configuration aitherdev `config.nix` plus its confctl-managed `devWorkspace` input pin. See the final amendment for exact scope and security/latency acceptance. |
 
 Keep durable feature semantics in codex-web's reference and dev-workspace's
 portal/session guides. Keep individual benchmark results and rollout evidence
 under this initiative. The architect edits only this design document. There
-are no host configuration, NixOS module, namespace migration, cluster-provider,
-model-policy, lifecycle-tier or persistent schema changes in scope.
+are no namespace migration, cluster-provider, model-policy, lifecycle-tier or
+persistent schema changes in scope. Host configuration and NixOS module work are
+limited to the later bcrypt-cost amendment.
 
 ## Invariants
 
@@ -646,9 +654,9 @@ declared-property checks so permissive schemas cannot hide a misspelled field.
 Use a disposable local App Server fixture to establish turn-filtered item cursor
 semantics, terminal metadata/error coverage, reconnect behavior and fresh-thread
 errors without writing to a real conversation. Run the browser benchmark and
-authorized rollout smoke checks after these pass. Host migration/VM tests are
-needed only if final changes unexpectedly affect that contract; refer any such
-scope expansion to the lead first.
+authorized rollout smoke checks after these pass. The later host-auth amendment
+requires the host-module VM checks before its system deployment; it introduces
+no namespace migration.
 
 ## Compatibility, package delivery and recovery
 
@@ -671,7 +679,8 @@ resulting lock diffs and avoid incidental input churn. This workspace's package
 input edits belong in its dedicated feature worktree, not shared master.
 
 There is no database, API-client generation, Terraform, service-daemon protocol,
-NixOS/vpsAdminOS module, host/node coordinated upgrade or on-disk conversion.
+host/node coordinated upgrade or on-disk format conversion. The later host-auth
+amendment adds one NixOS option and regenerates its derived htpasswd when needed.
 New and old HTTP/browser clients remain compatible as described above. Activity
 and archive sidecars remain readable by the existing generation. New cache
 tokens are disposable on process replacement; durable send receipts are not.
@@ -680,8 +689,9 @@ Before switching, record the running profile/store path, all source heads and
 the matching recovery source/package. Verify existing lifecycle, team, authority
 and cluster-state transition preflights. Deploy the complete consuming package
 with the stable `workspace-host switch --source <workspace-feature-worktree>`.
-Do not install only the generic package and lose site extensions. Do not run
-`confctl`, change a host system pin, rebuild NixOS or alter nginx/credentials.
+Do not install only the generic package and lose site extensions. The application
+rollout itself does not use system pins. The later host-auth amendment separately
+defines the narrowly scoped confctl/system deployment and derived-hash update.
 Deployment authorization and repository default-branch integration approval are
 separate; this brief supplies neither additional integration nor lifecycle scope.
 
@@ -1418,5 +1428,270 @@ version change is needed. Review and verify that correction before another live
 retry; unfinished journals still block deployment. Predecessor/helper
 compatibility and crash/retry preservation remain verification requirements.
 A plausible path name or an empty listing is not acceptance evidence.
+
+
+## Host-auth amendment: failed live latency gate
+
+### Evidence, ownership and selected fix
+
+The lead deployed reviewed application package
+`/nix/store/bn4wz9lbvikp8bkfv10xaw8i4v9ffzl4-dev-workspace-0.2.0`.
+`browser-benchmark-deployed-no-scan.log` records 30 successful loads, 30 paged
+responses, zero legacy responses, 11 rendered messages and no page exceptions.
+Nearest-rank p95 usable time is **8.725 seconds**, so functional correctness has
+not met the unchanged **2-second** performance gate. One HTTP error response is
+also counted in that log; retain/classify response failures when comparing the
+next run rather than describing the run as error-free.
+
+Lead resource timing places about 1.49 seconds in document Basic Auth TTFB,
+1.17/0.83 seconds in asset batches, and 3.35 seconds waiting for ten concurrently
+launched API calls. The successful `/thread/page` request itself takes about
+0.69 seconds. The host's synthetic `htpasswd` measurements are approximately
+336 ms per cost-12 verification versus 14 ms at cost 5; ten cost-12 checks match
+the roughly 3.36-second API delay. These measurements and the module's literal
+`htpasswd -niBC 12`/cost-12 validator identify authentication CPU as the dominant
+remaining bottleneck. They do not prove every delay is bcrypt or guarantee that
+reducing its cost alone will meet the browser gate.
+
+**Selected implementation:** add
+`services.dev-workspaces.auth.bcryptCost` in dev-workspace's host module, with
+`lib.types.ints.between 4 17`, **default 12**. Set **5 only on aitherdev** in
+vpsfree-cz-configuration. The documented Apache `htpasswd -C` range is 4 through
+17; use an integer option, not arbitrary shell text, a hash-prefix override or
+an automatic hardware-dependent calibration. Costs 4 and 17 are supported
+boundary values, not recommendations for this deployment. Keep the generic
+example/default at 12 so unrelated installations retain their existing cost.
+[Apache htpasswd reference](https://httpd.apache.org/docs/2.4/programs/htpasswd.html).
+
+This is the smallest change to the measured bottleneck: no auth cache, bearer
+session/cookie scheme, bypass for assets/API/SSE, password rotation, browser
+request batching change or application protocol change. TLS, per-request Basic
+Auth, nginx Authorization-header stripping, host firewall/access scope and file
+permissions remain required. A user-profile package switch cannot change this
+system-owned htpasswd; **vpsfree-cz-configuration is now an affected project**.
+The previous no-host-change constraint is superseded only for this amendment.
+
+### Security rationale and exact generation contract
+
+The password source is generated by `openssl rand -hex 32`: 64 printable ASCII
+hex characters representing 256 random bits. At 64 bytes it fits within bcrypt's
+72-byte password limit. Lower cost reduces the work of every offline/online
+guess; it does not remove the impractical search space of this independent
+random secret. The theoretical bcrypt work reduction from 12 to 5 is 128-fold;
+process overhead means measured wall-clock ratios need not match it. Faster
+online guesses are an accepted tradeoff for this random credential, and lower
+per-request CPU also reduces the authentication work an attacker can impose.
+This does not claim denial-of-service prevention.
+
+The low-cost site exception depends on the generated secret retaining its
+entropy and secrecy. A file matching 64 hex characters does not prove randomness;
+the deployment relies on the established generator/provenance, not syntax alone.
+Human-chosen or reused passwords are outside this justification. Ordinary
+password-storage guidance recommends bcrypt work factor at least 10; retaining
+12 as the generic default and documenting the aitherdev exception avoids turning
+this decision into a general password recommendation.
+[OWASP Password Storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
+A reader of the protected plaintext password already has the credential at any
+cost; the change preserves the trusted-local-operator boundary and existing
+root/group-readable files. Never print a real password, Authorization header
+or htpasswd record in logs, test output or deployment evidence.
+
+Use the same validated option for both hash generation and acceptance:
+
+- Pass the decimal integer to `htpasswd -niBC <cost>` and supply the existing
+  password on stdin. Keep credentials out of argv and the Nix store.
+- Compute an exact two-digit encoded cost (`5 -> 05`, `12 -> 12`) at Nix
+  evaluation. The regex for aitherdev must be
+  `^[^:]+:\$2[aby]\$05\$[./A-Za-z0-9]{53}$`; at default it remains the same
+  regex with `12`. Do not accept any two digits or unpadded `5`. Retain separate
+  exact username equality, the complete-file/single-entry check, the existing
+  terminal-newline convention, regular/nonsymlink checks, owner/group/mode
+  checks, and `htpasswd -vi` verification against the current password source.
+- An otherwise valid cost-12 hash is invalid for declared cost 5 and vice versa.
+  Reject the cost mismatch before doing expensive password verification. A
+  current-cost hash still has to verify; matching shape alone is insufficient.
+  Preserve validation of the 64-hex password file; malformed persistent password
+  state fails rather than causing silent credential rotation.
+- Reuse the existing substrate `flock`. Generate in a mode-restricted temporary
+  file in the htpasswd's own directory, set `root:<nginx group>`/0640, validate
+  the candidate with the same exact-cost/password checks, then `mv -T` over the
+  live htpasswd. Never truncate/rewrite the live file in place. Generation or
+  validation failure leaves the prior auth file and password intact and exits
+  nonzero. A crash may leave only a private staged file; retry validates the live
+  output and publishes a complete candidate, without sweeping unrelated state.
+- The first cost change produces a new salted hash only. Password bytes/inode,
+  username, CA, TLS pair and unrelated state stay unchanged. Once reconciled,
+  the same declaration preserves htpasswd bytes and inode on rerun; do not
+  rehash merely because bcrypt generates a fresh random salt. Existing renewal
+  and activation paths use the same option and validation rule.
+
+### Exact files and verification brief
+
+Implementation belongs in these repositories/files:
+
+| Repository/files | Change |
+| --- | --- |
+| dev-workspace `nix/host-module.nix` | Integer option/default/bounds, exact padded-cost regex and generation argument; reuse atomic reconciliation. |
+| dev-workspace `nix/tests/host-module.nix` | Evaluate default/custom/boundary/invalid options and inspect generated reconciliation behavior. |
+| dev-workspace `nix/tests/host-module-idempotency.nix` | Real nginx/auth checks and 12 -> 5 -> 12 -> 5 generation/idempotence/failure coverage in the disposable VM. |
+| dev-workspace `test/host_auth_benchmark.py` (new focused harness), `flake.nix` if needed | Synthetic credential verification report and deterministic generated-cost regression check using declared Apache tooling. Keep it separate from browser measurements and VM timing assertions. |
+| dev-workspace `docs/workspace-portal.md` | Explain option, random-secret exception, cost regeneration, mixed-system-generation behavior and rollback. |
+| vpsfree-cz-configuration `cluster/cz.vpsfree/machines/aitherdev/config.nix` | Set `services.dev-workspaces.auth.bcryptCost = 5` beside the existing auth username. |
+| vpsfree-cz-configuration confctl-managed `flake.lock` | Pin the reviewed generic module revision through channel `dev-workspace`, role `devWorkspace`, input `devWorkspace`; keep generated pin commit history. |
+
+Do not change codex-web, Codex/llm-agents, system model configuration, site
+extension behavior, TLS/security defaults for other hosts or the consuming
+user-profile pin chain solely to deliver this host option. The module input
+already exists in configuration `flake.nix`; aitherdev's `module.nix` already
+selects channel `dev-workspace`, and `config.nix` imports its `nixosModules.host`.
+An additional flake input or system installation of the workspace application
+is unnecessary. Lead/implementer own any tracking or project-document edits
+outside this architect's design.md-only assignment.
+
+Quick deterministic checks, in repository Nix environments:
+
+- Assert default 12 and evaluated custom 5; option type accepts integer bounds
+  4 and 17 and rejects 3, 18, fractional values, strings and null. Inspect the
+  generated script for matching exact padded regex and generation value at 5,
+  12 and boundaries. Do not actually hash at 17 just to test the upper bound.
+- Generate an isolated cost-5 credential with the packaged `htpasswd`; parse
+  its encoded cost and verify correct password succeeds and incorrect password
+  fails. A harness expecting cost 5 must fail immediately on a cost-12 fixture,
+  before timing it. This catches an accidental hardcoded generation cost without
+  relying on machine speed. Ensure a cost-12 declared fixture remains supported.
+- Preserve/refuse the existing malformed shape, extra username/record, unsafe
+  file type/mode, wrong user and wrong password cases. Specifically test `$5$`,
+  `$04$` and `$12$` rejection when `$05$` is declared, supported `$2a/$2b/$2y`
+  variants where the packaged verifier supports them, and unchanged permission
+  and source-password checks. Shape acceptance never overrides verifier failure.
+- Run `nix flake check --no-build --show-trace`, the focused host-module check,
+  formatting/shell checks and `git diff --check`. Evaluate the actual aitherdev
+  configuration and require its option and generated script to select 5 before
+  allowing deployment; a generic custom-option fixture alone cannot catch a
+  site override being dropped.
+
+After implementation commits and required independent security/compatibility
+review, run the NixOS VM test through the fresh verification watcher. Extend its
+existing specialisation pattern to switch cost while keeping all other host
+settings equal. Verify authenticated proxy success and unauthenticated/wrong-
+password rejection at each cost. Validate `$12$` initially, `$05$` after the
+site-like switch, `$12$` on rollback, and `$05$` on reapply; a second reconciliation
+at each setting must preserve auth bytes/inode. Password, CA and TLS outputs
+must remain identical through cost-only switches. Reuse existing locking and
+malformed-state tests; include interrupted/failed auth generation before atomic
+publication and a concurrent reader that sees only a complete old/new auth file.
+Test a valid same-cost hash for the wrong password is regenerated successfully.
+Never disable auth or accept a malformed file as failure recovery.
+
+The focused benchmark uses fresh synthetic 64-hex secrets, local temporary files
+and stdin only, never production credentials or the live auth file. Use the
+Apache executable selected by the tested Nix environment. Report executable
+revision, declared/encoded cost, sample count, all verification outcomes, median
+and p95 per-verification elapsed time, and totals for five batches of ten serial
+verifications; warm up outside the sample. A cost-12 comparison uses its own
+synthetic hash and reports the ratio. It must verify cost labels, not infer cost
+from speed. The reproducible CI gate is exact encoded cost plus verification
+behavior. Do **not** add a millisecond unit-test assertion or a required speedup
+ratio: scheduler load, process launch and VM/CPU differences make those flaky.
+
+On otherwise quiet aitherdev, use **0.5 seconds for a ten-verification cost-5
+batch** as the diagnostic auth budget (all five measured batches), against the
+observed roughly 0.14-second expectation. Exceeding it blocks acceptance pending
+investigation of host load/tooling and a recorded rerun; it does not automatically
+lower the cost or replace a failed browser sample. Timing is measured during
+rollout, not a portable unit-test contract. Exact cost checks prevent silent
+regression to 12 even if a fast CI machine masks its delay.
+
+### System ordering, compatibility, rollback and recovery
+
+There is **no session, database, runtime-authority, journal, manifest, ledger or
+protocol format migration**, and no Codex version change. The htpasswd is derived
+state in the existing bcrypt format. New nginx/old nginx consumers already read
+that format; changing its cost does not rotate the shared password or invalidate
+browser Basic Auth credentials. Existing unconfigured deployments still produce
+cost 12 and should preserve valid files. The new Nix option is additive: an old
+module revision cannot evaluate a configuration that sets it. Pin the supporting
+module and site assignment together; rolling the pin back alone while retaining
+that assignment is unsupported and should fail evaluation.
+
+Ordered delivery, separate from the already deployed user-profile application:
+
+1. Review/verify the dev-workspace module change and exact host-module diff. In
+   this initiative's configuration feature worktree, use
+   `confctl inputs channel set --commit dev-workspace devWorkspace <reviewed-rev>`
+   for the exact feature revision (or normal channel update for an accepted
+   published revision). Do not manually edit a channel-owned lock. Inspect
+   transitive changes; keep nixpkgs, llm-agents and unrelated host inputs fixed.
+2. Add the aitherdev-only setting, record exact module/config/system revisions,
+   inspect its evaluated cost and generate the configuration diff. Build only
+   `cz.vpsfree/machines/aitherdev` with `confctl build`, then run
+   `confctl deploy cz.vpsfree/machines/aitherdev dry-activate` and inspect its
+   service/activation plan. No remote default-branch integration is implied.
+   An unexpected local kernel build still requires stopping and investigation.
+3. After applicable system-deployment authorization, deploy that reviewed host
+   configuration with the supported confctl switch flow. Preserve the active
+   application profile and App Server; no workspace package switch, Codex restart
+   or session quiesce is required for this auth-only change. Avoid concurrent
+   system activations/manual old reconcilers. Let an in-flight old renewal finish
+   before switching; the substrate lock serializes writers, but does not choose
+   which generation's declared cost should win.
+4. Confirm the selected system's reconciliation completed and its renewal unit
+   uses that generation. Check only the encoded cost/ownership/mode and success
+   results, without recording the full hash. Verify same-password authenticated
+   access, unauthenticated/wrong-password denial and TLS, then run the selected
+   reconciler again to establish idempotence. If an older in-flight process wrote
+   last, finish it and rerun the selected reconciler; do not edit htpasswd by hand.
+   Routine system activation/renewal supplies nginx configuration/reload handling;
+   do not add an application restart merely for a changed hash file.
+5. Re-run the browser gates below on the recorded system + user-profile pair.
+   Do not claim the initiative ready for use from the synthetic timing alone.
+
+System rollback is distinct from the forbidden earlier **user-profile** rollback.
+A previously built compatible system generation still accepts the unchanged
+password; its old literal cost-12 validator will detect `$05$` and atomically
+regenerate `$12$`. A new module with `bcryptCost = 12` does the same. A rollback
+therefore restores compatibility but can restore the latency failure. It does
+not restore the old hash bytes, since the regenerated salt changes; a subsequent
+same-generation rerun must stabilize. Reapplying the cost-5 system regenerates
+`$05$` once. Test these transitions before live use and never run old/new
+reconcilers concurrently as an ongoing arrangement.
+
+If generation/verification fails, retain the complete previous auth file and
+report failed activation. Do not delete the password, weaken TLS/auth, expose an
+unauthenticated fallback or manually patch credential files. Recover through a
+corrected declared module/configuration or a compatible system-generation
+rollback, using the same substrate lock and verification. Confirm actual encoded
+cost after recovery; a selected generation alone does not prove reconciliation
+succeeded. Retain ordinary forward-only user-profile recovery rules.
+
+### Live acceptance and remaining risks
+
+Keep both original gates: **30 authenticated browser loads with no scan and 30
+with an overlapping observation-only/dry-run scan, each p95 usable <= 2 seconds**,
+nearest-rank 29th sorted sample. Use the same browser/viewport/cache policy and
+navigation-to-usable definition, count failed loads/timeouts, and preserve
+functional checks for recent paging, older history, receipts/uploads/prompts and
+SSE gap recovery. For the paging-capable target require paged responses, zero
+legacy fallback and no page exceptions; record/classify every failed HTTP
+response. Do not hide delays by preloading assets outside the established policy
+or subtracting auth time from usable time.
+
+Record document/assets/API resource timing and CPU after the system change,
+along with synthetic auth measurements and exact selected system/profile paths.
+Ensure runs cover a natural metadata-cache maximum-age expiry (60 seconds),
+including periodic bounded full-scan cost; space navigations or extend observation
+as needed without changing how each load is timed. The scan must actually overlap
+measured loads and remain a dry run; this design authorizes no new session
+archival. Preserve existing 5-second active/30-second idle activity and scan-lock
+acceptance requirements.
+
+The cost-5 reduction is selected from measured evidence, not a promise of an
+end-to-end result. Residual RPC/startup/asset latency may still miss 2 seconds;
+if either browser gate fails, keep the initiative open, retain the failure
+samples and investigate the remaining critical path. Do not silently relax the
+gate, lower the site cost again, change other deployments' defaults or declare
+success from 30 functionally successful loads. Only design.md was changed by
+this assignment; implementation, security review, VM checks and host deployment
+remain separate work owned by the lead/implementer.
 
 Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-09-29-portal-performance/
