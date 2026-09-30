@@ -170,7 +170,7 @@ There are **no database, schema, seed, persisted-format, API-version, protocol-
 version or generated-client migrations** in any repository. No migration was
 merged, released or externally consumed. The disposable rollout metadata cache
 is explicitly non-authoritative and rebuildable. Archive recovery consumes
-existing schema-1 journals and retained creation records without changing their
+existing schema-2 journals and retained creation records without changing their
 formats. The bcrypt deployment regenerates the htpasswd hash from the unchanged
 password and is reversible by restoring cost 12 and switching configuration.
 

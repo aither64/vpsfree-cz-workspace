@@ -6,7 +6,7 @@ lifecycle: active
 
 ## Status
 
-- Phase: implementation, focused and integration verification, independent incremental reviews, configuration deployment, application profile switch, and both live 30-load performance gates are complete. The exact five-repository branch inventory and mandatory whole-history review now precede the user-authorized fast-forward integration to each `master`; no archive, deletion, or session stop is authorized.
+- Phase: implementation, focused and integration verification, independent incremental and whole-history reviews, configuration deployment, application profile switch, and both live 30-load performance gates are complete. The rewritten extension commit's identical-tree CI and a final remote-ancestry recheck now precede the user-authorized fast-forward integration to each `master`; no archive, deletion, or session stop is authorized.
 - The corrected live replay proved the September 26 journal is a legitimate partial team archive: the retained root and architect are archived, while the implementer and reviewer remain active materialized rollouts with unchanged retained identities. The September 27 root and all three members are archived, but its roster still records the members as ready.
 - Read-only SQLite rows and pinned Codex 0.155.0 source establish filesystem-consistent archive state; no Codex storage patch or version change is needed. The old package moved threads successfully but its incomplete listing proof could fail before roster bookkeeping, and later retries then treated already-archived members as active.
 - The existing recovery adapter is correctly journal- and generation-bound but prematurely requires every member to be archived before the selected predecessor can run. The architect amended `design.md` to add a retained-only, exact, idempotent team completion step inside that adapter, followed by the existing all-archived proof and predecessor replay. It forbids replacement, fresh bootstrap, unarchive, interruption, manual database/filesystem edits, profile selection, and mutation outside the owning journal.
@@ -63,18 +63,18 @@ lifecycle: active
 - [x] Exact partial-journal diagnosis and retained-only recovery design.
 - [x] Retained-only recovery implementation correction, quick checks, and clean independent review.
 - [x] Exact package build, authorized journal recovery, and user-profile deployment.
-- [ ] Host authentication latency remediation and repeated live acceptance.
-- [ ] Final whole-history readiness review and authorized default-branch integration.
+- [x] Host authentication latency remediation and repeated live acceptance.
+- [x] Final whole-history and migration-readiness review.
+- [ ] Authorized default-branch integration and exact merged-head checks.
 
 ## Next actions
 
-- Push workspace head `ff30f388`, build/switch the exact package and repeat the 30-load no-scan gate.
-- After no-scan passes, run the authorized dry-run observation overlap and metadata due-rebuild acceptance. Both p95 values must be at most two seconds with no page-load failures.
-- Perform the final complete-history and migration-readiness review after the whole pin chain and live evidence are complete, then integrate the authorized feature heads into their default branches in dependency order.
+- Confirm GitHub Actions for rewritten identical-tree extension head `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`.
+- Recheck each remote `master`, capture any head changed since review, then fast-forward the five user-authorized heads in dependency order and verify exact remote results.
 
 ## Documentation
 
-- `plan.md` records intent and compatibility; `design.md` owns the technical and verification brief. `rollout.md` is a prepared, unexecuted aitherdev switch/recovery record. The plan now distinguishes legacy recent-20-turn `/thread` from all-history paging and uses forward-package recovery rather than unsupported profile rollback.
+- `plan.md` records intent and compatibility; `design.md` owns the technical and verification brief. `rollout.md` records the executed aitherdev recovery, system authentication deployment, application switch and live gates. The plan distinguishes legacy recent-20-turn `/thread` from all-history paging and uses forward-package recovery rather than unsupported profile rollback.
 
 ## Repositories
 
@@ -110,7 +110,8 @@ lifecycle: active
 - Initial team roster: `architect0` (Astra/xhigh, write), `implementer0` (Sol/xhigh, write), `reviewer0` (Sol/xhigh, read-only).
 - Mandatory recovery review: High risk; General, Architecture and repetition, Scope and proportionality, and Risk and compatibility lanes; retained `reviewer0` on saved `gpt-6-sol`/xhigh. One Blocking active-sibling regression and two Important source/root-only compatibility findings were fixed in `fbd7a9e` and directly reverified. No migrations; no superseded committed recovery approach.
 - Mandatory retained-only recovery review: High risk; the same four lanes and retained reviewer settings. Two Blocking findings at `b36691d5` were corrected separately at `47716d9e` and `b9465ab6`. Reviewer0 confirmed exact archived-member re-proof, real Nix wrapper layout handling, source-tree laziness, and stable missing-source failure; no remaining/new finding and no migration.
-- Live acceptance conclusion: paging and controls are functionally correct, but the 2-second latency criterion is not met. The next design/implementation unit is system authentication, not further transcript truncation or an unsafe cursor shortcut.
+- Mandatory whole-branch review: High risk; General, Architecture and repetition, Scope and proportionality, and Risk and compatibility lanes; retained `reviewer0` on saved `gpt-6-sol`/xhigh. It found no Blocking code or dependency issue, one Important stale durable rollout/status record and one Advisory journal-schema typo. Both documentation findings are corrected directly without changing reviewed application heads or behavior. The reviewer confirmed no migrations or obsolete branch-only approaches, compatible deliberate system pin `ec05cb9f` versus application head `d20bb64c`, safe identical-tree pin-history rewrites, and no code/pin barrier to fast-forward integration. Residual gaps are limited live older-history cursor traversal, one incidental overlap HTTP error without a failed load, and exact rewritten-extension CI.
+- Live acceptance conclusion: paging and controls are functionally correct; both no-scan and overlapping dry-run gates meet the 2-second criterion after the reviewed authentication and initial-render changes.
 
 ## Open questions
 
