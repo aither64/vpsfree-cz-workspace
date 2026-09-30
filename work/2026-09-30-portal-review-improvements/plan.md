@@ -14,10 +14,14 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   downstream vpsFree extension pin; update its transitive `llm-agents` lock so
   the user-profile package contains a Codex build that exposes the requested
   model.
-- `vpsfree-cz-configuration`: deploy only `aitherdev` from the registered
+- `vpsfree-cz-configuration`: deploy `aitherdev` from the registered
   feature worktree at the existing head, which already pins the required
   `llm-agents` revision; do not make a redundant input update or integrate the
-  configuration branch without separate approval.
+  configuration branch without separate approval. Prepare the bounded fourth
+  repository edit: one internal DNS CNAME and a monotonic SOA serial in
+  `configs/internal-dns/zone.vpsfree.cz.`. Shared DNS publication is pending
+  exact-target user approval and is outside the aitherdev/profile deployment
+  authorization; no input or system host code changes are included.
 - `codex-web`: read-only protocol dependency; its existing settings request is
   atomic, so the portal draft and refresh fix belongs in `dev-workspace`.
 - `vpsadmin-webui`: read-only package/module dependency at reviewed head
@@ -41,6 +45,11 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
 5. Deploy the reviewed portal package through the user profile. Keep feature
    branches unmerged until the user explicitly approves each default-branch
    integration.
+6. Prepare, check and independently review the internal DNS candidate locally,
+   then ask for publication approval naming both internal ns1 hosts and both
+   monitoring copies listed in the design. Cluster/profile work continues
+   independently; neither successful service probes nor this preparation
+   authorizes shared DNS deployment.
 
 ## Decisions
 
@@ -62,6 +71,13 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
 - Run the React WebUI beside the PHP WebUI at
   `newadmin.aitherdev.int.vpsfree.cz`, using a separate newadmin container and
   loopback-only private listeners behind the existing services TLS edge.
+- The cluster declares `newadmin` for guest hosts/resolution, but selected
+  configuration `ee99382c` lacks its site internal DNS record. Prepare
+  `newadmin.aitherdev.int IN CNAME frontend.aitherdev.int.vpsfree.cz.` next to
+  the existing aliases, with a strictly increased SOA serial. Public production
+  `newadmin.vpsfree.cz` is unrelated. Hostname/browser readiness requires normal
+  host and intended VPN-client resolution; `--resolve` checks prove only the
+  service path. Publication remains pending user approval.
 - Codex 0.155.0 does not expose `gpt-6.1-sol` for the active account, while an
   isolated 0.159.2 App Server using the same account does. Update the user-profile
   package lock to the proved `af40d966` revision and deploy configuration head
@@ -98,6 +114,10 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   The user-profile application remains a separate forward-only transition with
   its own generation and recovery journal, using the documented candidate entry
   and failure boundaries in the design addendum.
+- DNS publication is a separate operation on the approved shared targets.
+  Preserve existing records and use a newer SOA serial for any correction or
+  removal after publication. Account for negative caching; do not reset or
+  restart the development cluster to repair a missing DNS record.
 
 ## Documentation
 
@@ -125,3 +145,9 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   user-profile package use the intended Codex revision before switching the
   portal profile.
 - Use the required Luna/low watcher for long builds and cluster verification.
+- DNS: verify the one-record/serial diff, validate each rendered zone, build the
+  four explicit consumers under the review/watcher gates, and prepare their
+  deployment evidence before asking for shared-DNS publication approval.
+  After approval and publication, check each authoritative copy, normal host
+  and VPN-client resolution, then strict-CA HTTPS and browser OAuth/refresh
+  without `--resolve`; handle negative caches and recovery as in the design.

@@ -2,7 +2,8 @@
 
 Status: completed implementation brief. The lead accepted the repository,
 forward-only recovery and separate WebUI backend boundaries. This document
-records design, not implementation or deployment evidence.
+records design and explicitly attributed verification evidence; planned checks
+are not claims of execution.
 Author: architect0, 2026-09-30.
 
 ## Scope, evidence and ownership
@@ -43,13 +44,16 @@ corresponding repository unless stated.
 | `dev-workspace` | `portal/internal/web/static/{app.js,repository-review.js,repository-review.css,style.css}`, `templates/{session.html,details.html}`, `web/{server.go,member_conversation.go,repository_review.go,repository_review_batch.go,repository_review_cache.go}`, `repository/{review.go,review_diff.go,status.go}`, new origin/snapshot helpers, `teamruntime/runtime.go`, CLI adapter/tests if needed, README and `docs/workspace-portal.md` |
 | `vpsfree-dev-workspace` | `dev-clusters/vpsadmin/{flake.nix,bin/devcluster,nix/test.nix,README.md}`, `dev-clusters/lib/runtime.sh` links, optional focused WebUI Nix helper, `test/{devcluster_commands_test.rb,devcluster_status_test.rb,devcluster_nix_smoke.rb,fixtures/vpsadmin-config.json}`, runtime input in `flake.{nix,lock}` |
 | `workspace` | `config/{agent-teams.nix,vpsadmin-devcluster.json}`, `AGENTS.md`, `docs/agent-teams.md`, matching policy checks in `flake.nix`/`test/`, extension input in `flake.{nix,lock}` |
+| `vpsfree-cz-configuration` | Bounded fourth-repository candidate: one CNAME and monotonic SOA serial in `configs/internal-dns/zone.vpsfree.cz.`; shared DNS publication pending exact-target user approval. Existing aitherdev Codex deployment uses its already selected input; no input or system host code changes. |
 
 The lead owns plan/state/portal artifacts and implementation assignments; the
-implementer owns application changes. This architect edits only this document
-and any separately assigned coordination prototype. A consequential departure
+implementer owns application changes. This architect edits this document and
+the explicitly assigned DNS reconciliation in `plan.md`, plus any separately
+assigned coordination prototype. A consequential departure
 from these boundaries goes through the lead. No vpsAdmin API/schema, PHP product
-behavior, generated clients, Terraform provider, node protocol, production host,
-KB content, or vpsAdminOS change is required. No coordinated node upgrade is
+behavior, generated clients, Terraform provider, node protocol, system host
+code, KB content, or vpsAdminOS change is required. Shared internal DNS publication
+has the separate approval boundary below. No coordinated node upgrade is
 needed. The reviewed React repository remains an exact dependency; a discovered
 defect there requires a separately agreed scope change.
 
@@ -609,6 +613,37 @@ RACK_ENV, with `LoadCredential` for runtime client ID/secret access. Failure
 blocks the new container without making the PHP/API service depend on this
 new seed.
 
+Startup correction assessed at extension `e0f98557`: explicitly set
+`containers.newadmin.autoStart = true` inside its existing enabled-only block
+in `dev-clusters/vpsadmin/nix/test.nix`. The selected packaged smoke input
+`devcluster-vpsadminos` `15802517` uses nixpkgs `21a67dc4`, whose
+`nixos/modules/virtualisation/nixos-containers.nix:830-836` defaults this option
+to false. Lines 1041 and 1097-1107 connect multi-user to `machines.target` and
+add the container's `wantedBy = [ "machines.target" ]` only when auto-start is
+enabled. Selected API `5c76e329` explicitly enables the separate legacy
+`containers.webui` at `tests/configs/nixos/vpsadmin-services.nix:298-300`;
+that setting does not apply to `newadmin`.
+
+The existing selected services toplevel `jds0d7…` independently demonstrates
+the missing boot edge: `container@newadmin.service` has the seed `Requires`
+and `After`, but `etc/systemd/system/machines.target.wants/` contains the legacy
+`container@webui.service` link and no `container@newadmin.service` link. Seed
+`Before` and container `Requires`/`After` constrain a requested start; they do
+not request that start. Keep those dependencies and add only the declarative
+auto-start setting. The inspected dirty unit assertions at
+`test.nix:1146-1158` are appropriate: enabled means auto-start, machine-target
+membership and both seed dependencies; disabled means neither the container
+definition nor its named service. Ownership and commitment of that application
+change remain with the implementer and lead.
+
+This changes services-VM boot wiring only, without changing credentials,
+database schema, package interfaces or cluster lifecycle authority. Applying
+the fix requires the ordinary reviewed package/services-update path when
+authorized; neither a label-only profile switch nor this assessment applies it
+to the running VM. Preserve retained credentials, compatible API/schema and BFF
+state during recovery. Do not replace the fix with a manual container start or
+declare readiness from runner-level `ready: true`.
+
 In a DB transaction, upsert by the retained unique client ID with a distinct
 name and set these fields explicitly:
 
@@ -667,7 +702,17 @@ extension Nix shell, then include an enabled bridge fixture in
 `test/devcluster_nix_smoke.rb`. Evaluate disabled old configs in both modes and
 the explicit unsupported enabled-local error. Assert seed/container dependency
 ordering, path-only credential references, exact headers/listeners and unchanged
-legacy services. In a disposable API fixture, seed twice and assert one stable
+legacy services. The enabled fixture must force the services configuration and
+its auto-start/unit assertions; disabled bridge/local fixtures must retain the
+absence of the named React container/service. Removing auto-start in a
+disposable fixture must fail the enabled assertion. After an authorized build,
+inspect the new services result for the machine-target link and retained seed
+dependencies. After authorized activation, separately prove
+`container@newadmin.service` is active, seed completion succeeded, the private
+nginx/BFF are healthy and the public TLS/OAuth/PHP checks below pass. The
+existing `nix run .#devcluster-check` is the longer evaluation/runner check,
+under the normal review/watcher gate; no framework expansion is needed.
+In a disposable API fixture, seed twice and assert one stable
 new client/hash, NULL default, unchanged PHP default, configured token lifetimes
 and issuance/rotation of refresh tokens.
 
@@ -694,8 +739,227 @@ Then verify authenticated API access, login/callback, token refresh, logout,
 session retention, and unchanged PHP/default recovery behavior with a disposable
 seeded account. Assert responses without logging access/refresh tokens, cookies,
 callback state or authorization codes. Exercise upstream-failure OAuth log
-suppression and credential failure in isolated fixtures. A live cluster probe
-and authenticated flow remain required before readiness.
+suppression and credential failure in isolated fixtures. The lead's completed
+live service and authenticated-flow evidence is recorded below; normal DNS
+readiness remains a separate gate.
+
+### Running bridge cluster: completed evidence and acceptance reference
+
+On 2026-09-30 the lead's normal-host filtered status confirmed this exact
+session is already `running`, `ready: true`, `single`, `bridge`, with clean
+pinned WebUI `534caa83` and the expected PHP/React/API/auth URLs. The earlier
+provider error was transient during state changes. Do not start, reset or
+update this cluster for the label-only package cascade. The selected profile
+is `aidlqw1…` (workspace `0e00eab5`); the lead also confirmed live portal
+`gpt-6.1-sol` high/xhigh and the active thread's exact model/xhigh settings.
+These facts complete those live model checks. The lead subsequently reported
+the following live checks passed in this exact disposable bridge cluster:
+
+- Real OAuth login/callback and rejection of reused one-use state;
+  authenticated session and API access.
+- BFF restart persistence, two OAuth seed reruns, and logout/revocation.
+- Strict-CA TLS, static content, React health, CORS and legacy PHP checks;
+  loopback-only private nginx 18082 and BFF 3001.
+- Real provider refresh after changing only the authenticated server-side test
+  session's `expires_at` to a truthy expired value: the BFF rotated the access
+  token, restored a future expiry, preserved `sessionKey`, and the API accepted
+  the refreshed token. Credentials and provider token lifetimes were unchanged;
+  the lead deleted all secret temporary files after verification.
+
+This is lead-reported completed evidence, not a new architect-run probe. The
+bounded disposable-session refresh test satisfies this session's refresh gate;
+no redundant 20-minute wait is required. It exercised the normal BFF/provider
+refresh path, rather than merely testing an edited timestamp. Normal host/VPN
+DNS and browser reachability remain separate from the `--resolve` service
+checks and subject to the publication gate below.
+
+The following commands and criteria remain a reference for any needed
+inspection from the normal host context and this verified session; completed
+checks do not need repetition without a relevant change or failure. The
+architect's restricted shell cannot open the dispatcher transition lock or see
+host processes/netlink; its absent PID observation is not a stopped-run proof.
+Existing `runner.log`, per-machine logs under `state/`, and `result-config`
+belong to the running operation. If further long readiness monitoring is needed,
+assign a fresh Luna watcher to those existing logs; do not launch a second run.
+
+```sh
+slug=2026-09-30-portal-review-improvements
+cluster_dir=/home/aither/workspace/ai/vpsfree.cz/.dev-clusters/vpsadmin/clusters/$slug
+cluster_ca=/home/aither/workspace/ai/vpsfree.cz/.dev-clusters/vpsadmin/certs/default/vpsadmin-ca.crt
+dev-session current
+workspace-host status
+set -o pipefail
+vpsadmin-devcluster status "$slug" --json |
+  jq '{schema,found,kind,state,ready,topology,network,webuiSource,
+       services:[.services[]? | {label,url}]}'
+jq '{newWebui,domains,network,services:{ip:.services.ip},topologies}' \
+  "$cluster_dir/config.json"
+jq '{labels,machines:(.machines | with_entries(.value |= {toplevel}))}' \
+  "$cluster_dir/result-config"
+```
+
+The source distinction matters: `vpsadmin-devcluster config "$slug"` creates or
+merges configuration, and `urls` also prepares state and prints credentials.
+Neither is a read-only inspection command. Unfiltered `status --json` includes
+`services[].accounts` secret fields; retain only the projection above. A truly
+absent cluster returns `found:false`, not a provider failure. If that is ever
+observed after ownership checks, the supported future start command is
+`vpsadmin-devcluster start "$slug" --topology single --network bridge`, through
+the authorized watcher/start workflow, without `--force`; it is not indicated
+for the current running cluster. Do not invoke private helpers or infer new
+start/stop/reset authority from this checklist.
+
+1. **Host and selected build.** Verify `ip -br link show br0`, the configured
+   bridge-helper executable and `/etc/qemu/bridge.conf`; resolve the four public
+   names to services IP `172.16.106.53`. Preserve the selected result versus
+   activated-VM distinction. The inspected result was `6nxx6yw…json`, services
+   toplevel `jds0d7…`, API/database source `5c76e329`, and clean pinned WebUI
+   `534caa83`. Read-only guest commands use
+   `vpsadmin-devcluster ssh "$slug" services -- <command>`; keep its ordinary
+   session/generation/ownership guards. Compare guest `readlink -f
+   /run/current-system` with the selected services toplevel.
+2. **Services and render.** Through that SSH command, run `nginx -t`,
+   `systemctl show vpsadmin-devcluster-webui-credentials.service
+   vpsadmin-devcluster-webui-seed.service container@newadmin.service
+   -p ActiveState -p SubState -p Result -p ExecMainStatus -p After -p Requires`,
+   and `nixos-container run newadmin -- nginx -t`. Check the BFF with
+   `nixos-container run newadmin -- systemctl show vpsadmin-webui-bff.service
+   -p ActiveState -p SubState -p Result`, and inspect `ss -lnt` for loopback-only
+   18082/3001. The seed is a oneshot without RemainAfterExit: inactive/dead with
+   a completed successful invocation is valid, not a failure. Confirm rendered
+   seed ordering, exact edge Host/forwarding values, OAuth access/error-log
+   suppression, CA trust and separate BFF session storage without dumping full
+   environment, credential files, service journals or process arguments.
+3. **Runtime bundle and seed.** Inspect only owner/mode/size and boolean format
+   assertions: bundle mode 0700, exactly three nonsymlink regular files with
+   mode 0600, each 65 bytes containing 64 lowercase hex digits plus newline.
+   The architect checked
+   this existing bundle's shape/format without disclosing values. Inside the
+   services VM, use `stat`/quiet `cmp` to verify the runtime files at
+   `/run/vpsadmin-newadmin-credentials` match the mounted bundle; never print
+   their contents or hashes. The rendered seed requires database setup, base
+   seed and credential preparation; `container@newadmin` requires that seed.
+   Require successful seed completion and successful OAuth exchange. If DB
+   inspection is needed, query only boolean/count/nonsecret policy fields for
+   the named React client: one row, NULL default, fixed 1200-second access tokens,
+   refresh enabled for 2592000 seconds, exact callback/start origins, and a distinct
+   unchanged PHP default. Never SELECT client IDs, secrets, secret hashes or
+   token rows into output. The lead's two seed reruns already passed; ordinary
+   read-only inspection needs no additional seed rerun.
+4. **TLS, public endpoints and CORS.** Use the cluster CA with bounded curl
+   timeouts; never `-k`. Check React `/`, a deep link, `/healthz`, `/config.json`
+   and PHP `/` using `-o /dev/null -w '%{http_code}\n'`. Add
+   `--resolve <host>:443:172.16.106.53` when testing the edge before DNS is ready,
+   then repeat through normal DNS. Verify the existing preflight command above;
+   print only status and Access-Control-* headers. Public config must point at
+   exact newadmin/API/auth/legacy origins and API 7.0. A cross-origin
+   `/session.json` request must fail; same-origin unauthenticated access must
+   have no token. Filter session JSON to booleans only.
+5. **OAuth, refresh and PHP coexistence: completed.** The lead passed real
+   `/oauth/login` → auth origin → exact `/oauth/callback`, one-use state
+   rejection, authenticated session/API access, BFF restart persistence,
+   refresh, logout/revocation and PHP coexistence. Keep no-store/session
+   protections and avoid recording a HAR, callback URL/query, cookies or tokens.
+   Refresh is automatic in reviewed `bff/server.js:155-187,256-274` when a
+   same-origin `/session.json` read reaches access-token expiry; there is no
+   separate refresh endpoint. The accepted bounded probe edits only
+   `expires_at` in the authenticated disposable server-side test session to a
+   truthy expired value, then lets that normal path perform the real refresh.
+   Assert token rotation, restored future expiry, unchanged `sessionKey` and
+   accepted authenticated API access; report booleans only. It does not alter
+   credentials, provider lifetimes or other sessions. The completed probe and
+   deletion of its secret temporary files replace the proposed natural-expiry
+   wait for this session. Full VM restart and negative credential tests, if
+   needed, retain their separately authorized verification scope.
+
+Failure means retain the running cluster, credentials, session state and
+compatible API/schema, report the failing gate, and use the previously defined
+forward recovery path only when authorized. A source/result selection does not
+prove activation; OAuth success does not replace refresh/PHP evidence. No
+lifecycle action or additional deployment is authorized by this checklist.
+
+### Internal DNS candidate and publication gate
+
+The lead accepted local preparation of a fourth-repository change necessary
+for the approved hostname. **Shared DNS publication is pending exact-target
+user approval.** Prepare, check and independently review the candidate before
+requesting that approval. The existing aitherdev and user-profile deployment
+targets do not include these shared DNS hosts; cluster/profile work continues
+independently. This brief authorizes no cluster restart, reset or DNS deployment.
+
+Only `configs/internal-dns/zone.vpsfree.cz.` in the same-session
+`vpsfree-cz-configuration` worktree changes: add
+`newadmin.aitherdev.int IN CNAME frontend.aitherdev.int.vpsfree.cz.` beside the
+existing aitherdev aliases and advance the SOA serial monotonically from the
+selected source value `2026092800` (recheck the latest value before editing).
+No input, system host code, public zone, OAuth origin or cluster configuration
+change is included. `newadmin.vpsfree.cz` in the public zone is the separate
+production service and must remain unchanged.
+
+Source ownership at configuration `ee99382c`: the internal zone's line 241
+maps `frontend.aitherdev.int` to `172.16.106.53`; lines 244-259 contain the
+existing service aliases but no newadmin alias. `configs/internal-dns/default.nix`
+lines 11-15 and 26-42 substitute each consumer's FQDN and configure BIND to
+serve this zone as master. These are independent local copies, not replicas
+that can be assumed to transfer the change from one updated host:
+
+| Exact configuration target | Address | DNS role and source |
+| --- | --- | --- |
+| `cz.vpsfree/containers/prg/int.ns1` | `172.16.9.90` | Client resolver; `config.nix:11` imports the zone module, `module.nix:3-6,31-35` supplies address and internal-dns/manual-update tags |
+| `cz.vpsfree/containers/brq/int.ns1` | `172.19.9.90` | Client resolver; same import and module locations as the Prague ns1 |
+| `cz.vpsfree/containers/prg/int.mon1` | `172.16.4.10` | Monitoring's local authoritative copy; `config.nix:11,29` imports the zone and uses localhost DNS; `module.nix:18,34-38` identifies address and all-internal-dns tag |
+| `cz.vpsfree/containers/prg/int.mon2` | `172.16.4.18` | Monitoring's local authoritative copy; `config.nix:13,31` imports the zone and uses localhost DNS; `module.nix:18,34-38` identifies address and all-internal-dns tag |
+
+Use these four names for the proposed approval inventory, not an unbounded tag
+deployment. Both ns1 hosts are needed for consistent client resolution; the two
+monitoring copies need the same record for their local view. The host's
+`cluster/cz.vpsfree/machines/aitherdev/config.nix:20-35,149` selects the two ns1
+resolvers before `172.16.106.1`. In contrast, extension `test.nix:920-923,985-994,
+1186-1197` generates guest hosts and cluster dnsmasq records only. The inspected
+services result already contains `host-record=newadmin.aitherdev.int.vpsfree.cz,172.16.106.53`.
+That does not publish the name to the host or VPN clients.
+
+Quick candidate checks: require exactly the one alias and increased serial in
+the zone diff, no duplicate owner/conflicting record, and `git diff --check`.
+Render the zone with each consumer's FQDN replacing `@fqdn@`, then run
+`named-checkzone vpsfree.cz <rendered-zone>` using the configuration's Nix
+tooling. After committed-change review, use a fresh watcher for builds of the
+four exact targets. Prepare selected-result/change evidence for the approval
+request; compare against deployed generations so unrelated activation changes
+are visible. Dry activation and switch on those shared hosts wait for the
+explicit approved target/action set. No successful local check publishes DNS.
+
+After approved publication, query each copy's SOA and the new A/CNAME answer;
+for client resolvers use
+`dig @172.16.9.90 newadmin.aitherdev.int.vpsfree.cz A +noall +answer`
+and repeat at `172.19.9.90`. Check monitoring's local BIND views
+through their approved inspection path. Require matching intended serials and
+the CNAME resolving to `172.16.106.53`. Then require normal aitherdev
+`getent ahostsv4 newadmin.aitherdev.int.vpsfree.cz` and repeat resolution on the
+intended VPN/browser client, verifying that client's actual resolver and route
+can reach the internal zone and services IP. A direct authoritative query
+does not prove client resolver selection; public DNS/DoH is not this private
+zone. Do not silently change client DNS or routes.
+
+The lead reported strict-cluster-CA React `/healthz` 200 and PHP `/` 200 using
+`--resolve`, loopback-only BFF 3001/private nginx 18082, and API preflight 200
+with wildcard noncredentialed CORS and the required token/Content-Type headers.
+The completed OAuth, refresh, BFF persistence, seed-rerun and logout evidence is
+recorded above. After publication, repeat HTTPS without `--resolve` and confirm
+browser login/callback and API reachability from the intended normal host/VPN
+client before claiming hostname/browser readiness. A DNS-only publication does
+not require repeating the completed refresh, seed or persistence probes. Keep
+credentials, tokens and callback queries out of verification output.
+
+The selected zone has one-hour default and negative-cache TTLs. Verify live
+SOA/remaining negative TTL if a client still reports no record after all copies
+answer correctly; allow expiry or obtain approval for a targeted client/cache
+refresh, without restarting/resetting the cluster. On partial publication,
+report which copies changed and complete only the approved target set.
+Correction/removal after publication uses a forward zone change with a serial
+higher than every published value; reverting an old file/generation with a
+lower serial is not DNS recovery. Keep the working cluster, OAuth credentials,
+BFF state and compatible API/schema intact throughout.
 
 ## Compatibility, deployment and recovery
 
@@ -1178,20 +1442,25 @@ build when those conditions are not proven. Retain compatible API/schema and
 WebUI credentials/BFF state during any independent cluster recovery.
 
 The architect performed source/lock/version and supplied-log inspection plus
-this design update. The isolated catalog proof above is complete. Remaining
-candidate package/protocol checks, host build/deployment, profile transition
-and live cluster checks are pending operator/verification work.
+this design update. The isolated catalog proof and explicitly attributed lead
+live evidence above are complete. Earlier package/deployment steps describe
+their original gates; current execution status belongs in the lead's session
+state. The listed live cluster service/OAuth checks have passed. Shared DNS
+publication remains pending approval, followed by normal host/VPN resolution
+and browser reachability checks.
 
 ## Lead decisions and handoff
 
-The lead accepted the three-repository edit boundary, forward-only portal
-recovery and separate private WebUI backend. The snapshot quotas above are
+The lead accepted the original three-repository edit boundary, forward-only
+portal recovery and separate private WebUI backend, then authorized preparation
+of the bounded fourth-repository DNS candidate above. Publication to its four
+shared consumers remains pending exact-target user approval. The snapshot
+quotas above are
 concrete initial implementation bounds; material changes go through the lead.
 Current inspection found no requirement to edit codex-web or vpsadmin.
-Remaining verification uncertainties are real App Server read-after-update
-behavior and the live selected API/WebUI flow. Source proof establishes the
-CORS/OAuth contracts; enabled packaged smoke coverage still needs the compatible
-API input. Local WebUI enablement has the routing blocker described in section 6
+The lead's completed API/WebUI/OAuth evidence is recorded in section 6; it does
+not supply shared-DNS deployment authority or normal hostname resolution proof.
+Local WebUI enablement has the routing blocker described in section 6
 and requires a lead decision before expanding network scope. Bridge deployment
 is the required supported path. This brief requests no lifecycle action and
 creates no application commit.

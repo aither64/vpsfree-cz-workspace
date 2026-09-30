@@ -50,6 +50,14 @@ lifecycle: active
   guarded user-profile update and a supported cluster services update. The
   active-turn idle gate still applies to the profile transition; no bypass or
   delayed switch is authorized.
+- Ordinary host and VPN-client resolution for
+  `newadmin.aitherdev.int.vpsfree.cz` is absent from both internal authoritative
+  DNS copies even though the running cluster's guest DNS has the record. A
+  bounded configuration candidate adds one CNAME to the existing aitherdev
+  frontend and advances the zone serial. It will be committed, reviewed and
+  built locally; publication to `prg/int.ns1`, `brq/int.ns1`, `prg/int.mon1`
+  and `prg/int.mon2` requires separate exact-target approval because the user
+  authorized deployment of aitherdev, not those four shared DNS consumers.
 
 ## Development record
 
@@ -343,7 +351,8 @@ lifecycle: active
 - [x] Record the approved plan and compatibility/deployment constraints.
 - [x] Complete and accept the architecture/verification brief.
 - [x] Create/register project worktrees from current remote defaults.
-- [x] Implement and commit all intended changes with quick checks.
+- [ ] Implement and commit all intended changes with quick checks (portal and
+  cluster code complete; bounded internal-DNS candidate remains to commit).
 - [ ] Complete mandatory independent review and reconcile findings (baseline
   complete; final label, autostart and pin refinement review pending).
 - [ ] Finish long integration/build verification through Luna watchers (prior
@@ -358,8 +367,10 @@ lifecycle: active
 - Finish and review the autostart correction and exact downstream pin, then
   build the final composition. Update the user profile through the supported
   guarded entry and run the supported cluster services update, proving enabled
-  autostart, local WebUI-source provenance and session persistence. Leave all
-  feature heads unmerged pending explicit default-branch integration approval.
+  autostart, local WebUI-source provenance and session persistence. Commit,
+  review and build the internal-DNS candidate, then request exact publication
+  approval for its four shared consumers. Leave all feature heads unmerged
+  pending explicit default-branch integration approval.
 
 ## Documentation
 
@@ -397,9 +408,11 @@ lifecycle: active
   read-only source required by the cluster runner.
 - `vpsfree-cz-configuration`: same branch name and clean worktree under the
   initiative group at existing upstream head
-  `ee99382c8c448a15347052a6964030f838cb0381`; it has no feature diff. Exact
-  aitherdev generation `2026-09-30--21-42-52` was built, dry-activated and
-  switched without integrating configuration history.
+  `ee99382c8c448a15347052a6964030f838cb0381`. Its pending bounded feature diff
+  adds the newadmin internal-DNS CNAME and advances the zone serial; it has not
+  been committed or deployed. Exact aitherdev generation
+  `2026-09-30--21-42-52` was built, dry-activated and switched without
+  integrating configuration history.
 
 ## Commands run
 
