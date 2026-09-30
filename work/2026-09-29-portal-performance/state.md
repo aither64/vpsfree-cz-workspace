@@ -6,14 +6,14 @@ lifecycle: active
 
 ## Status
 
-- Phase: retained-only recovery is implemented and locally checked, but incremental review found two Blocking packaged-path/final-proof defects that are under correction. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining review, deployment, acceptance, and final whole-history gates.
+- Phase: retained-only recovery is implemented, locally checked, and clean after reconciled independent review; downstream pinning, exact package verification, and authorized journal replay are next. The user authorized repair/resumption of the two paused `tracking_committed` archive journals and default-branch integration after the remaining deployment, acceptance, and final whole-history gates.
 - The corrected live replay proved the September 26 journal is a legitimate partial team archive: the retained root and architect are archived, while the implementer and reviewer remain active materialized rollouts with unchanged retained identities. The September 27 root and all three members are archived, but its roster still records the members as ready.
 - Read-only SQLite rows and pinned Codex 0.155.0 source establish filesystem-consistent archive state; no Codex storage patch or version change is needed. The old package moved threads successfully but its incomplete listing proof could fail before roster bookkeeping, and later retries then treated already-archived members as active.
 - The existing recovery adapter is correctly journal- and generation-bound but prematurely requires every member to be archived before the selected predecessor can run. The architect amended `design.md` to add a retained-only, exact, idempotent team completion step inside that adapter, followed by the existing all-archived proof and predecessor replay. It forbids replacement, fresh bootstrap, unarchive, interruption, manual database/filesystem edits, profile selection, and mutation outside the owning journal.
 - The first authorized packaged recovery attempt failed safely before proof or mutation because the adapter classified the sessions' normal retained `creation.json` records in `state: ready` as conflicting operations. The selected profile and both archive/creation journals remained unchanged.
 - Dev-workspace correction `e58f8f61ce43058aba49361a0b3bd1ecd98af866` now accepts an absent legacy creation record or validates a present private bounded record through the existing schema reader, requires `ready`, and binds its goal digest to archived tracking before proof/executor work. Focused checks pass with 10 runs and 170 assertions plus Ruby syntax and whitespace checks.
 - Mandatory incremental review classified the correction High risk and covered all four lanes with retained `reviewer0` on saved `gpt-6-sol`/xhigh. It found no Blocking, Important, or Advisory issue, no migration, and no superseded committed recovery approach.
-- Dev-workspace local candidate `b36691d52790dffb5e104900343dca7f841e55e6` adds the retained-only partial-team completion route, exact journal verification, focused Go/Ruby coverage, and operator documentation. Focused checks pass, but the required High-risk four-lane incremental review found two Blocking issues: packaged `workspace-host` cannot locate the installed `dev-session`, and the final team proof skips members after their roster state becomes archived. No other finding or migration was reported. Package builds, pin changes, and live recovery remain gated while implementer0 corrects both issues in a separate commit.
+- Dev-workspace local candidate `b9465ab61dfc4e9820e312b062cb7b96ed3f09b0` adds the retained-only partial-team completion route, exact journal verification, focused Go/Ruby coverage, and operator documentation. The required High-risk four-lane incremental review initially found two Blocking issues in packaged lazy loading and final archived-member proof. Separate commits `47716d9e` and `b9465ab6` correct them; reviewer0 confirmed both are resolved with no new finding or migration. Lead reruns pass focused Go tests and 11 aggregate Ruby recovery/lazy-loader tests with 180 assertions. Full package verification, downstream pins, and live recovery remain gated next.
 - The corrected exact chain is now pushed: dev-workspace `e58f8f61ce43058aba49361a0b3bd1ecd98af866`, vpsFree extension `9c9833579e148e108b5811d618c81ec497b809bf`, and workspace `50c3dcf74f7eb816671caf4efd365f9c466e387a`. Dev-workspace Actions run `36641815619` and extension run `36641987050` passed.
 - The exact workspace package rebuilt successfully at `/nix/store/yhnzp6nmq4ngmlvh0wxxhzkbpzda4c0y-dev-workspace-0.2.0`; `candidate-workspace-package` resolves there. Its runtime contract is byte-identical to the selected predecessor `/nix/store/zpfyl4kkdmv6c7r8a0r6rl1s4wpikkla-dev-workspace-0.2.0`.
 - Read-only replay preflight confirms both authorized archive journals remain `tracking_committed/complete`; their schema-1 creation records are `ready`, private mode 0600, goal-bound to archived tracking, and root-thread-bound. The selected profile remains the predecessor and the auto-archive service is inactive.
@@ -40,13 +40,13 @@ lifecycle: active
 - [x] Independent review and long verification/CI.
 - [x] Archive-proof recovery fix, quick checks, and independent review.
 - [x] Exact partial-journal diagnosis and retained-only recovery design.
-- [ ] Retained-only recovery implementation correction, quick checks, and clean independent review.
+- [x] Retained-only recovery implementation correction, quick checks, and clean independent review.
 - [ ] Live user-profile deployment and acceptance.
 - [ ] Final whole-history readiness review and authorized default-branch integration.
 
 ## Next actions
 
-- Correct and re-review the retained-only adapter's packaged lazy-load path and final exact all-member proof, then rebuild the exact consuming candidate while preserving the selected predecessor throughout verification.
+- Push the reviewed dev-workspace head, update and review the two downstream dependency pins, then rebuild the exact consuming candidate while preserving the selected predecessor throughout verification.
 - Use the corrected candidate's supported adapter to resume the two user-authorized journals, one at a time, preserving the selected profile and recorded complete mode.
 - Retry the reviewed user-profile switch, then execute live latency, scan-contention, and metadata-rebuild acceptance.
 - Perform the final complete-history and migration-readiness review after the whole pin chain and live evidence are complete, then integrate the authorized feature heads into their default branches in dependency order.
@@ -58,7 +58,7 @@ lifecycle: active
 ## Repositories
 
 - `codex-web`: `worktrees/2026-09-29-portal-performance/codex-web`, branch `2026-09-29-portal-performance`, base `e92dd88`, pushed feature head `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`.
-- `dev-workspace`: `worktrees/2026-09-29-portal-performance/dev-workspace`, same branch, base `3b570f0`, pushed reviewed head `e58f8f61ce43058aba49361a0b3bd1ecd98af866`; local unpushed retained-only candidate `b36691d52790dffb5e104900343dca7f841e55e6` is under review correction.
+- `dev-workspace`: `worktrees/2026-09-29-portal-performance/dev-workspace`, same branch, base `3b570f0`, pushed reviewed head `e58f8f61ce43058aba49361a0b3bd1ecd98af866`; local reviewed retained-only head `b9465ab61dfc4e9820e312b062cb7b96ed3f09b0` is ready for feature-branch push and downstream pinning.
 - `vpsfree-dev-workspace`: `worktrees/2026-09-29-portal-performance/vpsfree-dev-workspace`, same branch, base `bd96168`, pushed dependency-only pin head `9c9833579e148e108b5811d618c81ec497b809bf`.
 - Workspace: `worktrees/2026-09-29-portal-performance/workspace`, same branch, base `979ef666`, pushed dependency-only pin head `50c3dcf74f7eb816671caf4efd365f9c466e387a`.
 
@@ -87,7 +87,7 @@ lifecycle: active
 
 - Initial team roster: `architect0` (Astra/xhigh, write), `implementer0` (Sol/xhigh, write), `reviewer0` (Sol/xhigh, read-only).
 - Mandatory recovery review: High risk; General, Architecture and repetition, Scope and proportionality, and Risk and compatibility lanes; retained `reviewer0` on saved `gpt-6-sol`/xhigh. One Blocking active-sibling regression and two Important source/root-only compatibility findings were fixed in `fbd7a9e` and directly reverified. No migrations; no superseded committed recovery approach.
-- Mandatory retained-only recovery review: High risk; the same four lanes and retained reviewer settings. Two Blocking findings at `b36691d5`: the package layout breaks lazy loading of `dev-session`, and the final all-member proof skips roster entries already marked archived. No other finding and no migration; correction and rerun are required.
+- Mandatory retained-only recovery review: High risk; the same four lanes and retained reviewer settings. Two Blocking findings at `b36691d5` were corrected separately at `47716d9e` and `b9465ab6`. Reviewer0 confirmed exact archived-member re-proof, real Nix wrapper layout handling, source-tree laziness, and stable missing-source failure; no remaining/new finding and no migration.
 
 ## Open questions
 
