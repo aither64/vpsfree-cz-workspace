@@ -14,17 +14,28 @@ project documentation.
 - vpsAdmin API: `5c76e3290481b297dcd0baa76d246133f0353d8f`
 - vpsAdmin WebUI: `534caa83a5f97d2b40b4a126886649b14dc9e8d3`
 
-The final unselected revisions are generic `50af66d9`, extension `8e04f262`,
-workspace `45cce0a8` and configuration `d24b2515`. The Origin-label and
+The final unselected runtime revisions are generic `50af66d9`, extension `8e04f262`,
+workspace `45cce0a8` and configuration `d24b2515`. Generic final branch head
+`50586880` is a separately reviewed verification-fixture correction with
+unchanged runtime source; the architect and reviewer accepted retaining the
+existing runtime pins and built package. The Origin-label and
 React-container autostart corrections are not yet selected in the user profile
 or cluster. The internal-DNS candidate is committed but publication to its four
 shared consumers remains unapproved.
 
 Mandatory final review found no Blocking or Important issue at those four
-heads. Final generic, extension and workspace flake checks pass, and the final
+heads or in the bounded fixture follow-up. Final generic, extension and
+workspace flake checks pass at the runtime revisions, and the final
 workspace package is
 `/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`. Build-only
 evaluation also passes for each of the four exact internal-DNS consumers.
+
+The optional fixture correction at generic `50586880` passed its independent
+follow-up review, declared Node syntax, three focused lifecycle runs, all six
+browser cases, generic flake checks and exact-head CI. The retained extension
+`8e04f262` also passed the complete rooted packaged smoke. The unrooted attempt
+was interrupted by host GC, as proved by its journal; the rooted retry needed
+no source change. Detailed results and log paths are in [state.md](state.md).
 
 ## Executed system and profile rollout
 
@@ -80,6 +91,14 @@ the post-update persistence comparison. A services update invoked through the
 candidate correctly refused while that candidate was not the selected profile
 generation.
 
+The exact final `51i6gp92…` candidate's guarded switch was attempted once
+through a fresh Luna watcher. Preconditions passed, then `thread require-idle`
+refused because this bound turn was `inProgress`. It returned exit 1 after
+about 56s, restored the terminal client and kept `aidlqw1…` selected. Log:
+`/tmp/portal-review-final-profile-switch-45c.log`; before/after status:
+`/tmp/portal-review-final-profile-{before,after}.txt`. No operation remains
+running. Retry the same candidate entry after this conversation becomes idle.
+
 Remaining activation steps are:
 
 1. select the new workspace package with the guarded profile transition;
@@ -91,4 +110,40 @@ Remaining activation steps are:
 5. repeat an authenticated session check across the services update;
 6. verify the portal displays `Origin` and retains all prior portal behavior.
 
+The profile transition requires every managed session to be idle. The current
+lead turn must end before invoking it; no idle-guard bypass or delayed
+background switch is authorized. All verification passed. The exact candidate
+entry is:
+
+```sh
+cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-30-portal-review-improvements/workspace
+/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0/bin/workspace-host switch --source "$PWD" --from-candidate
+```
+
+Once this candidate is selected, use the installed helper for any forward
+retry. After checking selected-package health, a fresh watcher can execute
+the supported `vpsadmin-devcluster update
+2026-09-30-portal-review-improvements services` and the listed acceptance
+checks. The existing running cluster does not need another start.
+
 No default-branch integration is part of this rollout.
+
+## Prepared internal DNS generations
+
+Configuration candidate `d24b2515` is built for all four independent private
+zone consumers. Complete build output:
+`/tmp/portal-review-internal-dns-four-builds-d24b251.log`. Each generated BIND
+configuration references a rendered zone with serial `2026093000` and exactly
+one newadmin CNAME to the existing aitherdev frontend. Validation with that
+generation's BIND `named-checkzone` returned OK for all four.
+
+| Target | Built generation | System toplevel |
+| --- | --- | --- |
+| cz.vpsfree/containers/prg/int.ns1 | 2026-09-30--23-24-31 | `/nix/store/aq3qibcnf3d4byw5c9sfi98d9yf4k1qx-nixos-system-ns1-26.05.20260928.7fc6f2c` |
+| cz.vpsfree/containers/brq/int.ns1 | 2026-09-30--23-27-01 | `/nix/store/imcbgk4d5gb12lgm254l4sk8i5fk0v6z-nixos-system-ns1-26.05.20260928.7fc6f2c` |
+| cz.vpsfree/containers/prg/int.mon1 | 2026-09-30--23-27-52 | `/nix/store/as30hhqffjmldi8qcjj1w0xdgb359p80-nixos-system-mon1-26.05.20260928.7fc6f2c` |
+| cz.vpsfree/containers/prg/int.mon2 | 2026-09-30--23-28-53 | `/nix/store/zxn6i3r0r341lbvn0qbrdh4arngxxhfz-nixos-system-mon2-26.05.20260928.7fc6f2c` |
+
+Dry activation and publication require explicit approval for these exact four
+shared hosts. That approval request is pending. Building and validating these
+generations did not publish the zone.

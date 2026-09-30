@@ -67,7 +67,7 @@ before any fast-forward integration, while retaining the actual deployed refs.
 
 - Worktree: `worktrees/2026-09-30-portal-review-improvements/dev-workspace`
 - Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`
-- Head: `50af66d9cfc1be07dcc4cb084de4887dd97a343c`
+- Head: `50586880d5b4e17e060c045dcc992a748f9c7827`
 
 Complete series, oldest first:
 
@@ -83,11 +83,33 @@ Complete series, oldest first:
    unstaged/untracked captures.
 6. `50af66d9cfc1be07dcc4cb084de4887dd97a343c` — label the repository URL
    `Origin` while retaining provider-specific GitHub links.
+7. `50586880d5b4e17e060c045dcc992a748f9c7827` — sample the activity counter
+   before dispatching a wake event in the existing Playwright fixture. The
+   fixture predates this initiative; no production behavior changes.
 
-Final diff: 30 files, 3,486 insertions and 362 deletions. Each commit owns one
-product unit. Corrections to clean-filter fixtures and failed-preview retry
-behavior were folded into their owning unmerged commits. No obsolete reader,
+Final diff: 31 files, 3,487 insertions and 363 deletions. Each commit owns one
+product or verification unit. Corrections to clean-filter fixtures and failed
+preview retry behavior were folded into their owning unmerged commits. No obsolete reader,
 snapshot protocol, provider shim or fixup commit remains.
+
+The full browser attempt at `50af66d` passed five cases and failed this fixture
+because its baseline could already include the wake request. The one-line move
+preserves the failure injection and assertions. Log: `/tmp/portal-review-final-5.log`.
+The production composition still pins `50af66d`/`8e04f262`/`45cce0a8`;
+the architect's accepted assessment in design.md, “Verification fixture
+follow-up and retained consumer pins”, establishes that no runtime interface,
+asset or package expression changed. Retain those consumer pins and the built
+`51i6gp92…` candidate. The unfiltered source means a hypothetical repin would
+change derivation identity; no byte or store-path equivalence is claimed.
+The bounded independent general/architecture follow-up at `50586880` has no
+Blocking or Important finding and confirms the seven-commit history and
+no-new-migrations conclusion. Its test-isolation Advisory is accepted: an
+earlier focus activity response could contribute to the shared counter, so a
+future intermittent failure should first settle or label that request. The
+hidden transition aborts pending reads. Declared-environment Node syntax,
+three focused lifecycle runs, all six browser cases, the generic flake check
+and exact-head CI have now passed at `50586880`. No product change is required
+by this Advisory. The runtime candidate stays at the separately built pins.
 
 ### vpsFree `dev-workspace` extension
 

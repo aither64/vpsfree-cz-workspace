@@ -5,9 +5,9 @@ Default-branch integration remains unapproved.
 
 ## dev-workspace
 
-Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`. Head: `50af66d9cfc1be07dcc4cb084de4887dd97a343c`.
+Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`. Head: `50586880d5b4e17e060c045dcc992a748f9c7827`.
 
-30 files changed, 3486 insertions(+), 362 deletions(-)
+31 files changed, 3487 insertions(+), 363 deletions(-)
 
 ```text
 f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a team: derive added member settings from role policy
@@ -16,6 +16,7 @@ f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a team: derive added member settings from
 7ccb6ba350594b69f80675d056b7fa80c496dc67 repository: isolate GitHub origin enrichment
 41c648cd92cb324037778be165e45e17c46bbc75 portal: capture immutable staged and unstaged reviews
 50af66d9cfc1be07dcc4cb084de4887dd97a343c portal: label repository origin link generically
+50586880d5b4e17e060c045dcc992a748f9c7827 test: sample activity before wake dispatch
 ```
 
 ```text
@@ -33,6 +34,7 @@ M	portal/internal/repository/status.go
 M	portal/internal/session/manifest_test.go
 M	portal/internal/teamruntime/runtime.go
 M	portal/internal/teamruntime/runtime_test.go
+M	portal/internal/web/page_lifecycle_browser_test.cjs
 M	portal/internal/web/question_browser_test.go
 M	portal/internal/web/repository_review.go
 M	portal/internal/web/repository_review_browser_test.cjs
@@ -50,6 +52,8 @@ M	portal/internal/web/templates/index.html
 M	portal/internal/web/templates/session.html
 M	test/dev_session/agent_team_creation_test.rb
 ```
+
+Runtime consumers currently pin production revision `50af66d`; the successor changes only a browser fixture.
 
 ## vpsfree-dev-workspace
 

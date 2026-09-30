@@ -1449,6 +1449,90 @@ state. The listed live cluster service/OAuth checks have passed. Shared DNS
 publication remains pending approval, followed by normal host/VPN resolution
 and browser reachability checks.
 
+## Verification fixture follow-up and retained consumer pins
+
+Recommendation: retain runtime composition generic
+`50af66d9cfc1be07dcc4cb084de4887dd97a343c`, extension
+`8e04f2626a3abd492768f15ae8d843c8e527f2cd`, workspace
+`45cce0a87d3f0c8d2b404ce7188d8fa0d9098154`. No consumer pin cascade is
+required for the generic test-only follow-up
+`50586880d5b4e17e060c045dcc992a748f9c7827`. Configuration
+`d24b251531a9a482b8f1b5dd81540da85981189f` retains its independent DNS scope
+and publication approval gate. This disposition preserves deployed ancestry.
+
+The architect inspected clean `50586880`, whose direct parent is `50af66d`.
+Its entire diff moves one `const beforeWake = activity` before the awaited wake
+dispatch in `portal/internal/web/page_lifecycle_browser_test.cjs:67-73`.
+Previously that dispatch could cause the counted activity request before the
+test sampled its baseline. Production `static/app.js:2425-2448,2717-2740`
+already resumes reads and calls `refreshActivity(true)` on wake; sampling after
+dispatch could therefore miss the event being tested. The follow-up preserves
+the assertion and production behavior. The earlier fixture commit
+`63cbc32173f73da313e4f11c9c2214884f6161d5` is already an ancestor of cached
+`origin/master`; retain it and the standalone follow-up without history rewrite.
+
+Packaging and interface evidence at these exact revisions:
+
+- Generic `portal/internal/web/server.go:46` embeds only `templates/*.html`
+  and `static/*`. The changed CJS fixture is outside those assets and is invoked
+  by `question_browser_test.go:18-20,76-84` only with `PORTAL_BROWSER_TEST=1`.
+- `nix/workspace-portal.nix:195-215` builds `cmd/workspace-portal`;
+  its normal check phase at 230-255 does not enable Playwright. Installation
+  at 258-310 supplies runtime helpers, contracts, catalogs and skills, without
+  installing this fixture as a runtime executable. `nix/review-ui.nix` selects
+  review-editor build inputs separately and is unchanged.
+- Extension `flake.nix:38,61,80` consumes `lib.hostPaths`, `lib.runtimeContract`
+  and `lib.mkPackage`. The complete `50af66d..50586880` diff leaves these,
+  all production Go/JS/templates, `flake.{nix,lock}`, Codex/client inputs,
+  schemas, lifecycle behavior and browser/server interfaces unchanged.
+  Workspace `45cce0a8` still locks extension `8e04f262` and generic `50af66d`.
+- Workspace `bin/check-dev-workspace-deployment:26-35` compares the workspace
+  and configuration's locked generic inputs, not the generic branch head.
+  Its previously accepted host/profile mismatch remains an explicit helper
+  limitation; this fixture change neither creates nor fixes it. Do not update
+  unrelated configuration pins to satisfy that helper.
+
+This establishes unchanged runtime source behavior, not identical derivations
+for different generic commits. Generic `flake.nix:35` passes unfiltered
+`src = self`; `nix/workspace-portal.nix:60-61,199,306-310` also retains source
+references through skills. Selecting `50586880` would change source/derivation
+identity even though this fixture is not a runtime component. There is no
+packaging/runtime requirement to select it merely because verification source
+advanced. Keep the already built workspace `45cce0a8` package
+`/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0` and its
+lead-reported successful build and two Codex protocol probes attributed to that
+exact composition; do not relabel them as a build/probe of `50586880`.
+
+Verification and readiness gates for this disposition:
+
+1. Confirm the complete follow-up diff is only that fixture, its parent remains
+   `50af66d`, and the consumer lock nodes remain exact. Run Node syntax/quick
+   checks and the required bounded review of the committed follow-up. Update
+   the final history/review inventory with generic branch head `50586880` and
+   separately identify deployed/candidate consumer pin `50af66d`; earlier
+   review of `50af66d` does not itself review the added test commit.
+2. Under the existing review and watcher gates, run the corrected focused
+   lifecycle subtest and full browser suite at `50586880` with the Nix-provided
+   Node/Playwright browsers and `PORTAL_BROWSER_TEST=1`. From `portal/`, the
+   focused selector is
+   `go test -count=1 -run '^TestQuestionBrowser$/^page_lifecycle_browser_test[.]cjs$' ./internal/web`;
+   full browser coverage retains `go test -count=1 -run Browser ./internal/web`.
+   Run generic flake/required CI checks at this new head. Record that these test
+   the unchanged production implementation using the corrected fixture. A
+   skipped Playwright run or the earlier failed attempt is not a pass.
+3. Preserve exact-head results for extension `8e04f262`, workspace `45cce0a8`
+   and configuration `d24b2515`; their checks remain independent. Do not repeat
+   their pin/build/probe stream solely for this unselected fixture commit.
+   Existing profile activation, React auto-start/service verification and DNS
+   publication gates are unaffected. A later production/interface/input change
+   requires a new disposition before relying on this equivalence.
+
+The architect performed read-only source, diff, lock and ancestry inspection
+and this design update, with no build/probe or ref/pin/application mutation.
+Corrected browser and generic follow-up results remain the verification owner's
+responsibility; this recommendation does not claim they have passed or authorize
+deployment, integration or shared DNS publication.
+
 ## Lead decisions and handoff
 
 The lead accepted the original three-repository edit boundary, forward-only

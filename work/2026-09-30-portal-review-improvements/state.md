@@ -6,11 +6,16 @@ lifecycle: active
 
 ## Status
 
-- Phase: final verification and activation. The reviewed portal user profile
-  and bridge cluster are active; final Origin-label and React-container
-  autostart corrections passed independent review and long checks and now
-  await activation.
-- Clean published candidates are generic `50af66d`, extension `8e04f262`,
+- Phase: final activation. Implementation, independent review and all final
+  verification passed, including the corrected browser fixture at generic
+  `50586880`. The deployed portal and bridge cluster are active. The final
+  Origin label and container autostart refinements await selection: the exact
+  candidate's normal guarded profile switch refused because this bound turn
+  is `inProgress`. Activation waits for an idle session; shared DNS publication
+  waits for approval of the four exact targets.
+  The accepted architect assessment retains runtime pins at generic
+  `50af66d` / extension `8e04f262` / workspace `45cce0a8`.
+- Clean published branches are generic `50586880` (test-only successor), extension `8e04f262`,
   workspace `45cce0a8` and configuration `d24b2515`. A conflicting brief
   temporarily published a consolidated extension chain and its consumer.
   Recovery restored the original deployed ancestry locally and remotely with
@@ -24,10 +29,33 @@ lifecycle: active
   existing Advisories: the duplicated exact WebUI revision and the aggregate
   deployment checker that rejects the documented scoped host/profile pin
   mismatch. The complete histories contain no obsolete unapplied approach or
-  transitional migration. Generic/extension GitHub checks, the six-case
-  Playwright suite, locked WebUI frontend/BFF builds and final generic,
-  extension and workspace flake checks pass. The final workspace package built
+  transitional migration. Exact generic `50af66d` and extension `8e04f262`
+  GitHub checks pass. The earlier six-case Playwright pass was at `41c648c`;
+  the full run at `50af66d` passed five cases and failed the wake-counter
+  fixture. Locked WebUI frontend/BFF builds and generic/workspace flake checks
+  pass. The final workspace package built
   at `45cce0a8` as `/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`.
+- The bounded general/architecture review at generic `50586880` found no
+  Blocking or Important issue and confirms the retained runtime pins. Its
+  Advisory notes that a late focus activity response could increment the same
+  counter; accept this bounded fixture-isolation limit unless focused/full
+  checks expose another failure. The complete seven-commit generic series has
+  no obsolete unapplied history and adds no migrations. Exact-head CI run
+  `36780221159` passed.
+- A fresh Luna/low watcher verified generic `50586880`: declared-environment
+  Node syntax, three focused lifecycle runs, all six browser cases and the
+  packaged flake check passed. Logs/statuses:
+  `/tmp/portal-review-browser-505-{syntax,focused,full}.log` and
+  `/tmp/portal-review-generic-505-check.log`. The full Go suite took 81.702s and
+  the flake check about 6m40s. This completes the remaining final verification
+  gates for the retained runtime package.
+- A fresh Luna/low watcher attempted the final `51i6gp92…` candidate entry
+  once. It passed preconditions and refused at `thread require-idle` because
+  this bound turn remained `inProgress`; exit 1 after about 56s. The selected
+  `aidlqw1…` package and active Codex paths are unchanged. Full evidence:
+  `/tmp/portal-review-final-profile-switch-45c.log` and `.status`, with
+  `/tmp/portal-review-final-profile-{before,after}.txt`. This is an activation
+  gate, not a product/test failure. No operation remains running.
 - Retained reviewer0 completed the final all-lane review with its saved GPT-6
   Sol/xhigh settings. The existing aggregate deployment helper mismatch is an
   Advisory limitation:
@@ -362,7 +390,7 @@ lifecycle: active
 
 ## Phase checklist
 
-Final candidate verification is scoped to generic `50af66d`, extension
+Runtime candidate verification is scoped to generic `50af66d`, extension
 `8e04f262`, workspace `45cce0a8` and configuration `d24b2515`. The complete
 series and changed paths are in [final-diff-inventory.md](final-diff-inventory.md).
 Reviewer0 completed all four lanes at those clean published heads with no
@@ -372,10 +400,30 @@ superseded consolidated-chain run `36776380225` was cancelled. The evaluated
 workspace candidate is
 `/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`, derivation
 `/nix/store/zjpfzn5k6y6mw7lbyzn7pg2g29p3y6rr-dev-workspace-0.2.0.drv`.
-The package build and final flake check passed. Final generic `50af66d` and
-extension `8e04f262` flake checks also passed. Build-only evaluation passed for
-all four internal DNS consumers at configuration `d24b2515`; no shared DNS
-activation is authorized.
+The package build and final flake check passed. Generic `50af66d` flake checks
+passed. The corrected optional browser fixture and generic checks passed at
+final branch head `50586880`; unchanged runtime behavior lets the corrected
+browser evidence apply to the retained candidate without a pin cascade.
+The local extension smoke was interrupted by host garbage collection: the
+`nix-store-gc-on-pressure.service` journal records deletion of both the running
+check app and its tools output at 23:34:08 CEST. The fixture passed bridge
+defaults and override evaluations before the missing-package read. Its log is
+`/tmp/portal-review-final-cluster-8e04f262.log`. A fresh Luna/low watcher then
+retained the full app closure with a normal out-link and ran the same check
+successfully: exit 0 after about 5m40s. Evidence:
+`/tmp/portal-review-rooted-cluster-8e04.log` and `.status`; root
+`/tmp/portal-review-devcluster-check-8e04-gc-root` is retained. Enabled bridge,
+disabled bridge/local, enabled-local refusal and runner build/load checks pass.
+No application or GC-policy change is indicated. The conditional
+DNS build in that batch did not run. Separate completed build logs were then
+verified: `/tmp/portal-review-extension-flake-check-8e04f26.log` ends with all
+checks passed, and `/tmp/portal-review-internal-dns-four-builds-d24b251.log`
+records all four DNS generations. Their realized BIND configurations each
+reference a zone with serial `2026093000` and one exact newadmin CNAME;
+`named-checkzone` from each built BIND package returned OK. Generation IDs and
+toplevels are recorded in [rollout.md](rollout.md). The user has been asked to
+approve dry activation/publication to those four exact shared hosts; approval
+remains pending.
 
 - [x] Verify there is no current initiative and create an isolated session.
 - [x] Verify the retained roster and saved access.
@@ -391,12 +439,14 @@ activation is authorized.
 
 ## Next actions
 
-- Complete the running final checks and build the DNS candidate. Update the
-  user profile through the supported
-  guarded entry and run the supported cluster services update, proving enabled
-  autostart, local WebUI-source provenance and session persistence. Build the reviewed internal-DNS candidate locally, then request exact publication
-  approval for its four shared consumers. Leave all feature heads unmerged
-  pending explicit default-branch integration approval.
+- Finish the guarded user-profile activation of the verified runtime
+  composition at `50af66d` / `8e04f262` / `45cce0a8`. An active-turn refusal
+  requires this session to become idle before retrying the same candidate
+  entry, followed by the supported services update. Verify
+  autostart, clean local WebUI provenance, session retention and visible Origin.
+- Shared DNS publication waits for approval of the four built targets. After
+  publication verify ordinary host/client DNS and HTTPS. Leave all branches
+  unmerged pending explicit default-branch integration approval.
 
 ## Documentation
 
@@ -412,7 +462,7 @@ activation is authorized.
 - `dev-workspace`: branch `2026-09-30-portal-review-improvements`, worktree
   `worktrees/2026-09-30-portal-review-improvements/dev-workspace`, initial base
   `7c133c562ac51076c1f45af46e180f8bfbabe836`, published head
-  `50af66d9cfc1be07dcc4cb084de4887dd97a343c`.
+  `50586880d5b4e17e060c045dcc992a748f9c7827`.
 - `vpsfree-dev-workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
@@ -455,7 +505,11 @@ activation is authorized.
 
 ## Open questions
 
-- None. Native browser find and side-by-side WebUI placement were selected
-  during planning.
+- Shared DNS publication to the four reviewed/built hosts awaits approval.
+  The exact-target question has been sent; no approval is inferred from time
+  elapsed or the preselected answer.
+- Final profile activation requires an idle session. The supported candidate
+  command is in [rollout.md](rollout.md); services update and live final
+  acceptance follow selection. No default-branch integration is authorized.
 
 ## Cleanup
