@@ -11,6 +11,17 @@ class DeploymentContractTest < Minitest::Test
   CHECKER = File.expand_path('../bin/check-dev-workspace-deployment', __dir__)
   REVISION = 'a' * 40
 
+  def test_vpsadmin_react_webui_uses_distinct_domain_on_bridge
+    config = JSON.parse(File.read(File.expand_path('../config/vpsadmin-devcluster.json', __dir__)))
+    domains = config.fetch('domains')
+
+    assert_equal('newadmin.aitherdev.int.vpsfree.cz', domains.fetch('newadmin'))
+    assert_equal(domains.values.uniq, domains.values)
+    assert_equal({ 'enable' => true }, config.fetch('newWebui'))
+    assert_equal('br0', config.fetch('network').fetch('bridge'))
+    assert_equal('webui.aitherdev.int.vpsfree.cz', domains.fetch('webui'))
+  end
+
   def test_matching_site_and_runtime_pass
     with_contract do |workspace, configuration, environment|
       output, error, status = Open3.capture3(
