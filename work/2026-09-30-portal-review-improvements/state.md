@@ -6,7 +6,7 @@ lifecycle: active
 
 ## Status
 
-- Phase: implementation.
+- Phase: mandatory independent review.
 - The portal performance and automatic-history changes are merged on
   `dev-workspace/master` through `7c133c5`.
 - Retained delegated roster is ready: `architect0` (design, GPT-6 Astra/xhigh,
@@ -44,16 +44,44 @@ lifecycle: active
   a clean worktree. Repository, manifest, web/template and browser-navigation
   quick checks pass. The lead applied the user-facing-writing pass before
   commit. Its live Playwright fixture remains for post-review verification.
-- The immutable staged/unstaged snapshot unit is coded and locally checked in
-  the `dev-workspace` feature worktree; its commit is pending. It includes
+- The immutable staged/unstaged snapshot unit is committed at `13383c0` with
+  a clean `dev-workspace` feature worktree. It includes
   non-ignored untracked files, ephemeral comparison IDs and frozen previews.
-  The repository package, focused web API tests, Node syntax, browser
-  navigation contract, formatting and diff checks pass. Live Playwright
-  coverage remains for post-review verification. The lead applied the
-  user-facing-writing pass to snapshot errors, notices and guide text.
-- `implementer0` is assigned the next unit: bridge-mode, side-by-side React
-  WebUI integration in `vpsfree-dev-workspace`, with the PHP UI retained.
-  Workspace model policy and configuration pins follow.
+  The full repository and web Go packages, focused worktree tests, Node syntax,
+  browser navigation contract, formatting and diff checks pass. Early capture
+  admission and in-progress reservations guard the 64/256 MiB quotas. Live
+  Playwright coverage remains for post-review verification. The lead applied
+  the user-facing-writing pass to snapshot errors, notices and guide text.
+- The side-by-side React WebUI cluster unit is committed at `d235836`; exact
+  generic runtime pin `516b3c8` completes the clean, published
+  `vpsfree-dev-workspace` feature branch. Focused runner, status and
+  seed Ruby fixtures, Nix parsing, shell syntax and the package derivation
+  evaluation passed. The lead updated the root flake lock to the selected vpsAdmin API
+  `5c76e329` and reviewed WebUI `534caa83`; its package derivation evaluates.
+  The generated nested flake lock was removed because it would freeze unrelated
+  previously floating `vpsadminos`, `vpsfStatus` and transitive inputs. The
+  subflake instead pins the two selected source URLs in `flake.nix`, preserving
+  its existing lock behavior. The lead applied the user-facing-writing pass to
+  the extension README and checked visible errors/labels; no product WebUI
+  source or KB navigation contract changed. No build or cluster boot has run.
+- The workspace branch is committed, rebased on current shared master and
+  published at `0cf75120`. Separate commits select exact `gpt-6.1-sol` policy,
+  enable the distinct `newadmin` bridge site and pin the complete extension,
+  generic runtime, API and WebUI dependency graph. Focused Ruby tests, direct
+  catalog checks, lock inspection and package derivation evaluation pass.
+  Existing roster state and all unrelated site settings are unchanged.
+- The [final review packet](review-packet.md) inventories every base-to-head
+  commit and final diff. Overall risk is high. All four mandatory lanes apply;
+  retained read-only `reviewer0` will review with its saved GPT-6 Sol/xhigh
+  settings. The inventory has no new migrations or obsolete branch history.
+- Active portal `/api/models` (read over its local Unix socket on 2026-09-30)
+  lists eight models and does not include the requested `gpt-6.1-sol`. The
+  workspace policy retains that exact requested name; deployment requires
+  rechecking the candidate App Server account catalog and must not substitute
+  another model. [Official OpenAI model documentation](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
+  lists the exact model and supports the retained high/xhigh effort settings,
+  but does not establish this Codex account's access. Current availability is a
+  material deployment risk.
 - An early capture review found a full tracked-file scan in the draft reader.
   The member proved Git's `ls-files -m`, `diff-files --name-only` and porcelain
   status can invoke hostile clean filters. The accepted [design clarification](design.md)
@@ -87,7 +115,7 @@ lifecycle: active
 - [x] Record the approved plan and compatibility/deployment constraints.
 - [x] Complete and accept the architecture/verification brief.
 - [x] Create/register project worktrees from current remote defaults.
-- [ ] Implement and commit all intended changes with quick checks.
+- [x] Implement and commit all intended changes with quick checks.
 - [ ] Complete mandatory independent review and reconcile findings.
 - [ ] Run long integration/build verification through a Luna watcher.
 - [ ] Deploy the reviewed portal package and verify it is ready for use.
@@ -95,27 +123,31 @@ lifecycle: active
 
 ## Next actions
 
-- Commit the checked snapshot unit. Implement the vpsFree cluster, then the
-  workspace policy/pin changes. Apply the user-facing-writing pass before each
-  implementation commit.
+- Run all four mandatory review lanes against the complete three-branch packet,
+  reconcile findings and only then begin long verification.
 
 ## Documentation
 
 - [Design and verification brief](design.md)
+- [Final committed-change review packet](review-packet.md)
 - [Team sandbox verification note](../../notes/dev-workspace/2026-09-30-team-sandbox-verification.md)
 
 ## Repositories
 
 - `dev-workspace`: branch `2026-09-30-portal-review-improvements`, worktree
   `worktrees/2026-09-30-portal-review-improvements/dev-workspace`, initial base
-  `7c133c562ac51076c1f45af46e180f8bfbabe836`.
+  `7c133c562ac51076c1f45af46e180f8bfbabe836`, published head
+  `13383c08a6483d0cf3f37d24548d317fc82461dd`.
 - `vpsfree-dev-workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
-  `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated.
+  `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
+  head `516b3c83aaa2fba6379570412d0014d9210932bc`.
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
-  `d66bda525c823fe0ce52ea9a1c35550f147b569c`.
+  `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
+  required shared-master rebase is `034eb08e`, with published head
+  `0cf751208472bbceb2e9f027e90c7c6682a600d6`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
