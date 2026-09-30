@@ -1,7 +1,8 @@
 # Aitherdev automatic-history rollout
 
 Status: executed successfully. User-profile generation 74 selects the reviewed
-package and the deployed long-conversation smoke passes.
+package, the deployed long-conversation smoke passes, and the exact reviewed
+feature commit is integrated into remote `dev-workspace/master`.
 
 ## Exact inputs
 
@@ -79,3 +80,7 @@ state.
   this was invalid because anchor compensation intentionally raises the final
   scroll position. The corrected harness retains the 260-pixel start, native
   upward wheel, successful cursor-response, and single-read assertions.
+- With explicit user authorization, remote `dev-workspace/master` was
+  fast-forwarded to `7c133c562ac51076c1f45af46e180f8bfbabe836`; the feature
+  branch was retained at the same commit. Default-branch CI run `36697284725`
+  was launched but intentionally not awaited at the user's direction.

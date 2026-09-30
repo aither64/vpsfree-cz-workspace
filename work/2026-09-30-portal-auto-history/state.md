@@ -1,14 +1,14 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-30-portal-auto-history
 
 ## Status
 
-- Phase: deployed and ready for integration. Aitherdev user-profile generation
-  74 selects the reviewed package, services and session authority are healthy,
-  and the live long-conversation automatic-history smoke passes.
+- Phase: integrated and deployed. Remote `dev-workspace/master` and the retained
+  feature ref both point to the reviewed commit, while aitherdev generation 74
+  remains healthy with the live smoke passing.
 - `implementer0` is the selected implementation owner with saved
   `gpt-6-sol`/xhigh and workspace-write access. `reviewer0` remains independent
   on saved `gpt-6-sol`/xhigh with read-only access.
@@ -22,13 +22,13 @@ lifecycle: active
 - [x] Mandatory independent whole-branch review completed; both initial
   findings are corrected and independently confirmed.
 - [x] Broader verification, CI, and aitherdev deployment completed.
-- [x] Ready for integration; default-branch merge remains unauthorized.
+- [x] Integrated into the default branch after explicit user authorization.
 
 ## Next actions
 
-- Await explicit user authorization before integrating the feature branch into
-  `dev-workspace` `master`. Keep the active session, branch, worktree, package
-  evidence, and forward-recovery instructions intact.
+- No implementation, integration, verification, or deployment work remains.
+  GitHub Actions run `36697284725` continues independently; the user explicitly
+  directed not to wait for it.
 
 ## Documentation
 
@@ -118,6 +118,13 @@ lifecycle: active
   below 200; anchor preservation intentionally compensates it upward. Removing
   that harness-only assertion produced the passing run without application or
   package changes.
+- After explicit authorization, pushed the reviewed commit as a fast-forward
+  from `d20bb64c45db1d803fc3b7a8c2956049860d72dd` to
+  `7c133c562ac51076c1f45af46e180f8bfbabe836` on remote `dev-workspace/master`.
+  The feature branch remains at the same commit.
+- Default-branch GitHub Actions run `36697284725` started for the exact merged
+  head. The user directed not to wait; only the local watcher was stopped, and
+  the GitHub workflow itself was not cancelled.
 
 ## Results
 
@@ -130,7 +137,6 @@ lifecycle: active
 
 ## Open questions
 
-- Default-branch integration is not authorized for this follow-up.
 - The final reviewer recorded one non-blocking test improvement: add a short or
   filter-hidden older-page fixture in a future focused verification change.
 
