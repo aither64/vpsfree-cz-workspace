@@ -132,3 +132,17 @@ generation's BIND `named-checkzone` returned OK for all four.
 Dry activation and publication require explicit approval for these exact four
 shared hosts. That approval request is pending. Building and validating these
 generations did not publish the zone.
+
+## Repository-review follow-up prepared on 2026-10-01
+
+The next portal candidate fixes empty comparison responses and presents each
+repository as a full-width card with a closed Local commits disclosure. Its
+accepted brief is in design.md, “Approved repository-review follow-up”. The
+generic patch, appended consumer pins, independent review and exact-candidate
+checks are pending. The preceding `51i6gp92…` profile remains selected.
+
+Deploy this follow-up through the supported user-profile transition after its
+checks pass. Reload the browser to acquire the new markup and versioned assets,
+then verify empty staged/unstaged and committed views, visible action errors,
+single-column layout and disclosure retention during status refresh. Existing
+cluster services and shared DNS are outside this portal-only rollout.

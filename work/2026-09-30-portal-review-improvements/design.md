@@ -1533,6 +1533,225 @@ Corrected browser and generic follow-up results remain the verification owner's
 responsibility; this recommendation does not claim they have passed or authorize
 deployment, integration or shared DNS publication.
 
+## Approved repository-review follow-up (2026-10-01)
+
+This follow-up repairs empty comparison responses and changes the repository
+overview to one full-width card per row with collapsed local history. It is a
+production API/browser change, so the preceding test-only pin exception does
+not apply. Append changes to generic `50586880`, then append the necessary
+generic/extension consumer pins to extension `8e04f262` and workspace
+`45cce0a8`. Preserve the already deployed and externally consumed ancestry;
+do not amend or rewrite those commits. There are no migrations, new endpoints,
+configuration-repository edits or default-branch integrations. The independent
+DNS candidate and shared-host approval boundary remain unchanged.
+
+### Source evidence, files and interfaces
+
+Inspection at generic `50586880` confirms the empty-worktree failure:
+`portal/internal/repository/review_worktree.go:325` initializes `WorktreeCapture`
+without `Files`; line 528 appends only changed paths. An empty capture therefore
+has a nil slice. `portal/internal/web/repository_review.go:204-220,549-562`
+copies that slice into the response, and Go JSON encoding emits `"files":null`.
+`static/repository-review.js:633,745` iterates it and reads its length, causing
+the error before the intended empty-state message can render. The committed
+parser already creates an empty slice at `repository/review.go:479`; its
+response constructor at `web/repository_review.go:601` still needs to uphold
+the same explicit API invariant rather than depend on a reader implementation.
+
+Implementation ownership remains with the implementer in the generic worktree:
+
+| Path under `dev-workspace` | Bounded change |
+| --- | --- |
+| `portal/internal/web/repository_review.go` | Normalize nil file lists to nonnil empty slices at both successful worktree and committed comparison response constructions |
+| `portal/internal/web/static/repository-review.js` | Normalize nullish comparison files once before rendering; keep the existing retained-card/history behavior; keep capture failures visible outside collapsed history |
+| `portal/internal/web/templates/details.html` | Keep repository action controls outside a closed native Local commits disclosure |
+| `portal/internal/web/static/{style.css,repository-review.css}` | Agree on one full-width grid column and style the native disclosure without changing comparison/diff layout |
+| `portal/internal/web/static/app.js`, `portal/internal/web/templates/{session,index,creation,source-file}.html` | Coordinate existing script/import cache versions and changed stylesheet URLs; no unrelated behavior change |
+| `portal/internal/web/{repository_review_worktree_test.go,repository_review_test.go,server_test.go}` | Raw HTTP JSON regressions and rendered active/archived card structure |
+| `portal/internal/web/{repository_review_browser_test.cjs,repository_review_live_browser_test.cjs,presentation_browser_test.cjs}` | Null/empty rendering, retained disclosure state and desktop/mobile layout regressions; update hand-built card fixtures to match the real template |
+| `README.md`, `docs/workspace-portal.md` | Explain the overview/disclosure behavior, background history and empty comparison API compatibility |
+
+The existing `/api/sessions/<slug>/repository-comparison?repository=<id>`
+selectors and GET/POST semantics remain unchanged. Every successful comparison
+response must contain a JSON array at `files`, including empty staged captures,
+empty unstaged captures, their retained snapshot GETs, empty committed branch
+comparisons and commits with no file changes. Normalize at the wire-response
+construction boundary with a small shared helper or equivalent two explicit
+nil checks; do not add a custom JSON framework or mutate cached captures merely
+to change their representation. Keep `json:"files"` without `omitempty`.
+
+An empty comparison remains a successful 200 response with its ordinary
+snapshot/review identity, pair, kind/time/ephemeral fields and zero changed-file
+statistics. `preview` remains absent content (`null`) when no file was requested;
+explicit unknown file selection keeps its existing error. Preserve additive
+`unverifiedSubmodules` notices even when `files` is empty. Zero changed files
+does not claim that nested submodule working state was inspected. Snapshot
+immutability, quotas, leases, eviction, safe capture/filter exclusions and
+recapture/409 semantics remain unchanged; no extra Git status command or disk
+read is needed for this serialization fix.
+
+After a successful comparison fetch, the browser uses a single local file
+list such as `const files = payload.files ?? []` for iteration and the empty
+check. This deliberately accepts legacy null (and an absent nullish field);
+do not coerce arbitrary malformed values into a successful empty comparison or
+convert HTTP failures into empty results. Leave the separate batched-file
+endpoint's response contract unchanged. Empty views display the existing
+worktree/committed messages, permit return/navigation and worktree recapture,
+and issue no file-preview requests. Load all diffs handles zero files without
+throwing or inventing progress; existing nonempty preview loading stays intact.
+
+### Card structure, disclosure and refresh invariants
+
+Use this structure inside each retained `article.repo-card`:
+
+```html
+<div data-repository-status>…existing status and origin links…</div>
+<div class="repository-review-actions">…existing action controls…</div>
+<!-- Existing notices and visible capture-error feedback remain outside history. -->
+<details class="repository-history">
+  <summary>Local commits</summary>
+  <div data-repository-commits>…history/loading/error content…</div>
+</details>
+```
+
+The disclosure has no `open` attribute on initial render. Keep Compare, Staged
+changes, Unstaged changes and Refresh commits above it and usable while it is
+closed; archived cards retain Compare/Refresh commits and omit working-change
+actions as before. Keep all existing data selectors, Compare's initial
+disabled state until history arrives, and the replacement Compare link from
+`renderHistory`. The summary uses native pointer/keyboard disclosure behavior
+and a visible focus indicator; do not add a custom accordion, persist its state
+in storage or make the summary itself a review action.
+
+`hydrate` at `repository-review.js:775-787` queues history independently of
+disclosure state. Preserve that behavior, batching, pause/resume and branch
+monitoring: closing Local commits affects presentation only. History rendering
+may replace children of `[data-repository-commits]` without replacing its
+enclosing details node or changing `open`. `updateHTML:814-832` matches stable
+repository IDs and replaces only `[data-repository-status]` in existing cards;
+retain that path so open/closed state survives periodic details/status/history
+updates, changed HEAD and return from a comparison. A newly added/recreated
+card and a full document reload start closed. No state guarantee is needed
+after a repository is removed and later re-added.
+
+One existing failure path needs care: `captureWorktree:262` currently writes
+errors into the commit-list target. Once that target is in closed history,
+capture failure must use a visible per-card notice adjacent to the actions,
+without forcing the disclosure open or erasing the loaded history. Clear or
+replace that action notice on a subsequent attempt; retain the comparison
+view's existing capture-error handling. Commit-history loading/error messages
+can remain within Local commits and be inspected by opening it.
+
+The global `.repo-grid` rule in `style.css:117` also serves
+`portal/internal/web/templates/clusters.html:3`; preserve its existing auto-fit
+columns. Add a scoped `#repositories .repo-grid` rule in `style.css` with
+`grid-template-columns: minmax(0, 1fr)` and change that same selector in
+`repository-review.css` to one column. This makes the repository overview full
+width before and after lazy stylesheet loading without changing the cluster
+grid. Preserve `min-width: 0`, existing gap and safe wrapping of long branch
+names/messages. At the normal desktop viewport the four action controls fit
+on one row; allow wrapping on narrow screens. Do not change the sessions grid
+or the comparison's file navigation/split/unified layout.
+
+### Compatibility, documentation and deployment/recovery
+
+New backend plus older browser works because the established array contract is
+restored. New browser plus older backend accepts legacy `files:null`; this
+covers mixed component versions and a compatible code-level recovery without
+silently recapturing or changing stored data. Both old components retain the
+old bug. Native disclosure markup preserves existing selectors, but an already
+open page retaining an older card will not acquire the new disclosure merely
+from a details refresh. Reload after profile activation to load the new assets
+and card markup and verify the initial closed state.
+
+Coordinate the existing cache versions in the same generic commit: advance
+`repository-review.js?v=5` to `?v=6` in `static/app.js` and matching browser
+fixtures, and `app.js?v=15` to `?v=16` in both session and index templates.
+Version the changed stylesheets too: use `style.css?v=1` at its four template
+references and `repository-review.css?v=1` in the lazy loader and source-file
+template. These are cache keys only; the static route and embedded filenames
+remain unchanged. Align fixtures with these URLs and verify the reloaded page
+fetches them. Do not introduce a general asset pipeline or alter Codex/editor
+asset versions. An already running tab retains its loaded modules until reload;
+the API array guarantee protects its existing comparison reader meanwhile.
+
+Update the generic README's repository overview description and the portal
+guide's comparison section: Local commits starts closed, loads in the
+background, preserves state only for the retained card, and resets on a full
+reload. Document successful empty responses and legacy null tolerance for API
+consumers. The lead owns the final user-facing writing pass and plan/state/review
+packet updates; the implementer owns the generic guide changes. This portal
+change does not alter vpsAdmin member UI or KB contracts and needs no KB
+publication.
+
+After quick checks, append coherent generic commits, complete required
+independent review including the preserved whole-branch history/no-migration
+conclusion, and verify the exact new heads. Propagate the production generic
+revision through the extension input and workspace input/locks while retaining
+the current Codex 0.159.2 selection and unrelated cluster inputs. Build the
+complete workspace package and use the supported, authorized aitherdev
+user-profile switch with normal journal/generation preflights. Do not deploy
+system configuration, shared DNS or the development cluster for this portal-only
+follow-up. Do not integrate any default branch.
+
+Portal package browser/server assets move together. A switch loses process-local
+snapshots under the existing contract; their 409/recapture path remains valid,
+and committed links remain durable. Before profile selection, a failure keeps
+the working selected package; after selection, use the ordinary journal-aware
+retry or a newer compatible forward recovery package. The platform still
+refuses selecting an older profile generation. Browser tolerance of old null
+responses is a compatibility property, not permission to bypass that policy.
+
+### Acceptance and verification
+
+Quick checks in the repository's Nix environment, before independent review:
+
+1. Add real HTTP regressions using `reviewWebFixture`: a clean worktree gives
+   staged and unstaged POST responses with raw JSON `files:[]`, then snapshot
+   GETs preserve both array shape and identity. Add empty committed branch and
+   empty commit cases. Check the raw JSON value/non-null decoded array rather
+   than only `len(files)==0`, which also passes for null. Preserve nonempty and
+   error-status coverage, including submodule metadata with no changed files.
+2. Add browser regressions for array and legacy-null empty payloads in both
+   committed and working views: the correct empty message, zero file sections,
+   no preview fetches, no console errors, working Back/return and recapture.
+   Use the same rendering path as the real UI; a helper-only assertion is not
+   sufficient. Keep retained editors and Load all diffs tests passing.
+3. Check rendered template structure for active/archived cards and all action
+   selectors outside `<details>`. In browser fixtures use two repositories and
+   the actual `#repositories` CSS context: some existing hand-built fixtures
+   use `#fixture-repositories`, which cannot prove the more specific grid rule.
+   Require closed-on-load, visible/enabled controls after background history,
+   native summary toggle and unchanged open state across a details refresh.
+   Verify failed capture feedback remains visible with history closed.
+   Check the cluster template's `.repo-grid` outside `#repositories` retains
+   auto-fit columns before and after the review stylesheet loads.
+4. Run `git diff --check`, Node syntax for the changed browser file/fixtures,
+   the focused repository-review HTTP/template tests, and
+   `node repository_review_browser_test.cjs` from `portal/internal/web/`
+   (its fixture reads `static/` relative to that directory). Check template and
+   fixture cache-version references agree. Keep checks
+   targeted; source inspection alone is not the JSON or browser regression.
+
+After review, use a fresh watcher for focused real-browser cases and the full
+`PORTAL_BROWSER_TEST=1` suite with Nix-provided Playwright/browsers, full Go and
+required generic/consumer flake/package checks at their exact heads. The
+focused live fixture is under `TestQuestionBrowser`; run its repository-review
+and presentation subtests before the full Browser selection. Exercise desktop
+(for example 1440 px) and narrow mobile widths: two vertically stacked cards
+must each span the overview width, desktop actions share a row, and mobile
+controls/content do not overflow horizontally. Verify history loads while
+closed, opening survives details refresh, and an actual full reload closes it.
+Use request/event or rendered-state synchronization instead of arbitrary waits.
+
+After the authorized profile switch and reload, check one clean repository's
+staged and unstaged snapshots, one changed comparison, empty committed review,
+disclosure persistence and full-width cards. Record deployed package/source
+identity separately from build/review results. No live repository edits are
+needed solely to create an empty or changed fixture; use suitable existing
+repositories or disposable test fixtures. No build, test, commit or deployment
+was performed by the architect for this design update.
+
 ## Lead decisions and handoff
 
 The lead accepted the original three-repository edit boundary, forward-only

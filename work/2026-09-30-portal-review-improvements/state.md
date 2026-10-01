@@ -6,15 +6,23 @@ lifecycle: active
 
 ## Status
 
-- Phase: deployed and ready for use. Implementation, independent review, final
+- Phase: mandatory review of the committed repository-review follow-up. Generic
+  `8019b9b7` restores empty comparison arrays, accepts legacy null in the
+  browser, uses one full-width repository card and closes Local commits by
+  default. Extension `361be9c7` and workspace `9818b805` select it exactly while
+  retaining Codex 0.159.2. Focused Go, mounted-browser, Node syntax, whitespace
+  and pin checks pass; all feature refs are published and worktrees are clean.
+  Long checks and user-profile deployment wait for the four-lane independent
+  review. Shared DNS publication remains separately unapproved.
+- The preceding release is deployed and ready for use. Implementation, independent review, final
   verification, profile activation and the bridge-cluster services update
   passed, including the corrected browser fixture at generic `50586880`. The
   final Origin label and container autostart refinements are active. Shared DNS
   publication waits for approval of the four exact targets.
   The accepted architect assessment retains runtime pins at generic
   `50af66d` / extension `8e04f262` / workspace `45cce0a8`.
-- Clean published branches are generic `50586880` (test-only successor), extension `8e04f262`,
-  workspace `45cce0a8` and configuration `d24b2515`. A conflicting brief
+- Clean published branches are generic `8019b9b7`, extension `361be9c7`,
+  workspace `9818b805` and unchanged configuration `d24b2515`. A conflicting brief
   temporarily published a consolidated extension chain and its consumer.
   Recovery restored the original deployed ancestry locally and remotely with
   checked ref updates, then amended only the unselected consumer. Its exact
@@ -100,6 +108,21 @@ lifecycle: active
   authorized deployment of aitherdev, not those four shared DNS consumers.
 
 ## Development record
+
+- Follow-up quick verification passed in the declared generic Nix shell on the
+  in-progress patch: raw empty committed/staged/unstaged responses, submodule-only
+  array shape, active/archived disclosure/actions, existing Origin template and
+  repository navigation contracts. Focused Go time was 1.665s. App/review/live
+  and presentation JavaScript syntax and the repository browser contract passed.
+  Shell entry rebuilt prerequisites and completed normally; these are focused
+  quick checks, not committed-head review or long browser/build evidence.
+- The main-agent user-facing writing pass is complete for the follow-up README,
+  portal guide and visible labels/errors. Implementer0 is authorized to commit
+  two focused appended units: empty-response compatibility, then card
+  presentation/disclosure/cache coordination. The scoped grid rule preserves
+  the actual development-cluster card consumer in templates/clusters.html.
+  The necessary test/repository_browser.cjs fixture update is included in the
+  19 owned paths. No deployed ancestor will be folded or rewritten.
 
 - The portal performance and automatic-history changes are merged on
   `dev-workspace/master` through `7c133c5`.
@@ -386,6 +409,20 @@ lifecycle: active
 
 ## Phase checklist
 
+Repository-review follow-up:
+
+- [x] Reconfirm the retained roster, clean feature worktrees and affected pin
+  chain.
+- [x] Complete and accept the design correction.
+- [x] Implement and commit the generic API/browser/layout/docs changes with
+  quick checks.
+- [ ] Complete mandatory whole-branch review and reconcile findings.
+- [x] Update and commit the extension and workspace pins.
+- [ ] Finish long integration/build verification through fresh Luna watchers.
+- [ ] Activate the new workspace user profile and verify the reported session.
+
+Preceding release evidence:
+
 Runtime candidate verification is scoped to generic `50af66d`, extension
 `8e04f262`, workspace `45cce0a8` and configuration `d24b2515`. The complete
 series and changed paths are in [final-diff-inventory.md](final-diff-inventory.md).
@@ -435,6 +472,10 @@ remains pending.
 
 ## Next actions
 
+- Complete the independent four-lane whole-branch review at generic `8019b9b7`,
+  extension `361be9c7`, workspace `9818b805` and configuration `d24b2515`.
+  Reconcile findings before long browser, flake and package checks, then use the
+  guarded user-profile rollout and verify the reported session.
 - Shared DNS publication waits for approval of the four built targets. After
   publication verify ordinary host/client DNS and HTTPS. Leave all branches
   unmerged pending explicit default-branch integration approval.

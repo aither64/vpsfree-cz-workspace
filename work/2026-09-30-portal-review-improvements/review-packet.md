@@ -1,5 +1,15 @@
 # Final committed-change review packet
 
+## Current follow-up status
+
+The approved 2026-10-01 repository-review follow-up is committed and published
+on the three existing feature refs. Generic `8019b9b7` restores empty comparison
+arrays and changes the repository overview; extension `361be9c7` and workspace
+`9818b805` select it exactly. The currently deployed profile still uses generic
+`50af66d9`, extension `8e04f262` and workspace `45cce0a8`. No follow-up package
+has been built, selected or deployed. This packet covers the complete updated
+base-to-head histories before long verification and profile activation.
+
 ## Assignment
 
 - Initiative: `2026-09-30-portal-review-improvements`
@@ -48,6 +58,14 @@ The user requested a connected portal and development-cluster update:
    aitherdev frontend by preparing one private-zone CNAME and a monotonic SOA
    serial. Publishing the four shared DNS copies is outside the current
    aitherdev-only deployment authorization.
+9. Return `files: []` for successful empty staged, unstaged, branch and commit
+   comparisons while accepting legacy `files: null` in the browser during a
+   mixed-version deployment.
+10. Show one repository card per row so the four review actions fit at desktop
+    width, and put Local commits in a native disclosure that starts closed while
+    history continues to load.
+11. Keep capture failures visible outside closed history and preserve an opened
+    disclosure while the same card is retained during details refresh.
 
 Acceptance requires no credential/token exposure, exact model/source pins,
 compatible old manifests and disabled cluster configurations, continued PHP/API
@@ -67,7 +85,7 @@ before any fast-forward integration, while retaining the actual deployed refs.
 
 - Worktree: `worktrees/2026-09-30-portal-review-improvements/dev-workspace`
 - Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`
-- Head: `50586880d5b4e17e060c045dcc992a748f9c7827`
+- Head: `8019b9b7970d5ae0e57cc530e047979d91632053`
 
 Complete series, oldest first:
 
@@ -86,8 +104,14 @@ Complete series, oldest first:
 7. `50586880d5b4e17e060c045dcc992a748f9c7827` — sample the activity counter
    before dispatching a wake event in the existing Playwright fixture. The
    fixture predates this initiative; no production behavior changes.
+8. `3445353c9dd297649052fee9b25bbeb541bcddbc` — guarantee an array for empty
+   comparison responses, accept legacy nullish file lists in the browser and
+   add raw HTTP and empty-view regressions.
+9. `8019b9b7970d5ae0e57cc530e047979d91632053` — make repository cards
+   full-width, keep actions outside a closed Local commits disclosure, show
+   capture failures beside the controls and coordinate the cache revisions.
 
-Final diff: 31 files, 3,487 insertions and 363 deletions. Each commit owns one
+Final diff: 38 files, 3,803 insertions and 393 deletions. Each commit owns one
 product or verification unit. Corrections to clean-filter fixtures and failed
 preview retry behavior were folded into their owning unmerged commits. No obsolete reader,
 snapshot protocol, provider shim or fixup commit remains.
@@ -95,12 +119,14 @@ snapshot protocol, provider shim or fixup commit remains.
 The full browser attempt at `50af66d` passed five cases and failed this fixture
 because its baseline could already include the wake request. The one-line move
 preserves the failure injection and assertions. Log: `/tmp/portal-review-final-5.log`.
-The production composition still pins `50af66d`/`8e04f262`/`45cce0a8`;
+The selected production composition still pins
+`50af66d`/`8e04f262`/`45cce0a8`;
 the architect's accepted assessment in design.md, “Verification fixture
-follow-up and retained consumer pins”, establishes that no runtime interface,
-asset or package expression changed. Retain those consumer pins and the built
-`51i6gp92…` candidate. The unfiltered source means a hypothetical repin would
-change derivation identity; no byte or store-path equivalence is claimed.
+follow-up and retained consumer pins”, explains why the preceding deployment
+did not select test-only `50586880`. The new API and presentation commits now
+require the deliberate consumer updates recorded in this packet. The selected
+`51i6gp92…` profile remains the rollback generation until the new candidate is
+built and activated.
 The bounded independent general/architecture follow-up at `50586880` has no
 Blocking or Important finding and confirms the seven-commit history and
 no-new-migrations conclusion. Its test-isolation Advisory is accepted: an
@@ -109,14 +135,14 @@ future intermittent failure should first settle or label that request. The
 hidden transition aborts pending reads. Declared-environment Node syntax,
 three focused lifecycle runs, all six browser cases, the generic flake check
 and exact-head CI have now passed at `50586880`. No product change is required
-by this Advisory. The runtime candidate stays at the separately built pins.
+by this Advisory. The new follow-up checks must cover both later commits.
 
 ### vpsFree `dev-workspace` extension
 
 - Worktree:
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`
 - Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`
-- Head: `8e04f2626a3abd492768f15ae8d843c8e527f2cd`
+- Head: `361be9c712b63e16bda1866c06fb40805c16ce7f`
 
 Complete series, oldest first:
 
@@ -129,6 +155,8 @@ Complete series, oldest first:
    Origin-label refinement.
 4. `8e04f2626a3abd492768f15ae8d843c8e527f2cd` — start the optional React
    container on boot and assert enabled ordering and disabled absence.
+5. `361be9c712b63e16bda1866c06fb40805c16ce7f` — select generic
+   `8019b9b7` without changing extension behavior or unrelated inputs.
 
 Final diff: 13 files, 1,236 insertions and 49 deletions. Cluster behavior and
 dependency selection remain separate for review/revert. The generated nested
@@ -151,7 +179,7 @@ remains.
 
 - Worktree: `worktrees/2026-09-30-portal-review-improvements/workspace`
 - Review base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`
-- Head: `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154`
+- Head: `9818b805a34394c73c6ee9799f1c268c21c156d4`
 
 Complete series, oldest first:
 
@@ -165,11 +193,14 @@ Complete series, oldest first:
    `af40d966` and its exact `bun2nix`/`nixpkgs` closure for Codex 0.159.2.
 5. `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154` — select final generic
    `50af66d9` and extension `8e04f262` heads while preserving the Codex closure.
+6. `9818b805a34394c73c6ee9799f1c268c21c156d4` — select extension
+   `361be9c7` and generic `8019b9b7` while retaining the exact Codex 0.159.2
+   `llm-agents`, `bun2nix` and `nixpkgs` closure.
 
 Final diff: 8 files, 99 insertions and 44 deletions. Policy, site enablement,
 initial composition, Codex runtime and final pin refresh are independently
-reviewable. The final lock retains exact generic `50af66d9`, extension
-`8e04f262` and `llm-agents` `af40d966`; the final pin commit contains no
+reviewable. The final lock retains exact generic `8019b9b7`, extension
+`361be9c7` and `llm-agents` `af40d966`; the final pin commit contains no
 unrelated node change.
 
 ### `vpsfree-cz-configuration`
@@ -224,6 +255,14 @@ Origin-label and boot-fix commits remain because they correct the externally
 consumed composition. The final workspace consumer amendment replaces only an
 unselected pin commit, preserving deployed parent `0e00eab5`.
 
+The follow-up adds no migration or persisted format. Its `files: null`
+compatibility path is intentional for a new browser talking to the currently
+deployed older backend and is bounded to nullish values; arbitrary values still
+fail. The test-only `50586880` commit remains as published and independently
+verified history. Commits `3445353c` and `8019b9b7` introduce the final response
+contract and card behavior directly, so there is no superseded follow-up API,
+markup or layout path to consolidate.
+
 ## Commit split and deliberate boundaries
 
 - Behavior, site configuration, generated dependency selection and DNS remain
@@ -271,6 +310,14 @@ No coordinated vpsAdminOS node update is required. The one-record DNS change is
 backward compatible, with normal one-hour positive/negative caching after
 authorized publication.
 
+Successful comparison responses now make the existing `files` array contract
+explicit for empty results. An old browser works with the new backend. The new
+browser treats a null or missing files field from the deployed backend as an
+empty comparison and rejects other malformed shapes. The portal server and
+embedded browser assets deploy as one package, while this tolerance covers open
+tabs and forward recovery. Captures remain process-local and are not persisted;
+switching the profile retains the existing 409/recapture recovery behavior.
+
 ## Documentation
 
 Lasting behavior is documented in:
@@ -288,19 +335,22 @@ commit.
 
 ## Quick verification before review
 
-- Generic final head: focused Origin/template test passes; complete changed Go
-  packages, Ruby role-default tests, Node syntax/browser contracts, snapshot
-  fixtures and the final six-case Playwright suite passed at the unchanged
-  owning commits. The prior final generic flake check also passed before the
-  label-only commit.
+- Generic final head: focused Go repository-review and template tests pass,
+  including raw empty staged, unstaged, branch and commit JSON responses. The
+  mounted browser contract and Node syntax checks pass for all changed scripts
+  and fixtures. `git diff --check` passes and the worktree is clean. Earlier
+  generic suites through `50586880` remain valid; the new real Playwright and
+  full flake checks intentionally wait for this review.
 - Extension final tree: enabled and disabled full cluster-config evaluations
   passed with the autostart/unit assertions. Nix parsing, exact generic pin,
   `git diff --check` and equality with the validated startup-fix final
   tree pass. Earlier focused runner/status/seed suites and packaged check passed
   at the owning implementation before the autostart correction.
-- Workspace final head: `agent_instructions_test.rb` passes 7 runs/96
-  assertions; `deployment_contract_test.rb` passes 4/19. `git diff --check`,
-  flake metadata and exact generic/extension/llm-agents pin assertions pass.
+- Workspace final head: `git diff --check`, flake metadata and exact
+  generic/extension/llm-agents pin assertions pass. The lock selects generic
+  `8019b9b7` and extension `361be9c7` while retaining the previously validated
+  Codex 0.159.2 closure. Earlier policy/deployment contract tests remain valid;
+  the new exact package build waits for this review.
 - Configuration final head: four rendered private zones for
   `ns1.int.prg.vpsfree.cz`, `ns1.int.brq.vpsfree.cz`,
   `mon1.int.prg.vpsfree.cz` and `mon2.int.prg.vpsfree.cz` pass
@@ -355,4 +405,10 @@ In addition to normal lane checks, inspect:
 - DNS owner/type/target, monotonic serial, four actual consumers, caching and
   forward-only correction after publication;
 - commit splits and the explicit conclusion that no obsolete history or
-  migrations remain.
+  migrations remain;
+- empty comparison array serialization, legacy-null tolerance, malformed-value
+  rejection and the absence of preview requests for an empty result;
+- actions remaining usable while Local commits is closed, background history
+  loading, disclosure state retention on card refresh and reset on full reload;
+- the repository-only grid override preserving the separate cluster-card grid,
+  plus cache-key coordination for every changed script and stylesheet.

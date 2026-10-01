@@ -151,3 +151,24 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   After approval and publication, check each authoritative copy, normal host
   and VPN-client resolution, then strict-CA HTTPS and browser OAuth/refresh
   without `--resolve`; handle negative caches and recovery as in the design.
+
+## Approved repository-review follow-up (2026-10-01)
+
+- Empty committed and working-tree comparisons must encode `files` as a JSON
+  array. The browser also treats legacy `files: null` as an empty comparison so
+  a mixed or rolled-back portal generation remains usable.
+- The Repositories overview shows one full-width repository card per row. The
+  Compare, Staged changes, Unstaged changes and Refresh commits controls remain
+  visible above a native **Local commits** disclosure.
+- Local commits starts closed on each full page load. History continues loading
+  in the background so Compare and branch-change monitoring remain available;
+  the retained card node preserves an opened disclosure during periodic details
+  refreshes.
+- Add raw JSON and browser regressions for an empty staged/unstaged snapshot,
+  legacy null compatibility, the single-column desktop layout, one-line desktop
+  actions and disclosure state. Preserve the existing lazy/load-all diff tests.
+- Append the generic fix to the already deployed branch history, update the
+  extension and workspace pins, repeat whole-branch review and long checks, then
+  deploy the rebuilt workspace package through the aitherdev user profile. No
+  schema migration, configuration-repository change or default-branch
+  integration is included.
