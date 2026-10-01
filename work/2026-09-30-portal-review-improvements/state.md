@@ -6,14 +6,25 @@ lifecycle: active
 
 ## Status
 
-- Phase: mandatory review of the committed repository-review follow-up. Generic
+- Phase: long verification of the reviewed repository-review follow-up. Generic
   `8019b9b7` restores empty comparison arrays, accepts legacy null in the
   browser, uses one full-width repository card and closes Local commits by
   default. Extension `361be9c7` and workspace `9818b805` select it exactly while
   retaining Codex 0.159.2. Focused Go, mounted-browser, Node syntax, whitespace
   and pin checks pass; all feature refs are published and worktrees are clean.
-  Long checks and user-profile deployment wait for the four-lane independent
-  review. Shared DNS publication remains separately unapproved.
+  The retained independent reviewer completed all four lanes with no Blocking
+  or Important finding. Long checks now own the remaining evidence before the
+  user-profile deployment. Shared DNS publication remains separately unapproved.
+- Reviewer0 used its retained `gpt-6-sol`/xhigh settings and read-only access to
+  inspect the complete 9/5/6/1 commit histories at generic `8019b9b7`, extension
+  `361be9c7`, workspace `9818b805` and configuration `d24b2515`. General,
+  architecture and repetition, scope and proportionality, and risk and
+  compatibility lanes found no new security or compatibility issue, obsolete
+  unmerged approach, transitional migration or incoherent commit split. No
+  branch adds a database or persisted-format migration. Its documentation-only
+  Advisory identified stale published-head references in this file; the
+  repository inventory below now uses the reviewed heads. Existing accepted
+  pin-duplication and deployment-checker Advisories remain unchanged.
 - The preceding release is deployed and ready for use. Implementation, independent review, final
   verification, profile activation and the bridge-cluster services update
   passed, including the corrected browser fixture at generic `50586880`. The
@@ -416,7 +427,7 @@ Repository-review follow-up:
 - [x] Complete and accept the design correction.
 - [x] Implement and commit the generic API/browser/layout/docs changes with
   quick checks.
-- [ ] Complete mandatory whole-branch review and reconcile findings.
+- [x] Complete mandatory whole-branch review and reconcile findings.
 - [x] Update and commit the extension and workspace pins.
 - [ ] Finish long integration/build verification through fresh Luna watchers.
 - [ ] Activate the new workspace user profile and verify the reported session.
@@ -472,10 +483,9 @@ remains pending.
 
 ## Next actions
 
-- Complete the independent four-lane whole-branch review at generic `8019b9b7`,
-  extension `361be9c7`, workspace `9818b805` and configuration `d24b2515`.
-  Reconcile findings before long browser, flake and package checks, then use the
-  guarded user-profile rollout and verify the reported session.
+- Run the reviewed generic browser and flake checks and build the exact
+  workspace `9818b805` package through fresh Luna/low watchers. If they pass,
+  use the guarded user-profile rollout and verify the reported session.
 - Shared DNS publication waits for approval of the four built targets. After
   publication verify ordinary host/client DNS and HTTPS. Leave all branches
   unmerged pending explicit default-branch integration approval.
@@ -494,17 +504,17 @@ remains pending.
 - `dev-workspace`: branch `2026-09-30-portal-review-improvements`, worktree
   `worktrees/2026-09-30-portal-review-improvements/dev-workspace`, initial base
   `7c133c562ac51076c1f45af46e180f8bfbabe836`, published head
-  `50586880d5b4e17e060c045dcc992a748f9c7827`.
+  `8019b9b7970d5ae0e57cc530e047979d91632053`.
 - `vpsfree-dev-workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
   `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
-  head `8e04f2626a3abd492768f15ae8d843c8e527f2cd`.
+  head `361be9c712b63e16bda1866c06fb40805c16ce7f`.
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154`.
+  `9818b805a34394c73c6ee9799f1c268c21c156d4`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
