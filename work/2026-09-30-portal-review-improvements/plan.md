@@ -172,3 +172,21 @@ Implement the approved dev-workspace portal plan: migrate workspace Sol defaults
   deploy the rebuilt workspace package through the aitherdev user profile. No
   schema migration, configuration-repository change or default-branch
   integration is included.
+
+## Repository-card design clarification (2026-10-01)
+
+The `1rem` action-row spacing is vertical separation above the review controls,
+implemented as `margin-top`. Keep the existing `.5rem` gap between buttons and
+desktop one-row fit. Workflow counts describe the exact-revision runs returned
+and displayed by the existing lookup, at most 100; initial nil runs are not a
+successful empty result. The accepted brief is in design.md, “Repository-card
+summaries and workflow disclosure”. New API/schema fields, provider queries,
+cluster/DNS changes and lifecycle actions are outside this
+clarification.
+
+Successful empty workflow data renders exactly `Workflows · 0 total` without a
+disclosure or counter row. Unavailable data is compact and never claims zero.
+Nonempty results show the short Workflows heading and all five counters;
+nonempty refreshes retain the native disclosure, while insertion after a
+compact state starts closed. This uses the existing nil-versus-empty data
+distinction and adds no persisted preference.

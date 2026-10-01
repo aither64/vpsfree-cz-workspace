@@ -6,10 +6,60 @@ lifecycle: active
 
 ## Status
 
-- Phase: deployed and verified; branches are ready, awaiting merge approval.
-  Implementation, independent review, long verification and live acceptance are
-  complete. No default-branch integration is authorized.
-- The selected user profile is exact package `bpzvfhdn…`, built from workspace
+- Phase: approved default-branch integration complete. All seven registered
+  final feature heads are ancestors of their freshly fetched remote defaults.
+  Generic869 and extension074 fast-forwarded unchanged; configuration9824 and
+  workspacec3b are independently reviewed, patch-equivalent rebases. The other
+  three dependency heads were already contained. SSH pushes and final comparisons
+  are complete; source feature worktrees are clean and refs retained.
+- CI is report-only by explicit user direction. Initial observations show
+  [generic Check](https://github.com/aither64/dev-workspace/actions/runs/36904460292)
+  and [extension Check](https://github.com/vpsfreecz/dev-workspace/actions/runs/36904534674)
+  in progress. Do not wait for or infer their final conclusions.
+- Deployed z20 remains selected from runtime1227/extension074/workspacecd287.
+  Its switch succeeded0/70s; portal, Codex and router are healthy, with the exact
+  visible gpt-6.1-sol high/xhigh catalog. The v4 live probe passed0/10s: six frozen
+  summaries, layout/spacing, empty staged/unstaged views, history retention,
+  reload/assets and no page errors. Populated counters/run-link focus and nonempty
+  previews were not exercised by this live sample; predeployment fixtures passed.
+- Configuration source is merged; shared DNS publication remains held. Re-render
+  and build approved DNS targets against9824 before any later authorized deployment.
+  No profile switch retry, system/cluster/DNS activation or lifecycle action occurred.
+  Session remains active/open. Shared master and59 unrelated modified tracked files
+  plus the preexisting empty staged diff were preserved during its fast-forward.
+- See [integration.md](integration.md) for approval scope, exact heads, rebase/review
+  evidence, final comparisons, remote ancestry proofs and CI observations, and
+  [handoff.md](handoff.md) for the concise continuation record.
+
+### Earlier checkpoints
+
+The entries below retain earlier evidence and identities; the current selected
+profile and pending work are stated above.
+
+- The original card UI unit has 19 paths and preserves existing API/schema/provider
+  contracts. The extension changes only its generic input. The workspace final
+  graph changes only extension and transitive generic nodes from `aca3b39d` and
+  preserves the approved Codex 0.159.2 closure at
+  `af40d966`/`07a5bfc8`/`f45c6f04`. A temporary unpublished workspace commit
+  captured an old nested closure during concurrent lock generation; the exact
+  override restored it and the bad tree was amended out before review or push.
+  Workspace `4a6d44a2` evaluates to
+  `/nix/store/9gdvn344zpng5vxwa7x4cvibp5kprhf1-dev-workspace-0.2.0.drv` with
+  lock writes disabled. Extension package-check evaluation resolves
+  `/nix/store/sgzrn8rmwrix63wwiaaff3czmln0k0jp-dev-workspace-0.2.0.drv`.
+- Spacing clarification: `1rem` means vertical separation above the repository
+  review action row (`margin-top`); the existing `.5rem` button gap and desktop
+  one-row fit remain. Workflow totals describe returned/displayed exact-revision
+  runs, at most 100. Initial nil runs must not appear as an observed zero.
+  Successful empty results show exactly `Workflows · 0 total`, without an empty
+  disclosure or five-counter row. Unavailable results are compact; nonempty
+  results retain the native disclosure during refresh and show all five
+  counters. Reinserted disclosures after a compact state start closed.
+  Presentation-only counters and retained native workflow disclosure are the
+  accepted design boundary, recorded in design.md:1926. Counts, loading/error
+  states and native disclosure retention use existing data; no API/schema field
+  or provider query is added. At that earlier checkpoint `bpz` was active.
+- The previous user profile was exact package `bpzvfhdn…`, built from workspace
   `aca3b39d` with generic runtime `e64a9fda`, extension `362ebd4` and Codex
   0.159.2. The guarded switch completed with exit status 0 in 88 seconds. The
   portal restarted successfully as PID 2031444.
@@ -18,7 +68,10 @@ lifecycle: active
   Six repositories stack one per row; all four desktop actions share one row;
   narrow layout does not overflow; Local commits starts closed, stays open during
   refresh and closes again after reload; Origin and Load all diffs are visible.
-- Shared DNS publication still needs explicit approval for its four targets.
+- Shared DNS candidate d24b and its four built consumers are prepared. The latest
+  user direction explicitly keeps DNS/configuration unpublished, superseding the
+  earlier approval question. Configuration d24b remains clean; no DNS activation
+  or publication is included in portal acceptance.
 - Independent reviewer0, saved gpt-6-sol/xhigh/read-only, completed the affected
   general/architecture and exact pin compatibility review at e64a9fda/362ebd4/
   aca3b39d/d24b2515. No Blocking or Important finding. It explicitly confirms
@@ -90,7 +143,8 @@ lifecycle: active
   publication waits for approval of the four exact targets.
   The accepted architect assessment retains runtime pins at generic
   `50af66d` / extension `8e04f262` / workspace `45cce0a8`.
-- Current clean published generic verification head is `618df553`.
+- At that earlier checkpoint, clean published generic verification head was
+  `618df553`.
   Published consumer heads remain
   extension `362ebd4` and workspace `aca3b39d`. The consumers retain runtime input
   `e64a9fda`; the local configuration candidate remains
@@ -482,6 +536,33 @@ lifecycle: active
 
 ## Phase checklist
 
+Repository-card design follow-up:
+
+- [x] Verify the same-session roster and resolve action-row spacing.
+- [x] Complete and accept architect0's design and verification brief.
+- [x] Assign application edits to implementer0 under the accepted brief.
+- [x] Receive the scoped patch and apply the main writing pass.
+- [x] Finish compact-state/focus refinements and final quick checks, then commit
+  the coherent presentation unit without rewriting consumed history.
+- [x] Independently review the committed card unit, resolve the workflow-link
+  focus finding, publish the exact focus/cache consumer graph and complete its
+  affected-lane review.
+- [x] Commit and independently review the optional archive fixture correction
+  `869b8d47`, retaining runtime `1227`/extension `074`/workspace `cd2875`.
+- [x] Pass the corrected full Go/browser suite and generic flake at verification
+  head `869b8d47` (170s/324s).
+- [x] Pass new-head generic CI, retained consumer flakes, exact z20 build/protocol,
+  real-editor harness and extension smoke (all nine stages status 0).
+- [x] Complete candidate catalog/protocol acceptance with the same exact packaged
+  binary/client/account and current visible model catalog.
+- [x] Execute the separately authorized guarded profile transition and verify
+  selected z20 package/service identity (status0/70s).
+- [x] Complete the requested unchanged v4 live probe with true exit0/10s;
+  summaries, layout/spacing, empty diffs, history retention and reload passed.
+- [ ] Observe populated workflow counters/run-link focus and nonempty previews
+  live if required; this sample contained unavailable workflows and empty diffs.
+  Their both-engine/real-editor fixture evidence is already complete.
+
 Repository-review follow-up:
 
 - [x] Reconfirm the retained roster, clean feature worktrees and affected pin
@@ -557,11 +638,14 @@ remains pending.
 
 ## Next actions
 
-- Shared DNS publication waits for approval of the four built targets listed in
-  rollout.md. After publication verify ordinary host/client DNS and strict-CA
-  HTTPS without `--resolve`.
-- Leave every feature branch unmerged until the user explicitly approves the
-  named repository and target branch. Keep this initiative active meanwhile.
+- The user-directed integrations are complete. Commit/push this consolidated
+  durable handoff; no additional source integration or CI wait remains authorized.
+- Preserve selected z20 and the active session. Do not retry the package switch,
+  reconcile/activate services or perform a session lifecycle action.
+- Keep shared DNS publication held. Later deployment requires its own authority
+  and checks against rebased configuration9824, even though the source is merged.
+- Preserve the live sampling limit and the initial-only CI states; no final CI or
+  populated-workflow/preview live result is inferred.
 
 ## Documentation
 
@@ -575,24 +659,26 @@ remains pending.
 - [Watcher identity directory lesson](../../notes/dev-workspace/2026-10-01-watcher-session-working-directory.md)
 - [Detached deployment launcher lesson](../../notes/dev-workspace/2026-10-01-detached-deployment-launcher.md)
 - [Retaining separate browser build assets](../../notes/dev-workspace/2026-09-12-browser-acceptance-gc-roots.md)
+- [Publication before amendment](../../notes/cross-project/2026-10-01-publication-before-amend.md)
+- [Paired browser refresh observations](../../notes/dev-workspace/2026-10-01-paired-browser-refresh-observations.md)
 
 ## Repositories
 
 - `dev-workspace`: branch `2026-09-30-portal-review-improvements`, worktree
   `worktrees/2026-09-30-portal-review-improvements/dev-workspace`, initial base
   `7c133c562ac51076c1f45af46e180f8bfbabe836`, published head
-  `618df5530ba378f8b98f9557cdca700367016c11`; retained consumer runtime input
-  `e64a9fda4f5fb3595ce194cc55359ab61f5d8b3a`.
+  `869b8d4728394127ba949dc76724dce56eae136b`; retained candidate runtime input
+  `1227f5c21f4f9a38bbde37c141c2f35f50008554` (active runtime remains e64).
 - `vpsfree-dev-workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
   `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
-  head `362ebd4759d090805cd95a800e7131edb930b604`.
+  head `074926d33f7306288f7cfad87c6a85e8a430e750` (active extension remains362).
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `aca3b39d400b5d1d6d51e42550421f8362684ee0`.
+  `cd2875f3d4fb2199dd1992b07a3e664eb901e50f` (active workspace remainsaca).
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
@@ -629,8 +715,9 @@ remains pending.
   The exact-target question has been sent; no approval is inferred from time
   elapsed or the preselected answer.
 - Final profile activation requires an idle session. The supported candidate
-  command is in [rollout.md](rollout.md); services update and live final
-  acceptance follow selection. No default-branch integration is authorized.
+  command is above; live card-summary/focus acceptance follows selection.
+  No cluster/system update is needed for this UI correction. No default-branch
+  integration is authorized.
 
 ## Cleanup
 
@@ -808,3 +895,478 @@ This completes the authorized portal deployment and acceptance. The development
 cluster remains on its already verified React and legacy UI rollout. The
 unselected four-host DNS candidate and all default-branch integrations still
 require separate approval.
+
+
+## Repository-card final review result
+
+Retained reviewer0 used saved gpt-6-sol/xhigh/read-only settings and reviewed the
+complete 13/7/8/1 series across all four mandatory lanes. It found one Important
+issue in `repository-review.js`: same-card refresh retains the workflow details
+and summary but replaces the run links, dropping keyboard focus from a focused
+run. `presentation_browser_test.cjs` covered summary focus only. Long checks and
+rollout remain blocked until the narrow fix is committed and directly verified.
+
+No other Blocking, Important or Advisory finding was reported. The reviewer
+confirmed coherent commit splits, no obsolete unmerged approach, no unused
+compatibility path and no transitional migration. None of the four ranges adds
+a database or persisted-format migration. The selected API's nine upstream
+migrations remain historical lineage with unknown production deployment and
+rollback provenance. Workspace's final lock changes only generic and extension
+nodes and preserves the approved Codex closure. Real browser/full Go/flake/CI,
+new candidate build/protocol/catalog and live rollout remain pending.
+
+## Workflow-focus correction and clean consumer graph
+
+Published generic `6245fe9b` owns the three-file focus fix. Cache child
+`1227f5c2` advances review v9/app v19 in five references, with CSS v3 retained.
+The finite rejected non-force push discovered concurrent publication of `6245`;
+only its unpublished amendment was rebased onto that published parent. The final
+source tree equals the checked interim amendment. See the reusable
+[publication lesson](../../notes/cross-project/2026-10-01-publication-before-amend.md).
+No published history was rewritten or force-pushed.
+
+The supported targeted extension lock update yielded `074926d3`; only its
+`dev-workspace` node changes. Targeted workspace update followed by exact nested
+`--override-input` restoration yielded `cd2875f3`, direct parent `4a6d44a2`.
+Its only node changes are generic/extension; all other nodes, input maps and
+`af40d966`/`07a5bfc8`/`f45c6f04` closure remain identical. The lead performed the
+normal owned two-file workspace commit after member graph/quick checks because
+member shared-index writes are restricted; no application edit was taken over,
+alternate index or hook bypass used. All three refs were pushed over SSH by
+fast-forward. Full inventory is now 15/8/9/1 commits and 40/13/8/1 paths.
+
+Node syntax and mounted checks pass. Lead Nix workflow/template Go passed
+0.115s after supplying the established GOFLAGS=-mod=mod; the omitted flag first
+failed on inconsistent local vendoring before tests. Final clean workspace drv
+is `/nix/store/ad34hy4q21lj2kppdddj7256glpm6djr-dev-workspace-0.2.0.drv`, not yet
+built. Generic exact-1227 CI Check36877192519 and extension exact-0749
+Check36877758314 are successful (finite exact-head metadata confirmed). Earlier-head
+passes do not establish the new real-browser/candidate gates. The active bpz
+runtime, configuration/DNS candidate and running cluster are unchanged.
+
+## Workflow-focus affected-lane review result
+
+Reviewer0 completed general, architecture/repetition and affected compatibility
+recheck at exact `1227f5c2`/`074926d3`/`cd2875f3`/`d24b2515`, using saved
+`gpt-6-sol`/xhigh/read-only settings. No Blocking, Important or new Advisory;
+prior Important is resolved. It inspected unchanged run-node retention, exact
+href restoration and native-summary fallback after reattachment, with no focus
+theft or closed-disclosure opening, and all three mounted/real-browser cases.
+It ran no tests. It explicitly confirmed coherent complete 15/8/9/1 histories,
+preserved published `6245` and consumed ancestry, no obsolete supported approach
+or unused compatibility path, and no authored database/persisted-format migration.
+The nine upstream API versions and unknown production/rollback provenance remain
+as inventoried. Unaffected scope/security conclusions stand. Accepted prior
+WebUI duplicate-pin/helper mismatch and optional fixture proof limits remain.
+Real browser/full candidate checks and guarded profile/live acceptance remain
+separate gates; no operational readiness or new deployment authority is claimed.
+
+## Exact workflow-focus verification operation
+
+Fresh utility `/root/workflow_focus_final_1227` uses pinned policy digest
+`d540572c…`, gpt-6-luna/low, matching native watcher config `dw_c1d02bb3…`.
+It owns the single literal `/tmp/portal-workflow-focus-final-1227.sh` operation:
+one browser-enabled full Go suite (including both focus engines), generic/
+extension/workspace flakes, full candidate build/protocol, real-editor harness,
+rooted extension packaged smoke, exact CI identities. Separate true stage logs,
+statuses and elapsed values are under `/tmp/portal-workflow-focus-final-1227/`;
+stop on first failure, no retries or source/deployment edits. Heads remain clean
+and fixed at `1227`/`0749`/`cd2875`/`d24b`. The candidate will be explicitly rooted
+at `/tmp/portal-workflow-focus-candidate-gc-root`; expected output is
+`/nix/store/z20g487rcankkgaprsrdya5na079i1rl-dev-workspace-0.2.0`.
+The candidate's evaluated editor input is the already rooted exact `3g3bvqgs…`
+output; this does not claim whole-package equivalence with active bpz. Existing
+roots and evidence remain. No check result is claimed until its status returns.
+
+## Full Go/browser batch failure at 1227
+
+The fresh watcher completed stage `01-go-browser` with exit 1 after 152 seconds;
+the batch stopped with exit 1 after 153 seconds. Logs and separate statuses are
+under `/tmp/portal-workflow-focus-final-1227/`. Stages 02–09 did not run. Firefox
+`TestArchiveFailurePage` failed at `archive_failure_browser_test.cjs:82`, expecting
+Running while the page showed Paused with an old fixture timestamp. Chromium
+passed that fixture. All six `TestQuestionBrowser` children passed in 90.50s;
+the presentation child passed Chromium and Firefox, including the new focus
+regressions. These passes do not make the aggregate Go stage successful.
+
+Source inspection suggests the preceding visible-wake refresh can still be in
+flight when the fixture changes its operation response and dispatches another
+wake. The banner assertion observes one branch of a Promise.all; the next wake
+can be suppressed by the existing in-flight guard. This is a hypothesis pending
+implementer confirmation, not a product diagnosis. Implementer0 is assigned only
+the existing archive browser fixture, preserving throttling, hidden-page,
+held-request, running/completion and read-only assertions. No retry, application
+edit, consumer cascade, deployment or lifecycle operation is authorized by that
+assignment. The clean published production graph and active bpz remain unchanged.
+
+## Archive fixture correction committed
+
+Implementer0 appended `869b8d4728394127ba949dc76724dce56eae136b`, parent
+`1227f5c2`, changing only `portal/internal/web/archive_failure_browser_test.cjs`
+(25+/1−). The fixture observes paused operation response bodies, changes the
+still-old timestamps to identify refreshed Paused rendering, then awaits both
+resumed response bodies and banner/detail rendering before the Running wake.
+It requires the Running response body and UI while preserving all earlier
+throttle, held-response, hidden-page, identity, warning, completion and read-only
+assertions. The race diagnosis is supported by source; the failed log does not
+record the private guard state. No production change or new visible prose.
+
+Member Nix-provided Node and lead declared `nix develop` Node syntax pass;
+staged/committed whitespace checks pass. Normal `git commit -F`, no framework or
+custom hooks declared, sample-only hook directory; no bypass. Worktree/index
+clean. Architect design.md:2257 confirms the optional fixture is not embedded
+or installed as runtime code, so retain the ad34/z20 candidate and exact consumer
+graph. Unfiltered source identity means no store-byte equivalence is claimed.
+Complete inventory is now 16/8/9/1 commits and 41/13/8/1 paths. New bounded review,
+exact-head CI and one corrected full Go/browser run remain pending; all later
+candidate gates from the failed batch remain unexecuted.
+
+## Archive fixture review and corrected verification operation
+
+Reviewer0, saved gpt-6-sol/xhigh/read-only, reviewed exact clean verification
+head `869b8d47` and retained `074926d3`/`cd2875f3`/`d24b2515` in general and
+architecture lanes. No Blocking, Important or Advisory. It confirms both paused
+response bodies/rendering precede Running, no relaxed assertion/private hook,
+and the one-file optional fixture packaging. Complete 16/8/9/1 history is
+coherent, preserves published ancestry and adds no database or persisted-format
+migration. Earlier scope/risk conclusions and upstream nine-migration limits
+remain; no production defect is established from the prior log.
+
+After canonical SSH fetch, master remains recorded base `7c133c56`. Normal SSH
+push advanced the feature from published `1227` to `869`; no rewrite or force.
+Finite workflow metadata found no superseded active runs to cancel. New-head CI
+is still required; old generic/current extension passes are not relabelled.
+
+Fresh utility `/root/archive_fixture_final_869b8d47` uses the pinned d540 policy,
+gpt-6-luna/low and matching native verification watcher configuration. It owns
+one literal `/tmp/portal-archive-fixture-final-869b8d47.sh` run, with separate
+stage/status/elapsed artifacts under `/tmp/portal-archive-fixture-final-869b8d47/`.
+The nine-stage sequence updates only the generic verification-head guard while
+retaining runtime/candidate/consumer identities and explicit GC roots. It stops
+at the first failure; no retry, cleanup, source mutation, deployment or lifecycle
+action. Head guards run before/after each stage. No new stage result is claimed
+until the watcher reports it.
+
+## Fresh account catalog evidence during the corrected batch
+
+The lead ran the existing isolated App Server probe from generic869's declared
+Nix environment with CGO_ENABLED=0/GOFLAGS=-mod=mod and exact Codex
+`/nix/store/4mxlhqv9angcqgjw4c067nfpjlxv3d4h-codex-0.159.2/bin/codex`.
+Resolved client module is version `v0.0.0-20260929193321-d210d3f7cc93`, no replace.
+Client ListModels uses limit100/includeHidden=false with its normal cursor loop.
+The read returned nine models and exactly one visible `gpt-6.1-sol`, default true,
+default effort low and supported low/medium/high/xhigh/max/ultra. Raw nonsecret
+catalog and module identity are `/tmp/portal-869-codex-catalog.json` and
+`/tmp/portal-869-catalog-client-module.json`. No account credential or real session
+thread was printed/created; the probe owns its isolated process/socket cleanup.
+
+This is current exact binary/client/account catalog evidence, not a multi-page
+test or a deployed successful turn. Reuse it only after the candidate protocol
+stage confirms the packaged Codex is the same exact path; the pinned client and
+approved af40 closure are unchanged. Candidate build/protocol and live new-UI
+readback remain pending. No saved roster model/effort was changed.
+
+## Corrected verification batch: first completed gates
+
+Watcher `/root/archive_fixture_final_869b8d47` reports stage01 full Go/browser
+exit0 in170s and stage02 generic flake exit0 in324s at clean exact869. The full
+suite includes corrected archive diagnostics in Chromium/Firefox and all six
+question-browser cases, including workflow focus. No extra focused browser run
+was needed. Stage03 retained extension flake has started; stages04-09 remain
+pending. The watcher owns exec handle1922, script PID/process group2582686.
+No unexpected kernel build observed and no cancellation taken. Complete
+per-stage artifacts remain `/tmp/portal-archive-fixture-final-869b8d47/`.
+These results clear the corrected Go gate without converting the prior failed
+1227 batch into a pass. The unbuilt z20 candidate and active bpz remain distinct.
+
+## Final verification gate completed; guarded profile rollout authorized
+
+Fresh watcher `/root/archive_fixture_final_869b8d47` completed its owned
+`/tmp/portal-archive-fixture-final-869b8d47.sh` operation successfully. Parent
+verified separate batch/stage artifacts. Stages 01-09 all status 0:
+
+| Stage | Scope | Seconds |
+| --- | --- | ---: |
+| 01 | Full browser-enabled Go, including both engines | 170 |
+| 02 | Generic flake at verification869 | 324 |
+| 03 | Retained extension074 flake | 514 |
+| 04 | Workspacecd287 flake | 254 |
+| 05 | Exact candidate z20 build | 7 |
+| 06 | Candidate/current protocol | 4 |
+| 07 | Real-editor harness | 47 |
+| 08 | Packaged extension smoke | 447 |
+| 09 | Exact current CI | 5 |
+
+Batch status0, elapsed1776s. Logs/status/elapsed are retained beneath
+`/tmp/portal-archive-fixture-final-869b8d47/`. Generic869 CI36884355447 and
+extension074 CI36877758314 conclude success. Both candidate/current Codex resolve
+`/nix/store/4mxlhqv9angcqgjw4c067nfpjlxv3d4h-codex-0.159.2/bin/codex`, with
+compatible schema/App Server. Candidate root is
+`/tmp/portal-workflow-focus-candidate-gc-root`; exact target is z20. These results
+are attributed to their actual heads; no consumer repin to optional869 is made.
+
+The latest explicit user request authorizes one normal guarded user-profile
+switch and live portal acceptance on `2026-09-23-storage-redesign`. It directs
+shared DNS/configuration to remain prepared but unpublished and excludes default
+integration. Prior DNS approval question is superseded by this explicit hold.
+
+### Deployment launcher environment correction
+
+The first named transient unit `portal-card-summary-switch-cd2875.service`
+failed at the initial identity command (`dev-session: command not found`), before
+source/profile prechecks or the switch. Status1/elapsed0; selected profile still
+bpz, no switch occurred. The user-service environment lacks the interactive
+user's command PATH. The corrected literal launcher supplies that known PATH,
+retains all identity/source/profile/graph guards and will use a fresh unit,
+watcher and v2 artifact directory. Original failure evidence is retained under
+`/tmp/portal-card-summary-deploy-cd2875/`. No guard bypass or private helper.
+
+### Guarded switch refused before profile selection
+
+The explicit-PATH v2 launcher reached the normal source/package/schema checks,
+then the installed predecessor's quiesce command refused this bound root thread:
+its latest turn was `inProgress`. The exact switch artifact is status1/elapsed59s,
+and the named unit's completed result is exit-code/ExecMainStatus1. Both selected
+profile records remain bpz. The watcher's early report sampled transient unit
+state and looked for shortened artifact names; parent checked the finalized
+`switch.status`/`switch.elapsed` and authoritative unit result after completion.
+The log is `/tmp/portal-card-summary-deploy-cd2875-v2/switch.log`.
+
+No selection or deployment occurred; normal refusal/restoration and pending
+compatible Codex reconciliation remain intact. No force/private activation or
+state clearing is permitted. A bounded read-only architect assessment is checking
+one normal idle-gated continuation before ending this lead turn. Live acceptance
+harness preparation continues independently; no acceptance of the old UI is
+claimed for the new candidate.
+
+### One-shot idle-gated deployment and live acceptance continuation
+
+Architect0's read-only source assessment confirms the installed public
+`workspace-portal thread require-idle` is a suitable read gate: exact thread/cwd,
+terminal turn state, pending requests, queued messages and unresolved submissions
+are checked without interrupting/resuming/archiving/submitting. Ordinary ledger
+lock creation is possible, but the ledger is not rewritten. It is advisory, not
+an idle reservation; the actual switch repeats full root/team/session and
+journal/cluster/runtime/profile/registration gates.
+
+The parent prepared `/tmp/portal-card-summary-idle-deploy-accept-cd2875.sh` for
+one named user unit. It waits at most600s only for the exact bound lead's expected
+inProgress refusal; any other read-gate error or source/profile identity change
+stops. Once idle, it runs the already authorized clean-source candidate switch
+once, never retries it, verifies actual z20 selection/service executable/model
+catalog, then executes the prepared live acceptance harness. The parent will
+finish its turn so the normal idle boundary can pass. A fresh Luna/low observer
+owns monitoring of that exact named unit and independent status artifacts.
+No deferred cleanup, session lifecycle or extra deployment is scheduled.
+
+Implementer0 delivered syntax-checked ephemeral
+`/tmp/portal-card-summary-live-cd2875.cjs` (SHA256
+16b52b1c468f1d4b75072195d3c0ba08a575dc8f8b465aa549dafa366fd74b9f).
+The normal live page/API/socket proxy is limited to the explicitly authorized
+storage-redesign page, its GET resources and staged/unstaged capture POSTs.
+It checks six cards, frozen history summaries, run-derived counters/compact
+states, closed defaults, spacing and desktop/mobile layout, observed details
+refresh/focus/node retention, frozen POST+GET snapshots and reload/cache reset.
+It emits aggregate metadata only. Fixed live data may not exercise changed/
+removed run-link transitions, already proven by the complete both-engine suite;
+first-repository empty snapshots may not provide a nonempty file preview.
+Node and browser store outputs are explicitly rooted for the operation.
+
+Parent logs/status are under
+`/tmp/portal-card-summary-idle-deploy-accept-cd2875/`: batch.log/status/elapsed,
+01-switch and02-live-card-acceptance logs/status/elapsed, selected-before/after,
+service-state/portal-executable/live-models. No stage is accepted before status
+and actual selected identity are checked. If selection precedes a failure,
+retain z20 and use ordinary selected-helper forward recovery rather than retrying
+--from-candidate. Pending Codex record is retained; installed reconciliation
+cannot select an unselected package and is not a substitute for the switch.
+
+## Guarded z20 deployment completed; acceptance harness diagnosis only
+
+The independent observer of invocation38d8db52d6f94936b263ea94952d5f0d reports
+stage01-switch status0/70s. Parent rechecked finalized artifacts under
+`/tmp/portal-card-summary-idle-deploy-accept-cd2875/`, actual selected profile,
+portal executable and service state. Beforebpz, afterz20; portal PID3043113
+executes z20/bin/workspace-portal. Portal, Codex and router remain active/running
+with successful service results. Live-models.json confirms nine models, exactly
+one visible gpt-6.1-sol with high/xhigh. No switch retry is authorized or needed.
+
+Stage02 acceptance status1/32s, combined batchstatus1/149s. The original probe
+SHA25616b52b1c468f1d4b75072195d3c0ba08a575dc8f8b465aa549dafa366fd74b9f
+is preserved. Its log contains an unhandled page.waitForResponse timeout30000ms
+at line173, the history-response observer registered after navigation. A missed
+eager response is a hypothesis pending implementer0's source-based diagnosis;
+there is no claim yet that the live UI failed its requested behavior. Latest
+user authorizes bounded ephemeral correction and live-only rerun, and directs
+z20 preservation and DNS/configuration/default holds. Saved implementation
+purpose/workspace-write was confirmed before the scoped assignment.
+
+### Bounded live-harness correction and live-only rerun
+
+Implementer0 preserved the original probe and delivered separatev2, SHA256
+ad295658755ef529b2894a7c96af50da9ed582eb27974c24ac8fcb82a1c0f7a7.
+Source/log establish an unhandled observer rejection; the log does not prove
+whether a history request was sent or an eager response was missed. The prior
+ok-only predicate also excluded non-2xx responses. V2 observes history requests
+and responses before navigation, resolves any status, bounds the wait after
+activation, and emits sanitized counts/statuses/load-state diagnostics. It
+immediately catches snapshot/details wait rejection. All requested summary,
+workflow, layout, focus, frozen snapshot/preview, reload and page-error checks
+remain. Parent inspected the exact ephemeral diff; Node syntax passed. No
+repository/branch/product/cache/protocol change or new committed-review gate.
+
+A fresh pinned Luna/low utility will own one literal live-only operation
+`/tmp/portal-card-summary-live-only-cd2875-v2.sh`, logging beneath the matching
+`/tmp/portal-card-summary-live-only-cd2875-v2/` directory. It guards selectedz20
+and exact clean workspacecd287 plus the probeSHA, then runs only the normal live
+storage-redesign probe. No deployment/activation/reconciliation, code/pin change,
+DNS/default action or retry is included. The failed original run remains failed;
+new acceptance is pending until true status/result evidence arrives.
+
+### Live-only v2 diagnostics: initialization remains unproved
+
+Fresh Luna/low watcher ran the live-only v2 command once, status1/33s. Log
+`/tmp/portal-card-summary-live-only-cd2875-v2/log` reports load-repositories
+TimeoutError with zero history requests/responses, zero review-module requests
+and one page exception. This is not evidence of a missed history response; the
+review module never requested in this observation. Original unhandled timeout
+is now bounded, with more useful diagnostics. The current failure may precede
+repository mounting. Main assigned further bounded initialization/transport/DOM
+contract investigation to implementer0; no speculative product defect is claimed.
+A message initially understated pageErrors, immediately corrected from the log.
+No switch or other deployment was retried; selected z20 is retained. No acceptance
+claim is made from v2 and no blind rerun is authorized without better evidence.
+
+### Concrete probe bootstrap mismatch found in source
+
+Parent read-only source inspection found app.js:969 awaits
+`/codex/assets/conversation.js?v=11` before installing repository activation
+listeners at2294-2314. The ephemeral proxy allowlist permitted /static/ but
+rejected /codex/assets/ with403. This is a concrete probe/server interface
+mismatch consistent with one startup exception and no review/history request.
+Implementer0 is correcting only the bootstrap GET allowlist and adding numeric
+conversation-module diagnostics. Live success must still establish actual module
+loading; the earlier log did not identify the exception text. /api/models is a
+normal read-only bootstrap request whose failure is caught separately, and is
+not assumed to be the startup exception. All acceptance assertions and the two
+capture-only POST restriction remain. No product/deployment scope changes.
+
+### Source-proven proxy correction accepted for one live-only v3 run
+
+Implementer0 confirms both session stylesheet references and app's awaited
+conversation import use /codex/assets/. The v2 proxy deterministically returns
+403 for those GETs, so an executing app cannot register repository activation
+handlers after that await. V2's exact exception stack was not retained, so another
+exception is not excluded. V3 permits the necessary /codex/assets/ GET resources
+and exact read-only models/limits bootstrap endpoints; captures remain the only
+permitted POSTs. It observes required conversation module2xx/version11 before
+interaction and native tab/panel activation before history observation, with
+sanitized numeric/module/frame diagnostics. All original behavior assertions
+remain. Parent reviewed v2-to-v3 diff and Node syntax; no application code changed.
+ProbeSHA09ab0478ef60fd9658dcc47a25b30532d14c33a18e52574a96381295b872f376.
+
+A separate fresh pinned Luna/low watcher owns one live-only v3 literal wrapper.
+Artifacts retain under `/tmp/portal-card-summary-live-only-cd2875-v3/`; failed
+original/v2 evidence remains separate. Selected z20 and exact clean workspacecd287
+are guarded before/after. No profile switch, activation, reconciliation or other
+operation is included. Acceptance remains pending actual status/result.
+
+### V3 assertions completed; owned probe terminated after teardown hang
+
+The user supplied the bounded 1069-byte v3 excerpt: complete JSON `ok:true`,
+six repositories and six frozen history summaries, desktop/mobile one-column
+layout, desktop action row, 1rem margin/.5rem gap, retained history/card through
+an observed details GET, zero-file staged/unstaged arrays, reload reset, assets
+app19/review9/css3 and no page exceptions. Its workflow baseline contained six
+unavailable states, so it did not prove nonempty workflow counters or run-link
+focus; the observed focus target was the history summary. Keep this limit explicit.
+
+The command remained alive after printing its result. Implementer0 traced the
+proxy's unowned outbound ClientRequests, including the normal EventSource GET;
+closing browser/server-side connections does not destroy those upstream clients.
+The user accepted this diagnosis and authorized only the existing watcher's
+termination of the stuck probe. The watcher preserved argv/PPID evidence for
+bash3064937 and its Node child3065035, sent SIGTERM only to that verified Node,
+and accounted for exec37040. Final status143/751s and the success JSON are retained
+under `/tmp/portal-card-summary-live-only-cd2875-v3/`; neither process remains.
+This is incomplete verification, not status0 and not a portal failure.
+
+Implementer0 was assigned separate v4 with explicit ClientRequest ownership and
+awaited server teardown on success/failure. All acceptance assertions/observations
+remain unchanged; no process.exit, timer, app hook or product edit is authorized.
+Parent will inspect the exact diff/Node syntax, then delegate one fresh live-only
+run. z20 remains selected; no switch, reconciliation, publication, merge or
+session lifecycle action is included.
+
+### Teardown-only v4 inspected and assigned once
+
+Implementer0 delivered `/tmp/portal-card-summary-live-cd2875-v4.cjs`, SHA256
+1a2b68f48f0bacc47bf2c0ced79998ce7f1e9f94455291af035b6159d2712131.
+Parent inspected the full v3-to-v4 diff and reran exact Node syntax: only proxy
+request ownership/error cleanup and the final awaited close changed. The Set
+removes requests on close, destroys the corresponding upstream on early
+browser-response close, and drains remaining requests after initiating proxy
+close. Nested finally retains proxy teardown if browser.close rejects. All
+assertions, waits, observations and output remain unchanged; no process.exit
+was introduced. Original/v2/v3 hashes remain unchanged.
+
+The selected profile is still z20 and workspacecd2875 remains clean. Fresh
+pinned Luna/low utility `portal_live_only_cd2875_v4` owns one execution of
+`bash /tmp/portal-card-summary-live-only-cd2875-v4.sh`, guarded by those identities
+and the exact probe hash. Artifacts are under its matching /tmp directory;
+acceptance requires true exit0 plus the JSON. No second operation or cancellation
+is delegated. User-authorized v3 termination is complete; no owned v3 process
+remains. No deployment or lifecycle action is included in v4.
+
+### Live-only v4 passed with normal teardown
+
+Fresh Luna/low `portal_live_only_cd2875_v4` executed the literal wrapper once,
+true exit0 matching status0, elapsed10s. Parent read the completed JSON/status and
+rechecked selected z20 plus actual portal executable and active portal/Codex/router
+units. There is no running probe handle or cancellation for v4. This establishes
+normal completion after the teardown-only correction; it does not retroactively
+make the terminated v3 command pass.
+
+Observed normal storage-redesign UI/API proof: six repositories and six frozen
+history summaries; 1rem top margin/.5rem action gap; desktop one-column/action row
+and mobile one-column/no overflow; observed details GET with retained history
+node/open state and history-summary focus; empty staged/unstaged POST+GET arrays
+and no-changes rendering; closed disclosures after reload; app19/review9/css3;
+zero page errors. All six sampled workflow states were unavailable, so
+workflowCountersVerified0 and runLinkOutcome not-applicable are limits, not
+positive nonempty counter/link proofs. Both captures used the first repository
+and were empty, so no nonempty preview was exercised. Original v4 observations
+and assertions were preserved exactly as requested.
+
+Artifacts: `/tmp/portal-card-summary-live-only-cd2875-v4/{log,status,elapsed}`.
+Runtime/candidate remains1227/074/cd287/z20; optional verification head869 and
+configurationd24 are unchanged. No source/branch/cache/pin, switch, reconciliation,
+cluster/system/DNS or lifecycle operation occurred. DNS/configuration remains
+prepared and unpublished; defaults remain unmerged and lifecycle remains active.
+
+## Explicit default-branch integration approval (2026-10-01)
+
+The latest user directly approves every registered repository and its configured
+remote default branch. Exact scope and approval wording are recorded in
+[integration.md](integration.md). Phase is now default-branch integration:
+fetch, patch-equivalent rebase if needed, review/check, comparison capture,
+fast-forward-only SSH push and exact remote ancestry proof. No approval is
+requested again for that scope. Shared DNS deployment remains held; z20 stays
+selected with no switch retry. Session/feature refs remain open and retained;
+no archive/delete/stop/retirement action is authorized.
+
+### Post-push CI is report-only
+
+The user explicitly supersedes the prior CI wait: complete pre-integration
+review/checks and all pushes/proofs, then report applicable CI URLs/initial states
+without waiting for completion. No CI-wait watcher is authorized for this phase.
+All deployment, DNS publication and lifecycle holds remain.
+
+## Default integration completed and durable handoff requested
+
+All seven final-head remote ancestry checks passed after fresh SSH fetches;
+exact results are in integration-remote-proofs.json. The user then explicitly
+requested a durable tracking/handoff commit and push without waiting for CI.
+This is the authorized consolidated integration handoff checkpoint. It includes
+only this initiative's coordination records and owned reusable notes; preserve
+all unrelated shared-checkout/index changes. No lifecycle transition is made.

@@ -1923,6 +1923,441 @@ No new deployment or recovery step follows from this fixture correction. All
 existing profile/live acceptance and authorization gates remain. The architect
 edited only this note; no tests, builds, probes or operational actions were run.
 
+## Repository-card summaries and workflow disclosure (2026-10-01)
+
+This approved production follow-up makes both closed disclosures useful without
+expanding them: Local commits exposes the complete comparison count/diffstat,
+and nonempty workflow details expose five fixed counters. A successful empty
+workflow lookup instead shows compact text without a disclosure. Inspection
+used clean generic
+`618df5530ba378f8b98f9557cdca700367016c11`. Preserve the existing API fields,
+repository/provider interfaces, persistent formats, snapshot safety/quotas and
+Codex 0.159.2 runtime closure. There are no migrations. Earlier unselected
+fixture-only pin exceptions do not apply to these production changes.
+
+### Interfaces, files and ownership
+
+The implementer owns the generic worktree changes below. The architect edits
+only this design; the lead owns plan/state/review records and the final writing
+pass. Feature explanations belong in generic `README.md` and
+`docs/workspace-portal.md`, including counter meanings and unavailable states.
+
+| Generic path | Responsibility |
+| --- | --- |
+| `portal/internal/web/templates/details.html` | Local-summary target, native closed disclosure for nonempty workflows, compact zero/unavailable states and retained run links/details |
+| `portal/internal/web/static/repository-review.js` | Populate local summary from existing history data, expose failures, preserve workflow disclosure nodes during status updates |
+| `portal/internal/web/repository_presentation.go` and its `_test.go` | Small presentation-only workflow classification helper and table-driven coverage |
+| `portal/internal/web/server.go` | Register the template helper; no endpoint or response-schema change |
+| `portal/internal/web/static/{style.css,repository-review.css}` | Compact summaries, accessible counter styles and the scoped action-row spacing |
+| `portal/internal/web/static/app.js`, `templates/{session,index,creation,source-file}.html` | Existing asset-cache keys only |
+| `portal/internal/web/{server_test.go,details_test.go,repository_review_browser_test.cjs,repository_review_live_browser_test.cjs,presentation_browser_test.cjs}` | Rendered counts/states, refresh retention, accessibility and real layout coverage |
+| `test/repository_browser.cjs` | Keep its hand-built card markup/cache URLs aligned and retain real-editor acceptance |
+
+`reviewHistoryResponse` already provides `summary.commitCount`, `summary.stats`
+and optional `summaryError` (`repository_review.go:186-199,480-495`). Both
+single-history and batched-history reads use this response. The summary covers
+the complete frozen base/head comparison, independently of history pagination.
+`repository.Status.Runs` already supplies status, conclusion, workflow name,
+head and sanitized URL. Compute workflow counters for the template, without
+adding fields to repository status JSON or the details endpoint. Its existing
+`repositoriesHTML` string carries the new markup; all response keys stay stable.
+
+### Local commits summary
+
+Keep the native `.repository-history` details node, initially without `open`.
+Its summary contains the label Local commits and an inline target such as
+`[data-repository-history-summary]`. Move the current count/diffstat rendering
+out of the hidden commit-list body into this target; do not duplicate totals.
+Use `summary.commitCount`, not `history.commits.length`, and reuse the existing
+`counts(..., stats, true)` formatting for changed files, additions/deletions,
+binary files and incomplete-count notices. These are net base/head changes,
+not summed per-commit churn or working-tree changes. Keep the base/head identity,
+warnings, commit list and pagination inside the disclosure.
+
+Initially show a loading indication, not zero. On successful empty history show
+0 commits and its actual zero diffstat. Missing `summary`/`summaryError` gives
+Totals unavailable in the closed summary, with the diagnostic in the body;
+the list and Compare remain usable. A failed history request or per-repository
+batch result gives a visible unavailable indication and the existing detailed
+error. Cover both `loadHistory` and `flushHistories` failure paths. During an
+in-flight refresh the prior totals may remain with the prior list, but replace
+them together on accepted success and clear them to unavailable on failure.
+Do not combine a new list with stale totals or turn an error into zero.
+
+History stays eager while closed. Preserve the existing request budgets,
+pagination, stale-response/head guards, pause/resume and refresh controls.
+Updating the summary's children must not replace its native summary/details
+node, change `open`, move keyboard focus or touch retained diff editors. No
+new Git read, provider call or endpoint is needed for these totals.
+
+### Workflow counters, zero and unavailable results
+
+For a successful lookup with runs, replace the visible run list with native
+`<details data-repository-workflows>` containing a summary headed Workflows and
+the existing run links/statuses in a body target. Keep all five colored counter
+positions, including zero-valued categories, in this order: Total, Queued,
+Running, Successful, Failed. Use category colors with readable text; a color
+alone must not convey the result. An observed empty result instead renders
+the exact compact non-disclosure text `Workflows · 0 total`, with no empty
+details element or five-counter row. Render the appropriate workflow state for
+an origin-backed repository (including lookup failures), or when run data
+exists; omit it for a local-only repository without origin data.
+
+Use a small template helper, for example
+`workflowSummary(repository.Status) workflowSummaryView`, with an availability
+flag and five integer counts. This is an internal view type, not a new API
+model. Each returned run increments Total once; classification is exclusive:
+
+| Existing run fields | Additional counter |
+| --- | --- |
+| Nonempty conclusion `success` | Successful |
+| Nonempty conclusion `skipped` or `neutral` | None; Total only |
+| Any other nonempty conclusion, including `failure`, `cancelled`, `timed_out`, `action_required`, `startup_failure`, `stale` or an unfamiliar terminal result | Failed |
+| Empty conclusion and status `completed` | Failed; completion without a successful result |
+| Empty conclusion and status `in_progress` | Running |
+| Empty conclusion and status `queued`, `requested`, `waiting` or `pending` | Queued |
+| Other unrecognized nonterminal status with no conclusion | Total only; retain its raw detail rather than invent a terminal outcome |
+
+Conclusion takes precedence over status. Skipped/neutral do not inflate success
+or failure, so the four category counters need not sum to Total. Preserve each
+run's original status/conclusion in expanded details, especially cancelled
+results grouped under Failed. Do not group or deduplicate distinct runs by
+workflow name, trigger new lookups, change the exact-revision filtering or
+infer results from a different pushed/local head.
+
+The provider already caps retrieval at 100 runs
+(`repository/origin_github.go:151-181`). Total means the returned/displayed runs
+for this revision, not an unlimited all-time count. The short heading remains
+Workflows; explain exact-revision/up-to-100 scope in counter tooltips and the
+guide, including the compact zero state's tooltip. Every counter has a readable
+category and value plus a matching accessible label and useful `title`; do not
+rely on color/icons alone
+or add five keyboard tab stops. Failed's explanation includes cancelled and
+other unsuccessful terminal results; Total explains skipped/neutral inclusion.
+Keep native summary keyboard activation, disclosure marker and focus outline.
+
+Distinguish a successful zero-run lookup from unknown data without a new field:
+the current GitHub provider initializes a nonnil filtered slice even when empty;
+the initial repository skeleton leaves `Runs` nil. The in-memory repository
+cache preserves that distinction. `Runs != nil` with no `OriginError` permits
+numeric results: a nonempty slice gets the five-counter disclosure, while an
+empty nonnil slice gets only `Workflows · 0 total`. Nil runs or an origin lookup
+error uses an explicit compact unavailable presentation without a disclosure,
+never a false zero, five fabricated counters or a Failed increment. Preserve
+the visible origin/status diagnostic. This also covers initial skeletons,
+archived repositories not yet inspected and active heads for which lookup was
+intentionally not performed. Do not claim
+that a missing lookup means no workflows exist. A future provider returning nil
+on success would need to honor this existing presentation distinction; GitHub
+remains the only provider in scope.
+
+### Refresh retention, spacing and asset keys
+
+Local history already survives `updateHTML` because its node sits outside
+`[data-repository-status]`. Workflows currently sit inside the replaced status
+block (`repository-review.js:824-834`), so simply wrapping that list in details
+would reset it every refresh. Preserve the old workflow details node when old
+and new status blocks both contain it for the same repository ID: update its
+summary/body content, substitute that retained node into the fresh status
+fragment, then replace the other status children. Preserve the native summary
+node/focus as well; never apply the fresh node's default `open` value to it.
+Nonempty-to-nonempty updates retain the user's current open/closed choice.
+A successful empty result or unavailable lookup replaces the disclosure with
+its compact non-disclosure state. If runs later become available again, the
+newly inserted disclosure starts closed; do not store a removed node's open
+preference. Removal also follows removal of its source/repository.
+
+Both disclosures retain state through same-page polling, manual refresh and
+tab changes while their nodes exist. A full document reload or recreated card
+starts closed. Do not add localStorage, a JS preference map, an accordion or
+persisted disclosure state. An old card without new summary targets must be
+handled safely by adding the target within its existing native summary; a
+missing workflow node may be inserted from the refreshed template.
+
+As clarified by the lead, set `margin-top: 1rem` on the repository overview's
+review action row in both applicable stylesheet paths. Preserve the existing
+`gap: .5rem`, stretched alignment, desktop one-row fit and mobile wrapping.
+Scope the rule to `#repositories .repository-review-actions`; retain the
+cluster grid's auto-fit columns and other action rows. Summary labels/counters
+may wrap on narrow screens without clipping or horizontal page overflow.
+
+Bump the inspected asset keys together: review module `v7` → `v8`, app script
+`v17` → `v18` in both session/index templates, and both changed stylesheets
+`v2` → `v3` at every current template/loader reference. Align hand-built browser
+fixtures and any held-stylesheet routes. Do not change Codex/editor asset keys
+or introduce a new asset pipeline. Reload after activation for the complete
+new behavior; a preexisting tab can continue with its already-loaded renderer.
+
+### Compatibility, rollout/recovery and acceptance
+
+Old and new generations consume the same history/status data and saved review
+identities. Keep existing selectors/actions and null-file compatibility. No
+database, manifest, provider, lifecycle, CLI or package-transition contract
+changes; transient presentation state resets on reload. Missing legacy history
+summaries render unavailable instead of causing an exception. Mixed cached
+markup/scripts may retain the prior presentation until reload, rather than
+gaining all new summary/retention behavior through a status poll alone.
+
+Append generic production commits after the consumed history, then append
+extension and workspace consumer pins. Retain the existing Codex 0.159.2 input
+and closure, cluster inputs and configuration/DNS boundaries. Review the exact
+final graph and whole-branch/no-migration history; complete checks and build the
+new workspace package before the authorized, journal-aware user-profile switch.
+Previous `bpz`/fixture-head results remain historical evidence, not verification
+of this new production UI. No system configuration deployment, cluster action
+or default-branch integration is part of this follow-up. Failure before package
+selection keeps the selected package; after selection use supported journal
+recovery or a newer compatible forward package, not an older profile generation.
+Process-local snapshot loss on portal restart retains the existing 409/recapture
+contract. No new recovery or data conversion procedure is introduced.
+
+Quick checks, for the implementation owner before independent review:
+
+1. Table-test the workflow helper and rendered cards: all statuses/conclusions
+   above, mixed runs with all five colored counters (including zero categories),
+   nil versus nonnil empty runs, origin errors, local-only cards and archived
+   skeleton/successful zero cases.
+   Assert exact `Workflows · 0 total` text and no workflow details/counter row
+   for a successful empty lookup. Unavailable/error must not claim zero and
+   retains the origin diagnostic. Nonempty results use the short Workflows
+   heading, accessible labels/scope tooltips, escaped names/errors, native
+   closed details, retained sanitized links and unchanged response keys.
+2. Test local summary rendering for 0, 1 and multi-page counts; net/binary stats,
+   absent summary, summary error and whole/per-repository history failure.
+   Assert the numbers are in the visible closed summary, not derived from the
+   current page length, with no duplicate totals in the body. Keep existing
+   repository summary and empty-comparison regressions passing.
+3. Use the mounted browser and real presentation fixtures to update workflow
+   results and local totals while both disclosures are open and while closed.
+   Assert the same card and, across nonempty updates, workflow details/summary
+   nodes, preserved open state and updated visible counters. Test nonempty→
+   error→zero→nonempty transitions: the middle states have no disclosure, and
+   its later insertion starts closed. Local history remains retained throughout.
+   Cover HEAD/status transitions as well.
+   Native Enter/Space toggles, manual Refresh commits and background reads
+   remain usable. A real reload closes both disclosures.
+4. Run whitespace and Nix-provided Node syntax checks, focused Go helper/render/
+   details tests from `portal/`, and the mounted Node regression from
+   `portal/internal/web/`. Check all cache-key references and fixture routes.
+   The architect does not execute these application checks.
+
+After review, the lead assigns fresh watchers for focused
+`TestQuestionBrowser/presentation_browser_test.cjs` and repository-review live
+cases, then full browser-enabled Go, required generic/consumer flake/CI checks,
+the real-editor harness and the exact new workspace package/protocol checks.
+Use the established Nix Node/Go/Playwright environment and explicit exit-status
+records; run no tests against a dirty or unrecorded candidate. Verify desktop
+and narrow mobile geometry before and after lazy CSS: the action row has 1rem
+top separation and .5rem gaps, full-width repository cards remain, and cluster
+cards retain their prior columns. Use event/render-state waits, not sleeps.
+
+After authorized rollout and reload, verify summary counts against the existing
+responses, both disclosures' refresh/reload behavior, successful-zero versus
+lookup-failure presentation and action spacing. Verify the selected package and
+unchanged Codex closure separately. No production workflow, repository edit or
+session lifecycle mutation is needed to manufacture test data; use fixtures.
+This design-only update performs no application edit, test, build or deployment.
+
+## Workflow focus remediation and publication boundary (2026-10-01)
+
+This clarifies the accepted retained-focus requirement, without a broader UI
+change. Reviewer0's Important finding is recorded in
+`review-packet.md` under Final review result and narrow remediation and in
+`state.md` under Repository-card final review result. At exact generic
+`b52ab03284c3a41d441d44394f8e1da2e78d554f`,
+`portal/internal/web/static/repository-review.js:852-869` retains the workflow
+details/summary but unconditionally replaces run-body children and restores
+only summary focus. A focused run link therefore loses focus on a status
+refresh even when its returned markup is unchanged. Existing presentation
+coverage checked the summary, not the expanded run links.
+
+The bounded correction belongs to `static/repository-review.js`, with focused
+coverage in `repository_review_browser_test.cjs` and
+`presentation_browser_test.cjs` under `portal/internal/web/`:
+
+- Preserve the existing native details and summary, their open state and focus.
+  When returned run-body markup is unchanged, keep its children, including the
+  exact focused link node. Reattachment during status replacement may require
+  restoring focus to that same connected node after the update.
+- When run markup changes, remember only the affected active link's existing
+  sanitized URL for this refresh, update the body, then focus the corresponding
+  refreshed link within the same repository's retained disclosure. Match the
+  URL, not list position or workflow name. If that run disappeared while the
+  disclosure remains, focus its existing native summary. Avoid scroll jumps
+  and do not open a disclosure or steal focus from outside the replaced region.
+- Keep the accepted compact empty/unavailable transitions and closed new
+  insertion behavior. Add no stored preference, API field, run ID, new focusable
+  placeholder, general reconciliation framework or lifecycle behavior. Local
+  history and loaded editor nodes remain outside this status-update operation.
+
+The current uncommitted member patch was observed in those three files only;
+that observation is scope evidence, not acceptance of the final patch. The lead
+retains direct finding reconciliation and the final history decision.
+
+Verification gates:
+
+1. Quick: Nix-provided syntax checks for the changed JS/CJS, the mounted Node
+   regression from `portal/internal/web/`, whitespace and the exact final diff.
+   Preserve existing helper/template checks; no API or classification change
+   is intended. The lead checks the committed correction against the finding
+   under the recorded mandatory-review remediation path; unchanged review lanes
+   need not be repeated unless scope expands.
+2. Real browser: a fresh watcher runs
+   `TestQuestionBrowser/presentation_browser_test.cjs` in its existing Chromium
+   and Firefox modes. Focus a run link in an open disclosure and force a status
+   refresh that changes other status markup while leaving run markup unchanged:
+   assert the same connected link is still `document.activeElement`. Then change
+   the run's status/text while retaining its URL and assert focus on that
+   corresponding refreshed link. Remove that run while keeping another run and
+   assert focus on the retained workflow summary. Synchronize on refreshed
+   content, not a delay; the unchanged-markup test must actually traverse the
+   status replacement path.
+3. Retain summary-focused, disclosure-open, local-history-summary and editor
+   node/content regressions, plus compact-state and closed reinsertion checks.
+   After the narrow finding is verified, complete the already required full
+   Go/browser, flake/CI and candidate/profile gates for the corrected production
+   graph. Earlier `bpz` and optional-fixture checks are not new-UI validation.
+   No tests, builds or waits are performed by the architect here.
+
+History recommendation: append the generic remediation and append the resulting
+extension/workspace pin updates. Do not fold it into `b52ab032` or replace the
+published consumer chain. Preserve the reviewed local workspace pin commit too
+under this bounded disposition; its unpublished status is not a reason to
+rewrite other repositories. Concrete evidence and limits are:
+
+| Exact commit | Available evidence |
+| --- | --- |
+| Generic `b52ab03284c3a41d441d44394f8e1da2e78d554f` | Parent `618df553`; local feature and cached `origin` feature refs both point here. The lead confirms publication. |
+| Extension `2495d6235da0b352602e9179eb8035beb15a8257` | Parent `362ebd4`; its committed lock selects exact `b52ab032`. The lead confirms this consumer was published. There is no local remote-tracking feature ref in this clone. |
+| Workspace `4a6d44a2d803d8d804e58400cadd4691715f0bc6` | Clean local child of `aca3b39d`; committed lock selects `2495d623`/`b52ab032`; cached remote feature remains `aca3b39d`. The lead confirms the new workspace commit is unpublished. |
+
+Thus there is known cross-repository consumption of `b52ab032` in a published
+extension pin, even though the new UI is not active on aitherdev. Session
+records show the workspace candidate derivation
+`9gdvn344zpng5vxwa7x4cvibp5kprhf1` was evaluated; `rollout.md` explicitly
+distinguishes this from a build. They do not establish a successful new-UI build,
+deployment or absence of third-party downloads/builds. The selected runtime
+remains `bpzvfhdn…` / generic `e64a9fda` / extension `362ebd4` / workspace
+`aca3b39d`, with Codex 0.159.2. Preserve those consumed ancestors and the new
+published commits without treating unmerged or locally unselected as unconsumed.
+
+Finite read-only remote checks could not add current publication/CI evidence:
+`git ls-remote` refused the inherited systemd SSH include's permissions, and
+`gh run list` could not connect to `api.github.com`. No bypass, retry, fetch,
+monitoring or ref mutation followed. Publication statements above are therefore
+attributed to the lead, with local corroboration only where stated. Unknown
+external consumption remains unknown and is not approved for rewriting.
+Appending resolves the finding without needing that unprovable negative.
+
+This recommendation authorizes no commit, pin update, push, integration or
+deployment. Main chooses and records the final sequence after accepting this
+brief. Only this design addendum was edited; configuration, DNS, cluster,
+runtime and lifecycle boundaries remain unchanged.
+
+## Archive diagnostics fixture synchronization and retained pins (2026-10-01)
+
+Apply the earlier fixture-only exception conditionally: append a standalone
+generic commit changing only
+`portal/internal/web/archive_failure_browser_test.cjs`. Retain candidate
+runtime generic `1227f5c21f4f9a38bbde37c141c2f35f50008554` → extension
+`074926d33f7306288f7cfad87c6a85e8a430e750` → workspace
+`cd2875f3d4fb2199dd1992b07a3e664eb901e50f`; both consumer locks were inspected
+and select those exact revisions. Configuration `d24b2515` is unchanged.
+The new generic verification head must be recorded separately from selected
+runtime source `1227f5c2`; no consumer cascade or history rewrite follows from
+this optional fixture correction.
+
+The failed stage is
+`/tmp/portal-workflow-focus-final-1227/01-go-browser.log:800-850`: Chromium
+passes, then Firefox expects Running at fixture line 82 but observes Paused.
+All six `TestQuestionBrowser` cases pass at log lines 1461-1467, including
+the lead-reported focus acceptance in both engines. The batch as a whole
+failed; its stages 02-09 did not run.
+
+Source at `1227f5c2` establishes an insufficient fixture synchronization point,
+not a confirmed trace of the failing interleaving. `static/app.js:2578-2596`
+holds `archiveRefreshRunning` until the `Promise.all` of `loadAutoArchive()`
+and the operation read settles; another visibility wake is suppressed while
+that guard is set. `renderAutoArchive()` renders the warning independently
+at 1949-1952, whereas the operation read publishes its detail through
+`showLifecycle()` at 2067-2082. Original fixture lines 75-82 await only the
+warning's visibility before changing the mocked operation and waking again.
+The lead's hypothesis that the preceding operation read was still pending is
+consistent with this source and log, but neither records the guard's actual
+state during the failure. No production defect is established by this evidence.
+
+The inspected one-file draft registers GET response waiters before the visible
+wake, changes the paused fixture's `updatedAt`, consumes both operation and
+auto-archive response bodies, and waits for the changed paused detail and
+warning to render. Only then does it set Running and issue the next wake,
+requiring a corresponding running GET response and rendered Running detail.
+This is the bounded correction: establish completion of both observable reads
+and their rendering, rather than relying on warning visibility or receipt of
+response headers alone. Preserve settings-read sharing, the 30-second throttle,
+coalescing while a response is held, hidden-page suppression, failed-read
+retention of confirmed diagnostics, journal-identity filtering, Running with its
+historical warning, completion/navigation clearing, page-error checks and the
+read-only page without a composer or lifecycle mutation. Keep both engines.
+Do not add sleeps, retries, relaxed assertions, production test hooks or changes
+to wake/throttle behavior. The implementer owns final diagnosis and correction;
+a production finding or wider diff requires lead disposition before expansion.
+
+Packaging was rechecked at `1227f5c2`. `server.go:46` embeds templates and
+`static/*`, excluding this sibling CJS file. Its own Go wrapper,
+`archive_failure_browser_test.go:40-50`, always checks the server-rendered
+pending page, but invokes Node only with `PORTAL_BROWSER_TEST=1`; this is separate
+from the six-script `TestQuestionBrowser` list. `nix/workspace-portal.nix:195-215`
+builds the portal command; its check phase at 230-255 does not enable Playwright,
+and installation at 258-310 does not install this fixture as a runtime
+executable. Extension `flake.nix:38,61,80` consumes unchanged host-path,
+runtime-contract and package interfaces. Editor inputs in `nix/review-ui.nix`
+are unchanged. Nevertheless, generic `flake.nix:35` uses unfiltered `src = self`,
+also retained through skill references: selecting the new commit changes
+source/derivation identity. This disposition establishes unchanged production
+source behavior, not identical derivations, closure bytes or store paths.
+
+The lead reports candidate derivation prefix `ad34hy4q21lj2kppdddj7256glpm6djr`
+and output `/nix/store/z20g487rcankkgaprsrdya5na079i1rl-dev-workspace-0.2.0`
+evaluated, not built. Keep that candidate tied to `1227/074/cd287`. The active
+profile remains `bpzvfhdn…` / `e64/362/aca`, with Codex 0.159.2; this note makes
+no activation claim or request. There are no API, schema, cache, persistence,
+deployment or recovery changes. Existing guarded profile rollout and forward
+recovery gates remain in force.
+
+Verification disposition, for the implementer, lead and fresh watcher:
+
+1. Quick: Nix-provided `node --check portal/internal/web/archive_failure_browser_test.cjs`,
+   whitespace, and the entire `1227f5c2..new-head` diff must establish the
+   one-file boundary and preserved assertions. Append without folding published
+   history, then obtain bounded independent review before long checks. Update
+   the review inventory with both the verification head and retained runtime
+   pins; earlier production review does not review the fixture correction.
+2. After review, a fresh watcher runs one full `go test ./... -count=1 -v`
+   from `portal/` at the clean new generic head, with the existing Nix environment,
+   `CGO_ENABLED=0`, `PORTAL_BROWSER_TEST=1` and the exact Node/Playwright paths
+   from `/tmp/portal-workflow-focus-final-1227.sh`. This includes the corrected
+   `TestArchiveFailurePage` in Chromium and Firefox and all six question-browser
+   fixtures. Do not add a duplicate focused browser run absent a concrete new
+   risk. A skipped browser invocation or the earlier failed full run is not a pass.
+3. Update the batch's generic checkout guard to the new verification head while
+   retaining consumer/configuration guards and candidate output identity. Complete
+   still-pending stage 02 generic flake at that head; stages 03-04 extension and
+   workspace flakes; 05 candidate build; 06 candidate Codex/protocol check;
+   07 real-editor harness; and 08 extension cluster smoke. Preserve separate
+   exit statuses and evidence ownership. Stage 07 uses checkout browser source
+   plus built editor assets, not the candidate portal process. Cluster smoke is
+   the existing test gate, not permission to operate this session's live cluster.
+4. Reuse the lead-reported successful generic CI `36877192519` only as exact
+   `1227f5c2` evidence and extension CI `36877758314` as current-consumer
+   `074926d3` evidence. Stage 09 must acquire successful generic CI for the new
+   verification head, without relabelling the old run or needlessly rewatching
+   completed extension CI. No pending local stage is a pass merely because CI
+   succeeded. New failures or scope changes require reconciliation, not another
+   unselected consumer pin cascade by default.
+
+Only this design addendum was changed by the architect, with a whitespace
+check. No tests, builds, probes, ref/pin changes or live operations were run.
+
 ## Lead decisions and handoff
 
 The lead accepted the original three-repository edit boundary, forward-only

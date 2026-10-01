@@ -1,17 +1,18 @@
-# Final branch and file inventory
+# Complete branch and file inventory
 
-Current clean committed repository-review follow-up graph, inspected 2026-10-01.
-Default-branch integration and shared-DNS publication remain unapproved.
-Generic final verification head is `618df553`; immutable runtime consumers still
-select `e64a9fda` through extension `362ebd4` and workspace `aca3b39d`. The
-additional standalone commits change only verification fixtures;
-source/derivation identity is not claimed equivalent.
+Current archive-fixture verification follow-up, 2026-10-01. All four worktrees
+are clean at the exact heads below. Generic verification head `869b8d47` adds
+only an optional CJS fixture to runtime input `1227f5c2`; consumers retain
+`074926d3`/`cd2875f3` and the evaluated ad34/z20 candidate. No source/derivation
+identity equivalence is claimed. Review and long checks remain separate gates.
 
 ## dev-workspace
 
-Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`. Head: `618df5530ba378f8b98f9557cdca700367016c11`.
+Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`. Head: `869b8d4728394127ba949dc76724dce56eae136b`.
 
-38 files changed, 3858 insertions(+), 402 deletions(-)
+Worktree: `worktrees/2026-09-30-portal-review-improvements/dev-workspace`. Status: clean.
+
+16 commits; 41 files changed, 4538 insertions(+), 438 deletions(-).
 
 ```text
 f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a team: derive added member settings from role policy
@@ -26,6 +27,10 @@ f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a team: derive added member settings from
 e64a9fda4f5fb3595ce194cc55359ab61f5d8b3a repository review: align overview actions at desktop width
 4a1da3c3d1d099a6b0d309b194bd1e343d8d38c1 test: observe failed Keep open write before rollback
 618df5530ba378f8b98f9557cdca700367016c11 test: cover retained repository review editors
+b52ab03284c3a41d441d44394f8e1da2e78d554f repository review: show closed card summaries
+6245fe9b2ab12f6d435dfe0bc2f4e8d0ae761e57 repository-review: retain focus on refreshed workflow runs
+1227f5c21f4f9a38bbde37c141c2f35f50008554 repository-review: advance script revisions for focus repair
+869b8d4728394127ba949dc76724dce56eae136b test: await archive refresh before checking running state
 ```
 
 ```text
@@ -44,9 +49,12 @@ M	portal/internal/repository/status.go
 M	portal/internal/session/manifest_test.go
 M	portal/internal/teamruntime/runtime.go
 M	portal/internal/teamruntime/runtime_test.go
+M	portal/internal/web/archive_failure_browser_test.cjs
 M	portal/internal/web/page_lifecycle_browser_test.cjs
 M	portal/internal/web/presentation_browser_test.cjs
 M	portal/internal/web/question_browser_test.go
+A	portal/internal/web/repository_presentation.go
+A	portal/internal/web/repository_presentation_test.go
 M	portal/internal/web/repository_review.go
 M	portal/internal/web/repository_review_browser_test.cjs
 A	portal/internal/web/repository_review_live_browser_test.cjs
@@ -71,9 +79,11 @@ M	test/repository_browser.cjs
 
 ## vpsfree-dev-workspace
 
-Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`. Head: `362ebd4759d090805cd95a800e7131edb930b604`.
+Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`. Head: `074926d33f7306288f7cfad87c6a85e8a430e750`.
 
-13 files changed, 1236 insertions(+), 49 deletions(-)
+Worktree: `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`. Status: clean.
+
+8 commits; 13 files changed, 1236 insertions(+), 49 deletions(-).
 
 ```text
 1d76d6032b40cd5fb035c26a6b9c94c4aa48e109 devcluster: add optional React Web UI alongside PHP
@@ -82,6 +92,8 @@ e0f98557d688d8561be97d3dc6b1964a0304e383 flake: pin generic repository origin la
 8e04f2626a3abd492768f15ae8d843c8e527f2cd devcluster: start the React Web UI container on boot
 361be9c712b63e16bda1866c06fb40805c16ce7f flake: select repository review follow-up
 362ebd4759d090805cd95a800e7131edb930b604 flake: select repository review action layout fix
+2495d6235da0b352602e9179eb8035beb15a8257 flake: select repository card summaries
+074926d33f7306288f7cfad87c6a85e8a430e750 inputs: pin generic repository-review cache update
 ```
 
 ```text
@@ -102,9 +114,11 @@ A	test/devcluster_webui_seed_test.rb
 
 ## workspace
 
-Base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`. Head: `aca3b39d400b5d1d6d51e42550421f8362684ee0`.
+Base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`. Head: `cd2875f3d4fb2199dd1992b07a3e664eb901e50f`.
 
-8 files changed, 99 insertions(+), 44 deletions(-)
+Worktree: `worktrees/2026-09-30-portal-review-improvements/workspace`. Status: clean.
+
+9 commits; 8 files changed, 99 insertions(+), 44 deletions(-).
 
 ```text
 e00505e30c7e1a0e982534a3b8c3afed5152c24c policy: select GPT-6.1 Sol for new team roles
@@ -114,6 +128,8 @@ bcba17a00335874eaa8ffe664a279637a0ab01ee vpsadmin: enable the React Web UI in th
 45cce0a87d3f0c8d2b404ce7188d8fa0d9098154 flake: select repository origin label and React boot fix
 9818b805a34394c73c6ee9799f1c268c21c156d4 flake: select repository review follow-up
 aca3b39d400b5d1d6d51e42550421f8362684ee0 flake: select repository review action layout
+4a6d44a2d803d8d804e58400cadd4691715f0bc6 flake: select repository card summaries
+cd2875f3d4fb2199dd1992b07a3e664eb901e50f inputs: pin repository-review focus cache update
 ```
 
 ```text
@@ -131,7 +147,9 @@ M	test/deployment_contract_test.rb
 
 Base: `ee99382c8c448a15347052a6964030f838cb0381`. Head: `d24b251531a9a482b8f1b5dd81540da85981189f`.
 
-1 file changed, 2 insertions(+), 1 deletion(-)
+Worktree: `worktrees/2026-09-30-portal-review-improvements/vpsfree-cz-configuration`. Status: clean.
+
+1 commits; 1 file changed, 2 insertions(+), 1 deletion(-).
 
 ```text
 d24b251531a9a482b8f1b5dd81540da85981189f internal-dns: add the development React Web UI alias
@@ -143,10 +161,59 @@ M	configs/internal-dns/zone.vpsfree.cz.
 
 ## History and migration disposition
 
-Preserve externally consumed generic 41c648c/50af66d, extension 1d76d603/67bfbbd/e0f98557/8e04f262 and workspace 0e00eab5/45cce0a8 ancestry. The two new generic behavior commits append to test-only 50586880; consumer updates append to the deployed extension/workspace heads. No deployed history was rewritten. Prior abandoned readers, sidecars and unsupported options were removed before consumption, as documented in the preceding independent review.
+The new generic correction is published `6245fe9b`, followed by cache successor
+`1227f5c2`; its tree equals the checked unpublished amendment `6d797f50`.
+The finite non-force push established that `6245` had already been published
+while the cache amendment was prepared. Only the unpublished amendment was
+rebased onto that exact published parent. No published commit was rewritten;
+no force push was used. The unsupported alternative heads remain outside the
+final series. Both cache URLs and browser fixtures acquire the corrected source.
 
-No database or persisted-format migration is authored by these four feature ranges. The OAuth runtime seed is not a migration. The selected API 5c76e329 advances former packaged 8d0ccafd through nine already-merged upstream migrations: 20260818115900, 20260818120000, 20260821120000, 20260821210000, 20260823100000, 20260909170000, 20260914120000, 20260914180000 and 20260914190000. Their production release/deployment/external-use status is unknown. 20260823100000 supplies the OAuth is_default column/index; selected-schema disposable cluster use is supported, older-API database rollback is unproved. DNS serial publication/correction remains forward-only.
+The correction's separate extension/workspace successors preserve published
+`b52ab032`/`2495d623`, reviewed local `4a6d44a2`, and the previously selected
+`e64a9fda`/`362ebd4`/`aca3b39d` ancestry. Assess the complete series and final
+source, including the append-only disposition, rather than inferring readiness
+from incremental reviews. Earlier abandoned clean-filter discovery, mutable
+provenance sidecar, unsupported systemd option and conflicting consolidated
+branch iteration are absent from the final series. Workspace coordination-only
+commits `9c887314`/`034eb08e` precede its product base and are not product units.
 
-Read-only inputs remain codex-web d210d3f7, API 5c76e329 and WebUI 534caa83. The consumer graph retains approved llm-agents af40d966, bun2nix 07a5bfc8 and nested nixpkgs f45c6f04, preserving packaged Codex 0.159.2.
+No database or persisted-format migration is authored in any of the four
+feature ranges. Runtime OAuth seed is not a migration; DNS serial changes are
+forward-only operational protocol state. Selected upstream API `5c76e329`
+advances former packaged `8d0ccafd` through nine already-merged migrations:
+`20260818115900`, `20260818120000`, `20260821120000`, `20260821210000`,
+`20260823100000`, `20260909170000`, `20260914120000`, `20260914180000` and
+`20260914190000`. `20260823100000` supplies OAuth is_default/index. Their
+production release, deployment and external-use provenance is unknown.
+Fresh disposable selected schema is supported; older-API rollback after
+migration remains unproved. Require the independent reviewer's explicit history
+and migration conclusions.
 
-Ownership note: implementer0 authored generic 3445353c, 8019b9b7 and e64a9fda. The earlier generic publication and 361be9c7/9818b805 pins were observed from a concurrent writer. For the alignment correction, implementer0 authored extension362ebd4 and prepared the workspace two-file source/message; this lead generated the Nix locks, committed workspaceaca3b39d through the writable shared index with normal hooks, and published both consumer feature refs. No profile or cluster change is claimed. All twelve/six/seven/one commits and final diffs are inventoried above; no new migration or abandoned protocol was added by the alignment correction.
+The selected package remains `bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb`, runtime generic
+`e64a9fda` / extension `362ebd4` / workspace `aca3b39d`. The new card UI is not
+deployed. The new consumer graph preserves Codex 0.159.2 closure
+`af40d966`/`07a5bfc8`/`f45c6f04`, API `5c76e329`, WebUI `534caa83` and
+codex-web `d210d3f7`. Shared DNS publication, default integration and session
+lifecycle actions remain unapproved.
+
+
+Archive synchronization follow-up `869b8d47` appends only
+`portal/internal/web/archive_failure_browser_test.cjs` to published runtime
+`1227f5c2`. It retains all production code, cache and consumer pins. Packaging
+excludes this optional fixture from runtime embeds/install. Standalone append
+preserves published ancestry; no migrations or persisted-format changes arise.
+The source supports an insufficient fixture synchronization point; no private
+guard trace or production defect is claimed. Bounded independent review cleared
+the exact 16/8/9/1 history with no findings; corrected long verification is pending.
+
+## Final integration inventory (2026-10-01)
+
+Generic869/extension074 remain unchanged. Workspacec3 is the nine-commit equivalent
+ofcd287 onto b38992; configuration9824 is the one-commit equivalent ofd24 onto
+b6f4e231. Every replayed patch is '=' in range-diff; feature final blobs are
+identical. Final target-relative lists and changed paths are recorded in
+integration-rebases.json; seven final-head ancestry proofs are recorded in
+integration-remote-proofs.json. Independent reviewer0 explicitly cleared coherent
+whole-history/migration lineage at these final ranges. User-approved FF-only
+integrations and SSH pushes are complete; CI is initial-state reporting only.

@@ -4,16 +4,57 @@ This record describes the individual aitherdev rollout for the portal review
 initiative. Reusable deployment and recovery behavior remains in the owning
 project documentation.
 
-## Current follow-up verification
+## Deployed card-summary composition
 
-The selected portal runtime is generic `e64a9fda` / extension `362ebd4` /
+Production UI plus its workflow-focus correction are committed/published at
+generic `1227f5c2`, extension `074926d3`, workspace `cd2875f3`. Focus fix `6245`
+and its five cache references are separate published ancestors; no consumed
+history was rewritten. Independent affected-lane recheck cleared the finding.
+The first full Go/browser stage failed in the archive-page Firefox fixture;
+all six question-browser cases passed, including workflow focus in both engines.
+Later flake/build/protocol stages did not run. Fixture-only correction `869b8d47`
+is committed/published and cleared by bounded independent review; it is the
+separate generic verification head and does not advance consumer inputs.
+The fresh Luna/low verification operation completed all nine stages with status0
+(170/324/514/254/7/4/47/447/5s). Full logs/status are retained under
+`/tmp/portal-archive-fixture-final-869b8d47/`. Candidate
+`/nix/store/z20g487rcankkgaprsrdya5na079i1rl-dev-workspace-0.2.0` is now built
+and explicitly rooted; its derivation is
+`/nix/store/ad34hy4q21lj2kppdddj7256glpm6djr-dev-workspace-0.2.0.drv`.
+Candidate/current protocol checks use the same exact Codex0.159.2 binary and
+current same-account model evidence is reusable. Cache references are reviewv9,
+appv19, CSSv3. Generic verification869 remains separate from runtime1227.
+
+The authorized idle-gated switch completed successfully in70s, selecting z20
+from clean workspacecd2875. Parent verified selected path and portal executable;
+portal/Codex/router are active and the live model catalog has exactly one visible
+gpt-6.1-sol with high/xhigh among9 models. Runtime is generic1227, extension074,
+workspacecd287; optional verification869 is not a runtime repin. Active portal
+PID3043113 executes z20/bin/workspace-portal.
+
+The requested live-only v4 probe passed with true exit0/status0 in10s, following
+bounded transport and teardown corrections to the ephemeral probe. Six frozen
+history summaries, desktop/mobile one-column layout, action spacing, empty
+staged/unstaged snapshots, retained history through details refresh, reload reset,
+app19/review9/css3 and no page errors are verified. All sampled workflow cards
+were unavailable, so populated counters/run-link focus and changed-file previews
+were not exercised live; retain the successful predeployment fixture proof and
+this separate sampling limit. Evidence is
+`/tmp/portal-card-summary-live-only-cd2875-v4/{log,status,elapsed}`.
+The original combined batchstatus1 and v3's terminated status143 remain separate;
+neither becomes an all-stage pass. The profile switch was not retried.
+Shared DNS/configuration remains prepared but unpublished and defaults unmerged.
+
+## Previous verified rollout
+
+The previous selected portal runtime was generic `e64a9fda` / extension `362ebd4` /
 workspace `aca3b39d`, package `bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb`. Generic final
 verification head `618df553` adds optional fixture corrections without a
 consumer cascade. Independent review, full Go/browser, generic/workspace flakes,
 candidate build/protocol, real-editor harness, exact CI and live acceptance all
 passed. Shared DNS publication and default integration remain unapproved.
 
-## Selected revisions
+## Previous rollout revisions
 
 - Unselected configuration candidate: `d24b251531a9a482b8f1b5dd81540da85981189f`
 - Deployed workspace composition: `aca3b39d400b5d1d6d51e42550421f8362684ee0`
@@ -23,7 +64,7 @@ passed. Shared DNS publication and default integration remain unapproved.
 - vpsAdmin API: `5c76e3290481b297dcd0baa76d246133f0353d8f`
 - vpsAdmin WebUI: `534caa83a5f97d2b40b4a126886649b14dc9e8d3`
 
-The deployed runtime revisions are generic `e64a9fda`, extension `362ebd4` and
+The previous rollout runtime revisions were generic `e64a9fda`, extension `362ebd4` and
 workspace `aca3b39d`. Configuration `d24b2515` remains an unselected DNS
 candidate. Generic final branch head `618df553` contains only separately
 reviewed verification-fixture corrections, so the deployed runtime keeps its
@@ -136,7 +177,9 @@ generation's BIND `named-checkzone` returned OK for all four.
 | cz.vpsfree/containers/prg/int.mon2 | 2026-09-30--23-28-53 | `/nix/store/zxn6i3r0r341lbvn0qbrdh4arngxxhfz-nixos-system-mon2-26.05.20260928.7fc6f2c` |
 
 Dry activation and publication require explicit approval for these exact four
-shared hosts. That approval request is pending. Building and validating these
+shared hosts. The lead presented the exact d24b CNAME/serial change and all four
+canonical target names; the user's answer remains pending. All four recorded
+built outputs are still present. Building and validating these
 generations did not publish the zone.
 
 ## Repository-review follow-up stages on 2026-10-01
@@ -211,3 +254,62 @@ diffs control. The final browser run exited 0 in 8.8 seconds.
 No configuration generation was selected and no shared DNS zone was published
 by this profile-only rollout. No feature branch was integrated into a default
 branch.
+
+## Preselection guarded-switch attempts
+
+The first transient launcher failed before identity/prechecks because its PATH
+lacked dev-session (status1/0s). The explicit-PATH v2 launcher ran the normal
+candidate switch, which refused quiescing the bound lead thread while its turn
+was inProgress (status1/59s). Authoritative before/after selection remains bpz;
+z20 remained unselected after these two attempts. Normal guards/restoration were respected. Final evidence
+is retained under `/tmp/portal-card-summary-deploy-cd2875{,-v2}/`. Any continuation
+must wait for normal idle and preserve the selected profile on another refusal.
+
+## Authorized idle-gated continuation prepared
+
+The latest user authorization covers the profile switch and normal live portal
+acceptance on storage-redesign. Architect0 confirmed a bounded public read-only
+idle gate. One named transient operation waits for this lead turn to finish,
+then runs the same source switch once with all normal guards, actual selected
+package/service/model checks, and the prepared live harness. Evidence is retained
+under `/tmp/portal-card-summary-idle-deploy-accept-cd2875/`. Until its completed
+status and selection were checked, bpz was the last proven deployment. This
+prepared continuation subsequently selected z20, as recorded at the top.
+The four-host DNS candidate remains prepared but expressly unpublished; no
+default integration or other lifecycle/system/cluster action is included.
+
+## Post-deployment acceptance continuation
+
+Latest user instruction: preserve selectedz20 and do not retry the profile
+switch. Implementer0 owns only the bounded ephemeral live harness correction,
+with the original failed script/log retained. A fresh Luna/low watcher will run
+only that corrected normal live probe. Deployed evidence is complete; live card
+acceptance is not yet claimed. No shared DNS/configuration/default or session
+lifecycle action is included.
+
+## Live-only v3 result and teardown correction
+
+V3 printed complete aggregate `ok:true` acceptance JSON (six frozen summaries,
+layout/spacing, retained history, empty staged/unstaged snapshots, reload/assets
+and no page errors), then remained alive in proxy teardown. Its six initial
+workflow states were unavailable; nonempty counters/run-link focus were not
+observed. User-authorized SIGTERM of the watcher's verified owned Node child
+completed the operation at status143/751s. Preserve it as incomplete despite the
+assertion result. Artifacts are `/tmp/portal-card-summary-live-only-cd2875-v3/`.
+A separate ephemeral v4 owns/destroys upstream ClientRequests and awaits proxy
+close, preserving all acceptance assertions. One fresh live-only watcher follows
+inspection. Selected z20, DNS/configuration hold and unmerged defaults are unchanged.
+
+## Source integration complete; deployment unchanged
+
+Explicit user approval now covers all seven registered repositories/defaults.
+Generic869 and extension074 merged unchanged; configuration9824 and workspacec3
+are conflict-free, independently reviewed equivalents of d24/cd287 rebased onto
+fresh defaults. All seven exact final feature heads are proved ancestors of the
+remote defaults. This supersedes earlier "integration unapproved" statements,
+which remain dated rollout history. See integration.md and handoff.md.
+
+z20 remains selected; its profile switch was not retried. Shared DNS publication
+remains held, and the rebased configuration's newer base lock requires current
+DNS consumer checks before any later deployment. The user requests initial CI
+URLs/states only; completion is not awaited. No lifecycle action is authorized.

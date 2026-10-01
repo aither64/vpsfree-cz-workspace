@@ -1,4 +1,147 @@
-# Final committed-change review packet
+# Repository-card committed review packet
+
+## Current archive-fixture affected-lane review (authoritative)
+
+Completed: retained reviewer0 gpt-6-sol/xhigh/read-only reports no Blocking,
+Important or Advisory finding. It explicitly reconciles complete history and
+no-new-migrations conclusions. The committed fixture clears the long-check gate;
+the fresh watcher owns the corrected suite, with operational readiness pending.
+
+Session: `2026-09-30-portal-review-improvements`. Exact clean heads:
+generic verification `869b8d4728394127ba949dc76724dce56eae136b` (parent/runtime
+`1227f5c21f4f9a38bbde37c141c2f35f50008554`), extension
+`074926d33f7306288f7cfad87c6a85e8a430e750`, workspace
+`cd2875f3d4fb2199dd1992b07a3e664eb901e50f`, configuration
+`d24b251531a9a482b8f1b5dd81540da85981189f`. Only the generic verification head
+changes. Consumers retain runtime1227 and approved Codex closure; ad34/z20 is
+still an evaluated, unbuilt candidate. Active bpz/e64/362/aca remains unchanged.
+
+Retain reviewer0 saved gpt-6-sol/xhigh/read_only. Review general and architecture
+lanes for the new optional fixture logic; prior scope/security/compatibility
+conclusions remain unless a concrete new concern appears. Overall initiative is
+high risk; this affected one-file correction is low risk with no runtime API,
+cache, schema, lifecycle, deployment or consumer change. Read mandatory skill
+and selected references directly. Architect disposition is design.md:2257.
+
+Requested outcome: reliable archive diagnostics fixture synchronization. Prior
+full Go/browser failed Firefox Running-vs-Paused at cjs:82; Chromium and all six
+question-browser children including focus both engines passed. Source supports
+banner visibility before the Promise.all operation branch settles, with next
+wake suppressed during the active refresh; the log does not expose the guard.
+The appended fixture observes paused operation bodies, distinct cleared/resumed
+Paused rendering and both resumed response bodies before the Running wake,
+then requires a Running GET body and Running UI. Preserve throttle, held-read
+coalescing, hidden suppression, read failure/history identity, read-only page,
+completion/navigation and page-error checks. No sleeps/retries/private hooks.
+
+One commit, one path, 25+/1−: archive_failure_browser_test.cjs. Parent and final
+full diffs were inspected; declared Nix Node syntax, member Node syntax and
+committed whitespace checks pass. No real browser run yet at this correction.
+No owning feature doc change is useful because product behavior is unchanged;
+short fixture rationale is in the commit and design, failure evidence in state,
+individual rollout separately in rollout.md. Normal commit/hooks only.
+
+Complete 16/8/9/1 histories and 41/13/8/1 final paths are in
+[final-diff-inventory.md](final-diff-inventory.md). Reconcile prior complete
+history/migration conclusions with this standalone append preserving published
+1227; no authored database or persisted-format migrations. Nine upstream API
+versions/provenance remain inventoried and unchanged; unknown production use
+and older-API rollback remain unproved. Explicitly assess retained runtime pins
+and optional fixture packaging; unfiltered src=self precludes identical store
+identity claims for a hypothetical repin. No consumer cascade is intended.
+
+After review: one fresh watcher full browser-enabled Go including archive both
+engines, then still-pending generic/consumer flakes, exact z20 build/protocol,
+real-editor harness, extension smoke and exact new-head generic CI. Old1227 CI
+36877192519 and current074 CI36877758314 succeeded; neither is new generic-head
+CI proof. No default integration, shared DNS publication, cluster/system action
+or real session lifecycle operation is authorized by this review.
+
+## Current workflow-focus affected-lane recheck (authoritative)
+
+Completed result: no Blocking, Important or new Advisory finding. The workflow
+focus correction is independently cleared. The subsequent full Go/browser run
+failed only the Firefox archive-page fixture; all six question-browser children,
+including both workflow-focus engines, passed. No later batch stage ran.
+Implementer0 is investigating a bounded fixture synchronization correction;
+the immutable production graph below remains selected for candidate checks.
+
+Session: `2026-09-30-portal-review-improvements`. All four local worktrees are
+clean at exact generic `1227f5c21f4f9a38bbde37c141c2f35f50008554`, extension
+`074926d33f7306288f7cfad87c6a85e8a430e750`, workspace
+`cd2875f3d4fb2199dd1992b07a3e664eb901e50f`, configuration
+`d24b251531a9a482b8f1b5dd81540da85981189f`. Generic, extension and workspace
+feature refs were published through normal SSH fast-forwards. DNS publication
+and default integration remain unapproved. Active `bpz/e64/362/aca` is unchanged.
+
+Retain reviewer0, saved `gpt-6-sol`/xhigh/read_only. The full four-lane review at
+`b52/2495/4a6/d24` found one Important issue: refreshing an open workflow list
+removed the focused run link. Inspect its bounded correction and coordinated
+consumer pins in general/architecture and affected compatibility concerns;
+reuse the completed scope/security conclusions unless a new concern appears.
+The overall composition remains high risk because of its previously reviewed
+working-content/OAuth/proxy and forward-only transition contracts; this fix
+adds no new endpoint, storage, policy, schema, secret or lifecycle behavior.
+The reviewer explicitly requested re-review before long checks/rollout.
+
+Acceptance: `repository-review.js` preserves unchanged run-body children and
+restores focus after reattachment to the identical connected link. Changed body
+markup restores the focused link by its existing exact href within the same
+retained disclosure; if that URL disappeared while other runs remain, focus the
+existing native summary without scrolling. Preserve summary/details identity,
+open state, no focus theft, Local commits/editor retention and compact transitions
+with closed reinsertion. Mounted and real-presentation regressions cover all
+three run-link outcomes plus existing summary/compact cases. No new framework
+or saved preference. Architect's bounded addendum is in design.md:2161.
+
+Commit split and publication evidence:
+
+- Published `6245fe9b` (parent `b52ab032`) owns the focus fix plus mounted and
+  real-browser fixtures: three paths, 80+/17−.
+- `1227f5c2` (parent `6245fe9b`) advances five mechanical references to review
+  module v9/app v19; CSS stays v3. A normal push revealed that `6245` had already
+  been published during coordination. Only the unpublished amendment was
+  rebased onto that exact published parent; final tree equals checked interim
+  `6d797f50`. No force push or published rewrite.
+- Extension `074926d3` (parent `2495d623`) changes only flake.nix/flake.lock and
+  the one generic node. Workspace `cd2875f3` (parent `4a6d44a2`) changes only its
+  two flake paths and the generic/extension nodes. All unrelated lock nodes,
+  input maps and approved af40d966/07a5bfc8/f45c6f04 Codex closure are identical.
+
+Complete 15/8/9/1 series and final 40/13/8/1 path inventories are in
+[final-diff-inventory.md](final-diff-inventory.md). Explicitly reconcile the
+whole-history and migration conclusions with these appended supported commits.
+No feature range authors a database/persisted-format migration. The selected
+API's nine preexisting upstream migrations and unknown production provenance
+are enumerated there; runtime seed is not a migration, DNS serial is forward
+protocol state. Temporary wrong-Codex and conflicting consolidated branches
+remain outside supported history. All deployed/consumed ancestors are preserved.
+
+Quick checks: member Nix-provided Node syntax/mounted regression passed for the
+final source/cache files, staged/committed whitespace and exact inventories pass.
+Lead declared `nix develop` syntax/mounted checks passed on byte-identical source;
+focused workflow/template Go passed 0.115s with CGO_ENABLED=0 GOFLAGS=-mod=mod.
+The first focused Go invocation omitted that module flag and hit inconsistent
+local vendoring before tests; corrected invocation passed, no source fix.
+Consumer JSON, Nix parse, Ruby instructions (7/96) and deployment contract (4/19)
+pass. Clean final workspace drvPath evaluates to
+`/nix/store/ad34hy4q21lj2kppdddj7256glpm6djr-dev-workspace-0.2.0.drv`; not a build.
+Generic exact-head Check run 36877192519 and extension run36877758314 are
+successful at the exact revisions above. No superseded active run was found.
+These are distinct from still-pending real-browser and full candidate evidence.
+
+README.md/portal guide already describe retained native focus; this correction
+fulfills that contract and adds no new visible wording. The main writing pass
+on the card unit remains applicable. Design rationale and current evidence are
+here/state.md; the individual rollout is separate in rollout.md. Long checks
+stay held until the finding is independently reconciled. Required afterward:
+one browser-enabled full Go run (including Chromium/Firefox focus regressions),
+exact graph flake/package/protocol/catalog/editor/CI gates, then normal guarded
+profile transition and live UI acceptance. No system/cluster/DNS/lifecycle action
+is supplied by review or verification.
+
+## Historical packet and earlier review checkpoints
+
 
 ## Assignment and risk
 
@@ -320,3 +463,157 @@ passed stages retain their exact revision attribution above. Independent review
 clears branch readiness; guarded profile activation/live new UI checks remain.
 The conversation is currently working and selected profile remains51i. No DNS
 publication, default integration or session lifecycle action is authorized.
+
+
+## Repository-card summary final review request (2026-10-01)
+
+### Outcome and accepted behavior
+
+Review the complete four-repository feature series and the final card-summary
+successors. Closed Local commits must show the full frozen comparison commit
+count and diffstat while history stays eager. Nonempty workflow results use a
+closed native Workflows disclosure with Total, Queued, Running, Successful and
+Failed counters. Successful empty lookup is the compact non-disclosure
+`Workflows · 0 total`; nil/error lookup is `Workflows · unavailable` and never
+zero. Nonempty-to-nonempty refresh retains the details and summary nodes, open
+state and focus. A compact-to-nonempty transition creates a closed disclosure.
+Repository actions have 1rem vertical separation, existing .5rem button gaps,
+one desktop row and mobile wrapping. No endpoint, JSON schema, provider query,
+persisted state or lifecycle contract changes.
+
+### Final heads, series and commit split
+
+The complete inventory is `final-diff-inventory.md`. All listed worktrees are
+clean. Review these exact ranges and their final diffs:
+
+- generic dev-workspace `7c133c56..b52ab032` (13 commits, 40 paths);
+- extension `6a0a2eb8..2495d623` (7 commits, 13 paths);
+- workspace `034eb08e..4a6d44a2` (8 commits, 8 paths);
+- configuration `ee99382c..d24b2515` (1 commit, 1 path, unchanged by this
+  follow-up but retained for whole-initiative compatibility and migration
+  conclusions).
+
+Generic `b52ab032` is one coherent presentation unit: helper, template, DOM
+retention, scoped base/lazy styles, coordinated cache keys, tests and owning
+README/portal guide must change together. Extension `2495d623` and workspace
+`4a6d44a2` are separate generated consumer pins so each consumer can be reviewed,
+reverted and deployed independently. The temporary unpublished workspace tree
+with an old Codex closure was amended out; it is not present in final history.
+The final workspace lock differs from `aca3b39d` only at `dev-workspace` and
+`vpsfree-dev-workspace`; llm-agents `af40d966`, bun2nix `07a5bfc8`, nested
+nixpkgs `f45c6f04`, codex-web, API, WebUI and cluster inputs are unchanged.
+
+### Scope, alternatives and compatibility
+
+The user selected five visible counts: neutral Total, yellow Queued, blue
+Running, green Successful and red Failed. Cancelled and other unsuccessful
+terminal conclusions count as Failed; skipped/neutral count only in Total. Total
+means the exact-revision runs returned/displayed by the existing GitHub lookup,
+up to 100. The user rejected an empty disclosure in favor of the compact zero
+line. The implementation uses the existing nonnil-empty Runs distinction and
+existing history summary. No new provider, endpoint, preference persistence,
+workflow trigger, cluster/configuration edit, DNS publication or default-branch
+integration belongs to this unit. Full reload resets disclosure state.
+
+Generic dev-workspace owns rendering and the existing review/status wire data.
+The vpsFree extension consumes its mkPackage output; workspace consumes the
+extension with site/team policy and the pinned Codex closure. Browser assets and
+server markup deploy together through the user profile. Old tabs can retain old
+assets until reload. Existing review snapshots stay process-local and retain
+409/recapture semantics across portal restart. Failure before candidate
+selection leaves the deployed profile untouched; after selection, recovery is
+a supported newer compatible forward switch. No migration or data conversion
+is introduced.
+
+No database or persisted-format migration exists in these four ranges. The
+runtime OAuth seed is not a migration. The selected upstream API's nine
+previously merged migrations and their unknown production provenance remain as
+listed in `final-diff-inventory.md`; this UI follow-up neither changes nor
+consumes a new migration. Shared DNS publication remains unapproved.
+
+### Documentation and quick evidence
+
+Owning feature documentation changed in generic `README.md` and
+`docs/workspace-portal.md`. Design rationale and operational acceptance remain
+in `design.md`, `state.md`, `rollout.md` and this packet.
+
+Quick checks before review:
+
+- generic focused workflow/helper/template Go tests passed; gofmt and
+  `git diff --check` passed;
+- Node syntax passed for app/review JS and all changed CJS fixtures;
+- mounted `repository_review_browser_test.cjs` passed, including compact state
+  transitions and retained disclosure focus; real Playwright remains a long
+  post-review gate;
+- extension parse/JSON/pin/diff checks passed; `nix eval --no-write-lock-file
+  .#checks.x86_64-linux.package.drvPath` produced `sgzrn8rm…drv`;
+- workspace agent-instruction tests passed 7/96, deployment-contract tests
+  passed 4/19, exact graph assertions and diff checks passed; `nix eval
+  --no-write-lock-file --raw .#packages.x86_64-linux.default.drvPath` produced
+  `9gdvn344…drv` while retaining exact Codex pins.
+
+### Review selection and lanes
+
+Overall risk is medium: the source change is bounded and reversible UI
+presentation, but it spans a reusable package and two consumers and will replace
+a running user-profile package. No schema, authorization, secret, irreversible
+operation or incompatible public contract changes. Selected reviewer0 is the
+retained independent review-purpose member with saved gpt-6-sol, xhigh effort
+and read-only access. Review all four mandatory lanes: general, architecture and
+repetition, scope and proportionality, and risk and compatibility. Explicitly
+report Blocking, Important and Advisory findings; conclude whether the complete
+13/7/8/1 histories contain obsolete approaches or unnecessary follow-up fixes,
+and state the final migration conclusion. Long checks and deployment wait until
+findings are resolved or accepted under the mandatory review procedure.
+
+
+### Final review result and narrow remediation
+
+Reviewer0 completed all four lanes at b52ab032/2495d623/4a6d44a2/d24b2515 with
+saved gpt-6-sol/xhigh/read-only settings. One Important accessibility finding:
+`repository-review.js` replaces run-body links during status refresh, so a
+focused workflow run link loses focus; existing browser coverage asserted only
+summary focus. Long checks are held. The accepted narrow remediation preserves
+an unchanged body, restores focus by stable run URL when changed, and falls back
+to the retained summary when the focused run disappears. It adds focused
+browser-contract coverage and no new product contract, storage or abstraction.
+The coordinating lead will inspect and verify it directly under mandatory review
+step 9; unaffected lanes do not require a rerun unless the fix expands scope.
+
+The reviewer found no other severity finding. Complete 13/7/8/1 histories were
+coherent with no obsolete branch approach or transitional migration. No feature
+range adds a database or persisted-format migration. The upstream nine API
+migrations retain unknown production deployment/rollback provenance. The final
+workspace graph preserves the exact Codex closure and changes only its two
+consumer nodes.
+
+## Workflow-focus affected-lane result (1227/0749/cd2875)
+
+Retained reviewer0, saved gpt-6-sol/xhigh/read-only, completed general,
+architecture/repetition and affected risk/compatibility inspection. No Blocking,
+Important or new Advisory. It explicitly resolves the prior run-link focus
+finding, confirms the exact native-focus and compact behavior, coordinated v9/
+v19 caches and unchanged two-node consumer graph/Codex closure. Complete
+15/8/9/1 history is coherent with supported published/consumed ancestry preserved;
+no obsolete implementation, unused path or transitional migration remains.
+No range authors a database/persisted-format migration; prior nine upstream API
+lineage and unknown production provenance remain. Unaffected scope/security
+review stands. It ran no tests. The review gate permits final long verification,
+not deployment, operational readiness, shared DNS publication or integration.
+
+## Integration-equivalence review and completion (2026-10-01)
+
+User explicitly approves all seven registered defaults; later direction excludes
+CI waiting and requests the durable handoff commit/push. Current final source
+heads: generic869, extension074, workspacec3b0361cc4e9ad51d58304b833c0e5cdd4c4b27f,
+configuration9824c02b657ad394dce6b81ed10abfbf3aed9d0e. Saved reviewer0 Sol/xhigh/
+read_only independently checked target-relative 16/8/9/1 series and identical
+functional patches after both clean rebases: no new findings, obsolete feature
+history or authored DB/persisted migrations. Approved pins are unchanged.
+
+Final comparisons and remote-default ancestry proofs for all seven registrations
+are complete. Detailed approval, range-diff, final heads/proofs and initial-only
+CI evidence are in integration.md and its linked JSON artifacts. No DNS deployment,
+profile switch retry or lifecycle action occurred. This current integration
+record supersedes prior "unapproved" statements without changing their dated
+review/deployment evidence.
