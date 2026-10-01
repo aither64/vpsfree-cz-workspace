@@ -2,12 +2,16 @@
 
 Current clean committed repository-review follow-up graph, inspected 2026-10-01.
 Default-branch integration and shared-DNS publication remain unapproved.
+Generic final verification head is `618df553`; immutable runtime consumers still
+select `e64a9fda` through extension `362ebd4` and workspace `aca3b39d`. The
+additional standalone commits change only verification fixtures;
+source/derivation identity is not claimed equivalent.
 
 ## dev-workspace
 
-Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`. Head: `8019b9b7970d5ae0e57cc530e047979d91632053`.
+Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`. Head: `618df5530ba378f8b98f9557cdca700367016c11`.
 
-38 files changed, 3803 insertions(+), 393 deletions(-)
+38 files changed, 3858 insertions(+), 402 deletions(-)
 
 ```text
 f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a team: derive added member settings from role policy
@@ -19,6 +23,9 @@ f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a team: derive added member settings from
 50586880d5b4e17e060c045dcc992a748f9c7827 test: sample activity before wake dispatch
 3445353c9dd297649052fee9b25bbeb541bcddbc repository review: encode empty comparisons as arrays
 8019b9b7970d5ae0e57cc530e047979d91632053 repository review: keep repository actions visible
+e64a9fda4f5fb3595ce194cc55359ab61f5d8b3a repository review: align overview actions at desktop width
+4a1da3c3d1d099a6b0d309b194bd1e343d8d38c1 test: observe failed Keep open write before rollback
+618df5530ba378f8b98f9557cdca700367016c11 test: cover retained repository review editors
 ```
 
 ```text
@@ -64,7 +71,7 @@ M	test/repository_browser.cjs
 
 ## vpsfree-dev-workspace
 
-Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`. Head: `361be9c712b63e16bda1866c06fb40805c16ce7f`.
+Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`. Head: `362ebd4759d090805cd95a800e7131edb930b604`.
 
 13 files changed, 1236 insertions(+), 49 deletions(-)
 
@@ -74,6 +81,7 @@ Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`. Head: `361be9c712b63e16bda1866
 e0f98557d688d8561be97d3dc6b1964a0304e383 flake: pin generic repository origin label correction
 8e04f2626a3abd492768f15ae8d843c8e527f2cd devcluster: start the React Web UI container on boot
 361be9c712b63e16bda1866c06fb40805c16ce7f flake: select repository review follow-up
+362ebd4759d090805cd95a800e7131edb930b604 flake: select repository review action layout fix
 ```
 
 ```text
@@ -94,7 +102,7 @@ A	test/devcluster_webui_seed_test.rb
 
 ## workspace
 
-Base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`. Head: `9818b805a34394c73c6ee9799f1c268c21c156d4`.
+Base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`. Head: `aca3b39d400b5d1d6d51e42550421f8362684ee0`.
 
 8 files changed, 99 insertions(+), 44 deletions(-)
 
@@ -105,6 +113,7 @@ bcba17a00335874eaa8ffe664a279637a0ab01ee vpsadmin: enable the React Web UI in th
 0e00eab555f9a41136f13cad0f82662f5c2f717b flake: pin Codex 0.159.2 for workspace package
 45cce0a87d3f0c8d2b404ce7188d8fa0d9098154 flake: select repository origin label and React boot fix
 9818b805a34394c73c6ee9799f1c268c21c156d4 flake: select repository review follow-up
+aca3b39d400b5d1d6d51e42550421f8362684ee0 flake: select repository review action layout
 ```
 
 ```text
@@ -140,4 +149,4 @@ No database or persisted-format migration is authored by these four feature rang
 
 Read-only inputs remain codex-web d210d3f7, API 5c76e329 and WebUI 534caa83. The consumer graph retains approved llm-agents af40d966, bun2nix 07a5bfc8 and nested nixpkgs f45c6f04, preserving packaged Codex 0.159.2.
 
-Ownership note: implementer0 authored the two new generic code commits. This lead turn observed the subsequent generic publication and extension/workspace pin commits from a concurrent writer; it did not perform those mutations. Actor coordination is pending. This inventory reports inspected artifacts, not deployment or review approval.
+Ownership note: implementer0 authored generic 3445353c, 8019b9b7 and e64a9fda. The earlier generic publication and 361be9c7/9818b805 pins were observed from a concurrent writer. For the alignment correction, implementer0 authored extension362ebd4 and prepared the workspace two-file source/message; this lead generated the Nix locks, committed workspaceaca3b39d through the writable shared index with normal hooks, and published both consumer feature refs. No profile or cluster change is claimed. All twelve/six/seven/one commits and final diffs are inventoried above; no new migration or abandoned protocol was added by the alignment correction.

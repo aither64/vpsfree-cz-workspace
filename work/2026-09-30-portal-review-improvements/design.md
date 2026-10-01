@@ -1752,6 +1752,177 @@ needed solely to create an empty or changed fixture; use suitable existing
 repositories or disposable test fixtures. No build, test, commit or deployment
 was performed by the architect for this design update.
 
+## Keep open fixture correction and retained runtime graph (2026-10-01)
+
+The earlier `50586880` fixture-only disposition applies to this bounded
+follow-up. Retain the reviewed runtime graph: generic
+`e64a9fda4f5fb3595ce194cc55359ab61f5d8b3a`, extension
+`362ebd4759d090805cd95a800e7131edb930b604`, workspace
+`aca3b39d400b5d1d6d51e42550421f8362684ee0`. Append a standalone generic test
+commit changing only `portal/internal/web/presentation_browser_test.cjs`.
+Do not cascade consumer pins or rewrite consumed ancestors for this fixture.
+The final generic verification head and selected runtime input remain distinct.
+
+Evidence: `/tmp/portal-review-e64-final-proper/01-go-browser.log:136-158`
+records the Firefox failure at fixture line 218, after Chromium passed.
+`static/app.js:1998-2014` submits the requested hold, restores the last
+confirmed checkbox value immediately on rejection, re-enables it and displays
+the error after refreshing settings. The fixture's intentional POST 503 at
+lines 40-44 leaves its confirmed hold unchanged. `uncheck()` then fails its own
+final-state assertion when the correct rollback has already restored checked.
+This failure does not demonstrate a production defect or a successful full run.
+
+The inspected in-progress one-file patch asserts the initial checked state,
+registers `waitForResponse` for the exact auto-archive POST before `click()`,
+then asserts that request's `hold` is false and its response status is 503.
+It retains checked rollback, visible failure status and technical error
+assertions. This proves the intended failed action occurred without requiring
+the temporary unchecked value to survive the response. Keep both Chromium and
+Firefox coverage; no delays, retries, suppressed errors or production/cache
+changes are needed. The final committed diff must still meet this boundary.
+
+Packaging evidence was rechecked at `e64a9fda`:
+
+- `portal/internal/web/server.go:46` embeds only `templates/*.html` and
+  `static/*`; the sibling CJS fixture is not embedded. The fixture is invoked
+  by `question_browser_test.go:18-20,76-84` only when
+  `PORTAL_BROWSER_TEST=1` enables the optional browser suite.
+- `nix/workspace-portal.nix:195-215,230-310` builds the portal command, runs
+  normal checks without enabling that suite, and installs runtime helpers,
+  contracts and skills. It does not install this fixture as a runtime
+  executable. `nix/review-ui.nix:6-20` selects editor sources separately.
+- Extension `flake.nix:38,61,80` consumes the generic host paths, runtime
+  contract and package function. Its lock still selects `e64a9fda`; workspace
+  `flake.lock` selects that same generic revision and extension `362ebd4`.
+  The proposed fixture edit changes none of these interfaces or inputs.
+
+Generic `flake.nix:35` nevertheless passes unfiltered `src = self`, with source
+references also retained through skills. Selecting a new generic revision
+would change source/derivation identity; this disposition proves unchanged
+runtime source behavior, not identical store paths or binary bytes. Retain the
+prospective workspace candidate
+`/nix/store/bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb-dev-workspace-0.2.0` recorded in
+the prepared verification script for `aca3b39d`. Its build/protocol evidence
+must belong to that exact graph, not be relabelled as the new generic head.
+The failed first stage prevented that script's later stages from running;
+the candidate is not established as verified by this investigation.
+
+Verification gates, owned by the implementer/lead and fresh watcher:
+
+1. Before commit/review, check whitespace, run Nix-provided
+   `node --check portal/internal/web/presentation_browser_test.cjs`, and inspect
+   the complete diff against `e64a9fda` for this one-file boundary. Append the
+   commit and obtain the required bounded independent review; update the final
+   history inventory with the new generic head and unchanged selected pins.
+2. After review, run the focused regression from `portal/` with the established
+   Nix Node/Go and Playwright environment, `PORTAL_BROWSER_TEST=1` and
+   `CGO_ENABLED=0`:
+   `go test -count=1 -run '^TestQuestionBrowser$/^presentation_browser_test[.]cjs$' ./internal/web`.
+   Both engines must observe the failed `hold:false` POST and checked/error
+   recovery, alongside the existing layout/disclosure assertions.
+3. Run `go test -count=1 ./...` from `portal/` with that same browser-enabled
+   environment at the new committed generic head. This replaces the failed
+   full Go/browser stage; a second separate full browser-only run is redundant.
+   Run required generic flake/CI checks at that new head. Preserve separate
+   command exit statuses and reject skipped browser coverage as evidence.
+4. Keep consumer head/lock guards at `362ebd4`/`aca3b39d` and update the
+   watcher's generic verification-head guard to the standalone test commit;
+   the existing literal script requiring an `e64a9fda` checkout cannot be reused
+   unchanged. Complete the still-pending exact consumer flake, candidate build,
+   protocol, packaged-editor browser and extension CI gates from the reviewed
+   rollout. Reuse successful exact-head evidence where already available;
+   do not repeat their pin/build/probe stream solely for an unselected fixture.
+
+No new schema, persistence, cache, lifecycle, compatibility or recovery change
+is introduced. The guarded user-profile rollout and forward recovery remain
+unchanged and require their existing gates; this note authorizes no activation,
+cluster operation, DNS publication or integration. A diff beyond this fixture
+or a production failure in corrected checks requires lead reconciliation before
+relying on equivalence. No such wider deviation was found in this inspection.
+The architect changed only this design note and ran no tests, builds or probes.
+
+## Real-editor retention fixture follow-up (2026-10-01)
+
+Retain runtime generic `e64a9fda` → extension `362ebd4` → workspace `aca3b39d`
+and candidate `bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb`, with the exact identities
+recorded above. Append only `test/repository_browser.cjs` to the inspected
+generic parent `4a1da3c3d1d099a6b0d309b194bd1e343d8d38c1` and record the
+resulting generic verification head separately. No consumer cascade,
+production/cache change or history rewrite is required for this test correction.
+
+The settled `/tmp/portal-review-final-4a1da3c3/07-packaged-browser.log` fails
+at `test/repository_browser.cjs:274`: the fixture requires at most eight mounted
+short diffs but observes 30. That assertion and its final success-label entry
+at line 379 contradict section 1's retained-editor contract. Production
+`static/repository-review.js:607-624` loads all files through the existing
+bounded queue; its same-comparison path at 767-773 reuses the current view.
+The observed count does not demonstrate a production defect.
+
+Replace only that obsolete scenario with deterministic real-editor acceptance:
+use the existing 30 short-file fixture and Load all diffs, wait for completed
+30/30 rendering and syntax settlement, and require more than eight distinct
+file editors. Retain a reference to an actual first-file editor node and its
+short rendered content, scroll far enough away to put it outside the visible
+file pane, then return and require the same connected node and content. Keep
+the comparison, layout and file-version identity fixed; closing/reopening a
+comparison or changing its layout can legitimately replace editors. Preserve
+syntax, CSP, readonly, navigation, responsive and other unrelated assertions,
+and relabel the final check as retained editors/Load all. Do not merely invert
+the count assertion, loosen its bound or add a timing sleep. The subsequent
+focused run passed the new 30-editor retention proof, then failed the obsolete
+collapse assertion at revised line 309 (expected zero editors, observed one;
+`/tmp/portal-review-real-editor-retention-focused.log`, status 1, 21s). The
+earlier assessment that this assertion remained valid was incorrect:
+`repository-review.js:493-502` hides `record.body` and retains its editor and
+content. Correct that assertion within the same test file: collapse hides the
+editor, and reopening in the same layout preserves the same node/content
+without another file fetch. Keep collapsed-choice and layout tests, but do not
+require node identity across a layout change. The focused run remains failed
+until the complete corrected fixture passes; existing runtime pins and
+successful Go/flake/candidate/protocol/CI evidence remain unchanged. Report any
+further contradictory requirement before widening the patch.
+
+This standalone script is outside the `server.go:46` embedded assets and the
+`question_browser_test.go:76` CJS list. Normal Go/flake checks do not invoke it.
+Its harness serves portal JS/CSS from the checkout and real built editor assets
+from `REVIEW_ASSETS_DIRECTORY` (`test/repository_browser.cjs:5-10,81-84`); it
+does not launch the candidate portal binary. Its result therefore proves that
+asset integration, while the candidate build/protocol checks retain their
+separate meaning. Unfiltered `src = self` still changes source/derivation
+identity if repinned; equivalent runtime behavior does not imply identical
+store paths or make the new generic head the candidate's source.
+
+Reusable evidence, reported by the lead for the clean `4a1da3c3` batch: full
+browser-enabled Go passed in 172s, generic flake in 329s, workspace flake at
+`aca3b39d` in 259s, candidate build in 7s and candidate protocol in 3s. Generic
+CI `36854636430` passed at exact `4a1da3c3`; extension `362ebd4` CI and smoke
+already passed. Attribute these results to their recorded heads. The failed
+real-editor fixture remains a failed stage until corrected verification passes.
+
+Remaining gates:
+
+1. Run Nix-provided `node --check test/repository_browser.cjs`, whitespace and
+   a complete diff check proving the sole changed path against `4a1da3c3`.
+   Append the standalone commit and obtain bounded review with the retained
+   runtime-pin distinction and unchanged production/inputs explicitly checked.
+2. A fresh watcher runs the complete corrected `node test/repository_browser.cjs`
+   from the generic root using the same Nix environment and immutable
+   `PLAYWRIGHT_MODULE`, `PLAYWRIGHT_BROWSERS_PATH`, `REVIEW_ASSETS_DIRECTORY`
+   and `CODEX_WEB_SOURCE` values as stage 07 of
+   `/tmp/portal-review-final-4a1da3c3.sh`. Update its generic head guard, preserve
+   consumer guards and record the real exit status/log for the new head.
+   This stage defaults to Chromium; do not describe it as a two-engine run.
+3. Complete required generic CI at the new head and record its exact result;
+   the successful `4a1da3c3` run is earlier-head evidence. Reuse the passed full
+   Go/browser suite because every file in its invoked CJS suite is unchanged.
+   Do not duplicate local Go/flake, consumer build/protocol or extension smoke
+   checks solely for this unselected optional fixture. New failures or a wider
+   diff require a fresh disposition, rather than assumed equivalence.
+
+No new deployment or recovery step follows from this fixture correction. All
+existing profile/live acceptance and authorization gates remain. The architect
+edited only this note; no tests, builds, probes or operational actions were run.
+
 ## Lead decisions and handoff
 
 The lead accepted the original three-repository edit boundary, forward-only

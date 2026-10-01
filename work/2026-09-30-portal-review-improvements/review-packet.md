@@ -1,414 +1,322 @@
 # Final committed-change review packet
 
-## Current follow-up status
+## Assignment and risk
 
-The approved 2026-10-01 repository-review follow-up is committed and published
-on the three existing feature refs. Generic `8019b9b7` restores empty comparison
-arrays and changes the repository overview; extension `361be9c7` and workspace
-`9818b805` select it exactly. The currently deployed profile still uses generic
-`50af66d9`, extension `8e04f262` and workspace `45cce0a8`. No follow-up package
-has been built, selected or deployed. This packet covers the complete updated
-base-to-head histories before long verification and profile activation.
+Session: `2026-09-30-portal-review-improvements`. Retain independent reviewer0,
+saved `gpt-6-sol`/xhigh, purpose review, read-only; no settings override or nested
+agents. Read mandatory-change-review and all four lane references: general,
+architecture/repetition, scope/proportionality, risk/compatibility. Overall risk
+remains high because the complete branch composition includes repository working
+content, OAuth/proxy/host behavior, mixed versions and forward-only deployment.
+The new portal follow-up itself is bounded compatible API/browser presentation.
 
-## Assignment
+Inspect the complete base-to-head series/final diffs and explicitly conclude
+whether obsolete unapplied history or transitional migrations remain. Prior
+whole-branch reviews are context; this packet names the current exact artifacts.
+No default-branch integration, DNS publication or lifecycle action is authorized.
 
-- Initiative: `2026-09-30-portal-review-improvements`
-- Requested review: final whole-branch readiness review of every committed
-  change and complete base-to-head history in all four changed repositories.
-- Overall risk: **high**. The changes touch OAuth credentials and sessions,
-  reverse-proxy trust, repository working-tree content, host/container startup,
-  cross-project Nix pins, deployment/recovery and shared internal DNS.
-- Reviewer: retained independent `reviewer0`, purpose `review`, read-only
-  access, saved `gpt-6-sol` model and xhigh effort. Do not override its saved
-  settings.
-- Lanes: general; architecture and repetition; scope and proportionality; risk
-  and compatibility.
-- Required workflow: read
-  `~/.codex/skills/mandatory-change-review/SKILL.md` and all four selected lane
-  references. Review directly without subagents.
+## New follow-up outcome
 
-This review supersedes every earlier incremental or affected-lane review. Start
-from each base below, inspect the complete series and final diff, and explicitly
-conclude whether obsolete unmerged history or transitional migrations remain.
-Return findings ordered by severity with file/line and commit references where
-possible. If there are no findings, say so and list residual risks or remaining
-verification gaps.
+The accepted design is design.md, “Approved repository-review follow-up
+(2026-10-01)”, at line 1536. Generic commits 3445353c and 8019b9b7 append:
 
-## Requested outcome and acceptance criteria
+- Both successful comparison response constructors emit a nonnull files array,
+  including empty staged/unstaged snapshots, retained GETs and committed views.
+- The browser accepts legacy nullish files as empty and rejects other malformed
+  values/HTTP failures. Empty views show existing notices without preview reads.
+- Repositories have one full-width card per row before/after lazy styles load;
+  scoped selectors preserve development-cluster auto-fit cards.
+- Native Local commits starts closed, loads eagerly, keeps an opened retained
+  node during status refresh, and resets on full reload. Actions, branch notice
+  and capture-error feedback remain visible outside it.
+- Module/app and both stylesheet cache keys are coordinated. README and the
+  portal guide document supported behavior; no custom disclosure state/storage,
+  payload repair framework, endpoint, snapshot quota/safety or schema changes.
 
-The user requested a connected portal and development-cluster update:
+The original seven-feature outcome is preserved: exact gpt-6.1-sol role defaults
+with saved rosters retained; atomic live settings drafts; retained/Load-all diffs;
+GitHub-only Origin boundary with old aliases; bounded immutable working reviews;
+role-based member defaults; separate optional bridge React UI beside PHP.
+The independent configuration branch prepares one private DNS CNAME and newer
+SOA serial, with shared publication still pending approval.
 
-1. Use exact `gpt-6.1-sol` for new workspace lead, implementer and reviewer
-   defaults while retaining existing roster settings, Astra/xhigh architects,
-   Luna/low verification watchers and the established effort policy.
-2. Keep loaded repository diffs in the DOM after scrolling and provide bounded
-   **Load all diffs** behavior for native browser Find.
-3. Label the repository remote **Origin**, with GitHub as the only supported
-   provider for commit, comparison and workflow enrichment.
-4. Capture immutable staged and unstaged/untracked repository reviews with the
-   existing review UI and bounded memory/reader use.
-5. Preselect added-member model/effort from role policy while preserving
-   explicit overrides and incomplete-pair validation.
-6. Apply live Codex model and reasoning effort as one draft pair so polling
-   cannot revert the first selection while the second is being changed.
-7. Add the exact reviewed `vpsadmin-webui` source to the vpsAdmin bridge cluster
-   beside the legacy PHP UI, with persistent credentials/session state and an
-   automatically started `newadmin` container.
-8. Make the approved React hostname resolvable through the existing internal
-   aitherdev frontend by preparing one private-zone CNAME and a monotonic SOA
-   serial. Publishing the four shared DNS copies is outside the current
-   aitherdev-only deployment authorization.
-9. Return `files: []` for successful empty staged, unstaged, branch and commit
-   comparisons while accepting legacy `files: null` in the browser during a
-   mixed-version deployment.
-10. Show one repository card per row so the four review actions fit at desktop
-    width, and put Local commits in a native disclosure that starts closed while
-    history continues to load.
-11. Keep capture failures visible outside closed history and preserve an opened
-    disclosure while the same card is retained during details refresh.
+## Exact histories and diffs
 
-Acceptance requires no credential/token exposure, exact model/source pins,
-compatible old manifests and disabled cluster configurations, continued PHP/API
-availability, bounded snapshot behavior, correct boot ordering, an idempotent
-OAuth seed, a clean final history and documented forward recovery. Final long
-builds and the corrected services update follow this review.
+All four local worktrees were clean during this inventory. Complete changed
+paths are in final-diff-inventory.md. Consumer pin successors append to deployed
+8e04f262/45cce0a8 and preserve the Codex 0.159.2 closure. No selected package or
+cluster update is claimed for this follow-up.
 
-## Exact repositories, histories and final diffs
+### dev-workspace
 
-All four feature refs are published and match the clean local heads listed
-below. The complete file inventory is in [final-diff-inventory.md](final-diff-inventory.md).
-These heads are candidates for deployment. Default-branch integration is still
-unapproved; the workspace will need a current-master compatibility/rebase gate
-before any fast-forward integration, while retaining the actual deployed refs.
+Worktree: `worktrees/2026-09-30-portal-review-improvements/dev-workspace`.
+Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`. Head: `618df5530ba378f8b98f9557cdca700367016c11`.
 
-### Generic `dev-workspace`
+38 files changed, 3858 insertions(+), 402 deletions(-)
 
-- Worktree: `worktrees/2026-09-30-portal-review-improvements/dev-workspace`
-- Base: `7c133c562ac51076c1f45af46e180f8bfbabe836`
-- Head: `8019b9b7970d5ae0e57cc530e047979d91632053`
+```text
+f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a team: derive added member settings from role policy
+4f500a50360c7507164de41787ed199a1d8c5183 portal: apply live Codex settings as one draft pair
+8c250986d560b13df7f09deeceaa7e19008aef9f review: retain loaded editors and add bounded Load all diffs
+7ccb6ba350594b69f80675d056b7fa80c496dc67 repository: isolate GitHub origin enrichment
+41c648cd92cb324037778be165e45e17c46bbc75 portal: capture immutable staged and unstaged reviews
+50af66d9cfc1be07dcc4cb084de4887dd97a343c portal: label repository origin link generically
+50586880d5b4e17e060c045dcc992a748f9c7827 test: sample activity before wake dispatch
+3445353c9dd297649052fee9b25bbeb541bcddbc repository review: encode empty comparisons as arrays
+8019b9b7970d5ae0e57cc530e047979d91632053 repository review: keep repository actions visible
+e64a9fda4f5fb3595ce194cc55359ab61f5d8b3a repository review: align overview actions at desktop width
+4a1da3c3d1d099a6b0d309b194bd1e343d8d38c1 test: observe failed Keep open write before rollback
+618df5530ba378f8b98f9557cdca700367016c11 test: cover retained repository review editors
+```
 
-Complete series, oldest first:
+### vpsfree-dev-workspace
 
-1. `f00a0e5d46f5dd0a4707ab23bbfc3eb4a9db755a` — derive added-member settings
-   from role policy.
-2. `4f500a50360c7507164de41787ed199a1d8c5183` — manage live model/effort as one
-   draft pair.
-3. `8c250986d560b13df7f09deeceaa7e19008aef9f` — retain loaded editors and add
-   bounded Load all diffs.
-4. `7ccb6ba350594b69f80675d056b7fa80c496dc67` — separate generic origin data
-   from GitHub-only enrichment.
-5. `41c648cd92cb324037778be165e45e17c46bbc75` — immutable staged and
-   unstaged/untracked captures.
-6. `50af66d9cfc1be07dcc4cb084de4887dd97a343c` — label the repository URL
-   `Origin` while retaining provider-specific GitHub links.
-7. `50586880d5b4e17e060c045dcc992a748f9c7827` — sample the activity counter
-   before dispatching a wake event in the existing Playwright fixture. The
-   fixture predates this initiative; no production behavior changes.
-8. `3445353c9dd297649052fee9b25bbeb541bcddbc` — guarantee an array for empty
-   comparison responses, accept legacy nullish file lists in the browser and
-   add raw HTTP and empty-view regressions.
-9. `8019b9b7970d5ae0e57cc530e047979d91632053` — make repository cards
-   full-width, keep actions outside a closed Local commits disclosure, show
-   capture failures beside the controls and coordinate the cache revisions.
+Worktree: `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`.
+Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`. Head: `362ebd4759d090805cd95a800e7131edb930b604`.
 
-Final diff: 38 files, 3,803 insertions and 393 deletions. Each commit owns one
-product or verification unit. Corrections to clean-filter fixtures and failed
-preview retry behavior were folded into their owning unmerged commits. No obsolete reader,
-snapshot protocol, provider shim or fixup commit remains.
+13 files changed, 1236 insertions(+), 49 deletions(-)
 
-The full browser attempt at `50af66d` passed five cases and failed this fixture
-because its baseline could already include the wake request. The one-line move
-preserves the failure injection and assertions. Log: `/tmp/portal-review-final-5.log`.
-The selected production composition still pins
-`50af66d`/`8e04f262`/`45cce0a8`;
-the architect's accepted assessment in design.md, “Verification fixture
-follow-up and retained consumer pins”, explains why the preceding deployment
-did not select test-only `50586880`. The new API and presentation commits now
-require the deliberate consumer updates recorded in this packet. The selected
-`51i6gp92…` profile remains the rollback generation until the new candidate is
-built and activated.
-The bounded independent general/architecture follow-up at `50586880` has no
-Blocking or Important finding and confirms the seven-commit history and
-no-new-migrations conclusion. Its test-isolation Advisory is accepted: an
-earlier focus activity response could contribute to the shared counter, so a
-future intermittent failure should first settle or label that request. The
-hidden transition aborts pending reads. Declared-environment Node syntax,
-three focused lifecycle runs, all six browser cases, the generic flake check
-and exact-head CI have now passed at `50586880`. No product change is required
-by this Advisory. The new follow-up checks must cover both later commits.
+```text
+1d76d6032b40cd5fb035c26a6b9c94c4aa48e109 devcluster: add optional React Web UI alongside PHP
+67bfbbd653694e13e8d5aee53ef0f8e283694bf5 flake: select portal review improvements runtime
+e0f98557d688d8561be97d3dc6b1964a0304e383 flake: pin generic repository origin label correction
+8e04f2626a3abd492768f15ae8d843c8e527f2cd devcluster: start the React Web UI container on boot
+361be9c712b63e16bda1866c06fb40805c16ce7f flake: select repository review follow-up
+362ebd4759d090805cd95a800e7131edb930b604 flake: select repository review action layout fix
+```
 
-### vpsFree `dev-workspace` extension
+### workspace
 
-- Worktree:
-  `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`
-- Base: `6a0a2eb873e7cb376092c74bdf82fc2c51c349da`
-- Head: `361be9c712b63e16bda1866c06fb40805c16ce7f`
+Worktree: `worktrees/2026-09-30-portal-review-improvements/workspace`.
+Base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`. Head: `aca3b39d400b5d1d6d51e42550421f8362684ee0`.
 
-Complete series, oldest first:
+8 files changed, 99 insertions(+), 44 deletions(-)
 
-1. `1d76d6032b40cd5fb035c26a6b9c94c4aa48e109` — optional React WebUI cluster
-   service, credential lifecycle, OAuth seed, edge/private proxying, immutable
-   source provenance and tests.
-2. `67bfbbd653694e13e8d5aee53ef0f8e283694bf5` — select the reviewed generic
-   portal runtime.
-3. `e0f98557d688d8561be97d3dc6b1964a0304e383` — select the final generic
-   Origin-label refinement.
-4. `8e04f2626a3abd492768f15ae8d843c8e527f2cd` — start the optional React
-   container on boot and assert enabled ordering and disabled absence.
-5. `361be9c712b63e16bda1866c06fb40805c16ce7f` — select generic
-   `8019b9b7` without changing extension behavior or unrelated inputs.
+```text
+e00505e30c7e1a0e982534a3b8c3afed5152c24c policy: select GPT-6.1 Sol for new team roles
+bcba17a00335874eaa8ffe664a279637a0ab01ee vpsadmin: enable the React Web UI in the dev cluster
+99e387511cd9d6beac2b9cbb4a7c49306b394ab5 flake: select portal and React Web UI runtime
+0e00eab555f9a41136f13cad0f82662f5c2f717b flake: pin Codex 0.159.2 for workspace package
+45cce0a87d3f0c8d2b404ce7188d8fa0d9098154 flake: select repository origin label and React boot fix
+9818b805a34394c73c6ee9799f1c268c21c156d4 flake: select repository review follow-up
+aca3b39d400b5d1d6d51e42550421f8362684ee0 flake: select repository review action layout
+```
 
-Final diff: 13 files, 1,236 insertions and 49 deletions. Cluster behavior and
-dependency selection remain separate for review/revert. The generated nested
-cluster lock stays absent so unrelated vpsAdminOS/status inputs retain their
-existing resolution contract; the root lock owns exact API/WebUI/runtime pins.
+### vpsfree-cz-configuration
 
-The live cluster exposed that the first implementation left
-`container@newadmin.service` linked but not wanted by `machines.target`. The
-final tree sets `containers.newadmin.autoStart = true` and asserts enabled
-autostart, seed ordering and disabled absence. This focused post-deployment fix
-is separate: the deployed `1d76d60`/`67bfbbd` chain must remain available as
-actual consumption provenance. A conflicting consolidation produced `11161424`
-with an identical final tree; its local and remote refs were restored to
-`8e04f262` using checked updates. No selected package used the consolidated
-chain. Earlier unsupported Nix option and mutable provenance-sidecar approaches
-were removed before the first deployment. No unused boot compatibility path
-remains.
+Worktree: `worktrees/2026-09-30-portal-review-improvements/vpsfree-cz-configuration`.
+Base: `ee99382c8c448a15347052a6964030f838cb0381`. Head: `d24b251531a9a482b8f1b5dd81540da85981189f`.
 
-### Coordination workspace policy and site configuration
+1 file changed, 2 insertions(+), 1 deletion(-)
 
-- Worktree: `worktrees/2026-09-30-portal-review-improvements/workspace`
-- Review base: `034eb08ea56e75f8a582179b8c13bd9b3109d29e`
-- Head: `9818b805a34394c73c6ee9799f1c268c21c156d4`
+```text
+d24b251531a9a482b8f1b5dd81540da85981189f internal-dns: add the development React Web UI alias
+```
 
-Complete series, oldest first:
+## Quick evidence and documentation
 
-1. `e00505e30c7e1a0e982534a3b8c3afed5152c24c` — exact GPT-6.1 Sol policy,
-   assertions and policy documentation.
-2. `bcba17a00335874eaa8ffe664a279637a0ab01ee` — enable the bridge-only React
-   site/domain.
-3. `99e387511cd9d6beac2b9cbb4a7c49306b394ab5` — select the extension, generic
-   portal, API and WebUI graph.
-4. `0e00eab555f9a41136f13cad0f82662f5c2f717b` — select `llm-agents`
-   `af40d966` and its exact `bun2nix`/`nixpkgs` closure for Codex 0.159.2.
-5. `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154` — select final generic
-   `50af66d9` and extension `8e04f262` heads while preserving the Codex closure.
-6. `9818b805a34394c73c6ee9799f1c268c21c156d4` — select extension
-   `361be9c7` and generic `8019b9b7` while retaining the exact Codex 0.159.2
-   `llm-agents`, `bun2nix` and `nixpkgs` closure.
+Bounded alignment correction `e64a9fda` follows the demonstrated desktop
+action-row failure. It changes two scoped CSS rules and coordinates cache
+keys/fixtures in 11 paths (18 additions, 13 deletions); the cluster grid and
+repository one-column selectors are unchanged. Normal-host
+`PORTAL_BROWSER_TEST=1 CGO_ENABLED=0 go test -count=1 -run
+"TestQuestionBrowser|TestRepositoryBrowserNavigationContracts" ./internal/web`
+passed in 84.274s with the patch before commit. The dedicated log/status are
+`repository-css-focused-browser.log` and `.status`; the harness runs all six
+browser fixtures, including Chromium and Firefox presentation checks. Member
+Node syntax and staged/final diff checks pass. No labels or public contract
+changed, so the existing README/portal-guide explanations remain accurate.
 
-Final diff: 8 files, 99 insertions and 44 deletions. Policy, site enablement,
-initial composition, Codex runtime and final pin refresh are independently
-reviewable. The final lock retains exact generic `8019b9b7`, extension
-`361be9c7` and `llm-agents` `af40d966`; the final pin commit contains no
-unrelated node change.
+The earlier long-check batch's zero aggregate status is not proof of every
+stage: its log includes browser failures and an invalid package attribute.
+Do not use its footer as new-head evidence. Exact committed consumer heads are
+extension362ebd4 and workspaceaca3b39d. Normal hooks, parse, policy Ruby tests,
+whitespace and generated-net-lock checks passed; only the two intended nodes
+change in the workspace, with the approved Codex closure byte-identical.
+Candidate drvPath evaluation passed at
+`/nix/store/fw0nc5x05b80x22fcgy71xgd4abbn9vs-dev-workspace-0.2.0.drv`;
+this is not a build.
 
-### `vpsfree-cz-configuration`
+Lead declared Nix focused Go HTTP/template/navigation tests passed (1.665s),
+including raw array shape for empty committed/staged/unstaged responses and
+submodule-only metadata; active/archived controls and existing Origin labels.
+App/review/live/presentation JS syntax and the repository browser contract passed.
+Implementer direct focused Go passed (6.426s); final Node syntax on app/review and
+four changed CJS fixtures, gofmt and full 50586880..8019b9b7 diff checks passed.
+The last fixture-only locator refinements were syntax-checked. Real Playwright
+and full package checks were pending at that initial checkpoint; later exact
+results are recorded in the current real-editor section below.
 
-- Worktree:
-  `worktrees/2026-09-30-portal-review-improvements/vpsfree-cz-configuration`
-- Base: `ee99382c8c448a15347052a6964030f838cb0381`
-- Head: `d24b251531a9a482b8f1b5dd81540da85981189f`
+The main-agent writing pass covers README.md, docs/workspace-portal.md and visible
+strings. Owning docs describe empty-array compatibility, eager history, retained
+native disclosure, visible failures and one-column presentation. Rollout evidence
+and prepared steps belong in rollout.md; no site-specific procedure was added to
+generic product docs. test/repository_browser.cjs changes its hand-built markup
+and assertions to the real closed disclosure/single-column contract.
 
-Complete series:
+## Public contracts, consumers and recovery
 
-1. `d24b251531a9a482b8f1b5dd81540da85981189f` — add
-   `newadmin.aitherdev.int` as one CNAME to the existing development frontend
-   and advance the private-zone serial from `2026092800` to `2026093000`.
+Generic dev-workspace owns API/browser behavior. Extension lib.mkPackage consumes
+that runtime; workspace consumes the extension with role/site catalogs. The
+current lock chain is generice64a9fda / extension362ebd4 / workspaceaca3b39d.
+Approved llm-agents af40d966, bun2nix07a5bfc8 and nested nixpkgsf45c6f04 remain
+exact, as do codex-web d210d3f7, API5c76e329 and WebUI534caa83. Verify these pins
+against actual lock JSON; no current source substitution is approved.
 
-Final diff: one file, two insertions and one deletion. No public DNS, input,
-system-host or deployment-target code changes. The commit deliberately prepares
-the shared-zone candidate without publishing it.
+New backend/old client gets files:[]; new client/old backend tolerates null.
+No persisted format changes. Browser/server assets deploy together through the
+user profile, followed by full reload to acquire new card markup. Snapshots
+remain process-local and recapture after restart/eviction; committed links stay
+durable. Recovery is supported journal-aware retry/newer compatible forward
+switch; older profiles are refused. Do not update system config, cluster services
+or shared DNS for this portal-only follow-up.
 
-### Read-only exact dependencies
+## Complete-history and migration provenance
 
-- `codex-web`: `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`
-- `vpsadmin`: `5c76e3290481b297dcd0baa76d246133f0353d8f`
-- `vpsadmin-webui`: `534caa83a5f97d2b40b4a126886649b14dc9e8d3`
+Externally consumed generic41c648c/50af66d, extension1d76d603/67bfbbd/e0f98557/8e04
+and workspace0e00eab5/45cce0a8 ancestors are preserved. New generic behavior units
+and consumer pins are separately reviewable appended commits. The optional50586880
+fixture correction remains standalone because its fixture base was already merged.
+Superseded clean-filter reader, mutable provenance sidecar, unsupported Nix option
+and conflicting consolidated chain were removed before final consumption. Review
+this conclusion against the complete series; do not infer integration approval.
 
-Their session worktrees are clean and have no initiative diff. The WebUI
-worktree exists to exercise the documented local-source override during the
-final cluster services update.
+No database or persisted-format migrations are authored in these four feature
+ranges. Runtime OAuth seed is not a migration. The selected API5c76e329 advances
+old packaged8d0ccafd across nine already-merged upstream migrations:
+20260818115900, 20260818120000, 20260821120000, 20260821210000, 20260823100000,
+20260909170000, 20260914120000, 20260914180000, 20260914190000. Their production
+release/deployment/external-use status is unknown. 20260823100000 supplies OAuth
+is_default/index. Fresh selected-schema development cluster use is supported;
+older-API database rollback remains unproved. DNS serial updates are forward-only
+protocol state, not a schema migration.
 
-## Migration and obsolete-history inventory
+Accepted existing Advisories: duplicated exact WebUI fallback pin must track the
+Nix source; aggregate deployment helper rejects workspace/config generic equality
+at the scoped mixed graph, with unchanged host module and separate reviewed
+host/profile checks. The prior browser wake-counter causal-isolation Advisory is
+bounded and its three focused/full-six-case verification passed at50586880.
 
-There are **no new database migrations or persisted-format migrations** in the
-four changed branches. The React client uses the OAuth schema already present
-in selected vpsAdmin revision `5c76e329`. Its nine upstream API migrations
-since the former selected revision are `20260818115900`, `20260818120000`,
-`20260821120000`, `20260821210000`, `20260823100000`, `20260909170000`,
-`20260914120000`, `20260914180000` and `20260914190000`. They are already
-merged in vpsAdmin; production release, deployment and external-use status is
-unknown. This initiative initializes a disposable development database at the
-selected schema and does not claim rollback to an older API after those
-migrations run.
+## Coordination and remaining gates
 
-The runtime OAuth seed is idempotent and is not a schema migration. Repeated
-live execution completed successfully. The DNS serial change is required
-protocol state; after publication, correction/removal must use a newer serial
-instead of rolling the zone file back to a lower serial.
+Implementer0 authored the generic code and the final extension pin. The earlier
+361be9c7/9818b805 publication came from a concurrent writer; the alignment
+cascade now has explicit ownership. This lead generated locks, committed the
+member-prepared workspace unit through its writable shared index, and published
+362ebd4/aca3b39d. The current graph is clean and retains the approved Codex closure.
+No profile transition, cluster operation or DNS publication occurred in this unit.
 
-No obsolete unapplied implementation remains. Unsupported `requiresMountsFor`
-use, mutable provenance sidecar, early Git porcelain/status snapshot selection
-and implicit failed-preview retry were removed before deployment. The separate
-Origin-label and boot-fix commits remain because they correct the externally
-consumed composition. The final workspace consumer amendment replaces only an
-unselected pin commit, preserving deployed parent `0e00eab5`.
+Affected-lane request: inspect the alignment fix and pin successors directly,
+reusing the completed four-lane review as context. Recheck general/architecture
+and exact consumer compatibility; rerun another lane only if its concern changed.
+Explicitly conclude final whole-history and migration disposition for the complete
+10/6/7/1 series. 8019b9b7 and its consumer pins were already published and built
+before the layout failure was discovered; preserving those consumed artifacts
+motivates the focused successors. No new abstraction, contract or migration was
+introduced. Default-branch integration compatibility remains a later approval gate.
 
-The follow-up adds no migration or persisted format. Its `files: null`
-compatibility path is intentional for a new browser talking to the currently
-deployed older backend and is bounded to nullish values; arbitrary values still
-fail. The test-only `50586880` commit remains as published and independently
-verified history. Commits `3445353c` and `8019b9b7` introduce the final response
-contract and card behavior directly, so there is no superseded follow-up API,
-markup or layout path to consolidate.
+After review findings are resolved/accepted, a fresh Luna/low watcher verifies
+focused/full browser suites and exact-head generic/extension/workspace checks and
+full candidate build/protocol/catalog. Then perform the supported guarded profile
+rollout and live empty-comparison/card checks when transition ownership is clear.
+Shared DNS publication still requires explicit four-target approval; default
+integration remains separately unapproved. No session lifecycle action is requested.
 
-## Commit split and deliberate boundaries
+Historical read-only SSH remote verification at the preceding checkpoint confirmed
+8019b9b7970d5ae0e57cc530e047979d91632053,
+361be9c712b63e16bda1866c06fb40805c16ce7f and
+9818b805a34394c73c6ee9799f1c268c21c156d4. No push was performed by this check.
 
-- Behavior, site configuration, generated dependency selection and DNS remain
-  separate commits because they have different owners, verification and revert
-  paths.
-- GitHub is the only enrichment provider. Generic Origin naming does not add
-  another forge.
-- Existing team members retain saved settings; only new defaults change.
-- Snapshot data is process-local, immutable, quota bounded and evictable. It
-  does not persist repository content or invoke filters/textconv/external diff.
-- Native browser Find searches loaded DOM content; Load all does not implement
-  a separate search system.
-- Unstaged gitlinks expose frozen, bounded, unverified metadata without claiming
-  clean/dirty state.
-- React remains bridge-only and separate from PHP. Disabled configurations add
-  no new container/unit. Recovery can disable React while retaining the
-  compatible API/schema, credentials and BFF state.
-- The workspace profile transition is forward-only through the guarded helper.
-- Shared internal DNS publication is not authorized by the user's aitherdev
-  deployment direction. The exact pending consumers are
-  `cz.vpsfree/containers/prg/int.ns1`,
-  `cz.vpsfree/containers/brq/int.ns1`,
-  `cz.vpsfree/containers/prg/int.mon1` and
-  `cz.vpsfree/containers/prg/int.mon2`.
-- No default-branch integration is authorized.
+Completed alignment-review result: no Blocking or Important finding at
+e64a9fda/362ebd4/aca3b39d/d24b2515, with explicit complete-history/no-new-migration
+conclusions. Normal SSH feature publication selected 362ebd4/aca3b39d and read-only
+remote verification confirms e64a9fda and aca3b39d. Preserve the remaining exact-head
+checks/profile gate and the unapproved DNS/default-integration boundaries.
 
-## Cross-project ownership and compatibility
+## Keep open fixture affected-lane review (completed)
 
-- `aither64/dev-workspace` owns portal APIs, manifests and browser behavior;
-  consumers are the vpsFree extension and final workspace package.
-- `vpsfreecz/dev-workspace` owns the cluster provider CLI, Nix interface,
-  credential/provenance behavior and status contract; the workspace package is
-  its consumer.
-- `vpsfreecz/vpsadmin-webui` owns the frontend/BFF/module contract; this change
-  consumes exact reviewed source without editing it.
-- `vpsfreecz/vpsfree-cz-configuration` owns the internal zone. Four independent
-  authoritative consumers render that zone with their own FQDN. Cluster guest
-  dnsmasq already has the hostname but does not publish host/VPN resolution.
+At the completed Keep open review, generic verification head was
+`4a1da3c3d1d099a6b0d309b194bd1e343d8d38c1`, direct parent runtime `e64a9fda`; extension362/workspaceaca/configd24 remain
+unchanged and clean. Review the complete 11/6/7/1 series above and inventory,
+with general and architecture affected-lane focus on the single optional CJS
+fixture correction. Prior complete risk/scope conclusions remain context, not
+an instruction to approve. Confirm whole-history and no-new-migration conclusions.
 
-Portal interfaces are additive and old manifests remain valid. Staged/unstaged
-comparison IDs are ephemeral and old runtimes ignore them. The enabled cluster
-path requires the selected compatible API/WebUI pair; the disabled path retains
-old PHP/API behavior. Autostart changes only enabled services-VM boot wiring.
-No coordinated vpsAdminOS node update is required. The one-record DNS change is
-backward compatible, with normal one-hour positive/negative caching after
-authorized publication.
+The failed full Go/browser run is `/tmp/portal-review-e64-final-proper/01-go-browser.log`
+(status 1): Firefox `uncheck()` required a temporary unchecked state that correct
+production rollback had already restored. This commit checks initial held state,
+registers the exact POST response before a normal click, asserts hold:false/503,
+and preserves rollback plus error/diagnostic checks. No product, cache, API,
+module, lock or lifecycle edit. Architect design.md:1755 records the retained
+runtime graph and source/derivation identity distinction. No owning product
+documentation change is useful for this optional test correction.
 
-Successful comparison responses now make the existing `files` array contract
-explicit for empty results. An old browser works with the new backend. The new
-browser treats a null or missing files field from the deployed backend as an
-empty comparison and rejects other malformed shapes. The portal server and
-embedded browser assets deploy as one package, while this tolerance covers open
-tabs and forward recovery. Captures remain process-local and are not persisted;
-switching the profile retains the existing 409/recapture recovery behavior.
+Quick Node syntax and whitespace passed; the identical precommit patch passed
+both Chromium and Firefox in the Nix environment, true status0, elapsed36s,
+log `/tmp/portal-review-e64-hold-fixture-focused.log`. At that review, the postcommit full browser-enabled Go suite and generic
+flake/CI checks were pending. They subsequently passed as recorded in the current
+real-editor section below. Consumer evidence belongs to362/aca and the built
+`bpzvfhdn…` package; no consumer cascade is planned for this fixture.
 
-## Documentation
+Completed affected-lane result at4a1da3c3/362/aca/d24: retained reviewer0 completed
+independent general/architecture review and full11/6/7/1 history/migration
+conclusions. No Blocking, Important or new Advisory. Optional fixture correction
+is proportionate and preserves assertions; retained runtime pins are sound,
+without a store/source identity equivalence claim. Remaining checks and guarded
+profile/live proof still gate readiness. No default integration or DNS authority.
 
-Lasting behavior is documented in:
+## Real-editor fixture affected-lane request (current)
 
-- generic `docs/workspace-portal.md`;
-- extension `README.md` and `dev-clusters/vpsadmin/README.md`;
-- workspace `AGENTS.md` and `docs/agent-teams.md`.
+Review generic verification head `618df5530ba378f8b98f9557cdca700367016c11`,
+parent `4a1da3c3d1d099a6b0d309b194bd1e343d8d38c1`. Extension `362ebd4`, workspace
+`aca3b39d` and configuration `d24b2515` remain clean and unchanged; runtime input
+remains `e64a9fda`. The complete 12/6/7/1 series and final 38/13/8/1 file inventory
+above are current. Use general and architecture affected lanes, preserving prior
+whole-branch risk/scope conclusions unless a new concern appears. Explicitly
+conclude whole history and migration disposition; no integration or deployment
+approval follows.
 
-Design and verification rationale is in `work/2026-09-30-portal-review-improvements/design.md`.
-Current status is in `state.md`; executed deployment evidence is separate in
-`rollout.md`. The Origin label uses the established provider terminology and
-needs no extra guide paragraph. No KB navigation workflow or screenshot text
-changed. User-visible portal wording received the required writing pass before
-commit.
+Only `test/repository_browser.cjs` changes (40 additions, 7 deletions). It replaces
+obsolete eight-editor eviction and collapse-removal expectations with explicit
+Load all of 30 files, 30/30 status, and the same first editor/content after
+loading and scrolling away/back. Collapse hides the loaded editor; same-layout
+reopen preserves its node/content without another file fetch. Layout-choice,
+syntax, boundary and unrelated checks remain. The standalone harness is outside
+runtime embeds and the optional QuestionBrowser six-fixture list. No product,
+cache, API, module, lock or migration changes. Architect design.md:1844 records
+the retained-pin disposition and corrected collapse clause. Owning product docs
+already describe retention; no new product documentation is useful here.
 
-## Quick verification before review
+Quick Node syntax, staged/range whitespace and clean status passed. The identical
+precommit patch passed the complete Chromium harness with 84 calls, status 0,
+elapsed 29s in `/tmp/portal-review-real-editor-retention-v3.log`. Its exact candidate
+asset output `3g3bvqg…` is retained by `/tmp/portal-review-real-editor-assets-gc-root`.
+The preceding early timeout was investigated: absent explicit assets caused
+fixture 404 responses and prevented editor import. Deletion cause/time is unknown.
+The root restores the original candidate assets without changing inputs.
 
-- Generic final head: focused Go repository-review and template tests pass,
-  including raw empty staged, unstaged, branch and commit JSON responses. The
-  mounted browser contract and Node syntax checks pass for all changed scripts
-  and fixtures. `git diff --check` passes and the worktree is clean. Earlier
-  generic suites through `50586880` remain valid; the new real Playwright and
-  full flake checks intentionally wait for this review.
-- Extension final tree: enabled and disabled full cluster-config evaluations
-  passed with the autostart/unit assertions. Nix parsing, exact generic pin,
-  `git diff --check` and equality with the validated startup-fix final
-  tree pass. Earlier focused runner/status/seed suites and packaged check passed
-  at the owning implementation before the autostart correction.
-- Workspace final head: `git diff --check`, flake metadata and exact
-  generic/extension/llm-agents pin assertions pass. The lock selects generic
-  `8019b9b7` and extension `361be9c7` while retaining the previously validated
-  Codex 0.159.2 closure. Earlier policy/deployment contract tests remain valid;
-  the new exact package build waits for this review.
-- Configuration final head: four rendered private zones for
-  `ns1.int.prg.vpsfree.cz`, `ns1.int.brq.vpsfree.cz`,
-  `mon1.int.prg.vpsfree.cz` and `mon2.int.prg.vpsfree.cz` pass
-  `named-checkzone vpsfree.cz`. The diff has one record, serial `2026093000`,
-  no duplicate, clean whitespace and no other file.
-- Every changed worktree is clean and each remote feature ref equals its local
-  head.
+Reuse exact `4a1da3c3` full Go/browser (172s), generic flake (329s) and CI
+36854636430; `aca3b39d` workspace flake (259s), `bpzvfhdn…` build (7s)/protocol (3s),
+and extension `362ebd4` CI 36850019822 with cluster smoke. Fresh exact `618df553`
+Node harness and CI follow this review. No consumer cascade or duplicate full
+local Go/flake/build/probe stream is needed solely for this fixture. Guarded
+profile rollout and live new UI checks remain. Shared DNS and default-branch
+integration are separately unapproved.
 
-The final-head generic/extension/workspace long package checks and four DNS
-consumer builds intentionally wait for this mandatory review.
+Current independent result at `618df553` / `362ebd4` / `aca3b39d` / `d24b2515`:
+retained reviewer0, saved gpt-6-sol/xhigh/read-only, completed general/architecture
+review and explicit whole 12/6/7/1 history/migration conclusions. No Blocking or
+Important finding; prior risk/scope conclusions remain unchanged. Accepted test
+Advisory: immediate post-reopen request-count sampling could miss a later async
+request. Reviewed production returns from retained editor/content without a
+fetch; future scheduling changes should strengthen the negative assertion. This
+does not block final checks. Generic618 was published normally over SSH; exact
+CI36860394508 and the committed-head Node harness now have a fresh watcher.
 
-## Existing live evidence and remaining deployment gates
-
-The previous `41c648c`/`67bfbbd`/`0e00eab5` composition is active. It proves:
-
-- Codex 0.159.2 and exact `gpt-6.1-sol` availability;
-- one atomic live model/effort write and retained readback;
-- immutable staged and unstaged/untracked endpoint captures;
-- bridge cluster boot, exact pinned WebUI provenance and PHP coexistence;
-- strict-CA TLS, expected certificate names, React static/config/health,
-  loopback-only nginx/BFF, nginx validation and API CORS;
-- real OAuth login/callback, one-use state rejection, authenticated API access,
-  provider token refresh after bounded disposable-session expiry, stable
-  session identity across BFF restart, two seed reruns, logout and revocation.
-
-The live start also exposed the missing newadmin autostart edge, which the final
-branch corrects. A manual diagnostic start is not proof of the final boot
-behavior. After review and long checks, the supported services update must
-prove `machines.target` enablement, active container state, retained session and
-clean local WebUI-source provenance. The guarded user-profile update must expose
-the final Origin label. Ordinary hostname resolution remains pending shared-DNS
-publication approval; current service checks use explicit resolution to the
-known bridge IP.
-
-## Review focus
-
-In addition to normal lane checks, inspect:
-
-- snapshot selection, ownership, quota/admission, symlink/race/filter avoidance,
-  reader cleanup and immutable comparison behavior;
-- dirty model/effort draft preservation across polling, failed writes,
-  restore/cancel and authorization/idle-gate enforcement;
-- role defaults, explicit override validation and retained roster settings;
-- old manifest/API compatibility and GitHub-only enrichment boundaries;
-- credential permissions/atomicity, no secret path through Nix/store/status/
-  logs, seed collision/idempotence and callback/session protections;
-- public/private proxy trust, loopback listeners, TLS authority and disabled
-  React isolation from PHP/API;
-- selected-result provenance fail-closed behavior and exact consumer pins;
-- newadmin `autoStart`, `machines.target` membership and seed Requires/After in
-  enabled configurations, plus complete absence when disabled;
-- DNS owner/type/target, monotonic serial, four actual consumers, caching and
-  forward-only correction after publication;
-- commit splits and the explicit conclusion that no obsolete history or
-  migrations remain;
-- empty comparison array serialization, legacy-null tolerance, malformed-value
-  rejection and the absence of preview requests for an empty result;
-- actions remaining usable while Local commits is closed, background history
-  loading, disclosure state retention on card refresh and reset on full reload;
-- the repository-only grid override preserving the separate cluster-card grid,
-  plus cache-key coordination for every changed script and stylesheet.
+Post-review verification passed at committed head618df553: complete Chromium
+real-editor harness status0/49s, exact generic CI36860394508 success, batchstatus0
+with separate artifacts in `/tmp/portal-review-final-618df553/`. Reused earlier
+passed stages retain their exact revision attribution above. Independent review
+clears branch readiness; guarded profile activation/live new UI checks remain.
+The conversation is currently working and selected profile remains51i. No DNS
+publication, default integration or session lifecycle action is authorized.

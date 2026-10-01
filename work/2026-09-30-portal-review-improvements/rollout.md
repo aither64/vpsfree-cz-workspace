@@ -4,39 +4,45 @@ This record describes the individual aitherdev rollout for the portal review
 initiative. Reusable deployment and recovery behavior remains in the owning
 project documentation.
 
+## Current follow-up verification
+
+The selected portal runtime is generic `e64a9fda` / extension `362ebd4` /
+workspace `aca3b39d`, package `bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb`. Generic final
+verification head `618df553` adds optional fixture corrections without a
+consumer cascade. Independent review, full Go/browser, generic/workspace flakes,
+candidate build/protocol, real-editor harness, exact CI and live acceptance all
+passed. Shared DNS publication and default integration remain unapproved.
+
 ## Selected revisions
 
-- Configuration: `ee99382c8c448a15347052a6964030f838cb0381`
-- Deployed workspace composition: `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154`
-- Deployed generic portal: `50af66d9cfc1be07dcc4cb084de4887dd97a343c`
-- Deployed extension: `8e04f2626a3abd492768f15ae8d843c8e527f2cd`
+- Unselected configuration candidate: `d24b251531a9a482b8f1b5dd81540da85981189f`
+- Deployed workspace composition: `aca3b39d400b5d1d6d51e42550421f8362684ee0`
+- Deployed generic portal: `e64a9fda4f5fb3595ce194cc55359ab61f5d8b3a`
+- Deployed extension: `362ebd4759d090805cd95a800e7131edb930b604`
 - Codex package input: `af40d966859ec4075ecc172dbb39e53f474dc5d9`
 - vpsAdmin API: `5c76e3290481b297dcd0baa76d246133f0353d8f`
 - vpsAdmin WebUI: `534caa83a5f97d2b40b4a126886649b14dc9e8d3`
 
-The deployed runtime revisions are generic `50af66d9`, extension `8e04f262`
-and workspace `45cce0a8`. Configuration `d24b2515` remains an unselected DNS
-candidate. Generic final branch head
-`50586880` is a separately reviewed verification-fixture correction with
-unchanged runtime source; the architect and reviewer accepted retaining the
-existing runtime pins and built package. The Origin-label and React-container
-autostart corrections are selected in the user profile and cluster. The
-internal-DNS candidate is committed but publication to its four shared
-consumers remains unapproved.
+The deployed runtime revisions are generic `e64a9fda`, extension `362ebd4` and
+workspace `aca3b39d`. Configuration `d24b2515` remains an unselected DNS
+candidate. Generic final branch head `618df553` contains only separately
+reviewed verification-fixture corrections, so the deployed runtime keeps its
+reviewed generic input. The Origin-label and React-container autostart
+corrections are selected in the user profile and cluster. The internal-DNS
+candidate is committed but publication to its four shared consumers remains
+unapproved.
 
-Mandatory final review found no Blocking or Important issue at those four
-heads or in the bounded fixture follow-up. Final generic, extension and
-workspace flake checks pass at the runtime revisions, and the final
+Mandatory final review found no Blocking or Important issue at the current
+heads or in the bounded fixture follow-ups. Final generic, extension and
+workspace flake checks pass at their recorded revisions, and the selected
 workspace package is
-`/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`. Build-only
+`/nix/store/bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb-dev-workspace-0.2.0`. Build-only
 evaluation also passes for each of the four exact internal-DNS consumers.
 
-The optional fixture correction at generic `50586880` passed its independent
-follow-up review, declared Node syntax, three focused lifecycle runs, all six
-browser cases, generic flake checks and exact-head CI. The retained extension
-`8e04f262` also passed the complete rooted packaged smoke. The unrooted attempt
-was interrupted by host GC, as proved by its journal; the rooted retry needed
-no source change. Detailed results and log paths are in [state.md](state.md).
+The optional fixture corrections through generic `618df553` passed independent
+follow-up review, Node syntax, focused browser runs, generic flake checks and
+exact-head CI. Extension `362ebd4` also passed the complete packaged cluster
+smoke. Detailed results and log paths are in [state.md](state.md).
 
 ## Executed system and profile rollout
 
@@ -133,16 +139,75 @@ Dry activation and publication require explicit approval for these exact four
 shared hosts. That approval request is pending. Building and validating these
 generations did not publish the zone.
 
-## Repository-review follow-up prepared on 2026-10-01
+## Repository-review follow-up stages on 2026-10-01
 
 The next portal candidate fixes empty comparison responses and presents each
 repository as a full-width card with a closed Local commits disclosure. Its
-accepted brief is in design.md, “Approved repository-review follow-up”. The
-generic patch, appended consumer pins, independent review and exact-candidate
-checks are pending. The preceding `51i6gp92…` profile remains selected.
+accepted brief is in design.md, “Approved repository-review follow-up”. Generic
+`8019b9b7`, extension `361be9c7` and workspace `9818b805` are committed,
+published and independently reviewed with no Blocking or Important findings.
+At this initial checkpoint, exact-candidate long checks and profile transition
+were pending. The preceding `51i6gp92…` profile remained selected.
+
+This lead turn observed another writer perform the publication and downstream
+pin commits while implementer0 authored the two generic code commits. The
+immutable graph and approved Codex closure were verified; coordination of the
+remaining verification/transition owner was pending at that checkpoint.
+Publication alone did not select a new profile.
+
+The demonstrated desktop action-row failure is corrected by generic `e64a9fda`.
+The dedicated normal-host six-fixture browser/navigation run passed in 84.274s
+before commit. Extension `362ebd4` and workspace `aca3b39d` now select that fix;
+their generated lock diffs preserve the approved Codex closure. This lead owns
+that final cascade and the remaining candidate verification/profile rollout.
+Independent affected-lane review passed at e64/362/aca; exact candidate checks
+were then pending. Generic verification head `4a1da3c3` added the independently
+reviewed optional Keep open fixture correction and leaves those runtime pins
+unchanged. Extension CI at362 passed both flake checks and packaged cluster
+smoke. The final literal batch has separate stage exit-status records in
+`/tmp/portal-review-final-4a1da3c3/` and stops at the first failure.
+The earlier batch's zero status is not an all-stage pass: browser failures and
+an invalid package lookup are logged, as reconciled in state.md.
 
 Deploy this follow-up through the supported user-profile transition after its
 checks pass. Reload the browser to acquire the new markup and versioned assets,
 then verify empty staged/unstaged and committed views, visible action errors,
 single-column layout and disclosure retention during status refresh. Existing
 cluster services and shared DNS are outside this portal-only rollout.
+
+The final literal batch passed full Go/browser, generic and workspace flakes,
+candidate build and protocol checks before the standalone editor harness exposed
+obsolete fixture expectations. Commit `618df553` corrects only that harness;
+independent affected-lane review and complete history/migration conclusions
+passed with no Blocking or Important finding. Its committed-head harness has
+now passed. Fresh exact generic CI 36860394508 remains under watcher observation.
+The exact asset output is rooted separately from the package because the package
+embeds the assets and need not retain their build output. No profile activation
+has occurred during these checks.
+
+Final committed-head real-editor harness at618 passed in49s and exact generic
+CI36860394508 concluded success. Separate evidence is in
+`/tmp/portal-review-final-618df553/`; batchstatus0,elapsed303s. The normal candidate
+switch command and forward recovery conditions are in state.md Next actions.
+Run it only when the normal idle guards pass. Do not infer activation from the
+checks: selected profile is still51i; live new UI acceptance follows selection.
+
+## Executed repository-review follow-up activation
+
+After the bound conversation became idle, the guarded candidate switch ran from
+clean workspace head `aca3b39d` and selected package
+`bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb`. A fresh Luna/low observer reported exit 0
+after 88 seconds. The transient user unit finished successfully, the portal
+restarted as PID 2031444, and the selected package includes Codex 0.159.2.
+
+Live staged and unstaged POSTs for the vpsadmin repository in
+`2026-09-23-storage-redesign` both returned HTTP 200 with `files: []` and
+zero-file statistics. Chromium acceptance against the live router passed with
+no page errors and confirmed one repository per row, all four desktop actions
+on one line, no narrow-screen overflow, collapsed history defaults and reload
+reset, retained disclosure state during refresh, Origin links, and the Load all
+diffs control. The final browser run exited 0 in 8.8 seconds.
+
+No configuration generation was selected and no shared DNS zone was published
+by this profile-only rollout. No feature branch was integrated into a default
+branch.

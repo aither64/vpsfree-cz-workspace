@@ -6,7 +6,27 @@ lifecycle: active
 
 ## Status
 
-- Phase: long verification of the reviewed repository-review follow-up. Generic
+- Phase: deployed and verified; branches are ready, awaiting merge approval.
+  Implementation, independent review, long verification and live acceptance are
+  complete. No default-branch integration is authorized.
+- The selected user profile is exact package `bpzvfhdn…`, built from workspace
+  `aca3b39d` with generic runtime `e64a9fda`, extension `362ebd4` and Codex
+  0.159.2. The guarded switch completed with exit status 0 in 88 seconds. The
+  portal restarted successfully as PID 2031444.
+- Live acceptance on `2026-09-23-storage-redesign` confirms staged and unstaged
+  empty comparisons encode `files` as arrays and render without a page error.
+  Six repositories stack one per row; all four desktop actions share one row;
+  narrow layout does not overflow; Local commits starts closed, stays open during
+  refresh and closes again after reload; Origin and Load all diffs are visible.
+- Shared DNS publication still needs explicit approval for its four targets.
+- Independent reviewer0, saved gpt-6-sol/xhigh/read-only, completed the affected
+  general/architecture and exact pin compatibility review at e64a9fda/362ebd4/
+  aca3b39d/d24b2515. No Blocking or Important finding. It explicitly confirms
+  coherent complete 12/6/7/1 histories, preserved consumed ancestry, no obsolete
+  unapplied approach or transitional migration, and no new database/persisted
+  migration. Prior scope/security and upstream nine-migration provenance remain
+  unchanged. The stale-head documentation Advisory is reconciled below.
+- Reviewed repository-review follow-up: generic
   `8019b9b7` restores empty comparison arrays, accepts legacy null in the
   browser, uses one full-width repository card and closes Local commits by
   default. Extension `361be9c7` and workspace `9818b805` select it exactly while
@@ -15,6 +35,44 @@ lifecycle: active
   The retained independent reviewer completed all four lanes with no Blocking
   or Important finding. Long checks now own the remaining evidence before the
   user-profile deployment. Shared DNS publication remains separately unapproved.
+- Verification correction: `repository-followup-long-checks-final.status` is
+  zero, but its log contains failed browser/Go stages at `8019b9b7` and a failed
+  `packages.x86_64-linux.package` lookup. Its `ALL_STAGES_PASSED` footer does not
+  establish success of those stages. The desktop action-row failure motivated
+  `e64a9fda`; the separate 84.274s browser run verifies that correction. Generic
+  and workspace flake stages in the earlier log passed at their recorded old
+  heads; exact new-candidate build/protocol/catalog gates remain pending.
+  A fresh watcher assigned for a duplicate focused check used the workspace
+  root instead of the specified tracking directory and failed identity before
+  starting any test. Parent identity was rechecked successfully from the exact
+  tracking directory; no duplicate operation or source mutation occurred.
+- The preceding exact-head final verification used fresh Luna/low
+  `final_candidate_e64_proper`. Its predecessor omitted the assigned Nix wrapper:
+  `/tmp/portal-review-e64-final/01-go-tests.log` records exit 1 because browser
+  subprocesses could not find Node. The parent verified that the actual Nix
+  shell supplies Node 24.19.0 and Go 1.26.6, then prepared a syntax-checked
+  literal batch at `/tmp/portal-review-e64-final-proper.sh`. That watcher ran
+  the exact script once; separate command statuses/logs/elapsed records are in
+  `/tmp/portal-review-e64-final-proper/`, with failure propagation and immutable
+  clean-head gates. No application fix was inferred from the missing wrapper.
+- The properly wrapped full Go/browser stage exited 1 after 175s at `e64a9fda`.
+  The failure is Firefox `presentation_browser_test.cjs:218`: intentional
+  Keep open POST failure restores the checkbox before Playwright `uncheck`
+  checks its final unchecked state. Chromium and repository layout assertions
+  passed. Evidence is `/tmp/portal-review-e64-final-proper/01-go-browser.log`
+  with status 1; later stages did not run. Implementer0 owns the bounded
+  fixture-only action/503-response correction; architect0 owns the verification
+  and retained-runtime-pin disposition. No production change is assumed and
+  no failed-stage result is counted as a pass.
+- Architect0 recorded the bounded fixture-only disposition in `design.md:1755`.
+  The reviewed runtime graph remains e64a9fda/362ebd4/aca3b39d, with prospective
+  package `bpzvfhdn…`; the optional CJS correction will have a separate generic
+  verification head. Unfiltered source changes derivation identity if repinned,
+  so no package identity equivalence is claimed. Fresh Luna/low utility
+  `hold_fixture_focus` owns the literal focused normal-host script
+  `/tmp/portal-review-e64-hold-fixture-focused.sh`; logs, true status and elapsed
+  use the matching prefix. Implementer0 holds its one-file commit until that
+  check passes. No consumer pins, production assets or lifecycle state changed.
 - Reviewer0 used its retained `gpt-6-sol`/xhigh settings and read-only access to
   inspect the complete 9/5/6/1 commit histories at generic `8019b9b7`, extension
   `361be9c7`, workspace `9818b805` and configuration `d24b2515`. General,
@@ -32,12 +90,16 @@ lifecycle: active
   publication waits for approval of the four exact targets.
   The accepted architect assessment retains runtime pins at generic
   `50af66d` / extension `8e04f262` / workspace `45cce0a8`.
-- Clean published branches are generic `8019b9b7`, extension `361be9c7`,
-  workspace `9818b805` and unchanged configuration `d24b2515`. A conflicting brief
+- Current clean published generic verification head is `618df553`.
+  Published consumer heads remain
+  extension `362ebd4` and workspace `aca3b39d`. The consumers retain runtime input
+  `e64a9fda`; the local configuration candidate remains
+  unchanged at `d24b2515`. During the earlier recovery, a conflicting brief
   temporarily published a consolidated extension chain and its consumer.
   Recovery restored the original deployed ancestry locally and remotely with
-  checked ref updates, then amended only the unselected consumer. Its exact
-  parent remains deployed `0e00eab5`; the Codex 0.159.2 closure is unchanged.
+  checked ref updates, then amended only the then-unselected consumer `45cce0a8`,
+  whose parent remains deployed `0e00eab5`. Later appended pins preserve that
+  ancestry and the Codex 0.159.2 closure.
   The final packet is synchronized to these preserved histories. No selected
   package or running cluster changed during recovery.
 - Mandatory final four-lane review at exact generic `50af66d`, extension
@@ -429,8 +491,20 @@ Repository-review follow-up:
   quick checks.
 - [x] Complete mandatory whole-branch review and reconcile findings.
 - [x] Update and commit the extension and workspace pins.
-- [ ] Finish long integration/build verification through fresh Luna watchers.
-- [ ] Activate the new workspace user profile and verify the reported session.
+- [x] Correct desktop action-row alignment with real browser verification and
+  publish the exact consumer pins while preserving the Codex closure.
+- [x] Complete the affected-lane review of e64a9fda/362ebd4/aca3b39d and refresh
+  the whole-history conclusion.
+- [x] Commit and independently review the optional Keep open fixture correction
+  at `4a1da3c3`, retaining runtime pins and the candidate package identity.
+- [x] Verify exact extension CI at `362ebd4`, including packaged cluster smoke,
+  and confirm account support for new defaults and retained member pairs.
+- [x] Commit and independently review the standalone real-editor retention
+  fixture at `618df553`, preserving the runtime consumer graph.
+- [x] Pass full Go/browser and generic/workspace flakes, exact candidate
+  build/protocol and extension CI/cluster smoke at their recorded revisions.
+- [x] Finish the exact `618df553` real-editor harness and generic CI.
+- [x] Activate the new workspace user profile and verify the reported session.
 
 Preceding release evidence:
 
@@ -483,12 +557,11 @@ remains pending.
 
 ## Next actions
 
-- Run the reviewed generic browser and flake checks and build the exact
-  workspace `9818b805` package through fresh Luna/low watchers. If they pass,
-  use the guarded user-profile rollout and verify the reported session.
-- Shared DNS publication waits for approval of the four built targets. After
-  publication verify ordinary host/client DNS and HTTPS. Leave all branches
-  unmerged pending explicit default-branch integration approval.
+- Shared DNS publication waits for approval of the four built targets listed in
+  rollout.md. After publication verify ordinary host/client DNS and strict-CA
+  HTTPS without `--resolve`.
+- Leave every feature branch unmerged until the user explicitly approves the
+  named repository and target branch. Keep this initiative active meanwhile.
 
 ## Documentation
 
@@ -498,23 +571,28 @@ remains pending.
 - [Team sandbox verification note](../../notes/dev-workspace/2026-09-30-team-sandbox-verification.md)
 - [Git clean-filter fixture lesson](../../notes/dev-workspace/2026-09-30-git-clean-filter-control.md)
 - [Confctl input metadata alias lesson](../../notes/cross-project/2026-09-30-confctl-input-info-lock-alias.md)
+- [Checkbox rollback fixture lesson](../../notes/dev-workspace/2026-10-01-playwright-checkbox-rollback.md)
+- [Watcher identity directory lesson](../../notes/dev-workspace/2026-10-01-watcher-session-working-directory.md)
+- [Detached deployment launcher lesson](../../notes/dev-workspace/2026-10-01-detached-deployment-launcher.md)
+- [Retaining separate browser build assets](../../notes/dev-workspace/2026-09-12-browser-acceptance-gc-roots.md)
 
 ## Repositories
 
 - `dev-workspace`: branch `2026-09-30-portal-review-improvements`, worktree
   `worktrees/2026-09-30-portal-review-improvements/dev-workspace`, initial base
   `7c133c562ac51076c1f45af46e180f8bfbabe836`, published head
-  `8019b9b7970d5ae0e57cc530e047979d91632053`.
+  `618df5530ba378f8b98f9557cdca700367016c11`; retained consumer runtime input
+  `e64a9fda4f5fb3595ce194cc55359ab61f5d8b3a`.
 - `vpsfree-dev-workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/vpsfree-dev-workspace`,
   initial base `bd961682cecb0b3b2bf729a53d2e08bda3d48eb2`; current upstream
   `6a0a2eb873e7cb376092c74bdf82fc2c51c349da` is incorporated, with published
-  head `361be9c712b63e16bda1866c06fb40805c16ce7f`.
+  head `362ebd4759d090805cd95a800e7131edb930b604`.
 - `workspace`: same branch name, worktree
   `worktrees/2026-09-30-portal-review-improvements/workspace`, initial base
   `d66bda525c823fe0ce52ea9a1c35550f147b569c`; final review base after the
   required shared-master rebase is `034eb08e`, with published head
-  `9818b805a34394c73c6ee9799f1c268c21c156d4`.
+  `aca3b39d400b5d1d6d51e42550421f8362684ee0`.
 - `codex-web`: same branch name and worktree under that initiative group,
   initial base `d210d3f7cc93981d0ab163b1fcf0718f9587f47e`. It is currently
   a read-only comparison with no changes planned.
@@ -555,3 +633,178 @@ remains pending.
   acceptance follow selection. No default-branch integration is authorized.
 
 ## Cleanup
+
+## Keep open fixture commit (2026-10-01)
+
+Implementer0 appended `4a1da3c3d1d099a6b0d309b194bd1e343d8d38c1` directly to
+`e64a9fda`, changing only presentation_browser_test.cjs (10+/2-). Normal
+`git commit -F`, no declared active hook framework, Node syntax and whitespace
+passed; worktree/index clean. Fresh Luna/low focused watcher passed the identical
+patch in both engines, true status0 and elapsed36s. Runtime pins e64/362/aca and
+prospective bpz package remain unchanged. Complete inventory now has11/6/7/1
+commits; bounded independent review and exact-head final checks remain next.
+
+Reviewer0 completed the general/architecture affected-lane recheck at clean
+4a1da3c3/362ebd4/aca3b39d/d24b2515 with its saved Sol/xhigh/read-only settings.
+No Blocking, Important or new Advisory finding. Its explicit full11/6/7/1
+history conclusion confirms no obsolete unapplied approach or transitional
+migration, preserved consumed ancestry and no new migrations. It accepts the
+distinct verification head and retained runtime graph; source identity differs
+if repinned. The reviewed gate clears the remaining long checks, not deployment
+or default-branch/shared-DNS approval.
+
+Exact extension CI `36850019822` at `362ebd4` is now verified successful:
+both `nix flake check --print-build-logs` and `nix run .#devcluster-check` passed
+on 2026-10-01. This closes extension checks and packaged enabled/disabled smoke
+for the retained consumer; no duplicate local rerun is required. The prepared
+new generic-head batch keeps consumer guards and completes full browser-enabled
+Go, generic flake, workspace flake, candidate build/protocol and packaged editor
+browser checks, stopping on the first actual nonzero stage. Its separate status
+files preserve evidence and do not reuse the invalid older aggregate footer.
+
+The first new batch watcher used the workspace root for its separate identity
+probe despite the assigned tracking directory and stopped before launch. Parent
+identity still matches from the exact session directory. No check ran or
+operation remains; replacement uses a fresh watcher with the first shell
+identity command and its working directory explicitly specified.
+
+The generic fixture commit was published normally over SSH at4a1da3c3; exact
+CI run36854636430 is included in the replacement batch. No superseded active
+generic CI run needed cancellation. Main read-only live catalog verification
+on Codex4mxlhqv9…/0.159.2 confirms exact gpt-6.1-sol with high/xhigh and all
+four retained lead/member model-effort pairs remain supported. Profile51i6gp92…
+and portal PID1250667 still match, and the bound session activity is working.
+The supported profile transition's idle gate must be respected; no force,
+private lifecycle invocation or delayed activation is authorized.
+
+## Final literal batch results and packaged fixture correction
+
+Fresh Luna/low `final_4a_literal_batch` ran the exact guarded script once:
+full Go/browser0 (172s), generic flake0 (329s), workspace flake0 (259s), candidate
+build0 (7s), check-codex0 (3s). Candidate is rooted at
+`/tmp/portal-review-candidate-e64-gc-root` and resolves to exact bpzvfhdn… package.
+Batch exited1 at packaged-editor browser (41s), so the batch is not all-green.
+Settled log `/tmp/portal-review-final-4a1da3c3/07-packaged-browser.log` is3275bytes
+and identifies `test/repository_browser.cjs:274`: the old <=8 editor mount
+assertion sees30 retained editors. The watcher's initial empty-log report is
+superseded by this direct settled evidence. This old assertion contradicts the
+accepted retained-editor behavior; no production defect is demonstrated.
+
+Implementer0 owns a one-file correction with real editor retention/content
+proof; architect0 owns its bounded verification/pin disposition. Hold commit
+until the focused real-editor proof. Preserve all successful exact-head results,
+the built e64/362/aca candidate and current51i profile. Generic CI36854636430
+at4a1da3c3 is successful; its stage was not reached in the stopped batch but
+was independently verified afterward. No retry, activation or cleanup occurred.
+
+Focused real-editor correction run21s exited1 after passing the new30-editor
+retention assertions. The next stale assertion expected zero editor nodes after
+collapse, while setCollapsed hides its body and retains the loaded node/content.
+Evidence: `/tmp/portal-review-real-editor-retention-focused.log`, line309 of
+current fixture. Architect's earlier assertion-validity assessment is corrected;
+implementer owns hidden/retained-node/reopen/no-refetch proof in the same file.
+No product issue or broader edit is inferred. A fresh watcher will verify the
+corrected complete harness; no failure was accepted as a pass or blindly retried.
+
+The second focused run exited 1 after 69s before the new assertions, waiting
+for the initial editor at fixture line 132. Its explicit editor-assets store
+directory `3g3bvqg…` is absent. The fixture returns 404 for missing static files;
+Playwright and Codex-web inputs still exist. The rooted candidate's derivation
+names that exact asset output and its still-present derivation `vwkvpcfc…`.
+System/user GC journal inspection did not establish the deletion's cause or
+timing. Restore and retain the exact asset output under an explicit GC root,
+check its editor/worker files, then verify the unchanged one-file patch in a
+fresh watcher operation. No product/input defect or new pin is inferred.
+
+Rooted focused proof passed: fresh Luna/low `real_editor_retention_v3` ran the
+guarded script once, status 0, elapsed 29s, with 84 fixture requests. The log
+`/tmp/portal-review-real-editor-retention-v3.log` includes retained real editors,
+syntax/lazy assets and the complete harness checks. The exact candidate asset
+output is retained by `/tmp/portal-review-real-editor-assets-gc-root`; restoration
+log is `/tmp/portal-review-real-editor-assets-restore.log`. Implementer0 is
+authorized to commit only the 40+/7− CJS fixture patch, preserving runtime pins.
+Independent affected-lane review and exact generic CI follow that commit.
+
+Retained reviewer0 completed independent general/architecture review at exact
+`618df553` / `362ebd4` / `aca3b39d` / `d24b2515`, saved Sol/xhigh/read-only. No
+Blocking or Important finding. It explicitly confirms the complete 12/6/7/1
+histories, final 38/13/8/1 file inventory, preserved consumed ancestry, no obsolete
+unapplied approach or transitional migration, and no new database/persisted
+format migrations. Prior upstream nine-migration provenance is unchanged.
+
+Accepted Advisory: the immediate request-count assertion after same-layout
+reopen could miss a later asynchronous request. This is a narrow regression-test
+limit: inspected production retains the editor/content and returns without a
+fetch on that path. No observed product failure or additional implementation
+is required for this rollout. A future change to reopen/fetch scheduling should
+strengthen that negative assertion with quiescence or a late-request trap.
+Existing WebUI-pin duplication, aggregate deployment-checker and wake-counter
+Advisories remain recorded. Fresh exact-head Node/CI checks follow review.
+
+Implementer0 committed `618df5530ba378f8b98f9557cdca700367016c11`, parent4a1da3c3,
+with only `test/repository_browser.cjs` (40 additions, 7 deletions). Normal
+`git commit -F`, hook inventory, Node syntax, staged/range whitespace and clean
+worktree checks passed. Complete inventories now contain12/6/7/1 commits and
+38/13/8/1 changed files; generic final diff is3858+/402−. Runtime e64/362/aca,
+Codex closure and rooted bpz candidate remain unchanged. Retained reviewer0
+receives the bounded general/architecture follow-up plus explicit complete
+history/migration conclusion before final exact generic checks.
+
+Normal SSH feature push advanced generic4a1da3c3 to618df553. Upstream master
+remains base7c133c5 and is an ancestor; no rebase or default integration occurred.
+Exact CI36860394508 is in progress on618df553. No superseded queued/in-progress
+run needed cancellation. Fresh Luna/low `final_618df553_checks` owns the guarded
+script `/tmp/portal-review-final-618df553.sh 36860394508`, with separate true
+Node/CI stage statuses under `/tmp/portal-review-final-618df553/`. No duplicate
+full local Go/flake/consumer build was launched. Fresh read-only activity still
+reports working, and the active portal unit PID1250667/selected profile51i remain
+unchanged; the supported package transition requires idle sessions.
+
+## Final verification result and activation handoff
+
+Fresh Luna/low `final_618df553_checks` completed its owned operation with status0,
+elapsed303s. Committed-head Chromium real-editor harness passed (status0,49s);
+exact generic CI36860394508 at618df553 concluded success (watch stage249s).
+Separate stage status/log/elapsed and CI JSON are retained under
+`/tmp/portal-review-final-618df553/`; no operation remains running. Reusable exact
+evidence remains full Go/browser and generic flake at4a, workspace flake ataca,
+bpz build/protocol, and extension362 CI/cluster smoke. The final optional fixture
+changes no runtime input, so no consumer cascade or duplicate build is needed.
+
+Main confirmed selected profile51i and active portal PID1250667 remain unchanged;
+normal API activity reports working. Latest candidate activation and live new
+UI acceptance are not claimed. The user can execute the guarded switch above
+after this turn is idle. All feature branches and the session remain open;
+shared DNS publication and default integration remain separately unapproved.
+
+## Guarded profile activation and live acceptance
+
+The normal candidate switch was launched only after the bound portal thread
+reported idle. A first `nohup` launcher was removed by the command runner before
+its script opened a log or changed the profile. Authoritative profile, portal PID
+and process checks proved that no transition had started. The replacement used a
+named transient user service and a fresh Luna/low observer. It ran the exact
+reviewed command once, exited 0 after 88 seconds and left no running operation.
+The unit reported `Result=success` and `ExecMainStatus=0`; full output is in
+`/tmp/portal-review-switch-bpz-systemd/switch.log`.
+
+The selected profile now resolves to
+`/nix/store/bpzvfhdnrj3clw9zfd1qhrhw7fjksyvb-dev-workspace-0.2.0`.
+`workspace-host status` reports that package, its bundled Codex reports 0.159.2,
+and `workspace-portal@vpsfree-cz.service` is active with PID 2031444 and a new
+14:27:17 CEST start time.
+
+Direct live POSTs against the reported `2026-09-23-storage-redesign` vpsadmin
+repository returned HTTP 200 for staged and unstaged captures. Both responses
+contain `files: []`, zero-file statistics and immutable ephemeral snapshot IDs.
+A Chromium run through the live router socket then passed with no page errors:
+six full-width repository cards, a single desktop action row, no narrow-screen
+overflow, empty staged and unstaged rendering, visible Origin and Load all diffs,
+collapsed history on first load and full reload, and retained open history during
+status refresh. The final run exited 0 in 8.8 seconds; its JSON summary is
+`/tmp/portal-review-live-acceptance-final.json`.
+
+This completes the authorized portal deployment and acceptance. The development
+cluster remains on its already verified React and legacy UI rollout. The
+unselected four-host DNS candidate and all default-branch integrations still
+require separate approval.
