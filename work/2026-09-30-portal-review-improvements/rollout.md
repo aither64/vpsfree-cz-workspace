@@ -7,21 +7,22 @@ project documentation.
 ## Selected revisions
 
 - Configuration: `ee99382c8c448a15347052a6964030f838cb0381`
-- Deployed workspace composition: `0e00eab555f9a41136f13cad0f82662f5c2f717b`
-- Deployed generic portal: `41c648cd92cb324037778be165e45e17c46bbc75`
-- Deployed extension: `67bfbbd653694e13e8d5aee53ef0f8e283694bf5`
+- Deployed workspace composition: `45cce0a87d3f0c8d2b404ce7188d8fa0d9098154`
+- Deployed generic portal: `50af66d9cfc1be07dcc4cb084de4887dd97a343c`
+- Deployed extension: `8e04f2626a3abd492768f15ae8d843c8e527f2cd`
 - Codex package input: `af40d966859ec4075ecc172dbb39e53f474dc5d9`
 - vpsAdmin API: `5c76e3290481b297dcd0baa76d246133f0353d8f`
 - vpsAdmin WebUI: `534caa83a5f97d2b40b4a126886649b14dc9e8d3`
 
-The final unselected runtime revisions are generic `50af66d9`, extension `8e04f262`,
-workspace `45cce0a8` and configuration `d24b2515`. Generic final branch head
+The deployed runtime revisions are generic `50af66d9`, extension `8e04f262`
+and workspace `45cce0a8`. Configuration `d24b2515` remains an unselected DNS
+candidate. Generic final branch head
 `50586880` is a separately reviewed verification-fixture correction with
 unchanged runtime source; the architect and reviewer accepted retaining the
-existing runtime pins and built package. The Origin-label and
-React-container autostart corrections are not yet selected in the user profile
-or cluster. The internal-DNS candidate is committed but publication to its four
-shared consumers remains unapproved.
+existing runtime pins and built package. The Origin-label and React-container
+autostart corrections are selected in the user profile and cluster. The
+internal-DNS candidate is committed but publication to its four shared
+consumers remains unapproved.
 
 Mandatory final review found no Blocking or Important issue at those four
 heads or in the bounded fixture follow-up. Final generic, extension and
@@ -53,6 +54,13 @@ no pending marker. The live portal lists exact `gpt-6.1-sol`; an atomic settings
 write to that model with xhigh effort persisted on readback. Disposable staged,
 unstaged and untracked probes returned immutable comparisons and were removed.
 
+After the final checks, the user ran the verified guarded transition while this
+conversation was idle. The selected profile now resolves to
+`/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0`, built from
+workspace `45cce0a8`. The live portal renders `Origin`, ships Load all diffs and
+the atomic settings client, and lists exact `gpt-6.1-sol` with every supported
+effort.
+
 ## Executed bridge-cluster rollout
 
 A fresh Luna/low watcher started the session's single-node bridge cluster. The
@@ -83,48 +91,25 @@ Credentials, cookies, authorization codes, states and tokens were kept in
 mode-0600 temporary files and deleted after the checks. Their values were not
 recorded in session artifacts or command output.
 
-## Pending final activation
+## Final runtime activation
 
-The final commits passed mandatory review and long package checks. A fresh real
-OAuth login established an authenticated session in private temporary files for
-the post-update persistence comparison. A services update invoked through the
-candidate correctly refused while that candidate was not the selected profile
-generation.
+A fresh real OAuth login established an authenticated session before the final
+update. A fresh Luna/low watcher then ran the selected helper's supported
+`update 2026-09-30-portal-review-improvements services`; it completed in about
+7m25s and activated services system
+`/nix/store/vv7b9mhcrmj1fii3jb6r0k1craclnynq-nixos-system-vpsadmin-services-26.05pre-git`.
 
-The exact final `51i6gp92…` candidate's guarded switch was attempted once
-through a fresh Luna watcher. Preconditions passed, then `thread require-idle`
-refused because this bound turn was `inProgress`. It returned exit 1 after
-about 56s, restored the terminal client and kept `aidlqw1…` selected. Log:
-`/tmp/portal-review-final-profile-switch-45c.log`; before/after status:
-`/tmp/portal-review-final-profile-{before,after}.txt`. No operation remains
-running. Retry the same candidate entry after this conversation becomes idle.
-
-Remaining activation steps are:
-
-1. select the new workspace package with the guarded profile transition;
-2. update the running cluster services through `vpsadmin-devcluster`;
-3. verify `container@newadmin.service` is enabled for `machines.target` and
-   remains active;
-4. verify the selected WebUI source is the clean session worktree at exact
-   revision `534caa83a5f97d2b40b4a126886649b14dc9e8d3`;
-5. repeat an authenticated session check across the services update;
-6. verify the portal displays `Origin` and retains all prior portal behavior.
-
-The profile transition requires every managed session to be idle. The current
-lead turn must end before invoking it; no idle-guard bypass or delayed
-background switch is authorized. All verification passed. The exact candidate
-entry is:
-
-```sh
-cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-30-portal-review-improvements/workspace
-/nix/store/51i6gp92srgvqcmmwfv8qsg9xq9xfdqf-dev-workspace-0.2.0/bin/workspace-host switch --source "$PWD" --from-candidate
-```
-
-Once this candidate is selected, use the installed helper for any forward
-retry. After checking selected-package health, a fresh watcher can execute
-the supported `vpsadmin-devcluster update
-2026-09-30-portal-review-improvements services` and the listed acceptance
-checks. The existing running cluster does not need another start.
+Post-update checks prove that the cluster is running, ready, single-node and on
+bridge networking. `container@newadmin.service` is active, enabled and wanted
+by `machines.target`; it requires and starts after the successful OAuth seed.
+The selected source record is the clean session worktree at exact WebUI
+`534caa83`. Nginx and the BFF are active, ports 18082 and 3001 remain bound to
+loopback, health and legacy PHP return 200, the authenticated session retained
+the same session key, and authenticated API and CORS probes return 200. The
+path-based local WebUI build reports unavailable embedded Git metadata; the
+cluster's immutable selected-result source record remains the authority for
+the exact clean worktree revision. Temporary credentials, cookies, states,
+codes and tokens were removed after the checks.
 
 No default-branch integration is part of this rollout.
 

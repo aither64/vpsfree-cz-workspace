@@ -6,13 +6,11 @@ lifecycle: active
 
 ## Status
 
-- Phase: final activation. Implementation, independent review and all final
-  verification passed, including the corrected browser fixture at generic
-  `50586880`. The deployed portal and bridge cluster are active. The final
-  Origin label and container autostart refinements await selection: the exact
-  candidate's normal guarded profile switch refused because this bound turn
-  is `inProgress`. Activation waits for an idle session; shared DNS publication
-  waits for approval of the four exact targets.
+- Phase: deployed and ready for use. Implementation, independent review, final
+  verification, profile activation and the bridge-cluster services update
+  passed, including the corrected browser fixture at generic `50586880`. The
+  final Origin label and container autostart refinements are active. Shared DNS
+  publication waits for approval of the four exact targets.
   The accepted architect assessment retains runtime pins at generic
   `50af66d` / extension `8e04f262` / workspace `45cce0a8`.
 - Clean published branches are generic `50586880` (test-only successor), extension `8e04f262`,
@@ -49,13 +47,12 @@ lifecycle: active
   `/tmp/portal-review-generic-505-check.log`. The full Go suite took 81.702s and
   the flake check about 6m40s. This completes the remaining final verification
   gates for the retained runtime package.
-- A fresh Luna/low watcher attempted the final `51i6gp92…` candidate entry
-  once. It passed preconditions and refused at `thread require-idle` because
-  this bound turn remained `inProgress`; exit 1 after about 56s. The selected
-  `aidlqw1…` package and active Codex paths are unchanged. Full evidence:
-  `/tmp/portal-review-final-profile-switch-45c.log` and `.status`, with
-  `/tmp/portal-review-final-profile-{before,after}.txt`. This is an activation
-  gate, not a product/test failure. No operation remains running.
+- The user ran the final guarded transition while this conversation was idle.
+  The selected profile is now exact built package `51i6gp92…` from workspace
+  `45cce0a8`; no pending transition remains. Live portal checks show seven
+  `Origin` repository links, no generic `GitHub` repository labels, Load all
+  diffs, the atomic settings client and exact `gpt-6.1-sol` with all supported
+  efforts.
 - Retained reviewer0 completed the final all-lane review with its saved GPT-6
   Sol/xhigh settings. The existing aggregate deployment helper mismatch is an
   Advisory limitation:
@@ -64,8 +61,8 @@ lifecycle: active
   `llm-agents` input and does not invoke that equality helper. The earlier
   duplicated WebUI-pin Advisory remains accepted. Long candidate verification
   may proceed; no migrations or obsolete feature history were found.
-- Normal `workspace-host status` now selects the realized `aidlqw1…` package
-  from workspace `0e00eab5`. The running host uses the reviewed Codex 0.159.2
+- Normal `workspace-host status` now selects the realized `51i6gp92…` package
+  from workspace `45cce0a8`. The running host uses the reviewed Codex 0.159.2
   binary. Live portal `/api/models` exposes exact `gpt-6.1-sol` with high and
   xhigh; this authorized lead turn reads back that model with xhigh effort.
 - Filtered normal cluster status proves this exact session is running and ready
@@ -83,15 +80,14 @@ lifecycle: active
   identity across BFF restart, repeated seed execution, logout and access-token
   revocation all passed without recording credentials or tokens.
 - A fresh real OAuth login produced an authenticated BFF session before final
-  activation. Its cookie and session-key hash remain only in mode-0600
-  temporary files for the post-update persistence comparison; no credential,
-  cookie, authorization code, state or token was printed or recorded.
-- The final composition needs a normal guarded user-profile update and a
-  supported cluster services update. An attempted services update through the
-  candidate correctly refused because the candidate is not yet the selected
-  profile generation. The
-  active-turn idle gate still applies to the profile transition; no bypass or
-  delayed switch is authorized.
+  activation. The supported services update completed through a fresh Luna/low
+  watcher in about 7m25s. The services VM activated exact selected toplevel
+  `vv7b9mh…`; cluster status is running and ready on single/bridge networking.
+  `container@newadmin` is active, enabled, wanted by `machines.target` and
+  ordered after the successful seed. The clean worktree source record is exact
+  WebUI `534caa83`; the pre-update session retained its session key, health,
+  legacy PHP, authenticated API and CORS checks return 200, and ports 18082 and
+  3001 remain loopback-only. All temporary authentication material was removed.
 - Ordinary host and VPN-client resolution for
   `newadmin.aitherdev.int.vpsfree.cz` is absent from both internal authoritative
   DNS copies even though the running cluster's guest DNS has the record. A
@@ -433,17 +429,12 @@ remains pending.
 - [x] Implement and commit all intended changes with quick checks.
 - [x] Complete mandatory independent review and reconcile findings.
 - [x] Finish long integration/build verification through Luna watchers.
-- [ ] Verify the active deployment is ready for use and activate the final
-  label refinement (baseline portal and bridge cluster are active).
+- [x] Verify the active deployment is ready for use and activate the final
+  label refinement.
 - [x] Prepare the whole-branch history and migration inventory for handoff.
 
 ## Next actions
 
-- Finish the guarded user-profile activation of the verified runtime
-  composition at `50af66d` / `8e04f262` / `45cce0a8`. An active-turn refusal
-  requires this session to become idle before retrying the same candidate
-  entry, followed by the supported services update. Verify
-  autostart, clean local WebUI provenance, session retention and visible Origin.
 - Shared DNS publication waits for approval of the four built targets. After
   publication verify ordinary host/client DNS and HTTPS. Leave all branches
   unmerged pending explicit default-branch integration approval.
