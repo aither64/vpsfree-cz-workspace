@@ -1,5 +1,22 @@
 # 2026-09-23-storage-redesign
 
+## Current execution slice, 2026-10-02
+
+The user requested rebasing the active project branches onto current defaults
+and redeploying the disposable cluster with the new React WebUI. They authorized
+resetting this cluster. The [architect brief](design.md) governs this slice;
+[rollout evidence](rebase-devcluster-20261001.md) and [state](state.md) record
+results. Preserve consumed migrations and the advisory storage boundary. Use
+the installed cluster provider, keep legacy PHP, and select the clean React
+default `main` source. The superseded workspace instruction branches are excluded.
+No default-branch integration or production deployment is authorized.
+
+This requested slice is deployed and verified: rebased branches and generated
+pins are independently reviewed/published; the fresh bridge/storage cluster
+runs React alongside PHP. The compact real-browser acceptance passed all 242
+checks and left `read_write` epoch 4. Earlier trial failures and broader CI
+limits remain in the rollout record. This does not complete milestones A or B.
+
 ## Current contract and reader map, 2026-09-26
 
 Deliver one reconciliation engine in two milestones:

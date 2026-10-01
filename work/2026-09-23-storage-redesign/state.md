@@ -6,6 +6,137 @@ lifecycle: active
 
 ## Current status
 
+2026-10-02 current phase: requested rebase and dev-cluster redeploy verified. The user
+requested rebasing the storage work onto current default branches and adding
+the separate React vpsadmin-webui component to the retained dev cluster.
+
+- [x] Session binding and ready roster verified; architect0 owns the design
+  and verification brief, implementer0 owns application edits.
+- [x] Defaults fetched: vpsAdmin `90184b374`, vpsAdminOS staging `26f28c691`,
+  site configuration `029c616e`, React WebUI main `aa2f60b8`.
+- [x] Architect brief accepted in [design.md](design.md); the installed provider
+  already owns the React/BFF integration. Old source refs and private cluster
+  configuration/provenance are backed up.
+- [x] Rebase source branches; preserve deployed migration versions and complete
+  provider checks, whole-branch review and feature publication.
+- [x] Verify/review final vpsAdmin pin and complete whole-branch history/schema review.
+- [x] Publish final vpsAdmin and regenerate/review the configuration pin.
+- [x] Rebuild/redeploy the fresh bridge/storage cluster and verify React/BFF,
+  API, legacy PHP storage controls and Node services.
+- [x] Complete the compact browser acceptance: 242 checks, both PHP mode
+  changes, epoch 2 to 4, exactly two new audits, no fallback recovery.
+- [ ] Resolve broader CI and separately approved future maintenance/repair
+  work. No merge or production operation is authorized.
+
+The cluster is running and available for development. Real React login, API
+access and logout passed under trusted TLS. PHP freeze/unfreeze, administrator
+authority, stale/same-mode CAS and frozen write rejection passed. Independent
+guest SQL confirms `read_write` epoch 4, four total audits, singleton row 1 and
+both migrations. The earlier PHP unfreeze attempt remains unexplained; its
+failed evidence is retained, and no application fix is claimed. The final
+diagnostic run passed without changing form timing or assertions. Broad CI and
+the unrelated upstream React nightly failures remain recorded limitations.
+
+The user explicitly authorized resetting this cluster, noting no personal
+changes. The supported reset/config helpers completed for this exact cluster;
+its fresh private configuration enables React and a dedicated disposable admin.
+The selected rollout is a clean rebuild after rebase and review;
+existing test records and branch backups are retained. The legacy PHP UI remains owned by vpsAdmin;
+React is an additional component, not a path extraction. No React storage
+freeze feature is in this request. Superseded instruction-only branches stay
+retained and are excluded. Default-branch integration, shared-host deployment,
+production strict, repair readiness and APPLY are not authorized.
+
+The saved implementer and reviewer settings now resolve to GPT-6.1 Sol/xhigh;
+architect0 remains GPT-6 Astra/xhigh. Earlier settings below are historical.
+
+Initial rebases are clean: vpsAdmin `eade85a5` retained all nineteen patch entries
+and all 189 feature-path blobs exactly; the two consumed migration blobs and
+generated schema match `fa7cec3`. OS `8d05dc3a` is one provider commit on current
+staging, fourteen unchanged provider blobs plus the additive test registration.
+Configuration guide-only `603da36e` is on current master, with the obsolete
+service pin removed pending regeneration. React is clean at default `aa2f60b`.
+The provider focused specs passed 36/0 and normal Nix hooks passed. The rebased
+API focused checks passed 62/0, Node 42/0, PHP 5 tests/17 assertions, and selector
+18 runs/77 assertions. Reviewer0 (saved GPT-6.1 Sol/xhigh, read-only) cleared all
+four HIGH-risk lanes for the complete OS range `26f28c691..8d05dc3ae`, with no
+findings and an explicit one-commit/no-migrations conclusion. Publication and
+the single generated replacement Admin/config pins precede final review and
+deployment. These first Admin checks still used the old internal OS pin;
+final-pin checks remain required. The old provider pin was dropped at `0bdd6caaa`
+with all eighteen retained patches/messages equivalent. Normal generated updater
+committed final vpsAdmin `e65a5a6b0` with one current-provider pin. Architect
+conformance found no blocker: its two transitive nixpkgs lock changes exactly
+match OS `8d05`; migration/bootstrap/signing/advisory behavior is unchanged.
+Final-pin checks passed: migration processes 4+2+2/0, API 74/0, Node 42/0,
+and all normal Admin hooks. Reviewer0 cleared the complete nineteen-commit
+range `90184b374..e65a5a6b0` in all four HIGH-risk lanes, with no Blocking or
+Important findings and explicit migration/history conclusions. One documentation
+advisory is accepted for this redeploy: integrity-foundation.md incorrectly
+describes copied identity owner IDs. Identity ownership actually uses RESTRICT
+FKs; copied metadata belongs to scopes/targets. Runtime behavior is correct and
+identity publication remains off; no schema or runtime change is warranted.
+Exact-head broad CI and fresh runtime acceptance remain pending.
+
+Admin `e65a5a6b0` is now published and SSH-fetchable. Required confctl generation
+created configuration `5eff558c4`: guide `603da36e` plus one generated service
+pin. Only the service locked triple changes; site OS/React/production/follows
+remain unchanged. Normal full configuration hooks and thirteen-channel
+evaluation passed. Reviewer0 cleared the complete two-commit branch in all
+four HIGH-risk lanes, with no findings and an explicit no-migrations/history
+conclusion. Its separate site provider/follows and full consumer inventory
+limits remain; no shared host is deployed by this pin.
+Configuration `5eff558c4` is also published and independently SSH-verified.
+The exact owned bridge/storage build booted all guests but start returned 1
+because ordinary seeding did not complete. Guest database setup successfully
+loaded schema/bootstrap/migrations, then the lead-added disposable admin seed
+failed with a missing required namespace allocation. The lead corrected only
+that private cluster configuration, after verifying unused blocks. The normal
+services recovery update passed, including node refresh (about 7.5 minutes).
+This is a
+configuration omission, not a demonstrated migration/source defect. No reset,
+manual DB seed or bypass of React startup dependencies is used. Runtime
+acceptance remains pending. A disposable admin password exposed during a
+member's generated-seed inspection has been replaced privately; its normal
+services application also passed. No credential value belongs in these records.
+All services and seeds are healthy; all three selected Node generations match
+and the actual osctld v1 `gc_trash_v1` provider responds correctly. Activated
+nginx/BFF paths and strict-TLS served build-info match the selected pair, with
+their supported unknown embedded revision reported honestly. A private DB
+backup preceded the trial. React real login/API read/logout/anonymous 401 passed;
+the first attempt stopped before PHP or any freeze because the private helper
+incorrectly version-prefixed the token-auth URL. Actual OPTIONS advertised the
+versionless path and a short direct probe returned 200. The corrected retry
+passed PHP login/status/freeze, stale and same-mode CAS 409, anonymous 401,
+member 403 and valid Pool Create refusal 423 with unchanged data rows. It failed
+at the PHP unfreeze path without enough step evidence; its normal owner-bound
+API recovery restored read_write epoch 2 with two audits. This recovery is not
+accepted as PHP-unfreeze verification. Implementer0 added numeric UI-step
+diagnostics, preserving the failed evidence before any edit. The resulting
+fresh Luna/low trial passed all 242 checks, including actual PHP unfreeze
+(change POST 302), epoch 2 to 4 and audit delta 2, without recovery. The prior
+failure was not reproduced or explained; no deployed application change was
+made. Detailed executed evidence is in the rollout record.
+Admin exact-head migrations, Node, PHP, lint, clients, i18n and the 5215 contract
+CI passed; the exact-head API topic workflow also finished successfully, with
+all 27 jobs green. Broad Admin/OS CI remains queued. No superseded
+same-branch live runs remained. Browser dependency setup is ready: NSS uses the
+multi-output `-tools` GC root, and host Chromium subprocess/version checks pass.
+
+The existing path-input integration may record unknown/dirty/unavailable inside
+both React package build-info files. That is a supported, honest development
+form, separate from the clean selected Git SHA. Acceptance verifies matching
+package metadata, selected source/tree and output paths rather than relabeling
+unknown metadata as a clean release. No provenance feature is added.
+
+The shared frontend address was occupied by the dev cluster from
+`2026-09-30-portal-review-improvements`. The user explicitly requested releasing
+that session's addresses. The authorized action is stopping that exact dev
+cluster through the supported helper, monitored by a fresh Luna/low utility;
+it does not authorize archiving or changing that session's records/team.
+The bound utility completed the stable stop with exit 0 (about 20 seconds);
+the shared frontend address is rechecked before our cluster starts.
+
 2026-09-27 coordination-policy reconciliation: workspace `master`
 `74f830c7` and vpsfree-dev-workspace `master` `bd961682` already provide the
 updated architect design brief, lead progress and whole-branch review rules,
@@ -1015,8 +1146,11 @@ with the final version 2 format and must be recaptured.
 
 ## Next actions
 
-1. Finish exact-`fa7cec3` API Specs and broad CI monitoring. Investigate any
-   failure against that head before treating the branch as verified.
+1. Keep the rebuilt cluster running for development. The requested rebase and
+   compact runtime acceptance are complete at Admin `e65a5a6b0`, OS `8d05dc3ae`
+   and React `aa2f60b8`; final configuration `5eff558c4` is published. Exact-head
+   API topic CI passed all 27 jobs. Broader Admin/OS CI remains queued; inspect
+   any later failures against the exact heads before accepting them.
 2. Benchmark a populated global retained-lock cohort, including unrelated
    nodes, before live diagnostic use. Keep query timeout failures incomplete;
    do not infer performance from the lock-free 40k-object case. Add focused
@@ -1028,10 +1162,11 @@ with the final version 2 format and must be recaptured.
 4. Keep the reconciler advisory until one-engine approval, bounded DB-only
    apply, crash resume and final verification are implemented and reviewed.
    Do not use two inventory passes or 5291 observation as an apply gate.
-5. Prepare the separate staging OS provider port/pin and final service pin
-   only after its own CI and build/dry-activation gates. Keep production pins
-   and hosts unchanged. Default-branch integration needs explicit direction;
-   the session remains active.
+5. The current-staging provider port and final service pin are reviewed and
+   published. A later shared rollout still needs actual consumer builds and a
+   separately reviewed site OS provider pin. Keep production pins and hosts
+   unchanged. Default-branch integration needs explicit direction; the session
+   remains active and all feature refs are retained.
 
 The task guide owns repeatable operator instructions. The source investigation
 and proposed future compatibility/deployment sequence remain in this session;
