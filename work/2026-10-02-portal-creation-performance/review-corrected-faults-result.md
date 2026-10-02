@@ -1,0 +1,47 @@
+# Fresh fault-driver independent review
+
+Actual reviewer0 public final 2026-10-02T21:57:19.933Z, saved gpt-6.1-sol/xhigh/read_only.
+
+Blocking: none. Important: none. Advisory: none.
+
+The fresh corrected-provider prototype passes all four affected preparation-review lanes. No finding prevents the authorized one-use, parent-owned watched run. This does not certify live fault acceptance, new-package latency, activation, canary, integration or session closure. The original unavailable-root case remains held and unproved. The complete report was sent to the native lead.
+
+Reviewer: retained independent reviewer0, native thread `01a0fd0c-62f4-7300-8912-2e82ffbab9cd`; the live roster confirms ready/review-purpose and saved `gpt-6.1-sol/xhigh/read_only`. No overrides, fallback or nested agents. Session identity matches the trusted binding; both environment identity variables are absent. I read the mandatory skill and all four references, applicable guidance and runtime AGENTS, relevant plan/state/design/recovery material, both preparation briefs, observation context, prototype/test sources, shared helpers and selected package/provider contracts. Inspection was read-only: no driver/test/build execution, RPC/model request, auth/history payload reading, retry/claim, edit, lifecycle or deployment action.
+
+**General lane:** [verify-corrected-faults.py:53](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-02-portal-creation-performance/verify-corrected-faults.py:53) binds the diagnosed fixture, frozen imports, original failed result/configuration, record hashes, history dimensions, prior claims, exact services/profile and absent new destinations. It never calls the held driver’s old-root retry, preservation or main. [run_fault:134](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-02-portal-creation-performance/verify-corrected-faults.py:134) uses normal shared creation/retry, requires attempt 2 with the original receipt and frozen Full preset/goal, requires the root-loss case’s exact created root, and requires two corrected-provider dispatches per case.
+
+[verify-creation.py:242](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-02-portal-creation-performance/verify-creation.py:242) withholds stdout only after the real root helper succeeds and returns an ID. Its member boundary kills only the exact owned Go helper after a member finish frame. [create:666](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-02-portal-creation-performance/verify-creation.py:666) refuses missed/error boundaries before retry and requires both ready and unfinished members for the partial case. The shared final tail preserves the root and every previously ready member ID, canonical one-goal/model/no-tool gates, completed stages and live detailed phase evidence. Root replacement cannot pass the driver’s additional exact-ID check.
+
+**Architecture lane:** acceptance remains owned by shared `ready_evidence`, `wait_model`, `progress_evidence` and `complete_creation`. The new driver supplies finite orchestration and case-specific identity/dispatch assertions without another model/goal/roster policy implementation. I independently matched the recorded shared acceptance AST fingerprint `32d44fa49aa2a83114da1aa4090365005eae296ab46046d2700d1fb1c24338b6` and final-tail fingerprint `967b9906a9f5bbc3e13d565b66788a6ced57116e7d5ff716a86c3bd0e31a9cc7`. Preparation reports 30 other functions unchanged. Historical packet source hashes remain provenance; current imports are separately frozen.
+
+Provider compatibility: [verify-creation.py:154](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-02-portal-creation-performance/verify-creation.py:154) selects a canonical executable ELF with the exact hash only for `thread/create` on the two fixed new slugs in the exact old fixture. The adapter forwards argv/environment, preserves inherited transition/lifecycle lock FDs, and logs provider identity plus an argv digest. All team/goal/other helpers and the stranded old slug retain the old provider.
+
+I inspected actual old package `0kl`’s wrapped Ruby `create_portal_thread` and `CLI#run`: complete runtime/frozen lead/model/effort arguments still originate there, and original transition-lock/generation validation remains. Reviewed [main.go:600](/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-02-portal-creation-performance/dev-workspace/portal/cmd/workspace-portal/main.go:600) accepts that public contract, requires complete provenance and has no profile/generation selector. CLI/Ruby source is unchanged between `8ae46f9` and `924c0ec2`. Contract-file equality supplements this source inspection.
+
+I independently verified package `/nix/store/xl9mvbb5j19anfbx6qj3lrw8k7a9vnz2-dev-workspace-0.2.0`, provider SHA256 `ac2bf71e98d1bafb4357bbf0bb7b7d1140f0bb4a1a903147cff67790284e9c4c`, matching old/new Codex launcher selection, and identical runtime-contract/catalog hashes. This is compatible old-consumer/new-thread-create-provider verification; full-package activation/canary remains separate.
+
+**Scope lane:** two fresh real boundaries directly address the demonstrated recovery failure and outstanding member interruption. Reusing the retained fixture through its configured provider avoids repeated registration/services or a package-transition bypass. No general continuation framework, unavailable-root repair, SDK error expansion, profile/token rewrite, model override, reseeding, old goal replay or lifecycle cleanup was added. The held driver and observation records remain historical evidence. Session prototypes and individual rollout material remain separate from reusable feature contracts.
+
+**Risk/compatibility lane:** [preserve_failure:100](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-02-portal-creation-performance/verify-corrected-faults.py:100) creates an exclusive retained claim, copies/fsyncs noncredential records/proofs/observer/sources and provenance, then fsyncs directories before config/result writes. Existing or interrupted claims refuse. The packet contains 86 noncredential records, 64 prior-claim files and 11 inventories; its preservation lists contain no credential/rollout payload or escaping path. Auth is metadata-only; history checks retain 3,379 seed files/208,256,155 bytes plus 24 successful warm-up/sample rollouts.
+
+[main:149](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-02-portal-creation-performance/verify-corrected-faults.py:149) checks the fixed UTC date before execution and each case. Only `rootRecoveryProvider` enters config. Result/injection files are separate; original result, old fault/receipt/journal and prior claims are rehashed before pass. Any case failure stops without another retry/next case and retains state/services. Observer SHA256 `4127dfe5cf3f7f62272232fb92c48d3e1591c3b09adfdaa579a86cade4e082ee` binds unavailability, not disappearance authority. The driver neither probes nor operates on that old root. Ordinary runtime discovery/identity/goal and generation refusals remain; trusted local administration does not weaken remote authorization.
+
+Reviewed SHA256 values:
+
+| Source | SHA256 |
+|---|---|
+| `verify-creation.py` | `afd95a7de8483b0726223cbce37a2ec316a184c81eba8a388a261800f36cc304` |
+| `verify-corrected-faults.py` | `1a4ffad2550987cd420d1cd4fd6ed41ffe2ad113742c4fb2ff281c3c11b7cabe` |
+| `test-corrected-faults.py` | `34cf3982857be58b7f1f3379029bd79f74f861240b4c9e90ff1324f44ae12484` |
+| Held `verify-fault-creation.py` | `6a9ea19a49d8e61c88ca6b8e0b24085dae7fba7fdd5d7aef57d84839f25048c4` |
+| `verification-fault-records.json` | `260a13f810d5ab3213ce392613ea14c694e217de43ee0df905963d5334d9a36c` |
+| Unchanged started helper | `86228a7a44e44bfeb323f0df261490a901566188d64336935fb9e59550d47f57` |
+| Unchanged warm-up helper | `d45a474c5ef69dde3038474398bb2a4bf90e10dcb6956bdc9df6d6fbbb691b47` |
+
+**Verification limits:** the seven focused groups use mocks; I inspected their source without running them. The parent preflight log/status records no-RPC/no-claim success and exit 0. Preparation does not establish fault timing, scheduling or real retry behavior. The helper-response fault covers the Go/Ruby boundary, not network-proxy equivalence. Member interruption must produce a genuine partial roster or remain inconclusive. New cases cannot establish recovery of the old unavailable root. Original five timings retain `8ae46f9/0kl` provenance. Corrected-package activation and actual-history canary remain pending.
+
+**Application history/migrations:** all five worktrees are clean at the packet’s exact heads: SDK `4c170393`, runtime `924c0ec2`, extension `8f8d8ecf`, workspace `1b670e03`, configuration `3d26ec39`. No application commit, public protocol/schema/pin or migration changed in this follow-up. Completed whole-branch inventories and their no-obsolete-history/no-migration conclusions stand. **No new migrations or schema versions have merge/release/deployment/external-use provenance.** One-off prototypes remain session records under the accepted tracking cadence.
+
+Parent next action: preserve this report and hashes, retain original claims/evidence, and run the frozen new driver once through the authorized fresh watcher. Interpret incomplete/refused outcomes without automatic repetition. No old-root repair, activation, default integration or session closure is inferred.
+
+[Session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-02-portal-creation-performance/)
