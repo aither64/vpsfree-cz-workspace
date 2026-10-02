@@ -6,11 +6,12 @@ lifecycle: active
 
 ## Current phase
 
-Final implementation, quick checks and expanded independent whole-branch review
-pass with no findings. Exact final heads are clean and published; comparisons
-recaptured. Final VM, archive hash, scoped build and RSpec CI passed. Broader
-integration CI remains queued; final_verification_watcher retains monitoring
-ownership. No merge or deployment is authorized.
+User-authorized integration is complete. Both remote default branches are
+master and point to the exact reviewed/tested feature heads. No rebase or
+source change was needed. Deployment is handed to the user, who will deploy
+personally. Local checks, review, VM and scoped build pass. Broader integration
+CI remains queued with optional watcher monitoring; it did not block the
+user-authorized merge. Session stays active/open while that observation exists.
 
 ## Phase checklist
 
@@ -26,8 +27,8 @@ ownership. No merge or deployment is authorized.
 - [x] Final publication, GitHub archive hash and signed-webhook VM pass.
 - [x] Exact final scoped configuration build and RSpec CI pass.
 - [ ] Broader GitHub integration CI37031196330 remains queued for a runner.
-- [ ] Ready, awaiting explicit merge approval for both repositories/master.
-- [ ] Production rollout/live delivery checks: not authorized.
+- [x] Explicit user approval received; both exact heads fast-forwarded to remote master.
+- [ ] Production rollout/live delivery checks: user-owned, outside agent scope.
 
 ## Complete final branch inventory
 
@@ -111,14 +112,28 @@ delivery claim.
 
 ## Next action and coordination
 
-Watcher continues exact integration CI; lead reconciles its result and any
-failure through the retained team before final branch readiness. Explicit user
-direction is still required to merge both repositories into master and deploy.
-No production
-replay, activation, merge, branch removal or session lifecycle action.
-Initial tracking commit1ff5d9fa; current records follow consolidated cadence.
-Environment/hook failures and pinned-tool workaround are in verification.md and
-[reusable setup note](../../notes/cross-project/2026-10-02-nix-dev-env-restricted-member.md).
-Shared master/index unrelated edits preserved. Session remains active and open.
+User deploys cz.vpsfree/containers/int.vpsfbot from updated configuration master.
+No agent deployment, replay, lifecycle cleanup or branch removal. Feature refs
+and existing worktrees retained. Optional CI watcher reports only start/final
+result/actionable escalation. [Integration proof and handoff](integration.md).
+Initial tracking commit1ff5d9fa; consolidated checkpoint25575923. A final
+ownership-handoff checkpoint records this authorized merge and user deployment.
+Shared workspace stays master, unrelated files/index changes preserved.
 
 [Session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-02-vpsfbot-github-notifications/)
+
+## Default-branch integration authorization
+
+User explicitly requested: "please merge it into default branches and we're
+done, I will deploy it myself." Authorization covers vpsfree-irc-bot/master
+and vpsfree-cz-configuration/master. Deployment is user-owned and outside agent
+work. Local integration verification already passed; user chooses not to wait
+for busy CI runners. Integrate exact reviewed bot e9c60b0b and config b164a3b7
+fast-forward only after fetching both targets; preserve feature refs and keep
+session open. No lifecycle cleanup requested.
+
+Both pushes succeeded and SSH ls-remote verified default HEAD/master and retained
+feature ref are identical: bot e9c60b0b95d3cc0dad6f012d8127c2bc078cfa7d and config
+b164a3b786cb82878f00f8ebd2a7825ee5254c15. No default-branch history rewrite.
+Dedicated detached integration target checkouts remain under the same session's
+worktrees/integration-targets directory; no unrequested removal performed.

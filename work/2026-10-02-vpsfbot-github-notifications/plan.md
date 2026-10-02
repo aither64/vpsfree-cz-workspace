@@ -6,7 +6,8 @@ Implement the plan requested by the user on 2026-10-02: filter push commits by
 original author in #vpsfree, suppress wholly ignored pushes, and add exactly six
 repository routes to #vpsadminos. The user selected author-only matching and
 explicitly declined other repository additions. Implementation and verification
-are authorized. Default-branch integration and production rollout are not.
+are authorized. The user subsequently authorized integration into both default branches and
+will deploy personally; production rollout remains outside agent scope.
 
 ## Affected repositories and ownership
 
@@ -93,3 +94,12 @@ deterministic regression before edits. Keep notification contract/routes intact.
 No persisted format/dependency/module changes. A separate functional logger
 fix commit remains reviewable; final package pin follows final bot head/hash.
 Expanded final source range gets independent review before VM rerun.
+
+## Final integration and ownership handoff
+
+User approved merging vpsfree-irc-bot/master and vpsfree-cz-configuration/master
+and reserved deployment for themselves. Both targets fetched unchanged, both
+reviewed feature heads fast-forwarded and pushed, exact remote defaults verified.
+No source rebase/patch change or additional review/testing needed: integrated
+trees match the locally verified source. Broader CI can finish when runners are
+available. Preserve branches and leave session open. See integration.md.

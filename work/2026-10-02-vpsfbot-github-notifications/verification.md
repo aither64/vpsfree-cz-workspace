@@ -134,3 +134,13 @@ remains queued with no job logs; fresh watcher retains monitoring ownership.
 Supersededcf21 CI37025858914 confirmed completed/cancelled at16:02:45Z.
 No rerun or cancellation of current-head CI. All final local acceptance checks
 pass, including both-channel archives; broader remote CI remains pending.
+
+## Authorized default-branch integration
+
+User approved both master integrations and will deploy personally. Freshly
+fetched targets matched reviewed bases. Both fast-forward merges/pushes passed
+with pinned environments/hooks; merged trees exactly equal tested final heads.
+SSH remote HEAD/master/feature equality verified for bot e9c60b0b and config
+b164a3b7. No rebase or further source changes, so passing checks were not
+repeated. No deployment. See integration.md. CI queue does not block the
+explicitly authorized merge; optional existing watcher retains observation.
