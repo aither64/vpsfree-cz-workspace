@@ -7,7 +7,8 @@ extract its declared source IP and event time, look up the historical assignment
 once, and preserve the original readable content. User authorized the replacement
 plan with "Implement the plan." after choosing all-nine scope and human-readable
 body/text evidence without a raw JSON dump. Original inputs and raw copies stay
-outside version control. No merge, deployment or live replay authorization.
+outside version control. The user subsequently authorized default-branch integration
+and will deploy personally. No agent deployment or live replay is authorized.
 
 ## Implementation contract
 
@@ -62,3 +63,11 @@ checks and targeted int.api1 configuration build at final head. Verify exact
 subject/text/timestamp roundtrips, historical owner and inclusive boundary;
 cross-history cases now succeed. Capture comparison and guarded force-with-lease
 feature push after checking expected remote head. Leave session/branches open.
+
+## Delivery
+
+Completed at `40289e3b3760eda1f55306d2547919aeb06bafe7`, fast-forwarded and pushed to
+vpsfree-cz-configuration/master under the user’s explicit direction. All planned
+review and verification gates passed; integration checkout repeated 186 tests
+with no failures. Deployment belongs to the user. Session and feature branches
+remain open; see [state](state.md) for exact revisions and evidence.

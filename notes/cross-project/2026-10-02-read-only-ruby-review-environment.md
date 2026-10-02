@@ -25,3 +25,9 @@ shellHook failed on `export PS1="(confctl) $PS1"` in its noninteractive shell.
 Initializing `PS1=''` before sourcing preserves strict mode and satisfies that
 existing hook expectation. A strict-shell source plus bundle-check smoke test
 passed after this wrapper correction; no repository code change was needed.
+
+Source the writable export from the configuration repository root containing
+Gemfile. Sourcing it from the session tracking directory failed with
+`mkConfigDevShell mode 'tools' requires ./Gemfile` before integration began.
+The export executes a working-directory-sensitive shellHook; running from the
+configuration root with PS1 initialized succeeded and the full suite passed.

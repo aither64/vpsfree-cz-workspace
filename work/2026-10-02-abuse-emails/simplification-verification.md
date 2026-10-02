@@ -62,8 +62,19 @@ suite. Logs/status remain private at `/tmp/abuse-emails-simplification-verificat
 and `/tmp/abuse-emails-simplification-verification.status`.
 
 Guarded SSH force-with-lease feature push passed against expected old `7cce4271`.
-Remote feature now exactly `40289e3b`; remote master staysb164a3b. GitHub branch runs
+At feature-push time, remote feature was exactly `40289e3b` and master remained
+`b164a3b`. GitHub branch runs
 list returned `[]`; only manual/scheduled daily-update exists, with no applicable
 feature CI or superseded runs to cancel. Final comparison captured exact base/
 head and source worktree stays clean. Production versions/worker/schema remain
 unverified; no live reports or mailbox operations performed.
+
+## Default-branch integration
+
+Under the user’s subsequent explicit merge direction, a fresh temporary checkout
+fast-forwarded the unchanged final head onto master. Full RSpec passed again:
+186 examples, 0 failures, seed 52091. Clean content was pushed normally over SSH;
+remote master and feature both matched exact head `40289e3b`. No applicable CI runs
+were returned for that commit. Only the operation-owned temporary checkout was
+removed; feature worktree/refs and the session are retained. Deployment is owned
+by the user and was not performed by the agent.

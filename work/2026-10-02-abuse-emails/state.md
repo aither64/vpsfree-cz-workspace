@@ -1,17 +1,19 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Abuse email parsing extension
 
 ## Current status
 
-Phase: ready, awaiting merge approval for vpsfree-cz-configuration/master. The user
-authorized "Implement the plan." All nine formats now extract one source/event,
+Phase: complete; merged and pushed to vpsfree-cz-configuration/master at
+`40289e3b3760eda1f55306d2547919aeb06bafe7`. All nine formats extract one source/event,
 perform one historical assignment lookup and preserve full readable content.
 Implementation, local checks, independent review with its narrow fix, original
-content/database checks and targeted API build are complete. Feature is pushed;
-no merge, deployment or live replay authorized. Session stays open.
+content/database checks and targeted API build are complete. The user explicitly
+authorized default-branch integration and takes responsibility for deployment.
+No agent-owned work or blockers remain. Session, feature refs and feature worktree
+stay open; no deployment or live replay was performed.
 
 ## Phase checklist
 
@@ -22,7 +24,8 @@ no merge, deployment or live replay authorized. Session stays open.
 - [x] Complete independent review and resolve findings.
 - [x] Verify original content/persistence and targeted API build.
 - [x] Capture final comparison, guarded feature push and CI inspection.
-- [ ] Integration/deployment (future authorization).
+- [x] Integrate the exact final feature into remote master.
+- [x] Hand deployment to the user; retain session and feature refs/worktree.
 
 ## Ownership and exact revisions
 
@@ -46,7 +49,8 @@ Old restrictive head `7cce4271be0bcd81a42c6784e12dff326e5d041f` is superseded,
 unmerged/undeployed/unconsumed. Only local/remote feature refs contained it before
 rewrite. Canonical SSH fetch reconfirmed master at the base and remote feature at
 that old head before push. Guarded SSH force-with-lease succeeded; remote feature
-now exactly `40289e3b`, remote master remains `b164a3b`. No master rewrite.
+now exactly `40289e3b`. Remote master was subsequently fast-forwarded to the same
+head under the explicit integration direction below. No master rewrite.
 Initial plan/state/design commit: `20f6e451474b3af5b5747ae8f0f41e2b4dba9270`.
 
 ## Implemented contract and local evidence
@@ -128,8 +132,8 @@ are explicitly marked historical for the superseded restrictive approach.
 
 Final comparison captured base `b164a3b`/head `40289e3b`; source stays clean. GitHub
 branch workflow query returned no runs. Only manual/scheduled daily update exists;
-no applicable feature CI or superseded runs to cancel. Next: integrate/deploy only
-after explicit user direction for the repository/target. No deployment or live
+no applicable feature CI or superseded runs to cancel. Integration is complete;
+next operator action is deployment by the user. No agent deployment or live
 replay planned.
 
 The mail task deletes fetched messages before parsing with EXECUTE=yes; rejected
@@ -139,3 +143,34 @@ Rollback cannot retract incidents/notifications or restore deleted mail. Offline
 checks do not establish actual production schema/version or mail-worker owner.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-02-abuse-emails/
+
+## Integration authorization
+
+User: "merge it into the default branches and we're done, I will do deployment
+myself". Scope: the sole registered source feature, vpsfree-cz-configuration/master.
+Remote default confirmed master; freshly fetched master remained `b164a3b` and local/
+remote feature both equaled `40289e3b`. Exact reviewed/focused-checked/verified head
+could fast-forward without a rebase or code change. Deployment handed to the user;
+no session archival/deletion/stop or feature-ref removal authorized.
+
+## Completed integration and deployment handoff
+
+Fresh remote checks found no upstream movement, so the reviewed patch needed no
+rebase or changes. From a fresh detached temporary integration checkout, the lead
+fast-forwarded master from `b164a3b` to `40289e3b`, reran the full suite (186 examples,
+0 failures, seed 52091), verified clean content and pushed normally over SSH.
+Remote master and retained feature were independently confirmed at the exact final
+head; canonical fetch and ancestry checks passed. GitHub runs for that commit were
+empty; no applicable push workflow exists.
+
+The clean, operation-owned temporary integration checkout was removed with normal
+non-force worktree removal. The session feature worktree and both feature refs are
+retained. No session lifecycle helper, archival, deletion, stop or deployment was
+invoked. All registered final feature heads are now merged and no work remains
+assigned to the agent; tracking is complete while the session remains open.
+
+One initial environment setup attempt from the tracking directory failed before
+any integration mutation because shellHook requires a repository-root Gemfile.
+Rerunning from the configuration root succeeded; the reusable environment note
+records this precondition. This checkpoint records the genuine ownership handoff
+to the user for deployment, under the same-day tracking exception.
