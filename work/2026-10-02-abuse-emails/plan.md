@@ -1,54 +1,64 @@
-# Abuse email parsing extension
+# Abuse email parsing and content preservation
 
-## Goal and authorized scope
+## Goal and authorization
 
-Inspect the nine user-supplied RT abuse messages and the existing
-`vpsfree-cz-configuration` parsers, then propose an extension that creates
-correctly attributed incident reports. This turn is investigation and design.
-Implementation, sending reports, deployment and integration are future work.
-Keep the supplied emails and any raw copies outside version control.
+Support all nine supplied report formats with one incident per incoming report:
+extract its declared source IP and event time, look up the historical assignment
+once, and preserve the original readable content. User authorized the replacement
+plan with "Implement the plan." after choosing all-nine scope and human-readable
+body/text evidence without a raw JSON dump. Original inputs and raw copies stay
+outside version control. No merge, deployment or live replay authorization.
 
-## Affected repositories
+## Implementation contract
 
-- `vpsfree-cz-configuration`: `configs/vpsadmin/api/incident_reports.rb`,
-  provider parsers, parser specifications and API configuration documentation.
-- Coordination workspace: this session's plan, state and architect brief.
-- vpsAdmin's incident-array interface is a compatibility boundary; changes to
-  vpsAdmin are not currently expected.
+Architect owns the revised [design](design.md); implementer owns configuration
+parsers, tests and owning API README. Lead owns plan/state, writing pass, review
+and verification coordination. Existing legacy provider paths remain supported.
 
-## Approach
+Metadata only: Blocklist/CEDO structured Source/Date; Provider.tools Source and
+Last seen; Burina subject IP and maximum timestamp prefix in its log section;
+LRob JSON source/timestamp; Cisilino matching subject IP slots and UTC Last seen;
+Custom Visuals subject IP and precise numeric-offset last-record prefix. Keep
+existing narrow identity/profile and required source/date/MIME validation.
+Preserve the nine expected instants, fractions and accepted yearless 31-day rule.
 
-The retained architect owns the technical proposal and verification brief in
-[design.md](design.md). The lead independently inspects the inputs and routing,
-reconciles the proposal, and obtains independent review before presenting it.
-Classify structured X-ARF attachments, inline structured reports and prose/log
-reports. Prefer narrowly recognized formats with explicit offending addresses
-and event timestamps over broad subject or arbitrary-IP extraction.
+Use original subject without RT prefix and decoded human body/plain attachments;
+append LRob decoded textual evidence. No individual-attempt interpretation,
+source extraction from logs, ownership-range checks, A/B/A rejection, filtering,
+counts or generated summaries. Unused optional fields are forwarded, not
+validated. Original wrapping/wording stays, with existing decoding/newline/edge
+whitespace handling. Keep storage bounds, no silent truncation or fallback.
 
-## Decisions and compatibility
+Whole-body forwarding intentionally retains earlier/repeated/unrelated records.
+The event owner receives the entire report; per-record ownership isolation is
+not a requirement. Source-like text in usernames/victim logs never selects an IP.
 
-Preserve historical IP assignment lookup, existing provider handling and dry-run
-semantics. Distinguish event time from receipt time, source from victim address,
-and allegation from verified activity. Keep reports scoped to their owner.
-No schema, on-disk format, API/client, CLI/Terraform, daemon protocol or node
-configuration changes are expected. Parser deployment belongs to API
-configuration; mixed API versions retain the incident-array contract. A rollback
-restores old recognition behavior without retracting existing incidents or mail.
-The detailed proposal must identify any exception to these assumptions.
+## Compatibility and documentation
 
-## Documentation
+Only vpsfree-cz-configuration API hook/spec/docs change. Unchanged vpsAdmin
+incident-array interface, schema, clients/CLI, daemons, Nix options and pins.
+Older code can read saved reports; no node coordination or migration. Rollback
+restores recognition behavior without retracting existing incidents/mail.
+Supported behavior belongs in configs/vpsadmin/api/README.md; exact revision,
+verification and rollout state remain here. Superseded restrictive policy will
+be replaced in current design/docs and unmerged feature history.
 
-Readers: maintainers implementing the parsers and operators validating rollout.
-Current proposal and temporary evidence belong in this session. After
-implementation, supported parser behavior and recovery guidance belong in
-`configs/vpsadmin/api/README.md`; entry point is the repository README.
+## Verification and delivery
 
-## Verification plan
+Prove all nine routes/times, original subject/full readable content, one event-
+time lookup, unknown SSH wording/other-IP text preservation, dry-run no saves,
+normal persistence, required metadata errors, storage bounds and legacy behavior.
+Replace range/filter tests with accepted forwarding and selected-time ownership
+checks. Originals remain private; committed fixtures are independently synthetic.
 
-Map all nine tickets to routing gaps and expected source IP/event time without
-creating reports. Independently review the committed proposal. Future
-implementation needs sanitized synthetic fixtures, handler-level routing tests,
-timestamp and assignment assertions, malformed-input and privacy cases, legacy
-regressions, and a dry-run replay of the external originals. Run the documented
-RSpec suite in the repository Nix shell. Longer verification uses the mandatory
-fresh watcher workflow; no build or deployment is needed for this proposal.
+After quick RSpec/lint/hooks and lead writing pass, consolidate the undeployed,
+unmerged feature into one coherent rewritten commit. Reconfirm provenance and
+fetch/rebase as needed; do not rewrite master. Independent retained reviewer
+reviews complete base-to-head history/diff and no-migrations inventory across
+all four lanes, with explicit accepted whole-body forwarding policy.
+
+Then fresh Luna/low watchers run adapted isolated pinned-schema database/original
+checks and targeted int.api1 configuration build at final head. Verify exact
+subject/text/timestamp roundtrips, historical owner and inclusive boundary;
+cross-history cases now succeed. Capture comparison and guarded force-with-lease
+feature push after checking expected remote head. Leave session/branches open.

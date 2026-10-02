@@ -1,191 +1,199 @@
-# Abuse email parsing: design and verification brief
+# Abuse email parsing: approved design and verification brief
 
-## Scope and evidence
+## Scope and status
 
-Proposal based on all nine originals and local canonical configuration HEAD
-`b6e650ad902482b4c4e66b5a89a4275bed92419e`. vpsAdmin interfaces were inspected
-read-only at `9fc0648accd414246d6422e67106ae7217486020`. These are inspected
-snapshots, not verified production revisions. No application edits, incidents,
-commits, deployments or mailbox operations were performed.
+The user authorized implementation of this simpler contract on 2026-10-02:
+"Implement the plan." It covers all nine supplied reports. The restrictive
+implementation at `7cce4271be0bcd81a42c6784e12dff326e5d041f` is superseded;
+its per-record filtering and ownership-range rules are not a supported path.
+This document describes the approved replacement, not completed verification.
 
-Implement only in `vpsfree-cz-configuration`, retaining the existing
-`parse -> Array<IncidentReport>` interface. Create one incident per incoming
-report/source, using its latest relevant event. The three Burina reports remain
-separate despite overlapping history. Exclude framework redesign, cross-message
-deduplication, historical replay and vpsAdmin core/schema changes.
+Keep changes within `vpsfree-cz-configuration` and its existing
+`parse -> Array<IncidentReport>` interface. For each valid incoming report,
+extract one reported source IP and one event instant, look up its historical
+assignment once, and preserve the original subject and decoded readable content.
+The three Burina reports remain separate despite overlapping evidence.
 
-Original uploads and identifying bulk evidence stay outside version control.
-Tests use synthetic equivalents; this brief retains only structural findings
-and ticket references. The architect owns design; implementers own application
-edits; the lead accepts material deviations and maintains tracking records.
+The architect owns this brief, implementers own application changes, and the
+lead owns plan/state/portal records and acceptance. Original messages and bulk
+identifying evidence remain outside version control; fixtures are synthetic.
+No cross-message deduplication, historical replay or new provider framework.
 
-## Routing and timestamp matrix
+## Required metadata and timestamps
 
-Expected times assume valid historical assignments and the privacy checks below.
-UTC conversions were checked; application tests were inspected, not executed.
+Keep the existing narrow provider routes, originator checks and diagnostic
+`CHECK_SENDER` behavior. Source comes from a recognized subject or authoritative
+structured field, never from individual SSH records or an arbitrary IP scan.
 
-| Ticket | Format and current behavior | Proposed handling | Expected UTC `detected_at` |
+| Ticket | Profile and authoritative source | Event time | Expected UTC `detected_at` |
 | --- | --- | --- | --- |
-| #95347 | Blocklist.de XARF 0.2 `report.txt`; unidentified | Extend structured-text XARF routing; complete RFC 2822 `Date`; log attachment has only a heading | `2026-09-28T08:41:50Z` |
-| #95348 | Provider.tools inline `X-XARF: PLAIN`; unidentified | Narrow inline profile; choose summary `Last seen`, retain `Date` as generation metadata | `2026-09-28T08:44:40.114Z` |
-| #95350 | Burina Fail2Ban SSH syslog; routed but returns no incident | Parse source-bound syslog with year inference and explicit `+0200` | `2026-09-28T09:23:02Z` |
-| #95351 | LRob/Shieldlist JSON XARF 4.2.0; unidentified | Dedicated provider adapter using existing decoder; JSON `timestamp` | `2026-09-28T09:29:00Z` |
-| #95353 | CEDO Fail2Ban XARF 0.2 attachments; unidentified | Same structured-text extension as #95347; RFC 2822 `Date` | `2026-09-28T09:36:08Z` |
-| #95355 | Second Burina syslog report; routed but returns no incident | Same syslog extension, maximum event time | `2026-09-28T10:32:52Z` |
-| #95356 | Cisilino bilingual UTC range; unidentified | Narrow prose adapter, labeled source and UTC `Last seen` | `2026-09-28T10:38:19Z` |
-| #95360 | Third Burina syslog report; routed but returns no incident | Same syslog extension, maximum event time | `2026-09-28T11:46:46Z` |
-| #95361 | Custom Visuals prose and wrapped SSH record; unidentified | Narrow adapter; full log timestamp with explicit `-05:00` | `2026-09-28T11:57:11.439254Z` |
+| #95347 | Blocklist.de; structured `Source`, agreeing with subject | Complete structured `Date` | `2026-09-28T08:41:50Z` |
+| #95348 | Provider.tools; inline `Source`, consistent with subject/summary IP | Summary `Last seen` | `2026-09-28T08:44:40.114Z` |
+| #95350 | Burina; `Abuse from <IP>` subject | Maximum syslog timestamp prefix | `2026-09-28T09:23:02Z` |
+| #95351 | LRob/Shieldlist; JSON `source_identifier`, agreeing with subject | JSON `timestamp` | `2026-09-28T09:29:00Z` |
+| #95353 | CEDO; structured `Source`, agreeing with subject | Complete structured `Date` | `2026-09-28T09:36:08Z` |
+| #95355 | Burina; recognized subject | Maximum syslog timestamp prefix | `2026-09-28T10:32:52Z` |
+| #95356 | Cisilino; the two recognized subject IP slots must agree | One explicit UTC `Last seen` | `2026-09-28T10:38:19Z` |
+| #95360 | Burina; recognized subject | Maximum syslog timestamp prefix | `2026-09-28T11:46:46Z` |
+| #95361 | Custom Visuals; recognized subject | Precise numeric-offset prefix in designated last-log section | `2026-09-28T11:57:11.439254Z` |
 
-Three messages match a parser; six miss routing. None currently reaches incident
-construction on the inspected code paths. Fail2Ban's `abuse .* from` body regex
-misses the exact `abuse from` wording. The subject fallback then calls
-`parse_access_log_time(fallback: false)`, which accepts Apache timestamps but
-not these syslog records. The legacy handler still marks the message processed.
+Blocklist.de/CEDO retain one direct `text/plain` structured report attachment,
+XARF 0.2/category/type/source-type admission and reporter identity checks.
+Required source/date keys are unique. Their structured date is authoritative;
+subject dates, prose and logfile times need no corroboration. Service, port,
+report ID and log contents are forwarded without interpretation.
 
-LRob's JSON meets the existing `XArfDecoder` core shape, including a valid UUID v4.
-The gaps are originator admission, absent feedback MIME part and unsupported
-provider/type dispatch. Do not render login attacks as Abusix spam.
+Provider.tools retains one marked inline XARF block and summary with its
+source-type/category/type admission. `Last seen` is required; generation `Date`,
+`First seen`, state and services are preserved without parsing or ordering.
+They do not determine attribution or require generated labels.
 
-## Implementation boundaries and routing
+LRob retains one direct `application/json` attachment, current XARF 4.2.0
+`connection/login_attack` admission, sender/reporter identity and the existing
+`XArfDecoder` required shape, UUID, source and timestamp validation. No feedback
+MIME part is required. Decode textual evidence without parsing its records.
+Ignore optional range extensions for extraction; do not validate prose dates.
 
-Paths below are relative to `configs/vpsadmin/api/` unless stated otherwise.
+Cisilino needs no English/Italian source sentence, translation agreement,
+first-seen field, counts, services or sample grammar. Custom Visuals needs only
+its subject source and one complete timestamp prefix in the unique designated
+last-log section. No username, log-source, prose count, first/last prose time,
+AM/PM conversion or prose timezone corroboration is needed.
 
-- `incident_reports.rb`: register narrow provider adapters before generic XARF.
-- `abuse_notice_parser/x_arf.rb`: preserve the old ISO-subject path; add
-  `match_message?` profiles for Blocklist.de/CEDO structured attachments and
-  Provider.tools inline fields. Parse selected sections, not flattened mail.
-- `abuse_notice_parser/fail2ban.rb`: support the exact observed prose and SSH
-  syslog timestamps; preserve original Fail2Ban and Apache paths.
-- New `abuse_notice_parser/{lrob,cisilino,custom_visuals}.rb`: small adapters.
-  LRob uses `XArfDecoder`; leave Abusix/Netcraft `XArfJson` admission and stable
-  Netcraft duplicate subjects unchanged. Decoder expansion is unnecessary.
-- `utils.rb`: only small helpers needed for strict times, section selection,
-  content limits and assignment interval coverage; avoid unrelated refactoring.
-- Add focused specs under repository `spec/configs/vpsadmin/api/`, synthetic
-  fixtures under `spec/fixtures/emails/`, and supported behavior to API `README.md`.
+### Timestamp behavior
 
-New profiles check exact `X-RT-Originator` addresses: `abuse-team@blocklist.de`,
-`www-root@cedo.com`, `noreply@provider.tools`, `abusereport@lrob.net`,
-`notifiche@cisilino.com`, `abuse@customvisuals.com`. Preserve existing Burina
-routing policy. `CHECK_SENDER` may bypass identity checks for diagnostics;
-required structure/source/time validation remains. RT originator selects a
-provider within trusted ingestion; it does not prove an allegation is true.
+Retain strict calendar and numeric-offset RFC/ISO parsing, including fractions.
+Burina reads line-leading syslog date/time prefixes in the report's log section
+and takes their maximum; the remainder of each record is opaque. A numeric
+local-timezone note and message Date are required for year inference. Consider
+adjacent years and require exactly one nonfuture candidate within 31 days of
+message Date for each parsed prefix. Reject invalid or out-of-window timestamps;
+never substitute the current year, process timezone or receipt time as an event.
 
-Blocklist.de/CEDO require one recognized `report.txt` block with unique required
-keys (`Source-Type`, `Source`, `Date`, `Version`, category/type). Allow leading
-`---`, optional fields and descriptive `Port: ssh`; do not evaluate YAML.
-Provider.tools requires its inline marker, source/type and coherent summary.
-LRob requires one `application/json` attachment named `xarf.json`, matching
-sender/reporter identity and `connection/login_attack`. Its missing feedback MIME
-part is accepted only in this adapter. Validate contact metadata in the bounded
-JSON object; the decoder result currently preserves only sender domain.
+Custom Visuals reads the precise date/time/offset prefix without joining or
+rewriting the record's content. Keep fractional instants for attribution and
+persistence. No selected timestamp may fall back to another field when invalid.
+Unknown SSH wording or an address mentioned in a log cannot change the source.
+A later prefix inside the reported log section can determine Burina's event time
+regardless of that record's opaque message text; this is intentional.
 
-Keep report/evidence MIME boundaries. Reject competing blocks, duplicate required
-keys and malformed structured data; do not fall back to prose guesses. Do not
-extract report fields from forwarded messages, arbitrary logs, HTML or headers.
-These nine messages need only their observed top-level MIME layouts.
+## Content preservation, attribution and failures
 
-## Source, time and evidence rules
+Set the incident subject to the original subject after removing the RT prefix.
+Preserve the decoded human-readable body after RT-wrapper removal, eligible
+direct text/plain attachments and complete log text. LRob additionally appends
+all supported decoded `text/plain` JSON evidence payloads, in order. Do not emit
+the raw JSON envelope or Base64 data. Empty optional logs/evidence remain valid.
 
-Validate one host IP with `IPAddr`, reject prefixes/hostnames, and normalize it.
-Use structured source fields or the adapter's explicit attacking-source phrase.
-Corroborate subject/body claims; contradictions require manual review. Victim
-addresses, masked targets, routing hops and URLs never trigger ownership lookup.
+Reuse existing text-section helpers and `append_text_sections`; decode MIME
+encodings and retain existing line-ending/outer-whitespace normalization and
+exact duplicate-section avoidance. Preserve wording and internal wrapping.
+Do not traverse nested/forwarded messages or emit HTML/binary attachments.
+Incidental unsupported MIME parts are ignored; malformed required parts and
+unsupported JSON evidence types remain rejected. No link fetching or YAML use.
 
-- XARF text: complete RFC 2822 numeric-offset or existing ISO `Date` fields.
-  Blocklist.de has no actual raw log lines; structured evidence is sufficient.
-- Provider.tools: `Last seen` is the event; `Date` is generation time. Require
-  valid first/last ordering. Missing/invalid event time requires manual review.
-- Burina: maximum source-specific syslog time, using the numeric timezone note.
-  Infer the year against message date in that offset, considering adjacent years.
-  Proposed conservative bound: require a unique past candidate within 31 days;
-  reject future/older/ambiguous records. The lead should accept this bound before
-  implementation. Do not use current year, process timezone or delivery time
-  as a substitute for an event timestamp.
-- LRob: JSON `timestamp`; validate any retained first/last range. Decode MIME
-  Base64 and evidence Base64 separately; retain only supported textual evidence.
-- Cisilino: explicit UTC first/last; bilingual repetition describes one report.
-- Custom Visuals: join the wrapped last record and use its full timestamp;
-  prose last time must agree to the second. Parse first time with explicit
-  `-05:00`. Do not infer a fixed offset merely from `America/Chicago`/`CDT`.
+Validate a single host IP with existing helpers, excluding prefixes/hostnames.
+After required metadata validation, call
+`find_ip_address_assignment(source, time: detected_at)` exactly once. Use the
+returned assignment/user/VPS and existing incident fields. Missing ownership
+means no incident; there is no fallback to the current owner. Preserve existing
+inclusive interval and highest-ID boundary semantics through the API helper.
 
-Retain fractions for attribution and rendered evidence. Verify persisted
-precision during integration against the existing `detected_at` column; do not
-introduce a schema migration for fractional timestamps.
+Forward full readable report content to that selected event owner. Content may
+include earlier-owner activity, repeated records and other IP mentions. This is
+the approved behavior: no range coverage, endpoint ownership, A/B/A, per-record
+source/ownership checks, filtering, generated counts or reconstructed summaries.
+A single lookup establishes event-time attribution, not ownership of every
+statement or historical record in the forwarded report.
 
-## Ownership and privacy invariants
+Keep required MIME/section uniqueness, provider identity, host-IP and selected
+source/time validation proportional. Missing/duplicate/invalid required metadata
+or conflicting required source claims fail closed with a useful diagnostic;
+no alternate IP guesses or malformed-structured-report prose fallback. Unused
+prose and optional range/count/sample fields are not validation inputs.
+Ignored optional text fields may repeat, and optional JSON range values remain
+uninterpreted, but existing rejection of duplicate JSON keys applies throughout
+the document without custom exceptions for unused extensions.
+`CHECK_SENDER` disables only identity checks. Keep legacy Fail2Ban handled
+semantics; malformed new provider profiles remain unprocessed.
 
-Use `find_ip_address_assignment(source, time: detected_at)` and existing incident
-fields. Never substitute the present owner or infer ownership from email names.
-The helper uses inclusive assignment intervals and highest-ID boundary ties.
-A latest-event lookup alone does not prove ownership of historical evidence.
+Retain 1 MiB report/JSON/decoded-evidence bounds, nonempty readable content,
+subject <=255 characters, text <=65,535 bytes and utf8mb3 compatibility. Reject
+unrepresentable or oversized original content rather than truncate or regenerate
+it. Diagnostics identify provider/ticket/reason without bulk evidence. Dry runs
+must not save incidents, send notifications or alter mailbox contents.
 
-For dated logs, select the latest event's assignment and retain only records
-within its interval that resolve to that assignment, including boundary checks.
-Recompute displayed ranges/counts from retained records; omit original aggregate
-claims. Diagnose omitted historical records for manual handling without creating
-extra historical incidents. For aggregate reports, require the selected
-assignment's continuous interval to cover first..last and consistent endpoint
-lookups. Same user/VPS at both ends is insufficient across A/B/A reassignments.
-Reject uncertain aggregate ownership. This includes Provider.tools, Cisilino
-and Custom Visuals when retaining their reported totals/ranges.
+## Files and removal boundaries
 
-Generate a summary plus validated evidence. Full originals remain in RT; never
-forward historical activity across ownership boundaries. Describe reported
-attempts/listings without asserting compromise or successful login. State when
-raw logs are absent. Include provider, source, event time, relevant service/range
-and available report ID. Final visible prose goes through the lead's writing
-workflow. Do not fetch links or execute content from reports.
+Under `configs/vpsadmin/api/`, retain `incident_reports.rb` routing and the
+existing provider classes. Simplify `x_arf.rb`, `fail2ban.rb`, `lrob.rb`,
+`cisilino.rb`, `custom_visuals.rb` and `utils.rb`; leave the decoder unchanged.
+Preserve original Fail2Ban/Apache, legacy XARF and all other legacy provider
+behavior, including Abusix/Netcraft admission and duplicate-key subjects.
 
-Keep subjects <=255 characters and text <=65,535 bytes, compatible with utf8mb3;
-reuse XARF's 1 MiB JSON/decoded-evidence bounds. Reject oversize/unsupported data
-before persistence. Diagnostics identify ticket/provider/field/reason without
-bulk evidence. Preserve legacy processed semantics; malformed new profiles may
-remain unprocessed. `processed?` never guarantees an incident or full coverage.
-Dry runs must not save, notify or change mailbox contents.
+Remove `Event`, `assignment_contains?`, `notice_range_assignment`,
+`notice_owned_events`, `notice_log_source`, `notice_iso_log_events`,
+`notice_summary` and `notice_event_evidence`. Reduce `notice_syslog_events` to
+a local Fail2Ban timestamp helper. Remove Custom Visuals `local_prose_time` and
+provider range/count/translation/sample interpretation. Simplify
+`notice_incident` to use the original stripped subject and supplied text.
+Reuse needed metadata, bounds, date, MIME, warning and single-assignment helpers.
+No abstraction replaces the removed machinery.
+
+Update `spec/configs/vpsadmin/api/extended_abuse_notices_spec.rb`, synthetic
+fixtures where needed, and `configs/vpsadmin/api/README.md`. Retain the small
+interval-aware assignment stub in `spec/spec_helper.rb` for event-time tests.
+
+## Verification and branch history
+
+Quick checks: full `nix develop -c bundle exec rake spec`, targeted RuboCop and
+mandatory repository hooks. Test all nine formats for one candidate, exact UTC
+instant, original stripped subject, preserved body/text attachments/JSON textual
+evidence, exactly one lookup for reported source/time, and dry-run no-save.
+Retain required-metadata/MIME/JSON/Base64/storage errors and legacy regressions.
+
+Replace evidence-exclusion, regenerated-count and range/A/B/A rejection tests
+with explicit preservation and event-owner assertions. Unknown SSH message text,
+username-like IPs, old records and other-IP mentions remain in output without
+changing the source. Remove rejection tests for unused ranges, counts, services,
+translations, samples and Custom Visuals prose offsets. Cover reversed log order,
+maximum prefixes, numeric offsets, process-TZ independence, year rollover,
+leap dates, the 31-day bound, fractions, missing owner, historical versus current
+owner, inclusive highest-ID boundaries and oversized original subjects.
+
+Before final review, fetch/recheck upstream and provenance. The current single
+pushed feature commit is unmerged and undeployed per session records. Consolidate
+its replacement into one coherent feature commit with no obsolete restrictive
+approach retained in the branch history. Do not rewrite master. Provide the
+retained independent reviewer the entire final base-to-head series/diff and
+explicit no-migrations inventory. Review general, architecture/repetition,
+scope/proportionality and risk/compatibility lanes, including the user's accepted
+full-content behavior. Previous verification/review does not validate this change.
+
+After review, use the required watcher for longer verification. Adapt the existing
+isolated pinned-schema MariaDB harness to all nine private originals, dry-run
+and save/reload, exact subject/text, one lookup and fractional DATETIME roundtrips.
+Cross-range/A/B/A cases now succeed when the selected event has an owner and
+preserve full content. Keep real historical/boundary lookup checks, disable
+notifications/mailbox access and keep originals outside Git. Rebuild only the
+affected API configuration at the final head; no node/kernel suite is needed.
+
+Capture the final comparison and push the rewritten feature with an explicit
+force-with-lease after checking the expected remote head. Handle applicable CI
+and only superseded feature runs. Retain the branch/session. Integration,
+deployment and production incident creation remain separate authorizations.
 
 ## Compatibility, deployment and recovery
 
-No migrations, persisted-format, API/client/CLI/Terraform, daemon protocol or
-Nix module-option changes; no coordinated node update. Old code reads new
-incidents. Mixed versions differ only in recognized formats. Keep legacy fixture
-behavior, sender rules and duplicate-key subjects stable.
+No API/schema/pin, persistent-format, client/CLI/Terraform, daemon protocol or
+Nix option changes; no node coordination. Old versions can read new incidents.
+Mixed parser versions can differ in recognition/rendering but retain the same
+incident-array contract. An authorized rollout must verify the actual API mail
+worker/configuration revision and reload; recorded offline checks do not prove
+production state.
 
-API configuration comes from `cluster/cz.vpsfree/vpsadmin/common/api.nix`;
-inspected default rake tasks are enabled on `int.api1`. A future rollout verifies
-the actual mail-task owner, builds/deploys its configuration and confirms reload.
-Deployment and replay are not authorized by this investigation. Rollback restores
-old parsing but does not remove incidents or retract notifications.
-
-vpsAdmin fetches/deletes messages before handling them with `EXECUTE=yes`.
-Unprocessed/rejected mail is not retained for automatic retry. Preserve RT
-originals; inspect existing incidents before replaying only missing reports.
-No cross-message deduplication is added. Persistence/notification failures can
-be partial and require inspection before retry.
-
-## Acceptance and verification
-
-Quick implementation checks in the configuration Ruby 3.4 Nix shell:
-`nix develop -c bundle exec rake spec` and targeted `bundle exec rubocop`.
-Use synthetic RT/MIME fixtures without original IPs, hosts, private IDs, log
-usernames or tokenized URLs. Preserve necessary provider-routing identity fields.
-
-Acceptance must cover all nine handler routes and UTC times; one incident per
-report/source; source rather than victim lookup; legacy regressions; sender
-mismatch; duplicate/conflicting blocks; malformed structured data without fallback;
-RFC/ISO offsets/fractions; both Base64 layers; quoted-printable; timezone-independent
-results; maximum log time; December/January and leap-day handling; missing offsets;
-empty/summary-only evidence; wrapped records; dry-run no-save and content limits.
-
-Extend the assignment test stub with intervals: different owners, same user/new
-assignment, A/B/A history, open end, exact boundaries and missing owner. Assert
-historical evidence exclusion and aggregate rejection. The current IP-only stub
-cannot establish these guarantees. Assert no unrelated source or log leaks.
-
-After commits and quick checks, the lead runs mandatory independent review of
-the complete branch/history with an explicit no-migrations conclusion. Only then
-run longer checks through the required watcher: targeted API configuration build
-and disposable real-database handler validation with notifications disabled,
-including assignment intervals and stored timestamp precision. No node/VM/kernel
-suite is justified for this parser-only change. Later original-message dry runs
-must remain private and omit `EXECUTE=yes`; production creation is separate work.
+With `EXECUTE=yes`, vpsAdmin fetches/deletes mail before parsing; rejected or
+unprocessed messages are not automatically retained for retry. Originals remain
+in RT. Inspect existing incidents and partial notification/persistence success
+before replaying missing reports. Rolling back restores old parser behavior but
+cannot remove existing incidents, retract notifications or restore deleted mail.
