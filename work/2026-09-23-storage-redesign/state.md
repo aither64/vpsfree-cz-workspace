@@ -6,7 +6,865 @@ lifecycle: active
 
 ## Current status
 
-2026-10-02 current phase: requested rebase and dev-cluster redeploy verified. The user
+2026-10-03 current phase: external idle package activation handoff.
+The storage profile and both acceptance fixtures are committed; default and
+compatible no-VM checks passed after the default-pin definition/app correction;
+scheduler and common Plan support are committed and published. The user-created VPS and all
+current disks/files are preserved; no reset is authorized for this slice.
+
+Current provider: clean published `45d7ce88`; API support: `46b3bf6f`. Required
+host migration and the real retained-services native fixture passed. The native
+result proves its ordered services-only assertions and ends at `starting_copied`,
+with no hold release. The generated consumer pin is committed at `492fdf8e`;
+reviewer0 completed all four HIGH-risk composition lanes with no findings.
+The four root checks, composed package build and packaged contract/source-byte
+proof passed. The external operator owns the next public package switch while
+all managed sessions are idle. Full-cluster public refresh/release and populated-cluster
+payload acceptance remain pending. API broad CI is still running.
+
+Consumer branch preparation: normal pinned-Git rebase advanced the clean
+registered workspace feature from `58df04cf` to committed shared master
+`8990ecca0cea7a3b59dd88e31138b177500bc43a`. Its package inputs, procedures,
+registration and original `3f539b0` backup remain unchanged; shared head/index
+parity was verified. The normal pin commit changes only two flake files and
+eight provider/generic lock metadata leaves; all other nodes and follows are
+unchanged. The fresh consumer no-build check passed in 16.151s with source
+parity 1. [Consumer review packet](storage-profile-consumer-review.md) records
+the complete one-commit series, actual review base, contracts and remaining
+package/activation gates. The fresh package watcher passed all three stages in
+250.02s with source parity 1: four existing root checks, default package build,
+and packaged contract/helper-byte proof. Consumer `492fdf8e` is published over
+SSH. Package activation remains pending.
+
+Built package: `/nix/store/g1jwv2598a5ig64f8yk1xg62mminkzpi-dev-workspace-0.2.0`;
+provider tools: `/nix/store/k62d9v4jjgqv4y2wgxz019k67liv75jp-vpsfree-dev-workspace-tools-0.1.0`.
+Host and tools canonical contract bytes match SHA256
+`33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`,
+schema 1/policy 3. Selected profile helper, maintenance helper and provider Nix
+source bytes also match. Evidence: `/tmp/storage-profile-composed-package._oa5spvo`.
+Root deployment/instruction tests report 4/19 and 7/95 with zero failures;
+package test groups report 344/3633 (12 skips), 8/33 (0 skips), 115/796 (3 skips),
+all zero failures/errors. No kernel compilation or owned process remains.
+
+Reusable fixture lessons: [forced VM replacement observations](../../notes/vpsfree-dev-workspace/2026-10-03-forced-vm-fixture-observations.md).
+
+### Storage-profile verification history
+
+The exact published `78ffa6f` retained-services invocation exited 1 after 680s.
+Its one native example failed after 216.23s in stage 1, after the initial
+disposable services guest booted. Parent inspection of the private guest shell
+log located MariaDB ERROR 1064 at the fixture namespace mutation: the `offset`
+column is unquoted in both the assignment and `MIN(offset)` expression.
+Implementer0 owns a one-file identifier-quoting correction and a focused
+disposable database check before another native run. Evidence:
+`/tmp/storage-profile-retained-services-78.W0DG89VX`. Cleanup completed; no owned
+process remains and the registered retained cluster is untouched. This attempt
+does not prove maintenance masks, preserved allocations, copy or new boot.
+
+The one-line correction quotes both `offset` identifiers. A fresh Luna/low
+check passed against the actual API46 automatic disposable database/schema in
+38s: PREPARE succeeded, no UPDATE or guest executed, database cleanup completed.
+Logs `/tmp/storage-profile-prepare-watch.vvTykFkl`. The tested source SHA256 is
+`2c63e8c775a3f50cef56f87544ef1e85fe695ac92397e40966b3ed869637915c`.
+Normal fixture-owning amend and exact-lease SSH publication created clean
+`3175df09a8e3080947730e25d06c3fb577816a2f`, tree
+`f710925bb6c9a4d4810022c572ca3b0fef3f3ca3`; first three commits remain identical,
+and the last differs only at that SQL line. Four commits/25 paths, 5265 additions/
+67 deletions, full binary diff SHA256
+`9ac69fd487cfb636a7420de54fc8f0b95ae233a42e2ca30794dd563c300f1802`.
+Backup `backup/2026-09-23-storage-redesign-provider-before-fixture-sql` retains
+`78ffa6f`; freshly fetched master remains `c56f981a`. No new contract or full
+unaffected rereview is implied. Fresh watcher `storage_profile_retained_services_3175`
+owned the actual compatible native retry, logs
+`/tmp/storage-profile-retained-services-3175.6ka7ukno`; source/index were held.
+Exact-head provider Check `37075156498` passed; prior `78ffa6f` Check
+`37072305045` passed. All earlier same-branch runs are completed, so no superseded
+live run requires cancellation. API46 broad `37030949481` remains in progress;
+the topic selection's 27/27 success is unchanged.
+
+The exact `3175df0` native retry exited 1 after 421s; its one example failed
+after 218.63s in stage 2. The initial old guest, corrected namespace/resource
+mutation, projections and clean stop completed. `validate_system!` then refused
+before the masked guest boot: “resident has an unsupported application writer”.
+Parent inspection of the actual public fixture closure identifies exactly
+`vpsadmin-rabbitmq-setup.service`, absent from the fixed mask set. Its owning
+API46 module declares a boot oneshot under `multi-user.target`; architect0 owns
+the bounded mask-completeness decision before implementation. The hold stayed
+`held`, with no bound runner/candidate. Logs
+`/tmp/storage-profile-retained-services-3175.6ka7ukno`, fixture roots
+`/tmp/retained-services-roots.ayRSqk1q`. Artifact directories and stale pid files
+are retained evidence, not live resources: parent confirmed all three recorded
+virtiofs PIDs are dead and no QEMU/virtiofs process binds to this fixture path.
+The registered cluster remains untouched; maintenance/preservation proof is pending.
+
+Architect0 selected the bounded completeness fix: mask only
+`vpsadmin-rabbitmq-setup.service`; keep maintenance record/version and mask policy
+1, runtime policy 3, and existing unknown writer/trigger/activation refusals.
+No deployed profile hold or selected maintenance package needs migration, and
+the failed disposable hold never reached masked boot. Both actual closure unit
+inventories have 365 entries with this sole unsupported unit; the augmented
+command line is 967 bytes under the existing 2047-byte bound. Implementer0 owns
+the two-file helper/regression correction. Focused literal-mask/inventory tests,
+current-helper validation of both sealed closures and native rerun remain pending.
+
+The two existing focused mask/inventory cases passed: 2 runs/21 assertions,
+zero failures/errors/skips. The current helper then validated both exact
+`3175df0` resident/candidate closures, with zero guests. Fixed launcher exit 0
+in 2.119s, source/index parity retained; logs
+`/tmp/storage-profile-mq-launch.9vb6wq2l/run.glff8eol`. An earlier utility stopped
+before execution on failed current/cwd preflight and supplies no test evidence;
+the parent reverified the binding/hashes and the fixed launcher uses matching
+literal session markers with conflict refusal.
+Normal maintenance-owning fold and exact-lease SSH publication created clean
+`1743940f608bf3d450555f5de7f5f7188190d846`, tree
+`aab4f03f3e14d9dbb463b88f378d2ad6ef192688`. Runtime commit `b108c414` contains
+only the two tested deltas; profile `f6b12398` and fixture patches are identical
+by range-diff, generated `da058353` unchanged. Four commits/25 paths, 5268
+additions/67 deletions, binary diff SHA256
+`4d240b67a8564dda20cf92716f1fc492090e0fc9505cd9f3dc6cbed25e199182`.
+Backup before-rabbitmq-mask retains `3175df0`; freshly fetched master remains
+`c56f981a`. Record/version/mask policy 1 and runtime policy 3 remain unchanged.
+The direct completeness fix adds no new mechanism or full unaffected rereview.
+Fresh Luna/low `storage_profile_native_1743` owns the actual compatible native
+retry at `/tmp/storage-profile-native-1743.i0ldpjza`; source/index are held.
+The watcher reports that fixed launcher preflight passed and the isolated
+services guest has started; the single run remains active with no kernel-build
+indicator. This is a startup milestone, not mask/copy/preservation acceptance.
+Exact-head provider Check `37077660749` and API46 broad `37030949481` are
+still in progress at the latest bounded metadata check.
+
+The exact `1743940f` invocation exited 1 in 544.801s (23:29:49.249–23:38:54.051
+UTC on October 2); one example failed after 331.88s in stage 4 because an
+expected `Maintenance::Invalid` was not raised. Parent source/log inspection
+identifies the first stage 4 assertion: it submits the original boot identity
+before rebinding, which still matches the persisted old identity. The helper
+checks supplied tokens; the production CLI obtains current runner/guest identity
+before that call. Implementer0 owns the bounded fixture correction: submit the
+newly observed identity before rebind, then prove the old identity refuses after
+rebind. Architect0 is checking the existing-contract rationale. No runtime,
+record/version or validation relaxation is proposed. The initial old mutation,
+first masked boot with exact mask/generator/status checks, unchanged old writer
+counters, partial-copy refusal and second masked boot preceded this failure;
+full copied-boot/preservation acceptance remains unproved. Hold release was 0,
+post-run source parity was 1, and no QEMU/virtiofs process binds to the fixture
+path. Private evidence remains at `/tmp/storage-profile-native-1743.i0ldpjza`.
+
+Architect0 confirms the supplied-token boundary; no production discrepancy was
+found. The corrected existing identity test passed 1 run/19 assertions, no
+failures/errors/skips, exit 0 in 1.537s with exact source/index parity; logs
+`/tmp/storage-profile-identity-check.ruz8g68p`. The fixture now submits the new
+identity before rebind and rejects the old one afterward. Normal maintenance
+test/fixture folds and exact-lease SSH publication created clean
+`5ee8281b07628de03454068e204c66367a8980dd`, tree
+`8922be76e13bccc8603e21ccf020ea266bb42acd`. Four commits/25 paths, 5281 additions/
+67 deletions, full binary diff SHA256
+`6791baae87a35abff15bc15a65ec7d0a6fb083bddf870ad1cb0ec9ba1e2e5b0b`.
+Generated `da058353` is unchanged; maintenance `683b84eb` changes only its test,
+profile `455d89f5` is patch-identical, and fixture changes only the two assertions.
+Backup before-fixture-identity retains `1743940f`; freshly fetched master is
+still `c56f981a`. Provider Check `37077660749` succeeded at the prior head; new
+exact-head `37079212058` is in progress, with no superseded live run to cancel.
+This is direct correction within the reviewed contract, not a full rereview.
+Fresh Luna/low `storage_profile_native_5ee` owns the actual compatible retry,
+logs `/tmp/storage-profile-native-5ee.uvtsral8`; source/index are held.
+
+The exact `5ee8281b` run exited 1 in 644.558s (23:48:43.266–23:59:27.824 UTC
+on October 2), one example 437.03s, stage 6, `starting_copied`, release 0,
+source parity 1. Parent inspected the actual terminal logs: QEMU could not
+connect to the vpsadmin virtiofs socket, and that daemon reported its pid-file
+lock unavailable. QEMU exited 1; the reported stream error is secondary. The
+first copied boot reached its new-seed barrier before the forced interruption;
+completed preserving seed and final projections remain unproved. No process
+binds to the private fixture path after cleanup. Roots remain at
+`/tmp/retained-services-roots.tUP47BfH`.
+Pinned OSVM `Machine#start` enforces a five-second settle when restarting the
+same instance; the fixture constructs a new instance after each stop, losing
+that gap. The observed lock failure is consistent with this source-backed
+timing issue, not proof of every underlying daemon detail. Architect0 accepted
+the fixture-local monotonic timestamp after successful teardown and only the
+remaining five-second gap before replacement start, with no initial delay.
+Implementer0 owns that one-file correction and focused no-guest timing check.
+Startup failures must still fail; no pid-file deletion, OSVM change or cleanup
+engine is authorized. The existing native gate remains the acceptance check.
+Exact `5ee8281b` provider Check `37079212058` completed successfully; this does
+not replace the failed native result.
+
+The real-main no-guest timing probe passed, exit 0 in 23.127s: five checks,
+zero guests/scenario runs, startup error propagation 1 and source parity 1.
+Logs `/tmp/storage-profile-settle-watch.qg93r99v`, child artifacts
+`/tmp/storage-profile-settle-probe.40xjirfX/run.a6sht9rj`. The common successful
+stop/kill tail is source-inspected; this probe does not prove physical reaping.
+Normal fixture-only amend and exact-lease SSH publication created clean
+`563c5255a5f08797640be8d9375705011bd15eb2`, tree
+`011f51a9b1a403369cba6ea29c08384a0af05773`; first three commits unchanged,
+four commits/25 paths, 5288 additions/67 deletions, binary diff SHA256
+`ad0c274110a74229e84e1d13d441bd74935339060f8a910b5e4b88b3f20e450e`.
+Only the seven-line fixture monotonic timestamp/remaining-five-second delta
+changed, tested SHA256
+`d1a2c7fb1f4d5c0dc46614c343d1dc48108f71365be68c9b2ed8e55ca85377f2`.
+Backup before-fixture-settle retains `5ee8281b`; fetched master is unchanged
+`c56f981a`. No OSVM/helper/record/public-contract change or full unaffected
+rereview is claimed. Fresh native watcher runs the exact API46 app through
+`/tmp/storage-profile-native-563.zugxbi_7/launch.py`; physical outcome is pending.
+Exact-head provider Check `37081959992` subsequently succeeded; prior `37079212058`
+succeeded and all older runs are completed. No superseded live run needs cancellation.
+
+The exact `563c5255` native invocation exited 1 after 774.795s
+(00:25:32.442–00:38:27.239 UTC), sole example 562.61s, stage 6, release 0,
+source parity 1. Parent inspected terminal command order and numeric counters:
+final seed Result=success, exact copied generation, complete protected SQL
+projections, payload checksum, old-writer counters and retained disk identity
+passed; the following two-start assertion failed with `new-seed=1`.
+The first copied boot observed its seed barrier, removed the marker and
+immediately forced power loss. Its counter append/removal have no explicit
+flush, so loss of buffered fixture instrumentation is plausible, not established
+as the sole cause. Architect0 is selecting a bounded durability correction;
+no assertion weakening, runtime helper/OSVM/record change or automatic retry.
+The full example remains failed, with no release/public payload acceptance.
+Architect0 approved the native-only `rm .../new-seed-entered && sync -f
+/var/lib/storage-profile-fixture` before the existing forced kill, keeping
+`block-new-seed` present. Both append and marker deletion must be flushed;
+`guest!` must propagate failure before kill and the >=2 assertion remains.
+The focused real-main disposable-filesystem probe checks command/reopen/failure
+behavior only; actual forced-reboot durability remains the native gate.
+Logs `/tmp/storage-profile-native-563.zugxbi_7`; the guest powered off and the
+watcher confirmed no path-bound QEMU/virtiofs process remains. Cached Linux
+6.12.109 was used, with no local kernel compilation observed.
+
+The guarded real-main command probe passed, exit 0 in 23.405s: three checks,
+zero guests/scenario runs, two failure cases prevented kill, source parity 1.
+Logs `/tmp/storage-profile-durability-watch.yjibafux`, child artifacts
+`/tmp/storage-profile-durability-probe.gz1m1aVU/run._dv8m8y0`. The earlier utility
+used the wrong current-session CWD and ran zero checks. Parent reverified exact
+binding and all frozen hashes; its reported child-hash mismatch was not actual
+drift. The fresh guarded launcher supplied matching literal markers and checked
+current in the tracking directory before accessing source. No power-cut
+acceptance follows from command/reopen checks alone.
+Normal fixture-only amend and exact-lease SSH publication created clean
+`45d7ce88fcb3a3d528f59b240c081667666526e3`, tree
+`09647aa2044c0da695654038091a45d59a2236a0`; first three owners unchanged,
+four commits/25 paths, 5288 additions/67 deletions, binary diff SHA256
+`c6c5e3f789b93f4bef6749b82822cd04e0d8a30098476448f371759d2f7c46b7`.
+Only the tested native guest-command line changed; source SHA256
+`0d7ba5548a5449981978f8215769f1195147b06dc9bc7e51d4766eee2167c8d0`.
+Backup before-fixture-durability retains `563c5255`; fetched master remains
+`c56f981a`. Fresh native watcher uses the exact API46 app through
+`/tmp/storage-profile-native-45d.g5bgua19/launch.py`; outcome remains pending.
+Exact-head provider Check `37083986313` is in progress; previous `37081959992`
+succeeded, all older runs completed. No superseded live workflow needs cancellation.
+
+The exact `45d7ce88` native fixture PASSED: exit 0/802.973s
+(00:55:09.744–01:08:32.717 UTC), sole example 611.85s. Summary: passed 1,
+scenario_completed 1, phase_starting_copied 1, hold_released 0, examples 1,
+stage 6, source parity 1. It proved the ordered real services-only masks,
+zero old-writer starts, changed namespace/package preservation, interrupted
+copy/receipt recovery, exact copied boots, forced seed interruption/retry,
+two seed starts and unchanged protected projections/payload/disk identity.
+Logs `/tmp/storage-profile-native-45d.g5bgua19`; cached Linux 6.12.109 used,
+no local kernel compilation observed. Guest powered off; parent independently
+found no QEMU/virtiofs process tied to this exact native artifact path.
+The policy intentionally remains `starting_copied`; it cannot prove full
+cluster Node refresh/public release or VPS/NAS backup payload acceptance.
+Exact-head provider Check `37083986313` also succeeded. Full consumer pin,
+composition review/package contract proof and external idle selection are next.
+
+- [x] Approved profile policy: snapshots every five minutes, backups every ten
+  minutes offset by two; existing VPS uses normal later rotation under unchanged
+  retention, and catch-up performs no rotation.
+- [x] Exact session and saved roster reverified; architect0 owns design,
+  implementer0 owns application changes, reviewer0 remains independent.
+- [x] Clean provider worktree registered as `vpsfree-dev-workspace-storage-profile`
+  on branch `2026-09-23-storage-redesign-storage-profile`, fetched base
+  `c56f981a950ab763b71dc91c59e8b5256d478851`. Superseded instruction branch retained.
+  HEAD-only bare fetch initially left origin/master stale at `074926d`; explicit
+  master fetch verified the actual default and the clean new branch advanced
+  fast-forward before feature edits.
+- [x] Final architect brief recorded; missing seeded-user namespace allocation
+  is deferred to the normal post-readiness chain, and existing rows are preserved.
+- [x] Scheduler support committed as `1848d41e11481eaa0fa52e64c8d7303b5d170412`:
+  focused RSpec 22/0, Ruby lint 6 files/0 and Nix formatting; all normal signed
+  hooks passed. Exactly nine paths. No schema/protocol change.
+- [x] Common Plan support committed, normal hooks and focused checks passed.
+- [x] Final Admin support whole-branch review; the Important numeric-schedule
+  compatibility finding was directly corrected, checked and published.
+- [x] Focused numeric-schedule verification: 8 examples/0 failures.
+- [x] Normal owning-commit amend: Admin `46b3bf6f` with all hooks passing.
+- [x] Provider profile, preserving seed and both acceptance fixtures implemented;
+  deployment and fixture runtime results remain pending.
+- [x] Canonical transition-policy prerequisite reviewed, directly remediated and
+  published as `2b67af62b40149e7554bab0c31b139cd52c963c1`.
+- [x] Provider maintenance boot/copy quick checks: 97 tests/1021 assertions.
+- [x] Normal maintenance commit: provider `8613c8da`, clean tested tree.
+- [x] Actual preserving profile seed, storage policy/helper and acceptance fixture
+  source completed; runtime preservation and payload results are unproved.
+- [x] First helper/seed semantic slice: provider 3/23 and all 16 real-AR cases
+  covered after focused corrections; full profile integration is still pending.
+- [x] Durable retirement contract: keep `enable:true`, select
+  `enrollment:false`, preserve assignments and block future enrollment.
+- [x] Retired selection runtime/CLI checks and full 22-example AR selection.
+- [x] Actual enabled/retired Nix closure and preserving-marker evaluation.
+- [ ] Real retained-boot preservation with no recreated future defaults.
+- [x] Final no-VM smoke, runner build/load, app wiring and formatting.
+- [x] Normal functional commits: profile `50e45ae5`, retained fixture `59f1d099`;
+  exact tested trees preserved, provider clean, no declared hooks bypassed.
+- [x] Independent complete-series provider review in all four HIGH-risk lanes.
+- [x] Important CatchUp STI loading correction, fresh-reader regression and
+  normal owning-commit fold; direct mandatory-review step 9 complete.
+- [x] Required host-migration VM check on corrected provider `f36f15d7`.
+- [x] Default-pin option omission/lazy-app correction, default/compatible smoke
+  and flake evaluation; normal folds preserve verified bytes.
+- [x] Affected general/architecture/risk review: one Important fixture root
+  lifetime finding; no other Important or Blocking finding.
+- [x] Direct fixture root correction, focused evaluation and normal amend.
+- [x] Retained-services VM preservation/interruption proof at exact `45d7ce88`;
+  one native example passed, services-only hold intentionally unreleased.
+- [x] Final generated workspace pin, full consumer review and checked composed
+  package with matching canonical host/tools contracts.
+- [ ] Activation from an external terminal while all managed sessions are idle.
+- [ ] In-place update, repeat-safe catch-up, real full/incremental fixture payload
+  proof, automatic cycle and retained VPS verification.
+
+The first final no-VM Nix smoke exited 1 in seven seconds before
+configuration evaluation: the two app declarations repeated the dynamic
+`apps.${system}` attribute. Only the app grouping was corrected; no VM,
+cluster or lock change occurred. All 18 staged hashes remained unchanged.
+The wiring and formatter commands were not run after that failure. The fresh
+grouped-app batch subsequently passed all three commands on unchanged runtime
+bytes; log `/tmp/storage-profile-watch.CnNXmd/1-nix-run.log`. Exact elapsed times
+were unavailable from the yielded watcher handles and are not inferred. Log:
+`/tmp/storage-profile-smoke-20261002/command1.log`.
+
+No profile deployment has completed. The last two provider commits contain 18 distinct final
+source paths: the planned 16-path profile and 3-path retained-services inventories
+share only `flake.nix`. The no-VM enabled/retired smoke, runner builds/load, app evaluation and pinned
+formatting passed. Normal commits created `50e45ae5` and `59f1d099` without
+changing verified bytes. At the direct-correction checkpoint, provider HEAD was
+`f36f15d79f92b50fd37ead32481d7fd7bd628286`,
+clean with four coherent commits on `c56f981a`. Reviewer0 completed the exact
+`c56f981a..59f1d099` series in all four HIGH-risk lanes with saved GPT-6.1
+Sol/xhigh/read-only settings. No Blocking findings; one Important class-loading
+finding: nonempty catch-up chains persist the named CatchUp STI type, but the
+class is defined only when the provisioner calls `catch_up_chain`. Fresh normal
+API/supervisor/database-task readers cannot load these rows, including terminal
+ones. See the [persisted STI loader lesson](../../notes/vpsfree-dev-workspace/2026-10-02-persisted-chain-sti-loading.md).
+Implementer0 supplied normal enabled/retired initialization and a real
+fresh-reader regression. Focused verification and the normal owning-commit
+fold completed under mandatory-review step 9. Reviewer
+independently confirmed coherent four-commit history, no obsolete committed
+approach and no provider migrations/schema conversion. Actual VM/cluster
+acceptance remains pending. The fresh Luna/low host-migration watcher passed exit 0 on exact `f36f15d7`
+in 5m34s; test script and QEMU cleanup completed, no local kernel build or
+owned process remained. Logs `/tmp/storage-profile-host-migration.r4JiK7`.
+The retained-services VM remains pending after the default-pin CI correction. Default API/OS inputs and the provider lock
+are unchanged. A fresh SSH fetch confirmed provider master remains `c56f981a`.
+The first fresh-reader regression reached 1 example but failed in a child
+process; generic suppressed diagnostics did not locate the failing step.
+Command exit 1 in 46.729833640 seconds, RSpec 12.81 seconds; log
+`/tmp/storage-profile-watch.vEQpKkov/rspec.log`. The eager-loader helper and
+spec hashes remained unchanged, index empty, and no owned DB/wrapper remained.
+Implementer0 added safe numeric stage/cause evidence and checked public
+bootstrap behavior before the later passing focused run. This failed attempt is not
+accepted as class-loading or VM proof.
+Public pinned ActiveRecord 8.1.4 source and a no-DB loader probe then located
+the fixture error: the child referenced `DatabaseConfigurations` before `Base`
+loaded it. The resolver now uses `Base.configurations.resolve`; numeric failure
+stages preserve diagnostic privacy. The fresh focused run passed 1 example/0
+failures in 40 seconds, log `/tmp/storage-profile-watch.ShenILPS/full.log`.
+It proves queued and terminal nonempty rows in fresh ordinary active/retired
+readers, without producer calls or Node effects. Both tested hashes remained
+unchanged, index empty, and no owned DB/reader process remained.
+Normal pinned Git fixup/autosquash folded those exact two paths into profile
+`23363e98e8db067f66bb7a2cf2bc4f740af3ebb8`; the separate VM commit is
+`f36f15d79f92b50fd37ead32481d7fd7bd628286`. The first two commits and the VM
+patch are identical by range-diff; only the profile patch contains the direct
+fix/regression. Final clean tree `444248213740404522864493afca3408b130fb9e`,
+four commits/25 paths, 5176 additions/64 deletions, binary diff SHA256
+`37a86f215074cf27ea866b05e1881e49b03a8c8048b80d715bb75831619f7189`.
+Backup `backup/2026-09-23-storage-redesign-provider-before-sti-fix` retains the
+original reviewed `59f1d099`. No schema, public contract, chain admission or
+confirmation change was introduced; no unaffected review lane was repeated.
+The registered `workspace` checkout was cleanly consolidated onto current
+committed master `508064ed951e5efc78131dd09d006586280d9285` through an empty
+normal Nix/Git replay. Its superseded instruction/pin payload was not replayed.
+Original head `3f539b0f6f034a77dd31efacb7044751237809df` is preserved at
+`backup/2026-09-23-storage-redesign-workspace-instructions-before-storage-profile`.
+Branch, path, registration and historical initial-base metadata are retained.
+The checkout is clean; shared master/index/unrelated working changes are
+untouched. Normal SSH feature publication now selects exact `f36f15d7`;
+provider master remains `c56f981a`. Exact-head Check `37057284522` failed at
+Nix evaluation: a disabled `mkIf false` declares the unsupported scheduler
+option against default API `5c76e329`. Evidence:
+`/tmp/storage-profile-provider-ci.b0U1wyHf/failed.log`. Implementer0 owns the
+bounded definition correction; architect0 checks app/default compatibility.
+The generated pin remains pending. The default/API46/no-build wiring batch is
+owned by a fresh bound watcher after an earlier lookup-only preflight failure;
+that first attempt launched no checks and is not verification evidence.
+The bound default smoke later exited 1 after about 6m15s at an invalid WebUI
+revision error assertion, after real disabled/default evaluation passed.
+Captured stderr was discarded; diagnostic/source work precedes retry.
+Commands 2/3 were unrun; source/index stayed unchanged, no kernel/VM/process
+remained. Log `/tmp/storage-profile-ci-wiring.1FDsWkU9/command-1.log`.
+The smoke now retains Nix stderr on a fixed invalid-input assertion mismatch.
+A fresh Luna/low diagnostic built only the current wrapper and ran one
+bad-revision evaluation: exit 0 in 14.009 seconds, with the actual final Nix
+error matching the intended lowercase-source refusal at provider `test.nix:69`.
+Evidence `/tmp/storage-profile-revision-launch-w2__mmmt/run.34_u8swz` and
+`/tmp/storage-profile-revision-watch.z0PUYU`. This does not recover the earlier
+discarded error or establish its cause. The five held source hashes and empty
+index stayed unchanged. The full default/API46/no-build batch is now assigned
+to a fresh watcher on those same bytes; no retained-services app or guest is
+authorized in that batch.
+The batch subsequently passed all three commands on unchanged hashes: default
+smoke exit 0/6m56s, API46 profile smoke exit 0/10m40s, default flake evaluation
+exit 0/11s. Logs `/tmp/storage-profile-default-compatible-eval.eueu9z`;
+no kernel, QEMU or owned handle remained. Normal pinned Git folds created
+profile `530c9b979e7e14d923ebb11e40e5fe48aa38cec3` and retained fixture
+`4f75d0642129bf078d6852601ed602f9b4520ac8`. The first two commits are unchanged;
+the final branch is clean with four commits/25 paths, tree
+`6a34e39ce0023948bc399f6bff12f0bb48abdaec`, 5259 additions/67 deletions and
+full binary diff SHA256
+`a0248b0423c99825adfd2b4cf0676a85ba3285e39138ab09a9c28700fa38149e`.
+Exactly the verified five paths differ from `f36`; all five hashes and both
+STI correction hashes match. Backup
+`backup/2026-09-23-storage-redesign-provider-before-ci-wiring` retains `f36`.
+Reviewer0 now owns the committed affected general, architecture/repetition and
+risk/compatibility review under unchanged saved Sol/xhigh/read-only settings.
+The new lazy fixture contract requires this step-10 review; the original
+whole-series review, scope conclusion and direct STI correction remain separate
+evidence. No retained-services guest or package activation has run.
+The affected review completed on exact `f36..4f75`, with no Blocking findings
+and one Important issue: runtime `--no-link` builds protect neither fixed JSON
+output nor its referenced closure after the Nix subprocess exits. Ordinary GC
+can remove a config during the second build or native fixture. Reviewer0
+confirmed option omission, captured input/follows handling and clean four-commit
+history, with no new migration concern. Implementer0 owns the narrow standard
+Nix-root correction: both fixed builds use private fixture-owned roots outside
+the native runner's initially empty artifact directory, retained through last
+use and failure diagnostics. Focused verification and normal fixture amend are
+pending under mandatory-review step 9; no new runtime contract is planned.
+That direct correction subsequently passed default/compatible app-path and
+default no-build flake evaluation, all exit 0 in 6s/9s/9s on the sole changed
+fixture file; logs `/tmp/storage-profile-root-lifetime-eval.S7rXko`. Lead source
+inspection confirms standard roots are established by each fixed build and
+retained outside the empty native artifact directory through execution and
+diagnostics. Normal pinned amend created published provider
+`eee1998c640441061ff5f6d76e379bc706ba81f6`, tree
+`35fba2731f7e0da92d6cdac29196f2d9dfe8baa5`, four commits/25 paths,
+5264 additions/67 deletions, binary diff SHA256
+`2cab5ba43547a6188ea1f262046bdb4e96695b733e0bf5fb149182e0020685d9`.
+Only that tested file differs from reviewed `4f75`; the parent profile and first
+two commits remain unchanged. Backup
+`backup/2026-09-23-storage-redesign-provider-before-fixture-roots` retains `4f75`.
+The Important is resolved under direct step 9, with no full affected/unaffected
+rerun claim. SSH publication used an exact lease against remote `f36`;
+fresh master fetch remains `c56`. Exact-head Check `37067408291` completed
+successfully; the old failed run is completed, so no cancellation was needed.
+A fresh Luna/low watcher ran the explicit API46 retained-services app on
+this clean head. It exited 1 after 7m30s, before the native scenario or any
+guest boot. Logs: `/tmp/storage-profile-retained-services-watch.P9e3XA`.
+The app created private Nix roots at `/tmp/retained-services-roots.3tKF8UTH`
+and built the resident configuration. The enabled candidate failed while
+building `vpsadmin-storage-profile-config`: `cp` could not replace `hooks.rb`.
+The owning builder first copies read-only Nix-store fixture files, then tries
+to overwrite the copied hooks/plans. Implementer0 owns the bounded copy-mode
+correction and a focused actual-overlay realization before the next VM run.
+No process remains. This is a configuration-builder defect, not seed,
+preservation, registered-cluster or package-activation evidence. The correction
+changes only the two overlay replacements to `cp --remove-destination`; initial
+fixture copy, overlay contents, marker/selection and input pins stay unchanged.
+The sole changed source hash is
+`88dc4138df4359bc70b6d914bee41ba8940c9e8d7dc70f044fb16a94b379123f`.
+Nix parse/format/diff checks passed. A fresh Luna/low watcher owns actual
+candidate-dependency selection and realization of only the config overlay,
+with file-content comparisons; no full guest build or boot in that batch. See the
+[Nix overlay copy-mode lesson](../../notes/vpsfree-dev-workspace/2026-10-02-nix-config-overlay-copy-modes.md).
+The focused overlay batch passed all four steps, exit 0 in 52s, logs
+`/tmp/storage-profile-overlay-build.8cDI5F8c`. The actual overlay contains the
+six expected files, with preserved ordinary fixture content and exact selected
+profile hook/plan/helper bytes. The source SHA256 above is unchanged; the
+watcher's reported `fc505ca` is the Git blob, not the SHA256.
+Normal pinned Git fold created profile `3a09ebc38425a62e9dadae292a8a83adce6e7234`
+and fixture `75fb840bfe6d9f12f26e953ce63c40ff06a828ce`. First two commits and
+fixture patch remain identical by range-diff; only the tested two copy lines
+changed. The clean four-commit tree is `b8689b5f2233f63f7da9a7579d1e4f8a528387a6`,
+25 paths/5264 additions/67 deletions, binary diff SHA256
+`ff81be472d637fe9f51fe48783fd6176c9047f38a9eadbff06b65cd485d3212d`.
+Backup `backup/2026-09-23-storage-redesign-provider-before-overlay-copy` retains
+`eee1998`. Fresh SSH master remains `c56`; exact-lease feature publication
+created `75fb840`, with new Check `37069787350` subsequently successful. The previous
+exact-head Check succeeded and is completed, so no cancellation was needed.
+This bounded builder correction preserves the reviewed overlay contract;
+no additional schema, policy, review clearance or physical outcome is claimed.
+A fresh Luna/low watcher now owns the native API46 fixture retry on exact clean
+`75fb840`, with a new private artifact directory and the source/index held.
+That retry exited 1 after 455s (21:59:05–22:06:40 UTC), logs
+`/tmp/storage-profile-retained-services-retry`. Both real configs built under
+`/tmp/retained-services-roots.2UtogfhJ`; the corrected overlay build is no
+longer failing. Native execution began, but no guest started: the entrypoint
+created `test-runner.log` before the constructor repeated its private/empty
+artifact-directory guard. Implementer0 owns the bounded initialization-order
+correction in the native fixture; the guard and native framework stay intact.
+Source parity passed and no process remains. This attempt gives no seed,
+payload or retained-boot result. A focused no-guest bootstrap check and normal
+fixture-owner fold precede another native retry.
+The one-file fix constructs the fixture before opening its owned log; both
+private/empty guards remain unchanged. Source SHA256
+`eb7046fbf931e6d4ec0529ba7094b395653dc618affcfd6532428c3cc368f509` passed
+syntax/lint and actual main-bootstrap verification in about 14s. Evidence:
+`/tmp/storage-profile-native-bootstrap-launch.mhVJCD24/run.9rnfmbco` and
+`/tmp/storage-profile-native-bootstrap-watch.X2CMxWSm`. The probe stopped
+before the inherited run body, with zero guests and scenario_passed=0.
+See the [artifact initialization lesson](../../notes/vpsfree-dev-workspace/2026-10-03-private-empty-fixture-artifacts.md).
+Normal fixture-owner amend/publish created
+`78ffa6f028b89af6276efa9678cdbe52f250dda9`, tree
+`31066a6d271df533eb1db73c353116ff990cd0fd`, four commits/25 paths,
+5265 additions/67 deletions, binary diff SHA256
+`bf6e7e3fc5fc6d95379d2b28b55d16292b6351bc6b5f6231da3d165493505da2`.
+First three commits are unchanged; only the tested initializer order/comment
+differs from `75fb840`, retained at
+`backup/2026-09-23-storage-redesign-provider-before-fixture-init`.
+Fresh SSH master remains `c56`; publication used the exact old-head lease.
+Exact-head provider Check `37072305045` at `78ffa6f` completed successfully.
+A later utility preflight compared the native script's hash to `flake.nix`;
+it ran zero checks/guests and left no handle. The lead rechecked all three
+actual paths/hashes and assigned a fresh watcher with literal paths/argv/log
+directory. The real retry now uses exact clean `78ffa6f`, evidence root
+`/tmp/storage-profile-retained-services-78.W0DG89VX`; no runtime result yet.
+The clean workspace feature subsequently
+rebased normally to committed master `58df04cf`; its extra two commits are
+unrelated tracking/notes only and source/procedures are unchanged. This is the
+current prospective pin-change base; historical registration remains unchanged.
+Package activation uses the normal installed `workspace-host switch --source`
+from an external terminal after the source, review, VM and composed-package
+checks are complete. The switch rebinds managed terminals before checking
+idleness and visits ready sessions across registered workspaces; it cannot be
+used as an active-turn idle probe. No switch, manual quiescence, delayed action
+or direct provider-store bypass is executed or scheduled. After the operator
+reports activation, verify the public selected package before cluster work.
+The [retained rollout record](storage-profile-rollout.md) separates prepared
+operator steps from future actual boot/provision/payload evidence.
+Historical scheduler hook/commit
+watcher returned exit 0 after 53 seconds, log
+`/tmp/storage-profile-scheduler-hooks.Xn2wjtmM/output.log`. TextWidth gave a
+72-column advisory; the reviewed message meets the workspace's 80-column rule.
+Scheduler verification logs: `/tmp/storage-profile-scheduler-check.XAVcqHHF`.
+Fresh Luna/low watcher ran the held snapshot, then reported disposable DB cleanup
+and no remaining process. No kernel build occurred. Scheduler documentation was
+checked against the source and plain writing rules; no prose correction needed.
+Saved member settings remain unchanged; the fresh verification utility uses current installed
+catalog `4676433c` GPT-6 Luna/low and one-operation lifetime.
+Common Plan support was verified as a seven-path draft on `1848d41e`; legacy plans
+retain their first-open backup destination behavior, while the keep-empty
+profile requires an exact sole destination. Previous attempts ran zero examples: one watcher used
+incorrect relative preflight locations; the next test database hit the known
+107-byte socket limit beneath a Nix-nested temporary path. Required guidance
+exists and identity was reverified. The corrected command sets a short private
+`TMPDIR` inside `nix ... -c`; no surviving prior MariaDB process was found.
+See [the reusable socket lesson](../../notes/vpsadmin/2026-07-31-test-db-socket-path-length.md).
+The corrected batch reached the Plan examples: 57 examples, 47 failures from
+an unqualified Scheduler constant in the owning Plan namespace. Implementer
+changed that one reference to `::VpsAdmin::Scheduler::CronTask`. The fresh
+three-file rerun reached 57 examples with 56 passing and one fixture failure:
+the spec attempted a duplicate GroupSnapshot that the real unique index rejects
+before its expectation. Only that fixture was corrected to check the constraint
+and the schema-possible ambiguous environment case; runtime bytes are unchanged.
+The fresh narrow example at line 245 passed 1/0 in 46 seconds, completing
+verification of the 57-example selection; seven held hashes remained unchanged,
+the index stayed empty and the disposable DB stopped. Normal Plan hooks passed
+and created `96ab16726b516ee601b3f366439f1079a1030d19`, exactly seven paths;
+all committed blobs match tested bytes. No loader, schema or larger runtime
+change was added for the fixture. Logs:
+`/tmp/storage-profile-prereq-check.SCWrBf71/admin.log` and
+`/tmp/storage-plan-namespace-check.ckLoxIBo/rspec.log` and
+`/tmp/storage-plan-fixture-check.wsS3tA3K/rspec.log`.
+Normal Plan hook evidence: `/tmp/storage-plan-normal-commit.G24Zov6t/output.log`.
+Nixfmt, MigrationSpecs, both i18n hooks and RuboCop passed. Two existing lint
+disable comments moved around unchanged statements; no extra runtime edit.
+The permitted 80-column message passed hooks with advisory 60/72-column warnings.
+Its nonempty private hook temporary directory was retained, with no MariaDB left.
+Before review, SSH default fetch found only two new PHP dependency files at
+`878a0d10c86060ed2ce62027223832371ca5e49e`. Normal signed replay of all 21
+commits created `2323829cc79d2d64661825d2f8f9e170ceb98170`. All 21 range-diff
+entries, complete messages, 202 feature blobs, both migrations/schema and
+base-to-head binary patch remain identical. Backup `96ab1672` is retained.
+Focused PHP after dependency replay passed 5 tests/17 assertions; index/tracked
+tree clean, PHPUnit cache preserved. Evidence:
+`/tmp/storage-admin-default-refresh.Dqw9aj2I`.
+The complete Admin series and consumed migrations are inventoried for the
+independent HIGH-risk four-lane [support review](storage-profile-admin-review.md).
+Reviewer0 completed all four lanes on `878a0d10..2323829c`, with no Blocking
+findings and one Important compatibility finding: validated integer schedule
+arguments were compared against persisted strings, blocking valid numeric DSL
+reuse/removal. The implementer supplied a one-expression string normalization
+and four real-DB numeric group/backup regressions for legacy and retained plans.
+The three-file remediation passed its eight focused real-DB examples in 45
+seconds, with held hashes unchanged. Log:
+`/tmp/storage-numeric-plan-bound-check.d8GL3Zsh/rspec.log`. The watcher verified
+no MariaDB remained and removed its empty short temporary directory. The status
+helper printed that the DB was stopped, then raised a standalone NameError;
+the actual RSpec exit was 0. A prior watcher used the parent tracking directory
+by mistake and ran no examples; the bound retry used the exact session path.
+Normal Nix sign/amend completed as `46b3bf6f9549eaf579053bc296ebf19c417bb848`;
+all pre-commit hooks passed, with only permitted message-width advisories.
+The parent and first twenty commits are unchanged; the old reviewed head to
+new head diff contains exactly the tested three paths. The owning Plan commit
+still has seven paths, the series still has 21 commits, and migrations/schema
+remain unchanged. Log: `/tmp/storage-numeric-plan-amend.GFNTMieF/amend.log`.
+The nonempty private hook temporary directory was retained; the DB reported
+stopped. Backup of reviewed `2323829c` is retained. Direct step-9 remediation
+is complete; no new contract or unaffected review rerun was introduced.
+The exact final Admin `46b3bf6f` was SSH-published with an explicit lease on the
+previous remote feature `e65a5a6b`; `ls-remote` confirms it. Default `878a0d10`
+remains unchanged. This is feature publication, not integration or deployment.
+Nine exact-head workflows have started or queued, led by API topics
+`37030949457` and broad CI `37030949481`. The previous e65 workflows are now
+all successful, including broad CI `36925295149`; these are historical results,
+not exact-head acceptance. No superseded queued/running job remained to cancel.
+Latest watcher observation: seven successful workflows, API topics still running
+and broad CI queued. Monitoring was released for the local profile checks;
+GitHub runs continue, with no cancellations or local monitor left running.
+A later bounded metadata read confirmed exact-head API topics
+`37030949457` completed successfully: all 27 jobs, including full-platform and
+topic coverage, passed. A later bounded metadata read reports broad CI
+`37030949481` in progress, updated `2026-10-02T19:10:57Z`, still at exact
+`46b3bf6f`. Its conclusion is pending; there is no active local CI watcher.
+The complete 21-commit history and two
+consumed migrations were independently checked and have no history/schema
+finding. Direct remediation follows mandatory-review step 9; unchanged lanes
+do not need another review merely to confirm normalization.
+No source-test result is inferred from the earlier startup failures.
+The generic prerequisite passed 40 runs/244 assertions with its required
+suspension-test fixture loader. Normal Nix commit created
+`8b2439938cbcbe527f2c703d88ed3c9f72f44b7e`, exactly three paths and no migrations;
+the tree is clean. No hook framework or active non-sample hook is declared.
+Reviewer0 (saved GPT-6.1 Sol/xhigh/read-only) completed the full branch review
+in all four HIGH-risk lanes under [the exact packet](storage-profile-runtime-review.md).
+No Blocking or Important findings; one general/risk Advisory identifies the
+preexisting refusal message that suggests resetting retained clusters. Lead
+assigned and directly verified a narrow wording correction to preserve state
+and select a reviewed compatible package. Its focused real transition test passed
+1 run/26 assertions. Enforcement stays unchanged; no unaffected review lane was
+repeated. The
+review explicitly concludes one coherent commit, no obsolete history and no
+migrations. Normal amend created final `2b67af62b40149e7554bab0c31b139cd52c963c1`:
+one commit/four paths, with only the message and two assertions added to reviewed
+`8b243993`. SSH fetch confirms default `4bec2016` is unchanged; the exact final
+feature SHA was published and confirmed with `ls-remote`. The generated provider
+runtime input update is released, separate from its maintenance implementation.
+No package activation or default-branch integration occurred.
+The provider's generated runtime pin is committed as
+`da058353ac4a43f08313d02b485c1578f3547378`, exactly `flake.nix`/`flake.lock`.
+Only four dev-workspace revision/hash/time/original-revision leaves changed;
+all other lock nodes are identical. `nix develop` was refused because this
+provider exports no development shell/default package. The normal commit then
+used its pinned `nix shell --inputs-from . nixpkgs#git` environment without a
+hook bypass. Maintenance drafts remain separate; flake source is released for
+their test registration. No provider publication or activation has occurred.
+The provider's evaluated canonical runtime export is schema 1/policy 3 and
+matches the published generic source byte-for-byte (SHA256
+`33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`).
+This verifies the input export, not the assembled host/tools package or activation.
+Before its commit, the maintenance prerequisite was a held ten-file draft on `da058353`:
+typed boot/copy/restart, private immutable evidence/hold/receipt, fixed masks,
+per-machine retained-disk checks and adoption validation. A fresh Luna/low
+watcher ran the four separate Ruby suites plus pinned Nix formatting.
+Its first attempt ran zero examples because a user-installed Minitest 6.0.6
+shadowed pinned Ruby's bundled 5.25.4 and lacked `minitest/mock`; formatting
+passed. The source-backed loader correction selects `Gem.default_dir` for both
+GEM_HOME/GEM_PATH and unsets RUBYOPT. A new watcher using that isolated
+environment on identical held hashes reached 13 tests/105 assertions with one
+error: the JSON duplicate-key parser subclass rejected a legitimate phase
+assignment in copied startup. The remaining three suites did not run. The
+implementer corrected that parser/update boundary and documented bundled gem
+isolation; exact shape/digest/phase checks remain. The fresh four-process run
+passed in 392 seconds: maintenance 13/112, runner 10/27, commands 23/295 and
+status 51/587, with no failures/errors/skips. The command suite accounted for
+319 seconds; no timeout or retry was used. All ten corrected hashes matched
+before/after. Log: `/tmp/storage-maintenance-parser-check.TlJqs6sb/tests.log`.
+Normal pinned-shell Git commit created
+`8613c8da74677ff3110f1775ca1ebd530d77ad5e`, exactly ten tested paths, with a
+clean tree/index and matching hashes. No hook framework is declared or bypassed.
+Implementer0 is released for actual enabled profile implementation from this
+head. Fresh SSH fetch confirms provider default c56 and Admin default 878
+are unchanged; the remote Admin feature was still e65 at this checkpoint.
+Final whole-provider review includes all intended source before the VM gate;
+there is no extra review delay between these two implementation slices. See the
+[provider shell lesson](../../notes/vpsfree-dev-workspace/2026-10-02-checks-without-development-shell.md).
+The [provider review preparation](storage-profile-provider-review.md) records
+the two committed prerequisites and remaining profile checks. It is not yet a
+review assignment; final source inventory and quick results remain pending.
+No preserving marker is emitted yet: actual enabled seed preservation and the
+storage policy remain the next implementation slice. Unit fixtures alone do
+not establish guest masking, preservation or populated-cluster readiness.
+Approved profile ownership includes the Nix selection/overlay, shared API helper,
+hooks/plans, post-ready provision/retire entrypoint, actual-seed preservation
+tests and dedicated full/incremental payload fixture. Pre-API setup never waits
+for Node work; Pool-dependent templates are established after real Pool::Create
+and before enrollment. Implementer0 owns these application paths; architect0
+keeps design conformance, and the lead owns subsequent checks and operations.
+The first nine-file helper/overlay/seed snapshot is held for a fresh Luna/low
+provider test and real-AR API check. Manifest:
+`/tmp/storage-profile-helper-first.sha256`, SHA256
+`9dc728fcded46ce52535856c8e435f1b8bed36a9b8f237957d72cbdd1e94b7d7`.
+Local syntax, shell/Nix parsing, scoped whitespace and targeted Ruby lint passed.
+Provider quick checks passed 3 tests/23 assertions. The API command ran zero
+examples: API `.rspec` preloaded spec_helper, whose automatic disposable DB
+set DATABASE_URL before the provider spec's second inherited-DB guard. That
+guard rejected the newly created test database. Log:
+`/tmp/storage-profile-helper-check.8HIFQUFi/check2.log`; DB teardown completed.
+The [provider API harness lesson](../../notes/vpsfree-dev-workspace/2026-10-02-api-harness-rspec-preload.md)
+records the custom-options correction and retained database preflight.
+The lead released the hold for a narrow loader-order correction that retains
+pre-schema refusal of inherited/configured databases. The 15-example semantic
+selection remains unverified. Remaining provision/CLI/smoke and acceptance-fixture
+source is still in development. The loader-order fix changed only the runner;
+the next check reached all 15 examples (9 pass, 6 fail). Source inspection
+identified a real NAS selector error (`parent_id` SQL on the ancestry model)
+and spec queries treating transactions as STI instead of using their `handle`.
+Log: `/tmp/storage-profile-helper-rerun.6omq4vXB/run.log`. All nine hashes
+matched and the disposable DB stopped. Implementer0 is correcting those queries
+without a schema change. The static future-default bootstrap must also work
+under retained read_only: its metadata-only admission check is being removed,
+with a regression for unchanged freeze/assignments/physical enrollment. All
+physical/template/Plan/provision admission remains required.
+The corrected nine-path slice is held under
+`/tmp/storage-profile-helper-roots-freeze.sha256`, SHA256
+`76e46e50bb4e731611fdd7ca0071ba78b19b23035e93a91f8ac023f86f682a9e`.
+Only helper/spec differ from the preceding held snapshot; syntax and targeted
+lint passed. The fresh 16-example run completed with 15 passing and one failure
+in the frozen-bootstrap conflicting-policy refusal. Its Environment changes
+survived a caught exception because the configuration transaction joined the
+RSpec outer transaction. Log:
+`/tmp/storage-profile-roots-freeze-check.NdhrO0mq/api-specs.log`; held hashes
+matched, API stayed clean and the run/DB stopped. Implementer0 is adding the
+owned savepoint for atomic refusal; protected-row assertions stay intact.
+Only the affected default/bootstrap examples need focused verification next.
+That focused check passed both examples (2/0, 30 seconds), with all nine held
+hashes matching. Manifest:
+`/tmp/storage-profile-helper-atomic-defaults.sha256`, SHA256
+`cf3122da7ce422a672084b3d161698d3453eb04ede4e2dc977b8b91a29fdd56b`.
+Log: `/tmp/storage-profile-atomic-check.0WnkJgKi/run.log`. The command tree
+ended and the API tree stayed clean; the log has no separate teardown line.
+The previous 15 passing cases plus these two affected cases cover the current
+16-example slice; this is not a claim of one fresh 16/0 run. The hold is released
+for implementer0 to finish provision/CLI/smoke and both acceptance fixtures.
+Parent read-only hygiene check found no MariaDB process tied to any
+`/tmp/vp-profile.*` directory and four empty short temp directories; no cleanup
+or private database inspection was needed.
+Architect0 recorded the enduring retirement contract in design.md; implementer0
+is implementing it within the approved profile slice. `storageProfile.enrollment`
+is a boolean, default true. The retired selection keeps `enable:true` and sets
+`enrollment:false`, retaining the preserving seed, marker and Plan definition.
+The false static branch removes only the exact owned future default-package
+link under the Environment savepoint/lock; it creates no package/default and
+rewrites no Environment permissions or existing assignments. Hooks skip new
+enrollment, explicit provision/catch-up/templates and direct Plan add/verify
+refuse, while normal unregister remains available. Retirement requires false
+in the CLI and loaded helper, including desired/effective boolean agreement
+after normal services-generation replacement. Existing owned rows mean pending
+retirement; atomic removal under ordinary admission/Plan locks establishes the
+retired state. Failure keeps scheduling stopped and the remaining rows intact
+for retry. Future false boots must not recreate defaults or enrollments.
+No persisted retirement engine or disabled legacy-seed boot is introduced;
+the new behavior and focused regressions remain unverified implementation work.
+Implementer0 handed over a held 13-path retirement/provisioning snapshot at
+provider `8613c8da`; its manifest is `/tmp/storage-profile-retirement.sha256`,
+SHA256 `546007a47efd041cf4c276902dab5c97cc841e3fc8b751a1f641f018f86f8117`.
+The first watcher passed the pure configuration tests (4/32), then its six
+selected CLI cases failed before profile execution because the lead brief
+omitted `DEVCLUSTER_RUNTIME_CONTRACT`. API examples were not run in that attempt.
+Log: `/tmp/storage-profile-retirement-check.1xpUmCZ4/check1.log`.
+The held source stayed unchanged. A fresh Luna/low watcher is running the same
+checks with the canonical published generic contract and fixture defaults,
+followed by the 22-example disposable API database selection. This is an
+environment correction, not an application fix. CI monitor-only utility was
+released again; broad run `37030949481` remains unchanged, with no local monitor.
+The corrected environment passed provider 4/32 and six CLI cases/71 assertions
+in 47 seconds. Its API invocation mistakenly included an extra `.` argument,
+selecting the whole API directory rather than 22 provider examples. After
+the watcher reported that expanded scope, the lead explicitly stopped only
+the owned RSpec run. Wrapper exit 143 at 451 seconds; its disposable MariaDB
+and wrapper exited, hashes remained unchanged, and unrelated processes were
+untouched. Log: `/tmp/storage-profile-retirement-env.9hcO4D3l/command2.log`.
+The expanded suite's failures are not accepted profile verification. This was
+an invocation error from ambiguous command punctuation in the lead brief,
+not a demonstrated harness/source defect. A fresh watcher now uses an exact
+six-element argument vector with no trailing `.` to run only the provider
+file. Provider pure/CLI passes stand; no repeat of those checks is needed.
+The exact bounded argument-vector retry passed 22 examples/0 failures in
+61.948 seconds on API `46b3bf6f`. Log:
+`/tmp/storage-profile-retirement-api.odsx_28j/run.log`. All 13 held hashes
+matched; the API tree remained clean apart from its existing PHPUnit cache,
+and the owned run/disposable DB ended. Together with provider 4/32 and CLI
+6/71, this verifies the current semantic retirement/provisioning slice.
+The lead released semantic/flake holds for final fixture, documentation and
+Nix-smoke preparation. Actual enabled/retired Nix evaluation, final provider
+review and guest/payload trials remain pending; these AR cases do not prove
+real boot-time preservation or worker replacement.
+Implementer0 then added a narrow retirement ownership guard: remaining shared
+templates must belong to the exact configured source/NAS pools. The focused
+regression reached one example but failed during fixture setup because it used
+`day` instead of the persisted `day_of_month` task column (31 seconds, exit 1).
+Log: `/tmp/storage-profile-api-watch.rRFb3q/run.log`. Both held hashes and
+repository heads/indexes stayed unchanged, and the disposable DB ended.
+The guard remains unverified until the corrected fixture reaches its atomic
+refusal assertion; the earlier 22-example result remains separate evidence.
+After changing only the fixture's task columns, the exact affected example
+passed 1/0 in 46 seconds. Log: `/tmp/storage-profile-api-spec.J0TZ8R/run.log`.
+Helper `6c039b21…` and corrected spec `8cf172db…` matched before/after;
+the index stayed empty and the disposable DB ended. The runtime ownership
+guard and atomic refusal are now verified alongside the earlier 22 passing
+cases. A prior retry ran no tests because the watcher could not locate a bare
+`dev-session` command; the bound retry used `/home/aither/bin/dev-session`.
+The hold is released for fixture/README/Nix-smoke completion.
+Fresh stable-helper preflight reports the owned cluster stopped, with stale
+readiness; services SSH returns No route to host. Retained disks/config and
+result-config remain. A supported retained-disk start is needed after source
+review; do not infer the prior running state or reset the populated cluster.
+Architect source inspection found the old seed/closure gap: a normal old boot
+can rewrite allocations, while a new host closure is not automatically copied
+into the retained guest store. Lead selected a bounded reviewed maintenance
+boot/copy-only prerequisite before any populated-cluster boot. It holds writers
+from initial boot, permits DB inspection/backup and copies the new closure;
+normal startup follows with the preserving seed. No such operation has run.
+The stopped cluster's private cold recovery copy completed at
+`/tmp/storage-profile-cold-recovery-20261002.9b7dxg0i`: six disk sizes match,
+source inode/size/mtime/ctime stayed unchanged, copy exit 0, no visible disk
+writers. Read-only `debugfs` on the copy extracted the recorded old services
+`init` and its exact systemd 260.4 debug generator; both byte hashes match the
+host store files. The selected generator directory exists and is empty, so
+no override was found there. This corroborates the prior activated-generation
+record; it is not a recursive closure check or permission to boot. The raw
+ext4 image reports journal recovery needed. No mount, repair, journal replay
+or write to the retained source disks occurred. Reviewed maintenance support
+and its disposable regression remain required before the actual boot.
+Lead prepared the required version-1 residency evidence at
+`/tmp/storage-profile-cold-recovery-20261002.9b7dxg0i/residency-evidence.json`:
+669 bytes, mode 0600, exact config-byte digest and selected services toplevel,
+with a reference to the prior activation record and cold-copy proof. Source
+disk metadata was rechecked unchanged. This trusted operator reference does not
+replace the later full-closure and masked-boot checks.
+The compatibility check found that policy-2 providers ignore a new hold record
+on an ordinary package switch. The lead selected canonical policy 3 with schema
+1 unchanged, in new clean `dev-workspace-maintenance-policy` worktree/branch
+`2026-09-23-storage-redesign-maintenance-policy`, fetched default
+`4bec20165387d567b761e43b11fdeabb096618d7`. The architect brief is ready and
+the policy-only commit passed focused checks and independent review. This intentionally
+refuses ordinary package downgrade while
+cluster state exists. Ordinary rollback is already disabled; old candidate
+recovery entry points are outside the supported procedure, not universally
+blocked by code they do not contain. Existing integrated instructions remain
+untouched.
+The shared storage1 disk is about 20 GiB: logical backup copies do not provide
+independent fault protection. New source retention 2/3 and backup 2/5 are rotation
+targets, not hard usage limits. Existing migrations/protocols and advisory
+strict/quiet/repair/APPLY boundaries remain unchanged. Full brief is in
+[design.md](design.md). The initial initiative plan/state are already committed;
+working updates follow the daily checkpoint cadence.
+
+## Completed rebase and React deployment
+
+Historical 2026-10-02 checkpoint: requested rebase and dev-cluster redeploy verified. The user
 requested rebasing the storage work onto current default branches and adding
 the separate React vpsadmin-webui component to the retained dev cluster.
 
@@ -28,7 +886,7 @@ the separate React vpsadmin-webui component to the retained dev cluster.
 - [ ] Resolve broader CI and separately approved future maintenance/repair
   work. No merge or production operation is authorized.
 
-The cluster is running and available for development. Real React login, API
+At that checkpoint the cluster was running and available for development. Real React login, API
 access and logout passed under trusted TLS. PHP freeze/unfreeze, administrator
 authority, stale/same-mode CAS and frozen write rejection passed. Independent
 guest SQL confirms `read_write` epoch 4, four total audits, singleton row 1 and
@@ -36,6 +894,14 @@ both migrations. The earlier PHP unfreeze attempt remains unexplained; its
 failed evidence is retained, and no application fix is claimed. The final
 diagnostic run passed without changing form timing or assertions. Broad CI and
 the unrelated upstream React nightly failures remain recorded limitations.
+
+The consolidated tracking checkpoint is `52fa4313060929567557a0f236ff69153f21b2b2`.
+Reviewer0 (saved GPT-6.1 Sol/xhigh, read-only) completed its documentation-only
+GENERAL review with no findings. This covers the ten committed tracking/note
+paths and their consistency, authority limits and provenance; it does not
+replace the completed source reviews or independently rerun private runtime
+checks. This clearance is recorded in the working state under the normal
+daily cadence, without another same-day tracking commit.
 
 The user explicitly authorized resetting this cluster, noting no personal
 changes. The supported reset/config helpers completed for this exact cluster;

@@ -1,6 +1,61 @@
 # 2026-09-23-storage-redesign
 
-## Current execution slice, 2026-10-02
+## Current execution slice: useful storage profile, 2026-10-02
+
+The user approved implementing the storage-profile plan after finding that a
+new VPS received no backup DatasetInPool. Preserve that VPS, files and current
+disks; the earlier reset authorization does not apply to this populated cluster.
+The provider currently seeds only hypervisor Pools, and its inherited test hook
+silently skips backups when no backup Pool exists. Production hooks are behavioral
+references, not runtime configuration for this development cluster.
+
+Implement an explicitly enabled provider profile with managed storage1 roots
+`tank/nas` (primary) and `tank/backup` (backup), user NAS roots of 1 GiB,
+normal chain-based backup attachment, and one `dev_short_backup` plan.
+Snapshots run at `*/5`, backups at `2-59/10`; task refresh is 60 seconds for
+this profile and remains 10800 seconds by default. New source retention is
+2/3/1800 seconds and backup retention 2/5/3600 seconds. Existing retention,
+quota, namespaces and personal resource packages remain intact. Catch-up does
+not rotate; later ordinary Backup may rotate under the existing policy, as
+the user selected. Retention values are targets, not hard physical space caps.
+
+Within the enabled profile, `enrollment` defaults to true. Retirement selects
+`enable:true,enrollment:false`, keeping assignment preservation and the Plan
+definition loaded across later boots. Its static seed removes only the owned
+future default-package link; runtime cleanup removes only owned enrollment and
+scheduling configuration. Existing datasets, packages and user assignments
+remain. Confirm the effective selection after services replacement before
+retirement; disabling the overlay would select the legacy rewriting seed.
+
+Generic Admin support adds validated interval grammar and a plan-level
+`keep_empty_group_snapshots` option, default false. The profile uses prebootstrapped
+shared group actions/tasks that survive last-member removal and individual
+chain rollback. Common Plan/Executor guards cover direct API edits, source
+locks, provisional confirmations and the admission-to-Plan-row lock order.
+Only a new backup DIP and new per-source metadata receive creation confirmations;
+a reused logical Dataset must never pass through Dataset::Create to attach a copy.
+
+The stopped populated cluster also requires a bounded provider maintenance
+boot/copy path: old application writers are masked from initial boot, the new
+preserving closure is copied without activation, then a recorded second boot
+starts the new seed. A canonical generic runtime transition-policy increment
+keeps ordinary package switches from selecting an older helper that ignores
+the hold. State schema stays at 1. Normal downgrade to policy 2 is then refused
+while cluster state exists; old candidate recovery helpers are not a supported
+escape. This is new maintenance compatibility work, separate from the already
+integrated prompt/instruction changes.
+
+Architect0 owns the design/verification brief; implementer0 owns Admin/provider
+and the narrow generic runtime contract change.
+Lead owns tracking, worktrees, long-check watchers and in-place deployment.
+After focused checks and independent whole-branch review, provision and catch up
+through normal chains, then verify dedicated VPS/NAS fixture payloads through
+full and incremental transfers, automatic scheduling and fixture-only rotation.
+No reset, default-branch integration, production deployment or repair authority
+is included. Lasting behavior belongs in Admin/provider docs; exact trial evidence
+belongs in this session. See [design.md](design.md) and [state.md](state.md).
+
+## Completed rebase and React deployment slice
 
 The user requested rebasing the active project branches onto current defaults
 and redeploying the disposable cluster with the new React WebUI. They authorized
