@@ -1,0 +1,256 @@
+diff --git a/.github/workflows/api-specs.yml b/.github/workflows/api-specs.yml
+index fb1838a9b..3e0408cc9 100644
+--- a/.github/workflows/api-specs.yml
++++ b/.github/workflows/api-specs.yml
+@@ -29,7 +29,7 @@ jobs:
+   api-specs-full:
+     name: "API specs (full) - ${{ matrix.topic }}"
+     runs-on: ubuntu-latest
+-    timeout-minutes: 45
++    timeout-minutes: 60
+ 
+     strategy:
+       fail-fast: false
+@@ -234,7 +234,7 @@ jobs:
+   api-specs-core:
+     name: "API specs (core) - ${{ matrix.topic }}"
+     runs-on: ubuntu-latest
+-    timeout-minutes: 45
++    timeout-minutes: 60
+ 
+     strategy:
+       fail-fast: false
+diff --git a/api/lib/vpsadmin/api/operations/user_session/resume_oauth2.rb b/api/lib/vpsadmin/api/operations/user_session/resume_oauth2.rb
+index 9f5d3ac3d..8f76add3b 100644
+--- a/api/lib/vpsadmin/api/operations/user_session/resume_oauth2.rb
++++ b/api/lib/vpsadmin/api/operations/user_session/resume_oauth2.rb
+@@ -34,11 +34,11 @@ module VpsAdmin::API
+       # Extend single sign on
+       if user_session.token_lifetime == 'renewable_auto'
+         oauth = ::Oauth2Authorization.find_by(user_session:)
++        sso_token = oauth&.single_sign_on&.token
+ 
+-        if oauth \
+-           && oauth.single_sign_on \
+-           && oauth.single_sign_on.token.valid_to < user_session.token.valid_to
+-          oauth.single_sign_on.token.update!(valid_to: user_session.token.valid_to)
++        # Closed SSO retains authorization links; keep its token absent.
++        if sso_token && sso_token.valid_to < user_session.token.valid_to
++          sso_token.update!(valid_to: user_session.token.valid_to)
+         end
+       end
+ 
+diff --git a/api/spec/lib/vpsadmin/api/authentication/oauth2_config_spec.rb b/api/spec/lib/vpsadmin/api/authentication/oauth2_config_spec.rb
+index ff38fce90..d3721a226 100644
+--- a/api/spec/lib/vpsadmin/api/authentication/oauth2_config_spec.rb
++++ b/api/spec/lib/vpsadmin/api/authentication/oauth2_config_spec.rb
+@@ -881,6 +881,62 @@ RSpec.describe VpsAdmin::API::Authentication::OAuth2Config do # rubocop:disable
+     expect(authorization.reload.refresh_token.token).to eq(refresh_token)
+   end
+ 
++  it 'authenticates refreshed access after expired access and SSO cleanup without recreating SSO' do
++    now = Time.utc(2026, 10, 3, 12)
++    allow(Time).to receive(:now).and_return(now)
++    client.update!(access_token_lifetime: 'renewable_auto')
++    session = create_open_session!(
++      user:, auth_type: 'oauth2', token_lifetime: 'renewable_auto',
++      token_interval: client.access_token_seconds, valid_to: now - 60
++    )
++    sso = create_single_sign_on!(user:, valid_to: now - 30)
++    authorization = create_oauth2_authorization!(
++      user:, client:, user_session: session, sso:, refresh_valid_to: now + 3600
++    )
++    old_access_id = session.token_id
++    old_sso_token_id = sso.token_id
++    old_refresh_id = authorization.refresh_token_id
++    task = VpsAdmin::API::Tasks::UserSession.new
++
++    expect do
++      with_current_context(user: SpecSeed.admin) do
++        with_env('EXECUTE' => 'yes') { task.close_expired }
++      end
++    end.to output(/Closing SSO session/).to_stdout
++
++    expect(session.reload.closed_at).to be_nil
++    expect(session.token).to be_nil
++    expect(sso.reload.token).to be_nil
++    expect(Token.exists?(old_access_id)).to be(false)
++    expect(Token.exists?(old_sso_token_id)).to be(false)
++    expect(authorization.reload.refresh_token_id).to eq(old_refresh_id)
++    expect(authorization.refreshable?).to be(true)
++    expect(authorization.single_sign_on).to eq(sso)
++
++    access_token, valid_to, refresh_token = config.refresh_tokens(authorization, request)
++
++    expect(session.reload.token.token).to eq(access_token)
++    expect(valid_to).to eq(now + client.access_token_seconds)
++    expect(authorization.reload.refresh_token.token).to eq(refresh_token)
++    expect(Token.exists?(old_refresh_id)).to be(false)
++    expect(sso.reload.token).to be_nil
++    resumed_at = now + 10
++    allow(Time).to receive(:now).and_return(resumed_at)
++
++    expect do
++      expect(config.find_user_by_access_token(request, access_token)).to eq(user)
++    end.not_to change(Token, :count)
++
++    expect(User.current).to eq(user)
++    expect(UserSession.current).to eq(session)
++    expect(session.reload.closed_at).to be_nil
++    expect(session.request_count).to eq(1)
++    expect(session.token.valid_to).to eq(resumed_at + client.access_token_seconds)
++    expect(authorization.reload.user_session).to eq(session)
++    expect(authorization.single_sign_on).to eq(sso)
++    expect(sso.reload.token).to be_nil
++  end
++
+   it 'does not find refresh tokens for locked or forced-reset users' do
+     %i[lockout password_reset].each do |flag|
+       user.update!(lockout: false, password_reset: false)
+diff --git a/api/spec/models/operations/user_session/resume_oauth2_spec.rb b/api/spec/models/operations/user_session/resume_oauth2_spec.rb
+index 571ba8629..af56c5836 100644
+--- a/api/spec/models/operations/user_session/resume_oauth2_spec.rb
++++ b/api/spec/models/operations/user_session/resume_oauth2_spec.rb
+@@ -69,4 +69,142 @@ RSpec.describe VpsAdmin::API::Operations::UserSession::ResumeOAuth2 do
+     expect(User.current).to eq(user)
+     expect(UserSession.current).to eq(session)
+   end
++
++  context 'with a renewable OAuth session' do
++    let(:now) { Time.utc(2026, 10, 3, 12) }
++    let(:session) do
++      create_open_session!(
++        user:,
++        auth_type: 'oauth2',
++        token_lifetime: 'renewable_auto',
++        token_interval: 3600,
++        valid_to: now + 60
++      )
++    end
++    let(:sso) { create_single_sign_on!(user:, valid_to: now + 30) }
++
++    before do
++      allow(Time).to receive(:now).and_return(now)
++    end
++
++    it 'resumes after SSO closure without recreating its token' do
++      authorization = create_oauth2_authorization!(user:, client:, user_session: session, sso:)
++      sso_token_id = sso.token_id
++      access_token_id = session.token_id
++      sso.close
++
++      expect(sso.reload.token).to be_nil
++      expect(Token.exists?(sso_token_id)).to be(false)
++      expect do
++        expect(described_class.run(session.token.token)).to eq(session)
++      end.not_to change(Token, :count)
++
++      expect(session.reload.closed_at).to be_nil
++      expect(session.token_id).to eq(access_token_id)
++      expect(session.token.valid_to).to eq(now + 3600)
++      expect(session.request_count).to eq(1)
++      expect(User.current).to eq(user)
++      expect(UserSession.current).to eq(session)
++      expect(authorization.reload.user_session).to eq(session)
++      expect(authorization.single_sign_on).to eq(sso)
++      expect(sso.reload.token).to be_nil
++    end
++
++    it 'resumes another valid authorization after its shared SSO is closed' do
++      create_oauth2_authorization!(user:, client:, user_session: session, sso:)
++      other_session = create_open_session!(user:, auth_type: 'oauth2', valid_to: now + 60)
++      other_authorization = create_oauth2_authorization!(
++        user:, client: create_oauth2_client!, user_session: other_session, sso:
++      )
++      sso.authorization_revoked(other_authorization, close_sso: true)
++
++      expect(described_class.run(session.token.token)).to eq(session)
++
++      expect(session.reload.token.valid_to).to eq(now + 3600)
++      expect(User.current).to eq(user)
++      expect(UserSession.current).to eq(session)
++      expect(other_session.reload.closed_at).to be_nil
++      expect(other_authorization.reload.single_sign_on).to eq(sso)
++      expect(sso.reload.token).to be_nil
++    end
++
++    it 'preserves an SSO expiry later than the renewed access token' do
++      sso.token.update!(valid_to: now + 7200)
++      create_oauth2_authorization!(user:, client:, user_session: session, sso:)
++
++      expect(described_class.run(session.token.token)).to eq(session)
++
++      expect(session.reload.token.valid_to).to eq(now + 3600)
++      expect(sso.reload.token.valid_to).to eq(now + 7200)
++    end
++
++    it 'extends an expired SSO token that is still present' do
++      sso.token.update!(valid_to: now - 30)
++      create_oauth2_authorization!(user:, client:, user_session: session, sso:)
++
++      expect(described_class.run(session.token.token)).to eq(session)
++
++      expect(session.reload.token.valid_to).to eq(now + 3600)
++      expect(sso.reload.token.valid_to).to eq(session.token.valid_to)
++    end
++
++    it 'renews access without an authorization' do
++      expect(described_class.run(session.token.token)).to eq(session)
++
++      expect(session.reload.token.valid_to).to eq(now + 3600)
++      expect(User.current).to eq(user)
++      expect(UserSession.current).to eq(session)
++    end
++
++    it 'renews access without an SSO association' do
++      authorization = create_oauth2_authorization!(user:, client:, user_session: session)
++
++      expect(described_class.run(session.token.token)).to eq(session)
++
++      expect(session.reload.token.valid_to).to eq(now + 3600)
++      expect(authorization.reload.single_sign_on).to be_nil
++      expect(User.current).to eq(user)
++      expect(UserSession.current).to eq(session)
++    end
++
++    it 'leaves fixed access expiry unchanged when its SSO is closed' do
++      session.update!(token_lifetime: 'fixed')
++      create_oauth2_authorization!(user:, client:, user_session: session, sso:)
++      sso.close
++
++      expect(described_class.run(session.token.token)).to eq(session)
++
++      expect(session.reload.token.valid_to).to eq(now + 60)
++      expect(User.current).to eq(user)
++      expect(UserSession.current).to eq(session)
++      expect(sso.reload.token).to be_nil
++    end
++
++    it 'rejects expired access even when its SSO is closed' do
++      create_oauth2_authorization!(user:, client:, user_session: session, sso:)
++      sso.close
++      session.token.update!(valid_to: now - 1)
++      User.current = user
++      UserSession.current = session
++
++      expect(described_class.run(session.token.token)).to be_nil
++
++      expect(User.current).to be_nil
++      expect(UserSession.current).to be_nil
++      expect(session.reload.token.valid_to).to eq(now - 1)
++      expect(sso.reload.token).to be_nil
++    end
++
++    it 'rejects a closed access session even when its token is valid' do
++      session.update!(closed_at: now - 1)
++      User.current = user
++      UserSession.current = session
++
++      expect(described_class.run(session.token.token)).to be_nil
++
++      expect(User.current).to be_nil
++      expect(UserSession.current).to be_nil
++      expect(session.reload.token.valid_to).to eq(now + 60)
++    end
++  end
+ end

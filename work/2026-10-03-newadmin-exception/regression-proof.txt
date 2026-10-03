@@ -1,0 +1,39 @@
+Persisted OAuth/SSO regression evidence
+
+Red: original guard at API base148ef0ea, added persisted regression examples,
+before source correction. All three fail at the intended nil.valid_to access.
+
+  1) VpsAdmin::API::Authentication::OAuth2Config authenticates refreshed access after expired access and SSO cleanup without recreating SSO
+     NoMethodError:
+       undefined method 'valid_to' for nil
+     # ./lib/vpsadmin/api/operations/user_session/resume_oauth2.rb:40:in 'VpsAdmin::API::Operations::UserSession::ResumeOAuth2#run'
+  2) VpsAdmin::API::Operations::UserSession::ResumeOAuth2 with a renewable OAuth session resumes after SSO closure without recreating its token
+     NoMethodError:
+       undefined method 'valid_to' for nil
+     # ./lib/vpsadmin/api/operations/user_session/resume_oauth2.rb:40:in 'VpsAdmin::API::Operations::UserSession::ResumeOAuth2#run'
+  3) VpsAdmin::API::Operations::UserSession::ResumeOAuth2 with a renewable OAuth session resumes another valid authorization after its shared SSO is closed
+     NoMethodError:
+       undefined method 'valid_to' for nil
+     # ./lib/vpsadmin/api/operations/user_session/resume_oauth2.rb:40:in 'VpsAdmin::API::Operations::UserSession::ResumeOAuth2#run'
+
+     # ./spec/spec_helper.rb:24:in 'block (2 levels) in <top (required)>'
+
+Finished in 11.71 seconds (files took 12.7 seconds to load)
+3 examples, 3 failures
+
+Failed examples:
+
+rspec ./spec/lib/vpsadmin/api/authentication/oauth2_config_spec.rb:884 # VpsAdmin::API::Authentication::OAuth2Config authenticates refreshed access after expired access and SSO cleanup without recreating SSO
+rspec ./spec/models/operations/user_session/resume_oauth2_spec.rb:90 # VpsAdmin::API::Operations::UserSession::ResumeOAuth2 with a renewable OAuth session resumes after SSO closure without recreating its token
+rspec ./spec/models/operations/user_session/resume_oauth2_spec.rb:113 # VpsAdmin::API::Operations::UserSession::ResumeOAuth2 with a renewable OAuth session resumes another valid authorization after its shared SSO is closed
+
+Randomized with seed 10804
+
+
+Green: the frozen guard and two modified specs, later committed as af8.
+Those three runtime/spec blobs are identical at final f9; workflow only differs.
+
+Finished in 56.12 seconds (files took 14.6 seconds to load)
+72 examples, 0 failures
+
+Randomized with seed 36063
