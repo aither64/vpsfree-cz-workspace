@@ -2,38 +2,103 @@
 
 ## Status
 
-Prepared execution record, updated 2026-10-03. Provider implementation,
-independent review and direct corrections are complete. Default/compatible
+Prepared execution record, updated 2026-10-03. The earlier provider399
+implementation, independent review and direct corrections are complete. Default/compatible
 checks, required host migration and the real retained-services fixture passed.
 The latter proves services-only preservation and interrupted-copy/new-boot
 behavior; its hold remains `starting_copied` and unreleased. Historical failures
 and focused corrections remain recorded in [state](state.md).
 
-The rebased consumer pin is published at `6d1b9c4d` on actual review base
-`93389c33`; independent runtime/provider/consumer composition review completed
+The consumer pin is merged and published to workspace master at `1fa9c982`,
+after a patch-equivalent replay onto tracking-only master `3fd3ff77`.
+Independent runtime/provider/consumer composition review at `6d1b9c4d` completed
 with no findings in all four HIGH-risk lanes. The six-stage quick batch, all
 four root checks, new package realization and installed runtime/contract/helper/
-Codex source-byte proof passed. No workspace
-package activation, registered-cluster boot or populated-cluster provisioning
-has occurred for this slice. The cluster remains stopped with retained disks.
+Codex source-byte proof passed. The user reported package activation, and the
+lead verified the selected generation and public same-session provider status.
+The user then explicitly authorized workspace/master integration if verification
+passed; the normal fast-forward and SSH publication completed. No registered-
+cluster boot or populated-cluster provisioning occurred during this step.
+During that workspace integration the cluster remained stopped with retained disks.
 The earlier reset authorization does not apply to the user-created VPS.
+
+Current retained trial: public masked maintenance boot passed0/88.027s, followed
+by a private logical DB dump and read-only original catalog/entitlement/retention
+baseline. Public services copy-only passed0/349.549s/parity1 with phase copied.
+Public stop/start --copied-config passed0/621.783s/parity1 under the frozen
+Admin290f/provider399/selectedzmwh composition. Real seed/services and regular
+Node refresh completed; public status confirms running/ready/released with no
+pending hold. Ordinary node1/node2/storage1 updates passed0/341.213s; all three
+process-bound source/hash/socket/queue-delay proofs passed0/15.627s. Exact290f
+core/full platform API topic failures lack the hidden request exception; direct
+provision does not use those HTTP endpoints, so they are tracked separately with
+test-only diagnostics planned. Public provision failed1/21.055s at an unstaged
+admission check before Pool/CatchUp staging; scheduling remains stopped. A bounded
+provider correction and checked replacement package are being prepared before a
+supported retry. The four-path correction passed47/0 real API examples,4runs/
+32assertions0, default no-build and compatible profile smoke; total733.663s/
+parity1. Normal owning fold produced clean provider0b0ba9d8/profilea3088680,
+with first2 commits and native fixture patch unchanged. Reviewer0's affected-code/complete-history review completed all four HIGH-risk
+lanes with no
+Blocking, Important or source Advisory findings; see the
+[packet](storage-profile-admission-review.md). Admin290f and the live cluster
+remain held. Independent consumer review passed all four HIGH-risk lanes atad539..bcb
+without findings. The unchanged pin was replayed onto coordination-only990 to
+final19cb25ee and published; final package evaluation resolves the exact built
+output. All four root checks/default build and installed-byte proof passed
+exit0/248.639s/parity1. Replacement packagevyf5/tools4w4m remain **unselected**.
+Final no-build passed0/3.838s; comparison captures actual990..19cb, and remote
+master1fa9 is unchanged. Original live file baselines begin after this boot and before Node updates/provision; no
+preseed file comparison is inferred from the six cold recovery copies.
+
+The original protected DB rows are unchanged after copied boot:27groups,
+1168rows, zero protected differences, plus one unassigned shared profile package
+and its six items. Original VPS is running; physical quotas and a known ordinary
+file have a private post-boot baseline. No prior checksum or specified user data
+file is available, so no earlier original-payload equality is asserted.
 
 The [current brief](design.md) owns behavior and ordered acceptance;
 [state](state.md) records implementation and verification. This record will
 hold exact operator selections and outcomes as the authorized trial proceeds.
 
+## Current activation handoff
+
+Final reviewed equivalent source:
+`19cb25ee8d5333a4ea4c1816806c130c41652f1f` in the registered workspace feature.
+Built package: `/nix/store/vyf5bpadsnplrzfvrhx182wcsfnw5602-dev-workspace-0.2.0`;
+tools: `/nix/store/4w4mbc7x9kgj798bf16kpfq7mdi11w6b-vpsfree-dev-workspace-tools-0.1.0`.
+The actual corrected provision/acceptance scripts match provider0b0b, both
+provider defaults and launchers remain equal to their owners, and the packaged
+canonical contract is schema1/policy3 with two providers. Evidence is linked in
+[state](state.md) and the [consumer review](storage-profile-admission-consumer-review.md).
+
+Use the installed public switch from an external terminal only after all managed
+sessions are idle, including the lead/member turns, with no pending submissions:
+
+```sh
+workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
+```
+
+No activation was performed or scheduled by the lead. After operator confirmation,
+verify the selected generation, then normal services update and actual guest-script
+proof precede the justified provision retry. Scheduling remains stopped. The
+existing original DB/file/quota baselines, payload/history/scheduling/repeat
+seed/provision and retirement gates remain; no reset/unlock or private release.
+The new pin has no default integration approval.
+
 ## Sources
 
 | Component | Selection | Status |
 | --- | --- | --- |
-| API | `46b3bf6f9549eaf579053bc296ebf19c417bb848` | Reviewed, directly remediated, published; API CI 27/27 passed. |
+| API / Node | `290f1ef07972e53c2b5154dbfa8b088802bde619` | Published on148ef; original full review plus directstep9 corrections, full Node634/0 and actual remote-restore4/4 passed. New CI running; prior topic27/27 belongs to historical46. |
 | Generic runtime | `4ef298b30f9cdbdcfe02bf6526e0f69ecc9bf7b4` | Reviewed, published on `924c0ec2`; schema 1/policy 3. |
-| Provider | `399c33023a568a8d7a21e4e4df52829628720a28` | Published on `8f8d8ecf`; rebased composition reviewed without findings. Original functional reviews/direct corrections retained. Host migration passed at `f36`, native fixture at `45d7ce88`; unchanged relevant bytes/inputs support carrying those observations forward. |
-| Workspace consumer | `6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25` | Published on `93389c33`; complete one-commit pin reviewed without findings or migrations. New package built and verified; unselected. |
+| Provider correction | `0b0ba9d869c04a4362f6051f5cc281ddf1b5a642` | Reviewed/published on8f8; admission47/0 and compatible checks passed. Installed tools still select399 until external activation. Unchanged host/native observations retain their original scope. |
+| Workspace correction | `19cb25ee8d5333a4ea4c1816806c130c41652f1f` | Reviewed equivalent pin, published feature, package checked/built; unselected and unmerged. Active source remains the earlier merged1fa9 pin. |
 | OS | `8d05dc3ae1fb71c1385609990acdf093af49ceec` | Previously reviewed/published provider source, unchanged. |
 | React | `aa2f60b89df65d2f987be48784ed42bab7010833` | Unchanged selected path source; honest embedded provenance remains separate. |
 
-Default-branch integration and production/shared deployment are not authorized.
+The user's integration approval covers workspace master only; generic/provider
+default integration and production storage deployment remain outside its scope.
 The provider's default API/OS inputs stay unchanged; use the selected
 same-session sources for the enabled checks and trial.
 
@@ -55,8 +120,18 @@ same-session sources for the enabled checks and trial.
   Holds remain `starting_copied`; no full-cluster release is claimed.
 - [x] Independent complete consumer review, all four HIGH-risk lanes, no findings.
 - [x] Published consumer and built package with equal packaged host/tools contract.
-- [ ] Supported workspace package activation from an external idle terminal.
-- [ ] Immediate cluster ownership/address-availability recheck before boot.
+- [x] User-reported external activation; installed public generation verified.
+- [x] Conditional workspace/master approval, fast-forward integration and publication.
+- [x] Immediate cluster ownership/address-availability recheck before masked boot.
+
+Lead preparation while the Node restore scenario runs: installed public host
+status still selects the reviewed `zmwh78dk` package. Public cluster status
+returns stale readiness for the storage/bridge topology; it does not prove a
+running runner or address availability. The private residency evidence remains
+mode0600 and bound to this exact workspace/session. Its resident configuration
+SHA256 and services toplevel match, and both store selections remain available.
+These read-only checks authorize no boot; immediate ownership and address checks
+remain pending until the Node scenario passes.
 
 The first explicit retained-services app attempt exited 1 after 7m30s at
 `eee1998`, logs `/tmp/storage-profile-retained-services-watch.P9e3XA`. The
@@ -107,8 +182,9 @@ mask evidence.
 
 ## Package activation boundary
 
-Prepared, not executed. Required review, both VM gates, source publication,
-generated pin and composed-package checks are complete. Reviewed source head:
+Executed by the user and verified by the lead. Required review, both VM gates,
+source publication, generated pin and composed-package checks are complete.
+Activated source head:
 `6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25`. Built package:
 `/nix/store/zmwh78dk1vjh2b91qnibjl682rb8hmwc-dev-workspace-0.2.0`.
 Host/tools canonical contract bytes match schema 1/policy 3 and SHA256
@@ -116,34 +192,53 @@ Host/tools canonical contract bytes match schema 1/policy 3 and SHA256
 The package proof also checked reviewed host/session/provider helpers and
 selected Codex `4c170393` source bytes. Evidence:
 `/tmp/storage-profile-rebased-package.xnradz5x`, exit 0 in 245.623s, parity 1.
-Public comparison capture records exact base `93389c33` and head `6d1b9c4d`.
+After the coordination-only pin replay, Nix resolved final source `1fa9c982`
+to that exact already-selected package, and the fresh no-build flake check
+passed. Final comparison capture records base `3fd3ff77` and head `1fa9c982`.
 Remote backup refs preserve exact pinned runtime/provider dependencies; their
 names and readback results are recorded in [state](state.md). This does not
 integrate any default branch.
-Use the normal installed command from the external terminal:
+The handoff specified this installed public command:
 
 ```sh
 workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
 ```
 
-Run it from an external terminal while the lead and every ready member are idle,
+Run future switches from an external terminal while the lead and every ready member are idle,
 with no pending requests or submissions. This is a profile-wide transition;
 the operator must account for ready sessions in other registered workspaces
 and the normal terminal/service rebind. The active lead must not invoke it as
-an idle probe or arrange background activation. No activation is scheduled.
-After the operator reports success, verify the public selected package/provider
-before the maintenance trial. Preserve retained state on refusal and recover
-forward through the same or a newer reviewed compatible public package.
+an idle probe or arrange background activation. No additional activation is scheduled.
+Installed public host status selected the expected package, with matching
+host/tools contracts. Public provider status succeeded with stopped/bridge
+state; router, portal, Codex and tmux units were active and their stable paths
+resolved to the selected package. The portal's unauthenticated response was
+HTTP 401 with TLS verification 0 using the configured public CA. No credentials,
+runtime settings or trust configuration were changed. Evidence:
+`/tmp/storage-profile-activated.zsuzp_g4`.
 
-Successful activation can support an early merge of this narrow workspace pin
-without waiting for the storage redesign. That merge requires explicit approval
-for workspace `master`, a current comparison and fast-forward integration.
+The user explicitly approved the narrow workspace/master merge after this
+verification. Normal shared-root fast-forward `3fd3ff77..1fa9c982` and SSH
+publication completed; the feature ref remains retained. A concurrent foreign
+tracking-only master advance was preserved, with the pin still an ancestor.
 Future repins must preserve the maintenance-aware provider together with policy
 3 or newer. The session and remaining storage feature branches stay active.
 
 ## Maintenance and preservation
 
-Pending. Use the reviewed typed maintenance/copy/copied-config path. Keep old
+Historical checkpoint before copied boot, superseded by the current status
+above: final Admin290f was published. Desired
+cluster config selects enable:true/enrollment:true; other fields are equal and
+the prior file is retained privately at
+`/tmp/storage-profile-retained-20261003.nemcjis2/config-before.json`.
+Fresh configured-address probes found no responses; the recorded PID is not
+live. Public maintenance owns the final validation under its locks. The recorded resident masked boot then passed0/88.027s/parity1 and
+public status then reported maintenance_ready/pendingtrue. Private logical DB dump
+passed0/4.028s;27-group original baseline captured1161rows and oneVPS before
+copy. Public services copy-only was running; copied boot, refresh/release and
+physical original/payload comparisons were pending at that checkpoint.
+
+Execution follows the recorded public sequence. Use the reviewed typed maintenance/copy/copied-config path. Keep old
 application writers masked from initial services boot. Once reachable, collect
 a fresh private logical DB backup and baseline of existing VPS/catalog,
 namespace/map, package/assignment and allocation rows. Bind the copy receipt to

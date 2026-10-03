@@ -38,10 +38,12 @@ the architect performed no host/cluster check.
 
 ### Current execution checkpoint, 2026-10-03
 
-Current phase: the user authorized rebasing the generic runtime, provider and
-consumer onto their advanced defaults. The bounded
+Current phase: workspace activation is verified and workspace/master
+integration is complete under the user's conditional approval. Continue the
+original storage work separately. The completed rebase of the generic runtime,
+provider and consumer is covered by the bounded
 [rebase and early-merge brief](#current-rebase-and-early-merge-brief-2026-10-03)
-below governs the new source work. Previous `492fdf8e` review/build evidence
+below. Previous `492fdf8e` review/build evidence
 is retained for that composition; it does not prove the replacement package.
 The lead reports generic/provider publication at `4ef298b3` / `399c3302` and
 the completed clean root rebase/pin `6d1b9c4d` on `93389c3`. The six-stage
@@ -50,17 +52,46 @@ three-repository composition/history in all four HIGH lanes without findings.
 The final root checks, package realization and source-contract/Codex-client
 proof passed at exact `6d1b9c4d`. The lead confirms root feature publication
 and public capture-comparison are complete at base `93389c3` / head
-`6d1b9c4d`, with remote master unchanged. Operator handoff follows the
-lead-owned tracking reconciliation.
-The package is unselected. Prior zero-check attempts remain distinct, and
+`6d1b9c4d`, with remote master unchanged at that checkpoint. The user now
+reports activation and conditionally authorizes workspace/master integration
+after the lead verifies it. The lead reports successful installed public
+activation checks and final pin replay `1fa9c982b866a305bd1451f2c32f6d387d2dc1a3`
+on tracking-only master `3fd3ff77`. Final package evaluation equals the exact
+active output; no rebuild or reactivation was needed. Final comparison,
+feature publication, shared-root fast-forward and remote master push completed.
+The pin remains an ancestor of concurrent tracking-only local master
+`4123553c1ae1fc47767e9b30445ff4f7f79266e9`; foreign work was preserved.
+Prior zero-check attempts remain distinct, and
 unchanged host/native evidence is retained without calling it a rerun.
 The separate API46 failure is diagnosed as an existing Node daemon/restart
 fixture reliability issue; its broker-timeout trigger remains unknown. It
 limits broader storage acceptance, not this default-disabled package rebase.
-No package has been selected. External idle-operator activation follows the
-new composition checks. The retained cluster remains stopped; full-cluster
-refresh, public release/payload acceptance and activation remain pending.
-The user's merge-strategy question is not merge authorization.
+The lead now reports successful public maintenance-start, a private logical DB
+backup and read-only catalog/entitlement baseline, and services copy-only.
+Public copied stop/start completed with real seed/services/regular-node refresh
+and hold release. All three ordinary Node updates and bounded process/source
+binding checks passed. Protected DB projections were preserved, and a known
+ordinary file plus four quota properties matched across Node updates; this is
+not pre-seed or user-payload equality. Normal public profile provision failed
+before Pool/CatchUp staging: its initial admission check lacked a SQL staging
+transaction. The scheduler remains intentionally stopped; no retry, unlock or
+reset follows. The bounded
+[provider admission remediation](#provider-provision-admission-remediation-2026-10-03)
+below takes priority and includes the installed-package correction boundary.
+Payload acceptance and retirement remain pending. The lead accepted the bounded
+provider brief and released its four owned implementation paths; no operation
+or runtime acceptance follows from that release.
+Exact-head API core/full-platform CI diagnosis identified two unexpected 500s
+without the underlying exception. The bounded
+[test-only diagnostic brief](#api-platform-request-exception-diagnostic-brief-2026-10-03)
+below preserves the source hold: application authoring awaits the lead's release.
+No cause or runtime correction for the API 500s is established. Exact
+Admin `290f1ef0`, installed provider `399c3302` and selected `zmwh` remain the
+runtime baseline; Admin source and the separate CI observer remain held;
+the Node review/direct remediation and integration pass are recorded below. The
+conditional approval covers only workspace/master, with the bounded checks
+and integration sequence below. Generic/provider default integration,
+production storage deployment and quiet/repair/APPLY remain excluded.
 Detailed lead-reported results and prior evidence follow; operation records
 remain in [state](state.md).
 
@@ -627,12 +658,14 @@ remain in [state](state.md).
 
 ### Current rebase and early-merge brief, 2026-10-03
 
-**Authorized scope:** rebase and regenerate the existing dependency chain.
+**Original rebase scope:** rebase and regenerate the existing dependency chain.
 No new storage feature, schema, selected package, cluster operation or session
 lifecycle change is included. The lead owns ref backups, short Git steps,
 generated locks and records; the implementer owns conflict resolution and
 input URLs, watchers own long verification, and the retained reviewer owns
 independent review. This is a design assessment, not another code review.
+The later user-reported activation and conditional workspace/master approval
+are recorded in the activation-verification subsection below.
 
 | Component | Preserve as prior evidence | New default base |
 | --- | --- | --- |
@@ -751,10 +784,10 @@ exact-lease root feature publication is complete. Remote readback confirms
 `93389c3373647fb3dc2d7ee15efa9acb93a8c62f`. Public capture-comparison is also
 complete at that exact base/head, with base label `Merge base` against locally
 available `origin/master`; historical registration `initial_base_sha` is
-preserved. Current phase is operator activation handoff after lead-owned
-tracking reconciliation. The package remains
-unselected: no activation, public Node refresh/release, VPS/NAS payload
-acceptance, merge, node-quiet, repair or APPLY authority is implied.
+preserved. This completed the pre-activation handoff. The subsequent user
+report and conditional integration approval are recorded below; public Node
+refresh/release, VPS/NAS payload acceptance, node-quiet, repair and APPLY
+remain outside that approval.
 
 The lead also reports API46 broad CI completed with 117 of 118 jobs passing;
 the sole failed job is `storage/restore-after-reinstall-remote`. The supplied
@@ -855,14 +888,14 @@ preserving-seed/mixed-version gates. Activation affects the workspace runtime
 for managed sessions; it does not deploy storage changes to shared or
 production nodes. Strict, node-quiet, repair and APPLY remain off.
 
-**Recommendation on the user's merge question:** yes, integrating the narrow
+**Recommendation on the user's original merge question:** yes, integrating the narrow
 root package pin after successful activation and its own review/checks is a
 reasonable independent milestone. It need not wait for the vpsAdmin storage
-redesign or full-cluster payload work. Obtain explicit approval for the
-workspace repository's `master` first, capture the final comparison, refresh
-current-master ancestry and integrate fast-forward only. Keep the feature
-ref and this session active for its remaining work. Activation approval and
-this recommendation are not merge approval.
+redesign or full-cluster payload work. The user has since supplied conditional
+approval for workspace/master, as recorded below. Capture the final comparison,
+refresh current-master ancestry and integrate fast-forward only after the
+activation checks pass. Keep the feature ref and this session active for its
+remaining work.
 
 Exact published generic/provider feature commits can remain intentional root
 dependencies; upstream integration is not technically required for an exact
@@ -888,6 +921,155 @@ storage redesign; full enabled-profile readiness remains a separate claim.
 This strategy does not authorize a new split, default merge or updater change
 within the present rebase task. Until coordinated integration is approved,
 the exact reviewed complete feature pins are the bounded alternative.
+
+#### Verified activation and completed workspace integration
+
+The lead relays the user's exact direction: “activated. you can verify it, if
+it is ok, you can merge the workspace.” This authorizes verification and,
+conditional on success, integration into **workspace/master only**. It does
+not authorize another package activation, generic/provider default merges,
+storage deployment, cluster actions or session lifecycle changes. The lead
+owns the checks and Git operations. The following completed activation and
+integration results are lead-reported; the architect ran no operation.
+
+**Activation verification PASS:** installed `workspace-host status` selects
+the exact reviewed `zmwh78dk…-dev-workspace-0.2.0` package and lists the owned
+`vpsfree-cz` workspace. The selected wrapper matches that package; current/team
+commands work through the new generation. Public same-session
+`vpsadmin-devcluster status` exited 0 with stopped/bridge state. Installed
+tools match `vah0176g…-vpsfree-dev-workspace-tools-0.1.0`, with equal canonical
+schema-1/policy-3 contract. All four owned router/portal/Codex/tmux units are
+active, with each stable-profile ExecStart resolving to the expected selected
+package. An unauthenticated request to the owned portal using the existing
+public CA returned HTTP 401 with TLS verification result 0, without credentials.
+Initial literal-path/default-CA checks reflected harness assumptions and were
+corrected without runtime or trust changes. Private artifacts remain unread
+by the architect.
+
+The completed verification used the following bounded public-check contract:
+
+1. Run installed `workspace-host status` and confirm the selected package is
+   `/nix/store/zmwh78dk1vjh2b91qnibjl682rb8hmwc-dev-workspace-0.2.0`, the package
+   whose actual contents passed the recorded proof. Check the reported active
+   Codex matches that composition and that the existing workspace/session
+   portal remains available. A responding old portal alone is insufficient:
+   match its service executable to the selected package using public service
+   metadata, without reading private logs or credentials.
+2. From that selected package, check public
+   `share/workspace-portal/runtime-contract.json` against recorded SHA
+   `33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`
+   (schema 1 / policy 3), and
+   `share/dev-workspace/extensions.json` for the two expected providers and
+   their reviewed tools package
+   `/nix/store/vah0176g8h75vasl0nlg0farmaacybid-vpsfree-dev-workspace-tools-0.1.0`.
+   The prior exact-package proof already covers helper, profile-loader and
+   Codex source bytes; selection of that same immutable package carries it
+   forward without a new build or repeated full content test.
+3. Run the installed public
+   `vpsadmin-devcluster status 2026-09-23-storage-redesign` from the verified
+   workspace. Require normal generation/provider dispatch and an intelligible
+   retained-state result. The last expected runtime state is stopped; stale
+   readiness does not authorize refresh/start. Record only nonsecret status.
+   An identity/adoption error needs resolution before merge; do not bypass it
+   with an unselected helper or alter the retained cluster to make status pass.
+
+These use existing interfaces (`libexec/workspace-host` methods `status` and
+`dispatch_cluster`, its `ExtensionCatalog`, and the provider's `status` command).
+They verify the selected composition and continuing access, not Node quiet,
+maintenance hold release or VPS/NAS payload behavior.
+
+**Completed integration result:** normal pin replay onto actual shared local
+master `3fd3ff77398c1557ba57e9da3e4dadb5f6748b7e` produced
+`1fa9c982b866a305bd1451f2c32f6d387d2dc1a3`. The single pin is `=` in range-diff;
+both tested flake hashes match, with the same two-path 9-addition/9-deletion
+change and binary diff SHA
+`18d2131e8abf5f7ab427837f34c09374af91328f5851f07a96c6059177c7a333`.
+Nix evaluation of the final default outPath equals the exact active
+`/nix/store/zmwh78dk1vjh2b91qnibjl682rb8hmwc-dev-workspace-0.2.0`.
+Final-head flake check without builds exited 0. Original independent review
+and actual package proof therefore carry forward; no new build, activation,
+full review or VM rerun is claimed.
+
+Explicit capture-comparison completed at `3fd3ff77..1fa9c982`; the
+before-integration backup retains `6d1b9c4d`. Normal exact-lease feature
+publication completed, then shared-root `git merge --ff-only` advanced
+`3fd3ff77` to `1fa9c982`, changing only the flakes. Normal SSH master push
+`93389c3..1fa9c982` completed. The lead's final remote readback confirmed both
+master and the retained feature at exact `1fa9c982`. A concurrent other-session tracking-only commit then
+advanced local master to `4123553c1ae1fc47767e9b30445ff4f7f79266e9`, changing
+three foreign tracking paths and no source/procedure/config content. The pin
+is an ancestor, both flake hashes remain exact, and other index entries were
+preserved, with the index empty afterward. An exact-HEAD postmerge check first
+noticed this concurrency; Git metadata established the cause without reading
+foreign records, rewriting master or performing any foreign lifecycle action.
+
+Workspace integration is complete. Generic/provider defaults are not merged;
+the published dependency anchors and maintenance-aware provider/policy-3
+composition remain required. This performs no physical cluster operation.
+Native `45d7ce88` evidence still ends at `starting_copied`, `released=0`;
+public Node refresh, full VPS/NAS payload/history acceptance and the separate
+API broad-CI RPC reliability follow-up remain pending. The session stays active
+and open, with refs retained. Lead-owned state/rollout/review records track the
+operation and final readback.
+
+**Retained reconciliation and FF contract:** the lead reported local master
+advanced from `93389c3` to
+`3fd3ff77398c1557ba57e9da3e4dadb5f6748b7e` through seven owned tracking files;
+remote master was last `93389c3`. Preserve published `6d1b9c4d` and its review
+evidence, then replay the single pin commit onto the actual current master in
+the registered feature worktree if it still requires that replay. Verify the
+intervening delta is coordination-only, the pin range-diff is equivalent, and
+final `flake.nix`, `flake.lock`, `config/`, package/test inputs and relevant
+procedures match the reviewed composition. The root package expression uses
+the pinned provider plus `siteConfig`/`teamConfig`. Tracking records and the
+root commit ID are not semantic runtime settings, but `clusterDefaults`
+references `./config/*.json`: a changed root source NAR/path context can yield
+a different package path even with identical config bytes. Do not infer an
+identical package output from equal flakes/config alone.
+
+**Bounded final package gate:** after the replay onto current master, the lead
+evaluates the exact final default-package output and compares it with the
+activated `/nix/store/zmwh78dk1vjh2b91qnibjl682rb8hmwc-dev-workspace-0.2.0`.
+
+- If the output path is equal, reuse its actual built-content and activation
+  proof. No duplicate package build, activation or VM is required.
+- If the path differs, a fresh watcher runs the same four existing root
+  checks and default-package build, then proves the final built runtime,
+  canonical contract, provider/helpers/profile-loader and Codex match the
+  active build, together with byte equality of the ordinary default JSON
+  inputs and unchanged effective configuration. Record both package paths.
+  Differences attributable only to source/store path context are acceptable
+  when every changed reference resolves to the same effective content. No
+  runtime/default logic, dependency leaf, helper, OSVM or configuration-content
+  change is permitted under this equivalence claim. No second activation or
+  new VM scenario is needed; a substantive mismatch instead blocks this
+  carry-forward claim for assessment.
+
+This gate is sufficient for a source-equivalent final merge after successful
+activation. If outputs differ, state precisely that the earlier package was
+activated and the final package was built and proved equivalent; do not say
+the final distinct store path was selected.
+
+Under that exact equivalence, retain the four-HIGH no-findings review, six-stage
+quick results, package proof and scoped VM evidence without claiming reruns.
+The user's conditional approval survives the clean equivalent rebase; it does
+not require a new activation or VM scenario. If actual runtime/package inputs
+change, assess that concrete delta and the affected proof before integration.
+Record the new head and actual review base, publish the feature normally over
+SSH with the exact lease, and repeat
+`dev-session worktree capture-comparison 2026-09-23-storage-redesign workspace --as-is`
+after the final head change. Preserve historical registration initial-base
+metadata; the old `933..6d1` capture is not the new comparison.
+
+Once activation verification and equivalence pass, confirm the feature
+descends from the still-current shared master, preserve foreign work/index,
+stage nothing for the merge, and use shared-root
+`git merge --ff-only <registered-feature-branch>`. Publish master normally over
+SSH and read back the final heads. If master advances again, repeat only the
+necessary ancestry/equivalence/comparison steps; never reset or stash shared
+changes. Keep feature and dependency anchor refs and the session open. These
+gates were satisfied for the completed integration recorded above; this
+retained contract is not a request to repeat the operation.
 
 ### Ownership and configuration boundary
 
@@ -1603,15 +1785,19 @@ consumer `6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25`, actual review base
 and new package proof passed as recorded above. The lead confirms root feature
 publication, exact remote dependency-anchor readbacks and public
 capture-comparison at that base/head are complete; remote master is unchanged.
-Package selection and activation have not occurred. Historical registration
-metadata and backups remain evidence, not the final review base.
+That was the completed pre-activation checkpoint. The user subsequently
+reported activation and approved workspace/master integration conditional on
+verification. Verification and the equivalent final replay/merge at `1fa9c982`
+are now complete as recorded above. Historical registration metadata and
+backups remain evidence, not the final review base.
 
-#### Proposed activation boundary
+#### Activation handoff boundary retained as historical procedure
 
 The lead-reported review and verification prerequisites above are complete
 for exact consumer `6d1b9c4d`; root publication and comparison are also
-complete. The lead owns the remaining tracking handoff. The following is not
-an executed or scheduled package transition.
+complete. The following describes the handoff before the user's activation
+report; it is not an instruction to switch again. The lead completed the
+public verification and authorized integration described above.
 
 Finish the existing source checks, complete independent review and resolve its
 findings, run the required host-migration/retained-services VM checks, and
@@ -2501,3 +2687,1115 @@ Upstream WebUI documentation retains some older verification-status text, so
 use exact revision evidence and this trial's observations, not broad readiness
 claims. Existing provider support, rather than a revived workspace instruction
 branch, is the implementation boundary.
+
+## Node RPC cleanup and remote-restore recovery slice, 2026-10-03
+
+**Current authorized scope:** implement the Node reliability correction before
+the retained-cluster trial. This bounded slice supersedes the earlier statement
+that no new application feature was expected. The implementer owns application
+and test changes in vpsAdmin at the current API46 base; the architect owns this
+brief. The lead owns verification, review and publication. No default merge,
+provider/generic change, new Node wire field, DB schema or production
+configuration input is authorized. Preserve the declared PHP test cache.
+The separate workspace activation/integration is complete. This brief is a
+proposal for implementation, not evidence that the Node correction passed.
+
+### Current implementation checkpoint
+
+**Current lead-reported result:** the independent `148ef..7da` review completed
+all four HIGH-risk lanes with no Blocking and two Important findings: the global
+publisher wait budget and ambient `$!` exception ownership. Both are resolved by
+the saved five-path direct step-9 remediation. This is not a full review rerun.
+Normal Nix/Git amendment passed every hook and commit-message check. The runtime
+owner is now `d82a6cc1cf25e6e23671ae095880a4478a9d4e18`; the separate unchanged
+fixture patch is `290f1ef07972e53c2b5154dbfa8b088802bde619`, tree
+`a2de421a02cc0add7a256273133b5dab9a2b2f32`. The first 21 commits and `e882` parent
+remain unchanged; the tested five-path correction is 372 additions/26 deletions,
+and fixture range-diff is `=`. The before-node-review-remediation backup retains
+`7da`. Tracked source/index are clean; the preexisting PHPUnit cache is preserved.
+
+Remediation verification retains the 55/1 protected-setter fixture failure,
+its spec-only `send` correction, subsequent 55/0 pass in 19.636s, and the two
+then one remaining lint offenses. Final root RuboCop 1.85 passed four files in
+13.275s; the full Node suite passed 634/0 in 35.803s, total 51.225s/parity 1
+against the final five-file manifest `88cd3edb…a82e`. The owning documentation
+writing pass accepted the tested text unchanged. These results are supplied by
+the lead; the architect has not read private artifacts or rerun verification.
+The **one existing remote-restore integration scenario passed** at exact clean
+`290f1ef07972e53c2b5154dbfa8b088802bde619`, tree `a2de421a`.
+Lead reports watcher `/root/node_rpc_remote_restore_290f` exit 0 in 1610.195s,
+parity 1, four of four examples passing in 172.32s, 265.1s, 172.97s and 51.58s;
+the script took 1109.64s. Private evidence is referenced at `/tmp/nrvm.0qykahy0`
+and was not read by the architect. The parent independently confirmed the
+numeric result, zero QEMU/virtiofs processes bound to that exact test state,
+clean tracked/index state and preserved PHPUnit cache.
+
+This is disposable integration evidence for the recorded restart, transfer,
+restore and subsequent incremental payload assertions. The original broker
+timeout trigger remains unknown; arbitrary live-send crash replay is not proved.
+Lead reports final feature publication and remote readback at exact
+`290f1ef07972e53c2b5154dbfa8b088802bde619`; remote master `148ef` is unchanged.
+The initial ambient push was refused by the Overcommit signature check before
+ref mutation. After verifying the existing hook configuration, normal
+`.#vpsadmin` signing and the same exact-lease push succeeded, without bypass or
+source changes. Exact-head CI `37144608422` and libnodectld `37144608395` started;
+the lead found no older queued/in-progress branch run in the 100-run read.
+These workflows are not awaited here. The retained/public-cluster maintenance
+has since completed public copied-start/refresh/release and all three Node
+updates, as recorded in the conditional sequence below. VPS/NAS profile payload
+acceptance and retirement remain pending and separate from these results.
+
+Earlier verification and review provenance follows:
+
+Lead evidence: the earlier incomplete focused runs (33/3 and39/1) and declared
+lint failure remain recorded in the [review packet](node-rpc-recovery-review.md).
+Portable paired directives and removal of redundant Struct keyword initialization
+changed no runtime control flow. Fresh Luna/low verification passed root-declared
+RuboCop1.85 and the full Node suite618/0, total54.107s/parity1. The frozen nine
+source paths then passed CI selector18/77, actual fixture derivation evaluation
+and owning Nixfmt, total82.342s/parity1. These are quick source/static results,
+not real broker/VM/payload acceptance.
+
+Two normal commits passed all pre-commit and commit-msg hooks (preferred-width
+warnings only), then the complete23 patches replayed identically on fetched
+master148ef. The original reviewed head was `7da85b7a`, tree `4ae8a7a5`, with
+clean tracked/index state and all
+nine tested source hashes unchanged; preexisting PHPUnit cache preserved.
+Upstream changed only four non-overlapping dependency files (packaged API
+parallel2.3 and WebUI dependencies). All23 range-diff entries are`=` and the
+full binary feature patch is identical. Scoped final-head fixture evaluation
+subsequently passed before the independent all-four-HIGH review. An additional
+whole-flake
+probe failed on the unchanged baseline `overlays.list` non-function output;
+that failure is retained, with no expanded source correction or passing claim.
+
+The bounded source conformance check found no fixture mismatch requiring a
+change: scenario-local persisted queue settings, `manageCluster = false` and
+the custom startup preserve normal startup while replacing transient queue
+patching with a graceful daemon-child restart and keyed JSON scalar checks.
+Transfer projections use the actual `input.input.snapshots` envelope and
+`output.execute.status`, together with successful done/status fields, the
+restored branch/path, receive history, GUID agreement and read-only A/B/C
+snapshot contents. These are transaction/payload assertions, not a claim of
+retained cryptographic signature evidence: normal chain close clears signatures.
+The architect inspected public source only and ran no application checks or
+operations; the integration result above is lead-reported evidence. The subsequent independent
+review findings and remediation boundary below supersede the earlier pending
+review status, without converting the prior checks into remediation evidence.
+
+### Narrow Node review remediation brief, 2026-10-03
+
+**Direct remediation and the existing integration pass completed.** The following
+saved brief governed the two Important findings from the completed `148ef..7da`
+review. Both were source-confirmed and resolved under mandatory-review step 9;
+no broader recovery mechanism was added. Implementer owned exactly five
+application paths: `libnodectld/lib/nodectld/{node_bunny,rpc_client}.rb`, their
+two existing `libnodectld/spec/nodectld/*_spec.rb` files, and `docs/node-rpc.md`.
+Keep StorageStatus/MountReporter runtime, fixture, pins, schemas, wire, production
+defaults and docs index unchanged. This brief authorizes no test or operation
+by the architect; lead-reported remediation evidence is in the checkpoint above.
+
+**Required publishers at reviewed `7da`:** `NodeBunny#acquire_publisher` created a
+30-second deadline for every caller (`node_bunny.rb:219-227`). Ordinary
+`publish_wait` must again wait without an imposed recovery/owner-gate deadline.
+`StorageStatus#save_properties` (`storage_status.rb:263-279`) and
+`MountReporter#report_thread` (`mount_reporter.rb:56-85`) are required publishers,
+not bounded RPC calls; do not rescue their failure broadly or drop their message.
+Keep optional `publish_drop` behavior unchanged.
+
+Add one explicit internal keyword, `recovery_timeout: nil`, to `publish_wait`
+and its publisher-acquisition path. Nil means unbounded gate waiting; RPC
+explicitly passes `NodeBunny::RECOVERY_WAIT` even when `stopped` is nil.
+Convert that opt-in duration to a monotonic deadline once per gate-acquisition
+wait. Do not infer boundedness from the cancellation predicate. Consume the
+keyword at NodeBunny's Ruby boundary; neither it nor `stopped` may enter
+`exchange.publish` options. Existing message properties must pass unchanged.
+An unbounded wait still releases the monitor and observes any supplied stop
+predicate; a bounded RPC wait retains the existing one-second stop polling and
+typed timeout. Timeout/stop cannot acquire/release another publisher's gate or
+acknowledge a retirement. Keep existing transport retries, channel lifecycle,
+exact retirement tokens, late-arrival handling and consumer cleanup unchanged.
+This bounds individual RPC gate waits, not the whole publish/RPC call, existing
+15-second transport retry or synchronous Bunny operation.
+
+In `node_bunny_spec.rb`, exercise actual `StorageStatus#save_properties` through
+the real NodeBunny gate (allocate the status with its exchange/message counter;
+do not start its updater). Hold recovery beyond the RPC budget using controlled
+time/wakeup, then complete it: the submitter remains waiting, publishes exactly
+once, clears its batch and advances its counter only after publication. Cover
+the competing-publisher gate as well. Separately prove opted-in RPC waiting
+expires with `stopped:nil`, cancellation still interrupts it, and no private
+keyword reaches the exchange. Retain the real Bunny continuation/retirement
+regressions. No 30-second sleep or alternate recovery implementation is needed.
+
+**Exception ownership at reviewed `7da`:** `RpcClient.run:20-35` mistook an
+enclosing rescue's
+ambient `$!` for this call's failure. Initialize a local pending exception before
+an explicit begin/rescue/ensure around construction and the yielded body.
+`rescue Exception => error` records that local error and immediately uses bare
+`raise`; ensure closes the constructed client. If close fails, suppress/log the
+secondary failure only when that local pending error exists. Otherwise re-raise
+cleanup's typed, programming or signal exception unchanged. Do not use `$!`,
+entry/exit exception-object comparison, or a return from ensure. Partial
+constructor retirement remains owned by existing setup logic; no initialized
+client means no additional `run` close.
+
+This preserves the same raised object/backtrace, including a body explicitly
+re-raising the very exception already handled by its caller. Successful cleanup
+preserves ordinary values and nonlocal return/break. With no locally raised
+body error, cleanup failure interrupts return/break by normal Ruby ensure rules.
+Add regressions inside an enclosing rescue for successful body plus cleanup-only
+timeout (`CleanupError` with cause), unexpected error and Interrupt/SystemExit;
+also successful cleanup/value/return/break. Cover local body errors/signals plus
+secondary cleanup, and re-raising the same enclosing exception object. No
+cleanup or diagnostic failure may replace the locally recorded primary error.
+
+Update `docs/node-rpc.md` error ownership and timeout wording: caller rescue
+state is irrelevant; ordinary required-publisher gate waits are unbounded;
+RPC explicitly opts in. Use portable paired RuboCop directives where needed.
+Focused verification remains the existing three RPC/NodeBunny/StorageStatus
+spec files through `.#libnodectld`, then the full Node suite. Run four changed
+Ruby paths through root `.#vpsadmin` RuboCop 1.85, not the component's undeclared
+lint bundle. Preserve every existing fixture/source proof; no fixture change
+or new integration scenario is needed. The lead inspects the direct fixes and
+focused results, then folds them into the owning runtime commit with normal
+hooks. If implementation instead changes recovery ownership, public/wire
+behavior or other consumers, route that deviation back and rerun only affected
+review lanes under step 10. Both Important findings are now resolved and the one
+existing remote-restore integration run passed as recorded above.
+
+### Conditional retained-profile sequence after Node proof
+
+Execution checkpoint supplied by the lead: independent review completed, its two Important findings
+are resolved by direct step 9, and **one existing
+`storage/restore-after-reinstall-remote` integration run passed**. Final feature
+publication and exact remote readback completed. The authorized retained trial
+has begun through the existing public sequence. Select the
+actual final Admin worktree head (currently `290f1ef0`, retaining the original
+review plus direct remediation evidence), not the earlier API46 revision in
+the historical rollout table.
+No command in this outline has been executed by the architect.
+
+Completed public maintenance-start passed exit 0 in 88.027s/parity 1, with
+masked services at `maintenance_ready`, `pending:true`, `ready:false`.
+The private logical DB dump passed exit 0 in 4.028s (1,141,715 bytes). The
+original read-only consistent baseline captured 27 groups, 1,161 rows and
+60,932 bytes covering one VPS; this supplies no original live-file proof.
+Public services copy-only passed exit 0 in 349.549s/parity 1, phase `copied`,
+with the old generation still held. The supported stop then completed.
+Public copied stop/start passed exit 0 in 621.783s/parity 1. Public own status
+reported running, `ready:true`, `phase:released`, `pending:false`, `active:true`.
+Actual new seed/services and regular-node refresh completed through the public
+path; no private release was used. All three ordinary public Node updates
+(`node1`, `node2`, `storage1`) passed exit 0 in 341.213s/parity 1, with
+`updated:3`, `running:3`. The observer completed and the foreground process
+ended; no kernel compilation was observed.
+
+The lead inspected and ran the fixed implementation-owned process-binding
+packet: exit 0 in 15.627s, `nodes_proved:3`. For each Node it checked actual
+stable wrapper/child PID-start identity and socket peer, running control,
+current system, the three corrected source-file hashes and both keyed transfer
+delays equal to zero. This is bounded process/source evidence, not heap or
+full-tree certification or evidence of a completed transfer.
+
+Before the updates the original VPS was running; four physical quota properties
+and one known nonsecret ordinary file were captured. Afterward `quota_equal:1`
+and `file_equal:1`. No earlier checksum or identified user-data file was
+available, so neither pre-seed nor user-payload equality is claimed. Pre-copy
+versus post-copied and post-Node DB comparisons covered 27 groups and 1,168
+post-capture rows: zero protected changes, exactly seven additions (the shared
+profile package and six items), no new existing-user assignment/ceiling, and
+two dynamic Pool-space changes.
+
+Lead-reported exact-290f CI successes cover Node, RuboCop, migrations, PHPUnit,
+client, i18n and group snapshot. General CI is queued and not awaited here.
+API topics run `37144608379` failed only core/full-platform jobs
+`111265858355` and `111265858600`; failed-step logs were downloaded privately,
+and implementer0's read-only diagnosis found core 968/1 at seed 25925
+(ObjectHistory admin Index) and full 968/1 at seed 21301 (ActionState
+authenticated Cancel). Both expected 200 but received the generic outer
+HaveAPI 500 response; the underlying exception was not captured. Relevant
+endpoint/spec/auth bytes are unchanged, but earlier feature/shared spec-state
+interactions remain possible. No runtime patch or unchanged rerun follows.
+The separate test-only observer brief below is held for lead release.
+
+Evidence reference: `/tmp/storage-profile-retained-20261003.nemcjis2`, unread
+by the architect. Normal public provision subsequently failed exit 1 in
+21.055s/parity 1. The fresh literal-CWD observer confirmed the foreground ended;
+the first watcher's wrong-CWD attempt observed nothing. The public error was
+`storage mutation admission requires a staging transaction`, at provider
+`storage-profile-provision.rb:82`, before Pool/Create or CatchUp staging.
+The scheduler is intentionally stopped. No retry, resume, reset or unlock was
+performed. Physical Pool/catch-up readiness and VPS/NAS payload/retirement
+acceptance remain pending. Provision uses ordinary `db:seed:file`,
+Pool and CatchUp chains rather than the two failing HTTP endpoints; the CI
+evidence does not demonstrate an immediate provisioning blocker. Original
+review/direct-step-9, host/native and Node integration
+evidence retains its separate scope; these checkpoints do not imply storage
+quiet, repair readiness or APPLY.
+Keep the exact Admin290f/provider399/selected-zmwh source hold.
+
+The installed public provider already selects
+`worktrees/2026-09-23-storage-redesign/vpsadmin`: `bin/devcluster:680-685,787-795`
+passes it as `--override-input vpsadmin path:...`, and `:733-756` records the
+source revision. Its flake imports the API modules from that input. Thus normal
+public build/update uses the final API and Node sources without another workspace
+pin or package switch. Keep the reviewed OS/React selections, retained disks,
+existing credentials and preserving `enable:true,enrollment:true` profile.
+Public installed maintenance/profile/fixture sources match provider399; the
+installed launcher differs only by its packaged Bash shebang.
+
+1. Immediately before boot, repeat `workspace-host status`, `dev-session current`
+   and `vpsadmin-devcluster status 2026-09-23-storage-redesign --json`. Require
+   the selected reviewed package/contract, exact ownership and stopped/bridge
+   state. Recheck the recorded bridge addresses and owned runner/socket absence;
+   an occupied address or unknown owner stops the sequence. Preserve cold recovery
+   and residency evidence; do not reset, force-start or stop another cluster.
+2. Use `maintenance-start <slug> --resident-config <recorded-store-config>
+   --expect-services-toplevel <proved-resident-toplevel>
+   --residency-evidence <private-evidence-file>`. Under the proved fixed masks,
+   take the fresh private logical DB backup and original VPS/catalog, namespace/map,
+   package/accounting/quota and retention baselines. Maintenance starts only
+   services (`dev-clusters/lib/devcluster_runner.rb:164-174`); stopped Node disks
+   and the original VPS files are not reachable through public Node SSH here.
+   Keep the recorded cold recovery copies of all six managed disks and any
+   already-known original-file path/digest evidence. No old unmasked seed fallback.
+3. Run public `update <slug> services --copy-only`, then the supported
+   `stop <slug>` and `start <slug> --copied-config`. The latter checks successful
+   new seed/API/Supervisor, performs actual regular-node refresh, then releases
+   the hold itself (`bin/devcluster:1727-1751`). No private release call or
+   services-only fixture result substitutes for this full-cluster outcome.
+   On refusal, retain the pending hold and diagnose before supported recovery.
+   After successful copied boot, take the first supported live read-only original
+   file manifest through public Node SSH/VPS access, before Node updates,
+   provisioning or fixture writes. Compare stable original files with prior
+   evidence where available. If no earlier file digest exists, this establishes
+   the baseline for subsequent operations; it does not retroactively prove
+   byte equality across seed/first boot. Cold disk copies preserve recovery
+   evidence, not an unperformed per-file comparison. There is no supported
+   pre-seed file reader in this services-only path; do not invent a held-node
+   boot, host ZFS import or private disk-reading step.
+4. **Install the Node correction before provision/payload work.** The recorded
+   copied configuration replaces only services (`maintenance.rb:442-448`);
+   refresh restarts existing regular-node daemons and skips storage-role nodes
+   (`bin/devcluster:951-1034`). After public release, use ordinary public
+   `update <slug> node1`, `update <slug> node2`, `update <slug> storage1` and
+   verify the actually running selected Node package/source and keyed transfer
+   delays. A selected result or successful refresh alone is not that proof.
+   Recheck the original stable-file manifest after these updates and preserve
+   it through provision, repeat update, payload acceptance and retirement;
+   writes remain confined to the dedicated new fixtures.
+   If the old regular-node daemon cannot complete the bootstrap refresh, the
+   hold remains pending and ordinary updates refuse; report that exact failure
+   to the lead rather than bypassing release or inventing a held Node update.
+5. Use `storage-profile <slug> provision`. Existing source Pools must already
+   exist; the helper checks physical/catalog root agreement, refuses unknown
+   roots, creates only missing backup/NAS Pools through normal chains, waits for
+   confirmations/locks and fresh capacity, then creates templates and catch-up.
+   Storage1 readiness is separate from regular-node refresh. Keep source
+   retention unchanged; catch-up does not Rotate or write original VPS files.
+6. Run the existing provider-owned `tests/storage-profile-acceptance.rb` with
+   `--slug <slug> --artifact-dir <new-private-directory> --os-template-id
+   <enabled-compatible-template>`, using the installed/provider399 source.
+   It owns new member/VPS/NAS payloads, full/incremental A/B history, read-only
+   clone checks, fixture rotation, automatic cycle, repeat provision and services
+   update. It does not replace the separate original-VPS file/retention baseline
+   or prove retirement. Retain failure evidence and admitted work; no blind retry.
+7. For the already planned retirement check, keep `enable:true`, select
+   `enrollment:false`, complete ordinary services update, then public
+   `storage-profile <slug> retire`; repeat and verify no reactivation after a
+   preserving seed. Keep all payload/catalog/package/assignment objects. Restore
+   enrollment true through services update and provision to leave the requested
+   useful profile active. Check original files, namespace/accounting/quota and
+   retention settings again; ordinary later pruning under unchanged retention
+   remains allowed. Confirm scheduler, PHP, React and API usability.
+
+These steps add no scenario or source change. The public payload runner handles
+its existing scheduler stop/resume contract; a failed provision/retirement may
+leave scheduling stopped for diagnosis. No storage quiet, strict production
+mode, repair/APPLY or additional default-branch integration follows.
+
+### Evidence and owning files
+
+[The CI diagnosis](api-remote-restore-ci.md) records the one failed remote
+restore scenario and its limits. The acknowledgement-timeout trigger is still
+unknown. Do not infer that cleanup was the first RPC error or that a manual
+unlock is safe. Public source establishes the following:
+
+- `libnodectld/lib/nodectld/rpc_client.rb:13-31`: ensure cleanup can replace
+  the body error; close is not idempotent. Setup at lines 129-174 can abandon
+  partially declared channels. Keep the existing request/retry protocol.
+- `libnodectld/lib/nodectld/node_bunny.rb:69-96,159-215`: existing creation
+  mutex, recovery monitor/condition/generation and timed-out-channel registry
+  provide the recovery mechanism to extend. A generation increment alone
+  does not prove a particular late channel was retired.
+- `libnodectld/lib/nodectld/storage_status.rb:75-86,96-158`: build a local
+  complete pool view before publishing it under the mutex. The updater
+  currently has no RPC exception boundary. `nodectld/lib/nodectld/cli.rb:177`
+  sets global `Thread.abort_on_exception`, so this escape can kill the daemon.
+- Pinned Bunny **2.24.0**, as selected by `libnodectld/Gemfile.lock` and the
+  owning gemsets: `lib/bunny/queue.rb:322` deregisters before deletion;
+  `channel.rb:1168` hardcodes synchronous queue.delete. There is no nowait
+  deletion shortcut. `channel.rb:252` can cancel consumers before close when
+  enabled (the default flag is false), then `session.rb:586` waits on the
+  **connection-wide** continuation shared with channel.open. A late delete-ok
+  or close-ok must never satisfy a later operation's continuation.
+- Bunny `session.rb:780-805` invokes the before-recovery hook before transport
+  initialization and registered-channel recovery; `:1052` unregisters and
+  releases a channel ID but does not stop its consumer pool.
+  `channel.rb:1696` recovers consumers; `consumer_work_pool.rb:62,95` separates
+  shutdown/running state from actual thread lifetime. Unregister alone leaks
+  resources; `running? == false` alone does not prove workers exited.
+
+Owned runtime edits: the three libnodectld files above and their existing
+`spec/nodectld/{rpc_client,node_bunny,storage_status}_spec.rb`. Add a small
+owning `docs/node-rpc.md`, linked from `docs/README.md`, covering supported
+error precedence, recovery and stale telemetry behavior. Keep CI incident
+revisions and individual operation evidence in the linked session diagnosis.
+Test edits belong in `tests/suite/storage/restore-after-reinstall-remote.nix`
+and a small test-only module imported there; change `remote-common.nix` only
+for a genuinely shared bounded helper. No production Nix-module/default edits.
+
+### Error precedence, close and refresh behavior
+
+Use `RpcClient::CleanupError < RpcClient::Error` for known RPC cleanup failures,
+and `RpcClient::TransportError < RpcClient::Error` if normalization is useful.
+Retain existing `RpcClient::Timeout`. Known transient transport failures are
+`::Timeout::Error` (including Bunny ClientTimeout/ConnectionTimeout),
+`Bunny::ConnectionClosedError`, `Bunny::ConnectionAlreadyClosed`,
+`Bunny::ChannelAlreadyClosed`, `Bunny::NetworkFailure`,
+`Bunny::NetworkErrorWrapper`, `Bunny::TCPConnectionFailed` (including its
+all-hosts subtype), and broker-forced connection closure
+(`Bunny::ConnectionForced`, `Bunny::ForcedConnectionCloseError`). Normalize
+raw `IOError`, `EOFError`, `SocketError`, and connection errno failures
+`EPIPE`, `ECONNRESET`, `ECONNABORTED`, `ECONNREFUSED`, `ETIMEDOUT`,
+`EHOSTUNREACH`, `ENETUNREACH` only around actual Bunny transport calls, never
+around catalog parsing or the whole updater. Classify the underlying cause of
+NetworkErrorWrapper/NetworkFailure; their wrappers must not hide a programming
+or protocol error. An exposed permanent broker error behind a closed-channel
+exception likewise remains visible. Do not rescue all `Bunny::Exception`,
+`ConnectionLevelException`, `StandardError` or `SystemCallError` as transient:
+authentication/authorization, protocol, malformed data and programming defects
+remain visible. Do not change Ruby signal/Interrupt/SystemExit behavior.
+
+| RPC body | Cleanup | Result |
+| --- | --- | --- |
+| success | success | Original return value |
+| exception | success | Same exception object/backtrace |
+| exception | known cleanup failure | Same original exception; bounded secondary cleanup diagnostic |
+| success | known cleanup failure | CleanupError with original cleanup cause |
+| any | unexpected programming/signal failure | Never convert to success or a refresh retry; preserve a pending original exception during ensure and report secondary diagnostics |
+
+Record this constructor/body's exception in a local rescue and re-raise it;
+use that local pending state in ensure, never ambient `$!`. Return/break and
+non-StandardError unwinding retain normal Ruby semantics. A no-primary unexpected cleanup
+error propagates as itself. `close` has a synchronized one-shot lifecycle:
+only the first caller attempts protocol cleanup or registers retirement;
+later calls do no broker I/O or duplicate retirement. A failed first close
+marks the client unusable; retain its diagnostic rather than retrying an
+ambiguous queue operation. Reject further requests on a closing/retired client.
+Initialization failures must also retire their allocated channel before
+discarding references; failed construction never reaches `run`'s close.
+
+The StorageStatus updater rescues only `RpcClient::Error` and the explicit
+known transport set from **fetch/its RPC cleanup**, logs one bounded warning,
+and continues at the normal update interval. On failure, retain the exact
+previous complete `@pools` view; do not publish a prefix, clear it or enqueue
+a success-triggered read. Periodic reading/submission of the previous view
+may continue; this is stale membership, not a successful fresh catalog.
+Even a completed body with failed cleanup does not publish the replacement.
+A later successful fetch atomically replaces the view. Keep `read`, `save`,
+catalog parsing and programming errors outside this rescue.
+
+### Retire poisoned channels through existing NodeBunny recovery
+
+Extend the existing mechanism; do not create a second connection manager,
+replace Bunny, disable automatic recovery or add one thread per failed RPC.
+Use one retirement entry per exact channel object with a request/generation
+token and pending/completed state. Never key proof only by reusable channel
+number. The implementation must satisfy this order:
+
+1. Healthy RPC cleanup performs queue.delete and channel.close at most once.
+   Serialize application channel open/close continuations through the same
+   lifecycle mutex, including setup. Admission to those operations must wait
+   for full recovery, not merely `connection.open?`. Keep the existing publisher
+   gate; once retirement is requested, close that gate immediately, before
+   triggering recovery. Optional publishes drop; required publishes wait.
+2. On an ambiguous timeout at any setup/cleanup step, register retirement and
+   stop issuing methods on that channel. In particular, do not call
+   channel.close after queue.delete timed out. Do not unregister/release its
+   number while the old transport can still deliver frames. A close timeout
+   poisons the connection continuation too and requires the same recovery.
+3. Close the old transport using the existing NodeBunny/Bunny path. Verify
+   actual closure: `Session#close_transport` logs and swallows close errors,
+   so its return alone is insufficient. The before-recovery hook must ensure
+   closure before retiring its pending batch; callback entry alone is not
+   proof. The old reader must also be at a recovery stop boundary with no
+   subsequent old-frame dispatch; account for reader-thread versus synchronous
+   publisher-thread recovery without joining the current thread or waiting
+   on a reader that needs a held recovery monitor. Do not clear continuation
+   queues manually on a live transport.
+4. Before Bunny recovers registered channels, remove each exact retiring object
+   from the recovery registry and stop/reap its local consumer-work-pool threads.
+   Use the pinned work-pool interface, including actual thread joins even when
+   `running?` is false; do not kill unrelated channels or join the current
+   thread. Drop the client's local consumer/queue/exchange references once safe.
+   Exclusive reply queues disappear with the old connection; never recover
+   the discarded reply consumer or let it mutate a replacement client's response.
+5. Mark a retirement entry complete only after old-transport closure, exact
+   registry exclusion and worker cleanup. A waiter tests **its entry**, not
+   `generation != old_generation`. Keep creation/required publication gated
+   until surviving channels are recovered and all required retirements are
+   handled. No user handler or transaction confirmation runs from these hooks.
+6. A request arriving after the before-recovery batch was taken remains pending.
+   It must be consumed at a safe boundary before that channel is recovered,
+   or force the next existing recovery cycle while gates stay shut. Never let
+   the first unrelated after-recovery increment acknowledge it. If it was
+   already recovered, close that transport before removing it. Repeated and
+   concurrent retirement requests coalesce; a late request is not dropped.
+
+Lock order is lifecycle mutex, then short recovery-state monitor sections.
+Do not hold the recovery monitor across a broker continuation, transport close,
+worker join or wait for callback progress. Recovery callbacks do not acquire
+the lifecycle mutex held by a caller awaiting recovery. Condition waits release
+the monitor. Preserve publish's existing reentrant recovery behavior: a write
+failure can initiate recovery on the publishing thread. Test both that path
+and reader-thread recovery. Do not release the publisher gate merely because
+the TCP socket reopened; Bunny still has to recover survivor channels.
+
+Close must not wait indefinitely for the broker to return. Register retirement
+and establish transport closure, then let existing recovery finish it; either
+return after proved retirement or report CleanupError with retirement pending.
+Pending is never successful cleanup and continues to own its resources/gate.
+Use bounded condition waits (a 30-second monotonic recovery-wait budget is
+sufficient here), leaving the pending entry for recovery after timeout; no
+unsafe force-unregister fallback. Setup cannot proceed onto a new channel until
+that pending retirement is accounted for.
+
+**Stop behavior:** preserve normal daemon/supervisor signal handling and global
+abort-on-programming-error policy. The updater checks stop before another
+refresh, after fetch and after the known-error rescue; it does not publish a
+replacement or schedule retries after stop. Where it waits for NodeBunny/RPC
+recovery, supply a cooperative cancellation predicate from StorageStatus;
+condition/retry waits recheck it at most once per second and raise a dedicated
+`RpcClient::Stopped < Error`. Existing callers without the predicate retain
+their contract. Stop still registers safe retirement and never waits for
+broker reconnection, clears a gate or starts another recovery worker itself.
+An in-flight synchronous Bunny call remains subject to its existing I/O and
+continuation bounds; do not promise a hard whole-daemon shutdown deadline or
+asynchronously interrupt Ruby while it owns Bunny locks. No persisted state
+or untracked background cleanup is added.
+
+### Persistent fixture and payload acceptance
+
+Use the existing `extraModules.nodes.node1/node2` import seam in
+`tests/machines/cluster/2-node.nix` / `mk-cluster.nix`. A small module selected
+**only by this remote-restore scenario** sets
+`vpsadmin.nodectld.settings.vpsadmin.queues.{zfs_send,zfs_recv}.start_delay = 0`.
+The existing module `nixos/modules/vpsadmin/nodectld/options.nix` writes those
+settings to `/etc/vpsadmin/nodectld.yml`; the vpsAdminOS runit module and CLI
+reload them on service restart. Production `config.rb` defaults remain
+90 minutes. Do not move this default to all development/production nodes.
+
+Before starting fixture transaction chains, use existing graceful
+`nodectl restart` (without `--force`) on the affected fixture nodes. It
+schedules restart; command success alone is not restart completion. Wait for
+changed daemon start identity/PID and initialized/running state, then assert
+JSON scalar `0` from exactly these existing commands before any subsequent
+`prepare_node_queues` patch:
+
+```sh
+nodectl get --parsable config vpsadmin.queues.zfs_send.start_delay
+nodectl get --parsable config vpsadmin.queues.zfs_recv.start_delay
+```
+
+`nodectl/lib/nodectl/commands/get.rb` already selects the requested key for
+parsable output; `commands/restart.rb` defaults to a graceful scheduled
+restart. No new runtime interface is needed. Never run an unkeyed config
+dump or print the generated YAML to prove these two values. Keep the existing
+bounded queue/status projections for readiness; a file-only check does not
+prove the restarted process loaded the settings. This verifies configuration
+survives a real restart, without killing a live transfer or claiming general
+transaction crash replay.
+
+Keep the existing ordered RSpec-style remote-restore scenario and its API/ZFS
+history assertions. Add these checks within it:
+
+1. Write small deterministic payload **A**, sync and read it through the VPS;
+   take/transfer snapshot 1. Change the same path to distinct **B**, sync/read,
+   take/transfer snapshot 2. Prove the corresponding backup snapshots contain
+   A/B through a read-only snapshot view and actual contents/hash, not only
+   row counts or names. Use existing proof helpers where sound; do not mount
+   a writable clone merely to compare data.
+2. Reinstall via the normal API, wait for its chain and prove the sentinel is
+   absent on the new primary while backup history persists. The scenario runs
+   on the restarted daemons with the persisted zero-delay settings proved
+   above; do not reapply a transient config patch to conceal a failed load.
+3. Restore snapshot 2 over the existing remote send/recv path; prove normal
+   chain completion, VPS running, payload B restored (not A/reinstall state),
+   and locks released normally. Preserve head/history/handle assertions.
+4. Change payload to **C**, take the next backup and verify actual C on the
+   destination snapshot while prior A/B remain correct. Prove the intended
+   incremental base/stream through the existing transaction inputs/output and
+   ZFS history, not merely presence of the generic send handle. No manual
+   unlock, row repair or bypass of normal chains is allowed.
+
+Failure diagnostics are bounded and scenario-local: relevant chain/transaction
+IDs, status/done/timings and queue workers/reservations/start delays, current
+daemon identities, recent Node/broker error classes and bounded owning-log tails,
+plus send/receive child/mbuffer state for those transactions. Use existing
+private test artifacts; omit credentials, environment/API/generated-config
+dumps, complete RPC payloads and unrelated member paths. Diagnostic failure must not replace the
+test failure. Keep the existing 900-second chain limit rather than increasing
+it to mask the production 90-minute delay.
+
+### Verification, compatibility and commit boundary
+
+Quick regressions must exercise real pinned Bunny continuation/registry and
+consumer-work-pool objects with a controlled transport, following existing
+`node_bunny_spec.rb`; mocks that bypass these mechanisms are insufficient.
+Cover error precedence/identity/backtrace, successful return, cleanup-only
+error, double/concurrent close, partial setup and final exhausted setup,
+late delete-ok/close-ok, no ID reuse before transport closure, concurrent
+channel creation/publishing, synchronous publisher recovery, the retirement
+request arriving after the callback's pending-batch snapshot, survivor recovery,
+no recovered retired consumer, and actual worker termination with running=false.
+Cover failed transport closure and recovery-wait timeout without false success.
+StorageStatus specs cover previous-view preservation after a later pool fails,
+cleanup-only failure, later success, programming errors propagating, stop during
+backoff/recovery, and no refresh publication after stop.
+
+Exact quick argv from the vpsAdmin root (component shells already change CWD):
+
+```sh
+nix develop .#libnodectld -c bundle exec rspec spec/nodectld/rpc_client_spec.rb spec/nodectld/node_bunny_spec.rb spec/nodectld/storage_status_spec.rb
+nix develop .#vpsadmin -c bundle exec rubocop libnodectld/lib/nodectld/rpc_client.rb libnodectld/lib/nodectld/node_bunny.rb libnodectld/lib/nodectld/storage_status.rb libnodectld/spec/nodectld/rpc_client_spec.rb libnodectld/spec/nodectld/node_bunny_spec.rb libnodectld/spec/nodectld/storage_status_spec.rb
+nix develop .#vpsadmin -c ruby tests/ci-selection-test.rb
+```
+
+Run the existing full libnodectld suite when the focused cases pass, under the
+watcher for uncertain duration. Keep unknown common runtime paths on the
+selector's broad fallback rather than narrowing them to storage only; if a
+test module/path is added, ensure this remote scenario remains selected.
+One coherent Node runtime/spec/docs commit and one persistent-fixture/payload
+commit are appropriate. No migration or generated dependency pin is needed.
+Give the independent reviewer the full final branch delta and these changes
+before the existing long acceptance command:
+
+```sh
+./test-runner.sh test storage/restore-after-reinstall-remote
+```
+
+A fresh watcher owns that disposable test, stops an unexpected local kernel
+build and reports actual stage/failure; it does not diagnose or retry. A green
+rerun without the focused cleanup/recovery regressions and restart/payload
+assertions does not establish the fix. Keep failure provenance and the unknown
+initial broker trigger. Small lasting Node-RPC documentation must ship with
+runtime changes; this session brief is not its sole contract.
+
+This changes in-process error/recovery handling only: old API/new Node and new
+API/old Node keep the same RPC wire; old Nodes retain the bug. Deploying the
+new Node package follows ordinary service restart when authorized. Reverting
+code requires no DB conversion, but restores the defect and cannot repair a
+previously interrupted chain. No additional rollout, production strict,
+node-quiet, verified topology, repair/APPLY or default integration is claimed.
+Material deviation from the lock/lifecycle/error contract returns to the lead.
+
+## API platform request-exception diagnostic brief, 2026-10-03
+
+**Design saved; application authoring remains held.** The lead releases this
+test-only change after the current retained-cluster operation. Keep exact
+Admin `290f1ef0` clean while it is a live build input. This brief adds no runtime
+rescue, API behavior, schema, dependency pin, Node change or deployment action.
+The architect read public source and lead-supplied diagnosis only; no failed
+private logs, credentials, checks or reproduction were accessed or run.
+
+### Evidence and smallest owning change
+
+Core platform ran 968 examples with one failure at seed **25925**:
+`api/spec/api/resources/object_history_spec.rb:228` expected HTTP 200 for admin
+Index and received 500. Full platform likewise ran 968/1 at seed **21301**:
+`action_state_spec.rb:403`, authenticated Cancel, expected 200 and received 500.
+Both envelopes have `status:false`, `response:null`, `errors:null`. This supports
+HaveAPI's outer `report_exception` path, but supplies no original exception or
+root cause. The lead/implementer report the affected specs, resources, auth
+helper, UserSession and Gemfile equal at `148ef` / `e882` / `290f`, and no API
+delta in the Node slice. Earlier feature/bootstrap/global spec interactions
+are not exonerated. No flake or production-runtime attribution is justified.
+
+Own exactly four existing API spec paths:
+
+- `spec/support/app_helper.rb`: attach the observer and provide the bounded
+  unexpected-status diagnostic formatter.
+- `spec/api/resources/{object_history,action_state}_spec.rb`: use that formatter
+  in their existing `expect_status` helpers only for unexpected HTTP 500.
+- `spec/smoke/api_boot_spec.rb`: focused observer/privacy/response regressions
+  against the actual memoized app.
+
+No new spec file, workflow selector, dependency or diagnostic engine is needed.
+The existing smoke glob covers the focused tests; platform's file/example
+selection remains unchanged. Keep a short owning helper comment explaining
+return-value preservation and the output privacy boundary.
+
+### Callback, output and isolation contract
+
+`api/lib/vpsadmin/api.rb:31-42,340-347` creates and mounts a new server on each
+`VpsAdmin::API.default` call. `spec/support/app_helper.rb:12-13` memoizes its Rack
+app. In that existing initialization block, attach one instance callback to
+**the returned app's `settings.api_server`**, then retain that same app. Do not
+call `default` again for instrumentation, register a global class hook, remount
+routes or change initialization order. HaveAPI 0.29.8's own
+`spec/server/integration_spec.rb:159-177` uses this instance hook after mount.
+
+The pinned gem's `lib/haveapi/server.rb:203-230` calls `request_exception` before
+formatting the response; `lib/haveapi/hooks.rb:167-189` merges listener returns
+and supports early stop. The observer must return the **same incoming `ret`
+object unchanged**, with no status/message keys or `Hooks.stop`. It must not
+re-raise the observed exception, modify context/authentication/locale, read the
+request payload, or change framework handling of signals and programming errors.
+
+Keep only a sanitized candidate in a namespaced key of this request's Rack
+environment (`context.request.env`); do not retain the exception, context,
+request or raw backtrace in a module/global/example buffer. No logging occurs
+inside the callback. Missing context/env/backtrace produces a fixed unavailable
+marker. A small rescue of **observer-internal StandardError only** may replace
+failed formatting with that marker and return `ret`; it must not invoke
+HaveAPI's hook-failure warning, which prints the diagnostic error's message.
+Do not rescue the application request or catch signals in the observer.
+
+The candidate contains only a bounded exception class name and up to **six**
+`{frame_id, line}` pairs, inspecting at most the first **64** backtrace locations.
+Map frames to known public Ruby source files under this checkout's
+`api/{lib,models,spec}` and the selected HaveAPI gem's `lib`, using public relative
+IDs such as `api/models/user_session.rb` or `haveapi/lib/haveapi/server.rb`.
+Accept only enumerated source files, bounded IDs and positive integer lines;
+omit unknown/eval/private/config/seed paths and method labels. Do not emit
+absolute paths, exception messages/causes/inspection, SQL, URLs, headers,
+request/response bodies, user data or credentials. Cap the rendered diagnostic
+at **1024 bytes**; nil/anonymous/malformed class names use a fixed marker.
+
+The existing two status helpers emit the sanitized diagnostic only when
+`last_response.status == 500 && expected_status != 500`. Use the current
+`last_request.env` candidate; when absent, emit a fixed unavailable marker.
+For that branch, **replace**, rather than append to, their current path/body
+failure text. Keep every status expectation and other response assertion
+unchanged. Expected 500, HTTP 200 domain failures, successful requests and
+unrelated examples produce no exception diagnostic. Per-request storage avoids
+stale exceptions leaking into a later request or randomized example; do not
+add an after-example global dump or a new reset/bootstrap hook.
+
+### Verification and review boundary
+
+After lead release, focused tests must prove one registration on repeated
+`app_instance` access and execution through its real server hook. Inject a
+temporary request-level failure on an existing action with RSpec's scoped
+stub; do not add a permanent route or construct a substitute API server.
+Assert the original HTTP status/envelope and hook-return object/keys remain
+unchanged, including an existing non-500 return override. Test unexpected 500
+with and without an observed exception, expected 500 and ordinary successful
+responses, then a second request with no inherited diagnostic. Include fake
+secret messages, SQL/URL/header/body sentinels, private/eval frames, nil and
+oversized traces, and an observer-formatting failure. None may reach emitted
+diagnostics or alter the assertion's expected/actual status.
+
+Proposed quick argv from the Admin root (the component shell enters `api`):
+
+```sh
+nix develop .#api -c env VPSADMIN_PLUGINS=none bundle exec rspec spec/smoke/api_boot_spec.rb
+nix develop .#api -c env VPSADMIN_PLUGINS=all bundle exec rspec spec/smoke/api_boot_spec.rb
+nix develop .#vpsadmin -c bundle exec rubocop api/spec/support/app_helper.rb api/spec/smoke/api_boot_spec.rb api/spec/api/resources/object_history_spec.rb api/spec/api/resources/action_state_spec.rb
+```
+
+Use the owning disposable automatic DB, never retained-cluster DB/config.
+The lead assigns uncertain-duration checks and subsequent reproduction to fresh
+Luna/low watchers. This is a new API test-harness/privacy change, **not step 9
+of the completed Node review**. After quick verification and a normal owning
+commit, reuse the independent reviewer for the affected test-harness lanes
+under step 10 (general, architecture, scope and privacy/risk), without repeating
+unchanged Node runtime, fixture, migration or whole-history review. Narrow
+requested fixes from that review then use step 9 normally.
+
+For reproduction, generate the **complete sorted platform file list** using
+the existing `.github/workflows/api-specs.yml:116-142,159-184` selection, retain
+it as the run manifest, and run each matrix mode in a separate fresh process
+and disposable DB. Within the API shell, the intended argv is:
+
+```sh
+env VPSADMIN_PLUGINS=none xargs -a "$platform_spec_list" bundle exec rspec --seed 25925
+env VPSADMIN_PLUGINS=all xargs -a "$platform_spec_list" bundle exec rspec --seed 21301
+```
+
+Require one RSpec invocation per matrix mode with the original platform list
+and expected 968 examples; no `--example`, fail-fast, retry or bisect initially.
+The seeds order Ruby examples; differing Ruby/DB/platform versions may still
+affect reproduction, so record versions without environment/config dumps.
+Preserve original failures even if neither recurs. A recurrence with sanitized
+class/frame evidence returns to lead/implementer for diagnosis before any
+runtime fix or additional reproduction. A green run alone does not establish
+root cause or repair. No production/shared/default integration, retained-cluster
+mutation, new scenario, strict, quiet, repair readiness or APPLY follows.
+
+## Provider provision admission remediation, 2026-10-03
+
+**Priority bounded correction; the lead accepted this brief and released exactly
+the four owned provider paths below.** No operation or verification result is
+authorized or implied by that implementation release. The actual
+public provision failed at clean Admin `290f1ef0`, provider `399c3302`, selected
+`zmwh` package, as recorded above. The lead's pre-operation control observation
+was singleton 1, read-write mode 0, epoch 4. That is an observation, not a
+continuing admission token. Preserve the original VPS/files/retention,
+namespaces/accounting, six retained disks, successful maintenance/release/Node
+proof and all failure evidence. No whole-cluster quiet or absence of unrelated
+work is established. The CI-500 observer remains a separate held diagnostic.
+
+### Current remediation checkpoint
+
+**Current phase: external idle activation handoff.** Provider and consumer
+review, package proof, equivalent final replay and feature publication are
+complete. The reviewed replacement package remains **unselected**; installed
+provider399 and the stopped scheduler are unchanged.
+The lead reports the four-stage batch passed exit 0 in 733.663s/parity 1:
+AR **47/0** in 61.964s; projection **4 runs / 32 assertions / 0 failures** in
+0.803s; default no-build in 12.193s; compatible-profile check in 658.645s.
+Evidence reference `/tmp/storage-profile-admission-quick-fixed.i40tueb9` is
+unread by the architect. These are scoped checks, not a new VM or physical
+provision/payload pass.
+
+Normal owning fold produced profile
+`a308868022d9f582a8266c65a5e657f810851b5a` and native-fixture head
+`0b0ba9d869c04a4362f6051f5cc281ddf1b5a642`, tree
+`2dfb8aeba684b17a829af5123adba5641d9c3cce`. The first two commits are unchanged;
+the fixture patch is `=`, and only the four tested paths differ from provider399,
+with hash parity. The clean series has four commits / 25 paths / 5824 additions
+and 67 deletions; full binary diff SHA is
+`b2c217dfa3b2245dfaa55b2a43a88902cca24897aefe9aca0bb0fb6f2a86b8fa`.
+The before-admission-fix backup retains `399c3302`. Retained reviewer0, saved
+Sol/xhigh/read-only, completed actual `8f8..0b0b` across all four HIGH lanes:
+no Blocking, Important or source Advisory findings; coherent four-commit
+history, no obsolete iterations or provider migrations, and both consumed Admin
+migrations unchanged. One coordination Advisory concerned stale rollout
+"Current preparation" wording at lines 200–209; the lead relabeled it historical
+with past verbs. No source amendment or review rerun was needed.
+Normal exact-lease SSH feature publication completed at `0b0ba9d8`; default
+`8f8d8ecf` and the old399 anchor remain preserved. The parent captured exact
+remote readback separately, confirming exact feature0b0b/default8f8/old399 anchor.
+Lead-reported Check `37154598713` at exact provider0b0b completed successfully;
+older branch checks, including old399 `37114037083`, are complete, with no
+superseded live run. No architect CI polling was performed.
+
+Earlier lead/implementer-reported authored state: provider base `399c3302`, Admin
+`290f1ef0`, empty index, and four frozen hash prefixes: README `9225`, provision
+`ef775`, acceptance `c7a1`, spec `bd8e`. Expected selection is **47 examples**:
+24 existing, seven autocommit, seven reader and nine host examples. Static
+syntax/diff checks passed; lint still exits 1 with 45 unchanged baseline
+offenses and zero introduced offenses. This is not a passing lint run.
+
+The ordinary reader's `Thread.kill`, checked three-second join, own connection
+disconnect, primary-error preservation and outer whole-restoration refusal
+were initially authored without runtime proof; the corrected checks above now
+cover their focused regressions. The first Luna launch could not find
+a command before starting its driver and ran zero checks; this is not evidence
+of a session-binding failure. The parent positively resolved the installed
+`dev-session` and profile tools. The first actual four-stage batch stopped at
+stage 1: **47 examples / 13 failures**, exit 1 in 66.717s/parity 1. The lead
+inspected all 13 failure blocks: each expected session `@@tx_isolation` to be
+`READ-COMMITTED`, but it remained `REPEATABLE-READ`. AR 8.1.4's
+`abstract_mysql_adapter.rb:256-274` uses next-transaction `SET TRANSACTION`;
+that does not change the session variable. The lead corroborated this with
+the official MariaDB SET TRANSACTION documentation.
+
+Only the spec was then released to set session READ COMMITTED after proving
+the distinct owned connection and before its transaction, preserving explicit
+AR isolation, all assertions and disconnect/cleanup behavior. The other three
+runtime/docs paths stayed held. Original failure evidence reference
+`/tmp/storage-profile-admission-quick.7syutiak` remains unread by the architect.
+Stages 2–4 were unrun in that failed attempt; all four completed in the corrected
+batch above. These are supplied reports, not architect-run checks.
+
+Installed provider399 still supplies immutable scripts to the selected package.
+The scheduler remains stopped; provision retry and replacement package
+selection have not occurred. The consumer URL and lead-generated lock are now
+committed at `bcb25d08` on actual `ad539340`; retained reviewer0 completed all
+four HIGH lanes without findings, confirming exact head/tree/diff/four leaves,
+one coherent commit and no migrations. The exact-bcb package batch passed
+exit 0 in 248.639s/parity 1: the four existing root checks took 241.182s,
+default package 7.191s, and installed proof exited 0. The parent read all seven
+proof flags equal to 1: provider launchers, admission scripts, ordinary defaults,
+runtime sources, Codex sources, canonical contract and profile loader.
+Schema 1/policy 3/providers 2 and canonical SHA prefix `33acdc50` are unchanged.
+The watcher completed without a remaining handle or reported kernel compilation.
+Private evidence `/tmp/storage-profile-admission-package.p5dtjka1` remains
+unread by the architect. Final equivalent consumer head `19cb25ee` resolves
+to that same built package, as detailed below; source holds remain unchanged.
+API CI diagnostics remain separate and held. The lead owns the external idle
+handoff, followed by public services update, actual corrected guest-script
+proof and the justified provision/payload retry. Prior Node/maintenance/native/public-release evidence
+keeps its original scope; no new runtime acceptance is claimed.
+
+### Cause, exact ownership and transaction contract
+
+`api/models/storage_mutation_admission.rb:118-127` deliberately requires an
+open transaction before locking singleton 1. Provider
+`dev-clusters/vpsadmin/nix/storage-profile-provision.rb:82` violates that
+contract at the top of `provision!`; the same defect occurs in
+`dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb:84`,
+`Guest.validate!`. Both run through the normal production database task in
+autocommit context. Ordinary API specs' outer rollback transaction concealed
+this entry condition. Do not weaken the API admission implementation.
+
+Implementer owns those **two existing provider Ruby files**, regressions in
+`test/vpsadmin_storage_profile_spec.rb`, and the short owning
+`dev-clusters/vpsadmin/README.md` clarification. No Admin, generic runtime,
+schema, auth, freeze-mode/epoch, policy version, provider interface or Nix
+option change is needed. Source release does not authorize deployment.
+
+Replace each top-level admission call with the same short observation:
+
+```ruby
+StorageFreezeControl.transaction(requires_new: true) do
+  StorageMutationAdmission.check!
+end
+```
+
+The block completes before Pool lookup/staging, remote work or a wait. It
+acquires/releases the normal admission lock and propagates the existing typed
+`StorageReadOnly` refusal, including a missing/malformed singleton failure.
+It writes no mode, epoch or audit row. Do not duplicate the mode predicate or
+cache/return this observation as authority for later work. Do not wrap
+`provision!`, `Guest.execute`, or their physical waits in one transaction:
+that would hide staged rows from Nodes and retain the freeze lock.
+
+Retain admission at every actual write boundary:
+
+- `TransactionChain.fire2` (`api/models/transaction_chain.rb:82-116`) owns the
+  transaction, registry admission and complete chain staging before returning.
+  `Pool::Create` saves the new Pool inside it. Its return precedes the wait.
+- Provider `lib/storage_profile.rb:229-262` calls
+  `Plan.with_configuration_lock` for templates. That API method
+  (`api/lib/vpsadmin/api/dataset_plans.rb:344-354`) opens its own transaction,
+  checks admission, then locks the Plan. Template configuration commits before
+  enrollment. Retirement keeps this same existing transaction boundary.
+- The named CatchUp `link_chain` (`storage_profile.rb:423-442`) explicitly
+  checks admission inside `fire`; `ensure_backup_and_plan!` and `ensure_nas!`
+  retain their checks and same-outer-chain confirmation semantics. No source
+  Dataset create confirmation, Rotate, or existing retention rewrite is added.
+- Payload User/VPS/Dataset/Snapshot/Transfer/Backup/UseClone/FreeClone and the
+  fixture's restricted RemoveClone continue through their existing API chains.
+  Do not remove a staged check because `Guest.validate!` already ran.
+
+A freeze between the initial observation and a later chain/template transaction
+must refuse that later work. Previously committed chains retain normal outcome
+and evidence; a later refusal does not roll the entire provisioning run back.
+Keep inspect read-only and enrollment/actor/owner validation unchanged.
+
+### Payload direct-write precondition
+
+The host's `write_payload!` (`storage-profile-acceptance.rb:526-537`) writes only
+the newly created fixture VPS/NAS through public SSH. These file writes are not
+API-staged topology commands. Immediately before each A/B write, use the
+**existing** guest `info` request, whose fixed `Guest.validate!` performs the
+short read-write check; revalidate the same member/source/node/filesystem
+identity and settled evidence before constructing the write. Any refusal or
+changed identity aborts before SSH. No new guest operation or wire field is
+needed. Do not use an earlier cached info response as that precondition.
+
+Keep `info`'s existing string-keyed response shape. Compare the stable projection
+`source_id`, `destination_id`, `source_node`, `destination_node`, `source_fs`
+with the already bound source/destination, require `source_id` to match the
+current fixture request and `settled == true`, and use that validated response
+for the write. Guest `source!` already rechecks the member/VPS/NAS ownership;
+do not add member fields to the response. Do **not** compare whole `info`
+hashes: `tree_id`, `branch_id` and `snapshots` legitimately change between
+initial A and post-full-transfer B. The unchanged retention assertions remain
+separate. These fields prove catalog routing and confirmation state, not ZFS
+GUID identity, absence of all locks/children or physical quiet. Retain the
+existing NAS mounted-path checks and VPS `osctl ct exec` route.
+
+This is a fail-fast observation, not atomic freeze exclusion across DB and SSH.
+The owning fixture therefore requires a read-write trial with no concurrent
+operator freeze change during its direct payload writes. It must not toggle
+freeze itself or claim that two observations enforce an interlock. Supporting
+concurrent freeze with those out-of-band writes would need a different runtime
+contract and is outside this correction. Original user files remain read-only
+comparison targets, never payload destinations.
+
+### Focused proof and existing acceptance
+
+Extend the existing guarded API/AR harness with fresh **autocommit** examples
+(`:no_transaction`, with owned fixture restoration) rather than another outer
+RSpec transaction. Assert `transaction_open? == false` at orchestration entry
+and at every intercepted chain/readiness wait. Use a second ordinary-isolation
+connection to the same harness-owned disposable DB to prove staged rows are
+visible and the singleton lock is obtainable after return, before the waiter
+continues. Do not use the existing fresh-reader test's READ UNCOMMITTED trick:
+that would conceal the exact commit-visibility defect being tested. Never
+commit or roll back a surrounding harness transaction to manufacture this proof.
+
+Minimum regressions: read-write provision reaches real Pool/CatchUp staging
+without the staging-transaction error; read-only initial calls refuse without
+new Pool/chain/template/member rows; mode changes after the short observation
+are caught by real staged admission; templates commit separately; waits hold
+no SQL transaction; Guest validation works/refuses in fresh autocommit context;
+and a fresh-info refusal or changed identity prevents the host payload write.
+Use controlled wait boundaries after actual DB staging, not fake admission.
+These DB checks do not simulate successful physical Node execution.
+
+**Bounded ordinary-reader cleanup supplement:** choose the standard Ruby
+`Thread#kill` / checked `join` path, without SQL `KILL` or another cancellation
+mechanism. The current draft's `Timeout.timeout(5) { reader.value }` followed
+by an unchecked `reader.join(3)` can return while its reader remains alive;
+the outer autocommit ensure would then delete fixtures and restore the singleton
+concurrently. That is not acceptable proof or cleanup.
+
+Keep the same positively bound automatic TestDb, distinct reader connection,
+READ COMMITTED transaction and two-second InnoDB lock wait. Verify the reader
+connection differs from the main connection before using it. Give this short
+reader an unconditional owning ensure that disconnects its adapter after
+transaction unwind, before `with_connection` returns it to the pool. Replace
+the current ensure's `SET SESSION ...` reset with this close; do not issue a
+retrying reset query or reconnect the canceled connection. A disconnected
+adapter may return through the ordinary pool API and reconnect on a later
+checkout; the old transport must already be closed. This disposes of the changed
+session timeout on success as well as cancellation, with no connection-ID race.
+
+Capture the actual `reader.value` exception locally and re-raise it unchanged;
+do not use ambient `$!`. On timeout or abnormal parent exit, kill only this
+recorded thread if alive, then join for at most the existing three seconds.
+A join exception must not replace an already pending timeout/reader assertion
+or signal. Accept reap only when the thread is dead and its connection-close
+ensure completed (or it never acquired a connection). ActiveRecord 8.1.4
+`abstract/transaction.rb:643-675` rolls back an aborting thread and discards an
+incomplete transaction; `connection_pool.rb:452-469` runs lease release in
+ensure, and `mysql2_adapter.rb:122-128` closes the raw connection. These paths
+support orderly unwinding, not a guarantee that arbitrary native I/O stops
+within three seconds.
+
+If reap/close remains unproved, preserve the original failure, mark this spec
+process for no further examples, and skip **all** autocommit fixture deletion
+and DB restoration, including the surrounding ensure's control/key updates.
+Retain the failure for the owning disposable harness/watcher to terminate;
+do not detach the thread, proceed to another example, or report cancellation
+success. Keep the guard on the outer restoration path as well as the reader
+helper. A cleanup-only close/join failure must itself fail the test.
+
+Focused acceptance covers normal return, reader assertion failure, parent
+timeout with successful reap, connection-close/lease cleanup, and an unproved
+reap refusing fixture restoration and subsequent examples. Use controlled
+barriers and short timing in existing spec infrastructure; no production DB,
+new fixture scenario, real five-second sleep or global thread patch is needed.
+SQL `KILL` is not selected: a recorded ID alone does not prove its connection
+is still exclusively owned when the command arrives, and it would not replace
+the required thread/ensure proof.
+
+Run through the existing selected-Admin API harness, with initial CWD set to
+the registered Admin repository root
+`/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/vpsadmin`.
+The shell then enters `api`; do not add another `cd api`. The absolute flake
+selector does not set initial CWD: Admin's `enterRepoHook`
+(`flake.nix:365-386`) locates the nearest flake from PWD, so launching from the
+provider root would select the wrong `VPSADMIN_REPO_ROOT`.
+
+```sh
+nix develop /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/vpsadmin#api -c /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/vpsfree-dev-workspace-storage-profile/dev-clusters/vpsadmin/tests/run-storage-profile-api-specs.sh
+```
+
+Keep its inherited/configured-DB refusal and automatic disposable ownership
+proof. Lead/watchers own focused checks, the provider's declared checks and
+compatible enabled-profile smoke. Commit normally and have the retained
+reviewer cover affected general/architecture/scope/risk lanes before the public
+retry. This newly exposed orchestration bug is not either of the completed
+Node review's step-9 fixes. Narrow fixes from its own review use step 9; any
+broader admission/package mechanism requires step-10 affected review. Carry
+forward unchanged Node integration, maintenance VM and host-policy evidence;
+no additional VM scenario or host-migration rerun is justified by these files.
+
+### Installed package, deployment and recovery boundary
+
+**Prepared consumer checkpoint (lead-reported):** the earlier provider SSH
+fetch confirmed default `8f8d8ecf` and feature `399c3302` unchanged; reviewed
+feature `0b0ba9d8` is now published as recorded above. Consumer
+`origin/master` remains `1fa9c982`; the clean registered workspace feature was
+normally fast-forwarded from that head to current shared local master
+`b9c2ef2b51b66c898ee073a958581d3ac36c4bc7`. Its 24 additional paths are
+coordination records under `work/` and `notes/`; the lead confirms unchanged
+source/procedure/config/input bytes, including AGENTS/flakes/configs/team
+blobs. Shared master/index were unchanged by the operation. The backup
+`backup/2026-09-23-storage-redesign-workspace-before-admission-pin` retains
+`1fa9c982`. A subsequent normal feature fast-forward moved `b9c2ef2b` to
+`ad539340b25786bf5cac11fa9c968144c417d1bd`: seven more coordination-only
+paths, with relevant AGENTS/flake/config/`.dev-workspace` bytes equal and the
+feature clean. Explicit SSH fetch still found origin/master at `1fa9c982`;
+shared HEAD/index were unchanged by the operation. The initial read used
+nonexistent config filenames and stopped before mutation; correcting those
+to the canonical `config/vpsadmin-devcluster.json` and vpsadminos config paths
+resolved the read assumption, with no source failure.
+The generated pin was normally committed at
+`bcb25d08b5aba776bff16c0415023e405435c97d` on actual base `ad539340`, tree
+`bf8038c2504deaff69b45e2640a9a03e1ec40c3a`: one commit, two flakes, 5 additions
+and 5 deletions, full binary diff SHA
+`4e193905614362220e288ec20f8db5a2f665a2993ce4e81281243e256f6e40b3`.
+Exactly four provider metadata leaves change 399 to 0b0b; generic4ef, Codex4c,
+all other nodes/follows and defaults are equal. The lock was generated, not
+manually edited. Root no-build passed on the final precommit flake bytes
+(`flake.nix` hash prefix `97f69c73`, lock `1a0b5e22`); no timing or realization
+is inferred. Retained reviewer0 completed actual `ad539340..bcb25d08` across
+all four HIGH lanes without findings, confirming the exact composition and
+one coherent commit/no migrations. The package batch above built
+`/nix/store/vyf5bpadsnplrzfvrhx182wcsfnw5602-dev-workspace-0.2.0` and tools
+`/nix/store/4w4mbc7x9kgj798bf16kpfq7mdi11w6b-vpsfree-dev-workspace-tools-0.1.0`.
+The canonical contract SHA is
+`33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`.
+
+The lead then normally replayed the single pin onto actual shared master
+`990a5929bf7c54489c1d75a4c292492239502adc`, producing clean
+`19cb25ee8d5333a4ea4c1816806c130c41652f1f`, tree
+`3087dbed87bc9066707c656a87d63ec1e7c75e2e`. The 30 intervening paths were
+coordination-only, with relevant source/config/procedure blobs equal; no foreign
+contents were inspected. Range-diff is `=`, full binary diff/file hashes/message
+are unchanged, and shared HEAD/index were preserved. The
+before-admission-publication backup retains bcb. Final package evaluation passed
+in 7.218s and resolved to the **exact same vyf5 output**; final no-build passed
+in 3.838s. The original independent `ad..bcb` review and built proof carry
+forward for the identical patch; no review or VM rerun is claimed.
+
+Normal exact-lease feature publication and readback completed at `19cb25ee`;
+remote master remains `1fa9c982`. The lead confirms the final public
+capture-comparison completed with base
+`990a5929bf7c54489c1d75a4c292492239502adc`, head
+`19cb25ee8d5333a4ea4c1816806c130c41652f1f` and base label `Captured comparison`,
+preserving initial registration metadata; the portal URL was also confirmed.
+This is lead-reported evidence, not an architect operation. This is an
+**unselected** package ready for the
+external idle activation handoff, not a new merge/default-integration approval.
+Generic/provider/Admin defaults remain unmerged. No switch, public services
+update, corrected guest-script proof or provision/payload retry has occurred
+for this replacement. CI-observer edits and cluster operations remain held.
+The architect performed no private-artifact inspection or operation.
+
+Provider `nix/test.nix:1166-1167,1207-1208` embeds each Ruby script into the
+services wrapper through an immutable store path. The selected public provider
+also supplies the Nix module. Editing its worktree or retaining Admin290f does
+**not** change the currently installed command or current guest wrapper.
+
+The supported sequence is: reviewed provider correction/publication; generated
+consumer input pin to that exact published provider, preserving generic policy
+3 and unrelated inputs; consumer composition review/checks and package/source
+byte proof; external idle operator activation through the public workspace
+switch; public selected-generation/provider/status verification; ordinary
+`vpsadmin-devcluster update 2026-09-23-storage-redesign services`; verify its
+installed fixed provision and guest-acceptance scripts, preserved profile
+selection and original DB/file baselines; then one justified public provision
+retry and the already approved payload/repeat-update/retirement sequence.
+Use the same-session Admin290f input unchanged. No direct extension store
+helper, unselected runner, guest script replacement or private lifecycle path
+is an alternative. Do not infer a new workspace/default merge approval.
+
+Until that sequence is ready, retain the intentional scheduler stop and report
+the actual state; do not resume/retry/unlock from this brief. A services update
+may restart scheduling, so the lead retains control of its accepted paused
+provisioning window and subsequent normal resume. A failed retry retains
+committed chain IDs/evidence and rechecks ownership/readiness before any next
+action. Never reset retained disks, disable the preserving profile, alter the
+singleton, cancel/delete locks, or restore old allocations to hide the error.
+An old package rollback reintroduces this bug; it is not a recovery fix.
+No new quiet/repair/APPLY, production operation or default integration follows.

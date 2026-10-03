@@ -6,8 +6,226 @@ lifecycle: active
 
 ## Current status
 
-2026-10-03 current phase: operator activation handoff. The workspace change is
-ready, awaiting merge approval after successful activation.
+2026-10-03 current phase: external idle activation handoff for the corrected
+provider. Final consumer feature `19cb25ee8d5333a4ea4c1816806c130c41652f1f` is
+published, independently reviewed through its identical original pin patch,
+and locally verified. Provider `0b0ba9d8` review and exact CI passed. The
+four-stage provider batch passed 47 real API examples and the default/compatible
+checks. Both source histories are coherent, with no obsolete approaches or
+provider/root migrations.
+
+The fresh package batch passed exit0/248.639s/parity1: all four existing root
+checks, default package build and actual output proof. Corrected admission
+scripts, unchanged provider launchers/defaults/helpers, host/tools canonical
+contract and Codex sources match their selected owners. Package:
+`/nix/store/vyf5bpadsnplrzfvrhx182wcsfnw5602-dev-workspace-0.2.0`.
+Tools: `/nix/store/4w4mbc7x9kgj798bf16kpfq7mdi11w6b-vpsfree-dev-workspace-tools-0.1.0`.
+Schema1/policy3/providers2; contract SHA256 is
+`33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`.
+This package is built and **unselected**. Installed399 remains unchanged;
+no live retry, scheduler resume or package selection occurred.
+
+Platform API CI diagnosis remains separate. All three ordinary
+Node updates and process-bound corrected-source proofs passed. Public copied
+boot completed real regular Node refresh and released the maintenance hold.
+Node review/direct corrections, declared lint,
+full Node634/0 and the one remote-restore integration4/4 passed. The selected
+workspace package is unchanged. The registered bridge cluster is running and
+ready with its maintenance hold released. Scheduling remains stopped after the
+provision failure; no retry or resume has been performed.
+
+The retained config now explicitly selects storageProfile enable:true and
+enrollment:true; every other JSON field is equal to the prior config. Private
+recovery and preparation evidence is at
+`/tmp/storage-profile-retained-20261003.nemcjis2`. The earlier public maintenance
+command passed0/88.027s/parity1, followed by copy-only with phase copied. The private
+logical DB dump and 27-group baseline (one original VPS) completed before copy.
+The full cluster is now running and ready; original VPS/data and all six cold
+recovery disk copies are retained. Profile provision, physical payload/history
+and retirement remain pending.
+
+The user selected "Fix Node recovery first" and then directed "Implement the
+plan." Architect0 owns the saved design brief; implementer0 owns Node cleanup,
+telemetry recovery and the existing remote-restore fixture; reviewer0 owns the
+independent committed HIGH-risk review. The lead owns tracking, normal commits
+and fresh Luna/low verification watchers. No additional default-branch merge or package switch is authorized. The completed
+Node slice now permits the separately recorded retained-profile public trial.
+
+- [x] Save precise Node recovery and fixture design before source edits.
+- [x] Implement cleanup error precedence, safe channel retirement and bounded
+  storage-status failure handling; author persistent restart/payload fixture.
+- [x] Pass declared runtime lint and the full Node suite.
+- [x] Finish selector/static checks and two normal owning commits/hooks.
+- [x] Finish final-head scoped fixture evaluation after upstream rebase.
+- [x] Complete independent committed review of all four HIGH-risk lanes.
+- [x] Resolve both Important findings with focused verification and owning fold.
+- [x] Pass the corrected remote-restore scenario with actual payload proof.
+- [x] Complete masked resident boot, fresh DB/catalog baseline and public copy-only.
+- [x] Complete public copied boot, real regular-node refresh and automatic release.
+- [x] Update all three Nodes and prove their running final runtime.
+- [x] Inspect exact290f platform API failures and assess provision impact.
+- [ ] Capture the hidden request exceptions with test-only diagnostics.
+- [x] Fix the provider's two top-level admission observations and prove real
+  autocommit staging/visibility, freeze refusals and reader cleanup.
+- [x] Finish independent provider review and exact feature publication.
+- [x] Finish generated consumer pin and independent composition/history review.
+- [x] Finish checked package and final feature publication/comparison.
+- [ ] Complete supported external activation and verify the selected generation.
+- [ ] Update services and prove its actual corrected guest scripts before retry.
+- [ ] Complete the recorded retained-profile update and full-cluster acceptance.
+
+The four-path provider remediation is committed at
+`0b0ba9d869c04a4362f6051f5cc281ddf1b5a642` on8f8, with tree
+`2dfb8aeba684b17a829af5123adba5641d9c3cce` and a clean worktree/index. Its47
+passing examples include actual autocommit staging/second-connection visibility,
+bounded reader cleanup and fresh payload-routing refusals. The
+initial run is retained at `/tmp/storage-profile-admission-quick.7syutiak`
+(exit1/66.717s/parity1). ActiveRecord uses a next-transaction isolation override;
+the failed assertion inspected the session default instead. The narrow reader
+session setup correction retained all assertions. The passing batch is at
+`/tmp/storage-profile-admission-quick-fixed.i40tueb9`: API61.964s, existing
+projection4runs/32assertions0/0.803s, default no-build12.193s, compatible profile
+smoke658.645s. See the [committed review packet](storage-profile-admission-review.md).
+The four-commit/25-path series contains no provider migrations; correction
+folded into its owner, backup399 retained, no hooks bypassed. Installed provider399 still contains
+the old immutable scripts, so source checks do not repair public provision.
+Provider Check37154598713 completed SUCCESS at exact0b0b; prior399
+Check37114037083 also completed success. All older branch checks in the short metadata query are
+completed, so there is no superseded live run to cancel. CI is not awaited.
+
+Provider review used retained reviewer0 gpt-6.1-sol/xhigh/read_only in all four
+HIGH-risk lanes, justified by storage admission, file writes and deployment
+ordering. Its sole Advisory concerned stale rollout wording, now explicitly
+historical; no source amendment or review rerun was needed. The replacement
+consumer review also completed with no findings; package realization remains
+pending. These reviews authorize no deployment, merge or physical readiness claim.
+
+Consumer reviewer0 retained gpt-6.1-sol/xhigh/read_only and independently inspected
+the complete ad539..bcb one-commit/two-path range, exact tree bf8038 and binary
+diff 4e193905, all four HIGH-risk lanes. No obsolete history, root/provider
+migrations or additional pin/default/follow change was found. Root no-build
+passed0 before commit; this is evaluation only. The fresh one-operation package
+driver is `/tmp/storage-profile-admission-package.p5dtjka1/launch.py`, with all
+root/provider/Admin/generic source and index held. Its prelaunch local variable
+name collision was corrected before execution; this was private launch plumbing,
+not application source or failed verification. Source proof and installed-script
+delivery still precede a public retry. See the
+[consumer review packet](storage-profile-admission-consumer-review.md).
+
+### Final consumer source and operator handoff
+
+A normal one-commit replay onto actual shared master `990a5929` produced final
+`19cb25ee8d5333a4ea4c1816806c130c41652f1f`, tree
+`3087dbed87bc9066707c656a87d63ec1e7c75e2e`. The 30 upstream paths are coordination
+records only; relevant source/config/procedure blobs are unchanged. Range-diff
+is `=`, both flake hashes, complete two-path 5+/5- binary diff and commit message
+are identical to the reviewed `ad539340..bcb25d08` patch. Shared HEAD/index and
+foreign working files were preserved. Backup
+`backup/2026-09-23-storage-redesign-before-admission-publication` retains bcb.
+
+Final package evaluation passed0/7.218s and resolved the exact already-built
+vyf5 output. Final no-build check passed0/3.838s. These checks preserve the
+original independent review and package observations within identical source;
+no new review or VM run is claimed. SSH feature readback is exact19cb25; remote
+master remains1fa9. Public comparison capture records actual base990a5929 and
+head19cb25, retaining historical initial registration metadata.
+
+Private package evidence: `/tmp/storage-profile-admission-package.p5dtjka1`.
+Stage1 took241.182s, stage2 took7.191s, stage3 proof exit0. No watcher handle or
+reported kernel compilation remains. Source/index holds remain in place.
+
+From an external terminal, after this lead and every managed session/member is
+idle with no pending request or submission, run:
+
+```sh
+workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
+```
+
+The public switch's idle requirement prevents activation from an active lead
+turn. No delayed/background activation is arranged. Report the result so the
+lead can verify the actual selected generation, perform the normal services
+update and prove its immutable provision/acceptance scripts before retrying
+provision. The retained cluster stays running/ready/released, scheduler stopped.
+No new workspace/default integration is authorized; the earlier approval covered
+already-merged1fa9. Profile payload/history/scheduling/repeat update and retirement
+acceptance remain pending, as do the separate held API CI diagnostics.
+
+The [Node recovery brief](design.md#node-rpc-cleanup-and-remote-restore-recovery-slice-2026-10-03)
+specifies original-error precedence, per-channel retirement completion,
+verified transport closure and consumer-thread exit, the late-recovery request
+race, bounded recovery waits and cooperative updater stop. Known transport
+failures are classified narrowly; programming errors remain visible. Lasting
+behavior is documented in Admin `docs/node-rpc.md` and linked from its index.
+The lead's direct writing pass accepts that prose unchanged. Two commits will
+separate the runtime/spec/docs behavior from the existing scenario's persistent
+restart and A/B/C payload/history acceptance.
+
+Fresh Luna/low `node_rpc_full_declared_46` passed at the complete frozen nine-path
+source plus six dependency/flake hashes: root RuboCop 1.85 exit0/14.904s;
+full libnodectld 618 examples/0 failures exit0/38.756s; total54.107s,
+source parity1 and empty index before/after. Evidence:
+`/tmp/node-rpc-full-z7bkokjv` (directory0700/files0600); no owned command or
+automatic disposable TestDb process remains. Tests use the owning Nix shells,
+an isolated bundle and automatic disposable DB; inherited/configured DB is
+refused. These checks do not establish real broker/VM/payload recovery.
+
+Earlier focused verification is retained in the
+[review packet](node-rpc-recovery-review.md): incomplete33/3 exit1/761.69s
+controlled-fixture stall, corrected39/1 exit1 missing transport timeout accessor,
+then focused39/0 followed by declared root lint10 offenses. Test fixtures were
+corrected without weakening assertions. Portable scoped directives and removal
+of redundant Struct keyword initialization resolved the declared lint issue;
+this last delta changed no runtime control flow. The first interrupted run's
+exact RSpec process and automatic TestDb were reaped under explicit lead
+cancellation; no source acceptance is inferred from that incomplete run.
+All original logs remain private. A parent log-creation permission defect in the
+third verifier was corrected to0600; the new driver sets umask077 before opening
+logs. Runtime source was unaffected.
+
+Architect0 is source-checking the fixture's ordinary startup/restart/input/output
+interfaces against the saved brief. This is design conformance, not independent
+review or execution evidence. The command-first `nodectl get --parsable` scalar
+interface is retained; no CLI change or transient repatch is required.
+
+### Completed workspace activation and integration
+The user reported activation and explicitly approved workspace/master integration
+conditional on successful verification: "activated. you can verify it, if it is
+ok, you can merge the workspace." This approval covers only the workspace;
+generic/provider defaults and storage deployment remain outside that scope.
+
+Activation verification passed through the installed public commands. Host
+status selects the exact reviewed `zmwh78dk` package; current/team commands
+work through that generation. Router, portal, Codex and tmux units are active,
+and all four stable ExecStart paths resolve to that selected package. The
+public same-session provider status succeeds with stopped/bridge state and
+the exact reviewed tools. Installed contracts match schema 1/policy 3.
+The portal responds with its expected unauthenticated HTTP 401 using the
+configured public CA, TLS verification 0. No credential was read or sent.
+An initial literal unit-path check missed the stable profile indirection;
+the default curl CA bundle also lacked the internal CA. Corrected checks use
+resolved paths and the existing CA, without changing units or trust settings.
+Evidence: `/tmp/storage-profile-activated.zsuzp_g4`.
+
+Normal one-commit replay onto tracking-only local master `3fd3ff77` produced
+clean `1fa9c982b866a305bd1451f2c32f6d387d2dc1a3`. Range-diff is `=`; both
+tested flake hashes, the complete two-path 9+/9- patch and its full-index
+SHA256 remain unchanged. Final Nix evaluation resolves the same actual selected
+package path, so the built package proof and original independent composition
+review carry forward without a new activation or full review rerun. The exact
+integration comparison was captured as `3fd3ff77..1fa9c982`; backup
+`backup/2026-09-23-storage-redesign-workspace-before-integration` retains the
+activated source `6d1b9c4d`.
+
+The fresh final-head no-build flake check passed. Normal shared-root
+`git merge --ff-only` advanced local master `3fd3ff77` to exact pin `1fa9c982`,
+changing only the two flake files. Normal SSH push advanced remote master from
+`93389c33` to `1fa9c982`; the feature ref is retained at that same head.
+The already-published handoff tracking commit is included as an ancestor.
+A concurrent session then advanced shared local master with three tracking
+files; its commit was preserved. The pin remains an ancestor, both tested
+flake hashes match, and all other index entries outside those concurrent paths
+remain equal to the pre-merge snapshot. No generic/provider default was merged,
+no additional package switch or cluster lifecycle action occurred.
 
 The requested rebase is complete. The generated locks preserve upstream's
 Codex Web `4c170393` selection and every unaffected input/follow.
@@ -16,7 +234,7 @@ Codex Web `4c170393` selection and every unaffected input/follow.
 | --- | --- | --- | --- |
 | Generic runtime | `924c0ec2` | `4ef298b3` | Published |
 | Provider | `8f8d8ecf` | `399c3302` | Published |
-| Workspace consumer | `93389c33` | `6d1b9c4d` | Published |
+| Workspace consumer | `3fd3ff77` | `1fa9c982` | Merged and published to master |
 
 The generic policy commit has an unchanged range-diff. The provider's three
 functional commits also compare equal; only its two pin files differ from
@@ -28,6 +246,9 @@ The member authored the root conflict files; its read-only shared `.git` blocked
 staging, so the lead verified hashes and staged/generated/continued normally.
 [Shared index access](../../notes/cross-project/2026-10-03-shared-worktree-index.md)
 records that boundary without a permission or hook bypass.
+[Git pathspec CWD](../../notes/cross-project/2026-10-03-git-pathspec-cwd.md)
+records why an empty nested-directory diff check supplies no evidence; the
+corrected root-directory check passed for the owned tracking files.
 
 Fresh watcher `storage_profile_rebase_quick_bound` passed all six stages in
 1175.12s with source parity1: generic40/250, maintenance13/121, runner10/27 and
@@ -60,13 +281,15 @@ compilation or owned process remains. Evidence:
 received a hash where its package path was required and performed zero checks;
 the launcher's correctly parameterized installed proof had already passed.
 
-Normal exact-lease SSH publication advanced the workspace feature to `6d1b9c4d`;
-remote master remains `93389c33`. Public comparison capture records that exact
+At the pre-activation checkpoint, normal exact-lease SSH publication advanced
+the workspace feature to `6d1b9c4d`; remote master was still `93389c33`.
+Public comparison capture recorded that exact
 base/head. Ordinary remote backup refs preserve both exact pinned dependencies:
 `backup/2026-09-23-storage-redesign-workspace-runtime-4ef298b3` in generic and
 `backup/2026-09-23-storage-redesign-workspace-provider-399c3302` in provider.
 Readback confirmed both heads; no default integration occurred. Generic CI
-37113228573 and provider CI37114037083 passed. Package remains unselected.
+37113228573 and provider CI37114037083 passed. The later activation and merge
+are recorded above.
 
 API support stays at `46b3bf6f`. Its broad CI run `37030949481` completed with
 117/118 tests passing. The sole failed test is
@@ -76,22 +299,21 @@ RPC-cleanup timeout/daemon exit and restart losing the fixture zero-delay patch.
 The broker timeout trigger remains unknown. Node reliability and persistent
 fixture timing are separate follow-up work; no blind rerun/manual unlock occurs.
 
-The workspace pin can reasonably merge after successful activation without
-waiting for the storage redesign. Explicit approval for workspace `master` is
-still required. Keep durable exact published dependency refs and preserve both
+The user-approved workspace/master merge is complete without waiting for the
+storage redesign. Keep durable exact published dependency refs and preserve both
 maintenance-aware provider code and policy >=3 in later repins; a policy-3
 number paired with a legacy provider is insufficient. The profile stays off
-by default. No merge, selected-package change or cluster action has occurred.
+by default. The reviewed package is selected; no storage-cluster operation
+occurred during activation verification or integration.
 
-The external operator owns activation now that the composition gates have
-passed, while all managed sessions are idle. Use the normal installed command:
+The user reported activation after the handoff for this installed public command:
 
 ```sh
 workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
 ```
 
-The active lead does not invoke or schedule it. After the operator reports
-success, verify the public selected generation before maintenance commands.
+The lead verified the public selected generation and did not invoke or schedule
+a second switch. Future package switches still require an external idle operator.
 User-created VPS/disks/files remain preserved.
 Full-cluster public refresh/release and payload acceptance remain pending.
 
@@ -408,7 +630,8 @@ composition review/package contract proof and external idle selection are next.
   package with matching canonical host/tools contracts.
 - [x] Rebased runtime/provider/consumer composition: focused checks, affected
   review and new composed package/contract-byte proof.
-- [ ] Activation from an external terminal while all managed sessions are idle.
+- [x] User-reported external activation; selected generation/public status verified.
+- [x] Explicitly approved workspace/master fast-forward integration and publication.
 - [ ] In-place update, repeat-safe catch-up, real full/incremental fixture payload
   proof, automatic cycle and retained VPS verification.
 
@@ -2100,6 +2323,19 @@ with the final version 2 format and must be recaptured.
 
 ## Next actions
 
+1. Finish the one running disposable remote-restore integration at290f1ef0.
+   Preserve failures and diagnose concrete evidence before any retry. The
+   original broker acknowledgement-timeout trigger remains unknown.
+2. After a pass, publish the exact reviewed/remediated Admin feature and
+   reconcile CI feedback. Default integration still needs explicit direction.
+3. Continue the public retained maintenance/copy/copied boot and genuine Node
+   refresh/release in [the rollout record](storage-profile-rollout.md). Then
+   update node1/node2/storage1 to the final Node runtime before provisioning
+   and backup/NAS payload/history/retirement acceptance. Preserve original
+   VPS data, quota, accounting and retention; no new workspace switch needed.
+
+### Earlier redesign sequence, retained as history
+
 1. Keep the rebuilt cluster running for development. The requested rebase and
    compact runtime acceptance are complete at Admin `e65a5a6b0`, OS `8d05dc3ae`
    and React `aa2f60b8`; final configuration `5eff558c4` is published. Exact-head
@@ -2125,3 +2361,289 @@ with the final version 2 format and must be recaptured.
 The task guide owns repeatable operator instructions. The source investigation
 and proposed future compatibility/deployment sequence remain in this session;
 they are not executed rollout records.
+
+### Node slice final-head preparation
+
+Normal runtime/spec/docs8-path commit and fixture1-path commit passed all hooks;
+preferred commit-width warnings remain nonfatal and every line meets80 columns.
+The first private bundle-exec commit launch failed the nested API localization
+hook; direct normal owning-shell Git passed with all hooks enabled. No source
+or hook configuration was changed to accept it. Evidence:
+`/tmp/node-rpc-commits-26bn4c5f`.
+
+Fetched origin/master148ef adds only API packaged parallel2.3 and WebUI dependency
+updates on four non-overlapping paths. Normal complete23-commit replay keeps
+every patch/message (`range-diff` all`=`), the binary feature patch, all nine
+source hashes and both consumed migration/schema blobs. Final clean head
+`7da85b7a16851ebf08e655ee12fd918762cff991`, tree4ae8a7a5; backup retains the
+pre-rebase fdc9be376. No published master rewrite or source/dependency rollback.
+
+The added generic whole-flake no-build command failed on baseline overlays.list
+not being a function, unchanged in old46 and fetched master. It supplies no
+verification. The correctly-bound final fixture evaluation passed exit0/57.757s/parity1; a first
+utility preflight started zero checks outside the literal tracking cwd. Parent
+current check in the exact tracking path passed; guard now checks it directly.
+No source failure or ownership loss follows from that zero-check launch.
+
+Reviewer0 is assigned the actual148ef..7da complete23-commit inventory and210-path
+final diff, with saved independent Sol/xhigh/read_only settings and all four
+HIGH-risk lanes. No clearance is claimed while the review runs. The baseline
+whole-flake failure remains in the packet. Final scoped configuration evaluation
+resolved fixture JSON derivation `ih1g6r614gsskcqxkyb51437jax71qzz` with no guest
+closure realization or scenario run; private evidence0700/0600. All19 guarded
+source/dependency hashes and tracked/index state match. Real broker/VM/payload
+acceptance remains after findings resolution.
+
+
+### Node recovery mandatory-review findings, 2026-10-03
+
+Retained reviewer0 (gpt-6.1-sol/xhigh/read_only; no override or nested reviewer)
+completed actual148ef..7da across general, architecture/repetition,
+scope/proportionality and risk/compatibility. No Blocking findings; two Important:
+
+1. The shared30-second publisher wait can escape existing required publisher
+   threads and terminate nodectld through abort_on_exception. Restore ordinary
+   required-publisher waits and keep an explicit bounded RPC opt-in.
+2. Ambient `$!` can describe an already-handled enclosing error and suppress a
+   cleanup-only failure. Track constructor/body errors locally in RpcClient.run.
+
+Architect0 owns the saved narrow correction brief; implementer0 will own the
+released runtime/spec/docs paths. The existing restore integration is held
+until both direct fixes are verified and folded. Complete23-commit history is
+coherent; no obsolete follow-ups and no new Node-slice migrations. The two
+externally consumed additive migrations retain their exact versions/blobs.
+See [review findings](node-rpc-recovery-review.md#independent-review-outcome).
+
+Saved correction brief: [narrow Node review remediation](design.md#narrow-node-review-remediation-brief-2026-10-03).
+Exactly five runtime/spec/docs paths are released to implementer0. The internal
+`recovery_timeout: nil` preserves ordinary required-publisher gate waits; RPC
+explicitly passes RECOVERY_WAIT even without a stop predicate. The existing
+StorageStatus save_properties consumer supplies the representative regression.
+RpcClient.run will record its own constructor/body exception locally. These
+are direct step9 remediations; no fixture/schema/wire/pin or recovery-owner
+change is accepted. Fresh focused/lint/full verification and owning fold are
+pending. The conditional retained-profile sequence is saved separately and
+remains unexecuted until actual Node restore acceptance.
+
+
+Direct correction source frozen at7da85b7a: exactly five unstaged paths, empty
+index, no other source/dependency changes. Final manifest SHA256
+88c6fa0e2eaf20e835f9dcf91b6e16e40eef54f07414bfdede3aca606ad593fd.
+The lead inspected the runtime and regressions against the saved brief and
+applied the owning writing skill directly, accepting docs/node-rpc.md unchanged
+(hashc965c997…24ec5). Four syntax checks and scoped whitespace checks pass;
+55 focused examples are authored, not yet passed. Fresh Luna/low
+node_rpc_direct_review_fixes owns the sequential focus/root1.85lint/fullNode
+batch at /tmp/node-rpc-review-fixes-xp7ieeh5, with19 protected source/dependency
+hashes, empty-index/head/binding guards and isolated automatic DB. Result
+pending; no integration launch. Direct step9 boundary remains unchanged.
+
+
+First direct-remediation focused batch at7da85b7a stopped on55examples/1failure,
+exit1/18.630s (total20.081s/parity1). Evidence remains at
+/tmp/node-rpc-review-fixes-xp7ieeh5. Declared lint and full suite were unrun.
+The lead read the failure and owning source: the new explicit-RPC-opt-in spec
+called protected response= outside RpcClient's lexical context; the actual
+reply callback uses it within the owning class. Released only that existing
+spec for explicit test access to the unchanged protected setter. Runtime/docs
+and all other files/index remain held. No operation remains; original failure
+is preserved, and passing prior cases do not clear the failed example.
+
+
+Corrected focused verification PASS55examples/0failures,19.636s. Declared
+RuboCop1.85 then failed with exactly2 autocorrectable test argument/key
+alignment offenses,13.399s; total35.129s/parity1. Full Node stage unrun.
+Private evidence /tmp/node-rpc-review-fixes-final-c_1ufkiq; parent corrected
+expected.json mode0644 to0600 (directory already0700). Released only those
+existing NodeBunny spec alignment lines; runtime/docs/otherfiles/index held.
+Next fresh watcher selects declared lint then full Node, which includes all55
+focused cases; no separate focus repeat for a whitespace-only correction.
+
+
+The next declared lint gate stopped at1 remaining ClosingParenthesisIndentation
+offense in the same nested test expectation,13.436s/total14.834/parity1.
+Full Node unrun; private /tmp/node-rpc-review-lint-full-l60o9740. Parent read
+the actual cop's column11 requirement and released only that closing whitespace.
+No logic/runtime change; earlier55/0 remains the corresponding focused proof.
+Source/index hold and mandatory-review step9 remain in force.
+
+
+Final direct-remediation source gate PASS: fresh Luna/low
+node_rpc_declared_final_suite ran declared rootRuboCop1.85 (4files/0offenses,
+13.275s) then full Node634examples/0failures (35.803s), total51.225s/parity1.
+Private evidence /tmp/node-rpc-review-verified-ck0mwrka,0700/0600. No owned
+operation remains. The full suite includes all55 focused cases at final
+whitespace-corrected bytes; earlier55/0 and each diagnosed failure are retained
+separately. Controlled Bunny fixture-close IOError diagnostics are expected
+failure-path output, not an additional daemon/real-broker observation.
+
+Lead focused inspection confirms exact requested narrower publisher contract
+and local primary-error ownership. Both Important findings are resolved under
+mandatory-review step9; no new mechanism or affected-lane rereview is needed.
+The normal owning runtime fold and unchanged separate fixture replay are
+executing with hooks. Actual remote-restore integration is still unrun.
+
+
+Normal owning fold complete: runtime d82a6cc1cf25e6e23671ae095880a4478a9d4e18,
+separate fixture290f1ef07972e53c2b5154dbfa8b088802bde619,
+treea2de421a02cc0add7a256273133b5dab9a2b2f32. All pre-commit and commit-message hooks passed in owning
+Nix environment. First21/e882 parent unchanged; separate fixture's full binary
+patch is identical and range-diff equals. Final19 protected hashes match tested
+bytes; tracked/index clean and preexisting PHP cache preserved. Backup
+backup/2026-09-23-storage-redesign-before-node-review-remediation retains7da.
+
+Final complete inventory:23 commits/210paths/210 files changed, 23740 insertions(+), 454 deletions(-); full-index binary
+SHA256f2abad5545f2e5b0daefcec7c0aca6a7e013be077b49ba200cb28bc4ba74565e. Exactly the tested five-path372+/26-
+correction differs from the reviewed7da. Both consumed migration versions and
+core schema blobs are unchanged; no new Node-slice migrations. Original full
+independent review plus direct step9 verification remain evidence; no fresh
+unaffected full-review claim.
+
+Fresh Luna/low node_rpc_remote_restore_290f owns ONE existing disposable
+storage/restore-after-reinstall-remote via /tmp/nrvm.0qykahy0/run.py atclean290f,
+emptyindex/19hash/binding guards. It uses newprivate state plus no-destructive
+evidence retention; native runner owns disposable cleanup. Outcome pending,
+source/index held. No registered retained-cluster or release operation is run.
+
+### Node integration and publication, 2026-10-03
+
+Fresh Luna/low watcher `node_rpc_remote_restore_290f` passed the single existing
+`storage/restore-after-reinstall-remote` at exact290f1ef0/treea2de421a: exit0,
+1610.195s, parity1, four of four examples172.32/265.1/172.97/51.58s, native
+script1109.64s. Actual A/B backup snapshot content, reinstall absence, remote
+restore of B with normal lock release and subsequent C/incremental history,
+transaction/GUID/payload assertions passed. Parent confirmed numeric result,
+zero exact-state QEMU/virtiofs processes and clean tracked/index state with the
+preexisting PHPUnit cache preserved. Evidence `/tmp/nrvm.0qykahy0` stays private.
+This does not establish the original broker acknowledgement-timeout trigger or
+arbitrary live-transfer crash recovery.
+
+Fresh SSHfetch retained default148ef and old feature46. The first ambient push
+was refused by Overcommit's changed configuration signature before publication.
+After verifying the declared configuration, normal owning .#vpsadmin
+`overcommit --sign` and the same exact-lease push completed at290f. Remote
+readback confirms feature290f/master148ef; no hook was bypassed and source bytes
+are unchanged. CI37144608422 and libnodectld37144608395 started at exact290f;
+other owning checks also started. No older queued/in-progress same-branch run
+was found among100 returned runs; no cancellation or broad-CI wait is needed.
+
+Preboot checks confirmed selectedzmwh package, own stale-ready storage/bridge
+status, no live recorded PID and six nonresponding configured addresses. The
+private mode0600 residency evidence still matches its exact session/config SHA
+and services toplevel, both store selections available. Desired profile was
+absent; lead set only enable:true/enrollment:true with other JSON fields equal.
+Pre-copy masked baselines are DB/catalog/entitlement/retention only. Live VPS
+file manifest begins after public copied boot, before Node updates/provision,
+and is compared with prior file evidence where available; no unperformed
+preseed live-file comparison is claimed. Cold disk copies are recovery evidence.
+
+### Registered masked boot and original baseline
+
+Public maintenance-start against the recorded resident config/toplevel and
+mode0600 residency evidence passed0/88.027s/parity1. The public command validated
+resident inventory/disks and real masks/boot identity; public status reports
+maintenance_ready/pendingtrue, storage/bridge, ordinaryreadyfalse. The watcher
+observed result/identity only; a mismatched byteoffset field meant it did not
+inspect runner logs. No kernel observation is inferred from that omission.
+Driver and foreground command exited while the supported masked runner remains
+active. Evidence `/tmp/storage-profile-retained-20261003.nemcjis2`.
+
+Private logical vpsadmin dump passed0/4.028s,1,141,715bytes/SHA256
+e516a8727fe0bec811888ba883bcb0b5f1e13725988c9d88cec05187ddb8c664.
+The implementation-owned private collector was inspected before execution; its
+current-command CWD was corrected to literal tracking before any guest query.
+The final8b223cd3 packet captured27groups/1161rows/60932bytes/oneVPS, SHA256
+5d0077d9f2ceee72d5f1dfe56e7b6ae0508d4e6dec951d8db4623a18bbdb635a.
+Rows, SQL and stderr remain private under baseline-before-copy. Both are
+read-only pre-copy DB evidence; no original preseed file checksum is invented.
+
+Public update services --copy-only passed0/349.549s/parity1, phase copied; the
+old generation remained held. The supported stop then completed, and public
+start --copied-config is running through the guarded parent driver and fresh
+Luna/low observer retained_public_copied_boot_290f. New seed/services, actual
+regular-node refresh and automatic hold release remain pending. Selected source
+heads/config/package are frozen; cold recovery disk copies remain untouched.
+
+### Public copied boot and Node updates
+
+Public stop/start --copied-config passed0/621.783s/parity1. Fresh observer
+retained_public_copied_boot_290f and parent public status confirm running/ready,
+maintenance phase released/pendingfalse/active true. The actual new seed/API/
+Supervisor and regular-node refresh completed through the supported command;
+no private release helper was used. Foreground command/driver exited; the
+registered runner continues. No local source-kernel compilation was observed.
+
+Post-copied consistent DB capture passed:27groups/1168rows/61218bytes, zero
+missing/changed original protected rows. Seven additions are one shared package
+and its six items; no added existing-user assignments or entitlement ceilings.
+Two dynamic Pool-space observations changed. Original VPS1 on verified node1 is
+running. Its four physical quota properties and known ordinary-file checksum
+were captured privately before Node updates. No earlier checksum or user-data
+file was supplied; this is a post-boot ordinary-file baseline, not proof across
+the first seed or of unspecified user payload. Evidence remains under the
+private retained-trial root.
+
+The lead-owned guarded driver now runs ordinary public updates node1, node2,
+storage1, stop-first-failure, with each current-system/running/socket check.
+Fresh Luna/low retained_public_node_updates_290f observes the one related batch.
+Outcome and actual packaged runtime/source proof remain pending; no provisioning
+or fixture write has started.
+
+The three ordinary Node updates passed0/341.213s/parity1, updated3/running3.
+Parent closed the foreground handle; no source-kernel compilation was observed.
+The inspected private implementation-owned packet then passed0/15.627s on all
+three actual daemon processes: stable PID/start identity, socket peer ownership,
+running control path, selected current system, exact final node_bunny/rpc_client/
+storage_status file hashes, and keyed send/recv delays0. This binds the running
+corrected files; it is not Ruby heap introspection or completed transfer proof.
+
+Exact290f CI feedback: Node specs, RuboCop, migrations, PHPUnit, client, i18n and
+group-snapshot contract passed. General integration CI37144608422 remains queued,
+not awaited. API topics37144608379 completed failure in only core/full platform
+jobs111265858355/111265858600. Failed-step logs were downloaded privately to
+/tmp/node290f-api-platform-ci-szd1r95_; implementer0 owns a read-only diagnosis,
+without a rerun or source edit. Provisioning has not started; original post-Node
+file/quota and DB comparisons completed separately: physical quota and the
+captured ordinary file are byte-equal; post-Node DB capture still has zero
+protected changes, the same seven shared-package additions and two dynamic
+Pool-space differences. Evidence node-runtime-proof, original-after-nodes and
+baseline-after-nodes remains private under the retained-trial root.
+
+Implementer read-only CI diagnosis: core968/1 seed25925 ObjectHistory admin Index
+and full968/1 seed21301 ActionState authenticated Cancel returned HTTP500 rather
+than200. Their generic statusfalse/responsenull/errorsnull shape supports the
+outer HaveAPI request_exception path; no underlying exception was captured.
+Affected endpoint/spec/auth bytes equal upstream148ef and pre-Node e882, and
+the Node slice changes no api files. This does not prove nondeterminism or
+exclude earlier feature/global spec-state interactions. Direct profile provision
+uses db:seed:file/normal Pool and CatchUp chains rather than these HTTP routes;
+these failures do not demonstrate a provision blocker. No runtime fix or
+unchanged rerun is justified. Architect0 owns a bounded test-only diagnostic
+brief; application authoring remains held during the retained trial.
+
+Public storage-profile provision ran in the guarded parent driver with
+fresh Luna/low retained_profile_provision_literal_290f observation. Final Node
+source, original baseline and released public hold prerequisites passed; template1
+is enabled/supported/compatible. Provision failed1/21.055s/parity1 before reaching
+Pool/CatchUp staging; physical Pool/catch-up readiness and payload acceptance
+remain pending. Scheduling stays stopped. No manual unlock/reset/private release
+or retry.
+
+Lead read the bounded private guest rake diagnostic through supported SSH:
+the public error is "storage mutation admission requires a staging transaction"
+at storage-profile-provision.rb82. Admin's owning check requires an open SQL
+transaction before its freeze-row lock. Observed freeze was read_write/mode0/
+epoch4; the refusal is missing staging, not proof of a read-only switch. The
+payload fixture's top-level validation contains the same misuse. Architect0
+owns a saved narrow correction/verification brief, including an autocommit
+test context that the existing outer RSpec transaction concealed. No whole
+physical-operation transaction, admission weakening or live data correction.
+
+The first provision observer used the wrong shared-root CWD and performed zero
+observation. Parent reconfirmed the exact tracking binding; a fresh literal-CWD
+observer inspected the existing result without relaunching provision. Both
+foreground PIDs exited, and private failure evidence is retained. The owning
+script is packaged in the immutable selected provider399, so a worktree edit
+alone cannot reach the public command: corrected provider publication, generated
+consumer pin and checked package precede external idle activation and a justified
+supported retry. Source/index remain held pending the precise brief.

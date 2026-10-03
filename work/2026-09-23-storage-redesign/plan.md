@@ -1,5 +1,26 @@
 # 2026-09-23-storage-redesign
 
+## Current execution slice: Node RPC recovery, 2026-10-03
+
+The workspace package is activated, verified and integrated. Before the retained
+storage-profile trial, the user selected Node recovery first and approved its
+implementation. Fix RPC cleanup error precedence and timed-out channel
+retirement through the existing Bunny recovery path; isolate expected RPC and
+transport failures in the storage-status updater without hiding programming
+errors or publishing a failed refresh. Persist zero transfer startup delays in
+the existing disposable remote-restore fixture, prove they survive a daemon
+restart, and add actual restored/subsequent-backup payload assertions.
+
+Architect0 saves the precise brief before implementer0 edits source. The lead
+runs focused checks through a fresh watcher, then reviewer0 independently
+reviews committed changes before the single corrected integration scenario.
+Keep the populated cluster stopped and preserve its disks/VPS. No migrations,
+production deployment, manual unlock, new package switch or default integration
+is authorized by this slice. The original broker timeout trigger remains unknown;
+the accepted correction must be proved by fault coverage, not a blind rerun.
+See [the diagnosis](api-remote-restore-ci.md), [design](design.md) and
+[current state](state.md).
+
 ## Current execution slice: useful storage profile, 2026-10-02
 
 The user approved implementing the storage-profile plan after finding that a

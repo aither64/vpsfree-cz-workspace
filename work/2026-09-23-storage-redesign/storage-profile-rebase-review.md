@@ -261,3 +261,29 @@ Those package/publication gates are now complete. Package selection remains
 pending external idle activation; workspace/master integration still requires
 explicit user direction. Public full-cluster refresh/release, payload/history
 acceptance and the separate Node/remote-restore follow-up remain outstanding.
+
+## Activation and workspace integration
+
+The user reported activation and authorized workspace integration if verification
+passed. Installed public host/provider commands selected the expected `zmwh78dk`
+package and `vah0176` tools, equal canonical schema 1/policy 3 contract, and
+same-session stopped/bridge state. The four workspace services were active and
+their stable executable paths resolved to the selected package. The own portal
+returned its expected unauthenticated 401 with TLS verification 0 using the
+configured public CA; no credentials were read or sent.
+
+The workspace pin was replayed unchanged onto tracking-only local master
+`3fd3ff77`, producing `1fa9c982b866a305bd1451f2c32f6d387d2dc1a3`. The range-diff
+is `=`, both tested flake hashes and the complete one-commit/two-path binary
+patch hash remain unchanged. Nix evaluated the final source to the exact active
+package path, and a fresh final-head no-build flake check passed. This preserves
+the original independent review and built proof; it is not a new review or VM
+run. Final public comparison capture records `3fd3ff77..1fa9c982`.
+
+Normal fast-forward integration changed only the two flakes. Normal SSH push
+and remote readback confirmed master and retained feature refs at `1fa9c982`.
+A concurrent unrelated tracking-only local master commit was preserved; the
+pin remained an ancestor with unchanged flakes and empty index. No generic or
+provider default branch was integrated. The workspace merge gate is complete;
+the initiative remains active for the separate storage work and existing API
+reliability/acceptance limits.

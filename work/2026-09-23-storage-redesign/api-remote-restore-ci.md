@@ -1,5 +1,18 @@
 # API46 remote restore CI failure
 
+## Current follow-up
+
+The user approved implementing the Node recovery plan before the retained
+storage-profile trial. The [saved brief](design.md#node-rpc-cleanup-and-remote-restore-recovery-slice-2026-10-03)
+defines cleanup error precedence, exact channel retirement and consumer-thread
+cleanup, transient storage-status error isolation, persistent fixture queue
+settings, real restart evidence and restored/next-backup payload assertions.
+Implementation is underway; focused tests, committed independent review and the
+single corrected integration scenario remain pending. No new runtime success
+or original broker-trigger explanation is claimed.
+
+## Original failure and diagnosis
+
 Run `37030949481` at API `46b3bf6f9549eaf579053bc296ebf19c417bb848`
 completed with 117/118 tests passing. The sole failed script was
 `storage/restore-after-reinstall-remote`. Its first two examples passed;
