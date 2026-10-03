@@ -23,7 +23,10 @@ deployment, or feature integration are requested.
 
 ## Decisions
 
-Preserve all existing tests. Use read-only canonical repository inspection;
+Preserve all existing tests. Timing evidence shows topic imbalance, with
+platform taking ~42min and several topics ~1min. Compare platform-only splitting
+(~23–25min floor), same-count topic rebalancing (~18–22min floor), and
+duration-balanced shards (15–20min target, subject to measurement/queueing). Use read-only canonical repository inspection;
 do not borrow other sessions' worktrees. Do not launch a new full suite merely
 to establish a historical baseline.
 
