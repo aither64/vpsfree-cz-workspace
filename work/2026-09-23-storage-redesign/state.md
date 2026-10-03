@@ -6,11 +6,96 @@ lifecycle: active
 
 ## Current status
 
-2026-10-03 current phase: external idle package activation handoff.
-The storage profile and both acceptance fixtures are committed; default and
-compatible no-VM checks passed after the default-pin definition/app correction;
-scheduler and common Plan support are committed and published. The user-created VPS and all
-current disks/files are preserved; no reset is authorized for this slice.
+2026-10-03 current phase: operator activation handoff. The workspace change is
+ready, awaiting merge approval after successful activation.
+
+The requested rebase is complete. The generated locks preserve upstream's
+Codex Web `4c170393` selection and every unaffected input/follow.
+
+| Repository | Current base | Feature head | Publication |
+| --- | --- | --- | --- |
+| Generic runtime | `924c0ec2` | `4ef298b3` | Published |
+| Provider | `8f8d8ecf` | `399c3302` | Published |
+| Workspace consumer | `93389c33` | `6d1b9c4d` | Published |
+
+The generic policy commit has an unchanged range-diff. The provider's three
+functional commits also compare equal; only its two pin files differ from
+`45d7ce88`. The consumer remains one commit changing two flake files, with
+exactly eight generated provider/runtime metadata leaves relative to `93389c33`.
+Backups retain published `2b67af62`, `45d7ce88` and `492fdf8e`. The shared master,
+unrelated files/index, registration and historical initial base remain intact.
+The member authored the root conflict files; its read-only shared `.git` blocked
+staging, so the lead verified hashes and staged/generated/continued normally.
+[Shared index access](../../notes/cross-project/2026-10-03-shared-worktree-index.md)
+records that boundary without a permission or hook bypass.
+
+Fresh watcher `storage_profile_rebase_quick_bound` passed all six stages in
+1175.12s with source parity1: generic40/250, maintenance13/121, runner10/27 and
+selectedCLI8/105, all zero failures/errors/skips; default and explicitAPI46
+smoke passed, followed by provider/root no-build. The first utility's wrong-CWD
+current-session refusal started zero checks. Evidence:
+`/tmp/storage-profile-rebase-quick.cgbjlt0h`. Generic4ef CI37113228573 passed.
+
+Reviewer0 completed the committed [composition review](storage-profile-rebase-review.md)
+with saved Sol/xhigh/read_only settings and all four HIGH-risk lanes: no findings
+at any severity. All exact heads/trees/full-index diff hashes match; coherent
+1/4/1 complete histories, no obsolete iterations or migrations. The review
+supports carrying forward the scoped host/native observations because relevant
+source/input interfaces are unchanged. Prior functional lanes are not claimed
+as rerun.
+
+Fresh watcher `storage_profile_rebased_package` passed all three stages in
+245.623s with source parity 1: four existing root checks (238.146s), default
+package build (7.296s), then installed runtime/contract/helper/Codex byte proof.
+The host and provider contract bytes match schema 1/policy 3 and SHA256
+`33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`.
+Installed host/session helpers and selected Codex `4c170393` source bytes match;
+provider catalog has two executable providers and the eager profile loader is
+present. Package: `/nix/store/zmwh78dk1vjh2b91qnibjl682rb8hmwc-dev-workspace-0.2.0`;
+tools: `/nix/store/vah0176g8h75vasl0nlg0farmaacybid-vpsfree-dev-workspace-tools-0.1.0`.
+Root test groups passed 4/19 and 7/95; package groups passed 350/3731 (12 skips),
+8/33 (0 skips), 115/796 (3 skips), with zero failures/errors. No local kernel
+compilation or owned process remains. Evidence:
+`/tmp/storage-profile-rebased-package.xnradz5x`. A redundant post-launch verifier
+received a hash where its package path was required and performed zero checks;
+the launcher's correctly parameterized installed proof had already passed.
+
+Normal exact-lease SSH publication advanced the workspace feature to `6d1b9c4d`;
+remote master remains `93389c33`. Public comparison capture records that exact
+base/head. Ordinary remote backup refs preserve both exact pinned dependencies:
+`backup/2026-09-23-storage-redesign-workspace-runtime-4ef298b3` in generic and
+`backup/2026-09-23-storage-redesign-workspace-provider-399c3302` in provider.
+Readback confirmed both heads; no default integration occurred. Generic CI
+37113228573 and provider CI37114037083 passed. Package remains unselected.
+
+API support stays at `46b3bf6f`. Its broad CI run `37030949481` completed with
+117/118 tests passing. The sole failed test is
+`storage/restore-after-reinstall-remote`: remote rollback timed out after 900s,
+then its dependent snapshot creation returned 423 Locked. [Diagnosis](api-remote-restore-ci.md) identifies an upstream-existing Node
+RPC-cleanup timeout/daemon exit and restart losing the fixture zero-delay patch.
+The broker timeout trigger remains unknown. Node reliability and persistent
+fixture timing are separate follow-up work; no blind rerun/manual unlock occurs.
+
+The workspace pin can reasonably merge after successful activation without
+waiting for the storage redesign. Explicit approval for workspace `master` is
+still required. Keep durable exact published dependency refs and preserve both
+maintenance-aware provider code and policy >=3 in later repins; a policy-3
+number paired with a legacy provider is insufficient. The profile stays off
+by default. No merge, selected-package change or cluster action has occurred.
+
+The external operator owns activation now that the composition gates have
+passed, while all managed sessions are idle. Use the normal installed command:
+
+```sh
+workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
+```
+
+The active lead does not invoke or schedule it. After the operator reports
+success, verify the public selected generation before maintenance commands.
+User-created VPS/disks/files remain preserved.
+Full-cluster public refresh/release and payload acceptance remain pending.
+
+### Previous package checkpoint before the latest rebase
 
 Current provider: clean published `45d7ce88`; API support: `46b3bf6f`. Required
 host migration and the real retained-services native fixture passed. The native
@@ -20,7 +105,8 @@ reviewer0 completed all four HIGH-risk composition lanes with no findings.
 The four root checks, composed package build and packaged contract/source-byte
 proof passed. The external operator owns the next public package switch while
 all managed sessions are idle. Full-cluster public refresh/release and populated-cluster
-payload acceptance remain pending. API broad CI is still running.
+payload acceptance remain pending. API broad CI was still running at this
+checkpoint; its completed failure is recorded above.
 
 Consumer branch preparation: normal pinned-Git rebase advanced the clean
 registered workspace feature from `58df04cf` to committed shared master
@@ -320,6 +406,8 @@ composition review/package contract proof and external idle selection are next.
   one native example passed, services-only hold intentionally unreleased.
 - [x] Final generated workspace pin, full consumer review and checked composed
   package with matching canonical host/tools contracts.
+- [x] Rebased runtime/provider/consumer composition: focused checks, affected
+  review and new composed package/contract-byte proof.
 - [ ] Activation from an external terminal while all managed sessions are idle.
 - [ ] In-place update, repeat-safe catch-up, real full/incremental fixture payload
   proof, automatic cycle and retained VPS verification.

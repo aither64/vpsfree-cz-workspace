@@ -38,14 +38,29 @@ the architect performed no host/cluster check.
 
 ### Current execution checkpoint, 2026-10-03
 
-Current phase, as reported by the lead: exact consumer `492fdf8e` passed
-review, root checks, package realization and packaged contract/helper-byte
-proof, and its feature branch is SSH-published. The package remains
-unselected. The next step is the external operator's public package switch
-from the exact reviewed source after the team and managed sessions are idle;
-the active lead cannot invoke it. The retained cluster remains stopped.
-Full-cluster Node refresh, public release/payload acceptance and activation
-remain pending.
+Current phase: the user authorized rebasing the generic runtime, provider and
+consumer onto their advanced defaults. The bounded
+[rebase and early-merge brief](#current-rebase-and-early-merge-brief-2026-10-03)
+below governs the new source work. Previous `492fdf8e` review/build evidence
+is retained for that composition; it does not prove the replacement package.
+The lead reports generic/provider publication at `4ef298b3` / `399c3302` and
+the completed clean root rebase/pin `6d1b9c4d` on `93389c3`. The six-stage
+quick batch passed all six stages. Retained `reviewer0` cleared the actual
+three-repository composition/history in all four HIGH lanes without findings.
+The final root checks, package realization and source-contract/Codex-client
+proof passed at exact `6d1b9c4d`. The lead confirms root feature publication
+and public capture-comparison are complete at base `93389c3` / head
+`6d1b9c4d`, with remote master unchanged. Operator handoff follows the
+lead-owned tracking reconciliation.
+The package is unselected. Prior zero-check attempts remain distinct, and
+unchanged host/native evidence is retained without calling it a rerun.
+The separate API46 failure is diagnosed as an existing Node daemon/restart
+fixture reliability issue; its broker-timeout trigger remains unknown. It
+limits broader storage acceptance, not this default-disabled package rebase.
+No package has been selected. External idle-operator activation follows the
+new composition checks. The retained cluster remains stopped; full-cluster
+refresh, public release/payload acceptance and activation remain pending.
+The user's merge-strategy question is not merge authorization.
 Detailed lead-reported results and prior evidence follow; operation records
 remain in [state](state.md).
 
@@ -609,6 +624,270 @@ remain in [state](state.md).
   cluster or package activation has occurred.
   Existing private recovery evidence, residency checks and policy/VM gates
   remain prerequisites; current disks and user data remain preserved.
+
+### Current rebase and early-merge brief, 2026-10-03
+
+**Authorized scope:** rebase and regenerate the existing dependency chain.
+No new storage feature, schema, selected package, cluster operation or session
+lifecycle change is included. The lead owns ref backups, short Git steps,
+generated locks and records; the implementer owns conflict resolution and
+input URLs, watchers own long verification, and the retained reviewer owns
+independent review. This is a design assessment, not another code review.
+
+| Component | Preserve as prior evidence | New default base |
+| --- | --- | --- |
+| Generic `dev-workspace` | Policy commit `2b67af62b40149e7554bab0c31b139cd52c963c1` from `4bec2016` | `924c0ec28c41dd8b56aaf17f2212b302ca614899` |
+| `vpsfree-dev-workspace` provider | Four commits ending `45d7ce88fcb3a3d528f59b240c081667666526e3` from `c56f981a` | `8f8d8ecf5031c40d3e4a4ee2e9425721fc035800` |
+| Root workspace consumer | Pin `492fdf8e57639c83befed3e938fdd4b670e1bdbe` from `8990ecca` | Current shared/origin master `93389c3373647fb3dc2d7ee15efa9acb93a8c62f` |
+
+The source inspection found three generic upstream commits touching 27 paths:
+session creation/recovery progress and the `codex-web` input update to
+`4c170393a96ed0a6ac2e43488d073f6fcab36132`. The canonical contract at
+`924c0ec:portal/internal/session/runtime-contract.json` still declares schema
+1 / policy 2. Upstream does not change `libexec/workspace-host`, the session
+runtime-contract implementation, transition tests, host module or host paths.
+Its additions to `docs/workspace-portal.md` concern creation progress; preserve
+them alongside the policy-3 explanation. The provider default change is only
+its generic `924c0ec` URL/generated lock. Root default already carries the
+new provider/runtime/Codex graph and coordination records. Do not discard
+those updates by replaying an old lockfile wholesale.
+
+Lead-reported execution checkpoint: the generic clean normal rebase onto
+`924c0ec` is published as `4ef298b30f9cdbdcfe02bf6526e0f69ecc9bf7b4`.
+Its owning range-diff is `=`; host helper, canonical contract and transition
+spec blobs are unchanged from `2b67af62`. Syntax, whitespace and schema-1/
+policy-3 checks passed. Exact-head CI `37113228573` succeeded; the old
+`2b67af62` CI completed successfully with no superseded live run. Backup
+runtime-before-master-rebase retains `2b67af62`. This reports source/check
+evidence, not a new independent-review clearance. The normal provider rebase
+onto `8f8d8ecf` initially stopped at dependency commit `da058353`,
+conflicting only in `flake.nix` / `flake.lock`; exact `45d7ce88` is backed up.
+The implementer was released for the bounded URL change to `4ef298b3` and
+upstream generated-lock baseline, with generated locking owned by the lead.
+The lead now reports normal rebase complete at
+`399c33023a568a8d7a21e4e4df52829628720a28` on `8f8d8ecf`, with source/index
+clean. Generated first pin `5b2e9a4` changes exactly four generic metadata
+leaves and preserves upstream `codex-web` `4c170393`. Maintenance `101d312`,
+profile `f50c92b` and fixture `399c330` all have `=` range-diffs; the entire
+old `45d7ce88` to new `399c3302` tree differs only in `flake.nix` / `flake.lock`.
+Normal SSH exact-lease publication from `45d7ce88` to `399c3302` completed.
+The root normal rebase/generated pin is clean at
+`6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25` on `93389c3`. Its two owned
+flake files change 9 lines each way: exactly eight expected metadata leaves
+select provider `399c3302` / generic `4ef298b3`, preserving Codex `4c170393`.
+Shared-master/index contents were unchanged. This is source-equivalence
+evidence, not new independent-review
+clearance or a VM-rerun decision. No selected package or cluster state changed.
+
+The initial utility for the related six-stage quick batch called
+`dev-session current` from the workspace root instead of the specified
+tracking directory and returned no session. It ran zero checks and left no
+process; this was a launch-CWD error, not a source/test failure or evidence
+of a missing trusted binding. The parent immediately reconfirmed the exact
+slug from the tracking directory with both environment identity variables
+absent. The lead now reports the fresh correct-CWD batch passed all six
+stages, exit 0 in 1175.12 seconds with `parity=1`, no remaining handle and
+no reported local-kernel build. The supplied final results are:
+
+| Stage | Result | Elapsed seconds |
+| --- | --- | --- |
+| 1: generic policy/transition | 40 runs / 250 assertions, all failure/error/skip counts zero | 2.704 |
+| 2: provider maintenance / runner / selected CLI | 13/121, 10/27, 8/105 runs/assertions respectively, all failure/error/skip counts zero | 60.651 |
+| 3: default smoke | Exit 0 | 428.045 |
+| 4: explicit API46 smoke | Exit 0 | 654.618 |
+| 5: provider default no-build | Exit 0 | 23.366 |
+| 6: root no-build | Exit 0 | 5.625 |
+
+These are lead-supplied results, not architect reruns or inferred counts.
+
+The lead captured the complete inventories for the prepared
+[rebase review packet](storage-profile-rebase-review.md), including all
+histories and no migrations:
+
+| Review range | Commits / paths | Diff | Tree |
+| --- | --- | --- | --- |
+| Generic `924c0ec..4ef298b3` | 1 / 4 | 175 additions / 3 deletions | `2c4c4b7e` |
+| Provider `8f8d8ecf..399c3302` | 4 / 25 | 5288 additions / 67 deletions | `557303f2` |
+| Consumer `93389c3..6d1b9c4d` | 1 / 2 | 9 additions / 9 deletions | `17967cd9` |
+
+Retained `reviewer0` completed those actual committed ranges in all four
+HIGH composition/history lanes with no findings. Saved Sol/xhigh/read-only
+settings were unchanged, without override. Report
+`cd4a54af-c26f-4d36-95e7-8a8fb72f2440` confirms exact clean heads/trees/diff
+hashes and coherent 1/4/1 histories, no obsolete iterations and no migrations.
+Original unchanged functional reviews and scoped host/native evidence are
+retained; they are not relabeled reruns.
+
+The lead reports the fresh rebased-package launcher passed, exit 0 in
+245.623 seconds with `parity=1`: four existing root checks passed in
+238.146 seconds, default package built in 7.296 seconds, and the actual
+package-content proof exited 0. The parent directly read results/contracts:
+`runtime_sources_equal=1`, `codex_sources_equal=1`, `contract_equal=1`, schema
+1, policy 3, `providers=2`, `profile_loader=1`. Package:
+`/nix/store/zmwh78dk1vjh2b91qnibjl682rb8hmwc-dev-workspace-0.2.0`;
+tools: `/nix/store/vah0176g8h75vasl0nlg0farmaacybid-vpsfree-dev-workspace-tools-0.1.0`.
+Selected Codex source revision is `4c170393a96ed0a6ac2e43488d073f6fcab36132`;
+canonical contract SHA is
+`33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`.
+Private evidence `/tmp/storage-profile-rebased-package.xnradz5x` is unread
+by the architect; no process remains according to the lead. A redundant
+post-launch verifier received its SHA instead of the package argument and
+exited before verification. It supplies no evidence and does not invalidate
+the correctly parameterized stage-3 proof; no rerun was requested.
+
+Latest lead CI metadata confirms generic `37113228573` and provider
+`37114037083` both succeeded. Source holds are unchanged. Ordinary SSH
+empty-lease remote anchors now retain the exact pinned dependencies:
+
+- Generic `backup/2026-09-23-storage-redesign-workspace-runtime-4ef298b3`
+  points to `4ef298b30f9cdbdcfe02bf6526e0f69ecc9bf7b4`.
+- Provider `backup/2026-09-23-storage-redesign-workspace-provider-399c3302`
+  points to `399c33023a568a8d7a21e4e4df52829628720a28`.
+
+These preserve published reachability without default integration; the lead
+confirms both remote anchor readbacks match their exact heads. Normal SSH
+exact-lease root feature publication is complete. Remote readback confirms
+`6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25`, with remote master unchanged at
+`93389c3373647fb3dc2d7ee15efa9acb93a8c62f`. Public capture-comparison is also
+complete at that exact base/head, with base label `Merge base` against locally
+available `origin/master`; historical registration `initial_base_sha` is
+preserved. Current phase is operator activation handoff after lead-owned
+tracking reconciliation. The package remains
+unselected: no activation, public Node refresh/release, VPS/NAS payload
+acceptance, merge, node-quiet, repair or APPLY authority is implied.
+
+The lead also reports API46 broad CI completed with 117 of 118 jobs passing;
+the sole failed job is `storage/restore-after-reinstall-remote`. The supplied
+read-only implementer diagnosis identifies a Bunny `queue_delete`
+continuation timeout in the node2 StorageStatus updater's `RpcClient.close`
+ensure path; `abort_on_exception` exits the daemon. Transaction 40 / handle
+5221 send ran without persisted completion, leaving chain 9 locked. Restart
+loses the fixture-only zero `start_delay` and reloads the production 90-minute
+delay, beyond example 3's 900-second wait at action 9. Dependent example 4
+then returns HTTP 423. The compared Node RPC, StorageStatus, Bunny, send,
+CLI and fixture files are reported byte-identical to upstream `878a0d10`;
+the diagnosis is not attributed to this feature or rebase. The initiating
+broker-ack timeout remains unexplained; do not infer startup authentication
+errors or claim safe chain recovery from this evidence.
+This is a separate Node reliability/restart-fixture follow-up, with no fix,
+manual unlock or blind rerun authorized here. The workspace composition
+retains default API `5c76e329` and a disabled storage profile: the failure
+limits broader storage acceptance, not rebase-only package activation.
+The architect has not inspected private logs, run a test or polled CI.
+
+#### Ordered source and verification work
+
+1. **Generic first.** Preserve published `2b67af62` and rebase its single
+   policy commit onto `924c0ec`. Keep exactly the schema-1/policy-3 change,
+   transition regressions, preservation wording and owning documentation;
+   no duplicate contract or new migration. Run the focused policy/transition
+   cases through `test/workspace_host_test.rb` in the declared Nix toolchain,
+   including policy-2 forward adoption, policy-3 downgrade refusal, malformed
+   contracts and provider adoption. Give the retained reviewer the complete
+   new one-commit series plus range-diff and upstream overlap. Publish the
+   resulting exact reviewed head over SSH before downstream generation.
+2. **Provider second.** Rebase the existing four coherent commits onto
+   `8f8d8ecf`. In the owning dependency commit, select that published generic
+   head in `flake.nix`; the lead regenerates `flake.lock` with Nix. Preserve
+   upstream `codex-web`, all unaffected nodes/follows, default Admin/OS/React
+   pins and default-disabled profile behavior. Keep maintenance, profile and
+   native-fixture commits separate and patch-equivalent outside the intended
+   dependency resolution. Focused maintenance/runner/command tests and the
+   existing default/explicit-API46 Nix evaluation cover this composition.
+   Review the changed dependency/compatibility surface and final four-commit
+   inventory, then publish the exact provider head.
+3. **Consumer last.** Rebase the one pin commit onto current `93389c3`
+   (or a newly recorded current master if it advances). Select the new exact
+   published provider through the existing root URL; generate the lock rather
+   than adding a parallel generic input. Verify that only intended dependency
+   metadata changes, with upstream Codex changes preserved and all follows
+   intact. Capture the actual final base/head/tree and complete one-commit,
+   two-path diff; historical registration `initial_base_sha` is not that base.
+   Run the no-build evaluation, affected composition review, then the existing
+   four root checks (`deployment-contract`, `agent-instructions`,
+   `agent-team-policy`, `cluster-provider-composition`), default-package build
+   and actual packaged contract/helper-byte proof. Publish with normal hooks
+   and exact leases. Preserve old evidence/refs; do not alter shared-master
+   contents or unrelated index changes during these feature operations.
+
+The new generic package must keep its Ruby helper, portal, `codex-web` source,
+Go module/vendor hash and browser protocol artifacts together. The existing
+`nix/workspace-portal.nix` package check runs Go/JS and the Ruby session/host
+suites; use that packaged verification, including new creation/recovery tests,
+instead of inventing a live session-creation scenario. Independent review
+should cover the affected general/composition/compatibility concerns and the
+final history/no-migration conclusion. Preserve prior provider review and
+direct-fix evidence; do not label unrelated provider lanes rerun.
+
+**VM evidence reuse:** the observed upstream delta does not justify repeating
+either existing VM solely because the package derivation changes. Carry the
+`45d7ce88` native PASS and earlier host-migration PASS forward only after the
+final comparison confirms unchanged maintenance/profile/fixture/runner bytes,
+OSVM/API46 and other relevant guest inputs, and unchanged schema/policy-3,
+host-path/module/migration semantics. The host test
+`nix/tests/host-migration.nix` exercises host substrate forward/reverse paths;
+it does not exercise the changed portal creation flow. Provider `AGENTS.md`
+requires that VM when migration behavior or its upstream host-state contract
+changes; neither is changed by the inspected upstream delta. A material
+conflict or changed interface invalidates the affected proof and requires
+rerunning that existing test after review, not adding a new scenario. New
+package/source/contract proof is required regardless of VM reuse.
+
+#### Activation, rollback and early root integration
+
+After those gates, the external operator can activate the exact new reviewed
+source through the existing public `workspace-host switch --source`, once
+the lead/team and other managed sessions are idle. The active lead cannot
+invoke it as an idle probe. Verify actual selected generation, matched
+helper/portal/provider contracts, existing-session/portal availability and
+read-only retained-cluster status before declaring activation successful.
+Do not run old unselected helpers or relax transition/adoption refusals.
+There is no cluster reset, boot, hold release or storage repair implied here.
+
+Keep the complete maintenance-aware provider/runtime composition together.
+Policy 3 intentionally refuses a policy-2 target while any registered cluster
+state exists, even with the profile disabled or no pending hold. Recover
+forward with the same or a newer reviewed compatible composition; retained
+backups are evidence, not authority to use a pre-policy-3 recovery binary.
+The profile remains off by default and retains the old API default pin;
+enabled use still requires API scheduler/Plan support and the existing
+preserving-seed/mixed-version gates. Activation affects the workspace runtime
+for managed sessions; it does not deploy storage changes to shared or
+production nodes. Strict, node-quiet, repair and APPLY remain off.
+
+**Recommendation on the user's merge question:** yes, integrating the narrow
+root package pin after successful activation and its own review/checks is a
+reasonable independent milestone. It need not wait for the vpsAdmin storage
+redesign or full-cluster payload work. Obtain explicit approval for the
+workspace repository's `master` first, capture the final comparison, refresh
+current-master ancestry and integrate fast-forward only. Keep the feature
+ref and this session active for its remaining work. Activation approval and
+this recommendation are not merge approval.
+
+Exact published generic/provider feature commits can remain intentional root
+dependencies; upstream integration is not technically required for an exact
+Nix pin. For that choice, retain published reachability for those exact
+commits, record them as dependencies, and prevent later routine repins from
+silently dropping maintenance support. A lock/NAR hash alone is not a promise
+that a force-rewritten, unreachable upstream commit stays retrievable.
+The lead has created the ordinary exact Git remote anchors listed in the
+checkpoint after review; retain them with the pinned commits. This uses no
+new enforcement mechanism and authorizes no further ref operation here.
+
+There is a concrete composition hazard in integrating only the generic policy
+first: `8f8d8ecf:dev-clusters/vpsadmin/bin/devcluster` still routes
+`transition-adopt` directly to `devcluster_adopt_package_transition`, whereas
+the feature uses `maintenance_adopt` and guards ordinary commands during a
+hold. A legacy provider updated to generic policy 3 could advertise an equal
+policy while lacking those guards. Do not accept that as a safe downstream
+update. If upstream integration is preferred, coordinate generic policy 3
+with at least the provider maintenance prerequisite, or the complete provider
+feature once its own release gates and approval are satisfied. The small
+host-policy/hold prerequisite can be integrated independently of future
+storage redesign; full enabled-profile readiness remains a separate claim.
+This strategy does not authorize a new split, default merge or updater change
+within the present rebase task. Until coordinated integration is approved,
+the exact reviewed complete feature pins are the bounded alternative.
 
 ### Ownership and configuration boundary
 
@@ -1297,14 +1576,14 @@ was clean at `58df04cf76d1bf424dd4cb2a21585708fa38e7d4`, with fetched
 `origin/master` `c5d8bed5` still an ancestor, the exact old `3f539b0f` backup
 preserved and shared `master`/index untouched.
 
-The latest lead-reported normal pinned-Git rebase moved that clean consumer
-feature from `58df04cf` to current prepared base
+An earlier lead-reported normal pinned-Git rebase moved that clean consumer
+feature from `58df04cf` to prepared base
 `8990ecca0cea7a3b59dd88e31138b177500bc43a`, a shared-master coordination commit.
 SSH-fetched `c5d8bed5` remains an ancestor; relevant flake/input/procedure/
 configuration bytes have no difference. Shared-master HEAD and index digest
 were unchanged before/after the operation, the feature is clean, and the
 exact `3f539b0f` backup, path/name/branch registration and historical initial
-base remain intact. The completed consumer pin is now `492fdf8e` and its
+base remained intact. That completed consumer pin was `492fdf8e` and its
 actual inventoried review base is `8990ecca`, with one commit and two paths
 as recorded in the current checkpoint. This uses the final pin inventory,
 not registration `initial_base_sha`. Re-establish the actual base if another
@@ -1318,11 +1597,21 @@ complete. The package remains unselected; full-cluster release is separate.
 This source checkpoint adds no schema, helper, interface or
 verification scenario and does not change the recorded review lineage.
 
+The subsequent user-authorized rebase replaces that candidate with exact
+consumer `6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25`, actual review base
+`93389c3373647fb3dc2d7ee15efa9acb93a8c62f`. The complete composition review
+and new package proof passed as recorded above. The lead confirms root feature
+publication, exact remote dependency-anchor readbacks and public
+capture-comparison at that base/head are complete; remote master is unchanged.
+Package selection and activation have not occurred. Historical registration
+metadata and backups remain evidence, not the final review base.
+
 #### Proposed activation boundary
 
 The lead-reported review and verification prerequisites above are complete
-for exact consumer `492fdf8e`. The following remains an operator handoff,
-not an executed or scheduled package transition.
+for exact consumer `6d1b9c4d`; root publication and comparison are also
+complete. The lead owns the remaining tracking handoff. The following is not
+an executed or scheduled package transition.
 
 Finish the existing source checks, complete independent review and resolve its
 findings, run the required host-migration/retained-services VM checks, and

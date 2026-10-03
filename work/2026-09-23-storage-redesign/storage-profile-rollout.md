@@ -9,10 +9,11 @@ The latter proves services-only preservation and interrupted-copy/new-boot
 behavior; its hold remains `starting_copied` and unreleased. Historical failures
 and focused corrections remain recorded in [state](state.md).
 
-The generated consumer pin is committed at `492fdf8e` on actual review base
-`8990ecca`; independent composition review completed with no findings in all
-four HIGH-risk lanes. The consumer no-build check, all four root checks,
-package realization and contract/source-byte proof passed. No workspace
+The rebased consumer pin is published at `6d1b9c4d` on actual review base
+`93389c33`; independent runtime/provider/consumer composition review completed
+with no findings in all four HIGH-risk lanes. The six-stage quick batch, all
+four root checks, new package realization and installed runtime/contract/helper/
+Codex source-byte proof passed. No workspace
 package activation, registered-cluster boot or populated-cluster provisioning
 has occurred for this slice. The cluster remains stopped with retained disks.
 The earlier reset authorization does not apply to the user-created VPS.
@@ -26,9 +27,9 @@ hold exact operator selections and outcomes as the authorized trial proceeds.
 | Component | Selection | Status |
 | --- | --- | --- |
 | API | `46b3bf6f9549eaf579053bc296ebf19c417bb848` | Reviewed, directly remediated, published; API CI 27/27 passed. |
-| Generic runtime | `2b67af62b40149e7554bab0c31b139cd52c963c1` | Reviewed, published; schema 1/policy 3. |
-| Provider | `45d7ce88fcb3a3d528f59b240c081667666526e3` | Published; original whole-series/affected-lane review and direct bounded corrections. Host migration passed at `f36`, native fixture at `45d7ce88`; composed package checked. |
-| Workspace consumer | `492fdf8e57639c83befed3e938fdd4b670e1bdbe` | Published; complete one-commit pin reviewed without findings or migrations. Package built and verified; unselected. |
+| Generic runtime | `4ef298b30f9cdbdcfe02bf6526e0f69ecc9bf7b4` | Reviewed, published on `924c0ec2`; schema 1/policy 3. |
+| Provider | `399c33023a568a8d7a21e4e4df52829628720a28` | Published on `8f8d8ecf`; rebased composition reviewed without findings. Original functional reviews/direct corrections retained. Host migration passed at `f36`, native fixture at `45d7ce88`; unchanged relevant bytes/inputs support carrying those observations forward. |
+| Workspace consumer | `6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25` | Published on `93389c33`; complete one-commit pin reviewed without findings or migrations. New package built and verified; unselected. |
 | OS | `8d05dc3ae1fb71c1385609990acdf093af49ceec` | Previously reviewed/published provider source, unchanged. |
 | React | `aa2f60b89df65d2f987be48784ed42bab7010833` | Unchanged selected path source; honest embedded provenance remains separate. |
 
@@ -108,12 +109,17 @@ mask evidence.
 
 Prepared, not executed. Required review, both VM gates, source publication,
 generated pin and composed-package checks are complete. Reviewed source head:
-`492fdf8e57639c83befed3e938fdd4b670e1bdbe`. Built package:
-`/nix/store/g1jwv2598a5ig64f8yk1xg62mminkzpi-dev-workspace-0.2.0`.
+`6d1b9c4d63d900dbe8fe5b8790c8f92b28ab0b25`. Built package:
+`/nix/store/zmwh78dk1vjh2b91qnibjl682rb8hmwc-dev-workspace-0.2.0`.
 Host/tools canonical contract bytes match schema 1/policy 3 and SHA256
 `33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`.
-The package proof also checked reviewed helper/source bytes. Evidence:
-`/tmp/storage-profile-composed-package._oa5spvo`, exit 0 in 250.02s, parity 1.
+The package proof also checked reviewed host/session/provider helpers and
+selected Codex `4c170393` source bytes. Evidence:
+`/tmp/storage-profile-rebased-package.xnradz5x`, exit 0 in 245.623s, parity 1.
+Public comparison capture records exact base `93389c33` and head `6d1b9c4d`.
+Remote backup refs preserve exact pinned runtime/provider dependencies; their
+names and readback results are recorded in [state](state.md). This does not
+integrate any default branch.
 Use the normal installed command from the external terminal:
 
 ```sh
@@ -128,6 +134,12 @@ an idle probe or arrange background activation. No activation is scheduled.
 After the operator reports success, verify the public selected package/provider
 before the maintenance trial. Preserve retained state on refusal and recover
 forward through the same or a newer reviewed compatible public package.
+
+Successful activation can support an early merge of this narrow workspace pin
+without waiting for the storage redesign. That merge requires explicit approval
+for workspace `master`, a current comparison and fast-forward integration.
+Future repins must preserve the maintenance-aware provider together with policy
+3 or newer. The session and remaining storage feature branches stay active.
 
 ## Maintenance and preservation
 
