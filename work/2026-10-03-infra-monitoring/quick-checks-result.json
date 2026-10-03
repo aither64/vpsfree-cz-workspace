@@ -1,0 +1,20 @@
+{
+  "session": "2026-10-03-infra-monitoring",
+  "workspace": "/home/aither/workspace/ai/vpsfree.cz",
+  "operation": "quick-checks watcher sequential batch",
+  "started_utc_epoch": 1791038396,
+  "finished_utc_epoch": 1791038411,
+  "elapsed_seconds": 15,
+  "working_directory": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration",
+  "head": "b66c929bb7c202ad31bd8994a691ade14c40ebf0",
+  "staged_index_tree": "f9dad7c34735c8d6e16c3ebc114bd0b2c462980c",
+  "commands": [
+    {"argv": ["nix", "eval", "--impure", "--no-write-lock-file", "--json", ".#confctl.machines", "--apply", "ms: builtins.mapAttrs (_: m: { inherit (m.metaConfig) machineType; }) ms"], "exit_status": 0, "elapsed_seconds": 3},
+    {"argv": ["nix", "build", "--no-write-lock-file", "--no-link", ".#checks.x86_64-linux.infra-monitoring-config", ".#checks.x86_64-linux.infra-monitoring-rules"], "exit_status": 1, "elapsed_seconds": 3},
+    {"argv": ["nix", "build", "--no-write-lock-file", "--no-link", ".#checks.x86_64-linux.vps-autostart-prometheus-rules", ".#checks.x86_64-linux.process-count-prometheus-rules"], "status": "not_run_due_to_prior_failure"}
+  ],
+  "result": "failed",
+  "failure_excerpt": "error: attribute 'monitor' missing at modules/clusterconf/monitor/default.nix:308:41 while evaluating infra-monitoring-config.nix checkMonitor; command 2 exit 1",
+  "unexpected_local_kernel_build": false,
+  "running_operations": []
+}
