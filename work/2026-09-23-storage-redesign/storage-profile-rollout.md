@@ -6,7 +6,8 @@ The user requested a current-master rebase, activation and workspace/master
 integration of the admission fix, with storage work aside and no CI wait.
 Upstream already contains the earlier maintenance/profile/native support.
 One residual four-file fix is published as provider `cd81e83f` on `e1bb5cf3`;
-the root generated pin is published as `1acb2077` on `c3124834`. Current
+the root generated pin was replayed without a source delta to published
+`86fe8f20` on the owned tracking checkpoint `fd7d07a4`. Current
 upstream generic6a and Codex32775 remain selected by the lock graph.
 
 The local package batch passed0/252.856s/parity1: four existing root checks,
@@ -14,8 +15,10 @@ default-package build and actual corrected-script/runtime/Codex/contract proof.
 All eight equality fields passed, schema1/policy3/providers2/profile_loader1.
 Package `/nix/store/s7y4bgq7iw0idkv5japb538kfwphk4nf-dev-workspace-0.2.0`;
 tools `/nix/store/q49yi3hizfraywb6d0fwi3drzzlylqjq-vpsfree-dev-workspace-tools-0.1.0`.
-This package is built and unselected. External idle public activation and
-verification precede the already-authorized workspace/master fast-forward.
+Final evaluation selects that exact tested output; final no-build and public
+comparison/publication are complete. The operator completed public activation; selected-generation/script/contract/
+Codex and four core service-binding checks passed. Normal workspace/master
+fast-forward and SSH publication reached86fe; final readback is recorded in state.
 Retained services delivery, provision, scheduling, payload and API diagnostics
 remain held. This package-only continuation performed no cluster operation.
 

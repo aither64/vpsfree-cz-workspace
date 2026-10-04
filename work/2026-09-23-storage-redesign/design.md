@@ -15,7 +15,7 @@ lead-owned.
 
 ### Current execution checkpoint
 
-**Lead-reported phase: package proof passed; final handoff preparation pending.** Normal
+**Lead-reported phase: activation verified and workspace/master integration complete.** Normal
 provider rebase dropped the upstream-equivalent native commit and retained
 exactly the four corrected `0b0ba9d8` blobs in one residual fix:
 `cd81e83f91a552eb0138e58cb76312784a2988df` on `e1bb5cf3`, tree
@@ -54,14 +54,50 @@ No unexpected kernel build or owned handle remains. Package Ruby test logs
 retain Git-identity-unknown stderr; all command and suite statuses are zero.
 This establishes no cause for the earlier broker failure. Private evidence
 `/tmp/storage-workspace-rebase-20261004.6uinnel5/package` remains unread by the
-architect. The package is **unselected**. Head1acb publication/comparison are
-complete; the lead's tracking checkpoint and any equivalent pin replay, final
-head/output comparison and final comparison capture remain pending.
-The lead's public host status now selects package `nl29dilg`, tools `xx5v`,
-with old provision hash prefix `1c067262`; the fix is not activated. One CI
-metadata read found no superseded live provider run; current CI is not awaited.
-No storage, cluster, scheduler, activation or merge operation occurred in this
-slice. Workspace/master approval remains conditional on activation verification.
+architect. The package was unselected at that preparation checkpoint.
+
+The lead published the normal three-record tracking commit
+`fd7d07a41ea7e71c374d19efd06bbfab476a128c`, then replayed the pin onto it as
+`86fe8f201ad041bbbb7bfabb6783cc09debde46c`, tree
+`3f59ae7c95253b6b2b412aad0f6e557319156fed`. Range-diff is `=`; the exact
+`429bf72d` patch, message and both flake hashes (`d2e55a04` / `1562ac96`)
+remain unchanged. Root/index are clean and foreign work was untouched.
+Final evaluation exited 0 and resolves the **same tested s7y4 package**;
+final no-build also exited 0. No extra realization, VM or review is claimed.
+Exact-lease feature publication/readback at86fe and public comparison capture
+basefd7/head86fe completed, preserving historical registration metadata;
+remote master was still fd7 at that checkpoint. Provider cd81 remains the unmerged fix on e1bb,
+whose original feature support is already upstream. Private references
+`/tmp/storage-workspace-rebase-20261004.6uinnel5/consumer-replay.json` and
+`handoff.json` remain unread by the architect.
+
+After the user reported activation and said to proceed, the lead verified
+public host status selecting the exact **s7y4 package / q49 tools** above.
+Selected-byte proof passed all eight equality flags, schema 1/policy 3/providers
+2/profile_loader 1, with active/profile Codex realpaths equal. Four owned core
+services are active/running with ExecStart through the selected profile.
+Public session identity and retained roster settings passed. Own provider
+status exited 0 and reported stale/ready true/bridge, maintenance phase released
+and pending false; no refresh, update, storage operation or second switch ran.
+This supersedes the earlier nl29/xx5v selection with old provision scripts.
+
+Fetched/shared master fd7 was unchanged, so no rebase or new build was needed.
+The lead refreshed public comparison basefd7/head86fe, preserving historical
+initial metadata, then normally fast-forwarded shared master to
+`86fe8f201ad041bbbb7bfabb6783cc09debde46c`: only two flakes changed, no paths
+were staged. Index entries outside those two paths and the complete before/
+after dirty status were identical. Normal SSH master publication completed;
+exact remote readback confirms **master and feature both at86fe**. Refs and
+backups remain. A later tracking-only descendant does not change this source
+integration evidence.
+
+The user's workspace/master scope is fulfilled without waiting for CI or
+integrating provider/Admin/OS defaults. Selected host proof does not deliver
+corrected scripts into the retained services guest. Guest delivery, provision,
+payload, scheduler and API trials remain held; the session stays active.
+Private evidence `/tmp/storage-workspace-rebase-20261004.6uinnel5/activation`
+is referenced only and unread by the architect. These are lead-reported
+results, with no architect runtime operation or additional acceptance claim.
 
 ### Source decision and smallest commit shape
 

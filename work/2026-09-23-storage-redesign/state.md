@@ -6,15 +6,17 @@ lifecycle: active
 
 ## Current status
 
-2026-10-04 current phase: fast rebase and package preparation for the provider
-admission fix, followed by external activation and workspace/master integration.
+2026-10-04 current phase: workspace admission-fix activation VERIFIED and
+workspace/master integration complete. The remaining storage work stays held.
 The user explicitly directed: “rebase, let's activate it and merge the fix again ...
 while keeping the rest of the storage work aside. do not wait for CI”. This
 covers the workspace correction; no other default integration or cluster/storage
 operation is authorized by this continuation. CI will not be awaited.
 
-Fresh fetches select generic master6a972b9a, provider mastere1bb5cf3 and workspace
-masterc3124834. Generic maintenance policy4ef is already upstream; provider also
+### Rebase preparation before activation
+
+Initial fresh fetches selected generic master6a972b9a, provider mastere1bb5cf3
+and workspace masterc3124834. Generic maintenance policy4ef is already upstream; provider also
 contains the earlier maintenance/profile/native series, but not the four-path
 admission correction. Architect0 owns the bounded rebase/composition brief,
 implementer0 owns any source conflict/URL edits, and the lead owns normal
@@ -35,26 +37,49 @@ published backup ref. Root rebase is complete at
 exactly two flakes (5 additions / 5 deletions). The generated lock changes only
 four provider metadata leaves; generic6a/Codex32775 and all other nodes/follows
 remain current upstream. Final no-build evaluation passed. Both feature heads
-and backups have exact SSH readbacks; root master remains c312. Public comparison
+and backups had exact SSH readbacks; root master was c312 at that checkpoint. Public comparison
 captured basec312/head1acb, preserving initial registration metadata.
 
 The old-CWD watcher preflight ran zero commands; the next launch refused a
 superseded hardcoded public generation before checks. Neither supplies check
 evidence. The private driver now invokes the stable public command from the
 literal tracking CWD, and a fresh Luna/low package watcher completed the four existing
-root checks/default build/output proof; final results are recorded below. Public status now
-reports selected package `nl29dilg`, whose provision hash remains the old
-`1c067262...`; the correction is not selected. CI metadata was read once only to
+root checks/default build/output proof; final results are recorded below.
+Before activation, public status selected package `nl29dilg` with old provision
+hash `1c067262...`; the correction was not selected at that checkpoint. CI metadata was read once only to
 ensure no superseded provider run remained; current-head CI is not awaited.
-Activation and workspace/master integration remain pending; storage is held.
+Activation and workspace/master integration were pending at that checkpoint.
+Storage remains held.
 Private execution evidence: `/tmp/storage-workspace-rebase-20261004.6uinnel5`.
 
-The current selected packagecfrf8m has schema1/policy3 but still contains the old
-bare admission checks, so the later fix needs package selection and services
-delivery. The retained cluster trial, scheduling and separate API diagnostics
-remain held; this turn will perform no storage trial. Session remains active.
+The earlier selected packagecfrf8m had schema1/policy3 and old bare admission
+checks. Workspace selection is now fixed; retained services delivery remains
+separate. The retained cluster trial, scheduling and separate API diagnostics
+remain held; this continuation performed no storage trial. Session remains active.
 
-### Current package proof and next action
+### Activation and integration result, 2026-10-04
+
+The user reported the public switch complete and said “done, proceed”. Public
+host status selects the exact tested `s7y4` package and `q49` tools; active/profile
+Codex resolve to the same executable. All eight selected-byte equality checks
+passed at schema1/policy3/providers2/profile_loader1. The four core owned
+workspace services are active/running with their ExecStart bound through the
+selected profile. Public same-session current and retained roster commands pass.
+Own provider status exited0 and reports stale/readytrue/bridge, released with
+pendingfalse; no refresh or cluster mutation was performed. Selected package
+proof does not update or certify the retained services guest scripts.
+
+The actual shared/remote master remained fd7, so no further rebase or build was
+needed. Public comparison was refreshed at basefd7/head86fe. Shared master
+fast-forwarded normally to `86fe8f201ad041bbbb7bfabb6783cc09debde46c`, changing
+only the two flakes. No paths were staged for integration; foreign working-tree
+and index entries were preserved. Normal SSH publication completed; exact final
+remote readback confirmed both master and feature at exact86fe. This implements the user's explicit
+workspace/master direction without awaiting CI. No other repository default or
+storage operation was integrated/performed, and all feature/backup refs remain.
+Evidence: `/tmp/storage-workspace-rebase-20261004.6uinnel5/activation`.
+
+### Completed package proof and activation handoff
 
 Fresh Luna/low verification passed0/252.856s/parity1, stages1/2/3 all0:
 four existing root checks, default package and actual packaged source proof.
@@ -67,16 +92,41 @@ chatter from test fixtures; the reported command/suite results remain all0.
 Evidence: `/tmp/storage-workspace-rebase-20261004.6uinnel5/package`.
 Package `/nix/store/s7y4bgq7iw0idkv5japb538kfwphk4nf-dev-workspace-0.2.0`;
 tools `/nix/store/q49yi3hizfraywb6d0fwi3drzzlylqjq-vpsfree-dev-workspace-tools-0.1.0`.
-The package is built and unselected. After this tracking checkpoint, any final
+At the package-proof checkpoint the package was built and unselected. After
+that tracking checkpoint, any final
 coordination-only replay must preserve both flake hashes and resolve this same
 output; a changed output needs the existing package-equivalence proof.
 
 - [x] Preserve current upstream history and the exact reviewed residual fix.
 - [x] Publish provider and generated workspace pin with durable backups.
 - [x] Pass local no-build, four root checks, package and byte proof.
-- [ ] Finish final comparison/publication after the tracking checkpoint.
-- [ ] Operator activates through the public switch with managed sessions idle.
-- [ ] Verify the selected generation, then fast-forward/publish workspace master.
+- [x] Finish final comparison/publication after the tracking checkpoint.
+- [x] Operator activates through the public switch with managed sessions idle.
+- [x] Verify the selected generation, then fast-forward/publish workspace master.
+
+Final tracking checkpoint `fd7d07a41ea7e71c374d19efd06bbfab476a128c`
+committed only the three owned coordination records with normal hooks and SSH.
+The pin was replayed to final `86fe8f201ad041bbbb7bfabb6783cc09debde46c`,
+range-diff `=`, identical full patch/message/two flake hashes and clean index.
+Final package evaluation is the exact tested `s7y4` output; final no-build passed.
+Root feature SSH readback and comparison are complete at actual basefd7/head86fe;
+At that pre-activation checkpoint remote master was fd7. Package/source proof
+carry by equality,
+not by claiming another four-check realization on the replay. Historical
+registration/initial-base metadata remains unchanged; foreign work/index is
+preserved. Evidence: the private `consumer-replay.json` and `handoff.json`.
+
+The completed operator handoff used the ordinary public command from an
+external terminal with the lead and managed sessions idle:
+
+```sh
+workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
+```
+
+Expected output package: `/nix/store/s7y4bgq7iw0idkv5japb538kfwphk4nf-dev-workspace-0.2.0`.
+Activation verification and the authorized workspace/master fast-forward are
+now complete. No second switch or CI wait was performed. Other repository
+default integration and retained services delivery remain separate.
 
 Storage operations, scheduler resume and API diagnostics remain held. The
 session stays active and feature refs are retained.
