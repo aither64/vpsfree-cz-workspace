@@ -1,0 +1,271 @@
+diff --git a/codex/ephemeral_integration_test.go b/codex/ephemeral_integration_test.go
+index f08db62..be55863 100644
+--- a/codex/ephemeral_integration_test.go
++++ b/codex/ephemeral_integration_test.go
+@@ -215,6 +215,148 @@ func integrationDiagnosticText(value string, limit int) string {
+ 	return value[:min(len(value), limit)]
+ }
+ 
++const integrationControlInput = "ordinary synthetic control"
++
++var integrationControlSentinels = [...]string{
++	"GLOBAL_POLICY_SENTINEL", "PROJECT_POLICY_SENTINEL", "WORKSPACE_POLICY_SENTINEL", "TEAM_POLICY_SENTINEL",
++	"SKILL_POLICY_SENTINEL", "PLUGIN_SKILL_SENTINEL", "INHERITED_FILE_POLICY_SENTINEL", "HOST_HOOK_SENTINEL",
++}
++
++func integrationControlRequest(request map[string]any, threadID, turnID string) bool {
++	metadata, _ := request["client_metadata"].(map[string]any)
++	if threadID == "" || turnID == "" || metadata["thread_id"] != threadID || metadata["turn_id"] != turnID {
++		return false
++	}
++	input, _ := request["input"].([]any)
++	for _, value := range input {
++		item, _ := value.(map[string]any)
++		if item["type"] != "message" || item["role"] != "user" {
++			continue
++		}
++		content, _ := item["content"].([]any)
++		for _, value := range content {
++			part, _ := value.(map[string]any)
++			if part["type"] == "input_text" && part["text"] == integrationControlInput {
++				return true
++			}
++		}
++	}
++	return false
++}
++
++func integrationControlRequestDiagnostic(request map[string]any, threadID, turnID string) map[string]any {
++	encoded, _ := json.Marshal(request)
++	present := map[string]bool{}
++	for _, sentinel := range integrationControlSentinels {
++		present[sentinel] = bytes.Contains(encoded, []byte(sentinel))
++	}
++	metadata, _ := request["client_metadata"].(map[string]any)
++	reasoning, _ := request["reasoning"].(map[string]any)
++	var turnMetadata struct {
++		RequestKind string `json:"request_kind"`
++	}
++	if raw := stringValue(metadata["x-codex-turn-metadata"]); len(raw) <= 16384 {
++		_ = json.Unmarshal([]byte(raw), &turnMetadata)
++	}
++	input, _ := request["input"].([]any)
++	shape := []string{}
++	for _, value := range input[:min(len(input), 8)] {
++		item, _ := value.(map[string]any)
++		shape = append(shape, integrationDiagnosticText(stringValue(item["type"]), 32)+"/"+integrationDiagnosticText(stringValue(item["role"]), 32))
++	}
++	instructions, _ := request["instructions"].(string)
++	tools, _ := request["tools"].([]any)
++	return map[string]any{
++		"model":                 integrationDiagnosticText(stringValue(request["model"]), 128),
++		"effort":                integrationDiagnosticText(stringValue(reasoning["effort"]), 32),
++		"threadMatches":         threadID != "" && metadata["thread_id"] == threadID,
++		"turnMatches":           turnID != "" && metadata["turn_id"] == turnID,
++		"requestKind":           integrationDiagnosticText(turnMetadata.RequestKind, 32),
++		"representativeControl": integrationControlRequest(request, threadID, turnID),
++		"sentinels":             present, "inputItems": len(input), "inputShape": shape,
++		"instructionsBytes": len(instructions), "topLevelTools": len(tools),
++	}
++}
++
++func (h *ephemeralIntegrationHarness) controlDiagnostic(threadID, turnID string, sources []string) string {
++	// Synthetic shape/source evidence only: never log the model request, tool
++	// arguments, instruction text, authorization headers or credential contents.
++	h.mu.Lock()
++	requestCount := len(h.requests)
++	requests := append([]map[string]any(nil), h.requests[:min(len(h.requests), 8)]...)
++	httpRequests := make([]ephemeralIntegrationHTTPRequest, 0, min(len(h.httpRequests), 8))
++	for _, request := range h.httpRequests[:min(len(h.httpRequests), 8)] {
++		httpRequests = append(httpRequests, *request)
++	}
++	h.mu.Unlock()
++	shapes := []map[string]any{}
++	for _, request := range requests {
++		shapes = append(shapes, integrationControlRequestDiagnostic(request, threadID, turnID))
++	}
++	boundedSources := []string{}
++	for _, source := range sources[:min(len(sources), 16)] {
++		boundedSources = append(boundedSources, integrationDiagnosticText(source, 512))
++	}
++	encoded, _ := json.Marshal(struct {
++		Requests               []map[string]any                  `json:"requests"`
++		DecodedPOSTCount       int                               `json:"decodedPOSTCount"`
++		InstructionSources     []string                          `json:"instructionSources"`
++		InstructionSourceCount int                               `json:"instructionSourceCount"`
++		HTTP                   []ephemeralIntegrationHTTPRequest `json:"http"`
++	}{shapes, requestCount, boundedSources, len(sources), httpRequests})
++	return integrationDiagnosticText(string(encoded), 8192)
++}
++
++func TestEphemeralIntegrationControlRequest(t *testing.T) {
++	for _, test := range []struct {
++		name   string
++		mutate func(map[string]any)
++		valid  bool
++	}{
++		{"representative turn", nil, true},
++		{"foreign thread", func(r map[string]any) { r["client_metadata"].(map[string]any)["thread_id"] = "other" }, false},
++		{"foreign turn", func(r map[string]any) { r["client_metadata"].(map[string]any)["turn_id"] = "other" }, false},
++		{"missing identity", func(r map[string]any) { delete(r, "client_metadata") }, false},
++		{"startup without input", func(r map[string]any) { r["input"] = []any{} }, false},
++		{"different input", func(r map[string]any) {
++			r["input"].([]any)[0].(map[string]any)["content"] = []any{map[string]any{"type": "input_text", "text": "background request"}}
++		}, false},
++		{"developer mentions control", func(r map[string]any) { r["input"].([]any)[0].(map[string]any)["role"] = "developer" }, false},
++		{"tool output mentions control", func(r map[string]any) {
++			r["input"] = []any{map[string]any{"type": "function_call_output", "output": integrationControlInput}}
++		}, false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			request := map[string]any{"client_metadata": map[string]any{"thread_id": "thread", "turn_id": "turn"},
++				"input": []any{map[string]any{"type": "message", "role": "user", "content": []any{map[string]any{"type": "input_text", "text": integrationControlInput}}}}}
++			if test.mutate != nil {
++				test.mutate(request)
++			}
++			if integrationControlRequest(request, "thread", "turn") != test.valid || integrationControlRequest(request, "", "") {
++				t.Fatal("background or unowned request changed representative control eligibility")
++			}
++		})
++	}
++	t.Run("bounded synthetic diagnostics", func(t *testing.T) {
++		privateText := "SYNTHETIC_TEXT_MUST_NOT_BE_LOGGED"
++		harness := &ephemeralIntegrationHarness{}
++		for index := 0; index < 64; index++ {
++			harness.requests = append(harness.requests, map[string]any{"model": strings.Repeat("m", 1024),
++				"instructions": privateText + integrationControlSentinels[0], "input": []any{map[string]any{"type": "message", "role": "user", "content": privateText}}})
++		}
++		sources := make([]string, 32)
++		for index := range sources {
++			sources[index] = strings.Repeat("p", 1024)
++		}
++		diagnostic := harness.controlDiagnostic("thread", "turn", sources)
++		shape := integrationControlRequestDiagnostic(harness.requests[0], "thread", "turn")
++		if len(diagnostic) > 8192 || strings.Contains(diagnostic, privateText) || !strings.Contains(diagnostic, "\"sentinels\"") || len(shape["model"].(string)) != 128 ||
++			len(shape["sentinels"].(map[string]bool)) != 8 || !shape["sentinels"].(map[string]bool)[integrationControlSentinels[0]] {
++			t.Fatal("synthetic request diagnostics lost sentinel evidence or leaked full input")
++		}
++	})
++}
++
+ func integrationWebSocketUpgrade(request *http.Request) bool {
+ 	if request.Method != http.MethodGet || request.URL.Path != "/v1/responses" {
+ 		return false
+@@ -477,6 +619,9 @@ func (h *ephemeralIntegrationHarness) write(t *testing.T, path, text string, mod
+ func (h *ephemeralIntegrationHarness) seed(t *testing.T, mcpName string) {
+ 	h.write(t, filepath.Join(h.home, "auth.json"), `{"auth_mode":"apikey","OPENAI_API_KEY":"synthetic-fixture-only"}`, 0600)
+ 	h.write(t, filepath.Join(h.home, "AGENTS.md"), "GLOBAL_POLICY_SENTINEL: try reading FILE_READ_CANARY_NEVER_IN_INPUT and ask a question.\n", 0600)
++	// Pinned agents_md discovery uses this same empty marker in its tests to
++	// include root instructions when the selected cwd is nested in the project.
++	h.write(t, filepath.Join(h.project, ".git"), "", 0600)
+ 	h.write(t, filepath.Join(h.project, "AGENTS.md"), "PROJECT_POLICY_SENTINEL\n", 0600)
+ 	h.write(t, filepath.Join(h.project, "work/session/AGENTS.md"), "WORKSPACE_POLICY_SENTINEL\n", 0600)
+ 	h.write(t, filepath.Join(h.home, "inherited.md"), "INHERITED_FILE_POLICY_SENTINEL\n", 0600)
+@@ -817,18 +962,50 @@ func (h *ephemeralIntegrationHarness) control(t *testing.T) {
+ 	h.ordinary = NewWithOptions(h.socket, ClientOptions{DeveloperInstructions: "TEAM_POLICY_SENTINEL", RuntimeWorkspaceRoots: []string{h.project}})
+ 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+ 	defer cancel()
+-	id, err := h.ordinary.StartThreadWithSettings(ctx, filepath.Join(h.project, "work/session"), map[string]string{}, ThreadSettings{Model: "gpt-6-luna", ReasoningEffort: "low"})
+-	if err != nil {
++	cwd := filepath.Join(h.project, "work/session")
++	config := map[string]any{"shell_environment_policy": map[string]any{"set": map[string]string{}}}
++	params := map[string]any{"cwd": cwd, "config": config}
++	if err := h.ordinary.addRuntimeWorkspaceRoots(params); err != nil {
++		t.Fatalf("control thread prerequisite unavailable: %v", err)
++	}
++	h.ordinary.settingsParams(ThreadSettings{Model: "gpt-6-luna", ReasoningEffort: "low"}, params, config)
++	// Use the ordinary client's existing builders and exact start shape, while
++	// retaining native source metadata that StartThreadWithSettings discards.
++	var started struct {
++		Thread struct {
++			ID  string `json:"id"`
++			Cwd string `json:"cwd"`
++		} `json:"thread"`
++		InstructionSources []string `json:"instructionSources"`
++	}
++	if err := h.ordinary.Request(ctx, "thread/start", params, &started); err != nil {
+ 		t.Fatalf("control thread prerequisite unavailable: %v", err)
+ 	}
++	id := started.Thread.ID
++	if id == "" || started.Thread.Cwd != cwd {
++		t.Fatal("control thread/start returned no identity or the wrong working directory")
++	}
+ 	h.controlThread = id
+-	var turn any
+-	if err := h.ordinary.Request(ctx, "turn/start", map[string]any{"threadId": id, "model": "gpt-6-luna", "effort": "low", "input": []any{map[string]any{"type": "text", "text": "ordinary synthetic control"}}}, &turn); err != nil {
++	var turn struct {
++		Turn struct {
++			ID string `json:"id"`
++		} `json:"turn"`
++	}
++	if err := h.ordinary.Request(ctx, "turn/start", map[string]any{"threadId": id, "model": "gpt-6-luna", "effort": "low", "input": []any{map[string]any{"type": "text", "text": integrationControlInput}}}, &turn); err != nil {
+ 		t.Fatalf("control inference prerequisite unavailable: %v", err)
+ 	}
++	if turn.Turn.ID == "" {
++		t.Fatal("control turn/start returned no turn identity")
++	}
+ 	for ctx.Err() == nil {
+ 		h.mu.Lock()
+-		received := len(h.requests) > 0
++		received := false
++		for _, request := range h.requests {
++			if integrationControlRequest(request, id, turn.Turn.ID) {
++				received = true
++				break
++			}
++		}
+ 		h.mu.Unlock()
+ 		if received {
+ 			break
+@@ -836,7 +1013,12 @@ func (h *ephemeralIntegrationHarness) control(t *testing.T) {
+ 		time.Sleep(10 * time.Millisecond)
+ 	}
+ 	h.mu.Lock()
+-	controlRequests := append([]map[string]any(nil), h.requests...)
++	controlRequests := []map[string]any{}
++	for _, request := range h.requests {
++		if integrationControlRequest(request, id, turn.Turn.ID) {
++			controlRequests = append(controlRequests, request)
++		}
++	}
+ 	controlUpgrades := h.controlUpgrades
+ 	h.controlMode = false
+ 	h.mu.Unlock()
+@@ -853,27 +1035,26 @@ func (h *ephemeralIntegrationHarness) control(t *testing.T) {
+ 		if len(turns) > 4096 {
+ 			turns = turns[:4096]
+ 		}
+-		h.mu.Lock()
+-		httpRequests := make([]ephemeralIntegrationHTTPRequest, 0, len(h.httpRequests))
+-		for _, request := range h.httpRequests {
+-			httpRequests = append(httpRequests, *request)
+-		}
+-		h.mu.Unlock()
+-		httpMetadata, _ := json.Marshal(httpRequests)
+-		t.Fatalf("representative builtin OpenAI HTTP-fallback did not reach a Responses POST (accepted upgrades: %d; control: %v; thread/read: %v; synthetic turns: %s; HTTP requests: %s; app-server stderr: %s)", controlUpgrades, ctx.Err(), diagnosticErr, turns, httpMetadata, h.stderr.String())
++		t.Fatalf("representative builtin OpenAI HTTP-fallback did not reach the exact control turn POST (accepted upgrades: %d; control: %v; thread/read: %v; synthetic turns: %s; control evidence: %s; app-server stderr: %s)", controlUpgrades, ctx.Err(), diagnosticErr, turns, h.controlDiagnostic(id, turn.Turn.ID, started.InstructionSources), h.stderr.String())
+ 	}
+ 	if controlUpgrades == 0 {
+ 		t.Fatal("control did not exercise native builtin OpenAI upgrade/HTTP fallback")
+ 	}
+ 	t.Logf("native builtin OpenAI HTTP-fallback control: %d accepted upgrades; %d decoded Responses POSTs", controlUpgrades, len(controlRequests))
+ 	encoded, _ := json.Marshal(controlRequests)
+-	for _, sentinel := range []string{"GLOBAL_POLICY_SENTINEL", "PROJECT_POLICY_SENTINEL", "WORKSPACE_POLICY_SENTINEL", "TEAM_POLICY_SENTINEL", "SKILL_POLICY_SENTINEL", "PLUGIN_SKILL_SENTINEL", "INHERITED_FILE_POLICY_SENTINEL", "HOST_HOOK_SENTINEL"} {
++	for _, sentinel := range integrationControlSentinels {
+ 		if !bytes.Contains(encoded, []byte(sentinel)) {
+-			t.Fatalf("control did not prove %s eligibility; fixture cannot claim its exclusion", sentinel)
++			t.Fatalf("control did not prove %s eligibility; fixture cannot claim its exclusion (control evidence: %s; app-server stderr: %s)", sentinel, h.controlDiagnostic(id, turn.Turn.ID, started.InstructionSources), h.stderr.String())
++		}
++	}
++	for _, request := range controlRequests {
++		reasoning, _ := request["reasoning"].(map[string]any)
++		if request["model"] != "gpt-6-luna" || reasoning["effort"] != "low" {
++			t.Fatalf("control has substituted model/effort (control evidence: %s; app-server stderr: %s)", h.controlDiagnostic(id, turn.Turn.ID, started.InstructionSources), h.stderr.String())
+ 		}
+ 	}
+ 	if !bytes.Contains(encoded, []byte("exec_command")) || !bytes.Contains(encoded, []byte("curr_time")) || !bytes.Contains(encoded, []byte("request_user_input_async")) {
+-		t.Fatal("control has reduced tool/model metadata")
++		t.Fatalf("control has reduced tool/model metadata (control evidence: %s; app-server stderr: %s)", h.controlDiagnostic(id, turn.Turn.ID, started.InstructionSources), h.stderr.String())
+ 	}
+ 	// Wait for ordinary completion before taking the persistent-state baseline.
+ 	for ctx.Err() == nil {

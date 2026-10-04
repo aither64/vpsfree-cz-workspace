@@ -1,0 +1,753 @@
+diff --git a/codex/ephemeral_integration_test.go b/codex/ephemeral_integration_test.go
+index f26b42f..c408424 100644
+--- a/codex/ephemeral_integration_test.go
++++ b/codex/ephemeral_integration_test.go
+@@ -690,6 +690,8 @@ func (h *ephemeralIntegrationHarness) beginDiagnostics() uint64 {
+ 	h.diagnosticCallActive = false
+ 	h.diagnosticCallContext = nil
+ 	h.withheldResponse = ""
++	h.toolDiagnostic = ""
++	h.questionDispatched, h.questionObserved = false, false
+ 	return h.diagnosticGeneration
+ }
+ 
+@@ -955,6 +957,8 @@ type ephemeralIntegrationHarness struct {
+ 	httpRequests                                                  []*ephemeralIntegrationHTTPRequest
+ 	controlUpgrades, utilityUpgrades                              int
+ 	failure                                                       string
++	toolDiagnostic                                                string
++	questionDispatched, questionObserved                          bool
+ 	controlMode                                                   bool
+ 	proxyError                                                    atomic.Bool
+ 	threadIDs                                                     []string
+@@ -1009,10 +1013,20 @@ func newEphemeralIntegrationHarness(t *testing.T, binary, nft string) *ephemeral
+ 	if response.StatusCode != http.StatusNotFound {
+ 		t.Fatalf("provider connectivity probe returned %d, expected 404", response.StatusCode)
+ 	}
+-	if response, err := probe.Get(h.canaryURL); err == nil {
+-		response.Body.Close()
++	beforeProbe := h.droppedPackets(t)
++	canaryURL, _ := url.Parse(h.canaryURL)
++	probeCtx, probeCancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
++	blocked, probeErr := integrationBlockedProbe(probeCtx, canaryURL.Host)
++	probeCancel()
++	if probeErr != nil {
++		t.Fatal(probeErr)
++	}
++	if !blocked {
+ 		t.Fatal("egress guard allowed canary endpoint")
+ 	}
++	if h.droppedPackets(t) <= beforeProbe {
++		t.Fatal("owned blocked probe produced no denied packets")
++	}
+ 	if h.canaryHits.Load() != 0 {
+ 		t.Fatal("egress guard canary was reached")
+ 	}
+@@ -1020,6 +1034,88 @@ func newEphemeralIntegrationHarness(t *testing.T, binary, nft string) *ephemeral
+ 	h.start(t)
+ 	return h
+ }
++
++func integrationBlockedProbe(ctx context.Context, address string) (bool, error) {
++	host, port, err := net.SplitHostPort(address)
++	ip := net.ParseIP(host)
++	number, portErr := strconv.Atoi(port)
++	if err != nil || ip == nil || ip.To4() == nil || ip.String() != host || !ip.IsLoopback() || portErr != nil || number < 1 || number > 65535 {
++		return false, errors.New("invalid synthetic IPv4 probe endpoint")
++	}
++	// The single serial dial owns cancellation and has finished before return.
++	// No shared HTTP transport retains a detached blocked connect attempt.
++	connection, dialErr := (&net.Dialer{}).DialContext(ctx, "tcp4", address)
++	if connection != nil {
++		connection.Close()
++	}
++	return dialErr != nil, nil
++}
++
++func TestEphemeralIntegrationOwnedProbe(t *testing.T) {
++	t.Run("permitted connection is refused and closed by the probe", func(t *testing.T) {
++		listener, err := net.Listen("tcp4", "127.0.0.1:0")
++		if err != nil {
++			t.Fatal(err)
++		}
++		defer listener.Close()
++		closed := make(chan error, 1)
++		go func() {
++			connection, err := listener.Accept()
++			if err != nil {
++				closed <- err
++				return
++			}
++			defer connection.Close()
++			connection.SetReadDeadline(time.Now().Add(time.Second))
++			var buffer [1]byte
++			_, err = connection.Read(buffer[:])
++			closed <- err
++		}()
++		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
++		defer cancel()
++		blocked, err := integrationBlockedProbe(ctx, listener.Addr().String())
++		if err != nil || blocked {
++			t.Fatal("a permitted endpoint was reported blocked")
++		}
++		select {
++		case err := <-closed:
++			if !errors.Is(err, io.EOF) {
++				t.Fatal("owned probe left its connection open")
++			}
++		case <-time.After(time.Second):
++			t.Fatal("owned probe did not finish")
++		}
++	})
++	t.Run("cancellation finishes without a delayed connection", func(t *testing.T) {
++		listener, err := net.Listen("tcp4", "127.0.0.1:0")
++		if err != nil {
++			t.Fatal(err)
++		}
++		defer listener.Close()
++		ctx, cancel := context.WithCancel(context.Background())
++		cancel()
++		blocked, err := integrationBlockedProbe(ctx, listener.Addr().String())
++		if err != nil || !blocked {
++			t.Fatal("cancelled owned dial did not fail")
++		}
++		listener.(*net.TCPListener).SetDeadline(time.Now().Add(100 * time.Millisecond))
++		connection, err := listener.Accept()
++		if connection != nil {
++			connection.Close()
++			t.Fatal("cancelled probe retained a dial")
++		}
++		if err == nil {
++			t.Fatal("cancelled probe connected")
++		}
++	})
++	t.Run("only literal loopback IPv4 endpoints", func(t *testing.T) {
++		for _, address := range []string{"localhost:80", "[::1]:80", "192.0.2.1:80", "127.0.0.1:0", "127.0.0.1:65536"} {
++			if _, err := integrationBlockedProbe(context.Background(), address); err == nil {
++				t.Fatal("unsafe probe endpoint admitted")
++			}
++		}
++	})
++}
+ func (h *ephemeralIntegrationHarness) write(t *testing.T, path, text string, mode os.FileMode) {
+ 	t.Helper()
+ 	if os.MkdirAll(filepath.Dir(path), 0700) != nil || os.WriteFile(path, []byte(text), mode) != nil {
+@@ -1186,6 +1282,9 @@ func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Req
+ 		}
+ 		if toolErr != nil || !names["clock.curr_time"] || !names["request_user_input_async"] || len(names) != expectedCount || (questionControl && !names["request_user_input"]) {
+ 			h.failure = "unexpected model-facing tool schemas"
++			if generation == h.diagnosticGeneration && h.toolDiagnostic == "" {
++				h.toolDiagnostic = integrationToolDiagnostic(request, names, toolErr, expectedCount)
++			}
+ 		}
+ 		text := string(raw)
+ 		if !strings.Contains(text, "GLOBAL_POLICY_SENTINEL") {
+@@ -1226,6 +1325,13 @@ func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Req
+ 		event(map[string]any{"type": "response.output_item.done", "item": map[string]any{"type": "message", "role": "assistant", "id": fmt.Sprintf("answer-%d", index), "phase": "final_answer", "content": []any{map[string]any{"type": "output_text", "text": `{"name":"fix runtime session names"}`}}}})
+ 	}
+ 	call := func(name, ns, args string, custom bool) {
++		if mode == "question-at-cancel" && name == "request_user_input_async" {
++			h.mu.Lock()
++			if generation == h.diagnosticGeneration {
++				h.questionDispatched = true
++			}
++			h.mu.Unlock()
++		}
+ 		if !control {
+ 			h.capturePhase(generation, "tool-dispatch", "provider-output", "synthetic-tool-call", nil, "", "")
+ 		}
+@@ -1263,6 +1369,178 @@ func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Req
+ 	}
+ 	event(map[string]any{"type": "response.completed", "response": map[string]any{"id": fmt.Sprintf("response-%d", index), "usage": map[string]any{"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}}})
+ }
++
++// These private summaries never retain tool descriptions, schemas or input text.
++func integrationDiagnosticIdentifier(value any) string {
++	text, ok := value.(string)
++	if !ok || len(text) == 0 || len(text) > 64 {
++		return "[invalid]"
++	}
++	for i, c := range []byte(text) {
++		letter := c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'
++		if !letter && (i == 0 || !(c >= '0' && c <= '9' || c == '.' || c == '-')) {
++			return "[invalid]"
++		}
++	}
++	return text
++}
++
++func integrationDiagnosticKind(value any) string {
++	switch value.(type) {
++	case nil:
++		return "null"
++	case string:
++		return "string"
++	case bool:
++		return "boolean"
++	case float64, int, json.Number:
++		return "number"
++	case []any:
++		return "array"
++	case map[string]any:
++		return "object"
++	default:
++		return "other"
++	}
++}
++
++func integrationDiagnosticCount(count int) int {
++	if count > 1024 {
++		return 1024
++	}
++	return count
++}
++
++type ephemeralIntegrationToolNode struct {
++	Source, Kind, Type, Name, Namespace, Parent, Role string
++	Depth, Fields, Children                           int
++	Present                                           []string
++	ToolsKind, DeferKind                              string
++	Deferred                                          bool
++}
++
++type ephemeralIntegrationToolDiagnostic struct {
++	Predicate, ToolsKind, InputKind                         string
++	Parsed, Required, TopTools, InputItems, AdditionalTools int
++	Clock, Async, Question, Truncated                       bool
++	Nodes                                                   []ephemeralIntegrationToolNode
++}
++
++func integrationToolDiagnostic(request map[string]any, names map[string]bool, failure error, required int) string {
++	result := ephemeralIntegrationToolDiagnostic{Predicate: "required-tool-set-mismatch", ToolsKind: integrationDiagnosticKind(request["tools"]), InputKind: integrationDiagnosticKind(request["input"]),
++		Parsed: integrationDiagnosticCount(len(names)), Required: required, Clock: names["clock.curr_time"], Async: names["request_user_input_async"], Question: names["request_user_input"]}
++	if failure != nil {
++		switch failure.Error() {
++		case "missing tools", "malformed tool", "unnamed tool", "unexpected namespace", "unexpected tool representation", "action tool exposed", "duplicate tool", "missing input", "malformed input", "unexpected tool role", "missing tool schemas":
++			result.Predicate = strings.ReplaceAll(failure.Error(), " ", "-")
++		default:
++			result.Predicate = "other-predicate-error"
++		}
++	}
++	enum := func(value any, role bool) string {
++		if text, ok := value.(string); ok {
++			if role {
++				switch text {
++				case "developer", "system", "assistant", "user", "tool":
++					return text
++				}
++			} else {
++				switch text {
++				case "function", "namespace", "custom", "additional_tools", "tool_search", "web_search", "file_search", "computer", "shell", "code_interpreter", "image_generation":
++					return text
++				}
++			}
++			return "other-string"
++		}
++		return integrationDiagnosticKind(value)
++	}
++	var visit func(any, string, string, string, int)
++	visit = func(value any, source, parent, role string, depth int) {
++		if len(result.Nodes) >= 32 || depth > 4 {
++			result.Truncated = true
++			return
++		}
++		node := ephemeralIntegrationToolNode{Source: source, Parent: parent, Role: role, Depth: depth, Kind: integrationDiagnosticKind(value)}
++		tool, ok := value.(map[string]any)
++		if ok {
++			node.Type, node.Fields = enum(tool["type"], false), integrationDiagnosticCount(len(tool))
++			for _, key := range []string{"type", "name", "namespace", "role", "tools", "function", "description", "parameters", "arguments", "defer_loading"} {
++				if _, exists := tool[key]; exists {
++					node.Present = append(node.Present, key)
++				}
++			}
++			if name, exists := tool["name"]; exists {
++				node.Name = integrationDiagnosticIdentifier(name)
++			}
++			if namespace, exists := tool["namespace"]; exists {
++				node.Namespace = integrationDiagnosticIdentifier(namespace)
++			}
++			if itemRole, exists := tool["role"]; exists {
++				node.Role = enum(itemRole, true)
++			}
++			node.ToolsKind, node.DeferKind = integrationDiagnosticKind(tool["tools"]), integrationDiagnosticKind(tool["defer_loading"])
++			node.Deferred, _ = tool["defer_loading"].(bool)
++			if children, ok := tool["tools"].([]any); ok {
++				node.Children = integrationDiagnosticCount(len(children))
++			}
++		}
++		result.Nodes = append(result.Nodes, node)
++		if !ok {
++			return // An array in place of a tool is opaque, never recursively walked.
++		}
++		if children, ok := tool["tools"].([]any); ok {
++			if depth == 4 && len(children) > 0 {
++				result.Truncated = true
++				return
++			}
++			for _, child := range children {
++				if len(result.Nodes) >= 32 {
++					result.Truncated = true
++					break
++				}
++				visit(child, source, node.Name, node.Role, depth+1)
++			}
++		}
++		if child, exists := tool["function"]; exists {
++			visit(child, "wrapped-function", node.Name, node.Role, depth+1)
++		}
++	}
++	if tools, ok := request["tools"].([]any); ok {
++		result.TopTools = integrationDiagnosticCount(len(tools))
++		for _, tool := range tools {
++			if len(result.Nodes) >= 32 {
++				result.Truncated = true
++				break
++			}
++			visit(tool, "tools", "", "", 0)
++		}
++	}
++	if input, ok := request["input"].([]any); ok {
++		result.InputItems = integrationDiagnosticCount(len(input))
++		for i, value := range input {
++			if i >= 64 {
++				result.Truncated = true
++				break
++			}
++			if item, ok := value.(map[string]any); ok && item["type"] == "additional_tools" {
++				result.AdditionalTools++
++				visit(item, "additional_tools", "", "", 0)
++			}
++		}
++	}
++	for {
++		output, err := json.Marshal(result)
++		if err == nil && len(output) <= 8192 {
++			return string(output)
++		}
++		if len(result.Nodes) == 0 {
++			return `{"Predicate":"diagnostic-bound","Truncated":true}`
++		}
++		result.Truncated = true
++		result.Nodes = result.Nodes[:len(result.Nodes)-1]
++	}
++}
++
+ func integrationToolNames(request map[string]any, questionControl bool) (map[string]bool, error) {
+ 	names := map[string]bool{}
+ 	var scan func(any, string) error
+@@ -1373,6 +1651,71 @@ func TestEphemeralIntegrationToolSchemaShapes(t *testing.T) {
+ 	}
+ }
+ 
++func TestEphemeralIntegrationToolDiagnostics(t *testing.T) {
++	t.Run("shape and predicate category without schema data", func(t *testing.T) {
++		tool := map[string]any{"type": "custom", "name": "exec", "namespace": "functions", "defer_loading": true,
++			"description": "DESCRIPTION_SECRET", "parameters": map[string]any{"AUTH_SECRET": "VALUE_SECRET"}, "arguments": "ARGUMENT_SECRET"}
++		request := map[string]any{"input": []any{map[string]any{"type": "message", "content": "PROMPT_SECRET"}, map[string]any{"type": "additional_tools", "role": "developer", "tools": []any{tool}}}}
++		names, predicate := integrationToolNames(request, false)
++		if predicate == nil {
++			t.Fatal("existing unsupported-tool predicate must still fail")
++		}
++		output := integrationToolDiagnostic(request, names, predicate, 2)
++		var got ephemeralIntegrationToolDiagnostic
++		if json.Unmarshal([]byte(output), &got) != nil || got.Predicate != "unexpected-tool-representation" || got.AdditionalTools != 1 || len(got.Nodes) != 2 {
++			t.Fatal("missing sanitized mismatch shape")
++		}
++		node := got.Nodes[1]
++		if node.Type != "custom" || node.Name != "exec" || node.Namespace != "functions" || node.Role != "developer" || !node.Deferred || node.DeferKind != "boolean" {
++			t.Fatal("known scalar shape was lost")
++		}
++		for _, secret := range []string{"DESCRIPTION_SECRET", "AUTH_SECRET", "VALUE_SECRET", "ARGUMENT_SECRET", "PROMPT_SECRET"} {
++			if strings.Contains(output, secret) {
++				t.Fatal("tool diagnostic disclosed opaque data")
++			}
++		}
++	})
++	t.Run("invalid scalars and errors are fixed categories", func(t *testing.T) {
++		request := map[string]any{"tools": []any{map[string]any{"name": "unsafe/NAME_SECRET", "namespace": strings.Repeat("NAMESPACE_SECRET", 16), "type": "TYPE_SECRET", "role": "ROLE_SECRET", "defer_loading": "DEFER_SECRET"}}, "input": []any{}}
++		output := integrationToolDiagnostic(request, nil, errors.New("ERROR_SECRET"), 2)
++		var got ephemeralIntegrationToolDiagnostic
++		if json.Unmarshal([]byte(output), &got) != nil || got.Predicate != "other-predicate-error" || got.Nodes[0].Name != "[invalid]" || got.Nodes[0].Namespace != "[invalid]" || got.Nodes[0].Type != "other-string" || got.Nodes[0].Role != "other-string" || got.Nodes[0].DeferKind != "string" {
++			t.Fatal("unsafe diagnostic scalar accepted")
++		}
++		if strings.Contains(output, "SECRET") {
++			t.Fatal("invalid diagnostic data leaked")
++		}
++	})
++	t.Run("width depth input and aggregate limits", func(t *testing.T) {
++		leaf := any(map[string]any{"type": "function", "name": strings.Repeat("x", 64), "namespace": strings.Repeat("y", 64), "description": "SECRET"})
++		deep := leaf
++		for i := 0; i < 100; i++ {
++			deep = map[string]any{"type": "namespace", "name": "nested", "tools": []any{deep}}
++		}
++		tools := []any{deep, []any{[]any{leaf}}}
++		for i := 0; i < 100; i++ {
++			tools = append(tools, leaf)
++		}
++		input := make([]any, 100)
++		for i := range input {
++			input[i] = map[string]any{"type": "additional_tools", "role": "developer", "tools": []any{leaf}}
++		}
++		output := integrationToolDiagnostic(map[string]any{"tools": tools, "input": input}, nil, nil, 2)
++		var got ephemeralIntegrationToolDiagnostic
++		if len(output) > 8192 || json.Unmarshal([]byte(output), &got) != nil || !got.Truncated || len(got.Nodes) > 32 || got.AdditionalTools != 64 {
++			t.Fatal("diagnostic bounds lost")
++		}
++		for _, node := range got.Nodes {
++			if node.Depth > 4 {
++				t.Fatal("unbounded diagnostic traversal")
++			}
++		}
++		if strings.Contains(output, "SECRET") {
++			t.Fatal("bounded traversal exposed descriptions")
++		}
++	})
++}
++
+ func (h *ephemeralIntegrationHarness) control(t *testing.T) {
+ 	h.trustControlHooks(t)
+ 	h.mu.Lock()
+@@ -1781,6 +2124,10 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string, generatio
+ 				if release {
+ 					held = nil
+ 				}
++				var questionCancel context.CancelFunc
++				if mode == "question-at-cancel" {
++					questionCancel = h.noteQuestionAtCancel(generation, message, threadID, turnID)
++				}
+ 				mu.Unlock()
+ 				if mode == "lost-question" && (message.Method == "item/started" || message.Method == "item/completed") {
+ 					var params struct {
+@@ -1811,13 +2158,8 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string, generatio
+ 					errorsChannel <- nil
+ 					return
+ 				}
+-				if mode == "question-at-cancel" && message.Method == "item/started" {
+-					h.mu.Lock()
+-					cancelCall := h.activeCancel
+-					h.mu.Unlock()
+-					if cancelCall != nil {
+-						cancelCall()
+-					}
++				if questionCancel != nil {
++					questionCancel()
+ 				}
+ 				if mode == "malformed" && message.Method == "turn/completed" {
+ 					raw = []byte("{")
+@@ -1870,6 +2212,90 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string, generatio
+ 	})
+ }
+ 
++func (h *ephemeralIntegrationHarness) noteQuestionAtCancel(generation uint64, message rpcMessage, threadID, turnID string) context.CancelFunc {
++	if message.Method != "item/started" || len(message.ID) != 0 || !ephemeralID(threadID) || !ephemeralID(turnID) || len(message.Params) > 256*1024 {
++		return nil
++	}
++	var params struct {
++		ThreadID string `json:"threadId"`
++		TurnID   string `json:"turnId"`
++		Item     struct {
++			Type      string            `json:"type"`
++			Delivery  string            `json:"delivery"`
++			Questions []json.RawMessage `json:"questions"`
++		} `json:"item"`
++	}
++	if json.Unmarshal(message.Params, &params) != nil || params.ThreadID != threadID || params.TurnID != turnID || params.Item.Type != "agentMessage" || params.Item.Delivery != "async" || len(params.Item.Questions) == 0 {
++		return nil
++	}
++	h.mu.Lock()
++	defer h.mu.Unlock()
++	if generation != h.diagnosticGeneration || h.mode != "question-at-cancel" || !h.diagnosticCallActive || h.diagnosticCallContext == nil || h.diagnosticCallContext.Err() != nil || h.activeCancel == nil || h.questionObserved || !h.questionDispatched || len(h.requests) == 0 {
++		return nil
++	}
++	h.questionObserved = true
++	return h.activeCancel
++}
++
++func TestEphemeralIntegrationQuestionCancellationTarget(t *testing.T) {
++	for _, test := range []struct {
++		name   string
++		change func(*ephemeralIntegrationHarness, *rpcMessage, map[string]any)
++		want   bool
++	}{
++		{"matching native async question", nil, true},
++		{"initial user item", func(_ *ephemeralIntegrationHarness, _ *rpcMessage, item map[string]any) { item["type"] = "userMessage" }, false},
++		{"plain agent item", func(_ *ephemeralIntegrationHarness, _ *rpcMessage, item map[string]any) { delete(item, "delivery") }, false},
++		{"no questions", func(_ *ephemeralIntegrationHarness, _ *rpcMessage, item map[string]any) { item["questions"] = []any{} }, false},
++		{"malformed questions", func(_ *ephemeralIntegrationHarness, _ *rpcMessage, item map[string]any) {
++			item["questions"] = "synthetic"
++		}, false},
++		{"completed item", func(_ *ephemeralIntegrationHarness, message *rpcMessage, _ map[string]any) {
++			message.Method = "item/completed"
++		}, false},
++		{"actual server request", func(_ *ephemeralIntegrationHarness, message *rpcMessage, _ map[string]any) {
++			message.ID = json.RawMessage(`1`)
++		}, false},
++		{"foreign leaf", func(h *ephemeralIntegrationHarness, _ *rpcMessage, _ map[string]any) { h.diagnosticGeneration++ }, false},
++		{"inactive helper", func(h *ephemeralIntegrationHarness, _ *rpcMessage, _ map[string]any) { h.diagnosticCallActive = false }, false},
++		{"no provider POST", func(h *ephemeralIntegrationHarness, _ *rpcMessage, _ map[string]any) { h.requests = nil }, false},
++		{"no synthetic question dispatch", func(h *ephemeralIntegrationHarness, _ *rpcMessage, _ map[string]any) { h.questionDispatched = false }, false},
++		{"already observed", func(h *ephemeralIntegrationHarness, _ *rpcMessage, _ map[string]any) { h.questionObserved = true }, false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			ctx, cancel := context.WithCancel(context.Background())
++			defer cancel()
++			calls := 0
++			h := &ephemeralIntegrationHarness{mode: "question-at-cancel", diagnosticGeneration: 7, diagnosticCallContext: ctx, diagnosticCallActive: true, questionDispatched: true, requests: []map[string]any{{}}, activeCancel: func() { calls++ }}
++			item := map[string]any{"type": "agentMessage", "delivery": "async", "questions": []any{map[string]any{"title": "synthetic"}}}
++			message := rpcMessage{Method: "item/started"}
++			if test.change != nil {
++				test.change(h, &message, item)
++			}
++			message.Params, _ = json.Marshal(map[string]any{"threadId": "owned-thread", "turnId": "owned-turn", "item": item})
++			callback := h.noteQuestionAtCancel(7, message, "owned-thread", "owned-turn")
++			if (callback != nil) != test.want {
++				t.Fatal("wrong native question cancellation target")
++			}
++			if callback != nil {
++				callback()
++				if !h.questionObserved || calls != 1 || h.noteQuestionAtCancel(7, message, "owned-thread", "owned-turn") != nil {
++					t.Fatal("question proof is not one-shot")
++				}
++			}
++		})
++	}
++	for _, identity := range []struct{ thread, turn string }{{"foreign-thread", "owned-turn"}, {"owned-thread", "foreign-turn"}, {"", "owned-turn"}, {"owned-thread", ""}} {
++		t.Run("identity/"+identity.thread+"/"+identity.turn, func(t *testing.T) {
++			h := &ephemeralIntegrationHarness{mode: "question-at-cancel", diagnosticGeneration: 7, diagnosticCallContext: context.Background(), diagnosticCallActive: true, questionDispatched: true, requests: []map[string]any{{}}, activeCancel: func() { t.Fatal("foreign question cancelled utility") }}
++			params, _ := json.Marshal(map[string]any{"threadId": identity.thread, "turnId": identity.turn, "item": map[string]any{"type": "agentMessage", "delivery": "async", "questions": []any{map[string]any{"title": "synthetic"}}}})
++			if h.noteQuestionAtCancel(7, rpcMessage{Method: "item/started", Params: params}, "owned-thread", "owned-turn") != nil || h.questionObserved {
++				t.Fatal("foreign identity established question proof")
++			}
++		})
++	}
++}
++
+ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack string) {
+ 	h.mu.Lock()
+ 	h.mode, h.namespace, h.attack = mode, namespace, attack
+@@ -1932,10 +2358,14 @@ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack
+ 	h.capturePhase(generation, "after-utility-teardown", "boundary", "none", nil, "", "")
+ 	h.mu.Lock()
+ 	phases := append([]ephemeralIntegrationPhase(nil), h.phases...)
++	toolDiagnostic := h.toolDiagnostic
+ 	h.mu.Unlock()
+ 	// Emit before any category assertion so setup failures retain their evidence.
+ 	evidence, _ := json.Marshal(phases)
+ 	t.Logf("native utility phase evidence (fixed deny baseline=%d; ordinary thread=%s): %s", h.egressDrops, h.controlThread, evidence)
++	if toolDiagnostic != "" {
++		t.Logf("native tool-schema mismatch metadata: %s", toolDiagnostic)
++	}
+ 	if ordinaryErr := <-ordinaryDone; ordinaryErr != nil {
+ 		t.Fatal("ordinary connection disrupted")
+ 	}
+@@ -1962,6 +2392,12 @@ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack
+ 			t.Fatalf("disconnect adopted: %v", err)
+ 		}
+ 	case "question-at-cancel":
++		h.mu.Lock()
++		questionProof := h.questionObserved && h.questionDispatched && len(h.requests) > 0
++		h.mu.Unlock()
++		if !questionProof {
++			t.Fatal("matching native async question and provider dispatch were not observed before cancellation")
++		}
+ 		if !errors.Is(err, context.Canceled) {
+ 			t.Fatalf("pending question cancellation lost: %v", err)
+ 		}
+@@ -2085,6 +2521,178 @@ func (h *ephemeralIntegrationHarness) managedConflict(t *testing.T) {
+ 		t.Fatal("managed conflict reached inference")
+ 	}
+ }
++
++type ephemeralIntegrationSQLiteOwner struct {
++	Table           string
++	Prompt, OwnedID bool
++	Statements      int
++}
++
++type ephemeralIntegrationSQLiteDiagnostic struct {
++	File                                     string
++	Prompt, OwnedID, UnknownOwner, Truncated bool
++	Owners                                   []ephemeralIntegrationSQLiteOwner
++}
++
++func integrationSQLiteDiagnostic(relative string, dump []byte, ids []string) string {
++	result := ephemeralIntegrationSQLiteDiagnostic{File: "[invalid]"}
++	parts := strings.Split(relative, "/")
++	valid := len(relative) <= 128 && len(parts) <= 4 && strings.HasSuffix(relative, ".sqlite")
++	for _, part := range parts {
++		valid = valid && integrationDiagnosticIdentifier(part) != "[invalid]"
++	}
++	if valid {
++		result.File = relative
++	}
++	if len(dump) > 4*1024*1024 {
++		return `{"File":"[invalid]","Truncated":true}`
++	}
++	if len(ids) > 64 {
++		ids, result.Truncated = ids[:64], true
++	}
++	// Inspect only transient slices of the already bounded dump. SQL quoting
++	// prevents a multiline row containing a fake INSERT from claiming ownership.
++	inspect := func(statement []byte) {
++		prompt, owned := bytes.Contains(statement, []byte("RAW_UTILITY_PREFIX_SENTINEL")), false
++		for _, id := range ids {
++			if len(id) > 128 {
++				result.Truncated = true
++			} else if id != "" && bytes.Contains(statement, []byte(id)) {
++				owned = true
++			}
++		}
++		if !prompt && !owned {
++			return
++		}
++		result.Prompt, result.OwnedID = result.Prompt || prompt, result.OwnedID || owned
++		name := "[unknown]"
++		statement = bytes.TrimSpace(statement)
++		if bytes.HasPrefix(statement, []byte("INSERT INTO ")) {
++			token := bytes.TrimSpace(statement[len("INSERT INTO "):])
++			if len(token) > 0 {
++				end, start := 0, 0
++				closing := byte(0)
++				if token[0] == '"' || token[0] == '`' || token[0] == '[' {
++					closing, start = token[0], 1
++					if closing == '[' {
++						closing = ']'
++					}
++				}
++				for end = start; end < len(token) && end-start <= 64; end++ {
++					if closing != 0 && token[end] == closing || closing == 0 && (token[end] == '(' || token[end] == ' ' || token[end] == '\n') {
++						name = integrationDiagnosticIdentifier(string(token[start:end]))
++						if closing != 0 && (end+1 >= len(token) || !(token[end+1] == '(' || token[end+1] == ' ' || token[end+1] == '\n' || token[end+1] == '\t')) {
++							name = "[invalid]"
++						}
++						break
++					}
++				}
++			}
++		}
++		if name == "[unknown]" || name == "[invalid]" {
++			result.UnknownOwner = true
++		}
++		for i := range result.Owners {
++			if result.Owners[i].Table == name {
++				owner := &result.Owners[i]
++				owner.Prompt, owner.OwnedID = owner.Prompt || prompt, owner.OwnedID || owned
++				if owner.Statements < 64 {
++					owner.Statements++
++				} else {
++					result.Truncated = true
++				}
++				return
++			}
++		}
++		if len(result.Owners) >= 16 {
++			result.Truncated = true
++			return
++		}
++		result.Owners = append(result.Owners, ephemeralIntegrationSQLiteOwner{Table: name, Prompt: prompt, OwnedID: owned, Statements: 1})
++	}
++	start, quote := 0, byte(0)
++	for i := 0; i < len(dump); i++ {
++		c := dump[i]
++		if quote != 0 {
++			if c == quote {
++				if quote != ']' && i+1 < len(dump) && dump[i+1] == quote {
++					i++
++				} else {
++					quote = 0
++				}
++			}
++			continue
++		}
++		switch c {
++		case '\'', '"', '`':
++			quote = c
++		case '[':
++			quote = ']'
++		case ';':
++			inspect(dump[start : i+1])
++			start = i + 1
++		}
++	}
++	if start < len(dump) {
++		inspect(dump[start:])
++	}
++	output, err := json.Marshal(result)
++	if err != nil || len(output) > 4096 {
++		return `{"File":"[invalid]","Truncated":true}`
++	}
++	return string(output)
++}
++
++func TestEphemeralIntegrationSQLiteDiagnostics(t *testing.T) {
++	t.Run("actual owner categories without rows", func(t *testing.T) {
++		dump := []byte("BEGIN TRANSACTION;\nINSERT INTO \"logs\" VALUES('RAW_UTILITY_PREFIX_SENTINEL: PROMPT_SECRET','owned-id-secret','ROW_SECRET');\nINSERT INTO threads VALUES('owned-id-secret');\nCOMMIT;")
++		output := integrationSQLiteDiagnostic("logs_2.sqlite", dump, []string{"owned-id-secret"})
++		var got ephemeralIntegrationSQLiteDiagnostic
++		if json.Unmarshal([]byte(output), &got) != nil || got.File != "logs_2.sqlite" || !got.Prompt || !got.OwnedID || got.UnknownOwner || len(got.Owners) != 2 || got.Owners[0].Table != "logs" || !got.Owners[0].Prompt || !got.Owners[0].OwnedID || got.Owners[1].Table != "threads" || got.Owners[1].Prompt || !got.Owners[1].OwnedID {
++			t.Fatal("marker ownership not identified")
++		}
++		for _, secret := range []string{"RAW_UTILITY_PREFIX_SENTINEL", "PROMPT_SECRET", "owned-id-secret", "ROW_SECRET", "INSERT", "VALUES"} {
++			if strings.Contains(output, secret) {
++				t.Fatal("SQLite diagnostic disclosed row data")
++			}
++		}
++	})
++	t.Run("quoted multiline row cannot manufacture a table", func(t *testing.T) {
++		dump := []byte("INSERT INTO logs VALUES('quoted ''value'';\nINSERT INTO fake_owner VALUES(RAW_UTILITY_PREFIX_SENTINEL);');\nINSERT INTO \"unsafe secret\" VALUES('owned-id-secret');\nINSERT INTO \"logs\"\"secret\" VALUES('owned-id-secret');\nSELECT 'RAW_UTILITY_PREFIX_SENTINEL';")
++		output := integrationSQLiteDiagnostic("../PRIVATE_SECRET.sqlite", dump, []string{"owned-id-secret"})
++		var got ephemeralIntegrationSQLiteDiagnostic
++		if json.Unmarshal([]byte(output), &got) != nil || got.File != "[invalid]" || !got.UnknownOwner || len(got.Owners) != 3 || got.Owners[0].Table != "logs" || got.Owners[0].OwnedID || got.Owners[1].Table != "[invalid]" || got.Owners[2].Table != "[unknown]" {
++			t.Fatal("unsafe or false SQLite owner retained")
++		}
++		for _, secret := range []string{"fake_owner", "unsafe secret", "PRIVATE_SECRET", "owned-id-secret", "RAW_UTILITY_PREFIX_SENTINEL", "quoted"} {
++			if strings.Contains(output, secret) {
++				t.Fatal("SQLite diagnostic leaked unsupported content")
++			}
++		}
++	})
++	t.Run("owner count row count and size limits", func(t *testing.T) {
++		var dump strings.Builder
++		for i := 0; i < 100; i++ {
++			dump.WriteString("INSERT INTO logs VALUES('RAW_UTILITY_PREFIX_SENTINEL');")
++		}
++		for i := 0; i < 40; i++ {
++			fmt.Fprintf(&dump, "INSERT INTO table_%d VALUES('owned-id-secret');", i)
++		}
++		output := integrationSQLiteDiagnostic("private/logs_2.sqlite", []byte(dump.String()), []string{"owned-id-secret"})
++		var got ephemeralIntegrationSQLiteDiagnostic
++		if len(output) > 4096 || json.Unmarshal([]byte(output), &got) != nil || !got.Truncated || len(got.Owners) != 16 || got.Owners[0].Statements != 64 {
++			t.Fatal("SQLite diagnostic limits lost")
++		}
++		if strings.Contains(output, "owned-id-secret") || strings.Contains(output, "RAW_UTILITY_PREFIX_SENTINEL") {
++			t.Fatal("bounded metadata exposed markers")
++		}
++		oversize := integrationSQLiteDiagnostic("logs_2.sqlite", make([]byte, 4*1024*1024+1), nil)
++		if oversize != `{"File":"[invalid]","Truncated":true}` {
++			t.Fatal("oversize dump was inspected")
++		}
++	})
++}
++
+ func (h *ephemeralIntegrationHarness) snapshot(t *testing.T) map[string]string {
+ 	t.Helper()
+ 	files := map[string]string{}
+@@ -2107,6 +2715,10 @@ func (h *ephemeralIntegrationHarness) snapshot(t *testing.T) map[string]string {
+ 				return errors.New("fixture SQLite inspection failed")
+ 			}
+ 			if bytes.Contains(output, []byte("RAW_UTILITY_PREFIX_SENTINEL")) {
++				h.mu.Lock()
++				ids := append([]string(nil), h.threadIDs...)
++				h.mu.Unlock()
++				t.Logf("native SQLite marker metadata: %s", integrationSQLiteDiagnostic(relative, output, ids))
+ 				return errors.New("utility prompt persisted in SQLite")
+ 			}
+ 			h.mu.Lock()
+@@ -2114,6 +2726,7 @@ func (h *ephemeralIntegrationHarness) snapshot(t *testing.T) map[string]string {
+ 			h.mu.Unlock()
+ 			for _, id := range ids {
+ 				if id != "" && bytes.Contains(output, []byte(id)) {
++					t.Logf("native SQLite marker metadata: %s", integrationSQLiteDiagnostic(relative, output, ids))
+ 					return errors.New("ephemeral identity persisted in SQLite")
+ 				}
+ 			}

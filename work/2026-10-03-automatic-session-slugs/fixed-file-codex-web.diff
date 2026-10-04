@@ -1,0 +1,550 @@
+diff --git a/codex/ephemeral.go b/codex/ephemeral.go
+index 8bcb931..6024ed7 100644
+--- a/codex/ephemeral.go
++++ b/codex/ephemeral.go
+@@ -26,6 +26,11 @@ var (
+ 	ErrEphemeralServer    = errors.New("ephemeral utility server failed")
+ )
+ 
++// EphemeralInstructionFileContent is the exact private file content required by
++// RunEphemeralTurn. The pinned server loads both instruction files even when
++// explicit base instructions take precedence, and rejects empty files.
++const EphemeralInstructionFileContent = "Preserve the current utility task and its explicit instructions.\n"
++
+ const (
+ 	ephemeralFrameLimit  = 256 * 1024
+ 	ephemeralEventLimit  = 256
+@@ -40,8 +45,10 @@ var ephemeralPolicyJSON []byte
+ // EphemeralTurnOptions contains trusted application inputs, never browser paths
+ // or arbitrary tool/config overrides. Directory must be empty, canonical,
+ // application-owned mode 0700 outside project trees. Its parent is private too.
+-// InstructionFile is a separate canonical empty regular mode-0600 file in
+-// application-owned private state outside Directory. The helper creates no files.
++// InstructionFile is a separate canonical regular mode-0600 file containing
++// exactly EphemeralInstructionFileContent in private state outside Directory.
++// The caller keeps that unique file unchanged through teardown. The helper
++// creates no files.
+ // Global user instructions remain trusted serving-instance policy.
+ type EphemeralTurnOptions struct {
+ 	Directory       string
+@@ -347,7 +354,16 @@ func privateEphemeralPath(path string, directory bool) bool {
+ 	if directory {
+ 		return info.IsDir() && info.Mode().Perm() == 0700
+ 	}
+-	return info.Mode().IsRegular() && info.Mode().Perm() == 0600 && info.Size() == 0 && owner.Nlink == 1
++	if !info.Mode().IsRegular() || info.Mode().Perm() != 0600 || info.Size() != int64(len(EphemeralInstructionFileContent)) || owner.Nlink != 1 {
++		return false
++	}
++	file, err := os.Open(path)
++	if err != nil {
++		return false
++	}
++	defer file.Close()
++	content, err := io.ReadAll(io.LimitReader(file, int64(len(EphemeralInstructionFileContent)+1)))
++	return err == nil && string(content) == EphemeralInstructionFileContent
+ }
+ 
+ func ephemeralEmptyArrays(object map[string]any, keys ...string) bool {
+diff --git a/codex/ephemeral_integration_test.go b/codex/ephemeral_integration_test.go
+index be55863..dc0ee55 100644
+--- a/codex/ephemeral_integration_test.go
++++ b/codex/ephemeral_integration_test.go
+@@ -530,6 +530,138 @@ func TestEphemeralIntegrationDiagnosticBounds(t *testing.T) {
+ 	})
+ }
+ 
++// Diagnostics retain only fixed categories and synthetic owned identities. RPC
++// parameters, error data/messages, model requests and file bytes are never kept.
++type ephemeralIntegrationPhase struct {
++	Phase                           string
++	Direction                       string
++	Method                          string
++	ErrorCode                       int
++	Summary                         string
++	ThreadID, TurnID                string
++	ProviderPOSTs, ProviderUpgrades int
++	DeniedPackets                   uint64
++	CounterUnavailable              bool
++}
++
++func integrationRPCSummary(failure *rpcError) string {
++	if failure == nil {
++		return "ok"
++	}
++	// Inspect only a bounded prefix; never echo native diagnostics or paths.
++	message := integrationDiagnosticText(failure.Message, 4096)
++	if strings.Contains(message, "experimental compact prompt file is empty:") {
++		return "empty-compact-instruction-file"
++	}
++	if strings.Contains(message, "model instructions file is empty:") {
++		return "empty-model-instruction-file"
++	}
++	return "other-native-error"
++}
++
++func integrationRPCPhase(method string) (string, string) {
++	switch method {
++	case "initialize", "initialized":
++		return "handshake", method
++	case "config/read", "configRequirements/read":
++		return "configuration", method
++	case "model/list":
++		return "model-lookup", method
++	case "thread/start":
++		return "thread-start", method
++	case "turn/start", "turn/started":
++		return "turn-start", method
++	case "turn/interrupt", "thread/unsubscribe":
++		return "teardown", method
++	case "item/tool/requestUserInput", "item/tool/call", "item/commandExecution/requestApproval":
++		return "tool-dispatch", method
++	case "item/started", "item/completed", "turn/completed", "error":
++		return "turn-event", method
++	default:
++		return "other", "unrecognized"
++	}
++}
++
++func (h *ephemeralIntegrationHarness) capturePhase(phase, direction, method string, failure *rpcError, threadID, turnID string) {
++	h.diagnosticMu.Lock()
++	defer h.diagnosticMu.Unlock()
++	h.mu.Lock()
++	boundary := phase == "after-utility-teardown"
++	if !h.diagnosticsActive || (len(h.phases) >= 48 && !boundary) {
++		h.mu.Unlock()
++		return
++	}
++	if ephemeralID(threadID) {
++		h.diagnosticThread = threadID
++	}
++	if ephemeralID(turnID) && threadID == h.diagnosticThread {
++		h.diagnosticTurn = turnID
++	}
++	event := ephemeralIntegrationPhase{Phase: phase, Direction: direction, Method: method, Summary: integrationRPCSummary(failure),
++		ThreadID: h.diagnosticThread, TurnID: h.diagnosticTurn, ProviderPOSTs: len(h.requests), ProviderUpgrades: h.utilityUpgrades}
++	if failure != nil {
++		event.ErrorCode = failure.Code
++	}
++	h.mu.Unlock()
++	// Sample before forwarding the observed envelope, without resetting the
++	// firewall. A sample locates a change in time; it does not attribute packets
++	// to this thread rather than concurrent native background work.
++	packets, err := h.readDroppedPackets()
++	event.DeniedPackets, event.CounterUnavailable = packets, err != nil
++	h.mu.Lock()
++	if len(h.phases) == 48 {
++		// Always retain the final sample after the helper's bounded teardown, even
++		// if a clock/event storm filled the provisional diagnostic inventory.
++		h.phases[len(h.phases)-1] = event
++	} else {
++		h.phases = append(h.phases, event)
++	}
++	h.mu.Unlock()
++}
++
++func (h *ephemeralIntegrationHarness) captureRPC(direction, method string, failure *rpcError, threadID, turnID string) {
++	phase, safeMethod := integrationRPCPhase(method)
++	if phase != "other" || failure != nil {
++		h.capturePhase(phase, direction, safeMethod, failure, threadID, turnID)
++	}
++}
++
++func TestEphemeralIntegrationRPCDiagnostics(t *testing.T) {
++	for _, test := range []struct{ name, message, want string }{
++		{"model file", "failed: model instructions file is empty: /private/SECRET", "empty-model-instruction-file"},
++		{"compact file", "experimental compact prompt file is empty: /private/SECRET", "empty-compact-instruction-file"},
++		{"other", "SECRET arbitrary native diagnostic", "other-native-error"},
++		{"bounded", strings.Repeat("x", 4096) + "model instructions file is empty: SECRET", "other-native-error"},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			failure := &rpcError{Code: -32600, Message: test.message, Data: json.RawMessage(`{"secret":"never retain"}`)}
++			if got := integrationRPCSummary(failure); got != test.want || strings.Contains(got, "SECRET") {
++				t.Fatalf("unsafe category=%q", got)
++			}
++		})
++	}
++	if phase, method := integrationRPCPhase("arbitrary-SECRET-method"); phase != "other" || method != "unrecognized" {
++		t.Fatal("unknown RPC method escaped fixed categories")
++	}
++	// Exercise storage bounds without a native process or firewall command: a
++	// missing executable produces only CounterUnavailable, never a raw error.
++	h := &ephemeralIntegrationHarness{diagnosticsActive: true, nft: "/missing-fixture-nft"}
++	for index := 0; index < 60; index++ {
++		h.captureRPC("response", "thread/start", &rpcError{Code: -32600, Message: "SECRET"}, "synthetic-thread", "")
++	}
++	if len(h.phases) != 48 || h.phases[0].ErrorCode != -32600 || !h.phases[0].CounterUnavailable || h.phases[0].ThreadID != "synthetic-thread" {
++		t.Fatal("bounded setup evidence lost")
++	}
++	h.capturePhase("after-utility-teardown", "boundary", "none", nil, "", "")
++	if len(h.phases) != 48 || h.phases[47].Phase != "after-utility-teardown" {
++		t.Fatal("full diagnostics lost the final unchanged counter sample")
++	}
++	encoded, _ := json.Marshal(h.phases)
++	if bytes.Contains(encoded, []byte("SECRET")) || bytes.Contains(encoded, []byte("never retain")) {
++		t.Fatal("native error text/data retained")
++	}
++}
++
+ type ephemeralIntegrationHarness struct {
+ 	t                                                             *testing.T
+ 	binary, nft, home, project, socket, canary, canaryURL, config string
+@@ -540,6 +672,10 @@ type ephemeralIntegrationHarness struct {
+ 	stderr                                                        *ephemeralIntegrationStderr
+ 	stopped                                                       chan error
+ 	mu                                                            sync.Mutex
++	diagnosticMu                                                  sync.Mutex
++	diagnosticsActive                                             bool
++	phases                                                        []ephemeralIntegrationPhase
++	diagnosticThread, diagnosticTurn                              string
+ 	mode, namespace, attack                                       string
+ 	requests                                                      []map[string]any
+ 	httpRequests                                                  []*ephemeralIntegrationHTTPRequest
+@@ -716,6 +852,7 @@ func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Req
+ 	}
+ 	h.mu.Unlock()
+ 	if diagnostic.UpgradeAccepted {
++		h.capturePhase("provider-handshake", "request", "accepted-WS-upgrade", nil, "", "")
+ 		// The native builtin provider selects HTTP fallback after this supported
+ 		// refusal. Only decoded POSTs below establish inference eligibility.
+ 		w.WriteHeader(http.StatusUpgradeRequired)
+@@ -788,6 +925,9 @@ func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Req
+ 	}
+ 	held, stopped := h.heldContinuation, h.continuationStopped
+ 	h.mu.Unlock()
++	if !control {
++		h.capturePhase("provider-inference", "request", "Responses-POST", nil, "", "")
++	}
+ 	if (mode == "lost-clock" || mode == "lost-question") && index == 2 {
+ 		close(held)
+ 		// This inference never completes naturally: exact-turn interruption must
+@@ -807,6 +947,9 @@ func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Req
+ 		event(map[string]any{"type": "response.output_item.done", "item": map[string]any{"type": "message", "role": "assistant", "id": fmt.Sprintf("answer-%d", index), "phase": "final_answer", "content": []any{map[string]any{"type": "output_text", "text": `{"name":"fix runtime session names"}`}}}})
+ 	}
+ 	call := func(name, ns, args string, custom bool) {
++		if !control {
++			h.capturePhase("tool-dispatch", "provider-output", "synthetic-tool-call", nil, "", "")
++		}
+ 		item := map[string]any{"type": "function_call", "name": name, "call_id": fmt.Sprintf("call-%d", index), "arguments": args}
+ 		if ns != "" {
+ 			item["namespace"] = ns
+@@ -1215,6 +1358,7 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string) string {
+ 					}
+ 				}
+ 				questionError := string(message.ID) == questionID && questionID != "" && message.Error != nil
++				h.captureRPC("request", message.Method, nil, threadID, turnID)
+ 				mu.Unlock()
+ 				if questionError {
+ 					if message.Error.Code == -32601 && message.Error.Message == "Questions are unavailable for ephemeral utility turns" {
+@@ -1256,6 +1400,10 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string) string {
+ 				}
+ 				mu.Lock()
+ 				method := methods[string(message.ID)]
++				if method != "" {
++					h.captureRPC("response", method, message.Error, threadID, turnID)
++					delete(methods, string(message.ID))
++				}
+ 				if method == "config/read" && message.Error == nil {
+ 					var result struct {
+ 						Config map[string]any `json:"config"`
+@@ -1278,6 +1426,7 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string) string {
+ 					}
+ 					_ = json.Unmarshal(message.Result, &result)
+ 					threadID = result.Thread.ID
++					h.captureRPC("owned", "thread/start", nil, threadID, "")
+ 					h.mu.Lock()
+ 					h.threadIDs = append(h.threadIDs, threadID)
+ 					h.mu.Unlock()
+@@ -1294,6 +1443,7 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string) string {
+ 					}
+ 					_ = json.Unmarshal(message.Result, &result)
+ 					turnID = result.Turn.ID
++					h.captureRPC("owned", "turn/start", nil, threadID, turnID)
+ 					if mode == "early-events" {
+ 						held = append([]byte(nil), raw...)
+ 						mu.Unlock()
+@@ -1329,6 +1479,9 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string) string {
+ 				if message.Method == "item/tool/requestUserInput" && len(message.ID) > 0 {
+ 					questionID = string(message.ID)
+ 				}
++				if message.Method != "" {
++					h.captureRPC("notification", message.Method, nil, threadID, turnID)
++				}
+ 				disconnect := mode == "disconnect" && method == "turn/start"
+ 				ambiguous := mode == "ambiguous" && message.Method == "turn/completed"
+ 				release := message.Method == "turn/completed" && len(held) > 0
+@@ -1426,6 +1579,7 @@ func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string) string {
+ }
+ 
+ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack string) {
++	h.diagnosticMu.Lock()
+ 	h.mu.Lock()
+ 	h.mode, h.namespace, h.attack = mode, namespace, attack
+ 	h.requests = nil
+@@ -1434,11 +1588,22 @@ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack
+ 	h.heldContinuation = make(chan struct{})
+ 	h.continuationStopped = make(chan struct{})
+ 	h.interrupted = false
++	h.phases = nil
++	h.diagnosticThread, h.diagnosticTurn = "", ""
++	h.diagnosticsActive = true
+ 	h.mu.Unlock()
++	h.diagnosticMu.Unlock()
++	defer func() { h.mu.Lock(); h.diagnosticsActive = false; h.mu.Unlock() }()
++	h.capturePhase("before-utility", "boundary", "none", nil, "", "")
+ 	h.proxyError.Store(false)
+ 	client := New(h.proxy(t, mode))
+ 	defer client.Close()
+ 	opts := ephemeralTestOptions(t)
++	// Provision the provider-owned nonempty file contract used by real callers.
++	content, fileErr := os.ReadFile(opts.InstructionFile)
++	if fileErr != nil || string(content) != EphemeralInstructionFileContent {
++		t.Fatal("native fixture instruction file differs from public contract")
++	}
+ 	opts.Input = "RAW_UTILITY_PREFIX_SENTINEL: fix runtime session naming"
+ 	duration := 3 * time.Second
+ 	if mode == "cancel-start" || strings.HasPrefix(mode, "timeout") || mode == "clock-loop" || mode == "missing-final" {
+@@ -1464,6 +1629,13 @@ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack
+ 		ordinaryDone <- h.ordinary.Request(ctx, "thread/read", map[string]any{"threadId": h.controlThread, "includeTurns": false}, &result)
+ 	}()
+ 	result, err := client.RunEphemeralTurn(ctx, opts)
++	h.capturePhase("after-utility-teardown", "boundary", "none", nil, "", "")
++	h.mu.Lock()
++	phases := append([]ephemeralIntegrationPhase(nil), h.phases...)
++	h.mu.Unlock()
++	// Emit before any category assertion so setup failures retain their evidence.
++	evidence, _ := json.Marshal(phases)
++	t.Logf("native utility phase evidence (fixed deny baseline=%d; ordinary thread=%s): %s", h.egressDrops, h.controlThread, evidence)
+ 	if ordinaryErr := <-ordinaryDone; ordinaryErr != nil {
+ 		t.Fatal("ordinary connection disrupted")
+ 	}
+@@ -1540,8 +1712,8 @@ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack
+ 		t.Fatal("forbidden file was read")
+ 	}
+ 	if mode == "baseline" || mode == "early-events" {
+-		if !bytes.Contains(data, []byte(opts.Input)) || !bytes.Contains(data, []byte("additionalProperties")) {
+-			t.Fatal("raw text/schema absent from actual provider request")
++		if !bytes.Contains(data, []byte(opts.Input)) || !bytes.Contains(data, []byte("additionalProperties")) || !bytes.Contains(data, []byte(opts.Instructions)) {
++			t.Fatal("raw text/schema/explicit instructions absent from actual provider request")
+ 		}
+ 	}
+ 	if mode == "forbidden" {
+@@ -1706,13 +1878,23 @@ func (h *ephemeralIntegrationHarness) verifyPersistence(t *testing.T) {
+ }
+ 
+ func (h *ephemeralIntegrationHarness) droppedPackets(t *testing.T) uint64 {
+-	output, err := exec.Command(h.nft, "-j", "list", "table", "inet", "ephemeral_fixture").Output()
+-	if err != nil || len(output) > 128*1024 {
++	packets, err := h.readDroppedPackets()
++	if err != nil {
+ 		t.Fatal("cannot inspect real egress counters")
+ 	}
++	return packets
++}
++
++func (h *ephemeralIntegrationHarness) readDroppedPackets() (uint64, error) {
++	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
++	defer cancel()
++	output, err := exec.CommandContext(ctx, h.nft, "-j", "list", "table", "inet", "ephemeral_fixture").Output()
++	if err != nil || len(output) > 128*1024 {
++		return 0, errors.New("egress counter unavailable")
++	}
+ 	var object any
+ 	if json.Unmarshal(output, &object) != nil {
+-		t.Fatal("malformed egress counters")
++		return 0, errors.New("malformed egress counters")
+ 	}
+ 	var packets uint64
+ 	var walk func(any)
+@@ -1734,5 +1916,5 @@ func (h *ephemeralIntegrationHarness) droppedPackets(t *testing.T) uint64 {
+ 		}
+ 	}
+ 	walk(object)
+-	return packets
++	return packets, nil
+ }
+diff --git a/codex/ephemeral_policy.json b/codex/ephemeral_policy.json
+index 489b044..0c8f9df 100644
+--- a/codex/ephemeral_policy.json
++++ b/codex/ephemeral_policy.json
+@@ -2,7 +2,7 @@
+   "agents.enabled": false,
+   "cloud.skills.enabled": false,
+   "compact_prompt": "",
+-  "experimental_compact_prompt_file": "/private/instructions.empty",
++  "experimental_compact_prompt_file": "/private/instructions.txt",
+   "features.agent_message_board": false,
+   "features.apps": false,
+   "features.code_mode": false,
+@@ -45,7 +45,7 @@
+   "memories.dedicated_tools": false,
+   "memories.generate_memories": false,
+   "memories.use_memories": false,
+-  "model_instructions_file": "/private/instructions.empty",
++  "model_instructions_file": "/private/instructions.txt",
+   "notify": [],
+   "orchestrator.mcp.enabled": false,
+   "project_doc_max_bytes": 0,
+diff --git a/codex/ephemeral_test.go b/codex/ephemeral_test.go
+index ab2bc21..3442192 100644
+--- a/codex/ephemeral_test.go
++++ b/codex/ephemeral_test.go
+@@ -25,10 +25,10 @@ func ephemeralTestOptions(t *testing.T) EphemeralTurnOptions {
+ 	if err := os.Mkdir(directory, 0700); err != nil {
+ 		t.Fatal(err)
+ 	}
+-	if err := os.WriteFile(filepath.Join(parent, "instructions.empty"), nil, 0600); err != nil {
++	if err := os.WriteFile(filepath.Join(parent, "instructions.txt"), []byte(EphemeralInstructionFileContent), 0600); err != nil {
+ 		t.Fatal(err)
+ 	}
+-	return EphemeralTurnOptions{Directory: directory, InstructionFile: filepath.Join(parent, "instructions.empty"), Model: "gpt-6-luna", Effort: "low", Instructions: "Return the requested JSON.", Input: "raw input", OutputSchema: json.RawMessage(`{"type":"object","properties":{"name":{"type":"string"}},"required":["name"],"additionalProperties":false}`)}
++	return EphemeralTurnOptions{Directory: directory, InstructionFile: filepath.Join(parent, "instructions.txt"), Model: "gpt-6-luna", Effort: "low", Instructions: "Return the requested JSON.", Input: "raw input", OutputSchema: json.RawMessage(`{"type":"object","properties":{"name":{"type":"string"}},"required":["name"],"additionalProperties":false}`)}
+ }
+ 
+ type ephemeralFake struct {
+@@ -165,6 +165,13 @@ func TestEphemeralEarlyCompletionUsesPrivatePolicy(t *testing.T) {
+ 		}
+ 	}
+ 	policy := start["config"].(map[string]any)
++	if policy["model_instructions_file"] != opts.InstructionFile || policy["experimental_compact_prompt_file"] != opts.InstructionFile || policy["compact_prompt"] != "" {
++		t.Fatal("private file overrides or explicit compact override changed")
++	}
++	content, err := os.ReadFile(opts.InstructionFile)
++	if err != nil || string(content) != EphemeralInstructionFileContent {
++		t.Fatal("instruction file changed during helper teardown")
++	}
+ 	servers := policy["mcp_servers"].(map[string]any)
+ 	if len(servers) != 2 || servers["dot.name"].(map[string]any)["enabled"] != false || servers["other"].(map[string]any)["enabled"] != false {
+ 		t.Fatalf("literal MCP names=%#v", servers)
+@@ -400,7 +407,7 @@ func TestEphemeralValidationAndObserverHaveNoConnection(t *testing.T) {
+ 			}
+ 		}},
+ 		{"instruction symlink", func(o *EphemeralTurnOptions) {
+-			path := filepath.Join(filepath.Dir(o.Directory), "instructions.empty")
++			path := o.InstructionFile
+ 			os.Remove(path)
+ 			if err := os.Symlink("cwd", path); err != nil {
+ 				t.Fatal(err)
+@@ -430,6 +437,82 @@ func TestEphemeralValidationAndObserverHaveNoConnection(t *testing.T) {
+ 	}
+ }
+ 
++func TestEphemeralInstructionFileExactContentBeforeConnection(t *testing.T) {
++	if EphemeralInstructionFileContent != "Preserve the current utility task and its explicit instructions.\n" {
++		t.Fatal("public instruction-file bytes changed")
++	}
++	cases := []struct {
++		name   string
++		mutate func(*testing.T, string)
++	}{
++		{"empty", func(t *testing.T, path string) {
++			if err := os.WriteFile(path, nil, 0600); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"whitespace", func(t *testing.T, path string) {
++			if err := os.WriteFile(path, []byte(strings.Repeat(" ", len(EphemeralInstructionFileContent))), 0600); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"same length other text", func(t *testing.T, path string) {
++			if err := os.WriteFile(path, []byte("X"+EphemeralInstructionFileContent[1:]), 0600); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"missing newline", func(t *testing.T, path string) {
++			if err := os.WriteFile(path, []byte(strings.TrimSuffix(EphemeralInstructionFileContent, "\n")), 0600); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"extra bytes", func(t *testing.T, path string) {
++			if err := os.WriteFile(path, []byte(EphemeralInstructionFileContent+"x"), 0600); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"unreadable mode", func(t *testing.T, path string) {
++			if err := os.Chmod(path, 0000); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"open mode", func(t *testing.T, path string) {
++			if err := os.Chmod(path, 0644); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"missing", func(t *testing.T, path string) {
++			if err := os.Remove(path); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"hard link", func(t *testing.T, path string) {
++			if err := os.Link(path, path+".link"); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"directory", func(t *testing.T, path string) {
++			if err := os.Remove(path); err != nil {
++				t.Fatal(err)
++			}
++			if err := os.Mkdir(path, 0600); err != nil {
++				t.Fatal(err)
++			}
++		}},
++	}
++	for _, test := range cases {
++		t.Run(test.name, func(t *testing.T) {
++			opts := ephemeralTestOptions(t)
++			test.mutate(t, opts.InstructionFile)
++			client := New("/missing-socket")
++			defer client.Close()
++			_, err := runEphemeralTest(t, client, opts)
++			if err != ErrEphemeralIsolation {
++				t.Fatalf("invalid private file did not fail before connection: %v", err)
++			}
++		})
++	}
++}
++
+ func TestEphemeralCancellationDiscoveryDisconnectAndOrdinaryClient(t *testing.T) {
+ 	for _, method := range []string{"config/read", "model/list", "thread/start", "turn/start"} {
+ 		t.Run("timeout "+method, func(t *testing.T) {
+diff --git a/docs/reference.md b/docs/reference.md
+index 2c827b7..6f580cc 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -514,10 +514,18 @@ Options require an exact `Model` and `Effort`, explicit nonempty `Instructions`,
+ UTF-8 text `Input`, and a JSON-object `OutputSchema`. `Directory` is an empty,
+ canonical absolute directory owned by the application user, with mode 0700 and
+ a private parent, outside workspace/project trees. `InstructionFile` is a
+-separate canonical absolute empty regular mode-0600 file in private application
+-state outside that cwd. It must have one hard link and cannot be a symlink.
++separate canonical absolute regular mode-0600 file in private application
++state outside that cwd. It must have one hard link and cannot be a symlink. Write
++exactly `[]byte(codex.EphemeralInstructionFileContent)` to this unique per-call
++file and keep its path and bytes unchanged through teardown. The helper verifies
++the exact length and bytes before connecting, with a bounded read. Empty,
++whitespace-only, altered, unreadable or unsafe files fail with the static
++isolation error. A neutral filename such as `instructions.txt` is suitable;
++the API imposes no filename convention.
+ The application provisions and removes its scratch state; the helper creates
+ no files. Keep project configuration, AGENTS and skills out of that state.
++Empty-file callers of this unreleased API must update together with the provider
++dependency; there is no legacy empty-file fallback.
+ 
+ The context must have a finite deadline. Input is limited to 64 KiB;
+ instructions and schema to 16 KiB each; final text to 16 KiB. Each JSON frame is
+@@ -538,7 +546,14 @@ helpers, reconnect, repeat a turn or adopt an uncertain thread.
+ The fixed policy in `codex/ephemeral_policy.json` disables file/command/image,
+ web/app/MCP/skill/plugin, delegation, memory/goal and hook tools. Both starts
+ supply empty execution environments and runtime roots, read-only sandboxing and
+-never approval, plus explicit instructions and empty instruction-file overrides.
++never approval, plus explicit instructions and both private instruction-file
++overrides. The pinned server loads both files before applying instruction
++precedence and rejects empty contents. `EphemeralInstructionFileContent` is
++`"Preserve the current utility task and its explicit instructions.\n"`. Explicit
++base instructions remain authoritative. The fixed file text supplies the compact
++prompt when the empty inline `compact_prompt` is trimmed away; compaction remains
++available. Both private overrides replace inherited model and compact-file text.
++The application owns the file and must keep it unchanged throughout the call.
+ Configured MCP names are captured once for the private cwd and disabled as
+ literal nested map keys, including names with dots. Unreadable inventories,
+ conflicting managed requirements and required hooks fail before inference.

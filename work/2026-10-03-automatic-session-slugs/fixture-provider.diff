@@ -1,0 +1,504 @@
+diff --git a/codex/ephemeral_integration_test.go b/codex/ephemeral_integration_test.go
+index 1b1d82e..f08db62 100644
+--- a/codex/ephemeral_integration_test.go
++++ b/codex/ephemeral_integration_test.go
+@@ -6,6 +6,7 @@ import (
+ 	"bytes"
+ 	"context"
+ 	"crypto/sha256"
++	"encoding/base64"
+ 	"encoding/hex"
+ 	"encoding/json"
+ 	"errors"
+@@ -24,6 +25,7 @@ import (
+ 	"sync/atomic"
+ 	"syscall"
+ 	"testing"
++	"testing/iotest"
+ 	"time"
+ 
+ 	"github.com/coder/websocket"
+@@ -32,6 +34,9 @@ import (
+ // This entry point is intentionally absent from quick checks. Missing exact
+ // candidate/hash, Linux namespace/firewall tools or schema/source prerequisites
+ // FAIL the explicit invocation. No installed serving instance is contacted.
++// Native builtin OpenAI HTTP-fallback coverage exercises HTTP/SSE after a real
++// upgrade refusal. It does not cover successful WebSocket framing, continuation
++// caching, reconnects or hostile delivery specifically over WebSockets.
+ func TestEphemeralProtocolIntegration(t *testing.T) {
+ 	binary := integrationExecutable(t, "CODEX_EPHEMERAL_TEST_BINARY")
+ 	expected := os.Getenv("CODEX_EPHEMERAL_TEST_SHA256")
+@@ -101,7 +106,7 @@ func TestEphemeralProtocolIntegration(t *testing.T) {
+ 			GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getegid(), Size: 1}}, GidMappingsEnableSetgroups: false}
+ 		output, err := command.CombinedOutput()
+ 		if err != nil {
+-			t.Fatalf("isolated fixture failed (namespace refusal is a prerequisite failure): %v\n%s", err, output)
++			t.Fatalf("isolated fixture failed: %v\n%s", err, output)
+ 		}
+ 		t.Logf("candidate %s; isolated fixture completed\n%s", expected, output)
+ 		return
+@@ -165,6 +170,224 @@ func integrationExecutable(t *testing.T, key string) string {
+ 	return path
+ }
+ 
++// Keep only the final 8 KiB of this disposable process's synthetic diagnostics.
++type ephemeralIntegrationStderr struct {
++	mu   sync.Mutex
++	tail []byte
++}
++
++func (buffer *ephemeralIntegrationStderr) Write(data []byte) (int, error) {
++	buffer.mu.Lock()
++	defer buffer.mu.Unlock()
++	count := len(data)
++	if buffer.tail == nil {
++		buffer.tail = make([]byte, 0, 8192)
++	}
++	if len(data) > 8192 {
++		data = data[len(data)-8192:]
++	}
++	if excess := len(buffer.tail) + len(data) - 8192; excess > 0 {
++		copy(buffer.tail, buffer.tail[excess:])
++		buffer.tail = buffer.tail[:len(buffer.tail)-excess]
++	}
++	buffer.tail = append(buffer.tail, data...)
++	return count, nil
++}
++
++func (buffer *ephemeralIntegrationStderr) String() string {
++	buffer.mu.Lock()
++	defer buffer.mu.Unlock()
++	return string(buffer.tail)
++}
++
++type ephemeralIntegrationHTTPRequest struct {
++	Method           string `json:"method"`
++	Path             string `json:"path"`
++	ContentEncoding  string `json:"contentEncoding"`
++	Connection       string `json:"connection,omitempty"`
++	Upgrade          string `json:"upgrade,omitempty"`
++	WebSocketVersion string `json:"webSocketVersion,omitempty"`
++	UpgradeAccepted  bool   `json:"upgradeAccepted,omitempty"`
++	Error            string `json:"error,omitempty"`
++}
++
++func integrationDiagnosticText(value string, limit int) string {
++	return value[:min(len(value), limit)]
++}
++
++func integrationWebSocketUpgrade(request *http.Request) bool {
++	if request.Method != http.MethodGet || request.URL.Path != "/v1/responses" {
++		return false
++	}
++	upgrade := request.Header.Values("Upgrade")
++	version := request.Header.Values("Sec-WebSocket-Version")
++	keys := request.Header.Values("Sec-WebSocket-Key")
++	if len(upgrade) != 1 || !strings.EqualFold(strings.TrimSpace(upgrade[0]), "websocket") ||
++		len(version) != 1 || strings.TrimSpace(version[0]) != "13" || len(keys) != 1 {
++		return false
++	}
++	connectionUpgrade := false
++	for _, value := range request.Header.Values("Connection") {
++		for _, token := range strings.Split(value, ",") {
++			if strings.EqualFold(strings.TrimSpace(token), "upgrade") {
++				connectionUpgrade = true
++			}
++		}
++	}
++	key := strings.TrimSpace(keys[0])
++	if len(key) != 24 {
++		return false
++	}
++	decoded, err := base64.StdEncoding.Strict().DecodeString(key)
++	return connectionUpgrade && err == nil && len(decoded) == 16
++}
++
++func TestEphemeralIntegrationHTTPFallbackResponder(t *testing.T) {
++	for _, test := range []struct {
++		name           string
++		mutate         func(*http.Request)
++		control, valid bool
++	}{
++		{"control upgrade", nil, true, true},
++		{"case insensitive tokens", func(r *http.Request) {
++			r.Header.Set("Connection", "keep-alive, UpGrAdE")
++			r.Header.Set("Upgrade", "WebSocket")
++		}, false, true},
++		{"multiple connection values", func(r *http.Request) {
++			r.Header.Set("Connection", "keep-alive")
++			r.Header.Add("Connection", "upgrade")
++		}, false, true},
++		{"plain GET", func(r *http.Request) { r.Header = http.Header{} }, false, false},
++		{"missing connection", func(r *http.Request) { r.Header.Del("Connection") }, false, false},
++		{"connection substring", func(r *http.Request) { r.Header.Set("Connection", "notupgrade") }, false, false},
++		{"missing upgrade", func(r *http.Request) { r.Header.Del("Upgrade") }, false, false},
++		{"different upgrade", func(r *http.Request) { r.Header.Set("Upgrade", "h2c") }, false, false},
++		{"duplicate upgrade", func(r *http.Request) { r.Header.Add("Upgrade", "websocket") }, false, false},
++		{"missing version", func(r *http.Request) { r.Header.Del("Sec-WebSocket-Version") }, false, false},
++		{"wrong version", func(r *http.Request) { r.Header.Set("Sec-WebSocket-Version", "12") }, false, false},
++		{"duplicate version", func(r *http.Request) { r.Header.Add("Sec-WebSocket-Version", "13") }, false, false},
++		{"missing key", func(r *http.Request) { r.Header.Del("Sec-WebSocket-Key") }, false, false},
++		{"malformed key", func(r *http.Request) { r.Header.Set("Sec-WebSocket-Key", strings.Repeat("!", 24)) }, false, false},
++		{"short decoded key", func(r *http.Request) {
++			r.Header.Set("Sec-WebSocket-Key", base64.StdEncoding.EncodeToString(make([]byte, 15)))
++		}, false, false},
++		{"long decoded key", func(r *http.Request) {
++			r.Header.Set("Sec-WebSocket-Key", base64.StdEncoding.EncodeToString(make([]byte, 17)))
++		}, false, false},
++		{"duplicate key", func(r *http.Request) { r.Header.Add("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==") }, false, false},
++		{"unrelated path", func(r *http.Request) { r.URL.Path = "/unexpected" }, false, false},
++		{"unrelated method", func(r *http.Request) { r.Method = http.MethodPut }, false, false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			harness := &ephemeralIntegrationHarness{controlMode: test.control}
++			request := httptest.NewRequest(http.MethodGet, "/v1/responses", nil)
++			request.Header.Set("Connection", "upgrade")
++			request.Header.Set("Upgrade", "websocket")
++			request.Header.Set("Sec-WebSocket-Version", "13")
++			request.Header.Set("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==")
++			if test.mutate != nil {
++				test.mutate(request)
++			}
++			response := httptest.NewRecorder()
++			harness.respond(response, request)
++			want := http.StatusNotFound
++			if test.valid {
++				want = http.StatusUpgradeRequired
++			}
++			if response.Code != want {
++				t.Fatalf("HTTP response=%d, want %d", response.Code, want)
++			}
++			if len(harness.requests) != 0 || len(harness.httpRequests) != 1 || harness.httpRequests[0].UpgradeAccepted != test.valid {
++				t.Fatal("upgrade evidence changed decoded Responses eligibility")
++			}
++			control, utility := 0, 0
++			if test.valid && test.control {
++				control = 1
++			} else if test.valid {
++				utility = 1
++			}
++			if harness.controlUpgrades != control || harness.utilityUpgrades != utility {
++				t.Fatal("upgrade evidence attributed to the wrong fixture call")
++			}
++		})
++	}
++	t.Run("bounded upgrade evidence", func(t *testing.T) {
++		harness := &ephemeralIntegrationHarness{}
++		for _, control := range []bool{true, false} {
++			harness.controlMode = control
++			for index := 0; index < 70; index++ {
++				request := httptest.NewRequest(http.MethodGet, "/v1/responses", nil)
++				request.Header.Set("Connection", strings.Repeat("keep-alive,", 64)+"upgrade")
++				request.Header.Set("Upgrade", "websocket")
++				request.Header.Set("Sec-WebSocket-Version", "13")
++				request.Header.Set("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==")
++				response := httptest.NewRecorder()
++				harness.respond(response, request)
++				if response.Code != http.StatusUpgradeRequired {
++					t.Fatal("diagnostic saturation changed valid handshake refusal")
++				}
++			}
++		}
++		if harness.controlUpgrades != 64 || harness.utilityUpgrades != 64 || len(harness.httpRequests) != 64 ||
++			len(harness.httpRequests[0].Connection) > 128 || len(harness.requests) != 0 {
++			t.Fatal("upgrade evidence exceeded its bounds or admitted Responses")
++		}
++	})
++}
++
++func TestEphemeralIntegrationDiagnosticBounds(t *testing.T) {
++	t.Run("stderr tail", func(t *testing.T) {
++		for _, chunks := range [][]string{{"short"}, {strings.Repeat("a", 8192), "tail"}, {"old", strings.Repeat("b", 16384)}, {""}} {
++			var buffer ephemeralIntegrationStderr
++			var complete string
++			for _, chunk := range chunks {
++				if count, err := buffer.Write([]byte(chunk)); err != nil || count != len(chunk) {
++					t.Fatalf("stderr write=%d %v", count, err)
++				}
++				complete += chunk
++			}
++			want := complete[max(0, len(complete)-8192):]
++			if buffer.String() != want || len(buffer.tail) > 8192 || cap(buffer.tail) > 8192 {
++				t.Fatal("stderr capture did not retain the bounded exact tail")
++			}
++		}
++	})
++	t.Run("HTTP rejection metadata", func(t *testing.T) {
++		harness := &ephemeralIntegrationHarness{}
++		for _, test := range []struct {
++			method, path string
++			body         io.Reader
++			status       int
++		}{
++			{http.MethodGet, "/v1/responses", nil, http.StatusNotFound},
++			{http.MethodPost, "/unexpected", nil, http.StatusNotFound},
++			{http.MethodPost, "/v1/responses", strings.NewReader("invalid JSON"), http.StatusBadRequest},
++			{http.MethodPost, "/v1/responses", iotest.ErrReader(io.ErrUnexpectedEOF), http.StatusBadRequest},
++		} {
++			request := httptest.NewRequest(test.method, test.path, test.body)
++			request.Header.Set("Content-Encoding", "synthetic-encoding")
++			response := httptest.NewRecorder()
++			harness.respond(response, request)
++			if response.Code != test.status {
++				t.Fatalf("HTTP rejection=%d, want %d", response.Code, test.status)
++			}
++		}
++		if len(harness.httpRequests) != 4 || len(harness.requests) != 0 || harness.httpRequests[0].Method != http.MethodGet ||
++			harness.httpRequests[1].Path != "/unexpected" || harness.httpRequests[2].ContentEncoding != "synthetic-encoding" ||
++			harness.httpRequests[2].Error == "" || harness.httpRequests[3].Error != io.ErrUnexpectedEOF.Error() {
++			t.Fatal("rejected HTTP traffic was lost or admitted as Responses evidence")
++		}
++		for index := 0; index < 70; index++ {
++			request := httptest.NewRequest(http.MethodGet, "/"+strings.Repeat("p", 1024), nil)
++			request.Header.Set("Content-Encoding", strings.Repeat("e", 256))
++			harness.respond(httptest.NewRecorder(), request)
++		}
++		if len(harness.httpRequests) != 64 || len(harness.httpRequests[4].Path) > 512 || len(harness.httpRequests[4].ContentEncoding) > 128 || len(harness.requests) != 0 {
++			t.Fatal("HTTP diagnostic bounds or separate Responses eligibility changed")
++		}
++	})
++}
++
+ type ephemeralIntegrationHarness struct {
+ 	t                                                             *testing.T
+ 	binary, nft, home, project, socket, canary, canaryURL, config string
+@@ -172,10 +395,13 @@ type ephemeralIntegrationHarness struct {
+ 	canaryServer                                                  *httptest.Server
+ 	canaryHits                                                    atomic.Int32
+ 	command                                                       *exec.Cmd
++	stderr                                                        *ephemeralIntegrationStderr
+ 	stopped                                                       chan error
+ 	mu                                                            sync.Mutex
+ 	mode, namespace, attack                                       string
+ 	requests                                                      []map[string]any
++	httpRequests                                                  []*ephemeralIntegrationHTTPRequest
++	controlUpgrades, utilityUpgrades                              int
+ 	failure                                                       string
+ 	controlMode                                                   bool
+ 	proxyError                                                    atomic.Bool
+@@ -208,13 +434,29 @@ func newEphemeralIntegrationHarness(t *testing.T, binary, nft string) *ephemeral
+ 	h.canaryURL = h.canaryServer.URL
+ 	h.provider = httptest.NewServer(http.HandlerFunc(h.respond))
+ 	providerURL, _ := url.Parse(h.provider.URL)
+-	rules := fmt.Sprintf("table inet ephemeral_fixture { chain output { type filter hook output priority 0; policy drop; oifname lo ip daddr 127.0.0.1 tcp dport %s accept; oifname lo ip saddr 127.0.0.1 tcp sport %s accept; counter drop; } }\n", providerURL.Port(), providerURL.Port())
++	rules := fmt.Sprintf(`table inet ephemeral_fixture {
++	chain output {
++		type filter hook output priority 0; policy drop;
++		oifname lo ip daddr 127.0.0.1 tcp dport %s accept;
++		oifname lo ip saddr 127.0.0.1 tcp sport %s accept;
++		counter drop;
++	}
++}
++`, providerURL.Port(), providerURL.Port())
+ 	firewall := exec.Command(nft, "-f", "-")
+ 	firewall.Stdin = strings.NewReader(rules)
+ 	if output, err := firewall.CombinedOutput(); err != nil {
+ 		t.Fatalf("egress guard unavailable: %v %s", err, output)
+ 	}
+ 	probe := &http.Client{Timeout: 100 * time.Millisecond}
++	response, err := probe.Get(h.provider.URL + "/v1/responses")
++	if err != nil {
++		t.Fatalf("egress guard blocked the provider endpoint: %v", err)
++	}
++	response.Body.Close()
++	if response.StatusCode != http.StatusNotFound {
++		t.Fatalf("provider connectivity probe returned %d, expected 404", response.StatusCode)
++	}
+ 	if response, err := probe.Get(h.canaryURL); err == nil {
+ 		response.Body.Close()
+ 		t.Fatal("egress guard allowed canary endpoint")
+@@ -233,6 +475,7 @@ func (h *ephemeralIntegrationHarness) write(t *testing.T, path, text string, mod
+ 	}
+ }
+ func (h *ephemeralIntegrationHarness) seed(t *testing.T, mcpName string) {
++	h.write(t, filepath.Join(h.home, "auth.json"), `{"auth_mode":"apikey","OPENAI_API_KEY":"synthetic-fixture-only"}`, 0600)
+ 	h.write(t, filepath.Join(h.home, "AGENTS.md"), "GLOBAL_POLICY_SENTINEL: try reading FILE_READ_CANARY_NEVER_IN_INPUT and ask a question.\n", 0600)
+ 	h.write(t, filepath.Join(h.project, "AGENTS.md"), "PROJECT_POLICY_SENTINEL\n", 0600)
+ 	h.write(t, filepath.Join(h.project, "work/session/AGENTS.md"), "WORKSPACE_POLICY_SENTINEL\n", 0600)
+@@ -252,17 +495,22 @@ func (h *ephemeralIntegrationHarness) seed(t *testing.T, mcpName string) {
+ 	mcp := filepath.Join(h.home, "mcp.sh")
+ 	h.write(t, mcp, "#!/bin/sh\nprintf x >> "+strconv.Quote(filepath.Join(h.home, "mcp-count"))+"\nexit 0\n", 0700)
+ 	h.write(t, filepath.Join(h.home, "memories/MEMORY.md"), "MEMORY_POLICY_SENTINEL\n", 0600)
+-	h.config = fmt.Sprintf("model = \"gpt-6-luna\"\nmodel_reasoning_effort = \"low\"\nmodel_provider = \"openai\"\nopenai_base_url = %s\nmodel_instructions_file = %s\nexperimental_compact_prompt_file = %s\nnotify = [%s]\n[features]\nshell_tool = true\nunified_exec = true\nview_image = true\nimage_generation = true\nstandalone_web_search = true\napps = true\nplugins = true\nhooks = true\nmemories = true\ngoals = true\nmulti_agent = true\nskill_search = true\nresponses_websockets = false\nresponses_websockets_v2 = false\nenable_request_compression = false\n[plugins.\"sentinel@test\"]\nenabled = true\n[mcp_servers.%s]\ncommand = %s\n[mcp_servers.http_sentinel]\nurl = %s\n", strconv.Quote(h.provider.URL+"/v1"), strconv.Quote(filepath.Join(h.home, "inherited.md")), strconv.Quote(filepath.Join(h.home, "compact.md")), strconv.Quote(script), strconv.Quote(mcpName), strconv.Quote(mcp), strconv.Quote(h.canaryURL))
++	h.config = fmt.Sprintf("model = \"gpt-6-luna\"\nmodel_reasoning_effort = \"low\"\nmodel_provider = \"openai\"\nopenai_base_url = %s\nmodel_instructions_file = %s\nexperimental_compact_prompt_file = %s\nnotify = [%s]\n[features]\nshell_tool = true\nunified_exec = true\nview_image = true\nimage_generation = true\nstandalone_web_search = true\napps = true\nplugins = true\nhooks = true\nmemories = true\ngoals = true\nmulti_agent = true\nskill_search = true\nenable_request_compression = false\n[plugins.\"sentinel@test\"]\nenabled = true\n[mcp_servers.%s]\ncommand = %s\nstartup_timeout_sec = 0.2\n[mcp_servers.http_sentinel]\nurl = %s\nstartup_timeout_sec = 0.2\n", strconv.Quote(h.provider.URL+"/v1"), strconv.Quote(filepath.Join(h.home, "inherited.md")), strconv.Quote(filepath.Join(h.home, "compact.md")), strconv.Quote(script), strconv.Quote(mcpName), strconv.Quote(mcp), strconv.Quote(h.canaryURL))
+ 	h.write(t, filepath.Join(h.home, "config.toml"), h.config, 0600)
+ }
+ func (h *ephemeralIntegrationHarness) start(t *testing.T) {
+ 	h.stopped = make(chan error, 1)
++	h.stderr = &ephemeralIntegrationStderr{}
++	h.mu.Lock()
++	h.httpRequests = nil
++	h.controlUpgrades, h.utilityUpgrades = 0, 0
++	h.mu.Unlock()
+ 	// Only synthetic credentials; no HOME/config/token environment is inherited.
+ 	h.command = exec.Command(h.binary, "app-server", "--listen", "unix://"+h.socket)
+ 	h.command.Dir = h.project
+-	h.command.Env = []string{"HOME=" + h.home, "CODEX_HOME=" + h.home, "OPENAI_API_KEY=synthetic-fixture-only", "PATH=" + os.Getenv("PATH")}
++	h.command.Env = []string{"HOME=" + h.home, "CODEX_HOME=" + h.home, "PATH=" + os.Getenv("PATH")}
+ 	h.command.Stdout = io.Discard
+-	h.command.Stderr = io.Discard
++	h.command.Stderr = h.stderr
+ 	if err := h.command.Start(); err != nil {
+ 		t.Fatal("candidate app-server launch failed")
+ 	}
+@@ -306,17 +554,48 @@ func (h *ephemeralIntegrationHarness) close() {
+ }
+ 
+ func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Request) {
++	diagnostic := &ephemeralIntegrationHTTPRequest{Method: integrationDiagnosticText(r.Method, 32),
++		Path: integrationDiagnosticText(r.URL.Path, 512), ContentEncoding: integrationDiagnosticText(r.Header.Get("Content-Encoding"), 128),
++		Connection: integrationDiagnosticText(r.Header.Get("Connection"), 128), Upgrade: integrationDiagnosticText(r.Header.Get("Upgrade"), 128),
++		WebSocketVersion: integrationDiagnosticText(r.Header.Get("Sec-WebSocket-Version"), 32), UpgradeAccepted: integrationWebSocketUpgrade(r)}
++	h.mu.Lock()
++	if len(h.httpRequests) < 64 {
++		h.httpRequests = append(h.httpRequests, diagnostic)
++	}
++	if diagnostic.UpgradeAccepted {
++		if h.controlMode {
++			h.controlUpgrades = min(h.controlUpgrades+1, 64)
++		} else {
++			h.utilityUpgrades = min(h.utilityUpgrades+1, 64)
++		}
++	}
++	h.mu.Unlock()
++	if diagnostic.UpgradeAccepted {
++		// The native builtin provider selects HTTP fallback after this supported
++		// refusal. Only decoded POSTs below establish inference eligibility.
++		w.WriteHeader(http.StatusUpgradeRequired)
++		return
++	}
+ 	if r.Method != "POST" || r.URL.Path != "/v1/responses" {
+ 		w.WriteHeader(http.StatusNotFound)
+ 		return
+ 	}
+ 	raw, err := io.ReadAll(io.LimitReader(r.Body, 256*1024+1))
+ 	if err != nil || len(raw) > 256*1024 {
++		if err == nil {
++			err = errors.New("provider request body bound exceeded")
++		}
++		h.mu.Lock()
++		diagnostic.Error = integrationDiagnosticText(err.Error(), 512)
++		h.mu.Unlock()
+ 		w.WriteHeader(400)
+ 		return
+ 	}
+ 	var request map[string]any
+-	if json.Unmarshal(raw, &request) != nil {
++	if err := json.Unmarshal(raw, &request); err != nil {
++		h.mu.Lock()
++		diagnostic.Error = integrationDiagnosticText(err.Error(), 512)
++		h.mu.Unlock()
+ 		w.WriteHeader(400)
+ 		return
+ 	}
+@@ -532,19 +811,20 @@ func (h *ephemeralIntegrationHarness) control(t *testing.T) {
+ 	h.mu.Lock()
+ 	h.controlMode = true
+ 	h.requests = nil
++	h.controlUpgrades = 0
+ 	h.failure = ""
+ 	h.mu.Unlock()
+ 	h.ordinary = NewWithOptions(h.socket, ClientOptions{DeveloperInstructions: "TEAM_POLICY_SENTINEL", RuntimeWorkspaceRoots: []string{h.project}})
+ 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+ 	defer cancel()
+-	id, err := h.ordinary.StartThreadWithSettings(ctx, filepath.Join(h.project, "work/session"), nil, ThreadSettings{Model: "gpt-6-luna", ReasoningEffort: "low"})
++	id, err := h.ordinary.StartThreadWithSettings(ctx, filepath.Join(h.project, "work/session"), map[string]string{}, ThreadSettings{Model: "gpt-6-luna", ReasoningEffort: "low"})
+ 	if err != nil {
+-		t.Fatal("control thread prerequisite unavailable")
++		t.Fatalf("control thread prerequisite unavailable: %v", err)
+ 	}
+ 	h.controlThread = id
+ 	var turn any
+ 	if err := h.ordinary.Request(ctx, "turn/start", map[string]any{"threadId": id, "model": "gpt-6-luna", "effort": "low", "input": []any{map[string]any{"type": "text", "text": "ordinary synthetic control"}}}, &turn); err != nil {
+-		t.Fatal("control inference prerequisite unavailable")
++		t.Fatalf("control inference prerequisite unavailable: %v", err)
+ 	}
+ 	for ctx.Err() == nil {
+ 		h.mu.Lock()
+@@ -557,11 +837,35 @@ func (h *ephemeralIntegrationHarness) control(t *testing.T) {
+ 	}
+ 	h.mu.Lock()
+ 	controlRequests := append([]map[string]any(nil), h.requests...)
++	controlUpgrades := h.controlUpgrades
+ 	h.controlMode = false
+ 	h.mu.Unlock()
+ 	if len(controlRequests) == 0 {
+-		t.Fatal("representative builtin OpenAI provider path did not reach mock")
++		diagnosticCtx, diagnosticCancel := context.WithTimeout(context.Background(), time.Second)
++		defer diagnosticCancel()
++		var diagnostic struct {
++			Thread struct {
++				Turns json.RawMessage `json:"turns"`
++			} `json:"thread"`
++		}
++		diagnosticErr := h.ordinary.Request(diagnosticCtx, "thread/read", map[string]any{"threadId": id, "includeTurns": true}, &diagnostic)
++		turns := diagnostic.Thread.Turns
++		if len(turns) > 4096 {
++			turns = turns[:4096]
++		}
++		h.mu.Lock()
++		httpRequests := make([]ephemeralIntegrationHTTPRequest, 0, len(h.httpRequests))
++		for _, request := range h.httpRequests {
++			httpRequests = append(httpRequests, *request)
++		}
++		h.mu.Unlock()
++		httpMetadata, _ := json.Marshal(httpRequests)
++		t.Fatalf("representative builtin OpenAI HTTP-fallback did not reach a Responses POST (accepted upgrades: %d; control: %v; thread/read: %v; synthetic turns: %s; HTTP requests: %s; app-server stderr: %s)", controlUpgrades, ctx.Err(), diagnosticErr, turns, httpMetadata, h.stderr.String())
+ 	}
++	if controlUpgrades == 0 {
++		t.Fatal("control did not exercise native builtin OpenAI upgrade/HTTP fallback")
++	}
++	t.Logf("native builtin OpenAI HTTP-fallback control: %d accepted upgrades; %d decoded Responses POSTs", controlUpgrades, len(controlRequests))
+ 	encoded, _ := json.Marshal(controlRequests)
+ 	for _, sentinel := range []string{"GLOBAL_POLICY_SENTINEL", "PROJECT_POLICY_SENTINEL", "WORKSPACE_POLICY_SENTINEL", "TEAM_POLICY_SENTINEL", "SKILL_POLICY_SENTINEL", "PLUGIN_SKILL_SENTINEL", "INHERITED_FILE_POLICY_SENTINEL", "HOST_HOOK_SENTINEL"} {
+ 		if !bytes.Contains(encoded, []byte(sentinel)) {
+@@ -944,6 +1248,7 @@ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack
+ 	h.mu.Lock()
+ 	h.mode, h.namespace, h.attack = mode, namespace, attack
+ 	h.requests = nil
++	h.utilityUpgrades = 0
+ 	h.failure = ""
+ 	h.heldContinuation = make(chan struct{})
+ 	h.continuationStopped = make(chan struct{})
+@@ -1037,13 +1342,18 @@ func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack
+ 	h.mu.Lock()
+ 	failure := h.failure
+ 	requests := append([]map[string]any(nil), h.requests...)
++	utilityUpgrades := h.utilityUpgrades
+ 	h.mu.Unlock()
+ 	if failure != "" {
+ 		t.Fatal(failure)
+ 	}
+ 	if mode != "cancel-start" && mode != "timeout-config" && mode != "timeout-model" && len(requests) == 0 {
+-		t.Fatal("fixture did not exercise inference; fallback is not proof")
++		t.Fatalf("fixture did not exercise a Responses POST; %d accepted upgrades alone are not proof", utilityUpgrades)
++	}
++	if len(requests) > 0 && utilityUpgrades == 0 {
++		t.Fatal("utility inference did not exercise native builtin OpenAI upgrade/HTTP fallback")
+ 	}
++	t.Logf("native builtin OpenAI HTTP-fallback utility %s: %d accepted upgrades; %d decoded Responses POSTs", mode, utilityUpgrades, len(requests))
+ 	data, _ := json.Marshal(requests)
+ 	if bytes.Contains(data, []byte("ACTUAL_FILE_READ_CANARY_8cdbe5")) {
+ 		t.Fatal("forbidden file was read")
+diff --git a/docs/reference.md b/docs/reference.md
+index 1dcd2fd..2c827b7 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -587,8 +587,15 @@ consumed shape. Separately validate fixed restriction keys/types with
+ After mandatory independent review, the tagged
+ `TestEphemeralProtocolIntegration` exercises the exact candidate with a local
+ mock of the built-in OpenAI Responses provider. It retains the binary's model
+-catalog and tool capability path; only inference endpoint and HTTP transport
+-settings are changed in disposable state. The control conversation must prove
++catalog and built-in provider capabilities. The mock returns HTTP 426 for valid
++WebSocket upgrades, so the native server selects its supported HTTP Responses
++fallback. Plain GET remains 404; inference must reach the mock through real
++POST requests. This covers native HTTP/SSE behavior. Successful WebSocket
++framing, continuation caching, reconnects and hostile tool delivery over
++WebSockets require separate coverage. Release verification also requires a
++positive model call using the serving instance's unchanged transport settings.
++
++The control conversation must prove
+ sentinel/tool eligibility. The utility inspects actual advertised schemas and
+ hostile dispatch, async questions, actual-ID requests, clock, early events,
+ cancellation/disconnect and an ordinary concurrent client. The fixture inspects

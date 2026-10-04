@@ -1,0 +1,1607 @@
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index 4c5ab0f..7b1a191 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -32,10 +32,17 @@ page renders it before browser scripts load.
+ exact receipt installation, a server-generated `canonicalUrl` and final slug.
+ `POST /api/session-creations/<request-id>/retry` requires the current
+ `receiptId` and `attempt`; stale offers conflict. Before handoff a retry starts
+-one new preparation attempt. After handoff the ordinary creation receipt owns
++a new preparation attempt, or resumes an attempt already published but not
++launched. After handoff the ordinary creation receipt owns
+ attempts and progress. These endpoints require canonical unescaped UUID paths;
+ mutations retain the portal's exact-origin and package-generation checks.
+ 
++An unconfirmed preparation or upload-claim write returns HTTP 503 with the
++exact `requestId` and `code: "preparation_persistence_unconfirmed"`. The saved
++identity remains reserved. Repeating the identical submission confirms the
++published write and repairs its pending admission; retry uses the current
++receipt and attempt. Other HTTP failures do not establish this recovery state.
++
+ ## Browser drafts and progress
+ 
+ New session puts the initial request first, with team selection available below
+@@ -57,7 +64,19 @@ scope and the exact serialized submission body, including field presence and
+ ordered attachment IDs. The first attempt saves that body before POST. A lost
+ response, HTTP failure or reload keeps the inputs and uploads locked. Recover
+ saved request checks status first; a missing operation permits only identical
+-resubmission of the saved body. It never permits editing or recycling that ID.
++resubmission of the saved body. A 503 with the exact saved `requestId` and
++`code: "preparation_persistence_unconfirmed"` also permits identical recovery
++POST after the status lookup. Other 503 responses do not. Neither path permits
++editing or recycling that ID.
++
++After an attempted submission fails, **Start a separate request** opens the
++current form in a new tab without an opener. The original request may still
++finish; this action does not cancel or replace it. The original tab retains its
++exact request, settings and file selection for recovery. **Copy saved text**
++copies its raw prompt. The new tab uses current settings, a new request ID and a
++fresh file scope. Copying text, reattaching files and submitting are deliberate
++steps; nothing transfers or submits automatically. A restored attempted draft
++retains its original recovery behavior, even in the new tab.
+ 
+ Each draft owns a separate upload scope and stores its selection in the same
+ tab. Fresh tabs do not reuse the older shared localStorage scope pointer.
+@@ -139,8 +158,22 @@ Version-1 preparation records live in private `session-preparations/` files
+ beside ordinary portal state. They preserve the full input, team snapshot,
+ digests, naming result, predetermined receipt ID, final handoff request and
+ deletion-history epoch while recovery can still need them. File replacement
+-and directory moves are atomic and synced. Existing creation receipts,
+-manifests, lifecycle journals and upload catalogs retain their schemas.
++and directory moves are atomic and synced. A successful rename followed by a
++sync error reserves the exact published record. Until required directory syncs
++succeed, admission and status return the request-bound persistence error above;
++no receipt replacement, upload release or new side effect is allowed.
++Same-process recovery confirms the published bytes before advancing.
++
++Private in-memory dispatch bookkeeping separates a pending launch from a
++dispatched worker. Identical submission repairs a pending admission launch once,
++with the original receipt and attempt. A retry that published its incremented
++attempt before a sync error exposes that current attempt after confirmation;
++retrying it launches the pending worker without another increment. A worker
++that already stopped after later I/O instead exposes stopped progress for an
++explicit retry. Confirmation alone never repeats its naming call. Explicit retry
++retains any published base and reservation; ordinary restart still pauses work.
++Existing creation receipts, manifests, lifecycle journals and upload catalogs
++retain their schemas.
+ 
+ At most 512 unfinished requests and 10,000 total admitted replay identities are
+ allowed. Mapping capacity is reserved on admission. Full records are bounded
+@@ -154,7 +187,13 @@ catalog using an initial submission with
+ `attempt: preparation:<request-id>` and `state: pending`. Pending retention
+ protects accepted files even before a slug exists. Another request or legacy
+ submission cannot reuse the scope. Every catalog mutation checks ownership
+-inside its transaction. Empty attachment selections do not claim a draft.
++inside its transaction. Replaying an existing pending claim confirms catalog
++file and directory durability before acceptance advances. Unconfirmed catalog
++or preparation writes abort collection and retain selected files and ownership
++evidence. For a confirmed accepting intent, collection completes the attachment
++claim before allowing expiry to run; it leaves dispatch pending for the original
++POST or explicit retry. If the claim cannot be completed, collection aborts.
++Empty attachment selections do not claim a draft.
+ 
+ After reservation the same scope receives the final slug and epoch. Ordinary
+ creation proof transfers it to the final thread through the existing initial
+@@ -179,6 +218,8 @@ exact receipt, without launching another worker.
+ 
+ Terminal operations compact to immutable input-digest/receipt/slug/epoch/outcome
+ mappings in `session-preparation-mappings/` before ordinary receipt retirement.
++Retirement also waits for confirmation of an already published mapping and both
++directories after its move; an earlier failed sync cannot be bypassed by replay.
+ The CLI scans only unfinished records. A crash after compact replacement but
+ before the directory move remains recoverable. Receipt eviction or later
+ session deletion never allows the same request ID to initialize again.
+diff --git a/portal/internal/uploads/preparation_test.go b/portal/internal/uploads/preparation_test.go
+index d5e18d1..8a3df36 100644
+--- a/portal/internal/uploads/preparation_test.go
++++ b/portal/internal/uploads/preparation_test.go
+@@ -4,6 +4,7 @@ import (
+ 	"bytes"
+ 	"context"
+ 	"encoding/json"
++	"errors"
+ 	"os"
+ 	"path/filepath"
+ 	"sync"
+@@ -154,3 +155,62 @@ func TestPreparationUploadCompetingStateIsRetainedForRecovery(t *testing.T) {
+ 		t.Fatal("conflict removed selected file")
+ 	}
+ }
++
++func TestPreparationUploadPublishedClaimReplayConfirmsDurability(t *testing.T) {
++	store, backend, file := preparationFixture(t)
++	ctx := context.Background()
++	id := "00000000-0000-4000-8000-000000000001"
++	fail := true
++	store.directorySync = func(directory string) error {
++		if fail {
++			return errors.New("injected post-rename catalog sync")
++		}
++		dir, err := os.Open(directory)
++		if err != nil {
++			return err
++		}
++		defer dir.Close()
++		return dir.Sync()
++	}
++	for n := 0; n < 2; n++ {
++		_, err := store.ClaimPreparation(ctx, id, backend.ScopeID, " raw prompt ", []string{file.ID})
++		if !errors.Is(err, ErrPersistenceUnconfirmed) {
++			t.Fatalf("claim=%v", err)
++		}
++		encoded, err := os.ReadFile(filepath.Join(store.Directory, "catalog.json"))
++		var data catalog
++		if err != nil || json.Unmarshal(encoded, &data) != nil || data.Submissions[backend.ScopeID+"/initial/preparation:"+id].State != "pending" {
++			t.Fatalf("published claim absent: %s %v", encoded, err)
++		}
++		if _, err := os.Stat(store.filePath(data.Files[file.ID], false)); err != nil {
++			t.Fatalf("selected bytes released=%v", err)
++		}
++	}
++	store.Now = func() time.Time { return time.Now().Add(8 * 24 * time.Hour) }
++	if err := store.Collect(ctx); !errors.Is(err, ErrPersistenceUnconfirmed) {
++		t.Fatalf("collector did not abort=%v", err)
++	}
++	// A surviving pending record also needs confirmation without process-local
++	// uncertainty knowledge; unchanged lookup alone cannot establish durability.
++	store.catalogUnconfirmed.Store(false)
++	if _, err := store.ClaimPreparation(ctx, id, backend.ScopeID, " raw prompt ", []string{file.ID}); !errors.Is(err, ErrPersistenceUnconfirmed) {
++		t.Fatalf("unchanged replay=%v", err)
++	}
++	fail = false
++	wire, err := store.ClaimPreparation(ctx, id, backend.ScopeID, " raw prompt ", []string{file.ID})
++	if err != nil || wire == "" {
++		t.Fatalf("confirmed claim=%q %v", wire, err)
++	}
++	again, err := store.ClaimPreparation(ctx, id, backend.ScopeID, " raw prompt ", []string{file.ID})
++	if err != nil || again != wire {
++		t.Fatalf("confirmed replay=%q %v", again, err)
++	}
++	if err := store.Collect(ctx); err != nil {
++		t.Fatal(err)
++	}
++	view, err := backend.Status(ctx, file.ID)
++	if err != nil || view.State != "ready" {
++		t.Fatalf("retention=%#v %v", view, err)
++	}
++	status(t, backend.Delete(ctx, file.ID, true), 409)
++}
+diff --git a/portal/internal/uploads/store.go b/portal/internal/uploads/store.go
+index 27f808b..a37c743 100644
+--- a/portal/internal/uploads/store.go
++++ b/portal/internal/uploads/store.go
+@@ -9,6 +9,7 @@ import (
+ 	"encoding/hex"
+ 	"encoding/json"
+ 	"errors"
++	"fmt"
+ 	"io"
+ 	"os"
+ 	"path/filepath"
+@@ -16,6 +17,7 @@ import (
+ 	"slices"
+ 	"sort"
+ 	"strings"
++	"sync/atomic"
+ 	"time"
+ 	"unicode"
+ 	"unicode/utf8"
+@@ -38,11 +40,44 @@ func DefaultLimits() conversation.UploadLimits {
+ }
+ 
+ type Store struct {
+-	Directory    string
+-	Workspace    string
+-	UploadLimits conversation.UploadLimits
+-	MinFreeBytes uint64
+-	Now          func() time.Time
++	Directory          string
++	Workspace          string
++	UploadLimits       conversation.UploadLimits
++	MinFreeBytes       uint64
++	Now                func() time.Time
++	catalogUnconfirmed atomic.Bool // Decisions are made under the catalog lock.
++	directorySync      func(string) error
++}
++
++var ErrPersistenceUnconfirmed = errors.New("upload catalog persistence is unconfirmed")
++
++func (store *Store) syncCatalogDirectory() error {
++	if store.directorySync != nil {
++		return store.directorySync(store.Directory)
++	}
++	dir, err := os.Open(store.Directory)
++	if err != nil {
++		return err
++	}
++	defer dir.Close()
++	return dir.Sync()
++}
++
++// Called inside the catalog transaction, including unchanged claim replay.
++func (store *Store) confirmCatalog() error {
++	file, err := os.OpenFile(filepath.Join(store.Directory, "catalog.json"), os.O_RDONLY|unix.O_NOFOLLOW, 0)
++	if err == nil {
++		err = file.Sync()
++		file.Close()
++	}
++	if err == nil {
++		err = store.syncCatalogDirectory()
++	}
++	store.catalogUnconfirmed.Store(err != nil)
++	if err != nil {
++		return fmt.Errorf("%w: %v", ErrPersistenceUnconfirmed, err)
++	}
++	return nil
+ }
+ 
+ type Scope struct {
+@@ -174,6 +209,11 @@ func (store *Store) transaction(ctx context.Context, fn func(*catalog) (bool, er
+ 			return errors.New("invalid upload record")
+ 		}
+ 	}
++	if store.catalogUnconfirmed.Load() {
++		if err := store.confirmCatalog(); err != nil {
++			return err
++		}
++	}
+ 	originalRecords, originalChunks := catalogSize(&data)
+ 	compacted := store.compact(&data)
+ 	changed, err := fn(&data)
+@@ -207,12 +247,8 @@ func (store *Store) transaction(ctx context.Context, fn func(*catalog) (bool, er
+ 	if err = os.Rename(temp.Name(), path); err != nil {
+ 		return err
+ 	}
+-	dir, err := os.Open(store.Directory)
+-	if err != nil {
+-		return err
+-	}
+-	defer dir.Close()
+-	return dir.Sync()
++	store.catalogUnconfirmed.Store(true)
++	return store.confirmCatalog()
+ }
+ 
+ func catalogSize(data *catalog) (records, chunks int) {
+@@ -821,6 +857,9 @@ func (store *Store) ClaimPreparation(ctx context.Context, requestID, scopeID, te
+ 		var changed bool
+ 		var err error
+ 		wire, changed, err = store.preparePreparation(data, requestID, scopeID, text, ids)
++		if err == nil && !changed {
++			err = store.confirmCatalog()
++		}
+ 		return changed, err
+ 	})
+ 	return wire, err
+diff --git a/portal/internal/web/preparation.go b/portal/internal/web/preparation.go
+index 0acbe25..247194e 100644
+--- a/portal/internal/web/preparation.go
++++ b/portal/internal/web/preparation.go
+@@ -17,6 +17,7 @@ import (
+ 
+ 	"github.com/aither64/dev-workspace/portal/internal/session"
+ 	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
++	"github.com/aither64/dev-workspace/portal/internal/uploads"
+ 	"github.com/aither64/dev-workspace/portal/internal/userstate"
+ 	"golang.org/x/sys/unix"
+ )
+@@ -37,6 +38,51 @@ type preparationStatus struct {
+ 	UpdatedAt      string `json:"updatedAt"`
+ }
+ 
++// A pending launch is repaired once in this process. A dispatched worker that
++// stops needs explicit retry; confirmation must never dispatch it again.
++type preparationWork struct {
++	attempt    int
++	dispatched bool
++	stopped    bool
++}
++
++func (s *Server) writePreparationError(w http.ResponseWriter, r *http.Request, id string, status int, err error) {
++	if errors.Is(err, errPreparationPersistenceUnconfirmed) || errors.Is(err, uploads.ErrPersistenceUnconfirmed) {
++		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{
++			"requestId": id, "code": "preparation_persistence_unconfirmed",
++			"error": "The portal could not confirm the saved request. Try again.",
++		})
++		return
++	}
++	s.writeError(w, r, status, err.Error())
++}
++
++func (s *Server) confirmPreparationStatus(ctx context.Context, id string) error {
++	_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
++	if err != nil {
++		return err
++	}
++	defer unlock()
++	if err := s.requireCurrentHostProfile(); err != nil {
++		return err
++	}
++	if err := s.uploadCreationMu.Lock(ctx); err != nil {
++		return err
++	}
++	defer s.uploadCreationMu.Unlock()
++	s.operationMu.Lock()
++	defer s.operationMu.Unlock()
++	if err := s.confirmPreparationLocked(id); err != nil {
++		return err
++	}
++	if record, ok := s.preparations[id]; ok && record.State == "accepting" {
++		// An intent is not acceptance. Only its identical POST may finish the
++		// upload claim and pending launch before browser storage is cleared.
++		return errPreparationPersistenceUnconfirmed
++	}
++	return nil
++}
++
+ func looksLikePreparationPath(value *url.URL) bool {
+ 	for _, prefix := range []string{"/creations", "/api/session-creations"} {
+ 		if strings.HasPrefix(value.Path, prefix) || strings.HasPrefix(value.EscapedPath(), prefix) || strings.HasPrefix(path.Clean(value.Path), prefix) {
+@@ -79,6 +125,10 @@ func (s *Server) preparationRoute(w http.ResponseWriter, r *http.Request) {
+ 		http.NotFound(w, r)
+ 		return
+ 	}
++	if err := s.confirmPreparationStatus(r.Context(), id); err != nil {
++		s.writePreparationError(w, r, id, http.StatusServiceUnavailable, err)
++		return
++	}
+ 	status, ok := s.preparationStatus(id)
+ 	if !ok {
+ 		http.NotFound(w, r)
+@@ -94,6 +144,7 @@ func (s *Server) preparationRoute(w http.ResponseWriter, r *http.Request) {
+ func (s *Server) preparationStatus(id string) (preparationStatus, bool) {
+ 	s.operationMu.Lock()
+ 	record, ok := s.preparations[id]
++	work := s.preparationWork[id]
+ 	s.operationMu.Unlock()
+ 	if !ok {
+ 		return preparationStatus{}, false
+@@ -104,6 +155,10 @@ func (s *Server) preparationStatus(id string) (preparationStatus, bool) {
+ 	if record.Snapshot != nil {
+ 		status.InitialRequest = record.Snapshot.Input.RawPrompt
+ 	}
++	if record.State == "running" && work.attempt == record.Attempt && (!work.dispatched || work.stopped) {
++		status.State, status.Phase = "paused", "stopped"
++		status.Error = "Session preparation stopped. Retry to continue."
++	}
+ 	if record.Slug == "" {
+ 		return status, true
+ 	}
+@@ -257,15 +312,19 @@ func (s *Server) createPreparation(w http.ResponseWriter, r *http.Request) {
+ 			s.writeError(w, r, http.StatusConflict, "Session request ID was reused with different input.")
+ 			return
+ 		}
+-		if record.State == "accepting" {
++		err = s.confirmPreparationLocked(id)
++		if work := s.preparationWork[id]; err == nil && s.closing && work.attempt == record.Attempt && !work.dispatched {
++			err = errors.New("portal is stopping")
++		}
++		if err == nil && record.State == "accepting" {
+ 			if s.closing {
+ 				err = errors.New("portal is stopping")
+ 			} else {
+ 				err = s.finishAcceptingPreparationLocked(r.Context(), &record)
+ 			}
+-			if err == nil {
+-				s.launchPreparationLocked(record)
+-			}
++		}
++		if err == nil && !s.closing {
++			s.launchPreparationLocked(s.preparations[id])
+ 		}
+ 	} else {
+ 		if s.closing {
+@@ -292,7 +351,7 @@ func (s *Server) createPreparation(w http.ResponseWriter, r *http.Request) {
+ 				err = s.uploadStore.ValidatePreparation(r.Context(), id, input.UploadScope, input.RawPrompt, input.Attachments)
+ 			}
+ 			if err == nil {
+-				err = s.savePreparation(record)
++				err = s.savePreparationForDispatchLocked(record)
+ 			}
+ 			if err == nil {
+ 				err = s.finishAcceptingPreparationLocked(r.Context(), &record)
+@@ -304,7 +363,7 @@ func (s *Server) createPreparation(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	s.operationMu.Unlock()
+ 	if err != nil {
+-		s.writeError(w, r, http.StatusConflict, err.Error())
++		s.writePreparationError(w, r, id, http.StatusConflict, err)
+ 		return
+ 	}
+ 	status, _ := s.preparationStatus(id)
+@@ -316,6 +375,9 @@ func (s *Server) createPreparation(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) finishAcceptingPreparationLocked(ctx context.Context, record *sessionPreparation) error {
++	if err := s.confirmPreparationLocked(record.RequestID); err != nil {
++		return err
++	}
+ 	input := record.Snapshot.Input
+ 	goal, err := s.uploadStore.ClaimPreparation(ctx, record.RequestID, input.UploadScope, input.RawPrompt, input.Attachments)
+ 	if err != nil {
+@@ -329,10 +391,35 @@ func (s *Server) finishAcceptingPreparationLocked(ctx context.Context, record *s
+ 	record.Snapshot, record.SnapshotDigest = &snapshot, preparationDigest(&snapshot)
+ 	record.State, record.Phase = "running", "naming"
+ 	record.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+-	return s.savePreparation(*record)
++	return s.savePreparationForDispatchLocked(*record)
++}
++
++func (s *Server) savePreparationForDispatchLocked(record sessionPreparation) error {
++	err := s.savePreparation(record)
++	if published, ok := s.preparations[record.RequestID]; ok && published.Attempt == record.Attempt &&
++		(published.State == "accepting" || published.State == "running") {
++		s.pendingPreparationLocked(published)
++	}
++	return err
++}
++
++func (s *Server) pendingPreparationLocked(record sessionPreparation) {
++	if s.preparationWork == nil {
++		s.preparationWork = make(map[string]preparationWork)
++	}
++	work := s.preparationWork[record.RequestID]
++	if work.attempt != record.Attempt {
++		s.preparationWork[record.RequestID] = preparationWork{attempt: record.Attempt}
++	}
+ }
+ 
+ func (s *Server) launchPreparationLocked(record sessionPreparation) {
++	work := s.preparationWork[record.RequestID]
++	if s.closing || record.State != "running" || work.attempt != record.Attempt || work.dispatched || s.preparationUnconfirmed[record.RequestID] != "" {
++		return
++	}
++	work.dispatched = true
++	s.preparationWork[record.RequestID] = work
+ 	s.operationWG.Add(1)
+ 	go s.runPreparation(record.RequestID, record.Attempt)
+ }
+@@ -358,6 +445,9 @@ func (s *Server) mutatePreparation(ctx context.Context, id string, attempt int,
+ 	if !ok || record.Attempt != attempt || record.State == "terminal" || s.closing {
+ 		return errors.New("session preparation attempt changed or stopped")
+ 	}
++	if err := s.confirmPreparationLocked(id); err != nil {
++		return err
++	}
+ 	if err := mutate(&record); err != nil {
+ 		return err
+ 	}
+@@ -367,6 +457,15 @@ func (s *Server) mutatePreparation(ctx context.Context, id string, attempt int,
+ 
+ func (s *Server) runPreparation(id string, attempt int) {
+ 	defer s.operationWG.Done()
++	defer func() {
++		s.operationMu.Lock()
++		work := s.preparationWork[id]
++		if work.attempt == attempt {
++			work.stopped = true
++			s.preparationWork[id] = work
++		}
++		s.operationMu.Unlock()
++	}()
+ 	s.operationMu.Lock()
+ 	record := s.preparations[id]
+ 	s.operationMu.Unlock()
+@@ -515,6 +614,11 @@ func (s *Server) retryPreparation(w http.ResponseWriter, r *http.Request, id str
+ 	if !s.decodeJSON(w, r, &body) {
+ 		return
+ 	}
++	if err := s.uploadCreationMu.Lock(r.Context()); err != nil {
++		s.writeError(w, r, http.StatusServiceUnavailable, err.Error())
++		return
++	}
++	defer s.uploadCreationMu.Unlock()
+ 	s.operationMu.Lock()
+ 	record, ok := s.preparations[id]
+ 	if !ok {
+@@ -522,6 +626,11 @@ func (s *Server) retryPreparation(w http.ResponseWriter, r *http.Request, id str
+ 		http.NotFound(w, r)
+ 		return
+ 	}
++	if err := s.confirmPreparationLocked(id); err != nil {
++		s.operationMu.Unlock()
++		s.writePreparationError(w, r, id, http.StatusServiceUnavailable, err)
++		return
++	}
+ 	if record.State == "handed_off" {
+ 		receipt, exists := s.creations[record.Slug]
+ 		if !exists || !preparationReceiptMatches(record, receipt) {
+@@ -545,7 +654,16 @@ func (s *Server) retryPreparation(w http.ResponseWriter, r *http.Request, id str
+ 		s.writeError(w, r, http.StatusConflict, "Creation status changed. Reload before retrying.")
+ 		return
+ 	}
+-	if record.State == "terminal" || record.State == "running" {
++	work := s.preparationWork[id]
++	if s.closing && work.attempt == record.Attempt && !work.dispatched {
++		s.operationMu.Unlock()
++		s.writeError(w, r, http.StatusServiceUnavailable, "Portal is stopping.")
++		return
++	}
++	if record.State == "terminal" || record.State == "running" && !(work.attempt == record.Attempt && work.stopped) {
++		if !s.closing {
++			s.launchPreparationLocked(record)
++		}
+ 		s.operationMu.Unlock()
+ 		status, _ := s.preparationStatus(id)
+ 		s.writeJSON(w, http.StatusAccepted, status)
+@@ -563,13 +681,13 @@ func (s *Server) retryPreparation(w http.ResponseWriter, r *http.Request, id str
+ 	} else {
+ 		record.Phase = "naming"
+ 	}
+-	err := s.savePreparation(record)
++	err := s.savePreparationForDispatchLocked(record)
+ 	if err == nil {
+ 		s.launchPreparationLocked(record)
+ 	}
+ 	s.operationMu.Unlock()
+ 	if err != nil {
+-		s.writeError(w, r, http.StatusInternalServerError, err.Error())
++		s.writePreparationError(w, r, id, http.StatusInternalServerError, err)
+ 		return
+ 	}
+ 	status, _ := s.preparationStatus(id)
+@@ -596,6 +714,20 @@ func (s *Server) reconcilePreparations() error {
+ 
+ func (s *Server) reconcilePreparationsLocked(ctx context.Context) error {
+ 	for _, record := range s.preparations {
++		if err := s.confirmPreparationLocked(record.RequestID); err != nil {
++			return err
++		}
++		work := s.preparationWork[record.RequestID]
++		if work.attempt == record.Attempt && !work.dispatched {
++			// A published intent alone does not retain attachments. Finish the
++			// claim (or abort collection) without consuming its pending launch.
++			if record.State == "accepting" || record.State == "running" && record.Snapshot.Goal == "" {
++				if err := s.finishAcceptingPreparationLocked(ctx, &record); err != nil {
++					return err
++				}
++			}
++			continue
++		}
+ 		if record.State == "terminal" {
+ 			if _, err := os.Lstat(s.preparationPath(record.RequestID, false)); err == nil {
+ 				if err := s.savePreparation(record); err != nil {
+@@ -613,6 +745,9 @@ func (s *Server) reconcilePreparationsLocked(ctx context.Context) error {
+ 		}
+ 		if record.State == "accepting" {
+ 			if err := s.finishAcceptingPreparationLocked(ctx, &record); err != nil {
++				if errors.Is(err, errPreparationPersistenceUnconfirmed) || errors.Is(err, uploads.ErrPersistenceUnconfirmed) {
++					return err
++				}
+ 				record.Error = err.Error()
+ 			}
+ 			record.State, record.Phase = "paused", "stopped"
+@@ -623,6 +758,9 @@ func (s *Server) reconcilePreparationsLocked(ctx context.Context) error {
+ 		if record.State != "accepting" && record.Snapshot.Goal != "" && len(record.Snapshot.Input.Attachments) > 0 {
+ 			input := record.Snapshot.Input
+ 			goal, err := s.uploadStore.ClaimPreparation(ctx, record.RequestID, input.UploadScope, input.RawPrompt, input.Attachments)
++			if errors.Is(err, uploads.ErrPersistenceUnconfirmed) {
++				return err
++			}
+ 			if err != nil || goal != record.Snapshot.Goal {
+ 				record.State, record.Phase, record.Error = "failed", "stopped", "Accepted attachment ownership changed."
+ 				if err := s.savePreparation(record); err != nil {
+@@ -654,19 +792,34 @@ func (s *Server) compactPreparationsLocked(receipt creationReceipt) error {
+ 	if receipt.State != "ready" && receipt.State != "conflict" && receipt.State != "cancelled" {
+ 		return nil
+ 	}
++	related := false
+ 	for _, record := range s.preparations {
+-		if record.State == "terminal" || !preparationReceiptMatches(record, receipt) {
+-			continue
++		if record.ReceiptID == receipt.ReceiptID && record.Slug == receipt.Request.Slug {
++			related = true
++			break
+ 		}
+-		ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+-		_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
+-		cancel()
+-		if err != nil {
+-			return err
++	}
++	if !related {
++		return nil
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
++	_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
++	cancel()
++	if err != nil {
++		return err
++	}
++	defer unlock()
++	if err := s.requireCurrentHostProfile(); err != nil {
++		return err
++	}
++	for _, record := range s.preparations {
++		if record.ReceiptID == receipt.ReceiptID && record.Slug == receipt.Request.Slug {
++			if err := s.confirmPreparationLocked(record.RequestID); err != nil {
++				return err
++			}
+ 		}
+-		defer unlock()
+-		if err := s.requireCurrentHostProfile(); err != nil {
+-			return err
++		if record.State == "terminal" || !preparationReceiptMatches(record, receipt) {
++			continue
+ 		}
+ 		if receipt.State == "ready" {
+ 			if s.uploadStore == nil {
+diff --git a/portal/internal/web/preparation_browser_contract_test.cjs b/portal/internal/web/preparation_browser_contract_test.cjs
+index 43facc8..6c21098 100644
+--- a/portal/internal/web/preparation_browser_contract_test.cjs
++++ b/portal/internal/web/preparation_browser_contract_test.cjs
+@@ -82,6 +82,70 @@ module.exports = async () => {
+     assert.equal(calls[1][1].body, firstBody); assert.equal(request.draft.requestId, id);
+     assert.throws(() => request.update({name:"new"}), /Recover/);
+   });
++  await test("only an exact request-bound persistence 503 permits frozen POST repair", async () => {
++    for (const failure of [
++      {requestId:otherID,code:"preparation_persistence_unconfirmed"},
++      {requestId:id,code:"different"}, {code:"preparation_persistence_unconfirmed"},
++      {requestId:id,code:"preparation_persistence_unconfirmed",http:409},
++    ]) {
++      const saved=storage();let calls=[];
++      const request=helpers.createRequestDraft({storage:saved,fields,randomUUID:()=>id,
++        fetch:async(url,options)=>{calls.push([url,options]);if(url==="/sessions")throw Error("lost");return response(failure,failure.http||503);}});
++      await assert.rejects(request.submit([],true),/lost/);calls=[];
++      const old=saved.getItem(helpers.draftKey);
++      await assert.rejects(request.submit());
++      assert.deepEqual(calls.map(([url])=>url),[`/api/session-creations/${id}`]);
++      assert.equal(saved.getItem(helpers.draftKey),old);assert.throws(()=>request.update({goal:"new"}),/Recover/);
++    }
++    const saved=storage();let calls=[],healthy=false;
++    const pending={requestId:id,code:"preparation_persistence_unconfirmed",error:"not yet confirmed"};
++    const request=helpers.createRequestDraft({storage:saved,fields,randomUUID:()=>id,fetch:async(url,options)=>{
++      calls.push([url,options]);return healthy ? response(status,202) : response(pending,503);
++    }});
++    request.bindScope(scope);await assert.rejects(request.submit([attachment],true),/not yet/);
++    const frozen=request.draft.body;
++    await assert.rejects(request.submit(),/not yet/);
++    assert.deepEqual(calls.map(([url])=>url),["/sessions",`/api/session-creations/${id}`,"/sessions"]);
++    assert.equal(calls[2][1].body,frozen);assert.deepEqual(request.draft.attachmentIds,[attachment]);
++    healthy=true;await request.submit();assert.equal(request.draft.accepted.receiptId,status.receiptId);
++  });
++  await test("stale 409 and missing status preserve the original envelope and selection", async () => {
++    const saved=storage(),calls=[];
++    saved.setItem(`workspace-portal.upload-draft.${scope.id}`,JSON.stringify([{id:attachment,name:"original.txt",state:"ready"}]));
++    const request=helpers.createRequestDraft({storage:saved,fields,randomUUID:()=>id,fetch:async(url,options)=>{
++      calls.push([url,options]);return url==="/sessions" ? response({error:"catalog digest is stale; reload the form"},409) : response({},404);
++    }});
++    request.bindScope(scope);await assert.rejects(request.submit([attachment],true),/catalog/);
++    const bytes=[...saved.values.entries()],frozen=request.draft.body;
++    await assert.rejects(request.submit(),/catalog/);
++    assert.deepEqual([...saved.values.entries()],bytes);
++    assert.equal(calls.at(-1)[1].body,frozen);assert.equal(request.draft.requestId,id);
++    assert.throws(()=>request.update({catalogDigest:"b".repeat(64)}),/Recover/);
++    assert.throws(()=>request.bindScope({id:attachment,url:`/uploads/d-${attachment}`}),/bind/);
++  });
++  await test("a separate tab uses current fields and new scope without adopting old bytes", async () => {
++    const oldStorage=storage(),newStorage=storage();let complete=false;
++    oldStorage.setItem(`workspace-portal.upload-draft.${scope.id}`,"original file selection");
++    const original=helpers.createRequestDraft({storage:oldStorage,fields,randomUUID:()=>id,
++      fetch:async(url)=>{if(complete)return response(status);throw Error("unknown outcome");}});
++    original.bindScope(scope);await assert.rejects(original.submit([attachment],true),/unknown/);
++    const oldBytes=[...oldStorage.values.entries()],oldBody=original.draft.body;
++    const fresh=helpers.createRequestDraft({storage:newStorage,fields:{...fields,goal:"",catalogDigest:"b".repeat(64)},randomUUID:()=>otherID,
++      legacyStorage:()=>assert.fail("separate tab read old uploads"),fetch:()=>assert.fail("separate draft auto submitted")});
++    fresh.bindScope({id:attachment,url:`/uploads/d-${attachment}`});
++    assert.notEqual(fresh.draft.requestId,original.draft.requestId);assert.notEqual(fresh.draft.scope.id,original.draft.scope.id);
++    assert.equal(fresh.draft.catalogDigest,"b".repeat(64));assert.equal(fresh.draft.goal,"");assert.equal(fresh.draft.body,null);
++    assert.deepEqual(fresh.draft.attachmentIds,[]);assert.deepEqual([...oldStorage.values.entries()],oldBytes);
++    const freshBytes=[...newStorage.values.entries()];complete=true;await original.submit();
++    assert.deepEqual([...newStorage.values.entries()],freshBytes);assert.equal(original.draft.body,oldBody);
++    assert.equal(oldStorage.getItem(`workspace-portal.upload-draft.${scope.id}`),"original file selection");
++  });
++  await test("a restored attempted draft is preserved rather than forced into a new identity", async () => {
++    const saved=storage();const original=helpers.createRequestDraft({storage:saved,fields,randomUUID:()=>otherID,fetch:async()=>{throw Error("lost");}});
++    await assert.rejects(original.submit([],true),/lost/);const bytes=saved.getItem(helpers.draftKey);
++    const restored=helpers.createRequestDraft({storage:saved,fields:{...fields,catalogDigest:"b".repeat(64)},randomUUID:()=>assert.fail("forced UUID"),fetch:()=>assert.fail("auto submission")});
++    assert.equal(restored.draft.requestId,otherID);assert.equal(saved.getItem(helpers.draftKey),bytes);
++  });
+   await test("double-click shares one request and acceptance", async () => {
+     const saved = storage(); let complete, count = 0;
+     const request = helpers.createRequestDraft({storage: saved, fields, randomUUID: () => id,
+diff --git a/portal/internal/web/preparation_store.go b/portal/internal/web/preparation_store.go
+index f874565..a230033 100644
+--- a/portal/internal/web/preparation_store.go
++++ b/portal/internal/web/preparation_store.go
+@@ -242,6 +242,8 @@ func readPreparation(path, workspace string) (sessionPreparation, error) {
+ 
+ func (s *Server) loadPreparations() error {
+ 	s.preparations = make(map[string]sessionPreparation)
++	s.preparationUnconfirmed = make(map[string]string)
++	s.preparationWork = make(map[string]preparationWork)
+ 	unfinished, totalBytes := 0, 0
+ 	for _, completed := range []bool{false, true} {
+ 		directory := s.preparationDirectory(completed)
+@@ -297,6 +299,67 @@ func (s *Server) loadPreparations() error {
+ 	return nil
+ }
+ 
++var errPreparationPersistenceUnconfirmed = errors.New("preparation persistence is unconfirmed")
++
++func (s *Server) syncPreparationDirectory(directory string) error {
++	if s.preparationSync != nil {
++		return s.preparationSync(directory)
++	}
++	return syncPreparationDirectory(directory)
++}
++
++// Only a real rename creates this obligation. Confirm the published bytes,
++// never reconstruct them from an earlier snapshot after an uncertain write.
++// The caller holds operationMu and a revalidated transition lock.
++func (s *Server) confirmPreparationLocked(id string) error {
++	path, pending := s.preparationUnconfirmed[id]
++	if !pending {
++		return nil
++	}
++	record := s.preparations[id]
++	published, err := readPreparation(path, s.config.Workspace)
++	if err == nil && preparationDigest(published) != preparationDigest(record) {
++		err = errors.New("published preparation changed")
++	}
++	if err == nil {
++		err = s.syncPreparationDirectory(s.operationStore.directory)
++	}
++	if err == nil {
++		err = s.syncPreparationDirectory(filepath.Dir(path))
++	}
++	if err == nil && record.State == "terminal" {
++		directory := s.preparationDirectory(true)
++		if err = os.MkdirAll(directory, 0700); err == nil {
++			err = privatePreparationDirectory(directory)
++		}
++		if err == nil {
++			err = s.syncPreparationDirectory(s.operationStore.directory)
++		}
++		if err == nil && path != s.preparationPath(id, true) {
++			err = os.Rename(path, s.preparationPath(id, true))
++			if err == nil {
++				path = s.preparationPath(id, true)
++				s.preparationUnconfirmed[id] = path
++			}
++		}
++		if err == nil {
++			if _, statErr := os.Lstat(s.preparationDirectory(false)); statErr == nil {
++				err = s.syncPreparationDirectory(s.preparationDirectory(false))
++			} else if !errors.Is(statErr, os.ErrNotExist) {
++				err = statErr
++			}
++		}
++		if err == nil {
++			err = s.syncPreparationDirectory(directory)
++		}
++	}
++	if err != nil {
++		return fmt.Errorf("%w: %v", errPreparationPersistenceUnconfirmed, err)
++	}
++	delete(s.preparationUnconfirmed, id)
++	return nil
++}
++
+ func syncPreparationDirectory(directory string) error {
+ 	file, err := os.Open(directory)
+ 	if err != nil {
+@@ -320,6 +383,9 @@ func privatePreparationDirectory(directory string) error {
+ 
+ // The caller holds operationMu and a revalidated transition lock.
+ func (s *Server) savePreparation(record sessionPreparation) error {
++	if err := s.confirmPreparationLocked(record.RequestID); err != nil {
++		return err
++	}
+ 	if err := validatePreparation(record, s.config.Workspace); err != nil {
+ 		return err
+ 	}
+@@ -335,7 +401,6 @@ func (s *Server) savePreparation(record sessionPreparation) error {
+ 		return errors.New("preparation record exceeds its byte limit")
+ 	}
+ 	directory := s.preparationDirectory(false)
+-	completed := record.State == "terminal"
+ 	if previous, ok := s.preparations[record.RequestID]; ok && previous.State == "terminal" {
+ 		if _, err := os.Lstat(s.preparationPath(record.RequestID, true)); err == nil {
+ 			directory = s.preparationDirectory(true)
+@@ -347,7 +412,7 @@ func (s *Server) savePreparation(record sessionPreparation) error {
+ 	if err := privatePreparationDirectory(directory); err != nil {
+ 		return err
+ 	}
+-	if err := syncPreparationDirectory(s.operationStore.directory); err != nil {
++	if err := s.syncPreparationDirectory(s.operationStore.directory); err != nil {
+ 		return err
+ 	}
+ 	file, err := os.CreateTemp(directory, ".preparation-*.tmp")
+@@ -371,28 +436,11 @@ func (s *Server) savePreparation(record sessionPreparation) error {
+ 	// Rename has published the identity even if the following sync reports an
+ 	// uncertain outcome. A same-process retry must not allocate another receipt.
+ 	s.preparations[record.RequestID] = record
+-	if err := syncPreparationDirectory(directory); err != nil {
+-		return err
++	if s.preparationUnconfirmed == nil {
++		s.preparationUnconfirmed = make(map[string]string)
+ 	}
+-	if completed && directory != s.preparationDirectory(true) {
+-		if err := os.MkdirAll(s.preparationDirectory(true), 0700); err != nil {
+-			return err
+-		}
+-		if err := privatePreparationDirectory(s.preparationDirectory(true)); err != nil {
+-			return err
+-		}
+-		if err := syncPreparationDirectory(s.operationStore.directory); err != nil {
+-			return err
+-		}
+-		if err := os.Rename(path, s.preparationPath(record.RequestID, true)); err != nil {
+-			return err
+-		}
+-		if err := syncPreparationDirectory(directory); err != nil {
+-			return err
+-		}
+-		return syncPreparationDirectory(s.preparationDirectory(true))
+-	}
+-	return nil
++	s.preparationUnconfirmed[record.RequestID] = path
++	return s.confirmPreparationLocked(record.RequestID)
+ }
+ 
+ func (s *Server) preparationCapacity() error {
+diff --git a/portal/internal/web/preparation_test.go b/portal/internal/web/preparation_test.go
+index ed70856..90436f8 100644
+--- a/portal/internal/web/preparation_test.go
++++ b/portal/internal/web/preparation_test.go
+@@ -2,9 +2,12 @@ package web
+ 
+ import (
+ 	"context"
++	"crypto/sha256"
++	"encoding/hex"
+ 	"encoding/json"
+ 	"errors"
+ 	"fmt"
++	"io"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"net/url"
+@@ -712,7 +715,7 @@ func TestSessionPreparationPageHasExplicitIdentityAndEscapedRawPrompt(t *testing
+ 	for _, expected := range []string{
+ 		`data-preparation="` + record.RequestID + `"`, `data-receipt-id="` + record.ReceiptID + `"`,
+ 		`data-accepted-at="` + record.StartedAt + `"`, "&lt;script&gt;", "Second line &amp; last.",
+-		`/static/preparation.js?v=1`, `/static/creation.js?v=2`,
++		`/static/preparation.js?v=2`, `/static/creation.js?v=2`,
+ 	} {
+ 		if !strings.Contains(body, expected) {
+ 			t.Errorf("preparation page omits %q", expected)
+@@ -741,7 +744,419 @@ func TestSessionPreparationIndexMakesOnlyNewSessionNameOptional(t *testing.T) {
+ 	if prompt < 0 || options < prompt || name < options {
+ 		t.Fatal("initial request must precede optional settings")
+ 	}
+-	if !strings.Contains(body, `id="new-session-recover"`) || !strings.Contains(body, `/static/preparation.js?v=1`) {
++	if !strings.Contains(body, `id="new-session-recover"`) || !strings.Contains(body, `/static/preparation.js?v=2`) {
+ 		t.Fatal("index is missing durable-request recovery controls")
+ 	}
++	if !strings.Contains(body, `href="/" target="_blank" rel="noopener noreferrer"`) || !strings.Contains(body, `Copy saved text`) || !strings.Contains(body, `The original request may still finish.`) {
++		t.Fatal("separate request must preserve recovery and open without an opener")
++	}
++}
++
++func getPreparation(t *testing.T, server *Server, id string) *httptest.ResponseRecorder {
++	t.Helper()
++	w := httptest.NewRecorder()
++	server.Handler().ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/session-creations/"+id, nil))
++	return w
++}
++
++func assertPreparationUnconfirmed(t *testing.T, response *httptest.ResponseRecorder, id string) {
++	t.Helper()
++	var body map[string]string
++	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || response.Code != 503 ||
++		body["requestId"] != id || body["code"] != "preparation_persistence_unconfirmed" || response.Header().Get("Location") != "" {
++		t.Fatalf("unconfirmed response=%d %s: %v", response.Code, response.Body.String(), err)
++	}
++}
++
++func TestSessionPreparationPublishedAdmissionConfirmationDispatchesOnce(t *testing.T) {
++	for _, state := range []string{"accepting", "running"} {
++		t.Run(state, func(t *testing.T) {
++			server := newTestServer(t)
++			release := make(chan struct{})
++			defer func() { close(release); server.Close() }()
++			id := preparationTestID(1)
++			var fault atomic.Bool
++			fault.Store(true)
++			var calls atomic.Int32
++			server.config.SessionNamer = func(ctx context.Context, _ string) (string, error) {
++				calls.Add(1)
++				select {
++				case <-release:
++					return `{"name":"one-two-three"}`, nil
++				case <-ctx.Done():
++					return "", ctx.Err()
++				}
++			}
++			server.preparationSync = func(directory string) error {
++				if directory == server.preparationDirectory(false) && fault.Load() {
++					published, err := readPreparation(server.preparationPath(id, false), server.config.Workspace)
++					if err == nil && published.State == state {
++						return errors.New("injected post-rename sync failure")
++					}
++				}
++				return syncPreparationDirectory(directory)
++			}
++			assertPreparationUnconfirmed(t, postPreparation(t, server, id, "raw prompt", "", nil), id)
++			published, err := readPreparation(server.preparationPath(id, false), server.config.Workspace)
++			if err != nil || published.State != state {
++				t.Fatalf("published=%#v %v", published, err)
++			}
++			assertPreparationUnconfirmed(t, getPreparation(t, server, id), id)
++			assertPreparationUnconfirmed(t, postPreparation(t, server, id, "raw prompt", "", nil), id)
++			form := url.Values{"clientRequestId": {id}, "goal": {"raw prompt"}, "name": {""}, "creation_date": {"2026-10-03"}}
++			r := httptest.NewRequest(http.MethodPost, "/sessions", strings.NewReader(form.Encode()))
++			r.Header.Set("Origin", server.config.BaseURL)
++			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
++			html := httptest.NewRecorder()
++			server.Handler().ServeHTTP(html, r)
++			assertPreparationUnconfirmed(t, html, id)
++			if err := server.reconcilePreparations(); !errors.Is(err, errPreparationPersistenceUnconfirmed) {
++				t.Fatalf("collection barrier=%v", err)
++			}
++			if calls.Load() != 0 {
++				t.Fatal("naming started before confirmation")
++			}
++			fault.Store(false)
++			// Collection may confirm bytes, but retains the pending launch for POST.
++			if err := server.reconcilePreparations(); err != nil {
++				t.Fatal(err)
++			}
++			if calls.Load() != 0 {
++				t.Fatal("collector dispatched naming")
++			}
++			responses := make(chan *httptest.ResponseRecorder, 4)
++			for n := 0; n < 4; n++ {
++				go func() { responses <- postPreparation(t, server, id, "raw prompt", "", nil) }()
++			}
++			for n := 0; n < 4; n++ {
++				response := <-responses
++				var status preparationStatus
++				if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 202 || status.ReceiptID != published.ReceiptID || status.Attempt != 1 {
++					t.Fatalf("replay=%d %s", response.Code, response.Body.String())
++				}
++			}
++			deadline := time.Now().Add(time.Second)
++			for calls.Load() == 0 && time.Now().Before(deadline) {
++				time.Sleep(time.Millisecond)
++			}
++			if calls.Load() != 1 {
++				t.Fatalf("naming calls=%d", calls.Load())
++			}
++		})
++	}
++}
++
++func TestSessionPreparationPublishedRetryKeepsAttemptAndLaunch(t *testing.T) {
++	server := newTestServer(t)
++	release := make(chan struct{})
++	defer func() { close(release); server.Close() }()
++	record := fixturePreparation(t, server, 1, "failed")
++	if err := server.savePreparation(record); err != nil {
++		t.Fatal(err)
++	}
++	var fault atomic.Bool
++	fault.Store(true)
++	server.preparationSync = func(directory string) error {
++		if fault.Load() && directory == server.preparationDirectory(false) {
++			return errors.New("injected retry directory sync")
++		}
++		return syncPreparationDirectory(directory)
++	}
++	var calls atomic.Int32
++	server.config.SessionNamer = func(ctx context.Context, _ string) (string, error) {
++		calls.Add(1)
++		select {
++		case <-release:
++			return `{"name":"one-two-three"}`, nil
++		case <-ctx.Done():
++			return "", ctx.Err()
++		}
++	}
++	retry := func(attempt int) *httptest.ResponseRecorder {
++		return postCreation(t, server, "/api/session-creations/"+record.RequestID+"/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":%d}`, record.ReceiptID, attempt), "application/json")
++	}
++	assertPreparationUnconfirmed(t, retry(1), record.RequestID)
++	assertPreparationUnconfirmed(t, retry(2), record.RequestID)
++	assertPreparationUnconfirmed(t, getPreparation(t, server, record.RequestID), record.RequestID)
++	published, err := readPreparation(server.preparationPath(record.RequestID, false), server.config.Workspace)
++	if err != nil || published.Attempt != 2 || published.ReceiptID != record.ReceiptID || calls.Load() != 0 {
++		t.Fatalf("retry published=%#v %v calls=%d", published, err, calls.Load())
++	}
++	fault.Store(false)
++	var status preparationStatus
++	response := getPreparation(t, server, record.RequestID)
++	if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 200 || status.State != "paused" || status.Attempt != 2 {
++		t.Fatalf("retry offer=%d %s", response.Code, response.Body.String())
++	}
++	if response := retry(1); response.Code != 409 {
++		t.Fatalf("stale retry=%d", response.Code)
++	}
++	for n := 0; n < 3; n++ {
++		response := retry(2)
++		if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 202 || status.Attempt != 2 {
++			t.Fatalf("repaired retry=%d %s", response.Code, response.Body.String())
++		}
++	}
++	deadline := time.Now().Add(time.Second)
++	for calls.Load() == 0 && time.Now().Before(deadline) {
++		time.Sleep(time.Millisecond)
++	}
++	if calls.Load() != 1 {
++		t.Fatalf("naming calls=%d", calls.Load())
++	}
++}
++
++func TestSessionPreparationStoppedWorkerNeedsExplicitRetryAfterConfirmation(t *testing.T) {
++	for _, boundary := range []string{"base", "reservation", "failed"} {
++		t.Run(boundary, func(t *testing.T) {
++			server := newTestServer(t)
++			defer server.Close()
++			id := preparationTestID(1)
++			var fault atomic.Bool
++			fault.Store(true)
++			var calls atomic.Int32
++			server.config.SessionNamer = func(context.Context, string) (string, error) { calls.Add(1); return `{"name":"one-two-three"}`, nil }
++			var lock *session.RuntimeLock
++			if boundary == "failed" {
++				var err error
++				lock, err = session.LockCreation(server.config.AuthorityDir, "2026-10-03-one-two-three")
++				if err != nil {
++					t.Fatal(err)
++				}
++				defer lock.Close()
++			}
++			server.preparationSync = func(directory string) error {
++				if directory == server.preparationDirectory(false) && fault.Load() {
++					published, err := readPreparation(server.preparationPath(id, false), server.config.Workspace)
++					if err == nil && ((boundary == "base" && published.Base != "") || (boundary == "reservation" && published.Slug != "") || (boundary == "failed" && published.State == "failed")) {
++						return errors.New("injected worker directory sync")
++					}
++				}
++				return syncPreparationDirectory(directory)
++			}
++			if response := postPreparation(t, server, id, "prompt", "", nil); response.Code != 202 {
++				t.Fatalf("admission=%d %s", response.Code, response.Body.String())
++			}
++			deadline := time.Now().Add(3 * time.Second)
++			for {
++				server.operationMu.Lock()
++				stopped := server.preparationWork[id].stopped
++				server.operationMu.Unlock()
++				if stopped {
++					break
++				}
++				if time.Now().After(deadline) {
++					t.Fatal("worker did not stop")
++				}
++				time.Sleep(time.Millisecond)
++			}
++			assertPreparationUnconfirmed(t, getPreparation(t, server, id), id)
++			published, err := readPreparation(server.preparationPath(id, false), server.config.Workspace)
++			if err != nil || published.Base != "one-two-three" || calls.Load() != 1 {
++				t.Fatalf("stopped=%#v %v", published, err)
++			}
++			fault.Store(false)
++			if lock != nil {
++				lock.Close()
++			}
++			var status preparationStatus
++			response := getPreparation(t, server, id)
++			if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 200 || (status.State != "paused" && status.State != "failed") {
++				t.Fatalf("stopped offer=%d %s", response.Code, response.Body.String())
++			}
++			if response := postPreparation(t, server, id, "prompt", "", nil); response.Code != 202 {
++				t.Fatal(response.Body.String())
++			}
++			if calls.Load() != 1 {
++				t.Fatal("identical POST redispatched a stopped worker")
++			}
++			response = postCreation(t, server, "/api/session-creations/"+id+"/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, published.ReceiptID), "application/json")
++			if response.Code != 202 {
++				t.Fatal(response.Body.String())
++			}
++			result := awaitPreparation(t, server, id)
++			if result.Attempt != 2 || result.ReceiptID != published.ReceiptID || result.Base != published.Base || result.Slug == "" || (published.Slug != "" && result.Slug != published.Slug) || calls.Load() != 1 {
++				t.Fatalf("explicit retry=%#v calls=%d", result, calls.Load())
++			}
++		})
++	}
++}
++
++func TestSessionPreparationMappingConfirmationPrecedesRetirement(t *testing.T) {
++	for _, moved := range []bool{false, true} {
++		t.Run(fmt.Sprint(moved), func(t *testing.T) {
++			server := newTestServer(t)
++			defer server.Close()
++			record := fixturePreparation(t, server, 1, "handed_off")
++			record.Base, record.Slug, record.Phase = "one-two-three", "2026-10-03-one-two-three", "initializing"
++			record.Epoch, _ = session.CompletedRemovalHistory(server.config.Workspace, record.Slug, server.config.UserStateRoot)
++			request := preparationCreationRequest(record)
++			record.Handoff = &request
++			if err := server.savePreparation(record); err != nil {
++				t.Fatal(err)
++			}
++			receipt := creationReceipt{Schema: 1, Workspace: record.Workspace, Request: request, ReceiptID: record.ReceiptID, DeletionHistorySHA256: record.Epoch, Attempt: 1, State: "ready", Validated: true, Goal: record.Snapshot.Goal, StartedAt: record.StartedAt, UpdatedAt: record.UpdatedAt}
++			if err := server.saveCreation(receipt); err != nil {
++				t.Fatal(err)
++			}
++			writeCreationProof(t, server, receipt)
++			server.creations[record.Slug] = receipt
++			var fault atomic.Bool
++			fault.Store(true)
++			server.preparationSync = func(directory string) error {
++				if fault.Load() && directory == server.preparationDirectory(moved) {
++					published, err := readPreparation(server.preparationPath(record.RequestID, moved), server.config.Workspace)
++					if err == nil && published.State == "terminal" {
++						return errors.New("injected mapping directory sync")
++					}
++				}
++				return syncPreparationDirectory(directory)
++			}
++			for n := 0; n < 2; n++ {
++				if err := server.retireCreation(receipt); !errors.Is(err, errPreparationPersistenceUnconfirmed) {
++					t.Fatalf("retire=%v", err)
++				}
++				if _, err := os.Stat(server.creationPath(record.Slug)); err != nil {
++					t.Fatalf("receipt released=%v", err)
++				}
++			}
++			fault.Store(false)
++			if err := server.retireCreation(receipt); err != nil {
++				t.Fatal(err)
++			}
++			mapping, err := readPreparation(server.preparationPath(record.RequestID, true), server.config.Workspace)
++			if err != nil || mapping.ReceiptID != record.ReceiptID || mapping.Epoch != record.Epoch {
++				t.Fatalf("mapping=%#v %v", mapping, err)
++			}
++		})
++	}
++}
++
++func TestSessionPreparationPendingConfirmationRejectsSupersededGeneration(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	id := preparationTestID(1)
++	var fault atomic.Bool
++	fault.Store(true)
++	var syncs atomic.Int32
++	server.preparationSync = func(directory string) error {
++		syncs.Add(1)
++		if fault.Load() && directory == server.preparationDirectory(false) {
++			return errors.New("injected directory sync")
++		}
++		return syncPreparationDirectory(directory)
++	}
++	var calls atomic.Int32
++	server.config.SessionNamer = func(context.Context, string) (string, error) { calls.Add(1); return `{"name":"one-two-three"}`, nil }
++	assertPreparationUnconfirmed(t, postPreparation(t, server, id, "prompt", "", nil), id)
++	fault.Store(false)
++	if err := os.Remove(server.config.HostProfile); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.Symlink(t.TempDir(), server.config.HostProfile); err != nil {
++		t.Fatal(err)
++	}
++	before := syncs.Load()
++	for _, response := range []*httptest.ResponseRecorder{postPreparation(t, server, id, "prompt", "", nil), getPreparation(t, server, id)} {
++		if response.Code != 503 {
++			t.Fatalf("superseded=%d %s", response.Code, response.Body.String())
++		}
++	}
++	if calls.Load() != 0 || syncs.Load() != before {
++		t.Fatal("superseded generation confirmed or dispatched")
++	}
++}
++
++func TestSessionPreparationAcceptingUploadConfirmationRetainsBeforeCollection(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	server.uploadStore.MinFreeBytes = 0
++	ctx := context.Background()
++	scope, err := server.uploadStore.NewDraft(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	backend := &uploads.Backend{Store: server.uploadStore, ScopeID: scope.ID}
++	bytes := "selected bytes survive a published intent"
++	file, err := backend.Create(ctx, conversation.UploadRequest{ClientID: preparationTestID(999), Name: "retained.txt", Size: int64(len(bytes))})
++	if err != nil {
++		t.Fatal(err)
++	}
++	digest := sha256.Sum256([]byte(bytes))
++	if _, err := backend.Append(ctx, file.ID, 0, hex.EncodeToString(digest[:]), strings.NewReader(bytes)); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := backend.Complete(ctx, file.ID); err != nil {
++		t.Fatal(err)
++	}
++	id := preparationTestID(1)
++	var fault atomic.Bool
++	fault.Store(true)
++	server.preparationSync = func(directory string) error {
++		if fault.Load() && directory == server.preparationDirectory(false) {
++			return errors.New("injected accepting post-rename sync")
++		}
++		return syncPreparationDirectory(directory)
++	}
++	var calls atomic.Int32
++	entered := make(chan struct{})
++	server.config.SessionNamer = func(ctx context.Context, _ string) (string, error) {
++		calls.Add(1)
++		close(entered)
++		<-ctx.Done()
++		return "", ctx.Err()
++	}
++	extra := url.Values{"uploadScope": {scope.ID}, "attachmentIds": {file.ID}}
++	assertPreparationUnconfirmed(t, postPreparation(t, server, id, " raw prompt ", "", extra), id)
++	published, err := readPreparation(server.preparationPath(id, false), server.config.Workspace)
++	if err != nil || published.State != "accepting" || published.Snapshot.Goal != "" {
++		t.Fatalf("intent=%#v %v", published, err)
++	}
++	server.uploadStore.Now = func() time.Time { return time.Now().Add(8 * 24 * time.Hour) }
++	if err := server.collectUploads(ctx); !errors.Is(err, errPreparationPersistenceUnconfirmed) {
++		t.Fatalf("uncertain collection=%v", err)
++	}
++	fault.Store(false)
++	for n := 0; n < 2; n++ {
++		if err := server.collectUploads(ctx); err != nil {
++			t.Fatal(err)
++		}
++	}
++	content, err := backend.Open(ctx, file.ID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	actual, err := io.ReadAll(content.File)
++	content.File.Close()
++	if err != nil || string(actual) != bytes {
++		t.Fatalf("selected bytes=%q %v", actual, err)
++	}
++	if err := backend.Delete(ctx, file.ID, true); err == nil {
++		t.Fatal("pending files were released")
++	}
++	server.operationMu.Lock()
++	retained := server.preparations[id]
++	work := server.preparationWork[id]
++	server.operationMu.Unlock()
++	if retained.ReceiptID != published.ReceiptID || retained.Attempt != 1 || retained.Snapshot.Input.UploadScope != scope.ID || !strings.Contains(retained.Snapshot.Goal, "retained.txt") || work.dispatched || calls.Load() != 0 {
++		t.Fatalf("retained=%#v work=%#v calls=%d", retained, work, calls.Load())
++	}
++	if response := postPreparation(t, server, preparationTestID(2), " raw prompt ", "", extra); response.Code != 409 {
++		t.Fatalf("competing ownership=%d", response.Code)
++	}
++	for n := 0; n < 2; n++ {
++		response := postPreparation(t, server, id, " raw prompt ", "", extra)
++		var status preparationStatus
++		if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 202 || status.ReceiptID != published.ReceiptID || status.Attempt != 1 {
++			t.Fatalf("repair=%d %s", response.Code, response.Body.String())
++		}
++	}
++	select {
++	case <-entered:
++	case <-time.After(time.Second):
++		t.Fatal("pending worker was not launched")
++	}
++	if calls.Load() != 1 {
++		t.Fatalf("naming calls=%d", calls.Load())
++	}
+ }
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index b6a9ce4..4dd9762 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -144,44 +144,47 @@ type lifecycleOperationOptions struct {
+ }
+ 
+ type Server struct {
+-	uploadCreationMu conversation.MutationLocker
+-	uploadStore      *uploads.Store
+-	uploadHandler    http.Handler
+-	reviewOnce       sync.Once
+-	reviewService    *repositoryReviewService
+-	activity         *activityMonitor
+-	config           Config
+-	hostProfile      hostProfileIdentity
+-	templates        *template.Template
+-	markdown         goldmark.Markdown
+-	sanitizer        *bluemonday.Policy
+-	repository       repository.Runner
+-	repositoryMu     sync.Mutex
+-	repositoryCache  map[string]cachedRepositories
+-	indexStatusMu    sync.Mutex
+-	indexStatusCache cachedIndexStatus
+-	indexStatusWait  chan struct{}
+-	codexLimitsMu    sync.Mutex
+-	codexLimitsCache codexLimitsSnapshot
+-	codexLimitsWait  *codexLimitsCall
+-	messageMu        sync.Mutex
+-	messageLocks     map[string]conversation.MutationLocker
+-	clusters         cluster.Runner
+-	operationMu      sync.Mutex
+-	creations        map[string]creationReceipt
+-	preparations     map[string]sessionPreparation
+-	namingSlots      chan struct{}
+-	operations       map[string]lifecycleOperation
+-	operationStore   *lifecycleOperationStore
+-	operationContext context.Context
+-	cancelOperations context.CancelFunc
+-	operationWG      sync.WaitGroup
+-	closing          bool
+-	stopOnce         sync.Once
+-	stopping         chan struct{}
+-	conversation     http.Handler
+-	trustedOrigins   []string
+-	installedTeams   *agentteams.Installed
++	uploadCreationMu       conversation.MutationLocker
++	uploadStore            *uploads.Store
++	uploadHandler          http.Handler
++	reviewOnce             sync.Once
++	reviewService          *repositoryReviewService
++	activity               *activityMonitor
++	config                 Config
++	hostProfile            hostProfileIdentity
++	templates              *template.Template
++	markdown               goldmark.Markdown
++	sanitizer              *bluemonday.Policy
++	repository             repository.Runner
++	repositoryMu           sync.Mutex
++	repositoryCache        map[string]cachedRepositories
++	indexStatusMu          sync.Mutex
++	indexStatusCache       cachedIndexStatus
++	indexStatusWait        chan struct{}
++	codexLimitsMu          sync.Mutex
++	codexLimitsCache       codexLimitsSnapshot
++	codexLimitsWait        *codexLimitsCall
++	messageMu              sync.Mutex
++	messageLocks           map[string]conversation.MutationLocker
++	clusters               cluster.Runner
++	operationMu            sync.Mutex
++	creations              map[string]creationReceipt
++	preparations           map[string]sessionPreparation
++	preparationUnconfirmed map[string]string
++	preparationWork        map[string]preparationWork
++	preparationSync        func(string) error
++	namingSlots            chan struct{}
++	operations             map[string]lifecycleOperation
++	operationStore         *lifecycleOperationStore
++	operationContext       context.Context
++	cancelOperations       context.CancelFunc
++	operationWG            sync.WaitGroup
++	closing                bool
++	stopOnce               sync.Once
++	stopping               chan struct{}
++	conversation           http.Handler
++	trustedOrigins         []string
++	installedTeams         *agentteams.Installed
+ }
+ 
+ type hostProfileIdentity struct {
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 01e67a5..5343b0b 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1337,6 +1337,7 @@
+       const progress = document.getElementById("new-session-progress");
+       const recovery = document.getElementById("new-session-recovery");
+       const recoverButton = document.getElementById("new-session-recover");
++      const separateRequest = document.getElementById("new-session-separate");
+       const readFields = () => ({
+         name: form.elements.name.value, goal: form.elements.goal.value, date: form.elements.creation_date.value,
+         ...managedDraftPolicyForStorage(form, {
+@@ -1349,6 +1350,10 @@
+         if (savedRequest && savedRequest.draft.body !== null) {
+           recovery.hidden = false;
+           recovery.querySelector("[data-request-identity]").textContent = `Saved request: ${savedRequest.draft.requestId}`;
++          if (separateRequest) {
++            separateRequest.hidden = false;
++            separateRequest.querySelector("[data-saved-request-text]").value = savedRequest.draft.goal;
++          }
+         } else if (error.requestId) {
+           recovery.hidden = false;
+           recovery.querySelector("[data-request-identity]").textContent = `Saved request: ${error.requestId}. Enable browser storage and reload this tab to recover.`;
+@@ -1853,7 +1858,7 @@
+   document.addEventListener("click", async (event) => {
+     const button = event.target.closest("[data-copy]");
+     if (!button) return;
+-    const input = button.parentElement.querySelector("input");
++    const input = button.parentElement.querySelector("input, textarea");
+     await navigator.clipboard.writeText(input.value);
+     const old = button.textContent;
+     button.textContent = "Copied";
+diff --git a/portal/internal/web/static/preparation.js b/portal/internal/web/static/preparation.js
+index c5678e1..2b5e795 100644
+--- a/portal/internal/web/static/preparation.js
++++ b/portal/internal/web/static/preparation.js
+@@ -93,8 +93,8 @@
+     const persist = () => verifyWrite(storage, draftKey, JSON.stringify(draft));
+     try { persist(); } catch (error) { error.requestId = draft.requestId; throw error; }
+     let busy = null;
+-    const receive = async (response) => {
+-      const status = await response.json().catch(() => ({}));
++    const receive = async (response, decoded) => {
++      const status = decoded ?? await response.json().catch(() => ({}));
+       if (!response.ok) throw new Error(status.error || `Unable to confirm session request (${response.status}).`);
+       if (!acceptedStatus(status, draft.requestId, draft.accepted?.receiptId)) {
+         throw new Error("Unable to confirm the saved session request identity. Retry recovery.");
+@@ -107,7 +107,12 @@
+       persist(); // Readback must succeed again before any recovery request.
+       if (draft.accepted) return draft.accepted;
+       const response = await fetchRequest(`/api/session-creations/${draft.requestId}`, {credentials: "same-origin", cache: "no-store"});
+-      if (response.status !== 404) return receive(response);
++      if (response.status === 503) {
++        const failure = await response.json().catch(() => ({}));
++        if (failure?.requestId !== draft.requestId || failure?.code !== "preparation_persistence_unconfirmed") {
++          return receive(response, failure);
++        }
++      } else if (response.status !== 404) return receive(response);
+       return receive(await fetchRequest("/sessions", {
+         method: "POST", credentials: "same-origin",
+         headers: {Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded"}, body: draft.body,
+diff --git a/portal/internal/web/templates/creation.html b/portal/internal/web/templates/creation.html
+index 90053ae..ad14f4c 100644
+--- a/portal/internal/web/templates/creation.html
++++ b/portal/internal/web/templates/creation.html
+@@ -26,7 +26,7 @@
+       <pre class="creation-request" id="creation-request">{{.InitialRequest}}</pre>
+     </section>
+   </main>
+-  <script src="/static/preparation.js?v=1" defer></script>
++  <script src="/static/preparation.js?v=2" defer></script>
+   <script src="/static/creation.js?v=2" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 309dd28..17801b7 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -67,7 +67,16 @@
+         <input type="hidden" name="uploadScope">
+         <div id="creation-uploads"></div>
+         <p id="new-session-progress" class="operation-progress" role="status" aria-live="polite" hidden></p>
+-        <div id="new-session-recovery" class="notice warning" hidden><p data-request-identity></p><p>The saved request and files stay locked until its outcome is confirmed.</p><button type="button" id="new-session-recover">Recover saved request</button></div>
++        <div id="new-session-recovery" class="notice warning" hidden>
++          <p data-request-identity></p>
++          <p>The saved request and files stay locked until its outcome is confirmed.</p>
++          <button type="button" id="new-session-recover">Recover saved request</button>
++          <div id="new-session-separate" hidden>
++            <p>The original request may still finish. To start a separate request with current settings, copy your text and attach files again.</p>
++            <div><textarea data-saved-request-text readonly aria-label="Saved request text"></textarea><button type="button" data-copy>Copy saved text</button></div>
++            <a href="/" target="_blank" rel="noopener noreferrer">Start a separate request</a>
++          </div>
++        </div>
+         <div class="creation-actions"><span id="creation-upload-controls"></span><button type="submit" disabled>Create session</button></div>
+       </form>
+     </section>
+@@ -81,8 +90,8 @@
+   </main>
+   </div>
+   <template id="session-card-template">{{template "session-card"}}</template>
+-  <script src="/static/preparation.js?v=1" defer></script>
+-  <script src="/static/app.js?v=20" defer></script>
++  <script src="/static/preparation.js?v=2" defer></script>
++  <script src="/static/app.js?v=21" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index ba214da..c60751c 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -205,7 +205,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=20" defer></script>
++  <script src="/static/app.js?v=21" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/test/README.md b/test/README.md
+index b8d8bda..93f7d53 100644
+--- a/test/README.md
++++ b/test/README.md
+@@ -22,9 +22,10 @@ the feature file that owns the behavior.
+ Node `browser_contract_test.cjs` entry point. That entry awaits
+ `preparation_browser_contract_test.cjs`, which covers New session's verified
+ tab storage, immutable submission/recovery, attachment scope, acceptance
+-identity and safe preparation/session navigation. The existing entry continues
+-to exercise legacy plan and fork client contracts. Run it from the repository's
+-Nix environment:
++identity, persistence repair bound to the saved request, preserved rejected
++drafts, separate-tab ownership and safe preparation/session navigation. The
++existing entry also exercises legacy plan and fork client contracts. Run it
++from the repository's Nix environment:
+ 
+ ```sh
+ go -C portal test -mod=readonly ./internal/web \
+@@ -40,8 +41,10 @@ After independent review, `test/creation_browser.cjs` exercises the shipped
+ assets in Chromium against a local HTTP fixture. It covers optional/custom
+ names, unavailable model discovery, lost-response recovery, isolated tab
+ uploads, attachment-only input, storage failures, progress/retries, escaped
+-text and legacy plan/creation routes. It requires `PLAYWRIGHT_MODULE` to name
+-the installed Playwright module, `CHROMIUM_EXECUTABLE` to name its exact browser
++text and legacy plan/creation routes. It also covers the separate no-opener tab
++with current settings and deliberate reattachment while the old request remains
++recoverable and may complete independently. It requires `PLAYWRIGHT_MODULE`
++to name the installed Playwright module, `CHROMIUM_EXECUTABLE` to name its exact browser
+ executable, and `CODEX_WEB_SOURCE` to point to the pinned codex-web source with
+ its conversation assets. Run `node test/creation_browser.cjs` from the runtime
+ repository root. This fixture performs no model inference. The separate
+diff --git a/test/creation_browser.cjs b/test/creation_browser.cjs
+index c71ada9..fb63e01 100644
+--- a/test/creation_browser.cjs
++++ b/test/creation_browser.cjs
+@@ -22,7 +22,7 @@ const managedPolicy = (digest, lead = true) => `<input type="hidden" name="catal
+ <p data-team-description></p><p data-team-catalog-changed role="status" aria-live="polite" hidden>Available teams changed.</p>
+ <label data-team-catalog-acknowledgement hidden><input type="checkbox" data-team-catalog-acknowledge> I checked the current team and lead settings.</label>`;
+ const settings = `<label>Lead model<select name="model" data-model-select><option value="">Selected team default</option></select></label><label>Lead reasoning effort<select name="effort" data-effort-select><option value="">Selected team default</option></select></label>`;
+-const index = () => `<!doctype html><body data-index><form id="new-session-form"><input name="creation_date" type="hidden" value="2026-09-13"><textarea name="goal" required></textarea>${managedPolicy(catalog.current)}<details><summary>Options</summary><input name="name" maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*">${settings}<div><input data-cli-command readonly><button type="button" data-copy disabled>Copy</button></div></details><p id="creation-draft-notice" hidden>Files from an older draft need to be attached again to this request.</p><input name="uploadScope" type="hidden"><div id="creation-uploads"></div><span id="creation-upload-controls"></span><p id="new-session-progress" hidden></p><div id="new-session-recovery" hidden><p data-request-identity></p><button type="button" id="new-session-recover">Recover saved request</button></div><button type="submit" disabled>Create session</button></form><script src="/static/preparation.js"></script><script src="/static/app.js"></script>`;
++const index = () => `<!doctype html><body data-index><form id="new-session-form"><input name="creation_date" type="hidden" value="2026-09-13"><textarea name="goal" required></textarea>${managedPolicy(catalog.current)}<details><summary>Options</summary><input name="name" maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*">${settings}<div><input data-cli-command readonly><button type="button" data-copy disabled>Copy</button></div></details><p id="creation-draft-notice" hidden>Files from an older draft need to be attached again to this request.</p><input name="uploadScope" type="hidden"><div id="creation-uploads"></div><span id="creation-upload-controls"></span><p id="new-session-progress" hidden></p><div id="new-session-recovery" hidden><p data-request-identity></p><button type="button" id="new-session-recover">Recover saved request</button><div id="new-session-separate" hidden><p>The original request may still finish.</p><div><textarea data-saved-request-text readonly></textarea><button type="button" data-copy>Copy saved text</button></div><a href="/" target="_blank" rel="noopener noreferrer">Start a separate request</a></div></div><button type="submit" disabled>Create session</button></form><script src="/static/preparation.js"></script><script src="/static/app.js"></script>`;
+ const planPage = (turnID, digest) => `<!doctype html><body data-session="source" data-thread-id="thread-1" data-interactive="true"><div id="conversation-connection"></div><div id="codex-status"></div><div id="transcript"></div>
+ <p id="pending-status" class="lane-status" role="status"><span>Loading requests…</span> <button id="pending-retry" type="button" class="quiet" hidden>Retry</button></p><div id="pending" class="pending"></div>
+ <p id="queue-status" class="lane-status" role="status"><span>Checking queued messages…</span> <button id="queue-retry" type="button" class="quiet" hidden>Retry</button></p>
+@@ -48,6 +48,7 @@ const server = http.createServer(async (req,res) => {
+   const raw=await body(),fields=Object.fromEntries(new URLSearchParams(raw));submissions.push({raw,fields});
+   if(failure==="network-before")return req.socket.destroy();
+   if(failure==="http")return json({error:"Temporary initialization service failure"},503);
++  if(failure==="stale")return json({error:"catalog digest is stale; reload the form"},409);
+   const requestId=fields.clientRequestId;
+   const record={requestId,receiptId:createHash("sha256").update(requestId).digest("hex"),attempt:1,url:`/creations/${requestId}/`,
+    state:"running",phase:"naming",initialRequest:fields.goal,startedAt:new Date().toISOString()};
+@@ -164,6 +165,53 @@ const server = http.createServer(async (req,res) => {
+   await b.waitForFunction(()=>!document.querySelector("#new-session-recovery").hidden&&!document.querySelector("#new-session-recover").disabled);
+   const acceptedPosts=submissions.length;await b.reload();await b.waitForURL(origin+`/creations/${acceptedID}/`);
+   assert.equal(submissions.length,acceptedPosts);assert(statusReads.includes(acceptedID));
++  // Stale rejection and an ambiguous accepted response both keep the old
++  // identity recoverable while the explicit route opens a current, separate tab.
++  for (const outcome of ["stale","network-after"]) {
++   failure=outcome;
++   const original=await context.newPage();await original.goto(origin);await ready(original);
++   await original.locator('[name="goal"]').fill(prompt);
++   await original.locator('input[type="file"]').setInputFiles({name:"keep-original.txt",mimeType:"text/plain",buffer:Buffer.from("retained original")});
++   await original.waitForFunction(()=>!document.querySelector('#new-session-form button[type="submit"]').disabled);
++   await original.getByRole("button",{name:"Create session"}).click();
++   await original.waitForFunction(()=>!document.querySelector('#new-session-separate').hidden&&!document.querySelector('#new-session-recover').disabled);
++   const old=await draft(original),oldSelection=await original.evaluate(id=>sessionStorage.getItem(`workspace-portal.upload-draft.${id}`),old.scope.id);
++   catalog.current=outcome==="stale" ? "c".repeat(64) : "d".repeat(64);
++   if(outcome==="stale") {
++    await original.reload();await original.waitForFunction(()=>!document.querySelector('#new-session-separate').hidden&&!document.querySelector('#new-session-recover').disabled);
++    assert.deepEqual(await draft(original),old);
++   }
++   await original.getByRole("button",{name:"Copy saved text"}).click();
++   assert.equal(await original.evaluate(()=>window.copiedText),prompt);
++   const count=submissions.length;
++   const opened=context.waitForEvent("page");
++   await original.getByRole("link",{name:"Start a separate request"}).click();
++   const separate=await opened;await separate.waitForLoadState();await ready(separate);
++   assert.equal(await separate.evaluate(()=>window.opener),null);
++   assert.equal(new URL(separate.url()).search,"");
++   const fresh=await draft(separate);
++   assert.notEqual(fresh.requestId,old.requestId);assert.notEqual(fresh.scope.id,old.scope.id);
++   assert.equal(fresh.goal,"");assert.equal(fresh.catalogDigest,catalog.current);
++   assert.equal(fresh.body,null);assert.deepEqual(fresh.attachmentIds,[]);
++   assert.equal(scopes.get(fresh.scope.id).length,0);assert.equal(submissions.length,count);
++   assert.deepEqual(await draft(original),old);
++   assert.equal(await original.evaluate(id=>sessionStorage.getItem(`workspace-portal.upload-draft.${id}`),old.scope.id),oldSelection);
++   assert.equal(scopes.get(old.scope.id).length,1);
++   // A delayed old acceptance is installed only in the original request page.
++   failure="";
++   if(!operations.has(old.requestId)) operations.set(old.requestId,{requestId:old.requestId,receiptId:createHash("sha256").update(old.requestId).digest("hex"),attempt:1,url:`/creations/${old.requestId}/`,state:"running",phase:"naming",initialRequest:prompt,startedAt:new Date().toISOString()});
++   const oldRecord=operations.get(old.requestId);
++   await original.getByRole("button",{name:"Recover saved request"}).click();await original.waitForURL(origin+oldRecord.url);
++   assert.equal(submissions.length,count);assert.deepEqual(await draft(separate),fresh);
++   oldRecord.state="ready";oldRecord.slug="2026-09-13-original-"+outcome;oldRecord.canonicalUrl=`/${oldRecord.slug}/`;
++   await original.waitForURL(origin+oldRecord.canonicalUrl);
++   assert.equal(new URL(separate.url()).pathname,"/");assert.deepEqual(await draft(separate),fresh);
++   // Reattachment to the new scope is deliberate and leaves the old files.
++   await separate.locator('input[type="file"]').setInputFiles({name:"keep-original.txt",mimeType:"text/plain",buffer:Buffer.from("retained original")});
++   await separate.waitForFunction(()=>!document.querySelector('#new-session-form button[type="submit"]').disabled);
++   assert.equal(submissions.length,count);assert.equal(scopes.get(fresh.scope.id).length,1);assert.equal(scopes.get(old.scope.id).length,1);
++   await original.close();await separate.close();
++  }
+   // Unsubmitted legacy draft can change catalogs after explicit acknowledgement.
+   modelsUnavailable=false;
+   await page.goto(origin);await ready(page);

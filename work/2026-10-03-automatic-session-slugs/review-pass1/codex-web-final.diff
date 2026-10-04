@@ -1,0 +1,3225 @@
+diff --git a/codex/client.go b/codex/client.go
+index 5722be9..3e3ebb5 100644
+--- a/codex/client.go
++++ b/codex/client.go
+@@ -708,6 +708,7 @@ func ResolveForkThreadSettings(
+ 
+ type Client struct {
+ 	socket            string
++	ephemeral         *ephemeralSink // private utility only; installed before Ensure
+ 	options           ClientOptions
+ 	activityNamespace string
+ 	observer          *observerState
+@@ -886,6 +887,9 @@ func (c *Client) Ensure(ctx context.Context) error {
+ 		return fmt.Errorf("connect to Codex App Server at %s: %w", c.socket, err)
+ 	}
+ 	connection.SetReadLimit(readLimit)
++	if c.ephemeral != nil {
++		connection.SetReadLimit(ephemeralFrameLimit)
++	}
+ 	c.generation++
+ 	generation := c.generation
+ 	c.connection = connection
+@@ -1087,13 +1091,24 @@ func (c *Client) writeOffer(ctx context.Context, connection *websocket.Conn, gen
+ 
+ func (c *Client) readLoop(connection *websocket.Conn, generation uint64) {
+ 	for {
+-		_, data, err := connection.Read(context.Background())
++		kind, data, err := connection.Read(context.Background())
+ 		if err != nil {
+ 			c.markDisconnected(connection, generation, err)
+ 			return
+ 		}
+ 		var message rpcMessage
+-		if err := json.Unmarshal(data, &message); err != nil {
++		if c.ephemeral != nil {
++			if kind != websocket.MessageText {
++				c.ephemeral.fail(ErrEphemeralProtocol)
++				return
++			}
++			if !c.ephemeral.decode(data, &message) {
++				return
++			}
++		} else if err := json.Unmarshal(data, &message); err != nil {
++			continue
++		}
++		if c.ephemeral != nil && c.ephemeral.handle(c, connection, generation, message) {
+ 			continue
+ 		}
+ 		if c.options.ActivityRecorder != nil {
+@@ -1158,12 +1173,20 @@ func (c *Client) readLoop(connection *websocket.Conn, generation uint64) {
+ 		if !ok || call.generation != generation {
+ 			continue
+ 		}
++		var reply response
+ 		if message.Error != nil {
+-			call.channel <- response{err: &rpcCallError{
+-				code: message.Error.Code, message: message.Error.Message,
+-			}}
++			reply = response{err: &rpcCallError{code: message.Error.Code, message: message.Error.Message}}
+ 		} else {
+-			call.channel <- response{result: message.Result}
++			reply = response{result: message.Result}
++		}
++		if c.ephemeral == nil {
++			call.channel <- reply
++		} else {
++			select {
++			case call.channel <- reply:
++			default:
++				c.ephemeral.fail(ErrEphemeralProtocol)
++			}
+ 		}
+ 	}
+ }
+@@ -1352,6 +1375,9 @@ func (c *Client) markDisconnected(connection *websocket.Conn, generation uint64,
+ 	}
+ 	c.connection = nil
+ 	c.ready = 0
++	if c.ephemeral != nil {
++		c.ephemeral.fail(ErrEphemeralServer)
++	}
+ 	if c.observer != nil && c.observer.cancelConnection != nil {
+ 		c.observer.cancelConnection()
+ 		c.observer.clearQueue()
+diff --git a/codex/ephemeral.go b/codex/ephemeral.go
+new file mode 100644
+index 0000000..8bcb931
+--- /dev/null
++++ b/codex/ephemeral.go
+@@ -0,0 +1,871 @@
++package codex
++
++import (
++	"bytes"
++	"context"
++	_ "embed"
++	"encoding/json"
++	"errors"
++	"io"
++	"os"
++	"path/filepath"
++	"strings"
++	"sync"
++	"syscall"
++	"time"
++	"unicode/utf8"
++
++	"github.com/coder/websocket"
++)
++
++// Errors deliberately contain no remote diagnostics, configuration or input.
++var (
++	ErrEphemeralIsolation = errors.New("ephemeral utility isolation is unavailable")
++	ErrEphemeralSettings  = errors.New("ephemeral utility settings are unavailable")
++	ErrEphemeralProtocol  = errors.New("ephemeral utility protocol failed")
++	ErrEphemeralServer    = errors.New("ephemeral utility server failed")
++)
++
++const (
++	ephemeralFrameLimit  = 256 * 1024
++	ephemeralEventLimit  = 256
++	ephemeralByteLimit   = 1024 * 1024
++	ephemeralOutputLimit = 16 * 1024
++	ephemeralCleanup     = 250 * time.Millisecond
++)
++
++//go:embed ephemeral_policy.json
++var ephemeralPolicyJSON []byte
++
++// EphemeralTurnOptions contains trusted application inputs, never browser paths
++// or arbitrary tool/config overrides. Directory must be empty, canonical,
++// application-owned mode 0700 outside project trees. Its parent is private too.
++// InstructionFile is a separate canonical empty regular mode-0600 file in
++// application-owned private state outside Directory. The helper creates no files.
++// Global user instructions remain trusted serving-instance policy.
++type EphemeralTurnOptions struct {
++	Directory       string
++	InstructionFile string
++	Model           string
++	Effort          string
++	Instructions    string
++	Input           string
++	OutputSchema    json.RawMessage
++}
++
++type EphemeralTurnResult struct{ Text string }
++
++// RunEphemeralTurn runs one bounded utility turn on a private connection. It
++// never adopts/reconnects a thread or records a submission. Operators must pause
++// naming before MCP reconfiguration; each call disables its captured MCP names.
++func (c *Client) RunEphemeralTurn(ctx context.Context, opts EphemeralTurnOptions) (result EphemeralTurnResult, err error) {
++	if ctx.Err() != nil {
++		return result, ctx.Err()
++	}
++	hardDeadline, hasDeadline := ctx.Deadline()
++	if !hasDeadline || c.options.ObserverOnly || !validEphemeralOptions(opts) {
++		return result, ErrEphemeralIsolation
++	}
++	if ctx.Err() != nil {
++		return result, ctx.Err()
++	}
++	remaining := time.Until(hardDeadline)
++	reserve := ephemeralCleanup
++	if remaining/10 < reserve {
++		reserve = remaining / 10
++	}
++	inference, cancel := context.WithDeadline(ctx, hardDeadline.Add(-reserve))
++	defer cancel()
++	sink := &ephemeralSink{hardDeadline: hardDeadline, cancel: cancel, changed: make(chan struct{}, 1)}
++	private := NewWithOptions(c.socket, ClientOptions{ClientInfo: c.options.ClientInfo})
++	private.queueLedgerPath = ""
++	private.ephemeral = sink
++	var generation uint64
++	var threadID, turnID string
++	defer func() {
++		// Cancellation cannot extend the original deadline. Cleanup does not run in
++		// a detached goroutine and never reconnects a lost private connection.
++		cleanupDeadline := time.Now().Add(ephemeralCleanup)
++		if hardDeadline.Before(cleanupDeadline) {
++			cleanupDeadline = hardDeadline
++		}
++		cleanup, stop := context.WithDeadline(context.WithoutCancel(ctx), cleanupDeadline)
++		defer stop()
++		if generation != 0 && threadID != "" && cleanup.Err() == nil {
++			if ownedTurn := sink.cleanupTurn(generation, threadID, turnID); err != nil && ownedTurn != "" {
++				_ = private.requestConnectedGeneration(cleanup, generation, "turn/interrupt", map[string]any{"threadId": threadID, "turnId": ownedTurn}, nil)
++			}
++			var unsubscribe struct {
++				Status string `json:"status"`
++			}
++			cleanupErr := private.requestConnectedGeneration(cleanup, generation, "thread/unsubscribe", map[string]any{"threadId": threadID}, &unsubscribe)
++			if err == nil && (cleanupErr != nil || (unsubscribe.Status != "unsubscribed" && unsubscribe.Status != "notSubscribed" && unsubscribe.Status != "notLoaded")) {
++				result, err = EphemeralTurnResult{}, ErrEphemeralServer
++			}
++		}
++		if err == nil {
++			if failed := sink.failure(); failed != nil {
++				result, err = EphemeralTurnResult{}, failed
++			}
++		}
++		private.Close()
++		if ctx.Err() != nil {
++			result, err = EphemeralTurnResult{}, ctx.Err()
++		}
++	}()
++	failure := func(category error) error {
++		if ctx.Err() != nil {
++			return ctx.Err()
++		}
++		if failed := sink.failure(); failed != nil {
++			return failed
++		}
++		if inference.Err() != nil {
++			return context.DeadlineExceeded
++		}
++		return category
++	}
++	if private.Ensure(inference) != nil {
++		return result, failure(ErrEphemeralServer)
++	}
++	private.connectionMu.Lock()
++	generation = private.generation
++	private.connectionMu.Unlock()
++	var configRaw json.RawMessage
++	if private.requestConnectedGeneration(inference, generation, "config/read", map[string]any{"cwd": opts.Directory, "includeLayers": false}, &configRaw) != nil {
++		return result, failure(ErrEphemeralIsolation)
++	}
++	policy, policyErr := ephemeralRestrictions(configRaw, opts.InstructionFile)
++	if policyErr != nil {
++		return result, policyErr
++	}
++	var requirements json.RawMessage
++	if private.requestConnectedGeneration(inference, generation, "configRequirements/read", nil, &requirements) != nil {
++		return result, failure(ErrEphemeralIsolation)
++	}
++	if !ephemeralRequirementsAllow(requirements, policy) {
++		return result, ErrEphemeralIsolation
++	}
++	cursor := ""
++	seen := map[string]bool{}
++	available := false
++	for page := 0; page < 8; page++ {
++		params := map[string]any{"limit": 100, "includeHidden": true}
++		if cursor != "" {
++			params["cursor"] = cursor
++		}
++		var raw json.RawMessage
++		if private.requestConnectedGeneration(inference, generation, "model/list", params, &raw) != nil {
++			return result, failure(ErrEphemeralSettings)
++		}
++		data, ok := ephemeralObject(raw)
++		if !ok {
++			return result, ErrEphemeralSettings
++		}
++		models, ok := data["data"].([]any)
++		if !ok || len(models) > 100 {
++			return result, ErrEphemeralSettings
++		}
++		for _, entry := range models {
++			model, ok := entry.(map[string]any)
++			if !ok {
++				return result, ErrEphemeralSettings
++			}
++			name, ok := model["model"].(string)
++			if !ok || name == "" {
++				return result, ErrEphemeralSettings
++			}
++			if name != opts.Model {
++				continue
++			}
++			efforts, ok := model["supportedReasoningEfforts"].([]any)
++			if !ok {
++				return result, ErrEphemeralSettings
++			}
++			for _, entry := range efforts {
++				effort, ok := entry.(map[string]any)
++				if !ok {
++					return result, ErrEphemeralSettings
++				}
++				value, ok := effort["reasoningEffort"].(string)
++				if !ok {
++					return result, ErrEphemeralSettings
++				}
++				if value == opts.Effort {
++					available = true
++				}
++			}
++		}
++		if available {
++			break
++		}
++		next, present := data["nextCursor"]
++		if !present || next == nil {
++			break
++		}
++		var valid bool
++		cursor, valid = next.(string)
++		if !valid || cursor == "" || len(cursor) > 1024 || seen[cursor] {
++			return result, ErrEphemeralSettings
++		}
++		seen[cursor] = true
++	}
++	if !available {
++		return result, ErrEphemeralSettings
++	}
++	var started json.RawMessage
++	if private.requestConnectedGeneration(inference, generation, "thread/start", map[string]any{
++		"ephemeral": true, "model": opts.Model, "allowProviderModelFallback": false,
++		"cwd": opts.Directory, "baseInstructions": opts.Instructions, "developerInstructions": "",
++		"approvalPolicy": "never", "sandbox": "read-only", "environments": []any{},
++		"runtimeWorkspaceRoots": []string{}, "selectedCapabilityRoots": []string{}, "dynamicTools": []any{}, "config": policy,
++	}, &started) != nil {
++		return result, failure(ErrEphemeralServer)
++	}
++	start, ok := ephemeralObject(started)
++	if !ok {
++		return result, ErrEphemeralProtocol
++	}
++	thread, ok := start["thread"].(map[string]any)
++	if !ok {
++		return result, ErrEphemeralProtocol
++	}
++	// A syntactically known ID permits unsubscribe, never adoption or resume.
++	threadID, _ = thread["id"].(string)
++	if !ephemeralID(threadID) {
++		threadID = ""
++		return result, ErrEphemeralProtocol
++	}
++	sandbox, sandboxOK := start["sandbox"].(map[string]any)
++	if start["model"] != opts.Model || start["cwd"] != opts.Directory || thread["cwd"] != opts.Directory ||
++		thread["ephemeral"] != true || thread["path"] != nil ||
++		start["approvalPolicy"] != "never" || !sandboxOK || sandbox["type"] != "readOnly" || (sandbox["networkAccess"] != nil && sandbox["networkAccess"] != false) ||
++		!ephemeralEmptyArrays(start, "runtimeWorkspaceRoots") || !ephemeralEmptyArrays(thread, "environments") {
++		return result, ErrEphemeralIsolation
++	}
++	if model, present := thread["model"]; present && model != nil && model != opts.Model {
++		return result, ErrEphemeralSettings
++	}
++	if !sink.bind(generation, threadID, "") {
++		return result, failure(ErrEphemeralProtocol)
++	}
++	if !sink.beginTurn(generation, threadID) {
++		return result, failure(ErrEphemeralProtocol)
++	}
++	var turnRaw json.RawMessage
++	if private.requestConnectedGeneration(inference, generation, "turn/start", map[string]any{
++		"threadId": threadID, "input": []any{map[string]any{"type": "text", "text": opts.Input}},
++		"model": opts.Model, "effort": opts.Effort, "outputSchema": opts.OutputSchema, "cwd": opts.Directory,
++		"approvalPolicy": "never", "sandboxPolicy": map[string]any{"type": "readOnly", "networkAccess": false},
++		"environments": []any{}, "runtimeWorkspaceRoots": []string{},
++	}, &turnRaw) != nil {
++		return result, failure(ErrEphemeralServer)
++	}
++	response, ok := ephemeralObject(turnRaw)
++	if !ok {
++		return result, ErrEphemeralProtocol
++	}
++	turn, ok := response["turn"].(map[string]any)
++	if !ok {
++		return result, ErrEphemeralProtocol
++	}
++	turnID, _ = turn["id"].(string)
++	if !ephemeralID(turnID) {
++		turnID = ""
++		return result, ErrEphemeralProtocol
++	}
++	status, _ := turn["status"].(string)
++	if status != "inProgress" && status != "completed" {
++		return result, ErrEphemeralServer
++	}
++	if _, ok := turn["items"].([]any); !ok {
++		return result, ErrEphemeralProtocol
++	}
++	if !sink.bind(generation, threadID, turnID) {
++		return result, failure(ErrEphemeralProtocol)
++	}
++	for {
++		result, done, failed := sink.result()
++		if failed != nil {
++			return EphemeralTurnResult{}, failed
++		}
++		if done {
++			return result, nil
++		}
++		select {
++		case <-sink.changed:
++		case <-inference.Done():
++			return EphemeralTurnResult{}, failure(ErrEphemeralProtocol)
++		}
++	}
++}
++
++func ephemeralID(id string) bool { return id != "" && len(id) <= 256 && utf8.ValidString(id) }
++
++func validEphemeralOptions(opts EphemeralTurnOptions) bool {
++	if strings.TrimSpace(opts.Model) == "" || strings.TrimSpace(opts.Effort) == "" || !ephemeralID(opts.Model) || !ephemeralID(opts.Effort) || strings.TrimSpace(opts.Instructions) == "" ||
++		len(opts.Instructions) > 16*1024 || len(opts.Input) > 64*1024 || !utf8.ValidString(opts.Instructions) || !utf8.ValidString(opts.Input) ||
++		len(opts.OutputSchema) == 0 || len(opts.OutputSchema) > 16*1024 {
++		return false
++	}
++	if _, ok := ephemeralObject(opts.OutputSchema); !ok {
++		return false
++	}
++	if !privateEphemeralPath(opts.Directory, true) || !privateEphemeralPath(filepath.Dir(opts.Directory), true) {
++		return false
++	}
++	entries, err := os.ReadDir(opts.Directory)
++	if err != nil || len(entries) != 0 {
++		return false
++	}
++	if !privateEphemeralPath(filepath.Dir(opts.InstructionFile), true) {
++		return false
++	}
++	relative, err := filepath.Rel(opts.Directory, opts.InstructionFile)
++	if err != nil || (relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator))) {
++		return false
++	}
++	return privateEphemeralPath(opts.InstructionFile, false)
++}
++
++func privateEphemeralPath(path string, directory bool) bool {
++	if !filepath.IsAbs(path) || filepath.Clean(path) != path {
++		return false
++	}
++	resolved, err := filepath.EvalSymlinks(path)
++	if err != nil || resolved != path {
++		return false
++	}
++	info, err := os.Lstat(path)
++	if err != nil {
++		return false
++	}
++	owner, ok := info.Sys().(*syscall.Stat_t)
++	if !ok || owner.Uid != uint32(os.Geteuid()) {
++		return false
++	}
++	if directory {
++		return info.IsDir() && info.Mode().Perm() == 0700
++	}
++	return info.Mode().IsRegular() && info.Mode().Perm() == 0600 && info.Size() == 0 && owner.Nlink == 1
++}
++
++func ephemeralEmptyArrays(object map[string]any, keys ...string) bool {
++	for _, key := range keys {
++		value, present := object[key]
++		if !present {
++			continue
++		} // optional protocol property; explicit request is required
++		list, ok := value.([]any)
++		if !ok || len(list) != 0 {
++			return false
++		}
++	}
++	return true
++}
++
++func ephemeralRestrictions(raw json.RawMessage, instructionFile string) (map[string]any, error) {
++	response, ok := ephemeralObject(raw)
++	if !ok {
++		return nil, ErrEphemeralIsolation
++	}
++	config, ok := response["config"].(map[string]any)
++	if !ok {
++		return nil, ErrEphemeralIsolation
++	}
++	if _, ok := response["origins"].(map[string]any); !ok {
++		return nil, ErrEphemeralIsolation
++	}
++	policy, _ := ephemeralObject(ephemeralPolicyJSON)
++	policy["model_instructions_file"] = instructionFile
++	policy["experimental_compact_prompt_file"] = instructionFile
++	servers := map[string]any{}
++	if value, present := config["mcp_servers"]; present {
++		inventory, ok := value.(map[string]any)
++		if !ok || len(inventory) > 128 {
++			return nil, ErrEphemeralIsolation
++		}
++		for name, settings := range inventory {
++			if !ephemeralID(name) {
++				return nil, ErrEphemeralIsolation
++			}
++			if _, ok := settings.(map[string]any); !ok {
++				return nil, ErrEphemeralIsolation
++			}
++			servers[name] = map[string]any{"enabled": false}
++		}
++	}
++	policy["mcp_servers"] = servers
++	return policy, nil
++}
++
++func ephemeralRequirementsAllow(raw json.RawMessage, policy map[string]any) bool {
++	response, ok := ephemeralObject(raw)
++	if !ok {
++		return false
++	}
++	value, present := response["requirements"]
++	if !present {
++		return false
++	}
++	if value == nil {
++		return true
++	}
++	requirements, ok := value.(map[string]any)
++	if !ok {
++		return false
++	}
++	for key, wanted := range map[string]string{"allowedApprovalPolicies": "never", "allowedSandboxModes": "read-only", "allowedWebSearchModes": "disabled"} {
++		value, present := requirements[key]
++		if !present || value == nil {
++			continue
++		}
++		choices, ok := value.([]any)
++		if !ok {
++			return false
++		}
++		found := false
++		for _, choice := range choices {
++			if _, ok := choice.(string); !ok {
++				return false
++			}
++			if choice == wanted {
++				found = true
++			}
++		}
++		if !found {
++			return false
++		}
++	}
++	if value := requirements["additionalDeveloperInstructions"]; value != nil && value != "" {
++		return false
++	}
++	if value := requirements["hooks"]; value != nil {
++		return false
++	}
++	if value := requirements["featureRequirements"]; value != nil {
++		features, ok := value.(map[string]any)
++		if !ok {
++			return false
++		}
++		for name, value := range features {
++			enabled, ok := value.(bool)
++			if !ok {
++				return false
++			}
++			if enforced, present := policy["features."+name]; present && enabled != enforced {
++				return false
++			}
++			// Unknown required enabled capabilities cannot be silently accepted.
++			if enabled {
++				return false
++			}
++		}
++	}
++	return true
++}
++
++// Decode JSON with bounded depth/node count and no duplicate properties. The
++// transport frame limit bounds bytes; this also protects schemas and config.
++func ephemeralObject(raw []byte) (map[string]any, bool) {
++	if len(raw) > ephemeralFrameLimit || !utf8.Valid(raw) {
++		return nil, false
++	}
++	decoder := json.NewDecoder(bytes.NewReader(raw))
++	decoder.UseNumber()
++	nodes := 0
++	var walk func(int) (any, error)
++	walk = func(depth int) (any, error) {
++		nodes++
++		if depth > 32 || nodes > 8192 {
++			return nil, ErrEphemeralProtocol
++		}
++		token, err := decoder.Token()
++		if err != nil {
++			return nil, err
++		}
++		delim, container := token.(json.Delim)
++		if !container {
++			return token, nil
++		}
++		switch delim {
++		case '{':
++			object := map[string]any{}
++			for decoder.More() {
++				keyToken, err := decoder.Token()
++				if err != nil {
++					return nil, err
++				}
++				key, ok := keyToken.(string)
++				if !ok {
++					return nil, ErrEphemeralProtocol
++				}
++				if _, exists := object[key]; exists {
++					return nil, ErrEphemeralProtocol
++				}
++				value, err := walk(depth + 1)
++				if err != nil {
++					return nil, err
++				}
++				object[key] = value
++			}
++			closing, err := decoder.Token()
++			if err != nil || closing != json.Delim('}') {
++				return nil, ErrEphemeralProtocol
++			}
++			return object, nil
++		case '[':
++			list := []any{}
++			for decoder.More() {
++				value, err := walk(depth + 1)
++				if err != nil {
++					return nil, err
++				}
++				list = append(list, value)
++			}
++			closing, err := decoder.Token()
++			if err != nil || closing != json.Delim(']') {
++				return nil, ErrEphemeralProtocol
++			}
++			return list, nil
++		}
++		return nil, ErrEphemeralProtocol
++	}
++	value, err := walk(0)
++	if err != nil {
++		return nil, false
++	}
++	if _, err = decoder.Token(); err != io.EOF {
++		return nil, false
++	}
++	object, ok := value.(map[string]any)
++	return object, ok
++}
++
++type ephemeralSink struct {
++	mu                 sync.Mutex
++	hardDeadline       time.Time
++	cancel             context.CancelFunc
++	changed            chan struct{}
++	err                error
++	generation         uint64
++	threadID, turnID   string
++	cleanupTurnID      string
++	turnIssued         bool
++	cleanupAmbiguous   bool
++	events             []rpcMessage
++	eventCount, bytes  int
++	finalID, finalText string
++	completed          bool
++}
++
++func (s *ephemeralSink) fail(err error) {
++	s.mu.Lock()
++	if s.err == nil {
++		s.err = err
++		s.cancel()
++	}
++	s.mu.Unlock()
++	s.signal()
++}
++func (s *ephemeralSink) failure() error { s.mu.Lock(); defer s.mu.Unlock(); return s.err }
++func (s *ephemeralSink) signal() {
++	select {
++	case s.changed <- struct{}{}:
++	default:
++	}
++}
++func (s *ephemeralSink) decode(raw []byte, message *rpcMessage) bool {
++	object, ok := ephemeralObject(raw)
++	s.mu.Lock()
++	s.bytes += len(raw)
++	s.eventCount++
++	bounded := s.bytes <= ephemeralByteLimit && s.eventCount <= ephemeralEventLimit
++	s.mu.Unlock()
++	if !ok || !bounded || json.Unmarshal(raw, message) != nil {
++		s.fail(ErrEphemeralProtocol)
++		return false
++	}
++	if message.Method != "" {
++		if _, ok := ephemeralObject(message.Params); !ok {
++			s.fail(ErrEphemeralProtocol)
++			return false
++		}
++		if _, ok := object["method"].(string); !ok || len(message.Result) != 0 || message.Error != nil || len(message.Params) == 0 {
++			s.fail(ErrEphemeralProtocol)
++			return false
++		}
++	} else if len(message.ID) == 0 || ((len(message.Result) == 0) == (message.Error == nil)) {
++		s.fail(ErrEphemeralProtocol)
++		return false
++	}
++	if len(message.ID) > 0 {
++		switch value := object["id"].(type) {
++		case string:
++			if value == "" || len(value) > 256 {
++				s.fail(ErrEphemeralProtocol)
++				return false
++			}
++		case json.Number:
++			if _, err := value.Int64(); err != nil {
++				s.fail(ErrEphemeralProtocol)
++				return false
++			}
++		default:
++			s.fail(ErrEphemeralProtocol)
++			return false
++		}
++	}
++	return true
++}
++
++// This hook precedes all ordinary request admission, activity and UI handling.
++func (s *ephemeralSink) handle(c *Client, connection *websocket.Conn, generation uint64, message rpcMessage) bool {
++	s.mu.Lock()
++	if s.generation == 0 {
++		s.generation = generation
++	}
++	valid := s.generation == generation
++	if !valid {
++		s.cleanupAmbiguous = true
++	}
++	s.mu.Unlock()
++	if !valid {
++		s.fail(ErrEphemeralProtocol)
++		return true
++	}
++	if message.Method == "" {
++		return false
++	} // generation-bound low-level response delivery
++	if len(message.ID) > 0 {
++		text := "Server requests are unavailable for ephemeral utility turns"
++		if message.Method == "item/tool/requestUserInput" {
++			text = "Questions are unavailable for ephemeral utility turns"
++		}
++		deadline := time.Now().Add(ephemeralCleanup)
++		if s.hardDeadline.Before(deadline) {
++			deadline = s.hardDeadline
++		}
++		ctx, cancel := context.WithDeadline(context.Background(), deadline)
++		raw, _ := json.Marshal(map[string]any{"id": message.ID, "error": map[string]any{"code": -32601, "message": text}})
++		_ = c.writeOn(ctx, connection, generation, raw)
++		cancel()
++		s.fail(ErrEphemeralIsolation)
++		return true
++	}
++	if message.Method == "error" {
++		s.fail(ErrEphemeralServer)
++		return true
++	}
++	// One issued turn on this new private thread may identify itself before its
++	// RPC response. Such an ID authorizes interruption only, never success.
++	if message.Method == "turn/started" || message.Method == "turn/completed" || message.Method == "item/started" || message.Method == "item/completed" {
++		s.mu.Lock()
++		s.noteCleanupIdentityLocked(message)
++		failed := s.err != nil
++		s.mu.Unlock()
++		if failed {
++			s.signal()
++			return true
++		}
++	}
++	// Metadata-driven async questions have no JSON-RPC request ID. Reject their
++	// started/completed item immediately, even before start responses are known.
++	if message.Method == "item/started" || message.Method == "item/completed" {
++		params, ok := ephemeralObject(message.Params)
++		if !ok {
++			s.fail(ErrEphemeralProtocol)
++			return true
++		}
++		item, ok := params["item"].(map[string]any)
++		if !ok {
++			s.fail(ErrEphemeralProtocol)
++			return true
++		}
++		if item["delivery"] == "async" || item["questions"] != nil {
++			s.fail(ErrEphemeralIsolation)
++			return true
++		}
++	}
++	if message.Method != "item/completed" && message.Method != "turn/completed" {
++		return true
++	}
++	s.mu.Lock()
++	if s.err == nil {
++		if s.threadID == "" || s.turnID == "" {
++			if len(s.events) >= 32 {
++				s.err = ErrEphemeralProtocol
++				s.cancel()
++			} else {
++				s.events = append(s.events, message)
++			}
++		} else {
++			s.consumeLocked(message)
++		}
++	}
++	s.mu.Unlock()
++	s.signal()
++	return true
++}
++
++func (s *ephemeralSink) bind(generation uint64, threadID, turnID string) bool {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if s.generation != generation || (s.threadID != "" && s.threadID != threadID) || (s.turnID != "" && s.turnID != turnID) {
++		s.cleanupAmbiguous = true
++		s.err = ErrEphemeralProtocol
++		s.cancel()
++		return false
++	}
++	if turnID != "" && s.cleanupTurnID != "" && s.cleanupTurnID != turnID {
++		s.cleanupAmbiguous = true
++		s.err = ErrEphemeralProtocol
++		s.cancel()
++		return false
++	}
++	s.threadID, s.turnID = threadID, turnID
++	if turnID != "" {
++		for _, message := range s.events {
++			s.consumeLocked(message)
++		}
++		s.events = nil
++	}
++	return s.err == nil
++}
++
++func (s *ephemeralSink) beginTurn(generation uint64, threadID string) bool {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if s.err != nil || s.generation != generation || s.threadID != threadID || s.turnIssued {
++		return false
++	}
++	s.turnIssued = true
++	return true
++}
++
++func (s *ephemeralSink) cleanupTurn(generation uint64, threadID, responseTurnID string) string {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if s.cleanupAmbiguous || !s.turnIssued || s.generation != generation || s.threadID != threadID {
++		return ""
++	}
++	if responseTurnID != "" {
++		if s.cleanupTurnID != "" && s.cleanupTurnID != responseTurnID {
++			return ""
++		}
++		return responseTurnID
++	}
++	return s.cleanupTurnID
++}
++
++func (s *ephemeralSink) noteCleanupIdentityLocked(message rpcMessage) {
++	if !s.turnIssued {
++		return
++	}
++	params, ok := ephemeralObject(message.Params)
++	var turnID string
++	valid := ok && params["threadId"] == s.threadID
++	if message.Method == "turn/started" || message.Method == "turn/completed" {
++		turn, ok := params["turn"].(map[string]any)
++		turnID, _ = turn["id"].(string)
++		_, itemsOK := turn["items"].([]any)
++		valid = valid && ok && itemsOK
++		if message.Method == "turn/started" {
++			valid = valid && turn["status"] == "inProgress"
++		}
++	} else {
++		turnID, _ = params["turnId"].(string)
++		item, ok := params["item"].(map[string]any)
++		itemID, _ := item["id"].(string)
++		kind, _ := item["type"].(string)
++		valid = valid && ok && ephemeralID(itemID) && ephemeralID(kind)
++	}
++	if !valid || !ephemeralID(turnID) || (s.cleanupTurnID != "" && s.cleanupTurnID != turnID) || (s.turnID != "" && s.turnID != turnID) {
++		s.cleanupAmbiguous = true
++		if s.err == nil {
++			s.err = ErrEphemeralProtocol
++			s.cancel()
++		}
++		return
++	}
++	s.cleanupTurnID = turnID
++}
++
++func (s *ephemeralSink) consumeLocked(message rpcMessage) {
++	if s.err != nil {
++		return
++	}
++	params, ok := ephemeralObject(message.Params)
++	bad := func(category error) { s.err = category; s.cancel() }
++	if !ok || params["threadId"] != s.threadID {
++		bad(ErrEphemeralProtocol)
++		return
++	}
++	if message.Method == "item/completed" {
++		if params["turnId"] != s.turnID {
++			bad(ErrEphemeralProtocol)
++			return
++		}
++		item, ok := params["item"].(map[string]any)
++		if !ok {
++			bad(ErrEphemeralProtocol)
++			return
++		}
++		s.itemLocked(item)
++	} else {
++		turn, ok := params["turn"].(map[string]any)
++		if !ok || turn["id"] != s.turnID {
++			bad(ErrEphemeralProtocol)
++			return
++		}
++		if turn["status"] != "completed" {
++			bad(ErrEphemeralServer)
++			return
++		}
++		items, ok := turn["items"].([]any)
++		if !ok {
++			bad(ErrEphemeralProtocol)
++			return
++		}
++		for _, value := range items {
++			item, ok := value.(map[string]any)
++			if !ok {
++				bad(ErrEphemeralProtocol)
++				return
++			}
++			s.itemLocked(item)
++		}
++		if s.completed {
++			bad(ErrEphemeralProtocol)
++			return
++		}
++		s.completed = true
++	}
++}
++func (s *ephemeralSink) itemLocked(item map[string]any) {
++	if s.err != nil || item["type"] != "agentMessage" {
++		return
++	}
++	if item["delivery"] == "async" || item["questions"] != nil {
++		s.err = ErrEphemeralIsolation
++		s.cancel()
++		return
++	}
++	if item["phase"] == "commentary" {
++		return
++	}
++	id, idOK := item["id"].(string)
++	text, textOK := item["text"].(string)
++	if item["phase"] != "final_answer" || !idOK || !ephemeralID(id) || !textOK || text == "" || len(text) > ephemeralOutputLimit || !utf8.ValidString(text) ||
++		(s.finalID != "" && (s.finalID != id || s.finalText != text)) {
++		s.err = ErrEphemeralProtocol
++		s.cancel()
++		return
++	}
++	s.finalID, s.finalText = id, text
++}
++func (s *ephemeralSink) result() (EphemeralTurnResult, bool, error) {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	return EphemeralTurnResult{Text: s.finalText}, s.completed && s.finalID != "", s.err
++}
+diff --git a/codex/ephemeral_integration_test.go b/codex/ephemeral_integration_test.go
+new file mode 100644
+index 0000000..1b1d82e
+--- /dev/null
++++ b/codex/ephemeral_integration_test.go
+@@ -0,0 +1,1247 @@
++//go:build codex_integration
++
++package codex
++
++import (
++	"bytes"
++	"context"
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"io"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"net/url"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strconv"
++	"strings"
++	"sync"
++	"sync/atomic"
++	"syscall"
++	"testing"
++	"time"
++
++	"github.com/coder/websocket"
++)
++
++// This entry point is intentionally absent from quick checks. Missing exact
++// candidate/hash, Linux namespace/firewall tools or schema/source prerequisites
++// FAIL the explicit invocation. No installed serving instance is contacted.
++func TestEphemeralProtocolIntegration(t *testing.T) {
++	binary := integrationExecutable(t, "CODEX_EPHEMERAL_TEST_BINARY")
++	expected := os.Getenv("CODEX_EPHEMERAL_TEST_SHA256")
++	file, err := os.Open(binary)
++	if err != nil {
++		t.Fatal("candidate binary unavailable")
++	}
++	digest := sha256.New()
++	_, hashErr := io.Copy(digest, file)
++	_ = file.Close()
++	if hashErr != nil {
++		t.Fatal("candidate binary hash failed")
++	}
++	if len(expected) != 64 || hex.EncodeToString(digest.Sum(nil)) != expected {
++		t.Fatal("candidate differs from reviewed CODEX_EPHEMERAL_TEST_SHA256")
++	}
++	source := os.Getenv("CODEX_EPHEMERAL_TEST_SOURCE")
++	if !filepath.IsAbs(source) {
++		t.Fatal("CODEX_EPHEMERAL_TEST_SOURCE must name the exact candidate codex-rs source")
++	}
++	for _, path := range []string{"core/config.schema.json", "models-manager/models.json"} {
++		if _, err := os.Stat(filepath.Join(source, path)); err != nil {
++			t.Fatalf("candidate source prerequisite missing: %s", path)
++		}
++	}
++	metadata, err := os.ReadFile(filepath.Join(source, "models-manager/models.json"))
++	if err != nil || len(metadata) > 4*1024*1024 {
++		t.Fatal("candidate model metadata unavailable")
++	}
++	var catalog struct {
++		Models []struct {
++			Slug    string   `json:"slug"`
++			Tools   []string `json:"experimental_supported_tools"`
++			Efforts []struct {
++				Effort string `json:"effort"`
++			} `json:"supported_reasoning_levels"`
++		} `json:"models"`
++	}
++	if json.Unmarshal(metadata, &catalog) != nil {
++		t.Fatal("candidate model metadata invalid")
++	}
++	unchanged := false
++	for _, model := range catalog.Models {
++		if model.Slug == "gpt-6-luna" {
++			low := false
++			for _, effort := range model.Efforts {
++				if effort.Effort == "low" {
++					low = true
++				}
++			}
++			unchanged = low && len(model.Tools) == 2 && model.Tools[0] == "send_user_message_async" && model.Tools[1] == "clock"
++		}
++	}
++	if !unchanged {
++		t.Fatal("candidate must retain reviewed Luna tool/effort metadata")
++	}
++	ip := integrationExecutable(t, "CODEX_EPHEMERAL_TEST_IP")
++	nft := integrationExecutable(t, "CODEX_EPHEMERAL_TEST_NFT")
++	_ = integrationExecutable(t, "CODEX_EPHEMERAL_TEST_SQLITE")
++	if os.Getenv("CODEX_EPHEMERAL_TEST_NAMESPACE") != "child" {
++		// A disposable user+network namespace provides real egress denial. Do not
++		// silently fall back to host networking if the kernel refuses it.
++		command := exec.Command(os.Args[0], "-test.run=^TestEphemeralProtocolIntegration$", "-test.count=1", "-test.timeout=180s", "-test.v")
++		command.Env = append(os.Environ(), "CODEX_EPHEMERAL_TEST_NAMESPACE=child")
++		command.SysProcAttr = &syscall.SysProcAttr{Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNET | syscall.CLONE_NEWNS,
++			UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Geteuid(), Size: 1}},
++			GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getegid(), Size: 1}}, GidMappingsEnableSetgroups: false}
++		output, err := command.CombinedOutput()
++		if err != nil {
++			t.Fatalf("isolated fixture failed (namespace refusal is a prerequisite failure): %v\n%s", err, output)
++		}
++		t.Logf("candidate %s; isolated fixture completed\n%s", expected, output)
++		return
++	}
++	if err := syscall.Mount("", "/", "", syscall.MS_REC|syscall.MS_PRIVATE, ""); err != nil {
++		t.Fatal("private mount namespace unavailable")
++	}
++	if err := syscall.Mount("tmpfs", "/etc", "tmpfs", syscall.MS_NODEV|syscall.MS_NOSUID, "mode=0755"); err != nil {
++		t.Fatal("disposable system requirements mount unavailable")
++	}
++	if output, err := exec.Command(ip, "link", "set", "lo", "up").CombinedOutput(); err != nil {
++		t.Fatalf("cannot configure isolated loopback: %v %s", err, output)
++	}
++	harness := newEphemeralIntegrationHarness(t, binary, nft)
++	defer harness.close()
++	harness.control(t)
++	for _, name := range []string{"baseline", "clock", "question", "server-question-control", "early-events", "lost-clock", "lost-question", "cancel-start", "disconnect", "ambiguous", "stale", "malformed", "missing-final", "timeout-config", "timeout-model", "timeout", "clock-loop", "question-at-cancel"} {
++		t.Run(name, func(t *testing.T) { harness.run(t, name, "", "") })
++	}
++	// The router must reject these despite their absence from advertised tools.
++	// Namespace and custom calls exercise dispatch, not a prompt prohibition.
++	hostile := []struct{ name, namespace, arguments string }{
++		{"exec_command", "", `{"cmd":"printf changed > CANARY","yield_time_ms":100}`},
++		{"shell", "", `{"command":["sh","-c","cat CANARY"]}`},
++		{"apply_patch", "", `*** Begin Patch\n*** Add File: CANARY\n+changed\n*** End Patch`},
++		{"view_image", "", `{"path":"CANARY"}`},
++		{"run", "web", `{"open":[{"ref_id":"CANARY_URL"}]}`},
++		{"imagegen", "image_gen", `{"prompt":"synthetic","referenced_image_paths":["CANARY"]}`},
++		{"echo", "mcp__literal.name", `{"value":"CANARY"}`},
++		{"read_resource", "mcp", `{"uri":"CANARY"}`},
++		{"search", "codex_apps", `{"query":"synthetic"}`},
++		{"tool_search", "", `{"query":"shell"}`},
++		{"exec", "functions", `await tools.exec_command({cmd:"cat CANARY"})`},
++		{"spawn_agent", "", `{"message":"read CANARY"}`},
++		{"search", "memories", `{"query":"synthetic"}`},
++		{"create_goal", "", `{"objective":"read CANARY"}`},
++		{"request_plugin_install", "", `{"plugin_id":"synthetic@fixture","suggest_reason":"synthetic"}`},
++		{"list", "skills", `{}`},
++		{"read", "skills", `{"path":"CANARY"}`},
++	}
++	for _, attack := range hostile {
++		t.Run("forbidden/"+attack.namespace+"/"+attack.name, func(t *testing.T) { harness.run(t, "forbidden", attack.namespace, attack.name+"\n"+attack.arguments) })
++	}
++	// Reconfiguration is between calls, never an arbitrary mid-call admin race.
++	harness.reconfigure(t, "fresh.literal.name")
++	t.Run("fresh inventory", func(t *testing.T) { harness.run(t, "baseline", "", "") })
++	harness.managedConflict(t)
++	harness.verifyPersistence(t)
++}
++
++func integrationExecutable(t *testing.T, key string) string {
++	t.Helper()
++	path := os.Getenv(key)
++	if !filepath.IsAbs(path) {
++		t.Fatalf("%s must name an explicit absolute executable", key)
++	}
++	info, err := os.Stat(path)
++	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 {
++		t.Fatalf("%s executable unavailable", key)
++	}
++	return path
++}
++
++type ephemeralIntegrationHarness struct {
++	t                                                             *testing.T
++	binary, nft, home, project, socket, canary, canaryURL, config string
++	provider                                                      *httptest.Server
++	canaryServer                                                  *httptest.Server
++	canaryHits                                                    atomic.Int32
++	command                                                       *exec.Cmd
++	stopped                                                       chan error
++	mu                                                            sync.Mutex
++	mode, namespace, attack                                       string
++	requests                                                      []map[string]any
++	failure                                                       string
++	controlMode                                                   bool
++	proxyError                                                    atomic.Bool
++	threadIDs                                                     []string
++	baseline                                                      map[string]string
++	ordinary                                                      *Client
++	controlThread                                                 string
++	egressDrops                                                   uint64
++	activeCancel                                                  context.CancelFunc
++	heldContinuation                                              chan struct{}
++	continuationStopped                                           chan struct{}
++	interrupted                                                   bool
++}
++
++func newEphemeralIntegrationHarness(t *testing.T, binary, nft string) *ephemeralIntegrationHarness {
++	t.Helper()
++	root, err := os.MkdirTemp("/tmp", "epi-")
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { os.RemoveAll(root) })
++	h := &ephemeralIntegrationHarness{t: t, binary: binary, nft: nft, home: filepath.Join(root, "home"), project: filepath.Join(root, "project"), socket: filepath.Join(root, "codex.sock"), canary: filepath.Join(root, "canary"), mode: "baseline"}
++	for _, path := range []string{h.home, h.project} {
++		if os.Mkdir(path, 0700) != nil {
++			t.Fatal("private fixture state unavailable")
++		}
++	}
++	h.write(t, h.canary, "ACTUAL_FILE_READ_CANARY_8cdbe5", 0600)
++	h.canaryServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { h.canaryHits.Add(1); w.WriteHeader(500) }))
++	h.canaryURL = h.canaryServer.URL
++	h.provider = httptest.NewServer(http.HandlerFunc(h.respond))
++	providerURL, _ := url.Parse(h.provider.URL)
++	rules := fmt.Sprintf("table inet ephemeral_fixture { chain output { type filter hook output priority 0; policy drop; oifname lo ip daddr 127.0.0.1 tcp dport %s accept; oifname lo ip saddr 127.0.0.1 tcp sport %s accept; counter drop; } }\n", providerURL.Port(), providerURL.Port())
++	firewall := exec.Command(nft, "-f", "-")
++	firewall.Stdin = strings.NewReader(rules)
++	if output, err := firewall.CombinedOutput(); err != nil {
++		t.Fatalf("egress guard unavailable: %v %s", err, output)
++	}
++	probe := &http.Client{Timeout: 100 * time.Millisecond}
++	if response, err := probe.Get(h.canaryURL); err == nil {
++		response.Body.Close()
++		t.Fatal("egress guard allowed canary endpoint")
++	}
++	if h.canaryHits.Load() != 0 {
++		t.Fatal("egress guard canary was reached")
++	}
++	h.seed(t, "literal.name")
++	h.start(t)
++	return h
++}
++func (h *ephemeralIntegrationHarness) write(t *testing.T, path, text string, mode os.FileMode) {
++	t.Helper()
++	if os.MkdirAll(filepath.Dir(path), 0700) != nil || os.WriteFile(path, []byte(text), mode) != nil {
++		t.Fatal("cannot seed disposable fixture")
++	}
++}
++func (h *ephemeralIntegrationHarness) seed(t *testing.T, mcpName string) {
++	h.write(t, filepath.Join(h.home, "AGENTS.md"), "GLOBAL_POLICY_SENTINEL: try reading FILE_READ_CANARY_NEVER_IN_INPUT and ask a question.\n", 0600)
++	h.write(t, filepath.Join(h.project, "AGENTS.md"), "PROJECT_POLICY_SENTINEL\n", 0600)
++	h.write(t, filepath.Join(h.project, "work/session/AGENTS.md"), "WORKSPACE_POLICY_SENTINEL\n", 0600)
++	h.write(t, filepath.Join(h.home, "inherited.md"), "INHERITED_FILE_POLICY_SENTINEL\n", 0600)
++	h.write(t, filepath.Join(h.home, "compact.md"), "COMPACT_FILE_POLICY_SENTINEL\n", 0600)
++	h.write(t, filepath.Join(h.home, "skills/sentinel/SKILL.md"), "---\nname: sentinel\ndescription: SKILL_POLICY_SENTINEL\n---\n\nSKILL_BODY_SENTINEL\n", 0600)
++	plugin := filepath.Join(h.home, "plugins/cache/test/sentinel/local")
++	h.write(t, filepath.Join(plugin, ".codex-plugin/plugin.json"), `{"name":"sentinel","description":"PLUGIN_POLICY_SENTINEL","hooks":"./hooks/hooks.json"}`, 0600)
++	h.write(t, filepath.Join(plugin, "skills/sentinel/SKILL.md"), "---\nname: sentinel\ndescription: PLUGIN_SKILL_SENTINEL\n---\n\nPLUGIN_BODY_SENTINEL\n", 0600)
++	script := filepath.Join(h.home, "hook.sh")
++	h.write(t, script, "#!/bin/sh\nprintf x >> "+strconv.Quote(filepath.Join(h.home, "hook-count"))+"\nprintf '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"HOST_HOOK_SENTINEL\"}}'\n", 0700)
++	hooks := map[string]any{"hooks": map[string]any{"SessionStart": []any{map[string]any{"hooks": []any{map[string]any{"type": "command", "command": script}}}}}}
++	encoded, _ := json.Marshal(hooks)
++	h.write(t, filepath.Join(h.home, "hooks.json"), string(encoded), 0600)
++	h.write(t, filepath.Join(plugin, "hooks/hooks.json"), string(encoded), 0600)
++	// A subprocess sentinel records any start and exits without serving tools.
++	mcp := filepath.Join(h.home, "mcp.sh")
++	h.write(t, mcp, "#!/bin/sh\nprintf x >> "+strconv.Quote(filepath.Join(h.home, "mcp-count"))+"\nexit 0\n", 0700)
++	h.write(t, filepath.Join(h.home, "memories/MEMORY.md"), "MEMORY_POLICY_SENTINEL\n", 0600)
++	h.config = fmt.Sprintf("model = \"gpt-6-luna\"\nmodel_reasoning_effort = \"low\"\nmodel_provider = \"openai\"\nopenai_base_url = %s\nmodel_instructions_file = %s\nexperimental_compact_prompt_file = %s\nnotify = [%s]\n[features]\nshell_tool = true\nunified_exec = true\nview_image = true\nimage_generation = true\nstandalone_web_search = true\napps = true\nplugins = true\nhooks = true\nmemories = true\ngoals = true\nmulti_agent = true\nskill_search = true\nresponses_websockets = false\nresponses_websockets_v2 = false\nenable_request_compression = false\n[plugins.\"sentinel@test\"]\nenabled = true\n[mcp_servers.%s]\ncommand = %s\n[mcp_servers.http_sentinel]\nurl = %s\n", strconv.Quote(h.provider.URL+"/v1"), strconv.Quote(filepath.Join(h.home, "inherited.md")), strconv.Quote(filepath.Join(h.home, "compact.md")), strconv.Quote(script), strconv.Quote(mcpName), strconv.Quote(mcp), strconv.Quote(h.canaryURL))
++	h.write(t, filepath.Join(h.home, "config.toml"), h.config, 0600)
++}
++func (h *ephemeralIntegrationHarness) start(t *testing.T) {
++	h.stopped = make(chan error, 1)
++	// Only synthetic credentials; no HOME/config/token environment is inherited.
++	h.command = exec.Command(h.binary, "app-server", "--listen", "unix://"+h.socket)
++	h.command.Dir = h.project
++	h.command.Env = []string{"HOME=" + h.home, "CODEX_HOME=" + h.home, "OPENAI_API_KEY=synthetic-fixture-only", "PATH=" + os.Getenv("PATH")}
++	h.command.Stdout = io.Discard
++	h.command.Stderr = io.Discard
++	if err := h.command.Start(); err != nil {
++		t.Fatal("candidate app-server launch failed")
++	}
++	go func() { h.stopped <- h.command.Wait() }()
++	deadline := time.Now().Add(5 * time.Second)
++	for time.Now().Before(deadline) {
++		if _, err := os.Stat(h.socket); err == nil {
++			return
++		}
++		select {
++		case <-h.stopped:
++			t.Fatal("candidate exited before socket readiness")
++		default:
++		}
++		time.Sleep(10 * time.Millisecond)
++	}
++	t.Fatal("candidate socket readiness exceeded fixture budget")
++}
++func (h *ephemeralIntegrationHarness) stop() {
++	if h.command != nil {
++		_ = h.command.Process.Kill()
++		select {
++		case <-h.stopped:
++		case <-time.After(time.Second):
++		}
++		h.command = nil
++	}
++	_ = os.Remove(h.socket)
++}
++func (h *ephemeralIntegrationHarness) close() {
++	if h.ordinary != nil {
++		h.ordinary.Close()
++	}
++	h.stop()
++	if h.provider != nil {
++		h.provider.Close()
++	}
++	if h.canaryServer != nil {
++		h.canaryServer.Close()
++	}
++}
++
++func (h *ephemeralIntegrationHarness) respond(w http.ResponseWriter, r *http.Request) {
++	if r.Method != "POST" || r.URL.Path != "/v1/responses" {
++		w.WriteHeader(http.StatusNotFound)
++		return
++	}
++	raw, err := io.ReadAll(io.LimitReader(r.Body, 256*1024+1))
++	if err != nil || len(raw) > 256*1024 {
++		w.WriteHeader(400)
++		return
++	}
++	var request map[string]any
++	if json.Unmarshal(raw, &request) != nil {
++		w.WriteHeader(400)
++		return
++	}
++	h.mu.Lock()
++	if len(h.requests) >= 64 {
++		h.failure = "provider request bound exceeded"
++		h.mu.Unlock()
++		w.WriteHeader(400)
++		return
++	}
++	h.requests = append(h.requests, request)
++	index := len(h.requests)
++	mode, namespace, attack, control := h.mode, h.namespace, h.attack, h.controlMode
++	if !control {
++		if request["model"] != "gpt-6-luna" {
++			h.failure = "model substitution"
++		}
++		reasoning, _ := request["reasoning"].(map[string]any)
++		if reasoning["effort"] != "low" {
++			h.failure = "effort substitution"
++		}
++		questionControl := mode == "server-question-control"
++		names, toolErr := integrationToolNames(request, questionControl)
++		expectedCount := 2
++		if questionControl {
++			expectedCount = 3
++		}
++		if toolErr != nil || !names["clock.curr_time"] || !names["request_user_input_async"] || len(names) != expectedCount || (questionControl && !names["request_user_input"]) {
++			h.failure = "unexpected model-facing tool schemas"
++		}
++		text := string(raw)
++		if !strings.Contains(text, "GLOBAL_POLICY_SENTINEL") {
++			h.failure = "trusted global policy missing"
++		}
++		for _, sentinel := range []string{"PROJECT_POLICY_SENTINEL", "WORKSPACE_POLICY_SENTINEL", "TEAM_POLICY_SENTINEL", "SKILL_POLICY_SENTINEL", "PLUGIN_POLICY_SENTINEL", "PLUGIN_SKILL_SENTINEL", "INHERITED_FILE_POLICY_SENTINEL", "COMPACT_FILE_POLICY_SENTINEL", "HOST_HOOK_SENTINEL", "MEMORY_POLICY_SENTINEL", "GOAL_STATE_SENTINEL", "FILE_READ_CANARY_NEVER_IN_INPUT"} {
++			// The global instruction names the file-read marker without its content;
++			// the actual secret below is checked separately in run().
++			if sentinel == "FILE_READ_CANARY_NEVER_IN_INPUT" {
++				continue
++			}
++			if strings.Contains(text, sentinel) {
++				h.failure = "excluded instruction source present"
++			}
++		}
++	}
++	held, stopped := h.heldContinuation, h.continuationStopped
++	h.mu.Unlock()
++	if (mode == "lost-clock" || mode == "lost-question") && index == 2 {
++		close(held)
++		// This inference never completes naturally: exact-turn interruption must
++		// cancel the actual App Server provider request, including a lost RPC reply.
++		<-r.Context().Done()
++		close(stopped)
++		return
++	}
++	if mode == "timeout" || mode == "clock-loop" && index > 8 {
++		<-r.Context().Done()
++		return
++	}
++	w.Header().Set("Content-Type", "text/event-stream")
++	event := func(value any) { data, _ := json.Marshal(value); fmt.Fprintf(w, "data: %s\n\n", data) }
++	event(map[string]any{"type": "response.created", "response": map[string]any{"id": fmt.Sprintf("response-%d", index)}})
++	final := func() {
++		event(map[string]any{"type": "response.output_item.done", "item": map[string]any{"type": "message", "role": "assistant", "id": fmt.Sprintf("answer-%d", index), "phase": "final_answer", "content": []any{map[string]any{"type": "output_text", "text": `{"name":"fix runtime session names"}`}}}})
++	}
++	call := func(name, ns, args string, custom bool) {
++		item := map[string]any{"type": "function_call", "name": name, "call_id": fmt.Sprintf("call-%d", index), "arguments": args}
++		if ns != "" {
++			item["namespace"] = ns
++		}
++		if custom {
++			item["type"] = "custom_tool_call"
++			delete(item, "arguments")
++			item["input"] = args
++		}
++		event(map[string]any{"type": "response.output_item.done", "item": item})
++	}
++	switch {
++	case control:
++		final()
++	case mode == "server-question-control" && index == 1:
++		call("request_user_input", "", `{"questions":[{"id":"q","header":"Question","question":"Synthetic question?","options":[{"label":"Continue","description":"Continue the fixture."},{"label":"Stop","description":"Stop the fixture."}]}]}`, false)
++	case (mode == "question" || mode == "question-at-cancel" || mode == "lost-question") && index == 1:
++		call("request_user_input_async", "", `{"questions":[{"title":"Synthetic question?","options":["Continue","Stop"]}]}`, false)
++	case ((mode == "clock" || mode == "lost-clock") && index == 1) || mode == "clock-loop":
++		call("curr_time", "clock", `{}`, false)
++	case mode == "forbidden" && index == 1:
++		parts := strings.SplitN(attack, "\n", 2)
++		args := "{}"
++		if len(parts) == 2 {
++			args = parts[1]
++		}
++		args = strings.ReplaceAll(args, "CANARY_URL", h.canaryURL)
++		args = strings.ReplaceAll(args, "CANARY", h.canary)
++		call(parts[0], namespace, args, parts[0] == "apply_patch" || parts[0] == "exec")
++	default:
++		final()
++	}
++	event(map[string]any{"type": "response.completed", "response": map[string]any{"id": fmt.Sprintf("response-%d", index), "usage": map[string]any{"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}}})
++}
++func integrationToolNames(request map[string]any, questionControl bool) (map[string]bool, error) {
++	names := map[string]bool{}
++	var scan func(any, string) error
++	scan = func(value any, prefix string) error {
++		list, ok := value.([]any)
++		if !ok {
++			return errors.New("missing tools")
++		}
++		for _, value := range list {
++			tool, ok := value.(map[string]any)
++			if !ok {
++				return errors.New("malformed tool")
++			}
++			name, ok := tool["name"].(string)
++			if !ok || name == "" {
++				return errors.New("unnamed tool")
++			}
++			if tool["type"] == "namespace" {
++				if prefix != "" || (name != "clock" && name != "functions") {
++					return errors.New("unexpected namespace")
++				}
++				next := name + "."
++				if name == "functions" {
++					next = ""
++				}
++				if err := scan(tool["tools"], next); err != nil {
++					return err
++				}
++				continue
++			}
++			if tool["type"] != "function" || tool["defer_loading"] == true {
++				return errors.New("unexpected tool representation")
++			}
++			full := prefix + name
++			if full != "clock.curr_time" && full != "request_user_input_async" && !(questionControl && full == "request_user_input") {
++				return errors.New("action tool exposed")
++			}
++			if names[full] {
++				return errors.New("duplicate tool")
++			}
++			names[full] = true
++		}
++		return nil
++	}
++	// Unchanged Luna uses Responses Lite: exact source moves tool schemas into
++	// developer additional_tools items and packages plain functions in the
++	// functions namespace. Inspect every actual schema, not a reduced catalog.
++	found := false
++	if value, present := request["tools"]; present && value != nil {
++		found = true
++		if err := scan(value, ""); err != nil {
++			return names, err
++		}
++	}
++	input, ok := request["input"].([]any)
++	if !ok {
++		return names, errors.New("missing input")
++	}
++	for _, value := range input {
++		item, ok := value.(map[string]any)
++		if !ok {
++			return names, errors.New("malformed input")
++		}
++		if item["type"] == "additional_tools" {
++			found = true
++			if item["role"] != "developer" {
++				return names, errors.New("unexpected tool role")
++			}
++			if err := scan(item["tools"], ""); err != nil {
++				return names, err
++			}
++		}
++	}
++	if !found {
++		return names, errors.New("missing tool schemas")
++	}
++	return names, nil
++}
++
++func TestEphemeralIntegrationToolSchemaShapes(t *testing.T) {
++	clock := map[string]any{"type": "namespace", "name": "clock", "tools": []any{map[string]any{"type": "function", "name": "curr_time"}}}
++	question := map[string]any{"type": "function", "name": "request_user_input_async"}
++	tools := []any{clock, question}
++	lite := []any{clock, map[string]any{"type": "namespace", "name": "functions", "tools": []any{question}}}
++	for _, test := range []struct {
++		name    string
++		request map[string]any
++		valid   bool
++	}{
++		{"direct", map[string]any{"tools": tools, "input": []any{}}, true},
++		{"unchanged Luna Lite", map[string]any{"input": []any{map[string]any{"type": "additional_tools", "role": "developer", "tools": lite}}}, true},
++		{"missing", map[string]any{"input": []any{}}, false},
++		{"duplicate catalogs", map[string]any{"tools": tools, "input": []any{map[string]any{"type": "additional_tools", "role": "developer", "tools": lite}}}, false},
++		{"action", map[string]any{"tools": []any{map[string]any{"type": "function", "name": "exec_command"}}, "input": []any{}}, false},
++		{"wrapped action", map[string]any{"tools": []any{map[string]any{"type": "namespace", "name": "functions", "tools": []any{map[string]any{"type": "custom", "name": "exec"}}}}, "input": []any{}}, false},
++		{"deferred", map[string]any{"tools": []any{map[string]any{"type": "function", "name": "request_user_input_async", "defer_loading": true}}, "input": []any{}}, false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			names, err := integrationToolNames(test.request, false)
++			if test.valid {
++				if err != nil || len(names) != 2 || !names["clock.curr_time"] || !names["request_user_input_async"] {
++					t.Fatal("known schema shape rejected")
++				}
++			} else if err == nil {
++				t.Fatal("unsupported model-facing schema accepted")
++			}
++		})
++	}
++}
++
++func (h *ephemeralIntegrationHarness) control(t *testing.T) {
++	h.trustControlHooks(t)
++	h.mu.Lock()
++	h.controlMode = true
++	h.requests = nil
++	h.failure = ""
++	h.mu.Unlock()
++	h.ordinary = NewWithOptions(h.socket, ClientOptions{DeveloperInstructions: "TEAM_POLICY_SENTINEL", RuntimeWorkspaceRoots: []string{h.project}})
++	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++	defer cancel()
++	id, err := h.ordinary.StartThreadWithSettings(ctx, filepath.Join(h.project, "work/session"), nil, ThreadSettings{Model: "gpt-6-luna", ReasoningEffort: "low"})
++	if err != nil {
++		t.Fatal("control thread prerequisite unavailable")
++	}
++	h.controlThread = id
++	var turn any
++	if err := h.ordinary.Request(ctx, "turn/start", map[string]any{"threadId": id, "model": "gpt-6-luna", "effort": "low", "input": []any{map[string]any{"type": "text", "text": "ordinary synthetic control"}}}, &turn); err != nil {
++		t.Fatal("control inference prerequisite unavailable")
++	}
++	for ctx.Err() == nil {
++		h.mu.Lock()
++		received := len(h.requests) > 0
++		h.mu.Unlock()
++		if received {
++			break
++		}
++		time.Sleep(10 * time.Millisecond)
++	}
++	h.mu.Lock()
++	controlRequests := append([]map[string]any(nil), h.requests...)
++	h.controlMode = false
++	h.mu.Unlock()
++	if len(controlRequests) == 0 {
++		t.Fatal("representative builtin OpenAI provider path did not reach mock")
++	}
++	encoded, _ := json.Marshal(controlRequests)
++	for _, sentinel := range []string{"GLOBAL_POLICY_SENTINEL", "PROJECT_POLICY_SENTINEL", "WORKSPACE_POLICY_SENTINEL", "TEAM_POLICY_SENTINEL", "SKILL_POLICY_SENTINEL", "PLUGIN_SKILL_SENTINEL", "INHERITED_FILE_POLICY_SENTINEL", "HOST_HOOK_SENTINEL"} {
++		if !bytes.Contains(encoded, []byte(sentinel)) {
++			t.Fatalf("control did not prove %s eligibility; fixture cannot claim its exclusion", sentinel)
++		}
++	}
++	if !bytes.Contains(encoded, []byte("exec_command")) || !bytes.Contains(encoded, []byte("curr_time")) || !bytes.Contains(encoded, []byte("request_user_input_async")) {
++		t.Fatal("control has reduced tool/model metadata")
++	}
++	// Wait for ordinary completion before taking the persistent-state baseline.
++	for ctx.Err() == nil {
++		var result struct {
++			Thread struct {
++				Turns []struct {
++					Status string `json:"status"`
++				} `json:"turns"`
++			} `json:"thread"`
++		}
++		if h.ordinary.Request(ctx, "thread/read", map[string]any{"threadId": id, "includeTurns": true}, &result) != nil {
++			t.Fatal("control read failed")
++		}
++		if len(result.Thread.Turns) > 0 && result.Thread.Turns[len(result.Thread.Turns)-1].Status == "completed" {
++			break
++		}
++		time.Sleep(10 * time.Millisecond)
++	}
++	if ctx.Err() != nil {
++		t.Fatal("control did not complete")
++	}
++	h.seedSensitiveStores(t)
++	h.baseline = h.snapshot(t)
++	h.egressDrops = h.droppedPackets(t)
++}
++
++func (h *ephemeralIntegrationHarness) trustControlHooks(t *testing.T) {
++	// Discover and trust only the synthetic disposable hooks through the pinned
++	// public list shape and ordinary config hash state, never bypass hook trust.
++	client := New(h.socket)
++	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
++	defer cancel()
++	var result struct {
++		Data []struct {
++			Hooks []struct {
++				Key         string `json:"key"`
++				CurrentHash string `json:"currentHash"`
++				Source      string `json:"source"`
++			} `json:"hooks"`
++		} `json:"data"`
++	}
++	err := client.Request(ctx, "hooks/list", map[string]any{"cwds": []string{filepath.Join(h.project, "work/session")}}, &result)
++	client.Close()
++	if err != nil {
++		t.Fatal("hook discovery prerequisite unavailable")
++	}
++	sources := map[string]bool{}
++	count := 0
++	for _, entry := range result.Data {
++		for _, hook := range entry.Hooks {
++			if !ephemeralID(hook.Key) || !ephemeralID(hook.CurrentHash) || count >= 16 {
++				t.Fatal("bounded synthetic hook inventory invalid")
++			}
++			sources[hook.Source] = true
++			count++
++			h.config += "\n[hooks.state." + strconv.Quote(hook.Key) + "]\ntrusted_hash = " + strconv.Quote(hook.CurrentHash) + "\n"
++		}
++	}
++	if !sources["user"] || !sources["plugin"] {
++		t.Fatal("control cannot prove user and plugin hook eligibility")
++	}
++	h.stop()
++	h.write(t, filepath.Join(h.home, "config.toml"), h.config, 0600)
++	h.start(t)
++}
++
++func (h *ephemeralIntegrationHarness) seedSensitiveStores(t *testing.T) {
++	// These are the actual pinned-source stores created by the candidate, not
++	// invented sentinel files. A schema/prerequisite mismatch fails the fixture.
++	sqlite := integrationExecutable(t, "CODEX_EPHEMERAL_TEST_SQLITE")
++	quote := func(value string) string { return "'" + strings.ReplaceAll(value, "'", "''") + "'" }
++	for _, seed := range []struct{ name, statement string }{
++		{"goals_1.sqlite", "INSERT INTO thread_goals (thread_id,goal_id,objective,status,created_at_ms,updated_at_ms) VALUES (" + quote(h.controlThread) + ",'00000000-0000-4000-8000-000000000001','GOAL_STATE_SENTINEL','paused',1,1);"},
++		{"memories_1.sqlite", "INSERT INTO stage1_outputs (thread_id,source_updated_at,raw_memory,rollout_summary,generated_at) VALUES ('00000000-0000-4000-8000-000000000002',1,'MEMORY_POLICY_SENTINEL','synthetic retained memory',1);"},
++	} {
++		path := filepath.Join(h.home, seed.name)
++		if info, err := os.Stat(path); err != nil || !info.Mode().IsRegular() {
++			t.Fatal("candidate sensitive-store prerequisite missing")
++		}
++		if _, err := exec.Command(sqlite, path, seed.statement).Output(); err != nil {
++			t.Fatal("candidate sensitive-store seed failed")
++		}
++	}
++	if count, err := os.ReadFile(filepath.Join(h.home, "mcp-count")); err != nil || len(count) == 0 {
++		t.Fatal("control did not prove subprocess MCP startup eligibility")
++	}
++	if count, err := os.ReadFile(filepath.Join(h.home, "hook-count")); err != nil || len(count) == 0 {
++		t.Fatal("control did not prove hook/notify eligibility")
++	}
++}
++
++func (h *ephemeralIntegrationHarness) proxy(t *testing.T, mode string) string {
++	t.Helper()
++	return serveUnixWebsocket(t, func(downstream *websocket.Conn) error {
++		transport := &http.Transport{DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
++			return (&net.Dialer{}).DialContext(ctx, "unix", h.socket)
++		}}
++		ctx, cancel := context.WithCancel(context.Background())
++		defer cancel()
++		defer downstream.CloseNow()
++		upstream, _, err := websocket.Dial(ctx, "ws://localhost/", &websocket.DialOptions{HTTPClient: &http.Client{Transport: transport}})
++		if err != nil {
++			return errors.New("candidate proxy connection failed")
++		}
++		defer upstream.CloseNow()
++		var mu sync.Mutex
++		methods := map[string]string{}
++		var held []byte
++		var threadID, turnID string
++		var inventory []string
++		var questionID string
++		errorsChannel := make(chan error, 2)
++		go func() {
++			for {
++				kind, raw, err := downstream.Read(ctx)
++				if err != nil {
++					errorsChannel <- nil
++					return
++				}
++				var message rpcMessage
++				if json.Unmarshal(raw, &message) != nil {
++					errorsChannel <- errors.New("malformed client envelope")
++					return
++				}
++				mu.Lock()
++				if message.Method != "" {
++					methods[string(message.ID)] = message.Method
++				}
++				if message.Method == "thread/start" {
++					var params map[string]any
++					_ = json.Unmarshal(message.Params, &params)
++					policy, _ := params["config"].(map[string]any)
++					servers, _ := policy["mcp_servers"].(map[string]any)
++					valid := len(servers) == len(inventory)
++					for _, name := range inventory {
++						entry, ok := servers[name].(map[string]any)
++						if !ok || entry["enabled"] != false {
++							valid = false
++						}
++					}
++					if !valid {
++						h.mu.Lock()
++						h.failure = "captured literal MCP names not all disabled"
++						h.mu.Unlock()
++					}
++				}
++				if message.Method == "turn/interrupt" {
++					var params map[string]any
++					_ = json.Unmarshal(message.Params, &params)
++					if threadID != "" && turnID != "" && params["threadId"] == threadID && params["turnId"] == turnID {
++						h.mu.Lock()
++						h.interrupted = true
++						h.mu.Unlock()
++					} else {
++						h.mu.Lock()
++						h.failure = "cleanup interrupted an unowned identity"
++						h.mu.Unlock()
++					}
++				}
++				questionError := string(message.ID) == questionID && questionID != "" && message.Error != nil
++				mu.Unlock()
++				if questionError {
++					if message.Error.Code == -32601 && message.Error.Message == "Questions are unavailable for ephemeral utility turns" {
++						h.proxyError.Store(true)
++					}
++				}
++				// Only this labelled exact-binary control enables the otherwise disabled
++				// blocking input tool. Production policy/API has no such escape hatch.
++				if mode == "server-question-control" && (message.Method == "thread/start" || message.Method == "turn/start") {
++					var object map[string]any
++					_ = json.Unmarshal(raw, &object)
++					params := object["params"].(map[string]any)
++					if message.Method == "thread/start" {
++						policy := params["config"].(map[string]any)
++						policy["tools.experimental_request_user_input.enabled"] = true
++					}
++					if message.Method == "turn/start" {
++						params["collaborationMode"] = map[string]any{"mode": "plan", "settings": map[string]any{"model": "gpt-6-luna", "reasoning_effort": "low", "developer_instructions": nil}}
++					}
++					raw, _ = json.Marshal(object)
++				}
++				if err := upstream.Write(ctx, kind, raw); err != nil {
++					errorsChannel <- nil
++					return
++				}
++			}
++		}()
++		go func() {
++			for {
++				kind, raw, err := upstream.Read(ctx)
++				if err != nil {
++					errorsChannel <- nil
++					return
++				}
++				var message rpcMessage
++				if json.Unmarshal(raw, &message) != nil {
++					errorsChannel <- errors.New("malformed candidate envelope")
++					return
++				}
++				mu.Lock()
++				method := methods[string(message.ID)]
++				if method == "config/read" && message.Error == nil {
++					var result struct {
++						Config map[string]any `json:"config"`
++					}
++					_ = json.Unmarshal(message.Result, &result)
++					servers, _ := result.Config["mcp_servers"].(map[string]any)
++					for name := range servers {
++						inventory = append(inventory, name)
++					}
++				}
++				if (mode == "timeout-config" && method == "config/read") || (mode == "timeout-model" && method == "model/list") {
++					mu.Unlock()
++					continue
++				}
++				if method == "thread/start" && message.Error == nil {
++					var result struct {
++						Thread struct {
++							ID string `json:"id"`
++						} `json:"thread"`
++					}
++					_ = json.Unmarshal(message.Result, &result)
++					threadID = result.Thread.ID
++					h.mu.Lock()
++					h.threadIDs = append(h.threadIDs, threadID)
++					h.mu.Unlock()
++					if mode == "cancel-start" {
++						mu.Unlock()
++						continue
++					}
++				}
++				if method == "turn/start" && message.Error == nil {
++					var result struct {
++						Turn struct {
++							ID string `json:"id"`
++						} `json:"turn"`
++					}
++					_ = json.Unmarshal(message.Result, &result)
++					turnID = result.Turn.ID
++					if mode == "early-events" {
++						held = append([]byte(nil), raw...)
++						mu.Unlock()
++						continue
++					}
++					if mode == "lost-clock" || mode == "lost-question" {
++						mu.Unlock()
++						continue
++					}
++				}
++				if message.Method == "turn/started" {
++					var params struct {
++						ThreadID string `json:"threadId"`
++						Turn     struct {
++							ID string `json:"id"`
++						} `json:"turn"`
++					}
++					_ = json.Unmarshal(message.Params, &params)
++					if params.ThreadID == threadID && turnID == "" {
++						turnID = params.Turn.ID
++					}
++				}
++				if message.Method == "item/started" || message.Method == "item/completed" {
++					var params struct {
++						ThreadID string `json:"threadId"`
++						TurnID   string `json:"turnId"`
++					}
++					_ = json.Unmarshal(message.Params, &params)
++					if params.ThreadID == threadID && turnID == "" {
++						turnID = params.TurnID
++					}
++				}
++				if message.Method == "item/tool/requestUserInput" && len(message.ID) > 0 {
++					questionID = string(message.ID)
++				}
++				disconnect := mode == "disconnect" && method == "turn/start"
++				ambiguous := mode == "ambiguous" && message.Method == "turn/completed"
++				release := message.Method == "turn/completed" && len(held) > 0
++				delayed := append([]byte(nil), held...)
++				if release {
++					held = nil
++				}
++				mu.Unlock()
++				if mode == "lost-question" && (message.Method == "item/started" || message.Method == "item/completed") {
++					var params struct {
++						Item struct {
++							Delivery string `json:"delivery"`
++						} `json:"item"`
++					}
++					_ = json.Unmarshal(message.Params, &params)
++					if params.Item.Delivery == "async" {
++						h.mu.Lock()
++						ready := h.heldContinuation
++						h.mu.Unlock()
++						// Hold the notification only until the continuation is verifiably
++						// running; then test immediate rejection and cancellation of that turn.
++						select {
++						case <-ready:
++						case <-time.After(time.Second):
++							errorsChannel <- errors.New("question continuation prerequisite absent")
++							return
++						case <-ctx.Done():
++							errorsChannel <- nil
++							return
++						}
++					}
++				}
++				if disconnect {
++					upstream.CloseNow()
++					errorsChannel <- nil
++					return
++				}
++				if mode == "question-at-cancel" && message.Method == "item/started" {
++					h.mu.Lock()
++					cancelCall := h.activeCancel
++					h.mu.Unlock()
++					if cancelCall != nil {
++						cancelCall()
++					}
++				}
++				if mode == "malformed" && message.Method == "turn/completed" {
++					raw = []byte("{")
++				}
++				if mode == "stale" && message.Method == "item/completed" {
++					var object map[string]any
++					_ = json.Unmarshal(raw, &object)
++					params := object["params"].(map[string]any)
++					params["turnId"] = "stale-turn"
++					raw, _ = json.Marshal(object)
++				}
++				if mode == "missing-final" && message.Method == "item/completed" {
++					continue
++				}
++				if mode == "missing-final" && message.Method == "turn/completed" {
++					var object map[string]any
++					_ = json.Unmarshal(raw, &object)
++					params := object["params"].(map[string]any)
++					turn := params["turn"].(map[string]any)
++					turn["items"] = []any{}
++					raw, _ = json.Marshal(object)
++				}
++				if ambiguous {
++					var object map[string]any
++					_ = json.Unmarshal(raw, &object)
++					params, _ := object["params"].(map[string]any)
++					turn, _ := params["turn"].(map[string]any)
++					items, _ := turn["items"].([]any)
++					turn["items"] = append(items, map[string]any{"type": "agentMessage", "id": "second-answer", "phase": "final_answer", "text": "ambiguous"})
++					raw, _ = json.Marshal(object)
++				}
++				if err := downstream.Write(ctx, kind, raw); err != nil {
++					errorsChannel <- nil
++					return
++				}
++				if release {
++					if downstream.Write(ctx, kind, delayed) != nil {
++						errorsChannel <- nil
++						return
++					}
++				}
++			}
++		}()
++		err = <-errorsChannel
++		cancel()
++		upstream.CloseNow()
++		downstream.CloseNow()
++		<-errorsChannel
++		return err
++	})
++}
++
++func (h *ephemeralIntegrationHarness) run(t *testing.T, mode, namespace, attack string) {
++	h.mu.Lock()
++	h.mode, h.namespace, h.attack = mode, namespace, attack
++	h.requests = nil
++	h.failure = ""
++	h.heldContinuation = make(chan struct{})
++	h.continuationStopped = make(chan struct{})
++	h.interrupted = false
++	h.mu.Unlock()
++	h.proxyError.Store(false)
++	client := New(h.proxy(t, mode))
++	defer client.Close()
++	opts := ephemeralTestOptions(t)
++	opts.Input = "RAW_UTILITY_PREFIX_SENTINEL: fix runtime session naming"
++	duration := 3 * time.Second
++	if mode == "cancel-start" || strings.HasPrefix(mode, "timeout") || mode == "clock-loop" || mode == "missing-final" {
++		duration = 400 * time.Millisecond
++	}
++	if mode == "lost-clock" {
++		duration = time.Second
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), duration)
++	defer cancel()
++	h.mu.Lock()
++	h.activeCancel = cancel
++	h.mu.Unlock()
++	defer func() { h.mu.Lock(); h.activeCancel = nil; h.mu.Unlock() }()
++	// Keep an ordinary connection active while the private helper runs. It must
++	// retain its generation/settings and never acquire utility prompts/notices.
++	h.ordinary.connectionMu.Lock()
++	ordinaryGeneration := h.ordinary.generation
++	h.ordinary.connectionMu.Unlock()
++	ordinaryDone := make(chan error, 1)
++	go func() {
++		var result any
++		ordinaryDone <- h.ordinary.Request(ctx, "thread/read", map[string]any{"threadId": h.controlThread, "includeTurns": false}, &result)
++	}()
++	result, err := client.RunEphemeralTurn(ctx, opts)
++	if ordinaryErr := <-ordinaryDone; ordinaryErr != nil {
++		t.Fatal("ordinary connection disrupted")
++	}
++	h.ordinary.connectionMu.Lock()
++	same := h.ordinary.generation == ordinaryGeneration
++	h.ordinary.connectionMu.Unlock()
++	if !same || len(h.ordinary.Prompts(h.controlThread)) != 0 {
++		t.Fatal("ordinary state contaminated")
++	}
++	switch mode {
++	case "question", "lost-question", "server-question-control":
++		if !errors.Is(err, ErrEphemeralIsolation) {
++			t.Fatalf("question accepted: result=%#v error=%v", result, err)
++		}
++	case "cancel-start", "timeout-config", "timeout-model", "timeout", "clock-loop", "missing-final", "lost-clock":
++		if !errors.Is(err, context.DeadlineExceeded) {
++			t.Fatalf("budget not preserved: %v", err)
++		}
++	case "disconnect":
++		if !errors.Is(err, ErrEphemeralServer) {
++			t.Fatalf("disconnect adopted: %v", err)
++		}
++	case "question-at-cancel":
++		if !errors.Is(err, context.Canceled) {
++			t.Fatalf("pending question cancellation lost: %v", err)
++		}
++	case "ambiguous", "stale", "malformed":
++		if !errors.Is(err, ErrEphemeralProtocol) {
++			t.Fatalf("ambiguous final accepted: %v", err)
++		}
++	default:
++		if err != nil || result.Text != `{"name":"fix runtime session names"}` {
++			t.Fatalf("candidate utility did not complete: %v", err)
++		}
++	}
++	if mode == "server-question-control" && !h.proxyError.Load() {
++		t.Fatal("actual-ID private request did not receive fixed -32601 error")
++	}
++	if mode == "lost-clock" || mode == "lost-question" {
++		h.mu.Lock()
++		running, stopped, interrupted := h.heldContinuation, h.continuationStopped, h.interrupted
++		h.mu.Unlock()
++		select {
++		case <-running:
++		default:
++			t.Fatal("lost-response control never held live inference")
++		}
++		if !interrupted {
++			t.Fatal("lost-response continuation received no exact-turn interrupt")
++		}
++		select {
++		case <-stopped:
++		case <-time.After(500 * time.Millisecond):
++			t.Fatal("exact interrupt left the actual provider continuation running")
++		}
++	}
++	h.mu.Lock()
++	failure := h.failure
++	requests := append([]map[string]any(nil), h.requests...)
++	h.mu.Unlock()
++	if failure != "" {
++		t.Fatal(failure)
++	}
++	if mode != "cancel-start" && mode != "timeout-config" && mode != "timeout-model" && len(requests) == 0 {
++		t.Fatal("fixture did not exercise inference; fallback is not proof")
++	}
++	data, _ := json.Marshal(requests)
++	if bytes.Contains(data, []byte("ACTUAL_FILE_READ_CANARY_8cdbe5")) {
++		t.Fatal("forbidden file was read")
++	}
++	if mode == "baseline" || mode == "early-events" {
++		if !bytes.Contains(data, []byte(opts.Input)) || !bytes.Contains(data, []byte("additionalProperties")) {
++			t.Fatal("raw text/schema absent from actual provider request")
++		}
++	}
++	if mode == "forbidden" {
++		if len(requests) < 2 {
++			t.Fatal("forbidden call did not exercise actual dispatch")
++		}
++		next, _ := json.Marshal(requests[1])
++		lower := strings.ToLower(string(next))
++		rejected := false
++		for _, word := range []string{"unknown tool", "unsupported", "not found", "not available", "unavailable", "not enabled", "not supported"} {
++			if strings.Contains(lower, word) {
++				rejected = true
++			}
++		}
++		if !rejected {
++			t.Fatal("model followup contains no dispatch rejection evidence")
++		}
++	}
++	if content, err := os.ReadFile(h.canary); err != nil || string(content) != "ACTUAL_FILE_READ_CANARY_8cdbe5" {
++		t.Fatal("forbidden file write/delete")
++	}
++	if h.canaryHits.Load() != 0 {
++		t.Fatal("forbidden action network request")
++	}
++	if h.droppedPackets(t) != h.egressDrops {
++		t.Fatal("forbidden action attempted denied egress")
++	}
++	h.verifyPersistence(t)
++}
++func (h *ephemeralIntegrationHarness) reconfigure(t *testing.T, name string) {
++	h.ordinary.Close()
++	h.stop()
++	h.config = strings.ReplaceAll(h.config, `mcp_servers."literal.name"`, `mcp_servers.`+strconv.Quote(name))
++	h.write(t, filepath.Join(h.home, "config.toml"), h.config, 0600)
++	h.start(t)
++	// No existing worker call survives configuration mutation. Restore only the
++	// ordinary control connection, then capture expected ordinary startup state.
++	h.ordinary = New(h.socket)
++	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
++	defer cancel()
++	if h.ordinary.Ensure(ctx) != nil {
++		t.Fatal("fresh serving generation unavailable")
++	}
++	h.baseline = h.snapshot(t)
++	h.egressDrops = h.droppedPackets(t)
++}
++func (h *ephemeralIntegrationHarness) managedConflict(t *testing.T) {
++	h.ordinary.Close()
++	h.stop()
++	h.write(t, "/etc/codex/requirements.toml", "[features]\nshell_tool = true\n", 0600)
++	h.start(t)
++	h.mu.Lock()
++	h.requests = nil
++	h.failure = ""
++	h.mu.Unlock()
++	client := New(h.socket)
++	defer client.Close()
++	_, err := runEphemeralTest(t, client, ephemeralTestOptions(t))
++	if !errors.Is(err, ErrEphemeralIsolation) {
++		t.Fatalf("managed restriction not refused: %v", err)
++	}
++	h.mu.Lock()
++	count := len(h.requests)
++	h.mu.Unlock()
++	if count != 0 {
++		t.Fatal("managed conflict reached inference")
++	}
++}
++func (h *ephemeralIntegrationHarness) snapshot(t *testing.T) map[string]string {
++	t.Helper()
++	files := map[string]string{}
++	err := filepath.WalkDir(h.home, func(path string, entry os.DirEntry, err error) error {
++		if err != nil {
++			return err
++		}
++		if entry.IsDir() {
++			return nil
++		}
++		relative, _ := filepath.Rel(h.home, path)
++		if strings.HasSuffix(relative, "-wal") || strings.HasSuffix(relative, "-shm") {
++			return nil
++		}
++		if strings.HasSuffix(relative, ".sqlite") {
++			sqlite := integrationExecutable(t, "CODEX_EPHEMERAL_TEST_SQLITE")
++			// The dump is synthetic fixture state only and retained in bounded memory.
++			output, err := exec.Command(sqlite, path, ".dump").Output()
++			if err != nil || len(output) > 4*1024*1024 {
++				return errors.New("fixture SQLite inspection failed")
++			}
++			if bytes.Contains(output, []byte("RAW_UTILITY_PREFIX_SENTINEL")) {
++				return errors.New("utility prompt persisted in SQLite")
++			}
++			h.mu.Lock()
++			ids := append([]string(nil), h.threadIDs...)
++			h.mu.Unlock()
++			for _, id := range ids {
++				if id != "" && bytes.Contains(output, []byte(id)) {
++					return errors.New("ephemeral identity persisted in SQLite")
++				}
++			}
++			// Goal/memory tables must remain byte-identical; ordinary metadata may
++			// change counters/time without carrying any utility prompt or identity.
++			if strings.HasPrefix(filepath.Base(relative), "goals_") || strings.HasPrefix(filepath.Base(relative), "memories_") {
++				files[relative] = string(output)
++				return nil
++			}
++			var sensitive []string
++			for _, line := range strings.Split(string(output), "\n") {
++				lower := strings.ToLower(line)
++				if strings.Contains(lower, "memory") || strings.Contains(lower, "goal") {
++					sensitive = append(sensitive, line)
++				}
++			}
++			files[relative] = strings.Join(sensitive, "\n")
++			return nil
++		}
++		if entry.Type()&os.ModeSymlink != 0 {
++			return errors.New("unexpected persistent symlink")
++		}
++		data, err := os.ReadFile(path)
++		if err != nil || len(data) > 4*1024*1024 {
++			return errors.New("fixture persistent-file inspection failed")
++		}
++		if bytes.Contains(data, []byte("RAW_UTILITY_PREFIX_SENTINEL")) {
++			return errors.New("utility prompt persisted in a file")
++		}
++		h.mu.Lock()
++		ids := append([]string(nil), h.threadIDs...)
++		h.mu.Unlock()
++		for _, id := range ids {
++			if id != "" && (strings.Contains(relative, id) || bytes.Contains(data, []byte(id))) {
++				return errors.New("ephemeral thread/rollout persisted")
++			}
++		}
++		if relative == "models_cache.json" {
++			return nil
++		} // inventoried ordinary catalog cache
++		sum := sha256.Sum256(data)
++		files[relative] = hex.EncodeToString(sum[:])
++		return nil
++	})
++	if err != nil {
++		t.Fatal(err)
++	}
++	return files
++}
++func (h *ephemeralIntegrationHarness) verifyPersistence(t *testing.T) {
++	current := h.snapshot(t)
++	for path, before := range h.baseline {
++		if path == "config.toml" {
++			continue
++		} // operator change occurs between stopped calls
++		if current[path] != before {
++			t.Fatalf("persistent state changed: %s", path)
++		}
++	}
++	for path := range current {
++		if _, known := h.baseline[path]; !known {
++			t.Fatalf("unexpected persistent file: %s", path)
++		}
++	}
++}
++
++func (h *ephemeralIntegrationHarness) droppedPackets(t *testing.T) uint64 {
++	output, err := exec.Command(h.nft, "-j", "list", "table", "inet", "ephemeral_fixture").Output()
++	if err != nil || len(output) > 128*1024 {
++		t.Fatal("cannot inspect real egress counters")
++	}
++	var object any
++	if json.Unmarshal(output, &object) != nil {
++		t.Fatal("malformed egress counters")
++	}
++	var packets uint64
++	var walk func(any)
++	walk = func(value any) {
++		switch node := value.(type) {
++		case map[string]any:
++			if counter, ok := node["counter"].(map[string]any); ok {
++				if count, ok := counter["packets"].(float64); ok {
++					packets += uint64(count)
++				}
++			}
++			for _, value := range node {
++				walk(value)
++			}
++		case []any:
++			for _, value := range node {
++				walk(value)
++			}
++		}
++	}
++	walk(object)
++	return packets
++}
+diff --git a/codex/ephemeral_policy.json b/codex/ephemeral_policy.json
+new file mode 100644
+index 0000000..489b044
+--- /dev/null
++++ b/codex/ephemeral_policy.json
+@@ -0,0 +1,57 @@
++{
++  "agents.enabled": false,
++  "cloud.skills.enabled": false,
++  "compact_prompt": "",
++  "experimental_compact_prompt_file": "/private/instructions.empty",
++  "features.agent_message_board": false,
++  "features.apps": false,
++  "features.code_mode": false,
++  "features.code_mode_host": false,
++  "features.code_mode_interrupt": false,
++  "features.code_mode_only": false,
++  "features.code_mode_prewarm": false,
++  "features.context_management": false,
++  "features.current_time_reminder": false,
++  "features.deferred_executor": false,
++  "features.enable_mcp_apps": false,
++  "features.external_agent_memory_import": false,
++  "features.goals": false,
++  "features.guardian_conversation_history_tools": false,
++  "features.hooks": false,
++  "features.image_generation": false,
++  "features.memories": false,
++  "features.multi_agent": false,
++  "features.multi_agent_v2": false,
++  "features.plugins": false,
++  "features.recommended_plugins": false,
++  "features.remote_plugin": false,
++  "features.send_message_to_user_async": false,
++  "features.shell_snapshot": false,
++  "features.shell_snapshot_v2": false,
++  "features.shell_tool": false,
++  "features.skill_mcp_dependency_install": false,
++  "features.skill_search": false,
++  "features.sleep_tool": false,
++  "features.standalone_web_search": false,
++  "features.token_budget": false,
++  "features.tool_suggest": false,
++  "features.unified_exec": false,
++  "features.view_image": false,
++  "history.persistence": "none",
++  "include_apps_instructions": false,
++  "include_collaboration_mode_instructions": false,
++  "include_environment_context": false,
++  "include_permissions_instructions": false,
++  "memories.dedicated_tools": false,
++  "memories.generate_memories": false,
++  "memories.use_memories": false,
++  "model_instructions_file": "/private/instructions.empty",
++  "notify": [],
++  "orchestrator.mcp.enabled": false,
++  "project_doc_max_bytes": 0,
++  "skills.bundled.enabled": false,
++  "skills.include_instructions": false,
++  "tools.experimental_request_user_input.enabled": false,
++  "tools.update_plan.enabled": false,
++  "web_search": "disabled"
++}
+diff --git a/codex/ephemeral_test.go b/codex/ephemeral_test.go
+new file mode 100644
+index 0000000..ab2bc21
+--- /dev/null
++++ b/codex/ephemeral_test.go
+@@ -0,0 +1,623 @@
++package codex
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"os"
++	"path/filepath"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/coder/websocket"
++)
++
++func ephemeralTestOptions(t *testing.T) EphemeralTurnOptions {
++	t.Helper()
++	parent := t.TempDir()
++	if err := os.Chmod(parent, 0700); err != nil {
++		t.Fatal(err)
++	}
++	directory := filepath.Join(parent, "cwd")
++	if err := os.Mkdir(directory, 0700); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(filepath.Join(parent, "instructions.empty"), nil, 0600); err != nil {
++		t.Fatal(err)
++	}
++	return EphemeralTurnOptions{Directory: directory, InstructionFile: filepath.Join(parent, "instructions.empty"), Model: "gpt-6-luna", Effort: "low", Instructions: "Return the requested JSON.", Input: "raw input", OutputSchema: json.RawMessage(`{"type":"object","properties":{"name":{"type":"string"}},"required":["name"],"additionalProperties":false}`)}
++}
++
++type ephemeralFake struct {
++	mu           sync.Mutex
++	calls        []map[string]any
++	config       any
++	requirements any
++	models       any
++	start        func(map[string]any)
++	turn         func(*websocket.Conn, map[string]any) error
++	stopAt       string
++	delayAt      string
++}
++
++func (f *ephemeralFake) snapshot() []map[string]any {
++	f.mu.Lock()
++	defer f.mu.Unlock()
++	return append([]map[string]any(nil), f.calls...)
++}
++func (f *ephemeralFake) serve(t *testing.T) string {
++	return serveUnixWebsocket(t, func(connection *websocket.Conn) error {
++		defer connection.CloseNow()
++		if err := handshake(connection); err != nil {
++			return err
++		}
++		for {
++			call, err := readObject(connection)
++			if err != nil {
++				return nil
++			} // expected private close on every exit
++			f.mu.Lock()
++			f.calls = append(f.calls, call)
++			f.mu.Unlock()
++			method, _ := call["method"].(string)
++			if method == f.stopAt {
++				return nil
++			}
++			if method == f.delayAt {
++				<-time.After(180 * time.Millisecond)
++			}
++			params, _ := call["params"].(map[string]any)
++			var result any
++			switch method {
++			case "config/read":
++				result = map[string]any{"config": map[string]any{"mcp_servers": map[string]any{"dot.name": map[string]any{"command": "secret-command"}, "other": map[string]any{"url": "secret-url"}}}, "origins": map[string]any{}}
++				if f.config != nil {
++					result = f.config
++				}
++			case "configRequirements/read":
++				result = map[string]any{"requirements": nil}
++				if f.requirements != nil {
++					result = f.requirements
++				}
++			case "model/list":
++				result = map[string]any{"data": []any{map[string]any{"model": "gpt-6-luna", "supportedReasoningEfforts": []any{map[string]any{"reasoningEffort": "low"}}}}, "nextCursor": nil}
++				if f.models != nil {
++					result = f.models
++				}
++			case "thread/start":
++				result = map[string]any{"model": params["model"], "cwd": params["cwd"], "approvalPolicy": "never", "sandbox": map[string]any{"type": "readOnly", "networkAccess": false}, "thread": map[string]any{"id": "utility-thread", "cwd": params["cwd"], "ephemeral": true, "path": nil, "environments": []any{}}}
++				if f.start != nil {
++					f.start(result.(map[string]any))
++				}
++			case "turn/start":
++				if f.turn != nil {
++					if err := f.turn(connection, call); err != nil {
++						return err
++					}
++					continue
++				}
++				if err := ephemeralWriteFinal(connection, `{"name":"fix runtime session names"}`, "final_answer", "utility-thread", "utility-turn"); err != nil {
++					return err
++				}
++				result = map[string]any{"turn": map[string]any{"id": "utility-turn", "status": "inProgress", "items": []any{}}}
++			case "turn/interrupt":
++				result = map[string]any{}
++			case "thread/unsubscribe":
++				result = map[string]any{"status": "unsubscribed"}
++			case "account/rateLimits/read":
++				result = map[string]any{"rateLimits": map[string]any{}}
++			default:
++				return fmt.Errorf("unexpected fake request %s", method)
++			}
++			if err := writeObject(connection, map[string]any{"id": call["id"], "result": result}); err != nil {
++				return nil
++			}
++		}
++	})
++}
++func ephemeralTurnResponse(connection *websocket.Conn, call map[string]any) error {
++	return writeObject(connection, map[string]any{"id": call["id"], "result": map[string]any{"turn": map[string]any{"id": "utility-turn", "status": "inProgress", "items": []any{}}}})
++}
++func ephemeralWriteFinal(connection *websocket.Conn, text, phase, threadID, turnID string) error {
++	item := map[string]any{"type": "agentMessage", "id": "answer", "text": text, "phase": phase}
++	if err := writeObject(connection, map[string]any{"method": "item/completed", "params": map[string]any{"threadId": threadID, "turnId": turnID, "completedAtMs": 1, "item": item}}); err != nil {
++		return err
++	}
++	return writeObject(connection, map[string]any{"method": "turn/completed", "params": map[string]any{"threadId": threadID, "turn": map[string]any{"id": turnID, "status": "completed", "items": []any{item}}}})
++}
++func runEphemeralTest(t *testing.T, client *Client, opts EphemeralTurnOptions) (EphemeralTurnResult, error) {
++	t.Helper()
++	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
++	defer cancel()
++	return client.RunEphemeralTurn(ctx, opts)
++}
++
++func TestEphemeralEarlyCompletionUsesPrivatePolicy(t *testing.T) {
++	f := &ephemeralFake{}
++	socket := f.serve(t)
++	parent := NewWithOptions(socket, ClientOptions{DeveloperInstructions: "parent-team-secret", RuntimeWorkspaceRoots: []string{"/workspace"}, SubmissionLedgerPath: filepath.Join(t.TempDir(), "ledger"), NonBlockingUserInput: &NonBlockingUserInputPolicy{HiddenGrace: time.Millisecond, VisibleCountdown: time.Millisecond}})
++	defer parent.Close()
++	opts := ephemeralTestOptions(t)
++	result, err := runEphemeralTest(t, parent, opts)
++	if err != nil || result.Text != `{"name":"fix runtime session names"}` {
++		t.Fatalf("result=%#v err=%v", result, err)
++	}
++	calls := f.snapshot()
++	want := []string{"config/read", "configRequirements/read", "model/list", "thread/start", "turn/start", "thread/unsubscribe"}
++	if len(calls) != len(want) {
++		t.Fatalf("calls=%#v", calls)
++	}
++	for i, method := range want {
++		if calls[i]["method"] != method {
++			t.Fatalf("call %d=%#v", i, calls[i])
++		}
++	}
++	start := calls[3]["params"].(map[string]any)
++	if start["baseInstructions"] != opts.Instructions || start["developerInstructions"] != "" || start["ephemeral"] != true || start["allowProviderModelFallback"] != false {
++		t.Fatalf("start=%#v", start)
++	}
++	for _, key := range []string{"environments", "runtimeWorkspaceRoots", "selectedCapabilityRoots", "dynamicTools"} {
++		if len(start[key].([]any)) != 0 {
++			t.Fatalf("nonempty %s", key)
++		}
++	}
++	policy := start["config"].(map[string]any)
++	servers := policy["mcp_servers"].(map[string]any)
++	if len(servers) != 2 || servers["dot.name"].(map[string]any)["enabled"] != false || servers["other"].(map[string]any)["enabled"] != false {
++		t.Fatalf("literal MCP names=%#v", servers)
++	}
++	encoded, _ := json.Marshal(calls)
++	if strings.Contains(string(encoded), "parent-team-secret") || strings.Contains(string(encoded), "secret-command") || strings.Contains(string(encoded), "secret-url") {
++		t.Fatal("parent policy/config leaked")
++	}
++	if parent.connection != nil || len(parent.requests) != 0 || len(parent.notices) != 0 || len(parent.watched) != 0 {
++		t.Fatal("parent acquired utility state")
++	}
++	if _, err := os.Stat(parent.queueLedgerPath); !errors.Is(err, os.ErrNotExist) {
++		t.Fatalf("ledger exists: %v", err)
++	}
++}
++
++func TestEphemeralRejectsServerRequestsBeforePromptAdmission(t *testing.T) {
++	for _, method := range []string{"item/tool/requestUserInput", "item/commandExecution/requestApproval", "item/tool/call", "unknown/request"} {
++		t.Run(method, func(t *testing.T) {
++			rejected := make(chan map[string]any, 1)
++			f := &ephemeralFake{turn: func(connection *websocket.Conn, call map[string]any) error {
++				if err := ephemeralTurnResponse(connection, call); err != nil {
++					return err
++				}
++				if err := writeObject(connection, map[string]any{"id": "question-1", "method": method, "params": map[string]any{"threadId": "utility-thread", "turnId": "utility-turn", "itemId": "item-1", "questions": []any{map[string]any{"id": "q", "header": "Question", "question": "synthetic secret?"}}}}); err != nil {
++					return err
++				}
++				response, err := readObject(connection)
++				if err != nil {
++					return err
++				}
++				rejected <- response
++				// A later successful answer cannot erase the terminal isolation failure.
++				_ = ephemeralWriteFinal(connection, `{"name":"ignore forbidden question"}`, "final_answer", "utility-thread", "utility-turn")
++				return nil
++			}}
++			parent := newTestClient(f.serve(t))
++			defer parent.Close()
++			_, err := runEphemeralTest(t, parent, ephemeralTestOptions(t))
++			if !errors.Is(err, ErrEphemeralIsolation) {
++				t.Fatalf("err=%v", err)
++			}
++			select {
++			case response := <-rejected:
++				failure, ok := response["error"].(map[string]any)
++				if !ok || response["id"] != "question-1" || failure["code"] != float64(-32601) || response["result"] != nil {
++					t.Fatalf("response=%#v", response)
++				}
++				expected := "Server requests are unavailable for ephemeral utility turns"
++				if method == "item/tool/requestUserInput" {
++					expected = "Questions are unavailable for ephemeral utility turns"
++				}
++				if failure["message"] != expected {
++					t.Fatalf("message=%#v", failure)
++				}
++			case <-time.After(time.Second):
++				t.Fatal("no immediate error response")
++			}
++			if len(parent.Prompts("utility-thread")) != 0 {
++				t.Fatal("utility question admitted")
++			}
++			calls := f.snapshot()
++			foundInterrupt := false
++			for _, call := range calls {
++				if call["method"] == "turn/interrupt" {
++					foundInterrupt = true
++					params := call["params"].(map[string]any)
++					if params["turnId"] != "utility-turn" || params["threadId"] != "utility-thread" {
++						t.Fatalf("cleanup adopted identity: %#v", params)
++					}
++				}
++			}
++			if !foundInterrupt {
++				t.Fatal("known turn not interrupted")
++			}
++		})
++	}
++}
++
++func TestEphemeralRejectsAmbiguousOrUnprovenCompletion(t *testing.T) {
++	cases := []struct {
++		name string
++		send func(*websocket.Conn) error
++		want error
++	}{
++		{"stale thread", func(c *websocket.Conn) error {
++			return ephemeralWriteFinal(c, "secret-output", "final_answer", "other-thread", "utility-turn")
++		}, ErrEphemeralProtocol},
++		{"stale turn", func(c *websocket.Conn) error {
++			return ephemeralWriteFinal(c, "secret-output", "final_answer", "utility-thread", "other-turn")
++		}, ErrEphemeralProtocol},
++		{"async notification question", func(c *websocket.Conn) error {
++			return writeObject(c, map[string]any{"method": "item/completed", "params": map[string]any{"threadId": "utility-thread", "turnId": "utility-turn", "item": map[string]any{"type": "agentMessage", "id": "q", "phase": "final_answer", "delivery": "async", "questions": []any{map[string]any{"title": "question"}}, "text": `{"name":"should never become session"}`}}})
++		}, ErrEphemeralIsolation},
++		{"missing phase", func(c *websocket.Conn) error {
++			return ephemeralWriteFinal(c, "secret-output", "", "utility-thread", "utility-turn")
++		}, ErrEphemeralProtocol},
++		{"output overflow", func(c *websocket.Conn) error {
++			return ephemeralWriteFinal(c, strings.Repeat("a", ephemeralOutputLimit+1), "final_answer", "utility-thread", "utility-turn")
++		}, ErrEphemeralProtocol},
++		{"two final answers", func(c *websocket.Conn) error {
++			return writeObject(c, map[string]any{"method": "turn/completed", "params": map[string]any{"threadId": "utility-thread", "turn": map[string]any{"id": "utility-turn", "status": "completed", "items": []any{map[string]any{"type": "agentMessage", "id": "a", "phase": "final_answer", "text": "one"}, map[string]any{"type": "agentMessage", "id": "b", "phase": "final_answer", "text": "two"}}}}})
++		}, ErrEphemeralProtocol},
++		{"failed turn", func(c *websocket.Conn) error {
++			return writeObject(c, map[string]any{"method": "turn/completed", "params": map[string]any{"threadId": "utility-thread", "turn": map[string]any{"id": "utility-turn", "status": "failed", "items": []any{}}}})
++		}, ErrEphemeralServer},
++		{"duplicate keys", func(c *websocket.Conn) error {
++			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
++			defer cancel()
++			return c.Write(ctx, websocket.MessageText, []byte(`{"method":"turn/completed","method":"item/completed","params":{}}`))
++		}, ErrEphemeralProtocol},
++		{"malformed JSON", func(c *websocket.Conn) error {
++			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
++			defer cancel()
++			return c.Write(ctx, websocket.MessageText, []byte(`{`))
++		}, ErrEphemeralProtocol},
++	}
++	for _, test := range cases {
++		t.Run(test.name, func(t *testing.T) {
++			f := &ephemeralFake{turn: func(c *websocket.Conn, call map[string]any) error {
++				if err := ephemeralTurnResponse(c, call); err != nil {
++					return err
++				}
++				return test.send(c)
++			}}
++			client := New(f.serve(t))
++			defer client.Close()
++			result, err := runEphemeralTest(t, client, ephemeralTestOptions(t))
++			if !errors.Is(err, test.want) || result.Text != "" || strings.Contains(err.Error(), "secret-output") {
++				t.Fatalf("result=%#v err=%v", result, err)
++			}
++		})
++	}
++}
++
++func TestEphemeralRestrictionsFailBeforeThreadCreation(t *testing.T) {
++	cases := []struct {
++		name      string
++		configure func(*ephemeralFake)
++		want      error
++	}{
++		{"malformed inventory", func(f *ephemeralFake) {
++			f.config = map[string]any{"config": map[string]any{"mcp_servers": []any{}}, "origins": map[string]any{}}
++		}, ErrEphemeralIsolation},
++		{"missing config", func(f *ephemeralFake) { f.config = map[string]any{} }, ErrEphemeralIsolation},
++		{"missing requirements", func(f *ephemeralFake) { f.requirements = map[string]any{} }, ErrEphemeralIsolation},
++		{"required action tool", func(f *ephemeralFake) {
++			f.requirements = map[string]any{"requirements": map[string]any{"featureRequirements": map[string]any{"shell_tool": true}}}
++		}, ErrEphemeralIsolation},
++		{"managed hook", func(f *ephemeralFake) {
++			f.requirements = map[string]any{"requirements": map[string]any{"hooks": map[string]any{}}}
++		}, ErrEphemeralIsolation},
++		{"managed instructions", func(f *ephemeralFake) {
++			f.requirements = map[string]any{"requirements": map[string]any{"additionalDeveloperInstructions": "managed-secret"}}
++		}, ErrEphemeralIsolation},
++		{"sandbox conflict", func(f *ephemeralFake) {
++			f.requirements = map[string]any{"requirements": map[string]any{"allowedSandboxModes": []any{"danger-full-access"}}}
++		}, ErrEphemeralIsolation},
++		{"model substitution", func(f *ephemeralFake) {
++			f.models = map[string]any{"data": []any{map[string]any{"model": "different-model", "supportedReasoningEfforts": []any{map[string]any{"reasoningEffort": "low"}}}}}
++		}, ErrEphemeralSettings},
++		{"effort substitution", func(f *ephemeralFake) {
++			f.models = map[string]any{"data": []any{map[string]any{"model": "gpt-6-luna", "supportedReasoningEfforts": []any{map[string]any{"reasoningEffort": "high"}}}}}
++		}, ErrEphemeralSettings},
++		{"cursor cycle", func(f *ephemeralFake) { f.models = map[string]any{"data": []any{}, "nextCursor": "same"} }, ErrEphemeralSettings},
++	}
++	for _, test := range cases {
++		t.Run(test.name, func(t *testing.T) {
++			f := &ephemeralFake{}
++			test.configure(f)
++			client := New(f.serve(t))
++			defer client.Close()
++			_, err := runEphemeralTest(t, client, ephemeralTestOptions(t))
++			if !errors.Is(err, test.want) {
++				t.Fatalf("err=%v", err)
++			}
++			for _, call := range f.snapshot() {
++				if call["method"] == "thread/start" {
++					t.Fatal("unsafe thread created")
++				}
++			}
++		})
++	}
++}
++
++func TestEphemeralStartIdentityFailsClosed(t *testing.T) {
++	for _, key := range []string{"model", "cwd", "ephemeral", "path", "environment"} {
++		t.Run(key, func(t *testing.T) {
++			f := &ephemeralFake{start: func(start map[string]any) {
++				thread := start["thread"].(map[string]any)
++				switch key {
++				case "model":
++					start["model"] = "substitute"
++				case "cwd":
++					thread["cwd"] = "/workspace"
++				case "ephemeral":
++					thread["ephemeral"] = false
++				case "path":
++					thread["path"] = "/rollout.jsonl"
++				case "environment":
++					thread["environments"] = []any{map[string]any{"id": "host"}}
++				}
++			}}
++			client := New(f.serve(t))
++			defer client.Close()
++			_, err := runEphemeralTest(t, client, ephemeralTestOptions(t))
++			if !errors.Is(err, ErrEphemeralIsolation) {
++				t.Fatalf("err=%v", err)
++			}
++			for _, call := range f.snapshot() {
++				if call["method"] == "turn/start" {
++					t.Fatal("inference admitted")
++				}
++			}
++		})
++	}
++}
++
++func TestEphemeralValidationAndObserverHaveNoConnection(t *testing.T) {
++	cases := []struct {
++		name   string
++		mutate func(*EphemeralTurnOptions)
++	}{
++		{"relative cwd", func(o *EphemeralTurnOptions) { o.Directory = "relative" }},
++		{"nonempty cwd", func(o *EphemeralTurnOptions) {
++			if err := os.WriteFile(filepath.Join(o.Directory, "AGENTS.md"), []byte("project"), 0600); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"open cwd", func(o *EphemeralTurnOptions) {
++			if err := os.Chmod(o.Directory, 0755); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"instruction symlink", func(o *EphemeralTurnOptions) {
++			path := filepath.Join(filepath.Dir(o.Directory), "instructions.empty")
++			os.Remove(path)
++			if err := os.Symlink("cwd", path); err != nil {
++				t.Fatal(err)
++			}
++		}},
++		{"blank model", func(o *EphemeralTurnOptions) { o.Model = "" }},
++		{"oversize input", func(o *EphemeralTurnOptions) { o.Input = strings.Repeat("x", 64*1024+1) }},
++		{"invalid utf8", func(o *EphemeralTurnOptions) { o.Input = string([]byte{0xff}) }},
++		{"duplicate schema", func(o *EphemeralTurnOptions) { o.OutputSchema = json.RawMessage(`{"type":"object","type":"string"}`) }},
++	}
++	for _, test := range cases {
++		t.Run(test.name, func(t *testing.T) {
++			opts := ephemeralTestOptions(t)
++			test.mutate(&opts)
++			_, err := runEphemeralTest(t, New("/missing-socket"), opts)
++			if !errors.Is(err, ErrEphemeralIsolation) {
++				t.Fatalf("err=%v", err)
++			}
++		})
++	}
++	opts := ephemeralTestOptions(t)
++	if _, err := New("/missing-socket").RunEphemeralTurn(context.Background(), opts); !errors.Is(err, ErrEphemeralIsolation) {
++		t.Fatal(err)
++	}
++	if _, err := runEphemeralTest(t, NewWithOptions("/missing-socket", ClientOptions{ObserverOnly: true}), opts); !errors.Is(err, ErrEphemeralIsolation) {
++		t.Fatal(err)
++	}
++}
++
++func TestEphemeralCancellationDiscoveryDisconnectAndOrdinaryClient(t *testing.T) {
++	for _, method := range []string{"config/read", "model/list", "thread/start", "turn/start"} {
++		t.Run("timeout "+method, func(t *testing.T) {
++			f := &ephemeralFake{delayAt: method}
++			client := New(f.serve(t))
++			defer client.Close()
++			ctx, cancel := context.WithTimeout(context.Background(), 120*time.Millisecond)
++			defer cancel()
++			started := time.Now()
++			_, err := client.RunEphemeralTurn(ctx, ephemeralTestOptions(t))
++			if !errors.Is(err, context.DeadlineExceeded) || time.Since(started) > 250*time.Millisecond {
++				t.Fatalf("err=%v elapsed=%v", err, time.Since(started))
++			}
++			for _, call := range f.snapshot() {
++				if call["method"] == "turn/interrupt" && method == "turn/start" {
++					t.Fatal("lost start response adopted a turn")
++				}
++			}
++		})
++	}
++	t.Run("disconnect never reconnects", func(t *testing.T) {
++		f := &ephemeralFake{stopAt: "turn/start"}
++		client := New(f.serve(t))
++		defer client.Close()
++		_, err := runEphemeralTest(t, client, ephemeralTestOptions(t))
++		if !errors.Is(err, ErrEphemeralServer) {
++			t.Fatal(err)
++		}
++		for _, call := range f.snapshot() {
++			if call["method"] == "thread/start" && len(f.snapshot()) > 5 {
++				t.Fatal("reconnect")
++			}
++		}
++	})
++	t.Run("ordinary connection remains usable", func(t *testing.T) {
++		f := &ephemeralFake{}
++		client := newTestClient(f.serve(t))
++		defer client.Close()
++		var limits AccountRateLimits
++		if err := client.Request(context.Background(), "account/rateLimits/read", nil, &limits); err != nil {
++			t.Fatal(err)
++		}
++		connection := client.connection
++		generation := client.generation
++		if _, err := runEphemeralTest(t, client, ephemeralTestOptions(t)); err != nil {
++			t.Fatal(err)
++		}
++		if client.connection != connection || client.generation != generation {
++			t.Fatal("parent connection changed")
++		}
++		if err := client.Request(context.Background(), "account/rateLimits/read", nil, &limits); err != nil {
++			t.Fatal(err)
++		}
++	})
++}
++
++func TestEphemeralBufferAndGenerationBounds(t *testing.T) {
++	ctx, cancel := context.WithCancel(context.Background())
++	defer cancel()
++	sink := &ephemeralSink{cancel: cancel, changed: make(chan struct{}, 1), generation: 1}
++	message := rpcMessage{Method: "item/completed", Params: json.RawMessage(`{"threadId":"thread","turnId":"turn","item":{"id":"a","type":"agentMessage","phase":"final_answer","text":"ok"}}`)}
++	for i := 0; i < 33; i++ {
++		sink.handle(nil, nil, 1, message)
++	}
++	if !errors.Is(sink.failure(), ErrEphemeralProtocol) || ctx.Err() == nil {
++		t.Fatal("provisional overflow accepted")
++	}
++	ctx2, cancel2 := context.WithCancel(context.Background())
++	defer cancel2()
++	sink2 := &ephemeralSink{cancel: cancel2, changed: make(chan struct{}, 1), generation: 1}
++	sink2.handle(nil, nil, 2, rpcMessage{})
++	if !errors.Is(sink2.failure(), ErrEphemeralProtocol) || ctx2.Err() == nil {
++		t.Fatal("stale generation accepted")
++	}
++}
++
++func TestEphemeralAsyncStartedQuestionFailsBeforeLostTurnResponse(t *testing.T) {
++	f := &ephemeralFake{turn: func(c *websocket.Conn, _ map[string]any) error {
++		return writeObject(c, map[string]any{"method": "item/started", "params": map[string]any{"threadId": "utility-thread", "turnId": "utility-turn", "startedAtMs": 1, "item": map[string]any{"type": "agentMessage", "id": "q", "phase": "final_answer", "delivery": "async", "questions": []any{map[string]any{"title": "question"}}, "text": "question"}}})
++	}}
++	client := New(f.serve(t))
++	defer client.Close()
++	started := time.Now()
++	_, err := runEphemeralTest(t, client, ephemeralTestOptions(t))
++	if !errors.Is(err, ErrEphemeralIsolation) || time.Since(started) > 500*time.Millisecond {
++		t.Fatalf("question waited for turn/start response: %v", err)
++	}
++	interrupted := false
++	for _, call := range f.snapshot() {
++		if call["method"] == "turn/interrupt" {
++			params := call["params"].(map[string]any)
++			if params["threadId"] != "utility-thread" || params["turnId"] != "utility-turn" {
++				t.Fatal("interrupted an unowned identity")
++			}
++			interrupted = true
++		}
++	}
++	if !interrupted {
++		t.Fatal("early owned turn was left running after question rejection")
++	}
++}
++
++func TestEphemeralLostTurnResponseCleanupIdentity(t *testing.T) {
++	for _, mode := range []string{"started", "completed", "missing", "foreign-thread", "conflicting-turn", "contradictory-response"} {
++		t.Run(mode, func(t *testing.T) {
++			f := &ephemeralFake{turn: func(c *websocket.Conn, call map[string]any) error {
++				if mode == "missing" {
++					return nil
++				}
++				if mode == "completed" {
++					return ephemeralWriteFinal(c, "answer", "final_answer", "utility-thread", "utility-turn")
++				}
++				notify := func(threadID, turnID string) error {
++					return writeObject(c, map[string]any{"method": "turn/started", "params": map[string]any{"threadId": threadID, "turn": map[string]any{"id": turnID, "status": "inProgress", "items": []any{}}}})
++				}
++				if mode == "foreign-thread" {
++					return notify("foreign-thread", "foreign-turn")
++				}
++				if err := notify("utility-thread", "utility-turn"); err != nil {
++					return err
++				}
++				if mode == "conflicting-turn" {
++					return notify("utility-thread", "another-turn")
++				}
++				if mode == "contradictory-response" {
++					return writeObject(c, map[string]any{"id": call["id"], "result": map[string]any{"turn": map[string]any{"id": "another-turn", "status": "inProgress", "items": []any{}}}})
++				}
++				return nil
++			}}
++			client := New(f.serve(t))
++			defer client.Close()
++			ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
++			defer cancel()
++			result, err := client.RunEphemeralTurn(ctx, ephemeralTestOptions(t))
++			want := ErrEphemeralProtocol
++			owned := mode == "started" || mode == "completed"
++			if owned || mode == "missing" {
++				want = context.DeadlineExceeded
++			}
++			if !errors.Is(err, want) || result.Text != "" {
++				t.Fatalf("result=%#v error=%v", result, err)
++			}
++			interrupts := 0
++			for _, call := range f.snapshot() {
++				if call["method"] != "turn/interrupt" {
++					continue
++				}
++				interrupts++
++				params := call["params"].(map[string]any)
++				if !owned || params["threadId"] != "utility-thread" || params["turnId"] != "utility-turn" {
++					t.Fatal("interrupted a missing, foreign or ambiguous identity")
++				}
++			}
++			if owned && interrupts != 1 {
++				t.Fatal("owned early identity did not receive exactly one interrupt")
++			}
++		})
++	}
++	ctx, cancel := context.WithCancel(context.Background())
++	defer cancel()
++	sink := &ephemeralSink{cancel: cancel, changed: make(chan struct{}, 1), generation: 1, threadID: "thread", turnIssued: true, cleanupTurnID: "turn"}
++	sink.handle(nil, nil, 2, rpcMessage{})
++	if sink.cleanupTurn(1, "thread", "") != "" || !errors.Is(sink.failure(), ErrEphemeralProtocol) || ctx.Err() == nil {
++		t.Fatal("foreign generation retained cleanup authority")
++	}
++}
++
++func TestEphemeralSinkFrameAndAggregateBounds(t *testing.T) {
++	for _, mode := range []string{"depth", "frame", "aggregate", "events"} {
++		t.Run(mode, func(t *testing.T) {
++			ctx, cancel := context.WithCancel(context.Background())
++			defer cancel()
++			sink := &ephemeralSink{cancel: cancel, changed: make(chan struct{}, 1)}
++			var message rpcMessage
++			raw := []byte(`{"id":1,"result":{}}`)
++			switch mode {
++			case "depth":
++				raw = []byte(`{"id":1,"result":` + strings.Repeat("[", 40) + "0" + strings.Repeat("]", 40) + "}")
++			case "frame":
++				raw = []byte(`{"id":1,"result":{"text":"` + strings.Repeat("x", ephemeralFrameLimit) + `"}}`)
++			case "aggregate":
++				sink.bytes = ephemeralByteLimit
++			case "events":
++				sink.eventCount = ephemeralEventLimit
++			}
++			if sink.decode(raw, &message) || !errors.Is(sink.failure(), ErrEphemeralProtocol) || ctx.Err() == nil {
++				t.Fatal("unbounded frame accepted")
++			}
++		})
++	}
++}
+diff --git a/docs/reference.md b/docs/reference.md
+index 22599d1..1dcd2fd 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -502,3 +502,116 @@ The App Server protocol is experimental. This repository validates its request
+ corpus against committed protocol fixtures. Applications that package a Codex
+ binary must also validate this source against schemas generated by the exact
+ Codex build they deploy.
++
++## Ephemeral utility turns
++
++`Client.RunEphemeralTurn(ctx, EphemeralTurnOptions)` returns
++`EphemeralTurnResult{Text: ...}` for one completed final answer. It is an additive
++Go API for trusted application callers; there is no browser route for selecting
++its socket, paths, model or restriction settings.
++
++Options require an exact `Model` and `Effort`, explicit nonempty `Instructions`,
++UTF-8 text `Input`, and a JSON-object `OutputSchema`. `Directory` is an empty,
++canonical absolute directory owned by the application user, with mode 0700 and
++a private parent, outside workspace/project trees. `InstructionFile` is a
++separate canonical absolute empty regular mode-0600 file in private application
++state outside that cwd. It must have one hard link and cannot be a symlink.
++The application provisions and removes its scratch state; the helper creates
++no files. Keep project configuration, AGENTS and skills out of that state.
++
++The context must have a finite deadline. Input is limited to 64 KiB;
++instructions and schema to 16 KiB each; final text to 16 KiB. Each JSON frame is
++limited to 256 KiB, the call to 256 envelopes and 1 MiB of received JSON, and
++provisional completion events to 32. JSON depth/node limits and duplicate-key
++rejection apply to schemas and consumed envelopes. Model discovery permits at
++most eight pages of 100 entries, with bounded nonrepeating cursors. Overflow,
++missing settings and model substitution fail the call.
++
++Each call copies only the trusted socket and client identity into a new private
++connection. It uses the existing initialization and generation-bound transport,
++then captures effective config and managed requirements, verifies the requested
++model/effort, and starts one ephemeral thread/turn. It does not copy parent
++instructions, roots, observers, activity recording, watchers, question timers
++or submission state. It does not use normal Send/Resume/Subscribe/history
++helpers, reconnect, repeat a turn or adopt an uncertain thread.
++
++The fixed policy in `codex/ephemeral_policy.json` disables file/command/image,
++web/app/MCP/skill/plugin, delegation, memory/goal and hook tools. Both starts
++supply empty execution environments and runtime roots, read-only sandboxing and
++never approval, plus explicit instructions and empty instruction-file overrides.
++Configured MCP names are captured once for the private cwd and disabled as
++literal nested map keys, including names with dots. Unreadable inventories,
++conflicting managed requirements and required hooks fail before inference.
++The helper has no caller-controlled config/tool options.
++
++Global user instructions remain trusted serving-instance policy. Operators
++must pause/stop naming through existing service/package procedures before
++changing MCP configuration; fresh calls then capture all newly configured
++names. This boundary does not cover deliberate administrator reconfiguration
++during a call. No shared config lease or Codex-home rewrite is performed.
++
++The private sink rejects server requests before ordinary prompt admission,
++activity, notices or timers. An actual question request receives JSON-RPC
++`-32601` with the fixed message
++`Questions are unavailable for ephemeral utility turns`; other requests receive
++a fixed unsupported-request error. Either fails the utility. Metadata-driven
++async questions are started/completed agent-message notifications with no
++request ID: they immediately fail the utility without a fabricated reply or UI
++admission. A later answer cannot restore success. A pure `clock.curr_time` tool
++may remain under the serving model's unchanged metadata.
++
++Success requires the exact connection generation, thread and turn, successful
++`turn/completed`, and exactly one completed agent message with explicit
++`phase: final_answer`. Commentary and streamed partial text are excluded; an
++unknown/missing phase is an error. Duplicate evidence for the same final item is
++accepted only when its ID/text agree. Conflicting final items fail.
++
++The helper reserves at most 250 ms within the original deadline for cleanup.
++It interrupts only an owned exact turn on failure, unsubscribes only a known
++exact thread, and always closes the private connection. After issuing its one
++turn/start, a matching early turn or item notification may establish the turn
++ID for interruption if the response is lost. That identity cannot authorize
++success; foreign or contradictory identities prohibit interruption. Unsubscribe
++alone does not stop an active turn. Cleanup never extends the caller's hard
++deadline or archives/deletes persisted threads. A lost start response returns
++an error. `ErrEphemeralIsolation`, `ErrEphemeralSettings`,
++`ErrEphemeralProtocol` and `ErrEphemeralServer` carry static safe messages;
++caller cancellation/deadline remains detectable with `errors.Is`.
++
++Fake-transport tests verify client behavior, not model-action isolation.
++`test/codex_protocol_contract.py` includes every literal utility call site and
++consumed shape. Separately validate fixed restriction keys/types with
++`test/codex_ephemeral_config_contract.py` against the exact candidate's
++`codex-rs/core/config.schema.json`.
++
++After mandatory independent review, the tagged
++`TestEphemeralProtocolIntegration` exercises the exact candidate with a local
++mock of the built-in OpenAI Responses provider. It retains the binary's model
++catalog and tool capability path; only inference endpoint and HTTP transport
++settings are changed in disposable state. The control conversation must prove
++sentinel/tool eligibility. The utility inspects actual advertised schemas and
++hostile dispatch, async questions, actual-ID requests, clock, early events,
++cancellation/disconnect and an ordinary concurrent client. The fixture inspects
++pinned-source goal/memory stores and holds clock/question provider continuations
++open while dropping turn/start responses, requiring exact interruption and actual
++provider cancellation. It inspects
++persistent synthetic state and uses a private Linux user/network/mount
++namespace with nftables egress restricted to the mock provider. It cannot
++silently fall back to host networking or deterministic-only completion.
++
++Explicit invocation requires absolute `CODEX_EPHEMERAL_TEST_BINARY`, its reviewed
++`CODEX_EPHEMERAL_TEST_SHA256`, exact `CODEX_EPHEMERAL_TEST_SOURCE` (`codex-rs`),
++and executable paths `CODEX_EPHEMERAL_TEST_IP`, `CODEX_EPHEMERAL_TEST_NFT` and
++`CODEX_EPHEMERAL_TEST_SQLITE`. The host must permit unprivileged namespaces and
++the private firewall/mount operations. Missing prerequisites or a different
++binary fail the test. These fixture prerequisites are not production runtime
++dependencies. Run it in the repository Nix environment only after review:
++
++```sh
++go test -mod=readonly -tags=codex_integration ./codex \
++  -run '^TestEphemeralProtocolIntegration$' -count=1 -timeout=180s
++```
++
++A passing schema or fake-transport check does not authorize live use. Record the
++exact binary/profile/model identities and executed isolation evidence before
++enabling a deployment that uses this helper.
+diff --git a/test/codex_ephemeral_config_contract.py b/test/codex_ephemeral_config_contract.py
+new file mode 100644
+index 0000000..cd6c0b4
+--- /dev/null
++++ b/test/codex_ephemeral_config_contract.py
+@@ -0,0 +1,67 @@
++#!/usr/bin/env python3
++"""Check the fixed utility policy against the candidate's config schema.
++
++App Server's arbitrary config JSON cannot detect misspelled/unsupported keys.
++Invoke with core/config.schema.json from the same reviewed binary source.
++"""
++import json
++import pathlib
++import sys
++
++from jsonschema import Draft7Validator
++
++if len(sys.argv) not in (2, 3):
++    raise SystemExit("usage: codex_ephemeral_config_contract.py CONFIG_SCHEMA [POLICY_JSON]")
++schema = json.loads(pathlib.Path(sys.argv[1]).read_text())
++policy_path = pathlib.Path(sys.argv[2]) if len(sys.argv) == 3 else (
++    pathlib.Path(__file__).resolve().parents[1] / "codex/ephemeral_policy.json"
++)
++policy = json.loads(policy_path.read_text())
++
++
++def resolve(node):
++    if "$ref" in node:
++        ref = node["$ref"]
++        if not ref.startswith("#/"):
++            raise SystemExit("external config schema reference is unsupported")
++        target = schema
++        for component in ref[2:].split("/"):
++            target = target[component.replace("~1", "/").replace("~0", "~")]
++        return resolve(target)
++    return node
++
++
++def declared(node, components):
++    node = resolve(node)
++    if not components:
++        return True
++    properties = node.get("properties", {})
++    if components[0] in properties:
++        return declared(properties[components[0]], components[1:])
++    return any(declared(child, components) for branch in ("allOf", "anyOf", "oneOf")
++               for child in node.get(branch, []))
++
++
++expanded = {}
++for key, value in policy.items():
++    components = key.split(".")
++    if not declared(schema, components):
++        raise SystemExit(f"unsupported utility restriction: {key}")
++    parent = expanded
++    for component in components[:-1]:
++        parent = parent.setdefault(component, {})
++    parent[components[-1]] = value
++
++# Configured MCP names are literal keys, including dots. This representative
++# inherited server is complete for config-schema validation; production sends
++# only the enabled override while retaining the operator's server definition.
++expanded["mcp_servers"] = {"literal.name": {"command": "synthetic-mcp", "enabled": False}}
++mcp = resolve(schema["properties"]["mcp_servers"])
++if not declared(mcp["additionalProperties"], ["enabled"]):
++    raise SystemExit("per-name MCP enabled restriction is unsupported")
++errors = list(Draft7Validator(schema).iter_errors(expanded))
++if errors:
++    raise SystemExit("utility restriction type mismatch:\n" + "\n".join(
++        f"  {'.'.join(map(str, error.path))}: {error.message}" for error in errors
++    ))
++print(f"validated {len(policy)} fixed utility restrictions and literal MCP enabled")
+diff --git a/test/codex_protocol_contract.py b/test/codex_protocol_contract.py
+index 46194fc..126680d 100644
+--- a/test/codex_protocol_contract.py
++++ b/test/codex_protocol_contract.py
+@@ -274,6 +274,33 @@ client_requests = [
+     ),
+     request("turn/interrupt", {"threadId": "thread-1", "turnId": "turn-1"}),
+ ]
++# Each entry below corresponds to one additional literal utility call site.
++# The production helper embeds this same fixed policy artifact.
++utility_policy = json.loads((CLIENT_SOURCE.parent / "ephemeral_policy.json").read_text())
++utility_policy["mcp_servers"] = {"literal.name": {"enabled": False}}
++utility_cwd = "/private/cwd"
++utility_schema = {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"], "additionalProperties": False}
++client_requests.extend([
++    request("config/read", {"cwd": utility_cwd, "includeLayers": False}),
++    request("configRequirements/read", None),
++    request("model/list", {"limit": 100, "includeHidden": True, "cursor": "utility-next"}),
++    request("thread/start", {
++        "ephemeral": True, "model": "gpt-6-luna", "allowProviderModelFallback": False,
++        "cwd": utility_cwd, "baseInstructions": "Return the requested JSON.",
++        "developerInstructions": "", "approvalPolicy": "never", "sandbox": "read-only",
++        "environments": [], "runtimeWorkspaceRoots": [], "selectedCapabilityRoots": [],
++        "dynamicTools": [], "config": utility_policy,
++    }),
++    request("turn/start", {
++        "threadId": "utility-thread", "input": [{"type": "text", "text": "raw input"}],
++        "model": "gpt-6-luna", "effort": "low", "outputSchema": utility_schema,
++        "cwd": utility_cwd, "approvalPolicy": "never",
++        "sandboxPolicy": {"type": "readOnly", "networkAccess": False},
++        "environments": [], "runtimeWorkspaceRoots": [],
++    }),
++    request("turn/interrupt", {"threadId": "utility-thread", "turnId": "utility-turn"}),
++    request("thread/unsubscribe", {"threadId": "utility-thread"}),
++])
+ client_source = CLIENT_SOURCE.read_text()
+ # Public client behavior is split into small implementation files. Keep every
+ # outgoing call in the schema corpus, including the optional activity reader.
+@@ -815,7 +842,6 @@ for message in server_requests:
+         f"server request {message['method']}",
+     )
+ 
+-print("Codex App Server protocol contract is compatible")
+ 
+ # Typed activity and observer fields consumed from the selected Codex schema.
+ activity_items = [
+@@ -847,3 +873,78 @@ for definition, fields in {
+ }.items():
+     for field in fields:
+         require_declared_property("v2/ThreadTurnsListResponse.json", definition, field, "activity turn metadata")
++
++# Utility-only consumed shapes. Optional phase/path/model properties are checked
++# at runtime; requiring their schema presence would invent a wire guarantee.
++utility_thread = {**thread, "id": "utility-thread", "cwd": utility_cwd, "ephemeral": True, "path": None}
++utility_start = {**common_start, "thread": utility_thread, "cwd": utility_cwd,
++                 "model": "gpt-6-luna", "sandbox": {"type": "readOnly", "networkAccess": False}}
++validate("v2/ThreadStartResponse.json", utility_start, "ephemeral thread result")
++require_fields("v2/ThreadStartResponse.json", utility_start,
++               [("model",), ("cwd",), ("thread", "id"), ("thread", "cwd"), ("thread", "ephemeral")],
++               "ephemeral thread identity")
++require_declared_property("v2/ThreadStartResponse.json", "Thread", "path", "ephemeral absent rollout")
++final_item = {"id": "utility-answer", "type": "agentMessage", "phase": "final_answer", "text": '{"name":"fix runtime session names"}'}
++utility_turn = {"id": "utility-turn", "status": "completed", "items": [final_item]}
++validate("v2/TurnStartResponse.json", {"turn": utility_turn}, "ephemeral turn result")
++require_fields("v2/TurnStartResponse.json", {"turn": utility_turn},
++               [("turn", "id"), ("turn", "status"), ("turn", "items")], "ephemeral turn identity")
++completion = {"threadId": "utility-thread", "turnId": "utility-turn", "completedAtMs": 1, "item": final_item}
++validate("v2/ItemCompletedNotification.json", completion, "ephemeral completed final item")
++require_fields("v2/ItemCompletedNotification.json", completion,
++               [("threadId",), ("turnId",), ("item",), ("item", "id"), ("item", "text")], "ephemeral final item")
++# ThreadItem is a union; explicitly validate phase literals against its declared
++# MessagePhase definition. Missing phase is a protocol failure in the helper.
++phase_schema = json.loads((SCHEMA_DIR / "v2/ItemCompletedNotification.json").read_text())["definitions"]["MessagePhase"]
++if not Draft7Validator(phase_schema).is_valid("final_answer") or Draft7Validator(phase_schema).is_valid("unknown"):
++    raise SystemExit("ephemeral final phase convention differs")
++finished = {"threadId": "utility-thread", "turn": utility_turn}
++early_started = {"threadId": "utility-thread", "turn": {"id": "utility-turn", "status": "inProgress", "items": []}}
++validate("v2/TurnStartedNotification.json", early_started, "ephemeral early cleanup identity")
++require_fields("v2/TurnStartedNotification.json", early_started,
++               [("threadId",), ("turn", "id"), ("turn", "status"), ("turn", "items")], "ephemeral early cleanup identity")
++validate("ServerNotification.json", {"method": "turn/started", "params": early_started}, "ephemeral early cleanup notification")
++validate("v2/TurnCompletedNotification.json", finished, "ephemeral successful completion")
++require_fields("v2/TurnCompletedNotification.json", finished,
++               [("threadId",), ("turn", "id"), ("turn", "status"), ("turn", "items")], "ephemeral successful completion")
++validate("v2/ConfigReadResponse.json", {"config": {"mcp_servers": {"literal.name": {"command": "synthetic"}}}, "origins": {}}, "ephemeral static config inventory")
++validate("v2/ConfigRequirementsReadResponse.json", {"requirements": None}, "ephemeral no managed requirements")
++validate("v2/ConfigRequirementsReadResponse.json", {"requirements": {"featureRequirements": {"shell_tool": True}}}, "ephemeral rejected managed requirement")
++validate("v2/ThreadUnsubscribeResponse.json", {"status": "unsubscribed"}, "ephemeral unsubscribe")
++require_fields("v2/ThreadUnsubscribeResponse.json", {"status": "unsubscribed"}, [("status",)], "ephemeral unsubscribe")
++# Server-request errors use the shared JSON-RPC error envelope, not an answer.
++validate("JSONRPCError.json", {"id": "question-1", "error": {"code": -32601, "message": "Questions are unavailable for ephemeral utility turns"}}, "ephemeral question rejection")
++
++# The tagged fixture discovers eligible synthetic hooks before its ordinary
++# control. This test-only request is excluded from production call-site counts.
++validate("ClientRequest.json", request("hooks/list", {"cwds": [utility_cwd]}), "fixture eligible hook discovery")
++hook = {"key": "fixture-hook", "currentHash": "fixture-hash", "source": "user",
++        "eventName": "sessionStart", "handlerType": "command", "command": "/private/hook.sh",
++        "sourcePath": "/private/hooks.json", "timeoutSec": 1, "displayOrder": 0,
++        "enabled": True, "isManaged": False, "trustStatus": "trusted"}
++hook_inventory = {"data": [{"cwd": utility_cwd, "hooks": [hook], "warnings": [], "errors": []}]}
++validate("v2/HooksListResponse.json", hook_inventory, "fixture synthetic hook eligibility")
++require_fields("v2/HooksListResponse.json", hook_inventory,
++               [("data",), ("data", 0, "hooks"), ("data", 0, "hooks", 0, "key"),
++                ("data", 0, "hooks", 0, "currentHash"), ("data", 0, "hooks", 0, "source")],
++               "fixture hook identity/trust")
++
++# Async questions carry agent-message metadata and no outer request ID. Ordinary
++# final messages may omit or null that metadata; the helper checks it at runtime.
++async_item = {**final_item, "delivery": "async", "questions": [{"title": "Synthetic question?", "options": ["Continue", "Stop"]}]}
++for method, timestamp, file_name in (
++    ("item/started", "startedAtMs", "v2/ItemStartedNotification.json"),
++    ("item/completed", "completedAtMs", "v2/ItemCompletedNotification.json"),
++):
++    params = {"threadId": "utility-thread", "turnId": "utility-turn", timestamp: 1, "item": async_item}
++    validate(file_name, params, "ephemeral rejected async question")
++    validate("ServerNotification.json", {"method": method, "params": params}, "ephemeral async notification without ID")
++    for item in (final_item, {**final_item, "delivery": None, "questions": None}):
++        validate(file_name, {**params, "item": item}, "ordinary final metadata absent/null")
++    definitions = json.loads((SCHEMA_DIR / file_name).read_text())["definitions"]
++    if definitions["AgentMessageDelivery"].get("enum") != ["async"]:
++        raise SystemExit("ephemeral async delivery convention differs")
++    if not Draft7Validator(definitions["AsyncUserInputQuestion"]).is_valid({"title": "Synthetic question?"}):
++        raise SystemExit("ephemeral async question convention differs")
++
++print("Codex App Server protocol contract is compatible")

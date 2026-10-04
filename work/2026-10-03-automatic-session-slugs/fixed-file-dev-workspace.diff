@@ -1,0 +1,195 @@
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index 7b1a191..712458f 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -117,8 +117,14 @@ workspace. Attachment names, paths and contents are excluded.
+ 
+ The adapter calls codex-web's public `RunEphemeralTurn` with exactly
+ `gpt-6-luna`/`low`, fixed instructions and a bounded name schema. Each call uses
+-an empty private mode-0700 cwd outside the workspace and a separate empty
+-mode-0600 instruction override file. It supplies no attachments or team policy.
++an empty private mode-0700 cwd outside the workspace and a separate mode-0600
++instruction override file containing exactly codex-web's
++`EphemeralInstructionFileContent`. The adapter writes that provider-owned constant
++once to its unique `instructions.txt` file and keeps it unchanged through helper
++teardown. Both file overrides use that path: the pinned server requires readable,
++nonempty contents even when explicit naming instructions take precedence. The
++fixed text also supplies the compact-file prompt; it does not disable compaction.
++The call supplies no attachments or team policy.
+ The worker retains ownership of the whole deadline and concurrency limit.
+ Scratch state is removed after the call; durable session state is untouched.
+ 
+diff --git a/flake.lock b/flake.lock
+index d86d12f..736c1b9 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1791049716,
+-        "narHash": "sha256-+pdMUMHIftsKHylDCaz9NLgaa6QM30LvMJxN8eWBve8=",
++        "lastModified": 1791070827,
++        "narHash": "sha256-BYcKtK1mcKc1BxkEU7wy8/tzUdKLq/G1MA+Un49I3sE=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "ca0f3bc980ca99454d000761aeee37b4b9bbafc3",
++        "rev": "d371a7721819ddc7becbd41eabd0486664e1edcd",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "ca0f3bc980ca99454d000761aeee37b4b9bbafc3",
++        "rev": "d371a7721819ddc7becbd41eabd0486664e1edcd",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 511687c..10618e6 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/ca0f3bc980ca99454d000761aeee37b4b9bbafc3";
++      url = "github:aither64/codex-web/d371a7721819ddc7becbd41eabd0486664e1edcd";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index ba2458e..36cf6cb 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -198,7 +198,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-QWQvnlkcpKlOL6fZh3zsSw5QBuZVGUxOIj1y6zNruts=";
++  vendorHash = "sha256-wD6K+dw9W1zhBzFHwFGeNQ/HLGcDfVjdmyE2bhDomAw=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 2f32134..dd012ec 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -3,7 +3,7 @@ module github.com/aither64/dev-workspace/portal
+ go 1.24.0
+ 
+ require (
+-	github.com/aither64/codex-web v0.0.0-20261003174836-ca0f3bc980ca
++	github.com/aither64/codex-web v0.0.0-20261003234027-d371a7721819
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 2ddfeb3..2a56bfb 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,5 +1,5 @@
+-github.com/aither64/codex-web v0.0.0-20261003174836-ca0f3bc980ca h1:N4nNe4j9w5P4lLBTqxQFqMO7jI5W0kei1v6zosTzTF0=
+-github.com/aither64/codex-web v0.0.0-20261003174836-ca0f3bc980ca/go.mod h1:wxfbQeNrjnDW43kExN39RdEflxekqogIDfernCytTEc=
++github.com/aither64/codex-web v0.0.0-20261003234027-d371a7721819 h1:bkHRmZePCUfrZDMenKn6AyOlNRay0aENBV2Yj7QrEm0=
++github.com/aither64/codex-web v0.0.0-20261003234027-d371a7721819/go.mod h1:wxfbQeNrjnDW43kExN39RdEflxekqogIDfernCytTEc=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/web/session_namer.go b/portal/internal/web/session_namer.go
+index 5db3166..65cb33c 100644
+--- a/portal/internal/web/session_namer.go
++++ b/portal/internal/web/session_namer.go
+@@ -77,11 +77,11 @@ func modelSessionName(ctx context.Context, input string, client ephemeralTurnCli
+ 	if os.Mkdir(directory, 0700) != nil {
+ 		return "", codex.ErrEphemeralIsolation
+ 	}
+-	if os.WriteFile(filepath.Join(private, "instructions.empty"), nil, 0600) != nil {
++	if os.WriteFile(filepath.Join(private, "instructions.txt"), []byte(codex.EphemeralInstructionFileContent), 0600) != nil {
+ 		return "", codex.ErrEphemeralIsolation
+ 	}
+ 	result, err := client.RunEphemeralTurn(ctx, codex.EphemeralTurnOptions{
+-		Directory: directory, InstructionFile: filepath.Join(private, "instructions.empty"), Model: "gpt-6-luna", Effort: "low", Instructions: sessionNamingInstructions,
++		Directory: directory, InstructionFile: filepath.Join(private, "instructions.txt"), Model: "gpt-6-luna", Effort: "low", Instructions: sessionNamingInstructions,
+ 		Input: input, OutputSchema: json.RawMessage(sessionNamingSchema),
+ 	})
+ 	if ctx.Err() != nil {
+diff --git a/portal/internal/web/session_namer_test.go b/portal/internal/web/session_namer_test.go
+index 7f24175..6f47f35 100644
+--- a/portal/internal/web/session_namer_test.go
++++ b/portal/internal/web/session_namer_test.go
+@@ -7,6 +7,7 @@ import (
+ 	"os"
+ 	"path/filepath"
+ 	"strings"
++	"syscall"
+ 	"testing"
+ 	"time"
+ 	"unicode/utf8"
+@@ -38,8 +39,12 @@ func TestSessionNamingUtilityAdapterExactInputsAndPrivateState(t *testing.T) {
+ 	defer cancel()
+ 	deadline, _ := ctx.Deadline()
+ 	var private string
++	var previous string
+ 	client := ephemeralNamingMock{run: func(call context.Context, options codex.EphemeralTurnOptions) (codex.EphemeralTurnResult, error) {
+ 		private = filepath.Dir(options.Directory)
++		if private == previous {
++			t.Fatal("adapter reused another call's instruction path")
++		}
+ 		if got, _ := call.Deadline(); got != deadline {
+ 			t.Fatal("adapter restarted deadline")
+ 		}
+@@ -61,9 +66,17 @@ func TestSessionNamingUtilityAdapterExactInputsAndPrivateState(t *testing.T) {
+ 		if cwd.Mode().Perm() != 0700 {
+ 			t.Fatal("cwd not private")
+ 		}
+-		file, err := os.Lstat(filepath.Join(private, "instructions.empty"))
+-		if err != nil || !file.Mode().IsRegular() || file.Mode().Perm() != 0600 || file.Size() != 0 {
+-			t.Fatal("instruction override not empty/private")
++		if options.InstructionFile != filepath.Join(private, "instructions.txt") {
++			t.Fatal("instruction override path is not separate per-call state")
++		}
++		file, err := os.Lstat(options.InstructionFile)
++		if err != nil || !file.Mode().IsRegular() || file.Mode().Perm() != 0600 || file.Size() != int64(len(codex.EphemeralInstructionFileContent)) {
++			t.Fatal("instruction override not exact/private")
++		}
++		owner, ok := file.Sys().(*syscall.Stat_t)
++		content, readErr := os.ReadFile(options.InstructionFile)
++		if !ok || owner.Uid != uint32(os.Geteuid()) || owner.Nlink != 1 || readErr != nil || string(content) != codex.EphemeralInstructionFileContent {
++			t.Fatal("instruction override bytes or ownership changed")
+ 		}
+ 		relative, err := filepath.Rel(store.workspace, options.Directory)
+ 		if err != nil || !strings.HasPrefix(relative, "../") {
+@@ -71,12 +84,15 @@ func TestSessionNamingUtilityAdapterExactInputsAndPrivateState(t *testing.T) {
+ 		}
+ 		return codex.EphemeralTurnResult{Text: `{"name":"fix runtime session names"}`}, nil
+ 	}}
+-	result, err := modelSessionName(ctx, raw, client, store)
+-	if err != nil || result != `{"name":"fix runtime session names"}` {
+-		t.Fatalf("result=%q err=%v", result, err)
+-	}
+-	if _, err := os.Stat(private); !errors.Is(err, os.ErrNotExist) {
+-		t.Fatalf("scratch state retained: %v", err)
++	for call := 0; call < 2; call++ {
++		result, err := modelSessionName(ctx, raw, client, store)
++		if err != nil || result != `{"name":"fix runtime session names"}` {
++			t.Fatalf("result=%q err=%v", result, err)
++		}
++		if _, err := os.Stat(private); !errors.Is(err, os.ErrNotExist) {
++			t.Fatalf("scratch state retained: %v", err)
++		}
++		previous = private
+ 	}
+ }
+ 
+@@ -89,6 +105,10 @@ func TestSessionNamingUtilityCleanupAndCancellation(t *testing.T) {
+ 			var private string
+ 			client := ephemeralNamingMock{run: func(_ context.Context, opts codex.EphemeralTurnOptions) (codex.EphemeralTurnResult, error) {
+ 				private = filepath.Dir(opts.Directory)
++				content, err := os.ReadFile(opts.InstructionFile)
++				if err != nil || string(content) != codex.EphemeralInstructionFileContent {
++					t.Fatal("failure path lacks exact private instruction file")
++				}
+ 				switch mode {
+ 				case "failure":
+ 					return codex.EphemeralTurnResult{}, codex.ErrEphemeralIsolation

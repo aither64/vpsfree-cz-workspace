@@ -1,0 +1,115 @@
+diff --git a/portal/internal/teamruntime/runtime_test.go b/portal/internal/teamruntime/runtime_test.go
+index 386db5f..5f23ae8 100644
+--- a/portal/internal/teamruntime/runtime_test.go
++++ b/portal/internal/teamruntime/runtime_test.go
+@@ -353,6 +353,9 @@ func (client *testClient) SendWithOptions(_ context.Context, thread, text, messa
+ 		close(client.sendEntered)
+ 		<-client.releaseSend
+ 	}
++	// This mutex protects recording only, never the serialization handshake.
++	client.mu.Lock()
++	defer client.mu.Unlock()
+ 	client.sends = append(client.sends, thread+"\n"+text)
+ 	client.messageIDs = append(client.messageIDs, messageID)
+ 	client.options = append(client.options, options)
+@@ -361,12 +364,16 @@ func (client *testClient) SendWithOptions(_ context.Context, thread, text, messa
+ }
+ 
+ func (client *testClient) CompactAcceptedSendOptions(prefix string) error {
++	client.mu.Lock()
++	defer client.mu.Unlock()
+ 	client.compactPrefixes = append(client.compactPrefixes, prefix)
+ 	client.ledgerEvents = append(client.ledgerEvents, "compact")
+ 	return client.compactError
+ }
+ 
+ func (client *testClient) ClearRetiredThreadAttempts(threadID string) error {
++	client.mu.Lock()
++	defer client.mu.Unlock()
+ 	client.clearedThreads = append(client.clearedThreads, threadID)
+ 	client.ledgerEvents = append(client.ledgerEvents, "clear")
+ 	return client.clearError
+diff --git a/test/creation_browser.cjs b/test/creation_browser.cjs
+index fb63e01..2ab9449 100644
+--- a/test/creation_browser.cjs
++++ b/test/creation_browser.cjs
+@@ -45,7 +45,7 @@ const server = http.createServer(async (req,res) => {
+  if(url.pathname.startsWith("/static/"))return send("text/javascript",fs.readFileSync(path.join(root,"portal/internal/web/static",path.basename(url.pathname))));
+  if(url.pathname.startsWith("/codex/assets/"))return send("text/javascript",fs.readFileSync(path.join(provider,"conversation/assets",path.basename(url.pathname))));
+  if(url.pathname==="/sessions") {
+-  const raw=await body(),fields=Object.fromEntries(new URLSearchParams(raw));submissions.push({raw,fields});
++  const raw=await body(),fields=Object.fromEntries(new URLSearchParams(raw));submissions.push({method:req.method,raw,fields});
+   if(failure==="network-before")return req.socket.destroy();
+   if(failure==="http")return json({error:"Temporary initialization service failure"},503);
+   if(failure==="stale")return json({error:"catalog digest is stale; reload the form"},409);
+@@ -98,6 +98,18 @@ const server = http.createServer(async (req,res) => {
+  try {
+   const context=await browser.newContext(),page=await context.newPage(),errors=[];
+   page.on("pageerror",error=>errors.push(error.message));
++  await context.addInitScript(()=>{
++   const originalFetch=window.fetch;
++   window.sessionPostFetches=[];
++   window.fetch=function(input,options){
++    const url=new URL(typeof input==="string"||input instanceof URL ? input : input.url,window.location.href);
++    const method=String(options?.method||(input instanceof Request ? input.method : "GET")).toUpperCase();
++    if(url.origin===window.location.origin&&url.pathname==="/sessions"&&method==="POST") {
++     window.sessionPostFetches.push(Object.freeze({method,body:String(options?.body??"")}));
++    }
++    return originalFetch.apply(this,arguments);
++   };
++  });
+   await context.addInitScript(()=>Object.defineProperty(navigator,"clipboard",{value:{writeText:async text=>{window.copiedText=text;}}}));
+   const ready=page=>page.waitForFunction(()=>!document.querySelector('#new-session-form button[type="submit"]').disabled);
+   const draft=page=>page.evaluate(()=>JSON.parse(sessionStorage.getItem("workspace-portal.creation-draft")));
+@@ -106,15 +118,22 @@ const server = http.createServer(async (req,res) => {
+   assert.match(await page.locator('[data-cli-command]').inputValue(),/custom short name/);
+   await page.locator('[name="goal"]').fill(prompt);
+   const before=await draft(page),beforeCount=submissions.length;
++  const beforeFetchCount=await page.evaluate(()=>window.sessionPostFetches.length);
+   assert.match(before.requestId,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab]/);
+-  // A rapid duplicate cannot create a second identity or POST.
++  // Rapid duplicate events make one application fetch. Chromium may replay
++  // that fetch after TCP loss; every wire attempt must keep its frozen identity.
+   await page.evaluate(()=>{const form=document.querySelector("#new-session-form");for(let n=0;n<2;n++)form.dispatchEvent(new SubmitEvent("submit",{cancelable:true}));});
+   await page.waitForFunction(()=>!document.querySelector("#new-session-recovery").hidden&&!document.querySelector("#new-session-recover").disabled);
+-  assert.equal(submissions.length,beforeCount+1);
++  const applicationPosts=await page.evaluate(()=>window.sessionPostFetches);
++  assert.equal(applicationPosts.length,beforeFetchCount+1);
++  const frozen=(await draft(page)).body;
++  assert.deepEqual(applicationPosts.at(-1),{method:"POST",body:frozen});
++  const wirePosts=submissions.slice(beforeCount);
++  assert(wirePosts.length>0,"The application submission must reach the TCP-loss fixture");
++  assert(wirePosts.every(item=>item.method==="POST"&&item.raw===frozen&&item.fields.clientRequestId===before.requestId));
+   assert.equal(submissions.at(-1).fields.name,"");
+   assert.equal(submissions.at(-1).fields.model,"");assert.equal(submissions.at(-1).fields.effort,"");
+   assert(await page.locator('[name="goal"]').isDisabled());
+-  const frozen=(await draft(page)).body;
+   catalog.current="b".repeat(64);
+   await page.reload();await page.waitForFunction(()=>!document.querySelector("#new-session-recovery").hidden&&!document.querySelector("#new-session-recover").disabled);
+   assert.equal((await draft(page)).body,frozen);
+@@ -123,7 +142,7 @@ const server = http.createServer(async (req,res) => {
+   assert(await page.locator('[name="goal"]').isDisabled());
+   failure="none";await page.getByRole("button",{name:"Recover saved request"}).click();
+   await page.waitForURL(origin+`/creations/${before.requestId}/`);
+-  assert(submissions.filter(item=>item.fields.clientRequestId===before.requestId).every(item=>item.raw===frozen));
++  assert(submissions.slice(beforeCount).every(item=>item.method==="POST"&&item.raw===frozen&&item.fields.clientRequestId===before.requestId));
+   assert.equal(await page.locator("#creation-request").textContent(),prompt);
+   assert(!await page.evaluate(()=>window.promptInjected));
+   assert.equal(await page.evaluate(()=>sessionStorage.getItem("workspace-portal.creation-draft")),null);
+@@ -213,6 +232,7 @@ const server = http.createServer(async (req,res) => {
+    await original.close();await separate.close();
+   }
+   // Unsubmitted legacy draft can change catalogs after explicit acknowledgement.
++  const legacyCatalog=catalog.current;
+   modelsUnavailable=false;
+   await page.goto(origin);await ready(page);
+   await page.evaluate(({prompt})=>{
+@@ -224,7 +244,7 @@ const server = http.createServer(async (req,res) => {
+   assert(await page.locator("#creation-draft-notice").isVisible());
+   assert.equal((await draft(page)).migratedUploads,true);
+   await page.locator('[data-team-catalog-acknowledge]').check();await ready(page);
+-  assert.equal((await draft(page)).catalogDigest,"b".repeat(64));
++  assert.equal((await draft(page)).catalogDigest,legacyCatalog);
+   await page.getByText("Options",{exact:true}).click();
+   await page.locator('[name="model"]').selectOption("alternate-model");await page.locator('[name="effort"]').selectOption("xhigh");
+   modelsUnavailable=true;await page.reload();await ready(page);

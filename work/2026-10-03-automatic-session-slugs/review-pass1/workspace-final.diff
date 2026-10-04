@@ -1,0 +1,2125 @@
+diff --git a/flake.lock b/flake.lock
+index 66350f03..a2de6deb 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -45,17 +45,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1790953142,
+-        "narHash": "sha256-cFRxBW98ARuOPHUJ9fuw+1ObE3cygMTzz+msd5ngVhU=",
++        "lastModified": 1791049716,
++        "narHash": "sha256-+pdMUMHIftsKHylDCaz9NLgaa6QM30LvMJxN8eWBve8=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "4c170393a96ed0a6ac2e43488d073f6fcab36132",
++        "rev": "ca0f3bc980ca99454d000761aeee37b4b9bbafc3",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "4c170393a96ed0a6ac2e43488d073f6fcab36132",
++        "rev": "ca0f3bc980ca99454d000761aeee37b4b9bbafc3",
+         "type": "github"
+       }
+     },
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1791019703,
+-        "narHash": "sha256-PtepPc6igqLZK2ZYJLMnO5hT5Av4RhFKTib81iPTbsQ=",
++        "lastModified": 1791054254,
++        "narHash": "sha256-IKUhiXnLcKc3DTPmine3KRak9qFxjrJNKyeVShivV5g=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "4ef298b30f9cdbdcfe02bf6526e0f69ecc9bf7b4",
++        "rev": "edcfc18f2fdc3bdebfec7089e2bd79b2d9b918b1",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "4ef298b30f9cdbdcfe02bf6526e0f69ecc9bf7b4",
++        "rev": "edcfc18f2fdc3bdebfec7089e2bd79b2d9b918b1",
+         "type": "github"
+       }
+     },
+@@ -462,17 +462,17 @@
+         "nixpkgs": "nixpkgs_5"
+       },
+       "locked": {
+-        "lastModified": 1791020287,
+-        "narHash": "sha256-jAHLheY9lw0R3i9evFAas+LphXdG2RW8cqVv659KOZo=",
++        "lastModified": 1791054348,
++        "narHash": "sha256-cAdo+6Nl+J3os58d3lE7bZNScH3TvFY2uc6YAZC+M/o=",
+         "owner": "vpsfreecz",
+         "repo": "dev-workspace",
+-        "rev": "399c33023a568a8d7a21e4e4df52829628720a28",
++        "rev": "c8f9ba36bbb0b346d2165229690015193ca97ac0",
+         "type": "github"
+       },
+       "original": {
+         "owner": "vpsfreecz",
+         "repo": "dev-workspace",
+-        "rev": "399c33023a568a8d7a21e4e4df52829628720a28",
++        "rev": "c8f9ba36bbb0b346d2165229690015193ca97ac0",
+         "type": "github"
+       }
+     }
+diff --git a/flake.nix b/flake.nix
+index 13962fd2..af3fac4d 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -3,7 +3,7 @@
+ 
+   inputs = {
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+-    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/399c33023a568a8d7a21e4e4df52829628720a28";
++    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/c8f9ba36bbb0b346d2165229690015193ca97ac0";
+   };
+ 
+   outputs =
+diff --git a/notes/dev-workspace/2026-10-03-add-members-to-retained-solo-roster.md b/notes/dev-workspace/2026-10-03-add-members-to-retained-solo-roster.md
+new file mode 100644
+index 00000000..84f4a132
+--- /dev/null
++++ b/notes/dev-workspace/2026-10-03-add-members-to-retained-solo-roster.md
+@@ -0,0 +1,15 @@
++# Add development members to a retained solo roster
++
++In `work/2026-10-03-infra-monitoring`, the public command
++`dev-session team preset 2026-10-03-infra-monitoring delegated --as-is` refused
++with `team preset differs from the retained roster`. The retained roster had
++the solo preset and no members.
++
++The supported public `dev-session team add <slug> <role> --as-is` commands for
++architect, implementer and reviewer succeeded. They selected the installed
++catalog's role settings and preserved the lead's retained settings. Verify the
++exact session identity first, then inspect saved member purpose, access, state,
++model and effort with `dev-session team list <slug> --as-is` before assignment.
++
++Do not rewrite private roster files or substitute the lead for application
++edits when adding members through the public interface resolves the setup.
+diff --git a/notes/vpsfree-cz-configuration/2026-10-03-retained-member-nix-checks.md b/notes/vpsfree-cz-configuration/2026-10-03-retained-member-nix-checks.md
+new file mode 100644
+index 00000000..cbd586d0
+--- /dev/null
++++ b/notes/vpsfree-cz-configuration/2026-10-03-retained-member-nix-checks.md
+@@ -0,0 +1,26 @@
++# Functional Nix checks from retained team members
++
++During infra-monitoring implementation, retained native architect/implementer
++shells could read the repository and use realized tools, but a Nix evaluation
++failed connecting to `/nix/var/nix/daemon-socket/socket` with "Operation not
++permitted". The operation did not start a build. Their saved workspace-write
++access was valid; this was a Nix daemon boundary, not a Git/source permission
++failure.
++
++A fresh verification watcher under the installed catalog utility policy ran
++session-authorized Nix operations successfully. It installed the frozen bundle
++in the repository's pinned `nix develop` environment and later ran the metadata,
++configuration and Prometheus checks. The lead supplied the implementer only
++selected nonsensitive tool environment variables from that already-realized
++shell for local formatter, Bundler and active Git hooks. No member access or
++sandbox policy was changed; daemon-requiring checks remained watcher-owned.
++
++When this recurs, distinguish local source/tool access from functional Nix
++verification. Do not claim a denied evaluation is a code failure or a test
++pass. Use the session monitor workflow for uncertain operations, preserve the
++failed evidence, and report actual check results from the authorized execution
++path. Avoid capturing a full environment, which may contain credentials.
++
++Related records: work/2026-10-03-infra-monitoring/{state,design,
++implementation-result}.md. Frozen bundle setup and all four focused/adjacent
++checks passed; declared hooks ran on both behavior commits.
+diff --git a/work/2026-10-03-automatic-session-slugs/plan.md b/work/2026-10-03-automatic-session-slugs/plan.md
+new file mode 100644
+index 00000000..c7d58055
+--- /dev/null
++++ b/work/2026-10-03-automatic-session-slugs/plan.md
+@@ -0,0 +1,119 @@
++# Automatic portal session slugs
++
++Implement the accepted plan: creating a session from the portal requires only
++the initial prompt and team selection. An optional custom slug remains available
++under expanded options. Preserve the dated slug format and 48-character short
++name limit. Scope is New session; forks, approved-plan creation and CLI naming
++retain their existing contracts.
++
++## Components and ownership
++
++- `codex-web`: public isolated ephemeral-turn client helper, protocol corpus,
++  meaningful tests and API documentation.
++- `dev-workspace`: asynchronous naming, durable preparation requests, receipt
++  handoff, upload ownership, browser drafts/progress, tests and feature docs.
++- `vpsfree-dev-workspace`: runtime input update after the generic runtime is
++  committed and pushed.
++- Workspace feature worktree: assembled package input update and deployment.
++- `vpsfree-cz-configuration`: inspect the aitherdev host contract; modify only
++  if evidence shows a host change is required. Application deployment remains
++  in the user profile, not system configuration.
++
++The retained designer owns `design.md`; the implementer owns application edits.
++The coordinator owns tracking, integration of reports and deployment. Retained
++reviewer performs independent whole-branch review. Fresh catalog Luna/low
++utilities run and monitor long checks. No default-branch integration is
++authorized by the user's instruction to implement.
++
++## Accepted design
++
++The browser stores a random `clientRequestId` in its draft before submitting.
++`POST /sessions` freezes the accepted snapshot (raw prompt, attachment IDs and
++scope, date, custom name, resolved team/model settings). Same ID and same input
++replays the operation; changed input with the same ID conflicts. Acceptance
++persists before naming and immediately returns `/creations/<request-id>/`.
++Status is at `/api/session-creations/<request-id>` and retries at its `/retry`
++endpoint with receipt/attempt checks. Legacy explicit-name submissions without
++a request ID remain supported. Progress shows the accepted prompt, elapsed
++time and phases, then redirects to the reserved canonical session URL.
++
++Use a public `codex.Client.RunEphemeralTurn` with model, effort, instructions,
++input, JSON output schema and trusted private working directory. Utility
++threads do not enter persisted conversation resume paths. Subscribe to their
++notifications, wait for turn completion and the final agent message, then
++interrupt/unsubscribe on cancellation. Disable tools and workspace instruction
++inheritance. Validate every RPC shape against the pinned Codex schema.
++
++Naming uses `gpt-6-luna` with low effort, independently of development settings.
++Send at most the first 8 KiB of raw textual prompt at a UTF-8 boundary, without
++attachment paths or contents. Request JSON `{"name":"..."}` with 3–6 English
++words and validate lowercase ASCII kebab syntax, at most 48 characters. Limit
++the entire operation, including connect/model lookup/queue, to 10 seconds and
++two simultaneous calls per workspace. Missing model, timeout or invalid result
++falls back deterministically: first nonempty line, lowercase, fold diacritics,
++up to six ASCII words and word-boundary truncation. No useful words yields
++`session`; attachment-only requests skip the model. Generated collisions use
++`-2`, `-3`, etc. within the limit; custom collisions remain errors.
++
++Persist separate private version-1 preparation records, leaving existing
++manifest, lifecycle journal and creation receipt formats unchanged. Freeze the
++generated base before reservation and final slug plus predetermined receipt ID
++before handoff. Existing receipt acceptance must accept that supplied ID and
++prove matching ID and request, never adopt an unrelated matching receipt.
++Recovery between file writes resumes the exact operation. Reserve active,
++archived, worktree, receipt and journal names under existing serialization.
++Never rename a reserved session.
++
++Reserve accepted upload scopes to request IDs before a slug exists. Reject
++competing ownership and mutations. Retain accepted submissions, reconcile
++before collection, then transfer to ordinary creation ownership. Keep complete
++snapshots while unfinished, compact immutable request ID to receipt/slug/input
++digest mappings afterward. Bound unfinished operations to 512 and completed
++mappings to 10,000; reject admission rather than forgetting replay identity.
++Server shutdown pauses naming, and package generation is revalidated before
++mutations.
++
++## Compatibility and recovery
++
++No SQL schema, seeds, service message or host module contract changes are
++expected. New API endpoints and the ephemeral client helper are additive.
++Legacy explicit-name portal requests and all CLI behavior remain supported.
++New state is isolated from slug-keyed receipts and journals. Old packages
++ignore and retain it. Accepted uploads use existing pending retention so older
++collection preserves them. Rolling forward restores preparation recovery UI.
++Rollback can load existing standard receipts/manifests and completed sessions;
++unfinished pre-slug requests pause until the newer package is restored. Verify
++these claims with tests, including crash gaps and collection.
++
++Update exact feature pins in dependency order: codex-web → dev-workspace →
++vpsfree-dev-workspace → assembled workspace flake. Preserve unrelated Codex
++and other dependency inputs, checking the complete nested lock diff. Deploy
++the assembled workspace package with `workspace-host switch --source` from
++the dedicated workspace worktree on aitherdev. Retain the previous profile
++generation for rollback. Host configuration needs no deployment unless the
++contract inspection shows otherwise; record any expansion before editing.
++
++## Verification and acceptance
++
++Quick meaningful tests cover automatic/custom naming, fallback, Unicode and
++long prompts, attachment-only input, duplicate IDs and input conflicts,
++distinct requests with the same prompt, concurrent collisions, response loss,
++restart/crash handoff, upload ownership and collection/rollback, nonblocking
++acceptance, ephemeral cancellation/isolation, draft preservation, safe URLs and
++legacy callers. Browser syntax and protocol corpus must pass.
++
++Commit intended changes after quick checks. Inventory each complete branch and
++all persisted format changes, recording migration provenance (no database
++migrations expected). Mandatory review covers general, architecture, scope and
++risk/compatibility lanes, with all Blocking/Important findings resolved or
++explicitly reconciled before longer tests. Run packaged Nix checks and live
++protocol/browser checks through fresh watchers, then deploy and exercise
++automatic/custom/retry behavior. Logs include naming duration/outcome, not
++prompt text.
++
++Keep public helper semantics in codex-web reference docs and creation/recovery
++contracts in dev-workspace portal/session docs. Exact revisions, commands,
++review evidence, rollout and rollback generation belong in this initiative.
++Apply the user-facing writing skill in the context-owning coordinator before
++committing final visible copy. Finish with active branches ready for explicit
++merge direction; retain the session and all feature refs.
+diff --git a/work/2026-10-03-automatic-session-slugs/state.md b/work/2026-10-03-automatic-session-slugs/state.md
+new file mode 100644
+index 00000000..99e10128
+--- /dev/null
++++ b/work/2026-10-03-automatic-session-slugs/state.md
+@@ -0,0 +1,69 @@
++---
++lifecycle: active
++---
++
++# Automatic portal session slugs
++
++Phase: design and implementation setup. The user explicitly requested
++implementation of the accepted plan; default-branch integration is not
++authorized.
++
++## Phase checklist
++
++- [x] Inspect applicable workspace procedures and installed team policy.
++- [x] Create a separate initiative and verify its identity.
++- [ ] Commit the initial plan and state.
++- [ ] Create/register feature worktrees and record their bases.
++- [ ] Designer records the technical brief before substantive implementation.
++- [ ] Implement and document the accepted feature; run quick checks.
++- [ ] Commit and inventory the complete intended branch series.
++- [ ] Independent mandatory review and finding reconciliation.
++- [ ] Packaged and live verification through fresh watchers.
++- [ ] Pin the assembled package and deploy/canary on aitherdev.
++- [ ] Ready, awaiting explicit merge approval; retain session and refs.
++
++## Identity and ownership
++
++`dev-session current` initially failed; no environment or trusted thread binding
++selected an existing initiative. Created this initiative with the user-profile
++`dev-session start automatic-session-slugs --team delegated --no-attach --json
++--exclusive --goal-file ...`. Startup returned slug
++`2026-10-03-automatic-session-slugs`, thread
++`01a1021d-ad01-7913-a092-70f6e41646d0` and its stable URL. A subsequent `current`
++with both exact environment identity values matched. The bootstrap lead was
++instructed to remain idle while this conversation coordinates assignments.
++
++Stable portal URL:
++https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-03-automatic-session-slugs/
++
++Pinned team: delegated, catalog digest
++`4676433c6831fbaca91da8ffde84891aff6ce065a17c74c2f367f1acf1d15b17`.
++Verified saved ready members: `architect0` (design, GPT-6 Astra/xhigh,
++workspace_write), `implementer0` (implementation, GPT-6.1 Sol/xhigh,
++workspace_write), `reviewer0` (review, GPT-6.1 Sol/xhigh, read_only). Assign
++without model/effort overrides. Utility policy is GPT-6 Luna/low with fresh
++operation lifetime; native config is
++`share/dev-workspace/agent-teams/utilities/verification_watcher-low.toml`.
++
++## Scope and repositories
++
++Planned feature branches/worktrees use this slug for codex-web, dev-workspace,
++vpsfree-dev-workspace and workspace. Exact bases and final heads pending.
++Configuration host inspection found application deployment belongs in the user
++profile; no host configuration edit expected.
++
++The shared workspace is on master with extensive unrelated dirty files and one
++existing local commit ahead of origin. Its index was empty before setup.
++Preserve all unrelated content and stage only this initiative's owned records.
++Bare local master refs may be stale: fetch and base project worktrees on
++origin/master.
++
++## Current evidence and next actions
++
++No application edits or checks yet. Complete the initial tracking commit,
++create worktrees and delegate the design brief. The main material risks are
++crash-safe handoff to existing receipts, upload retention during rollback,
++ephemeral tool isolation and exact nested dependency pin preservation.
++
++Documentation destinations and verification criteria are in [plan.md](plan.md).
++Independent review, deployment and readiness remain unverified.
+diff --git a/work/2026-10-03-infra-monitoring/architect-result.md b/work/2026-10-03-infra-monitoring/architect-result.md
+new file mode 100644
+index 00000000..a98872f9
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/architect-result.md
+@@ -0,0 +1,57 @@
++# Architect result
++
++Design is ready for implementer0 in [design.md](design.md), based on
++`b66c929bb7c202ad31bd8994a691ade14c40ebf0`. No deviation from accepted scope.
++
++Recommended assignment: implement the typed machine metadata, three explicit
++VM classifications, four authoritative host label constructors, exact terminal
++SMS exception, and four CPU rule edits listed in the design. Add the focused
++Nix/promtool/amtool fixtures and a short owning-project monitoring explanation.
++Use the pinned shell, verify declared hooks, run quick verification, and commit
++only the owned configuration changes. Application work has not begun here.
++
++Important details for implementation:
++
++- `monitorings` is the Nix target group; its actual job is `mon`. Include its
++  local Prometheus/node-exporter pair and peer monitor targets.
++- Append `machine_type` after `monitoring.labels`. Keep `type=node`; shared
++  node labels also cover both ZFS jobs and IPMI.
++- Reuse `blackhole` after email/Telegram and before both SMS routes. All four
++  exact matchers are required; keep hourly notification subroutes unchanged.
++- Only relaxed CPU aggregates retain `location`; remove their hardcoded stg
++  labels. Do not touch raw load-average or I/O-wait rules.
++- With 20-second rule samples, the first `irate` is at 20s, so hold-boundary
++  fixtures fire at 10m20s/50m20s for already-old hosts, not t=10m/50m.
++- Offline amtool routing tests verify receiver selection, not real delivery,
++  repeat timers, inhibition or active-time behavior. Preserve those structures
++  and verify their diff separately.
++
++Proposed check commands are in the brief:
++`nix build --no-write-lock-file --no-link .#checks.x86_64-linux.infra-monitoring-config .#checks.x86_64-linux.infra-monitoring-rules`,
++then adjacent process-count/autostart regressions and declared Overcommit hooks.
++The flake exposes `confctl.machines` for metadata, but not complete system
++configuration objects; use a small module fixture for generated labels/routes.
++
++After commits and quick checks, the lead owns mandatory whole-branch review,
++including a no-migrations conclusion. Only then run both central configuration
++builds through a fresh verification watcher:
++`confctl build 'cz.vpsfree/containers/prg/int.mon[12]'` and
++`confctl build 'cz.vpsfree/containers/prg/int.alerts[12]'`.
++Confirm the selectors first; explicit single-machine builds are equivalent.
++
++Execution path is available: the lead confirmed the authorized fresh watcher
++entered the pinned shell and installed all 40 gems with the frozen bundle.
++Use that watcher for functional Nix checks and the lead's captured pinned-shell
++environment for implementer quick commands; verify hook installation/activation.
++This member's failed daemon access during an offline source-path evaluation
++does not block implementation. No build/test ran here. Fixture/package
++feasibility was checked from source, not executed. Existing checks already use
++`pkgs.prometheus.cli`; local nixpkgs source provides amtool via
++`pkgs.prometheus-alertmanager`, whose pinned resolution remains to be checked.
++
++Only design.md and this report were created. No application edits, commits,
++deployment, integration, input changes or cleanup. Lead should link these
++documents and record design completion in state/portal under normal cadence.
++
++Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-03-infra-monitoring/.
++Session remains open.
+diff --git a/work/2026-10-03-infra-monitoring/branch-inventory.md b/work/2026-10-03-infra-monitoring/branch-inventory.md
+new file mode 100644
+index 00000000..89e62cc8
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/branch-inventory.md
+@@ -0,0 +1,52 @@
++# Final branch inventory
++
++Repository: vpsfree-cz-configuration. Branch: 2026-10-03-infra-monitoring.
++Base and fetched origin/master: `b66c929bb7c202ad31bd8994a691ade14c40ebf0`.
++Final head: `f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68`.
++Final tree: `8978bc46c53107705a7dc587c0f036ff6d88a219`, identical to the passing
++R1 focused config check tree. Worktree and index are clean.
++
++## Complete series
++
++e7b029165e3304e6f1ca4ec7e261d007ff4cab81 monitoring: label machine types and suppress VPS disk sms
++f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68 monitoring: apply staging cpu alert policy to playground
++
++The first commit combines typed metadata, authoritative static target labels
++and their immediate consumer, the filesystem notification exception. Its tests
++and documentation describe that policy together. The second independently
++changes playground CPU holds and retains the true location, with its own tests
++and documentation additions. No dependency updates, transitional implementations,
++fixup commits or unused compatibility paths are present in this two-commit
++series. Pre-commit fixture corrections and temporary split preparation were
++not published or deployed. No earlier threshold proposal entered application
++history. The dedicated reviewer must independently assess this conclusion.
++
++## Migration provenance
++
++No migrations. The complete diff changes Nix metadata, generated monitoring
++configuration, rule selectors, checks and operator docs. It does not change
++schemas, persisted formats or migration files. No session action has merged or deployed branch behavior or updated a
++consumer pin. The feature branch is published for inspection; no migrations
++have a provenance to reconcile.
++
++## Final diff
++
++[Complete final diff](final-branch.diff), generated directly from the base and
++final head above. Includes all 15 changed paths; no lockfile changes. The common
++and infra rule files compare equal to base; nodes.nix changes exactly the four
++accepted CPU rules. The reviewer should inspect both individual commits and the
++whole final diff, including test proportionality and documentation placement.
++
++## Independent review and narrow correction
++
++Reviewer0 independently reviewed the prior two-commit series ending f3f8688b,
++with explicit clean-history/no-migrations conclusions. Advisory R1 corrected
++only a filesystem warning fixture. Lead inspected and verified that correction,
++then checked the rewritten complete series: exactly two commits, first e7b02916
++contains only the requested fixture delta relative to reviewed 36b6b874; CPU
++commit f725dd3f is patch-identical to reviewed f3f8688b. Production, docs, other
++fixtures and pins are unchanged. The final tree equals the passing R1 check
++snapshot. [Range-diff evidence](r1-range.diff) shows the one fixture change and
++unchanged CPU patch. No obsolete history or migration was introduced. Mandatory
++review steps 9–10 permit this narrow direct verification without a reviewer rerun.
++[Review record](review.md) preserves the original reviewed heads and disposition.
+diff --git a/work/2026-10-03-infra-monitoring/central-builds-result.json b/work/2026-10-03-infra-monitoring/central-builds-result.json
+new file mode 100644
+index 00000000..8ed73cc1
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/central-builds-result.json
+@@ -0,0 +1,39 @@
++{
++  "session": "2026-10-03-infra-monitoring",
++  "repository": "vpsfree-cz-configuration",
++  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration",
++  "revision": "f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68",
++  "tree": "8978bc46c53107705a7dc587c0f036ff6d88a219",
++  "result": "passed",
++  "complete_log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-03-infra-monitoring/central-builds.log",
++  "builds": [
++    {
++      "selector": "cz.vpsfree/containers/prg/int.mon[12]",
++      "machines": [
++        "cz.vpsfree/containers/prg/int.mon1",
++        "cz.vpsfree/containers/prg/int.mon2"
++      ],
++      "command": "nix develop --no-write-lock-file --command confctl build --yes 'cz.vpsfree/containers/prg/int.mon[12]'",
++      "exit_status": 0,
++      "elapsed_seconds": 107,
++      "generation": "2026-10-03--17-18-19",
++      "confctl_log": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration/.confctl/logs/2026-10-03--17-17-53-confctl-build.log",
++      "output_store_paths_emitted": []
++    },
++    {
++      "selector": "cz.vpsfree/containers/prg/int.alerts[12]",
++      "machines": [
++        "cz.vpsfree/containers/prg/int.alerts1",
++        "cz.vpsfree/containers/prg/int.alerts2"
++      ],
++      "command": "nix develop --no-write-lock-file --command confctl build --yes 'cz.vpsfree/containers/prg/int.alerts[12]'",
++      "exit_status": 0,
++      "elapsed_seconds": 139,
++      "generation": "2026-10-03--17-19-58",
++      "confctl_log": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration/.confctl/logs/2026-10-03--17-19-45-confctl-build.log",
++      "output_store_paths_emitted": []
++    }
++  ],
++  "still_running_operation": null,
++  "deployment_performed": false
++}
+diff --git a/work/2026-10-03-infra-monitoring/design.md b/work/2026-10-03-infra-monitoring/design.md
+new file mode 100644
+index 00000000..726d363c
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/design.md
+@@ -0,0 +1,390 @@
++# Infra monitoring: design and verification brief
++
++Status: prepared for implementer0, 2026-10-03. This is a design, not verification
++or deployment evidence. Accepted scope is in [plan.md](plan.md). Repository base:
++`b66c929bb7c202ad31bd8994a691ade14c40ebf0`.
++
++## Ownership and scope
++
++Only `vpsfree-cz-configuration` changes. Work in
++`worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration`, on branch
++`2026-10-03-infra-monitoring`. The architect owns this brief and
++[architect-result.md](architect-result.md); the implementer owns application,
++fixture and project-documentation edits. Refer material departures to the lead.
++The lead owns plan/state/portal updates, review and verification coordination.
++
++Implement three changes: typed machine metadata and host target labels; the
++infra VPS critical filesystem SMS exception; and playground's adoption of the
++existing staging CPU usage policy. Do not change disk thresholds, filesystem
++selection, load-average rules, I/O-wait rules, CPU calculations, alert names,
++severity, repeat policies, inhibition or notification transports. No input
++updates, deployment, integration, cluster operations or cleanup are authorized.
++
++## Interfaces and files
++
++Paths below are relative to the configuration worktree.
++
++| File | Change |
++| --- | --- |
++| `modules/cluster/default.nix` | Add `cluster.<name>.machineType` to the existing machine submodule. |
++| `cluster/cz.vpsfree/machines/aitherdev/module.nix` | Set `machineType = "vm"`. |
++| `cluster/cz.vpsfree/machines/em1/module.nix` | Set `machineType = "vm"`. |
++| `cluster/cz.vpsfree/machines/build/module.nix` | Set `machineType = "vm"`. |
++| `modules/clusterconf/monitor/default.nix` | Add authoritative `machine_type` to local/remote monitoring, infra and shared node exporter labels. |
++| `modules/clusterconf/alerter/default.nix` | Insert the exact terminal exception between Telegram and the first SMS route. |
++| `modules/clusterconf/monitor/rules/nodes.nix` | Edit only the four named CPU usage rules below. |
++| `tests/prometheus/infra-monitoring-rules.{nix,yml}` | Add focused rule and timing checks using existing promtool conventions. |
++| `tests/prometheus/infra-monitoring-config.nix` | Add generated metadata/target assertions and offline amtool routing checks; a small fixture helper is acceptable. |
++| `flake.nix` | Register the two focused checks, using existing pinned inputs. |
++| `docs/services/monitoring.md`, `mkdocs.yml` | Explain the lasting metadata/routing/CPU policy and link it in Services. |
++
++The test filenames/check names are the recommended implementation interface, not
++existing files. A small naming adjustment is routine; changing production
++architecture to accommodate fixtures is not required. Keep rollout status and
++temporary base comparisons in this session, not in project feature docs.
++
++### Machine metadata and labels
++
++Use a `mkOption` with `types.enum [ "vps" "vm" "physical" ]`. Its default is
++`if config.container != null then "vps" else "physical"`. This classifies
++managed containers through their existing metadata, not hostname, OS spin,
++node role, carrier status or runtime detection. Explicit typed overrides remain
++possible. Invalid enum values fail Nix evaluation. The three VM overrides belong
++in metadata `module.nix`, not their system `config.nix` files.
++
++Append the generated label **after** the existing custom-label merge:
++
++```nix
++existingLabels // metaConfig.monitoring.labels // {
++  machine_type = metaConfig.machineType;
++}
++```
++
++Apply this to all four construction sites: the local monitoring target pair,
++remote monitoring targets, infra targets, and `mkNodeLabels`. Use
++`confMachine.machineType` for the local pair and `m.metaConfig.machineType`
++elsewhere. Do not alter the precedence or meaning of other custom labels.
++
++`scrapeConfigs.monitorings` produces actual Prometheus job `mon`, not a job
++named `monitorings`. Both local targets (Prometheus itself and node-exporter)
++and the peer monitor's node-exporter get the label. `infra` and `nodes` label
++all exporters already sharing their static target group. `mkNodeLabels` also
++feeds `nodes-zfs-hypervisor`, `nodes-zfs-storage` and `nodes-ipmi`; these must
++receive the same authoritative classification. Preserve `type = "node"` and
++all existing alias, FQDN, domain, location, OS, role and storage labels.
++
++Do not expand into ping, DNS, HTTP, log, service-specific or independently
++constructed SSH-exporter target labels. Do not change `honor_labels`, relabeling,
++target selection, exporter enablement or scraped endpoints. The authoritative
++contract here is the final generated static target label. A conflict in
++`monitoring.labels.machine_type` is resolved by merge order, without adding a
++new rejection mechanism.
++
++### SMS-only exception
++
++Reuse the existing empty `blackhole` receiver. Add one sibling route immediately
++after the email and Telegram siblings and before **both** SMS siblings:
++
++```nix
++{
++  match = {
++    job = "infra";
++    machine_type = "vps";
++    alertclass = "fsavail";
++    severity = "critical";
++  };
++  receiver = "blackhole";
++  continue = false;
++}
++```
++
++The earlier email and Telegram routes retain `continue = true`; the terminal
++match prevents traversal into the later SMS routes. This follows the existing
++route style and Alertmanager's documented sibling traversal semantics. See
++[Alertmanager routing](https://prometheus.io/docs/alerting/latest/configuration/#route).
++
++Do not use inhibition, severity changes, an alert-name filter, a mountpoint
++filter, a silence, or a broad container route. The existing common filesystem
++rules remain byte-for-byte unchanged, including warning `<20%`, critical
++`<=10%`, both `for = "5m"`, their mountpoint selector and `frequency = "hourly"`.
++The exception therefore covers `/run` too. `/run` being tmpfs means disk
++auto-expansion is not its recovery mechanism; that does not narrow the accepted
++notification exception. Monitors themselves use job `mon`, so their filesystem
++alerts remain eligible for SMS even when `machine_type = "vps"`.
++
++### Playground CPU usage
++
++Limit changes to these four rules:
++
++| Alert | Selector after change | Hold | Aggregation/labels |
++| --- | --- | --- | --- |
++| `HypervisorHighCpuLoad` | `location!~"stg\|pgnd"` | existing 10m | unchanged |
++| `HypervisorHighCpuLoadStaging` | `location=~"stg\|pgnd"` | existing 50m | add `location` to `avg by`; remove static `location = "stg"` |
++| `HypervisorCritOsCpuLoad` | `location!~"stg\|pgnd"` | existing 10m | unchanged |
++| `HypervisorCritOsCpuLoadStaging` | `location=~"stg\|pgnd"` | existing 50m | add `location` to `avg by`; remove static `location = "stg"` |
++
++The backslashes in the table escape Markdown pipes; PromQL uses `"stg|pgnd"`.
++The two relaxed aggregations become `avg by(instance, alias, fqdn, location)`.
++Keep `100 - avg(irate(idle[5m])) * 100`, hypervisor/OS/mode selectors and the
++existing `and on(instance) time() - node_boot_time_seconds > 3600` guard.
++Warning remains strictly `>80%`, critical strictly `>90%`; the critical rule
++remains restricted to `os="vpsadminos"`. Alert names retain `Staging` for
++compatibility although the relaxed policy now covers both locations.
++
++Do not add `location` to the strict aggregations or carry new labels through
++other aggregate alerts. Every other rule, including all `node_load*`, storage
++CPU, I/O wait, filesystem and ZFS rules, must compare equal to the base.
++
++## Compatibility, rollout and recovery
++
++This adds site-owned Nix metadata and a target label. Existing metadata callers
++receive a default; exporters require no changes. There are no DB migrations,
++seeds, persisted-format changes, API/client/CLI/Terraform changes, daemon
++messages, or vpsAdminOS fleet updates. No coordinated update of running nodes
++or VMs is necessary. Existing Prometheus TSDB and Alertmanager state remain
++readable on rollback.
++
++Adding a label creates new metric and unaggregated-alert identities. Old and
++new series can coexist in historical queries; label changes can reset pending
++alerts and cause resolution/refiring notifications. Short rate windows need
++fresh samples after target relabeling. Staging's relaxed CPU alert preserves
++its existing location; playground changes from the strict alert identity to the
++relaxed one and adopts the longer pending interval. These are intentional.
++
++For a later, separately authorized rollout, prepare both alerters before
++updating either monitor, then update both monitors promptly:
++
++1. `cz.vpsfree/containers/prg/int.alerts1` and `int.alerts2`: install the route.
++2. `cz.vpsfree/containers/prg/int.mon1` and `int.mon2`: install labels and CPU rules.
++3. Check effective configuration/reload health, representative target labels,
++   and expected rule labels on both replicas. Do not send live test messages
++   without separate authorization.
++
++Old alerts without `machine_type` retain old SMS eligibility. New labels with
++old alerter configuration also retain old eligibility. Partial monitor rollout
++can temporarily produce both alert identities; HA notification deduplication
++must not be assumed across different label sets. The alerter-first order makes
++the exception available to each new labeled alert, but does not suppress an
++old unlabeled alert still emitted by the other monitor.
++
++Rollback to the prior central configurations restores their former routing and
++CPU policy. Restoring old alerter config restores SMS eligibility even while
++new labels remain; restoring old monitor config also removes the required VPS
++label and returns playground CPU to the strict rules. Expect series/alert
++identity transitions again. No TSDB deletion, migration reversal or exporter
++rollback is needed. These are implications and prepared steps, not deployment
++authorization; preserve the old central generations when executing a later
++approved rollout under normal procedures.
++
++## Acceptance and focused verification
++
++Tests must consume production expressions/routes/label generation, not a copied
++implementation of the new policy. Use only synthetic alert labels and local
++files with promtool/amtool; no live Alertmanager or messaging endpoint is needed.
++
++### Generated configuration checks
++
++Use real machine metadata evaluation to assert defaults and the three explicit
++VMs. The pinned confctl flake exposes `confctl.machines.<name>.metaConfig`; its
++`mk-confctl-outputs.nix` does not expose a complete NixOS `config` output. Do not
++invent a `nixosConfigurations` or `confctl.config` attribute.
++
++A small Nix fixture can import the actual monitor/alerter modules with test
++arguments and select their generated configuration. Both modules currently
++wrap their configuration in `mkIf`; a direct-import fixture can select
++`module.config.content` with `enable = true`, or use `lib.evalModules` with
++minimal receiving options. Nix's lazy evaluation allows selection of target
++groups/routes without evaluating full machines, unrelated services or secrets.
++Supply realistic metadata/services and `confData.meet = { }` as needed. Keep
++fixture mechanics in tests; do not extract production modules solely for this.
++
++Required assertions:
++
++- Managed container defaults to `vps`; ordinary node and physical infra host
++  default to `physical`; aitherdev/em1/build explicitly evaluate to `vm`.
++  Force evaluation of an invalid enum fixture and require failure.
++- Generated `infra`, `nodes`, and local/remote `mon` static targets have the
++  expected `machine_type`. Check an infra container, each explicit VM, a
++  physical infra host, hypervisor and storage-node fixtures, and both monitors.
++- Verify `nodes-zfs-hypervisor`, `nodes-zfs-storage` and `nodes-ipmi` use the
++  same type and retain `type = "node"` and existing identifying labels.
++- Give custom labels a deliberately conflicting `machine_type` plus an
++  unrelated custom label. Generated type wins in all four constructors; the
++  unrelated label survives. Generated target lists and jobs otherwise match.
++- Render the actual alerter route/time-interval tree. For an offline route
++  fixture, replace receivers with name-only declarations and omit templates
++  and transport credentials; retain routing and time intervals verbatim.
++  This tests route selection, not delivery or inhibition execution.
++- Require route order, all four exact matchers, terminal behavior and unchanged
++  email/Telegram/SMS subtrees, including hourly repeat routes and SMS daytime
++  intervals. Preserve the entire inhibition configuration in the base diff.
++
++Use amtool's exact receiver-set verification for these label combinations:
++
++| Input labels, in addition to a synthetic alert name/instance | Expected receivers |
++| --- | --- |
++| `job=infra machine_type=vps alertclass=fsavail severity=critical frequency=hourly` | `team-mail,team-telegram,blackhole` |
++| Same case with `/`, `/run`, `/nix/store` mountpoint labels | same; no SMS |
++| Same critical case with machine type `vm`, `physical`, or missing | `team-mail,team-telegram,sms-aither,sms-snajpa` |
++| Same VPS critical case with `job=nodes` or `job=mon` | all four notification receivers |
++| Same VPS critical case with another/missing `alertclass`, or missing `job` | all four notification receivers |
++| Same VPS filesystem case with severity `fatal` | all four notification receivers |
++| Same VPS filesystem case with severity `warning` | `team-mail` |
++| Existing `severity=none` case | `blackhole` |
++
++`amtool config routes test` resolves matching routes; it does not prove actual
++delivery, daytime activation, repeat timing, or inhibition. Check preserved
++intervals structurally. Upstream implementation confirms the command compares
++the ordered receiver list against `--verify.receivers`:
++[amtool routing test source](https://github.com/prometheus/alertmanager/blob/main/cli/test_routing.go).
++
++### Prometheus rule cases
++
++Follow existing `tests/prometheus/process-count-rules.nix`: import production
++rule groups, serialize JSON with `builtins.toJSON`, replace `@ruleFile@` in the
++YAML fixture, and run `promtool check rules` plus `promtool test rules`.
++Use group-aware 20-second samples/evaluations and explicit expected labels.
++
++- Both stg and pgnd: 85% CPU fires only the relaxed warning after 50 minutes;
++  95% fires relaxed warning and OS critical after 50 minutes. Never emit the
++  strict counterparts; retain actual `location=stg` or `location=pgnd`.
++- Production and a missing-location case: same thresholds fire the strict
++  rules after 10 minutes and never the relaxed counterparts. The strict rules'
++  existing label shape stays unchanged.
++- At exactly 80%, no warning; at exactly 90%, no critical. A non-vpsAdminOS
++  hypervisor can warn, but cannot trigger these OS-critical rules.
++- Boot age exactly 3600 seconds does not satisfy the strict `>3600` guard;
++  the next qualifying evaluation starts the hold. Preserve a boot-guard case
++  for both policy locations, not only steady-state old hosts.
++- Use two CPU cores with distinct idle rates in at least one fixture, so the
++  result exercises the existing average, rather than only single-core data.
++- A common critical filesystem sample retains job, machine type, critical
++  severity, `alertclass=fsavail` and `frequency=hourly`; it still fires after
++  five minutes on `/run` as well as the other selected mountpoints.
++
++For predictable hold-boundary fixtures, an old boot timestamp such as `-7200`
++and counters beginning at t=0 work. With 20-second sampling, the first usable
++`irate` occurs at t=20s: relaxed checks should be pending at 50m and firing at
++50m20s; strict checks pending at 10m and firing at 10m20s. Counter increments
++of 3/4/2/1 seconds per 20 seconds represent 85/80/90/95 percent utilization
++respectively. Confirm these assumptions in the fixture rather than silently
++moving boundary expectations to make a failure disappear. See the
++[promtool fixture format](https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/).
++
++## Commands, tooling feasibility and gates
++
++No command below was run as a test/build by the architect. The pinned repository
++shell uses Ruby 3.4 and `mkConfigDevShell` in tools mode; entering it bootstraps
++Bundler and gems under `.gems`. `.overcommit.yml` enables Nixfmt and RuboCop.
++The four existing flake checks demonstrate `pkgs.prometheus.cli`; a locally
++available nixpkgs package definition confirms `pkgs.prometheus-alertmanager`
++builds both `alertmanager` and `amtool`. Resolve the latter against this flake's
++pinned nixpkgs during implementation; it is not supplied by the current shell.
++No tool or input upgrade is part of this change.
++
++Run commands from the configuration worktree. Environment setup, uncached Nix
++realization and other work of uncertain duration belong to a fresh policy
++watcher under the monitor skill. Known bounded checks may run inline once the
++environment and tools are available.
++
++```sh
++# Implementer setup: use the pinned shell or the lead's realized pinned-shell
++# environment, and verify the declared hooks. The watcher installed the bundle.
++nix develop --no-write-lock-file
++bundle check
++bundle exec overcommit --install
++bundle exec overcommit --sign
++
++# Quick static checks, after adding the focused fixtures.
++git diff --check
++bundle exec overcommit --run
++nix eval --impure --no-write-lock-file --json .#confctl.machines \
++  --apply 'ms: builtins.mapAttrs (_: m: { inherit (m.metaConfig) machineType; }) ms'
++
++# Proposed focused checks. Stage owned new files first: Git flakes omit
++# untracked files. Delegate if realizing dependencies or duration is uncertain.
++nix build --no-write-lock-file --no-link \
++  .#checks.x86_64-linux.infra-monitoring-config \
++  .#checks.x86_64-linux.infra-monitoring-rules
++
++# Preserve the adjacent existing rule regressions using cached dependencies.
++nix build --no-write-lock-file --no-link \
++  .#checks.x86_64-linux.vps-autostart-prometheus-rules \
++  .#checks.x86_64-linux.process-count-prometheus-rules
++
++# Inspection against the accepted base: common/infra files must have no diff;
++# nodes.nix must change only the four approved CPU rules.
++git diff b66c929bb7c202ad31bd8994a691ade14c40ebf0 -- \
++  modules/clusterconf/monitor/rules/common.nix \
++  modules/clusterconf/monitor/rules/infra.nix
++git diff b66c929bb7c202ad31bd8994a691ade14c40ebf0 -- \
++  modules/clusterconf/monitor/rules/nodes.nix
++```
++
++Inside the focused config derivation, the principal offline commands are:
++
++```sh
++amtool check-config "$route_fixture"
++amtool config routes test --config.file="$route_fixture" \
++  --verify.receivers=team-mail,team-telegram,blackhole \
++  alertname=FilesystemCritFreeSpace instance=test:9100 \
++  job=infra machine_type=vps alertclass=fsavail severity=critical frequency=hourly
++promtool check rules "$rule_file"
++promtool test rules "$test_file"
++```
++
++Those variables are fixture paths supplied by the check derivation. Repeat
++receiver assertions for the matrix above, including the negative cases. Do not
++infer success from only the positive exception case.
++
++After quick checks and implementation commits, the lead must run mandatory
++independent review before long configuration builds. Supply the complete
++base-to-head commit inventory and final diff; explicitly record **no database
++migrations** and whether obsolete intermediate approaches remain. A successful
++focused derivation is not a full system-build result.
++
++After that review gate, a fresh watcher runs these longer checks in the pinned
++shell, with logs and exit results retained for the lead:
++
++```sh
++confctl build 'cz.vpsfree/containers/prg/int.mon[12]'
++confctl build 'cz.vpsfree/containers/prg/int.alerts[12]'
++```
++
++Confirm selection includes exactly both monitors and both alerters using
++`confctl ls` before building. Inspect source for the selector if its CLI behavior
++differs; four explicit single-machine builds are an equivalent fallback. This
++validates central system configuration and generated service files, including
++the real receiver/template configuration. Metadata-only VM changes do not
++require deploying or building aitherdev/em1/build systems to apply the policy.
++Stop unexpected local kernel builds and investigate cache misses under the
++workspace verification procedure. No deploy/dry-activate command is part of
++verification here.
++
++## Inspection evidence and remaining gaps
++
++- `dev-session current` from the session directory returned the exact bound
++  slug; both environment markers were absent, so the trusted developer binding
++  supplied ownership. The initial command from the workspace root reported no
++  current session; changing to the intended session directory resolved it
++  before any session records were read.
++- The configuration worktree remained clean at the stated base throughout
++  architect inspection. No application source, input, plan, state or portal
++  was changed by the architect, and no commit was made.
++- Read the root/worktree instructions, applicable procedures, README, accepted
++  plan/state, monitoring modules and representative existing fixtures. Inspected
++  the exact pinned confctl source at
++  `7bee58a52372b95c2198ce3f2a719807a3c2c66b` for flake outputs and shell setup.
++- An offline metadata-only `nix eval`, with import-from-derivation disabled,
++  failed because this member cannot access the Nix daemon socket. No build or
++  test started. The lead subsequently confirmed that the authorized fresh
++  watcher successfully entered the pinned shell and installed all 40 gems with
++  the frozen bundle. Functional Nix checks can use that watcher path; the lead
++  is capturing the realized shell environment for implementer quick commands.
++  This is an available execution path, not a design blocker.
++- The implementer still verifies declared hook installation/activation.
++  Test packages, direct-import fixture mechanics and all suggested functional
++  verification commands require execution; none is reported as passed here.
++
++Stable session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-03-infra-monitoring/.
++Keep the session open.
+diff --git a/work/2026-10-03-infra-monitoring/implementation-check-request.md b/work/2026-10-03-infra-monitoring/implementation-check-request.md
+new file mode 100644
+index 00000000..e39f332a
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/implementation-check-request.md
+@@ -0,0 +1,56 @@
++# Functional quick checks requested
++
++Implementer0 has staged all 15 owned application/fixture/documentation paths in
++the configuration worktree. HEAD remains the assigned base
++`b66c929bb7c202ad31bd8994a691ade14c40ebf0`; no application commit yet. Leave the
++staged changes in place for Git flake visibility. No deployment, input update,
++push, integration or long system build is requested.
++
++Run through a fresh lead-owned verification watcher from
++`worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration`:
++
++```sh
++nix eval --impure --no-write-lock-file --json .#confctl.machines \
++  --apply 'ms: builtins.mapAttrs (_: m: { inherit (m.metaConfig) machineType; }) ms'
++nix build --no-write-lock-file --no-link \
++  .#checks.x86_64-linux.infra-monitoring-config \
++  .#checks.x86_64-linux.infra-monitoring-rules
++nix build --no-write-lock-file --no-link \
++  .#checks.x86_64-linux.vps-autostart-prometheus-rules \
++  .#checks.x86_64-linux.process-count-prometheus-rules
++```
++
++The config derivation evaluates real metadata, validates the enum, and directly
++imports the production monitor/alerter modules. It checks both monitors' local
++and peer labels, infra VPS/VM/physical hosts, shared node/ZFS/IPMI labels and
++custom-label conflicts. Fixtures supply only inventory lookup and inert
++receiver names; routes and intervals come from production. Amtool covers the
++exact exception and all negative routing cases, and promtool covers filesystem
++labels, mounts and five minute timing. The separate CPU derivation imports only
++the four production CPU usage rules and checks full ALERTS labels at exact
++10m/10m20s and 50m/50m20s boundaries, both relaxed locations, missing location,
++threshold equality, non-vpsAdminOS hosts, two-core averages and boot boundaries.
++
++Known quick static evidence: the pinned bundle is satisfied; Overcommit was
++installed and signed without bypass; pinned Nixfmt formatted all changed Nix
++files; Bash syntax and staged whitespace checks passed. Byte comparison proves
++common.nix/infra.nix, flake.lock and Gemfile.lock unchanged, and nodes.nix has
++exactly the four approved CPU rule edits. Full Overcommit run is next while the
++watcher runs. Functional fixture mechanics remain unverified until these checks
++pass; return concrete failures for implementer correction.
++
++After the lead confirms the requested quick checks pass, implementer0 will
++create the required two behavior commits, with corresponding tests/docs and
++active hooks, then write implementation-result.md. No migration or obsolete
++intermediate application history is introduced. The lead owns tracking and
++whole-branch independent review before the longer central system builds.
++
++## First watcher result and fixture correction
++
++The first watcher passed metadata evaluation, then stopped focused evaluation
++at `sv.monitor` in target filtering. The fixture had added synthetic ZFS/IPMI
++service ports without the `monitor` field supplied by real metadata. Both
++synthetic services now include `address`, `port` and `monitor = null`; the
++fixture was formatted and staged again. No production source changed. The two
++focused checks and adjacent regressions require a fresh watcher rerun.
++The full declared Overcommit run passed before this fixture-only correction.
+diff --git a/work/2026-10-03-infra-monitoring/implementation-result.md b/work/2026-10-03-infra-monitoring/implementation-result.md
+new file mode 100644
+index 00000000..5b998166
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/implementation-result.md
+@@ -0,0 +1,181 @@
++# Implementation result
++
++Implementation and quick verification are complete. The configuration checkout
++is clean at `f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68`. The lead reports that
++reviewer0 completed all four lanes with no Blocking or Important findings;
++Advisory R1 is corrected and directly verified under review step 9. Central
++configuration build coordination remains lead-owned.
++
++The authorized local history rewrite folded R1 into the first unpublished
++commit and replayed the CPU commit. No push, upstream rebase, integration,
++deployment, input change or session lifecycle operation occurred. The session
++remains open.
++
++## Identity and exact commit inventory
++
++`dev-session current` was checked again from this tracking directory and returned
++`2026-10-03-infra-monitoring`. Both environment identity variables were absent;
++the exact trusted developer binding to `/home/aither/workspace/ai/vpsfree.cz`
++established ownership. Repository: `vpsfree-cz-configuration`; worktree:
++`worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration`; retained branch:
++`2026-10-03-infra-monitoring`.
++
++Base: `b66c929bb7c202ad31bd8994a691ade14c40ebf0`.
++
++| Order | Exact commit | Subject |
++| --- | --- | --- |
++| 1 | `e7b029165e3304e6f1ca4ec7e261d007ff4cab81` | monitoring: label machine types and suppress VPS disk sms |
++| 2 / final head | `f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68` | monitoring: apply staging cpu alert policy to playground |
++
++This is the entire base-to-head series. Each behavior's tests and documentation
++are in its own commit. There are no retained fixup commits, superseded approaches
++or unused compatibility paths. R1 belongs to the first commit. The second
++commit's replay patch is byte-identical to its reviewed predecessor, including
++production, documentation and CPU fixtures.
++
++[Range comparison](r1-range-diff.txt) compares the complete reviewed series at
++`36b6b874096e0bbd344cc140d07c358ab6799c41` /
++`f3f8688b7ffc517a9a24150bd1f3d4056fbd35b7` with the current two commits.
++Only the first commit's filesystem fixture differs; the second is marked equal.
++A final-tree diff against the reviewed head contains only
++`tests/prometheus/infra-monitoring-filesystem.yml`. The base is unchanged.
++
++## Changed paths
++
++The first commit changes these 12 paths:
++
++- `modules/cluster/default.nix`
++- `cluster/cz.vpsfree/machines/aitherdev/module.nix`
++- `cluster/cz.vpsfree/machines/em1/module.nix`
++- `cluster/cz.vpsfree/machines/build/module.nix`
++- `modules/clusterconf/monitor/default.nix`
++- `modules/clusterconf/alerter/default.nix`
++- `tests/prometheus/infra-monitoring-config.nix`
++- `tests/prometheus/infra-monitoring-routing.sh`
++- `tests/prometheus/infra-monitoring-filesystem.yml`
++- `docs/services/monitoring.md`
++- `mkdocs.yml`
++- `flake.nix`
++
++The second changes these five paths, including the two shared documentation/check
++registration files:
++
++- `modules/clusterconf/monitor/rules/nodes.nix`
++- `tests/prometheus/infra-monitoring-rules.nix`
++- `tests/prometheus/infra-monitoring-rules.yml`
++- `docs/services/monitoring.md`
++- `flake.nix`
++
++The complete final diff has 15 paths. No unrelated file or generated dependency
++file changed.
++
++## Behavior and preserved invariants
++
++Typed `machineType` defaults from container metadata (`vps` for managed
++containers, otherwise `physical`); aitherdev/em1/build explicitly use `vm`.
++All four approved label constructors append authoritative `machine_type` after
++custom labels. This covers local and peer `mon`, `infra`, and shared node
++exporters, including both ZFS jobs and IPMI, while retaining `type=node`.
++
++The terminal Alertmanager exception requires all four exact labels:
++`job=infra`, `machine_type=vps`, `alertclass=fsavail`, `severity=critical`.
++Email and Telegram run first; the existing empty blackhole ends traversal
++before both SMS routes. No filesystem or mountpoint filter was added.
++
++Exactly the four approved CPU usage rules change. Relaxed staging/playground
++rules retain their real location and 50-minute holds; strict rules exclude
++those locations and retain 10-minute holds and their original label shape.
++Alert names, thresholds, calculations and the strict one-hour boot guard remain.
++
++Byte comparisons against the base established that common.nix and infra.nix
++are unchanged and nodes.nix differs only by the approved selectors, relaxed
++location aggregation and removal of two static location labels. Every raw
++load-average, I/O-wait, storage CPU, filesystem and ZFS rule remains unchanged.
++The alerter module differs only by the inserted exception; transports, other
++routes, hourly repeats, daytime intervals and inhibition remain unchanged.
++The monitor module differs only by the four label additions; other jobs,
++endpoints and custom-label precedence remain unchanged. `flake.lock` and
++`Gemfile.lock` remain byte-identical to the base.
++
++## Verification evidence
++
++- The lead's first watcher passed real machine metadata evaluation; see
++  [first result](quick-checks-result.json).
++- [Second watcher result](quick-checks-2-result.json) and
++  [log](quick-checks-2.log): `infra-monitoring-config` and
++  `infra-monitoring-rules` passed (exit 0), followed by
++  `vps-autostart-prometheus-rules` and `process-count-prometheus-rules`
++  (exit 0). No operation remains running or unexpected local kernel build
++  occurred.
++- [R1 focused result](r1-check-result.json) and [log](r1-check.log): the lead's
++  known-warm `infra-monitoring-config` check passed (exit 0, 5.636 seconds) at
++  corrected tree `8978bc46c53107705a7dc587c0f036ff6d88a219`. The final commit
++  tree matches that result exactly. Earlier CPU and adjacent regression results
++  remain applicable because their source and fixtures are byte-identical.
++- The config check validates real classifications, enum rejection, all four
++  label constructors and both monitor identities, conflicting custom labels,
++  node/ZFS/IPMI identity labels, exact route ordering, repeats and daytime
++  intervals. Offline amtool covers the positive exception and all specified
++  negative cases; promtool checks the retained filesystem labels, selected
++  mounts and five-minute hold.
++- The CPU check imports the four production rules and validates complete ALERTS
++  labels, 10m/10m20s and 50m/50m20s boundaries, both relaxed locations,
++  production and missing location, exact 80/90% boundaries, OS restriction,
++  distinct two-core averaging and boot suppression boundaries.
++- The frozen pinned bundle was satisfied. Overcommit was installed/signed;
++  executable pre-commit and commit-msg hooks were verified. Full
++  `bundle exec overcommit --run` passed Nixfmt and RuboCop before commits.
++  Each final commit passed its applicable pre-commit and commit-msg hooks with
++  the realized pinned dev-shell environment. Both rewritten final commits were
++  explicitly amended with their exact original messages in temporary files and
++  `git commit --amend -F`; their pre-commit and commit-msg hooks passed again.
++  [R1 hook evidence](r1-hooks.log) records both exit-0 runs. No hook was bypassed.
++- Bash syntax and whitespace checks passed. Final `HEAD^{tree}` is exactly
++  `8978bc46c53107705a7dc587c0f036ff6d88a219`, the R1 functional tested tree.
++  The earlier four-check batch used `406b654f992c65815806615e86c7a84fe267451c`;
++  only the directly rechecked filesystem fixture differs.
++  `git status --porcelain=v1 --untracked-files=all` returned empty after the
++  final commit, and the complete base-to-head diff passed `git diff --check`.
++
++The initial focused evaluation failed because synthetic ZFS/IPMI services lacked
++the `monitor` field consumed by target filtering. The fixture now supplies
++address/port/monitor metadata. The successful second run verifies that
++correction; no production design changed. There are no material design deviations.
++
++R1 identified that the 20%-free warning equality case used excluded mountpoint
++`/boundary`, making its empty assertion vacuous. It now uses selected mountpoint
++`/` on `boundary-20:9100`; a separate selected filesystem on `boundary-19:9100`
++must emit the full warning alert after five minutes. The original critical
++mount/hold/label cases remain unchanged. Lead inspection and the focused check
++closed the finding; no new reviewer turn was required for this narrow test fix.
++
++## Documentation, compatibility and remaining limits
++
++[Project monitoring policy](../../worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration/docs/services/monitoring.md)
++was reconciled with the final source and passing fixtures and linked from the
++Services index in `mkdocs.yml`. It covers classification and label precedence,
++the precise SMS exception including `/run`, the CPU policy, alerter-first
++ordering, mixed label identities, rollback and the focused commands. The
++vpsFree writing skill and its English Humanizer were applied directly without
++altering technical facts. Commands were exercised by the watcher; the links
++and check registrations match committed paths. Rollout status remains here,
++not in the project behavior documentation.
++
++**No database migrations**: no migration versions, seeds, schema, persisted
++formats, API/client/CLI/Terraform contracts or daemon messages changed. There is
++no migration lineage to consolidate or assess as released/deployed. Exporters
++and nodes require no update; no coordinated fleet update is needed. Existing
++Prometheus/Alertmanager state remains readable after rollback. New labels create
++new identities and can reset pending alerts; old unlabeled alerts keep their SMS
++eligibility during mixed rollout. Playground deliberately moves to relaxed
++alert identities and hold times.
++
++Offline routing verifies receiver selection, not live delivery, daytime
++activation, repeat timers or inhibition execution. No full central system build
++was run by the implementer; build results and review reconciliation remain
++lead-owned. No live reload or notification behavior is reported as deployed or
++verified. The completed review assessed the whole branch; the lead owns recording
++its history and no-migrations conclusions and the narrow R1 closure against these
++new exact heads.
++
++Stable session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-03-infra-monitoring/.
+diff --git a/work/2026-10-03-infra-monitoring/plan.md b/work/2026-10-03-infra-monitoring/plan.md
+new file mode 100644
+index 00000000..ce4453be
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/plan.md
+@@ -0,0 +1,77 @@
++# Infra monitoring: accepted implementation plan
++
++## Goal and scope
++
++Implement the user-approved machine-type label and infra VPS critical filesystem
++SMS exception in vpsfree-cz-configuration. Apply the existing staging CPU usage
++policy to playground. Leave all filesystem thresholds, ZFS thresholds, raw
++load-average alerts, I/O-wait alerts, and CPU calculations unchanged.
++
++User decisions: "keep the rules as they are, except making the exception for
++VPS"; introduce a reusable machine-type label; label the main host exporter jobs;
++classify build as a VM; "keep pgnd loadavg alerts as they are. relax just cpu
++usage alerts." The user subsequently requested "Implement the plan."
++Implementation does not authorize master integration. Prepare and verify the
++feature branch; central deployment is a distinct operational step.
++
++## Affected repository and approach
++
++- Repository: vpsfree-cz-configuration.
++- Branch: 2026-10-03-infra-monitoring.
++- Worktree: worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration.
++- Initial base: b66c929bb7c202ad31bd8994a691ade14c40ebf0.
++- Architect owns design.md and verification brief; implementer owns application
++  edits and quick checks; independent reviewer owns final committed-branch review.
++  Lead owns coordination and acceptance of their reports.
++
++## Accepted behavior
++
++1. Typed cluster metadata machineType has values vps, vm and physical. Infer vps
++   for managed containers and default other machines to physical. Explicitly mark
++   aitherdev, em1 and build as vm. Generate authoritative machine_type labels on
++   infra, nodes and monitorings exporter targets, including local monitoring
++   targets and related node exporters sharing the label helper. Preserve type=node.
++2. After email/Telegram and before both SMS routes, add a terminal route matching
++   job=infra, machine_type=vps, alertclass=fsavail and severity=critical. Keep
++   severity, email, Telegram, inhibition and hourly repeats. This covers the
++   existing rule's filesystems, including /run; it does not change the disk rule.
++3. Extend only the two staging CPU usage rules to location=~"stg|pgnd" and exclude
++   those locations from strict counterparts. Retain real location through relaxed
++   CPU aggregation instead of hardcoding stg. Keep existing alert names, boot
++   suppression and calculations. Warning stays >80% for 50m and critical >90%
++   for 50m on stg/pgnd; production retains its existing 10m holds.
++
++## Compatibility, deployment and recovery
++
++No schema migration, client/API/daemon contract, persisted format or vpsAdminOS
++update is needed. The new target label changes series/alert identity and may
++restart pending alerts. Missing labels retain old SMS behavior during rollout.
++Deploy both Alertmanagers before both monitors if deployment is requested;
++rollback either configuration restores the previous notification policy.
++No coordinated fleet update is needed. /run is normally tmpfs, so auto-expansion
++is not its recovery mechanism; the requested SMS exception still covers it.
++Do not merge or push feature content to master without explicit integration
++approval for this repository/target. Leave the session open.
++
++## Documentation and verification
++
++Future operators and reviewers need a concise owning-project description of the
++machine type and routing policy, with rollout evidence retained in this session.
++Architect records concrete interfaces, invariants, checks and implementation
++boundaries in design.md before application edits.
++
++Quick checks must cover representative generated labels, exact SMS routing,
++retained email/Telegram, unrelated alerts, CPU hold-time boundaries and pgnd
++location. Prove filesystem and raw load-average rules unchanged. Run declared
++hooks in the pinned Nix environment, commit changes, then mandatory independent
++review of the complete series and final diff, explicitly recording no migrations.
++Only after review, run configuration builds for both monitors and both alerters
++under a fresh catalog-policy verification watcher. Do not deploy while merely
++verifying the implementation.
++
++## Historical investigation
++
++Initial findings and broader threshold suggestions were recorded in coordination
++commit 4123553c. Those threshold changes were declined and are superseded by the
++accepted scope above. Initial inspection used origin/master 2a3e6a977db4464b585e413839953f08f57521f7;
++worktree creation fetched the newer base stated above.
+diff --git a/work/2026-10-03-infra-monitoring/portal.yml b/work/2026-10-03-infra-monitoring/portal.yml
+new file mode 100644
+index 00000000..8d12fad9
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/portal.yml
+@@ -0,0 +1,31 @@
++---
++schema: 1
++slug: 2026-10-03-infra-monitoring
++codex:
++  thread_id: 01a101f4-80b3-7de2-88c1-17b0460945b4
++  socket_path: "/run/user/1000/dev-workspaces/vpsfree-cz/app-server.sock"
++  client_version: 0.160.0
++creation:
++  state: ready
++  initial_goal_sent: true
++  goal_sha256: cc8361c9d65d7446ff4504cf3f37e0288f8f1cb655870bf047ddc74600b781ad
++repositories:
++- name: vpsfree-cz-configuration
++  project: vpsfree-cz-configuration
++  github: vpsfreecz/vpsfree-cz-configuration
++  branch: 2026-10-03-infra-monitoring
++  default_branch: master
++  initial_base_sha: b66c929bb7c202ad31bd8994a691ade14c40ebf0
++artifacts:
++  - label: Design and verification
++    path: design.md
++  - label: Implementation report
++    path: implementation-result.md
++  - label: Branch inventory
++    path: branch-inventory.md
++  - label: Independent review packet
++    path: review-packet.md
++  - label: Independent review
++    path: review.md
++  - label: Final verification and build results
++    path: verification.md
+diff --git a/work/2026-10-03-infra-monitoring/quick-checks-2-result.json b/work/2026-10-03-infra-monitoring/quick-checks-2-result.json
+new file mode 100644
+index 00000000..ab22e29d
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/quick-checks-2-result.json
+@@ -0,0 +1,40 @@
++{
++  "result": "passed",
++  "tested_revision": "b66c929bb7c202ad31bd8994a691ade14c40ebf0",
++  "tested_tree": "406b654f992c65815806615e86c7a84fe267451c",
++  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration",
++  "log_path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-03-infra-monitoring/quick-checks-2.log",
++  "batches": [
++    {
++      "batch": 1,
++      "command": [
++        "nix",
++        "build",
++        "--no-write-lock-file",
++        "--no-link",
++        ".#checks.x86_64-linux.infra-monitoring-config",
++        ".#checks.x86_64-linux.infra-monitoring-rules"
++      ],
++      "started_at": "2026-10-03T14:46:38.617137+00:00",
++      "ended_at": "2026-10-03T14:46:46.690692+00:00",
++      "elapsed_seconds": 8.074,
++      "exit_status": 0
++    },
++    {
++      "batch": 2,
++      "command": [
++        "nix",
++        "build",
++        "--no-write-lock-file",
++        "--no-link",
++        ".#checks.x86_64-linux.vps-autostart-prometheus-rules",
++        ".#checks.x86_64-linux.process-count-prometheus-rules"
++      ],
++      "started_at": "2026-10-03T14:46:46.690919+00:00",
++      "ended_at": "2026-10-03T14:46:53.400504+00:00",
++      "elapsed_seconds": 6.71,
++      "exit_status": 0
++    }
++  ],
++  "still_running": false
++}
+diff --git a/work/2026-10-03-infra-monitoring/quick-checks-result.json b/work/2026-10-03-infra-monitoring/quick-checks-result.json
+new file mode 100644
+index 00000000..75b89c83
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/quick-checks-result.json
+@@ -0,0 +1,20 @@
++{
++  "session": "2026-10-03-infra-monitoring",
++  "workspace": "/home/aither/workspace/ai/vpsfree.cz",
++  "operation": "quick-checks watcher sequential batch",
++  "started_utc_epoch": 1791038396,
++  "finished_utc_epoch": 1791038411,
++  "elapsed_seconds": 15,
++  "working_directory": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration",
++  "head": "b66c929bb7c202ad31bd8994a691ade14c40ebf0",
++  "staged_index_tree": "f9dad7c34735c8d6e16c3ebc114bd0b2c462980c",
++  "commands": [
++    {"argv": ["nix", "eval", "--impure", "--no-write-lock-file", "--json", ".#confctl.machines", "--apply", "ms: builtins.mapAttrs (_: m: { inherit (m.metaConfig) machineType; }) ms"], "exit_status": 0, "elapsed_seconds": 3},
++    {"argv": ["nix", "build", "--no-write-lock-file", "--no-link", ".#checks.x86_64-linux.infra-monitoring-config", ".#checks.x86_64-linux.infra-monitoring-rules"], "exit_status": 1, "elapsed_seconds": 3},
++    {"argv": ["nix", "build", "--no-write-lock-file", "--no-link", ".#checks.x86_64-linux.vps-autostart-prometheus-rules", ".#checks.x86_64-linux.process-count-prometheus-rules"], "status": "not_run_due_to_prior_failure"}
++  ],
++  "result": "failed",
++  "failure_excerpt": "error: attribute 'monitor' missing at modules/clusterconf/monitor/default.nix:308:41 while evaluating infra-monitoring-config.nix checkMonitor; command 2 exit 1",
++  "unexpected_local_kernel_build": false,
++  "running_operations": []
++}
+diff --git a/work/2026-10-03-infra-monitoring/r1-check-result.json b/work/2026-10-03-infra-monitoring/r1-check-result.json
+new file mode 100644
+index 00000000..8bcf5f4e
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/r1-check-result.json
+@@ -0,0 +1,16 @@
++{
++  "result": "passed",
++  "exit_status": 0,
++  "tested_revision": "f3f8688b7ffc517a9a24150bd1f3d4056fbd35b7",
++  "tested_tree": "8978bc46c53107705a7dc587c0f036ff6d88a219",
++  "command": [
++    "nix",
++    "build",
++    "--no-write-lock-file",
++    "--no-link",
++    ".#checks.x86_64-linux.infra-monitoring-config"
++  ],
++  "elapsed_seconds": 5.636,
++  "runner": "lead: known-warm focused check",
++  "running": false
++}
+diff --git a/work/2026-10-03-infra-monitoring/review-packet.md b/work/2026-10-03-infra-monitoring/review-packet.md
+new file mode 100644
+index 00000000..ceb61df7
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/review-packet.md
+@@ -0,0 +1,100 @@
++Historical packet used for the completed independent review before narrow R1
++fixture remediation. Current final heads/diff and verified history mapping are
++in [branch inventory](branch-inventory.md) and [review record](review.md).
++
++# Mandatory complete-branch review packet
++
++## Outcome and acceptance
++
++User requested implementation of the accepted infra-monitoring plan. Preserve
++all filesystem rules/thresholds and pgnd raw load-average rules. Add reusable
++machine-type metadata/labels; keep email and Telegram for critical infra VPS
++filesystem alerts while preventing both SMS receivers. Apply existing staging
++CPU usage holds to pgnd only; production keeps its strict policy.
++
++Read [plan](plan.md), [state](state.md), [architect design](design.md),
++[branch inventory](branch-inventory.md) and [complete final diff](review-final.diff).
++Repository/worktree: `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration`.
++Base: `b66c929bb7c202ad31bd8994a691ade14c40ebf0`.
++Final head: `f3f8688b7ffc517a9a24150bd1f3d4056fbd35b7`.
++Both intended commits are complete, with a clean worktree. The inventory lists
++the complete series, split rationale, disposition of prior approaches and
++explicit no-migrations provenance. Assess those conclusions independently.
++
++## Selection and lanes
++
++Overall risk: High, because notification routing changes live host behavior,
++and target-label identities affect HA deduplication, rolling deployment and
++rollback. No source deployment is part of this implementation task.
++
++Independent retained review-purpose member: reviewer0, index 0,
++thread 01a1021a-42ed-7e62-9bc2-43fbd84c6a48, read_only, ready,
++saved gpt-6.1-sol/xhigh. No model or effort override and no fallback.
++Review all four lanes: general, architecture/repetition, scope/proportionality,
++risk/compatibility. Read the mandatory-change-review skill and every lane
++reference in full. Perform the review directly without nested agents.
++
++## Interfaces and consumers
++
++The owning provider is site-local `modules/cluster/default.nix`:
++`cluster.<name>.machineType`, enum vps/vm/physical, default vps for managed
++containers and physical otherwise. Explicit vm overrides are aitherdev, em1,
++and build. Confctl carries metadata through `confctl.machines.*.metaConfig`;
++monitor module consumes it through confMachine and m.metaConfig. Static target
++labels have machine_type appended after custom labels at all four constructors,
++including mon local/peer, infra, and shared node labels/ZFS/IPMI. Existing node
++`type=node` remains. Alertmanager is the immediate label consumer. No exported
++cross-project API or pins change; all flake/Gem locks remain unchanged.
++
++The exact terminal route follows continuing email and Telegram and precedes
++both SMS siblings: job=infra, machine_type=vps, alertclass=fsavail,
++severity=critical, receiver=blackhole, continue=false. No severity/inhibition/
++interval/transport change. The CPU selectors change only four rules; relaxed
++rules retain location through their aggregation. Names and calculations remain.
++
++## User decisions and boundaries
++
++- Keep filesystem thresholds, fatal policy and holds as they are.
++- Exception includes every selected filesystem, including /run; /run is tmpfs
++  and disk auto-expansion does not recover it. That retained behavior is accepted.
++- Only CPU usage changes for pgnd, not node_load rules, storage CPU or I/O wait.
++- Reuse existing blackhole after email/Telegram; no general notification framework.
++- Classification defaults plus explicit known VMs; no runtime/hostname detection.
++- Missing machine_type stays eligible for SMS, including during mixed rollout.
++- No input updates, migrations, live test messages, production deployment or
++  default-branch integration. Do not broaden these boundaries in remediation.
++
++## Verification and documentation
++
++Real machine metadata evaluation passed. Declared Nixfmt/RuboCop full Overcommit,
++active hooks, Bash syntax and whitespace checks passed. Fresh watcher passed:
++
++`nix build --no-write-lock-file --no-link .#checks.x86_64-linux.infra-monitoring-config .#checks.x86_64-linux.infra-monitoring-rules`
++
++`nix build --no-write-lock-file --no-link .#checks.x86_64-linux.vps-autostart-prometheus-rules .#checks.x86_64-linux.process-count-prometheus-rules`
++
++Evidence: quick-checks-2-result.json/log. Tested staged tree
++406b654f992c65815806615e86c7a84fe267451c equals final committed tree. First
++focused attempt failed due to incomplete synthetic service metadata; fixture
++fields were corrected before commits and the actual derivations then passed.
++No production fix or scope deviation. Common/infra rules and locks compare
++unchanged; nodes.nix has only the accepted four CPU edits.
++
++Owning-project explanation: docs/services/monitoring.md, linked by mkdocs.yml.
++It records classification precedence, notification boundaries, CPU policy,
++label identity/HA rollout/rollback constraints and verification limits. Session
++design holds this initiative's proposed deployment ordering separately.
++No deployment has occurred. Offline amtool checks receiver selection, not live
++notification delivery, daytime activation, repeat timers or inhibition execution.
++Central full configurations will be built only after this review gate.
++
++## Deliverable
++
++Start with Blocking/Important/Advisory findings ordered by severity with path,
++line and commit references, then a brief conclusion for EACH lane. Explicitly
++conclude on the whole branch history (obsolete approaches/fixups) and migration
++lineage, including "no migrations". List residual test/deployment risks even
++if there are no findings. Remain read-only: send the complete report via team
++assignment message to lead, which will record it. Do not write fixes, run long
++builds, commit, push, deploy or change lifecycle. Validate session/current and
++read all applicable workspace and repository procedures before inspection.
+diff --git a/work/2026-10-03-infra-monitoring/review.md b/work/2026-10-03-infra-monitoring/review.md
+new file mode 100644
+index 00000000..a3c4a1b7
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/review.md
+@@ -0,0 +1,126 @@
++# Mandatory independent whole-branch review
++
++Completed by reviewer0 (retained thread 01a1021a-42ed-7e62-9bc2-43fbd84c6a48),
++review purpose, read_only, saved gpt-6.1-sol/xhigh. Identity/settings were checked
++against the live same-session roster; no override, fallback or nested reviewer.
++Overall risk High; all four required lanes were independently completed.
++Reviewer validated dev-session current and trusted session binding before access.
++This record consolidates the complete report sent to lead through team assignment.
++
++Reviewed base `b66c929bb7c202ad31bd8994a691ade14c40ebf0`, first commit
++`36b6b874096e0bbd344cc140d07c358ab6799c41`, final head
++`f3f8688b7ffc517a9a24150bd1f3d4056fbd35b7`; final tree
++`406b654f992c65815806615e86c7a84fe267451c` matched passing checks.
++Merge base equaled the supplied base. Reviewer inspected both commits and their
++messages/inventories, complete final diff, source, tests, documentation, evidence
++and pinned confctl 7bee58a metadata/system-argument implementation. The packet
++and actual diff were byte-identical (SHA256
++cb821d4f384e0c2bebdfe29b48465bdc6daa02ddb9a6458e60ed78b2ea9332b7).
++Reviewer performed no edits, tests/builds, hooks, commits or deployment.
++
++## Findings and lead disposition
++
++No Blocking or Important findings.
++
++Advisory R1 (general/verification): the filesystem warning equality test at
++`tests/prometheus/infra-monitoring-filesystem.yml:21,38` is vacuous. Its 20%-free
++series uses `/boundary`, whereas the unchanged rule selects only `/`, `/run`
++and `/nix/store`. The series is excluded before threshold comparison, so an empty
++result does not prove the strict 20% boundary. Reviewer recommends a selected
++mountpoint on a separate instance, with that instance selected in the assertion;
++a companion 19% positive case makes the intent explicit. Production filesystem
++expressions are unchanged and the critical identity/hold checks are meaningful.
++
++Lead decision: correct this bounded fixture defect. Implementer owns the edit,
++then lead will inspect it and run the known-warm focused config check. Fold the
++fix into the first unpublished behavior commit and replay the CPU commit,
++preserving exactly two commits. This changes no production behavior/design or
++accepted boundary. Under mandatory-review steps 9–10, direct inspection and
++focused verification suffice; no specialist-lane or full reviewer rerun is
++required for this narrow test correction. Updated history/head evidence follows
++in the remediation section once complete.
++
++## Lane conclusions
++
++- General: all accepted behavior is implemented. The exact terminal exception
++  follows continuing email/Telegram and precedes both SMS siblings; warnings,
++  fatal alerts, other jobs/classes, VM/physical hosts and missing type preserve
++  routing. Production-route amtool covers positive and negative cases. Common,
++  infra and lock files are byte-identical; nodes changes only four CPU rules.
++  CPU fixtures cover policies, equality, holds, labels, OS restriction, cores
++  and boot boundary. Docs agree and are discoverable. R1 is the only gap found.
++- Architecture/repetition: typed machine metadata is the site-owned finite
++  contract; no duplicated runtime registry. Defaults and three explicit VMs
++  are appropriate. All four label constructors enforce precedence, including
++  shared node/ZFS/IPMI labels and preserved type=node. Actual generation and
++  both monitors are tested. Confctl preserves metadata for consumers; no pin
++  update is needed. Tiny label appends do not justify a production abstraction.
++- Scope/proportionality: uses existing blackhole and CPU policies, retains
++  alert names and strict counterparts. No speculative routing framework,
++  runtime classification, compatibility shim or general safety layer. Larger
++  fixtures/docs are focused and proportionate. Retained /run exception and
++  raw pgnd load-average policy are accepted choices.
++- Risk/compatibility: no new credential exposure, authorization-boundary or
++  destructive-action issue identified. Typed site labels win custom conflicts;
++  existing metadata consumers receive defaults. Exporters/nodes need no update.
++  Missing type and old alerter config retain SMS eligibility. Label and pgnd
++  alert-identity transitions, pending resets, partial HA deduplication limits,
++  alerter-first rollout and rollback are documented. Existing state remains
++  readable; no coordinated vpsAdminOS fleet update is required.
++
++## Explicit history and migration conclusions
++
++Reviewer inspected the entire linear two-commit series. The first owns typed
++classification, target labels and immediate SMS consumer with its checks/docs;
++the second is an independent CPU policy change with its checks/docs. The split
++has a causal rationale. Neither replaces the other's design. No obsolete
++unmerged approaches, superseded thresholds, fixup/tidy history, transitional
++compatibility paths or redundant input-update history remain. No consolidation
++was required on the reviewed branch.
++
++**No migrations.** No schema/migration/seed/persisted-format change exists, so
++there is no migration version or provenance to reconcile. The series/alert
++identity transition is an operational effect, not a data-format migration.
++Session evidence reports no merge/release/deployment/external consumption;
++reviewer inspected local refs but performed no live deployment-state audit.
++
++## Remaining limits
++
++The exact reviewed tree passed focused metadata/labels/routing/rules and adjacent
++regressions. Hooks were reported passed and their configuration inspected, not
++rerun by the reviewer. Full central configs still need planned post-review
++builds. Direct-import fixtures substitute inventory lookup/inert receivers and
++cannot cover every full-system receiving option or real transport secret.
++
++Offline amtool proves receiver selection, not live delivery, daytime execution,
++repeat timers or inhibition. These existing structures were inspected and
++preserved. Mixed monitors may emit distinct identities and old unlabeled alerts
++may still SMS; relabeling resets pending/rate windows and can resolve/refire.
++The accepted /run exception does not make tmpfs exhaustion auto-expand.
++
++The review gate permits central configuration builds after lead records the
++R1 decision. Review alone supplies neither deployment nor integration approval.
++
++## Narrow remediation verification
++
++Lead directly inspected the R1 staged diff: only
++`tests/prometheus/infra-monitoring-filesystem.yml` changed. The 20% and 19%
++inputs use selected `/` on distinct instances, with an empty warning assertion
++at equality and a positive five-minute assertion carrying full expected labels.
++Existing critical mount/hold assertions remain. On staged tree
++`8978bc46c53107705a7dc587c0f036ff6d88a219`, the known-warm focused
++`infra-monitoring-config` check passed (exit 0, 5.636 seconds), recorded in
++r1-check-result.json/log. No production, documentation, CPU fixture or dependency
++changed. R1 is fixed; no reviewer rerun is required under steps 9–10. Implementer
++is folding this into the first commit and replaying the unchanged CPU commit;
++final exact-head/history verification remains before central builds.
++
++Final history verification: e7b029165e3304e6f1ca4ec7e261d007ff4cab81 followed by
++f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68, based on the same b66c929b. Checkout/index
++are clean; final tree is the passing R1 tree 8978bc46c53107705a7dc587c0f036ff6d88a219.
++Lead compared the complete series and final diff: only the specified filesystem
++fixture changed relative to the reviewed tree. Range-diff shows the CPU commit
++patch-identical and the first commit differing solely by R1. Exactly two logical
++commits remain, with no obsolete history or migrations. Implementer explicitly
++ran active hooks for both final rewritten commits and recorded r1-hooks.log.
++The review gate is closed.
+diff --git a/work/2026-10-03-infra-monitoring/state.md b/work/2026-10-03-infra-monitoring/state.md
+new file mode 100644
+index 00000000..67337482
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/state.md
+@@ -0,0 +1,97 @@
++---
++lifecycle: active
++---
++
++# Infra monitoring
++
++## Current status
++
++Phase: ready, awaiting merge approval. Implementation, focused verification,
++independent whole-branch review and all four central system builds passed.
++The feature branch is published, the project checkout/index are clean, and no
++verification operation remains running. No default integration or production
++deployment occurred. Session remains open; no lifecycle action/cleanup scheduled.
++
++## Phase checklist
++
++- [x] Investigate current disk/CPU rules, inventory and notification routing.
++- [x] Settle machine_type, exact VPS SMS exception and pgnd CPU-only scope.
++- [x] Delegate architect design and implementer application work.
++- [x] Implement and commit two behavior changes with active declared hooks.
++- [x] Pass focused and adjacent checks; keep disk/loadavg/pins unchanged.
++- [x] Independent complete-branch review with explicit no-migrations/history conclusions.
++- [x] Fix Advisory R1, run focused check and verify rewritten two-commit series.
++- [x] Build both monitors and both alerters from exact final revision.
++- [x] Publish feature branch, capture portal comparison and prepare handoff.
++- [ ] Explicit integration direction for vpsfree-cz-configuration/master.
++- [ ] Any separately requested production rollout and live verification.
++
++## Repository and team
++
++- Worktree: ../../worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration.
++- Branch: 2026-10-03-infra-monitoring, local and origin refs match.
++- Base / freshly fetched origin/master: b66c929bb7c202ad31bd8994a691ade14c40ebf0.
++- First: e7b029165e3304e6f1ca4ec7e261d007ff4cab81 (metadata/labels/SMS).
++- Final: f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68 (CPU usage).
++- Final tree: 8978bc46c53107705a7dc587c0f036ff6d88a219.
++- architect0: design, gpt-6-astra/xhigh, workspace_write.
++- implementer0: implementation, gpt-6.1-sol/xhigh, workspace_write.
++- reviewer0: independent review, gpt-6.1-sol/xhigh, read_only.
++- Retained catalog: 4676433c6831fbaca91da8ffde84891aff6ce065a17c74c2f367f1acf1d15b17.
++- Session/current and both lead environment markers matched the trusted binding.
++
++## Verification, review and risks
++
++[Final verification](verification.md) records actual commands/results, exact trees,
++build generations, CI observation and remaining operational limits. Focused
++metadata/labels/routing/CPU/filesystem and adjacent autostart/process-count checks
++passed. Declared Nixfmt/RuboCop hooks ran on both final commits. Full builds
++passed for mon1+mon2 (107 seconds) and alerts1+alerts2 (139 seconds).
++
++Mandatory review was High risk because operational notification policy and new
++label identities affect rollout, HA deduplication and rollback. Reviewer0 used
++saved settings without override/fallback; all four lanes completed. No Blocking
++or Important finding. Advisory R1's warning-boundary fixture was corrected and
++verified on the final tree. Lead checked that the only change after review was
++that fixture; CPU patch was unchanged, exactly two commits remain, no obsolete
++history/migrations. Narrow direct verification closed the finding without rerun.
++
++[Independent review](review.md), [branch inventory](branch-inventory.md) and
++[implementation report](implementation-result.md) provide detailed evidence.
++
++Material operational limits: no live reload/notification delivery verified.
++Relabeling can reset pending alerts; mixed monitor versions may emit distinct
++identities and old unlabeled VPS alerts may still SMS. The /run exception remains
++accepted even though tmpfs is not dataset-auto-expanded. No migrations or
++coordinated exporter/node update is needed.
++
++## Setup and failure recovery
++
++Initial substantive tracking commit: 4123553c; final records follow the
++consolidated checkpoint cadence. Public preset replacement was refused; adding
++architect/implementer/reviewer from the installed catalog preserved lead policy.
++See ../../notes/dev-workspace/2026-10-03-add-members-to-retained-solo-roster.md.
++
++Worktree checkout hook initially exited 78 because pinned gems were absent;
++no hook was bypassed. Repeating public worktree add registered the checkout.
++Fresh environment watcher installed the frozen bundle (40 gems, exit 0,
++61 seconds); implementer installed/signed active Overcommit hooks.
++Retained members could not reach the Nix daemon; functional operations ran
++through the authorized watcher path. Realized pinned tool variables supported
++local static checks/hooks without changing access. See
++../../notes/vpsfree-cz-configuration/2026-10-03-retained-member-nix-checks.md.
++
++First focused evaluation failed because synthetic service fixtures lacked
++`monitor`. Complete address/port/monitor metadata corrected the fixture; the
++subsequent focused run passed. This was not a production defect or design deviation.
++Full logs remain local; curated structured results are linked in verification.md.
++
++## Documentation and next action
++
++- [Accepted plan](plan.md), [architect design](design.md), [architect report](architect-result.md).
++- [Owning-project policy and recovery](../../worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration/docs/services/monitoring.md), linked from mkdocs Services.
++- Next user-owned decision: explicit integration of vpsfree-cz-configuration into master.
++  If rollout is requested, update both alerters before either monitor, then both
++  monitors promptly and verify effective labels/reload health on each replica.
++- No integration approval was inferred from "Implement the plan"; no deploy command ran.
++- Stable portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-03-infra-monitoring/.
+diff --git a/work/2026-10-03-infra-monitoring/verification.md b/work/2026-10-03-infra-monitoring/verification.md
+new file mode 100644
+index 00000000..c0f8d95b
+--- /dev/null
++++ b/work/2026-10-03-infra-monitoring/verification.md
+@@ -0,0 +1,77 @@
++# Final verification and readiness
++
++Final feature head: `f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68`.
++Final tree: `8978bc46c53107705a7dc587c0f036ff6d88a219`.
++Branch: `2026-10-03-infra-monitoring`, published over SSH to the same origin ref.
++The project checkout/index are clean and origin/master remains base b66c929b.
++Public capture-comparison recorded this exact base/head for the portal.
++
++## Checks and review
++
++| Evidence | Result |
++| --- | --- |
++| Real `confctl.machines.*.metaConfig.machineType` evaluation | Passed |
++| Declared Overcommit Nixfmt/RuboCop and executable hooks | Passed; active on both final commits |
++| Bash syntax, full diff whitespace and accepted source invariants | Passed |
++| infra-monitoring-config + infra-monitoring-rules | Exit 0, 8 seconds |
++| vps-autostart-prometheus-rules + process-count-prometheus-rules | Exit 0, 7 seconds |
++| Mandatory whole-branch review, all four lanes | No Blocking/Important; Advisory R1 fixed |
++| R1 focused infra-monitoring-config | Exit 0, 5.636 seconds, exact final tree |
++| Final history/patch comparison | Two commits; only R1 fixture differs from reviewed tree; CPU patch identical |
++
++Initial focused evaluation failed because synthetic services lacked `monitor`;
++fixture metadata was corrected before commits and the actual checks then passed.
++Review R1 found a vacuous filesystem warning equality case on an excluded mount;
++the corrected test uses selected `/` at 20% and 19% on separate instances.
++Lead inspected and verified this narrow correction under review steps 9–10;
++no production/docs/CPU/pin changed and no reviewer rerun was required.
++
++The four original checks ran on tree 406b654f. The final tree changes only the
++filesystem fixture, rechecked through the complete config derivation. Unchanged
++CPU and adjacent regressions retain their passing evidence. No unnecessary
++repeat of unchanged checks was performed.
++
++Details: [implementation](implementation-result.md), [review](review.md),
++[history](branch-inventory.md), [focused result](quick-checks-2-result.json),
++[R1 result](r1-check-result.json). Full logs remain locally under this session.
++
++## Full central configuration builds
++
++Fresh catalog-policy watcher /root/central_builds_watcher used gpt-6-luna/low
++and owned both sequential local builds in the pinned Nix shell, after review.
++Read-only inventory first confirmed exactly the intended replicas. Commands:
++
++```sh
++nix develop --no-write-lock-file --command confctl build --yes 'cz.vpsfree/containers/prg/int.mon[12]'
++nix develop --no-write-lock-file --command confctl build --yes 'cz.vpsfree/containers/prg/int.alerts[12]'
++```
++
++| Machines | Exit | Elapsed | Built generation |
++| --- | --- | --- | --- |
++| mon1, mon2 | 0 | 107 seconds | 2026-10-03--17-18-19 |
++| alerts1, alerts2 | 0 | 139 seconds | 2026-10-03--17-19-58 |
++
++[Structured build result](central-builds-result.json) records exact revision/tree,
++selectors and confctl log paths. Full output is central-builds.log. No unexpected
++local kernel compilation occurred and no verification operation remains running.
++These are local build generations, not deployed generations.
++
++## CI and remaining operational limits
++
++SSH feature push succeeded; remote-tracking ref matches the final head. The
++repository has only a schedule/dispatch-driven daily-update workflow. Scoped
++`gh run list` for the final branch/SHA returned no Actions runs (exit 0).
++
++Ready, awaiting explicit integration direction for vpsfree-cz-configuration/master.
++No default integration, production deployment, consumer-pin update or live test
++notification was performed. Offline amtool covers routing, not actual delivery,
++SMS activation times, repeat timers or inhibition execution. Existing routing
++structures were inspected and preserved; full configs built successfully.
++
++For a later approved rollout, update both alerters before either monitor, then
++update both monitors promptly. New labels change series/alert identity and can
++reset pending/rate windows; mixed monitors can still emit old unlabeled SMS-
++eligible alerts. The accepted /run SMS exception does not make tmpfs expand.
++Lasting policy/compatibility/rollback explanation is in
++[project monitoring docs](../../worktrees/2026-10-03-infra-monitoring/vpsfree-cz-configuration/docs/services/monitoring.md).
++Prepared rollout details remain in [design](design.md). No migrations.
+diff --git a/work/2026-10-03-newadmin-exception/plan.md b/work/2026-10-03-newadmin-exception/plan.md
+new file mode 100644
+index 00000000..2d3b8e4c
+--- /dev/null
++++ b/work/2026-10-03-newadmin-exception/plan.md
+@@ -0,0 +1,46 @@
++# API exception from newadmin
++
++## Goal and scope
++
++Find the root cause of the attached API exception in relation to
++vpsadmin-webui. This is an investigation; application changes, deployments and
++integration are outside the current request. Keep the raw email outside Git
++and record only sanitized evidence.
++
++## Affected repositories
++
++- `vpsadmin`: deployed API revision
++  `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`, OAuth authentication and SSO
++  session/token lifetime management.
++- `vpsadmin-webui`: separate newadmin application, canonical bare clone
++  `repos/vpsadmin-webui.git`; inspect its default branch's authentication flow.
++- `haveapi`: framework reference only if needed to resolve request handling.
++
++## Approach and responsibilities
++
++1. Lead extracts sanitized exception, source location and request context.
++2. Retained `architect0` independently traces API token cleanup and records
++   root-cause evidence, proposed correction and verification brief in `design.md`.
++3. Lead traces the WebUI client behavior and reconciles the evidence with the
++   exact deployed API source. Use canonical bare refs; do not use other sessions.
++4. Document the proven failure, plausible triggers, remaining uncertainty and
++   recommended correction in session records. No application implementation is
++   assigned for this investigation.
++
++## Compatibility and deployment
++
++Current work makes no persisted-state, database, API, protocol or deployment
++changes. Any proposed correction must preserve OAuth access/refresh-token
++semantics and ensure expired or revoked SSO credentials cannot be revived.
++Record whether independent SSO and OAuth lifetimes permit a valid access token
++to outlive an SSO token. Do not infer production data or a specific user's
++actions from the exception alone.
++
++## Documentation and verification
++
++Readers are the user and a future fix implementer. Investigation evidence and
++temporary verification belong in this session; an implemented behavior contract
++would belong in vpsadmin documentation. Review relevant subsystem docs, follow
++the source and its history, and use a bounded isolated probe only if needed.
++No integration builds or production mutations are required. Separate source
++proof from unverified production-state hypotheses.
+diff --git a/work/2026-10-03-newadmin-exception/state.md b/work/2026-10-03-newadmin-exception/state.md
+new file mode 100644
+index 00000000..7cecd466
+--- /dev/null
++++ b/work/2026-10-03-newadmin-exception/state.md
+@@ -0,0 +1,48 @@
++---
++lifecycle: active
++---
++
++# API exception from newadmin
++
++## Current status
++
++Investigation in progress. Session identity matches the thread binding and both
++environment markers. No application edits or production operations.
++
++## Phase checklist
++
++- [x] Verify session identity and retained roster.
++- [x] Extract sanitized exception and identify the exact deployed API revision.
++- [ ] Trace API session/token cleanup and WebUI authentication behavior.
++- [ ] Reconcile independent architect findings and verification evidence.
++- [ ] Deliver root cause, uncertainty and proposed correction to the user.
++
++## Evidence
++
++Email dated 2026-10-03 16:47:13 +0200 reports `NoMethodError` on
++`GET /v7.0/users/current`, with Origin `https://newadmin.vpsfree.cz`.
++The API is `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`; the exception is at
++`api/lib/vpsadmin/api/operations/user_session/resume_oauth2.rb:40`:
++`oauth.single_sign_on.token.valid_to < user_session.token.valid_to`.
++The raw email remains in the uploaded private input location outside Git.
++
++## Team and repositories
++
++- `architect0` (design, Astra/xhigh, workspace write): independent API trace and
++  proposed fix/verification brief in `design.md`.
++- Lead: report extraction, WebUI trace, reconciliation and coordination records.
++- Implementer and reviewer are retained but have no application assignment.
++- Canonical bare repositories: `repos/vpsadmin.git`, `repos/vpsadmin-webui.git`,
++  `repos/haveapi.git`. No project feature branches or worktrees created.
++
++## Next action and limitations
++
++Trace why an existing SSO row can lack its token while an OAuth access session
++remains valid. No production database or correlated cleanup logs have been
++inspected. The report alone may not distinguish expiration from revocation or
++a concurrent cleanup race.
++
++## Documentation
++
++[Investigation plan](plan.md); architect brief pending. No project documentation
++change is needed until a correction is implemented.
+diff --git a/work/2026-10-03-newadmin-http-check/plan.md b/work/2026-10-03-newadmin-http-check/plan.md
+new file mode 100644
+index 00000000..eb46db79
+--- /dev/null
++++ b/work/2026-10-03-newadmin-http-check/plan.md
+@@ -0,0 +1,83 @@
++# Fix newadmin probes and warning-only dedicated alerts
++
++## Goal and authorization
++
++Implement the plan accepted by the user's "Implement the plan" instruction.
++Correct the public frontend metadata probe and retain all dedicated Newadmin
++alerts as warnings. The user selected "Newadmin alerts only": shared
++infrastructure alerts for the VPS retain their existing severities.
++Implementation and verification are authorized; default-branch integration,
++production deployment and session lifecycle actions are not authorized.
++
++## Scope and implementation
++
++Only `vpsfree-cz-configuration` changes. Keep the WebUI application, dependency
++pins, Alertmanager routing and shared infrastructure rules outside scope.
++
++- Correct both frontend body patterns in
++  `modules/clusterconf/monitor/http.nix` to allow JSON whitespace around colons.
++  Retain schema version 1, require a comma or closing brace after it, and retain
++  the full lowercase 40-character hexadecimal commit hash.
++- In `modules/clusterconf/monitor/rules/vpsadmin.nix`, change the three dedicated
++  missing-metrics alerts to warning. Compute HTTP severity once for each site:
++  warning for the exact newadmin frontend and BFF keys, critical for other
++  sites. Use that value in both generated ExporterDown and WebDown alerts.
++- Preserve alert names, PromQL, durations and notification frequencies. All
++  nine dedicated Newadmin alerts must be warnings; API, console and legacy UI
++  checks remain critical.
++- Update existing rule test expectations and coverage for both exporter-down
++  alerts, all-nine warning severity and critical control cases for other sites.
++- Document the warning-only policy in `docs/operations/newadmin-webui.md`.
++  Promotion to critical requires a later explicit policy decision.
++
++## Team and execution
++
++Select the installed `lead_designed` preset after initial tracking is committed.
++The lead owns session tracking, coordination and acceptance. Assign this small,
++bounded unit directly to the retained implementation-purpose member; a separate
++architect design document is unnecessary because the approved plan resolves the
++regex and alert-generation design without an interface change. Preserve saved
++access, model and effort. Use the retained independent review-purpose member
++under the mandatory-change-review skill.
++
++Use the exact session branch and dedicated worktree. Fetch upstream before
++creating it. Commit with declared hooks active, and retain a coherent reviewed
++branch. Long or uncertain verification is launched and monitored by a fresh
++catalog-resolved Luna/low watcher under dev-session-monitor.
++
++## Compatibility and deployment
++
++This is monitoring configuration only. Compact and formatted schema-1 JSON are
++both supported. No persisted-state, schema, API/client, protocol, Nix option or
++WebUI deployment changes are required. Mixed monitoring versions continue to
++operate, but the old monitor can still emit false failures and critical alerts.
++
++Prepare rollout instructions for both `cz.vpsfree/containers/prg/int.mon1` and
++`cz.vpsfree/containers/prg/int.mon2`; do not activate them without explicit
++production deployment direction. Confirm the frontend and BFF probes report
++`probe_success = 1` and all dedicated Newadmin rule severities are warning.
++A whole-change rollback restores the faulty compact-body checks and critical
++severities; prefer a targeted correction retaining the warning-only policy.
++
++## Verification and acceptance
++
++Before independent review, use the Nix environment for quick rule checks,
++formatting/hooks and regex fixture checks. Compact, formatted and additional
++whitespace metadata must match; schema 10 and invalid commit hashes must fail.
++Run the existing newadmin promtool check, extending it to verify all nine
++warnings, both exporter failures and API/console/legacy critical controls.
++
++Commit intended changes and inventory the complete base-to-head series and
++final diff, including an explicit no-migrations conclusion. Conduct mandatory
++independent review before long integration verification. Resolve material
++findings, then build both monitoring hosts via the fresh verification watcher.
++Record tested exact heads and build results. No production activation is part
++of implementation acceptance.
++
++## Documentation and handoff
++
++Operators need the warning policy in the existing configuration operations
++guide. Session tracking retains investigation evidence, exact revisions,
++verification, review and prepared rollout/rollback steps. Update the portal
++with useful durable artifacts and include its stable URL. Keep lifecycle active
++and the session open while the feature branch awaits merge approval.
+diff --git a/work/2026-10-03-newadmin-http-check/portal.yml b/work/2026-10-03-newadmin-http-check/portal.yml
+new file mode 100644
+index 00000000..a004b46b
+--- /dev/null
++++ b/work/2026-10-03-newadmin-http-check/portal.yml
+@@ -0,0 +1,13 @@
++---
++schema: 1
++slug: 2026-10-03-newadmin-http-check
++codex:
++  thread_id: 01a102ec-310d-73c2-94c1-2e72ce86e459
++  socket_path: "/run/user/1000/dev-workspaces/vpsfree-cz/app-server.sock"
++  client_version: 0.160.0
++creation:
++  state: ready
++  initial_goal_sent: true
++  goal_sha256: c368f7b5f3af1016a9377039fa8d188919556967ca77cb26d9a7be44fb15f8eb
++repositories: []
++artifacts: []
+diff --git a/work/2026-10-03-newadmin-http-check/state.md b/work/2026-10-03-newadmin-http-check/state.md
+new file mode 100644
+index 00000000..67017fd9
+--- /dev/null
++++ b/work/2026-10-03-newadmin-http-check/state.md
+@@ -0,0 +1,120 @@
++---
++lifecycle: active
++---
++
++# 2026-10-03-newadmin-http-check
++
++## Status
++
++- Phase: implementation setup; approved probe fix and dedicated warning-only policy.
++- Cause confirmed: both public frontend body patterns require compact JSON,
++  while the live endpoint serves formatted JSON with a space after each colon.
++- Implementation authorized by the user; no merge, production deployment or lifecycle action authorized.
++
++## Phase checklist
++
++- [x] Verify exact session identity and inspect retained roster (`solo`).
++- [x] Inspect live metadata, HTTP probe configuration and exporter semantics.
++- [x] Reproduce both pattern failures and check proposed replacements.
++- [x] Separate BFF health and status-site redirect from the frontend failure.
++- [ ] Set up the approved implementation team and dedicated feature worktree.
++- [ ] Implement probe fix, warning-only rules, coverage and policy documentation.
++- [ ] Complete quick checks and required hooks; commit intended changes.
++- [ ] Complete independent whole-branch review.
++- [ ] Build both monitoring hosts and prepare rollout.
++- [ ] Merge/deploy only after later explicit direction; verify production probes.
++
++## Next actions
++
++Correct both `bodyMatches` entries for `newadmin_vpsfree_cz` in
++`modules/clusterconf/monitor/http.nix`, then deploy monitoring to mon1 and check
++the production probe. Proposed Nix values:
++
++```nix
++bodyMatches = [
++  ''"schemaVersion"[[:space:]]*:[[:space:]]*1[[:space:]]*[,}]''
++  ''"commit"[[:space:]]*:[[:space:]]*"[0-9a-f]{40}"''
++];
++```
++
++Both are required. Fixing the first alone exposes the second mismatch because
++the exporter stops at the first missing required pattern.
++
++## Documentation
++
++- Read configuration `README.md`, `AGENTS.md` and
++  `docs/operations/newadmin-webui.md` from canonical cached `origin/master`.
++- The operations guide's schema/full-SHA contract is correct; no project
++  documentation update is useful for this read-only diagnosis.
++- Upstream implementation checked:
++  <https://github.com/prometheus/blackbox_exporter/blob/v0.28.0/prober/http.go>
++  (`matchRegularExpressions`, lines 46–64: raw body matching, all required
++  patterns, early failure).
++
++## Repositories
++
++- Configuration canonical cached `origin/master`:
++  `657cc0a8e087f8c4bed7fe8d7176cb9f06a6e2da`.
++- Probe definition: `modules/clusterconf/monitor/http.nix:52–63`.
++- Configuration plumbing:
++  `modules/clusterconf/monitor/default.nix:489` passes `bodyMatches` directly
++  to `fail_if_body_not_matches_regexp`.
++- Probe introduction: `4f1dfd72`,
++  `monitor: check newadmin frontend, BFF and certificate`.
++- WebUI pinned and publicly served commit:
++  `f123a7fb825437034a764a8a5654032a481a8476`.
++- Cached WebUI `origin/main:build/buildInfo.ts:103` emits
++  `JSON.stringify(buildInfo, null, 2)`, consistent with the observed formatting.
++  The pinned WebUI revision is absent from this local bare clone; its exact
++  source was not inspected, and no fetch was needed for the diagnosis.
++- No registered feature branches or owned project worktrees.
++
++## Commands run
++
++- `dev-session current`: matches exact thread binding and both environment
++  markers. `dev-session team list 2026-10-03-newadmin-http-check --as-is`:
++  solo roster, no members. Stable URL obtained with `dev-session url`.
++- Public `curl` GETs for `/build-info.json`, `/healthz` and the status site
++  (including IPv4 and following the status redirect).
++- Read-only canonical Git inspection (`show`, `grep`, `log`, `rev-parse`).
++- Ruby raw-body regex evaluation and JSON parsing using Nix-profile Ruby.
++- Read upstream blackbox exporter 0.28.0 source and configuration documentation.
++
++## Results
++
++Live checks on 2026-10-03 at approximately 18:00–18:03 UTC:
++
++- `/build-info.json`: HTTP 200, `application/json`, 159-byte formatted body.
++  `schemaVersion = 1`, full lowercase 40-character SHA, `dirty = false`.
++- Configured schema pattern `"schemaVersion":1`: false.
++- Configured commit pattern `"commit":"[0-9a-f]{40}"`: false.
++- Both proposed whitespace-tolerant patterns: true against the live body.
++- Proposed schema pattern rejects `{"schemaVersion":10}`.
++- `/healthz`: HTTP 200 with `ok`.
++- `status.vpsf.cz/`: HTTP 302 to `/?lang=en`; following the redirect returns
++  the configured `vpsFree.cz Status` body match. Exporter defaults to following
++  redirects; the warning is separate from the logged frontend regex failure.
++- `tests/prometheus/newadmin-rules.nix` exercises alert rules with promtool;
++  it does not validate body regexes against actual endpoint JSON.
++
++## Open questions
++
++- No blocker to diagnosis. The running exporter on mon1 was not queried
++  directly; its failure reason comes from the supplied logs, corroborated by
++  the matching source configuration and observed public response.
++- These checks do not certify interactive login or all WebUI behavior.
++
++## Cleanup
++
++No temporary artifacts or development resources were created. Session remains
++open and active. Unrelated shared-workspace changes were preserved.
++
++## Approved implementation scope
++
++The user requested warning-only Newadmin alerts and selected the dedicated-alert
++scope. Shared VPS infrastructure severities remain unchanged. Implementation
++was authorized with "Implement the plan" after the proposed plan. No merge or
++production deployment approval was given. The bounded design is recorded in
++`plan.md`; the implementer owns application edits and the lead owns tracking.
++
++Initial coordination commit will precede team setup and project-code commits.
