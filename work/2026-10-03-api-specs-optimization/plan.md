@@ -1,52 +1,69 @@
 # API specs workflow optimization
 
-## Goal
+## Goal and authorization
 
-Investigate typical vpsAdmin `api-specs` workflow duration and recommend a
-way to evaluate every existing test faster than the reported 40+ minutes.
-This phase is investigation and proposal only; no application edits, CI runs,
-deployment, or feature integration are requested.
+Reduce vpsAdmin API-spec workflow execution from its usual 40+ minutes while
+preserving every existing test and both plugin modes. Historical investigation
+and proposal review are complete. User requested an implementation plan, rejected
+weighted sharding because test placement should remain simple, then authorized
+“Implement the plan” on 2026-10-04. Implementation and controlled CI verification
+are authorized; vpsadmin/master integration, production deployment and session
+closure are not.
 
-## Affected repositories
+## Affected repositories and scope
 
-- `vpsadmin`: inspect upstream workflow, topic selection, test setup, and logs.
-- Coordination workspace: retain evidence and a design/verification proposal.
+vpsAdmin workflow plus AGENTS.md and testing procedure placement guidance.
+Coordination workspace retains design, review and benchmark evidence. No API,
+plugin, spec, schema, package or dependency change. Worktree/branch ownership and
+exact heads are in state.md; do not borrow another session's worktree.
 
-## Approach
+## Chosen approach
 
-1. Sample recent completed GitHub Actions runs and separate queue, setup,
-   topic test execution, failures, and the critical path.
-2. Ask retained architect0 to inspect topic balance and propose safe parallel
-   partitions with exact-once test coverage and isolated state.
-3. Reconcile timing evidence with the architecture and recommend a concrete
-   initial split, expected duration, costs, limitations, and validation.
+Maintain thirteen static domain topics in each full/core mode, 26 independent
+jobs. Combine smoke/coverage/routes/models/supervisor into foundation and spend
+the four released slots on platform3, users/auth2 and network/IP2. Other domains
+stay unchanged. Use explicit patterns and the shared matrix; no test moves,
+catch-all assignment, selector framework or duration-based placement.
 
-## Decisions
+Two functional commits: diagnostics and stronger both-mode aggregate using the
+original topics, then static rebalancing with lasting developer guidance.
+Native RSpec JSON supplements readable output; mode-qualified seven-day artifacts
+retain manifests, outcomes, seeds and effective dependency fingerprints.
+The aggregate checks exact-once file coverage per mode and successful matrices.
+[Implementation plan](implementation-plan.md) and [focused design](design.md)
+define the precise partition, interfaces, recovery and verification contract.
 
-Preserve all existing tests. Timing evidence shows topic imbalance, with
-platform taking ~42min and several topics ~1min. Compare platform-only splitting
-(~23–25min floor), same-count topic rebalancing (~18–22min floor), and
-duration-balanced shards (15–20min target, subject to measurement/queueing). Use read-only canonical repository inspection;
-do not borrow other sessions' worktrees. Do not launch a new full suite merely
-to establish a historical baseline.
+## Compatibility and recovery
 
-## Compatibility and deployment
+Each job retains its isolated process/database and normal filters, pending
+behavior and randomized order. Stable aggregate check name retained; renamed
+topic contexts/artifacts are the only compatibility surface. Classic protection
+inventory is permission-limited; document context mapping before adoption and
+resolve required-check settings before integration. No production persisted
+state, API/client/protocol, schema/migration or deployment ordering changes.
+Rollback restores old topic patterns/expected names; diagnostics can remain.
 
-A proposed CI-only change must preserve test discovery, plugin combinations,
-database isolation, failure reporting, and required-check names. No production
-API, schema, protocol, persisted-state, deployment, or rollback changes are
-intended. Workflow runner capacity and added setup cost must be considered.
+## Verification
 
-## Documentation
+Quick checks/hooks and independent whole-branch history/final-diff review first.
+Only after review push instrumented old-topic baseline, wait for its full run,
+then candidate and a second candidate run. Keep source and dependency inputs
+identical, compare effective Ruby/Bundler/RSpec/lock fingerprints by mode, and
+require exact example IDs/status/pending parity. The native comparator is
+session-only evidence tooling, never an application selector.
 
-Readers: maintainers choosing the optimization and a subsequent implementer.
-Record evidence in investigation.md and the architect proposal in design.md;
-keep plan.md/state.md and portal links current. No project documentation edit
-is needed for an unimplemented proposal.
+Seek <=25-minute slowest candidate test job in both runs. Separate execution,
+queueing, setup, full workflow wall time and runner minutes. Investigate failed
+attempts before reruns; missing evidence is not acceptance. Monitoring follows
+the pinned utility policy with documented visible parent fallback when native
+utility selection is unavailable. No VM/production verification is needed for
+this workflow-only scope. Leave the feature unmerged pending explicit approval.
 
-## Testing plan
+## Documentation and evidence
 
-Read historical job/step logs and inspect exact-once topic validation. Model
-candidate partitions from measured durations; distinguish estimates from
-executed results. A future implementation must verify complete file/example
-coverage and compare a full run on the same revision before and after.
+Maintainers and feature authors use vpsAdmin AGENTS.md and
+`docs/agent-instructions/testing.md` for static topic placement, aggregate/artifact
+semantics and local reproduction. Session records own exact revisions, temporary
+benchmark/review tools and adoption evidence. Historical evidence remains in
+[investigation.md](investigation.md) and [timing-summary.json](timing-summary.json).
+Prior alternative estimates are historical, with weighted sharding rejected.
