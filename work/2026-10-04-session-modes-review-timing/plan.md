@@ -53,3 +53,12 @@ exact rollout revisions and evidence here.
 
 The accepted plan settles the behavior. A bounded design reconciliation and
 verification brief is sufficient; do not add another planning review.
+
+## Final execution authorization
+
+The user's final instruction authorizes the simplest safe recovery of the
+unfinished `2026-10-03-api-specs-optimization` archive while preserving its
+failure evidence for later implementation work. That recovery is complete.
+The same instruction authorizes default-branch integration of the three affected
+repositories after deployment and verification, and explicitly excludes waiting
+for post-merge CI. No host configuration change is needed.

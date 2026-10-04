@@ -1,0 +1,45 @@
+{
+  "tested_revision": "45d4f13ab14a2dd7d19ea564dc1d364c5ac155c6",
+  "working_tree": {
+    "status": "dirty",
+    "modified": [
+      "docs/dev-sessions.md",
+      "docs/workspace-portal.md",
+      "portal/internal/agentteams/catalog_test.go",
+      "portal/internal/teamruntime/runtime_test.go",
+      "portal/internal/web/server_test.go",
+      "portal/internal/workspacecodex/lead_policy_test.go",
+      "test/dev_session/agent_team_creation_test.rb"
+    ]
+  },
+  "checks": [
+    {
+      "name": "go-focused-packages",
+      "command": "nix shell --inputs-from . nixpkgs#go --command go -C portal test -mod=readonly ./internal/workspacecodex ./internal/agentteams ./internal/teamruntime -count=1",
+      "exit_status": 1,
+      "result": "failed",
+      "elapsed_seconds": 1.2,
+      "evidence": "cgo: C compiler \\\"gcc\\\" not found; agentteams package reported ok, workspacecodex and teamruntime build failed"
+    },
+    {
+      "name": "web-focused-tests",
+      "command": "nix shell --inputs-from . nixpkgs#go --command go -C portal test -mod=readonly ./internal/web -run 'TestNewSessionShowsConcretePresetLeadSettings|TestDirectTeamPresetAcceptsFrozenCustomRoleInstructions' -count=1",
+      "exit_status": 1,
+      "result": "failed",
+      "elapsed_seconds": 1.2,
+      "evidence": "cgo: C compiler \\\"gcc\\\" not found; web package build failed"
+    },
+    {
+      "name": "ruby-focused-tests",
+      "command": "nix shell --inputs-from . nixpkgs#ruby --command ruby test/dev_session_test.rb --name '/test_prompt_bearing_direct_snapshot_and_thread_flags|test_cli_team_resolves_the_installed_direct_snapshot_without_hidden_lead_defaults|test_cli_team_retry_keeps_frozen_snapshot_after_catalog_changes/'",
+      "exit_status": 0,
+      "result": "passed",
+      "elapsed_seconds": 0.918,
+      "tests": 3,
+      "assertions": 23,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    }
+  ]
+}
