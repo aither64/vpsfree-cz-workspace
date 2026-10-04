@@ -1,0 +1,2094 @@
+﻿2026-10-02T16:00:33.7530503Z Current runner version: '2.337.0'
+2026-10-02T16:00:33.7556089Z ##[group]Runner Image Provisioner
+2026-10-02T16:00:33.7557003Z Hosted Compute Agent
+2026-10-02T16:00:33.7557660Z Version: 20260901.588
+2026-10-02T16:00:33.7558342Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-02T16:00:33.7559077Z Build Date: 2026-09-01T19:56:44Z
+2026-10-02T16:00:33.7559854Z Worker ID: {00491623-337d-4ff6-aaad-fdfc0f30905a}
+2026-10-02T16:00:33.7560577Z Azure Region: northcentralus
+2026-10-02T16:00:33.7561177Z ##[endgroup]
+2026-10-02T16:00:33.7563099Z ##[group]Operating System
+2026-10-02T16:00:33.7563763Z Ubuntu
+2026-10-02T16:00:33.7564407Z 24.04.5
+2026-10-02T16:00:33.7564933Z LTS
+2026-10-02T16:00:33.7565434Z ##[endgroup]
+2026-10-02T16:00:33.7566055Z ##[group]Runner Image
+2026-10-02T16:00:33.7566704Z Image: ubuntu-24.04
+2026-10-02T16:00:33.7567342Z Version: 20260927.320.1
+2026-10-02T16:00:33.7568639Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-02T16:00:33.7570265Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+2026-10-02T16:00:33.7571251Z ##[endgroup]
+2026-10-02T16:00:33.7572828Z ##[group]GITHUB_TOKEN Permissions
+2026-10-02T16:00:33.7574759Z Contents: read
+2026-10-02T16:00:33.7575531Z Metadata: read
+2026-10-02T16:00:33.7576134Z ##[endgroup]
+2026-10-02T16:00:33.7578273Z Secret source: Actions
+2026-10-02T16:00:33.7579331Z Cache mode: write
+2026-10-02T16:00:33.7580028Z Prepare workflow directory
+2026-10-02T16:00:33.8116571Z Prepare all required actions
+2026-10-02T16:00:33.8187107Z Getting action download info
+2026-10-02T16:00:34.1117867Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-02T16:00:34.2613290Z Download action repository 'actions/upload-artifact@v7' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-10-02T16:00:34.3370780Z Download action repository 'ruby/setup-ruby@v1' (SHA:14594264cd68ce8a2345dd349bc3d138a4ef85c8)
+2026-10-02T16:00:34.7584703Z Complete job name: API specs (full) - network
+2026-10-02T16:00:34.8374226Z ##[group]Run actions/checkout@v7
+2026-10-02T16:00:34.8375143Z with:
+2026-10-02T16:00:34.8375606Z   repository: vpsfreecz/vpsadmin
+2026-10-02T16:00:34.8379597Z   token: ***
+2026-10-02T16:00:34.8380024Z   ssh-strict: true
+2026-10-02T16:00:34.8380458Z   ssh-user: git
+2026-10-02T16:00:34.8380897Z   persist-credentials: true
+2026-10-02T16:00:34.8381615Z   clean: true
+2026-10-02T16:00:34.8382073Z   sparse-checkout-cone-mode: true
+2026-10-02T16:00:34.8382585Z   fetch-depth: 1
+2026-10-02T16:00:34.8383012Z   fetch-tags: false
+2026-10-02T16:00:34.8383459Z   show-progress: true
+2026-10-02T16:00:34.8383917Z   lfs: false
+2026-10-02T16:00:34.8384321Z   submodules: false
+2026-10-02T16:00:34.8384769Z   set-safe-directory: true
+2026-10-02T16:00:34.8385266Z   allow-unsafe-pr-checkout: false
+2026-10-02T16:00:34.8386032Z env:
+2026-10-02T16:00:34.8386438Z   RACK_ENV: test
+2026-10-02T16:00:34.8386883Z   BUNDLE_WITHOUT: development
+2026-10-02T16:00:34.8387401Z   BUNDLE_JOBS: 4
+2026-10-02T16:00:34.8387853Z   BUNDLE_RETRY: 3
+2026-10-02T16:00:34.8388287Z   VPSADMIN_PLUGINS: all
+2026-10-02T16:00:34.8388736Z ##[endgroup]
+2026-10-02T16:00:34.9436029Z Syncing repository: vpsfreecz/vpsadmin
+2026-10-02T16:00:34.9438038Z ##[group]Getting Git version info
+2026-10-02T16:00:34.9438843Z Working directory is '/home/runner/work/vpsadmin/vpsadmin'
+2026-10-02T16:00:34.9439993Z [command]/usr/bin/git version
+2026-10-02T16:00:34.9542457Z git version 2.55.0
+2026-10-02T16:00:34.9569347Z ##[endgroup]
+2026-10-02T16:00:34.9582117Z Temporarily overriding HOME='/home/runner/work/_temp/24bb1822-6039-4f89-a7fe-ec7f6782d2d9' before making global git config changes
+2026-10-02T16:00:34.9583917Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-02T16:00:34.9588226Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/vpsadmin/vpsadmin
+2026-10-02T16:00:34.9643537Z Deleting the contents of '/home/runner/work/vpsadmin/vpsadmin'
+2026-10-02T16:00:34.9647927Z ##[group]Determining repository object format
+2026-10-02T16:00:34.9649532Z ##[endgroup]
+2026-10-02T16:00:34.9650604Z ##[group]Initializing the repository
+2026-10-02T16:00:34.9654878Z [command]/usr/bin/git init /home/runner/work/vpsadmin/vpsadmin
+2026-10-02T16:00:34.9847639Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-02T16:00:34.9852769Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-02T16:00:34.9854852Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-02T16:00:34.9856625Z hint: call:
+2026-10-02T16:00:34.9857570Z hint:
+2026-10-02T16:00:34.9858755Z hint: 	git config --global init.defaultBranch <name>
+2026-10-02T16:00:34.9860237Z hint:
+2026-10-02T16:00:34.9862054Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-02T16:00:34.9864290Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-02T16:00:34.9866354Z hint:
+2026-10-02T16:00:34.9867823Z hint: 	git branch -m <name>
+2026-10-02T16:00:34.9869021Z hint:
+2026-10-02T16:00:34.9870460Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-02T16:00:34.9873207Z Initialized empty Git repository in /home/runner/work/vpsadmin/vpsadmin/.git/
+2026-10-02T16:00:34.9876275Z [command]/usr/bin/git remote add origin https://github.com/vpsfreecz/vpsadmin
+2026-10-02T16:00:34.9922314Z ##[endgroup]
+2026-10-02T16:00:34.9923515Z ##[group]Disabling automatic garbage collection
+2026-10-02T16:00:34.9927056Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-02T16:00:34.9962432Z ##[endgroup]
+2026-10-02T16:00:34.9963680Z ##[group]Setting up auth
+2026-10-02T16:00:34.9968660Z Removing SSH command configuration
+2026-10-02T16:00:34.9971805Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-02T16:00:35.0007186Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-02T16:00:35.0410579Z Removing HTTP extra header
+2026-10-02T16:00:35.0416656Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-02T16:00:35.0453458Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-02T16:00:35.0672623Z Removing includeIf entries pointing to credentials config files
+2026-10-02T16:00:35.0680154Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-02T16:00:35.0723027Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-02T16:00:35.0947352Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-02T16:00:35.0987344Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git.path /home/runner/work/_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:00:35.1021901Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:00:35.1058430Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:00:35.1094000Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:00:35.1124653Z ##[endgroup]
+2026-10-02T16:00:35.1125438Z ##[group]Fetching the repository
+2026-10-02T16:00:35.1131731Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +46b3bf6f9549eaf579053bc296ebf19c417bb848:refs/remotes/origin/2026-09-23-storage-redesign
+2026-10-02T16:00:35.8159076Z From https://github.com/vpsfreecz/vpsadmin
+2026-10-02T16:00:35.8162623Z  * [new ref]         46b3bf6f9549eaf579053bc296ebf19c417bb848 -> origin/2026-09-23-storage-redesign
+2026-10-02T16:00:35.8169625Z [command]/usr/bin/git branch --list --remote origin/2026-09-23-storage-redesign
+2026-10-02T16:00:35.8198823Z   origin/2026-09-23-storage-redesign
+2026-10-02T16:00:35.8209547Z [command]/usr/bin/git rev-parse refs/remotes/origin/2026-09-23-storage-redesign
+2026-10-02T16:00:35.8242384Z 46b3bf6f9549eaf579053bc296ebf19c417bb848
+2026-10-02T16:00:35.8250154Z ##[endgroup]
+2026-10-02T16:00:35.8253150Z ##[group]Determining the checkout info
+2026-10-02T16:00:35.8256450Z ##[endgroup]
+2026-10-02T16:00:35.8258332Z [command]/usr/bin/git sparse-checkout disable
+2026-10-02T16:00:35.8323738Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-02T16:00:35.8358653Z ##[group]Checking out the ref
+2026-10-02T16:00:35.8362718Z [command]/usr/bin/git checkout --progress --force -B 2026-09-23-storage-redesign refs/remotes/origin/2026-09-23-storage-redesign
+2026-10-02T16:00:36.0256566Z Switched to a new branch '2026-09-23-storage-redesign'
+2026-10-02T16:00:36.0263709Z branch '2026-09-23-storage-redesign' set up to track 'origin/2026-09-23-storage-redesign'.
+2026-10-02T16:00:36.0274525Z ##[endgroup]
+2026-10-02T16:00:36.0324419Z [command]/usr/bin/git log -1 --format=%H
+2026-10-02T16:00:36.0354268Z 46b3bf6f9549eaf579053bc296ebf19c417bb848
+2026-10-02T16:00:36.0686547Z ##[group]Run set -euo pipefail
+2026-10-02T16:00:36.0687845Z [36;1mset -euo pipefail[0m
+2026-10-02T16:00:36.0688964Z [36;1mshopt -s nullglob globstar[0m
+2026-10-02T16:00:36.0690100Z [36;1m[0m
+2026-10-02T16:00:36.0690941Z [36;1mmkdir -p tmp[0m
+2026-10-02T16:00:36.0692274Z [36;1m: > "tmp/rspec-files-$TOPIC.txt"[0m
+2026-10-02T16:00:36.0693505Z [36;1m[0m
+2026-10-02T16:00:36.0694332Z [36;1mfiles=()[0m
+2026-10-02T16:00:36.0695285Z [36;1mwhile IFS= read -r pat; do[0m
+2026-10-02T16:00:36.0696486Z [36;1m  [[ -z "$pat" ]] && continue[0m
+2026-10-02T16:00:36.0698041Z [36;1m  # unquoted expansion is intentional: we want glob expansion[0m
+2026-10-02T16:00:36.0699642Z [36;1m  for f in $pat; do[0m
+2026-10-02T16:00:36.0700700Z [36;1m    files+=("$f")[0m
+2026-10-02T16:00:36.0701941Z [36;1m  done[0m
+2026-10-02T16:00:36.0702858Z [36;1mdone <<< "$PATTERNS"[0m
+2026-10-02T16:00:36.0703887Z [36;1m[0m
+2026-10-02T16:00:36.0704751Z [36;1mif (( ${#files[@]} == 0 )); then[0m
+2026-10-02T16:00:36.0706233Z [36;1m  echo "ERROR: Topic '$TOPIC' matched 0 spec files."[0m
+2026-10-02T16:00:36.0707684Z [36;1m  echo "Patterns were:"[0m
+2026-10-02T16:00:36.0708772Z [36;1m  echo "$PATTERNS"[0m
+2026-10-02T16:00:36.0709774Z [36;1m  exit 2[0m
+2026-10-02T16:00:36.0710621Z [36;1mfi[0m
+2026-10-02T16:00:36.0711679Z [36;1m[0m
+2026-10-02T16:00:36.0712932Z [36;1mprintf '%s\n' "${files[@]}" | sort -u > "tmp/rspec-files-$TOPIC.txt"[0m
+2026-10-02T16:00:36.0714511Z [36;1m[0m
+2026-10-02T16:00:36.0715283Z [36;1m{[0m
+2026-10-02T16:00:36.0716184Z [36;1m  echo "### API spec topic: $TOPIC"[0m
+2026-10-02T16:00:36.0717380Z [36;1m  echo ""[0m
+2026-10-02T16:00:36.0718718Z [36;1m  echo "Matched **$(wc -l < "tmp/rspec-files-$TOPIC.txt")** spec files:"[0m
+2026-10-02T16:00:36.0720304Z [36;1m  echo ""[0m
+2026-10-02T16:00:36.0721178Z [36;1m  echo '```'[0m
+2026-10-02T16:00:36.0722482Z [36;1m  cat "tmp/rspec-files-$TOPIC.txt"[0m
+2026-10-02T16:00:36.0723669Z [36;1m  echo '```'[0m
+2026-10-02T16:00:36.0724598Z [36;1m} >> "$GITHUB_STEP_SUMMARY"[0m
+2026-10-02T16:00:36.1030697Z shell: /usr/bin/bash -e {0}
+2026-10-02T16:00:36.1032290Z env:
+2026-10-02T16:00:36.1033220Z   RACK_ENV: test
+2026-10-02T16:00:36.1034289Z   BUNDLE_WITHOUT: development
+2026-10-02T16:00:36.1035515Z   BUNDLE_JOBS: 4
+2026-10-02T16:00:36.1036523Z   BUNDLE_RETRY: 3
+2026-10-02T16:00:36.1037793Z   VPSADMIN_PLUGINS: all
+2026-10-02T16:00:36.1038938Z   TOPIC: network
+2026-10-02T16:00:36.1043902Z   PATTERNS: spec/api/resources/network_*_spec.rb
+spec/api/resources/network_interface*_spec.rb
+spec/api/resources/ip_address*_spec.rb
+spec/api/resources/ip_release*_spec.rb
+spec/api/resources/host_ip_address_spec.rb
+spec/api/resources/location_network_spec.rb
+
+2026-10-02T16:00:36.1048306Z ##[endgroup]
+2026-10-02T16:00:36.1440772Z ##[group]Run actions/upload-artifact@v7
+2026-10-02T16:00:36.1442217Z with:
+2026-10-02T16:00:36.1442990Z   name: rspec-files-network
+2026-10-02T16:00:36.1444006Z   path: api/tmp/rspec-files-network.txt
+2026-10-02T16:00:36.1445145Z   if-no-files-found: error
+2026-10-02T16:00:36.1446090Z   retention-days: 7
+2026-10-02T16:00:36.1446957Z   compression-level: 6
+2026-10-02T16:00:36.1447818Z   overwrite: false
+2026-10-02T16:00:36.1448672Z   include-hidden-files: false
+2026-10-02T16:00:36.1449644Z   archive: true
+2026-10-02T16:00:36.1450440Z env:
+2026-10-02T16:00:36.1451176Z   RACK_ENV: test
+2026-10-02T16:00:36.1452274Z   BUNDLE_WITHOUT: development
+2026-10-02T16:00:36.1453231Z   BUNDLE_JOBS: 4
+2026-10-02T16:00:36.1454009Z   BUNDLE_RETRY: 3
+2026-10-02T16:00:36.1454821Z   VPSADMIN_PLUGINS: all
+2026-10-02T16:00:36.1455755Z ##[endgroup]
+2026-10-02T16:00:36.2873263Z With the provided path, there will be 1 file uploaded
+2026-10-02T16:00:36.2880883Z Artifact name is valid!
+2026-10-02T16:00:36.2883081Z Root directory input is valid!
+2026-10-02T16:00:36.5215768Z Uploading artifact: rspec-files-network.zip
+2026-10-02T16:00:36.5260437Z Beginning upload of artifact content to blob storage
+2026-10-02T16:00:36.6754139Z Uploaded bytes 279
+2026-10-02T16:00:36.7095892Z Finished uploading artifact content to blob storage!
+2026-10-02T16:00:36.7098078Z SHA256 digest of uploaded artifact is 1b79c9c9a9c9e13e6ec4314bb76eeaa896af9b72bc08b6cbeb36ba06cb3b7f47
+2026-10-02T16:00:36.7101160Z Finalizing artifact upload
+2026-10-02T16:00:36.9964847Z Artifact rspec-files-network successfully finalized. Artifact ID 11236254901
+2026-10-02T16:00:36.9967313Z Artifact rspec-files-network has been successfully uploaded! Final size is 279 bytes. Artifact ID is 11236254901
+2026-10-02T16:00:36.9969374Z Artifact download URL: https://github.com/vpsfreecz/vpsadmin/actions/runs/37030949457/artifacts/11236254901
+2026-10-02T16:00:37.0090790Z ##[group]Run sudo apt-get update
+2026-10-02T16:00:37.0091673Z [36;1msudo apt-get update[0m
+2026-10-02T16:00:37.0092208Z [36;1msudo apt-get install -y \[0m
+2026-10-02T16:00:37.0092711Z [36;1m  libmariadb-dev \[0m
+2026-10-02T16:00:37.0093190Z [36;1m  libmariadb-dev-compat \[0m
+2026-10-02T16:00:37.0093686Z [36;1m  mariadb-client \[0m
+2026-10-02T16:00:37.0094162Z [36;1m  mariadb-server[0m
+2026-10-02T16:00:37.0159540Z shell: /usr/bin/bash -e {0}
+2026-10-02T16:00:37.0160016Z env:
+2026-10-02T16:00:37.0160424Z   RACK_ENV: test
+2026-10-02T16:00:37.0160866Z   BUNDLE_WITHOUT: development
+2026-10-02T16:00:37.0161640Z   BUNDLE_JOBS: 4
+2026-10-02T16:00:37.0162104Z   BUNDLE_RETRY: 3
+2026-10-02T16:00:37.0162545Z   VPSADMIN_PLUGINS: all
+2026-10-02T16:00:37.0162979Z ##[endgroup]
+2026-10-02T16:00:37.1050072Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-10-02T16:00:37.1448421Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-10-02T16:00:37.1464690Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-10-02T16:00:37.1521175Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-10-02T16:00:37.1559841Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-10-02T16:00:37.1869631Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-10-02T16:00:37.2796827Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1364 kB]
+2026-10-02T16:00:37.2945434Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [304 kB]
+2026-10-02T16:00:37.2981135Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [180 kB]
+2026-10-02T16:00:37.2992593Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1699 kB]
+2026-10-02T16:00:37.3112829Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [341 kB]
+2026-10-02T16:00:37.3142920Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+2026-10-02T16:00:37.3190745Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1720 kB]
+2026-10-02T16:00:37.3262739Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [394 kB]
+2026-10-02T16:00:37.3290083Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2026-10-02T16:00:37.3430354Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5764 B]
+2026-10-02T16:00:37.3869094Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [12.6 kB]
+2026-10-02T16:00:37.3960453Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1069 kB]
+2026-10-02T16:00:37.4028287Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [221 kB]
+2026-10-02T16:00:37.4050087Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [46.3 kB]
+2026-10-02T16:00:37.4068022Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1216 kB]
+2026-10-02T16:00:37.4139167Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [244 kB]
+2026-10-02T16:00:37.4149866Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.3 kB]
+2026-10-02T16:00:37.4169643Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1566 kB]
+2026-10-02T16:00:37.4282184Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [361 kB]
+2026-10-02T16:00:37.4495311Z Get:26 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [12.6 kB]
+2026-10-02T16:00:37.4531747Z Get:27 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [511 kB]
+2026-10-02T16:00:37.4623549Z Get:28 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [458 kB]
+2026-10-02T16:00:41.6981604Z Fetched 12.6 MB in 1s (9219 kB/s)
+2026-10-02T16:00:42.5346252Z Reading package lists...
+2026-10-02T16:00:42.5663656Z Reading package lists...
+2026-10-02T16:00:42.7375286Z Building dependency tree...
+2026-10-02T16:00:42.7384406Z Reading state information...
+2026-10-02T16:00:42.8787833Z The following additional packages will be installed:
+2026-10-02T16:00:42.8791959Z   galera-4 libconfig-inifiles-perl libdbd-mysql-perl libdbi-perl libmariadb3
+2026-10-02T16:00:42.8793259Z   liburing2 mariadb-client-core mariadb-common mariadb-plugin-provider-bzip2
+2026-10-02T16:00:42.8794281Z   mariadb-plugin-provider-lz4 mariadb-plugin-provider-lzma
+2026-10-02T16:00:42.8795198Z   mariadb-plugin-provider-lzo mariadb-plugin-provider-snappy
+2026-10-02T16:00:42.8796169Z   mariadb-server-core pv socat
+2026-10-02T16:00:42.8800520Z Suggested packages:
+2026-10-02T16:00:42.8801554Z   libmldbm-perl libnet-daemon-perl libsql-statement-perl mailx mariadb-test
+2026-10-02T16:00:42.8802419Z   doc-base
+2026-10-02T16:00:42.9093694Z The following packages will be REMOVED:
+2026-10-02T16:00:42.9098408Z   libmysqlclient-dev mysql-client mysql-client-8.0 mysql-client-core-8.0
+2026-10-02T16:00:42.9102704Z   mysql-server mysql-server-8.0 mysql-server-core-8.0
+2026-10-02T16:00:42.9103648Z The following NEW packages will be installed:
+2026-10-02T16:00:42.9106076Z   galera-4 libconfig-inifiles-perl libdbd-mysql-perl libdbi-perl
+2026-10-02T16:00:42.9110307Z   libmariadb-dev libmariadb-dev-compat libmariadb3 liburing2 mariadb-client
+2026-10-02T16:00:42.9111037Z   mariadb-client-core mariadb-common mariadb-plugin-provider-bzip2
+2026-10-02T16:00:42.9111968Z   mariadb-plugin-provider-lz4 mariadb-plugin-provider-lzma
+2026-10-02T16:00:42.9113286Z   mariadb-plugin-provider-lzo mariadb-plugin-provider-snappy mariadb-server
+2026-10-02T16:00:42.9113880Z   mariadb-server-core pv socat
+2026-10-02T16:00:42.9288262Z 0 upgraded, 20 newly installed, 7 to remove and 25 not upgraded.
+2026-10-02T16:00:42.9288771Z Need to get 18.0 MB of archives.
+2026-10-02T16:00:42.9289104Z After this operation, 458 kB disk space will be freed.
+2026-10-02T16:00:42.9289480Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-10-02T16:00:42.9713341Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 galera-4 amd64 26.4.16-2build4 [736 kB]
+2026-10-02T16:00:43.0070343Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-common all 1:10.11.14-0ubuntu0.24.04.1 [28.6 kB]
+2026-10-02T16:00:43.0385524Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libdbi-perl amd64 1.643-4ubuntu0.3 [721 kB]
+2026-10-02T16:00:43.0712263Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libconfig-inifiles-perl all 3.000003-2ubuntu0.1 [38.5 kB]
+2026-10-02T16:00:43.0973376Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 libmariadb3 amd64 1:10.11.14-0ubuntu0.24.04.1 [196 kB]
+2026-10-02T16:00:43.1286848Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-client-core amd64 1:10.11.14-0ubuntu0.24.04.1 [1039 kB]
+2026-10-02T16:00:43.1677130Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-client amd64 1:10.11.14-0ubuntu0.24.04.1 [2502 kB]
+2026-10-02T16:00:43.2250679Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 liburing2 amd64 2.5-1build1 [21.1 kB]
+2026-10-02T16:00:43.2552740Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-server-core amd64 1:10.11.14-0ubuntu0.24.04.1 [8406 kB]
+2026-10-02T16:00:43.3618043Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 socat amd64 1.8.0.0-4ubuntu0.1 [374 kB]
+2026-10-02T16:00:43.3944643Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-server amd64 1:10.11.14-0ubuntu0.24.04.1 [3463 kB]
+2026-10-02T16:00:43.4556231Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libdbd-mysql-perl amd64 4.052-1ubuntu3 [85.5 kB]
+2026-10-02T16:00:43.4861891Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 libmariadb-dev amd64 1:10.11.14-0ubuntu0.24.04.1 [274 kB]
+2026-10-02T16:00:43.5179255Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-plugin-provider-bzip2 amd64 1:10.11.14-0ubuntu0.24.04.1 [13.9 kB]
+2026-10-02T16:00:43.5481709Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-plugin-provider-lz4 amd64 1:10.11.14-0ubuntu0.24.04.1 [13.8 kB]
+2026-10-02T16:00:43.5783058Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-plugin-provider-lzma amd64 1:10.11.14-0ubuntu0.24.04.1 [13.8 kB]
+2026-10-02T16:00:43.6083373Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-plugin-provider-lzo amd64 1:10.11.14-0ubuntu0.24.04.1 [13.8 kB]
+2026-10-02T16:00:43.6826483Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 mariadb-plugin-provider-snappy amd64 1:10.11.14-0ubuntu0.24.04.1 [13.8 kB]
+2026-10-02T16:00:43.7089156Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 pv amd64 1.8.5-2build1 [73.9 kB]
+2026-10-02T16:00:43.7357745Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 libmariadb-dev-compat amd64 1:10.11.14-0ubuntu0.24.04.1 [12.0 kB]
+2026-10-02T16:00:43.9600208Z Preconfiguring packages ...
+2026-10-02T16:00:44.0492082Z Fetched 18.0 MB in 1s (22.1 MB/s)
+2026-10-02T16:00:44.0970759Z (Reading database ... 
+2026-10-02T16:00:44.0971210Z (Reading database ... 5%
+2026-10-02T16:00:44.0971991Z (Reading database ... 10%
+2026-10-02T16:00:44.0972502Z (Reading database ... 15%
+2026-10-02T16:00:44.0972970Z (Reading database ... 20%
+2026-10-02T16:00:44.0973426Z (Reading database ... 25%
+2026-10-02T16:00:44.0974052Z (Reading database ... 30%
+2026-10-02T16:00:44.0974384Z (Reading database ... 35%
+2026-10-02T16:00:44.0974745Z (Reading database ... 40%
+2026-10-02T16:00:44.0975157Z (Reading database ... 45%
+2026-10-02T16:00:44.0975500Z (Reading database ... 50%
+2026-10-02T16:00:44.1037824Z (Reading database ... 55%
+2026-10-02T16:00:44.2183406Z (Reading database ... 60%
+2026-10-02T16:00:44.4243526Z (Reading database ... 65%
+2026-10-02T16:00:44.6273069Z (Reading database ... 70%
+2026-10-02T16:00:44.7824264Z (Reading database ... 75%
+2026-10-02T16:00:44.9321593Z (Reading database ... 80%
+2026-10-02T16:00:45.0849070Z (Reading database ... 85%
+2026-10-02T16:00:45.2443113Z (Reading database ... 90%
+2026-10-02T16:00:45.3858303Z (Reading database ... 95%
+2026-10-02T16:00:45.3858959Z (Reading database ... 100%
+2026-10-02T16:00:45.3859672Z (Reading database ... 202294 files and directories currently installed.)
+2026-10-02T16:00:45.3900135Z Removing libmysqlclient-dev (8.0.46-0ubuntu0.24.04.4) ...
+2026-10-02T16:00:45.4161215Z Removing mysql-client (8.0.46-0ubuntu0.24.04.4) ...
+2026-10-02T16:00:45.4451276Z Removing mysql-server (8.0.46-0ubuntu0.24.04.4) ...
+2026-10-02T16:00:45.4881051Z Removing mysql-server-8.0 (8.0.46-0ubuntu0.24.04.4) ...
+2026-10-02T16:00:45.9410605Z update-alternatives: using /etc/mysql/my.cnf.fallback to provide /etc/mysql/my.cnf (my.cnf) in auto mode
+2026-10-02T16:00:45.9803907Z Removing mysql-client-8.0 (8.0.46-0ubuntu0.24.04.4) ...
+2026-10-02T16:00:46.0047056Z Removing mysql-client-core-8.0 (8.0.46-0ubuntu0.24.04.4) ...
+2026-10-02T16:00:46.0251765Z Removing mysql-server-core-8.0 (8.0.46-0ubuntu0.24.04.4) ...
+2026-10-02T16:00:46.2144405Z Selecting previously unselected package galera-4.
+2026-10-02T16:00:46.2199143Z (Reading database ... 
+2026-10-02T16:00:46.2199523Z (Reading database ... 5%
+2026-10-02T16:00:46.2199871Z (Reading database ... 10%
+2026-10-02T16:00:46.2200216Z (Reading database ... 15%
+2026-10-02T16:00:46.2200560Z (Reading database ... 20%
+2026-10-02T16:00:46.2200889Z (Reading database ... 25%
+2026-10-02T16:00:46.2201241Z (Reading database ... 30%
+2026-10-02T16:00:46.2201789Z (Reading database ... 35%
+2026-10-02T16:00:46.2202118Z (Reading database ... 40%
+2026-10-02T16:00:46.2202446Z (Reading database ... 45%
+2026-10-02T16:00:46.2202769Z (Reading database ... 50%
+2026-10-02T16:00:46.2209460Z (Reading database ... 55%
+2026-10-02T16:00:46.2310198Z (Reading database ... 60%
+2026-10-02T16:00:46.2335446Z (Reading database ... 65%
+2026-10-02T16:00:46.2356723Z (Reading database ... 70%
+2026-10-02T16:00:46.2387191Z (Reading database ... 75%
+2026-10-02T16:00:46.2421064Z (Reading database ... 80%
+2026-10-02T16:00:46.2447092Z (Reading database ... 85%
+2026-10-02T16:00:46.2599493Z (Reading database ... 90%
+2026-10-02T16:00:46.2859850Z (Reading database ... 95%
+2026-10-02T16:00:46.2860405Z (Reading database ... 100%
+2026-10-02T16:00:46.2861088Z (Reading database ... 202054 files and directories currently installed.)
+2026-10-02T16:00:46.2904431Z Preparing to unpack .../0-galera-4_26.4.16-2build4_amd64.deb ...
+2026-10-02T16:00:46.3484683Z info: The home dir /nonexistent you specified can't be accessed: No such file or directory
+2026-10-02T16:00:46.3485355Z 
+2026-10-02T16:00:46.3521646Z info: Selecting UID from range 100 to 999 ...
+2026-10-02T16:00:46.3522278Z 
+2026-10-02T16:00:46.3545600Z info: Adding system user `_galera' (UID 113) ...
+2026-10-02T16:00:46.3565074Z info: Adding new user `_galera' (UID 113) with group `nogroup' ...
+2026-10-02T16:00:46.3735272Z info: Not creating `/nonexistent'.
+2026-10-02T16:00:46.3769939Z Unpacking galera-4 (26.4.16-2build4) ...
+2026-10-02T16:00:46.4058135Z Selecting previously unselected package mariadb-common.
+2026-10-02T16:00:46.4186485Z Preparing to unpack .../1-mariadb-common_1%3a10.11.14-0ubuntu0.24.04.1_all.deb ...
+2026-10-02T16:00:46.4271034Z Unpacking mariadb-common (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:46.4458366Z Selecting previously unselected package libdbi-perl:amd64.
+2026-10-02T16:00:46.4586115Z Preparing to unpack .../2-libdbi-perl_1.643-4ubuntu0.3_amd64.deb ...
+2026-10-02T16:00:46.4593942Z Unpacking libdbi-perl:amd64 (1.643-4ubuntu0.3) ...
+2026-10-02T16:00:46.5099067Z Selecting previously unselected package libconfig-inifiles-perl.
+2026-10-02T16:00:46.5228267Z Preparing to unpack .../3-libconfig-inifiles-perl_3.000003-2ubuntu0.1_all.deb ...
+2026-10-02T16:00:46.5236467Z Unpacking libconfig-inifiles-perl (3.000003-2ubuntu0.1) ...
+2026-10-02T16:00:46.5511543Z Selecting previously unselected package libmariadb3:amd64.
+2026-10-02T16:00:46.5637804Z Preparing to unpack .../4-libmariadb3_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:46.5657138Z Unpacking libmariadb3:amd64 (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:46.5897057Z Selecting previously unselected package mariadb-client-core.
+2026-10-02T16:00:46.6027218Z Preparing to unpack .../5-mariadb-client-core_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:46.6035739Z Unpacking mariadb-client-core (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:46.6652856Z Selecting previously unselected package mariadb-client.
+2026-10-02T16:00:46.6780053Z Preparing to unpack .../6-mariadb-client_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:46.6788852Z Unpacking mariadb-client (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:46.8661097Z Selecting previously unselected package liburing2:amd64.
+2026-10-02T16:00:46.8787886Z Preparing to unpack .../7-liburing2_2.5-1build1_amd64.deb ...
+2026-10-02T16:00:46.8796226Z Unpacking liburing2:amd64 (2.5-1build1) ...
+2026-10-02T16:00:46.8992083Z Selecting previously unselected package mariadb-server-core.
+2026-10-02T16:00:46.9120772Z Preparing to unpack .../8-mariadb-server-core_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:46.9126851Z Unpacking mariadb-server-core (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.0788074Z Selecting previously unselected package socat.
+2026-10-02T16:00:47.0914690Z Preparing to unpack .../9-socat_1.8.0.0-4ubuntu0.1_amd64.deb ...
+2026-10-02T16:00:47.0921649Z Unpacking socat (1.8.0.0-4ubuntu0.1) ...
+2026-10-02T16:00:47.1401192Z Setting up mariadb-common (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.1468898Z update-alternatives: using /etc/mysql/mariadb.cnf to provide /etc/mysql/my.cnf (my.cnf) in auto mode
+2026-10-02T16:00:47.1796773Z Selecting previously unselected package mariadb-server.
+2026-10-02T16:00:47.1852619Z (Reading database ... 
+2026-10-02T16:00:47.1853174Z (Reading database ... 5%
+2026-10-02T16:00:47.1853526Z (Reading database ... 10%
+2026-10-02T16:00:47.1853862Z (Reading database ... 15%
+2026-10-02T16:00:47.1854187Z (Reading database ... 20%
+2026-10-02T16:00:47.1854515Z (Reading database ... 25%
+2026-10-02T16:00:47.1854837Z (Reading database ... 30%
+2026-10-02T16:00:47.1855160Z (Reading database ... 35%
+2026-10-02T16:00:47.1855482Z (Reading database ... 40%
+2026-10-02T16:00:47.1855810Z (Reading database ... 45%
+2026-10-02T16:00:47.1856133Z (Reading database ... 50%
+2026-10-02T16:00:47.1856452Z (Reading database ... 55%
+2026-10-02T16:00:47.1963408Z (Reading database ... 60%
+2026-10-02T16:00:47.1986543Z (Reading database ... 65%
+2026-10-02T16:00:47.2009954Z (Reading database ... 70%
+2026-10-02T16:00:47.2035566Z (Reading database ... 75%
+2026-10-02T16:00:47.2074081Z (Reading database ... 80%
+2026-10-02T16:00:47.2099876Z (Reading database ... 85%
+2026-10-02T16:00:47.2258662Z (Reading database ... 90%
+2026-10-02T16:00:47.2523175Z (Reading database ... 95%
+2026-10-02T16:00:47.2523766Z (Reading database ... 100%
+2026-10-02T16:00:47.2524555Z (Reading database ... 202514 files and directories currently installed.)
+2026-10-02T16:00:47.2568794Z Preparing to unpack .../0-mariadb-server_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.3419430Z /var/lib/mysql: found previous version 8.0
+2026-10-02T16:00:47.3493460Z The contents of /var/lib/mysql/ indicates a
+2026-10-02T16:00:47.3494182Z version that cannot automatically be upgraded. Therefore the
+2026-10-02T16:00:47.3495458Z previous data directory will be renamed to /var/lib/mysql-8.0 and
+2026-10-02T16:00:47.3496411Z a new data directory will be initialized at /var/lib/mysql.
+2026-10-02T16:00:47.3497077Z Please manually export/import your data (e.g. with mysqldump) if needed.
+2026-10-02T16:00:47.4191997Z Unpacking mariadb-server (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.5883930Z Selecting previously unselected package libdbd-mysql-perl:amd64.
+2026-10-02T16:00:47.6011199Z Preparing to unpack .../1-libdbd-mysql-perl_4.052-1ubuntu3_amd64.deb ...
+2026-10-02T16:00:47.6018277Z Unpacking libdbd-mysql-perl:amd64 (4.052-1ubuntu3) ...
+2026-10-02T16:00:47.6218690Z Selecting previously unselected package libmariadb-dev.
+2026-10-02T16:00:47.6349134Z Preparing to unpack .../2-libmariadb-dev_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.6356179Z Unpacking libmariadb-dev (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.6815333Z Selecting previously unselected package mariadb-plugin-provider-bzip2.
+2026-10-02T16:00:47.6942725Z Preparing to unpack .../3-mariadb-plugin-provider-bzip2_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.6950094Z Unpacking mariadb-plugin-provider-bzip2 (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.7139706Z Selecting previously unselected package mariadb-plugin-provider-lz4.
+2026-10-02T16:00:47.7266769Z Preparing to unpack .../4-mariadb-plugin-provider-lz4_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.7274235Z Unpacking mariadb-plugin-provider-lz4 (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.7463630Z Selecting previously unselected package mariadb-plugin-provider-lzma.
+2026-10-02T16:00:47.7592414Z Preparing to unpack .../5-mariadb-plugin-provider-lzma_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.7600371Z Unpacking mariadb-plugin-provider-lzma (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.7800579Z Selecting previously unselected package mariadb-plugin-provider-lzo.
+2026-10-02T16:00:47.7928605Z Preparing to unpack .../6-mariadb-plugin-provider-lzo_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.7936420Z Unpacking mariadb-plugin-provider-lzo (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.8129361Z Selecting previously unselected package mariadb-plugin-provider-snappy.
+2026-10-02T16:00:47.8257816Z Preparing to unpack .../7-mariadb-plugin-provider-snappy_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.8265499Z Unpacking mariadb-plugin-provider-snappy (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.8460534Z Selecting previously unselected package pv.
+2026-10-02T16:00:47.8589166Z Preparing to unpack .../8-pv_1.8.5-2build1_amd64.deb ...
+2026-10-02T16:00:47.8596902Z Unpacking pv (1.8.5-2build1) ...
+2026-10-02T16:00:47.8805182Z Selecting previously unselected package libmariadb-dev-compat.
+2026-10-02T16:00:47.8933084Z Preparing to unpack .../9-libmariadb-dev-compat_1%3a10.11.14-0ubuntu0.24.04.1_amd64.deb ...
+2026-10-02T16:00:47.8939445Z Unpacking libmariadb-dev-compat (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9322345Z Setting up libconfig-inifiles-perl (3.000003-2ubuntu0.1) ...
+2026-10-02T16:00:47.9342876Z Setting up galera-4 (26.4.16-2build4) ...
+2026-10-02T16:00:47.9365685Z Setting up socat (1.8.0.0-4ubuntu0.1) ...
+2026-10-02T16:00:47.9380526Z Setting up libmariadb3:amd64 (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9398163Z Setting up libmariadb-dev (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9414758Z Setting up pv (1.8.5-2build1) ...
+2026-10-02T16:00:47.9431699Z Setting up liburing2:amd64 (2.5-1build1) ...
+2026-10-02T16:00:47.9453387Z Setting up libdbi-perl:amd64 (1.643-4ubuntu0.3) ...
+2026-10-02T16:00:47.9474644Z Setting up libmariadb-dev-compat (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9492873Z Setting up mariadb-client-core (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9509137Z Setting up libdbd-mysql-perl:amd64 (4.052-1ubuntu3) ...
+2026-10-02T16:00:47.9527404Z Setting up mariadb-server-core (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9545586Z Setting up mariadb-client (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9598107Z Setting up mariadb-server (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:47.9681048Z Installing new version of config file /etc/mysql/debian-start ...
+2026-10-02T16:00:48.8028461Z renamed '/etc/logrotate.d/mysql-server' -> '/etc/logrotate.d/mysql-server.dpkg-bak'
+2026-10-02T16:00:49.2268598Z Created symlink /etc/systemd/system/multi-user.target.wants/mariadb.service → /usr/lib/systemd/system/mariadb.service.
+2026-10-02T16:00:49.2269493Z 
+2026-10-02T16:00:49.7080881Z Setting up mariadb-plugin-provider-bzip2 (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:49.7113243Z Setting up mariadb-plugin-provider-lzma (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:49.7139069Z Setting up mariadb-plugin-provider-lzo (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:49.7166852Z Setting up mariadb-plugin-provider-lz4 (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:49.7194431Z Setting up mariadb-plugin-provider-snappy (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:49.7224998Z Processing triggers for man-db (2.12.0-4build2) ...
+2026-10-02T16:00:49.7249600Z Not building database; man-db/auto-update is not 'true'.
+2026-10-02T16:00:49.7301846Z Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+2026-10-02T16:00:49.7719891Z Processing triggers for mariadb-server (1:10.11.14-0ubuntu0.24.04.1) ...
+2026-10-02T16:00:50.7975433Z 
+2026-10-02T16:00:50.7975990Z Running kernel seems to be up-to-date.
+2026-10-02T16:00:50.7976413Z 
+2026-10-02T16:00:50.7976578Z No services need to be restarted.
+2026-10-02T16:00:50.7976856Z 
+2026-10-02T16:00:50.7977027Z No containers need to be restarted.
+2026-10-02T16:00:50.7977366Z 
+2026-10-02T16:00:50.7977570Z No user sessions are running outdated binaries.
+2026-10-02T16:00:50.7977943Z 
+2026-10-02T16:00:50.7978268Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-10-02T16:00:51.6644217Z ##[group]Run set -euo pipefail
+2026-10-02T16:00:51.6644581Z [36;1mset -euo pipefail[0m
+2026-10-02T16:00:51.6644937Z [36;1m# ruby/setup-ruby resolves exact 3.4.0 to a preview build on[0m
+2026-10-02T16:00:51.6645430Z [36;1m# GitHub-hosted runners, so use the latest stable 3.4.x instead.[0m
+2026-10-02T16:00:51.6645909Z [36;1mecho "version=$(cut -d. -f1,2 .ruby-version)" >> "$GITHUB_OUTPUT"[0m
+2026-10-02T16:00:51.6714677Z shell: /usr/bin/bash -e {0}
+2026-10-02T16:00:51.6714955Z env:
+2026-10-02T16:00:51.6715171Z   RACK_ENV: test
+2026-10-02T16:00:51.6715415Z   BUNDLE_WITHOUT: development
+2026-10-02T16:00:51.6715688Z   BUNDLE_JOBS: 4
+2026-10-02T16:00:51.6715912Z   BUNDLE_RETRY: 3
+2026-10-02T16:00:51.6716152Z   VPSADMIN_PLUGINS: all
+2026-10-02T16:00:51.6716407Z ##[endgroup]
+2026-10-02T16:00:51.6919095Z ##[group]Run ruby/setup-ruby@v1
+2026-10-02T16:00:51.6919375Z with:
+2026-10-02T16:00:51.6919575Z   ruby-version: 3.4
+2026-10-02T16:00:51.6919792Z   bundler-cache: true
+2026-10-02T16:00:51.6920026Z   working-directory: api
+2026-10-02T16:00:51.6922824Z   token: ***
+2026-10-02T16:00:51.6923024Z env:
+2026-10-02T16:00:51.6923211Z   RACK_ENV: test
+2026-10-02T16:00:51.6923436Z   BUNDLE_WITHOUT: development
+2026-10-02T16:00:51.6923675Z   BUNDLE_JOBS: 4
+2026-10-02T16:00:51.6923873Z   BUNDLE_RETRY: 3
+2026-10-02T16:00:51.6924080Z   VPSADMIN_PLUGINS: all
+2026-10-02T16:00:51.6924297Z ##[endgroup]
+2026-10-02T16:00:51.8373323Z ##[group]Modifying PATH
+2026-10-02T16:00:51.8374128Z Entries added to PATH to use selected Ruby:
+2026-10-02T16:00:51.8376104Z   /opt/hostedtoolcache/Ruby/3.4.11/x64/bin
+2026-10-02T16:00:51.8381168Z ##[endgroup]
+2026-10-02T16:00:51.8382749Z ##[group]Print Ruby version
+2026-10-02T16:00:51.8477147Z [command]/opt/hostedtoolcache/Ruby/3.4.11/x64/bin/ruby --version
+2026-10-02T16:00:52.1752467Z ruby 3.4.11 (2026-09-23 revision 592f1ffdb3) +PRISM [x86_64-linux]
+2026-10-02T16:00:52.1782247Z Took   0.34 seconds
+2026-10-02T16:00:52.1783272Z ##[endgroup]
+2026-10-02T16:00:52.1784541Z ##[group]Installing Bundler
+2026-10-02T16:00:52.1788536Z Using Bundler shipped with ruby-3.4.11
+2026-10-02T16:00:52.1789506Z Took   0.00 seconds
+2026-10-02T16:00:52.1790256Z ##[endgroup]
+2026-10-02T16:00:52.1791023Z > bundle install
+2026-10-02T16:00:52.1793932Z Setting BUNDLER_VERSION=2 for "bundle config|lock" commands below to ensure Bundler 2 is used
+2026-10-02T16:00:52.1814241Z [command]/opt/hostedtoolcache/Ruby/3.4.11/x64/bin/bundle config set --local path /home/runner/work/vpsadmin/vpsadmin/api/vendor/bundle
+2026-10-02T16:00:53.4120613Z [command]/opt/hostedtoolcache/Ruby/3.4.11/x64/bin/bundle lock
+2026-10-02T16:00:55.0570428Z Writing lockfile to /home/runner/work/vpsadmin/vpsadmin/api/Gemfile.lock
+2026-10-02T16:00:56.4513539Z Fetching gem metadata from https://rubygems.org/..........
+2026-10-02T16:00:56.6384743Z Resolving dependencies...
+2026-10-02T16:00:57.2339543Z ##[group]Print lockfile
+2026-10-02T16:00:57.2354573Z [command]/usr/bin/cat Gemfile.lock
+2026-10-02T16:00:57.2384900Z GEM
+2026-10-02T16:00:57.2385324Z   remote: https://rubygems.org/
+2026-10-02T16:00:57.2386188Z   specs:
+2026-10-02T16:00:57.2386560Z     activemodel (8.1.4)
+2026-10-02T16:00:57.2387048Z       activesupport (= 8.1.4)
+2026-10-02T16:00:57.2387560Z     activerecord (8.1.4)
+2026-10-02T16:00:57.2388029Z       activemodel (= 8.1.4)
+2026-10-02T16:00:57.2388607Z       activesupport (= 8.1.4)
+2026-10-02T16:00:57.2389077Z       timeout (>= 0.4.0)
+2026-10-02T16:00:57.2389538Z     activesupport (8.1.4)
+2026-10-02T16:00:57.2389940Z       base64
+2026-10-02T16:00:57.2390288Z       bigdecimal
+2026-10-02T16:00:57.2390724Z       concurrent-ruby (~> 1.0, >= 1.3.1)
+2026-10-02T16:00:57.2391215Z       connection_pool (>= 2.2.5)
+2026-10-02T16:00:57.2391889Z       drb
+2026-10-02T16:00:57.2392219Z       i18n (>= 1.6, < 2)
+2026-10-02T16:00:57.2392621Z       json
+2026-10-02T16:00:57.2392958Z       logger (>= 1.4.2)
+2026-10-02T16:00:57.2393343Z       minitest (>= 5.1)
+2026-10-02T16:00:57.2393730Z       securerandom (>= 0.3)
+2026-10-02T16:00:57.2394151Z       tzinfo (~> 2.0, >= 2.0.5)
+2026-10-02T16:00:57.2394554Z       uri (>= 0.13.1)
+2026-10-02T16:00:57.2394937Z     aes_key_wrap (1.1.0)
+2026-10-02T16:00:57.2395389Z     amq-protocol (2.9.0)
+2026-10-02T16:00:57.2395820Z     ancestry (4.3.3)
+2026-10-02T16:00:57.2396209Z       activerecord (>= 5.2.6)
+2026-10-02T16:00:57.2396619Z     android_key_attestation (0.3.0)
+2026-10-02T16:00:57.2397044Z     ast (2.4.3)
+2026-10-02T16:00:57.2397440Z     attr_required (1.0.2)
+2026-10-02T16:00:57.2397849Z     base64 (0.3.0)
+2026-10-02T16:00:57.2398175Z     bcrypt (3.1.22)
+2026-10-02T16:00:57.2398545Z     bigdecimal (4.1.3)
+2026-10-02T16:00:57.2398942Z     bindata (2.5.1)
+2026-10-02T16:00:57.2399265Z     bunny (2.24.0)
+2026-10-02T16:00:57.2399653Z       amq-protocol (~> 2.3)
+2026-10-02T16:00:57.2400581Z       sorted_set (~> 1, >= 1.0.2)
+2026-10-02T16:00:57.2401064Z     cbor (0.5.10.3)
+2026-10-02T16:00:57.2401684Z     coderay (1.1.3)
+2026-10-02T16:00:57.2402112Z     concurrent-ruby (1.3.8)
+2026-10-02T16:00:57.2402588Z     connection_pool (3.0.2)
+2026-10-02T16:00:57.2403000Z     cose (1.3.1)
+2026-10-02T16:00:57.2403352Z       cbor (~> 0.5.9)
+2026-10-02T16:00:57.2403817Z       openssl-signature_algorithm (~> 1.0)
+2026-10-02T16:00:57.2404340Z     csv (3.3.6)
+2026-10-02T16:00:57.2404683Z     date (3.5.1)
+2026-10-02T16:00:57.2405037Z     diff-lcs (1.6.2)
+2026-10-02T16:00:57.2405490Z     dnsruby (1.74.0)
+2026-10-02T16:00:57.2405916Z       base64 (>= 0.2)
+2026-10-02T16:00:57.2406393Z       logger (~> 1.6)
+2026-10-02T16:00:57.2406866Z       simpleidn (~> 0.2.1)
+2026-10-02T16:00:57.2407349Z     domain_name (0.6.20260921)
+2026-10-02T16:00:57.2407771Z     drb (2.2.3)
+2026-10-02T16:00:57.2408115Z     faraday (2.14.4)
+2026-10-02T16:00:57.2408481Z       faraday-net_http (>= 2.0, < 3.5)
+2026-10-02T16:00:57.2408928Z       json
+2026-10-02T16:00:57.2409264Z       logger
+2026-10-02T16:00:57.2409651Z     faraday-follow_redirects (0.5.0)
+2026-10-02T16:00:57.2410128Z       faraday (>= 1, < 3)
+2026-10-02T16:00:57.2410587Z     faraday-net_http (3.4.4)
+2026-10-02T16:00:57.2411023Z       net-http (~> 0.5)
+2026-10-02T16:00:57.2411637Z     fio_api (0.0.11)
+2026-10-02T16:00:57.2412090Z       httparty (>= 0.16.2)
+2026-10-02T16:00:57.2412508Z     haveapi (0.29.8)
+2026-10-02T16:00:57.2413232Z       activesupport (>= 7.1)
+2026-10-02T16:00:57.2413691Z       haveapi-client (~> 0.29.8)
+2026-10-02T16:00:57.2414126Z       i18n (>= 1.6, < 2)
+2026-10-02T16:00:57.2414481Z       json
+2026-10-02T16:00:57.2414795Z       mail
+2026-10-02T16:00:57.2415120Z       nesty (~> 1.0)
+2026-10-02T16:00:57.2415559Z       rack-oauth2 (~> 2.2.0)
+2026-10-02T16:00:57.2415976Z       rake
+2026-10-02T16:00:57.2416307Z       redcarpet (~> 3.6)
+2026-10-02T16:00:57.2416764Z       require_all (~> 2.0.0)
+2026-10-02T16:00:57.2417220Z       sinatra (~> 4.0)
+2026-10-02T16:00:57.2417642Z       sinatra-contrib (~> 4.0)
+2026-10-02T16:00:57.2418076Z       tilt (~> 2.4)
+2026-10-02T16:00:57.2418461Z     haveapi-client (0.29.8)
+2026-10-02T16:00:57.2418951Z       activesupport (>= 7.0)
+2026-10-02T16:00:57.2419392Z       highline (~> 3.1)
+2026-10-02T16:00:57.2419817Z       json
+2026-10-02T16:00:57.2420159Z       require_all (~> 2.0.0)
+2026-10-02T16:00:57.2420564Z       rest-client (~> 2.1.0)
+2026-10-02T16:00:57.2421030Z       ruby-progressbar (~> 1.13.0)
+2026-10-02T16:00:57.2421747Z     highline (3.1.2)
+2026-10-02T16:00:57.2422135Z       reline
+2026-10-02T16:00:57.2422542Z     http-accept (1.7.0)
+2026-10-02T16:00:57.2422951Z     http-cookie (1.1.6)
+2026-10-02T16:00:57.2423411Z       domain_name (~> 0.5)
+2026-10-02T16:00:57.2423852Z     httparty (0.24.3)
+2026-10-02T16:00:57.2424237Z       csv
+2026-10-02T16:00:57.2424615Z       mini_mime (>= 1.0.0)
+2026-10-02T16:00:57.2425030Z       multi_xml (>= 0.5.2)
+2026-10-02T16:00:57.2425430Z     i18n (1.15.2)
+2026-10-02T16:00:57.2425806Z       concurrent-ruby (~> 1.0)
+2026-10-02T16:00:57.2426268Z     io-console (0.9.4)
+2026-10-02T16:00:57.2426687Z     ipaddress (0.8.3)
+2026-10-02T16:00:57.2427079Z     json (2.21.2)
+2026-10-02T16:00:57.2427447Z     json-jwt (1.17.2)
+2026-10-02T16:00:57.2427849Z       activesupport (>= 4.2)
+2026-10-02T16:00:57.2428277Z       aes_key_wrap
+2026-10-02T16:00:57.2428731Z       base64
+2026-10-02T16:00:57.2429068Z       bindata
+2026-10-02T16:00:57.2429426Z       faraday (~> 2.0)
+2026-10-02T16:00:57.2429826Z       faraday-follow_redirects
+2026-10-02T16:00:57.2430280Z     jwt (3.3.0)
+2026-10-02T16:00:57.2430624Z       base64
+2026-10-02T16:00:57.2431008Z     language_server-protocol (3.17.0.6)
+2026-10-02T16:00:57.2431763Z     lint_roller (1.1.0)
+2026-10-02T16:00:57.2432199Z     logger (1.7.0)
+2026-10-02T16:00:57.2432552Z     mail (2.9.1)
+2026-10-02T16:00:57.2432900Z       logger
+2026-10-02T16:00:57.2433289Z       mini_mime (>= 0.1.1)
+2026-10-02T16:00:57.2433715Z       net-imap
+2026-10-02T16:00:57.2434120Z       net-pop
+2026-10-02T16:00:57.2434472Z       net-smtp
+2026-10-02T16:00:57.2435123Z     method_source (1.1.0)
+2026-10-02T16:00:57.2435585Z     mime-types (3.7.0)
+2026-10-02T16:00:57.2435970Z       logger
+2026-10-02T16:00:57.2436372Z       mime-types-data (~> 3.2025, >= 3.2025.0507)
+2026-10-02T16:00:57.2436970Z     mime-types-data (3.2026.0929)
+2026-10-02T16:00:57.2437429Z     mini_mime (1.1.5)
+2026-10-02T16:00:57.2437856Z     minitest (6.0.6)
+2026-10-02T16:00:57.2438258Z       drb (~> 2.0)
+2026-10-02T16:00:57.2438621Z       prism (~> 1.5)
+2026-10-02T16:00:57.2439012Z     multi_json (1.21.2)
+2026-10-02T16:00:57.2439404Z     multi_xml (0.9.1)
+2026-10-02T16:00:57.2439812Z       bigdecimal (>= 3.1, < 5)
+2026-10-02T16:00:57.2440324Z     mustermann (3.1.1)
+2026-10-02T16:00:57.2440839Z     mysql2 (0.5.7)
+2026-10-02T16:00:57.2441285Z       bigdecimal
+2026-10-02T16:00:57.2441901Z     nesty (1.0.2)
+2026-10-02T16:00:57.2442274Z     net-http (0.9.1)
+2026-10-02T16:00:57.2442658Z       uri (>= 0.11.1)
+2026-10-02T16:00:57.2443057Z     net-imap (0.6.7)
+2026-10-02T16:00:57.2443454Z       date
+2026-10-02T16:00:57.2443806Z       net-protocol
+2026-10-02T16:00:57.2444178Z     net-pop (0.1.2)
+2026-10-02T16:00:57.2444549Z       net-protocol
+2026-10-02T16:00:57.2444937Z     net-protocol (0.4.0)
+2026-10-02T16:00:57.2445334Z       timeout
+2026-10-02T16:00:57.2445687Z     net-smtp (0.5.2)
+2026-10-02T16:00:57.2446051Z       net-protocol
+2026-10-02T16:00:57.2446614Z     netrc (0.11.0)
+2026-10-02T16:00:57.2447327Z     nio4r (2.7.5)
+2026-10-02T16:00:57.2447701Z     openssl (4.0.2)
+2026-10-02T16:00:57.2448118Z     openssl-signature_algorithm (1.3.0)
+2026-10-02T16:00:57.2448660Z       openssl (> 2.0)
+2026-10-02T16:00:57.2449067Z     paper_trail (17.0.0)
+2026-10-02T16:00:57.2449481Z       activerecord (>= 7.1)
+2026-10-02T16:00:57.2449978Z       request_store (~> 1.4)
+2026-10-02T16:00:57.2450416Z     parallel (2.2.0)
+2026-10-02T16:00:57.2450814Z     parser (3.3.12.0)
+2026-10-02T16:00:57.2451186Z       ast (~> 2.4.1)
+2026-10-02T16:00:57.2451810Z       racc
+2026-10-02T16:00:57.2452139Z     prism (1.9.0)
+2026-10-02T16:00:57.2452541Z     prometheus-client (4.2.5)
+2026-10-02T16:00:57.2453030Z       base64
+2026-10-02T16:00:57.2453342Z     pry (0.16.0)
+2026-10-02T16:00:57.2453687Z       coderay (~> 1.1)
+2026-10-02T16:00:57.2454100Z       method_source (~> 1.0)
+2026-10-02T16:00:57.2454585Z       reline (>= 0.6.0)
+2026-10-02T16:00:57.2454981Z     puma (8.0.2)
+2026-10-02T16:00:57.2455324Z       nio4r (~> 2.0)
+2026-10-02T16:00:57.2455666Z     racc (1.8.1)
+2026-10-02T16:00:57.2456024Z     rack (3.2.7)
+2026-10-02T16:00:57.2456379Z     rack-oauth2 (2.2.1)
+2026-10-02T16:00:57.2456765Z       activesupport
+2026-10-02T16:00:57.2457168Z       attr_required
+2026-10-02T16:00:57.2457555Z       faraday (~> 2.0)
+2026-10-02T16:00:57.2458009Z       faraday-follow_redirects
+2026-10-02T16:00:57.2458451Z       json-jwt (>= 1.11.0)
+2026-10-02T16:00:57.2458803Z       rack (>= 2.1.0)
+2026-10-02T16:00:57.2459173Z     rack-protection (4.2.1)
+2026-10-02T16:00:57.2459627Z       base64 (>= 0.1.0)
+2026-10-02T16:00:57.2460017Z       logger (>= 1.6.0)
+2026-10-02T16:00:57.2460487Z       rack (>= 3.0.0, < 4)
+2026-10-02T16:00:57.2460901Z     rack-session (2.1.2)
+2026-10-02T16:00:57.2461344Z       base64 (>= 0.1.0)
+2026-10-02T16:00:57.2461997Z       rack (>= 3.0.0)
+2026-10-02T16:00:57.2462366Z     rack-test (2.2.0)
+2026-10-02T16:00:57.2462737Z       rack (>= 1.3)
+2026-10-02T16:00:57.2463102Z     rackup (2.3.1)
+2026-10-02T16:00:57.2463454Z       rack (>= 3)
+2026-10-02T16:00:57.2463782Z     rainbow (3.1.1)
+2026-10-02T16:00:57.2464111Z     rake (13.4.2)
+2026-10-02T16:00:57.2464431Z     rbtree (0.4.7)
+2026-10-02T16:00:57.2464766Z     redcarpet (3.6.1)
+2026-10-02T16:00:57.2465130Z     regexp_parser (2.13.1)
+2026-10-02T16:00:57.2465545Z     reline (0.7.0)
+2026-10-02T16:00:57.2465920Z       io-console (~> 0.5)
+2026-10-02T16:00:57.2466387Z     request_store (1.7.0)
+2026-10-02T16:00:57.2466800Z       rack (>= 1.4)
+2026-10-02T16:00:57.2467203Z     require_all (2.0.0)
+2026-10-02T16:00:57.2467601Z     rest-client (2.1.0)
+2026-10-02T16:00:57.2468395Z       http-accept (>= 1.7.0, < 2.0)
+2026-10-02T16:00:57.2468951Z       http-cookie (>= 1.0.2, < 2.0)
+2026-10-02T16:00:57.2469496Z       mime-types (>= 1.16, < 4.0)
+2026-10-02T16:00:57.2470053Z       netrc (~> 0.8)
+2026-10-02T16:00:57.2470448Z     rotp (6.3.0)
+2026-10-02T16:00:57.2470817Z     rspec (3.13.2)
+2026-10-02T16:00:57.2471222Z       rspec-core (~> 3.13.0)
+2026-10-02T16:00:57.2471991Z       rspec-expectations (~> 3.13.0)
+2026-10-02T16:00:57.2472541Z       rspec-mocks (~> 3.13.0)
+2026-10-02T16:00:57.2473022Z     rspec-core (3.13.6)
+2026-10-02T16:00:57.2473466Z       rspec-support (~> 3.13.0)
+2026-10-02T16:00:57.2473971Z     rspec-expectations (3.13.5)
+2026-10-02T16:00:57.2474477Z       diff-lcs (>= 1.2.0, < 2.0)
+2026-10-02T16:00:57.2474942Z       rspec-support (~> 3.13.0)
+2026-10-02T16:00:57.2475425Z     rspec-mocks (3.13.8)
+2026-10-02T16:00:57.2475881Z       diff-lcs (>= 1.2.0, < 2.0)
+2026-10-02T16:00:57.2476358Z       rspec-support (~> 3.13.0)
+2026-10-02T16:00:57.2476860Z     rspec-support (3.13.7)
+2026-10-02T16:00:57.2477321Z     rubocop (1.91.0)
+2026-10-02T16:00:57.2477750Z       json (>= 2.3)
+2026-10-02T16:00:57.2478213Z       language_server-protocol (~> 3.17.0.2)
+2026-10-02T16:00:57.2478780Z       lint_roller (~> 1.1.0)
+2026-10-02T16:00:57.2479246Z       parallel (>= 1.10)
+2026-10-02T16:00:57.2479703Z       parser (>= 3.3.0.2)
+2026-10-02T16:00:57.2480133Z       rainbow (>= 2.2.2, < 4.0)
+2026-10-02T16:00:57.2481195Z       regexp_parser (>= 2.9.3, < 3.0)
+2026-10-02T16:00:57.2482008Z       rubocop-ast (>= 1.49.0, < 2.0)
+2026-10-02T16:00:57.2482530Z       ruby-progressbar (~> 1.7)
+2026-10-02T16:00:57.2483071Z       unicode-display_width (>= 2.4.0, < 4.0)
+2026-10-02T16:00:57.2483636Z     rubocop-ast (1.50.0)
+2026-10-02T16:00:57.2484069Z       parser (>= 3.3.7.2)
+2026-10-02T16:00:57.2484464Z       prism (~> 1.7)
+2026-10-02T16:00:57.2484902Z     rubocop-rake (0.7.1)
+2026-10-02T16:00:57.2485364Z       lint_roller (~> 1.1)
+2026-10-02T16:00:57.2485843Z       rubocop (>= 1.72.1)
+2026-10-02T16:00:57.2486324Z     rubocop-rspec (3.10.2)
+2026-10-02T16:00:57.2486786Z       lint_roller (~> 1.1)
+2026-10-02T16:00:57.2487217Z       regexp_parser (>= 2.0)
+2026-10-02T16:00:57.2487708Z       rubocop (~> 1.86, >= 1.86.2)
+2026-10-02T16:00:57.2488242Z     ruby-progressbar (1.13.0)
+2026-10-02T16:00:57.2488723Z     rubyzip (3.2.2)
+2026-10-02T16:00:57.2489128Z     safety_net_attestation (0.5.0)
+2026-10-02T16:00:57.2489626Z       jwt (>= 2.0, < 4.0)
+2026-10-02T16:00:57.2490050Z     securerandom (0.4.1)
+2026-10-02T16:00:57.2490471Z     simpleidn (0.2.3)
+2026-10-02T16:00:57.2490912Z     sinatra (4.2.1)
+2026-10-02T16:00:57.2491273Z       logger (>= 1.6.0)
+2026-10-02T16:00:57.2491921Z       mustermann (~> 3.0)
+2026-10-02T16:00:57.2492341Z       rack (>= 3.0.0, < 4)
+2026-10-02T16:00:57.2492786Z       rack-protection (= 4.2.1)
+2026-10-02T16:00:57.2493239Z       rack-session (>= 2.0.0, < 3)
+2026-10-02T16:00:57.2493715Z       tilt (~> 2.0)
+2026-10-02T16:00:57.2494112Z     sinatra-activerecord (2.0.28)
+2026-10-02T16:00:57.2494616Z       activerecord (>= 4.1)
+2026-10-02T16:00:57.2495111Z       sinatra (>= 1.0)
+2026-10-02T16:00:57.2495568Z     sinatra-contrib (4.2.1)
+2026-10-02T16:00:57.2496064Z       multi_json (>= 0.0.2)
+2026-10-02T16:00:57.2496482Z       mustermann (~> 3.0)
+2026-10-02T16:00:57.2496956Z       rack-protection (= 4.2.1)
+2026-10-02T16:00:57.2497400Z       sinatra (= 4.2.1)
+2026-10-02T16:00:57.2497765Z       tilt (~> 2.0)
+2026-10-02T16:00:57.2498111Z     sorted_set (1.1.0)
+2026-10-02T16:00:57.2498456Z       rbtree
+2026-10-02T16:00:57.2498773Z     tilt (2.9.0)
+2026-10-02T16:00:57.2499109Z     timeout (0.6.1)
+2026-10-02T16:00:57.2499477Z     tpm-key_attestation (0.14.2)
+2026-10-02T16:00:57.2499898Z       bindata (~> 2.4)
+2026-10-02T16:00:57.2500261Z       openssl (> 2.0)
+2026-10-02T16:00:57.2500650Z       openssl-signature_algorithm (~> 1.0)
+2026-10-02T16:00:57.2501111Z     tzinfo (2.0.6)
+2026-10-02T16:00:57.2501708Z       concurrent-ruby (~> 1.0)
+2026-10-02T16:00:57.2502159Z     unicode-display_width (3.3.0)
+2026-10-02T16:00:57.2502799Z       unicode-emoji (~> 4.3)
+2026-10-02T16:00:57.2503222Z     unicode-emoji (4.3.0)
+2026-10-02T16:00:57.2503600Z     uri (1.1.1)
+2026-10-02T16:00:57.2503945Z     user_agent_parser (2.21.0)
+2026-10-02T16:00:57.2504335Z     webauthn (3.4.3)
+2026-10-02T16:00:57.2504763Z       android_key_attestation (~> 0.3.0)
+2026-10-02T16:00:57.2505421Z       bindata (~> 2.4)
+2026-10-02T16:00:57.2505788Z       cbor (~> 0.5.9)
+2026-10-02T16:00:57.2506002Z       cose (~> 1.1)
+2026-10-02T16:00:57.2506202Z       openssl (>= 2.2)
+2026-10-02T16:00:57.2506426Z       safety_net_attestation (~> 0.5.0)
+2026-10-02T16:00:57.2506746Z       tpm-key_attestation (~> 0.14.0)
+2026-10-02T16:00:57.2507007Z     webrick (1.9.2)
+2026-10-02T16:00:57.2507202Z     yard (0.9.45)
+2026-10-02T16:00:57.2507319Z 
+2026-10-02T16:00:57.2507407Z PLATFORMS
+2026-10-02T16:00:57.2507586Z   ruby
+2026-10-02T16:00:57.2507763Z   x86_64-linux
+2026-10-02T16:00:57.2507883Z 
+2026-10-02T16:00:57.2507969Z DEPENDENCIES
+2026-10-02T16:00:57.2508169Z   activerecord (~> 8.1.1)
+2026-10-02T16:00:57.2508401Z   ancestry (~> 4.3.3)
+2026-10-02T16:00:57.2508603Z   base64
+2026-10-02T16:00:57.2508788Z   bcrypt (~> 3.1.20)
+2026-10-02T16:00:57.2508990Z   bunny (~> 2.24.0)
+2026-10-02T16:00:57.2509186Z   dnsruby (~> 1.73)
+2026-10-02T16:00:57.2509374Z   fio_api!
+2026-10-02T16:00:57.2509564Z   haveapi (~> 0.29.6)
+2026-10-02T16:00:57.2509774Z   ipaddress (~> 0.8.3)
+2026-10-02T16:00:57.2509983Z   json (< 3)
+2026-10-02T16:00:57.2510326Z   mysql2 (~> 0.5.6)
+2026-10-02T16:00:57.2510530Z   paper_trail (~> 17.0.0)
+2026-10-02T16:00:57.2510774Z   prometheus-client (~> 4.2.3)
+2026-10-02T16:00:57.2511237Z   pry
+2026-10-02T16:00:57.2511699Z   puma
+2026-10-02T16:00:57.2511897Z   rack-test
+2026-10-02T16:00:57.2512084Z   rackup
+2026-10-02T16:00:57.2512256Z   rake
+2026-10-02T16:00:57.2512433Z   require_all (~> 2.0.0)
+2026-10-02T16:00:57.2512652Z   rotp (~> 6.3.0)
+2026-10-02T16:00:57.2512841Z   rspec
+2026-10-02T16:00:57.2513025Z   rubocop
+2026-10-02T16:00:57.2513202Z   rubocop-rake
+2026-10-02T16:00:57.2513401Z   rubocop-rspec
+2026-10-02T16:00:57.2513602Z   rubyzip (~> 3.2.2)
+2026-10-02T16:00:57.2513830Z   sinatra-activerecord (~> 2.0.27)
+2026-10-02T16:00:57.2514093Z   user_agent_parser (~> 2.20)
+2026-10-02T16:00:57.2514324Z   webauthn (~> 3.4)
+2026-10-02T16:00:57.2514514Z   webrick
+2026-10-02T16:00:57.2514681Z   yard
+2026-10-02T16:00:57.2514781Z 
+2026-10-02T16:00:57.2514862Z BUNDLED WITH
+2026-10-02T16:00:57.2515045Z    2.6.9
+2026-10-02T16:00:57.2515585Z ##[endgroup]
+2026-10-02T16:00:57.2516528Z Cache key: setup-ruby-bundler-cache-v6-ubuntu-24.04-x64-ruby-3.4.11-wd-/home/runner/work/vpsadmin/vpsadmin/api-with--without-development-only--Gemfile.lock-621acded027ae36dd01f319901469fd6e04750ef86e22a504734475e002b98ce
+2026-10-02T16:00:57.3519660Z Cache hit for: setup-ruby-bundler-cache-v6-ubuntu-24.04-x64-ruby-3.4.11-wd-/home/runner/work/vpsadmin/vpsadmin/api-with--without-development-only--Gemfile.lock-621acded027ae36dd01f319901469fd6e04750ef86e22a504734475e002b98ce
+2026-10-02T16:00:58.4917714Z Received 23480124 of 27674428 (84.8%), 22.4 MBs/sec
+2026-10-02T16:00:59.4923726Z Received 23480124 of 27674428 (84.8%), 11.2 MBs/sec
+2026-10-02T16:00:59.5505734Z Received 27674428 of 27674428 (100.0%), 12.8 MBs/sec
+2026-10-02T16:00:59.5506447Z Cache Size: ~26 MB (27674428 B)
+2026-10-02T16:00:59.5525875Z [command]/usr/bin/tar -xf /home/runner/work/_temp/53ccba23-d4ba-4f19-9904-cee0badfe29e/cache.tzst -P -C /home/runner/work/vpsadmin/vpsadmin --use-compress-program unzstd
+2026-10-02T16:00:59.7990756Z Cache restored successfully
+2026-10-02T16:00:59.8007059Z Found cache for key: setup-ruby-bundler-cache-v6-ubuntu-24.04-x64-ruby-3.4.11-wd-/home/runner/work/vpsadmin/vpsadmin/api-with--without-development-only--Gemfile.lock-621acded027ae36dd01f319901469fd6e04750ef86e22a504734475e002b98ce
+2026-10-02T16:00:59.8019473Z [command]/opt/hostedtoolcache/Ruby/3.4.11/x64/bin/bundle install --jobs 4
+2026-10-02T16:01:00.1229338Z Bundle complete! 30 Gemfile dependencies, 98 gems now installed.
+2026-10-02T16:01:00.1230401Z Gems in the group 'development' were not installed.
+2026-10-02T16:01:00.1231932Z Bundled gems are installed into `./vendor/bundle`
+2026-10-02T16:01:00.1366567Z Took   7.96 seconds
+2026-10-02T16:01:00.1489805Z ##[group]Run set -euo pipefail
+2026-10-02T16:01:00.1490158Z [36;1mset -euo pipefail[0m
+2026-10-02T16:01:00.1490515Z [36;1mxargs -a "tmp/rspec-files-network.txt" bundle exec rspec[0m
+2026-10-02T16:01:00.1558925Z shell: /usr/bin/bash -e {0}
+2026-10-02T16:01:00.1559259Z env:
+2026-10-02T16:01:00.1559509Z   RACK_ENV: test
+2026-10-02T16:01:00.1559785Z   BUNDLE_WITHOUT: development
+2026-10-02T16:01:00.1560086Z   BUNDLE_JOBS: 4
+2026-10-02T16:01:00.1560331Z   BUNDLE_RETRY: 3
+2026-10-02T16:01:00.1560595Z   VPSADMIN_PLUGINS: all
+2026-10-02T16:01:00.1560868Z ##[endgroup]
+2026-10-02T16:01:02.0832932Z Started local MariaDB test database at ***127.0.0.1:44535/vpsadmin_test?encoding=utf8mb3&collation=utf8mb3_unicode_ci
+2026-10-02T16:01:02.6662657Z -- create_table("auth_tokens", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6663815Z    -> 0.0078s
+2026-10-02T16:01:02.6664852Z -- create_table("branches", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6666449Z    -> 0.0031s
+2026-10-02T16:01:02.6667900Z -- create_table("cluster_resource_package_items", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6669636Z    -> 0.0036s
+2026-10-02T16:01:02.6670989Z -- create_table("cluster_resource_packages", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6672577Z    -> 0.0038s
+2026-10-02T16:01:02.6673153Z -- create_table("cluster_resource_uses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6673757Z    -> 0.0046s
+2026-10-02T16:01:02.6674308Z -- create_table("cluster_resources", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6674907Z    -> 0.0030s
+2026-10-02T16:01:02.6675292Z -- create_table("components", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6675747Z    -> 0.0029s
+2026-10-02T16:01:02.6676350Z -- create_table("dataset_actions", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6677018Z    -> 0.0029s
+2026-10-02T16:01:02.6677456Z -- create_table("dataset_expansion_events", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6677950Z    -> 0.0031s
+2026-10-02T16:01:02.6678391Z -- create_table("dataset_expansion_histories", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6678971Z    -> 0.0033s
+2026-10-02T16:01:02.6679376Z -- create_table("dataset_expansions", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6679862Z    -> 0.0042s
+2026-10-02T16:01:02.6680630Z -- create_table("dataset_in_pool_plans", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6682035Z    -> 0.0059s
+2026-10-02T16:01:02.6682769Z -- create_table("dataset_in_pools", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6683872Z    -> 0.0040s
+2026-10-02T16:01:02.6684643Z -- create_table("dataset_plans", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6685218Z    -> 0.0024s
+2026-10-02T16:01:02.6686161Z -- create_table("dataset_properties", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6687253Z    -> 0.0045s
+2026-10-02T16:01:02.6688147Z -- create_table("dataset_property_histories", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6688922Z    -> 0.0032s
+2026-10-02T16:01:02.6690010Z -- create_table("dataset_trees", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6690981Z    -> 0.0030s
+2026-10-02T16:01:02.6691999Z -- create_table("datasets", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6692849Z    -> 0.0041s
+2026-10-02T16:01:02.6693583Z -- create_table("default_lifetime_values", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6694200Z    -> 0.0030s
+2026-10-02T16:01:02.6694774Z -- create_table("default_object_cluster_resources", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6695579Z    -> 0.0027s
+2026-10-02T16:01:02.6696480Z -- create_table("default_user_cluster_resource_packages", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6697491Z    -> 0.0033s
+2026-10-02T16:01:02.6698182Z -- create_table("dns_record_logs", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6699083Z    -> 0.0031s
+2026-10-02T16:01:02.6699977Z -- create_table("dns_records", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6700617Z    -> 0.0050s
+2026-10-02T16:01:02.6701762Z -- create_table("dns_resolvers", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6702719Z    -> 0.0030s
+2026-10-02T16:01:02.6703552Z -- create_table("dns_server_zone_transfer_logs", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6704079Z    -> 0.0040s
+2026-10-02T16:01:02.6704470Z -- create_table("dns_server_zones", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6704935Z    -> 0.0044s
+2026-10-02T16:01:02.6705415Z -- create_table("dns_servers", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6706259Z    -> 0.0029s
+2026-10-02T16:01:02.6706650Z -- create_table("dns_tsig_keys", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6707430Z    -> 0.0031s
+2026-10-02T16:01:02.6708147Z -- create_table("dns_zone_transfers", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6708969Z    -> 0.0049s
+2026-10-02T16:01:02.6709367Z -- create_table("dns_zones", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6709813Z    -> 0.0044s
+2026-10-02T16:01:02.6710204Z -- create_table("dnssec_records", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6710922Z    -> 0.0030s
+2026-10-02T16:01:02.6711797Z -- create_table("environment_dataset_plans", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6712719Z    -> 0.0023s
+2026-10-02T16:01:02.6713746Z -- create_table("environment_user_configs", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6714610Z    -> 0.0028s
+2026-10-02T16:01:02.6715500Z -- create_table("environments", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6716195Z    -> 0.0030s
+2026-10-02T16:01:02.6717143Z -- create_table("export_hosts", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6718186Z    -> 0.0029s
+2026-10-02T16:01:02.6718591Z -- create_table("export_mounts", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6719262Z    -> 0.0031s
+2026-10-02T16:01:02.6720391Z -- create_table("exports", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6721658Z    -> 0.0038s
+2026-10-02T16:01:02.6722310Z -- create_table("group_snapshots", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6723386Z    -> 0.0026s
+2026-10-02T16:01:02.6724347Z -- create_table("host_ip_addresses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6725497Z    -> 0.0038s
+2026-10-02T16:01:02.6725949Z -- create_table("incident_reports", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6726426Z    -> 0.0054s
+2026-10-02T16:01:02.6726854Z -- create_table("ip_address_assignments", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6727349Z    -> 0.0059s
+2026-10-02T16:01:02.6727845Z -- create_table("ip_addresses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6728793Z    -> 0.0094s
+2026-10-02T16:01:02.6729646Z -- create_table("ip_release_attempt_addresses", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:02.6730579Z    -> 0.0028s
+2026-10-02T16:01:02.6731670Z -- create_table("ip_release_attempts", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:02.6732566Z    -> 0.0029s
+2026-10-02T16:01:02.6733328Z -- create_table("ip_release_campaigns", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:02.6734236Z    -> 0.0025s
+2026-10-02T16:01:02.6735010Z -- create_table("ip_release_request_addresses", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:02.6735920Z    -> 0.0045s
+2026-10-02T16:01:02.6736663Z -- create_table("ip_release_request_notices", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:02.6737189Z    -> 0.0034s
+2026-10-02T16:01:02.6737615Z -- create_table("ip_release_requests", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:02.6738305Z    -> 0.0032s
+2026-10-02T16:01:02.6739233Z -- create_table("ip_traffic_monthly_summaries", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6740501Z    -> 0.0051s
+2026-10-02T16:01:02.6741683Z -- create_table("languages", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6742302Z    -> 0.0036s
+2026-10-02T16:01:02.6742816Z -- create_table("location_networks", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6743714Z    -> 0.0038s
+2026-10-02T16:01:02.6744200Z -- create_table("locations", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6744923Z    -> 0.0028s
+2026-10-02T16:01:02.6745868Z -- create_table("mail_logs", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6746774Z    -> 0.0031s
+2026-10-02T16:01:02.6747300Z -- create_table("mail_recipients", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6748251Z    -> 0.0026s
+2026-10-02T16:01:02.6748796Z -- create_table("mail_template_recipients", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6749403Z    -> 0.0032s
+2026-10-02T16:01:02.6749944Z -- create_table("mail_template_translations", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.6750794Z    -> 0.0049s
+2026-10-02T16:01:02.8880504Z -- create_table("mail_templates", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8881621Z    -> 0.0033s
+2026-10-02T16:01:02.8882432Z -- create_table("mailbox_handlers", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8883160Z    -> 0.0032s
+2026-10-02T16:01:02.8883726Z -- create_table("mailboxes", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8884386Z    -> 0.0034s
+2026-10-02T16:01:02.8885185Z -- create_table("maintenance_locks", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8886072Z    -> 0.0038s
+2026-10-02T16:01:02.8886695Z -- create_table("metrics_access_tokens", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8887418Z    -> 0.0037s
+2026-10-02T16:01:02.8888174Z -- create_table("migration_plans", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8889043Z    -> 0.0030s
+2026-10-02T16:01:02.8889741Z -- create_table("mirrors", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8890555Z    -> 0.0028s
+2026-10-02T16:01:02.8891248Z -- create_table("mounts", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8892444Z    -> 0.0045s
+2026-10-02T16:01:02.8893476Z -- create_table("network_interface_daily_accountings", {primary_key: ["network_interface_id", "user_id", "year", "month", "day"], charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8894595Z    -> 0.0054s
+2026-10-02T16:01:02.8895567Z -- create_table("network_interface_monitors", {primary_key: "network_interface_id", id: :bigint, default: nil, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8896525Z    -> 0.0029s
+2026-10-02T16:01:02.8897243Z -- create_table("network_interface_monthly_accountings", {primary_key: ["network_interface_id", "user_id", "year", "month"], charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8898200Z    -> 0.0045s
+2026-10-02T16:01:02.8898882Z -- create_table("network_interface_yearly_accountings", {primary_key: ["network_interface_id", "user_id", "year"], charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8899589Z    -> 0.0041s
+2026-10-02T16:01:02.8900418Z -- create_table("network_interfaces", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8901673Z    -> 0.0040s
+2026-10-02T16:01:02.8902173Z -- create_table("networks", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8902733Z    -> 0.0036s
+2026-10-02T16:01:02.8903521Z -- create_table("node_current_statuses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8904148Z    -> 0.0078s
+2026-10-02T16:01:02.8904588Z -- create_table("node_ebpf_program_links", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8905499Z    -> 0.0038s
+2026-10-02T16:01:02.8906283Z -- create_table("node_ebpf_program_objects", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8907151Z    -> 0.0033s
+2026-10-02T16:01:02.8907817Z -- create_table("node_ebpf_programs", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8908376Z    -> 0.0034s
+2026-10-02T16:01:02.8909122Z -- create_table("node_kernel_configuration_options", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8909901Z    -> 0.0039s
+2026-10-02T16:01:02.8910337Z -- create_table("node_kernel_configurations", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8911175Z    -> 0.0026s
+2026-10-02T16:01:02.8911950Z -- create_table("node_kernel_events", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8912455Z    -> 0.0050s
+2026-10-02T16:01:02.8912942Z -- create_table("node_kernel_evidence_checkpoints", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:02.8913504Z    -> 0.0030s
+2026-10-02T16:01:02.8913933Z -- create_table("node_kernel_evidence_errors", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8914639Z    -> 0.0030s
+2026-10-02T16:01:02.8915383Z -- create_table("node_kernel_evidences", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8915962Z    -> 0.0039s
+2026-10-02T16:01:02.8916588Z -- create_table("node_kernel_history_gaps", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8917177Z    -> 0.0043s
+2026-10-02T16:01:02.8917875Z -- create_table("node_kernel_history_states", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8918508Z    -> 0.0034s
+2026-10-02T16:01:02.8919279Z -- create_table("node_kernel_livepatch_patches", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8920172Z    -> 0.0033s
+2026-10-02T16:01:02.8920724Z -- create_table("node_kernel_livepatches", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8921846Z    -> 0.0033s
+2026-10-02T16:01:02.8922532Z -- create_table("node_kernel_modules", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8923139Z    -> 0.0037s
+2026-10-02T16:01:02.8923769Z -- create_table("node_kernel_parameters", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8924240Z    -> 0.0036s
+2026-10-02T16:01:02.8924633Z -- create_table("node_software_changes", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8925102Z    -> 0.0032s
+2026-10-02T16:01:02.8925687Z -- create_table("node_software_versions", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8926563Z    -> 0.0040s
+2026-10-02T16:01:02.8927196Z -- create_table("node_statuses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8927911Z    -> 0.0032s
+2026-10-02T16:01:02.8928662Z -- create_table("node_sysctl_changes", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8929375Z    -> 0.0030s
+2026-10-02T16:01:02.8929755Z -- create_table("node_sysctls", {charset: "utf8mb3", collation: "utf8mb3_bin", force: :cascade})
+2026-10-02T16:01:02.8930185Z    -> 0.0034s
+2026-10-02T16:01:02.8930609Z -- create_table("node_system_history_states", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8931316Z    -> 0.0030s
+2026-10-02T16:01:02.8931872Z -- create_table("node_system_states", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8932340Z    -> 0.0033s
+2026-10-02T16:01:02.8932907Z -- create_table("node_transfer_connections", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8933865Z    -> 0.0033s
+2026-10-02T16:01:02.8934499Z -- create_table("nodes", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8935272Z    -> 0.0036s
+2026-10-02T16:01:02.8935726Z -- create_table("oauth2_authorizations", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8936452Z    -> 0.0047s
+2026-10-02T16:01:02.8937069Z -- create_table("oauth2_clients", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8937909Z    -> 0.0035s
+2026-10-02T16:01:02.8938837Z -- create_table("object_histories", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8939626Z    -> 0.0037s
+2026-10-02T16:01:02.8944549Z -- create_table("object_states", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8945586Z    -> 0.0030s
+2026-10-02T16:01:02.8946034Z -- create_table("oom_preventions", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8946519Z    -> 0.0033s
+2026-10-02T16:01:02.8946943Z -- create_table("oom_report_counters", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8947415Z    -> 0.0066s
+2026-10-02T16:01:02.8947810Z -- create_table("oom_report_rules", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8948522Z    -> 0.0030s
+2026-10-02T16:01:02.8949036Z -- create_table("oom_report_stats", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8949611Z    -> 0.0027s
+2026-10-02T16:01:02.8950114Z -- create_table("oom_report_tasks", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8950678Z    -> 0.0028s
+2026-10-02T16:01:02.8951182Z -- create_table("oom_report_usages", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8952536Z    -> 0.0028s
+2026-10-02T16:01:02.8953059Z -- create_table("oom_reports", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8953634Z    -> 0.0039s
+2026-10-02T16:01:02.8954021Z -- create_table("os_families", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8954477Z    -> 0.0023s
+2026-10-02T16:01:02.8955245Z -- create_table("os_templates", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8955820Z    -> 0.0046s
+2026-10-02T16:01:02.8956255Z -- create_table("password_change_logs", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8957079Z    -> 0.0042s
+2026-10-02T16:01:02.8957524Z -- create_table("password_event_counters", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8958016Z    -> 0.0035s
+2026-10-02T16:01:02.8958447Z -- create_table("password_recoveries", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8958922Z    -> 0.0052s
+2026-10-02T16:01:02.8959414Z -- create_table("password_recovery_requests", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8960372Z    -> 0.0046s
+2026-10-02T16:01:02.8960874Z -- create_table("password_recovery_submissions", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8961529Z    -> 0.0048s
+2026-10-02T16:01:02.8962289Z -- create_table("pools", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8962826Z    -> 0.0033s
+2026-10-02T16:01:02.8963420Z -- create_table("port_reservations", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:02.8964192Z    -> 0.0042s
+2026-10-02T16:01:03.1102889Z -- create_table("repeatable_tasks", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1104001Z    -> 0.0033s
+2026-10-02T16:01:03.1104983Z -- create_table("resource_locks", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1106012Z    -> 0.0046s
+2026-10-02T16:01:03.1106785Z -- create_table("security_advisories", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1107838Z    -> 0.0047s
+2026-10-02T16:01:03.1108798Z -- create_table("security_advisory_cves", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1109640Z    -> 0.0034s
+2026-10-02T16:01:03.1110801Z -- create_table("security_advisory_node_status_translations", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1111909Z    -> 0.0035s
+2026-10-02T16:01:03.1112662Z -- create_table("security_advisory_node_statuses", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1113385Z    -> 0.0039s
+2026-10-02T16:01:03.1113921Z -- create_table("security_advisory_translations", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1114525Z    -> 0.0038s
+2026-10-02T16:01:03.1115403Z -- create_table("security_advisory_updates", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1116141Z    -> 0.0033s
+2026-10-02T16:01:03.1116845Z -- create_table("security_advisory_users", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1117607Z    -> 0.0031s
+2026-10-02T16:01:03.1118423Z -- create_table("security_advisory_vpses", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1119058Z    -> 0.0038s
+2026-10-02T16:01:03.1119513Z -- create_table("single_sign_ons", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1120048Z    -> 0.0040s
+2026-10-02T16:01:03.1121030Z -- create_table("snapshot_downloads", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1121853Z    -> 0.0030s
+2026-10-02T16:01:03.1122873Z -- create_table("snapshot_in_pool_clones", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1123629Z    -> 0.0034s
+2026-10-02T16:01:03.1124569Z -- create_table("snapshot_in_pool_in_branches", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1125746Z    -> 0.0041s
+2026-10-02T16:01:03.1126319Z -- create_table("snapshot_in_pools", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1126919Z    -> 0.0074s
+2026-10-02T16:01:03.1127603Z -- create_table("snapshots", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1128448Z    -> 0.0033s
+2026-10-02T16:01:03.1128927Z -- create_table("storage_filesystem_identities", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1129809Z    -> 0.0054s
+2026-10-02T16:01:03.1130768Z -- create_table("storage_freeze_controls", {id: :bigint, default: nil, charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1132056Z    -> 0.0028s
+2026-10-02T16:01:03.1132754Z -- create_table("storage_freeze_transitions", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1133288Z    -> 0.0036s
+2026-10-02T16:01:03.1133790Z -- create_table("storage_integrity_scopes", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1134505Z    -> 0.0034s
+2026-10-02T16:01:03.1134950Z -- create_table("storage_mutation_attempts", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1135797Z    -> 0.0033s
+2026-10-02T16:01:03.1136410Z -- create_table("storage_mutation_intent_scopes", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1137046Z    -> 0.0028s
+2026-10-02T16:01:03.1137812Z -- create_table("storage_mutation_intents", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1138325Z    -> 0.0050s
+2026-10-02T16:01:03.1138808Z -- create_table("storage_mutation_target_observations", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1139353Z    -> 0.0034s
+2026-10-02T16:01:03.1139781Z -- create_table("storage_mutation_targets", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1140459Z    -> 0.0051s
+2026-10-02T16:01:03.1141177Z -- create_table("storage_observation_runs", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1142211Z    -> 0.0030s
+2026-10-02T16:01:03.1142912Z -- create_table("storage_observer_catch_up_audits", {charset: "utf8mb3", collation: "utf8mb3_unicode_ci", force: :cascade})
+2026-10-02T16:01:03.1143722Z    -> 0.0044s
+2026-10-02T16:01:03.1144398Z -- create_table("sysconfig", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1145398Z    -> 0.0034s
+2026-10-02T16:01:03.1146200Z -- create_table("tokens", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1147002Z    -> 0.0033s
+2026-10-02T16:01:03.1147619Z -- create_table("transaction_chain_concerns", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1148493Z    -> 0.0039s
+2026-10-02T16:01:03.1149029Z -- create_table("transaction_chains", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1149624Z    -> 0.0052s
+2026-10-02T16:01:03.1150660Z -- create_table("transaction_confirmations", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1151282Z    -> 0.0035s
+2026-10-02T16:01:03.1151951Z -- create_table("transactions", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1152520Z    -> 0.0049s
+2026-10-02T16:01:03.1153360Z -- create_table("user_agents", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1154262Z    -> 0.0033s
+2026-10-02T16:01:03.1155062Z -- create_table("user_cluster_resource_packages", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1155866Z    -> 0.0044s
+2026-10-02T16:01:03.1156853Z -- create_table("user_cluster_resources", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1157487Z    -> 0.0041s
+2026-10-02T16:01:03.1157870Z -- create_table("user_devices", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1158321Z    -> 0.0041s
+2026-10-02T16:01:03.1158840Z -- create_table("user_failed_logins", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1159624Z    -> 0.0040s
+2026-10-02T16:01:03.1160179Z -- create_table("user_mail_role_recipients", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1160781Z    -> 0.0034s
+2026-10-02T16:01:03.1162125Z -- create_table("user_mail_template_recipients", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1163213Z    -> 0.0033s
+2026-10-02T16:01:03.1163757Z -- create_table("user_namespace_blocks", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1164496Z    -> 0.0038s
+2026-10-02T16:01:03.1165147Z -- create_table("user_namespace_map_entries", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1165747Z    -> 0.0124s
+2026-10-02T16:01:03.1166669Z -- create_table("user_namespace_maps", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1167759Z    -> 0.0036s
+2026-10-02T16:01:03.1168301Z -- create_table("user_namespaces", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1169241Z    -> 0.0039s
+2026-10-02T16:01:03.1170228Z -- create_table("user_public_keys", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1171276Z    -> 0.0029s
+2026-10-02T16:01:03.1172313Z -- create_table("user_sessions", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1173171Z    -> 0.0041s
+2026-10-02T16:01:03.1173708Z -- create_table("user_totp_devices", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1174624Z    -> 0.0035s
+2026-10-02T16:01:03.1175121Z -- create_table("users", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1175651Z    -> 0.0040s
+2026-10-02T16:01:03.1176016Z -- create_table("uuids", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1176455Z    -> 0.0033s
+2026-10-02T16:01:03.1177285Z -- create_table("versions", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1178072Z    -> 0.0030s
+2026-10-02T16:01:03.1178813Z -- create_table("vps_consoles", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1179760Z    -> 0.0031s
+2026-10-02T16:01:03.1180347Z -- create_table("vps_current_statuses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1181621Z    -> 0.0037s
+2026-10-02T16:01:03.1182565Z -- create_table("vps_features", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1183566Z    -> 0.0035s
+2026-10-02T16:01:03.1184563Z -- create_table("vps_maintenance_windows", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1185510Z    -> 0.0030s
+2026-10-02T16:01:03.1186037Z -- create_table("vps_migrations", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1186622Z    -> 0.0029s
+2026-10-02T16:01:03.1187136Z -- create_table("vps_os_processes", {primary_key: ["vps_id", "state"], charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:03.1187703Z    -> 0.0032s
+2026-10-02T16:01:06.5754318Z -- create_table("vps_ssh_host_keys", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:06.5755472Z    -> 0.0037s
+2026-10-02T16:01:06.5756614Z -- create_table("vps_statuses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:06.5757516Z    -> 0.0037s
+2026-10-02T16:01:06.5758118Z -- create_table("vps_user_data", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:06.5758860Z    -> 0.0041s
+2026-10-02T16:01:06.5759915Z -- create_table("vpses", {id: {type: :integer, unsigned: true}, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:06.5760742Z    -> 0.0069s
+2026-10-02T16:01:06.5761918Z -- create_table("webauthn_challenges", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:06.5762978Z    -> 0.0040s
+2026-10-02T16:01:06.5764077Z -- create_table("webauthn_credentials", {charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade})
+2026-10-02T16:01:06.5765162Z    -> 0.0034s
+2026-10-02T16:01:06.5765989Z -- add_foreign_key("node_current_statuses", "node_kernel_evidences", {on_delete: :nullify})
+2026-10-02T16:01:06.5766814Z    -> 0.0061s
+2026-10-02T16:01:06.5767196Z -- add_foreign_key("node_ebpf_program_links", "node_ebpf_programs", {on_delete: :cascade})
+2026-10-02T16:01:06.5767907Z    -> 0.0045s
+2026-10-02T16:01:06.5769814Z -- add_foreign_key("node_ebpf_program_objects", "node_ebpf_programs", {on_delete: :cascade})
+2026-10-02T16:01:06.5770318Z    -> 0.0048s
+2026-10-02T16:01:06.5770684Z -- add_foreign_key("node_ebpf_programs", "node_kernel_evidences", {on_delete: :cascade})
+2026-10-02T16:01:06.5771113Z    -> 0.0045s
+2026-10-02T16:01:06.5771805Z -- add_foreign_key("node_kernel_configuration_options", "node_kernel_configurations", {on_delete: :cascade})
+2026-10-02T16:01:06.5772309Z    -> 0.0052s
+2026-10-02T16:01:06.5772670Z -- add_foreign_key("node_kernel_events", "node_kernel_evidences", {on_delete: :nullify})
+2026-10-02T16:01:06.5773089Z    -> 0.0114s
+2026-10-02T16:01:06.5773441Z -- add_foreign_key("node_kernel_evidence_checkpoints", "nodes", {on_delete: :cascade})
+2026-10-02T16:01:06.5773851Z    -> 0.0044s
+2026-10-02T16:01:06.5774227Z -- add_foreign_key("node_kernel_evidence_errors", "node_kernel_evidences", {on_delete: :cascade})
+2026-10-02T16:01:06.5774673Z    -> 0.0044s
+2026-10-02T16:01:06.5775050Z -- add_foreign_key("node_kernel_history_gaps", "node_kernel_history_states", {on_delete: :cascade})
+2026-10-02T16:01:06.5775505Z    -> 0.0048s
+2026-10-02T16:01:06.5775892Z -- add_foreign_key("node_kernel_livepatch_patches", "node_kernel_livepatches", {on_delete: :cascade})
+2026-10-02T16:01:06.5776347Z    -> 0.0048s
+2026-10-02T16:01:06.5776714Z -- add_foreign_key("node_kernel_livepatches", "node_kernel_evidences", {on_delete: :cascade})
+2026-10-02T16:01:06.5777323Z    -> 0.0047s
+2026-10-02T16:01:06.5777670Z -- add_foreign_key("node_kernel_modules", "node_kernel_evidences", {on_delete: :cascade})
+2026-10-02T16:01:06.5778107Z    -> 0.0046s
+2026-10-02T16:01:06.5778465Z -- add_foreign_key("node_kernel_parameters", "node_kernel_evidences", {on_delete: :cascade})
+2026-10-02T16:01:06.5778884Z    -> 0.0044s
+2026-10-02T16:01:06.5779222Z -- add_foreign_key("node_software_changes", "node_kernel_events", {on_delete: :cascade})
+2026-10-02T16:01:06.5779636Z    -> 0.0058s
+2026-10-02T16:01:06.5779982Z -- add_foreign_key("node_software_versions", "node_kernel_evidences", {on_delete: :cascade})
+2026-10-02T16:01:06.5780411Z    -> 0.0053s
+2026-10-02T16:01:06.5780735Z -- add_foreign_key("node_sysctl_changes", "node_kernel_events", {on_delete: :cascade})
+2026-10-02T16:01:06.5781132Z    -> 0.0065s
+2026-10-02T16:01:06.5781704Z -- add_foreign_key("node_sysctls", "node_kernel_evidences", {on_delete: :cascade})
+2026-10-02T16:01:06.5782107Z    -> 0.0045s
+2026-10-02T16:01:06.5782424Z -- add_foreign_key("snapshot_in_pool_in_branches", "storage_observation_runs")
+2026-10-02T16:01:06.5782814Z    -> 0.0053s
+2026-10-02T16:01:06.5783096Z -- add_foreign_key("snapshot_in_pools", "storage_observation_runs")
+2026-10-02T16:01:06.5783442Z    -> 0.0066s
+2026-10-02T16:01:06.5783718Z -- add_foreign_key("storage_filesystem_identities", "branches")
+2026-10-02T16:01:06.5784048Z    -> 0.0093s
+2026-10-02T16:01:06.5784356Z -- add_foreign_key("storage_filesystem_identities", "dataset_in_pools")
+2026-10-02T16:01:06.5784727Z    -> 0.0082s
+2026-10-02T16:01:06.5785021Z -- add_foreign_key("storage_filesystem_identities", "dataset_trees")
+2026-10-02T16:01:06.5785392Z    -> 0.0336s
+2026-10-02T16:01:06.5785656Z -- add_foreign_key("storage_filesystem_identities", "nodes")
+2026-10-02T16:01:06.5785977Z    -> 0.0071s
+2026-10-02T16:01:06.5786229Z -- add_foreign_key("storage_filesystem_identities", "pools")
+2026-10-02T16:01:06.5786563Z    -> 0.0075s
+2026-10-02T16:01:06.5786919Z -- add_foreign_key("storage_filesystem_identities", "pools", {column: "owner_pool_id"})
+2026-10-02T16:01:06.5787335Z    -> 0.0070s
+2026-10-02T16:01:06.5787650Z -- add_foreign_key("storage_filesystem_identities", "snapshot_in_pool_clones")
+2026-10-02T16:01:06.5788032Z    -> 0.0078s
+2026-10-02T16:01:06.5788528Z -- add_foreign_key("storage_filesystem_identities", "snapshot_in_pool_in_branches", {column: "origin_snapshot_in_pool_in_branch_id"})
+2026-10-02T16:01:06.5789096Z    -> 0.0074s
+2026-10-02T16:01:06.5789523Z -- add_foreign_key("storage_filesystem_identities", "snapshot_in_pools", {column: "origin_snapshot_in_pool_id"})
+2026-10-02T16:01:06.5790024Z    -> 0.0078s
+2026-10-02T16:01:06.5804324Z -- add_foreign_key("storage_filesystem_identities", "storage_observation_runs")
+2026-10-02T16:01:06.5804797Z    -> 0.0070s
+2026-10-02T16:01:06.5805140Z -- add_foreign_key("storage_freeze_transitions", "storage_freeze_controls")
+2026-10-02T16:01:06.5805529Z    -> 0.0064s
+2026-10-02T16:01:06.5806022Z -- add_foreign_key("storage_integrity_scopes", "dataset_in_pools", {on_delete: :nullify})
+2026-10-02T16:01:06.5806450Z    -> 0.0056s
+2026-10-02T16:01:06.5806772Z -- add_foreign_key("storage_integrity_scopes", "pools", {on_delete: :nullify})
+2026-10-02T16:01:06.5807159Z    -> 0.0048s
+2026-10-02T16:01:06.5807469Z -- add_foreign_key("storage_mutation_attempts", "storage_mutation_intents")
+2026-10-02T16:01:06.5807846Z    -> 0.0051s
+2026-10-02T16:01:06.5808180Z -- add_foreign_key("storage_mutation_intent_scopes", "storage_integrity_scopes")
+2026-10-02T16:01:06.5808667Z    -> 0.0053s
+2026-10-02T16:01:06.5808989Z -- add_foreign_key("storage_mutation_intent_scopes", "storage_mutation_intents")
+2026-10-02T16:01:06.5809376Z    -> 0.0045s
+2026-10-02T16:01:06.5809775Z -- add_foreign_key("storage_mutation_intents", "nodes", {on_delete: :nullify})
+2026-10-02T16:01:06.5810163Z    -> 0.0055s
+2026-10-02T16:01:06.5810516Z -- add_foreign_key("storage_mutation_intents", "transaction_chains", {on_delete: :nullify})
+2026-10-02T16:01:06.5811067Z    -> 0.0102s
+2026-10-02T16:01:06.5811659Z -- add_foreign_key("storage_mutation_intents", "transactions", {on_delete: :nullify})
+2026-10-02T16:01:06.5812079Z    -> 0.0059s
+2026-10-02T16:01:06.5812438Z -- add_foreign_key("storage_mutation_target_observations", "storage_mutation_attempts")
+2026-10-02T16:01:06.5812962Z    -> 0.0048s
+2026-10-02T16:01:06.5813303Z -- add_foreign_key("storage_mutation_target_observations", "storage_mutation_targets")
+2026-10-02T16:01:06.5813727Z    -> 0.0052s
+2026-10-02T16:01:06.5814118Z -- add_foreign_key("storage_mutation_targets", "snapshot_in_pool_in_branches", {on_delete: :nullify})
+2026-10-02T16:01:06.5814792Z    -> 0.0069s
+2026-10-02T16:01:06.5815152Z -- add_foreign_key("storage_mutation_targets", "snapshot_in_pools", {on_delete: :nullify})
+2026-10-02T16:01:06.5815676Z    -> 0.0067s
+2026-10-02T16:01:06.5816073Z -- add_foreign_key("storage_mutation_targets", "storage_filesystem_identities", {on_delete: :nullify})
+2026-10-02T16:01:06.5816532Z    -> 0.0063s
+2026-10-02T16:01:06.5816849Z -- add_foreign_key("storage_mutation_targets", "storage_mutation_intent_scopes")
+2026-10-02T16:01:06.5817238Z    -> 0.0058s
+2026-10-02T16:01:06.5817536Z -- add_foreign_key("storage_mutation_targets", "storage_mutation_intents")
+2026-10-02T16:01:06.5817905Z    -> 0.0056s
+2026-10-02T16:01:06.5818198Z -- add_foreign_key("storage_observation_runs", "storage_integrity_scopes")
+2026-10-02T16:01:06.5818559Z    -> 0.0043s
+2026-10-02T16:01:06.5818790Z Run options: exclude {generator: true}
+2026-10-02T16:01:06.5818978Z 
+2026-10-02T16:01:06.5819078Z Randomized with seed 1704
+2026-10-02T16:01:06.5819425Z == 20170408184500 Setup: migrating ============================================
+2026-10-02T16:01:06.5819925Z -- create_table(:monitored_events, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.5820314Z    -> 0.0036s
+2026-10-02T16:01:06.5820791Z -- add_index(:monitored_events, :monitor_name, {name: "index_monitored_events_on_monitor_name"})
+2026-10-02T16:01:06.5821253Z    -> 0.0035s
+2026-10-02T16:01:06.5821946Z -- add_index(:monitored_events, :class_name, {name: "index_monitored_events_on_class_name"})
+2026-10-02T16:01:06.5822481Z    -> 0.0034s
+2026-10-02T16:01:06.5822813Z -- add_index(:monitored_events, :row_id, {name: "index_monitored_events_on_row_id"})
+2026-10-02T16:01:06.5823303Z    -> 0.0030s
+2026-10-02T16:01:06.5823631Z -- add_index(:monitored_events, :state, {name: "index_monitored_events_on_state"})
+2026-10-02T16:01:06.5824021Z    -> 0.0034s
+2026-10-02T16:01:06.5824458Z -- add_index(:monitored_events, :user_id, {name: "index_monitored_events_on_user_id"})
+2026-10-02T16:01:06.5824858Z    -> 0.0031s
+2026-10-02T16:01:06.5825443Z -- create_table(:monitored_event_states, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.5825852Z    -> 0.0017s
+2026-10-02T16:01:06.5826661Z -- add_index(:monitored_event_states, :monitored_event_id, {name: "index_monitored_event_states_on_monitored_event_id"})
+2026-10-02T16:01:06.5827440Z    -> 0.0032s
+2026-10-02T16:01:06.5828106Z -- create_table(:monitored_event_logs, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.5828770Z    -> 0.0016s
+2026-10-02T16:01:06.5829204Z -- add_index(:monitored_event_logs, :monitored_event_id, {name: "index_monitored_event_logs_on_monitored_event_id"})
+2026-10-02T16:01:06.5830161Z    -> 0.0035s
+2026-10-02T16:01:06.5830538Z -- add_index(:monitored_event_logs, :passed, {name: "index_monitored_event_logs_on_passed"})
+2026-10-02T16:01:06.5830975Z    -> 0.0032s
+2026-10-02T16:01:06.5831314Z == 20170408184500 Setup: migrated (0.0334s) ===================================
+2026-10-02T16:01:06.5831906Z 
+2026-10-02T16:01:06.5832171Z == 20230123085900 AddMonitoredEventActionState: migrating =====================
+2026-10-02T16:01:06.5832929Z -- add_column(:monitored_events, :action_state, :text, {null: true})
+2026-10-02T16:01:06.5833301Z    -> 0.0066s
+2026-10-02T16:01:06.5846406Z == 20230123085900 AddMonitoredEventActionState: migrated (0.0067s) ============
+2026-10-02T16:01:06.5847187Z 
+2026-10-02T16:01:06.5847862Z == 20231105124400 AddMonitoredEventAlertCount: migrating ======================
+2026-10-02T16:01:06.5848689Z -- add_column(:monitored_events, :alert_count, :integer, {null: false, default: 0})
+2026-10-02T16:01:06.5860948Z    -> 0.0028s
+2026-10-02T16:01:06.5861802Z == 20231105124400 AddMonitoredEventAlertCount: migrated (0.0028s) =============
+2026-10-02T16:01:06.5862436Z 
+2026-10-02T16:01:06.5916849Z == 20170122083340 Setup: migrating ============================================
+2026-10-02T16:01:06.5917798Z -- create_table(:user_requests, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.5945191Z    -> 0.0028s
+2026-10-02T16:01:06.5945852Z -- add_index(:user_requests, :user_id, {name: "index_user_requests_on_user_id"})
+2026-10-02T16:01:06.5978412Z    -> 0.0033s
+2026-10-02T16:01:06.5979038Z -- add_index(:user_requests, :type, {name: "index_user_requests_on_type"})
+2026-10-02T16:01:06.6009372Z    -> 0.0031s
+2026-10-02T16:01:06.6010002Z -- add_index(:user_requests, :state, {name: "index_user_requests_on_state"})
+2026-10-02T16:01:06.6042744Z    -> 0.0032s
+2026-10-02T16:01:06.6043628Z -- add_index(:user_requests, :admin_id, {name: "index_user_requests_on_admin_id"})
+2026-10-02T16:01:06.6076283Z    -> 0.0033s
+2026-10-02T16:01:06.6076875Z -- table_exists?(:members_changes)
+2026-10-02T16:01:06.6083137Z    -> 0.0006s
+2026-10-02T16:01:06.6083926Z == 20170122083340 Setup: migrated (0.0166s) ===================================
+2026-10-02T16:01:06.6084467Z 
+2026-10-02T16:01:06.6089437Z == 20170908165000 AddAccessToken: migrating ===================================
+2026-10-02T16:01:06.6090625Z -- add_column(:user_requests, :access_token, :string, {null: true, limit: 40})
+2026-10-02T16:01:06.6120855Z    -> 0.0031s
+2026-10-02T16:01:06.6121724Z == 20170908165000 AddAccessToken: migrated (0.0032s) ==========================
+2026-10-02T16:01:06.6122333Z 
+2026-10-02T16:01:06.6128527Z == 20201126142500 AddIpMailChecks: migrating ==================================
+2026-10-02T16:01:06.6129471Z -- add_column(:user_requests, :ip_checked, :boolean, {null: true})
+2026-10-02T16:01:06.6156085Z    -> 0.0027s
+2026-10-02T16:01:06.6156718Z -- add_column(:user_requests, :ip_request_id, :string, {limit: 50, null: true})
+2026-10-02T16:01:06.6181431Z    -> 0.0025s
+2026-10-02T16:01:06.6182238Z -- add_column(:user_requests, :ip_success, :boolean, {null: true})
+2026-10-02T16:01:06.6212143Z    -> 0.0030s
+2026-10-02T16:01:06.6212877Z -- add_column(:user_requests, :ip_message, :string, {limit: 255, null: true})
+2026-10-02T16:01:06.6238582Z    -> 0.0026s
+2026-10-02T16:01:06.6239334Z -- add_column(:user_requests, :ip_errors, :text, {null: true})
+2026-10-02T16:01:06.6279042Z    -> 0.0040s
+2026-10-02T16:01:06.6280110Z -- add_column(:user_requests, :ip_proxy, :boolean, {null: true})
+2026-10-02T16:01:06.6316151Z    -> 0.0037s
+2026-10-02T16:01:06.6317023Z -- add_column(:user_requests, :ip_crawler, :boolean, {null: true})
+2026-10-02T16:01:06.6344716Z    -> 0.0028s
+2026-10-02T16:01:06.6345598Z -- add_column(:user_requests, :ip_recent_abuse, :boolean, {null: true})
+2026-10-02T16:01:06.6378811Z    -> 0.0034s
+2026-10-02T16:01:06.6379514Z -- add_column(:user_requests, :ip_vpn, :boolean, {null: true})
+2026-10-02T16:01:06.6411618Z    -> 0.0032s
+2026-10-02T16:01:06.6412526Z -- add_column(:user_requests, :ip_tor, :boolean, {null: true})
+2026-10-02T16:01:06.6438946Z    -> 0.0027s
+2026-10-02T16:01:06.6439705Z -- add_column(:user_requests, :ip_fraud_score, :integer, {null: true})
+2026-10-02T16:01:06.6465820Z    -> 0.0027s
+2026-10-02T16:01:06.6466571Z -- add_column(:user_requests, :mail_checked, :boolean, {null: true})
+2026-10-02T16:01:06.6491723Z    -> 0.0026s
+2026-10-02T16:01:06.6492816Z -- add_column(:user_requests, :mail_request_id, :string, {limit: 50, null: true})
+2026-10-02T16:01:06.6518810Z    -> 0.0027s
+2026-10-02T16:01:06.6519530Z -- add_column(:user_requests, :mail_success, :boolean, {null: true})
+2026-10-02T16:01:06.6544797Z    -> 0.0026s
+2026-10-02T16:01:06.6545618Z -- add_column(:user_requests, :mail_message, :string, {limit: 255, null: true})
+2026-10-02T16:01:06.6572455Z    -> 0.0027s
+2026-10-02T16:01:06.6573090Z -- add_column(:user_requests, :mail_errors, :text, {null: true})
+2026-10-02T16:01:06.6597836Z    -> 0.0025s
+2026-10-02T16:01:06.6598522Z -- add_column(:user_requests, :mail_valid, :boolean, {null: true})
+2026-10-02T16:01:06.6630144Z    -> 0.0032s
+2026-10-02T16:01:06.6630899Z -- add_column(:user_requests, :mail_disposable, :boolean, {null: true})
+2026-10-02T16:01:06.6656655Z    -> 0.0026s
+2026-10-02T16:01:06.6657417Z -- add_column(:user_requests, :mail_timed_out, :boolean, {null: true})
+2026-10-02T16:01:06.6684029Z    -> 0.0027s
+2026-10-02T16:01:06.6684902Z -- add_column(:user_requests, :mail_deliverability, :string, {limit: 20, null: true})
+2026-10-02T16:01:06.6708224Z    -> 0.0024s
+2026-10-02T16:01:06.6708822Z -- add_column(:user_requests, :mail_catch_all, :boolean, {null: true})
+2026-10-02T16:01:06.6734877Z    -> 0.0026s
+2026-10-02T16:01:06.6735489Z -- add_column(:user_requests, :mail_leaked, :boolean, {null: true})
+2026-10-02T16:01:06.6760053Z    -> 0.0025s
+2026-10-02T16:01:06.6760792Z -- add_column(:user_requests, :mail_suspect, :boolean, {null: true})
+2026-10-02T16:01:06.6785444Z    -> 0.0025s
+2026-10-02T16:01:06.6786217Z -- add_column(:user_requests, :mail_smtp_score, :integer, {null: true})
+2026-10-02T16:01:06.6809481Z    -> 0.0024s
+2026-10-02T16:01:06.6809933Z -- add_column(:user_requests, :mail_overall_score, :integer, {null: true})
+2026-10-02T16:01:06.6833718Z    -> 0.0024s
+2026-10-02T16:01:06.6834221Z -- add_column(:user_requests, :mail_fraud_score, :integer, {null: true})
+2026-10-02T16:01:06.6858756Z    -> 0.0025s
+2026-10-02T16:01:06.6859527Z -- add_column(:user_requests, :mail_dns_valid, :boolean, {null: true})
+2026-10-02T16:01:06.6884484Z    -> 0.0025s
+2026-10-02T16:01:06.6884948Z -- add_column(:user_requests, :mail_honeypot, :boolean, {null: true})
+2026-10-02T16:01:06.6937176Z    -> 0.0052s
+2026-10-02T16:01:06.6938058Z -- add_column(:user_requests, :mail_spam_trap_score, :string, {limit: 20, null: true})
+2026-10-02T16:01:06.6962644Z    -> 0.0025s
+2026-10-02T16:01:06.6963210Z -- add_column(:user_requests, :mail_recent_abuse, :boolean, {null: true})
+2026-10-02T16:01:06.6987522Z    -> 0.0024s
+2026-10-02T16:01:06.6988367Z -- add_column(:user_requests, :mail_frequent_complainer, :boolean, {null: true})
+2026-10-02T16:01:06.7012974Z    -> 0.0025s
+2026-10-02T16:01:06.7013584Z == 20201126142500 AddIpMailChecks: migrated (0.0885s) =========================
+2026-10-02T16:01:06.7014082Z 
+2026-10-02T16:01:06.7019766Z == 20260606223100 AddUserRequestsTimeZone: migrating ==========================
+2026-10-02T16:01:06.7020823Z -- add_column(:user_requests, :time_zone, :string, {null: true})
+2026-10-02T16:01:06.7044850Z    -> 0.0025s
+2026-10-02T16:01:06.7045812Z == 20260606223100 AddUserRequestsTimeZone: migrated (0.0026s) =================
+2026-10-02T16:01:06.7046449Z 
+2026-10-02T16:01:06.7098426Z == 20170121214350 Setup: migrating ============================================
+2026-10-02T16:01:06.7099329Z -- create_table(:incoming_payments, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.7121280Z    -> 0.0023s
+2026-10-02T16:01:06.7122158Z -- add_index(:incoming_payments, :transaction_id, {unique: true, name: "index_incoming_payments_on_transaction_id"})
+2026-10-02T16:01:06.7151942Z    -> 0.0030s
+2026-10-02T16:01:06.7152582Z -- add_index(:incoming_payments, :vs, {name: "index_incoming_payments_on_vs"})
+2026-10-02T16:01:06.7178643Z    -> 0.0026s
+2026-10-02T16:01:06.7179252Z -- add_index(:incoming_payments, :ks, {name: "index_incoming_payments_on_ks"})
+2026-10-02T16:01:06.7209214Z    -> 0.0030s
+2026-10-02T16:01:06.7210102Z -- add_index(:incoming_payments, :ss, {name: "index_incoming_payments_on_ss"})
+2026-10-02T16:01:06.7240265Z    -> 0.0031s
+2026-10-02T16:01:06.7240804Z -- create_table(:user_accounts, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.7258400Z    -> 0.0018s
+2026-10-02T16:01:06.7259364Z -- add_index(:user_accounts, :user_id, {unique: true, name: "index_user_accounts_on_user_id"})
+2026-10-02T16:01:06.7286781Z    -> 0.0028s
+2026-10-02T16:01:06.7287571Z -- create_table(:user_payments, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.7305884Z    -> 0.0019s
+2026-10-02T16:01:06.7306852Z -- add_index(:user_payments, :incoming_payment_id, {unique: true, name: "index_user_payments_on_incoming_payment_id"})
+2026-10-02T16:01:06.7336160Z    -> 0.0030s
+2026-10-02T16:01:06.7336744Z -- add_index(:user_payments, :user_id, {name: "index_user_payments_on_user_id"})
+2026-10-02T16:01:06.7367975Z    -> 0.0031s
+2026-10-02T16:01:06.7368610Z -- add_index(:user_payments, :accounted_by_id, {name: "index_user_payments_on_accounted_by_id"})
+2026-10-02T16:01:06.7394882Z    -> 0.0026s
+2026-10-02T16:01:06.7398960Z == 20170121214350 Setup: migrated (0.0300s) ===================================
+2026-10-02T16:01:06.7399652Z 
+2026-10-02T16:01:06.7413558Z == 20260706212000 LocalizePaymentInstructionsSysconfig: migrating =============
+2026-10-02T16:01:06.7428683Z == 20260706212000 LocalizePaymentInstructionsSysconfig: migrated (0.0015s) ====
+2026-10-02T16:01:06.7429381Z 
+2026-10-02T16:01:06.7433596Z == 20260905180000 AddUserPaymentsCreatedAtIndex: migrating ====================
+2026-10-02T16:01:06.7434178Z -- add_index(:user_payments, :created_at)
+2026-10-02T16:01:06.7460892Z    -> 0.0027s
+2026-10-02T16:01:06.7461866Z == 20260905180000 AddUserPaymentsCreatedAtIndex: migrated (0.0027s) ===========
+2026-10-02T16:01:06.7462321Z 
+2026-10-02T16:01:06.7508807Z == 20170201093720 Setup: migrating ============================================
+2026-10-02T16:01:06.7509374Z -- create_table(:help_boxes, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.7531463Z    -> 0.0022s
+2026-10-02T16:01:06.7558690Z -- add_index(:help_boxes, :page, {name: "index_help_boxes_on_page"})
+2026-10-02T16:01:06.7559207Z    -> 0.0027s
+2026-10-02T16:01:06.7559777Z -- add_index(:help_boxes, :action, {name: "index_help_boxes_on_action"})
+2026-10-02T16:01:06.7587383Z    -> 0.0028s
+2026-10-02T16:01:06.7587914Z -- add_index(:help_boxes, [:page, :action], {name: "index_help_boxes_on_page_and_action"})
+2026-10-02T16:01:06.7618888Z    -> 0.0031s
+2026-10-02T16:01:06.7619416Z == 20170201093720 Setup: migrated (0.0110s) ===================================
+2026-10-02T16:01:06.7620042Z 
+2026-10-02T16:01:06.7625368Z == 20260607190000 AddWebuiUserSettings: migrating =============================
+2026-10-02T16:01:06.7626005Z -- create_table(:webui_user_settings)
+2026-10-02T16:01:06.7640486Z    -> 0.0015s
+2026-10-02T16:01:06.7641233Z -- add_index(:webui_user_settings, [:user_id, :namespace, :key], {unique: true, name: "index_webui_user_settings_unique_key"})
+2026-10-02T16:01:06.7673353Z    -> 0.0032s
+2026-10-02T16:01:06.7674319Z -- add_index(:webui_user_settings, [:user_id, :namespace], {name: "index_webui_user_settings_on_user_namespace"})
+2026-10-02T16:01:06.7703001Z    -> 0.0029s
+2026-10-02T16:01:06.7703723Z == 20260607190000 AddWebuiUserSettings: migrated (0.0078s) ====================
+2026-10-02T16:01:06.7704285Z 
+2026-10-02T16:01:06.7711774Z == 20260706211000 LocalizeWebuiSysconfig: migrating ===========================
+2026-10-02T16:01:06.7765342Z == 20260706211000 LocalizeWebuiSysconfig: migrated (0.0054s) ==================
+2026-10-02T16:01:06.7766031Z 
+2026-10-02T16:01:06.7814203Z == 20170201082030 Setup: migrating ============================================
+2026-10-02T16:01:06.7815259Z -- create_table(:news_logs, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.7833065Z    -> 0.0018s
+2026-10-02T16:01:06.7833824Z == 20170201082030 Setup: migrated (0.0019s) ===================================
+2026-10-02T16:01:06.7834404Z 
+2026-10-02T16:01:06.7845362Z == 20260706210000 LocalizeNewsLogMessages: migrating ==========================
+2026-10-02T16:01:06.7846210Z -- create_table(:news_log_translations)
+2026-10-02T16:01:06.7864147Z    -> 0.0018s
+2026-10-02T16:01:06.7864969Z -- add_index(:news_log_translations, :news_log_id)
+2026-10-02T16:01:06.7895335Z    -> 0.0031s
+2026-10-02T16:01:06.7895714Z -- add_index(:news_log_translations, :language_id)
+2026-10-02T16:01:06.7922773Z    -> 0.0027s
+2026-10-02T16:01:06.7923695Z -- add_index(:news_log_translations, [:news_log_id, :language_id], {unique: true, name: "news_log_translation_unique"})
+2026-10-02T16:01:06.7954617Z    -> 0.0031s
+2026-10-02T16:01:06.7996501Z == 20260706210000 LocalizeNewsLogMessages: migrated (0.0151s) =================
+2026-10-02T16:01:06.7997193Z 
+2026-10-02T16:01:06.8051728Z == 20170223191015 Setup: migrating ============================================
+2026-10-02T16:01:06.8052519Z -- create_table(:outages, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.8073583Z    -> 0.0022s
+2026-10-02T16:01:06.8074211Z -- add_index(:outages, :state, {name: "index_outages_on_state"})
+2026-10-02T16:01:06.8102148Z    -> 0.0028s
+2026-10-02T16:01:06.8102654Z -- add_index(:outages, :outage_type, {name: "index_outages_on_outage_type"})
+2026-10-02T16:01:06.8132913Z    -> 0.0030s
+2026-10-02T16:01:06.8133389Z -- add_index(:outages, :planned, {name: "index_outages_on_planned"})
+2026-10-02T16:01:06.8171004Z    -> 0.0038s
+2026-10-02T16:01:06.8171817Z -- create_table(:outage_entities, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.8190500Z    -> 0.0019s
+2026-10-02T16:01:06.8191091Z -- add_index(:outage_entities, :outage_id, {name: "index_outage_entities_on_outage_id"})
+2026-10-02T16:01:06.8217557Z    -> 0.0027s
+2026-10-02T16:01:06.8218148Z -- add_index(:outage_entities, :name, {name: "index_outage_entities_on_name"})
+2026-10-02T16:01:06.8246911Z    -> 0.0029s
+2026-10-02T16:01:06.8247497Z -- add_index(:outage_entities, :row_id, {name: "index_outage_entities_on_row_id"})
+2026-10-02T16:01:06.8277564Z    -> 0.0030s
+2026-10-02T16:01:06.8278467Z -- add_index(:outage_entities, [:outage_id, :name, :row_id], {unique: true, name: "index_outage_entities_on_outage_id_and_name_and_row_id"})
+2026-10-02T16:01:06.8315471Z    -> 0.0037s
+2026-10-02T16:01:06.8316089Z -- create_table(:outage_handlers, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.8331594Z    -> 0.0016s
+2026-10-02T16:01:06.8332390Z -- add_index(:outage_handlers, :outage_id, {name: "index_outage_handlers_on_outage_id"})
+2026-10-02T16:01:06.8361486Z    -> 0.0030s
+2026-10-02T16:01:06.8362582Z -- add_index(:outage_handlers, :user_id, {name: "index_outage_handlers_on_user_id"})
+2026-10-02T16:01:06.8390866Z    -> 0.0029s
+2026-10-02T16:01:06.8392277Z -- add_index(:outage_handlers, [:outage_id, :user_id], {unique: true, name: "index_outage_handlers_on_outage_id_and_user_id"})
+2026-10-02T16:01:06.8418421Z    -> 0.0027s
+2026-10-02T16:01:06.8419288Z -- create_table(:outage_updates, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.8435744Z    -> 0.0017s
+2026-10-02T16:01:06.8436557Z -- add_index(:outage_updates, :outage_id, {name: "index_outage_updates_on_outage_id"})
+2026-10-02T16:01:06.8467730Z    -> 0.0031s
+2026-10-02T16:01:06.8468697Z -- add_index(:outage_updates, :reported_by_id, {name: "index_outage_updates_on_reported_by_id"})
+2026-10-02T16:01:06.8496130Z    -> 0.0028s
+2026-10-02T16:01:06.8496983Z -- add_index(:outage_updates, :state, {name: "index_outage_updates_on_state"})
+2026-10-02T16:01:06.8528686Z    -> 0.0032s
+2026-10-02T16:01:06.8529638Z -- add_index(:outage_updates, :outage_type, {name: "index_outage_updates_on_outage_type"})
+2026-10-02T16:01:06.8561918Z    -> 0.0033s
+2026-10-02T16:01:06.8563028Z -- create_table(:outage_translations, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.8581255Z    -> 0.0019s
+2026-10-02T16:01:06.8582411Z -- add_index(:outage_translations, :outage_id, {name: "index_outage_translations_on_outage_id"})
+2026-10-02T16:01:06.8610572Z    -> 0.0029s
+2026-10-02T16:01:06.8611999Z -- add_index(:outage_translations, :outage_update_id, {name: "index_outage_translations_on_outage_update_id"})
+2026-10-02T16:01:06.8641444Z    -> 0.0031s
+2026-10-02T16:01:06.8642662Z -- add_index(:outage_translations, :language_id, {name: "index_outage_translations_on_language_id"})
+2026-10-02T16:01:06.8669592Z    -> 0.0028s
+2026-10-02T16:01:06.8671082Z -- add_index(:outage_translations, [:outage_id, :language_id], {unique: true, name: "index_outage_translations_on_outage_id_and_language_id"})
+2026-10-02T16:01:06.8701264Z    -> 0.0031s
+2026-10-02T16:01:06.8702876Z -- add_index(:outage_translations, [:outage_update_id, :language_id], {unique: true, name: "index_outage_translations_on_outage_update_id_and_language_id"})
+2026-10-02T16:01:06.8731393Z    -> 0.0030s
+2026-10-02T16:01:06.8732749Z -- create_table(:outage_vpses, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.8749436Z    -> 0.0018s
+2026-10-02T16:01:06.8750395Z -- add_index(:outage_vpses, [:outage_id, :vps_id], {unique: true, name: "index_outage_vpses_on_outage_id_and_vps_id"})
+2026-10-02T16:01:06.8786971Z    -> 0.0037s
+2026-10-02T16:01:06.8787912Z -- add_index(:outage_vpses, :outage_id, {name: "index_outage_vpses_on_outage_id"})
+2026-10-02T16:01:06.8814334Z    -> 0.0027s
+2026-10-02T16:01:06.8815103Z -- add_index(:outage_vpses, :vps_id, {name: "index_outage_vpses_on_vps_id"})
+2026-10-02T16:01:06.8843184Z    -> 0.0028s
+2026-10-02T16:01:06.8843949Z -- add_index(:outage_vpses, :user_id, {name: "index_outage_vpses_on_user_id"})
+2026-10-02T16:01:06.8871391Z    -> 0.0028s
+2026-10-02T16:01:06.8872521Z -- add_index(:outage_vpses, :environment_id, {name: "index_outage_vpses_on_environment_id"})
+2026-10-02T16:01:06.8902956Z    -> 0.0031s
+2026-10-02T16:01:06.8903764Z -- add_index(:outage_vpses, :location_id, {name: "index_outage_vpses_on_location_id"})
+2026-10-02T16:01:06.8935262Z    -> 0.0032s
+2026-10-02T16:01:06.8936012Z -- add_index(:outage_vpses, :node_id, {name: "index_outage_vpses_on_node_id"})
+2026-10-02T16:01:06.8964451Z    -> 0.0029s
+2026-10-02T16:01:06.8965209Z -- create_table(:outage_vps_mounts, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.8986273Z    -> 0.0021s
+2026-10-02T16:01:06.8987457Z -- add_index(:outage_vps_mounts, [:outage_vps_id, :mount_id], {unique: true, name: "index_outage_vps_mounts_on_outage_vps_id_and_mount_id"})
+2026-10-02T16:01:06.9012082Z    -> 0.0025s
+2026-10-02T16:01:06.9013006Z -- add_index(:outage_vps_mounts, :outage_vps_id, {name: "index_outage_vps_mounts_on_outage_vps_id"})
+2026-10-02T16:01:06.9041320Z    -> 0.0029s
+2026-10-02T16:01:06.9042403Z -- add_index(:outage_vps_mounts, :mount_id, {name: "index_outage_vps_mounts_on_mount_id"})
+2026-10-02T16:01:06.9070302Z    -> 0.0028s
+2026-10-02T16:01:06.9071032Z == 20170223191015 Setup: migrated (0.1019s) ===================================
+2026-10-02T16:01:06.9071874Z 
+2026-10-02T16:01:06.9084517Z == 20201129113300 AddOutageExports: migrating =================================
+2026-10-02T16:01:06.9085621Z -- create_table(:outage_users, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.9118647Z    -> 0.0034s
+2026-10-02T16:01:06.9119891Z -- add_index(:outage_users, [:outage_id, :user_id], {unique: true, name: "index_outage_users_on_outage_id_and_user_id"})
+2026-10-02T16:01:06.9145371Z    -> 0.0026s
+2026-10-02T16:01:06.9146153Z -- add_index(:outage_users, :outage_id, {name: "index_outage_users_on_outage_id"})
+2026-10-02T16:01:06.9178538Z    -> 0.0033s
+2026-10-02T16:01:06.9179283Z -- add_index(:outage_users, :user_id, {name: "index_outage_users_on_user_id"})
+2026-10-02T16:01:06.9206988Z    -> 0.0028s
+2026-10-02T16:01:06.9215796Z -- create_table(:outage_exports, {options: "ENGINE=InnoDB", id: :integer})
+2026-10-02T16:01:06.9236726Z    -> 0.0021s
+2026-10-02T16:01:06.9237867Z -- add_index(:outage_exports, [:outage_id, :export_id], {unique: true, name: "index_outage_exports_on_outage_id_and_export_id"})
+2026-10-02T16:01:06.9381364Z    -> 0.0144s
+2026-10-02T16:01:06.9382401Z -- add_index(:outage_exports, :outage_id, {name: "index_outage_exports_on_outage_id"})
+2026-10-02T16:01:06.9413401Z    -> 0.0032s
+2026-10-02T16:01:06.9414139Z -- add_index(:outage_exports, :export_id, {name: "index_outage_exports_on_export_id"})
+2026-10-02T16:01:06.9439466Z    -> 0.0026s
+2026-10-02T16:01:06.9440261Z -- add_index(:outage_exports, :user_id, {name: "index_outage_exports_on_user_id"})
+2026-10-02T16:01:06.9466734Z    -> 0.0027s
+2026-10-02T16:01:06.9467649Z -- add_index(:outage_exports, :environment_id, {name: "index_outage_exports_on_environment_id"})
+2026-10-02T16:01:06.9496782Z    -> 0.0030s
+2026-10-02T16:01:06.9497637Z -- add_index(:outage_exports, :location_id, {name: "index_outage_exports_on_location_id"})
+2026-10-02T16:01:06.9526166Z    -> 0.0029s
+2026-10-02T16:01:06.9526969Z -- add_index(:outage_exports, :node_id, {name: "index_outage_exports_on_node_id"})
+2026-10-02T16:01:06.9559960Z    -> 0.0033s
+2026-10-02T16:01:06.9560733Z == 20201129113300 AddOutageExports: migrated (0.0476s) ========================
+2026-10-02T16:01:06.9561522Z 
+2026-10-02T16:01:06.9566827Z == 20240123092400 RemoveVpsOutageMounts: migrating ============================
+2026-10-02T16:01:06.9568002Z -- remove_index(:outage_vps_mounts, [:outage_vps_id, :mount_id], {unique: true})
+2026-10-02T16:01:06.9593186Z    -> 0.0026s
+2026-10-02T16:01:06.9593652Z -- drop_table(:outage_vps_mounts)
+2026-10-02T16:01:06.9606907Z    -> 0.0013s
+2026-10-02T16:01:06.9607685Z == 20240123092400 RemoveVpsOutageMounts: migrated (0.0040s) ===================
+2026-10-02T16:01:06.9608289Z 
+2026-10-02T16:01:06.9615352Z == 20240124093200 AddImpactType: migrating ====================================
+2026-10-02T16:01:06.9616399Z -- add_column(:outages, :impact_type, :integer, {null: false, default: 0})
+2026-10-02T16:01:06.9638265Z    -> 0.0023s
+2026-10-02T16:01:06.9638779Z -- add_index(:outages, :impact_type)
+2026-10-02T16:01:06.9668566Z    -> 0.0030s
+2026-10-02T16:01:06.9675590Z -- remove_index(:outages, :planned)
+2026-10-02T16:01:06.9707079Z    -> 0.0031s
+2026-10-02T16:01:06.9707834Z -- remove_column(:outages, :planned, :boolean, {null: false, default: false})
+2026-10-02T16:01:06.9737454Z    -> 0.0030s
+2026-10-02T16:01:06.9737942Z -- remove_index(:outage_updates, :outage_type)
+2026-10-02T16:01:06.9762549Z    -> 0.0025s
+2026-10-02T16:01:06.9763198Z -- rename_column(:outage_updates, :outage_type, :impact_type)
+2026-10-02T16:01:06.9788227Z    -> 0.0025s
+2026-10-02T16:01:06.9788757Z -- add_index(:outage_updates, :impact_type)
+2026-10-02T16:01:06.9818282Z    -> 0.0030s
+2026-10-02T16:01:06.9818997Z == 20240124093200 AddImpactType: migrated (0.0203s) ===========================
+2026-10-02T16:01:06.9819547Z 
+2026-10-02T16:01:06.9824267Z == 20240124185400 AddAutoResolve: migrating ===================================
+2026-10-02T16:01:06.9825247Z -- add_column(:outages, :auto_resolve, :boolean, {null: false, default: true})
+2026-10-02T16:01:06.9849398Z    -> 0.0025s
+2026-10-02T16:01:06.9850080Z == 20240124185400 AddAutoResolve: migrated (0.0025s) ==========================
+2026-10-02T16:01:06.9850639Z 
+2026-10-02T16:01:06.9855432Z == 20260601121000 AddOutageSecurityAdvisories: migrating ======================
+2026-10-02T16:01:06.9856295Z -- create_table(:outage_security_advisories)
+2026-10-02T16:01:06.9882647Z    -> 0.0027s
+2026-10-02T16:01:06.9910983Z -- add_index(:outage_security_advisories, [:outage_id, :security_advisory_id], {unique: true, name: "index_osa_on_outage_advisory"})
+2026-10-02T16:01:06.9912053Z    -> 0.0027s
+2026-10-02T16:01:06.9912482Z -- add_index(:outage_security_advisories, :security_advisory_id)
+2026-10-02T16:01:06.9952100Z    -> 0.0042s
+2026-10-02T16:01:06.9952897Z == 20260601121000 AddOutageSecurityAdvisories: migrated (0.0097s) =============
+2026-10-02T16:01:06.9953449Z 
+2026-10-02T16:01:08.6370061Z 
+2026-10-02T16:01:08.6375772Z VpsAdmin::API::Resources::Network write actions
+2026-10-02T16:01:12.2630824Z   rejects owned additions without a charge environment atomically
+2026-10-02T16:01:15.4038507Z   rejects a charge environment without an owner atomically
+2026-10-02T16:01:18.5676225Z   rejects owned additions in an unavailable charge environment atomically
+2026-10-02T16:01:27.8437183Z   rejects quota-semantic changes after addresses have been registered
+2026-10-02T16:01:27.8437764Z   Update
+2026-10-02T16:01:30.0485377Z     forbids support users
+2026-10-02T16:01:33.2574198Z     allows admin to update network fields
+2026-10-02T16:01:35.4646051Z     rejects unauthenticated access
+2026-10-02T16:01:37.7693036Z     forbids normal users
+2026-10-02T16:01:40.8173159Z     returns validation errors for invalid ip_version
+2026-10-02T16:01:47.1493744Z     registers addresses after a coherent empty-network family change
+2026-10-02T16:01:50.2599025Z     rejects an IP family that does not match an empty network address
+2026-10-02T16:01:50.2599610Z   AddAddresses
+2026-10-02T16:01:52.4544767Z     forbids support users
+2026-10-02T16:01:55.6481826Z     allows admin to add IP addresses
+2026-10-02T16:01:57.8861735Z     rejects unauthenticated access
+2026-10-02T16:02:00.1967888Z     forbids normal users
+2026-10-02T16:02:03.2418799Z     rejects unmanaged networks
+2026-10-02T16:02:06.4149586Z     ignores reverse DNS zones without network metadata
+2026-10-02T16:02:09.4921030Z     returns validation errors for invalid count
+2026-10-02T16:02:09.4921925Z   API description
+2026-10-02T16:02:12.7430852Z     includes network write endpoints
+2026-10-02T16:02:22.6395558Z     documents network write inputs
+2026-10-02T16:02:22.6396238Z   Create
+2026-10-02T16:02:24.8540086Z     forbids normal users
+2026-10-02T16:02:31.4573302Z     returns validation errors for missing address
+2026-10-02T16:02:37.8355879Z     returns validation errors for duplicate network
+2026-10-02T16:02:44.1735474Z     returns validation errors for invalid ip_version
+2026-10-02T16:02:46.3270462Z     rejects unauthenticated access
+2026-10-02T16:02:48.5357352Z     forbids support users
+2026-10-02T16:02:55.0913628Z     allows admin to create a network
+2026-10-02T16:02:55.0915216Z 
+2026-10-02T16:02:55.0915599Z VpsAdmin::API::Resources::NetworkInterface
+2026-10-02T16:02:55.0917612Z   API description
+2026-10-02T16:02:58.2346860Z     includes network interface endpoints
+2026-10-02T16:03:04.8575696Z     documents network interface inputs
+2026-10-02T16:03:08.1615295Z     localizes network interface input metadata
+2026-10-02T16:03:08.1615990Z   Index
+2026-10-02T16:03:11.3855703Z     shows all interfaces to admins
+2026-10-02T16:03:14.6121520Z     supports from_id pagination
+2026-10-02T16:03:16.8200188Z     shows only own interfaces to users
+2026-10-02T16:03:18.9381733Z     rejects unauthenticated access
+2026-10-02T16:03:22.1285804Z     returns expected output shape
+2026-10-02T16:03:25.3428814Z     filters by vps for admins
+2026-10-02T16:03:27.5338352Z     filters by vps for users
+2026-10-02T16:03:30.6335580Z     returns total_count meta when requested
+2026-10-02T16:03:33.8116362Z     supports limit pagination
+2026-10-02T16:03:37.0503898Z     filters by user for admins
+2026-10-02T16:03:39.2801168Z     ignores user filter for non-admins
+2026-10-02T16:03:41.5205449Z     returns empty when users filter by other vps
+2026-10-02T16:03:44.7256707Z     filters by location
+2026-10-02T16:03:46.9446841Z     restricts support users
+2026-10-02T16:03:46.9447208Z   Show
+2026-10-02T16:03:50.1225846Z     allows admins to show any netif
+2026-10-02T16:03:52.3428226Z     prevents users from showing other netifs
+2026-10-02T16:03:55.5322535Z     returns 404 for unknown netif
+2026-10-02T16:03:57.7987967Z     rejects unauthenticated access
+2026-10-02T16:04:00.0084041Z     allows users to show their netif
+2026-10-02T16:04:00.0084675Z   Update
+2026-10-02T16:04:02.2120911Z     prevents users from updating other netifs
+2026-10-02T16:04:08.8167421Z     allows admin to toggle enable
+2026-10-02T16:04:14.3761026Z     rejects renaming on non-vpsadminos nodes
+2026-10-02T16:04:16.7198663Z     ignores non-whitelisted fields for users
+2026-10-02T16:04:23.4159099Z     rejects negative max_tx
+2026-10-02T16:04:29.8820580Z     allows admin to update shaper fields
+2026-10-02T16:04:32.1563074Z     rejects unauthenticated access
+2026-10-02T16:04:37.7859454Z     allows users to rename their netif
+2026-10-02T16:04:44.1078860Z     returns validation errors for invalid name
+2026-10-02T16:04:44.1081094Z   export interfaces
+2026-10-02T16:04:48.7359075Z     hides export interfaces from other users and support
+2026-10-02T16:04:59.5387431Z     keeps export interfaces out of the VPS interface index and update action
+2026-10-02T16:05:10.3270055Z     expands export interfaces in compatible IP and host address lists
+2026-10-02T16:05:15.7171240Z     allows the export owner and admins to read interface details with no VPS
+2026-10-02T16:05:32.3888519Z     expands host details for an export owner without widening direct IP access
+2026-10-02T16:05:32.3889110Z 
+2026-10-02T16:05:32.3889413Z VpsAdmin::API::Resources::NetworkInterfaceAccounting
+2026-10-02T16:05:32.3890324Z   Index
+2026-10-02T16:05:34.6625001Z     restricts normal users to their VPSes
+2026-10-02T16:05:36.9023198Z     filters by environment
+2026-10-02T16:05:39.2594323Z     filters by node
+2026-10-02T16:05:42.3569564Z     supports limit pagination
+2026-10-02T16:05:45.5992471Z     supports from_date pagination for created_at
+2026-10-02T16:05:51.9732645Z     orders by bytes descending with from_bytes pagination
+2026-10-02T16:05:55.0601635Z     filters by year and month
+2026-10-02T16:05:58.2768480Z     filters by created_at range
+2026-10-02T16:06:00.5049752Z     ignores user filter for non-admins
+2026-10-02T16:06:02.7189440Z     filters by location
+2026-10-02T16:06:05.9495920Z     validates order choices
+2026-10-02T16:06:09.2492551Z     allows admins to list all records
+2026-10-02T16:06:12.5350438Z     filters by user for admins
+2026-10-02T16:06:15.9622494Z     orders by updated_at desc
+2026-10-02T16:06:21.4568381Z     returns total_count in meta for admin and user
+2026-10-02T16:06:28.0724347Z     orders by bytes ascending with from_bytes pagination
+2026-10-02T16:06:31.4416500Z     orders by created_at desc by default
+2026-10-02T16:06:33.7191654Z     rejects unauthenticated access
+2026-10-02T16:06:36.1059960Z     filters by vps
+2026-10-02T16:06:36.1062532Z   UserTop
+2026-10-02T16:06:38.3953193Z     forbids non-admin users
+2026-10-02T16:06:41.7700653Z     filters by environment
+2026-10-02T16:06:44.9360495Z     supports limit pagination
+2026-10-02T16:06:48.1252956Z     aggregates traffic per user for admins
+2026-10-02T16:06:51.3308084Z     supports from_bytes pagination
+2026-10-02T16:06:53.5609228Z     rejects unauthenticated access
+2026-10-02T16:06:53.5609594Z 
+2026-10-02T16:06:53.5609794Z VpsAdmin::API::Resources::Network
+2026-10-02T16:06:53.5610752Z   Index
+2026-10-02T16:06:55.8128749Z     rejects unauthenticated access
+2026-10-02T16:06:58.9377393Z     allows admins to list networks with full output
+2026-10-02T16:07:01.1529580Z     allows support to list networks with limited output
+2026-10-02T16:07:04.1919845Z     supports from_id pagination
+2026-10-02T16:07:07.3584830Z     returns total_count meta when requested
+2026-10-02T16:07:10.5063442Z     filters by purpose
+2026-10-02T16:07:12.7558638Z     allows users to list networks with limited output
+2026-10-02T16:07:15.8068010Z     supports limit pagination
+2026-10-02T16:07:18.9840918Z     filters by location
+2026-10-02T16:07:18.9841294Z     with network purpose filters
+2026-10-02T16:07:18.9842479Z       behaves like network purpose filtering
+2026-10-02T16:07:22.1161761Z         keeps purpose=export exact
+2026-10-02T16:07:25.2340056Z         keeps purpose=vps exact
+2026-10-02T16:07:31.4958716Z         intersects exact purpose with compatibility
+2026-10-02T16:07:34.5788955Z         rejects usable_for=unknown
+2026-10-02T16:07:37.7532195Z         includes any and export networks for admin
+2026-10-02T16:07:39.9504595Z         includes any and vps networks for user
+2026-10-02T16:07:49.3450727Z         filters before pagination and reports the filtered count
+2026-10-02T16:07:52.5285843Z         does not restrict purpose when both filters are omitted
+2026-10-02T16:07:54.7133617Z         includes any and export networks for user
+2026-10-02T16:07:57.7531363Z         keeps purpose=any exact
+2026-10-02T16:08:00.9550024Z         includes any and vps networks for admin
+2026-10-02T16:08:04.1201974Z         rejects usable_for=any
+2026-10-02T16:08:04.1202807Z   Show
+2026-10-02T16:08:07.1999825Z     returns 404 for unknown network
+2026-10-02T16:08:09.3999021Z     allows users to show networks with limited output
+2026-10-02T16:08:11.6520349Z     rejects unauthenticated access
+2026-10-02T16:08:14.7860993Z     allows admins to show networks with full output
+2026-10-02T16:08:17.0406966Z     allows support to show networks with limited output
+2026-10-02T16:08:17.0407514Z 
+2026-10-02T16:08:17.0407845Z VpsAdmin::API::Resources::IpReleaseCampaign
+2026-10-02T16:08:36.1142200Z   validates multi-select filter values before querying
+2026-10-02T16:09:15.5615474Z   returns one shared attempt and restricts its history to administrators and its campaign
+2026-10-02T16:09:30.2166201Z   returns only member fields from request, address and keep responses
+2026-10-02T16:10:14.0640528Z   denies campaign management to ordinary users and support staff
+2026-10-02T16:10:26.8535198Z   lets an admin preview and create a campaign with seven-day and opt-out defaults
+2026-10-02T16:10:50.0503127Z   shows notice history only to administrators
+2026-10-02T16:10:59.7156956Z   returns another administrator's running attempt without an inaccessible action state
+2026-10-02T16:11:30.8986825Z   accepts a campaign larger than one page and paginates all of its addresses
+2026-10-02T16:11:53.0942047Z   requires a reason to set exemptions and an explicit flag to remove them
+2026-10-02T16:12:00.9594723Z   lists only the member requests, including closed ones, without admin counts
+2026-10-02T16:12:16.8970389Z   shows deleted-owner history without resolving an unavailable user resource
+2026-10-02T16:12:34.9081031Z   lists campaign addresses across owners and records only the authenticated exemption actor
+2026-10-02T16:12:41.2849410Z   initializes counts when a campaign is expanded through a request
+2026-10-02T16:12:50.9065536Z   paginates candidate selections
+2026-10-02T16:13:00.5213366Z   retains raw actor IDs when the actor no longer exists
+2026-10-02T16:13:07.2404046Z   rejects nested exemption IDs from another request
+2026-10-02T16:13:26.4038527Z   scopes request lists, details and nested addresses to the owner
+2026-10-02T16:13:41.6256964Z   accepts reasons after the advisory deadline and ignores them only under forced policy
+2026-10-02T16:14:11.8313894Z   lets an admin inspect, notify, exempt and close a campaign without releasing its address
+2026-10-02T16:14:11.8314578Z 
+2026-10-02T16:14:11.8314798Z VpsAdmin::API::Resources::IpAddress
+2026-10-02T16:14:11.8316558Z   Index
+2026-10-02T16:14:15.0883759Z     filters by vps when nil
+2026-10-02T16:14:18.2189725Z     filters by user when nil
+2026-10-02T16:14:20.4492893Z     rejects unauthenticated access
+2026-10-02T16:14:23.6395996Z     shows all addresses for admins
+2026-10-02T16:14:25.8903121Z     shows accessible addresses for normal users
+2026-10-02T16:14:30.4583991Z     hides free addresses from non-userpick networks for normal users
+2026-10-02T16:14:32.6926070Z     shows accessible addresses for support users
+2026-10-02T16:14:32.6926686Z     with network purpose filters
+2026-10-02T16:14:32.6927504Z       behaves like network purpose filtering
+2026-10-02T16:14:42.1491803Z         filters before pagination and reports the filtered count
+2026-10-02T16:14:45.3824327Z         keeps purpose=vps exact
+2026-10-02T16:14:47.6890788Z         includes any and export networks for user
+2026-10-02T16:14:50.0231820Z         includes any and vps networks for user
+2026-10-02T16:14:53.2925616Z         keeps purpose=any exact
+2026-10-02T16:14:56.4532155Z         rejects usable_for=any
+2026-10-02T16:14:59.6300043Z         keeps purpose=export exact
+2026-10-02T16:15:02.7837671Z         includes any and vps networks for admin
+2026-10-02T16:15:09.0349772Z         intersects exact purpose with compatibility
+2026-10-02T16:15:12.1300157Z         rejects usable_for=unknown
+2026-10-02T16:15:15.2828970Z         does not restrict purpose when both filters are omitted
+2026-10-02T16:15:18.3780265Z         includes any and export networks for admin
+2026-10-02T16:15:18.3780929Z   Assign
+2026-10-02T16:15:20.6767684Z     denies assigning addresses owned by another user
+2026-10-02T16:15:26.2385243Z     allows users to assign free addresses to their interface
+2026-10-02T16:15:28.4355734Z     denies assigning addresses routed to another user interface
+2026-10-02T16:15:30.7385414Z     rejects unauthenticated access
+2026-10-02T16:15:30.7386527Z   Free
+2026-10-02T16:15:32.9316980Z     rejects freeing unassigned addresses
+2026-10-02T16:15:38.5662508Z     allows users to free their routed address
+2026-10-02T16:15:44.9587001Z     allows admins to free other users addresses
+2026-10-02T16:15:47.1269618Z     rejects unauthenticated access
+2026-10-02T16:15:49.3362623Z     denies freeing addresses routed to another user
+2026-10-02T16:15:49.3363237Z   Show
+2026-10-02T16:15:52.5309792Z     allows admins to show any address
+2026-10-02T16:15:54.7369097Z     rejects unauthenticated access
+2026-10-02T16:15:57.0376994Z     denies access to other users routed addresses
+2026-10-02T16:15:59.2368416Z     allows users to show owned addresses
+2026-10-02T16:16:01.4691881Z     denies access to other users owned addresses
+2026-10-02T16:16:03.8222898Z     allows users to show free addresses
+2026-10-02T16:16:06.0314378Z     allows users to show routed addresses assigned to their VPS
+2026-10-02T16:16:09.2591092Z     allows admins to show routed addresses
+2026-10-02T16:16:09.2591938Z   Update
+2026-10-02T16:16:15.6479106Z     rejects invalid environment for the address
+2026-10-02T16:16:18.8388151Z     prevents chown when the address belongs to a VPS in IP ownership env
+2026-10-02T16:16:21.1779102Z     rejects unauthenticated access
+2026-10-02T16:16:24.3784772Z     requires environment when user is provided
+2026-10-02T16:16:26.6133090Z     forbids normal users
+2026-10-02T16:16:28.8629087Z     forbids support users
+2026-10-02T16:16:38.5452744Z     allows admin to disown an address without environment
+2026-10-02T16:16:45.1227006Z     allows admin to change ownership
+2026-10-02T16:16:45.1227562Z   AssignWithHostAddress
+2026-10-02T16:16:47.3507576Z     rejects invalid host address
+2026-10-02T16:16:52.9282632Z     allows users to assign with host address
+2026-10-02T16:16:55.1785056Z     rejects unauthenticated access
+2026-10-02T16:16:55.1785786Z   Create
+2026-10-02T16:16:58.3043086Z     allows admin to create a user-owned address with location
+2026-10-02T16:17:01.3883457Z     rejects networks unavailable in selected location
+2026-10-02T16:17:04.5229901Z     requires location when user is provided
+2026-10-02T16:17:07.6229322Z     allows admin to create an unowned address
+2026-10-02T16:17:10.7170458Z     rejects duplicate addresses
+2026-10-02T16:17:12.8773548Z     rejects unauthenticated access
+2026-10-02T16:17:15.9825134Z     rejects address outside of network
+2026-10-02T16:17:19.0657806Z     returns validation errors for invalid address
+2026-10-02T16:17:21.2630054Z     forbids support users
+2026-10-02T16:17:23.4838459Z     forbids normal users
+2026-10-02T16:17:23.4838990Z   API description
+2026-10-02T16:17:26.7419820Z     includes ip address endpoints
+2026-10-02T16:17:39.8857873Z     documents ip address inputs
+2026-10-02T16:17:39.8858247Z 
+2026-10-02T16:17:39.8858495Z VpsAdmin::API::Resources::IpAddressAssignment
+2026-10-02T16:17:39.8859194Z   Show
+2026-10-02T16:17:42.1267937Z     forbids users from showing other assignments
+2026-10-02T16:17:45.3023804Z     returns 404 for unknown assignment
+2026-10-02T16:17:47.5184118Z     rejects unauthenticated access
+2026-10-02T16:17:49.7536739Z     allows users to show their assignment with limited output
+2026-10-02T16:17:52.9452243Z     allows admins to show any assignment with user fields
+2026-10-02T16:17:52.9452891Z   Index
+2026-10-02T16:17:56.2090630Z     filters by vps
+2026-10-02T16:17:58.4335997Z     restricts support users to their assignments with limited output
+2026-10-02T16:18:01.6624626Z     filters by assigned_by_chain when nil
+2026-10-02T16:18:04.7899131Z     filters by user for admins
+2026-10-02T16:18:07.9122666Z     allows admins to see all assignments with user fields
+2026-10-02T16:18:12.4044601Z     filters by active status
+2026-10-02T16:18:15.5410243Z     filters by unassigned_by_chain
+2026-10-02T16:18:18.6865362Z     filters by ip_address
+2026-10-02T16:18:21.7846433Z     filters by ip_addr
+2026-10-02T16:18:28.0199698Z     paginates with limit and from_id
+2026-10-02T16:18:31.1755383Z     returns total_count meta when requested
+2026-10-02T16:18:35.6275472Z     filters by network
+2026-10-02T16:18:37.8556646Z     rejects or ignores user filter for non-admins
+2026-10-02T16:18:40.2376865Z     orders by oldest first
+2026-10-02T16:18:44.6472475Z     filters by location
+2026-10-02T16:18:47.8371114Z     filters by assigned_by_chain
+2026-10-02T16:18:50.0581002Z     rejects unauthenticated access
+2026-10-02T16:18:52.3242853Z     orders by newest first
+2026-10-02T16:18:55.3974052Z     filters by reconstructed
+2026-10-02T16:19:01.7185448Z     filters by ip_prefix
+2026-10-02T16:19:04.1201710Z     restricts normal users to their assignments with limited output
+2026-10-02T16:19:10.5321121Z     filters by ip_version
+2026-10-02T16:19:10.5321892Z   API description
+2026-10-02T16:19:13.8931271Z     includes ip_address_assignment scopes
+2026-10-02T16:19:13.8932027Z 
+2026-10-02T16:19:13.8932249Z VpsAdmin::API::Resources::LocationNetwork
+2026-10-02T16:19:13.8933565Z   API description
+2026-10-02T16:19:17.2246062Z     includes location_network endpoints
+2026-10-02T16:19:17.2246584Z   Show
+2026-10-02T16:19:19.3725614Z     rejects unauthenticated access
+2026-10-02T16:19:22.6132687Z     allows admin to show a location network
+2026-10-02T16:19:24.8296819Z     forbids normal users
+2026-10-02T16:19:28.0018495Z     returns 404 for unknown id
+2026-10-02T16:19:28.0018883Z   Create
+2026-10-02T16:19:31.0640560Z     returns validation errors for missing location
+2026-10-02T16:19:33.3592530Z     forbids normal users
+2026-10-02T16:19:36.3820687Z     allows admin to create a location network
+2026-10-02T16:19:39.5546878Z     returns validation errors for missing network
+2026-10-02T16:19:41.7516670Z     forbids support users
+2026-10-02T16:19:44.0012532Z     rejects unauthenticated access
+2026-10-02T16:19:47.0575650Z     returns a friendly error when duplicate is created
+2026-10-02T16:19:47.0576330Z   Index
+2026-10-02T16:19:50.1666729Z     filters by network
+2026-10-02T16:19:53.2724231Z     returns meta count
+2026-10-02T16:19:56.3501925Z     supports pagination limit
+2026-10-02T16:19:58.5355879Z     forbids support users
+2026-10-02T16:20:01.8230435Z     allows admin to list location networks
+2026-10-02T16:20:04.0507438Z     rejects unauthenticated access
+2026-10-02T16:20:06.3116667Z     forbids normal users
+2026-10-02T16:20:09.3855138Z     filters by location
+2026-10-02T16:20:12.6181203Z     orders by priority within location
+2026-10-02T16:20:15.7323720Z     supports pagination from_id
+2026-10-02T16:20:15.7324187Z   Update
+2026-10-02T16:20:21.9806477Z     toggles primary location on the network
+2026-10-02T16:20:24.1329303Z     rejects unauthenticated access
+2026-10-02T16:20:26.3223978Z     forbids support users
+2026-10-02T16:20:29.5003453Z     allows admin to update a location network
+2026-10-02T16:20:31.6889999Z     forbids normal users
+2026-10-02T16:20:31.6890533Z   Delete
+2026-10-02T16:20:34.8565681Z     allows admin to delete a location network
+2026-10-02T16:20:37.9320963Z     clears network primary location when deleting a primary link
+2026-10-02T16:20:40.1974143Z     rejects unauthenticated access
+2026-10-02T16:20:42.4132713Z     forbids support users
+2026-10-02T16:20:44.6433759Z     forbids normal users
+2026-10-02T16:20:44.6434188Z 
+2026-10-02T16:20:44.6434473Z VpsAdmin::API::Resources::NetworkInterfaceMonitor
+2026-10-02T16:20:44.6436364Z   API description
+2026-10-02T16:20:47.9585047Z     includes network interface monitor scopes
+2026-10-02T16:20:47.9585655Z   Index
+2026-10-02T16:20:51.1407043Z     lists all monitors for admins
+2026-10-02T16:20:54.3040335Z     returns error on invalid order
+2026-10-02T16:20:57.3735124Z     orders by bytes descending by default
+2026-10-02T16:21:00.5232463Z     orders by bytes ascending
+2026-10-02T16:21:06.7465706Z     filters by user for admins
+2026-10-02T16:21:09.1445343Z     ignores user filter for non-admins
+2026-10-02T16:21:11.4409981Z     lists only user monitors for non-admins
+2026-10-02T16:21:17.9948752Z     paginates with limit and from_id
+2026-10-02T16:21:21.2900485Z     orders by packets descending
+2026-10-02T16:21:40.8184560Z     filters by environment, location, node, vps, and network_interface for admins
+2026-10-02T16:21:43.1734972Z     returns empty results for non-admin environment mismatch
+2026-10-02T16:21:45.4616056Z     rejects unauthenticated access
+2026-10-02T16:21:45.4616609Z   Show
+2026-10-02T16:21:48.7237274Z     allows admins to show any monitor
+2026-10-02T16:21:50.9277688Z     rejects unauthenticated access
+2026-10-02T16:21:54.2031055Z     returns 404 for unknown id
+2026-10-02T16:21:56.4999277Z     prevents users from showing other monitors
+2026-10-02T16:21:58.9100400Z     allows users to show their monitor
+2026-10-02T16:21:58.9100853Z 
+2026-10-02T16:21:58.9101043Z VpsAdmin::API::Resources::HostIpAddress
+2026-10-02T16:21:58.9109441Z   Create
+2026-10-02T16:22:03.5217528Z     rejects duplicate host addresses
+2026-10-02T16:22:05.9623542Z     rejects unauthenticated access
+2026-10-02T16:22:08.2455325Z     denies users creating host addresses under other users IPs
+2026-10-02T16:22:10.5581707Z     rejects host address outside of prefix
+2026-10-02T16:22:12.8699860Z     rejects invalid host address format
+2026-10-02T16:22:15.3615507Z     allows users to create host addresses under their IPs
+2026-10-02T16:22:15.3615998Z   Free
+2026-10-02T16:22:17.5359034Z     rejects unauthenticated access
+2026-10-02T16:22:19.9458691Z     rejects freeing unassigned host addresses
+2026-10-02T16:22:22.1826339Z     rejects freeing when the IP is not routed
+2026-10-02T16:22:27.9084335Z     frees assigned host addresses
+2026-10-02T16:22:30.1446173Z     rejects freeing addresses used for routing
+2026-10-02T16:22:32.3883940Z     denies freeing other users host addresses
+2026-10-02T16:22:32.3884524Z   API description
+2026-10-02T16:22:35.8422043Z     includes host_ip_address endpoints
+2026-10-02T16:22:35.8422940Z   Delete
+2026-10-02T16:22:38.2137049Z     rejects deleting non-user-created host addresses
+2026-10-02T16:22:40.4090288Z     rejects unauthenticated access
+2026-10-02T16:22:46.1110532Z     deletes user-created unassigned host addresses
+2026-10-02T16:22:48.3675761Z     denies deleting other users host addresses
+2026-10-02T16:22:50.6992228Z     rejects deleting assigned host addresses
+2026-10-02T16:22:50.6992920Z   Show
+2026-10-02T16:22:55.1089470Z     hides unrouted host IPs owned through the parent address from users
+2026-10-02T16:22:58.3383918Z     allows admins to view other users host IPs
+2026-10-02T16:23:00.5444857Z     denies users access to other users host IPs
+2026-10-02T16:23:02.8306547Z     rejects unauthenticated access
+2026-10-02T16:23:05.0405201Z     allows users to view their host IP
+2026-10-02T16:23:07.2800049Z     allows users to view host IPs assigned to their exports
+2026-10-02T16:23:07.2800791Z   Assign
+2026-10-02T16:23:09.5777968Z     rejects assigning when the IP is not routed
+2026-10-02T16:23:15.0182261Z     assigns host addresses to their interface
+2026-10-02T16:23:17.1948809Z     rejects unauthenticated access
+2026-10-02T16:23:19.4394297Z     denies assigning other users host addresses
+2026-10-02T16:23:21.8229065Z     rejects assigning already assigned host addresses
+2026-10-02T16:23:21.8241015Z   Update
+2026-10-02T16:23:24.1177431Z     denies access to other users host IPs
+2026-10-02T16:23:31.9856331Z     sets and unsets PTR records
+2026-10-02T16:23:34.2823642Z     rejects unauthenticated access
+2026-10-02T16:23:36.4794261Z     rejects invalid reverse record values
+2026-10-02T16:23:36.4794698Z   Index
+2026-10-02T16:23:39.5483146Z     filters by user when nil
+2026-10-02T16:23:45.8749447Z     filters by routed
+2026-10-02T16:23:49.0420403Z     filters by size
+2026-10-02T16:23:51.2540956Z     rejects unauthenticated access
+2026-10-02T16:23:54.3484872Z     filters by vps when nil
+2026-10-02T16:23:56.5854989Z     shows accessible records for users
+2026-10-02T16:23:59.7939814Z     filters by addr
+2026-10-02T16:24:02.9155219Z     filters by prefix
+2026-10-02T16:24:09.2342772Z     filters by assigned
+2026-10-02T16:24:12.3127375Z     shows all records for admins
+2026-10-02T16:24:12.3128011Z     with network purpose filters
+2026-10-02T16:24:12.3128944Z       behaves like network purpose filtering
+2026-10-02T16:24:15.5056595Z         includes any and vps networks for admin
+2026-10-02T16:24:18.6229690Z         keeps purpose=vps exact
+2026-10-02T16:24:21.7830770Z         does not restrict purpose when both filters are omitted
+2026-10-02T16:24:24.0691784Z         includes any and export networks for user
+2026-10-02T16:24:27.1248124Z         keeps purpose=any exact
+2026-10-02T16:24:33.4826778Z         intersects exact purpose with compatibility
+2026-10-02T16:24:36.6026073Z         rejects usable_for=unknown
+2026-10-02T16:24:39.7774387Z         rejects usable_for=any
+2026-10-02T16:24:42.8642342Z         includes any and export networks for admin
+2026-10-02T16:24:46.0230199Z         keeps purpose=export exact
+2026-10-02T16:24:48.2595940Z         includes any and vps networks for user
+2026-10-02T16:24:57.5441830Z         filters before pagination and reports the filtered count
+2026-10-02T16:24:57.5444952Z 
+2026-10-02T16:24:57.5445342Z Finished in 23 minutes 53 seconds (files took 4.55 seconds to load)
+2026-10-02T16:24:57.5445918Z 325 examples, 0 failures
+2026-10-02T16:24:57.5446130Z 
+2026-10-02T16:24:57.5446259Z Randomized with seed 1704
+2026-10-02T16:24:57.5446454Z 
+2026-10-02T16:24:58.3190923Z Post job cleanup.
+2026-10-02T16:24:58.4045622Z [command]/usr/bin/git version
+2026-10-02T16:24:58.4102902Z git version 2.55.0
+2026-10-02T16:24:58.4145097Z Temporarily overriding HOME='/home/runner/work/_temp/42ccc1c9-f554-4f5c-a43e-542524237696' before making global git config changes
+2026-10-02T16:24:58.4146516Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-02T16:24:58.4151536Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/vpsadmin/vpsadmin
+2026-10-02T16:24:58.4184892Z Removing SSH command configuration
+2026-10-02T16:24:58.4192055Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-02T16:24:58.4228886Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-02T16:24:58.4477370Z Removing HTTP extra header
+2026-10-02T16:24:58.4483223Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-02T16:24:58.4525016Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-02T16:24:58.4789257Z Removing includeIf entries pointing to credentials config files
+2026-10-02T16:24:58.4796284Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-02T16:24:58.4835298Z includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git.path
+2026-10-02T16:24:58.4836456Z includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git/worktrees/*.path
+2026-10-02T16:24:58.4837451Z includeif.gitdir:/github/workspace/.git.path
+2026-10-02T16:24:58.4838368Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-02T16:24:58.4845248Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git.path
+2026-10-02T16:24:58.4874615Z /home/runner/work/_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:24:58.4884595Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-6f0abe38\-f5aa\-45f6\-93b8\-f5e48fe98a93\.config
+2026-10-02T16:24:58.4927387Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git/worktrees/*.path
+2026-10-02T16:24:58.4962688Z /home/runner/work/_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:24:58.4971646Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-6f0abe38\-f5aa\-45f6\-93b8\-f5e48fe98a93\.config
+2026-10-02T16:24:58.5011412Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-10-02T16:24:58.5038063Z /github/runner_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:24:58.5045556Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-6f0abe38\-f5aa\-45f6\-93b8\-f5e48fe98a93\.config
+2026-10-02T16:24:58.5082480Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-02T16:24:58.5107682Z /github/runner_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config
+2026-10-02T16:24:58.5117719Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-6f0abe38\-f5aa\-45f6\-93b8\-f5e48fe98a93\.config
+2026-10-02T16:24:58.5161193Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-02T16:24:58.5413190Z Removing credentials config '/home/runner/work/_temp/git-credentials-6f0abe38-f5aa-45f6-93b8-f5e48fe98a93.config'
+2026-10-02T16:24:58.5573077Z Cleaning up orphan processes
