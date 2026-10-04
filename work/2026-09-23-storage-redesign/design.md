@@ -1,5 +1,199 @@
 # Storage redesign implementation briefs
 
+## Current workspace correction rebase and integration brief, 2026-10-04
+
+**Scope and authority:** the user explicitly requested “rebase, let's activate
+it and merge the fix again”, with the rest of the storage work aside and **no
+CI wait**. This authorizes the root workspace correction's activation and
+workspace/master integration after verification. It authorizes no new default
+integration in generic/provider/Admin/OS, no retained-cluster operation, no
+scheduler resume or storage trial. Preserve the existing VPS, disks, files,
+namespaces, allocations and stopped-scheduler state. The prior checkpoints
+below retain their original dates and evidence; this section governs the
+current package-only sequence. [State](state.md) and rollout records remain
+lead-owned.
+
+### Current execution checkpoint
+
+**Lead-reported phase: package proof passed; final handoff preparation pending.** Normal
+provider rebase dropped the upstream-equivalent native commit and retained
+exactly the four corrected `0b0ba9d8` blobs in one residual fix:
+`cd81e83f91a552eb0138e58cb76312784a2988df` on `e1bb5cf3`, tree
+`e038dc276462c0cbc3bacc744390bb63536fb36b`, 540 additions / 4 deletions.
+Full-index patch SHA `ae52282070254f1ac108e295360af3ca7a043ee915d3eca911ebfd0a663456b3`
+equals `399c3302..0b0ba9d8`. Upstream flakes, generic6a and Codex32775 are
+unchanged. Three pinned-Ruby syntax checks and the whitespace check passed.
+Prior 47/0 and independent reviews carry through exact corrected-source,
+helper, harness and Admin290f parity; no re-review or VM rerun is claimed.
+Exact-lease SSH publication/readback completed at cd81, provider master e1bb
+is unchanged, and the old0b durable remote backup is retained.
+
+The root URL and generated lock became one normal commit
+`1acb207784d31e8891fbc6db95125d2470df6d8d` on `c3124834`, tree
+`8effecec401f1a0adb092f01a138e74e695badce`: two flakes, 5 additions / 5 deletions,
+full-index patch SHA `429bf72deda410f468bfad2a4b12d05589c0f9a10ce728cb4d23540351f33a70`.
+Exactly four provider metadata leaves changed; all other upstream inputs,
+defaults and follows remain. Final no-build passed. Feature/old19 backup
+readbacks and public comparison capture at base c312/head1acb completed;
+root master c312 and historical registration metadata remain unchanged.
+The mechanical pin exemption applies, with no new substantive difference.
+
+Two verification launches ran zero checks: the first used the wrong CWD;
+the next driver referenced the superseded cfrf command. The stable public
+command from the tracking directory passed identity resolution. The fresh
+Luna/low watcher using `/home/aither/bin/dev-session` passed exit 0 in
+252.856s/parity 1: four existing root checks in 245.712s, default-package build
+in 6.836s, and packaged proof exit 0. The parent read all eight equality flags
+as 1, schema 1/policy 3/providers 2/profile_loader 1, with generic6a/Codex32775
+owner bytes and model catalog matching. Canonical contract SHA remains
+`33acdc50fa6b7ed94f84d1f7f1db0af8d76d7d57d2e721cbb6a204a96b27c0d1`.
+Built package:
+`/nix/store/s7y4bgq7iw0idkv5japb538kfwphk4nf-dev-workspace-0.2.0`;
+tools: `/nix/store/q49yi3hizfraywb6d0fwi3drzzlylqjq-vpsfree-dev-workspace-tools-0.1.0`.
+No unexpected kernel build or owned handle remains. Package Ruby test logs
+retain Git-identity-unknown stderr; all command and suite statuses are zero.
+This establishes no cause for the earlier broker failure. Private evidence
+`/tmp/storage-workspace-rebase-20261004.6uinnel5/package` remains unread by the
+architect. The package is **unselected**. Head1acb publication/comparison are
+complete; the lead's tracking checkpoint and any equivalent pin replay, final
+head/output comparison and final comparison capture remain pending.
+The lead's public host status now selects package `nl29dilg`, tools `xx5v`,
+with old provision hash prefix `1c067262`; the fix is not activated. One CI
+metadata read found no superseded live provider run; current CI is not awaited.
+No storage, cluster, scheduler, activation or merge operation occurred in this
+slice. Workspace/master approval remains conditional on activation verification.
+
+### Source decision and smallest commit shape
+
+Public Git inspection confirms the fetched graph:
+
+| Component | Fetched default | Selected source shape |
+| --- | --- | --- |
+| Generic runtime | `6a972b9ab01077611b2c60e0fc726c185e050315` | None: reviewed `4ef298b3` is already an ancestor; canonical schema 1/policy 3, host switch and transition-spec bytes are retained. |
+| Provider | `e1bb5cf3ad37c5ef31445a68ab85f53db2858777` | One admission-fix commit containing exactly the residual `399c3302..0b0ba9d8` four-path patch. |
+| Root consumer | `c31248344e4b0a26d94d7fa319406501cc4fc28f` at the supplied shared-master snapshot | One generated provider-pin commit on the actual current shared master, preserving upstream source and coordination work. |
+
+Provider `399c3302` is already an ancestor of `e1bb5cf3`: maintenance,
+profile and native-fixture support have entered upstream. Its four residual
+fix paths are `dev-clusters/vpsadmin/README.md`,
+`dev-clusters/vpsadmin/nix/storage-profile-provision.rb`,
+`dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb`, and
+`test/vpsadmin_storage_profile_spec.rb` (540 additions / 4 deletions).
+The lead confirms each predecessor blob at `e1bb5cf3` equals `399c3302`;
+the independently inspected upstream six-path delta touches only root README,
+flakes and review-policy skill/test files. There is no overlapping application
+edit to resolve. Preserve the old published heads/backups, construct the one
+residual fix on `e1bb5cf3`, and retain the already merged history. Do not replay
+the old four-commit series or its obsolete generic pin.
+
+The minimum sequence is **provider residual fix, then root generated pin**.
+A generic feature replay is unnecessary. Pinning old `0b0ba9d8` directly from
+current root would regress the generic runtime and Codex client. Keep generic
+`6a972b9a` and current `codex-web`
+`32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5`; the prior `4c170393` is historical.
+Keep current generic `codexModelCatalog` packaging and its matching Go/browser
+client, root team-mode checks/catalog/procedures, all follows, ordinary cluster
+defaults and Admin/OS/React pins. Root `flake.nix` resolution changes only the
+provider URL; the lead generates the lock from the current graph. Expected
+lock change is the provider's four metadata leaves, with no transitive input
+change because the corrected provider keeps `e1bb5cf3`'s flakes unchanged.
+No parallel runtime input or manual old-lock restoration is needed.
+
+The lead owns backups, short Git steps, generated locks, publication,
+comparison capture and integration. The implementer owns any necessary
+four-path application conflict or URL authoring; an unexpected substantive
+conflict returns to the lead rather than broadening this brief. Architect0
+owns only this design record. Retained review purpose/model/access are unchanged.
+
+### Verification carried forward and final composition proof
+
+Carry the prior **47/0** real-API correction tests, projection **4/32**, provider
+`8f8..0b0b` independent review and consumer `ad..bcb` review as their original
+evidence. First compare all four corrected final blobs with `0b0ba9d8` and
+confirm unchanged Admin290f/helper/harness dependencies. Record the new complete
+one-commit provider history and one-commit root history, with no migrations;
+old folded feature history is now upstream, not a new unreviewed replay.
+The runtime guard semantics remain the two short SQL admission transactions
+and fresh payload identity check documented below, with no physical wait under
+the staging transaction.
+
+For this byte-preserving rebase, repeating the 47-example DB run, default and
+enabled-profile smoke, Node restore VM, retained-services VM or host-migration
+VM is unnecessary. The inspected generic host helper/contract/transition tests
+and provider maintenance/runner/native/OSVM inputs are unchanged; upstream
+portal naming and team-policy work does not change the host-state migration
+interface. Prior VM results retain their limited scope. If a conflict changes
+one of those bytes or inputs, rerun only the affected existing check and
+reassess its review lane. Do not create a new runtime scenario.
+
+The lead verifies the exact residual patch and generated lock, syntax/whitespace
+and no-build evaluation, then records review carry-forward. The already
+reviewed identical correction needs no full functional re-review; a genuinely
+mechanical root pin is exempt under mandatory-change-review step 1. If the
+final comparison reveals a substantive difference, review the affected lanes
+on the committed final diff before proceeding. No generic feature review is
+needed for consuming its current default.
+
+Use one fresh watcher for the existing four root checks
+(`deployment-contract`, `agent-instructions`, `agent-team-policy`,
+`cluster-provider-composition`), default-package build and actual packaged
+proof. Prove installed provision/acceptance scripts equal the corrected
+provider, provider launchers/maintenance/default JSON equal their intended
+owners, host/tools canonical contracts equal at schema 1/policy 3, both
+providers and profile loader present, and runtime/Codex sources match the
+new selected graph. The old `vyf5` build proves the old composition only.
+Current root policy checks must remain intact. No CI result or wait is a gate
+for this user-directed slice.
+
+### Public activation and workspace-only fast-forward
+
+The initial lead-reported selected package was `cfrf8m`/tools `k5vvj`; the
+current checkpoint above supersedes that selection with
+`/nix/store/nl29dilg1awgqxmim73d04pizsp5px3j-dev-workspace-0.2.0` and tools
+`xx5v`, still carrying the old bare admission check. Earlier public inspection
+found the host script equal between nl29 and
+`/nix/store/cfrf8mjcww7lks1ylqzgfay5920ab029-dev-workspace-0.2.0/libexec/.workspace-host-wrapped`
+and confirmed the existing boundary: `switch` calls `quiesce_sessions` at line 622;
+lines 1877–1911 invoke the predecessor's public session quiesce for ready
+managed sessions before selecting the candidate. Generic `dev-session`
+`quiesce_and_require_idle!` checks both lead-thread and team idleness. The
+resolved `~/bin` wrapper is not itself evidence of the selected profile; the
+lead must use the current public selected-generation/status result.
+
+After final publication/comparison and package proof, leave the team idle for
+the operator's ordinary public `workspace-host switch --source` of the exact
+reviewed root worktree. An active lead cannot perform its own idle handoff.
+Do not use `--from-candidate`, force, private helpers, delayed switching,
+session stop/archive or an unselected provider runner. A refusal leaves the
+selection unproved; recover through the supported forward switch, retaining
+maintenance-aware provider and policy at least 3. No downgrade or cluster
+reset is a recovery step.
+
+After the operator reports activation, the lead verifies public host/package
+selection, same-session current/team commands, own stable service bindings and
+installed corrected script/contract/default bytes. A public provider status
+read may confirm ownership/current reported state; it must not start, update,
+release or provision the cluster. Preserve any unrelated selected-generation
+change rather than assuming yesterday's package remains active.
+
+Then capture the exact final workspace comparison and fast-forward shared
+master with ordinary hooks/SSH, preserving foreign work/index and all feature
+refs. Today's explicit approval covers this workspace/master fix. If master
+advances only through coordination, rebase the single pin, prove patch/config
+equivalence and compare the final default output with the activated output.
+An equal output carries the built/activation proof; a different output needs
+the existing package/byte-equivalence proof before integration, with no new
+storage VM or automatic reactivation. Any substantive source/default change
+returns to the lead. Publish/read back the exact root master and retain a
+reachable published provider dependency; generic is already on its default.
+Do not integrate the provider correction or any other default in this task.
+
+**Current status:** provider correction and root pin are published; final
+package proof is pending as reported above. The architect only reconciled
+this design record from supplied evidence. Package activation and workspace
+integration remain pending; retained-cluster delivery/provision and API CI
+diagnosis remain separate, held work.
+
 ## Current storage-profile contract, 2026-10-02
 
 The user has said **Implement the plan**, selected five-minute snapshots and

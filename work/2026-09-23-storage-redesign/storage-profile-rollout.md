@@ -1,6 +1,25 @@
 # Retained storage-profile rollout
 
-## Status
+## Current package correction, 2026-10-04
+
+The user requested a current-master rebase, activation and workspace/master
+integration of the admission fix, with storage work aside and no CI wait.
+Upstream already contains the earlier maintenance/profile/native support.
+One residual four-file fix is published as provider `cd81e83f` on `e1bb5cf3`;
+the root generated pin is published as `1acb2077` on `c3124834`. Current
+upstream generic6a and Codex32775 remain selected by the lock graph.
+
+The local package batch passed0/252.856s/parity1: four existing root checks,
+default-package build and actual corrected-script/runtime/Codex/contract proof.
+All eight equality fields passed, schema1/policy3/providers2/profile_loader1.
+Package `/nix/store/s7y4bgq7iw0idkv5japb538kfwphk4nf-dev-workspace-0.2.0`;
+tools `/nix/store/q49yi3hizfraywb6d0fwi3drzzlylqjq-vpsfree-dev-workspace-tools-0.1.0`.
+This package is built and unselected. External idle public activation and
+verification precede the already-authorized workspace/master fast-forward.
+Retained services delivery, provision, scheduling, payload and API diagnostics
+remain held. This package-only continuation performed no cluster operation.
+
+## Prior retained status, 2026-10-03
 
 Prepared execution record, updated 2026-10-03. The earlier provider399
 implementation, independent review and direct corrections are complete. Default/compatible
@@ -48,7 +67,8 @@ final19cb25ee and published; final package evaluation resolves the exact built
 output. All four root checks/default build and installed-byte proof passed
 exit0/248.639s/parity1. Replacement packagevyf5/tools4w4m remain **unselected**.
 Final no-build passed0/3.838s; comparison captures actual990..19cb, and remote
-master1fa9 is unchanged. Original live file baselines begin after this boot and before Node updates/provision; no
+master1fa9 was unchanged at feature publication. The subsequent tracking-only
+handoff checkpointa51fa51e is published; the new pin remains unmerged. Original live file baselines begin after this boot and before Node updates/provision; no
 preseed file comparison is inferred from the six cold recovery copies.
 
 The original protected DB rows are unchanged after copied boot:27groups,

@@ -6,6 +6,83 @@ lifecycle: active
 
 ## Current status
 
+2026-10-04 current phase: fast rebase and package preparation for the provider
+admission fix, followed by external activation and workspace/master integration.
+The user explicitly directed: “rebase, let's activate it and merge the fix again ...
+while keeping the rest of the storage work aside. do not wait for CI”. This
+covers the workspace correction; no other default integration or cluster/storage
+operation is authorized by this continuation. CI will not be awaited.
+
+Fresh fetches select generic master6a972b9a, provider mastere1bb5cf3 and workspace
+masterc3124834. Generic maintenance policy4ef is already upstream; provider also
+contains the earlier maintenance/profile/native series, but not the four-path
+admission correction. Architect0 owns the bounded rebase/composition brief,
+implementer0 owns any source conflict/URL edits, and the lead owns normal
+rebase/generated locks, local proof, publication and final integration.
+
+Provider residual rebase is complete and published at
+`cd81e83f91a552eb0138e58cb76312784a2988df` on current `e1bb5cf3`.
+It contains one commit and exactly the reviewed four-file correction,
+540 additions / 4 deletions, full-index patch SHA256
+`ae52282070254f1ac108e295360af3ca7a043ee915d3eca911ebfd0a663456b3`.
+All corrected blobs equal `0b0ba9d8`; upstream flakes, generic6a/Codex32775
+and merged feature history are preserved. Three Ruby syntax checks and diff
+checks passed. Prior47/0 and independent review carry forward as their original
+source-equivalent evidence; no new DB/VM or full review run is claimed.
+Remote provider master remains `e1bb5cf3`; the old exact0b0b head has a
+published backup ref. Root rebase is complete at
+`1acb207784d31e8891fbc6db95125d2470df6d8d` on actual `c3124834`, one commit,
+exactly two flakes (5 additions / 5 deletions). The generated lock changes only
+four provider metadata leaves; generic6a/Codex32775 and all other nodes/follows
+remain current upstream. Final no-build evaluation passed. Both feature heads
+and backups have exact SSH readbacks; root master remains c312. Public comparison
+captured basec312/head1acb, preserving initial registration metadata.
+
+The old-CWD watcher preflight ran zero commands; the next launch refused a
+superseded hardcoded public generation before checks. Neither supplies check
+evidence. The private driver now invokes the stable public command from the
+literal tracking CWD, and a fresh Luna/low package watcher completed the four existing
+root checks/default build/output proof; final results are recorded below. Public status now
+reports selected package `nl29dilg`, whose provision hash remains the old
+`1c067262...`; the correction is not selected. CI metadata was read once only to
+ensure no superseded provider run remained; current-head CI is not awaited.
+Activation and workspace/master integration remain pending; storage is held.
+Private execution evidence: `/tmp/storage-workspace-rebase-20261004.6uinnel5`.
+
+The current selected packagecfrf8m has schema1/policy3 but still contains the old
+bare admission checks, so the later fix needs package selection and services
+delivery. The retained cluster trial, scheduling and separate API diagnostics
+remain held; this turn will perform no storage trial. Session remains active.
+
+### Current package proof and next action
+
+Fresh Luna/low verification passed0/252.856s/parity1, stages1/2/3 all0:
+four existing root checks, default package and actual packaged source proof.
+All eight equality fields passed; schema1/policy3/providers2/profile_loader1.
+Selected generic6a/Codex32775 sources and model catalog match the package;
+corrected provision/acceptance scripts, launchers, maintenance, ordinary defaults
+and canonical host/tools contract match their owners. No kernel build or
+remaining watcher handle was reported. The build logs retain Git identity
+chatter from test fixtures; the reported command/suite results remain all0.
+Evidence: `/tmp/storage-workspace-rebase-20261004.6uinnel5/package`.
+Package `/nix/store/s7y4bgq7iw0idkv5japb538kfwphk4nf-dev-workspace-0.2.0`;
+tools `/nix/store/q49yi3hizfraywb6d0fwi3drzzlylqjq-vpsfree-dev-workspace-tools-0.1.0`.
+The package is built and unselected. After this tracking checkpoint, any final
+coordination-only replay must preserve both flake hashes and resolve this same
+output; a changed output needs the existing package-equivalence proof.
+
+- [x] Preserve current upstream history and the exact reviewed residual fix.
+- [x] Publish provider and generated workspace pin with durable backups.
+- [x] Pass local no-build, four root checks, package and byte proof.
+- [ ] Finish final comparison/publication after the tracking checkpoint.
+- [ ] Operator activates through the public switch with managed sessions idle.
+- [ ] Verify the selected generation, then fast-forward/publish workspace master.
+
+Storage operations, scheduler resume and API diagnostics remain held. The
+session stays active and feature refs are retained.
+
+### Prior correction handoff, 2026-10-03
+
 2026-10-03 current phase: external idle activation handoff for the corrected
 provider. Final consumer feature `19cb25ee8d5333a4ea4c1816806c130c41652f1f` is
 published, independently reviewed through its identical original pin patch,
@@ -112,6 +189,22 @@ not application source or failed verification. Source proof and installed-script
 delivery still precede a public retry. See the
 [consumer review packet](storage-profile-admission-consumer-review.md).
 
+### Activation clarification, 2026-10-04
+
+The user questioned the requested additional workspace activation. The earlier
+activation/integration is complete. The later provision failure exposed a
+provider-script defect; the corrected provider requires a new package selection
+and services update because these guest scripts are embedded immutable inputs.
+Read-only public workspace-host status now selects
+`/nix/store/cfrf8mjcww7lks1ylqzgfay5920ab029-dev-workspace-0.2.0`, tools
+`/nix/store/k5vvjzpr72xbmaycgail274bgqxh6dk7-vpsfree-dev-workspace-tools-0.1.0`.
+Its contract remains schema1/policy3. Both provision/acceptance scripts are
+byte-identical to the previous vah tools and still use the top-level bare
+admission check. Thus the reviewed correction is not selected. The status/code
+checks performed no switch or cluster operation; no claim is made about who
+selected this generation or why. The remaining external package update and
+supported services delivery are unchanged.
+
 ### Final consumer source and operator handoff
 
 A normal one-commit replay onto actual shared master `990a5929` produced final
@@ -127,8 +220,15 @@ Final package evaluation passed0/7.218s and resolved the exact already-built
 vyf5 output. Final no-build check passed0/3.838s. These checks preserve the
 original independent review and package observations within identical source;
 no new review or VM run is claimed. SSH feature readback is exact19cb25; remote
-master remains1fa9. Public comparison capture records actual base990a5929 and
+master remained1fa9 at feature publication. Public comparison capture records actual base990a5929 and
 head19cb25, retaining historical initial registration metadata.
+
+The consolidated operator handoff was committed and published as tracking-only
+`a51fa51e2e2503ce658003f75b77a5be1ff6c042`, with eleven owned record/note paths.
+Remote master now includes that checkpoint; the new pin remains only on feature
+19cb25, not merged. Foreign index entries were preserved, shared index empty.
+This is the genuine external activation ownership handoff under the tracking
+cadence, not another application or default integration.
 
 Private package evidence: `/tmp/storage-profile-admission-package.p5dtjka1`.
 Stage1 took241.182s, stage2 took7.191s, stage3 proof exit0. No watcher handle or
