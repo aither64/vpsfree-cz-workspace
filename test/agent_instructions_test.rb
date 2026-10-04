@@ -48,9 +48,22 @@ class AgentInstructionsTest < Minitest::Test
     assert_match(/including for solo sessions/, verification)
   end
 
+  def test_final_review_timing_and_substantive_documentation_are_consistent
+    paths = %w[AGENTS.md docs/agent-teams.md docs/agent-instructions/sessions.md
+               docs/agent-instructions/verification.md]
+    paths.each do |path|
+      text = File.read(File.join(ROOT, path)).gsub(/\s+/, ' ')
+      assert_match(/Routine\s+planning, investigation, findings,.*evidence alone\s+never trigger automatic review/m, text, path)
+      assert_match(/(?:Earlier review requires an explicit user request|Explicitly requested earlier review)/, text, path)
+      assert_match(/is advisory/, text, path)
+      assert_match(/does not replace final/, text, path)
+      assert_match(/substantive documentation and configuration|configuration, documentation/, text, path)
+    end
+  end
+
   def test_default_sol_policy_documents_exact_requested_model
-    core = File.read(File.join(ROOT, 'AGENTS.md'))
-    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'))
+    core = File.read(File.join(ROOT, 'AGENTS.md')).gsub(/\s+/, ' ')
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
 
     assert_includes(core, '`gpt-6.1-sol`')
     assert_includes(teams, 'model = "gpt-6.1-sol";')
@@ -61,16 +74,20 @@ class AgentInstructionsTest < Minitest::Test
   end
 
   def test_team_ownership_and_progress_policy_is_routed_consistently
-    core = File.read(File.join(ROOT, 'AGENTS.md'))
-    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'))
-    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'))
+    core = File.read(File.join(ROOT, 'AGENTS.md')).gsub(/\s+/, ' ')
+    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md')).gsub(/\s+/, ' ')
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
 
-    assert_match(/architect records the design and verification brief/, core)
-    assert_match(/implementers edit application code/, core)
+    assert_match(/selected design owner records the design and verification brief/, core)
+    assert_match(/implementers edit application code from architect-owned or\s+lead-owned briefs/, core)
     assert_match(/resolve that failure\s+rather than taking over delegated application work/, core)
     assert_match(/At the end of every lead turn.*current\s+phase.*completed work.*remaining work.*next\s+action/m, core)
     assert_match(/phase\s+checklist in `state\.md`/, sessions)
-    assert_match(/`solo` is for discussion\s+and read-only investigation/, teams)
+    assert_match(/Solo leads investigate, design and implement without automatic specialists/, teams)
+    assert_match(/Lead-designed leads write the design and verification brief/, teams)
+    assert_match(/Full-team architects write that brief/, teams)
+    assert_match(/Adding, replacing or reconfiguring members requires explicit user direction/, teams)
+    assert_match(/creation retries and forks keep retained snapshots/, teams)
   end
 
   def test_final_readiness_requires_complete_history_and_migration_lineage

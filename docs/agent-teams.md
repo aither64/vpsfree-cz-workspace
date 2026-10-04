@@ -26,25 +26,51 @@ review workflow can select it independently of its role name. Existing session
 members keep their saved instructions and settings; a member added later uses
 the currently installed catalog.
 
-The site catalog gives architects (`designer` in the catalog) and implementers
-workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`) for the lead,
-implementer and independent reviewer. Architects use GPT-6 Astra/xhigh. The
-architect writes the design and verification brief before substantive
-implementation and may edit assigned design documents and prototypes. The
-implementer makes application edits. The lead coordinates their work and reports
-a compact progress checklist at the end of every turn.
-Reviewers stay read-only, and a separate GPT-6 Luna/low utility watches long
-checks.
+The site catalog gives leads, architects (`designer` in the catalog) and
+implementers workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`)
+for leads, implementers and independent reviewers. Architects use GPT-6
+Astra/xhigh. Reviewers stay read-only, and a separate GPT-6 Luna/low utility
+watches long checks.
 
-`delegated` is the default team. The `lead_designed` key remains available for
-compatibility but creates the same architect, implementer, and reviewer roles;
-its Sol lead retains xhigh effort. Its name no longer means that the lead owns
-design. The generic portal may still display its built-in "Lead-designed team"
-label. `solo` is for discussion and read-only investigation. Substantive
-development requires a suitable team.
+| Preset | Persistent members | Design owner | Application edits | Specialist slots |
+| --- | --- | --- | --- | --- |
+| `solo` | lead (1 total) | lead | lead | 0 |
+| `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
+| `delegated` (Full team, default) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
 
-The portal shows each member's saved access, which may differ from the current
-catalog. Existing members retain their saved model, effort, access, and
-instructions. Newly added members use the installed catalog; creation retries
-and forks keep the retained snapshots. Do not reconfigure an existing roster
-just to apply new defaults.
+Solo leads investigate, design and implement without automatic specialists.
+Lead-designed leads write the design and verification brief before substantive
+implementation. Full-team architects write that brief. The brief lives in
+`work/<slug>/design.md`; implementers accept either owner's brief. A bounded
+small edit may use a direct lead brief. Leads report a compact progress
+checklist at the end of every turn and integrate member reports.
+
+Solo and Full-team leads default to high effort and allow high/xhigh;
+Lead-designed leads default to xhigh and allow high/xhigh. Substantive design
+and implementation use xhigh, with high allowed for a bounded simple unit when
+the reason is recorded. Independent reviewers retain their saved effort.
+
+Run independent final review after the intended substantive deliverable is
+complete, all intended changes are committed and quick checks pass, before
+long integration tests. Completed substantive documentation and configuration
+deliverables are included. Routine
+planning, investigation, findings, session tracking and evidence alone never
+trigger automatic review. Earlier review requires an explicit user request,
+is advisory, and does not replace final review. A reviewer in a preset receives
+no automatic assignment. Solo uses the mandatory-review skill's temporary
+standalone reviewer. That reviewer and the utility watcher do not join its
+roster. Preserve whole-branch history and migration review and the skill's
+narrow-fix policy.
+
+Adding, replacing or reconfiguring members requires explicit user direction;
+manual team controls remain available. The portal shows each member's saved
+access, which may differ from the current catalog. Existing members retain
+their saved model, effort, access, and instructions. Newly added members use
+the installed catalog; creation retries and forks keep retained snapshots,
+including an older Lead-designed lineup containing an architect. Do not
+reconfigure an existing roster to apply new defaults.
+
+Shared workspace rules and installed skills change globally rather than being
+frozen with a session. They can conflict with older saved prompts. These defaults
+do not refresh those prompts, change existing rosters or add a policy-refresh
+mechanism.

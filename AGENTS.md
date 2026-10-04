@@ -109,32 +109,29 @@ the parent's responsibility for choosing scope or accepting results.
   through `~/.codex/skills/dev-session-monitor/SKILL.md`. The watcher is not a
   team member; retain the skill's ownership, cancellation and visible-fallback
   rules. Respect instructions not to await CI.
-- As the lead of a direct team, check the live same-session roster with
-  `dev-session team list <verified-slug> --as-is` at the start of each new
-  substantive work item. Give a ready member whose saved purpose is `design`
-  nontrivial design work and a ready member whose purpose is `implementation`
-  application edits, with a concrete deliverable. Check saved access before
-  assigning edits. If access or session identity fails, resolve that failure
-  rather than taking over delegated application work. The installed
-  catalog can define custom role names; use the retained member addresses and
-  purposes rather than assuming `architectN` or `implementerN`; those names
-  identify design and implementation only in legacy rosters without a purpose.
-  Briefly tell the user who owns what and integrate their reports. Keep
-  coordination records and short dependent coordination steps yourself;
-  assign bounded application edits to an implementer. Use the mandatory-review
-  workflow for review and the separate Luna watcher for long verification.
-  Respect user directions and the current collaboration mode; never invent
-  members or address another
-  session's roster. [Site team roles](docs/agent-teams.md) shows a custom role.
-- The architect records the design and verification brief in
-  `work/<slug>/design.md` before substantive implementation. It covers scope,
-  interfaces, invariants, compatibility, deployment and recovery, acceptance
-  criteria, and quick and longer checks. Architects may edit assigned design
-  documents and prototypes; implementers edit application code. Route material
-  design deviations through the lead. A small bounded edit may go straight to
-  an implementer without a separate design document. A solo session is for
-  discussion and read-only investigation; set up an appropriate team before
-  substantive development.
+- Follow the selected mode and retained lead instructions. Solo leads investigate,
+  design and edit application code without automatic specialists. Lead-designed
+  leads own design and delegate application edits; Full-team leads delegate
+  nontrivial design and application edits. Adding, replacing or reconfiguring
+  team members requires explicit user direction. Check the live same-session
+  roster with `dev-session team list <verified-slug> --as-is` before each new
+  substantive team work item. Use saved member addresses, purposes and access;
+  check workspace-write access before assigning edits. If access or session
+  identity fails, resolve that failure rather than taking over delegated
+  application work. Briefly tell the user who owns what and integrate member
+  reports. Keep coordination records and short dependent steps yourself.
+  Never invent members or address another session's roster.
+  [Site team roles](docs/agent-teams.md) owns the mode table.
+- The selected design owner records the design and verification brief in
+  `work/<slug>/design.md` before substantive implementation: the Solo or
+  Lead-designed lead, or the Full-team architect. It covers scope, interfaces,
+  invariants, compatibility, deployment and recovery, acceptance criteria, and
+  quick and longer checks. Architects may edit assigned design documents and
+  prototypes; implementers edit application code from architect-owned or
+  lead-owned briefs. Solo leads edit their own application code. Route material
+  design deviations through the lead. A small bounded edit may use a direct
+  lead brief without a separate design document. Preserve retained instructions
+  and respect the current collaboration mode.
 - Use the dev-session-documentation skill for substantive work, and the
   dev-session-handoff skill after material changes/review/status requests. Keep
   tracking and the portal manifest current and include the stable session URL.
@@ -198,11 +195,14 @@ content.
 
 ## Mandatory Change Review
 
-For feature, bugfix, refactor, or cross-project work with relevant code,
-schema, API, protocol, configuration, documentation, deployment, or security
-impact, run the `mandatory-change-review` skill after all intended changes are
-committed and quick local verification has passed, but before starting long
-integration tests. The canonical workflow is
+Run the `mandatory-change-review` skill for a completed substantive deliverable,
+including code, schema, API, protocol, configuration, documentation, tests,
+deployment or security changes, after all intended changes are committed and
+quick local verification has passed, but before starting long integration tests.
+Routine planning, investigation, findings, session tracking and evidence alone
+never trigger automatic review. Earlier review requires an explicit user request,
+is advisory, and does not replace final committed-deliverable review. Having a
+reviewer in a preset creates no assignment. The canonical workflow is
 `~/.codex/skills/mandatory-change-review/SKILL.md`; it owns reviewer model and effort,
 adaptive lane selection, review packets, finding reconciliation, reruns, and
 recording requirements. Follow it exactly, including its skip criteria.

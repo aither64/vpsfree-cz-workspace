@@ -96,12 +96,20 @@
             .work_policy.implementation.simple_requires_reason == true and
             .work_policy.implementation.followup == "retain" and
             .teams.solo.max_open_agents == 0 and
+            .teams.solo.design_owner == "team_lead" and
+            (.teams.solo.roles | keys) == ["team_lead"] and
+            .teams.solo.roles.team_lead.access == "workspace_write" and
+            .teams.solo.roles.team_lead.effort == "high" and
+            .teams.solo.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
             .teams.solo.roles.team_lead.model == "gpt-6.1-sol" and
             .teams.solo.roles.team_lead.purpose == "lead" and
-            (.teams.solo.roles.team_lead.instructions | contains("Set up an appropriate team before substantive development")) and
+            (.teams.solo.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself without automatic specialists")) and
             (.teams.solo.roles.team_lead.instructions | contains("At the end of every turn")) and
             .teams.delegated.max_open_agents == 3 and
             .teams.delegated.design_owner == "designer" and
+            (.teams.delegated.roles | keys | sort) == (["designer", "implementer", "reviewer", "team_lead"] | sort) and
+            .teams.delegated.roles.team_lead.access == "workspace_write" and
+            .teams.delegated.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
             .teams.delegated.roles.team_lead.model == "gpt-6.1-sol" and
             .teams.delegated.roles.team_lead.effort == "high" and
             (.teams.delegated.roles.team_lead.instructions | contains("At the end of every turn")) and
@@ -128,16 +136,29 @@
             .teams.delegated.roles.reviewer.lifetime == "session" and
             .teams.delegated.roles.reviewer.fresh_context == true and
             (.teams.delegated.roles.reviewer.instructions | contains("complete base-to-head history")) and
+            (.teams.delegated.roles.reviewer.instructions | contains("Earlier review is allowed only on an explicit user request")) and
+            (.teams.delegated.roles.reviewer.instructions | contains("after all intended changes are committed and quick checks pass")) and
             .teams.lead_designed.roles.team_lead.model == "gpt-6.1-sol" and
             .teams.lead_designed.roles.team_lead.effort == "xhigh" and
-            .teams.lead_designed.design_owner == "designer" and
-            .teams.lead_designed.max_open_agents == 3 and
-            (.teams.lead_designed.roles | keys | sort) == (["designer", "implementer", "reviewer", "team_lead"] | sort) and
-            .teams.lead_designed.roles.designer.model == "gpt-6-astra" and
-            .teams.lead_designed.roles.designer.effort == "xhigh" and
-            .teams.lead_designed.roles.designer.access == "workspace_write" and
+            .teams.lead_designed.design_owner == "team_lead" and
+            .teams.lead_designed.max_open_agents == 2 and
+            (.teams.lead_designed.roles | keys | sort) == (["implementer", "reviewer", "team_lead"] | sort) and
+            .teams.lead_designed.roles.team_lead.access == "workspace_write" and
+            .teams.lead_designed.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
+            (.teams.lead_designed.roles.team_lead.instructions | contains("Own substantive technical design and write work/<slug>/design.md")) and
             .teams.lead_designed.roles.implementer.model == "gpt-6.1-sol" and
             .teams.lead_designed.roles.reviewer.model == "gpt-6.1-sol" and
+            ([.teams[].roles.team_lead.instructions] | unique | length) == 3 and
+            ([.teams[].roles.team_lead.instructions] | all(
+              contains("all intended changes are committed, and quick checks pass, before long integration tests") and
+              contains("Completed substantive documentation and configuration deliverables are included") and
+              contains("Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review") and
+              contains("Earlier review requires an explicit user request, is advisory, and does not replace final review") and
+              contains("Adding, replacing or reconfiguring team members requires explicit user direction")
+            )) and
+            ([.teams.delegated, .teams.lead_designed] | all(
+              .roles.implementer.instructions | contains("architect-owned or lead-owned design and verification brief for substantive work")
+            )) and
             .utilities.verification_watcher.model == "gpt-6-luna" and
             .utilities.verification_watcher.effort == "low" and
             .utilities.verification_watcher.behavior == "verification_watcher" and

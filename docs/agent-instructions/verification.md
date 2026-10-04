@@ -16,7 +16,13 @@ settings from the retained team roster. Mandatory review uses an eligible
 retained review-purpose member's saved model and effort; without one, use a
 review-purpose role from the installed catalog's default development team in a
 fresh standalone thread, including for solo sessions. Do not invent a team or
-change the roster. Pass
+change the roster. Run final review only after the substantive deliverable is
+complete, all intended changes are committed, and quick checks pass, before
+long integration tests. Completed substantive documentation and configuration
+deliverables remain in scope. Routine planning, investigation, findings,
+session tracking and evidence alone never trigger automatic review. Earlier
+review requires an explicit user request, is advisory, and does not replace
+final review. A reviewer in a preset receives no automatic assignment. Pass
 project escalation rules, including
 unexpected local kernel builds, in the watcher's brief. The parent continues
 automatically on completion or escalation. If the skill or delegation is

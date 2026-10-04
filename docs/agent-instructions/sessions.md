@@ -126,10 +126,19 @@ Keep these files current enough that a future agent can resume the work without
 guessing. When plans change because code or tests reveal new facts, update the
 tracking notes.
 
-For a team initiative, the architect keeps the technical design and verification
-brief in `work/<slug>/design.md` before substantive implementation. Keep a phase
-checklist in `state.md` and update it when its state changes. The lead reports a
-compact progress checklist at the end of every turn, including the current
+The selected design owner keeps the technical design and verification brief in
+`work/<slug>/design.md` before substantive implementation: the Solo or
+Lead-designed lead, or the Full-team architect. Implementers accept either
+architect-owned or lead-owned briefs. Solo leads also edit application code.
+Adding, replacing or reconfiguring members requires explicit user direction.
+Routine planning, investigation, findings, session tracking and evidence alone
+never trigger automatic review. Explicitly requested earlier review is advisory
+and does not replace final review of the completed, committed substantive
+deliverable after quick checks and before long integration tests. Completed
+substantive documentation and configuration deliverables remain in scope.
+
+Keep a phase checklist in `state.md` and update it when its state changes. The
+lead reports a compact progress checklist at the end of every turn, including the current
 phase, completed and remaining work, blockers or material risks, and next
 action. This does not add a tracking-only commit for each turn; use the cadence
 above.
