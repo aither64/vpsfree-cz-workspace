@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-07-24-vpsfreectl-snapshot-download-fix
 
 ## Repositories
