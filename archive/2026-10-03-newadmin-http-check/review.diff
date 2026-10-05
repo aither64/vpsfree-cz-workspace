@@ -1,0 +1,414 @@
+diff --git a/docs/operations/newadmin-webui.md b/docs/operations/newadmin-webui.md
+index 2d89b284..20d42a13 100644
+--- a/docs/operations/newadmin-webui.md
++++ b/docs/operations/newadmin-webui.md
+@@ -87,6 +87,12 @@ retain their thresholds. These checks do not certify interactive login.
+ Confirm OAuth, recovery, console, locale, and important read-only API paths
+ in a controlled operator acceptance session after activation.
+ 
++All nine dedicated Newadmin alerts use `warning` severity, including HTTP and
++exporter failures and missing host or probe metrics. Shared VPS infrastructure
++alerts and API, console and legacy UI HTTP alerts retain their existing
++severities. Promoting a dedicated Newadmin alert to `critical` requires an
++explicit policy decision.
++
+ After activation, inspect the top-level document's Content-Security-Policy
+ response header. `frame-src` must include the exact console and heatmap origins
+ above alongside the existing map origin; `connect-src` must not add the console
+diff --git a/modules/clusterconf/monitor/http.nix b/modules/clusterconf/monitor/http.nix
+index 24a5c283..5e7c9277 100644
+--- a/modules/clusterconf/monitor/http.nix
++++ b/modules/clusterconf/monitor/http.nix
+@@ -53,8 +53,8 @@
+     targets = [ "https://newadmin.vpsfree.cz/build-info.json" ];
+     host = "newadmin.vpsfree.cz";
+     bodyMatches = [
+-      ''"schemaVersion":1''
+-      ''"commit":"[0-9a-f]{40}"''
++      ''"schemaVersion"[[:space:]]*:[[:space:]]*1[[:space:]]*[,}]''
++      ''"commit"[[:space:]]*:[[:space:]]*"[0-9a-f]{40}"''
+     ];
+     labels = {
+       alias = "newadmin.vpsfree.cz";
+diff --git a/modules/clusterconf/monitor/rules/vpsadmin.nix b/modules/clusterconf/monitor/rules/vpsadmin.nix
+index 46f8ec17..f96da03e 100644
+--- a/modules/clusterconf/monitor/rules/vpsadmin.nix
++++ b/modules/clusterconf/monitor/rules/vpsadmin.nix
+@@ -89,7 +89,7 @@ in
+         '';
+         for = "10m";
+         labels = {
+-          severity = "critical";
++          severity = "warning";
+           frequency = "15m";
+         };
+         annotations.summary = "newadmin host metrics are missing for {{ $labels.fqdn }}";
+@@ -116,7 +116,7 @@ in
+         '';
+         for = "10m";
+         labels = {
+-          severity = "critical";
++          severity = "warning";
+           frequency = "15m";
+         };
+         annotations.summary = "newadmin frontend HTTP probe metrics are missing";
+@@ -130,7 +130,7 @@ in
+         '';
+         for = "10m";
+         labels = {
+-          severity = "critical";
++          severity = "warning";
+           frequency = "15m";
+         };
+         annotations.summary = "newadmin BFF HTTP probe metrics are missing";
+@@ -499,43 +499,58 @@ in
+     name = "vpsadmin-front";
+     interval = "300s";
+     rules = lib.flatten (
+-      lib.mapAttrsToList (name: camel: [
+-        {
+-          alert = "${camel}ExporterDown";
+-          expr = ''up{job="http_${name}"} == 0'';
+-          for = "10m";
+-          labels = {
+-            severity = "critical";
+-            frequency = "hourly";
+-          };
+-          annotations = {
+-            summary = "Web exporter is down (instance {{ $labels.instance }})";
+-            description = ''
+-              Unable to check web availability
+-
+-              LABELS: {{ $labels }}
+-            '';
+-          };
+-        }
+-
+-        {
+-          alert = "${camel}WebDown";
+-          expr = ''probe_success{job="http_${name}"} == 0'';
+-          for = "120s";
+-          labels = {
+-            severity = "critical";
+-            frequency = "5m";
+-          };
+-          annotations = {
+-            summary = "{{ $labels.instance }} web probe failed";
+-            description = ''
+-              {{ $labels.instance }} does not return the expected HTTP response
+-
+-              LABELS: {{ $labels }}
+-            '';
+-          };
+-        }
+-      ]) httpSites
++      lib.mapAttrsToList (
++        name: camel:
++        let
++          severity =
++            if
++              builtins.elem name [
++                "newadmin_vpsfree_cz"
++                "newadmin_bff_vpsfree_cz"
++              ]
++            then
++              "warning"
++            else
++              "critical";
++        in
++        [
++          {
++            alert = "${camel}ExporterDown";
++            expr = ''up{job="http_${name}"} == 0'';
++            for = "10m";
++            labels = {
++              inherit severity;
++              frequency = "hourly";
++            };
++            annotations = {
++              summary = "Web exporter is down (instance {{ $labels.instance }})";
++              description = ''
++                Unable to check web availability
++
++                LABELS: {{ $labels }}
++              '';
++            };
++          }
++
++          {
++            alert = "${camel}WebDown";
++            expr = ''probe_success{job="http_${name}"} == 0'';
++            for = "120s";
++            labels = {
++              inherit severity;
++              frequency = "5m";
++            };
++            annotations = {
++              summary = "{{ $labels.instance }} web probe failed";
++              description = ''
++                {{ $labels.instance }} does not return the expected HTTP response
++
++                LABELS: {{ $labels }}
++              '';
++            };
++          }
++        ]
++      ) httpSites
+     );
+   }
+ ]
+diff --git a/tests/prometheus/newadmin-rules.nix b/tests/prometheus/newadmin-rules.nix
+index cf0280d1..a67a999c 100644
+--- a/tests/prometheus/newadmin-rules.nix
++++ b/tests/prometheus/newadmin-rules.nix
+@@ -3,13 +3,17 @@ let
+   groups = import ../../modules/clusterconf/monitor/rules/vpsadmin.nix {
+     lib = pkgs.lib;
+   };
+-  names = pkgs.lib.concatMap (group: map (rule: rule.alert) group.rules) groups;
++  rules = pkgs.lib.concatMap (group: group.rules) groups;
++  newadminRules = pkgs.lib.filter (rule: pkgs.lib.hasPrefix "Newadmin" rule.alert) rules;
++  names = map (rule: rule.alert) newadminRules;
+   expected = [
+     "NewadminBffNotActive"
+     "NewadminInfraScrapeMissing"
+     "NewadminCertificateExpiring"
+     "NewadminFrontendProbeMissing"
+     "NewadminBffProbeMissing"
++    "NewadminVpsfreeCzExporterDown"
++    "NewadminBffVpsfreeCzExporterDown"
+     "NewadminVpsfreeCzWebDown"
+     "NewadminBffVpsfreeCzWebDown"
+   ];
+@@ -17,6 +21,8 @@ let
+   testFile = pkgs.replaceVars ./newadmin-rules.yml { inherit ruleFile; };
+ in
+ assert pkgs.lib.all (name: builtins.elem name names) expected;
++assert builtins.length newadminRules == builtins.length expected;
++assert pkgs.lib.all (rule: rule.labels.severity == "warning") newadminRules;
+ pkgs.runCommand "newadmin-prometheus-rules" { nativeBuildInputs = [ pkgs.prometheus.cli ]; } ''
+   promtool check rules ${ruleFile}
+   promtool test rules ${testFile}
+diff --git a/tests/prometheus/newadmin-rules.yml b/tests/prometheus/newadmin-rules.yml
+index 49316d5e..4c82b370 100644
+--- a/tests/prometheus/newadmin-rules.yml
++++ b/tests/prometheus/newadmin-rules.yml
+@@ -67,7 +67,7 @@ tests:
+               job: infra
+               fqdn: vpsadmin-webui1.int.vpsfree.cz
+               instance: vpsadmin-webui1.int.vpsfree.cz:9100
+-              severity: critical
++              severity: warning
+               frequency: 15m
+             exp_annotations:
+               summary: newadmin host metrics are missing for vpsadmin-webui1.int.vpsfree.cz
+@@ -81,7 +81,7 @@ tests:
+           - exp_labels:
+               job: infra
+               fqdn: vpsadmin-webui1.int.vpsfree.cz
+-              severity: critical
++              severity: warning
+               frequency: 15m
+             exp_annotations:
+               summary: newadmin host metrics are missing for vpsadmin-webui1.int.vpsfree.cz
+@@ -128,7 +128,7 @@ tests:
+         exp_alerts:
+           - exp_labels:
+               job: http_newadmin_vpsfree_cz
+-              severity: critical
++              severity: warning
+               frequency: 15m
+             exp_annotations:
+               summary: newadmin frontend HTTP probe metrics are missing
+@@ -151,7 +151,7 @@ tests:
+         exp_alerts:
+           - exp_labels:
+               job: http_newadmin_vpsfree_cz
+-              severity: critical
++              severity: warning
+               frequency: 15m
+             exp_annotations:
+               summary: newadmin frontend HTTP probe metrics are missing
+@@ -171,7 +171,7 @@ tests:
+         exp_alerts:
+           - exp_labels:
+               job: http_newadmin_bff_vpsfree_cz
+-              severity: critical
++              severity: warning
+               frequency: 15m
+             exp_annotations:
+               summary: newadmin BFF HTTP probe metrics are missing
+@@ -194,7 +194,7 @@ tests:
+         exp_alerts:
+           - exp_labels:
+               job: http_newadmin_bff_vpsfree_cz
+-              severity: critical
++              severity: warning
+               frequency: 15m
+             exp_annotations:
+               summary: newadmin BFF HTTP probe metrics are missing
+@@ -230,7 +230,7 @@ tests:
+           - exp_labels:
+               job: http_newadmin_vpsfree_cz
+               instance: https://newadmin.vpsfree.cz/build-info.json
+-              severity: critical
++              severity: warning
+               frequency: 5m
+             exp_annotations:
+               summary: https://newadmin.vpsfree.cz/build-info.json web probe failed
+@@ -251,7 +251,7 @@ tests:
+           - exp_labels:
+               job: http_newadmin_bff_vpsfree_cz
+               instance: https://newadmin.vpsfree.cz/healthz
+-              severity: critical
++              severity: warning
+               frequency: 5m
+             exp_annotations:
+               summary: https://newadmin.vpsfree.cz/healthz web probe failed
+@@ -259,3 +259,146 @@ tests:
+                 https://newadmin.vpsfree.cz/healthz does not return the expected HTTP response
+ 
+                 LABELS: map[__name__:probe_success instance:https://newadmin.vpsfree.cz/healthz job:http_newadmin_bff_vpsfree_cz]
++
++  - name: A failed frontend exporter alerts as warning
++    interval: 1m
++    input_series:
++      - series: 'up{job="http_newadmin_vpsfree_cz",instance="https://newadmin.vpsfree.cz/build-info.json"}'
++        values: '0+0x12'
++    alert_rule_test:
++      - eval_time: 11m
++        alertname: NewadminVpsfreeCzExporterDown
++        exp_alerts:
++          - exp_labels:
++              job: http_newadmin_vpsfree_cz
++              instance: https://newadmin.vpsfree.cz/build-info.json
++              severity: warning
++              frequency: hourly
++            exp_annotations:
++              summary: Web exporter is down (instance https://newadmin.vpsfree.cz/build-info.json)
++              description: |
++                Unable to check web availability
++
++                LABELS: map[__name__:up instance:https://newadmin.vpsfree.cz/build-info.json job:http_newadmin_vpsfree_cz]
++
++  - name: A failed BFF exporter alerts as warning
++    interval: 1m
++    input_series:
++      - series: 'up{job="http_newadmin_bff_vpsfree_cz",instance="https://newadmin.vpsfree.cz/healthz"}'
++        values: '0+0x12'
++    alert_rule_test:
++      - eval_time: 11m
++        alertname: NewadminBffVpsfreeCzExporterDown
++        exp_alerts:
++          - exp_labels:
++              job: http_newadmin_bff_vpsfree_cz
++              instance: https://newadmin.vpsfree.cz/healthz
++              severity: warning
++              frequency: hourly
++            exp_annotations:
++              summary: Web exporter is down (instance https://newadmin.vpsfree.cz/healthz)
++              description: |
++                Unable to check web availability
++
++                LABELS: map[__name__:up instance:https://newadmin.vpsfree.cz/healthz job:http_newadmin_bff_vpsfree_cz]
++
++  - name: API console and legacy UI exporter and probe failures remain critical
++    interval: 1m
++    input_series:
++      - series: 'up{job="http_api_vpsfree_cz",instance="https://api.vpsfree.cz/"}'
++        values: '0+0x12'
++      - series: 'probe_success{job="http_api_vpsfree_cz",instance="https://api.vpsfree.cz/"}'
++        values: '0+0x12'
++      - series: 'up{job="http_console_vpsfree_cz",instance="https://console.vpsfree.cz/vzconsole.js"}'
++        values: '0+0x12'
++      - series: 'probe_success{job="http_console_vpsfree_cz",instance="https://console.vpsfree.cz/vzconsole.js"}'
++        values: '0+0x12'
++      - series: 'up{job="http_vpsadmin_vpsfree_cz",instance="https://vpsadmin.vpsfree.cz/"}'
++        values: '0+0x12'
++      - series: 'probe_success{job="http_vpsadmin_vpsfree_cz",instance="https://vpsadmin.vpsfree.cz/"}'
++        values: '0+0x12'
++    alert_rule_test:
++      - eval_time: 11m
++        alertname: ApiVpsfreeCzExporterDown
++        exp_alerts:
++          - exp_labels:
++              job: http_api_vpsfree_cz
++              instance: https://api.vpsfree.cz/
++              severity: critical
++              frequency: hourly
++            exp_annotations:
++              summary: Web exporter is down (instance https://api.vpsfree.cz/)
++              description: |
++                Unable to check web availability
++
++                LABELS: map[__name__:up instance:https://api.vpsfree.cz/ job:http_api_vpsfree_cz]
++      - eval_time: 11m
++        alertname: ApiVpsfreeCzWebDown
++        exp_alerts:
++          - exp_labels:
++              job: http_api_vpsfree_cz
++              instance: https://api.vpsfree.cz/
++              severity: critical
++              frequency: 5m
++            exp_annotations:
++              summary: https://api.vpsfree.cz/ web probe failed
++              description: |
++                https://api.vpsfree.cz/ does not return the expected HTTP response
++
++                LABELS: map[__name__:probe_success instance:https://api.vpsfree.cz/ job:http_api_vpsfree_cz]
++      - eval_time: 11m
++        alertname: ConsoleVpsfreeCzExporterDown
++        exp_alerts:
++          - exp_labels:
++              job: http_console_vpsfree_cz
++              instance: https://console.vpsfree.cz/vzconsole.js
++              severity: critical
++              frequency: hourly
++            exp_annotations:
++              summary: Web exporter is down (instance https://console.vpsfree.cz/vzconsole.js)
++              description: |
++                Unable to check web availability
++
++                LABELS: map[__name__:up instance:https://console.vpsfree.cz/vzconsole.js job:http_console_vpsfree_cz]
++      - eval_time: 11m
++        alertname: ConsoleVpsfreeCzWebDown
++        exp_alerts:
++          - exp_labels:
++              job: http_console_vpsfree_cz
++              instance: https://console.vpsfree.cz/vzconsole.js
++              severity: critical
++              frequency: 5m
++            exp_annotations:
++              summary: https://console.vpsfree.cz/vzconsole.js web probe failed
++              description: |
++                https://console.vpsfree.cz/vzconsole.js does not return the expected HTTP response
++
++                LABELS: map[__name__:probe_success instance:https://console.vpsfree.cz/vzconsole.js job:http_console_vpsfree_cz]
++      - eval_time: 11m
++        alertname: VpsadminVpsfreeCzExporterDown
++        exp_alerts:
++          - exp_labels:
++              job: http_vpsadmin_vpsfree_cz
++              instance: https://vpsadmin.vpsfree.cz/
++              severity: critical
++              frequency: hourly
++            exp_annotations:
++              summary: Web exporter is down (instance https://vpsadmin.vpsfree.cz/)
++              description: |
++                Unable to check web availability
++
++                LABELS: map[__name__:up instance:https://vpsadmin.vpsfree.cz/ job:http_vpsadmin_vpsfree_cz]
++      - eval_time: 11m
++        alertname: VpsadminVpsfreeCzWebDown
++        exp_alerts:
++          - exp_labels:
++              job: http_vpsadmin_vpsfree_cz
++              instance: https://vpsadmin.vpsfree.cz/
++              severity: critical
++              frequency: 5m
++            exp_annotations:
++              summary: https://vpsadmin.vpsfree.cz/ web probe failed
++              description: |
++                https://vpsadmin.vpsfree.cz/ does not return the expected HTTP response
++
++                LABELS: map[__name__:probe_success instance:https://vpsadmin.vpsfree.cz/ job:http_vpsadmin_vpsfree_cz]

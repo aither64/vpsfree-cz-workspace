@@ -6,8 +6,11 @@ Implement the plan accepted by the user's "Implement the plan" instruction.
 Correct the public frontend metadata probe and retain all dedicated Newadmin
 alerts as warnings. The user selected "Newadmin alerts only": shared
 infrastructure alerts for the VPS retain their existing severities.
-Implementation and verification are authorized; default-branch integration,
-production deployment and session lifecycle actions are not authorized.
+Implementation and verification were authorized initially. The user later
+explicitly directed integration of `vpsfree-cz-configuration` into default branch
+master and retained production deployment ownership. That fast-forward
+integration is recorded in state.md. No agent deployment or session lifecycle
+action is assigned.
 
 ## Scope and implementation
 
@@ -32,7 +35,9 @@ pins, Alertmanager routing and shared infrastructure rules outside scope.
 
 ## Team and execution
 
-Select the installed `lead_designed` preset after initial tracking is committed.
+The runtime retained the solo preset and refused a different preset. Add the
+installed development implementer and reviewer roles with supported team-add
+commands, preserving the saved lead and each member policy.
 The lead owns session tracking, coordination and acceptance. Assign this small,
 bounded unit directly to the retained implementation-purpose member; a separate
 architect design document is unnecessary because the approved plan resolves the
@@ -80,4 +85,4 @@ Operators need the warning policy in the existing configuration operations
 guide. Session tracking retains investigation evidence, exact revisions,
 verification, review and prepared rollout/rollback steps. Update the portal
 with useful durable artifacts and include its stable URL. Keep lifecycle active
-and the session open while the feature branch awaits merge approval.
+and the session open for the operator-owned rollout and follow-up results.
