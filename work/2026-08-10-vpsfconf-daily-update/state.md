@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-10-vpsfconf-daily-update
 
 ## Repositories
