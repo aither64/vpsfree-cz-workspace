@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Test framework and CI integration state
 
 ## Branches and worktrees
