@@ -32,3 +32,26 @@ through the system configuration. Do not merge or push configuration changes
 to `master` merely to deploy aitherdev. Integrate that branch only after the
 user explicitly directs the merge; accepting a plan or deployment result alone
 is insufficient.
+
+## Workspace runtime selection
+
+The workspace owns generic runtime selection through
+`inputs.vpsfree-dev-workspace.inputs.dev-workspace.url` in `flake.nix`.
+This direct nested URL keeps the selected extension source independent of the
+runtime revision. Extension updates must preserve that selection unless a
+reviewed composition change intentionally replaces it. Remove the override only
+when the selected extension provides the intended runtime and review proves that
+the effective input graph and package/deployment contracts remain equivalent.
+
+Select a published exact runtime revision, then generate the composed lock in
+the workspace feature worktree with
+`nix flake update vpsfree-dev-workspace/dev-workspace`. Inspect semantic input
+paths and locked identities: preserve the extension revision/content hash,
+sibling inputs and existing follows paths. Do not add a top-level runtime input,
+rewrite the extension's own lock or deduplicate dependency nodes incidentally.
+The direct nested runtime must match configuration's `devWorkspace` selection,
+managed through its existing confctl channel. Run
+`bin/check-dev-workspace-deployment --workspace-root PATH --configuration-root PATH`
+against the final locks before deployment. The application still comes from the
+workspace user profile; configuration selects the matching host module/runtime
+contract and does not install the application.
