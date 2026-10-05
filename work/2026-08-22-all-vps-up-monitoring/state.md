@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-22-all-vps-up-monitoring
 
 ## Repositories
