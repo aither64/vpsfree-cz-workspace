@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # State
 
 - Initiative: `2026-07-12-vpsadmin-channel-update`
