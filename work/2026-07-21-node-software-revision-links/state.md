@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Node Software Revision Links State
 
 ## Status
