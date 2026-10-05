@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-17-image-build-failures
 
 ## Repositories
