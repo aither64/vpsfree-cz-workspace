@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-09-02-kb-runtime-reliability
 
 ## Repositories
