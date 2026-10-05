@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-08-dns-caa-record
 
 ## Repositories
