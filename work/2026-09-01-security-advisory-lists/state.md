@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-09-01-security-advisory-lists
 
 ## Repositories
