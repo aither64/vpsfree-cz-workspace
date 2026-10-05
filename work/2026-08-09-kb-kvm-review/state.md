@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-09-kb-kvm-review
 
 ## Repositories
