@@ -4,8 +4,8 @@
 
 The user's **“ok, continue”** resumes the already approved retained-profile
 trial. Lead owns operations; this is the source-confirmed continuation brief,
-not execution evidence. Selected package **s7y4/q49**, reviewed provider
-`cd81e83f91a552eb0138e58cb76312784a2988df` and same-session Admin
+not execution evidence. The current continuation uses selected **3fzi/wg7**,
+reviewed provider `77dd0d0447f48c8d8e667257cef2276738d053a0` and same-session Admin
 `290f1ef07972e53c2b5154dbfa8b088802bde619` are the source boundary. Workspace
 activation/integration is complete as recorded below. No new activation,
 independent review, VM scenario or default merge is needed for these identical
@@ -14,7 +14,82 @@ authority follows.
 
 ### Current execution checkpoint
 
-**Lead-reported phase: copied-start failed; recovery selection blocked.** The first
+**Current lead-reported phase, 2026-10-05: payload fixture failed at its VPS
+memory request; correction reviewed and published, consumer package proof passed,
+final handoff preparation pending.** Fresh stopped proof confirmed original hold `cf9`, immutable
+sources `1j91/dd37`, `gxcf22/dccd` and `47iy/16cf`, all six retained disks with
+positive current sizes equal to the cold copy, and zero own command-line or
+disk-FD holders. Public installed recovery passed exit 0 in 25.543s. Lead's
+metadata-recovery readback confirmed v2/`starting_copied`, archived predecessor bytes digest exact
+`cf9`, only the two DNS descriptors changed, and exact services/copied `kyryi8`,
+candidate and all three Nodes. Disk bindings were unchanged; applied selection
+was pending `copied_boot`. These are lead-confirmed results, not architect
+inspection of the private reference `/tmp/storage-retained-resume-20261005`.
+
+The watcher's first preflight used an insufficient workspace CWD and ran zero
+operations; this remains a launch failure with no boot result. After correcting
+the tracking CWD, one exact installed public `start --copied-config` passed:
+driver exit 0 in 666.808s. Lead accepted all six actual recorded systems and
+rooted closures, successful actual seed/API/Supervisor, and normal regular-node
+refresh. Complete applied state with pending null was published before v2
+`released`. Public status is running/ready true/bridge; all disk device/inode/size
+bindings are equal. Watcher PID/PGID 1579638 ended; no unexpected kernel build
+was reported. The private reference above remains unread by the architect.
+
+Lead accepted the read-only post-recovery batch: PASS exit 0 in 29s. Actual
+guest provision/acceptance `SEED_FILE` hashes match `ef775`/`c7a1` exactly and
+the actual services toplevel is `kyryi8`. The established ordinary-file digest
+and four quota properties are equal. Across 27 groups / 1,168 rows, protected
+changes are zero; seven package/item additions equal the previously verified
+owned metadata additions, and only two observed Pool-space rows changed.
+Original assignments, ceilings, namespaces/maps and retention are exact. All
+three actual Nodes passed source-hash, socket, running and zero-delay proofs.
+This supplies no fresh preboot-file measurement. The private reference above
+remains unread by the architect.
+
+Lead accepted the one exact installed public `storage-profile provision`
+attempt: PASS exit 0 in 78.601s, stderr 0, summary version 1 / members 2 /
+sources 3 / provisioned true. Actual artifacts are `provision-result.json`
+and `provision-process.json`. The watcher initially looked for incorrect generic
+filenames; no provision retry occurred. These are supplied evidence references,
+not private artifact reads by the architect.
+
+Lead accepted the post-provision read packet: original ordinary file and four
+quota properties equal, protected changes 0, and all three Node proofs passed.
+The 52 added rows comprise seven previously verified seed-metadata rows and
+45 profile rows. Parent joined the actual catalog: two backup/NAS Pools on
+node201 (`tank/backup`, `tank/nas`), two member NAS roots, five backup/NAS DIPs,
+corresponding quota/retention/use rows (8/5/2), three Plan links, six tasks and
+observed rows. Existing assignments, ceilings and namespaces have no drift.
+Fresh bounded public reads confirmed loaded enrollment true, all four Pools
+present, template1 enabled and hypervisor-compatible, freeze `read_write`
+(mode 0), and the existing test administrator. This retains the earlier file
+proof limit; it adds no preboot measurement.
+
+The installed c7a1 fixture under `/root/retained_profile_payload_20261005`
+failed once: exit 1 in 27.444s, stage 1, scheduler_stopped 1 and recovery_required
+1. Lead's owning guest evidence identifies
+`VpsAdmin::API::Exceptions::ClusterResourceAllocationError`, through
+`api/cluster_resources.rb:270` and `Vps::Create#link_chain:18`; bounded message
+classification confirms below-resource-minimum, memory label and GB unit.
+The actual Admin290f guest seed requires 1024 MiB while the fixture requests
+512 MiB. User chain48/user5 completed and was recorded; VPS allocation rolled
+back before return, with no stage 2 or payload. Lead's exact PGID1671507 scan
+found no owned process. Fresh bounded public SQL further confirms chain48
+state `done` (enum 2), unfinished transactions 0, pending confirmations 0,
+chain locks 0 and user5 VPS rows 0. The post-failure protected capture contains
+27 groups / 1,253 rows with protected changes 0; no retry or repair occurred.
+Preserve this failed fixture, its admitted user/chain
+and stopped scheduler; no cleanup, cancellation, unlock, freeze toggle or blind
+retry. Installed provider77dd/c7a1/Admin290f remain unchanged. Lead read the
+bounded brief below and released exactly its two source paths. The correction
+passed its owning checks and independent review and is published as 0ff827df;
+consumer package proof has passed, while final handoff, selection and guest
+delivery remain pending. Retirement remains pending. Earlier
+unrelated failure causes stay unknown; private evidence remains unread by the
+architect and CI is not awaited.
+
+**Prior 2026-10-04 attempt: copied-start failed; recovery selection was blocked.** The first
 maintenance watcher used the default CWD and performed no operation. The
 corrected literal public maintenance-start passed exit 0 in 70.755s/parity 1,
 reaching `maintenance_ready`, running, ready false. The first masked-capture
@@ -48,7 +123,7 @@ Private reference `/tmp/storage-profile-resume-20261004.7t052v6y` remains unread
 No successful full-cluster boot, release, provision or payload proof follows.
 Services booted without the maintenance masks during this attempt, so a
 pending hold alone does not establish that no application writer ran.
-Existing source/index/CI and cluster-operation holds remain.
+At that checkpoint, source/index/CI and cluster-operation holds remained.
 These are supplied lead results; the architect read no private evidence and
 performed no operation. Earlier failure and preservation evidence remains below.
 
@@ -223,15 +298,24 @@ failed on Unix socket path length. The shorter-path retry failed at stage 2;
 the specific assertion/cause remains unproved. Lead accepted the one-file
 diagnostic/readiness amendment, now folded into 77dd; its native retry is
 complete and passed within the fixture's scope. Provider 77dd is published;
-the consumer package checks/proof have passed. The current phase is final
-handoff preparation; public recovery, activation and deployment remain held.
-Lead reports the failed boot artifacts preserved, exact-executable
+the root-only rebase onto 88a is complete at c754, with fresh package proof,
+feature publication and comparison complete. Lead confirms actual activation
+proof passed for selected 3fzi/wg7 and both authorized workspace integrations
+completed: provider master/feature77dd and consumer master/featurec754.
+No known workspace source gate remains. Public metadata recovery and copied
+boot/release and post-recovery delivery/preservation/Node proof passed.
+Public provision and post-provision original-preservation proof passed. The
+owning VPS/NAS payload fixture failed at stage 1 on its 512-MiB request below
+the seeded 1024-MiB minimum; the bounded fixture correction is pending.
+Retirement is unexecuted.
+Before recovery, lead reported the failed boot artifacts preserved, exact-executable
 process scan empty, all six images present, no disk FD holders and no runner or
-ready files. An earlier scan matched its observer and supplies no live-VM
-evidence. All retained-cluster operations remain held. Architect owns this brief;
+ready files. An earlier scan matched its observer and supplied no live-VM
+evidence. Architect owns this brief;
 implementer owns provider source, lead owns source release, package delivery
-and subsequent operations. The resumed trial supplies the purpose for this
-correction; it supplies no new package activation or default-merge approval.
+and subsequent operations. The initial resumed-trial authorization supplied the
+purpose for this correction; the later workspace-only merge approval is recorded
+below and does not authorize a cluster operation.
 
 **Prior baseline verification (lead-reported):** the tested eight-path draft was
 frozen atop provider `cd81e83f91a552eb0138e58cb76312784a2988df`, index empty,
@@ -586,7 +670,7 @@ exit 0. Normal owning commit `de915cd11b97ea8438eb1d8ddbeac139a379db68`, tree
 `48eed400090222653932029286f3b2860f0ca4c681db63eff871f17ae6a337f2`.
 The mechanical pin exemption applies; no new independent root review is claimed.
 
-**Current package checkpoint (lead-reported):** fresh Luna/low watcher
+**Previous package checkpoint (lead-reported, before root 88a):** fresh Luna/low watcher
 `retained_selection_package_20261005` completed at private
 `/tmp/storage-profile-retained-selection-package-20261005.u4_knzyn`, with exact
 consumer de915/provider77dd/Admin290f. It ran the existing four root checks,
@@ -602,23 +686,154 @@ warning, not a failure. Exact built outputs are
 The earlier native pass remains scoped to 1,018.533s, all six stages and
 hold_released 0; package proof adds no full-cluster release claim.
 
-Lead's final daily owned tracking checkpoint, source-equivalent one-pin replay,
-equal-output evaluation, final feature publication and comparison are still
-pending. The concrete operator boundary after that preparation is an external
-idle invocation of the public command:
+**Previous handoff preparation complete (lead-reported, before root 88a):** normal tracking commit
+and publication `09da5e10eff9d0ead7d5647691256944049524f4` covered 13 owned paths.
+The source-equivalent one-pin replay de915→
+`3dfda5c6a0b14fa55a75ce28e262c4a5c4af2326` onto 09da produced tree
+`6185953115dcd0ac0e079b88657b9767fd9eb840`. Exact patch, message and flake
+hashes were preserved; range-diff was `=`. Final evaluation passed exit 0 in
+7.492s and resolves the same built zwdv package; final no-build passed exit 0
+in 4.083s. The original de915 260.657s package/proof/parity evidence therefore
+carries with the identical source patch/output. No new build, review or VM run
+is claimed.
+
+SSH feature publication/readback completed at 3df; remote master 09da remained
+unchanged. Public comparison completed base09da/head3df with historical
+`initial_base` preserved. Provider77dd/default e1bb and the native six-stage
+PASS/hold_released 0 evidence are unchanged. Shared foreign records, index and
+features were preserved. Lead reports the tracking whitespace finding consisted
+only of 128 required blank patch-context lines: three immutable diff hashes
+were validated and the prose/JSON/YAML gate passed exit 0, with no hook/source
+bypass.
+
+**Current rebase/package checkpoint (lead-reported, 2026-10-05):** root master is
+`88a75655ce6f4151f932df1d5204845edd8ea968`, one commit after 09da. Immutable Git
+inspection confirms only the two flakes changed: upstream retains provider
+cd81 but makes its input an attrset with
+`inputs.dev-workspace.url = "github:aither64/dev-workspace/3edc605d81a30a4d49560426e0128b388b856493"`.
+Its lock changes only eight generic/Codex metadata leaves, selecting generic
+3edc605 and Codex `3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c`.
+The root-only rebase completed at `c754120b48d41ad58367ca4db1908dfeb7a5c1a6`,
+tree `aedb64ddd9325201726b9cbe34a33a9ffe44aada`, on exact 88a. Implementer
+preserved the upstream attrset except the provider URL selecting 77dd; the
+normal generated lock changed exactly four provider metadata leaves. Generic
+3edc605/Codex3d07 and all other graph nodes/follows remain equal to 88a.
+Provider77dd/master e1bb/Admin290f are unchanged. The two-path patch has
+5 additions / 5 deletions, full-index SHA256
+`8a682dbab89eacfeef4f907e092499e6ff45f364fc4b2ed6b06e1ae2ea910d76`.
+Flake/lock SHA256 values are
+`4af9f4b31fb72210082d08cd7b13c62a980e1b52f354dbd87c2a5b21df033561` /
+`218f080e248980c968f3403b82a24bc638b63ef0c74e0cface19a10c1701cde4`.
+The original message is unchanged; range-diff is `!`, because only the URL hunk
+adapts to the upstream attrset. Exact 3df is retained in a backup.
+
+Source basis is root `88a:flake.nix`/`flake.lock`, provider `77dd:flake.nix`
+(`mkPackage`, canonical runtime-contract injection and native fixture inputs),
+and generic `6a972..3edc605`. That upstream generic delta changes portal
+uploads/preparation and packaging/Codex selection; package-constructor,
+host-transition and canonical contract sources are unchanged. Schema 1 / policy
+3 remains the contract. The mechanical pin exemption applies to this exact
+composition. Native77dd/Admin290f and host evidence retain their original scope
+with unchanged provider/Admin/OSVM inputs and host contract; this delta requires
+no automatic VM rerun or new review scenario.
+
+The old 3df/zwdv/n2ki proof remains historical. The first un-waited `setsid`
+launch returned exit 0 in 0.05s without preflight, result, log or driver process:
+it is incomplete zero-check evidence. Parent confirmed hashes, valid syntax and
+process count 0. Fresh Luna/low watcher `workspace_rebase_package_waited_20261005`
+ran the identical frozen driver with `setsid --wait` and passed exit 0 in
+254.433s, parity 1. The existing four root checks passed in 247.982s, default
+package in 6.210s and actual proof exited 0. All nine equality flags and
+profile_loader were 1; schema 1 / policy 3 / providers 2. Actual runtime3ed and
+Codex3d07 matched their selected immutable sources, and provider77dd helper,
+scripts and defaults matched. Upstream skips, deliberate-test Git-identity
+stderr and rename warning retain their successful command statuses; no
+unexplained kernel build was reported. Private reference
+`/tmp/storage-profile-workspace-rebase-20261005`, driver `0b565810`, verifier
+`0239b631` and selection `ca550d2d` are lead-supplied and unread by the architect.
+The newly proved outputs are
+`/nix/store/3fzif0563caiknl53a8s64axaxyf0ph8-dev-workspace-0.2.0` and tools
+`/nix/store/wg7hnssgk49kqg4wkyj2dminlcji9h2b-vpsfree-dev-workspace-tools-0.1.0`.
+
+A second explicit SSH fetch confirmed root master88a/provider mastere1bb
+unchanged and feature3df/77dd before publication. Exact-lease root publication
+and readback then completed at featurec754/master88a; public comparison captured
+base88a/headc754 while preserving `initial_base`. Feature/source/index are clean,
+shared index is empty and foreign work is preserved. No master merge occurred;
+CI was not awaited. The mechanical pin exemption and prior provider review,
+direct step-9 and native evidence retain their scoped unchanged-source/input
+carry; no new independent review or native run is claimed.
+
+The previous external-idle handoff supplied this public operator command:
 
 ```sh
 workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
 ```
 
-This records the handoff, not an invocation or completed activation. Public
-host status still selects s7y4/q49 and old maintenance helper `20761bf1…33c2`;
-the proved zwd package remains unselected.
+At that handoff, lead's public status selected package
+`jq982nq0jxfhmr4jxyvkglnyy77n1kxf` and tools
+`psjfqw8nkw4mra7va5ad9yc8cacpmijk`, with old maintenance SHA256
+`20761bf1f778c8e06f3eddb48197963df3f4a80127aeb7780c26a6854d9233c2`.
+This and the earlier s7y4/zwdv handoffs are historical; no second switch is
+requested.
 
-The actual retained cluster remains stopped with its untouched
-`starting_copied` hold; selected old s7y4 package/q49 tools remain in use.
-No new package selection/activation, public recovery, provision or subsequent
-trial result is inferred. CI is not awaited and no default merge is authorized.
+**Current activation/integration complete (lead-reported, 2026-10-05):** the user explicitly
+said, "activated. please verify that we're finally done with workspace fixes.
+if so, you can merge the workspace changes into default branches, keep the rest
+of the storage work in feature branches." Lead reports installed public host
+status selecting exact
+`/nix/store/3fzif0563caiknl53a8s64axaxyf0ph8-dev-workspace-0.2.0`.
+Lead's actual activation proof passed: selected 3fzi/wg7 matches the prior
+package proof, all nine source-equality flags and loader are 1, schema 1 /
+policy 3 / providers 2. The active Codex path matches the selected wrapper;
+all four owned units are active/running with ExecStart through selected 3fzi.
+Public same-session status exited 0: stopped/bridge/ready false, with the v1
+`starting_copied` hold and pending true intact. Lead performed no activation,
+restart or cluster mutation during verification. Private proof reference
+`/tmp/storage-profile-workspace-activation-20261005` is supplied only and unread
+by the architect.
+
+No concrete workspace source gate remains for these unchanged heads. The
+complete provider inventory is two commits, cd81 admission plus 77dd retained
+selection/host roots/owning fixture, across the recorded 13 paths; there is no
+additional provider feature delta outside those tested corrections. Original
+ef116da3 all-four-HIGH review, direct step-9 resolution, full quick checks,
+native PASS and fresh c754 package proof retain their exact recorded scope.
+No obsolete iteration or SQL migration is added; intentional maintenance
+record 1→2/applied envelope 1 and canonical schema 1/policy 3 remain as documented.
+Workspace activation and integration are complete within this evidence; this
+cannot promise absence of future bugs or prove the real retained trial.
+
+The explicit repository/target scope is `vpsfreecz/dev-workspace:master`
+(cd81 + 77dd) and `aither64/vpsfree-cz-workspace:master` (the single c754
+provider URL/generated-lock pin preserving generic3ed/Codex3d07). Generic
+maintenance-policy4ef already belongs to generic master3ed and needed no
+duplicate integration. The exact approval was recorded in state before
+integration. Public comparisons captured provider basee1bb/head77dd and root
+base88a/headc754, preserving initial metadata. Lead completed provider FF-only
+integration through a fresh detached target worktree, normal SSH push and
+readback: remote master and feature both 77dd. Consumer FF-only integration in
+shared master staged nothing; normal SSH push/readback confirms remote master
+and feature both c754. Shared status metadata was byte-equal before/after,
+index empty before/after and foreign work preserved. Tested source heads and
+feature refs are retained; no extra build, native run or independent review is
+claimed and CI was not awaited.
+
+All seven held registered feature heads match the recorded snapshot:
+Admin290f, OS8d, config5eff, WebUIaa2, tasks a457, legacy instruction branchdcb
+and generic-policy4ef. Admin, OS, configuration and other storage branches
+remain feature-only; generic4ef's prior ancestry is unchanged. No default
+application integration was performed in this step.
+
+The subsequent public metadata recovery and copied boot passed, including all
+six guest selections, seed/regular-node refresh, complete applied selection and
+v2 release, as recorded in the current execution checkpoint. Post-recovery
+delivery/preservation/Node proof and public provision also passed. Post-provision
+original-preservation proof passed; the owning payload fixture failed at its
+initial VPS allocation and its bounded correction is pending. Payload and
+retirement acceptance remain unproved.
+These trial results do not follow from the completed workspace integrations.
+No second switch or other default integration is authorized here.
 No GC or session action is authorized; the session remains open. The architect
 has not read private evidence or run checks/operations.
 
@@ -1123,6 +1338,154 @@ Stop at the first refusal; no unchanged retry or new physical fixture writes to
 the original VPS. No additional user preference is needed for the source
 correction; package activation and physical actions retain their own authority.
 
+### Payload fixture minimum-memory correction, 2026-10-05
+
+**Decision and ownership:** change only the fixture's fixed VPS request from
+`memory: 512` to `memory: 1024` MiB. This meets the actual selected guest seed's
+minimum and fits the unchanged shared 4096-MiB member package. Keep CPU 1,
+swap 0, diskspace 4096 and all creation, transfer, history, rotation, schedule,
+repeat-update and failure behavior unchanged. No runtime resource-discovery
+interface, API limit/default-package change, Node change, wire/schema/state
+change or source-input change belongs to this correction. Lead released exactly
+the two paths below and owns publication/delivery; this brief grants no operation or
+default-merge permission.
+
+Exact two-path provider manifest:
+
+- `dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb`: the one fixed
+  request value in `StorageProfileAcceptance::Guest.prepare!`, currently line193.
+- `test/vpsadmin_storage_profile_spec.rb`: one owning regression using the
+  existing selected-API real-AR harness, with only local test setup as needed.
+
+**Current correction checkpoint (lead-reported):** the frozen two-path change
+contains 51 insertions / 1 deletion. Acceptance SHA
+`77f2c2558a8759acaad5bcd0f38e43c9755d2cb6e8af1461d8e60a8599019195`
+contains the single 512-to-1024 change; spec SHA
+`fcbdc90ddecc8d5690e44eb08466153d2ddc0276c47ca2d17650fbfa965db98c`
+contains one regression. Lead inspected the exact diff and message and found
+no design deviation. Member's initial syntax/diff exit 0 and expected authored
+inventory were preparation evidence only. Lead subsequently accepted the fresh
+`payload_memory_profile_checks_20261005` batch on those exact hashes: complete
+AR profile file 48/0 in 65.106s, provider no-build exit 0 in 13.224s, total exit
+0 in 78.929s / parity 1.
+
+Normal new commit `0ff827df13e82dfab4b536ff29979280f264e8f5`, tree
+`867d2378792da1fb3c2cd707b881c04bd17426c0`, has parent77dd and exactly those
+two paths / 51 insertions / 1 deletion; worktree and index are clean.
+Retained reviewer0 completed mandatory review of 77dd..0ff across all four HIGH
+lanes with no Blocking, Important or Advisory findings, and confirmed one
+coherent commit, no obsolete history and no migrations. Provider feature0ff
+is published over SSH; default77dd is unchanged.
+
+The consumer pin is normal commit `7d5507f54d25764446ed09c96698197bf3a0fe85`,
+two flakes / 5 insertions / 5 deletions, with exactly four generated provider
+metadata leaves and all other input equality preserved. Its no-build check
+passed; the mechanical pin exemption applies. Lead accepted the fresh exact
+root7d/provider0ff/Admin290f package batch: exit 0 in 261.457s / parity 1,
+existing four checks 254.616s, default build 6.604s, actual proof exit 0.
+All nine equality flags are 1, profile loader 1, schema 1 / policy 3 / providers
+2; actual generic3ed/Codex3d07/provider0ff sources and acceptance hash77f2 match.
+Built package is
+`/nix/store/i95b471mnd2xw88knbs9c7wcyj31lma1-dev-workspace-0.2.0`, tools
+`/nix/store/npjjcfz1m4zaxcy3zg8s6q853rn8q0m5-vpsfree-dev-workspace-tools-0.1.0`.
+They remain **unselected**; public host status still selects 3fzi/wg7 and its
+provider77dd/c7a1 scripts.
+
+Final handoff tracking, source-equivalent replay, SSH publication and comparison
+remain lead steps. Shared local master4df contains only two other sessions'
+coordination commits over remote c754; preserve those commits and foreign work.
+The prepared private post-delivery proof packet
+`/tmp/storage-profile-post-delivery-proof-20261005.0gz33zhd` is an unread reference,
+unexecuted, with original byte parity except provider/new-acceptance guards.
+External-idle activation must precede ordinary services update and actual guest
+script/preservation proof before one new fixture run. Source and all storage
+branches remain held, the scheduler remains stopped, and failed user5/chain48
+and their evidence are preserved. No corrected guest delivery, activation,
+fixture retry or new default integration is claimed; CI is not awaited.
+
+Source basis: provider `nix/test.nix:47` imports the selected API's
+`api/db/seeds/test.nix`; that seed's memory row at lines115–119 has minimum
+1024. `api/models/transaction_chains/vps/create.rb:18` reaches ordinary resource
+allocation, and `api/models/cluster_resource_use.rb:78–82` enforces the minimum.
+Keep that real validation unchanged. No previous successful check is relabeled
+as coverage of this corrected request or of actual VPS/NAS payloads.
+
+Lead's fresh public source projection used `nix-instantiate` without a build or
+network access and returned exit 0, `min: 1024`, `max: 131072`, `stepsize: 1`.
+Lead's pre-authoring fetch confirmed clean provider HEAD and `origin/master`
+at 77dd; no upstream replay was needed. The subsequent two-path release and
+verification hold are recorded above.
+
+**Regression:** the ordinary API spec bootstrap seeds memory minimum **128**
+(`api/spec/support/db_setup.rb:169`), so checking the unmodified spec row would
+miss this exact failure. In the new transactional example, derive the memory
+definition from the actual selected Admin290f `api/db/seeds/test.nix`, using the
+bounded `nix-instantiate` projection: filter `.seed` for model `ClusterResource`,
+assert exactly one table, filter its records for name `memory`, assert exactly
+one row, then use `builtins.intersectAttrs` to return only numeric `min`, `max`
+and `stepsize`. Do not print the whole seed or copy a second hardcoded minimum
+into the test. Use the existing `VPSADMIN_REPO_ROOT` binding and fail if the
+projection is absent, ambiguous or
+not numeric; no fallback to the spec minimum. This is test-only source access,
+not a new guest/public discovery interface or harness option.
+
+Exercise the actual `Guest.prepare!` resource request. Reuse a real scoped
+member/source Pool/compatible template from the existing AR fixture, substituting
+only the preceding User-chain return, chain wait and admitted-log side effects.
+Capture the resources at the normal `Operations::Vps::Create.run` boundary and
+halt there with a finite test-local sentinel; do not duplicate the request in
+the spec or stage guest/Node work. Assert the captured memory is within the
+projected bounds and respects the step size, and that the old 512-MiB request
+is below that same projected minimum. The original source must fail this
+regression. This proves fixture-to-seed request compatibility; the existing
+owning payload scenario supplies actual creation/transfer proof later. Keep
+the example transactional and restore any test stubs/configuration normally.
+
+**Quick verification, proposed only:** use the existing wrapper's complete
+profile spec file, including the new example, against unchanged Admin290f.
+Launch from the registered **Admin repository root**; its API shell enters
+`api/` itself. Exact argv:
+
+```sh
+nix develop /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/vpsadmin#api -c \
+  /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/vpsfree-dev-workspace-storage-profile/dev-clusters/vpsadmin/tests/run-storage-profile-api-specs.sh
+```
+
+Retain the wrapper's configured-DB refusal, automatic disposable DB, controlled
+RSpec options and short private paths. The example's projected Nix evaluation
+does not build or realize a closure. Pinned Ruby syntax, scoped diff inspection
+and the normal owning checks accompany this two-path commit; long/uncertain
+verification remains a fresh Luna watcher task. No API-wide rerun, maintenance
+VM, Node integration or new scenario follows from this fixture value change.
+The earlier provider integration is complete, so preserve it and author a new
+focused commit; do not rewrite consumed master history. Normal review routing
+for this new substantive fixture/test delta applies before deployment, rather
+than labeling it another step-9 disposition of the old ef116da3 report. This
+brief does not request a review or claim a check result.
+
+**Immutable delivery boundary:** installed `bin/devcluster:4–5,786–805,855`
+derives `CLUSTER_DIR` from its packaged path and builds `path:$CLUSTER_DIR`.
+The public source overrides select Admin/OS/WebUI/status, not this provider.
+`nix/organization-tools.nix:87,128–139` packages that owner, and
+`nix/test.nix:1208` embeds the relative acceptance file as immutable `SEED_FILE`.
+No existing public source-selection interface can deliver a provider worktree
+edit through the old selected package. Running a newer host Ruby fixture alone
+also leaves the old guest request unchanged. Do not use a private provider
+helper, arbitrary guest script, store edit or new override to bypass this.
+
+After lead's reviewed provider publication, a normal generated consumer pin
+and checked composed package must reach an operator-owned external-idle
+workspace activation. Then ordinary public `update ... services` delivers the
+corrected guest wrapper; prove its actual immutable `SEED_FILE` hash, services
+generation and original preservation before one justified new owning fixture
+run with a new private artifact/key. The update can restart scheduling: retain
+the accepted controlled window and observe actual state. Keep user5/chain48
+and all prior admitted objects/evidence; no deletion or replay of their IDs.
+Normal capacity/admission checks still apply. The live correction must earn
+the existing full/incremental/history/repeat-update payload result; it earns
+no retirement, quiet, repair or APPLY authority. Package transition, retry and
+new default integration remain lead/user decisions, unexecuted by this brief.
+
 ### Remaining trial sequence
 
 Preserve the recorded cold recovery and logical DB backups, original VPS/file
@@ -1133,33 +1496,38 @@ retention remains authorized. The known ordinary-file digest proves subsequent
 preservation only, not pre-seed/user-payload equality. New payload writes belong
 only to fixture-created objects. Historical evidence and failures below remain.
 
-1. **Ordinary services update.** Reconfirm public selected generation, exact
-   session/owned bridge cluster and actual reachable services state. The last
-   supplied status was stale/ready true, maintenance released/pending false;
-   do not turn that into a fresh liveness claim. Run the existing
-   `vpsadmin-devcluster update 2026-09-23-storage-redesign services`.
-   Provider `bin/devcluster:1412–1461` builds, copies and activates the services
-   closure and performs its ordinary regular-node refresh. Its same-session
-   Admin path selection at `:680–685,787–795` remains Admin290f. Preserve OS/
-   React selections, credentials, retained disks and the enabled preserving
-   profile with enrollment true. Do not repeat completed maintenance/copy/boot
-   or separate Node updates. An update may restart scheduling; retain the
-   previously accepted controlled provisioning window and observe actual state.
-2. **Prove actual guest delivery before retry.** Through public
+1. **Recover the recorded selection, then complete copied boot.** The public
+   `maintenance-recover-config` step has passed under selected 3fzi/wg7/provider77dd;
+   do not repeat it merely to continue. The completed owning command was
+   `vpsadmin-devcluster start 2026-09-23-storage-redesign --copied-config`, with
+   no extra topology/network arguments. Provider `bin/devcluster:1803–1829`
+   uses the exact recovered next selection, waits for the successful new seed,
+   API/Supervisor and ordinary regular-node refresh, proves every guest's exact
+   current system/rooted closure, publishes complete applied state, then releases.
+   A runner-ready file alone is insufficient. Preserve copied services `kyryi8`,
+   the three actual Node selections, recovered old DNS, credentials, all six
+   disks and the enabled preserving profile with enrollment true. The previous
+   ordinary-update-first wording applied to the earlier released/reachable
+   state and is superseded by this recovery. Successful copied boot plus step 2
+   satisfies initial delivery; no redundant initial services or separate Node
+   update is required. Observe actual scheduling state before provisioning.
+2. **Prove actual guest delivery before retry (passed).** Through public
    `vpsadmin-devcluster ssh 2026-09-23-storage-redesign services -- ...`,
    identify the current services toplevel and resolve the actual immutable
    `/run/current-system/sw/bin/vpsadmin-storage-profile` and
    `/run/current-system/sw/bin/vpsadmin-storage-profile-acceptance` wrappers.
    Extract only their fixed `SEED_FILE` store references and compare those
-   script bytes/hashes with selected q49/cd81 provision and acceptance sources.
+   script bytes/hashes with selected wg7/provider77dd provision and acceptance
+   sources. Their corrected cd81 bytes are unchanged; q49 was the historical
+   package owner and is not the current delivery reference.
    `nix/test.nix:1136–1215` embeds those scripts into ordinary `db:seed:file`
    wrappers; neither selected host output nor `result-config` proves guest
    delivery. Check preserving profile/loaded enrollment and the existing
    baseline projections. Do not print complete generated wrappers/config,
    credentials, request data or DB rows. No guest script replacement is allowed.
-3. **Provision through the public owner.** Run
+3. **Provision through the public owner (passed, including post-provision preservation).** The owning command is
    `vpsadmin-devcluster storage-profile 2026-09-23-storage-redesign provision`.
-   `bin/devcluster:1781–1835` checks owned running cluster, API/Supervisor,
+   `bin/devcluster:1860–1917` checks owned running cluster, API/Supervisor,
    desired versus loaded enrollment and bounded physical/catalog Pool-root
    agreement, then stops scheduling and resumes it only on success. Existing
    hypervisor source Pools must exist; only missing configured backup/NAS Pools
@@ -1168,9 +1536,11 @@ only to fixture-created objects. Historical evidence and failures below remain.
    cleared confirmations/locks and fresh capacity, then commits shared templates
    before member/source CatchUp. Catch-up performs no Rotate, existing package
    rewrite, original-file write or snapshot-retention change.
-4. **Run the existing owning payload/history fixture.** Use cd81's
-   `dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb` (also installed
-   under q49's `share/vpsfree-dev-workspace/`) with exact `--slug`, a new private
+4. **Run the existing owning payload/history fixture (failed; correction/delivery pending).**
+   After delivery of the reviewed memory correction above, use its selected
+   provider's `dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb`, also
+   installed under that tools package's `share/vpsfree-dev-workspace/`, with
+   exact `--slug`, a new private
    `--artifact-dir` and the existing enabled-compatible `--os-template-id`.
    Its public provider commands require the corrected guest wrapper, active
    fixture admin, read-write mode and running scheduler. Keep operator freeze
@@ -1178,7 +1548,8 @@ only to fixture-created objects. Historical evidence and failures below remain.
    not an atomic DB/SSH interlock. The existing fixture owns a new member/VPS/NAS,
    cross-node and same-node full/incremental A/B transfers, exact head/common-base
    checks, read-only historical clone payload/absence checks, fixture rotation,
-   actual scheduled cycle, repeated provision and services update. It checks
+   actual scheduled cycle, repeated provision and services update. That later
+   repeat-update acceptance remains required within this fixture. It checks
    task identities/allocations and resumes scheduling on successful provision.
    Its numerical success does not replace the separate original-file baseline
    and does not prove retirement.

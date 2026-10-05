@@ -6,27 +6,167 @@ lifecycle: active
 
 ## Current status
 
-2026-10-05 current phase: the provider correction and native DNS regression
-have passed; the provider feature is published and the consumer/package proof
-is complete. Final publication/comparison and external idle activation follow.
+### Retained-cluster recovery resumed, 2026-10-05
+
+The user directed continuation after the workspace-default integrations.
+Fresh public status confirmed stopped/bridge/readyfalse with the original
+version-1 starting_copied hold. The three immutable source configs and their
+hashes, genuine prior released/full-boot ledger, actual three Node-update
+selections and completed services copy matched. All six retained disks remain
+present at their original sizes; fresh metadata scans found no owned runner or
+disk FD holder. Historical inode/device is not inferred from current stat.
+
+The installed public maintenance-recover-config completed exit0 in25.543s.
+Readback proved version2/starting_copied, exact archived predecessor bytes,
+unchanged services/candidate/copy and all three Node descriptors, with only the
+two DNS descriptors restored from the prior successful full boot. Current disk
+bindings remain equal. At that metadata checkpoint, applied selection remained
+pending copied_boot, before guest boot or release. Recovery evidence is private under
+`/tmp/storage-retained-resume-20261005`.
+
+The exact public start --copied-config passed exit0 in666.808s under its fresh
+Luna/low watcher. All six guests proved recorded systems/rooted closures, actual
+seed/API/Supervisor and normal Node refresh completed, applied selection was
+published complete, then the version2 hold released. Disk identities/sizes
+remain equal. The exact command launched once; PID/PGID1579638 ended and no
+unexpected kernel build was reported. The earlier wrong workspace-root CWD
+identity check launched zero operations; corrected tracking-CWD identity
+matched before execution. Parent readback accepted released/pendingfalse and
+complete six-machine applied selection.
+
+Post-recovery read-only proof passed exit0 in29s: both actual immutable guest
+SEED_FILE hashes match the corrected scripts, original ordinary-file and four
+quota properties remain equal, protected DB changes0 across27groups/1168rows,
+and all three actual Node code/socket/running/zero-delay proofs passed. Seven
+package/item additions are identical to the prior verified owned seed metadata;
+only two observed Pool-space rows changed. Original assignments, ceilings,
+namespace/map and retention rows are unchanged. The file proof is forward from
+the established first post-copy observation, not a fresh preboot measurement.
+
+Public profile provisioning passed exit0 in78.601s: version1/members2/sources3/
+provisionedtrue, stderr0. Post-provision preservation reads passed: original
+file/four quotas and all protected rows remain equal. Of52 added rows, seven
+are the prior seed metadata and45 are the expected backup/NAS catalog,
+quota/retention, memberships/tasks and NAS-use rows. All four loaded Pools are
+present; enabled compatible template and read-write mode were freshly checked.
+
+The one existing VPS/NAS payload fixture attempt failed exit1 in27.444s at
+preparation stage1, before payload writes. Its normal user chain48/user5 was
+admitted. The API rejected VPS staging with ClusterResourceAllocationError:
+the fixture requests512 MiB but the actual seeded memory minimum is1024 MiB.
+The fixed API minimum remains unchanged. The owned foreground/PGID1671507
+ended; no fixture retry, deletion, unlock, cancellation or freeze change occurred.
+Scheduling remains stopped as recorded by the fixture.
+
+Current phase is the reviewed fixture correction's immutable package delivery.
+The complete owning profile spec file passed48examples/0 in65.106s and provider
+no-build evaluation passed0/13.224s; the fresh batch passed0/78.929s/parity1.
+Normal new commit0ff827df (parent77dd/tree867d2378) contains exactly two paths,
+51+/1-, with the1024-MiB request and selected-seed regression. Independent
+reviewer0 inspected the complete committed77dd..0ff range in all four lanes:
+no Blocking, Important or Advisory findings; one coherent commit, no obsolete
+history or migrations. The consumed77dd predecessor is preserved.
+
+The provider feature was published/read back at0ff827df; default77dd remains.
+Fresh root masterc754 is unchanged. Implementer0 authored its one provider-URL
+edit; normal Nix generation changed exactly the four provider metadata leaves,
+preserving generic3ed/Codex3d07 and all other inputs/follows. Root no-build
+passed and normal new commit7d5507f5/tree2e750552 contains exactly two flakes,
+5+/5-, with clean index/tree. It is a mechanical pin exempt from additional
+independent review. Fresh Luna/low watcher payload_memory_package_20261005 completed the existing
+four checks, default build and actual proof PASS0/261.457s/parity1 (254.616s,
+6.604s, proof0). All nine source/contract/default/Codex equality flags, loader1,
+schema1/policy3 and two providers passed. Input revisions are exact0ff/provider,
+3ed/generic and3d07/Codex; actual installed acceptance hash77f2 matches. The
+built package is `/nix/store/i95b471mnd2xw88knbs9c7wcyj31lma1-dev-workspace-0.2.0`,
+with tools `/nix/store/npjjcfz1m4zaxcy3zg8s6q853rn8q0m5-vpsfree-dev-workspace-tools-0.1.0`.
+Evidence packet is `/tmp/storage-profile-memory-package-20261005.g6uxu1uw`.
+The watcher ended; no retries/cancellations or CI wait occurred. Public host
+status still selects3fzi/wg7/oldc7a1; the proved package is UNSELECTED.
+
+Final handoff tracking/replay/feature publication and comparison are being
+prepared. Local shared master4df advanced by two coordination-only commits;
+remote masterc754/provider77dd remain unchanged. Preserve those commits and all
+foreign work; the equivalent pin replay must retain the exact tested output.
+External-idle public activation is required by workspace-host's session
+quiescence before package selection; no active-lead/private-helper bypass.
+Ordinary services update, actual new guest script and original preservation
+must precede one new payload fixture/key. New readonly proof packet
+`/tmp/storage-profile-post-delivery-proof-20261005.0gz33zhd` is prepared/unrun;
+it changes only provider/new acceptance guards, retaining original baselines,
+Node probes and forward-only file proof. This correction is ready, awaiting
+new merge approval; no new provider/workspace default integration is inferred.
+
+After the failed preparation, original protected-DB changes remain0 across
+27groups/1253rows. The admitted user chain48 is done with no unfinished
+transaction, pending confirmation or retained lock; user5's fixture VPS count
+is0. Failed objects/evidence remain preserved and scheduler remains stopped.
+Payload/history/rotation/automatic/repeat and retirement are unproved;
+separate API diagnostics remain held. The session stays active and open.
+
+### Current activation and integration approval, 2026-10-05
+
+The user reported activation and explicitly directed: “please verify that we're
+finally done with workspace fixes. if so, you can merge the workspace changes
+into default branches, keep the rest of the storage work in feature branches.”
+This authorizes provider vpsfreecz/dev-workspace master at77dd (cd81 admission
+and retained-selection/roots correction) and consuming
+aither64/vpsfree-cz-workspace master atc754. Generic policy4ef is already an
+ancestor of generic master3ed; no duplicate integration is needed. Admin290f,
+OS/config/WebUI/maintenance-tasks and other storage branches are excluded.
+
+Public installed status and actual-byte proof PASS: exact3fzi/wg7, all9equal1,
+loader1/schema1policy3/providers2, active Codex path equals selected package.
+Router, portal, Codex and tmux are active/running; all four ExecStart paths
+resolve to the selected3fzi package. Same-session public status0 reports
+stopped/bridge/readyfalse and intact version1 starting_copied/pendingtrue hold.
+No switch, restart or cluster mutation was performed by the lead.
+
+Fresh SSH master88a/e1bb and published c754/77dd are unchanged. Prior full
+review/direct-step9/native/package evidence retains its original scope;
+architect0 confirms no concrete remaining workspace source gate. Normal public
+captures and FF-only provider→consumer integration/readback are now authorized;
+source/index/foreign work and all feature refs remain protected. Actual retained
+recovery/fullboot/preservation/profile payload gates remain unproved. The
+historical dcb skill-only branch is superseded by upstream e1bb’s rewritten
+final-history/migration guidance; no additional runtime correction remains
+there, and its reference is retained.
+
+
+Earlier workspace-only checkpoint, 2026-10-05: activation and default integration COMPLETE;
+retained storage recovery/acceptance remains pending. Public selected status,
+actual sources/contracts/Codex and all four service bindings verify exact3fzi/wg7.
+Provider master and feature are77dd0d04; consuming workspace master and feature
+arec754120b after authorized FF-only integration and normal SSH readback.
+Generic policy4ef was already integrated into generic master3ed. No remaining
+known workspace source gate was found. The seven held feature heads, foreign
+shared work/index and session refs remain preserved. CI was not awaited.
+Prior3df/zwdv/jq982 handoffs are historical. The overall session stays active.
 Independent review and direct host-root remediation are complete. The native
 passed with bounded diagnostics and the source-proved readiness prerequisite;
 the earlier counter-or-disk failure remains unattributed. The user said
-“ok, continue” after the ordered next steps were described. Workspace activation
-and integration are complete. This continuation uses the selected corrected
+“ok, continue” after the ordered next steps were described. The earlier86fe activation/integration and the currentc754 recovery-pin
+activation/integration are complete. This continuation uses the selected corrected
 package for a supported second maintenance copy/boot, actual guest-script proof,
 one justified provision retry and the existing VPS/NAS acceptance and retirement/reactivation
-sequence. It does not authorize another repository's default integration.
+sequence. The present approval covers only workspace/provider defaults; storage project
+defaults remain excluded.
 Separate API diagnostics remain held; CI is not awaited.
 
-The selected package is `s7y4`, tools `q49`, provider `cd81e83f` and same-session
-Admin `290f1ef0`. Initial stale/ready status was disproved by the absent runner
+### Historical pre-recovery status
+
+Public workspace-host status selects3fzi with toolswg7, and the actual
+corrected maintenance helper SHA8f205b0c matches reviewed provider77dd.
+All nine actual-source comparisons, loader, schema1/policy3 and two-provider
+catalog passed; active Codex resolves to the selected wrapper. Earlier
+s7y4/q49 and jq982/psjf selections are historical. Same-session Admin290f is
+unchanged. Initial stale/ready status was disproved by the absent runner
 and failed SSH. A second public maintenance cycle has now booted the proved
 resident generation, captured a fresh masked DB backup/baseline and copied the
 corrected closure. Supported stop completed, but copied start failed at DNS
 boot readiness. The hold remains `starting_copied`; the runner performed its
-own shutdown. The currently installed provider has no recovery for this selection;
-its replacement is now committed at
+own shutdown. The currently installed provider includes the reviewed recovery interface;
+its selected source is
 `77dd0d0447f48c8d8e667257cef2276738d053a0` (original review at bcc retained;
 rooting checks at b748 retained within unchanged runtime/input scope).
 Provision and
@@ -35,42 +175,106 @@ Original disks, cold recovery copies and prior DB/file/quota evidence are retain
 Architect0 owns the saved recovery brief and fixture decision; implementer0
 completed the eight-path host-root remediation, now committed and held. The lead owns coordination, proof
 selection and acceptance. The lead inspected and folded the final one-path fixture amendment; the fresh
-watcher completed its native pass. All cluster operations
-remain held until the new source is externally activated and its selected bytes are verified.
+watcher completed its native pass. Activation and selected-byte verification are now complete. Actual metadata
+recovery/copied boot and storage acceptance remain pending; no cluster
+mutation was performed during this verification/integration.
+
+### Current phase checklist
 
 - [x] Resolve the host-payload rooting finding and check the final provider
   retained-selection/v2 recovery correction.
 - [x] Complete committed provider review and direct rooting remediation disposition.
 - [x] Run the existing native scenario with its added retained DNS-root regression.
 - [x] Publish the provider and check the generated consumer/default package.
-- [ ] Finish final consumer publication/comparison and verify external idle
-  activation before public recovery and copied start.
+- [x] Rebase onto fresh master, pass the new composition/package proof, and
+  finish exact consumer publication/readback and comparison.
+- [x] Verify external activation and integrate provider/workspace defaults,
+  preserving all storage feature branches.
+- [x] Prepare exact stopped evidence and run supported metadata recovery/copied
+  boot before the retained storage trial.
 - [x] Capture a fresh masked protected DB baseline and logical backup; retain
   prior ordinary-file/quota evidence without inventing a fresh preboot read.
-- [ ] Deliver services through the public provider and prove both actual guest
+- [x] Deliver services through the public provider and prove both actual guest
   wrappers' immutable scripts match the selected correction.
-- [ ] Recheck preservation, then complete public provision and Pool/catch-up proof.
+- [x] Recheck preservation, then complete public provision and Pool/catch-up proof.
+- [x] Correct the payload request against the actual guest minimum, pass48 specs
+  and complete independent final review of the new two-file provider commit.
+- [x] Build/prove the consuming package with its actual corrected fixture bytes.
+- [ ] Complete external activation and ordinary services delivery, then prove the
+  new actual guest script and original preservation.
 - [ ] Complete the existing VPS/NAS payload/history, rotation, automatic cycle and
   repeat seed/provision fixture, with separate original-object comparisons.
 - [ ] Complete retirement/repeat/nonreactivation and re-enrollment, retaining data.
 
-## Prepared external activation boundary
+## Completed external activation and integration, 2026-10-05
 
-The built package is unselected. Once managed sessions are idle, use the stable
-public command from an external shell:
+The user completed the public external switch. Lead read-only verification
+proved selected package3fzi/toolswg7, exact runtime/provider/default/Codex
+sources, canonical contract, loader/catalog and active Codex path. Router,
+portal, Codex and tmux are active/running; every ExecStart resolves to3fzi.
+Same-session public status reports stopped/bridge/readyfalse, existing version1
+starting_copied/pendingtrue hold. No service or cluster operation was launched.
 
-```sh
-workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
-```
+The user's conditional workspace-default approval was recorded above before
+integration. After captures atproviderbasee1bb/head77dd androotbase88a/headc754,
+provider master FF/push/readback completed at77dd through a fresh target worktree.
+The consumer FF in shared master staged nothing; push/readback completed atc754.
+Shared status metadata matched before/after, index was empty and foreign work
+was preserved. Generic4ef is already in generic master3ed. Seven held feature
+head snapshots remain exact, including Admin290f, OS8d05, config5eff and WebUIaa2.
+No second switch or additional source/package fix is currently required.
 
-The public switch quiesces ready sessions before selecting the generation; the
-active lead must leave this operation to the external idle boundary. The old
-installed q49 helper lacks the new recovery command. After activation, the lead
-verifies exact zwdv/n2ki selected/runtime bytes and public ownership, then fills
-fresh private stopped-disk/provenance evidence for metadata recovery and copied
-start. No helper bypass, second maintenance boot, reset, early release, session
-closure or default merge is implied. The prepared evidence template remains
-invalid until its real hold/disk/proof placeholders are validated.
+Evidence reference: `/tmp/storage-profile-workspace-activation-20261005`.
+The existing private recovery template is still invalid until real hold/disk/
+provenance placeholders are validated. Next work is supported retained-cluster
+recovery and actual fullboot/preservation/provision/payload/retirement acceptance.
+Keep storage feature branches, original disks/evidence, unchanged retention and
+session state. No reset/private helper/early release/quiet/repair/APPLY follows.
+
+## Historical fresh-master rebase and handoff, 2026-10-05
+
+The requested freshness check fetched exact SSH master88a75655 and feature3df.
+Shared master matches the remote; its foreign work/index remains preserved.
+The sole master advance changes only flakes: an explicit nested generic3ed
+selection and Codex3d07 metadata. All fifteen inspected root instruction,
+configuration and check-source blobs match09da. Provider mastere1bb has no
+advance and feature77dd matches its remote. Exact3df is retained in the
+before-upload-runtime-rebase backup.
+
+Implementer0 resolved the one flake.nix conflict from full88a bytes with only
+providerURLcd81→77dd, as architect0’s saved brief requires. Normal generated
+lock and rebase completion produced clean c754120b/treeaedb64dd: two flakes,
+5+/5-, exact four provider metadata leaves. Every other lock node/follow equals
+88a, including new generic3ed/Codex3d07. Commit message is unchanged; range-diff
+shows only the URL hunk adapting to upstream’s attrset. New flake hashes are
+4af9f4b3/218f080e and binary diff8a682dba. First un-waited launch returned0
+without checks/results or a live driver; it remains incomplete zero-check
+evidence. Fresh Luna/low watcher workspace_rebase_package_waited_20261005
+completed the waited launch PASS0/254.433s/parity1: four existing root checks
+247.982s, default build6.210s, actual proof0. Driver0b565810/verifier0239b631/
+selectionca550d2d bind exact c754/77dd/290f. All nine equality flags and profile
+loader passed; schema1/policy3/providers2. New output is
+`/nix/store/3fzif0563caiknl53a8s64axaxyf0ph8-dev-workspace-0.2.0`, tools
+`/nix/store/wg7hnssgk49kqg4wkyj2dminlcji9h2b-vpsfree-dev-workspace-tools-0.1.0`.
+Parent inspected exact immutable generic3ed/Codex3d07 input revisions and proof
+artifacts. Test skips, a deliberate-test Git identity message and a Nix rename
+warning preserve the actual successful statuses; no kernel build was reported.
+
+A second fresh SSH fetch found master88a/e1bb unchanged. Normal exact-lease
+root publication and remote readback completed atc754/master88a; public
+comparison captured exactbase88a/headc754, preserving initial metadata. GitHub
+branch-run metadata returned an empty list: no superseded workflow to cancel
+and no CI wait. Shared index stayed empty; foreign work and all refs remain.
+An optional final YAML assertion expected captured base/head inside portal.yml
+and failed; source shows public capture delegates to portal user-state metadata.
+Its successful exact result and owned inventory are the evidence. Corrected
+final source/hash/shared-index guards passed; package proof is unaffected.
+The new output is unselected. External idle activation of the registered root
+worktree is the next operator action, then selected proof before the already
+planned actual recovery/trial. No default integration or cluster mutation ran. No CI wait, new
+provider/native work, activation, cluster mutation or default integration is
+implied. Evidence is retained privately in
+`/tmp/storage-profile-workspace-rebase-20261005`.
 
 ## Native preservation evidence amendment, 2026-10-05
 
@@ -130,8 +334,15 @@ passed with schema1/policy3/providers2. Package is
 `/nix/store/zwdv3dc17zbbfkdm24qrm4rz1l0xg5nz-dev-workspace-0.2.0`, tools
 `/nix/store/n2ki0wm9lr7qjs49j1v155gp42g2j3a2-vpsfree-dev-workspace-tools-0.1.0`.
 The successful check contains Git identity-warning stderr; its exit status is0.
-No package selection is inferred. Final replay/publication/comparison against
-shared tracking master are pending preparation for the external idle handoff. Public `workspace-host status` still selects s7y4/q49;
+No package selection is inferred. The consolidated owned tracking checkpoint09da was normally published.
+A one-pin replay from de915 onto09da produced3dfda5c6/tree61859531: range-diff
+`=`, exact patch/message/flake hashes. Final evaluation0/7.492s selected the exact
+tested zwdv output; final no-build0/4.083s passed. SSH feature publication/readback
+is3dfda5c6, remote master09da unchanged. Public comparison captured exact
+base09da/head3dfda5c6, preserving initial_base metadata. Shared index is empty;
+foreign working/untracked records and feature refs were preserved. Root CI
+metadata returned no runs; CI was not awaited. No default feature integration
+was performed. The new root pin is ready, awaiting merge approval after activation. Public `workspace-host status` still selects s7y4/q49;
 its actual maintenance SHA20761bf1 is the old helper. Public recovery and the
 retained trial remain held until the new package is built and externally
 activated while managed sessions are idle. No new default integration authority
@@ -2888,16 +3099,47 @@ with the final version 2 format and must be recaptured.
 
 ## Next actions
 
-1. Finish the one running disposable remote-restore integration at290f1ef0.
-   Preserve failures and diagnose concrete evidence before any retry. The
-   original broker acknowledgement-timeout trigger remains unknown.
-2. After a pass, publish the exact reviewed/remediated Admin feature and
-   reconcile CI feedback. Default integration still needs explicit direction.
-3. Continue the public retained maintenance/copy/copied boot and genuine Node
-   refresh/release in [the rollout record](storage-profile-rollout.md). Then
-   update node1/node2/storage1 to the final Node runtime before provisioning
-   and backup/NAS payload/history/retirement acceptance. Preserve original
-   VPS data, quota, accounting and retention; no new workspace switch needed.
+Current 2026-10-05 sequence; the remote-restore integration and Admin feature
+publication are already complete. Workspace/provider activation and approved
+default integrations are also complete. No further workspace switch is planned.
+
+1. Validate fresh stopped hold/disk/provenance evidence, then use the installed
+   public metadata recovery command and copied boot. Prove every guest's actual
+   selected closure, seed/API/Supervisor and Node refresh before hold release.
+2. Prove delivered guest scripts and compare original DB, file and quota
+   evidence. Complete public profile provision through ordinary Pool/CatchUp
+   chains while preserving existing allocations and retention.
+3. Run the existing VPS/NAS full/incremental payload/history, rotation,
+   automatic scheduling and repeat update/provision acceptance; then prove
+   retirement, repeat/nonreactivation and re-enrollment with data preserved.
+4. Diagnose the two API request-500 test failures in the separately saved,
+   held test-only scope. Their underlying exceptions remain unknown; neither
+   an unchanged CI rerun nor a runtime patch is justified by current evidence.
+
+### Overall redesign remaining work
+
+The storage application foundation, bounded advisory capture/offline analysis
+and Node RPC correction are implemented and reviewed. Their recorded local,
+disposable integration and browser checks retain their exact scope. The live
+G0 freeze trial remains partial; the G1a trial passed diagnostic collection,
+not executable repair. After the retained profile acceptance above:
+
+- Finish remaining live freeze/authorization/race cases and populated retained-
+  lock capture performance plus pooled-session failure/restoration coverage.
+- Implement G1b's held physical writer exclusion and API maintenance owner.
+  The development-cluster maintenance hold is not that storage repair gate.
+- Implement G2's exact approval, bounded DB-only action journal, crash recovery
+  and final same-engine verification; rehearse repair/resumption under G3.
+- Complete Milestone B's writer-family coverage, authoritative physical
+  identities/origins and strict continuous verification as a separate stage.
+- Refresh branch readiness/review and compatibility/rollout evidence before
+  requesting storage-project default integration. Production deployment and a
+  repair maintenance window remain separately approved operations.
+
+The current cluster is stopped with its hold intact. Original disks/cold copies
+and baselines are retained, but post-recovery equality is still unproved.
+Production strict dispatch, physical quiet/repair-ready claims and APPLY remain
+unavailable. Session lifecycle remains active.
 
 ### Earlier redesign sequence, retained as history
 

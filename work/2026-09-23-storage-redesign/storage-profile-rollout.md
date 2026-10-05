@@ -1,6 +1,65 @@
 # Retained storage-profile rollout
 
-## Current retained-selection correction, 2026-10-05
+## Current recovered-cluster trial, 2026-10-05
+
+The installed public metadata recovery passed0/25.543s, preserving exact
+predecessor/copy/services/three Nodes/disks while replacing only DNS from genuine
+prior full-boot provenance. Public copied boot then passed0/666.808s: all six
+guest systems/rooted closures, seed/API/Supervisor and normal Node refresh were
+proved, complete applied state published, and v2 hold released. The cluster is
+running/ready on bridge. No redundant initial services/Node update was needed.
+
+Fixed post-recovery reads passed0/29s: corrected immutable guest script hashes,
+original ordinary-file/four-quota equality, protected DB changes0 over27groups/
+1168rows, and running corrected code/socket/zero-delays on all three Nodes.
+The seven seed package/item additions equal earlier verified metadata; only two
+observed Pool-space rows changed. No new preboot file proof is inferred.
+
+The one justified public profile provision passed0/78.601s, members2/sources3.
+Post-provision original file/four-quota/protected-row equality passed. The52
+added rows comprise seven prior seed rows and45 expected profile catalog,
+quota/retention, membership/task and NAS-use rows. Loaded enrollment and all
+four Pools, compatible enabled template and read-write mode were checked.
+The one existing VPS/NAS scenario failed exit1/27.444s at preparation stage1,
+before payload writes. The normal user chain48/user5 was admitted; VPS staging
+refused the fixture's512 MiB request against the actual seeded1024 MiB memory
+minimum. Owning foreground/PGID ended. Scheduler remains stopped; admitted
+objects/diagnostics are retained without retry or cleanup. Current phase is
+immutable delivery of the completed fixture correction. The1024-MiB request
+and selected-seed regression passed the complete48-example profile file and
+provider no-build check (overall0/78.929s/parity1). New provider commit0ff827df
+has passed independent complete-history/four-lane review with no findings and
+was published to its feature branch; default77dd remains unchanged. Rootc754
+is fresh and the one-URL/generated-lock commit7d5507f5 passed its fresh package
+batch0/261.457s/parity1/all9equal1. Builti95b/npjj contains the new77f2 fixture
+but remains unselected. Final tracking/replay/publication/comparison precedes
+the external-idle handoff. Installed3fzi/wg7 still embeds the old fixture;
+no retry precedes external activation,
+ordinary services update and actual guest-script/preservation proof. Failed
+user5/chain48 remain preserved. Remaining payload and retirement proof is
+unexecuted; no new default integration or CI wait is authorized.
+Evidence: private `/tmp/storage-retained-resume-20261005` and
+[payload-memory-review.md](payload-memory-review.md). No worktree/helper bypass.
+
+## Historical retained-selection correction checkpoint, 2026-10-05
+
+Activation VERIFIED and workspace integration COMPLETE. Exact selected3fzi/wg7
+passed source/contract/Codex and four-service bindings; same-session public
+status remains stopped/bridge/starting_copied/pendingtrue. Authorized provider
+master77dd and consuming workspace masterc754 FF/SSH/readback are complete;
+storage API/OS/config/WebUI/other feature heads remain unchanged. No known
+workspace source blocker remains. Actual recovery/fullboot/preservation/profile
+payload/repeat/retirement acceptance is pending. Earlier package-handoff
+preparation below is historical; no second workspace switch is required.
+
+Historical rebase preparation: the requested fresh-master check found88a’s upload-runtime
+input update. The published provider77dd/native PASS is unchanged; root3df was
+replayed as c754120b, retaining generic3ed/Codex3d07. Fresh composition/package
+proof passed0/254.433s/parity1 with all9equal1; 3fzi/wg7 is built and unselected.
+Exact publication/readback and base88a/headc754 comparison are complete, with
+master unchanged and no CI wait. Prior zwdv/n2ki is historical. Public status
+selects jq982/psjf with the old20761bf1 helper; recovery/cluster operations stay
+held until the corrected combined generation is externally selected and proved.
 
 The second public maintenance cycle captured the fresh masked backup/baseline
 and copied the corrected services closure, but full copied start failed at DNS
@@ -15,8 +74,10 @@ Provider correction `bcc0532` passed its four-stage quick batch
 review. Reviewer0 report ef116da3 found one Important host boot-payload lifetime
 gap and one Advisory cumulative-root cost, with no Blocking finding. Raw config
 JSON roots do not retain their embedded host store paths; the actual prior JSON
-has no registered references. Implementer0 is applying the saved explicit
-payload-root correction and private-store real-Nix regression. The cumulative
+has no registered references. The saved explicit
+payload-root correction and private-store real-Nix regression passed at b748
+under direct review step9. The owning native passed at77dd with all six bounded
+preservation comparisons equal; its hold remained unreleased. The cumulative
 provenance/root retention cost is accepted and documented; no pruning is added.
 
 Native DNS acceptance, publication, generated consumer pin and checked package
@@ -349,8 +410,8 @@ identity publication, physical quiet, repair readiness and APPLY remain off.
 Provider77dd is published after the native services+DNS scenario passed. The
 mechanical root pin and package proof passed at de915; zwdv/n2ki is built but
 unselected. Root checks and actual helper/contract/runtime/Codex/default bytes
-passed. The stopped real starting_copied hold remains untouched. Final consumer
-publication/comparison and external idle selection precede fresh stopped
-evidence, public metadata recovery and copied-start/seed/refresh/release.
+passed. The stopped real starting_copied hold remains untouched. Final consumer publication/comparison completed at3df; identical zwdv output
+was verified after the coordination replay. External idle selection precedes
+fresh stopped evidence, public metadata recovery and copied-start/seed/refresh/release.
 Neither the native fixture nor host package proof establishes populated payload
 acceptance. Preserve the earlier failures and unknown original native predicate.
