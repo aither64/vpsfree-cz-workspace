@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-04-uceprotect-abuse-parsing
 
 ## Repositories
