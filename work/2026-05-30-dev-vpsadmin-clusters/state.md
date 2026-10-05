@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Dev vpsAdmin clusters state
 
 Date: 2026-05-30
