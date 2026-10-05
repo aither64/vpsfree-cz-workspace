@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # vpsAdmin KB documentation contract state
 
 ## Session
