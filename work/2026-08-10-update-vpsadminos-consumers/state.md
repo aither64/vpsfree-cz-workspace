@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-10-update-vpsadminos-consumers
 
 ## Status
