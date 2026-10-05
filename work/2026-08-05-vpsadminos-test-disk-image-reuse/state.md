@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-05-vpsadminos-test-disk-image-reuse
 
 ## Repositories
