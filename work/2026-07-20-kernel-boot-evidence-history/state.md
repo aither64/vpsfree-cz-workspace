@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Kernel Boot Evidence History State
 
 ## Scope and status
