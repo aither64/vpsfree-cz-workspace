@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-07-13-security-advisory-automation
 
 ## Current status
