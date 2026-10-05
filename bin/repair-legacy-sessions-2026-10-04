@@ -18,7 +18,7 @@ require 'yaml'
 
 module LegacySessionRepair20261004
   class Error < StandardError; end
-  RUNTIME = '0bce6075f5cf2521d84abe2f80ac90c761c01ae9'
+  RUNTIME = '43fc46e89c6ccafec16002e960c8fb11ff9f58ba'
   SLUG = /\A[A-Za-z0-9][A-Za-z0-9_-]*\z/
   SHA = /\A(?:[0-9a-f]{40}|[0-9a-f]{64})\z/
   MAX_BYTES = 32 * 1024 * 1024
@@ -247,18 +247,94 @@ module LegacySessionRepair20261004
           Dir.children(path).sort.each { |child| walk.call(File.join(path, child)) }
         else
           stat = File.lstat(path)
-          raise Error, "unsupported tracking file: #{path}" unless stat.file? && stat.size <= MAX_FILE
+          raise Error, "unsupported tracking file: #{path}" unless stat.file?
 
           relative = path.delete_prefix(directory + '/')
-          files[relative] = { 'identity' => LegacySessionRepair20261004.identity(path), 'mode' => stat.mode & 0o777,
-                              'bytes' => Base64.strict_encode64(File.binread(path)), 'sha256' => Digest::SHA256.file(path).hexdigest }
-          raise Error, 'too many tracking files' if files.length > 512
+          metadata = %w[plan.md state.md portal.yml].include?(relative)
+          raise Error, "metadata file exceeds bound: #{path}" if metadata && stat.size > MAX_FILE
+
+          digest, bytes = Digest::SHA256.new, metadata ? +''.b : nil
+          File.open(path, 'rb') do |file|
+            opened = file.stat
+            raise Error, "tracking file changed while opening: #{path}" unless [opened.dev, opened.ino, opened.mode, opened.size] == [stat.dev, stat.ino, stat.mode, stat.size]
+
+            while (chunk = file.read(1024 * 1024))
+              digest.update(chunk)
+              bytes << chunk if metadata
+              raise Error, "metadata file exceeds bound: #{path}" if bytes && bytes.bytesize > MAX_FILE
+            end
+            after = file.stat
+            current = File.lstat(path)
+            unless [opened.dev, opened.ino, opened.mode, opened.size, opened.mtime, opened.ctime] ==
+                   [after.dev, after.ino, after.mode, after.size, after.mtime, after.ctime] &&
+                   !current.symlink? && [current.dev, current.ino, current.mode, current.size, current.mtime, current.ctime] ==
+                   [after.dev, after.ino, after.mode, after.size, after.mtime, after.ctime]
+              raise Error, "tracking file changed while hashing: #{path}"
+            end
+          end
+          files[relative] = { 'identity' => { 'dev' => stat.dev, 'ino' => stat.ino }, 'mode' => stat.mode & 0o777,
+                              'size' => stat.size, 'sha256' => digest.hexdigest }
+          files[relative]['bytes'] = Base64.strict_encode64(bytes) if metadata
         end
       end
       walk.call(directory)
-      raise Error, 'tracking payload exceeds bound' if JSON.generate(files).bytesize > MAX_BYTES / 2
+      raise Error, 'tracking payload exceeds bound' if JSON.generate(files).bytesize > MAX_BYTES
 
       { 'identity' => LegacySessionRepair20261004.identity(directory), 'directories' => directories, 'files' => files }
+    end
+
+    # Source-only evidence may describe dirt; installed cleanup still requires clean.
+    def inventory_shape?(inventory)
+      identity = ->(value) { value.is_a?(Hash) && value.keys.sort == %w[dev ino] && value.values.all? { |part| part.is_a?(Integer) && part >= 0 } }
+      relative = ->(value, empty = false) { value.is_a?(String) && (empty && value.empty? || !value.empty? && !value.start_with?('/') && !value.match?(/[[:cntrl:]]/) && value.split('/').none? { |part| part.empty? || %w[. .. .git].include?(part) }) }
+      inventory.is_a?(Hash) && inventory.keys.sort == %w[containers worktrees] &&
+        %w[worktrees containers].all? { |key| inventory[key].is_a?(Array) } &&
+        inventory['worktrees'].all? { |record| record.is_a?(Hash) && record.keys.sort == DevSession::ArchiveCleanup::WORKTREE_KEYS.sort &&
+          relative.call(record['path']) && record['project'].is_a?(String) && record['project'].match?(SLUG) &&
+          %w[common_dir admin_dir].all? { |key| record[key].is_a?(String) && record[key].start_with?('/') && !record[key].match?(/[[:cntrl:]]/) } &&
+          %w[identity common_identity admin_identity].all? { |key| identity.call(record[key]) } && record['head'].is_a?(String) && record['head'].match?(SHA) &&
+          (record['branch'].nil? || record['branch'].is_a?(String) && !record['branch'].empty? && !record['branch'].match?(/[[:cntrl:]]/)) &&
+          [true, false].include?(record['dirty']) && record['removed'] == false } &&
+        inventory['containers'].all? { |record| record.is_a?(Hash) && record.keys.sort == %w[identity path removed] && relative.call(record['path'], true) && identity.call(record['identity']) && record['removed'] == false } &&
+        %w[worktrees containers].all? { |key| inventory[key].map { |record| record['path'] }.uniq.length == inventory[key].length }
+    end
+
+    # Git diffs can themselves contain large artifacts; retain their hash only.
+    def command_digest(*argv)
+      digest = Digest::SHA256.new
+      error = +''
+      Open3.popen3(runtime.environment, *argv) do |input, output, errors, child|
+        input.close
+        drain = Thread.new do
+          while (chunk = errors.read(4096))
+            error << chunk.byteslice(0, [4096 - error.bytesize, 0].max)
+          end
+        end
+        begin
+          while (chunk = output.read(1024 * 1024))
+            digest.update(chunk)
+          end
+        ensure
+          drain.value
+        end
+        raise Error, "Git evidence failed: #{error.strip}" unless child.value.success?
+      end
+      digest.hexdigest
+    end
+
+    def tracking_artifacts(location, slug)
+      relative = File.join(location, slug)
+      exclusions = %w[state.md portal.yml].map { |name| ":(exclude)#{File.join(relative, name)}" }
+      commands = [%w[diff --binary], %w[diff --cached --binary], %w[status --porcelain=v1 --untracked-files=all]]
+      commands.map { |args| command_digest('git', '-C', workspace, *args, '--', relative, *exclusions) }
+    end
+
+    def checkout_content(inventory, slug)
+      inventory.fetch('worktrees').to_h do |record|
+        path = File.join(workspace, 'worktrees', slug, record.fetch('path'))
+        commands = [%w[status --porcelain=v1 --untracked-files=all], %w[diff --binary], %w[diff --cached --binary]]
+        [record.fetch('path'), commands.map { |args| command_digest('git', '-C', path, *args) }]
+      end
     end
 
     def row(slug, decision, selection)
@@ -269,7 +345,7 @@ module LegacySessionRepair20261004
 
       location = locations.first
       directory = File.join(workspace, location, slug)
-      unless git('diff', '--cached', '--quiet', '--', File.join(location, slug), optional: true)
+      unless git('diff', '--cached', '--quiet', '--', *%w[state.md portal.yml].map { |name| File.join(location, slug, name) }, optional: true)
         raise Error, 'selected tracking contains staged changes'
       end
       source = snapshot(directory)
@@ -284,8 +360,8 @@ module LegacySessionRepair20261004
       history = histories(slug)
       entries = history.dup
       entries << { 'path' => File.join(location, slug, 'portal.yml'), 'manifest' => current } if current
-      inventory = DevSession::ArchiveCleanup.new(runtime.runner, slug).discover
-      raise Error, 'archive inventory has an unsupported shape' unless DevSession::ArchiveCleanup.discovery_shape?(inventory)
+      inventory = DevSession::ArchiveCleanup.new(runtime.runner, slug).discover(clean: false)
+      raise Error, 'archive inventory has an unsupported shape' unless inventory_shape?(inventory)
 
       repositories, proofs = repositories(slug, entries, inventory, decision)
       if repositories.empty? && decision['scope'] != 'coordination_only'
@@ -347,7 +423,7 @@ module LegacySessionRepair20261004
       runtime.runner.validate_manifest(target, slug, File.join(directory, 'portal.yml'))
       portal_bytes = YAML.dump(target)
       { 'slug' => slug, 'location' => location, 'path' => directory, 'source' => source,
-        'evidence' => { 'history' => history, 'inventory' => inventory, 'repositories' => proofs },
+        'evidence' => { 'workspace_head' => git('rev-parse', 'HEAD'), 'tracking_artifacts' => tracking_artifacts(location, slug), 'history' => history, 'inventory' => inventory, 'checkout_content' => checkout_content(inventory, slug), 'repositories' => proofs },
         'decision' => decision, 'root_thread_id' => root, 'lifecycle' => lifecycle,
         'target' => { 'manifest' => target, 'portal_bytes' => Base64.strict_encode64(portal_bytes),
                       'portal_sha256' => Digest::SHA256.hexdigest(portal_bytes),
@@ -411,6 +487,17 @@ module LegacySessionRepair20261004
 
         registrations << [{ 'name' => record.fetch('project'), 'project' => record.fetch('project'), 'branch' => record.fetch('branch') }, { 'checkout_evidence' => record.fetch('path') }]
       end
+      mappings = mapping.fetch('repositories', [])
+      mappings.each do |addition|
+        next unless addition.key?('historical_commits')
+
+        project, branch = addition.values_at('project', 'branch')
+        common = catalog.find { |record| record['project'] == project }&.fetch('common_dir')
+        raise Error, "canonical historical project missing: #{project}" unless common
+
+        registrations << [{ 'name' => addition['name'] || project, 'project' => project, 'branch' => branch },
+                          { 'historical_commits' => addition.fetch('historical_commits') }]
+      end
       registrations = registrations.map do |repo, evidence|
         next [repo, evidence] if repo['branch']
 
@@ -427,6 +514,9 @@ module LegacySessionRepair20261004
         [repo.merge('branch' => branch), evidence]
       end
       grouped = registrations.group_by { |repo, _evidence| [repo.fetch('project'), repo.fetch('branch')] }
+      unless mappings.all? { |choice| grouped.key?([choice['project'], choice['branch']]) }
+        raise Error, 'unused repository mapping has no discovered or reviewed historical obligation'
+      end
       occupied = []
       proofs = []
       result = grouped.sort.map do |(project, branch), rows|
@@ -462,8 +552,24 @@ module LegacySessionRepair20261004
         refs = ["refs/heads/#{branch}", "refs/remotes/origin/#{branch}", "refs/heads/#{default}", "refs/remotes/origin/#{default}"].uniq.to_h do |ref|
           [ref, LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "#{ref}^{commit}", optional: true)]
         end
+        historical = override.fetch('historical_commits', []).map do |commit|
+          unless LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'cat-file', '-t', commit, optional: true) == 'commit'
+            raise Error, "historical evidence is not an existing full commit: #{commit}"
+          end
+          named = ["refs/heads/#{branch}", "refs/remotes/origin/#{branch}"].select { |ref| refs[ref] }
+          retained = if named.empty?
+                       LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'for-each-ref', '--format=%(refname)', 'refs/heads', 'refs/remotes/origin', 'refs/tags').lines.map(&:strip).sort
+                     else
+                       named
+                     end
+          ref = retained.find { |candidate| LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'merge-base', '--is-ancestor', commit, "#{candidate}^{commit}", optional: true) }
+          raise Error, "historical commit has no retained reachability for #{project}/#{branch}: #{commit}" unless ref
+
+          refs[ref] ||= LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "#{ref}^{commit}")
+          { 'commit' => commit, 'ref' => ref }
+        end
         proofs << { 'project' => project, 'common_dir' => common, 'identity' => LegacySessionRepair20261004.identity(common), 'origin' => origin,
-                    'refs' => refs, 'evidence' => rows.map(&:last) }
+                    'refs' => refs, 'historical_commits' => historical, 'evidence' => rows.map(&:last) }
         target = { 'name' => name, 'project' => project, 'github' => github, 'branch' => branch, 'default_branch' => default }
         target['initial_base_sha'] = base if base
         target['final_head_sha'] = final if final
@@ -683,10 +789,17 @@ module LegacySessionRepair20261004
                            '--user-state-root', @context.runtime.fetch('state_root')])
     end
 
-    def sample(row)
+    def local_sample(row)
       @context.check!
       before = metadata(row)
       receipts(row.fetch('slug'))
+      raise Error, 'retained authority/roster/runtime evidence changed during local proof' unless metadata(row) == before
+
+      before
+    end
+
+    def sample(row)
+      before = local_sample(row)
       common = ['--workspace', @evidence.workspace, '--session-slug', row.fetch('slug'), '--socket', @context.runtime.fetch('socket'), '--codex-home', @context.runtime.fetch('codex_home')]
       if row['root_thread_id']
         @context.invocation([@context.runtime.fetch('portal'), 'team', 'require-archive-ready', *common,
@@ -695,8 +808,7 @@ module LegacySessionRepair20261004
       else
         @context.invocation([@context.record.fetch('helper').fetch('executable'), '--mode', 'threadless', *common])
       end
-      receipts(row.fetch('slug'))
-      raise Error, 'retained authority/roster/runtime evidence changed during native proof' unless metadata(row) == before
+      raise Error, 'retained authority/roster/runtime evidence changed during native proof' unless local_sample(row) == before
 
       before
     end
@@ -755,9 +867,10 @@ module LegacySessionRepair20261004
         used << row.fetch('slug')
         raise Error, 'unsupported scope/header decision' if row.key?('scope') && row['scope'] != 'coordination_only' || row.key?('state_decision') && row['state_decision'] != 'prepend_active'
         if row.key?('repositories')
-          unless row['repositories'].is_a?(Array) && row['repositories'].all? { |repo| repo.is_a?(Hash) && (repo.keys - %w[project branch name default_branch initial_base_sha final_head_sha]).empty? && repo['project'].to_s.match?(SLUG) && repo['branch'].is_a?(String) }
+          unless row['repositories'].is_a?(Array) && row['repositories'].all? { |repo| repo.is_a?(Hash) && (repo.keys - %w[project branch name default_branch initial_base_sha final_head_sha historical_commits]).empty? && repo['project'].to_s.match?(SLUG) && repo['branch'].is_a?(String) && (!repo.key?('historical_commits') || repo['historical_commits'].is_a?(Array) && repo['historical_commits'].length.between?(1, 128) && repo['historical_commits'].uniq == repo['historical_commits'] && repo['historical_commits'].all? { |sha| sha.is_a?(String) && sha.match?(SHA) }) }
             raise Error, 'invalid exact repository mapping'
           end
+          raise Error, 'duplicate repository mapping' unless row['repositories'].map { |repo| repo.values_at('project', 'branch') }.uniq.length == row['repositories'].length
         end
       end
       { 'path' => path, 'value' => value }
@@ -869,11 +982,9 @@ module LegacySessionRepair20261004
       LegacySessionRepair20261004.durable_json(@recovery_path, @recovery)
     end
 
-    def barrier(row, progress)
+    def barrier(row, progress, full_native: false)
       @context.verify_window!
-      if progress['commit'] && @evidence.git('rev-parse', 'HEAD') != progress['commit']
-        raise Error, 'tracking HEAD changed after the recorded repair commit'
-      end
+      verify_repair_chain!(row.dig('evidence', 'workspace_head'))
       current = @evidence.snapshot(row.fetch('path'))
       source = row.fetch('source')
       raise Error, 'tracking directory/container identity changed' unless current['identity'] == source['identity'] && current['directories'] == source['directories']
@@ -891,17 +1002,39 @@ module LegacySessionRepair20261004
 
         raise Error, "tracking bytes/identity drift: #{name}"
       end
+      unless @evidence.tracking_artifacts(row.fetch('location'), row.fetch('slug')) == row.dig('evidence', 'tracking_artifacts')
+        raise Error, 'unmodified tracking artifact index/worktree state changed'
+      end
       row.fetch('evidence').fetch('repositories').each do |record|
         common = record.fetch('common_dir')
         raise Error, 'canonical repository identity changed' unless LegacySessionRepair20261004.identity(common) == record['identity'] &&
           LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'config', '--get', 'remote.origin.url') == record['origin']
         record.fetch('refs').each do |ref, tip|
-          raise Error, "retained ref changed: #{ref}" unless LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "#{ref}^{commit}", optional: true) == tip
+          actual = LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "#{ref}^{commit}", optional: true)
+          next if actual == tip
+          workspace_common = @evidence.git('rev-parse', '--path-format=absolute', '--git-common-dir')
+          if record['project'] == 'workspace' && common == workspace_common && ref == 'refs/heads/master' && tip == row.dig('evidence', 'workspace_head') && actual == @evidence.git('rev-parse', 'HEAD')
+            verify_repair_chain!(tip)
+          else
+            raise Error, "retained ref changed: #{ref}"
+          end
         end
       end
-      unless DevSession::ArchiveCleanup.new(@runtime.runner, row.fetch('slug')).discover == row.dig('evidence', 'inventory') && @proof.sample(row) == row['runtime_evidence']
+      row.dig('evidence', 'repositories').each do |record|
+        record.fetch('historical_commits').each do |saved|
+          common = record.fetch('common_dir')
+          unless LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'cat-file', '-t', saved.fetch('commit'), optional: true) == 'commit' &&
+                 LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'merge-base', '--is-ancestor', saved.fetch('commit'), "#{saved.fetch('ref')}^{commit}", optional: true)
+            raise Error, 'historical retention evidence changed'
+          end
+        end
+      end
+      unless DevSession::ArchiveCleanup.new(@runtime.runner, row.fetch('slug')).discover(clean: false) == row.dig('evidence', 'inventory') &&
+             @evidence.checkout_content(row.dig('evidence', 'inventory'), row.fetch('slug')) == row.dig('evidence', 'checkout_content') &&
+             (full_native ? @proof.sample(row) : @proof.local_sample(row)) == row['runtime_evidence']
         raise Error, 'worktree/native/retained evidence changed'
       end
+      @context.verify_window! if full_native
     end
 
     def target_bytes(row, name)
@@ -910,7 +1043,7 @@ module LegacySessionRepair20261004
     end
 
     def apply_row(row, progress)
-      barrier(row, progress)
+      barrier(row, progress, full_native: true)
       if progress['phase'] == 'prepared'
         %w[state.md portal.yml].each do |name|
           bytes = target_bytes(row, name)
@@ -967,7 +1100,7 @@ module LegacySessionRepair20261004
         progress['phase'] = 'grace_started'
         checkpoint
       end
-      barrier(row, progress)
+      barrier(row, progress, full_native: true)
       require_committed_target!(row)
       progress['phase'] = 'complete'
       checkpoint
@@ -986,19 +1119,18 @@ module LegacySessionRepair20261004
     end
 
     def expected_blobs(row)
-      row.fetch('source').fetch('files').merge(%w[state.md portal.yml].to_h do |name|
-        [name, { 'bytes' => Base64.strict_encode64(target_bytes(row, name)), 'mode' => row.dig('source', 'files', name, 'mode') || 0o644 }]
-      end).to_h do |name, file|
-        hash, error, status = Open3.capture3(@runtime.environment, 'git', '-C', @evidence.workspace, 'hash-object', '--stdin', stdin_data: Base64.strict_decode64(file.fetch('bytes')))
+      %w[state.md portal.yml].to_h do |name|
+        hash, error, status = Open3.capture3(@runtime.environment, 'git', '-C', @evidence.workspace, 'hash-object', '--stdin', stdin_data: target_bytes(row, name))
         raise Error, "cannot hash target: #{error}" unless status.success?
 
-        [name, [file['mode'] & 0o111 == 0 ? '100644' : '100755', hash.strip]]
+        mode = row.dig('source', 'files', name, 'mode') || 0o644
+        [name, [mode & 0o111 == 0 ? '100644' : '100755', hash.strip]]
       end
     end
 
-    def require_committed_target!(row)
+    def require_committed_target!(row, commit: 'HEAD')
       relative = File.join(row.fetch('location'), row.fetch('slug'))
-      output = @evidence.git('ls-tree', '-r', '-z', "HEAD:#{relative}")
+      output = @evidence.git('ls-tree', '-z', "#{commit}:#{relative}", '--', 'state.md', 'portal.yml')
       actual = output.split("\0").to_h do |entry|
         metadata, name = entry.split("\t", 2)
         mode, type, hash = metadata.split(' ')
@@ -1009,44 +1141,87 @@ module LegacySessionRepair20261004
       raise Error, 'committed target tree differs from the exact repair projection' unless actual == expected_blobs(row)
     end
 
-    def isolation(relative)
-      @evidence.git('diff', '--binary', '--', '.', ":(exclude)#{relative}") + "\0" +
-        @evidence.git('diff', '--cached', '--binary', '--', '.', ":(exclude)#{relative}")
+    def metadata_paths(row)
+      %w[state.md portal.yml].map { |name| File.join(row.fetch('location'), row.fetch('slug'), name) }
+    end
+
+    def isolation(paths)
+      exclusions = paths.map { |path| ":(exclude)#{path}" }
+      commands = [%w[diff --binary], %w[diff --cached --binary], %w[status --porcelain=v1 --untracked-files=all]]
+      LegacySessionRepair20261004.digest(commands.map { |args| @evidence.command_digest('git', '-C', @evidence.workspace, *args, '--', '.', *exclusions) })
+    end
+
+    def repair_message(row)
+      "workspace: repair legacy session #{row.fetch('slug')}\n\nRecord reviewed ordinary metadata using dated source-only repair.\nRuntime #{RUNTIME}.\nProjection #{@recovery.fetch('projection').fetch('digest')}.\n"
+    end
+
+    def prove_repair_commit!(row, commit, parent)
+      parents = @evidence.git('rev-list', '--parents', '-n', '1', commit).split
+      changed = @evidence.git('diff-tree', '--no-commit-id', '--name-only', '-r', commit).lines.map(&:strip)
+      unless parents == [commit, parent] && @evidence.git('log', '-1', '--format=%B', commit) == repair_message(row).strip &&
+             !changed.empty? && (changed - metadata_paths(row)).empty?
+        raise Error, 'tracking HEAD changed beyond the recorded repair commit'
+      end
+      require_committed_target!(row, commit: commit)
+    end
+
+    # Only this saved recovery's exact commits may advance workspace/master.
+    # The last commit can win before its progress write; its sealed parent and
+    # metadata-only message/tree prove that one interrupted boundary.
+    def verify_repair_chain!(sealed)
+      tip = sealed
+      pending = nil
+      @recovery.fetch('projection').fetch('sessions').zip(@recovery.fetch('rows')).each do |row, progress|
+        parent = progress['commit_parent']
+        next unless parent
+        raise Error, 'recorded repair commit chain has a different parent' unless parent == tip
+
+        if progress['commit']
+          commit = progress.fetch('commit')
+          prove_repair_commit!(row, commit, parent) unless commit == parent
+          tip = commit
+        else
+          pending = [row, parent]
+          break
+        end
+      end
+      head = @evidence.git('rev-parse', 'HEAD')
+      return if head == tip
+      raise Error, 'tracking HEAD changed after the recorded repair commits' unless pending
+
+      prove_repair_commit!(pending.first, head, pending.last)
     end
 
     def commit_row(row, progress)
       barrier(row, progress)
-      relative = File.join(row.fetch('location'), row.fetch('slug'))
+      paths = metadata_paths(row)
       raise Error, 'tracking baseline needs the shared master checkout' unless @evidence.git('symbolic-ref', '--short', 'HEAD') == 'master'
       unless @evidence.git('merge-base', '--is-ancestor', 'origin/master', 'HEAD', optional: true)
         raise Error, 'cached workspace master is not an ancestor; reconcile before the window'
       end
-      raise Error, 'selected tracking contains staged changes' unless @evidence.git('diff', '--cached', '--quiet', '--', relative, optional: true)
+      raise Error, 'selected tracking contains staged changes' unless @evidence.git('diff', '--cached', '--quiet', '--', *paths, optional: true)
 
       progress['commit_parent'] ||= @evidence.git('rev-parse', 'HEAD')
-      progress['isolation'] ||= isolation(relative)
+      progress['isolation'] ||= isolation(paths)
       checkpoint
-      message = "workspace: repair legacy session #{row.fetch('slug')}\n\nRecord reviewed ordinary metadata using dated source-only repair.\nRuntime #{RUNTIME}.\nProjection #{ @recovery.fetch('projection').fetch('digest') }.\n"
+      message = repair_message(row)
       head = @evidence.git('rev-parse', 'HEAD')
       if head != progress.fetch('commit_parent')
-        unless @evidence.git('rev-parse', 'HEAD^') == progress['commit_parent'] && @evidence.git('log', '-1', '--format=%B') == message.strip &&
-               @evidence.git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').lines.all? { |name| name.strip.start_with?(relative + '/') }
-          raise Error, 'tracking HEAD changed beyond the recorded repair commit'
-        end
-      elsif !@evidence.git('status', '--porcelain=v1', '--', relative).empty?
+        prove_repair_commit!(row, head, progress.fetch('commit_parent'))
+      elsif !@evidence.git('status', '--porcelain=v1', '--', *paths).empty?
         Tempfile.create(['dated-legacy-repair-', '.txt']) do |file|
           file.write(message); file.flush; file.fsync
           begin
-            @evidence.git('add', '--intent-to-add', '--', relative)
-            @evidence.git('commit', '--only', '-F', file.path, '--', relative)
+            @evidence.git('add', '--intent-to-add', '--', *paths)
+            @evidence.git('commit', '--only', '-F', file.path, '--', *paths)
           rescue Error
-            @evidence.git('reset', '--quiet', 'HEAD', '--', relative, optional: true)
+            @evidence.git('reset', '--quiet', 'HEAD', '--', *paths, optional: true)
             raise
           end
         end
       end
       require_committed_target!(row)
-      raise Error, 'normal commit changed unrelated index/worktree data' unless isolation(relative) == progress['isolation']
+      raise Error, 'normal commit changed unrelated index/worktree data' unless isolation(paths) == progress['isolation']
 
       progress['commit'] = @evidence.git('rev-parse', 'HEAD')
     end

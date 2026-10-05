@@ -53,7 +53,16 @@ class RepairLegacySessionsTest < Minitest::Test
     File.chmod(0o600, File.join(@home, '.config/dev-workspaces/registry.json'))
     FileUtils.mkdir_p(File.join(@generation, 'bin'))
     # These are explicit command collaborators, not native persistence/protocol.
-    script = "#!/bin/sh\nprintf 'proof\\n' >> '#{@root}/proof.log'\ntest ! -e '#{@root}/busy'\n"
+    script = <<~SH
+      #!/bin/sh
+      printf '%s\\n' "$*" >> '#{@root}/proof.log'
+      case " $* " in
+        *" --mode threadless "*|*" team require-archive-ready "*)
+          test ! -e '#{@root}/native-failure' || exit 1
+          ;;
+      esac
+      test ! -e '#{@root}/busy'
+    SH
     %w[workspace-portal dev-session].each { |name| File.write(File.join(@generation, 'bin', name), script); File.chmod(0o700, File.join(@generation, 'bin', name)) }
     @helper = File.join(@private, 'proof')
     File.write(@helper, script); File.chmod(0o700, @helper)
@@ -153,6 +162,76 @@ class RepairLegacySessionsTest < Minitest::Test
     tool.run
   end
 
+  def full_proof_calls(slug = SLUG)
+    File.readlines(File.join(@root, 'proof.log')).count do |line|
+      (line.include?('--mode threadless ') || line.start_with?('team require-archive-ready ')) && line.include?("--session-slug #{slug} ")
+    end
+  end
+
+  def receipt_proof_calls
+    File.readlines(File.join(@root, 'proof.log')).count { |line| line.include?('--mode receipts ') }
+  end
+
+  def test_full_native_proofs_bracket_writes_and_final_failure_retries_without_resetting_grace
+    project('alpha')
+    write_mapping('root_thread_id' => ROOT_ID)
+    assert_empty(preview['sessions'].first['blockers'])
+    before = full_proof_calls
+    checkpoints = []
+    error = assert_raises(Repair::Error) do
+      apply(FaultTool, fault: ->(recovery) {
+        phase = recovery['rows'][0]['phase']
+        checkpoints << [phase, full_proof_calls - before, receipt_proof_calls]
+        File.write(File.join(@root, 'native-failure'), 'final proof unavailable') if phase == 'grace_started'
+        false
+      })
+    end
+    assert_match(/proof failed/, error.message)
+    assert_equal(3, full_proof_calls - before) # All-row preflight, entry, failed final proof.
+    assert_equal(1, checkpoints.first[1])
+    assert(checkpoints.drop(1).all? { |entry| entry[1] == 2 }, 'intermediate checkpoints repeated native discovery')
+    assert_operator(checkpoints.last[2], :>, checkpoints[1][2])
+    assert_equal('grace_started', Repair.read_json(@recovery)['rows'][0]['phase'])
+    head = git('-C', @workspace, 'rev-parse', 'HEAD')
+    grace = Dir[File.join(@state, 'auto-archive', '*', "session-#{SLUG}.json")].first
+    saved_grace = File.binread(grace)
+    File.unlink(File.join(@root, 'native-failure'))
+    before = full_proof_calls
+    apply
+    assert_equal(2, full_proof_calls - before)
+    assert_equal('complete', Repair.read_json(@recovery)['rows'][0]['phase'])
+    assert_equal(saved_grace, File.binread(grace))
+    assert_equal(head, git('-C', @workspace, 'rev-parse', 'HEAD'))
+    before = full_proof_calls
+    apply
+    assert_equal(before, full_proof_calls)
+  end
+
+  def test_entry_native_failure_preserves_tracking_and_retry_observes_afresh
+    project('alpha')
+    assert_empty(preview['sessions'].first['blockers'])
+    head = git('-C', @workspace, 'rev-parse', 'HEAD')
+    before = full_proof_calls
+    assert_raises(Repair::Error) do
+      apply(FaultTool, fault: ->(recovery) {
+        if recovery['rows'][0]['phase'] == 'prepared' && recovery['rows'][0]['targets'].empty?
+          File.write(File.join(@root, 'native-failure'), 'entry proof unavailable')
+        end
+        false
+      })
+    end
+    assert_equal(2, full_proof_calls - before)
+    assert_empty(Repair.read_json(@recovery)['rows'][0]['targets'])
+    assert_equal(PROSE, File.binread(File.join(@workspace, 'work', SLUG, 'state.md')))
+    refute(File.exist?(File.join(@workspace, 'work', SLUG, 'portal.yml')))
+    assert_equal(head, git('-C', @workspace, 'rev-parse', 'HEAD'))
+    File.unlink(File.join(@root, 'native-failure'))
+    before = full_proof_calls
+    apply
+    assert_equal(2, full_proof_calls - before)
+    assert_equal('complete', Repair.read_json(@recovery)['rows'][0]['phase'])
+  end
+
   def test_missing_checkout_multiple_projects_and_unknown_base_repair
     project('alpha'); project('beta')
     row = preview.fetch('sessions').first
@@ -170,6 +249,149 @@ class RepairLegacySessionsTest < Minitest::Test
     manifest = YAML.safe_load(File.read(File.join(@workspace, 'work', SLUG, 'portal.yml')))
     assert_equal(%w[artifacts repositories schema slug], manifest.keys.sort)
     assert_equal(first, File.binread(grace))
+  end
+
+  def test_dirty_checkout_is_metadata_evidence_and_its_content_is_preserved
+    project('alpha', checkout: true)
+    checkout = File.join(@workspace, 'worktrees', SLUG, 'alpha')
+    File.write(File.join(checkout, 'file'), 'real dirty tracked content')
+    File.write(File.join(checkout, 'untracked'), 'untracked content')
+    before = git('-C', checkout, 'diff', '--binary')
+    status = git('-C', checkout, 'status', '--porcelain=v1', '--untracked-files=all')
+    row = preview['sessions'].first
+    assert_empty(row['blockers'])
+    assert_equal(true, row.dig('evidence', 'inventory', 'worktrees', 0, 'dirty'))
+    refute(DevSession::ArchiveCleanup.discovery_shape?(row.dig('evidence', 'inventory')))
+    apply
+    assert_equal(before, git('-C', checkout, 'diff', '--binary'))
+    assert_equal(status, git('-C', checkout, 'status', '--porcelain=v1', '--untracked-files=all'))
+    assert_equal('untracked content', File.read(File.join(checkout, 'untracked')))
+  end
+
+  def test_bulk_artifacts_are_hash_only_and_only_metadata_paths_are_committed
+    project('alpha')
+    tracking = File.join(@workspace, 'work', SLUG)
+    artifact = File.join(tracking, 'artifact.txt')
+    File.write(artifact, 'staged artifact'); git('-C', @workspace, 'add', artifact)
+    File.write(artifact, 'unstaged artifact')
+    index = git('-C', @workspace, 'ls-files', '--stage', '--', artifact)
+    File.write(File.join(tracking, 'plan.md'), 'uncommitted plan prose')
+    bulk = File.join(tracking, 'bulk')
+    FileUtils.mkdir_p(bulk)
+    520.times { |number| File.write(File.join(bulk, number.to_s), 'small artifact') }
+    large = File.join(bulk, 'large')
+    File.open(large, 'wb') { |file| file.truncate(9 * 1024 * 1024) }
+    source_head = git('-C', @workspace, 'rev-parse', 'HEAD')
+    row = preview['sessions'].first
+    assert_empty(row['blockers'])
+    files = row.fetch('source').fetch('files')
+    assert_operator(files.length, :>, 512)
+    assert_equal(9 * 1024 * 1024, files.fetch('bulk/large').fetch('size'))
+    assert_equal(Digest::SHA256.file(large).hexdigest, files.fetch('bulk/large').fetch('sha256'))
+    refute(files.fetch('bulk/large').key?('bytes'))
+    refute(files.fetch('artifact.txt').key?('bytes'))
+    assert(files.fetch('plan.md').key?('bytes'))
+    apply
+    changes = git('-C', @workspace, 'diff', '--name-only', source_head, 'HEAD').lines.map(&:strip)
+    assert_equal(%W[work/#{SLUG}/portal.yml work/#{SLUG}/state.md], changes.sort)
+    assert_equal(index, git('-C', @workspace, 'ls-files', '--stage', '--', artifact))
+    assert_equal('unstaged artifact', File.read(artifact))
+    assert_equal('uncommitted plan prose', File.read(File.join(tracking, 'plan.md')))
+    assert_equal(files.fetch('bulk/large').fetch('sha256'), Digest::SHA256.file(large).hexdigest)
+    assert_equal('', git('-C', @workspace, 'ls-files', '--', large))
+  end
+
+  def test_historical_additions_union_missing_obligations_and_require_retained_commits
+    common, base = project('alpha')
+    git("--git-dir=#{common}", 'update-ref', '-d', "refs/heads/#{SLUG}")
+    git("--git-dir=#{common}", 'update-ref', '-d', "refs/remotes/origin/#{SLUG}")
+    deleted = 'deleted-historical-feature'
+    write_mapping('root_thread_id' => nil, 'repositories' => [
+      { 'project' => 'alpha', 'branch' => deleted, 'historical_commits' => [base] }
+    ])
+    row = preview['sessions'].first
+    assert_empty(row['blockers'])
+    assert_equal(deleted, row.dig('target', 'manifest', 'repositories', 0, 'branch'))
+    refute(row.dig('target', 'manifest', 'repositories', 0).key?('initial_base_sha'))
+    proof = row.dig('evidence', 'repositories', 0)
+    assert_nil(proof.fetch('refs').fetch("refs/heads/#{deleted}"))
+    assert_equal(base, proof.fetch('historical_commits').first.fetch('commit'))
+    apply
+    assert_nil(Repair.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "refs/heads/#{deleted}", optional: true))
+
+    # Object existence alone is insufficient: this real commit has no retained ref.
+    blob = git('-C', @workspace, 'rev-parse', 'HEAD^{tree}')
+    unreachable = git('-C', @workspace, 'commit-tree', blob, '-m', 'fixture: unreferenced historical object')
+    write_mapping('root_thread_id' => nil, 'repositories' => [
+      { 'project' => 'workspace', 'branch' => 'master', 'historical_commits' => [unreachable] }
+    ])
+    assert_match(/no retained reachability/, preview['sessions'].first['blockers'].join)
+    write_mapping('root_thread_id' => nil, 'repositories' => [
+      { 'project' => 'workspace', 'branch' => 'master', 'historical_commits' => [blob] }
+    ])
+    assert_match(/not an existing full commit/, preview['sessions'].first['blockers'].join)
+  end
+
+  def test_historical_mapping_cannot_replace_an_automatic_obligation_or_go_unused
+    _common, base = project('alpha')
+    write_mapping('root_thread_id' => nil, 'repositories' => [
+      { 'project' => 'alpha', 'name' => 'historical-alpha', 'branch' => 'deleted-feature', 'historical_commits' => [base] }
+    ])
+    row = preview['sessions'].first
+    assert_empty(row['blockers'])
+    assert_equal([SLUG, 'deleted-feature'].sort, row.dig('target', 'manifest', 'repositories').map { |repo| repo['branch'] }.sort)
+    write_mapping('root_thread_id' => nil, 'repositories' => [{ 'project' => 'alpha', 'branch' => 'unproved-feature' }])
+    assert_match(/unused repository mapping/, preview['sessions'].first['blockers'].join)
+  end
+
+  def test_workspace_historical_master_accepts_only_its_recorded_sequential_repair_commits
+    second = '2026-10-04-repair-second'
+    directory = File.join(@workspace, 'work', second)
+    FileUtils.mkdir_p(directory)
+    File.write(File.join(directory, 'plan.md'), "# Second plan\n")
+    File.binwrite(File.join(directory, 'state.md'), PROSE)
+    git('-C', @workspace, 'add', directory); git('-C', @workspace, 'commit', '-m', 'fixture: second source')
+    base = git('-C', @workspace, 'rev-parse', 'HEAD')
+    File.write(@mapping, JSON.generate('schema' => 1, 'workspace' => @workspace, 'sessions' => [SLUG, second].sort.map { |slug|
+      { 'slug' => slug, 'root_thread_id' => nil, 'rationale' => 'reviewed direct workspace commit',
+        'repositories' => [{ 'project' => 'workspace', 'branch' => 'master', 'historical_commits' => [base] }] }
+    }))
+    output = StringIO.new
+    Repair::Tool.new(['preview', '--workspace', @workspace, '--runtime-source', @source, '--session', SLUG, '--session', second, '--mapping', @mapping, '--json'], environment: @env, output: output).run
+    projection = JSON.parse(output.string)
+    assert(projection.fetch('sessions').all? { |row| row['blockers'] == [] })
+    File.write(@projection, output.string)
+    before = [SLUG, second].to_h { |slug| [slug, full_proof_calls(slug)] }
+    assert_raises(Interrupted) { apply(FaultTool, fault: ->(recovery) { recovery['rows'][0]['phase'] == 'complete' }) }
+    assert_equal(3, full_proof_calls(SLUG) - before[SLUG])
+    assert_equal(1, full_proof_calls(second) - before[second])
+    first = git('-C', @workspace, 'rev-parse', 'HEAD')
+    before = [SLUG, second].to_h { |slug| [slug, full_proof_calls(slug)] }
+    apply
+    assert_equal(before[SLUG], full_proof_calls(SLUG))
+    assert_equal(2, full_proof_calls(second) - before[second])
+    assert_equal('2', git('-C', @workspace, 'rev-list', '--count', "#{base}..HEAD"))
+    final = git('-C', @workspace, 'rev-parse', 'HEAD')
+    refute_equal(first, final)
+    before = [SLUG, second].to_h { |slug| [slug, full_proof_calls(slug)] }
+    apply
+    assert_equal(before, [SLUG, second].to_h { |slug| [slug, full_proof_calls(slug)] })
+    assert_equal(final, git('-C', @workspace, 'rev-parse', 'HEAD'))
+  end
+
+  def test_unrecorded_tracking_commit_and_dirty_content_drift_refuse_saved_retry
+    project('alpha', checkout: true)
+    checkout = File.join(@workspace, 'worktrees', SLUG, 'alpha')
+    File.write(File.join(checkout, 'file'), 'original dirt')
+    assert_empty(preview['sessions'].first['blockers'])
+    assert_raises(Interrupted) { apply(FaultTool, fault: ->(recovery) { recovery['rows'][0]['phase'] == 'files_written' }) }
+    File.write(File.join(checkout, 'file'), 'different dirt with the same dirty boolean')
+    assert_match(/worktree\/native\/retained evidence changed/, assert_raises(Repair::Error) { apply }.message)
+    File.write(File.join(checkout, 'file'), 'original dirt')
+    File.write(File.join(@workspace, 'peer.txt'), 'external committed change')
+    git('-C', @workspace, 'add', 'peer.txt'); git('-C', @workspace, 'commit', '-m', 'fixture: unrecorded outside commit')
+    assert_match(/tracking HEAD changed/, assert_raises(Repair::Error) { apply }.message)
+    assert_equal('files_written', Repair.read_json(@recovery)['rows'][0]['phase'])
   end
 
   def test_selected_socket_alias_keeps_logical_identity_and_requires_a_unix_target
@@ -269,7 +491,9 @@ class RepairLegacySessionsTest < Minitest::Test
     File.write(File.join(@workspace, 'work', SLUG, 'artifact.txt'), 'drift')
     assert_raises(Repair::Error) { apply }
     File.write(File.join(@workspace, 'work', SLUG, 'artifact.txt'), original)
+    before = full_proof_calls
     apply
+    assert_equal(2, full_proof_calls - before)
     assert_equal('complete', Repair.read_json(@recovery)['rows'][0]['phase'])
   end
 
@@ -283,11 +507,24 @@ class RepairLegacySessionsTest < Minitest::Test
     assert_equal(PROSE, File.binread(File.join(@workspace, 'work', SLUG, 'state.md')))
     assert_equal(before, git('-C', @workspace, 'rev-parse', 'HEAD'))
     File.unlink(File.join(@root, 'busy'))
+    assert_raises(Repair::Error) do
+      apply(FaultTool, fault: ->(recovery) {
+        File.write(File.join(@root, 'busy'), 'window lost before replacement') unless recovery['rows'][0]['targets'].empty?
+        false
+      })
+    end
+    assert_equal('prepared', Repair.read_json(@recovery)['rows'][0]['phase'])
+    assert_equal(PROSE, File.binread(File.join(@workspace, 'work', SLUG, 'state.md')))
+    refute(File.exist?(File.join(@workspace, 'work', SLUG, 'portal.yml')))
+    assert_equal(before, git('-C', @workspace, 'rev-parse', 'HEAD'))
+    File.unlink(File.join(@root, 'busy'))
     assert_raises(Interrupted) { apply(CommitFaultTool) }
     assert_equal('files_written', Repair.read_json(@recovery)['rows'][0]['phase'])
     committed = git('-C', @workspace, 'rev-parse', 'HEAD')
     refute_equal(before, committed)
+    native_before = full_proof_calls
     apply
+    assert_equal(2, full_proof_calls - native_before)
     assert_equal(committed, git('-C', @workspace, 'rev-parse', 'HEAD'))
     assert_equal('complete', Repair.read_json(@recovery)['rows'][0]['phase'])
   end

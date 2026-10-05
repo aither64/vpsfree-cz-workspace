@@ -7,7 +7,7 @@ execution. It is never exported by Nix, a profile, dev-session, the portal or an
 automatic worker. Writing this procedure does not authorize a real repair.
 
 The tool reads the committed runtime owners at
-`0bce6075f5cf2521d84abe2f80ac90c761c01ae9`. The supplied runtime checkout must use
+`43fc46e89c6ccafec16002e960c8fb11ff9f58ba`. The supplied runtime checkout must use
 the selected workspace's canonical `repos/dev-workspace.git` common directory
 and `git@github.com:aither64/dev-workspace.git` origin. Working files are not
 runtime proof inputs. Prepare a new projection if source, helper or selected
@@ -24,7 +24,9 @@ existing evidence. A no-evidence record needs explicit coordination-only scope
 and an explicit threadless decision. Prose does not prove scope or completion.
 
 Preserve original plan/state body bytes, CRLF, artifacts, exact roots/teams and
-refs. Active-path records without an anchored lifecycle receive an active header
+refs. Dirty checkouts are read-only metadata evidence, with their real dirty
+flags and status/diff hashes retained. Repair does not clean or commit project
+files; ordinary archive still refuses dirty worktrees. Active-path records without an anchored lifecycle receive an active header
 above all original bytes. Unsupported headers need an explicit reviewed
 `prepend_active` decision. Archives need genuine committed terminal lifecycle,
 recorded finalization and exact recorded final heads. Unknown archive provenance
@@ -52,6 +54,16 @@ No repair can certify lost expected revive journal/success evidence or adopt a
 new root. Ordinary runtime reads never depend on the tool's recovery evidence.
 
 ## Preparation and native proof callers
+
+This dated operation supports only selected Codex 0.160.0 ordinary stored ChatGPT
+authentication. Main must exclude account/login/config writers for the entire
+window and interruption recovery, freshly read `getAuthStatus` with
+`includeToken: false, refreshToken: false`, require `authMethod` exactly `chatgpt`,
+and verify the actual selected `auth.json` has `auth_mode: chatgpt`.
+`account/read.type` alone is insufficient. External tokens, other or unknown
+authentication block this operation. The ordinary client does not subscribe or
+resume threads; this auth precondition excludes its global external-token refresh
+callback. Main owns the private native preflight, window checks and execution.
 
 For a positive root, the tool calls the selected absolute `workspace-portal team
 require-archive-ready` with the reviewed root, original `WORKSPACE/work/SLUG`
@@ -81,7 +93,12 @@ GOWORK=off go -C "$BUILD/portal" build -mod=readonly -buildvcs=false -trimpath \
 The exported source has no Git worktree; disable Go VCS stamping and retain the
 explicit runtime revision and executable hash below. Keep committed `go.mod`/`go.sum`
 unchanged. The default threadless mode calls
-exported `workspacecodex.RequireThreadlessConversations`; receipts mode uses
+exported `workspacecodex.RequireThreadlessConversations`, including the reviewed
+fail-closed project index partitions, bounded saved headers, exhaustive loaded
+scope and public submission bracketing. Prepare against the final committed
+runtime containing that owner, then roll this tool's exact source revision and
+context together before a fresh preview; never compile working owner edits.
+Receipt mode uses
 the existing web store's strict read-only loader. This export exists only in
 scratch. There is no installed bridge, protocol copy or private ledger parser.
 Actual selected HOME/UID/Codex/private state/socket and the public ledger path
@@ -135,7 +152,24 @@ and unique selected `sessions`; each row requires `slug` and `rationale` and may
 select `root_thread_id` (including null), `scope: coordination_only`,
 `state_decision: prepend_active`, `finalized_at` and exact `repositories` choices.
 Repository choices use `project`, `branch` and optional `name`, `default_branch`,
-`initial_base_sha`, `final_head_sha`. Values must select existing proof.
+`initial_base_sha`, `final_head_sha` and optional `historical_commits`, an array
+of unique full commit SHAs. Historical additions need the row's reviewed rationale
+and canonical project/origin proof. Each commit must exist and be reachable from
+the named retained local/cached-origin branch. If that branch was explicitly
+reviewed as deleted, an existing retained default/other ref can prove retention;
+the missing branch remains an obligation with its missing refs recorded. An
+additional registration is unioned with discovered obligations. Unused mappings,
+unreachable objects and contradictory scope refuse. No historical commit becomes
+an invented base or final head.
+
+Preview embeds bytes only for `plan.md`, `state.md` and existing `portal.yml`.
+Other regular artifacts retain exact path, identity, mode, size and streamed
+SHA256 evidence, with before/after hashing checks. File-count and per-artifact
+size limits do not require removing useful artifacts. The 32 MiB projection/
+recovery bound, metadata-file limit and 128-row maximum still apply: prepare
+smaller successive batches when needed, and preview the next batch after the
+prior batch's commits. Refresh old unapplied projections; no previous real repair
+has consumed their artifact payload format.
 
 Apply takes the normal exclusive generation/transition gate, then creation/slug
 locks; the retained proof owner holds its team locks. It validates **all** selected
@@ -149,16 +183,30 @@ selected tracking; its mode is 0600. It seals projection, immutable evidence,
 exact source/target inodes and bytes, window attempts and sequential row phases:
 `prepared`, `files_written`, `tracking_committed`, `grace_started`, `complete`.
 Payloads and recovery are fsynced before replacement. Each normal-hook commit
-includes only that row's exact tracking paths and preserves unrelated index and
-working files. No fetch/ref synthesis/branch deletion occurs. A failed hook does
+writes, stages and commits only that row's `state.md` and `portal.yml`. Original
+plan/artifact bytes and their tracked/staged/untracked state remain unchanged,
+including dirty artifacts under selected tracking. Keep full backups separately;
+unchanged artifact payloads are not recovery-file restoration inputs. No fetch/ref synthesis/branch deletion occurs. A failed hook does
 not permit bypassing it.
+
+Preview and all-row preflight keep full native proof. Each unfinished row repeats
+full proof before mutation and after commit/grace before completion, including on
+retry. Intervening barriers still verify the window, context, tracking/artifacts,
+refs, worktrees, authority/roster and receipts. No native permission is cached or
+shared between rows or attempts. A failed final proof leaves the row unfinished;
+retry repeats both proofs without restarting grace. Completed reapply remains a
+no-op.
 
 After interruption, retain the window or re-establish its exact exclusions, then
 retry the **same invocation** with the same preparation/projection/recovery.
 Only exact recorded source or target is accepted; changed roots, artifacts,
 refs, checkouts, identities, receipts or commit evidence refuse. A commit that
 won before checkpoint is reused only when its recorded parent/message/paths/tree
-prove it. Never automatically roll back a committed tree. Restore backups only
+prove it. A workspace/master obligation can advance only through this recovery's
+recorded sequential repair commits, with exact parents, messages and those two
+metadata paths. Earlier rows need not remain HEAD after later rows commit;
+arbitrary ancestor or outside commits are refused. Never automatically roll back
+a committed tree. Restore backups only
 under explicit operator direction after inspecting actual commit/recovery state;
 restoring raw backups requires repair before ordinary writers are exposed.
 
