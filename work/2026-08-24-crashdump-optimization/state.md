@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-24-crashdump-optimization
 
 ## Repository
