@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-07-21-system-install-failure
 
 ## Repositories
