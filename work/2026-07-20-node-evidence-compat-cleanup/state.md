@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Node Evidence Compatibility Cleanup State
 
 ## Status
