@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Outage labels and wire rename state
 
 ## Branches and worktrees
