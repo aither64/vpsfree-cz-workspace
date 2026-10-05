@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-21-vpsadminos-ebpf-program-check
 
 ## Repositories
