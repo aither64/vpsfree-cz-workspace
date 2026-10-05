@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-07-16-codex-lb-update
 
 ## Follow-up status (2026-07-19)
