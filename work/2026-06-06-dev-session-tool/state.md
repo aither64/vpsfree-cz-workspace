@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Implement dev-session tmux workflow
 
 ## Repositories
