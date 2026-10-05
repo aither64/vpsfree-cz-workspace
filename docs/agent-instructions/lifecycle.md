@@ -27,9 +27,10 @@ worker, abandon other work, delete sessions, or schedule its own delayed cleanup
 
 Run `dev-session archive <slug> --as-is` for a completed initiative, or add
 `--abandoned` when the user explicitly discards the work. Archival is one
-deterministic, journaled operation. It verifies that the Codex thread has no
-active turn, pending request, or queued message; releases development clusters;
-removes clean attached worktrees with non-force `git worktree remove`; retains
+deterministic, journaled operation. It verifies that the Codex root and retained
+members have no active turn, pending request, or queued message; releases
+development clusters;
+removes clean, owned worktrees with non-force `git worktree remove`; retains
 branches; writes terminal lifecycle and manifest metadata; moves
 `work/<slug>/` atomically to `archive/<slug>/`; commits only that tracking
 transition on a compatible shared `master`; and retires the Codex thread, tmux
@@ -37,6 +38,11 @@ session, and runtime authority. Preserve unrelated working-tree and index
 changes. Resolve any refusal and retry the same command, which resumes its
 private journal. The CLI and portal each ask for one yes/no confirmation; they
 do not require the slug to be typed.
+
+Canonical Git registration and exact ref proofs also cover nested default-branch
+and detached auxiliary worktrees. The runtime's `docs/session-archive-recovery.md`
+owns these cleanup and retry rules; attaching an auxiliary checkout to a feature
+branch is not a prerequisite.
 
 For a completed initiative, archival fetches each registered feature and
 default branch and proves that the exact local and remote feature head is an
@@ -59,10 +65,14 @@ heads, preserves repository, branch, base, and conversation identity, and
 starts the exact retained Codex thread. It does not recreate worktrees. The
 confirmation uses a stronger warning for an abandoned initiative and is stored
 in the revive journal so a retry does not ask again. Recovery verifies the
-complete restored tracking tree before committing it. Legacy archives without
-`portal.yml` receive a recoverable new shared conversation;
-re-adding retained branches reconstructs their registration metadata. Revive
-refuses dirty, duplicated, ambiguous, or live state.
+complete restored tracking tree before committing it. New revival of unresolved
+manifestless archives refuses before a journal, move, runtime or root is created.
+Use the workspace's [dated repair procedure](../maintenance/repair-legacy-sessions-2026-10-04.md)
+for separately reviewed historic scope, roots and terminal metadata, including
+obligations without checkouts. Ordinary repaired records preserve their exact
+root and unknown bases without fabricated creation/goals evidence; a genuinely
+threadless archive stays threadless. Accepted predecessor journals retain their
+own recovery contract. Revival refuses dirty, duplicated, ambiguous, or live state.
 
 `dev-session delete` is the user-directed destructive discard. Agents must not
 run it unless the user explicitly asks to delete that session. It requires an
@@ -102,3 +112,13 @@ is supported only while its recorded identity and complete owner record prove
 the known runner tuple. Other legacy socket state fails closed.
 Workspace unregister is refused until that workspace's cluster state is reset.
 Never use `delete` as a substitute for archiving completed or abandoned work.
+Historic metadata repair is source-only maintenance, with writer exclusions held
+across interruption and one standalone recovery file. It has no installed batch
+reservation, status decoder or automatic-worker integration. Resume the exact
+saved projection inside the re-established window; never expose a partial repair
+to ordinary writers. Repair is separate authorization from archive, worker
+enablement or conversation retirement. The dated procedure owns tool removal;
+the runtime's `docs/session-archive-recovery.md` owns its other temporary readers.
+Both inventories include active/archive records and restore/revival paths and
+require zero dependent inputs and zero supported reintroduction paths.
+Unknown-base schema-1 and schema-2 journals remain supported formats.

@@ -30,11 +30,12 @@ session. It selects the registered workspace from the current directory, fixes
 the matching authority, tmux, Codex, and portal endpoints, and creates a dated
 slug from the short name. Pass `--workspace <name>` when calling it outside a
 registered root or when an explicit selection is clearer. Use `--as-is` when
-the full slug has already been chosen. An exact active slug with committed
-`plan.md` and `state.md` but no portal manifest can be restarted this way after
-its old writers are stopped. The helper preserves both tracking files, creates
-a fresh shared conversation, and registers canonical worktrees it finds under
-that slug.
+the full slug has already been chosen. Existing tracking must have an ordinary
+manifest with explicit scope before restart, attach or worktree registration.
+Manifestless retained tracking refuses before a new conversation or partial
+manifest is created. Repair it through the dated procedure below, under a
+separately approved maintenance window. An accepted existing operation journal
+remains owned by its ordinary recovery command.
 
 When running inside an existing development session, check its identity before
 choosing a new slug. Run `dev-session current` from the intended working
@@ -60,6 +61,20 @@ For a command that requires the environment variables, set both to the already
 verified literal slug and workspace path for that command; this does not turn
 the command's CWD into ownership evidence.
 
+
+## Older tracking
+
+Older records and manifestless-revival shells require reviewed repository scope;
+missing checkouts or a new empty manifest cannot establish an empty initiative.
+Use the workspace's source-only
+[dated repair procedure](../maintenance/repair-legacy-sessions-2026-10-04.md)
+only within an explicitly assigned scope. Keep original prose, artifacts, exact
+retained root/team and all structured/exact-slug obligations. Do not invent
+creation/goals metadata or a historical branch base to make a record eligible.
+After repair, ordinary readiness depends on explicit scope and exact current
+identity/native/receipt proof, without a repair marker or private provenance
+reader. Present creation evidence keeps its genuine completion contract.
+Lost browser revive success/journal evidence cannot be certified by repair.
 
 ## Planning And Tracking
 

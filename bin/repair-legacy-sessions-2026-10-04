@@ -1,0 +1,1063 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Dated, source-only maintenance. Ordinary runtime never reads this tool's
+# projection or recovery file. See docs/maintenance/repair-legacy-sessions-2026-10-04.md.
+require 'base64'
+require 'digest'
+require 'fileutils'
+require 'json'
+require 'open3'
+require 'optparse'
+require 'pathname'
+require 'securerandom'
+require 'tempfile'
+require 'tmpdir'
+require 'time'
+require 'yaml'
+
+module LegacySessionRepair20261004
+  class Error < StandardError; end
+  RUNTIME = '0bce6075f5cf2521d84abe2f80ac90c761c01ae9'
+  SLUG = /\A[A-Za-z0-9][A-Za-z0-9_-]*\z/
+  SHA = /\A(?:[0-9a-f]{40}|[0-9a-f]{64})\z/
+  MAX_BYTES = 32 * 1024 * 1024
+  MAX_FILE = 8 * 1024 * 1024
+  MAX_ROWS = 128
+
+  class StrictHash < Hash
+    def []=(key, value)
+      raise JSON::ParserError, "duplicate JSON key: #{key}" if key?(key)
+
+      super
+    end
+  end
+
+  def self.canonical(value)
+    case value
+    when Hash then value.keys.sort.to_h { |key| [key, canonical(value.fetch(key))] }
+    when Array then value.map { |part| canonical(part) }
+    else value
+    end
+  end
+
+  def self.digest(value)
+    Digest::SHA256.hexdigest(JSON.generate(canonical(value)))
+  end
+
+  def self.run(*argv, optional: false, environment: ENV.to_h)
+    output, error, status = Open3.capture3(environment, *argv, stdin_data: '')
+    raise Error, "#{argv.first} failed: #{error.byteslice(0, 4096).strip}" unless status.success? || optional
+
+    status.success? ? output.strip : nil
+  end
+
+  def self.absolute(path)
+    raise Error, "not an absolute canonical path: #{path}" unless path.is_a?(String) && path.start_with?('/') && File.expand_path(path) == path
+
+    File.realpath(path)
+  rescue SystemCallError => e
+    raise Error, "cannot resolve #{path}: #{e.message}"
+  end
+
+  def self.identity(path)
+    stat = File.lstat(path)
+    raise Error, "unsafe or foreign path: #{path}" if stat.symlink? || stat.uid != Process.euid
+
+    { 'dev' => stat.dev, 'ino' => stat.ino }
+  end
+
+  def self.read_json(path)
+    stat = File.lstat(path)
+    raise Error, "JSON is not an owned bounded regular file: #{path}" unless stat.file? && stat.uid == Process.euid && stat.size <= MAX_BYTES
+
+    canonical(JSON.parse(File.binread(path, MAX_BYTES + 1), object_class: StrictHash, create_additions: false))
+  rescue JSON::ParserError, SystemCallError => e
+    raise Error, "cannot read JSON #{path}: #{e.message}"
+  end
+
+  def self.durable_json(path, value, create: false)
+    bytes = JSON.pretty_generate(canonical(value)) + "\n"
+    raise Error, 'recovery exceeds its bound' if bytes.bytesize > MAX_BYTES
+    raise Error, "recovery already exists: #{path}" if create && File.exist?(path)
+
+    temporary = "#{path}.#{SecureRandom.hex(12)}.tmp"
+    begin
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+        file.write(bytes)
+        file.flush
+        file.fsync
+      end
+      File.rename(temporary, path)
+      File.open(File.dirname(path), File::RDONLY, &:fsync)
+    ensure
+      File.unlink(temporary) if File.exist?(temporary)
+    end
+  end
+
+  # Export only committed owner files; never load the supplied checkout's edits.
+  # The adapter exposes named ordinary owners, without generic private dispatch.
+  class Runtime
+    FILES = %w[libexec/dev-session libexec/workspace-host libexec/workspace-auto-archive.rb libexec/workspace-archive-cleanup.rb
+               libexec/workspace-profile-identity.rb portal/internal/session/runtime-contract.json].freeze
+    attr_reader :source, :runner, :scratch, :environment
+    class << self
+      attr_accessor :owners_loaded
+    end
+
+    def initialize(workspace, source, environment)
+      @source = LegacySessionRepair20261004.absolute(source)
+      common = LegacySessionRepair20261004.absolute(LegacySessionRepair20261004.run('git', '-C', @source, 'rev-parse', '--path-format=absolute', '--git-common-dir'))
+      expected = LegacySessionRepair20261004.absolute(File.join(workspace, 'repos/dev-workspace.git'))
+      origin = LegacySessionRepair20261004.run('git', '-C', @source, 'config', '--get', 'remote.origin.url')
+      unless common == expected && origin == 'git@github.com:aither64/dev-workspace.git' &&
+             LegacySessionRepair20261004.run('git', '-C', @source, 'cat-file', '-t', RUNTIME) == 'commit'
+        raise Error, 'runtime source is not the approved canonical repository/commit'
+      end
+      @scratch = Dir.mktmpdir('dated-repair-owners-')
+      FILES.each do |path|
+        destination = File.join(@scratch, path)
+        FileUtils.mkdir_p(File.dirname(destination), mode: 0o700)
+        bytes, error, status = Open3.capture3('git', '-C', @source, 'show', "#{RUNTIME}:#{path}")
+        raise Error, "cannot export committed owner: #{error.strip}" unless status.success?
+
+        File.binwrite(destination, bytes)
+      end
+      unless self.class.owners_loaded
+        load File.join(@scratch, 'libexec/dev-session')
+        load File.join(@scratch, 'libexec/workspace-host')
+        self.class.owners_loaded = true
+      end
+      @adapter = Class.new(DevSession::Runner) do
+        def validate_manifest(manifest, slug, path)
+          validate_portal_manifest!(manifest, slug, path)
+        end
+
+        def validate_yaml(node, path)
+          validate_yaml_structure!(node, path)
+        end
+
+        def lifecycle(bytes)
+          lifecycle_state(bytes)
+        end
+
+        def validate_authority(record, slug, path)
+          validate_session_authority!(record, slug, path)
+        end
+
+        def row_locks(slug, &block)
+          with_creation_lock(slug) { with_slug_lock(slug, &block) }
+        end
+
+        def transition_lock(path, mode, &block)
+          with_host_lock(path, 'workspace transition', mode: mode, &block)
+        end
+
+        def runtime_identity(slug)
+          live = cleanup_session(slug)
+          return nil unless live
+          raise DevSession::Error, 'untrusted named runtime' unless managed_by_workspace?(live)
+
+          live.to_h.slice(:id, :name, :workspace, :identity_token, :codex_thread_id,
+                           :codex_socket_path, :codex_client_version, :socket_path).transform_keys(&:to_s)
+        end
+
+        def creation_matches?(journal, slug, manifest)
+          valid_stored_creation_journal?(journal, slug, manifest)
+        end
+
+        def creation_journal(path)
+          read_private_json_object(path, 'creation journal', max_size: 64 * 1024, mode: 0o600)
+        end
+
+        def authority_record(path)
+          read_private_json_object(path, 'session authority', max_size: DevSession::AUTHORITY_MAX_SIZE, mode: 0o600)
+        end
+      end
+      @workspace = workspace
+      @host_adapter = Class.new(DevWorkspaceHost::Host) do
+        # The committed code is exported outside a package. Read the actual
+        # selected profile rather than treating that export as an installation.
+        def package_root
+          File.realpath(@profile)
+        end
+
+        def repair_selection(workspace)
+          entry = registry.select(cwd: workspace, environment_name: @env['DEV_WORKSPACE_NAME'])
+          raise DevWorkspaceHost::Error, 'registered workspace differs from repair selection' unless entry.fetch('root') == workspace
+
+          instance = instance_runtime(entry)
+          { 'portal' => File.join(package_root, 'bin/workspace-portal'), 'dev_session' => File.join(package_root, 'bin/dev-session'),
+            'profile' => @profile, 'generation' => package_root, 'profile_token' => profile_link_token,
+            'transition_lock' => transition_lock_file, 'socket' => instance.fetch(:codex), 'codex_home' => codex_home,
+            'state_root' => @state, 'authority_dir' => instance.fetch(:authority), 'tmux_socket' => instance.fetch(:tmux),
+            'codex_command' => active_codex, 'codex_version' => codex_version(active_codex), 'home' => @home, 'uid' => Process.euid }
+        end
+      end
+      configure(environment)
+    end
+
+    def configure(environment)
+      @environment = environment
+      @runner = @adapter.new(workspace: @workspace, env: environment, require_runtime: false)
+    end
+
+    def selected_coordinates(environment)
+      @host_adapter.new(env: environment).repair_selection(@workspace)
+    end
+
+    def close
+      FileUtils.remove_entry(@scratch) if @scratch && File.directory?(@scratch)
+    end
+  end
+
+  class Evidence
+    attr_reader :workspace, :runtime
+
+    def initialize(workspace, runtime)
+      @workspace = LegacySessionRepair20261004.absolute(workspace)
+      @runtime = runtime
+    end
+
+    def git(*arguments, optional: false)
+      LegacySessionRepair20261004.run('git', '-C', workspace, *arguments, optional: optional, environment: runtime.environment)
+    end
+
+    def yaml(bytes, path)
+      stream = Psych.parse_stream(bytes)
+      raise Error, "expected one YAML document: #{path}" unless stream.children.length == 1 && stream.children.first.root
+
+      runtime.runner.validate_yaml(stream.children.first.root, path)
+      value = YAML.safe_load(bytes, permitted_classes: [], permitted_symbols: [], aliases: false)
+      raise Error, "expected YAML mapping: #{path}" unless value.is_a?(Hash)
+
+      LegacySessionRepair20261004.canonical(value)
+    rescue Psych::Exception => e
+      raise Error, "invalid YAML #{path}: #{e.message}"
+    end
+
+    def snapshot(directory)
+      raise Error, "tracking is not a directory: #{directory}" unless File.directory?(directory)
+
+      files, directories = {}, {}
+      walk = lambda do |path|
+        LegacySessionRepair20261004.identity(path)
+        if File.directory?(path)
+          directories[path.delete_prefix(directory).delete_prefix('/')] = LegacySessionRepair20261004.identity(path)
+          Dir.children(path).sort.each { |child| walk.call(File.join(path, child)) }
+        else
+          stat = File.lstat(path)
+          raise Error, "unsupported tracking file: #{path}" unless stat.file? && stat.size <= MAX_FILE
+
+          relative = path.delete_prefix(directory + '/')
+          files[relative] = { 'identity' => LegacySessionRepair20261004.identity(path), 'mode' => stat.mode & 0o777,
+                              'bytes' => Base64.strict_encode64(File.binread(path)), 'sha256' => Digest::SHA256.file(path).hexdigest }
+          raise Error, 'too many tracking files' if files.length > 512
+        end
+      end
+      walk.call(directory)
+      raise Error, 'tracking payload exceeds bound' if JSON.generate(files).bytesize > MAX_BYTES / 2
+
+      { 'identity' => LegacySessionRepair20261004.identity(directory), 'directories' => directories, 'files' => files }
+    end
+
+    def row(slug, decision, selection)
+      raise Error, 'invalid exact session slug' unless slug.match?(SLUG)
+
+      locations = %w[work archive].select { |location| File.exist?(File.join(workspace, location, slug)) }
+      raise Error, 'tracking is missing or duplicated between work and archive' unless locations.length == 1
+
+      location = locations.first
+      directory = File.join(workspace, location, slug)
+      unless git('diff', '--cached', '--quiet', '--', File.join(location, slug), optional: true)
+        raise Error, 'selected tracking contains staged changes'
+      end
+      source = snapshot(directory)
+      files = source.fetch('files')
+      raise Error, 'plan.md/state.md must both be regular tracking files' unless files.key?('plan.md') && files.key?('state.md')
+
+      current = files['portal.yml'] && yaml(Base64.strict_decode64(files['portal.yml']['bytes']), File.join(directory, 'portal.yml'))
+      if current
+        runtime.runner.validate_manifest(current, slug, File.join(directory, 'portal.yml'))
+        raise Error, 'in-flight creation/fork must finish through its ordinary owner' unless current['schema'] == 1 && !current.key?('forked_from')
+      end
+      history = histories(slug)
+      entries = history.dup
+      entries << { 'path' => File.join(location, slug, 'portal.yml'), 'manifest' => current } if current
+      inventory = DevSession::ArchiveCleanup.new(runtime.runner, slug).discover
+      raise Error, 'archive inventory has an unsupported shape' unless DevSession::ArchiveCleanup.discovery_shape?(inventory)
+
+      repositories, proofs = repositories(slug, entries, inventory, decision)
+      if repositories.empty? && decision['scope'] != 'coordination_only'
+        raise Error, 'no repository evidence; explicitly review coordination-only scope'
+      end
+      state = Base64.strict_decode64(files.fetch('state.md').fetch('bytes'))
+      lifecycle, target_state = state_projection(slug, location, state, decision)
+      roots = entries.filter_map { |entry| entry.dig('manifest', 'codex', 'thread_id') }.reject(&:empty?).uniq
+      root = if decision.key?('root_thread_id')
+               decision['root_thread_id']
+             elsif roots.length == 1
+               roots.first
+             elsif roots.empty?
+               raise Error, 'root absence must be explicitly reviewed as root_thread_id: null'
+             else
+               raise Error, 'conflicting retained roots; exact reviewed root mapping required'
+             end
+      unless root.nil? || root.is_a?(String) && !root.empty? && root.bytesize <= 1024 && !root.match?(/[[:cntrl:]]/)
+        raise Error, 'invalid reviewed retained root'
+      end
+      if current&.dig('codex', 'thread_id').to_s != '' && current.dig('codex', 'thread_id') != root
+        raise Error, 'mapping cannot replace the current retained root'
+      end
+      target = current ? current.dup : { 'schema' => 1, 'slug' => slug }
+      target['repositories'] = repositories
+      target['artifacts'] = entries.flat_map { |entry| entry.fetch('manifest').fetch('artifacts', []) }.uniq
+      if target['artifacts'].group_by { |artifact| artifact.fetch('path') }.any? { |_path, entries| entries.length != 1 }
+        raise Error, 'conflicting structured artifact registrations'
+      end
+      if target.key?('creation')
+        creation = target.fetch('creation')
+        if creation['state'] != 'ready' || creation.key?('goal_sha256') && creation['initial_goal_sent'] != true
+          raise Error, 'present creation evidence needs its genuine completion owner'
+        end
+      end
+      if root
+        tuples = entries.filter_map do |entry|
+          codex = entry.dig('manifest', 'codex')
+          codex if codex && codex['thread_id'] == root && codex['socket_path'] && codex['client_version']
+        end.uniq
+        tuple = { 'thread_id' => root, 'socket_path' => selection.fetch('socket'), 'client_version' => selection.fetch('codex_version') }
+        raise Error, 'retained socket/client provenance conflicts with the selected authority' if tuples.any? { |known| known != tuple }
+
+        target['codex'] = tuple
+      else
+        raise Error, 'threadless selection contradicts creation evidence' if target.key?('creation')
+
+        target.delete('codex')
+      end
+      if location == 'archive'
+        finalizations = entries.filter_map { |entry| entry.dig('manifest', 'finalized_at') }.uniq
+        target['finalized_at'] = choose(finalizations, decision['finalized_at'], 'recorded archive finalization')
+        raise Error, 'archived obligation lacks a recorded final head' unless repositories.all? { |repo| repo['final_head_sha'] }
+      else
+        target.delete('finalized_at')
+        target['repositories'] = repositories.map { |repo| repo.reject { |key, _value| key == 'final_head_sha' } }
+      end
+      target = LegacySessionRepair20261004.canonical(target)
+      runtime.runner.validate_manifest(target, slug, File.join(directory, 'portal.yml'))
+      portal_bytes = YAML.dump(target)
+      { 'slug' => slug, 'location' => location, 'path' => directory, 'source' => source,
+        'evidence' => { 'history' => history, 'inventory' => inventory, 'repositories' => proofs },
+        'decision' => decision, 'root_thread_id' => root, 'lifecycle' => lifecycle,
+        'target' => { 'manifest' => target, 'portal_bytes' => Base64.strict_encode64(portal_bytes),
+                      'portal_sha256' => Digest::SHA256.hexdigest(portal_bytes),
+                      'state_bytes' => Base64.strict_encode64(target_state) },
+        'actions' => ['repair_metadata', location == 'work' ? 'fresh_grace_after_commit' : 'grace_on_ordinary_revival'],
+        'later_archive' => 'retain', 'blockers' => [] }
+    end
+
+    def state_projection(slug, location, bytes, decision)
+      lifecycle = runtime.runner.lifecycle(bytes)
+      if location == 'archive'
+        raise Error, 'archived state has no terminal lifecycle' unless %w[complete abandoned].include?(lifecycle)
+
+        commits = git('log', '--all', '--format=%H', '--', "archive/#{slug}/state.md").lines.map(&:strip)
+        raise Error, 'terminal history exceeds bound' if commits.length > 512
+        proven = commits.any? do |commit|
+          state = git('show', "#{commit}:archive/#{slug}/state.md", optional: true)
+          state && runtime.runner.lifecycle(state) == lifecycle
+        end
+        raise Error, 'terminal lifecycle has no structured committed archive evidence' unless proven
+      end
+      [lifecycle, bytes]
+    rescue DevSession::Error => e
+      if location == 'work' && (!bytes.start_with?("---") || decision['state_decision'] == 'prepend_active')
+        ['active', "---\nlifecycle: active\n---\n".b + bytes]
+      else
+        raise Error, "unsupported state header/terminal provenance: #{e.message}"
+      end
+    end
+
+    def histories(slug)
+      paths = %W[work/#{slug}/portal.yml archive/#{slug}/portal.yml]
+      commits = git('log', '--all', '--format=%H', '--', *paths).lines.map(&:strip).uniq
+      raise Error, 'structured history exceeds 512 commits; select reviewed evidence separately' if commits.length > 512
+
+      commits.flat_map do |commit|
+        paths.filter_map do |path|
+          blob = git('rev-parse', "#{commit}:#{path}", optional: true)
+          next unless blob
+
+          bytes = git('cat-file', 'blob', blob)
+          manifest = yaml(bytes, "#{commit}:#{path}")
+          runtime.runner.validate_manifest(manifest, slug, "#{commit}:#{path}")
+          { 'commit' => commit, 'path' => path, 'blob' => blob, 'manifest' => manifest }
+        end
+      end.uniq { |entry| [entry['path'], entry['blob']] }.sort_by { |entry| [entry['path'], entry['blob']] }
+    end
+
+    def repositories(slug, manifests, inventory, mapping)
+      catalog = DevSession::ArchiveCleanup.new(runtime.runner, slug).repository_catalog
+      registrations = manifests.flat_map { |entry| entry.fetch('manifest').fetch('repositories', []).map { |repo| [repo, entry] } }
+      catalog.each do |record|
+        common = record.fetch('common_dir')
+        refs = LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'for-each-ref', '--format=%(refname)', "refs/heads/#{slug}", "refs/remotes/origin/#{slug}").lines.map(&:strip)
+        if refs.any? { |ref| ["refs/heads/#{slug}", "refs/remotes/origin/#{slug}"].include?(ref) }
+          registrations << [{ 'name' => record.fetch('project'), 'project' => record.fetch('project'), 'branch' => slug }, { 'ref_evidence' => refs }]
+        end
+      end
+      inventory.fetch('worktrees').each do |record|
+        next unless record['branch'] && !default_branches(record.fetch('common_dir')).include?(record['branch'])
+
+        registrations << [{ 'name' => record.fetch('project'), 'project' => record.fetch('project'), 'branch' => record.fetch('branch') }, { 'checkout_evidence' => record.fetch('path') }]
+      end
+      registrations = registrations.map do |repo, evidence|
+        next [repo, evidence] if repo['branch']
+
+        project = repo.fetch('project')
+        common = catalog.find { |record| record['project'] == project }&.fetch('common_dir')
+        raise Error, "canonical project missing: #{project}" unless common
+
+        choices = inventory.fetch('worktrees').filter_map { |record| record['branch'] if record['project'] == project && !default_branches(common).include?(record['branch']) }.uniq
+        exact = LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "refs/heads/#{slug}^{commit}", optional: true) ||
+                LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "refs/remotes/origin/#{slug}^{commit}", optional: true)
+        choices << slug if exact
+        selected = mapping.fetch('repositories', []).select { |row| row['project'] == project }.map { |row| row.fetch('branch') }.uniq
+        branch = selected.length == 1 ? selected.first : choose(choices.uniq, nil, "retained branch for #{project}")
+        [repo.merge('branch' => branch), evidence]
+      end
+      grouped = registrations.group_by { |repo, _evidence| [repo.fetch('project'), repo.fetch('branch')] }
+      occupied = []
+      proofs = []
+      result = grouped.sort.map do |(project, branch), rows|
+        common = catalog.find { |record| record['project'] == project }&.fetch('common_dir')
+        raise Error, "canonical project missing: #{project}" unless common
+
+        origin = LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'config', '--get', 'remote.origin.url')
+        github = runtime.runner.archive_cleanup_github_repository(origin)
+        raise Error, "unsupported canonical origin: #{project}" unless github
+        raise Error, "invalid retained branch: #{branch}" unless LegacySessionRepair20261004.run('git', 'check-ref-format', '--branch', branch, optional: true)
+
+        override = mapping.fetch('repositories', []).find { |row| row['project'] == project && row['branch'] == branch } || {}
+        defaults = rows.map { |repo, _e| repo['default_branch'] }.compact.uniq
+        defaults = (defaults + default_branches(common)).uniq
+        default = choose(defaults, override['default_branch'], "default for #{project}/#{branch}")
+        names = rows.map { |repo, _e| repo.fetch('name') }.uniq
+        name = override['name'] || (names.length == 1 ? names.first : project)
+        raise Error, "repository name conflict: #{name}" unless name.match?(SLUG) && !occupied.include?(name)
+
+        occupied << name
+        rows.each do |repo, _entry|
+          raise Error, "origin contradiction: #{project}" if repo['github'] && repo['github'] != github
+        end
+        # A predecessor's post-revival inferred base is not historical evidence.
+        bases = rows.reject { |_repo, entry| entry.dig('manifest', 'creation', 'tracking_origin') == 'revived' }
+                    .map { |repo, _entry| repo['initial_base_sha'] }.compact.uniq
+        base = bases.empty? ? nil : choose(bases, override['initial_base_sha'], "historical base for #{project}/#{branch}")
+        if override['initial_base_sha'] && !bases.include?(override['initial_base_sha'])
+          raise Error, "mapping has no structured base evidence: #{project}/#{branch}"
+        end
+        finals = rows.map { |repo, entry| repo['final_head_sha'] if entry.dig('manifest', 'finalized_at') }.compact.uniq
+        final = finals.empty? ? nil : choose(finals, override['final_head_sha'], "recorded final head for #{project}/#{branch}")
+        refs = ["refs/heads/#{branch}", "refs/remotes/origin/#{branch}", "refs/heads/#{default}", "refs/remotes/origin/#{default}"].uniq.to_h do |ref|
+          [ref, LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "#{ref}^{commit}", optional: true)]
+        end
+        proofs << { 'project' => project, 'common_dir' => common, 'identity' => LegacySessionRepair20261004.identity(common), 'origin' => origin,
+                    'refs' => refs, 'evidence' => rows.map(&:last) }
+        target = { 'name' => name, 'project' => project, 'github' => github, 'branch' => branch, 'default_branch' => default }
+        target['initial_base_sha'] = base if base
+        target['final_head_sha'] = final if final
+        target
+      end
+      [result, proofs]
+    end
+
+    def default_branches(common)
+      remote = LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'symbolic-ref', '--quiet', 'refs/remotes/origin/HEAD', optional: true)
+      local = LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'symbolic-ref', '--quiet', 'HEAD', optional: true)
+      [remote&.delete_prefix('refs/remotes/origin/'), local&.delete_prefix('refs/heads/')].compact.uniq
+    end
+
+    def choose(values, selected, label)
+      return values.first if values.length == 1 && (!selected || selected == values.first)
+      return selected if selected && values.include?(selected)
+
+      raise Error, "ambiguous or missing #{label}; reviewed mapping must select existing evidence"
+    end
+  end
+
+  class Context
+    KEYS = %w[schema workspace runtime_source runtime_commit runtime helper maintenance_window].freeze
+    RUNTIME_KEYS = %w[portal dev_session profile generation profile_token transition_lock socket codex_home state_root authority_dir tmux_socket codex_command codex_version home uid].freeze
+    HELPER_KEYS = %w[executable sha256 sources runtime_commit go_mod_sha256 go_sum_sha256].freeze
+    WINDOW_KEYS = %w[operator evidence_reference crash_hold exclusions].freeze
+    attr_reader :record, :path
+
+    def initialize(path, workspace, source, environment = ENV.to_h, selection: nil)
+      @path = LegacySessionRepair20261004.absolute(path)
+      stat = File.lstat(path)
+      raise Error, 'preparation must be an absolute owned mode-0600 regular file, at most 64 KiB' unless path == @path && stat.file? && stat.uid == Process.euid && (stat.mode & 0o777) == 0o600 && stat.size <= 64 * 1024
+
+      @record = LegacySessionRepair20261004.read_json(@path)
+      @environment = environment
+      @selection = selection
+      keys!(@record, KEYS, 'preparation')
+      unless record['schema'] == 1 && record['workspace'] == workspace && record['runtime_source'] == source && record['runtime_commit'] == RUNTIME
+        raise Error, 'preparation selects a different workspace/runtime source'
+      end
+      keys!(runtime, RUNTIME_KEYS, 'runtime coordinates')
+      keys!(record.fetch('helper'), HELPER_KEYS, 'helper provenance')
+      keys!(record.fetch('maintenance_window'), WINDOW_KEYS, 'maintenance window')
+      window = record.fetch('maintenance_window')
+      unless %w[operator evidence_reference crash_hold].all? { |key| window[key].is_a?(String) && !window[key].strip.empty? && window[key].bytesize <= 4096 } &&
+             window['exclusions'].is_a?(Array) && window['exclusions'].length.between?(3, 64)
+        raise Error, 'missing supervised window/external-writer/crash continuity method'
+      end
+      window.fetch('exclusions').each do |exclusion|
+        keys!(exclusion, %w[kind name method verify], 'window exclusion')
+        unless %w[portal automatic external].include?(exclusion['kind']) &&
+               %w[name method].all? { |key| exclusion[key].is_a?(String) && !exclusion[key].strip.empty? } &&
+               exclusion['verify'].is_a?(Array) && exclusion['verify'].length.between?(1, 16) &&
+               exclusion['verify'].all? { |part| part.is_a?(String) && part.bytesize <= 4096 && !part.include?("\0") }
+          raise Error, 'invalid observable exclusion method'
+        end
+      end
+      raise Error, 'window must exclude portal, automatic and external writers' unless window['exclusions'].map { |row| row['kind'] }.uniq.sort == %w[automatic external portal]
+
+      check!
+    end
+
+    def keys!(value, expected, label)
+      raise Error, "#{label} has missing/unknown fields" unless value.is_a?(Hash) && value.keys.sort == expected.sort
+    end
+
+    def runtime
+      record.fetch('runtime')
+    end
+
+    def child_environment
+      @environment.merge('DEV_WORKSPACE_CODEX_HOME' => runtime.fetch('codex_home'),
+                         'DEV_WORKSPACES_STATE' => runtime.fetch('state_root'),
+                         'DEV_SESSION_AUTHORITY_DIR' => runtime.fetch('authority_dir'),
+                         'DEV_SESSION_TMUX_SOCKET' => runtime.fetch('tmux_socket'),
+                         'DEV_SESSION_CODEX_SOCKET' => runtime.fetch('socket'),
+                         'DEV_SESSION_CODEX_VERSION' => runtime.fetch('codex_version'),
+                         'DEV_SESSION_PORTAL_COMMAND' => runtime.fetch('portal'))
+    end
+
+    def check!
+      raise Error, 'preparation record changed' unless LegacySessionRepair20261004.read_json(path) == record
+      raise Error, 'preparation does not match the actual host registry/profile/runtime selection' unless @selection && @selection.call == runtime
+      raise Error, 'HOME/UID or selected Codex version differs from preparation' unless @environment['HOME'] == runtime['home'] && Process.euid == runtime['uid'] && runtime['codex_version'] == '0.160.0'
+
+      %w[generation codex_home state_root authority_dir home tmux_socket].each do |key|
+        raise Error, "runtime #{key} is not canonical" unless LegacySessionRepair20261004.absolute(runtime.fetch(key)) == runtime.fetch(key)
+      end
+      socket = runtime.fetch('socket')
+      unless socket.is_a?(String) && socket.start_with?('/') && !socket.include?("\0") && File.expand_path(socket) == socket
+        raise Error, 'runtime socket is not an absolute normalized path'
+      end
+      # Keep the selected logical alias for runtime and submission-ledger identity.
+      socket_stat = File.stat(socket)
+      raise Error, 'runtime socket is not an owned Unix socket' unless socket_stat.socket? && socket_stat.uid == runtime['uid']
+
+      unless File.symlink?(runtime['profile']) && File.realpath(runtime['profile']) == runtime['generation'] &&
+             DevWorkspaceProfileIdentity.token(runtime['profile']) == runtime['profile_token']
+        raise Error, 'selected workspace profile/generation/token changed'
+      end
+      %w[portal dev_session].each do |key|
+        executable = runtime.fetch(key)
+        name = key == 'portal' ? 'workspace-portal' : 'dev-session'
+        unless executable.start_with?('/') && File.executable?(executable) && File.realpath(executable) == File.realpath(File.join(runtime['generation'], 'bin', name))
+          raise Error, "#{key} is not the positively selected generation executable"
+        end
+      end
+      lock = File.lstat(runtime.fetch('transition_lock'))
+      raise Error, 'transition lock is not an existing private owned regular file' unless lock.file? && lock.uid == Process.euid && (lock.mode & 0o777) == 0o600
+
+      { 'DEV_SESSION_WORKSPACE' => record['workspace'], 'DEV_WORKSPACES_PROFILE' => runtime['profile'],
+        'DEV_WORKSPACE_CODEX_HOME' => runtime['codex_home'], 'CODEX_HOME' => runtime['codex_home'],
+        'DEV_WORKSPACES_STATE' => runtime['state_root'], 'DEV_SESSION_AUTHORITY_DIR' => runtime['authority_dir'],
+        'DEV_SESSION_TMUX_SOCKET' => runtime['tmux_socket'], 'DEV_SESSION_CODEX_SOCKET' => runtime['socket'],
+        'DEV_SESSION_CODEX_VERSION' => runtime['codex_version'], 'DEV_SESSION_CODEX' => runtime['codex_command'], 'DEV_SESSION_PORTAL_COMMAND' => runtime['portal'] }.each do |key, value|
+        raise Error, "#{key} conflicts with the selected preparation" if @environment.key?(key) && @environment[key] != value
+      end
+      helper = record.fetch('helper')
+      source_root = File.join(File.dirname(__FILE__), 'repair-legacy-sessions-2026-10-04-threadless')
+      expected = %w[main.go web/receipt_bridge.go].map { |relative| File.realpath(File.join(source_root, relative)) }.sort
+      raise Error, 'helper does not bind both reviewed source files' unless helper['sources'].is_a?(Hash) && helper['sources'].keys.sort == expected
+
+      helper['sources'].each do |source, sha|
+        raise Error, 'helper source changed' unless Digest::SHA256.file(source).hexdigest == sha
+      end
+      executable = helper.fetch('executable')
+      raise Error, 'prepared helper is unavailable or changed' unless executable == File.realpath(executable) && File.executable?(executable) && Digest::SHA256.file(executable).hexdigest == helper['sha256']
+      raise Error, 'helper built for another runtime revision' unless helper['runtime_commit'] == RUNTIME
+
+      %w[go.mod go.sum].each do |name|
+        bytes, _stderr, status = Open3.capture3('git', '-C', record['runtime_source'], 'show', "#{RUNTIME}:portal/#{name}")
+        key = name == 'go.mod' ? 'go_mod_sha256' : 'go_sum_sha256'
+        raise Error, 'prepared helper module inputs differ from committed R' unless status.success? && Digest::SHA256.hexdigest(bytes) == helper[key]
+      end
+    rescue SystemCallError => e
+      raise Error, "selected preparation unavailable: #{e.message}"
+    end
+
+    def invocation(argv)
+      output, error, status = Open3.capture3(child_environment, *argv, stdin_data: '')
+      raise Error, "proof failed: #{error.byteslice(0, 4096).strip}" unless status.success?
+
+      output.byteslice(0, 4096)
+    end
+
+    def verify_window!
+      check!
+      record.fetch('maintenance_window').fetch('exclusions').map do |exclusion|
+        command = exclusion.fetch('verify')
+        executable = command.first
+        raise Error, 'window verification must use an available absolute executable' unless executable.start_with?('/') && File.executable?(executable)
+
+        { 'kind' => exclusion.fetch('kind'), 'name' => exclusion.fetch('name'), 'output' => invocation(command) }
+      end
+    end
+  end
+
+  class Proof
+    def initialize(evidence, context)
+      @evidence, @context = evidence, context
+      @runtime = evidence.runtime
+    end
+
+    def metadata(row)
+      slug, root = row.values_at('slug', 'root_thread_id')
+      locks = File.join(@evidence.workspace, 'worktrees/.locks')
+      protected = Dir[File.join(locks, "#{slug}.*.json")].sort
+      creation = File.join(locks, "#{slug}.creation.json")
+      if protected.delete(creation)
+        raise Error, 'creation journal contradicts raw creation-less tracking' unless root && row.dig('source', 'files', 'portal.yml')
+
+        record = @evidence.yaml(Base64.strict_decode64(row.fetch('source').fetch('files').fetch('portal.yml').fetch('bytes')), 'source portal')
+        journal = @runtime.runner.creation_journal(creation)
+        raise Error, 'creation journal must finish through its ordinary owner' unless root && record.key?('creation') && @runtime.runner.creation_matches?(journal, slug, record)
+      end
+      raise Error, "ordinary operation/residue owns this row: #{protected.join(', ')}" unless protected.empty?
+
+      authority = File.join(@context.runtime.fetch('authority_dir'), "#{slug}.json")
+      state = @context.runtime.fetch('state_root')
+      namespace = File.basename(@evidence.workspace) + '-' + Digest::SHA256.hexdigest(@evidence.workspace)[0, 16]
+      roster = File.join(state, 'codex-teams', namespace, "#{slug}.json")
+      raise Error, 'unexpected installed migration state requires separate upgrade inventory' if File.exist?(File.join(state, 'legacy-session-migrations'))
+
+      metadata = [authority, roster, creation].to_h do |path|
+        if File.exist?(path) || File.symlink?(path)
+          stat = File.lstat(path)
+          raise Error, "private evidence is unsafe: #{path}" unless stat.file? && stat.uid == Process.euid && (stat.mode & 0o777) == 0o600 && stat.size <= 1024 * 1024
+
+          [path, { 'identity' => LegacySessionRepair20261004.identity(path), 'sha256' => Digest::SHA256.file(path).hexdigest }]
+        else
+          [path, nil]
+        end
+      end
+      if metadata[authority]
+        record = @runtime.runner.authority_record(authority)
+        @runtime.runner.validate_authority(record, slug, authority)
+        unless root && record['state'] == 'ready' && record['codex_thread_id'] == root &&
+               record['codex_socket_path'] == @context.runtime['socket'] && record['codex_client_version'] == @context.runtime['codex_version'] &&
+               record['tmux_socket'] == @context.runtime['tmux_socket']
+          raise Error, 'authority contradicts the reviewed retained identity'
+        end
+      end
+      live = @runtime.runner.runtime_identity(slug)
+      if live && (!root || live['codex_thread_id'] != root || live['codex_socket_path'] != @context.runtime['socket'] ||
+                  live['codex_client_version'] != @context.runtime['codex_version'])
+        raise Error, 'live runtime contradicts the reviewed root/socket/client'
+      end
+      raise Error, 'threadless decision contradicts retained roster/runtime/authority' if !root && (metadata[roster] || metadata[authority] || live)
+
+      metadata.merge('runtime' => live)
+    end
+
+    def receipts(slug)
+      @context.invocation([@context.record.fetch('helper').fetch('executable'), '--mode', 'receipts',
+                           '--workspace', @evidence.workspace, '--session-slug', slug,
+                           '--user-state-root', @context.runtime.fetch('state_root')])
+    end
+
+    def sample(row)
+      @context.check!
+      before = metadata(row)
+      receipts(row.fetch('slug'))
+      common = ['--workspace', @evidence.workspace, '--session-slug', row.fetch('slug'), '--socket', @context.runtime.fetch('socket'), '--codex-home', @context.runtime.fetch('codex_home')]
+      if row['root_thread_id']
+        @context.invocation([@context.runtime.fetch('portal'), 'team', 'require-archive-ready', *common,
+                             '--root-thread-id', row.fetch('root_thread_id'), '--cwd', File.join(@evidence.workspace, 'work', row.fetch('slug')),
+                             '--user-state-root', @context.runtime.fetch('state_root'), '--authority-dir', @context.runtime.fetch('authority_dir')])
+      else
+        @context.invocation([@context.record.fetch('helper').fetch('executable'), '--mode', 'threadless', *common])
+      end
+      receipts(row.fetch('slug'))
+      raise Error, 'retained authority/roster/runtime evidence changed during native proof' unless metadata(row) == before
+
+      before
+    end
+  end
+
+  class Tool
+    PHASES = %w[prepared files_written tracking_committed grace_started complete].freeze
+    def initialize(argv, environment: ENV.to_h, input: $stdin, output: $stdout)
+      @environment, @input, @output = environment, input, output
+      @command = argv.shift
+      @options = { sessions: [] }
+      parser = OptionParser.new do |flags|
+        flags.on('--workspace PATH') { |value| @options[:workspace] = value }
+        flags.on('--runtime-source PATH') { |value| @options[:source] = value }
+        flags.on('--session SLUG') { |value| @options[:sessions] << value }
+        flags.on('--mapping FILE') { |value| @options[:mapping] = value }
+        flags.on('--json') { @options[:json] = true }
+        flags.on('--projection FILE') { |value| @options[:projection] = value }
+        flags.on('--recovery FILE') { |value| @options[:recovery] = value }
+      end
+      parser.parse!(argv)
+      raise Error, 'unexpected arguments or command; use preview or apply' unless argv.empty? && %w[preview apply].include?(@command)
+    end
+
+    def run
+      @command == 'preview' ? preview : apply
+    ensure
+      @runtime&.close
+    end
+
+    def setup(workspace, source)
+      @runtime = Runtime.new(workspace, source, @environment)
+      @context = Context.new(@environment.fetch('REPAIR_LEGACY_CONTEXT') { raise Error, 'REPAIR_LEGACY_CONTEXT preparation is required' }, workspace, source, @environment,
+                             selection: -> { @runtime.selected_coordinates(@environment) })
+      @runtime.configure(@context.child_environment)
+      @evidence = Evidence.new(workspace, @runtime)
+      @proof = Proof.new(@evidence, @context)
+      @store = WorkspaceAutoArchive::Store.new(state_root: @context.runtime.fetch('state_root'), workspace: workspace)
+    end
+
+    def mapping(path, slugs)
+      return { 'path' => nil, 'value' => { 'schema' => 1, 'workspace' => @evidence.workspace, 'sessions' => [] } } unless path
+
+      path = LegacySessionRepair20261004.absolute(path)
+      value = LegacySessionRepair20261004.read_json(path)
+      @context.keys!(value, %w[schema workspace sessions], 'reviewed mapping')
+      unless value['schema'] == 1 && value['workspace'] == @evidence.workspace && value['sessions'].is_a?(Array) && value['sessions'].length <= MAX_ROWS
+        raise Error, 'mapping has another workspace or unsupported shape'
+      end
+      used = []
+      value['sessions'].each do |row|
+        allowed = %w[slug rationale root_thread_id scope repositories state_decision finalized_at]
+        unless row.is_a?(Hash) && (row.keys - allowed).empty? && slugs.include?(row['slug']) && !used.include?(row['slug']) && row['rationale'].is_a?(String) && !row['rationale'].strip.empty?
+          raise Error, 'mapping must name unique selected rows with reviewed rationale'
+        end
+        used << row.fetch('slug')
+        raise Error, 'unsupported scope/header decision' if row.key?('scope') && row['scope'] != 'coordination_only' || row.key?('state_decision') && row['state_decision'] != 'prepend_active'
+        if row.key?('repositories')
+          unless row['repositories'].is_a?(Array) && row['repositories'].all? { |repo| repo.is_a?(Hash) && (repo.keys - %w[project branch name default_branch initial_base_sha final_head_sha]).empty? && repo['project'].to_s.match?(SLUG) && repo['branch'].is_a?(String) }
+            raise Error, 'invalid exact repository mapping'
+          end
+        end
+      end
+      { 'path' => path, 'value' => value }
+    end
+
+    def decision(mapping, slug)
+      mapping.fetch('value').fetch('sessions').find { |row| row['slug'] == slug } || {}
+    end
+
+    def preview
+      slugs = @options.fetch(:sessions).sort
+      unless @options[:json] && @options[:workspace] && @options[:source] && !@options[:projection] && !@options[:recovery] &&
+             slugs.length.between?(1, MAX_ROWS) && slugs.uniq == slugs && slugs.all? { |slug| slug.match?(SLUG) }
+        raise Error, 'preview requires --workspace --runtime-source --session (unique exact slugs) --json'
+      end
+      workspace, source = %i[workspace source].map { |key| LegacySessionRepair20261004.absolute(@options.fetch(key)) }
+      setup(workspace, source)
+      reviewed = mapping(@options[:mapping], slugs)
+      rows = @runtime.runner.transition_lock(@context.runtime.fetch('transition_lock'), File::LOCK_SH) do
+        @context.check!
+        slugs.map do |slug|
+          @runtime.runner.row_locks(slug) do
+            row = @evidence.row(slug, decision(reviewed, slug), @context.runtime)
+            row['runtime_evidence'] = @proof.sample(row)
+            grace_record(row) if row['location'] == 'work'
+            row
+          end
+        rescue Error, DevSession::Error, KeyError, SystemCallError => e
+          { 'slug' => slug, 'blockers' => [e.message] }
+        end
+      end
+      projection = { 'schema' => 1, 'workspace' => workspace, 'runtime_source' => source, 'runtime_commit' => RUNTIME,
+                     'context' => { 'path' => @context.path, 'value' => @context.record }, 'mapping' => reviewed, 'sessions' => rows }
+      projection['digest'] = LegacySessionRepair20261004.digest(projection)
+      bytes = JSON.pretty_generate(LegacySessionRepair20261004.canonical(projection))
+      raise Error, 'projection exceeds 32 MiB; select a smaller reviewed set' if bytes.bytesize > MAX_BYTES
+
+      @output.puts bytes
+    end
+
+    def apply
+      raise Error, 'apply requires only --projection FILE --recovery FILE' unless @options[:projection] && @options[:recovery] && @options[:sessions].empty? && (@options.keys - %i[sessions projection recovery]).empty?
+
+      projection = LegacySessionRepair20261004.read_json(LegacySessionRepair20261004.absolute(@options.fetch(:projection)))
+      unless projection.is_a?(Hash) && projection.keys.sort == %w[context digest mapping runtime_commit runtime_source schema sessions workspace] && projection['schema'] == 1 &&
+             projection['runtime_commit'] == RUNTIME && projection['digest'] == LegacySessionRepair20261004.digest(projection.reject { |key, _v| key == 'digest' }) &&
+             projection['sessions'].is_a?(Array) && projection['sessions'].length.between?(1, MAX_ROWS) && projection['sessions'].all? { |row| row['blockers'] == [] }
+        raise Error, 'projection is invalid or still blocked'
+      end
+      setup(projection.fetch('workspace'), projection.fetch('runtime_source'))
+      raise Error, 'preparation changed since preview' unless projection['context'] == { 'path' => @context.path, 'value' => @context.record }
+
+      slugs = projection['sessions'].map { |row| row.fetch('slug') }
+      raise Error, 'projection selection changed' unless slugs == slugs.sort.uniq && slugs.all? { |slug| slug.match?(SLUG) }
+      raise Error, 'reviewed mapping changed' unless mapping(projection['mapping']['path'], slugs) == projection['mapping']
+
+      @recovery_path = @options.fetch(:recovery)
+      parent = LegacySessionRepair20261004.absolute(File.dirname(@recovery_path))
+      unless @recovery_path.start_with?('/') && File.expand_path(@recovery_path) == @recovery_path && File.dirname(@recovery_path) == parent &&
+             (File.stat(parent).mode & 0o777) == 0o700 && File.stat(parent).uid == Process.euid && File.stat(parent).dev == File.stat(@evidence.workspace).dev &&
+             slugs.none? { |slug| %w[work archive].any? { |location| @recovery_path.start_with?(File.join(@evidence.workspace, location, slug) + '/') } }
+        raise Error, 'recovery needs an owned private same-filesystem directory outside selected tracking'
+      end
+      @runtime.runner.transition_lock(@context.runtime.fetch('transition_lock'), File::LOCK_EX) do
+        @context.check!
+        @recovery = if File.exist?(@recovery_path) || File.symlink?(@recovery_path)
+                      raise Error, 'recovery must remain an owned mode-0600 regular file' unless File.lstat(@recovery_path).file? && (File.stat(@recovery_path).mode & 0o777) == 0o600
+                      value = LegacySessionRepair20261004.read_json(@recovery_path)
+                      unless value.keys.sort == %w[projection rows schema window_runs] && value['schema'] == 1 && value['projection'] == projection &&
+                             value['rows'].is_a?(Array) && value['rows'].map { |row| row['slug'] } == slugs &&
+                             value['rows'].all? { |row| PHASES.include?(row['phase']) && (row.keys - %w[slug phase targets commit_parent commit isolation grace]).empty? }
+                        raise Error, 'recovery does not bind this exact saved projection/selection'
+                      end
+                      value
+                    end
+        if @recovery && @recovery['rows'].all? { |row| row['phase'] == 'complete' }
+          @output.puts 'Recorded repair complete; no current-state mutation.'
+          return
+        end
+        @output.print "Repair #{slugs.join(', ')} with the reviewed exclusions established and held through interruption? [y/N] "
+        @output.flush
+        raise Error, 'maintenance window/repair not confirmed' unless @input.gets&.strip&.downcase == 'y'
+
+        execution = { 'confirmed_at' => Time.now.utc.iso8601(6), 'operator' => @context.record.dig('maintenance_window', 'operator'), 'checks' => @context.verify_window! }
+        unless @recovery
+          projection['sessions'].each do |row|
+            @runtime.runner.row_locks(row.fetch('slug')) do
+              rebuilt = @evidence.row(row.fetch('slug'), decision(projection['mapping'], row.fetch('slug')), @context.runtime)
+              rebuilt['runtime_evidence'] = @proof.sample(rebuilt)
+              raise Error, 'source/evidence/projection changed since preview' unless rebuilt == row
+              grace_record(row) if row['location'] == 'work'
+            end
+          end
+          @recovery = { 'schema' => 1, 'projection' => projection, 'window_runs' => [], 'rows' => slugs.map { |slug| { 'slug' => slug, 'phase' => 'prepared', 'targets' => {} } } }
+        end
+        @recovery['window_runs'] << execution
+        raise Error, 'too many interrupted attempts; review recovery evidence' if @recovery['window_runs'].length > 128
+        checkpoint
+        projection['sessions'].zip(@recovery['rows']).each do |row, progress|
+          next if progress['phase'] == 'complete'
+
+          @runtime.runner.row_locks(row.fetch('slug')) { apply_row(row, progress) }
+        end
+        @output.puts 'Metadata repair complete; archive remains a separately approved ordinary operation.'
+      end
+    end
+
+    def checkpoint
+      LegacySessionRepair20261004.durable_json(@recovery_path, @recovery)
+    end
+
+    def barrier(row, progress)
+      @context.verify_window!
+      if progress['commit'] && @evidence.git('rev-parse', 'HEAD') != progress['commit']
+        raise Error, 'tracking HEAD changed after the recorded repair commit'
+      end
+      current = @evidence.snapshot(row.fetch('path'))
+      source = row.fetch('source')
+      raise Error, 'tracking directory/container identity changed' unless current['identity'] == source['identity'] && current['directories'] == source['directories']
+
+      allowed = (source['files'].keys + progress.fetch('targets').keys).uniq
+      unless (current['files'].keys - allowed).empty? && (source['files'].keys - current['files'].keys).empty?
+        raise Error, 'unknown tracking file or missing original artifact'
+      end
+      current['files'].each do |name, actual|
+        target = progress['targets'][name]
+        original = source['files'][name]
+        replacement = target_bytes(row, name) if target
+        next if original == actual
+        next if target && actual['identity'] == target['identity'] && actual['mode'] == target['mode'] && actual['bytes'] == Base64.strict_encode64(replacement)
+
+        raise Error, "tracking bytes/identity drift: #{name}"
+      end
+      row.fetch('evidence').fetch('repositories').each do |record|
+        common = record.fetch('common_dir')
+        raise Error, 'canonical repository identity changed' unless LegacySessionRepair20261004.identity(common) == record['identity'] &&
+          LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'config', '--get', 'remote.origin.url') == record['origin']
+        record.fetch('refs').each do |ref, tip|
+          raise Error, "retained ref changed: #{ref}" unless LegacySessionRepair20261004.run('git', "--git-dir=#{common}", 'rev-parse', '--verify', "#{ref}^{commit}", optional: true) == tip
+        end
+      end
+      unless DevSession::ArchiveCleanup.new(@runtime.runner, row.fetch('slug')).discover == row.dig('evidence', 'inventory') && @proof.sample(row) == row['runtime_evidence']
+        raise Error, 'worktree/native/retained evidence changed'
+      end
+    end
+
+    def target_bytes(row, name)
+      key = name == 'portal.yml' ? 'portal_bytes' : 'state_bytes'
+      Base64.strict_decode64(row.fetch('target').fetch(key))
+    end
+
+    def apply_row(row, progress)
+      barrier(row, progress)
+      if progress['phase'] == 'prepared'
+        %w[state.md portal.yml].each do |name|
+          bytes = target_bytes(row, name)
+          next if row.dig('source', 'files', name, 'bytes') == Base64.strict_encode64(bytes)
+
+          unless progress['targets'][name]
+            temporary = "#{@recovery_path}.#{row.fetch('slug')}.#{name}.#{SecureRandom.hex(8)}"
+            mode = row.dig('source', 'files', name, 'mode') || 0o644
+            File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, mode) { |file| file.chmod(mode); file.write(bytes); file.flush; file.fsync }
+            progress['targets'][name] = { 'temporary' => temporary, 'identity' => LegacySessionRepair20261004.identity(temporary), 'mode' => mode }
+            checkpoint # Exact future target inode is durable before rename.
+          end
+          target = progress['targets'].fetch(name)
+          destination = File.join(row.fetch('path'), name)
+          if File.exist?(target.fetch('temporary'))
+            unless LegacySessionRepair20261004.identity(target.fetch('temporary')) == target['identity'] && File.binread(target.fetch('temporary')) == bytes
+              raise Error, 'staged repair payload changed'
+            end
+            barrier(row, progress)
+            File.rename(target.fetch('temporary'), destination)
+            File.open(row.fetch('path'), File::RDONLY, &:fsync)
+          end
+          unless File.file?(destination) && LegacySessionRepair20261004.identity(destination) == target['identity'] && File.binread(destination) == bytes
+            raise Error, 'recorded repair target is absent or replaced'
+          end
+          barrier(row, progress)
+        end
+        progress['phase'] = 'files_written'
+        checkpoint
+      end
+      if progress['phase'] == 'files_written'
+        commit_row(row, progress)
+        progress['phase'] = 'tracking_committed'
+        checkpoint
+      end
+      if progress['phase'] == 'tracking_committed'
+        barrier(row, progress)
+        require_committed_target!(row)
+        if row['location'] == 'work'
+          progress['grace'] ||= grace_record(row).merge('epoch' => Time.now.utc.iso8601)
+          checkpoint # Reuse this epoch if store write wins before checkpoint.
+          grace = progress.fetch('grace')
+          @store.lock do
+            current = @store.session(row.fetch('slug'))
+            after = grace.fetch('after').merge('reset_at' => grace.fetch('epoch'))
+            after = after.merge('schema' => 1, 'workspace' => @evidence.workspace)
+            unless current == after
+              raise Error, 'hold/observation changed before grace completion' unless current == grace.fetch('before')
+
+              @store.write("session-#{row.fetch('slug')}", after)
+            end
+          end
+        end
+        progress['phase'] = 'grace_started'
+        checkpoint
+      end
+      barrier(row, progress)
+      require_committed_target!(row)
+      progress['phase'] = 'complete'
+      checkpoint
+    end
+
+    def grace_record(row)
+      previous = @store.session(row.fetch('slug'))
+      id = row.dig('source', 'identity')
+      identity = Digest::SHA256.hexdigest(JSON.generate(['session-observation-v1', @evidence.workspace, row.fetch('slug'), id.fetch('dev'), id.fetch('ino'), row['root_thread_id']]))
+      after = WorkspaceAutoArchive::Policy.bind(previous, identity, root_thread_id: row['root_thread_id'], activity_known: true)
+      raise Error, 'hold identity cannot be positively preserved' if previous['hold'] && !after['hold']
+
+      after = after.merge('eligible' => false, 'eligible_at' => nil)
+      after.delete('operation')
+      { 'before' => previous, 'after' => after }
+    end
+
+    def expected_blobs(row)
+      row.fetch('source').fetch('files').merge(%w[state.md portal.yml].to_h do |name|
+        [name, { 'bytes' => Base64.strict_encode64(target_bytes(row, name)), 'mode' => row.dig('source', 'files', name, 'mode') || 0o644 }]
+      end).to_h do |name, file|
+        hash, error, status = Open3.capture3(@runtime.environment, 'git', '-C', @evidence.workspace, 'hash-object', '--stdin', stdin_data: Base64.strict_decode64(file.fetch('bytes')))
+        raise Error, "cannot hash target: #{error}" unless status.success?
+
+        [name, [file['mode'] & 0o111 == 0 ? '100644' : '100755', hash.strip]]
+      end
+    end
+
+    def require_committed_target!(row)
+      relative = File.join(row.fetch('location'), row.fetch('slug'))
+      output = @evidence.git('ls-tree', '-r', '-z', "HEAD:#{relative}")
+      actual = output.split("\0").to_h do |entry|
+        metadata, name = entry.split("\t", 2)
+        mode, type, hash = metadata.split(' ')
+        raise Error, 'committed tracking contains a non-blob' unless type == 'blob'
+
+        [name, [mode, hash]]
+      end
+      raise Error, 'committed target tree differs from the exact repair projection' unless actual == expected_blobs(row)
+    end
+
+    def isolation(relative)
+      @evidence.git('diff', '--binary', '--', '.', ":(exclude)#{relative}") + "\0" +
+        @evidence.git('diff', '--cached', '--binary', '--', '.', ":(exclude)#{relative}")
+    end
+
+    def commit_row(row, progress)
+      barrier(row, progress)
+      relative = File.join(row.fetch('location'), row.fetch('slug'))
+      raise Error, 'tracking baseline needs the shared master checkout' unless @evidence.git('symbolic-ref', '--short', 'HEAD') == 'master'
+      unless @evidence.git('merge-base', '--is-ancestor', 'origin/master', 'HEAD', optional: true)
+        raise Error, 'cached workspace master is not an ancestor; reconcile before the window'
+      end
+      raise Error, 'selected tracking contains staged changes' unless @evidence.git('diff', '--cached', '--quiet', '--', relative, optional: true)
+
+      progress['commit_parent'] ||= @evidence.git('rev-parse', 'HEAD')
+      progress['isolation'] ||= isolation(relative)
+      checkpoint
+      message = "workspace: repair legacy session #{row.fetch('slug')}\n\nRecord reviewed ordinary metadata using dated source-only repair.\nRuntime #{RUNTIME}.\nProjection #{ @recovery.fetch('projection').fetch('digest') }.\n"
+      head = @evidence.git('rev-parse', 'HEAD')
+      if head != progress.fetch('commit_parent')
+        unless @evidence.git('rev-parse', 'HEAD^') == progress['commit_parent'] && @evidence.git('log', '-1', '--format=%B') == message.strip &&
+               @evidence.git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').lines.all? { |name| name.strip.start_with?(relative + '/') }
+          raise Error, 'tracking HEAD changed beyond the recorded repair commit'
+        end
+      elsif !@evidence.git('status', '--porcelain=v1', '--', relative).empty?
+        Tempfile.create(['dated-legacy-repair-', '.txt']) do |file|
+          file.write(message); file.flush; file.fsync
+          begin
+            @evidence.git('add', '--intent-to-add', '--', relative)
+            @evidence.git('commit', '--only', '-F', file.path, '--', relative)
+          rescue Error
+            @evidence.git('reset', '--quiet', 'HEAD', '--', relative, optional: true)
+            raise
+          end
+        end
+      end
+      require_committed_target!(row)
+      raise Error, 'normal commit changed unrelated index/worktree data' unless isolation(relative) == progress['isolation']
+
+      progress['commit'] = @evidence.git('rev-parse', 'HEAD')
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  begin
+    LegacySessionRepair20261004::Tool.new(ARGV).run
+  rescue LegacySessionRepair20261004::Error, OptionParser::ParseError, KeyError, SystemCallError => e
+    warn "repair-legacy-sessions-2026-10-04: #{e.message}"
+    exit 1
+  end
+end

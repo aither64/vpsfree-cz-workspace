@@ -149,3 +149,16 @@ reviews do not complete this gate.
 Before changing code in a repository, read its local `AGENTS.md` if present.
 When a repository has no `AGENTS.md`, infer commands and style from its
 existing files, history, and manifests.
+
+
+## Retained branches with unknown historical bases
+
+An ordinary registration may omit `initial_base_sha` honestly. Re-add its exact
+existing branch without supplying a guessed base; missing retained refs require
+explicit recovery and cannot become new branches at today's default. Registration
+and sync do not infer historical starts from merge-base or current tips. `--base`
+selects a genuinely new branch's start. For a retained historical base, use the
+workspace's [dated source-only repair](../maintenance/repair-legacy-sessions-2026-10-04.md)
+with exact structured commit/blob and repository/branch evidence. Finalization
+still requires the exact final head; unknown bases do not earn the unpushed-initial-head archive exception. A saved
+exact comparison remains useful, otherwise archived comparison is unavailable.
