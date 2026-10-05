@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # Security Advisories State
 
 ## Initiative
