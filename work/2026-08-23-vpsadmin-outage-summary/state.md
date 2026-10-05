@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-23-vpsadmin-outage-summary
 
 ## Repositories
