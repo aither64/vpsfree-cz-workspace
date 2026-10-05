@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-14-advisories-6-12-95-5
 
 ## Repositories
