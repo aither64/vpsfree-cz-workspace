@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-03-webui-dataset-used-czech-fix
 
 ## Repositories
