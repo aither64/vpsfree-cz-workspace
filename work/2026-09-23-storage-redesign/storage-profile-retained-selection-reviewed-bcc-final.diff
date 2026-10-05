@@ -1,0 +1,2803 @@
+diff --git a/dev-clusters/vpsadmin/README.md b/dev-clusters/vpsadmin/README.md
+index 01678a5f49150a0aabf16149b633ee602816554f..03fb249d7cc4cabf96ad694b2de90c72d43fc7f7 100644
+--- a/dev-clusters/vpsadmin/README.md
++++ b/dev-clusters/vpsadmin/README.md
+@@ -14,9 +14,40 @@ sources before starting the cluster. Existing complete VM disk images need no
+ conversion.
+ 
+ Services and DNS root disks are retained across stop/start. Apply configuration
+-changes with `update` while the VMs are running so their root disks contain the
+-new system closures before the next boot. Starting retained disks with older
+-runner versions can replace them with fresh images and erase their data.
++changes with `update` while the VMs are running so their disks contain the new
++closures. Starting retained disks with older runner versions can replace them
++with fresh images and erase their data.
++
++### Build candidates and retained boot selections
++
++`result-config` describes the full build candidate. The provider records the
++retained boot selection in one private `applied-config.json` envelope. Its
++version-1 format contains the workspace/slug, full configuration, machine
++provenance and one nullable pending operation. Guest proof determines which
++built descriptors become part of the retained selection.
++
++An update records its pending target before copy or activation. It promotes
++that target's complete descriptor after verifying exact `/run/current-system`,
++closure validity, executable init where applicable and a guest GC root.
++A services update also finishes its restart and Node refresh before promotion.
++The provider retains every other descriptor and proof. On failure, the target
++stays pending and completed earlier targets remain recorded. A retry may select
++a new candidate for the same target; another target cannot clear that pending
++operation.
++
++Ordinary cold start uses only a complete, non-pending applied selection. A newly
++built candidate validates the requested routing/layout but does not replace
++retained boot payloads. NixOS updates may change toplevel/kernel/initrd and the
++source `rootDisk.image`; direct vpsAdminOS updates may change
++toplevel/kernel/initrd/squashfs. Spin, boot options, resources, preserved disk
++fields, networks and shared mounts must remain exact.
++
++Fresh creation records a pending boot before starting guests and establishes
++residency after full boot proof. Existing legacy images without the envelope
++remain readable and target-updatable. Each update proves its own target; cold
++start requires proof for every guest. A build, image age or stale readiness file
++cannot supply that proof. Use the stopped recovery below when historical
++evidence supports it.
+ 
+ ## Maintenance boot for retained disks
+ 
+@@ -91,8 +122,11 @@ before each start. A missing disk refuses boot before OSVM can create an image.
+ 
+ The copied-config boot uses the recorded configuration without rebuilding it.
+ It releases the hold only after the new seed has run successfully, API and
+-supervisor are active, and the normal node refresh completes. Pending or
+-unknown maintenance state blocks plain start, update, refresh, restart and
++supervisor are active, the normal Node refresh completes, and every guest
++proves its exact recorded system and rooted closure. The complete applied
++selection is published before release; publication failure leaves the hold
++pending. Pending or unknown maintenance state blocks plain start, update,
++refresh, restart and
+ reset. Status and stop remain available. Private hold/copy records and their
+ configuration GC roots survive stop and interruption. Failed copy has no
+ release receipt; stop and retry the same proved maintenance selection or
+@@ -100,6 +134,79 @@ diagnose while stopped. If a new boot may have changed schema or state, verify
+ compatibility before selecting an old resident generation for masked recovery.
+ Never reset retained state or run an old package to evade a refusal.
+ 
++### Correcting an unproved DNS selection while stopped
++
++If a completed services copy recorded rebuilt DNS descriptors that were never
++copied, stop the owned runner and collect trustworthy historical evidence.
++Then use the metadata-only command:
++
++```sh
++vpsadmin-devcluster maintenance-recover-config <slug> \
++  --residency-evidence /private/retained-boot-evidence.json
++```
++
++Recovery requires a completed pending copy in `copied` or `starting_copied`,
++the existing stopped-owner/socket/address checks and all retained disks. This
++metadata operation records a boot selection without building guest closures,
++starting guests, copying or activating systems, or releasing the hold. It
++restores the complete configured DNS primary/secondary descriptors from one
++prior successful full boot.
++Both prior and recorded DNS descriptors must be NixOS with compatible retained
++layout. Services remains the exact copied candidate; every Node descriptor,
++including squashfs, must equal its actual last update and the recorded next.
++An arbitrary merged config or whole-old-config rollback is not accepted.
++
++The operator-owned, non-symlink 0600 evidence is at most 16 KiB. Its version-1
++JSON has exactly `version`, `kind` (`retained_boot_recovery`), `workspace`,
++`slug`, `expected_hold_sha256` and `machines`. Use SHA-256 of the exact original
++hold bytes. `machines` must contain every recorded machine, without extras.
++Each entry has these fields:
++
++```json
++{
++  "source_config": "/nix/store/immutable-source-config",
++  "source_config_sha256": "64-lowercase-hex-digits",
++  "proof_kind": "prior_boot",
++  "proof_reference": "private historical continuity and action evidence reference",
++  "disks": [{ "device": "dns-primary-root.img", "dev": 1, "ino": 1, "size": 1 }]
++}
++```
++
++The stat numbers above are placeholders; supply actual current measurements.
++DNS uses `prior_boot`, Nodes use `prior_update`, and services uses `held_copy`.
++Source configs remain bounded to 2 MiB, references to 2048 bytes and machine
++names to 128 bytes. The provider validates exact bindings and layout; the
++trusted local operator supplies the underlying historical continuity account.
++Original paths, sizes and mtimes, cold copies, and successful boot/update/copy
++source records support that account when there is no known replacement, reset,
++restore, truncation or contradictory evidence. Historical device/inode may be
++unmeasured and must not be backfilled. Expected mtime changes from guest writes
++and unexplained runner loss alone do not establish a disk replacement.
++
++Current device/inode/size bind this stopped recovery attempt. The helper checks
++them under the lifecycle lock and before each boot, refusing changed bindings.
++Historical residency and payload equality need their own evidence; a fresh stat
++cannot establish them or replace missing historical proof.
++
++Recovery durably archives the exact predecessor hold and evidence as private
++0600 files in a 0700 history directory, roots immutable source configs and the
++derived next, then publishes the version-2 hold last. The old ledger and roots
++remain intact. An identical evidence retry returns the same selection; changed
++evidence refuses. The hold stays pending with its phase and copy identity
++preserved. Run the existing
++`start <slug> --copied-config` separately to establish full seed/refresh and
++residency proof before release. A recovered selection cannot be overwritten by
++a masked copy retry.
++
++Maintenance records are version 2; legacy version 1 remains readable with its
++original validation. Explicit supported transitions write version 2. Mask
++policy, preserving seed, residency/recovery evidence and applied envelope stay
++version 1; canonical runtime schema 1/policy 3 is unchanged. Old version-1
++helpers reject version-2 holds even after release. Old providers can still
++ignore applied metadata on other clusters without a version-2 hold. Rollback
++requires a reviewed provider that preserves this selection contract. Never use
++an old candidate helper to evade it.
++
+ Runtime policy 3 permits the supported forward transition from policy 2 with
+ schema 1. It conservatively rejects normal transitions to policy 2 while any
+ development-cluster state exists, even after maintenance completes. Recover
+@@ -182,8 +289,10 @@ to an empty value to omit the QEMU `helper=` option.
+ `start` and `update` keep the built cluster config rooted at
+ `.dev-clusters/vpsadmin/clusters/<slug>/result-config` while the cluster is in
+ use. `stop` removes that root after the runner exits, and `reset` removes it
+-with the rest of the cluster state. Use `vpsadmin-devcluster gcroots` to list retained
+-cluster config roots and `vpsadmin-devcluster gcroots --cleanup` to remove roots for
++with the rest of the cluster state. Applied-selection and maintenance source
++roots survive ordinary stop so retained provenance stays readable. Use
++`vpsadmin-devcluster gcroots` to list retained cluster config roots and
++`vpsadmin-devcluster gcroots --cleanup` to remove roots for
+ stopped clusters left by older tooling.
+ 
+ Resolver behavior is configured in `config.json` under `resolver`. The default
+@@ -265,8 +374,14 @@ vpsadmin-devcluster storage-profile <slug> provision
+ 
+ Provision creates missing configured roots through normal Pool chains, waits
+ for readiness, commits shared empty snapshot templates, then enrolls existing
+-members and confirmed sources. Newly profile-created sources use minimum 2,
+-maximum 3 snapshots and maximum age 1800 seconds; new backup copies use minimum
++members and confirmed sources. Its initial admission observation completes in
++a short database transaction. Each chain and template writer checks admission
++again in its own staging transaction; physical waits hold no database
++transaction or freeze lock. A later freeze refuses subsequent work and retains
++previously committed chains and their evidence.
++
++Newly profile-created sources use minimum 2, maximum 3 snapshots and maximum
++age 1800 seconds; new backup copies use minimum
+ 2, maximum 5 and maximum age 3600 seconds. These are rotation targets after
+ successful Backup, not hard growth or physical-space bounds. Failed or locked
+ work and snapshot dependencies can retain more history. Existing source
+@@ -344,6 +459,13 @@ An invocation without a compatible API override refuses the enabled candidate
+ configuration before starting a guest. The native runner receives only the
+ built store JSON files.
+ 
++The same ordered example also boots one real old DNS guest and proves that its
++rebuilt candidate closure is absent. It seals a fixture-only legacy selection
++with that unproved DNS descriptor, recovers after stop/reap, and boots new
++services with the old DNS descriptor and unchanged payload/disk identity. The
++combined legacy selection is never claimed booted; six-machine unit fixtures
++cover exact Node preservation. No new DNS candidate is copied or booted.
++
+ ```sh
+ nix run --no-write-lock-file \
+   --override-input devcluster-vpsadmin path:/absolute/compatible/vpsadmin \
+@@ -374,6 +496,10 @@ the guest wrapper invokes only its packaged fixture through the ordinary
+ database task. It accepts no arbitrary script path and exports no credentials.
+ 
+ The fixture creates its own member, VPS and NAS child through normal chains.
++Immediately before each payload write, a fresh guest `info` request checks
++read-write mode, settled evidence and the bound source/destination routing.
++The trial requires no concurrent operator freeze change during these direct
++file writes: the observation is not an atomic interlock across DB and SSH.
+ It writes only those new objects, verifies full and incremental sends, and
+ checks both historical payload versions through normal `UseClone` read-only
+ views. Each view must have `readonly=on`, matching checksums and the expected
+@@ -596,4 +722,6 @@ the normal build to establish rooting and validation before updating a VM.
+ Keep the compatible API and database schema, WebUI credentials, and BFF
+ session state. Do not reset the cluster or rotate secrets to recover from this
+ failure. An update stops at the first failed copy, activation, or refresh.
+-Machines updated before that failure keep their new configuration.
++Only targets with completed copy, activation and residency proof are promoted
++in the applied envelope. A failed target remains pending; its running generation
++may already have changed and needs an explicit same-target retry.
+diff --git a/dev-clusters/vpsadmin/bin/devcluster b/dev-clusters/vpsadmin/bin/devcluster
+index 387503a1ebdb3410dcd7deb6c056fb62107e4208..5500bc29ed330822b3206a550ef8dab2ea4796ce 100755
+--- a/dev-clusters/vpsadmin/bin/devcluster
++++ b/dev-clusters/vpsadmin/bin/devcluster
+@@ -40,6 +40,7 @@ usage() {
+ Usage:
+   devcluster start <slug> [--topology single|dual|storage] [--network bridge|local] [--force]
+   devcluster start <slug> --copied-config
++  devcluster maintenance-recover-config <slug> --residency-evidence PATH
+   devcluster maintenance-start <slug> --resident-config PATH --expect-services-toplevel PATH --residency-evidence PATH
+   devcluster stop <slug>
+   devcluster status <slug>
+@@ -1106,9 +1107,6 @@ start_cluster() {
+   kill_socket_processes "$slug" || return
+   devcluster_with_lock "$DEVCLUSTER_KIND-credentials" \
+     build_config_with_credentials "$slug" "$topology" "$network" || return
+-  printf '%s\n' "$topology" > "$(topology_file "$slug")" || return
+-  printf '%s\n' "$network" > "$(network_file "$slug")" || return
+-
+   local vpsadmin_path vpsadminos_input_value vpsf_status_path vpsadmin_webui_path
+   vpsadmin_path="$(slug_vpsadmin_path "$slug")" || return
+   vpsadminos_input_value="$(vpsadminos_input "$slug")" || return
+@@ -1120,6 +1118,17 @@ start_cluster() {
+     runner_overrides+=("$item")
+   done < <(nix_overrides "$slug" "$vpsadmin_path" "$vpsadminos_input_value" "$vpsf_status_path" "$vpsadmin_webui_path")
+ 
++  local boot_config
++  if [ "$(maintenance_state "$slug" applied-present)" = true ]; then
++    maintenance_state "$slug" applied-config "$(cluster_dir "$slug")/applied-boot.json" "$(config_path "$slug")" || return
++    boot_config="$(nix-store --add "$(cluster_dir "$slug")/applied-boot.json")" || return
++    maintenance_root_config "$slug" applied-boot "$boot_config" || return
++  else
++    boot_config="$(config_path "$slug")" || return
++  fi
++  printf '%s\n' "$topology" > "$(topology_file "$slug")" || return
++  printf '%s\n' "$network" > "$(network_file "$slug")" || return
++  maintenance_state "$slug" applied-begin-boot "$boot_config" boot || return
+   local dir log ready sock_dir
+   dir="$(cluster_dir "$slug")"
+   log="$dir/runner.log"
+@@ -1137,7 +1146,7 @@ start_cluster() {
+     "path:$CLUSTER_DIR#runner"
+     --
+     start
+-    --config "$(config_path "$slug")"
++    --config "$boot_config"
+     --state-dir "$dir/state"
+     --sock-dir "$sock_dir"
+     --pid-file "$pid_path"
+@@ -1157,6 +1166,7 @@ start_cluster() {
+   for _ in $(seq 1 900); do
+     if [ -f "$ready" ]; then
+       refresh_nodes_after_seed "$slug" || return
++      prove_full_applied_boot "$slug" "$boot_config" || return
+       urls_cluster "$slug"
+       return
+     fi
+@@ -1433,7 +1443,6 @@ update_cluster() {
+   local cfg
+   cfg="$(config_path "$slug")" || return
+ 
+-  local services_updated=0
+   for machine in "${machines[@]}"; do
+     local host toplevel opts
+     host="$(machine_host "$slug" "$machine")"
+@@ -1441,25 +1450,27 @@ update_cluster() {
+     [ -n "$toplevel" ] || die "no toplevel found for $machine in $cfg"
+     opts="$(ssh_opts "$slug" "$machine")"
+ 
++    maintenance_state "$slug" applied-begin-update "$cfg" "$machine" || return
++    root_applied_source "$slug" "$cfg" || return
+     printf 'Updating %s (%s) to %s\n' "$machine" "$host" "$toplevel"
+     NIX_SSHOPTS="$opts" nix copy --to "ssh://root@$host" "$toplevel" || return
+     # shellcheck disable=SC2086
+     ssh $opts "root@$host" "$toplevel/bin/switch-to-configuration" switch || return
+ 
+     if [ "$machine" = "services" ]; then
+-      services_updated=1
+       # shellcheck disable=SC2086
+       ssh $opts "root@$host" '
+         if systemctl cat vpsadmin-devcluster-seed.service >/dev/null 2>&1; then
+           systemctl restart vpsadmin-api.service
+         fi
+       ' || return
++      refresh_nodes_after_seed "$slug" || return
+     fi
++    prove_machine_selection "$slug" "$machine" "$toplevel" "$(jq -r --arg machine "$machine" '.machines[$machine].spin' "$cfg")" || return
++    maintenance_state "$slug" applied-promote-update "$machine" "public update proved exact current system and rooted closure" || return
+   done
+ 
+-  if [ "$services_updated" = "1" ]; then
+-    refresh_nodes_after_seed "$slug"
+-  fi
++  : # Each services target finishes its refresh before promotion.
+ }
+ 
+ restart_service() {
+@@ -1669,6 +1680,61 @@ launch_recorded_config() {
+   die "recorded runner readiness timed out; maintenance hold retained"
+ }
+ 
++# A candidate is not residency evidence until the target proves its exact system.
++root_applied_source() {
++  local slug="$1" config="$2" digest
++  digest="$(sha256sum "$config")" || return
++  digest="${digest%% *}"
++  maintenance_root_config "$slug" "applied-$digest" "$config"
++}
++
++prove_machine_selection() {
++  local slug="$1" machine="$2" top="$3" spin="$4" opts host init_check=""
++  host="$(machine_host "$slug" "$machine")" || return
++  opts="$(ssh_opts "$slug" "$machine")" || return
++  # Fixed provider store paths, never arbitrary code or caller kernel options.
++  [[ "$top" =~ ^/nix/store/[A-Za-z0-9+._-]+$ ]] || die "invalid candidate system path"
++  [ "$spin" != nixos ] || init_check="test -x '$top/init';"
++  # shellcheck disable=SC2086
++  timeout --kill-after=5s 120s ssh $opts "root@$host" "set -eu; test \"\$(readlink -e /run/current-system)\" = '$top'; $init_check requisites=\"\$(nix-store --query --requisites '$top')\" || exit \$?; test -n \"\$requisites\"; printf '%s\\n' \"\$requisites\" | xargs -r nix-store --check-validity; nix-store --add-root '/nix/var/nix/gcroots/vpsadmin-devcluster-applied-$slug-$machine' --indirect --realise '$top' >/dev/null"
++}
++
++prove_full_applied_boot() {
++  local slug="$1" config="$2" machine top names
++  root_applied_source "$slug" "$config" || return
++  names="$(jq -r '.machines | keys[]' "$config")" || return
++  [ -n "$names" ] || die "full boot proof requires every configured machine"
++  while IFS= read -r machine; do
++    top="$(jq -r --arg machine "$machine" '.machines[$machine].toplevel' "$config")" || return
++    prove_machine_selection "$slug" "$machine" "$top" "$(jq -r --arg machine "$machine" '.machines[$machine].spin' "$config")" || return
++  done <<<"$names"
++  maintenance_state "$slug" applied-finish-boot "$config" "public full boot proved all current systems and rooted closures after refresh"
++}
++
++maintenance_recover_config() {
++  local slug="$1" evidence prepared next source sources
++  shift
++  [ "$#" -eq 2 ] && [ "$1" = --residency-evidence ] && [ -n "$2" ] || die "recovery requires exactly residency evidence"
++  evidence="$2"
++  devcluster_validate_cluster_directory "$slug" false || die "recovery requires existing owned state"
++  maintenance_require_stopped "$slug" || return
++  prepared="$(maintenance_state "$slug" recover-prepare "$evidence")" || return
++  if [ "$(jq -r '.already_recorded' <<<"$prepared")" = true ]; then
++    printf 'identical recovery already recorded; maintenance remains pending\n'
++    return
++  fi
++  sources="$(jq -r '.sources[]' <<<"$prepared")" || return
++  [ -n "$sources" ] || die "recovery requires rooted machine source evidence"
++  while IFS= read -r source; do
++    root_applied_source "$slug" "$source" || return
++  done <<<"$sources"
++  source="$(jq -r '.next_config' <<<"$prepared")" || return
++  next="$(nix-store --add "$source")" || return
++  root_applied_source "$slug" "$next" || return
++  maintenance_state "$slug" recover-commit "$evidence" "$next" || return
++  printf 'retained DNS selection recovered; copied boot and release remain pending\n'
++}
++
+ maintenance_start() {
+   local slug="$1" resident="" expected="" evidence=""
+   shift
+@@ -1728,6 +1794,7 @@ start_copied_config() {
+   local slug="$1" config
+   maintenance_require_stopped "$slug" || return
+   config="$(maintenance_state "$slug" copied)" || return
++  maintenance_state "$slug" applied-begin-boot "$config" copied_boot || return
+   launch_recorded_config "$slug" "$config" copied || return
+   wait_for_machine_ssh "$slug" services || return
+   maintenance_remote "$slug" 'set -eu
+@@ -1746,6 +1813,7 @@ start_copied_config() {
+   local -a identity=()
+   read -r -a identity <<<"$(maintenance_identity "$slug")" || return
+   [ "${#identity[@]}" -eq 3 ] || die "copied boot identity is incomplete"
++  prove_full_applied_boot "$slug" "$config" || return
+   maintenance_state "$slug" release "${identity[@]}" || return
+   printf 'copied services configuration ready; maintenance hold released\n'
+ }
+@@ -1857,6 +1925,7 @@ main() {
+ 
+   case "$cmd" in
+     start) devcluster_with_lifecycle_lock "$1" true true start start_dispatch "${@:2}" ;;
++    maintenance-recover-config) devcluster_with_lifecycle_lock "$1" true true maintenance-recover-config maintenance_recover_config "${@:2}" ;;
+     maintenance-start) devcluster_with_lifecycle_lock "$1" true true maintenance-start maintenance_start "${@:2}" ;;
+     stop) devcluster_with_lifecycle_lock "$1" false true stop stop_cluster "${@:2}" ;;
+     status) devcluster_with_lifecycle_lock "$1" false false status status_cluster "${@:2}" ;;
+diff --git a/dev-clusters/vpsadmin/lib/maintenance.rb b/dev-clusters/vpsadmin/lib/maintenance.rb
+index 3ff293bae8ce8513b77c4c677412c8b0374258e5..e5972c28a05c9f69f3ea3c51417d63c0f3e0f891 100644
+--- a/dev-clusters/vpsadmin/lib/maintenance.rb
++++ b/dev-clusters/vpsadmin/lib/maintenance.rb
+@@ -10,7 +10,12 @@ module DevClusters
+   # Operator residency evidence is a bounded reference, not guest authentication.
+   class VpsAdminMaintenance
+     Invalid = Class.new(StandardError)
+-    VERSION = 1
++    VERSION = 2
++    LEGACY_VERSION = 1
++    MASK_POLICY = 1
++    SEED_VERSION = 1
++    EVIDENCE_VERSION = 1
++    APPLIED_VERSION = 1
+     MAX_CONFIG_BYTES = 2 * 1024 * 1024
+     MAX_RECORD_BYTES = 16 * 1024
+     MAX_EVIDENCE_BYTES = 8 * 1024
+@@ -62,6 +67,7 @@ module DevClusters
+       @directory = directory
+       @store_root = store_root
+       @record_path = File.join(directory, 'maintenance-hold.json')
++      @applied_path = File.join(directory, 'applied-config.json')
+     end
+ 
+     def self.kernel_parameters
+@@ -79,7 +85,7 @@ module DevClusters
+ 
+       # Deliberately omit evidence references, config paths and private inputs.
+       {
+-        'version' => VERSION, 'mode' => record.fetch('mode'), 'phase' => record.fetch('phase'),
++        'version' => record.fetch('version'), 'mode' => record.fetch('mode'), 'phase' => record.fetch('phase'),
+         'pending' => record.fetch('phase') != 'released',
+         'copied' => !record.fetch('copied_toplevel').nil?,
+         'active' => record.fetch('phase') == 'released'
+@@ -103,6 +109,7 @@ module DevClusters
+ 
+       previous = load_record
+       if previous && previous.fetch('phase') != 'released'
++        raise Invalid, 'recovered selection requires copied boot' if previous['recovery']
+         unless previous.fetch('resident_config') == config_path &&
+                previous.fetch('resident_config_sha256') == digest &&
+                previous.fetch('services_toplevel') == services_toplevel &&
+@@ -118,7 +125,7 @@ module DevClusters
+         'workspace' => @workspace, 'slug' => @slug,
+         'resident_config' => config_path, 'resident_config_sha256' => digest,
+         'services_toplevel' => services_toplevel, 'evidence' => evidence,
+-        'evidence_sha256' => evidence_digest, 'mask_policy' => VERSION,
++        'evidence_sha256' => evidence_digest, 'mask_policy' => MASK_POLICY,
+         'runner_pid' => nil, 'runner_start' => nil, 'boot_id' => nil,
+         'candidate' => nil, 'candidate_sha256' => nil, 'next_config' => nil,
+         'next_config_sha256' => nil, 'copied_toplevel' => nil, 'preserving_seed' => nil
+@@ -127,6 +134,7 @@ module DevClusters
+ 
+     def bind_boot!(pid:, start:, boot_id:)
+       record = required_record
++      raise Invalid, 'recovered selection requires copied boot' if record['recovery']
+       raise Invalid, 'unexpected maintenance boot phase' unless %w[held maintenance_ready copying copied].include?(record.fetch('phase'))
+       validate_identity!(pid, start, boot_id)
+       record.merge!('phase' => 'maintenance_ready', 'runner_pid' => pid,
+@@ -138,6 +146,7 @@ module DevClusters
+ 
+     def begin_copy!(candidate_path:, pid:, start:, boot_id:)
+       record = required_record
++      raise Invalid, 'recovered selection requires copied boot' if record['recovery']
+       assert_boot!(record, pid, start, boot_id)
+       raise Invalid, 'copy requires proved maintenance readiness' unless %w[maintenance_ready copying copied].include?(record.fetch('phase'))
+       resident, = config_file(record.fetch('resident_config'), expected_digest: record.fetch('resident_config_sha256'))
+@@ -191,6 +200,11 @@ module DevClusters
+     def release!(pid:, start:, boot_id:)
+       record = required_record
+       raise Invalid, 'release requires copied boot' unless record.fetch('phase') == 'starting_copied'
++      applied = applied_record
++      config, = config_file(record.fetch('next_config'), expected_digest: record.fetch('next_config_sha256'))
++      unless applied && complete_applied?(applied) && applied.fetch('configuration') == config
++        raise Invalid, 'release requires completed full applied proof'
++      end
+       validate_identity!(pid, start, boot_id)
+       record.merge!('phase' => 'released', 'runner_pid' => pid, 'runner_start' => start, 'boot_id' => boot_id)
+       write_record(record)
+@@ -204,6 +218,7 @@ module DevClusters
+ 
+     def validate_runner!(config_path:)
+       record = required_record
++      raise Invalid, 'recovered selection requires copied boot' if record['recovery']
+       raise Invalid, 'maintenance runner requires a pending hold' if record.fetch('phase') == 'released'
+       raise Invalid, 'maintenance runner changes resident config' unless resident_config! == config_path
+       config, = config_file(config_path, expected_digest: record.fetch('resident_config_sha256'))
+@@ -222,6 +237,11 @@ module DevClusters
+       validate_adoption!
+       config, = config_file(config_path, expected_digest: record.fetch('next_config_sha256'))
+       validate_disks!(config)
++      @boot_disk_identities = nil
++      if record['recovery']
++        evidence, = private_json(record.fetch('recovery').fetch('evidence_path'), max_bytes: MAX_RECORD_BYTES)
++        @boot_disk_identities = evidence.fetch('machines').transform_values { |proof| proof.fetch('disks') }
++      end
+     end
+ 
+     def validate_system!(toplevel)
+@@ -304,9 +324,14 @@ module DevClusters
+       return nil unless File.exist?(@record_path) || File.symlink?(@record_path)
+ 
+       record, = private_json(@record_path, max_bytes: MAX_RECORD_BYTES)
+-      exact_keys!(record, RECORD_KEYS)
+-      unless record.fetch('version').is_a?(Integer) && record.fetch('version') == VERSION && record.fetch('mode') == 'maintenance' &&
+-             record.fetch('mask_policy').is_a?(Integer) && record.fetch('mask_policy') == VERSION && PHASES.include?(record.fetch('phase')) &&
++      validate_record!(record)
++    end
++
++    def validate_record!(record)
++      version = record.fetch('version')
++      exact_keys!(record, version == LEGACY_VERSION ? RECORD_KEYS : RECORD_KEYS + %w[predecessor recovery])
++      unless version.is_a?(Integer) && [LEGACY_VERSION, VERSION].include?(version) && record.fetch('mode') == 'maintenance' &&
++             record.fetch('mask_policy').is_a?(Integer) && record.fetch('mask_policy') == MASK_POLICY && PHASES.include?(record.fetch('phase')) &&
+              record.fetch('workspace') == @workspace && record.fetch('slug') == @slug
+         raise Invalid, 'unsupported maintenance record'
+       end
+@@ -325,7 +350,8 @@ module DevClusters
+       if %w[copying copied starting_copied released].include?(record.fetch('phase'))
+         store_path!(record.fetch('candidate'))
+         digest!(record.fetch('candidate_sha256'))
+-        unless record.fetch('preserving_seed') == { 'version' => VERSION, 'existingAssignments' => 'preserve' }
++        unless record.fetch('preserving_seed').is_a?(Hash) && record.fetch('preserving_seed')['version'].is_a?(Integer) &&
++               record.fetch('preserving_seed') == { 'version' => SEED_VERSION, 'existingAssignments' => 'preserve' }
+           raise Invalid, 'maintenance record preservation contract differs'
+         end
+       end
+@@ -343,6 +369,7 @@ module DevClusters
+         unused += %w[next_config next_config_sha256 copied_toplevel]
+       end
+       raise Invalid, 'maintenance record contains an unproved later phase' unless unused.all? { |key| record.fetch(key).nil? }
++      validate_recovery_record!(record) if version == VERSION
+       record
+     end
+ 
+@@ -366,7 +393,7 @@ module DevClusters
+       raise Invalid, 'invalid resident machine' unless machine.is_a?(Hash) && machine.fetch('disks', []).is_a?(Array)
+       disks = [machine.fetch('rootDisk', nil), *machine.fetch('disks', [])].compact
+       raise Invalid, 'resident machine has no retained disk' if disks.empty? || disks.length > 32
+-      disks.map do |disk|
++      paths = disks.map do |disk|
+         unless disk.is_a?(Hash) && disk.fetch('type') == 'file' &&
+                disk.fetch('create', true) == true && disk.fetch('preserve', true) == true
+           raise Invalid, 'maintenance requires managed preserved file disks'
+@@ -379,6 +406,15 @@ module DevClusters
+         end
+         path
+       end
++      if @boot_disk_identities
++        current = paths.map do |path|
++          stat = File.stat(path)
++          { 'device' => path.delete_prefix(File.join(@directory, 'state') + '/'),
++            'dev' => stat.dev, 'ino' => stat.ino, 'size' => stat.size }
++        end
++        raise Invalid, 'stopped disk snapshot changed before boot' unless current == @boot_disk_identities.fetch(name)
++      end
++      paths
+     end
+ 
+     def validate_boot!(machine)
+@@ -431,21 +467,419 @@ module DevClusters
+       raise Invalid, 'candidate lacks preserving seed contract' unless raw.is_a?(String) && raw.bytesize <= 256
+       marker = parse_json(raw)
+       unless marker.is_a?(Hash) && marker['version'].is_a?(Integer) &&
+-             marker == { 'version' => VERSION, 'existingAssignments' => 'preserve' }
++             marker == { 'version' => SEED_VERSION, 'existingAssignments' => 'preserve' }
+         raise Invalid, 'unsupported preserving seed contract'
+       end
+       marker
+     end
+ 
++    # A built candidate does not establish residency on any retained disk.
++    def begin_update!(candidate_path:, target:)
++      candidate, digest = config_file(candidate_path)
++      validate_disks!(candidate)
++      candidate.fetch('machines').fetch(target)
++      applied = applied_record || empty_applied(candidate)
++      pending = applied.fetch('pending')
++      if pending && (pending.fetch('operation') != 'update' || pending.fetch('targets') != [target])
++        raise Invalid, 'another applied operation remains uncertain'
++      end
++      compatible_configuration!(applied.fetch('configuration'), candidate)
++      applied['pending'] = pending_operation('update', [target], candidate_path, digest)
++      write_applied(applied)
++    end
++
++    def promote_update!(target:, proof_reference:)
++      applied = applied_record || raise(Invalid, 'applied update is missing')
++      pending = applied.fetch('pending')
++      unless pending && pending.fetch('operation') == 'update' && pending.fetch('targets') == [target]
++        raise Invalid, 'applied target differs from pending update'
++      end
++      candidate, = config_file(pending.fetch('candidate'), expected_digest: pending.fetch('candidate_sha256'))
++      validate_disks!(candidate)
++      compatible_configuration!(applied.fetch('configuration'), candidate)
++      applied.fetch('configuration').fetch('machines')[target] = candidate.fetch('machines').fetch(target)
++      applied.fetch('configuration')['labels'] = candidate.fetch('labels', {}) if target == 'services'
++      applied.fetch('provenance')[target] = provenance(pending.fetch('candidate'), pending.fetch('candidate_sha256'), 'prior_update', proof_reference)
++      applied['pending'] = nil
++      write_applied(applied)
++    end
++
++    def begin_boot!(config_path:, operation:)
++      raise Invalid, 'unsupported applied boot operation' unless %w[boot copied_boot].include?(operation)
++      config, digest = config_file(config_path)
++      applied = applied_record
++      if operation == 'boot' && applied
++        raise Invalid, 'retained selection remains incomplete or pending' unless complete_applied?(applied)
++        raise Invalid, 'retained boot selection differs' unless config == applied.fetch('configuration')
++        validate_disks!(config)
++      elsif operation == 'boot'
++        # No legacy result/ready file is an initialization source for old images.
++        managed_disk_paths(config).each do |path|
++          raise Invalid, 'legacy retained images require explicit residency recovery' if File.exist?(path) || File.symlink?(path)
++        end
++      else
++        record = required_record
++        unless %w[copied starting_copied].include?(record.fetch('phase')) && record.fetch('next_config') == config_path
++          raise Invalid, 'copied boot must use the recorded selection'
++        end
++        validate_disks!(config)
++        if applied && applied.fetch('pending') && applied.fetch('pending').fetch('operation') != 'copied_boot'
++          raise Invalid, 'another applied operation remains uncertain'
++        end
++      end
++      applied ||= empty_applied(config)
++      applied['provenance'].delete_if do |name, proof|
++        source, = config_file(proof.fetch('source_config'), expected_digest: proof.fetch('source_config_sha256'))
++        source.fetch('machines').fetch(name) != config.fetch('machines').fetch(name)
++      end
++      applied['configuration'] = config
++      applied['pending'] = pending_operation(operation, config.fetch('machines').keys, config_path, digest)
++      write_applied(applied)
++    end
++
++    def finish_boot!(config_path:, proof_reference:)
++      config, digest = config_file(config_path)
++      validate_disks!(config)
++      applied = applied_record || raise(Invalid, 'applied boot is missing')
++      pending = applied.fetch('pending')
++      unless pending && %w[boot copied_boot].include?(pending.fetch('operation')) &&
++             pending.fetch('candidate') == config_path && pending.fetch('candidate_sha256') == digest &&
++             pending.fetch('targets').sort == config.fetch('machines').keys.sort
++        raise Invalid, 'full boot proof differs from pending selection'
++      end
++      applied['configuration'] = config
++      applied['provenance'] = config.fetch('machines').keys.to_h do |name|
++        [name, provenance(config_path, digest, 'prior_boot', proof_reference)]
++      end
++      applied['pending'] = nil
++      write_applied(applied)
++    end
++
++    def retained_config!(output_path:, candidate_path: nil)
++      applied = applied_record || raise(Invalid, 'retained selection is unknown; explicit residency recovery required')
++      raise Invalid, 'retained selection is incomplete or pending' unless complete_applied?(applied)
++      if candidate_path
++        candidate, = config_file(candidate_path)
++        compatible_configuration!(applied.fetch('configuration'), candidate)
++      end
++      validate_disks!(applied.fetch('configuration'))
++      write_private_json(output_path, applied.fetch('configuration'), max_bytes: MAX_CONFIG_BYTES)
++    end
++
++    def retained_selection?
++      !applied_record.nil?
++    end
++
++    def prepare_recovery!(evidence_path:, output_path:)
++      record, hold_digest = private_json(@record_path, max_bytes: MAX_RECORD_BYTES)
++      required_record # Full v1/v2 validation, without modifying legacy bytes.
++      evidence, evidence_digest = private_json(evidence_path, max_bytes: MAX_RECORD_BYTES)
++      if record['recovery']
++        recovery = record.fetch('recovery')
++        raise Invalid, 'recovery retry changes evidence' unless recovery.fetch('evidence_sha256') == evidence_digest
++        recovery_configuration!(record, original_next!(record))
++        return { 'already_recorded' => true, 'next_config' => record.fetch('next_config'), 'sources' => [] }
++      end
++      raise Invalid, 'recovery requires a completed pending copy' unless %w[copied starting_copied].include?(record.fetch('phase'))
++      original, = config_file(record.fetch('next_config'), expected_digest: record.fetch('next_config_sha256'))
++      raise Invalid, 'original next selection differs' unless original == next_configuration(record)
++      corrected = derive_recovery!(record, hold_digest, evidence, original)
++      history = history_directory!
++      predecessor_path = File.join(history, "#{hold_digest}-hold.json")
++      snapshot_path = File.join(history, "#{evidence_digest}-evidence.json")
++      archive_bytes!(predecessor_path, bounded_bytes(@record_path, MAX_RECORD_BYTES))
++      archive_bytes!(snapshot_path, bounded_bytes(evidence_path, MAX_RECORD_BYTES))
++      write_private_json(output_path, corrected, max_bytes: MAX_CONFIG_BYTES)
++      { 'already_recorded' => false, 'next_config' => output_path,
++        'sources' => evidence.fetch('machines').values.map { |proof| proof.fetch('source_config') }.uniq }
++    end
++
++    def commit_recovery!(evidence_path:, next_path:)
++      prepared = prepare_recovery!(evidence_path:, output_path: File.join(@directory, 'recovery-next.json'))
++      return required_record if prepared.fetch('already_recorded')
++      record, hold_digest = private_json(@record_path, max_bytes: MAX_RECORD_BYTES)
++      required_record
++      evidence, evidence_digest = private_json(evidence_path, max_bytes: MAX_RECORD_BYTES)
++      original, = config_file(record.fetch('next_config'), expected_digest: record.fetch('next_config_sha256'))
++      corrected = derive_recovery!(record, hold_digest, evidence, original)
++      actual, next_digest = config_file(next_path)
++      raise Invalid, 'rooted recovery selection differs' unless actual == corrected
++      history = history_directory!
++      upgraded = record.merge('version' => VERSION,
++                              'predecessor' => { 'path' => File.join(history, "#{hold_digest}-hold.json"), 'sha256' => hold_digest },
++                              'recovery' => { 'evidence_path' => File.join(history, "#{evidence_digest}-evidence.json"),
++                                              'evidence_sha256' => evidence_digest,
++                                              'original_next_config' => record.fetch('next_config'),
++                                              'original_next_config_sha256' => record.fetch('next_config_sha256') },
++                              'next_config' => next_path, 'next_config_sha256' => next_digest)
++      validate_recovery_record!(upgraded)
++      applied = empty_applied(corrected)
++      applied['provenance'] = evidence.fetch('machines').transform_values do |proof|
++        proof.slice('source_config', 'source_config_sha256', 'proof_kind', 'proof_reference')
++      end
++      applied['pending'] = pending_operation('copied_boot', corrected.fetch('machines').keys, next_path, next_digest)
++      write_applied(applied) # Never boot-eligible as complete before full proof.
++      write_record(upgraded) # Authoritative hold publication is last.
++    end
++
+     private
+ 
++    def provenance(path, digest, kind, reference)
++      string!(reference)
++      { 'source_config' => path, 'source_config_sha256' => digest, 'proof_kind' => kind, 'proof_reference' => reference }
++    end
++
++    def empty_applied(config)
++      { 'version' => APPLIED_VERSION, 'workspace' => @workspace, 'slug' => @slug,
++        'configuration' => config, 'provenance' => {}, 'pending' => nil }
++    end
++
++    def pending_operation(operation, targets, path, digest)
++      { 'operation' => operation, 'targets' => targets, 'candidate' => path, 'candidate_sha256' => digest }
++    end
++
++    def applied_record
++      return nil unless File.exist?(@applied_path) || File.symlink?(@applied_path)
++      applied, = private_json(@applied_path, max_bytes: MAX_CONFIG_BYTES)
++      exact_keys!(applied, %w[version workspace slug configuration provenance pending])
++      unless applied.fetch('version').is_a?(Integer) && applied.fetch('version') == APPLIED_VERSION && applied.fetch('workspace') == @workspace && applied.fetch('slug') == @slug
++        raise Invalid, 'unsupported applied selection'
++      end
++      configuration = applied.fetch('configuration')
++      managed_disk_paths(configuration)
++      proofs = applied.fetch('provenance')
++      unless proofs.is_a?(Hash) && (proofs.keys - configuration.fetch('machines').keys).empty?
++        raise Invalid, 'invalid applied provenance'
++      end
++      proofs.each do |name, proof|
++        validate_provenance!(proof)
++        source, = config_file(proof.fetch('source_config'), expected_digest: proof.fetch('source_config_sha256'))
++        raise Invalid, 'applied descriptor differs from its proof' unless source.fetch('machines').fetch(name) == configuration.fetch('machines').fetch(name)
++      end
++      pending = applied.fetch('pending')
++      if pending
++        exact_keys!(pending, %w[operation targets candidate candidate_sha256])
++        targets = pending.fetch('targets')
++        unless %w[update boot copied_boot].include?(pending.fetch('operation')) && targets.is_a?(Array) &&
++               !targets.empty? && targets.uniq == targets && (targets - configuration.fetch('machines').keys).empty? &&
++               (pending.fetch('operation') != 'update' || targets.one?)
++          raise Invalid, 'invalid pending applied operation'
++        end
++        config_file(pending.fetch('candidate'), expected_digest: pending.fetch('candidate_sha256'))
++      end
++      applied
++    end
++
++    def complete_applied?(applied)
++      applied.fetch('pending').nil? && applied.fetch('provenance').keys.sort == applied.fetch('configuration').fetch('machines').keys.sort
++    end
++
++    def write_applied(applied)
++      write_private_json(@applied_path, applied, max_bytes: MAX_CONFIG_BYTES)
++      applied
++    end
++
++    def managed_disk_paths(config)
++      machines = config.fetch('machines')
++      unless machines.is_a?(Hash) && machines.key?('services') && machines.length.between?(1, 16)
++        raise Invalid, 'invalid applied machine set'
++      end
++      paths = machines.flat_map do |name, machine|
++        string!(name, max_bytes: 128)
++        raise Invalid, 'invalid machine name' unless name.match?(/\A[a-zA-Z0-9_-]+\z/)
++        disks = [machine['rootDisk'], *machine.fetch('disks', [])].compact
++        raise Invalid, 'invalid retained disk set' unless disks.length.between?(1, 32)
++        disks.map do |disk|
++          unless disk.fetch('type') == 'file' && disk.fetch('create', true) == true && disk.fetch('preserve', true) == true
++            raise Invalid, 'retained selection requires preserved managed disks'
++          end
++          path = File.expand_path(string!(disk.fetch('device')).gsub('{machine}', name), File.join(@directory, 'state'))
++          raise Invalid, 'retained disk escapes state' unless path.start_with?(File.join(@directory, 'state') + '/') && !File.symlink?(path)
++          path
++        end
++      end
++      raise Invalid, 'retained disks share a destination' unless paths.uniq == paths
++      paths
++    end
++
++    def compatible_configuration!(current, candidate)
++      unless current.reject { |key, _| %w[machines labels].include?(key) } == candidate.reject { |key, _| %w[machines labels].include?(key) } &&
++             current.fetch('machines').keys.sort == candidate.fetch('machines').keys.sort
++        raise Invalid, 'candidate changes the retained topology'
++      end
++      current.fetch('machines').each do |name, machine|
++        raise Invalid, 'candidate changes retained layout' unless machine_layout(machine) == machine_layout(candidate.fetch('machines').fetch(name))
++      end
++    end
++
++    def machine_layout(machine)
++      allowed = case machine.fetch('spin')
++                when 'nixos' then %w[toplevel kernel initrd]
++                when 'vpsadminos' then %w[toplevel kernel initrd squashfs]
++                else []
++                end
++      allowed = [] unless machine.fetch('bootMode', 'direct') == 'direct'
++      result = machine.reject { |key, _| allowed.include?(key) }
++      if machine.fetch('spin') == 'nixos' && machine.fetch('bootMode', 'direct') == 'direct' && machine.key?('rootDisk')
++        result = result.merge('rootDisk' => machine.fetch('rootDisk').reject { |key, _| key == 'image' })
++      end
++      result
++    end
++
++    def validate_provenance!(proof)
++      exact_keys!(proof, %w[source_config source_config_sha256 proof_kind proof_reference])
++      store_path!(proof.fetch('source_config'))
++      digest!(proof.fetch('source_config_sha256'))
++      string!(proof.fetch('proof_reference'))
++      raise Invalid, 'unsupported residency proof' unless %w[prior_boot prior_update held_copy].include?(proof.fetch('proof_kind'))
++    end
++
++    def derive_recovery!(record, hold_digest, evidence, original)
++      exact_keys!(evidence, %w[version kind workspace slug expected_hold_sha256 machines])
++      unless evidence.fetch('version').is_a?(Integer) && evidence.fetch('version') == EVIDENCE_VERSION && evidence.fetch('kind') == 'retained_boot_recovery' &&
++             evidence.fetch('workspace') == @workspace && evidence.fetch('slug') == @slug && evidence.fetch('expected_hold_sha256') == hold_digest
++        raise Invalid, 'recovery evidence differs from predecessor'
++      end
++      proofs = evidence.fetch('machines')
++      unless proofs.is_a?(Hash) && proofs.keys.sort == original.fetch('machines').keys.sort
++        raise Invalid, 'recovery must prove every recorded machine'
++      end
++      dns = original.fetch('machines').keys & %w[dns-primary dns-secondary]
++      raise Invalid, 'recorded selection has no supported DNS guests' if dns.empty?
++      selected = original.fetch('machines').dup
++      dns_sources = []
++      proofs.each do |name, proof|
++        exact_keys!(proof, %w[source_config source_config_sha256 proof_kind proof_reference disks])
++        validate_provenance!(proof.reject { |key, _| key == 'disks' })
++        source, = config_file(proof.fetch('source_config'), expected_digest: proof.fetch('source_config_sha256'))
++        machine = source.fetch('machines').fetch(name)
++        unless machine_layout(machine) == machine_layout(original.fetch('machines').fetch(name))
++          raise Invalid, 'recovery changes a retained layout'
++        end
++        disks = proof.fetch('disks')
++        unless disks.is_a?(Array) && disks.length.between?(1, 32)
++          raise Invalid, 'invalid stopped disk binding'
++        end
++        disks.each do |disk|
++          exact_keys!(disk, %w[device dev ino size])
++          string!(disk.fetch('device'))
++          unless %w[dev ino size].all? { |key| disk.fetch(key).is_a?(Integer) && disk.fetch(key) >= (key == 'size' ? 1 : 0) }
++            raise Invalid, 'invalid stopped disk stat'
++          end
++        end
++        expected_disks = disk_identities(name:, machine:)
++        raise Invalid, 'current stopped disk binding differs' unless proof.fetch('disks') == expected_disks
++        if dns.include?(name)
++          unless machine.fetch('spin') == 'nixos' && original.fetch('machines').fetch(name).fetch('spin') == 'nixos'
++            raise Invalid, 'DNS recovery requires NixOS descriptors'
++          end
++          raise Invalid, 'DNS recovery requires prior full boot' unless proof.fetch('proof_kind') == 'prior_boot'
++          dns_sources << proof.fetch('source_config')
++          selected[name] = machine
++        else
++          kind = name == 'services' ? 'held_copy' : 'prior_update'
++          unless proof.fetch('proof_kind') == kind && machine == original.fetch('machines').fetch(name)
++            raise Invalid, 'recovery changes a proved services or Node selection'
++          end
++        end
++      end
++      raise Invalid, 'DNS guests require the same prior full boot configuration' unless dns_sources.uniq.one?
++      candidate, = config_file(record.fetch('candidate'), expected_digest: record.fetch('candidate_sha256'))
++      unless selected.fetch('services') == candidate.fetch('machines').fetch('services') &&
++             selected.fetch('services').fetch('toplevel') == record.fetch('copied_toplevel')
++        raise Invalid, 'recovery loses the completed services copy'
++      end
++      preserving_seed!(candidate)
++      corrected = original.merge('machines' => selected)
++      validate_disks!(corrected)
++      corrected
++    end
++
++    def disk_identities(name:, machine:)
++      validate_machine_disks!(name:, machine:).map do |path|
++        stat = File.stat(path)
++        { 'device' => path.delete_prefix(File.join(@directory, 'state') + '/'),
++          'dev' => stat.dev, 'ino' => stat.ino, 'size' => stat.size }
++      end
++    end
++
++    def history_directory!
++      path = File.join(@directory, 'maintenance-history')
++      Dir.mkdir(path, 0o700) unless File.exist?(path) || File.symlink?(path)
++      stat = File.lstat(path)
++      raise Invalid, 'unsafe maintenance history' unless stat.directory? && stat.uid == Process.uid && (stat.mode & 0o777) == 0o700
++      path
++    end
++
++    def archive_bytes!(path, bytes)
++      if File.exist?(path) || File.symlink?(path)
++        private_json(path, max_bytes: MAX_RECORD_BYTES)
++        raise Invalid, 'immutable history differs' unless File.binread(path) == bytes
++        return
++      end
++      File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
++        file.write(bytes)
++        file.flush
++        file.fsync
++      end
++      File.open(File.dirname(path)) { |directory| directory.fsync }
++    end
++
++    def original_next!(record)
++      recovery = record.fetch('recovery')
++      config_file(recovery.fetch('original_next_config'), expected_digest: recovery.fetch('original_next_config_sha256')).first
++    end
++
++    def validate_recovery_record!(record)
++      if record['recovery'].nil?
++        raise Invalid, 'unexpected predecessor without recovery' unless record['predecessor'].nil?
++        return
++      end
++      exact_keys!(record.fetch('predecessor'), %w[path sha256])
++      recovery = record.fetch('recovery')
++      exact_keys!(recovery, %w[evidence_path evidence_sha256 original_next_config original_next_config_sha256])
++      predecessor, predecessor_digest = private_json(record.fetch('predecessor').fetch('path'), max_bytes: MAX_RECORD_BYTES)
++      unless record.fetch('predecessor').fetch('path') == File.join(@directory, 'maintenance-history', "#{predecessor_digest}-hold.json") &&
++             recovery.fetch('evidence_path') == File.join(@directory, 'maintenance-history', "#{recovery.fetch('evidence_sha256')}-evidence.json")
++        raise Invalid, 'recovery snapshots escape private history'
++      end
++      unless predecessor_digest == record.fetch('predecessor').fetch('sha256') &&
++             predecessor['recovery'].nil? && predecessor['predecessor'].nil?
++        raise Invalid, 'recovery predecessor differs or recurses'
++      end
++      validate_record!(predecessor)
++      raise Invalid, 'predecessor copy is incomplete' unless %w[copied starting_copied].include?(predecessor.fetch('phase'))
++      predecessor_next, = config_file(predecessor.fetch('next_config'), expected_digest: predecessor.fetch('next_config_sha256'))
++      raise Invalid, 'predecessor selection differs' unless predecessor_next == next_configuration(predecessor)
++      unchanged = RECORD_KEYS - %w[version phase runner_pid runner_start boot_id next_config next_config_sha256]
++      raise Invalid, 'recovery changed original copy bindings' unless unchanged.all? { |key| predecessor.fetch(key) == record.fetch(key) }
++      evidence, evidence_digest = private_json(recovery.fetch('evidence_path'), max_bytes: MAX_RECORD_BYTES)
++      raise Invalid, 'recovery evidence digest differs' unless evidence_digest == recovery.fetch('evidence_sha256')
++      unless recovery.fetch('original_next_config') == predecessor.fetch('next_config') &&
++             recovery.fetch('original_next_config_sha256') == predecessor.fetch('next_config_sha256')
++        raise Invalid, 'recovery original next binding differs'
++      end
++      expected = derive_recovery!(record, predecessor_digest, evidence, original_next!(record))
++      actual, = config_file(record.fetch('next_config'), expected_digest: record.fetch('next_config_sha256'))
++      raise Invalid, 'recovered next differs' unless actual == expected
++    end
++
++    def recovery_configuration!(record, original)
++      recovery = record.fetch('recovery')
++      evidence, = private_json(recovery.fetch('evidence_path'), max_bytes: MAX_RECORD_BYTES)
++      derive_recovery!(record, record.fetch('predecessor').fetch('sha256'), evidence, original)
++    end
++
+     def next_configuration(record)
+       resident, = config_file(record.fetch('resident_config'), expected_digest: record.fetch('resident_config_sha256'))
+       candidate, = config_file(record.fetch('candidate'), expected_digest: record.fetch('candidate_sha256'))
+       marker = preserving_seed!(candidate)
+       compatible_services!(resident, candidate)
+-      resident.merge('machines' => resident.fetch('machines').merge('services' => candidate.fetch('machines').fetch('services')),
+-                     'labels' => resident.fetch('labels', {}).merge('vpsadminPreservingSeed' => JSON.generate(marker)))
++      original = resident.merge('machines' => resident.fetch('machines').merge('services' => candidate.fetch('machines').fetch('services')),
++                                'labels' => resident.fetch('labels', {}).merge('vpsadminPreservingSeed' => JSON.generate(marker)))
++      return original unless record['recovery']
++
++      recovery_configuration!(record, original)
+     end
+ 
+     def config_file(path, expected_digest: nil, store: true)
+@@ -468,7 +902,7 @@ module DevClusters
+ 
+     def evidence!(evidence)
+       exact_keys!(evidence, EVIDENCE_KEYS)
+-      unless evidence.fetch('version').is_a?(Integer) && evidence.fetch('version') == VERSION && evidence.fetch('workspace') == @workspace &&
++      unless evidence.fetch('version').is_a?(Integer) && evidence.fetch('version') == EVIDENCE_VERSION && evidence.fetch('workspace') == @workspace &&
+              evidence.fetch('slug') == @slug && %w[prior_activation prior_copy cold_residency].include?(evidence.fetch('evidence_kind'))
+         raise Invalid, 'unsupported residency evidence scope'
+       end
+@@ -558,6 +992,7 @@ module DevClusters
+     end
+ 
+     def write_record(record)
++      record = record.merge('version' => VERSION, 'predecessor' => record['predecessor'], 'recovery' => record['recovery'])
+       write_private_json(@record_path, record, max_bytes: MAX_RECORD_BYTES)
+       record
+     end
+@@ -586,6 +1021,29 @@ if $PROGRAM_NAME == __FILE__
+       { pid: Integer(values.fetch(0), 10), start: values.fetch(1), boot_id: values.fetch(2) }
+     end
+     case action
++    when 'applied-begin-update'
++      raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid applied update arguments' unless arguments.length == 2
++      maintenance.begin_update!(candidate_path: arguments.fetch(0), target: arguments.fetch(1))
++    when 'applied-promote-update'
++      raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid applied proof arguments' unless arguments.length == 2
++      maintenance.promote_update!(target: arguments.fetch(0), proof_reference: arguments.fetch(1))
++    when 'applied-begin-boot'
++      raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid applied boot arguments' unless arguments.length == 2
++      maintenance.begin_boot!(config_path: arguments.fetch(0), operation: arguments.fetch(1))
++    when 'applied-finish-boot'
++      raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid applied boot proof arguments' unless arguments.length == 2
++      maintenance.finish_boot!(config_path: arguments.fetch(0), proof_reference: arguments.fetch(1))
++    when 'applied-config'
++      raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid applied render arguments' unless arguments.length.between?(1, 2)
++      maintenance.retained_config!(output_path: arguments.fetch(0), candidate_path: arguments[1])
++    when 'applied-present'
++      puts maintenance.retained_selection? ? 'true' : 'false'
++    when 'recover-prepare'
++      raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid recovery arguments' unless arguments.length == 1
++      puts JSON.generate(maintenance.prepare_recovery!(evidence_path: arguments.fetch(0), output_path: File.join(directory, 'recovery-next.json')))
++    when 'recover-commit'
++      raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid rooted recovery arguments' unless arguments.length == 2
++      maintenance.commit_recovery!(evidence_path: arguments.fetch(0), next_path: arguments.fetch(1))
+     when 'prepare'
+       raise DevClusters::VpsAdminMaintenance::Invalid, 'invalid maintenance evidence arguments' unless arguments.length == 3
+       maintenance.prepare!(config_path: arguments.fetch(0), services_toplevel: arguments.fetch(1), evidence_path: arguments.fetch(2))
+diff --git a/dev-clusters/vpsadmin/nix/storage-profile-provision.rb b/dev-clusters/vpsadmin/nix/storage-profile-provision.rb
+index 9cce0e29fdb4c74d77f803284d7decaedab4563e..812441b6a0127e7bfffeb999281527db97675e7e 100644
+--- a/dev-clusters/vpsadmin/nix/storage-profile-provision.rb
++++ b/dev-clusters/vpsadmin/nix/storage-profile-provision.rb
+@@ -79,7 +79,9 @@ module DevStorageProfileProvision
+   def provision!(profile)
+     profile.require_enrollment!
+     @deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + MAX_SECONDS
+-    StorageMutationAdmission.check!
++    StorageFreezeControl.transaction(requires_new: true) do
++      StorageMutationAdmission.check!
++    end
+     pool_rows(profile)
+     [profile.config.fetch('backupPool'), profile.config.fetch('nasPool')].each do |selection|
+       check_deadline!
+diff --git a/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb b/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb
+index 956713974364c12f8ba574bc68a30cff6e401b1f..5ed4cbc7a9469b688d97711c9cac6da2513b15be 100644
+--- a/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb
++++ b/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb
+@@ -79,7 +79,9 @@ module StorageProfileAcceptance
+ 
+       profile = DevClusters::VpsAdminStorageProfile.instance
+       profile.require_enrollment! unless request.fetch('operation') == 'retired-info'
+-      StorageMutationAdmission.check!
++      StorageFreezeControl.transaction(requires_new: true) do
++        StorageMutationAdmission.check!
++      end
+       profile
+     end
+ 
+@@ -524,6 +526,14 @@ module StorageProfileAcceptance
+     end
+ 
+     def write_payload!(version)
++      current = api!('info')
++      identity = %w[source_id destination_id source_node destination_node source_fs]
++      unless current.fetch('settled') == true && current.fetch('source_id') == @request.fetch('source_id') &&
++             identity.all? { |field| current.fetch(field) == @info.fetch(field) }
++        raise Invalid, 'fixture payload source identity changed or is unsettled'
++      end
++
++      @info = current
+       files = PAYLOADS.fetch(version)
+       body = 'set -eu; mkdir -p /storage-profile-fixture; rm -f /storage-profile-fixture/keep /storage-profile-fixture/remove /storage-profile-fixture/added; '
+       files.each { |name, content| body += "printf %s #{Shellwords.escape(content)} > /storage-profile-fixture/#{name}; " }
+diff --git a/nix/tests/retained-services-maintenance.nix b/nix/tests/retained-services-maintenance.nix
+index 529572c84d643a6e138264899fe44d50d617e4de..1a8ab23613c2d9aa8c534a7743e37b818a4c5edf 100644
+--- a/nix/tests/retained-services-maintenance.nix
++++ b/nix/tests/retained-services-maintenance.nix
+@@ -36,6 +36,18 @@ let
+           enrollment = true;
+         };
+         newWebui.enable = false;
++        dns = {
++          enable = true;
++          servers.dns-primary = {
++            id = 301;
++            name = "retained-dns";
++            serverName = "retained-dns.example.test";
++            ip = "192.0.2.3";
++            cpus = 1;
++            memoryMiB = 1024;
++            sshPort = 19123;
++          };
++        };
+       }
+     );
+   fixtureModule =
+@@ -106,7 +118,24 @@ let
+     in
+     actual
+     // {
+-      # The real seed still sees the ordinary topology; only services boots.
++      # Real provider services and one retained DNS root share this scenario.
++      machines.dns-primary = actual.machines.dns-primary // {
++        networks = [
++          {
++            type = "user";
++            opts = {
++              network = "10.0.2.0/24";
++              host = "10.0.2.2";
++              dns = "10.0.2.3";
++              hostForward = "tcp:127.0.0.1:19123-:22";
++            };
++          }
++        ];
++        config = {
++          imports = [ actual.machines.dns-primary.config ];
++          environment.etc.retained-dns-generation.text = if enabled then "new" else "old";
++        };
++      };
+       machines.services = actual.machines.services // {
+         networks = [
+           {
+diff --git a/test/devcluster_commands_test.rb b/test/devcluster_commands_test.rb
+index e25288f75fd98d185d2d3e0b2944d97806dadc4c..e31879a1ff9e124e0e0bc3eb27dc1d61579fffed 100644
+--- a/test/devcluster_commands_test.rb
++++ b/test/devcluster_commands_test.rb
+@@ -5,6 +5,7 @@ require 'minitest/autorun'
+ require 'open3'
+ require 'rbconfig'
+ require 'tmpdir'
++require_relative '../dev-clusters/vpsadmin/lib/maintenance'
+ 
+ class DevclusterCommandsTest < Minitest::Test
+   ROOT = File.expand_path('..', __dir__)
+@@ -493,8 +494,246 @@ class DevclusterCommandsTest < Minitest::Test
+     end
+   end
+ 
++  def test_failed_guest_requisite_query_keeps_target_pending_without_root_or_promotion
++    with_workspace('vpsadmin') do |env, directory|
++      proof_env = selection_proof_environment(env).merge('FAIL_PROOF_QUERY' => '1')
++      result = run_helper('vpsadmin', proof_env, 'update', 'node1')
++      assert_equal(23, result.exitstatus, @last_output)
++      applied = JSON.parse(File.read(File.join(directory, 'applied-config.json')))
++      assert_equal(['node1'], applied.fetch('pending').fetch('targets'))
++      assert_empty(applied.fetch('provenance'))
++      assert_equal(['--query'], File.readlines(proof_env.fetch('TEST_PROOF_EVENTS'), chomp: true))
++      assert_locks_released(env)
++    end
++  end
++
++  def test_guest_closure_and_root_proof_promotes_only_the_updated_target
++    with_workspace('vpsadmin') do |env, directory|
++      proof_env = selection_proof_environment(env)
++      result = run_helper('vpsadmin', proof_env, 'update', 'node1')
++      assert(result.success?, @last_output)
++      applied = JSON.parse(File.read(File.join(directory, 'applied-config.json')))
++      assert_nil(applied.fetch('pending'))
++      assert_equal(['node1'], applied.fetch('provenance').keys)
++      assert_equal(%w[--query --check-validity --add-root], File.readlines(proof_env.fetch('TEST_PROOF_EVENTS'), chomp: true))
++    end
++  end
++
++  def test_failed_applied_source_root_leaves_pending_before_copy
++    with_workspace('vpsadmin') do |env, directory|
++      result = run_helper('vpsadmin', env.merge('FAIL_GC_ROOT' => '1'), 'update', 'node1')
++      assert_equal(23, result.exitstatus, @last_output)
++      applied = JSON.parse(File.read(File.join(directory, 'applied-config.json')))
++      assert_equal(['node1'], applied.fetch('pending').fetch('targets'))
++      assert_empty(applied.fetch('provenance'))
++      refute(events(env).any? { |event| %w[copy activate].include?(event['event']) })
++    end
++  end
++
++  def test_public_recovery_is_metadata_only_and_root_failure_preserves_original_hold
++    [true, false].each do |root_failure|
++      with_workspace('vpsadmin') do |env, directory|
++        with_recovery_selection(env, directory) do |evidence|
++          before = File.binread(File.join(directory, 'maintenance-hold.json'))
++          arguments = [File.join(ROOT, 'dev-clusters/vpsadmin/bin/devcluster'), 'maintenance-recover-config',
++                       env.fetch('TEST_SLUG'), '--residency-evidence', evidence]
++          stdout, stderr, result = Open3.capture3(env.merge('FAIL_GC_ROOT' => root_failure ? '1' : '0'), *arguments)
++          if root_failure
++            assert_equal(23, result.exitstatus, stdout + stderr)
++            assert_equal(before, File.binread(File.join(directory, 'maintenance-hold.json')))
++            refute(File.exist?(File.join(directory, 'applied-config.json')))
++          else
++            assert(result.success?, stdout + stderr)
++            hold = JSON.parse(File.read(File.join(directory, 'maintenance-hold.json')))
++            assert_equal(2, hold.fetch('version'))
++            assert_equal('copied', hold.fetch('phase'))
++            assert_equal(before, File.binread(hold.fetch('predecessor').fetch('path')))
++            applied = JSON.parse(File.read(File.join(directory, 'applied-config.json')))
++            assert_equal('copied_boot', applied.fetch('pending').fetch('operation'))
++            current = File.binread(File.join(directory, 'maintenance-hold.json'))
++            _, retry_stderr, retry_result = Open3.capture3(env, *arguments)
++            assert(retry_result.success?, retry_stderr)
++            assert_equal(current, File.binread(File.join(directory, 'maintenance-hold.json')))
++          end
++          refute(events(env).any? { |event| %w[build run copy activate ssh selection-proof].include?(event['event']) })
++          assert_locks_released(env)
++        end
++      end
++    end
++  end
++
++  def test_public_maintenance_start_never_launches_old_services_after_recovery
++    with_workspace('vpsadmin') do |env, directory|
++      with_recovery_selection(env, directory) do |evidence, resident, residency, top|
++        command = File.join(ROOT, 'dev-clusters/vpsadmin/bin/devcluster')
++        _, errors, recovered = Open3.capture3(env, command, 'maintenance-recover-config', env.fetch('TEST_SLUG'),
++                                            '--residency-evidence', evidence)
++        assert(recovered.success?, errors)
++        before = File.binread(File.join(directory, 'maintenance-hold.json'))
++        stdout, stderr, result = Open3.capture3(env, command, 'maintenance-start', env.fetch('TEST_SLUG'),
++          '--resident-config', resident, '--expect-services-toplevel', top, '--residency-evidence', residency)
++        refute(result.success?, stdout + stderr)
++        assert_equal(before, File.binread(File.join(directory, 'maintenance-hold.json')))
++        refute(events(env).any? { |event| %w[run copy activate ssh].include?(event['event']) })
++        refute(File.exist?(File.join(directory, 'ready')))
++      end
++    end
++  end
++
++  def test_legacy_images_refuse_cold_start_without_inventing_residency
++    with_workspace('vpsadmin', retained: true) do |env, directory|
++      FileUtils.mkdir_p(File.join(directory, 'state'))
++      File.write(File.join(directory, 'state/services-root.img'), 'existing retained image')
++      result = run_helper('vpsadmin', env, 'start')
++      refute(result.success?)
++      refute(events(env).any? { |event| event['event'] == 'run' })
++      refute(File.exist?(File.join(directory, 'applied-config.json')))
++    end
++  end
++
++  def test_retained_start_refuses_changed_layout_and_ignores_unapplied_boot_payloads
++    with_workspace('vpsadmin') do |env, directory|
++      assert(run_helper('vpsadmin', env, 'start').success?, @last_output)
++      original = JSON.parse(File.read(File.join(directory, 'applied-config.json')))
++      pending_before = File.binread(File.join(directory, 'applied-config.json'))
++      machines = fixture_machines
++      machines.fetch('node1')['networks'] = [{ 'type' => 'bridge', 'name' => 'changed-routing' }]
++      env['TEST_BUILT_MACHINES'] = JSON.generate(machines)
++      runs = events(env).count { |event| event['event'] == 'run' }
++      refute(run_helper('vpsadmin', env, 'start').success?)
++      assert_equal(runs, events(env).count { |event| event['event'] == 'run' })
++      assert_equal(pending_before, File.binread(File.join(directory, 'applied-config.json')))
++      machines = fixture_machines
++      machines.fetch('services')['toplevel'] += '-new-unapplied'
++      machines.fetch('node1')['squashfs'] += '-new-unapplied'
++      env['TEST_BUILT_MACHINES'] = JSON.generate(machines)
++      assert(run_helper('vpsadmin', env, 'start').success?, @last_output)
++      runner = events(env).select { |event| event['event'] == 'run' }.last
++      config_arg = runner.fetch('argv').index('--config') + 1
++      actual_boot = JSON.parse(File.read(runner.fetch('argv').fetch(config_arg)))
++      assert_equal(original.fetch('configuration'), actual_boot)
++      assert_equal(original.fetch('configuration'), JSON.parse(File.read(File.join(directory, 'applied-config.json'))).fetch('configuration'))
++    end
++  end
++
++  def test_recovery_accepts_only_fixed_evidence_argument_and_refuses_a_live_runner
++    with_workspace('vpsadmin') do |env, directory|
++      with_profile_runner(env, directory) do
++        before = events(env)
++        stdout, stderr, result = Open3.capture3(env, File.join(ROOT, 'dev-clusters/vpsadmin/bin/devcluster'),
++          'maintenance-recover-config', env.fetch('TEST_SLUG'), '--residency-evidence', '/fixture/evidence.json')
++        refute(result.success?, stdout + stderr)
++        assert_equal(before, events(env))
++        refute(File.exist?(File.join(directory, 'maintenance-hold.json')))
++      end
++    end
++    [[], ['--force'], ['--residency-evidence', '/fixture/evidence', '--config', '/fixture/config']].each do |arguments|
++      with_workspace('vpsadmin') do |env, _directory|
++        stdout, stderr, result = Open3.capture3(env, File.join(ROOT, 'dev-clusters/vpsadmin/bin/devcluster'),
++          'maintenance-recover-config', env.fetch('TEST_SLUG'), *arguments)
++        refute(result.success?, stdout + stderr)
++        assert_empty(events(env))
++      end
++    end
++  end
++
+   private
+ 
++  def fixture_machines
++    %w[services node1 node2].to_h do |name|
++      machine = { 'spin' => name == 'services' ? 'nixos' : 'vpsadminos',
++                  'toplevel' => "/nix/store/fixture-#{name}",
++                  'kernel' => "/nix/store/fixture-#{name}-kernel", 'initrd' => "/nix/store/fixture-#{name}-initrd" }
++      disk = { 'device' => '{machine}-root.img', 'type' => 'file',
++               'create' => true, 'preserve' => true, 'size' => '1G' }
++      if name == 'services'
++        machine['rootDisk'] = disk
++      else
++        machine['disks'] = [disk]
++        machine['squashfs'] = "/nix/store/fixture-#{name}-squashfs"
++      end
++      [name, machine]
++    end
++  end
++
++  def with_recovery_selection(env, directory)
++    store = env.fetch('TEST_STORE')
++    state = File.join(directory, 'state')
++    FileUtils.mkdir_p(state)
++    File.write(File.join(directory, 'network'), "bridge\n")
++    qemu = File.join(store, 'qemu')
++    FileUtils.mkdir_p(File.join(qemu, 'bin'))
++    File.write(File.join(qemu, 'bin/qemu-kvm'), 'fixture')
++    File.chmod(0o755, File.join(qemu, 'bin/qemu-kvm'))
++    historic = { 'machines' => fixture_machines }
++    historic.fetch('machines')['dns-primary'] = historic.fetch('machines').fetch('services').dup
++    historic.fetch('machines').each do |name, machine|
++      machine['toplevel'] = File.join(store, "old-#{name}")
++      machine['kernel'] = File.join(store, 'kernel')
++      machine['initrd'] = File.join(store, 'initrd')
++      machine['qemu'] = qemu
++      File.write(File.join(state, "#{name}-root.img"), 'retained fixture image')
++    end
++    historic_path = File.join(store, 'historic.json')
++    File.write(historic_path, JSON.generate(historic))
++    selected = JSON.parse(JSON.generate(historic))
++    selected.fetch('machines').fetch('dns-primary')['toplevel'] += '-not-copied'
++    resident_path = File.join(store, 'legacy-selected.json')
++    File.write(resident_path, JSON.generate(selected))
++    candidate = JSON.parse(JSON.generate(selected))
++    candidate.fetch('machines').fetch('services')['toplevel'] += '-copied'
++    candidate['labels'] = { 'vpsadminPreservingSeed' => '{"version":1,"existingAssignments":"preserve"}' }
++    candidate_path = File.join(store, 'candidate.json')
++    File.write(candidate_path, JSON.generate(candidate))
++    evidence = File.join(directory, 'residency.json')
++    File.write(evidence, JSON.generate('version' => 1, 'workspace' => env.fetch('DEVCLUSTER_WORKSPACE'),
++      'slug' => env.fetch('TEST_SLUG'), 'resident_config' => resident_path,
++      'resident_config_sha256' => Digest::SHA256.file(resident_path).hexdigest,
++      'services_toplevel' => selected.fetch('machines').fetch('services').fetch('toplevel'),
++      'evidence_kind' => 'prior_activation', 'evidence_reference' => 'fixture real services residency; DNS unproved'))
++    File.chmod(0o600, evidence)
++    helper = DevClusters::VpsAdminMaintenance.new(workspace: env.fetch('DEVCLUSTER_WORKSPACE'),
++      slug: env.fetch('TEST_SLUG'), directory: directory, store_root: store)
++    helper.prepare!(config_path: resident_path,
++      services_toplevel: selected.fetch('machines').fetch('services').fetch('toplevel'), evidence_path: evidence)
++    identity = { pid: 123, start: '456', boot_id: '01111111-2222-3333-4444-555555555555' }
++    helper.bind_boot!(**identity)
++    helper.begin_copy!(candidate_path: candidate_path, **identity)
++    next_path = File.join(store, 'next.json')
++    helper.build_next!(next_path: next_path)
++    helper.finish_copy!(next_path: next_path, **identity)
++    proof = JSON.parse(File.read(next_path)).fetch('machines').to_h do |name, machine|
++      source = name == 'dns-primary' ? historic_path : next_path
++      [name, { 'source_config' => source, 'source_config_sha256' => Digest::SHA256.file(source).hexdigest,
++               'proof_kind' => name == 'services' ? 'held_copy' : (name == 'dns-primary' ? 'prior_boot' : 'prior_update'),
++               'proof_reference' => 'fixture action ledger; retained disk never replaced',
++               'disks' => helper.send(:disk_identities, name:, machine:) }]
++    end
++    recovery = File.join(directory, 'recovery.json')
++    File.write(recovery, JSON.generate('version' => 1, 'kind' => 'retained_boot_recovery',
++      'workspace' => env.fetch('DEVCLUSTER_WORKSPACE'), 'slug' => env.fetch('TEST_SLUG'),
++      'expected_hold_sha256' => Digest::SHA256.file(File.join(directory, 'maintenance-hold.json')).hexdigest,
++      'machines' => proof))
++    File.chmod(0o600, recovery)
++    yield recovery, resident_path, evidence, selected.fetch('machines').fetch('services').fetch('toplevel')
++  end
++
++  def selection_proof_environment(env)
++    bin = File.join(env.fetch('DEVCLUSTER_WORKSPACE'), 'proof-bin')
++    FileUtils.mkdir_p(bin)
++    path = File.join(bin, 'nix-store')
++    File.write(path, "#!#{RbConfig.ruby}\n" + <<~'RUBY')
++      File.open(ENV.fetch('TEST_PROOF_EVENTS'), 'a') { |file| file.puts(ARGV.first) }
++      if ARGV.first == '--query'
++        exit 23 if ENV['FAIL_PROOF_QUERY'] == '1'
++        puts ENV.fetch('TEST_PROOF_TOP')
++      end
++    RUBY
++    File.chmod(0o755, path)
++    env.merge('RUN_SELECTION_PROOF' => '1', 'TEST_PROOF_BIN' => bin,
++              'TEST_PROOF_EVENTS' => File.join(bin, 'events'))
++  end
++
+   def enable_storage_profile(env, directory, enrollment: :omitted)
+     config = JSON.parse(File.read(env.fetch('TEST_CONFIG')))
+     config['storageProfile'] = { 'enable' => true }
+@@ -551,12 +790,15 @@ class DevclusterCommandsTest < Minitest::Test
+       File.write(File.join(tracking, 'state.md'), "---\nlifecycle: active\n---\n")
+       %w[vpsadmin vpsadminos].each { |project| FileUtils.mkdir_p(File.join(workspace, 'worktrees', slug, project)) }
+       config = File.join(ROOT, 'test', 'fixtures', "#{kind}-config.json")
+-      machines = %w[services node1 node2].to_h { |name| [name, { 'toplevel' => "/fixture/#{name}" }] }
+-      File.write(File.join(workspace, 'built.json'), JSON.generate('machines' => machines))
+-      File.symlink(File.join(workspace, 'built.json'), File.join(directory, 'result-config')) if retained
++      store = File.join(workspace, 'store')
++      FileUtils.mkdir_p(store)
++      machines = fixture_machines
++      built = File.join(store, 'built.json')
++      File.write(built, JSON.generate('machines' => machines, 'labels' => {}))
++      File.symlink(built, File.join(directory, 'result-config')) if retained
+       bin = File.join(workspace, 'bin')
+       FileUtils.mkdir_p(bin)
+-      %w[nix ssh ssh-keygen openssl git rm jq mktemp mv].each do |name|
++      %w[nix nix-store ruby ssh ssh-keygen openssl git rm jq mktemp mv ping].each do |name|
+         path = File.join(bin, name)
+         File.write(path, "#!#{RbConfig.ruby}\n" + command_stub)
+         File.chmod(0o755, path)
+@@ -565,6 +807,9 @@ class DevclusterCommandsTest < Minitest::Test
+         'DEVCLUSTER_WORKSPACE' => workspace,
+         'TEST_SLUG' => slug,
+         'TEST_KIND' => kind,
++        'TEST_REAL_RUBY' => RbConfig.ruby,
++        'TEST_STORE' => store,
++        'TEST_BUILT_MACHINES' => JSON.generate(machines),
+         'TEST_CONFIG' => config,
+         'TEST_EVENTS' => File.join(workspace, 'events.jsonl'),
+         'TEST_REAL_RM' => ENV.fetch('PATH').split(File::PATH_SEPARATOR).map { |path| File.join(path, 'rm') }.find { |path| File.executable?(path) },
+@@ -584,6 +829,14 @@ class DevclusterCommandsTest < Minitest::Test
+     argv = [File.join(ROOT, 'dev-clusters', kind, 'bin', 'devcluster'), command, env.fetch('TEST_SLUG')]
+     argv << target if target
+     argv += ['--network', env.fetch('TEST_START_NETWORK', 'local'), '--topology', 'dual'] if command == 'start'
++    if kind == 'vpsadmin' && command == 'update'
++      state = File.join(env.fetch('DEVCLUSTER_WORKSPACE'), '.dev-clusters', kind, 'clusters', env.fetch('TEST_SLUG'), 'state')
++      FileUtils.mkdir_p(state)
++      fixture_machines.each_key do |name|
++        path = File.join(state, "#{name}-root.img")
++        File.write(path, 'retained sentinel') unless File.exist?(path)
++      end
++    end
+     stdout, stderr, result = Open3.capture3(env, *argv)
+     assert(result.exited?, stderr)
+     @last_output = stdout + stderr
+@@ -662,6 +915,42 @@ class DevclusterCommandsTest < Minitest::Test
+       require 'json'
+       require 'fileutils'
+       command = File.basename($PROGRAM_NAME)
++      exit 1 if command == 'ping'
++      if command == 'ruby'
++        helper = ARGV.first
++        if helper && helper.end_with?('/vpsadmin/lib/maintenance.rb')
++          require helper
++          DevClusters::VpsAdminMaintenance.prepend(Module.new do
++            def initialize(**identity)
++              super(**identity, store_root: ENV.fetch('TEST_STORE'))
++            end
++          end)
++          $0 = ARGV.shift
++          $VERBOSE = nil
++          load helper
++          exit 0
++        end
++        exec ENV.fetch('TEST_REAL_RUBY'), *ARGV
++      end
++      if command == 'nix-store'
++        if ARGV.first == '--add'
++          require 'digest'
++          source = ARGV.fetch(1)
++          target = File.join(ENV.fetch('TEST_STORE'), Digest::SHA256.file(source).hexdigest + '-sealed.json')
++          FileUtils.cp(source, target) unless File.exist?(target)
++          puts target
++        elsif ARGV.first == '--add-root'
++          exit 23 if ENV['FAIL_GC_ROOT'] == '1'
++          link = ARGV.fetch(1)
++          target = ARGV.last
++          FileUtils.mkdir_p(File.dirname(link))
++          FileUtils.rm_f(link)
++          File.symlink(target, link)
++        else
++          abort 'unexpected fixture nix-store action'
++        end
++        exit 0
++      end
+       if command == 'jq'
+         abort 'obsolete source metadata jq write' if ARGV.include?('-n') && ARGV.include?('revision')
+         exec ENV.fetch('TEST_REAL_JQ'), *ARGV
+@@ -687,6 +976,8 @@ class DevclusterCommandsTest < Minitest::Test
+               when 'ssh'
+                 if ARGV.any? { |arg| arg.include?('switch-to-configuration') }
+                   'activate'
++                elsif ARGV.last.include?('vpsadmin-devcluster-applied-')
++                  'selection-proof'
+                 elsif ARGV.last == 'true'
+                   'ssh-ready'
+                 else
+@@ -718,7 +1009,7 @@ class DevclusterCommandsTest < Minitest::Test
+           link = value_after('--out-link')
+           workspace = ENV.fetch('DEVCLUSTER_WORKSPACE')
+           config = JSON.parse(File.read(ENV.fetch('TEST_CONFIG')))
+-          machines = %w[services node1 node2].to_h { |name| [name, { 'toplevel' => "/fixture/#{name}" }] }
++          machines = JSON.parse(ENV.fetch('TEST_BUILT_MACHINES'))
+           labels = if config.dig('newWebui', 'enable') == true
+                      { 'webuiSourceRevision' => environment.fetch('VPSADMIN_DEVCLUSTER_VPSADMIN_WEBUI_REVISION'),
+                        'webuiSourceDirty' => environment.fetch('VPSADMIN_DEVCLUSTER_VPSADMIN_WEBUI_DIRTY') == '1' ? 'true' : 'false',
+@@ -727,12 +1018,19 @@ class DevclusterCommandsTest < Minitest::Test
+                      {}
+                    end
+           labels.delete('webuiSourceKind') if ENV['TEST_PARTIAL_LABELS'] == '1'
+-          target = File.join(workspace, "built-#{File.readlines(ENV.fetch('TEST_EVENTS')).length}.json")
++          target = File.join(ENV.fetch('TEST_STORE'), "built-#{File.readlines(ENV.fetch('TEST_EVENTS')).length}.json")
+           File.write(target, ENV['TEST_INVALID_RESULT'] == '1' ? '{invalid' : JSON.generate('machines' => machines, 'labels' => labels))
+           FileUtils.rm_f(link)
+           File.symlink(target, link)
+           exit 23 if ENV['FAIL_AFTER_LINK'] == '1'
+         when 'run'
++          config = JSON.parse(File.read(value_after('--config')))
++          state = value_after('--state-dir')
++          FileUtils.mkdir_p(state)
++          config.fetch('machines').each_key do |name|
++            path = File.join(state, "#{name}-root.img")
++            File.write(path, 'new fixture image') unless File.exist?(path)
++          end
+           File.write(value_after('--ready-file'), 'ready')
+         end
+       when 'ssh-keygen'
+@@ -748,6 +1046,25 @@ class DevclusterCommandsTest < Minitest::Test
+           File.write(output, 'fixture')
+         end
+       when 'ssh'
++        if event == 'selection-proof'
++          if ENV['RUN_SELECTION_PROOF'] == '1'
++            require 'open3'
++            remote = ARGV.last
++            top = remote.match(/= '([^']+)'/).captures.first
++            prelude = <<~SH
++              readlink() { printf '%s\n' '#{top}'; }
++              test() {
++                if [ "$1" = -x ] && [ "$2" = '#{top}/init' ]; then return 0; fi
++                command test "$@"
++              }
++            SH
++            output, errors, result = Open3.capture3({ 'PATH' => "#{ENV.fetch('TEST_PROOF_BIN')}:#{ENV.fetch('PATH')}", 'TEST_PROOF_TOP' => top }, 'bash', '-c', prelude + remote)
++            print output
++            warn errors unless errors.empty?
++            exit result.exitstatus
++          end
++          exit 0
++        end
+         if ENV['TEST_STORAGE_PROFILE'] == '1'
+           remote = ARGV.last
+           if remote.include?('vpsadmin-storage-profile inspect')
+diff --git a/test/devcluster_maintenance_test.rb b/test/devcluster_maintenance_test.rb
+index 233aef3a83c3849c95446517bde504045caf73f7..b2c21f61430c7f910adcddd20aa7c7ed4e94c139 100644
+--- a/test/devcluster_maintenance_test.rb
++++ b/test/devcluster_maintenance_test.rb
+@@ -67,7 +67,7 @@ class DevclusterMaintenanceTest < Minitest::Test
+       File.open(paths.fetch(:missing), 'a') { |file| file.write("\n") }
+       assert_raises(Maintenance::Invalid) { prepare(maintenance, paths, evidence_path: paths.fetch(:missing)) }
+       assert_equal(before, File.binread(paths.fetch(:record)))
+-      assert_equal({ 'version' => 1, 'mode' => 'maintenance', 'phase' => 'held',
++      assert_equal({ 'version' => 2, 'mode' => 'maintenance', 'phase' => 'held',
+                      'pending' => true, 'copied' => false, 'active' => false }, maintenance.status)
+       refute_includes(JSON.generate(maintenance.status), 'private reference')
+     end
+@@ -161,6 +161,8 @@ class DevclusterMaintenanceTest < Minitest::Test
+       assert_equal('retained services payload', File.binread(paths.fetch(:services_disk)))
+       assert_equal(paths.fetch(:next), maintenance.copied_config!)
+       assert_equal('starting_copied', maintenance.status.fetch('phase'))
++      maintenance.begin_boot!(config_path: paths.fetch(:next), operation: 'copied_boot')
++      maintenance.finish_boot!(config_path: paths.fetch(:next), proof_reference: 'fixture full boot proof')
+       maintenance.release!(**identity.merge(boot_id: '01111111-2222-3333-4444-666666666666'))
+       refute(maintenance.pending?)
+       assert(maintenance.status.fetch('active'))
+@@ -284,6 +286,271 @@ class DevclusterMaintenanceTest < Minitest::Test
+     end
+   end
+ 
++  def test_target_promotion_keeps_all_other_descriptors_and_proofs
++    with_applied_fixture do |maintenance, paths|
++      before = read_applied(paths)
++      maintenance.begin_update!(candidate_path: paths.fetch(:candidate), target: 'node1')
++      pending = read_applied(paths)
++      assert_equal(before.fetch('configuration'), pending.fetch('configuration'))
++      assert_equal(before.fetch('provenance'), pending.fetch('provenance'))
++      maintenance.promote_update!(target: 'node1', proof_reference: 'exact current-system and rooted closure')
++      after = read_applied(paths)
++      assert_equal(before.dig('configuration', 'machines', 'services'), after.dig('configuration', 'machines', 'services'))
++      assert_equal(before.dig('provenance', 'services'), after.dig('provenance', 'services'))
++      assert_equal(JSON.parse(File.read(paths.fetch(:candidate))).dig('machines', 'node1'), after.dig('configuration', 'machines', 'node1'))
++      assert_nil(after.fetch('pending'))
++    end
++  end
++
++  def test_node_boot_payload_changes_only_promote_the_selected_descriptor
++    with_applied_fixture do |maintenance, paths|
++      before = read_applied(paths)
++      maintenance.begin_update!(candidate_path: paths.fetch(:candidate), target: 'node1')
++      maintenance.promote_update!(target: 'node1', proof_reference: 'real-shaped Node current-system and closure proof')
++      after = read_applied(paths)
++      refute_equal(before.dig('configuration', 'machines', 'node1', 'squashfs'), after.dig('configuration', 'machines', 'node1', 'squashfs'))
++      assert_equal(before.dig('configuration', 'machines', 'services'), after.dig('configuration', 'machines', 'services'))
++      %w[kernelParams extraQemuOptions iso qemu virtiofs networks sharedFileSystems].each do |field|
++        candidate = JSON.parse(File.read(paths.fetch(:candidate)))
++        candidate.fetch('machines').fetch('node1')[field] = 'changed retained layout'
++        path = paths.fetch(:candidate) + "-#{field}.json"
++        write_json(path, candidate)
++        unchanged = File.binread(paths.fetch(:applied))
++        assert_raises(Maintenance::Invalid, field) { maintenance.begin_update!(candidate_path: path, target: 'node1') }
++        assert_equal(unchanged, File.binread(paths.fetch(:applied)), field)
++      end
++    end
++  end
++
++  def test_unexpected_node_root_disk_has_no_image_source_exemption
++    with_applied_fixture do |maintenance, paths|
++      current = read_applied(paths)
++      node = current.fetch('configuration').fetch('machines').fetch('node1')
++      node['rootDisk'] = { 'type' => 'file', 'device' => 'node-extra.img', 'preserve' => true,
++                           'image' => paths.fetch(:resident) }
++      File.write(File.join(File.dirname(paths.fetch(:record)), 'state/node-extra.img'), 'retained extra disk')
++      source = paths.fetch(:resident) + '-unexpected-root.json'
++      write_json(source, current.fetch('configuration'))
++      current.fetch('provenance')['node1'] = { 'source_config' => source,
++        'source_config_sha256' => Digest::SHA256.file(source).hexdigest,
++        'proof_kind' => 'prior_boot', 'proof_reference' => 'fixture unexpected retained descriptor' }
++      write_json(paths.fetch(:applied), current)
++      candidate = JSON.parse(JSON.generate(current.fetch('configuration')))
++      candidate.fetch('machines').fetch('node1').fetch('rootDisk')['image'] = paths.fetch(:candidate)
++      changed = paths.fetch(:candidate) + '-unexpected-root.json'
++      write_json(changed, candidate)
++      assert_raises(Maintenance::Invalid) { maintenance.begin_update!(candidate_path: changed, target: 'node1') }
++    end
++  end
++
++  def test_pending_target_refuses_another_target_and_allows_explicit_retry
++    with_applied_fixture do |maintenance, paths|
++      maintenance.begin_update!(candidate_path: paths.fetch(:candidate), target: 'node1')
++      before = File.binread(paths.fetch(:applied))
++      assert_raises(Maintenance::Invalid) { maintenance.begin_update!(candidate_path: paths.fetch(:candidate), target: 'services') }
++      assert_equal(before, File.binread(paths.fetch(:applied)))
++      assert_raises(Maintenance::Invalid) { maintenance.retained_config!(output_path: paths.fetch(:rendered)) }
++      retry_config = JSON.parse(File.read(paths.fetch(:candidate)))
++      retry_config.fetch('machines').fetch('node1')['toplevel'] += '-retry'
++      # Both candidates remain immutable; only the explicit pending target changes.
++      retry_path = paths.fetch(:candidate) + '-retry.json'
++      write_json(retry_path, retry_config)
++      maintenance.begin_update!(candidate_path: retry_path, target: 'node1')
++      assert_equal(retry_path, read_applied(paths).fetch('pending').fetch('candidate'))
++      maintenance.promote_update!(target: 'node1', proof_reference: 'actual retry proof')
++      assert_equal(retry_config.fetch('machines').fetch('node1'), read_applied(paths).dig('configuration', 'machines', 'node1'))
++    end
++  end
++
++  def test_legacy_target_update_does_not_prove_untouched_images
++    with_fixture do |maintenance, paths|
++      assert_raises(Maintenance::Invalid) { maintenance.begin_boot!(config_path: paths.fetch(:resident), operation: 'boot') }
++      maintenance.begin_update!(candidate_path: paths.fetch(:candidate), target: 'node1')
++      maintenance.promote_update!(target: 'node1', proof_reference: 'actual target update')
++      applied = JSON.parse(File.read(File.join(File.dirname(paths.fetch(:record)), 'applied-config.json')))
++      assert_equal(['node1'], applied.fetch('provenance').keys)
++      assert_raises(Maintenance::Invalid) { maintenance.retained_config!(output_path: paths.fetch(:next)) }
++    end
++  end
++
++  def test_missing_or_changed_disk_layout_refuses_before_pending_publication
++    with_applied_fixture do |maintenance, paths|
++      before = File.binread(paths.fetch(:applied))
++      candidate = JSON.parse(File.read(paths.fetch(:candidate)))
++      candidate.fetch('machines').fetch('node1').fetch('disks').first['device'] = '../outside'
++      write_json(paths.fetch(:candidate), candidate)
++      assert_raises(Maintenance::Invalid) { maintenance.begin_update!(candidate_path: paths.fetch(:candidate), target: 'node1') }
++      assert_equal(before, File.binread(paths.fetch(:applied)))
++    end
++  end
++
++  def test_interrupted_target_promotion_retains_pending_and_prior_selection
++    with_applied_fixture do |maintenance, paths|
++      maintenance.begin_update!(candidate_path: paths.fetch(:candidate), target: 'node1')
++      before = File.binread(paths.fetch(:applied))
++      maintenance.stub(:write_private_json, ->(*) { raise Errno::EIO }) do
++        assert_raises(Errno::EIO) { maintenance.promote_update!(target: 'node1', proof_reference: 'actual proof') }
++      end
++      assert_equal(before, File.binread(paths.fetch(:applied)))
++    end
++  end
++
++  def test_recovery_preserves_six_machine_copy_and_immutable_predecessor
++    with_recovery_fixture do |maintenance, paths|
++      old_hold = File.binread(paths.fetch(:record))
++      original = JSON.parse(File.read(paths.fetch(:next)))
++      prepared = maintenance.prepare_recovery!(evidence_path: paths.fetch(:recovery), output_path: paths.fetch(:corrected))
++      assert_equal(false, prepared.fetch('already_recorded'))
++      assert_equal(old_hold, File.binread(paths.fetch(:record)))
++      maintenance.commit_recovery!(evidence_path: paths.fetch(:recovery), next_path: paths.fetch(:corrected))
++      corrected = JSON.parse(File.read(paths.fetch(:corrected)))
++      %w[services node1 node2 storage1].each do |name|
++        assert_equal(original.fetch('machines').fetch(name), corrected.fetch('machines').fetch(name))
++      end
++      history = JSON.parse(File.read(paths.fetch(:historic)))
++      %w[dns-primary dns-secondary].each do |name|
++        assert_equal(history.fetch('machines').fetch(name), corrected.fetch('machines').fetch(name))
++      end
++      record = maintenance.load_record
++      assert_equal(2, record.fetch('version'))
++      assert_equal(1, record.fetch('mask_policy'))
++      assert_equal(old_hold, File.binread(record.fetch('predecessor').fetch('path')))
++      assert_equal('copied', maintenance.status.fetch('phase'))
++      assert(maintenance.pending?)
++      assert_raises(Maintenance::Invalid) { maintenance.retained_config!(output_path: paths.fetch(:rendered)) }
++      retry_result = maintenance.prepare_recovery!(evidence_path: paths.fetch(:recovery), output_path: paths.fetch(:rendered))
++      assert(retry_result.fetch('already_recorded'))
++      assert_equal(paths.fetch(:corrected), retry_result.fetch('next_config'))
++    end
++  end
++
++  def test_recovery_validation_failure_never_publishes
++    %w[hold node services dns_source disk layout extra marker float duplicate].each do |failure|
++      with_recovery_fixture do |maintenance, paths|
++        evidence = JSON.parse(File.read(paths.fetch(:recovery)))
++        case failure
++        when 'hold' then evidence['expected_hold_sha256'] = '0' * 64
++        when 'node'
++          foreign = JSON.parse(File.read(paths.fetch(:next)))
++          foreign.fetch('machines').fetch('node1')['squashfs'] += '-different'
++          source = paths.fetch(:historic) + '-foreign.json'
++          write_json(source, foreign)
++          evidence.fetch('machines').fetch('node1').merge!(
++            'source_config' => source, 'source_config_sha256' => Digest::SHA256.file(source).hexdigest)
++        when 'services'
++          evidence.fetch('machines').fetch('services').merge!(
++            'source_config' => paths.fetch(:historic), 'source_config_sha256' => Digest::SHA256.file(paths.fetch(:historic)).hexdigest)
++        when 'dns_source' then evidence.fetch('machines').fetch('dns-primary')['proof_kind'] = 'prior_update'
++        when 'disk' then evidence.fetch('machines').fetch('dns-primary').fetch('disks').first['ino'] += 1
++        when 'layout' then File.unlink(paths.fetch(:dns_disk))
++        when 'float' then evidence['version'] = 1.0
++        when 'extra' then evidence.fetch('machines')['foreign'] = evidence.fetch('machines').fetch('node1')
++        when 'marker'
++          candidate = JSON.parse(File.read(paths.fetch(:candidate)))
++          candidate['labels'] = {}
++          write_json(paths.fetch(:candidate), candidate)
++        end
++        write_json(paths.fetch(:recovery), evidence)
++        if failure == 'duplicate'
++          File.write(paths.fetch(:recovery), File.read(paths.fetch(:recovery)).sub('{', '{"version":1,'))
++        end
++        before = File.binread(paths.fetch(:record))
++        assert_raises(Maintenance::Invalid, failure) do
++          maintenance.prepare_recovery!(evidence_path: paths.fetch(:recovery), output_path: paths.fetch(:corrected))
++        end
++        assert_equal(before, File.binread(paths.fetch(:record)), failure)
++        refute(File.exist?(paths.fetch(:corrected)), failure)
++      end
++    end
++  end
++
++  def test_recovery_final_publication_failure_leaves_original_hold_authoritative
++    with_recovery_fixture do |maintenance, paths|
++      maintenance.prepare_recovery!(evidence_path: paths.fetch(:recovery), output_path: paths.fetch(:corrected))
++      before = File.binread(paths.fetch(:record))
++      original_writer = maintenance.method(:write_private_json)
++      maintenance.stub(:write_private_json, lambda { |path, value, **options|
++        raise Errno::EIO if path == paths.fetch(:record)
++        original_writer.call(path, value, **options)
++      }) do
++        assert_raises(Errno::EIO) { maintenance.commit_recovery!(evidence_path: paths.fetch(:recovery), next_path: paths.fetch(:corrected)) }
++      end
++      assert_equal(before, File.binread(paths.fetch(:record)))
++      assert(maintenance.pending?)
++    end
++  end
++
++  def test_recovered_boot_rechecks_current_disk_snapshot_and_requires_full_proof
++    with_recovery_fixture do |maintenance, paths|
++      maintenance.prepare_recovery!(evidence_path: paths.fetch(:recovery), output_path: paths.fetch(:corrected))
++      maintenance.commit_recovery!(evidence_path: paths.fetch(:recovery), next_path: paths.fetch(:corrected))
++      assert_equal(paths.fetch(:corrected), maintenance.copied_config!)
++      maintenance.validate_copied_runner!(config_path: paths.fetch(:corrected))
++      assert_raises(Maintenance::Invalid) { maintenance.release!(**identity) }
++      config = JSON.parse(File.read(paths.fetch(:corrected)))
++      File.rename(paths.fetch(:dns_disk), paths.fetch(:dns_disk) + '.old')
++      File.write(paths.fetch(:dns_disk), 'replacement same size'.ljust(File.size(paths.fetch(:dns_disk) + '.old')))
++      assert_raises(Maintenance::Invalid) do
++        maintenance.validate_machine_disks!(name: 'dns-primary', machine: config.fetch('machines').fetch('dns-primary'))
++      end
++    end
++  end
++
++  def test_recovered_pending_selection_refuses_old_maintenance_before_effects
++    with_recovery_fixture do |maintenance, paths|
++      maintenance.prepare_recovery!(evidence_path: paths.fetch(:recovery), output_path: paths.fetch(:corrected))
++      maintenance.commit_recovery!(evidence_path: paths.fetch(:recovery), next_path: paths.fetch(:corrected))
++      before = File.binread(paths.fetch(:record))
++      error = assert_raises(Maintenance::Invalid) { prepare(maintenance, paths) }
++      assert_equal('recovered selection requires copied boot', error.message)
++      error = assert_raises(Maintenance::Invalid) { maintenance.validate_runner!(config_path: paths.fetch(:resident)) }
++      assert_equal('recovered selection requires copied boot', error.message)
++      assert_equal(before, File.binread(paths.fetch(:record)))
++    end
++  end
++
++  def test_applied_envelope_rejects_float_version
++    with_applied_fixture do |maintenance, paths|
++      applied = read_applied(paths).merge('version' => 1.0)
++      write_json(paths.fetch(:applied), applied)
++      assert_raises(Maintenance::Invalid) { maintenance.retained_selection? }
++    end
++  end
++
++  def test_completed_recovered_full_boot_publishes_before_release
++    with_recovery_fixture do |maintenance, paths|
++      maintenance.prepare_recovery!(evidence_path: paths.fetch(:recovery), output_path: paths.fetch(:corrected))
++      maintenance.commit_recovery!(evidence_path: paths.fetch(:recovery), next_path: paths.fetch(:corrected))
++      maintenance.copied_config!
++      maintenance.begin_boot!(config_path: paths.fetch(:corrected), operation: 'copied_boot')
++      assert_raises(Maintenance::Invalid) { maintenance.release!(**identity) }
++      maintenance.finish_boot!(config_path: paths.fetch(:corrected), proof_reference: 'full copied boot, seed and Node refresh completed')
++      maintenance.release!(**identity)
++      refute(maintenance.pending?)
++      maintenance.retained_config!(output_path: paths.fetch(:rendered))
++      assert_equal(JSON.parse(File.read(paths.fetch(:corrected))), JSON.parse(File.read(paths.fetch(:rendered))))
++      assert_equal(2, maintenance.load_record.fetch('version'))
++    end
++  end
++
++  def test_legacy_v1_reader_remains_exact_and_new_transitions_write_v2
++    with_fixture do |maintenance, paths|
++      prepare(maintenance, paths)
++      legacy = maintenance.load_record.reject { |key, _| %w[predecessor recovery].include?(key) }.merge('version' => 1)
++      write_json(paths.fetch(:record), legacy)
++      assert_equal(1, maintenance.load_record.fetch('version'))
++      bind_boot(maintenance)
++      new_record = maintenance.load_record
++      assert_equal(2, new_record.fetch('version'))
++      # The published v1 reader's exact version/key guard cannot accept v2,
++      # including a released record; no unknown-type compatibility fallback.
++      %w[held released].each do |phase|
++        candidate = new_record.merge('phase' => phase)
++        refute(candidate.fetch('version') == 1 && candidate.keys.sort == Maintenance::RECORD_KEYS.sort)
++      end
++    end
++  end
++
+   private
+ 
+   def identity
+@@ -298,6 +565,74 @@ class DevclusterMaintenanceTest < Minitest::Test
+     maintenance.begin_copy!(candidate_path: paths.fetch(:candidate), **identity.merge(overrides))
+   end
+ 
++  def read_applied(paths)
++    JSON.parse(File.read(paths.fetch(:applied)))
++  end
++
++  def with_applied_fixture
++    with_fixture do |maintenance, paths|
++      prepare(maintenance, paths)
++      bind_boot(maintenance)
++      begin_copy(maintenance, paths)
++      maintenance.build_next!(next_path: paths.fetch(:next))
++      maintenance.finish_copy!(next_path: paths.fetch(:next), **identity)
++      maintenance.copied_config!
++      maintenance.begin_boot!(config_path: paths.fetch(:next), operation: 'copied_boot')
++      maintenance.finish_boot!(config_path: paths.fetch(:next), proof_reference: 'fixture prior successful full boot')
++      paths[:applied] = File.join(File.dirname(paths.fetch(:record)), 'applied-config.json')
++      paths[:rendered] = paths.fetch(:next) + '-rendered.json'
++      yield maintenance, paths
++    end
++  end
++
++  def with_recovery_fixture
++    with_fixture do |maintenance, paths|
++      historic = JSON.parse(File.read(paths.fetch(:resident)))
++      old_services = historic.fetch('machines').fetch('services')
++      %w[node2 storage1].each do |name|
++        historic.fetch('machines')[name] = historic.fetch('machines').fetch('node1').merge('toplevel' => File.join(File.dirname(paths.fetch(:resident)), "old-#{name}"))
++        File.write(File.join(File.dirname(paths.fetch(:record)), 'state', "#{name}-tank.img"), 'retained node payload')
++      end
++      %w[dns-primary dns-secondary].each do |name|
++        historic.fetch('machines')[name] = old_services.merge('toplevel' => File.join(File.dirname(paths.fetch(:resident)), "old-#{name}"))
++        File.write(File.join(File.dirname(paths.fetch(:record)), 'state', "#{name}-root.img"), 'retained dns payload')
++      end
++      paths[:dns_disk] = File.join(File.dirname(paths.fetch(:record)), 'state', 'dns-primary-root.img')
++      paths[:historic] = paths.fetch(:resident) + '-historic.json'
++      write_json(paths.fetch(:historic), historic)
++      selected = JSON.parse(JSON.generate(historic))
++      %w[dns-primary dns-secondary].each { |name| selected.fetch('machines').fetch(name)['toplevel'] += '-never-copied' }
++      write_json(paths.fetch(:resident), selected)
++      update_evidence_digest(paths)
++      candidate = selected.merge('machines' => selected.fetch('machines').merge(
++        'services' => JSON.parse(File.read(paths.fetch(:candidate))).fetch('machines').fetch('services')),
++        'labels' => { 'vpsadminPreservingSeed' => '{"version":1,"existingAssignments":"preserve"}' })
++      write_json(paths.fetch(:candidate), candidate)
++      prepare(maintenance, paths)
++      bind_boot(maintenance)
++      begin_copy(maintenance, paths)
++      maintenance.build_next!(next_path: paths.fetch(:next))
++      maintenance.finish_copy!(next_path: paths.fetch(:next), **identity)
++      paths[:recovery] = paths.fetch(:evidence) + '-recovery.json'
++      paths[:corrected] = paths.fetch(:next) + '-corrected.json'
++      paths[:rendered] = paths.fetch(:next) + '-rendered.json'
++      current = JSON.parse(File.read(paths.fetch(:next)))
++      proofs = current.fetch('machines').to_h do |name, machine|
++        dns = name.start_with?('dns-')
++        source = dns ? paths.fetch(:historic) : paths.fetch(:next)
++        kind = dns ? 'prior_boot' : (name == 'services' ? 'held_copy' : 'prior_update')
++        [name, { 'source_config' => source, 'source_config_sha256' => Digest::SHA256.file(source).hexdigest,
++                 'proof_kind' => kind, 'proof_reference' => 'actual owning fixture boot/update/copy reference',
++                 'disks' => maintenance.send(:disk_identities, name:, machine:) }]
++      end
++      write_json(paths.fetch(:recovery), { 'version' => 1, 'kind' => 'retained_boot_recovery',
++        'workspace' => File.realpath(File.join(File.dirname(paths.fetch(:resident)), '..')),
++        'slug' => '2026-10-02-maintenance-fixture',
++        'expected_hold_sha256' => Digest::SHA256.file(paths.fetch(:record)).hexdigest, 'machines' => proofs })
++      yield maintenance, paths
++    end
++  end
++
+   def prepare(maintenance, paths, evidence_path: paths.fetch(:evidence))
+     maintenance.prepare!(config_path: paths.fetch(:resident), services_toplevel: paths.fetch(:toplevel), evidence_path:)
+   end
+@@ -330,6 +665,8 @@ class DevclusterMaintenanceTest < Minitest::Test
+                    'rootDisk' => { 'device' => '{machine}-root.img', 'type' => 'file', 'create' => true,
+                                    'preserve' => true, 'size' => '1G', 'image' => File.join(store, 'old-image') } }
+       node = { 'spin' => 'vpsadminos', 'toplevel' => File.join(store, 'old-node'),
++               'kernel' => File.join(store, 'old-node-kernel'), 'initrd' => File.join(store, 'old-node-initrd'),
++               'squashfs' => File.join(store, 'old-node-squashfs'),
+                'disks' => [{ 'device' => '{machine}-tank.img', 'type' => 'file', 'preserve' => true }] }
+       FileUtils.mkdir_p(File.join(services.fetch('qemu'), 'bin'))
+       File.binwrite(File.join(services.fetch('qemu'), 'bin/qemu-system-x86_64'), 'fixture')
+@@ -347,7 +684,8 @@ class DevclusterMaintenanceTest < Minitest::Test
+         'machines' => { 'services' => services.merge('toplevel' => File.join(store, 'new-services'),
+                                                     'kernel' => File.join(store, 'new-kernel'), 'initrd' => File.join(store, 'new-initrd'),
+                                                     'rootDisk' => services.fetch('rootDisk').merge('image' => File.join(store, 'new-image'))),
+-                        'node1' => node.merge('toplevel' => File.join(store, 'not-copied-node')) },
++                        'node1' => node.merge('toplevel' => File.join(store, 'not-copied-node'),
++                                              'squashfs' => File.join(store, 'not-copied-node-squashfs')) },
+         'labels' => { 'vpsadminPreservingSeed' => JSON.generate('version' => 1, 'existingAssignments' => 'preserve') }
+       })
+       maintenance = Maintenance.new(workspace:, slug:, directory:, store_root: store)
+diff --git a/test/devcluster_runner_test.rb b/test/devcluster_runner_test.rb
+index ec15ddee45da9d52125115b9bae80df3bdb5214c..6f6b7219ac263890f39e461846e4be019dd9d1df 100644
+--- a/test/devcluster_runner_test.rb
++++ b/test/devcluster_runner_test.rb
+@@ -123,6 +123,47 @@ class DevclusterRunnerTest < Minitest::Test
+     end
+   end
+ 
++  def test_recovered_runner_constructs_old_dns_and_rechecks_snapshot_before_each_start
++    with_recorded_runner(:copied_config, recovered: true) do |runner, options, _disk, dns_disk|
++      machines = runner.send(:build_machines, options)
++      selected = JSON.parse(File.read(options.fetch(:config)))
++      assert(selected.fetch('machines').fetch('dns-primary').fetch('toplevel').end_with?('/old-dns'))
++      assert_equal(%w[services dns-primary], machines.map(&:name))
++      started = []
++      machines.each do |entry|
++        entry.machine.define_singleton_method(:start) { |**| started << entry.name }
++        entry.machine.define_singleton_method(:wait_for_boot) { |**| }
++      end
++      File.rename(dns_disk, dns_disk + '.previous')
++      File.write(dns_disk, File.read(dns_disk + '.previous'))
++      assert_raises(DevClusters::VpsAdminMaintenance::Invalid) { runner.send(:start_machines, machines, 30) }
++      assert_equal(['services'], started)
++    end
++  end
++
++  def test_recovered_disk_snapshot_change_refuses_before_machine_construction
++    with_recorded_runner(:copied_config, recovered: true) do |runner, options, disk, _dns_disk|
++      File.rename(disk, disk + '.previous')
++      File.write(disk, File.read(disk + '.previous'))
++      assert_raises(DevClusters::VpsAdminMaintenance::Invalid) { runner.send(:build_machines, options) }
++    end
++  end
++
++  def test_recovered_pending_hold_refuses_old_services_before_construction
++    with_recorded_runner(:copied_config, recovered: true) do |runner, options, _disk|
++      path = File.join(File.dirname(options.fetch(:state_dir)), 'maintenance-hold.json')
++      before = File.binread(path)
++      resident = JSON.parse(before).fetch('resident_config')
++      OsVm::NixosMachine.stub(:new, ->(*) { raise 'constructed old services' }) do
++        error = assert_raises(DevClusters::VpsAdminMaintenance::Invalid) do
++          runner.send(:build_machines, options.merge(maintenance: true, copied_config: false, config: resident))
++        end
++        assert_equal('recovered selection requires copied boot', error.message)
++      end
++      assert_equal(before, File.binread(path))
++    end
++  end
++
+   def test_failed_maintenance_policy_never_constructs_a_machine
+     with_runner do |_runner, options|
+       policy = Class.new do
+@@ -186,7 +227,7 @@ class DevclusterRunnerTest < Minitest::Test
+     end
+   end
+ 
+-  def with_recorded_runner(mode)
++  def with_recorded_runner(mode, recovered: false)
+     Dir.mktmpdir('recorded-runner-test') do |workspace|
+       slug = '2026-10-02-recorded-runner'
+       directory = File.join(workspace, '.dev-clusters/vpsadmin/clusters', slug)
+@@ -212,7 +253,16 @@ class DevclusterRunnerTest < Minitest::Test
+       machine = { 'spin' => 'nixos', 'toplevel' => top, 'qemu' => qemu,
+                   'kernel' => File.join(store, 'kernel'), 'initrd' => File.join(store, 'initrd'),
+                   'rootDisk' => { 'device' => '{machine}-root.img', 'type' => 'file', 'preserve' => true, 'size' => '1G' } }
+-      File.write(config, JSON.generate('machines' => { 'services' => machine }))
++      selected = { 'machines' => { 'services' => machine } }
++      dns_disk = File.join(state, 'dns-primary-root.img')
++      historical = File.join(store, 'historical.json')
++      if recovered
++        File.write(dns_disk, 'retained DNS sentinel')
++        old_dns = machine.merge('toplevel' => File.join(store, 'old-dns'))
++        File.write(historical, JSON.generate(selected.merge('machines' => selected.fetch('machines').merge('dns-primary' => old_dns))))
++        selected.fetch('machines')['dns-primary'] = old_dns.merge('toplevel' => File.join(store, 'uncopied-dns'))
++      end
++      File.write(config, JSON.generate(selected))
+       evidence = File.join(directory, 'evidence.json')
+       File.write(evidence, JSON.generate('version' => 1, 'workspace' => workspace, 'slug' => slug,
+                                        'resident_config' => config, 'resident_config_sha256' => Digest::SHA256.file(config).hexdigest,
+@@ -227,17 +277,36 @@ class DevclusterRunnerTest < Minitest::Test
+         identity = { pid: 123, start: '456', boot_id: '01111111-2222-3333-4444-555555555555' }
+         policy.bind_boot!(**identity)
+         candidate = File.join(store, 'candidate.json')
+-        File.write(candidate, JSON.generate('machines' => { 'services' => machine },
++        File.write(candidate, JSON.generate('machines' => selected.fetch('machines'),
+                                             'labels' => { 'vpsadminPreservingSeed' => '{"version":1,"existingAssignments":"preserve"}' }))
+         policy.begin_copy!(candidate_path: candidate, **identity)
+         config = File.join(store, 'next.json')
+         policy.build_next!(next_path: config)
+         policy.finish_copy!(next_path: config, **identity)
++        if recovered
++          hold = File.join(directory, 'maintenance-hold.json')
++          proofs = JSON.parse(File.read(config)).fetch('machines').to_h do |name, descriptor|
++            source = name == 'services' ? candidate : historical
++            [name, { 'source_config' => source, 'source_config_sha256' => Digest::SHA256.file(source).hexdigest,
++                     'proof_kind' => name == 'services' ? 'held_copy' : 'prior_boot',
++                     'proof_reference' => 'fixture historical source with no disk replacement',
++                     'disks' => policy.send(:disk_identities, name:, machine: descriptor) }]
++          end
++          recovery = File.join(directory, 'recovery.json')
++          File.write(recovery, JSON.generate('version' => 1, 'kind' => 'retained_boot_recovery',
++            'workspace' => workspace, 'slug' => slug, 'expected_hold_sha256' => Digest::SHA256.file(hold).hexdigest,
++            'machines' => proofs))
++          File.chmod(0o600, recovery)
++          corrected = File.join(store, 'recovered.json')
++          policy.prepare_recovery!(evidence_path: recovery, output_path: corrected)
++          policy.commit_recovery!(evidence_path: recovery, next_path: corrected)
++          config = corrected
++        end
+         policy.copied_config!
+       end
+       options = { config:, state_dir: state, sock_dir: state, timeout: 30, mode => true }
+       runner = DevClusters::OsVmRunner.new([], hash_base: 'test', priority_machines: ['services'], maintenance_policy: policy_class)
+-      yield runner, options, disk
++      yield runner, options, disk, dns_disk
+     end
+   end
+ end
+diff --git a/test/retained-services-maintenance/devcluster-runner.rb b/test/retained-services-maintenance/devcluster-runner.rb
+index e76f24ab13175425158d0fcce2fbf11e06563297..158d6175cc25ecdba2f08e574f80c15959cf33a5 100644
+--- a/test/retained-services-maintenance/devcluster-runner.rb
++++ b/test/retained-services-maintenance/devcluster-runner.rb
+@@ -12,7 +12,7 @@ require 'osvm'
+ require 'test-runner'
+ require 'maintenance'
+ 
+-# This fixture owns one newly created services disk, not a registered cluster.
++# This fixture owns services and one DNS disk, not a registered cluster.
+ # It never releases the full-cluster hold or substitutes for Node refresh.
+ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+   PORT = 19_122
+@@ -39,9 +39,11 @@ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+     @candidate_path = store_json!(options.fetch(:candidate_config))
+     @resident = JSON.parse(File.binread(@resident_path))
+     @candidate = JSON.parse(File.binread(@candidate_path))
++    @historical_path = @resident_path
++    @historical = @resident
+     [@resident, @candidate].each do |config|
+-      unless config.fetch('machines').keys == ['services']
+-        raise Invalid, 'fixture configuration must contain services only'
++      unless config.fetch('machines').keys.sort == %w[dns-primary services]
++        raise Invalid, 'fixture configuration must contain services and one DNS guest'
+       end
+     end
+     @state = File.join(@directory, 'state')
+@@ -86,17 +88,29 @@ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+     guest!('systemctl stop vpsadmin-api-auth-tokens.timer vpsadmin-api-auth-tokens.service')
+     @projection = projections
+     @payload = guest!('sha256sum /var/lib/storage-profile-fixture/payload').split.first
++    @old_dns_toplevel = dns_execute!('readlink -e /run/current-system').strip
++    expect(@old_dns_toplevel).to eq(@resident.fetch('machines').fetch('dns-primary').fetch('toplevel'))
++    candidate_dns = @candidate.fetch('machines').fetch('dns-primary').fetch('toplevel')
++    expect(candidate_dns).not_to eq(@old_dns_toplevel)
++    code, = machines.fetch('dns-primary').execute(
++      "nix-store --check-validity #{quote(candidate_dns)}", timeout: 30
++    )
++    expect(code).not_to eq(0)
++    dns_execute!('printf retained-dns-payload > /var/lib/retained-dns-payload')
++    @dns_payload = dns_execute!('sha256sum /var/lib/retained-dns-payload').split.first
+     @old_counters = counters
+     expect(@old_counters.fetch('old-seed', 0).positive?).to be(true)
+     save_private('before.json', @projection)
+     stop!
+     @disk_identity = disk_identity
++    @dns_disk_identity = File.stat(File.join(@state, 'dns-primary-root.img')).then { |stat| [stat.dev, stat.ino, stat.size] }
++    select_legacy_candidate_dns!
+     evidence = File.join(@directory, 'residency.json')
+     save_private('residency.json', {
+                    'version' => 1, 'workspace' => @directory, 'slug' => 'retained-services-fixture',
+                    'resident_config' => @resident_path, 'resident_config_sha256' => Digest::SHA256.file(@resident_path).hexdigest,
+                    'services_toplevel' => old_toplevel, 'evidence_kind' => 'prior_activation',
+-                   'evidence_reference' => 'fixture completed old seed and captured exact retained projections'
++                   'evidence_reference' => 'actual old services boot; legacy candidate DNS intentionally unproved'
+                  })
+     @policy.prepare!(config_path: @resident_path, services_toplevel: old_toplevel, evidence_path: evidence)
+ 
+@@ -157,6 +171,7 @@ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+     check_preservation!
+     guest!('touch /var/lib/storage-profile-fixture/block-new-seed')
+     stop!
++    recover_dns_selection!
+ 
+     @summary['stage'] = 5
+     boot_copied!
+@@ -181,12 +196,17 @@ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+     expect(guest!('readlink -f /run/current-system').strip == new_toplevel).to be(true)
+     check_preservation!
+     expect(counters.fetch('new-seed', 0) >= 2).to be(true)
++    expect(dns_execute!('readlink -e /run/current-system').strip).to eq(@old_dns_toplevel)
++    expect(dns_execute!('cat /etc/retained-dns-generation').strip).to eq('old')
++    expect(dns_execute!('sha256sum /var/lib/retained-dns-payload').split.first).to eq(@dns_payload)
++    expect(File.stat(File.join(@state, 'dns-primary-root.img')).then { |stat| [stat.dev, stat.ino, stat.size] }).to eq(@dns_disk_identity)
+     expect(@policy.status.fetch('phase') == 'starting_copied').to be(true)
+     save_private('after.json', projections)
+     stop!
+     @summary.merge!('scenario_completed' => 1, 'phase_starting_copied' => 1,
+                     'projection_sha256' => Digest::SHA256.hexdigest(JSON.generate(@projection)),
+-                    'resident_config' => @resident_path, 'candidate_config' => @candidate_path,
++                    'resident_config' => @resident_path, 'historical_config' => @historical_path,
++                    'candidate_config' => @candidate_path,
+                     'resident_toplevel' => old_toplevel, 'candidate_toplevel' => new_toplevel)
+   end
+ 
+@@ -207,7 +227,7 @@ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+     expect(&block).to raise_error(DevClusters::VpsAdminMaintenance::Invalid)
+   end
+ 
+-  # The script evaluator is cloned. Resolve the one mutable registry each time
++  # The script evaluator is cloned. Resolve the shared mutable registry each time
+   # so kernel checks and inherited cleanup see every replacement guest.
+   def services
+     machines.fetch('services')
+@@ -226,32 +246,94 @@ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+   end
+ 
+   def refuse_existing_listener!
+-    Socket.tcp('127.0.0.1', PORT, connect_timeout: 1) { |_| raise Invalid, 'fixture port is occupied' }
+-  rescue Errno::ECONNREFUSED
+-    nil
++    [PORT, 19_123].each do |port|
++      begin
++        Socket.tcp('127.0.0.1', port, connect_timeout: 1) { |_| raise Invalid, 'fixture port is occupied' }
++      rescue Errno::ECONNREFUSED
++        next
++      end
++    end
+   end
+ 
+   def boot!(config, masked: false)
+-    raise Invalid, 'fixture already has a services guest' unless machines.empty?
++    raise Invalid, 'fixture already has a guest' unless machines.empty?
+ 
+-    machine_config = config.fetch('machines').fetch('services')
+-    @policy.validate_machine_disks!(name: 'services', machine: machine_config) if @disk_identity
+-    machine = OsVm::NixosMachine.new('services', OsVm::MachineConfig.from_config(machine_config),
+-                                     @state, @sockets, default_timeout: @default_timeout, hash_base: @test.path)
+-    machines['services'] = machine
+-    # Replacement instances lose OSVM's five-second stop/start settle timestamp.
++    selected = config.fetch('machines')
++    selected = selected.slice('services') if masked
+     if @services_stopped_at
+       elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @services_stopped_at
+       delay = [5 - elapsed, 0].max
+       sleep(delay) if delay.positive?
+     end
+-    @policy.validate_machine_disks!(name: 'services', machine: machine_config) if @disk_identity
+-    services.start(kernel_params: masked ? DevClusters::VpsAdminMaintenance.kernel_parameters : [], wait_for_boot: true)
++    selected.each do |name, machine_config|
++      @policy.validate_machine_disks!(name:, machine: machine_config) if @disk_identity
++      machine = OsVm::NixosMachine.new(name, OsVm::MachineConfig.from_config(machine_config),
++                                     @state, @sockets, default_timeout: @default_timeout, hash_base: @test.path)
++      machines[name] = machine
++      @policy.validate_machine_disks!(name:, machine: machine_config) if @disk_identity
++      machine.start(kernel_params: masked ? DevClusters::VpsAdminMaintenance.kernel_parameters : [], wait_for_boot: true)
++    end
+     wait!('systemctl is-active --quiet mysql.service')
+     wait!('systemctl is-active --quiet sshd.service nix-daemon.socket')
+     host!('ssh', *@ssh_options, 'root@127.0.0.1', 'true')
+   end
+ 
++  def dns_execute!(command)
++    code, output = machines.fetch('dns-primary').execute(command, timeout: 120)
++    raise Invalid, 'fixture DNS read failed' unless code.zero?
++
++    output
++  end
++
++  def select_legacy_candidate_dns!
++    # Reproduce the old full build-result selection after the real old boot.
++    # This combined configuration has never booted; only services is resident.
++    selected = @historical.merge('machines' => @historical.fetch('machines').merge(
++      'dns-primary' => @candidate.fetch('machines').fetch('dns-primary')))
++    expect(selected.reject { |key, _| key == 'machines' }).to eq(@historical.reject { |key, _| key == 'machines' })
++    expect(selected.fetch('machines').fetch('services')).to eq(@historical.fetch('machines').fetch('services'))
++    @policy.send(:compatible_configuration!, @historical, selected)
++    save_private('legacy-selected.json', selected)
++    @resident_path = store_json!(host!('nix-store', '--add', File.join(@directory, 'legacy-selected.json')).strip)
++    host!('nix-store', '--add-root', File.join(@directory, 'legacy-selected-root'), '--indirect', '--realise', @resident_path)
++    @resident = JSON.parse(File.binread(@resident_path))
++  end
++
++  def recover_dns_selection!
++    expect(machines).to be_empty
++    record_path = File.join(@directory, 'maintenance-hold.json')
++    before = JSON.parse(File.binread(record_path))
++    original = JSON.parse(File.binread(@next_path))
++    expect(original.fetch('machines').fetch('dns-primary')).to eq(@candidate.fetch('machines').fetch('dns-primary'))
++    expect(original.fetch('machines').fetch('services')).to eq(@candidate.fetch('machines').fetch('services'))
++    proofs = original.fetch('machines').to_h do |name, machine|
++      source = name == 'services' ? @candidate_path : @historical_path
++      kind = name == 'services' ? 'held_copy' : 'prior_boot'
++      [name, { 'source_config' => source, 'source_config_sha256' => Digest::SHA256.file(source).hexdigest,
++               'proof_kind' => kind, 'proof_reference' => 'fixture real old full boot and completed services copy; no disk replacement',
++               'disks' => @policy.send(:disk_identities, name:, machine:) }]
++    end
++    recovery = File.join(@directory, 'recovery-evidence.json')
++    save_private('recovery-evidence.json', { 'version' => 1, 'kind' => 'retained_boot_recovery',
++      'workspace' => @directory, 'slug' => 'retained-services-fixture',
++      'expected_hold_sha256' => Digest::SHA256.file(record_path).hexdigest, 'machines' => proofs })
++    prepared = @policy.prepare_recovery!(evidence_path: recovery, output_path: File.join(@directory, 'recovered-next.json'))
++    prepared.fetch('sources').each_with_index do |source, index|
++      host!('nix-store', '--add-root', File.join(@directory, "recovery-source-#{index}"), '--indirect', '--realise', source)
++    end
++    @next_path = store_json!(host!('nix-store', '--add', prepared.fetch('next_config')).strip)
++    host!('nix-store', '--add-root', File.join(@directory, 'recovered-next-root'), '--indirect', '--realise', @next_path)
++    @policy.commit_recovery!(evidence_path: recovery, next_path: @next_path)
++    corrected = JSON.parse(File.binread(@next_path))
++    expect(corrected.fetch('machines').fetch('dns-primary')).to eq(@historical.fetch('machines').fetch('dns-primary'))
++    expect(corrected.fetch('machines').fetch('services')).to eq(original.fetch('machines').fetch('services'))
++    after = JSON.parse(File.binread(record_path))
++    unchanged = DevClusters::VpsAdminMaintenance::RECORD_KEYS - %w[version next_config next_config_sha256]
++    expect(after.slice(*unchanged)).to eq(before.slice(*unchanged))
++    expect(@policy.status.fetch('phase')).to eq('copied')
++    expect(@policy.pending?).to be(true)
++  end
++
+   def masked_boot!
+     @policy.validate_runner!(config_path: @resident_path)
+     boot!(@resident, masked: true)
+@@ -262,27 +344,29 @@ class RetainedServicesMaintenanceFixture < TestRunner::TestEvaluator
+     expect(selected_path).to eq(@next_path)
+     @policy.validate_copied_runner!(config_path: selected_path)
+     selected = JSON.parse(File.binread(selected_path))
+-    expect(selected.fetch('machines').keys).to eq(['services'])
++    expect(selected.fetch('machines').keys.sort).to eq(%w[dns-primary services])
+     boot!(selected)
+   end
+ 
+   def stop!(force: false)
+     return if machines.empty?
+ 
+-    machine = services
+-    if force
+-      machine.kill(signal: 'KILL')
+-    else
+-      begin
+-        machine.stop(timeout: 45)
+-      rescue OsVm::UnrecoverableTimeoutError
++    machines.keys.each do |name|
++      machine = machines.fetch(name)
++      if force
+         machine.kill(signal: 'KILL')
++      else
++        begin
++          machine.stop(timeout: 45)
++        rescue OsVm::UnrecoverableTimeoutError
++          machine.kill(signal: 'KILL')
++        end
+       end
++      machine.raise_if_kernel_failed!
++      machine.finalize
++      machine.cleanup
++      machines.delete(name)
+     end
+-    machine.raise_if_kernel_failed!
+-    machine.finalize
+-    machine.cleanup
+-    machines.delete('services')
+     @services_stopped_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+   end
+ 
+diff --git a/test/vpsadmin_storage_profile_spec.rb b/test/vpsadmin_storage_profile_spec.rb
+index 47348fb18f544015ccfe37caafbd3ec3b248c93b..f2226b5baf27e8bc5ec65065d5d43da0b3ca26d4 100644
+--- a/test/vpsadmin_storage_profile_spec.rb
++++ b/test/vpsadmin_storage_profile_spec.rb
+@@ -15,6 +15,9 @@ raise 'API revision is unavailable' unless status.success?
+ 
+ warn "storage-profile API revision=#{revision.strip} helper=#{api_root}/api/spec/spec_helper.rb"
+ require_relative '../dev-clusters/vpsadmin/lib/storage_profile'
++raise 'Storage profile specs refuse guest execution mode' if ENV.key?('STORAGE_PROFILE_ACCEPTANCE_MODE')
++
++require_relative '../dev-clusters/vpsadmin/tests/storage-profile-acceptance'
+ 
+ RSpec.describe DevClusters::VpsAdminStorageProfile do
+   let(:source_pool) { SpecSeed.pool }
+@@ -705,3 +708,514 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+     expect(DatasetInPoolPlan.where(dataset_in_pool: source).count).to eq(1)
+   end
+ end
++
++# These entrypoints run from a database task, without RSpec's rollback wrapper.
++RSpec.describe 'Storage profile autocommit admission', :no_transaction do
++  WaitReached = Class.new(StandardError)
++  PROFILE = DevClusters::VpsAdminStorageProfile
++
++  around do |example|
++    owned_url = VpsAdmin::TestDb.auto_start!
++    uri = URI.parse(owned_url)
++    connection = ActiveRecord::Base.connection_db_config.configuration_hash
++    unless ENV.fetch('DATABASE_URL') == owned_url && uri.scheme == 'mysql2' && uri.host == '127.0.0.1' &&
++           connection.values_at(:adapter, :host, :port, :database) ==
++           ['mysql2', uri.host, uri.port, uri.path.delete_prefix('/')]
++      raise 'Autocommit specs refuse a database outside the automatic harness'
++    end
++
++    expect(ActiveRecord::Base.connection.transaction_open?).to be(false)
++    control = StorageFreezeControl.find(1)
++    @control = control.attributes.except('id')
++    @plan_id = DatasetPlan.find_by(name: PROFILE::PLAN_NAME)&.id
++    plans = VpsAdmin::API::DatasetPlans.plans.dup
++    instance = PROFILE.instance_variable_get(:@instance)
++    actor = User.current
++    session = UserSession.current
++    key = SysConfig.find_by!(category: 'core', name: 'transaction_key')
++    key_attributes = key.attributes.except('id')
++    signer = VpsAdmin::API::TransactionSigner.instance
++    signer_state = signer.instance_variables.to_h { |name| [name, signer.instance_variable_get(name)] }
++    @owned = Hash.new { |hash, model| hash[model] = [] }
++    User.current = SpecSeed.admin
++    UserSession.current = nil
++    example.run
++  ensure
++    if @owned
++      restore_autocommit_fixture do
++        begin
++          cleanup_autocommit_fixtures!
++        ensure
++          control.update_columns(@control)
++          key.update_columns(key_attributes)
++          (signer.instance_variables - signer_state.keys).each { |name| signer.remove_instance_variable(name) }
++          signer_state.each { |name, value| signer.instance_variable_set(name, value) }
++          VpsAdmin::API::DatasetPlans::Registrator.instance_variable_set(:@plans, plans)
++          PROFILE.instance_variable_set(:@instance, instance)
++          User.current = actor
++          UserSession.current = session
++        end
++      end
++    end
++  end
++
++  before do
++    source = File.read(File.expand_path('../dev-clusters/vpsadmin/nix/storage-profile-provision.rb', __dir__))
++    first = source.index('module DevStorageProfileProvision')
++    last = source.index("\nactor = ", first)
++    Object.class_eval(source[first...last], 'storage-profile-provision', 1)
++  end
++
++  def own(row)
++    row.save!
++    @owned[row.class] << row.id
++    row
++  end
++
++  let(:environment) do
++    own(SpecSeed.environment.dup.tap do |row|
++      row.label = "Admission #{SecureRandom.hex(4)}"
++      row.domain = "admission-#{SecureRandom.hex(4)}.test"
++    end)
++  end
++  let(:location) { own(SpecSeed.location.dup.tap { |row| row.environment = environment }) }
++  let(:source_node) do
++    own(SpecSeed.node.dup.tap do |row|
++      row.location = location
++      row.name = "admission-#{SecureRandom.hex(4)}"
++    end)
++  end
++  let(:storage_node) do
++    own(SpecSeed.node.dup.tap do |row|
++      row.location = location
++      row.name = "admission-storage-#{SecureRandom.hex(4)}"
++      row.role = :storage
++    end)
++  end
++  let(:source_pool) { own_pool(:hypervisor, source_node) }
++  let(:nas_pool) { own_pool(:primary, storage_node) }
++  let(:backup_selection) do
++    { 'nodeId' => storage_node.id, 'filesystem' => "tank/admission_backup_#{SecureRandom.hex(4)}",
++      'role' => 'backup', 'maxDatasets' => 32 }
++  end
++  let(:profile) do
++    PROFILE.new(
++      'version' => 1, 'enrollment' => true, 'environmentId' => environment.id,
++      'sourcePools' => [{ 'nodeId' => source_node.id, 'filesystem' => source_pool.filesystem, 'role' => 'hypervisor' }],
++      'backupPool' => backup_selection,
++      'nasPool' => { 'nodeId' => storage_node.id, 'filesystem' => nas_pool.filesystem,
++                     'role' => 'primary', 'maxDatasets' => 32 },
++      'resources' => PROFILE::RESOURCE_DEFAULTS.dup, 'packageVersion' => 1, 'namespaceBlocks' => 2
++    )
++  end
++
++  def own_pool(role, node, filesystem: "tank/admission_#{SecureRandom.hex(4)}")
++    own(Pool.new(node: node, label: 'Admission fixture', filesystem: filesystem, role: role,
++                 state: :online, is_open: 1, max_datasets: 32, maintenance_lock: 0,
++                 checked_at: Time.current, available_space: 10_000, used_space: 100, total_space: 10_100))
++  end
++
++  def existing_backup!
++    own_pool(:backup, storage_node, filesystem: backup_selection.fetch('filesystem'))
++  end
++
++  def source!
++    dataset, dip = create_dataset_with_pool!(user: SpecSeed.user, pool: source_pool,
++                                             name: "admission-#{SecureRandom.hex(4)}")
++    @owned[Dataset] << dataset.id
++    dip
++  end
++
++  def restore_autocommit_fixture
++    return if @reader_unreaped
++
++    yield
++  end
++
++  # Preserve assertion, timeout and signal exceptions over owning cleanup.
++  # rubocop:disable Lint/RescueException
++  def ordinary_reader
++    primary = nil
++    state = { acquired: false, closed: false }
++    expect(ActiveRecord::Base.connection.transaction_open?).to be(false)
++    main_id = ActiveRecord::Base.connection.select_value('SELECT CONNECTION_ID()')
++    reader = Thread.new do
++      Thread.current.report_on_exception = false
++      ActiveRecord::Base.connection_pool.with_connection do |db|
++        state[:acquired] = true
++        reader_error = nil
++        begin
++          expect(db.select_value('SELECT CONNECTION_ID()')).not_to eq(main_id)
++          db.execute('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')
++          db.execute('SET SESSION innodb_lock_wait_timeout = 2')
++          db.transaction(isolation: :read_committed) do
++            expect(db.select_value('SELECT @@tx_isolation')).to eq('READ-COMMITTED')
++            # The freeze lock must be obtainable before the caller's wait ends.
++            StorageFreezeControl.lock.find(1)
++            yield
++          end
++        rescue Exception => error
++          reader_error = error
++          raise
++        ensure
++          begin
++            db.disconnect!
++            state[:closed] = true
++          rescue Exception
++            raise unless reader_error
++          end
++        end
++      end
++    end
++    reader.report_on_exception = false
++    Timeout.timeout(5) { reader.value }
++  rescue Exception => error
++    primary = error
++    raise
++  ensure
++    if reader
++      cleanup_error = nil
++      begin
++        reader.kill if reader.alive?
++        reader.join(3)
++      rescue Exception => error
++        cleanup_error = error
++      end
++      unless !reader.alive? && (!state[:acquired] || state[:closed])
++        @reader_unreaped = true
++        RSpec.world.wants_to_quit = true
++        cleanup_error ||= StandardError.new('Autocommit reader cleanup is unproved; fixtures retained')
++      end
++      raise cleanup_error if cleanup_error && !primary
++    end
++  end
++  # rubocop:enable Lint/RescueException
++
++  def catalog_counts
++    [Pool, Dataset, DatasetInPool, DatasetPlan, EnvironmentDatasetPlan, DatasetAction,
++     GroupSnapshot, DatasetInPoolPlan, RepeatableTask, TransactionChain, Transaction,
++     TransactionConfirmation, ResourceLock, StorageMutationIntent].map(&:count)
++  end
++
++  def cleanup_autocommit_fixtures!
++    nodes = @owned[Node]
++    pools = Pool.where(node_id: nodes).pluck(:id)
++    dips = DatasetInPool.where(pool_id: pools).pluck(:id)
++    chains = Transaction.where(node_id: nodes).distinct.pluck(:transaction_chain_id)
++    transactions = Transaction.where(transaction_chain_id: chains).pluck(:id)
++    intents = StorageMutationIntent.where(transaction_chain_id: chains).pluck(:id)
++    targets = StorageMutationTarget.where(storage_mutation_intent_id: intents).pluck(:id)
++    attempts = StorageMutationAttempt.where(storage_mutation_intent_id: intents).pluck(:id)
++    StorageMutationTargetObservation.where(storage_mutation_target_id: targets)
++                                    .or(StorageMutationTargetObservation.where(storage_mutation_attempt_id: attempts))
++                                    .delete_all
++    StorageMutationAttempt.where(id: attempts).delete_all
++    StorageMutationTarget.where(id: targets).delete_all
++    StorageMutationIntentScope.where(storage_mutation_intent_id: intents).delete_all
++    StorageMutationIntent.where(id: intents).delete_all
++    StorageIntegrityScope.where(pool_catalog_id: pools).delete_all
++    TransactionConfirmation.where(transaction_id: transactions).delete_all
++    ResourceLock.where(locked_by_type: 'TransactionChain', locked_by_id: chains).delete_all
++    TransactionChainConcern.where(transaction_chain_id: chains).delete_all
++    Transaction.where(id: transactions).delete_all
++    TransactionChain.where(id: chains).delete_all
++    actions = DatasetAction.where(pool_id: pools).pluck(:id)
++    GroupSnapshot.where(dataset_action_id: actions).delete_all
++    RepeatableTask.where(class_name: 'DatasetAction', row_id: actions).delete_all
++    DatasetAction.where(id: actions).delete_all
++    DatasetInPoolPlan.where(dataset_in_pool_id: dips).delete_all
++    EnvironmentDatasetPlan.where(environment_id: @owned[Environment]).delete_all
++    DatasetProperty.where(pool_id: pools).delete_all
++    DatasetInPool.where(id: dips).delete_all
++    Dataset.where(id: @owned[Dataset]).delete_all
++    Pool.where(id: pools).delete_all
++    DatasetPlan.where(name: PROFILE::PLAN_NAME).delete_all unless @plan_id
++    [Node, Location, Environment].each do |model|
++      PaperTrail::Version.where(item_type: model.name, item_id: @owned[model]).delete_all
++      model.where(id: @owned[model]).delete_all
++    end
++  end
++
++  it 'closes the ordinary reader adapter and releases its lease on normal return' do
++    leases = ActiveRecord::Base.connection_pool.stat.fetch(:busy)
++    reader = nil
++    adapter = nil
++    result = ordinary_reader do
++      reader = Thread.current
++      adapter = ActiveRecord::Base.connection
++      expect(StorageFreezeControl.find(1)).to be_read_write
++      :visible
++    end
++    expect(result).to eq(:visible)
++    expect(reader).not_to be_alive
++    expect(adapter).not_to be_active
++    expect(ActiveRecord::Base.connection_pool.stat.fetch(:busy)).to eq(leases)
++  end
++
++  [RSpec::Expectations::ExpectationNotMetError, Interrupt].each do |exception_class|
++    it "preserves the reader's #{exception_class} over a separate join failure" do
++      primary = exception_class.new('controlled reader failure')
++      cleanup_error = StandardError.new('controlled join failure')
++      reader = nil
++      adapter = nil
++      expect do
++        ordinary_reader do
++          reader = Thread.current
++          adapter = ActiveRecord::Base.connection
++          allow(reader).to receive(:join).with(3).and_raise(cleanup_error)
++          raise primary
++        end
++      end.to raise_error(exception_class) { |error| expect(error).to equal(primary) }
++      expect(reader).not_to be_alive
++      expect(adapter).not_to be_active
++    end
++  end
++
++  it 'kills and reaps only its timed-out reader after transaction unwind and adapter close' do
++    entered = Queue.new
++    blocked = Queue.new
++    primary = Timeout::Error.new('controlled parent timeout')
++    leases = ActiveRecord::Base.connection_pool.stat.fetch(:busy)
++    reader = nil
++    adapter = nil
++    allow(Timeout).to receive(:timeout).and_call_original
++    allow(Timeout).to receive(:timeout).with(5) do
++      Timeout.timeout(3) { entered.pop }
++      raise primary
++    end
++    expect do
++      ordinary_reader do
++        reader = Thread.current
++        adapter = ActiveRecord::Base.connection
++        entered << true
++        blocked.pop
++      end
++    end.to raise_error(Timeout::Error) { |error| expect(error).to equal(primary) }
++    expect(reader).not_to be_alive
++    expect(adapter).not_to be_active
++    expect(ActiveRecord::Base.connection_pool.stat.fetch(:busy)).to eq(leases)
++    expect(@reader_unreaped).not_to be(true)
++  end
++
++  [false, true].each do |body_failure|
++    it "retains evidence and stops further examples when close proof fails with body_failure=#{body_failure}" do
++      # A separate instance exercises the refusal guard without poisoning this
++      # example's real restoration. The adapter actually closes before the
++      # controlled error; reset the quit flag only after proving that fact.
++      probe = self.class.new
++      previous_quit = RSpec.world.wants_to_quit
++      primary = StandardError.new('controlled reader failure')
++      close_error = StandardError.new('controlled close failure')
++      reader = nil
++      adapter = nil
++      restoration = double('fixture restoration')
++      expect(restoration).not_to receive(:call)
++      expect do
++        probe.ordinary_reader do
++          reader = Thread.current
++          adapter = ActiveRecord::Base.connection
++          allow(adapter).to receive(:disconnect!).and_wrap_original do |method|
++            method.call
++            raise close_error
++          end
++          raise primary if body_failure
++        end
++      end.to raise_error(StandardError) { |error| expect(error).to equal(body_failure ? primary : close_error) }
++      expect(reader).not_to be_alive
++      expect(adapter).not_to be_active
++      expect(RSpec.world.wants_to_quit).to be(true)
++      probe.restore_autocommit_fixture { restoration.call }
++    ensure
++      if reader && !reader.alive? && adapter && !adapter.active?
++        RSpec.world.wants_to_quit = previous_quit
++      else
++        @reader_unreaped = true
++      end
++    end
++  end
++
++  it 'fails on a cleanup-only join exception after a successfully closed reader' do
++    cleanup_error = StandardError.new('controlled join failure')
++    reader = nil
++    adapter = nil
++    expect do
++      ordinary_reader do
++        reader = Thread.current
++        adapter = ActiveRecord::Base.connection
++        allow(reader).to receive(:join).with(3).and_raise(cleanup_error)
++        :visible
++      end
++    end.to raise_error(StandardError) { |error| expect(error).to equal(cleanup_error) }
++    expect(reader).not_to be_alive
++    expect(adapter).not_to be_active
++    expect(@reader_unreaped).not_to be(true)
++  end
++
++  it 'commits real Pool staging and releases admission before its physical wait' do
++    selected = profile
++    unlock_transaction_signer!
++    allow(DevStorageProfileProvision).to receive(:wait_for_chain!) do |chain|
++      ordinary_reader do
++        expect(TransactionChain.find(chain.id).state).to eq('queued')
++        expect(Transaction.where(transaction_chain_id: chain.id).pluck(:handle))
++          .to eq([Transactions::Storage::CreatePool.t_type])
++        expect(Pool.exists?(node_id: storage_node.id, filesystem: backup_selection.fetch('filesystem'))).to be(true)
++      end
++      raise WaitReached
++    end
++    expect { DevStorageProfileProvision.provision!(selected) }.to raise_error(WaitReached)
++  end
++
++  it 'releases admission before a real capacity-readiness wait' do
++    selected = profile
++    existing_backup!.update_columns(checked_at: nil)
++    allow(DevStorageProfileProvision).to receive(:sleep).with(1) do
++      ordinary_reader { expect(Pool.where(node_id: storage_node.id).count).to eq(2) }
++      raise WaitReached
++    end
++    expect { DevStorageProfileProvision.provision!(selected) }.to raise_error(WaitReached)
++  end
++
++  it 'commits templates and real CatchUp staging before the physical wait' do
++    selected = profile
++    existing_backup!
++    dip = source!
++    selected.install_plan!
++    unlock_transaction_signer!
++    allow(selected).to receive(:bootstrap_templates!).and_wrap_original do |method|
++      method.call
++      ordinary_reader do
++        link = EnvironmentDatasetPlan.find_by!(environment: environment)
++        expect(DatasetAction.where(dataset_plan_id: link.dataset_plan_id, action: :group_snapshot).count).to eq(2)
++      end
++    end
++    allow(DevStorageProfileProvision).to receive(:wait_for_chain!) do |chain|
++      ordinary_reader do
++        expect(TransactionChain.find(chain.id).state).to eq('queued')
++        expect(Transaction.where(transaction_chain_id: chain.id).order(:id).pluck(:handle))
++          .to eq([Transactions::Storage::CreateDataset.t_type, Transactions::Utils::NoOp.t_type])
++        expect(DatasetInPoolPlan.exists?(dataset_in_pool: dip)).to be(true)
++      end
++      raise WaitReached
++    end
++    expect { DevStorageProfileProvision.provision!(selected) }.to raise_error(WaitReached)
++  end
++
++  it 'refuses initially frozen provision before changing catalog, plans or chains' do
++    selected = profile
++    before = catalog_counts
++    StorageFreezeControl.find(1).update_columns(mode: StorageFreezeControl.modes.fetch('read_only'))
++    frozen = StorageFreezeControl.find(1).attributes
++    audits = StorageFreezeTransition.count
++    expect { DevStorageProfileProvision.provision!(selected) }.to raise_error(VpsAdmin::API::Exceptions::StorageReadOnly)
++    expect(catalog_counts).to eq(before)
++    expect(StorageFreezeControl.find(1).attributes).to eq(frozen)
++    expect(StorageFreezeTransition.count).to eq(audits)
++    ordinary_reader { expect(StorageFreezeControl.find(1)).to be_read_only }
++  end
++
++  it 'rechecks staged Pool admission when freeze changes after the initial observation' do
++    selected = profile
++    unlock_transaction_signer!
++    before = catalog_counts
++    expect(DevStorageProfileProvision).not_to receive(:wait_for_chain!)
++    allow(DevStorageProfileProvision).to receive(:pool_rows).and_wrap_original do |method, argument|
++      result = method.call(argument)
++      expect(ActiveRecord::Base.connection.transaction_open?).to be(false)
++      StorageFreezeControl.find(1).update_columns(mode: StorageFreezeControl.modes.fetch('read_only'))
++      result
++    end
++    expect { DevStorageProfileProvision.provision!(selected) }.to raise_error(VpsAdmin::API::Exceptions::StorageReadOnly)
++    expect(catalog_counts).to eq(before)
++  end
++
++  it 'retains committed templates but refuses CatchUp if freeze changes before staging' do
++    selected = profile
++    existing_backup!
++    source!
++    selected.install_plan!
++    unlock_transaction_signer!
++    before = TransactionChain.count
++    allow(selected).to receive(:bootstrap_templates!).and_wrap_original do |method|
++      result = method.call
++      ordinary_reader { expect(EnvironmentDatasetPlan.exists?(environment: environment)).to be(true) }
++      StorageFreezeControl.find(1).update_columns(mode: StorageFreezeControl.modes.fetch('read_only'))
++      result
++    end
++    expect { DevStorageProfileProvision.provision!(selected) }.to raise_error(VpsAdmin::API::Exceptions::StorageReadOnly)
++    expect(TransactionChain.count).to eq(before)
++    expect(EnvironmentDatasetPlan.exists?(environment: environment)).to be(true)
++  end
++
++  it 'validates Guest admission in autocommit and refuses frozen entry without writes' do
++    PROFILE.instance_variable_set(:@instance, profile)
++    request = { 'operation' => 'info', 'key' => '0123456789abcdef' }
++    expect(StorageProfileAcceptance::Guest.validate!(request)).to eq(profile)
++    ordinary_reader { expect(StorageFreezeControl.find(1)).to be_read_write }
++    StorageFreezeControl.find(1).update_columns(mode: StorageFreezeControl.modes.fetch('read_only'))
++    before = catalog_counts
++    frozen = StorageFreezeControl.find(1).attributes
++    expect { StorageProfileAcceptance::Guest.validate!(request) }.to raise_error(VpsAdmin::API::Exceptions::StorageReadOnly)
++    expect(catalog_counts).to eq(before)
++    expect(StorageFreezeControl.find(1).attributes).to eq(frozen)
++    ordinary_reader { expect(StorageFreezeControl.find(1)).to be_read_only }
++  end
++end
++
++RSpec.describe StorageProfileAcceptance::Host do
++  let(:info) do
++    { 'source_id' => 11, 'destination_id' => 12, 'source_node' => 'node1',
++      'destination_node' => 'storage1', 'source_fs' => 'tank/source/fixture', 'settled' => true,
++      'tree_id' => nil, 'branch_id' => nil, 'snapshots' => {} }
++  end
++
++  around do |example|
++    Dir.mktmpdir('profile-payload-') do |directory|
++      File.chmod(0o700, directory)
++      @directory = directory
++      example.run
++    end
++  end
++
++  let(:host) do
++    allow_any_instance_of(described_class).to receive(:command!)
++      .with('dev-session', 'current').and_return('profile-spec')
++    instance = described_class.new(slug: 'profile-spec', artifact_dir: @directory, os_template_id: 1)
++    instance.instance_variable_get(:@request).merge!(
++      'kind' => 'vps', 'user_id' => 10, 'vps_id' => 20, 'source_id' => 11
++    )
++    instance.instance_variable_set(:@info, info)
++    instance
++  end
++
++  it 'checks fresh Guest info before payload SSH and uses intended updated snapshot evidence' do
++    fresh = info.merge('tree_id' => 30, 'branch_id' => 31, 'snapshots' => { '11' => [{ 'id' => 40 }] })
++    expect(host).to receive(:api!).with('info').ordered.and_return(fresh)
++    expect(host).to receive(:remote!).with('node1', /osctl ct exec 20/).ordered
++    host.send(:write_payload!, 'B')
++    expect(host.instance_variable_get(:@info)).to eq(fresh)
++  end
++
++  it 'refuses payload SSH when the fresh Guest observation refuses' do
++    expect(host).to receive(:api!).with('info')
++                                  .and_raise(StorageProfileAcceptance::Invalid, 'fixture observation refused')
++    expect(host).not_to receive(:remote!)
++    expect { host.send(:write_payload!, 'A') }.to raise_error(StorageProfileAcceptance::Invalid, /observation refused/)
++  end
++
++  { 'source_id' => 21, 'destination_id' => 22, 'source_node' => 'node2',
++    'destination_node' => 'node2', 'source_fs' => 'tank/other/fixture', 'settled' => false }.each do |field, changed|
++    it "refuses payload SSH when fresh #{field} differs" do
++      expect(host).to receive(:api!).with('info').and_return(info.merge(field => changed))
++      expect(host).not_to receive(:remote!)
++      expect { host.send(:write_payload!, 'A') }.to raise_error(StorageProfileAcceptance::Invalid, /identity changed/)
++    end
++  end
++
++  it 'refuses payload SSH if the current request no longer matches the bound source' do
++    host.instance_variable_get(:@request)['source_id'] = 21
++    expect(host).to receive(:api!).with('info').and_return(info)
++    expect(host).not_to receive(:remote!)
++    expect { host.send(:write_payload!, 'A') }.to raise_error(StorageProfileAcceptance::Invalid, /identity changed/)
++  end
++end

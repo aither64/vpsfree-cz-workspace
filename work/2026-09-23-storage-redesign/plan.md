@@ -1,6 +1,46 @@
 # 2026-09-23-storage-redesign
 
-## Current execution slice: Node RPC recovery, 2026-10-03
+## Current execution slice: retained storage trial, 2026-10-04
+
+Workspace correction activation and integration are complete. The user's
+“ok, continue” resumes delivery of the corrected guest scripts, public profile
+provision and the existing VPS/NAS payload/history, automatic/repeat and
+retirement/reactivation checks. Keep original disks, allocations, files, quotas
+and retention intact. Separate API diagnostics and repository default integration
+remain outside this operational slice.
+
+The initial live baseline read found the old runner gone. A second supported
+public maintenance cycle captured a fresh masked backup/baseline and copied the
+corrected services closure. Full copied boot then failed because targeted Node
+updates had advanced full result-config DNS selections without delivering their
+closures. Keep the stopped `starting_copied` hold and all six disks intact.
+
+The saved provider correction distinguishes build candidates from actually
+applied guest selections and permits bounded, provenance-based stopped DNS
+recovery. Its complete committed branch passed quick checks and independent
+review, which found an omitted host GC lifetime boundary. The explicit selected
+payload roots and real-Nix private-store regression are now checked and committed
+at b748; direct review remediation is resolved. The native failed at an
+unresolved counter-or-disk equality with missing baseline evidence. A one-path
+fixture amendment now records bounded comparisons and checks source-proved
+all-service readiness before the baseline. It is committed at77dd0d04 and the
+same short native scenario passed0/1018.533s/parity1, stage6/released0. The
+provider feature is published; generated consumer/package proof has passed.
+Final feature publication/comparison and external idle activation precede the
+public recovery. No cause is inferred for the earlier missing-evidence
+failure; full-cluster recovery remains a separate acceptance gate. Cumulative provenance/root retention is accepted; no pruning or
+state-version expansion is part of that remediation.
+
+After focused correction checks and the owning DNS native scenario, publication,
+generated consumer pin and package proof precede external idle activation. Then
+public metadata recovery and full copied boot/seed/refresh/release precede guest-
+script delivery and original-object comparisons. The approved provision and
+payload/retirement sequence resumes only after those proofs. New fixture writes
+remain separate from original-object preservation. No force/reset, manual
+unlock, freeze bypass or private release is used. See [design](design.md),
+[state](state.md) and [rollout](storage-profile-rollout.md).
+
+## Completed execution slice: Node RPC recovery, 2026-10-03
 
 The workspace package is activated, verified and integrated. Before the retained
 storage-profile trial, the user selected Node recovery first and approved its

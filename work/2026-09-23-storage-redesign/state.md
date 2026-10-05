@@ -6,14 +6,429 @@ lifecycle: active
 
 ## Current status
 
-2026-10-04 current phase: workspace admission-fix activation VERIFIED and
-workspace/master integration complete. The remaining storage work stays held.
-The user explicitly directed: “rebase, let's activate it and merge the fix again ...
-while keeping the rest of the storage work aside. do not wait for CI”. This
-covers the workspace correction; no other default integration or cluster/storage
-operation is authorized by this continuation. CI will not be awaited.
+2026-10-05 current phase: the provider correction and native DNS regression
+have passed; the provider feature is published and the consumer/package proof
+is complete. Final publication/comparison and external idle activation follow.
+Independent review and direct host-root remediation are complete. The native
+passed with bounded diagnostics and the source-proved readiness prerequisite;
+the earlier counter-or-disk failure remains unattributed. The user said
+“ok, continue” after the ordered next steps were described. Workspace activation
+and integration are complete. This continuation uses the selected corrected
+package for a supported second maintenance copy/boot, actual guest-script proof,
+one justified provision retry and the existing VPS/NAS acceptance and retirement/reactivation
+sequence. It does not authorize another repository's default integration.
+Separate API diagnostics remain held; CI is not awaited.
 
-### Rebase preparation before activation
+The selected package is `s7y4`, tools `q49`, provider `cd81e83f` and same-session
+Admin `290f1ef0`. Initial stale/ready status was disproved by the absent runner
+and failed SSH. A second public maintenance cycle has now booted the proved
+resident generation, captured a fresh masked DB backup/baseline and copied the
+corrected closure. Supported stop completed, but copied start failed at DNS
+boot readiness. The hold remains `starting_copied`; the runner performed its
+own shutdown. The currently installed provider has no recovery for this selection;
+its replacement is now committed at
+`77dd0d0447f48c8d8e667257cef2276738d053a0` (original review at bcc retained;
+rooting checks at b748 retained within unchanged runtime/input scope).
+Provision and
+the prepared read-only delivery batch remain unexecuted.
+Original disks, cold recovery copies and prior DB/file/quota evidence are retained.
+Architect0 owns the saved recovery brief and fixture decision; implementer0
+completed the eight-path host-root remediation, now committed and held. The lead owns coordination, proof
+selection and acceptance. The lead inspected and folded the final one-path fixture amendment; the fresh
+watcher completed its native pass. All cluster operations
+remain held until the new source is externally activated and its selected bytes are verified.
+
+- [x] Resolve the host-payload rooting finding and check the final provider
+  retained-selection/v2 recovery correction.
+- [x] Complete committed provider review and direct rooting remediation disposition.
+- [x] Run the existing native scenario with its added retained DNS-root regression.
+- [x] Publish the provider and check the generated consumer/default package.
+- [ ] Finish final consumer publication/comparison and verify external idle
+  activation before public recovery and copied start.
+- [x] Capture a fresh masked protected DB baseline and logical backup; retain
+  prior ordinary-file/quota evidence without inventing a fresh preboot read.
+- [ ] Deliver services through the public provider and prove both actual guest
+  wrappers' immutable scripts match the selected correction.
+- [ ] Recheck preservation, then complete public provision and Pool/catch-up proof.
+- [ ] Complete the existing VPS/NAS payload/history, rotation, automatic cycle and
+  repeat seed/provision fixture, with separate original-object comparisons.
+- [ ] Complete retirement/repeat/nonreactivation and re-enrollment, retaining data.
+
+## Prepared external activation boundary
+
+The built package is unselected. Once managed sessions are idle, use the stable
+public command from an external shell:
+
+```sh
+workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace
+```
+
+The public switch quiesces ready sessions before selecting the generation; the
+active lead must leave this operation to the external idle boundary. The old
+installed q49 helper lacks the new recovery command. After activation, the lead
+verifies exact zwdv/n2ki selected/runtime bytes and public ownership, then fills
+fresh private stopped-disk/provenance evidence for metadata recovery and copied
+start. No helper bypass, second maintenance boot, reset, early release, session
+closure or default merge is implied. The prepared evidence template remains
+invalid until its real hold/disk/proof placeholders are validated.
+
+## Native preservation evidence amendment, 2026-10-05
+
+Implementer0 froze only the native Ruby fixture at SHA256 `5f72cdc3…d27f5`.
+Lead inspection and Ruby3.4.9 syntax/diff passed; all nine other guarded source
+hashes and the lock remained exact. Normal owning amend produced provider
+`77dd0d04`, tree `31986d97`, preserving `b7488807` in an exact backup.
+The complete branch still has two coherent commits; admission `cd81` is
+unchanged. No runtime, public interface, state format or migration changed.
+
+The fixture now checks initial API, Supervisor and scheduler independently:
+`systemctl is-active` with multiple arguments succeeds if any is active.
+The existing final API/Supervisor wait uses the same all-of meaning, without a
+new scheduler gate. The existing auth timer is stopped before its service;
+both synchronous stops and inactive states are checked. Original equality,
+data reads, masked boots, copy interruption and release guards remain intact.
+Private baselines and bounded pre-assertion comparisons now distinguish
+projection/payload/counter/disk failures. No raw SQL/config/credential output
+was added. These are source-proved prerequisites, not a diagnosis of the prior
+unresolved counter-or-disk failure.
+
+Fresh one-operation Luna/low watcher `retained_dns_baseline_native_20261005`
+owns `/tmp/ndns.27h2r2lc` at exact `77dd0d04`/Admin290f. Driver
+`bfedae90…12509`, ten-source manifest `0959b517…4072e`, review-clearance
+`0f7d2f74…d3bf5` bind this run. Only the two inspected module-trim/initrd-pack
+noncompiling derivations remain monitor exceptions. The batch completed PASS0/1018.533s/parity1, one example, stage6,
+scenario_completed1 and hold_released0. All six saved preservation comparisons
+were equal. Parent process metadata found zero prefix/PGID825613/FD holders.
+This proves the owning services+one-DNS scenario, not actual full-cluster
+release, host GC survival or the prior failure cause. Provider SSH publication
+and exact readback completed at77dd; default e1bb is unchanged. Consumer URL
+authoring is assigned; lock/package/activation/public recovery remain pending.
+Provider CI37249592515 is in progress at77dd; metadata listed no superseded
+queued/in-progress run, so none was canceled. CI is not awaited.
+
+## Consumer and package preparation, 2026-10-05
+
+Implementer0 authored only the provider URL on clean root `e5ba1912`.
+Normal lead generation changed exactly the four provider metadata leaves to
+`77dd0d04`; generic6a, Codex32775, defaults and every other node/follow stayed
+exact. Root no-build and diff checks passed. The normal one-commit pin is
+`de915cd11b97ea8438eb1d8ddbeac139a379db68`, tree
+`46efba7693c56b18020f5c38fdd204be20b59697`: two flakes,5+/5-, binary diff
+`48eed400…337f2`. [Consumer inventory](storage-profile-retained-selection-consumer-inventory.json)
+and [diff](storage-profile-retained-selection-consumer.diff) retain its complete
+range. This mechanical URL/generated-lock update is exempt from a new independent
+review; complete provider review and direct-remediation proof remain scoped
+under their original provenance.
+
+Fresh Luna/low watcher `retained_selection_package_20261005` owns the existing
+four root checks, default build and actual provider/helper/runtime/contract/
+Codex/default byte proof in `/tmp/storage-profile-retained-selection-package-20261005.u4_knzyn`.
+Exact root/provider/Admin bindings are de915/77dd/290f. Driver7348596a,
+verifier0239b631 and selection35822c94 are frozen. The batch passed0/260.657s/parity1: existing four checks252.368s,
+default build8.038s, actual proof0. All nine equality flags and profile loader
+passed with schema1/policy3/providers2. Package is
+`/nix/store/zwdv3dc17zbbfkdm24qrm4rz1l0xg5nz-dev-workspace-0.2.0`, tools
+`/nix/store/n2ki0wm9lr7qjs49j1v155gp42g2j3a2-vpsfree-dev-workspace-tools-0.1.0`.
+The successful check contains Git identity-warning stderr; its exit status is0.
+No package selection is inferred. Final replay/publication/comparison against
+shared tracking master are pending preparation for the external idle handoff. Public `workspace-host status` still selects s7y4/q49;
+its actual maintenance SHA20761bf1 is the old helper. Public recovery and the
+retained trial remain held until the new package is built and externally
+activated while managed sessions are idle. No new default integration authority
+is inferred from the earlier completed86fe activation/integration.
+
+## Provider correction checkpoints, 2026-10-05
+
+The following checkpoints retain the original failures, intermediate holds and
+later disposition in execution order. Current phase is summarized above.
+
+The final authoring manifest is `ca7ff1dd…9056f`; the normal commit preserved
+all eight hashes. Before host-root remediation, provider `bcc0532` had a
+clean worktree/index and unchanged inputs. Bash/Ruby/Nix syntax, Nix formatting and diff checks passed. A fresh
+Luna/low watcher completed all four quick stages against Admin `290f1ef0`:
+exit0/1259.483s/parity1, no remaining operation or reported kernel build.
+Focused stage 1 passed in
+465.321s: maintenance 28 runs/222 assertions, commands 37/426, runner 13/35,
+all zero failures/errors/skips. Existing flake checks passed in687.491s;
+candidate/resident evaluations passed in54.039s/52.037s. Existing skips and
+repeated upstream summaries in the flake log are not a deduplicated test count.
+Reviewer0 completed all four HIGH-risk lanes with saved Sol/xhigh/read_only
+settings against the complete `e1bb5cf..bcc0532` two-commit/11-path range.
+[Review packet and inventory](storage-profile-retained-selection-review.md).
+Review completed with one Important host-payload rooting finding and one
+Advisory retention-cost finding. The added DNS native regression remains held.
+
+Reviewer0 report `ef116da3-cd14-4ca3-a7b4-9a612d229cc0` completed all four
+HIGH-risk lanes at `e1bb5cf..bcc0532`: no Blocking finding, one Important and
+one Advisory. The complete two-commit history is coherent, with no obsolete
+approach or SQL migration; maintenance1→2 and applied1 are intentional private
+format changes. The Important finding confirms that raw imported JSON roots do
+not retain embedded host boot closures. The parent's read-only query of the
+actual prior maintenance-next JSON returned exit0 with empty references.
+Architect0 saved the explicit per-store-item rooting supplement and real-Nix
+reachability regression contract. Lead released exactly eight remediation paths
+to implementer0 at `bcc0532`, including one new focused test and its existing
+flake-check invocation/dependency. Inputs and unrelated source/index remain held.
+No host GC, native or public operation has run.
+
+Adjacent lead inspection found that content-named JSON roots can collide for
+byte-identical configs stored under distinct names while provenance requires
+both exact paths. Architect0 saved the bounded clarification and lead released
+it within the same manifest: permanent `maintenance-source-*` roots hash the
+containing store-item path, retaining old roots and record content digests.
+One real-Nix private-store case must prove both registrations remain after the
+second source and first-source retry. README's owning prose pass is complete;
+the final eight-path freeze is complete. Manifest `235edcd5…3965a` matches
+all source bytes. The lead staged only the new store-root test for Git-flake
+inclusion; seven tracked modifications remain held. Fresh watcher
+`host_roots_quick_20261005` runs four focused Ruby files, existing flake checks,
+and actual Admin290f candidate/resident evaluation, stopping at the first failure.
+Driver `74c43fc6…eb580` and ten-file guard manifest `3cf8d582…58c44` bind the
+exact bcc head, source bytes and staged new test. The first batch stopped at stage1: exit1/713.502s, overall714.202s/parity1,
+no unexpected kernel build or remaining process. Maintenance31/236 passed;
+commands42/458 had four assertion failures (seed34147); runner/store-root and
+stages2–4 were not run. The new assertions expected internal error text, whereas
+the actual CLI uses a generic diagnostic and the fixture suppresses warnings.
+Lead released only commands_test to replace those invalid text expectations with
+per-attempt causal mock-Nix refusal events, retaining every no-effect/pending/
+predecessor/root check. Runtime and the other seven paths remain frozen, and the
+new test remains parent-staged. The corrected command fixture is frozen at SHA256 `0b426280…b9c57`, with
+manifest `c44061db…affe7`. Only that test file changed: refusal assertions now
+use exact events emitted during each attempt; the selected missing-registration
+case keeps its file present to reach the Nix validity check, while actual absent
+items remain covered by the real-Nix test. All other seven source hashes and the
+parent-staged new test are unchanged. Fresh watcher
+`host_roots_corrected_quick_20261005` owns driver `a89d9d70…001a4` / ten-file
+manifest `107f31ad…a42dd`. It checks the four corrected methods and six real-Nix
+methods, then the existing full flake check (all92 methods) and both actual
+Admin290f evaluations. This avoids repeating the slow complete command file
+outside and inside the full check. The corrected batch stopped at stage1: exit1/70.051s, overall70.708s/parity1,
+no kernel or remaining process. Four corrected command cases4/40 passed
+(seed2463). Actual-Nix6/89 had six EACCES errors (seed27258) from implicit
+Dir.mktmpdir cleanup of read-only imported store directories; those cleanup
+errors can mask earlier errors, so rooting acceptance remains unproved. Only
+the new store-root test is now released for standard-library cleanup of its own
+private store plus explicit primary-error preservation. Host store/runtime and
+the seven other paths are held. The parent will restage this one file after its
+new freeze. Later fullflake/evals/native remain unrun.
+
+The cleanup correction and valid unregistered-store basename were frozen at
+manifest `85c04dbb…ed1108`; new test SHA `70ff71c8…ae76e` was restaged by the
+parent. Fresh watcher `host_roots_final_quick_20261005` ran actual-Nix6 against
+these exact bytes. It stopped at stage1: exit1/9.01s, overall9.632s/parity1,
+no kernel or remaining process. Six runs/89 assertions had zero assertion
+failures and three errors, seed11095: root registration was unproved. Cleanup
+now exposed the primary failures. The lead's bounded synthetic local-store
+probe showed actual `nix-store --query --roots` output is `ROOT -> ITEM`; helper,
+mock and real-Nix assertions incorrectly required a bare root path. Lead
+released only maintenance.rb, commands_test and store_roots_test for the exact
+formatted root/item proof and matching fixtures. Other five paths/index remain
+held. No persisted-state/public contract or rooting design change is proposed.
+The exact query-format correction is frozen at manifest `e2a00a58…e414d`:
+helper `8f205b0c…b6ef4`, commands `2573c280…f9ad8`, store test `f8ed0db1…0beda`;
+the other five paths and inputs/lock are unchanged. Parent restaged only the
+new test. Fresh Luna/low watcher `host_roots_formatted_quick_20261005` owns
+private batch `/tmp/storage-profile-host-roots-formatted-check-20261005.un6qcor0`,
+driver `2bdc2381…42eac` / ten-hash manifest `4e8569d5…4a191`.
+Actual-Nix stage1 passed exit0/27.022s, all six required cases, no kernel;
+assertion count remains pending the complete watcher report. Fullflake stage2
+is active under the same owned driver; exactAdmin stages3/4 remain unreported.
+The real-store proof establishes root registration without a GC run.
+The full flake gate covers all four complete affected files/all92 methods;
+no additional CI wait or VM matrix is introduced. The complete formatted batch passed exit0/1092.449s/parity1; all four stages
+passed and no handle or kernel build remains. Actual-Nix6/141 passed; fullflake
+passed in956.702s with maintenance31/236, commands42/478, runner13/35 and
+store6/141. Candidate/resident evals passed54.039s/54.038s. Broader upstream
+skips/repeated summaries are retained without an aggregate count. Git identity
+diagnostics preceded the final all-checks-passed status.
+
+Normal owning amendment produced `b7488807e95ad3d79febccf021d47a6afaee2b4d`,
+tree `73fb0a2344976bbf50657b0780ac178ed6385e3d`, preserving all eight tested
+hashes and unchanged lock. Backup
+`backup/2026-09-23-storage-redesign-provider-before-host-roots` retains bcc;
+cd81 admission stays unchanged. Fresh SSH fetch confirmed default e1bb and
+remote feature cd81, so no new upstream replay is needed. Complete e1bb..b748
+is two commits/13 paths/2776 additions/84 deletions, full diff SHA
+`591f878c8198429cd7dfa6050fe8fc6b53ffa4038838e3f180805e77b6a70072`.
+Original bcc inventory/diff and ef116da3 report remain linked separately.
+
+The lead resolved Important1 under direct step9 inspection and checks: one
+registrar retains exact source items and selected payloads, Nix proves roots,
+and root failures precede effects/publication. No new public/state boundary,
+SQL migration, obsolete branch history or step10 rerun is introduced. Cumulative
+retention Advisory is documented and accepted. This does not claim observed GC
+survival or native/public boot success.
+
+Fresh watcher `retained_dns_native_20261005` owns private batch
+`/tmp/storage-profile-retained-dns-final-native-20261005.of35dldp`, driver
+`2bb09bd5…e1adb`, manifest `8691720e…153ae`, direct-review clearance
+`65c6bbbd…a340b`. Exact b748/Admin290f guard passed. It runs the one existing
+services+oneDNS ordered native fixture. That first attempt is incomplete:
+driver exit1 / underlying -2 / 125.235s / parity1, zero examples and no VM
+artifacts. Its broad Linux-build matcher canceled the exact modules-shrunk
+derivation; the parent confirmed the owned PGID had no remaining processes.
+Source inspection proved that derivation only copies/trims registered modules,
+firmware and runs depmod, with no kernel compilation. The exact inspected
+derivation is now allowed while all other Linux-build cancellation remains.
+Fresh Luna/low watcher `retained_dns_trim_aware_native_20261005` owns
+`/tmp/storage-profile-retained-dns-trim-aware-native-20261005.nkekuy3y`, driver
+`c73ab983…06f88`, the same manifest/review clearance and source guards. Its
+The trim-aware retry also stopped before examples: driver1/underlying-2,
+68.647s/parity1, zero native artifacts. Its broad matcher flagged the initrd.
+The parent inspected its derivation: make-initrd-ng/cpio/compression only,
+empty buildInputs and all42 referenced store items registered. A fresh watcher
+retained_dns_payload_aware_native_20261005 now owns
+/tmp/storage-profile-retained-dns-payload-aware-native-20261005.qqla295w,
+driver 64b9ff5f…6e3c53, with the same source manifest and review clearance.
+Only the two exact inspected module-trimming/initrd-packing derivations are
+allowed; every other Linux-build cancellation remains. That run completed
+exit1/430.174s/parity1, no unexpected kernel build. One native example failed
+in17.67s at stage1: the artifact prefix made its Unix socket122 bytes, above
+the108-byte limit. Parent source/path inspection confirms this launch-path
+constraint and an exact owned-path process scan found zero processes.
+Fresh watcher retained_dns_short_native_20261005 now runs the unchanged driver
+and guarded source in /tmp/ndns.e87t01sh. The observed socket would be68 bytes
+with this prefix; this is a launch-path correction, not a source fix. That
+run completed exit1/385.891s/parity1 with no unexpected kernel build. One
+example failed325.69s at stage2, passed0/hold_released0, expected true got false.
+Bounded shell evidence narrows failure to old-writer counters or the following
+unlogged host disk-stat tuple comparison before mask/start probes. The initial
+counter/disk baselines were not saved, so the specific difference/cause remains
+unproved; the parent corrected its premature counter-only attribution.
+Implementer0 completed bounded diagnosis: all eight protected SQL projections
+are byte-identical to before.json and payload equality passed. Failed predicate
+remains counters or the following host tuple; both original baselines are absent.
+Raw-disk and one-clone source checks support no qcow2/reset cause. Late initial
+scheduler start is only a timing candidate; no readiness fix is inferred.
+A fresh parent metadata scan found zero exact-prefix cmdline processes,
+PGID790647 members and artifact FD holders. Lead released only the native runner
+to implementer0 for private bounded baseline/comparison diagnostics, preserving
+all reads, assertions and lifecycle semantics. No runtime correction or guessed
+stabilization is authorized. Ruby syntax/diff and lead inspection precede normal
+owning fold and a fresh short-path native run. Other source/index and
+publication/package/actual cluster operations remain held. Earlier failures stay.
+
+Root preparation advanced the clean feature from integrated86fe to actual
+shared master `e5ba1912b74e0bad6d47a61b629100931aa53e52` by fast-forward only.
+The three intervening commits change coordination records only; relevant
+instructions, source/config/tests and both flakes are byte-identical. Foreign
+record contents and shared work/index were untouched. The consumer still pins
+cd81; new pin authoring waits for native proof and exact provider publication.
+
+Implementer0 prepared only an invalid recovery evidence template in private
+/tmp/storage-profile-recovery-template-20261005.o1za129y:
+template SHA669ce203…00d2 / README51961ae7…fa51. The exact version1 schema
+has31 NULL placeholders for the current hold digest, proof references and
+current disk bindings; it supplies no measured facts or runnable evidence.
+Historical device/inode remains unmeasured. Lead must validate the immutable
+sources, copy receipt, stopped ownership and disk identities after package
+activation before completing any final evidence. No operation was run.
+
+
+The Advisory concerns cumulative digest-named config roots. The lead accepts
+and documents this retention cost for the current provenance/history
+contract. This remediation does not authorize pruning roots or changing cluster
+lifecycle behavior. Required pending and historical evidence stays rooted.
+Direct requested rooting remediation will use focused inspection and checks
+under mandatory review step9; substantive boundary changes would require the
+affected step10 lanes. Review findings are recorded in the linked packet.
+
+## Earlier retained-trial execution evidence (2026-10-04)
+
+Private execution evidence:
+`/tmp/storage-profile-resume-20261004.7t052v6y`.
+
+Fresh baseline attempt failed exit1/17.932s before SQL: public services SSH
+reported no route to host, with zero rows captured. The recorded runner PID
+does not exist. Read-only host metadata found six retained disks, no process
+references to the owned VM paths, no disk FD holders, no recorded Unix socket
+listener, and no response from the services address on the existing bridge.
+No mutation or retry occurred. Supported ordinary storage/bridge start is being
+checked; this is a liveness issue, not a DB comparison failure. Prior original
+baseline and cold copies remain available. New measurements after boot cannot
+be described as an unperformed fresh pre-boot file/DB capture.
+
+Source inspection showed ordinary start points at the new toplevel without
+copying it into the preserved root; that proposal was not executed. Architect0
+saved the supported second public maintenance cycle. The latest immutable full
+configuration's services selection matches the prior validated copy and copied
+boot/release. All three nonservices descriptors match the actual successful Node
+update selections; all six disk sizes/mtimes and the prior released ledger were
+preserved before any action. New private `prior_copy` evidence references that
+ledger, not just a host store root. A fresh watcher now owns public
+maintenance-start against the proven resident configuration. Fresh masked DB
+backup/baseline, public copy-only, stop and copied start/refresh/release will
+deliver the correction; successful actual delivery makes an additional ordinary
+services update unnecessary. No new mode or VM test is introduced.
+
+The first maintenance watcher used the default CWD and executed zero operations.
+Parent identity/guards passed from the literal tracking CWD. A fresh watcher ran
+the public maintenance command: exit0/70.755s/parity1, running services under
+maintenance_ready/readyfalse. The next backup/baseline launcher stopped before
+SQL at its public JSON-status preflight (exit1/1.312s, no detailed stderr).
+Read-only parent status observation then proved the live runner/held phase via
+the text command, followed by a successful JSON status with the same ownership.
+That unexplained status observation failure is retained. No DB comparison or
+backup had run; a fresh guarded read-only capture is now the next operation.
+
+The fresh masked capture passed exit0/10.058s/parity1. Logical backup is
+1,324,514 bytes. The consistent baseline covers 27 groups/1,168 rows with zero
+protected changes against the original pre-copy baseline. Its seven additions
+are exactly package6 and items31–36 already observed after the previous seed;
+only two dynamic Pool-space rows changed. A fresh watcher now owns the public
+services copy-only command; no unmasked boot or provision retry is running.
+
+Copy-only passed exit0/260.432s/parity1 and reached copied with the running
+generation still held. All five nonservices descriptors, including the three
+updated Nodes, remain byte-equal in the rooted next configuration. The watcher
+reported no unexpected local kernel build. Supported stop has completed;
+copied-config start/real refresh/release was run by its fresh watcher.
+The fixed delivered-script/original-file/quota packet is prepared and guarded
+against the exact copied toplevel, but unexecuted. Provision remains unstarted.
+
+Copied-start failed exit1/985.14s/parity0 at recorded runner readiness. Services
+obtained its boot shell, but the runner stalled at DNS-primary and then shut
+down its machines. DNS-primary failed initrd NixOS activation; DNS-secondary
+failed finding its NixOS closure. The PID and ready files are now absent; the
+hold remains starting_copied. No seed/refresh/release success is inferred.
+
+Immutable comparison with the prior successful full boot confirms that both
+DNS descriptors changed only toplevel/rootDisk in the latest full result-config
+from Node updates. Those updates never copied or activated DNS. The lead's
+resident proof established the three updated Nodes but missed DNS residency;
+five-descriptor equality against that build configuration did not fill the gap.
+Architect0 assesses supported recovery; implementer0 inspects update/result-config
+bookkeeping read-only. No pending-hold edit, disk import, reset, force or retry
+has been performed. All source/index/package and separate API holds remain.
+
+Both source assessments found no current public recovery seam for this pending
+selection. The lead authorized a bounded provider correction: distinguish the
+full build candidate from successfully applied per-machine selections, and
+derive recovery from genuine earlier DNS boot provenance while retaining the
+current Nodes, copied services and six disks. Architect0 is saving the concrete
+brief before application authoring. A provider-local maintenance record v2 is
+accepted in principle for explicit predecessor/provenance, with legacy v1 read
+without inference. Canonical schema1/policy3, mask policy1 and preserving-seed
+contract1 stay unchanged; no new phase or relaxed release guard is planned.
+The finalized brief releases eight provider source/test/documentation paths to
+implementer0, including the existing native fixture's retained DNS-root check.
+No generic/OSVM/Admin or input change is included. Application source is now in
+authoring; package transition and all cluster operations remain held. The new
+public metadata-only recovery will preserve the predecessor hold, retain copied
+services and actual Nodes, and derive only the two DNS descriptors from prior
+successful boot provenance. Earlier services-only native proof cannot cover
+that case; new review and the owning DNS regression precede package delivery.
+
+Historical device/inode were not measured. The accepted trusted-operator
+continuity account uses original paths/sizes/cold evidence, exact successful
+per-machine source references and the intervening operation ledger, with no
+known reset/replacement/restore/truncation. Current stopped-disk stat is a fresh
+execution binding, not historical inode or unchanged-content proof. Any known
+contradiction remains a blocker. Actual executable-bound host inspection after
+runner cleanup found zero owned runner/QEMU/virtiofs processes and zero disk FD
+holders, with all six images present. No release/provision/payload is claimed.
+
+### Completed rebase preparation before activation
 
 Initial fresh fetches selected generic master6a972b9a, provider mastere1bb5cf3
 and workspace masterc3124834. Generic maintenance policy4ef is already upstream; provider also
@@ -2797,3 +3212,8 @@ script is packaged in the immutable selected provider399, so a worktree edit
 alone cannot reach the public command: corrected provider publication, generated
 consumer pin and checked package precede external idle activation and a justified
 supported retry. Source/index remain held pending the precise brief.
+
+The consolidated tracking whitespace gate rejected the immutable .diff files'
+blank context lines (a required single-space patch prefix). Exact patch digests
+were preserved and verified; prose/JSON/YAML whitespace checks passed with those
+three patch artifacts excluded. No source or hook was bypassed or changed.

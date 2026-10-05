@@ -1,5 +1,33 @@
 # Retained storage-profile rollout
 
+## Current retained-selection correction, 2026-10-05
+
+The second public maintenance cycle captured the fresh masked backup/baseline
+and copied the corrected services closure, but full copied start failed at DNS
+readiness (exit1/985.14s/parity0). The hold remains `starting_copied` and the
+runner shut down. Full result-config from targeted Node updates had selected new
+DNS descriptors without copying their closures into the retained DNS disks.
+The earlier resident proof missed that per-DNS boundary. No provision retry or
+payload acceptance has run.
+
+Provider correction `bcc0532` passed its four-stage quick batch
+(exit0/1259.483s/parity1; focused78runs/683assertions) and complete independent
+review. Reviewer0 report ef116da3 found one Important host boot-payload lifetime
+gap and one Advisory cumulative-root cost, with no Blocking finding. Raw config
+JSON roots do not retain their embedded host store paths; the actual prior JSON
+has no registered references. Implementer0 is applying the saved explicit
+payload-root correction and private-store real-Nix regression. The cumulative
+provenance/root retention cost is accepted and documented; no pruning is added.
+
+Native DNS acceptance, publication, generated consumer pin and checked package
+must precede external idle activation and public recovery. Selected s7y4/q49
+still supplies cd81. The existing copied services closure already includes the
+admission scripts, but the selected host tools lack the new recovery interface.
+All retained-cluster and separate API actions remain held. Preserve the original
+six disks, cold copies and prior DB/file/quota/retention evidence. Detailed
+finding disposition and next steps are in [state](state.md) and the
+[review packet](storage-profile-retained-selection-review.md).
+
 ## Current package correction, 2026-10-04
 
 The user requested a current-master rebase, activation and workspace/master
@@ -21,6 +49,20 @@ Codex and four core service-binding checks passed. Normal workspace/master
 fast-forward and SSH publication reached86fe; final readback is recorded in state.
 Retained services delivery, provision, scheduling, payload and API diagnostics
 remain held. This package-only continuation performed no cluster operation.
+
+## Historical continuation plan, 2026-10-04
+
+This initial continuation plan was superseded by the failed copied start and
+retained-selection correction above. The user authorized continuation after the workspace correction was activated,
+verified and merged. Use the selected `s7y4` package, `q49` tools, provider
+`cd81e83f` and same-session Admin `290f1ef0`. Fresh original-object baselines
+precede ordinary services update and proof of both deployed immutable guest
+scripts. Provision and the existing payload/repeat/retirement sequence follow
+only after that proof and preservation checks. Separate API diagnostics and
+other repository default integration remain held. No second workspace switch
+or repeated maintenance boot/Node update is planned.
+
+Execution evidence: `/tmp/storage-profile-resume-20261004.7t052v6y`.
 
 ## Prior retained status, 2026-10-03
 
@@ -84,7 +126,7 @@ The [current brief](design.md) owns behavior and ordered acceptance;
 [state](state.md) records implementation and verification. This record will
 hold exact operator selections and outcomes as the authorized trial proceeds.
 
-## Current activation handoff
+## Historical activation handoff, 2026-10-03
 
 Final reviewed equivalent source:
 `19cb25ee8d5333a4ea4c1816806c130c41652f1f` in the registered workspace feature.
@@ -301,3 +343,14 @@ Storage1's logical copies share its existing disk; they are not independent
 failure domains. Retention settings are rotation targets, not hard space caps.
 Preserve both consumed API migrations and additive schema. Production strict,
 identity publication, physical quiet, repair readiness and APPLY remain off.
+
+## Recovery package preparation, 2026-10-05
+
+Provider77dd is published after the native services+DNS scenario passed. The
+mechanical root pin and package proof passed at de915; zwdv/n2ki is built but
+unselected. Root checks and actual helper/contract/runtime/Codex/default bytes
+passed. The stopped real starting_copied hold remains untouched. Final consumer
+publication/comparison and external idle selection precede fresh stopped
+evidence, public metadata recovery and copied-start/seed/refresh/release.
+Neither the native fixture nor host package proof establishes populated payload
+acceptance. Preserve the earlier failures and unknown original native predicate.
