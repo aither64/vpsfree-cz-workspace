@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-07-27-terraform-provider-vpsadmin-issue-11
 
 ## Repositories
