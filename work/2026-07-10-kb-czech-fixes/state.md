@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-07-10-kb-czech-fixes
 
 ## Repositories
