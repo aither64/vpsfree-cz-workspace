@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-08-22-multiple-kernel-scopes
 
 ## Repositories
