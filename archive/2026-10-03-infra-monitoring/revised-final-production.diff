@@ -1,0 +1,180 @@
+diff --git a/cluster/cz.vpsfree/machines/aitherdev/module.nix b/cluster/cz.vpsfree/machines/aitherdev/module.nix
+index 8d3b7651..30a8e227 100644
+--- a/cluster/cz.vpsfree/machines/aitherdev/module.nix
++++ b/cluster/cz.vpsfree/machines/aitherdev/module.nix
+@@ -2,6 +2,7 @@
+ {
+   cluster."cz.vpsfree/machines/aitherdev" = rec {
+     spin = "nixos";
++    machineType = "vm";
+     inputs.channels = [
+       "nixos-stable"
+       "home-manager"
+diff --git a/cluster/cz.vpsfree/machines/build/module.nix b/cluster/cz.vpsfree/machines/build/module.nix
+index c8f35a0d..0444780d 100644
+--- a/cluster/cz.vpsfree/machines/build/module.nix
++++ b/cluster/cz.vpsfree/machines/build/module.nix
+@@ -2,6 +2,7 @@
+ {
+   cluster."cz.vpsfree/machines/build" = rec {
+     spin = "nixos";
++    machineType = "vm";
+     inputs.channels = [
+       "nixos-stable"
+       "os-staging"
+diff --git a/cluster/cz.vpsfree/machines/em1/module.nix b/cluster/cz.vpsfree/machines/em1/module.nix
+index 1dab6e39..fe746051 100644
+--- a/cluster/cz.vpsfree/machines/em1/module.nix
++++ b/cluster/cz.vpsfree/machines/em1/module.nix
+@@ -2,6 +2,7 @@
+ {
+   cluster."cz.vpsfree/machines/em1" = rec {
+     spin = "nixos";
++    machineType = "vm";
+ 
+     inputs.channels = [ "nixos-stable" ];
+ 
+diff --git a/modules/cluster/default.nix b/modules/cluster/default.nix
+index 276addb3..d8e872a1 100644
+--- a/modules/cluster/default.nix
++++ b/modules/cluster/default.nix
+@@ -17,6 +17,16 @@ let
+           default = null;
+         };
+ 
++        machineType = mkOption {
++          type = types.enum [
++            "vps"
++            "vm"
++            "physical"
++          ];
++          default = if config.container != null then "vps" else "physical";
++          description = "Machine classification used by monitoring target labels";
++        };
++
+         node = mkOption {
+           type = types.nullOr (types.submodule node);
+           default = null;
+diff --git a/modules/clusterconf/monitor/default.nix b/modules/clusterconf/monitor/default.nix
+index f83a980d..8b7e0f4d 100644
+--- a/modules/clusterconf/monitor/default.nix
++++ b/modules/clusterconf/monitor/default.nix
+@@ -90,7 +90,10 @@ let
+               alias = getAlias confMachine.host;
+               fqdn = confMachine.host.fqdn;
+             }
+-            // confMachine.monitoring.labels;
++            // confMachine.monitoring.labels
++            // {
++              machine_type = confMachine.machineType;
++            };
+           }
+         ]
+         ++ (flatten (
+@@ -102,7 +105,10 @@ let
+               alias = getAlias m.metaConfig.host;
+               fqdn = m.metaConfig.host.fqdn;
+             }
+-            // m.metaConfig.monitoring.labels;
++            // m.metaConfig.monitoring.labels
++            // {
++              machine_type = m.metaConfig.machineType;
++            };
+           }) machines
+         ));
+ 
+@@ -158,7 +164,10 @@ let
+             location = ensureLocation m.metaConfig.host.location;
+             os = m.metaConfig.spin;
+           }
+-          // m.metaConfig.monitoring.labels;
++          // m.metaConfig.monitoring.labels
++          // {
++            machine_type = m.metaConfig.machineType;
++          };
+         }) exporterMachines;
+ 
+         pingConfigs = map (m: {
+@@ -189,7 +198,10 @@ let
+             role = m.metaConfig.node.role;
+             storage_type = m.metaConfig.node.storageType;
+           }
+-          // m.metaConfig.monitoring.labels;
++          // m.metaConfig.monitoring.labels
++          // {
++            machine_type = m.metaConfig.machineType;
++          };
+ 
+         mkNodeZfsConfig = m: {
+           targets = [
+@@ -573,6 +585,7 @@ let
+               alias = "meet-${name}";
+               type = "meet-jvb";
+               project = project;
++              machine_type = "vps";
+             };
+           }) conf.videoBridges
+         ) confData.meet
+diff --git a/modules/clusterconf/monitor/rules/common.nix b/modules/clusterconf/monitor/rules/common.nix
+index bd99a605..e7c8507f 100644
+--- a/modules/clusterconf/monitor/rules/common.nix
++++ b/modules/clusterconf/monitor/rules/common.nix
+@@ -225,7 +225,7 @@
+       }
+       {
+         alert = "FilesystemCritFreeSpace";
+-        expr = ''(node_filesystem_avail_bytes{mountpoint=~"^(/)|(/run)|(/nix/store)"} / node_filesystem_size_bytes) * 100 <= 10'';
++        expr = ''(node_filesystem_avail_bytes{mountpoint=~"^(/)|(/run)|(/nix/store)",machine_type=~"vm|physical"} / node_filesystem_size_bytes) * 100 <= 10'';
+         for = "5m";
+         labels = {
+           alertclass = "fsavail";
+diff --git a/modules/clusterconf/monitor/rules/nodes.nix b/modules/clusterconf/monitor/rules/nodes.nix
+index a11d750e..e4891f68 100644
+--- a/modules/clusterconf/monitor/rules/nodes.nix
++++ b/modules/clusterconf/monitor/rules/nodes.nix
+@@ -73,7 +73,7 @@
+ 
+       {
+         alert = "HypervisorHighCpuLoad";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location!="stg"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location!~"stg|pgnd"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "10m";
+         labels = {
+           alertclass = "cpuload";
+@@ -92,12 +92,11 @@
+ 
+       {
+         alert = "HypervisorHighCpuLoadStaging";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location="stg"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn, location) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location=~"stg|pgnd"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "50m";
+         labels = {
+           alertclass = "cpuload";
+           severity = "warning";
+-          location = "stg";
+         };
+         annotations = {
+           summary = "High CPU load (instance {{ $labels.instance }})";
+@@ -112,7 +111,7 @@
+ 
+       {
+         alert = "HypervisorCritOsCpuLoad";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location!="stg"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location!~"stg|pgnd"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "10m";
+         labels = {
+           alertclass = "cpuload";
+@@ -131,12 +130,11 @@
+ 
+       {
+         alert = "HypervisorCritOsCpuLoadStaging";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location="stg"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn, location) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location=~"stg|pgnd"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "50m";
+         labels = {
+           alertclass = "cpuload";
+           severity = "critical";
+-          location = "stg";
+         };
+         annotations = {
+           summary = "Critical CPU load (instance {{ $labels.instance }})";

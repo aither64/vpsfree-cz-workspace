@@ -1,3 +1,7 @@
+> Historical evidence for the superseded SMS-only policy at f725dd3f.
+> The global critical-rule revision requires new verification and review.
+> Current intent is in [plan.md](plan.md) and [design.md](design.md).
+
 # Final verification and readiness
 
 Final feature head: `f725dd3f407b0e5b82c9f9c1ad7720bbc7b14b68`.

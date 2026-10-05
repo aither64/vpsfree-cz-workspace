@@ -1,3 +1,7 @@
+> Historical evidence for the superseded SMS-only policy at f725dd3f.
+> The global critical-rule revision requires new verification and review.
+> Current intent is in [plan.md](plan.md) and [design.md](design.md).
+
 # Final branch inventory
 
 Repository: vpsfree-cz-configuration. Branch: 2026-10-03-infra-monitoring.

@@ -1,0 +1,23 @@
+$ nixfmt --check modules/clusterconf/monitor/rules/common.nix modules/clusterconf/monitor/default.nix modules/clusterconf/alerter/default.nix tests/prometheus/infra-monitoring-config.nix
+exit=0
+
+$ bash -n tests/prometheus/infra-monitoring-routing.sh
+exit=0
+
+$ git diff --check
+exit=0
+
+$ git diff --cached --check
+exit=0
+
+$ bundle exec overcommit --run
+Running pre-commit hooks
+Run Nixfmt...................................................[Nixfmt] OK
+Analyze with RuboCop........................................[RuboCop] OK
+
+✓ All pre-commit hooks passed
+
+exit=0
+
+Executable Overcommit pre-commit/commit-msg hooks verified.
+Only two requested fixture query replacements relative to prior staged tree.

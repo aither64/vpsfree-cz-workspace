@@ -1,0 +1,96 @@
+{
+  "head": "657cc0a8e087f8c4bed7fe8d7176cb9f06a6e2da",
+  "generation": "2026-10-03--19-14-38",
+  "monitors": {
+    "mon1": {
+      "toplevel": "/nix/store/csw90srjvy7sjrkzivjbv1g1p3kwn4x4-nixos-system-mon1-26.05.20261002.774debe",
+      "jobs": [
+        {
+          "job": "mon",
+          "groups": 2,
+          "machine_types": {
+            "vps": 2
+          }
+        },
+        {
+          "job": "nodes",
+          "groups": 13,
+          "machine_types": {
+            "physical": 13
+          }
+        },
+        {
+          "job": "infra",
+          "groups": 50,
+          "machine_types": {
+            "vps": 44,
+            "vm": 3,
+            "physical": 3
+          }
+        },
+        {
+          "job": "meet-jvbs",
+          "groups": 11,
+          "machine_types": {
+            "vps": 11
+          }
+        }
+      ],
+      "critical_rule": {
+        "alert": "FilesystemCritFreeSpace",
+        "expr": "(node_filesystem_avail_bytes{mountpoint=~\"^(/)|(/run)|(/nix/store)\",machine_type=~\"vm|physical\"} / node_filesystem_size_bytes) * 100 <= 10",
+        "for": "5m",
+        "labels": {
+          "alertclass": "fsavail",
+          "frequency": "hourly",
+          "severity": "critical"
+        }
+      }
+    },
+    "mon2": {
+      "toplevel": "/nix/store/44kg829p0jj5fqk83868xy8j6kka9sdm-nixos-system-mon2-26.05.20261002.774debe",
+      "jobs": [
+        {
+          "job": "mon",
+          "groups": 2,
+          "machine_types": {
+            "vps": 2
+          }
+        },
+        {
+          "job": "nodes",
+          "groups": 13,
+          "machine_types": {
+            "physical": 13
+          }
+        },
+        {
+          "job": "infra",
+          "groups": 50,
+          "machine_types": {
+            "vps": 44,
+            "vm": 3,
+            "physical": 3
+          }
+        },
+        {
+          "job": "meet-jvbs",
+          "groups": 11,
+          "machine_types": {
+            "vps": 11
+          }
+        }
+      ],
+      "critical_rule": {
+        "alert": "FilesystemCritFreeSpace",
+        "expr": "(node_filesystem_avail_bytes{mountpoint=~\"^(/)|(/run)|(/nix/store)\",machine_type=~\"vm|physical\"} / node_filesystem_size_bytes) * 100 <= 10",
+        "for": "5m",
+        "labels": {
+          "alertclass": "fsavail",
+          "frequency": "hourly",
+          "severity": "critical"
+        }
+      }
+    }
+  }
+}

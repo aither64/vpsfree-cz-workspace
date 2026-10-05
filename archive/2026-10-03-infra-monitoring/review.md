@@ -1,3 +1,7 @@
+> Historical evidence for the superseded SMS-only policy at f725dd3f.
+> The global critical-rule revision requires new verification and review.
+> Current intent is in [plan.md](plan.md) and [design.md](design.md).
+
 # Mandatory independent whole-branch review
 
 Completed by reviewer0 (retained thread 01a1021a-42ed-7e62-9bc2-43fbd84c6a48),

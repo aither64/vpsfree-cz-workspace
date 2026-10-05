@@ -1,0 +1,34 @@
+1:  36b6b874 ! 1:  e7b02916 monitoring: label machine types and suppress VPS disk sms
+    @@ tests/prometheus/infra-monitoring-filesystem.yml (new)
+     +        values: '10+0x15'
+     +      - series: 'node_filesystem_size_bytes{instance="test:9100",job="infra",machine_type="vps",mountpoint="/nix/store"}'
+     +        values: '100+0x15'
+    -+      - series: 'node_filesystem_avail_bytes{instance="test:9100",job="infra",machine_type="vps",mountpoint="/boundary"}'
+    ++      - series: 'node_filesystem_avail_bytes{instance="boundary-20:9100",job="infra",machine_type="vps",mountpoint="/"}'
+     +        values: '20+0x15'
+    -+      - series: 'node_filesystem_size_bytes{instance="test:9100",job="infra",machine_type="vps",mountpoint="/boundary"}'
+    ++      - series: 'node_filesystem_size_bytes{instance="boundary-20:9100",job="infra",machine_type="vps",mountpoint="/"}'
+    ++        values: '100+0x15'
+    ++      - series: 'node_filesystem_avail_bytes{instance="boundary-19:9100",job="infra",machine_type="vps",mountpoint="/"}'
+    ++        values: '19+0x15'
+    ++      - series: 'node_filesystem_size_bytes{instance="boundary-19:9100",job="infra",machine_type="vps",mountpoint="/"}'
+     +        values: '100+0x15'
+     +    promql_expr_test:
+     +      - expr: 'ALERTS{alertname="FilesystemCritFreeSpace",alertstate="firing"}'
+    @@ tests/prometheus/infra-monitoring-filesystem.yml (new)
+     +            value: 1
+     +          - labels: 'ALERTS{alertname="FilesystemCritFreeSpace",alertstate="firing",alertclass="fsavail",frequency="hourly",instance="test:9100",job="infra",machine_type="vps",mountpoint="/nix/store",severity="critical"}'
+     +            value: 1
+    -+      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",mountpoint="/boundary"}'
+    ++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",instance="boundary-20:9100"}'
+     +        eval_time: 5m
+     +        exp_samples: []
+    ++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",alertstate="firing",instance="boundary-19:9100"}'
+    ++        eval_time: 5m
+    ++        exp_samples:
+    ++          - labels: 'ALERTS{alertname="FilesystemLowFreeSpace",alertstate="firing",alertclass="fsavail",frequency="hourly",instance="boundary-19:9100",job="infra",machine_type="vps",mountpoint="/",severity="warning"}'
+    ++            value: 1
+     
+      ## tests/prometheus/infra-monitoring-routing.sh (new) ##
+     @@
+2:  f3f8688b = 2:  f725dd3f monitoring: apply staging cpu alert policy to playground

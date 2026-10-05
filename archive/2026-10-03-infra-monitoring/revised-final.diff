@@ -1,0 +1,1493 @@
+diff --git a/cluster/cz.vpsfree/machines/aitherdev/module.nix b/cluster/cz.vpsfree/machines/aitherdev/module.nix
+index 8d3b7651..30a8e227 100644
+--- a/cluster/cz.vpsfree/machines/aitherdev/module.nix
++++ b/cluster/cz.vpsfree/machines/aitherdev/module.nix
+@@ -2,6 +2,7 @@
+ {
+   cluster."cz.vpsfree/machines/aitherdev" = rec {
+     spin = "nixos";
++    machineType = "vm";
+     inputs.channels = [
+       "nixos-stable"
+       "home-manager"
+diff --git a/cluster/cz.vpsfree/machines/build/module.nix b/cluster/cz.vpsfree/machines/build/module.nix
+index c8f35a0d..0444780d 100644
+--- a/cluster/cz.vpsfree/machines/build/module.nix
++++ b/cluster/cz.vpsfree/machines/build/module.nix
+@@ -2,6 +2,7 @@
+ {
+   cluster."cz.vpsfree/machines/build" = rec {
+     spin = "nixos";
++    machineType = "vm";
+     inputs.channels = [
+       "nixos-stable"
+       "os-staging"
+diff --git a/cluster/cz.vpsfree/machines/em1/module.nix b/cluster/cz.vpsfree/machines/em1/module.nix
+index 1dab6e39..fe746051 100644
+--- a/cluster/cz.vpsfree/machines/em1/module.nix
++++ b/cluster/cz.vpsfree/machines/em1/module.nix
+@@ -2,6 +2,7 @@
+ {
+   cluster."cz.vpsfree/machines/em1" = rec {
+     spin = "nixos";
++    machineType = "vm";
+ 
+     inputs.channels = [ "nixos-stable" ];
+ 
+diff --git a/docs/services/monitoring.md b/docs/services/monitoring.md
+new file mode 100644
+index 00000000..e2244698
+--- /dev/null
++++ b/docs/services/monitoring.md
+@@ -0,0 +1,90 @@
++# Monitoring policy
++
++## Machine classification
++
++Cluster metadata exposes `machineType`: `vps` for managed containers, `physical`
++for other machines by default, and `vm` for aitherdev, em1 and build. Set an
++explicit value in the machine's `module.nix` when the default does not apply.
++
++Host exporter targets publish this as `machine_type` on the `infra`, `nodes`
++and `mon` jobs. This includes the local Prometheus/node-exporter pair, the peer
++monitor, and node ZFS/IPMI exporters. This value overrides a conflicting
++`monitoring.labels.machine_type`; other custom labels retain their precedence.
++Node targets also retain `type="node"` and their existing identity and role labels.
++
++All configured video bridges run as VPSes. The `meet-jvbs` job labels each
++bridge's paired node-exporter (9100) and Jitsi exporter (9700) targets with
++`machine_type="vps"`, preserving alias, type and project labels. Reconsider this
++classification when the bridge inventory changes.
++
++## Filesystem alerts
++
++`FilesystemCritFreeSpace` applies only to exact `machine_type="vm"` or
++`machine_type="physical"` values on any job. It keeps the existing calculation:
++available space at or below 10%, held for five minutes, on `/`, `/run` or
++`/nix/store`. The original percentage value, critical severity, `fsavail` class
++and hourly frequency remain. The numerator selects `machine_type=~"vm|physical"`;
++size metrics must match the available-space metric's labels, including device,
++filesystem type and machine type.
++
++VPS, missing, empty, unknown and lookalike machine types such as `vmx` do not
++produce this critical alert. This includes the VPS monitors and video bridges.
++Job names do not affect eligibility. Absent critical alerts generate no new
++critical email, Telegram or SMS notifications; active alerts may resolve when
++monitor configuration changes and send their normal resolved notifications.
++
++`FilesystemLowFreeSpace` still warns below 20% after five minutes, with hourly
++frequency, for every type, including VPS and missing types. A VPS critical
++filesystem alert cannot inhibit its warning because that critical is absent;
++other inhibition still applies. The separate node fatal-rootfs alert remains
++at or below 5% after five minutes. Alertmanager keeps its normal routes and
++receivers, including normal routing for independently supplied critical alerts.
++
++The `/run` selection remains. `/run` is normally tmpfs; expanding a VPS disk
++does not expand it.
++
++## CPU usage alerts
++
++Staging (`stg`) and playground (`pgnd`) hypervisors share the relaxed CPU
++usage policy: warning above 80% and vpsAdminOS critical above 90%, both held
++for 50 minutes. Other locations, including a missing location label, keep the
++10 minute holds. Both policies require a boot age strictly above one hour.
++
++The relaxed alerts retain their actual location. Their names keep the
++`Staging` suffix for compatibility. CPU usage still averages the idle rate
++across CPU cores. Raw load-average, I/O-wait, storage CPU, filesystem and ZFS
++rules keep their existing policies.
++
++## Configuration changes
++
++Update both monitors with the labels and critical rule together. No exporter,
++node, VM or video bridge update is required. Alertmanager routing is unchanged.
++Changing target labels creates new series and alert identities and can reset
++pending alerts and rate windows. During mixed monitor versions, an older monitor
++may still emit VPS critical alerts. Complete both monitor updates before
++checking the policy; HA deduplication does not cover different label sets.
++
++Restoring the previous deployed monitor configuration restores its filesystem
++eligibility, host/bridge label shape and playground CPU policy. Reverting only
++the critical selector restores filesystem eligibility while preserving labels
++and CPU changes. Restoring Alertmanager alone cannot recreate an alert that
++Prometheus does not emit. Existing Prometheus and Alertmanager state remains
++readable; no data migration or deletion is needed. Verify effective labels,
++rules and configuration reload health on both monitor replicas.
++
++## Focused checks
++
++From the repository's pinned development shell:
++
++```sh
++nix build --no-write-lock-file --no-link \
++  .#checks.x86_64-linux.infra-monitoring-config \
++  .#checks.x86_64-linux.infra-monitoring-rules
++```
++
++The config check evaluates real machine metadata, generated host and video
++bridge labels, global filesystem eligibility, thresholds, values and timing.
++It also checks offline Alertmanager routing with inert receivers. The CPU
++check covers thresholds, hold times, locations and boot suppression. Offline
++routing verifies receiver selection; it does not send notifications or exercise
++delivery, daytime activation, repeat timers or inhibition.
+diff --git a/flake.nix b/flake.nix
+index 57d75ce8..103364f2 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -171,6 +171,13 @@
+         ];
+       };
+       checks.${system} = {
++        infra-monitoring-rules = import ./tests/prometheus/infra-monitoring-rules.nix {
++          pkgs = devPkgs;
++        };
++        infra-monitoring-config = import ./tests/prometheus/infra-monitoring-config.nix {
++          pkgs = devPkgs;
++          machines = confctlOutputs.machines;
++        };
+         vpsf-status-prometheus-rules = import ./tests/prometheus/vpsf-status-rules.nix {
+           pkgs = devPkgs;
+         };
+diff --git a/mkdocs.yml b/mkdocs.yml
+index c61572ad..146a8aeb 100644
+--- a/mkdocs.yml
++++ b/mkdocs.yml
+@@ -9,4 +9,5 @@ nav:
+   - vpsAdmin password recovery deployment: 'operations/vpsadmin-password-recovery-deployment.md'
+   - vpsAdmin security evidence deployment: 'operations/vpsadmin-security-evidence-deployment.md'
+ - Services:
++  - Monitoring: 'services/monitoring.md'
+   - Grafana: 'services/grafana.md'
+diff --git a/modules/cluster/default.nix b/modules/cluster/default.nix
+index 276addb3..d8e872a1 100644
+--- a/modules/cluster/default.nix
++++ b/modules/cluster/default.nix
+@@ -17,6 +17,16 @@ let
+           default = null;
+         };
+ 
++        machineType = mkOption {
++          type = types.enum [
++            "vps"
++            "vm"
++            "physical"
++          ];
++          default = if config.container != null then "vps" else "physical";
++          description = "Machine classification used by monitoring target labels";
++        };
++
+         node = mkOption {
+           type = types.nullOr (types.submodule node);
+           default = null;
+diff --git a/modules/clusterconf/monitor/default.nix b/modules/clusterconf/monitor/default.nix
+index f83a980d..8b7e0f4d 100644
+--- a/modules/clusterconf/monitor/default.nix
++++ b/modules/clusterconf/monitor/default.nix
+@@ -90,7 +90,10 @@ let
+               alias = getAlias confMachine.host;
+               fqdn = confMachine.host.fqdn;
+             }
+-            // confMachine.monitoring.labels;
++            // confMachine.monitoring.labels
++            // {
++              machine_type = confMachine.machineType;
++            };
+           }
+         ]
+         ++ (flatten (
+@@ -102,7 +105,10 @@ let
+               alias = getAlias m.metaConfig.host;
+               fqdn = m.metaConfig.host.fqdn;
+             }
+-            // m.metaConfig.monitoring.labels;
++            // m.metaConfig.monitoring.labels
++            // {
++              machine_type = m.metaConfig.machineType;
++            };
+           }) machines
+         ));
+ 
+@@ -158,7 +164,10 @@ let
+             location = ensureLocation m.metaConfig.host.location;
+             os = m.metaConfig.spin;
+           }
+-          // m.metaConfig.monitoring.labels;
++          // m.metaConfig.monitoring.labels
++          // {
++            machine_type = m.metaConfig.machineType;
++          };
+         }) exporterMachines;
+ 
+         pingConfigs = map (m: {
+@@ -189,7 +198,10 @@ let
+             role = m.metaConfig.node.role;
+             storage_type = m.metaConfig.node.storageType;
+           }
+-          // m.metaConfig.monitoring.labels;
++          // m.metaConfig.monitoring.labels
++          // {
++            machine_type = m.metaConfig.machineType;
++          };
+ 
+         mkNodeZfsConfig = m: {
+           targets = [
+@@ -573,6 +585,7 @@ let
+               alias = "meet-${name}";
+               type = "meet-jvb";
+               project = project;
++              machine_type = "vps";
+             };
+           }) conf.videoBridges
+         ) confData.meet
+diff --git a/modules/clusterconf/monitor/rules/common.nix b/modules/clusterconf/monitor/rules/common.nix
+index bd99a605..e7c8507f 100644
+--- a/modules/clusterconf/monitor/rules/common.nix
++++ b/modules/clusterconf/monitor/rules/common.nix
+@@ -225,7 +225,7 @@
+       }
+       {
+         alert = "FilesystemCritFreeSpace";
+-        expr = ''(node_filesystem_avail_bytes{mountpoint=~"^(/)|(/run)|(/nix/store)"} / node_filesystem_size_bytes) * 100 <= 10'';
++        expr = ''(node_filesystem_avail_bytes{mountpoint=~"^(/)|(/run)|(/nix/store)",machine_type=~"vm|physical"} / node_filesystem_size_bytes) * 100 <= 10'';
+         for = "5m";
+         labels = {
+           alertclass = "fsavail";
+diff --git a/modules/clusterconf/monitor/rules/nodes.nix b/modules/clusterconf/monitor/rules/nodes.nix
+index a11d750e..e4891f68 100644
+--- a/modules/clusterconf/monitor/rules/nodes.nix
++++ b/modules/clusterconf/monitor/rules/nodes.nix
+@@ -73,7 +73,7 @@
+ 
+       {
+         alert = "HypervisorHighCpuLoad";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location!="stg"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location!~"stg|pgnd"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "10m";
+         labels = {
+           alertclass = "cpuload";
+@@ -92,12 +92,11 @@
+ 
+       {
+         alert = "HypervisorHighCpuLoadStaging";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location="stg"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn, location) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",location=~"stg|pgnd"}[5m])) * 100) > 80 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "50m";
+         labels = {
+           alertclass = "cpuload";
+           severity = "warning";
+-          location = "stg";
+         };
+         annotations = {
+           summary = "High CPU load (instance {{ $labels.instance }})";
+@@ -112,7 +111,7 @@
+ 
+       {
+         alert = "HypervisorCritOsCpuLoad";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location!="stg"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location!~"stg|pgnd"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "10m";
+         labels = {
+           alertclass = "cpuload";
+@@ -131,12 +130,11 @@
+ 
+       {
+         alert = "HypervisorCritOsCpuLoadStaging";
+-        expr = ''100 - (avg by(instance, alias, fqdn) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location="stg"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
++        expr = ''100 - (avg by(instance, alias, fqdn, location) (irate(node_cpu_seconds_total{mode="idle",role="hypervisor",os="vpsadminos",location=~"stg|pgnd"}[5m])) * 100) > 90 and on(instance) time() - node_boot_time_seconds > 3600'';
+         for = "50m";
+         labels = {
+           alertclass = "cpuload";
+           severity = "critical";
+-          location = "stg";
+         };
+         annotations = {
+           summary = "Critical CPU load (instance {{ $labels.instance }})";
+diff --git a/tests/prometheus/infra-monitoring-config.nix b/tests/prometheus/infra-monitoring-config.nix
+new file mode 100644
+index 00000000..5b144fd6
+--- /dev/null
++++ b/tests/prometheus/infra-monitoring-config.nix
+@@ -0,0 +1,373 @@
++{ pkgs, machines }:
++
++let
++  inherit (pkgs) lib;
++  meet = import ../../data/meet.nix;
++  classifications = {
++    "cz.vpsfree/containers/int.kb" = "vps";
++    "cz.vpsfree/containers/prg/int.mon1" = "vps";
++    "cz.vpsfree/containers/prg/int.mon2" = "vps";
++    "cz.vpsfree/machines/aitherdev" = "vm";
++    "cz.vpsfree/machines/em1" = "vm";
++    "cz.vpsfree/machines/build" = "vm";
++    "cz.vpsfree/machines/prg/apu" = "physical";
++    "cz.vpsfree/nodes/prg/node19" = "physical";
++    "cz.vpsfree/nodes/prg/backuper2" = "physical";
++  };
++
++  # Real evaluated metadata, with conflicting custom labels on every constructor.
++  cluster = lib.mapAttrs (
++    name: _:
++    let
++      meta = machines.${name}.metaConfig;
++    in
++    meta
++    // {
++      monitoring = meta.monitoring // {
++        labels = {
++          machine_type = "conflicting-custom-type";
++          fixture_label = "kept";
++        };
++      };
++      services =
++        meta.services
++        // lib.optionalAttrs (meta.node != null) {
++          zfs-exporter = {
++            port = 9134;
++            address = meta.addresses.primary.address;
++            monitor = null;
++          };
++          ipmi-exporter = {
++            port = 9290;
++            address = meta.addresses.primary.address;
++            monitor = null;
++          };
++        };
++    }
++  ) classifications;
++
++  # The fixtures expose only inventory lookup; production modules generate labels.
++  confLib = {
++    getClusterMachines =
++      c:
++      lib.mapAttrsToList (name: metaConfig: {
++        inherit name metaConfig;
++        carrier = null;
++      }) c;
++    findMetaConfig = { cluster, name }: cluster.${name};
++  };
++
++  monitorJobs =
++    monitorName:
++    (import ../../modules/clusterconf/monitor {
++      inherit pkgs lib confLib;
++      confData = { inherit meet; };
++      confMachine = cluster.${monitorName};
++      config = {
++        inherit cluster;
++        clusterconf.monitor = {
++          enable = true;
++          monitorMachines = builtins.attrNames cluster;
++        };
++      };
++    }).config.content.services.prometheus.scrapeConfigs;
++
++  getJob = jobs: name: lib.findFirst (job: job.job_name == name) (throw "Missing job ${name}") jobs;
++  getTarget =
++    job: meta:
++    lib.findFirst (
++      target: target.labels.fqdn == meta.host.fqdn
++    ) (throw "Missing target ${meta.host.fqdn}") job.static_configs;
++  endpoint =
++    meta: port:
++    "${
++      if meta.monitoring.target == null then meta.host.fqdn else meta.monitoring.target
++    }:${toString port}";
++  alias =
++    meta:
++    "${meta.host.name}${lib.optionalString (meta.host.location != null) ".${meta.host.location}"}";
++  identity = meta: {
++    alias = alias meta;
++    fqdn = meta.host.fqdn;
++    machine_type = meta.machineType;
++    fixture_label = "kept";
++  };
++  hostLabels =
++    meta:
++    identity meta
++    // {
++      domain = meta.host.domain;
++      location = if meta.host.location == null then "global" else meta.host.location;
++      os = meta.spin;
++    };
++  nodeLabels =
++    meta:
++    hostLabels meta
++    // {
++      type = "node";
++      role = meta.node.role;
++      storage_type = meta.node.storageType;
++    };
++  exporterTargets =
++    meta:
++    [ (endpoint meta meta.services.node-exporter.port) ]
++    ++ lib.optional (meta.services ? osctl-exporter) (endpoint meta meta.services.osctl-exporter.port)
++    ++ lib.optional (meta.services ? ebpf-exporter) (endpoint meta meta.services.ebpf-exporter.port)
++    ++ lib.optional (meta.node != null && meta.services ? ksvcmon-exporter) (
++      endpoint meta meta.services.ksvcmon-exporter.port
++    );
++
++  checkMeetJob =
++    jobs:
++    let
++      groups = (getJob jobs "meet-jvbs").static_configs;
++      groupCount = lib.foldl' (
++        count: project: count + builtins.length (builtins.attrNames project.videoBridges)
++      ) 0 (builtins.attrValues meet);
++    in
++    builtins.length groups == groupCount
++    && builtins.all (
++      project:
++      let
++        data = meet.${project};
++      in
++      builtins.all (
++        name:
++        (lib.findFirst (
++          group: group.labels.alias == "meet-${name}" && group.labels.project == project
++        ) { } groups) == {
++          targets = map (port: "${data.videoBridges.${name}}:${toString port}") data.jvbExporterPorts;
++          labels = {
++            alias = "meet-${name}";
++            type = "meet-jvb";
++            inherit project;
++            machine_type = "vps";
++          };
++        }
++      ) (builtins.attrNames data.videoBridges)
++    ) (builtins.attrNames meet)
++    && builtins.elem {
++      targets = [
++        "37.205.14.138:9100"
++        "37.205.14.138:9700"
++      ];
++      labels = {
++        alias = "meet-jvb1";
++        type = "meet-jvb";
++        project = "vpsfree";
++        machine_type = "vps";
++      };
++    } groups;
++
++  checkMonitor =
++    monitorName:
++    let
++      jobs = monitorJobs monitorName;
++      mon = getJob jobs "mon";
++      local = cluster.${monitorName};
++      infra = getJob jobs "infra";
++      nodes = getJob jobs "nodes";
++      nodeMetas = lib.filter (meta: meta.node != null) (builtins.attrValues cluster);
++      infraMetas = lib.filter (meta: meta.node == null && !meta.monitoring.isMonitor) (
++        builtins.attrValues cluster
++      );
++      checkNodeJob =
++        jobName: role: port:
++        let
++          job = getJob jobs jobName;
++          metas = lib.filter (meta: role == null || meta.node.role == role) nodeMetas;
++        in
++        builtins.length job.static_configs == builtins.length metas
++        && builtins.all (
++          meta:
++          getTarget job meta == {
++            targets = [ (endpoint meta port) ];
++            labels = nodeLabels meta;
++          }
++        ) metas;
++    in
++    builtins.length mon.static_configs == 2
++    &&
++      getTarget mon local == {
++        targets = [
++          "localhost:9090"
++          "localhost:9100"
++        ];
++        labels = identity local;
++      }
++    &&
++      builtins.all
++        (
++          meta:
++          getTarget mon meta == {
++            targets = [ (endpoint meta meta.services.node-exporter.port) ];
++            labels = identity meta;
++          }
++        )
++        (
++          lib.filter (meta: meta.monitoring.isMonitor && meta.host.fqdn != local.host.fqdn) (
++            builtins.attrValues cluster
++          )
++        )
++    && builtins.length infra.static_configs == builtins.length infraMetas
++    && builtins.all (
++      meta:
++      getTarget infra meta == {
++        targets = exporterTargets meta;
++        labels = hostLabels meta;
++      }
++    ) infraMetas
++    && builtins.length nodes.static_configs == builtins.length nodeMetas
++    && builtins.all (
++      meta:
++      getTarget nodes meta == {
++        targets = exporterTargets meta;
++        labels = nodeLabels meta;
++      }
++    ) nodeMetas
++    && checkNodeJob "nodes-zfs-hypervisor" "hypervisor" 9134
++    && checkNodeJob "nodes-zfs-storage" "storage" 9134
++    && checkNodeJob "nodes-ipmi" null 9290
++    && checkMeetJob jobs;
++
++  metadataFixture =
++    machineType:
++    (lib.evalModules {
++      modules = [
++        ../../modules/cluster
++        {
++          options.cluster = lib.mkOption {
++            type = lib.types.attrsOf (
++              lib.types.submodule {
++                freeformType = lib.types.attrs;
++                options.spin = lib.mkOption {
++                  type = lib.types.str;
++                  default = "other";
++                };
++              }
++            );
++          };
++          config.cluster.invalid = { inherit machineType; };
++        }
++      ];
++      specialArgs.confLib = confLib;
++    }).config.cluster.invalid.machineType;
++
++  alerter =
++    (import ../../modules/clusterconf/alerter {
++      inherit pkgs lib confLib;
++      confData = { };
++      confMachine.services.alertmanager.port = 9093;
++      config.clusterconf.alerter.enable = true;
++    }).config.content.services.prometheus.alertmanager.configuration;
++  routes = alerter.route.routes;
++  mail = builtins.elemAt routes 0;
++  telegram = builtins.elemAt routes 1;
++  smsAither = builtins.elemAt routes 2;
++  smsSnajpa = builtins.elemAt routes 3;
++  none = builtins.elemAt routes 4;
++  hourly =
++    route:
++    (lib.findFirst (r: (r.match.frequency or "") == "hourly") { } route.routes).repeat_interval == "1h";
++  smsInterval =
++    route: interval:
++    let
++      critical = builtins.head route.routes;
++    in
++    critical.receiver == "sms-${interval}"
++    && critical.active_time_intervals == [ "daytime-${interval}" ]
++    && hourly critical
++    && builtins.all (r: r.active_time_intervals == [ "daytime-${interval}" ]) critical.routes;
++
++  # Retain production routes/intervals; replace all transports with inert names.
++  routeFile = pkgs.writeText "infra-monitoring-alertmanager.json" (
++    builtins.toJSON {
++      inherit (alerter) route time_intervals;
++      receivers = map (receiver: { inherit (receiver) name; }) alerter.receivers;
++    }
++  );
++  commonGroup = builtins.head (import ../../modules/clusterconf/monitor/rules/common.nix);
++  ruleFile = pkgs.writeText "infra-monitoring-filesystem.json" (
++    builtins.toJSON {
++      groups = [
++        (
++          commonGroup
++          // {
++            rules = lib.filter (
++              rule:
++              builtins.elem (rule.alert or "") [
++                "FilesystemLowFreeSpace"
++                "FilesystemCritFreeSpace"
++              ]
++            ) commonGroup.rules;
++          }
++        )
++      ];
++    }
++  );
++  testFile = pkgs.replaceVars ./infra-monitoring-filesystem.yml { inherit ruleFile; };
++in
++assert builtins.all (name: machines.${name}.metaConfig.machineType == classifications.${name}) (
++  builtins.attrNames classifications
++);
++assert metadataFixture "vm" == "vm";
++assert !(builtins.tryEval (metadataFixture "invalid")).success;
++assert checkMonitor "cz.vpsfree/containers/prg/int.mon1";
++assert checkMonitor "cz.vpsfree/containers/prg/int.mon2";
++assert builtins.length routes == 5;
++assert
++  none == {
++    match.severity = "none";
++    receiver = "blackhole";
++    continue = false;
++  };
++assert mail.receiver == "team-mail" && mail.continue && hourly mail;
++assert telegram.receiver == "team-telegram" && telegram.continue && hourly telegram;
++assert smsAither.continue && smsInterval smsAither "aither";
++assert smsSnajpa.continue && smsInterval smsSnajpa "snajpa";
++assert
++  alerter.time_intervals == [
++    {
++      name = "daytime-aither";
++      time_intervals = [
++        {
++          times = [
++            {
++              start_time = "07:00";
++              end_time = "22:00";
++            }
++          ];
++          location = "Europe/Prague";
++        }
++      ];
++    }
++    {
++      name = "daytime-snajpa";
++      time_intervals = [
++        {
++          times = [
++            {
++              start_time = "09:00";
++              end_time = "23:00";
++            }
++          ];
++          location = "Europe/Prague";
++        }
++      ];
++    }
++  ];
++pkgs.runCommand "infra-monitoring-config"
++  {
++    nativeBuildInputs = [
++      pkgs.prometheus-alertmanager
++      pkgs.prometheus.cli
++    ];
++  }
++  ''
++    amtool check-config ${routeFile}
++    export ALERTMANAGER_CONFIG=${routeFile}
++    bash ${./infra-monitoring-routing.sh}
++    promtool check rules ${ruleFile}
++    promtool test rules ${testFile}
++    touch $out
++  ''
+diff --git a/tests/prometheus/infra-monitoring-filesystem.yml b/tests/prometheus/infra-monitoring-filesystem.yml
+new file mode 100644
+index 00000000..f1014994
+--- /dev/null
++++ b/tests/prometheus/infra-monitoring-filesystem.yml
+@@ -0,0 +1,483 @@
++rule_files:
++  - @ruleFile@
++evaluation_interval: 20s
++
++tests:
++  - name: Critical filesystems select exact VM and physical types globally and retain five minute timing and values
++    interval: 20s
++    input_series:
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vm-infra:9100",job="infra",machine_type="vm",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vm-infra:9100",job="infra",machine_type="vm",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="physical-infra:9100",job="infra",machine_type="physical",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="physical-infra:9100",job="infra",machine_type="physical",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vm-nodes:9100",job="nodes",machine_type="vm",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vm-nodes:9100",job="nodes",machine_type="vm",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="physical-nodes:9100",job="nodes",machine_type="physical",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="physical-nodes:9100",job="nodes",machine_type="physical",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vm-mon:9100",job="mon",machine_type="vm",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vm-mon:9100",job="mon",machine_type="vm",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="physical-mon:9100",job="mon",machine_type="physical",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="physical-mon:9100",job="mon",machine_type="physical",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vm-meet-jvbs:9100",job="meet-jvbs",machine_type="vm",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vm-meet-jvbs:9100",job="meet-jvbs",machine_type="vm",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="physical-meet-jvbs:9100",job="meet-jvbs",machine_type="physical",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="physical-meet-jvbs:9100",job="meet-jvbs",machine_type="physical",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vps-infra:9100",job="infra",machine_type="vps",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vps-infra:9100",job="infra",machine_type="vps",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="missing-infra:9100",job="infra",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="missing-infra:9100",job="infra",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="-infra:9100",job="infra",machine_type="",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="-infra:9100",job="infra",machine_type="",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-infra:9100",job="infra",machine_type="unknown",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-infra:9100",job="infra",machine_type="unknown",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-infra:9100",job="infra",machine_type="vmx",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-infra:9100",job="infra",machine_type="vmx",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vps-nodes:9100",job="nodes",machine_type="vps",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vps-nodes:9100",job="nodes",machine_type="vps",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="missing-nodes:9100",job="nodes",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="missing-nodes:9100",job="nodes",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="-nodes:9100",job="nodes",machine_type="",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="-nodes:9100",job="nodes",machine_type="",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-nodes:9100",job="nodes",machine_type="unknown",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-nodes:9100",job="nodes",machine_type="unknown",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-nodes:9100",job="nodes",machine_type="vmx",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-nodes:9100",job="nodes",machine_type="vmx",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vps-mon:9100",job="mon",machine_type="vps",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vps-mon:9100",job="mon",machine_type="vps",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="missing-mon:9100",job="mon",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="missing-mon:9100",job="mon",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="-mon:9100",job="mon",machine_type="",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="-mon:9100",job="mon",machine_type="",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-mon:9100",job="mon",machine_type="unknown",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-mon:9100",job="mon",machine_type="unknown",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-mon:9100",job="mon",machine_type="vmx",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-mon:9100",job="mon",machine_type="vmx",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vps-meet-jvbs:9100",job="meet-jvbs",machine_type="vps",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vps-meet-jvbs:9100",job="meet-jvbs",machine_type="vps",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="missing-meet-jvbs:9100",job="meet-jvbs",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="missing-meet-jvbs:9100",job="meet-jvbs",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="-meet-jvbs:9100",job="meet-jvbs",machine_type="",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="-meet-jvbs:9100",job="meet-jvbs",machine_type="",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-meet-jvbs:9100",job="meet-jvbs",machine_type="unknown",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="unknown-meet-jvbs:9100",job="meet-jvbs",machine_type="unknown",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-meet-jvbs:9100",job="meet-jvbs",machine_type="vmx",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="vmx-meet-jvbs:9100",job="meet-jvbs",machine_type="vmx",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="missing-job:9100",machine_type="vm",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="missing-job:9100",machine_type="vm",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="other-job:9100",job="unrecognized",machine_type="physical",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="other-job:9100",job="unrecognized",machine_type="physical",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="shared:9100",job="infra",machine_type="vm",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="shared:9100",job="infra",machine_type="vm",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="tmpfs",fstype="tmpfs",instance="shared:9100",job="infra",machine_type="physical",mountpoint="/run"}'
++        values: '9+0x15'
++      - series: 'node_filesystem_size_bytes{device="tmpfs",fstype="tmpfs",instance="shared:9100",job="infra",machine_type="physical",mountpoint="/run"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vdb1",fstype="ext4",instance="shared:9100",job="infra",machine_type="physical",mountpoint="/nix/store"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vdb1",fstype="ext4",instance="shared:9100",job="infra",machine_type="physical",mountpoint="/nix/store"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="above-10:9100",job="nodes",machine_type="vm",mountpoint="/"}'
++        values: '10.01+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="above-10:9100",job="nodes",machine_type="vm",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="excluded-mount:9100",job="mon",machine_type="physical",mountpoint="/var"}'
++        values: '1+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="excluded-mount:9100",job="mon",machine_type="physical",mountpoint="/var"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="unmatched-size:9100",job="infra",machine_type="vm",mountpoint="/"}'
++        values: '10+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="unmatched-size:9100",job="infra",machine_type="physical",mountpoint="/"}'
++        values: '100+0x15'
++    alert_rule_test:
++      - eval_time: 4m40s
++        alertname: FilesystemCritFreeSpace
++        exp_alerts: []
++      - eval_time: 5m
++        alertname: FilesystemCritFreeSpace
++        exp_alerts:
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "vm-infra:9100"
++              job: "infra"
++              machine_type: "vm"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance vm-infra:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:vm-infra:9100 job:infra machine_type:vm mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "physical-infra:9100"
++              job: "infra"
++              machine_type: "physical"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance physical-infra:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:physical-infra:9100 job:infra machine_type:physical mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "vm-nodes:9100"
++              job: "nodes"
++              machine_type: "vm"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance vm-nodes:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:vm-nodes:9100 job:nodes machine_type:vm mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "physical-nodes:9100"
++              job: "nodes"
++              machine_type: "physical"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance physical-nodes:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:physical-nodes:9100 job:nodes machine_type:physical mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "vm-mon:9100"
++              job: "mon"
++              machine_type: "vm"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance vm-mon:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:vm-mon:9100 job:mon machine_type:vm mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "physical-mon:9100"
++              job: "mon"
++              machine_type: "physical"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance physical-mon:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:physical-mon:9100 job:mon machine_type:physical mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "vm-meet-jvbs:9100"
++              job: "meet-jvbs"
++              machine_type: "vm"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance vm-meet-jvbs:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:vm-meet-jvbs:9100 job:meet-jvbs machine_type:vm mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "physical-meet-jvbs:9100"
++              job: "meet-jvbs"
++              machine_type: "physical"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance physical-meet-jvbs:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:physical-meet-jvbs:9100 job:meet-jvbs machine_type:physical mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "missing-job:9100"
++              machine_type: "vm"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance missing-job:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:missing-job:9100 machine_type:vm mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "other-job:9100"
++              job: "unrecognized"
++              machine_type: "physical"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance other-job:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:other-job:9100 job:unrecognized machine_type:physical mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vda1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "shared:9100"
++              job: "infra"
++              machine_type: "vm"
++              mountpoint: "/"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance shared:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vda1 fstype:ext4 instance:shared:9100 job:infra machine_type:vm mountpoint:/]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "tmpfs"
++              frequency: "hourly"
++              fstype: "tmpfs"
++              instance: "shared:9100"
++              job: "infra"
++              machine_type: "physical"
++              mountpoint: "/run"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance shared:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 9
++                LABELS: map[device:tmpfs fstype:tmpfs instance:shared:9100 job:infra machine_type:physical mountpoint:/run]
++          - exp_labels:
++              alertclass: "fsavail"
++              device: "/dev/vdb1"
++              frequency: "hourly"
++              fstype: "ext4"
++              instance: "shared:9100"
++              job: "infra"
++              machine_type: "physical"
++              mountpoint: "/nix/store"
++              severity: "critical"
++            exp_annotations:
++              summary: Not enough free space (instance shared:9100)
++              description: |
++                Filesystem uses more than 90% of available space
++
++                VALUE = 10
++                LABELS: map[device:/dev/vdb1 fstype:ext4 instance:shared:9100 job:infra machine_type:physical mountpoint:/nix/store]
++    promql_expr_test:
++      - expr: 'ALERTS{alertname="FilesystemCritFreeSpace",alertstate="pending"}'
++        eval_time: 4m40s
++        exp_samples:
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vm-infra:9100",job="infra",machine_type="vm",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="physical-infra:9100",job="infra",machine_type="physical",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vm-nodes:9100",job="nodes",machine_type="vm",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="physical-nodes:9100",job="nodes",machine_type="physical",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vm-mon:9100",job="mon",machine_type="vm",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="physical-mon:9100",job="mon",machine_type="physical",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vm-meet-jvbs:9100",job="meet-jvbs",machine_type="vm",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="physical-meet-jvbs:9100",job="meet-jvbs",machine_type="physical",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-job:9100",machine_type="vm",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="other-job:9100",job="unrecognized",machine_type="physical",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="shared:9100",job="infra",machine_type="vm",mountpoint="/",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="tmpfs",frequency="hourly",fstype="tmpfs",instance="shared:9100",job="infra",machine_type="physical",mountpoint="/run",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemCritFreeSpace",alertstate="pending",device="/dev/vdb1",frequency="hourly",fstype="ext4",instance="shared:9100",job="infra",machine_type="physical",mountpoint="/nix/store",severity="critical"}'
++            value: 1
++      - expr: 'ALERTS{alertname="FilesystemCritFreeSpace",machine_type!~"vm|physical"}'
++        eval_time: 0s
++        exp_samples: []
++      - expr: 'ALERTS{alertname="FilesystemCritFreeSpace",machine_type!~"vm|physical"}'
++        eval_time: 4m40s
++        exp_samples: []
++      - expr: 'ALERTS{alertname="FilesystemCritFreeSpace",machine_type!~"vm|physical"}'
++        eval_time: 5m
++        exp_samples: []
++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",alertstate="pending",instance=~"(vps|missing)-(infra|nodes|mon|meet-jvbs):9100"}'
++        eval_time: 4m40s
++        exp_samples:
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-infra:9100",job="infra",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-infra:9100",job="infra",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-nodes:9100",job="nodes",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-nodes:9100",job="nodes",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-mon:9100",job="mon",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-mon:9100",job="mon",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-meet-jvbs:9100",job="meet-jvbs",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="pending",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-meet-jvbs:9100",job="meet-jvbs",mountpoint="/",severity="warning"}'
++            value: 1
++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",alertstate="firing",instance=~"(vps|missing)-.*"}'
++        eval_time: 4m40s
++        exp_samples: []
++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",alertstate="firing",instance=~"(vps|missing)-(infra|nodes|mon|meet-jvbs):9100"}'
++        eval_time: 5m
++        exp_samples:
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-infra:9100",job="infra",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-infra:9100",job="infra",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-nodes:9100",job="nodes",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-nodes:9100",job="nodes",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-mon:9100",job="mon",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-mon:9100",job="mon",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="vps-meet-jvbs:9100",job="meet-jvbs",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="missing-meet-jvbs:9100",job="meet-jvbs",mountpoint="/",severity="warning"}'
++            value: 1
++
++  - name: Selected VPS warning filesystems exclude exactly twenty percent but warn at nineteen
++    interval: 20s
++    input_series:
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="boundary-20:9100",job="infra",machine_type="vps",mountpoint="/"}'
++        values: '20+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="boundary-20:9100",job="infra",machine_type="vps",mountpoint="/"}'
++        values: '100+0x15'
++      - series: 'node_filesystem_avail_bytes{device="/dev/vda1",fstype="ext4",instance="boundary-19:9100",job="infra",machine_type="vps",mountpoint="/"}'
++        values: '19+0x15'
++      - series: 'node_filesystem_size_bytes{device="/dev/vda1",fstype="ext4",instance="boundary-19:9100",job="infra",machine_type="vps",mountpoint="/"}'
++        values: '100+0x15'
++    promql_expr_test:
++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",instance="boundary-20:9100"}'
++        eval_time: 5m
++        exp_samples: []
++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",alertstate="firing",instance="boundary-19:9100"}'
++        eval_time: 4m40s
++        exp_samples: []
++      - expr: 'ALERTS{alertname="FilesystemLowFreeSpace",alertstate="firing",instance="boundary-19:9100"}'
++        eval_time: 5m
++        exp_samples:
++          - labels: 'ALERTS{alertclass="fsavail",alertname="FilesystemLowFreeSpace",alertstate="firing",device="/dev/vda1",frequency="hourly",fstype="ext4",instance="boundary-19:9100",job="infra",machine_type="vps",mountpoint="/",severity="warning"}'
++            value: 1
+diff --git a/tests/prometheus/infra-monitoring-routing.sh b/tests/prometheus/infra-monitoring-routing.sh
+new file mode 100644
+index 00000000..6bbbef65
+--- /dev/null
++++ b/tests/prometheus/infra-monitoring-routing.sh
+@@ -0,0 +1,33 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++check() {
++  local receivers="$1"
++  shift
++  amtool config routes test --config.file="$ALERTMANAGER_CONFIG" \
++    --verify.receivers="$receivers" alertname=FilesystemCritFreeSpace \
++    instance=test:9100 frequency=hourly "$@"
++}
++
++with_sms=team-mail,team-telegram,sms-aither,sms-snajpa
++
++check "$with_sms" job=infra machine_type=vps alertclass=fsavail severity=critical
++for mountpoint in / /run /nix/store; do
++  check "$with_sms" job=infra machine_type=vps alertclass=fsavail \
++    severity=critical "mountpoint=$mountpoint"
++done
++for machine_type in vm physical unknown vmx; do
++  check "$with_sms" job=infra "machine_type=$machine_type" alertclass=fsavail severity=critical
++done
++check "$with_sms" job=infra alertclass=fsavail severity=critical
++for job in infra nodes mon meet-jvbs; do
++  check "$with_sms" "job=$job" machine_type=vps alertclass=fsavail severity=critical
++  check "$with_sms" "job=$job" machine_type=vps alertclass=fsavail severity=fatal
++  check team-mail "job=$job" machine_type=vps alertclass=fsavail severity=warning
++done
++check "$with_sms" job=infra machine_type=vps alertclass=cpuload severity=critical
++check "$with_sms" job=infra machine_type=vps severity=critical
++check "$with_sms" machine_type=vps alertclass=fsavail severity=critical
++check "$with_sms" job=infra machine_type=vps alertclass=fsavail severity=fatal
++check team-mail job=infra machine_type=vps alertclass=fsavail severity=warning
++check blackhole job=infra machine_type=vps alertclass=fsavail severity=none
+diff --git a/tests/prometheus/infra-monitoring-rules.nix b/tests/prometheus/infra-monitoring-rules.nix
+new file mode 100644
+index 00000000..500f7412
+--- /dev/null
++++ b/tests/prometheus/infra-monitoring-rules.nix
+@@ -0,0 +1,35 @@
++{ pkgs }:
++
++let
++  group = builtins.head (import ../../modules/clusterconf/monitor/rules/nodes.nix);
++  ruleFile = pkgs.writeText "infra-monitoring-cpu-rules.json" (
++    builtins.toJSON {
++      groups = [
++        (
++          group
++          // {
++            rules = builtins.filter (
++              rule:
++              builtins.elem (rule.alert or "") [
++                "HypervisorHighCpuLoad"
++                "HypervisorHighCpuLoadStaging"
++                "HypervisorCritOsCpuLoad"
++                "HypervisorCritOsCpuLoadStaging"
++              ]
++            ) group.rules;
++          }
++        )
++      ];
++    }
++  );
++  testFile = pkgs.replaceVars ./infra-monitoring-rules.yml { inherit ruleFile; };
++in
++pkgs.runCommand "infra-monitoring-rules"
++  {
++    nativeBuildInputs = [ pkgs.prometheus.cli ];
++  }
++  ''
++    promtool check rules ${ruleFile}
++    promtool test rules ${testFile}
++    touch $out
++  ''
+diff --git a/tests/prometheus/infra-monitoring-rules.yml b/tests/prometheus/infra-monitoring-rules.yml
+new file mode 100644
+index 00000000..b72ab12b
+--- /dev/null
++++ b/tests/prometheus/infra-monitoring-rules.yml
+@@ -0,0 +1,235 @@
++rule_files:
++  - @ruleFile@
++evaluation_interval: 20s
++
++tests:
++  - name: Staging and playground CPU usage keep their real location and wait fifty minutes
++    interval: 20s
++    input_series:
++      - series: 'node_cpu_seconds_total{alias="stg-85",fqdn="stg-85.example",instance="stg-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg",cpu="0",mode="idle"}'
++        values: '0+4x151'
++      - series: 'node_cpu_seconds_total{alias="stg-85",fqdn="stg-85.example",instance="stg-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg",cpu="1",mode="idle"}'
++        values: '0+2x151'
++      - series: 'node_boot_time_seconds{alias="stg-85",fqdn="stg-85.example",instance="stg-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="stg-95",fqdn="stg-95.example",instance="stg-95:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg",cpu="0",mode="idle"}'
++        values: '0+1x151'
++      - series: 'node_boot_time_seconds{alias="stg-95",fqdn="stg-95.example",instance="stg-95:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="stg-other",fqdn="stg-other.example",instance="stg-other:9100",job="nodes",role="hypervisor",os="nixos",location="stg",cpu="0",mode="idle"}'
++        values: '0+1x151'
++      - series: 'node_boot_time_seconds{alias="stg-other",fqdn="stg-other.example",instance="stg-other:9100",job="nodes",role="hypervisor",os="nixos",location="stg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="pgnd-85",fqdn="pgnd-85.example",instance="pgnd-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd",cpu="0",mode="idle"}'
++        values: '0+4x151'
++      - series: 'node_cpu_seconds_total{alias="pgnd-85",fqdn="pgnd-85.example",instance="pgnd-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd",cpu="1",mode="idle"}'
++        values: '0+2x151'
++      - series: 'node_boot_time_seconds{alias="pgnd-85",fqdn="pgnd-85.example",instance="pgnd-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="pgnd-95",fqdn="pgnd-95.example",instance="pgnd-95:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd",cpu="0",mode="idle"}'
++        values: '0+1x151'
++      - series: 'node_boot_time_seconds{alias="pgnd-95",fqdn="pgnd-95.example",instance="pgnd-95:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="pgnd-other",fqdn="pgnd-other.example",instance="pgnd-other:9100",job="nodes",role="hypervisor",os="nixos",location="pgnd",cpu="0",mode="idle"}'
++        values: '0+1x151'
++      - series: 'node_boot_time_seconds{alias="pgnd-other",fqdn="pgnd-other.example",instance="pgnd-other:9100",job="nodes",role="hypervisor",os="nixos",location="pgnd"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg",cpu="0",mode="idle"}'
++        values: '0+1x151'
++      - series: 'node_boot_time_seconds{alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",job="nodes",role="hypervisor",os="vpsadminos",cpu="0",mode="idle"}'
++        values: '0+1x151'
++      - series: 'node_boot_time_seconds{alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",job="nodes",role="hypervisor",os="vpsadminos"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="prg-85",fqdn="prg-85.example",instance="prg-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg",cpu="0",mode="idle"}'
++        values: '0+3x151'
++      - series: 'node_boot_time_seconds{alias="prg-85",fqdn="prg-85.example",instance="prg-85:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="missing-85",fqdn="missing-85.example",instance="missing-85:9100",job="nodes",role="hypervisor",os="vpsadminos",cpu="0",mode="idle"}'
++        values: '0+3x151'
++      - series: 'node_boot_time_seconds{alias="missing-85",fqdn="missing-85.example",instance="missing-85:9100",job="nodes",role="hypervisor",os="vpsadminos"}'
++        values: '-7200+0x151'
++    promql_expr_test:
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 10m
++        exp_samples: []
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 10m20s
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-85",fqdn="prg-85.example",instance="prg-85:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-85",fqdn="missing-85.example",instance="missing-85:9100",severity="warning"}'
++            value: 1
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 50m
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-85",fqdn="prg-85.example",instance="prg-85:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-85",fqdn="missing-85.example",instance="missing-85:9100",severity="warning"}'
++            value: 1
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 50m20s
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-95",fqdn="prg-95.example",instance="prg-95:9100",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-95",fqdn="missing-95.example",instance="missing-95:9100",severity="critical"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-85",fqdn="prg-85.example",instance="prg-85:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-85",fqdn="missing-85.example",instance="missing-85:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="stg-85",fqdn="stg-85.example",instance="stg-85:9100",severity="warning",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="pgnd-85",fqdn="pgnd-85.example",instance="pgnd-85:9100",severity="warning",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="stg-95",fqdn="stg-95.example",instance="stg-95:9100",severity="warning",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="stg-95",fqdn="stg-95.example",instance="stg-95:9100",severity="critical",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="pgnd-95",fqdn="pgnd-95.example",instance="pgnd-95:9100",severity="warning",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="pgnd-95",fqdn="pgnd-95.example",instance="pgnd-95:9100",severity="critical",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="stg-other",fqdn="stg-other.example",instance="stg-other:9100",severity="warning",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="pgnd-other",fqdn="pgnd-other.example",instance="pgnd-other:9100",severity="warning",location="pgnd"}'
++            value: 1
++
++  - name: Exactly eighty percent does not warn and exactly ninety percent does not become critical
++    interval: 20s
++    input_series:
++      - series: 'node_cpu_seconds_total{alias="stg-80",fqdn="stg-80.example",instance="stg-80:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg",cpu="0",mode="idle"}'
++        values: '0+4x151'
++      - series: 'node_boot_time_seconds{alias="stg-80",fqdn="stg-80.example",instance="stg-80:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="stg-90",fqdn="stg-90.example",instance="stg-90:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg",cpu="0",mode="idle"}'
++        values: '0+2x151'
++      - series: 'node_boot_time_seconds{alias="stg-90",fqdn="stg-90.example",instance="stg-90:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="pgnd-80",fqdn="pgnd-80.example",instance="pgnd-80:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd",cpu="0",mode="idle"}'
++        values: '0+4x151'
++      - series: 'node_boot_time_seconds{alias="pgnd-80",fqdn="pgnd-80.example",instance="pgnd-80:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="pgnd-90",fqdn="pgnd-90.example",instance="pgnd-90:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd",cpu="0",mode="idle"}'
++        values: '0+2x151'
++      - series: 'node_boot_time_seconds{alias="pgnd-90",fqdn="pgnd-90.example",instance="pgnd-90:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="prg-80",fqdn="prg-80.example",instance="prg-80:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg",cpu="0",mode="idle"}'
++        values: '0+4x151'
++      - series: 'node_boot_time_seconds{alias="prg-80",fqdn="prg-80.example",instance="prg-80:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="prg-90",fqdn="prg-90.example",instance="prg-90:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg",cpu="0",mode="idle"}'
++        values: '0+2x151'
++      - series: 'node_boot_time_seconds{alias="prg-90",fqdn="prg-90.example",instance="prg-90:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="missing-80",fqdn="missing-80.example",instance="missing-80:9100",job="nodes",role="hypervisor",os="vpsadminos",cpu="0",mode="idle"}'
++        values: '0+4x151'
++      - series: 'node_boot_time_seconds{alias="missing-80",fqdn="missing-80.example",instance="missing-80:9100",job="nodes",role="hypervisor",os="vpsadminos"}'
++        values: '-7200+0x151'
++      - series: 'node_cpu_seconds_total{alias="missing-90",fqdn="missing-90.example",instance="missing-90:9100",job="nodes",role="hypervisor",os="vpsadminos",cpu="0",mode="idle"}'
++        values: '0+2x151'
++      - series: 'node_boot_time_seconds{alias="missing-90",fqdn="missing-90.example",instance="missing-90:9100",job="nodes",role="hypervisor",os="vpsadminos"}'
++        values: '-7200+0x151'
++    promql_expr_test:
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 50m20s
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="stg-90",fqdn="stg-90.example",instance="stg-90:9100",severity="warning",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="pgnd-90",fqdn="pgnd-90.example",instance="pgnd-90:9100",severity="warning",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-90",fqdn="prg-90.example",instance="prg-90:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="missing-90",fqdn="missing-90.example",instance="missing-90:9100",severity="warning"}'
++            value: 1
++
++  - name: Boot age must exceed one hour before either policy starts its hold
++    interval: 20s
++    input_series:
++      - series: 'node_cpu_seconds_total{alias="stg-boot",fqdn="stg-boot.example",instance="stg-boot:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg",cpu="0",mode="idle"}'
++        values: '0+1x331'
++      - series: 'node_boot_time_seconds{alias="stg-boot",fqdn="stg-boot.example",instance="stg-boot:9100",job="nodes",role="hypervisor",os="vpsadminos",location="stg"}'
++        values: '0+0x331'
++      - series: 'node_cpu_seconds_total{alias="pgnd-boot",fqdn="pgnd-boot.example",instance="pgnd-boot:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd",cpu="0",mode="idle"}'
++        values: '0+1x331'
++      - series: 'node_boot_time_seconds{alias="pgnd-boot",fqdn="pgnd-boot.example",instance="pgnd-boot:9100",job="nodes",role="hypervisor",os="vpsadminos",location="pgnd"}'
++        values: '0+0x331'
++      - series: 'node_cpu_seconds_total{alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg",cpu="0",mode="idle"}'
++        values: '0+1x331'
++      - series: 'node_boot_time_seconds{alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",job="nodes",role="hypervisor",os="vpsadminos",location="prg"}'
++        values: '0+0x331'
++    promql_expr_test:
++      - expr: 'ALERTS{alertstate="pending"}'
++        eval_time: 60m
++        exp_samples: []
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 60m
++        exp_samples: []
++      - expr: 'ALERTS{alertstate="pending"}'
++        eval_time: 60m20s
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="pending",alertclass="cpuload",alias="stg-boot",fqdn="stg-boot.example",instance="stg-boot:9100",severity="warning",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoadStaging",alertstate="pending",alertclass="cpuload",alias="stg-boot",fqdn="stg-boot.example",instance="stg-boot:9100",severity="critical",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="pending",alertclass="cpuload",alias="pgnd-boot",fqdn="pgnd-boot.example",instance="pgnd-boot:9100",severity="warning",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoadStaging",alertstate="pending",alertclass="cpuload",alias="pgnd-boot",fqdn="pgnd-boot.example",instance="pgnd-boot:9100",severity="critical",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="pending",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="pending",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="critical"}'
++            value: 1
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 70m
++        exp_samples: []
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 70m20s
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="critical"}'
++            value: 1
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 110m
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="critical"}'
++            value: 1
++      - expr: 'ALERTS{alertstate="firing"}'
++        eval_time: 110m20s
++        exp_samples:
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="stg-boot",fqdn="stg-boot.example",instance="stg-boot:9100",severity="warning",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="stg-boot",fqdn="stg-boot.example",instance="stg-boot:9100",severity="critical",location="stg"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="pgnd-boot",fqdn="pgnd-boot.example",instance="pgnd-boot:9100",severity="warning",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoadStaging",alertstate="firing",alertclass="cpuload",alias="pgnd-boot",fqdn="pgnd-boot.example",instance="pgnd-boot:9100",severity="critical",location="pgnd"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorHighCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="warning"}'
++            value: 1
++          - labels: 'ALERTS{alertname="HypervisorCritOsCpuLoad",alertstate="firing",alertclass="cpuload",alias="prg-boot",fqdn="prg-boot.example",instance="prg-boot:9100",severity="critical"}'
++            value: 1
