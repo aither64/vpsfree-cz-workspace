@@ -1,3 +1,6 @@
+---
+lifecycle: active
+---
 # 2026-07-24-ct-start-hang
 
 Status: implementation published and all exact-head workflows green.
