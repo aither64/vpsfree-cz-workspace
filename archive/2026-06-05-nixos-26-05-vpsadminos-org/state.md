@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # State: Upgrade vpsadminos.org to NixOS 26.05
 
