@@ -1,0 +1,286 @@
+SHELL: 0
+
+START: 2026-06-03 20:48:39 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 20:48:39 +0200
+ELAPSED: 0.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:48:39 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 20:48:39 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:48:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:43 +0200
+ELAPSED: 3.35s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:48:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:45 +0200
+ELAPSED: 1.27s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:48:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:47 +0200
+ELAPSED: 1.12s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:48:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:49 +0200
+ELAPSED: 1.33s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:48:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:51 +0200
+ELAPSED: 1.04s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:48:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:53 +0200
+ELAPSED: 1.1s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:48:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:56 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:48:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:48:58 +0200
+ELAPSED: 1.16s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 20:48:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:49:00 +0200
+ELAPSED: 1.26s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-06-03 20:49:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:49:02 +0200
+ELAPSED: 1.29s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:49:02 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:49:02 +0200
+ELAPSED: 0.15s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:49:02 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:49:02 +0200
+COMMAND: mkdir -p /mnt/vpsadminos && mount -t virtiofs hostOs /mnt/vpsadminos
+END: 2026-06-03 20:49:02 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:49:02 +0200
+COMMAND: osctl-image --vpsadminos-dir /mnt/vpsadminos test --build-dataset tank/image-scripts/build --output-dir /tank/image-scripts/output nixos-unstable-impermanence
+END: 2026-06-03 20:50:21 +0200
+ELAPSED: 78.2s
+STATUS: 1
+OUTPUT:
+A, [2026-06-03T20:49:04.583869 #1999]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x0000735f01ad8da0>] /etc/vpsadminos-image-scripts/bin/config image list
+A, [2026-06-03T20:49:05.061978 #1999]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x0000735f0189ceb0>] /etc/vpsadminos-image-scripts/bin/config test list
+A, [2026-06-03T20:49:05.241392 #1999]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x0000735f017c3480>] /etc/vpsadminos-image-scripts/bin/config image show nixos-unstable-impermanence
+A, [2026-06-03T20:49:05.288332 #1999]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x0000735f017aa020>] /etc/vpsadminos-image-scripts/bin/config builder show nixos
+I, [2026-06-03T20:49:05.332385 #1999]  INFO -- : [build nixos-unstable-impermanence@nixos] Using builder nixos
+Waiting for network.......I, [2026-06-03T20:50:11.488263 #1999]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x0000735f0183bb88>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.a66b635baf1a4dc7bed4
++++ dirname /build/basedir.0a3aa2d6/bin/runner
+++ realpath /build/basedir.0a3aa2d6/bin/..
++ BASEDIR=/build/basedir.0a3aa2d6
++ . /build/basedir.0a3aa2d6/include/lib.sh
++ main builder setup nixos
++ '[' 3 -lt 1 ']'
++ local command=builder
++ shift 1
++ case "$command" in
++ do_builder setup nixos
++ '[' 2 -lt 1 ']'
++ local action=setup
++ case "$action" in
++ local name=nixos
++ local dir=/build/basedir.0a3aa2d6/builders/nixos
++ '[' nixos == '' ']'
++ '[' '!' -d /build/basedir.0a3aa2d6/builders/nixos ']'
++ . /build/basedir.0a3aa2d6/builders/nixos/setup.sh
+++ '[' -n /build/vpsadminos.0a3aa2d6 ']'
+++ '[' -d /build/vpsadminos.0a3aa2d6/os ']'
+++ vpsadminos_input_url=path:/build/vpsadminos.0a3aa2d6
+++ cat
+++ cat
+++ rm -f /etc/nixos/flake.lock
+++ '[' -n '' ']'
+++ export 'NIX_CONFIG=experimental-features = nix-command flakes'
+++ NIX_CONFIG='experimental-features = nix-command flakes'
+++ . /etc/profile
++++ '[' -n '' ']'
++++ __ETC_PROFILE_SOURCED=1
++++ export __ETC_PROFILE_DONE=1
++++ __ETC_PROFILE_DONE=1
++++ '[' -z '' ']'
++++ . /nix/store/sll55g5jy99v21pav97s9bmm2falpwn1-set-environment
+++++ export __NIXOS_SET_ENVIRONMENT_DONE=1
+++++ __NIXOS_SET_ENVIRONMENT_DONE=1
+++++ export EDITOR=nano
+++++ EDITOR=nano
+++++ export GTK_A11Y=none
+++++ GTK_A11Y=none
+++++ export GTK_PATH=/root/.nix-profile/lib/gtk-2.0:/root/.nix-profile/lib/gtk-3.0:/root/.nix-profile/lib/gtk-4.0:/nix/profile/lib/gtk-2.0:/nix/profile/lib/gtk-3.0:/nix/profile/lib/gtk-4.0:/root/.local/state/nix/profile/lib/gtk-2.0:/root/.local/state/nix/profile/lib/gtk-3.0:/root/.local/state/nix/profile/lib/gtk-4.0:/etc/profiles/per-user/root/lib/gtk-2.0:/etc/profiles/per-user/root/lib/gtk-3.0:/etc/profiles/per-user/root/lib/gtk-4.0:/nix/var/nix/profiles/default/lib/gtk-2.0:/nix/var/nix/profiles/default/lib/gtk-3.0:/nix/var/nix/profiles/default/lib/gtk-4.0:/run/current-system/sw/lib/gtk-2.0:/run/current-system/sw/lib/gtk-3.0:/run/current-system/sw/lib/gtk-4.0
+++++ GTK_PATH=/root/.nix-profile/lib/gtk-2.0:/root/.nix-profile/lib/gtk-3.0:/root/.nix-profile/lib/gtk-4.0:/nix/profile/lib/gtk-2.0:/nix/profile/lib/gtk-3.0:/nix/profile/lib/gtk-4.0:/root/.local/state/nix/profile/lib/gtk-2.0:/root/.local/state/nix/profile/lib/gtk-3.0:/root/.local/state/nix/profile/lib/gtk-4.0:/etc/profiles/per-user/root/lib/gtk-2.0:/etc/profiles/per-user/root/lib/gtk-3.0:/etc/profiles/per-user/root/lib/gtk-4.0:/nix/var/nix/profiles/default/lib/gtk-2.0:/nix/var/nix/profiles/default/lib/gtk-3.0:/nix/var/nix/profiles/default/lib/gtk-4.0:/run/current-system/sw/lib/gtk-2.0:/run/current-system/sw/lib/gtk-3.0:/run/current-system/sw/lib/gtk-4.0
+++++ export INFOPATH=/root/.nix-profile/info:/root/.nix-profile/share/info:/nix/profile/info:/nix/profile/share/info:/root/.local/state/nix/profile/info:/root/.local/state/nix/profile/share/info:/etc/profiles/per-user/root/info:/etc/profiles/per-user/root/share/info:/nix/var/nix/profiles/default/info:/nix/var/nix/profiles/default/share/info:/run/current-system/sw/info:/run/current-system/sw/share/info
+++++ INFOPATH=/root/.nix-profile/info:/root/.nix-profile/share/info:/nix/profile/info:/nix/profile/share/info:/root/.local/state/nix/profile/info:/root/.local/state/nix/profile/share/info:/etc/profiles/per-user/root/info:/etc/profiles/per-user/root/share/info:/nix/var/nix/profiles/default/info:/nix/var/nix/profiles/default/share/info:/run/current-system/sw/info:/run/current-system/sw/share/info
+++++ export LANG=en_US.UTF-8
+++++ LANG=en_US.UTF-8
+++++ export LESSKEYIN_SYSTEM=/nix/store/4f0jni3ax3b23i95fgr30i3y10iz07hg-lessconfig
+++++ LESSKEYIN_SYSTEM=/nix/store/4f0jni3ax3b23i95fgr30i3y10iz07hg-lessconfig
+++++ export LIBEXEC_PATH=/root/.nix-profile/libexec:/nix/profile/libexec:/root/.local/state/nix/profile/libexec:/etc/profiles/per-user/root/libexec:/nix/var/nix/profiles/default/libexec:/run/current-system/sw/libexec
+++++ LIBEXEC_PATH=/root/.nix-profile/libexec:/nix/profile/libexec:/root/.local/state/nix/profile/libexec:/etc/profiles/per-user/root/libexec:/nix/var/nix/profiles/default/libexec:/run/current-system/sw/libexec
+++++ export LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
+++++ LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
+++++ export NIXPKGS_CONFIG=/etc/nix/nixpkgs-config.nix
+++++ NIXPKGS_CONFIG=/etc/nix/nixpkgs-config.nix
+++++ export NIX_PATH=nixpkgs=flake:nixpkgs:/nix/var/nix/profiles/per-user/root/channels
+++++ NIX_PATH=nixpkgs=flake:nixpkgs:/nix/var/nix/profiles/per-user/root/channels
+++++ export NIX_REMOTE=daemon
+++++ NIX_REMOTE=daemon
+++++ export NO_AT_BRIDGE=1
+++++ NO_AT_BRIDGE=1
+++++ export PAGER=less
+++++ PAGER=less
+++++ export PATH=/root/.nix-profile/bin:/nix/profile/bin:/root/.local/state/nix/profile/bin:/etc/profiles/per-user/root/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
+++++ PATH=/root/.nix-profile/bin:/nix/profile/bin:/root/.local/state/nix/profile/bin:/etc/profiles/per-user/root/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
+++++ export QTWEBKIT_PLUGIN_PATH=/root/.nix-profile/lib/mozilla/plugins/:/nix/profile/lib/mozilla/plugins/:/root/.local/state/nix/profile/lib/mozilla/plugins/:/etc/profiles/per-user/root/lib/mozilla/plugins/:/nix/var/nix/profiles/default/lib/mozilla/plugins/:/run/current-system/sw/lib/mozilla/plugins/
+++++ QTWEBKIT_PLUGIN_PATH=/root/.nix-profile/lib/mozilla/plugins/:/nix/profile/lib/mozilla/plugins/:/root/.local/state/nix/profile/lib/mozilla/plugins/:/etc/profiles/per-user/root/lib/mozilla/plugins/:/nix/var/nix/profiles/default/lib/mozilla/plugins/:/run/current-system/sw/lib/mozilla/plugins/
+++++ export SSH_ASKPASS=
+++++ SSH_ASKPASS=
+++++ export SYSTEMD_XKB_DIRECTORY=/etc/X11/xkb
+++++ SYSTEMD_XKB_DIRECTORY=/etc/X11/xkb
+++++ export TERMINFO_DIRS=/root/.nix-profile/share/terminfo:/nix/profile/share/terminfo:/root/.local/state/nix/profile/share/terminfo:/etc/profiles/per-user/root/share/terminfo:/nix/var/nix/profiles/default/share/terminfo:/run/current-system/sw/share/terminfo
+++++ TERMINFO_DIRS=/root/.nix-profile/share/terminfo:/nix/profile/share/terminfo:/root/.local/state/nix/profile/share/terminfo:/etc/profiles/per-user/root/share/terminfo:/nix/var/nix/profiles/default/share/terminfo:/run/current-system/sw/share/terminfo
+++++ export TZDIR=/etc/zoneinfo
+++++ TZDIR=/etc/zoneinfo
+++++ export XCURSOR_PATH=/root/.icons:/root/.local/share/icons:/root/.nix-profile/share/icons:/root/.nix-profile/share/pixmaps:/nix/profile/share/icons:/nix/profile/share/pixmaps:/root/.local/state/nix/profile/share/icons:/root/.local/state/nix/profile/share/pixmaps:/etc/profiles/per-user/root/share/icons:/etc/profiles/per-user/root/share/pixmaps:/nix/var/nix/profiles/default/share/icons:/nix/var/nix/profiles/default/share/pixmaps:/run/current-system/sw/share/icons:/run/current-system/sw/share/pixmaps
+++++ XCURSOR_PATH=/root/.icons:/root/.local/share/icons:/root/.nix-profile/share/icons:/root/.nix-profile/share/pixmaps:/nix/profile/share/icons:/nix/profile/share/pixmaps:/root/.local/state/nix/profile/share/icons:/root/.local/state/nix/profile/share/pixmaps:/etc/profiles/per-user/root/share/icons:/etc/profiles/per-user/root/share/pixmaps:/nix/var/nix/profiles/default/share/icons:/nix/var/nix/profiles/default/share/pixmaps:/run/current-system/sw/share/icons:/run/current-system/sw/share/pixmaps
+++++ export XDG_CONFIG_DIRS=/etc/xdg:/root/.nix-profile/etc/xdg:/nix/profile/etc/xdg:/root/.local/state/nix/profile/etc/xdg:/etc/profiles/per-user/root/etc/xdg:/nix/var/nix/profiles/default/etc/xdg:/run/current-system/sw/etc/xdg
+++++ XDG_CONFIG_DIRS=/etc/xdg:/root/.nix-profile/etc/xdg:/nix/profile/etc/xdg:/root/.local/state/nix/profile/etc/xdg:/etc/profiles/per-user/root/etc/xdg:/nix/var/nix/profiles/default/etc/xdg:/run/current-system/sw/etc/xdg
+++++ export XDG_DATA_DIRS=/root/.nix-profile/share:/nix/profile/share:/root/.local/state/nix/profile/share:/etc/profiles/per-user/root/share:/nix/var/nix/profiles/default/share:/run/current-system/sw/share
+++++ XDG_DATA_DIRS=/root/.nix-profile/share:/nix/profile/share:/root/.local/state/nix/profile/share:/etc/profiles/per-user/root/share:/nix/var/nix/profiles/default/share:/run/current-system/sw/share
+++++ export PATH=/run/wrappers/bin:/root/.nix-profile/bin:/nix/profile/bin:/root/.local/state/nix/profile/bin:/etc/profiles/per-user/root/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
+++++ PATH=/run/wrappers/bin:/root/.nix-profile/bin:/nix/profile/bin:/root/.local/state/nix/profile/bin:/etc/profiles/per-user/root/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
+++++ export NIX_USER_PROFILE_DIR=/nix/var/nix/profiles/per-user/root
+++++ NIX_USER_PROFILE_DIR=/nix/var/nix/profiles/per-user/root
+++++ export 'NIX_PROFILES=/run/current-system/sw /nix/var/nix/profiles/default /etc/profiles/per-user/root /root/.local/state/nix/profile /nix/profile /root/.nix-profile'
+++++ NIX_PROFILES='/run/current-system/sw /nix/var/nix/profiles/default /etc/profiles/per-user/root /root/.local/state/nix/profile /nix/profile /root/.nix-profile'
+++++ export TERM=dumb
+++++ TERM=dumb
+++++ '[' -e /root/.nix-defexpr/channels ']'
++++ test -f /etc/profile.local
++++ '[' -n '5.3.9(1)-release' ']'
++++ . /etc/bashrc
+++++ '[' -n '' ']'
+++++ '[' -n '' ']'
+++++ __ETC_BASHRC_SOURCED=1
+++++ '[' -z 1 ']'
+++++ '[' -n '' ']'
+++++ test -f /etc/bashrc.local
+++ nixos-rebuild switch --flake /etc/nixos#vps
+error:
+       … while updating the lock file of flake 'path:/etc/nixos?lastModified=1780512613&narHash=sha256-V2OiPTmVLZCU5D97jt6O%2B8TYQK9JTCXbdFp3H63jIIs%3D'
+
+       … while updating the flake input 'vpsadminos'
+
+       … while fetching the input 'path:/build/vpsadminos.0a3aa2d6'
+
+       error: cannot read directory "/build/vpsadminos.0a3aa2d6": Permission denied
+Command 'nix --extra-experimental-features 'nix-command flakes' build --print-out-paths '/etc/nixos#nixosConfigurations."vps".config.system.build.nixos-rebuild' --no-link' returned non-zero exit status 1.
+I, [2026-06-03T20:50:14.456622 #1999]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x0000735f0183acd8>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.0a3aa2d6
+* error occurred: builder setup failed with exit status 1, cleaning up
+A, [2026-06-03T20:50:20.936694 #1999]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs destroy  tank/image-scripts/build/42bae5ed/work
+A, [2026-06-03T20:50:20.974275 #1999]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs list -H -o name -t snapshot tank/image-scripts/build/42bae5ed/output
+A, [2026-06-03T20:50:21.009900 #1999]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs destroy -r tank/image-scripts/build/42bae5ed/output
+A, [2026-06-03T20:50:21.050726 #1999]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs destroy  tank/image-scripts/build/42bae5ed
+error: builder setup failed with exit status 1
+---
+
+START: 2026-06-03 20:50:21 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 20:50:22 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

@@ -1,0 +1,530 @@
+SHELL: 0
+
+START: 2026-06-03 19:08:22 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:08:22 +0200
+ELAPSED: 0.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:08:22 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:08:22 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:08:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:26 +0200
+ELAPSED: 3.84s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:28 +0200
+ELAPSED: 1.43s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:30 +0200
+ELAPSED: 1.11s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:33 +0200
+ELAPSED: 1.4s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:35 +0200
+ELAPSED: 1.36s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:37 +0200
+ELAPSED: 1.36s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:40 +0200
+ELAPSED: 1.24s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:42 +0200
+ELAPSED: 1.18s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:08:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:44 +0200
+ELAPSED: 1.25s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:08:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:08:46 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:08:46 +0200
+COMMAND: mkdir "/scripts"
+END: 2026-06-03 19:08:46 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:08:46 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/c517aaaa-nix--store--vk7q2l29rij3mw60cw75a2n4mph6vzvk-mmap-writer.py" "/scripts/writer.py"
+END: 2026-06-03 19:08:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:08:46 +0200
+COMMAND: osctl ct new --distribution alpine --zfs-property xattr=dir --zfs-property acltype=posix xattr-dir-5b5f
+END: 2026-06-03 19:08:52 +0200
+ELAPSED: 5.12s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 19:08:52 +0200
+COMMAND: osctl ct unset start-menu xattr-dir-5b5f
+END: 2026-06-03 19:08:53 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:08:53 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 xattr-dir-5b5f eth0
+END: 2026-06-03 19:08:54 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:08:54 +0200
+COMMAND: osctl ct start xattr-dir-5b5f
+END: 2026-06-03 19:08:58 +0200
+ELAPSED: 4.04s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:08:58 +0200
+COMMAND: osctl ct exec xattr-dir-5b5f sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:09:03 +0200
+ELAPSED: 5.04s
+STATUS: 0
+OUTPUT:
+PING check-online.vpsadminos.org (37.205.14.58): 56 data bytes
+64 bytes from 37.205.14.58: seq=0 ttl=254 time=2.186 ms
+
+--- check-online.vpsadminos.org ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 2.186/2.186/2.186 ms
+---
+
+START: 2026-06-03 19:09:03 +0200
+COMMAND: osctl ct exec xattr-dir-5b5f apk add python3
+END: 2026-06-03 19:09:09 +0200
+ELAPSED: 5.6s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.7.5-r0)
+( 3/15) Installing libffi (3.5.2-r0)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r2)
+( 7/15) Installing libstdc++ (15.2.0-r2)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.5_p20251123-r0)
+(10/15) Installing readline (8.3.1-r0)
+(11/15) Installing sqlite-libs (3.51.2-r0)
+(12/15) Installing python3 (3.12.13-r0)
+(13/15) Installing python3-pycache-pyc0 (3.12.13-r0)
+(14/15) Installing pyc (3.12.13-r0)
+(15/15) Installing python3-pyc (3.12.13-r0)
+Executing busybox-1.37.0-r30.trigger
+OK: 55.1 MiB in 53 packages
+---
+
+START: 2026-06-03 19:09:09 +0200
+COMMAND: osctl ct exec xattr-dir-5b5f mkdir /data
+END: 2026-06-03 19:09:12 +0200
+ELAPSED: 3.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:09:12 +0200
+COMMAND: osctl ct runscript xattr-dir-5b5f /scripts/writer.py
+END: 2026-06-03 19:09:17 +0200
+ELAPSED: 5.2s
+STATUS: 0
+OUTPUT:
+Wrote 8388608 bytes to /data/mmap_test.bin
+SHA-256 saved in /data/mmap_test.bin.sha256: 7d212b9c884f5c77896de960ae17cc341cda43b14d6a971f34ca29ebd4badf7f
+---
+
+START: 2026-06-03 19:09:17 +0200
+COMMAND: osctl ct new --distribution alpine --zfs-property xattr=on --zfs-property acltype=posix xattr-on-56b8
+END: 2026-06-03 19:09:20 +0200
+ELAPSED: 3.08s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 19:09:20 +0200
+COMMAND: osctl ct unset start-menu xattr-on-56b8
+END: 2026-06-03 19:09:21 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:09:21 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 xattr-on-56b8 eth0
+END: 2026-06-03 19:09:23 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:09:23 +0200
+COMMAND: osctl ct start xattr-on-56b8
+END: 2026-06-03 19:09:26 +0200
+ELAPSED: 3.43s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:09:26 +0200
+COMMAND: osctl ct exec xattr-on-56b8 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:09:32 +0200
+ELAPSED: 5.39s
+STATUS: 0
+OUTPUT:
+PING check-online.vpsadminos.org (37.205.14.58): 56 data bytes
+64 bytes from 37.205.14.58: seq=0 ttl=254 time=1.224 ms
+
+--- check-online.vpsadminos.org ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 1.224/1.224/1.224 ms
+---
+
+START: 2026-06-03 19:09:32 +0200
+COMMAND: osctl ct exec xattr-on-56b8 apk add python3
+END: 2026-06-03 19:09:38 +0200
+ELAPSED: 6.31s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.7.5-r0)
+( 3/15) Installing libffi (3.5.2-r0)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r2)
+( 7/15) Installing libstdc++ (15.2.0-r2)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.5_p20251123-r0)
+(10/15) Installing readline (8.3.1-r0)
+(11/15) Installing sqlite-libs (3.51.2-r0)
+(12/15) Installing python3 (3.12.13-r0)
+(13/15) Installing python3-pycache-pyc0 (3.12.13-r0)
+(14/15) Installing pyc (3.12.13-r0)
+(15/15) Installing python3-pyc (3.12.13-r0)
+Executing busybox-1.37.0-r30.trigger
+OK: 55.1 MiB in 53 packages
+---
+
+START: 2026-06-03 19:09:38 +0200
+COMMAND: osctl ct exec xattr-on-56b8 mkdir /data
+END: 2026-06-03 19:09:41 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:09:41 +0200
+COMMAND: osctl ct runscript xattr-on-56b8 /scripts/writer.py
+END: 2026-06-03 19:09:48 +0200
+ELAPSED: 6.74s
+STATUS: 0
+OUTPUT:
+Wrote 8388608 bytes to /data/mmap_test.bin
+SHA-256 saved in /data/mmap_test.bin.sha256: 7d212b9c884f5c77896de960ae17cc341cda43b14d6a971f34ca29ebd4badf7f
+---
+
+START: 2026-06-03 19:09:48 +0200
+COMMAND: sync
+END: 2026-06-03 19:09:48 +0200
+ELAPSED: 0.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:10:19 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:10:20 +0200
+ELAPSED: 0.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:10:20 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:10:20 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:10:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:23 +0200
+ELAPSED: 3.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:10:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:25 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:10:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:28 +0200
+ELAPSED: 1.32s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:10:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:30 +0200
+ELAPSED: 1.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:10:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:32 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:10:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:35 +0200
+ELAPSED: 1.31s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:10:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:37 +0200
+ELAPSED: 1.21s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:10:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:39 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:10:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:41 +0200
+ELAPSED: 1.29s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:10:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:10:43 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:10:43 +0200
+COMMAND: mkdir "/scripts"
+END: 2026-06-03 19:10:43 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:10:43 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/9f287200-nix--store--4j4rig4ms9q6v898w1mf9ky16fwghq31-mmap-reader.py" "/scripts/reader.py"
+END: 2026-06-03 19:10:43 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:10:43 +0200
+COMMAND: osctl ct start xattr-dir-5b5f
+END: 2026-06-03 19:10:47 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:10:47 +0200
+COMMAND: osctl ct runscript xattr-dir-5b5f /scripts/reader.py
+END: 2026-06-03 19:10:50 +0200
+ELAPSED: 3.24s
+STATUS: 0
+OUTPUT:
+SUCCESS: Content matches (SHA-256 7d212b9c884f5c77896de960ae17cc341cda43b14d6a971f34ca29ebd4badf7f)
+---
+
+START: 2026-06-03 19:10:50 +0200
+COMMAND: osctl ct start xattr-on-56b8
+END: 2026-06-03 19:10:53 +0200
+ELAPSED: 3.25s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:10:53 +0200
+COMMAND: osctl ct runscript xattr-on-56b8 /scripts/reader.py
+END: 2026-06-03 19:10:56 +0200
+ELAPSED: 3.27s
+STATUS: 0
+OUTPUT:
+SUCCESS: Content matches (SHA-256 7d212b9c884f5c77896de960ae17cc341cda43b14d6a971f34ca29ebd4badf7f)
+---
+
+START: 2026-06-03 19:10:56 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 19:11:03 +0200
+ELAPSED: 6.28s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/2] Stopping container tank:xattr-dir-5b5f
+[2/2] Stopping container tank:xattr-on-56b8
+Unregistering users, groups and containers
+---
+

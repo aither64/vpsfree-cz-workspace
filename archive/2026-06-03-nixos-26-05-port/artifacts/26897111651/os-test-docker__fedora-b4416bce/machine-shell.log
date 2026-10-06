@@ -1,0 +1,1094 @@
+SHELL: 0
+
+START: 2026-06-02 02:18:32 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-02 02:18:32 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:32 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-02 02:18:32 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:34 +0200
+ELAPSED: 2.11s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:36 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:37 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:39 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:41 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:42 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:44 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:45 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:47 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:18:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:48 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-02 02:18:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:18:50 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-02 02:18:50 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-02 02:18:50 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 02 Jun 2026 00:18:50 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-02 02:18:50 +0200
+COMMAND: osctl ct new --distribution fedora --version latest docker-4bd0
+END: 2026-06-02 02:19:29 +0200
+ELAPSED: 38.56s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-02 02:19:29 +0200
+COMMAND: osctl ct unset start-menu docker-4bd0
+END: 2026-06-02 02:19:29 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:19:29 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 docker-4bd0 eth0
+END: 2026-06-02 02:19:30 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:19:30 +0200
+COMMAND: osctl ct set dns-resolver docker-4bd0 1.1.1.1
+END: 2026-06-02 02:19:31 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:19:31 +0200
+COMMAND: osctl ct start docker-4bd0
+END: 2026-06-02 02:19:33 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-02 02:19:33 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-02 02:19:34 +0200
+ELAPSED: 1.53s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-02 02:19:35 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-02 02:19:37 +0200
+ELAPSED: 1.53s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-02 02:19:38 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-02 02:19:39 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=1.70 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.704/1.704/1.704/0.000 ms
+---
+
+START: 2026-06-02 02:19:39 +0200
+COMMAND: osctl ct exec docker-4bd0 dnf -y update
+END: 2026-06-02 02:19:53 +0200
+ELAPSED: 13.52s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Fedora 44 - x86_64 - Updates           100% |   3.5 MiB/s |   8.8 MiB |  00m02s
+ Fedora 44 openh264 (From Cisco) - x86_ 100% |   1.9 KiB/s |   5.3 KiB |  00m03s
+ Fedora 44 - x86_64                     100% |  11.0 MiB/s |  36.7 MiB |  00m03s
+Repositories loaded.
+Package               Arch   Version        Repository          Size
+Upgrading:
+ libsoup3             x86_64 0:3.6.6-8.fc44 updates          1.2 MiB
+   replacing libsoup3 x86_64 0:3.6.6-6.fc44 install-fedora   1.2 MiB
+ which                x86_64 0:2.25-1.fc44  updates         83.6 KiB
+   replacing which    x86_64 0:2.23-4.fc44  install-fedora  83.4 KiB
+
+Transaction Summary:
+ Upgrading:          2 packages
+ Replacing:          2 packages
+
+Total size of inbound packages is 450 KiB. Need to download 450 KiB.
+After this operation, 262 B extra will be used (install 1 MiB, remove 1 MiB).
+[1/2] which-0:2.25-1.fc44.x86_64        100% | 500.7 KiB/s |  42.1 KiB |  00m00s
+[2/2] libsoup3-0:3.6.6-8.fc44.x86_64    100% |   4.5 MiB/s | 407.5 KiB |  00m00s
+--------------------------------------------------------------------------------
+[2/2] Total                             100% |   4.8 MiB/s | 449.6 KiB |  00m00s
+Running transaction
+[1/6] Verify package files              100% | 250.0   B/s |   2.0   B |  00m00s
+[2/6] Prepare transaction               100% |  45.0   B/s |   4.0   B |  00m00s
+[3/6] Upgrading which-0:2.25-1.fc44.x86 100% |   1.9 MiB/s |  85.8 KiB |  00m00s
+[4/6] Upgrading libsoup3-0:3.6.6-8.fc44 100% |  12.1 MiB/s |   1.2 MiB |  00m00s
+[5/6] Removing which-0:2.23-4.fc44.x86_ 100% | 789.0   B/s |  15.0   B |  00m00s
+[6/6] Removing libsoup3-0:3.6.6-6.fc44. 100% | 505.0   B/s |  85.0   B |  00m00s
+Complete!
+---
+
+START: 2026-06-02 02:19:53 +0200
+COMMAND: osctl ct exec docker-4bd0 dnf -y install dnf-plugins-core
+END: 2026-06-02 02:19:58 +0200
+ELAPSED: 5.4s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+Repositories loaded.
+Package                     Arch   Version              Repository      Size
+Installing:
+ dnf-plugins-core           noarch 0:4.10.1-9.fc44      fedora      23.0 KiB
+Installing dependencies:
+ dnf-data                   noarch 0:4.24.0-3.fc44      fedora      39.7 KiB
+ dns-root-data              noarch 0:2026260100-2.fc44  fedora      10.9 KiB
+ hiredis                    x86_64 0:1.2.0-8.fc44       fedora     105.7 KiB
+ libcomps                   x86_64 0:0.1.24-1.fc44      fedora     209.2 KiB
+ libdnf                     x86_64 0:0.75.0-2.fc44      fedora       2.2 MiB
+ protobuf-c                 x86_64 0:1.5.2-2.fc44       fedora      53.7 KiB
+ python3-dateutil           noarch 1:2.9.0.post0-7.fc44 fedora     878.0 KiB
+ python3-distro             noarch 0:1.9.0-11.fc44      fedora     210.2 KiB
+ python3-dnf                noarch 0:4.24.0-3.fc44      fedora       2.7 MiB
+ python3-dnf-plugins-core   noarch 0:4.10.1-9.fc44      fedora       1.2 MiB
+ python3-hawkey             x86_64 0:0.75.0-2.fc44      fedora     299.3 KiB
+ python3-libcomps           x86_64 0:0.1.24-1.fc44      fedora     147.3 KiB
+ python3-libdnf             x86_64 0:0.75.0-2.fc44      fedora       3.9 MiB
+ python3-rpm                x86_64 0:6.0.1-2.fc44       fedora     179.2 KiB
+ python3-six                noarch 0:1.17.0-8.fc44      fedora     118.0 KiB
+ python3-systemd            x86_64 0:235-18.fc44        fedora     346.9 KiB
+ unbound-libs               x86_64 0:1.25.1-1.fc44      updates      1.5 MiB
+Installing weak dependencies:
+ python3-unbound            x86_64 0:1.25.1-1.fc44      updates    524.4 KiB
+ rpm-plugin-systemd-inhibit x86_64 0:6.0.1-2.fc44       fedora      12.1 KiB
+ unbound-anchor             x86_64 0:1.25.1-1.fc44      updates     52.4 KiB
+
+Transaction Summary:
+ Installing:        21 packages
+
+Total size of inbound packages is 4 MiB. Need to download 4 MiB.
+After this operation, 15 MiB extra will be used (install 15 MiB, remove 0 B).
+[ 1/21] dnf-plugins-core-0:4.10.1-9.fc4 100% |   4.1 MiB/s |  37.5 KiB |  00m00s
+[ 2/21] python3-distro-0:1.9.0-11.fc44. 100% |   7.7 MiB/s |  47.2 KiB |  00m00s
+[ 3/21] python3-dnf-plugins-core-0:4.10 100% |  13.9 MiB/s | 314.1 KiB |  00m00s
+[ 4/21] python3-dateutil-1:2.9.0.post0- 100% |  12.5 MiB/s | 344.3 KiB |  00m00s
+[ 5/21] python3-hawkey-0:0.75.0-2.fc44. 100% |  14.9 MiB/s | 106.6 KiB |  00m00s
+[ 6/21] python3-systemd-0:235-18.fc44.x 100% |  17.7 MiB/s | 108.7 KiB |  00m00s
+[ 7/21] python3-six-0:1.17.0-8.fc44.noa 100% |   6.8 MiB/s |  42.0 KiB |  00m00s
+[ 8/21] dnf-data-0:4.24.0-3.fc44.noarch 100% |  12.3 MiB/s |  37.9 KiB |  00m00s
+[ 9/21] python3-libcomps-0:0.1.24-1.fc4 100% |   3.5 MiB/s |  49.7 KiB |  00m00s
+[10/21] python3-dnf-0:4.24.0-3.fc44.noa 100% |  13.3 MiB/s | 638.4 KiB |  00m00s
+[11/21] python3-rpm-0:6.0.1-2.fc44.x86_ 100% |   5.8 MiB/s |  71.1 KiB |  00m00s
+[12/21] libcomps-0:0.1.24-1.fc44.x86_64 100% |  11.0 MiB/s |  78.7 KiB |  00m00s
+[13/21] python3-libdnf-0:0.75.0-2.fc44. 100% |  16.3 MiB/s | 902.4 KiB |  00m00s
+[14/21] hiredis-0:1.2.0-8.fc44.x86_64   100% |   4.0 MiB/s |  52.6 KiB |  00m00s
+[15/21] protobuf-c-0:1.5.2-2.fc44.x86_6 100% |  11.0 MiB/s |  33.7 KiB |  00m00s
+[16/21] libdnf-0:0.75.0-2.fc44.x86_64   100% |  13.4 MiB/s | 742.1 KiB |  00m00s
+[17/21] python3-unbound-0:1.25.1-1.fc44 100% |   2.9 MiB/s | 123.2 KiB |  00m00s
+[18/21] dns-root-data-0:2026260100-2.fc 100% |   4.7 MiB/s |  14.6 KiB |  00m00s
+[19/21] rpm-plugin-systemd-inhibit-0:6. 100% |   9.3 MiB/s |  19.1 KiB |  00m00s
+[20/21] unbound-anchor-0:1.25.1-1.fc44. 100% |   9.8 MiB/s |  40.1 KiB |  00m00s
+[21/21] unbound-libs-0:1.25.1-1.fc44.x8 100% |  17.4 MiB/s | 604.4 KiB |  00m00s
+--------------------------------------------------------------------------------
+[21/21] Total                           100% |   3.5 MiB/s |   4.3 MiB |  00m01s
+Running transaction
+[ 1/23] Verify package files            100% | 420.0   B/s |  21.0   B |  00m00s
+[ 2/23] Prepare transaction             100% | 221.0   B/s |  21.0   B |  00m00s
+[ 3/23] Installing protobuf-c-0:1.5.2-2 100% |   7.7 MiB/s |  55.2 KiB |  00m00s
+[ 4/23] Installing hiredis-0:1.2.0-8.fc 100% |  15.0 MiB/s | 107.4 KiB |  00m00s
+[ 5/23] Installing libdnf-0:0.75.0-2.fc 100% |  52.5 MiB/s |   2.3 MiB |  00m00s
+[ 6/23] Installing python3-libdnf-0:0.7 100% |  69.9 MiB/s |   3.9 MiB |  00m00s
+[ 7/23] Installing python3-hawkey-0:0.7 100% |  32.8 MiB/s | 302.2 KiB |  00m00s
+[ 8/23] Installing dns-root-data-0:2026 100% | 285.0 KiB/s |  12.5 KiB |  00m00s
+>>> Running sysusers scriptlet: unbound-libs-0:1.25.1-1.fc44.x86_64
+>>> Finished sysusers scriptlet: unbound-libs-0:1.25.1-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'unbound' with GID 992.
+>>> Creating user 'unbound' (Unbound DNS resolver) with UID 992 and GID 992.
+>>> 
+[ 9/23] Installing unbound-libs-0:1.25. 100% |  53.2 MiB/s |   1.5 MiB |  00m00s
+[10/23] Installing libcomps-0:0.1.24-1. 100% |  29.4 MiB/s | 210.5 KiB |  00m00s
+[11/23] Installing python3-libcomps-0:0 100% |  20.9 MiB/s | 149.8 KiB |  00m00s
+[12/23] Installing python3-rpm-0:6.0.1- 100% |  22.3 MiB/s | 183.0 KiB |  00m00s
+[13/23] Installing dnf-data-0:4.24.0-3. 100% |   6.8 MiB/s |  41.7 KiB |  00m00s
+[14/23] Installing python3-dnf-0:4.24.0 100% |  31.7 MiB/s |   2.8 MiB |  00m00s
+[15/23] Installing python3-six-0:1.17.0 100% |  16.8 MiB/s | 120.3 KiB |  00m00s
+[16/23] Installing python3-dateutil-1:2 100% |  34.8 MiB/s | 891.5 KiB |  00m00s
+[17/23] Installing python3-systemd-0:23 100% |  19.3 MiB/s | 355.9 KiB |  00m00s
+[18/23] Installing python3-distro-0:1.9 100% |   6.0 MiB/s | 214.9 KiB |  00m00s
+[19/23] Installing python3-dnf-plugins- 100% |  45.2 MiB/s |   1.2 MiB |  00m00s
+[20/23] Installing dnf-plugins-core-0:4 100% |   5.1 MiB/s |  26.2 KiB |  00m00s
+[21/23] Installing python3-unbound-0:1. 100% |  43.1 MiB/s | 529.6 KiB |  00m00s
+[22/23] Installing unbound-anchor-0:1.2 100% | 481.0 KiB/s |  53.9 KiB |  00m00s
+>>> Running %post scriptlet: unbound-anchor-0:1.25.1-1.fc44.x86_64
+>>> Finished %post scriptlet: unbound-anchor-0:1.25.1-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Created symlink '/etc/systemd/system/timers.target.wants/unbound-anchor.timer' → '/usr/lib/systemd/system/unbound-anchor.timer'.
+>>> 
+[23/23] Installing rpm-plugin-systemd-i 100% |  26.3 KiB/s |  13.1 KiB |  00m00s
+Complete!
+---
+
+START: 2026-06-02 02:19:58 +0200
+COMMAND: osctl ct exec docker-4bd0 dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+END: 2026-06-02 02:20:00 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+Adding repo from: https://download.docker.com/linux/fedora/docker-ce.repo
+---
+
+START: 2026-06-02 02:20:00 +0200
+COMMAND: osctl ct exec docker-4bd0 dnf -y install docker-ce docker-ce-cli containerd.io
+END: 2026-06-02 02:20:24 +0200
+ELAPSED: 23.59s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Docker CE Stable - x86_64              100% | 238.0 KiB/s |  17.8 KiB |  00m00s
+Repositories loaded.
+Package                    Arch   Version          Repository            Size
+Installing:
+ containerd.io             x86_64 0:2.2.4-1.fc44   docker-ce-stable 120.4 MiB
+ docker-ce                 x86_64 3:29.5.2-1.fc44  docker-ce-stable 102.7 MiB
+ docker-ce-cli             x86_64 1:29.5.2-1.fc44  docker-ce-stable  35.2 MiB
+Installing dependencies:
+ container-selinux         noarch 4:2.248.0-1.fc44 updates           74.3 KiB
+ libcgroup                 x86_64 0:3.0-10.fc44    fedora           161.6 KiB
+ tar                       x86_64 2:1.35-8.fc44    fedora             3.0 MiB
+Installing weak dependencies:
+ docker-buildx-plugin      x86_64 0:0.34.1-1.fc44  docker-ce-stable  69.0 MiB
+ docker-ce-rootless-extras x86_64 0:29.5.2-1.fc44  docker-ce-stable  20.1 MiB
+ docker-compose-plugin     x86_64 0:5.1.4-1.fc44   docker-ce-stable  31.4 MiB
+
+Transaction Summary:
+ Installing:         9 packages
+
+Total size of inbound packages is 100 MiB. Need to download 100 MiB.
+After this operation, 382 MiB extra will be used (install 382 MiB, remove 0 B).
+[1/9] tar-2:1.35-8.fc44.x86_64          100% |  19.7 MiB/s | 868.2 KiB |  00m00s
+[2/9] docker-ce-cli-1:29.5.2-1.fc44.x86 100% |  32.3 MiB/s |   8.6 MiB |  00m00s
+[3/9] container-selinux-4:2.248.0-1.fc4 100% |   1.6 MiB/s |  58.3 KiB |  00m00s
+[4/9] libcgroup-0:3.0-10.fc44.x86_64    100% |   7.4 MiB/s |  75.6 KiB |  00m00s
+[5/9] docker-ce-rootless-extras-0:29.5. 100% |  16.1 MiB/s |   5.6 MiB |  00m00s
+[6/9] docker-ce-3:29.5.2-1.fc44.x86_64  100% |  28.1 MiB/s |  23.8 MiB |  00m01s
+[7/9] containerd.io-0:2.2.4-1.fc44.x86_ 100% |  30.8 MiB/s |  35.4 MiB |  00m01s
+[8/9] docker-compose-plugin-0:5.1.4-1.f 100% |  17.3 MiB/s |   8.5 MiB |  00m00s
+[9/9] docker-buildx-plugin-0:0.34.1-1.f 100% |  22.4 MiB/s |  17.7 MiB |  00m01s
+--------------------------------------------------------------------------------
+[9/9] Total                             100% |  37.7 MiB/s | 100.4 MiB |  00m03s
+Running transaction
+[ 1/10] https://download.docker.com/lin 100% |  61.1 KiB/s |   1.6 KiB |  00m00s
+--------------------------------------------------------------------------------
+[10/10] Total                           100% |  37.7 MiB/s | 100.4 MiB |  00m03s
+Importing OpenPGP key 0x621E9F35:
+ UserID     : "Docker Release (CE rpm) <docker@docker.com>"
+ Fingerprint: 060A61C51B558A7F742B77AAC52FEB6B621E9F35
+ From       : https://download.docker.com/linux/fedora/gpg
+The key was successfully imported.
+[ 1/11] Verify package files            100% |   7.0   B/s |   9.0   B |  00m01s
+[ 2/11] Prepare transaction             100% |  84.0   B/s |   9.0   B |  00m00s
+[ 3/11] Installing container-selinux-4: 100% |   7.1 KiB/s |  77.8 KiB |  00m11s
+[ 4/11] Installing containerd.io-0:2.2. 100% | 124.6 MiB/s | 120.4 MiB |  00m01s
+[ 5/11] Installing libcgroup-0:3.0-10.f 100% |  14.5 MiB/s | 163.0 KiB |  00m00s
+[ 6/11] Installing docker-ce-cli-1:29.5 100% | 105.3 MiB/s |  35.3 MiB |  00m00s
+[ 7/11] Installing tar-2:1.35-8.fc44.x8 100% |  43.8 MiB/s |   3.0 MiB |  00m00s
+[ 8/11] Installing docker-ce-3:29.5.2-1 100% | 130.7 MiB/s | 102.7 MiB |  00m01s
+[ 9/11] Installing docker-ce-rootless-e 100% |  98.6 MiB/s |  20.1 MiB |  00m00s
+[10/11] Installing docker-compose-plugi 100% | 107.8 MiB/s |  31.4 MiB |  00m00s
+[11/11] Installing docker-buildx-plugin 100% |  71.7 MiB/s |  69.0 MiB |  00m01s
+Complete!
+---
+
+START: 2026-06-02 02:20:24 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c mkdir\ -p\ /etc/docker'
+'cat\ \>\ /etc/docker/daemon.json\ \<\<\'EOF\''
+'\{'
+'\ \ \"registry-mirrors\":\ \['
+'\ \ \ \ \"https://docker-registry.vpsadminos.org\"'
+'\ \ \]'
+'\}'
+''
+'EOF'
+'
+END: 2026-06-02 02:20:25 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:25 +0200
+COMMAND: osctl ct exec docker-4bd0 systemctl start docker
+END: 2026-06-02 02:20:28 +0200
+ELAPSED: 2.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:28 +0200
+COMMAND: osctl ct exec docker-4bd0 cat /etc/docker/daemon.json
+END: 2026-06-02 02:20:29 +0200
+ELAPSED: 1.35s
+STATUS: 0
+OUTPUT:
+{
+  "registry-mirrors": [
+    "https://docker-registry.vpsadminos.org"
+  ]
+}
+
+---
+
+START: 2026-06-02 02:20:29 +0200
+COMMAND: osctl ct exec docker-4bd0 docker info
+END: 2026-06-02 02:20:31 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+Client: Docker Engine - Community
+ Version:    29.5.2
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.34.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.1.4
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 29.5.2
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: 193637f7ee8ae5f5aa5248f49e7baa3e6164966e
+ runc version: v1.3.5-0-g488fc13e
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.91
+ Operating System: Fedora Linux 44 (Forty Four)
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 7.768GiB
+ Name: docker-4bd0
+ ID: 78d70bba-6110-492a-825e-b5f5f1148a45
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  ::1/128
+  127.0.0.0/8
+ Registry Mirrors:
+  https://docker-registry.vpsadminos.org/
+ Live Restore Enabled: false
+ Firewall Backend: iptables+firewalld
+  ReloadedAt: 2026-06-02T02:20:27+02:00
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+WARNING: No io.weight support
+WARNING: No io.weight (per device) support
+WARNING: No io.max (rbps) support
+WARNING: No io.max (wbps) support
+WARNING: No io.max (riops) support
+WARNING: No io.max (wiops) support
+---
+
+START: 2026-06-02 02:20:31 +0200
+COMMAND: osctl ct exec docker-4bd0 docker run hello-world
+END: 2026-06-02 02:20:34 +0200
+ELAPSED: 3.17s
+STATUS: 0
+OUTPUT:
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+4f55086f7dd0: Pulling fs layer
+d5e71e642bf5: Download complete
+4f55086f7dd0: Download complete
+4f55086f7dd0: Pull complete
+Digest: sha256:0e760fdfbc48ba8041e7c6db999bb40bfca508b4be580ac75d32c4e29d202ce1
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-06-02 02:20:34 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c mkdir\ -p\ /tmp/docker-build-test'
+'cat\ \>\ /tmp/docker-build-test/Dockerfile\ \<\<\'EOF\''
+'\#\ syntax\=docker/dockerfile:1'
+''
+'FROM\ alpine:latest'
+'RUN\ echo\ \"Docker\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-06-02 02:20:36 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:36 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ build\ -t\ docker-build-test\ /tmp/docker-build-test
+END: 2026-06-02 02:20:40 +0200
+ELAPSED: 4.57s
+STATUS: 0
+OUTPUT:
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.4s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
+#3 resolve docker.io/docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89 0.0s done
+#3 sha256:50ba52cd6a2c01eaf1a9efbedc7c75b5da5e3965c1586001c722980487a73fd7 2.10MB / 14.36MB 0.2s
+#3 sha256:50ba52cd6a2c01eaf1a9efbedc7c75b5da5e3965c1586001c722980487a73fd7 6.29MB / 14.36MB 0.3s
+#3 sha256:50ba52cd6a2c01eaf1a9efbedc7c75b5da5e3965c1586001c722980487a73fd7 9.44MB / 14.36MB 0.5s
+#3 sha256:50ba52cd6a2c01eaf1a9efbedc7c75b5da5e3965c1586001c722980487a73fd7 14.36MB / 14.36MB 0.6s done
+#3 extracting sha256:50ba52cd6a2c01eaf1a9efbedc7c75b5da5e3965c1586001c722980487a73fd7
+#3 extracting sha256:50ba52cd6a2c01eaf1a9efbedc7c75b5da5e3965c1586001c722980487a73fd7 0.3s done
+#3 DONE 1.0s
+
+#4 [internal] load metadata for docker.io/library/alpine:latest
+#4 DONE 0.5s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [1/2] FROM docker.io/library/alpine:latest@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11
+#6 resolve docker.io/library/alpine:latest@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11 0.0s done
+#6 sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb 2.10MB / 3.86MB 0.2s
+#6 sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb 3.86MB / 3.86MB 0.2s done
+#6 extracting sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb
+#6 extracting sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb 0.2s done
+#6 DONE 0.4s
+
+#7 [2/2] RUN echo "Docker build works!" > /message.txt
+#7 DONE 0.2s
+
+#8 exporting to image
+#8 exporting layers 0.1s done
+#8 exporting manifest sha256:957c5185827ba70053195454de7533e34dc6baa608bdc1823bcfe92f64150ff4 done
+#8 exporting config sha256:21d7264bfd889f19d97fd66b6e9e31e549a5fb8f8e6b2efb164a64123a26a29b done
+#8 exporting attestation manifest sha256:57188a4e914fbee8f998329e1cf4ded7d6dd62c370007f65ccef390e53af3cb1 0.0s done
+#8 exporting manifest list sha256:8f8d5446f142d0452a91a043007a2b64b9680e29bb82be8d4bf835a2be3f8036 done
+#8 naming to docker.io/library/docker-build-test:latest
+#8 naming to docker.io/library/docker-build-test:latest done
+#8 unpacking to docker.io/library/docker-build-test:latest 0.0s done
+#8 DONE 0.1s
+---
+
+START: 2026-06-02 02:20:40 +0200
+COMMAND: osctl ct exec docker-4bd0 docker run --rm docker-build-test
+END: 2026-06-02 02:20:42 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+Docker build works!
+---
+
+START: 2026-06-02 02:20:42 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:20:44 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:44 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-02 02:20:45 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+ff52f8ff6bd265f7673f75f8dc653c90944fa45cf109d04d07cb2f220fcfbb1d
+---
+
+START: 2026-06-02 02:20:45 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-06-02 02:20:47 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-02 02:20:47 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:20:48 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:48 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:20:50 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:50 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-02 02:20:51 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+63d515f1a3f5c92febf665632f4d2c32b180036c604bf050ec4fe7e73e043bcc
+---
+
+START: 2026-06-02 02:20:51 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-06-02 02:20:53 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-02 02:20:53 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:20:55 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:55 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:20:56 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:20:56 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-02 02:20:58 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+d4eae05d1ff8a9dae32e39e5dba852bbb94e7ce76caa61860dd2e6d3a6221979
+---
+
+START: 2026-06-02 02:20:58 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-06-02 02:20:59 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-02 02:20:59 +0200
+COMMAND: osctl ct exec docker-4bd0 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:21:01 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:21:01 +0200
+COMMAND: osctl ct exec docker-4bd0 docker pull gitlab/gitlab-ee:latest
+END: 2026-06-02 02:23:09 +0200
+ELAPSED: 128.01s
+STATUS: 0
+OUTPUT:
+latest: Pulling from gitlab/gitlab-ee
+50bba6fff3bf: Pulling fs layer
+ee63356d024e: Pulling fs layer
+b40150c1c271: Pulling fs layer
+ed9551d3710c: Pulling fs layer
+eea81ca627b2: Pulling fs layer
+6f339bcc48ee: Pulling fs layer
+7c392f6973bf: Pulling fs layer
+709015a0a520: Pulling fs layer
+1e7e993569e5: Pulling fs layer
+7c392f6973bf: Download complete
+1e7e993569e5: Download complete
+eea81ca627b2: Download complete
+6f339bcc48ee: Download complete
+709015a0a520: Download complete
+ed9551d3710c: Download complete
+ee63356d024e: Download complete
+b40150c1c271: Download complete
+b40150c1c271: Pull complete
+eea81ca627b2: Pull complete
+709015a0a520: Pull complete
+ee63356d024e: Pull complete
+7c392f6973bf: Pull complete
+1e7e993569e5: Pull complete
+6f339bcc48ee: Pull complete
+ed9551d3710c: Pull complete
+50bba6fff3bf: Download complete
+50bba6fff3bf: Pull complete
+Digest: sha256:6a7fd7d917a76a4cbedd3c3d9f5abba0a5d198c4637dc7916e5a466611f21439
+Status: Downloaded newer image for gitlab/gitlab-ee:latest
+docker.io/gitlab/gitlab-ee:latest
+---
+
+START: 2026-06-02 02:23:09 +0200
+COMMAND: osctl ct exec docker-4bd0 docker image inspect gitlab/gitlab-ee:latest
+END: 2026-06-02 02:23:10 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+[
+    {
+        "Id": "sha256:6a7fd7d917a76a4cbedd3c3d9f5abba0a5d198c4637dc7916e5a466611f21439",
+        "RepoTags": [
+            "gitlab/gitlab-ee:latest"
+        ],
+        "RepoDigests": [
+            "gitlab/gitlab-ee@sha256:6a7fd7d917a76a4cbedd3c3d9f5abba0a5d198c4637dc7916e5a466611f21439"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-05-27T00:15:35.157873011Z",
+        "Config": {
+            "ExposedPorts": {
+                "22/tcp": {},
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Env": [
+                "PATH=/opt/gitlab/embedded/bin:/opt/gitlab/bin:/assets:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "EDITOR=/bin/vi",
+                "GITLAB_ALLOW_SHA1_RSA=false",
+                "TERM=xterm"
+            ],
+            "Cmd": [
+                "/assets/init-container"
+            ],
+            "Volumes": {
+                "/etc/gitlab": {},
+                "/var/log/gitlab": {},
+                "/var/opt/gitlab": {}
+            },
+            "Labels": {
+                "org.opencontainers.image.authors": "GitLab Distribution Team <distribution-be@gitlab.com>",
+                "org.opencontainers.image.base.name": "docker.io/ubuntu:24.04",
+                "org.opencontainers.image.documentation": "https://docs.gitlab.com/ee/install/docker/",
+                "org.opencontainers.image.source": "https://gitlab.com/gitlab-org/omnibus-gitlab",
+                "org.opencontainers.image.title": "GitLab Omnibus Docker",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "ArgsEscaped": true,
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "/opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10"
+                ],
+                "Interval": 60000000000,
+                "Timeout": 30000000000,
+                "Retries": 5
+            },
+            "Shell": [
+                "/bin/sh",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 1425820192,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:538812a4b9bd45adaac2b5e5b967daa6999aa44eb110aa32ae7c69702b906475",
+                "sha256:4b5bcb56c9b00b84114d6bc5b81c374def870738a05689d5792f2b4c911b6d6b",
+                "sha256:aeb315f9ef139a75a41da56e000ea0a219d0815c07412e2b8b9f6d5269bdecbf",
+                "sha256:3b45968d8d69119563ffe361f8c688770e95f713d4195abe8a13da168a2c0b4b",
+                "sha256:90324c55673e22639802bc547c8538bb8b8812e750c697044e4c8ca02a411cce",
+                "sha256:766be0d8068bf183e347df40ffee5993c20090781f9be57df89029b7b3d59f87",
+                "sha256:85b41c11fdb50f3877ef8f3bf438e4ccce805e0f6d3b9b43e7f2f041f7134ab1",
+                "sha256:340d6f7ad5311016408d8a91d5fe2ce922ec3502c742be15d414d69a6d362079",
+                "sha256:58665f8b5f1e32da61dc3b8a855bc7b3a29ea4c9ab88281f16970f6cbbb0b5ae"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-06-02T00:23:09.248001905Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+            "digest": "sha256:6a7fd7d917a76a4cbedd3c3d9f5abba0a5d198c4637dc7916e5a466611f21439",
+            "size": 685
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/gitlab/gitlab-ee"
+                }
+            ]
+        }
+    }
+]
+---
+
+START: 2026-06-02 02:23:10 +0200
+COMMAND: osctl ct del -f --prune docker-4bd0
+END: 2026-06-02 02:23:14 +0200
+ELAPSED: 3.7s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:docker-4bd0
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-02 02:23:14 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-02 02:23:15 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-06-02 02:23:15 +0200
+COMMAND: poweroff -f
+END: 2026-06-02 02:23:30 +0200
+ELAPSED: 14.98s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

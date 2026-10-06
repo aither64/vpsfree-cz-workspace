@@ -1,0 +1,179 @@
+SHELL: 0
+
+START: 2026-06-03 23:30:27 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 23:30:27 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:30:27 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 23:30:27 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:30:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:29 +0200
+ELAPSED: 2.11s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:31 +0200
+ELAPSED: 0.8s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:33 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:34 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:36 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:37 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:39 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:40 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:42 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:44 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:30:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:45 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 23:30:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:30:47 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 23:30:47 +0200
+COMMAND: sv check nfsd
+END: 2026-06-03 23:30:47 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nfsd: (pid 847) 20s
+---
+
+START: 2026-06-03 23:30:47 +0200
+COMMAND: test -d /storage/vpsfree.cz/crashdump
+END: 2026-06-03 23:30:47 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:30:47 +0200
+COMMAND: zfs share -a
+END: 2026-06-03 23:30:47 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:30:47 +0200
+COMMAND: exportfs -v | tr '\n\t' '  ' | grep -F /storage/vpsfree.cz/crashdump | grep -F 192.168.10.11
+END: 2026-06-03 23:30:47 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/storage/vpsfree.cz/crashdump   192.168.10.11/32(sync,wdelay,hide,no_subtree_check,mountpoint,sec=sys,rw,secure,no_root_squash,no_all_squash) 
+---
+
+START: 2026-06-03 23:31:09 +0200
+COMMAND: ping -c 1 192.168.10.11
+END: 2026-06-03 23:31:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.10.11 (192.168.10.11) 56(84) bytes of data.
+64 bytes from 192.168.10.11: icmp_seq=1 ttl=64 time=1.04 ms
+
+--- 192.168.10.11 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.043/1.043/1.043/0.000 ms
+---
+

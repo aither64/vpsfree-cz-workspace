@@ -1,0 +1,177 @@
+SHELL: 0
+
+START: 2026-06-03 16:31:24 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 16:31:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:31:24 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 16:31:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:31:24 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:31:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1505) 72s
+---
+
+START: 2026-06-03 16:31:24 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:31:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1505) 72s
+---
+
+START: 2026-06-03 16:31:24 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:31:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:31:24 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 16:31:24 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 16:31:30 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:31:30 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:31:30 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 16:31:31 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 16:31:31 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 16:31:32 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 16:31:32 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 16:31:32 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:38:53 +0200
+COMMAND: osctl ct exec 1 true
+END: 2026-06-03 16:38:54 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:38:54 +0200
+COMMAND: osctl ct exec 1 sh -c cat\ /root/vpsadmin-migration-proof.txt
+END: 2026-06-03 16:38:56 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+vps migration data retention proof
+---
+
+START: 2026-06-03 16:38:56 +0200
+COMMAND: zfs list -H -o name -t filesystem
+END: 2026-06-03 16:38:56 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank
+tank/conf
+tank/ct
+tank/ct-mw-dst
+tank/ct-mw-dst/vpsadmin
+tank/ct-mw-dst/vpsadmin/config
+tank/ct-mw-dst/vpsadmin/download
+tank/ct-mw-dst/vpsadmin/mount
+tank/ct/1
+tank/hook
+tank/log
+tank/migration
+tank/repository
+tank/trash
+---
+
+START: 2026-06-03 16:38:56 +0200
+COMMAND: zfs mount tank/ct/1 >/dev/null 2>&1 || true
+END: 2026-06-03 16:38:56 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:38:56 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/1
+END: 2026-06-03 16:38:56 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/tank/ct/1
+---
+
+START: 2026-06-03 16:38:56 +0200
+COMMAND: cat /tank/ct/1/root/maintenance-window.txt
+END: 2026-06-03 16:38:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+maintenance window migration sentinel
+---
+
+START: 2026-06-03 16:39:04 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 16:39:07 +0200
+ELAPSED: 3.25s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:1
+Unregistering users, groups and containers
+---
+

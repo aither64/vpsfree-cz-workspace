@@ -1,0 +1,1180 @@
+SHELL: 0
+
+START: 2026-06-03 19:30:52 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:30:52 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:30:52 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:30:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:30:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:54 +0200
+ELAPSED: 2.09s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:56 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:57 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:59 +0200
+ELAPSED: 0.53s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:31:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:31:00 +0200
+ELAPSED: 0.53s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:31:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:31:02 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:31:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:31:03 +0200
+ELAPSED: 0.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:31:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:31:05 +0200
+ELAPSED: 0.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:31:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:31:06 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:31:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:31:08 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:31:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:31:10 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:31:10 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 19:31:10 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 17:31:10 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 19:31:10 +0200
+COMMAND: osctl ct new --distribution fedora --version latest snap-f12d
+END: 2026-06-03 19:31:39 +0200
+ELAPSED: 28.98s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 19:31:39 +0200
+COMMAND: osctl ct unset start-menu snap-f12d
+END: 2026-06-03 19:31:39 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:31:39 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 snap-f12d eth0
+END: 2026-06-03 19:31:40 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:31:40 +0200
+COMMAND: osctl ct devices add -p snap-f12d char 10 229 rwm /dev/fuse
+END: 2026-06-03 19:31:41 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:31:41 +0200
+COMMAND: osctl ct set dns-resolver snap-f12d 1.1.1.1
+END: 2026-06-03 19:31:41 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:31:41 +0200
+COMMAND: osctl ct start snap-f12d
+END: 2026-06-03 19:31:43 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:31:43 +0200
+COMMAND: osctl ct exec snap-f12d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:31:45 +0200
+ELAPSED: 1.59s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-03 19:31:46 +0200
+COMMAND: osctl ct exec snap-f12d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:31:47 +0200
+ELAPSED: 1.43s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-03 19:31:48 +0200
+COMMAND: osctl ct exec snap-f12d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:31:49 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=1.62 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.620/1.620/1.620/0.000 ms
+---
+
+START: 2026-06-03 19:31:49 +0200
+COMMAND: osctl ct exec snap-f12d dnf -y update
+END: 2026-06-03 19:32:11 +0200
+ELAPSED: 21.85s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Fedora 44 - x86_64 - Updates           100% |   2.4 MiB/s |   8.3 MiB |  00m03s
+ Fedora 44 openh264 (From Cisco) - x86_ 100% |   1.9 KiB/s |   5.3 KiB |  00m03s
+ Fedora 44 - x86_64                     100% |  13.8 MiB/s |  46.8 MiB |  00m03s
+Repositories loaded.
+Package                       Arch   Version          Repository          Size
+Upgrading:
+ cracklib                     x86_64 0:2.10.3-1.fc44  updates        234.6 KiB
+   replacing cracklib         x86_64 0:2.9.11-10.fc44 install-fedora 225.7 KiB
+ cracklib-dicts               x86_64 0:2.10.3-1.fc44  updates          9.4 MiB
+   replacing cracklib-dicts   x86_64 0:2.9.11-10.fc44 install-fedora   9.3 MiB
+ exfatprogs                   x86_64 0:1.4.1-1.fc44   updates        376.6 KiB
+   replacing exfatprogs       x86_64 0:1.3.2-1.fc44   install-fedora 267.2 KiB
+ libldb                       x86_64 2:4.24.3-1.fc44  updates        465.6 KiB
+   replacing libldb           x86_64 2:4.24.2-1.fc44  updates        465.6 KiB
+ libnghttp3                   x86_64 0:1.16.0-1.fc44  updates        163.2 KiB
+   replacing libnghttp3       x86_64 0:1.15.0-1.fc44  install-fedora 159.2 KiB
+ libsolv                      x86_64 0:0.7.39-1.fc44  updates          1.0 MiB
+   replacing libsolv          x86_64 0:0.7.37-2.fc44  updates        991.6 KiB
+ libsoup3                     x86_64 0:3.6.6-8.fc44   updates          1.2 MiB
+   replacing libsoup3         x86_64 0:3.6.6-6.fc44   install-fedora   1.2 MiB
+ samba-common                 noarch 2:4.24.3-1.fc44  updates        212.0 KiB
+   replacing samba-common     noarch 2:4.24.2-1.fc44  updates        207.6 KiB
+ samba-core-libs              x86_64 2:4.24.3-1.fc44  updates          1.7 MiB
+   replacing samba-core-libs  x86_64 2:4.24.2-1.fc44  updates          1.7 MiB
+ samba-ndr-libs               x86_64 2:4.24.3-1.fc44  updates          4.7 MiB
+   replacing samba-ndr-libs   x86_64 2:4.24.2-1.fc44  updates          4.7 MiB
+ systemd                      x86_64 0:259.6-1.fc44   updates         12.9 MiB
+   replacing systemd          x86_64 0:259.5-1.fc44   install-fedora  12.9 MiB
+ systemd-libs                 x86_64 0:259.6-1.fc44   updates          2.4 MiB
+   replacing systemd-libs     x86_64 0:259.5-1.fc44   install-fedora   2.4 MiB
+ systemd-networkd             x86_64 0:259.6-1.fc44   updates          2.3 MiB
+   replacing systemd-networkd x86_64 0:259.5-1.fc44   install-fedora   2.3 MiB
+ systemd-pam                  x86_64 0:259.6-1.fc44   updates          1.2 MiB
+   replacing systemd-pam      x86_64 0:259.5-1.fc44   install-fedora   1.2 MiB
+ systemd-resolved             x86_64 0:259.6-1.fc44   updates        655.4 KiB
+   replacing systemd-resolved x86_64 0:259.5-1.fc44   install-fedora 655.3 KiB
+ systemd-shared               x86_64 0:259.6-1.fc44   updates          5.4 MiB
+   replacing systemd-shared   x86_64 0:259.5-1.fc44   install-fedora   5.4 MiB
+ systemd-sysusers             x86_64 0:259.6-1.fc44   updates         79.6 KiB
+   replacing systemd-sysusers x86_64 0:259.5-1.fc44   install-fedora  79.6 KiB
+ systemd-udev                 x86_64 0:259.6-1.fc44   updates         13.0 MiB
+   replacing systemd-udev     x86_64 0:259.5-1.fc44   install-fedora  12.9 MiB
+ which                        x86_64 0:2.25-1.fc44    updates         83.6 KiB
+   replacing which            x86_64 0:2.23-4.fc44    install-fedora  83.4 KiB
+
+Transaction Summary:
+ Upgrading:         19 packages
+ Replacing:         19 packages
+
+Total size of inbound packages is 18 MiB. Need to download 18 MiB.
+After this operation, 341 KiB extra will be used (install 57 MiB, remove 57 MiB).
+[ 1/19] exfatprogs-0:1.4.1-1.fc44.x86_6 100% |   1.9 MiB/s | 147.2 KiB |  00m00s
+[ 2/19] cracklib-0:2.10.3-1.fc44.x86_64 100% |   1.2 MiB/s |  95.9 KiB |  00m00s
+[ 3/19] libldb-2:4.24.3-1.fc44.x86_64   100% |  24.4 MiB/s | 200.0 KiB |  00m00s
+[ 4/19] libnghttp3-0:1.16.0-1.fc44.x86_ 100% |   9.1 MiB/s |  74.5 KiB |  00m00s
+[ 5/19] libsolv-0:0.7.39-1.fc44.x86_64  100% |  14.6 MiB/s | 462.9 KiB |  00m00s
+[ 6/19] libsoup3-0:3.6.6-8.fc44.x86_64  100% |  11.7 MiB/s | 407.5 KiB |  00m00s
+[ 7/19] samba-common-2:4.24.3-1.fc44.no 100% |  22.6 MiB/s | 184.9 KiB |  00m00s
+[ 8/19] cracklib-dicts-0:2.10.3-1.fc44. 100% |  21.1 MiB/s |   3.6 MiB |  00m00s
+[ 9/19] samba-ndr-libs-2:4.24.3-1.fc44. 100% |  21.8 MiB/s |   1.3 MiB |  00m00s
+[10/19] samba-core-libs-2:4.24.3-1.fc44 100% |   8.7 MiB/s | 515.2 KiB |  00m00s
+[11/19] systemd-libs-0:259.6-1.fc44.x86 100% |  20.2 MiB/s | 870.4 KiB |  00m00s
+[12/19] systemd-shared-0:259.6-1.fc44.x 100% |  26.0 MiB/s |   2.0 MiB |  00m00s
+[13/19] systemd-0:259.6-1.fc44.x86_64   100% |  33.1 MiB/s |   4.3 MiB |  00m00s
+[14/19] systemd-udev-0:259.6-1.fc44.x86 100% |  24.2 MiB/s |   2.6 MiB |  00m00s
+[15/19] systemd-resolved-0:259.6-1.fc44 100% |   3.8 MiB/s | 285.5 KiB |  00m00s
+[16/19] systemd-networkd-0:259.6-1.fc44 100% |  17.7 MiB/s | 796.3 KiB |  00m00s
+[17/19] systemd-pam-0:259.6-1.fc44.x86_ 100% |  23.8 MiB/s | 439.5 KiB |  00m00s
+[18/19] systemd-sysusers-0:259.6-1.fc44 100% |   3.4 MiB/s |  48.5 KiB |  00m00s
+[19/19] which-0:2.25-1.fc44.x86_64      100% |   6.8 MiB/s |  42.1 KiB |  00m00s
+--------------------------------------------------------------------------------
+[19/19] Total                           100% |  50.5 MiB/s |  18.3 MiB |  00m00s
+Running transaction
+[ 1/40] Verify package files            100% |  98.0   B/s |  19.0   B |  00m00s
+[ 2/40] Prepare transaction             100% | 294.0   B/s |  38.0   B |  00m00s
+[ 3/40] Upgrading systemd-shared-0:259. 100% |  96.9 MiB/s |   5.4 MiB |  00m00s
+[ 4/40] Upgrading systemd-libs-0:259.6- 100% |  53.2 MiB/s |   2.4 MiB |  00m00s
+[ 5/40] Upgrading systemd-sysusers-0:25 100% | 646.0 KiB/s |  80.8 KiB |  00m00s
+[ 6/40] Upgrading systemd-0:259.6-1.fc4 100% |  27.6 MiB/s |  13.1 MiB |  00m00s
+[ 7/40] Upgrading samba-common-2:4.24.3 100% |   5.7 MiB/s | 215.5 KiB |  00m00s
+[ 8/40] Upgrading samba-core-libs-2:4.2 100% |  58.0 MiB/s |   1.7 MiB |  00m00s
+[ 9/40] Upgrading cracklib-0:2.10.3-1.f 100% |   4.8 MiB/s | 246.7 KiB |  00m00s
+[10/40] Upgrading cracklib-dicts-0:2.10 100% |  73.1 MiB/s |   9.4 MiB |  00m00s
+[11/40] Upgrading samba-ndr-libs-2:4.24 100% |  41.4 MiB/s |   4.7 MiB |  00m00s
+[12/40] Upgrading systemd-udev-0:259.6- 100% |  12.1 MiB/s |  13.1 MiB |  00m01s
+[13/40] Upgrading systemd-resolved-0:25 100% |   7.2 MiB/s | 659.9 KiB |  00m00s
+[14/40] Upgrading systemd-networkd-0:25 100% |  25.3 MiB/s |   2.3 MiB |  00m00s
+[15/40] Upgrading systemd-pam-0:259.6-1 100% |  55.4 MiB/s |   1.2 MiB |  00m00s
+[16/40] Upgrading which-0:2.25-1.fc44.x 100% |   2.3 MiB/s |  85.8 KiB |  00m00s
+[17/40] Upgrading libsoup3-0:3.6.6-8.fc 100% |  24.6 MiB/s |   1.2 MiB |  00m00s
+[18/40] Upgrading libsolv-0:0.7.39-1.fc 100% |  40.8 MiB/s |   1.0 MiB |  00m00s
+[19/40] Upgrading libnghttp3-0:1.16.0-1 100% |  23.0 MiB/s | 164.6 KiB |  00m00s
+[20/40] Upgrading libldb-2:4.24.3-1.fc4 100% |  24.2 MiB/s | 471.3 KiB |  00m00s
+[21/40] Upgrading exfatprogs-0:1.4.1-1. 100% |   5.4 MiB/s | 382.6 KiB |  00m00s
+[22/40] Removing cracklib-dicts-0:2.9.1 100% | 500.0   B/s |  10.0   B |  00m00s
+[23/40] Removing samba-ndr-libs-2:4.24. 100% |   1.1 KiB/s |  51.0   B |  00m00s
+[24/40] Removing systemd-udev-0:259.5-1 100% |  12.1 KiB/s | 670.0   B |  00m00s
+[25/40] Removing samba-core-libs-2:4.24 100% | 729.0   B/s |  35.0   B |  00m00s
+[26/40] Removing systemd-networkd-0:259 100% | 859.0   B/s |  61.0   B |  00m00s
+[27/40] Removing systemd-resolved-0:259 100% |   1.1 KiB/s |  28.0   B |  00m00s
+[28/40] Removing samba-common-2:4.24.2- 100% |   5.3 KiB/s |  27.0   B |  00m00s
+[29/40] Removing systemd-pam-0:259.5-1. 100% | 500.0   B/s |  12.0   B |  00m00s
+[30/40] Removing systemd-0:259.5-1.fc44 100% |  13.8 KiB/s |   1.0 KiB |  00m00s
+[31/40] Removing systemd-sysusers-0:259 100% | 368.0   B/s |   7.0   B |  00m00s
+[32/40] Removing systemd-shared-0:259.5 100% |   1.2 KiB/s |   6.0   B |  00m00s
+[33/40] Removing systemd-libs-0:259.5-1 100% | 909.0   B/s |  20.0   B |  00m00s
+[34/40] Removing cracklib-0:2.9.11-10.f 100% |   1.6 KiB/s |  75.0   B |  00m00s
+[35/40] Removing which-0:2.23-4.fc44.x8 100% | 833.0   B/s |  15.0   B |  00m00s
+[36/40] Removing libsoup3-0:3.6.6-6.fc4 100% |  10.4 KiB/s |  85.0   B |  00m00s
+[37/40] Removing libsolv-0:0.7.37-2.fc4 100% |   2.9 KiB/s |  12.0   B |  00m00s
+[38/40] Removing libnghttp3-0:1.15.0-1. 100% |   2.9 KiB/s |   9.0   B |  00m00s
+[39/40] Removing libldb-2:4.24.2-1.fc44 100% |   1.6 KiB/s |  37.0   B |  00m00s
+[40/40] Removing exfatprogs-0:1.3.2-1.f 100% |   8.0   B/s |  29.0   B |  00m04s
+>>> Running %posttrans scriptlet: systemd-0:259.6-1.fc44.x86_64
+>>> Finished %posttrans scriptlet: systemd-0:259.6-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Failed to set unit properties on systemd-hostnamed.service: Unit systemd-hostnamed.service is masked.
+>>> 
+Complete!
+---
+
+START: 2026-06-03 19:32:11 +0200
+COMMAND: osctl ct exec snap-f12d dnf -y install squashfuse snapd
+END: 2026-06-03 19:32:27 +0200
+ELAPSED: 16.04s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+Repositories loaded.
+Package                       Arch   Version         Repository      Size
+Installing:
+ snapd                        x86_64 0:2.75.2-0.fc44 updates     61.7 MiB
+ squashfuse                   x86_64 0:0.5.2-6.fc44  fedora      94.0 KiB
+Installing dependencies:
+ checkpolicy                  x86_64 0:3.10-1.fc44   fedora       1.7 MiB
+ fuse                         x86_64 0:2.9.9-25.fc44 fedora     214.1 KiB
+ fuse-common                  x86_64 0:3.18.2-1.fc44 fedora      38.0   B
+ policycoreutils-python-utils noarch 0:3.10-4.fc44   updates     94.5 KiB
+ python3-audit                x86_64 0:4.1.4-1.fc44  fedora     295.3 KiB
+ python3-distro               noarch 0:1.9.0-11.fc44 fedora     210.2 KiB
+ python3-libselinux           x86_64 0:3.10-1.fc44   fedora     632.9 KiB
+ python3-libsemanage          x86_64 0:3.10-1.fc44   fedora     398.9 KiB
+ python3-policycoreutils      noarch 0:3.10-4.fc44   updates      5.8 MiB
+ python3-setools              x86_64 0:4.6.0-5.fc44  fedora       2.8 MiB
+ snap-confine                 x86_64 0:2.75.2-0.fc44 updates     10.7 MiB
+ snapd-selinux                noarch 0:2.75.2-0.fc44 updates     44.6 KiB
+ squashfs-tools               x86_64 0:4.6.1-8.fc44  fedora     661.3 KiB
+ squashfuse-libs              x86_64 0:0.5.2-6.fc44  fedora     114.2 KiB
+ xdelta                       x86_64 0:3.1.0-24.fc44 fedora     189.4 KiB
+
+Transaction Summary:
+ Installing:        17 packages
+
+Total size of inbound packages is 27 MiB. Need to download 27 MiB.
+After this operation, 86 MiB extra will be used (install 86 MiB, remove 0 B).
+[ 1/17] squashfuse-0:0.5.2-6.fc44.x86_6 100% | 877.9 KiB/s |  46.5 KiB |  00m00s
+[ 2/17] squashfuse-libs-0:0.5.2-6.fc44. 100% | 770.3 KiB/s |  44.7 KiB |  00m00s
+[ 3/17] xdelta-0:3.1.0-24.fc44.x86_64   100% |   2.9 MiB/s |  92.7 KiB |  00m00s
+[ 4/17] squashfs-tools-0:4.6.1-8.fc44.x 100% |   5.6 MiB/s | 247.6 KiB |  00m00s
+[ 5/17] snapd-selinux-0:2.75.2-0.fc44.n 100% |   6.1 MiB/s |  94.2 KiB |  00m00s
+[ 6/17] policycoreutils-python-utils-0: 100% |   4.1 MiB/s |  50.3 KiB |  00m00s
+[ 7/17] python3-policycoreutils-0:3.10- 100% |  25.0 MiB/s |   2.2 MiB |  00m00s
+[ 8/17] snap-confine-0:2.75.2-0.fc44.x8 100% |  20.1 MiB/s |   3.2 MiB |  00m00s
+[ 9/17] checkpolicy-0:3.10-1.fc44.x86_6 100% |   9.6 MiB/s | 383.1 KiB |  00m00s
+[10/17] python3-distro-0:1.9.0-11.fc44. 100% |   3.8 MiB/s |  47.2 KiB |  00m00s
+[11/17] python3-audit-0:4.1.4-1.fc44.x8 100% |   4.0 MiB/s |  73.0 KiB |  00m00s
+[12/17] python3-libselinux-0:3.10-1.fc4 100% |  13.0 MiB/s | 212.9 KiB |  00m00s
+[13/17] python3-libsemanage-0:3.10-1.fc 100% |   4.9 MiB/s |  84.4 KiB |  00m00s
+[14/17] fuse-0:2.9.9-25.fc44.x86_64     100% |   5.2 MiB/s |  79.9 KiB |  00m00s
+[15/17] python3-setools-0:4.6.0-5.fc44. 100% |  20.4 MiB/s | 730.3 KiB |  00m00s
+[16/17] fuse-common-0:3.18.2-1.fc44.x86 100% | 332.8 KiB/s |   8.0 KiB |  00m00s
+[17/17] snapd-0:2.75.2-0.fc44.x86_64    100% |  27.3 MiB/s |  19.5 MiB |  00m01s
+--------------------------------------------------------------------------------
+[17/17] Total                           100% |  16.3 MiB/s |  27.0 MiB |  00m02s
+Running transaction
+[ 1/19] Verify package files            100% |  47.0   B/s |  17.0   B |  00m00s
+[ 2/19] Prepare transaction             100% | 182.0   B/s |  17.0   B |  00m00s
+[ 3/19] Installing python3-libselinux-0 100% |  41.4 MiB/s | 636.4 KiB |  00m00s
+[ 4/19] Installing python3-libsemanage- 100% |  55.9 MiB/s | 400.3 KiB |  00m00s
+[ 5/19] Installing fuse-common-0:3.18.2 100% | 142.6 KiB/s | 292.0   B |  00m00s
+[ 6/19] Installing fuse-0:2.9.9-25.fc44 100% |   6.6 MiB/s | 217.2 KiB |  00m00s
+[ 7/19] Installing python3-setools-0:4. 100% |  51.3 MiB/s |   2.9 MiB |  00m00s
+[ 8/19] Installing python3-distro-0:1.9 100% |   7.2 MiB/s | 214.9 KiB |  00m00s
+[ 9/19] Installing python3-audit-0:4.1. 100% |  36.3 MiB/s | 297.3 KiB |  00m00s
+[10/19] Installing checkpolicy-0:3.10-1 100% |  38.0 MiB/s |   1.7 MiB |  00m00s
+[11/19] Installing python3-policycoreut 100% |  62.0 MiB/s |   5.9 MiB |  00m00s
+[12/19] Installing policycoreutils-pyth 100% |   2.5 MiB/s |  98.1 KiB |  00m00s
+[13/19] Installing snapd-selinux-0:2.75 100% |   5.0 KiB/s |  45.6 KiB |  00m09s
+[14/19] Installing snap-confine-0:2.75. 100% | 103.3 MiB/s |  10.7 MiB |  00m00s
+[15/19] Installing xdelta-0:3.1.0-24.fc 100% |   5.8 MiB/s | 190.9 KiB |  00m00s
+[16/19] Installing squashfs-tools-0:4.6 100% |  17.1 MiB/s | 664.9 KiB |  00m00s
+[17/19] Installing squashfuse-libs-0:0. 100% |  14.1 MiB/s | 115.9 KiB |  00m00s
+[18/19] Installing squashfuse-0:0.5.2-6 100% |   2.7 MiB/s |  96.4 KiB |  00m00s
+[19/19] Installing snapd-0:2.75.2-0.fc4 100% |  53.8 MiB/s |  61.8 MiB |  00m01s
+>>> Running %post scriptlet: snapd-0:2.75.2-0.fc44.x86_64
+>>> Finished %post scriptlet: snapd-0:2.75.2-0.fc44.x86_64
+>>> Scriptlet output:
+>>> Created symlink '/etc/systemd/system/sockets.target.wants/snapd.socket' → '/usr/lib/systemd/system/snapd.socket'.
+>>> Created symlink '/etc/systemd/user/sockets.target.wants/snapd.session-agent.socket' → '/usr/lib/systemd/user/snapd.session-agent.socket'.
+>>> 
+Complete!
+---
+
+START: 2026-06-03 19:32:42 +0200
+COMMAND: osctl ct exec snap-f12d snap wait system seed.loaded
+END: 2026-06-03 19:32:45 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:32:45 +0200
+COMMAND: osctl ct exec snap-f12d snap install hello-world
+END: 2026-06-03 19:33:00 +0200
+ELAPSED: 15.12s
+STATUS: 0
+OUTPUT:
+2026-06-03T19:32:50+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T19:32:51+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T19:32:52+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T19:32:53+02:00 INFO Waiting for automatic snapd restart...
+Warning: /var/lib/snapd/snap/bin was not found in your $PATH. If you've not
+         restarted your session since you installed snapd, try doing that.
+         Please see https://forum.snapcraft.io/t/9469 for more details.
+
+hello-world 6.4 from Canonical** installed
+---
+
+START: 2026-06-03 19:33:00 +0200
+COMMAND: osctl ct exec snap-f12d snap run hello-world
+END: 2026-06-03 19:33:01 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+Hello World!
+---
+
+START: 2026-06-03 19:33:01 +0200
+COMMAND: osctl ct del -f --prune snap-f12d
+END: 2026-06-03 19:33:07 +0200
+ELAPSED: 5.35s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:snap-f12d
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 19:33:07 +0200
+COMMAND: osctl user del snap-f12d
+END: 2026-06-03 19:33:07 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-06-03 19:33:07 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 19:33:08 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-06-03 19:33:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:33:09 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:33:09 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 19:33:09 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 17:33:09 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 19:33:09 +0200
+COMMAND: osctl user new --no-standalone --map 0:2800000:524288 snap-caef
+END: 2026-06-03 19:33:09 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+Registering user tank:snap-caef
+---
+
+START: 2026-06-03 19:33:09 +0200
+COMMAND: osctl ct new --user snap-caef --distribution fedora --version latest snap-caef
+END: 2026-06-03 19:33:39 +0200
+ELAPSED: 29.55s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 19:33:39 +0200
+COMMAND: osctl ct unset start-menu snap-caef
+END: 2026-06-03 19:33:40 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:33:40 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 snap-caef eth0
+END: 2026-06-03 19:33:40 +0200
+ELAPSED: 0.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:33:40 +0200
+COMMAND: osctl ct devices add -p snap-caef char 10 229 rwm /dev/fuse
+END: 2026-06-03 19:33:41 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:33:41 +0200
+COMMAND: osctl ct set dns-resolver snap-caef 1.1.1.1
+END: 2026-06-03 19:33:42 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:33:42 +0200
+COMMAND: osctl ct start snap-caef
+END: 2026-06-03 19:33:43 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:33:43 +0200
+COMMAND: osctl ct exec snap-caef sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:33:45 +0200
+ELAPSED: 1.54s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-03 19:33:46 +0200
+COMMAND: osctl ct exec snap-caef sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:33:47 +0200
+ELAPSED: 1.4s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-03 19:33:48 +0200
+COMMAND: osctl ct exec snap-caef sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:33:50 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=1.24 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.242/1.242/1.242/0.000 ms
+---
+
+START: 2026-06-03 19:33:50 +0200
+COMMAND: osctl ct exec snap-caef dnf -y update
+END: 2026-06-03 19:34:12 +0200
+ELAPSED: 22.36s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Fedora 44 - x86_64 - Updates           100% |   2.4 MiB/s |   9.0 MiB |  00m04s
+ Fedora 44 openh264 (From Cisco) - x86_ 100% |   1.7 KiB/s |   5.3 KiB |  00m03s
+ Fedora 44 - x86_64                     100% |  12.1 MiB/s |  41.8 MiB |  00m03s
+Repositories loaded.
+Package                       Arch   Version          Repository          Size
+Upgrading:
+ cracklib                     x86_64 0:2.10.3-1.fc44  updates        234.6 KiB
+   replacing cracklib         x86_64 0:2.9.11-10.fc44 install-fedora 225.7 KiB
+ cracklib-dicts               x86_64 0:2.10.3-1.fc44  updates          9.4 MiB
+   replacing cracklib-dicts   x86_64 0:2.9.11-10.fc44 install-fedora   9.3 MiB
+ exfatprogs                   x86_64 0:1.4.1-1.fc44   updates        376.6 KiB
+   replacing exfatprogs       x86_64 0:1.3.2-1.fc44   install-fedora 267.2 KiB
+ libldb                       x86_64 2:4.24.3-1.fc44  updates        465.6 KiB
+   replacing libldb           x86_64 2:4.24.2-1.fc44  updates        465.6 KiB
+ libnghttp3                   x86_64 0:1.16.0-1.fc44  updates        163.2 KiB
+   replacing libnghttp3       x86_64 0:1.15.0-1.fc44  install-fedora 159.2 KiB
+ libsolv                      x86_64 0:0.7.39-1.fc44  updates          1.0 MiB
+   replacing libsolv          x86_64 0:0.7.37-2.fc44  updates        991.6 KiB
+ libsoup3                     x86_64 0:3.6.6-8.fc44   updates          1.2 MiB
+   replacing libsoup3         x86_64 0:3.6.6-6.fc44   install-fedora   1.2 MiB
+ samba-common                 noarch 2:4.24.3-1.fc44  updates        212.0 KiB
+   replacing samba-common     noarch 2:4.24.2-1.fc44  updates        207.6 KiB
+ samba-core-libs              x86_64 2:4.24.3-1.fc44  updates          1.7 MiB
+   replacing samba-core-libs  x86_64 2:4.24.2-1.fc44  updates          1.7 MiB
+ samba-ndr-libs               x86_64 2:4.24.3-1.fc44  updates          4.7 MiB
+   replacing samba-ndr-libs   x86_64 2:4.24.2-1.fc44  updates          4.7 MiB
+ systemd                      x86_64 0:259.6-1.fc44   updates         12.9 MiB
+   replacing systemd          x86_64 0:259.5-1.fc44   install-fedora  12.9 MiB
+ systemd-libs                 x86_64 0:259.6-1.fc44   updates          2.4 MiB
+   replacing systemd-libs     x86_64 0:259.5-1.fc44   install-fedora   2.4 MiB
+ systemd-networkd             x86_64 0:259.6-1.fc44   updates          2.3 MiB
+   replacing systemd-networkd x86_64 0:259.5-1.fc44   install-fedora   2.3 MiB
+ systemd-pam                  x86_64 0:259.6-1.fc44   updates          1.2 MiB
+   replacing systemd-pam      x86_64 0:259.5-1.fc44   install-fedora   1.2 MiB
+ systemd-resolved             x86_64 0:259.6-1.fc44   updates        655.4 KiB
+   replacing systemd-resolved x86_64 0:259.5-1.fc44   install-fedora 655.3 KiB
+ systemd-shared               x86_64 0:259.6-1.fc44   updates          5.4 MiB
+   replacing systemd-shared   x86_64 0:259.5-1.fc44   install-fedora   5.4 MiB
+ systemd-sysusers             x86_64 0:259.6-1.fc44   updates         79.6 KiB
+   replacing systemd-sysusers x86_64 0:259.5-1.fc44   install-fedora  79.6 KiB
+ systemd-udev                 x86_64 0:259.6-1.fc44   updates         13.0 MiB
+   replacing systemd-udev     x86_64 0:259.5-1.fc44   install-fedora  12.9 MiB
+ which                        x86_64 0:2.25-1.fc44    updates         83.6 KiB
+   replacing which            x86_64 0:2.23-4.fc44    install-fedora  83.4 KiB
+
+Transaction Summary:
+ Upgrading:         19 packages
+ Replacing:         19 packages
+
+Total size of inbound packages is 18 MiB. Need to download 18 MiB.
+After this operation, 341 KiB extra will be used (install 57 MiB, remove 57 MiB).
+[ 1/19] cracklib-0:2.10.3-1.fc44.x86_64 100% | 849.0 KiB/s |  95.9 KiB |  00m00s
+[ 2/19] exfatprogs-0:1.4.1-1.fc44.x86_6 100% |   1.3 MiB/s | 147.2 KiB |  00m00s
+[ 3/19] libnghttp3-0:1.16.0-1.fc44.x86_ 100% |   5.6 MiB/s |  74.5 KiB |  00m00s
+[ 4/19] libldb-2:4.24.3-1.fc44.x86_64   100% |   5.6 MiB/s | 200.0 KiB |  00m00s
+[ 5/19] libsolv-0:0.7.39-1.fc44.x86_64  100% |  14.6 MiB/s | 462.9 KiB |  00m00s
+[ 6/19] samba-common-2:4.24.3-1.fc44.no 100% |  10.0 MiB/s | 184.9 KiB |  00m00s
+[ 7/19] libsoup3-0:3.6.6-8.fc44.x86_64  100% |   7.5 MiB/s | 407.5 KiB |  00m00s
+[ 8/19] cracklib-dicts-0:2.10.3-1.fc44. 100% |  15.2 MiB/s |   3.6 MiB |  00m00s
+[ 9/19] samba-ndr-libs-2:4.24.3-1.fc44. 100% |  18.6 MiB/s |   1.3 MiB |  00m00s
+[10/19] samba-core-libs-2:4.24.3-1.fc44 100% |   8.5 MiB/s | 515.2 KiB |  00m00s
+[11/19] systemd-libs-0:259.6-1.fc44.x86 100% |  18.9 MiB/s | 870.4 KiB |  00m00s
+[12/19] systemd-shared-0:259.6-1.fc44.x 100% |  14.4 MiB/s |   2.0 MiB |  00m00s
+[13/19] systemd-0:259.6-1.fc44.x86_64   100% |  22.6 MiB/s |   4.3 MiB |  00m00s
+[14/19] systemd-udev-0:259.6-1.fc44.x86 100% |  17.5 MiB/s |   2.6 MiB |  00m00s
+[15/19] systemd-resolved-0:259.6-1.fc44 100% |   6.3 MiB/s | 285.5 KiB |  00m00s
+[16/19] systemd-networkd-0:259.6-1.fc44 100% |  22.2 MiB/s | 796.3 KiB |  00m00s
+[17/19] systemd-sysusers-0:259.6-1.fc44 100% |   3.0 MiB/s |  48.5 KiB |  00m00s
+[18/19] systemd-pam-0:259.6-1.fc44.x86_ 100% |  16.5 MiB/s | 439.5 KiB |  00m00s
+[19/19] which-0:2.25-1.fc44.x86_64      100% |   3.7 MiB/s |  42.1 KiB |  00m00s
+--------------------------------------------------------------------------------
+[19/19] Total                           100% |  37.9 MiB/s |  18.3 MiB |  00m00s
+Running transaction
+[ 1/40] Verify package files            100% |  79.0   B/s |  19.0   B |  00m00s
+[ 2/40] Prepare transaction             100% | 267.0   B/s |  38.0   B |  00m00s
+[ 3/40] Upgrading systemd-shared-0:259. 100% |  90.4 MiB/s |   5.4 MiB |  00m00s
+[ 4/40] Upgrading systemd-libs-0:259.6- 100% |  68.0 MiB/s |   2.4 MiB |  00m00s
+[ 5/40] Upgrading systemd-sysusers-0:25 100% | 690.2 KiB/s |  80.8 KiB |  00m00s
+[ 6/40] Upgrading systemd-0:259.6-1.fc4 100% |  27.8 MiB/s |  13.1 MiB |  00m00s
+[ 7/40] Upgrading samba-common-2:4.24.3 100% |   7.0 MiB/s | 215.5 KiB |  00m00s
+[ 8/40] Upgrading samba-core-libs-2:4.2 100% |  62.3 MiB/s |   1.7 MiB |  00m00s
+[ 9/40] Upgrading cracklib-0:2.10.3-1.f 100% |   4.9 MiB/s | 246.7 KiB |  00m00s
+[10/40] Upgrading cracklib-dicts-0:2.10 100% |  65.0 MiB/s |   9.4 MiB |  00m00s
+[11/40] Upgrading samba-ndr-libs-2:4.24 100% |  39.7 MiB/s |   4.7 MiB |  00m00s
+[12/40] Upgrading systemd-udev-0:259.6- 100% |  12.5 MiB/s |  13.1 MiB |  00m01s
+[13/40] Upgrading systemd-resolved-0:25 100% |   7.7 MiB/s | 659.9 KiB |  00m00s
+[14/40] Upgrading systemd-networkd-0:25 100% |  24.3 MiB/s |   2.3 MiB |  00m00s
+[15/40] Upgrading systemd-pam-0:259.6-1 100% |  50.7 MiB/s |   1.2 MiB |  00m00s
+[16/40] Upgrading which-0:2.25-1.fc44.x 100% |   1.9 MiB/s |  85.8 KiB |  00m00s
+[17/40] Upgrading libsoup3-0:3.6.6-8.fc 100% |  24.1 MiB/s |   1.2 MiB |  00m00s
+[18/40] Upgrading libsolv-0:0.7.39-1.fc 100% |  54.4 MiB/s |   1.0 MiB |  00m00s
+[19/40] Upgrading libnghttp3-0:1.16.0-1 100% |  23.0 MiB/s | 164.6 KiB |  00m00s
+[20/40] Upgrading libldb-2:4.24.3-1.fc4 100% |  24.2 MiB/s | 471.3 KiB |  00m00s
+[21/40] Upgrading exfatprogs-0:1.4.1-1. 100% |   6.7 MiB/s | 382.6 KiB |  00m00s
+[22/40] Removing cracklib-dicts-0:2.9.1 100% | 526.0   B/s |  10.0   B |  00m00s
+[23/40] Removing samba-ndr-libs-2:4.24. 100% |   1.1 KiB/s |  51.0   B |  00m00s
+[24/40] Removing systemd-udev-0:259.5-1 100% |  11.9 KiB/s | 670.0   B |  00m00s
+[25/40] Removing samba-core-libs-2:4.24 100% |   1.0 KiB/s |  35.0   B |  00m00s
+[26/40] Removing systemd-networkd-0:259 100% |   1.1 KiB/s |  61.0   B |  00m00s
+[27/40] Removing systemd-resolved-0:259 100% |   1.2 KiB/s |  28.0   B |  00m00s
+[28/40] Removing samba-common-2:4.24.2- 100% |   5.3 KiB/s |  27.0   B |  00m00s
+[29/40] Removing systemd-pam-0:259.5-1. 100% | 521.0   B/s |  12.0   B |  00m00s
+[30/40] Removing systemd-0:259.5-1.fc44 100% |  14.7 KiB/s |   1.0 KiB |  00m00s
+[31/40] Removing systemd-sysusers-0:259 100% | 388.0   B/s |   7.0   B |  00m00s
+[32/40] Removing systemd-shared-0:259.5 100% |   1.2 KiB/s |   6.0   B |  00m00s
+[33/40] Removing systemd-libs-0:259.5-1 100% | 952.0   B/s |  20.0   B |  00m00s
+[34/40] Removing cracklib-0:2.9.11-10.f 100% |   2.0 KiB/s |  75.0   B |  00m00s
+[35/40] Removing which-0:2.23-4.fc44.x8 100% | 833.0   B/s |  15.0   B |  00m00s
+[36/40] Removing libsoup3-0:3.6.6-6.fc4 100% |  11.9 KiB/s |  85.0   B |  00m00s
+[37/40] Removing libsolv-0:0.7.37-2.fc4 100% |   2.9 KiB/s |  12.0   B |  00m00s
+[38/40] Removing libnghttp3-0:1.15.0-1. 100% |   2.9 KiB/s |   9.0   B |  00m00s
+[39/40] Removing libldb-2:4.24.2-1.fc44 100% |   1.6 KiB/s |  37.0   B |  00m00s
+[40/40] Removing exfatprogs-0:1.3.2-1.f 100% |   8.0   B/s |  29.0   B |  00m04s
+>>> Running %posttrans scriptlet: systemd-0:259.6-1.fc44.x86_64
+>>> Finished %posttrans scriptlet: systemd-0:259.6-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Failed to set unit properties on systemd-hostnamed.service: Unit systemd-hostnamed.service is masked.
+>>> 
+Complete!
+---
+
+START: 2026-06-03 19:34:12 +0200
+COMMAND: osctl ct exec snap-caef dnf -y install screen squashfuse snapd
+END: 2026-06-03 19:34:29 +0200
+ELAPSED: 16.88s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+Repositories loaded.
+Package                       Arch   Version         Repository      Size
+Installing:
+ screen                       x86_64 0:5.0.1-6.fc44  fedora     951.9 KiB
+ snapd                        x86_64 0:2.75.2-0.fc44 updates     61.7 MiB
+ squashfuse                   x86_64 0:0.5.2-6.fc44  fedora      94.0 KiB
+Installing dependencies:
+ checkpolicy                  x86_64 0:3.10-1.fc44   fedora       1.7 MiB
+ fuse                         x86_64 0:2.9.9-25.fc44 fedora     214.1 KiB
+ fuse-common                  x86_64 0:3.18.2-1.fc44 fedora      38.0   B
+ policycoreutils-python-utils noarch 0:3.10-4.fc44   updates     94.5 KiB
+ python3-audit                x86_64 0:4.1.4-1.fc44  fedora     295.3 KiB
+ python3-distro               noarch 0:1.9.0-11.fc44 fedora     210.2 KiB
+ python3-libselinux           x86_64 0:3.10-1.fc44   fedora     632.9 KiB
+ python3-libsemanage          x86_64 0:3.10-1.fc44   fedora     398.9 KiB
+ python3-policycoreutils      noarch 0:3.10-4.fc44   updates      5.8 MiB
+ python3-setools              x86_64 0:4.6.0-5.fc44  fedora       2.8 MiB
+ snap-confine                 x86_64 0:2.75.2-0.fc44 updates     10.7 MiB
+ snapd-selinux                noarch 0:2.75.2-0.fc44 updates     44.6 KiB
+ squashfs-tools               x86_64 0:4.6.1-8.fc44  fedora     661.3 KiB
+ squashfuse-libs              x86_64 0:0.5.2-6.fc44  fedora     114.2 KiB
+ xdelta                       x86_64 0:3.1.0-24.fc44 fedora     189.4 KiB
+
+Transaction Summary:
+ Installing:        18 packages
+
+Total size of inbound packages is 28 MiB. Need to download 28 MiB.
+After this operation, 87 MiB extra will be used (install 87 MiB, remove 0 B).
+[ 1/18] squashfuse-libs-0:0.5.2-6.fc44. 100% |   1.3 MiB/s |  44.7 KiB |  00m00s
+[ 2/18] squashfuse-0:0.5.2-6.fc44.x86_6 100% |   1.2 MiB/s |  46.5 KiB |  00m00s
+[ 3/18] squashfs-tools-0:4.6.1-8.fc44.x 100% |   8.1 MiB/s | 247.6 KiB |  00m00s
+[ 4/18] screen-0:5.0.1-6.fc44.x86_64    100% |   7.7 MiB/s | 639.7 KiB |  00m00s
+[ 5/18] xdelta-0:3.1.0-24.fc44.x86_64   100% |   7.0 MiB/s |  92.7 KiB |  00m00s
+[ 6/18] snapd-selinux-0:2.75.2-0.fc44.n 100% |   7.1 MiB/s |  94.2 KiB |  00m00s
+[ 7/18] policycoreutils-python-utils-0: 100% |   4.5 MiB/s |  50.3 KiB |  00m00s
+[ 8/18] python3-policycoreutils-0:3.10- 100% |  23.2 MiB/s |   2.2 MiB |  00m00s
+[ 9/18] snap-confine-0:2.75.2-0.fc44.x8 100% |  21.3 MiB/s |   3.2 MiB |  00m00s
+[10/18] checkpolicy-0:3.10-1.fc44.x86_6 100% |  10.7 MiB/s | 383.1 KiB |  00m00s
+[11/18] python3-audit-0:4.1.4-1.fc44.x8 100% |   5.5 MiB/s |  73.0 KiB |  00m00s
+[12/18] python3-distro-0:1.9.0-11.fc44. 100% |   4.2 MiB/s |  47.2 KiB |  00m00s
+[13/18] python3-libselinux-0:3.10-1.fc4 100% |  13.0 MiB/s | 212.9 KiB |  00m00s
+[14/18] python3-libsemanage-0:3.10-1.fc 100% |   6.3 MiB/s |  84.4 KiB |  00m00s
+[15/18] fuse-0:2.9.9-25.fc44.x86_64     100% |   5.6 MiB/s |  79.9 KiB |  00m00s
+[16/18] fuse-common-0:3.18.2-1.fc44.x86 100% | 798.6 KiB/s |   8.0 KiB |  00m00s
+[17/18] python3-setools-0:4.6.0-5.fc44. 100% |  21.6 MiB/s | 730.3 KiB |  00m00s
+[18/18] snapd-0:2.75.2-0.fc44.x86_64    100% |  26.1 MiB/s |  19.5 MiB |  00m01s
+--------------------------------------------------------------------------------
+[18/18] Total                           100% |  12.6 MiB/s |  27.6 MiB |  00m02s
+Running transaction
+[ 1/20] Verify package files            100% |  61.0   B/s |  18.0   B |  00m00s
+[ 2/20] Prepare transaction             100% | 193.0   B/s |  18.0   B |  00m00s
+[ 3/20] Installing python3-libselinux-0 100% |  27.0 MiB/s | 636.4 KiB |  00m00s
+[ 4/20] Installing python3-libsemanage- 100% |  55.9 MiB/s | 400.3 KiB |  00m00s
+[ 5/20] Installing fuse-common-0:3.18.2 100% | 142.6 KiB/s | 292.0   B |  00m00s
+[ 6/20] Installing fuse-0:2.9.9-25.fc44 100% |   6.6 MiB/s | 217.2 KiB |  00m00s
+[ 7/20] Installing python3-setools-0:4. 100% |  48.7 MiB/s |   2.9 MiB |  00m00s
+[ 8/20] Installing python3-distro-0:1.9 100% |   7.0 MiB/s | 214.9 KiB |  00m00s
+[ 9/20] Installing python3-audit-0:4.1. 100% |  20.7 MiB/s | 297.3 KiB |  00m00s
+[10/20] Installing checkpolicy-0:3.10-1 100% |  37.2 MiB/s |   1.7 MiB |  00m00s
+[11/20] Installing python3-policycoreut 100% |  50.4 MiB/s |   5.9 MiB |  00m00s
+[12/20] Installing policycoreutils-pyth 100% |   2.0 MiB/s |  98.1 KiB |  00m00s
+[13/20] Installing snapd-selinux-0:2.75 100% |   5.1 KiB/s |  45.6 KiB |  00m09s
+[14/20] Installing snap-confine-0:2.75. 100% |  98.5 MiB/s |  10.7 MiB |  00m00s
+[15/20] Installing xdelta-0:3.1.0-24.fc 100% |   5.3 MiB/s | 190.9 KiB |  00m00s
+[16/20] Installing squashfs-tools-0:4.6 100% |  17.1 MiB/s | 664.9 KiB |  00m00s
+[17/20] Installing squashfuse-libs-0:0. 100% |  14.1 MiB/s | 115.9 KiB |  00m00s
+[18/20] Installing squashfuse-0:0.5.2-6 100% |   2.5 MiB/s |  96.4 KiB |  00m00s
+[19/20] Installing snapd-0:2.75.2-0.fc4 100% |  86.0 MiB/s |  61.8 MiB |  00m01s
+>>> Running %post scriptlet: snapd-0:2.75.2-0.fc44.x86_64
+>>> Finished %post scriptlet: snapd-0:2.75.2-0.fc44.x86_64
+>>> Scriptlet output:
+>>> Created symlink '/etc/systemd/system/sockets.target.wants/snapd.socket' → '/usr/lib/systemd/system/snapd.socket'.
+>>> Created symlink '/etc/systemd/user/sockets.target.wants/snapd.session-agent.socket' → '/usr/lib/systemd/user/snapd.session-agent.socket'.
+>>> 
+>>> Running sysusers scriptlet: screen-0:5.0.1-6.fc44.x86_64
+>>> Finished sysusers scriptlet: screen-0:5.0.1-6.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'screen' with GID 84.
+>>> 
+[20/20] Installing screen-0:5.0.1-6.fc4 100% |   1.4 MiB/s | 957.4 KiB |  00m01s
+Complete!
+---
+
+START: 2026-06-03 19:34:29 +0200
+COMMAND: osctl ct exec snap-caef ln -s /var/lib/snapd/snap /snap
+END: 2026-06-03 19:34:30 +0200
+ELAPSED: 1.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:34:45 +0200
+COMMAND: osctl ct exec snap-caef snap wait system seed.loaded
+END: 2026-06-03 19:34:48 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:34:48 +0200
+COMMAND: osctl ct exec snap-caef snap install lxd
+END: 2026-06-03 19:35:12 +0200
+ELAPSED: 24.19s
+STATUS: 0
+OUTPUT:
+2026-06-03T19:34:54+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T19:34:55+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T19:34:56+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T19:34:57+02:00 INFO Waiting for automatic snapd restart...
+lxd (5.21/stable) 5.21.4-aee7e08 from Canonical** installed
+Warning: /var/lib/snapd/snap/bin was not found in your $PATH. If you've not
+         restarted your session since you installed snapd, try doing that.
+         Please see https://forum.snapcraft.io/t/9469 for more details.
+
+---
+
+START: 2026-06-03 19:35:12 +0200
+COMMAND: osctl ct exec snap-caef /snap/bin/lxd init --auto
+END: 2026-06-03 19:35:22 +0200
+ELAPSED: 10.51s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:35:22 +0200
+COMMAND: osctl ct exec snap-caef screen -d -m /bin/sh -c '/snap/bin/lxc launch ubuntu:22.04 u1 ; echo $? > /lxc.status'
+END: 2026-06-03 19:35:24 +0200
+ELAPSED: 1.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:35:24 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:25 +0200
+ELAPSED: 1.33s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:26 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:28 +0200
+ELAPSED: 2.29s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:29 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:31 +0200
+ELAPSED: 1.49s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:32 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:33 +0200
+ELAPSED: 1.48s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:34 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:36 +0200
+ELAPSED: 1.76s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:37 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:39 +0200
+ELAPSED: 1.58s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:40 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:41 +0200
+ELAPSED: 1.72s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:42 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:44 +0200
+ELAPSED: 1.49s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 19:35:45 +0200
+COMMAND: osctl ct exec snap-caef cat /lxc.status
+END: 2026-06-03 19:35:46 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 19:36:01 +0200
+COMMAND: osctl ct exec snap-caef /snap/bin/lxc info u1
+END: 2026-06-03 19:36:03 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+Name: u1
+Status: RUNNING
+Type: container
+Architecture: x86_64
+PID: 2246
+Created: 2026/06/03 19:35 CEST
+Last Used: 2026/06/03 19:35 CEST
+
+Resources:
+  Processes: 54
+  Disk usage:
+    root: 0B
+  Disk total:
+    root: 0B
+  CPU usage:
+    CPU usage (in seconds): 14
+  Memory usage:
+    Memory (current): 223.63MiB
+  Network usage:
+    ip6tnl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
+      MTU: 1452
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    lo:
+      Type: loopback
+      State: UP
+      MTU: 65536
+      Bytes received: 1.89kB
+      Bytes sent: 1.89kB
+      Packets received: 29
+      Packets sent: 29
+      IP addresses:
+        inet:  127.0.0.1/8 (local)
+        inet6: ::1/128 (local)
+    tunl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1480
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    erspan0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1450
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    eth0:
+      Type: broadcast
+      State: UP
+      Host interface: veth97586572
+      MAC address: 00:16:3e:0c:dc:34
+      MTU: 1500
+      Bytes received: 3.22kB
+      Bytes sent: 4.15kB
+      Packets received: 20
+      Packets sent: 33
+      IP addresses:
+        inet6: fd42:76e1:1fc2:5f6d:216:3eff:fe0c:dc34/64 (global)
+        inet6: fe80::216:3eff:fe0c:dc34/64 (link)
+    gre0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1476
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    gretap0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1462
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+---
+
+START: 2026-06-03 19:36:03 +0200
+COMMAND: osctl ct del -f --prune snap-caef
+END: 2026-06-03 19:36:35 +0200
+ELAPSED: 31.87s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:snap-caef
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 19:36:35 +0200
+COMMAND: osctl user del snap-caef
+END: 2026-06-03 19:36:35 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-06-03 19:36:35 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 19:36:36 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-06-03 19:36:36 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 19:36:50 +0200
+ELAPSED: 14.35s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

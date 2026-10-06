@@ -1,0 +1,221 @@
+SHELL: 0
+
+START: 2026-06-03 15:23:19 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 15:23:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:23:19 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 15:23:19 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:23:19 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:23:19 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1563) 71s
+---
+
+START: 2026-06-03 15:23:19 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:23:19 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1563) 71s
+---
+
+START: 2026-06-03 15:23:19 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:23:19 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:23:20 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:23:20 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1563) 72s
+---
+
+START: 2026-06-03 15:23:20 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:23:20 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:23:21 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:23:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1563) 73s
+---
+
+START: 2026-06-03 15:23:21 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:23:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:23:21 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 15:23:22 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 15:23:28 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:23:28 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:23:28 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 15:23:29 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:23:29 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 15:23:29 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:23:29 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 15:23:30 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:25:52 +0200
+COMMAND: zfs list -H -o name -t filesystem
+END: 2026-06-03 15:25:52 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank
+tank/conf
+tank/ct
+tank/ct-rsync-dst
+tank/ct-rsync-dst/dataset-migrate-rsync-remote
+tank/ct-rsync-dst/vpsadmin
+tank/ct-rsync-dst/vpsadmin/config
+tank/ct-rsync-dst/vpsadmin/download
+tank/ct-rsync-dst/vpsadmin/mount
+tank/hook
+tank/log
+tank/migration
+tank/repository
+tank/trash
+---
+
+START: 2026-06-03 15:25:55 +0200
+COMMAND: zfs mount tank/ct-rsync-dst/dataset-migrate-rsync-remote >/dev/null 2>&1 || true
+END: 2026-06-03 15:25:55 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:25:55 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct-rsync-dst/dataset-migrate-rsync-remote
+END: 2026-06-03 15:25:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/tank/ct-rsync-dst/dataset-migrate-rsync-remote
+---
+
+START: 2026-06-03 15:25:55 +0200
+COMMAND: cat /tank/ct-rsync-dst/dataset-migrate-rsync-remote/private/payload/sentinel.txt
+END: 2026-06-03 15:25:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+dataset migration sentinel
+---
+
+START: 2026-06-03 15:25:55 +0200
+COMMAND: zfs mount tank/ct-rsync-dst/dataset-migrate-rsync-remote >/dev/null 2>&1 || true
+END: 2026-06-03 15:25:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:25:55 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct-rsync-dst/dataset-migrate-rsync-remote
+END: 2026-06-03 15:25:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/tank/ct-rsync-dst/dataset-migrate-rsync-remote
+---
+
+START: 2026-06-03 15:25:55 +0200
+COMMAND: sha256sum /tank/ct-rsync-dst/dataset-migrate-rsync-remote/private/payload/blob.bin
+END: 2026-06-03 15:25:55 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+532bb7c3f83eff44d94b33cb8abc391a11d9f9d5826da39f9f57adfff6ad07db  /tank/ct-rsync-dst/dataset-migrate-rsync-remote/private/payload/blob.bin
+---
+
+START: 2026-06-03 15:26:02 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 15:26:04 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

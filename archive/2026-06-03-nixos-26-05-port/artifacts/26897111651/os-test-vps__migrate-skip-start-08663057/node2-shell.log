@@ -1,0 +1,213 @@
+SHELL: 0
+
+START: 2026-06-03 13:48:37 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 13:48:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:48:37 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 13:48:37 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:48:37 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 13:48:37 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1497) 71s
+---
+
+START: 2026-06-03 13:48:37 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 13:48:37 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1497) 71s
+---
+
+START: 2026-06-03 13:48:37 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 13:48:37 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:48:37 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 13:48:38 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 13:48:44 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 13:48:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:48:44 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 13:48:44 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 13:48:44 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 13:48:45 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 13:48:45 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 13:48:45 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: zfs list -H -o name -t filesystem
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+tank
+tank/conf
+tank/ct
+tank/ct-dst
+tank/ct-dst/vpsadmin
+tank/ct-dst/vpsadmin/config
+tank/ct-dst/vpsadmin/download
+tank/ct-dst/vpsadmin/mount
+tank/ct/1
+tank/hook
+tank/log
+tank/migration
+tank/repository
+tank/trash
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: zfs mount tank/ct/1 >/dev/null 2>&1 || true
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/1
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/tank/ct/1
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: cat /tank/ct/1/private/root/vpsadmin-migration-proof.txt
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+vps migration data retention proof
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: zfs mount tank/ct/1 >/dev/null 2>&1 || true
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/1
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/tank/ct/1
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: cat /tank/ct/1/root/spec-migrate.txt
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+vps migration sentinel
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: zfs mount tank/ct/1 >/dev/null 2>&1 || true
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/1
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/tank/ct/1
+---
+
+START: 2026-06-03 13:52:44 +0200
+COMMAND: sha256sum /tank/ct/1/root/blob.bin
+END: 2026-06-03 13:52:44 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+15d9e1a5616ff8ad5a029141e536f124cecc020b1e8af28f2aefe4110ef7e408  /tank/ct/1/root/blob.bin
+---
+
+START: 2026-06-03 13:52:51 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 13:52:53 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:1
+Unregistering users, groups and containers
+---
+

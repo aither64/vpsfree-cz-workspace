@@ -1,0 +1,791 @@
+SHELL: 0
+
+START: 2026-06-03 18:43:48 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 18:43:48 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:48 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 18:43:48 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:43:51 +0200
+ELAPSED: 3.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:43:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:43:53 +0200
+ELAPSED: 1.28s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:43:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:43:56 +0200
+ELAPSED: 1.31s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:43:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:43:58 +0200
+ELAPSED: 1.05s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:43:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:44:00 +0200
+ELAPSED: 1.26s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:44:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:44:02 +0200
+ELAPSED: 1.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:44:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:44:04 +0200
+ELAPSED: 1.18s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:44:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:44:06 +0200
+ELAPSED: 1.05s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:44:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:44:08 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-06-03 18:44:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:44:11 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:44:11 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:44:11 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:44:11 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:44:11 +0200
+COMMAND: osctl ct new --distribution alpine testct
+END: 2026-06-03 18:44:14 +0200
+ELAPSED: 3.55s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:44:14 +0200
+COMMAND: osctl ct unset start-menu testct
+END: 2026-06-03 18:44:15 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:15 +0200
+COMMAND: osctl ct show -H -o map_mode testct
+END: 2026-06-03 18:44:16 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+native
+
+---
+
+START: 2026-06-03 18:44:16 +0200
+COMMAND: osctl ct del testct
+END: 2026-06-03 18:44:18 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 18:44:18 +0200
+COMMAND: osctl ct new --distribution alpine --map-mode zfs testct
+END: 2026-06-03 18:44:20 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:44:20 +0200
+COMMAND: osctl ct unset start-menu testct
+END: 2026-06-03 18:44:21 +0200
+ELAPSED: 0.84s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:21 +0200
+COMMAND: osctl ct show -H -o map_mode testct
+END: 2026-06-03 18:44:22 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+zfs
+
+---
+
+START: 2026-06-03 18:44:22 +0200
+COMMAND: osctl ct set map-mode testct native
+END: 2026-06-03 18:44:24 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+Unmounting dataset /
+Unsetting UID/GID mapping of /
+Remounting dataset /
+---
+
+START: 2026-06-03 18:44:24 +0200
+COMMAND: osctl ct show -H -o map_mode testct
+END: 2026-06-03 18:44:25 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+native
+
+---
+
+START: 2026-06-03 18:44:25 +0200
+COMMAND: osctl ct set map-mode
+END: 2026-06-03 18:44:26 +0200
+ELAPSED: 1.02s
+STATUS: 64
+OUTPUT:
+error: missing argument <id>
+
+NAME
+    map-mode - Set map mode
+
+SYNOPSIS
+
+    osctl [global options] ct set map-mode <ctid> <mode>
+---
+
+START: 2026-06-03 18:44:26 +0200
+COMMAND: osctl ct set map-mode testct
+END: 2026-06-03 18:44:27 +0200
+ELAPSED: 1.01s
+STATUS: 64
+OUTPUT:
+error: missing argument <mode>
+
+NAME
+    map-mode - Set map mode
+
+SYNOPSIS
+
+    osctl [global options] ct set map-mode <ctid> <mode>
+---
+
+START: 2026-06-03 18:44:27 +0200
+COMMAND: osctl ct set map-mode testct woah
+END: 2026-06-03 18:44:28 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: invalid map mode
+---
+
+START: 2026-06-03 18:44:28 +0200
+COMMAND: osctl ct set map-mode testct native woah
+END: 2026-06-03 18:44:29 +0200
+ELAPSED: 1.25s
+STATUS: 64
+OUTPUT:
+error: unknown argument: woah
+
+NAME
+    map-mode - Set map mode
+
+SYNOPSIS
+
+    osctl [global options] ct set map-mode <ctid> <mode>
+---
+
+START: 2026-06-03 18:44:29 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-03 18:44:32 +0200
+ELAPSED: 2.97s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:44:32 +0200
+COMMAND: osctl ct set map-mode testct zfs
+END: 2026-06-03 18:44:33 +0200
+ELAPSED: 1.29s
+STATUS: 1
+OUTPUT:
+error: container is running
+---
+
+START: 2026-06-03 18:44:33 +0200
+COMMAND: osctl ct stop testct
+END: 2026-06-03 18:44:39 +0200
+ELAPSED: 5.13s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-06-03 18:44:39 +0200
+COMMAND: osctl ct set map-mode testct native
+END: 2026-06-03 18:44:40 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:40 +0200
+COMMAND: osctl ct set map-mode testct native
+END: 2026-06-03 18:44:41 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:41 +0200
+COMMAND: osctl ct del testct
+END: 2026-06-03 18:44:42 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 18:44:42 +0200
+COMMAND: osctl ct new --distribution debian --map-mode native testct
+END: 2026-06-03 18:44:55 +0200
+ELAPSED: 12.3s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:44:55 +0200
+COMMAND: osctl ct unset start-menu testct
+END: 2026-06-03 18:44:56 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:56 +0200
+COMMAND: osctl ct show -H -o map_mode testct
+END: 2026-06-03 18:44:57 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+native
+
+---
+
+START: 2026-06-03 18:44:57 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-03 18:45:00 +0200
+ELAPSED: 2.84s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:45:00 +0200
+COMMAND: osctl ct exec testct systemctl is-system-running --wait
+END: 2026-06-03 18:45:03 +0200
+ELAPSED: 3.01s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-06-03 18:45:03 +0200
+COMMAND: osctl ct exec testct stat -c %u:%g /var
+END: 2026-06-03 18:45:06 +0200
+ELAPSED: 2.9s
+STATUS: 0
+OUTPUT:
+0:0
+---
+
+START: 2026-06-03 18:45:06 +0200
+COMMAND: osctl ct show -H -o rootfs testct
+END: 2026-06-03 18:45:07 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct/private
+
+---
+
+START: 2026-06-03 18:45:07 +0200
+COMMAND: stat -c %u:%g /tank/ct/testct/private/var
+END: 2026-06-03 18:45:07 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0:0
+---
+
+START: 2026-06-03 18:45:07 +0200
+COMMAND: osctl ct show -H -o dataset testct
+END: 2026-06-03 18:45:08 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+tank/ct/testct
+
+---
+
+START: 2026-06-03 18:45:08 +0200
+COMMAND: zfs get -H -o value uidmap,gidmap tank/ct/testct
+END: 2026-06-03 18:45:08 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+none
+none
+---
+
+START: 2026-06-03 18:45:08 +0200
+COMMAND: osctl ct dataset new testct mysubdataset
+END: 2026-06-03 18:45:11 +0200
+ELAPSED: 2.8s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:11 +0200
+COMMAND: osctl ct exec testct /bin/sh -c 'echo hello > /mysubdataset/hello.txt'
+END: 2026-06-03 18:45:13 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:13 +0200
+COMMAND: osctl ct exec testct stat -c %u:%g /mysubdataset/hello.txt
+END: 2026-06-03 18:45:16 +0200
+ELAPSED: 2.56s
+STATUS: 0
+OUTPUT:
+0:0
+---
+
+START: 2026-06-03 18:45:16 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/testct/mysubdataset
+END: 2026-06-03 18:45:16 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct/mysubdataset
+---
+
+START: 2026-06-03 18:45:16 +0200
+COMMAND: stat -c %u:%g /tank/ct/testct/mysubdataset/private/hello.txt
+END: 2026-06-03 18:45:16 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0:0
+---
+
+START: 2026-06-03 18:45:16 +0200
+COMMAND: zfs get -H -o value uidmap,gidmap tank/ct/testct/mysubdataset
+END: 2026-06-03 18:45:16 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+none
+none
+---
+
+START: 2026-06-03 18:45:16 +0200
+COMMAND: osctl ct restart testct
+END: 2026-06-03 18:45:21 +0200
+ELAPSED: 5.07s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:45:21 +0200
+COMMAND: osctl ct cat testct /mysubdataset/hello.txt
+END: 2026-06-03 18:45:22 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+hello
+---
+
+START: 2026-06-03 18:45:22 +0200
+COMMAND: osctl healthcheck -a
+END: 2026-06-03 18:45:23 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+No errors detected.
+---
+
+START: 2026-06-03 18:45:23 +0200
+COMMAND: osctl ct del -f testct
+END: 2026-06-03 18:45:27 +0200
+ELAPSED: 3.77s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 18:45:27 +0200
+COMMAND: osctl ct new --distribution debian --map-mode zfs testct
+END: 2026-06-03 18:45:34 +0200
+ELAPSED: 6.96s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:45:34 +0200
+COMMAND: osctl ct unset start-menu testct
+END: 2026-06-03 18:45:35 +0200
+ELAPSED: 1.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:35 +0200
+COMMAND: osctl ct show -H -o map_mode testct
+END: 2026-06-03 18:45:36 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+zfs
+
+---
+
+START: 2026-06-03 18:45:36 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-03 18:45:40 +0200
+ELAPSED: 3.54s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:45:40 +0200
+COMMAND: osctl ct exec testct systemctl is-system-running --wait
+END: 2026-06-03 18:45:43 +0200
+ELAPSED: 3.07s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-06-03 18:45:43 +0200
+COMMAND: osctl ct exec testct stat -c %u:%g /var
+END: 2026-06-03 18:45:45 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+0:0
+---
+
+START: 2026-06-03 18:45:45 +0200
+COMMAND: osctl ct show -H -o rootfs testct
+END: 2026-06-03 18:45:46 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct/private
+
+---
+
+START: 2026-06-03 18:45:46 +0200
+COMMAND: stat -c %u:%g /tank/ct/testct/private/var
+END: 2026-06-03 18:45:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1000000:1000000
+---
+
+START: 2026-06-03 18:45:46 +0200
+COMMAND: osctl ct show -H -o dataset testct
+END: 2026-06-03 18:45:47 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+tank/ct/testct
+
+---
+
+START: 2026-06-03 18:45:47 +0200
+COMMAND: zfs get -H -o value uidmap,gidmap tank/ct/testct
+END: 2026-06-03 18:45:47 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0:1000000:65536
+0:1000000:65536
+---
+
+START: 2026-06-03 18:45:47 +0200
+COMMAND: osctl ct dataset new testct mysubdataset
+END: 2026-06-03 18:45:50 +0200
+ELAPSED: 3.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:50 +0200
+COMMAND: osctl ct exec testct /bin/sh -c 'echo hello > /mysubdataset/hello.txt'
+END: 2026-06-03 18:45:53 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:53 +0200
+COMMAND: osctl ct exec testct stat -c %u:%g /mysubdataset/hello.txt
+END: 2026-06-03 18:45:56 +0200
+ELAPSED: 2.84s
+STATUS: 0
+OUTPUT:
+0:0
+---
+
+START: 2026-06-03 18:45:56 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/testct/mysubdataset
+END: 2026-06-03 18:45:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct/mysubdataset
+---
+
+START: 2026-06-03 18:45:56 +0200
+COMMAND: stat -c %u:%g /tank/ct/testct/mysubdataset/private/hello.txt
+END: 2026-06-03 18:45:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1000000:1000000
+---
+
+START: 2026-06-03 18:45:56 +0200
+COMMAND: zfs get -H -o value uidmap,gidmap tank/ct/testct/mysubdataset
+END: 2026-06-03 18:45:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0:1000000:65536
+0:1000000:65536
+---
+
+START: 2026-06-03 18:45:56 +0200
+COMMAND: osctl ct restart testct
+END: 2026-06-03 18:46:01 +0200
+ELAPSED: 5.25s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:46:01 +0200
+COMMAND: osctl ct cat testct /mysubdataset/hello.txt
+END: 2026-06-03 18:46:02 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+hello
+---
+
+START: 2026-06-03 18:46:03 +0200
+COMMAND: osctl healthcheck -a
+END: 2026-06-03 18:46:04 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+No errors detected.
+---
+
+START: 2026-06-03 18:46:04 +0200
+COMMAND: osctl ct del -f testct
+END: 2026-06-03 18:46:08 +0200
+ELAPSED: 3.75s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 18:46:08 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 18:46:09 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

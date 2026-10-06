@@ -1,0 +1,187 @@
+SHELL: 0
+
+START: 2026-06-03 15:10:09 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 15:10:09 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:10:09 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 15:10:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:10:09 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:10:09 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1520) 70s
+---
+
+START: 2026-06-03 15:10:09 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:10:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1520) 70s
+---
+
+START: 2026-06-03 15:10:09 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:10:09 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:10:10 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:10:10 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1520) 71s
+---
+
+START: 2026-06-03 15:10:10 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:10:10 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:10:11 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:10:11 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1520) 72s
+---
+
+START: 2026-06-03 15:10:11 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:10:11 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:10:11 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 15:10:12 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 15:10:18 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:10:18 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:10:18 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 15:10:18 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:10:18 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 15:10:19 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:10:19 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 15:10:19 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:12:15 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-03 15:12:15 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/1
+---
+
+START: 2026-06-03 15:17:45 +0200
+COMMAND: zfs get -H -o name,value origin -t filesystem -r tank/backup/1
+END: 2026-06-03 15:17:45 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+tank/backup/1	-
+tank/backup/1/tree.0	-
+tank/backup/1/tree.0/branch-2026-06-03T13:12:23.0	tank/backup/1/tree.0/branch-2026-06-03T13:13:15.0@2026-06-03T13:13:15
+tank/backup/1/tree.0/branch-2026-06-03T13:12:57.0	-
+tank/backup/1/tree.0/branch-2026-06-03T13:13:15.0	tank/backup/1/tree.0/branch-2026-06-03T13:12:57.0@2026-06-03T13:12:57
+tank/backup/1/tree.1	-
+tank/backup/1/tree.1/branch-2026-06-03T13:15:57.0	-
+---
+
+START: 2026-06-03 15:17:45 +0200
+COMMAND: zfs get -H -o name,value clones -t snapshot -r tank/backup/1
+END: 2026-06-03 15:17:45 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+tank/backup/1/tree.0/branch-2026-06-03T13:12:23.0@2026-06-03T13:13:34	-
+tank/backup/1/tree.0/branch-2026-06-03T13:12:23.0@2026-06-03T13:13:53	-
+tank/backup/1/tree.0/branch-2026-06-03T13:12:57.0@2026-06-03T13:12:18	-
+tank/backup/1/tree.0/branch-2026-06-03T13:12:57.0@2026-06-03T13:12:57	tank/backup/1/tree.0/branch-2026-06-03T13:13:15.0
+tank/backup/1/tree.0/branch-2026-06-03T13:12:57.0@2026-06-03T13:17:29	-
+tank/backup/1/tree.0/branch-2026-06-03T13:13:15.0@2026-06-03T13:13:15	tank/backup/1/tree.0/branch-2026-06-03T13:12:23.0
+tank/backup/1/tree.0/branch-2026-06-03T13:13:15.0@2026-06-03T13:14:52	-
+tank/backup/1/tree.0/branch-2026-06-03T13:13:15.0@2026-06-03T13:15:10	-
+tank/backup/1/tree.1/branch-2026-06-03T13:15:57.0@2026-06-03T13:15:53	-
+tank/backup/1/tree.1/branch-2026-06-03T13:15:57.0@2026-06-03T13:16:31	-
+---
+
+START: 2026-06-03 15:17:54 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 15:17:56 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

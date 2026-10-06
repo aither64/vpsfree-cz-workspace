@@ -1,0 +1,99 @@
+SHELL: 0
+
+START: 2026-06-03 19:29:40 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:29:41 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:41 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:29:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:41 +0200
+COMMAND: sv check crashdump
+END: 2026-06-03 19:29:48 +0200
+ELAPSED: 7.74s
+STATUS: 1
+OUTPUT:
+timeout: run: crashdump: (pid 858) 7s
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: sv check crashdump
+END: 2026-06-03 19:29:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: down: crashdump: 1s, normally up
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: ping -c 1 192.168.10.12
+END: 2026-06-03 19:29:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.10.12 (192.168.10.12) 56(84) bytes of data.
+64 bytes from 192.168.10.12: icmp_seq=1 ttl=64 time=0.550 ms
+
+--- 192.168.10.12 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.550/0.550/0.550/0.000 ms
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: mkdir -p /mnt/host-nfs-check
+END: 2026-06-03 19:29:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: mount.nfs -v -o vers=4 192.168.10.12:/storage/vpsfree.cz/crashdump /mnt/host-nfs-check
+END: 2026-06-03 19:29:49 +0200
+ELAPSED: 0.03s
+STATUS: 32
+OUTPUT:
+mount.nfs: mount(2): Invalid argument
+mount.nfs: mount(2): Invalid argument
+mount.nfs: mount(2): Protocol not supported
+mount.nfs: Protocol not supported for 192.168.10.12:/storage/vpsfree.cz/crashdump on /mnt/host-nfs-check
+mount.nfs: timeout set for Wed Jun  3 19:31:49 2026
+mount.nfs: trying text-based options 'vers=4.2,addr=192.168.10.12,clientaddr=192.168.10.11'
+mount.nfs: trying text-based options 'vers=4,minorversion=1,addr=192.168.10.12,clientaddr=192.168.10.11'
+mount.nfs: trying text-based options 'vers=4,addr=192.168.10.12,clientaddr=192.168.10.11'
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: cat /sys/kernel/kexec_crash_loaded
+END: 2026-06-03 19:29:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: echo hello\ crash\ kernel\ nfs\ inspect\ test > /dev/kmsg
+END: 2026-06-03 19:29:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: echo c > /proc/sysrq-trigger
+START: 2026-06-03 19:49:55 +0200
+COMMAND: poweroff -f

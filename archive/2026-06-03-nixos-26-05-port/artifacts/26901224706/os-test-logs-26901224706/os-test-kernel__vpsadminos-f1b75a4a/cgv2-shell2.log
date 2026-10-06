@@ -1,0 +1,3026 @@
+SHELL: 2
+
+START: 2026-06-03 18:41:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:41:54 +0200
+ELAPSED: 3.3s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:41:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:41:57 +0200
+ELAPSED: 1.29s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:41:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:41:59 +0200
+ELAPSED: 1.51s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:42:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:01 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:42:02 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:03 +0200
+ELAPSED: 1.09s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:42:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:05 +0200
+ELAPSED: 1.24s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:42:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:07 +0200
+ELAPSED: 1.02s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:42:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:09 +0200
+ELAPSED: 1.02s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:42:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:11 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:42:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:14 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:42:14 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:42:14 +0200
+ELAPSED: 0.3s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:42:14 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:42:14 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 18:42:15 +0200
+ELAPSED: 1.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:15 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-attrs-b6da
+END: 2026-06-03 18:42:20 +0200
+ELAPSED: 4.99s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:42:20 +0200
+COMMAND: osctl ct start kmisc-attrs-b6da
+END: 2026-06-03 18:42:23 +0200
+ELAPSED: 2.83s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:42:23 +0200
+COMMAND: osctl ct exec kmisc-attrs-b6da touch /immutable.file
+END: 2026-06-03 18:42:26 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:26 +0200
+COMMAND: osctl ct exec kmisc-attrs-b6da chattr +i /immutable.file
+END: 2026-06-03 18:42:29 +0200
+ELAPSED: 2.72s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /immutable.file: Permission denied
+---
+
+START: 2026-06-03 18:42:29 +0200
+COMMAND: osctl ct exec kmisc-attrs-b6da chattr -i /immutable.file
+END: 2026-06-03 18:42:31 +0200
+ELAPSED: 2.21s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /immutable.file: Permission denied
+---
+
+START: 2026-06-03 18:42:31 +0200
+COMMAND: osctl ct exec kmisc-attrs-b6da touch /append-only.file
+END: 2026-06-03 18:42:34 +0200
+ELAPSED: 2.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:34 +0200
+COMMAND: osctl ct exec kmisc-attrs-b6da chattr +a /append-only.file
+END: 2026-06-03 18:42:36 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /append-only.file: Permission denied
+---
+
+START: 2026-06-03 18:42:36 +0200
+COMMAND: osctl ct exec kmisc-attrs-b6da chattr -a /append-only.file
+END: 2026-06-03 18:42:39 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /append-only.file: Permission denied
+---
+
+START: 2026-06-03 18:42:39 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 18:42:39 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+ksyslog-b4ce
+kmisc-attrs-b6da
+kloadavg1
+kloadavg2
+kmisc-oom-cad4
+ktmpfsv2-557f
+ksyslog-bd19
+kmisc-oom-4a29
+---
+
+START: 2026-06-03 18:42:39 +0200
+COMMAND: osctl ct del -f --prune kmisc-attrs-b6da >/dev/null 2>&1 || true
+END: 2026-06-03 18:42:46 +0200
+ELAPSED: 6.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:42:47 +0200
+ELAPSED: 1.28s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:42:47 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:42:47 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:42:47 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:42:47 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 18:42:48 +0200
+ELAPSED: 1.32s
+STATUS: 0
+OUTPUT:
+ksyslog-b4ce
+kloadavg1
+kloadavg2
+kmisc-oom-cad4
+ktmpfsv2-557f
+ksyslog-bd19
+kmisc-oom-4a29
+---
+
+START: 2026-06-03 18:42:48 +0200
+COMMAND: mkdir -p "/scripts"
+END: 2026-06-03 18:42:48 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:48 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/3f721233-nix--store--gffml0jfpici57r2fqxji6l0jl1m7qzd-sched_getaffinity.py" "/scripts/sched_getaffinity.py"
+END: 2026-06-03 18:42:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:48 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/931c7301-nix--store--cdia1cskxb4wznw7c7rjsdnn4p5ksayb-sched_setaffinity.py" "/scripts/sched_setaffinity.py"
+END: 2026-06-03 18:42:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:48 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/a70b632d-nix--store--rngmw67f240p6hrl683dipjv1l0q1xq2-sched_setaffinity_and_get.py" "/scripts/sched_setaffinity_and_get.py"
+END: 2026-06-03 18:42:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:48 +0200
+COMMAND: osctl ct new --distribution alpine kcpuv2-514d
+END: 2026-06-03 18:42:51 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:42:51 +0200
+COMMAND: osctl ct unset start-menu kcpuv2-514d
+END: 2026-06-03 18:42:52 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:52 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kcpuv2-514d eth0
+END: 2026-06-03 18:42:53 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:53 +0200
+COMMAND: osctl ct start kcpuv2-514d
+END: 2026-06-03 18:42:56 +0200
+ELAPSED: 2.93s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:42:56 +0200
+COMMAND: osctl ct exec kcpuv2-514d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 18:43:01 +0200
+ELAPSED: 5.43s
+STATUS: 0
+OUTPUT:
+PING check-online.vpsadminos.org (37.205.14.58): 56 data bytes
+64 bytes from 37.205.14.58: seq=0 ttl=254 time=1.604 ms
+
+--- check-online.vpsadminos.org ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 1.604/1.604/1.604 ms
+---
+
+START: 2026-06-03 18:43:01 +0200
+COMMAND: osctl ct exec kcpuv2-514d apk add python3
+END: 2026-06-03 18:43:06 +0200
+ELAPSED: 4.73s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.7.5-r0)
+( 3/15) Installing libffi (3.5.2-r0)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r2)
+( 7/15) Installing libstdc++ (15.2.0-r2)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.5_p20251123-r0)
+(10/15) Installing readline (8.3.1-r0)
+(11/15) Installing sqlite-libs (3.51.2-r0)
+(12/15) Installing python3 (3.12.13-r0)
+(13/15) Installing python3-pycache-pyc0 (3.12.13-r0)
+(14/15) Installing pyc (3.12.13-r0)
+(15/15) Installing python3-pyc (3.12.13-r0)
+Executing busybox-1.37.0-r30.trigger
+OK: 55.1 MiB in 53 packages
+---
+
+START: 2026-06-03 18:43:06 +0200
+COMMAND: osctl ct unset cpu-limit kcpuv2-514d
+END: 2026-06-03 18:43:07 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:07 +0200
+COMMAND: osctl ct cgparams unset kcpuv2-514d cpuset.cpus
+END: 2026-06-03 18:43:08 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:08 +0200
+COMMAND: cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:43:08 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+cpu5
+cpu6
+cpu7
+---
+
+START: 2026-06-03 18:43:08 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:43:10 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+cpu5
+cpu6
+cpu7
+---
+
+START: 2026-06-03 18:43:10 +0200
+COMMAND: grep processor /proc/cpuinfo
+END: 2026-06-03 18:43:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+processor	: 5
+processor	: 6
+processor	: 7
+---
+
+START: 2026-06-03 18:43:10 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:43:13 +0200
+ELAPSED: 3.02s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+processor	: 5
+processor	: 6
+processor	: 7
+---
+
+START: 2026-06-03 18:43:13 +0200
+COMMAND: cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:43:13 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0-7
+---
+
+START: 2026-06-03 18:43:13 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:43:16 +0200
+ELAPSED: 3.07s
+STATUS: 0
+OUTPUT:
+0-7
+---
+
+START: 2026-06-03 18:43:16 +0200
+COMMAND: find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:43:16 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+/sys/devices/system/cpu/cpu5
+/sys/devices/system/cpu/cpu6
+/sys/devices/system/cpu/cpu7
+---
+
+START: 2026-06-03 18:43:16 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:43:19 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+/sys/devices/system/cpu/cpu5
+/sys/devices/system/cpu/cpu6
+/sys/devices/system/cpu/cpu7
+---
+
+START: 2026-06-03 18:43:19 +0200
+COMMAND: nproc
+END: 2026-06-03 18:43:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:43:19 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:43:21 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:43:21 +0200
+COMMAND: getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:43:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:43:21 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:43:24 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:43:24 +0200
+COMMAND: /scripts/sched_getaffinity.py
+END: 2026-06-03 18:43:24 +0200
+ELAPSED: 0.25s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:43:24 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:43:27 +0200
+ELAPSED: 2.89s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:43:27 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:43:30 +0200
+ELAPSED: 3.06s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:43:30 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2,3,4,5,6,7
+END: 2026-06-03 18:43:33 +0200
+ELAPSED: 2.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:33 +0200
+COMMAND: osctl ct unset cpu-limit kcpuv2-514d
+END: 2026-06-03 18:43:34 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:34 +0200
+COMMAND: osctl ct cgparams set kcpuv2-514d cpuset.cpus 2,3,4
+END: 2026-06-03 18:43:35 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:35 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/fs/cgroup/cpuset.cpus
+END: 2026-06-03 18:43:38 +0200
+ELAPSED: 3.04s
+STATUS: 0
+OUTPUT:
+2-4
+---
+
+START: 2026-06-03 18:43:38 +0200
+COMMAND: cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:43:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+cpu5
+cpu6
+cpu7
+---
+
+START: 2026-06-03 18:43:38 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:43:41 +0200
+ELAPSED: 2.66s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+cpu5
+cpu6
+cpu7
+---
+
+START: 2026-06-03 18:43:41 +0200
+COMMAND: grep processor /proc/cpuinfo
+END: 2026-06-03 18:43:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+processor	: 5
+processor	: 6
+processor	: 7
+---
+
+START: 2026-06-03 18:43:41 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:43:44 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+processor	: 5
+processor	: 6
+processor	: 7
+---
+
+START: 2026-06-03 18:43:44 +0200
+COMMAND: cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:43:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0-7
+---
+
+START: 2026-06-03 18:43:44 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:43:46 +0200
+ELAPSED: 2.53s
+STATUS: 0
+OUTPUT:
+0-7
+---
+
+START: 2026-06-03 18:43:46 +0200
+COMMAND: find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:43:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+/sys/devices/system/cpu/cpu5
+/sys/devices/system/cpu/cpu6
+/sys/devices/system/cpu/cpu7
+---
+
+START: 2026-06-03 18:43:46 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:43:49 +0200
+ELAPSED: 2.78s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+/sys/devices/system/cpu/cpu5
+/sys/devices/system/cpu/cpu6
+/sys/devices/system/cpu/cpu7
+---
+
+START: 2026-06-03 18:43:49 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:43:52 +0200
+ELAPSED: 2.58s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:43:52 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:43:54 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:43:54 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:43:57 +0200
+ELAPSED: 3.02s
+STATUS: 0
+OUTPUT:
+2,3,4
+---
+
+START: 2026-06-03 18:43:57 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 2,3,4
+END: 2026-06-03 18:43:59 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:59 +0200
+COMMAND: osctl ct cgparams unset kcpuv2-514d cpuset.cpus
+END: 2026-06-03 18:44:01 +0200
+ELAPSED: 1.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:01 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 300
+END: 2026-06-03 18:44:02 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:02 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:44:04 +0200
+ELAPSED: 2.62s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+---
+
+START: 2026-06-03 18:44:04 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:44:07 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+---
+
+START: 2026-06-03 18:44:07 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:44:09 +0200
+ELAPSED: 2.72s
+STATUS: 0
+OUTPUT:
+0-2
+---
+
+START: 2026-06-03 18:44:09 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:44:12 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+---
+
+START: 2026-06-03 18:44:12 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:44:14 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:44:14 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:44:17 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:44:17 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:44:19 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:44:19 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2
+END: 2026-06-03 18:44:22 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:22 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:44:25 +0200
+ELAPSED: 2.84s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:44:25 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3
+END: 2026-06-03 18:44:27 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:44:27 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 3
+END: 2026-06-03 18:44:30 +0200
+ELAPSED: 2.92s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-hlqqex.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:30 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 400
+END: 2026-06-03 18:44:31 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:31 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:44:34 +0200
+ELAPSED: 2.65s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+---
+
+START: 2026-06-03 18:44:34 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:44:37 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+---
+
+START: 2026-06-03 18:44:37 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:44:39 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+0-3
+---
+
+START: 2026-06-03 18:44:39 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:44:42 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+---
+
+START: 2026-06-03 18:44:42 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:44:44 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+4
+---
+
+START: 2026-06-03 18:44:44 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:44:47 +0200
+ELAPSED: 2.89s
+STATUS: 0
+OUTPUT:
+4
+---
+
+START: 2026-06-03 18:44:47 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:44:49 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+0,1,2,3
+---
+
+START: 2026-06-03 18:44:49 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2,3
+END: 2026-06-03 18:44:52 +0200
+ELAPSED: 2.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:52 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:44:55 +0200
+ELAPSED: 3.46s
+STATUS: 0
+OUTPUT:
+0,1,2,3
+---
+
+START: 2026-06-03 18:44:55 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3,4
+END: 2026-06-03 18:44:58 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+0,1,2,3
+---
+
+START: 2026-06-03 18:44:58 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 4
+END: 2026-06-03 18:45:01 +0200
+ELAPSED: 3.29s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-q0m1kk.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:45:01 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 250
+END: 2026-06-03 18:45:02 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:02 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:45:04 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+---
+
+START: 2026-06-03 18:45:04 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:45:07 +0200
+ELAPSED: 2.96s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+---
+
+START: 2026-06-03 18:45:07 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:45:10 +0200
+ELAPSED: 2.3s
+STATUS: 0
+OUTPUT:
+0-2
+---
+
+START: 2026-06-03 18:45:10 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:45:12 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+---
+
+START: 2026-06-03 18:45:12 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:45:14 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:45:14 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:45:16 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:45:16 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:45:18 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:45:18 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2
+END: 2026-06-03 18:45:22 +0200
+ELAPSED: 3.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:22 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:45:24 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:45:24 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3
+END: 2026-06-03 18:45:27 +0200
+ELAPSED: 2.66s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:45:27 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 3
+END: 2026-06-03 18:45:30 +0200
+ELAPSED: 2.89s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-4aya84.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:45:30 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 201
+END: 2026-06-03 18:45:31 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:31 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:45:33 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+---
+
+START: 2026-06-03 18:45:33 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:45:35 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+---
+
+START: 2026-06-03 18:45:35 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:45:38 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+0-2
+---
+
+START: 2026-06-03 18:45:38 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:45:41 +0200
+ELAPSED: 2.75s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+---
+
+START: 2026-06-03 18:45:41 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:45:43 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:45:43 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:45:46 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:45:46 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:45:48 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:45:48 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2
+END: 2026-06-03 18:45:51 +0200
+ELAPSED: 2.9s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:45:51 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:45:54 +0200
+ELAPSED: 2.8s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:45:54 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3
+END: 2026-06-03 18:45:57 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:45:57 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 3
+END: 2026-06-03 18:46:00 +0200
+ELAPSED: 3.0s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-nbidre.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:46:00 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 200
+END: 2026-06-03 18:46:00 +0200
+ELAPSED: 0.89s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:46:00 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:46:03 +0200
+ELAPSED: 2.65s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+---
+
+START: 2026-06-03 18:46:03 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:46:06 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+---
+
+START: 2026-06-03 18:46:06 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:46:08 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+0-1
+---
+
+START: 2026-06-03 18:46:08 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:46:11 +0200
+ELAPSED: 3.18s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+---
+
+START: 2026-06-03 18:46:11 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:46:14 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+2
+---
+
+START: 2026-06-03 18:46:14 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:46:17 +0200
+ELAPSED: 2.89s
+STATUS: 0
+OUTPUT:
+2
+---
+
+START: 2026-06-03 18:46:17 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:46:19 +0200
+ELAPSED: 2.75s
+STATUS: 0
+OUTPUT:
+0,1
+---
+
+START: 2026-06-03 18:46:19 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1
+END: 2026-06-03 18:46:22 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:46:22 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:46:25 +0200
+ELAPSED: 2.98s
+STATUS: 0
+OUTPUT:
+0,1
+---
+
+START: 2026-06-03 18:46:25 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2
+END: 2026-06-03 18:46:28 +0200
+ELAPSED: 3.45s
+STATUS: 0
+OUTPUT:
+0,1
+---
+
+START: 2026-06-03 18:46:28 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 2
+END: 2026-06-03 18:46:31 +0200
+ELAPSED: 2.79s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-cnpc58.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:46:31 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 100
+END: 2026-06-03 18:46:32 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:46:32 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:46:34 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+---
+
+START: 2026-06-03 18:46:34 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:46:37 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+processor	: 0
+---
+
+START: 2026-06-03 18:46:37 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:46:40 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:46:40 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:46:42 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+---
+
+START: 2026-06-03 18:46:42 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:46:45 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:46:45 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:46:47 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:46:47 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:46:51 +0200
+ELAPSED: 3.14s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:46:51 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0
+END: 2026-06-03 18:46:53 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:46:53 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:46:56 +0200
+ELAPSED: 2.79s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:46:56 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1
+END: 2026-06-03 18:46:58 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:46:58 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 1
+END: 2026-06-03 18:47:01 +0200
+ELAPSED: 2.62s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-15nnj0.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:47:01 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 50
+END: 2026-06-03 18:47:02 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:47:02 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:47:06 +0200
+ELAPSED: 4.1s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+---
+
+START: 2026-06-03 18:47:06 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:47:10 +0200
+ELAPSED: 3.91s
+STATUS: 0
+OUTPUT:
+processor	: 0
+---
+
+START: 2026-06-03 18:47:10 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:47:14 +0200
+ELAPSED: 4.2s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:47:14 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:47:19 +0200
+ELAPSED: 4.4s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+---
+
+START: 2026-06-03 18:47:19 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:47:23 +0200
+ELAPSED: 4.58s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:47:23 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:47:29 +0200
+ELAPSED: 5.43s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:47:29 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:47:33 +0200
+ELAPSED: 4.1s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:47:33 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0
+END: 2026-06-03 18:47:38 +0200
+ELAPSED: 4.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:47:38 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:47:43 +0200
+ELAPSED: 5.72s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:47:43 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1
+END: 2026-06-03 18:47:47 +0200
+ELAPSED: 4.26s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:47:47 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 1
+END: 2026-06-03 18:47:53 +0200
+ELAPSED: 5.43s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-f7gvs8.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:47:53 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 800
+END: 2026-06-03 18:47:54 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:47:54 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:47:57 +0200
+ELAPSED: 2.7s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+cpu5
+cpu6
+cpu7
+---
+
+START: 2026-06-03 18:47:57 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:47:59 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+processor	: 5
+processor	: 6
+processor	: 7
+---
+
+START: 2026-06-03 18:47:59 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:48:01 +0200
+ELAPSED: 2.32s
+STATUS: 0
+OUTPUT:
+0-7
+---
+
+START: 2026-06-03 18:48:01 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:48:04 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+/sys/devices/system/cpu/cpu5
+/sys/devices/system/cpu/cpu6
+/sys/devices/system/cpu/cpu7
+---
+
+START: 2026-06-03 18:48:04 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:48:06 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:48:06 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:48:08 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:48:08 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:48:11 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:48:11 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2,3,4,5,6,7
+END: 2026-06-03 18:48:14 +0200
+ELAPSED: 3.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:48:14 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:48:16 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:48:16 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 500
+END: 2026-06-03 18:48:17 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:48:17 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:48:20 +0200
+ELAPSED: 2.85s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+---
+
+START: 2026-06-03 18:48:20 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:48:22 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+---
+
+START: 2026-06-03 18:48:22 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:48:25 +0200
+ELAPSED: 2.68s
+STATUS: 0
+OUTPUT:
+0-4
+---
+
+START: 2026-06-03 18:48:25 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:48:27 +0200
+ELAPSED: 2.58s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+---
+
+START: 2026-06-03 18:48:27 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:48:31 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+5
+---
+
+START: 2026-06-03 18:48:31 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:48:33 +0200
+ELAPSED: 2.7s
+STATUS: 0
+OUTPUT:
+5
+---
+
+START: 2026-06-03 18:48:33 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:48:36 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4
+---
+
+START: 2026-06-03 18:48:36 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2,3,4
+END: 2026-06-03 18:48:38 +0200
+ELAPSED: 2.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:48:38 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:48:41 +0200
+ELAPSED: 3.01s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4
+---
+
+START: 2026-06-03 18:48:41 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3,4,5
+END: 2026-06-03 18:48:44 +0200
+ELAPSED: 2.74s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4
+---
+
+START: 2026-06-03 18:48:44 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 5
+END: 2026-06-03 18:48:47 +0200
+ELAPSED: 2.74s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-fgnu2b.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:48:47 +0200
+COMMAND: osctl ct unset cpu-limit kcpuv2-514d
+END: 2026-06-03 18:48:48 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:48:48 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:48:51 +0200
+ELAPSED: 2.67s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+cpu5
+cpu6
+cpu7
+---
+
+START: 2026-06-03 18:48:51 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:48:54 +0200
+ELAPSED: 3.03s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+processor	: 5
+processor	: 6
+processor	: 7
+---
+
+START: 2026-06-03 18:48:54 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:48:56 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+0-7
+---
+
+START: 2026-06-03 18:48:56 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:48:59 +0200
+ELAPSED: 2.52s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+/sys/devices/system/cpu/cpu5
+/sys/devices/system/cpu/cpu6
+/sys/devices/system/cpu/cpu7
+---
+
+START: 2026-06-03 18:48:59 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:49:01 +0200
+ELAPSED: 2.65s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:49:01 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:49:04 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:49:04 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:49:06 +0200
+ELAPSED: 2.19s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:49:06 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2,3,4,5,6,7
+END: 2026-06-03 18:49:08 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:49:08 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:49:11 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:49:11 +0200
+COMMAND: osctl ct cgparams set kcpuv2-514d cpuset.cpus 2-5
+END: 2026-06-03 18:49:12 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:49:12 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 300
+END: 2026-06-03 18:49:13 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:49:13 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:49:15 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+---
+
+START: 2026-06-03 18:49:15 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:49:18 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+---
+
+START: 2026-06-03 18:49:18 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:49:21 +0200
+ELAPSED: 2.97s
+STATUS: 0
+OUTPUT:
+0-2
+---
+
+START: 2026-06-03 18:49:21 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:49:23 +0200
+ELAPSED: 2.5s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+---
+
+START: 2026-06-03 18:49:23 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:49:26 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:49:26 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:49:28 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:49:28 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:49:31 +0200
+ELAPSED: 2.92s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:49:31 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2
+END: 2026-06-03 18:49:33 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:49:33 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:49:36 +0200
+ELAPSED: 2.87s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:49:36 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3
+END: 2026-06-03 18:49:38 +0200
+ELAPSED: 2.65s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:49:38 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 3
+END: 2026-06-03 18:49:41 +0200
+ELAPSED: 2.61s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-sv77h.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:49:41 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 400
+END: 2026-06-03 18:49:42 +0200
+ELAPSED: 1.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:49:42 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:49:45 +0200
+ELAPSED: 3.2s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+---
+
+START: 2026-06-03 18:49:45 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:49:48 +0200
+ELAPSED: 2.72s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+---
+
+START: 2026-06-03 18:49:48 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:49:51 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+0-3
+---
+
+START: 2026-06-03 18:49:51 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:49:54 +0200
+ELAPSED: 2.75s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+---
+
+START: 2026-06-03 18:49:54 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:49:57 +0200
+ELAPSED: 2.97s
+STATUS: 0
+OUTPUT:
+4
+---
+
+START: 2026-06-03 18:49:57 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:49:59 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+4
+---
+
+START: 2026-06-03 18:49:59 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:50:01 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+0,1,2,3
+---
+
+START: 2026-06-03 18:50:01 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2,3
+END: 2026-06-03 18:50:04 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:50:04 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:50:06 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+0,1,2,3
+---
+
+START: 2026-06-03 18:50:06 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3,4
+END: 2026-06-03 18:50:09 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+0,1,2,3
+---
+
+START: 2026-06-03 18:50:09 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 4
+END: 2026-06-03 18:50:12 +0200
+ELAPSED: 2.65s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-noi9za.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:50:12 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 250
+END: 2026-06-03 18:50:13 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:50:13 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:50:15 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+---
+
+START: 2026-06-03 18:50:15 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:50:17 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+---
+
+START: 2026-06-03 18:50:17 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:50:20 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+0-2
+---
+
+START: 2026-06-03 18:50:20 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:50:22 +0200
+ELAPSED: 2.5s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+---
+
+START: 2026-06-03 18:50:22 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:50:24 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:50:24 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:50:27 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:50:27 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:50:29 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:50:29 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2
+END: 2026-06-03 18:50:32 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:50:32 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:50:34 +0200
+ELAPSED: 2.59s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:50:34 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3
+END: 2026-06-03 18:50:37 +0200
+ELAPSED: 2.91s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:50:37 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 3
+END: 2026-06-03 18:50:40 +0200
+ELAPSED: 3.02s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-d6nuid.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:50:40 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 201
+END: 2026-06-03 18:50:41 +0200
+ELAPSED: 0.8s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:50:41 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:50:43 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+---
+
+START: 2026-06-03 18:50:43 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:50:45 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+---
+
+START: 2026-06-03 18:50:45 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:50:48 +0200
+ELAPSED: 2.65s
+STATUS: 0
+OUTPUT:
+0-2
+---
+
+START: 2026-06-03 18:50:48 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:50:51 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+---
+
+START: 2026-06-03 18:50:51 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:50:53 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:50:53 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:50:55 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+3
+---
+
+START: 2026-06-03 18:50:55 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:50:57 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:50:57 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2
+END: 2026-06-03 18:51:00 +0200
+ELAPSED: 2.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:51:00 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:51:03 +0200
+ELAPSED: 2.96s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:51:03 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2,3
+END: 2026-06-03 18:51:06 +0200
+ELAPSED: 3.1s
+STATUS: 0
+OUTPUT:
+0,1,2
+---
+
+START: 2026-06-03 18:51:06 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 3
+END: 2026-06-03 18:51:09 +0200
+ELAPSED: 2.47s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-7hsor3.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:51:09 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 200
+END: 2026-06-03 18:51:09 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:51:09 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:51:12 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+---
+
+START: 2026-06-03 18:51:12 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:51:14 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+---
+
+START: 2026-06-03 18:51:14 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:51:17 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+0-1
+---
+
+START: 2026-06-03 18:51:17 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:51:20 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+---
+
+START: 2026-06-03 18:51:20 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:51:22 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+2
+---
+
+START: 2026-06-03 18:51:22 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:51:25 +0200
+ELAPSED: 2.67s
+STATUS: 0
+OUTPUT:
+2
+---
+
+START: 2026-06-03 18:51:25 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:51:27 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+0,1
+---
+
+START: 2026-06-03 18:51:27 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1
+END: 2026-06-03 18:51:29 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:51:29 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:51:32 +0200
+ELAPSED: 2.81s
+STATUS: 0
+OUTPUT:
+0,1
+---
+
+START: 2026-06-03 18:51:32 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1,2
+END: 2026-06-03 18:51:35 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+0,1
+---
+
+START: 2026-06-03 18:51:35 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 2
+END: 2026-06-03 18:51:38 +0200
+ELAPSED: 3.05s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-zcfaox.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:51:38 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 100
+END: 2026-06-03 18:51:39 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:51:39 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:51:41 +0200
+ELAPSED: 2.56s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+---
+
+START: 2026-06-03 18:51:41 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:51:44 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+processor	: 0
+---
+
+START: 2026-06-03 18:51:44 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:51:47 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:51:47 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:51:49 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+---
+
+START: 2026-06-03 18:51:49 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:51:51 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:51:51 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:51:54 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:51:54 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:51:57 +0200
+ELAPSED: 2.93s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:51:57 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0
+END: 2026-06-03 18:51:59 +0200
+ELAPSED: 2.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:51:59 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:52:01 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:52:01 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1
+END: 2026-06-03 18:52:04 +0200
+ELAPSED: 2.95s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:52:04 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 1
+END: 2026-06-03 18:52:07 +0200
+ELAPSED: 2.44s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-50c1rv.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:52:07 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 50
+END: 2026-06-03 18:52:08 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:52:08 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:52:12 +0200
+ELAPSED: 4.13s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+---
+
+START: 2026-06-03 18:52:12 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:52:16 +0200
+ELAPSED: 3.91s
+STATUS: 0
+OUTPUT:
+processor	: 0
+---
+
+START: 2026-06-03 18:52:16 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:52:21 +0200
+ELAPSED: 4.79s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:52:21 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:52:25 +0200
+ELAPSED: 4.08s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+---
+
+START: 2026-06-03 18:52:25 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:52:29 +0200
+ELAPSED: 4.44s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:52:29 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:52:33 +0200
+ELAPSED: 3.96s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-03 18:52:33 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:52:37 +0200
+ELAPSED: 4.23s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:52:37 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0
+END: 2026-06-03 18:52:42 +0200
+ELAPSED: 4.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:52:42 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:52:46 +0200
+ELAPSED: 4.6s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:52:46 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0,1
+END: 2026-06-03 18:52:51 +0200
+ELAPSED: 4.98s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 18:52:51 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 1
+END: 2026-06-03 18:52:57 +0200
+ELAPSED: 5.41s
+STATUS: 1
+OUTPUT:
+Traceback (most recent call last):
+  File "/.runscript20260603-2024-1gh49x.sh", line 32, in <module>
+    os.sched_setaffinity(0, parse_cpus(sys.argv[1]))
+OSError: [Errno 22] Invalid argument
+error: executed command failed
+---
+
+START: 2026-06-03 18:52:57 +0200
+COMMAND: osctl ct set cpu-limit kcpuv2-514d 800
+END: 2026-06-03 18:52:58 +0200
+ELAPSED: 1.25s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:52:58 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /proc/stat | grep -P '^cpu[\d+]* ' | awk '{ print $1; }'
+END: 2026-06-03 18:53:01 +0200
+ELAPSED: 3.08s
+STATUS: 0
+OUTPUT:
+cpu
+cpu0
+cpu1
+cpu2
+cpu3
+cpu4
+cpu5
+cpu6
+cpu7
+---
+
+START: 2026-06-03 18:53:01 +0200
+COMMAND: osctl ct exec kcpuv2-514d grep processor /proc/cpuinfo
+END: 2026-06-03 18:53:03 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+processor	: 0
+processor	: 1
+processor	: 2
+processor	: 3
+processor	: 4
+processor	: 5
+processor	: 6
+processor	: 7
+---
+
+START: 2026-06-03 18:53:03 +0200
+COMMAND: osctl ct exec kcpuv2-514d cat /sys/devices/system/cpu/online
+END: 2026-06-03 18:53:07 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+0-7
+---
+
+START: 2026-06-03 18:53:07 +0200
+COMMAND: osctl ct exec kcpuv2-514d find /sys/devices/system/cpu -maxdepth 1 -type d | grep -P '/cpu\d+' | sort
+END: 2026-06-03 18:53:09 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+/sys/devices/system/cpu/cpu0
+/sys/devices/system/cpu/cpu1
+/sys/devices/system/cpu/cpu2
+/sys/devices/system/cpu/cpu3
+/sys/devices/system/cpu/cpu4
+/sys/devices/system/cpu/cpu5
+/sys/devices/system/cpu/cpu6
+/sys/devices/system/cpu/cpu7
+---
+
+START: 2026-06-03 18:53:09 +0200
+COMMAND: osctl ct exec kcpuv2-514d nproc
+END: 2026-06-03 18:53:11 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:53:11 +0200
+COMMAND: osctl ct exec kcpuv2-514d getconf _NPROCESSORS_ONLN
+END: 2026-06-03 18:53:13 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+8
+---
+
+START: 2026-06-03 18:53:13 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_getaffinity.py
+END: 2026-06-03 18:53:17 +0200
+ELAPSED: 3.74s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:53:17 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity.py 0,1,2,3,4,5,6,7
+END: 2026-06-03 18:53:21 +0200
+ELAPSED: 3.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:53:21 +0200
+COMMAND: osctl ct runscript kcpuv2-514d /scripts/sched_setaffinity_and_get.py 0-1023
+END: 2026-06-03 18:53:24 +0200
+ELAPSED: 3.08s
+STATUS: 0
+OUTPUT:
+0,1,2,3,4,5,6,7
+---
+
+START: 2026-06-03 18:53:24 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 18:53:25 +0200
+ELAPSED: 1.16s
+STATUS: 0
+OUTPUT:
+kloadavg1
+kloadavg2
+ktmpfsv2-557f
+kcpuv2-514d
+kmemv2-mem256swap128
+---
+
+START: 2026-06-03 18:53:25 +0200
+COMMAND: osctl ct del -f --prune kcpuv2-514d >/dev/null 2>&1 || true
+END: 2026-06-03 18:53:32 +0200
+ELAPSED: 6.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:53:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:53:33 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:53:33 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:53:33 +0200
+ELAPSED: 0.19s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:53:33 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:53:33 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 18:53:34 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+kloadavg1
+kloadavg2
+ktmpfsv2-557f
+kmemv2-mem256swap128
+---
+
+START: 2026-06-03 18:53:34 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-nice-734f
+END: 2026-06-03 18:53:37 +0200
+ELAPSED: 2.74s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:53:37 +0200
+COMMAND: osctl ct start kmisc-nice-734f
+END: 2026-06-03 18:53:40 +0200
+ELAPSED: 3.03s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:53:40 +0200
+COMMAND: osctl ct exec kmisc-nice-734f nice -n 19 uptime
+END: 2026-06-03 18:53:42 +0200
+ELAPSED: 2.4s
+STATUS: 0
+OUTPUT:
+ 18:53:42 up 0 min,  0 users,  load average: 4.30, 7.04, 4.03
+---
+
+START: 2026-06-03 18:53:42 +0200
+COMMAND: osctl ct exec kmisc-nice-734f nice -n -20 uptime
+END: 2026-06-03 18:53:46 +0200
+ELAPSED: 3.28s
+STATUS: 0
+OUTPUT:
+ 18:53:45 up 0 min,  0 users,  load average: 4.19, 6.97, 4.03
+---
+
+START: 2026-06-03 18:53:46 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 18:53:47 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+kloadavg1
+kloadavg2
+kmisc-nice-734f
+kmemv2-mem256
+---
+
+START: 2026-06-03 18:53:47 +0200
+COMMAND: osctl ct del -f --prune kmisc-nice-734f >/dev/null 2>&1 || true
+END: 2026-06-03 18:53:53 +0200
+ELAPSED: 6.15s
+STATUS: 0
+OUTPUT:
+
+---
+

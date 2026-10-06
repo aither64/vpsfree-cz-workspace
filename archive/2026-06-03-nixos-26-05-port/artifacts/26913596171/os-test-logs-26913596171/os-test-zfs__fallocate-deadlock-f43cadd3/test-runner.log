@@ -1,0 +1,88 @@
+these 10 derivations will be built:
+  /nix/store/1w06r8czp7mz3wyrc1r27f237d6lfbzc-fallocate-deadlock-reproducer.py.drv
+  /nix/store/8c1k4lyvnjk989mj0vablyj1a6gznj2y-system-path.drv
+  /nix/store/jg79dyxy44m199a5cxrx7kg187hxlb21-system-crontab.drv
+  /nix/store/6hz73chd57k4ygnan5iwa7zl9202ag8k-crontabs.drv
+  /nix/store/as494g9d6gynv3qh8xv0pkwms7i2rfpa-etc.drv
+  /nix/store/vszrdrcx0bmdy7jm5c0qna8vhp94ixy3-stage-2-init.sh.drv
+  /nix/store/rq3xgrnwxkj0csw8j3z63r17wd12mg91-vpsadminos-system-vpsadminos-26.05.git.9545c07.drv
+  /nix/store/jz2dsqvd1khg1kb04sygz5hn0mxi39g1-closure-info.drv
+  /nix/store/nacslnywl8w4ffmgr9ibagna4qyly6c2-squashfs.img.drv
+  /nix/store/kzy2x3w1hvgfzqindp4ghmmnzzmac28l-os-test-zfs-fallocate-deadlock.json.drv
+building '/nix/store/1w06r8czp7mz3wyrc1r27f237d6lfbzc-fallocate-deadlock-reproducer.py.drv'...
+building '/nix/store/8c1k4lyvnjk989mj0vablyj1a6gznj2y-system-path.drv'...
+structuredAttrs is enabled
+created 7194 symlinks in user environment
+building '/nix/store/vszrdrcx0bmdy7jm5c0qna8vhp94ixy3-stage-2-init.sh.drv'...
+building '/nix/store/jg79dyxy44m199a5cxrx7kg187hxlb21-system-crontab.drv'...
+Running phase: patchPhase
+Running phase: updateAutotoolsGnuConfigScriptsPhase
+Running phase: configurePhase
+no configure script, doing nothing
+Running phase: buildPhase
+Running phase: checkPhase
+building '/nix/store/6hz73chd57k4ygnan5iwa7zl9202ag8k-crontabs.drv'...
+Running phase: installPhase
+no Makefile or custom installPhase, doing nothing
+Running phase: fixupPhase
+shrinking RPATHs of ELF executables and libraries in /nix/store/nr1pd8pavpaqhy4c365zygpb2lpkm6ng-stage-2-init.sh
+checking for references to /build/ in /nix/store/nr1pd8pavpaqhy4c365zygpb2lpkm6ng-stage-2-init.sh...
+patching script interpreter paths in /nix/store/nr1pd8pavpaqhy4c365zygpb2lpkm6ng-stage-2-init.sh
+building '/nix/store/as494g9d6gynv3qh8xv0pkwms7i2rfpa-etc.drv'...
+building '/nix/store/rq3xgrnwxkj0csw8j3z63r17wd12mg91-vpsadminos-system-vpsadminos-26.05.git.9545c07.drv'...
+building '/nix/store/jz2dsqvd1khg1kb04sygz5hn0mxi39g1-closure-info.drv'...
+structuredAttrs is enabled
+building '/nix/store/nacslnywl8w4ffmgr9ibagna4qyly6c2-squashfs.img.drv'...
+Parallel mksquashfs: Using 40 processors
+Creating 4.0 filesystem on /nix/store/vf9l5sgbxxf2ahs1311n8fq7gslly9q9-squashfs.img, block size 1048576.
+
+
+Squashfs 4.0 filesystem, zstd compressed, data block size 1048576
+        compressed data, compressed metadata, compressed fragments,
+        compressed xattrs, compressed ids
+        duplicates are removed
+Filesystem size 395066.31 Kbytes (385.81 Mbytes)
+        38.47% of uncompressed filesystem size (1026866.03 Kbytes)
+Inode table size 555768 bytes (542.74 Kbytes)
+        20.57% of uncompressed inode table size (2701706 bytes)
+Directory table size 589031 bytes (575.23 Kbytes)
+        42.96% of uncompressed directory table size (1371181 bytes)
+Number of duplicate files found 6249
+Number of inodes 61242
+Number of files 39156
+Number of fragments 648
+Number of symbolic links 13117
+Number of device nodes 0
+Number of fifo nodes 0
+Number of socket nodes 0
+Number of directories 8969
+Number of hard-links 0
+Number of ids (unique uids + gids) 1
+Number of uids 1
+        root (0)
+Number of gids 1
+        root (0)
+building '/nix/store/kzy2x3w1hvgfzqindp4ghmmnzzmac28l-os-test-zfs-fallocate-deadlock.json.drv'...
+/nix/store/mp345zh21rkbpyf4y1ign1bxxi55is5s-os-test-zfs-fallocate-deadlock.json
+[2026-06-03 23:35:01 +0200] Running script default
+[2026-06-04 00:15:39 +0200] Exception occurred while running script default in 2437.85s
+[2026-06-04 00:15:39 +0200] /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:292:in 'block in OsVm::Shell#read_output': Timeout occurred while running command 'set -euo pipefail; ZFS_FALLOCATE_DEADLOCK_SIZE_MB=2048 ZFS_FALLOCATE_DEADLOCK_ATTEMPTS=12 ZFS_FALLOCATE_DEADLOCK_READERS=64 ZFS_FALLOCATE_DEADLOCK_RELEASE_DELAYS_MS=0,1,2,5,10,20,50,100,250,500,1000,2000 ZFS_FALLOCATE_DEADLOCK_ATTEMPT_TIMEOUT=75 ZFS_FALLOCATE_DEADLOCK_STABLE_SECONDS=5 /scripts/reproducer.py', buffer contents: "" (OsVm::UnrecoverableTimeoutError)
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:290:in 'OsVm::Shell#read_output'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:259:in 'OsVm::Shell#execute_command'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:136:in 'block in OsVm::Shell#execute'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:134:in 'Thread::Mutex#synchronize'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:134:in 'OsVm::Shell#execute'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/machine.rb:259:in 'OsVm::Machine#execute'
+	from (eval at /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493):23:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493:in 'Binding#eval'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:587:in 'TestRunner::TestEvaluator#with_script_state'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:492:in 'TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:458:in 'TestRunner::TestEvaluator#run_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:104:in 'block (3 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/machine.rb:11:in 'OsVm::Machine.with_shell'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:103:in 'block (2 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:442:in 'block (3 levels) in TestRunner::TestEvaluator#run_script_workers'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:434:in 'block (2 levels) in TestRunner::TestEvaluator#run_script_workers'

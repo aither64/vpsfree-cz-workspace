@@ -1,0 +1,1196 @@
+SHELL: 0
+
+START: 2026-06-03 19:11:35 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:11:35 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:11:35 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:11:35 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:11:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:37 +0200
+ELAPSED: 2.04s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:38 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:40 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:42 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:43 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:45 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:46 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:48 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:49 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:11:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:51 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:11:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:11:53 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:11:53 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 19:11:53 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 17:11:53 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 19:11:53 +0200
+COMMAND: osctl ct new --distribution ubuntu --version latest podman-766f
+END: 2026-06-03 19:12:17 +0200
+ELAPSED: 23.75s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 19:12:17 +0200
+COMMAND: osctl ct unset start-menu podman-766f
+END: 2026-06-03 19:12:17 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:12:17 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 podman-766f eth0
+END: 2026-06-03 19:12:18 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:12:18 +0200
+COMMAND: osctl ct devices add -p podman-766f char 10 200 rwm /dev/net/tun
+END: 2026-06-03 19:12:18 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:12:18 +0200
+COMMAND: osctl ct set dns-resolver podman-766f 1.1.1.1
+END: 2026-06-03 19:12:19 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:12:19 +0200
+COMMAND: osctl ct start podman-766f
+END: 2026-06-03 19:12:21 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:12:21 +0200
+COMMAND: osctl ct exec podman-766f sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:12:23 +0200
+ELAPSED: 1.64s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 19:12:22--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 19:12:24 +0200
+COMMAND: osctl ct exec podman-766f sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:12:25 +0200
+ELAPSED: 1.45s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 19:12:25--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 19:12:26 +0200
+COMMAND: osctl ct exec podman-766f sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:12:28 +0200
+ELAPSED: 1.69s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 19:12:28--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 19:12:29 +0200
+COMMAND: osctl ct exec podman-766f sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:12:30 +0200
+ELAPSED: 1.5s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 19:12:30--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 19:12:31 +0200
+COMMAND: osctl ct exec podman-766f sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 19:12:33 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=0.885 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.885/0.885/0.885/0.000 ms
+---
+
+START: 2026-06-03 19:12:33 +0200
+COMMAND: osctl ct exec podman-766f apt-get -y update
+END: 2026-06-03 19:12:36 +0200
+ELAPSED: 2.94s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu resolute InRelease
+Get:2 http://cz.archive.ubuntu.com/ubuntu resolute-security InRelease [137 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu resolute-security/main amd64 Packages [182 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu resolute-security/main Translation-en [49.0 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu resolute-security/restricted amd64 Packages [193 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu resolute-security/restricted Translation-en [34.2 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu resolute-security/universe amd64 Packages [94.0 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu resolute-security/universe Translation-en [28.3 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main amd64 Packages [197 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [51.5 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu resolute-updates/universe amd64 Packages [98.6 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [29.6 kB]
+Fetched 1231 kB in 0s (6400 kB/s)
+Reading package lists...
+---
+
+START: 2026-06-03 19:12:36 +0200
+COMMAND: osctl ct exec podman-766f apt-get -y install podman
+END: 2026-06-03 19:12:50 +0200
+ELAPSED: 14.23s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Solving dependencies...
+The following additional packages will be installed:
+  aardvark-dns buildah catatonit conmon containers-storage cpp cpp-15
+  cpp-15-x86-64-linux-gnu cpp-x86-64-linux-gnu criu crun dirmngr
+  fuse-overlayfs gcc-15-base gnupg gnupg-l10n gnupg-utils
+  golang-github-containers-common golang-github-containers-image gpg gpg-agent
+  gpg-wks-client gpgconf gpgsm libassuan9 libcompel1 libcriu2 libgpgme45
+  libisl23 libjansson4 libksba8 libldap-common libldap2 libmpc3 libmpfr6
+  libnet9 libnftables1 libnftnl11 libnl-3-200 libnpth0t64 libprotobuf-c1
+  libsasl2-2 libsasl2-modules libsasl2-modules-db libslirp0 libsubid5 libyajl2
+  netavark nftables passt pinentry-curses python3-protobuf python3-pycriu
+  slirp4netns uidmap
+Suggested packages:
+  cpp-doc gcc-15-locales cpp-15-doc iptables libwasmedge0 pinentry-gnome3 tor
+  gpg-wks-server parcimonie xloadimage scdaemon tpm2daemon
+  libsasl2-modules-gssapi-mit | libsasl2-modules-gssapi-heimdal
+  libsasl2-modules-ldap libsasl2-modules-otp libsasl2-modules-sql firewalld
+  apparmor pinentry-doc containernetworking-plugins docker-compose
+The following NEW packages will be installed:
+  aardvark-dns buildah catatonit conmon containers-storage cpp cpp-15
+  cpp-15-x86-64-linux-gnu cpp-x86-64-linux-gnu criu crun dirmngr
+  fuse-overlayfs gcc-15-base gnupg gnupg-l10n gnupg-utils
+  golang-github-containers-common golang-github-containers-image gpg gpg-agent
+  gpg-wks-client gpgconf gpgsm libassuan9 libcompel1 libcriu2 libgpgme45
+  libisl23 libjansson4 libksba8 libldap-common libldap2 libmpc3 libmpfr6
+  libnet9 libnftables1 libnftnl11 libnl-3-200 libnpth0t64 libprotobuf-c1
+  libsasl2-2 libsasl2-modules libsasl2-modules-db libslirp0 libsubid5 libyajl2
+  netavark nftables passt pinentry-curses podman python3-protobuf
+  python3-pycriu slirp4netns uidmap
+0 upgraded, 56 newly installed, 0 to remove and 0 not upgraded.
+Need to get 92.1 MB of archives.
+After this operation, 302 MB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libjansson4 amd64 2.14-2build4 [33.2 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libnftnl11 amd64 1.3.1-1 [72.3 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libnftables1 amd64 1.1.6-1 [390 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libnl-3-200 amd64 3.12.0-2 [58.8 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 nftables amd64 1.1.6-1 [76.2 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 netavark amd64 1.16.1-3.1 [4832 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 aardvark-dns amd64 1.16.0-3 [907 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 golang-github-containers-image all 5.38.0+ds2-2 [34.7 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 golang-github-containers-common all 0.66.0+ds2-3 [46.4 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsubid5 amd64 1:4.17.4-2ubuntu3 [28.0 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 uidmap amd64 1:4.17.4-2ubuntu3 [39.0 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libassuan9 amd64 3.0.2-2build1 [41.3 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpgconf amd64 2.4.8-4ubuntu3 [111 kB]
+Get:14 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libksba8 amd64 1.6.7-2build1 [125 kB]
+Get:15 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-9ubuntu3 [21.1 kB]
+Get:16 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-9ubuntu3 [54.0 kB]
+Get:17 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libldap-common all 2.6.10+dfsg-1ubuntu5 [36.0 kB]
+Get:18 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libldap2 amd64 2.6.10+dfsg-1ubuntu5 [204 kB]
+Get:19 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libnpth0t64 amd64 1.8-3build1 [9302 B]
+Get:20 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 dirmngr amd64 2.4.8-4ubuntu3 [327 kB]
+Get:21 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg amd64 2.4.8-4ubuntu3 [637 kB]
+Get:22 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 pinentry-curses amd64 1.3.2-3ubuntu1 [41.1 kB]
+Get:23 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg-agent amd64 2.4.8-4ubuntu3 [236 kB]
+Get:24 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpgsm amd64 2.4.8-4ubuntu3 [239 kB]
+Get:25 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg all 2.4.8-4ubuntu3 [311 kB]
+Get:26 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libgpgme45 amd64 2.0.1-2build1 [140 kB]
+Get:27 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 buildah amd64 1.42.1+ds1-2build1 [38.0 MB]
+Get:28 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 catatonit amd64 0.2.1-2build1 [319 kB]
+Get:29 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 conmon amd64 2.1.13+ds1-2 [36.7 kB]
+Get:30 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 containers-storage amd64 1.61.0+ds1-6 [2736 kB]
+Get:31 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gcc-15-base amd64 15.2.0-16ubuntu1 [39.0 kB]
+Get:32 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libisl23 amd64 0.27-1build1 [691 kB]
+Get:33 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libmpfr6 amd64 4.2.2-3 [361 kB]
+Get:34 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libmpc3 amd64 1.3.1-3 [54.6 kB]
+Get:35 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 cpp-15-x86-64-linux-gnu amd64 15.2.0-16ubuntu1 [12.9 MB]
+Get:36 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 cpp-15 amd64 15.2.0-16ubuntu1 [1030 B]
+Get:37 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 cpp-x86-64-linux-gnu amd64 4:15.2.0-5ubuntu1 [5840 B]
+Get:38 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 cpp amd64 4:15.2.0-5ubuntu1 [22.4 kB]
+Get:39 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libnet9 amd64 1.3+dfsg-3 [43.8 kB]
+Get:40 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 libprotobuf-c1 amd64 1.5.1-1ubuntu2 [22.0 kB]
+Get:41 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 libcompel1 amd64 4.2-1ubuntu2 [70.5 kB]
+Get:42 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 criu amd64 4.2-1ubuntu2 [589 kB]
+Get:43 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libyajl2 amd64 2.1.0-5.1 [20.9 kB]
+Get:44 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 crun amd64 1.21-1ubuntu3 [455 kB]
+Get:45 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 fuse-overlayfs amd64 1.14-1build2 [46.6 kB]
+Get:46 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg-l10n all 2.4.8-4ubuntu3 [73.5 kB]
+Get:47 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg-utils amd64 2.4.8-4ubuntu3 [132 kB]
+Get:48 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg-wks-client amd64 2.4.8-4ubuntu3 [71.9 kB]
+Get:49 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 libcriu2 amd64 4.2-1ubuntu2 [25.5 kB]
+Get:50 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-modules amd64 2.1.28+dfsg1-9ubuntu3 [71.3 kB]
+Get:51 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libslirp0 amd64 4.9.1-1ubuntu1 [67.2 kB]
+Get:52 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 passt amd64 0.0~git20260120.386b5f5-1 [260 kB]
+Get:53 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 podman amd64 5.7.0+ds2-3build1 [25.8 MB]
+Get:54 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 python3-protobuf amd64 3.21.12-15ubuntu1 [107 kB]
+Get:55 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 python3-pycriu all 4.2-1ubuntu2 [43.0 kB]
+Get:56 http://cz.archive.ubuntu.com/ubuntu resolute/universe amd64 slirp4netns amd64 1.3.3-1 [35.7 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 56.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Fetched 92.1 MB in 1s (87.4 MB/s)
+Selecting previously unselected package libjansson4:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 24657 files and directories currently installed.)
+Preparing to unpack .../00-libjansson4_2.14-2build4_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2build4) ...
+Selecting previously unselected package libnftnl11:amd64.
+Preparing to unpack .../01-libnftnl11_1.3.1-1_amd64.deb ...
+Unpacking libnftnl11:amd64 (1.3.1-1) ...
+Selecting previously unselected package libnftables1:amd64.
+Preparing to unpack .../02-libnftables1_1.1.6-1_amd64.deb ...
+Unpacking libnftables1:amd64 (1.1.6-1) ...
+Selecting previously unselected package libnl-3-200:amd64.
+Preparing to unpack .../03-libnl-3-200_3.12.0-2_amd64.deb ...
+Unpacking libnl-3-200:amd64 (3.12.0-2) ...
+Selecting previously unselected package nftables.
+Preparing to unpack .../04-nftables_1.1.6-1_amd64.deb ...
+Unpacking nftables (1.1.6-1) ...
+Selecting previously unselected package netavark.
+Preparing to unpack .../05-netavark_1.16.1-3.1_amd64.deb ...
+Unpacking netavark (1.16.1-3.1) ...
+Selecting previously unselected package aardvark-dns.
+Preparing to unpack .../06-aardvark-dns_1.16.0-3_amd64.deb ...
+Unpacking aardvark-dns (1.16.0-3) ...
+Selecting previously unselected package golang-github-containers-image.
+Preparing to unpack .../07-golang-github-containers-image_5.38.0+ds2-2_all.deb ...
+Unpacking golang-github-containers-image (5.38.0+ds2-2) ...
+Selecting previously unselected package golang-github-containers-common.
+Preparing to unpack .../08-golang-github-containers-common_0.66.0+ds2-3_all.deb ...
+Unpacking golang-github-containers-common (0.66.0+ds2-3) ...
+Selecting previously unselected package libsubid5:amd64.
+Preparing to unpack .../09-libsubid5_1%3a4.17.4-2ubuntu3_amd64.deb ...
+Unpacking libsubid5:amd64 (1:4.17.4-2ubuntu3) ...
+Selecting previously unselected package uidmap.
+Preparing to unpack .../10-uidmap_1%3a4.17.4-2ubuntu3_amd64.deb ...
+Unpacking uidmap (1:4.17.4-2ubuntu3) ...
+Selecting previously unselected package libassuan9:amd64.
+Preparing to unpack .../11-libassuan9_3.0.2-2build1_amd64.deb ...
+Unpacking libassuan9:amd64 (3.0.2-2build1) ...
+Selecting previously unselected package gpgconf.
+Preparing to unpack .../12-gpgconf_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpgconf (2.4.8-4ubuntu3) ...
+Selecting previously unselected package libksba8:amd64.
+Preparing to unpack .../13-libksba8_1.6.7-2build1_amd64.deb ...
+Unpacking libksba8:amd64 (1.6.7-2build1) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../14-libsasl2-modules-db_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../15-libsasl2-2_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package libldap-common.
+Preparing to unpack .../16-libldap-common_2.6.10+dfsg-1ubuntu5_all.deb ...
+Unpacking libldap-common (2.6.10+dfsg-1ubuntu5) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../17-libldap2_2.6.10+dfsg-1ubuntu5_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-1ubuntu5) ...
+Selecting previously unselected package libnpth0t64:amd64.
+Preparing to unpack .../18-libnpth0t64_1.8-3build1_amd64.deb ...
+Unpacking libnpth0t64:amd64 (1.8-3build1) ...
+Selecting previously unselected package dirmngr.
+Preparing to unpack .../19-dirmngr_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking dirmngr (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpg.
+Preparing to unpack .../20-gpg_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg (2.4.8-4ubuntu3) ...
+Selecting previously unselected package pinentry-curses.
+Preparing to unpack .../21-pinentry-curses_1.3.2-3ubuntu1_amd64.deb ...
+Unpacking pinentry-curses (1.3.2-3ubuntu1) ...
+Selecting previously unselected package gpg-agent.
+Preparing to unpack .../22-gpg-agent_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg-agent (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpgsm.
+Preparing to unpack .../23-gpgsm_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpgsm (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg.
+Preparing to unpack .../24-gnupg_2.4.8-4ubuntu3_all.deb ...
+Unpacking gnupg (2.4.8-4ubuntu3) ...
+Selecting previously unselected package libgpgme45:amd64.
+Preparing to unpack .../25-libgpgme45_2.0.1-2build1_amd64.deb ...
+Unpacking libgpgme45:amd64 (2.0.1-2build1) ...
+Selecting previously unselected package buildah.
+Preparing to unpack .../26-buildah_1.42.1+ds1-2build1_amd64.deb ...
+Unpacking buildah (1.42.1+ds1-2build1) ...
+Selecting previously unselected package catatonit.
+Preparing to unpack .../27-catatonit_0.2.1-2build1_amd64.deb ...
+Unpacking catatonit (0.2.1-2build1) ...
+Selecting previously unselected package conmon.
+Preparing to unpack .../28-conmon_2.1.13+ds1-2_amd64.deb ...
+Unpacking conmon (2.1.13+ds1-2) ...
+Selecting previously unselected package containers-storage.
+Preparing to unpack .../29-containers-storage_1.61.0+ds1-6_amd64.deb ...
+Unpacking containers-storage (1.61.0+ds1-6) ...
+Selecting previously unselected package gcc-15-base:amd64.
+Preparing to unpack .../30-gcc-15-base_15.2.0-16ubuntu1_amd64.deb ...
+Unpacking gcc-15-base:amd64 (15.2.0-16ubuntu1) ...
+Selecting previously unselected package libisl23:amd64.
+Preparing to unpack .../31-libisl23_0.27-1build1_amd64.deb ...
+Unpacking libisl23:amd64 (0.27-1build1) ...
+Selecting previously unselected package libmpfr6:amd64.
+Preparing to unpack .../32-libmpfr6_4.2.2-3_amd64.deb ...
+Unpacking libmpfr6:amd64 (4.2.2-3) ...
+Selecting previously unselected package libmpc3:amd64.
+Preparing to unpack .../33-libmpc3_1.3.1-3_amd64.deb ...
+Unpacking libmpc3:amd64 (1.3.1-3) ...
+Selecting previously unselected package cpp-15-x86-64-linux-gnu.
+Preparing to unpack .../34-cpp-15-x86-64-linux-gnu_15.2.0-16ubuntu1_amd64.deb ...
+Unpacking cpp-15-x86-64-linux-gnu (15.2.0-16ubuntu1) ...
+Selecting previously unselected package cpp-15.
+Preparing to unpack .../35-cpp-15_15.2.0-16ubuntu1_amd64.deb ...
+Unpacking cpp-15 (15.2.0-16ubuntu1) ...
+Selecting previously unselected package cpp-x86-64-linux-gnu.
+Preparing to unpack .../36-cpp-x86-64-linux-gnu_4%3a15.2.0-5ubuntu1_amd64.deb ...
+Unpacking cpp-x86-64-linux-gnu (4:15.2.0-5ubuntu1) ...
+Selecting previously unselected package cpp.
+Preparing to unpack .../37-cpp_4%3a15.2.0-5ubuntu1_amd64.deb ...
+Unpacking cpp (4:15.2.0-5ubuntu1) ...
+Selecting previously unselected package libnet9:amd64.
+Preparing to unpack .../38-libnet9_1.3+dfsg-3_amd64.deb ...
+Unpacking libnet9:amd64 (1.3+dfsg-3) ...
+Selecting previously unselected package libprotobuf-c1:amd64.
+Preparing to unpack .../39-libprotobuf-c1_1.5.1-1ubuntu2_amd64.deb ...
+Unpacking libprotobuf-c1:amd64 (1.5.1-1ubuntu2) ...
+Selecting previously unselected package libcompel1:amd64.
+Preparing to unpack .../40-libcompel1_4.2-1ubuntu2_amd64.deb ...
+Unpacking libcompel1:amd64 (4.2-1ubuntu2) ...
+Selecting previously unselected package criu.
+Preparing to unpack .../41-criu_4.2-1ubuntu2_amd64.deb ...
+Unpacking criu (4.2-1ubuntu2) ...
+Selecting previously unselected package libyajl2:amd64.
+Preparing to unpack .../42-libyajl2_2.1.0-5.1_amd64.deb ...
+Unpacking libyajl2:amd64 (2.1.0-5.1) ...
+Selecting previously unselected package crun.
+Preparing to unpack .../43-crun_1.21-1ubuntu3_amd64.deb ...
+Unpacking crun (1.21-1ubuntu3) ...
+Selecting previously unselected package fuse-overlayfs.
+Preparing to unpack .../44-fuse-overlayfs_1.14-1build2_amd64.deb ...
+Unpacking fuse-overlayfs (1.14-1build2) ...
+Selecting previously unselected package gnupg-l10n.
+Preparing to unpack .../45-gnupg-l10n_2.4.8-4ubuntu3_all.deb ...
+Unpacking gnupg-l10n (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg-utils.
+Preparing to unpack .../46-gnupg-utils_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gnupg-utils (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpg-wks-client.
+Preparing to unpack .../47-gpg-wks-client_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg-wks-client (2.4.8-4ubuntu3) ...
+Selecting previously unselected package libcriu2:amd64.
+Preparing to unpack .../48-libcriu2_4.2-1ubuntu2_amd64.deb ...
+Unpacking libcriu2:amd64 (4.2-1ubuntu2) ...
+Selecting previously unselected package libsasl2-modules:amd64.
+Preparing to unpack .../49-libsasl2-modules_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-modules:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package libslirp0:amd64.
+Preparing to unpack .../50-libslirp0_4.9.1-1ubuntu1_amd64.deb ...
+Unpacking libslirp0:amd64 (4.9.1-1ubuntu1) ...
+Selecting previously unselected package passt.
+Preparing to unpack .../51-passt_0.0~git20260120.386b5f5-1_amd64.deb ...
+Unpacking passt (0.0~git20260120.386b5f5-1) ...
+Selecting previously unselected package podman.
+Preparing to unpack .../52-podman_5.7.0+ds2-3build1_amd64.deb ...
+Unpacking podman (5.7.0+ds2-3build1) ...
+Selecting previously unselected package python3-protobuf.
+Preparing to unpack .../53-python3-protobuf_3.21.12-15ubuntu1_amd64.deb ...
+Unpacking python3-protobuf (3.21.12-15ubuntu1) ...
+Selecting previously unselected package python3-pycriu.
+Preparing to unpack .../54-python3-pycriu_4.2-1ubuntu2_all.deb ...
+Unpacking python3-pycriu (4.2-1ubuntu2) ...
+Selecting previously unselected package slirp4netns.
+Preparing to unpack .../55-slirp4netns_1.3.3-1_amd64.deb ...
+Unpacking slirp4netns (1.3.3-1) ...
+Setting up libksba8:amd64 (1.6.7-2build1) ...
+Setting up libnpth0t64:amd64 (1.8-3build1) ...
+Setting up libsasl2-modules:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up libyajl2:amd64 (2.1.0-5.1) ...
+Setting up libnftnl11:amd64 (1.3.1-1) ...
+Setting up libldap-common (2.6.10+dfsg-1ubuntu5) ...
+Setting up libprotobuf-c1:amd64 (1.5.1-1ubuntu2) ...
+Setting up libsubid5:amd64 (1:4.17.4-2ubuntu3) ...
+Setting up libjansson4:amd64 (2.14-2build4) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up libcompel1:amd64 (4.2-1ubuntu2) ...
+Setting up golang-github-containers-image (5.38.0+ds2-2) ...
+Setting up libmpfr6:amd64 (4.2.2-3) ...
+Setting up gnupg-l10n (2.4.8-4ubuntu3) ...
+Setting up conmon (2.1.13+ds1-2) ...
+Setting up catatonit (0.2.1-2build1) ...
+Setting up netavark (1.16.1-3.1) ...
+Created symlink '/etc/systemd/system/default.target.wants/netavark-dhcp-proxy.service' → '/usr/lib/systemd/system/netavark-dhcp-proxy.service'.
+Created symlink '/etc/systemd/system/sockets.target.wants/netavark-dhcp-proxy.socket' → '/usr/lib/systemd/system/netavark-dhcp-proxy.socket'.
+Created symlink '/etc/systemd/system/firewalld.service.wants/netavark-firewalld-reload.service' → '/usr/lib/systemd/system/netavark-firewalld-reload.service'.
+Unit /usr/lib/systemd/system/netavark-firewalld-reload.service is added as a dependency to a non-existent unit firewalld.service.
+Setting up libmpc3:amd64 (1.3.1-3) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up aardvark-dns (1.16.0-3) ...
+Setting up libslirp0:amd64 (4.9.1-1ubuntu1) ...
+Setting up passt (0.0~git20260120.386b5f5-1) ...
+Setting up libassuan9:amd64 (3.0.2-2build1) ...
+Setting up libnl-3-200:amd64 (3.12.0-2) ...
+Setting up gpgconf (2.4.8-4ubuntu3) ...
+Setting up fuse-overlayfs (1.14-1build2) ...
+Setting up golang-github-containers-common (0.66.0+ds2-3) ...
+Setting up libnet9:amd64 (1.3+dfsg-3) ...
+Setting up python3-protobuf (3.21.12-15ubuntu1) ...
+Setting up libisl23:amd64 (0.27-1build1) ...
+Setting up gcc-15-base:amd64 (15.2.0-16ubuntu1) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-1ubuntu5) ...
+Setting up gpg (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/keyboxd.socket' → '/usr/lib/systemd/user/keyboxd.socket'.
+Setting up gnupg-utils (2.4.8-4ubuntu3) ...
+Setting up pinentry-curses (1.3.2-3ubuntu1) ...
+Setting up libnftables1:amd64 (1.1.6-1) ...
+Setting up gpg-agent (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-browser.socket' → '/usr/lib/systemd/user/gpg-agent-browser.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-extra.socket' → '/usr/lib/systemd/user/gpg-agent-extra.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-ssh.socket' → '/usr/lib/systemd/user/gpg-agent-ssh.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent.socket' → '/usr/lib/systemd/user/gpg-agent.socket'.
+Setting up nftables (1.1.6-1) ...
+Setting up slirp4netns (1.3.3-1) ...
+Setting up crun (1.21-1ubuntu3) ...
+Setting up uidmap (1:4.17.4-2ubuntu3) ...
+Setting up containers-storage (1.61.0+ds1-6) ...
+Setting up gpgsm (2.4.8-4ubuntu3) ...
+Setting up cpp-15-x86-64-linux-gnu (15.2.0-16ubuntu1) ...
+Setting up dirmngr (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/dirmngr.socket' → '/usr/lib/systemd/user/dirmngr.socket'.
+Setting up cpp-15 (15.2.0-16ubuntu1) ...
+Setting up criu (4.2-1ubuntu2) ...
+Setting up gnupg (2.4.8-4ubuntu3) ...
+Setting up libgpgme45:amd64 (2.0.1-2build1) ...
+Setting up buildah (1.42.1+ds1-2build1) ...
+Setting up cpp-x86-64-linux-gnu (4:15.2.0-5ubuntu1) ...
+Setting up python3-pycriu (4.2-1ubuntu2) ...
+Setting up gpg-wks-client (2.4.8-4ubuntu3) ...
+Setting up libcriu2:amd64 (4.2-1ubuntu2) ...
+Setting up podman (5.7.0+ds2-3build1) ...
+Setting up cpp (4:15.2.0-5ubuntu1) ...
+Processing triggers for man-db (2.13.1-1build1) ...
+Processing triggers for libc-bin (2.43-2ubuntu2) ...
+---
+
+START: 2026-06-03 19:12:50 +0200
+COMMAND: osctl ct exec podman-766f sh -c mkdir\ -p\ /etc/containers/registries.conf.d'
+'cat\ \>\ /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf\ \<\<\'EOF\''
+'\[\[registry\]\]'
+'prefix\ \=\ \"docker.io\"'
+'location\ \=\ \"docker.io\"'
+''
+'\ \ \[\[registry.mirror\]\]'
+'\ \ location\ \=\ \"docker-registry.vpsadminos.org\"'
+'\ \ pull-from-mirror\ \=\ \"all\"'
+''
+'\[aliases\]'
+'\"hello-world\"\ \=\ \"docker.io/library/hello-world\"'
+''
+'EOF'
+'
+END: 2026-06-03 19:12:51 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:12:51 +0200
+COMMAND: osctl ct exec podman-766f cat /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf
+END: 2026-06-03 19:12:53 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+[[registry]]
+prefix = "docker.io"
+location = "docker.io"
+
+  [[registry.mirror]]
+  location = "docker-registry.vpsadminos.org"
+  pull-from-mirror = "all"
+
+[aliases]
+"hello-world" = "docker.io/library/hello-world"
+
+---
+
+START: 2026-06-03 19:12:53 +0200
+COMMAND: osctl ct exec podman-766f podman info
+END: 2026-06-03 19:12:54 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+host:
+  arch: amd64
+  buildahVersion: 1.42.1
+  cgroupControllers:
+  - memory
+  - pids
+  cgroupManager: systemd
+  cgroupVersion: v2
+  conmon:
+    package: conmon_2.1.13+ds1-2_amd64
+    path: /usr/bin/conmon
+    version: 'conmon version 2.1.13, commit: unknown'
+  cpuUtilization:
+    idlePercent: 100
+    systemPercent: 0
+    userPercent: 0
+  cpus: 4
+  databaseBackend: sqlite
+  distribution:
+    codename: resolute
+    distribution: ubuntu
+    version: "26.04"
+  eventLogger: journald
+  freeLocks: 2048
+  hostname: podman-766f
+  idMappings:
+    gidmap: null
+    uidmap: null
+  kernel: 6.12.91
+  linkmode: dynamic
+  logDriver: journald
+  memFree: 6547660800
+  memTotal: 8340774912
+  networkBackend: netavark
+  networkBackendInfo:
+    backend: netavark
+    dns:
+      package: aardvark-dns_1.16.0-3_amd64
+      path: /usr/lib/podman/aardvark-dns
+      version: aardvark-dns 1.16.0
+    package: netavark_1.16.1-3.1_amd64
+    path: /usr/lib/podman/netavark
+    version: netavark 1.16.1
+  ociRuntime:
+    name: crun
+    package: crun_1.21-1ubuntu3_amd64
+    path: /usr/bin/crun
+    version: |-
+      crun version 1.21
+      commit: 10269840aa07fb7e6b7e1acff6198692d8ff5c88
+      rundir: /run/crun
+      spec: 1.0.0
+      +SYSTEMD +SELINUX +APPARMOR +CAP +SECCOMP +EBPF +CRIU +WASM:wasmedge +YAJL
+  os: linux
+  pasta:
+    executable: /bin/pasta
+    package: Unknown
+    version: |
+      pasta 0.0~git20260120.386b5f5-1
+      Copyright Red Hat
+      GNU General Public License, version 2 or later
+        <https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+      This is free software: you are free to change and redistribute it.
+      There is NO WARRANTY, to the extent permitted by law.
+  remoteSocket:
+    exists: true
+    path: /run/podman/podman.sock
+  rootlessNetworkCmd: pasta
+  security:
+    apparmorEnabled: false
+    capabilities: CAP_CHOWN,CAP_DAC_OVERRIDE,CAP_FOWNER,CAP_FSETID,CAP_KILL,CAP_NET_BIND_SERVICE,CAP_SETFCAP,CAP_SETGID,CAP_SETPCAP,CAP_SETUID,CAP_SYS_CHROOT
+    rootless: false
+    seccompEnabled: true
+    seccompProfilePath: /usr/share/containers/seccomp.json
+    selinuxEnabled: false
+  serviceIsRemote: false
+  slirp4netns:
+    executable: /bin/slirp4netns
+    package: Unknown
+    version: |-
+      slirp4netns version 1.3.3
+      commit: 944fa94090e1fd1312232cbc0e6b43585553d824
+      libslirp: 4.9.1
+      SLIRP_CONFIG_VERSION_MAX: 5
+      libseccomp: 2.6.0
+  swapFree: 0
+  swapTotal: 0
+  uptime: 0h 0m 34.00s
+  variant: ""
+plugins:
+  authorization: null
+  log:
+  - k8s-file
+  - none
+  - passthrough
+  - journald
+  network:
+  - bridge
+  - macvlan
+  - ipvlan
+  volume:
+  - local
+registries:
+  docker.io:
+    Blocked: false
+    Insecure: false
+    Location: docker.io
+    MirrorByDigestOnly: false
+    Mirrors:
+    - Insecure: false
+      Location: docker-registry.vpsadminos.org
+      PullFromMirror: all
+    Prefix: docker.io
+    PullFromMirror: ""
+store:
+  configFile: /usr/share/containers/storage.conf
+  containerStore:
+    number: 0
+    paused: 0
+    running: 0
+    stopped: 0
+  graphDriverName: overlay
+  graphOptions:
+    overlay.mountopt: nodev
+  graphRoot: /var/lib/containers/storage
+  graphRootAllocated: 9688317952
+  graphRootUsed: 616824832
+  graphStatus:
+    Backing Filesystem: cramfs
+    Native Overlay Diff: "true"
+    Supports d_type: "true"
+    Supports shifting: "false"
+    Supports volatile: "true"
+    Using metacopy: "false"
+  imageCopyTmpDir: /var/tmp
+  imageStore:
+    number: 0
+  runRoot: /run/containers/storage
+  transientStore: false
+  volumePath: /var/lib/containers/storage/volumes
+version:
+  APIVersion: 5.7.0
+  BuildOrigin: Ubuntu
+  Built: 1771860932
+  BuiltTime: Mon Feb 23 16:35:32 2026
+  GitCommit: ""
+  GoVersion: go1.25.0
+  Os: linux
+  OsArch: linux/amd64
+  Version: 5.7.0
+
+---
+
+START: 2026-06-03 19:12:54 +0200
+COMMAND: osctl ct exec podman-766f podman run hello-world
+END: 2026-06-03 19:12:58 +0200
+ELAPSED: 3.1s
+STATUS: 0
+OUTPUT:
+Resolved "hello-world" as an alias (/etc/containers/registries.conf.d/shortnames.conf)
+Trying to pull quay.io/podman/hello:latest...
+Getting image source signatures
+Copying blob sha256:81df7ff16254ed9756e27c8de9ceb02a9568228fccadbf080f41cc5eb5118a44
+Copying config sha256:5dd467fce50b56951185da365b5feee75409968cbab5767b9b59e325fb2ecbc0
+Writing manifest to image destination
+!... Hello Podman World ...!
+
+         .--"--.           
+       / -     - \         
+      / (O)   (O) \        
+   ~~~| -=(,Y,)=- |         
+    .---. /`  \   |~~      
+ ~/  o  o \~~~~.----. ~~   
+  | =(X)= |~  / (O (O) \   
+   ~~~~~~~  ~| =(Y_)=-  |   
+  ~~~~    ~~~|   U      |~~ 
+
+Project:   https://github.com/containers/podman
+Website:   https://podman.io
+Desktop:   https://podman-desktop.io
+Documents: https://docs.podman.io
+YouTube:   https://youtube.com/@Podman
+X/Twitter: @Podman_io
+Mastodon:  @Podman_io@fosstodon.org
+---
+
+START: 2026-06-03 19:12:58 +0200
+COMMAND: osctl ct exec podman-766f sh -c mkdir\ -p\ /tmp/podman-build-test'
+'cat\ \>\ /tmp/podman-build-test/Dockerfile\ \<\<\'EOF\''
+'FROM\ docker.io/library/alpine:latest'
+'RUN\ echo\ \"Podman\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-06-03 19:12:59 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:12:59 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ build\ -t\ localhost/podman-build-test:latest\ /tmp/podman-build-test
+END: 2026-06-03 19:13:06 +0200
+ELAPSED: 6.92s
+STATUS: 0
+OUTPUT:
+STEP 1/3: FROM docker.io/library/alpine:latest
+Trying to pull docker.io/library/alpine:latest...
+Getting image source signatures
+Copying blob sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb
+Copying config sha256:3cb067eab609612d81b4d82ff8ad71d73482bb3059a87b642d7e14f0ed659cde
+Writing manifest to image destination
+STEP 2/3: RUN echo "Podman build works!" > /message.txt
+--> 291d370c93da
+STEP 3/3: CMD ["cat", "/message.txt"]
+COMMIT localhost/podman-build-test:latest
+--> adb849154585
+Successfully tagged localhost/podman-build-test:latest
+adb84915458579fa5eb6c5fc83bbb0fc73cdc260af13eb472a19f5c24c446a1e
+---
+
+START: 2026-06-03 19:13:06 +0200
+COMMAND: osctl ct exec podman-766f podman run --rm localhost/podman-build-test:latest
+END: 2026-06-03 19:13:08 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+Podman build works!
+---
+
+START: 2026-06-03 19:13:08 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 19:13:09 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:13:09 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-03 19:13:10 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+28ea27785da0f9bcbc560465fb9248802090fe9ab351ea7f72a4715d1aec263b
+---
+
+START: 2026-06-03 19:13:10 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-06-03 19:13:12 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-03 19:13:12 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 19:13:13 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:13:13 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 19:13:15 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:13:15 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-03 19:13:16 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+f48730dd8238765c7551f7f8f6b31d5e325f299e842b65c7f9607f3368842917
+---
+
+START: 2026-06-03 19:13:16 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-06-03 19:13:18 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-03 19:13:18 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 19:13:19 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:13:19 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 19:13:21 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:13:21 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-03 19:13:22 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+52d13a721b5be08a4fcb546eb7f37f714c61bd3aff45a6c9ba77df3bc6ecaa85
+---
+
+START: 2026-06-03 19:13:22 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-06-03 19:13:24 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-03 19:13:24 +0200
+COMMAND: osctl ct exec podman-766f sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 19:13:25 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:13:25 +0200
+COMMAND: osctl ct del -f --prune podman-766f
+END: 2026-06-03 19:13:29 +0200
+ELAPSED: 3.75s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:podman-766f
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 19:13:29 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 19:13:30 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/26.04/image-stream.tar
+---
+
+START: 2026-06-03 19:13:30 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 19:13:44 +0200
+ELAPSED: 14.67s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

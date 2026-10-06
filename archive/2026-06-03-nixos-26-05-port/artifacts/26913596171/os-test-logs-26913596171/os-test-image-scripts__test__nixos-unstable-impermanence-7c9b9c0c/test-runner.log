@@ -1,0 +1,66 @@
+this derivation will be built:
+  /nix/store/qlvcm7c91l4p8fsk9xmwv5z2mzwbh0vi-os-test-image-scripts-test-nixos-unstable-impermanence.json.drv
+building '/nix/store/qlvcm7c91l4p8fsk9xmwv5z2mzwbh0vi-os-test-image-scripts-test-nixos-unstable-impermanence.json.drv'...
+/nix/store/3w46gl79zypiw1lgfp6bpcfr203k5b32-os-test-image-scripts-test-nixos-unstable-impermanence.json
+[2026-06-03 21:57:11 +0200] Running script default
+[2026-06-03 21:58:49 +0200] Exception occurred while running script default in 97.41s
+[2026-06-03 21:58:49 +0200] /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:148:in 'OsVm::Shell#succeeds': Command 'osctl-image --vpsadminos-dir /mnt/vpsadminos test --build-dataset tank/image-scripts/build --output-dir /tank/image-scripts/output nixos-unstable-impermanence' failed with status 1. Output: (OsVm::CommandFailed)
+ A, [2026-06-03T21:57:55.051505 #2046]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x00007d9fa8708b98>] /etc/vpsadminos-image-scripts/bin/config image list
+A, [2026-06-03T21:57:55.382186 #2046]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x00007d9fa84ccd20>] /etc/vpsadminos-image-scripts/bin/config test list
+A, [2026-06-03T21:57:55.498151 #2046]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x00007d9fa83f3020>] /etc/vpsadminos-image-scripts/bin/config image show nixos-unstable-impermanence
+A, [2026-06-03T21:57:55.526812 #2046]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x00007d9fa83d9d50>] /etc/vpsadminos-image-scripts/bin/config builder show nixos
+I, [2026-06-03T21:57:55.550742 #2046]  INFO -- : [build nixos-unstable-impermanence@nixos] Using builder nixos
+Waiting for network.......I, [2026-06-03T21:58:44.785102 #2046]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x00007d9fa846bbd8>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.b1fc0ffe7eb32f1aebcb
++++ dirname /build/basedir.647d99e3/bin/runner
+++ realpath /build/basedir.647d99e3/bin/..
++ BASEDIR=/build/basedir.647d99e3
++ . /build/basedir.647d99e3/include/lib.sh
++ main builder setup nixos
++ '[' 3 -lt 1 ']'
++ local command=builder
++ shift 1
++ case "$command" in
++ do_builder setup nixos
++ '[' 2 -lt 1 ']'
++ local action=setup
++ case "$action" in
++ local name=nixos
++ local dir=/build/basedir.647d99e3/builders/nixos
++ '[' nixos == '' ']'
++ '[' '!' -d /build/basedir.647d99e3/builders/nixos ']'
++ . /build/basedir.647d99e3/builders/nixos/setup.sh
+++ '[' -n /build/vpsadminos.647d99e3 ']'
+++ '[' -d /build/vpsadminos.647d99e3/os ']'
++++ mktemp -d /tmp/vpsadminos.XXXXXXXX
+++ vpsadminos=/tmp/vpsadminos.vPNh9XlT
+++ trap 'rm -rf "$vpsadminos"' EXIT
++++ git -C /build/vpsadminos.647d99e3 rev-parse --verify HEAD
++++ true
+++ vpsadminos_rev=
+++ cp -a /build/vpsadminos.647d99e3/. /tmp/vpsadminos.vPNh9XlT
+cp: cannot access '/build/vpsadminos.647d99e3/.': Permission denied
+++ echo 'unable to copy vpsadminos from /build/vpsadminos.647d99e3'
+unable to copy vpsadminos from /build/vpsadminos.647d99e3
+++ exit 1
++ rm -rf /tmp/vpsadminos.vPNh9XlT
+I, [2026-06-03T21:58:45.656456 #2046]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x00007d9fa846ad28>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.647d99e3
+* error occurred: builder setup failed with exit status 1, cleaning up
+A, [2026-06-03T21:58:49.066592 #2046]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs destroy  tank/image-scripts/build/42226f1f/work
+A, [2026-06-03T21:58:49.081934 #2046]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs list -H -o name -t snapshot tank/image-scripts/build/42226f1f/output
+A, [2026-06-03T21:58:49.095790 #2046]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs destroy -r tank/image-scripts/build/42226f1f/output
+A, [2026-06-03T21:58:49.109679 #2046]   ANY -- : [build nixos-unstable-impermanence@nixos] zfs destroy  tank/image-scripts/build/42226f1f
+error: builder setup failed with exit status 1
+
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/machine.rb:267:in 'OsVm::Machine#succeeds'
+	from (eval at /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493):4:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493:in 'Binding#eval'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:587:in 'TestRunner::TestEvaluator#with_script_state'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:492:in 'TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:458:in 'TestRunner::TestEvaluator#run_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:104:in 'block (3 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/machine.rb:11:in 'OsVm::Machine.with_shell'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:103:in 'block (2 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:442:in 'block (3 levels) in TestRunner::TestEvaluator#run_script_workers'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:434:in 'block (2 levels) in TestRunner::TestEvaluator#run_script_workers'

@@ -1,0 +1,4780 @@
+SHELL: 0
+
+START: 2026-06-03 20:14:28 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 20:14:28 +0200
+ELAPSED: 0.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:14:28 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 20:14:28 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:14:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:32 +0200
+ELAPSED: 3.29s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:14:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:34 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:14:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:36 +0200
+ELAPSED: 1.09s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:14:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:38 +0200
+ELAPSED: 1.14s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:14:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:40 +0200
+ELAPSED: 1.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:14:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:42 +0200
+ELAPSED: 0.83s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:14:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:44 +0200
+ELAPSED: 0.8s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:14:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:45 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 20:14:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:14:47 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:14:47 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:14:48 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:14:48 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:14:48 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:14:58 +0200
+ELAPSED: 10.03s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:14:58 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-musl-systemd testct-a23f
+END: 2026-06-03 20:15:43 +0200
+ELAPSED: 45.2s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:15:43 +0200
+COMMAND: osctl ct netif new routed testct-a23f eth0
+END: 2026-06-03 20:15:44 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:15:44 +0200
+COMMAND: osctl ct netif ip add testct-a23f eth0 1.2.3.4/32
+END: 2026-06-03 20:15:45 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:15:45 +0200
+COMMAND: osctl ct start testct-a23f
+END: 2026-06-03 20:15:47 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:15:47 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:15:50 +0200
+ELAPSED: 3.09s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:15:51 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:15:55 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:15:56 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:15:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.113 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.113/0.113/0.113/0.000 ms
+---
+
+START: 2026-06-03 20:15:56 +0200
+COMMAND: osctl ct del -f --prune testct-a23f
+END: 2026-06-03 20:16:00 +0200
+ELAPSED: 4.34s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-a23f
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:16:00 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:16:01 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/musl-systemd-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:16:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:16:02 +0200
+ELAPSED: 1.17s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:16:02 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:16:02 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:16:02 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:16:02 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:16:12 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:16:12 +0200
+COMMAND: osctl ct new --distribution alpine --version latest testct-3cc2
+END: 2026-06-03 20:16:15 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:16:15 +0200
+COMMAND: osctl ct netif new routed testct-3cc2 eth0
+END: 2026-06-03 20:16:16 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:16:16 +0200
+COMMAND: osctl ct netif ip add testct-3cc2 eth0 1.2.3.4/32
+END: 2026-06-03 20:16:17 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:16:17 +0200
+COMMAND: osctl ct start testct-3cc2
+END: 2026-06-03 20:16:19 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:16:19 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:16:22 +0200
+ELAPSED: 3.09s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:16:23 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:16:25 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2053 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2053.414/2053.414/2053.414/0.000 ms
+---
+
+START: 2026-06-03 20:16:25 +0200
+COMMAND: osctl ct del -f --prune testct-3cc2
+END: 2026-06-03 20:16:30 +0200
+ELAPSED: 5.08s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-3cc2
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:16:30 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:16:30 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/alpine/3.23/image-stream.tar
+---
+
+START: 2026-06-03 20:16:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:16:31 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:16:31 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:16:31 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:16:31 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:16:31 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:16:41 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:16:41 +0200
+COMMAND: osctl ct new --distribution debian --version stable testct-145b
+END: 2026-06-03 20:16:58 +0200
+ELAPSED: 16.88s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:16:58 +0200
+COMMAND: osctl ct netif new routed testct-145b eth0
+END: 2026-06-03 20:16:59 +0200
+ELAPSED: 0.73s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:16:59 +0200
+COMMAND: osctl ct netif ip add testct-145b eth0 1.2.3.4/32
+END: 2026-06-03 20:17:00 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:17:00 +0200
+COMMAND: osctl ct start testct-145b
+END: 2026-06-03 20:17:02 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:17:02 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:17:05 +0200
+ELAPSED: 3.07s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:17:06 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:17:08 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2055 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2055.272/2055.272/2055.272/0.000 ms
+---
+
+START: 2026-06-03 20:17:08 +0200
+COMMAND: osctl ct del -f --prune testct-145b
+END: 2026-06-03 20:17:11 +0200
+ELAPSED: 3.1s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-145b
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:17:11 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:17:12 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/debian/13/image-stream.tar
+---
+
+START: 2026-06-03 20:17:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:17:13 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:17:13 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:17:13 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:17:13 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:17:13 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:17:23 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:17:23 +0200
+COMMAND: osctl ct new --distribution almalinux --version 10 testct-9270
+END: 2026-06-03 20:17:50 +0200
+ELAPSED: 26.68s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:17:50 +0200
+COMMAND: osctl ct netif new routed testct-9270 eth0
+END: 2026-06-03 20:17:50 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:17:50 +0200
+COMMAND: osctl ct netif ip add testct-9270 eth0 1.2.3.4/32
+END: 2026-06-03 20:17:51 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:17:51 +0200
+COMMAND: osctl ct start testct-9270
+END: 2026-06-03 20:17:53 +0200
+ELAPSED: 1.73s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:17:53 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:17:56 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:17:57 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:18:00 +0200
+ELAPSED: 2.72s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2704 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2704.387/2704.387/2704.387/0.000 ms
+---
+
+START: 2026-06-03 20:18:00 +0200
+COMMAND: osctl ct del -f --prune testct-9270
+END: 2026-06-03 20:18:02 +0200
+ELAPSED: 2.87s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-9270
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:18:02 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:18:03 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/10/image-stream.tar
+---
+
+START: 2026-06-03 20:18:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:18:04 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:18:04 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:18:04 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:18:04 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:18:04 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:18:14 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:18:14 +0200
+COMMAND: osctl ct new --distribution ubuntu --version 20.04 testct-452e
+END: 2026-06-03 20:18:22 +0200
+ELAPSED: 8.21s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:18:22 +0200
+COMMAND: osctl ct netif new routed testct-452e eth0
+END: 2026-06-03 20:18:23 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:18:23 +0200
+COMMAND: osctl ct netif ip add testct-452e eth0 1.2.3.4/32
+END: 2026-06-03 20:18:23 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:18:23 +0200
+COMMAND: osctl ct start testct-452e
+END: 2026-06-03 20:18:25 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:18:25 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:18:28 +0200
+ELAPSED: 3.09s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:18:29 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:18:31 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2055 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2054.520/2054.520/2054.520/0.000 ms
+---
+
+START: 2026-06-03 20:18:31 +0200
+COMMAND: osctl ct del -f --prune testct-452e
+END: 2026-06-03 20:18:33 +0200
+ELAPSED: 2.32s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-452e
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:18:33 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:18:34 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/20.04/image-stream.tar
+---
+
+START: 2026-06-03 20:18:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:18:34 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:18:34 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:18:35 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:18:35 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:18:35 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:18:45 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:18:45 +0200
+COMMAND: osctl ct new --distribution debian --version testing testct-1aa7
+END: 2026-06-03 20:18:52 +0200
+ELAPSED: 7.51s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:18:52 +0200
+COMMAND: osctl ct netif new routed testct-1aa7 eth0
+END: 2026-06-03 20:18:53 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:18:53 +0200
+COMMAND: osctl ct netif ip add testct-1aa7 eth0 1.2.3.4/32
+END: 2026-06-03 20:18:53 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:18:53 +0200
+COMMAND: osctl ct start testct-1aa7
+END: 2026-06-03 20:18:55 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:18:55 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:18:58 +0200
+ELAPSED: 3.12s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:18:59 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:19:01 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2045 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2044.719/2044.719/2044.719/0.000 ms
+---
+
+START: 2026-06-03 20:19:01 +0200
+COMMAND: osctl ct del -f --prune testct-1aa7
+END: 2026-06-03 20:19:03 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-1aa7
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:19:03 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:19:04 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/debian/testing-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:19:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:19:05 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:19:05 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:19:05 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:19:05 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:19:05 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:19:15 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:19:15 +0200
+COMMAND: osctl ct new --distribution chimera --version latest testct-309e
+END: 2026-06-03 20:19:22 +0200
+ELAPSED: 7.07s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:19:22 +0200
+COMMAND: osctl ct netif new routed testct-309e eth0
+END: 2026-06-03 20:19:22 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:19:22 +0200
+COMMAND: osctl ct netif ip add testct-309e eth0 1.2.3.4/32
+END: 2026-06-03 20:19:23 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:19:23 +0200
+COMMAND: osctl ct start testct-309e
+END: 2026-06-03 20:19:25 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:19:25 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:19:28 +0200
+ELAPSED: 3.07s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:19:29 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:19:31 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2058 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2057.627/2057.627/2057.627/0.000 ms
+---
+
+START: 2026-06-03 20:19:31 +0200
+COMMAND: osctl ct del -f --prune testct-309e
+END: 2026-06-03 20:19:34 +0200
+ELAPSED: 3.29s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-309e
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:19:34 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:19:35 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/chimera/20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:19:35 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 20:19:49 +0200
+ELAPSED: 14.58s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+
+START: 2026-06-03 20:20:15 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 20:20:15 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:20:15 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 20:20:16 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:20:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:18 +0200
+ELAPSED: 2.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:20 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:21 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:21 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:23 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:25 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:26 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:28 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:29 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:31 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:33 +0200
+ELAPSED: 0.68s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:20:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:34 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 20:20:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:20:36 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:20:36 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:20:36 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:20:36 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:20:36 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:20:46 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:20:46 +0200
+COMMAND: osctl ct new --distribution centos --version 7 testct-bc52
+END: 2026-06-03 20:21:20 +0200
+ELAPSED: 34.41s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:21:20 +0200
+COMMAND: osctl ct netif new routed testct-bc52 eth0
+END: 2026-06-03 20:21:21 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:21:21 +0200
+COMMAND: osctl ct netif ip add testct-bc52 eth0 1.2.3.4/32
+END: 2026-06-03 20:21:22 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:21:22 +0200
+COMMAND: osctl ct start testct-bc52
+END: 2026-06-03 20:21:24 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:21:24 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:21:27 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:21:28 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:21:31 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:21:32 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:21:42 +0200
+ELAPSED: 10.03s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:21:43 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:21:43 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.354 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.354/0.354/0.354/0.000 ms
+---
+
+START: 2026-06-03 20:21:43 +0200
+COMMAND: osctl ct del -f --prune testct-bc52
+END: 2026-06-03 20:21:46 +0200
+ELAPSED: 3.26s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-bc52
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:21:46 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:21:47 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/centos/7/image-stream.tar
+---
+
+START: 2026-06-03 20:21:47 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 20:22:01 +0200
+ELAPSED: 14.65s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+
+START: 2026-06-03 20:22:27 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 20:22:27 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:22:27 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 20:22:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:22:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:29 +0200
+ELAPSED: 2.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:31 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:32 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:34 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:35 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:37 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:39 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:40 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:42 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 20:22:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:43 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 20:22:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:22:45 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:22:45 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:22:45 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:22:45 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:22:45 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:22:55 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:22:55 +0200
+COMMAND: osctl ct new --distribution arch --version latest testct-62b3
+END: 2026-06-03 20:23:12 +0200
+ELAPSED: 16.51s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:23:12 +0200
+COMMAND: osctl ct netif new routed testct-62b3 eth0
+END: 2026-06-03 20:23:12 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:23:12 +0200
+COMMAND: osctl ct netif ip add testct-62b3 eth0 1.2.3.4/32
+END: 2026-06-03 20:23:13 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:23:13 +0200
+COMMAND: osctl ct start testct-62b3
+END: 2026-06-03 20:23:14 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:23:14 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:23:18 +0200
+ELAPSED: 3.07s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:23:19 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:23:21 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2053 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2052.736/2052.736/2052.736/0.000 ms
+---
+
+START: 2026-06-03 20:23:21 +0200
+COMMAND: osctl ct del -f --prune testct-62b3
+END: 2026-06-03 20:23:23 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-62b3
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:23:23 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:23:24 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/arch/20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:23:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:23:24 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:23:24 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:23:24 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:23:24 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:23:24 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:23:34 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:23:34 +0200
+COMMAND: osctl ct new --distribution void --version latest-glibc testct-86d6
+END: 2026-06-03 20:23:54 +0200
+ELAPSED: 20.14s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:23:54 +0200
+COMMAND: osctl ct netif new routed testct-86d6 eth0
+END: 2026-06-03 20:23:55 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:23:55 +0200
+COMMAND: osctl ct netif ip add testct-86d6 eth0 1.2.3.4/32
+END: 2026-06-03 20:23:56 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:23:56 +0200
+COMMAND: osctl ct start testct-86d6
+END: 2026-06-03 20:23:58 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:23:58 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:24:01 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:24:02 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:24:04 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2056 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2055.607/2055.607/2055.607/0.000 ms
+---
+
+START: 2026-06-03 20:24:04 +0200
+COMMAND: osctl ct del -f --prune testct-86d6
+END: 2026-06-03 20:24:10 +0200
+ELAPSED: 5.96s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-86d6
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:24:10 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:24:11 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/glibc-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:24:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:24:12 +0200
+ELAPSED: 0.81s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:24:12 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:24:12 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:24:12 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:24:12 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:24:22 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:24:22 +0200
+COMMAND: osctl ct new --distribution fedora --version latest testct-0c00
+END: 2026-06-03 20:24:38 +0200
+ELAPSED: 16.26s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:24:38 +0200
+COMMAND: osctl ct netif new routed testct-0c00 eth0
+END: 2026-06-03 20:24:39 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:24:39 +0200
+COMMAND: osctl ct netif ip add testct-0c00 eth0 1.2.3.4/32
+END: 2026-06-03 20:24:40 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:24:40 +0200
+COMMAND: osctl ct start testct-0c00
+END: 2026-06-03 20:24:42 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:24:42 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:24:45 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:24:46 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:24:50 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:24:51 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:24:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.144 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.144/0.144/0.144/0.000 ms
+---
+
+START: 2026-06-03 20:24:51 +0200
+COMMAND: osctl ct del -f --prune testct-0c00
+END: 2026-06-03 20:24:54 +0200
+ELAPSED: 3.35s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-0c00
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:24:54 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:24:55 +0200
+ELAPSED: 0.89s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-06-03 20:24:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:24:56 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:24:56 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:24:56 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:24:56 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:24:56 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:25:06 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:25:06 +0200
+COMMAND: osctl ct new --distribution slackware --version latest testct-5c4b
+END: 2026-06-03 20:25:18 +0200
+ELAPSED: 12.6s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:25:18 +0200
+COMMAND: osctl ct netif new routed testct-5c4b eth0
+END: 2026-06-03 20:25:19 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:25:19 +0200
+COMMAND: osctl ct netif ip add testct-5c4b eth0 1.2.3.4/32
+END: 2026-06-03 20:25:20 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:25:20 +0200
+COMMAND: osctl ct start testct-5c4b
+END: 2026-06-03 20:25:22 +0200
+ELAPSED: 2.41s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:25:22 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:25:25 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:25:26 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:25:28 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2052 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2052.047/2052.047/2052.047/0.000 ms
+---
+
+START: 2026-06-03 20:25:28 +0200
+COMMAND: osctl ct del -f --prune testct-5c4b
+END: 2026-06-03 20:25:31 +0200
+ELAPSED: 3.01s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-5c4b
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:25:31 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:25:32 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/slackware/15.0/image-stream.tar
+---
+
+START: 2026-06-03 20:25:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:25:33 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:25:33 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:25:33 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:25:33 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:25:33 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:25:43 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:25:43 +0200
+COMMAND: osctl ct new --distribution centos --version latest-10-stream testct-e692
+END: 2026-06-03 20:26:33 +0200
+ELAPSED: 49.38s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:26:33 +0200
+COMMAND: osctl ct netif new routed testct-e692 eth0
+END: 2026-06-03 20:26:33 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:26:33 +0200
+COMMAND: osctl ct netif ip add testct-e692 eth0 1.2.3.4/32
+END: 2026-06-03 20:26:34 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:26:34 +0200
+COMMAND: osctl ct start testct-e692
+END: 2026-06-03 20:26:36 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:26:36 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:26:39 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:26:40 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:26:43 +0200
+ELAPSED: 2.78s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2760 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2759.761/2759.761/2759.761/0.000 ms
+---
+
+START: 2026-06-03 20:26:43 +0200
+COMMAND: osctl ct del -f --prune testct-e692
+END: 2026-06-03 20:26:46 +0200
+ELAPSED: 3.12s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-e692
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:26:46 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:26:47 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/centos/10-stream-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:26:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:26:47 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:26:47 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:26:47 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:26:47 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:26:47 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:26:57 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:26:57 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-openrc testct-6a75
+END: 2026-06-03 20:27:44 +0200
+ELAPSED: 46.85s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:27:44 +0200
+COMMAND: osctl ct netif new routed testct-6a75 eth0
+END: 2026-06-03 20:27:45 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:27:45 +0200
+COMMAND: osctl ct netif ip add testct-6a75 eth0 1.2.3.4/32
+END: 2026-06-03 20:27:45 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:27:45 +0200
+COMMAND: osctl ct start testct-6a75
+END: 2026-06-03 20:27:47 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:27:47 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:27:50 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:27:51 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:27:54 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:27:55 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:27:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.082 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.082/0.082/0.082/0.000 ms
+---
+
+START: 2026-06-03 20:27:55 +0200
+COMMAND: osctl ct del -f --prune testct-6a75
+END: 2026-06-03 20:27:59 +0200
+ELAPSED: 3.37s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-6a75
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:27:59 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:27:59 +0200
+ELAPSED: 0.73s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/openrc-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:27:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:28:00 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:28:00 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:28:00 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:28:00 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:28:00 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:28:10 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:28:10 +0200
+COMMAND: osctl ct new --distribution ubuntu --version 26.04 testct-845b
+END: 2026-06-03 20:28:29 +0200
+ELAPSED: 19.25s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:28:29 +0200
+COMMAND: osctl ct netif new routed testct-845b eth0
+END: 2026-06-03 20:28:30 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:28:30 +0200
+COMMAND: osctl ct netif ip add testct-845b eth0 1.2.3.4/32
+END: 2026-06-03 20:28:31 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:28:31 +0200
+COMMAND: osctl ct start testct-845b
+END: 2026-06-03 20:28:32 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:28:32 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:28:35 +0200
+ELAPSED: 3.07s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:28:36 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:28:38 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2050 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2049.979/2049.979/2049.979/0.000 ms
+---
+
+START: 2026-06-03 20:28:38 +0200
+COMMAND: osctl ct del -f --prune testct-845b
+END: 2026-06-03 20:28:41 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-845b
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:28:41 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:28:41 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/26.04/image-stream.tar
+---
+
+START: 2026-06-03 20:28:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:28:42 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:28:42 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:28:42 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:28:42 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:28:42 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:28:52 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:28:52 +0200
+COMMAND: osctl ct new --distribution rocky --version 10 testct-66cf
+END: 2026-06-03 20:29:33 +0200
+ELAPSED: 40.47s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:29:33 +0200
+COMMAND: osctl ct netif new routed testct-66cf eth0
+END: 2026-06-03 20:29:33 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:29:33 +0200
+COMMAND: osctl ct netif ip add testct-66cf eth0 1.2.3.4/32
+END: 2026-06-03 20:29:34 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:29:34 +0200
+COMMAND: osctl ct start testct-66cf
+END: 2026-06-03 20:29:36 +0200
+ELAPSED: 1.85s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:29:36 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:29:39 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:29:40 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:29:42 +0200
+ELAPSED: 2.59s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2568 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2568.328/2568.328/2568.328/0.000 ms
+---
+
+START: 2026-06-03 20:29:42 +0200
+COMMAND: osctl ct del -f --prune testct-66cf
+END: 2026-06-03 20:29:45 +0200
+ELAPSED: 2.88s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-66cf
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:29:45 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:29:46 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/rocky/10/image-stream.tar
+---
+
+START: 2026-06-03 20:29:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:29:46 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:29:46 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:29:47 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:29:47 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:29:47 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:29:57 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:29:57 +0200
+COMMAND: osctl ct new --distribution nixos --version stable testct-ddbc
+END: 2026-06-03 20:30:19 +0200
+ELAPSED: 22.65s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:30:19 +0200
+COMMAND: osctl ct netif new routed testct-ddbc eth0
+END: 2026-06-03 20:30:20 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:30:20 +0200
+COMMAND: osctl ct netif ip add testct-ddbc eth0 1.2.3.4/32
+END: 2026-06-03 20:30:20 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:30:20 +0200
+COMMAND: osctl ct start testct-ddbc
+END: 2026-06-03 20:30:22 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:30:22 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:30:25 +0200
+ELAPSED: 3.07s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:30:26 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:30:29 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:30:30 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:30:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.111 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.111/0.111/0.111/0.000 ms
+---
+
+START: 2026-06-03 20:30:30 +0200
+COMMAND: osctl ct del -f --prune testct-ddbc
+END: 2026-06-03 20:30:33 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-ddbc
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:30:33 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:30:33 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/nixos/25.11/image-stream.tar
+---
+
+START: 2026-06-03 20:30:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:30:34 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:30:34 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:30:34 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:30:34 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:30:34 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:30:44 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:30:44 +0200
+COMMAND: osctl ct new --distribution almalinux --version 8 testct-8a82
+END: 2026-06-03 20:31:53 +0200
+ELAPSED: 68.98s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:31:53 +0200
+COMMAND: osctl ct netif new routed testct-8a82 eth0
+END: 2026-06-03 20:31:54 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:31:54 +0200
+COMMAND: osctl ct netif ip add testct-8a82 eth0 1.2.3.4/32
+END: 2026-06-03 20:31:54 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:31:54 +0200
+COMMAND: osctl ct start testct-8a82
+END: 2026-06-03 20:31:56 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:31:56 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:31:59 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:32:00 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:32:02 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=1919 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1919.345/1919.345/1919.345/0.000 ms
+---
+
+START: 2026-06-03 20:32:02 +0200
+COMMAND: osctl ct del -f --prune testct-8a82
+END: 2026-06-03 20:32:05 +0200
+ELAPSED: 3.07s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-8a82
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:32:05 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:32:06 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/8/image-stream.tar
+---
+
+START: 2026-06-03 20:32:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:32:06 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:32:06 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:32:06 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:32:06 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:32:06 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:32:16 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:32:16 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-musl-openrc testct-a5b9
+END: 2026-06-03 20:33:01 +0200
+ELAPSED: 44.48s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:33:01 +0200
+COMMAND: osctl ct netif new routed testct-a5b9 eth0
+END: 2026-06-03 20:33:02 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:33:02 +0200
+COMMAND: osctl ct netif ip add testct-a5b9 eth0 1.2.3.4/32
+END: 2026-06-03 20:33:02 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:33:02 +0200
+COMMAND: osctl ct start testct-a5b9
+END: 2026-06-03 20:33:04 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:33:04 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:33:07 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:33:08 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:33:11 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:33:12 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:33:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.104 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.104/0.104/0.104/0.000 ms
+---
+
+START: 2026-06-03 20:33:12 +0200
+COMMAND: osctl ct del -f --prune testct-a5b9
+END: 2026-06-03 20:33:16 +0200
+ELAPSED: 3.34s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-a5b9
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:33:16 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:33:16 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/musl-openrc-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:33:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:33:17 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:33:17 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:33:17 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:33:17 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:33:17 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:33:27 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:33:27 +0200
+COMMAND: osctl ct new --distribution ubuntu --version 24.04 testct-ba5b
+END: 2026-06-03 20:33:44 +0200
+ELAPSED: 17.52s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:33:44 +0200
+COMMAND: osctl ct netif new routed testct-ba5b eth0
+END: 2026-06-03 20:33:45 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:33:45 +0200
+COMMAND: osctl ct netif ip add testct-ba5b eth0 1.2.3.4/32
+END: 2026-06-03 20:33:46 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:33:46 +0200
+COMMAND: osctl ct start testct-ba5b
+END: 2026-06-03 20:33:47 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:33:47 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:33:51 +0200
+ELAPSED: 3.07s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:33:52 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:33:54 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2054 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2053.703/2053.703/2053.703/0.000 ms
+---
+
+START: 2026-06-03 20:33:54 +0200
+COMMAND: osctl ct del -f --prune testct-ba5b
+END: 2026-06-03 20:33:56 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-ba5b
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:33:56 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:33:57 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/24.04/image-stream.tar
+---
+
+START: 2026-06-03 20:33:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:33:57 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:33:57 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:33:57 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:33:57 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:33:57 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:34:07 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:34:07 +0200
+COMMAND: osctl ct new --distribution nixos --version unstable testct-1ce5
+END: 2026-06-03 20:34:36 +0200
+ELAPSED: 29.16s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:34:36 +0200
+COMMAND: osctl ct netif new routed testct-1ce5 eth0
+END: 2026-06-03 20:34:37 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:34:37 +0200
+COMMAND: osctl ct netif ip add testct-1ce5 eth0 1.2.3.4/32
+END: 2026-06-03 20:34:38 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:34:38 +0200
+COMMAND: osctl ct start testct-1ce5
+END: 2026-06-03 20:34:39 +0200
+ELAPSED: 1.85s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:34:39 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:34:43 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:34:44 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:34:47 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:34:48 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:34:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.136 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.136/0.136/0.136/0.000 ms
+---
+
+START: 2026-06-03 20:34:48 +0200
+COMMAND: osctl ct del -f --prune testct-1ce5
+END: 2026-06-03 20:34:50 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-1ce5
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:34:50 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:34:51 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/nixos/unstable-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:34:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:34:52 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:34:52 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:34:52 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:34:52 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:34:52 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:35:02 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:35:02 +0200
+COMMAND: osctl ct new --distribution ubuntu --version 22.04 testct-bb67
+END: 2026-06-03 20:35:16 +0200
+ELAPSED: 14.11s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:35:16 +0200
+COMMAND: osctl ct netif new routed testct-bb67 eth0
+END: 2026-06-03 20:35:16 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:35:16 +0200
+COMMAND: osctl ct netif ip add testct-bb67 eth0 1.2.3.4/32
+END: 2026-06-03 20:35:17 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:35:17 +0200
+COMMAND: osctl ct start testct-bb67
+END: 2026-06-03 20:35:19 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:35:19 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:35:22 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:35:23 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:35:25 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2048 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2048.289/2048.289/2048.289/0.000 ms
+---
+
+START: 2026-06-03 20:35:25 +0200
+COMMAND: osctl ct del -f --prune testct-bb67
+END: 2026-06-03 20:35:27 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-bb67
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:35:27 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:35:28 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/22.04/image-stream.tar
+---
+
+START: 2026-06-03 20:35:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:35:28 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:35:28 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:35:28 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:35:28 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:35:28 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:35:38 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:35:38 +0200
+COMMAND: osctl ct new --distribution opensuse --version latest testct-54aa
+END: 2026-06-03 20:35:46 +0200
+ELAPSED: 7.22s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:35:46 +0200
+COMMAND: osctl ct netif new routed testct-54aa eth0
+END: 2026-06-03 20:35:46 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:35:46 +0200
+COMMAND: osctl ct netif ip add testct-54aa eth0 1.2.3.4/32
+END: 2026-06-03 20:35:47 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:35:47 +0200
+COMMAND: osctl ct start testct-54aa
+END: 2026-06-03 20:35:49 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:35:49 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:35:52 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:35:53 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:35:56 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:35:57 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:36:07 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:36:08 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:36:08 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.087 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.087/0.087/0.087/0.000 ms
+---
+
+START: 2026-06-03 20:36:08 +0200
+COMMAND: osctl ct del -f --prune testct-54aa
+END: 2026-06-03 20:36:11 +0200
+ELAPSED: 2.72s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-54aa
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:36:11 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:36:11 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/opensuse/leap-16.0/image-stream.tar
+---
+
+START: 2026-06-03 20:36:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:36:12 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:36:12 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:36:12 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:36:12 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:36:12 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:36:22 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:36:22 +0200
+COMMAND: osctl ct new --distribution almalinux --version 9 testct-4f3c
+END: 2026-06-03 20:37:27 +0200
+ELAPSED: 64.81s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:37:27 +0200
+COMMAND: osctl ct netif new routed testct-4f3c eth0
+END: 2026-06-03 20:37:27 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:37:27 +0200
+COMMAND: osctl ct netif ip add testct-4f3c eth0 1.2.3.4/32
+END: 2026-06-03 20:37:28 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:37:28 +0200
+COMMAND: osctl ct start testct-4f3c
+END: 2026-06-03 20:37:30 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:37:30 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:37:33 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:37:34 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:37:36 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2234 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2233.545/2233.545/2233.545/0.000 ms
+---
+
+START: 2026-06-03 20:37:36 +0200
+COMMAND: osctl ct del -f --prune testct-4f3c
+END: 2026-06-03 20:37:39 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-4f3c
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:37:39 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:37:40 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/9/image-stream.tar
+---
+
+START: 2026-06-03 20:37:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:37:40 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:37:40 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:37:40 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:37:40 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:37:40 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:37:50 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:37:50 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-systemd testct-389e
+END: 2026-06-03 20:38:58 +0200
+ELAPSED: 67.53s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:38:58 +0200
+COMMAND: osctl ct netif new routed testct-389e eth0
+END: 2026-06-03 20:38:58 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:38:58 +0200
+COMMAND: osctl ct netif ip add testct-389e eth0 1.2.3.4/32
+END: 2026-06-03 20:38:59 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:38:59 +0200
+COMMAND: osctl ct start testct-389e
+END: 2026-06-03 20:39:01 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:39:01 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:39:04 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:39:05 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:39:08 +0200
+ELAPSED: 3.1s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:39:09 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:39:09 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=0.075 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.075/0.075/0.075/0.000 ms
+---
+
+START: 2026-06-03 20:39:09 +0200
+COMMAND: osctl ct del -f --prune testct-389e
+END: 2026-06-03 20:39:12 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-389e
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:39:12 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:39:12 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/systemd-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:39:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:39:13 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:39:13 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:39:13 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:39:13 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:39:13 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:39:23 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:39:23 +0200
+COMMAND: osctl ct new --distribution rocky --version 8 testct-2f3f
+END: 2026-06-03 20:40:27 +0200
+ELAPSED: 64.52s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:40:27 +0200
+COMMAND: osctl ct netif new routed testct-2f3f eth0
+END: 2026-06-03 20:40:28 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:40:28 +0200
+COMMAND: osctl ct netif ip add testct-2f3f eth0 1.2.3.4/32
+END: 2026-06-03 20:40:29 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:40:29 +0200
+COMMAND: osctl ct start testct-2f3f
+END: 2026-06-03 20:40:30 +0200
+ELAPSED: 1.73s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:40:30 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:40:33 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:40:34 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:40:36 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=1795 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1794.829/1794.829/1794.829/0.000 ms
+---
+
+START: 2026-06-03 20:40:36 +0200
+COMMAND: osctl ct del -f --prune testct-2f3f
+END: 2026-06-03 20:40:39 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-2f3f
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:40:39 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:40:40 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/rocky/8/image-stream.tar
+---
+
+START: 2026-06-03 20:40:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:40:40 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:40:40 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:40:40 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:40:40 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:40:40 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:40:50 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:40:50 +0200
+COMMAND: osctl ct new --distribution debian --version oldstable testct-4eb8
+END: 2026-06-03 20:41:10 +0200
+ELAPSED: 19.53s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:41:10 +0200
+COMMAND: osctl ct netif new routed testct-4eb8 eth0
+END: 2026-06-03 20:41:10 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:41:10 +0200
+COMMAND: osctl ct netif ip add testct-4eb8 eth0 1.2.3.4/32
+END: 2026-06-03 20:41:11 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:41:11 +0200
+COMMAND: osctl ct start testct-4eb8
+END: 2026-06-03 20:41:13 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:41:13 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:41:16 +0200
+ELAPSED: 3.12s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:41:17 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:41:19 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2057 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2056.837/2056.837/2056.837/0.000 ms
+---
+
+START: 2026-06-03 20:41:19 +0200
+COMMAND: osctl ct del -f --prune testct-4eb8
+END: 2026-06-03 20:41:21 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-4eb8
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:41:21 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:41:22 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/debian/12/image-stream.tar
+---
+
+START: 2026-06-03 20:41:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:41:22 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:41:22 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:41:22 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:41:22 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:41:22 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:41:32 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:41:32 +0200
+COMMAND: osctl ct new --distribution rocky --version 9 testct-01f0
+END: 2026-06-03 20:42:42 +0200
+ELAPSED: 69.96s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:42:42 +0200
+COMMAND: osctl ct netif new routed testct-01f0 eth0
+END: 2026-06-03 20:42:43 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:42:43 +0200
+COMMAND: osctl ct netif ip add testct-01f0 eth0 1.2.3.4/32
+END: 2026-06-03 20:42:44 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:42:44 +0200
+COMMAND: osctl ct start testct-01f0
+END: 2026-06-03 20:42:45 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:42:45 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:42:49 +0200
+ELAPSED: 3.13s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:42:50 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:42:52 +0200
+ELAPSED: 2.11s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2100 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2100.273/2100.273/2100.273/0.000 ms
+---
+
+START: 2026-06-03 20:42:52 +0200
+COMMAND: osctl ct del -f --prune testct-01f0
+END: 2026-06-03 20:42:54 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-01f0
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:42:54 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:42:55 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/rocky/9/image-stream.tar
+---
+
+START: 2026-06-03 20:42:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:42:56 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:42:56 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:42:56 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:42:56 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:42:56 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:43:06 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:43:06 +0200
+COMMAND: osctl ct new --distribution void --version latest-musl testct-9c09
+END: 2026-06-03 20:43:16 +0200
+ELAPSED: 10.54s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:43:16 +0200
+COMMAND: osctl ct netif new routed testct-9c09 eth0
+END: 2026-06-03 20:43:17 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:43:17 +0200
+COMMAND: osctl ct netif ip add testct-9c09 eth0 1.2.3.4/32
+END: 2026-06-03 20:43:18 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:43:18 +0200
+COMMAND: osctl ct start testct-9c09
+END: 2026-06-03 20:43:19 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:43:19 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:43:22 +0200
+ELAPSED: 3.12s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:43:23 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:43:24 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=1032 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1031.839/1031.839/1031.839/0.000 ms
+---
+
+START: 2026-06-03 20:43:24 +0200
+COMMAND: osctl ct del -f --prune testct-9c09
+END: 2026-06-03 20:43:30 +0200
+ELAPSED: 5.48s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-9c09
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:43:30 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:43:31 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/musl-20260530/image-stream.tar
+---
+
+START: 2026-06-03 20:43:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 20:43:31 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 20:43:31 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 20:43:31 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 18:43:31 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 20:43:31 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:43:41 +0200
+ELAPSED: 10.01s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:43:41 +0200
+COMMAND: osctl ct new --distribution devuan --version latest testct-1e4e
+END: 2026-06-03 20:43:55 +0200
+ELAPSED: 13.26s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 20:43:55 +0200
+COMMAND: osctl ct netif new routed testct-1e4e eth0
+END: 2026-06-03 20:43:55 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:43:55 +0200
+COMMAND: osctl ct netif ip add testct-1e4e eth0 1.2.3.4/32
+END: 2026-06-03 20:43:56 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:43:56 +0200
+COMMAND: osctl ct start testct-1e4e
+END: 2026-06-03 20:43:58 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 20:43:58 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:44:01 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-03 20:44:02 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-03 20:44:04 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2055 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2054.998/2054.998/2054.998/0.000 ms
+---
+
+START: 2026-06-03 20:44:04 +0200
+COMMAND: osctl ct del -f --prune testct-1e4e
+END: 2026-06-03 20:44:06 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-1e4e
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 20:44:06 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 20:44:07 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/devuan/6/image-stream.tar
+---
+
+START: 2026-06-03 20:44:07 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 20:44:21 +0200
+ELAPSED: 14.53s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

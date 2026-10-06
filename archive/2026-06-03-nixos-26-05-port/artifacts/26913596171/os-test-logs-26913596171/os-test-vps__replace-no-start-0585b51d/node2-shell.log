@@ -1,0 +1,186 @@
+SHELL: 0
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 16:30:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 16:30:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:30:57 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1572) 72s
+---
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:30:57 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1572) 72s
+---
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:30:57 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 16:30:57 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:30:57 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:30:57 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 16:30:58 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 16:30:58 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 16:30:58 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 16:30:58 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 16:30:59 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:39:02 +0200
+COMMAND: zfs list -H -o name -t filesystem
+END: 2026-06-03 16:39:02 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank
+tank/conf
+tank/ct
+tank/ct-replace-no-start
+tank/ct-replace-no-start/vpsadmin
+tank/ct-replace-no-start/vpsadmin/config
+tank/ct-replace-no-start/vpsadmin/download
+tank/ct-replace-no-start/vpsadmin/mount
+tank/ct/2
+tank/hook
+tank/log
+tank/migration
+tank/repository
+tank/trash
+---
+
+START: 2026-06-03 16:39:05 +0200
+COMMAND: zfs mount tank/ct/2 >/dev/null 2>&1 || true
+END: 2026-06-03 16:39:06 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:39:06 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/2
+END: 2026-06-03 16:39:06 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/tank/ct/2
+---
+
+START: 2026-06-03 16:39:06 +0200
+COMMAND: cat /tank/ct/2/root/spec-replace.txt
+END: 2026-06-03 16:39:06 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+replace no-start sentinel
+---
+
+START: 2026-06-03 16:39:06 +0200
+COMMAND: zfs mount tank/ct/2 >/dev/null 2>&1 || true
+END: 2026-06-03 16:39:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:39:06 +0200
+COMMAND: zfs get -H -o value mountpoint tank/ct/2
+END: 2026-06-03 16:39:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/tank/ct/2
+---
+
+START: 2026-06-03 16:39:06 +0200
+COMMAND: sha256sum /tank/ct/2/root/blob.bin
+END: 2026-06-03 16:39:06 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+9ea0d0cd88b217996be25dd9622dda6772f05cbea9607a7d06531f9e86c78317  /tank/ct/2/root/blob.bin
+---
+
+START: 2026-06-03 16:39:13 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 16:39:15 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:2
+Unregistering users, groups and containers
+---
+

@@ -1,0 +1,121 @@
+SHELL: 0
+
+START: 2026-06-02 01:37:46 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-02 01:37:46 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 01:37:46 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-02 01:37:46 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 01:37:46 +0200
+COMMAND: sv check crashdump
+END: 2026-06-02 01:37:54 +0200
+ELAPSED: 7.72s
+STATUS: 1
+OUTPUT:
+timeout: run: crashdump: (pid 859) 8s
+---
+
+START: 2026-06-02 01:37:55 +0200
+COMMAND: sv check crashdump
+END: 2026-06-02 01:37:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: down: crashdump: 1s, normally up
+---
+
+START: 2026-06-02 01:37:55 +0200
+COMMAND: ping -c 1 192.168.10.12
+END: 2026-06-02 01:37:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.10.12 (192.168.10.12) 56(84) bytes of data.
+64 bytes from 192.168.10.12: icmp_seq=1 ttl=64 time=0.463 ms
+
+--- 192.168.10.12 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.463/0.463/0.463/0.000 ms
+---
+
+START: 2026-06-02 01:37:55 +0200
+COMMAND: mkdir -p /mnt/host-nfs-check
+END: 2026-06-02 01:37:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 01:37:55 +0200
+COMMAND: mount.nfs -v -o vers=4 192.168.10.12:/storage/vpsfree.cz/crashdump /mnt/host-nfs-check
+END: 2026-06-02 01:37:55 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+mount.nfs: mount(2): Invalid argument
+mount.nfs: mount(2): Invalid argument
+mount.nfs: timeout set for Tue Jun  2 01:39:54 2026
+mount.nfs: trying text-based options 'vers=4.2,addr=192.168.10.12,clientaddr=192.168.10.11'
+mount.nfs: trying text-based options 'vers=4,minorversion=1,addr=192.168.10.12,clientaddr=192.168.10.11'
+mount.nfs: trying text-based options 'vers=4,addr=192.168.10.12,clientaddr=192.168.10.11'
+---
+
+START: 2026-06-02 01:37:55 +0200
+COMMAND: printf '%s
+' host-stage > /mnt/host-nfs-check/host-stage.txt
+END: 2026-06-02 01:38:52 +0200
+ELAPSED: 57.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 01:38:52 +0200
+COMMAND: umount /mnt/host-nfs-check
+END: 2026-06-02 01:38:52 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 01:38:52 +0200
+COMMAND: cat /sys/kernel/kexec_crash_loaded
+END: 2026-06-02 01:38:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-02 01:38:52 +0200
+COMMAND: echo hello\ crash\ kernel\ nfs\ inspect\ test > /dev/kmsg
+END: 2026-06-02 01:38:52 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 01:38:52 +0200
+COMMAND: echo c > /proc/sysrq-trigger
+END: 2026-06-02 01:41:16 +0200
+ELAPSED: 143.3s
+STATUS: -1
+OUTPUT:
+[machine shell closed]
+---
+

@@ -1,0 +1,1096 @@
+SHELL: 0
+
+START: 2026-06-03 18:56:24 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 18:56:24 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:56:24 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 18:56:24 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:56:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:26 +0200
+ELAPSED: 2.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:29 +0200
+ELAPSED: 1.46s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:31 +0200
+ELAPSED: 0.87s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:32 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:34 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:35 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:37 +0200
+ELAPSED: 0.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:39 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:40 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:56:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:42 +0200
+ELAPSED: 0.7s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:56:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:44 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:56:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:56:45 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:56:45 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:56:45 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:56:45 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:56:45 +0200
+COMMAND: osctl ct new --distribution fedora --version latest podman-a732
+END: 2026-06-03 18:57:04 +0200
+ELAPSED: 19.1s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:57:04 +0200
+COMMAND: osctl ct unset start-menu podman-a732
+END: 2026-06-03 18:57:05 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:57:05 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 podman-a732 eth0
+END: 2026-06-03 18:57:06 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:57:06 +0200
+COMMAND: osctl ct devices add -p podman-a732 char 10 200 rwm /dev/net/tun
+END: 2026-06-03 18:57:06 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:57:06 +0200
+COMMAND: osctl ct set dns-resolver podman-a732 1.1.1.1
+END: 2026-06-03 18:57:07 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:57:07 +0200
+COMMAND: osctl ct start podman-a732
+END: 2026-06-03 18:57:09 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:57:09 +0200
+COMMAND: osctl ct exec podman-a732 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 18:57:10 +0200
+ELAPSED: 1.48s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-03 18:57:11 +0200
+COMMAND: osctl ct exec podman-a732 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 18:57:13 +0200
+ELAPSED: 1.44s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-03 18:57:14 +0200
+COMMAND: osctl ct exec podman-a732 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 18:57:15 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=1.80 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.799/1.799/1.799/0.000 ms
+---
+
+START: 2026-06-03 18:57:15 +0200
+COMMAND: osctl ct exec podman-a732 dnf -y update
+END: 2026-06-03 18:57:37 +0200
+ELAPSED: 22.32s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Fedora 44 - x86_64 - Updates           100% |   2.5 MiB/s |   8.8 MiB |  00m04s
+ Fedora 44 openh264 (From Cisco) - x86_ 100% |   1.7 KiB/s |   5.3 KiB |  00m03s
+ Fedora 44 - x86_64                     100% |   8.6 MiB/s |  38.2 MiB |  00m04s
+Repositories loaded.
+Package                       Arch   Version          Repository          Size
+Upgrading:
+ cracklib                     x86_64 0:2.10.3-1.fc44  updates        234.6 KiB
+   replacing cracklib         x86_64 0:2.9.11-10.fc44 install-fedora 225.7 KiB
+ cracklib-dicts               x86_64 0:2.10.3-1.fc44  updates          9.4 MiB
+   replacing cracklib-dicts   x86_64 0:2.9.11-10.fc44 install-fedora   9.3 MiB
+ exfatprogs                   x86_64 0:1.4.1-1.fc44   updates        376.6 KiB
+   replacing exfatprogs       x86_64 0:1.3.2-1.fc44   install-fedora 267.2 KiB
+ libldb                       x86_64 2:4.24.3-1.fc44  updates        465.6 KiB
+   replacing libldb           x86_64 2:4.24.2-1.fc44  updates        465.6 KiB
+ libnghttp3                   x86_64 0:1.16.0-1.fc44  updates        163.2 KiB
+   replacing libnghttp3       x86_64 0:1.15.0-1.fc44  install-fedora 159.2 KiB
+ libsolv                      x86_64 0:0.7.39-1.fc44  updates          1.0 MiB
+   replacing libsolv          x86_64 0:0.7.37-2.fc44  updates        991.6 KiB
+ libsoup3                     x86_64 0:3.6.6-8.fc44   updates          1.2 MiB
+   replacing libsoup3         x86_64 0:3.6.6-6.fc44   install-fedora   1.2 MiB
+ samba-common                 noarch 2:4.24.3-1.fc44  updates        212.0 KiB
+   replacing samba-common     noarch 2:4.24.2-1.fc44  updates        207.6 KiB
+ samba-core-libs              x86_64 2:4.24.3-1.fc44  updates          1.7 MiB
+   replacing samba-core-libs  x86_64 2:4.24.2-1.fc44  updates          1.7 MiB
+ samba-ndr-libs               x86_64 2:4.24.3-1.fc44  updates          4.7 MiB
+   replacing samba-ndr-libs   x86_64 2:4.24.2-1.fc44  updates          4.7 MiB
+ systemd                      x86_64 0:259.6-1.fc44   updates         12.9 MiB
+   replacing systemd          x86_64 0:259.5-1.fc44   install-fedora  12.9 MiB
+ systemd-libs                 x86_64 0:259.6-1.fc44   updates          2.4 MiB
+   replacing systemd-libs     x86_64 0:259.5-1.fc44   install-fedora   2.4 MiB
+ systemd-networkd             x86_64 0:259.6-1.fc44   updates          2.3 MiB
+   replacing systemd-networkd x86_64 0:259.5-1.fc44   install-fedora   2.3 MiB
+ systemd-pam                  x86_64 0:259.6-1.fc44   updates          1.2 MiB
+   replacing systemd-pam      x86_64 0:259.5-1.fc44   install-fedora   1.2 MiB
+ systemd-resolved             x86_64 0:259.6-1.fc44   updates        655.4 KiB
+   replacing systemd-resolved x86_64 0:259.5-1.fc44   install-fedora 655.3 KiB
+ systemd-shared               x86_64 0:259.6-1.fc44   updates          5.4 MiB
+   replacing systemd-shared   x86_64 0:259.5-1.fc44   install-fedora   5.4 MiB
+ systemd-sysusers             x86_64 0:259.6-1.fc44   updates         79.6 KiB
+   replacing systemd-sysusers x86_64 0:259.5-1.fc44   install-fedora  79.6 KiB
+ systemd-udev                 x86_64 0:259.6-1.fc44   updates         13.0 MiB
+   replacing systemd-udev     x86_64 0:259.5-1.fc44   install-fedora  12.9 MiB
+ which                        x86_64 0:2.25-1.fc44    updates         83.6 KiB
+   replacing which            x86_64 0:2.23-4.fc44    install-fedora  83.4 KiB
+
+Transaction Summary:
+ Upgrading:         19 packages
+ Replacing:         19 packages
+
+Total size of inbound packages is 18 MiB. Need to download 18 MiB.
+After this operation, 341 KiB extra will be used (install 57 MiB, remove 57 MiB).
+[ 1/19] exfatprogs-0:1.4.1-1.fc44.x86_6 100% |   1.8 MiB/s | 147.2 KiB |  00m00s
+[ 2/19] cracklib-0:2.10.3-1.fc44.x86_64 100% |   1.1 MiB/s |  95.9 KiB |  00m00s
+[ 3/19] libldb-2:4.24.3-1.fc44.x86_64   100% |  39.1 MiB/s | 200.0 KiB |  00m00s
+[ 4/19] libsolv-0:0.7.39-1.fc44.x86_64  100% |  50.2 MiB/s | 462.9 KiB |  00m00s
+[ 5/19] libsoup3-0:3.6.6-8.fc44.x86_64  100% |  56.8 MiB/s | 407.5 KiB |  00m00s
+[ 6/19] samba-common-2:4.24.3-1.fc44.no 100% |  45.1 MiB/s | 184.9 KiB |  00m00s
+[ 7/19] libnghttp3-0:1.16.0-1.fc44.x86_ 100% |   2.3 MiB/s |  74.5 KiB |  00m00s
+[ 8/19] samba-core-libs-2:4.24.3-1.fc44 100% |  29.6 MiB/s | 515.2 KiB |  00m00s
+[ 9/19] samba-ndr-libs-2:4.24.3-1.fc44. 100% |  34.2 MiB/s |   1.3 MiB |  00m00s
+[10/19] systemd-libs-0:259.6-1.fc44.x86 100% |  31.5 MiB/s | 870.4 KiB |  00m00s
+[11/19] cracklib-dicts-0:2.10.3-1.fc44. 100% |  16.1 MiB/s |   3.6 MiB |  00m00s
+[12/19] systemd-shared-0:259.6-1.fc44.x 100% |  26.0 MiB/s |   2.0 MiB |  00m00s
+[13/19] systemd-0:259.6-1.fc44.x86_64   100% |  29.4 MiB/s |   4.3 MiB |  00m00s
+[14/19] systemd-resolved-0:259.6-1.fc44 100% |   9.3 MiB/s | 285.5 KiB |  00m00s
+[15/19] systemd-networkd-0:259.6-1.fc44 100% |  33.8 MiB/s | 796.3 KiB |  00m00s
+[16/19] systemd-pam-0:259.6-1.fc44.x86_ 100% |  20.4 MiB/s | 439.5 KiB |  00m00s
+[17/19] systemd-sysusers-0:259.6-1.fc44 100% |  11.8 MiB/s |  48.5 KiB |  00m00s
+[18/19] which-0:2.25-1.fc44.x86_64      100% |  20.5 MiB/s |  42.1 KiB |  00m00s
+[19/19] systemd-udev-0:259.6-1.fc44.x86 100% |  24.2 MiB/s |   2.6 MiB |  00m00s
+--------------------------------------------------------------------------------
+[19/19] Total                           100% |  53.0 MiB/s |  18.3 MiB |  00m00s
+Running transaction
+[ 1/40] Verify package files            100% |  97.0   B/s |  19.0   B |  00m00s
+[ 2/40] Prepare transaction             100% | 290.0   B/s |  38.0   B |  00m00s
+[ 3/40] Upgrading systemd-shared-0:259. 100% |  93.6 MiB/s |   5.4 MiB |  00m00s
+[ 4/40] Upgrading systemd-libs-0:259.6- 100% |  78.9 MiB/s |   2.4 MiB |  00m00s
+[ 5/40] Upgrading systemd-sysusers-0:25 100% | 690.2 KiB/s |  80.8 KiB |  00m00s
+[ 6/40] Upgrading systemd-0:259.6-1.fc4 100% |  23.0 MiB/s |  13.1 MiB |  00m01s
+[ 7/40] Upgrading samba-common-2:4.24.3 100% |   6.8 MiB/s | 215.5 KiB |  00m00s
+[ 8/40] Upgrading samba-core-libs-2:4.2 100% |  52.6 MiB/s |   1.7 MiB |  00m00s
+[ 9/40] Upgrading cracklib-0:2.10.3-1.f 100% |   4.0 MiB/s | 246.7 KiB |  00m00s
+[10/40] Upgrading cracklib-dicts-0:2.10 100% |  63.7 MiB/s |   9.4 MiB |  00m00s
+[11/40] Upgrading samba-ndr-libs-2:4.24 100% |  42.9 MiB/s |   4.7 MiB |  00m00s
+[12/40] Upgrading systemd-udev-0:259.6- 100% |  11.8 MiB/s |  13.1 MiB |  00m01s
+[13/40] Upgrading systemd-resolved-0:25 100% |   6.6 MiB/s | 659.9 KiB |  00m00s
+[14/40] Upgrading systemd-networkd-0:25 100% |  23.1 MiB/s |   2.3 MiB |  00m00s
+[15/40] Upgrading systemd-pam-0:259.6-1 100% |  45.1 MiB/s |   1.2 MiB |  00m00s
+[16/40] Upgrading which-0:2.25-1.fc44.x 100% |   1.8 MiB/s |  85.8 KiB |  00m00s
+[17/40] Upgrading libsoup3-0:3.6.6-8.fc 100% |  19.4 MiB/s |   1.2 MiB |  00m00s
+[18/40] Upgrading libsolv-0:0.7.39-1.fc 100% |  57.6 MiB/s |   1.0 MiB |  00m00s
+[19/40] Upgrading libnghttp3-0:1.16.0-1 100% |  23.0 MiB/s | 164.6 KiB |  00m00s
+[20/40] Upgrading libldb-2:4.24.3-1.fc4 100% |  24.2 MiB/s | 471.3 KiB |  00m00s
+[21/40] Upgrading exfatprogs-0:1.4.1-1. 100% |   6.8 MiB/s | 382.6 KiB |  00m00s
+[22/40] Removing cracklib-dicts-0:2.9.1 100% | 526.0   B/s |  10.0   B |  00m00s
+[23/40] Removing samba-ndr-libs-2:4.24. 100% |   1.0 KiB/s |  51.0   B |  00m00s
+[24/40] Removing systemd-udev-0:259.5-1 100% |  12.3 KiB/s | 670.0   B |  00m00s
+[25/40] Removing samba-core-libs-2:4.24 100% | 921.0   B/s |  35.0   B |  00m00s
+[26/40] Removing systemd-networkd-0:259 100% |   1.0 KiB/s |  61.0   B |  00m00s
+[27/40] Removing systemd-resolved-0:259 100% |   1.1 KiB/s |  28.0   B |  00m00s
+[28/40] Removing samba-common-2:4.24.2- 100% |   2.2 KiB/s |  27.0   B |  00m00s
+[29/40] Removing systemd-pam-0:259.5-1. 100% | 387.0   B/s |  12.0   B |  00m00s
+[30/40] Removing systemd-0:259.5-1.fc44 100% |  11.8 KiB/s |   1.0 KiB |  00m00s
+[31/40] Removing systemd-sysusers-0:259 100% | 368.0   B/s |   7.0   B |  00m00s
+[32/40] Removing systemd-shared-0:259.5 100% | 500.0   B/s |   6.0   B |  00m00s
+[33/40] Removing systemd-libs-0:259.5-1 100% | 588.0   B/s |  20.0   B |  00m00s
+[34/40] Removing cracklib-0:2.9.11-10.f 100% |   1.9 KiB/s |  75.0   B |  00m00s
+[35/40] Removing which-0:2.23-4.fc44.x8 100% | 714.0   B/s |  15.0   B |  00m00s
+[36/40] Removing libsoup3-0:3.6.6-6.fc4 100% |  10.4 KiB/s |  85.0   B |  00m00s
+[37/40] Removing libsolv-0:0.7.37-2.fc4 100% |   1.1 KiB/s |  12.0   B |  00m00s
+[38/40] Removing libnghttp3-0:1.15.0-1. 100% |   2.2 KiB/s |   9.0   B |  00m00s
+[39/40] Removing libldb-2:4.24.2-1.fc44 100% |   1.3 KiB/s |  37.0   B |  00m00s
+[40/40] Removing exfatprogs-0:1.3.2-1.f 100% |   7.0   B/s |  29.0   B |  00m04s
+>>> Running %posttrans scriptlet: systemd-0:259.6-1.fc44.x86_64
+>>> Finished %posttrans scriptlet: systemd-0:259.6-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Failed to set unit properties on systemd-hostnamed.service: Unit systemd-hostnamed.service is masked.
+>>> 
+Complete!
+---
+
+START: 2026-06-03 18:57:37 +0200
+COMMAND: osctl ct exec podman-a732 dnf -y install podman
+END: 2026-06-03 18:58:23 +0200
+ELAPSED: 45.26s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+Repositories loaded.
+Package                       Arch   Version                      Repository      Size
+Installing:
+ podman                       x86_64 5:5.8.2-1.fc44               updates     49.0 MiB
+Installing dependencies:
+ aardvark-dns                 x86_64 2:1.17.1-1.fc44              updates      2.3 MiB
+ catatonit                    x86_64 0:0.2.1-5.fc44               fedora     788.3 KiB
+ composefs-libs               x86_64 0:1.0.8-5.fc44               fedora     142.1 KiB
+ conmon                       x86_64 2:2.2.1-2.fc44               fedora     183.2 KiB
+ container-selinux            noarch 4:2.248.0-1.fc44             updates     74.3 KiB
+ containers-common            noarch 5:0.67.0-1.fc44              fedora     133.5 KiB
+ containers-common-extra      noarch 5:0.67.0-1.fc44              fedora       0.0   B
+ criu                         x86_64 0:4.2-13.fc44                fedora       1.6 MiB
+ crun                         x86_64 0:1.28-1.fc44                updates    605.9 KiB
+ fuse-common                  x86_64 0:3.18.2-1.fc44              fedora      38.0   B
+ fuse3                        x86_64 0:3.18.2-1.fc44              fedora     132.4 KiB
+ libbsd                       x86_64 0:0.12.2-7.fc44              fedora     423.0 KiB
+ libmd                        x86_64 0:1.2.0-1.fc44               updates    128.5 KiB
+ libnet                       x86_64 0:1.3-7.fc44                 fedora     144.3 KiB
+ netavark                     x86_64 2:1.17.2-1.fc44              fedora       8.9 MiB
+ passt                        x86_64 0:0^20260526.g038c51e-1.fc44 updates      1.4 MiB
+ passt-selinux                noarch 0:0^20260526.g038c51e-1.fc44 updates    377.8 KiB
+ podman-sequoia               x86_64 0:0.3.2-2.fc44               updates      7.0 MiB
+ protobuf-c                   x86_64 0:1.5.2-2.fc44               fedora      53.7 KiB
+ qemu-user-static-aarch64     x86_64 2:10.2.2-1.fc44              fedora      15.2 MiB
+ qemu-user-static-alpha       x86_64 2:10.2.2-1.fc44              fedora       4.2 MiB
+ qemu-user-static-arm         x86_64 2:10.2.2-1.fc44              fedora      10.9 MiB
+ qemu-user-static-hexagon     x86_64 2:10.2.2-1.fc44              fedora       6.0 MiB
+ qemu-user-static-hppa        x86_64 2:10.2.2-1.fc44              fedora       4.2 MiB
+ qemu-user-static-loongarch64 x86_64 2:10.2.2-1.fc44              fedora       4.9 MiB
+ qemu-user-static-m68k        x86_64 2:10.2.2-1.fc44              fedora       4.4 MiB
+ qemu-user-static-microblaze  x86_64 2:10.2.2-1.fc44              fedora       8.3 MiB
+ qemu-user-static-mips        x86_64 2:10.2.2-1.fc44              fedora      31.4 MiB
+ qemu-user-static-or1k        x86_64 2:10.2.2-1.fc44              fedora       4.1 MiB
+ qemu-user-static-ppc         x86_64 2:10.2.2-1.fc44              fedora      15.3 MiB
+ qemu-user-static-riscv       x86_64 2:10.2.2-1.fc44              fedora      11.1 MiB
+ qemu-user-static-s390x       x86_64 2:10.2.2-1.fc44              fedora       4.6 MiB
+ qemu-user-static-sh4         x86_64 2:10.2.2-1.fc44              fedora       8.4 MiB
+ qemu-user-static-sparc       x86_64 2:10.2.2-1.fc44              fedora      13.0 MiB
+ qemu-user-static-x86         x86_64 2:10.2.2-1.fc44              fedora       9.7 MiB
+ qemu-user-static-xtensa      x86_64 2:10.2.2-1.fc44              fedora      14.7 MiB
+ shadow-utils-subid           x86_64 2:4.19.0-7.fc44              updates     50.0 KiB
+Installing weak dependencies:
+ composefs                    x86_64 0:1.0.8-5.fc44               fedora     167.7 KiB
+ criu-libs                    x86_64 0:4.2-13.fc44                fedora      89.1 KiB
+ fuse-overlayfs               x86_64 0:1.16-2.fc44                fedora     135.0 KiB
+ qemu-user-static             x86_64 2:10.2.2-1.fc44              fedora      44.4 KiB
+ tar                          x86_64 2:1.35-8.fc44                fedora       3.0 MiB
+
+Transaction Summary:
+ Installing:        43 packages
+
+Total size of inbound packages is 60 MiB. Need to download 60 MiB.
+After this operation, 247 MiB extra will be used (install 247 MiB, remove 0 B).
+[ 1/43] conmon-2:2.2.1-2.fc44.x86_64    100% |   1.7 MiB/s |  56.4 KiB |  00m00s
+[ 2/43] catatonit-0:0.2.1-5.fc44.x86_64 100% |   7.0 MiB/s | 331.9 KiB |  00m00s
+[ 3/43] containers-common-extra-5:0.67. 100% | 885.2 KiB/s |  10.6 KiB |  00m00s
+[ 4/43] containers-common-5:0.67.0-1.fc 100% |  16.7 MiB/s | 102.8 KiB |  00m00s
+[ 5/43] netavark-2:1.17.2-1.fc44.x86_64 100% |  35.5 MiB/s |   3.0 MiB |  00m00s
+[ 6/43] shadow-utils-subid-2:4.19.0-7.f 100% | 960.1 KiB/s |  30.7 KiB |  00m00s
+[ 7/43] aardvark-dns-2:1.17.1-1.fc44.x8 100% |   9.0 MiB/s | 859.3 KiB |  00m00s
+[ 8/43] podman-sequoia-0:0.3.2-2.fc44.x 100% |  10.0 MiB/s |   2.4 MiB |  00m00s
+[ 9/43] crun-0:1.28-1.fc44.x86_64       100% |   7.5 MiB/s | 269.1 KiB |  00m00s
+[10/43] passt-selinux-0:0^20260526.g038 100% |   2.0 MiB/s |  30.9 KiB |  00m00s
+[11/43] passt-0:0^20260526.g038c51e-1.f 100% |   8.6 MiB/s | 325.7 KiB |  00m00s
+[12/43] container-selinux-4:2.248.0-1.f 100% |   2.5 MiB/s |  58.3 KiB |  00m00s
+[13/43] composefs-0:1.0.8-5.fc44.x86_64 100% |  10.3 MiB/s |  63.4 KiB |  00m00s
+[14/43] qemu-user-static-2:10.2.2-1.fc4 100% |   6.8 MiB/s |  28.0 KiB |  00m00s
+[15/43] composefs-libs-0:1.0.8-5.fc44.x 100% |   9.2 MiB/s |  56.5 KiB |  00m00s
+[16/43] qemu-user-static-alpha-2:10.2.2 100% |  33.3 MiB/s |   1.5 MiB |  00m00s
+[17/43] qemu-user-static-aarch64-2:10.2 100% |  42.0 MiB/s |   2.9 MiB |  00m00s
+[18/43] qemu-user-static-hexagon-2:10.2 100% |  33.8 MiB/s |   1.8 MiB |  00m00s
+[19/43] qemu-user-static-arm-2:10.2.2-1 100% |  25.3 MiB/s |   2.3 MiB |  00m00s
+[20/43] qemu-user-static-loongarch64-2: 100% |  36.7 MiB/s |   1.6 MiB |  00m00s
+[21/43] podman-5:5.8.2-1.fc44.x86_64    100% |  23.2 MiB/s |  15.3 MiB |  00m01s
+[22/43] qemu-user-static-hppa-2:10.2.2- 100% |   7.4 MiB/s |   1.5 MiB |  00m00s
+[23/43] qemu-user-static-m68k-2:10.2.2- 100% |   9.9 MiB/s |   1.5 MiB |  00m00s
+[24/43] qemu-user-static-microblaze-2:1 100% |  35.6 MiB/s |   1.8 MiB |  00m00s
+[25/43] qemu-user-static-or1k-2:10.2.2- 100% |  33.8 MiB/s |   1.5 MiB |  00m00s
+[26/43] qemu-user-static-ppc-2:10.2.2-1 100% |  47.0 MiB/s |   2.7 MiB |  00m00s
+[27/43] qemu-user-static-s390x-2:10.2.2 100% |  41.6 MiB/s |   1.6 MiB |  00m00s
+[28/43] qemu-user-static-mips-2:10.2.2- 100% |  22.0 MiB/s |   4.1 MiB |  00m00s
+[29/43] qemu-user-static-sh4-2:10.2.2-1 100% |  22.5 MiB/s |   1.8 MiB |  00m00s
+[30/43] qemu-user-static-riscv-2:10.2.2 100% |  12.9 MiB/s |   2.3 MiB |  00m00s
+[31/43] qemu-user-static-sparc-2:10.2.2 100% |  28.6 MiB/s |   2.3 MiB |  00m00s
+[32/43] qemu-user-static-x86-2:10.2.2-1 100% |  25.7 MiB/s |   2.1 MiB |  00m00s
+[33/43] fuse-overlayfs-0:1.16-2.fc44.x8 100% |   1.7 MiB/s |  67.8 KiB |  00m00s
+[34/43] qemu-user-static-xtensa-2:10.2. 100% |  24.2 MiB/s |   2.4 MiB |  00m00s
+[35/43] fuse3-0:3.18.2-1.fc44.x86_64    100% |   1.8 MiB/s |  59.8 KiB |  00m00s
+[36/43] fuse-common-0:3.18.2-1.fc44.x86 100% | 307.2 KiB/s |   8.0 KiB |  00m00s
+[37/43] criu-libs-0:4.2-13.fc44.x86_64  100% |   6.4 MiB/s |  32.9 KiB |  00m00s
+[38/43] protobuf-c-0:1.5.2-2.fc44.x86_6 100% |   8.2 MiB/s |  33.7 KiB |  00m00s
+[39/43] libbsd-0:0.12.2-7.fc44.x86_64   100% |  17.3 MiB/s | 124.3 KiB |  00m00s
+[40/43] libnet-0:1.3-7.fc44.x86_64      100% |   8.9 MiB/s |  64.0 KiB |  00m00s
+[41/43] criu-0:4.2-13.fc44.x86_64       100% |  36.5 MiB/s | 597.3 KiB |  00m00s
+[42/43] libmd-0:1.2.0-1.fc44.x86_64     100% |   4.9 MiB/s |  55.2 KiB |  00m00s
+[43/43] tar-2:1.35-8.fc44.x86_64        100% |  49.9 MiB/s | 868.2 KiB |  00m00s
+--------------------------------------------------------------------------------
+[43/43] Total                           100% |  24.8 MiB/s |  60.4 MiB |  00m02s
+Running transaction
+[ 1/45] Verify package files            100% |  62.0   B/s |  43.0   B |  00m01s
+[ 2/45] Prepare transaction             100% | 457.0   B/s |  43.0   B |  00m00s
+[ 3/45] Installing protobuf-c-0:1.5.2-2 100% |   7.7 MiB/s |  55.2 KiB |  00m00s
+[ 4/45] Installing qemu-user-static-x86 100% |  73.3 MiB/s |   9.7 MiB |  00m00s
+[ 5/45] Installing qemu-user-static-arm 100% |  84.6 MiB/s |  10.9 MiB |  00m00s
+[ 6/45] Installing qemu-user-static-aar 100% |  70.3 MiB/s |  15.3 MiB |  00m00s
+[ 7/45] Installing container-selinux-4: 100% |   6.2 KiB/s |  77.8 KiB |  00m13s
+[ 8/45] Installing passt-selinux-0:0^20 100% |  18.1 KiB/s | 378.7 KiB |  00m21s
+[ 9/45] Installing passt-0:0^20260526.g 100% |  25.9 MiB/s |   1.4 MiB |  00m00s
+[10/45] Installing libmd-0:1.2.0-1.fc44 100% |  21.2 MiB/s | 130.1 KiB |  00m00s
+[11/45] Installing libbsd-0:0.12.2-7.fc 100% |  46.1 MiB/s | 424.6 KiB |  00m00s
+[12/45] Installing libnet-0:1.3-7.fc44. 100% |  23.7 MiB/s | 145.9 KiB |  00m00s
+[13/45] Installing criu-0:4.2-13.fc44.x 100% |  23.0 MiB/s |   1.6 MiB |  00m00s
+[14/45] Installing fuse-common-0:3.18.2 100% |  95.1 KiB/s | 292.0   B |  00m00s
+[15/45] Installing fuse3-0:3.18.2-1.fc4 100% |   3.3 MiB/s | 134.8 KiB |  00m00s
+[16/45] Installing fuse-overlayfs-0:1.1 100% |   2.2 MiB/s | 136.5 KiB |  00m00s
+[17/45] Installing containers-common-5: 100% |   9.2 MiB/s | 140.8 KiB |  00m00s
+[18/45] Installing qemu-user-static-xte 100% |  92.4 MiB/s |  14.7 MiB |  00m00s
+[19/45] Installing qemu-user-static-spa 100% |  78.6 MiB/s |  13.0 MiB |  00m00s
+[20/45] Installing qemu-user-static-sh4 100% |  69.1 MiB/s |   8.4 MiB |  00m00s
+[21/45] Installing qemu-user-static-s39 100% |  46.5 MiB/s |   4.6 MiB |  00m00s
+[22/45] Installing qemu-user-static-ris 100% |  79.5 MiB/s |  11.1 MiB |  00m00s
+[23/45] Installing qemu-user-static-ppc 100% |  97.1 MiB/s |  15.3 MiB |  00m00s
+[24/45] Installing qemu-user-static-or1 100% |  46.4 MiB/s |   4.1 MiB |  00m00s
+[25/45] Installing qemu-user-static-mip 100% | 117.9 MiB/s |  31.4 MiB |  00m00s
+[26/45] Installing qemu-user-static-mic 100% |  57.9 MiB/s |   8.3 MiB |  00m00s
+[27/45] Installing qemu-user-static-m68 100% |  44.9 MiB/s |   4.4 MiB |  00m00s
+[28/45] Installing qemu-user-static-loo 100% |  50.4 MiB/s |   4.9 MiB |  00m00s
+[29/45] Installing qemu-user-static-hpp 100% |  43.3 MiB/s |   4.2 MiB |  00m00s
+[30/45] Installing qemu-user-static-hex 100% |  55.1 MiB/s |   6.0 MiB |  00m00s
+[31/45] Installing qemu-user-static-alp 100% |  44.1 MiB/s |   4.2 MiB |  00m00s
+[32/45] Installing composefs-libs-0:1.0 100% |  17.6 MiB/s | 143.9 KiB |  00m00s
+[33/45] Installing crun-0:1.28-1.fc44.x 100% |  15.2 MiB/s | 607.0 KiB |  00m00s
+[34/45] Installing aardvark-dns-2:1.17. 100% |  87.1 MiB/s |   2.3 MiB |  00m00s
+[35/45] Installing netavark-2:1.17.2-1. 100% |  70.3 MiB/s |   8.9 MiB |  00m00s
+[36/45] Installing containers-common-ex 100% |  40.4 KiB/s | 124.0   B |  00m00s
+[37/45] Installing shadow-utils-subid-2 100% |   1.2 MiB/s |  51.4 KiB |  00m00s
+[38/45] Installing podman-sequoia-0:0.3 100% |  94.3 MiB/s |   7.0 MiB |  00m00s
+[39/45] Installing conmon-2:2.2.1-2.fc4 100% |   4.4 MiB/s | 184.6 KiB |  00m00s
+[40/45] Installing catatonit-0:0.2.1-5. 100% |  45.4 MiB/s | 790.0 KiB |  00m00s
+[41/45] Installing podman-5:5.8.2-1.fc4 100% |  85.2 MiB/s |  49.1 MiB |  00m01s
+[42/45] Installing composefs-0:1.0.8-5. 100% |   4.0 MiB/s | 171.1 KiB |  00m00s
+[43/45] Installing qemu-user-static-2:1 100% |   8.8 MiB/s |  45.1 KiB |  00m00s
+[44/45] Installing criu-libs-0:4.2-13.f 100% |  17.6 MiB/s |  89.9 KiB |  00m00s
+[45/45] Installing tar-2:1.35-8.fc44.x8 100% |   4.5 MiB/s |   3.0 MiB |  00m01s
+Complete!
+---
+
+START: 2026-06-03 18:58:23 +0200
+COMMAND: osctl ct exec podman-a732 sh -c mkdir\ -p\ /etc/containers/registries.conf.d'
+'cat\ \>\ /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf\ \<\<\'EOF\''
+'\[\[registry\]\]'
+'prefix\ \=\ \"docker.io\"'
+'location\ \=\ \"docker.io\"'
+''
+'\ \ \[\[registry.mirror\]\]'
+'\ \ location\ \=\ \"docker-registry.vpsadminos.org\"'
+'\ \ pull-from-mirror\ \=\ \"all\"'
+''
+'\[aliases\]'
+'\"hello-world\"\ \=\ \"docker.io/library/hello-world\"'
+''
+'EOF'
+'
+END: 2026-06-03 18:58:24 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:24 +0200
+COMMAND: osctl ct exec podman-a732 cat /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf
+END: 2026-06-03 18:58:26 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+[[registry]]
+prefix = "docker.io"
+location = "docker.io"
+
+  [[registry.mirror]]
+  location = "docker-registry.vpsadminos.org"
+  pull-from-mirror = "all"
+
+[aliases]
+"hello-world" = "docker.io/library/hello-world"
+
+---
+
+START: 2026-06-03 18:58:26 +0200
+COMMAND: osctl ct exec podman-a732 podman info
+END: 2026-06-03 18:58:28 +0200
+ELAPSED: 1.73s
+STATUS: 0
+OUTPUT:
+host:
+  arch: amd64
+  buildahVersion: 1.43.1
+  cgroupControllers:
+  - memory
+  - pids
+  cgroupManager: systemd
+  cgroupVersion: v2
+  conmon:
+    package: conmon-2.2.1-2.fc44.x86_64
+    path: /usr/bin/conmon
+    version: 'conmon version 2.2.1, commit: '
+  cpuUtilization:
+    idlePercent: 100
+    systemPercent: 0
+    userPercent: 0
+  cpus: 4
+  databaseBackend: sqlite
+  distribution:
+    distribution: fedora
+    version: "44"
+  eventLogger: journald
+  freeLocks: 2048
+  hostname: podman-a732
+  idMappings:
+    gidmap: null
+    uidmap: null
+  kernel: 6.12.91
+  linkmode: dynamic
+  logDriver: journald
+  memFree: 6256992256
+  memTotal: 8340779008
+  networkBackend: netavark
+  networkBackendInfo:
+    backend: netavark
+    defaultNetwork: podman
+    dns:
+      package: aardvark-dns-1.17.1-1.fc44.x86_64
+      path: /usr/libexec/podman/aardvark-dns
+      version: aardvark-dns 1.17.1
+    package: netavark-1.17.2-1.fc44.x86_64
+    path: /usr/libexec/podman/netavark
+    version: netavark 1.17.2
+  ociRuntime:
+    name: crun
+    package: crun-1.28-1.fc44.x86_64
+    path: /usr/bin/crun
+    version: |-
+      crun version 1.28
+      commit: 54f16ffbefcd022bf032af768b5c5ce075c18bfc
+      rundir: /run/crun
+      spec: 1.0.0
+      +SYSTEMD +SELINUX +APPARMOR +CAP +SECCOMP +EBPF +CRIU +LIBKRUN +WASM:wasmedge +JSON_C
+  os: linux
+  pasta:
+    executable: /bin/pasta
+    package: passt-0^20260526.g038c51e-1.fc44.x86_64
+    version: |
+      pasta 0^20260526.g038c51e-1.fc44.x86_64
+      Copyright Red Hat
+      GNU General Public License, version 2 or later
+        <https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+      This is free software: you are free to change and redistribute it.
+      There is NO WARRANTY, to the extent permitted by law.
+  remoteSocket:
+    exists: true
+    path: /run/podman/podman.sock
+  rootlessNetworkCmd: pasta
+  security:
+    apparmorEnabled: false
+    capabilities: CAP_CHOWN,CAP_DAC_OVERRIDE,CAP_FOWNER,CAP_FSETID,CAP_KILL,CAP_NET_BIND_SERVICE,CAP_SETFCAP,CAP_SETGID,CAP_SETPCAP,CAP_SETUID,CAP_SYS_CHROOT
+    rootless: false
+    seccompEnabled: true
+    seccompProfilePath: /usr/share/containers/seccomp.json
+    selinuxEnabled: false
+  serviceIsRemote: false
+  slirp4netns:
+    executable: ""
+    package: ""
+    version: ""
+  swapFree: 0
+  swapTotal: 0
+  uptime: 0h 1m 20.00s
+  variant: ""
+plugins:
+  authorization: null
+  log:
+  - k8s-file
+  - none
+  - passthrough
+  - journald
+  network:
+  - bridge
+  - macvlan
+  - ipvlan
+  volume:
+  - local
+registries:
+  docker.io:
+    Blocked: false
+    Insecure: false
+    Location: docker.io
+    MirrorByDigestOnly: false
+    Mirrors:
+    - Insecure: false
+      Location: docker-registry.vpsadminos.org
+      PullFromMirror: all
+    Prefix: docker.io
+    PullFromMirror: ""
+  search:
+  - registry.fedoraproject.org
+  - registry.access.redhat.com
+  - docker.io
+store:
+  configFile: /usr/share/containers/storage.conf
+  containerStore:
+    number: 0
+    paused: 0
+    running: 0
+    stopped: 0
+  graphDriverName: overlay
+  graphOptions:
+    overlay.additionalImageStores:
+    - /usr/lib/containers/storage
+    overlay.imagestore: /usr/lib/containers/storage
+    overlay.mountopt: nodev,metacopy=on
+  graphRoot: /var/lib/containers/storage
+  graphRootAllocated: 9621340160
+  graphRootUsed: 632422400
+  graphStatus:
+    Backing Filesystem: cramfs
+    Native Overlay Diff: "false"
+    Supports d_type: "true"
+    Supports shifting: "false"
+    Supports volatile: "true"
+    Using metacopy: "false"
+  imageCopyTmpDir: /var/tmp
+  imageStore:
+    number: 0
+  runRoot: /run/containers/storage
+  transientStore: false
+  volumePath: /var/lib/containers/storage/volumes
+version:
+  APIVersion: 5.8.2
+  BuildOrigin: Fedora Project
+  Built: 1776124800
+  BuiltTime: Tue Apr 14 02:00:00 2026
+  GitCommit: 5b263b5f5b48004a87caac44e67349a8266d9ef4
+  GoVersion: go1.26.1-X:nodwarf5
+  Os: linux
+  OsArch: linux/amd64
+  Version: 5.8.2
+
+---
+
+START: 2026-06-03 18:58:28 +0200
+COMMAND: osctl ct exec podman-a732 podman run hello-world
+END: 2026-06-03 18:58:30 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+Resolved "hello-world" as an alias (/etc/containers/registries.conf.d/10-vpsadminos-mirror.conf)
+Trying to pull docker.io/library/hello-world:latest...
+Getting image source signatures
+Copying blob sha256:4f55086f7dd096d48b0e49be066971a8ed996521c2e190aa21b2435a847198b4
+Copying config sha256:e2ac70e7319a02c5a477f5825259bd118b94e8b02c279c67afa63adab6d8685b
+Writing manifest to image destination
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-06-03 18:58:30 +0200
+COMMAND: osctl ct exec podman-a732 sh -c mkdir\ -p\ /tmp/podman-build-test'
+'cat\ \>\ /tmp/podman-build-test/Dockerfile\ \<\<\'EOF\''
+'FROM\ docker.io/library/alpine:latest'
+'RUN\ echo\ \"Podman\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-06-03 18:58:31 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:31 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ build\ -t\ localhost/podman-build-test:latest\ /tmp/podman-build-test
+END: 2026-06-03 18:58:37 +0200
+ELAPSED: 5.45s
+STATUS: 0
+OUTPUT:
+STEP 1/3: FROM docker.io/library/alpine:latest
+Trying to pull docker.io/library/alpine:latest...
+Getting image source signatures
+Copying blob sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb
+Copying config sha256:3cb067eab609612d81b4d82ff8ad71d73482bb3059a87b642d7e14f0ed659cde
+Writing manifest to image destination
+STEP 2/3: RUN echo "Podman build works!" > /message.txt
+--> bdeebce59ad4
+STEP 3/3: CMD ["cat", "/message.txt"]
+COMMIT localhost/podman-build-test:latest
+--> 4be36c2331b6
+Successfully tagged localhost/podman-build-test:latest
+4be36c2331b6e052d70cf62123dea90a7ea5934f6e72261e6efeb52a54b9b709
+---
+
+START: 2026-06-03 18:58:37 +0200
+COMMAND: osctl ct exec podman-a732 podman run --rm localhost/podman-build-test:latest
+END: 2026-06-03 18:58:39 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+Podman build works!
+---
+
+START: 2026-06-03 18:58:39 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 18:58:40 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:40 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-03 18:58:42 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+ae1325bc07c218a7e8f585b28fe122c2245adc919b9a7565a9b34ad4412f97ad
+---
+
+START: 2026-06-03 18:58:42 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-06-03 18:58:44 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-03 18:58:44 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 18:58:45 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:45 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 18:58:47 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:47 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-03 18:58:48 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+ee028dde4b007c9a07e48f2be5497a61236eaa34e0276c5901a3737dc7daa4c8
+---
+
+START: 2026-06-03 18:58:48 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-06-03 18:58:50 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-03 18:58:50 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 18:58:52 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:52 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 18:58:53 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:53 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-03 18:58:55 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+171158651eb0dedd503abf2150c44d83ad7aee367603d885bb5a94b93c17677e
+---
+
+START: 2026-06-03 18:58:55 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-06-03 18:58:57 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-03 18:58:57 +0200
+COMMAND: osctl ct exec podman-a732 sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-03 18:58:58 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:58:58 +0200
+COMMAND: osctl ct del -f --prune podman-a732
+END: 2026-06-03 18:59:01 +0200
+ELAPSED: 2.78s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:podman-a732
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 18:59:01 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 18:59:01 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-06-03 18:59:01 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 18:59:16 +0200
+ELAPSED: 14.72s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

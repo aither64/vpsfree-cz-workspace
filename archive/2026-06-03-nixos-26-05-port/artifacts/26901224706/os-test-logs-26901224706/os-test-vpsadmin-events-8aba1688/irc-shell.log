@@ -1,0 +1,92 @@
+SHELL: 0
+
+START: 2026-06-03 14:04:15 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 14:04:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:15 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 14:04:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:15 +0200
+COMMAND: ip -4 addr show dev eth0 | grep -q '10\.0\.2\.'
+END: 2026-06-03 14:04:15 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:15 +0200
+COMMAND: ip -4 addr show dev eth1 | grep -q '192.168.10.20'
+END: 2026-06-03 14:04:15 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:15 +0200
+COMMAND: curl --silent --fail-with-body http://api.vpsadmin.test/ | grep -q 'API description'
+END: 2026-06-03 14:04:16 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:16 +0200
+COMMAND: systemctl is-active --quiet ngircd
+END: 2026-06-03 14:04:16 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:16 +0200
+COMMAND: systemctl is-active --quiet vpsfree-irc-bot
+END: 2026-06-03 14:04:16 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:16 +0200
+COMMAND: systemctl restart vpsfree-irc-bot
+END: 2026-06-03 14:04:16 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:04:16 +0200
+COMMAND: systemctl is-active --quiet vpsfree-irc-bot
+END: 2026-06-03 14:04:16 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:05:23 +0200
+COMMAND: poweroff
+END: 2026-06-03 14:05:23 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+

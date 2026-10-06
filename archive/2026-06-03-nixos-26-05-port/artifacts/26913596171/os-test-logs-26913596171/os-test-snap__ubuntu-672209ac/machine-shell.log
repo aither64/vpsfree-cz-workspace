@@ -1,0 +1,1249 @@
+SHELL: 0
+
+START: 2026-06-03 23:25:09 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 23:25:09 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:25:09 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 23:25:09 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:25:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:11 +0200
+ELAPSED: 1.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:13 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:14 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:16 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:18 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:19 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:21 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:22 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:23 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:24 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:25 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 23:25:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:27 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 23:25:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:25:29 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 23:25:29 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 23:25:29 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 21:25:29 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 23:25:29 +0200
+COMMAND: osctl ct new --distribution ubuntu --version latest snap-6fbc
+END: 2026-06-03 23:25:38 +0200
+ELAPSED: 9.16s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 23:25:38 +0200
+COMMAND: osctl ct unset start-menu snap-6fbc
+END: 2026-06-03 23:25:38 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:25:38 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 snap-6fbc eth0
+END: 2026-06-03 23:25:39 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:25:39 +0200
+COMMAND: osctl ct devices add -p snap-6fbc char 10 229 rwm /dev/fuse
+END: 2026-06-03 23:25:40 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:25:40 +0200
+COMMAND: osctl ct set dns-resolver snap-6fbc 1.1.1.1
+END: 2026-06-03 23:25:40 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:25:40 +0200
+COMMAND: osctl ct start snap-6fbc
+END: 2026-06-03 23:25:42 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 23:25:42 +0200
+COMMAND: osctl ct exec snap-6fbc sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:25:44 +0200
+ELAPSED: 1.52s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:25:43--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:25:45 +0200
+COMMAND: osctl ct exec snap-6fbc sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:25:46 +0200
+ELAPSED: 1.4s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:25:46--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:25:47 +0200
+COMMAND: osctl ct exec snap-6fbc sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:25:48 +0200
+ELAPSED: 1.5s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:25:48--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:25:49 +0200
+COMMAND: osctl ct exec snap-6fbc sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:25:51 +0200
+ELAPSED: 1.54s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:25:51--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:25:52 +0200
+COMMAND: osctl ct exec snap-6fbc sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:25:53 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=1.57 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.567/1.567/1.567/0.000 ms
+---
+
+START: 2026-06-03 23:25:53 +0200
+COMMAND: osctl ct exec snap-6fbc apt-get update -y
+END: 2026-06-03 23:25:56 +0200
+ELAPSED: 2.97s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu resolute InRelease
+Get:2 http://cz.archive.ubuntu.com/ubuntu resolute-security InRelease [137 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu resolute-security/main amd64 Packages [182 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu resolute-security/main Translation-en [49.0 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu resolute-security/restricted amd64 Packages [193 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu resolute-security/restricted Translation-en [34.2 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu resolute-security/universe amd64 Packages [94.0 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu resolute-security/universe Translation-en [28.3 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main amd64 Packages [197 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [51.5 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu resolute-updates/universe amd64 Packages [98.6 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [29.6 kB]
+Fetched 1231 kB in 0s (5238 kB/s)
+Reading package lists...
+---
+
+START: 2026-06-03 23:25:56 +0200
+COMMAND: osctl ct exec snap-6fbc apt-get -y install snapd
+END: 2026-06-03 23:26:10 +0200
+ELAPSED: 14.08s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Solving dependencies...
+The following additional packages will be installed:
+  apparmor dirmngr gnupg gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client
+  gpgconf gpgsm libassuan9 libksba8 libldap-common libldap2 libnpth0t64
+  libsasl2-2 libsasl2-modules libsasl2-modules-db pinentry-curses
+  squashfs-tools
+Suggested packages:
+  apparmor-profiles-extra apparmor-utils pinentry-gnome3 tor gpg-wks-server
+  parcimonie xloadimage scdaemon tpm2daemon libsasl2-modules-gssapi-mit
+  | libsasl2-modules-gssapi-heimdal libsasl2-modules-ldap libsasl2-modules-otp
+  libsasl2-modules-sql pinentry-doc zenity | kdialog
+The following NEW packages will be installed:
+  apparmor dirmngr gnupg gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client
+  gpgconf gpgsm libassuan9 libksba8 libldap-common libldap2 libnpth0t64
+  libsasl2-2 libsasl2-modules libsasl2-modules-db pinentry-curses snapd
+  squashfs-tools
+0 upgraded, 21 newly installed, 0 to remove and 0 not upgraded.
+Need to get 45.1 MB of archives.
+After this operation, 158 MB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 apparmor amd64 5.0.0~beta1-0ubuntu7 [375 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libassuan9 amd64 3.0.2-2build1 [41.3 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpgconf amd64 2.4.8-4ubuntu3 [111 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libksba8 amd64 1.6.7-2build1 [125 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-9ubuntu3 [21.1 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-9ubuntu3 [54.0 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libldap-common all 2.6.10+dfsg-1ubuntu5 [36.0 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libldap2 amd64 2.6.10+dfsg-1ubuntu5 [204 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libnpth0t64 amd64 1.8-3build1 [9302 B]
+Get:10 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 dirmngr amd64 2.4.8-4ubuntu3 [327 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg amd64 2.4.8-4ubuntu3 [637 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 pinentry-curses amd64 1.3.2-3ubuntu1 [41.1 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg-agent amd64 2.4.8-4ubuntu3 [236 kB]
+Get:14 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpgsm amd64 2.4.8-4ubuntu3 [239 kB]
+Get:15 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg all 2.4.8-4ubuntu3 [311 kB]
+Get:16 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg-l10n all 2.4.8-4ubuntu3 [73.5 kB]
+Get:17 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg-utils amd64 2.4.8-4ubuntu3 [132 kB]
+Get:18 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg-wks-client amd64 2.4.8-4ubuntu3 [71.9 kB]
+Get:19 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-modules amd64 2.1.28+dfsg1-9ubuntu3 [71.3 kB]
+Get:20 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 squashfs-tools amd64 1:4.7.5-1 [228 kB]
+Get:21 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main amd64 snapd amd64 2.75.2+ubuntu26.04.2 [41.8 MB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 21.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Preconfiguring packages ...
+Fetched 45.1 MB in 1s (77.4 MB/s)
+Selecting previously unselected package apparmor.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 24657 files and directories currently installed.)
+Preparing to unpack .../00-apparmor_5.0.0~beta1-0ubuntu7_amd64.deb ...
+Unpacking apparmor (5.0.0~beta1-0ubuntu7) ...
+Selecting previously unselected package libassuan9:amd64.
+Preparing to unpack .../01-libassuan9_3.0.2-2build1_amd64.deb ...
+Unpacking libassuan9:amd64 (3.0.2-2build1) ...
+Selecting previously unselected package gpgconf.
+Preparing to unpack .../02-gpgconf_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpgconf (2.4.8-4ubuntu3) ...
+Selecting previously unselected package libksba8:amd64.
+Preparing to unpack .../03-libksba8_1.6.7-2build1_amd64.deb ...
+Unpacking libksba8:amd64 (1.6.7-2build1) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../04-libsasl2-modules-db_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../05-libsasl2-2_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package libldap-common.
+Preparing to unpack .../06-libldap-common_2.6.10+dfsg-1ubuntu5_all.deb ...
+Unpacking libldap-common (2.6.10+dfsg-1ubuntu5) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../07-libldap2_2.6.10+dfsg-1ubuntu5_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-1ubuntu5) ...
+Selecting previously unselected package libnpth0t64:amd64.
+Preparing to unpack .../08-libnpth0t64_1.8-3build1_amd64.deb ...
+Unpacking libnpth0t64:amd64 (1.8-3build1) ...
+Selecting previously unselected package dirmngr.
+Preparing to unpack .../09-dirmngr_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking dirmngr (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpg.
+Preparing to unpack .../10-gpg_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg (2.4.8-4ubuntu3) ...
+Selecting previously unselected package pinentry-curses.
+Preparing to unpack .../11-pinentry-curses_1.3.2-3ubuntu1_amd64.deb ...
+Unpacking pinentry-curses (1.3.2-3ubuntu1) ...
+Selecting previously unselected package gpg-agent.
+Preparing to unpack .../12-gpg-agent_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg-agent (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpgsm.
+Preparing to unpack .../13-gpgsm_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpgsm (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg.
+Preparing to unpack .../14-gnupg_2.4.8-4ubuntu3_all.deb ...
+Unpacking gnupg (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg-l10n.
+Preparing to unpack .../15-gnupg-l10n_2.4.8-4ubuntu3_all.deb ...
+Unpacking gnupg-l10n (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg-utils.
+Preparing to unpack .../16-gnupg-utils_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gnupg-utils (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpg-wks-client.
+Preparing to unpack .../17-gpg-wks-client_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg-wks-client (2.4.8-4ubuntu3) ...
+Selecting previously unselected package libsasl2-modules:amd64.
+Preparing to unpack .../18-libsasl2-modules_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-modules:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package squashfs-tools.
+Preparing to unpack .../19-squashfs-tools_1%3a4.7.5-1_amd64.deb ...
+Unpacking squashfs-tools (1:4.7.5-1) ...
+Selecting previously unselected package snapd.
+Preparing to unpack .../20-snapd_2.75.2+ubuntu26.04.2_amd64.deb ...
+Unpacking snapd (2.75.2+ubuntu26.04.2) ...
+Setting up libksba8:amd64 (1.6.7-2build1) ...
+Setting up libnpth0t64:amd64 (1.8-3build1) ...
+Setting up squashfs-tools (1:4.7.5-1) ...
+Setting up libsasl2-modules:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up libldap-common (2.6.10+dfsg-1ubuntu5) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up apparmor (5.0.0~beta1-0ubuntu7) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Created symlink '/etc/systemd/system/sysinit.target.wants/apparmor.service' → '/usr/lib/systemd/system/apparmor.service'.
+Setting up gnupg-l10n (2.4.8-4ubuntu3) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up libassuan9:amd64 (3.0.2-2build1) ...
+Setting up gpgconf (2.4.8-4ubuntu3) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-1ubuntu5) ...
+Setting up gpg (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/keyboxd.socket' → '/usr/lib/systemd/user/keyboxd.socket'.
+Setting up gnupg-utils (2.4.8-4ubuntu3) ...
+Setting up pinentry-curses (1.3.2-3ubuntu1) ...
+Setting up snapd (2.75.2+ubuntu26.04.2) ...
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.apparmor.service' → '/usr/lib/systemd/system/snapd.apparmor.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.autoimport.service' → '/usr/lib/systemd/system/snapd.autoimport.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.core-fixup.service' → '/usr/lib/systemd/system/snapd.core-fixup.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.recovery-chooser-trigger.service' → '/usr/lib/systemd/system/snapd.recovery-chooser-trigger.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.seeded.service' → '/usr/lib/systemd/system/snapd.seeded.service'.
+Created symlink '/etc/systemd/system/cloud-final.service.wants/snapd.seeded.service' → '/usr/lib/systemd/system/snapd.seeded.service'.
+Unit /usr/lib/systemd/system/snapd.seeded.service is added as a dependency to a non-existent unit cloud-final.service.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.service' → '/usr/lib/systemd/system/snapd.service'.
+Created symlink '/etc/systemd/system/timers.target.wants/snapd.snap-repair.timer' → '/usr/lib/systemd/system/snapd.snap-repair.timer'.
+Created symlink '/etc/systemd/system/sockets.target.wants/snapd.socket' → '/usr/lib/systemd/system/snapd.socket'.
+Created symlink '/etc/systemd/system/final.target.wants/snapd.system-shutdown.service' → '/usr/lib/systemd/system/snapd.system-shutdown.service'.
+snapd.failure.service is a disabled or a static unit, not starting it.
+snapd.gpio-chardev-setup.target is a disabled or a static unit, not starting it.
+snapd.mounts.target is a disabled or a static unit, not starting it.
+snapd.snap-repair.service is a disabled or a static unit, not starting it.
+Setting up gpg-agent (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-browser.socket' → '/usr/lib/systemd/user/gpg-agent-browser.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-extra.socket' → '/usr/lib/systemd/user/gpg-agent-extra.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-ssh.socket' → '/usr/lib/systemd/user/gpg-agent-ssh.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent.socket' → '/usr/lib/systemd/user/gpg-agent.socket'.
+Setting up gpgsm (2.4.8-4ubuntu3) ...
+Setting up dirmngr (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/dirmngr.socket' → '/usr/lib/systemd/user/dirmngr.socket'.
+Setting up gnupg (2.4.8-4ubuntu3) ...
+Setting up gpg-wks-client (2.4.8-4ubuntu3) ...
+Processing triggers for systemd (259.5-0ubuntu3) ...
+Processing triggers for man-db (2.13.1-1build1) ...
+Processing triggers for dbus (1.16.2-2ubuntu4) ...
+Processing triggers for procps (2:4.0.4-9ubuntu1) ...
+Processing triggers for libc-bin (2.43-2ubuntu2) ...
+---
+
+START: 2026-06-03 23:26:25 +0200
+COMMAND: osctl ct exec snap-6fbc snap wait system seed.loaded
+END: 2026-06-03 23:26:27 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:26:27 +0200
+COMMAND: osctl ct exec snap-6fbc snap install hello-world
+END: 2026-06-03 23:26:44 +0200
+ELAPSED: 17.21s
+STATUS: 0
+OUTPUT:
+2026-06-03T23:26:33+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T23:26:34+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T23:26:35+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T23:26:36+02:00 INFO Waiting for automatic snapd restart...
+hello-world 6.4 from Canonical** installed
+Warning: /snap/bin was not found in your $PATH. If you've not restarted
+         your session since you installed snapd, try doing that. Please see
+         https://forum.snapcraft.io/t/9469 for more details.
+
+---
+
+START: 2026-06-03 23:26:44 +0200
+COMMAND: osctl ct exec snap-6fbc snap run hello-world
+END: 2026-06-03 23:26:46 +0200
+ELAPSED: 1.85s
+STATUS: 0
+OUTPUT:
+Hello World!
+---
+
+START: 2026-06-03 23:26:46 +0200
+COMMAND: osctl ct del -f --prune snap-6fbc
+END: 2026-06-03 23:26:52 +0200
+ELAPSED: 5.77s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:snap-6fbc
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 23:26:52 +0200
+COMMAND: osctl user del snap-6fbc
+END: 2026-06-03 23:26:53 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-06-03 23:26:53 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 23:26:53 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/26.04/image-stream.tar
+---
+
+START: 2026-06-03 23:26:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:26:54 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 23:26:54 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 23:26:54 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 21:26:54 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 23:26:54 +0200
+COMMAND: osctl user new --no-standalone --map 0:3400000:524288 snap-212d
+END: 2026-06-03 23:26:55 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+Registering user tank:snap-212d
+---
+
+START: 2026-06-03 23:26:55 +0200
+COMMAND: osctl ct new --user snap-212d --distribution ubuntu --version latest snap-212d
+END: 2026-06-03 23:27:09 +0200
+ELAPSED: 14.32s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 23:27:09 +0200
+COMMAND: osctl ct unset start-menu snap-212d
+END: 2026-06-03 23:27:10 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:27:10 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 snap-212d eth0
+END: 2026-06-03 23:27:10 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:27:10 +0200
+COMMAND: osctl ct devices add -p snap-212d char 10 229 rwm /dev/fuse
+END: 2026-06-03 23:27:11 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:27:11 +0200
+COMMAND: osctl ct set dns-resolver snap-212d 1.1.1.1
+END: 2026-06-03 23:27:11 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:27:11 +0200
+COMMAND: osctl ct start snap-212d
+END: 2026-06-03 23:27:13 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 23:27:13 +0200
+COMMAND: osctl ct exec snap-212d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:27:15 +0200
+ELAPSED: 1.48s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:27:15--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:27:16 +0200
+COMMAND: osctl ct exec snap-212d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:27:17 +0200
+ELAPSED: 1.47s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:27:17--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:27:18 +0200
+COMMAND: osctl ct exec snap-212d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:27:20 +0200
+ELAPSED: 1.44s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:27:20--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:27:21 +0200
+COMMAND: osctl ct exec snap-212d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:27:22 +0200
+ELAPSED: 1.56s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+sh: 1: curl: not found
+--2026-06-03 23:27:22--  https://check-online.vpsadminos.org/
+Resolving check-online.vpsadminos.org (check-online.vpsadminos.org)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address 'check-online.vpsadminos.org'
+error: executed command failed
+---
+
+START: 2026-06-03 23:27:23 +0200
+COMMAND: osctl ct exec snap-212d sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-03 23:27:25 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=0.415 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.415/0.415/0.415/0.000 ms
+---
+
+START: 2026-06-03 23:27:25 +0200
+COMMAND: osctl ct exec snap-212d apt-get update -y
+END: 2026-06-03 23:27:28 +0200
+ELAPSED: 3.66s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu resolute InRelease
+Get:2 http://cz.archive.ubuntu.com/ubuntu resolute-security InRelease [137 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu resolute-security/main amd64 Packages [182 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu resolute-security/main Translation-en [49.0 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu resolute-security/restricted amd64 Packages [193 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu resolute-security/restricted Translation-en [34.2 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu resolute-security/universe amd64 Packages [94.0 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu resolute-security/universe Translation-en [28.3 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main amd64 Packages [197 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [51.5 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu resolute-updates/universe amd64 Packages [98.6 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [29.6 kB]
+Fetched 1231 kB in 0s (3856 kB/s)
+Reading package lists...
+---
+
+START: 2026-06-03 23:27:28 +0200
+COMMAND: osctl ct exec snap-212d apt-get -y install screen snapd
+END: 2026-06-03 23:27:43 +0200
+ELAPSED: 14.73s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Solving dependencies...
+The following additional packages will be installed:
+  apparmor dirmngr gnupg gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client
+  gpgconf gpgsm libassuan9 libksba8 libldap-common libldap2 libnpth0t64
+  libsasl2-2 libsasl2-modules libsasl2-modules-db pinentry-curses
+  squashfs-tools
+Suggested packages:
+  apparmor-profiles-extra apparmor-utils pinentry-gnome3 tor gpg-wks-server
+  parcimonie xloadimage scdaemon tpm2daemon libsasl2-modules-gssapi-mit
+  | libsasl2-modules-gssapi-heimdal libsasl2-modules-ldap libsasl2-modules-otp
+  libsasl2-modules-sql pinentry-doc byobu | screenie | iselect zenity
+  | kdialog
+The following NEW packages will be installed:
+  apparmor dirmngr gnupg gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client
+  gpgconf gpgsm libassuan9 libksba8 libldap-common libldap2 libnpth0t64
+  libsasl2-2 libsasl2-modules libsasl2-modules-db pinentry-curses screen snapd
+  squashfs-tools
+0 upgraded, 22 newly installed, 0 to remove and 0 not upgraded.
+Need to get 45.8 MB of archives.
+After this operation, 159 MB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 apparmor amd64 5.0.0~beta1-0ubuntu7 [375 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 screen amd64 4.9.1-3ubuntu2 [649 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libassuan9 amd64 3.0.2-2build1 [41.3 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpgconf amd64 2.4.8-4ubuntu3 [111 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libksba8 amd64 1.6.7-2build1 [125 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-9ubuntu3 [21.1 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-9ubuntu3 [54.0 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libldap-common all 2.6.10+dfsg-1ubuntu5 [36.0 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libldap2 amd64 2.6.10+dfsg-1ubuntu5 [204 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libnpth0t64 amd64 1.8-3build1 [9302 B]
+Get:11 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 dirmngr amd64 2.4.8-4ubuntu3 [327 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg amd64 2.4.8-4ubuntu3 [637 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 pinentry-curses amd64 1.3.2-3ubuntu1 [41.1 kB]
+Get:14 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg-agent amd64 2.4.8-4ubuntu3 [236 kB]
+Get:15 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpgsm amd64 2.4.8-4ubuntu3 [239 kB]
+Get:16 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg all 2.4.8-4ubuntu3 [311 kB]
+Get:17 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg-l10n all 2.4.8-4ubuntu3 [73.5 kB]
+Get:18 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gnupg-utils amd64 2.4.8-4ubuntu3 [132 kB]
+Get:19 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 gpg-wks-client amd64 2.4.8-4ubuntu3 [71.9 kB]
+Get:20 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 libsasl2-modules amd64 2.1.28+dfsg1-9ubuntu3 [71.3 kB]
+Get:21 http://cz.archive.ubuntu.com/ubuntu resolute/main amd64 squashfs-tools amd64 1:4.7.5-1 [228 kB]
+Get:22 http://cz.archive.ubuntu.com/ubuntu resolute-updates/main amd64 snapd amd64 2.75.2+ubuntu26.04.2 [41.8 MB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 22.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Preconfiguring packages ...
+Fetched 45.8 MB in 0s (96.1 MB/s)
+Selecting previously unselected package apparmor.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 24657 files and directories currently installed.)
+Preparing to unpack .../00-apparmor_5.0.0~beta1-0ubuntu7_amd64.deb ...
+Unpacking apparmor (5.0.0~beta1-0ubuntu7) ...
+Selecting previously unselected package screen.
+Preparing to unpack .../01-screen_4.9.1-3ubuntu2_amd64.deb ...
+Unpacking screen (4.9.1-3ubuntu2) ...
+Selecting previously unselected package libassuan9:amd64.
+Preparing to unpack .../02-libassuan9_3.0.2-2build1_amd64.deb ...
+Unpacking libassuan9:amd64 (3.0.2-2build1) ...
+Selecting previously unselected package gpgconf.
+Preparing to unpack .../03-gpgconf_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpgconf (2.4.8-4ubuntu3) ...
+Selecting previously unselected package libksba8:amd64.
+Preparing to unpack .../04-libksba8_1.6.7-2build1_amd64.deb ...
+Unpacking libksba8:amd64 (1.6.7-2build1) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../05-libsasl2-modules-db_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../06-libsasl2-2_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package libldap-common.
+Preparing to unpack .../07-libldap-common_2.6.10+dfsg-1ubuntu5_all.deb ...
+Unpacking libldap-common (2.6.10+dfsg-1ubuntu5) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../08-libldap2_2.6.10+dfsg-1ubuntu5_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-1ubuntu5) ...
+Selecting previously unselected package libnpth0t64:amd64.
+Preparing to unpack .../09-libnpth0t64_1.8-3build1_amd64.deb ...
+Unpacking libnpth0t64:amd64 (1.8-3build1) ...
+Selecting previously unselected package dirmngr.
+Preparing to unpack .../10-dirmngr_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking dirmngr (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpg.
+Preparing to unpack .../11-gpg_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg (2.4.8-4ubuntu3) ...
+Selecting previously unselected package pinentry-curses.
+Preparing to unpack .../12-pinentry-curses_1.3.2-3ubuntu1_amd64.deb ...
+Unpacking pinentry-curses (1.3.2-3ubuntu1) ...
+Selecting previously unselected package gpg-agent.
+Preparing to unpack .../13-gpg-agent_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg-agent (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpgsm.
+Preparing to unpack .../14-gpgsm_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpgsm (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg.
+Preparing to unpack .../15-gnupg_2.4.8-4ubuntu3_all.deb ...
+Unpacking gnupg (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg-l10n.
+Preparing to unpack .../16-gnupg-l10n_2.4.8-4ubuntu3_all.deb ...
+Unpacking gnupg-l10n (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gnupg-utils.
+Preparing to unpack .../17-gnupg-utils_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gnupg-utils (2.4.8-4ubuntu3) ...
+Selecting previously unselected package gpg-wks-client.
+Preparing to unpack .../18-gpg-wks-client_2.4.8-4ubuntu3_amd64.deb ...
+Unpacking gpg-wks-client (2.4.8-4ubuntu3) ...
+Selecting previously unselected package libsasl2-modules:amd64.
+Preparing to unpack .../19-libsasl2-modules_2.1.28+dfsg1-9ubuntu3_amd64.deb ...
+Unpacking libsasl2-modules:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Selecting previously unselected package squashfs-tools.
+Preparing to unpack .../20-squashfs-tools_1%3a4.7.5-1_amd64.deb ...
+Unpacking squashfs-tools (1:4.7.5-1) ...
+Selecting previously unselected package snapd.
+Preparing to unpack .../21-snapd_2.75.2+ubuntu26.04.2_amd64.deb ...
+Unpacking snapd (2.75.2+ubuntu26.04.2) ...
+Setting up libksba8:amd64 (1.6.7-2build1) ...
+Setting up libnpth0t64:amd64 (1.8-3build1) ...
+Setting up squashfs-tools (1:4.7.5-1) ...
+Setting up libsasl2-modules:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up screen (4.9.1-3ubuntu2) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Setting up libldap-common (2.6.10+dfsg-1ubuntu5) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up apparmor (5.0.0~beta1-0ubuntu7) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Created symlink '/etc/systemd/system/sysinit.target.wants/apparmor.service' → '/usr/lib/systemd/system/apparmor.service'.
+Setting up gnupg-l10n (2.4.8-4ubuntu3) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-9ubuntu3) ...
+Setting up libassuan9:amd64 (3.0.2-2build1) ...
+Setting up gpgconf (2.4.8-4ubuntu3) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-1ubuntu5) ...
+Setting up gpg (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/keyboxd.socket' → '/usr/lib/systemd/user/keyboxd.socket'.
+Setting up gnupg-utils (2.4.8-4ubuntu3) ...
+Setting up pinentry-curses (1.3.2-3ubuntu1) ...
+Setting up snapd (2.75.2+ubuntu26.04.2) ...
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.apparmor.service' → '/usr/lib/systemd/system/snapd.apparmor.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.autoimport.service' → '/usr/lib/systemd/system/snapd.autoimport.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.core-fixup.service' → '/usr/lib/systemd/system/snapd.core-fixup.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.recovery-chooser-trigger.service' → '/usr/lib/systemd/system/snapd.recovery-chooser-trigger.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.seeded.service' → '/usr/lib/systemd/system/snapd.seeded.service'.
+Created symlink '/etc/systemd/system/cloud-final.service.wants/snapd.seeded.service' → '/usr/lib/systemd/system/snapd.seeded.service'.
+Unit /usr/lib/systemd/system/snapd.seeded.service is added as a dependency to a non-existent unit cloud-final.service.
+Created symlink '/etc/systemd/system/multi-user.target.wants/snapd.service' → '/usr/lib/systemd/system/snapd.service'.
+Created symlink '/etc/systemd/system/timers.target.wants/snapd.snap-repair.timer' → '/usr/lib/systemd/system/snapd.snap-repair.timer'.
+Created symlink '/etc/systemd/system/sockets.target.wants/snapd.socket' → '/usr/lib/systemd/system/snapd.socket'.
+Created symlink '/etc/systemd/system/final.target.wants/snapd.system-shutdown.service' → '/usr/lib/systemd/system/snapd.system-shutdown.service'.
+snapd.failure.service is a disabled or a static unit, not starting it.
+snapd.gpio-chardev-setup.target is a disabled or a static unit, not starting it.
+snapd.mounts.target is a disabled or a static unit, not starting it.
+snapd.snap-repair.service is a disabled or a static unit, not starting it.
+Setting up gpg-agent (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-browser.socket' → '/usr/lib/systemd/user/gpg-agent-browser.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-extra.socket' → '/usr/lib/systemd/user/gpg-agent-extra.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent-ssh.socket' → '/usr/lib/systemd/user/gpg-agent-ssh.socket'.
+Created symlink '/etc/systemd/user/sockets.target.wants/gpg-agent.socket' → '/usr/lib/systemd/user/gpg-agent.socket'.
+Setting up gpgsm (2.4.8-4ubuntu3) ...
+Setting up dirmngr (2.4.8-4ubuntu3) ...
+Created symlink '/etc/systemd/user/sockets.target.wants/dirmngr.socket' → '/usr/lib/systemd/user/dirmngr.socket'.
+Setting up gnupg (2.4.8-4ubuntu3) ...
+Setting up gpg-wks-client (2.4.8-4ubuntu3) ...
+Processing triggers for systemd (259.5-0ubuntu3) ...
+Processing triggers for man-db (2.13.1-1build1) ...
+Processing triggers for dbus (1.16.2-2ubuntu4) ...
+Processing triggers for procps (2:4.0.4-9ubuntu1) ...
+Processing triggers for debianutils (5.23.2build1) ...
+Processing triggers for libc-bin (2.43-2ubuntu2) ...
+---
+
+START: 2026-06-03 23:27:58 +0200
+COMMAND: osctl ct exec snap-212d snap wait system seed.loaded
+END: 2026-06-03 23:28:00 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:28:00 +0200
+COMMAND: osctl ct exec snap-212d snap install lxd
+END: 2026-06-03 23:28:24 +0200
+ELAPSED: 23.77s
+STATUS: 0
+OUTPUT:
+2026-06-03T23:28:06+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T23:28:07+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T23:28:08+02:00 INFO Waiting for automatic snapd restart...
+2026-06-03T23:28:09+02:00 INFO Waiting for automatic snapd restart...
+lxd (5.21/stable) 5.21.4-aee7e08 from Canonical** installed
+Warning: /snap/bin was not found in your $PATH. If you've not restarted
+         your session since you installed snapd, try doing that. Please see
+         https://forum.snapcraft.io/t/9469 for more details.
+
+---
+
+START: 2026-06-03 23:28:24 +0200
+COMMAND: osctl ct exec snap-212d /snap/bin/lxd init --auto
+END: 2026-06-03 23:28:34 +0200
+ELAPSED: 10.74s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:28:34 +0200
+COMMAND: osctl ct exec snap-212d screen -d -m /bin/sh -c '/snap/bin/lxc launch ubuntu:22.04 u1 ; echo $? > /lxc.status'
+END: 2026-06-03 23:28:36 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:28:36 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:28:37 +0200
+ELAPSED: 1.56s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:28:38 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:28:42 +0200
+ELAPSED: 3.31s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:28:43 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:28:46 +0200
+ELAPSED: 3.26s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:28:47 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:28:50 +0200
+ELAPSED: 3.32s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:28:51 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:28:55 +0200
+ELAPSED: 3.68s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:28:56 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:28:59 +0200
+ELAPSED: 3.5s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:29:00 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:29:04 +0200
+ELAPSED: 3.43s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:29:05 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:29:09 +0200
+ELAPSED: 4.03s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:29:10 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:29:13 +0200
+ELAPSED: 3.04s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 23:29:14 +0200
+COMMAND: osctl ct exec snap-212d cat /lxc.status
+END: 2026-06-03 23:29:17 +0200
+ELAPSED: 2.98s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-03 23:29:32 +0200
+COMMAND: osctl ct exec snap-212d /snap/bin/lxc info u1
+END: 2026-06-03 23:29:34 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+Name: u1
+Status: RUNNING
+Type: container
+Architecture: x86_64
+PID: 3149
+Created: 2026/06/03 23:28 CEST
+Last Used: 2026/06/03 23:29 CEST
+
+Resources:
+  Processes: 49
+  Disk usage:
+    root: 0B
+  Disk total:
+    root: 0B
+  CPU usage:
+    CPU usage (in seconds): 25
+  Memory usage:
+    Memory (current): 215.51MiB
+  Network usage:
+    eth0:
+      Type: broadcast
+      State: UP
+      Host interface: vetha6130d9f
+      MAC address: 00:16:3e:b1:7d:1e
+      MTU: 1500
+      Bytes received: 367.99kB
+      Bytes sent: 14.80kB
+      Packets received: 202
+      Packets sent: 144
+      IP addresses:
+        inet:  10.86.24.212/24 (global)
+        inet6: fd42:7488:fa14:551a:216:3eff:feb1:7d1e/64 (global)
+        inet6: fe80::216:3eff:feb1:7d1e/64 (link)
+    gre0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1476
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    gretap0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1462
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    ip6tnl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
+      MTU: 1452
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    lo:
+      Type: loopback
+      State: UP
+      MTU: 65536
+      Bytes received: 1.66kB
+      Bytes sent: 1.66kB
+      Packets received: 16
+      Packets sent: 16
+      IP addresses:
+        inet:  127.0.0.1/8 (local)
+        inet6: ::1/128 (local)
+    tunl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1480
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    erspan0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1450
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+---
+
+START: 2026-06-03 23:29:34 +0200
+COMMAND: osctl ct del -f --prune snap-212d
+END: 2026-06-03 23:29:44 +0200
+ELAPSED: 10.09s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:snap-212d
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 23:29:44 +0200
+COMMAND: osctl user del snap-212d
+END: 2026-06-03 23:29:44 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-06-03 23:29:44 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 23:29:45 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/26.04/image-stream.tar
+---
+
+START: 2026-06-03 23:29:45 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 23:29:59 +0200
+ELAPSED: 14.45s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

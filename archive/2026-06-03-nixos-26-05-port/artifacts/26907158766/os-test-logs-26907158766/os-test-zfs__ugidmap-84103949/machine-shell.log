@@ -1,0 +1,404 @@
+SHELL: 0
+
+START: 2026-06-03 20:09:09 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 20:09:09 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:09 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 20:09:09 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:09 +0200
+COMMAND: sv check pool-tank
+END: 2026-06-03 20:09:17 +0200
+ELAPSED: 7.73s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 805) 7s
+---
+
+START: 2026-06-03 20:09:18 +0200
+COMMAND: sv check pool-tank
+END: 2026-06-03 20:09:26 +0200
+ELAPSED: 7.71s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 805) 16s
+---
+
+START: 2026-06-03 20:09:27 +0200
+COMMAND: sv check pool-tank
+END: 2026-06-03 20:09:28 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+ok: down: pool-tank: 0s, normally up
+---
+
+START: 2026-06-03 20:09:28 +0200
+COMMAND: mkdir "/ugidmap"
+END: 2026-06-03 20:09:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:28 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/1fcb34ac-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--run.sh" "/ugidmap/run.sh"
+END: 2026-06-03 20:09:28 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:28 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/a5ad09cc-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--setup.sh" "/ugidmap/setup.sh"
+END: 2026-06-03 20:09:28 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:28 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/ac6b0f3e-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--cleanup.sh" "/ugidmap/cleanup.sh"
+END: 2026-06-03 20:09:28 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:28 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/9802c1d0-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--defaults.sh" "/ugidmap/defaults.sh"
+END: 2026-06-03 20:09:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:28 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/9a010776-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--properties.sh" "/ugidmap/properties.sh"
+END: 2026-06-03 20:09:28 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:28 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/701f2e81-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--send-recv.sh" "/ugidmap/send-recv.sh"
+END: 2026-06-03 20:09:29 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:29 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/31814006-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--mappings.sh" "/ugidmap/mappings.sh"
+END: 2026-06-03 20:09:29 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:29 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/d408ca96-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--acl-host.sh" "/ugidmap/acl-host.sh"
+END: 2026-06-03 20:09:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:29 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/55b4e5cc-nix--store--lqihi81xwajik7zd59l53qfw5cgwmj0i-ugidmap--acl-ct.sh" "/ugidmap/acl-ct.sh"
+END: 2026-06-03 20:09:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:29 +0200
+COMMAND: chmod +x /ugidmap/run.sh
+END: 2026-06-03 20:09:29 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:09:29 +0200
+COMMAND: /ugidmap/run.sh /ugidmap defaults
+END: 2026-06-03 20:09:29 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+useradd warning: zfsugidmap's uid 100000 outside of the UID_MIN 1000 and UID_MAX 29999 range.
+
+---
+
+START: 2026-06-03 20:09:29 +0200
+COMMAND: /ugidmap/run.sh /ugidmap properties
+END: 2026-06-03 20:09:31 +0200
+ELAPSED: 2.0s
+STATUS: 0
+OUTPUT:
+useradd warning: zfsugidmap's uid 100000 outside of the UID_MIN 1000 and UID_MAX 29999 range.
+cannot set property for 'tank/testfs/both': 'uidmap' cannot be changed while the file system is mounted
+cannot set property for 'tank/testfs/both': 'gidmap' cannot be changed while the file system is mounted
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'uidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+cannot set property for 'tank/testfs/both': 'gidmap' is not in the expected format
+
+---
+
+START: 2026-06-03 20:09:31 +0200
+COMMAND: /ugidmap/run.sh /ugidmap send-recv
+END: 2026-06-03 20:09:33 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+useradd warning: zfsugidmap's uid 100000 outside of the UID_MIN 1000 and UID_MAX 29999 range.
+
+---
+
+START: 2026-06-03 20:09:33 +0200
+COMMAND: /ugidmap/run.sh /ugidmap mappings
+END: 2026-06-03 20:09:34 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+useradd warning: zfsugidmap's uid 100000 outside of the UID_MIN 1000 and UID_MAX 29999 range.
+
+---
+
+START: 2026-06-03 20:09:34 +0200
+COMMAND: /ugidmap/run.sh /ugidmap acl-host
+END: 2026-06-03 20:09:35 +0200
+ELAPSED: 1.34s
+STATUS: 0
+OUTPUT:
+useradd warning: zfsugidmap's uid 100000 outside of the UID_MIN 1000 and UID_MAX 29999 range.
+getfacl: Removing leading '/' from absolute path names
+user:33:rwx
+getfacl: Removing leading '/' from absolute path names
+group:66:rwx
+getfacl: Removing leading '/' from absolute path names
+user:100033:rwx
+getfacl: Removing leading '/' from absolute path names
+group:200066:rwx
+getfacl: Removing leading '/' from absolute path names
+default:user:33:rw-
+getfacl: Removing leading '/' from absolute path names
+default:group:66:rw-
+getfacl: Removing leading '/' from absolute path names
+user:33:rw-
+getfacl: Removing leading '/' from absolute path names
+group:66:rw-
+getfacl: Removing leading '/' from absolute path names
+user:100033:rwx
+getfacl: Removing leading '/' from absolute path names
+group:200066:rwx
+getfacl: Removing leading '/' from absolute path names
+user:100033:rwx
+getfacl: Removing leading '/' from absolute path names
+group:200066:rwx
+getfacl: Removing leading '/' from absolute path names
+default:user:100033:rw-
+getfacl: Removing leading '/' from absolute path names
+default:group:200066:rw-
+getfacl: Removing leading '/' from absolute path names
+user:100033:rw-
+getfacl: Removing leading '/' from absolute path names
+group:200066:rw-
+getfacl: Removing leading '/' from absolute path names
+user:100033:rwx
+getfacl: Removing leading '/' from absolute path names
+group:200066:rwx
+getfacl: Removing leading '/' from absolute path names
+user:100033:rwx
+getfacl: Removing leading '/' from absolute path names
+group:200066:rwx
+getfacl: Removing leading '/' from absolute path names
+user:100033:rw-
+getfacl: Removing leading '/' from absolute path names
+group:200066:rw-
+getfacl: Removing leading '/' from absolute path names
+user:33:rwx
+getfacl: Removing leading '/' from absolute path names
+group:66:rwx
+getfacl: Removing leading '/' from absolute path names
+user:100033:rwx
+getfacl: Removing leading '/' from absolute path names
+group:200066:rwx
+getfacl: Removing leading '/' from absolute path names
+user:33:rwx
+getfacl: Removing leading '/' from absolute path names
+group:66:rwx
+getfacl: Removing leading '/' from absolute path names
+user:33:rwx
+getfacl: Removing leading '/' from absolute path names
+group:66:rwx
+getfacl: Removing leading '/' from absolute path names
+default:user:33:rw-
+getfacl: Removing leading '/' from absolute path names
+default:group:66:rw-
+getfacl: Removing leading '/' from absolute path names
+user:33:rw-
+getfacl: Removing leading '/' from absolute path names
+group:66:rw-
+getfacl: Removing leading '/' from absolute path names
+user:33:rw-
+getfacl: Removing leading '/' from absolute path names
+group:66:rw-
+
+---
+
+START: 2026-06-03 20:09:35 +0200
+COMMAND: /ugidmap/run.sh /ugidmap acl-ct
+END: 2026-06-03 20:10:05 +0200
+ELAPSED: 29.52s
+STATUS: 0
+OUTPUT:
+Registering user tank:testuser
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+Starting container
+Connecting console
+Waiting for the container to start
+(1/2) Installing acl-libs (2.3.2-r1)
+(2/2) Installing acl (2.3.2-r1)
+Executing busybox-1.37.0-r30.trigger
+OK: 16.6 MiB in 40 packages
+ls: can't open '/acl/user': Permission denied
+total 0
+ls: can't open '/acl/group': Permission denied
+total 0
+total 0
+total 0
+ls: can't open '/acl/group': Permission denied
+total 0
+total 0
+getfacl: Removing leading '/' from absolute path names
+user:testuser:r-x
+getfacl: Removing leading '/' from absolute path names
+group:testgroup:r-x
+total 0
+ls: can't open '/acl/user': Permission denied
+total 0
+ls: can't open '/acl/group': Permission denied
+total 0
+total 0
+Stopping container
+getfacl: Removing leading '/' from absolute path names
+user:1000:r-x
+getfacl: Removing leading '/' from absolute path names
+group:2000:r-x
+getfacl: Removing leading '/' from absolute path names
+default:user:1000:r-x
+getfacl: Removing leading '/' from absolute path names
+default:group::r-x
+getfacl: Removing leading '/' from absolute path names
+user:1000:r-x
+getfacl: Removing leading '/' from absolute path names
+group::r-x
+Starting container
+Connecting console
+Waiting for the container to start
+total 0
+total 0
+getfacl: Removing leading '/' from absolute path names
+user:testuser:r-x
+getfacl: Removing leading '/' from absolute path names
+group:testgroup:r-x
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Reconfiguring LXC usernet
+Unregistering user tank:testuser
+---
+
+START: 2026-06-03 20:10:05 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 20:10:05 +0200
+ELAPSED: 0.8s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

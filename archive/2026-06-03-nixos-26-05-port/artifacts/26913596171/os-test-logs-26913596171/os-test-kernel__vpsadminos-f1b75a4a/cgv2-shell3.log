@@ -1,0 +1,258 @@
+SHELL: 3
+
+START: 2026-06-03 23:52:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:52:00 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 23:52:00 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 23:52:00 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 21:52:00 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 23:52:00 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 23:52:01 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+kloadavg1
+kloadavg2
+ktmpfsv2-ab56
+kcpuv2-ad37
+kmemv2-mem256
+---
+
+START: 2026-06-03 23:52:01 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-attrs-6486
+END: 2026-06-03 23:52:03 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 23:52:03 +0200
+COMMAND: osctl ct start kmisc-attrs-6486
+END: 2026-06-03 23:52:04 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 23:52:04 +0200
+COMMAND: osctl ct exec kmisc-attrs-6486 touch /immutable.file
+END: 2026-06-03 23:52:06 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:52:06 +0200
+COMMAND: osctl ct exec kmisc-attrs-6486 chattr -i /immutable.file
+END: 2026-06-03 23:52:07 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /immutable.file: Permission denied
+---
+
+START: 2026-06-03 23:52:07 +0200
+COMMAND: osctl ct exec kmisc-attrs-6486 chattr +i /immutable.file
+END: 2026-06-03 23:52:08 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /immutable.file: Permission denied
+---
+
+START: 2026-06-03 23:52:08 +0200
+COMMAND: osctl ct exec kmisc-attrs-6486 touch /append-only.file
+END: 2026-06-03 23:52:10 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:52:10 +0200
+COMMAND: osctl ct exec kmisc-attrs-6486 chattr -a /append-only.file
+END: 2026-06-03 23:52:11 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /append-only.file: Permission denied
+---
+
+START: 2026-06-03 23:52:11 +0200
+COMMAND: osctl ct exec kmisc-attrs-6486 chattr +a /append-only.file
+END: 2026-06-03 23:52:13 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+chattr: setting flags on /append-only.file: Permission denied
+---
+
+START: 2026-06-03 23:52:13 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 23:52:14 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+kloadavg1
+kloadavg2
+ktmpfsv2-ab56
+kcpuv2-ad37
+kmemv2-mem256
+kmisc-attrs-6486
+---
+
+START: 2026-06-03 23:52:14 +0200
+COMMAND: osctl ct del -f --prune kmisc-attrs-6486 >/dev/null 2>&1 || true
+END: 2026-06-03 23:52:18 +0200
+ELAPSED: 4.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 23:52:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 23:52:19 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 23:52:19 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 23:52:19 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 21:52:19 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 23:52:19 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 23:52:19 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+kloadavg1
+kloadavg2
+ktmpfsv2-ab56
+kcpuv2-ad37
+kmisc-proc-6233
+---
+
+START: 2026-06-03 23:52:19 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-nice-836b
+END: 2026-06-03 23:52:21 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 23:52:21 +0200
+COMMAND: osctl ct start kmisc-nice-836b
+END: 2026-06-03 23:52:22 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 23:52:22 +0200
+COMMAND: osctl ct exec kmisc-nice-836b nice -n 19 uptime
+END: 2026-06-03 23:52:24 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+ 23:52:24 up 0 min,  0 users,  load average: 13.99, 5.24, 2.00
+---
+
+START: 2026-06-03 23:52:24 +0200
+COMMAND: osctl ct exec kmisc-nice-836b nice -n -20 uptime
+END: 2026-06-03 23:52:25 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+ 23:52:25 up 0 min,  0 users,  load average: 14.55, 5.50, 2.10
+---
+
+START: 2026-06-03 23:52:25 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-03 23:52:26 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+kloadavg1
+kloadavg2
+ktmpfsv2-ab56
+kcpuv2-ad37
+kmisc-proc-6233
+kmisc-nice-836b
+---
+
+START: 2026-06-03 23:52:26 +0200
+COMMAND: osctl ct del -f --prune kmisc-nice-836b >/dev/null 2>&1 || true
+END: 2026-06-03 23:52:28 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+
+---
+

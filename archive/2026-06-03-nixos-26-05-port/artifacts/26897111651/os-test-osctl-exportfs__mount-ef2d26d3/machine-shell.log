@@ -1,0 +1,759 @@
+SHELL: 0
+
+START: 2026-06-02 02:16:51 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-02 02:16:51 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:16:51 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-02 02:16:51 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:16:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:16:53 +0200
+ELAPSED: 2.25s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:16:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:16:55 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:16:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:16:57 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:16:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:16:58 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:16:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:17:00 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:17:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:17:02 +0200
+ELAPSED: 0.81s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:17:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:17:03 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:17:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:17:05 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:17:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:17:06 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-02 02:17:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:17:08 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-02 02:17:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:17:10 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-02 02:17:10 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-02 02:17:10 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 02 Jun 2026 00:17:10 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-02 02:17:10 +0200
+COMMAND: osctl ct new --distribution alpine testct1
+END: 2026-06-02 02:17:12 +0200
+ELAPSED: 2.51s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-02 02:17:12 +0200
+COMMAND: osctl ct unset start-menu testct1
+END: 2026-06-02 02:17:13 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:13 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp testct1 eth0
+END: 2026-06-02 02:17:13 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:13 +0200
+COMMAND: osctl ct netif ip add testct1 eth0 192.168.1.21/24
+END: 2026-06-02 02:17:14 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:14 +0200
+COMMAND: osctl ct set dns-resolver testct1 1.1.1.1
+END: 2026-06-02 02:17:15 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:15 +0200
+COMMAND: osctl ct start testct1
+END: 2026-06-02 02:17:17 +0200
+ELAPSED: 1.92s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-02 02:17:17 +0200
+COMMAND: sleep 5
+END: 2026-06-02 02:17:22 +0200
+ELAPSED: 5.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:22 +0200
+COMMAND: osctl ct exec testct1 apk update
+END: 2026-06-02 02:17:24 +0200
+ELAPSED: 2.21s
+STATUS: 0
+OUTPUT:
+v3.23.4-321-gd7ba2f7929f [http://mirror.fel.cvut.cz/alpine/v3.23/main]
+v3.23.4-324-g5fb311142cb [http://mirror.fel.cvut.cz/alpine/v3.23/community]
+OK: 27580 distinct packages available
+---
+
+START: 2026-06-02 02:17:24 +0200
+COMMAND: osctl ct exec testct1 apk add nfs-utils
+END: 2026-06-02 02:17:27 +0200
+ELAPSED: 3.2s
+STATUS: 0
+OUTPUT:
+( 1/33) Installing libtirpc-conf (1.3.5-r1)
+( 2/33) Installing krb5-conf (1.0-r2)
+( 3/33) Installing libcom_err (1.47.3-r0)
+( 4/33) Installing keyutils-libs (1.6.3-r4)
+( 5/33) Installing libverto (0.3.2-r2)
+( 6/33) Installing krb5-libs (1.22.1-r0)
+( 7/33) Installing libtirpc (1.3.5-r1)
+( 8/33) Installing rpcbind (1.2.8-r0)
+  Executing rpcbind-1.2.8-r0.pre-install
+( 9/33) Installing rpcbind-openrc (1.2.8-r0)
+(10/33) Installing libbz2 (1.0.8-r6)
+(11/33) Installing libexpat (2.7.5-r0)
+(12/33) Installing libffi (3.5.2-r0)
+(13/33) Installing gdbm (1.26-r0)
+(14/33) Installing xz-libs (5.8.3-r0)
+(15/33) Installing libgcc (15.2.0-r2)
+(16/33) Installing libstdc++ (15.2.0-r2)
+(17/33) Installing mpdecimal (4.0.1-r0)
+(18/33) Installing libpanelw (6.5_p20251123-r0)
+(19/33) Installing readline (8.3.1-r0)
+(20/33) Installing sqlite-libs (3.51.2-r0)
+(21/33) Installing python3 (3.12.13-r0)
+(22/33) Installing python3-pycache-pyc0 (3.12.13-r0)
+(23/33) Installing pyc (3.12.13-r0)
+(24/33) Installing python3-pyc (3.12.13-r0)
+(25/33) Installing libeconf (0.8.3-r0)
+(26/33) Installing libblkid (2.41.4-r0)
+(27/33) Installing device-mapper-libs (2.03.35-r0)
+(28/33) Installing libevent (2.1.12-r8)
+(29/33) Installing libmount (2.41.4-r0)
+(30/33) Installing libnfsidmap (2.6.4-r6)
+(31/33) Installing libuuid (2.41.4-r0)
+(32/33) Installing nfs-utils (2.6.4-r6)
+(33/33) Installing nfs-utils-openrc (2.6.4-r6)
+Executing busybox-1.37.0-r30.trigger
+OK: 59.9 MiB in 71 packages
+---
+
+START: 2026-06-02 02:17:27 +0200
+COMMAND: osctl ct exec testct1 rc-service rpcbind start
+END: 2026-06-02 02:17:29 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting rpcbind ... [ ok ]
+---
+
+START: 2026-06-02 02:17:29 +0200
+COMMAND: osctl ct exec testct1 rc-service rpc.statd start
+END: 2026-06-02 02:17:30 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+ * Starting NFS statd ... [ ok ]
+---
+
+START: 2026-06-02 02:17:30 +0200
+COMMAND: osctl ct new --distribution alpine testct2
+END: 2026-06-02 02:17:32 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-02 02:17:32 +0200
+COMMAND: osctl ct unset start-menu testct2
+END: 2026-06-02 02:17:33 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:33 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp testct2 eth0
+END: 2026-06-02 02:17:33 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:33 +0200
+COMMAND: osctl ct netif ip add testct2 eth0 192.168.1.22/24
+END: 2026-06-02 02:17:34 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:34 +0200
+COMMAND: osctl ct set dns-resolver testct2 1.1.1.1
+END: 2026-06-02 02:17:34 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:34 +0200
+COMMAND: osctl ct start testct2
+END: 2026-06-02 02:17:36 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-02 02:17:36 +0200
+COMMAND: sleep 5
+END: 2026-06-02 02:17:41 +0200
+ELAPSED: 5.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:41 +0200
+COMMAND: osctl ct exec testct2 apk update
+END: 2026-06-02 02:17:43 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+v3.23.4-321-gd7ba2f7929f [http://mirror.fel.cvut.cz/alpine/v3.23/main]
+v3.23.4-324-g5fb311142cb [http://mirror.fel.cvut.cz/alpine/v3.23/community]
+OK: 27580 distinct packages available
+---
+
+START: 2026-06-02 02:17:43 +0200
+COMMAND: osctl ct exec testct2 apk add nfs-utils
+END: 2026-06-02 02:17:46 +0200
+ELAPSED: 2.98s
+STATUS: 0
+OUTPUT:
+( 1/33) Installing libtirpc-conf (1.3.5-r1)
+( 2/33) Installing krb5-conf (1.0-r2)
+( 3/33) Installing libcom_err (1.47.3-r0)
+( 4/33) Installing keyutils-libs (1.6.3-r4)
+( 5/33) Installing libverto (0.3.2-r2)
+( 6/33) Installing krb5-libs (1.22.1-r0)
+( 7/33) Installing libtirpc (1.3.5-r1)
+( 8/33) Installing rpcbind (1.2.8-r0)
+  Executing rpcbind-1.2.8-r0.pre-install
+( 9/33) Installing rpcbind-openrc (1.2.8-r0)
+(10/33) Installing libbz2 (1.0.8-r6)
+(11/33) Installing libexpat (2.7.5-r0)
+(12/33) Installing libffi (3.5.2-r0)
+(13/33) Installing gdbm (1.26-r0)
+(14/33) Installing xz-libs (5.8.3-r0)
+(15/33) Installing libgcc (15.2.0-r2)
+(16/33) Installing libstdc++ (15.2.0-r2)
+(17/33) Installing mpdecimal (4.0.1-r0)
+(18/33) Installing libpanelw (6.5_p20251123-r0)
+(19/33) Installing readline (8.3.1-r0)
+(20/33) Installing sqlite-libs (3.51.2-r0)
+(21/33) Installing python3 (3.12.13-r0)
+(22/33) Installing python3-pycache-pyc0 (3.12.13-r0)
+(23/33) Installing pyc (3.12.13-r0)
+(24/33) Installing python3-pyc (3.12.13-r0)
+(25/33) Installing libeconf (0.8.3-r0)
+(26/33) Installing libblkid (2.41.4-r0)
+(27/33) Installing device-mapper-libs (2.03.35-r0)
+(28/33) Installing libevent (2.1.12-r8)
+(29/33) Installing libmount (2.41.4-r0)
+(30/33) Installing libnfsidmap (2.6.4-r6)
+(31/33) Installing libuuid (2.41.4-r0)
+(32/33) Installing nfs-utils (2.6.4-r6)
+(33/33) Installing nfs-utils-openrc (2.6.4-r6)
+Executing busybox-1.37.0-r30.trigger
+OK: 59.9 MiB in 71 packages
+---
+
+START: 2026-06-02 02:17:46 +0200
+COMMAND: osctl ct exec testct2 rc-service rpcbind start
+END: 2026-06-02 02:17:48 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting rpcbind ... [ ok ]
+---
+
+START: 2026-06-02 02:17:48 +0200
+COMMAND: osctl ct exec testct2 rc-service rpc.statd start
+END: 2026-06-02 02:17:49 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+ * Starting NFS statd ... [ ok ]
+---
+
+START: 2026-06-02 02:17:49 +0200
+COMMAND: mkdir -p /srv/server1
+END: 2026-06-02 02:17:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:49 +0200
+COMMAND: echo hello > /srv/server1/server1.txt
+END: 2026-06-02 02:17:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:49 +0200
+COMMAND: osctl-exportfs server new --address 10.0.0.10 server1
+END: 2026-06-02 02:17:50 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:50 +0200
+COMMAND: osctl-exportfs export add --directory /srv/server1 --host 192.168.1.21/32 --options fsid=1234 server1
+END: 2026-06-02 02:17:50 +0200
+ELAPSED: 0.43s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:50 +0200
+COMMAND: osctl-exportfs server start server1
+END: 2026-06-02 02:17:51 +0200
+ELAPSED: 0.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:51 +0200
+COMMAND: test -s /run/osctl/exportfs/servers/server1/pid
+END: 2026-06-02 02:17:51 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:52 +0200
+COMMAND: test -s /run/osctl/exportfs/servers/server1/pid
+END: 2026-06-02 02:17:52 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:53 +0200
+COMMAND: test -s /run/osctl/exportfs/servers/server1/pid
+END: 2026-06-02 02:17:53 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:17:53 +0200
+COMMAND: cat /run/osctl/exportfs/servers/server1/pid
+END: 2026-06-02 02:17:53 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+3647
+---
+
+START: 2026-06-02 02:18:03 +0200
+COMMAND: osctl ct exec testct1 mkdir -p /mnt/server1
+END: 2026-06-02 02:18:04 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:04 +0200
+COMMAND: osctl ct exec testct1 mount -v -t nfs 10.0.0.10:/srv/server1 /mnt/server1
+END: 2026-06-02 02:18:06 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:06 +0200
+COMMAND: osctl ct exec testct1 cat /mnt/server1/server1.txt
+END: 2026-06-02 02:18:07 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+hello
+---
+
+START: 2026-06-02 02:18:07 +0200
+COMMAND: rm /proc/3647/root/run/current-system
+END: 2026-06-02 02:18:07 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:07 +0200
+COMMAND: ln -s /nix/store/missing-system /proc/3647/root/run/current-system
+END: 2026-06-02 02:18:07 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:07 +0200
+COMMAND: readlink /proc/3647/root/run/current-system
+END: 2026-06-02 02:18:07 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+/nix/store/missing-system
+---
+
+START: 2026-06-02 02:18:07 +0200
+COMMAND: osctl ct exec testct1 cat /mnt/server1/server1.txt
+END: 2026-06-02 02:18:09 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+hello
+---
+
+START: 2026-06-02 02:18:09 +0200
+COMMAND: mkdir -p /srv/server2
+END: 2026-06-02 02:18:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:09 +0200
+COMMAND: echo second > /srv/server2/server2.txt
+END: 2026-06-02 02:18:09 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:09 +0200
+COMMAND: osctl-exportfs export add --directory /srv/server2 --host 192.168.1.21/32 --options fsid=5678 server1
+END: 2026-06-02 02:18:09 +0200
+ELAPSED: 0.53s
+STATUS: 0
+OUTPUT:
+A, [2026-06-02T02:18:09.645012 #28]   ANY -- : [#<OsCtl::ExportFS::Operations::Export::Add:0x000077c32bf6aa20>] /nix/store/72s8wy00gbk04ayf06shmzcwmbpmks33-nfs-utils-2.8.6/bin/exportfs -i -o fsid\=5678 192.168.1.21/32:/srv/server2
+---
+
+START: 2026-06-02 02:18:09 +0200
+COMMAND: osctl ct exec testct1 mkdir -p /mnt/server2
+END: 2026-06-02 02:18:11 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:11 +0200
+COMMAND: osctl ct exec testct1 mount -v -t nfs 10.0.0.10:/srv/server2 /mnt/server2
+END: 2026-06-02 02:18:12 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:12 +0200
+COMMAND: osctl ct exec testct1 cat /mnt/server2/server2.txt
+END: 2026-06-02 02:18:13 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+second
+---
+
+START: 2026-06-02 02:18:13 +0200
+COMMAND: mkdir -p /srv/server3
+END: 2026-06-02 02:18:14 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:14 +0200
+COMMAND: echo third > /srv/server3/server3.txt
+END: 2026-06-02 02:18:14 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:14 +0200
+COMMAND: osctl-exportfs export add --directory /srv/server3 --host 192.168.1.21/32 --options fsid=9012 server1
+END: 2026-06-02 02:18:14 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+A, [2026-06-02T02:18:14.482977 #33]   ANY -- : [#<OsCtl::ExportFS::Operations::Export::Add:0x000075165699aa70>] /nix/store/72s8wy00gbk04ayf06shmzcwmbpmks33-nfs-utils-2.8.6/bin/exportfs -i -o fsid\=9012 192.168.1.21/32:/srv/server3
+---
+
+START: 2026-06-02 02:18:14 +0200
+COMMAND: exportfs=$(readlink -f $(command -v exportfs)) && nsenter -t 3647 -m -n -r --wd=/ -- $exportfs -u 192.168.1.21/32:/srv/server3
+END: 2026-06-02 02:18:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:14 +0200
+COMMAND: osctl-exportfs export del --as /srv/server3 --host 192.168.1.21/32 server1
+END: 2026-06-02 02:18:15 +0200
+ELAPSED: 0.48s
+STATUS: 0
+OUTPUT:
+A, [2026-06-02T02:18:14.990972 #38]   ANY -- : [#<OsCtl::ExportFS::Operations::Export::Remove:0x00007a4e4241b698>] /nix/store/72s8wy00gbk04ayf06shmzcwmbpmks33-nfs-utils-2.8.6/bin/exportfs -u 192.168.1.21/32:/srv/server3
+---
+
+START: 2026-06-02 02:18:15 +0200
+COMMAND: ! osctl-exportfs export ls server1 | grep -F 'as      = /srv/server3'
+END: 2026-06-02 02:18:15 +0200
+ELAPSED: 0.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:15 +0200
+COMMAND: mountpoint=$(readlink -f $(command -v mountpoint)) && ! nsenter -t 3647 -m -r --wd=/ -- $mountpoint -q /srv/server3
+END: 2026-06-02 02:18:15 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:15 +0200
+COMMAND: osctl ct exec testct2 mkdir -p /mnt/server1
+END: 2026-06-02 02:18:16 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:16 +0200
+COMMAND: osctl ct exec testct2 mount -v -t nfs 10.0.0.10:/srv/server1 /mnt/server1
+END: 2026-06-02 02:18:18 +0200
+ELAPSED: 1.49s
+STATUS: 32
+OUTPUT:
+mount.nfs: access denied by server while mounting 10.0.0.10:/srv/server1
+mount.nfs: access denied by server while mounting 10.0.0.10:/srv/server1
+mount: mounting 10.0.0.10:/srv/server1 on /mnt/server1 failed: Permission denied
+error: executed command failed
+---
+
+START: 2026-06-02 02:18:18 +0200
+COMMAND: pid=$(cat /run/osctl/exportfs/servers/server1/pid 2>/dev/null) && rm -f /proc/$pid/root/run/current-system && ln -s /nix/var/nix/profiles/system /proc/$pid/root/run/current-system || true
+END: 2026-06-02 02:18:18 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:18 +0200
+COMMAND: osctl-exportfs server stop server1
+END: 2026-06-02 02:18:21 +0200
+ELAPSED: 3.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:21 +0200
+COMMAND: osctl-exportfs server del server1
+END: 2026-06-02 02:18:22 +0200
+ELAPSED: 0.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:18:22 +0200
+COMMAND: poweroff -f
+END: 2026-06-02 02:18:26 +0200
+ELAPSED: 4.32s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/2] Stopping container tank:testct1
+[2/2] Stopping container tank:testct2
+Unregistering users, groups and containers
+---
+

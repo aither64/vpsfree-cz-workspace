@@ -1,0 +1,82 @@
+SHELL: 0
+
+START: 2026-06-03 19:04:46 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:04:46 +0200
+ELAPSED: 0.25s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:04:46 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:04:46 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:04:46 +0200
+COMMAND: cat /sys/module/apparmor/parameters/enabled
+END: 2026-06-03 19:04:46 +0200
+ELAPSED: 0.08s
+STATUS: 1
+OUTPUT:
+cat: /sys/module/apparmor/parameters/enabled: No such file or directory
+---
+
+START: 2026-06-03 19:04:46 +0200
+COMMAND: sv check pool-tank
+END: 2026-06-03 19:04:54 +0200
+ELAPSED: 7.85s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 827) 8s
+---
+
+START: 2026-06-03 19:04:55 +0200
+COMMAND: sv check pool-tank
+END: 2026-06-03 19:05:03 +0200
+ELAPSED: 7.76s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 827) 17s
+---
+
+START: 2026-06-03 19:05:04 +0200
+COMMAND: sv check pool-tank
+END: 2026-06-03 19:05:11 +0200
+ELAPSED: 6.89s
+STATUS: 0
+OUTPUT:
+ok: down: pool-tank: 0s, normally up
+---
+
+START: 2026-06-03 19:05:11 +0200
+COMMAND: zfs get -H -o value xattr tank
+END: 2026-06-03 19:05:11 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+on
+---
+
+START: 2026-06-03 19:05:11 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 19:05:12 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

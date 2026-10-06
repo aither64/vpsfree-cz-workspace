@@ -1,0 +1,170 @@
+SHELL: 0
+
+START: 2026-06-03 19:29:10 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:29:10 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:10 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:29:10 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:12 +0200
+ELAPSED: 2.04s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:13 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:15 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:17 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:18 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:20 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:21 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:21 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:23 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:25 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:29:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:26 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:29:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:29:28 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:29:28 +0200
+COMMAND: sv check nfsd
+END: 2026-06-03 19:29:28 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nfsd: (pid 836) 19s
+---
+
+START: 2026-06-03 19:29:28 +0200
+COMMAND: test -d /storage/vpsfree.cz/crashdump
+END: 2026-06-03 19:29:28 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:28 +0200
+COMMAND: zfs share -a
+END: 2026-06-03 19:29:28 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:29:28 +0200
+COMMAND: exportfs -v | tr '\n\t' '  ' | grep -F /storage/vpsfree.cz/crashdump | grep -F 192.168.10.11
+END: 2026-06-03 19:29:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/storage/vpsfree.cz/crashdump   192.168.10.11/32(sync,wdelay,hide,no_subtree_check,mountpoint,sec=sys,rw,secure,no_root_squash,no_all_squash) 
+---
+
+START: 2026-06-03 19:29:49 +0200
+COMMAND: ping -c 1 192.168.10.11
+END: 2026-06-03 19:29:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.10.11 (192.168.10.11) 56(84) bytes of data.
+64 bytes from 192.168.10.11: icmp_seq=1 ttl=64 time=0.963 ms
+
+--- 192.168.10.11 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.963/0.963/0.963/0.000 ms
+---
+

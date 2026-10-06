@@ -1,0 +1,218 @@
+SHELL: 0
+
+START: 2026-06-03 16:33:58 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 16:33:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:33:58 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 16:33:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:33:58 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:33:58 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1571) 71s
+---
+
+START: 2026-06-03 16:33:58 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:33:58 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1571) 71s
+---
+
+START: 2026-06-03 16:33:58 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:33:58 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:33:59 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:33:59 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1571) 72s
+---
+
+START: 2026-06-03 16:33:59 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:33:59 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:34:00 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:34:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1571) 73s
+---
+
+START: 2026-06-03 16:34:00 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:34:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:34:00 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 16:34:00 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 16:34:06 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 16:34:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:34:06 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 16:34:07 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 16:34:07 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 16:34:07 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 16:34:07 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 16:34:08 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:35:14 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/snapshot-download-transfer
+END: 2026-06-03 16:35:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/snapshot-download-transfer
+---
+
+START: 2026-06-03 16:35:51 +0200
+COMMAND: bash -lc gzip\ -dc\ /tank/backup/vpsadmin/download/172ed1d0f31bb2d143e55d42cdf2f69ab53f4f1d88c35b819f4829b2e6997c5c74fe7c90f0e146ae4ffcd84a4c5eca3d2531/snapshot-download-transfer__2026-06-03T14-35-17__2026-06-03T14-35-37.inc.dat.gz\ \|\ zstreamdump\ -v\ 2\>\&1
+END: 2026-06-03 16:35:51 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+BEGIN record
+	hdrtype = 2
+	features = 0
+	magic = 2f5bacbac
+	creation_time = 0
+	type = 0
+	flags = 0x0
+	toguid = 0
+	fromguid = 0
+	toname = tank/backup/snapshot-download-transfer/tree.0/branch-2026-06-03T14:35:22.0@2026-06-03T14:35:37
+	payloadlen = 0
+
+END checksum = 827f71290/1d20b8b0079/36394efea9e2/4614b57993107
+BEGIN record
+	hdrtype = 1
+	features = 4
+	magic = 2f5bacbac
+	creation_time = 6a203bb9
+	type = 2
+	flags = 0xc
+	toguid = d603196ac5dfaa7
+	fromguid = 80a87e51223367c2
+	toname = tank/backup/snapshot-download-transfer/tree.0/branch-2026-06-03T14:35:22.0@2026-06-03T14:35:37
+	payloadlen = 0
+
+FREEOBJECTS firstobj = 64 numobjs = 64
+FREEOBJECTS firstobj = 160 numobjs = 96
+OBJECT object = 256 type = 19 bonustype = 44 blksz = 512 bonuslen = 176 dn_slots = 1 raw_bonuslen = 0 flags = 0 maxblkid = 0 indblkshift = 0 nlevels = 0 nblkptr = 0
+FREE object = 256 offset = 512 length = -1
+WRITE object = 256 type = 19 checksum type = 2 compression type = 0 flags = 0 offset = 0 logical_size = 512 compressed_size = 0 payload_size = 512 props = 0 salt = 0000000000000000 iv = 000000000000000000000000 mac = 00000000000000000000000000000000
+FREEOBJECTS firstobj = 257 numobjs = 31
+END checksum = 1fd8f393ab/392960fae5ab/3d15385ca7d5e3/2fc98eaeb5a51df1
+END checksum = 0/0/0/0
+SUMMARY:
+	Total DRR_BEGIN records = 2 (0 bytes)
+	Total DRR_END records = 3 (0 bytes)
+	Total DRR_OBJECT records = 1 (176 bytes)
+	Total DRR_FREEOBJECTS records = 3 (0 bytes)
+	Total DRR_WRITE records = 1 (512 bytes)
+	Total DRR_WRITE_BYREF records = 0 (0 bytes)
+	Total DRR_WRITE_EMBEDDED records = 0 (0 bytes)
+	Total DRR_FREE records = 1 (0 bytes)
+	Total DRR_SPILL records = 0 (0 bytes)
+	Total records = 11
+	Total payload size = 688 (0x2b0)
+	Total header overhead = 3432 (0xd68)
+	Total stream length = 4120 (0x1018)
+---
+
+START: 2026-06-03 16:35:54 +0200
+COMMAND: test -f /tank/backup/vpsadmin/download/172ed1d0f31bb2d143e55d42cdf2f69ab53f4f1d88c35b819f4829b2e6997c5c74fe7c90f0e146ae4ffcd84a4c5eca3d2531/snapshot-download-transfer__2026-06-03T14-35-17__2026-06-03T14-35-37.inc.dat.gz
+END: 2026-06-03 16:35:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:36:01 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 16:36:03 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

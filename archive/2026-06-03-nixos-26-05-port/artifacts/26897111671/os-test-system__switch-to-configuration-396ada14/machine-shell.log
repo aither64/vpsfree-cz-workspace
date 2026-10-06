@@ -1,0 +1,88 @@
+SHELL: 0
+
+START: 2026-06-03 19:20:55 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:20:55 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:20:55 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:20:55 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:20:55 +0200
+COMMAND: sv check restart-trigger-test
+END: 2026-06-03 19:20:55 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: restart-trigger-test: (pid 850) 1s
+---
+
+START: 2026-06-03 19:20:55 +0200
+COMMAND: test -f /run/restart-trigger-test/state
+END: 2026-06-03 19:20:55 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:20:55 +0200
+COMMAND: readlink -f /etc/runit/services/restart-trigger-test/run
+END: 2026-06-03 19:20:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/nix/store/pm5rc823ad5vv6nlxijk4fg00zp68b7i-sv-restart-trigger-test-run
+---
+
+START: 2026-06-03 19:20:55 +0200
+COMMAND: readlink -f /nix/store/bzp55fyhwwy0yp5csyhzdyx0s5x1w0xb-vpsadminos-system-vpsadminos-26.05.git.c64617d/etc/runit/services/restart-trigger-test/run
+END: 2026-06-03 19:20:55 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+/nix/store/pm5rc823ad5vv6nlxijk4fg00zp68b7i-sv-restart-trigger-test-run
+---
+
+START: 2026-06-03 19:20:55 +0200
+COMMAND: /nix/store/bzp55fyhwwy0yp5csyhzdyx0s5x1w0xb-vpsadminos-system-vpsadminos-26.05.git.c64617d/bin/switch-to-configuration dry-activate
+END: 2026-06-03 19:20:58 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+probing runit services...
+probing pools...
+would stop deprecated services...
+would stop changed services...
+> sv stop restart-trigger-test
+would activate the configuration...
+would reload changed services...
+would restart changed services...
+> sv start restart-trigger-test
+runit would start new services...
+> osctl activate --system
+---
+
+START: 2026-06-03 19:20:58 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 19:21:11 +0200
+ELAPSED: 13.12s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown...... ok
+---
+

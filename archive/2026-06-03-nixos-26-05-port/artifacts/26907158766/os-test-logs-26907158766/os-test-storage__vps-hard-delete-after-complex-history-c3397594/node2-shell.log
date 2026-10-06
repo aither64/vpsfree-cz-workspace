@@ -1,0 +1,172 @@
+SHELL: 0
+
+START: 2026-06-03 15:44:46 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 15:44:46 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:44:46 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 15:44:46 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:44:46 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:44:46 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1530) 70s
+---
+
+START: 2026-06-03 15:44:46 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:44:46 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1530) 70s
+---
+
+START: 2026-06-03 15:44:46 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:44:46 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:44:47 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:44:47 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1530) 71s
+---
+
+START: 2026-06-03 15:44:47 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:44:47 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:44:48 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:44:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1530) 72s
+---
+
+START: 2026-06-03 15:44:48 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:44:48 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:44:48 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 15:44:49 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 15:44:55 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:44:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:44:55 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 15:44:55 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:44:55 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 15:44:56 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:44:56 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 15:44:57 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:46:31 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-03 15:46:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/1
+---
+
+START: 2026-06-03 15:52:20 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-03 15:52:20 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/1
+---
+
+START: 2026-06-03 15:52:53 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-03 15:52:53 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+cannot open 'tank/backup/1': dataset does not exist
+---
+
+START: 2026-06-03 15:53:00 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 15:53:02 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

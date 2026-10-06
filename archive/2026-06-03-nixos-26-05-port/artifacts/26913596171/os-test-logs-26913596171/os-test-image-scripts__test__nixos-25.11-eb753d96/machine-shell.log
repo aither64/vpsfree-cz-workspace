@@ -1,0 +1,218 @@
+SHELL: 0
+
+START: 2026-06-03 21:55:14 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 21:55:14 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 21:55:14 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 21:55:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 21:55:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:16 +0200
+ELAPSED: 1.85s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:18 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:19 +0200
+ELAPSED: 0.51s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:21 +0200
+ELAPSED: 0.51s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:22 +0200
+ELAPSED: 0.53s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:23 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:24 +0200
+ELAPSED: 0.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:25 +0200
+ELAPSED: 0.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:27 +0200
+ELAPSED: 0.52s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:28 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 21:55:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:30 +0200
+ELAPSED: 0.54s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 21:55:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 21:55:31 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 21:55:31 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 21:55:31 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 19:55:31 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 21:55:31 +0200
+COMMAND: mkdir -p /mnt/vpsadminos && mount -t virtiofs hostOs /mnt/vpsadminos
+END: 2026-06-03 21:55:31 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 21:55:31 +0200
+COMMAND: osctl-image --vpsadminos-dir /mnt/vpsadminos test --build-dataset tank/image-scripts/build --output-dir /tank/image-scripts/output nixos-25.11
+END: 2026-06-03 21:56:31 +0200
+ELAPSED: 60.09s
+STATUS: 1
+OUTPUT:
+A, [2026-06-03T21:55:32.573495 #2020]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x00007b3bdaf48850>] /etc/vpsadminos-image-scripts/bin/config image list
+A, [2026-06-03T21:55:32.901933 #2020]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x00007b3bdad0c690>] /etc/vpsadminos-image-scripts/bin/config test list
+A, [2026-06-03T21:55:33.017731 #2020]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x00007b3bdac32c60>] /etc/vpsadminos-image-scripts/bin/config image show nixos-25.11
+A, [2026-06-03T21:55:33.045454 #2020]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x00007b3bdac19c38>] /etc/vpsadminos-image-scripts/bin/config builder show nixos
+I, [2026-06-03T21:55:33.073166 #2020]  INFO -- : [build nixos-25.11@nixos] Using builder nixos
+Waiting for network......I, [2026-06-03T21:56:27.638278 #2020]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x00007b3bdacabbd8>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.c9cb3699d059a11bd607
++++ dirname /build/basedir.7a3d6fa5/bin/runner
+++ realpath /build/basedir.7a3d6fa5/bin/..
++ BASEDIR=/build/basedir.7a3d6fa5
++ . /build/basedir.7a3d6fa5/include/lib.sh
++ main builder setup nixos
++ '[' 3 -lt 1 ']'
++ local command=builder
++ shift 1
++ case "$command" in
++ do_builder setup nixos
++ '[' 2 -lt 1 ']'
++ local action=setup
++ case "$action" in
++ local name=nixos
++ local dir=/build/basedir.7a3d6fa5/builders/nixos
++ '[' nixos == '' ']'
++ '[' '!' -d /build/basedir.7a3d6fa5/builders/nixos ']'
++ . /build/basedir.7a3d6fa5/builders/nixos/setup.sh
+++ '[' -n /build/vpsadminos.7a3d6fa5 ']'
+++ '[' -d /build/vpsadminos.7a3d6fa5/os ']'
++++ mktemp -d /tmp/vpsadminos.XXXXXXXX
+++ vpsadminos=/tmp/vpsadminos.aFM0ZpFH
+++ trap 'rm -rf "$vpsadminos"' EXIT
++++ git -C /build/vpsadminos.7a3d6fa5 rev-parse --verify HEAD
++++ true
+++ vpsadminos_rev=
+++ cp -a /build/vpsadminos.7a3d6fa5/. /tmp/vpsadminos.aFM0ZpFH
+cp: cannot access '/build/vpsadminos.7a3d6fa5/.': Permission denied
+++ echo 'unable to copy vpsadminos from /build/vpsadminos.7a3d6fa5'
+unable to copy vpsadminos from /build/vpsadminos.7a3d6fa5
+++ exit 1
++ rm -rf /tmp/vpsadminos.aFM0ZpFH
+I, [2026-06-03T21:56:28.483145 #2020]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x00007b3bdacaad78>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.7a3d6fa5
+* error occurred: builder setup failed with exit status 1, cleaning up
+A, [2026-06-03T21:56:31.868306 #2020]   ANY -- : [build nixos-25.11@nixos] zfs destroy  tank/image-scripts/build/75ea3f69/work
+A, [2026-06-03T21:56:31.884596 #2020]   ANY -- : [build nixos-25.11@nixos] zfs list -H -o name -t snapshot tank/image-scripts/build/75ea3f69/output
+A, [2026-06-03T21:56:31.908534 #2020]   ANY -- : [build nixos-25.11@nixos] zfs destroy -r tank/image-scripts/build/75ea3f69/output
+A, [2026-06-03T21:56:31.923377 #2020]   ANY -- : [build nixos-25.11@nixos] zfs destroy  tank/image-scripts/build/75ea3f69
+error: builder setup failed with exit status 1
+---
+
+START: 2026-06-03 21:56:31 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 21:56:32 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

@@ -1,0 +1,66 @@
+this derivation will be built:
+  /nix/store/a50k5hyz06aar9cligf2zwm682qllfb0-os-test-image-scripts-test-nixos-unstable.json.drv
+building '/nix/store/a50k5hyz06aar9cligf2zwm682qllfb0-os-test-image-scripts-test-nixos-unstable.json.drv'...
+/nix/store/ag53y8v4z2dys9p0dxr15l7b9s014274-os-test-image-scripts-test-nixos-unstable.json
+[2026-06-03 21:57:13 +0200] Running script default
+[2026-06-03 21:58:50 +0200] Exception occurred while running script default in 97.53s
+[2026-06-03 21:58:50 +0200] /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/shell.rb:148:in 'OsVm::Shell#succeeds': Command 'osctl-image --vpsadminos-dir /mnt/vpsadminos test --build-dataset tank/image-scripts/build --output-dir /tank/image-scripts/output nixos-unstable' failed with status 1. Output: (OsVm::CommandFailed)
+ A, [2026-06-03T21:57:56.225401 #2052]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x000078f9ee3857f0>] /etc/vpsadminos-image-scripts/bin/config image list
+A, [2026-06-03T21:57:56.497402 #2052]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseList:0x000078f9ee1590d0>] /etc/vpsadminos-image-scripts/bin/config test list
+A, [2026-06-03T21:57:56.585723 #2052]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x000078f9ee04c0c0>] /etc/vpsadminos-image-scripts/bin/config image show nixos-unstable
+A, [2026-06-03T21:57:56.618074 #2052]   ANY -- : [#<OsCtl::Image::Operations::Config::ParseAttrs:0x000078f9ee0455e0>] /etc/vpsadminos-image-scripts/bin/config builder show nixos
+I, [2026-06-03T21:57:56.639019 #2052]  INFO -- : [build nixos-unstable@nixos] Using builder nixos
+Waiting for network........I, [2026-06-03T21:58:46.218654 #2052]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x000078f9ee0eb698>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.08bc638d8a16a83935ba
++++ dirname /build/basedir.5b5eeac4/bin/runner
+++ realpath /build/basedir.5b5eeac4/bin/..
++ BASEDIR=/build/basedir.5b5eeac4
++ . /build/basedir.5b5eeac4/include/lib.sh
++ main builder setup nixos
++ '[' 3 -lt 1 ']'
++ local command=builder
++ shift 1
++ case "$command" in
++ do_builder setup nixos
++ '[' 2 -lt 1 ']'
++ local action=setup
++ case "$action" in
++ local name=nixos
++ local dir=/build/basedir.5b5eeac4/builders/nixos
++ '[' nixos == '' ']'
++ '[' '!' -d /build/basedir.5b5eeac4/builders/nixos ']'
++ . /build/basedir.5b5eeac4/builders/nixos/setup.sh
+++ '[' -n /build/vpsadminos.5b5eeac4 ']'
+++ '[' -d /build/vpsadminos.5b5eeac4/os ']'
++++ mktemp -d /tmp/vpsadminos.XXXXXXXX
+++ vpsadminos=/tmp/vpsadminos.BLPYs6Ya
+++ trap 'rm -rf "$vpsadminos"' EXIT
++++ git -C /build/vpsadminos.5b5eeac4 rev-parse --verify HEAD
++++ true
+++ vpsadminos_rev=
+++ cp -a /build/vpsadminos.5b5eeac4/. /tmp/vpsadminos.BLPYs6Ya
+cp: cannot access '/build/vpsadminos.5b5eeac4/.': Permission denied
+++ echo 'unable to copy vpsadminos from /build/vpsadminos.5b5eeac4'
+unable to copy vpsadminos from /build/vpsadminos.5b5eeac4
+++ exit 1
++ rm -rf /tmp/vpsadminos.BLPYs6Ya
+I, [2026-06-03T21:58:47.050522 #2052]  INFO -- : [#<OsCtl::Image::Operations::Builder::ControlledExec:0x000078f9ee0ea7e8>] clearing cgroup /sys/fs/cgroup/osctl/pool.tank/group.default/user.builder-6ed332bc/ct.builder-6ed332bc/user-owned/lxc.payload.builder-6ed332bc/osctl-image.exec.5b5eeac4
+* error occurred: builder setup failed with exit status 1, cleaning up
+A, [2026-06-03T21:58:50.569105 #2052]   ANY -- : [build nixos-unstable@nixos] zfs destroy  tank/image-scripts/build/eecff4f0/work
+A, [2026-06-03T21:58:50.587614 #2052]   ANY -- : [build nixos-unstable@nixos] zfs list -H -o name -t snapshot tank/image-scripts/build/eecff4f0/output
+A, [2026-06-03T21:58:50.602768 #2052]   ANY -- : [build nixos-unstable@nixos] zfs destroy -r tank/image-scripts/build/eecff4f0/output
+A, [2026-06-03T21:58:50.617463 #2052]   ANY -- : [build nixos-unstable@nixos] zfs destroy  tank/image-scripts/build/eecff4f0
+error: builder setup failed with exit status 1
+
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/machine.rb:267:in 'OsVm::Machine#succeeds'
+	from (eval at /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493):4:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493:in 'Binding#eval'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:493:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:587:in 'TestRunner::TestEvaluator#with_script_state'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:492:in 'TestRunner::TestEvaluator#test_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:458:in 'TestRunner::TestEvaluator#run_script'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:104:in 'block (3 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/sl8glfvq34n6icgcavbxbk6pbwb8rnzj-osvm/lib/osvm/machine.rb:11:in 'OsVm::Machine.with_shell'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:103:in 'block (2 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:442:in 'block (3 levels) in TestRunner::TestEvaluator#run_script_workers'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/wjg3l7bjqf861xrgz6hmzm858cs0ff10-test-runner/lib/test-runner/test_evaluator.rb:434:in 'block (2 levels) in TestRunner::TestEvaluator#run_script_workers'

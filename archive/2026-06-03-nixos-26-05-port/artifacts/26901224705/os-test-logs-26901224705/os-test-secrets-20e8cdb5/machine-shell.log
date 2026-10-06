@@ -1,0 +1,106 @@
+SHELL: 0
+
+START: 2026-06-03 20:10:53 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 20:10:53 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:10:53 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 20:10:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:10:53 +0200
+COMMAND: find /nix/store -name secret-hello.txt
+END: 2026-06-03 20:10:54 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 20:10:54 +0200
+COMMAND: find /var/secrets/ | sort
+END: 2026-06-03 20:10:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/var/secrets/
+/var/secrets/secret-hello.txt
+/var/secrets/subdir
+/var/secrets/subdir/another.txt
+---
+
+START: 2026-06-03 20:10:54 +0200
+COMMAND: stat -c %a /var/secrets
+END: 2026-06-03 20:10:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+500
+---
+
+START: 2026-06-03 20:10:54 +0200
+COMMAND: cat /var/secrets/subdir/another.txt
+END: 2026-06-03 20:10:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+another secret
+---
+
+START: 2026-06-03 20:10:54 +0200
+COMMAND: cat /var/secrets/secret-hello.txt
+END: 2026-06-03 20:10:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+secret hello
+---
+
+START: 2026-06-03 20:10:54 +0200
+COMMAND: stat -c %u:%g /var/secrets
+END: 2026-06-03 20:10:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+0:0
+---
+
+START: 2026-06-03 20:10:54 +0200
+COMMAND: stat /var/secrets
+END: 2026-06-03 20:10:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+  File: /var/secrets
+  Size: 80        	Blocks: 0          IO Block: 4096   directory
+Device: 0,24	Inode: 8           Links: 3
+Access: (0500/dr-x------)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2026-06-03 20:10:54.645799655 +0200
+Modify: 1970-01-01 01:00:01.000000000 +0100
+Change: 2026-06-03 20:10:48.839799655 +0200
+ Birth: 2026-06-03 20:10:48.834799655 +0200
+---
+
+START: 2026-06-03 20:10:54 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 20:11:10 +0200
+ELAPSED: 16.1s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown...... ok
+---
+

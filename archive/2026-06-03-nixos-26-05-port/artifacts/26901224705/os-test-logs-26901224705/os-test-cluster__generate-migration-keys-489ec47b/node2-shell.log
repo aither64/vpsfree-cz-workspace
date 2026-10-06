@@ -1,0 +1,127 @@
+SHELL: 0
+
+START: 2026-06-03 14:25:01 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 14:25:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:25:01 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 14:25:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:25:01 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 14:25:01 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1519) 70s
+---
+
+START: 2026-06-03 14:25:01 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 14:25:01 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1519) 70s
+---
+
+START: 2026-06-03 14:25:01 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 14:25:01 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:25:02 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 14:25:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1519) 71s
+---
+
+START: 2026-06-03 14:25:02 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 14:25:02 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:25:03 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 14:25:03 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1519) 72s
+---
+
+START: 2026-06-03 14:25:03 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 14:25:03 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:25:03 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 14:25:03 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 14:26:20 +0200
+COMMAND: osctl --pool tank send key path public
+END: 2026-06-03 14:26:21 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+/tank/conf/send-receive/key.pub
+---
+
+START: 2026-06-03 14:26:21 +0200
+COMMAND: cat /tank/conf/send-receive/key.pub
+END: 2026-06-03 14:26:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFAvuFLz7RjbBE2ShU/BH9trPC/O4lzPEJE/KafoIEDh tank@vpsadmin-node2
+---
+
+START: 2026-06-03 14:26:28 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 14:26:30 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

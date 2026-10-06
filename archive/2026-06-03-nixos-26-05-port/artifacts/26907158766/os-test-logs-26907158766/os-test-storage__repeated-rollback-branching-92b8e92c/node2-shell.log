@@ -1,0 +1,174 @@
+SHELL: 0
+
+START: 2026-06-03 14:01:30 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 14:01:30 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:01:30 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 14:01:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:01:30 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 14:01:30 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1495) 71s
+---
+
+START: 2026-06-03 14:01:30 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 14:01:30 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1495) 71s
+---
+
+START: 2026-06-03 14:01:30 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 14:01:30 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:01:31 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 14:01:31 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1495) 72s
+---
+
+START: 2026-06-03 14:01:31 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 14:01:31 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:01:31 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 14:01:32 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 14:01:37 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 14:01:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:01:37 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 14:01:38 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 14:01:38 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 14:01:39 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 14:01:39 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 14:01:39 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 14:03:11 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-03 14:03:11 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/1
+---
+
+START: 2026-06-03 14:09:13 +0200
+COMMAND: zfs get -H -o name,value origin -t filesystem -r tank/backup/1
+END: 2026-06-03 14:09:13 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+tank/backup/1	-
+tank/backup/1/tree.0	-
+tank/backup/1/tree.0/branch-2026-06-03T12:03:18.0	tank/backup/1/tree.0/branch-2026-06-03T12:04:10.0@2026-06-03T12:04:10
+tank/backup/1/tree.0/branch-2026-06-03T12:03:52.0	-
+tank/backup/1/tree.0/branch-2026-06-03T12:04:10.0	tank/backup/1/tree.0/branch-2026-06-03T12:03:52.0@2026-06-03T12:03:52
+---
+
+START: 2026-06-03 14:09:13 +0200
+COMMAND: zfs get -H -o name,value clones -t snapshot -r tank/backup/1
+END: 2026-06-03 14:09:13 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+tank/backup/1/tree.0/branch-2026-06-03T12:03:18.0@2026-06-03T12:04:30	-
+tank/backup/1/tree.0/branch-2026-06-03T12:03:18.0@2026-06-03T12:04:48	-
+tank/backup/1/tree.0/branch-2026-06-03T12:03:52.0@2026-06-03T12:03:14	-
+tank/backup/1/tree.0/branch-2026-06-03T12:03:52.0@2026-06-03T12:03:52	tank/backup/1/tree.0/branch-2026-06-03T12:04:10.0
+tank/backup/1/tree.0/branch-2026-06-03T12:03:52.0@2026-06-03T12:08:53	-
+tank/backup/1/tree.0/branch-2026-06-03T12:04:10.0@2026-06-03T12:04:10	tank/backup/1/tree.0/branch-2026-06-03T12:03:18.0
+tank/backup/1/tree.0/branch-2026-06-03T12:04:10.0@2026-06-03T12:07:38	-
+tank/backup/1/tree.0/branch-2026-06-03T12:04:10.0@2026-06-03T12:07:57	-
+---
+
+START: 2026-06-03 14:09:38 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-03 14:09:38 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+cannot open 'tank/backup/1': dataset does not exist
+---
+
+START: 2026-06-03 14:09:48 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 14:09:50 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

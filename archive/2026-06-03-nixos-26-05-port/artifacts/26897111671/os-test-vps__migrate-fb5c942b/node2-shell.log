@@ -1,0 +1,147 @@
+SHELL: 0
+
+START: 2026-06-03 15:14:43 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 15:14:43 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:14:43 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 15:14:43 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:14:43 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:14:43 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1509) 71s
+---
+
+START: 2026-06-03 15:14:43 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:14:43 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1509) 71s
+---
+
+START: 2026-06-03 15:14:43 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:14:43 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:14:43 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 15:14:44 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 15:14:50 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:14:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:14:50 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 15:14:51 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:14:51 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 15:14:52 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:14:52 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 15:14:52 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:15:54 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 15:15:55 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:17:59 +0200
+COMMAND: osctl ct show -H -o state 1
+END: 2026-06-03 15:17:59 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-06-03 15:17:59 +0200
+COMMAND: osctl ct exec 1 true
+END: 2026-06-03 15:18:01 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:18:01 +0200
+COMMAND: osctl ct exec 1 sh -c cat\ /root/vpsadmin-migration-proof.txt
+END: 2026-06-03 15:18:02 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+vps migration data retention proof
+---
+
+START: 2026-06-03 15:18:10 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 15:18:13 +0200
+ELAPSED: 3.12s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:1
+Unregistering users, groups and containers
+---
+

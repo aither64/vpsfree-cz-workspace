@@ -1,0 +1,266 @@
+SHELL: 0
+
+START: 2026-06-03 18:40:25 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 18:40:25 +0200
+ELAPSED: 0.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:40:25 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 18:40:25 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:40:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:29 +0200
+ELAPSED: 3.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:31 +0200
+ELAPSED: 1.04s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:33 +0200
+ELAPSED: 1.33s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:35 +0200
+ELAPSED: 1.08s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:38 +0200
+ELAPSED: 1.26s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:40 +0200
+ELAPSED: 1.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:44 +0200
+ELAPSED: 2.42s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:46 +0200
+ELAPSED: 1.35s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:40:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:48 +0200
+ELAPSED: 1.4s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:40:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:50 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:40:50 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:40:50 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:40:50 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:40:50 +0200
+COMMAND: osctl ct new --distribution debian startedct
+END: 2026-06-03 18:41:18 +0200
+ELAPSED: 27.9s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:41:18 +0200
+COMMAND: osctl ct unset start-menu startedct
+END: 2026-06-03 18:41:19 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:41:19 +0200
+COMMAND: osctl ct new --distribution debian stoppedct
+END: 2026-06-03 18:41:29 +0200
+ELAPSED: 9.87s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:41:29 +0200
+COMMAND: osctl ct unset start-menu stoppedct
+END: 2026-06-03 18:41:30 +0200
+ELAPSED: 1.25s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:41:30 +0200
+COMMAND: osctl ct start startedct
+END: 2026-06-03 18:41:34 +0200
+ELAPSED: 3.64s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:41:34 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-06-03 18:41:35 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-06-03 18:41:35 +0200
+COMMAND: osctl ct passwd startedct root sup3rS3cret
+END: 2026-06-03 18:41:38 +0200
+ELAPSED: 2.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:41:38 +0200
+COMMAND: osctl ct exec  startedct sh -c "grep -q '^root:[^!*]' /etc/shadow"
+END: 2026-06-03 18:41:40 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:41:40 +0200
+COMMAND: osctl ct show -H -o state stoppedct
+END: 2026-06-03 18:41:42 +0200
+ELAPSED: 1.34s
+STATUS: 0
+OUTPUT:
+stopped
+
+---
+
+START: 2026-06-03 18:41:42 +0200
+COMMAND: osctl ct passwd stoppedct root sup3rS3cret
+END: 2026-06-03 18:41:47 +0200
+ELAPSED: 5.35s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:41:47 +0200
+COMMAND: osctl ct exec -r stoppedct sh -c "grep -q '^root:[^!*]' /etc/shadow"
+END: 2026-06-03 18:41:52 +0200
+ELAPSED: 4.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:41:52 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 18:41:55 +0200
+ELAPSED: 3.45s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/2] Stopping container tank:startedct
+[2/2] Stopping container tank:stoppedct
+Unregistering users, groups and containers
+---
+

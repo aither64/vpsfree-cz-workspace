@@ -1,0 +1,203 @@
+SHELL: 2
+
+START: 2026-06-03 19:30:15 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:30:15 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:30:15 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:30:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:30:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:18 +0200
+ELAPSED: 2.32s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:19 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:21 +0200
+ELAPSED: 0.74s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:23 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:24 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:26 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:27 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:29 +0200
+ELAPSED: 0.73s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:31 +0200
+ELAPSED: 0.72s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:30:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:33 +0200
+ELAPSED: 0.76s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:30:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:30:34 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:30:34 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 19:30:34 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 17:30:34 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 19:30:34 +0200
+COMMAND: osctl ct new --distribution devuan --version latest testct-2feb
+END: 2026-06-03 19:32:09 +0200
+ELAPSED: 94.98s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 19:32:09 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/3a99e83d-nix--store--172yf1y044kw4zllnzdq6dbdii4fxs9k-dist-config-nonsystemd-rundir-script.sh" "/tmp/testct-2feb-test-script.sh"
+END: 2026-06-03 19:32:09 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:32:09 +0200
+COMMAND: osctl ct runscript -r testct-2feb /tmp/testct-2feb-test-script.sh
+END: 2026-06-03 19:32:12 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+/.runscript20260603-1887-6chbuh.sh: 7: [: devuan: unexpected operator
+/.runscript20260603-1887-6chbuh.sh: 7: [: devuan: unexpected operator
+---
+
+START: 2026-06-03 19:32:12 +0200
+COMMAND: osctl ct del -f --prune testct-2feb
+END: 2026-06-03 19:32:13 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-2feb
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 19:32:13 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 19:34:07 +0200
+ELAPSED: 114.57s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/chimera/20260530/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/glibc-20260530/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/openrc-20260530/image-stream.tar
+---
+

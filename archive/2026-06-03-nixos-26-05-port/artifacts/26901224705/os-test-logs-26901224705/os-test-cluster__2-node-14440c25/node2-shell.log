@@ -1,0 +1,98 @@
+SHELL: 0
+
+START: 2026-06-03 16:18:58 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 16:18:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:18:58 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 16:18:58 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 16:18:58 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 16:18:58 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1573) 71s
+---
+
+START: 2026-06-03 16:18:58 +0200
+COMMAND: nodectl status
+END: 2026-06-03 16:18:59 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+   Version: 4.1.0
+     State: initializing
+    Uptime: 00:00:01
+  Consoles: 0
+  Subtasks: 0
+Queue size: 0
+    Queues:
+       general  0 / 6 (+6) 
+       storage  0 / 2 (+2) 
+       network  0 / 1 (+0) 
+           vps  0 / 4 (+4) 
+      zfs_send  0 / 3 (+0) opens in 01:29:59
+      zfs_recv  0 / 3 (+0) opens in 01:29:59
+          mail  0 / 2 (+2) 
+           dns  0 / 1 (+0) 
+        outage  0 / 128 (+0) 
+         queue  0 / 256 (+16) 
+      rollback  0 / 6 (+6) 
+---
+
+START: 2026-06-03 16:19:00 +0200
+COMMAND: nodectl status
+END: 2026-06-03 16:19:00 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+   Version: 4.1.0
+     State: running
+    Uptime: 00:00:02
+  Consoles: 0
+  Subtasks: 0
+Queue size: 0
+    Queues:
+       general  0 / 6 (+6) 
+       storage  0 / 2 (+2) 
+       network  0 / 1 (+0) 
+           vps  0 / 4 (+4) 
+      zfs_send  0 / 3 (+0) opens in 01:29:58
+      zfs_recv  0 / 3 (+0) opens in 01:29:58
+          mail  0 / 2 (+2) 
+           dns  0 / 1 (+0) 
+        outage  0 / 128 (+0) 
+         queue  0 / 256 (+16) 
+      rollback  0 / 6 (+6) 
+---
+
+START: 2026-06-03 16:19:07 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 16:19:08 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

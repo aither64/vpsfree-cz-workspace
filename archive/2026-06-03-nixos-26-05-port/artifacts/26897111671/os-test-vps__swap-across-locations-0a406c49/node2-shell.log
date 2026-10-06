@@ -1,0 +1,182 @@
+SHELL: 0
+
+START: 2026-06-03 15:36:21 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 15:36:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:36:21 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 15:36:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:36:21 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:36:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1553) 70s
+---
+
+START: 2026-06-03 15:36:21 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:36:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1553) 70s
+---
+
+START: 2026-06-03 15:36:21 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:36:21 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:36:22 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:36:22 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1553) 71s
+---
+
+START: 2026-06-03 15:36:22 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:36:22 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:36:23 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:36:23 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1553) 72s
+---
+
+START: 2026-06-03 15:36:23 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:36:23 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:36:23 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 15:36:24 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 15:36:30 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:36:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:36:30 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 15:36:31 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:36:31 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 15:36:31 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:36:31 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 15:36:32 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:37:28 +0200
+COMMAND: osctl --pool tank send key gen --force
+END: 2026-06-03 15:37:28 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:37:28 +0200
+COMMAND: cat $(osctl --pool tank send key path public)
+END: 2026-06-03 15:37:29 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILvnfvbcFZmNwCwSI9AVr8DP8H7/W/pmZU1wilSME4dq tank@vpsadmin-node2
+---
+
+START: 2026-06-03 15:40:29 +0200
+COMMAND: osctl ct exec 2 sh -c printf\ \'secondary-sentinel\\n\'\ \>\ /root/swap-sentinel.txt
+END: 2026-06-03 15:40:31 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:44:29 +0200
+COMMAND: osctl ct exec 1 sh -c cat\ /root/swap-sentinel.txt
+END: 2026-06-03 15:44:31 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+primary-sentinel
+---
+
+START: 2026-06-03 15:44:41 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 15:44:44 +0200
+ELAPSED: 3.1s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:1
+Unregistering users, groups and containers
+---
+

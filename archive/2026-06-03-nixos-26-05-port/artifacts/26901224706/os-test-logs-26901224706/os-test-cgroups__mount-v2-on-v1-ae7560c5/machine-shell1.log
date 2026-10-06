@@ -1,0 +1,583 @@
+SHELL: 1
+
+START: 2026-06-03 18:40:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:29 +0200
+ELAPSED: 3.98s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:31 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:34 +0200
+ELAPSED: 1.41s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:36 +0200
+ELAPSED: 1.24s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:38 +0200
+ELAPSED: 1.22s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:41 +0200
+ELAPSED: 2.02s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:44 +0200
+ELAPSED: 2.21s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:48 +0200
+ELAPSED: 2.28s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 18:40:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:50 +0200
+ELAPSED: 1.31s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 18:40:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:40:52 +0200
+ELAPSED: 1.23s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:40:52 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:40:52 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:40:52 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:40:52 +0200
+COMMAND: osctl ct new --distribution nixos --version stable testct-dc4a
+END: 2026-06-03 18:42:36 +0200
+ELAPSED: 103.24s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:42:36 +0200
+COMMAND: osctl ct unset start-menu testct-dc4a
+END: 2026-06-03 18:42:37 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:37 +0200
+COMMAND: osctl ct start testct-dc4a
+END: 2026-06-03 18:42:39 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:42:49 +0200
+COMMAND: osctl ct exec testct-dc4a cat /proc/mounts
+END: 2026-06-03 18:42:52 +0200
+ELAPSED: 3.1s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-dc4a / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,nosuid,size=407268k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+none /sys/kernel/debug debugfs rw,relatime 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2036324k,mode=755 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,size=2036324k,mode=755,uid=0,gid=0 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=407268k,mode=755,uid=0,gid=0 0 0
+tank/ct/testct-dc4a /nix/store zfs ro,nosuid,nodev,relatime,idmapped,xattr,noacl,casesensitive 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev,size=4072648k,uid=0,gid=0 0 0
+tmpfs /run/keys tmpfs rw,nosuid,nodev,relatime,mode=750,uid=0,gid=0 0 0
+cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+ramfs /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+tmpfs /run/wrappers tmpfs rw,nodev,relatime,size=4072648k,mode=755,uid=0,gid=0 0 0
+ramfs /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-06-03 18:42:52 +0200
+COMMAND: osctl ct exec testct-dc4a cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-06-03 18:42:55 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:42:55 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/cpu,cpuacct
+END: 2026-06-03 18:42:57 +0200
+ELAPSED: 2.13s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/cpu,cpuacct': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:42:57 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/cpuset
+END: 2026-06-03 18:43:00 +0200
+ELAPSED: 3.09s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/cpuset': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:00 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/devices
+END: 2026-06-03 18:43:03 +0200
+ELAPSED: 2.68s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/devices': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:03 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/freezer
+END: 2026-06-03 18:43:05 +0200
+ELAPSED: 2.56s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/freezer': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:05 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/hugetlb
+END: 2026-06-03 18:43:08 +0200
+ELAPSED: 2.9s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/hugetlb': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:08 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/memory
+END: 2026-06-03 18:43:11 +0200
+ELAPSED: 2.64s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/memory': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:11 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/net_cls,net_prio
+END: 2026-06-03 18:43:14 +0200
+ELAPSED: 3.26s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/net_cls,net_prio': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:14 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/perf_event
+END: 2026-06-03 18:43:17 +0200
+ELAPSED: 3.32s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/perf_event': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:17 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/pids
+END: 2026-06-03 18:43:21 +0200
+ELAPSED: 3.31s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/pids': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:21 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/rdma
+END: 2026-06-03 18:43:24 +0200
+ELAPSED: 3.44s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/rdma': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:24 +0200
+COMMAND: osctl ct exec testct-dc4a ls /sys/fs/cgroup/systemd
+END: 2026-06-03 18:43:28 +0200
+ELAPSED: 3.47s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/systemd': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:43:28 +0200
+COMMAND: osctl ct del -f --prune testct-dc4a
+END: 2026-06-03 18:43:31 +0200
+ELAPSED: 3.7s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-dc4a
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 18:43:31 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 18:43:52 +0200
+ELAPSED: 21.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:43:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 18:43:54 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 18:43:54 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 18:43:54 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 16:43:54 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 18:43:54 +0200
+COMMAND: osctl ct new --distribution fedora --version latest testct-9fc5
+END: 2026-06-03 18:44:08 +0200
+ELAPSED: 14.47s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 18:44:08 +0200
+COMMAND: osctl ct unset start-menu testct-9fc5
+END: 2026-06-03 18:44:09 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:09 +0200
+COMMAND: osctl ct start testct-9fc5
+END: 2026-06-03 18:44:12 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 18:44:22 +0200
+COMMAND: osctl ct exec testct-9fc5 cat /proc/mounts
+END: 2026-06-03 18:44:25 +0200
+ELAPSED: 3.02s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-9fc5 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+none /sys/kernel/debug debugfs rw,relatime 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2036324k,mode=755 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,relatime,mode=755,uid=0,gid=0 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev,uid=0,gid=0 0 0
+cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+none /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,size=4072648k,nr_inodes=1048576,uid=0,gid=0 0 0
+none /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-06-03 18:44:25 +0200
+COMMAND: osctl ct exec testct-9fc5 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-06-03 18:44:27 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 18:44:27 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/cpu,cpuacct
+END: 2026-06-03 18:44:30 +0200
+ELAPSED: 2.64s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/cpu,cpuacct': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:30 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/cpuset
+END: 2026-06-03 18:44:32 +0200
+ELAPSED: 2.31s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/cpuset': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:32 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/devices
+END: 2026-06-03 18:44:35 +0200
+ELAPSED: 2.36s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/devices': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:35 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/freezer
+END: 2026-06-03 18:44:37 +0200
+ELAPSED: 2.28s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/freezer': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:37 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/hugetlb
+END: 2026-06-03 18:44:40 +0200
+ELAPSED: 2.92s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/hugetlb': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:40 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/memory
+END: 2026-06-03 18:44:44 +0200
+ELAPSED: 3.62s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/memory': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:44 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/net_cls,net_prio
+END: 2026-06-03 18:44:46 +0200
+ELAPSED: 2.8s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/net_cls,net_prio': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:46 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/perf_event
+END: 2026-06-03 18:44:50 +0200
+ELAPSED: 3.16s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/perf_event': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:50 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/pids
+END: 2026-06-03 18:44:52 +0200
+ELAPSED: 2.85s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/pids': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:52 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/rdma
+END: 2026-06-03 18:44:55 +0200
+ELAPSED: 2.38s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/rdma': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:55 +0200
+COMMAND: osctl ct exec testct-9fc5 ls /sys/fs/cgroup/systemd
+END: 2026-06-03 18:44:57 +0200
+ELAPSED: 2.44s
+STATUS: 2
+OUTPUT:
+ls: cannot access '/sys/fs/cgroup/systemd': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-03 18:44:57 +0200
+COMMAND: osctl ct del -f --prune testct-9fc5
+END: 2026-06-03 18:45:02 +0200
+ELAPSED: 4.28s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-9fc5
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-03 18:45:02 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-03 18:45:03 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+
+---
+

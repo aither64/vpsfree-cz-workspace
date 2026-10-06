@@ -1,0 +1,187 @@
+SHELL: 0
+
+START: 2026-06-03 15:13:36 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 15:13:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:13:36 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 15:13:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:13:36 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:13:36 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1509) 71s
+---
+
+START: 2026-06-03 15:13:36 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:13:36 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1509) 71s
+---
+
+START: 2026-06-03 15:13:36 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:13:36 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:13:37 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 15:13:37 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1509) 72s
+---
+
+START: 2026-06-03 15:13:37 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:13:37 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:13:37 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 15:13:38 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 15:13:45 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 15:13:45 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:13:45 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 15:13:45 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:13:45 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 15:13:46 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 15:13:46 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 15:13:46 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 15:15:31 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-03 15:15:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/1
+---
+
+START: 2026-06-03 15:17:48 +0200
+COMMAND: zfs get -H -o name,value origin -t filesystem -r tank/backup/1
+END: 2026-06-03 15:17:48 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+tank/backup/1	-
+tank/backup/1/tree.0	-
+tank/backup/1/tree.0/branch-2026-06-03T13:15:38.0	-
+tank/backup/1/tree.1	-
+tank/backup/1/tree.1/branch-2026-06-03T13:16:59.0	-
+---
+
+START: 2026-06-03 15:17:48 +0200
+COMMAND: zfs get -H -o name,value clones -t snapshot -r tank/backup/1
+END: 2026-06-03 15:17:48 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+tank/backup/1/tree.0/branch-2026-06-03T13:15:38.0@2026-06-03T13:15:34	-
+tank/backup/1/tree.0/branch-2026-06-03T13:15:38.0@2026-06-03T13:16:12	-
+tank/backup/1/tree.1/branch-2026-06-03T13:16:59.0@2026-06-03T13:16:55	-
+tank/backup/1/tree.1/branch-2026-06-03T13:16:59.0@2026-06-03T13:17:32	-
+---
+
+START: 2026-06-03 15:18:48 +0200
+COMMAND: zfs get -H -o name,value origin -t filesystem -r tank/backup/1
+END: 2026-06-03 15:18:48 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+tank/backup/1	-
+tank/backup/1/tree.0	-
+tank/backup/1/tree.0/branch-2026-06-03T13:15:38.0	-
+tank/backup/1/tree.1	-
+tank/backup/1/tree.1/branch-2026-06-03T13:16:59.0	-
+---
+
+START: 2026-06-03 15:18:48 +0200
+COMMAND: zfs get -H -o name,value clones -t snapshot -r tank/backup/1
+END: 2026-06-03 15:18:48 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+tank/backup/1/tree.0/branch-2026-06-03T13:15:38.0@2026-06-03T13:15:34	-
+tank/backup/1/tree.0/branch-2026-06-03T13:15:38.0@2026-06-03T13:16:12	-
+tank/backup/1/tree.0/branch-2026-06-03T13:15:38.0@2026-06-03T13:18:32	-
+tank/backup/1/tree.1/branch-2026-06-03T13:16:59.0@2026-06-03T13:16:55	-
+tank/backup/1/tree.1/branch-2026-06-03T13:16:59.0@2026-06-03T13:17:32	-
+---
+
+START: 2026-06-03 15:18:57 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 15:18:59 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

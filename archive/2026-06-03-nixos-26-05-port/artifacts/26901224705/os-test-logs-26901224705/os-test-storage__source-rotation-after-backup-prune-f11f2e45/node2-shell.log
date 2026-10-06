@@ -1,0 +1,145 @@
+SHELL: 0
+
+START: 2026-06-03 13:53:50 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 13:53:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:53:50 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 13:53:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:53:50 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 13:53:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1519) 71s
+---
+
+START: 2026-06-03 13:53:50 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 13:53:50 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1519) 71s
+---
+
+START: 2026-06-03 13:53:50 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 13:53:50 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:53:51 +0200
+COMMAND: sv check nodectld
+END: 2026-06-03 13:53:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 1519) 72s
+---
+
+START: 2026-06-03 13:53:51 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 13:53:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:53:51 +0200
+COMMAND: nodectl ping
+END: 2026-06-03 13:53:51 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+pong
+---
+
+START: 2026-06-03 13:53:57 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-03 13:53:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:53:57 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-03 13:53:58 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 13:53:58 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-03 13:53:58 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-03 13:53:58 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-03 13:53:59 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 13:55:05 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/storage-source-rotation-after-prune
+END: 2026-06-03 13:55:05 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/storage-source-rotation-after-prune
+---
+
+START: 2026-06-03 13:57:06 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/storage-source-rotation-nonhead
+END: 2026-06-03 13:57:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+tank/backup/storage-source-rotation-nonhead
+---
+
+START: 2026-06-03 13:57:48 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 13:57:50 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

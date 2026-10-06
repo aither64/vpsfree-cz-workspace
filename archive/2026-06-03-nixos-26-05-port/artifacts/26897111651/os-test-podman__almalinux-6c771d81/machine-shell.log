@@ -1,0 +1,965 @@
+SHELL: 0
+
+START: 2026-06-02 02:12:06 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-02 02:12:06 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:12:06 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-02 02:12:06 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:12:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:08 +0200
+ELAPSED: 2.17s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:10 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:11 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:13 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:14 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:16 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:18 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:19 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:21 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-02 02:12:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:22 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-02 02:12:23 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-02 02:12:24 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-02 02:12:24 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-02 02:12:24 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 02 Jun 2026 00:12:24 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-02 02:12:24 +0200
+COMMAND: osctl ct new --distribution almalinux --version 10 podman-6e87
+END: 2026-06-02 02:13:36 +0200
+ELAPSED: 72.33s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-02 02:13:36 +0200
+COMMAND: osctl ct unset start-menu podman-6e87
+END: 2026-06-02 02:13:37 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:13:37 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 podman-6e87 eth0
+END: 2026-06-02 02:13:38 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:13:38 +0200
+COMMAND: osctl ct devices add -p podman-6e87 char 10 200 rwm /dev/net/tun
+END: 2026-06-02 02:13:38 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:13:38 +0200
+COMMAND: osctl ct set dns-resolver podman-6e87 1.1.1.1
+END: 2026-06-02 02:13:39 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:13:39 +0200
+COMMAND: osctl ct start podman-6e87
+END: 2026-06-02 02:13:41 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-02 02:13:41 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-02 02:13:42 +0200
+ELAPSED: 1.53s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Name or service not known
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-02 02:13:43 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-02 02:13:45 +0200
+ELAPSED: 1.57s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Name or service not known
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-02 02:13:46 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-02 02:13:47 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=1.81 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.814/1.814/1.814/0.000 ms
+---
+
+START: 2026-06-02 02:13:47 +0200
+COMMAND: osctl ct exec podman-6e87 yum -y update
+END: 2026-06-02 02:13:52 +0200
+ELAPSED: 4.8s
+STATUS: 0
+OUTPUT:
+AlmaLinux 10 - AppStream                        4.9 MB/s | 2.0 MB     00:00    
+AlmaLinux 10 - BaseOS                           4.8 MB/s | 1.8 MB     00:00    
+AlmaLinux 10 - CRB                              1.3 MB/s | 482 kB     00:00    
+AlmaLinux 10 - Extras                            21 kB/s | 7.3 kB     00:00    
+Dependencies resolved.
+Nothing to do.
+Complete!
+---
+
+START: 2026-06-02 02:13:52 +0200
+COMMAND: osctl ct exec podman-6e87 yum -y install podman
+END: 2026-06-02 02:14:26 +0200
+ELAPSED: 33.68s
+STATUS: 0
+OUTPUT:
+Last metadata expiration check: 0:00:02 ago on Tue Jun  2 02:13:52 2026.
+Dependencies resolved.
+================================================================================
+ Package                 Arch   Version                         Repo       Size
+================================================================================
+Installing:
+ podman                  x86_64 7:5.8.2-1.el10_2.alma.1         appstream  15 M
+Installing dependencies:
+ aardvark-dns            x86_64 2:1.17.0-1.el10                 appstream 900 k
+ catatonit               x86_64 5:0.2.1-1.el10                  appstream 307 k
+ conmon                  x86_64 3:2.2.1-2.el10                  appstream  53 k
+ container-selinux       noarch 4:2.246.0-1.el10                appstream  57 k
+ containers-common       noarch 6:5.8-2.el10                    appstream  98 k
+ containers-common-extra noarch 6:5.8-2.el10                    appstream 9.5 k
+ criu                    x86_64 4.2-1.el10                      appstream 571 k
+ crun                    x86_64 1.27-2.el10_2                   appstream 275 k
+ gnupg2                  x86_64 2.4.5-4.el10_1                  baseos    2.7 M
+ gpgme                   x86_64 1.23.2-6.el10.alma.1            baseos    213 k
+ libassuan               x86_64 2.5.6-6.el10                    baseos     67 k
+ libgcrypt               x86_64 1.11.0-5.el10                   baseos    587 k
+ libgpg-error            x86_64 1.50-2.el10                     baseos    239 k
+ libksba                 x86_64 1.6.7-2.el10                    baseos    162 k
+ libnet                  x86_64 1.3-7.el10                      appstream  60 k
+ netavark                x86_64 2:1.17.2-1.el10                 appstream 3.1 M
+ npth                    x86_64 1.6-21.el10                     baseos     25 k
+ passt                   x86_64 0^20251210.gd04c480-4.el10_2    appstream 281 k
+ passt-selinux           noarch 0^20251210.gd04c480-4.el10_2    appstream  26 k
+ podman-sequoia          x86_64 0.4.0~pqc.2-1.el10              appstream 2.5 M
+ protobuf-c              x86_64 1.5.0-6.el10                    baseos     32 k
+ shadow-utils-subid      x86_64 2:4.15.0-11.el10                baseos     26 k
+Installing weak dependencies:
+ criu-libs               x86_64 4.2-1.el10                      appstream  31 k
+ tar                     x86_64 2:1.35-11.el10                  baseos    857 k
+
+Transaction Summary
+================================================================================
+Install  25 Packages
+
+Total download size: 28 M
+Installed size: 90 M
+Downloading Packages:
+(1/25): conmon-2.2.1-2.el10.x86_64.rpm          553 kB/s |  53 kB     00:00    
+(2/25): container-selinux-2.246.0-1.el10.noarch  12 MB/s |  57 kB     00:00    
+(3/25): catatonit-0.2.1-1.el10.x86_64.rpm       2.8 MB/s | 307 kB     00:00    
+(4/25): containers-common-extra-5.8-2.el10.noar 201 kB/s | 9.5 kB     00:00    
+(5/25): containers-common-5.8-2.el10.noarch.rpm 1.7 MB/s |  98 kB     00:00    
+(6/25): aardvark-dns-1.17.0-1.el10.x86_64.rpm   5.1 MB/s | 900 kB     00:00    
+(7/25): criu-libs-4.2-1.el10.x86_64.rpm         2.8 MB/s |  31 kB     00:00    
+(8/25): criu-4.2-1.el10.x86_64.rpm               26 MB/s | 571 kB     00:00    
+(9/25): libnet-1.3-7.el10.x86_64.rpm            543 kB/s |  60 kB     00:00    
+(10/25): crun-1.27-2.el10_2.x86_64.rpm          2.2 MB/s | 275 kB     00:00    
+(11/25): passt-0^20251210.gd04c480-4.el10_2.x86  22 MB/s | 281 kB     00:00    
+(12/25): passt-selinux-0^20251210.gd04c480-4.el 514 kB/s |  26 kB     00:00    
+(13/25): netavark-1.17.2-1.el10.x86_64.rpm      8.3 MB/s | 3.1 MB     00:00    
+(14/25): podman-sequoia-0.4.0~pqc.2-1.el10.x86_  11 MB/s | 2.5 MB     00:00    
+(15/25): gpgme-1.23.2-6.el10.alma.1.x86_64.rpm  5.1 MB/s | 213 kB     00:00    
+(16/25): libassuan-2.5.6-6.el10.x86_64.rpm       15 MB/s |  67 kB     00:00    
+(17/25): libgcrypt-1.11.0-5.el10.x86_64.rpm      22 MB/s | 587 kB     00:00    
+(18/25): libgpg-error-1.50-2.el10.x86_64.rpm     20 MB/s | 239 kB     00:00    
+(19/25): gnupg2-2.4.5-4.el10_1.x86_64.rpm        18 MB/s | 2.7 MB     00:00    
+(20/25): libksba-1.6.7-2.el10.x86_64.rpm        5.0 MB/s | 162 kB     00:00    
+(21/25): npth-1.6-21.el10.x86_64.rpm            5.2 MB/s |  25 kB     00:00    
+(22/25): protobuf-c-1.5.0-6.el10.x86_64.rpm     867 kB/s |  32 kB     00:00    
+(23/25): shadow-utils-subid-4.15.0-11.el10.x86_ 457 kB/s |  26 kB     00:00    
+(24/25): tar-1.35-11.el10.x86_64.rpm             20 MB/s | 857 kB     00:00    
+(25/25): podman-5.8.2-1.el10_2.alma.1.x86_64.rp 9.3 MB/s |  15 MB     00:01    
+--------------------------------------------------------------------------------
+Total                                            11 MB/s |  28 MB     00:02     
+AlmaLinux 10 - AppStream                        1.6 MB/s | 1.6 kB     00:00    
+Importing GPG key 0xC2A1E572:
+ Userid     : "AlmaLinux OS 10 <packager@almalinux.org>"
+ Fingerprint: EE6D B7B9 8F5B F5ED D9DA 0DE5 DEE5 C11C C2A1 E572
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-10
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : libgpg-error-1.50-2.el10.x86_64                       1/25 
+  Installing       : libassuan-2.5.6-6.el10.x86_64                         2/25 
+  Installing       : protobuf-c-1.5.0-6.el10.x86_64                        3/25 
+  Running scriptlet: container-selinux-4:2.246.0-1.el10.noarch             4/25 
+  Installing       : container-selinux-4:2.246.0-1.el10.noarch             4/25 
+  Running scriptlet: container-selinux-4:2.246.0-1.el10.noarch             4/25 
+  Running scriptlet: passt-selinux-0^20251210.gd04c480-4.el10_2.noarch     5/25 
+  Installing       : passt-selinux-0^20251210.gd04c480-4.el10_2.noarch     5/25 
+  Running scriptlet: passt-selinux-0^20251210.gd04c480-4.el10_2.noarch     5/25 
+  Installing       : passt-0^20251210.gd04c480-4.el10_2.x86_64             6/25 
+  Installing       : libgcrypt-1.11.0-5.el10.x86_64                        7/25 
+  Installing       : libksba-1.6.7-2.el10.x86_64                           8/25 
+  Installing       : tar-2:1.35-11.el10.x86_64                             9/25 
+  Installing       : shadow-utils-subid-2:4.15.0-11.el10.x86_64           10/25 
+  Installing       : npth-1.6-21.el10.x86_64                              11/25 
+  Installing       : gnupg2-2.4.5-4.el10_1.x86_64                         12/25 
+  Installing       : gpgme-1.23.2-6.el10.alma.1.x86_64                    13/25 
+  Installing       : podman-sequoia-0.4.0~pqc.2-1.el10.x86_64             14/25 
+  Installing       : libnet-1.3-7.el10.x86_64                             15/25 
+  Installing       : criu-4.2-1.el10.x86_64                               16/25 
+  Installing       : criu-libs-4.2-1.el10.x86_64                          17/25 
+  Installing       : crun-1.27-2.el10_2.x86_64                            18/25 
+  Installing       : conmon-3:2.2.1-2.el10.x86_64                         19/25 
+  Installing       : catatonit-5:0.2.1-1.el10.x86_64                      20/25 
+  Installing       : aardvark-dns-2:1.17.0-1.el10.x86_64                  21/25 
+  Installing       : netavark-2:1.17.2-1.el10.x86_64                      22/25 
+  Installing       : containers-common-6:5.8-2.el10.noarch                23/25 
+  Installing       : containers-common-extra-6:5.8-2.el10.noarch          24/25 
+  Installing       : podman-7:5.8.2-1.el10_2.alma.1.x86_64                25/25 
+  Running scriptlet: container-selinux-4:2.246.0-1.el10.noarch            25/25 
+  Running scriptlet: passt-selinux-0^20251210.gd04c480-4.el10_2.noarch    25/25 
+  Running scriptlet: podman-7:5.8.2-1.el10_2.alma.1.x86_64                25/25 
+
+Installed:
+  aardvark-dns-2:1.17.0-1.el10.x86_64                                           
+  catatonit-5:0.2.1-1.el10.x86_64                                               
+  conmon-3:2.2.1-2.el10.x86_64                                                  
+  container-selinux-4:2.246.0-1.el10.noarch                                     
+  containers-common-6:5.8-2.el10.noarch                                         
+  containers-common-extra-6:5.8-2.el10.noarch                                   
+  criu-4.2-1.el10.x86_64                                                        
+  criu-libs-4.2-1.el10.x86_64                                                   
+  crun-1.27-2.el10_2.x86_64                                                     
+  gnupg2-2.4.5-4.el10_1.x86_64                                                  
+  gpgme-1.23.2-6.el10.alma.1.x86_64                                             
+  libassuan-2.5.6-6.el10.x86_64                                                 
+  libgcrypt-1.11.0-5.el10.x86_64                                                
+  libgpg-error-1.50-2.el10.x86_64                                               
+  libksba-1.6.7-2.el10.x86_64                                                   
+  libnet-1.3-7.el10.x86_64                                                      
+  netavark-2:1.17.2-1.el10.x86_64                                               
+  npth-1.6-21.el10.x86_64                                                       
+  passt-0^20251210.gd04c480-4.el10_2.x86_64                                     
+  passt-selinux-0^20251210.gd04c480-4.el10_2.noarch                             
+  podman-7:5.8.2-1.el10_2.alma.1.x86_64                                         
+  podman-sequoia-0.4.0~pqc.2-1.el10.x86_64                                      
+  protobuf-c-1.5.0-6.el10.x86_64                                                
+  shadow-utils-subid-2:4.15.0-11.el10.x86_64                                    
+  tar-2:1.35-11.el10.x86_64                                                     
+
+Complete!
+---
+
+START: 2026-06-02 02:14:26 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c mkdir\ -p\ /etc/containers/registries.conf.d'
+'cat\ \>\ /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf\ \<\<\'EOF\''
+'\[\[registry\]\]'
+'prefix\ \=\ \"docker.io\"'
+'location\ \=\ \"docker.io\"'
+''
+'\ \ \[\[registry.mirror\]\]'
+'\ \ location\ \=\ \"docker-registry.vpsadminos.org\"'
+'\ \ pull-from-mirror\ \=\ \"all\"'
+''
+'\[aliases\]'
+'\"hello-world\"\ \=\ \"docker.io/library/hello-world\"'
+''
+'EOF'
+'
+END: 2026-06-02 02:14:27 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:27 +0200
+COMMAND: osctl ct exec podman-6e87 cat /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf
+END: 2026-06-02 02:14:29 +0200
+ELAPSED: 1.37s
+STATUS: 0
+OUTPUT:
+[[registry]]
+prefix = "docker.io"
+location = "docker.io"
+
+  [[registry.mirror]]
+  location = "docker-registry.vpsadminos.org"
+  pull-from-mirror = "all"
+
+[aliases]
+"hello-world" = "docker.io/library/hello-world"
+
+---
+
+START: 2026-06-02 02:14:29 +0200
+COMMAND: osctl ct exec podman-6e87 podman info
+END: 2026-06-02 02:14:30 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+host:
+  arch: amd64
+  buildahVersion: 1.43.1
+  cgroupControllers:
+  - memory
+  - pids
+  cgroupManager: systemd
+  cgroupVersion: v2
+  conmon:
+    package: conmon-2.2.1-2.el10.x86_64
+    path: /usr/bin/conmon
+    version: 'conmon version 2.2.1, commit: '
+  cpuUtilization:
+    idlePercent: 100
+    systemPercent: 0
+    userPercent: 0
+  cpus: 4
+  databaseBackend: sqlite
+  distribution:
+    distribution: almalinux
+    version: "10.2"
+  eventLogger: journald
+  freeLocks: 2048
+  hostname: podman-6e87
+  idMappings:
+    gidmap: null
+    uidmap: null
+  kernel: 6.12.91
+  linkmode: dynamic
+  logDriver: journald
+  memFree: 6259994624
+  memTotal: 8340758528
+  networkBackend: netavark
+  networkBackendInfo:
+    backend: netavark
+    defaultNetwork: podman
+    dns:
+      package: aardvark-dns-1.17.0-1.el10.x86_64
+      path: /usr/libexec/podman/aardvark-dns
+      version: aardvark-dns 1.17.0
+    package: netavark-1.17.2-1.el10.x86_64
+    path: /usr/libexec/podman/netavark
+    version: netavark 1.17.2
+  ociRuntime:
+    name: crun
+    package: crun-1.27-2.el10_2.x86_64
+    path: /usr/bin/crun
+    version: |-
+      crun version 1.27
+      commit: a718a92cc9a94955a5a550b6fdec1378c247ec50
+      rundir: /run/crun
+      spec: 1.0.0
+      +SYSTEMD +SELINUX +APPARMOR +CAP +SECCOMP +EBPF +CRIU +LIBKRUN +YAJL
+  os: linux
+  pasta:
+    executable: /bin/pasta
+    package: passt-0^20251210.gd04c480-4.el10_2.x86_64
+    version: |
+      pasta 0^20251210.gd04c480-4.el10_2.x86_64
+      Copyright Red Hat
+      GNU General Public License, version 2 or later
+        <https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+      This is free software: you are free to change and redistribute it.
+      There is NO WARRANTY, to the extent permitted by law.
+  remoteSocket:
+    exists: true
+    path: /run/podman/podman.sock
+  rootlessNetworkCmd: pasta
+  security:
+    apparmorEnabled: false
+    capabilities: CAP_CHOWN,CAP_DAC_OVERRIDE,CAP_FOWNER,CAP_FSETID,CAP_KILL,CAP_NET_BIND_SERVICE,CAP_SETFCAP,CAP_SETGID,CAP_SETPCAP,CAP_SETUID,CAP_SYS_CHROOT
+    rootless: false
+    seccompEnabled: true
+    seccompProfilePath: /usr/share/containers/seccomp.json
+    selinuxEnabled: false
+  serviceIsRemote: false
+  slirp4netns:
+    executable: ""
+    package: ""
+    version: ""
+  swapFree: 0
+  swapTotal: 0
+  uptime: 0h 0m 50.00s
+  variant: ""
+plugins:
+  authorization: null
+  log:
+  - k8s-file
+  - none
+  - passthrough
+  - journald
+  network:
+  - bridge
+  - macvlan
+  - ipvlan
+  volume:
+  - local
+registries:
+  docker.io:
+    Blocked: false
+    Insecure: false
+    Location: docker.io
+    MirrorByDigestOnly: false
+    Mirrors:
+    - Insecure: false
+      Location: docker-registry.vpsadminos.org
+      PullFromMirror: all
+    Prefix: docker.io
+    PullFromMirror: ""
+  search:
+  - registry.access.redhat.com
+  - registry.redhat.io
+  - docker.io
+store:
+  configFile: /usr/share/containers/storage.conf
+  containerStore:
+    number: 0
+    paused: 0
+    running: 0
+    stopped: 0
+  graphDriverName: overlay
+  graphOptions:
+    overlay.mountopt: nodev,metacopy=on
+  graphRoot: /var/lib/containers/storage
+  graphRootAllocated: 9266659328
+  graphRootUsed: 749076480
+  graphStatus:
+    Backing Filesystem: cramfs
+    Native Overlay Diff: "false"
+    Supports d_type: "true"
+    Supports shifting: "false"
+    Supports volatile: "true"
+    Using metacopy: "false"
+  imageCopyTmpDir: /var/tmp
+  imageStore:
+    number: 0
+  runRoot: /run/containers/storage
+  transientStore: false
+  volumePath: /var/lib/containers/storage/volumes
+version:
+  APIVersion: 5.8.2
+  BuildOrigin: AlmaLinux Packaging Team <packager@almalinux.org>
+  Built: 1779148800
+  BuiltTime: Tue May 19 02:00:00 2026
+  GitCommit: 5b263b5f5b48004a87caac44e67349a8266d9ef4
+  GoVersion: go1.26.2 (Red Hat 1.26.2-2.el10_2.alma.1)
+  Os: linux
+  OsArch: linux/amd64
+  Version: 5.8.2
+
+---
+
+START: 2026-06-02 02:14:30 +0200
+COMMAND: osctl ct exec podman-6e87 podman run hello-world
+END: 2026-06-02 02:14:33 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+Resolved "hello-world" as an alias (/etc/containers/registries.conf.d/10-vpsadminos-mirror.conf)
+Trying to pull docker.io/library/hello-world:latest...
+Getting image source signatures
+Copying blob sha256:4f55086f7dd096d48b0e49be066971a8ed996521c2e190aa21b2435a847198b4
+Copying config sha256:e2ac70e7319a02c5a477f5825259bd118b94e8b02c279c67afa63adab6d8685b
+Writing manifest to image destination
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-06-02 02:14:33 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c mkdir\ -p\ /tmp/podman-build-test'
+'cat\ \>\ /tmp/podman-build-test/Dockerfile\ \<\<\'EOF\''
+'FROM\ docker.io/library/alpine:latest'
+'RUN\ echo\ \"Podman\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-06-02 02:14:34 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:34 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ build\ -t\ localhost/podman-build-test:latest\ /tmp/podman-build-test
+END: 2026-06-02 02:14:38 +0200
+ELAPSED: 3.66s
+STATUS: 0
+OUTPUT:
+STEP 1/3: FROM docker.io/library/alpine:latest
+Trying to pull docker.io/library/alpine:latest...
+Getting image source signatures
+Copying blob sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb
+Copying config sha256:3cb067eab609612d81b4d82ff8ad71d73482bb3059a87b642d7e14f0ed659cde
+Writing manifest to image destination
+STEP 2/3: RUN echo "Podman build works!" > /message.txt
+--> 41122aa0ac6b
+STEP 3/3: CMD ["cat", "/message.txt"]
+COMMIT localhost/podman-build-test:latest
+--> eb40ef118cbc
+Successfully tagged localhost/podman-build-test:latest
+eb40ef118cbc61df143ec7e71365c87fe3ed867c57d8315f19faf7d9516e0332
+---
+
+START: 2026-06-02 02:14:38 +0200
+COMMAND: osctl ct exec podman-6e87 podman run --rm localhost/podman-build-test:latest
+END: 2026-06-02 02:14:39 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+Podman build works!
+---
+
+START: 2026-06-02 02:14:39 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:14:41 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:41 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-02 02:14:42 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+ccdfa2adbe8610eb0dc58ef74fabb2d3f391af2c21c1ab1439752ce5dcfc3fdf
+---
+
+START: 2026-06-02 02:14:42 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-06-02 02:14:44 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-02 02:14:44 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:14:45 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:45 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:14:47 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:47 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-02 02:14:48 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+76fdd6a5f19b31028ceb79614e582f5b04a64aa0b4a02c7e20dfa54324d8556a
+---
+
+START: 2026-06-02 02:14:48 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-06-02 02:14:50 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-02 02:14:50 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:14:52 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:52 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:14:53 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:53 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-02 02:14:55 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+c7bee51a90c2a7bfae9cbc1343814c668b46ddbfb89a3687b6d4a24963e11af4
+---
+
+START: 2026-06-02 02:14:55 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-06-02 02:14:56 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-02 02:14:56 +0200
+COMMAND: osctl ct exec podman-6e87 sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-02 02:14:58 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-02 02:14:58 +0200
+COMMAND: osctl ct del -f --prune podman-6e87
+END: 2026-06-02 02:15:00 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:podman-6e87
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-02 02:15:00 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-02 02:15:01 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/10/image-stream.tar
+---
+
+START: 2026-06-02 02:15:01 +0200
+COMMAND: poweroff -f
+END: 2026-06-02 02:15:16 +0200
+ELAPSED: 14.64s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

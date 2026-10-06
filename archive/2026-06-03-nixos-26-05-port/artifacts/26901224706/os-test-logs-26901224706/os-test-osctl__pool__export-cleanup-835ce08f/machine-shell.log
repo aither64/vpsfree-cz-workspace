@@ -1,0 +1,328 @@
+SHELL: 0
+
+START: 2026-06-03 19:32:31 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-03 19:32:31 +0200
+ELAPSED: 0.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:32:31 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-03 19:32:31 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-03 19:32:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:35 +0200
+ELAPSED: 4.34s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:32:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:38 +0200
+ELAPSED: 1.3s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:32:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:40 +0200
+ELAPSED: 1.41s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:32:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:43 +0200
+ELAPSED: 1.51s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:32:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:45 +0200
+ELAPSED: 1.25s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:32:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:48 +0200
+ELAPSED: 1.8s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:32:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:50 +0200
+ELAPSED: 1.19s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-03 19:32:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:52 +0200
+ELAPSED: 1.45s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-03 19:32:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-03 19:32:54 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-03 19:32:54 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-03 19:32:54 +0200
+ELAPSED: 0.14s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 03 Jun 2026 17:32:54 GMT
+content-type: text/html
+content-length: 7
+etag: "28kljspsk61pjwb96361zwi576fjnkh6-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-03 19:32:54 +0200
+COMMAND: osctl ct new --distribution alpine testct
+END: 2026-06-03 19:33:00 +0200
+ELAPSED: 5.44s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-03 19:33:00 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-03 19:33:04 +0200
+ELAPSED: 3.85s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-03 19:33:04 +0200
+COMMAND: osctl user show testct
+END: 2026-06-03 19:33:05 +0200
+ELAPSED: 1.25s
+STATUS: 0
+OUTPUT:
+       POOL:  tank
+       NAME:  testct
+ REGISTERED:  true
+ STANDALONE:  -
+
+---
+
+START: 2026-06-03 19:33:05 +0200
+COMMAND: id tank-testct
+END: 2026-06-03 19:33:05 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+uid=100000(tank-testct) gid=100000(tank-testct) groups=100000(tank-testct)
+---
+
+START: 2026-06-03 19:33:05 +0200
+COMMAND: osctl group show /default
+END: 2026-06-03 19:33:06 +0200
+ELAPSED: 1.25s
+STATUS: 0
+OUTPUT:
+   POOL:  tank
+   NAME:  /default
+ MEMORY:  9.4M
+ CPU_US:  2s
+
+---
+
+START: 2026-06-03 19:33:06 +0200
+COMMAND: osctl ct show testct
+END: 2026-06-03 19:33:07 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+         POOL:  tank
+           ID:  testct
+         USER:  testct
+        GROUP:  /default
+ DISTRIBUTION:  alpine
+      VERSION:  3.23
+        STATE:  running
+     INIT_PID:  2057
+       MEMORY:  6.1M
+       CPU_US:  1s
+
+---
+
+START: 2026-06-03 19:33:07 +0200
+COMMAND: osctl pool export tank
+END: 2026-06-03 19:33:08 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: the pool has running containers
+---
+
+START: 2026-06-03 19:33:08 +0200
+COMMAND: osctl user show testct
+END: 2026-06-03 19:33:10 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+       POOL:  tank
+       NAME:  testct
+ REGISTERED:  true
+ STANDALONE:  -
+
+---
+
+START: 2026-06-03 19:33:10 +0200
+COMMAND: id tank-testct
+END: 2026-06-03 19:33:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+uid=100000(tank-testct) gid=100000(tank-testct) groups=100000(tank-testct)
+---
+
+START: 2026-06-03 19:33:10 +0200
+COMMAND: osctl group show /default
+END: 2026-06-03 19:33:11 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+   POOL:  tank
+   NAME:  /default
+ MEMORY:  10.0M
+ CPU_US:  3s
+
+---
+
+START: 2026-06-03 19:33:11 +0200
+COMMAND: osctl ct show testct
+END: 2026-06-03 19:33:12 +0200
+ELAPSED: 1.35s
+STATUS: 0
+OUTPUT:
+         POOL:  tank
+           ID:  testct
+         USER:  testct
+        GROUP:  /default
+ DISTRIBUTION:  alpine
+      VERSION:  3.23
+        STATE:  running
+     INIT_PID:  2057
+       MEMORY:  6.7M
+       CPU_US:  3s
+
+---
+
+START: 2026-06-03 19:33:12 +0200
+COMMAND: osctl pool export -f tank
+END: 2026-06-03 19:33:19 +0200
+ELAPSED: 6.99s
+STATUS: 0
+OUTPUT:
+Grabbing all containers
+Stopping all containers
+[1/1] Stopping container tank:testct
+Unregistering users, groups and containers
+Unregistering user tank:testct
+Removing cgroups
+---
+
+START: 2026-06-03 19:33:19 +0200
+COMMAND: osctl user show testct
+END: 2026-06-03 19:33:20 +0200
+ELAPSED: 0.9s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-06-03 19:33:20 +0200
+COMMAND: id tank-testct
+END: 2026-06-03 19:33:20 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+id: ‘tank-testct’: no such user
+---
+
+START: 2026-06-03 19:33:20 +0200
+COMMAND: osctl group show /default
+END: 2026-06-03 19:33:21 +0200
+ELAPSED: 1.29s
+STATUS: 1
+OUTPUT:
+error: group not found
+---
+
+START: 2026-06-03 19:33:21 +0200
+COMMAND: osctl ct show testct
+END: 2026-06-03 19:33:23 +0200
+ELAPSED: 1.51s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-06-03 19:33:23 +0200
+COMMAND: poweroff -f
+END: 2026-06-03 19:33:25 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+
