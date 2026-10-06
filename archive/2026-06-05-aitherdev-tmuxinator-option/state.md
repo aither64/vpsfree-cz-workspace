@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # Fix aitherdev tmuxinator option conflict
 
