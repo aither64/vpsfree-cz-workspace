@@ -1,10 +1,10 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-10-04-session-archive-reliability
 
-Current phase: deployed and verified; awaiting user UI review and merge approval.
+Current phase: complete; reviewed changes merged and pushed to all defaults.
 
 Automatic archival is in the shared sidebar menu, and the redundant Workspace
 heading is removed. The matching archive shared-master correction is deployed
@@ -12,10 +12,14 @@ on aitherdev. All 141 requested old sessions are archived, with no unresolved
 archive failures, native journals or selected worktree groups. The two exceptions
 remain active: 2026-06-15-vpsadmin-events and 2026-07-24-ct-start-hang.
 
-The user explicitly directed: "do not merge this automatically... i'd like to
-review the ui before we merge it". All new runtime, workspace and configuration
-features remain on retained unmerged branches. Deployment is authorized; merge
-approval is pending. This initiative remains active. CI was not awaited.
+The user reviewed the deployed UI and explicitly approved integration with
+"looks good, merge it". This supersedes the previous review hold and authorizes
+the reviewed dev-workspace, workspace and vpsfree-cz-configuration feature
+branches to enter their origin/master defaults. All three integrations fast-forwarded and are pushed; exact remote ancestry
+and retained feature refs are verified. The workspace rebase preserved both
+reviewed patches exactly. CI was not awaited. The previously disclosed baseline
+timing assertion remains recorded below as an accepted residual verification
+limit. The session remains open; archival was not requested.
 
 Phase checklist:
 
@@ -23,7 +27,9 @@ Phase checklist:
 - [x] Independent final review of complete 2/2/2 histories; no findings/migrations.
 - [x] All 141 archives and individual recovery, preserving unfinished work.
 - [x] Matching package/host build, deployment and live verification.
-- [ ] User UI review and explicit feature integration approval.
+- [x] User UI review and explicit feature integration approval.
+- [x] Fast-forward integration and exact remote ancestry verification.
+- [x] Temporary integration worktrees removed; branches retained.
 
 ## Final branches and deployed revision
 
@@ -31,11 +37,13 @@ All three feature branches are 2026-10-04-session-archive-reliability:
 
 | Repository | Final head | Status |
 | --- | --- | --- |
-| dev-workspace | 4c3ea2eb3b82b572e86f23ec7f9e53a0f1dc6a0c | pushed, deployed, unmerged |
-| workspace | c650b86f83785e2c47ab827e2f0e37f7186e5712 | pushed, deployed, unmerged |
-| vpsfree-cz-configuration | 676a73c0d7e1570f2e4c4ebfb0cc8bd0b02b8271 | pushed, deployed, unmerged |
+| dev-workspace | 4c3ea2eb3b82b572e86f23ec7f9e53a0f1dc6a0c | merged into origin/master; deployed |
+| workspace | 37db212f9c0b743aea1189c343c56e9722540165 | merged into origin/master; deployment inputs unchanged |
+| vpsfree-cz-configuration | 676a73c0d7e1570f2e4c4ebfb0cc8bd0b02b8271 | merged into origin/master; deployed |
 
-vpsfree-dev-workspace is unchanged from the previous merged reliability rollout.
+vpsfree-dev-workspace is unchanged from the previous merged reliability rollout;
+its retained exact feature head is also verified as merged. The deployed
+workspace source is c650b86f; the rebased 37db212f selects identical inputs.
 Host generation: 2026-10-06--11-54-16. The actual profile and system match
 the build outputs, and portal/Codex/router/tmux/archive timer are active.
 
@@ -77,12 +85,12 @@ archives as coordination commits advance master.
 
 ## Next action and records
 
-The user reviews the deployed UI, then explicitly approves or changes the
-feature integration scope. Before any later approved integration, fetch current
-defaults, rebase the workspace feature onto advancing tracking master with
-patch-equivalence evidence, and refresh exact comparison captures. Preserve
-retained refs and the existing review conclusions unless the patch changes.
+No implementation, review, deployment or integration work remains. All registered
+exact feature heads are ancestors of their fetched remote defaults. Feature
+branches and initiative worktrees are retained. The current session is complete
+and remains open for follow-up conversation.
 
+- [Approved integration and exact remote proofs](sidebar-integration-result.json)
 - [Approved follow-up plan](sidebar-archive-plan.md)
 - [Rollout, recovery and CI details](sidebar-rollout.md)
 - [Verified archive result](sidebar-archive-result.json)
