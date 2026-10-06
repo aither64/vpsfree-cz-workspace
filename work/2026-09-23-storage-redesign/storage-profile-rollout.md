@@ -23,21 +23,35 @@ four Pools, compatible enabled template and read-write mode were checked.
 The one existing VPS/NAS scenario failed exit1/27.444s at preparation stage1,
 before payload writes. The normal user chain48/user5 was admitted; VPS staging
 refused the fixture's512 MiB request against the actual seeded1024 MiB memory
-minimum. Owning foreground/PGID ended. Scheduler remains stopped; admitted
-objects/diagnostics are retained without retry or cleanup. Current phase is
-immutable delivery of the completed fixture correction. The1024-MiB request
-and selected-seed regression passed the complete48-example profile file and
-provider no-build check (overall0/78.929s/parity1). New provider commit0ff827df
-has passed independent complete-history/four-lane review with no findings and
-was published to its feature branch; default77dd remains unchanged. Rootc754
-is fresh and the one-URL/generated-lock commit7d5507f5 passed its fresh package
-batch0/261.457s/parity1/all9equal1. Builti95b/npjj contains the new77f2 fixture
-but remains unselected. Final tracking/replay/publication/comparison precedes
-the external-idle handoff. Installed3fzi/wg7 still embeds the old fixture;
-no retry precedes external activation,
-ordinary services update and actual guest-script/preservation proof. Failed
-user5/chain48 remain preserved. Remaining payload and retirement proof is
-unexecuted; no new default integration or CI wait is authorized.
+minimum. Owning foreground/PGID ended; its failed user5/chain48 and evidence are retained.
+The reviewed1024-MiB request and selected-seed regression passed48 examples and
+provider no-build (overall0/78.929s/parity1). Provider0ff and root67505 passed
+their unchanged-source package proof, actuali95b/npjj activation proof and both
+explicitly approved FF-only default integrations with SSH readback. The other
+storage branches remain feature-only; no CI was awaited.
+
+The one ordinary services delivery passed0/399.864s/parity1. Post-delivery
+reads passed0/25.419s: actual77f2 acceptance/ef775 provision/toplevel match,
+original ordinary-file/four-quota and all three Node proofs pass. Protected
+DB changes0 across27groups1253rows; its100 additions relative to the original
+baseline are already present in the accepted post-user5 capture. Compared to
+that exact capture, no protected row was added, changed or removed; only four
+Pool-space and five snapshot-count observations differ. The supported switch
+restarted scheduling. Fresh loaded enrollment/all four Pools/scheduler/admin/
+compatible template1/read-write mode0/epoch4 checks pass. Chain48 remains done
+with zero unfinished/pending/locked work and user5 has no VPS.
+
+The one corrected owning fixture failed exit1/202.570s during first full-transfer
+stage2, after preparation. Chain71 is failed/state4; tx186/handle5213/node201 is
+the failed member, pending confirmations0/locks0. Underlying ZFS command cause
+is being diagnosed, without retry or cancellation. Host childPGID2156563 and
+its prefix/FD-holder observations are empty. Scheduler is stopped, admitted
+objects/evidence remain, and original-preservation reads are active/pending.
+
+Current phase is first-transfer diagnosis. Full/incremental/history/rotation/
+automatic/repeat and retirement remain unproved. No initial separate Node
+update/package switch/recovery is repeated. The file proof remains forward
+from its first post-copy measurement; no fresh preboot history is inferred.
 Evidence: private `/tmp/storage-retained-resume-20261005` and
 [payload-memory-review.md](payload-memory-review.md). No worktree/helper bypass.
 

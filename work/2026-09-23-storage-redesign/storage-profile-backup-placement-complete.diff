@@ -1,0 +1,1543 @@
+diff --git a/dev-clusters/vpsadmin/README.md b/dev-clusters/vpsadmin/README.md
+index ad3b235e2078fac88dc0a095ef7a4b6a9c3d982b..c4a5dca81e887b8e1e5f0b52dfc63a000cde06f2 100644
+--- a/dev-clusters/vpsadmin/README.md
++++ b/dev-clusters/vpsadmin/README.md
+@@ -397,6 +397,31 @@ keep their entitlement; catch-up reports insufficient resources rather than
+ changing a personal package. Administrative/service accounts receive no
+ automatic member NAS allocation.
+ 
++New member NAS roots use `nas-<user-id>`; VPS roots keep their numeric VPS-ID
++names. Catch-up reuses one valid numeric or prefixed NAS root after checking
++member ownership, the configured NAS Pool/DIP, label, quota and confirmation.
++Ambiguous, pending or incompatible roots cause refusal. Catch-up preserves
++existing names, DIPs and policy and never creates a second NAS root beside one.
++
++Before staging a backup creation or enrolling a reused copy, the profile checks
++exclusive catalog ownership of the destination node, Pool filesystem and
++Dataset full name. A locking read under storage admission checks current
++claims, including confirmed and pending DIPs in duplicate Pool entries.
++Only the validated reused DIP is excluded. A conflicting claim rolls back the
++current User, VPS or catch-up staging before its commands can run. Physical
++waits hold no admission lock. This check covers catalog claims made through
++upgraded profile writers; uncatalogued physical targets and old or unrelated
++writers remain outside its guarantee.
++
++Load the upgraded helper in every profile-writing API, Supervisor and task
++process before enrollment. After creating prefixed roots, rolling back to an
++active old helper could create a second root because it recognizes only numeric
++NAS names. Before rolling back, use the compatible retired selection
++(`enable: true`, `enrollment: false`) and normal retirement, retaining the
++preserving overlay. Naming and refusal changes do not repair existing aliases.
++Retirement leaves their Dataset/DIP catalog and payloads intact; re-enrollment
++refuses an alias until a separately authorized recovery has resolved it.
++
+ After the compatible services generation and Node workers are running, use:
+ 
+ ```sh
+@@ -452,6 +477,79 @@ profile. Never disable the overlay on retained disks to retire or recover.
+ Re-enrollment requires a compatible services generation with enrollment true,
+ then provision. These operations do not establish quiet or repair authority.
+ 
++### Optional VPS backup placement
++
++Omitting `storageProfile.vpsBackupFilesystem` keeps profile configuration
++version 1 and its single backup destination. Setting it selects configuration
++version 2 with an additional backup root on the same storage node:
++
++```json
++{
++  "storageProfile": {
++    "enable": true,
++    "vpsBackupFilesystem": "tank/vps-backup"
++  }
++}
++```
++
++The new root must have the form `zpool/component` and differ from every
++configured root on that node. Null, empty, single-component and nested paths
++are invalid. The existing `backupFilesystem` default (`tank/backup`) remains
++the NAS backup destination and an allowed destination for existing VPS copies.
++
++The configured source Pool determines placement, including for NAS children.
++With configuration version 2, a source in a hypervisor Pool that has no backup
++copy uses `vpsBackupPool`; a NAS source uses `backupPool`. The selector reuses
++a sole valid VPS copy on either configured destination, preserving its DIP,
++name, history, retention and Plan action/task identities. The unused preferred
++Pool need not be ready. A source without a backup requires its default Pool
++to be ready and have capacity; the selector does not fall back to the other
++destination.
++
++Configuration version 2 examines all backup-role copies, including closed and
++pending ones. Multiple copies, a foreign destination, an invalid Pool,
++unrelated pending work or a catalog path alias cause refusal before the staging
++transaction can commit. Only the enclosing staging chain may reuse its own
++copy awaiting a create confirmation. The payload reader requires a confirmed,
++unlocked source and destination. It uses the same selector and completes its
++admission/path transaction before SSH, payload writes or physical waits.
++Configuration version 1 retains direct Plan selection among open copies;
++its catch-up and payload reader examine all copies. Catalog checks do not
++prove absence of uncatalogued physical paths.
++
++Provision inspects every configured source, NAS and backup root before creating
++any Pool, then uses normal Pool chains and fresh readiness evidence. Shared
++snapshot templates remain on source and NAS Pools. Inspection report version 2
++contains `profile_version: 2` and the exact legacy and VPS destination
++identities. The host requires those identities and the complete bounded Pool
++list to match its resolved desired configuration before stopping dispatch or
++changing Pools. Without the opt-in, inspection retains report version 1.
++These versions are separate from preserving-seed marker version 1 and the
++unchanged maintenance and runtime formats.
++
++Deliver the compatible helper and configuration to every API, Supervisor,
++scheduler and database-task writer before affected enrollment or dispatch.
++Exclude or settle old staging writers before the transition. An old process
++with its version-1 configuration can still stage into the legacy Pool; editing
++the host config or stopping the scheduler does not prove that all writers have
++loaded the new selection.
++
++Existing copies retain their locations and names; the policy never adds a
++second copy beside one. Removing or changing a destination with existing copies is
++unsupported. Once copies exist only on the version-2 VPS destination, rollback
++to an active version-1 profile is unsupported. Keep the enabled preserving
++overlay and a compatible retired selection during transitions. Compatible
++retirement removes only owned scheduling/default metadata, preserving copies
++and histories in both destination Pools. Re-enrollment retains each valid
++destination.
++
++This policy leaves existing aliases unresolved and does not authorize retrying
++a populated trial. Delivery requires reviewed provider publication, a generated
++consumer pin, composed package/source proof, external idle activation and
++supported services delivery. Before use, verify the exact installed scripts
++and configuration and prove that the writers loaded them. Editing a worktree
++helper does not replace the installed public package.
++
+ ### Storage profile verification
+ 
+ The optional no-VM smoke selection evaluates active and retired profile
+diff --git a/dev-clusters/vpsadmin/bin/devcluster b/dev-clusters/vpsadmin/bin/devcluster
+index 781f642c6f063aec71fefd9e15467439189aa711..809b940754ec5ec69ce1d684c782a154c5a15740 100755
+--- a/dev-clusters/vpsadmin/bin/devcluster
++++ b/dev-clusters/vpsadmin/bin/devcluster
+@@ -1862,7 +1862,7 @@ storage_profile_cluster() {
+   [ "$#" -eq 2 ] && [[ "$operation" = provision || "$operation" = retire ]] || die "storage-profile requires provision or retire"
+   [ "$(config_get "$slug" '.storageProfile.enable // false')" = true ] || die "storage profile is not enabled"
+   local desired_enrollment
+-  desired_enrollment="$(config_get "$slug" '.storageProfile | if has("enrollment") then .enrollment else true end')" || return
++  desired_enrollment="$(config_get "$slug" '.storageProfile | if has("enrollment") then if (.enrollment | type) == "boolean" then .enrollment else "invalid" end else true end')" || return
+   [[ "$desired_enrollment" = true || "$desired_enrollment" = false ]] || die "storage profile enrollment must be a boolean"
+   if [ "$operation" = provision ]; then
+     [ "$desired_enrollment" = true ] || die "storage profile provisioning requires enrollment enabled"
+@@ -1885,10 +1885,57 @@ storage_profile_cluster() {
+     die "storage profile inspection failed; private evidence: $profile_dir"
+   fi
+   [ "$(wc -c <"$report")" -le 8192 ] || die "storage profile inspection exceeded its bound"
+-  jq -e '.version == 1 and (.enrollment | type == "boolean") and (.pools | length >= 1 and length <= 10) and
+-    all(.pools[]; (.node_id | type == "number" and . == floor and . > 0) and
+-      (.filesystem | type == "string" and test("^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")) and
+-      (.present | type == "boolean"))' "$report" >/dev/null || die "invalid storage profile inspection"
++  # Inspection and profile formats are independent. Validate JSON integer
++  # declarations, exact fields and loaded routing before any root/Pool effect.
++  ruby -rjson - "$report" "$cfg" <<'RUBY' || die "invalid storage profile inspection or desired/loaded routing"
++begin
++  report, cfg = ARGV.map { |path| JSON.parse(File.binread(path)) }
++  selection = cfg.fetch('storageProfile')
++  opt_in = selection.key?('vpsBackupFilesystem')
++  version = opt_in ? 2 : 1
++  valid_root = lambda do |root|
++    root.is_a?(String) && root.match?(%r{\A[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+\z}) &&
++      root.split('/').none? { |part| %w[. ..].include?(part) }
++  end
++  fields = %w[version enrollment pools] + (opt_in ? %w[profile_version backup_placement] : [])
++  valid = report.is_a?(Hash) && report.keys.sort == fields.sort &&
++    report['version'].is_a?(Integer) && report['version'] == version &&
++    [true, false].include?(report['enrollment'])
++  rows = report.fetch('pools')
++  valid &&= rows.is_a?(Array) && rows.size.between?(1, opt_in ? 11 : 10) && rows.all? do |row|
++    row.is_a?(Hash) && row.keys.sort == %w[filesystem node_id present] &&
++      row['node_id'].is_a?(Integer) && row['node_id'].positive? && valid_root.call(row['filesystem']) &&
++      [true, false].include?(row['present'])
++  end
++  abort 'invalid storage profile inspection' unless valid
++  identities = rows.map { |row| row.values_at('node_id', 'filesystem') }
++  abort 'duplicate storage profile pool selection' unless identities.uniq == identities
++  if opt_in
++    nodes = cfg.fetch('topologies').fetch('storage').map { |name| cfg.fetch('nodes').fetch(name) }
++    storage = nodes.select { |node| node.fetch('role') == 'storage' }
++    abort 'invalid storage profile storage topology' unless storage.one?
++    storage_id = storage.first.fetch('id')
++    abort 'invalid desired storage node identity' unless storage_id.is_a?(Integer) && storage_id.positive?
++    legacy = selection.fetch('backupFilesystem', 'tank/backup')
++    vps = selection.fetch('vpsBackupFilesystem')
++    nas = selection.fetch('nasFilesystem', 'tank/nas')
++    roots = [legacy, vps, nas]
++    abort 'invalid desired storage profile roots' unless roots.all? { |root| valid_root.call(root) } && roots.uniq.size == roots.size
++    placement = { 'legacy' => { 'node_id' => storage_id, 'filesystem' => legacy },
++                  'vps' => { 'node_id' => storage_id, 'filesystem' => vps } }
++    abort 'storage profile placement differs from desired routing' unless
++      report['profile_version'].is_a?(Integer) && report['profile_version'] == 2 &&
++      report['backup_placement'] == placement &&
++      report['backup_placement'].values.all? { |entry| entry['node_id'].is_a?(Integer) }
++    expected = nodes.select { |node| node.fetch('role') == 'node' }.map do |node|
++      [node.fetch('id'), cfg.fetch('seed').fetch('pools').fetch('filesystem')]
++    end + roots.map { |root| [storage_id, root] }
++    abort 'incomplete storage profile pool inspection' unless identities.sort == expected.sort
++  end
++rescue JSON::ParserError, KeyError, TypeError, NoMethodError
++  abort 'invalid storage profile inspection'
++end
++RUBY
+   [ "$(jq -r '.enrollment' "$report")" = "$desired_enrollment" ] || die "storage profile desired and deployed enrollment differ; complete the services replacement first"
+   while IFS=$'\t' read -r node root present; do
+     [[ "$root" != */. && "$root" != */.. && "$root" != ./* && "$root" != ../* ]] || die "invalid storage profile root"
+diff --git a/dev-clusters/vpsadmin/lib/storage_profile.rb b/dev-clusters/vpsadmin/lib/storage_profile.rb
+index 88fcf01c24b9cb49eb59c73f307f8e9b8ac1f763..d841ac9fd507af2e05c6f1c00e4f9dd019000b37 100644
+--- a/dev-clusters/vpsadmin/lib/storage_profile.rb
++++ b/dev-clusters/vpsadmin/lib/storage_profile.rb
+@@ -36,7 +36,9 @@ module DevClusters
+ 
+     def validate_config!
+       fields = %w[version enrollment environmentId sourcePools backupPool nasPool resources packageVersion namespaceBlocks]
+-      unless config.is_a?(Hash) && config.keys.sort == fields.sort && config['version'] == 1
++      fields += %w[vpsBackupPool] if config.is_a?(Hash) && config['version'] == 2
++      unless config.is_a?(Hash) && config['version'].is_a?(Integer) && [1, 2].include?(config['version']) &&
++             config.keys.sort == fields.sort
+         raise Invalid, 'Invalid storage profile configuration'
+       end
+ 
+@@ -60,6 +62,13 @@ module DevClusters
+       end
+ 
+       all = sources + [backup, nas]
++      if config.fetch('version') == 2
++        vps = config.fetch('vpsBackupPool')
++        validate_pool_config!(vps, role: 'backup')
++        raise Invalid, 'VPS backup must use the configured storage node' unless vps.fetch('nodeId') == backup.fetch('nodeId')
++
++        all << vps
++      end
+       unless all.map { |pool| [pool.fetch('nodeId'), pool.fetch('filesystem')] }.uniq.size == all.size
+         raise Invalid, 'Storage profile pool selections overlap'
+       end
+@@ -215,7 +224,7 @@ module DevClusters
+         PLAN_NAME, label: 'Development short backup', keep_empty_group_snapshots: true
+       ) do |dip|
+         profile.require_enrollment! if %i[add verify].include?(direction)
+-        profile.validate_registration!(dip)
++        profile.validate_registration!(dip, check_backup_path: %i[add verify].include?(direction))
+         group_snapshot dip, *SNAPSHOT_SCHEDULE
+         backup dip, *BACKUP_SCHEDULE
+       end
+@@ -261,49 +270,19 @@ module DevClusters
+       end
+     end
+ 
+-    def validate_registration!(source)
+-      selection = source_pool_configs.find do |pool|
+-        pool.fetch('nodeId') == source.pool.node_id && pool.fetch('filesystem') == source.pool.filesystem
+-      end
+-      raise Invalid, 'Source is outside configured storage profile pools' unless selection
+-
+-      pool!(selection)
+-      backup = pool!(config.fetch('backupPool'))
+-      copies = source.dataset.dataset_in_pools.joins(:pool).where(pools: { role: :backup, is_open: true }).limit(2).to_a
+-      unless copies.one? && copies.first.pool_id == backup.id
+-        raise Invalid, 'Source requires exactly the configured backup destination'
+-      end
+-
+-      copy = copies.first
+-      source_lock = source.get_current_lock
+-      chain_id = source_lock.locked_by_id if source_lock&.locked_by_type == 'TransactionChain'
+-      pending_copy = chain_id && owned_create_by_id?(chain_id, copy)
+-      unless copy.confirmed? || pending_copy
+-        raise Invalid, 'Configured backup destination is not confirmed by this chain'
+-      end
+-
+-      copy_lock = copy.get_current_lock
+-      if copy_lock && !(chain_id && copy_lock.locked_by_type == 'TransactionChain' && copy_lock.locked_by_id == chain_id)
+-        raise ::ResourceLocked.new(copy, 'Configured backup destination is locked by another chain')
+-      end
+-
++    def validate_registration!(source, check_backup_path: true, confirmed_only: false)
++      _, copy = select_backup!(source, existing_only: true, registration: true,
++                               check_backup_path: check_backup_path, confirmed_only: confirmed_only)
+       copy
+     end
+ 
+     def ensure_backup_and_plan!(chain:, source_dip:)
+       require_enrollment!
+       ::StorageMutationAdmission.check!
+-      selection = source_pool_configs.find do |pool|
+-        pool.fetch('nodeId') == source_dip.pool.node_id && pool.fetch('filesystem') == source_dip.pool.filesystem
+-      end
+-      raise Invalid, 'Source is outside configured storage profile pools' unless selection
+-
+-      pool!(selection)
+       chain.lock(source_dip.dataset)
+       chain.lock(source_dip)
+-      destination = pool!(config.fetch('backupPool'))
+-      copies = source_dip.dataset.dataset_in_pools.joins(:pool).where(pools: { role: :backup }).lock.limit(2).to_a
+-      if copies.empty?
++      destination, backup = select_backup!(source_dip, chain: chain)
++      unless backup
+         if destination.dataset_in_pools.count >= destination.max_datasets
+           raise Invalid, 'Configured backup pool has no dataset capacity'
+         end
+@@ -314,12 +293,6 @@ module DevClusters
+         chain.lock(backup)
+         chain.append_t(::Transactions::Storage::CreateDataset, args: backup) { |confirmation| confirmation.create(backup) }
+       else
+-        unless copies.one? && copies.first.pool_id == destination.id &&
+-               (copies.first.confirmed? || owned_create?(chain, copies.first))
+-          raise Invalid, 'Existing backup copy is pending or has a conflicting destination'
+-        end
+-
+-        backup = copies.first
+         chain.lock(backup)
+       end
+       if owned_create?(chain, source_dip.dataset)
+@@ -369,13 +342,21 @@ module DevClusters
+       chain.lock(user)
+       map = ensure_namespace!(chain: chain, user: user)
+       nas = pool!(config.fetch('nasPool'))
+-      roots = ::Dataset.roots.where(user: user, name: user.id.to_s).limit(2).to_a
++      names = [user.id.to_s, "nas-#{user.id}"]
++      nas_datasets = ::DatasetInPool.where(pool: nas).select(:dataset_id)
++      candidates = ::Dataset.roots.where(name: names)
++      # Include owned NAS roots with unexpected names and foreign owners of
++      # either accepted NAS path; neither permits creating a second root.
++      roots = ::Dataset.roots.where(user: user, vps_id: nil, id: nas_datasets)
++                       .or(candidates.where(user: user, vps_id: nil))
++                       .or(candidates.where(id: nas_datasets)).lock.limit(2).to_a
+       raise Invalid, 'Member NAS root is ambiguous' if roots.size > 1
+ 
+       if roots.one?
+         root = roots.first
+-        copies = root.dataset_in_pools.where(pool: nas).limit(2).to_a
+-        unless root.confirmed? && root.user_editable && root.user_create && !root.user_destroy &&
++        copies = root.dataset_in_pools.where(pool: nas).lock.limit(2).to_a
++        unless root.user_id == user.id && root.vps_id.nil? && names.include?(root.name) &&
++               root.full_name == root.name && root.confirmed? && root.user_editable && root.user_create && !root.user_destroy &&
+                copies.one? && copies.first.confirmed? && copies.first.label == 'nas' && copies.first.effective_quota == 1024
+           raise Invalid, 'Existing NAS root is incompatible or pending'
+         end
+@@ -385,7 +366,7 @@ module DevClusters
+       end
+       raise Invalid, 'Configured NAS pool has no dataset capacity' if nas.dataset_in_pools.count >= nas.max_datasets
+ 
+-      root = ::Dataset.new(name: user.id.to_s, user: user, user_editable: true,
++      root = ::Dataset.new(name: "nas-#{user.id}", user: user, user_editable: true,
+                            user_create: true, user_destroy: false, confirmed: ::Dataset.confirmed(:confirm_create))
+       chain.use_chain(::TransactionChains::Dataset::Create,
+                       args: [nas, nil, [root], { user: user, label: 'nas', automount: false,
+@@ -467,6 +448,19 @@ module DevClusters
+       config.fetch('sourcePools') + [config.fetch('nasPool')]
+     end
+ 
++    # One enumeration owns inspect, physical preflight, creation and readiness.
++    def pool_configs
++      config.fetch('sourcePools') + [config.fetch('backupPool'), config.fetch('nasPool')] +
++        (config.fetch('version') == 2 ? [config.fetch('vpsBackupPool')] : [])
++    end
++
++    def backup_placement
++      %w[backupPool vpsBackupPool].zip(%w[legacy vps]).to_h do |field, name|
++        selection = config.fetch(field)
++        [name, { 'node_id' => selection.fetch('nodeId'), 'filesystem' => selection.fetch('filesystem') }]
++      end
++    end
++
+     def enrollment?
+       config.fetch('enrollment')
+     end
+@@ -521,6 +515,92 @@ module DevClusters
+ 
+     private
+ 
++    # Pool identity, never a Dataset/VPS ID, determines placement. Existing
++    # copies are resolved first so reuse does not depend on an unused default.
++    def placement_for(source)
++      selection = source_pool_configs.find do |pool|
++        pool.fetch('nodeId') == source.pool.node_id && pool.fetch('filesystem') == source.pool.filesystem
++      end
++      raise Invalid, 'Source is outside configured storage profile pools' unless selection
++
++      pool!(selection)
++      legacy = config.fetch('backupPool')
++      pool!(legacy) if config.fetch('version') == 1
++      if config.fetch('version') == 2 && selection.fetch('role') == 'hypervisor'
++        preferred = config.fetch('vpsBackupPool')
++        [[legacy, preferred], preferred]
++      else
++        [[legacy], legacy]
++      end
++    end
++
++    def select_backup!(source, chain: nil, existing_only: false, registration: false,
++                       check_backup_path: true, confirmed_only: false)
++      ::StorageMutationAdmission.check! if check_backup_path
++      allowed, default = placement_for(source)
++      scope = source.dataset.dataset_in_pools.joins(:pool)
++      copies = scope.where(pools: { role: :backup })
++      if config.fetch('version') == 2
++        # A configured destination with a changed role is invalid, not empty.
++        allowed.each do |pool|
++          copies = copies.or(scope.where(pools: { node_id: pool.fetch('nodeId'), filesystem: pool.fetch('filesystem') }))
++        end
++      end
++      # v1 direct Plan calls retain their open-copy selection. Catch-up and the
++      # strict guest reader, plus every v2 caller, inspect all backup copies.
++      copies = copies.where(pools: { is_open: true }) if registration && !confirmed_only && config.fetch('version') == 1
++      copies = copies.lock if check_backup_path
++      copies = copies.limit(2).to_a
++      if copies.empty? && !existing_only
++        destination = pool!(default)
++        validate_backup_path!(source.dataset, destination)
++        return [destination, nil]
++      end
++      unless copies.one?
++        raise Invalid, 'Source requires exactly the configured backup destination'
++      end
++
++      copy = copies.first
++      selected = allowed.find do |pool|
++        pool.fetch('nodeId') == copy.pool.node_id && pool.fetch('filesystem') == copy.pool.filesystem
++      end
++      raise Invalid, 'Existing backup copy is pending or has a conflicting destination' unless selected
++
++      destination = pool!(selected)
++      raise Invalid, 'Existing backup copy has an ambiguous destination' unless copy.pool_id == destination.id
++
++      source_lock = source.get_current_lock
++      chain_id = chain ? chain.dst_chain.id : (source_lock.locked_by_id if source_lock&.locked_by_type == 'TransactionChain')
++      if confirmed_only
++        unless source.confirmed? && source.dataset.confirmed? && copy.confirmed? && !source_lock && !source.dataset.get_current_lock
++          raise Invalid, 'Fixture source or backup destination is pending or locked'
++        end
++      elsif !(copy.confirmed? || (copy.confirmed == :confirm_create && chain_id && owned_create_by_id?(chain_id, copy)))
++        raise Invalid, 'Configured backup destination is not confirmed by this chain'
++      end
++      copy_lock = copy.get_current_lock
++      if copy_lock && (confirmed_only || !(chain_id && copy_lock.locked_by_type == 'TransactionChain' && copy_lock.locked_by_id == chain_id))
++        raise ::ResourceLocked.new(copy, 'Configured backup destination is locked by another chain')
++      end
++
++      validate_backup_path!(source.dataset, destination, copy: copy) if check_backup_path
++      [destination, copy]
++    end
++
++    def validate_backup_path!(dataset, destination, copy: nil)
++      ::StorageMutationAdmission.check!
++      owners = ::DatasetInPool.joins(:pool, :dataset).where(
++        pools: { node_id: destination.node_id, filesystem: destination.filesystem },
++        datasets: { full_name: dataset.full_name }
++      )
++      owners = owners.where.not(id: copy.id) if copy
++      # Admission serializes upgraded profile writers. FOR UPDATE sees a claim
++      # committed while this transaction waited, including pending/Pool aliases.
++      return if owners.lock.limit(1).to_a.empty?
++
++      raise Invalid, 'Configured backup path has another catalog owner'
++    end
++
+     # Static seed and retirement share this bounded ownership check. Packages
+     # and assignments survive; only the future default link is removed.
+     def remove_owned_default!(environment)
+diff --git a/dev-clusters/vpsadmin/nix/storage-profile-provision.rb b/dev-clusters/vpsadmin/nix/storage-profile-provision.rb
+index 812441b6a0127e7bfffeb999281527db97675e7e..dbbc87d263d6b2f8de7d5cb5ced0489e3ec693aa 100644
+--- a/dev-clusters/vpsadmin/nix/storage-profile-provision.rb
++++ b/dev-clusters/vpsadmin/nix/storage-profile-provision.rb
+@@ -48,7 +48,7 @@ module DevStorageProfileProvision
+   end
+ 
+   def pool_rows(profile)
+-    selections = profile.config.fetch('sourcePools') + [profile.config.fetch('backupPool'), profile.config.fetch('nasPool')]
++    selections = profile.pool_configs
+     selections.map do |selection|
+       pools = Pool.where(node_id: selection.fetch('nodeId'), filesystem: selection.fetch('filesystem')).limit(2).to_a
+       raise 'Configured storage pool is ambiguous' if pools.size > 1
+@@ -73,7 +73,11 @@ module DevStorageProfileProvision
+   end
+ 
+   def inspect(profile)
+-    { 'version' => 1, 'enrollment' => profile.enrollment?, 'pools' => pool_rows(profile) }
++    report = { 'version' => profile.config.fetch('version'), 'enrollment' => profile.enrollment?, 'pools' => pool_rows(profile) }
++    if profile.config.fetch('version') == 2
++      report.merge!('profile_version' => 2, 'backup_placement' => profile.backup_placement)
++    end
++    report
+   end
+ 
+   def provision!(profile)
+@@ -83,7 +87,7 @@ module DevStorageProfileProvision
+       StorageMutationAdmission.check!
+     end
+     pool_rows(profile)
+-    [profile.config.fetch('backupPool'), profile.config.fetch('nasPool')].each do |selection|
++    profile.pool_configs.reject { |selection| selection.fetch('role') == 'hypervisor' }.each do |selection|
+       check_deadline!
+       next if Pool.exists?(node_id: selection.fetch('nodeId'), filesystem: selection.fetch('filesystem'))
+ 
+@@ -98,7 +102,7 @@ module DevStorageProfileProvision
+     loop do
+       check_deadline!
+       begin
+-        (profile.config.fetch('sourcePools') + [profile.config.fetch('backupPool'), profile.config.fetch('nasPool')]).each do |selection|
++        profile.pool_configs.each do |selection|
+           profile.pool!(selection)
+         end
+         break
+diff --git a/dev-clusters/vpsadmin/nix/storage-profile.nix b/dev-clusters/vpsadmin/nix/storage-profile.nix
+index 6ba1c98944e89a9ba559e7f113014c4e00ee7e92..cede2fc9d5b70649cde5c88432f078f10dba2f63 100644
+--- a/dev-clusters/vpsadmin/nix/storage-profile.nix
++++ b/dev-clusters/vpsadmin/nix/storage-profile.nix
+@@ -15,6 +15,7 @@ let
+     "enable"
+     "enrollment"
+     "backupFilesystem"
++    "vpsBackupFilesystem"
+     "nasFilesystem"
+     "maxDatasets"
+     "resources"
+@@ -22,7 +23,7 @@ let
+     "namespaceBlocks"
+   ];
+   config = {
+-    version = 1;
++    version = if selection ? vpsBackupFilesystem then 2 else 1;
+     inherit enrollment;
+     environmentId = seed.environment.id;
+     sourcePools = map (node: {
+@@ -53,6 +54,14 @@ let
+       };
+     packageVersion = selection.packageVersion or 1;
+     namespaceBlocks = selection.namespaceBlocks or 8;
++  }
++  // lib.optionalAttrs (selection ? vpsBackupFilesystem) {
++    vpsBackupPool = {
++      nodeId = config.backupPool.nodeId;
++      filesystem = selection.vpsBackupFilesystem;
++      role = "backup";
++      maxDatasets = selection.maxDatasets or 32;
++    };
+   };
+   validRoot =
+     value:
+@@ -78,6 +87,27 @@ let
+       || config.backupPool.filesystem == config.nasPool.filesystem
+     then
+       throw "Storage profile requires distinct valid NAS and backup roots"
++    else if
++      config.version == 2
++      && (
++        !(validRoot config.vpsBackupPool.filesystem)
++        || builtins.length sourceNodes > 8
++        || !builtins.all (pool: validRoot pool.filesystem) config.sourcePools
++        || !builtins.all
++          (
++            pool:
++            pool.nodeId != config.vpsBackupPool.nodeId || pool.filesystem != config.vpsBackupPool.filesystem
++          )
++          (
++            config.sourcePools
++            ++ [
++              config.backupPool
++              config.nasPool
++            ]
++          )
++      )
++    then
++      throw "Storage profile VPS backup root must be valid and distinct from every configured same-node root"
+     else if
+       !(
+         boundedPositive 1024 config.nasPool.maxDatasets
+diff --git a/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb b/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb
+index 627abcaaefb66e7d5b0b448c8b89cbb87653fb3c..deeff585568c0d09ab715276bccc9f8bc170299f 100644
+--- a/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb
++++ b/dev-clusters/vpsadmin/tests/storage-profile-acceptance.rb
+@@ -120,13 +120,10 @@ module StorageProfileAcceptance
+     end
+ 
+     def destination!(source, profile)
+-      backup_pool = profile.pool!(profile.config.fetch('backupPool'))
+-      copies = source.dataset.dataset_in_pools.joins(:pool).where(pools: { role: :backup }).limit(2).to_a
+-      unless copies.one? && copies.first.pool_id == backup_pool.id && copies.first.confirmed?
+-        raise Invalid, 'fixture backup destination differs'
++      # Shared strict selection/path admission ends before SSH or physical waits.
++      StorageFreezeControl.transaction(requires_new: true) do
++        profile.validate_registration!(source, confirmed_only: true)
+       end
+-
+-      copies.first
+     end
+ 
+     def machine!(node)
+diff --git a/test/devcluster_commands_test.rb b/test/devcluster_commands_test.rb
+index f63065221a7ca2eea108915cb81f787916e004c2..cd4606a6fa513423f6f016c5ad0b9314c29e5a0e 100644
+--- a/test/devcluster_commands_test.rb
++++ b/test/devcluster_commands_test.rb
+@@ -494,6 +494,105 @@ class DevclusterCommandsTest < Minitest::Test
+     end
+   end
+ 
++  def profile_inspection_v2
++    {
++      'version' => 2, 'profile_version' => 2, 'enrollment' => true,
++      'backup_placement' => { 'legacy' => { 'node_id' => 201, 'filesystem' => 'tank/backup' },
++                              'vps' => { 'node_id' => 201, 'filesystem' => 'tank/vps-backup' } },
++      'pools' => [
++        { 'node_id' => 101, 'filesystem' => 'tank/ct', 'present' => true },
++        { 'node_id' => 102, 'filesystem' => 'tank/ct', 'present' => true },
++        { 'node_id' => 201, 'filesystem' => 'tank/backup', 'present' => false },
++        { 'node_id' => 201, 'filesystem' => 'tank/nas', 'present' => false },
++        { 'node_id' => 201, 'filesystem' => 'tank/vps-backup', 'present' => false }
++      ]
++    }
++  end
++
++  def test_storage_profile_v2_preflights_both_destinations_before_provision_or_retire
++    %w[provision retire].each do |operation|
++      with_workspace('vpsadmin', retained: true) do |env, directory|
++        env = enable_storage_profile(env, directory, enrollment: operation == 'provision', vps_root: 'tank/vps-backup')
++        with_profile_runner(env, directory) do
++          result = run_helper('vpsadmin', env, 'storage-profile', operation)
++          assert(result.success?, @last_output)
++          commands = events(env).select { |event| event['event'] == 'ssh' }.map { |event| event['argv'].last }
++          probes = commands.each_index.select { |index| commands[index].include?('zfs list -H -r') }
++          stop = commands.index('systemctl stop vpsadmin-scheduler.service')
++          assert_equal(5, probes.size)
++          assert(probes.all? { |index| index < stop })
++          refute(events(env).any? { |event| %w[build run copy activate].include?(event['event']) })
++          assert_locks_released(env)
++        end
++      end
++    end
++  end
++
++  def test_storage_profile_rejects_stale_typed_or_incomplete_placement_reports_before_effects
++    changes = [
++      ->(r) { r['version'] = 1 }, ->(r) { r['version'] = 2.0 },
++      ->(r) { r['profile_version'] = 1 }, ->(r) { r['profile_version'] = '2' },
++      ->(r) { r['profile_version'] = 2.0 }, ->(r) { r['enrollment'] = 'true' },
++      ->(r) { r['extra'] = true }, ->(r) { r.delete('profile_version') },
++      ->(r) { r.delete('backup_placement') },
++      ->(r) { r['backup_placement']['vps']['filesystem'] = 'tank/foreign' },
++      ->(r) { r['backup_placement']['legacy']['node_id'] = 101 },
++      ->(r) { r['backup_placement']['vps']['node_id'] = 201.0 },
++      ->(r) { r['pools'].pop }, ->(r) { r['pools'] << r['pools'].last.dup },
++      ->(r) { r['pools'].last['present'] = nil },
++      ->(r) { r['pools'] += 7.times.map { |i| { 'node_id' => 201, 'filesystem' => "tank/extra#{i}", 'present' => false } } }
++    ]
++    changes.each do |change|
++      with_workspace('vpsadmin', retained: true) do |env, directory|
++        env = enable_storage_profile(env, directory, vps_root: 'tank/vps-backup')
++        report = profile_inspection_v2
++        change.call(report)
++        env['TEST_PROFILE_REPORT'] = JSON.generate(report)
++        with_profile_runner(env, directory) do
++          result = run_helper('vpsadmin', env, 'storage-profile', 'provision')
++          refute(result.success?, @last_output)
++          commands = events(env).select { |event| event['event'] == 'ssh' }.map { |event| event['argv'].last }
++          refute(commands.any? { |command| command.include?('zfs list') || command.include?('systemctl stop') || command.include?("'provision'") })
++          assert_locks_released(env)
++        end
++      end
++    end
++    with_workspace('vpsadmin', retained: true) do |env, directory|
++      env = enable_storage_profile(env, directory)
++      env['TEST_PROFILE_REPORT'] = JSON.generate(profile_inspection_v2)
++      with_profile_runner(env, directory) do
++        refute(run_helper('vpsadmin', env, 'storage-profile', 'provision').success?)
++        refute(events(env).any? { |event| event['argv'].last.to_s.include?('systemctl stop') })
++      end
++    end
++  end
++
++  def test_storage_profile_v2_accepts_eleven_selected_pools_and_refuses_preferred_root_adoption
++    with_workspace('vpsadmin', retained: true) do |env, directory|
++      env = enable_storage_profile(env, directory, vps_root: 'tank/vps-backup')
++      config = JSON.parse(File.read(env.fetch('TEST_CONFIG')))
++      report = profile_inspection_v2
++      (3..8).each do |index|
++        config['nodes']["node#{index}"] = config['nodes']['node1'].merge('id' => 100 + index, 'sshPort' => 10122)
++        config['topologies']['storage'] << "node#{index}"
++        report['pools'] << { 'node_id' => 100 + index, 'filesystem' => 'tank/ct', 'present' => true }
++      end
++      File.write(env.fetch('TEST_CONFIG'), JSON.generate(config))
++      env['TEST_PROFILE_REPORT'] = JSON.generate(report)
++      with_profile_runner(env, directory) do
++        assert(run_helper('vpsadmin', env, 'storage-profile', 'provision').success?, @last_output)
++      end
++    end
++    with_workspace('vpsadmin', retained: true) do |env, directory|
++      env = enable_storage_profile(env, directory, vps_root: 'tank/vps-backup').merge('TEST_PROFILE_VPS_ORPHAN' => '1')
++      with_profile_runner(env, directory) do
++        refute(run_helper('vpsadmin', env, 'storage-profile', 'provision').success?)
++        commands = events(env).select { |event| event['event'] == 'ssh' }.map { |event| event['argv'].last }
++        refute_includes(commands, 'systemctl stop vpsadmin-scheduler.service')
++      end
++    end
++  end
++
+   def test_failed_guest_requisite_query_keeps_target_pending_without_root_or_promotion
+     with_workspace('vpsadmin') do |env, directory|
+       proof_env = selection_proof_environment(env).merge('FAIL_PROOF_QUERY' => '1')
+@@ -889,10 +988,11 @@ class DevclusterCommandsTest < Minitest::Test
+               'TEST_PROOF_EVENTS' => File.join(bin, 'events'))
+   end
+ 
+-  def enable_storage_profile(env, directory, enrollment: :omitted)
++  def enable_storage_profile(env, directory, enrollment: :omitted, vps_root: :omitted)
+     config = JSON.parse(File.read(env.fetch('TEST_CONFIG')))
+     config['storageProfile'] = { 'enable' => true }
+     config['storageProfile']['enrollment'] = enrollment unless enrollment == :omitted
++    config['storageProfile']['vpsBackupFilesystem'] = vps_root unless vps_root == :omitted
+     path = File.join(directory, 'config.json')
+     File.write(path, JSON.generate(config))
+     File.write(File.join(directory, 'topology'), "storage\n")
+@@ -1267,15 +1367,28 @@ class DevclusterCommandsTest < Minitest::Test
+             selection = JSON.parse(File.read(ENV.fetch('TEST_CONFIG'))).fetch('storageProfile')
+             enrollment = selection.fetch('enrollment', true)
+             enrollment = JSON.parse(ENV.fetch('TEST_PROFILE_EFFECTIVE_ENROLLMENT')) if ENV.key?('TEST_PROFILE_EFFECTIVE_ENROLLMENT')
+-            puts JSON.generate('version' => 1, 'enrollment' => enrollment, 'pools' => [
++            rows = [
+               { 'node_id' => 101, 'filesystem' => 'tank/ct', 'present' => true },
+-              { 'node_id' => 201, 'filesystem' => 'tank/backup', 'present' => false },
+-              { 'node_id' => 201, 'filesystem' => 'tank/nas', 'present' => false }
+-            ])
++              { 'node_id' => 201, 'filesystem' => selection.fetch('backupFilesystem', 'tank/backup'), 'present' => false },
++              { 'node_id' => 201, 'filesystem' => selection.fetch('nasFilesystem', 'tank/nas'), 'present' => false }
++            ]
++            report = { 'version' => 1, 'enrollment' => enrollment, 'pools' => rows }
++            if selection.key?('vpsBackupFilesystem')
++              rows << { 'node_id' => 102, 'filesystem' => 'tank/ct', 'present' => true }
++              rows << { 'node_id' => 201, 'filesystem' => selection.fetch('vpsBackupFilesystem'), 'present' => false }
++              report.merge!('version' => 2, 'profile_version' => 2,
++                            'backup_placement' => {
++                              'legacy' => { 'node_id' => 201, 'filesystem' => selection.fetch('backupFilesystem', 'tank/backup') },
++                              'vps' => { 'node_id' => 201, 'filesystem' => selection.fetch('vpsBackupFilesystem') }
++                            })
++            end
++            report = JSON.parse(ENV.fetch('TEST_PROFILE_REPORT')) if ENV.key?('TEST_PROFILE_REPORT')
++            puts JSON.generate(report)
+           elsif remote.include?('zfs list -H -r')
+             roots = ['tank']
+-            roots << 'tank/ct' if value_after('-p') == '10122' && ENV['TEST_PROFILE_MISSING_ROOT'] != '1'
++            roots << 'tank/ct' if %w[10122 10222].include?(value_after('-p')) && ENV['TEST_PROFILE_MISSING_ROOT'] != '1'
+             roots << 'tank/backup' if value_after('-p') == '10322' && ENV['TEST_PROFILE_ORPHAN'] == '1'
++            roots << 'tank/vps-backup' if ENV['TEST_PROFILE_VPS_ORPHAN'] == '1'
+             puts roots
+           elsif remote.match?(/vpsadmin-storage-profile '(provision|retire)'/) && ENV['FAIL_PROFILE_OPERATION'] == '1'
+             exit 23
+diff --git a/test/devcluster_nix_smoke.rb b/test/devcluster_nix_smoke.rb
+index 8ce723b8d385cdf781d874436427e0ddf2ccafac..00162d41688d15a9dca0e13a6fc0b76bdb08686d 100644
+--- a/test/devcluster_nix_smoke.rb
++++ b/test/devcluster_nix_smoke.rb
+@@ -22,6 +22,24 @@ def run!(environment, *command)
+   stdout.strip
+ end
+ 
++# Read the actual profile JSON producer in the evaluated services dependency
++# graph. No fixture config import or VM closure realization substitutes for it.
++def storage_profile_projection!(environment, config_drv)
++  graph = JSON.parse(run!(environment, 'nix', 'derivation', 'show', '--recursive', config_drv))
++  unless graph.is_a?(Hash) && graph.keys.sort == %w[derivations version] &&
++         graph['version'].is_a?(Integer) && graph['version'] == 4 && graph['derivations'].is_a?(Hash)
++    abort 'Unsupported Nix derivation metadata envelope'
++  end
++  derivations = graph.fetch('derivations')
++  unless derivations.values.all? { |entry| entry.is_a?(Hash) && entry['env'].is_a?(Hash) }
++    abort 'Invalid Nix derivation metadata entries'
++  end
++  profiles = derivations.values.select { |entry| entry.fetch('env').fetch('name', nil) == 'vpsadmin-storage-profile.json' }
++  abort 'Actual services graph did not contain one profile JSON producer' unless profiles.one?
++
++  JSON.parse(profiles.first.fetch('env').fetch('text'))
++end
++
+ Dir.mktmpdir('devcluster-nix-smoke') do |workspace|
+   key = File.join(workspace, 'id_ed25519')
+   run!({}, 'ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', key)
+@@ -178,6 +196,9 @@ Dir.mktmpdir('devcluster-nix-smoke') do |workspace|
+           marker == { 'version' => 1, 'existingAssignments' => 'preserve' }
+         abort 'Storage profile did not retain the actual storage topology' unless
+           %w[node1 node2 storage1 services].all? { |machine| rendered.fetch('machines').key?(machine) }
++        legacy_projection = storage_profile_projection!(environment, result.fetch('drvPath'))
++        abort 'Omitted VPS backup selection changed the v1 projection' unless
++          legacy_projection.fetch('version') == 1 && !legacy_projection.key?('vpsBackupPool')
+         puts 'vpsadmin: enabled storage profile and actual services closure evaluated'
+ 
+         File.write(profile_config, JSON.generate('storageProfile' => { 'enable' => true, 'enrollment' => false }))
+@@ -195,6 +216,31 @@ Dir.mktmpdir('devcluster-nix-smoke') do |workspace|
+           abort 'Storage profile accepted nonboolean enrollment' if result.success?
+           abort 'Invalid enrollment did not report the boolean boundary' unless stderr.include?('must be booleans')
+         end
++        placement = { 'enable' => true, 'vpsBackupFilesystem' => 'tank/vps-backup' }
++        [true, false].each do |enrollment|
++          File.write(profile_config, JSON.generate('storageProfile' => placement.merge('enrollment' => enrollment)))
++          placement_result = JSON.parse(run!(environment, 'nix', 'eval', *common, '--json',
++                                             '--apply', 'config: { drvPath = config.drvPath; text = config.text; }',
++                                             "path:#{source}#cluster-config"))
++          actual = storage_profile_projection!(environment, placement_result.fetch('drvPath'))
++          expected = legacy_projection.merge('version' => 2, 'enrollment' => enrollment,
++                                             'vpsBackupPool' => legacy_projection.fetch('backupPool').merge('filesystem' => 'tank/vps-backup'))
++          abort 'Actual v2 placement projection differs' unless actual == expected
++          labels = JSON.parse(placement_result.fetch('text')).fetch('labels')
++          abort 'V2 placement changed preserving-seed marker1' unless
++            labels.fetch('vpsadminPreservingSeed') == rendered.fetch('labels').fetch('vpsadminPreservingSeed')
++          puts "vpsadmin: actual v2 placement enrollment=#{enrollment} evaluated"
++        end
++        [nil, '', 32, 'tank', 'tank/backup', 'tank/nas', 'tank/backup/nas-3'].each do |invalid|
++          File.write(profile_config, JSON.generate('storageProfile' => placement.merge('vpsBackupFilesystem' => invalid)))
++          _stdout, stderr, result = Open3.capture3(environment, 'nix', 'eval', *common, '--json',
++                                                   '--apply', 'config: config.drvPath', "path:#{source}#cluster-config")
++          abort 'Storage profile accepted an invalid or overlapping VPS backup root' if result.success?
++          unless stderr.include?('VPS backup root must be valid and distinct')
++            warn stderr
++            abort 'Invalid VPS backup root did not report its placement boundary'
++          end
++        end
+         File.write(profile_config, JSON.generate('storageProfile' => { 'enable' => true }))
+ 
+         environment["#{prefix}TOPOLOGY"] = 'single'
+diff --git a/test/devcluster_storage_profile_test.rb b/test/devcluster_storage_profile_test.rb
+index 80b67cc5a9a68634727119dcbc0e740e5e952b94..c995ba08f52a8c3469af51213879449bcdd877c4 100644
+--- a/test/devcluster_storage_profile_test.rb
++++ b/test/devcluster_storage_profile_test.rb
+@@ -54,6 +54,58 @@ class DevclusterStorageProfileTest < Minitest::Test
+     assert_raises(Profile::Invalid) { Profile.new(overlap) }
+   end
+ 
++  def placement_configuration
++    configuration.merge('version' => 2, 'vpsBackupPool' => {
++      'nodeId' => 201, 'filesystem' => 'tank/vps-backup', 'role' => 'backup', 'maxDatasets' => 32
++    })
++  end
++
++  def test_profile_formats_are_exact_integer_declarations_with_no_optional_fields
++    [configuration, placement_configuration].each do |valid|
++      assert_equal(valid, Profile.new(valid).config)
++      [nil, '1', '2', 1.0, 2.0, 0, 3].each do |version|
++        assert_raises(Profile::Invalid) { Profile.new(valid.merge('version' => version)) }
++      end
++      assert_raises(Profile::Invalid) { Profile.new(valid.merge('extra' => true)) }
++    end
++    assert_raises(Profile::Invalid) { Profile.new(placement_configuration.merge('version' => 1)) }
++    assert_raises(Profile::Invalid) { Profile.new(configuration.merge('version' => 2)) }
++  end
++
++  def test_vps_placement_is_bounded_distinct_and_on_the_existing_storage_node
++    [nil, '', 'tank', 'tank/backup/child', 'tank/..', 'tank/backup', 'tank/nas'].each do |root|
++      invalid = placement_configuration
++      invalid.fetch('vpsBackupPool')['filesystem'] = root
++      assert_raises(Profile::Invalid) { Profile.new(invalid) }
++    end
++    invalid = placement_configuration
++    invalid.fetch('vpsBackupPool')['nodeId'] = 202
++    assert_raises(Profile::Invalid) { Profile.new(invalid) }
++    invalid = placement_configuration
++    invalid.fetch('sourcePools').first['nodeId'] = 201
++    invalid.fetch('vpsBackupPool')['filesystem'] = 'tank/ct'
++    assert_raises(Profile::Invalid) { Profile.new(invalid) }
++    %w[role maxDatasets].each do |field|
++      invalid = placement_configuration
++      invalid.fetch('vpsBackupPool').delete(field)
++      assert_raises(Profile::Invalid) { Profile.new(invalid) }
++    end
++  end
++
++  def test_pool_enumeration_and_inspection_placement_leave_templates_on_source_pools
++    selected = Profile.new(placement_configuration)
++    assert_equal(4, selected.pool_configs.size)
++    assert_equal(2, selected.source_pool_configs.size)
++    assert_equal({ 'legacy' => { 'node_id' => 201, 'filesystem' => 'tank/backup' },
++                   'vps' => { 'node_id' => 201, 'filesystem' => 'tank/vps-backup' } }, selected.backup_placement)
++    assert_equal(3, Profile.new(configuration).pool_configs.size)
++    bounded = placement_configuration
++    bounded['sourcePools'] = 8.times.map { |i| { 'nodeId' => 101 + i, 'filesystem' => 'tank/ct', 'role' => 'hypervisor' } }
++    assert_equal(11, Profile.new(bounded).pool_configs.size)
++    bounded['sourcePools'] << { 'nodeId' => 109, 'filesystem' => 'tank/ct', 'role' => 'hypervisor' }
++    assert_raises(Profile::Invalid) { Profile.new(bounded) }
++  end
++
+   def test_existing_preservation_marker_has_the_exact_consumer_shape
+     assert_equal({ 'version' => 1, 'existingAssignments' => 'preserve' }, Profile::PRESERVING_SEED)
+     source = File.read(File.expand_path('../dev-clusters/vpsadmin/nix/test.nix', __dir__))
+diff --git a/test/vpsadmin_storage_profile_spec.rb b/test/vpsadmin_storage_profile_spec.rb
+index e162cd237ea265505edfeb7ed7220cd30e0340d2..90792e206544ef1ae0ba964b5534a256c7ca9805 100644
+--- a/test/vpsadmin_storage_profile_spec.rb
++++ b/test/vpsadmin_storage_profile_spec.rb
+@@ -35,6 +35,14 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+     }
+   end
+   let(:profile) { described_class.new(configuration) }
++  let(:vps_backup_pool) { create_profile_pool!(:backup, 'profile_vps_backup') }
++  let(:placement_configuration) do
++    configuration.merge('version' => 2, 'vpsBackupPool' => {
++      'nodeId' => vps_backup_pool.node_id, 'filesystem' => vps_backup_pool.filesystem,
++      'role' => 'backup', 'maxDatasets' => 32
++    })
++  end
++  let(:placement_profile) { described_class.new(placement_configuration) }
+ 
+   around do |example|
+     definitions = VpsAdmin::API::DatasetPlans.plans.dup
+@@ -79,6 +87,55 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+     profile.bootstrap_templates!
+   end
+ 
++  def settled_profile_namespace!
++    ensure_user_namespace_blocks!(count: 8)
++    chain, namespace = TransactionChains::UserNamespace::Allocate.fire(user, 2)
++    map = UserNamespaceMap.create_chained!(namespace, 'Default map')
++    UserNamespaceMapEntry.kinds.each_value do |kind|
++      UserNamespaceMapEntry.create!(user_namespace_map: map, kind: kind, vps_id: 0, ns_id: 0, count: namespace.size)
++    end
++    chain.release_locks
++    map
++  end
++
++  def profile_staging_rows
++    [User, EnvironmentUserConfig, UserNamespace, UserNamespaceBlock, UserNamespaceMap, UserNamespaceMapEntry,
++     ClusterResourcePackage, ClusterResourcePackageItem, UserClusterResourcePackage, UserClusterResource,
++     ClusterResourceUse, DefaultUserClusterResourcePackage, Vps, Dataset, DatasetInPool, DatasetProperty,
++     DatasetPlan, EnvironmentDatasetPlan, DatasetInPoolPlan, DatasetAction, GroupSnapshot, RepeatableTask,
++     TransactionChain, Transaction, TransactionConfirmation, ResourceLock].map do |model|
++      model.order(:id).map(&:attributes)
++    end
++  end
++
++  def existing_member_nas!(name)
++    dataset, dip = create_dataset_with_pool!(user: user, pool: nas_pool, name: name, label: 'nas',
++                                             user_destroy: false, properties: { quota: 1024 })
++    attach_dataset_to_pool!(dataset: dataset, pool: backup_pool, label: 'backup')
++    [dataset, dip]
++  end
++
++  def bootstrap_placement!
++    placement_profile.install_plan!
++    placement_profile.bootstrap_templates!
++  end
++
++  def retained_storage_rows
++    [Dataset, DatasetInPool, DatasetTree, Branch, Snapshot, SnapshotInPool, SnapshotInPoolInBranch,
++     DatasetProperty, UserNamespace, UserNamespaceMap, UserNamespaceMapEntry, ClusterResourcePackage,
++     ClusterResourcePackageItem, UserClusterResourcePackage, UserClusterResource].map do |model|
++      model.order(:id).map(&:attributes)
++    end
++  end
++
++  def retained_backup_history!(dataset, source, copy)
++    snapshot, = create_snapshot!(dataset: dataset, dip: source)
++    tree = create_tree!(dip: copy)
++    branch = create_branch!(tree: tree, name: 'profile-retained')
++    create_backup_branch_snapshot!(snapshot: snapshot, dip: copy, branch: branch)
++    [tree, branch]
++  end
++
+   def fresh_profile_reader(selected_configuration, chains)
+     # The top-level guard and actual spec_helper started this automatic DB.
+     # Never forward a configured/inherited URL, or reset its schema in a child.
+@@ -634,6 +691,226 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+     expect(DatasetInPoolPlan.where(dataset_in_pool: source).count).to eq(1)
+   end
+ 
++  %i[legacy preferred nas].each do |destination|
++    it "preserves a valid #{destination} source copy, retained history and existing Plan/task identities under v2" do
++      bootstrap_placement!
++      dataset, source = create_dataset_with_pool!(user: user, pool: destination == :nas ? nas_pool : source_pool, name: "placement-history-#{destination}")
++      selected_pool = destination == :preferred ? vps_backup_pool : backup_pool
++      copy = attach_dataset_to_pool!(dataset: dataset, pool: selected_pool)
++      source.update!(min_snapshots: 7, max_snapshots: 99, snapshot_max_age: 777)
++      copy.update!(min_snapshots: 2, max_snapshots: 5, snapshot_max_age: 3600)
++      retained_backup_history!(dataset, source, copy)
++      placement_profile.plan.register(source)
++      # Only the selected destination must be ready for reuse.
++      (destination == :preferred ? backup_pool : vps_backup_pool).update!(is_open: 0)
++      storage = retained_storage_rows
++      metadata = [DatasetAction, RepeatableTask, DatasetInPoolPlan, GroupSnapshot].map { |m| m.order(:id).map(&:attributes) }
++      2.times do
++        chain, reused = placement_profile.catch_up_chain.fire(placement_profile, source_dip: source)
++        expect(reused.id).to eq(copy.id)
++        expect(chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type)).to be_empty
++        chain.release_locks
++        placement_profile.plan.register(source)
++        expect(StorageProfileAcceptance::Guest.destination!(source, placement_profile).id).to eq(copy.id)
++      end
++      expect(retained_storage_rows).to eq(storage)
++      expect([DatasetAction, RepeatableTask, DatasetInPoolPlan, GroupSnapshot].map { |m| m.order(:id).map(&:attributes) }).to eq(metadata)
++    end
++  end
++
++  it 'uses source Pool identity for a NAS child even when vps_id is nil and VPS placement is enabled' do
++    bootstrap_placement!
++    root, parent = create_dataset_with_pool!(user: user, pool: nas_pool, name: 'legacy-nas-root')
++    dataset, source = create_dataset_with_pool!(user: user, pool: nas_pool, parent: root, name: 'child')
++    expect(dataset.vps_id).to be_nil
++    chain, copy = placement_profile.catch_up_chain.fire(placement_profile, source_dip: source)
++    expect(copy.pool_id).to eq(backup_pool.id)
++    expect(dataset.reload.dataset_in_pools.pluck(:pool_id)).to contain_exactly(nas_pool.id, backup_pool.id)
++    expect(parent.reload.pool_id).to eq(nas_pool.id)
++    expect(chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type).count).to eq(1)
++  end
++
++  it 'places an empty numeric VPS source in the disjoint destination while preserving an equal-name legacy NAS history' do
++    bootstrap_placement!
++    nas, nas_source = create_dataset_with_pool!(user: user, pool: nas_pool, name: user.id.to_s,
++                                               label: 'nas', user_destroy: false, properties: { quota: 1024 })
++    nas_copy = attach_dataset_to_pool!(dataset: nas, pool: backup_pool)
++    retained_backup_history!(nas, nas_source, nas_copy)
++    placement_profile.plan.register(nas_source)
++    models = [DatasetTree, Branch, Snapshot, SnapshotInPool, SnapshotInPoolInBranch]
++    history = models.map { |m| m.order(:id).map(&:attributes) }
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: user.id.to_s)
++    source_identity = source.attributes
++    chain, copy = placement_profile.catch_up_chain.fire(placement_profile, source_dip: source)
++    expect(copy.pool_id).to eq(vps_backup_pool.id)
++    expect(copy.dataset_id).to eq(dataset.id)
++    expect(source.reload.attributes).to eq(source_identity)
++    creations = chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type)
++    expect(creations.count).to eq(1)
++    signed = JSON.parse(creations.first.input)
++    expect(signed.fetch('node')).to eq(vps_backup_pool.node_id)
++    expect(signed.fetch('input').slice('pool_fs', 'name', 'create_private'))
++      .to eq('pool_fs' => vps_backup_pool.filesystem, 'name' => dataset.full_name, 'create_private' => false)
++    expect(nas.reload.dataset_in_pools.pluck(:id)).to contain_exactly(nas_source.id, nas_copy.id)
++    expect(models.map { |m| m.order(:id).map(&:attributes) }).to eq(history)
++  end
++
++  %i[foreign multiple closed role pending alias].each do |invalid|
++    it "refuses a #{invalid} existing v2 copy without treating it as an empty source" do
++      bootstrap_placement!
++      dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: "placement-refusal-#{invalid}")
++      pool = invalid == :foreign ? create_profile_pool!(:backup, 'placement_foreign') : backup_pool
++      copy = attach_dataset_to_pool!(dataset: dataset, pool: pool)
++      case invalid
++      when :multiple
++        attach_dataset_to_pool!(dataset: dataset, pool: vps_backup_pool)
++      when :closed
++        pool.update!(is_open: 0)
++      when :role
++        pool.update!(role: :primary)
++      when :pending
++        copy.update!(confirmed: DatasetInPool.confirmed(:confirm_create))
++      when :alias
++        owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name, user_create: true, user_destroy: true,
++                                user_editable: true, confirmed: Dataset.confirmed(:confirmed))
++        attach_dataset_to_pool!(dataset: owner, pool: backup_pool)
++      end
++      before = profile_staging_rows
++      expect { placement_profile.catch_up_chain.fire(placement_profile, source_dip: source) }.to raise_error(described_class::Invalid)
++      expect { placement_profile.plan.register(source) }.to raise_error(described_class::Invalid)
++      expect { StorageProfileAcceptance::Guest.destination!(source, placement_profile) }.to raise_error(described_class::Invalid)
++      expect(profile_staging_rows).to eq(before)
++      expect(dataset.dataset_in_pools.where(pool: vps_backup_pool).count).to eq(invalid == :multiple ? 1 : 0)
++    end
++  end
++
++  %i[missing stale closed full collision duplicate].each do |invalid|
++    it "refuses a #{invalid} preferred v2 destination for an empty source without falling back" do
++      bootstrap_placement!
++      dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: "placement-default-#{invalid}")
++      selected = placement_profile
++      case invalid
++      when :missing
++        vps_backup_pool.delete
++      when :stale
++        vps_backup_pool.update_columns(checked_at: nil)
++      when :closed
++        vps_backup_pool.update!(is_open: 0)
++      when :full
++        vps_backup_pool.update!(max_datasets: 1)
++        selected = described_class.new(placement_configuration.merge('vpsBackupPool' => placement_configuration.fetch('vpsBackupPool').merge('maxDatasets' => 1)))
++        create_dataset_with_pool!(user: user, pool: vps_backup_pool, name: 'placement-full-owner')
++      when :collision
++        owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name, user_create: true, user_destroy: true,
++                                user_editable: true, confirmed: Dataset.confirmed(:confirmed))
++        attach_dataset_to_pool!(dataset: owner, pool: vps_backup_pool, confirmed: :confirm_create)
++      when :duplicate
++        create_profile_pool!(:backup, 'placement_duplicate').update!(filesystem: vps_backup_pool.filesystem)
++      end
++      before = profile_staging_rows
++      expect { selected.catch_up_chain.fire(selected, source_dip: source) }.to raise_error(described_class::Invalid)
++      expect(profile_staging_rows).to eq(before)
++      expect(dataset.dataset_in_pools.pluck(:id)).to eq([source.id])
++    end
++  end
++
++  it 'refuses a reconfigured or removed VPS destination without moving its existing copy or Plan metadata' do
++    bootstrap_placement!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'placement-not-migration')
++    copy = attach_dataset_to_pool!(dataset: dataset, pool: vps_backup_pool)
++    retained_backup_history!(dataset, source, copy)
++    placement_profile.plan.register(source)
++    changed = placement_configuration.merge('vpsBackupPool' => placement_configuration.fetch('vpsBackupPool').merge('filesystem' => 'tank/changed-vps'))
++    [changed, configuration].each do |config|
++      selected = described_class.new(config)
++      selected.install_plan!
++      before = profile_staging_rows
++      expect { selected.catch_up_chain.fire(selected, source_dip: source) }.to raise_error(described_class::Invalid)
++      expect { selected.plan.register(source) }.to raise_error(described_class::Invalid)
++      expect(profile_staging_rows).to eq(before)
++      expect(dataset.dataset_in_pools.pluck(:id)).to contain_exactly(source.id, copy.id)
++    end
++  end
++
++  it 'allows only this enclosing chain pending v2 copy and keeps the fixture reader strictly confirmed' do
++    bootstrap_placement!
++    _, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'placement-owned-pending')
++    chain, copies = placement_profile.catch_up_chain.fire(placement_profile, source_dips: [source, source])
++    expect(copies.map(&:id).uniq.size).to eq(1)
++    expect(copies.first.pool_id).to eq(vps_backup_pool.id)
++    expect(chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type).count).to eq(1)
++    chain.release_locks
++    expect { StorageProfileAcceptance::Guest.destination!(source, placement_profile) }
++      .to raise_error(described_class::Invalid, /pending/)
++  end
++
++  it 'retains v1 open-copy Plan semantics but rejects an additional closed copy for every v2 consumer' do
++    bootstrap!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'placement-legacy-open')
++    attach_dataset_to_pool!(dataset: dataset, pool: backup_pool)
++    extra_pool = create_profile_pool!(:backup, 'placement_closed_extra')
++    extra_pool.update!(is_open: 0)
++    attach_dataset_to_pool!(dataset: dataset, pool: extra_pool)
++    profile.plan.register(source)
++    expect { profile.catch_up_chain.fire(profile, source_dip: source) }.to raise_error(described_class::Invalid)
++    placement_profile.install_plan!
++    before = profile_staging_rows
++    expect { placement_profile.plan.register(source) }.to raise_error(described_class::Invalid)
++    expect { StorageProfileAcceptance::Guest.destination!(source, placement_profile) }.to raise_error(described_class::Invalid)
++    expect(profile_staging_rows).to eq(before)
++  end
++
++  it 'preserves both allowed histories through v2 retirement and re-enrollment metadata changes' do
++    bootstrap_placement!
++    DefaultUserClusterResourcePackage.where(environment: environment).delete_all
++    placement_profile.bootstrap_defaults!
++    sources = [backup_pool, vps_backup_pool].each_with_index.map do |pool, index|
++      dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: "placement-retire-#{index}")
++      copy = attach_dataset_to_pool!(dataset: dataset, pool: pool)
++      retained_backup_history!(dataset, source, copy)
++      placement_profile.plan.register(source)
++      source
++    end
++    storage = retained_storage_rows
++    action_ids = placement_profile.plan.dataset_plan.dataset_actions.pluck(:id)
++    task_ids = RepeatableTask.where(class_name: 'DatasetAction', row_id: action_ids).pluck(:id)
++    retired = described_class.new(placement_configuration.merge('enrollment' => false))
++    retired.install_plan!
++    2.times { retired.retire! }
++    expect(retained_storage_rows).to eq(storage)
++    expect(DatasetInPoolPlan.where(dataset_in_pool: sources)).to be_empty
++    expect(retired.plan.dataset_plan.dataset_actions).to be_empty
++    expect(DatasetAction.where(id: action_ids)).to be_empty
++    expect(RepeatableTask.where(id: task_ids)).to be_empty
++    retired.bootstrap_defaults!
++    expect(DefaultUserClusterResourcePackage.where(environment: environment)).to be_empty
++    placement_profile.install_plan!
++    placement_profile.bootstrap_templates!
++    placement_profile.bootstrap_defaults!
++    sources.each do |source|
++      chain, copy = placement_profile.catch_up_chain.fire(placement_profile, source_dip: source)
++      expect(chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type)).to be_empty
++      chain.release_locks
++      expect(StorageProfileAcceptance::Guest.destination!(source, placement_profile).id).to eq(copy.id)
++    end
++    expect(retained_storage_rows).to eq(storage)
++  end
++
++  it 'reports v2 placement and every configured Pool independently from the profile format' do
++    bootstrap_placement!
++    SpecSeed.other_node.update!(role: :storage)
++    source = File.read(File.expand_path('../dev-clusters/vpsadmin/nix/storage-profile-provision.rb', __dir__))
++    first = source.index('module DevStorageProfileProvision')
++    last = source.index("\nactor = ", first)
++    Object.class_eval(source[first...last], 'storage-profile-provision', 1)
++    report = DevStorageProfileProvision.inspect(placement_profile)
++    expect(report.keys).to contain_exactly('version', 'profile_version', 'enrollment', 'backup_placement', 'pools')
++    expect(report.values_at('version', 'profile_version')).to eq([2, 2])
++    expect(report.fetch('backup_placement')).to eq(placement_profile.backup_placement)
++    expect(report.fetch('pools').map { |row| row.values_at('node_id', 'filesystem') })
++      .to eq(placement_profile.pool_configs.map { |pool| pool.values_at('nodeId', 'filesystem') })
++  end
++
+   it 'uses the actual Dataset hook once and respects preserve-existing-backups replacement' do
+     bootstrap!
+     install_profile_hooks!
+@@ -665,7 +942,7 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+                       enable_basic_auth: true, enable_token_auth: true, mailer_enabled: true)
+     member.set_password('secret123')
+     chain, created = TransactionChains::User::Create.fire(member, false, nil, nil, true)
+-    root = Dataset.roots.find_by!(user: created, name: created.id.to_s)
++    root = Dataset.roots.find_by!(user: created, name: "nas-#{created.id}")
+     expect(root.dataset_in_pools.pluck(:pool_id)).to contain_exactly(nas_pool.id, backup_pool.id)
+     expect(root.dataset_in_pools.find_by!(pool: nas_pool).effective_quota).to eq(1024)
+     expect(UserNamespace.where(user: created).count).to eq(1)
+@@ -677,6 +954,205 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+     expect(TransactionChain.where(user: SpecSeed.admin).where.not(id: chain.id).count).to eq(0)
+   end
+ 
++  it 'keeps new NAS and numeric VPS root backup paths distinct for equal user and VPS IDs' do
++    bootstrap!
++    install_profile_hooks!
++    map = settled_profile_namespace!
++    ensure_numeric_resources!(user: user, environment: environment)
++    seed_pool_dataset_properties!(nas_pool)
++    nas_chain, nas = profile.catch_up_chain.fire(profile, user: user)
++    expect(nas.dataset.full_name).to eq("nas-#{user.id}")
++    nas_chain.release_locks
++    seed_pool_dataset_properties!(source_pool)
++    template = create_os_template!(config: { 'datasets' => [{ 'name' => '/' }] })
++    expect(Vps.exists?(id: user.id)).to be(false)
++    vps = Vps.new(id: user.id, user: user, node: source_pool.node, os_template: template,
++                  hostname: "profile-distinct-vps-#{SecureRandom.hex(4)}", user_namespace_map: map,
++                  cpu: 1, memory: 1024, swap: 0, diskspace: 4096)
++    complete = Class.new(StandardError).new('VPS backup staging captured')
++    paths = nil
++    # Capture real nested VPS/Dataset/backup/Plan staging before unrelated VPS
++    # commands. The finite sentinel rolls it back without any Node execution.
++    expect(profile).to receive(:ensure_backup_and_plan!).and_wrap_original do |method, **kwargs|
++      copy = method.call(**kwargs)
++      expect(copy.dataset.vps_id).to eq(user.id)
++      paths = [nas.dataset, copy.dataset].map do |dataset|
++        destination = dataset.dataset_in_pools.find_by!(pool: backup_pool)
++        [destination.pool.node_id, destination.pool.filesystem, dataset.full_name]
++      end
++      raise complete
++    end
++    expect { TransactionChains::Vps::Create.fire(vps, ipv4: 0, ipv4_private: 0, ipv6: 0, start: false) }
++      .to raise_error(complete.class) { |error| expect(error).to equal(complete) }
++    expect(paths.map(&:last)).to contain_exactly("nas-#{user.id}", user.id.to_s)
++    expect(paths.uniq.size).to eq(2)
++    expect(nas_chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type).count).to eq(2)
++    expect(Vps.exists?(id: user.id)).to be(false)
++  end
++
++  %i[legacy canonical].each do |kind|
++    it "reuses the sole valid #{kind} NAS without changing its identity or policy" do
++      bootstrap!
++      settled_profile_namespace!
++      name = kind == :legacy ? user.id.to_s : "nas-#{user.id}"
++      dataset, source = existing_member_nas!(name)
++      profile.plan.register(source)
++      before = [dataset.attributes, source.attributes, dataset.dataset_in_pools.order(:id).map(&:attributes),
++                UserNamespaceMapEntry.order(:id).map(&:attributes)]
++      2.times do
++        chain, reused = profile.catch_up_chain.fire(profile, user: user)
++        expect(reused.id).to eq(source.id)
++        expect(chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type)).to be_empty
++        chain.release_locks
++      end
++      expect(Dataset.roots.where(user: user, vps_id: nil).pluck(:id)).to eq([dataset.id])
++      expect([dataset.reload.attributes, source.reload.attributes, dataset.dataset_in_pools.order(:id).map(&:attributes),
++              UserNamespaceMapEntry.order(:id).map(&:attributes)]).to eq(before)
++    end
++  end
++
++  it 'refuses ambiguous legacy and canonical NAS roots without creating a third root' do
++    bootstrap!
++    settled_profile_namespace!
++    existing_member_nas!(user.id.to_s)
++    existing_member_nas!("nas-#{user.id}")
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, user: user) }.to raise_error(described_class::Invalid, /ambiguous/)
++    expect(profile_staging_rows).to eq(before)
++  end
++
++  %i[root copy].each do |pending|
++    it "refuses an existing pending NAS #{pending} without creating a replacement" do
++      bootstrap!
++      settled_profile_namespace!
++      dataset, source = existing_member_nas!(user.id.to_s)
++      target = pending == :root ? dataset : source
++      target.update!(confirmed: target.class.confirmed(:confirm_create))
++      before = profile_staging_rows
++      expect { profile.catch_up_chain.fire(profile, user: user) }.to raise_error(described_class::Invalid, /incompatible or pending/)
++      expect(profile_staging_rows).to eq(before)
++    end
++  end
++
++  it 'refuses a foreign owner of the canonical NAS path without allocating another root' do
++    bootstrap!
++    settled_profile_namespace!
++    create_dataset_with_pool!(user: SpecSeed.user, pool: nas_pool, name: "nas-#{user.id}", label: 'nas',
++                              user_destroy: false, properties: { quota: 1024 })
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, user: user) }.to raise_error(described_class::Invalid, /incompatible or pending/)
++    expect(profile_staging_rows).to eq(before)
++  end
++
++  %i[confirmed confirm_create].each do |state|
++    it "rejects a #{state} distinct backup path owner and rolls back CatchUp staging" do
++      bootstrap!
++      dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-path-collision')
++      owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                              user_editable: true, user_create: true, user_destroy: true,
++                              confirmed: Dataset.confirmed(:confirmed))
++      foreign = attach_dataset_to_pool!(dataset: owner, pool: backup_pool, confirmed: state)
++      before = profile_staging_rows
++      expect { profile.catch_up_chain.fire(profile, source_dip: source) }
++        .to raise_error(described_class::Invalid, /another catalog owner/)
++      expect(profile_staging_rows).to eq(before)
++      expect(foreign.reload.confirmed).to eq(state)
++    end
++  end
++
++  it 'refuses aliased reused copies through both CatchUp and direct Plan enrollment' do
++    bootstrap!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-existing-alias')
++    attach_dataset_to_pool!(dataset: dataset, pool: backup_pool)
++    profile.plan.register(source)
++    owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: backup_pool)
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, source_dip: source) }
++      .to raise_error(described_class::Invalid, /another catalog owner/)
++    expect { profile.plan.register(source) }.to raise_error(described_class::Invalid, /another catalog owner/)
++    expect(profile_staging_rows).to eq(before)
++    retired_profile!.plan.unregister(source)
++    expect(DatasetInPoolPlan.where(dataset_in_pool: source)).to be_empty
++    expect(dataset.reload.dataset_in_pools.count).to eq(2)
++    expect(owner.reload.dataset_in_pools.count).to eq(1)
++  end
++
++  it 'refuses duplicate Pool aliases before admitting a backup command or membership' do
++    bootstrap!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-pool-alias')
++    alias_pool = create_profile_pool!(:primary, 'alias_backup')
++    alias_pool.update!(filesystem: backup_pool.filesystem)
++    owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: alias_pool, confirmed: :confirm_create)
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, source_dip: source) }.to raise_error(described_class::Invalid, /ambiguous/)
++    expect(profile_staging_rows).to eq(before)
++  end
++
++  it 'permits equal dataset names in a different physical backup root' do
++    bootstrap!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-separate-path')
++    other_pool = create_profile_pool!(:backup, 'nonconflicting_backup')
++    owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    foreign = attach_dataset_to_pool!(dataset: owner, pool: other_pool)
++    chain, copy = profile.catch_up_chain.fire(profile, source_dip: source)
++    expect(copy.pool_id).to eq(backup_pool.id)
++    expect(foreign.reload.pool_id).to eq(other_pool.id)
++    expect(chain.transactions.order(:id).pluck(:handle))
++      .to eq([Transactions::Storage::CreateDataset.t_type, Transactions::Utils::NoOp.t_type])
++  end
++
++  it 'rolls back a real User chain and its default accounting when its new NAS backup path is claimed' do
++    bootstrap!
++    install_profile_hooks!
++    ensure_user_namespace_blocks!(count: 8)
++    seed_pool_dataset_properties!(nas_pool)
++    DefaultUserClusterResourcePackage.where(environment: environment).delete_all
++    profile.bootstrap_defaults!
++    member = User.new(id: User.maximum(:id) + 1, login: "profile-claimed-#{SecureRandom.hex(4)}",
++                      full_name: 'Profile Claimed User', email: 'profile-claimed@test.invalid',
++                      language: SpecSeed.language, level: 1, mailer_enabled: false)
++    member.set_password('secret123')
++    owner = Dataset.create!(user: SpecSeed.user, name: "nas-#{member.id}",
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: backup_pool, confirmed: :confirm_create)
++    before = profile_staging_rows
++    expect { TransactionChains::User::Create.fire(member, false, nil, nil, true) }
++      .to raise_error(described_class::Invalid, /another catalog owner/)
++    expect(profile_staging_rows).to eq(before)
++    expect(User.exists?(id: member.id)).to be(false)
++  end
++
++  it 'rolls back a real VPS chain before its colliding numeric backup can be admitted' do
++    bootstrap!
++    install_profile_hooks!
++    map = settled_profile_namespace!
++    ensure_numeric_resources!(user: user, environment: environment)
++    seed_pool_dataset_properties!(source_pool)
++    id = Vps.maximum(:id).to_i + 1
++    owner = Dataset.create!(user: SpecSeed.user, name: id.to_s,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: backup_pool)
++    template = create_os_template!(config: { 'datasets' => [{ 'name' => '/' }] })
++    vps = Vps.new(id: id, user: user, node: source_pool.node, os_template: template,
++                  hostname: "profile-colliding-vps-#{SecureRandom.hex(4)}", user_namespace_map: map,
++                  cpu: 1, memory: 1024, swap: 0, diskspace: 4096)
++    before = profile_staging_rows
++    expect { TransactionChains::Vps::Create.fire(vps, ipv4: 0, ipv4_private: 0, ipv6: 0, start: false) }
++      .to raise_error(described_class::Invalid, /another catalog owner/)
++    expect(profile_staging_rows).to eq(before)
++    expect(Vps.exists?(id: id)).to be(false)
++  end
++
+   it 'rolls back a failed future-member NAS enrollment without deleting shared templates' do
+     bootstrap!
+     install_profile_hooks!
+@@ -884,10 +1360,10 @@ RSpec.describe 'Storage profile autocommit admission', :no_transaction do
+ 
+   # Preserve assertion, timeout and signal exceptions over owning cleanup.
+   # rubocop:disable Lint/RescueException
+-  def ordinary_reader
++  def ordinary_reader(during_staging: false)
+     primary = nil
+     state = { acquired: false, closed: false }
+-    expect(ActiveRecord::Base.connection.transaction_open?).to be(false)
++    expect(ActiveRecord::Base.connection.transaction_open?).to eq(during_staging)
+     main_id = ActiveRecord::Base.connection.select_value('SELECT CONNECTION_ID()')
+     reader = Thread.new do
+       Thread.current.report_on_exception = false
+@@ -986,6 +1462,68 @@ RSpec.describe 'Storage profile autocommit admission', :no_transaction do
+     end
+   end
+ 
++  it 'holds admission through the backup ownership check and commits before a separate reader observes staging' do
++    selected = profile
++    existing_backup!
++    dip = source!
++    selected.install_plan!
++    selected.bootstrap_templates!
++    unlock_transaction_signer!
++    blocked = false
++    allow(selected).to receive(:validate_backup_path!).and_wrap_original do |method, *args, **kwargs|
++      unless blocked
++        expect do
++          ordinary_reader(during_staging: true) { raise 'The competing reader obtained admission before staging committed' }
++        end.to raise_error(ActiveRecord::LockWaitTimeout)
++        blocked = true
++        expect(@reader_unreaped).not_to be(true)
++      end
++      method.call(*args, **kwargs)
++    end
++    chain, copy = selected.catch_up_chain.fire(selected, source_dip: dip)
++    expect(blocked).to be(true)
++    ordinary_reader do
++      expect(TransactionChain.find(chain.id).state).to eq('queued')
++      expect(Transaction.where(transaction_chain_id: chain.id).order(:id).pluck(:handle))
++        .to eq([Transactions::Storage::CreateDataset.t_type, Transactions::Utils::NoOp.t_type])
++      expect(DatasetInPool.find(copy.id).dataset_id).to eq(dip.dataset_id)
++      expect(DatasetInPoolPlan.exists?(dataset_in_pool_id: dip.id)).to be(true)
++    end
++  end
++
++  it 'rejects a just-committed pending claim hidden from its existing repeatable-read snapshot' do
++    selected = profile
++    destination = existing_backup!
++    dip = source!
++    selected.install_plan!
++    selected.bootstrap_templates!
++    unlock_transaction_signer!
++    claim = nil
++    ActiveRecord::Base.transaction(isolation: :repeatable_read) do
++      expect(DatasetInPool.where(pool: destination).count).to eq(0)
++      ordinary_reader(during_staging: true) do
++        owner = own(Dataset.new(user: SpecSeed.user, name: dip.dataset.full_name,
++                                user_editable: true, user_create: true, user_destroy: true,
++                                confirmed: Dataset.confirmed(:confirmed)))
++        claim = own(DatasetInPool.new(dataset: owner, pool: destination,
++                                      confirmed: DatasetInPool.confirmed(:confirm_create)))
++      end
++      # A consistent read still sees the old snapshot; the guard must use the
++      # current locking read after taking the same admission lock as the writer.
++      expect(DatasetInPool.exists?(id: claim.id)).to be(false)
++      before = catalog_counts
++      expect { selected.catch_up_chain.fire(selected, source_dip: dip) }
++        .to raise_error(PROFILE::Invalid, /another catalog owner/)
++      expect(catalog_counts).to eq(before)
++    end
++    ordinary_reader do
++      expect(DatasetInPool.find(claim.id).confirmed).to eq(:confirm_create)
++      expect(DatasetInPool.where(dataset_id: dip.dataset_id, pool: destination)).to be_empty
++      expect(DatasetInPoolPlan.where(dataset_in_pool_id: dip.id)).to be_empty
++      expect(Transaction.where(node_id: @owned[Node])).to be_empty
++    end
++  end
++
+   it 'closes the ordinary reader adapter and releases its lease on normal return' do
+     leases = ActiveRecord::Base.connection_pool.stat.fetch(:busy)
+     reader = nil
+@@ -1197,6 +1735,79 @@ RSpec.describe 'Storage profile autocommit admission', :no_transaction do
+     expect(EnvironmentDatasetPlan.exists?(environment: environment)).to be(true)
+   end
+ 
++  def autocommit_placement_profile!(create_destination: true)
++    existing_backup!
++    selection = { 'nodeId' => storage_node.id, 'filesystem' => "tank/admission_vps_#{SecureRandom.hex(4)}",
++                  'role' => 'backup', 'maxDatasets' => 32 }
++    own_pool(:backup, storage_node, filesystem: selection.fetch('filesystem')) if create_destination
++    PROFILE.new(profile.config.merge('version' => 2, 'vpsBackupPool' => selection))
++  end
++
++  it 'finishes strict Guest v2 path admission before ordinary readers and rejects a later freeze' do
++    selected = autocommit_placement_profile!
++    dip = source!
++    destination = selected.pool!(selected.config.fetch('vpsBackupPool'))
++    copy = own(DatasetInPool.new(dataset: dip.dataset, pool: destination, confirmed: DatasetInPool.confirmed(:confirmed)))
++    checked = false
++    allow(selected).to receive(:validate_backup_path!).and_wrap_original do |method, *args, **kwargs|
++      expect(ActiveRecord::Base.connection.transaction_open?).to be(true)
++      checked = true
++      method.call(*args, **kwargs)
++    end
++    expect(StorageProfileAcceptance::Guest.destination!(dip, selected).id).to eq(copy.id)
++    expect(checked).to be(true)
++    expect(ActiveRecord::Base.connection.transaction_open?).to be(false)
++    ordinary_reader { expect(DatasetInPool.find(copy.id).pool_id).to eq(destination.id) }
++    StorageFreezeControl.find(1).update_columns(mode: StorageFreezeControl.modes.fetch('read_only'))
++    before = catalog_counts
++    expect { StorageProfileAcceptance::Guest.destination!(dip, selected) }.to raise_error(VpsAdmin::API::Exceptions::StorageReadOnly)
++    expect(catalog_counts).to eq(before)
++  end
++
++  it 'commits missing v2 destination Pool staging and releases admission before its physical wait' do
++    selected = autocommit_placement_profile!(create_destination: false)
++    unlock_transaction_signer!
++    selection = selected.config.fetch('vpsBackupPool')
++    allow(DevStorageProfileProvision).to receive(:wait_for_chain!) do |chain|
++      ordinary_reader do
++        expect(TransactionChain.find(chain.id).state).to eq('queued')
++        expect(Transaction.where(transaction_chain_id: chain.id).pluck(:handle)).to eq([Transactions::Storage::CreatePool.t_type])
++        expect(Pool.exists?(node_id: selection.fetch('nodeId'), filesystem: selection.fetch('filesystem'))).to be(true)
++      end
++      raise WaitReached
++    end
++    expect { DevStorageProfileProvision.provision!(selected) }.to raise_error(WaitReached)
++  end
++
++  it 'uses a current locking read for a v2 default claim committed behind a repeatable-read snapshot' do
++    selected = autocommit_placement_profile!
++    dip = source!
++    destination = selected.pool!(selected.config.fetch('vpsBackupPool'))
++    selected.install_plan!
++    selected.bootstrap_templates!
++    unlock_transaction_signer!
++    claim = nil
++    ActiveRecord::Base.transaction(isolation: :repeatable_read) do
++      expect(DatasetInPool.where(pool: destination).count).to eq(0)
++      ordinary_reader(during_staging: true) do
++        owner = own(Dataset.new(user: SpecSeed.user, name: dip.dataset.full_name,
++                                user_create: true, user_destroy: true, user_editable: true,
++                                confirmed: Dataset.confirmed(:confirmed)))
++        claim = own(DatasetInPool.new(dataset: owner, pool: destination, confirmed: DatasetInPool.confirmed(:confirm_create)))
++      end
++      expect(DatasetInPool.exists?(id: claim.id)).to be(false)
++      before = catalog_counts
++      expect { selected.catch_up_chain.fire(selected, source_dip: dip) }.to raise_error(PROFILE::Invalid, /another catalog owner/)
++      expect(catalog_counts).to eq(before)
++    end
++    ordinary_reader do
++      expect(DatasetInPool.find(claim.id).confirmed).to eq(:confirm_create)
++      expect(DatasetInPool.where(dataset: dip.dataset, pool: destination)).to be_empty
++      expect(DatasetInPoolPlan.where(dataset_in_pool: dip)).to be_empty
++      expect(Transaction.where(node_id: @owned[Node])).to be_empty
++    end
++  end
++
+   it 'validates Guest admission in autocommit and refuses frozen entry without writes' do
+     PROFILE.instance_variable_set(:@instance, profile)
+     request = { 'operation' => 'info', 'key' => '0123456789abcdef' }

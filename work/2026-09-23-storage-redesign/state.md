@@ -6,6 +6,1656 @@ lifecycle: active
 
 ## Current status
 
+Phase checklist:
+
+- **Retained dev-cluster: stopped.** The user requested it for another initiative.
+  Ordinary stop and status passed; configuration and all six disk identities
+  were preserved. No automatic restart.
+- **Earlier source prerequisites complete:** API reservation `425d399a`, OS
+  disabled generation `80034c8c`, Admin OS dependency `bc9bb38e` and optional
+  maintenance profile `6cd9f9a6` are feature published. Their completed reviews
+  and bounded verification remain scoped to those revisions.
+- **Current phase:** Contract2 acknowledgement and its requested-state review
+  fix are committed at `32d7f0ac`. Fresh API/model127 and both three-file lint
+  gates passed. All declared amend hooks passed. The complete primary
+  c4d..543 review plus direct step9 remediation has no remaining Blocking or
+  Important; the comparator CPU Advisory is accepted separately.
+- **Source delivery complete:** feature `32d7f0ac` is published with exact
+  readback and final comparison; master stays `c4d9b50f`. Source is ready,
+  awaiting merge approval. No default integration or live delivery is authorized.
+- **Held capabilities:** Contract2 invocation, termination/release, physical
+  exclusion and G2 remain unavailable. Alias disposition, NAS history and
+  destination availability remain unresolved; scheduler, objects and evidence
+  are retained. Default integration, package delivery and live activation held.
+- **Known verification limit:** broad flake validation remains blocked by the
+  reproduced baseline overlay export. Focused results do not imply that gate
+  passed.
+- **Next action:** preserve the completed source checkpoint. Remaining
+  termination/recovery and physical ownership contracts require a separate
+  design and release; operational handoff is held. Retained cluster stays stopped.
+
+### Current-read review resolved; feature publication complete, 2026-10-07
+
+Normal owning amend PASS0/63.289s, child49.774s, driver56.370s/cleanup1/
+children waited1/parity1. New32d7f0ac/tree3d9d65a7/parent6cd; actual precommit
+and message hooks allOK/no hook warnings, nonfatal Nix dirty-tree warning only.
+Parent verifies all3248 hashes, outside3243 byte/stat/cache parity, original
+DB3289070 and commit child3289123 absent; signals0/prune0. Clean tracked/index.
+Final27commits/222paths/27300+/461-, owner19paths/1543+/97-; exact four
+migration/schema blobs preserved. Original543 backup and independent all-four
+review remain; Important resolved through focused lead step9, no rerun claim.
+See [disposition](storage-maintenance-handoff-current-actor-disposition.md)
+and [final inventory](storage-maintenance-handoff-current-actor-final-inventory.json).
+Fresh guarded feature publication PASS0/14.241s (push9.530s/waited1/parity1),
+exact6cd->32d readback, masterc4d unchanged. Final comparison saved. Actual
+child Bundler/push output and existing default-branch two-high Dependabot
+advisory are distinct from hook success. Seven current CI runs were queued or
+in progress at the metadata snapshot, unawaited. Superseded6cd CI37530868383
+cancellation request0 only; completion not proved. No current/default run
+cancelled. See [publication](storage-maintenance-handoff-current-actor-publication-result.json).
+No default/live/physical or operational Contract2 release follows.
+
+### Historical checkpoint: current-read checks passed; owning fold active, 2026-10-07
+
+Fresh batch PASS0/513.868s/waited1/parity1; driver505.897s/cleanup1/
+children waited1. API127/0/0pending/0outside passed (stage479.230s,
+native465.596s, seed40690), including every10 older-view/current-request case.
+Both component/root lint inspected3files with0offenses (5.936s/13.026s).
+Parent read native JSON, actual lint output and cleanup result; all3248 bytes,
+outside5 byte/stat/cache parity and original DB PID3283553 absence proved.
+No signals/prune. Migration8/endpoint1/selector20/generated proofs remain exact
+unchanged-byte carry, no extra execution.
+
+Parent retained exact543 backup and staged only the reviewed5 paths, tree
+3d9d65a703d20697be45088ce6f33449cf1b3429. Fresh Luna/low normal amend watcher
+api_current_actor_amend_20261007 is active at /tmp/handoff-current-actor-amend-20261007.n6jzkkth/commit.py; frozen0ffe37d9/messageffde34d9, guards unchanged
+except explicit expected parent6cd for the amend. Actual hooks and outcome
+pending; no bypass. Important disposition/publication remain pending. All
+physical/default/Contract2 invocation and stopped-cluster holds remain.
+
+### Historical checkpoint: current-read remediation freeze, 2026-10-07
+
+Implementer0's exact five-path freeze a47d4129 is accepted after parent full-delta
+inspection. Canonical default SQL/order and existing caller lock order remain;
+unknown requested state refuses. Authored25 new cases include15 real-row/query
+cases and10 older ordinary-RR/concurrent-request refusals. Actor67/full API127
+remain inventory until the fresh run finishes. Protected worker and original
+spec bodies reconstruct exactly; only two exact-owned row bookkeeping additions.
+Parent proves all3248 source hashes, exact five delta and other3243 parity,
+owner19 with14 unchanged, schema/locales/four migrations/inputs and empty index.
+Both owning guides received the main-agent prose pass.
+
+Fresh Luna/low utility api_current_actor_checks_20261007 owns the once-launched
+three-stage batch at /tmp/handoff-current-actor-checks-20261007.nuueaj4u/checks.py.
+Frozen80d570b8, Ruby driver7bd984d8, guard911c91cb, wrapperaf1d488e. Complete
+four owning API/model files then component/root lint for3 Ruby paths; all
+results pending. No migration/endpoint/selector/regeneration/VM/CI wait.
+Important remains open; normal unpublished fold, direct step9 disposition and
+feature publication pending. Retained cluster stopped; all operational holds
+remain.
+
+### Original Important actor eligibility finding at543, 2026-10-07
+
+Reviewer0 confirms an Important risk/general finding in retained actor helper
+(origin a561366c, consumed by543a797). User/UserSession are current-locked, but
+current_object_state is an ordinary SELECT. An established outer REPEATABLE READ
+view may miss a separately committed requested suspension/soft-delete while
+User.object_state stays active pending lifecycle confirmation. Existing tests
+cover direct row-state changes and current Pool claims, not this requested-state
+case. This is a source-backed authority gap, not a demonstrated remote exploit
+or recovered incident.
+
+Architect0's final five-path brief is accepted. Implementer0 task
+01a11373-2e27-7490-b15d-652719bfee4c owns authoring and static verification only:
+canonical Lifetimes opt-in locking read, storage admission, actor regressions,
+object-lifetimes and integrity-model documentation. Parent owns the two-document
+prose pass and guarded owning checks. All other source and the index stay held.
+The original complete all-four-HIGH review is complete on exact543; Important
+remains open until focused remediation checks and direct step9 disposition.
+Publication remains held.
+All prior pass scopes and stopped-cluster/operational/physical/G2/default holds
+remain. No new physical trial is requested.
+
+### Contract2 final lint gates and normal commit, 2026-10-07
+
+Selected final batch PASS0/38.308s/waited1/parity1; driver31.553s/cleanup1/
+children waited1. Component/root lint each10files/0offenses (5.182s/13.024s),
+selector20runs/89assertions/0failure/error/skip (7.364s). Parent independently
+read stage and cleanup results, proves original private DB PID absent and
+all3248 source hashes/outside/cache parity; no signals/prune. Functional102+8+1
+carry only through the equivalent actor conditional correction. All six
+owning gates are now satisfied with their explicit source scopes.
+
+Parent staged exactly17 including both new migration/spec paths. Staged tree
+e8bbbadc65c6e8734c55723f2056ed2614d323c2; mandatory hooks installed/active,
+normal new message word-identical72-column wrapping. Fresh utility
+api_handoff_commit_20261007 owns /tmp/handoff-commit-prepared-20261007.ko2iw09s/
+commit.py, frozen73913850, commit driver7a9cfae7/guard911c91cb/wrapper5df5cd2a.
+Commit PASS0/62.410s/parity1, driver55.585s/cleanup1/children waited1. Actual
+precommit and commit-message hooks all passed, no hook warnings; only nonfatal
+Nix dirty-tree warning. New543a797/treee8bbbadc/parent6cd, clean tracked/index,
+all source hashes and original private DB PID absence verified by parent.
+Complete c4d..543 is27commits/220paths/27015+/457-, one17-path owner1255+/90-.
+Final complete independent review is pending; no publication acceptance. All source/index held; retained cluster stopped.
+
+### Contract2 style batch and final fixture lint correction, 2026-10-07
+
+Fresh style wrapper failed1/476.438s/waited1/parity1; driver469.572s,
+cleanup1/children waited1. API102/0/0pending/0outside passed
+(stage420.270s/native408.580s), migration8/0 (stage7.038s), endpoint1/0
+(stage30.624s). Component lint10files found one Lint/DuplicateBranch at actor532
+and failed4.833s; root lint and selector did not run. Parent read actual results
+and proved original private DB PID3193369 absent; no signal or prune.
+
+Implementer0 turn01a1135b-c7d4-7993-b3d7-db74d81d786f merged only the identical
+Integer/Time increment branches. Actor3f8f9d7c reverses exactly to b8e7844;
+short-circuit order, result values, assertions and protected worker machinery
+are unchanged. Final17 manifestf3831115 and complete patchb17fa2be accepted;
+parent verifies all3248 source hashes, other16, head/tree and empty index.
+Functional102+8+1 evidence carries narrowly for this equivalent fixture change.
+Fresh utility api_handoff_final_lint_20261007 owns the selected APIlint/rootlint/
+selector batch at /tmp/handoff-final-lint-20261007.u__t33by/checks.py,
+frozen0cfedf01/selection driverd09606fd/guard911c91cb/wrapperaf1d488e.
+All three results pending; no overall pass, commit or review acceptance inferred.
+Prior failures and generated proofs remain. Retained cluster stays stopped;
+operational handoff/default/live/physical/G2/alias holds remain.
+
+### Contract2 third batch and style release, 2026-10-07
+
+Remaining-five wrapper failed1/59.753s/parity1; driver53.041s/cleanup1/children
+waited1. Migration8/0/0pending/0outside passed (stage7.331s/native5.895s), including
+FK preservation and actual DELETE refusal. Endpoint1/0 passed (stage31.396s/
+native19.011s). Component lint10files/38correctable offenses failed6.727s;
+root lint and selector unrun. Parent confirms original private DB PID absent,
+no signal/prune. Earlier API102 pass retains unchanged source scope.
+
+Released exactly eight owned paths to implementer0 turn
+01a1134d-5f53-7cb1-a2c4-3e4a94a6c538: new migration/spec, maintenance_run,
+freeze_status and four existing API/model specs. Corrections are reported
+alignment, redundant literal parentheses, numeric predicate spelling, terminal
+guard clause, one nested ternary and single literal quote. No cop/config or
+scope expansion; other9/index/schema/locales/docs/admission/resource/coverage
+held. Compiled SQL bytes, invariants,102/8 examples and protected worker machinery
+must remain exact. Fresh complete six-stage verification follows because runtime
+branches change. Style freezefda692c4/fullpatch72b47fd0/correction7e9929a0 accepted. Parent inspects
+complete eight-path delta and full3248/17/head/index parity; six compiled SQL and
+column constants match exactly (digeste4575b28). Other9/schema/locales/worker
+remain exact. Fresh utility api_handoff_style_checks_20261007 owns one full batch
+at /tmp/handoff-style-checks-20261007.v6ug6tu2/checks.py, frozen3eb421c2, original
+full driver939fdd16/guard911c91cb/wrapperaf1d488e. All six new outcomes pending;
+prior passes retain old-byte scope. Member preparation-only Python warning/tool
+JSON refusal is retained separately; final syntax/parity evidence owns bytes.
+No aggregate pass or new gate.
+Cluster remains stopped, operational handoff and all physical/default/live/G2
+holds remain.
+
+### Contract2 second batch and migration fixture, 2026-10-07
+
+Second wrapper failed1/457.068s/waited1/parity1; driver450.149s/cleanup1.
+API102/0/0pending/0outside passed (stage436.379s/native424.717s). Migration8/1
+failed (stage7.126s/native5.752s) at spec91: fresh IndexDefinition objects compare
+by identity. Pinned AR8.1.4 base/MySQL classes have no value-equality override;
+all displayed index metadata matches. ForeignKeyDefinition is a Struct and its
+unchanged equality remains valid. Parent verifies all3248 source hashes and
+original DB PID absence, no signal/prune. Later endpoint/lints/selector unrun.
+
+Only130000 migration spec is released to implementer0 turn
+01a11347-dd2f-7571-a4b3-d36fc234f78b for a local explicit projection of all14 public
+base index attributes plus MySQL enabled. Preserve every remaining assertion,
+including FK equality and actual DELETE refusal. Other16/index/head/schema/locales
+held. Corrected freeze5b14f456/manifest1631d6b1 accepted; parent complete3248/17/head/index
+parity and exact reversal verified. Fresh utility api_handoff_index_checks_20261007
+owns /tmp/handoff-index-checks-20261007.6h932zdg/checks.py, frozenb3913869,
+selection-only driver18b30987/unchanged guard911c91cb/wrapperaf1d488e. All five
+new outcomes pending: migration8/endpoint/lints/selector20;
+API102 pass carries only with exact unchanged source. No runtime/migration or
+contract defect/change is inferred. Retained cluster stays stopped.
+
+### Contract2 first owning batch and fixture correction, 2026-10-07
+
+First batch at exact6cd/final17 failed1/420.591s, waited1/parity1; driver
+413.024s/cleanup1/children waited1. Native API102/1/0pending/0outside errors,
+395.611s; stage407.794s. Later migration/endpoint/lint/selector stages did not
+run. Parent rechecked all3248 source hashes and original private DB PID absence;
+no signal/prune. The sole failure is API example421/expectation448: typed action
+Datetime outputs are ISO strings while nested Custom status timestamps retain
+ordinary UTC JSON strings. Full-summary diff differs only acquired_at and
+handed_off_at. Installed HaveAPI0.29.8 Typed#format_output confirms this existing
+boundary. No runtime defect or format change is indicated.
+
+Only api/spec/api/resources/storage_freeze_spec.rb is released to implementer0
+turn01a1133c-05b6-7132-9e8d-513478040b57. Project the two typed timestamps through
+Time.iso8601(...).utc.to_s in the expected full summary; preserve every key,
+subsequent effect/refusal assertions and102 examples. Other16/index/schema/locales
+remain held. Corrected freeze accepted: spec279dcdf7 and manifest2350e959; complete reverse proof
+restores prior474ac272 bytes. Parent verifies all3248 source hashes,17 owned files,
+head/index and exact one-expression reversal. Fresh utility
+api_handoff_timestamp_checks_20261007 owns the once-launched
+/tmp/handoff-timefmt-checks-20261007.t1m1kmc7/checks.py, frozena6baeafb,
+unchanged driver939fdd16/guard911c91cb/wrapperaf1d488e. All six outcomes pending;
+no old failed-run pass carries.
+Cluster remains stopped; no operational handoff or physical authority follows.
+
+### Contract2 initial14 freeze and core generation, 2026-10-06
+
+Member froze initial14 at unchanged6cd/tree0f11, empty index. Manifest
+64088cae/source patch15c7ac74/owning message4f48c3ba are in the retained private
+authoring packet. Lead inspected the complete fourteen-path change and found
+no concrete deviation from the accepted record-only contract. The actual new
+130000 migration matches the prepared five-column schema projection, including
+exact binary tuple/profile checks and refusal before DDL for unsupported rows.
+All3234 outside tracked sources and PHP cache file/directory bytes/stat match
+the member baseline; schema/EN-CS, first three migrations and worker cleanup
+remain unchanged. Source/index/head and scoped diff checks pass. Authored
+102 API/model and8 migration examples are inventory only, not outcomes.
+
+First utility api_handoff_schema_generation_20261006 ran one core-only
+generation at /tmp/handoffgen-20261006.tecjll92. Frozen SHA
+ced43cf43d7b771388d3ed828de0041fd355f0f87c9d6e968eb9dd513264c30f binds
+all3248 current sources. Driver7cf38227/guard911c91cb/wrapperd5f3a1c1 retain
+the accepted pre-effect and same-connection guard, sole pending130000,
+180-table/five-column/one-constraint/version projection, exact predecessor
+reversal and socket-bound cleanup without prune or fallback termination.
+Parent preflight parity1/executed0 is separate from that child. The run failed
+1/25.659s/waited1/parity1; generation17.073s/generated0/cleanup1/installable0,
+GenerationRefusal at dump_core_schema/driver156. The output remains retained
+and unaccepted. Parent read the exact schema diff: only version, five audits
+and the owning constraint changed, but the changed constraint moved. Pinned
+AR8.1.4 SchemaDumper sorts rendered CHECK statements, so the private validator's
+fixed-position comparison refused it. Parent source guard passes and the
+original private DB PID is absent; no signal or prune occurred.
+
+The correction changes only the private comparison: remove the unique named
+owning constraint from both table blocks before comparing every other byte
+and order. Five-column checks and entire-schema predecessor reversal remain
+exact; no SQL/helper/application-source or cleanup change. Offline comparison
+of the retained failed output proves that is the sole mismatch. Fresh packet
+/tmp/handoffgen-order-20261006.ltpvoe66 has frozena386fdef/driver60e79a33,
+unchanged guard911c91cb/wrapperd5f3a1c1 and the same3248-source binding.
+Syntax/preflight parity1/executed0 passed. Fresh utility
+api_handoff_schema_order_generation_20261006 completed PASS0/23.284s,
+waited1/parity1; generation16.683s/generated1/cleanup1/installable1. Core proof
+is sole130000 on exact120000,180 unchanged tables,five audit columns,owning
+constraint/version only, application boot0 and unrelated schema changes0.
+Lead inspected the complete schema diff/proof, rechecked source guard and
+artifact syntax, and proved the original private DB PID absent without signals
+or prune. The emitted SHA2030ff5c9f12ff8b4ef10c405c6cc96cda7a89ab7824ea751c272fcac3a302a9
+matches the retained first output, whose failed proof remains historical.
+
+Only api/db/schema.rb installation was released to implementer0, turn
+01a11321-0f44-72a3-b236-4b12e6b72439, byte-for-byte from the accepted second
+artifact. Installation completed byte-for-byte (SHA2030ff5c,141134bytes,7+/2-),
+with static syntax/diff0 and initial14/all3233 outside/cache/head/index parity.
+Initial15/index and EN-CS remain held. No ordinary examples, live handoff, cluster restart or physical action
+follows; locale generation/checks/review/publication remain separate.
+
+### Contract2 full-plugin locale environment, 2026-10-06
+
+Fresh utility api_handoff_locale_environment_20261006 owns the once-launched
+/tmp/handoff-locale-env-20261006.qju819zi/checks.py. Frozen67ea05b7,
+wrapper0c554c8b and environment264b7f83 bind all3248 source files, exact6cd,
+empty index and installed schema2030ff5c. This declared full-plugin API shell
+setup runs before snapshot capture so the effective generated Gemfile.lock is
+bound correctly. Application/DB startup is absent from the prepared driver;
+Environment setup completed0/7.212s/waited1/parity1, pinned Ruby3.4.9/AR8.1.4/
+mysql2.5.7/full-plugin mode, app boot0/DB started0. Effective lock0ecd77cc and
+all3248 source hashes match the parent readback. Dirty-tree warning is expected
+for held source edits, not a check failure. Fresh raw locale packet
+/tmp/handoffloc-raw-20261006.xwzu1pc1 freezes the complete private snapshot,
+lock and unchanged locale3651d92a/guard911c91cb/wrapper0c554c8b, frozen8b0f9efc.
+Fresh utility api_handoff_raw_locale_generation_20261006 owns one existing
+vpsadmin:i18n:update run; all generation/cleanup/prose/health outcomes remain
+pending. Application EN-CS/source/index and retained cluster remain held.
+
+### Contract2 locale prose and health, 2026-10-06
+
+Raw locale generation completed0/52.307s/waited1/parity1; generation45.96s,
+generated1/cleanup1, full-plugin update child0, core schema unchanged/plugin
+schema dump0. Parent verifies all source hashes and original private DB PID
+absence without signals/prune. Raw proof remains unaccepted for installation
+until prose/health. Each locale has2388->2399 leaves:13 additions and2 shared
+descriptions moved to action-specific paths. Every other leaf is unchanged.
+Lead applies owning vpsFree writing and EN/CS Humanizer guidance directly:
+EN metadata needs no rewrite;13 CS TODO leaves are translated, preserving the
+two previous abandonment descriptions and existing epoch wording. Exact key
+and13-change comparison/YAML parse pass.
+
+Fresh /tmp/handoffloc-health-20261006._t9mv6p0 freezes root sources separately
+from normalized snapshot bytes. Frozen3367c91f/locale5675eb2e/guard911c91cb/
+wrapper0c554c8b reuse the accepted health driver unchanged. Fresh utility
+api_handoff_locale_health_20261006 completed0/97.036s/waited1/parity1.
+Generation90.312s/generated1/cleanup1, update0 and health0, no normalization
+byte change. Parent verifies root/snapshot/proof hashes and original private
+DB absence without signals/prune. Final EN27cced81 and CSbbc77293 are accepted
+for installation; only those two paths released to implementer0 turn
+01a1132e-4970-76e3-9978-0319a0329863. Exact final17 freeze pending, no ordinary
+API/model/migration example run. Prepared six-stage owning driver939fdd16,
+guard911c91cb/wrapperaf1d488e remains unbound/unrun until final17 acceptance.
+
+### Contract2 final17 freeze and owning checks, 2026-10-06
+
+Implementer0 installed only accepted EN-CS bytes; final17 packet
+/tmp/api-maintenance-handoff-final17-20261006.imr20pgw has manifestc83cb544,
+complete patchb34fada4/locale patch8861649a/unchanged new-owner message4f48c3ba.
+Initial15/head6cd/tree0f11/index and all3231 outside tracked byte/stat, first3
+migrations, protected worker and foreign cache file/directory match baseline.
+Parent independently verifies final17 hashes/stat, exact locale artifacts and
+outside/cache parity. Member YAML2/static diff0 passes; initial no-index
+status0 assumption failed because a clean difference correctly returns1,
+then static checks were corrected without source rewrite. Parent's first
+cache-directory projection assumed the file's five-field stat shape; it
+refused before checks, then the actual saved four-field directory projection
+passed. No source or operation changed for either private comparison correction.
+
+Fresh utility api_handoff_owning_checks_20261006 owns the once-launched
+/tmp/handoff-owning-prepared-20261006.05v4bdej/checks.py. Frozendc8f6872,
+driver939fdd16/guard911c91cb/wrapperaf1d488e bind all3248 final sources and
+empty index. Six stages: API/model102, core migration8, existing full-plugin
+endpoint coverage, component/root lint10 and unchanged selector20. Counts
+are authored inventory; every outcome is PENDING. Existing guarded DB/SQL/
+cleanup ownership is retained; root Bundler isolation is private runner glue.
+All source/index/runtime/default/alias/Contract2 invocation holds persist.
+
+### Contract2 main prose, 2026-10-06
+
+Implementer0 released only the three integrity guides while finishing the
+other eleven static paths. Lead read the technical handoff and owning docs,
+applied the vpsFree writing/Humanizer skills, and completed the prose pass.
+The text states supported tuples, copied audit, first-transition locks,
+original-CAS no-write replay and the absent termination/physical authority
+directly. Existing unknown/malformed-reader refusal and multi-service reader
+convergence wording are retained. No interface or policy decision changed.
+
+Final SHA256: foundationf64f6688c2d850ce0f78b7eb5656a3e84ea3f063c049591b445eb440adffd6a3;
+modelcd26f426bb69283d737a7e3d02756349df5b3ce7909a7734ac90b2b33b4275be;
+reconciler4549abcf7d716d03efeadc04f46d804143868025f1d02fb8050b4b301f48a669.
+Inline technical content, headings, links and fenced code match the technical
+handoff; scoped three-doc diff check0, exact6cd and empty index. The final
+bytes were returned to the active implementer turn for its initial14 manifest
+and are held. No examples, generation or runtime action ran. Remaining
+eleven-path authoring and generated schema/EN-CS holds remain unchanged.
+
+### Contract2 generation preparation, 2026-10-06
+
+During initial14 member authoring, lead prepared an unbound private schema
+projection at /tmp/handoff-schema-driver-prepared-20261006.9pcbglpi.
+Adapter911c91cb remains exact accepted bytes; driver7cf38227 keeps its
+pre-effect identity/same-connection, core-only SchemaDumper and retained
+cleanup rules. The projection requires predecessor120000, sole pending130000,
+180 unchanged tables, only five nullable audit columns and the owning
+constraint/version delta; reversal must reproduce the entire predecessor.
+Column choices will be reconciled against the actual frozen migration before
+release. Immutable Ruby syntax passes; no schema generation or DB started.
+The accepted Python watcher wrapper d5f3a1c1 was copied byte-for-byte and
+compiled in memory; it remains unbound and unrun. No frozen manifest, launch
+shell or artifact directory exists. Updated prepared manifest SHA256 is
+f0cc637faffc75501ea692bce0d3e0935ccc19eb75d6dfc901b58322b08564af. This is
+prepared/unrun evidence, not source/migration/cleanup/install acceptance.
+Initial14 source remains member-owned; schema/EN-CS and all runtime actions
+stay held. Original generation packets and source evidence are unchanged.
+
+### User-requested retained cluster stop, 2026-10-06
+
+User continued source work and explicitly requested stopping the dev-cluster
+for another initiative. Parent verified exact current/env identity and installed
+public stop ownership. Fresh Luna/low utility
+storage_retained_cluster_stop_20261006 ran one public status/stop/status batch
+in private /tmp/storage-cluster-stop-20261006.oa7kj6ie, driverdf5fddcd.
+Overall0/101.061s; stop child0/98.847s/waited1; final status0/stopped,
+storage topology/bridge network/maintenance released. The public owner printed
+`cluster 2026-09-23-storage-redesign stopped`, without timeout-kill fallback,
+and removed its ordinary result-config GC link. Retained applied-selection and
+provenance roots remain under the existing stop contract.
+
+The private config SHA is unchanged and all six retained disk paths keep the
+same device/inode/size. Admin head/index binding remains unchanged. These are
+bounded preservation checks, not a new guest DB/file/history certificate or
+universal process-reap proof. No reset, release, unregister, deletion,
+configuration/mode/package change, scheduling restart, alias disposition or
+other initiative operation occurred. The session stays active and this retained
+cluster stays stopped until separately requested. See the
+[public stop result](storage-retained-cluster-stop-result.json).
+
+### Bounded Node endpoint fixture correction, 2026-10-06
+
+Read-only preparation during the corrected VM copied the accepted guarded
+TestDb adapter byte-for-byte (SHA911c91cb) into a private prepared packet.
+No launch driver/frozen manifest exists and no DB, process or source operation
+ran. The later handoff SchemaDumper must bind the actual current predecessor,
+sole130000 migration and unchanged table set; it cannot reuse the reservation
+new-table proof. Existing pre-effect identity/connection and retained cleanup
+rules remain. This supplies no authoring or generation release.
+
+
+The complete saved one-path design at design.md3903 is accepted. Authoring was
+released to retained Implementer0, turn01a112c6-5335-7bb0-9aed-72eeea99c1b4,
+for `tests/suite/admin/nodectl-refresh-and-runtime-state.nix` only. The live
+transition uses installed Ruby for one nonblocking AF_UNIX probe: validated
+parent and absent-path lstat, or exact ECONNREFUSED at a socket. Successful or
+in-progress connections, other errors and cleanup failures refuse. The host
+requires integer zero and one exact allowed label. OS unlink and fresh-boot
+Node pathname predicates remain strict; all system/storage/RPC checks remain.
+No guide update is needed: the checked maintenance guide makes no Node unlink
+promise. Member freeze98904a58 and static Nix parse/format, full-script/probe Ruby syntax
+and scoped diff checks passed. Lead inspected the entire one-file diff and
+all3246 source/index/cache guards passed0.965s, executed0. Original first
+example and all remaining predicates are preserved. Runtime/other source,
+index, contract2 and publication remain held.
+
+Fresh Luna/low utility admin_node_endpoint_fixture_eval_20261006 owns the one
+actual scenario drvPath evaluation at /tmp/adminsocketcheck.7v04rosh. Frozen
+9276d8b0/drivercaf14c8f/wrapperafa57da9/gate4fffa4dc bind the held source;
+The single evaluation passed0/63.619s/parity1, stage60.722s/child_waited1;
+main rechecked the full guard and original PGID2928668 had zero same-UID
+members, no signals. It constructed the actual scenario JSON derivation and
+executed no VM. Only the scenario file is staged. Original0d is retained under
+a session backup ref. Fresh Luna/low admin_node_endpoint_fixture_amend_20261006
+owns the normal unpublished amend at /tmp/adminsocketamend._l3bck61; frozen
+1ded2d0f/driverda7801cf/wrapper5706e866/message810add8c bind staged tree0f11bc17
+and unchanged parentbc9. The normal amend passed0/55.543s/parity1, producing
+6cd9f9a6/tree0f11bc17 with source/cache parity and clean index. Parent verified
+all hooks passed; child stderr retains a nonfatal TextWidth warning (maximum79
+within the required80), correcting the utility's wrapper-only no-warning
+observation. Original PGID2943088 had zero same-UID members, no signals.
+The old-to-new source delta is exactly one scenario file; all three migration
+and schema blobs remain identical. Complete range26commits/218paths/25850+/457-,
+unit5paths530+/2-, completeSHAd775c3e7/unit905597f9/remediation9248fddb bind the
+[final inventory](storage-admin-maintenance-profile-endpoint-inventory.json).
+Lead accepted the focused direct-step9
+[disposition](storage-admin-maintenance-profile-endpoint-disposition.md) under the
+original complete review, without a new reviewer rerun or physical claim.
+
+Fresh native Luna/low admin_maintenance_profile_corrected_vm_20261006 owns the
+same existing two-example scenario at exact6cd. Packet /tmp/avmendpoint.zau3c8b3,
+frozen25a16a7d/driver867b1a34/wrapper34fefde1/gatecba8c02a bind all3246 source
+entries, index, refs and foreign state. Parent preflight passed0.938s/parity1,
+executed0. The ordinary runner uses its fresh private state with
+--no-destructive/--stop-on-failure. That run was cancelled at the user's pause:
+waited driver1/401.630s, stage1/397.138s, parity1 and no completed examples.
+Watcher verified exact PGID2953490 and sent TERM only; no KILL was needed.
+Parent's bounded same-UID PGID scan returned zero. This is incomplete user
+cancellation, not an assertion failure. Old packet and failed run remain
+untouched. User continue authorizes fresh source verification; new prepared
+packet /tmp/avmendpoint-resumed-20261006.juule2dt has unchanged driver867b1a34,
+wrapperd56ef309, frozen1b4a0a05 and unchanged review gatecba8c02a. Its full
+source/index/cache guard passed2.419s/parity1/executed0. After the separate
+retained-cluster stop completed, fresh Luna/low utility
+admin_maintenance_profile_resumed_vm_20261006 launched the same existing
+scenario once in fresh private state. The batch passed0/869.343s/parity1,
+stage0/865.272s/child_waited1. Native script606.47s: original Node-status and
+read-only-RPC example1/2 PASS5.13s; ordered maintenance activation/fresh-boot/
+restoration example2/2 PASS242.56s. Parent rechecked the complete frozen
+source/index/cache guard0.947s/parity1; bounded same-UID stagePGID3056416 scan
+returned zero, no signals. No local kernel compilation was observed. This
+proves the installed generation/service/endpoint, current/booted systems and
+boot-ID changes, Pool/Dataset GUID/property/known payload and config/key equality,
+and ordinary restoration/RPC predicates in this disposable scenario. It does
+not prove production bootloader persistence, complete descendant/delegated-GC
+reap, physical exclusion, retained alias/NAS history or real payload recovery.
+It did not use or restart the retained cluster. See the
+[accepted corrected VM result](storage-admin-maintenance-profile-resumed-vm-result.json).
+
+Parent fetched the canonical SSH remote after accepting the run. Default and
+merge base remainc4d; feature425d is an ancestor of6cd, no rebase needed.
+Fresh Luna/low admin_maintenance_profile_publication_20261006 now owns one
+normal exact-lease feature push/readback at
+/tmp/admin-maintenance-publication-20261006.lg7s1d8p, driverf8d6a1e8. Publication
+passed0/15.430s, pushchild0/10.859s/waited1/sourceparity1. Actual SSH readback
+is exact6cd feature and unchangedc4d default; final c4d..6cd comparison is saved.
+Normal declared shell/hooks were used, with no bypass. Parent inspected actual
+child output rather than treating wrapper silence as a no-warning certificate.
+Current6cd workflows are in progress, unawaited. A cancellation request for
+sole superseded425d CI37492572220 was submitted successfully; its completion
+is unawaited. Defaults, package and retained-cluster selection stay unchanged.
+See [feature publication result](storage-admin-maintenance-profile-publication-result.json).
+
+After this accepted composition source-delivery checkpoint, initial fourteen
+static Contract2 paths were released to implementer0 at published6cd, clean
+tracked/index and preserved PHP cache. The accepted seventeen-path design is
+unchanged; generated schema/locales stay held for guarded parent generation
+and exact member installation. Main owns the three technical-document prose
+passes after handoff. Authoring supplies no operational handoff, termination,
+physical/G2/alias action or default/package/live authority. Source/index and Contract2/publication/live holds
+remain. The failed first VM and its
+unknown operand remain separate evidence. No socket deletion, timeout change,
+retry or physical-exclusion claim follows from the source diagnosis.
+
+### Admin maintenance profile committed and reviewed, 2026-10-06
+
+The five-path source unit was frozen at Adminbc9bb38. Lead inspected the profile,
+actual-module check, flake exports, extended Node scenario and owning guide.
+The original API/RPC example and documentation prefix remain unchanged.
+Main applied the required prose pass directly; the guide's final SHA929b4a92
+retains the import example, identifiers, refusal and compatibility boundaries.
+All five full hashes match the member manifestf7c4f573; source patch60c96c98
+and normal owning message3d000f9f were used for the completed commit below.
+
+Member static checks passed: four Nix parses/formats, extracted Ruby syntax and
+scoped whitespace. The 30 module projections, nine refusals and two VM examples
+are authored inventory, not results. Lead verified all3241 outside tracked
+files and the declared PHP cache against the pre-authoring byte/stat baseline.
+Only the two new Nix files were staged for Git-backed flake access; all five
+source bytes and the index are held. Inputs and the accepted OS800 lock remain
+unchanged. The complete current-source patch binds SHAeaec2703.
+
+Fresh Luna/low watcher admin_storage_maintenance_profile_checks_20261006 owns
+one batch at /tmp/adminprofile.hz4jzg1p. Frozen4f2c551e, drivere2867c67,
+wrapperf5653310 and source-gatede4070d4 bind all3246 source entries, exact index,
+heads and declared foreign state. The batch passed0/201.805s/parity1: focused
+build60.370s, all six actual check drvPaths72.707s, exact registered Node scenario
+JSON drvPath63.678s. Main read the built output: all30 projections are typed
+true. The installed halt policy checks ran in the focused derivation. Main
+rechecked source/index/foreign guards and proved all three original stage PGIDs
+empty, no signals; no kernel build was observed. See the
+[accepted check result](storage-admin-maintenance-profile-check-result.json).
+The evaluations construct derivations; they do not execute other check bodies
+or the two VM examples. Broad flake
+validation stays blocked by the reproduced predecessor overlays.list shape;
+no repeated baseline run or overlay fix is selected.
+
+One parent-only inspector could not start through unified exec; the same pinned
+bash executable and /bin/sh were positively verified, with no test re-execution.
+A parent-only metadata projection initially assumed full store paths; pinned
+Nix2.34.8 metadata version4 uses store-relative names. The exact version4
+projection then read the already-built output without rerunning a build.
+See the [metadata note](../../notes/cross-project/2026-10-06-nix-derivation-v4-store-relative-paths.md).
+
+Fresh SSH fetch retains master/basec4d and remote feature425d, so no rebase is
+needed. All five owned paths are now staged at treeef6b3371. Fresh Luna/low
+admin_storage_maintenance_profile_commit_20261006 owns the normal commit/hooks
+at /tmp/adminprofilecommit.qy48_31e: frozenfa12820c, driverda7801cf and
+wrapperd5a571fb. The normal commit passed0/59.850s/parity1, all required hooks.
+TextWidth warned on14 body lines above72; maximum79 satisfies the mandatory80
+column limit. No hooks were bypassed. Final0d5c855c2493dec51ec400a99ea3f61dc8e31469
+has treeef6b3371e2158a5b1c0de5273234057f2e101e63 and parentbc9. Lead independently
+matched all3246 source entries and foreign byte/stat state, clean tracked/index,
+original PGID2627173 empty and no signals.
+
+Complete final history has26 commits/218 paths/25793+/457-, with five-path
+unit473+/2-. [Inventory](storage-admin-maintenance-profile-inventory.json),
+[complete diff](storage-admin-maintenance-profile-complete.diff) and
+[unit diff](storage-admin-maintenance-profile-unit.diff) bind exact final source
+and three migration versions/provenance; completeSHAf0466c6d/unitSHAeaec2703.
+Retained independent reviewer0 is assigned all four HIGH lanes on the COMPLETE
+c4d..0d range, turn01a1128f-182f-7ca2-a2ab-36a50613d1d5, saved Sol/xhigh/read_only.
+The [review packet](storage-admin-maintenance-profile-review.md) distinguishes
+source checks carried through unchanged bytes from final runtime proof. All
+final review completed all four HIGH lanes with no Blocking/Important.
+[Consolidated result](storage-admin-maintenance-profile-review-result.md) records
+the accepted comparator Advisory, complete history/no-obsolete conclusion and
+three preserved migration versions. No source remediation or review rerun is
+required. Supplied checks remain parent/watcher evidence; the owning VM is unrun.
+
+The first exact-head VM packet /tmp/avm.jf7ha2ma completed: frozen64a7ab89,
+driver867b1a34 and wrapper8b3baf45 bind final0d, all3246 source entries, clean
+index and preserved PHP cache. Lead accepts the completed review disposition
+and releases only this prepared exact-head verification operation.
+The sole command runs the existing admin/nodectl-refresh-and-runtime-state
+scenario with a short private state path, no-destructive and stop-on-failure.
+Final review disposition and prefix preflight0.947s/parity1 preceded fresh
+Luna/low admin_storage_maintenance_profile_vm_20261006. Review gate8ab9799f
+records exact0d review acceptance. The waited run failed1/1714.637s/parity1;
+stage1710.327s, native first RPC example passed and second failed908.8s at
+`test ! -S /run/nodectl/nodectld.sock && test ! -S /run/osctl/osctld.sock`.
+The successful switch and both runit down acknowledgements precede the combined
+wait. That result does not identify which path or a live listener/daemon.
+Normal stop/fresh maintenance boot/restoration were not reached. See
+[first VM evidence](storage-admin-maintenance-profile-vm-result.json).
+Parent final source/index/cache guard passed. Original PGID2716429 is empty;
+readable same-UID prefix command/FD counts are zero, with four FD observations
+unreadable. No unqualified global FD absence is claimed; no signals/kernel
+build were observed. Native runner disks/logs/state remain retained.
+Implementer0 read-only source diagnosis turn01a112b9-7b38-7a21-a8fd-4c657ee9bcef
+is active. No runtime cause, correction, rerun, publication or new source gate
+is inferred. Earlier source checks/review keep their scope.
+
+The next contract2/handoff_pending API design is accepted as a separate
+record-only source slice, still unreleased. Its operational invocation needs
+separately reviewed responsibility recovery/termination and physical contracts.
+This adds no gate to the current composition. Architect's public-source
+containment/reap assessment is complete in design.md under
+"G1b service containment and reap: public-source assessment, 2026-10-06".
+Runit is the appropriate service owner, but existing immediate-group TERM and
+process-only controls provide no complete incarnation-bound descendant wait
+or delegated-GC coverage. Empty membership/socket or kernel kill is not a reap
+receipt. The proposed entry-failure hardening remains only a candidate
+precursor; no authoring release or complete stop/reap manifest is accepted.
+Interrupted physical-work settlement remains separately unresolved.
+Implementer0 completed read-only next-slice preparation, turn
+01a1129d-4852-7ab2-b594-26ea7cc6ca98, on exact0d/treeef6b/clean index. The
+seventeen-path manifest is sufficient (fourteen static plus schema/EN-CS
+companions); proposed130000 migration/spec paths are absent. No authoring,
+checks or runtime operations occurred. Existing unsupported-record fixtures
+persist contract2/reserved; the new explicit SQL tuple constraint must refuse
+that malformed setup, so those owning tests need separate constraint and
+reader-refusal coverage. Do not weaken the constraint. HaveAPI normalizes its
+integer parameters; strict Integer CAS tests belong at the model boundary,
+without a new raw-JSON interface. Existing concurrency/reap/status/metadata
+owners suffice. No wider scope or material design conflict was found; source
+release remains held until the current composition completes.
+Live Admin290f, the stopped scheduler, aliased DIPs and all retained
+objects/evidence remain unchanged.
+No default integration, deployment, capture or physical action is authorized
+by these source checks.
+
+### First owning VM failed; bounded fixture correction, 2026-10-06
+
+The following records the first run and its correction. Current source and
+the second run are recorded in the next checkpoint.
+
+Exact8e0 source run /tmp/osvm.zov_e_u4 was waited: exit1/416.137s/parity1,
+stage413.253s, first seven examples passed, eighth failed7.09s. The initial
+disabled switch itself passed0/5.05s and stopped osctld without osctl activate.
+The disabled_services compound check failed1/.22s with no output, before the
+owning stop/fresh-boot/return assertions. All original checks/evidence retained;
+this is no full transition or preservation acceptance. Main proved original
+PGID1345014, exact packet-prefix cmdlines and FD holders zero, no signals.
+Ordinary cleanup poweroff returned0/.28s; this does not replace owning assertions.
+No Linux compilation was reported or found in the supplied build lines.
+
+Main reproduced a process-check hazard using the actual guest procps4.0.6
+binary. Each probe was restricted to one newly spawned/waited host-only child:
+the exact failed compound argv matched the daemon regex, neutral argv did not,
+and daemon argv did. Private proof /tmp/ospgrep.d1ohn7ow/result.json binds
+commandSHA676ea9fd. No guest/live/source mutation occurred. The original
+unlabelled compound does not identify its first failing predicate, so this
+proves the self-match hazard without claiming every other predicate passed.
+See the [reusable process-assertion note](../../notes/vpsadminos/2026-10-06-process-assertion-self-match.md).
+Pool-tank's check also reported running while later logs reached completion;
+its prior marker semantics remain a source nuance, not an assigned cause/fix.
+
+Lead released only tests/suite/system/switch-to-configuration.nix to the same
+implementer turn01a11253-f29b-7ee2-b49f-90f93cdd4818: isolate the same daemon
+absence predicate from literal service-path arguments, add fixed failure labels,
+preserve all eight examples/first-seven bodies, normal stop/boot and every
+system/GUID/property/payload check. No runtime/framework/timeout/scenario or
+Pool-wait change is released. The exact static-only member freeze was accepted
+and folded as recorded below. Publication, Admin pin/composition and all
+alias/G1b/G2/physical/default/live actions stay pending/held.
+
+### Process assertion corrected; second owning VM passed, 2026-10-06
+
+Lead inspected the complete one-path18+/18- correction and exact reverse
+lambda parity. Final scenario SHAaa75c103 binds the same eight examples;
+all first-seven bodies, helpers, runtime sources and normal stop/boot/system/
+GUID/property/payload assertions remain unchanged. Each original compound
+predicate now has a fixed failure label. The same daemon regex runs separately
+without service-path literals in its argv, and requires pgrep status1 exactly.
+This fixes the reproduced self-match hazard without attributing the first run's
+unlabelled failure or changing Pool waiting semantics.
+
+Normal owning amendment passed0/13.022s/parity1 with every mandatory hook;
+final80034c8cc6489db6287b43f439a9617511f14908,
+tree497afa5c0863b2dd824664408a0e06cba4c0305d, parent7f85 and message unchanged.
+Original8e0 is retained in an explicit backup. Main proved commit PGID1389319
+empty, no signals; source/index clean, all other10 owning paths and64 foreign
+files/17 directories preserved. Complete history remains two coherent commits,
+26 paths1709+/82-, unit11 paths826+/59-, no OS SQL/schema migrations.
+[Current inventory](storage-os-disabled-process-final-inventory.json) records
+completeSHAde0d26fc, unit89f8a457 and the exact one-path fix2a051047.
+
+Fresh Luna/low watcher osctld_disabled_process_corrected_vm_20261006 launched
+the existing system/switch-to-configuration scenario once at /tmp/osvm.acec89l4.
+Frozend695bb19/driver015a159c/wrapperd04b583b/review-clearancef9a216d7 bind
+exact800 source/empty index/foreign inventory. The waited result passed
+0/623.055s/parity1; runner620.272s, all8 examples successful, final216.37s.
+The expected-success result and actual scenario assertions prove normal-to-
+disabled activation, normal installed poweroff, fresh disabled boot on retained
+disks and ordinary return with exact systems/new boot ID, pool/dataset GUID,
+active property and known payload equality. Main independently rechecked
+source/foreign parity and proved PGID1398701, exact packet-prefix cmdlines
+and FD holders zero, no signals. No Linux compilation was observed. This is
+disposable transition proof, not production bootloader persistence or physical
+exclusion.
+Original all-four review plus shutdown direct-step9 disposition is preserved;
+this bounded fixture-only correction adds no runtime/interface/authority change.
+Broad flake validation remains baseline-blocked. Fresh SSH fetch keeps
+stagingcbfc and remote feature8d05; no rebase was required. Normal exact-lease
+SSH publication passed, readback confirms feature800/stagingcbfc unchanged and
+the final comparison is captured. CI37509517986/RSpec37509517958/RuboCop37509517981
+are in progress at800, unawaited; no superseded active same-branch run was found.
+No default/package/live/physical/G2/alias action is inferred.
+
+Fresh Admin SSH fetch retains masterc4d/feature425d/basec4d, no rebase.
+Fresh Luna/low admin_os800_dependency_update_20261006 launched once at
+/tmp/adminosdep.pye1en2t from the clean425d source/index. Frozena0896b0e,
+driver99c9333d, wrapper78f10b69 and releaseaf894b15 bind all3244 sources,
+existing cache and accepted published800. The existing update_vpsadminos_flake.sh
+owns generated lock-only normal commit/hooks; its exact dependency graph is
+planned graph checks and ordinary no-build. The actual outcomes follow below.
+The owning updater itself passed0/65.597s with all hooks, committing
+bc9bb38ee6f87dcd092097e512c5c84d74fc2417/treec5afa522af6894a04249e04c0a761d5ef47b37fe
+at parent425d: only flake.lock9+/9-. The first private batch then refused
+1/67.574s on its incorrect `OS original refused` expectation; its reported
+old head/sourceparity0 are not acceptance evidence. No-build was unrun.
+Main inspected the actual final graph: exact OS800, only vpsadminos/nixpkgs_2/
+nixpkgsUnstable locked values change; original staging reference, all edges,
+flake.nix and every other source/cache/index are unchanged. LockSHAe7b83936.
+This is the required mechanical generated update, review-exempt. Main proved
+owned PGID1539645 zero, no signals. See the [guard lesson](../../notes/vpsadmin/2026-10-06-generated-lock-original-reference.md).
+
+No updater retry or source change followed. Fresh Luna/low watcher
+admin_os800_pin_no_build_20261006 owns ONLY existing no-build at bc9,
+/tmp/adminpincheck.ycyd54db, frozen46dfa9f7/driver397bc0e0/wrapper651bab40/
+gate118ce767. The waited no-build failed1/3.634s/parity1, child0.696s, at existing
+`overlays.list`: overlay is a list rather than a function. An immutable complete
+425d source snapshot (all3244 bytes verified) reproduces the same error1/.408s.
+The initial bare-path baseline attempt failed before evaluation at Git discovery
+1/.125s; explicit path: selects the intended snapshot. Both histories remain.
+No broad flake pass or overlay-source change is claimed. The mechanical pin
+prerequisite is accepted; bc9 remains feature-only/unpublished.
+
+Lead released the accepted exact five-path profile implementation to
+implementer0 from clean bc9. Existing exported/default integration and retained
+settings/packages/roots remain; the profile is opt-in, final contradictions
+refuse. Focused actual-module/build/evaluation, full-range review and existing
+Admin VM are pending. No new API/SQL/Node/protocol/ownership/containment unit or
+live authority is released.
+
+### Corrected OS source accepted; owning VM earlier launch, 2026-10-06
+
+Final8e0b2d9fa1876ad2e28ce34e23724f841cacec01,
+tree39155267633908eadee772caac39cd8c5b74c630, parent7f85 unchanged.
+Normal owning amendment passed0/13.411s/parity1; Nixfmt/RuboCop and all
+message hooks passed, no bypass. The expected Nix dirty-tree warning came
+from the staged amendment, not a hook failure. Index/tracked source clean;
+64 foreign files/17 directories unchanged. Main proved owned commit PGID1340289
+empty, no signals. Fresh staging fetch/readback remains cbfc, no rebase.
+
+Original all-four-HIGH cbfc..097 review is preserved. Lead inspected and
+verified the exact seven-path installed-halt/stage3 remediation under mandatory
+step9, with no new public/authority/containment boundary. The sole Important
+is resolved in the [consolidated result](storage-os-disabled-review-result.md).
+Complete final history is two coherent commits26 paths1709+/82-; new unit11
+paths826+/59-. No OS SQL/schema migrations or obsolete/fixup history added.
+[Final inventory](storage-os-disabled-final-inventory.json) records complete
+SHA316b6188, unit0ab5b344 and exact remediationf067a4e1.
+
+Fresh Luna/low watcher osctld_disabled_corrected_owning_vm_20261006 owns the
+single existing system/switch-to-configuration scenario at /tmp/osvm.zov_e_u4.
+Frozene4420be8/unchanged driver015a159c/wrapper1acca815/clearance1526955e
+bind final head/all2238 sources/empty index/foreign64+17. Ordinary runner uses
+short state path, --no-destructive and --stop-on-failure; existing eight examples,
+normal machine.stop and framework deadlines are unchanged. This earlier launch
+subsequently failed as recorded above; it does not certify final800.
+The old /tmp/osvm.07em5svg remains unrun and cannot prove this changed head.
+No live cluster, physical exclusion, G2/alias disposition, package/default
+integration or publication is implied. Admin composition stays accepted but
+unreleased, after tested/reviewed/published OS and generated dependency delivery.
+
+### Earlier OS review and shutdown correction, 2026-10-06
+
+Reviewer0 confirmed an Important finding in original09786fbc, general and
+risk/compatibility lanes. After the new scenario proves osctld/socket absent,
+Machine.stop invokes poweroff -f. The installed Halt wrapper still invokes
+osctl shutdown --force; its missing-socket path waits for a marker producer
+that is intentionally absent. Normal disabled-generation poweroff/reboot
+has the same defect. Lead source inspection confirms it; non-force confirmation
+also invokes osctl ct ls unconditionally.
+
+The owning VM stays unrun. Increasing its timeout or replacing normal shutdown
+with a test-only forced stop would not resolve the consumer. Architect0 saved
+the final seven-path correction brief; lead accepted it and released static-only
+authoring to implementer0, turn01a11228-da69-7c52-ae1b-1f0525d0765a.
+The preliminary six-path release is superseded by explicit seventh-path
+steering; no contrary source decision remains. The consolidated independent
+report confirms this as its sole finding: no Blocking or additional
+Important/Advisory. All four lanes and complete history/migrations were reviewed.
+See the [review result](storage-os-disabled-review-result.md).
+The final brief also covers config/runit.nix stage3's second unconditional
+shutdown request, confirmed by lead source inspection. The same final
+osctld.enable predicate gates only that command, preserving both clock writes
+and all other stage3 behavior. The generated Halt predicate preserves enabled
+shutdown; disabled skips only daemon-dependent blocks. Actual generated-class
+and recording-stub stage3 checks accompany the normal owning stop/boot scenario.
+Seven correction paths overlap three original paths: expected final unit11,
+subject to actual inventory. The final seven-path correction is frozen on097;
+lead completed diff/source inspection with no concrete deviation. All seven
+hashes match manifest418a32c9 and correctione7310de6. Main guard confirms2238
+tracked files/2231 outside the seven, empty index and unchanged64 foreign files
+in17 directories. These are source/static facts, not finding resolution.
+Both technical docs were handed back and the main-agent prose pass is complete:
+runlevels SHAe2360e7e5bf8487f3fffba82370591f1b10d5c9f0f63aac591823068d00a95e1;
+installed halt manual SHA4087adbeff43b29268c0ad26658a81db43c79028ab6f50c828f682e04f273a0a.
+Protected commands/options/code samples and surrounding sections remain equal
+to the technical handoff; scoped diff check passed. These two bytes are held
+for inclusion in the final seven-path freeze. Runtime tests remain unrun.
+Parent's raw-template Ruby syntax check failed at the bare Nix boolean marker
+in halt.rb. Lead relayed a bounded representation correction: quote the rendered
+true/false token and compare it with the string `true`, keeping the constant Boolean
+and the final Nix option as its sole input. No runtime discovery or hook/exclusion
+change is allowed. Raw and both rendered syntax checks passed before freeze;
+this is static template evidence, not an observed shutdown/runtime failure.
+The fresh Luna/low watcher osctld_shutdown_corrected_checks_20261006 owns the
+three-command quick batch at /tmp/oshalt.f01o2t52: focused actual check build,
+all five check derivations and the exact owning scenario JSON derivation.
+FrozenSHA0d8e254f, unchanged driver2fbe7bcb and wrapper12deac92 bind all source,
+index and foreign files. The waited batch passed0/217.826s/parity1: focused0/35.527s printed
+module19/activation6/halt19/stage3four; five derivations0/131.134s;
+scenario JSON0/46.441s, exact r529qzgk derivation. Main inspected all results
+and proved stage PGIDs1329162/1330766/1334923 empty, no signals. The ordinary
+broad flake gate remains baseline-blocked; other check bodies and VM unrun.
+Fresh SSH fetch/readback keeps stagingcbfc and feature remote8d05; no rebase
+is needed. Lead staged only the seven correction paths, saved reviewed097
+backup and tree39155267. A fresh owning-fold watcher at /tmp/osfold.1xk1um5o
+is active; amendment/hooks results are pending. Message words are preserved
+with72-column wrapping, and hooks remain mandatory.
+Prior checks remain scoped to their unchanged original bytes. The prepared
+VM clearance remains absent and its original-head guard will refuse a changed
+head. All live, alias, package/default and physical/G2 holds remain.
+
+### OS committed; complete branch review finished with a finding, 2026-10-06
+
+Final OS HEAD09786fbc20a2d8e134e2e3001d53ef287646e74b,
+tree523c25edbb0bb2675c88b3c5d083aab907d6703a,
+parent7f85b137835907b3a786dec225a49e9ff694537a. All seven intended paths
+are committed; tracked source/index are clean and all64 foreign files remain
+unchanged. Inputs/lock remain exact stagingcbfc. No new source was published.
+
+The accepted bounded evaluations passed0/183.911s/parity1: all five actual
+check drvPaths0/131.341s and the registered switch-test JSON drvPath0/48.851s.
+They construct those derivations; they execute neither the other four check
+bodies nor the eight VM examples. Focused19/6 runtime evidence carries on
+unchanged source. Ordinary full flake validation remains baseline-blocked.
+See the [reusable baseline note](../../notes/vpsadminos/2026-10-06-flake-overlay-list-validation.md).
+
+Normal owning commit passed0/14.453s. Two message-width warnings were resolved
+with a normal unpublished message-only amend0/13.420s; source/tree/parent
+unchanged, all hooks passed without warnings. Final index is empty. No hooks
+were bypassed, and no source rerun is implied by the message-only amendment.
+
+The complete cbfc..097 range contains two coherent commits,22 paths,
+1265 additions/49 deletions. Complete binary/full-index SHA256
+27831036572eaed0648b5449c8fbf66367666d30013dea3dc2048b19ce84389e.
+No OS SQL/schema migrations are present. Retained reviewer0 (Sol/xhigh,
+read_only) owns all four HIGH lanes, turn01a11218-1ee1-7120-b079-a2d3dc36e4ea;
+review is complete with the shutdown Important open. See the
+[complete review packet](storage-os-disabled-review.md),
+[inventory](storage-os-disabled-inventory.json),
+[complete diff](storage-os-disabled-complete.diff) and
+[new unit](storage-os-disabled-unit.diff).
+
+The existing owning switch VM is unrun and follows review disposition.
+Its prepared private packet is /tmp/osvm.07em5svg: frozen15e3276e,
+driver015a159c, wrappera1f84ff1. It uses the ordinary runner's short state path,
+--no-destructive and --stop-on-failure, exact2238 source/index guards and
+unchanged64 foreign files/17 directories. The review-disposition file is absent;
+the packet was syntax-checked but not executed. No new test runner or retry
+mechanism was added. Parent also proved the message-amend PGID1228061 empty.
+Admin composition is accepted but unreleased; its clean-source generated OS
+dependency update follows reviewed/tested/published OS source. No physical
+exclusion, API handoff, alias recovery, package activation or default merge
+is supplied by this checkpoint.
+
+### Earlier OS freeze and baseline flake failure, 2026-10-06
+
+The seven-path source is frozen at unchanged OS7f85b137 on stagingcbfc.
+Lead inspected the complete runtime/test/doc delta and found no concrete
+design deviation. All seven hashes match the member manifest3698e6c3 and
+patch32202b97; all other tracked source, lock and64 foreign files/17
+directories are unchanged. Lead completed the runlevels prose pass at
+SHA4e1c2e57; original code sample, links and technical limits are preserved.
+Only the new tests/osctld-disabled-eval.nix is staged for Git-flake inclusion,
+blob14d6caad. The remaining six paths are unstaged and all seven/index held.
+
+Member static evidence: Ruby syntax for runtime/two extracted scripts,
+five Nix parses, five nixfmt checks and scoped whitespace checks passed.
+Authored19 module predicates/6 activation cases and8 owning scenario examples
+(7 unchanged plus1) are not results.
+Fresh focused selection is Nix build osctld-disabled-eval, then flake check
+without builds, under /tmp/osdisabled.iq19cihf/. FrozenSHA2a754a9e,
+driverSHA2fbe7bcb guards2238 source entries, staged index and complete foreign
+inventory. The first watcher stopped on its own non-mutating help/preflight
+error before the driver; zero checks ran. A fresh watcher owns the same
+unstarted selection through a simpler bound preflight.
+The bound batch finished exit1/59.540s/parity1: focused build passed0/55.664s
+and printed module_checks=19/activation_checks=6. Standard no-build failed1
+in0.195s before reaching checks because flake.nix exports overlays.all as a
+list, while Nix2.34.8 expects a function. The immutable7f85 baseline reproduces
+that failure; its flake/lock are exact stagingcbfc bytes. This is not a new
+runtime regression or a broad green result. Parent verified2238 source/index
+parity and both owned stage PGIDs1204648/1207032 empty; no signals.
+Lead requested the design owner's bounded alternative: evaluate all five
+declared check derivations and the registered owning switch-test JSON
+derivation without builds. The prepared /tmp/oseval.8v81f2qd subsequently
+passed both evaluations as recorded above. No overlay/public-interface source
+edit was released.
+No VM, physical exclusion, package delivery/default integration or alias/G2
+operation is implied.
+
+### API reservation reviewed and feature-published; OS authoring active, 2026-10-06
+
+Final source is Admin425d399afb3876bde4f3f4023f3810a45bee6f3f,
+treec0babd3297b9c0bbab2eb35b322ca902ca675bdd, parent5dd06eeb.
+All20 intended paths are committed; tracked/index clean, declared PHP cache
+preserved. API73/0, migration6/0, final API+root lint12/0 each, selector20/89/0
+pass with the scoped receiver/comment equivalence described below. Normal
+amend passed0/66.273s with all hooks passed without warnings, source/tree parity1
+and private cleanup1; original spawned DB absent/owned PGID0/no signals/prune.
+
+The complete branch has24 commits/214 paths/25320+/455-. All three migrations
+have explicit provenance: foundation/index consumed unchanged, reservation only
+disposable generation/spec use. Complete binary SHAab5ea0b9b10dc698520e7af29a07bc7434b6e662a13c5f7ed51a5078b1740114.
+Retained reviewer0 (Sol/xhigh/read_only) owns all four HIGH-risk lanes,
+turn01a111d3-499a-7ae3-a36c-977d8002dc6e; complete report accepted. See
+[final packet](storage-maintenance-reservation-review.md) and
+[original reviewed inventory](storage-maintenance-reservation-inventory.json),
+[final amended inventory](storage-maintenance-reservation-final-inventory.json)
+and [independent result](storage-maintenance-reservation-review-result.md).
+Reviewer0 reports one source-backed Important omission: the three advertised
+maintenance actions are absent from covered/pending endpoint manifests, so the
+existing endpoint coverage gate would fail. Only
+api/spec/api/covered_endpoints.yml is released as the20th companion path,
+turn01a111d8-ad0d-7273-8228-3dede274f158; addexact three covered scope entries,
+other19/runtime/index held. Existing full-plugin endpoint_coverage_spec is the
+focused regression gate. The exact three-entry correction is frozen at
+SHA256 ec79801a5962be80a21063c4ab32ad08a4d44347cbe098472d941a3f2b233ceb.
+The existing full-plugin endpoint gate passed: 1 example, zero failures,
+pending or outside errors; wrapper exit0/54.508s/parity1 and private cleanup1.
+Parent proved the original database PID absent and owned PGID empty; no
+signals or prune. Evidence: /tmp/rescoverage.780l9mav/.
+Normal unpublished amend at /tmp/rescoverageamend.q_bhrt6t/ passed exit0
+in72.166s/parity1 with all hooks passed, private cleanup1 and no bypass.
+Parent proved exact staged/final tree, all3244 source bindings, unchanged
+other19/message/PHP cache, empty index, absent original database PID and owned
+PGID0. The committed edc..425d delta is only those three manifest rows.
+Lead has directly verified the requested remediation under step9; the
+consolidated independent report confirms its resolution and inspects the
+endpoint-only committed delta. Primary review remains edc plus directstep9.
+This is direct mandatory-review step9, with no new public behavior,
+policy/version or automatic full review/test rerun. Reviewer completed the exact
+COMPLETE c4d..edc committed source/history assessment is complete in all four
+HIGH lanes. No Blocking/Important remains; one comparator repeated-scan
+Advisory is accepted for a separate measured cohort/indexing follow-up. It
+introduces no reservation or physical-trial gate. The reviewer confirms coherent
+history/no obsolete approach and all three migration lineages; consumed
+predecessors are preserved and the new additive migration was disposable-only
+at review.
+Fresh SSH master/base remains c4d. Normal force-with-lease feature publication
+and exact SSH readback at425d are complete; master is unchanged. Final comparison
+is captured with basec4d/head425d and original registration base retained.
+The new migration is now feature-published, without live/external DB use.
+One bounded CI metadata read found four current-head active runs and no
+superseded active run; nothing to cancel, no CI wait. No default/live delivery.
+Architect0 completed the next seven-path OS prerequisite brief at
+[design.md](design.md#next-common-g1b-slice-an-osctld-disabled-generation-prerequisite-2026-10-06).
+Lead accepts its bounded option/pool/activation design. Normal OS replay onto
+fresh SSH staging cbfc283d completed exit0/7.953s. New head7f85b137835907b3a786dec225a49e9ff694537a
+preserves the exact one-commit activity patch (range-diff=), all five upstream
+commits/lock/OSVM and all62 retained temporary files. Consumed8d05 has an exact
+backup; pins/remote feature remain unchanged. See
+[OS replay inventory](storage-os-cbfc-rebase-inventory.json).
+The first attempt stopped on Overcommit's stale configuration signature before
+rebase. Parent reviewed the configuration/custom hook and registered its normal
+signature; no hooks were bypassed. Two watcher context preflights executed
+zero commands; the cached short signing/replay ran inline with existing guards.
+Implementer0 owns exactly the seven-path authoring/static unit under
+turn01a111ed-59cc-78d2-a577-f00b63841fcc. Checks, commit, review and owning VM
+remain pending. Docs return to lead for prose; no other source/runtime release.
+The OS generation prerequisite supplies no physical exclusion or G2 authority.
+
+The generation and check history below retains its original byte scope.
+At the initial freeze, source was at Admin5dd06eeb, index empty.
+The final 11 receiver substitutions in three model specs reconstruct the prior
+bytes exactly when reversed; installed RSpec3.13.6 binds the same real classes
+through all string contexts. API73/0 and migration6/0 from the full style batch
+therefore carry for unchanged runtime and equivalent receiver spelling. Fresh
+lint passed all 12 inspected files with zero offenses.
+
+The lint/selector batch at /tmp/rescheck.wz3_n6re/ failed1/32.155s,
+waited/parity1/cleanup1. Selector failed before examples with minitest/autorun
+LoadError (stage11.572s). Parent proved the original private DB process absent.
+Source diagnosis: RubyGems explicitly loads BUNDLER_SETUP, which the nested API
+Bundler environment retained after clearing RUBYOPT and common selectors.
+Bundler's own with_unbundled_env clears that variable. The private driver now
+uses this standard helper around root-shell spawn; product source, command,
+database guard and coverage remain exact. No application dependency edit.
+Fresh626 Luna/low reservation_unbundled_selector_20261006 owns selector-only
+/tmp/resselect.a5vtamy1/; frozen813ee390/driverfe94d8a9/guard911c91cb/
+wrapperaf1d488e. Selector passed0/21.586s, waited/parity1/cleanup1,
+stage7.643s:20 runs/89 assertions, zero failures/errors/skips. Parent verified
+all3244 source bindings, original private DB absent and owned PGID count0;
+no signals or prune. This is scoped selector evidence, not an all-suite rerun.
+
+Normal hooks are installed/active and bypass selectors are absent. Fresh SSH
+master/base remains c4d. A cache-path preflight refused before staging because
+the retained PHP cache is a file beneath its directory; the corrected guard
+binds that exact preexisting file. Parent staged only the 19 owned paths,
+matching all tested source hashes, tree675ed9ea6b33cba4625864159441a305ee0aad76.
+Fresh626 Luna/low reservation_owning_commit_20261006 owns the normal hook commit
+at /tmp/rescommit.491dbf3p/ (frozen682f1976/driver7a9cfae7/wrapper5df5cd2a).
+Normal commit passed0/66.315s, waited/parity1/cleanup1. New unpublished
+head06434a329a96525d7add643ae564210f256ebdc1 has exact tested
+staged tree675ed9ea and parent5dd06eeb. Parent verified all3244 source hashes,
+empty tracked/index changes, unchanged retained PHP cache, original private DB
+absent and owned PGID0; no signals/prune. The wrapper's head field intentionally
+names its input base; actual Git and final tree prove the new commit.
+Normal hooks passed with warnings: root RuboCop1.85 rejects four disable-next
+comments supported by the API checker; commit-message width also warned.
+
+Only the actor spec is released for relocating those four comments to standard
+inline disable directives, preserving every rescue/body/test. Implementer turn
+01a111c9-1850-79d1-a238-8b8b77461a7b; other18/index held. Lead will verify both
+lint owners, narrow comment parity, then normally amend the unpublished owning
+commit with a wrapped message and enabled hooks. API73/migration6/selector20
+carry only because comments cannot alter executed behavior. No independent
+review is assigned until the final commit; complete c4d..final inventory will
+replace the current064 preparatory inventory. Feature publication remains
+pending.
+
+Historical generation and verification checkpoints follow.
+
+Provider placement is reviewed and feature-published at e33. Admin replay onto
+c4d completed at5dd06eeb5111af52fe49bf76e39f163f83aa8478,
+treec79214a735d7a7962313c59b0fdcaa6db6cae407. All23 feature and seven upstream
+commits remain; source/locale/CI union parity, consumed migration/schema/input
+parity and complete topic coverage passed. Range-diff has21 equivalent commits
+and two expected context differences. See
+[inventory](storage-admin-c4d-rebase-inventory.json) and
+[range-diff](storage-admin-c4d-rebase-range-diff.txt). Fresh selector check passed
+18 runs/77 assertions in9.225s, waited/parity1. Original290f backup and remote
+remain; historical290f runtime evidence does not certify the new composition.
+
+Initial16 reservation paths were frozen and completely inspected: no concrete
+design deviation, empty index, outside-source parity1. Member syntax12/diff0
+were static checks. Authored API/model73 (32 new), migration6 and selector20
+(two new) were unrun at that initial freeze. Lead prose is complete in the three owning reference
+pages. Full19 includes generated core schema and English/Czech metadata.
+
+First private core generation failed1/12.952s, source parity1/cleanup proved1,
+no schema. Its ArgumentError has no saved exact frame. Public pinned AR source
+shows the adapter changes Mysql2 result defaults to arrays; the private probe
+needed an explicit hash result. Fresh corrected generation passed0/23.153s,
+child waited1/source parity1, generation16.075s. Core-only proof: sole pending
+20261006120000,179→180 tables, unrelated schema changes0, application boot0,
+schema installable1 and cleanup proved1. Lead inspected the full schema diff
+and proved the original spawned DB process absent; no signal or prune.
+Evidence remains in /tmp/resgen.z26aq47e/; failed packet is retained separately.
+
+Implementer installed ONLY path17, api/db/schema.rb, exact generated SHA256
+cbce0d81ad37d8a4d621684af58a2a1dd0ec1d7d32eb526bfd9426fda9c0574b.
+Diff31+/1-, Ruby syntax/diff0. Initial16, EN/CS predecessor, other source,
+head/index and PHP cache remain unchanged. Schema plus initial16 are held.
+
+Private full-plugin locale generation passed0/54.606s, waited/parity1,
+generation46.994s/cleanup proved1/application source unchanged1/core schema
+unchanged1/plugin schema dump0. The generated diff contains the reservation
+metadata only; raw Czech TODOs are prepared output, not final translations.
+Evidence and private state remain in /tmp/locgen.wb2i6406/.
+
+Lead applied the owning English/Czech prose workflow. The implementer made
+four same-resource metadata changes: distinct reserve/abandon reason text,
+`1 to 256`, and an explicit UUID output label. Input names/types/required and
+epoch bounds remain exact. Final resource SHA270fbed8bc286d11382773fbe63185a195c033eb0a50995da27d44d0a94b6eb1;
+reverse-only-four-change parity restores the original resource. Transcribed
+intermediate member hashes are superseded; parent measured the actual bytes.
+All other16 source paths/index/cache remain held unchanged. These changes are
+metadata prose, not a new authority or interface.
+
+Lead translated30 new Czech metadata placeholders in a separate private
+snapshot. Normalization and full-plugin i18n health passed0/98.425s, waited1,
+source parity1/cleanup proved1. Both ordinary tasks exited0; generated core
+schema/application source stayed exact and no plugin schema was dumped. Lead
+accepted the complete locale diff: all2359 old leaves per language unchanged,
+29 reservation metadata leaves added per language, no TODOs. Original DB PID
+is absent; no signal or prune. Evidence remains in /tmp/lochealth.dplxbw3r/.
+
+Implementer installed ONLY EN/CS exact accepted bytes and refroze complete19
+at unchanged5dd06eeb, empty/unchanged index and outside-source/cache parity1.
+English SHA9d880d77a5e06bc3a64d10f164987236dd19a2a0cb054684f60eb9f75f56eeea;
+Czech SHA2592098d5c2831a2df865422eab4e3afc387660f5b5991d2dfb3e18fc96e5c56.
+Both parse/diff checks pass. Final packet
+/tmp/storage-maintenance-reservation-final19-20261006.rdmqa4ly/ binds manifest
+9aaf7859 and complete patch79aad3d2, including three new unstaged owned paths.
+Authored73 API/model,6 migration and20 selector remain inventory, not results.
+
+Fresh managed626 Luna/low watcher reservation_owning_checks_20261006 owns the
+four-stage disposable batch: complete focused API/model files, sole new core
+migration spec, component RuboCop, and existing root selector. It reuses the
+accepted pre-effect guarded Instance/private Unix socket; no app/helper source
+or SQL policy change, no shared/live DB, no automatic prune. Packet
+/tmp/rescheck.l4zn04rc/ binds all3244 source files; frozen SHA
+c6b3fc9f87fcf5f866f75f88dbeab8679ac2900674b2adfa1bdf7c703e9f679d,
+driver56522e9d/guard911c91cb/wrapperaf1d488e. Driver Ruby and wrapper Python
+syntax passed. First batch failed1/277.995s, waited/source parity1/cleanup proved1. API stage
+265.312s, native RSpec73/2/0 pending/0 outside errors, duration253.454s/seed45718.
+Later three stages are unrun. Parent confirmed both native JSON and the actual
+stage-1 result; early watcher artifact/parity wording was inaccurate. Original
+DB/stage PID and prefix process scan are absent; no signals or prune.
+
+The two failed fixtures assume an application422 response for the inherited
+HaveAPI empty-required-value validation, and pass a corrupted run epoch into
+the supposedly current CAS before owner-consistency validation. Only the two
+spec files were released for exact boundary assertions. Corrected source is
+refrozen: API spec8e512b9d, actor specedbede33; every other17 path/index/head/
+cache is unchanged. Parent inspected the entire narrow diff and verified all
+3244 source hashes. Packet /tmp/storage-maintenance-reservation-fixture-fix-20261006.u06447pf/
+binds manifest58b4dc05/complete patche9c042cc/correction83caac83. The original
+73/2 failure remains prior-byte evidence; no runtime guard defect inferred.
+
+Fresh626 Luna/low watcher reservation_fixture_checks_20261006 now owns the
+complete four-stage batch at /tmp/rescheck.eweq0et_/. Frozen SHA
+dfe84772e95dfbb924fd7237865da9c4c22dfa15c82b3c98b82e4265fe091844,
+driver030e2542/guard911c91cb/wrapperaf1d488e. The root selector starts with
+inherited API Bundler selectors removed so its declared root shell selects
+its own environment. This is private driver environment precision only;
+existing commands/coverage/database guard are unchanged. Second batch failed
+1/301.954s, waited/source parity1/cleanup proved1. API73/0/0 pending/0 outside
+passed, stage283.436s/RSpec270.776s. Migration6/1 failed stage5.246s/RSpec3.666s;
+lint/selector unrun. Original DB and owned PGID are absent; no signals/prune.
+
+The migration fixture correction removed only the metadata-symbol expectation:
+pinned AR8.1.4 MySQL maps default RESTRICT to nil. The migration still declares
+RESTRICT; actual DELETE/missing-pointer InvalidForeignKey assertions, FK
+column/table and audit/down checks remain. Corrected migration spec SHA256
+c463ea99ad0efb0d56ce158febdc11872eb2573c71a9460d0fb68947ae179bdc.
+Packet /tmp/storage-maintenance-reservation-migration-fix-20261006.xqm162k4/
+binds manifest a3aa3e47 and complete patch f0ae8904; the other 18 paths stayed
+exact. Both earlier failures remain separately recorded.
+
+Third disposable batch failed exit1 in 28.013s, waited/source parity1,
+children waited1/cleanup proved1. Corrected migration: six examples, zero
+failures/pending/outside errors, RSpec3.704s/stage5.062s. RuboCop failed in
+9.081s: 12 files inspected, 65 offenses, 28 autocorrectable. Selector is unrun.
+Evidence: /tmp/rescheck.y8wjozbc/, frozen c8c8782e, driver7b739790,
+unchanged guard911c91cb/wrapperaf1d488e. This is a style gate failure, with no
+new reservation or migration behavior failure established. Parent confirmed
+the original DB PID absent and owned PGID process count zero; no signals/prune.
+
+Lead read the complete lint report. Implementer0 has the exact nine affected
+owned files for style cleanup, turn01a111a1-9d2b-7a42-a677-670ddcab854e;
+the other ten paths and index stay held. No cop configuration change, test
+removal, weaker negative dispatch proof or concurrency/cleanup relaxation is
+authorized. All 73 API/model, six migration and 20 selector cases must remain.
+After the member freeze, lead will inspect the complete correction and rerun
+all four owning stages because runtime/spec source will change. The prior
+API73 and migration6 passes remain evidence for their tested bytes. No current
+full-batch pass or selector result is inferred.
+
+Style cleanup is complete and all 19 paths/index are held. Parent inspected
+all nine source deltas with indentation separated from substantive edits,
+verified prior snapshots/current hashes/other-ten parity, and found no concrete
+design deviation. Runtime changes are whitespace and equivalent has_key?
+spelling. Class contexts keep inherited hooks in their original sibling scope;
+scoped spies refuse signing/dispatch immediately; fault injection uses the
+actual current locked singleton; example-owned worker state preserves binding,
+reap and error rules. Case descriptions and metadata retain API73/migration6/
+selector20. Member Ruby9 syntax/diff0 remains static evidence.
+
+Style packet /tmp/storage-maintenance-reservation-style-20261006._niw1ya7/
+binds manifest2ecc9790, correctionaf4dcfc5 and complete patchde5381f6.
+Fresh626 Luna/low utility reservation_style_checks_20261006 now owns the same
+complete four-stage batch at /tmp/rescheck.pfhr38ik/. Frozen SHA256
+f499ee8e17102190476ea9f911a30ddf4ef45f0c35f0b980706d794668214a73;
+driver030e2542/guard911c91cb/wrapperaf1d488e unchanged. All 3,244 source files
+were guarded. The full batch completed exit1/302.155s, waited/parity1 and
+children waited/cleanup proved1. API passed 73 examples with zero failures,
+pending or outside errors (stage276.787s/RSpec264.204s). Migration passed all
+six with zero failures/pending/outside errors (stage5.349s/RSpec3.853s).
+RuboCop failed with 11 autocorrectable DescribedClass offenses in three model
+specs (12 inspected/stage7.1s); selector remains unrun. Parent read the complete
+lint report and confirmed original DB absent/owned PGID count zero, no signals
+or prune. These results are separate from the earlier 65-offense failure.
+
+Only the 11 reported receiver spellings in the actor/admission/status specs
+are released, turn01a111b2-4586-7311-aaa5-38ac67668dc7; other16/index held.
+Each file has one real class describe, and installed RSpec3.13.6 inherits that
+class through string contexts. Replace only those constants with described_class;
+no runtime, assertion, class scope or worker changes. After exact reverse-byte
+and receiver-binding inspection, run remaining lint/selector. The 73+6 pass
+carries for equivalent test receiver spelling and unchanged runtime; no single
+all-four-stage passing run or fresh current-byte API rerun is claimed.
+
+Fresh SSH fetch confirms master/base c4d unchanged, so no further rebase is
+currently needed. Normal Overcommit pre-commit is installed and core.hooksPath
+unset. No hooks were bypassed.
+
+- [x] Placement implementation, owning checks, whole-branch review and feature publication.
+- [x] Admin rebase/source/history/schema parity and topic/selector verification.
+- [x] Reservation authoring, complete inspection and static freeze.
+- [x] Guarded core schema generation, accepted diff and exact installation.
+- [x] Full-plugin locale generation, lead translation/health and final19 freeze.
+- [x] Real API/migration/authorization/concurrency checks and clean component lint.
+- [x] Existing root selector in its own unbundled environment:20/89, zero failures/errors/skips.
+- [x] Normal owning commit with all hooks passed and tested-byte tree parity.
+- [ ] Independent all-four-lane COMPLETE c4d..edc branch/history/migration review.
+- [ ] Physical exclusion, G2 approval/action proof and separately authorized recovery.
+- [ ] Real payload/history/automatic/repeat/retirement after proved recovery/delivery.
+
+Actual alias, stopped scheduler and admitted objects/evidence remain held.
+No live reservation, package delivery, activation, default integration or repair
+is claimed. Session stays active/open, with no CI wait.
+
+### Placement reviewed and published; Admin preparation, 2026-10-06
+
+Independent reviewer0 completed all four HIGH-risk lanes for COMPLETE
+0ff827df..e33b8d0, tree e71ffb04e6f657be6d2c55676dd9ad7317a8ff3b,
+with no findings. Saved Sol/xhigh/read_only settings were retained without
+override or fallback. The reviewer confirmed both coherent commits, all ten
+paths, complete diff SHA21f496e1, supported v1/legacy compatibility, no obsolete
+history and no provider SQL migrations. Intentional NAS naming, profile2 and
+inspection2 remain distinct from unchanged maintenance2/applied1/schema1-policy3.
+See [final report](storage-profile-backup-placement-review-result.md).
+
+Fresh SSH master/base stayed0ff. Normal feature push and exact readback are
+complete at e33b8d0075fb37c49c91a4fcc68251a1e1815545; default remains0ff.
+The public comparison is captured at exact base0ff/head e33. Current CI run
+37464626649 is in progress; no superseded queued/running run needed cancellation
+and no CI wait is imposed. Local checks retain their scoped lineage above/below;
+source review and publication do not deliver this feature into the retained guest.
+
+The architect's API-only reservation brief and typed Pool-selector precision
+are complete. Fresh Admin fetch is c4d9b50f4e74417ed37b5fe410cca3ec1addc24e;
+held feature290f has seven upstream commits to carry forward. Parent prepares
+the normal rebase; implementer0 owns actual source conflicts and exact-once
+topic/testing-table carry. Keep both consumed migration blobs and the core
+schema exact. Reservation source release follows final rebase inspection.
+
+Backup ref2026-09-23-storage-redesign-admin-290f-before-c4d-20261006 preserves
+exact290f, which also remains the remote feature. Initial pre-rebase refusal
+performed no replay: a stale Overcommit configuration signature. Current
+config/custom hooks were read and shown unchanged in both source ranges, then
+ordinary --sign succeeded with hooks enabled. Rebase is now at step2/23,
+HEAD dda3b1126e717e42cf3d76d36b066c527c9c224b, REBASE_HEAD9d215ffcd;
+only EN/CS locale conflicts are released to implementer0, turn
+01a1113c-efd2-7d00-aa6d-dab71a58ab74. Parent owns index/continue. A wrong-CWD
+read-only REBASE_HEAD query failed against shared root; the corrected registered
+Admin read supplied this binding, with no mutation from the failed query.
+Architect0 is refining the generated core-schema workflow and locale-health
+path requirements, design-only turn01a1113d-0cef-7540-ba05-93b9eb180680.
+
+- [x] Placement implementation, owning checks and complete independent review.
+- [x] Feature publication/readback/comparison; defaults and feature refs preserved.
+- [x] API reservation design and interface precision.
+- [ ] Rebase Admin, preserving upstream CI/locales/instructions and consumed schema.
+- [ ] Implement and review the API reservation foundation.
+- [ ] Complete physical exclusion, action proof and separately approved recovery.
+- [ ] Prove real payload/history/repeat/retirement after authorized delivery/recovery.
+
+Retained alias, stopped scheduler and admitted objects/evidence remain held.
+No pin, package, activation, default merge, live reservation or recovery action
+is authorized by this checkpoint. Session stays active/open.
+
+### Placement committed; complete branch review pending, 2026-10-06
+
+Fresh resumed selected-Admin290f no-VM smoke PASS0/1203.510s, followed by
+provider no-build PASS0/11.881s; total0/1216.065s/parity1. The lead read both
+waited statuses, actual v1/v2 active/retired producer/marker and runner
+milestones, and all ten unchanged source hashes. Earlier API89/0, pure7/69,
+host8/132 and full-flake0 carry only on exact nine-file equality; this is not
+a new four-stage rerun. Original failed and user-cancelled runs remain below.
+
+Fresh SSH default/merge-base still0ff; normal new placement commit
+e33b8d0075fb37c49c91a4fcc68251a1e1815545, tree
+e71ffb04e6f657be6d2c55676dd9ad7317a8ff3b, exact ten-path806+/67-, clean and
+tested-byte parity. No hook framework/custom executable hook is declared or
+active; no bypass. Complete0ff..e33 contains bd5 namespace prevention plus
+e33 placement: two commits/ten final paths/1150+/72-, full-index binary SHA
+21f496e15576d841272fa5af6928e696a09fa6c5706ce9148aa5f03d30cd0c94.
+No provider SQL migrations; intentional NAS naming/profile2/inspection2 and
+unchanged maintenance2/applied1/schema1-policy3 remain explicit. Actual
+consumed Admin foundation/captureindex/schema blobs match their inventory.
+
+Mandatory independent all-four-HIGH COMPLETE branch review is assigned to
+retained ready reviewer0, review/read_only/gpt-6.1-sol/xhigh, no override or
+fallback, turn01a11128-415f-7661-9da6-19ca5e70899f. Findings and whole-history/
+migration conclusion are PENDING. See
+[packet](storage-profile-backup-placement-review.md),
+[inventory](storage-profile-backup-placement-inventory.json) and
+[complete diff](storage-profile-backup-placement-complete.diff).
+
+- [x] Complete owning source and scoped verification; commit exact tested bytes.
+- [ ] Resolve complete-branch independent review and publish the feature.
+- [ ] Finalize design-only common API maintenance-owner/CAS brief.
+- [ ] Implement/review the future recovery foundation and action proof.
+- [ ] Obtain separately approved retained recovery and payload acceptance.
+
+No new feature publication, pin/package delivery, activation/default merge or
+cluster operation is claimed. Actual alias/scheduler/objects/evidence remain
+held. Architect0's next-source design remains separate and unreleased; session
+stays active/open, with no CI wait.
+
+### Placement verification resumed, 2026-10-06
+
+The user explicitly said “continue”, lifting the work pause. Exact session/env
+and roster23 binding match; all ten frozen sources, bd5/Admin290f heads and
+empty provider index match yesterday. Fresh SSH master fetch/merge-base remain
+0ff827df, so no provider rebase is needed. Cancelled smoke evidence reached
+actual omitted-v1 and active/retired-v2 producer projections before TERM; its
+Open3 stream-close diagnostics followed cancellation and are not a test-failure
+conclusion. Complete smoke/no-build remains unproved.
+
+Fresh Luna/low utility `/root/profile_placement_resume_smoke_20261006` owns
+the exact unchanged driver at
+`/tmp/storage-profile-placement-resume-checks-20261006.8iin6afb/checks.py`,
+SHA20ad14ce75aaa44ca374c308c4ac121a4cfe3415b035951bd9e3d83deaf9c360,
+frozen SHAb297247dc7f045bfa1b21c7f1c8ae869760d4e000f61a799faef41279c8ab797.
+Selected-Admin smoke then provider no-build are active/pending; no duplicate
+API/fullflake/VM/CI run. Earlier source-specific passes and failed/cancelled
+evidence remain distinct. All source/index held until result; commit, complete
+branch review and feature publication follow a pass. Alias/scheduler/G1bG2/
+physical/delivery/default/operation holds remain; session stays active/open.
+
+While verification runs, retained architect0 owns a design-only refinement of
+the common G1b/G2 recovery foundation into an exact next source brief, turn
+01a1111a-1a09-7961-b4b7-5bdc79da5f07. This is not a placement gate or application
+release. The API maintenance interlock must remain distinct from actual held
+Node/child/GC exclusion and authenticated action approval; no live evidence or
+repair operation is authorized. Current public consumer master5561663 selects
+provider0ff with generic4c3ea2/Codex3d07; earlier67505/i95b proof is historical.
+Architect0's initial direction is an independently testable API-only retained
+reservation/CAS boundary, with direct-admin reserve/show/abandon and ordinary
+unfreeze refusal. The lead requested strict predecessor-state/version refusal,
+no expiry release and explicit old-mode-writer exclusion. The exact source brief
+is still being authored; neither application implementation nor physical hold,
+capture authority or G2 execution is released.
+
+### User-requested pause, 2026-10-05
+
+The user explicitly requested “pause”. Development is paused; the session
+lifecycle remains active/open. The fresh corrected-smoke watcher cancelled
+only its owned stage1 PGID2986195 with TERM: stage exit-15/waited1/770.019s,
+driver exit1/770.755s/source-parity1. The watcher reports zero members in that
+PGID; provider no-build stage2 never started. This is an incomplete user-
+cancelled run, not a failing test conclusion. No retry or further work starts
+until the user resumes. All ten source bytes/index remain frozen on bd5; no
+placement commit, final review, publication, package/cluster or default action
+was performed. Evidence remains at
+`/tmp/storage-profile-placement-envelope-checks-20261005.1ckw2r_c/`.
+
+On resume: inspect the cancelled smoke evidence, choose a fresh watcher for
+the remaining owning check, then commit and review the complete branch if it
+passes. Earlier API89/0, pure7/69, host8/132 and full-flake source-specific
+evidence remains scoped to unchanged bytes. Retained alias recovery, stopped
+scheduler, G1b/G2 and physical/operation approvals remain unresolved and held.
+
+Namespace prevention atbd5 is checked, independently reviewed and published
+feature-only. The lead accepted architect0's complete separate placement brief
+and released its ten provider paths to implementer0. The optional VPS backup
+root keeps omitted v1 behavior, selects a distinct destination for empty
+hypervisor sources under v2, and preserves valid sole existing copies. Source
+authoring/static checks are complete and all ten paths are frozen; owning
+verification is assigned to a fresh watcher and committed review remains
+pending. Provider/default0ff, consuming default67505 and selectedi95b/npjj
+are unchanged.
+
+- [x] Complete and publish reviewed namespace prevention atbd5.
+- [x] Accept the separate placement design and release bounded source authoring.
+- [ ] Check and independently review the complete placement deliverable.
+- [ ] Implement guarded recovery and obtain exact retained-action proof/approval.
+- [ ] Resume the payload/history/repeat/retirement acceptance after safe recovery.
+
+The retained NAS/VPS alias and stopped scheduler remain held. Placement does
+not withdraw DIP12 or establish historical NAS integrity or destination
+availability; common G1b/G2 exclusion, approval/action persistence and exact
+dependency/lifetime/physical proof remain missing. No new package activation,
+default integration or live trial is authorized by this source release.
+
+Parent verification selection is frozen at
+`/tmp/storage-profile-placement-checks-20261005.crxlbuxo`, driver SHA
+8adb59aa9015c9c3b6d79b2bed1f4ff944f0b590b6251f413ead073e77526683;
+frozen manifest SHAee69d69d9ea4b88a9580f1926aa89a5d95a0704f004cb77d9db9b09ae00f61ba.
+The parent read the full ten-path diff and verified HEADbd5, every source hash,
+empty index, exact modified inventory and unchanged flakes/wrapper/Admin290f.
+The selected batch is the complete disposable-API harness, focused
+profile/host Ruby checks, full existing flake checks and selected-Admin290f Nix
+smoke. Fresh operation-only Luna/low watcher
+`/root/profile_placement_quick_checks_20261005` owns execution. Its one bounded
+numeric-metadata progress report records stage1 exit0/122.857s, stage2
+exit0/137.658s and stage3 exit0/1122.582s. Actual counts, aggregate status and
+source parity are not yet extracted. Stage4 selected-Admin290f no-VM smoke is
+active at PID/PGID2947569; result pending. Parent has not polled live logs.
+No new runtime gate or scenario was added.
+
+The first batch completed with driver exit1/1879.380s/parity1 (watcher/tool
+1879.511s). API89/0 and pure7/69 + selected host8/132 passed; full flake passed.
+The smoke failed exit1/495.620s at the new projection helper: KeyError env.
+Actual selected Nix2.34.8 emits envelope version Integer4 with a derivations
+map; the helper iterated the envelope itself. Parent registered metadata read
+and package input prove that shape without realizing VM closures. Owned stage4
+PGID2947569 has zero remaining processes; no signals. Only the smoke test file
+is released to implementer0 for the explicit selected-envelope correction;
+other nine files/index stay held. Corrected freeze and fresh selected-Admin
+smoke -> no-build are pending. Unchanged nine-source API/pure/host/full-flake
+evidence carries only by exact byte parity. No current v1/v2 producer smoke
+pass, aggregate success, runtime repair or new contract is claimed.
+
+The helper-only correction is frozen at f0263f14748e8cf6e83e8c34628e79421b73d99abd57baadaa068deb2030a1b9. Parent inspected exact typed Nix version4 envelope/map handling; the remaining projection/scenario is unchanged. Other nine hashes/head/index/flakes/Admin match. Corrected author packet
+`/tmp/storage-profile-placement-metadata-v4-20261006.uk276ou2` has
+manifest a213ffae and ten-path full-index patch bb39b67e. A fresh Luna/low
+utility `/root/profile_placement_envelope_smoke_20261005` owns driver
+`/tmp/storage-profile-placement-envelope-checks-20261005.1ckw2r_c/checks.py`,
+SHA20ad14ce75aaa44ca374c308c4ac121a4cfe3415b035951bd9e3d83deaf9c360;
+frozen SHAb297247dc7f045bfa1b21c7f1c8ae869760d4e000f61a799faef41279c8ab797.
+Only actual selected-Admin smoke then provider no-build are running/pending.
+All ten source bytes/index remain held. Prior fullflake includes command45/545
+zero failures/errors/skips; upstream suite summaries/skips are not aggregated.
+No new interface, format or runtime acceptance follows from this test-only fix.
+The reusable metadata lesson is in
+[notes/vpsfree-dev-workspace/2026-10-05-nix-derivation-metadata-envelope.md](../../notes/vpsfree-dev-workspace/2026-10-05-nix-derivation-metadata-envelope.md).
+
+Fresh explicit SSH master fetch still resolves to0ff827df, also the current
+merge base, so no provider rebase is needed. Declared hook-framework inventory,
+core.hooksPath and executable custom hooks are empty; no hook is bypassed.
+Actual Admin290f foundation/capture-index/schema blobs match the established
+consumed lineage; no provider SQL migration is introduced. Full branch review
+preparation covers bd5 prevention plus the prospective placement owner, with
+all results and the final placement head still pending.
+
+Author packet `/tmp/storage-profile-backup-placement-freeze-20261005.uu8hyhi6`
+has manifestdb1aa0c5 and complete patch07b62c4c. The actual delta is ten paths,
+798 additions/67 deletions; full-index binary patch SHAd33172c6cd6420b13539af7a80aac45df95bec8729c026e8545f05d503b11576.
+Authored inventory is89 API examples,7 pure methods,45 total command methods
+(8 selected), with active/retired v2/omitted v1 and7 invalid-root Nix projections;
+these counts are not results. Member-reported current-byte Ruby/Bash syntax,
+Nix formatting and scoped whitespace checks passed. All source/index remain
+held; no new commit, review, publication or runtime acceptance is inferred.
+
+Implementer0 released only the technical README for the lead's owning prose
+pass while finishing the other nine paths. That pass is complete at SHA
+1712eb66f0a6dc09a83697451c60dee2525bb51f48517dd12524b23fc65459ee;
+scoped whitespace check passed. Configuration example and prior prevention
+prose are preserved; placement/reuse/refusal, inspection, writer transition,
+rollback and delivery limits are unchanged. Final source freeze includes these
+bytes; owning checks and new review remain pending. A nonlogin shell could not resolve the bare
+`dev-session` name and performed no owned action; the absolute public command
+then verified exact binding/env/roster before owned reads and edits. The
+unexecuted driver now uses that verified absolute command.
+
+### Payload correction activation and integration complete, 2026-10-05
+
+The user reported activation and explicitly directed: “activated. verify it and
+once again, merge the workspace fix into the default branch.” In the current
+correction context this covers provider vpsfreecz/dev-workspace master (reviewed
+0ff827df fixture/test correction) and consuming aither64/vpsfree-cz-workspace
+master (67505d97 mechanical pin), preserving all other storage feature branches.
+Approval is recorded before integration. No guest update, fixture retry or
+other default integration is inferred from this turn.
+
+Read-only activation proof PASS: selectedi95b/toolsnpjj, all nine actual-source/
+contract/default/Codex comparisons and loader/schema1policy3/providers2 pass,
+active Codex resolves to this package, and all four router/portal/Codex/tmux
+units are active/running with stable ExecStart links resolving to selectedi95b.
+An initial literal store-prefix assertion did not resolve the stable profile
+link and failed; resolving the actual links proves the intended binding. This
+was a proof assumption, not an activation or service failure. Public cluster
+status reports running/readytrue/bridge and v2released/pendingfalse. The guest
+acceptance script remains the oldc7a1 until ordinary services delivery.
+
+Fresh SSH fetch confirms provider master77dd/feature0ff and root master35c/
+feature67505 unchanged. Saved review48/0/package261.457s/equivalent-output proof
+carry on exact source/input parity. Both FF-only integrations and normal SSH
+readbacks are complete: provider master=feature0ff827df; root master=feature
+67505d97. Shared index stayed empty and all seven held storage/other feature
+heads remained exact. Public comparisons retain exact pre-integration bases.
+Only the clean temporary provider target worktree was removed; feature refs,
+registered worktrees and the session remain. No CI was awaited. Private proof references:
+`/tmp/storage-profile-memory-activation-20261005.nqkppk5z`. The session stays
+active/open; faileduser5/chain48 and the scheduler state remain preserved.
+
+Current phase after completed integration: the one ordinary installed public
+services update passed exit0/399.864s/parity1 to exact l2n9 services toplevel.
+The fresh read-only post-delivery packet passed exit0/25.419s: actual immutable
+acceptance77f2 and provisionef775 SEED_FILEs, services system, original ordinary
+file/four quota properties and all three actual Node source/socket/running/
+zero-delay proofs match. Protected DB changes0 across27groups/1253rows. Relative
+to the original baseline there are100 added rows; relative to the exact accepted
+post-user5 capture there are no protected additions, changes or missing rows,
+only four Pool-space and five snapshot-count observations differ. Faileduser5/
+chain48 remain intact. The supported services switch restarted scheduling.
+
+Private evidence remains at
+`/tmp/storage-profile-memory-delivery-20261005.ukggg26d`. Fresh bounded preconditions PASS: loaded enrollmenttrue/all four Pools, active
+scheduler/test-admin, enabled compatible template1, read-write mode0/epoch4,
+and prior chain48 done with no unfinished transaction, confirmation or lock;
+user5 has no VPS. The one corrected fixture then failed exit1/202.570s at first full-transfer
+stage2, after VPS/member preparation. Chain71 is failed/state4, with five
+transactions, pending confirmations0 and locks0. Tx186/handle5213/node201
+CreateTree failed because its dataset already exists; rollback failed because
+the filesystem has children. The remaining four members were dependency-skipped;
+no send/receive completed. This is not a quoting or history-assertion failure.
+
+A bounded read-only catalog snapshot confirms the cause boundary: NAS Dataset3/
+user3/backupDIP5 and new VPS Dataset6/user6/VPS3/backupDIP12 have the same full_name
+in exactly the same backupPool5/node201. The NAS copy already has confirmed
+headTree2/index0, Branch2 and three snapshot copies. This establishes a canonical
+path alias between distinct logical owners. Exact-target physical metadata was
+read separately without mount/write/adoption/deletion. Historical GUID/ownership
+and safe disposition of the new aliased copy are not inferred from metadata.
+
+Post-failure original preservation PASS0/26.639s: original ordinary file/four
+quota properties and protected DB rows remain equal; all three actual Node
+proofs pass. There are180 added rows relative to the original baseline, versus
+100 before the new fixture. An offline join of the two existing captures binds
+all56 newly added protected rows to fixture user6/VPS3 or its NAS, namespace,
+package and resource records. The other24 additions are observations:6 accounting,
+6 DIP-space,6 snapshot-count,3 Plan links and3 tasks. Task/action ownership is
+not established by this collector, nor is physical alias disposition. The
+private comparison hash is996b91faefcd794c92120ac843310036663edeb05690afe7b8ebce3ddd42e65a.
+No new guest/DB read was run for this comparison. Host childPID/PGID2156563 is reaped; owned-group/prefix/FD-holder
+observations are zero, no signals. Scheduler remains stopped, all old/new
+admitted objects and evidence are retained. The first wrong-CWD watcher launched
+zero operations; the bound-CWD watcher launched once.
+
+Current phase: reviewed prevention feature published; source-only recovery
+proposal recorded, retained trial held. The lead accepted the architect's three-path brief; the
+original335+/9- freeze and its two fixture corrections are preserved below.
+The final three-path commit has348+/9- and passed the complete64-example
+API290f suite plus provider no-build with exact tested-byte parity. New NAS roots
+use `nas-<user-id>`, valid legacy roots retain their
+identity, and an admission-serialized current read refuses distinct catalog
+owners of the same backup path before staging can commit. Existing pending and
+confirmed copies, including duplicate Pool aliases, are covered. This is
+catalog/profile-writer prevention, not a physical ownership or old-writer fence.
+
+The retained alias remains a separate recovery blocker. No inspected public
+interface safely separates the two DIPs with their history intact. Prevention
+cannot make this trial resumable; scheduler stays stopped and all admitted
+objects/evidence remain. No retry, cleanup, unlock, mode change, recovery or
+retirement is performed. Private evidence:
+`/tmp/storage-profile-corrected-payload-20261005.b23vqo76`. Workspace/provider
+integrations remain complete, no further workspace defect is established;
+other storage branches and the active session are preserved.
+
+- [x] Workspace fixes activated, verified and integrated at0ff/67505.
+- [x] Guest delivery and original-preservation proofs accepted.
+- [x] First-transfer failure diagnosed as a confirmed NAS/VPS path alias.
+- [x] Three-path prevention authored and frozen; static syntax/diff passed.
+- [x] Full-file disposable-DB suite/provider no-build checks accepted.
+- [x] New prevention committed atbd5bf53 with tested-byte parity.
+- [x] New prevention commit independently reviewed on the feature branch.
+- [ ] Existing-alias ownership/disposition and supported recovery decided.
+- [ ] Owning payload/history/automatic/repeat and retirement acceptance completed.
+
+The lead inspected the full frozen patch and actual unchanged fixture consumer
+without finding a concrete deviation. The fresh Luna/low batch failed exit1/
+83.177s/parity1: the full Admin290f harness reached64 examples with8 failures in
+82.569s; provider no-build did not run. All eight failures are new competing-owner
+fixture inserts missing required Dataset boolean fields, before their collision
+assertions. Only the spec was released for that setup correction; helper/README,
+index and HEAD0ff stay held. No corrected pass or runtime defect is inferred.
+Fresh provider SSH fetch returned master0ff unchanged.
+Evidence: `/tmp/storage-profile-namespace-checks-20261005.g15pfu3z`.
+
+The boolean-fixture correction preserved the helper/README and all64 examples.
+The second fresh batch failed exit1/88.575s/parity1: stage1 took87.947s with
+64 examples/3 failures; no-build remained unrun. All three failures are two new
+expectation lines comparing string states to the held Confirmable symbol getter,
+after the collision/refusal and rollback checks. Only these two spec expectations
+were released for exact symbol comparison; runtime/docs/index remain held. The
+owned stagePGID2270288 has zero processes; no signals were sent. Evidence:
+`/tmp/storage-profile-namespace-checks-final-20261005.ff3_8b3k`.
+
+The exact two-expression symbol correction is frozen at spec42dd4823; reversing
+only those expressions recreates prior219436f9 byte-for-byte. Helperbe9/READMEece8
+remain unchanged, all64 examples and reader/cleanup controls are preserved, and
+index/HEAD0ff remain held. The fresh symbol-corrected batch is active under
+`/root/profile_namespace_symbol_quick_checks_20261005`; frozen manifestb65fc57f
+and driverba430f1b are bound in
+`/tmp/storage-profile-namespace-checks-symbols-20261005.2letm09k`. No outcome is
+inferred from the freeze or launch.
+
+Final batch PASS0/104.756s/parity1:64 examples/0 failures in88.605s and
+provider no-build0/15.518s. Parent checked actual results, exact three hashes,
+complete patch, empty index and no unrelated source. Normal new owning commit
+`bd5bf53c9ba24ab6f37272ed928baa6a0b49e6ca` is complete atop consumed0ff;
+treece5f7ba58990cfd1280fd96aa33a05a6dde90391,348+/9-, clean source/index.
+Complete one-commit/three-path inventory and diff have SHA
+d50e7c56b06a3d417d70d675c85d38d13c5f052b5972995023a09f3c59f39013.
+No SQL migration/input/wire/schema/CLI/module or inherited state-version change;
+new NAS naming/legacy compatibility and rollback constraints are intentional.
+
+Mandatory final review is COMPLETE from verified retainedreviewer0, review/
+read_only,gpt-6.1-sol/xhigh (no override/fallback), HIGH risk/all four lanes.
+No Blocking, Important or Advisory findings. Reviewer independently verified
+exact0ff..bd5/tree/diff/threehashes and one coherent complete commit with no
+obsolete history or migrations. Consumed predecessors/Admin migration lineage
+are preserved; prevention/old-writer/physical/recovery limits are retained. See
+[final prevention review packet](storage-profile-namespace-prevention-review.md),
+[inventory](storage-profile-namespace-prevention-inventory.json) and
+[complete diff](storage-profile-namespace-prevention.diff).
+
+Normal SSH feature publication succeeded atbd5bf53 after fresh master0ff
+readiness/no-rebase proof; public comparison captures exact0ff..bd5. Default
+master stays0ff, consumer/default67505 and selectedi95b/npjj remain unchanged;
+no new selection/delivery/default merge. CI metadata reports current-head Check
+run37321075184 in_progress; no CI was awaited and no superseded branch run was
+queued/in_progress, so none was cancelled. Both final local stage process groups
+are empty; no signals were sent.
+
+The lead read architect0's separate
+[G2 empty-alias withdrawal proposal](design.md#proposed-recovery-g2-catalog-only-withdrawal-of-an-empty-backup-alias-2026-10-05).
+The candidate withdraws only an exactly proved empty backup claim and its
+source-specific scheduling metadata inside the existing reconciler, with zero
+Node/ZFS effects. It is not executable: common G1b held exclusion/maintenance
+ownership and G2 authenticated approval/action persistence/execution do not
+exist. Current capture also lacks complete Plan/task/property/resource closure
+and whole DIP lifetime/deleted-confirmation proof. Historical NAS GUIDs cannot
+be reconstructed; retrospective NAS integrity stays unresolved. No operation
+or application release follows from this source assessment.
+
+Even a future approved withdrawal would not restore VPS3 backup eligibility in
+Pool5: its logical name still conflicts with the retained legacy NAS. A separate
+namespace/destination policy is necessary; another fixture ID or physical
+rename/deletion is not a supported workaround.
+
+Current source phase: backup-placement authoring is released to ready
+implementer0 at providerbd5, after the lead read architect0's complete
+[placement brief](design.md#proposed-backup-placement-preserve-existing-copies-choose-a-distinct-vps-destination-2026-10-05).
+The optional `storageProfile.vpsBackupFilesystem` preserves omitted v1 behavior
+and introduces explicit v2 selection, reusing valid sole legacy copies. The
+ten-path release covers the shared placement owner, generated configuration,
+provision/guest/host consumers, existing tests and owning README. Only static
+syntax/format/diff checks are assigned to the author; runtime outcomes are
+pending. Existing-alias recovery, destination availability and operation
+approval are not supplied by this source policy. Common G1b/G2 implementation
+and exact held action evidence remain separate prerequisites. Existing-alias recovery/disposition and remaining trial
+acceptance stay held. Prevention is locally checked, independently reviewed and published
+on its feature branch, awaiting any later integration/delivery direction. The
+already-fulfilled0ff/67505 approval does not cover this new substantive correction.
+New default integration and recovery operations are not authorized by the
+already-fulfilled0ff/67505 approval.
+
 ### Retained-cluster recovery resumed, 2026-10-05
 
 The user directed continuation after the workspace-default integrations.
@@ -84,18 +1734,30 @@ Evidence packet is `/tmp/storage-profile-memory-package-20261005.g6uxu1uw`.
 The watcher ended; no retries/cancellations or CI wait occurred. Public host
 status still selects3fzi/wg7/oldc7a1; the proved package is UNSELECTED.
 
-Final handoff tracking/replay/feature publication and comparison are being
-prepared. Local shared master4df advanced by two coordination-only commits;
-remote masterc754/provider77dd remain unchanged. Preserve those commits and all
-foreign work; the equivalent pin replay must retain the exact tested output.
-External-idle public activation is required by workspace-host's session
-quiescence before package selection; no active-lead/private-helper bypass.
-Ordinary services update, actual new guest script and original preservation
-must precede one new payload fixture/key. New readonly proof packet
+Current phase is EXTERNAL IDLE ACTIVATION HANDOFF. Normal tracking commit35c5ab1e
+is published, preserving the two other coordination commits4df/af907 and all
+foreign work. Tested root7d was retained in its backup ref, then replayed onto
+35c as clean67505d97/tree24b13218. Full patch/message/flake bytes are identical
+and range-diff is '='; final eval0/7.771s resolves to SAME testedi95b output and
+final no-build passed0/3.746s. Normal SSH feature publication/readback and public
+comparison base35c/head67505 are complete; provider77dd..0ff comparison is also
+saved. Master35c contains tracking only; no new pin/default integration.
+Obsolete-workflow metadata was handled without a CI wait.
+
+Run the public switch from an idle terminal:
+`workspace-host switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/workspace`.
+workspace-host requires session quiescence before selecting a package; the
+active lead cannot bypass that public boundary. After selection, lead verifies
+actual sources/contracts/services, performs the ordinary services update, and
+proves the actual new77f2 guest script and original preservation before one
+new owning payload fixture/key. New readonly proof packet
 `/tmp/storage-profile-post-delivery-proof-20261005.0gz33zhd` is prepared/unrun;
 it changes only provider/new acceptance guards, retaining original baselines,
-Node probes and forward-only file proof. This correction is ready, awaiting
+Node probes and forward-only file proof. Source correction is ready, awaiting
 new merge approval; no new provider/workspace default integration is inferred.
+Shared index remains empty. A concurrent extra foreign status entry appeared;
+only the six owned tracking paths were committed, and no foreign cleanup or
+record/index change was performed.
 
 After the failed preparation, original protected-DB changes remain0 across
 27groups/1253rows. The admitted user chain48 is done with no unfinished
@@ -190,6 +1852,10 @@ mutation was performed during this verification/integration.
   finish exact consumer publication/readback and comparison.
 - [x] Verify external activation and integrate provider/workspace defaults,
   preserving all storage feature branches.
+- [x] Review and publish feature-only namespace prevention atbd5;64/0 and no-build passed.
+- [x] Accept the separate compatible backup-placement source/verification brief.
+- [ ] Author and check the ten-path placement change, then review the complete committed range.
+- [ ] Implement guarded G1b/G2 recovery and prove/approve the exact retained alias action.
 - [x] Prepare exact stopped evidence and run supported metadata recovery/copied
   boot before the retained storage trial.
 - [x] Capture a fresh masked protected DB baseline and logical backup; retain
@@ -200,7 +1866,7 @@ mutation was performed during this verification/integration.
 - [x] Correct the payload request against the actual guest minimum, pass48 specs
   and complete independent final review of the new two-file provider commit.
 - [x] Build/prove the consuming package with its actual corrected fixture bytes.
-- [ ] Complete external activation and ordinary services delivery, then prove the
+- [x] Complete external activation and ordinary services delivery, then prove the
   new actual guest script and original preservation.
 - [ ] Complete the existing VPS/NAS payload/history, rotation, automatic cycle and
   repeat seed/provision fixture, with separate original-object comparisons.

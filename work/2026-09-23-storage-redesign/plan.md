@@ -1,6 +1,173 @@
 # 2026-09-23-storage-redesign
 
-## Current execution slice: retained storage trial, 2026-10-04
+## Current execution slice: generation prerequisites and API responsibility, 2026-10-06
+
+The retained alias still blocks live recovery. Preserve the stopped scheduler,
+DIP5/DIP12 and all admitted objects/evidence while implementing independently
+useful source prerequisites. Neither source review nor a disposable VM grants
+physical exclusion or alias disposition authority.
+
+The API-only reservation is checked, reviewed and feature-published425d. Its
+contract1 reserve/show/abandon keeps a retained owner and refuses compatible
+unfreeze writers; old setters and independent physical writers remain outside
+that guarantee. The OS800 generation prerequisite and installed shutdown
+consumers are checked, independently reviewed, passed the existing eight-case
+transition VM and are feature-published. The ordinary generated Admin OS input
+updatebc9 and optional Admin maintenance profile0d are committed. The complete
+c4d..0d branch passed all four independent HIGH review lanes, with the retained
+offline comparator liveness Advisory accepted separately. The exact-head
+existing Admin transition VM failed its second example at a combined socket-path
+absence wait after both services reported down. The installed Node service does
+not unlink its socket pathname on stop, so that fixture requirement exceeds the
+runtime contract. The actual failing operand remains unmeasured. The bounded
+one-path fixture correction passed its static and scenario-construction checks,
+was folded normally into6cd9f9a6. Its exact-head VM was cancelled at the user's
+pause before completed examples; user continue now resumes source work. The
+user also explicitly requested ordinary stop of the retained dev-cluster to
+free it for another initiative. Preserve its state and use the public stop
+owner; this does not authorize reset or alias repair. The public stop and stopped status are verified; private config and all six
+retained disk identities remain unchanged. The corrected disposable VM passed2/2 with full source parity in fresh private
+state, without using or restarting the retained cluster. This proves the
+bounded generation transition/preservation scenario, not physical exclusion or
+retained alias disposition. Feature publication/readback and final comparison are complete at6cd9f9a6,
+with masterc4d unchanged. The accepted record-only Contract2 source unit is
+complete at32d7f0ac after the five-path requested actor-state review correction.
+Guarded core schema and full-plugin EN-CS companions are retained. Fresh
+API/model127 and both three-file lint gates passed. The complete independent
+c4d..543 all-four-HIGH review plus focused lead step9 disposition has no
+remaining Blocking or Important. The comparator CPU Advisory is accepted
+separately. Feature32d publication/readback and comparison are complete, masterc4d unchanged;
+CI remains unawaited and defaults remain unmerged.
+
+The profile keeps Node/osctl tools, keys/settings, network and raw ZFS behavior
+while explicitly suppressing automatic NodeCtld and osctld starts. Conflicting
+final declarations refuse. Default imports remain ordinary. Its owning VM must
+prove activation, a fresh selected maintenance boot on the same disks, actual
+system/boot identities, GUID/property/known-payload/config/key preservation and
+ordinary restoration. Direct init selection is not production bootloader
+persistence or child/delegated-GC reap proof. Baseline broad-flake overlay errors
+remain recorded; bounded module builds and derivation evaluations retain their
+stated limits. Feature publication follows accepted VM evidence; defaults and
+live packages are not integrated or activated without separate authorization.
+
+The current source slice is authenticated record-only contract2/handoff_pending
+acknowledgement on the existing API owner. Composition acceptance/publication
+is complete. The amended owning commit atop published6cd includes the original seventeen
+authorized paths and the two canonical lifetime/guide companions needed by the
+review correction (nineteen distinct paths). The
+seventeen-path brief separates fourteen static paths from guarded generated
+schema/EN-CS companions. Add one migration on the exact preserved predecessor,
+update the shared supported tuple/readers and forbid contract1 abandonment from
+releasing the new state. Keep UUID/epoch/scope and audit through failure/replay;
+introduce no dispatch, physical evidence, TTL or action approval. There is
+intentionally no termination/release from contract2 in this unit, so operational
+invocation remains held until separate recovery/termination and physical
+contracts exist. Focused real-AR/API/migration/locale/endpoint/lint checks and
+complete committed-range independent review precede publication.
+
+The architect's completed public-source assessment finds no existing complete
+incarnation-bound descendant accounting/wait and delegated-GC coverage.
+Runit remains the appropriate service owner, but successful stops, empty groups
+or kernel kill cannot become a lifetime/reap receipt. Entry-failure hardening is
+only a prospective precursor, unreleased and insufficient for acquisition.
+Actual containment, exceptional interrupted-work settlement, owner-bound
+signed inventory/capture, G2 approval/action journal/executor, full dependency
+and lifetime evidence, NAS integrity and destination availability remain
+separate work. Do not retry, clean up, adopt, detach, rename, destroy, unlock,
+retire or resume scheduling to bypass the alias.
+
+Supported behavior and compatibility stay in Admin's storage integrity guides
+and OS's runlevels guide; exact rollout, tests, source heads and review findings
+stay in [state](state.md) and linked artifacts. The
+[design](design.md#admin-g1b-generation-composition-after-the-os-prerequisite-2026-10-06)
+owns the accepted source scopes and verification/rollback limits. Session and
+feature refs remain open; no CI wait or additional current-unit gate is added.
+
+## Completed source slice: namespace prevention and backup placement, 2026-10-05
+
+The workspace fixes are activated, verified and integrated at provider0ff827df
+and consumer67505d97. Ordinary services delivery and original DB/file/quota/Node
+preservation passed. The corrected payload trial failed in its first full
+transfer: a legacy NAS and the new VPS have distinct catalog owners but the
+same physical backup path. Scheduling is stopped and all admitted objects and
+evidence are retained.
+
+Implement the architect's bounded prevention on the provider feature branch:
+stable `nas-<user-id>` names for new member NAS roots, strict reuse of compatible
+legacy roots without rename, and an admission-serialized current catalog-path
+collision check before backup creation or Plan enrollment. Owned paths are the
+profile helper, its existing real-AR spec and owning README. Existing namespace,
+quota, assignments and retention remain. No schema/wire/version or input change
+is planned. The guard covers upgraded profile writers and known catalog claims;
+unknown physical targets and old/unmanaged writers remain outside its guarantee.
+
+The saved [design brief](design.md#backup-namespace-collision-prevention-and-retained-recovery-boundary-2026-10-05)
+is implemented in the normal new prevention commitbd5bf53. The existing
+disposable-DB full-file harness passed64/0, followed by provider no-build.
+Independent final complete-range review found no findings in all four lanes,
+and the feature is published. The separate recovery capability/evidence
+proposal is recorded; recovery application/operation release remains undecided. This scope
+needs no repeated workspace activation or
+populated trial. Keep the correction feature-only.
+
+The current alias is not repaired by a naming change. No inspected supported
+interface safely reassigns or separates it while preserving both owners and
+history. Recovery needs its own ownership/disposition design before any runtime
+attempt. Do not retry, adopt, rename, delete, cancel, unlock, change mode or run
+retirement to bypass it. Payload/history/automatic/repeat/retirement acceptance
+remains pending. The proposed DB-only withdrawal belongs to the existing G2
+reconciler and needs common G1b exclusion plus approval/journal/execution, full
+DIP dependency/lifetime proof and complete held physical evidence. It does not
+solve the remaining name conflict; source design must also choose a compatible
+namespace/destination policy before backups can resume. No operation is
+authorized by that proposal. See [current state](state.md) and the
+[collision investigation note](../../notes/vpsfree-dev-workspace/2026-10-05-shared-backup-path-collision.md).
+
+The lead accepted the separate
+[backup-placement brief](design.md#proposed-backup-placement-preserve-existing-copies-choose-a-distinct-vps-destination-2026-10-05)
+and released its exact ten provider paths to implementer0. Omission preserves
+v1; the optional VPS root produces v2 and selects that destination only for an
+empty hypervisor source, retaining valid sole legacy copies. Actual host
+inspection must prove loaded routing equals the desired selection. Authoring
+and owning verification are complete; placement is committed at e33b8d0.
+Complete0ff..e33 independent review passed all four lanes with no findings,
+and exact e33 feature publication/readback/comparison is complete. This source
+work remains feature-only and does not dispose of
+the existing alias, select an available new Pool or resume the retained trial.
+
+The next source unit is the architect's authenticated API reservation/CAS
+foundation: retained owner pointer, direct-admin reserve/show/abandon and
+compatible unfreeze refusal. It supplies no physical exclusion or action
+approval. Rebase Admin290f onto current c4d before authoring, preserving all
+seven incoming commits and the consumed foundation/capture-index schema.
+Rebase and source/topic/selector verification are complete at5dd06eeb. All19
+reservation paths are authored, generated, exactly installed and frozen. Guarded
+core schema generation and full-plugin locale normalization/health passed;
+lead prose and complete-diff inspection are complete. The current four-stage
+owning disposable checks cover the focused API/model files, new core migration,
+component lint and root selector. Passing checks precede a normal new commit
+and complete-branch independent review. Keep every consumed migration unchanged.
+Physical maintenance, G2 approval/journal and exact alias disposition proof
+remain separate work before a live recovery can be considered.
+
+## Historical execution slice: retained storage trial, 2026-10-04
+
+Current workspace phase is complete: selected3fzi/wg7 activation passed, and
+explicitly approved provider master77dd/workspace masterc754 FF/publication/
+readback completed. Generic policy is already upstream. All storage feature
+heads remain unchanged; no additional known workspace source gate remains.
+Resume the previously planned retained recovery/fullboot/preservation and
+storage acceptance using the installed public correction. The following rebase
+and package preparation details are historical checkpoints.
+
+Before activation, the user requested another master-freshness check. Replay
+the one recovery-provider pin onto88a while preserving its new nested generic3ed
+and Codex3d07 upload runtime. Completed rootc754 has only four provider lock
+leaves; provider77dd/mastere1bb is current. Fresh existing root checks/default
+build/source equality passed0/254.433s/parity1, yielding unselected3fzi/wg7.
+Publication/readback and comparison are complete. External idle activation
+precedes actual recovery; prior zwdv proof remains historical. CI was not
+awaited and no additional native scenario is needed for unchanged inputs.
 
 Workspace correction activation and integration are complete. The user's
 “ok, continue” resumes delivery of the corrected guest scripts, public profile
@@ -26,8 +193,8 @@ fixture amendment now records bounded comparisons and checks source-proved
 all-service readiness before the baseline. It is committed at77dd0d04 and the
 same short native scenario passed0/1018.533s/parity1, stage6/released0. The
 provider feature is published; generated consumer/package proof has passed.
-Final feature publication/comparison and external idle activation precede the
-public recovery. No cause is inferred for the earlier missing-evidence
+Final feature publication/comparison is complete; external idle activation
+precedes public recovery. No cause is inferred for the earlier missing-evidence
 failure; full-cluster recovery remains a separate acceptance gate. Cumulative provenance/root retention is accepted; no pruning or
 state-version expansion is part of that remediation.
 

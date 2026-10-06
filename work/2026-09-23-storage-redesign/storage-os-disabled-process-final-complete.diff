@@ -1,0 +1,2324 @@
+diff --git a/docs/os/runlevels.md b/docs/os/runlevels.md
+index 6d8ea1212d0ff65ffe6ca6c905b15a55befd14ec..223aa764f8128eac48daf15073d58c1b3d984772 100644
+--- a/docs/os/runlevels.md
++++ b/docs/os/runlevels.md
+@@ -114,3 +114,62 @@ runlevel. So when you've booted in a single user mode, i.e. runlevel `single`,
+ ```bash
+ svctl enable sshd
+ ```
++
++## Building without automatic osctld startup
++
++`osctld.enable` defaults to `true`. Set it to `false` to omit osctld from all
++runlevels while retaining its service definition, generated configuration and
++ordinary tools, including `osctl`, `osup` and `svctl`:
++
++```nix
++{
++  osctld.enable = false;
++  osctl.pools = { };
++  osctl.exportfs.enable = false;
++  boot.zfs.pools.tank.install = false;
++}
++```
++
++Every configured ZFS pool must have `install = false`. Configuration evaluation
++fails if `osctl.pools` is nonempty, `osctl.exportfs` is enabled, pool installation
++is enabled or osctld is forced into a runlevel. These checks prevent the
++configured consumers from waiting for a daemon that will not start.
++
++The ZFS pool service still imports pools, mounts datasets and applies configured
++properties. With osctld disabled, it skips the osctl active-property lookup,
++daemon wait, pool installation/import and parallel-start/stop settings. It
++preserves retained osctl state and `org.vpsadminos.osctl:active`. Existing ZFS
++startup configuration can write to storage; this option does not make ZFS
++read-only.
++
++Configuration activation skips `osctl activate` when osctld is absent from the
++destination runlevel. Activation keeps its existing restart handling when
++osctld is selected. A successful activation does not prove that a removed
++service and all its children have stopped. Neither an absent socket nor a
++successful activation exit proves that storage writers are excluded.
++
++The installed `halt`, `poweroff` and `reboot` commands use the generation's
++`osctld.enable` value. When it is `false`, they skip container listing and
++osctl shutdown/abort. Runit's final shutdown stage also skips its osctl shutdown
++command and retains both hardware-clock writes. Commands without `--force`
++still collect a reason, confirm the hostname and count down. Logging, halt hooks,
++kexec handling and final runit dispatch are unchanged. The commands record the
++reason in syslog without sending container wall messages.
++
++Use the selected generation's ordinary commands. If you invoke an older store
++script directly, it uses that generation's shutdown policy. This option does not
++stop a manually started daemon or constrain arbitrary halt hooks; it does not
++prove that storage writers are excluded.
++
++Use the ordinary generation selection described in [Updates](updates.md).
++`switch` selects the boot configuration and activates it; `boot` selects it
++without runtime activation. `test` changes the running configuration only.
++Transient `svctl` changes do not establish the generation used on the next boot.
++A fresh boot into the disabled generation continues to omit automatic osctld
++startup, but invalidates evidence tied to the previous boot or process identity.
++
++This option changes no on-disk format and requires no coordinated fleet update.
++Older sources that lack the option refuse its declaration. Booting an older
++ordinary generation can restart storage writers; it is not a safe rollback
++while another component owns storage maintenance. The option does not provide
++that ownership, authorize storage actions or exclude other producers.
+diff --git a/docs/osctld/interfaces.md b/docs/osctld/interfaces.md
+index 537ceca3db25cfe6ab1390280d63ec580c5a146c..5f2712d0ccdeafe3ecb1ba859dc5a8ae0ccb4fb0 100644
+--- a/docs/osctld/interfaces.md
++++ b/docs/osctld/interfaces.md
+@@ -28,6 +28,26 @@ and reports success or failure.
+ For the list of commands, see *osctld* sources. This interface may change
+ between versions, you're encouraged to use `osctl` instead.
+ 
++### Pool storage activity
++
++The read-only `pool_storage_activity` command takes one `pool` name and returns
++one bounded activity sample. Version `1` reports coverage `gc_trash_v1`: the
++per-pool run-dataset garbage collector and trash-bin workers. The sample has a
++daemon boot UUID, a UUID for the current pool import, and a daemon-local
++monotonic generation. It also reports the pool state (`importing`, `active`,
++`stopping`, or `absent`), pending and running counts for `run_gc`,
++`trash_prune`, and `trash_move`, the registered run-dataset count, both worker
++states, `unknown` and `overflow` flags, and any unknown reason codes. Counts
++stop at 10,000; overflow remains unknown for the life of the daemon.
++
++`idle: true` means only that this sample found an active pool, both workers
++alive, no pending or running work in this coverage, and no unknown reason.
++It does not stop new work, prove that external ZFS commands have finished, or
++authorize a storage repair. A missing command on an older daemon, a failed
++request, an invalid response, or a changed boot UUID or generation must be
++treated as unknown by a caller that compares samples. A pool reimport gets a
++new instance UUID without resetting the daemon's generation.
++
+ ## Events
+ One of the management commands is `event_subscribe`. Subscribed clients are
+ informed abour various events, such as management commands,
+diff --git a/flake.nix b/flake.nix
+index 2ac509be5c251139fc064b2153ffb8e5417fd3ca..e09dc41355e1c5586639e2532c7c96dee02f2365 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -762,6 +762,10 @@
+           };
+         in
+         {
++          osctld-disabled-eval = import ./tests/osctld-disabled-eval.nix {
++            pkgs = import nixpkgs { inherit system; };
++            makeSystem = args: vpsadminosSystem (args // { inherit system; });
++          };
+           qemu-disk-lifecycle = import ./tests/qemu-disk-lifecycle-check.nix {
+             pkgs = import nixpkgs { inherit system; };
+             makeSystem = args: vpsadminosSystem (args // { inherit system; });
+diff --git a/os/modules/config/runit.nix b/os/modules/config/runit.nix
+index 298231ee02c82d0e276cef36568b914ce89a1b54..45f16c0ee85d2af6e1f7b445f9a72ca690eb0ec6 100644
+--- a/os/modules/config/runit.nix
++++ b/os/modules/config/runit.nix
+@@ -179,7 +179,7 @@ in
+ 
+   runit.stage3 = ''
+     hwclock -w
+-    osctl shutdown --force
++    ${optionalString config.osctld.enable "osctl shutdown --force"}
+     hwclock -w
+     echo and down we go
+   '';
+diff --git a/os/modules/osctl/osctld.nix b/os/modules/osctl/osctld.nix
+index 81a1373a8c06dfd987cdded19a764fa5d8d3f1cd..cc8802ac79c4c3bbcf5fb88abc3d1ffa81d1587c 100644
+--- a/os/modules/osctl/osctld.nix
++++ b/os/modules/osctl/osctld.nix
+@@ -23,6 +23,16 @@ in
+ 
+   options = {
+     osctld = {
++      enable = mkOption {
++        type = types.bool;
++        default = true;
++        description = ''
++          Start osctld automatically in the default runlevel. Disabling it
++          retains its service definition, configuration and tools, but requires
++          empty osctl.pools, disabled osctl.exportfs and no ZFS pool installation.
++        '';
++      };
++
+       waitForNetworkOnline = mkOption {
+         type = types.bool;
+         default = true;
+@@ -54,6 +64,25 @@ in
+   ###### implementation
+ 
+   config = {
++    assertions = [
++      {
++        assertion = cfg.enable || config.runit.services.osctld.runlevels == [ ];
++        message = "osctld.enable = false requires empty runit.services.osctld.runlevels";
++      }
++      {
++        assertion = cfg.enable || config.osctl.pools == { };
++        message = "osctld.enable = false requires empty osctl.pools";
++      }
++      {
++        assertion = cfg.enable || !config.osctl.exportfs.enable;
++        message = "osctld.enable = false requires osctl.exportfs.enable = false";
++      }
++      {
++        assertion = cfg.enable || all (pool: !pool.install) (attrValues config.boot.zfs.pools);
++        message = "osctld.enable = false requires boot.zfs.pools.<name>.install = false";
++      }
++    ];
++
+     osctld.settings = {
+       apparmor_paths = optionals config.security.apparmor.enable (
+         map (s: "${s}/etc/apparmor.d") apparmorPaths
+@@ -64,6 +93,8 @@ in
+     };
+ 
+     runit.services.osctld = {
++      runlevels = mkIf (!cfg.enable) [ ];
++
+       path = with pkgs; [
+         config.security.wrapperDir
+         apparmor-parser
+diff --git a/os/modules/system/activation/switch-to-configuration.rb b/os/modules/system/activation/switch-to-configuration.rb
+index eaaa12df2785d8bf52ef51782039246f8ac6fd34..ddf3da559561f3bcb6a127fde8f9efff7dcc8475 100755
+--- a/os/modules/system/activation/switch-to-configuration.rb
++++ b/os/modules/system/activation/switch-to-configuration.rb
+@@ -145,6 +145,8 @@ class Configuration
+   end
+ 
+   def activate_osctl(services)
++    return unless services.selected?('osctld')
++
+     # If osctld is restarted, it will regenerate system files by itself
+     return if services.restart.detect { |s| s.name == 'osctld' && !s.skip? }
+ 
+@@ -253,6 +255,11 @@ class Services
+     @new_services = get_services(@new_cfg, @new_runlevel, Configuration::ETC)
+   end
+ 
++  # Membership in the parsed destination runlevel, independent of restart/skip.
++  def selected?(name)
++    new_services.has_key?(name)
++  end
++
+   # Services that are new and should be started
+   # @return [Array<Service>]
+   def start
+diff --git a/os/modules/system/boot/runit/default.nix b/os/modules/system/boot/runit/default.nix
+index 7fe00ae7e4d3da4f88ce7032862b9875c2e4fe98..c62c3cb8537358a6591ed0b5f0c4ee62225b1b6a 100644
+--- a/os/modules/system/boot/runit/default.nix
++++ b/os/modules/system/boot/runit/default.nix
+@@ -519,6 +519,7 @@ let
+     isExecutable = true;
+     replacements = {
+       ruby = pkgs.ruby;
++      osctldEnabled = if config.osctld.enable then "true" else "false";
+     };
+   };
+ 
+diff --git a/os/modules/system/boot/runit/halt.8.adoc b/os/modules/system/boot/runit/halt.8.adoc
+index e993ffb319fb02891524b08a145c1cf74deaa192..bbc9d9574bfb3b4c466d62f89e469434fa232c09 100644
+--- a/os/modules/system/boot/runit/halt.8.adoc
++++ b/os/modules/system/boot/runit/halt.8.adoc
+@@ -22,15 +22,28 @@ halt, poweroff, reboot - Halt, power-off or reboot the machine
+ *halt*, *poweroff*, *reboot* may be used to halt, power-off, or reboot the machine.
+ All three commands take the same options.
+ 
+-Care is taken to first stop all containers using *osctl shutdown*. As long as
+-*osctl shutdown* is running, it is possible to abort the operation using *Ctrl+C*,
+-i.e. sending *SIGINT* signal. See osctl(8) for more information.
++When the installed generation has *osctld.enable = true* (the default), the
++commands first stop all containers using *osctl shutdown*. While that command
++is running, you can abort it using *Ctrl+C* (*SIGINT*).
++See osctl(8) for more information.
++
++With *osctld.enable = false*, the commands skip container listing and
++osctl shutdown/abort. Runit's final shutdown stage also omits its osctl shutdown
++command and retains both hardware-clock writes. Commands without *--force*
++still collect a reason, confirm the hostname and count down. Logging, halt hooks,
++kexec handling and final runit dispatch are unchanged. This option does not stop
++a manually started daemon or constrain arbitrary hooks, and does not prove
++that storage writers are excluded.
++
++Use the selected generation's ordinary commands. If you invoke an older store
++script directly, it uses that generation's shutdown policy.
+ 
+ == Halt reason
+ 
+ Unless option *-m*, *--message* is provided, *$EDITOR* is opened for the user
+-to write one. The reason is then written to syslog and sent to logged-in container
+-users as a wall message.
++to write one. The reason is then written to syslog. When osctld is enabled in
++the installed generation and wall delivery is enabled, it is also sent to
++logged-in container users as a wall message.
+ 
+ The default reason opened in *$EDITOR* can be extended by templates placed
+ in directory */etc/runit/halt.reason.d*. Non-executable text files are read
+@@ -85,10 +98,12 @@ The following options are understood:
+   Power-off the machine, regardless of which one of the three commands is invoked.
+ 
+ *-w*, *--[no-]wall*::
+-  Send message to logged-in container users. Enabled by default.
++  Send message to logged-in container users when osctld is enabled in the
++  installed generation. Wall delivery is enabled by default.
+ 
+ *-m*, *--message* _MSG_::
+-  Message sent to logged-in container users.
++  Reason written to syslog and, when wall delivery and osctld are enabled,
++  sent to logged-in container users.
+ 
+ == Bugs
+ 
+diff --git a/os/modules/system/boot/runit/halt.rb b/os/modules/system/boot/runit/halt.rb
+index 6a1ffa43ef2cbdf7559b57601734f74ba25b1a90..4be9f2c65aeb68274f2029347fe27a43340811c4 100755
+--- a/os/modules/system/boot/runit/halt.rb
++++ b/os/modules/system/boot/runit/halt.rb
+@@ -5,6 +5,8 @@ require 'syslog/logger'
+ require 'tempfile'
+ 
+ class Halt
++  OSCTLD_ENABLED = '@osctldEnabled@' == 'true'
++
+   REASON_TEMPLATE_DIR = '/etc/runit/halt.reason.d'.freeze
+ 
+   HOOK_DIR = '/etc/runit/halt.hook.d'.freeze
+@@ -92,7 +94,7 @@ class Halt
+       # abort #{@action}.
+     END
+ 
+-    if @wall
++    if OSCTLD_ENABLED && @wall
+       file.puts('# The reason will be sent to logged-in container users.')
+     else
+       file.puts('# The reason will be written to system log.')
+@@ -163,18 +165,20 @@ class Halt
+   end
+ 
+   def confirm
+-    puts 'The following containers will be stopped:'
+-    puts
++    if OSCTLD_ENABLED
++      puts 'The following containers will be stopped:'
++      puts
+ 
+-    st = Kernel.system('osctl', 'ct', 'ls', '-S', 'running')
+-    raise 'Unable to list containers' unless st
++      st = Kernel.system('osctl', 'ct', 'ls', '-S', 'running')
++      raise 'Unable to list containers' unless st
++    end
+ 
+     puts
+     puts "Reason for #{@action}:"
+     puts(@message.empty? ? '[not given]' : @message)
+     puts
+ 
+-    if @wall
++    if OSCTLD_ENABLED && @wall
+       puts 'The reason will be sent to logged-in container users.'
+     else
+       puts 'The reason will be written to system log.'
+@@ -206,31 +210,35 @@ class Halt
+   end
+ 
+   def halt
+-    puts 'Shutting down containers, this operation can still be interrupted'
+-    puts
++    if OSCTLD_ENABLED
++      puts 'Shutting down containers, this operation can still be interrupted'
++      puts
++    end
+ 
+     @logger.info("System #{@action}, reason: #{@message}, wall #{@wall ? 'yes' : 'no'}")
+ 
+-    begin
+-      shutdown_pid = Process.fork do
+-        cmd = %w[osctl shutdown --force]
+-
+-        if @wall
+-          cmd << '--wall'
+-          cmd << '--message' << @message if @message && !@message.empty?
+-        else
+-          cmd << '--no-wall'
+-        end
++    if OSCTLD_ENABLED
++      begin
++        shutdown_pid = Process.fork do
++          cmd = %w[osctl shutdown --force]
++
++          if @wall
++            cmd << '--wall'
++            cmd << '--message' << @message if @message && !@message.empty?
++          else
++            cmd << '--no-wall'
++          end
+ 
+-        Kernel.exec(*cmd, pgroup: true)
++          Kernel.exec(*cmd, pgroup: true)
++        end
++        Process.wait(shutdown_pid)
++      rescue Interrupt
++        handle_abort(shutdown_pid)
++        return
+       end
+-      Process.wait(shutdown_pid)
+-    rescue Interrupt
+-      handle_abort(shutdown_pid)
+-      return
+-    end
+ 
+-    raise 'Unable to shutdown osctld' if $?.exitstatus != 0
++      raise 'Unable to shutdown osctld' if $?.exitstatus != 0
++    end
+ 
+     run_hook('pre-system')
+ 
+diff --git a/os/modules/tasks/filesystems/zfs/pool-service.nix b/os/modules/tasks/filesystems/zfs/pool-service.nix
+index d8b5f1c00b0fdf44840f78fd84f21d480019b83e..947b389382b19c149794af798f167d109ced86a6 100644
+--- a/os/modules/tasks/filesystems/zfs/pool-service.nix
++++ b/os/modules/tasks/filesystems/zfs/pool-service.nix
+@@ -140,35 +140,37 @@ in
+     echo "Mounting datasets..."
+     ${mount} ${name} ${datasets}
+ 
+-    active=$(${zfs} get -Hp -o value org.vpsadminos.osctl:active ${name})
+-
+-    echo "Waiting for osctld..."
+-    waitForOsctld
+-
+-    if [ "$(getKernelParam osctl.pools 1)" == "1" ] ; then
+-      if [ "$active" == "yes" ] ; then
+-        if  ! osctlEntityExists pool ${name} ; then
+-          echo "Importing pool ${name} into osctld"
+-          ${osctl} pool import \
+-            $(if [ "$(getKernelParam osctl.autostart 1)" == "1" ] ; then echo "--autostart" ; else echo "--no-autostart" ; fi) \
+-            ${name} \
+-            || fail "Unable to import pool ${name} into osctld"
++    ${optionalString config.osctld.enable ''
++      active=$(${zfs} get -Hp -o value org.vpsadminos.osctl:active ${name})
++
++      echo "Waiting for osctld..."
++      waitForOsctld
++
++      if [ "$(getKernelParam osctl.pools 1)" == "1" ] ; then
++        if [ "$active" == "yes" ] ; then
++          if  ! osctlEntityExists pool ${name} ; then
++            echo "Importing pool ${name} into osctld"
++            ${osctl} pool import \
++              $(if [ "$(getKernelParam osctl.autostart 1)" == "1" ] ; then echo "--autostart" ; else echo "--no-autostart" ; fi) \
++              ${name} \
++              || fail "Unable to import pool ${name} into osctld"
++          fi
++
++        elif ${if pool.install then "true" else "false"} ; then
++          echo "Installing pool ${name} into osctld"
++          ${osctl} pool install ${name} \
++            || fail "Unable to install pool ${name} into osctld"
+         fi
+ 
+-      elif ${if pool.install then "true" else "false"} ; then
+-        echo "Installing pool ${name} into osctld"
+-        ${osctl} pool install ${name} \
+-          || fail "Unable to install pool ${name} into osctld"
++        ${optionalString (hasAttr name config.osctl.pools) ''
++          echo "Configuring osctl pool ${name}"
++          ${osctl} pool set parallel-start ${name} ${toString config.osctl.pools.${name}.parallelStart}
++          ${osctl} pool set parallel-stop ${name} ${toString config.osctl.pools.${name}.parallelStop}
++        ''}
++      else
++        echo "Pool install/import disabled by kernel parameter"
+       fi
+-
+-      ${optionalString (hasAttr name config.osctl.pools) ''
+-        echo "Configuring osctl pool ${name}"
+-        ${osctl} pool set parallel-start ${name} ${toString config.osctl.pools.${name}.parallelStart}
+-        ${osctl} pool set parallel-stop ${name} ${toString config.osctl.pools.${name}.parallelStop}
+-      ''}
+-    else
+-      echo "Pool install/import disabled by kernel parameter"
+-    fi
++    ''}
+ 
+     ${optionalString config.services.zfs.vdevlog.enable ''
+       echo "Updating vdevlog"
+diff --git a/osctld/lib/osctld/commands/pool/export.rb b/osctld/lib/osctld/commands/pool/export.rb
+index 2d0e4d09f7c9fb9c77b6c4939dd7d6fb6f5e557c..ff44721b15bcfaf11886576bbde27875da0f6f91 100644
+--- a/osctld/lib/osctld/commands/pool/export.rb
++++ b/osctld/lib/osctld/commands/pool/export.rb
+@@ -150,6 +150,7 @@ module OsCtld
+ 
+         # Remove pool from the database
+         DB::Pools.remove(pool)
++        pool.storage_activity_absent
+ 
+         # Remove outdated send/receive keys
+         SendReceive.deploy
+diff --git a/osctld/lib/osctld/commands/pool/storage_activity.rb b/osctld/lib/osctld/commands/pool/storage_activity.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..55f18ad991dce80d8cf0dd0aafaaa69328bf6b56
+--- /dev/null
++++ b/osctld/lib/osctld/commands/pool/storage_activity.rb
+@@ -0,0 +1,23 @@
++# frozen_string_literal: true
++
++require 'osctld/commands/base'
++
++module OsCtld
++  class Commands::Pool::StorageActivity < Commands::Base
++    handle :pool_storage_activity
++
++    def execute
++      name = opts[:pool]
++      error!('provide exactly one zpool name') unless opts.keys == [:pool] &&
++                                                      name.is_a?(String) &&
++                                                      !name.empty? && !name.include?('/') &&
++                                                      !name.include?("\0") &&
++                                                      name.bytesize <= 255
++
++      tracker = Daemon.get&.storage_activity
++      error!('storage activity is unavailable') unless tracker
++
++      ok(tracker.snapshot(name, pool: DB::Pools.find(name)))
++    end
++  end
++end
+diff --git a/osctld/lib/osctld/daemon.rb b/osctld/lib/osctld/daemon.rb
+index 6d3f43cc0e64da2303ce2a738aa6439b5830a087..fb3030115d723e0bc2abd890c6c5b8696cb20c66 100644
+--- a/osctld/lib/osctld/daemon.rb
++++ b/osctld/lib/osctld/daemon.rb
+@@ -7,6 +7,7 @@ require 'osctld/hook'
+ require 'osctld/hook/base'
+ require 'osctld/run_state'
+ require 'osctld/generic/client_handler'
++require 'osctld/storage_activity'
+ 
+ module OsCtld
+   class Daemon
+@@ -74,6 +75,9 @@ module OsCtld
+     # @return [Config]
+     attr_reader :config
+ 
++    # @return [StorageActivity]
++    attr_reader :storage_activity
++
+     # @return [Time]
+     attr_reader :started_at
+ 
+@@ -85,6 +89,7 @@ module OsCtld
+     # @param config_file [String] path to config file
+     def initialize(config_file)
+       @config = Config.new(config_file)
++      @storage_activity = StorageActivity.new
+       @started_at = Time.now
+       @initialized = false
+       @stopping = false
+diff --git a/osctld/lib/osctld/garbage_collector.rb b/osctld/lib/osctld/garbage_collector.rb
+index 6b25c2b7c98b6be5d61616853d1eb17e32bc1c45..65e9e9dfc68dbeba2740d83f21cbdedc35d94c78 100644
+--- a/osctld/lib/osctld/garbage_collector.rb
++++ b/osctld/lib/osctld/garbage_collector.rb
+@@ -106,22 +106,32 @@ module OsCtld
+     end
+ 
+     def prune
++      activity_enqueue
+       @queue << :prune
++    rescue StandardError
++      activity_unknown('gc_queue_failed')
++      raise
+     end
+ 
+     # @param run_conf [Container::RunConfiguration]
+     # @param dataset [OsCtl::Lib::Zfs::Dataset]
+     def add_container_run_dataset(run_conf, dataset)
+-      exclusively do
+-        @container_run_datasets << ContainerRunDataset.new(run_conf.run_id, dataset)
+-        save_config
++      with_activity do
++        exclusively do
++          @container_run_datasets << ContainerRunDataset.new(run_conf.run_id, dataset)
++          save_config
++        end
+       end
+     end
+ 
+     # @param run_conf [Container::RunConfiguration]
+     # @param dataset [OsCtl::Lib::Zfs::Dataset]
+     def free_container_run_dataset(run_conf, dataset)
++      activity_enqueue
+       @queue << [:free_container_run_dataset, ContainerRunDataset.new(run_conf.run_id, dataset)]
++    rescue StandardError
++      activity_unknown('gc_queue_failed')
++      raise
+     end
+ 
+     def log_type
+@@ -136,12 +146,14 @@ module OsCtld
+       begin
+         cfg = OsCtl::Lib::ConfigFile.load_yaml_file(@config_path)
+       rescue Errno::ENOENT
++        activity_registered
+         return
+       end
+ 
+       @container_run_datasets = cfg.fetch('container_run_datasets', []).map do |ct_run_ds_cfg|
+         ContainerRunDataset.load(ct_run_ds_cfg)
+       end
++      activity_registered
+     end
+ 
+     def save_config
+@@ -151,25 +163,42 @@ module OsCtld
+             'container_run_datasets' => @container_run_datasets.map(&:dump)
+           }))
+         end
++        activity_registered
+       end
+     end
+ 
+     def run_gc
++      stopped_normally = false
++
+       loop do
+         v = @queue.pop(timeout: Daemon.get.config.garbage_collector.prune_interval)
+ 
+         case v
+         in :stop
++          stopped_normally = true
+           return
+ 
+-        in :prune | nil
+-          log(:info, 'Pruning container run datasets')
+-          prune_container_run_datasets
++        in :prune
++          with_activity(queued: true) do
++            log(:info, 'Pruning container run datasets')
++            prune_container_run_datasets
++          end
++
++        in nil
++          with_activity do
++            log(:info, 'Pruning container run datasets')
++            prune_container_run_datasets
++          end
+ 
+         in [:free_container_run_dataset, ct_run_ds]
+-          do_free_container_run_dataset(ct_run_ds)
++          with_activity(queued: true) { do_free_container_run_dataset(ct_run_ds) }
++
++        else
++          activity_unknown('gc_queue_event_unknown')
+         end
+       end
++    ensure
++      activity_unknown('gc_worker_lost') unless stopped_normally
+     end
+ 
+     def prune_container_run_datasets
+@@ -231,5 +260,41 @@ module OsCtld
+         true
+       end
+     end
++
++    def activity_tracker
++      pool.respond_to?(:storage_activity) ? pool.storage_activity : nil
++    end
++
++    def activity_instance_uuid
++      pool.storage_activity_instance_uuid
++    end
++
++    def activity_enqueue
++      activity_tracker&.enqueue(pool.name, activity_instance_uuid, :run_gc)
++    end
++
++    def activity_registered
++      activity_tracker&.registered(pool.name, activity_instance_uuid, @container_run_datasets.length)
++    end
++
++    def activity_unknown(reason)
++      activity_tracker&.unknown(pool.name, activity_instance_uuid, reason)
++    end
++
++    def with_activity(queued: false)
++      tracker = activity_tracker
++      if tracker
++        if queued
++          tracker.start_queued(pool.name, activity_instance_uuid, :run_gc)
++        else
++          tracker.start_direct(pool.name, activity_instance_uuid, :run_gc)
++        end
++      end
++
++      yield
++    ensure
++      activity_unknown('gc_job_failed') if $!
++      tracker&.finish(pool.name, activity_instance_uuid, :run_gc)
++    end
+   end
+ end
+diff --git a/osctld/lib/osctld/pool.rb b/osctld/lib/osctld/pool.rb
+index 81a5a2b147f8eb450a26f7386f840d3fdee152c2..06eaa86529b9fedfe286aaf2584cc4124d18db9b 100644
+--- a/osctld/lib/osctld/pool.rb
++++ b/osctld/lib/osctld/pool.rb
+@@ -31,7 +31,8 @@ module OsCtld
+     include OsCtl::Lib::Utils::Exception
+ 
+     attr_reader :name, :dataset, :state, :send_receive_key_chain, :autostart_plan,
+-                :autostop_plan, :trash_bin, :garbage_collector, :attrs
++                :autostop_plan, :trash_bin, :garbage_collector, :attrs,
++                :storage_activity, :storage_activity_instance_uuid
+ 
+     def initialize(name, dataset)
+       init_lock
+@@ -40,6 +41,9 @@ module OsCtld
+       @name = name
+       @dataset = dataset || name
+       @state = :importing
++      daemon = Daemon.get if defined?(Daemon)
++      @storage_activity = daemon.storage_activity if daemon.respond_to?(:storage_activity)
++      @storage_activity_instance_uuid = @storage_activity&.attach_pool(name)
+       @attrs = Attributes.new
+       @abort_export = false
+     end
+@@ -323,6 +327,7 @@ module OsCtld
+       garbage_collector.start
+ 
+       exclusively { @state = :active }
++      storage_activity&.state(name, storage_activity_instance_uuid, 'active')
+ 
+       # Schedule hint updates
+       @hint_updater.start
+@@ -408,6 +413,7 @@ module OsCtld
+     end
+ 
+     def begin_stop
++      storage_activity&.state(name, storage_activity_instance_uuid, 'stopping')
+       autostart_plan.stop if autostart_plan.started?
+       trash_bin.stop if trash_bin.started?
+     end
+@@ -449,6 +455,15 @@ module OsCtld
+ 
+     def disable
+       @state = :disabled
++      storage_activity&.state(name, storage_activity_instance_uuid, 'stopping')
++    end
++
++    def storage_activity_absent
++      if garbage_collector&.started?
++        storage_activity&.unknown(name, storage_activity_instance_uuid, 'gc_worker_unstopped')
++      end
++
++      storage_activity&.state(name, storage_activity_instance_uuid, 'absent')
+     end
+ 
+     def ct_ds
+diff --git a/osctld/lib/osctld/storage_activity.rb b/osctld/lib/osctld/storage_activity.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..0863d3988a99c8da5b80161fc9e15ee81793947e
+--- /dev/null
++++ b/osctld/lib/osctld/storage_activity.rb
+@@ -0,0 +1,236 @@
++# frozen_string_literal: true
++
++require 'securerandom'
++
++module OsCtld
++  # Bounded, daemon-local evidence about delayed per-pool storage work.
++  # It observes work; it does not prevent any operation from starting.
++  class StorageActivity
++    VERSION = 1
++    COVERAGE = 'gc_trash_v1'
++    MAX_COUNT = 10_000
++    MAX_REASONS = 8
++    KINDS = %i[run_gc trash_prune trash_move].freeze
++    STATES = %w[importing active stopping absent].freeze
++    REASONS = %w[
++      prior_instance_unsettled invalid_registration_count count_overflow
++      stale_instance_event worker_dead worker_inspection_failed pool_missing
++      pool_instance_mismatch reason_overflow counter_mismatch
++      gc_queue_failed gc_worker_lost gc_queue_event_unknown gc_job_failed
++      gc_worker_unstopped trash_queue_failed trash_worker_lost
++      trash_queue_event_unknown trash_job_failed trash_unmount_failed
++      trash_metadata_incomplete trash_destroy_failed
++    ].freeze
++
++    Entry = Struct.new(
++      :instance_uuid, :state, :counts, :registered, :unknown_reasons,
++      keyword_init: true
++    )
++
++    attr_reader :boot_uuid
++
++    def initialize
++      @boot_uuid = SecureRandom.uuid
++      @mutex = Mutex.new
++      @generation = 0
++      @pools = {}
++    end
++
++    def attach_pool(name)
++      change do
++        previous = @pools[name]
++        reasons = previous ? previous.unknown_reasons.dup : []
++
++        if previous && (previous.state != 'absent' || busy?(previous))
++          add_reason(reasons, 'prior_instance_unsettled')
++        end
++
++        entry = Entry.new(
++          instance_uuid: SecureRandom.uuid,
++          state: 'importing',
++          counts: empty_counts,
++          registered: 0,
++          unknown_reasons: reasons
++        )
++        @pools[name] = entry
++        entry.instance_uuid
++      end
++    end
++
++    def state(name, instance_uuid, value)
++      raise ArgumentError, 'invalid pool state' unless STATES.include?(value)
++
++      update(name, instance_uuid) { |entry| entry.state = value }
++    end
++
++    def enqueue(name, instance_uuid, kind)
++      check_kind!(kind)
++      update(name, instance_uuid) { |entry| increase(entry, kind, :pending) }
++    end
++
++    def start_queued(name, instance_uuid, kind)
++      check_kind!(kind)
++      update(name, instance_uuid) do |entry|
++        decrease(entry, kind, :pending)
++        increase(entry, kind, :running)
++      end
++    end
++
++    def start_direct(name, instance_uuid, kind)
++      check_kind!(kind)
++      update(name, instance_uuid) { |entry| increase(entry, kind, :running) }
++    end
++
++    def finish(name, instance_uuid, kind)
++      check_kind!(kind)
++      update(name, instance_uuid) { |entry| decrease(entry, kind, :running) }
++    end
++
++    def registered(name, instance_uuid, count)
++      update(name, instance_uuid) do |entry|
++        if !count.is_a?(Integer) || count < 0
++          add_reason(entry.unknown_reasons, 'invalid_registration_count')
++        elsif count > MAX_COUNT
++          entry.registered = MAX_COUNT
++          add_reason(entry.unknown_reasons, 'count_overflow')
++        else
++          entry.registered = count
++        end
++      end
++    end
++
++    def unknown(name, instance_uuid, reason)
++      update(name, instance_uuid) { |entry| add_reason(entry.unknown_reasons, reason) }
++    end
++
++    # The current Pool object is inspected under the same mutex as all counters.
++    # A missing or dead worker remains unknown even if it is later restarted.
++    def snapshot(name, pool:)
++      @mutex.synchronize do
++        entry = @pools[name]
++        state = entry ? entry.state : 'absent'
++        alive = { run_gc: false, trash_prune: false }
++
++        if pool
++          if entry.nil? || pool.storage_activity_instance_uuid != entry.instance_uuid
++            mark_snapshot_unknown(entry, 'pool_instance_mismatch')
++          else
++            begin
++              alive = {
++                run_gc: pool.garbage_collector&.started? || false,
++                trash_prune: pool.trash_bin&.started? || false
++              }
++              if state == 'active' && !alive.values.all?
++                mark_snapshot_unknown(entry, 'worker_dead')
++              end
++            rescue StandardError
++              mark_snapshot_unknown(entry, 'worker_inspection_failed') if state == 'active'
++            end
++          end
++        elsif entry && state != 'absent'
++          mark_snapshot_unknown(entry, 'pool_missing')
++          state = 'absent'
++        end
++
++        reasons = entry ? entry.unknown_reasons.dup : ['pool_absent']
++        counts = entry ? copy_counts(entry) : empty_counts
++        overflow = reasons.include?('count_overflow') || reasons.include?('reason_overflow')
++        unknown = state != 'active' || !alive.values.all? || reasons.any?
++        idle = !unknown && counts.values.all? { |v| v.values.all?(&:zero?) }
++
++        {
++          version: VERSION,
++          coverage: COVERAGE,
++          daemon_boot_uuid: boot_uuid,
++          pool_instance_uuid: entry&.instance_uuid,
++          generation: @generation,
++          pool: name,
++          state: state,
++          counts: counts,
++          registered_run_datasets: entry ? entry.registered : 0,
++          worker_alive: alive,
++          unknown_reasons: reasons,
++          unknown: unknown,
++          overflow: overflow,
++          idle: idle
++        }
++      end
++    end
++
++    private
++
++    def change
++      @mutex.synchronize do
++        @generation += 1
++        begin
++          yield
++        ensure
++          @generation += 1
++        end
++      end
++    end
++
++    def update(name, instance_uuid)
++      change do
++        entry = @pools[name]
++        if entry && entry.instance_uuid == instance_uuid
++          yield entry
++        elsif entry
++          add_reason(entry.unknown_reasons, 'stale_instance_event')
++        end
++      end
++    end
++
++    def mark_snapshot_unknown(entry, reason)
++      @generation += 1
++      add_reason(entry.unknown_reasons, reason) if entry
++      @generation += 1
++    end
++
++    def add_reason(reasons, reason)
++      raise ArgumentError, 'invalid storage activity reason' unless REASONS.include?(reason)
++
++      return if reasons.include?(reason)
++
++      if reasons.length < MAX_REASONS
++        reasons << reason
++      elsif !reasons.include?('reason_overflow')
++        reasons[-1] = 'reason_overflow'
++      end
++    end
++
++    def empty_counts
++      KINDS.to_h { |kind| [kind, { pending: 0, running: 0 }] }
++    end
++
++    def copy_counts(entry)
++      entry.counts.transform_values(&:dup)
++    end
++
++    def busy?(entry)
++      entry.counts.values.any? { |v| v.values.any?(&:positive?) }
++    end
++
++    def check_kind!(kind)
++      raise ArgumentError, 'invalid activity kind' unless KINDS.include?(kind)
++    end
++
++    def increase(entry, kind, phase)
++      current = entry.counts.fetch(kind).fetch(phase)
++      if current == MAX_COUNT
++        add_reason(entry.unknown_reasons, 'count_overflow')
++      else
++        entry.counts[kind][phase] = current + 1
++      end
++    end
++
++    def decrease(entry, kind, phase)
++      current = entry.counts.fetch(kind).fetch(phase)
++      if current == 0
++        add_reason(entry.unknown_reasons, 'counter_mismatch')
++      else
++        entry.counts[kind][phase] = current - 1
++      end
++    end
++  end
++end
+diff --git a/osctld/lib/osctld/trash_bin.rb b/osctld/lib/osctld/trash_bin.rb
+index 1b79caedf7e3ca640de8b340fcad17b1ef491b4c..52bc9ae758b6797cfde6b28ef937b69874a13329 100644
+--- a/osctld/lib/osctld/trash_bin.rb
++++ b/osctld/lib/osctld/trash_bin.rb
+@@ -42,11 +42,25 @@ module OsCtld
+     end
+ 
+     def prune
++      activity_tracker&.enqueue(pool.name, activity_instance_uuid, :trash_prune)
+       @queue << :prune
++    rescue StandardError
++      activity_unknown('trash_queue_failed')
++      raise
+     end
+ 
+     # @param dataset [OsCtl::Lib::Zfs::Dataset]
+     def add_dataset(dataset)
++      with_activity(:trash_move) { do_add_dataset(dataset) }
++    end
++
++    def log_type
++      "#{pool.name}:trash"
++    end
++
++    protected
++
++    def do_add_dataset(dataset)
+       # Set canmount on the dataset and umount it with and all its descendants
+       dataset.list.reverse_each do |ds|
+         zfs(:set, 'canmount=noauto', ds.name)
+@@ -58,6 +72,7 @@ module OsCtld
+         rescue SystemCommandFailed => e
+           unless e.output.include?('not currently mounted')
+             log(:warn, "Unable to unmount #{ds}: #{e.message}")
++            activity_unknown('trash_unmount_failed')
+           end
+         end
+       end
+@@ -79,20 +94,27 @@ module OsCtld
+       )
+     end
+ 
+-    def log_type
+-      "#{pool.name}:trash"
+-    end
+-
+-    protected
+-
+     def run_gc
++      stopped_normally = false
++
+       loop do
+         v = @queue.pop(timeout: Daemon.get.config.trash_bin.prune_interval)
+-        return if v == :stop
++        if v == :stop
++          stopped_normally = true
++          return
++        end
+ 
+-        log(:info, 'Pruning')
+-        prune_datasets
++        if v == :prune || v.nil?
++          with_activity(:trash_prune, queued: v == :prune) do
++            log(:info, 'Pruning')
++            prune_datasets
++          end
++        else
++          activity_unknown('trash_queue_event_unknown')
++        end
+       end
++    ensure
++      activity_unknown('trash_worker_lost') unless stopped_normally
+     end
+ 
+     def prune_datasets
+@@ -114,6 +136,7 @@ module OsCtld
+ 
+         if ds.properties[check_property] == '-' || ds.properties[check_property].to_i <= 0
+           log(:debug, "Skipping #{ds} as it is still being trashed")
++          activity_unknown('trash_metadata_incomplete')
+           next
+         end
+ 
+@@ -123,6 +146,7 @@ module OsCtld
+           ds.destroy!(recursive: true)
+         rescue SystemCommandFailed => e
+           log(:warn, "Unable to destroy #{ds}: #{e.message}")
++          activity_unknown('trash_destroy_failed')
+           next
+         end
+ 
+@@ -146,5 +170,33 @@ module OsCtld
+ 
+       [path, t]
+     end
++
++    def activity_tracker
++      pool.respond_to?(:storage_activity) ? pool.storage_activity : nil
++    end
++
++    def activity_instance_uuid
++      pool.storage_activity_instance_uuid
++    end
++
++    def activity_unknown(reason)
++      activity_tracker&.unknown(pool.name, activity_instance_uuid, reason)
++    end
++
++    def with_activity(kind, queued: false)
++      tracker = activity_tracker
++      if tracker
++        if queued
++          tracker.start_queued(pool.name, activity_instance_uuid, kind)
++        else
++          tracker.start_direct(pool.name, activity_instance_uuid, kind)
++        end
++      end
++
++      yield
++    ensure
++      activity_unknown('trash_job_failed') if $!
++      tracker&.finish(pool.name, activity_instance_uuid, kind)
++    end
+   end
+ end
+diff --git a/osctld/spec/osctld/commands/heavy_system_spec.rb b/osctld/spec/osctld/commands/heavy_system_spec.rb
+index ee62fb80331f3df3159df0aa74a44cfac8100cc1..8e3d60efe3235a8910c7d54ff3bfcc946bf2d3c2 100644
+--- a/osctld/spec/osctld/commands/heavy_system_spec.rb
++++ b/osctld/spec/osctld/commands/heavy_system_spec.rb
+@@ -348,6 +348,7 @@ RSpec.describe 'heavy system commands' do
+ 
+           def begin_export; end
+           def begin_stop; end
++          def storage_activity_absent; end
+ 
+           def exclusively
+             yield
+@@ -435,8 +436,10 @@ RSpec.describe 'heavy system commands' do
+       allow(command).to receive(:call_cmd!).with(subugids).and_return(status: true, output: nil)
+       allow(command).to receive(:call_cmd!).with(usernet).and_return(status: true, output: nil)
+       allow(command).to receive(:syscmd)
++      allow(pool).to receive(:storage_activity_absent)
+ 
+       expect(command.execute).to eq(status: true, output: nil)
++      expect(pool).to have_received(:storage_activity_absent).once
+       expect(monitor).to have_received(:demonitor).with(ct)
+       expect(console).to have_received(:remove).with(ct)
+       expect(history).to have_received(:close).with(pool)
+diff --git a/osctld/spec/osctld/commands/simple_delegators_spec.rb b/osctld/spec/osctld/commands/simple_delegators_spec.rb
+index ab8c91e0691f35021720b8ac5bdab7d7bb269ee7..4c79c5f835ed44822c11aaecc4e436964af23f41 100644
+--- a/osctld/spec/osctld/commands/simple_delegators_spec.rb
++++ b/osctld/spec/osctld/commands/simple_delegators_spec.rb
+@@ -2,14 +2,24 @@
+ 
+ require 'osctld/exceptions'
+ require 'osctld/command'
++require 'osctld/lockable'
++require 'osctld/garbage_collector'
++require 'osctld/trash_bin'
++
++module OsCtld::Commands
++  module Pool; end
++end
++
+ require 'osctld/commands/self/ping'
+ require 'osctld/commands/debug/lock_registry'
+ require 'osctld/commands/history/list'
+ require 'osctld/commands/trash_bin/prune'
+ require 'osctld/commands/trash_bin/dataset_add'
+ require 'osctld/commands/garbage_collector/prune'
++require 'osctld/commands/pool/storage_activity'
+ require 'osctld/commands/send/key_path'
+ require 'osctld/commands/receive/authkey_list'
++require 'osctld/storage_activity'
+ 
+ RSpec.describe OsCtld::Commands::Self::Ping do
+   it 'returns pong from self ping' do
+@@ -109,6 +119,46 @@ RSpec.describe OsCtld::Commands::Self::Ping do
+     expect(trash).to have_received(:add_dataset).with(dataset)
+   end
+ 
++  it 'returns one imported pool activity snapshot without enqueuing work' do
++    tracker = OsCtld::StorageActivity.new
++    instance_uuid = tracker.attach_pool('tank')
++    tracker.state('tank', instance_uuid, 'active')
++    gc = instance_double(OsCtld::GarbageCollector, started?: true)
++    trash = instance_double(OsCtld::TrashBin, started?: true)
++    pool = Struct.new(
++      :storage_activity_instance_uuid, :garbage_collector, :trash_bin
++    ).new(instance_uuid, gc, trash)
++    daemon = Struct.new(:storage_activity).new(tracker)
++
++    stub_const('OsCtld::Daemon', Class.new do
++      def self.get; end
++    end)
++    allow(OsCtld::Daemon).to receive(:get).and_return(daemon)
++    stub_const('OsCtld::DB::Pools', Class.new do
++      def self.find(_name); end
++    end)
++    allow(OsCtld::DB::Pools).to receive(:find).with('tank').and_return(pool)
++
++    expect(OsCtld::Command.find(:pool_storage_activity)).to eq(
++      OsCtld::Commands::Pool::StorageActivity
++    )
++    ret = OsCtld::Commands::Pool::StorageActivity.run(pool: 'tank')
++
++    expect(ret[:status]).to be(true)
++    expect(ret[:output]).to include(
++      version: 1, coverage: 'gc_trash_v1', unknown: false, overflow: false, idle: true
++    )
++    allow(OsCtld::DB::Pools).to receive(:find).with('pond').and_return(nil)
++    absent = OsCtld::Commands::Pool::StorageActivity.run(pool: 'pond')
++    expect(absent[:output]).to include(state: 'absent', idle: false)
++    expect { OsCtld::Commands::Pool::StorageActivity.run(pools: ['tank']) }.to raise_error(
++      OsCtld::CommandFailed, /exactly one zpool/
++    )
++    expect { OsCtld::Commands::Pool::StorageActivity.run(pool: 'tank', extra: true) }.to raise_error(
++      OsCtld::CommandFailed, /exactly one zpool/
++    )
++  end
++
+   it 'returns send key paths and receive auth key exports for the selected pool' do
+     key_chain = Struct.new(:private_key_path, :public_key_path, :export, keyword_init: true).new(
+       private_key_path: '/keys/id_rsa',
+diff --git a/osctld/spec/osctld/garbage_collector_spec.rb b/osctld/spec/osctld/garbage_collector_spec.rb
+index 1003a0728126ba9e2b57e1fde994b0e38618d393..909d49449e4ddac403eb1506f80a7a2791783666 100644
+--- a/osctld/spec/osctld/garbage_collector_spec.rb
++++ b/osctld/spec/osctld/garbage_collector_spec.rb
+@@ -3,6 +3,9 @@
+ require 'osctld/lockable'
+ require 'osctld/container/run_id'
+ require 'osctld/garbage_collector'
++require 'osctld/trash_bin'
++require 'osctld/storage_activity'
++require 'timeout'
+ 
+ RSpec.describe OsCtld::GarbageCollector do
+   def stub_gc_daemon(prune_interval: 0.01)
+@@ -16,10 +19,16 @@ RSpec.describe OsCtld::GarbageCollector do
+     allow(OsCtld::Daemon).to receive(:get).and_return(daemon)
+   end
+ 
+-  def build_pool(tmpdir)
+-    Struct.new(:name, :conf_path, keyword_init: true).new(
++  def build_pool(tmpdir, activity: nil)
++    Struct.new(
++      :name, :conf_path, :storage_activity, :storage_activity_instance_uuid,
++      :garbage_collector, :trash_bin, keyword_init: true
++    ).new(
+       name: 'tank',
+-      conf_path: File.join(tmpdir, 'conf')
++      conf_path: File.join(tmpdir, 'conf'),
++      storage_activity: activity,
++      storage_activity_instance_uuid: activity&.attach_pool('tank'),
++      trash_bin: instance_double(OsCtld::TrashBin, started?: true)
+     )
+   end
+ 
+@@ -127,4 +136,64 @@ RSpec.describe OsCtld::GarbageCollector do
+                                                   ])
+     end
+   end
++
++  it 'tracks registration and preserves queued work through pop and execution' do
++    with_tmpdir do |tmpdir|
++      stub_gc_daemon(prune_interval: 60)
++      allow(OsCtl::Lib::Logger).to receive(:log)
++      tracker = OsCtld::StorageActivity.new
++      pool = build_pool(tmpdir, activity: tracker)
++      FileUtils.mkdir_p(File.join(pool.conf_path, 'pool'))
++      gc = described_class.new(pool)
++      pool.garbage_collector = gc
++      run_id = OsCtld::Container::RunId.new(pool_name: 'tank', container_id: 'ct1', timestamp: 3.5)
++      gc.add_container_run_dataset(
++        Struct.new(:run_id).new(run_id),
++        OsCtl::Lib::Zfs::Dataset.new('tank/ct1-run')
++      )
++
++      expect(tracker.snapshot('tank', pool:)[:registered_run_datasets]).to eq(1)
++
++      entered = Queue.new
++      release = Queue.new
++      allow(gc).to receive(:prune_container_run_datasets) do
++        entered << true
++        release.pop
++      end
++
++      gc.prune
++      pending = tracker.snapshot('tank', pool:)
++      expect(pending[:counts][:run_gc]).to eq(pending: 1, running: 0)
++
++      gc.start
++      Timeout.timeout(2) { entered.pop }
++      running = tracker.snapshot('tank', pool:)
++      expect(running[:counts][:run_gc]).to eq(pending: 0, running: 1)
++    ensure
++      release << true if release
++      gc&.stop
++      expect(tracker.snapshot('tank', pool:)[:counts][:run_gc]).to eq(pending: 0, running: 0)
++    end
++  end
++
++  it 'keeps an unexpected worker death unknown' do
++    with_tmpdir do |tmpdir|
++      stub_gc_daemon(prune_interval: 60)
++      tracker = OsCtld::StorageActivity.new
++      pool = build_pool(tmpdir, activity: tracker)
++      gc = described_class.new(pool)
++      pool.garbage_collector = gc
++      tracker.state('tank', pool.storage_activity_instance_uuid, 'active')
++
++      gc.start
++      thread = gc.instance_variable_get(:@thread)
++      Timeout.timeout(2) { Thread.pass until thread.status == 'sleep' }
++      thread.kill
++      thread.join
++
++      sample = tracker.snapshot('tank', pool:)
++      expect(sample[:unknown_reasons]).to include('gc_worker_lost')
++      expect(sample[:idle]).to be(false)
++    end
++  end
+ end
+diff --git a/osctld/spec/osctld/storage_activity_spec.rb b/osctld/spec/osctld/storage_activity_spec.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc325085b97a4be746a826c82f17c6e21b0db5b0
+--- /dev/null
++++ b/osctld/spec/osctld/storage_activity_spec.rb
+@@ -0,0 +1,150 @@
++# frozen_string_literal: true
++
++require 'osctld/storage_activity'
++require 'osctld/attributes'
++require 'osctld/pool'
++require 'osctld/garbage_collector'
++require 'osctld/trash_bin'
++
++RSpec.describe OsCtld::StorageActivity do
++  def pool(instance_uuid, gc_alive: true, trash_alive: true)
++    Struct.new(
++      :storage_activity_instance_uuid, :garbage_collector, :trash_bin,
++      keyword_init: true
++    ).new(
++      storage_activity_instance_uuid: instance_uuid,
++      garbage_collector: instance_double(OsCtld::GarbageCollector, started?: gc_alive),
++      trash_bin: instance_double(OsCtld::TrashBin, started?: trash_alive)
++    )
++  end
++
++  it 'counts queued work through running completion without an idle pop gap' do
++    tracker = described_class.new
++    instance_uuid = tracker.attach_pool('tank')
++    current_pool = pool(instance_uuid)
++    tracker.state('tank', instance_uuid, 'active')
++
++    initial = tracker.snapshot('tank', pool: current_pool)
++    expect(initial).to include(
++      version: 1, coverage: 'gc_trash_v1', unknown: false, overflow: false, idle: true
++    )
++    expect(initial[:daemon_boot_uuid]).to match(/\A[0-9a-f-]{36}\z/)
++
++    tracker.enqueue('tank', instance_uuid, :run_gc)
++    pending = tracker.snapshot('tank', pool: current_pool)
++    expect(pending[:counts][:run_gc]).to eq(pending: 1, running: 0)
++    expect(pending[:unknown]).to be(false)
++    expect(pending[:idle]).to be(false)
++
++    tracker.start_queued('tank', instance_uuid, :run_gc)
++    running = tracker.snapshot('tank', pool: current_pool)
++    expect(running[:counts][:run_gc]).to eq(pending: 0, running: 1)
++    expect(running[:idle]).to be(false)
++
++    tracker.finish('tank', instance_uuid, :run_gc)
++    finished = tracker.snapshot('tank', pool: current_pool)
++    expect(finished[:idle]).to be(true)
++    expect([initial, pending, running, finished].map { |v| v[:generation] }).to eq(
++      [4, 6, 8, 10]
++    )
++  end
++
++  it 'counts timer work and synchronous moves before they can act' do
++    tracker = described_class.new
++    instance_uuid = tracker.attach_pool('tank')
++    current_pool = pool(instance_uuid)
++    tracker.state('tank', instance_uuid, 'active')
++
++    tracker.start_direct('tank', instance_uuid, :trash_prune)
++    tracker.start_direct('tank', instance_uuid, :trash_move)
++    sample = tracker.snapshot('tank', pool: current_pool)
++
++    expect(sample[:counts][:trash_prune]).to eq(pending: 0, running: 1)
++    expect(sample[:counts][:trash_move]).to eq(pending: 0, running: 1)
++    expect(sample[:idle]).to be(false)
++
++    tracker.finish('tank', instance_uuid, :trash_prune)
++    tracker.finish('tank', instance_uuid, :trash_move)
++    expect(tracker.snapshot('tank', pool: current_pool)[:idle]).to be(true)
++  end
++
++  it 'retains unknown after worker loss and across pool reimport' do
++    tracker = described_class.new
++    first = tracker.attach_pool('tank')
++    tracker.state('tank', first, 'active')
++    lost = tracker.snapshot('tank', pool: pool(first, gc_alive: false))
++    expect(lost[:unknown_reasons]).to include('worker_dead')
++    expect(lost[:unknown]).to be(true)
++
++    tracker.state('tank', first, 'absent')
++    second = tracker.attach_pool('tank')
++    tracker.state('tank', second, 'active')
++    sample = tracker.snapshot('tank', pool: pool(second))
++
++    expect(second).not_to eq(first)
++    expect(sample[:generation]).to be > lost[:generation]
++    expect(sample[:unknown_reasons]).to include('worker_dead')
++    expect(sample[:idle]).to be(false)
++
++    tracker.finish('tank', first, :run_gc)
++    expect(tracker.snapshot('tank', pool: pool(second))[:unknown_reasons]).to include(
++      'stale_instance_event'
++    )
++  end
++
++  it 'bounds counts and keeps overflow unknown after completion' do
++    tracker = described_class.new
++    instance_uuid = tracker.attach_pool('tank')
++    tracker.state('tank', instance_uuid, 'active')
++    tracker.registered('tank', instance_uuid, described_class::MAX_COUNT + 1)
++
++    sample = tracker.snapshot('tank', pool: pool(instance_uuid))
++    expect(sample[:registered_run_datasets]).to eq(described_class::MAX_COUNT)
++    expect(sample[:unknown_reasons]).to include('count_overflow')
++    expect(sample).to include(unknown: true, overflow: true)
++    expect(sample[:idle]).to be(false)
++  end
++
++  it 'reports absent pools without inventing worker coverage' do
++    tracker = described_class.new
++    sample = tracker.snapshot('missing', pool: nil)
++
++    expect(sample).to include(state: 'absent', unknown: true, overflow: false, idle: false)
++    expect(sample[:pool_instance_uuid]).to be_nil
++    expect(sample[:unknown_reasons]).to eq(['pool_absent'])
++  end
++
++  it 'keeps a pool lifecycle generation through export and reimport' do
++    tracker = described_class.new
++    daemon = Struct.new(:storage_activity).new(tracker)
++    stub_const('OsCtld::Daemon', Class.new do
++      def self.get; end
++    end)
++    allow(OsCtld::Daemon).to receive(:get).and_return(daemon)
++
++    first = OsCtld::Pool.new('tank', 'tank')
++    first.instance_variable_set(
++      '@autostart_plan', instance_double(OsCtld::AutoStart::Plan, started?: false)
++    )
++    first.instance_variable_set('@trash_bin', instance_double(OsCtld::TrashBin, started?: false))
++    first.instance_variable_set(
++      '@garbage_collector', instance_double(OsCtld::GarbageCollector, started?: false)
++    )
++    importing = tracker.snapshot('tank', pool: first)
++
++    first.begin_stop
++    stopping = tracker.snapshot('tank', pool: first)
++    first.storage_activity_absent
++    absent = tracker.snapshot('tank', pool: nil)
++    second = OsCtld::Pool.new('tank', 'tank')
++    reimporting = tracker.snapshot('tank', pool: second)
++
++    expect([importing, stopping, absent, reimporting].map { |v| v[:state] }).to eq(
++      %w[importing stopping absent importing]
++    )
++    expect([importing, stopping, absent, reimporting].map { |v| v[:generation] }).to eq(
++      [2, 4, 6, 8]
++    )
++    expect(reimporting[:pool_instance_uuid]).not_to eq(importing[:pool_instance_uuid])
++  end
++end
+diff --git a/osctld/spec/osctld/trash_bin_spec.rb b/osctld/spec/osctld/trash_bin_spec.rb
+index 54c99adcf029fab36a70a0403d268329f3004f31..2cf4e5d79f5c7857eb264cfe144966ec97a65840 100644
+--- a/osctld/spec/osctld/trash_bin_spec.rb
++++ b/osctld/spec/osctld/trash_bin_spec.rb
+@@ -1,6 +1,10 @@
+ # frozen_string_literal: true
+ 
++require 'osctld/lockable'
++require 'osctld/garbage_collector'
+ require 'osctld/trash_bin'
++require 'osctld/storage_activity'
++require 'timeout'
+ 
+ RSpec.describe OsCtld::TrashBin do
+   def stub_trash_daemon(prune_interval: 0.01)
+@@ -14,10 +18,16 @@ RSpec.describe OsCtld::TrashBin do
+     allow(OsCtld::Daemon).to receive(:get).and_return(daemon)
+   end
+ 
+-  def build_pool
+-    Struct.new(:name, :trash_bin_ds, keyword_init: true).new(
++  def build_pool(activity: nil)
++    Struct.new(
++      :name, :trash_bin_ds, :storage_activity, :storage_activity_instance_uuid,
++      :garbage_collector, :trash_bin, keyword_init: true
++    ).new(
+       name: 'tank',
+-      trash_bin_ds: 'tank/trash'
++      trash_bin_ds: 'tank/trash',
++      storage_activity: activity,
++      storage_activity_instance_uuid: activity&.attach_pool('tank'),
++      garbage_collector: instance_double(OsCtld::GarbageCollector, started?: true)
+     )
+   end
+ 
+@@ -71,4 +81,67 @@ RSpec.describe OsCtld::TrashBin do
+ 
+     expect { trash.add_dataset(dataset) }.not_to raise_error
+   end
++
++  it 'counts a synchronous move before the first ZFS effect' do
++    tracker = OsCtld::StorageActivity.new
++    pool = build_pool(activity: tracker)
++    trash = described_class.new(pool)
++    pool.trash_bin = trash
++    dataset = instance_double(OsCtl::Lib::Zfs::Dataset, name: 'tank/ct1', to_s: 'tank/ct1')
++    allow(dataset).to receive(:list).and_return([dataset])
++    allow(trash).to receive(:trash_path).and_return(['tank/trash/ct1.1700.abcdef', Time.at(1700)])
++    observed = []
++    allow(trash).to receive(:zfs) do |cmd, _, _|
++      observed << tracker.snapshot('tank', pool:)[:counts][:trash_move] if cmd == :set
++    end
++
++    trash.add_dataset(dataset)
++
++    expect(observed).not_to be_empty
++    expect(observed).to all(eq(pending: 0, running: 1))
++    expect(tracker.snapshot('tank', pool:)[:counts][:trash_move]).to eq(pending: 0, running: 0)
++  end
++
++  it 'counts a timer prune until its scan completes' do
++    stub_trash_daemon(prune_interval: 0.01)
++    allow(OsCtl::Lib::Logger).to receive(:log)
++    tracker = OsCtld::StorageActivity.new
++    pool = build_pool(activity: tracker)
++    trash = described_class.new(pool)
++    pool.trash_bin = trash
++    entered = Queue.new
++    release = Queue.new
++    allow(trash).to receive(:prune_datasets) do
++      entered << true
++      release.pop
++    end
++
++    trash.start
++    Timeout.timeout(2) { entered.pop }
++    expect(tracker.snapshot('tank', pool:)[:counts][:trash_prune]).to eq(pending: 0, running: 1)
++
++    stop_thread = Thread.new { trash.stop }
++    release << true
++    Timeout.timeout(2) { stop_thread.join }
++    expect(tracker.snapshot('tank', pool:)[:counts][:trash_prune]).to eq(pending: 0, running: 0)
++  end
++
++  it 'keeps a failed move unknown after the running counter clears' do
++    tracker = OsCtld::StorageActivity.new
++    pool = build_pool(activity: tracker)
++    trash = described_class.new(pool)
++    pool.trash_bin = trash
++    dataset = instance_double(OsCtl::Lib::Zfs::Dataset, name: 'tank/ct1', to_s: 'tank/ct1')
++    allow(dataset).to receive(:list).and_return([dataset])
++    allow(trash).to receive(:zfs).and_raise(
++      OsCtld::SystemCommandFailed.new('zfs set', 1, 'unknown result')
++    )
++
++    expect { trash.add_dataset(dataset) }.to raise_error(OsCtld::SystemCommandFailed)
++
++    sample = tracker.snapshot('tank', pool:)
++    expect(sample[:counts][:trash_move]).to eq(pending: 0, running: 0)
++    expect(sample[:unknown_reasons]).to include('trash_job_failed')
++    expect(sample[:idle]).to be(false)
++  end
+ end
+diff --git a/tests/all-tests.nix b/tests/all-tests.nix
+index 8d9fda61f8b77201ec579218a6b94ea17627fa91..a7ab1392156a240fbdee0b51358a26d0bc3edf83 100644
+--- a/tests/all-tests.nix
++++ b/tests/all-tests.nix
+@@ -165,6 +165,7 @@ let
+         "osctl-exportfs/mount"
+         "osctld/resilience"
+         "osctld/restart"
++        "osctld/storage-activity"
+         "prometheus/exporters"
+         "podman/almalinux"
+         "podman/arch"
+diff --git a/tests/osctld-disabled-eval.nix b/tests/osctld-disabled-eval.nix
+new file mode 100644
+index 0000000000000000000000000000000000000000..ddc3d70b766c741e48d0dbf3f1cff47b7037799c
+--- /dev/null
++++ b/tests/osctld-disabled-eval.nix
+@@ -0,0 +1,548 @@
++{ pkgs, makeSystem }:
++let
++  inherit (pkgs) lib;
++  common = {
++    system.stateVersion = "26.05";
++    osctld.settings.disabled_generation_test = "retained";
++    boot.zfs.pools.tank = {
++      install = false;
++      properties."feature@block_cloning" = "disabled";
++      datasets.proof.properties.mountpoint = "/mnt/osctld-disabled-proof";
++    };
++  };
++  make =
++    module:
++    makeSystem {
++      modules = [
++        common
++        module
++      ];
++    };
++  omitted = make { };
++  enabled = make { osctld.enable = true; };
++  declarative = make { osctl.pools.tank = { }; };
++  disabled = make { osctld.enable = false; };
++  rescueOnly = make { runit.services.osctld.runlevels = [ "rescue" ]; };
++  cfg = disabled.config;
++  generatedRun = system: name: system.config.environment.etc."runit/services/${name}/run".source.text;
++  poolRun = generatedRun disabled "pool-tank";
++  enabledPoolRun = generatedRun enabled "pool-tank";
++  service = system: {
++    inherit (system.config.runit.services.osctld) runlevels onChange reloadMethod;
++    restartTriggers = map toString (lib.flatten system.config.runit.services.osctld.restartTriggers);
++  };
++  refuses = module: !(builtins.tryEval (make module).config.system.build.toplevel.drvPath).success;
++  checks = {
++    defaultEnabled = omitted.config.osctld.enable;
++    omissionEqualsTrue =
++      generatedRun omitted "osctld" == generatedRun enabled "osctld"
++      && generatedRun omitted "pool-tank" == enabledPoolRun
++      && service omitted == service enabled;
++    enabledRunlevel = enabled.config.runit.services.osctld.runlevels == [ "default" ];
++    enabledCustomRunlevel = rescueOnly.config.runit.services.osctld.runlevels == [ "rescue" ];
++    disabledRunlevels = cfg.runit.services.osctld.runlevels == [ ];
++    noRunlevelLinks =
++      !lib.any (name: lib.hasSuffix "/osctld" name && lib.hasPrefix "runit/runsvdir/" name) (
++        builtins.attrNames cfg.environment.etc
++      );
++    retainedDefinition = generatedRun disabled "osctld" == generatedRun enabled "osctld";
++    retainedSettings = cfg.osctld.settings == enabled.config.osctld.settings;
++    retainedTools = lib.all (name: lib.elem disabled.pkgs.${name} cfg.environment.systemPackages) [
++      "osctl"
++      "osup"
++      "svctl"
++    ];
++    rawPoolImport = lib.hasInfix "zpool import" poolRun && lib.hasInfix "Mounting datasets..." poolRun;
++    retainedZfsSettings =
++      cfg.boot.zfs.pools.tank == enabled.config.boot.zfs.pools.tank
++      && lib.hasInfix "feature@block_cloning=disabled" poolRun
++      && cfg.runit.services.pool-tank.oneShot;
++    enabledAssociation = lib.all (text: lib.hasInfix text enabledPoolRun) [
++      "org.vpsadminos.osctl:active"
++      "waitForOsctld"
++      "osctl pool import"
++      "osctl pool install"
++    ];
++    enabledParallelSettings = lib.all (text: lib.hasInfix text (generatedRun declarative "pool-tank")) [
++      "osctl pool set parallel-start tank 2"
++      "osctl pool set parallel-stop tank 4"
++    ];
++    disabledAssociation =
++      !lib.any (text: lib.hasInfix text poolRun) [
++        "org.vpsadminos.osctl:active"
++        "waitForOsctld"
++        "osctlEntityExists"
++        "osctl pool"
++        "getKernelParam osctl.pools"
++      ];
++    validDisabledSystem = (builtins.tryEval cfg.system.build.toplevel.drvPath).success;
++    refusesDeclarativePool = refuses {
++      osctld.enable = false;
++      osctl.pools.tank = { };
++    };
++    refusesExportfs = refuses {
++      osctld.enable = false;
++      osctl.exportfs.enable = true;
++    };
++    refusesInstall = refuses {
++      osctld.enable = false;
++      boot.zfs.pools.tank.install = lib.mkForce true;
++    };
++    refusesForcedMembership = refuses {
++      osctld.enable = false;
++      runit.services.osctld.runlevels = lib.mkForce [ "rescue" ];
++    };
++  };
++  haltPackage =
++    system:
++    let
++      matching = lib.filter (
++        package: lib.getName package == "halt"
++      ) system.config.environment.systemPackages;
++    in
++    assert lib.assertMsg (builtins.length matching == 1) "expected one owning installed halt package";
++    builtins.head matching;
++  shutdownInputs = pkgs.writeText "osctld-disabled-shutdown-inputs.json" (
++    builtins.toJSON {
++      halt = {
++        omitted = haltPackage omitted;
++        enabled = haltPackage enabled;
++        disabled = haltPackage disabled;
++      };
++      stage3 = {
++        omitted = omitted.config.environment.etc."runit/3".source;
++        enabled = enabled.config.environment.etc."runit/3".source;
++        disabled = disabled.config.environment.etc."runit/3".source;
++      };
++      shell = pkgs.stdenv.shell;
++    }
++  );
++  projections = pkgs.writeText "osctld-disabled-projections.json" (
++    builtins.unsafeDiscardStringContext (
++      builtins.toJSON {
++        inherit checks;
++        services = {
++          enabled = service enabled;
++          disabled = service disabled;
++          rescue = service rescueOnly;
++        };
++      }
++    )
++  );
++in
++assert lib.assertMsg (lib.all (result: result) (
++  builtins.attrValues checks
++)) "osctld-disabled module checks failed";
++pkgs.runCommand "osctld-disabled-eval" { nativeBuildInputs = [ enabled.pkgs.ruby ]; } ''
++  ruby - ${../os/modules/system/activation/switch-to-configuration.rb} ${projections} <<'RUBY'
++  require 'tmpdir'
++  require 'json'
++
++  source_path, projection_path = ARGV
++  source = File.read(source_path)
++  definitions, entrypoint = source.split("\ncase ARGV[0]\n", 2)
++  raise 'missing owning activation entrypoint' unless entrypoint
++  eval(definitions, TOPLEVEL_BINDING, source_path)
++  projections = JSON.parse(File.read(projection_path))
++
++  # Use the owning service parser and restart calculation with actual module
++  # projections; only filesystem locations and the external command are fixtures.
++  class FixtureServices < Services
++    def initialize(old_service, new_service, etc_path, skipped: false)
++      @opts = { dry_run: false }
++      protected_path = File.join(etc_path, 'protected-services.txt')
++      File.write(protected_path, skipped ? "osctld\n" : "")
++      @protected_list = ServiceNameList.new(protected_path)
++      @old_cfg = { 'defaultRunlevel' => 'default', 'services' => { 'osctld' => old_service } }
++      @new_cfg = { 'defaultRunlevel' => 'default', 'services' => { 'osctld' => new_service } }
++      @old_runlevel = 'default'
++      @new_runlevel = get_runlevel(@new_cfg, @old_runlevel)
++      @old_services = get_services(@old_cfg, @old_runlevel, etc_path)
++      @new_services = get_services(@new_cfg, @new_runlevel, etc_path)
++    end
++  end
++
++  class FixtureConfiguration < Configuration
++    attr_reader :commands
++
++    def initialize(**opts)
++      super
++      @commands = []
++    end
++
++    def system(*args)
++      commands << args
++      true
++    end
++  end
++
++  Dir.mktmpdir('osctld-disabled-activation-') do |etc_path|
++    run_path = File.join(etc_path, 'runit/services/osctld/run')
++    FileUtils.mkdir_p(File.dirname(run_path))
++    File.write(run_path, 'actual service path fixture')
++    enabled = projections.fetch('services').fetch('enabled')
++    changed = enabled.merge('restartTriggers' => ['changed-trigger'])
++    cases = [
++      ['selected', enabled, false, false, true],
++      ['restarted', changed, false, false, false],
++      ['skipped restart', changed, true, false, true],
++      ['disabled', projections.fetch('services').fetch('disabled'), false, false, false],
++      ['other runlevel', projections.fetch('services').fetch('rescue'), false, false, false],
++      ['dry run', enabled, false, true, false]
++    ]
++    cases.each do |label, selected, skipped, dry_run, should_activate|
++      services = FixtureServices.new(enabled, selected, etc_path, skipped: skipped)
++      configuration = FixtureConfiguration.new(dry_run: dry_run)
++      configuration.send(:activate_osctl, services)
++      expected = should_activate ? [[File.join(Configuration::CURRENT_BIN, 'osctl'), 'activate', '--system']] : []
++      raise "incorrect activation: #{label}" unless configuration.commands == expected
++    end
++    puts "module_checks=#{projections.fetch('checks').length} activation_checks=#{cases.length}"
++  end
++  RUBY
++  ruby - ${shutdownInputs} <<'RUBY'
++  require 'json'
++  require 'open3'
++  require 'rbconfig'
++  require 'stringio'
++  require 'tmpdir'
++  require 'fileutils'
++
++  inputs = JSON.parse(File.read(ARGV.fetch(0)))
++  entrypoint = "\nhalt = Halt.new(File.basename($0), ARGV)\nhalt.run\n"
++  classes = {}
++  scripts = {}
++  inputs.fetch('halt').each do |policy, package|
++    script = File.realpath(File.join(package, 'bin/halt'))
++    %w[poweroff reboot].each do |name|
++      raise 'halt alias does not select installed script' unless File.realpath(File.join(package, 'bin', name)) == script
++    end
++    source = File.read(script)
++    raise 'unexpected owning halt entrypoint' unless source.end_with?(entrypoint) && source.scan(entrypoint).length == 1
++    scope = Module.new
++    scope.module_eval(source.delete_suffix(entrypoint), script, 1)
++    classes[policy] = scope.const_get(:Halt)
++    scripts[policy] = source
++  end
++  raise 'omitted and enabled halt scripts differ' unless scripts.fetch('omitted') == scripts.fetch('enabled')
++  raise 'incorrect generated halt policy' unless classes.fetch('omitted')::OSCTLD_ENABLED == true &&
++                                              classes.fetch('enabled')::OSCTLD_ENABLED == true &&
++                                              classes.fetch('disabled')::OSCTLD_ENABLED == false
++
++  class CapturedHaltChild < StandardError; end
++  class CapturedRunitDispatch < StandardError; end
++
++  # Capture external effects only. The installed class owns option parsing,
++  # reason/confirmation/countdown, hooks, shutdown/abort and final dispatch.
++  def observe_halt(klass, name:, args:, loaded: false, listing: true, shutdown_status: 0,
++                   interrupt: false, hooks: true, stale_status: false)
++    events = []
++    children = {}
++    originals = {}
++    original_streams = [$stdin, $stdout, $stderr]
++    fields = %w[HALT_HOOK HALT_ACTION HALT_REASON HALT_FORCE HALT_KEXEC HALT_REASON_FILE]
++    original_env = fields.to_h { |key| [key, ENV[key]] }
++    original_spawn = Process.method(:spawn)
++    original_wait = Process.method(:wait)
++    original_write = File.method(:write)
++    original_stat = File.method(:stat)
++    original_unlink = File.method(:unlink)
++    original_open = File.method(:open)
++    original_tempfile = Tempfile.method(:new)
++    output = StringIO.new
++    error_output = StringIO.new
++    failure = nil
++    patch = lambda do |owner, method, &replacement|
++      originals[[owner, method]] = owner.method(method)
++      owner.define_singleton_method(method, &replacement)
++    end
++
++    Dir.mktmpdir('halt-effects-') do |private_dir|
++      child_kind = nil
++      in_child = false
++      interrupted = false
++      private_file = ->(path) { path.start_with?(private_dir + '/') }
++      fake_stat = Object.new
++      fake_stat.define_singleton_method(:file?) { true }
++      fake_stat.define_singleton_method(:executable?) { true }
++      text_stat = Object.new
++      text_stat.define_singleton_method(:file?) { true }
++      text_stat.define_singleton_method(:executable?) { false }
++      logger = Object.new
++      logger.define_singleton_method(:info) { |text| events << [:log, text] }
++
++      begin
++        $stdin = StringIO.new("fixture-host\n")
++        $stdout = output
++        $stderr = error_output
++        patch.call(Syslog::Logger, :new) { |tag| raise 'unexpected logger' unless tag == 'halt'; logger }
++        patch.call(Socket, :gethostname) { events << [:hostname]; 'fixture-host' }
++        patch.call(Tempfile, :new) { |prefix| original_tempfile.call(prefix, private_dir) }
++        patch.call(Dir, :entries) do |path|
++          case path
++          when klass::HOOK_DIR then hooks ? ['fixture-hook'] : []
++          when klass::REASON_TEMPLATE_DIR then ['fixture-reason']
++          else raise 'unexpected directory effect'
++          end
++        end
++        patch.call(File, :stat) do |path|
++          if path == File.join(klass::HOOK_DIR, 'fixture-hook')
++            fake_stat
++          elsif path == File.join(klass::REASON_TEMPLATE_DIR, 'fixture-reason')
++            text_stat
++          elsif private_file.call(path)
++            original_stat.call(path)
++          else
++            raise 'unexpected stat effect'
++          end
++        end
++        patch.call(File, :read) do |path|
++          case path
++          when '/sys/kernel/kexec_loaded' then loaded ? "1\n" : "0\n"
++          when File.join(klass::REASON_TEMPLATE_DIR, 'fixture-reason')
++            events << [:reason_template]
++            "fixture template\n"
++          else raise 'unexpected read effect'
++          end
++        end
++        patch.call(File, :open) do |path, *arguments, **options, &block|
++          if private_file.call(path)
++            original_open.call(path, *arguments, **options, &block)
++          else
++            raise 'unexpected open effect' unless path == '/etc/runit/kexec' && arguments == ['w'] && options.empty? && !block
++            events << [:kexec_marker]
++            StringIO.new
++          end
++        end
++        patch.call(File, :chmod) do |mode, path|
++          raise 'unexpected chmod effect' unless path == '/etc/runit/kexec' && mode == 0o100
++          events << [:kexec_chmod, mode]
++          1
++        end
++        patch.call(File, :unlink) do |path|
++          if path == '/run/osctl/shutdown'
++            events << [:abort_marker]
++            raise Errno::ENOENT
++          end
++          raise 'unexpected unlink effect' unless private_file.call(path)
++          original_unlink.call(path)
++        end
++        patch.call(Kernel, :system) do |*command|
++          case command
++          when ['osctl', 'ct', 'ls', '-S', 'running']
++            events << [:list]
++            listing
++          when ['osctl', 'shutdown', '--abort']
++            events << [:abort]
++            true
++          else
++            raise 'unexpected system effect' unless command.length == 2 && private_file.call(command.last)
++            events << [:editor]
++            original_write.call(command.last, "fixture reason\n")
++            true
++          end
++        end
++        patch.call(Kernel, :exec) do |*command, **options|
++          raise 'unexpected exec effect' unless in_child && command.take(3) == ['osctl', 'shutdown', '--force'] && options == { pgroup: true }
++          child_kind = :shutdown
++          events << [:shutdown, command]
++          raise CapturedHaltChild
++        end
++        patch.call(Process, :exec) do |*command|
++          if in_child && command == [File.join(klass::HOOK_DIR, 'fixture-hook')]
++            child_kind = :hook
++            events << [:hook, fields.to_h { |key| [key, ENV[key]] }]
++            raise CapturedHaltChild
++          end
++          raise 'unexpected process exec effect' unless !in_child && command.first == 'runit-init' && %w[0 6].include?(command.last) && command.length == 2
++          events << [:dispatch, command.last]
++          raise CapturedRunitDispatch
++        end
++        patch.call(Process, :fork) do |&body|
++          raise 'missing owning fork body' unless body
++          saved_env = fields.to_h { |key| [key, ENV[key]] }
++          begin
++            child_kind = nil
++            in_child = true
++            body.call
++            raise 'owning child did not exec'
++          rescue CapturedHaltChild
++            raise 'unknown child effect' unless %i[hook shutdown].include?(child_kind)
++          ensure
++            in_child = false
++            saved_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
++          end
++          status = child_kind == :shutdown ? shutdown_status : 0
++          pid = original_spawn.call(RbConfig.ruby, '-e', "exit #{status}")
++          children[pid] = child_kind
++          events << [:fork, child_kind, pid]
++          pid
++        end
++        patch.call(Process, :wait) do |pid|
++          kind = children.fetch(pid)
++          events << [:wait, kind, pid]
++          if interrupt && kind == :shutdown && !interrupted
++            interrupted = true
++            raise Interrupt
++          end
++          result = original_wait.call(pid)
++          children.delete(pid)
++          result
++        end
++
++        if stale_status
++          pid = original_spawn.call(RbConfig.ruby, '-e', 'exit 7')
++          original_wait.call(pid)
++          raise 'failed status fixture not established' unless $?.exitstatus == 7
++        end
++        object = klass.new(name, args)
++        object.define_singleton_method(:sleep) { |seconds| events << [:sleep, seconds] }
++        object.run
++        raise 'owning halt returned without final dispatch'
++      rescue CapturedRunitDispatch
++        # The terminal exec is the captured end of a successful owning run.
++      rescue StandardError, SystemExit => error
++        failure = error
++      ensure
++        originals.to_a.reverse_each { |(owner, method), original| owner.define_singleton_method(method, original) }
++        $stdin, $stdout, $stderr = original_streams
++        original_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
++        children.each_key { |pid| original_wait.call(pid) }
++      end
++    end
++    { events: events, output: output.string, error_output: error_output.string, failure: failure }
++  end
++
++  def check_halt(label)
++    yield
++  rescue StandardError => error
++    raise "halt check failed: #{label}: #{error.message}"
++  end
++
++  def require_effect(condition, label)
++    raise label unless condition
++  end
++
++  halt_checks = 0
++  %w[omitted enabled disabled].each do |policy|
++    %w[halt poweroff reboot].each do |name|
++      check_halt("#{policy} forced #{name}") do
++        result = observe_halt(classes.fetch(policy), name: name, args: ['--force', '--message', 'fixture message'])
++        events = result.fetch(:events)
++        require_effect(result.fetch(:failure).nil?, 'unexpected failure')
++        require_effect(events.last == [:dispatch, name == 'reboot' ? '6' : '0'], 'wrong final dispatch')
++        require_effect(events.count { |entry| entry.first == :shutdown } == (policy == 'disabled' ? 0 : 1), 'wrong shutdown selection')
++        require_effect(events.none? { |entry| %i[list hostname sleep abort abort_marker].include?(entry.first) }, 'forced interactive/abort effect')
++        hook_events = events.select { |entry| entry.first == :hook }
++        require_effect(hook_events.map { |entry| entry.last.fetch('HALT_HOOK') } == %w[pre-run pre-system], 'hook order')
++        require_effect(hook_events.all? { |entry| entry.last.fetch('HALT_FORCE') == '1' && entry.last.fetch('HALT_ACTION') == (name == 'reboot' ? 'reboot' : 'poweroff') }, 'hook environment')
++        log_index = events.index { |entry| entry.first == :log }
++        pre_system_index = events.index { |entry| entry.first == :hook && entry.last.fetch('HALT_HOOK') == 'pre-system' }
++        require_effect(log_index && log_index < pre_system_index, 'common log/hook order')
++        if policy != 'disabled'
++          require_effect(events.find { |entry| entry.first == :shutdown }.last == %w[osctl shutdown --force --wall --message] + ['fixture message'], 'wall/message arguments')
++          shutdown_index = events.index { |entry| entry.first == :shutdown }
++          require_effect(log_index < shutdown_index && shutdown_index < pre_system_index, 'shutdown order')
++        end
++      end
++      halt_checks += 1
++    end
++  end
++
++  %w[enabled disabled].each do |policy|
++    check_halt("#{policy} interactive reason") do
++      result = observe_halt(classes.fetch(policy), name: 'poweroff', args: [])
++      events = result.fetch(:events)
++      require_effect(result.fetch(:failure).nil?, 'unexpected failure')
++      require_effect(events.count { |entry| entry.first == :list } == (policy == 'enabled' ? 1 : 0), 'listing selection')
++      require_effect(events.count { |entry| entry.first == :shutdown } == (policy == 'enabled' ? 1 : 0), 'shutdown selection')
++      require_effect(events.include?([:reason_template]) && events.include?([:editor]) && events.include?([:hostname]), 'reason/confirmation missing')
++      require_effect(events.count { |entry| entry == [:sleep, 1] } == 10, 'countdown changed')
++      require_effect(result.fetch(:output).include?(policy == 'enabled' ? 'sent to logged-in container users' : 'written to system log'), 'reason notice missing')
++      require_effect(!result.fetch(:output).include?('sent to logged-in container users') || policy == 'enabled', 'disabled wall promise')
++      require_effect(events.last == [:dispatch, '0'], 'wrong final dispatch')
++      require_effect(events.none? { |entry| %i[abort abort_marker].include?(entry.first) }, 'unexpected abort')
++    end
++    halt_checks += 1
++  end
++
++  check_halt('disabled unrelated failed process status') do
++    result = observe_halt(classes.fetch('disabled'), name: 'poweroff', args: ['-f', '-m', 'fixture'], hooks: false, stale_status: true)
++    require_effect(result.fetch(:failure).nil? && result.fetch(:events).last == [:dispatch, '0'], 'prior status affected dispatch')
++    require_effect(result.fetch(:events).none? { |entry| %i[fork wait shutdown abort abort_marker].include?(entry.first) }, 'disabled process effect')
++    require_effect(result.fetch(:output).include?('Executing pre-run hooks') && result.fetch(:output).include?('Executing pre-system hooks'), 'common hooks skipped')
++  end
++  halt_checks += 1
++
++  check_halt('enabled listing refusal') do
++    result = observe_halt(classes.fetch('enabled'), name: 'poweroff', args: ['-m', 'fixture'], listing: false)
++    require_effect(result.fetch(:failure).is_a?(RuntimeError) && result.fetch(:failure).message == 'Unable to list containers', 'listing failure lost')
++    require_effect(result.fetch(:events).none? { |entry| %i[shutdown dispatch].include?(entry.first) }, 'effect after listing refusal')
++  end
++  halt_checks += 1
++
++  check_halt('enabled shutdown status refusal') do
++    result = observe_halt(classes.fetch('enabled'), name: 'poweroff', args: ['-f', '-m', 'fixture'], shutdown_status: 7)
++    require_effect(result.fetch(:failure).is_a?(RuntimeError) && result.fetch(:failure).message == 'Unable to shutdown osctld', 'shutdown failure lost')
++    require_effect(result.fetch(:events).none? { |entry| entry.first == :dispatch || (entry.first == :hook && entry.last.fetch('HALT_HOOK') == 'pre-system') }, 'effect after shutdown refusal')
++  end
++  halt_checks += 1
++
++  check_halt('enabled interrupted same shutdown child') do
++    result = observe_halt(classes.fetch('enabled'), name: 'poweroff', args: ['-f', '-m', 'fixture'], interrupt: true)
++    require_effect(result.fetch(:failure).is_a?(SystemExit) && result.fetch(:failure).status == 1, 'abort exit changed')
++    events = result.fetch(:events)
++    pid = events.find { |entry| entry.take(2) == [:fork, :shutdown] }.last
++    require_effect(events.select { |entry| entry.take(2) == [:wait, :shutdown] }.map(&:last) == [pid, pid], 'abort did not wait on same child')
++    require_effect(events.count { |entry| entry.first == :abort } == 1 && events.count { |entry| entry.first == :abort_marker } == 1, 'abort effects changed')
++    require_effect(events.none? { |entry| entry.first == :dispatch || (entry.first == :hook && entry.last.fetch('HALT_HOOK') == 'pre-system') }, 'effect after interrupt')
++  end
++  halt_checks += 1
++
++  check_halt('enabled no-wall arguments') do
++    result = observe_halt(classes.fetch('enabled'), name: 'halt', args: ['-f', '--no-wall', '-m', 'fixture'])
++    require_effect(result.fetch(:failure).nil?, 'unexpected failure')
++    require_effect(result.fetch(:events).find { |entry| entry.first == :shutdown }.last == %w[osctl shutdown --force --no-wall], 'no-wall arguments changed')
++  end
++  halt_checks += 1
++
++  [['reboot', [], true], ['reboot', ['--no-kexec'], false], ['halt', ['-r'], false]].each do |name, options, uses_kexec|
++    check_halt("disabled loaded kexec #{name} #{options.join(' ')}") do
++      result = observe_halt(classes.fetch('disabled'), name: name, args: ['-f', '-m', 'fixture'] + options, loaded: true)
++      events = result.fetch(:events)
++      require_effect(result.fetch(:failure).nil? && events.last == [:dispatch, '6'], 'reboot dispatch changed')
++      require_effect(events.count { |entry| entry.first == :kexec_marker } == (uses_kexec ? 1 : 0), 'kexec marker selection')
++      require_effect(events.count { |entry| entry == [:kexec_chmod, 0o100] } == (uses_kexec ? 1 : 0), 'kexec marker mode')
++      require_effect(events.none? { |entry| %i[shutdown list abort abort_marker].include?(entry.first) }, 'disabled osctl effect')
++      expected_action = uses_kexec ? 'kexec' : 'reboot'
++      require_effect(events.find { |entry| entry.first == :hook && entry.last.fetch('HALT_HOOK') == 'pre-system' }.last.fetch('HALT_ACTION') == expected_action, 'final hook action')
++    end
++    halt_checks += 1
++  end
++
++  stage_paths = inputs.fetch('stage3')
++  raise 'omitted and enabled stage3 differ' unless File.read(stage_paths.fetch('omitted')) == File.read(stage_paths.fetch('enabled'))
++  stage_checks = 0
++  Dir.mktmpdir('runit-stage3-effects-') do |private_dir|
++    bin = File.join(private_dir, 'bin')
++    Dir.mkdir(bin)
++    %w[hwclock osctl].each do |command|
++      path = File.join(bin, command)
++      exit_status = command == 'osctl' ? '$OSCTL_STATUS' : '0'
++      File.write(path, "#!#{inputs.fetch('shell')}\nprintf '#{command} %s\\n' \"$*\" >> \"$TRACE_FILE\"\nexit \"#{exit_status}\"\n")
++      File.chmod(0o700, path)
++    end
++    [['omitted', 0], ['enabled', 0], ['disabled', 0], ['enabled', 7]].each_with_index do |(policy, status), index|
++      trace = File.join(private_dir, "trace-#{index}")
++      File.write(trace, "")
++      stdout, stderr, result = Open3.capture3({ 'PATH' => bin, 'TRACE_FILE' => trace, 'OSCTL_STATUS' => status.to_s }, stage_paths.fetch(policy))
++      expected = policy == 'disabled' ? ["hwclock -w\n", "hwclock -w\n"] : ["hwclock -w\n", "osctl shutdown --force\n", "hwclock -w\n"]
++      raise 'stage3 effects/order changed' unless File.readlines(trace) == expected
++      raise 'stage3 output/status changed' unless stdout == "and down we go\n" && stderr.empty? && result.success?
++      stage_checks += 1
++    end
++  end
++  puts "halt_checks=#{halt_checks} stage3_checks=#{stage_checks}"
++  RUBY
++  touch "$out"
++''
+diff --git a/tests/suite/osctld/storage-activity.nix b/tests/suite/osctld/storage-activity.nix
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc14d730f0f39543d0cb0bf2a898f795507f4452
+--- /dev/null
++++ b/tests/suite/osctld/storage-activity.nix
+@@ -0,0 +1,97 @@
++import ../../make-test.nix (
++  { pkgs }:
++  {
++    name = "osctld-storage-activity";
++
++    description = ''
++      Test the read-only osctld pool storage activity command
++    '';
++
++    tags = [ "ci" ];
++
++    machine = import ../../machines/vpsadminos/tank.nix pkgs;
++
++    testScript = ''
++      require 'json'
++
++      def self.activity(opts)
++        request = JSON.generate(cmd: 'pool_storage_activity', opts:)
++        _, output = machine.succeeds(<<~SH)
++          ruby -rjson -rsocket <<'RUBY'
++            socket = UNIXSocket.new('/run/osctl/osctld.sock')
++            socket.gets
++            socket.puts(#{request.inspect})
++            puts(socket.gets)
++          RUBY
++        SH
++
++        JSON.parse(output)
++      end
++
++      describe 'pool storage activity' do
++        before(:suite) do
++          machine.start
++          machine.wait_for_service('osctld')
++          machine.wait_for_osctl_pool('tank')
++        end
++
++        it 'returns a bounded v1 sample for the imported pool' do
++          response = activity(pool: 'tank')
++          expect(response['status']).to be(true)
++          sample = response.fetch('response')
++
++          expect(sample.keys).to match_array(%w[
++            version coverage daemon_boot_uuid pool_instance_uuid generation
++            pool state counts registered_run_datasets worker_alive
++            unknown_reasons unknown overflow idle
++          ])
++          expect(sample).to include(
++            'version' => 1, 'coverage' => 'gc_trash_v1', 'pool' => 'tank',
++            'state' => 'active'
++          )
++          expect(sample['daemon_boot_uuid']).to match(/\A[0-9a-f-]{36}\z/)
++          expect(sample['pool_instance_uuid']).to match(/\A[0-9a-f-]{36}\z/)
++          expect(sample['counts'].keys).to match_array(%w[run_gc trash_prune trash_move])
++          sample['counts'].each_value do |counts|
++            expect(counts.keys).to match_array(%w[pending running])
++            expect(counts.values).to all(be_between(0, 10_000))
++          end
++          expect(sample['worker_alive'].keys).to match_array(%w[run_gc trash_prune])
++          sample['worker_alive'].each_value do |alive|
++            expect([true, false]).to include(alive)
++          end
++          expect([true, false]).to include(sample['unknown'], sample['overflow'], sample['idle'])
++
++          if sample['idle']
++            expect(sample['unknown']).to be(false)
++            expect(sample['overflow']).to be(false)
++            expect(sample['counts'].values.flat_map(&:values)).to all(eq(0))
++          end
++        end
++
++        it 'advances generation on an enqueued GC run' do
++          before = activity(pool: 'tank').fetch('response')
++          machine.succeeds('osctl garbage-collector prune tank')
++          after = activity(pool: 'tank').fetch('response')
++
++          expect(after['daemon_boot_uuid']).to eq(before['daemon_boot_uuid'])
++          expect(after['pool_instance_uuid']).to eq(before['pool_instance_uuid'])
++          expect(after['generation']).to be > before['generation']
++        end
++
++        it 'treats an absent pool as unknown and rejects extra options' do
++          absent = activity(pool: 'not-imported').fetch('response')
++          expect(absent).to include(
++            'state' => 'absent', 'unknown' => true, 'overflow' => false,
++            'idle' => false
++          )
++          expect(absent['pool_instance_uuid']).to be_nil
++
++          invalid = activity(pool: 'tank', extra: true)
++          expect(invalid['status']).to be(false)
++          expect(invalid['message']).to include('exactly one zpool')
++        end
++      end
++    '';
++  }
++)
+diff --git a/tests/suite/system/switch-to-configuration.nix b/tests/suite/system/switch-to-configuration.nix
+index dde55da08fb3561e2c7270c067466e2c001ca0a1..afb9aa675c136da15b06ef67341136e2652170dc 100644
+--- a/tests/suite/system/switch-to-configuration.nix
++++ b/tests/suite/system/switch-to-configuration.nix
+@@ -69,6 +69,19 @@ import ../../make-test.nix (
+       networking.firewall.logRefusedConnections = true;
+     };
+ 
++    osctldDisabledSystem = switchedSystem (
++      { lib, ... }: {
++        osctld.enable = false;
++        boot.zfs.pools.tank.install = lib.mkForce false;
++        boot.kernelModules = [
++          addedModule
++          keptModule
++          failedModule
++        ];
++        boot.kernel.loadNewModules = false;
++      }
++    );
++
+     nextFirewallSystem =
+       (import ../../../os (
+         {
+@@ -110,6 +123,7 @@ import ../../make-test.nix (
+           loadDisabledSystem
+           moduleAndFirewallSystem
+           nextFirewallSystem
++          osctldDisabledSystem
+         ];
+       };
+     };
+@@ -305,6 +319,84 @@ import ../../make-test.nix (
+             '${failedModule}' => 'absent',
+           )
+         end
++
++        it 'preserves a retained pool when switching and booting without osctld' do
++          machine.wait_for_service('osctld')
++          machine.wait_for_service('pool-tank')
++          machine.wait_for_osctl_pool('tank')
++          _, normal_system = machine.succeeds('readlink -f /run/current-system')
++          _, original_boot = machine.succeeds('readlink -f /run/booted-system')
++          _, original_boot_id = machine.succeeds('cat /proc/sys/kernel/random/boot_id')
++          machine.succeeds(<<~CMD)
++            set -e
++            zfs create -o mountpoint=/mnt/osctld-disabled-proof tank/osctld-disabled-proof
++            printf 'retained payload before osctld-disabled activation\\n' > /mnt/osctld-disabled-proof/payload
++            sync -f /mnt/osctld-disabled-proof
++          CMD
++
++          retained_identity = lambda do
++            machine.succeeds(<<~CMD)[1]
++              set -e
++              zpool get -H -o value guid tank
++              zfs get -H -o value guid tank/osctld-disabled-proof
++              zfs get -H -o value org.vpsadminos.osctl:active tank
++              sha256sum /mnt/osctld-disabled-proof/payload
++            CMD
++          end
++          baseline = retained_identity.call
++          disabled_services = lambda do
++            machine.succeeds(<<~CMD)
++              set -e
++              test ! -e /service/osctld || { echo 'disabled: service-entry-absent'; exit 1; }
++              test ! -L /service/osctld || { echo 'disabled: service-link-absent'; exit 1; }
++              test ! -e /etc/runit/runsvdir/default/osctld || { echo 'disabled: runlevel-entry-absent'; exit 1; }
++              test ! -L /etc/runit/runsvdir/default/osctld || { echo 'disabled: runlevel-link-absent'; exit 1; }
++              test ! -S /run/osctl/osctld.sock || { echo 'disabled: socket-absent'; exit 1; }
++              test ! -e /run/osctl/shutdown || { echo 'disabled: shutdown-marker-absent'; exit 1; }
++              poweroff_command=$(command -v poweroff) || { echo 'disabled: poweroff-command'; exit 1; }
++              poweroff_script=$(readlink -f "$poweroff_command") || { echo 'disabled: poweroff-script'; exit 1; }
++              disabled_script=$(readlink -f ${osctldDisabledSystem}/sw/bin/poweroff) || { echo 'disabled: selected-poweroff-script'; exit 1; }
++              test "$poweroff_script" = "$disabled_script" || { echo 'disabled: poweroff-selection'; exit 1; }
++              test -f "$poweroff_script" || { echo 'disabled: poweroff-script-file'; exit 1; }
++              test -x /run/current-system/sw/bin/osctl || { echo 'disabled: osctl-tool'; exit 1; }
++              test -x /run/current-system/sw/bin/osup || { echo 'disabled: osup-tool'; exit 1; }
++              test -x /run/current-system/sw/bin/svctl || { echo 'disabled: svctl-tool'; exit 1; }
++              test -f /run/service/pool-tank/done || { echo 'disabled: pool-service-done'; exit 1; }
++            CMD
++            # Keep the process check out of argv containing literal osctld paths.
++            status, = machine.execute("pgrep -f '(^|/)[o]sctld([ :]|$)|/[.]osctld-wrapped( |$)' > /dev/null")
++            expect(status).to eq(1), 'disabled: osctld-process-absent'
++          end
++
++          _, output = machine.succeeds('${osctldDisabledSystem}/bin/switch-to-configuration switch')
++          expect(output).to include('> sv stop osctld')
++          expect(output).not_to include('> osctl activate')
++          machine.wait_for_service('pool-tank')
++          machine.wait_until_succeeds('test ! -S /run/osctl/osctld.sock')
++          disabled_services.call
++          expect(machine.succeeds('readlink -f /run/current-system')[1].strip).to eq('${osctldDisabledSystem}')
++          expect(machine.succeeds('readlink -f /run/booted-system')[1]).to eq(original_boot)
++          expect(retained_identity.call).to eq(baseline)
++
++          # Same framework instance and preserved disks; the final init argument
++          # selects the disabled closure from the original image's dependencies.
++          machine.stop
++          machine.start(kernel_params: ['init=${osctldDisabledSystem}/init'], wait_for_boot: true)
++          machine.wait_for_service('pool-tank')
++          machine.wait_for_service('restart-trigger-test')
++          expect(machine.succeeds('readlink -f /run/booted-system')[1].strip).to eq('${osctldDisabledSystem}')
++          expect(machine.succeeds('readlink -f /run/current-system')[1].strip).to eq('${osctldDisabledSystem}')
++          expect(machine.succeeds('cat /proc/sys/kernel/random/boot_id')[1]).not_to eq(original_boot_id)
++          disabled_services.call
++          expect(retained_identity.call).to eq(baseline)
++
++          machine.succeeds("#{Shellwords.escape(normal_system.strip)}/bin/switch-to-configuration switch")
++          machine.wait_for_service('osctld')
++          machine.wait_for_service('pool-tank')
++          machine.wait_for_osctl_pool('tank')
++          expect(machine.succeeds('readlink -f /run/current-system')[1]).to eq(normal_system)
++          expect(retained_identity.call).to eq(baseline)
++        end
+       end
+     '';
+   }

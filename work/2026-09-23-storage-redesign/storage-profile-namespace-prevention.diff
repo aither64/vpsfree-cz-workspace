@@ -1,0 +1,473 @@
+diff --git a/dev-clusters/vpsadmin/README.md b/dev-clusters/vpsadmin/README.md
+index ad3b235e2078fac88dc0a095ef7a4b6a9c3d982b..484056905c8fd0b57c135be7e00674a246d76ad8 100644
+--- a/dev-clusters/vpsadmin/README.md
++++ b/dev-clusters/vpsadmin/README.md
+@@ -397,6 +397,31 @@ keep their entitlement; catch-up reports insufficient resources rather than
+ changing a personal package. Administrative/service accounts receive no
+ automatic member NAS allocation.
+ 
++New member NAS roots use `nas-<user-id>`; VPS roots keep their numeric VPS-ID
++names. Catch-up reuses one valid numeric or prefixed NAS root after checking
++member ownership, the configured NAS Pool/DIP, label, quota and confirmation.
++Ambiguous, pending or incompatible roots cause refusal. Catch-up preserves
++existing names, DIPs and policy and never creates a second NAS root beside one.
++
++Before staging a backup creation or enrolling a reused copy, the profile checks
++exclusive catalog ownership of the destination node, Pool filesystem and
++Dataset full name. A locking read under storage admission checks current
++claims, including confirmed and pending DIPs in duplicate Pool entries.
++Only the validated reused DIP is excluded. A conflicting claim rolls back the
++current User, VPS or catch-up staging before its commands can run. Physical
++waits hold no admission lock. This check covers catalog claims made through
++upgraded profile writers; uncatalogued physical targets and old or unrelated
++writers remain outside its guarantee.
++
++Load the upgraded helper in every profile-writing API, Supervisor and task
++process before enrollment. After creating prefixed roots, rolling back to an
++active old helper could create a second root because it recognizes only numeric
++NAS names. Before rolling back, use the compatible retired selection
++(`enable: true`, `enrollment: false`) and normal retirement, retaining the
++preserving overlay. Naming and refusal changes do not repair existing aliases.
++Retirement leaves their Dataset/DIP catalog and payloads intact; re-enrollment
++refuses an alias until a separately authorized recovery has resolved it.
++
+ After the compatible services generation and Node workers are running, use:
+ 
+ ```sh
+diff --git a/dev-clusters/vpsadmin/lib/storage_profile.rb b/dev-clusters/vpsadmin/lib/storage_profile.rb
+index 88fcf01c24b9cb49eb59c73f307f8e9b8ac1f763..f96a5cf3c5747364b585755678d091ade8983be2 100644
+--- a/dev-clusters/vpsadmin/lib/storage_profile.rb
++++ b/dev-clusters/vpsadmin/lib/storage_profile.rb
+@@ -215,7 +215,7 @@ module DevClusters
+         PLAN_NAME, label: 'Development short backup', keep_empty_group_snapshots: true
+       ) do |dip|
+         profile.require_enrollment! if %i[add verify].include?(direction)
+-        profile.validate_registration!(dip)
++        profile.validate_registration!(dip, check_backup_path: %i[add verify].include?(direction))
+         group_snapshot dip, *SNAPSHOT_SCHEDULE
+         backup dip, *BACKUP_SCHEDULE
+       end
+@@ -261,7 +261,7 @@ module DevClusters
+       end
+     end
+ 
+-    def validate_registration!(source)
++    def validate_registration!(source, check_backup_path: true)
+       selection = source_pool_configs.find do |pool|
+         pool.fetch('nodeId') == source.pool.node_id && pool.fetch('filesystem') == source.pool.filesystem
+       end
+@@ -287,6 +287,7 @@ module DevClusters
+         raise ::ResourceLocked.new(copy, 'Configured backup destination is locked by another chain')
+       end
+ 
++      validate_backup_path!(source.dataset, backup, copy: copy) if check_backup_path
+       copy
+     end
+ 
+@@ -304,6 +305,7 @@ module DevClusters
+       destination = pool!(config.fetch('backupPool'))
+       copies = source_dip.dataset.dataset_in_pools.joins(:pool).where(pools: { role: :backup }).lock.limit(2).to_a
+       if copies.empty?
++        validate_backup_path!(source_dip.dataset, destination)
+         if destination.dataset_in_pools.count >= destination.max_datasets
+           raise Invalid, 'Configured backup pool has no dataset capacity'
+         end
+@@ -321,6 +323,7 @@ module DevClusters
+ 
+         backup = copies.first
+         chain.lock(backup)
++        validate_backup_path!(source_dip.dataset, destination, copy: backup)
+       end
+       if owned_create?(chain, source_dip.dataset)
+         source_dip.update!(min_snapshots: 2, max_snapshots: 3, snapshot_max_age: 1800)
+@@ -369,13 +372,21 @@ module DevClusters
+       chain.lock(user)
+       map = ensure_namespace!(chain: chain, user: user)
+       nas = pool!(config.fetch('nasPool'))
+-      roots = ::Dataset.roots.where(user: user, name: user.id.to_s).limit(2).to_a
++      names = [user.id.to_s, "nas-#{user.id}"]
++      nas_datasets = ::DatasetInPool.where(pool: nas).select(:dataset_id)
++      candidates = ::Dataset.roots.where(name: names)
++      # Include owned NAS roots with unexpected names and foreign owners of
++      # either accepted NAS path; neither permits creating a second root.
++      roots = ::Dataset.roots.where(user: user, vps_id: nil, id: nas_datasets)
++                       .or(candidates.where(user: user, vps_id: nil))
++                       .or(candidates.where(id: nas_datasets)).lock.limit(2).to_a
+       raise Invalid, 'Member NAS root is ambiguous' if roots.size > 1
+ 
+       if roots.one?
+         root = roots.first
+-        copies = root.dataset_in_pools.where(pool: nas).limit(2).to_a
+-        unless root.confirmed? && root.user_editable && root.user_create && !root.user_destroy &&
++        copies = root.dataset_in_pools.where(pool: nas).lock.limit(2).to_a
++        unless root.user_id == user.id && root.vps_id.nil? && names.include?(root.name) &&
++               root.full_name == root.name && root.confirmed? && root.user_editable && root.user_create && !root.user_destroy &&
+                copies.one? && copies.first.confirmed? && copies.first.label == 'nas' && copies.first.effective_quota == 1024
+           raise Invalid, 'Existing NAS root is incompatible or pending'
+         end
+@@ -385,7 +396,7 @@ module DevClusters
+       end
+       raise Invalid, 'Configured NAS pool has no dataset capacity' if nas.dataset_in_pools.count >= nas.max_datasets
+ 
+-      root = ::Dataset.new(name: user.id.to_s, user: user, user_editable: true,
++      root = ::Dataset.new(name: "nas-#{user.id}", user: user, user_editable: true,
+                            user_create: true, user_destroy: false, confirmed: ::Dataset.confirmed(:confirm_create))
+       chain.use_chain(::TransactionChains::Dataset::Create,
+                       args: [nas, nil, [root], { user: user, label: 'nas', automount: false,
+@@ -521,6 +532,20 @@ module DevClusters
+ 
+     private
+ 
++    def validate_backup_path!(dataset, destination, copy: nil)
++      ::StorageMutationAdmission.check!
++      owners = ::DatasetInPool.joins(:pool, :dataset).where(
++        pools: { node_id: destination.node_id, filesystem: destination.filesystem },
++        datasets: { full_name: dataset.full_name }
++      )
++      owners = owners.where.not(id: copy.id) if copy
++      # Admission serializes upgraded profile writers. FOR UPDATE sees a claim
++      # committed while this transaction waited, including pending/Pool aliases.
++      return if owners.lock.limit(1).to_a.empty?
++
++      raise Invalid, 'Configured backup path has another catalog owner'
++    end
++
+     # Static seed and retirement share this bounded ownership check. Packages
+     # and assignments survive; only the future default link is removed.
+     def remove_owned_default!(environment)
+diff --git a/test/vpsadmin_storage_profile_spec.rb b/test/vpsadmin_storage_profile_spec.rb
+index e162cd237ea265505edfeb7ed7220cd30e0340d2..ef9a1b2a68a8183bebabefc2a07e8306807179fb 100644
+--- a/test/vpsadmin_storage_profile_spec.rb
++++ b/test/vpsadmin_storage_profile_spec.rb
+@@ -79,6 +79,34 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+     profile.bootstrap_templates!
+   end
+ 
++  def settled_profile_namespace!
++    ensure_user_namespace_blocks!(count: 8)
++    chain, namespace = TransactionChains::UserNamespace::Allocate.fire(user, 2)
++    map = UserNamespaceMap.create_chained!(namespace, 'Default map')
++    UserNamespaceMapEntry.kinds.each_value do |kind|
++      UserNamespaceMapEntry.create!(user_namespace_map: map, kind: kind, vps_id: 0, ns_id: 0, count: namespace.size)
++    end
++    chain.release_locks
++    map
++  end
++
++  def profile_staging_rows
++    [User, EnvironmentUserConfig, UserNamespace, UserNamespaceBlock, UserNamespaceMap, UserNamespaceMapEntry,
++     ClusterResourcePackage, ClusterResourcePackageItem, UserClusterResourcePackage, UserClusterResource,
++     ClusterResourceUse, DefaultUserClusterResourcePackage, Vps, Dataset, DatasetInPool, DatasetProperty,
++     DatasetPlan, EnvironmentDatasetPlan, DatasetInPoolPlan, DatasetAction, GroupSnapshot, RepeatableTask,
++     TransactionChain, Transaction, TransactionConfirmation, ResourceLock].map do |model|
++      model.order(:id).map(&:attributes)
++    end
++  end
++
++  def existing_member_nas!(name)
++    dataset, dip = create_dataset_with_pool!(user: user, pool: nas_pool, name: name, label: 'nas',
++                                             user_destroy: false, properties: { quota: 1024 })
++    attach_dataset_to_pool!(dataset: dataset, pool: backup_pool, label: 'backup')
++    [dataset, dip]
++  end
++
+   def fresh_profile_reader(selected_configuration, chains)
+     # The top-level guard and actual spec_helper started this automatic DB.
+     # Never forward a configured/inherited URL, or reset its schema in a child.
+@@ -665,7 +693,7 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+                       enable_basic_auth: true, enable_token_auth: true, mailer_enabled: true)
+     member.set_password('secret123')
+     chain, created = TransactionChains::User::Create.fire(member, false, nil, nil, true)
+-    root = Dataset.roots.find_by!(user: created, name: created.id.to_s)
++    root = Dataset.roots.find_by!(user: created, name: "nas-#{created.id}")
+     expect(root.dataset_in_pools.pluck(:pool_id)).to contain_exactly(nas_pool.id, backup_pool.id)
+     expect(root.dataset_in_pools.find_by!(pool: nas_pool).effective_quota).to eq(1024)
+     expect(UserNamespace.where(user: created).count).to eq(1)
+@@ -677,6 +705,205 @@ RSpec.describe DevClusters::VpsAdminStorageProfile do
+     expect(TransactionChain.where(user: SpecSeed.admin).where.not(id: chain.id).count).to eq(0)
+   end
+ 
++  it 'keeps new NAS and numeric VPS root backup paths distinct for equal user and VPS IDs' do
++    bootstrap!
++    install_profile_hooks!
++    map = settled_profile_namespace!
++    ensure_numeric_resources!(user: user, environment: environment)
++    seed_pool_dataset_properties!(nas_pool)
++    nas_chain, nas = profile.catch_up_chain.fire(profile, user: user)
++    expect(nas.dataset.full_name).to eq("nas-#{user.id}")
++    nas_chain.release_locks
++    seed_pool_dataset_properties!(source_pool)
++    template = create_os_template!(config: { 'datasets' => [{ 'name' => '/' }] })
++    expect(Vps.exists?(id: user.id)).to be(false)
++    vps = Vps.new(id: user.id, user: user, node: source_pool.node, os_template: template,
++                  hostname: "profile-distinct-vps-#{SecureRandom.hex(4)}", user_namespace_map: map,
++                  cpu: 1, memory: 1024, swap: 0, diskspace: 4096)
++    complete = Class.new(StandardError).new('VPS backup staging captured')
++    paths = nil
++    # Capture real nested VPS/Dataset/backup/Plan staging before unrelated VPS
++    # commands. The finite sentinel rolls it back without any Node execution.
++    expect(profile).to receive(:ensure_backup_and_plan!).and_wrap_original do |method, **kwargs|
++      copy = method.call(**kwargs)
++      expect(copy.dataset.vps_id).to eq(user.id)
++      paths = [nas.dataset, copy.dataset].map do |dataset|
++        destination = dataset.dataset_in_pools.find_by!(pool: backup_pool)
++        [destination.pool.node_id, destination.pool.filesystem, dataset.full_name]
++      end
++      raise complete
++    end
++    expect { TransactionChains::Vps::Create.fire(vps, ipv4: 0, ipv4_private: 0, ipv6: 0, start: false) }
++      .to raise_error(complete.class) { |error| expect(error).to equal(complete) }
++    expect(paths.map(&:last)).to contain_exactly("nas-#{user.id}", user.id.to_s)
++    expect(paths.uniq.size).to eq(2)
++    expect(nas_chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type).count).to eq(2)
++    expect(Vps.exists?(id: user.id)).to be(false)
++  end
++
++  %i[legacy canonical].each do |kind|
++    it "reuses the sole valid #{kind} NAS without changing its identity or policy" do
++      bootstrap!
++      settled_profile_namespace!
++      name = kind == :legacy ? user.id.to_s : "nas-#{user.id}"
++      dataset, source = existing_member_nas!(name)
++      profile.plan.register(source)
++      before = [dataset.attributes, source.attributes, dataset.dataset_in_pools.order(:id).map(&:attributes),
++                UserNamespaceMapEntry.order(:id).map(&:attributes)]
++      2.times do
++        chain, reused = profile.catch_up_chain.fire(profile, user: user)
++        expect(reused.id).to eq(source.id)
++        expect(chain.transactions.where(handle: Transactions::Storage::CreateDataset.t_type)).to be_empty
++        chain.release_locks
++      end
++      expect(Dataset.roots.where(user: user, vps_id: nil).pluck(:id)).to eq([dataset.id])
++      expect([dataset.reload.attributes, source.reload.attributes, dataset.dataset_in_pools.order(:id).map(&:attributes),
++              UserNamespaceMapEntry.order(:id).map(&:attributes)]).to eq(before)
++    end
++  end
++
++  it 'refuses ambiguous legacy and canonical NAS roots without creating a third root' do
++    bootstrap!
++    settled_profile_namespace!
++    existing_member_nas!(user.id.to_s)
++    existing_member_nas!("nas-#{user.id}")
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, user: user) }.to raise_error(described_class::Invalid, /ambiguous/)
++    expect(profile_staging_rows).to eq(before)
++  end
++
++  %i[root copy].each do |pending|
++    it "refuses an existing pending NAS #{pending} without creating a replacement" do
++      bootstrap!
++      settled_profile_namespace!
++      dataset, source = existing_member_nas!(user.id.to_s)
++      target = pending == :root ? dataset : source
++      target.update!(confirmed: target.class.confirmed(:confirm_create))
++      before = profile_staging_rows
++      expect { profile.catch_up_chain.fire(profile, user: user) }.to raise_error(described_class::Invalid, /incompatible or pending/)
++      expect(profile_staging_rows).to eq(before)
++    end
++  end
++
++  it 'refuses a foreign owner of the canonical NAS path without allocating another root' do
++    bootstrap!
++    settled_profile_namespace!
++    create_dataset_with_pool!(user: SpecSeed.user, pool: nas_pool, name: "nas-#{user.id}", label: 'nas',
++                              user_destroy: false, properties: { quota: 1024 })
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, user: user) }.to raise_error(described_class::Invalid, /incompatible or pending/)
++    expect(profile_staging_rows).to eq(before)
++  end
++
++  %i[confirmed confirm_create].each do |state|
++    it "rejects a #{state} distinct backup path owner and rolls back CatchUp staging" do
++      bootstrap!
++      dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-path-collision')
++      owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                              user_editable: true, user_create: true, user_destroy: true,
++                              confirmed: Dataset.confirmed(:confirmed))
++      foreign = attach_dataset_to_pool!(dataset: owner, pool: backup_pool, confirmed: state)
++      before = profile_staging_rows
++      expect { profile.catch_up_chain.fire(profile, source_dip: source) }
++        .to raise_error(described_class::Invalid, /another catalog owner/)
++      expect(profile_staging_rows).to eq(before)
++      expect(foreign.reload.confirmed).to eq(state)
++    end
++  end
++
++  it 'refuses aliased reused copies through both CatchUp and direct Plan enrollment' do
++    bootstrap!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-existing-alias')
++    attach_dataset_to_pool!(dataset: dataset, pool: backup_pool)
++    profile.plan.register(source)
++    owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: backup_pool)
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, source_dip: source) }
++      .to raise_error(described_class::Invalid, /another catalog owner/)
++    expect { profile.plan.register(source) }.to raise_error(described_class::Invalid, /another catalog owner/)
++    expect(profile_staging_rows).to eq(before)
++    retired_profile!.plan.unregister(source)
++    expect(DatasetInPoolPlan.where(dataset_in_pool: source)).to be_empty
++    expect(dataset.reload.dataset_in_pools.count).to eq(2)
++    expect(owner.reload.dataset_in_pools.count).to eq(1)
++  end
++
++  it 'refuses duplicate Pool aliases before admitting a backup command or membership' do
++    bootstrap!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-pool-alias')
++    alias_pool = create_profile_pool!(:primary, 'alias_backup')
++    alias_pool.update!(filesystem: backup_pool.filesystem)
++    owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: alias_pool, confirmed: :confirm_create)
++    before = profile_staging_rows
++    expect { profile.catch_up_chain.fire(profile, source_dip: source) }.to raise_error(described_class::Invalid, /ambiguous/)
++    expect(profile_staging_rows).to eq(before)
++  end
++
++  it 'permits equal dataset names in a different physical backup root' do
++    bootstrap!
++    dataset, source = create_dataset_with_pool!(user: user, pool: source_pool, name: 'profile-separate-path')
++    other_pool = create_profile_pool!(:backup, 'nonconflicting_backup')
++    owner = Dataset.create!(user: SpecSeed.user, name: dataset.full_name,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    foreign = attach_dataset_to_pool!(dataset: owner, pool: other_pool)
++    chain, copy = profile.catch_up_chain.fire(profile, source_dip: source)
++    expect(copy.pool_id).to eq(backup_pool.id)
++    expect(foreign.reload.pool_id).to eq(other_pool.id)
++    expect(chain.transactions.order(:id).pluck(:handle))
++      .to eq([Transactions::Storage::CreateDataset.t_type, Transactions::Utils::NoOp.t_type])
++  end
++
++  it 'rolls back a real User chain and its default accounting when its new NAS backup path is claimed' do
++    bootstrap!
++    install_profile_hooks!
++    ensure_user_namespace_blocks!(count: 8)
++    seed_pool_dataset_properties!(nas_pool)
++    DefaultUserClusterResourcePackage.where(environment: environment).delete_all
++    profile.bootstrap_defaults!
++    member = User.new(id: User.maximum(:id) + 1, login: "profile-claimed-#{SecureRandom.hex(4)}",
++                      full_name: 'Profile Claimed User', email: 'profile-claimed@test.invalid',
++                      language: SpecSeed.language, level: 1, mailer_enabled: false)
++    member.set_password('secret123')
++    owner = Dataset.create!(user: SpecSeed.user, name: "nas-#{member.id}",
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: backup_pool, confirmed: :confirm_create)
++    before = profile_staging_rows
++    expect { TransactionChains::User::Create.fire(member, false, nil, nil, true) }
++      .to raise_error(described_class::Invalid, /another catalog owner/)
++    expect(profile_staging_rows).to eq(before)
++    expect(User.exists?(id: member.id)).to be(false)
++  end
++
++  it 'rolls back a real VPS chain before its colliding numeric backup can be admitted' do
++    bootstrap!
++    install_profile_hooks!
++    map = settled_profile_namespace!
++    ensure_numeric_resources!(user: user, environment: environment)
++    seed_pool_dataset_properties!(source_pool)
++    id = Vps.maximum(:id).to_i + 1
++    owner = Dataset.create!(user: SpecSeed.user, name: id.to_s,
++                            user_editable: true, user_create: true, user_destroy: true,
++                            confirmed: Dataset.confirmed(:confirmed))
++    attach_dataset_to_pool!(dataset: owner, pool: backup_pool)
++    template = create_os_template!(config: { 'datasets' => [{ 'name' => '/' }] })
++    vps = Vps.new(id: id, user: user, node: source_pool.node, os_template: template,
++                  hostname: "profile-colliding-vps-#{SecureRandom.hex(4)}", user_namespace_map: map,
++                  cpu: 1, memory: 1024, swap: 0, diskspace: 4096)
++    before = profile_staging_rows
++    expect { TransactionChains::Vps::Create.fire(vps, ipv4: 0, ipv4_private: 0, ipv6: 0, start: false) }
++      .to raise_error(described_class::Invalid, /another catalog owner/)
++    expect(profile_staging_rows).to eq(before)
++    expect(Vps.exists?(id: id)).to be(false)
++  end
++
+   it 'rolls back a failed future-member NAS enrollment without deleting shared templates' do
+     bootstrap!
+     install_profile_hooks!
+@@ -884,10 +1111,10 @@ RSpec.describe 'Storage profile autocommit admission', :no_transaction do
+ 
+   # Preserve assertion, timeout and signal exceptions over owning cleanup.
+   # rubocop:disable Lint/RescueException
+-  def ordinary_reader
++  def ordinary_reader(during_staging: false)
+     primary = nil
+     state = { acquired: false, closed: false }
+-    expect(ActiveRecord::Base.connection.transaction_open?).to be(false)
++    expect(ActiveRecord::Base.connection.transaction_open?).to eq(during_staging)
+     main_id = ActiveRecord::Base.connection.select_value('SELECT CONNECTION_ID()')
+     reader = Thread.new do
+       Thread.current.report_on_exception = false
+@@ -986,6 +1213,68 @@ RSpec.describe 'Storage profile autocommit admission', :no_transaction do
+     end
+   end
+ 
++  it 'holds admission through the backup ownership check and commits before a separate reader observes staging' do
++    selected = profile
++    existing_backup!
++    dip = source!
++    selected.install_plan!
++    selected.bootstrap_templates!
++    unlock_transaction_signer!
++    blocked = false
++    allow(selected).to receive(:validate_backup_path!).and_wrap_original do |method, *args, **kwargs|
++      unless blocked
++        expect do
++          ordinary_reader(during_staging: true) { raise 'The competing reader obtained admission before staging committed' }
++        end.to raise_error(ActiveRecord::LockWaitTimeout)
++        blocked = true
++        expect(@reader_unreaped).not_to be(true)
++      end
++      method.call(*args, **kwargs)
++    end
++    chain, copy = selected.catch_up_chain.fire(selected, source_dip: dip)
++    expect(blocked).to be(true)
++    ordinary_reader do
++      expect(TransactionChain.find(chain.id).state).to eq('queued')
++      expect(Transaction.where(transaction_chain_id: chain.id).order(:id).pluck(:handle))
++        .to eq([Transactions::Storage::CreateDataset.t_type, Transactions::Utils::NoOp.t_type])
++      expect(DatasetInPool.find(copy.id).dataset_id).to eq(dip.dataset_id)
++      expect(DatasetInPoolPlan.exists?(dataset_in_pool_id: dip.id)).to be(true)
++    end
++  end
++
++  it 'rejects a just-committed pending claim hidden from its existing repeatable-read snapshot' do
++    selected = profile
++    destination = existing_backup!
++    dip = source!
++    selected.install_plan!
++    selected.bootstrap_templates!
++    unlock_transaction_signer!
++    claim = nil
++    ActiveRecord::Base.transaction(isolation: :repeatable_read) do
++      expect(DatasetInPool.where(pool: destination).count).to eq(0)
++      ordinary_reader(during_staging: true) do
++        owner = own(Dataset.new(user: SpecSeed.user, name: dip.dataset.full_name,
++                                user_editable: true, user_create: true, user_destroy: true,
++                                confirmed: Dataset.confirmed(:confirmed)))
++        claim = own(DatasetInPool.new(dataset: owner, pool: destination,
++                                      confirmed: DatasetInPool.confirmed(:confirm_create)))
++      end
++      # A consistent read still sees the old snapshot; the guard must use the
++      # current locking read after taking the same admission lock as the writer.
++      expect(DatasetInPool.exists?(id: claim.id)).to be(false)
++      before = catalog_counts
++      expect { selected.catch_up_chain.fire(selected, source_dip: dip) }
++        .to raise_error(PROFILE::Invalid, /another catalog owner/)
++      expect(catalog_counts).to eq(before)
++    end
++    ordinary_reader do
++      expect(DatasetInPool.find(claim.id).confirmed).to eq(:confirm_create)
++      expect(DatasetInPool.where(dataset_id: dip.dataset_id, pool: destination)).to be_empty
++      expect(DatasetInPoolPlan.where(dataset_in_pool_id: dip.id)).to be_empty
++      expect(Transaction.where(node_id: @owned[Node])).to be_empty
++    end
++  end
++
+   it 'closes the ordinary reader adapter and releases its lease on normal return' do
+     leases = ActiveRecord::Base.connection_pool.stat.fetch(:busy)
+     reader = nil

@@ -1,0 +1,542 @@
+diff --git a/docs/storage/integrity-reconciler.md b/docs/storage/integrity-reconciler.md
+index 6aeb70ed91a98a36f628b6258f89bfd6dcc33f97..9b861a9017a097d7e11b17e48f63ed71df28677c 100644
+--- a/docs/storage/integrity-reconciler.md
++++ b/docs/storage/integrity-reconciler.md
+@@ -249,3 +249,73 @@ exclusion, dependency closure, durable physical evidence and action approval
+ before repair. A future handoff must change the reservation contract under its
+ singleton authority before acquiring physical responsibilities. This API slice
+ adds no executable action, approval, capture receipt or physical recovery path.
++
++## Storage-maintenance generation
++
++The optional vpsAdminOS profile keeps the Node integration, settings, key paths
++and command-line tools available. It excludes nodectld and osctld from every
++automatic runlevel. Import it alongside the ordinary integration:
++
++```nix
++{
++  imports = [
++    vpsadmin.nixosModules.vpsadminos-modules
++    vpsadmin.nixosModules.vpsadminos-storage-maintenance
++    ./node-configuration.nix
++  ];
++}
++```
++
++The same profile is available at
++[`nixos/profiles/storage-maintenance.nix`](../../nixos/profiles/storage-maintenance.nix)
++for direct file imports. It is absent from the default module list. It sets
++`osctld.enable = false` and `runit.services.nodectld.runlevels = []`, using
++ordinary module definitions. `vpsadmin.nodectld.enable` must remain true.
++Evaluation fails if the final configuration re-enables osctld or assigns either
++daemon an automatic runlevel. The profile does not override conflicting caller
++declarations. Setting osctld false alone does not select Admin maintenance: an
++ordinary storage-only Node can still need nodectld.
++
++Prepare compatible workload configuration before importing the profile. The
++final configuration must have empty `osctl.pools`, disabled
++`osctl.exportfs.enable`, no automatic osctld membership, and `install = false`
++for every `boot.zfs.pools` entry. The profile also refuses `osctl.oomd.enable`
++and `services.prometheus.exporters.osctl.enable`. Existing raw pool import,
++mount, dataset and property definitions remain active and can write storage.
++The profile leaves pool paths and on-disk osctl-active properties unchanged.
++
++Service executables, Node settings and keys, network configuration and tools
++remain available. The existing `nodectl halt-reason` outage template remains;
++its standalone local reader does not start nodectld. The OS renders the
++installed halt policy and runit stage 3 without automatic container
++shutdown. Other installed packages retain their identities. An administrator can
++still start a retained executable, and arbitrary hooks or persisted exports need
++separate inspection. These configuration checks do not prove that old workloads
++are absent or that children, delegated GC and other physical writers are excluded.
++
++This profile requires the OS implementation of `osctld.enable`, including its
++pool startup, activation and shutdown consumers. Older OS sources refuse the
++unknown option; there is no compatibility fallback. Ordinary imports and Node
++protocols are unchanged, so other Nodes need no coordinated update for this
++generation-only feature. The test activates the maintenance system, boots it
++afresh on the same disposable disk, and restores ordinary startup. It checks
++the current and booted systems, configuration and key hashes, dataset identities
++and known payload contents. Its direct `init=` boot does not prove that a
++production bootloader will retain the selected generation.
++
++Building or selecting a generation does not acquire physical responsibility.
++Before an actual transition, a separately reviewed authenticated handoff must
++replace the API-only reservation contract under its owner, epoch and scope CAS;
++contract 1 abandonment cannot release a later physical hold. That transition
++must persist the maintenance boot selection before retiring ordinary producers,
++prove that descendants and delegated work are contained and reaped, and bind
++capture and results to the owner, epoch, scope, boot and executable payloads.
++The current observer and activity-report interfaces provide no such handoff,
++physical receipt or executable repair path.
++
++Failed activation or operator death leaves the transition uncertain. Reboot
++invalidates prior process and capture evidence even when the generation is
++unchanged. There is no automatic fallback, expiry or release. Restoring an older
++ordinary generation can restart writers: end physical action authority through
++its future reviewed release path before ordinary restoration. The profile itself
++cannot authorize that rollback or resolve uncertain physical work.
+diff --git a/flake.nix b/flake.nix
+index 39015a1affd6d6960bb1ec412b1cfcbd4d059577..4fbbb655a03350adc87f89fabba62f791955573d 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -116,6 +116,7 @@
+       lib.notificationTemplates = notificationTemplatesLib;
+ 
+       nixosModules = {
++        vpsadminos-storage-maintenance = import ./nixos/profiles/storage-maintenance.nix;
+         nixos-modules =
+           { ... }:
+           {
+@@ -266,6 +267,13 @@
+           };
+         in
+         {
++          storage-maintenance-profile = import ./nixos/tests/storage-maintenance-profile.nix {
++            inherit pkgs;
++            makeSystem = modules: vpsadminos.lib.vpsadminosSystem ({ inherit system; } // modules);
++            adminModule = self.nixosModules.vpsadminos-modules;
++            exportedProfile = self.nixosModules.vpsadminos-storage-maintenance;
++          };
++
+           effective-notification-templates = pkgs.runCommand "effective-notification-templates" { } ''
+             grep -Fx 'Overridden daily report' \
+               ${effectiveNotificationTemplates}/templates/daily_report/email/en.subject.erb
+diff --git a/nixos/profiles/storage-maintenance.nix b/nixos/profiles/storage-maintenance.nix
+new file mode 100644
+index 0000000000000000000000000000000000000000..766d849818ab0f7689596fb3cd334198595342f5
+--- /dev/null
++++ b/nixos/profiles/storage-maintenance.nix
+@@ -0,0 +1,46 @@
++# Import alongside the ordinary vpsAdminOS integration. These final-value
++# assertions refuse conflicting workloads; they do not establish physical quiet.
++{ config, lib, ... }:
++{
++  osctld.enable = false;
++  runit.services.nodectld.runlevels = [ ];
++
++  assertions = [
++    {
++      assertion = config.vpsadmin.nodectld.enable;
++      message = "storage-maintenance requires vpsadmin.nodectld.enable = true";
++    }
++    {
++      assertion = config.runit.services.nodectld.runlevels == [ ];
++      message = "storage-maintenance requires empty nodectld runlevels";
++    }
++    {
++      assertion = !config.osctld.enable;
++      message = "storage-maintenance requires osctld.enable = false";
++    }
++    {
++      assertion = config.runit.services.osctld.runlevels == [ ];
++      message = "storage-maintenance requires empty osctld runlevels";
++    }
++    {
++      assertion = config.osctl.pools == { };
++      message = "storage-maintenance requires empty osctl.pools";
++    }
++    {
++      assertion = !config.osctl.exportfs.enable;
++      message = "storage-maintenance requires osctl.exportfs.enable = false";
++    }
++    {
++      assertion = lib.all (pool: !pool.install) (builtins.attrValues config.boot.zfs.pools);
++      message = "storage-maintenance requires boot.zfs.pools.<name>.install = false";
++    }
++    {
++      assertion = !config.osctl.oomd.enable;
++      message = "storage-maintenance requires osctl.oomd.enable = false";
++    }
++    {
++      assertion = !config.services.prometheus.exporters.osctl.enable;
++      message = "storage-maintenance requires the osctl Prometheus exporter to be disabled";
++    }
++  ];
++}
+diff --git a/nixos/tests/storage-maintenance-profile.nix b/nixos/tests/storage-maintenance-profile.nix
+new file mode 100644
+index 0000000000000000000000000000000000000000..6f45d330a9b544fe3f27e83eed2b2fb7b1e4c91a
+--- /dev/null
++++ b/nixos/tests/storage-maintenance-profile.nix
+@@ -0,0 +1,202 @@
++{
++  pkgs,
++  makeSystem,
++  adminModule,
++  exportedProfile,
++}:
++let
++  inherit (pkgs) lib;
++  common = {
++    system.stateVersion = "26.05";
++    networking.hostName = "maintenance-profile-test";
++    networking.hosts."192.0.2.1" = [ "maintenance-profile-peer" ];
++    vpsadmin.nodectld = {
++      enable = true;
++      settings = {
++        vpsadmin = {
++          node_id = 1;
++          node_name = "maintenance-profile-test";
++          transaction_public_key = "/etc/vpsadmin/transaction.key";
++        };
++      };
++    };
++    environment.etc."vpsadmin/transaction.key".text = "disposable module-check key";
++  };
++  rawPool = {
++    boot.zfs.pools.tank = {
++      install = false;
++      properties."feature@block_cloning" = "disabled";
++      datasets.proof.properties.mountpoint = "/mnt/maintenance-profile-proof";
++    };
++  };
++  make =
++    modules:
++    makeSystem {
++      modules = [
++        adminModule
++        common
++      ]
++      ++ modules;
++    };
++  directProfile = ../profiles/storage-maintenance.nix;
++  ordinary = make [ rawPool ];
++  maintenance = make [
++    rawPool
++    directProfile
++  ];
++  exported = make [
++    rawPool
++    exportedProfile
++  ];
++  directDefault = make [ directProfile ];
++  exportedDefault = make [ exportedProfile ];
++  osOnly = make [ { osctld.enable = false; } ];
++  generatedRun = system: name: system.config.environment.etc."runit/services/${name}/run".source.text;
++  assertionsHold = system: lib.all (entry: entry.assertion) system.config.assertions;
++  valid =
++    system:
++    (builtins.tryEval (
++      assert assertionsHold system;
++      system.config.system.build.toplevel.drvPath
++    )).success;
++  refuses =
++    module:
++    !valid (make [
++      rawPool
++      directProfile
++      module
++    ]);
++  cfg = maintenance.config;
++  poolRun = generatedRun maintenance "pool-tank";
++  runlevelLinks =
++    system:
++    lib.filter (name: lib.hasPrefix "runit/runsvdir/" name) (
++      builtins.attrNames system.config.environment.etc
++    );
++  daemonLinks =
++    system:
++    lib.filter (name: lib.hasSuffix "/nodectld" name || lib.hasSuffix "/osctld" name) (
++      runlevelLinks system
++    );
++  # Halt deliberately changes with the reviewed OS policy. Every other installed
++  # package, including the retained Node and osctl tools, must remain identical.
++  retainedPackages =
++    system:
++    map toString (
++      lib.filter (package: lib.getName package != "halt") system.config.environment.systemPackages
++    );
++  haltPackage =
++    system:
++    let
++      matching = lib.filter (
++        package: lib.getName package == "halt"
++      ) system.config.environment.systemPackages;
++    in
++    assert lib.assertMsg (builtins.length matching == 1) "expected one owning installed halt package";
++    builtins.head matching;
++  network = system: {
++    inherit (system.config.networking) hostName hosts nameservers;
++  };
++  checks = {
++    validOrdinary = valid ordinary;
++    ordinaryStartup =
++      ordinary.config.osctld.enable
++      && ordinary.config.runit.services.osctld.runlevels == [ "default" ]
++      && ordinary.config.runit.services.nodectld.runlevels == [ "default" ]
++      && builtins.length (daemonLinks ordinary) == 2;
++    osSettingDoesNotSelectAdminProfile =
++      valid osOnly && osOnly.config.runit.services.nodectld.runlevels == [ "default" ];
++    validDirectDefault = valid directDefault;
++    validExportedDefault = valid exportedDefault;
++    validDirectRawPool = valid maintenance;
++    validExportedRawPool = valid exported;
++    exportedEqualsDirect =
++      cfg.vpsadmin.nodectld.settings == exported.config.vpsadmin.nodectld.settings
++      && runlevelLinks maintenance == runlevelLinks exported
++      && generatedRun maintenance "pool-tank" == generatedRun exported "pool-tank"
++      && retainedPackages maintenance == retainedPackages exported;
++    noDaemonLinks = daemonLinks maintenance == [ ] && daemonLinks exported == [ ];
++    retainedDaemonDefinitions =
++      generatedRun maintenance "nodectld" == generatedRun ordinary "nodectld"
++      && generatedRun maintenance "osctld" == generatedRun ordinary "osctld";
++    retainedSettings =
++      cfg.vpsadmin.nodectld.settings == ordinary.config.vpsadmin.nodectld.settings
++      && cfg.osctld.settings == ordinary.config.osctld.settings;
++    retainedConfigAndKey =
++      cfg.environment.etc."vpsadmin/nodectld.yml".source
++      == ordinary.config.environment.etc."vpsadmin/nodectld.yml".source
++      &&
++        cfg.environment.etc."vpsadmin/transaction.key".source
++        == ordinary.config.environment.etc."vpsadmin/transaction.key".source;
++    retainedPackages = retainedPackages maintenance == retainedPackages ordinary;
++    owningHaltPolicy =
++      lib.all (system: lib.getName (haltPackage system) == "halt") [
++        ordinary
++        maintenance
++        exported
++        directDefault
++        exportedDefault
++        osOnly
++      ]
++      && toString (haltPackage ordinary) != toString (haltPackage maintenance)
++      && lib.all (system: toString (haltPackage system) == toString (haltPackage maintenance)) [
++        exported
++        directDefault
++        exportedDefault
++        osOnly
++      ];
++    retainedNodeExecutables =
++      toString maintenance.pkgs.nodectld == toString ordinary.pkgs.nodectld
++      && toString maintenance.pkgs.nodectl == toString ordinary.pkgs.nodectl
++      && lib.elem maintenance.pkgs.nodectl cfg.environment.systemPackages;
++    retainedOsTools = lib.all (name: lib.elem maintenance.pkgs.${name} cfg.environment.systemPackages) [
++      "osctl"
++      "osup"
++      "svctl"
++    ];
++    retainedHaltReason =
++      cfg.runit.halt.reasonTemplates."10-vpsadmin-outages".source.text
++      == ordinary.config.runit.halt.reasonTemplates."10-vpsadmin-outages".source.text;
++    retainedNetwork = network maintenance == network ordinary;
++    retainedPoolConfiguration = cfg.boot.zfs.pools.tank == ordinary.config.boot.zfs.pools.tank;
++    rawPoolStartup =
++      cfg.runit.services.pool-tank.oneShot
++      && lib.hasInfix "zpool import" poolRun
++      && lib.hasInfix "Mounting datasets..." poolRun
++      && lib.hasInfix "feature@block_cloning=disabled" poolRun;
++    noOsctlAssociation =
++      !lib.any (text: lib.hasInfix text poolRun) [
++        "waitForOsctld"
++        "osctlEntityExists"
++        "osctl pool"
++        "org.vpsadminos.osctl:active"
++      ];
++    refusesDisabledIntegration = refuses { vpsadmin.nodectld.enable = lib.mkForce false; };
++    refusesNodectldMembership = refuses {
++      runit.services.nodectld.runlevels = lib.mkForce [ "rescue" ];
++    };
++    refusesOsctldMembership = refuses { runit.services.osctld.runlevels = lib.mkForce [ "rescue" ]; };
++    refusesOsctldEnabled = refuses { osctld.enable = lib.mkForce true; };
++    refusesDeclarativePool = refuses { osctl.pools.tank = { }; };
++    refusesExportfs = refuses { osctl.exportfs.enable = true; };
++    refusesPoolInstall = refuses { boot.zfs.pools.tank.install = lib.mkForce true; };
++    refusesOomd = refuses { osctl.oomd.enable = true; };
++    refusesOsctlExporter = refuses { services.prometheus.exporters.osctl.enable = true; };
++  };
++  failed = builtins.attrNames (lib.filterAttrs (_: result: !result) checks);
++  projections = pkgs.writeText "storage-maintenance-profile-checks.json" (
++    builtins.unsafeDiscardStringContext (builtins.toJSON checks)
++  );
++in
++assert lib.assertMsg (
++  failed == [ ]
++) "storage-maintenance profile checks failed: ${lib.concatStringsSep ", " failed}";
++pkgs.runCommand "storage-maintenance-profile" { } ''
++  ordinary_script=$(readlink -f ${haltPackage ordinary}/bin/poweroff)
++  maintenance_script=$(readlink -f ${haltPackage maintenance}/bin/poweroff)
++  exported_script=$(readlink -f ${haltPackage exported}/bin/poweroff)
++  grep -Fx "  OSCTLD_ENABLED = 'true' == 'true'" "$ordinary_script"
++  grep -Fx "  OSCTLD_ENABLED = 'false' == 'true'" "$maintenance_script"
++  cmp "$maintenance_script" "$exported_script"
++  cp ${projections} "$out"
++''
+diff --git a/tests/suite/admin/nodectl-refresh-and-runtime-state.nix b/tests/suite/admin/nodectl-refresh-and-runtime-state.nix
+index 141fb25a3efd55bd903cf56394791ec9ddc11f7a..c0743afc4e6d0365af94dd4c4d8fd00506d71a75 100644
+--- a/tests/suite/admin/nodectl-refresh-and-runtime-state.nix
++++ b/tests/suite/admin/nodectl-refresh-and-runtime-state.nix
+@@ -1,3 +1,4 @@
++{ testFramework, ... }@testArgs:
+ import ../../make-test.nix (
+   { pkgs, ... }@args:
+   let
+@@ -9,6 +10,37 @@ import ../../make-test.nix (
+       adminUserId = adminUser.id;
+       node1Id = nodeSeed.id;
+     };
++    ordinaryMachines = import ../../machines/cluster/1-node.nix args;
++    # Use the same OS evaluator, packages, hardware and node module as the
++    # framework. Only this disposable variant explicitly prepares compatible
++    # consumer flags; the public profile refuses conflicting caller choices.
++    maintenanceSystem =
++      (import (args.vpsadminosPath + "/os") (
++        {
++          importedPkgs = pkgs;
++          system = pkgs.system;
++          extraArgs = {
++            vpsadminos = args.vpsadminosPath;
++          };
++          modules = [
++            (args.vpsadminosPath + "/tests/configs/vpsadminos/base.nix")
++            ordinaryMachines.node.config
++            ../../../nixos/profiles/storage-maintenance.nix
++            ({ lib, ... }: {
++              boot.zfs.pools.tank.install = lib.mkForce false;
++              osctl.exportfs.enable = lib.mkForce false;
++              services.prometheus.exporters.osctl.enable = lib.mkForce false;
++              osctl.test-shell.shells = 1;
++              system.vpsadminos.nixpkgsRevision =
++                if toString pkgs.path == toString testFramework.nixpkgsPath then
++                  testFramework.nixpkgsRevision
++                else
++                  null;
++            })
++          ];
++        }
++        // (pkgs.vpsadminosTestFrameworkInputs or { })
++      )).config.system.build.toplevel;
+   in
+   {
+     name = "admin-nodectl-refresh-and-runtime-state";
+@@ -23,7 +55,14 @@ import ../../make-test.nix (
+       "admin"
+     ];
+ 
+-    machines = import ../../machines/cluster/1-node.nix args;
++    machines = ordinaryMachines // {
++      node = ordinaryMachines.node // {
++        config = {
++          imports = [ ordinaryMachines.node.config ];
++          system.extraDependencies = [ maintenanceSystem ];
++        };
++      };
++    };
+ 
+     testScript = common + ''
+       before(:suite) do
+@@ -61,7 +100,113 @@ import ../../make-test.nix (
+           expect(accounting_response.fetch('status')).to eq('ok')
+           expect(accounting_response.fetch('response').fetch('interfaces')).to be_a(Array)
+         end
++
++        it 'preserves Node storage through maintenance activation, boot and restoration' do
++          require 'digest'
++          node.wait_for_service('pool-tank')
++          node.wait_for_osctl_pool('tank')
++          _, ordinary_system = node.succeeds('readlink -f /run/current-system')
++          _, ordinary_boot = node.succeeds('readlink -f /run/booted-system')
++          _, ordinary_boot_id = node.succeeds('cat /proc/sys/kernel/random/boot_id')
++          expect(ordinary_boot).to eq(ordinary_system)
++
++          node.succeeds(<<~CMD)
++            set -e
++            zfs create -o mountpoint=/mnt/admin-maintenance-proof tank/admin-maintenance-proof
++            printf 'retained Node payload before maintenance\\n' > /mnt/admin-maintenance-proof/payload
++            sync -f /mnt/admin-maintenance-proof
++          CMD
++          retained_storage = lambda do
++            node.succeeds(<<~CMD)[1]
++              set -e
++              zpool get -H -o value guid tank
++              zfs get -H -o value guid tank/admin-maintenance-proof
++              zfs get -H -o value org.vpsadminos.osctl:active tank
++              sha256sum /mnt/admin-maintenance-proof/payload
++            CMD
++          end
++          retained_config = lambda do
++            node.succeeds(<<~CMD)[1]
++              set -e
++              sha256sum /etc/vpsadmin/nodectld.yml
++              sha256sum /etc/vpsadmin/transaction.key
++            CMD
++          end
++          storage_before = retained_storage.call
++          config_before = retained_config.call
++          expect(storage_before.lines.length).to eq(4)
++          expect(storage_before.lines[0].strip).to match(/\A[0-9]+\z/)
++          expect(storage_before.lines[1].strip).to match(/\A[0-9]+\z/)
++          expect(storage_before.lines.last.split.first).to eq(
++            Digest::SHA256.hexdigest("retained Node payload before maintenance\n")
++          )
++
++          maintenance_ready = lambda do
++            node.wait_until_succeeds('test -f /run/service/pool-tank/done')
++            node.succeeds(<<~CMD)
++              set -e
++              test ! -e /service/nodectld && test ! -L /service/nodectld || { echo 'maintenance: nodectld-service'; exit 1; }
++              test ! -e /service/osctld && test ! -L /service/osctld || { echo 'maintenance: osctld-service'; exit 1; }
++              links=$(find /etc/runit/runsvdir -mindepth 2 -maxdepth 2 -name nodectld -o -name osctld) || { echo 'maintenance: runlevel-query'; exit 1; }
++              test -z "$links" || { echo 'maintenance: daemon-runlevels'; exit 1; }
++              test ! -S /run/nodectl/nodectld.sock || { echo 'maintenance: nodectld-socket'; exit 1; }
++              test ! -S /run/osctl/osctld.sock || { echo 'maintenance: osctld-socket'; exit 1; }
++              test ! -e /run/osctl/shutdown || { echo 'maintenance: shutdown-marker'; exit 1; }
++              test -x /etc/runit/services/nodectld/run || { echo 'maintenance: nodectld-definition'; exit 1; }
++              test -x /etc/runit/services/osctld/run || { echo 'maintenance: osctld-definition'; exit 1; }
++              test -x /run/current-system/sw/bin/nodectl || { echo 'maintenance: nodectl-tool'; exit 1; }
++              test -x /run/current-system/sw/bin/osctl || { echo 'maintenance: osctl-tool'; exit 1; }
++              test -x /run/current-system/sw/bin/osup || { echo 'maintenance: osup-tool'; exit 1; }
++              test -x /run/current-system/sw/bin/svctl || { echo 'maintenance: svctl-tool'; exit 1; }
++              poweroff_command=$(command -v poweroff) || { echo 'maintenance: poweroff-command'; exit 1; }
++              poweroff_script=$(readlink -f "$poweroff_command") || { echo 'maintenance: poweroff-script'; exit 1; }
++              selected_script=$(readlink -f ${maintenanceSystem}/sw/bin/poweroff) || { echo 'maintenance: selected-poweroff'; exit 1; }
++              test "$poweroff_script" = "$selected_script" || { echo 'maintenance: poweroff-binding'; exit 1; }
++            CMD
++            # Separate argv avoids matching the shell's own literal service paths.
++            status, = node.execute("pgrep -f '(^|/)[n]odectld([ :]|$)|/[.]nodectld-wrapped( |$)' > /dev/null")
++            expect(status).to eq(1), 'maintenance: nodectld-process-absent'
++            status, = node.execute("pgrep -f '(^|/)[o]sctld([ :]|$)|/[.]osctld-wrapped( |$)' > /dev/null")
++            expect(status).to eq(1), 'maintenance: osctld-process-absent'
++            expect(retained_storage.call).to eq(storage_before)
++            expect(retained_config.call).to eq(config_before)
++          end
++
++          _, switch_output = node.succeeds('${maintenanceSystem}/bin/switch-to-configuration switch')
++          expect(switch_output).to include('> sv stop nodectld', '> sv stop osctld')
++          expect(switch_output).not_to include('> osctl activate')
++          node.wait_until_succeeds('test ! -S /run/nodectl/nodectld.sock && test ! -S /run/osctl/osctld.sock')
++          maintenance_ready.call
++          expect(node.succeeds('readlink -f /run/current-system')[1].strip).to eq('${maintenanceSystem}')
++          expect(node.succeeds('readlink -f /run/booted-system')[1]).to eq(ordinary_boot)
++          expect(node.succeeds('cat /proc/sys/kernel/random/boot_id')[1]).to eq(ordinary_boot_id)
++
++          # Normal framework stop and the same Machine/disk. Last init wins;
++          # this does not certify a production bootloader's persistent default.
++          node.stop
++          node.start(kernel_params: ['init=${maintenanceSystem}/init'], wait_for_boot: true)
++          expect(node.succeeds('readlink -f /run/current-system')[1].strip).to eq('${maintenanceSystem}')
++          expect(node.succeeds('readlink -f /run/booted-system')[1].strip).to eq('${maintenanceSystem}')
++          _, maintenance_boot_id = node.succeeds('cat /proc/sys/kernel/random/boot_id')
++          expect(maintenance_boot_id).not_to eq(ordinary_boot_id)
++          maintenance_ready.call
++
++          node.succeeds("#{Shellwords.escape(ordinary_system.strip)}/bin/switch-to-configuration switch")
++          wait_for_running_nodectld(node)
++          node.wait_for_service('pool-tank')
++          node.wait_for_osctl_pool('tank')
++          expect(node.succeeds('readlink -f /run/current-system')[1]).to eq(ordinary_system)
++          expect(node.succeeds('readlink -f /run/booted-system')[1].strip).to eq('${maintenanceSystem}')
++          expect(retained_storage.call).to eq(storage_before)
++          expect(retained_config.call).to eq(config_before)
++          status_response = nodectl_remote_json(node, command: :status)
++          expect(status_response.fetch('status')).to eq('ok')
++          expect(status_response.fetch('response').fetch('state').fetch('run')).to eq(true)
++          accounting_response = nodectl_remote_json(node, command: :get, params: { resource: 'net_accounting' })
++          expect(accounting_response.fetch('status')).to eq('ok')
++          expect(accounting_response.fetch('response').fetch('interfaces')).to be_a(Array)
++        end
+       end
+     '';
+   }
+-)
++) testArgs

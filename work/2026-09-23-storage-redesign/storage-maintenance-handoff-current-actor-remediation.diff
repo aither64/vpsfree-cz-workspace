@@ -1,0 +1,374 @@
+diff --git a/api/lib/vpsadmin/api/lifetimes.rb b/api/lib/vpsadmin/api/lifetimes.rb
+index 454af2dfd52d0bd9d369e8cdc7a2282928bf3aab..925c09bfa40d679cf0dfd8c78745bbabda55dabd 100644
+--- a/api/lib/vpsadmin/api/lifetimes.rb
++++ b/api/lib/vpsadmin/api/lifetimes.rb
+@@ -394,12 +394,17 @@ module VpsAdmin::API
+           log
+         end
+ 
+-        # Returns the current (last) state.
+-        def current_object_state
+-          ::ObjectState.where(
++        # Returns the latest requested state. A locking caller must already hold
++        # this object's row lock in its transaction.
++        def current_object_state(lock: false)
++          raise ArgumentError, 'invalid object-state lock option' unless [true, false].include?(lock)
++
++          scope = ::ObjectState.where(
+             class_name: self.class.name,
+             row_id: id
+-          ).order('created_at DESC, id DESC').take
++          ).order('created_at DESC, id DESC')
++          scope = scope.lock if lock
++          scope.take
+         end
+       end
+ 
+diff --git a/api/models/storage_mutation_admission.rb b/api/models/storage_mutation_admission.rb
+index 79c6a01d259b6dfacda12dee9b25430c3185fa61..ad342cfc9785fa0ed0084e63d03b27073e29cecd 100644
+--- a/api/models/storage_mutation_admission.rb
++++ b/api/models/storage_mutation_admission.rb
+@@ -308,9 +308,9 @@ class StorageMutationAdmission
+ 
+     actor = User.lock.find_by(id: user.id)
+     session = UserSession.lock.find_by(id: user_session.id)
+-    requested_state = actor&.current_object_state&.state
++    requested_state = actor&.current_object_state(lock: true)
+     active = actor && actor.object_state == 'active' &&
+-             (requested_state.nil? || requested_state == 'active')
++             (requested_state.nil? || requested_state.state == 'active')
+     unless active && actor.role == :admin && session && session.user_id == actor.id &&
+            session.admin_id.nil? && session.closed_at.nil?
+       raise AuthorizationRefused, 'active direct administrator session required'
+diff --git a/api/spec/models/storage_freeze_api_actor_spec.rb b/api/spec/models/storage_freeze_api_actor_spec.rb
+index 9a045c30a673f1be35898da6fd04e1348b896340..4260b3ef445751552a433f4b9266869e8aa85dd2 100644
+--- a/api/spec/models/storage_freeze_api_actor_spec.rb
++++ b/api/spec/models/storage_freeze_api_actor_spec.rb
+@@ -91,6 +91,157 @@ RSpec.describe StorageMutationAdmission do
+     StorageFreezeControl.singleton!.update_columns(mode: 0, epoch:) if epoch
+   end
+ 
++  context 'with current requested actor eligibility' do
++    let(:actor) do
++      create_lifecycle_user!.tap { |user| user.update_columns(level: SpecSeed.admin.level) }
++    end
++    let(:session) { session_for(actor) }
++    let(:epoch) { StorageFreezeControl.singleton!.epoch }
++
++    before do
++      StorageFreezeControl.singleton!.update_columns(mode: 0)
++      session
++    end
++
++    it 'allows absent history for the confirmed active direct actor' do
++      ObjectState.where(class_name: 'User', row_id: actor.id).delete_all
++      expect(actor.current_object_state).to be_nil
++
++      freeze!(admin: actor, session:, epoch:)
++
++      expect(StorageFreezeControl.singleton!).to have_attributes(mode: 'read_only', epoch: epoch + 1)
++    end
++
++    it 'allows the latest active request for the confirmed active direct actor' do
++      request = record_requested_user_state!(actor, :active)
++      expect(actor.current_object_state.id).to eq(request.id)
++
++      freeze!(admin: actor, session:, epoch:)
++
++      expect(StorageFreezeControl.singleton!).to have_attributes(mode: 'read_only', epoch: epoch + 1)
++    end
++
++    %i[suspended soft_delete hard_delete deleted].each do |state|
++      it "refuses a latest #{state} request while the confirmed actor remains active" do
++        record_requested_user_state!(actor, state)
++        control = StorageFreezeControl.singleton!.attributes
++        transitions = StorageFreezeTransition.count
++
++        expect { freeze!(admin: actor, session:, epoch:) }
++          .to raise_error(described_class::AuthorizationRefused)
++
++        expect(actor.reload.object_state).to eq('active')
++        expect(StorageFreezeControl.singleton!.attributes).to eq(control)
++        expect(StorageFreezeTransition.count).to eq(transitions)
++      end
++    end
++
++    it 'refuses a present unknown state instead of treating its nil enum as absent' do
++      request = record_requested_user_state!(actor, :active)
++      request.update_columns(state: 99)
++      expect(actor.current_object_state).to have_attributes(id: request.id, state: nil)
++      control = StorageFreezeControl.singleton!.attributes
++
++      expect { freeze!(admin: actor, session:, epoch:) }
++        .to raise_error(described_class::AuthorizationRefused)
++
++      expect(StorageFreezeControl.singleton!.attributes).to eq(control)
++    end
++
++    %i[suspended soft_delete].each do |state|
++      %i[show abandon].each do |action|
++        it "refuses maintenance #{action} for a latest #{state} request without changing its owner" do
++          StorageFreezeControl.singleton!.update_columns(mode: 1)
++          run = described_class.reserve_maintenance_for_user!(
++            request_id: SecureRandom.uuid, expected_epoch: epoch, pool_ids: [SpecSeed.pool.id],
++            reason: 'requested-state authority', user: actor, user_session: session
++          )
++          before = run.attributes
++          control = StorageFreezeControl.singleton!.attributes
++          record_requested_user_state!(actor, state)
++
++          expect do
++            if action == :show
++              described_class.show_maintenance_for_user!(request_id: run.request_id, user: actor, user_session: session)
++            else
++              described_class.abandon_maintenance_for_user!(
++                request_id: run.request_id, expected_epoch: epoch, expected_revision: 1,
++                expected_scope_digest: run.requested_scope_digest, reason: 'unused requested-state owner',
++                user: actor, user_session: session
++              )
++            end
++          end.to raise_error(described_class::AuthorizationRefused)
++
++          expect(run.reload.attributes).to eq(before)
++          expect(StorageFreezeControl.singleton!.attributes).to eq(control)
++        end
++      end
++    end
++
++    it 'keeps default and explicit false query SQL identical and locks only on opt-in' do
++      request = record_requested_user_state!(actor, :active)
++      selects = []
++      subscriber = lambda do |*, payload|
++        selects << payload[:sql] if payload[:sql].match?(/\bFROM `object_states`(?:\s|$)/)
++      end
++      ActiveSupport::Notifications.subscribed(subscriber, 'sql.active_record') do
++        ActiveRecord::Base.uncached do
++          expect(actor.current_object_state.id).to eq(request.id)
++          expect(actor.current_object_state(lock: false).id).to eq(request.id)
++          User.transaction do
++            actor.lock!
++            expect(actor.current_object_state(lock: true).id).to eq(request.id)
++          end
++        end
++      end
++
++      expect(selects.length).to eq(3)
++      expect(selects[0]).to eq(selects[1])
++      expect(selects[0]).not_to include('FOR UPDATE')
++      expect(selects[2]).to end_with('FOR UPDATE')
++    end
++
++    it 'uses the latest timestamp before the higher ID under default and locking lookup' do
++      timestamp = (ObjectState.where(class_name: 'User', row_id: actor.id).maximum(:created_at) || Time.current) + 1
++      newest = record_requested_user_state!(actor, :active)
++      newest.update_columns(created_at: timestamp + 1)
++      older = record_requested_user_state!(actor, :suspended)
++      older.update_columns(created_at: timestamp)
++      expect(older.id).to be > newest.id
++
++      expect(actor.current_object_state.id).to eq(newest.id)
++      User.transaction do
++        actor.lock!
++        expect(actor.current_object_state(lock: true).id).to eq(newest.id)
++      end
++    end
++
++    it 'isolates class and row and breaks equal timestamps by ID under both lookups' do
++      timestamp = (ObjectState.where(class_name: 'User', row_id: actor.id).maximum(:created_at) || Time.current) + 1
++      older = record_requested_user_state!(actor, :active)
++      latest = record_requested_user_state!(actor, :suspended)
++      [older, latest].each { |request| request.update_columns(created_at: timestamp) }
++      ObjectState.create!(class_name: 'Vps', row_id: actor.id, state: :active,
++                          user: actor, created_at: timestamp + 1)
++      other = create_lifecycle_user!
++      record_requested_user_state!(other, :active).update_columns(created_at: timestamp + 1)
++      expect(latest.id).to be > older.id
++
++      expect(actor.current_object_state.id).to eq(latest.id)
++      User.transaction do
++        actor.lock!
++        expect(actor.current_object_state(lock: true).id).to eq(latest.id)
++      end
++    end
++
++    it 'rejects non-Boolean locking options instead of accepting SQL lock strings' do
++      [nil, 'FOR UPDATE', 1, :update].each do |lock|
++        expect { actor.current_object_state(lock:) }
++          .to raise_error(ArgumentError, 'invalid object-state lock option')
++      end
++    end
++  end
++
+   context 'with an API-only storage maintenance reservation' do
+     let(:admin) { SpecSeed.admin }
+     let(:session) { create_open_session!(user: admin, auth_type: 'basic') }
+@@ -608,7 +759,7 @@ RSpec.describe StorageMutationAdmission do
+     let(:reservation_state) do
+       control_before = StorageFreezeControl.singleton!.attributes
+       {
+-        workers: [], release_queues: [], request_ids: [], owned_sessions: [],
++        workers: [], release_queues: [], request_ids: [], owned_sessions: [], owned_object_state_ids: [],
+         control_before:, transition_ids_before: StorageFreezeTransition.pluck(:id),
+         epoch: control_before.fetch('epoch')
+       }
+@@ -653,6 +804,7 @@ RSpec.describe StorageMutationAdmission do
+           StorageFreezeControl.singleton!.update_columns(fixture.fetch(:control_before).except('id'))
+           StorageMaintenanceRun.where(request_id: fixture.fetch(:request_ids)).delete_all
+           StorageFreezeTransition.where.not(id: fixture.fetch(:transition_ids_before)).delete_all
++          ObjectState.where(id: fixture.fetch(:owned_object_state_ids)).delete_all
+           fixture.fetch(:owned_sessions).each(&:destroy!)
+           raise worker_error if worker_error
+         rescue Exception # rubocop:disable Lint/RescueException
+@@ -686,6 +838,95 @@ RSpec.describe StorageMutationAdmission do
+       )
+     end
+ 
++    %i[suspended soft_delete].each do |requested_state|
++      %i[freeze unfreeze catch_up reserve handoff].each do |action|
++        it "refuses #{action} after a committed #{requested_state} request despite an older repeatable-read view" do
++          session = committed_session
++          admin = SpecSeed.admin
++          active_request = User.transaction do
++            actor = User.lock.find(admin.id)
++            record_requested_user_state!(actor, :active).tap do |request|
++              reservation_state.fetch(:owned_object_state_ids) << request.id
++            end
++          end
++          StorageFreezeControl.singleton!.update_columns(mode: action == :freeze ? 0 : 1)
++          run = committed_reserve(session:) if action == :handoff
++          snapshot = lambda do
++            {
++              control: StorageFreezeControl.singleton!.attributes,
++              runs: StorageMaintenanceRun.order(:id).map(&:attributes),
++              transitions: StorageFreezeTransition.order(:id).map(&:attributes),
++              catch_up_audits: StorageObserverCatchUpAudit.order(:id).map(&:attributes)
++            }
++          end
++          before = ActiveRecord::Base.uncached { snapshot.call }
++          request_id = SecureRandom.uuid
++          reservation_state.fetch(:request_ids) << request_id
++          committed = nil
++          ActiveRecord::Base.transaction do
++            connection = ActiveRecord::Base.connection
++            expect(connection.select_value('SELECT @@tx_isolation')).to eq('REPEATABLE-READ')
++            ActiveRecord::Base.uncached do
++              expect(admin.current_object_state).to have_attributes(id: active_request.id, state: 'active')
++            end
++            writer = reservation_worker do |worker_connection|
++              expect(worker_connection.select_value('SELECT @@tx_isolation')).to eq('REPEATABLE-READ')
++              User.transaction do
++                actor = User.lock.find(admin.id)
++                request = record_requested_user_state!(actor, requested_state, actor:)
++                reservation_state.fetch(:owned_object_state_ids) << request.id
++                current_session = UserSession.find(session.id)
++                [request.id, request.state, actor.object_state, current_session.closed_at, current_session.admin_id]
++              end
++            end
++            committed = Timeout.timeout(5) { writer.value }
++            expect(committed.drop(1)).to eq([requested_state.to_s, 'active', nil, nil])
++            ActiveRecord::Base.uncached do
++              expect(admin.current_object_state).to have_attributes(id: active_request.id, state: 'active')
++            end
++            writes = []
++            locked_tables = []
++            subscriber = lambda do |*, payload|
++              sql = payload.fetch(:sql)
++              statement = sql[/\A\s*(\w+)/, 1]&.upcase
++              writes << statement if %w[INSERT UPDATE DELETE REPLACE CREATE ALTER DROP TRUNCATE RENAME].include?(statement)
++              if sql.include?('FOR UPDATE')
++                locked_tables.concat(sql.scan(/\bFROM `(storage_freeze_controls|users|user_sessions|object_states)`/).flatten)
++              end
++            end
++            ActiveSupport::Notifications.subscribed(subscriber, 'sql.active_record') do
++              expect do
++                case action
++                when :freeze, :unfreeze
++                  described_class.set_read_only_for_user!(
++                    read_only: action == :freeze, expected_epoch: reservation_state.fetch(:epoch),
++                    reason: 'current requested actor', user: admin, user_session: session
++                  )
++                when :catch_up
++                  described_class.request_catch_up_for_user!(
++                    user: admin, user_session: session, expected_epoch: reservation_state.fetch(:epoch),
++                    reason: 'current requested actor', after_chain_id: 0, limit: 1
++                  )
++                when :reserve
++                  committed_reserve(session:, request_id:)
++                when :handoff
++                  committed_handoff(run, session:)
++                end
++              end.to raise_error(described_class::AuthorizationRefused)
++            end
++            expect(writes).to be_empty
++            expect(locked_tables).to eq(%w[storage_freeze_controls users user_sessions object_states])
++          end
++          ActiveRecord::Base.uncached do
++            expect(admin.current_object_state).to have_attributes(id: committed.first, state: requested_state.to_s)
++            expect(admin.reload.object_state).to eq('active')
++            expect(session.reload).to have_attributes(closed_at: nil, admin_id: nil)
++            expect(snapshot.call).to eq(before)
++          end
++        end
++      end
++    end
++
+     it 'publishes a lost-response UUID to an ordinary second connection and releases the lock' do
+       session = committed_session
+       run = committed_reserve(session:)
+diff --git a/docs/object-lifetimes.md b/docs/object-lifetimes.md
+index f09e4f5eb7aecaa41e5b9c54643ad001953efeb0..1c7bea08f8207ab5a1a028a2dba2d157fa483a85 100644
+--- a/docs/object-lifetimes.md
++++ b/docs/object-lifetimes.md
+@@ -40,6 +40,26 @@ Source: [lifetime model and resource support](../api/lib/vpsadmin/api/lifetimes.
+ [lifetime wrapper](../api/models/transaction_chains/lifetimes/wrapper.rb),
+ [User](../api/models/user.rb), and [VPS](../api/models/vps.rb).
+ 
++## Requested and confirmed state
++
++`ObjectState` records a requested transition before its chain confirms the
++model's `object_state`. A pending suspension or deletion can therefore coexist
++with a confirmed `active` state.
++
++`current_object_state` selects the latest request for the exact model class and
++row, ordered by `created_at DESC, id DESC`. By default it uses an ordinary read,
++which can see an older repeatable-read snapshot. Callers that need current
++eligibility can use the Boolean option `current_object_state(lock: true)`.
++They must hold the object's row lock in the same transaction before locking
++its latest state row. User requested-state writers hold that User lock before
++publishing the request.
++
++Storage administration uses this locking read after locking User and
++UserSession. It requires confirmed `active` state and either no requested-state
++row or an explicitly `active` request. It refuses a present row with an unknown
++or nil state. User authentication has a different policy and can permit
++suspended accounts.
++
+ ## Expiration and history
+ 
+ An object can have an `expiration_date`. The lifetime progress task selects
+diff --git a/docs/storage/integrity-model.md b/docs/storage/integrity-model.md
+index f86ec81a014981746c0e20ac353e3e676a2ec699..b551a9ae845d1924871d1d263301919af4541cb0 100644
+--- a/docs/storage/integrity-model.md
++++ b/docs/storage/integrity-model.md
+@@ -123,6 +123,21 @@ by `show`; the API rechecks actor, session, mode and epoch under SQL locks.
+ Transition and catch-up audits copy the API user ID, session ID and login.
+ The WebUI shows status and mode controls to a direct full administrator.
+ 
++Actor revalidation locks singleton 1, then User, UserSession and the latest
++requested `ObjectState` row. The requested-state lookup is a current locking
++read even inside an older repeatable-read transaction. Confirmed User state
++must be `active`; its latest request must be absent or explicitly `active`.
++The API refuses pending suspension or deletion and a present unknown or nil
++requested state before changing mode or writing audit. The same check covers
++catch-up requests and maintenance reserve, show, handoff and abandon. See
++[requested and confirmed state](../object-lifetimes.md#requested-and-confirmed-state).
++
++The canonical lifetime reader and storage admission caller must reach every
++API worker together before this check can be relied on. Older workers can read
++an older requested-state snapshot even with compatible schema. Rolling back
++the reader and caller restores this gap. The check changes no stored contract,
++wire format or physical authority.
++
+ NodeCtld settles generic observer intents when a chain has terminal proof.
+ During `read_only`, `settle_observer` can inspect bounded pages of old-node
+ prepared intents. It commits a request audit before the work and a separate

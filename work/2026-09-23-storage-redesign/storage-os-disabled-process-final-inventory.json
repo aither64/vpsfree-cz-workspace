@@ -1,0 +1,228 @@
+{
+  "base": "cbfc283d233f77cd6823893f97cf843f69c995a1",
+  "head": "80034c8cc6489db6287b43f439a9617511f14908",
+  "tree": "497afa5c0863b2dd824664408a0e06cba4c0305d",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-09-23-storage-redesign/vpsadminos",
+  "commits": [
+    {
+      "head": "7f85b137835907b3a786dec225a49e9ff694537a",
+      "subject": "osctld: report bounded pool storage activity",
+      "message": "osctld: report bounded pool storage activity\n\nTrack per-pool garbage collector and trash work from enqueue through\ncompletion, including timer prunes and synchronous moves. Report a\nread-only, versioned pool sample with stable daemon and import identities,\na monotonic generation, worker status, and sticky unknown conditions.\n\nKeep absent or stopping pools unknown. Add unit and VM command coverage\nwithout changing GC stop behavior or granting repair authority.",
+      "paths": [
+        "docs/osctld/interfaces.md",
+        "osctld/lib/osctld/commands/pool/export.rb",
+        "osctld/lib/osctld/commands/pool/storage_activity.rb",
+        "osctld/lib/osctld/daemon.rb",
+        "osctld/lib/osctld/garbage_collector.rb",
+        "osctld/lib/osctld/pool.rb",
+        "osctld/lib/osctld/storage_activity.rb",
+        "osctld/lib/osctld/trash_bin.rb",
+        "osctld/spec/osctld/commands/heavy_system_spec.rb",
+        "osctld/spec/osctld/commands/simple_delegators_spec.rb",
+        "osctld/spec/osctld/garbage_collector_spec.rb",
+        "osctld/spec/osctld/storage_activity_spec.rb",
+        "osctld/spec/osctld/trash_bin_spec.rb",
+        "tests/all-tests.nix",
+        "tests/suite/osctld/storage-activity.nix"
+      ]
+    },
+    {
+      "head": "80034c8cc6489db6287b43f439a9617511f14908",
+      "subject": "os: support generations without automatic osctld startup",
+      "message": "os: support generations without automatic osctld startup\n\nAdd osctld.enable with the existing enabled behavior as its default.\nDisabled generations retain the service, configuration and tools while\nrefusing declarative pools, exportfs, pool installation and\ncontradictory runlevel membership.\n\nKeep raw ZFS import, mounts and properties available without waiting for\nosctld or associating pools with it. Configuration activation consults\nits parsed destination runlevel before invoking osctl and keeps the\nexisting restart handling for selected services.\n\nBind installed halt, poweroff and reboot commands to the final\ngeneration policy. Disabled generations omit container listing and\nshutdown/abort, including the second shutdown request in runit's final\nstage. Preserve confirmation, countdown, logging, hooks, kexec, both\nclock writes and runit dispatch. An explicitly invoked older script\nretains its policy.\n\nCover actual module outputs, activation classes, installed Halt classes\nand generated stage3 scripts in the focused check. Extend the existing\nswitch scenario to preserve dataset identity and a known payload across\nactivation, ordinary stop, a fresh disabled boot and return to normal\nstartup using the same framework machine and retained disks.\n\nThis changes no retained format and grants no physical exclusion or\nmaintenance authority. Arbitrary hooks and manually started daemons\nremain operator responsibilities. Older ordinary generations can restart\nwriters; booting one is not a safe rollback during owned maintenance.",
+      "paths": [
+        "docs/os/runlevels.md",
+        "flake.nix",
+        "os/modules/config/runit.nix",
+        "os/modules/osctl/osctld.nix",
+        "os/modules/system/activation/switch-to-configuration.rb",
+        "os/modules/system/boot/runit/default.nix",
+        "os/modules/system/boot/runit/halt.8.adoc",
+        "os/modules/system/boot/runit/halt.rb",
+        "os/modules/tasks/filesystems/zfs/pool-service.nix",
+        "tests/osctld-disabled-eval.nix",
+        "tests/suite/system/switch-to-configuration.nix"
+      ]
+    }
+  ],
+  "paths": {
+    "docs/os/runlevels.md": {
+      "sha256": "e2360e7e5bf8487f3fffba82370591f1b10d5c9f0f63aac591823068d00a95e1",
+      "git_blob": "223aa764f8128eac48daf15073d58c1b3d984772"
+    },
+    "docs/osctld/interfaces.md": {
+      "sha256": "0b310f091f72970f6e956c344444182ae52c23444f8986ac01758427bdf18c06",
+      "git_blob": "5f2712d0ccdeafe3ecb1ba859dc5a8ae0ccb4fb0"
+    },
+    "flake.nix": {
+      "sha256": "2a846c93433f12be3578b8139958aba37b634ab99e2788351d4dd80c9ed3b176",
+      "git_blob": "e09dc41355e1c5586639e2532c7c96dee02f2365"
+    },
+    "os/modules/config/runit.nix": {
+      "sha256": "4b92363611ecccd17760eb6c52440f1c3c6afade702923030d314c3f9574d004",
+      "git_blob": "45f16c0ee85d2af6e1f7b445f9a72ca690eb0ec6"
+    },
+    "os/modules/osctl/osctld.nix": {
+      "sha256": "75aca340938eca55ce21c2ea20d6cf9d0b607cf04b8c1416c82cc8c7d4cdc39f",
+      "git_blob": "cc8802ac79c4c3bbcf5fb88abc3d1ffa81d1587c"
+    },
+    "os/modules/system/activation/switch-to-configuration.rb": {
+      "sha256": "82d90d20c113ec86bfa4dae3a5b3b638472ad906f39557d4b5f69b3654422204",
+      "git_blob": "ddf3da559561f3bcb6a127fde8f9efff7dcc8475"
+    },
+    "os/modules/system/boot/runit/default.nix": {
+      "sha256": "ec45faf0f5f05a449ae052d02c74702bfafb419bda80d1ab80571dcde0a4ce69",
+      "git_blob": "c62c3cb8537358a6591ed0b5f0c4ee62225b1b6a"
+    },
+    "os/modules/system/boot/runit/halt.8.adoc": {
+      "sha256": "4087adbeff43b29268c0ad26658a81db43c79028ab6f50c828f682e04f273a0a",
+      "git_blob": "bbc9d9574bfb3b4c466d62f89e469434fa232c09"
+    },
+    "os/modules/system/boot/runit/halt.rb": {
+      "sha256": "bbc71c553502d2c9892e6f72a85570d60b86e7ce9a3d286b83253d7d08be5e23",
+      "git_blob": "4be9f2c65aeb68274f2029347fe27a43340811c4"
+    },
+    "os/modules/tasks/filesystems/zfs/pool-service.nix": {
+      "sha256": "7068a140b350377674428d7a10f897cef9b1f8fd7c4ade58bab77f3e1332a971",
+      "git_blob": "947b389382b19c149794af798f167d109ced86a6"
+    },
+    "osctld/lib/osctld/commands/pool/export.rb": {
+      "sha256": "ec762ab25fb0c487a1415a87fa3a0e5827c134777862a9e43c42a5c1a57353b7",
+      "git_blob": "ff44721b15bcfaf11886576bbde27875da0f6f91"
+    },
+    "osctld/lib/osctld/commands/pool/storage_activity.rb": {
+      "sha256": "5fa82a86944ba37f4f3ecadaa03972c2452e1bf74762d7333c8ca95b182ab446",
+      "git_blob": "55f18ad991dce80d8cf0dd0aafaaa69328bf6b56"
+    },
+    "osctld/lib/osctld/daemon.rb": {
+      "sha256": "c32a44513b39afd88a9b1bc972de1d52bec565726bc22d6e189c2430abb8ed01",
+      "git_blob": "fb3030115d723e0bc2abd890c6c5b8696cb20c66"
+    },
+    "osctld/lib/osctld/garbage_collector.rb": {
+      "sha256": "dffa3fedf4e02e6e8d34e82dde8a393f740e7178205796534db33cac1dba3842",
+      "git_blob": "65e9e9dfc68dbeba2740d83f21cbdedc35d94c78"
+    },
+    "osctld/lib/osctld/pool.rb": {
+      "sha256": "ceb4074a6f2774f12656154b2797807374faa4f31926116cc80ac26d147d41f0",
+      "git_blob": "06eaa86529b9fedfe286aaf2584cc4124d18db9b"
+    },
+    "osctld/lib/osctld/storage_activity.rb": {
+      "sha256": "9a24454e8bb3da1d45b701b1a585e89e8451541bcb8a6fabe600a3f0661f51e9",
+      "git_blob": "0863d3988a99c8da5b80161fc9e15ee81793947e"
+    },
+    "osctld/lib/osctld/trash_bin.rb": {
+      "sha256": "def7550794c0f571ed24beb1715d9c371397c44e2b37efd7fed725b6198da710",
+      "git_blob": "52bc9ae758b6797cfde6b28ef937b69874a13329"
+    },
+    "osctld/spec/osctld/commands/heavy_system_spec.rb": {
+      "sha256": "48be77c46b97440ae702d6869fbe533bcceeb491b92f1918263091d63791350b",
+      "git_blob": "8e3d60efe3235a8910c7d54ff3bfcc946bf2d3c2"
+    },
+    "osctld/spec/osctld/commands/simple_delegators_spec.rb": {
+      "sha256": "ea986f8f4d884113372ab4225db2069d86b5d1357d81ba11cbeafa5b55a36237",
+      "git_blob": "4c79c5f835ed44822c11aaecc4e436964af23f41"
+    },
+    "osctld/spec/osctld/garbage_collector_spec.rb": {
+      "sha256": "18131a9f900ee82c3124c0aa3f0c4ceb5b16f43486c515c926ff104b77fc7f1e",
+      "git_blob": "909d49449e4ddac403eb1506f80a7a2791783666"
+    },
+    "osctld/spec/osctld/storage_activity_spec.rb": {
+      "sha256": "05c18b4945ea1890a9d7de391593a3d3d662c15746cf134209282150211203e9",
+      "git_blob": "bc325085b97a4be746a826c82f17c6e21b0db5b0"
+    },
+    "osctld/spec/osctld/trash_bin_spec.rb": {
+      "sha256": "eeb1794b371e4eb94ce59fdbb96546d1e512d1267a39c3e84426d10c6ca5a398",
+      "git_blob": "2cf4e5d79f5c7857eb264cfe144966ec97a65840"
+    },
+    "tests/all-tests.nix": {
+      "sha256": "bbd07328a63b59b6c17e7cba5148faaa7c241aff1ad21a1e6e1a3a5e871239a0",
+      "git_blob": "a7ab1392156a240fbdee0b51358a26d0bc3edf83"
+    },
+    "tests/osctld-disabled-eval.nix": {
+      "sha256": "ac2f16cb107e279fadc0c4c4450f903d460c03ae4ff099cae6df674441a5e627",
+      "git_blob": "ddc3d70b766c741e48d0dbf3f1cff47b7037799c"
+    },
+    "tests/suite/osctld/storage-activity.nix": {
+      "sha256": "28a85c7a82c7f9f304b6a03fc32808e5b9a23ee2f45d0bf971938474798be8d6",
+      "git_blob": "bc14d730f0f39543d0cb0bf2a898f795507f4452"
+    },
+    "tests/suite/system/switch-to-configuration.nix": {
+      "sha256": "aa75c103b4075f771d3ec4dae5d206e098f250229e720e14b65ac7a94bf8f456",
+      "git_blob": "afb9aa675c136da15b06ef67341136e2652170dc"
+    }
+  },
+  "complete_diff_sha256": "de0d26fcb95a23206fa929aec2e93851ea32173505ed079f6a25bfda3fab50c9",
+  "unit_diff_sha256": "89f8a4577d984fb2cd9e7b1d5a29d39d526b06966b516411a637fffafb43fa24",
+  "remediation_diff_sha256": "f067a4e1b4b392edb8de5cda9170e56e07cf7138fa78a2333a86c970ae043e6e",
+  "complete_stat": "26 files changed, 1709 insertions(+), 82 deletions(-)",
+  "unit_stat": "11 files changed, 826 insertions(+), 59 deletions(-)",
+  "unit_paths": [
+    "docs/os/runlevels.md",
+    "flake.nix",
+    "os/modules/config/runit.nix",
+    "os/modules/osctl/osctld.nix",
+    "os/modules/system/activation/switch-to-configuration.rb",
+    "os/modules/system/boot/runit/default.nix",
+    "os/modules/system/boot/runit/halt.8.adoc",
+    "os/modules/system/boot/runit/halt.rb",
+    "os/modules/tasks/filesystems/zfs/pool-service.nix",
+    "tests/osctld-disabled-eval.nix",
+    "tests/suite/system/switch-to-configuration.nix"
+  ],
+  "migrations": [],
+  "review": {
+    "original_head": "09786fbc20a2d8e134e2e3001d53ef287646e74b",
+    "original_all_four_high_complete": true,
+    "direct_step9": "installed halt and stage3 shutdown consumers, no new authority/interface boundary",
+    "source_checks": {
+      "module": 19,
+      "activation": 6,
+      "halt": 19,
+      "stage3": 4,
+      "derivation_evaluations": 5,
+      "scenario_derivation": 1
+    },
+    "original_vm_unrun_at_review": true
+  },
+  "source_parity": 1,
+  "index_empty": true,
+  "foreign_files": 64,
+  "foreign_dirs": 17,
+  "process_check_fix_sha256": "2a051047ec94c500ad5534c2f16f93ffc1311e79063ec32cb7adeea54b389fd4",
+  "previous_head": "8e0b2d9fa1876ad2e28ce34e23724f841cacec01",
+  "fixture_fix": "same eighth example, separated pgrep status1 plus fixed labels; first seven and all runtime sources unchanged",
+  "first_vm_result": {
+    "head": "8e0b2d9fa1876ad2e28ce34e23724f841cacec01",
+    "exit_code": 1,
+    "elapsed_seconds": 416.137,
+    "source_parity": 1,
+    "passed_examples": 7,
+    "failed_examples": 1
+  },
+  "next_vm_status": "passed/accepted",
+  "next_vm_head": "80034c8cc6489db6287b43f439a9617511f14908",
+  "owning_vm": {
+    "head": "80034c8cc6489db6287b43f439a9617511f14908",
+    "exit_code": 0,
+    "elapsed_seconds": 623.055,
+    "stage_seconds": 620.272,
+    "examples_passed": 8,
+    "examples_failed": 0,
+    "last_example_seconds": 216.37,
+    "source_parity": 1,
+    "owned_pgid_remaining": 0,
+    "exact_prefix_cmdlines_remaining": 0,
+    "exact_prefix_fd_holders_remaining": 0,
+    "signals": 0,
+    "unexpected_kernel_build": false,
+    "production_bootloader_proof": false,
+    "physical_exclusion_proof": false
+  },
+  "publication": {
+    "feature": "80034c8cc6489db6287b43f439a9617511f14908",
+    "default": "cbfc283d233f77cd6823893f97cf843f69c995a1",
+    "ssh_readback": true,
+    "comparison_captured": true,
+    "default_integrated": false
+  }
+}

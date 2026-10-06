@@ -1,0 +1,86 @@
+diff --git a/tests/suite/admin/nodectl-refresh-and-runtime-state.nix b/tests/suite/admin/nodectl-refresh-and-runtime-state.nix
+index c0743afc4e6d0365af94dd4c4d8fd00506d71a75..c257493a9c22fe4ec4253ef67d20e3cbb35177f2 100644
+--- a/tests/suite/admin/nodectl-refresh-and-runtime-state.nix
++++ b/tests/suite/admin/nodectl-refresh-and-runtime-state.nix
+@@ -149,7 +149,6 @@ import ../../make-test.nix (
+               test ! -e /service/osctld && test ! -L /service/osctld || { echo 'maintenance: osctld-service'; exit 1; }
+               links=$(find /etc/runit/runsvdir -mindepth 2 -maxdepth 2 -name nodectld -o -name osctld) || { echo 'maintenance: runlevel-query'; exit 1; }
+               test -z "$links" || { echo 'maintenance: daemon-runlevels'; exit 1; }
+-              test ! -S /run/nodectl/nodectld.sock || { echo 'maintenance: nodectld-socket'; exit 1; }
+               test ! -S /run/osctl/osctld.sock || { echo 'maintenance: osctld-socket'; exit 1; }
+               test ! -e /run/osctl/shutdown || { echo 'maintenance: shutdown-marker'; exit 1; }
+               test -x /etc/runit/services/nodectld/run || { echo 'maintenance: nodectld-definition'; exit 1; }
+@@ -175,7 +174,64 @@ import ../../make-test.nix (
+           _, switch_output = node.succeeds('${maintenanceSystem}/bin/switch-to-configuration switch')
+           expect(switch_output).to include('> sv stop nodectld', '> sv stop osctld')
+           expect(switch_output).not_to include('> osctl activate')
+-          node.wait_until_succeeds('test ! -S /run/nodectl/nodectld.sock && test ! -S /run/osctl/osctld.sock')
++          # Ordinary Node exit can retain its socket inode. Check only this
++          # endpoint's inactivity, not descendant or physical exclusion.
++          endpoint_status, endpoint_output = node.execute(<<~CMD)
++            /run/current-system/sw/bin/ruby -rsocket <<'RUBY'
++            parent = '/run/nodectl'
++            path = '/run/nodectl/nodectld.sock'
++            outcome = failure = client = nil
++
++            begin
++              raise TypeError unless File.lstat(parent).directory?
++
++              observed = begin
++                File.lstat(path)
++              rescue Errno::ENOENT
++                nil
++              end
++
++              if observed.nil?
++                outcome = 'maintenance: nodectld-endpoint-absent'
++              else
++                raise TypeError unless observed.socket?
++
++                client = Socket.new(Socket::AF_UNIX, Socket::SOCK_STREAM, 0)
++                address = Socket.sockaddr_un(path)
++
++                begin
++                  client.connect_nonblock(address)
++                  failure = 'maintenance: nodectld-endpoint-accepting'
++                rescue Errno::ECONNREFUSED
++                  outcome = 'maintenance: nodectld-endpoint-refused'
++                rescue Errno::EISCONN
++                  failure = 'maintenance: nodectld-endpoint-accepting'
++                end
++              end
++            rescue StandardError
++              failure = 'maintenance: nodectld-probe-error'
++            ensure
++              begin
++                client.close if client
++              rescue StandardError
++                failure ||= 'maintenance: nodectld-probe-error'
++              end
++            end
++
++            if failure || outcome.nil?
++              warn(failure || 'maintenance: nodectld-probe-error')
++              exit 1
++            end
++
++            puts outcome
++            RUBY
++          CMD
++          expect(endpoint_status).to be_an(Integer), 'maintenance: nodectld-endpoint-status'
++          expect(endpoint_status).to eq(0), 'maintenance: nodectld-endpoint-status'
++          expect([
++            "maintenance: nodectld-endpoint-absent\n",
++            "maintenance: nodectld-endpoint-refused\n"
++          ].include?(endpoint_output)).to eq(true), 'maintenance: nodectld-endpoint-result'
+           maintenance_ready.call
+           expect(node.succeeds('readlink -f /run/current-system')[1].strip).to eq('${maintenanceSystem}')
+           expect(node.succeeds('readlink -f /run/booted-system')[1]).to eq(ordinary_boot)
+@@ -189,6 +245,7 @@ import ../../make-test.nix (
+           expect(node.succeeds('readlink -f /run/booted-system')[1].strip).to eq('${maintenanceSystem}')
+           _, maintenance_boot_id = node.succeeds('cat /proc/sys/kernel/random/boot_id')
+           expect(maintenance_boot_id).not_to eq(ordinary_boot_id)
++          node.succeeds("test ! -S /run/nodectl/nodectld.sock || { echo 'maintenance: nodectld-socket'; exit 1; }")
+           maintenance_ready.call
+ 
+           node.succeeds("#{Shellwords.escape(ordinary_system.strip)}/bin/switch-to-configuration switch")

@@ -1,0 +1,1738 @@
+diff --git a/api/db/migrate/20261006130000_add_storage_maintenance_handoffs.rb b/api/db/migrate/20261006130000_add_storage_maintenance_handoffs.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3ca91a407512529f7c0213a1778d487f86f6ad5
+--- /dev/null
++++ b/api/db/migrate/20261006130000_add_storage_maintenance_handoffs.rb
+@@ -0,0 +1,69 @@
++# frozen_string_literal: true
++
++class AddStorageMaintenanceHandoffs < ActiveRecord::Migration[8.0]
++  HANDOFF_COLUMNS = %w[handed_off_by_user_id handed_off_by_user_session_id
++                       handed_off_by_user_login handoff_reason handed_off_at].freeze
++  TERMINAL_CONSTRAINT = 'chk_storage_maintenance_terminal_audit'
++  PREDECESSOR_AUDIT =
++    "(state = 'reserved' AND revision = 1 AND abandoned_by_user_id IS NULL " \
++    'AND abandoned_by_user_session_id IS NULL AND abandoned_by_user_login IS NULL ' \
++    'AND abandonment_reason IS NULL AND abandoned_at IS NULL) OR ' \
++    "(state = 'abandoned' AND revision = 2 AND abandoned_by_user_id IS NOT NULL " \
++    'AND abandoned_by_user_id > 0 AND abandoned_by_user_session_id IS NOT NULL ' \
++    'AND abandoned_by_user_session_id > 0 AND abandoned_by_user_login IS NOT NULL ' \
++    'AND CHAR_LENGTH(TRIM(abandoned_by_user_login)) BETWEEN 1 AND 128 ' \
++    'AND abandonment_reason IS NOT NULL ' \
++    'AND CHAR_LENGTH(TRIM(abandonment_reason)) BETWEEN 1 AND 255 AND abandoned_at IS NOT NULL)'
++  CONTRACT_ONE =
++    "record_contract = 1 AND BINARY requested_profile = 'manual_storage_only_v1' " \
++    "AND BINARY state IN ('reserved', 'abandoned') AND (#{PREDECESSOR_AUDIT})".freeze
++  EMPTY_HANDOFF = HANDOFF_COLUMNS.map { |name| "#{name} IS NULL" }.join(' AND ').freeze
++  SUCCESSOR_AUDIT =
++    "(#{CONTRACT_ONE} AND #{EMPTY_HANDOFF}) OR " \
++    "(record_contract = 2 AND BINARY requested_profile = 'manual_storage_only_v1' " \
++    "AND BINARY state = 'handoff_pending' AND revision = 2 " \
++    'AND abandoned_by_user_id IS NULL AND abandoned_by_user_session_id IS NULL ' \
++    'AND abandoned_by_user_login IS NULL AND abandonment_reason IS NULL AND abandoned_at IS NULL ' \
++    'AND handed_off_by_user_id IS NOT NULL AND handed_off_by_user_id > 0 ' \
++    'AND handed_off_by_user_session_id IS NOT NULL AND handed_off_by_user_session_id > 0 ' \
++    'AND handed_off_by_user_login IS NOT NULL ' \
++    'AND CHAR_LENGTH(TRIM(handed_off_by_user_login)) BETWEEN 1 AND 128 ' \
++    'AND handoff_reason IS NOT NULL AND CHAR_LENGTH(TRIM(handoff_reason)) BETWEEN 1 AND 255 ' \
++    'AND handed_off_at IS NOT NULL)'.freeze
++
++  def up
++    # Validate the consumed predecessor before the first additive DDL statement.
++    if unsupported_rows?(CONTRACT_ONE)
++      raise ActiveRecord::IrreversibleMigration, 'unsupported storage maintenance predecessor'
++    end
++
++    add_column :storage_maintenance_runs, :handed_off_by_user_id, :integer, unsigned: true
++    add_column :storage_maintenance_runs, :handed_off_by_user_session_id, :integer, unsigned: true
++    add_column :storage_maintenance_runs, :handed_off_by_user_login, :string, limit: 128
++    add_column :storage_maintenance_runs, :handoff_reason, :string
++    add_column :storage_maintenance_runs, :handed_off_at, :datetime
++    remove_check_constraint :storage_maintenance_runs, name: TERMINAL_CONSTRAINT
++    add_check_constraint :storage_maintenance_runs, SUCCESSOR_AUDIT, name: TERMINAL_CONSTRAINT
++  end
++
++  def down
++    # Never discard responsibility audit or reinterpret an unknown tuple.
++    permitted = "#{CONTRACT_ONE} AND #{EMPTY_HANDOFF}"
++    if unsupported_rows?(permitted)
++      raise ActiveRecord::IrreversibleMigration, 'storage maintenance handoff audit must be retained'
++    end
++
++    remove_check_constraint :storage_maintenance_runs, name: TERMINAL_CONSTRAINT
++    add_check_constraint :storage_maintenance_runs, PREDECESSOR_AUDIT, name: TERMINAL_CONSTRAINT
++    HANDOFF_COLUMNS.reverse_each { |name| remove_column :storage_maintenance_runs, name }
++  end
++
++  private
++
++  def unsupported_rows?(predicate)
++    select_value(<<~SQL.squish).to_i > 0
++      SELECT COUNT(*) FROM storage_maintenance_runs
++      WHERE NOT COALESCE((#{predicate}), FALSE)
++    SQL
++  end
++end
+diff --git a/api/db/schema.rb b/api/db/schema.rb
+index 9e168f501e716ff82c9b695f8430828c4426b77f..13be672017a1ee5427966ed2e91a833602409a52 100644
+--- a/api/db/schema.rb
++++ b/api/db/schema.rb
+@@ -10,7 +10,7 @@
+ #
+ # It's strongly recommended that you check this file into your version control system.
+ 
+-ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
++ActiveRecord::Schema[8.1].define(version: 2026_10_06_130000) do
+   create_table "auth_tokens", id: { type: :integer, unsigned: true }, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade do |t|
+     t.string "api_ip_addr", limit: 46
+     t.string "api_ip_ptr"
+@@ -1952,11 +1952,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
+     t.string "abandoned_by_user_login", limit: 128
+     t.string "abandonment_reason"
+     t.datetime "abandoned_at"
++    t.integer "handed_off_by_user_id", unsigned: true
++    t.integer "handed_off_by_user_session_id", unsigned: true
++    t.string "handed_off_by_user_login", limit: 128
++    t.string "handoff_reason"
++    t.datetime "handed_off_at"
+     t.index ["request_id"], name: "index_storage_maintenance_runs_on_request_id", unique: true
+     t.check_constraint "`acquired_by_user_id` > 0 and `acquired_by_user_session_id` > 0 and char_length(trim(`acquired_by_user_login`)) between 1 and 128 and char_length(trim(`acquisition_reason`)) between 1 and 255", name: "chk_storage_maintenance_acquisition"
++    t.check_constraint "`record_contract` = 1 and cast(`requested_profile` as char charset binary) = 'manual_storage_only_v1' and cast(`state` as char charset binary) in ('reserved','abandoned') and (`state` = 'reserved' and `revision` = 1 and `abandoned_by_user_id` is null and `abandoned_by_user_session_id` is null and `abandoned_by_user_login` is null and `abandonment_reason` is null and `abandoned_at` is null or `state` = 'abandoned' and `revision` = 2 and `abandoned_by_user_id` is not null and `abandoned_by_user_id` > 0 and `abandoned_by_user_session_id` is not null and `abandoned_by_user_session_id` > 0 and `abandoned_by_user_login` is not null and char_length(trim(`abandoned_by_user_login`)) between 1 and 128 and `abandonment_reason` is not null and char_length(trim(`abandonment_reason`)) between 1 and 255 and `abandoned_at` is not null) and `handed_off_by_user_id` is null and `handed_off_by_user_session_id` is null and `handed_off_by_user_login` is null and `handoff_reason` is null and `handed_off_at` is null or `record_contract` = 2 and cast(`requested_profile` as char charset binary) = 'manual_storage_only_v1' and cast(`state` as char charset binary) = 'handoff_pending' and `revision` = 2 and `abandoned_by_user_id` is null and `abandoned_by_user_session_id` is null and `abandoned_by_user_login` is null and `abandonment_reason` is null and `abandoned_at` is null and `handed_off_by_user_id` is not null and `handed_off_by_user_id` > 0 and `handed_off_by_user_session_id` is not null and `handed_off_by_user_session_id` > 0 and `handed_off_by_user_login` is not null and char_length(trim(`handed_off_by_user_login`)) between 1 and 128 and `handoff_reason` is not null and char_length(trim(`handoff_reason`)) between 1 and 255 and `handed_off_at` is not null", name: "chk_storage_maintenance_terminal_audit"
+     t.check_constraint "`record_contract` > 0 and char_length(trim(`requested_profile`)) between 1 and 64", name: "chk_storage_maintenance_contract"
+     t.check_constraint "`request_id` regexp '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'", name: "chk_storage_maintenance_uuid"
+-    t.check_constraint "`state` = 'reserved' and `revision` = 1 and `abandoned_by_user_id` is null and `abandoned_by_user_session_id` is null and `abandoned_by_user_login` is null and `abandonment_reason` is null and `abandoned_at` is null or `state` = 'abandoned' and `revision` = 2 and `abandoned_by_user_id` is not null and `abandoned_by_user_id` > 0 and `abandoned_by_user_session_id` is not null and `abandoned_by_user_session_id` > 0 and `abandoned_by_user_login` is not null and char_length(trim(`abandoned_by_user_login`)) between 1 and 128 and `abandonment_reason` is not null and char_length(trim(`abandonment_reason`)) between 1 and 255 and `abandoned_at` is not null", name: "chk_storage_maintenance_terminal_audit"
+     t.check_constraint "json_valid(`requested_scope_json`) and octet_length(`requested_scope_json`) <= 1048576 and `requested_scope_digest` regexp '^[0-9a-f]{64}$'", name: "chk_storage_maintenance_scope"
+   end
+ 
+diff --git a/api/lib/vpsadmin/api/locales/cs.yml b/api/lib/vpsadmin/api/locales/cs.yml
+index a13ae7eb236b0333cd830b60cea9b288eea857a9..24b4ad5e6d95a6f6639507116bbbd842909b1845 100644
+--- a/api/lib/vpsadmin/api/locales/cs.yml
++++ b/api/lib/vpsadmin/api/locales/cs.yml
+@@ -780,14 +780,14 @@ cs:
+         label: Důvod výjimky administrátora
+       expected_content_revision:
+         label: Očekávaná revize obsahu
++      expected_contract:
++        description: Předchozí kontrakt rezervace pouze v API; musí být 1
++        label: Očekávaný kontrakt záznamu údržby
+       expected_epoch:
+         label: Očekávaná epocha režimu úložiště
+       expected_revision:
+-        description: Revize rezervace vrácená akcí maintenance_show
+         label: Očekávaná revize rezervace
+       expected_scope_digest:
+-        description: Otisk vrácený akcí maintenance_show; při změně rozsahu se zrušení
+-          rezervace zamítne
+         label: Očekávaný otisk požadovaného rozsahu katalogu
+       expiration:
+         description: Datum, po kterém token přestane být platný
+@@ -892,9 +892,19 @@ cs:
+           current:
+             label: Aktuální
+         label: Stav systému
++      handed_off_at:
++        label: Čas potvrzení odpovědnosti
++      handed_off_by_user_id:
++        label: ID odpovědného administrátora
++      handed_off_by_user_login:
++        label: Login administrátora při převzetí odpovědnosti
++      handed_off_by_user_session_id:
++        label: ID relace odpovědného administrátora
+       handled_by:
+         description: Filtrovat hlášení řešená uživatelem
+         label: Řeší
++      handoff_reason:
++        label: Důvod převzetí odpovědnosti
+       has_hypervisor:
+         label: Má hypervisor
+       has_ipv6:
+@@ -3793,8 +3803,25 @@ cs:
+               expected_epoch:
+                 description: Epocha vrácená akcí show; pokud se změnila, požadavek
+                   se zamítne
++              expected_revision:
++                description: Revize rezervace vrácená akcí maintenance_show
++              expected_scope_digest:
++                description: Otisk vrácený akcí maintenance_show; při změně rozsahu
++                  se zrušení rezervace zamítne
+               reason:
+                 description: Důvod zrušení rezervace údržby v API
++          maintenance_handoff:
++            input:
++              expected_epoch:
++                description: Epocha vrácená akcí show; pokud se změnila, požadavek
++                  se zamítne
++              expected_revision:
++                description: Předchozí revize rezervace pouze v API; musí být 1
++              expected_scope_digest:
++                description: Otisk vrácený akcí maintenance_show; při změně záznamů
++                  katalogu se převzetí odpovědnosti zamítne
++              reason:
++                description: Důvod přijetí odpovědnosti za zamýšlenou údržbu
+           maintenance_reserve:
+             input:
+               expected_epoch:
+diff --git a/api/lib/vpsadmin/api/locales/en.yml b/api/lib/vpsadmin/api/locales/en.yml
+index ef4e6d3020803c1bb50eed6f475c73bea612791e..a12f41880d19666d295433789a925d16ec0e471f 100644
+--- a/api/lib/vpsadmin/api/locales/en.yml
++++ b/api/lib/vpsadmin/api/locales/en.yml
+@@ -779,13 +779,14 @@ en:
+         label: Admin exemption reason
+       expected_content_revision:
+         label: Expected_content_revision
++      expected_contract:
++        description: API-only predecessor contract, which must be 1
++        label: Expected maintenance record contract
+       expected_epoch:
+         label: Expected storage mode epoch
+       expected_revision:
+-        description: Reserved revision returned by maintenance_show
+         label: Expected maintenance revision
+       expected_scope_digest:
+-        description: Digest returned by maintenance_show; changed scope refuses abandonment
+         label: Expected requested catalog scope digest
+       expiration:
+         description: A date after which the token becomes invalid
+@@ -891,9 +892,19 @@ en:
+           current:
+             label: current
+         label: Generation
++      handed_off_at:
++        label: Responsibility acknowledged at
++      handed_off_by_user_id:
++        label: Responsible administrator ID
++      handed_off_by_user_login:
++        label: Administrator login at handoff
++      handed_off_by_user_session_id:
++        label: Responsible administrator session ID
+       handled_by:
+         description: Filter outages handled by user
+         label: Handled by
++      handoff_reason:
++        label: Handoff reason
+       has_hypervisor:
+         label: Has hypervisor
+       has_ipv6:
+@@ -3792,8 +3803,24 @@ en:
+             input:
+               expected_epoch:
+                 description: Epoch returned by show; the request fails if it has changed
++              expected_revision:
++                description: Reserved revision returned by maintenance_show
++              expected_scope_digest:
++                description: Digest returned by maintenance_show; changed scope refuses
++                  abandonment
+               reason:
+                 description: Reason for abandoning the API maintenance reservation
++          maintenance_handoff:
++            input:
++              expected_epoch:
++                description: Epoch returned by show; the request fails if it has changed
++              expected_revision:
++                description: API-only predecessor revision, which must be 1
++              expected_scope_digest:
++                description: Digest returned by maintenance_show; changed catalog
++                  claims refuse handoff
++              reason:
++                description: Reason for accepting prospective maintenance responsibility
+           maintenance_reserve:
+             input:
+               expected_epoch:
+diff --git a/api/lib/vpsadmin/api/resources/storage_freeze.rb b/api/lib/vpsadmin/api/resources/storage_freeze.rb
+index d2ede24449159190c17fa620a1f1c318667f8abf..566bc736e8704f90d4f56e5040c91e4962fda03b 100644
+--- a/api/lib/vpsadmin/api/resources/storage_freeze.rb
++++ b/api/lib/vpsadmin/api/resources/storage_freeze.rb
+@@ -164,6 +164,11 @@ module VpsAdmin::API::Resources
+       string :abandoned_by_user_login, nullable: true, label: 'Abandoning administrator login'
+       string :abandonment_reason, nullable: true, label: 'Abandonment reason'
+       datetime :abandoned_at, nullable: true, label: 'Abandoned at'
++      integer :handed_off_by_user_id, nullable: true, label: 'Responsible administrator ID'
++      integer :handed_off_by_user_session_id, nullable: true, label: 'Responsible administrator session ID'
++      string :handed_off_by_user_login, nullable: true, label: 'Administrator login at handoff'
++      string :handoff_reason, nullable: true, label: 'Handoff reason'
++      datetime :handed_off_at, nullable: true, label: 'Responsibility acknowledged at'
+     end
+ 
+     class MaintenanceReserve < HaveAPI::Action
+@@ -198,7 +203,7 @@ module VpsAdmin::API::Resources
+ 
+       route 'maintenance_show'
+       http_method :get
+-      desc 'Inspect an API maintenance reservation by UUID'
++      desc 'Inspect retained maintenance responsibility by UUID'
+       input { use :maintenance_identity }
+       output { use :maintenance_result }
+       authorize { |user| allow if Access.allowed?(user) }
+@@ -212,6 +217,38 @@ module VpsAdmin::API::Resources
+       end
+     end
+ 
++    class MaintenanceHandoff < HaveAPI::Action
++      include Access
++
++      route 'maintenance_handoff'
++      http_method :post
++      desc 'Acknowledge responsibility for a prospective transition without acquiring physical ownership'
++      input do
++        use :maintenance_identity
++        use :change, include: [:expected_epoch]
++        integer :expected_contract, required: true, label: 'Expected maintenance record contract',
++                                    desc: 'API-only predecessor contract, which must be 1'
++        integer :expected_revision, required: true, label: 'Expected maintenance revision',
++                                    desc: 'API-only predecessor revision, which must be 1'
++        string :expected_scope_digest, required: true, label: 'Expected requested catalog scope digest',
++                                       desc: 'Digest returned by maintenance_show; changed catalog claims refuse handoff'
++        text :reason, required: true, desc: 'Reason for accepting prospective maintenance responsibility'
++      end
++      output { use :maintenance_result }
++      authorize { |user| allow if Access.allowed?(user) }
++
++      def exec
++        maintenance_request do
++          ::StorageMutationAdmission.handoff_maintenance_for_user!(
++            request_id: input[:request_id], expected_epoch: input[:expected_epoch],
++            expected_contract: input[:expected_contract], expected_revision: input[:expected_revision],
++            expected_scope_digest: input[:expected_scope_digest], reason: input[:reason],
++            user: current_user, user_session: ::UserSession.current
++          )
++        end
++      end
++    end
++
+     class MaintenanceAbandon < HaveAPI::Action
+       include Access
+ 
+diff --git a/api/models/storage_freeze_status.rb b/api/models/storage_freeze_status.rb
+index 7897777f3401605b611db332cde2ff594dcbf676..b4b69001cd09a1997d1f0fa0b7801e65a563bd93 100644
+--- a/api/models/storage_freeze_status.rb
++++ b/api/models/storage_freeze_status.rb
+@@ -92,7 +92,9 @@ class StorageFreezeStatus
+     after = Control.find(1)
+     mode = MODES.fetch(after.mode) { raise 'invalid storage freeze mode' }
+     owner_after = maintenance_summary(after)
+-    if owner_after && (owner_after[:state] != 'reserved' || owner_after[:freeze_epoch] != after.epoch)
++    if owner_after && (!StorageMaintenanceRun.active_tuple?(owner_after[:record_contract], owner_after[:state],
++                                                            owner_after[:revision]) ||
++                       owner_after[:freeze_epoch] != after.epoch)
+       raise StorageMaintenanceRun::UnsupportedRecord, 'maintenance owner is inconsistent'
+     end
+ 
+diff --git a/api/models/storage_maintenance_run.rb b/api/models/storage_maintenance_run.rb
+index 6e4d77f77fe3bf085e8f1f88db8c9d6dd9b2a133..0c5f8495142457c259a0ba326c397c242ddcdc06 100644
+--- a/api/models/storage_maintenance_run.rb
++++ b/api/models/storage_maintenance_run.rb
+@@ -3,13 +3,18 @@
+ require 'digest'
+ require 'json'
+ 
+-# API-only reservation. Contract 1 cannot accept physical responsibilities.
++# Retained API responsibility. Neither contract grants physical authority.
+ class StorageMaintenanceRun < ApplicationRecord
+   class UnsupportedRecord < StandardError; end
+ 
+   RECORD_CONTRACT = 1
+   REQUESTED_PROFILE = 'manual_storage_only_v1'
+   REVISIONS = { 'reserved' => 1, 'abandoned' => 2 }.freeze
++  SUPPORTED_TUPLES = {
++    [1, 'reserved', 1].freeze => :active,
++    [1, 'abandoned', 2].freeze => :terminal,
++    [2, 'handoff_pending', 2].freeze => :active
++  }.freeze
+   SCOPE_LIMIT = 1_048_576
+   POOL_LIMIT = 256
+   UUID_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/
+@@ -19,10 +24,12 @@ class StorageMaintenanceRun < ApplicationRecord
+                           acquired_by_user_session_id acquired_by_user_login acquisition_reason acquired_at].freeze
+   ABANDONMENT_FIELDS = %w[abandoned_by_user_id abandoned_by_user_session_id
+                           abandoned_by_user_login abandonment_reason abandoned_at].freeze
++  HANDOFF_FIELDS = %w[handed_off_by_user_id handed_off_by_user_session_id
++                      handed_off_by_user_login handoff_reason handed_off_at].freeze
+   POOL_FIELDS = %w[pool_id node_id pool_role filesystem node_role hypervisor_type zpool_guid].freeze
+ 
+   validate :supported_record
+-  validate :only_terminal_transition, on: :update
++  validate :only_supported_transition, on: :update
+   before_destroy { throw :abort }
+ 
+   def self.request_id!(value)
+@@ -40,6 +47,18 @@ class StorageMaintenanceRun < ApplicationRecord
+     value.sort
+   end
+ 
++  def self.supported_tuple?(contract, state, revision)
++    contract.is_a?(Integer) && revision.is_a?(Integer) && SUPPORTED_TUPLES.has_key?([contract, state, revision])
++  end
++
++  def self.active_tuple?(contract, state, revision)
++    supported_tuple?(contract, state, revision) && SUPPORTED_TUPLES[[contract, state, revision]] == :active
++  end
++
++  def active?
++    self.class.active_tuple?(record_contract, state, revision)
++  end
++
+   def supported!
+     raise UnsupportedRecord, 'unsupported storage maintenance record' unless valid?
+ 
+@@ -55,7 +74,7 @@ class StorageMaintenanceRun < ApplicationRecord
+     attributes.symbolize_keys.slice(
+       :id, :request_id, :record_contract, :requested_profile, :state, :revision,
+       :freeze_epoch, :requested_scope_digest, *ACQUISITION_FIELDS.map(&:to_sym),
+-      *ABANDONMENT_FIELDS.map(&:to_sym)
++      *ABANDONMENT_FIELDS.map(&:to_sym), *HANDOFF_FIELDS.map(&:to_sym)
+     ).except(:requested_scope_json).merge(
+       requested_pool_ids: requested_scope.fetch('pools').map { |pool| pool.fetch('pool_id') }
+     )
+@@ -65,8 +84,7 @@ class StorageMaintenanceRun < ApplicationRecord
+ 
+   def supported_record
+     errors.add(:request_id, 'is invalid') unless request_id.is_a?(String) && UUID_PATTERN.match?(request_id)
+-    unless record_contract.is_a?(Integer) && record_contract == RECORD_CONTRACT &&
+-           requested_profile == REQUESTED_PROFILE && revision.is_a?(Integer) && REVISIONS[state] == revision
++    unless self.class.supported_tuple?(record_contract, state, revision) && requested_profile == REQUESTED_PROFILE
+       errors.add(:record_contract, 'is unsupported')
+     end
+     errors.add(:freeze_epoch, 'is invalid') unless freeze_epoch.is_a?(Integer) && freeze_epoch >= 0
+@@ -80,8 +98,17 @@ class StorageMaintenanceRun < ApplicationRecord
+     elsif ABANDONMENT_FIELDS.any? { |field| !self[field].nil? }
+       errors.add(:state, 'has unexpected abandonment audit')
+     end
++    if state == 'handoff_pending'
++      actor_fields('handed_off')
++      safe_text(:handoff_reason, 255)
++      errors.add(:handed_off_at, 'is required') unless handed_off_at
++    elsif HANDOFF_FIELDS.any? { |field| !self[field].nil? }
++      errors.add(:state, 'has unexpected handoff audit')
++    end
+     validate_scope
+-    errors.add(:state, 'must begin reserved') if new_record? && state != 'reserved'
++    return unless new_record? && [record_contract, state, revision] != [1, 'reserved', 1]
++
++    errors.add(:state, 'must begin with an API-only reservation')
+   end
+ 
+   def actor_fields(prefix)
+@@ -128,11 +155,19 @@ class StorageMaintenanceRun < ApplicationRecord
+          pool['zpool_guid'].to_i <= 18_446_744_073_709_551_615))
+   end
+ 
+-  def only_terminal_transition
+-    immutable = (changes_to_save.keys - (ABANDONMENT_FIELDS + %w[state revision])).any?
+-    terminal = state_in_database == 'reserved' && revision_in_database == 1 &&
+-               state == 'abandoned' && revision == 2 &&
+-               ABANDONMENT_FIELDS.all? { |field| attribute_in_database(field).nil? && !self[field].nil? }
+-    errors.add(:base, 'maintenance audit is immutable') if immutable || (has_changes_to_save? && !terminal)
++  def only_supported_transition
++    return unless has_changes_to_save?
++
++    predecessor = [record_contract_in_database, state_in_database, revision_in_database]
++    successor = [record_contract, state, revision]
++    audit = if predecessor == [1, 'reserved', 1] && successor == [1, 'abandoned', 2]
++              ABANDONMENT_FIELDS
++            elsif predecessor == [1, 'reserved', 1] && successor == [2, 'handoff_pending', 2]
++              HANDOFF_FIELDS + ['record_contract']
++            end
++    unless audit && (changes_to_save.keys - (audit + %w[state revision])).empty? &&
++           (audit - ['record_contract']).all? { |field| attribute_in_database(field).nil? && !self[field].nil? }
++      errors.add(:base, 'maintenance audit is immutable')
++    end
+   end
+ end
+diff --git a/api/models/storage_mutation_admission.rb b/api/models/storage_mutation_admission.rb
+index 4f37d94098329f641b5d24b78352bbb5b9364414..79c6a01d259b6dfacda12dee9b25430c3185fa61 100644
+--- a/api/models/storage_mutation_admission.rb
++++ b/api/models/storage_mutation_admission.rb
+@@ -94,7 +94,7 @@ class StorageMutationAdmission
+       raise MaintenanceConflict, 'maintenance request not found' unless run
+ 
+       run.supported!
+-      if run.state == 'reserved' && owner&.id != run.id
++      if run.active? && owner&.id != run.id
+         raise MaintenanceConflict, 'maintenance owner is inconsistent'
+       end
+ 
+@@ -102,6 +102,51 @@ class StorageMutationAdmission
+     end
+   end
+ 
++  def self.handoff_maintenance_for_user!(request_id:, expected_epoch:, expected_contract:, expected_revision:,
++                                         expected_scope_digest:, reason:, user:, user_session:)
++    StorageMaintenanceRun.request_id!(request_id)
++    validate_epoch!(expected_epoch, required: true)
++    validate_reason!(reason)
++    unless expected_contract.is_a?(Integer) && expected_contract == 1 &&
++           expected_revision.is_a?(Integer) && expected_revision == 1 &&
++           expected_scope_digest.is_a?(String) && StorageMaintenanceRun::DIGEST_PATTERN.match?(expected_scope_digest)
++      raise ArgumentError, 'invalid maintenance compare-and-swap'
++    end
++
++    StorageFreezeControl.transaction(requires_new: true) do
++      control = StorageFreezeControl.lock.find(1)
++      actor, session = locked_api_actor!(user:, user_session:)
++      validate_maintenance_control!(control, expected_epoch)
++      run = active_maintenance!(control)
++      unless run && run.request_id == request_id && run.requested_scope_digest == expected_scope_digest
++        raise MaintenanceConflict, 'maintenance request binding changed'
++      end
++
++      if run.state == 'handoff_pending'
++        unless run.handed_off_by_user_id == actor.id && run.handed_off_by_user_session_id == session.id &&
++               run.handoff_reason == reason.strip
++          raise MaintenanceConflict, 'maintenance handoff binding changed'
++        end
++
++        next run
++      end
++      unless [run.record_contract, run.state, run.revision] == [expected_contract, 'reserved', expected_revision]
++        raise MaintenanceConflict, 'maintenance predecessor changed'
++      end
++
++      ids = run.requested_scope.fetch('pools').map { |pool| pool.fetch('pool_id') }
++      unless locked_maintenance_scope!(ids) == run.requested_scope_json
++        raise MaintenanceConflict, 'maintenance catalog scope changed'
++      end
++
++      run.update!(record_contract: 2, state: 'handoff_pending', revision: 2,
++                  handed_off_by_user_id: actor.id, handed_off_by_user_session_id: session.id,
++                  handed_off_by_user_login: actor.login, handoff_reason: reason.strip,
++                  handed_off_at: Time.current)
++      run
++    end
++  end
++
+   def self.abandon_maintenance_for_user!(request_id:, expected_epoch:, expected_revision:,
+                                          expected_scope_digest:, reason:, user:, user_session:)
+     StorageMaintenanceRun.request_id!(request_id)
+@@ -121,6 +166,8 @@ class StorageMutationAdmission
+       raise MaintenanceConflict, 'maintenance request not found' unless run
+ 
+       run.supported!
++      raise MaintenanceConflict, 'maintenance responsibility cannot be abandoned' unless run.record_contract == 1
++
+       unless run.freeze_epoch == expected_epoch && run.requested_scope_digest == expected_scope_digest
+         raise MaintenanceConflict, 'maintenance request binding changed'
+       end
+@@ -155,7 +202,7 @@ class StorageMutationAdmission
+     raise MaintenanceConflict, 'maintenance owner is missing' unless run
+ 
+     run.supported!
+-    unless run.state == 'reserved' && run.freeze_epoch == control.epoch
++    unless run.active? && run.freeze_epoch == control.epoch
+       raise MaintenanceConflict, 'maintenance owner is inconsistent'
+     end
+ 
+diff --git a/api/spec/api/covered_endpoints.yml b/api/spec/api/covered_endpoints.yml
+index 95a811f672ef7f5914f85a1c38dea180f301d62f..e2ecce99724c7fac0855a84fc6a784a81e839bac 100644
+--- a/api/spec/api/covered_endpoints.yml
++++ b/api/spec/api/covered_endpoints.yml
+@@ -110,6 +110,7 @@ covered:
+ - snapshot_download#index
+ - snapshot_download#show
+ - storage_freeze#maintenance_abandon
++- storage_freeze#maintenance_handoff
+ - storage_freeze#maintenance_reserve
+ - storage_freeze#maintenance_show
+ - storage_freeze#read_only
+diff --git a/api/spec/api/resources/storage_freeze_spec.rb b/api/spec/api/resources/storage_freeze_spec.rb
+index e91fb786ac77fcaa839e7d61c9140ffd5a488de7..ce5f684686558093740f00fb0ede20133a3a86eb 100644
+--- a/api/spec/api/resources/storage_freeze_spec.rb
++++ b/api/spec/api/resources/storage_freeze_spec.rb
+@@ -44,7 +44,8 @@ RSpec.describe 'VpsAdmin::API::Resources::StorageFreeze' do
+     expect(scopes).to include(
+       'storage_freeze#show', 'storage_freeze#read_only',
+       'storage_freeze#read_write', 'storage_freeze#settle_observer',
+-      'storage_freeze#maintenance_reserve', 'storage_freeze#maintenance_show', 'storage_freeze#maintenance_abandon'
++      'storage_freeze#maintenance_reserve', 'storage_freeze#maintenance_show',
++      'storage_freeze#maintenance_handoff', 'storage_freeze#maintenance_abandon'
+     )
+   end
+ 
+@@ -300,6 +301,14 @@ RSpec.describe 'VpsAdmin::API::Resources::StorageFreeze' do
+       }.merge(attrs))
+     end
+ 
++    def handoff_api(result, **attrs)
++      json_post('maintenance_handoff', {
++        request_id: result.fetch('request_id'), expected_epoch: result.fetch('freeze_epoch'),
++        expected_contract: 1, expected_revision: 1, expected_scope_digest: result.fetch('requested_scope_digest'),
++        reason: 'prospective responsibility'
++      }.merge(attrs))
++    end
++
+     it 'reserves, looks up a UUID and abandons without unfreezing' do
+       as_admin do
+         reserve_api
+@@ -388,7 +397,9 @@ RSpec.describe 'VpsAdmin::API::Resources::StorageFreeze' do
+         reserve_api
+         expect_status(200)
+         result = status
+-        StorageMaintenanceRun.find(result['id']).update_columns(record_contract: 2)
++        run = StorageMaintenanceRun.find(result['id'])
++        expect { run.update_columns(record_contract: 2) }.to raise_error(ActiveRecord::StatementInvalid)
++        run.reload.update_columns(requested_scope_json: '{}')
+         maintenance_get(request_id)
+         expect_status(409)
+         abandon_api(result)
+@@ -406,5 +417,160 @@ RSpec.describe 'VpsAdmin::API::Resources::StorageFreeze' do
+       expect_status(422)
+       expect(StorageMaintenanceRun.count).to eq(0)
+     end
++
++    it 'acknowledges responsibility, shows bounded audit and replays without releasing the owner' do
++      as_admin do
++        reserve_api
++        expect_status(200)
++        result = status
++        control = StorageFreezeControl.singleton!.attributes
++        handoff_api(result)
++        expect_status(200)
++        acknowledged = status
++        expect(acknowledged).to include('record_contract' => 2, 'state' => 'handoff_pending', 'revision' => 2,
++                                        'request_id' => result['request_id'], 'freeze_epoch' => result['freeze_epoch'],
++                                        'requested_scope_digest' => result['requested_scope_digest'],
++                                        'handed_off_by_user_id' => SpecSeed.admin.id,
++                                        'handed_off_by_user_login' => SpecSeed.admin.login,
++                                        'handoff_reason' => 'prospective responsibility')
++        expect(acknowledged['handed_off_by_user_session_id']).to be > 0
++        expect(acknowledged['handed_off_at']).to be_a(String)
++        expect(acknowledged['abandoned_at']).to be_nil
++        expect(acknowledged).not_to have_key('requested_scope_json')
++        maintenance_get(request_id)
++        expect_status(200)
++        expect(status).to eq(acknowledged)
++        handoff_api(result)
++        expect_status(200)
++        expect(status).to eq(acknowledged)
++        json_get
++        expect_status(200)
++        expect(status['active_maintenance']).to eq(
++          acknowledged.merge(
++            'acquired_at' => Time.iso8601(acknowledged.fetch('acquired_at')).utc.to_s,
++            'handed_off_at' => Time.iso8601(acknowledged.fetch('handed_off_at')).utc.to_s
++          )
++        )
++        expect(status['repair_ready']).to be(false)
++        abandon_api(result)
++        expect_status(409)
++        abandon_api(result, expected_revision: 2)
++        expect_status(422)
++        reserve_api
++        expect_status(409)
++        json_post('read_write', expected_epoch: result['freeze_epoch'], reason: 'refused after handoff')
++        expect_status(409)
++        expect(StorageFreezeControl.singleton!.attributes).to eq(control)
++      end
++    end
++
++    it 'requires the dedicated scope and direct administrator before handoff' do
++      result = nil
++      as_admin do
++        reserve_api
++        expect_status(200)
++        result = status
++      end
++      before = StorageMaintenanceRun.find(result['id']).attributes
++      handoff_api(result)
++      expect_status(401)
++      as_token(SpecSeed.user) { handoff_api(result) }
++      expect_status(403)
++      as_token(SpecSeed.admin, admin: SpecSeed.admin) { handoff_api(result) }
++      expect_status(403)
++      as_token(SpecSeed.admin, scope: ['storage_freeze#maintenance_show']) { handoff_api(result) }
++      expect_status(403)
++      expect(StorageMaintenanceRun.find(result['id']).attributes).to eq(before)
++      as_token(SpecSeed.admin, scope: ['storage_freeze#maintenance_handoff']) do
++        handoff_api(result)
++        expect_status(200)
++        maintenance_get(request_id)
++        expect_status(403)
++      end
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(result['id'])
++    end
++
++    it 'preserves inherited integer parameters while enforcing exact model predecessor values' do
++      as_admin do
++        reserve_api
++        expect_status(200)
++        result = status
++        before = StorageMaintenanceRun.find(result['id']).attributes
++        [{ expected_contract: 2 }, { expected_revision: 2 }].each do |attrs|
++          handoff_api(result, **attrs)
++          expect_status(422)
++        end
++        handoff_api(result, expected_epoch: result['freeze_epoch'] + 1)
++        expect_status(409)
++        handoff_api(result, expected_scope_digest: 'a' * 64)
++        expect_status(409)
++        handoff_api(result, request_id: SecureRandom.uuid)
++        expect_status(409)
++        expect(StorageMaintenanceRun.find(result['id']).attributes).to eq(before)
++        handoff_api(result, expected_contract: '1', expected_revision: '1')
++        expect_status(200)
++        acknowledged = status
++        handoff_api(result, expected_contract: 1.0, expected_revision: 1.0)
++        expect_status(200)
++        expect(status).to eq(acknowledged)
++      end
++    end
++
++    it 'refuses changed current catalog scope before creating handoff audit' do
++      as_admin do
++        reserve_api
++        expect_status(200)
++        result = status
++        before = StorageMaintenanceRun.find(result['id']).attributes
++        SpecSeed.pool.update_columns(filesystem: 'spec/changed-before-api-handoff')
++        handoff_api(result)
++        expect_status(409)
++        expect(StorageMaintenanceRun.find(result['id']).attributes).to eq(before)
++        expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(result['id'])
++      end
++    end
++
++    it 'refuses changed replay reason or session without transferring responsibility' do
++      result = nil
++      acknowledged = nil
++      as_admin do
++        reserve_api
++        expect_status(200)
++        result = status
++        handoff_api(result)
++        expect_status(200)
++        acknowledged = status
++        handoff_api(result, reason: 'changed')
++        expect_status(409)
++        SpecSeed.pool.update_columns(filesystem: 'spec/changed-after-api-handoff')
++        handoff_api(result)
++        expect_status(200)
++        expect(status).to eq(acknowledged)
++      end
++      as_admin do
++        handoff_api(result)
++        expect_status(409)
++        maintenance_get(request_id)
++        expect_status(200)
++        expect(status).to eq(acknowledged)
++      end
++    end
++
++    it 'revalidates current administrator access while preserving acknowledged responsibility' do
++      result = nil
++      as_admin do
++        reserve_api
++        expect_status(200)
++        result = status
++        handoff_api(result)
++        expect_status(200)
++        before = StorageMaintenanceRun.find(result['id']).attributes
++        SpecSeed.admin.update_columns(object_state: User.object_states.fetch(:suspended))
++        handoff_api(result)
++        expect_status(403)
++        expect(StorageMaintenanceRun.find(result['id']).attributes).to eq(before)
++        expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(result['id'])
++      end
++    end
+   end
+ end
+diff --git a/api/spec/migrations/20261006130000_add_storage_maintenance_handoffs_spec.rb b/api/spec/migrations/20261006130000_add_storage_maintenance_handoffs_spec.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..3734b7a4e435a783f5b841b0d00bee5e316652f1
+--- /dev/null
++++ b/api/spec/migrations/20261006130000_add_storage_maintenance_handoffs_spec.rb
+@@ -0,0 +1,206 @@
++# frozen_string_literal: true
++
++require 'digest'
++require_relative '../migration_helper'
++
++MigrationSpecSupport.require_migration('20261006120000_add_storage_maintenance_reservations')
++MigrationSpecSupport.require_migration('20261006130000_add_storage_maintenance_handoffs')
++
++RSpec.describe AddStorageMaintenanceHandoffs do
++  before do
++    # Exact touched predecessor definition from the consumed core schema.
++    define_schema do
++      create_table :storage_freeze_controls, id: :bigint, default: nil,
++                                             charset: 'utf8mb3', collation: 'utf8mb3_unicode_ci' do |t|
++        t.integer :mode, default: 0, null: false
++        t.bigint :epoch, default: 0, null: false, unsigned: true
++        t.integer :requested_by_user_id, unsigned: true
++        t.datetime :requested_at
++        t.string :reason
++        t.datetime :created_at, null: false
++        t.datetime :updated_at, null: false
++        t.check_constraint 'id = 1', name: 'chk_storage_freeze_singleton'
++      end
++      create_table 'storage_freeze_transitions', charset: 'utf8mb3', collation: 'utf8mb3_unicode_ci' do |t|
++        t.bigint 'storage_freeze_control_id', null: false
++        t.integer 'prior_mode', null: false
++        t.integer 'new_mode', null: false
++        t.bigint 'prior_epoch', null: false, unsigned: true
++        t.bigint 'new_epoch', null: false, unsigned: true
++        t.integer 'actor_user_id', null: false, unsigned: true
++        t.integer 'actor_user_session_id', null: false, unsigned: true
++        t.string 'actor_user_login', limit: 128, null: false
++        t.string 'reason', null: false
++        t.datetime 'created_at', null: false
++        t.index ['actor_user_id'], name: 'index_storage_freeze_transitions_on_actor_user_id'
++        t.index ['actor_user_session_id'], name: 'index_storage_freeze_transitions_on_actor_user_session_id'
++        t.index ['new_epoch'], name: 'index_storage_freeze_transitions_on_new_epoch', unique: true
++        t.index ['storage_freeze_control_id'], name: 'index_storage_freeze_transitions_on_storage_freeze_control_id'
++        t.check_constraint '`actor_user_id` > 0 and `actor_user_session_id` > 0 and char_length(trim(`actor_user_login`)) between 1 and 128', name: 'chk_storage_freeze_transition_actor'
++        t.check_constraint '`new_epoch` = `prior_epoch` + 1', name: 'chk_storage_freeze_transition_epoch'
++        t.check_constraint '`prior_mode` in (0,1) and `new_mode` in (0,1) and `prior_mode` <> `new_mode`', name: 'chk_storage_freeze_transition_modes'
++        t.check_constraint 'char_length(trim(`reason`)) between 1 and 255', name: 'chk_storage_freeze_transition_reason'
++      end
++      add_foreign_key :storage_freeze_transitions, :storage_freeze_controls
++    end
++    insert_row(:storage_freeze_controls, id: 1, mode: 1, epoch: 7,
++                                         reason: 'retained freeze', created_at: timestamp, updated_at: timestamp)
++    insert_row(:storage_freeze_transitions, id: 3, storage_freeze_control_id: 1,
++                                            prior_mode: 0, new_mode: 1, prior_epoch: 6, new_epoch: 7, actor_user_id: 7,
++                                            actor_user_session_id: 9, actor_user_login: 'admin', reason: 'retained freeze', created_at: timestamp)
++    migrate_up!(AddStorageMaintenanceReservations)
++  end
++
++  def acquisition
++    scope = '{"pools":[]}'
++    {
++      request_id: '00000000-0000-0000-0000-000000000001', record_contract: 1,
++      requested_profile: 'manual_storage_only_v1', state: 'reserved', revision: 1,
++      freeze_epoch: 7, requested_scope_json: scope, requested_scope_digest: Digest::SHA256.hexdigest(scope),
++      acquired_by_user_id: 7, acquired_by_user_session_id: 9, acquired_by_user_login: 'admin',
++      acquisition_reason: 'API-only reservation', acquired_at: timestamp
++    }
++  end
++
++  def handoff
++    acquisition.merge(record_contract: 2, state: 'handoff_pending', revision: 2,
++                      handed_off_by_user_id: 8, handed_off_by_user_session_id: 10,
++                      handed_off_by_user_login: 'accepting-admin', handoff_reason: 'prospective responsibility',
++                      handed_off_at: timestamp)
++  end
++
++  def maintenance_run_indexes
++    connection.indexes(:storage_maintenance_runs).map do |index|
++      [
++        index.table, index.name, index.unique, index.columns, index.lengths,
++        index.orders, index.opclasses, index.where, index.type, index.using,
++        index.include, index.nulls_not_distinct, index.comment, index.valid,
++        index.enabled
++      ]
++    end
++  end
++
++  it 'preserves consumed reservation rows, pointer, acquisition audit and freeze history' do
++    id = insert_row(:storage_maintenance_runs, acquisition)
++    insert_row(:storage_maintenance_runs,
++               acquisition.merge(request_id: '00000000-0000-0000-0000-000000000002',
++                                 state: 'abandoned', revision: 2, abandoned_by_user_id: 8,
++                                 abandoned_by_user_session_id: 10, abandoned_by_user_login: 'other-admin',
++                                 abandonment_reason: 'unused reservation', abandoned_at: timestamp))
++    connection.execute("UPDATE storage_freeze_controls SET active_maintenance_run_id = #{id} WHERE id = 1")
++    before = rows(:storage_maintenance_runs)
++    control = rows(:storage_freeze_controls)
++    history = rows(:storage_freeze_transitions)
++    indexes = maintenance_run_indexes
++    fk = connection.foreign_keys(:storage_freeze_controls).sole
++    migrate_up!
++    expect(rows(:storage_maintenance_runs).map { |row| row.except(*described_class::HANDOFF_COLUMNS) }).to eq(before)
++    expect(rows(:storage_maintenance_runs).map { |row| row.slice(*described_class::HANDOFF_COLUMNS).values })
++      .to all(eq([nil] * 5))
++    expect(rows(:storage_freeze_controls)).to eq(control)
++    expect(rows(:storage_freeze_transitions)).to eq(history)
++    expect(maintenance_run_indexes).to eq(indexes)
++    expect(connection.foreign_keys(:storage_freeze_controls).sole).to eq(fk)
++    expect { connection.execute("DELETE FROM storage_maintenance_runs WHERE id = #{id}") }
++      .to raise_error(ActiveRecord::InvalidForeignKey)
++  end
++
++  it 'requires all five handoff audit values and retains UUID uniqueness' do
++    migrate_up!
++    described_class::HANDOFF_COLUMNS.each do |field|
++      expect { insert_row(:storage_maintenance_runs, handoff.merge(field.to_sym => nil)) }
++        .to raise_error(ActiveRecord::StatementInvalid)
++    end
++    [[:handed_off_by_user_id, 0], [:handed_off_by_user_session_id, 0],
++     [:handed_off_by_user_login, ' '], [:handoff_reason, ' ']].each do |field, value|
++      expect { insert_row(:storage_maintenance_runs, handoff.merge(field => value)) }
++        .to raise_error(ActiveRecord::StatementInvalid)
++    end
++    insert_row(:storage_maintenance_runs, handoff)
++    expect { insert_row(:storage_maintenance_runs, handoff) }.to raise_error(ActiveRecord::RecordNotUnique)
++    expect(find_row(:storage_maintenance_runs, request_id: handoff[:request_id]))
++      .to include('record_contract' => 2, 'state' => 'handoff_pending', 'revision' => 2)
++  end
++
++  it 'rejects unknown tuples and audit from the other supported contract' do
++    migrate_up!
++    [{ record_contract: 2 }, { record_contract: 3 }, { state: 'handoff_pending', revision: 2 },
++     { revision: 2 }, { state: 'RESERVED' }, { requested_profile: 'MANUAL_STORAGE_ONLY_V1' },
++     { handoff_reason: 'unexpected' }].each do |attrs|
++      expect { insert_row(:storage_maintenance_runs, acquisition.merge(attrs)) }
++        .to raise_error(ActiveRecord::StatementInvalid)
++    end
++    [{ record_contract: 1 }, { revision: 1 }, { state: 'reserved' }, { state: 'HANDOFF_PENDING' },
++     { abandoned_at: timestamp }].each do |attrs|
++      expect { insert_row(:storage_maintenance_runs, handoff.merge(attrs)) }
++        .to raise_error(ActiveRecord::StatementInvalid)
++    end
++    expect(row_count(:storage_maintenance_runs)).to eq(0)
++  end
++
++  it 'refuses unsupported predecessor contracts before any additive DDL' do
++    insert_row(:storage_maintenance_runs, acquisition.merge(record_contract: 3))
++    before = rows(:storage_maintenance_runs)
++    expect { migrate_up! }.to raise_error(ActiveRecord::IrreversibleMigration)
++    expect(described_class::HANDOFF_COLUMNS.map { |field| column_exists?(:storage_maintenance_runs, field) })
++      .to eq([false] * 5)
++    expect(rows(:storage_maintenance_runs)).to eq(before)
++  end
++
++  it 'refuses unknown or differently cased predecessor profiles and states without normalization' do
++    [{ requested_profile: 'unknown' }, { requested_profile: 'MANUAL_STORAGE_ONLY_V1' },
++     { state: 'RESERVED' }].each_with_index do |attrs, index|
++      id = insert_row(:storage_maintenance_runs,
++                      acquisition.merge(request_id: format('00000000-0000-0000-0000-%012d', index + 1)).merge(attrs))
++      before = rows(:storage_maintenance_runs)
++      expect { migrate_up! }.to raise_error(ActiveRecord::IrreversibleMigration)
++      expect(column_exists?(:storage_maintenance_runs, :handed_off_at)).to be(false)
++      expect(rows(:storage_maintenance_runs)).to eq(before)
++      connection.execute("DELETE FROM storage_maintenance_runs WHERE id = #{id}")
++    end
++  end
++
++  it 'refuses down before DDL for a handed-off owner, preserving its complete audit' do
++    migrate_up!
++    id = insert_row(:storage_maintenance_runs, handoff)
++    connection.execute("UPDATE storage_freeze_controls SET active_maintenance_run_id = #{id} WHERE id = 1")
++    before = rows(:storage_maintenance_runs)
++    control = rows(:storage_freeze_controls)
++    expect { migrate_down! }.to raise_error(ActiveRecord::IrreversibleMigration)
++    expect(rows(:storage_maintenance_runs)).to eq(before)
++    expect(rows(:storage_freeze_controls)).to eq(control)
++    expect(described_class::HANDOFF_COLUMNS.map { |field| column_exists?(:storage_maintenance_runs, field) })
++      .to eq([true] * 5)
++  end
++
++  it 'refuses unknown or stray-audit content before down DDL' do
++    migrate_up!
++    id = insert_row(:storage_maintenance_runs, acquisition)
++    # Privileged corruption is confined to this owned disposable table.
++    connection.remove_check_constraint(:storage_maintenance_runs, name: described_class::TERMINAL_CONSTRAINT)
++    ['record_contract = 3', "record_contract = 1, handoff_reason = 'unexpected'"].each do |assignment|
++      connection.execute("UPDATE storage_maintenance_runs SET #{assignment} WHERE id = #{id}")
++      before = rows(:storage_maintenance_runs)
++      expect { migrate_down! }.to raise_error(ActiveRecord::IrreversibleMigration)
++      expect(rows(:storage_maintenance_runs)).to eq(before)
++      expect(column_exists?(:storage_maintenance_runs, :handed_off_at)).to be(true)
++    end
++  end
++
++  it 'restores the exact predecessor for untouched contract one rows without losing audit' do
++    id = insert_row(:storage_maintenance_runs, acquisition)
++    connection.execute("UPDATE storage_freeze_controls SET active_maintenance_run_id = #{id} WHERE id = 1")
++    before = rows(:storage_maintenance_runs)
++    control = rows(:storage_freeze_controls)
++    constraints = connection.check_constraints(:storage_maintenance_runs)
++    migrate_up!
++    migrate_down!
++    expect(rows(:storage_maintenance_runs)).to eq(before)
++    expect(rows(:storage_freeze_controls)).to eq(control)
++    expect(connection.check_constraints(:storage_maintenance_runs)).to eq(constraints)
++    expect(described_class::HANDOFF_COLUMNS.map { |field| column_exists?(:storage_maintenance_runs, field) })
++      .to eq([false] * 5)
++    expect { connection.execute("DELETE FROM storage_maintenance_runs WHERE id = #{id}") }
++      .to raise_error(ActiveRecord::InvalidForeignKey)
++  end
++end
+diff --git a/api/spec/models/storage_freeze_api_actor_spec.rb b/api/spec/models/storage_freeze_api_actor_spec.rb
+index d126f4cd3e37509b7e9c083341e789fd16fd1e68..9a045c30a673f1be35898da6fd04e1348b896340 100644
+--- a/api/spec/models/storage_freeze_api_actor_spec.rb
++++ b/api/spec/models/storage_freeze_api_actor_spec.rb
+@@ -2,6 +2,7 @@
+ 
+ require 'spec_helper'
+ require 'timeout'
++require 'vpsadmin/storage_reconciler'
+ 
+ RSpec.describe StorageMutationAdmission do
+   def session_for(admin)
+@@ -308,12 +309,12 @@ RSpec.describe StorageMutationAdmission do
+ 
+     it 'fails closed on unknown contracts, malformed scope and inconsistent owner state' do
+       run = reserve
+-      run.update_columns(record_contract: 2)
+-      expect { abandon(run) }.to raise_error(StorageMaintenanceRun::UnsupportedRecord)
++      expect { run.update_columns(record_contract: 2) }.to raise_error(ActiveRecord::StatementInvalid)
++      expect(StorageMaintenanceRun.supported_tuple?(3, 'reserved', 1)).to be(false)
++      scope = run.reload.requested_scope_json
++      run.update_columns(requested_scope_json: '{}')
+       expect { described_class.show_maintenance_for_user!(request_id:, user: admin, user_session: session) }
+         .to raise_error(StorageMaintenanceRun::UnsupportedRecord)
+-      scope = run.requested_scope_json
+-      run.update_columns(record_contract: 1, requested_scope_json: '{}')
+       expect { abandon(run) }.to raise_error(StorageMaintenanceRun::UnsupportedRecord)
+       run.update_columns(requested_scope_json: scope, freeze_epoch: epoch + 1)
+       expect { abandon(run, expected_epoch: epoch) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
+@@ -321,6 +322,261 @@ RSpec.describe StorageMutationAdmission do
+     end
+   end
+ 
++  context 'with pre-transition responsibility acknowledgement' do
++    let(:admin) { SpecSeed.admin }
++    let(:session) { create_open_session!(user: admin, auth_type: 'basic') }
++    let(:epoch) { StorageFreezeControl.singleton!.epoch }
++    let(:request_id) { SecureRandom.uuid }
++
++    before { StorageFreezeControl.singleton!.update_columns(mode: 1) }
++
++    def reserve_for_handoff
++      described_class.reserve_maintenance_for_user!(
++        request_id:, expected_epoch: epoch, pool_ids: [SpecSeed.pool.id],
++        reason: 'API reservation', user: admin, user_session: session
++      )
++    end
++
++    def acknowledge(run, **overrides)
++      described_class.handoff_maintenance_for_user!(
++        request_id: run.request_id, expected_epoch: epoch, expected_contract: 1, expected_revision: 1,
++        expected_scope_digest: run.requested_scope_digest, reason: 'prospective responsibility',
++        user: admin, user_session: session, **overrides
++      )
++    end
++
++    it 'changes only the exact tuple and handoff audit without dispatch or physical effects' do
++      run = reserve_for_handoff
++      before = run.attributes
++      control = StorageFreezeControl.singleton!.attributes
++      counts = [TransactionChain.count, Transaction.count, StorageFreezeTransition.count,
++                StorageMutationIntent.count, StorageIntegrityScope.count, Pool.count, Node.count]
++      allow(VpsAdmin::API::TransactionSigner).to receive(:sign_base64) { raise 'prohibited handoff signing' }
++      allow(TransactionChains::Storage::Inventory).to receive(:fire) { raise 'prohibited handoff dispatch' }
++      allow(VpsAdmin::StorageReconciler::Capture).to receive(:new) { raise 'prohibited handoff capture' }
++      allow(VpsAdmin::StorageReconciler::NodeTransport).to receive(:new) { raise 'prohibited handoff transport' }
++      result = acknowledge(run, reason: '  prospective responsibility  ')
++      expect(result).to have_attributes(record_contract: 2, state: 'handoff_pending', revision: 2,
++                                        handed_off_by_user_id: admin.id, handed_off_by_user_session_id: session.id,
++                                        handed_off_by_user_login: admin.login, handoff_reason: 'prospective responsibility')
++      expect(result.handed_off_at).not_to be_nil
++      expect(result.attributes.except('record_contract', 'state', 'revision', *StorageMaintenanceRun::HANDOFF_FIELDS))
++        .to eq(before.except('record_contract', 'state', 'revision', *StorageMaintenanceRun::HANDOFF_FIELDS))
++      expect(StorageFreezeControl.singleton!.attributes).to eq(control)
++      expect([TransactionChain.count, Transaction.count, StorageFreezeTransition.count,
++              StorageMutationIntent.count, StorageIntegrityScope.count, Pool.count, Node.count]).to eq(counts)
++      expect(VpsAdmin::API::TransactionSigner).not_to have_received(:sign_base64)
++      expect(TransactionChains::Storage::Inventory).not_to have_received(:fire)
++      expect(VpsAdmin::StorageReconciler::Capture).not_to have_received(:new)
++      expect(VpsAdmin::StorageReconciler::NodeTransport).not_to have_received(:new)
++      expect(result.summary).not_to have_key(:requested_scope_json)
++    end
++
++    it 'copies a fresh accepting direct administrator separately from the acquisition actor' do
++      run = reserve_for_handoff
++      fresh = SpecSeed.support
++      fresh.update_columns(level: 90)
++      fresh_session = create_open_session!(user: fresh, auth_type: 'basic')
++      result = acknowledge(run, user: fresh, user_session: fresh_session)
++      expect(result).to have_attributes(acquired_by_user_id: admin.id, acquired_by_user_session_id: session.id,
++                                        handed_off_by_user_id: fresh.id, handed_off_by_user_session_id: fresh_session.id,
++                                        handed_off_by_user_login: fresh.login)
++      expect(described_class.show_maintenance_for_user!(request_id:, user: admin, user_session: session).attributes)
++        .to eq(result.attributes)
++    end
++
++    it 'replays the original CAS without changing audit or revalidating the catalog' do
++      run = reserve_for_handoff
++      result = acknowledge(run).attributes
++      SpecSeed.pool.update_columns(filesystem: 'spec/changed-after-handoff')
++      writes = []
++      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') do |*, payload|
++        writes << payload[:sql] if payload[:sql].match?(/\A\s*(?:UPDATE|INSERT|DELETE)\b/i)
++      end
++      begin
++        expect(acknowledge(run).attributes).to eq(result)
++      ensure
++        ActiveSupport::Notifications.unsubscribe(subscriber)
++      end
++      expect(writes).to be_empty
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
++    end
++
++    it 'refuses changed replay bindings and successor CAS without changing responsibility' do
++      run = reserve_for_handoff
++      result = acknowledge(run).attributes
++      other = create_open_session!(user: admin, auth_type: 'basic')
++      [{ user_session: other }, { reason: 'different' }, { expected_scope_digest: 'a' * 64 },
++       { request_id: SecureRandom.uuid }].each do |attrs|
++        expect { acknowledge(run, **attrs) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      end
++      expect { acknowledge(run, expected_epoch: epoch + 1) }.to raise_error(StorageMutationAdmission::StaleEpoch)
++      expect { acknowledge(run, expected_contract: 2) }.to raise_error(ArgumentError)
++      expect { acknowledge(run, expected_revision: 2) }.to raise_error(ArgumentError)
++      expect(run.reload.attributes).to eq(result)
++    end
++
++    it 'requires exact integer predecessor CAS and safe reason before changing the owner' do
++      run = reserve_for_handoff
++      before = run.attributes
++      [nil, true, '1', 1.0, 0, 2].each do |value|
++        expect { acknowledge(run, expected_contract: value) }.to raise_error(ArgumentError)
++        expect { acknowledge(run, expected_revision: value) }.to raise_error(ArgumentError)
++      end
++      [nil, '', ' ' * 3, 'x' * 256, "bad\nreason"].each do |reason|
++        expect { acknowledge(run, reason:) }.to raise_error(ArgumentError)
++      end
++      expect(StorageMaintenanceRun.supported_tuple?(1.0, 'reserved', 1)).to be(false)
++      expect(StorageMaintenanceRun.active_tuple?(2, 'handoff_pending', 2.0)).to be(false)
++      expect(run.reload.attributes).to eq(before)
++    end
++
++    it 'refuses current Pool and Node claim changes before handoff' do
++      run = reserve_for_handoff
++      before = run.attributes
++      pool = SpecSeed.pool
++      filesystem = pool.filesystem
++      pool.update_columns(filesystem: 'spec/changed-before-handoff')
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      pool.update_columns(filesystem:)
++      node = pool.node
++      node.update_columns(role: Node.roles.fetch('mailer'))
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect(run.reload.attributes).to eq(before)
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
++    end
++
++    it 'refuses a missing requested Pool and preserves the exact owner' do
++      pool = create_pool!(node: SpecSeed.node, role: :backup)
++      run = described_class.reserve_maintenance_for_user!(
++        request_id:, expected_epoch: epoch, pool_ids: [pool.id], reason: 'API reservation',
++        user: admin, user_session: session
++      )
++      before = run.attributes
++      pool.delete
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect(run.reload.attributes).to eq(before)
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
++    end
++
++    it 'refuses a missing requested Node without dropping its retained catalog claim' do
++      node = create_node!(role: :storage)
++      pool = create_pool!(node:, role: :backup)
++      run = described_class.reserve_maintenance_for_user!(
++        request_id:, expected_epoch: epoch, pool_ids: [pool.id], reason: 'API reservation',
++        user: admin, user_session: session
++      )
++      before = run.attributes
++      node.delete
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect(run.reload.attributes).to eq(before)
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
++    end
++
++    it 'refuses a missing pointer or inconsistent owner epoch before adding handoff audit' do
++      run = reserve_for_handoff
++      before = run.attributes
++      control = StorageFreezeControl.singleton!
++      control.update_columns(active_maintenance_run_id: nil)
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect(run.reload.attributes).to eq(before)
++      control.update_columns(active_maintenance_run_id: run.id)
++      run.update_columns(freeze_epoch: epoch + 1)
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect(run.reload.handed_off_at).to be_nil
++      expect(control.reload.active_maintenance_run_id).to eq(run.id)
++    end
++
++    it 'revalidates closed, delegated, suspended and nonadmin actors before responsibility changes' do
++      run = reserve_for_handoff
++      before = run.attributes
++      session.update_columns(closed_at: Time.current)
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::AuthorizationRefused)
++      session.update_columns(closed_at: nil, admin_id: admin.id)
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::AuthorizationRefused)
++      session.update_columns(admin_id: nil)
++      admin.update_columns(object_state: User.object_states.fetch(:suspended))
++      expect { acknowledge(run) }.to raise_error(StorageMutationAdmission::AuthorizationRefused)
++      admin.update_columns(object_state: User.object_states.fetch(:active))
++      member_session = create_open_session!(user: SpecSeed.user, auth_type: 'basic')
++      expect { acknowledge(run, user: SpecSeed.user, user_session: member_session) }
++        .to raise_error(StorageMutationAdmission::AuthorizationRefused)
++      expect(run.reload.attributes).to eq(before)
++    end
++
++    it 'never abandons, reopens or deletes a handoff owner' do
++      run = reserve_for_handoff
++      before = acknowledge(run).attributes
++      [1, 2].each do |revision|
++        error = revision == 1 ? StorageMutationAdmission::MaintenanceConflict : ArgumentError
++        expect do
++          described_class.abandon_maintenance_for_user!(
++            request_id:, expected_epoch: epoch, expected_revision: revision,
++            expected_scope_digest: run.requested_scope_digest, reason: 'not safely API-only', user: admin, user_session: session
++          )
++        end.to raise_error(error)
++      end
++      expect { reserve_for_handoff }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect(run.reload.destroy).to be(false)
++      expect(run.reload.attributes).to eq(before)
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
++    end
++
++    it 'keeps every handoff audit and acquisition value immutable after acknowledgement' do
++      run = acknowledge(reserve_for_handoff)
++      before = run.attributes
++      (StorageMaintenanceRun::HANDOFF_FIELDS + StorageMaintenanceRun::ACQUISITION_FIELDS).each do |field|
++        changed = run.reload.attributes[field]
++        changed = if changed.is_a?(Integer) || changed.is_a?(Time)
++                    changed + 1
++                  else
++                    "changed-#{changed}"
++                  end
++        expect { run.update!(field => changed) }.to raise_error(ActiveRecord::RecordInvalid)
++      end
++      expect { run.reload.update!(record_contract: 1, state: 'reserved', revision: 1) }
++        .to raise_error(ActiveRecord::RecordInvalid)
++      expect(run.reload.attributes).to eq(before)
++    end
++
++    it 'refuses partial handoff audit and direct creation of a successor record' do
++      run = reserve_for_handoff
++      audit = { record_contract: 2, state: 'handoff_pending', revision: 2,
++                handed_off_by_user_id: admin.id, handed_off_by_user_session_id: session.id,
++                handed_off_by_user_login: admin.login, handoff_reason: 'prospective responsibility',
++                handed_off_at: Time.current }
++      before = run.attributes
++      StorageMaintenanceRun::HANDOFF_FIELDS.each do |field|
++        expect { run.reload.update!(audit.merge(field.to_sym => nil)) }.to raise_error(ActiveRecord::RecordInvalid)
++      end
++      fresh = StorageMaintenanceRun.new(before.except('id').merge(audit.stringify_keys))
++      expect { fresh.save! }.to raise_error(ActiveRecord::RecordInvalid)
++      expect(run.reload.attributes).to eq(before)
++      expect(StorageMaintenanceRun.where(request_id:).count).to eq(1)
++    end
++
++    it 'rolls back a failure after the actual run update but before transaction commit' do
++      run = reserve_for_handoff
++      before = run.attributes
++      control = StorageFreezeControl.singleton!.attributes
++      allow(StorageMaintenanceRun).to receive(:lock).and_wrap_original do |lock, *args|
++        relation = lock.call(*args)
++        allow(relation).to receive(:find_by).with(id: run.id).and_wrap_original do |find, *ids|
++          current = find.call(*ids)
++          allow(current).to receive(:update!).and_wrap_original do |update, *values|
++            update.call(*values)
++            raise 'handoff precommit failure'
++          end
++          current
++        end
++        relation
++      end
++      expect { acknowledge(run) }.to raise_error('handoff precommit failure')
++      expect(run.reload.attributes).to eq(before)
++      expect(StorageFreezeControl.singleton!.attributes).to eq(control)
++    end
++  end
++
+   context 'with committed API maintenance authority', :no_transaction do
+     # Every worker borrows a distinct ordinary connection, checks the test-owned
+     # database binding, and disconnects it before fixture restoration.
+@@ -422,6 +678,14 @@ RSpec.describe StorageMutationAdmission do
+       )
+     end
+ 
++    def committed_handoff(run, session:)
++      described_class.handoff_maintenance_for_user!(
++        request_id: run.request_id, expected_epoch: reservation_state.fetch(:epoch),
++        expected_contract: 1, expected_revision: 1, expected_scope_digest: run.requested_scope_digest,
++        reason: 'committed prospective responsibility', user: SpecSeed.admin, user_session: session
++      )
++    end
++
+     it 'publishes a lost-response UUID to an ordinary second connection and releases the lock' do
+       session = committed_session
+       run = committed_reserve(session:)
+@@ -541,5 +805,150 @@ RSpec.describe StorageMutationAdmission do
+       end
+       SpecSeed.pool.update_columns(filesystem:) if filesystem && reaped
+     end
++
++    it 'publishes committed handoff audit to an ordinary reader and resolves a lost reply without another write' do
++      session = committed_session
++      run = committed_reserve(session:)
++      expect do
++        committed_handoff(run, session:)
++        raise 'lost handoff response after commit'
++      end.to raise_error('lost handoff response after commit')
++      reader = reservation_worker do |connection|
++        connection.transaction do
++          control = StorageFreezeControl.lock.find(1)
++          found = described_class.show_maintenance_for_user!(request_id: run.request_id,
++                                                             user: SpecSeed.admin, user_session: session)
++          [control.active_maintenance_run_id, found.attributes]
++        end
++      end
++      pointer, observed = Timeout.timeout(5) { reader.value }
++      expect(pointer).to eq(run.id)
++      expect(observed).to include('record_contract' => 2, 'state' => 'handoff_pending', 'revision' => 2,
++                                  'handed_off_by_user_session_id' => session.id)
++      expect(committed_handoff(run, session:).attributes).to eq(observed)
++      expect(StorageFreezeControl.singleton!).to have_attributes(mode: 'read_only', epoch: reservation_state.fetch(:epoch))
++    end
++
++    it 'serializes handoff against abandonment without partial audit or pointer loss' do
++      session = committed_session
++      run = committed_reserve(session:)
++      ready = Queue.new
++      go = Queue.new
++      reservation_state.fetch(:release_queues) << go
++      handing_off = reservation_worker do
++        ready << true
++        go.pop
++        begin
++          committed_handoff(run, session:)
++          :handed_off
++        rescue StorageMutationAdmission::MaintenanceConflict
++          :handoff_refused
++        end
++      end
++      abandoning = reservation_worker do
++        ready << true
++        go.pop
++        begin
++          described_class.abandon_maintenance_for_user!(
++            request_id: run.request_id, expected_epoch: reservation_state.fetch(:epoch), expected_revision: 1,
++            expected_scope_digest: run.requested_scope_digest, reason: 'competing unused reservation',
++            user: SpecSeed.admin, user_session: session
++          )
++          :abandoned
++        rescue StorageMutationAdmission::MaintenanceConflict
++          :abandon_refused
++        end
++      end
++      Timeout.timeout(5) { 2.times { ready.pop } }
++      2.times { go << true }
++      result = Timeout.timeout(5) { [handing_off.value, abandoning.value] }
++      expect(result).to eq(%i[handed_off abandon_refused]).or eq(%i[handoff_refused abandoned])
++      current = run.reload
++      control = StorageFreezeControl.singleton!
++      expect(control).to have_attributes(mode: 'read_only', epoch: reservation_state.fetch(:epoch))
++      if current.state == 'handoff_pending'
++        expect(current).to have_attributes(record_contract: 2, revision: 2, handed_off_by_user_session_id: session.id,
++                                           abandonment_reason: nil)
++        expect(control.active_maintenance_run_id).to eq(current.id)
++      else
++        expect(current).to have_attributes(record_contract: 1, state: 'abandoned', revision: 2,
++                                           handoff_reason: nil, abandoned_by_user_session_id: session.id)
++        expect(control.active_maintenance_run_id).to be_nil
++      end
++    end
++
++    it 'serializes handoff against unfreeze while retaining the responsible owner' do
++      session = committed_session
++      run = committed_reserve(session:)
++      ready = Queue.new
++      go = Queue.new
++      reservation_state.fetch(:release_queues) << go
++      handing_off = reservation_worker do
++        ready << true
++        go.pop
++        committed_handoff(run, session:)
++        :handed_off
++      end
++      switching = reservation_worker do
++        ready << true
++        go.pop
++        begin
++          described_class.set_read_only_for_user!(
++            read_only: false, expected_epoch: reservation_state.fetch(:epoch), reason: 'competing unfreeze',
++            user: SpecSeed.admin, user_session: session
++          )
++          :unfrozen
++        rescue StorageMutationAdmission::MaintenanceConflict
++          :unfreeze_refused
++        end
++      end
++      Timeout.timeout(5) { 2.times { ready.pop } }
++      2.times { go << true }
++      expect(Timeout.timeout(5) { [handing_off.value, switching.value] }).to eq(%i[handed_off unfreeze_refused])
++      expect(StorageFreezeControl.singleton!).to have_attributes(mode: 'read_only', epoch: reservation_state.fetch(:epoch),
++                                                                 active_maintenance_run_id: run.id)
++    end
++
++    it 'retains handoff responsibility after the accepting session closes' do
++      session = committed_session
++      run = committed_reserve(session:)
++      before = committed_handoff(run, session:).attributes
++      session.update_columns(closed_at: Time.current)
++      replacement = committed_session
++      reader = reservation_worker do
++        described_class.show_maintenance_for_user!(request_id: run.request_id,
++                                                   user: SpecSeed.admin, user_session: replacement).attributes
++      end
++      expect(Timeout.timeout(5) { reader.value }).to eq(before)
++      expect { committed_handoff(run, session:) }.to raise_error(StorageMutationAdmission::AuthorizationRefused)
++      expect do
++        described_class.abandon_maintenance_for_user!(
++          request_id: run.request_id, expected_epoch: reservation_state.fetch(:epoch), expected_revision: 1,
++          expected_scope_digest: run.requested_scope_digest, reason: 'not safely API-only',
++          user: SpecSeed.admin, user_session: replacement
++        )
++      end.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect(run.reload.attributes).to eq(before)
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
++    end
++
++    it 'refuses a separately committed catalog change despite an older repeatable-read snapshot' do
++      session = committed_session
++      run = committed_reserve(session:)
++      filesystem = SpecSeed.pool.reload.filesystem
++      ActiveRecord::Base.transaction do
++        expect(Pool.find(SpecSeed.pool.id).filesystem).to eq(filesystem)
++        changer = reservation_worker { Pool.find(SpecSeed.pool.id).update_columns(filesystem: 'spec/handoff-changed') }
++        Timeout.timeout(5) { changer.value }
++        expect { committed_handoff(run, session:) }.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      end
++      expect(run.reload).to have_attributes(record_contract: 1, state: 'reserved', revision: 1, handed_off_at: nil)
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
++    ensure
++      reaped = reservation_state.fetch(:workers).all? do |state|
++        !state[:thread].alive? && (!state[:acquired] || state[:closed])
++      end
++      SpecSeed.pool.update_columns(filesystem:) if filesystem && reaped
++    end
+   end
+ end
+diff --git a/api/spec/models/storage_freeze_status_spec.rb b/api/spec/models/storage_freeze_status_spec.rb
+index 9d2adcf87715b7c9cb9992ed2b47334c0f8d119f..bdf13c33c8f9c127cb31312983d00cc9def2f895 100644
+--- a/api/spec/models/storage_freeze_status_spec.rb
++++ b/api/spec/models/storage_freeze_status_spec.rb
+@@ -163,6 +163,15 @@ RSpec.describe StorageFreezeStatus do
+       )
+     end
+ 
++    def handoff(run)
++      StorageMutationAdmission.handoff_maintenance_for_user!(
++        request_id: run.request_id, expected_epoch: run.freeze_epoch, expected_contract: 1,
++        expected_revision: 1, expected_scope_digest: run.requested_scope_digest,
++        reason: 'status prospective responsibility', user: SpecSeed.admin,
++        user_session: UserSession.find(run.acquired_by_user_session_id)
++      )
++    end
++
+     it 'reports bounded active reservation metadata without scope paths or physical authority' do
+       run = reservation
+       status = described_class.snapshot
+@@ -187,8 +196,41 @@ RSpec.describe StorageFreezeStatus do
+ 
+     it 'refuses unsupported owner records rather than reporting absence' do
+       run = reservation
+-      run.update_columns(record_contract: 2)
++      expect { run.update_columns(record_contract: 2) }.to raise_error(ActiveRecord::StatementInvalid)
++      run.reload.update_columns(requested_scope_json: '{}')
++      expect { described_class.snapshot }.to raise_error(StorageMaintenanceRun::UnsupportedRecord)
++    end
++
++    it 'reports the supported handoff tuple and bounded copied audit without physical readiness' do
++      run = handoff(reservation)
++      status = described_class.snapshot
++      expect(status).to include(stable_epoch: true, db_drained: true, repair_ready: false)
++      expect(status[:active_maintenance]).to include(id: run.id, record_contract: 2, state: 'handoff_pending', revision: 2,
++                                                     handed_off_by_user_id: run.handed_off_by_user_id,
++                                                     handed_off_by_user_session_id: run.handed_off_by_user_session_id,
++                                                     handoff_reason: run.handoff_reason, handed_off_at: run.handed_off_at)
++      expect(status[:active_maintenance]).not_to have_key(:requested_scope_json)
++      expect(status).not_to have_key(:acquisition_ready)
++    end
++
++    it 'marks a handoff at the same epoch unstable across the status scan' do
++      run = reservation
++      calls = 0
++      allow(StorageFreezeStatus::Control).to receive(:find).and_wrap_original do |original, *args|
++        calls += 1
++        handoff(run) if calls == 2
++        original.call(*args)
++      end
++      status = described_class.snapshot
++      expect(status).to include(stable_epoch: false, db_drained: false, repair_ready: false, epoch: run.freeze_epoch)
++      expect(status[:active_maintenance]).to include(record_contract: 2, state: 'handoff_pending', revision: 2)
++    end
++
++    it 'refuses a supported handoff tuple at an inconsistent singleton epoch' do
++      run = handoff(reservation)
++      run.update_columns(freeze_epoch: run.freeze_epoch + 1)
+       expect { described_class.snapshot }.to raise_error(StorageMaintenanceRun::UnsupportedRecord)
++      expect(StorageFreezeControl.singleton!.active_maintenance_run_id).to eq(run.id)
+     end
+   end
+ end
+diff --git a/api/spec/models/storage_mutation_admission_spec.rb b/api/spec/models/storage_mutation_admission_spec.rb
+index 210ea606596c9b7a267292e2c3cd522adf66db10..40840b54de6ba22080817190052dd1b726a2512f 100644
+--- a/api/spec/models/storage_mutation_admission_spec.rb
++++ b/api/spec/models/storage_mutation_admission_spec.rb
+@@ -453,6 +453,35 @@ RSpec.describe StorageMutationAdmission do
+       expect(control.reload.active_maintenance_run_id).to eq(run.id)
+     end
+ 
++    it 'keeps handoff ownership interlocked through read-write and staged admission contradictions' do
++      admin = SpecSeed.admin
++      session = create_open_session!(user: admin, auth_type: 'basic')
++      control = StorageFreezeControl.singleton!
++      control.update_columns(mode: 1)
++      run = described_class.reserve_maintenance_for_user!(
++        request_id: SecureRandom.uuid, expected_epoch: control.epoch, pool_ids: [SpecSeed.pool.id],
++        reason: 'handoff interlock', user: admin, user_session: session
++      )
++      run = described_class.handoff_maintenance_for_user!(
++        request_id: run.request_id, expected_epoch: control.epoch, expected_contract: 1, expected_revision: 1,
++        expected_scope_digest: run.requested_scope_digest, reason: 'prospective responsibility', user: admin, user_session: session
++      )
++      before = run.attributes
++      expect do
++        described_class.set_read_only_for_user!(read_only: false, expected_epoch: control.epoch,
++                                                reason: 'unfreeze refused', user: admin, user_session: session)
++      end.to raise_error(StorageMutationAdmission::MaintenanceConflict)
++      expect do
++        StorageFreezeControl.transaction(requires_new: true) { described_class.check! }
++      end.to raise_error(VpsAdmin::API::Exceptions::StorageReadOnly)
++      control.reload.update_columns(mode: 0)
++      expect do
++        StorageFreezeControl.transaction(requires_new: true) { described_class.check! }
++      end.to raise_error(VpsAdmin::API::Exceptions::StorageReadOnly)
++      expect(run.reload.attributes).to eq(before)
++      expect(control.reload.active_maintenance_run_id).to eq(run.id)
++    end
++
+     it 'requires its staging transaction even when no reservation exists', :no_transaction do
+       expect { described_class.check! }.to raise_error('storage mutation admission requires a staging transaction')
+     end
+diff --git a/docs/storage/integrity-foundation.md b/docs/storage/integrity-foundation.md
+index 0d8ca0e49c791687f3a760ad8d02ffda028c9bb2..dd8319e1c2d9a6efae7bbf684ddde01ef311be7d 100644
+--- a/docs/storage/integrity-foundation.md
++++ b/docs/storage/integrity-foundation.md
+@@ -83,29 +83,45 @@ pointer. Its unique index and restrictive FK prevent deletion of a referenced
+ run. An existing installation starts with a null pointer and no run; provider
+ state never creates API ownership.
+ 
+-Record contract 1 has two states: `reserved` at revision 1 and `abandoned` at
+-revision 2. Its requested profile is `manual_storage_only_v1`. Acquisition
+-records a canonical client UUID, freeze epoch, requested catalog scope and
+-SHA-256 digest, plus the locked administrator's user/session IDs, copied login,
+-reason and time. The scope is canonical JSON of 1 to 256 distinct Pool claims
+-in ID order, bounded to 1 MiB. Each claim copies Pool/node IDs, Pool role/filesystem, Node role and
+-hypervisor type, and known catalog zpool GUID or null. These claims describe
+-the requested catalog; they do not identify a physical dependency closure.
+-Aliases and absent GUIDs remain unproved.
+-
+-The model keeps acquisition fields immutable. Its only supported update adds
+-the abandoning administrator's separately copied identity, reason and time,
+-changes state and advances revision. Database constraints enforce complete
+-acquisition and terminal audit groups, state/revision pairs, JSON size/validity
+-and UUID uniqueness. User/session and catalog identities are copied rather
+-than cascading FKs. Privileged SQL can bypass model immutability; this schema
+-is not a tamper-proof audit journal. Completed runs remain retained.
+-
+-The additive reservation migration preserves the existing singleton mode,
+-epoch and freeze audit. Its down migration checks for any run or active
+-pointer before DDL and refuses to discard consumed audit. Keep the additive
+-schema on code rollback once a reservation has existed. Unknown record
+-contracts, malformed scope or inconsistent ownership fail closed in supported
+-reservation readers. A future physical handoff must change the recognized
+-contract before accepting its first physical responsibility or evidence;
+-contract 1 cannot represent that handoff.
++The supported record tuples are contract 1 / `reserved` / revision 1,
++contract 1 / `abandoned` / revision 2, and contract 2 / `handoff_pending` /
++revision 2. `StorageMaintenanceRun` owns this declaration for admission and
++status readers. Acquisition creates contract 1 and uses the requested profile
++`manual_storage_only_v1`.
++
++Acquisition records a canonical client UUID, freeze epoch, requested catalog
++scope and SHA-256 digest, plus the locked administrator's user/session IDs,
++copied login, reason and time. The scope is canonical JSON of 1 to 256 distinct
++Pool claims in ID order, bounded to 1 MiB. Each claim copies Pool/node IDs,
++Pool role/filesystem, Node role and hypervisor type, and known catalog zpool
++GUID or null. These claims describe the requested catalog; they do not identify
++a physical dependency closure. Aliases and absent GUIDs remain unproved.
++
++The model permits two transitions from contract 1 / `reserved` / revision 1.
++Abandonment records its administrator audit and changes the run to contract 1 /
++`abandoned` / revision 2. Responsibility acknowledgement changes it to contract 2 /
++`handoff_pending` / revision 2 and adds `handed_off_by_user_id`,
++`handed_off_by_user_session_id`, `handed_off_by_user_login`, `handoff_reason`
++and `handed_off_at`. It retains the same pointer, UUID, epoch, profile and
++immutable acquisition scope and audit, with no abandonment audit. The model
++rejects subsequent updates and deletion. The acknowledgement grants no physical
++authority and has no supported termination or downgrade path. Supported readers
++reject unknown contracts, malformed scope and inconsistent ownership.
++
++Database constraints enforce complete acquisition, abandonment and handoff
++audit groups, the supported tuples, JSON size/validity and UUID uniqueness.
++Contract 1 has null handoff audit; contract 2 requires all five values and null
++abandonment audit. User/session and catalog identities are copied rather than
++cascading FKs. Privileged SQL can bypass model immutability; this schema is not
++a tamper-proof audit journal. Completed runs remain retained.
++
++The additive reservation migration preserves the singleton mode, epoch and
++freeze audit. Its down migration refuses to proceed if any run or active pointer
++exists, before issuing DDL. The handoff migration validates the predecessor rows,
++adds the five nullable audit columns and updates the existing state and audit
++constraint. It rejects unknown predecessor rows without normalizing them. Its
++down migration refuses before DDL if any handoff audit, contract 2 or unsupported
++row exists. Contract 1 rows with no handoff audit can retain their reservation
++audit when restoring the predecessor schema and constraint. Keep the additive
++schema and compatible readers while a handoff owner exists; clearing the
++pointer or relabeling it as contract 1 is unsupported.
+diff --git a/docs/storage/integrity-model.md b/docs/storage/integrity-model.md
+index 1c2b0a30131df98566ab331cc55561ee7537ca72..f86ec81a014981746c0e20ac353e3e676a2ec699 100644
+--- a/docs/storage/integrity-model.md
++++ b/docs/storage/integrity-model.md
+@@ -140,9 +140,10 @@ repair are separate operations.
+ ## API-only maintenance ownership
+ 
+ The singular `storage_freeze` resource also exposes POST `maintenance_reserve`,
+-GET `maintenance_show` and POST `maintenance_abandon`, each with its own action
+-scope. They require an active direct administrator and open nondelegated
+-session. This reservation prevents compatible API writers from unfreezing
++GET `maintenance_show`, POST `maintenance_handoff` and POST
++`maintenance_abandon`, each with its own action scope. They require an active
++direct administrator and open nondelegated session. This reservation prevents
++compatible API writers from unfreezing
+ storage. It acquires no Node or physical interval, dispatches no command and
+ accepts no exclusion evidence or repair approval.
+ 
+@@ -165,29 +166,66 @@ roll back both run and pointer. A timeout, process exit, expired session or
+ restart never clears a committed pointer. There is no automatic expiry or
+ implicit takeover.
+ 
+-`maintenance_abandon` compares UUID, freeze epoch, reserved revision 1 and
+-requested scope digest. A fresh direct administrator may abandon the unused API reservation
+-after its creator disconnects. Both actors remain in the audit. The service
+-atomically records abandonment at revision 2 and clears the exact pointer,
+-leaving `read_only` and its epoch unchanged. Exact terminal replay requires
+-the same abandoning actor/session and request, unchanged epoch and no new
+-owner. Unsupported contracts or later physical ownership cannot be abandoned
+-through this API-only action. Changing mode to `read_write` is a separate
+-audited request afterward.
++`maintenance_handoff` accepts responsibility for a prospective transition.
++It compares the UUID, freeze epoch and requested-scope digest with explicit
++`expected_contract=1` and `expected_revision=1`. These CAS values must be exact
++integers at the model boundary. In a short transaction, the service locks
++singleton 1, revalidates the direct actor and session, locks the run referenced
++by the owner pointer, and rechecks the requested Pools and Nodes with current
++ordered locking reads. It rejects changed or missing catalog claims before
++the transition.
++
++The committed result is contract 2 / `handoff_pending` / revision 2. Five copied
++handoff audit values record the accepting administrator and session IDs, login,
++normalized reason and time. That administrator may differ from the acquiring
++actor. UUID, pointer, epoch, profile, scope and original acquisition audit stay
++unchanged, as do mode and freeze history. The service calls no signer, chain,
++broker, Node, capture or physical operation. This state records prospective
++responsibility and establishes no physical ownership, exclusion or readiness.
++
++An exact lost-reply retry uses the original contract 1 / revision 1 CAS values
++and the same handoff actor and session, normalized reason and stored digest. It
++returns the acknowledgement without writing or advancing revision. Replay
++reports the retained commitment without a fresh catalog or physical check.
++Changed bindings conflict. Authenticated show is read-only and does not
++transfer responsibility. Failure before commit leaves the predecessor state;
++resolve an uncertain COMMIT through authenticated show or exact replay.
++Session expiry, process death, timeout or reboot never clears the owner.
++
++`maintenance_abandon` is restricted to contract 1, including terminal replay.
++It compares UUID, freeze epoch, reserved revision 1 and requested scope digest.
++A fresh direct administrator may abandon the unused API reservation after its
++creator disconnects. Both actors remain in the audit. The service atomically
++records abandonment at revision 2 and clears the exact pointer, leaving
++`read_only` and its epoch unchanged. Exact terminal replay requires the same
++abandoning actor/session and request, unchanged epoch and no new owner.
++Abandonment rejects contract 2 even with its matching actor, digest or revision 2;
++reservation cannot reopen its UUID. Changing mode to `read_write` is a separate
++audited request after a supported contract 1 abandonment.
+ 
+ Every compatible `read_write` path refuses a nonnull owner pointer. Staged
+ storage admission also refuses it even if the mode is contradictory
+-`read_write`. Status includes bounded reservation metadata and compares its
+-identity, contract, state and revision across the scan; ownership changes at
+-the same epoch make the result unstable. No raw catalog scope paths appear in
+-the public response. `db_drained` still describes bounded database work only;
+-`repair_ready` remains false.
+-
+-The additive pointer cannot fence old API setters that ignore it. Deploy the
+-compatible mode and admission readers across API, Supervisor, scheduler/task
+-and administrative entrypoints, and exclude old unfreeze writers and direct
+-out-of-band writes before relying on a reservation. Null ownership preserves
+-ordinary legacy behavior. Code rollback while an owner is active is
+-unsupported; keep compatible readers until explicit API-only abandonment or
+-recovery through a future compatible physical owner. Node versions gain no
+-physical exclusion capability from this API change.
++`read_write`. Status accepts the exact active tuples at the same epoch and
++compares identity, contract, state, revision and bounded audit across the scan.
++A concurrent handoff at the same epoch makes the result unstable. No raw
++catalog scope paths appear in the public response. `db_drained` still describes
++bounded database work only; `repair_ready` remains false.
++
++Deploy the additive schema before compatible code. Converge compatible readers
++across API, Supervisor, scheduler/task and administrative entrypoints, and
++exclude old unfreeze writers and direct out-of-band writes before relying on
++reservations. Null
++ownership preserves ordinary legacy behavior. Do not create contract 2 while
++old reservation readers are expected to serve it: contract 1 readers reject
++it, although compatible predecessor mode/admission guards still refuse any
++nonnull pointer. This does not fence pre-reservation writers or independent
++Node processes. No coordinated Node upgrade is required by this API-only unit.
++
++Running older code while a handoff owner exists is unsupported. Keep
++compatible readers and the additive schema; never discard audit, clear the
++pointer or downgrade contract 2 to make old code work. There is no TTL,
++cancellation, automatic release or supported termination from `handoff_pending`.
++Operational invocation remains unsupported until separate audited termination,
++recovery and physical contracts exist. Failed external work retains
++responsibility and invalidates physical evidence; the API acknowledgement
++alone authorizes no physical transition, capture or repair.
+diff --git a/docs/storage/integrity-reconciler.md b/docs/storage/integrity-reconciler.md
+index 9b861a9017a097d7e11b17e48f63ed71df28677c..7dadb9a4ea55b8d21a07bedf45bf3de442beb944 100644
+--- a/docs/storage/integrity-reconciler.md
++++ b/docs/storage/integrity-reconciler.md
+@@ -246,9 +246,17 @@ unchanged.
+ Observer settlement can complete supported database work while the reservation
+ is active. A drained status or successful capture still needs separate child
+ exclusion, dependency closure, durable physical evidence and action approval
+-before repair. A future handoff must change the reservation contract under its
+-singleton authority before acquiring physical responsibilities. This API slice
+-adds no executable action, approval, capture receipt or physical recovery path.
++before repair. `maintenance_handoff` changes the API record to contract 2 /
++`handoff_pending` / revision 2 under singleton authority and records the direct
++administrator accepting prospective responsibility. It retains the original
++UUID, pointer, epoch and catalog scope. Exact replay reports that committed
++acknowledgement only. It acquires no physical interval and does not bind an
++old capture to that owner. Contract 1 abandonment cannot end this state.
++
++There is no supported termination or recovery action for `handoff_pending`.
++Operational invocation must wait for separate audited recovery, termination and
++physical contracts. The API action adds no executable repair, approval,
++owner-bound capture receipt or physical recovery path.
+ 
+ ## Storage-maintenance generation
+ 
+@@ -304,14 +312,15 @@ and known payload contents. Its direct `init=` boot does not prove that a
+ production bootloader will retain the selected generation.
+ 
+ Building or selecting a generation does not acquire physical responsibility.
+-Before an actual transition, a separately reviewed authenticated handoff must
+-replace the API-only reservation contract under its owner, epoch and scope CAS;
+-contract 1 abandonment cannot release a later physical hold. That transition
++Before an actual transition, the authenticated API responsibility
++acknowledgement must be followed by separately supported physical, termination
++and recovery contracts. Contract 2 grants no execution authority,
++and contract 1 abandonment cannot release it. The physical transition
+ must persist the maintenance boot selection before retiring ordinary producers,
+ prove that descendants and delegated work are contained and reaped, and bind
+ capture and results to the owner, epoch, scope, boot and executable payloads.
+-The current observer and activity-report interfaces provide no such handoff,
+-physical receipt or executable repair path.
++The current observer and activity-report interfaces provide no physical
++handoff, receipt or executable repair path.
+ 
+ Failed activation or operator death leaves the transition uncertain. Reboot
+ invalidates prior process and capture evidence even when the generation is

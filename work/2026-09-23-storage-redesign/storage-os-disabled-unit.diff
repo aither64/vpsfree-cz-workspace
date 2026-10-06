@@ -1,0 +1,515 @@
+diff --git a/docs/os/runlevels.md b/docs/os/runlevels.md
+index 6d8ea1212d0ff65ffe6ca6c905b15a55befd14ec..2586d08637ffe661c3870723b38813758f7ad2e6 100644
+--- a/docs/os/runlevels.md
++++ b/docs/os/runlevels.md
+@@ -114,3 +114,49 @@ runlevel. So when you've booted in a single user mode, i.e. runlevel `single`,
+ ```bash
+ svctl enable sshd
+ ```
++
++## Building without automatic osctld startup
++
++`osctld.enable` defaults to `true`. Set it to `false` to omit osctld from all
++runlevels while retaining its service definition, generated configuration and
++ordinary tools, including `osctl`, `osup` and `svctl`:
++
++```nix
++{
++  osctld.enable = false;
++  osctl.pools = { };
++  osctl.exportfs.enable = false;
++  boot.zfs.pools.tank.install = false;
++}
++```
++
++Every configured ZFS pool must have `install = false`. Configuration evaluation
++fails if `osctl.pools` is nonempty, `osctl.exportfs` is enabled, pool installation
++is enabled or osctld is forced into a runlevel. These checks prevent the
++configured consumers from waiting for a daemon that will not start.
++
++The ZFS pool service still imports pools, mounts datasets and applies configured
++properties. With osctld disabled, it skips the osctl active-property lookup,
++daemon wait, pool installation/import and parallel-start/stop settings. It
++preserves retained osctl state and `org.vpsadminos.osctl:active`. Existing ZFS
++startup configuration can write to storage; this option does not make ZFS
++read-only.
++
++Configuration activation skips `osctl activate` when osctld is absent from the
++destination runlevel. Activation keeps its existing restart handling when
++osctld is selected. A successful activation does not prove that a removed
++service and all its children have stopped. Neither an absent socket nor a
++successful activation exit proves that storage writers are excluded.
++
++Use the ordinary generation selection described in [Updates](updates.md).
++`switch` selects the boot configuration and activates it; `boot` selects it
++without runtime activation. `test` changes the running configuration only.
++Transient `svctl` changes do not establish the generation used on the next boot.
++A fresh boot into the disabled generation continues to omit automatic osctld
++startup, but invalidates evidence tied to the previous boot or process identity.
++
++This option changes no on-disk format and requires no coordinated fleet update.
++Older sources that lack the option refuse its declaration. Booting an older
++ordinary generation can restart storage writers; it is not a safe rollback
++while another component owns storage maintenance. The option does not provide
++that ownership, authorize storage actions or exclude other producers.
+diff --git a/flake.nix b/flake.nix
+index 2ac509be5c251139fc064b2153ffb8e5417fd3ca..e09dc41355e1c5586639e2532c7c96dee02f2365 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -762,6 +762,10 @@
+           };
+         in
+         {
++          osctld-disabled-eval = import ./tests/osctld-disabled-eval.nix {
++            pkgs = import nixpkgs { inherit system; };
++            makeSystem = args: vpsadminosSystem (args // { inherit system; });
++          };
+           qemu-disk-lifecycle = import ./tests/qemu-disk-lifecycle-check.nix {
+             pkgs = import nixpkgs { inherit system; };
+             makeSystem = args: vpsadminosSystem (args // { inherit system; });
+diff --git a/os/modules/osctl/osctld.nix b/os/modules/osctl/osctld.nix
+index 81a1373a8c06dfd987cdded19a764fa5d8d3f1cd..cc8802ac79c4c3bbcf5fb88abc3d1ffa81d1587c 100644
+--- a/os/modules/osctl/osctld.nix
++++ b/os/modules/osctl/osctld.nix
+@@ -23,6 +23,16 @@ in
+ 
+   options = {
+     osctld = {
++      enable = mkOption {
++        type = types.bool;
++        default = true;
++        description = ''
++          Start osctld automatically in the default runlevel. Disabling it
++          retains its service definition, configuration and tools, but requires
++          empty osctl.pools, disabled osctl.exportfs and no ZFS pool installation.
++        '';
++      };
++
+       waitForNetworkOnline = mkOption {
+         type = types.bool;
+         default = true;
+@@ -54,6 +64,25 @@ in
+   ###### implementation
+ 
+   config = {
++    assertions = [
++      {
++        assertion = cfg.enable || config.runit.services.osctld.runlevels == [ ];
++        message = "osctld.enable = false requires empty runit.services.osctld.runlevels";
++      }
++      {
++        assertion = cfg.enable || config.osctl.pools == { };
++        message = "osctld.enable = false requires empty osctl.pools";
++      }
++      {
++        assertion = cfg.enable || !config.osctl.exportfs.enable;
++        message = "osctld.enable = false requires osctl.exportfs.enable = false";
++      }
++      {
++        assertion = cfg.enable || all (pool: !pool.install) (attrValues config.boot.zfs.pools);
++        message = "osctld.enable = false requires boot.zfs.pools.<name>.install = false";
++      }
++    ];
++
+     osctld.settings = {
+       apparmor_paths = optionals config.security.apparmor.enable (
+         map (s: "${s}/etc/apparmor.d") apparmorPaths
+@@ -64,6 +93,8 @@ in
+     };
+ 
+     runit.services.osctld = {
++      runlevels = mkIf (!cfg.enable) [ ];
++
+       path = with pkgs; [
+         config.security.wrapperDir
+         apparmor-parser
+diff --git a/os/modules/system/activation/switch-to-configuration.rb b/os/modules/system/activation/switch-to-configuration.rb
+index eaaa12df2785d8bf52ef51782039246f8ac6fd34..ddf3da559561f3bcb6a127fde8f9efff7dcc8475 100755
+--- a/os/modules/system/activation/switch-to-configuration.rb
++++ b/os/modules/system/activation/switch-to-configuration.rb
+@@ -145,6 +145,8 @@ class Configuration
+   end
+ 
+   def activate_osctl(services)
++    return unless services.selected?('osctld')
++
+     # If osctld is restarted, it will regenerate system files by itself
+     return if services.restart.detect { |s| s.name == 'osctld' && !s.skip? }
+ 
+@@ -253,6 +255,11 @@ class Services
+     @new_services = get_services(@new_cfg, @new_runlevel, Configuration::ETC)
+   end
+ 
++  # Membership in the parsed destination runlevel, independent of restart/skip.
++  def selected?(name)
++    new_services.has_key?(name)
++  end
++
+   # Services that are new and should be started
+   # @return [Array<Service>]
+   def start
+diff --git a/os/modules/tasks/filesystems/zfs/pool-service.nix b/os/modules/tasks/filesystems/zfs/pool-service.nix
+index d8b5f1c00b0fdf44840f78fd84f21d480019b83e..947b389382b19c149794af798f167d109ced86a6 100644
+--- a/os/modules/tasks/filesystems/zfs/pool-service.nix
++++ b/os/modules/tasks/filesystems/zfs/pool-service.nix
+@@ -140,35 +140,37 @@ in
+     echo "Mounting datasets..."
+     ${mount} ${name} ${datasets}
+ 
+-    active=$(${zfs} get -Hp -o value org.vpsadminos.osctl:active ${name})
+-
+-    echo "Waiting for osctld..."
+-    waitForOsctld
+-
+-    if [ "$(getKernelParam osctl.pools 1)" == "1" ] ; then
+-      if [ "$active" == "yes" ] ; then
+-        if  ! osctlEntityExists pool ${name} ; then
+-          echo "Importing pool ${name} into osctld"
+-          ${osctl} pool import \
+-            $(if [ "$(getKernelParam osctl.autostart 1)" == "1" ] ; then echo "--autostart" ; else echo "--no-autostart" ; fi) \
+-            ${name} \
+-            || fail "Unable to import pool ${name} into osctld"
++    ${optionalString config.osctld.enable ''
++      active=$(${zfs} get -Hp -o value org.vpsadminos.osctl:active ${name})
++
++      echo "Waiting for osctld..."
++      waitForOsctld
++
++      if [ "$(getKernelParam osctl.pools 1)" == "1" ] ; then
++        if [ "$active" == "yes" ] ; then
++          if  ! osctlEntityExists pool ${name} ; then
++            echo "Importing pool ${name} into osctld"
++            ${osctl} pool import \
++              $(if [ "$(getKernelParam osctl.autostart 1)" == "1" ] ; then echo "--autostart" ; else echo "--no-autostart" ; fi) \
++              ${name} \
++              || fail "Unable to import pool ${name} into osctld"
++          fi
++
++        elif ${if pool.install then "true" else "false"} ; then
++          echo "Installing pool ${name} into osctld"
++          ${osctl} pool install ${name} \
++            || fail "Unable to install pool ${name} into osctld"
+         fi
+ 
+-      elif ${if pool.install then "true" else "false"} ; then
+-        echo "Installing pool ${name} into osctld"
+-        ${osctl} pool install ${name} \
+-          || fail "Unable to install pool ${name} into osctld"
++        ${optionalString (hasAttr name config.osctl.pools) ''
++          echo "Configuring osctl pool ${name}"
++          ${osctl} pool set parallel-start ${name} ${toString config.osctl.pools.${name}.parallelStart}
++          ${osctl} pool set parallel-stop ${name} ${toString config.osctl.pools.${name}.parallelStop}
++        ''}
++      else
++        echo "Pool install/import disabled by kernel parameter"
+       fi
+-
+-      ${optionalString (hasAttr name config.osctl.pools) ''
+-        echo "Configuring osctl pool ${name}"
+-        ${osctl} pool set parallel-start ${name} ${toString config.osctl.pools.${name}.parallelStart}
+-        ${osctl} pool set parallel-stop ${name} ${toString config.osctl.pools.${name}.parallelStop}
+-      ''}
+-    else
+-      echo "Pool install/import disabled by kernel parameter"
+-    fi
++    ''}
+ 
+     ${optionalString config.services.zfs.vdevlog.enable ''
+       echo "Updating vdevlog"
+diff --git a/tests/osctld-disabled-eval.nix b/tests/osctld-disabled-eval.nix
+new file mode 100644
+index 0000000000000000000000000000000000000000..14d6caad5d04203dc86964015b1e1ea7441b5f03
+--- /dev/null
++++ b/tests/osctld-disabled-eval.nix
+@@ -0,0 +1,180 @@
++{ pkgs, makeSystem }:
++let
++  inherit (pkgs) lib;
++  common = {
++    system.stateVersion = "26.05";
++    osctld.settings.disabled_generation_test = "retained";
++    boot.zfs.pools.tank = {
++      install = false;
++      properties."feature@block_cloning" = "disabled";
++      datasets.proof.properties.mountpoint = "/mnt/osctld-disabled-proof";
++    };
++  };
++  make =
++    module:
++    makeSystem {
++      modules = [
++        common
++        module
++      ];
++    };
++  omitted = make { };
++  enabled = make { osctld.enable = true; };
++  declarative = make { osctl.pools.tank = { }; };
++  disabled = make { osctld.enable = false; };
++  rescueOnly = make { runit.services.osctld.runlevels = [ "rescue" ]; };
++  cfg = disabled.config;
++  generatedRun = system: name: system.config.environment.etc."runit/services/${name}/run".source.text;
++  poolRun = generatedRun disabled "pool-tank";
++  enabledPoolRun = generatedRun enabled "pool-tank";
++  service = system: {
++    inherit (system.config.runit.services.osctld) runlevels onChange reloadMethod;
++    restartTriggers = map toString (lib.flatten system.config.runit.services.osctld.restartTriggers);
++  };
++  refuses = module: !(builtins.tryEval (make module).config.system.build.toplevel.drvPath).success;
++  checks = {
++    defaultEnabled = omitted.config.osctld.enable;
++    omissionEqualsTrue =
++      generatedRun omitted "osctld" == generatedRun enabled "osctld"
++      && generatedRun omitted "pool-tank" == enabledPoolRun
++      && service omitted == service enabled;
++    enabledRunlevel = enabled.config.runit.services.osctld.runlevels == [ "default" ];
++    enabledCustomRunlevel = rescueOnly.config.runit.services.osctld.runlevels == [ "rescue" ];
++    disabledRunlevels = cfg.runit.services.osctld.runlevels == [ ];
++    noRunlevelLinks =
++      !lib.any (name: lib.hasSuffix "/osctld" name && lib.hasPrefix "runit/runsvdir/" name) (
++        builtins.attrNames cfg.environment.etc
++      );
++    retainedDefinition = generatedRun disabled "osctld" == generatedRun enabled "osctld";
++    retainedSettings = cfg.osctld.settings == enabled.config.osctld.settings;
++    retainedTools = lib.all (name: lib.elem disabled.pkgs.${name} cfg.environment.systemPackages) [
++      "osctl"
++      "osup"
++      "svctl"
++    ];
++    rawPoolImport = lib.hasInfix "zpool import" poolRun && lib.hasInfix "Mounting datasets..." poolRun;
++    retainedZfsSettings =
++      cfg.boot.zfs.pools.tank == enabled.config.boot.zfs.pools.tank
++      && lib.hasInfix "feature@block_cloning=disabled" poolRun
++      && cfg.runit.services.pool-tank.oneShot;
++    enabledAssociation = lib.all (text: lib.hasInfix text enabledPoolRun) [
++      "org.vpsadminos.osctl:active"
++      "waitForOsctld"
++      "osctl pool import"
++      "osctl pool install"
++    ];
++    enabledParallelSettings = lib.all (text: lib.hasInfix text (generatedRun declarative "pool-tank")) [
++      "osctl pool set parallel-start tank 2"
++      "osctl pool set parallel-stop tank 4"
++    ];
++    disabledAssociation =
++      !lib.any (text: lib.hasInfix text poolRun) [
++        "org.vpsadminos.osctl:active"
++        "waitForOsctld"
++        "osctlEntityExists"
++        "osctl pool"
++        "getKernelParam osctl.pools"
++      ];
++    validDisabledSystem = (builtins.tryEval cfg.system.build.toplevel.drvPath).success;
++    refusesDeclarativePool = refuses {
++      osctld.enable = false;
++      osctl.pools.tank = { };
++    };
++    refusesExportfs = refuses {
++      osctld.enable = false;
++      osctl.exportfs.enable = true;
++    };
++    refusesInstall = refuses {
++      osctld.enable = false;
++      boot.zfs.pools.tank.install = lib.mkForce true;
++    };
++    refusesForcedMembership = refuses {
++      osctld.enable = false;
++      runit.services.osctld.runlevels = lib.mkForce [ "rescue" ];
++    };
++  };
++  projections = pkgs.writeText "osctld-disabled-projections.json" (
++    builtins.unsafeDiscardStringContext (
++      builtins.toJSON {
++        inherit checks;
++        services = {
++          enabled = service enabled;
++          disabled = service disabled;
++          rescue = service rescueOnly;
++        };
++      }
++    )
++  );
++in
++assert lib.assertMsg (lib.all (result: result) (
++  builtins.attrValues checks
++)) "osctld-disabled module checks failed";
++pkgs.runCommand "osctld-disabled-eval" { nativeBuildInputs = [ enabled.pkgs.ruby ]; } ''
++  ruby - ${../os/modules/system/activation/switch-to-configuration.rb} ${projections} <<'RUBY'
++  require 'tmpdir'
++  require 'json'
++
++  source_path, projection_path = ARGV
++  source = File.read(source_path)
++  definitions, entrypoint = source.split("\ncase ARGV[0]\n", 2)
++  raise 'missing owning activation entrypoint' unless entrypoint
++  eval(definitions, TOPLEVEL_BINDING, source_path)
++  projections = JSON.parse(File.read(projection_path))
++
++  # Use the owning service parser and restart calculation with actual module
++  # projections; only filesystem locations and the external command are fixtures.
++  class FixtureServices < Services
++    def initialize(old_service, new_service, etc_path, skipped: false)
++      @opts = { dry_run: false }
++      protected_path = File.join(etc_path, 'protected-services.txt')
++      File.write(protected_path, skipped ? "osctld\n" : "")
++      @protected_list = ServiceNameList.new(protected_path)
++      @old_cfg = { 'defaultRunlevel' => 'default', 'services' => { 'osctld' => old_service } }
++      @new_cfg = { 'defaultRunlevel' => 'default', 'services' => { 'osctld' => new_service } }
++      @old_runlevel = 'default'
++      @new_runlevel = get_runlevel(@new_cfg, @old_runlevel)
++      @old_services = get_services(@old_cfg, @old_runlevel, etc_path)
++      @new_services = get_services(@new_cfg, @new_runlevel, etc_path)
++    end
++  end
++
++  class FixtureConfiguration < Configuration
++    attr_reader :commands
++
++    def initialize(**opts)
++      super
++      @commands = []
++    end
++
++    def system(*args)
++      commands << args
++      true
++    end
++  end
++
++  Dir.mktmpdir('osctld-disabled-activation-') do |etc_path|
++    run_path = File.join(etc_path, 'runit/services/osctld/run')
++    FileUtils.mkdir_p(File.dirname(run_path))
++    File.write(run_path, 'actual service path fixture')
++    enabled = projections.fetch('services').fetch('enabled')
++    changed = enabled.merge('restartTriggers' => ['changed-trigger'])
++    cases = [
++      ['selected', enabled, false, false, true],
++      ['restarted', changed, false, false, false],
++      ['skipped restart', changed, true, false, true],
++      ['disabled', projections.fetch('services').fetch('disabled'), false, false, false],
++      ['other runlevel', projections.fetch('services').fetch('rescue'), false, false, false],
++      ['dry run', enabled, false, true, false]
++    ]
++    cases.each do |label, selected, skipped, dry_run, should_activate|
++      services = FixtureServices.new(enabled, selected, etc_path, skipped: skipped)
++      configuration = FixtureConfiguration.new(dry_run: dry_run)
++      configuration.send(:activate_osctl, services)
++      expected = should_activate ? [[File.join(Configuration::CURRENT_BIN, 'osctl'), 'activate', '--system']] : []
++      raise "incorrect activation: #{label}" unless configuration.commands == expected
++    end
++    puts "module_checks=#{projections.fetch('checks').length} activation_checks=#{cases.length}"
++  end
++  RUBY
++  touch "$out"
++''
+diff --git a/tests/suite/system/switch-to-configuration.nix b/tests/suite/system/switch-to-configuration.nix
+index dde55da08fb3561e2c7270c067466e2c001ca0a1..5f5546a289141bd14787921ccdd05d9fecb8a3c6 100644
+--- a/tests/suite/system/switch-to-configuration.nix
++++ b/tests/suite/system/switch-to-configuration.nix
+@@ -69,6 +69,19 @@ import ../../make-test.nix (
+       networking.firewall.logRefusedConnections = true;
+     };
+ 
++    osctldDisabledSystem = switchedSystem (
++      { lib, ... }: {
++        osctld.enable = false;
++        boot.zfs.pools.tank.install = lib.mkForce false;
++        boot.kernelModules = [
++          addedModule
++          keptModule
++          failedModule
++        ];
++        boot.kernel.loadNewModules = false;
++      }
++    );
++
+     nextFirewallSystem =
+       (import ../../../os (
+         {
+@@ -110,6 +123,7 @@ import ../../make-test.nix (
+           loadDisabledSystem
+           moduleAndFirewallSystem
+           nextFirewallSystem
++          osctldDisabledSystem
+         ];
+       };
+     };
+@@ -305,6 +319,78 @@ import ../../make-test.nix (
+             '${failedModule}' => 'absent',
+           )
+         end
++
++        it 'preserves a retained pool when switching and booting without osctld' do
++          machine.wait_for_service('osctld')
++          machine.wait_for_service('pool-tank')
++          machine.wait_for_osctl_pool('tank')
++          _, normal_system = machine.succeeds('readlink -f /run/current-system')
++          _, original_boot = machine.succeeds('readlink -f /run/booted-system')
++          _, original_boot_id = machine.succeeds('cat /proc/sys/kernel/random/boot_id')
++          machine.succeeds(<<~CMD)
++            set -e
++            zfs create -o mountpoint=/mnt/osctld-disabled-proof tank/osctld-disabled-proof
++            printf 'retained payload before osctld-disabled activation\\n' > /mnt/osctld-disabled-proof/payload
++            sync -f /mnt/osctld-disabled-proof
++          CMD
++
++          retained_identity = lambda do
++            machine.succeeds(<<~CMD)[1]
++              set -e
++              zpool get -H -o value guid tank
++              zfs get -H -o value guid tank/osctld-disabled-proof
++              zfs get -H -o value org.vpsadminos.osctl:active tank
++              sha256sum /mnt/osctld-disabled-proof/payload
++            CMD
++          end
++          baseline = retained_identity.call
++          disabled_services = lambda do
++            machine.succeeds(<<~CMD)
++              set -e
++              test ! -e /service/osctld
++              test ! -L /service/osctld
++              test ! -e /etc/runit/runsvdir/default/osctld
++              test ! -L /etc/runit/runsvdir/default/osctld
++              test ! -S /run/osctl/osctld.sock
++              if pgrep -f '(^|/)[o]sctld([ :]|$)|/[.]osctld-wrapped( |$)' > /dev/null; then
++                exit 1
++              fi
++              test -x /run/current-system/sw/bin/osctl
++              test -x /run/current-system/sw/bin/osup
++              test -x /run/current-system/sw/bin/svctl
++              test -f /run/service/pool-tank/done
++            CMD
++          end
++
++          _, output = machine.succeeds('${osctldDisabledSystem}/bin/switch-to-configuration switch')
++          expect(output).to include('> sv stop osctld')
++          expect(output).not_to include('> osctl activate')
++          machine.wait_for_service('pool-tank')
++          machine.wait_until_succeeds('test ! -S /run/osctl/osctld.sock')
++          disabled_services.call
++          expect(machine.succeeds('readlink -f /run/current-system')[1].strip).to eq('${osctldDisabledSystem}')
++          expect(machine.succeeds('readlink -f /run/booted-system')[1]).to eq(original_boot)
++          expect(retained_identity.call).to eq(baseline)
++
++          # Same framework instance and preserved disks; the final init argument
++          # selects the disabled closure from the original image's dependencies.
++          machine.stop
++          machine.start(kernel_params: ['init=${osctldDisabledSystem}/init'], wait_for_boot: true)
++          machine.wait_for_service('pool-tank')
++          machine.wait_for_service('restart-trigger-test')
++          expect(machine.succeeds('readlink -f /run/booted-system')[1].strip).to eq('${osctldDisabledSystem}')
++          expect(machine.succeeds('readlink -f /run/current-system')[1].strip).to eq('${osctldDisabledSystem}')
++          expect(machine.succeeds('cat /proc/sys/kernel/random/boot_id')[1]).not_to eq(original_boot_id)
++          disabled_services.call
++          expect(retained_identity.call).to eq(baseline)
++
++          machine.succeeds("#{Shellwords.escape(normal_system.strip)}/bin/switch-to-configuration switch")
++          machine.wait_for_service('osctld')
++          machine.wait_for_service('pool-tank')
++          machine.wait_for_osctl_pool('tank')
++          expect(machine.succeeds('readlink -f /run/current-system')[1]).to eq(normal_system)
++          expect(retained_identity.call).to eq(baseline)
++        end
+       end
+     '';
+   }

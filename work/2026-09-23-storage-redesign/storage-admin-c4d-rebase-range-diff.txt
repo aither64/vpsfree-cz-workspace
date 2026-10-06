@@ -1,0 +1,100 @@
+ 1:  6562e1410 =  1:  dda3b1126 storage: establish integrity schema and freeze bootstrap
+ 2:  9d215ffcd !  2:  4e058ca9b storage: journal observer writes across API and NodeCtld
+    @@ api/lib/vpsadmin/api/locales/cs.yml: cs:
+            snapshot_download_unavailable: snapshot není dostupný ke stažení
+     +      storage_read_only: Úložiště je dočasně jen pro čtení. Zkus to prosím později.
+     +      storage_signer_unavailable: Úložiště je dočasně nedostupné. Zkus to prosím později.
+    +       vps_already_marked_for_deletion: VPS už je označeno ke smazání.
+          password_changes:
+            minimum_length_description: Heslo musí mít alespoň %{minimum} znaků
+    -     resources:
+     
+      ## api/lib/vpsadmin/api/locales/en.yml ##
+     @@ api/lib/vpsadmin/api/locales/en.yml: en:
+    @@ api/lib/vpsadmin/api/locales/en.yml: en:
+            snapshot_download_unavailable: snapshot is not available for download
+     +      storage_read_only: Storage is temporarily read-only. Try again later.
+     +      storage_signer_unavailable: Storage is temporarily unavailable. Try again later.
+    +       vps_already_marked_for_deletion: This VPS is already marked for deletion.
+          password_changes:
+            minimum_length_description: The password must be at least %{minimum} characters
+    -         long
+     
+      ## api/models/storage_effect_registry.rb (new) ##
+     @@
+ 3:  0771b0b32 =  3:  4de65ba8e storage: add advisory inventory and reconciliation
+ 4:  3e1e67e77 !  4:  a561366c3 storage: add authenticated freeze API and WebUI
+    @@ Commit message
+     
+      ## .github/workflows/api-specs.yml ##
+     @@ .github/workflows/api-specs.yml: jobs:
+    -               spec/api/resources/oom_report*_spec.rb
+    -               spec/api/resources/os_*_spec.rb
+    -               spec/api/resources/security_advisory*_spec.rb
+    +               spec/api/resources/pool_*_spec.rb
+    +               spec/api/resources/snapshot_download_spec.rb
+    +               spec/api/resources/export_spec.rb
+     +              spec/api/resources/storage_freeze_spec.rb
+    -               spec/api/resources/system_config_spec.rb
+    -               spec/api/resources/transaction*_spec.rb
+      
+    +           - topic: mail
+    +             patterns: |
+     
+      ## api/lib/vpsadmin/api/locales/cs.yml ##
+     @@ api/lib/vpsadmin/api/locales/cs.yml: cs:
+    @@ api/lib/vpsadmin/api/locales/cs.yml: cs:
+     +      storage_freeze_invalid_request: Zkontroluj požadavek na změnu režimu úložiště.
+            storage_read_only: Úložiště je dočasně jen pro čtení. Zkus to prosím později.
+            storage_signer_unavailable: Úložiště je dočasně nedostupné. Zkus to prosím později.
+    -     password_changes:
+    +       vps_already_marked_for_deletion: VPS už je označeno ke smazání.
+     @@ api/lib/vpsadmin/api/locales/cs.yml: cs:
+                  label: Velikost
+                url:
+    @@ api/lib/vpsadmin/api/locales/en.yml: en:
+     +      storage_freeze_invalid_request: Check the storage mode request.
+            storage_read_only: Storage is temporarily read-only. Try again later.
+            storage_signer_unavailable: Storage is temporarily unavailable. Try again later.
+    -     password_changes:
+    +       vps_already_marked_for_deletion: This VPS is already marked for deletion.
+     @@ api/lib/vpsadmin/api/locales/en.yml: en:
+                  label: Size
+                url:
+    @@ api/spec/models/storage_observer_catch_up_audit_spec.rb (new)
+     +  end
+     +end
+     
+    + ## docs/agent-instructions/testing.md ##
+    +@@ docs/agent-instructions/testing.md: its explicit patterns if needed.
+    + | `foundation` | `spec/smoke/**/*_spec.rb`, `spec/api/custom_routes_coverage_spec.rb`, `spec/api/endpoint_coverage_spec.rb`, `spec/api/generate_pending_endpoints_spec.rb`, `spec/api/routes/**/*_spec.rb`, `spec/models/**/*_spec.rb`, `spec/supervisor/**/*_spec.rb` |
+    + | `plugins` | `spec/api/plugins/**/*_spec.rb` |
+    + | `dns` | `dns*` |
+    +-| `storage` | `dataset_*`, `environment_dataset_*`, `pool_*`, `snapshot_download`, `export` |
+    ++| `storage` | `dataset_*`, `environment_dataset_*`, `pool_*`, `snapshot_download`, `export`, `storage_freeze` |
+    + | `mail` | `mail*`, `mailbox`, `user_mail_*` |
+    + | `vps` | `vps_*` |
+    + | `platform-infrastructure` | `node_*`, `os_*`, `migration_plan` |
+    +
+      ## tests/ci-selection.yml ##
+     @@ tests/ci-selection.yml: select:
+            - "webui/forms/cluster.forms.php"
+ 5:  9ee0d3cdc =  5:  3731d43a1 storage: prove strict snapshot dispatch in test mode
+ 6:  9780d44c9 =  6:  d08b259dd storage: document integrity evidence and observer limits
+ 7:  75eaff411 =  7:  967b243bb nodectld: observe bounded local storage activity
+ 8:  0a6370773 =  8:  8d23bb61f storage: preserve exact GUIDs in signed inventory
+ 9:  2ea6d33c4 =  9:  af199fa53 storage: sample node and osctld activity around inventory
+10:  8590a38dc = 10:  47b9da9b8 storage: accept capped settled intents in activity reports
+11:  0d2423359 = 11:  2fa04caad Distinguish completed rollbacks in DB capture overlap
+12:  1d49cf42f = 12:  1bf9438ac Keep storage reconciliation replay cold and offline
+13:  cebff3461 = 13:  d6309a306 api: canonicalize captured storage GUID decimals
+14:  7201c64fd = 14:  7d928c950 storage: version offline coverage conservatively
+15:  8c3921101 = 15:  ac2fc0795 Bound storage reconciler capture to current evidence
+16:  af4dd3a26 = 16:  0cac1a138 Restore pooled DB isolation after storage capture
+17:  ece32c604 = 17:  79df5c87c api: avoid fixture IP address collisions
+18:  72f1b5245 = 18:  a72824454 Use the shared transient node exchange for inventory
+19:  0b476b9b7 = 19:  dd3a97afc flake: vpsadminos 8e44a5124 -> 8d05dc3ae
+20:  8b292278f = 20:  9b28d44b6 api: support bounded scheduler intervals and task refresh
+21:  e882caebe = 21:  971bf7f83 api: serialize dataset plan membership and retain shared templates
+22:  d82a6cc1c = 22:  2ffa8e735 nodectld: retire failed RPC channels during recovery
+23:  290f1ef07 = 23:  5dd06eeb5 tests: verify remote restore payloads across persistent queue settings

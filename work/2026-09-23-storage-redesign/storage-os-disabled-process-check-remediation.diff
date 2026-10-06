@@ -1,0 +1,48 @@
+diff --git a/tests/suite/system/switch-to-configuration.nix b/tests/suite/system/switch-to-configuration.nix
+index 7c3ddcc6f62824fa61d2d06a8a17ecaf904a8e4b..afb9aa675c136da15b06ef67341136e2652170dc 100644
+--- a/tests/suite/system/switch-to-configuration.nix
++++ b/tests/suite/system/switch-to-configuration.nix
+@@ -347,25 +347,25 @@ import ../../make-test.nix (
+           disabled_services = lambda do
+             machine.succeeds(<<~CMD)
+               set -e
+-              test ! -e /service/osctld
+-              test ! -L /service/osctld
+-              test ! -e /etc/runit/runsvdir/default/osctld
+-              test ! -L /etc/runit/runsvdir/default/osctld
+-              test ! -S /run/osctl/osctld.sock
+-              test ! -e /run/osctl/shutdown
+-              poweroff_command=$(command -v poweroff)
+-              poweroff_script=$(readlink -f "$poweroff_command")
+-              disabled_script=$(readlink -f ${osctldDisabledSystem}/sw/bin/poweroff)
+-              test "$poweroff_script" = "$disabled_script"
+-              test -f "$poweroff_script"
+-              if pgrep -f '(^|/)[o]sctld([ :]|$)|/[.]osctld-wrapped( |$)' > /dev/null; then
+-                exit 1
+-              fi
+-              test -x /run/current-system/sw/bin/osctl
+-              test -x /run/current-system/sw/bin/osup
+-              test -x /run/current-system/sw/bin/svctl
+-              test -f /run/service/pool-tank/done
++              test ! -e /service/osctld || { echo 'disabled: service-entry-absent'; exit 1; }
++              test ! -L /service/osctld || { echo 'disabled: service-link-absent'; exit 1; }
++              test ! -e /etc/runit/runsvdir/default/osctld || { echo 'disabled: runlevel-entry-absent'; exit 1; }
++              test ! -L /etc/runit/runsvdir/default/osctld || { echo 'disabled: runlevel-link-absent'; exit 1; }
++              test ! -S /run/osctl/osctld.sock || { echo 'disabled: socket-absent'; exit 1; }
++              test ! -e /run/osctl/shutdown || { echo 'disabled: shutdown-marker-absent'; exit 1; }
++              poweroff_command=$(command -v poweroff) || { echo 'disabled: poweroff-command'; exit 1; }
++              poweroff_script=$(readlink -f "$poweroff_command") || { echo 'disabled: poweroff-script'; exit 1; }
++              disabled_script=$(readlink -f ${osctldDisabledSystem}/sw/bin/poweroff) || { echo 'disabled: selected-poweroff-script'; exit 1; }
++              test "$poweroff_script" = "$disabled_script" || { echo 'disabled: poweroff-selection'; exit 1; }
++              test -f "$poweroff_script" || { echo 'disabled: poweroff-script-file'; exit 1; }
++              test -x /run/current-system/sw/bin/osctl || { echo 'disabled: osctl-tool'; exit 1; }
++              test -x /run/current-system/sw/bin/osup || { echo 'disabled: osup-tool'; exit 1; }
++              test -x /run/current-system/sw/bin/svctl || { echo 'disabled: svctl-tool'; exit 1; }
++              test -f /run/service/pool-tank/done || { echo 'disabled: pool-service-done'; exit 1; }
+             CMD
++            # Keep the process check out of argv containing literal osctld paths.
++            status, = machine.execute("pgrep -f '(^|/)[o]sctld([ :]|$)|/[.]osctld-wrapped( |$)' > /dev/null")
++            expect(status).to eq(1), 'disabled: osctld-process-absent'
+           end
+ 
+           _, output = machine.succeeds('${osctldDisabledSystem}/bin/switch-to-configuration switch')

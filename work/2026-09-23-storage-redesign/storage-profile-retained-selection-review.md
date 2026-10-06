@@ -334,3 +334,44 @@ Exact output zwdv/tools n2ki is built, unselected. Current installed s7y4/q49
 still has old maintenance bytes. Final source-equivalent tracking replay,
 publication and comparison precede external idle activation; actual cluster
 recovery/release/preservation/payload gates remain separate.
+
+Final source-equivalent replay onto published coordination-only09da produced
+root3dfda5c6/tree61859531. Patch/message/flake hashes and range-diff are equal;
+default outPath evaluates to the exact built zwdv package (7.492s), and final
+no-build passed (4.083s). Feature publication/readback and exact09da..3df
+comparison are complete. This retains de915 build evidence without a new
+independent review/build/VM claim. Package is unselected; actual recovery and
+new default integration remain pending.
+
+## Fresh-master composition checkpoint, 2026-10-05
+
+User-requested freshness check found root master88a’s nested generic3ed/Codex3d07
+upload update. Root-only replay produced c754/treeaedb on88a: exact upstream
+flake.nix exceptproviderURL77dd, generated four provider leaves, every other
+node/follow equal. Range-diff! reflects the URL hunk’s upstream attrset; message
+and intended selection remain unchanged. Provider77dd/mastere1bb/Admin290f
+remain exact. This mechanical dependency composition is exempt from a new
+substantive review; original ef116da3/direct-step9/native evidence is carried
+only within its original unchanged-source/input scope. No SQL migration or
+new private format is introduced by the root pin.
+
+Fresh waited package batch passed0/254.433s/parity1, existing four checks plus
+default build and all nine actual-source equalities/schema1policy3providers2.
+New3fzi/wg7 is unselected. Prior3df/zwdv package proof is historical; initial
+un-waited0 launch is zero-check incomplete evidence. Publication/readback and
+comparison base88a/headc754 completed, master88a unchanged, CI not awaited.
+Actual activation/recovery/full-cluster/preservation/profile payload and
+retirement gates remain pending. See the current consumer inventory/state;
+this reconciliation is parent evidence, not an independent review rerun.
+
+## Activation and default integration, 2026-10-05
+
+User reported activation and conditionally authorized workspace-default merges,
+keeping storage features separate. Selected3fzi/wg7/source/contract/Codex/four-
+service proof passed, and public same-session status remained stopped/bridge/
+starting_copied. Architect0 found no concrete remaining workspace source gate
+for unchanged reviewed/tested inventories. Provider master77dd and workspace
+masterc754 FF/normalSSH/readbacks completed; captured review/comparison bases
+remain e1bb and88a. All seven held feature heads remain unchanged. No review
+rerun, CI wait, source delta, cluster mutation or new SQL/state-format change
+was introduced by integration. Actual retained recovery/trial remains unproved.
