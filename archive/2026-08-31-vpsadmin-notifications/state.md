@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # 2026-08-31-vpsadmin-notifications
 
@@ -218,3 +218,12 @@ fixes.
 - Observe exhaustive vpsAdmin CI at `f2f7c6a9a104` to completion and inspect
   its logs if it fails.
 - Deployment remains with the user and is intentionally out of scope.
+
+## Archive ref recovery, 2026-10-06
+
+The old `vpsfree-mail-templates` clone lacked its local session branch. Restored
+that ref at `c38e56c945d1fb0df41a26b6c9127368eb592373` after confirming the retained
+origin/session ref, live origin/session ref, and the renamed
+`vpsfree-notification-templates` canonical clone agree exactly. Both registered
+repository obligations and their heads are preserved. No code, origin refs or
+default branches changed.
