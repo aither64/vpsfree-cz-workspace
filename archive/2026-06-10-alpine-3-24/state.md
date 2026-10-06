@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # 2026-06-10-alpine-3-24
 
