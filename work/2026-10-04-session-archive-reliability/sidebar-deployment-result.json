@@ -1,0 +1,163 @@
+{
+  "heads": {
+    "source_head": "4c3ea2eb3b82b572e86f23ec7f9e53a0f1dc6a0c",
+    "workspace_head": "c650b86f83785e2c47ab827e2f0e37f7186e5712",
+    "configuration_head": "676a73c0d7e1570f2e4c4ebfb0cc8bd0b02b8271",
+    "review": "no findings; completed whole-branch 2/2/2 inventory; no migrations",
+    "reviewer_thread": "01a10867-4791-78a1-995f-f81a027350c5",
+    "reviewer_turn": "01a11095-1398-7121-aaa8-052456fa0a2b",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "xhigh"
+  },
+  "build": [
+    {
+      "name": "package",
+      "argv": [
+        "nix",
+        "build",
+        "--no-link",
+        "--print-out-paths",
+        "--print-build-logs",
+        ".#packages.x86_64-linux.default"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/workspace",
+      "started_epoch": 1791279822.9003556,
+      "status": "passed",
+      "pid": 3512874,
+      "exit_code": 0,
+      "elapsed_seconds": 607.1349446773529
+    },
+    {
+      "name": "host",
+      "argv": [
+        "nix",
+        "develop",
+        "--command",
+        "confctl",
+        "build",
+        "--yes",
+        "cz.vpsfree/machines/aitherdev"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/vpsfree-cz-configuration",
+      "started_epoch": 1791280430.0363262,
+      "status": "passed",
+      "pid": 3847612,
+      "exit_code": 0,
+      "elapsed_seconds": 96.42832899093628
+    }
+  ],
+  "deployment": [
+    {
+      "name": "application",
+      "argv": [
+        "/home/aither/bin/workspace-host",
+        "switch",
+        "--source",
+        "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/workspace"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz",
+      "started_epoch": 1791283270.6897287,
+      "status": "passed",
+      "pid": 418256,
+      "exit_code": 0,
+      "elapsed_seconds": 80.14000606536865
+    },
+    {
+      "name": "host-dry-activate",
+      "argv": [
+        "nix",
+        "develop",
+        "--command",
+        "confctl",
+        "deploy",
+        "--yes",
+        "--generation",
+        "2026-10-06--11-54-16",
+        "cz.vpsfree/machines/aitherdev",
+        "dry-activate"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/vpsfree-cz-configuration",
+      "started_epoch": 1791283350.8307645,
+      "status": "passed",
+      "pid": 432207,
+      "exit_code": 0,
+      "elapsed_seconds": 17.307111978530884
+    },
+    {
+      "name": "host-switch",
+      "argv": [
+        "nix",
+        "develop",
+        "--command",
+        "confctl",
+        "deploy",
+        "--yes",
+        "--generation",
+        "2026-10-06--11-54-16",
+        "cz.vpsfree/machines/aitherdev",
+        "switch"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/vpsfree-cz-configuration",
+      "started_epoch": 1791283368.138979,
+      "status": "passed",
+      "pid": 433535,
+      "exit_code": 0,
+      "elapsed_seconds": 26.21980333328247
+    }
+  ],
+  "live": {
+    "profile": "/nix/store/h73nvgmdlwq2ccsnr2499qdlxnj9qrdx-dev-workspace-0.2.0",
+    "system": "/nix/store/98s4gm1ifnvljbap8hgd6vvg7bb885an-nixos-system-aitherdev-26.05.20261004.0d9e9b8",
+    "generation": "2026-10-06--11-54-16",
+    "services": {
+      "workspace-codex@vpsfree-cz.service": "active",
+      "workspace-portal@vpsfree-cz.service": "active",
+      "workspace-router.service": "active",
+      "workspace-tmux@vpsfree-cz.service": "active",
+      "workspace-auto-archive@vpsfree-cz.timer": "active"
+    },
+    "requests": [
+      {
+        "path": "/",
+        "status": 200,
+        "seconds": 0.0204,
+        "menu": true,
+        "automatic_link_count": 1,
+        "redundant_workspace_heading": false,
+        "eligible_rule_text": false,
+        "app_v25": true,
+        "style_v5": true,
+        "selected_archived_cards": 141,
+        "selected_active_cards": 0,
+        "older_active_cards": [
+          "2026-06-15-vpsadmin-events",
+          "2026-07-24-ct-start-hang"
+        ]
+      },
+      {
+        "path": "/automatic-archival",
+        "status": 200,
+        "seconds": 0.001
+      },
+      {
+        "path": "/2026-10-04-session-archive-reliability/",
+        "status": 200,
+        "seconds": 0.508
+      }
+    ]
+  },
+  "feature_merges_held": true,
+  "one_time_helpers_removed": {
+    "removed": [
+      "archive-old-sessions.sh",
+      "archive-old-sessions-parallel.sh",
+      "archive-native-candidate.rb",
+      "remove-empty-legacy-temp.py",
+      "retry-empty-temp-archive.sh",
+      "retry-threadless-archives.sh"
+    ],
+    "reason": "all 141 native archives and matching deployment completed; no old archive recovery depends on these helpers",
+    "preserved_work_retained": true,
+    "logs_and_selection_retained": true
+  }
+}
