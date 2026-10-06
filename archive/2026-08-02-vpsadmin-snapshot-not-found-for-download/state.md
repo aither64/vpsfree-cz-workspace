@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # 2026-08-02-vpsadmin-snapshot-not-found-for-download
 
