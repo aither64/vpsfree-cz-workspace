@@ -1,0 +1,106 @@
+{
+  "package": "/nix/store/6lxis4gfn59m2m2mqjjc5wm4d5wqsqh7-dev-workspace-0.2.0",
+  "system": "/nix/store/5k73x45rr0lk08x06nvag40xfbj96c8z-nixos-system-aitherdev-26.05.20261004.0d9e9b8",
+  "host_generation": "2026-10-06--02-43-36",
+  "runtime_head": "d5069a7b93a7282add64ad77f83eff7f511aa2d1",
+  "units": {
+    "workspace-portal@vpsfree-cz.service": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled",
+      "MainPID": "1715853"
+    },
+    "workspace-codex@vpsfree-cz.service": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled",
+      "MainPID": "3220839"
+    },
+    "workspace-tmux@vpsfree-cz.service": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled",
+      "MainPID": "435397"
+    },
+    "workspace-auto-archive@vpsfree-cz.timer": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    }
+  },
+  "live_http": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "elapsed_ms": 1.8860958516597748,
+      "bytes": 12
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "elapsed_ms": 269.1581714898348,
+      "bytes": 138866
+    },
+    {
+      "path": "/automatic-archival",
+      "status": 200,
+      "elapsed_ms": 2.012653276324272,
+      "bytes": 814
+    }
+  ],
+  "steps": [
+    {
+      "name": "application",
+      "argv": [
+        "/home/aither/bin/workspace-host",
+        "switch",
+        "--source",
+        "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/workspace"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz",
+      "started_epoch": 1791247568.8818843,
+      "status": "passed",
+      "pid": 1708419,
+      "exit_code": 0,
+      "elapsed_seconds": 79.8335108757019
+    },
+    {
+      "name": "host-dry-activate",
+      "argv": [
+        "nix",
+        "develop",
+        "--command",
+        "confctl",
+        "deploy",
+        "--yes",
+        "--generation",
+        "2026-10-06--02-43-36",
+        "cz.vpsfree/machines/aitherdev",
+        "dry-activate"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/vpsfree-cz-configuration",
+      "started_epoch": 1791247648.7165744,
+      "status": "passed",
+      "pid": 1722544,
+      "exit_code": 0,
+      "elapsed_seconds": 17.988682746887207
+    },
+    {
+      "name": "host-switch",
+      "argv": [
+        "nix",
+        "develop",
+        "--command",
+        "confctl",
+        "deploy",
+        "--yes",
+        "--generation",
+        "2026-10-06--02-43-36",
+        "cz.vpsfree/machines/aitherdev",
+        "switch"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/vpsfree-cz-configuration",
+      "started_epoch": 1791247666.7063181,
+      "status": "passed",
+      "pid": 1723682,
+      "exit_code": 0,
+      "elapsed_seconds": 25.68307662010193
+    }
+  ]
+}

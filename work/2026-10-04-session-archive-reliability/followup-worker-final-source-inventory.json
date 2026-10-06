@@ -1,0 +1,44 @@
+{
+  "repositories": [
+    {
+      "repository": "dev-workspace",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/dev-workspace",
+      "base": "e05915986227af41ececea55e498dc07ea1bc219",
+      "head": "d5069a7b93a7282add64ad77f83eff7f511aa2d1",
+      "commits": [
+        "0c2d1e644aef1b2fa48335e181996f200abc553a portal: move automatic archival to its own page",
+        "04146ab9fdf29e13da943f3b91ca464cb67c5a96 lifecycle: keep progress reads responsive during archival",
+        "43fc46e89c6ccafec16002e960c8fb11ff9f58ba archive: prove threadless scope without scanning turn histories",
+        "d5069a7b93a7282add64ad77f83eff7f511aa2d1 auto-archive: pass the selected tmux socket to session observation"
+      ],
+      "diff_stat": " docs/session-archive-recovery.md                   |  38 ++-\n docs/workspace-portal.md                           |  24 +-\n libexec/dev-session                                | 180 ++++++------\n libexec/workspace-auto-archive.rb                  |  24 +-\n portal/internal/web/auto_archive.go                |   6 +-\n portal/internal/web/auto_archive_test.go           |  27 ++\n portal/internal/web/browser_contract_test.cjs      |  20 ++\n portal/internal/web/lifecycle_target.go            |  17 +-\n portal/internal/web/lifecycle_target_test.go       |   6 +\n portal/internal/web/operation_state.go             | 320 +++++++++++++++++----\n portal/internal/web/operation_state_test.go        | 231 +++++++++++++++\n portal/internal/web/presentation_browser_test.cjs  |  99 +++++++\n portal/internal/web/server.go                      | 295 ++++++++++---------\n portal/internal/web/server_test.go                 | 147 ++++++----\n portal/internal/web/static/app.js                  | 160 ++++++++---\n .../internal/web/templates/automatic-archival.html |  24 ++\n portal/internal/web/templates/index.html           |   8 +-\n portal/internal/web/templates/session.html         |   2 +-\n portal/internal/workspacecodex/archive_proof.go    |  31 +-\n portal/internal/workspacecodex/discovery.go        |   6 +-\n portal/internal/workspacecodex/discovery_test.go   |  33 ++-\n portal/internal/workspacecodex/saved_discovery.go  | 296 +++++++++++++++++++\n .../workspacecodex/saved_discovery_test.go         | 277 ++++++++++++++++++\n test/archive_acceptance_browser.cjs                |   2 +-\n test/creation_browser.cjs                          |   4 +-\n test/dev_session/automatic_archive_test.rb         |  68 +++++\n test/dev_session/lifecycle_commands_test.rb        |  37 +++\n test/dev_session/tracking_test.rb                  |  83 ++++++\n test/workspace_host/commands_and_locks_test.rb     |  63 ++++\n 29 files changed, 2125 insertions(+), 403 deletions(-)\n",
+      "clean": true
+    },
+    {
+      "repository": "workspace",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/workspace",
+      "base": "ff9d1281a89632c9e1d8af38a9285c45125ac9bd",
+      "head": "402112ed95193ec8bcc8e5ce141dd26c31da6f2a",
+      "commits": [
+        "fa8541990e6174841ffd004cbc4d0577170d44e7 workspace: repair legacy metadata without copying artifact payloads",
+        "402112ed95193ec8bcc8e5ce141dd26c31da6f2a workspace: select the responsive archival runtime"
+      ],
+      "diff_stat": " bin/repair-legacy-sessions-2026-10-04              | 267 +++++++++++++++++----\n .../repair-legacy-sessions-2026-10-04.md           |  62 ++++-\n flake.lock                                         |   8 +-\n flake.nix                                          |   2 +-\n test/repair_legacy_sessions_test.rb                | 239 +++++++++++++++++-\n 5 files changed, 519 insertions(+), 59 deletions(-)\n",
+      "clean": true
+    },
+    {
+      "repository": "vpsfree-cz-configuration",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-04-session-archive-reliability/vpsfree-cz-configuration",
+      "base": "e52b1b14224599c2ffa80650d7906861a5a730ed",
+      "head": "44ed89bd4edf6423672a670e7697dc15a09f329b",
+      "commits": [
+        "44ed89bd4edf6423672a670e7697dc15a09f329b inputs: set devWorkspace to d5069a7b"
+      ],
+      "diff_stat": " flake.lock | 6 +++---\n 1 file changed, 3 insertions(+), 3 deletions(-)\n",
+      "clean": true
+    }
+  ],
+  "schema_migrations": [],
+  "migration_conclusion": "No schema migrations. Dated source-only repair was externally executed on147 records using R43; its existing recovery schema1 and ordinary manifest/journal formats remain unchanged. No installed migration subsystem.",
+  "history": "R has4 logical commits; R43 deployed and used by actual repair, so new coordinate fix remains distinct. W rebase equivalent and retains source-only already-consumed tool; second pin amended. C has one normally generated consolidated pin with exact generated message preserved. No obsolete unapplied pin commits."
+}

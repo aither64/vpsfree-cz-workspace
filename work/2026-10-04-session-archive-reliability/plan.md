@@ -1,18 +1,40 @@
 # 2026-10-04-session-archive-reliability
 
+## Accepted simplification, 2026-10-05
+
+The user approved the one-time repair approach with “ok, proceed.” Remove the
+installed normalizer, private migration reservations/provenance and their
+portal/package/status integration. Keep the ordinary archive fixes, support
+positively verified creation-less records without migration receipts, and stop
+revival/restart from creating incomplete scope. Repair active and retained archived
+inputs through a dated workspace-only maintenance tool. Restore/import guidance
+can reuse that source artifact. The tool must produce a concrete reviewed
+inventory before any real repair/archive execution. Deployment and merges remain
+on hold. No application changes implement this revision yet.
+
+This replaces the installed-migrator portion of the earlier plan. Prior reviews,
+checks and candidate provenance remain evidence for their recorded source only;
+the revised deliverable needs final independent review and affected checks.
+The architect is reconciling [design.md](design.md) from the accepted assessment
+[design-migration-simplification.md](design-migration-simplification.md).
+
 ## Goal
 
 Implement the accepted archival reliability plan: completed clean sessions must
 archive through the normal command or browser confirmation without worktree
 repairs, team-retirement commands, environment exports or page reloads. Include a
-supported legacy migration and workspace-wide automatic archive diagnostics.
+dated repair tool outside the installed application and workspace-wide automatic
+archive diagnostics.
 
 ## Affected repositories
 
 - dev-workspace: archive inventory and recovery, team ordering, host dispatch,
-  browser identity, automatic activity/retention, diagnostics and legacy migration.
-- workspace: lifecycle guidance and application package selection.
-- vpsfree-dev-workspace: downstream runtime pin if needed for the deployable bundle.
+  browser identity, automatic activity/retention, diagnostics and retained readiness.
+- workspace: dated repair utility, lifecycle guidance and application package selection.
+- vpsfree-cz-configuration: aitherdev host deployment and any required host-module
+  channel pin; the application remains in its user profile.
+- vpsfree-dev-workspace: unchanged registered checkout; preserve the extension
+  revision already selected by workspace through a workspace-owned runtime override.
 - codex-web only if the architect proves a public client addition is necessary;
   retain the current Codex 0.160.0 protocol and dependency direction.
 
@@ -33,8 +55,16 @@ supported legacy migration and workspace-wide automatic archive diagnostics.
   inactivity. Administrative settings, polling and restarts must not restart it.
 - Preserve elapsed grace for unchanged merge/cleanup failures; unknown activity
   continues to defer and require a fresh trustworthy observation.
-- Add workspace-wide CLI/portal archive status and a preview/apply batch legacy
-  migrator. Recover branch registrations even when worktrees have been removed.
+- Keep workspace-wide CLI/portal archive status. Remove migration-only paths and
+  receipt dependence from the installed application.
+- Add one dated report/apply maintenance tool that repairs explicit ordinary
+  metadata, including obligations whose worktrees are gone. Preserve prose,
+  real native identities, holds, terminal provenance and honest unknown bases.
+  Archive approved eligible rows through the existing command and its checks.
+- Make absent creation evidence ordinary supported schema-1 semantics under exact
+  native proof; present pending/malformed evidence must never use that path.
+- Refuse new unresolved manifestless revival/restart before mutation. Keep existing
+  journal recovery and document offline repair of restored old backups.
 
 ## Decisions
 
@@ -60,18 +90,44 @@ recovery tests, including legacy receipts and package-generation transitions.
 Old helpers may refuse new auxiliary layouts but must not destroy state. The
 workspace uses forward-only user-profile package switches; prepare supported
 recovery without deleting journals. No database/API daemon/NixOS fleet change or
-coordinated node update is expected. Update the deployable extension/workspace
-pins only after verified runtime commits. Implementation is authorized; default
-branch integration, legacy batch application and archiving other sessions are
-not authorized by that instruction.
+coordinated node update is expected. The current workspace default includes the
+runtime override and has advanced its extension to 77dd0d0447f48c8d8e667257cef2276738d053a0.
+Refresh the owned workspace branch onto current shared master and retain that
+already-merged extension while selecting the revised runtime. Configuration's
+host-module channel stays managed by confctl. Do not downgrade newer live/default
+composition or integrate a foreign feature.
+
+Ordinary manifests, journals, sidecars and semantic observations keep their
+formats. The maintenance recovery file belongs to the dated source tool and is
+not an installed readiness requirement. Before eventual rollout, inspect actual
+private migration state; unexpected in-flight/dependent records require their
+exact owning executor offline. Quiesce cooperating and external writers during
+repair, preserve native read-only proof, and do not reopen workers onto partial
+unresolved shells. Older helpers may reject repaired creation-less/unknown-base
+records; recovery remains a normal forward package switch. Restored old inputs
+must run through the dated tool before ordinary use. Preserve separate supported
+archive/browser/observation compatibility adapters with their input inventories
+and removal criteria.
 
 ## Documentation
 
 Runtime behavior and removal contracts belong in dev-workspace project docs;
-repeatable migration/recovery instructions belong in its operations guidance.
+ordinary recovery belongs in its operations guidance. The dated tool owns its
+maintenance-window and restoration instructions in this workspace.
 Workspace lifecycle rules must match the final contract. Record exact rollout
 revisions and verification here. Apply the user-facing writing skill directly
 before final documentation/interface commits.
+
+Subsequent authorization: the user explicitly directed deployment on aitherdev
+using vpsfree-cz-configuration, verification, then integration of the affected
+default branches. Proceed through the existing review/check gates and preserve
+the deployment-before-integration order. Actual legacy batch application and
+archiving other sessions remain separate, unapproved actions.
+
+Latest direction: prepare everything and wait for approval before deployment.
+The live aitherdev rollout, user-profile switch and subsequent integrations are
+held. Complete implementation, independent review, checks and an exact candidate
+and configuration rollout packet first; no real legacy batch/archive is authorized.
 
 ## Testing plan
 
@@ -80,7 +136,8 @@ heads, dirty/foreign state, interrupted removal, partial team retirement,
 tracking_committed retry, helper environment, stable browser identity versus
 replaced sessions, semantic activity versus settings changes, worker restarts,
 legacy records with missing worktrees, ambiguous mappings, tracking-only sessions,
-and repeatable migration. Inventory final branch history and migration provenance
+and dated repair recovery/drift. Creation-less start/revive/interaction and
+raw manifestless producer refusal need focused coverage. Inventory final branch history and migration provenance
 and run mandatory independent review after commits/quick checks, before long
 packaged/live tests. Delegate long or uncertain verification to fresh Luna/low
 watchers from the retained catalog. Keep unrelated state and all branch refs.
