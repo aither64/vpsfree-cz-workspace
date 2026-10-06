@@ -1,0 +1,344 @@
+SHELL: 0
+
+START: 2026-06-10 11:51:05 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-10 11:51:05 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:51:05 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-10 11:51:05 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:51:05 +0200
+COMMAND: ping -c 1 192.168.10.11
+END: 2026-06-10 11:51:05 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.10.11 (192.168.10.11) 56(84) bytes of data.
+64 bytes from 192.168.10.11: icmp_seq=1 ttl=64 time=0.382 ms
+
+--- 192.168.10.11 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.382/0.382/0.382/0.000 ms
+---
+
+START: 2026-06-10 11:51:05 +0200
+COMMAND: vpsadminctl --raw cluster public_stats
+END: 2026-06-10 11:51:06 +0200
+ELAPSED: 0.84s
+STATUS: 1
+OUTPUT:
+/nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:249:in 'RestClient::AbstractResponse#exception_with_response': 503 Service Unavailable (RestClient::ServiceUnavailable)
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:129:in 'RestClient::AbstractResponse#return!'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:836:in 'RestClient::Request#process_result'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:743:in 'block in RestClient::Request#transmit'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/net/http.rb:1626:in 'Net::HTTP#start'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:727:in 'RestClient::Request#transmit'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:163:in 'RestClient::Request#execute'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:63:in 'RestClient::Request.execute'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/restclient_ext/resource.rb:5:in 'RestClient::Resource#get_options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:195:in 'HaveAPI::Client::Communicator#description_for'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:72:in 'HaveAPI::Client::Communicator#describe_api'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:318:in 'HaveAPI::CLI::Cli#options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:35:in 'HaveAPI::CLI::Cli#initialize'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'Class#new'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'HaveAPI::CLI::Cli.run'
+	from /nix/store/j9r9q48mnh754bwyz722afrqykkhxvpl-vpsadmin-client-dev/client/bin/vpsadminctl:4:in '<main>'
+---
+
+START: 2026-06-10 11:51:07 +0200
+COMMAND: vpsadminctl --raw cluster public_stats
+END: 2026-06-10 11:51:08 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+/nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:249:in 'RestClient::AbstractResponse#exception_with_response': 503 Service Unavailable (RestClient::ServiceUnavailable)
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:129:in 'RestClient::AbstractResponse#return!'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:836:in 'RestClient::Request#process_result'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:743:in 'block in RestClient::Request#transmit'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/net/http.rb:1626:in 'Net::HTTP#start'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:727:in 'RestClient::Request#transmit'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:163:in 'RestClient::Request#execute'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:63:in 'RestClient::Request.execute'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/restclient_ext/resource.rb:5:in 'RestClient::Resource#get_options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:195:in 'HaveAPI::Client::Communicator#description_for'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:72:in 'HaveAPI::Client::Communicator#describe_api'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:318:in 'HaveAPI::CLI::Cli#options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:35:in 'HaveAPI::CLI::Cli#initialize'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'Class#new'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'HaveAPI::CLI::Cli.run'
+	from /nix/store/j9r9q48mnh754bwyz722afrqykkhxvpl-vpsadmin-client-dev/client/bin/vpsadminctl:4:in '<main>'
+---
+
+START: 2026-06-10 11:51:09 +0200
+COMMAND: vpsadminctl --raw cluster public_stats
+END: 2026-06-10 11:51:09 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+/nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:249:in 'RestClient::AbstractResponse#exception_with_response': 503 Service Unavailable (RestClient::ServiceUnavailable)
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:129:in 'RestClient::AbstractResponse#return!'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:836:in 'RestClient::Request#process_result'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:743:in 'block in RestClient::Request#transmit'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/net/http.rb:1626:in 'Net::HTTP#start'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:727:in 'RestClient::Request#transmit'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:163:in 'RestClient::Request#execute'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:63:in 'RestClient::Request.execute'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/restclient_ext/resource.rb:5:in 'RestClient::Resource#get_options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:195:in 'HaveAPI::Client::Communicator#description_for'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:72:in 'HaveAPI::Client::Communicator#describe_api'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:318:in 'HaveAPI::CLI::Cli#options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:35:in 'HaveAPI::CLI::Cli#initialize'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'Class#new'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'HaveAPI::CLI::Cli.run'
+	from /nix/store/j9r9q48mnh754bwyz722afrqykkhxvpl-vpsadmin-client-dev/client/bin/vpsadminctl:4:in '<main>'
+---
+
+START: 2026-06-10 11:51:10 +0200
+COMMAND: vpsadminctl --raw cluster public_stats
+END: 2026-06-10 11:51:11 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+/nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:249:in 'RestClient::AbstractResponse#exception_with_response': 503 Service Unavailable (RestClient::ServiceUnavailable)
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:129:in 'RestClient::AbstractResponse#return!'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:836:in 'RestClient::Request#process_result'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:743:in 'block in RestClient::Request#transmit'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/net/http.rb:1626:in 'Net::HTTP#start'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:727:in 'RestClient::Request#transmit'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:163:in 'RestClient::Request#execute'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:63:in 'RestClient::Request.execute'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/restclient_ext/resource.rb:5:in 'RestClient::Resource#get_options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:195:in 'HaveAPI::Client::Communicator#description_for'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:72:in 'HaveAPI::Client::Communicator#describe_api'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:318:in 'HaveAPI::CLI::Cli#options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:35:in 'HaveAPI::CLI::Cli#initialize'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'Class#new'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'HaveAPI::CLI::Cli.run'
+	from /nix/store/j9r9q48mnh754bwyz722afrqykkhxvpl-vpsadmin-client-dev/client/bin/vpsadminctl:4:in '<main>'
+---
+
+START: 2026-06-10 11:51:12 +0200
+COMMAND: vpsadminctl --raw cluster public_stats
+END: 2026-06-10 11:51:12 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+/nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:249:in 'RestClient::AbstractResponse#exception_with_response': 503 Service Unavailable (RestClient::ServiceUnavailable)
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/abstract_response.rb:129:in 'RestClient::AbstractResponse#return!'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:836:in 'RestClient::Request#process_result'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:743:in 'block in RestClient::Request#transmit'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/net/http.rb:1626:in 'Net::HTTP#start'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:727:in 'RestClient::Request#transmit'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:163:in 'RestClient::Request#execute'
+	from /nix/store/2yr1fap7misak6izspw6z453vibm7a22-ruby3.4-rest-client-2.1.0/lib/ruby/gems/3.4.0/gems/rest-client-2.1.0/lib/restclient/request.rb:63:in 'RestClient::Request.execute'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/restclient_ext/resource.rb:5:in 'RestClient::Resource#get_options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:195:in 'HaveAPI::Client::Communicator#description_for'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/client/communicator.rb:72:in 'HaveAPI::Client::Communicator#describe_api'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:318:in 'HaveAPI::CLI::Cli#options'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:35:in 'HaveAPI::CLI::Cli#initialize'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'Class#new'
+	from /nix/store/cc63hpc0mz71y0bjmb4iidq8yf56r8z3-ruby3.4-haveapi-client-0.28.4/lib/ruby/gems/3.4.0/gems/haveapi-client-0.28.4/lib/haveapi/cli/cli.rb:14:in 'HaveAPI::CLI::Cli.run'
+	from /nix/store/j9r9q48mnh754bwyz722afrqykkhxvpl-vpsadmin-client-dev/client/bin/vpsadminctl:4:in '<main>'
+---
+
+START: 2026-06-10 11:51:13 +0200
+COMMAND: vpsadminctl --raw cluster public_stats
+END: 2026-06-10 11:51:16 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+{
+  "cluster": {
+    "user_count": 1,
+    "vps_count": 0,
+    "ipv4_left": 0
+  },
+  "_meta": {}
+}
+---
+
+START: 2026-06-10 11:51:16 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-rabbitmq-setup.service
+END: 2026-06-10 11:51:16 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:51:16 +0200
+COMMAND: rabbitmqcfg user --vhost vpsadmin_test --create --perms --execute node vpsadmin-node.lab:testRabbitmqNodePassword
+END: 2026-06-10 11:51:17 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+rabbitmqctl add_user vpsadmin-node.lab testRabbitmqNodePassword
+Adding user "vpsadmin-node.lab" ...
+Done. Don't forget to grant the user permissions to some virtual hosts! See 'rabbitmqctl help set_permissions' to learn more.
+
+rabbitmqctl set_permissions \
+  -p vpsadmin_test \
+  vpsadmin-node.lab \
+  "^(amq\.gen.*|node:vpsadmin\-node\.lab|console:vpsadmin\-node\.lab:.+)$" \
+  "^(amq\.gen.*|node:vpsadmin\-node\.lab|console:vpsadmin\-node\.lab:.+)$" \
+  "^(amq\.gen.*|node:vpsadmin\-node\.lab|node:vpsadmin\-node\.lab:.+|console:vpsadmin\-node\.lab:input)$"
+Setting permissions for user "vpsadmin-node.lab" in vhost "vpsadmin_test" ...
+
+---
+
+START: 2026-06-10 11:51:17 +0200
+COMMAND: vpsadminctl --raw --no-block node create -- --id 101 --name vpsadmin-node --type node --hypervisor-type vpsadminos --location 1 --ip-addr 192.168.10.11 --cpus 4 --total-memory 8192 --total-swap 0 --max-vps 30
+END: 2026-06-10 11:51:59 +0200
+ELAPSED: 41.43s
+STATUS: 0
+OUTPUT:
+Run
+  /nix/store/j9r9q48mnh754bwyz722afrqykkhxvpl-vpsadmin-client-dev/client/bin/vpsadminctl action_state show 1
+or
+  /nix/store/j9r9q48mnh754bwyz722afrqykkhxvpl-vpsadmin-client-dev/client/bin/vpsadminctl action_state wait 1
+to check the action's progress.
+{
+  "node": {},
+  "_meta": {
+    "action_state_id": 1
+  }
+}
+
+---
+
+START: 2026-06-10 11:51:59 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ c.transaction_chain_id\''
+'\'FROM\\\ transaction_chain_concerns\\\ c\''
+'\'INNER\\\ JOIN\\\ transaction_chains\\\ ch\\\ ON\\\ ch.id\\\ \\\=\\\ c.transaction_chain_id\''
+'\'WHERE\\\ c.class_name\\\ \\\=\\\ \\\'Node\\\'\''
+'\'\\\ \\\ AND\\\ c.row_id\\\ \\\=\\\ 101\''
+'\'\\\ \\\ AND\\\ ch.name\\\ \\\=\\\ \\\'register\\\'\''
+'\'ORDER\\\ BY\\\ c.transaction_chain_id\\\ DESC\''
+'\'LIMIT\\\ 1\''
+'\'
+END: 2026-06-10 11:51:59 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-10 11:53:59 +0200
+COMMAND: systemctl restart vpsadmin-supervisor.service
+END: 2026-06-10 11:54:02 +0200
+ELAPSED: 3.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:54:02 +0200
+COMMAND: systemctl is-active --quiet vpsadmin-supervisor.service
+END: 2026-06-10 11:54:02 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:55:14 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ state\\\ FROM\\\ transaction_chains\\\ WHERE\\\ id\\\ \\\=\\\ 1
+END: 2026-06-10 11:55:14 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-10 11:55:15 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ state\\\ FROM\\\ transaction_chains\\\ WHERE\\\ id\\\ \\\=\\\ 1
+END: 2026-06-10 11:55:15 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-10 11:55:16 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ state\\\ FROM\\\ transaction_chains\\\ WHERE\\\ id\\\ \\\=\\\ 1
+END: 2026-06-10 11:55:16 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-10 11:55:17 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ state\\\ FROM\\\ transaction_chains\\\ WHERE\\\ id\\\ \\\=\\\ 1
+END: 2026-06-10 11:55:17 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+2
+---
+
+START: 2026-06-10 11:55:17 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ JSON_OBJECT\\\(\''
+'\'\\\ \\\ \\\'id\\\',\\\ id,\''
+'\'\\\ \\\ \\\'name\\\',\\\ name,\''
+'\'\\\ \\\ \\\'active\\\',\\\ active,\''
+'\'\\\ \\\ \\\'role\\\',\\\ role,\''
+'\'\\\ \\\ \\\'hypervisor_type\\\',\\\ hypervisor_type,\''
+'\'\\\ \\\ \\\'ip_addr\\\',\\\ ip_addr\''
+'\'\\\)\''
+'\'FROM\\\ nodes\''
+'\'WHERE\\\ id\\\ \\\=\\\ 101\''
+'\'LIMIT\\\ 1\''
+'\'
+END: 2026-06-10 11:55:18 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+{"id": 101, "name": "vpsadmin-node", "active": 1, "role": 0, "hypervisor_type": 1, "ip_addr": "192.168.10.11"}
+---
+
+START: 2026-06-10 11:55:18 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ JSON_OBJECT\\\(\\\'count\\\',\\\ COUNT\\\(\\\*\\\)\\\)\''
+'\'FROM\\\ port_reservations\''
+'\'WHERE\\\ node_id\\\ \\\=\\\ 101\''
+'\'
+END: 2026-06-10 11:55:18 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+{"count": 10000}
+---
+
+START: 2026-06-10 11:55:18 +0200
+COMMAND: bash -lc mariadb\ --batch\ --raw\ --skip-column-names\ --user\=api\ --password\=\"\$\(cat\ /etc/vpsadmin-test/mariadb-api-password\)\"\ vpsadmin\ -e\ SELECT\\\ COUNT\\\(\\\*\\\)\''
+'\'FROM\\\ resource_locks\''
+'\'WHERE\\\ locked_by_type\\\ \\\=\\\ \\\'TransactionChain\\\'\''
+'\'\\\ \\\ AND\\\ locked_by_id\\\ \\\=\\\ 1\''
+'\'
+END: 2026-06-10 11:55:18 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-10 11:55:24 +0200
+COMMAND: poweroff
+END: 2026-06-10 11:55:24 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+

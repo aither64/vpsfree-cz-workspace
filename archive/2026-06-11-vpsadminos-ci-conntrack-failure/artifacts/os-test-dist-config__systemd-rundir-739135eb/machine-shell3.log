@@ -1,0 +1,610 @@
+SHELL: 3
+
+START: 2026-06-11 19:57:35 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-11 19:57:35 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:35 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-11 19:57:35 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:37 +0200
+ELAPSED: 2.48s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:39 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:41 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:42 +0200
+ELAPSED: 0.77s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:44 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:46 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:47 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:49 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:51 +0200
+ELAPSED: 0.68s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-11 19:57:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:53 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:57:53 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:57:53 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:57:53 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:57:53 +0200
+COMMAND: osctl ct new --distribution rocky --version 10 testct-1951
+END: 2026-06-11 19:58:29 +0200
+ELAPSED: 35.83s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 19:58:29 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/98104dfc-nix--store--dw0giz3n8plzcv9bvgdfrnh4dwbmc9wb-dist-config-systemd-rundir-script.sh" "/tmp/testct-1951-test-script.sh"
+END: 2026-06-11 19:58:29 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:58:29 +0200
+COMMAND: osctl ct runscript -r testct-1951 /tmp/testct-1951-test-script.sh
+END: 2026-06-11 19:58:32 +0200
+ELAPSED: 3.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:58:32 +0200
+COMMAND: osctl ct del -f --prune testct-1951
+END: 2026-06-11 19:58:34 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-1951
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 19:58:34 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 19:59:56 +0200
+ELAPSED: 82.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:59:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:59:56 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:59:56 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:59:57 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:59:57 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:59:57 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-musl-systemd testct-bfaf
+END: 2026-06-11 20:01:51 +0200
+ELAPSED: 114.85s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:01:51 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/9a0118fc-nix--store--dw0giz3n8plzcv9bvgdfrnh4dwbmc9wb-dist-config-systemd-rundir-script.sh" "/tmp/testct-bfaf-test-script.sh"
+END: 2026-06-11 20:01:51 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:01:51 +0200
+COMMAND: osctl ct runscript -r testct-bfaf /tmp/testct-bfaf-test-script.sh
+END: 2026-06-11 20:01:54 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:01:54 +0200
+COMMAND: osctl ct del -f --prune testct-bfaf
+END: 2026-06-11 20:01:55 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-bfaf
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 20:01:55 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 20:02:26 +0200
+ELAPSED: 31.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:02:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 20:02:27 +0200
+ELAPSED: 0.81s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 20:02:27 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 20:02:27 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 18:02:27 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 20:02:27 +0200
+COMMAND: osctl ct new --distribution arch --version latest testct-3373
+END: 2026-06-11 20:02:42 +0200
+ELAPSED: 15.0s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:02:42 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/0e1e2775-nix--store--dw0giz3n8plzcv9bvgdfrnh4dwbmc9wb-dist-config-systemd-rundir-script.sh" "/tmp/testct-3373-test-script.sh"
+END: 2026-06-11 20:02:42 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:02:42 +0200
+COMMAND: osctl ct runscript -r testct-3373 /tmp/testct-3373-test-script.sh
+END: 2026-06-11 20:02:45 +0200
+ELAPSED: 2.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:02:45 +0200
+COMMAND: osctl ct del -f --prune testct-3373
+END: 2026-06-11 20:02:46 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-3373
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 20:02:46 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 20:03:17 +0200
+ELAPSED: 31.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:03:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 20:03:17 +0200
+ELAPSED: 0.73s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 20:03:17 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 20:03:18 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 18:03:18 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 20:03:18 +0200
+COMMAND: osctl ct new --distribution nixos --version unstable testct-61c9
+END: 2026-06-11 20:03:51 +0200
+ELAPSED: 33.84s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:03:51 +0200
+COMMAND: osctl ct unset start-menu testct-61c9
+END: 2026-06-11 20:03:52 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:03:52 +0200
+COMMAND: osctl ct start testct-61c9
+END: 2026-06-11 20:03:54 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:03:54 +0200
+COMMAND: osctl ct exec testct-61c9 systemctl status
+END: 2026-06-11 20:03:56 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+● nixos
+    State: initializing
+    Units: 156 loaded (incl. loaded aliases)
+     Jobs: 48 queued
+   Failed: 0 units
+    Since: Thu 2026-06-11 20:03:55 CEST; 789ms ago
+  systemd: 260.1
+  Tainted: var-run-bad
+   CGroup: /
+           ├─.lxc
+           │ └─172 systemctl status
+           ├─init.scope
+           │ └─1 /run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0
+           └─system.slice
+             ├─firewall.service
+             │ ├─100 /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash -e /nix/store/89khcgx9jaw6pz9rvgym40yw2pdhzj0j-firewall-start/bin/firewall-start
+             │ └─181 ip6tables -w -w -t nat -X nixos-nat-pre
+             ├─systemd-journald.service
+             │ └─99 /nix/store/a8avqfxd649rfgfpqldja6v38ljb8fj5-systemd-260.1/lib/systemd/systemd-journald
+             └─systemd-udevd.service
+               └─udev
+                 └─133 /nix/store/a8avqfxd649rfgfpqldja6v38ljb8fj5-systemd-260.1/lib/systemd/systemd-udevd
+---
+
+START: 2026-06-11 20:03:56 +0200
+COMMAND: osctl ct stop testct-61c9
+END: 2026-06-11 20:03:59 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-06-11 20:03:59 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/aa38c1d8-nix--store--dw0giz3n8plzcv9bvgdfrnh4dwbmc9wb-dist-config-systemd-rundir-script.sh" "/tmp/testct-61c9-test-script.sh"
+END: 2026-06-11 20:03:59 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:03:59 +0200
+COMMAND: osctl ct runscript -r testct-61c9 /tmp/testct-61c9-test-script.sh
+END: 2026-06-11 20:04:01 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:04:01 +0200
+COMMAND: osctl ct del -f --prune testct-61c9
+END: 2026-06-11 20:04:02 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-61c9
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 20:04:02 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 20:04:57 +0200
+ELAPSED: 54.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:04:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 20:04:58 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 20:04:58 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 20:04:58 +0200
+ELAPSED: 0.35s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 18:04:58 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 20:04:58 +0200
+COMMAND: osctl ct new --distribution opensuse --version latest testct-44ef
+END: 2026-06-11 20:05:38 +0200
+ELAPSED: 39.9s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:05:38 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/41cb2bc4-nix--store--dw0giz3n8plzcv9bvgdfrnh4dwbmc9wb-dist-config-systemd-rundir-script.sh" "/tmp/testct-44ef-test-script.sh"
+END: 2026-06-11 20:05:38 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:05:38 +0200
+COMMAND: osctl ct runscript -r testct-44ef /tmp/testct-44ef-test-script.sh
+END: 2026-06-11 20:05:41 +0200
+ELAPSED: 2.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:05:41 +0200
+COMMAND: osctl ct del -f --prune testct-44ef
+END: 2026-06-11 20:05:42 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-44ef
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 20:05:42 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 20:05:56 +0200
+ELAPSED: 14.05s
+STATUS: 0
+OUTPUT:
+
+---
+

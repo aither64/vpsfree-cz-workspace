@@ -1,0 +1,706 @@
+SHELL: 2
+
+START: 2026-06-11 19:52:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:50 +0200
+ELAPSED: 3.75s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:52 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:54 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:56 +0200
+ELAPSED: 0.79s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:57 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:59 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:53:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:53:00 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:53:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:53:02 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:53:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:53:04 +0200
+ELAPSED: 0.83s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:53:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:53:06 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-11 19:53:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:53:08 +0200
+ELAPSED: 0.73s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:53:08 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:53:08 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:53:08 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:53:08 +0200
+COMMAND: osctl ct new --distribution almalinux --version 10 testct-80f0
+END: 2026-06-11 19:53:58 +0200
+ELAPSED: 50.39s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 19:53:58 +0200
+COMMAND: osctl ct unset start-menu testct-80f0
+END: 2026-06-11 19:53:59 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:53:59 +0200
+COMMAND: osctl ct netif new routed testct-80f0 eth0
+END: 2026-06-11 19:54:00 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:54:00 +0200
+COMMAND: osctl ct start testct-80f0
+END: 2026-06-11 19:54:01 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 19:54:01 +0200
+COMMAND: osctl ct exec testct-80f0 systemctl status sys-devices-virtual-net-eth0.device
+END: 2026-06-11 19:54:03 +0200
+ELAPSED: 1.96s
+STATUS: 3
+OUTPUT:
+○ sys-devices-virtual-net-eth0.device - /sys/devices/virtual/net/eth0
+     Loaded: loaded
+     Active: inactive (dead)
+error: executed command failed
+---
+
+START: 2026-06-11 19:54:04 +0200
+COMMAND: osctl ct exec testct-80f0 systemctl status sys-devices-virtual-net-eth0.device
+END: 2026-06-11 19:54:06 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-eth0.device - /sys/devices/virtual/net/eth0
+     Loaded: loaded
+     Active: active (plugged) since Thu 2026-06-11 19:54:04 CEST; 2s ago
+ Invocation: 24b4acbb51a8411894651350f8a9f56b
+     Device: /sys/devices/virtual/net/eth0
+---
+
+START: 2026-06-11 19:54:06 +0200
+COMMAND: osctl ct exec testct-80f0 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 19:54:08 +0200
+ELAPSED: 1.95s
+STATUS: 3
+OUTPUT:
+○ sys-devices-virtual-net-dummy0.device - /sys/devices/virtual/net/dummy0
+     Loaded: loaded
+     Active: inactive (dead)
+error: executed command failed
+---
+
+START: 2026-06-11 19:54:08 +0200
+COMMAND: osctl ct exec testct-80f0 ip link add dummy0 type dummy
+END: 2026-06-11 19:54:10 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:54:10 +0200
+COMMAND: osctl ct exec testct-80f0 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 19:54:12 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-dummy0.device - /sys/devices/virtual/net/dummy0
+     Loaded: loaded
+     Active: active (plugged) since Thu 2026-06-11 19:54:10 CEST; 1s ago
+ Invocation: 35a3c0901b4344a3ba68f26e2d03f7c7
+     Device: /sys/devices/virtual/net/dummy0
+---
+
+START: 2026-06-11 19:54:12 +0200
+COMMAND: osctl ct del -f --prune testct-80f0
+END: 2026-06-11 19:54:15 +0200
+ELAPSED: 2.95s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-80f0
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 19:54:15 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 19:54:40 +0200
+ELAPSED: 25.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:54:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:54:41 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:54:41 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:54:41 +0200
+ELAPSED: 0.15s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:54:41 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:54:41 +0200
+COMMAND: osctl ct new --distribution rocky --version 8 testct-efe3
+END: 2026-06-11 19:55:10 +0200
+ELAPSED: 28.52s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 19:55:10 +0200
+COMMAND: osctl ct unset start-menu testct-efe3
+END: 2026-06-11 19:55:10 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:55:10 +0200
+COMMAND: osctl ct netif new routed testct-efe3 eth0
+END: 2026-06-11 19:55:11 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:55:11 +0200
+COMMAND: osctl ct start testct-efe3
+END: 2026-06-11 19:55:13 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 19:55:13 +0200
+COMMAND: osctl ct exec testct-efe3 systemctl status sys-devices-virtual-net-eth0.device
+END: 2026-06-11 19:55:15 +0200
+ELAPSED: 1.85s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-eth0.device - /sys/devices/virtual/net/eth0
+   Loaded: loaded
+   Active: active (plugged) since Thu 2026-06-11 19:55:14 CEST; 770ms ago
+   Device: /sys/devices/virtual/net/eth0
+---
+
+START: 2026-06-11 19:55:15 +0200
+COMMAND: osctl ct exec testct-efe3 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 19:55:17 +0200
+ELAPSED: 1.74s
+STATUS: 3
+OUTPUT:
+● sys-devices-virtual-net-dummy0.device
+   Loaded: loaded
+   Active: inactive (dead)
+error: executed command failed
+---
+
+START: 2026-06-11 19:55:17 +0200
+COMMAND: osctl ct exec testct-efe3 ip link add dummy0 type dummy
+END: 2026-06-11 19:55:19 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:55:19 +0200
+COMMAND: osctl ct exec testct-efe3 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 19:55:20 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-dummy0.device - /sys/devices/virtual/net/dummy0
+   Loaded: loaded
+   Active: active (plugged) since Thu 2026-06-11 19:55:19 CEST; 1s ago
+   Device: /sys/devices/virtual/net/dummy0
+---
+
+START: 2026-06-11 19:55:20 +0200
+COMMAND: osctl ct del -f --prune testct-efe3
+END: 2026-06-11 19:55:23 +0200
+ELAPSED: 2.71s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-efe3
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 19:55:23 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 19:55:34 +0200
+ELAPSED: 11.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:55:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:55:35 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:55:35 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:55:35 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:55:35 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:55:35 +0200
+COMMAND: osctl ct new --distribution nixos --version stable testct-1aa4
+END: 2026-06-11 19:57:13 +0200
+ELAPSED: 98.53s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 19:57:13 +0200
+COMMAND: osctl ct unset start-menu testct-1aa4
+END: 2026-06-11 19:57:14 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:14 +0200
+COMMAND: osctl ct netif new routed testct-1aa4 eth0
+END: 2026-06-11 19:57:15 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:15 +0200
+COMMAND: osctl ct start testct-1aa4
+END: 2026-06-11 19:57:17 +0200
+ELAPSED: 2.08s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 19:57:17 +0200
+COMMAND: osctl ct exec testct-1aa4 systemctl status sys-devices-virtual-net-eth0.device
+END: 2026-06-11 19:57:19 +0200
+ELAPSED: 1.58s
+STATUS: 1
+OUTPUT:
+Failed to connect to system scope bus via local transport: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-11 19:57:20 +0200
+COMMAND: osctl ct exec testct-1aa4 systemctl status sys-devices-virtual-net-eth0.device
+END: 2026-06-11 19:57:21 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-eth0.device - /sys/devices/virtual/net/eth0
+     Loaded: loaded
+     Active: active (plugged) since Thu 2026-06-11 19:57:19 CEST; 2s ago
+ Invocation: 09e00faaaf694ce6a12d0afbcf522a22
+     Device: /sys/devices/virtual/net/eth0
+---
+
+START: 2026-06-11 19:57:21 +0200
+COMMAND: osctl ct exec testct-1aa4 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 19:57:23 +0200
+ELAPSED: 1.75s
+STATUS: 3
+OUTPUT:
+○ sys-devices-virtual-net-dummy0.device - /sys/devices/virtual/net/dummy0
+     Loaded: loaded
+     Active: inactive (dead)
+error: executed command failed
+---
+
+START: 2026-06-11 19:57:23 +0200
+COMMAND: osctl ct exec testct-1aa4 ip link add dummy0 type dummy
+END: 2026-06-11 19:57:25 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:25 +0200
+COMMAND: osctl ct exec testct-1aa4 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 19:57:26 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-dummy0.device - /sys/devices/virtual/net/dummy0
+     Loaded: loaded
+     Active: active (plugged) since Thu 2026-06-11 19:57:25 CEST; 1s ago
+ Invocation: 47b9e222d51c479697ba3ed8ba75659e
+     Device: /sys/devices/virtual/net/dummy0
+---
+
+START: 2026-06-11 19:57:26 +0200
+COMMAND: osctl ct del -f --prune testct-1aa4
+END: 2026-06-11 19:57:30 +0200
+ELAPSED: 3.33s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-1aa4
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 19:57:30 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 19:58:37 +0200
+ELAPSED: 67.53s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/24.04/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/debian/13/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/8/image-stream.tar
+---
+
+START: 2026-06-11 19:58:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:58:38 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:58:38 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:58:38 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:58:38 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:58:38 +0200
+COMMAND: osctl ct new --distribution debian --version oldstable testct-ada1
+END: 2026-06-11 19:59:50 +0200
+ELAPSED: 71.68s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 19:59:50 +0200
+COMMAND: osctl ct unset start-menu testct-ada1
+END: 2026-06-11 19:59:51 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:59:51 +0200
+COMMAND: osctl ct netif new routed testct-ada1 eth0
+END: 2026-06-11 19:59:51 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:59:51 +0200
+COMMAND: osctl ct start testct-ada1
+END: 2026-06-11 19:59:53 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 19:59:53 +0200
+COMMAND: osctl ct exec testct-ada1 systemctl status sys-devices-virtual-net-eth0.device
+END: 2026-06-11 19:59:55 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-eth0.device - /sys/devices/virtual/net/eth0
+     Loaded: loaded
+     Active: active (plugged) since Thu 2026-06-11 19:59:54 CEST; 911ms ago
+     Device: /sys/devices/virtual/net/eth0
+---
+
+START: 2026-06-11 19:59:55 +0200
+COMMAND: osctl ct exec testct-ada1 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 19:59:57 +0200
+ELAPSED: 1.73s
+STATUS: 3
+OUTPUT:
+○ sys-devices-virtual-net-dummy0.device - /sys/devices/virtual/net/dummy0
+     Loaded: loaded
+     Active: inactive (dead)
+error: executed command failed
+---
+
+START: 2026-06-11 19:59:57 +0200
+COMMAND: osctl ct exec testct-ada1 ip link add dummy0 type dummy
+END: 2026-06-11 19:59:59 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:59:59 +0200
+COMMAND: osctl ct exec testct-ada1 systemctl status sys-devices-virtual-net-dummy0.device
+END: 2026-06-11 20:00:01 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+● sys-devices-virtual-net-dummy0.device - /sys/devices/virtual/net/dummy0
+     Loaded: loaded
+     Active: active (plugged) since Thu 2026-06-11 19:59:59 CEST; 1s ago
+     Device: /sys/devices/virtual/net/dummy0
+---
+
+START: 2026-06-11 20:00:01 +0200
+COMMAND: osctl ct del -f --prune testct-ada1
+END: 2026-06-11 20:00:04 +0200
+ELAPSED: 3.02s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-ada1
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-11 20:00:04 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-11 20:01:10 +0200
+ELAPSED: 66.28s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/20.04/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/centos/10-stream-20260606/image-stream.tar
+---
+

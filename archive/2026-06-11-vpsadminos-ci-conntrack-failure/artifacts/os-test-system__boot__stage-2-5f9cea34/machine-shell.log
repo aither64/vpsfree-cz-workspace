@@ -1,0 +1,105 @@
+SHELL: 0
+
+START: 2026-06-11 19:53:41 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-11 19:53:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:53:41 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-11 19:53:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:53:41 +0200
+COMMAND: sv check set-clock
+END: 2026-06-11 19:53:48 +0200
+ELAPSED: 7.68s
+STATUS: 1
+OUTPUT:
+timeout: run: set-clock: (pid 800) 9s
+---
+
+START: 2026-06-11 19:53:49 +0200
+COMMAND: sv check set-clock
+END: 2026-06-11 19:53:55 +0200
+ELAPSED: 5.54s
+STATUS: 0
+OUTPUT:
+ok: down: set-clock: 0s, normally up
+---
+
+START: 2026-06-11 19:53:55 +0200
+COMMAND: touch -d '2006-01-01 00:00:00 UTC' /run/utmp
+END: 2026-06-11 19:53:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:53:55 +0200
+COMMAND: uptime
+END: 2026-06-11 19:53:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ 19:53:55  up   0:00,  5 users,  load average: 0.80, 0.19, 0.06
+---
+
+START: 2026-06-11 19:53:55 +0200
+COMMAND: cat /proc/uptime
+END: 2026-06-11 19:53:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+28.18 69.52
+---
+
+START: 2026-06-11 19:53:55 +0200
+COMMAND: utmpdump /run/utmp 2>/dev/null | awk '$1 == "[2]" { print }'
+END: 2026-06-11 19:53:55 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[2] [00000] [~~  ] [reboot  ] [~           ] [6.12.93             ] [0.0.0.0        ] [2026-06-11T17:53:27,388603+00:00]
+---
+
+START: 2026-06-11 19:53:55 +0200
+COMMAND: test -f /var/log/wtmp
+END: 2026-06-11 19:53:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:53:55 +0200
+COMMAND: last >/dev/null
+END: 2026-06-11 19:53:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:53:55 +0200
+COMMAND: poweroff -f
+END: 2026-06-11 19:53:59 +0200
+ELAPSED: 3.61s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown.... ok
+---
+

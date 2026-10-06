@@ -1,0 +1,907 @@
+SHELL: 0
+
+START: 2026-06-12 00:09:57 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:09:57 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:09:57 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:09:57 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:09:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:59 +0200
+ELAPSED: 2.1s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:01 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:02 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:03 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:04 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:06 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:08 +0200
+ELAPSED: 0.83s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:10 +0200
+ELAPSED: 0.8s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:11 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:13 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:10:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:15 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-12 00:10:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:10:16 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-12 00:10:16 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-12 00:10:16 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 22:10:16 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-12 00:10:16 +0200
+COMMAND: osctl ct new --distribution arch --version latest podman-1837
+END: 2026-06-12 00:10:37 +0200
+ELAPSED: 21.28s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-12 00:10:37 +0200
+COMMAND: osctl ct unset start-menu podman-1837
+END: 2026-06-12 00:10:38 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:10:38 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 podman-1837 eth0
+END: 2026-06-12 00:10:39 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:10:39 +0200
+COMMAND: osctl ct devices add -p podman-1837 char 10 200 rwm /dev/net/tun
+END: 2026-06-12 00:10:39 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:10:39 +0200
+COMMAND: osctl ct set dns-resolver podman-1837 1.1.1.1
+END: 2026-06-12 00:10:40 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:10:40 +0200
+COMMAND: osctl ct start podman-1837
+END: 2026-06-12 00:10:42 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-12 00:10:42 +0200
+COMMAND: osctl ct exec podman-1837 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-12 00:10:44 +0200
+ELAPSED: 1.53s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-06-12 00:10:45 +0200
+COMMAND: osctl ct exec podman-1837 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-12 00:10:46 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=1.11 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.107/1.107/1.107/0.000 ms
+---
+
+START: 2026-06-12 00:10:46 +0200
+COMMAND: osctl ct exec podman-1837 pacman -Syu --noconfirm podman
+END: 2026-06-12 00:10:54 +0200
+ELAPSED: 8.32s
+STATUS: 0
+OUTPUT:
+:: Synchronizing package databases...
+ core downloading...
+ extra downloading...
+:: Starting full system upgrade...
+resolving dependencies...
+:: There are 3 providers available for oci-runtime:
+:: Repository extra
+   1) crun  2) krun  3) runc
+
+Enter a number (default=1): 
+looking for conflicting packages...
+
+Packages (29) aardvark-dns-1.17.1-1  abseil-cpp-20260107.1-1  bash-5.3.15-1  catatonit-0.2.1-2  conmon-1:2.2.1-1  containers-common-1:0.67.1-2  criu-4.2-3  crun-1.28-1  file-5.48-1  gtest-1.17.0-2  hwloc-2.13.0-1  libblake3-1.8.4-1  libbsd-0.12.2-2  libdrm-2.4.134-1  libmd-1.2.0-1  libnet-2:1.3-2  libpciaccess-0.19-1  libtool-2.6.1-1  mpdecimal-4.0.1-3  netavark-1.17.2-2  onetbb-2023.0.0-1  openssl-3.6.3-1  pacman-mirrorlist-20260610-1  passt-2026_05_26.038c51e-1  protobuf-35.0-1  protobuf-c-1.5.2-10  python-3.14.5-1  python-protobuf-35.0-1  podman-5.8.2-1
+
+Total Download Size:    59.04 MiB
+Total Installed Size:  245.56 MiB
+Net Upgrade Size:      213.56 MiB
+
+:: Proceed with installation? [Y/n] 
+:: Retrieving packages...
+ podman-5.8.2-1-x86_64 downloading...
+ python-3.14.5-1-x86_64 downloading...
+ openssl-3.6.3-1-x86_64 downloading...
+ protobuf-35.0-1-x86_64 downloading...
+ netavark-1.17.2-2-x86_64 downloading...
+ bash-5.3.15-1-x86_64 downloading...
+ abseil-cpp-20260107.1-1-x86_64 downloading...
+ aardvark-dns-1.17.1-1-x86_64 downloading...
+ criu-4.2-3-x86_64 downloading...
+ hwloc-2.13.0-1-x86_64 downloading...
+ python-protobuf-35.0-1-x86_64 downloading...
+ file-5.48-1-x86_64 downloading...
+ libtool-2.6.1-1-x86_64 downloading...
+ onetbb-2023.0.0-1-x86_64 downloading...
+ gtest-1.17.0-2-x86_64 downloading...
+ libdrm-2.4.134-1-x86_64 downloading...
+ catatonit-0.2.1-2-x86_64 downloading...
+ crun-1.28-1-x86_64 downloading...
+ libnet-2:1.3-2-x86_64 downloading...
+ passt-2026_05_26.038c51e-1-x86_64 downloading...
+ libbsd-0.12.2-2-x86_64 downloading...
+ protobuf-c-1.5.2-10-x86_64 downloading...
+ containers-common-1:0.67.1-2-any downloading...
+ mpdecimal-4.0.1-3-x86_64 downloading...
+ libmd-1.2.0-1-x86_64 downloading...
+ conmon-1:2.2.1-1-x86_64 downloading...
+ libblake3-1.8.4-1-x86_64 downloading...
+ libpciaccess-0.19-1-x86_64 downloading...
+ pacman-mirrorlist-20260610-1-any downloading...
+checking keyring...
+checking package integrity...
+loading package files...
+checking for file conflicts...
+checking available disk space...
+:: Processing package changes...
+installing catatonit...
+upgrading bash...
+upgrading openssl...
+warning: directory permissions differ on /etc/ssl/private/
+filesystem: 755  package: 700
+upgrading file...
+installing conmon...
+installing aardvark-dns...
+installing netavark...
+installing containers-common...
+installing libmd...
+installing libbsd...
+installing libpciaccess...
+installing libdrm...
+Optional dependencies for libdrm
+    cairo: needed for modetest tool
+installing libnet...
+installing gtest...
+Optional dependencies for gtest
+    python: gmock generator [pending]
+installing abseil-cpp...
+installing protobuf...
+installing protobuf-c...
+installing mpdecimal...
+installing python...
+Optional dependencies for python
+    python-setuptools: for building Python packages using tooling that is usually bundled with Python
+    python-pip: for installing Python packages using tooling that is usually bundled with Python
+    python-pipx: for installing Python software not packaged on Arch Linux
+    sqlite: for a default database integration [installed]
+    xz: for lzma [installed]
+    tk: for tkinter
+installing python-protobuf...
+installing criu...
+installing libtool...
+installing hwloc...
+Optional dependencies for hwloc
+    cairo: PDF, Postscript, and PNG export support
+    libxml2: full XML import/export support [installed]
+installing onetbb...
+Optional dependencies for onetbb
+    python: for Python module [installed]
+installing libblake3...
+installing crun...
+installing passt...
+Optional dependencies for passt
+    sh: for demo script [installed]
+installing podman...
+Optional dependencies for podman
+    apparmor: for AppArmor support
+    btrfs-progs: support btrfs backend devices
+    fuse-overlayfs: for deprecated storage driver in rootless environment
+    podlet: Generate Podman Quadlet files from a Podman command, compose file, or existing object
+    podman-compose: for docker-compose compatibility
+    podman-desktop: GUI and tray to manage Podman containers (and Kubernetes pods)
+    podman-docker: for Docker-compatible CLI
+    slirp4netns: for alternative rootless network support
+upgrading pacman-mirrorlist...
+warning: /etc/pacman.d/mirrorlist installed as /etc/pacman.d/mirrorlist.pacnew
+:: Running post-transaction hooks...
+(1/4) Creating temporary files...
+(2/4) Reloading system manager configuration...
+(3/4) Reloading user manager configuration...
+(4/4) Arming ConditionNeedsUpdate...
+---
+
+START: 2026-06-12 00:10:54 +0200
+COMMAND: osctl ct exec podman-1837 sh -c mkdir\ -p\ /etc/containers/registries.conf.d'
+'cat\ \>\ /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf\ \<\<\'EOF\''
+'\[\[registry\]\]'
+'prefix\ \=\ \"docker.io\"'
+'location\ \=\ \"docker.io\"'
+''
+'\ \ \[\[registry.mirror\]\]'
+'\ \ location\ \=\ \"docker-registry.vpsadminos.org\"'
+'\ \ pull-from-mirror\ \=\ \"all\"'
+''
+'\[aliases\]'
+'\"hello-world\"\ \=\ \"docker.io/library/hello-world\"'
+''
+'EOF'
+'
+END: 2026-06-12 00:10:56 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:10:56 +0200
+COMMAND: osctl ct exec podman-1837 cat /etc/containers/registries.conf.d/10-vpsadminos-mirror.conf
+END: 2026-06-12 00:10:57 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+[[registry]]
+prefix = "docker.io"
+location = "docker.io"
+
+  [[registry.mirror]]
+  location = "docker-registry.vpsadminos.org"
+  pull-from-mirror = "all"
+
+[aliases]
+"hello-world" = "docker.io/library/hello-world"
+
+---
+
+START: 2026-06-12 00:10:57 +0200
+COMMAND: osctl ct exec podman-1837 podman info
+END: 2026-06-12 00:10:59 +0200
+ELAPSED: 1.95s
+STATUS: 0
+OUTPUT:
+host:
+  arch: amd64
+  buildahVersion: 1.43.1
+  cgroupControllers:
+  - memory
+  - pids
+  cgroupManager: systemd
+  cgroupVersion: v2
+  conmon:
+    package: conmon-1:2.2.1-1
+    path: /usr/bin/conmon
+    version: 'conmon version 2.2.1, commit: c8cc2c4db27531bd4e084ce7857f73cd21ee639d'
+  cpuUtilization:
+    idlePercent: 100
+    systemPercent: 0
+    userPercent: 0
+  cpus: 4
+  databaseBackend: sqlite
+  distribution:
+    distribution: arch
+    version: unknown
+  eventLogger: journald
+  freeLocks: 2048
+  hostname: podman-1837
+  idMappings:
+    gidmap: null
+    uidmap: null
+  kernel: 6.12.93
+  linkmode: dynamic
+  logDriver: journald
+  memFree: 6537187328
+  memTotal: 8338124800
+  networkBackend: netavark
+  networkBackendInfo:
+    backend: netavark
+    defaultNetwork: podman
+    dns:
+      package: aardvark-dns-1.17.1-1
+      path: /usr/lib/podman/aardvark-dns
+      version: aardvark-dns 1.17.1
+    package: netavark-1.17.2-2
+    path: /usr/lib/podman/netavark
+    version: netavark 1.17.2
+  ociRuntime:
+    name: crun
+    package: crun-1.28-1
+    path: /usr/bin/crun
+    version: |-
+      crun version 1.28-dirty
+      commit: 54f16ffbefcd022bf032af768b5c5ce075c18bfc
+      rundir: /run/crun
+      spec: 1.0.0
+      +SYSTEMD +SELINUX +APPARMOR +CAP +SECCOMP +EBPF +CRIU +LIBKRUN +JSON_C
+  os: linux
+  pasta:
+    executable: /bin/pasta
+    package: passt-2026_05_26.038c51e-1
+    version: |
+      pasta 2026_05_26.038c51e
+      Copyright Red Hat
+      GNU General Public License, version 2 or later
+        <https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+      This is free software: you are free to change and redistribute it.
+      There is NO WARRANTY, to the extent permitted by law.
+  remoteSocket:
+    exists: true
+    path: /run/podman/podman.sock
+  rootlessNetworkCmd: pasta
+  security:
+    apparmorEnabled: false
+    capabilities: CAP_CHOWN,CAP_DAC_OVERRIDE,CAP_FOWNER,CAP_FSETID,CAP_KILL,CAP_NET_BIND_SERVICE,CAP_SETFCAP,CAP_SETGID,CAP_SETPCAP,CAP_SETUID,CAP_SYS_CHROOT
+    rootless: false
+    seccompEnabled: true
+    seccompProfilePath: /etc/containers/seccomp.json
+    selinuxEnabled: false
+  serviceIsRemote: false
+  slirp4netns:
+    executable: ""
+    package: ""
+    version: ""
+  swapFree: 0
+  swapTotal: 0
+  uptime: 0h 0m 19.00s
+  variant: ""
+plugins:
+  authorization: null
+  log:
+  - k8s-file
+  - none
+  - passthrough
+  - journald
+  network:
+  - bridge
+  - macvlan
+  - ipvlan
+  volume:
+  - local
+registries:
+  docker.io:
+    Blocked: false
+    Insecure: false
+    Location: docker.io
+    MirrorByDigestOnly: false
+    Mirrors:
+    - Insecure: false
+      Location: docker-registry.vpsadminos.org
+      PullFromMirror: all
+    Prefix: docker.io
+    PullFromMirror: ""
+store:
+  configFile: /etc/containers/storage.conf
+  containerStore:
+    number: 0
+    paused: 0
+    running: 0
+    stopped: 0
+  graphDriverName: overlay
+  graphOptions:
+    overlay.mountopt: nodev
+  graphRoot: /var/lib/containers/storage
+  graphRootAllocated: 9515171840
+  graphRootUsed: 662306816
+  graphStatus:
+    Backing Filesystem: cramfs
+    Native Overlay Diff: "true"
+    Supports d_type: "true"
+    Supports shifting: "false"
+    Supports volatile: "true"
+    Using metacopy: "false"
+  imageCopyTmpDir: /var/tmp
+  imageStore:
+    number: 0
+  runRoot: /run/containers/storage
+  transientStore: false
+  volumePath: /var/lib/containers/storage/volumes
+version:
+  APIVersion: 5.8.2
+  Built: 1776240370
+  BuiltTime: Wed Apr 15 10:06:10 2026
+  GitCommit: 5b263b5f5b48004a87caac44e67349a8266d9ef4
+  GoVersion: go1.26.2-X:nodwarf5
+  Os: linux
+  OsArch: linux/amd64
+  Version: 5.8.2
+
+---
+
+START: 2026-06-12 00:10:59 +0200
+COMMAND: osctl ct exec podman-1837 podman run hello-world
+END: 2026-06-12 00:11:10 +0200
+ELAPSED: 10.65s
+STATUS: 0
+OUTPUT:
+Resolved "hello-world" as an alias (/etc/containers/registries.conf.d/10-vpsadminos-mirror.conf)
+Trying to pull docker.io/library/hello-world:latest...
+Getting image source signatures
+Copying blob sha256:4f55086f7dd096d48b0e49be066971a8ed996521c2e190aa21b2435a847198b4
+Copying config sha256:e2ac70e7319a02c5a477f5825259bd118b94e8b02c279c67afa63adab6d8685b
+Writing manifest to image destination
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-06-12 00:11:10 +0200
+COMMAND: osctl ct exec podman-1837 sh -c mkdir\ -p\ /tmp/podman-build-test'
+'cat\ \>\ /tmp/podman-build-test/Dockerfile\ \<\<\'EOF\''
+'FROM\ docker.io/library/alpine:latest'
+'RUN\ echo\ \"Podman\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-06-12 00:11:11 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:11:11 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ build\ -t\ localhost/podman-build-test:latest\ /tmp/podman-build-test
+END: 2026-06-12 00:11:17 +0200
+ELAPSED: 5.05s
+STATUS: 0
+OUTPUT:
+STEP 1/3: FROM docker.io/library/alpine:latest
+Trying to pull docker.io/library/alpine:latest...
+Getting image source signatures
+Copying blob sha256:9b70e313681f44d32991ec943f89228bc91d7431d4a84feafc269a76e3f96a63
+Copying config sha256:772bee4540c411d1fec755cb8ead76db4173d38afde7b2018a08f255907bbf23
+Writing manifest to image destination
+STEP 2/3: RUN echo "Podman build works!" > /message.txt
+--> 8ec029cca1cc
+STEP 3/3: CMD ["cat", "/message.txt"]
+COMMIT localhost/podman-build-test:latest
+--> 9d377c483530
+Successfully tagged localhost/podman-build-test:latest
+9d377c483530cc76958c2f41846db955b289d7efcf320cf3763339ef7a5cd686
+---
+
+START: 2026-06-12 00:11:17 +0200
+COMMAND: osctl ct exec podman-1837 podman run --rm localhost/podman-build-test:latest
+END: 2026-06-12 00:11:18 +0200
+ELAPSED: 1.73s
+STATUS: 0
+OUTPUT:
+Podman build works!
+---
+
+START: 2026-06-12 00:11:18 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-12 00:11:20 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:11:20 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-12 00:11:21 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+a57709c5b8ae8d143f95521fcdc1b403015be9c6e208726c121e6872b583f171
+---
+
+START: 2026-06-12 00:11:21 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-06-12 00:11:23 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-12 00:11:23 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-12 00:11:25 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:11:25 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-12 00:11:26 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:11:26 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-12 00:11:27 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+dfc39ff11f442843164126c65e32b30603d9f839f2444df53d03c8e0a66643ec
+---
+
+START: 2026-06-12 00:11:27 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-06-12 00:11:29 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-12 00:11:29 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-12 00:11:31 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:11:31 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-12 00:11:32 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:11:32 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ localhost/podman-build-test:latest\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory.max\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu.max\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ /sys/fs/cgroup/cpu.max\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ /sys/fs/cgroup/cpu/cpu.cfs_period_us\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-06-12 00:11:34 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+b591096a947824ddbe188dbb088f9e040c63917e372a927830f6e0dd55564faa
+---
+
+START: 2026-06-12 00:11:34 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-06-12 00:11:35 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-06-12 00:11:35 +0200
+COMMAND: osctl ct exec podman-1837 sh -c podman\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-06-12 00:11:37 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:11:37 +0200
+COMMAND: osctl ct del -f --prune podman-1837
+END: 2026-06-12 00:11:40 +0200
+ELAPSED: 2.59s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:podman-1837
+Reconfiguring LXC usernet
+---
+
+START: 2026-06-12 00:11:40 +0200
+COMMAND: osctl repository images prune
+END: 2026-06-12 00:11:40 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/arch/20260606/image-stream.tar
+---
+
+START: 2026-06-12 00:11:40 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:11:55 +0200
+ELAPSED: 14.67s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

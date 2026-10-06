@@ -1,0 +1,309 @@
+SHELL: 0
+
+START: 2026-06-10 11:17:54 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-10 11:17:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:17:54 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-10 11:17:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:17:54 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 11:17:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2135) 72s
+---
+
+START: 2026-06-10 11:17:54 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 11:17:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2135) 72s
+---
+
+START: 2026-06-10 11:17:54 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 11:17:54 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:17:55 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 11:17:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2135) 73s
+---
+
+START: 2026-06-10 11:17:55 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 11:17:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:17:55 +0200
+COMMAND: nodectl status
+END: 2026-06-10 11:17:55 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+   Version: 4.1.0
+     State: running
+    Uptime: 00:00:01
+  Consoles: 0
+  Subtasks: 0
+Queue size: 0
+    Queues:
+       general  0 / 6 (+6) 
+       storage  0 / 2 (+2) 
+       network  0 / 1 (+0) 
+           vps  0 / 4 (+4) 
+      zfs_send  0 / 3 (+0) opens in 01:29:59
+      zfs_recv  0 / 3 (+0) opens in 01:29:59
+          mail  0 / 2 (+2) 
+           dns  0 / 1 (+0) 
+        outage  0 / 128 (+0) 
+         queue  0 / 256 (+16) 
+      rollback  0 / 6 (+6) 
+---
+
+START: 2026-06-10 11:18:01 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 11:18:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:18:01 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-10 11:18:02 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-10 11:18:02 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-10 11:18:03 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-10 11:18:03 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-10 11:18:03 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:19:42 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-10 11:19:42 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/1
+---
+
+START: 2026-06-10 11:20:26 +0200
+COMMAND: cat > /run/vpsadmin-test-faulty-mbuffer <<'RUBY'
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'socket'
+
+FAIL_AFTER = 1048576
+
+def parse_args(argv)
+  args = argv.dup
+  options = {}
+
+  until args.empty?
+    arg = args.shift
+
+    case arg
+    when '-O'
+      host, port = args.shift.split(':', 2)
+      options[:mode] = :send
+      options[:host] = host
+      options[:port] = Integer(port)
+    when /\A-O(.+)\z/
+      host, port = Regexp.last_match(1).split(':', 2)
+      options[:mode] = :send
+      options[:host] = host
+      options[:port] = Integer(port)
+    when '-I'
+      options[:mode] = :recv
+      options[:port] = Integer(args.shift)
+    when /\A-I(.+)\z/
+      options[:mode] = :recv
+      options[:port] = Integer(Regexp.last_match(1))
+    when '-l'
+      options[:log_file] = args.shift
+    when /\A-l(.+)\z/
+      options[:log_file] = Regexp.last_match(1)
+    when '-s', '-m', '-P', '-W'
+      args.shift
+    else
+      # Ignore compatibility flags such as -q or inline-valued options.
+    end
+  end
+
+  options
+end
+
+def log(log_file, message)
+  return unless log_file
+
+  File.open(log_file, 'a') do |f|
+    f.puts(message)
+  end
+rescue StandardError
+  nil
+end
+
+def fail_send(host, port, log_file)
+  socket = TCPSocket.new(host, port)
+  transferred = 0
+
+  loop do
+    chunk = STDIN.readpartial(16 * 1024)
+    remaining = FAIL_AFTER - transferred
+    break if remaining <= 0
+
+    payload = chunk.byteslice(0, remaining)
+    socket.write(payload)
+    transferred += payload.bytesize
+
+    next unless transferred >= FAIL_AFTER
+
+    log(log_file, "faulty-mbuffer send abort after #{transferred} bytes")
+    exit 1
+  rescue EOFError
+    break
+  end
+
+  socket.close
+  exit 0
+end
+
+def fail_recv(port, log_file)
+  server = TCPServer.new('0.0.0.0', port)
+  socket = server.accept
+  transferred = 0
+  $stdout.sync = true
+
+  loop do
+    chunk = socket.readpartial(16 * 1024)
+    remaining = FAIL_AFTER - transferred
+    break if remaining <= 0
+
+    payload = chunk.byteslice(0, remaining)
+    STDOUT.write(payload)
+    transferred += payload.bytesize
+
+    next unless transferred >= FAIL_AFTER
+
+    STDOUT.flush
+    log(log_file, "faulty-mbuffer recv abort after #{transferred} bytes")
+    exit 1
+  rescue EOFError
+    break
+  end
+
+  socket.close
+  server.close
+  exit 0
+end
+
+options = parse_args(ARGV)
+
+case options.fetch(:mode)
+when :send
+  fail_send(options.fetch(:host), options.fetch(:port), options[:log_file])
+when :recv
+  fail_recv(options.fetch(:port), options[:log_file])
+end
+
+RUBY
+chmod 755 /run/vpsadmin-test-faulty-mbuffer
+END: 2026-06-10 11:20:26 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 11:20:26 +0200
+COMMAND: nodectl set config mbuffer.receive.command=/run/vpsadmin-test-faulty-mbuffer
+END: 2026-06-10 11:20:26 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-10 11:20:44 +0200
+COMMAND: nodectl set config mbuffer.receive.command=mbuffer
+END: 2026-06-10 11:20:45 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-10 11:20:45 +0200
+COMMAND: grep -F chain\=7,trans\=26,type\=execute\]\ fork\ /run/vpsadmin-test-faulty-mbuffer /var/log/nodectld
+END: 2026-06-10 11:20:45 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+2026-06-10T11:20:33.871728+02:00 vpsadmin-node2 nodectld[2150]: [chain=7,trans=26,type=execute] fork /run/vpsadmin-test-faulty-mbuffer -q -I 10000 -s 1M -m 128M -P 60 -l /tmp/nodectld-mbuffer-26.log -W 5400 | zfs recv -F -u tank/backup/1/tree.0/branch-2026-06-10T09:19:48.0
+---
+
+START: 2026-06-10 11:21:10 +0200
+COMMAND: poweroff -f
+END: 2026-06-10 11:21:12 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

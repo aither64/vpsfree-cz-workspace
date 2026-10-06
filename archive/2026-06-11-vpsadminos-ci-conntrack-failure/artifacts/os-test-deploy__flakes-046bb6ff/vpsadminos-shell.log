@@ -1,0 +1,54 @@
+SHELL: 0
+
+START: 2026-06-09 22:01:30 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-09 22:01:30 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:01:30 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-09 22:01:30 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:01:30 +0200
+COMMAND: mkdir -p /root/.ssh && chmod 700 /root/.ssh
+END: 2026-06-09 22:01:30 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:01:30 +0200
+COMMAND: cat > /root/.ssh/authorized_keys <<'EOF'
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOqY4M5CxK5I1jFwArQqhIf2dZjZYdvF35WdJGCvxJBh github-runner@gh-runner1
+EOF
+chmod 600 /root/.ssh/authorized_keys
+END: 2026-06-09 22:01:30 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:01:47 +0200
+COMMAND: poweroff -f
+END: 2026-06-09 22:01:48 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

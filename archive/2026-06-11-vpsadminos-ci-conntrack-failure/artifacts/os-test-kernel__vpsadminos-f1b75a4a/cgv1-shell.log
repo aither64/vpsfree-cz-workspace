@@ -1,0 +1,2603 @@
+SHELL: 0
+
+START: 2026-06-11 20:16:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 18:16:34 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+kcpuv1-bb2a
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: awk 'NR > 1 { print $1 }' /proc/swaps || true
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: for dev in /dev/zram*; do [ -e "$dev" ] && zramctl --reset "$dev" >/dev/null 2>&1 || true; done
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: modprobe -r zram >/dev/null 2>&1 || true
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: mkdir -p "/scripts"
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/33f12542-nix--store--bcn0v8fnq6jnz56yinbv0pi3lvb4q1gl-sysinfo-to-json.py" "/scripts/sysinfo.py"
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: cat /proc/swaps
+END: 2026-06-11 20:16:34 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+---
+
+START: 2026-06-11 20:16:34 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256swap128 >/dev/null 2>&1 || true
+END: 2026-06-11 20:16:35 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:35 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem256swap128
+END: 2026-06-11 20:16:37 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:16:37 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem256swap128 eth0
+END: 2026-06-11 20:16:38 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:38 +0200
+COMMAND: osctl ct set memory kmemv1-mem256swap128 268435456 134217728
+END: 2026-06-11 20:16:38 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:16:38 +0200
+COMMAND: osctl ct start kmemv1-mem256swap128
+END: 2026-06-11 20:16:40 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:16:40 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:16:49 +0200
+ELAPSED: 9.09s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+online
+-                    100% |********************************|     7  0:00:00 ETA
+written to stdout
+---
+
+START: 2026-06-11 20:16:49 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 apk add python3
+END: 2026-06-11 20:16:52 +0200
+ELAPSED: 2.95s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:16:52 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:16:52 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         7000596 kB
+MemAvailable:    5541228 kB
+Buffers:             688 kB
+Cached:           285748 kB
+SwapCached:            0 kB
+Active:           101440 kB
+Inactive:         384940 kB
+Active(anon):       5088 kB
+Inactive(anon):   225472 kB
+Active(file):      96352 kB
+Inactive(file):   159468 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        221120 kB
+Mapped:            65232 kB
+Shmem:             19072 kB
+KReclaimable:          0 kB
+Slab:             134996 kB
+SReclaimable:      35740 kB
+SUnreclaim:        99256 kB
+KernelStack:        9216 kB
+PageTables:         7808 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260534784 kB
+Committed_AS:    2231628 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      161672 kB
+VmallocChunk:          0 kB
+Percpu:             3040 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      173936 kB
+DirectMap2M:     4020224 kB
+DirectMap1G:     6291456 kB
+---
+
+START: 2026-06-11 20:16:52 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 cat /proc/meminfo
+END: 2026-06-11 20:16:54 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+MemTotal:         262144 kB
+MemFree:          217060 kB
+MemAvailable:     218520 kB
+Buffers:               0 kB
+Cached:             5320 kB
+SwapCached:            0 kB
+Active:             3860 kB
+Inactive:          40580 kB
+Active(anon):         52 kB
+Inactive(anon):    39120 kB
+Active(file):       3808 kB
+Inactive(file):     1460 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:        131072 kB
+SwapFree:         131072 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:         39196 kB
+Mapped:              892 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:16:54 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:16:54 +0200
+ELAPSED: 0.24s
+STATUS: 0
+OUTPUT:
+{"uptime":76,"loads":[1.212890625,0.36181640625,0.12548828125],"totalram":8337113088,"freeram":7127994368,"sharedram":19529728,"bufferram":704512,"totalswap":0,"freeswap":0,"procs":568,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:16:54 +0200
+COMMAND: osctl ct runscript kmemv1-mem256swap128 /scripts/sysinfo.py
+END: 2026-06-11 20:16:55 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+{"uptime":17,"loads":[1.212890625,0.36181640625,0.12548828125],"totalram":268435456,"freeram":212111360,"sharedram":57344,"bufferram":5447680,"totalswap":134217728,"freeswap":134217728,"procs":579,"totalhigh":268435456,"freehigh":212111360,"mem_unit":1}
+---
+
+START: 2026-06-11 20:16:55 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 cat /proc/swaps
+END: 2026-06-11 20:16:57 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+virtual                                 virtual		134217728	0		-1
+---
+
+START: 2026-06-11 20:16:57 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256swap128 >/dev/null 2>&1 || true
+END: 2026-06-11 20:17:02 +0200
+ELAPSED: 4.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:02 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512 >/dev/null 2>&1 || true
+END: 2026-06-11 20:17:02 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:02 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem512
+END: 2026-06-11 20:17:04 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:17:04 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem512 eth0
+END: 2026-06-11 20:17:04 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:04 +0200
+COMMAND: osctl ct set memory kmemv1-mem512 536870912 
+END: 2026-06-11 20:17:05 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:05 +0200
+COMMAND: osctl ct start kmemv1-mem512
+END: 2026-06-11 20:17:07 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:17:07 +0200
+COMMAND: osctl ct exec kmemv1-mem512 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:17:16 +0200
+ELAPSED: 9.24s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+online
+-                    100% |********************************|     7  0:00:00 ETA
+written to stdout
+---
+
+START: 2026-06-11 20:17:16 +0200
+COMMAND: osctl ct exec kmemv1-mem512 apk add python3
+END: 2026-06-11 20:17:19 +0200
+ELAPSED: 2.85s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:17:19 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:17:19 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+{"uptime":101,"loads":[1.4765625,0.494140625,0.1767578125],"totalram":8337113088,"freeram":7202844672,"sharedram":19607552,"bufferram":704512,"totalswap":0,"freeswap":0,"procs":571,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:17:19 +0200
+COMMAND: osctl ct runscript kmemv1-mem512 /scripts/sysinfo.py
+END: 2026-06-11 20:17:20 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+{"uptime":16,"loads":[1.4765625,0.494140625,0.1767578125],"totalram":536870912,"freeram":480202752,"sharedram":57344,"bufferram":5447680,"totalswap":0,"freeswap":0,"procs":576,"totalhigh":536870912,"freehigh":480202752,"mem_unit":1}
+---
+
+START: 2026-06-11 20:17:20 +0200
+COMMAND: osctl ct exec kmemv1-mem512 cat /proc/swaps
+END: 2026-06-11 20:17:22 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+---
+
+START: 2026-06-11 20:17:22 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:17:22 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6902744 kB
+MemAvailable:    5450128 kB
+Buffers:             688 kB
+Cached:           295852 kB
+SwapCached:            0 kB
+Active:           114432 kB
+Inactive:         415764 kB
+Active(anon):       5180 kB
+Inactive(anon):   259164 kB
+Active(file):     109252 kB
+Inactive(file):   156600 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        254412 kB
+Mapped:            65676 kB
+Shmem:             19148 kB
+KReclaimable:          0 kB
+Slab:             139952 kB
+SReclaimable:      39216 kB
+SUnreclaim:       100736 kB
+KernelStack:        9248 kB
+PageTables:         7956 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260534784 kB
+Committed_AS:    2728380 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      171156 kB
+VmallocChunk:          0 kB
+Percpu:             3168 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      173936 kB
+DirectMap2M:     4020224 kB
+DirectMap1G:     6291456 kB
+---
+
+START: 2026-06-11 20:17:22 +0200
+COMMAND: osctl ct exec kmemv1-mem512 cat /proc/meminfo
+END: 2026-06-11 20:17:24 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+MemTotal:         524288 kB
+MemFree:          475556 kB
+MemAvailable:     480500 kB
+Buffers:               0 kB
+Cached:             8852 kB
+SwapCached:            0 kB
+Active:             3896 kB
+Inactive:           7372 kB
+Active(anon):         44 kB
+Inactive(anon):     2428 kB
+Active(file):       3852 kB
+Inactive(file):     4944 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:          2416 kB
+Mapped:              880 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:17:24 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512 >/dev/null 2>&1 || true
+END: 2026-06-11 20:17:28 +0200
+ELAPSED: 4.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:28 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512swap256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:17:29 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:29 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem512swap256
+END: 2026-06-11 20:17:31 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:17:31 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem512swap256 eth0
+END: 2026-06-11 20:17:31 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:31 +0200
+COMMAND: osctl ct set memory kmemv1-mem512swap256 536870912 268435456
+END: 2026-06-11 20:17:32 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:32 +0200
+COMMAND: osctl ct start kmemv1-mem512swap256
+END: 2026-06-11 20:17:34 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:17:34 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:17:43 +0200
+ELAPSED: 9.22s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+-                    100% |********************************|     7  0:00:00 ETA
+written to stdout
+online
+---
+
+START: 2026-06-11 20:17:43 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 apk add python3
+END: 2026-06-11 20:17:47 +0200
+ELAPSED: 4.35s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:17:47 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 cat /proc/swaps
+END: 2026-06-11 20:17:49 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+virtual                                 virtual		268435456	0		-1
+---
+
+START: 2026-06-11 20:17:49 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:17:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6931872 kB
+MemAvailable:    5477520 kB
+Buffers:             688 kB
+Cached:           292392 kB
+SwapCached:            0 kB
+Active:           115084 kB
+Inactive:         387636 kB
+Active(anon):       5260 kB
+Inactive(anon):   235140 kB
+Active(file):     109824 kB
+Inactive(file):   152496 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        230500 kB
+Mapped:            65156 kB
+Shmem:             19220 kB
+KReclaimable:          0 kB
+Slab:             143236 kB
+SReclaimable:      39280 kB
+SUnreclaim:       103956 kB
+KernelStack:        9248 kB
+PageTables:         7676 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260534784 kB
+Committed_AS:    2265476 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      177660 kB
+VmallocChunk:          0 kB
+Percpu:             3360 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      173936 kB
+DirectMap2M:     4020224 kB
+DirectMap1G:     6291456 kB
+---
+
+START: 2026-06-11 20:17:49 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 cat /proc/meminfo
+END: 2026-06-11 20:17:50 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+MemTotal:         524288 kB
+MemFree:          479024 kB
+MemAvailable:     480512 kB
+Buffers:               0 kB
+Cached:             5320 kB
+SwapCached:            0 kB
+Active:             3832 kB
+Inactive:          32580 kB
+Active(anon):         52 kB
+Inactive(anon):    31092 kB
+Active(file):       3780 kB
+Inactive(file):     1488 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:        262144 kB
+SwapFree:         262144 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:         31100 kB
+Mapped:              900 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:17:50 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:17:50 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+{"uptime":132,"loads":[1.68896484375,0.64013671875,0.23583984375],"totalram":8337113088,"freeram":7028670464,"sharedram":19681280,"bufferram":704512,"totalswap":0,"freeswap":0,"procs":569,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:17:50 +0200
+COMMAND: osctl ct runscript kmemv1-mem512swap256 /scripts/sysinfo.py
+END: 2026-06-11 20:17:52 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+{"uptime":20,"loads":[1.68896484375,0.64013671875,0.23583984375],"totalram":536870912,"freeram":480333824,"sharedram":57344,"bufferram":5447680,"totalswap":268435456,"freeswap":268435456,"procs":580,"totalhigh":536870912,"freehigh":480333824,"mem_unit":1}
+---
+
+START: 2026-06-11 20:17:52 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512swap256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:17:57 +0200
+ELAPSED: 4.74s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:57 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:17:57 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:17:57 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem256
+END: 2026-06-11 20:17:59 +0200
+ELAPSED: 1.73s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:17:59 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem256 eth0
+END: 2026-06-11 20:18:00 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:00 +0200
+COMMAND: osctl ct set memory kmemv1-mem256 268435456 
+END: 2026-06-11 20:18:00 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:00 +0200
+COMMAND: osctl ct start kmemv1-mem256
+END: 2026-06-11 20:18:02 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:18:02 +0200
+COMMAND: osctl ct exec kmemv1-mem256 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:18:11 +0200
+ELAPSED: 9.2s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+online
+writing to stdout
+-                    100% |********************************|     7  0:00:00 ETA
+written to stdout
+---
+
+START: 2026-06-11 20:18:11 +0200
+COMMAND: osctl ct exec kmemv1-mem256 apk add python3
+END: 2026-06-11 20:18:14 +0200
+ELAPSED: 3.15s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:18:14 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:18:14 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+{"uptime":156,"loads":[1.72216796875,0.73388671875,0.279296875],"totalram":8337113088,"freeram":7119941632,"sharedram":19763200,"bufferram":704512,"totalswap":0,"freeswap":0,"procs":569,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:18:14 +0200
+COMMAND: osctl ct runscript kmemv1-mem256 /scripts/sysinfo.py
+END: 2026-06-11 20:18:16 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+{"uptime":16,"loads":[1.72216796875,0.73388671875,0.279296875],"totalram":268435456,"freeram":211996672,"sharedram":57344,"bufferram":5447680,"totalswap":0,"freeswap":0,"procs":574,"totalhigh":268435456,"freehigh":211996672,"mem_unit":1}
+---
+
+START: 2026-06-11 20:18:16 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:18:16 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6915012 kB
+MemAvailable:    5462476 kB
+Buffers:             688 kB
+Cached:           296004 kB
+SwapCached:            0 kB
+Active:           116084 kB
+Inactive:         373804 kB
+Active(anon):       5324 kB
+Inactive(anon):   218716 kB
+Active(file):     110760 kB
+Inactive(file):   155088 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        214068 kB
+Mapped:            65072 kB
+Shmem:             19300 kB
+KReclaimable:          0 kB
+Slab:             144236 kB
+SReclaimable:      39380 kB
+SUnreclaim:       104856 kB
+KernelStack:        9248 kB
+PageTables:         7704 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260534784 kB
+Committed_AS:    2254628 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      172368 kB
+VmallocChunk:          0 kB
+Percpu:             3360 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      173936 kB
+DirectMap2M:     4020224 kB
+DirectMap1G:     6291456 kB
+---
+
+START: 2026-06-11 20:18:16 +0200
+COMMAND: osctl ct exec kmemv1-mem256 cat /proc/meminfo
+END: 2026-06-11 20:18:18 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+MemTotal:         262144 kB
+MemFree:          213460 kB
+MemAvailable:     215012 kB
+Buffers:               0 kB
+Cached:             5320 kB
+SwapCached:            0 kB
+Active:             3768 kB
+Inactive:          40704 kB
+Active(anon):         52 kB
+Inactive(anon):    39152 kB
+Active(file):       3716 kB
+Inactive(file):     1552 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:         39156 kB
+Mapped:              916 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:18:18 +0200
+COMMAND: osctl ct exec kmemv1-mem256 cat /proc/swaps
+END: 2026-06-11 20:18:19 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+---
+
+START: 2026-06-11 20:18:19 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:18:23 +0200
+ELAPSED: 4.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:23 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-99a5
+END: 2026-06-11 20:18:25 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:18:25 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-99a5 eth0
+END: 2026-06-11 20:18:26 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:26 +0200
+COMMAND: osctl ct start kmemv1-99a5
+END: 2026-06-11 20:18:27 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:18:27 +0200
+COMMAND: osctl ct exec kmemv1-99a5 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:18:36 +0200
+ELAPSED: 9.1s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+-                    100% online
+|********************************|     7  0:00:00 ETA
+written to stdout
+---
+
+START: 2026-06-11 20:18:36 +0200
+COMMAND: osctl ct exec kmemv1-99a5 apk add python3
+END: 2026-06-11 20:18:40 +0200
+ELAPSED: 3.04s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:18:40 +0200
+COMMAND: cat /proc/swaps
+END: 2026-06-11 20:18:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+---
+
+START: 2026-06-11 20:18:40 +0200
+COMMAND: osctl ct exec kmemv1-99a5 cat /proc/swaps
+END: 2026-06-11 20:18:41 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+---
+
+START: 2026-06-11 20:18:41 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:18:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6858700 kB
+MemAvailable:    5404508 kB
+Buffers:             688 kB
+Cached:           292544 kB
+SwapCached:            0 kB
+Active:           116188 kB
+Inactive:         380440 kB
+Active(anon):       5396 kB
+Inactive(anon):   228916 kB
+Active(file):     110792 kB
+Inactive(file):   151524 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        224260 kB
+Mapped:            65296 kB
+Shmem:             19372 kB
+KReclaimable:          0 kB
+Slab:             147508 kB
+SReclaimable:      39596 kB
+SUnreclaim:       107912 kB
+KernelStack:        9232 kB
+PageTables:         7772 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260534784 kB
+Committed_AS:    2267984 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      180176 kB
+VmallocChunk:          0 kB
+Percpu:             3552 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      173936 kB
+DirectMap2M:     4020224 kB
+DirectMap1G:     6291456 kB
+---
+
+START: 2026-06-11 20:18:41 +0200
+COMMAND: osctl ct exec kmemv1-99a5 cat /proc/meminfo
+END: 2026-06-11 20:18:42 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6850672 kB
+MemAvailable:    5396496 kB
+Buffers:             688 kB
+Cached:           292544 kB
+SwapCached:            0 kB
+Active:           116208 kB
+Inactive:         436564 kB
+Active(anon):       5416 kB
+Inactive(anon):   285040 kB
+Active(file):     110792 kB
+Inactive(file):   151524 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        280448 kB
+Mapped:            65500 kB
+Shmem:             19372 kB
+KReclaimable:          0 kB
+Slab:             147068 kB
+SReclaimable:      39632 kB
+SUnreclaim:       107436 kB
+KernelStack:        9408 kB
+PageTables:         8236 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260534784 kB
+Committed_AS:    3210152 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      177096 kB
+VmallocChunk:          0 kB
+Percpu:             3552 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      173936 kB
+DirectMap2M:     4020224 kB
+DirectMap1G:     6291456 kB
+---
+
+START: 2026-06-11 20:18:42 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:18:43 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+{"uptime":185,"loads":[2.00390625,0.88427734375,0.341796875],"totalram":8337113088,"freeram":7021441024,"sharedram":19836928,"bufferram":704512,"totalswap":0,"freeswap":0,"procs":569,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:18:43 +0200
+COMMAND: osctl ct runscript kmemv1-99a5 /scripts/sysinfo.py
+END: 2026-06-11 20:18:44 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+{"uptime":19,"loads":[2.00341796875,0.90283203125,0.35107421875],"totalram":8337113088,"freeram":6995070976,"sharedram":19845120,"bufferram":704512,"totalswap":0,"freeswap":0,"procs":580,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:18:44 +0200
+COMMAND: osctl ct del -f --prune kmemv1-99a5 >/dev/null 2>&1 || true
+END: 2026-06-11 20:18:48 +0200
+ELAPSED: 4.43s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:48 +0200
+COMMAND: modprobe zram
+END: 2026-06-11 20:18:48 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:48 +0200
+COMMAND: zramctl --find --size 1048576
+END: 2026-06-11 20:18:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/dev/zram0
+---
+
+START: 2026-06-11 20:18:48 +0200
+COMMAND: mkswap /dev/zram0
+END: 2026-06-11 20:18:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+Setting up swapspace version 1, size = 1020 KiB (1044480 bytes)
+no label, UUID=0eca2d45-1413-47c0-8f37-81772e7dace8
+---
+
+START: 2026-06-11 20:18:49 +0200
+COMMAND: swapon /dev/zram0
+END: 2026-06-11 20:18:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:49 +0200
+COMMAND: cat /proc/swaps
+END: 2026-06-11 20:18:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+/dev/zram0                              partition	1020		0		-2
+---
+
+START: 2026-06-11 20:18:49 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512 >/dev/null 2>&1 || true
+END: 2026-06-11 20:18:49 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:49 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem512
+END: 2026-06-11 20:18:51 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:18:51 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem512 eth0
+END: 2026-06-11 20:18:51 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:51 +0200
+COMMAND: osctl ct set memory kmemv1-mem512 536870912 
+END: 2026-06-11 20:18:52 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:52 +0200
+COMMAND: osctl ct start kmemv1-mem512
+END: 2026-06-11 20:18:54 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:18:54 +0200
+COMMAND: osctl ct exec kmemv1-mem512 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:19:03 +0200
+ELAPSED: 9.29s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+online
+-                    100% |********************************|     7  0:00:00 ETA
+written to stdout
+---
+
+START: 2026-06-11 20:19:03 +0200
+COMMAND: osctl ct exec kmemv1-mem512 apk add python3
+END: 2026-06-11 20:19:06 +0200
+ELAPSED: 3.06s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:19:06 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:19:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         7010812 kB
+MemAvailable:    5557140 kB
+Buffers:             692 kB
+Cached:           293580 kB
+SwapCached:            0 kB
+Active:           116504 kB
+Inactive:         421144 kB
+Active(anon):       5480 kB
+Inactive(anon):   268908 kB
+Active(file):     111024 kB
+Inactive(file):   152236 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:          1020 kB
+SwapFree:           1020 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        264264 kB
+Mapped:            66376 kB
+Shmem:             19460 kB
+KReclaimable:          0 kB
+Slab:             149972 kB
+SReclaimable:      39696 kB
+SUnreclaim:       110276 kB
+KernelStack:        9296 kB
+PageTables:         8008 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260535804 kB
+Committed_AS:    2773108 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      179340 kB
+VmallocChunk:          0 kB
+Percpu:             3648 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      190320 kB
+DirectMap2M:     5052416 kB
+DirectMap1G:     5242880 kB
+---
+
+START: 2026-06-11 20:19:06 +0200
+COMMAND: osctl ct exec kmemv1-mem512 cat /proc/meminfo
+END: 2026-06-11 20:19:07 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+MemTotal:         524288 kB
+MemFree:          479216 kB
+MemAvailable:     480668 kB
+Buffers:               0 kB
+Cached:             5320 kB
+SwapCached:            0 kB
+Active:             3852 kB
+Inactive:           3876 kB
+Active(anon):         40 kB
+Inactive(anon):     2424 kB
+Active(file):       3812 kB
+Inactive(file):     1452 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:          2408 kB
+Mapped:              912 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:19:07 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:19:08 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+{"uptime":209,"loads":[2.08837890625,0.9921875,0.392578125],"totalram":8337113088,"freeram":7136215040,"sharedram":19922944,"bufferram":708608,"totalswap":1044480,"freeswap":1044480,"procs":572,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:19:08 +0200
+COMMAND: osctl ct runscript kmemv1-mem512 /scripts/sysinfo.py
+END: 2026-06-11 20:19:09 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+{"uptime":18,"loads":[2.0810546875,1.00927734375,0.4013671875],"totalram":536870912,"freeram":480428032,"sharedram":57344,"bufferram":5447680,"totalswap":0,"freeswap":0,"procs":577,"totalhigh":536870912,"freehigh":480428032,"mem_unit":1}
+---
+
+START: 2026-06-11 20:19:09 +0200
+COMMAND: osctl ct exec kmemv1-mem512 cat /proc/swaps
+END: 2026-06-11 20:19:10 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+---
+
+START: 2026-06-11 20:19:10 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512 >/dev/null 2>&1 || true
+END: 2026-06-11 20:19:15 +0200
+ELAPSED: 4.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:15 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512swap256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:19:16 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:16 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem512swap256
+END: 2026-06-11 20:19:17 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:19:17 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem512swap256 eth0
+END: 2026-06-11 20:19:18 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:18 +0200
+COMMAND: osctl ct set memory kmemv1-mem512swap256 536870912 268435456
+END: 2026-06-11 20:19:18 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:18 +0200
+COMMAND: osctl ct start kmemv1-mem512swap256
+END: 2026-06-11 20:19:20 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:19:20 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:19:31 +0200
+ELAPSED: 11.44s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+wget: bad address 'check-online.vpsadminos.org'
+2a03:3b40:fe:48::1  vpsadminos.org  vpsadminos.org check-online.vpsadminos.org
+---
+
+START: 2026-06-11 20:19:31 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 apk add python3
+END: 2026-06-11 20:19:34 +0200
+ELAPSED: 2.84s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:19:34 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:19:34 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         7004204 kB
+MemAvailable:    5550236 kB
+Buffers:             692 kB
+Cached:           292984 kB
+SwapCached:            0 kB
+Active:           115868 kB
+Inactive:         386020 kB
+Active(anon):       5536 kB
+Inactive(anon):   233744 kB
+Active(file):     110332 kB
+Inactive(file):   152276 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:          1020 kB
+SwapFree:           1020 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        229404 kB
+Mapped:            65420 kB
+Shmem:             19524 kB
+KReclaimable:          0 kB
+Slab:             152244 kB
+SReclaimable:      39756 kB
+SUnreclaim:       112488 kB
+KernelStack:        9216 kB
+PageTables:         7828 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260535804 kB
+Committed_AS:    2276368 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      190040 kB
+VmallocChunk:          0 kB
+Percpu:             3744 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      190320 kB
+DirectMap2M:     5052416 kB
+DirectMap1G:     5242880 kB
+---
+
+START: 2026-06-11 20:19:34 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 cat /proc/meminfo
+END: 2026-06-11 20:19:36 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+MemTotal:         524288 kB
+MemFree:          479808 kB
+MemAvailable:     481308 kB
+Buffers:               0 kB
+Cached:             4660 kB
+SwapCached:            0 kB
+Active:             3160 kB
+Inactive:          37020 kB
+Active(anon):         52 kB
+Inactive(anon):    35520 kB
+Active(file):       3108 kB
+Inactive(file):     1500 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:        262144 kB
+SwapFree:         262144 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:         35604 kB
+Mapped:              900 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:19:36 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:19:36 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+{"uptime":238,"loads":[1.8544921875,1.041015625,0.42919921875],"totalram":8337113088,"freeram":7095914496,"sharedram":19992576,"bufferram":708608,"totalswap":1044480,"freeswap":1044480,"procs":573,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:19:36 +0200
+COMMAND: osctl ct runscript kmemv1-mem512swap256 /scripts/sysinfo.py
+END: 2026-06-11 20:19:37 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+{"uptime":19,"loads":[1.8544921875,1.041015625,0.42919921875],"totalram":536870912,"freeram":481067008,"sharedram":57344,"bufferram":4771840,"totalswap":268435456,"freeswap":268435456,"procs":575,"totalhigh":536870912,"freehigh":481067008,"mem_unit":1}
+---
+
+START: 2026-06-11 20:19:37 +0200
+COMMAND: osctl ct exec kmemv1-mem512swap256 cat /proc/swaps
+END: 2026-06-11 20:19:39 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+virtual                                 virtual		268435456	0		-1
+---
+
+START: 2026-06-11 20:19:39 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem512swap256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:19:43 +0200
+ELAPSED: 4.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:43 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:19:44 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:44 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem256
+END: 2026-06-11 20:19:46 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:19:46 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem256 eth0
+END: 2026-06-11 20:19:46 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:46 +0200
+COMMAND: osctl ct set memory kmemv1-mem256 268435456 
+END: 2026-06-11 20:19:47 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:19:47 +0200
+COMMAND: osctl ct start kmemv1-mem256
+END: 2026-06-11 20:19:49 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:19:49 +0200
+COMMAND: osctl ct exec kmemv1-mem256 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:19:58 +0200
+ELAPSED: 9.14s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+online
+-                    100% |********************************|     7  0:00:00 ETA
+written to stdout
+---
+
+START: 2026-06-11 20:19:58 +0200
+COMMAND: osctl ct exec kmemv1-mem256 apk add python3
+END: 2026-06-11 20:20:01 +0200
+ELAPSED: 2.83s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:20:01 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:20:01 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+{"uptime":263,"loads":[1.9111328125,1.119140625,0.47216796875],"totalram":8337113088,"freeram":7118381056,"sharedram":20058112,"bufferram":708608,"totalswap":1044480,"freeswap":1044480,"procs":570,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:20:01 +0200
+COMMAND: osctl ct runscript kmemv1-mem256 /scripts/sysinfo.py
+END: 2026-06-11 20:20:02 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+{"uptime":16,"loads":[1.9111328125,1.119140625,0.47216796875],"totalram":268435456,"freeram":212033536,"sharedram":57344,"bufferram":5447680,"totalswap":0,"freeswap":0,"procs":575,"totalhigh":268435456,"freehigh":212033536,"mem_unit":1}
+---
+
+START: 2026-06-11 20:20:02 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:20:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6916992 kB
+MemAvailable:    5465136 kB
+Buffers:             692 kB
+Cached:           297244 kB
+SwapCached:            0 kB
+Active:           116780 kB
+Inactive:         396388 kB
+Active(anon):       5596 kB
+Inactive(anon):   240776 kB
+Active(file):     111184 kB
+Inactive(file):   155612 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:          1020 kB
+SwapFree:           1020 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        235972 kB
+Mapped:            65244 kB
+Shmem:             19592 kB
+KReclaimable:          0 kB
+Slab:             152800 kB
+SReclaimable:      39792 kB
+SUnreclaim:       113008 kB
+KernelStack:        9264 kB
+PageTables:         7884 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260535804 kB
+Committed_AS:    2286988 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      175400 kB
+VmallocChunk:          0 kB
+Percpu:             3840 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      190320 kB
+DirectMap2M:     5052416 kB
+DirectMap1G:     5242880 kB
+---
+
+START: 2026-06-11 20:20:02 +0200
+COMMAND: osctl ct exec kmemv1-mem256 cat /proc/meminfo
+END: 2026-06-11 20:20:04 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+MemTotal:         262144 kB
+MemFree:          213496 kB
+MemAvailable:     218456 kB
+Buffers:               0 kB
+Cached:             8852 kB
+SwapCached:            0 kB
+Active:             3892 kB
+Inactive:          43456 kB
+Active(anon):         52 kB
+Inactive(anon):    38496 kB
+Active(file):       3840 kB
+Inactive(file):     4960 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:         38616 kB
+Mapped:              920 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:20:04 +0200
+COMMAND: osctl ct exec kmemv1-mem256 cat /proc/swaps
+END: 2026-06-11 20:20:05 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+---
+
+START: 2026-06-11 20:20:05 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256 >/dev/null 2>&1 || true
+END: 2026-06-11 20:20:10 +0200
+ELAPSED: 4.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:20:10 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256swap128 >/dev/null 2>&1 || true
+END: 2026-06-11 20:20:10 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:20:10 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-mem256swap128
+END: 2026-06-11 20:20:12 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:20:12 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-mem256swap128 eth0
+END: 2026-06-11 20:20:12 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:20:12 +0200
+COMMAND: osctl ct set memory kmemv1-mem256swap128 268435456 134217728
+END: 2026-06-11 20:20:13 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:20:13 +0200
+COMMAND: osctl ct start kmemv1-mem256swap128
+END: 2026-06-11 20:20:15 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:20:15 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:20:23 +0200
+ELAPSED: 8.91s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+online
+-                    100% |********************************|     7  0:00:00 ETA
+written to stdout
+---
+
+START: 2026-06-11 20:20:23 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 apk add python3
+END: 2026-06-11 20:20:27 +0200
+ELAPSED: 3.21s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:20:27 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:20:27 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+{"uptime":289,"loads":[1.72509765625,1.14111328125,0.49755859375],"totalram":8337113088,"freeram":7124570112,"sharedram":20140032,"bufferram":708608,"totalswap":1044480,"freeswap":1044480,"procs":573,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:20:27 +0200
+COMMAND: osctl ct runscript kmemv1-mem256swap128 /scripts/sysinfo.py
+END: 2026-06-11 20:20:28 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+{"uptime":16,"loads":[1.74755859375,1.15576171875,0.505859375],"totalram":268435456,"freeram":211722240,"sharedram":57344,"bufferram":5447680,"totalswap":134217728,"freeswap":134217728,"procs":578,"totalhigh":268435456,"freehigh":211722240,"mem_unit":1}
+---
+
+START: 2026-06-11 20:20:28 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 cat /proc/swaps
+END: 2026-06-11 20:20:30 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+virtual                                 virtual		134217728	0		-1
+---
+
+START: 2026-06-11 20:20:30 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:20:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6895544 kB
+MemAvailable:    5443636 kB
+Buffers:             692 kB
+Cached:           297320 kB
+SwapCached:            0 kB
+Active:           116988 kB
+Inactive:         410364 kB
+Active(anon):       5700 kB
+Inactive(anon):   254848 kB
+Active(file):     111288 kB
+Inactive(file):   155516 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:          1020 kB
+SwapFree:           1020 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        250264 kB
+Mapped:            65660 kB
+Shmem:             19668 kB
+KReclaimable:          0 kB
+Slab:             154996 kB
+SReclaimable:      39676 kB
+SUnreclaim:       115320 kB
+KernelStack:        9296 kB
+PageTables:         7952 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260535804 kB
+Committed_AS:    2747740 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      184716 kB
+VmallocChunk:          0 kB
+Percpu:             4032 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      190320 kB
+DirectMap2M:     5052416 kB
+DirectMap1G:     5242880 kB
+---
+
+START: 2026-06-11 20:20:30 +0200
+COMMAND: osctl ct exec kmemv1-mem256swap128 cat /proc/meminfo
+END: 2026-06-11 20:20:31 +0200
+ELAPSED: 1.34s
+STATUS: 0
+OUTPUT:
+MemTotal:         262144 kB
+MemFree:          213656 kB
+MemAvailable:     218516 kB
+Buffers:               0 kB
+Cached:             8852 kB
+SwapCached:            0 kB
+Active:             3980 kB
+Inactive:           7284 kB
+Active(anon):         44 kB
+Inactive(anon):     2424 kB
+Active(file):       3936 kB
+Inactive(file):     4860 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:        131072 kB
+SwapFree:         131072 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:          2412 kB
+Mapped:              908 kB
+Shmem:                56 kB
+KReclaimable:          0 kB
+Slab:                  0 kB
+SReclaimable:          0 kB
+SUnreclaim:            0 kB
+KernelStack:           0 kB
+PageTables:            0 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+---
+
+START: 2026-06-11 20:20:31 +0200
+COMMAND: osctl ct del -f --prune kmemv1-mem256swap128 >/dev/null 2>&1 || true
+END: 2026-06-11 20:20:36 +0200
+ELAPSED: 4.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:20:36 +0200
+COMMAND: osctl ct new --distribution alpine kmemv1-da98
+END: 2026-06-11 20:20:37 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 20:20:37 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 kmemv1-da98 eth0
+END: 2026-06-11 20:20:38 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:20:38 +0200
+COMMAND: osctl ct start kmemv1-da98
+END: 2026-06-11 20:20:39 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 20:20:39 +0200
+COMMAND: osctl ct exec kmemv1-da98 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-06-11 20:20:48 +0200
+ELAPSED: 8.94s
+STATUS: 0
+OUTPUT:
+ping: bad address 'check-online.vpsadminos.org'
+sh: curl: not found
+Connecting to check-online.vpsadminos.org (37.205.14.58:443)
+writing to stdout
+-                    100% |********************************|     7  0:00:00 ETAonline
+
+written to stdout
+---
+
+START: 2026-06-11 20:20:48 +0200
+COMMAND: osctl ct exec kmemv1-da98 apk add python3
+END: 2026-06-11 20:20:51 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+( 1/15) Installing libbz2 (1.0.8-r6)
+( 2/15) Installing libexpat (2.8.1-r0)
+( 3/15) Installing libffi (3.5.2-r1)
+( 4/15) Installing gdbm (1.26-r0)
+( 5/15) Installing xz-libs (5.8.3-r0)
+( 6/15) Installing libgcc (15.2.0-r5)
+( 7/15) Installing libstdc++ (15.2.0-r5)
+( 8/15) Installing mpdecimal (4.0.1-r0)
+( 9/15) Installing libpanelw (6.6_p20260516-r0)
+(10/15) Installing readline (8.3.3-r1)
+(11/15) Installing sqlite-libs (3.53.2-r0)
+(12/15) Installing python3 (3.14.5-r0)
+(13/15) Installing python3-pycache-pyc0 (3.14.5-r0)
+(14/15) Installing pyc (3.14.5-r0)
+(15/15) Installing python3-pyc (3.14.5-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 54.5 MiB in 53 packages
+---
+
+START: 2026-06-11 20:20:51 +0200
+COMMAND: cat /proc/swaps
+END: 2026-06-11 20:20:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+/dev/zram0                              partition	1020		0		-2
+---
+
+START: 2026-06-11 20:20:51 +0200
+COMMAND: osctl ct exec kmemv1-da98 cat /proc/swaps
+END: 2026-06-11 20:20:53 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+Filename				Type		Size		Used		Priority
+/dev/zram0                              partition	1020		0		-2
+---
+
+START: 2026-06-11 20:20:53 +0200
+COMMAND: cat /proc/meminfo
+END: 2026-06-11 20:20:53 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6864540 kB
+MemAvailable:    5411140 kB
+Buffers:             692 kB
+Cached:           293868 kB
+SwapCached:            0 kB
+Active:           116936 kB
+Inactive:         393616 kB
+Active(anon):       5756 kB
+Inactive(anon):   241532 kB
+Active(file):     111180 kB
+Inactive(file):   152084 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:          1020 kB
+SwapFree:           1020 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        236640 kB
+Mapped:            66688 kB
+Shmem:             19748 kB
+KReclaimable:          0 kB
+Slab:             158312 kB
+SReclaimable:      40236 kB
+SUnreclaim:       118076 kB
+KernelStack:        9268 kB
+PageTables:         8236 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260535804 kB
+Committed_AS:    2292592 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      193488 kB
+VmallocChunk:          0 kB
+Percpu:             4160 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      190320 kB
+DirectMap2M:     5052416 kB
+DirectMap1G:     5242880 kB
+---
+
+START: 2026-06-11 20:20:53 +0200
+COMMAND: osctl ct exec kmemv1-da98 cat /proc/meminfo
+END: 2026-06-11 20:20:54 +0200
+ELAPSED: 1.35s
+STATUS: 0
+OUTPUT:
+MemTotal:        8141712 kB
+MemFree:         6781536 kB
+MemAvailable:    5328140 kB
+Buffers:             692 kB
+Cached:           293864 kB
+SwapCached:            0 kB
+Active:           116948 kB
+Inactive:         456524 kB
+Active(anon):       5768 kB
+Inactive(anon):   304432 kB
+Active(file):     111180 kB
+Inactive(file):   152092 kB
+Unevictable:       20828 kB
+Mlocked:           20828 kB
+SwapTotal:          1020 kB
+SwapFree:           1020 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        299860 kB
+Mapped:            65700 kB
+Shmem:             19744 kB
+KReclaimable:          0 kB
+Slab:             158376 kB
+SReclaimable:      40236 kB
+SUnreclaim:       118140 kB
+KernelStack:        9340 kB
+PageTables:         8384 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    260535804 kB
+Committed_AS:    3241344 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      193540 kB
+VmallocChunk:          0 kB
+Percpu:             4160 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      190320 kB
+DirectMap2M:     5052416 kB
+DirectMap1G:     5242880 kB
+---
+
+START: 2026-06-11 20:20:54 +0200
+COMMAND: sysinfo-to-json
+END: 2026-06-11 20:20:54 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+{"uptime":316,"loads":[1.63525390625,1.17529296875,0.53125],"totalram":8337113088,"freeram":6944235520,"sharedram":20217856,"bufferram":708608,"totalswap":1044480,"freeswap":1044480,"procs":571,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:20:54 +0200
+COMMAND: osctl ct runscript kmemv1-da98 /scripts/sysinfo.py
+END: 2026-06-11 20:20:56 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+{"uptime":18,"loads":[1.63525390625,1.17529296875,0.53125],"totalram":8337113088,"freeram":6983413760,"sharedram":20217856,"bufferram":708608,"totalswap":1044480,"freeswap":1044480,"procs":584,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-06-11 20:20:56 +0200
+COMMAND: osctl ct del -f --prune kmemv1-da98 >/dev/null 2>&1 || true
+END: 2026-06-11 20:21:00 +0200
+ELAPSED: 4.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:21:00 +0200
+COMMAND: swapoff /dev/zram0
+END: 2026-06-11 20:21:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:21:00 +0200
+COMMAND: zramctl --reset /dev/zram0
+END: 2026-06-11 20:21:00 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:21:00 +0200
+COMMAND: modprobe -r zram
+END: 2026-06-11 20:21:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:21:00 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-06-11 20:21:01 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+kcpuv1-bb2a
+ktmpfsv1-6ac7
+---
+
+START: 2026-06-11 20:21:01 +0200
+COMMAND: awk 'NR > 1 { print $1 }' /proc/swaps || true
+END: 2026-06-11 20:21:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:21:01 +0200
+COMMAND: for dev in /dev/zram*; do [ -e "$dev" ] && zramctl --reset "$dev" >/dev/null 2>&1 || true; done
+END: 2026-06-11 20:21:01 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:21:01 +0200
+COMMAND: modprobe -r zram >/dev/null 2>&1 || true
+END: 2026-06-11 20:21:01 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:38:25 +0200
+COMMAND: poweroff -f
+END: 2026-06-11 20:38:25 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

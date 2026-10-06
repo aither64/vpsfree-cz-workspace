@@ -1,0 +1,87 @@
+SHELL: 0
+
+START: 2026-06-11 20:18:07 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-11 20:18:07 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:07 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-11 20:18:07 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:07 +0200
+COMMAND: sv check firewall
+END: 2026-06-11 20:18:07 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: firewall: (pid 838) 0s
+---
+
+START: 2026-06-11 20:18:07 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | grep -- "-j LOG" | grep -q -- "refused connection"
+END: 2026-06-11 20:18:07 +0200
+ELAPSED: 0.11s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:08 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | grep -- "-j LOG" | grep -q -- "refused connection"
+END: 2026-06-11 20:18:08 +0200
+ELAPSED: 0.06s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:09 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | grep -- "-j LOG" | grep -q -- "refused connection"
+END: 2026-06-11 20:18:09 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:10 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | grep -- "-j LOG" | grep -q -- "refused connection"
+END: 2026-06-11 20:18:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:10 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | { grep -c -- " -j LOG" || true; }
+END: 2026-06-11 20:18:10 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-11 20:19:27 +0200
+COMMAND: poweroff -f
+END: 2026-06-11 20:19:28 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

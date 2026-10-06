@@ -1,0 +1,278 @@
+SHELL: 0
+
+START: 2026-06-12 00:41:07 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:41:07 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:41:07 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:41:07 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:41:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:09 +0200
+ELAPSED: 2.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:10 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:12 +0200
+ELAPSED: 0.53s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:13 +0200
+ELAPSED: 0.53s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:15 +0200
+ELAPSED: 0.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:17 +0200
+ELAPSED: 0.73s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:18 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:20 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:21 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:21 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:41:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:23 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-12 00:41:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:25 +0200
+ELAPSED: 0.53s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-06-12 00:41:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:41:26 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-12 00:41:26 +0200
+COMMAND: sv check nfsd
+END: 2026-06-12 00:41:26 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nfsd: (pid 808) 20s
+---
+
+START: 2026-06-12 00:41:26 +0200
+COMMAND: test -d /storage/vpsfree.cz/crashdump
+END: 2026-06-12 00:41:26 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:41:26 +0200
+COMMAND: zfs share -a
+END: 2026-06-12 00:41:26 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:41:26 +0200
+COMMAND: exportfs -v | tr '\n\t' '  ' | grep -F /storage/vpsfree.cz/crashdump | grep -F 192.168.10.11
+END: 2026-06-12 00:41:26 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/storage/vpsfree.cz/crashdump   192.168.10.11/32(sync,wdelay,hide,no_subtree_check,mountpoint,sec=sys,rw,secure,no_root_squash,no_all_squash) 
+---
+
+START: 2026-06-12 00:41:49 +0200
+COMMAND: ping -c 1 192.168.10.11
+END: 2026-06-12 00:41:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.10.11 (192.168.10.11) 56(84) bytes of data.
+64 bytes from 192.168.10.11: icmp_seq=1 ttl=64 time=0.776 ms
+
+--- 192.168.10.11 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.776/0.776/0.776/0.000 ms
+---
+
+START: 2026-06-12 00:42:46 +0200
+COMMAND: cat /storage/vpsfree.cz/crashdump/host-stage.txt
+END: 2026-06-12 00:42:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+host-stage
+---
+
+START: 2026-06-12 00:45:20 +0200
+COMMAND: target=$(find /storage/vpsfree.cz/crashdump/crasher -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)
+test -n "$target"
+test -s "$target/dmesg"
+test -f "$target/kernel-version"
+test -f "$target/cmdline"
+test -f "$target/inspect.exit-status"
+test -f "$target/inspect/status"
+test -f "$target/inspect/manifest"
+test -f "$target/inspect/ps-active.txt"
+test -f "$target/inspect/bt-active.txt"
+END: 2026-06-12 00:45:20 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:45:20 +0200
+COMMAND: find /storage/vpsfree.cz/crashdump/crasher -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1
+END: 2026-06-12 00:45:20 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+/storage/vpsfree.cz/crashdump/crasher/20260611T224252
+---
+
+START: 2026-06-12 00:45:20 +0200
+COMMAND: cat /storage/vpsfree.cz/crashdump/crasher/20260611T224252/inspect.exit-status
+END: 2026-06-12 00:45:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-12 00:45:21 +0200
+COMMAND: grep -F hello\ crash\ kernel\ nfs\ inspect\ test /storage/vpsfree.cz/crashdump/crasher/20260611T224252/dmesg
+END: 2026-06-12 00:45:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+[   78.135066] [   T2165] hello crash kernel nfs inspect test
+---
+
+START: 2026-06-12 00:45:21 +0200
+COMMAND: grep -F 'vmcore=/proc/vmcore' /storage/vpsfree.cz/crashdump/crasher/20260611T224252/inspect/manifest
+END: 2026-06-12 00:45:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+vmcore=/proc/vmcore
+---
+
+START: 2026-06-12 00:45:21 +0200
+COMMAND: grep -F 'ps-active.txt 0' /storage/vpsfree.cz/crashdump/crasher/20260611T224252/inspect/status
+END: 2026-06-12 00:45:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ps-active.txt 0
+---
+
+START: 2026-06-12 00:45:21 +0200
+COMMAND: grep -F 'bt-active.txt 0' /storage/vpsfree.cz/crashdump/crasher/20260611T224252/inspect/status
+END: 2026-06-12 00:45:21 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+bt-active.txt 0
+---
+
+START: 2026-06-12 00:45:21 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:45:21 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

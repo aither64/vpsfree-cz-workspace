@@ -1,0 +1,496 @@
+SHELL: 0
+
+START: 2026-06-12 00:08:22 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:08:22 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:22 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:08:22 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:25 +0200
+ELAPSED: 2.76s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:27 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:28 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:30 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:32 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:33 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:35 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:37 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:38 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:08:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:40 +0200
+ELAPSED: 0.7s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-12 00:08:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:08:41 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-12 00:08:41 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-12 00:08:42 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 22:08:42 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-12 00:08:42 +0200
+COMMAND: osctl ct new --distribution alpine startedct
+END: 2026-06-12 00:08:44 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-12 00:08:44 +0200
+COMMAND: osctl ct unset start-menu startedct
+END: 2026-06-12 00:08:45 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:45 +0200
+COMMAND: osctl ct new --distribution alpine stoppedct
+END: 2026-06-12 00:08:46 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-12 00:08:46 +0200
+COMMAND: osctl ct netif new routed stoppedct eth0
+END: 2026-06-12 00:08:47 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:47 +0200
+COMMAND: osctl ct netif ip add stoppedct eth0 1.2.3.4/32
+END: 2026-06-12 00:08:48 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:48 +0200
+COMMAND: osctl ct start startedct
+END: 2026-06-12 00:08:49 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-12 00:08:49 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-06-12 00:08:50 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-06-12 00:08:50 +0200
+COMMAND: osctl ct exec  startedct echo hi
+END: 2026-06-12 00:08:52 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:08:52 +0200
+COMMAND: osctl ct exec  startedct sh -c '>&2 echo hi'
+END: 2026-06-12 00:08:53 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:08:53 +0200
+COMMAND: osctl ct exec  startedct sh -c 'exit 33'
+END: 2026-06-12 00:08:54 +0200
+ELAPSED: 1.47s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:08:54 +0200
+COMMAND: osctl ct exec  startedct totally-madeup-command
+END: 2026-06-12 00:08:56 +0200
+ELAPSED: 1.55s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:08:56 +0200
+COMMAND: osctl ct show -H -o state stoppedct
+END: 2026-06-12 00:08:57 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+stopped
+
+---
+
+START: 2026-06-12 00:08:57 +0200
+COMMAND: osctl ct exec -r stoppedct echo hi
+END: 2026-06-12 00:09:00 +0200
+ELAPSED: 3.26s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:00 +0200
+COMMAND: osctl ct exec -r stoppedct sh -c '>&2 echo hi'
+END: 2026-06-12 00:09:03 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:03 +0200
+COMMAND: osctl ct exec -r stoppedct sh -c 'exit 33'
+END: 2026-06-12 00:09:05 +0200
+ELAPSED: 2.7s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:05 +0200
+COMMAND: osctl ct exec -r stoppedct totally-madeup-command
+END: 2026-06-12 00:09:08 +0200
+ELAPSED: 2.67s
+STATUS: 255
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:08 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-06-12 00:09:09 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-06-12 00:09:09 +0200
+COMMAND: osctl ct exec -r startedct echo hi
+END: 2026-06-12 00:09:10 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:10 +0200
+COMMAND: osctl ct exec -r startedct sh -c '>&2 echo hi'
+END: 2026-06-12 00:09:12 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:12 +0200
+COMMAND: osctl ct exec -r startedct sh -c 'exit 33'
+END: 2026-06-12 00:09:13 +0200
+ELAPSED: 1.48s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:13 +0200
+COMMAND: osctl ct exec -r startedct totally-madeup-command
+END: 2026-06-12 00:09:15 +0200
+ELAPSED: 1.58s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:15 +0200
+COMMAND: osctl ct show -H -o state stoppedct
+END: 2026-06-12 00:09:15 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+stopped
+
+---
+
+START: 2026-06-12 00:09:15 +0200
+COMMAND: osctl ct exec -rn stoppedct echo hi
+END: 2026-06-12 00:09:19 +0200
+ELAPSED: 3.16s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:19 +0200
+COMMAND: osctl ct exec -rn stoppedct sh -c '>&2 echo hi'
+END: 2026-06-12 00:09:21 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:21 +0200
+COMMAND: osctl ct exec -rn stoppedct sh -c 'exit 33'
+END: 2026-06-12 00:09:24 +0200
+ELAPSED: 2.8s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:24 +0200
+COMMAND: osctl ct exec -rn stoppedct totally-madeup-command
+END: 2026-06-12 00:09:27 +0200
+ELAPSED: 2.78s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:27 +0200
+COMMAND: osctl ct exec -rn stoppedct ping -c 1 1.2.3.4
+END: 2026-06-12 00:09:30 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4): 56 data bytes
+64 bytes from 1.2.3.4: seq=0 ttl=64 time=0.135 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.135/0.135/0.135 ms
+---
+
+START: 2026-06-12 00:09:30 +0200
+COMMAND: osctl ct exec -rn stoppedct ping -c 1 255.255.255.254
+END: 2026-06-12 00:09:33 +0200
+ELAPSED: 2.79s
+STATUS: 0
+OUTPUT:
+PING 255.255.255.254 (255.255.255.254): 56 data bytes
+64 bytes from 255.255.255.254: seq=0 ttl=64 time=0.118 ms
+
+--- 255.255.255.254 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.118/0.118/0.118 ms
+---
+
+START: 2026-06-12 00:09:33 +0200
+COMMAND: osctl ct exec -rn stoppedct ip route show
+END: 2026-06-12 00:09:35 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+default via 255.255.255.254 dev eth0 
+255.255.255.254 dev eth0 scope link 
+---
+
+START: 2026-06-12 00:09:35 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-06-12 00:09:36 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-06-12 00:09:36 +0200
+COMMAND: osctl ct exec -rn startedct echo hi
+END: 2026-06-12 00:09:37 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:37 +0200
+COMMAND: osctl ct exec -rn startedct sh -c '>&2 echo hi'
+END: 2026-06-12 00:09:40 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-06-12 00:09:40 +0200
+COMMAND: osctl ct exec -rn startedct sh -c 'exit 33'
+END: 2026-06-12 00:09:42 +0200
+ELAPSED: 1.84s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:42 +0200
+COMMAND: osctl ct exec -rn startedct totally-madeup-command
+END: 2026-06-12 00:09:44 +0200
+ELAPSED: 1.6s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-06-12 00:09:44 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:09:48 +0200
+ELAPSED: 4.42s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/2] Stopping container tank:startedct
+[2/2] Stopping container tank:stoppedct
+Unregistering users, groups and containers
+---
+

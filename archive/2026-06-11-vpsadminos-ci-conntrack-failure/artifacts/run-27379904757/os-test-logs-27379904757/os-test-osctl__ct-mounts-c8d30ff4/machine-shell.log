@@ -1,0 +1,354 @@
+SHELL: 0
+
+START: 2026-06-12 00:34:31 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:34:31 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:34:31 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:34:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:34:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:33 +0200
+ELAPSED: 2.12s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:35 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:36 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:38 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:40 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:41 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:43 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:44 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:46 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:34:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:48 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-12 00:34:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:34:49 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-12 00:34:49 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-12 00:34:50 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 22:34:49 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-12 00:34:50 +0200
+COMMAND: zfs create -p tank/test/stopped
+END: 2026-06-12 00:34:50 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:34:50 +0200
+COMMAND: zfs create -p tank/test/started
+END: 2026-06-12 00:34:50 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:34:50 +0200
+COMMAND: echo stopped > /tank/test/stopped/stopped.txt
+END: 2026-06-12 00:34:50 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:34:50 +0200
+COMMAND: echo started > /tank/test/started/started.txt
+END: 2026-06-12 00:34:50 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:34:50 +0200
+COMMAND: osctl ct new --distribution alpine testct
+END: 2026-06-12 00:34:53 +0200
+ELAPSED: 3.23s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-12 00:34:53 +0200
+COMMAND: osctl ct unset start-menu testct
+END: 2026-06-12 00:34:53 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:34:53 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-12 00:34:55 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-12 00:34:55 +0200
+COMMAND: osctl ct exec testct ls /mnt/stopped
+END: 2026-06-12 00:34:57 +0200
+ELAPSED: 1.53s
+STATUS: 1
+OUTPUT:
+ls: /mnt/stopped: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-12 00:34:57 +0200
+COMMAND: osctl ct exec testct ls /mnt/started
+END: 2026-06-12 00:34:58 +0200
+ELAPSED: 1.53s
+STATUS: 1
+OUTPUT:
+ls: /mnt/started: No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-12 00:34:58 +0200
+COMMAND: osctl ct stop testct
+END: 2026-06-12 00:35:02 +0200
+ELAPSED: 4.0s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-06-12 00:35:02 +0200
+COMMAND: osctl ct mounts new --fs /tank/test/stopped --type bind --opts bind,create=dir --mountpoint /mnt/stopped testct
+END: 2026-06-12 00:35:03 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:35:03 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-12 00:35:05 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-12 00:35:05 +0200
+COMMAND: osctl ct exec testct cat /mnt/stopped/stopped.txt
+END: 2026-06-12 00:35:06 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+stopped
+---
+
+START: 2026-06-12 00:35:06 +0200
+COMMAND: osctl ct exec testct cat /mnt/started/started.txt
+END: 2026-06-12 00:35:07 +0200
+ELAPSED: 1.48s
+STATUS: 1
+OUTPUT:
+cat: can't open '/mnt/started/started.txt': No such file or directory
+error: executed command failed
+---
+
+START: 2026-06-12 00:35:07 +0200
+COMMAND: osctl ct mounts new --fs /tank/test/started --type bind --opts bind,create=dir --mountpoint /mnt/started testct
+END: 2026-06-12 00:35:09 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:35:09 +0200
+COMMAND: osctl ct exec testct cat /mnt/started/started.txt
+END: 2026-06-12 00:35:11 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+started
+---
+
+START: 2026-06-12 00:35:11 +0200
+COMMAND: ct mounts new --fs tmpfs --type tmpfs --opts create=dir --mountpoint /mnt/tmpfs --no-map-ids testct
+END: 2026-06-12 00:35:11 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:35:11 +0200
+COMMAND: ct mounts activate testct /mnt/tmpfs
+END: 2026-06-12 00:35:12 +0200
+ELAPSED: 0.84s
+STATUS: 1
+OUTPUT:
+error: can activate only bind mounts, not tmpfs
+---
+
+START: 2026-06-12 00:35:12 +0200
+COMMAND: ct restart testct
+END: 2026-06-12 00:35:18 +0200
+ELAPSED: 5.39s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-12 00:35:18 +0200
+COMMAND: osctl ct exec testct grep /mnt/tmpfs /proc/mounts
+END: 2026-06-12 00:35:19 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+tmpfs /mnt/tmpfs tmpfs rw,relatime,uid=0,gid=0 0 0
+---
+
+START: 2026-06-12 00:35:19 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:35:24 +0200
+ELAPSED: 4.44s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:testct
+Unregistering users, groups and containers
+---
+

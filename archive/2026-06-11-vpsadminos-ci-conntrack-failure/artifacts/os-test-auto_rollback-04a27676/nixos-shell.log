@@ -1,0 +1,50 @@
+SHELL: 0
+
+START: 2026-06-09 22:01:24 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-09 22:01:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:01:24 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-09 22:01:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:01:24 +0200
+COMMAND: mkdir -p /root/.ssh && chmod 700 /root/.ssh
+END: 2026-06-09 22:01:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:01:24 +0200
+COMMAND: cat > /root/.ssh/authorized_keys <<'EOF'
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH1ffS7nlkztuBSUmyVNr+HXjrJGufdBAfZuJ0w6fjPK github-runner@gh-runner1
+EOF
+chmod 600 /root/.ssh/authorized_keys
+END: 2026-06-09 22:01:24 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-09 22:02:09 +0200
+COMMAND: poweroff
+END: 2026-06-09 22:02:09 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+

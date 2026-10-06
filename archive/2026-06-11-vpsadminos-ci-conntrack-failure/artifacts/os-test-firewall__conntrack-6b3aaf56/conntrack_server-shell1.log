@@ -1,0 +1,2151 @@
+SHELL: 1
+
+START: 2026-06-11 20:18:07 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-11 20:18:07 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:07 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-11 20:18:07 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:07 +0200
+COMMAND: sv check firewall
+END: 2026-06-11 20:18:08 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: firewall: (pid 823) 0s
+---
+
+START: 2026-06-11 20:18:08 +0200
+COMMAND: sv check firewall-test-server
+END: 2026-06-11 20:18:08 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: firewall-test-server: (pid 821) 0s
+---
+
+START: 2026-06-11 20:18:08 +0200
+COMMAND: ip netns exec client ip addr show veth-client | grep -q 192.168.11.11
+END: 2026-06-11 20:18:08 +0200
+ELAPSED: 0.09s
+STATUS: 1
+OUTPUT:
+Cannot open network namespace "client": No such file or directory
+---
+
+START: 2026-06-11 20:18:09 +0200
+COMMAND: ip netns exec client ip addr show veth-client | grep -q 192.168.11.11
+END: 2026-06-11 20:18:09 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+Cannot open network namespace "client": No such file or directory
+---
+
+START: 2026-06-11 20:18:10 +0200
+COMMAND: ip netns exec client ip addr show veth-client | grep -q 192.168.11.11
+END: 2026-06-11 20:18:10 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:10 +0200
+COMMAND: timeout 4s ip netns exec client ruby - <<'RUBY'
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(3) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.11.11"))
+    socket.connect(Socket.sockaddr_in(8081, "192.168.11.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-11 20:18:10 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+open-tcp
+---
+
+START: 2026-06-11 20:18:10 +0200
+COMMAND: iptables-save | grep -q -- "^-A nixos-fw -j nixos-fw-log-refuse"
+END: 2026-06-11 20:18:10 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:11 +0200
+COMMAND: iptables-save | grep -q -- "^-A nixos-fw -j nixos-fw-log-refuse"
+END: 2026-06-11 20:18:11 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:11 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | { grep -c -- " -j LOG" || true; }
+END: 2026-06-11 20:18:11 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-11 20:18:11 +0200
+COMMAND: iptables-save | grep -Eq -- "-m conntrack --ctstate (RELATED,ESTABLISHED|ESTABLISHED,RELATED)"
+END: 2026-06-11 20:18:11 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:11 +0200
+COMMAND: iptables-save -t raw | { grep -c -- "--comment nixos-fw-notrack" || true; }
+END: 2026-06-11 20:18:11 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-11 20:18:11 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY' >/tmp/tcp-hold-8080.log 2>&1 &
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(20) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.11.11"))
+    socket.connect(Socket.sockaddr_in(8080, "192.168.11.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+    sleep 15
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-11 20:18:11 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:11 +0200
+COMMAND: conntrack -L -p tcp 2>/dev/null | grep -q "dport=8080"
+END: 2026-06-11 20:18:11 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:12 +0200
+COMMAND: conntrack -L -p tcp 2>/dev/null | grep -q "dport=8080"
+END: 2026-06-11 20:18:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 20:18:12 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(3) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.11.11"))
+    socket.connect(Socket.sockaddr_in(8080, "192.168.11.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-11 20:18:12 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+protected-tcp
+---
+
+START: 2026-06-11 20:18:12 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(3) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.11.11"))
+    socket.connect(Socket.sockaddr_in(8080, "192.168.11.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-11 20:18:12 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+protected-tcp
+---
+
+START: 2026-06-11 20:18:12 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+require 'socket'
+
+socket = UDPSocket.new
+socket.bind("192.168.11.11", 0)
+socket.connect("192.168.11.10", 5353)
+socket.send("hello", 0)
+
+raise 'timeout' unless IO.select([socket], nil, nil, 3)
+
+puts socket.recv(4096).strip
+RUBY
+END: 2026-06-11 20:18:12 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+protected-udp
+---
+
+START: 2026-06-11 20:18:12 +0200
+COMMAND: set +e
+
+section() {
+  printf '\n===== %s =====\n' "$*"
+}
+
+run() {
+  section "$*"
+  "$@" 2>&1
+}
+
+run_sh() {
+  section "$1"
+  sh -c "$1" 2>&1
+}
+
+show_file() {
+  file="$1"
+  [ -e "$file" ] || return 0
+  section "$file"
+  cat "$file" 2>&1
+}
+
+show_glob() {
+  pattern="$1"
+
+  for file in $pattern; do
+    [ -e "$file" ] || continue
+    show_file "$file"
+  done
+}
+
+run date -Ins
+run uname -a
+run uptime
+run free -m
+run df -h
+run dmesg -T
+run ps -eo pid,ppid,stat,comm,args
+run_sh 'sv status /service/*'
+
+if command -v osctl >/dev/null 2>&1; then
+  run_sh 'timeout 10 osctl pool ls'
+  run_sh 'timeout 10 osctl ct ls'
+  run_sh 'timeout 10 osctl ct ls -H -o pool,id,state,init-pid,log-file 2>/dev/null || true'
+fi
+
+run_sh 'ls -la /run/osctl /run/osctl/pools /service/osctld /var/log /tank/log /tank/log/ct 2>/dev/null'
+
+show_file /var/log/osctld
+show_file /var/log/messages
+show_glob '/tank/log/ct/*'
+show_glob '/tank/log/ct/*.destroyed'
+show_glob '/tmp/osctld-restart-jobs/*'
+show_glob '/tmp/osctld-restart-blocks/*/*'
+END: 2026-06-11 20:18:15 +0200
+ELAPSED: 3.13s
+STATUS: 0
+OUTPUT:
+
+===== date -Ins =====
+2026-06-11T20:18:12,265355780+02:00
+
+===== uname -a =====
+Linux firewall-conntrack-server 6.12.93 #1-vpsAdminOS SMP PREEMPT_DYNAMIC Wed Jun 10 21:00:09 UTC 2026 x86_64 GNU/Linux
+
+===== uptime =====
+ 20:18:12  up   0:00,  5 users,  load average: 0.08, 0.02, 0.01
+
+===== free -m =====
+               total        used        free      shared  buff/cache   available
+Mem:            7951        1978        7446          14         201        5973
+Swap:              0           0           0
+
+===== df -h =====
+Filesystem      Size  Used Avail Use% Mounted on
+root            6.0G  9.0M  6.0G   1% /
+/dev/vda        377M  377M     0 100% /nix/.ro-store
+tmpfs           2.0G     0  2.0G   0% /nix/.overlay-store
+overlay         2.0G     0  2.0G   0% /nix/store
+devtmpfs        398M     0  398M   0% /dev
+tmpfs           3.9G     0  3.9G   0% /tmp
+tmpfs           2.0G  4.1M  2.0G   1% /run
+tmpfs           3.9G  4.0K  3.9G   1% /dev/shm
+tmpfs           3.9G  1.2M  3.9G   1% /run/wrappers
+vmSharedDir     400G  143G  258G  36% /run/osvm/shared-dir
+
+===== dmesg -T =====
+[Thu Jun 11 20:17:53 2026] Linux version 6.12.93 (nixbld@localhost) (gcc (GCC) 15.2.0, GNU ld (GNU Binutils) 2.46) #1-vpsAdminOS SMP PREEMPT_DYNAMIC Wed Jun 10 21:00:09 UTC 2026
+[Thu Jun 11 20:17:53 2026] Command line: console=ttyS0 init=/nix/store/hmskvg02xfnarz0s0r690fnkph1i0v97-vpsadminos-system-firewall-conntrack-server-26.05.git.11a751d/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+[Thu Jun 11 20:17:53 2026] BIOS-provided physical RAM map:
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x0000000000100000-0x00000000bffdcfff] usable
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x00000000bffdd000-0x00000000bfffffff] reserved
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff] reserved
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+[Thu Jun 11 20:17:53 2026] BIOS-e820: [mem 0x0000000100000000-0x000000023fffffff] usable
+[Thu Jun 11 20:17:53 2026] NX (Execute Disable) protection: active
+[Thu Jun 11 20:17:53 2026] APIC: Static calls initialized
+[Thu Jun 11 20:17:53 2026] SMBIOS 2.8 present.
+[Thu Jun 11 20:17:53 2026] DMI: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014
+[Thu Jun 11 20:17:53 2026] DMI: Memory slots populated: 1/1
+[Thu Jun 11 20:17:53 2026] Hypervisor detected: KVM
+[Thu Jun 11 20:17:53 2026] last_pfn = 0xbffdd max_arch_pfn = 0x400000000
+[Thu Jun 11 20:17:53 2026] kvm-clock: Using msrs 4b564d01 and 4b564d00
+[Thu Jun 11 20:17:53 2026] kvm-clock: using sched offset of 604081716 cycles
+[Thu Jun 11 20:17:53 2026] clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+[Thu Jun 11 20:17:53 2026] tsc: Detected 2095.076 MHz processor
+[Thu Jun 11 20:17:53 2026] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[Thu Jun 11 20:17:53 2026] e820: remove [mem 0x000a0000-0x000fffff] usable
+[Thu Jun 11 20:17:53 2026] last_pfn = 0x240000 max_arch_pfn = 0x400000000
+[Thu Jun 11 20:17:53 2026] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[Thu Jun 11 20:17:53 2026] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[Thu Jun 11 20:17:53 2026] last_pfn = 0xbffdd max_arch_pfn = 0x400000000
+[Thu Jun 11 20:17:53 2026] found SMP MP-table at [mem 0x000f54a0-0x000f54af]
+[Thu Jun 11 20:17:53 2026] Using GB pages for direct mapping
+[Thu Jun 11 20:17:53 2026] RAMDISK: [mem 0xbf645000-0xbffcffff]
+[Thu Jun 11 20:17:53 2026] ACPI: Early table checksum verification disabled
+[Thu Jun 11 20:17:53 2026] ACPI: RSDP 0x00000000000F52A0 000014 (v00 BOCHS )
+[Thu Jun 11 20:17:53 2026] ACPI: RSDT 0x00000000BFFE2564 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[Thu Jun 11 20:17:53 2026] ACPI: FACP 0x00000000BFFE2318 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[Thu Jun 11 20:17:53 2026] ACPI: DSDT 0x00000000BFFE0040 0022D8 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[Thu Jun 11 20:17:53 2026] ACPI: FACS 0x00000000BFFE0000 000040
+[Thu Jun 11 20:17:53 2026] ACPI: APIC 0x00000000BFFE238C 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[Thu Jun 11 20:17:53 2026] ACPI: HPET 0x00000000BFFE241C 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[Thu Jun 11 20:17:53 2026] ACPI: SRAT 0x00000000BFFE2454 0000E8 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[Thu Jun 11 20:17:53 2026] ACPI: WAET 0x00000000BFFE253C 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[Thu Jun 11 20:17:53 2026] ACPI: Reserving FACP table memory at [mem 0xbffe2318-0xbffe238b]
+[Thu Jun 11 20:17:53 2026] ACPI: Reserving DSDT table memory at [mem 0xbffe0040-0xbffe2317]
+[Thu Jun 11 20:17:53 2026] ACPI: Reserving FACS table memory at [mem 0xbffe0000-0xbffe003f]
+[Thu Jun 11 20:17:53 2026] ACPI: Reserving APIC table memory at [mem 0xbffe238c-0xbffe241b]
+[Thu Jun 11 20:17:53 2026] ACPI: Reserving HPET table memory at [mem 0xbffe241c-0xbffe2453]
+[Thu Jun 11 20:17:53 2026] ACPI: Reserving SRAT table memory at [mem 0xbffe2454-0xbffe253b]
+[Thu Jun 11 20:17:53 2026] ACPI: Reserving WAET table memory at [mem 0xbffe253c-0xbffe2563]
+[Thu Jun 11 20:17:53 2026] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+[Thu Jun 11 20:17:53 2026] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0xbfffffff]
+[Thu Jun 11 20:17:53 2026] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x23fffffff]
+[Thu Jun 11 20:17:53 2026] NUMA: Node 0 [mem 0x00001000-0x0009ffff] + [mem 0x00100000-0xbfffffff] -> [mem 0x00001000-0xbfffffff]
+[Thu Jun 11 20:17:53 2026] NUMA: Node 0 [mem 0x00001000-0xbfffffff] + [mem 0x100000000-0x23fffffff] -> [mem 0x00001000-0x23fffffff]
+[Thu Jun 11 20:17:53 2026] NODE_DATA(0) allocated [mem 0x23fffc0c0-0x23fffffff]
+[Thu Jun 11 20:17:53 2026] Zone ranges:
+[Thu Jun 11 20:17:53 2026]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[Thu Jun 11 20:17:53 2026]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[Thu Jun 11 20:17:53 2026]   Normal   [mem 0x0000000100000000-0x000000023fffffff]
+[Thu Jun 11 20:17:53 2026] Movable zone start for each node
+[Thu Jun 11 20:17:53 2026] Early memory node ranges
+[Thu Jun 11 20:17:53 2026]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+[Thu Jun 11 20:17:53 2026]   node   0: [mem 0x0000000000100000-0x00000000bffdcfff]
+[Thu Jun 11 20:17:53 2026]   node   0: [mem 0x0000000100000000-0x000000023fffffff]
+[Thu Jun 11 20:17:53 2026] Initmem setup node 0 [mem 0x0000000000001000-0x000000023fffffff]
+[Thu Jun 11 20:17:53 2026] On node 0, zone DMA: 1 pages in unavailable ranges
+[Thu Jun 11 20:17:53 2026] On node 0, zone DMA: 97 pages in unavailable ranges
+[Thu Jun 11 20:17:53 2026] On node 0, zone Normal: 35 pages in unavailable ranges
+[Thu Jun 11 20:17:53 2026] ACPI: PM-Timer IO Port: 0x608
+[Thu Jun 11 20:17:53 2026] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[Thu Jun 11 20:17:53 2026] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+[Thu Jun 11 20:17:53 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[Thu Jun 11 20:17:53 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+[Thu Jun 11 20:17:53 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[Thu Jun 11 20:17:53 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+[Thu Jun 11 20:17:53 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+[Thu Jun 11 20:17:53 2026] ACPI: Using ACPI (MADT) for SMP configuration information
+[Thu Jun 11 20:17:53 2026] ACPI: HPET id: 0x8086a201 base: 0xfed00000
+[Thu Jun 11 20:17:53 2026] TSC deadline timer available
+[Thu Jun 11 20:17:53 2026] CPU topo: Max. logical packages:   1
+[Thu Jun 11 20:17:53 2026] CPU topo: Max. logical dies:       1
+[Thu Jun 11 20:17:53 2026] CPU topo: Max. dies per package:   1
+[Thu Jun 11 20:17:53 2026] CPU topo: Max. threads per core:   1
+[Thu Jun 11 20:17:53 2026] CPU topo: Num. cores per package:     4
+[Thu Jun 11 20:17:53 2026] CPU topo: Num. threads per package:   4
+[Thu Jun 11 20:17:53 2026] CPU topo: Allowing 4 present CPUs plus 0 hotplug CPUs
+[Thu Jun 11 20:17:53 2026] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[Thu Jun 11 20:17:53 2026] kvm-guest: KVM setup pv remote TLB flush
+[Thu Jun 11 20:17:53 2026] kvm-guest: setup PV sched yield
+[Thu Jun 11 20:17:53 2026] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[Thu Jun 11 20:17:53 2026] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+[Thu Jun 11 20:17:53 2026] PM: hibernation: Registered nosave memory: [mem 0xbffdd000-0xffffffff]
+[Thu Jun 11 20:17:53 2026] [mem 0xc0000000-0xfeffbfff] available for PCI devices
+[Thu Jun 11 20:17:53 2026] Booting paravirtualized kernel on KVM
+[Thu Jun 11 20:17:53 2026] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+[Thu Jun 11 20:17:53 2026] setup_percpu: NR_CPUS:384 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[Thu Jun 11 20:17:53 2026] percpu: Embedded 59 pages/cpu s204376 r8192 d29096 u524288
+[Thu Jun 11 20:17:53 2026] pcpu-alloc: s204376 r8192 d29096 u524288 alloc=1*2097152
+[Thu Jun 11 20:17:53 2026] pcpu-alloc: [0] 0 1 2 3 
+[Thu Jun 11 20:17:53 2026] kvm-guest: PV spinlocks enabled
+[Thu Jun 11 20:17:53 2026] PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)
+[Thu Jun 11 20:17:53 2026] Kernel command line: console=ttyS0 init=/nix/store/hmskvg02xfnarz0s0r690fnkph1i0v97-vpsadminos-system-firewall-conntrack-server-26.05.git.11a751d/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+[Thu Jun 11 20:17:53 2026] random: crng init done
+[Thu Jun 11 20:17:53 2026] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[Thu Jun 11 20:17:53 2026] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[Thu Jun 11 20:17:53 2026] Fallback order for Node 0: 0 
+[Thu Jun 11 20:17:53 2026] Built 1 zonelists, mobility grouping on.  Total pages: 2097019
+[Thu Jun 11 20:17:53 2026] Policy zone: Normal
+[Thu Jun 11 20:17:53 2026] mem auto-init: stack:all(zero), heap alloc:on, heap free:on
+[Thu Jun 11 20:17:53 2026] mem auto-init: clearing system memory may take some time...
+[Thu Jun 11 20:17:53 2026] software IO TLB: area num 4.
+[Thu Jun 11 20:17:58 2026] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[Thu Jun 11 20:17:58 2026] ftrace: allocating 42335 entries in 166 pages
+[Thu Jun 11 20:17:58 2026] ftrace: allocated 166 pages with 4 groups
+[Thu Jun 11 20:17:58 2026] Dynamic Preempt: none
+[Thu Jun 11 20:17:58 2026] rcu: Preemptible hierarchical RCU implementation.
+[Thu Jun 11 20:17:58 2026] rcu: 	RCU event tracing is enabled.
+[Thu Jun 11 20:17:58 2026] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=4.
+[Thu Jun 11 20:17:58 2026] 	Trampoline variant of Tasks RCU enabled.
+[Thu Jun 11 20:17:58 2026] 	Rude variant of Tasks RCU enabled.
+[Thu Jun 11 20:17:58 2026] 	Tracing variant of Tasks RCU enabled.
+[Thu Jun 11 20:17:58 2026] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[Thu Jun 11 20:17:58 2026] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[Thu Jun 11 20:17:58 2026] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[Thu Jun 11 20:17:58 2026] RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[Thu Jun 11 20:17:58 2026] RCU Tasks Trace: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[Thu Jun 11 20:17:58 2026] NR_IRQS: 24832, nr_irqs: 456, preallocated irqs: 16
+[Thu Jun 11 20:17:58 2026] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[Thu Jun 11 20:17:58 2026] Console: colour VGA+ 80x25
+[Thu Jun 11 20:17:58 2026] printk: legacy console [ttyS0] enabled
+[Thu Jun 11 20:17:58 2026] ACPI: Core revision 20240827
+[Thu Jun 11 20:17:58 2026] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+[Thu Jun 11 20:17:58 2026] APIC: Switch to symmetric I/O mode setup
+[Thu Jun 11 20:17:58 2026] x2apic enabled
+[Thu Jun 11 20:17:58 2026] APIC: Switched APIC routing to: physical x2apic
+[Thu Jun 11 20:17:58 2026] kvm-guest: APIC: send_IPI_mask() replaced with kvm_send_ipi_mask()
+[Thu Jun 11 20:17:58 2026] kvm-guest: APIC: send_IPI_mask_allbutself() replaced with kvm_send_ipi_mask_allbutself()
+[Thu Jun 11 20:17:58 2026] kvm-guest: setup PV IPIs
+[Thu Jun 11 20:17:58 2026] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[Thu Jun 11 20:17:58 2026] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x1e33052aadd, max_idle_ns: 440795310221 ns
+[Thu Jun 11 20:17:58 2026] Calibrating delay loop (skipped) preset value.. 4190.15 BogoMIPS (lpj=2095076)
+[Thu Jun 11 20:17:58 2026] x86/cpu: User Mode Instruction Prevention (UMIP) activated
+[Thu Jun 11 20:17:58 2026] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0
+[Thu Jun 11 20:17:58 2026] Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0
+[Thu Jun 11 20:17:58 2026] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+[Thu Jun 11 20:17:58 2026] Spectre V2 : Spectre BHI mitigation: SW BHB clearing on syscall and VM exit
+[Thu Jun 11 20:17:58 2026] Spectre V2 : Mitigation: Enhanced / Automatic IBRS
+[Thu Jun 11 20:17:58 2026] Spectre V2 : Spectre v2 / PBRSB-eIBRS: Retire a single CALL on VMEXIT
+[Thu Jun 11 20:17:58 2026] RETBleed: Mitigation: Enhanced IBRS
+[Thu Jun 11 20:17:58 2026] Spectre V2 : mitigation: Enabling conditional Indirect Branch Prediction Barrier
+[Thu Jun 11 20:17:58 2026] Speculative Store Bypass: Mitigation: Speculative Store Bypass disabled via prctl
+[Thu Jun 11 20:17:58 2026] TAA: Mitigation: TSX disabled
+[Thu Jun 11 20:17:58 2026] MMIO Stale Data: Mitigation: Clear CPU buffers
+[Thu Jun 11 20:17:58 2026] active return thunk: its_return_thunk
+[Thu Jun 11 20:17:58 2026] ITS: Mitigation: Aligned branch/return thunks
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x020: 'AVX-512 opmask'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x040: 'AVX-512 Hi256'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x080: 'AVX-512 ZMM_Hi256'
+[Thu Jun 11 20:17:58 2026] x86/fpu: Supporting XSAVE feature 0x200: 'Protection Keys User registers'
+[Thu Jun 11 20:17:58 2026] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+[Thu Jun 11 20:17:58 2026] x86/fpu: xstate_offset[3]:  832, xstate_sizes[3]:   64
+[Thu Jun 11 20:17:58 2026] x86/fpu: xstate_offset[4]:  896, xstate_sizes[4]:   64
+[Thu Jun 11 20:17:58 2026] x86/fpu: xstate_offset[5]:  960, xstate_sizes[5]:   64
+[Thu Jun 11 20:17:58 2026] x86/fpu: xstate_offset[6]: 1024, xstate_sizes[6]:  512
+[Thu Jun 11 20:17:58 2026] x86/fpu: xstate_offset[7]: 1536, xstate_sizes[7]: 1024
+[Thu Jun 11 20:17:58 2026] x86/fpu: xstate_offset[9]: 2560, xstate_sizes[9]:    8
+[Thu Jun 11 20:17:58 2026] x86/fpu: Enabled xstate features 0x2ff, context size is 2568 bytes, using 'compacted' format.
+[Thu Jun 11 20:17:58 2026] Freeing SMP alternatives memory: 36K
+[Thu Jun 11 20:17:58 2026] pid_max: default: 32768 minimum: 301
+[Thu Jun 11 20:17:58 2026] LSM: initializing lsm=capability,landlock,yama,bpf
+[Thu Jun 11 20:17:58 2026] landlock: Up and running.
+[Thu Jun 11 20:17:58 2026] Yama: becoming mindful.
+[Thu Jun 11 20:17:58 2026] LSM support for eBPF active
+[Thu Jun 11 20:17:58 2026] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[Thu Jun 11 20:17:58 2026] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[Thu Jun 11 20:17:58 2026] smpboot: CPU0: Intel(R) Xeon(R) Gold 6230R CPU @ 2.10GHz (family: 0x6, model: 0x55, stepping: 0x7)
+[Thu Jun 11 20:17:58 2026] Performance Events: Skylake events, full-width counters, Intel PMU driver.
+[Thu Jun 11 20:17:58 2026] ... version:                2
+[Thu Jun 11 20:17:58 2026] ... bit width:              48
+[Thu Jun 11 20:17:58 2026] ... generic registers:      4
+[Thu Jun 11 20:17:58 2026] ... value mask:             0000ffffffffffff
+[Thu Jun 11 20:17:58 2026] ... max period:             00007fffffffffff
+[Thu Jun 11 20:17:58 2026] ... fixed-purpose events:   3
+[Thu Jun 11 20:17:58 2026] ... event mask:             000000070000000f
+[Thu Jun 11 20:17:58 2026] signal: max sigframe size: 3632
+[Thu Jun 11 20:17:58 2026] rcu: Hierarchical SRCU implementation.
+[Thu Jun 11 20:17:58 2026] rcu: 	Max phase no-delay instances is 400.
+[Thu Jun 11 20:17:58 2026] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[Thu Jun 11 20:17:58 2026] smp: Bringing up secondary CPUs ...
+[Thu Jun 11 20:17:58 2026] smpboot: x86: Booting SMP configuration:
+[Thu Jun 11 20:17:58 2026] .... node  #0, CPUs:      #1 #2 #3
+[Thu Jun 11 20:17:58 2026] smp: Brought up 1 node, 4 CPUs
+[Thu Jun 11 20:17:58 2026] smpboot: Total of 4 processors activated (16760.60 BogoMIPS)
+[Thu Jun 11 20:18:00 2026] node 0 deferred pages initialised in 2157ms
+[Thu Jun 11 20:18:00 2026] Memory: 8124220K/8388076K available (16384K kernel code, 2485K rwdata, 10220K rodata, 2848K init, 1448K bss, 258004K reserved, 0K cma-reserved)
+[Thu Jun 11 20:18:00 2026] devtmpfs: initialized
+[Thu Jun 11 20:18:00 2026] x86/mm: Memory block size: 128MB
+[Thu Jun 11 20:18:00 2026] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[Thu Jun 11 20:18:00 2026] futex hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[Thu Jun 11 20:18:00 2026] pinctrl core: initialized pinctrl subsystem
+[Thu Jun 11 20:18:00 2026] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[Thu Jun 11 20:18:00 2026] audit: initializing netlink subsys (disabled)
+[Thu Jun 11 20:18:00 2026] audit: type=2000 audit(1781201880.296:1): state=initialized audit_enabled=0 res=1
+[Thu Jun 11 20:18:00 2026] thermal_sys: Registered thermal governor 'bang_bang'
+[Thu Jun 11 20:18:00 2026] thermal_sys: Registered thermal governor 'step_wise'
+[Thu Jun 11 20:18:00 2026] thermal_sys: Registered thermal governor 'user_space'
+[Thu Jun 11 20:18:00 2026] cpuidle: using governor ladder
+[Thu Jun 11 20:18:00 2026] cpuidle: using governor menu
+[Thu Jun 11 20:18:00 2026] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+[Thu Jun 11 20:18:00 2026] PCI: Using configuration type 1 for base access
+[Thu Jun 11 20:18:00 2026] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[Thu Jun 11 20:18:00 2026] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[Thu Jun 11 20:18:00 2026] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+[Thu Jun 11 20:18:00 2026] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[Thu Jun 11 20:18:00 2026] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[Thu Jun 11 20:18:00 2026] ACPI: Added _OSI(Module Device)
+[Thu Jun 11 20:18:00 2026] ACPI: Added _OSI(Processor Device)
+[Thu Jun 11 20:18:00 2026] ACPI: Added _OSI(Processor Aggregator Device)
+[Thu Jun 11 20:18:00 2026] ACPI: 1 ACPI AML tables successfully acquired and loaded
+[Thu Jun 11 20:18:00 2026] ACPI: Interpreter enabled
+[Thu Jun 11 20:18:00 2026] ACPI: PM: (supports S0 S3 S4 S5)
+[Thu Jun 11 20:18:00 2026] ACPI: Using IOAPIC for interrupt routing
+[Thu Jun 11 20:18:00 2026] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[Thu Jun 11 20:18:00 2026] PCI: Using E820 reservations for host bridge windows
+[Thu Jun 11 20:18:00 2026] ACPI: Enabled 2 GPEs in block 00 to 0F
+[Thu Jun 11 20:18:00 2026] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[Thu Jun 11 20:18:00 2026] acpi PNP0A03:00: _OSC: OS supports [ASPM ClockPM Segments MSI HPX-Type3]
+[Thu Jun 11 20:18:00 2026] acpi PNP0A03:00: _OSC: not requesting OS control; OS requires [ExtendedConfig ASPM ClockPM MSI]
+[Thu Jun 11 20:18:00 2026] acpi PNP0A03:00: fail to add MMCONFIG information, can't access extended configuration space under this bridge
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [3] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [4] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [5] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [6] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [7] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [8] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [9] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [10] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [11] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [12] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [13] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [14] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [15] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [16] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [17] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [18] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [19] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [20] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [21] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [22] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [23] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [24] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [25] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [26] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [27] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [28] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [29] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [30] registered
+[Thu Jun 11 20:18:00 2026] acpiphp: Slot [31] registered
+[Thu Jun 11 20:18:00 2026] PCI host bridge to bus 0000:00
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: root bus resource [mem 0xe0000000000-0xe007fffffff window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: root bus resource [bus 00-ff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.1: BAR 4 [io  0xc100-0xc10f]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: [1234:1111] type 00 class 0x030000 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: BAR 0 [mem 0xfd000000-0xfdffffff pref]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: BAR 2 [mem 0xfebd0000-0xfebd0fff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: ROM [mem 0xfebc0000-0xfebcffff pref]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:03.0: [8086:2922] type 00 class 0x010601 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:03.0: BAR 4 [io  0xc0c0-0xc0df]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:03.0: BAR 5 [mem 0xfebd1000-0xfebd1fff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:04.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:04.0: BAR 0 [io  0xc0e0-0xc0ff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:04.0: BAR 1 [mem 0xfebd2000-0xfebd2fff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:04.0: BAR 4 [mem 0xe0000000000-0xe0000003fff 64bit pref]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:04.0: ROM [mem 0xfeb80000-0xfebbffff pref]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:05.0: [1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:05.0: BAR 0 [io  0xc080-0xc0bf]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:05.0: BAR 1 [mem 0xfebd3000-0xfebd3fff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:05.0: BAR 4 [mem 0xe0000004000-0xe0000007fff 64bit pref]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:06.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:06.0: BAR 1 [mem 0xfebd4000-0xfebd4fff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:06.0: BAR 4 [mem 0xe0000008000-0xe000000bfff 64bit pref]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:07.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[Thu Jun 11 20:18:00 2026] pci 0000:00:07.0: BAR 0 [io  0xc000-0xc07f]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:07.0: BAR 1 [mem 0xfebd5000-0xfebd5fff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:07.0: BAR 4 [mem 0xe000000c000-0xe000000ffff 64bit pref]
+[Thu Jun 11 20:18:00 2026] ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+[Thu Jun 11 20:18:00 2026] ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+[Thu Jun 11 20:18:00 2026] ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+[Thu Jun 11 20:18:00 2026] ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+[Thu Jun 11 20:18:00 2026] ACPI: PCI: Interrupt link LNKS configured for IRQ 9
+[Thu Jun 11 20:18:00 2026] iommu: Default domain type: Translated
+[Thu Jun 11 20:18:00 2026] iommu: DMA domain TLB invalidation policy: lazy mode
+[Thu Jun 11 20:18:00 2026] NetLabel: Initializing
+[Thu Jun 11 20:18:00 2026] NetLabel:  domain hash size = 128
+[Thu Jun 11 20:18:00 2026] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[Thu Jun 11 20:18:00 2026] NetLabel:  unlabeled traffic allowed by default
+[Thu Jun 11 20:18:00 2026] PCI: Using ACPI for IRQ routing
+[Thu Jun 11 20:18:00 2026] PCI: pci_cache_line_size set to 64 bytes
+[Thu Jun 11 20:18:00 2026] e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+[Thu Jun 11 20:18:00 2026] e820: reserve RAM buffer [mem 0xbffdd000-0xbfffffff]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: vgaarb: setting as boot VGA device
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: vgaarb: bridge control possible
+[Thu Jun 11 20:18:00 2026] pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+[Thu Jun 11 20:18:00 2026] vgaarb: loaded
+[Thu Jun 11 20:18:00 2026] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+[Thu Jun 11 20:18:00 2026] hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+[Thu Jun 11 20:18:00 2026] clocksource: Switched to clocksource kvm-clock
+[Thu Jun 11 20:18:00 2026] VFS: Disk quotas dquot_6.6.0
+[Thu Jun 11 20:18:00 2026] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[Thu Jun 11 20:18:00 2026] netfs: FS-Cache loaded
+[Thu Jun 11 20:18:00 2026] pnp: PnP ACPI init
+[Thu Jun 11 20:18:00 2026] pnp 00:02: [dma 2]
+[Thu Jun 11 20:18:00 2026] pnp: PnP ACPI: found 6 devices
+[Thu Jun 11 20:18:00 2026] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[Thu Jun 11 20:18:00 2026] NET: Registered PF_INET protocol family
+[Thu Jun 11 20:18:00 2026] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[Thu Jun 11 20:18:00 2026] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[Thu Jun 11 20:18:00 2026] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[Thu Jun 11 20:18:00 2026] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[Thu Jun 11 20:18:00 2026] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[Thu Jun 11 20:18:00 2026] TCP: Hash tables configured (established 65536 bind 65536)
+[Thu Jun 11 20:18:00 2026] UDP hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[Thu Jun 11 20:18:00 2026] UDP-Lite hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[Thu Jun 11 20:18:00 2026] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[Thu Jun 11 20:18:00 2026] RPC: Registered named UNIX socket transport module.
+[Thu Jun 11 20:18:00 2026] RPC: Registered udp transport module.
+[Thu Jun 11 20:18:00 2026] RPC: Registered tcp transport module.
+[Thu Jun 11 20:18:00 2026] RPC: Registered tcp-with-tls transport module.
+[Thu Jun 11 20:18:00 2026] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[Thu Jun 11 20:18:00 2026] NET: Registered PF_XDP protocol family
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: resource 7 [mem 0xc0000000-0xfebfffff window]
+[Thu Jun 11 20:18:00 2026] pci_bus 0000:00: resource 8 [mem 0xe0000000000-0xe007fffffff window]
+[Thu Jun 11 20:18:00 2026] pci 0000:00:01.0: PIIX3: Enabling Passive Release
+[Thu Jun 11 20:18:00 2026] pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+[Thu Jun 11 20:18:00 2026] PCI: CLS 0 bytes, default 64
+[Thu Jun 11 20:18:00 2026] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+[Thu Jun 11 20:18:00 2026] software IO TLB: mapped [mem 0x00000000bb645000-0x00000000bf645000] (64MB)
+[Thu Jun 11 20:18:00 2026] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x1e33052aadd, max_idle_ns: 440795310221 ns
+[Thu Jun 11 20:18:00 2026] Trying to unpack rootfs image as initramfs...
+[Thu Jun 11 20:18:00 2026] Initialise system trusted keyrings
+[Thu Jun 11 20:18:00 2026] workingset: timestamp_bits=40 max_order=21 bucket_order=0
+[Thu Jun 11 20:18:00 2026] zbud: loaded
+[Thu Jun 11 20:18:00 2026] Key type asymmetric registered
+[Thu Jun 11 20:18:00 2026] Asymmetric key parser 'x509' registered
+[Thu Jun 11 20:18:00 2026] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+[Thu Jun 11 20:18:00 2026] io scheduler mq-deadline registered
+[Thu Jun 11 20:18:00 2026] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[Thu Jun 11 20:18:00 2026] 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[Thu Jun 11 20:18:00 2026] ACPI: bus type drm_connector registered
+[Thu Jun 11 20:18:00 2026] brd: module loaded
+[Thu Jun 11 20:18:00 2026] intel_pstate: CPU model not supported
+[Thu Jun 11 20:18:00 2026] drop_monitor: Initializing network drop monitor service
+[Thu Jun 11 20:18:00 2026] Initializing XFRM netlink socket
+[Thu Jun 11 20:18:00 2026] IPsec XFRM device driver
+[Thu Jun 11 20:18:00 2026] NET: Registered PF_INET6 protocol family
+[Thu Jun 11 20:18:00 2026] Segment Routing with IPv6
+[Thu Jun 11 20:18:00 2026] In-situ OAM (IOAM) with IPv6
+[Thu Jun 11 20:18:00 2026] NET: Registered PF_KEY protocol family
+[Thu Jun 11 20:18:00 2026] IPI shorthand broadcast: enabled
+[Thu Jun 11 20:18:00 2026] sched_clock: Marking stable (7108003256, 10062390)->(7703758090, -585692444)
+[Thu Jun 11 20:18:00 2026] registered taskstats version 1
+[Thu Jun 11 20:18:00 2026] Loading compiled-in X.509 certificates
+[Thu Jun 11 20:18:00 2026] Freeing initrd memory: 9772K
+[Thu Jun 11 20:18:00 2026] Loaded X.509 cert 'Build time autogenerated kernel key: c58876b048a98987c3eb51577f9700094dc34ca6'
+[Thu Jun 11 20:18:00 2026] Demotion targets for Node 0: null
+[Thu Jun 11 20:18:00 2026] Key type .fscrypt registered
+[Thu Jun 11 20:18:00 2026] Key type fscrypt-provisioning registered
+[Thu Jun 11 20:18:00 2026] RAS: Correctable Errors collector initialized.
+[Thu Jun 11 20:18:00 2026] clk: Disabling unused clocks
+[Thu Jun 11 20:18:00 2026] Freeing unused kernel image (initmem) memory: 2848K
+[Thu Jun 11 20:18:00 2026] Write protecting the kernel read-only data: 26624k
+[Thu Jun 11 20:18:00 2026] Freeing unused kernel image (rodata/data gap) memory: 20K
+[Thu Jun 11 20:18:00 2026] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[Thu Jun 11 20:18:00 2026] Run /init as init process
+[Thu Jun 11 20:18:00 2026]   with arguments:
+[Thu Jun 11 20:18:00 2026]     /init
+[Thu Jun 11 20:18:00 2026]   with environment:
+[Thu Jun 11 20:18:00 2026]     HOME=/
+[Thu Jun 11 20:18:00 2026]     TERM=linux
+[Thu Jun 11 20:18:00 2026] SCSI subsystem initialized
+[Thu Jun 11 20:18:00 2026] libata version 3.00 loaded.
+[Thu Jun 11 20:18:00 2026] ahci 0000:00:03.0: version 3.0
+[Thu Jun 11 20:18:00 2026] ACPI: \_SB_.LNKC: Enabled at IRQ 11
+[Thu Jun 11 20:18:00 2026] ahci 0000:00:03.0: AHCI vers 0001.0000, 32 command slots, 1.5 Gbps, SATA mode
+[Thu Jun 11 20:18:00 2026] ahci 0000:00:03.0: 6/6 ports implemented (port mask 0x3f)
+[Thu Jun 11 20:18:00 2026] ahci 0000:00:03.0: flags: 64bit ncq only 
+[Thu Jun 11 20:18:00 2026] scsi host0: ahci
+[Thu Jun 11 20:18:00 2026] scsi host1: ahci
+[Thu Jun 11 20:18:00 2026] scsi host2: ahci
+[Thu Jun 11 20:18:00 2026] scsi host3: ahci
+[Thu Jun 11 20:18:00 2026] scsi host4: ahci
+[Thu Jun 11 20:18:00 2026] scsi host5: ahci
+[Thu Jun 11 20:18:00 2026] ata1: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1100 irq 24 lpm-pol 1
+[Thu Jun 11 20:18:00 2026] ata2: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1180 irq 24 lpm-pol 1
+[Thu Jun 11 20:18:00 2026] ata3: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1200 irq 24 lpm-pol 1
+[Thu Jun 11 20:18:00 2026] ata4: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1280 irq 24 lpm-pol 1
+[Thu Jun 11 20:18:00 2026] ata5: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1300 irq 24 lpm-pol 1
+[Thu Jun 11 20:18:00 2026] ata6: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1380 irq 24 lpm-pol 1
+[Thu Jun 11 20:18:01 2026] ata5: SATA link down (SStatus 0 SControl 300)
+[Thu Jun 11 20:18:01 2026] ata2: SATA link down (SStatus 0 SControl 300)
+[Thu Jun 11 20:18:01 2026] ata1: SATA link down (SStatus 0 SControl 300)
+[Thu Jun 11 20:18:01 2026] ata6: SATA link down (SStatus 0 SControl 300)
+[Thu Jun 11 20:18:01 2026] ata3: SATA link down (SStatus 0 SControl 300)
+[Thu Jun 11 20:18:01 2026] ata4: SATA link down (SStatus 0 SControl 300)
+[Thu Jun 11 20:18:01 2026] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@lists.linux.dev
+[Thu Jun 11 20:18:01 2026] ACPI: bus type USB registered
+[Thu Jun 11 20:18:01 2026] usbcore: registered new interface driver usbfs
+[Thu Jun 11 20:18:01 2026] usbcore: registered new interface driver hub
+[Thu Jun 11 20:18:01 2026] usbcore: registered new device driver usb
+[Thu Jun 11 20:18:01 2026] hid: raw HID events driver (C) Jiri Kosina
+[Thu Jun 11 20:18:01 2026] usbcore: registered new interface driver usbhid
+[Thu Jun 11 20:18:01 2026] usbhid: USB HID core driver
+[Thu Jun 11 20:18:01 2026] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[Thu Jun 11 20:18:01 2026] serio: i8042 KBD port at 0x60,0x64 irq 1
+[Thu Jun 11 20:18:01 2026] serio: i8042 AUX port at 0x60,0x64 irq 12
+[Thu Jun 11 20:18:01 2026] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+[Thu Jun 11 20:18:01 2026] isci: Intel(R) C600 SAS Controller Driver - version 1.2.0
+[Thu Jun 11 20:18:01 2026] loop: module loaded
+[Thu Jun 11 20:18:01 2026] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[Thu Jun 11 20:18:01 2026] tun: Universal TUN/TAP device driver, 1.6
+[Thu Jun 11 20:18:01 2026] ACPI: \_SB_.LNKD: Enabled at IRQ 10
+[Thu Jun 11 20:18:01 2026] ACPI: \_SB_.LNKA: Enabled at IRQ 10
+[Thu Jun 11 20:18:01 2026] ACPI: \_SB_.LNKB: Enabled at IRQ 11
+[Thu Jun 11 20:18:01 2026] virtio_blk virtio3: 4/0/0 default/read/poll queues
+[Thu Jun 11 20:18:01 2026] virtio_blk virtio3: [vda] 770824 512-byte logical blocks (395 MB/376 MiB)
+[Thu Jun 11 20:18:01 2026] udevd[157]: starting version 3.2.14
+[Thu Jun 11 20:18:01 2026] udevd[158]: starting eudev-3.2.14
+[Thu Jun 11 20:18:01 2026] ata_piix 0000:00:01.1: version 2.13
+[Thu Jun 11 20:18:01 2026] scsi host6: ata_piix
+[Thu Jun 11 20:18:01 2026] scsi host7: ata_piix
+[Thu Jun 11 20:18:01 2026] ata7: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc100 irq 14 lpm-pol 0
+[Thu Jun 11 20:18:01 2026] ata8: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc108 irq 15 lpm-pol 0
+[Thu Jun 11 20:18:01 2026] ata8: found unknown device (class 0)
+[Thu Jun 11 20:18:01 2026] ata8.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100
+[Thu Jun 11 20:18:01 2026] scsi 7:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5
+[Thu Jun 11 20:18:01 2026] sr 7:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray
+[Thu Jun 11 20:18:01 2026] cdrom: Uniform CD-ROM driver Revision: 3.20
+[Thu Jun 11 20:18:01 2026] sr 7:0:0:0: Attached scsi CD-ROM sr0
+[Thu Jun 11 20:18:03 2026] vpsAdminOS 26.05.git.11a751d with kernel 6.12.93
+[Thu Jun 11 20:18:03 2026] Mirror/redirect action on
+[Thu Jun 11 20:18:03 2026] NET: Registered PF_ALG protocol family
+[Thu Jun 11 20:18:03 2026] NET: Registered PF_PACKET protocol family
+[Thu Jun 11 20:18:03 2026] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+[Thu Jun 11 20:18:03 2026] Bridge firewalling registered
+[Thu Jun 11 20:18:03 2026] PPP generic driver version 2.4.2
+[Thu Jun 11 20:18:03 2026] PPP BSD Compression module registered
+[Thu Jun 11 20:18:03 2026] Key type ceph registered
+[Thu Jun 11 20:18:03 2026] libceph: loaded (mon/osd proto 15/24)
+[Thu Jun 11 20:18:03 2026] ceph: loaded (mds proto 32)
+[Thu Jun 11 20:18:03 2026] Key type dns_resolver registered
+[Thu Jun 11 20:18:03 2026] Key type cifs.spnego registered
+[Thu Jun 11 20:18:03 2026] Key type cifs.idmap registered
+[Thu Jun 11 20:18:03 2026] u32 classifier
+[Thu Jun 11 20:18:03 2026]     Performance counters on
+[Thu Jun 11 20:18:03 2026]     input device check on
+[Thu Jun 11 20:18:03 2026]     Actions configured
+[Thu Jun 11 20:18:03 2026] cryptd: max_cpu_qlen set to 1000
+[Thu Jun 11 20:18:03 2026] fuse: init (API version 7.41)
+[Thu Jun 11 20:18:04 2026] gre: GRE over IPv4 demultiplexor driver
+[Thu Jun 11 20:18:04 2026] ip_gre: GRE over IPv4 tunneling driver
+[Thu Jun 11 20:18:04 2026] IPVS: Registered protocols (TCP, UDP, AH, ESP)
+[Thu Jun 11 20:18:04 2026] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[Thu Jun 11 20:18:04 2026] IPVS: ipvs loaded.
+[Thu Jun 11 20:18:04 2026] IPVS: [dh] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [fo] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [lblc] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [lblcr] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [lc] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [nq] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [ovf] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [sip] pe registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [rr] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [sed] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [sh] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [wlc] scheduler registered.
+[Thu Jun 11 20:18:04 2026] IPVS: [wrr] scheduler registered.
+[Thu Jun 11 20:18:04 2026] ipip: IPv4 and MPLS over IPv4 tunneling driver
+[Thu Jun 11 20:18:04 2026] l2tp_core: L2TP core driver, V2.0
+[Thu Jun 11 20:18:04 2026] l2tp_netlink: L2TP netlink interface
+[Thu Jun 11 20:18:04 2026] l2tp_eth: L2TP ethernet pseudowire support (L2TPv3)
+[Thu Jun 11 20:18:04 2026] NET: Registered PF_PPPOX protocol family
+[Thu Jun 11 20:18:04 2026] l2tp_ppp: PPPoL2TP kernel driver, V2.0
+[Thu Jun 11 20:18:04 2026] NFS: Registering the id_resolver key type
+[Thu Jun 11 20:18:04 2026] Key type id_resolver registered
+[Thu Jun 11 20:18:04 2026] Key type id_legacy registered
+[Thu Jun 11 20:18:05 2026] PPP Deflate Compression module registered
+[Thu Jun 11 20:18:05 2026] sctp: Hash tables configured (bind 256/256)
+[Thu Jun 11 20:18:05 2026] NET: Registered PF_VSOCK protocol family
+[Thu Jun 11 20:18:05 2026] wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+[Thu Jun 11 20:18:05 2026] wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+[Thu Jun 11 20:18:05 2026] xt_time: kernel timezone is -0000
+[Thu Jun 11 20:18:06 2026] ZFS: Loaded module v2.3.5-1, ZFS pool version 5000, ZFS filesystem version 5
+[Thu Jun 11 20:18:06 2026] Spectre V2 : WARNING: Unprivileged eBPF is enabled with eIBRS on, data leaks possible via Spectre v2 BHB attacks!
+[Thu Jun 11 20:18:07 2026] udevd[843]: starting version 3.2.14
+[Thu Jun 11 20:18:07 2026] udevd[843]: starting eudev-3.2.14
+[Thu Jun 11 20:18:08 2026] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input2
+[Thu Jun 11 20:18:08 2026] rtc_cmos 00:05: RTC can wake from S4
+[Thu Jun 11 20:18:08 2026] rtc_cmos 00:05: registered as rtc0
+[Thu Jun 11 20:18:08 2026] rtc_cmos 00:05: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+[Thu Jun 11 20:18:08 2026] ACPI: button: Power Button [PWRF]
+[Thu Jun 11 20:18:08 2026] Floppy drive(s): fd0 is 2.88M AMI BIOS
+[Thu Jun 11 20:18:08 2026] piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+[Thu Jun 11 20:18:08 2026] i2c i2c-0: Memory type 0x07 not supported yet, not instantiating SPD
+[Thu Jun 11 20:18:08 2026] FDC 0 is a S82078B
+[Thu Jun 11 20:18:08 2026] parport_pc 00:03: reported by Plug and Play ACPI
+[Thu Jun 11 20:18:08 2026] parport0: PC-style at 0x378, irq 7 [PCSPP(,...)]
+[Thu Jun 11 20:18:08 2026] bochs-drm 0000:00:02.0: vgaarb: deactivate vga console
+[Thu Jun 11 20:18:08 2026] Console: switching to colour dummy device 80x25
+[Thu Jun 11 20:18:08 2026] [drm] Found bochs VGA, ID 0xb0c5.
+[Thu Jun 11 20:18:08 2026] [drm] Framebuffer size 16384 kB @ 0xfd000000, mmio @ 0xfebd0000.
+[Thu Jun 11 20:18:08 2026] [drm] Found EDID data blob.
+[Thu Jun 11 20:18:08 2026] [drm] Initialized bochs-drm 1.0.0 for 0000:00:02.0 on minor 0
+[Thu Jun 11 20:18:08 2026] fbcon: bochs-drmdrmfb (fb0) is primary device
+[Thu Jun 11 20:18:08 2026] Console: switching to colour frame buffer device 160x50
+[Thu Jun 11 20:18:08 2026] bochs-drm 0000:00:02.0: [drm] fb0: bochs-drmdrmfb frame buffer device
+[Thu Jun 11 20:18:08 2026] RAPL PMU: API unit is 2^-32 Joules, 0 fixed counters, 10737418240 ms ovfl timer
+[Thu Jun 11 20:18:08 2026] AES CTR mode by8 optimization enabled
+[Thu Jun 11 20:18:08 2026] ppdev: user-space parallel port driver
+[Thu Jun 11 20:18:08 2026] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[Thu Jun 11 20:18:08 2026] mousedev: PS/2 mouse device common for all mice
+[Thu Jun 11 20:18:08 2026] Key type encrypted registered
+[Thu Jun 11 20:18:08 2026] EDAC MC: Ver: 3.0.0
+
+===== ps -eo pid,ppid,stat,comm,args =====
+    PID    PPID STAT COMMAND         COMMAND
+      1       0 Ss   runit           runit
+      2       0 S    kthreadd        [kthreadd]
+      3       2 S    pool_workqueue_ [pool_workqueue_release]
+      4       2 I<   kworker/R-kvfre [kworker/R-kvfree_rcu_reclaim]
+      5       2 I<   kworker/R-rcu_g [kworker/R-rcu_gp]
+      6       2 I<   kworker/R-sync_ [kworker/R-sync_wq]
+      7       2 I<   kworker/R-slub_ [kworker/R-slub_flushwq]
+      8       2 I<   kworker/R-netns [kworker/R-netns]
+      9       2 I    kworker/0:0-eve [kworker/0:0-events]
+     10       2 I<   kworker/0:0H-ev [kworker/0:0H-events_highpri]
+     11       2 I    kworker/0:1-ata [kworker/0:1-ata_sff]
+     12       2 I    kworker/u16:0-a [kworker/u16:0-async]
+     13       2 I<   kworker/R-mm_pe [kworker/R-mm_percpu_wq]
+     14       2 I    rcu_tasks_kthre [rcu_tasks_kthread]
+     15       2 I    rcu_tasks_rude_ [rcu_tasks_rude_kthread]
+     16       2 I    rcu_tasks_trace [rcu_tasks_trace_kthread]
+     17       2 S    ksoftirqd/0     [ksoftirqd/0]
+     18       2 I    rcu_preempt     [rcu_preempt]
+     19       2 S    rcu_exp_par_gp_ [rcu_exp_par_gp_kthread_worker/0]
+     20       2 S    rcu_exp_gp_kthr [rcu_exp_gp_kthread_worker]
+     21       2 S    migration/0     [migration/0]
+     22       2 S    idle_inject/0   [idle_inject/0]
+     23       2 S    cpuhp/0         [cpuhp/0]
+     24       2 S    cpuhp/1         [cpuhp/1]
+     25       2 S    idle_inject/1   [idle_inject/1]
+     26       2 S    migration/1     [migration/1]
+     27       2 S    ksoftirqd/1     [ksoftirqd/1]
+     28       2 I    kworker/1:0-ata [kworker/1:0-ata_sff]
+     29       2 I<   kworker/1:0H-kb [kworker/1:0H-kblockd]
+     30       2 S    cpuhp/2         [cpuhp/2]
+     31       2 S    idle_inject/2   [idle_inject/2]
+     32       2 S    migration/2     [migration/2]
+     33       2 S    ksoftirqd/2     [ksoftirqd/2]
+     34       2 I    kworker/2:0-eve [kworker/2:0-events]
+     35       2 I<   kworker/2:0H-ev [kworker/2:0H-events_highpri]
+     36       2 S    cpuhp/3         [cpuhp/3]
+     37       2 S    idle_inject/3   [idle_inject/3]
+     38       2 S    migration/3     [migration/3]
+     39       2 S    ksoftirqd/3     [ksoftirqd/3]
+     40       2 I    kworker/3:0-ata [kworker/3:0-ata_sff]
+     41       2 I<   kworker/3:0H-ev [kworker/3:0H-events_highpri]
+     43       2 I    kworker/u16:1-a [kworker/u16:1-async]
+     44       2 I    kworker/u16:2-a [kworker/u16:2-async]
+     45       2 I    kworker/u16:3-e [kworker/u16:3-events_unbound]
+     46       2 I    kworker/3:1-eve [kworker/3:1-events]
+     47       2 I    kworker/1:1-ata [kworker/1:1-ata_sff]
+     48       2 I    kworker/u16:4-k [kworker/u16:4-kvfree_rcu_reclaim]
+     49       2 S    kdevtmpfs       [kdevtmpfs]
+     50       2 I<   kworker/R-inet_ [kworker/R-inet_frag_wq]
+     51       2 S    kauditd         [kauditd]
+     52       2 S    khungtaskd      [khungtaskd]
+     53       2 S    oom_reaper      [oom_reaper]
+     54       2 I<   kworker/R-write [kworker/R-writeback]
+     55       2 S    kcompactd0      [kcompactd0]
+     56       2 SN   ksmd            [ksmd]
+     57       2 SN   khugepaged      [khugepaged]
+     58       2 I<   kworker/R-kinte [kworker/R-kintegrityd]
+     59       2 I<   kworker/R-kbloc [kworker/R-kblockd]
+     60       2 S    irq/9-acpi      [irq/9-acpi]
+     61       2 I<   kworker/R-devfr [kworker/R-devfreq_wq]
+     62       2 I<   kworker/R-quota [kworker/R-quota_events_unbound]
+     63       2 I<   kworker/R-rpcio [kworker/R-rpciod]
+     64       2 I<   kworker/3:1H-kb [kworker/3:1H-kblockd]
+     65       2 I<   kworker/R-xprti [kworker/R-xprtiod]
+     66       2 S    kswapd0         [kswapd0]
+     67       2 I<   kworker/R-nfsio [kworker/R-nfsiod]
+     68       2 I    kworker/2:1-eve [kworker/2:1-events]
+     69       2 I<   kworker/R-mld   [kworker/R-mld]
+     70       2 I<   kworker/R-ipv6_ [kworker/R-ipv6_addrconf]
+     71       2 I<   kworker/R-kstrp [kworker/R-kstrp]
+     75       2 I<   kworker/u17:0   [kworker/u17:0]
+     76       2 I<   kworker/0:1H-kb [kworker/0:1H-kblockd]
+     87       2 I    kworker/1:2-ata [kworker/1:2-ata_sff]
+     88       2 I<   kworker/R-ata_s [kworker/R-ata_sff]
+     89       2 S    scsi_eh_0       [scsi_eh_0]
+     90       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_0]
+     91       2 S    scsi_eh_1       [scsi_eh_1]
+     92       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_1]
+     93       2 S    scsi_eh_2       [scsi_eh_2]
+     94       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_2]
+     95       2 S    scsi_eh_3       [scsi_eh_3]
+     96       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_3]
+     97       2 S    scsi_eh_4       [scsi_eh_4]
+     98       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_4]
+     99       2 S    scsi_eh_5       [scsi_eh_5]
+    100       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_5]
+    101       2 I    kworker/u16:5-e [kworker/u16:5-events_unbound]
+    102       2 I    kworker/u16:6-e [kworker/u16:6-events_unbound]
+    103       2 I    kworker/u16:7   [kworker/u16:7]
+    107       2 I    kworker/2:2-ata [kworker/2:2-ata_sff]
+    110       2 I    kworker/0:2-eve [kworker/0:2-events]
+    112       2 I<   kworker/1:1H-kb [kworker/1:1H-kblockd]
+    114       2 I<   kworker/2:1H-kb [kworker/2:1H-kblockd]
+    119       2 I    kworker/0:3     [kworker/0:3]
+    123       2 I<   kworker/R-nvme- [kworker/R-nvme-wq]
+    124       2 I<   kworker/R-nvme- [kworker/R-nvme-reset-wq]
+    125       2 I<   kworker/R-nvme- [kworker/R-nvme-delete-wq]
+    145       2 S    khvcd           [khvcd]
+    177       2 S    scsi_eh_6       [scsi_eh_6]
+    178       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_6]
+    179       2 S    scsi_eh_7       [scsi_eh_7]
+    180       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_7]
+    181       2 I    kworker/3:2-eve [kworker/3:2-events]
+    186       2 I<   kworker/1:2H-kb [kworker/1:2H-kblockd]
+    361       2 I<   kworker/R-ceph- [kworker/R-ceph-msgr]
+    363       2 I<   kworker/R-cifsi [kworker/R-cifsiod]
+    364       2 I<   kworker/R-smb3d [kworker/R-smb3decryptd]
+    365       2 I<   kworker/R-cifsf [kworker/R-cifsfileinfoput]
+    366       2 I<   kworker/R-cifso [kworker/R-cifsoplockd]
+    367       2 I<   kworker/R-defer [kworker/R-deferredclose]
+    368       2 I<   kworker/R-serve [kworker/R-serverclose]
+    369       2 I<   kworker/R-cfid_ [kworker/R-cfid_put_wq]
+    370       2 I<   kworker/R-cifs- [kworker/R-cifs-dfscache]
+    383       2 I<   kworker/R-crypt [kworker/R-cryptd]
+    627       2 S    spl_system_task [spl_system_task]
+    628       2 S    spl_system_task [spl_system_task]
+    629       2 S    spl_system_task [spl_system_task]
+    630       2 S    spl_system_task [spl_system_task]
+    631       2 S    spl_system_task [spl_system_task]
+    632       2 S    spl_system_task [spl_system_task]
+    633       2 S    spl_system_task [spl_system_task]
+    634       2 S    spl_system_task [spl_system_task]
+    635       2 S    spl_system_task [spl_system_task]
+    636       2 S    spl_system_task [spl_system_task]
+    637       2 S    spl_system_task [spl_system_task]
+    638       2 S    spl_system_task [spl_system_task]
+    639       2 S    spl_system_task [spl_system_task]
+    640       2 S    spl_system_task [spl_system_task]
+    641       2 S    spl_system_task [spl_system_task]
+    642       2 S    spl_system_task [spl_system_task]
+    643       2 S    spl_system_task [spl_system_task]
+    644       2 S    spl_system_task [spl_system_task]
+    645       2 S    spl_system_task [spl_system_task]
+    646       2 S    spl_system_task [spl_system_task]
+    647       2 S    spl_system_task [spl_system_task]
+    648       2 S    spl_system_task [spl_system_task]
+    649       2 S    spl_system_task [spl_system_task]
+    650       2 S    spl_system_task [spl_system_task]
+    651       2 S    spl_system_task [spl_system_task]
+    652       2 S    spl_system_task [spl_system_task]
+    653       2 S    spl_system_task [spl_system_task]
+    654       2 S    spl_system_task [spl_system_task]
+    655       2 S    spl_system_task [spl_system_task]
+    656       2 S    spl_system_task [spl_system_task]
+    657       2 S    spl_system_task [spl_system_task]
+    658       2 S    spl_system_task [spl_system_task]
+    659       2 S    spl_system_task [spl_system_task]
+    660       2 S    spl_system_task [spl_system_task]
+    661       2 S    spl_system_task [spl_system_task]
+    662       2 S    spl_system_task [spl_system_task]
+    663       2 S    spl_system_task [spl_system_task]
+    664       2 S    spl_system_task [spl_system_task]
+    665       2 S    spl_system_task [spl_system_task]
+    666       2 S    spl_system_task [spl_system_task]
+    667       2 S    spl_system_task [spl_system_task]
+    668       2 S    spl_system_task [spl_system_task]
+    669       2 S    spl_system_task [spl_system_task]
+    670       2 S    spl_system_task [spl_system_task]
+    671       2 S    spl_system_task [spl_system_task]
+    672       2 S    spl_system_task [spl_system_task]
+    673       2 S    spl_system_task [spl_system_task]
+    674       2 S    spl_system_task [spl_system_task]
+    675       2 S    spl_system_task [spl_system_task]
+    676       2 S    spl_system_task [spl_system_task]
+    677       2 S    spl_system_task [spl_system_task]
+    678       2 S    spl_system_task [spl_system_task]
+    679       2 S    spl_system_task [spl_system_task]
+    680       2 S    spl_system_task [spl_system_task]
+    681       2 S    spl_system_task [spl_system_task]
+    682       2 S    spl_system_task [spl_system_task]
+    683       2 S    spl_system_task [spl_system_task]
+    684       2 S    spl_system_task [spl_system_task]
+    685       2 S    spl_system_task [spl_system_task]
+    686       2 S    spl_system_task [spl_system_task]
+    687       2 S    spl_system_task [spl_system_task]
+    688       2 S    spl_system_task [spl_system_task]
+    689       2 S    spl_system_task [spl_system_task]
+    690       2 S    spl_system_task [spl_system_task]
+    691       2 S    spl_delay_taskq [spl_delay_taskq]
+    692       2 S    spl_delay_taskq [spl_delay_taskq]
+    693       2 S    spl_delay_taskq [spl_delay_taskq]
+    694       2 S    spl_delay_taskq [spl_delay_taskq]
+    695       2 S    spl_dynamic_tas [spl_dynamic_tas]
+    696       2 S    spl_kmem_cache  [spl_kmem_cache]
+    697       2 S    spl_kmem_cache  [spl_kmem_cache]
+    698       2 S    spl_kmem_cache  [spl_kmem_cache]
+    699       2 S    spl_kmem_cache  [spl_kmem_cache]
+    700       2 S    zvol_tq-0       [zvol_tq-0]
+    701       2 S    zvol_tq-0       [zvol_tq-0]
+    702       2 S    zvol_tq-0       [zvol_tq-0]
+    703       2 S    zvol_tq-0       [zvol_tq-0]
+    704       2 S    zvol_tq-0       [zvol_tq-0]
+    705       2 S    zvol_tq-0       [zvol_tq-0]
+    706       2 S    zvol_tq-0       [zvol_tq-0]
+    707       2 S    zvol_tq-0       [zvol_tq-0]
+    708       2 S    zvol_tq-0       [zvol_tq-0]
+    709       2 S    zvol_tq-0       [zvol_tq-0]
+    710       2 S    zvol_tq-0       [zvol_tq-0]
+    711       2 S    zvol_tq-0       [zvol_tq-0]
+    712       2 S    zvol_tq-0       [zvol_tq-0]
+    713       2 S    zvol_tq-0       [zvol_tq-0]
+    714       2 S    zvol_tq-0       [zvol_tq-0]
+    715       2 S    zvol_tq-0       [zvol_tq-0]
+    716       2 S    zvol_tq-0       [zvol_tq-0]
+    717       2 S    zvol_tq-0       [zvol_tq-0]
+    718       2 S    zvol_tq-0       [zvol_tq-0]
+    719       2 S    zvol_tq-0       [zvol_tq-0]
+    720       2 S    zvol_tq-0       [zvol_tq-0]
+    721       2 S    zvol_tq-0       [zvol_tq-0]
+    722       2 S    zvol_tq-0       [zvol_tq-0]
+    723       2 S    zvol_tq-0       [zvol_tq-0]
+    724       2 S    zvol_tq-0       [zvol_tq-0]
+    725       2 S    zvol_tq-0       [zvol_tq-0]
+    726       2 S    zvol_tq-0       [zvol_tq-0]
+    727       2 S    zvol_tq-0       [zvol_tq-0]
+    728       2 S    zvol_tq-0       [zvol_tq-0]
+    729       2 S    zvol_tq-0       [zvol_tq-0]
+    730       2 S    zvol_tq-0       [zvol_tq-0]
+    731       2 S    zvol_tq-0       [zvol_tq-0]
+    732       2 S    arc_prune       [arc_prune]
+    733       2 S    arc_flush       [arc_flush]
+    734       2 S    arc_flush       [arc_flush]
+    735       2 S    arc_flush       [arc_flush]
+    736       2 S    arc_flush       [arc_flush]
+    737       2 S    arc_evict       [arc_evict]
+    738       2 SN   arc_reap        [arc_reap]
+    739       2 S    dbu_evict       [dbu_evict]
+    740       2 SN   dbuf_evict      [dbuf_evict]
+    741       2 S    z_vdev_file     [z_vdev_file]
+    742       2 S    z_vdev_file     [z_vdev_file]
+    743       2 S    z_vdev_file     [z_vdev_file]
+    744       2 S    z_vdev_file     [z_vdev_file]
+    745       2 S    z_vdev_file     [z_vdev_file]
+    746       2 S    z_vdev_file     [z_vdev_file]
+    747       2 S    z_vdev_file     [z_vdev_file]
+    748       2 S    z_vdev_file     [z_vdev_file]
+    749       2 S    z_vdev_file     [z_vdev_file]
+    750       2 S    z_vdev_file     [z_vdev_file]
+    751       2 S    z_vdev_file     [z_vdev_file]
+    752       2 S    z_vdev_file     [z_vdev_file]
+    753       2 S    z_vdev_file     [z_vdev_file]
+    754       2 S    z_vdev_file     [z_vdev_file]
+    755       2 S    z_vdev_file     [z_vdev_file]
+    756       2 S    z_vdev_file     [z_vdev_file]
+    757       2 S    l2arc_feed      [l2arc_feed]
+    786       1 Ss   runsvdir        runsvdir -P /service
+    787     786 Ss   runsv           runsv zfs-zed
+    788     786 Ss   runsv           runsv zfs-module-parameters
+    789     786 Ss   runsv           runsv test-shell-1
+    790     786 Ss   runsv           runsv test-shell
+    791     786 Ss   runsv           runsv statd
+    792     786 Ss   runsv           runsv sshd
+    793     788 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    794     790 S    bash            /nix/store/cgjr3kj3hs7ngznyws5qfg16c8scpys0-bash-interactive-5.3p9/bin/bash --norc /dev/hvc0
+    795     786 Ss   runsv           runsv spl-module-parameters
+    796     786 Ss   runsv           runsv rsyslog
+    797     786 Ss   runsv           runsv rpcbind
+    798     791 S    rpc.statd       /nix/store/47nvm00lpaw0bv7fsda7zks2ljpw7137-nfs-utils-2.9.1/bin/rpc.statd --foreground
+    799     786 Ss   runsv           runsv restrict-proc-sysfs
+    800     786 Ss   runsv           runsv osctld
+    801     786 Ss   runsv           runsv opensmtpd
+    802     786 Ss   runsv           runsv nix
+    803     786 Ss   runsv           runsv networking
+    804     786 Ss   runsv           runsv live-patches
+    805     786 Ss   runsv           runsv kernel-modules
+    806     786 Ss   runsv           runsv haveged
+    807     786 Ss   runsv           runsv getty-ttyS1
+    808     795 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    809     789 S    bash            /nix/store/cgjr3kj3hs7ngznyws5qfg16c8scpys0-bash-interactive-5.3p9/bin/bash --norc /dev/hvc1
+    810     786 Ss   runsv           runsv getty-ttyS0
+    811     786 Ss   runsv           runsv getty-tty4
+    812     787 S    svlogd          svlogd -l 4000 -b 4096 -tt /var/log/zfs-zed
+    813     786 Ss   runsv           runsv getty-tty3
+    814     786 Ss   runsv           runsv getty-tty2
+    815     787 Sl   zed             /nix/store/c24m2giqay0v88xcpbkqxk3if905gi7k-zfs-user-2.3-vpsadminos/sbin/zed -F
+    816     786 Ss   runsv           runsv getty-tty1
+    817     786 Ss   runsv           runsv firewall-test-server
+    818     786 Ss   runsv           runsv firewall
+    819     799 S    svlogd          svlogd -l 4000 -b 4096 -tt /var/log/restrict-proc-sysfs
+    821     817 Sl   ruby            /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/bin/ruby /nix/store/bfi6vrnf253n0qddbmpk8xsclbc2rfs8-firewall-test-server.rb
+    822     796 Sl   rsyslogd        /nix/store/8jn0m2sc6zgwxivliq0li01a06c9p5bz-rsyslog-8.2512.0/sbin/rsyslogd -f /nix/store/2yr1rcc7ihf9q6ga44g7b1c5dhs3gkiq-rsyslog-checked.conf -n -i /run/rsyslog.pid
+    823     818 S    sleep           sleep inf
+    824     813 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    825     800 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    826     801 S    svlogd          svlogd -l 4000 -b 4096 -tt /var/log/opensmtpd
+    827     814 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    828     811 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    829     805 S    svlogd          svlogd -l 4000 -b 4096 -tt /var/log/kernel-modules
+    830     805 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    831     799 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    832     804 S    svlogd          svlogd -l 4000 -b 4096 -tt /var/log/live-patches
+    833     804 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    834     807 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    835     786 Ss   runsv           runsv eudev-trigger
+    836     786 Ss   runsv           runsv eudev
+    837     786 Ss   runsv           runsv damon-reclaim
+    838     786 Ss   runsv           runsv crond
+    839     786 Ss   runsv           runsv cpufreq
+    840     837 S    svlogd          svlogd -l 4000 -b 4096 -tt /var/log/damon-reclaim
+    841     816 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    843     836 S    udevd           /nix/store/fnwbipi0yz6asxv2a6lxq3xfypi2insm-eudev-3.2.14/bin/udevd
+    844     801 S    smtpd           /nix/store/gs810rc9w3r4yqlkjhrq200ynrrn7bsg-opensmtpd-7.8.0p0/sbin/smtpd -d -f /nix/store/yc0dxqh2lycq4jzq83gj7jak4n4k5kwf-smtpd.conf
+    845     792 S    sshd            sshd: /nix/store/mpzrhvrkdzkajhgay1dngqpf062vb1iq-openssh-10.3p1/bin/sshd -D -f /etc/ssh/sshd_config [listener] 0 of 10-100 startups
+    848     806 S    svlogd          svlogd -l 4000 -b 4096 -tt /var/log/haveged
+    849     837 S    sleep           sleep inf
+    850     806 S    haveged         /nix/store/xpm565szs4v3ni5r0h598zi6ghhxx6k7-haveged-1.9.21/bin/haveged -F -w 1024 -v 1
+    851     810 S    run             /nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash ./run
+    852     802 Sl   nix-daemon      nix-daemon
+    853     797 S    rpcbind         /nix/store/462sh9jz5am8628nfn2il7jriknvh7iq-rpcbind-1.2.6/bin/rpcbind -f
+    859     838 S    cron            /nix/store/a47302f7kyzlqzkk42v2avnrbjgg7nhc-cron-4.1/bin/cron -n
+    891     834 Ss   agetty          /nix/store/kvf3vg6ff39wnpm95df9zfhjh97c093j-util-linux-2.42-bin/sbin/agetty --autologin root --login-program /nix/store/5yag29f2jzp10wk2kqadlgn70x9i1wqf-shadow-4.19.4/bin/login --keep-baud ttyS1 115200,38400,9600 vt100
+    892     824 Ss   login           /nix/store/5yag29f2jzp10wk2kqadlgn70x9i1wqf-shadow-4.19.4/bin/login -f --
+    893     828 Ss   login           /nix/store/5yag29f2jzp10wk2kqadlgn70x9i1wqf-shadow-4.19.4/bin/login -f --
+    900     841 Ss   login           /nix/store/5yag29f2jzp10wk2kqadlgn70x9i1wqf-shadow-4.19.4/bin/login -f --
+    910     851 Ss   login           /nix/store/5yag29f2jzp10wk2kqadlgn70x9i1wqf-shadow-4.19.4/bin/login -f --
+    924     833 S    sleep           sleep inf
+    925     827 Ss   login           /nix/store/5yag29f2jzp10wk2kqadlgn70x9i1wqf-shadow-4.19.4/bin/login -f --
+    926     808 S    sleep           sleep inf
+    927     831 S    sleep           sleep 10
+    938     793 S    sleep           sleep inf
+    975     825 S    sv              sv check restrict-proc-sysfs
+    990     844 S    smtpd           smtpd: crypto
+    991     844 S    smtpd           smtpd: control
+    992     844 S    smtpd           smtpd: lookup
+    993     844 S    smtpd           smtpd: dispatcher
+    995     844 S    smtpd           smtpd: queue
+    996     844 S    smtpd           smtpd: scheduler
+   1006     925 S+   bash            -bash
+   1007     892 S+   bash            -bash
+   1008     900 S+   bash            -bash
+   1009     910 S+   bash            -bash
+   1010     893 S+   bash            -bash
+   1149       2 I<   kworker/R-ttm   [kworker/R-ttm]
+   1179       2 I    kworker/1:3-eve [kworker/1:3-events]
+   1183       2 I    kworker/1:4-ata [kworker/1:4-ata_sff]
+   1392       2 I<   kworker/R-tpm_d [kworker/R-tpm_dev_wq]
+   1459       2 I<   kworker/R-edac- [kworker/R-edac-poller]
+   1467       2 I<   kworker/R-nfit  [kworker/R-nfit]
+   1799     830 S    /nix/store/9ypz /nix/store/9ypz3flqsrl5xl495mm8h645gadjsxi1-coreutils-9.11/bin/sleep infinity
+   1937       1 Sl   ruby            ruby -
+   1978     809 S    timeout         timeout 300 bash -c set -euo pipefail; set +e  section() {   printf '\n===== %s =====\n' "$*" }  run() {   section "$*"   "$@" 2>&1 }  run_sh() {   section "$1"   sh -c "$1" 2>&1 }  show_file() {   file="$1"   [ -e "$file" ] || return 0   section "$file"   cat "$file" 2>&1 }  show_glob() {   pattern="$1"    for file in $pattern; do     [ -e "$file" ] || continue     show_file "$file"   done }  run date -Ins run uname -a run uptime run free -m run df -h run dmesg -T run ps -eo pid,ppid,stat,comm,args run_sh 'sv status /service/*'  if command -v osctl >/dev/null 2>&1; then   run_sh 'timeout 10 osctl pool ls'   run_sh 'timeout 10 osctl ct ls'   run_sh 'timeout 10 osctl ct ls -H -o pool,id,state,init-pid,log-file 2>/dev/null || true' fi  run_sh 'ls -la /run/osctl /run/osctl/pools /service/osctld /var/log /tank/log /tank/log/ct 2>/dev/null'  show_file /var/log/osctld show_file /var/log/messages show_glob '/tank/log/ct/*' show_glob '/tank/log/ct/*.destroyed' show_glob '/tmp/osctld-restart-jobs/*' show_glob '/tmp/osctld-restart-blocks/*/*' 
+   1979     809 S    bash            /nix/store/cgjr3kj3hs7ngznyws5qfg16c8scpys0-bash-interactive-5.3p9/bin/bash --norc /dev/hvc1
+   1980    1979 S    base64          base64 -w 0
+   1981    1978 S    bash            bash -c set -euo pipefail; set +e  section() {   printf '\n===== %s =====\n' "$*" }  run() {   section "$*"   "$@" 2>&1 }  run_sh() {   section "$1"   sh -c "$1" 2>&1 }  show_file() {   file="$1"   [ -e "$file" ] || return 0   section "$file"   cat "$file" 2>&1 }  show_glob() {   pattern="$1"    for file in $pattern; do     [ -e "$file" ] || continue     show_file "$file"   done }  run date -Ins run uname -a run uptime run free -m run df -h run dmesg -T run ps -eo pid,ppid,stat,comm,args run_sh 'sv status /service/*'  if command -v osctl >/dev/null 2>&1; then   run_sh 'timeout 10 osctl pool ls'   run_sh 'timeout 10 osctl ct ls'   run_sh 'timeout 10 osctl ct ls -H -o pool,id,state,init-pid,log-file 2>/dev/null || true' fi  run_sh 'ls -la /run/osctl /run/osctl/pools /service/osctld /var/log /tank/log /tank/log/ct 2>/dev/null'  show_file /var/log/osctld show_file /var/log/messages show_glob '/tank/log/ct/*' show_glob '/tank/log/ct/*.destroyed' show_glob '/tmp/osctld-restart-jobs/*' show_glob '/tmp/osctld-restart-blocks/*/*' 
+   1988    1981 R    ps              ps -eo pid,ppid,stat,comm,args
+
+===== sv status /service/* =====
+down: /service/cpufreq: 3s, normally up
+run: /service/crond: (pid 859) 5s
+run: /service/damon-reclaim: (pid 849) 5s; run: log: (pid 840) 5s
+run: /service/eudev: (pid 843) 5s
+down: /service/eudev-trigger: 3s, normally up
+run: /service/firewall: (pid 823) 5s
+run: /service/firewall-test-server: (pid 821) 5s
+run: /service/getty-tty1: (pid 841) 5s
+run: /service/getty-tty2: (pid 827) 5s
+run: /service/getty-tty3: (pid 824) 5s
+run: /service/getty-tty4: (pid 828) 5s
+run: /service/getty-ttyS0: (pid 851) 5s
+run: /service/getty-ttyS1: (pid 834) 5s
+run: /service/haveged: (pid 850) 5s; run: log: (pid 848) 5s
+run: /service/kernel-modules: (pid 830) 5s; run: log: (pid 829) 5s
+run: /service/live-patches: (pid 833) 5s; run: log: (pid 832) 5s
+down: /service/networking: 3s, normally up
+run: /service/nix: (pid 852) 5s
+run: /service/opensmtpd: (pid 844) 5s; run: log: (pid 826) 5s
+run: /service/osctld: (pid 825) 5s
+run: /service/restrict-proc-sysfs: (pid 831) 5s; run: log: (pid 819) 5s
+run: /service/rpcbind: (pid 853) 5s
+run: /service/rsyslog: (pid 822) 5s
+run: /service/spl-module-parameters: (pid 808) 5s
+run: /service/sshd: (pid 845) 5s
+run: /service/statd: (pid 798) 5s
+run: /service/test-shell: (pid 794) 5s
+run: /service/test-shell-1: (pid 809) 5s
+run: /service/zfs-module-parameters: (pid 793) 5s
+run: /service/zfs-zed: (pid 815) 5s; run: log: (pid 812) 5s
+
+===== timeout 10 osctl pool ls =====
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+
+===== timeout 10 osctl ct ls =====
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+
+===== timeout 10 osctl ct ls -H -o pool,id,state,init-pid,log-file 2>/dev/null || true =====
+
+===== ls -la /run/osctl /run/osctl/pools /service/osctld /var/log /tank/log /tank/log/ct 2>/dev/null =====
+lrwxrwxrwx  1 root root  41 Jun 11 20:18 /service/osctld -> /etc/static/runit/runsvdir/default/osctld
+
+/run/osctl:
+total 4
+drwxr-xr-x  2 root root  60 Jun 11 20:18 .
+drwxr-xr-x 12 root root 560 Jun 11 20:18 ..
+-rw-r--r--  1 root root   2 Jun 11 20:18 cgroup.version
+
+/var/log:
+total 100
+drwxr-xr-x 10 root root   240 Jun 11 20:18 .
+drwxr-xr-x  8 root root   180 Jun 11 20:18 ..
+drwx------  2 root root    40 Jun 11 20:18 crash-reports
+drwxr-xr-x  2 log  root   100 Jun 11 20:18 damon-reclaim
+drwxr-xr-x  2 log  root   100 Jun 11 20:18 haveged
+drwxr-xr-x  2 log  root   100 Jun 11 20:18 kernel-modules
+drwxr-xr-x  2 log  root   100 Jun 11 20:18 live-patches
+-rw-r--r--  1 root root 96585 Jun 11 20:18 messages
+drwxr-xr-x  2 log  root   100 Jun 11 20:18 opensmtpd
+drwxr-xr-x  2 log  root   100 Jun 11 20:18 restrict-proc-sysfs
+-rw-r--r--  1 root root  2304 Jun 11 20:18 wtmp
+drwxr-xr-x  2 log  root   100 Jun 11 20:18 zfs-zed
+
+===== /var/log/messages =====
+2026-06-11T20:18:07.361953+02:00 firewall-conntrack-server kernel: Linux version 6.12.93 (nixbld@localhost) (gcc (GCC) 15.2.0, GNU ld (GNU Binutils) 2.46) #1-vpsAdminOS SMP PREEMPT_DYNAMIC Wed Jun 10 21:00:09 UTC 2026
+2026-06-11T20:18:07.364274+02:00 firewall-conntrack-server kernel: Command line: console=ttyS0 init=/nix/store/hmskvg02xfnarz0s0r690fnkph1i0v97-vpsadminos-system-firewall-conntrack-server-26.05.git.11a751d/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+2026-06-11T20:18:07.364277+02:00 firewall-conntrack-server kernel: BIOS-provided physical RAM map:
+2026-06-11T20:18:07.364277+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+2026-06-11T20:18:07.364278+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+2026-06-11T20:18:07.364278+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+2026-06-11T20:18:07.364281+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x0000000000100000-0x00000000bffdcfff] usable
+2026-06-11T20:18:07.364282+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x00000000bffdd000-0x00000000bfffffff] reserved
+2026-06-11T20:18:07.364282+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff] reserved
+2026-06-11T20:18:07.364283+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+2026-06-11T20:18:07.364283+02:00 firewall-conntrack-server kernel: BIOS-e820: [mem 0x0000000100000000-0x000000023fffffff] usable
+2026-06-11T20:18:07.364284+02:00 firewall-conntrack-server kernel: NX (Execute Disable) protection: active
+2026-06-11T20:18:07.364284+02:00 firewall-conntrack-server kernel: APIC: Static calls initialized
+2026-06-11T20:18:07.364286+02:00 firewall-conntrack-server kernel: SMBIOS 2.8 present.
+2026-06-11T20:18:07.364287+02:00 firewall-conntrack-server kernel: DMI: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014
+2026-06-11T20:18:07.364287+02:00 firewall-conntrack-server kernel: DMI: Memory slots populated: 1/1
+2026-06-11T20:18:07.364288+02:00 firewall-conntrack-server kernel: Hypervisor detected: KVM
+2026-06-11T20:18:07.364288+02:00 firewall-conntrack-server kernel: last_pfn = 0xbffdd max_arch_pfn = 0x400000000
+2026-06-11T20:18:07.364289+02:00 firewall-conntrack-server kernel: kvm-clock: Using msrs 4b564d01 and 4b564d00
+2026-06-11T20:18:07.364291+02:00 firewall-conntrack-server kernel: kvm-clock: using sched offset of 604081716 cycles
+2026-06-11T20:18:07.364291+02:00 firewall-conntrack-server kernel: clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+2026-06-11T20:18:07.364292+02:00 firewall-conntrack-server kernel: tsc: Detected 2095.076 MHz processor
+2026-06-11T20:18:07.364292+02:00 firewall-conntrack-server kernel: e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+2026-06-11T20:18:07.364293+02:00 firewall-conntrack-server kernel: e820: remove [mem 0x000a0000-0x000fffff] usable
+2026-06-11T20:18:07.364293+02:00 firewall-conntrack-server kernel: last_pfn = 0x240000 max_arch_pfn = 0x400000000
+2026-06-11T20:18:07.364295+02:00 firewall-conntrack-server kernel: MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+2026-06-11T20:18:07.364296+02:00 firewall-conntrack-server kernel: x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+2026-06-11T20:18:07.364296+02:00 firewall-conntrack-server kernel: last_pfn = 0xbffdd max_arch_pfn = 0x400000000
+2026-06-11T20:18:07.364297+02:00 firewall-conntrack-server kernel: found SMP MP-table at [mem 0x000f54a0-0x000f54af]
+2026-06-11T20:18:07.364297+02:00 firewall-conntrack-server kernel: Using GB pages for direct mapping
+2026-06-11T20:18:07.364298+02:00 firewall-conntrack-server kernel: RAMDISK: [mem 0xbf645000-0xbffcffff]
+2026-06-11T20:18:07.364298+02:00 firewall-conntrack-server kernel: ACPI: Early table checksum verification disabled
+2026-06-11T20:18:07.364300+02:00 firewall-conntrack-server kernel: ACPI: RSDP 0x00000000000F52A0 000014 (v00 BOCHS )
+2026-06-11T20:18:07.364300+02:00 firewall-conntrack-server kernel: ACPI: RSDT 0x00000000BFFE2564 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+2026-06-11T20:18:07.364301+02:00 firewall-conntrack-server kernel: ACPI: FACP 0x00000000BFFE2318 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+2026-06-11T20:18:07.364301+02:00 firewall-conntrack-server kernel: ACPI: DSDT 0x00000000BFFE0040 0022D8 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+2026-06-11T20:18:07.364302+02:00 firewall-conntrack-server kernel: ACPI: FACS 0x00000000BFFE0000 000040
+2026-06-11T20:18:07.364302+02:00 firewall-conntrack-server kernel: ACPI: APIC 0x00000000BFFE238C 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+2026-06-11T20:18:07.364304+02:00 firewall-conntrack-server kernel: ACPI: HPET 0x00000000BFFE241C 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+2026-06-11T20:18:07.364305+02:00 firewall-conntrack-server kernel: ACPI: SRAT 0x00000000BFFE2454 0000E8 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+2026-06-11T20:18:07.364305+02:00 firewall-conntrack-server kernel: ACPI: WAET 0x00000000BFFE253C 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+2026-06-11T20:18:07.364306+02:00 firewall-conntrack-server kernel: ACPI: Reserving FACP table memory at [mem 0xbffe2318-0xbffe238b]
+2026-06-11T20:18:07.364306+02:00 firewall-conntrack-server kernel: ACPI: Reserving DSDT table memory at [mem 0xbffe0040-0xbffe2317]
+2026-06-11T20:18:07.364306+02:00 firewall-conntrack-server kernel: ACPI: Reserving FACS table memory at [mem 0xbffe0000-0xbffe003f]
+2026-06-11T20:18:07.364308+02:00 firewall-conntrack-server kernel: ACPI: Reserving APIC table memory at [mem 0xbffe238c-0xbffe241b]
+2026-06-11T20:18:07.364309+02:00 firewall-conntrack-server kernel: ACPI: Reserving HPET table memory at [mem 0xbffe241c-0xbffe2453]
+2026-06-11T20:18:07.364310+02:00 firewall-conntrack-server kernel: ACPI: Reserving SRAT table memory at [mem 0xbffe2454-0xbffe253b]
+2026-06-11T20:18:07.364310+02:00 firewall-conntrack-server kernel: ACPI: Reserving WAET table memory at [mem 0xbffe253c-0xbffe2563]
+2026-06-11T20:18:07.364311+02:00 firewall-conntrack-server kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+2026-06-11T20:18:07.364311+02:00 firewall-conntrack-server kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0xbfffffff]
+2026-06-11T20:18:07.364311+02:00 firewall-conntrack-server kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x23fffffff]
+2026-06-11T20:18:07.364313+02:00 firewall-conntrack-server kernel: NUMA: Node 0 [mem 0x00001000-0x0009ffff] + [mem 0x00100000-0xbfffffff] -> [mem 0x00001000-0xbfffffff]
+2026-06-11T20:18:07.364314+02:00 firewall-conntrack-server kernel: NUMA: Node 0 [mem 0x00001000-0xbfffffff] + [mem 0x100000000-0x23fffffff] -> [mem 0x00001000-0x23fffffff]
+2026-06-11T20:18:07.364315+02:00 firewall-conntrack-server kernel: NODE_DATA(0) allocated [mem 0x23fffc0c0-0x23fffffff]
+2026-06-11T20:18:07.364315+02:00 firewall-conntrack-server kernel: Zone ranges:
+2026-06-11T20:18:07.364316+02:00 firewall-conntrack-server kernel:   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+2026-06-11T20:18:07.364316+02:00 firewall-conntrack-server kernel:   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+2026-06-11T20:18:07.364318+02:00 firewall-conntrack-server kernel:   Normal   [mem 0x0000000100000000-0x000000023fffffff]
+2026-06-11T20:18:07.364319+02:00 firewall-conntrack-server kernel: Movable zone start for each node
+2026-06-11T20:18:07.364319+02:00 firewall-conntrack-server kernel: Early memory node ranges
+2026-06-11T20:18:07.364320+02:00 firewall-conntrack-server kernel:   node   0: [mem 0x0000000000001000-0x000000000009efff]
+2026-06-11T20:18:07.364320+02:00 firewall-conntrack-server kernel:   node   0: [mem 0x0000000000100000-0x00000000bffdcfff]
+2026-06-11T20:18:07.364321+02:00 firewall-conntrack-server kernel:   node   0: [mem 0x0000000100000000-0x000000023fffffff]
+2026-06-11T20:18:07.364323+02:00 firewall-conntrack-server kernel: Initmem setup node 0 [mem 0x0000000000001000-0x000000023fffffff]
+2026-06-11T20:18:07.364323+02:00 firewall-conntrack-server kernel: On node 0, zone DMA: 1 pages in unavailable ranges
+2026-06-11T20:18:07.364324+02:00 firewall-conntrack-server kernel: On node 0, zone DMA: 97 pages in unavailable ranges
+2026-06-11T20:18:07.364324+02:00 firewall-conntrack-server kernel: On node 0, zone Normal: 35 pages in unavailable ranges
+2026-06-11T20:18:07.364324+02:00 firewall-conntrack-server kernel: ACPI: PM-Timer IO Port: 0x608
+2026-06-11T20:18:07.364325+02:00 firewall-conntrack-server kernel: ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+2026-06-11T20:18:07.364325+02:00 firewall-conntrack-server kernel: IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+2026-06-11T20:18:07.364327+02:00 firewall-conntrack-server kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+2026-06-11T20:18:07.364328+02:00 firewall-conntrack-server kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+2026-06-11T20:18:07.364329+02:00 firewall-conntrack-server kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+2026-06-11T20:18:07.364329+02:00 firewall-conntrack-server kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+2026-06-11T20:18:07.364329+02:00 firewall-conntrack-server kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+2026-06-11T20:18:07.364330+02:00 firewall-conntrack-server kernel: ACPI: Using ACPI (MADT) for SMP configuration information
+2026-06-11T20:18:07.364331+02:00 firewall-conntrack-server kernel: ACPI: HPET id: 0x8086a201 base: 0xfed00000
+2026-06-11T20:18:07.364332+02:00 firewall-conntrack-server kernel: TSC deadline timer available
+2026-06-11T20:18:07.364333+02:00 firewall-conntrack-server kernel: CPU topo: Max. logical packages:   1
+2026-06-11T20:18:07.364333+02:00 firewall-conntrack-server kernel: CPU topo: Max. logical dies:       1
+2026-06-11T20:18:07.364333+02:00 firewall-conntrack-server kernel: CPU topo: Max. dies per package:   1
+2026-06-11T20:18:07.364334+02:00 firewall-conntrack-server kernel: CPU topo: Max. threads per core:   1
+2026-06-11T20:18:07.364336+02:00 firewall-conntrack-server kernel: CPU topo: Num. cores per package:     4
+2026-06-11T20:18:07.364336+02:00 firewall-conntrack-server kernel: CPU topo: Num. threads per package:   4
+2026-06-11T20:18:07.364337+02:00 firewall-conntrack-server kernel: CPU topo: Allowing 4 present CPUs plus 0 hotplug CPUs
+2026-06-11T20:18:07.364337+02:00 firewall-conntrack-server kernel: kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+2026-06-11T20:18:07.364338+02:00 firewall-conntrack-server kernel: kvm-guest: KVM setup pv remote TLB flush
+2026-06-11T20:18:07.364338+02:00 firewall-conntrack-server kernel: kvm-guest: setup PV sched yield
+2026-06-11T20:18:07.364338+02:00 firewall-conntrack-server kernel: PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+2026-06-11T20:18:07.364340+02:00 firewall-conntrack-server kernel: PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+2026-06-11T20:18:07.364341+02:00 firewall-conntrack-server kernel: PM: hibernation: Registered nosave memory: [mem 0xbffdd000-0xffffffff]
+2026-06-11T20:18:07.364341+02:00 firewall-conntrack-server kernel: [mem 0xc0000000-0xfeffbfff] available for PCI devices
+2026-06-11T20:18:07.364342+02:00 firewall-conntrack-server kernel: Booting paravirtualized kernel on KVM
+2026-06-11T20:18:07.364342+02:00 firewall-conntrack-server kernel: clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+2026-06-11T20:18:07.364343+02:00 firewall-conntrack-server kernel: setup_percpu: NR_CPUS:384 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+2026-06-11T20:18:07.364345+02:00 firewall-conntrack-server kernel: percpu: Embedded 59 pages/cpu s204376 r8192 d29096 u524288
+2026-06-11T20:18:07.364345+02:00 firewall-conntrack-server kernel: pcpu-alloc: s204376 r8192 d29096 u524288 alloc=1*2097152
+2026-06-11T20:18:07.364346+02:00 firewall-conntrack-server kernel: pcpu-alloc: [0] 0 1 2 3 
+2026-06-11T20:18:07.364346+02:00 firewall-conntrack-server kernel: kvm-guest: PV spinlocks enabled
+2026-06-11T20:18:07.364347+02:00 firewall-conntrack-server kernel: PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)
+2026-06-11T20:18:07.364347+02:00 firewall-conntrack-server kernel: Kernel command line: console=ttyS0 init=/nix/store/hmskvg02xfnarz0s0r690fnkph1i0v97-vpsadminos-system-firewall-conntrack-server-26.05.git.11a751d/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+2026-06-11T20:18:07.364349+02:00 firewall-conntrack-server kernel: random: crng init done
+2026-06-11T20:18:07.364350+02:00 firewall-conntrack-server kernel: Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+2026-06-11T20:18:07.364413+02:00 firewall-conntrack-server kernel: Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+2026-06-11T20:18:07.364414+02:00 firewall-conntrack-server kernel: Fallback order for Node 0: 0 
+2026-06-11T20:18:07.364414+02:00 firewall-conntrack-server kernel: Built 1 zonelists, mobility grouping on.  Total pages: 2097019
+2026-06-11T20:18:07.364415+02:00 firewall-conntrack-server kernel: Policy zone: Normal
+2026-06-11T20:18:07.364417+02:00 firewall-conntrack-server kernel: mem auto-init: stack:all(zero), heap alloc:on, heap free:on
+2026-06-11T20:18:07.364417+02:00 firewall-conntrack-server kernel: mem auto-init: clearing system memory may take some time...
+2026-06-11T20:18:07.364418+02:00 firewall-conntrack-server kernel: software IO TLB: area num 4.
+2026-06-11T20:18:07.364418+02:00 firewall-conntrack-server kernel: SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+2026-06-11T20:18:07.364419+02:00 firewall-conntrack-server kernel: ftrace: allocating 42335 entries in 166 pages
+2026-06-11T20:18:07.364419+02:00 firewall-conntrack-server kernel: ftrace: allocated 166 pages with 4 groups
+2026-06-11T20:18:07.364420+02:00 firewall-conntrack-server kernel: Dynamic Preempt: none
+2026-06-11T20:18:07.364422+02:00 firewall-conntrack-server kernel: rcu: Preemptible hierarchical RCU implementation.
+2026-06-11T20:18:07.364422+02:00 firewall-conntrack-server kernel: rcu: 	RCU event tracing is enabled.
+2026-06-11T20:18:07.364423+02:00 firewall-conntrack-server kernel: rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=4.
+2026-06-11T20:18:07.364423+02:00 firewall-conntrack-server kernel: 	Trampoline variant of Tasks RCU enabled.
+2026-06-11T20:18:07.364424+02:00 firewall-conntrack-server kernel: 	Rude variant of Tasks RCU enabled.
+2026-06-11T20:18:07.364424+02:00 firewall-conntrack-server kernel: 	Tracing variant of Tasks RCU enabled.
+2026-06-11T20:18:07.364426+02:00 firewall-conntrack-server kernel: rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+2026-06-11T20:18:07.364427+02:00 firewall-conntrack-server kernel: rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+2026-06-11T20:18:07.364427+02:00 firewall-conntrack-server kernel: RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+2026-06-11T20:18:07.364428+02:00 firewall-conntrack-server kernel: RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+2026-06-11T20:18:07.364428+02:00 firewall-conntrack-server kernel: RCU Tasks Trace: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+2026-06-11T20:18:07.364428+02:00 firewall-conntrack-server kernel: NR_IRQS: 24832, nr_irqs: 456, preallocated irqs: 16
+2026-06-11T20:18:07.364429+02:00 firewall-conntrack-server kernel: rcu: srcu_init: Setting srcu_struct sizes based on contention.
+2026-06-11T20:18:07.364431+02:00 firewall-conntrack-server kernel: Console: colour VGA+ 80x25
+2026-06-11T20:18:07.364432+02:00 firewall-conntrack-server kernel: printk: legacy console [ttyS0] enabled
+2026-06-11T20:18:07.364432+02:00 firewall-conntrack-server kernel: ACPI: Core revision 20240827
+2026-06-11T20:18:07.364433+02:00 firewall-conntrack-server kernel: clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+2026-06-11T20:18:07.364433+02:00 firewall-conntrack-server kernel: APIC: Switch to symmetric I/O mode setup
+2026-06-11T20:18:07.364433+02:00 firewall-conntrack-server kernel: x2apic enabled
+2026-06-11T20:18:07.364435+02:00 firewall-conntrack-server kernel: APIC: Switched APIC routing to: physical x2apic
+2026-06-11T20:18:07.364436+02:00 firewall-conntrack-server kernel: kvm-guest: APIC: send_IPI_mask() replaced with kvm_send_ipi_mask()
+2026-06-11T20:18:07.364436+02:00 firewall-conntrack-server kernel: kvm-guest: APIC: send_IPI_mask_allbutself() replaced with kvm_send_ipi_mask_allbutself()
+2026-06-11T20:18:07.364437+02:00 firewall-conntrack-server kernel: kvm-guest: setup PV IPIs
+2026-06-11T20:18:07.364437+02:00 firewall-conntrack-server kernel: ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+2026-06-11T20:18:07.364438+02:00 firewall-conntrack-server kernel: clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x1e33052aadd, max_idle_ns: 440795310221 ns
+2026-06-11T20:18:07.364439+02:00 firewall-conntrack-server kernel: Calibrating delay loop (skipped) preset value.. 4190.15 BogoMIPS (lpj=2095076)
+2026-06-11T20:18:07.364440+02:00 firewall-conntrack-server kernel: x86/cpu: User Mode Instruction Prevention (UMIP) activated
+2026-06-11T20:18:07.364440+02:00 firewall-conntrack-server kernel: Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0
+2026-06-11T20:18:07.364441+02:00 firewall-conntrack-server kernel: Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0
+2026-06-11T20:18:07.364441+02:00 firewall-conntrack-server kernel: Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+2026-06-11T20:18:07.364442+02:00 firewall-conntrack-server kernel: Spectre V2 : Spectre BHI mitigation: SW BHB clearing on syscall and VM exit
+2026-06-11T20:18:07.364442+02:00 firewall-conntrack-server kernel: Spectre V2 : Mitigation: Enhanced / Automatic IBRS
+2026-06-11T20:18:07.364444+02:00 firewall-conntrack-server kernel: Spectre V2 : Spectre v2 / PBRSB-eIBRS: Retire a single CALL on VMEXIT
+2026-06-11T20:18:07.364445+02:00 firewall-conntrack-server kernel: RETBleed: Mitigation: Enhanced IBRS
+2026-06-11T20:18:07.364445+02:00 firewall-conntrack-server kernel: Spectre V2 : mitigation: Enabling conditional Indirect Branch Prediction Barrier
+2026-06-11T20:18:07.364446+02:00 firewall-conntrack-server kernel: Speculative Store Bypass: Mitigation: Speculative Store Bypass disabled via prctl
+2026-06-11T20:18:07.364446+02:00 firewall-conntrack-server kernel: TAA: Mitigation: TSX disabled
+2026-06-11T20:18:07.364446+02:00 firewall-conntrack-server kernel: MMIO Stale Data: Mitigation: Clear CPU buffers
+2026-06-11T20:18:07.364448+02:00 firewall-conntrack-server kernel: active return thunk: its_return_thunk
+2026-06-11T20:18:07.364449+02:00 firewall-conntrack-server kernel: ITS: Mitigation: Aligned branch/return thunks
+2026-06-11T20:18:07.364449+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+2026-06-11T20:18:07.364450+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+2026-06-11T20:18:07.364450+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+2026-06-11T20:18:07.364451+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'
+2026-06-11T20:18:07.364453+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'
+2026-06-11T20:18:07.364453+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x020: 'AVX-512 opmask'
+2026-06-11T20:18:07.364454+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x040: 'AVX-512 Hi256'
+2026-06-11T20:18:07.364454+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x080: 'AVX-512 ZMM_Hi256'
+2026-06-11T20:18:07.364455+02:00 firewall-conntrack-server kernel: x86/fpu: Supporting XSAVE feature 0x200: 'Protection Keys User registers'
+2026-06-11T20:18:07.364455+02:00 firewall-conntrack-server kernel: x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+2026-06-11T20:18:07.364455+02:00 firewall-conntrack-server kernel: x86/fpu: xstate_offset[3]:  832, xstate_sizes[3]:   64
+2026-06-11T20:18:07.364460+02:00 firewall-conntrack-server kernel: x86/fpu: xstate_offset[4]:  896, xstate_sizes[4]:   64
+2026-06-11T20:18:07.364460+02:00 firewall-conntrack-server kernel: x86/fpu: xstate_offset[5]:  960, xstate_sizes[5]:   64
+2026-06-11T20:18:07.364461+02:00 firewall-conntrack-server kernel: x86/fpu: xstate_offset[6]: 1024, xstate_sizes[6]:  512
+2026-06-11T20:18:07.364461+02:00 firewall-conntrack-server kernel: x86/fpu: xstate_offset[7]: 1536, xstate_sizes[7]: 1024
+2026-06-11T20:18:07.364462+02:00 firewall-conntrack-server kernel: x86/fpu: xstate_offset[9]: 2560, xstate_sizes[9]:    8
+2026-06-11T20:18:07.364462+02:00 firewall-conntrack-server kernel: x86/fpu: Enabled xstate features 0x2ff, context size is 2568 bytes, using 'compacted' format.
+2026-06-11T20:18:07.364464+02:00 firewall-conntrack-server kernel: Freeing SMP alternatives memory: 36K
+2026-06-11T20:18:07.364465+02:00 firewall-conntrack-server kernel: pid_max: default: 32768 minimum: 301
+2026-06-11T20:18:07.364465+02:00 firewall-conntrack-server kernel: LSM: initializing lsm=capability,landlock,yama,bpf
+2026-06-11T20:18:07.364465+02:00 firewall-conntrack-server kernel: landlock: Up and running.
+2026-06-11T20:18:07.364466+02:00 firewall-conntrack-server kernel: Yama: becoming mindful.
+2026-06-11T20:18:07.364466+02:00 firewall-conntrack-server kernel: LSM support for eBPF active
+2026-06-11T20:18:07.364467+02:00 firewall-conntrack-server kernel: Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+2026-06-11T20:18:07.364469+02:00 firewall-conntrack-server kernel: Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+2026-06-11T20:18:07.364469+02:00 firewall-conntrack-server kernel: smpboot: CPU0: Intel(R) Xeon(R) Gold 6230R CPU @ 2.10GHz (family: 0x6, model: 0x55, stepping: 0x7)
+2026-06-11T20:18:07.364470+02:00 firewall-conntrack-server kernel: Performance Events: Skylake events, full-width counters, Intel PMU driver.
+2026-06-11T20:18:07.364470+02:00 firewall-conntrack-server kernel: ... version:                2
+2026-06-11T20:18:07.364471+02:00 firewall-conntrack-server kernel: ... bit width:              48
+2026-06-11T20:18:07.364471+02:00 firewall-conntrack-server kernel: ... generic registers:      4
+2026-06-11T20:18:07.364473+02:00 firewall-conntrack-server kernel: ... value mask:             0000ffffffffffff
+2026-06-11T20:18:07.364473+02:00 firewall-conntrack-server kernel: ... max period:             00007fffffffffff
+2026-06-11T20:18:07.364474+02:00 firewall-conntrack-server kernel: ... fixed-purpose events:   3
+2026-06-11T20:18:07.364474+02:00 firewall-conntrack-server kernel: ... event mask:             000000070000000f
+2026-06-11T20:18:07.364475+02:00 firewall-conntrack-server kernel: signal: max sigframe size: 3632
+2026-06-11T20:18:07.364475+02:00 firewall-conntrack-server kernel: rcu: Hierarchical SRCU implementation.
+2026-06-11T20:18:07.364477+02:00 firewall-conntrack-server kernel: rcu: 	Max phase no-delay instances is 400.
+2026-06-11T20:18:07.364477+02:00 firewall-conntrack-server kernel: Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+2026-06-11T20:18:07.364478+02:00 firewall-conntrack-server kernel: smp: Bringing up secondary CPUs ...
+2026-06-11T20:18:07.364479+02:00 firewall-conntrack-server kernel: smpboot: x86: Booting SMP configuration:
+2026-06-11T20:18:07.364479+02:00 firewall-conntrack-server kernel: .... node  #0, CPUs:      #1 #2 #3
+2026-06-11T20:18:07.364479+02:00 firewall-conntrack-server kernel: smp: Brought up 1 node, 4 CPUs
+2026-06-11T20:18:07.364480+02:00 firewall-conntrack-server kernel: smpboot: Total of 4 processors activated (16760.60 BogoMIPS)
+2026-06-11T20:18:07.364482+02:00 firewall-conntrack-server kernel: node 0 deferred pages initialised in 2157ms
+2026-06-11T20:18:07.364483+02:00 firewall-conntrack-server kernel: Memory: 8124220K/8388076K available (16384K kernel code, 2485K rwdata, 10220K rodata, 2848K init, 1448K bss, 258004K reserved, 0K cma-reserved)
+2026-06-11T20:18:07.364483+02:00 firewall-conntrack-server kernel: devtmpfs: initialized
+2026-06-11T20:18:07.364484+02:00 firewall-conntrack-server kernel: x86/mm: Memory block size: 128MB
+2026-06-11T20:18:07.364484+02:00 firewall-conntrack-server kernel: clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+2026-06-11T20:18:07.364485+02:00 firewall-conntrack-server kernel: futex hash table entries: 1024 (order: 4, 65536 bytes, linear)
+2026-06-11T20:18:07.364490+02:00 firewall-conntrack-server kernel: pinctrl core: initialized pinctrl subsystem
+2026-06-11T20:18:07.364490+02:00 firewall-conntrack-server kernel: NET: Registered PF_NETLINK/PF_ROUTE protocol family
+2026-06-11T20:18:07.364491+02:00 firewall-conntrack-server kernel: audit: initializing netlink subsys (disabled)
+2026-06-11T20:18:07.364491+02:00 firewall-conntrack-server kernel: audit: type=2000 audit(1781201880.296:1): state=initialized audit_enabled=0 res=1
+2026-06-11T20:18:07.364492+02:00 firewall-conntrack-server kernel: thermal_sys: Registered thermal governor 'bang_bang'
+2026-06-11T20:18:07.364492+02:00 firewall-conntrack-server kernel: thermal_sys: Registered thermal governor 'step_wise'
+2026-06-11T20:18:07.364495+02:00 firewall-conntrack-server kernel: thermal_sys: Registered thermal governor 'user_space'
+2026-06-11T20:18:07.364496+02:00 firewall-conntrack-server kernel: cpuidle: using governor ladder
+2026-06-11T20:18:07.364497+02:00 firewall-conntrack-server kernel: cpuidle: using governor menu
+2026-06-11T20:18:07.364498+02:00 firewall-conntrack-server kernel: acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+2026-06-11T20:18:07.364498+02:00 firewall-conntrack-server kernel: PCI: Using configuration type 1 for base access
+2026-06-11T20:18:07.364498+02:00 firewall-conntrack-server kernel: kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+2026-06-11T20:18:07.364576+02:00 firewall-conntrack-server kernel: HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+2026-06-11T20:18:07.364582+02:00 firewall-conntrack-server kernel: HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+2026-06-11T20:18:07.364583+02:00 firewall-conntrack-server kernel: HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+2026-06-11T20:18:07.364584+02:00 firewall-conntrack-server kernel: HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+2026-06-11T20:18:07.364584+02:00 firewall-conntrack-server kernel: ACPI: Added _OSI(Module Device)
+2026-06-11T20:18:07.364585+02:00 firewall-conntrack-server kernel: ACPI: Added _OSI(Processor Device)
+2026-06-11T20:18:07.364585+02:00 firewall-conntrack-server kernel: ACPI: Added _OSI(Processor Aggregator Device)
+2026-06-11T20:18:07.364588+02:00 firewall-conntrack-server kernel: ACPI: 1 ACPI AML tables successfully acquired and loaded
+2026-06-11T20:18:07.364589+02:00 firewall-conntrack-server kernel: ACPI: Interpreter enabled
+2026-06-11T20:18:07.364589+02:00 firewall-conntrack-server kernel: ACPI: PM: (supports S0 S3 S4 S5)
+2026-06-11T20:18:07.364590+02:00 firewall-conntrack-server kernel: ACPI: Using IOAPIC for interrupt routing
+2026-06-11T20:18:07.364590+02:00 firewall-conntrack-server kernel: PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+2026-06-11T20:18:07.364591+02:00 firewall-conntrack-server kernel: PCI: Using E820 reservations for host bridge windows
+2026-06-11T20:18:07.364591+02:00 firewall-conntrack-server kernel: ACPI: Enabled 2 GPEs in block 00 to 0F
+2026-06-11T20:18:07.364594+02:00 firewall-conntrack-server kernel: ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+2026-06-11T20:18:07.364595+02:00 firewall-conntrack-server kernel: acpi PNP0A03:00: _OSC: OS supports [ASPM ClockPM Segments MSI HPX-Type3]
+2026-06-11T20:18:07.364595+02:00 firewall-conntrack-server kernel: acpi PNP0A03:00: _OSC: not requesting OS control; OS requires [ExtendedConfig ASPM ClockPM MSI]
+2026-06-11T20:18:07.364596+02:00 firewall-conntrack-server kernel: acpi PNP0A03:00: fail to add MMCONFIG information, can't access extended configuration space under this bridge
+2026-06-11T20:18:07.364597+02:00 firewall-conntrack-server kernel: acpiphp: Slot [3] registered
+2026-06-11T20:18:07.364597+02:00 firewall-conntrack-server kernel: acpiphp: Slot [4] registered
+2026-06-11T20:18:07.364600+02:00 firewall-conntrack-server kernel: acpiphp: Slot [5] registered
+2026-06-11T20:18:07.364601+02:00 firewall-conntrack-server kernel: acpiphp: Slot [6] registered
+2026-06-11T20:18:07.364602+02:00 firewall-conntrack-server kernel: acpiphp: Slot [7] registered
+2026-06-11T20:18:07.364602+02:00 firewall-conntrack-server kernel: acpiphp: Slot [8] registered
+2026-06-11T20:18:07.364602+02:00 firewall-conntrack-server kernel: acpiphp: Slot [9] registered
+2026-06-11T20:18:07.364603+02:00 firewall-conntrack-server kernel: acpiphp: Slot [10] registered
+2026-06-11T20:18:07.364606+02:00 firewall-conntrack-server kernel: acpiphp: Slot [11] registered
+2026-06-11T20:18:07.364607+02:00 firewall-conntrack-server kernel: acpiphp: Slot [12] registered
+2026-06-11T20:18:07.364607+02:00 firewall-conntrack-server kernel: acpiphp: Slot [13] registered
+2026-06-11T20:18:07.364608+02:00 firewall-conntrack-server kernel: acpiphp: Slot [14] registered
+2026-06-11T20:18:07.364608+02:00 firewall-conntrack-server kernel: acpiphp: Slot [15] registered
+2026-06-11T20:18:07.364608+02:00 firewall-conntrack-server kernel: acpiphp: Slot [16] registered
+2026-06-11T20:18:07.364609+02:00 firewall-conntrack-server kernel: acpiphp: Slot [17] registered
+2026-06-11T20:18:07.364612+02:00 firewall-conntrack-server kernel: acpiphp: Slot [18] registered
+2026-06-11T20:18:07.364613+02:00 firewall-conntrack-server kernel: acpiphp: Slot [19] registered
+2026-06-11T20:18:07.364613+02:00 firewall-conntrack-server kernel: acpiphp: Slot [20] registered
+2026-06-11T20:18:07.364614+02:00 firewall-conntrack-server kernel: acpiphp: Slot [21] registered
+2026-06-11T20:18:07.364614+02:00 firewall-conntrack-server kernel: acpiphp: Slot [22] registered
+2026-06-11T20:18:07.364615+02:00 firewall-conntrack-server kernel: acpiphp: Slot [23] registered
+2026-06-11T20:18:07.364618+02:00 firewall-conntrack-server kernel: acpiphp: Slot [24] registered
+2026-06-11T20:18:07.364619+02:00 firewall-conntrack-server kernel: acpiphp: Slot [25] registered
+2026-06-11T20:18:07.364619+02:00 firewall-conntrack-server kernel: acpiphp: Slot [26] registered
+2026-06-11T20:18:07.364620+02:00 firewall-conntrack-server kernel: acpiphp: Slot [27] registered
+2026-06-11T20:18:07.364620+02:00 firewall-conntrack-server kernel: acpiphp: Slot [28] registered
+2026-06-11T20:18:07.364621+02:00 firewall-conntrack-server kernel: acpiphp: Slot [29] registered
+2026-06-11T20:18:07.364624+02:00 firewall-conntrack-server kernel: acpiphp: Slot [30] registered
+2026-06-11T20:18:07.364624+02:00 firewall-conntrack-server kernel: acpiphp: Slot [31] registered
+2026-06-11T20:18:07.364625+02:00 firewall-conntrack-server kernel: PCI host bridge to bus 0000:00
+2026-06-11T20:18:07.364625+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+2026-06-11T20:18:07.364626+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+2026-06-11T20:18:07.364626+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+2026-06-11T20:18:07.364627+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window]
+2026-06-11T20:18:07.364630+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: root bus resource [mem 0xe0000000000-0xe007fffffff window]
+2026-06-11T20:18:07.364630+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: root bus resource [bus 00-ff]
+2026-06-11T20:18:07.364631+02:00 firewall-conntrack-server kernel: pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+2026-06-11T20:18:07.364631+02:00 firewall-conntrack-server kernel: pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+2026-06-11T20:18:07.364632+02:00 firewall-conntrack-server kernel: pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint
+2026-06-11T20:18:07.364632+02:00 firewall-conntrack-server kernel: pci 0000:00:01.1: BAR 4 [io  0xc100-0xc10f]
+2026-06-11T20:18:07.364635+02:00 firewall-conntrack-server kernel: pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+2026-06-11T20:18:07.364636+02:00 firewall-conntrack-server kernel: pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+2026-06-11T20:18:07.364637+02:00 firewall-conntrack-server kernel: pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+2026-06-11T20:18:07.364637+02:00 firewall-conntrack-server kernel: pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+2026-06-11T20:18:07.364638+02:00 firewall-conntrack-server kernel: pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+2026-06-11T20:18:07.364638+02:00 firewall-conntrack-server kernel: pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI
+2026-06-11T20:18:07.364638+02:00 firewall-conntrack-server kernel: pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB
+2026-06-11T20:18:07.364641+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: [1234:1111] type 00 class 0x030000 conventional PCI endpoint
+2026-06-11T20:18:07.364642+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: BAR 0 [mem 0xfd000000-0xfdffffff pref]
+2026-06-11T20:18:07.364643+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: BAR 2 [mem 0xfebd0000-0xfebd0fff]
+2026-06-11T20:18:07.364643+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: ROM [mem 0xfebc0000-0xfebcffff pref]
+2026-06-11T20:18:07.364644+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+2026-06-11T20:18:07.364645+02:00 firewall-conntrack-server kernel: pci 0000:00:03.0: [8086:2922] type 00 class 0x010601 conventional PCI endpoint
+2026-06-11T20:18:07.364648+02:00 firewall-conntrack-server kernel: pci 0000:00:03.0: BAR 4 [io  0xc0c0-0xc0df]
+2026-06-11T20:18:07.364649+02:00 firewall-conntrack-server kernel: pci 0000:00:03.0: BAR 5 [mem 0xfebd1000-0xfebd1fff]
+2026-06-11T20:18:07.364649+02:00 firewall-conntrack-server kernel: pci 0000:00:04.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+2026-06-11T20:18:07.364650+02:00 firewall-conntrack-server kernel: pci 0000:00:04.0: BAR 0 [io  0xc0e0-0xc0ff]
+2026-06-11T20:18:07.364650+02:00 firewall-conntrack-server kernel: pci 0000:00:04.0: BAR 1 [mem 0xfebd2000-0xfebd2fff]
+2026-06-11T20:18:07.364651+02:00 firewall-conntrack-server kernel: pci 0000:00:04.0: BAR 4 [mem 0xe0000000000-0xe0000003fff 64bit pref]
+2026-06-11T20:18:07.364654+02:00 firewall-conntrack-server kernel: pci 0000:00:04.0: ROM [mem 0xfeb80000-0xfebbffff pref]
+2026-06-11T20:18:07.364654+02:00 firewall-conntrack-server kernel: pci 0000:00:05.0: [1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+2026-06-11T20:18:07.364655+02:00 firewall-conntrack-server kernel: pci 0000:00:05.0: BAR 0 [io  0xc080-0xc0bf]
+2026-06-11T20:18:07.364655+02:00 firewall-conntrack-server kernel: pci 0000:00:05.0: BAR 1 [mem 0xfebd3000-0xfebd3fff]
+2026-06-11T20:18:07.364656+02:00 firewall-conntrack-server kernel: pci 0000:00:05.0: BAR 4 [mem 0xe0000004000-0xe0000007fff 64bit pref]
+2026-06-11T20:18:07.364656+02:00 firewall-conntrack-server kernel: pci 0000:00:06.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint
+2026-06-11T20:18:07.364657+02:00 firewall-conntrack-server kernel: pci 0000:00:06.0: BAR 1 [mem 0xfebd4000-0xfebd4fff]
+2026-06-11T20:18:07.364660+02:00 firewall-conntrack-server kernel: pci 0000:00:06.0: BAR 4 [mem 0xe0000008000-0xe000000bfff 64bit pref]
+2026-06-11T20:18:07.364661+02:00 firewall-conntrack-server kernel: pci 0000:00:07.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+2026-06-11T20:18:07.364661+02:00 firewall-conntrack-server kernel: pci 0000:00:07.0: BAR 0 [io  0xc000-0xc07f]
+2026-06-11T20:18:07.364662+02:00 firewall-conntrack-server kernel: pci 0000:00:07.0: BAR 1 [mem 0xfebd5000-0xfebd5fff]
+2026-06-11T20:18:07.364662+02:00 firewall-conntrack-server kernel: pci 0000:00:07.0: BAR 4 [mem 0xe000000c000-0xe000000ffff 64bit pref]
+2026-06-11T20:18:07.364662+02:00 firewall-conntrack-server kernel: ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+2026-06-11T20:18:07.364665+02:00 firewall-conntrack-server kernel: ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+2026-06-11T20:18:07.364666+02:00 firewall-conntrack-server kernel: ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+2026-06-11T20:18:07.364666+02:00 firewall-conntrack-server kernel: ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+2026-06-11T20:18:07.364667+02:00 firewall-conntrack-server kernel: ACPI: PCI: Interrupt link LNKS configured for IRQ 9
+2026-06-11T20:18:07.364667+02:00 firewall-conntrack-server kernel: iommu: Default domain type: Translated
+2026-06-11T20:18:07.364668+02:00 firewall-conntrack-server kernel: iommu: DMA domain TLB invalidation policy: lazy mode
+2026-06-11T20:18:07.364668+02:00 firewall-conntrack-server kernel: NetLabel: Initializing
+2026-06-11T20:18:07.364671+02:00 firewall-conntrack-server kernel: NetLabel:  domain hash size = 128
+2026-06-11T20:18:07.364672+02:00 firewall-conntrack-server kernel: NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+2026-06-11T20:18:07.364672+02:00 firewall-conntrack-server kernel: NetLabel:  unlabeled traffic allowed by default
+2026-06-11T20:18:07.364673+02:00 firewall-conntrack-server kernel: PCI: Using ACPI for IRQ routing
+2026-06-11T20:18:07.364673+02:00 firewall-conntrack-server kernel: PCI: pci_cache_line_size set to 64 bytes
+2026-06-11T20:18:07.364674+02:00 firewall-conntrack-server kernel: e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+2026-06-11T20:18:07.364677+02:00 firewall-conntrack-server kernel: e820: reserve RAM buffer [mem 0xbffdd000-0xbfffffff]
+2026-06-11T20:18:07.364678+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: vgaarb: setting as boot VGA device
+2026-06-11T20:18:07.364679+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: vgaarb: bridge control possible
+2026-06-11T20:18:07.364679+02:00 firewall-conntrack-server kernel: pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+2026-06-11T20:18:07.364679+02:00 firewall-conntrack-server kernel: vgaarb: loaded
+2026-06-11T20:18:07.364680+02:00 firewall-conntrack-server kernel: hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+2026-06-11T20:18:07.364683+02:00 firewall-conntrack-server kernel: hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+2026-06-11T20:18:07.364684+02:00 firewall-conntrack-server kernel: clocksource: Switched to clocksource kvm-clock
+2026-06-11T20:18:07.364684+02:00 firewall-conntrack-server kernel: VFS: Disk quotas dquot_6.6.0
+2026-06-11T20:18:07.364685+02:00 firewall-conntrack-server kernel: VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+2026-06-11T20:18:07.364685+02:00 firewall-conntrack-server kernel: netfs: FS-Cache loaded
+2026-06-11T20:18:07.364685+02:00 firewall-conntrack-server kernel: pnp: PnP ACPI init
+2026-06-11T20:18:07.364686+02:00 firewall-conntrack-server kernel: pnp 00:02: [dma 2]
+2026-06-11T20:18:07.364689+02:00 firewall-conntrack-server kernel: pnp: PnP ACPI: found 6 devices
+2026-06-11T20:18:07.364690+02:00 firewall-conntrack-server kernel: clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+2026-06-11T20:18:07.364690+02:00 firewall-conntrack-server kernel: NET: Registered PF_INET protocol family
+2026-06-11T20:18:07.364691+02:00 firewall-conntrack-server kernel: IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+2026-06-11T20:18:07.364741+02:00 firewall-conntrack-server kernel: tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+2026-06-11T20:18:07.364741+02:00 firewall-conntrack-server kernel: Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+2026-06-11T20:18:07.364744+02:00 firewall-conntrack-server kernel: TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+2026-06-11T20:18:07.364745+02:00 firewall-conntrack-server kernel: TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+2026-06-11T20:18:07.364745+02:00 firewall-conntrack-server kernel: TCP: Hash tables configured (established 65536 bind 65536)
+2026-06-11T20:18:07.364746+02:00 firewall-conntrack-server kernel: UDP hash table entries: 4096 (order: 5, 131072 bytes, linear)
+2026-06-11T20:18:07.364746+02:00 firewall-conntrack-server kernel: UDP-Lite hash table entries: 4096 (order: 5, 131072 bytes, linear)
+2026-06-11T20:18:07.364747+02:00 firewall-conntrack-server kernel: NET: Registered PF_UNIX/PF_LOCAL protocol family
+2026-06-11T20:18:07.364747+02:00 firewall-conntrack-server kernel: RPC: Registered named UNIX socket transport module.
+2026-06-11T20:18:07.364750+02:00 firewall-conntrack-server kernel: RPC: Registered udp transport module.
+2026-06-11T20:18:07.364751+02:00 firewall-conntrack-server kernel: RPC: Registered tcp transport module.
+2026-06-11T20:18:07.364751+02:00 firewall-conntrack-server kernel: RPC: Registered tcp-with-tls transport module.
+2026-06-11T20:18:07.364752+02:00 firewall-conntrack-server kernel: RPC: Registered tcp NFSv4.1 backchannel transport module.
+2026-06-11T20:18:07.364752+02:00 firewall-conntrack-server kernel: NET: Registered PF_XDP protocol family
+2026-06-11T20:18:07.364753+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+2026-06-11T20:18:07.364756+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+2026-06-11T20:18:07.364757+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+2026-06-11T20:18:07.364758+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: resource 7 [mem 0xc0000000-0xfebfffff window]
+2026-06-11T20:18:07.364758+02:00 firewall-conntrack-server kernel: pci_bus 0000:00: resource 8 [mem 0xe0000000000-0xe007fffffff window]
+2026-06-11T20:18:07.364759+02:00 firewall-conntrack-server kernel: pci 0000:00:01.0: PIIX3: Enabling Passive Release
+2026-06-11T20:18:07.364759+02:00 firewall-conntrack-server kernel: pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+2026-06-11T20:18:07.364762+02:00 firewall-conntrack-server kernel: PCI: CLS 0 bytes, default 64
+2026-06-11T20:18:07.364763+02:00 firewall-conntrack-server kernel: PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+2026-06-11T20:18:07.364763+02:00 firewall-conntrack-server kernel: software IO TLB: mapped [mem 0x00000000bb645000-0x00000000bf645000] (64MB)
+2026-06-11T20:18:07.364763+02:00 firewall-conntrack-server kernel: clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x1e33052aadd, max_idle_ns: 440795310221 ns
+2026-06-11T20:18:07.364764+02:00 firewall-conntrack-server kernel: Trying to unpack rootfs image as initramfs...
+2026-06-11T20:18:07.364764+02:00 firewall-conntrack-server kernel: Initialise system trusted keyrings
+2026-06-11T20:18:07.364765+02:00 firewall-conntrack-server kernel: workingset: timestamp_bits=40 max_order=21 bucket_order=0
+2026-06-11T20:18:07.364770+02:00 firewall-conntrack-server kernel: zbud: loaded
+2026-06-11T20:18:07.364770+02:00 firewall-conntrack-server kernel: Key type asymmetric registered
+2026-06-11T20:18:07.364771+02:00 firewall-conntrack-server kernel: Asymmetric key parser 'x509' registered
+2026-06-11T20:18:07.364771+02:00 firewall-conntrack-server kernel: Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+2026-06-11T20:18:07.364772+02:00 firewall-conntrack-server kernel: io scheduler mq-deadline registered
+2026-06-11T20:18:07.364772+02:00 firewall-conntrack-server kernel: Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+2026-06-11T20:18:07.364775+02:00 firewall-conntrack-server kernel: 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+2026-06-11T20:18:07.364776+02:00 firewall-conntrack-server kernel: ACPI: bus type drm_connector registered
+2026-06-11T20:18:07.364776+02:00 firewall-conntrack-server kernel: brd: module loaded
+2026-06-11T20:18:07.364777+02:00 firewall-conntrack-server kernel: intel_pstate: CPU model not supported
+2026-06-11T20:18:07.364777+02:00 firewall-conntrack-server kernel: drop_monitor: Initializing network drop monitor service
+2026-06-11T20:18:07.364778+02:00 firewall-conntrack-server kernel: Initializing XFRM netlink socket
+2026-06-11T20:18:07.364778+02:00 firewall-conntrack-server kernel: IPsec XFRM device driver
+2026-06-11T20:18:07.364781+02:00 firewall-conntrack-server kernel: NET: Registered PF_INET6 protocol family
+2026-06-11T20:18:07.364782+02:00 firewall-conntrack-server kernel: Segment Routing with IPv6
+2026-06-11T20:18:07.364782+02:00 firewall-conntrack-server kernel: In-situ OAM (IOAM) with IPv6
+2026-06-11T20:18:07.364783+02:00 firewall-conntrack-server kernel: NET: Registered PF_KEY protocol family
+2026-06-11T20:18:07.364783+02:00 firewall-conntrack-server kernel: IPI shorthand broadcast: enabled
+2026-06-11T20:18:07.364784+02:00 firewall-conntrack-server kernel: sched_clock: Marking stable (7108003256, 10062390)->(7703758090, -585692444)
+2026-06-11T20:18:07.364787+02:00 firewall-conntrack-server kernel: registered taskstats version 1
+2026-06-11T20:18:07.364788+02:00 firewall-conntrack-server kernel: Loading compiled-in X.509 certificates
+2026-06-11T20:18:07.364788+02:00 firewall-conntrack-server kernel: Freeing initrd memory: 9772K
+2026-06-11T20:18:07.364788+02:00 firewall-conntrack-server kernel: Loaded X.509 cert 'Build time autogenerated kernel key: c58876b048a98987c3eb51577f9700094dc34ca6'
+2026-06-11T20:18:07.364789+02:00 firewall-conntrack-server kernel: Demotion targets for Node 0: null
+2026-06-11T20:18:07.364789+02:00 firewall-conntrack-server kernel: Key type .fscrypt registered
+2026-06-11T20:18:07.364792+02:00 firewall-conntrack-server kernel: Key type fscrypt-provisioning registered
+2026-06-11T20:18:07.364793+02:00 firewall-conntrack-server kernel: RAS: Correctable Errors collector initialized.
+2026-06-11T20:18:07.364793+02:00 firewall-conntrack-server kernel: clk: Disabling unused clocks
+2026-06-11T20:18:07.364794+02:00 firewall-conntrack-server kernel: Freeing unused kernel image (initmem) memory: 2848K
+2026-06-11T20:18:07.364794+02:00 firewall-conntrack-server kernel: Write protecting the kernel read-only data: 26624k
+2026-06-11T20:18:07.364795+02:00 firewall-conntrack-server kernel: Freeing unused kernel image (rodata/data gap) memory: 20K
+2026-06-11T20:18:07.364795+02:00 firewall-conntrack-server kernel: x86/mm: Checked W+X mappings: passed, no W+X pages found.
+2026-06-11T20:18:07.364798+02:00 firewall-conntrack-server kernel: Run /init as init process
+2026-06-11T20:18:07.364799+02:00 firewall-conntrack-server kernel:   with arguments:
+2026-06-11T20:18:07.364799+02:00 firewall-conntrack-server kernel:     /init
+2026-06-11T20:18:07.364800+02:00 firewall-conntrack-server kernel:   with environment:
+2026-06-11T20:18:07.364800+02:00 firewall-conntrack-server kernel:     HOME=/
+2026-06-11T20:18:07.364800+02:00 firewall-conntrack-server kernel:     TERM=linux
+2026-06-11T20:18:07.364804+02:00 firewall-conntrack-server kernel: SCSI subsystem initialized
+2026-06-11T20:18:07.364804+02:00 firewall-conntrack-server kernel: libata version 3.00 loaded.
+2026-06-11T20:18:07.364805+02:00 firewall-conntrack-server kernel: ahci 0000:00:03.0: version 3.0
+2026-06-11T20:18:07.364805+02:00 firewall-conntrack-server kernel: ACPI: \_SB_.LNKC: Enabled at IRQ 11
+2026-06-11T20:18:07.364806+02:00 firewall-conntrack-server kernel: ahci 0000:00:03.0: AHCI vers 0001.0000, 32 command slots, 1.5 Gbps, SATA mode
+2026-06-11T20:18:07.364806+02:00 firewall-conntrack-server kernel: ahci 0000:00:03.0: 6/6 ports implemented (port mask 0x3f)
+2026-06-11T20:18:07.364806+02:00 firewall-conntrack-server kernel: ahci 0000:00:03.0: flags: 64bit ncq only 
+2026-06-11T20:18:07.364809+02:00 firewall-conntrack-server kernel: scsi host0: ahci
+2026-06-11T20:18:07.364810+02:00 firewall-conntrack-server kernel: scsi host1: ahci
+2026-06-11T20:18:07.364811+02:00 firewall-conntrack-server kernel: scsi host2: ahci
+2026-06-11T20:18:07.364811+02:00 firewall-conntrack-server kernel: scsi host3: ahci
+2026-06-11T20:18:07.364812+02:00 firewall-conntrack-server kernel: scsi host4: ahci
+2026-06-11T20:18:07.364812+02:00 firewall-conntrack-server kernel: scsi host5: ahci
+2026-06-11T20:18:07.364815+02:00 firewall-conntrack-server kernel: ata1: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1100 irq 24 lpm-pol 1
+2026-06-11T20:18:07.364816+02:00 firewall-conntrack-server kernel: ata2: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1180 irq 24 lpm-pol 1
+2026-06-11T20:18:07.364816+02:00 firewall-conntrack-server kernel: ata3: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1200 irq 24 lpm-pol 1
+2026-06-11T20:18:07.364817+02:00 firewall-conntrack-server kernel: ata4: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1280 irq 24 lpm-pol 1
+2026-06-11T20:18:07.364817+02:00 firewall-conntrack-server kernel: ata5: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1300 irq 24 lpm-pol 1
+2026-06-11T20:18:07.364818+02:00 firewall-conntrack-server kernel: ata6: SATA max UDMA/133 abar m4096@0xfebd1000 port 0xfebd1380 irq 24 lpm-pol 1
+2026-06-11T20:18:07.364821+02:00 firewall-conntrack-server kernel: ata5: SATA link down (SStatus 0 SControl 300)
+2026-06-11T20:18:07.364821+02:00 firewall-conntrack-server kernel: ata2: SATA link down (SStatus 0 SControl 300)
+2026-06-11T20:18:07.364822+02:00 firewall-conntrack-server kernel: ata1: SATA link down (SStatus 0 SControl 300)
+2026-06-11T20:18:07.364822+02:00 firewall-conntrack-server kernel: ata6: SATA link down (SStatus 0 SControl 300)
+2026-06-11T20:18:07.364822+02:00 firewall-conntrack-server kernel: ata3: SATA link down (SStatus 0 SControl 300)
+2026-06-11T20:18:07.364823+02:00 firewall-conntrack-server kernel: ata4: SATA link down (SStatus 0 SControl 300)
+2026-06-11T20:18:07.364823+02:00 firewall-conntrack-server kernel: device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@lists.linux.dev
+2026-06-11T20:18:07.364826+02:00 firewall-conntrack-server kernel: ACPI: bus type USB registered
+2026-06-11T20:18:07.364827+02:00 firewall-conntrack-server kernel: usbcore: registered new interface driver usbfs
+2026-06-11T20:18:07.364827+02:00 firewall-conntrack-server kernel: usbcore: registered new interface driver hub
+2026-06-11T20:18:07.364828+02:00 firewall-conntrack-server kernel: usbcore: registered new device driver usb
+2026-06-11T20:18:07.364828+02:00 firewall-conntrack-server kernel: hid: raw HID events driver (C) Jiri Kosina
+2026-06-11T20:18:07.364829+02:00 firewall-conntrack-server kernel: usbcore: registered new interface driver usbhid
+2026-06-11T20:18:07.364832+02:00 firewall-conntrack-server kernel: usbhid: USB HID core driver
+2026-06-11T20:18:07.364832+02:00 firewall-conntrack-server kernel: i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+2026-06-11T20:18:07.364833+02:00 firewall-conntrack-server kernel: serio: i8042 KBD port at 0x60,0x64 irq 1
+2026-06-11T20:18:07.364833+02:00 firewall-conntrack-server kernel: serio: i8042 AUX port at 0x60,0x64 irq 12
+2026-06-11T20:18:07.364834+02:00 firewall-conntrack-server kernel: input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+2026-06-11T20:18:07.364834+02:00 firewall-conntrack-server kernel: isci: Intel(R) C600 SAS Controller Driver - version 1.2.0
+2026-06-11T20:18:07.364834+02:00 firewall-conntrack-server kernel: loop: module loaded
+2026-06-11T20:18:07.364838+02:00 firewall-conntrack-server kernel: squashfs: version 4.0 (2009/01/31) Phillip Lougher
+2026-06-11T20:18:07.364838+02:00 firewall-conntrack-server kernel: tun: Universal TUN/TAP device driver, 1.6
+2026-06-11T20:18:07.364839+02:00 firewall-conntrack-server kernel: ACPI: \_SB_.LNKD: Enabled at IRQ 10
+2026-06-11T20:18:07.364839+02:00 firewall-conntrack-server kernel: ACPI: \_SB_.LNKA: Enabled at IRQ 10
+2026-06-11T20:18:07.364840+02:00 firewall-conntrack-server kernel: ACPI: \_SB_.LNKB: Enabled at IRQ 11
+2026-06-11T20:18:07.364840+02:00 firewall-conntrack-server kernel: virtio_blk virtio3: 4/0/0 default/read/poll queues
+2026-06-11T20:18:07.364843+02:00 firewall-conntrack-server kernel: virtio_blk virtio3: [vda] 770824 512-byte logical blocks (395 MB/376 MiB)
+2026-06-11T20:18:07.364844+02:00 firewall-conntrack-server kernel: udevd[157]: starting version 3.2.14
+2026-06-11T20:18:07.364844+02:00 firewall-conntrack-server kernel: udevd[158]: starting eudev-3.2.14
+2026-06-11T20:18:07.364845+02:00 firewall-conntrack-server kernel: ata_piix 0000:00:01.1: version 2.13
+2026-06-11T20:18:07.364845+02:00 firewall-conntrack-server kernel: scsi host6: ata_piix
+2026-06-11T20:18:07.364846+02:00 firewall-conntrack-server kernel: scsi host7: ata_piix
+2026-06-11T20:18:07.364849+02:00 firewall-conntrack-server kernel: ata7: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc100 irq 14 lpm-pol 0
+2026-06-11T20:18:07.364849+02:00 firewall-conntrack-server kernel: ata8: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc108 irq 15 lpm-pol 0
+2026-06-11T20:18:07.364850+02:00 firewall-conntrack-server kernel: ata8: found unknown device (class 0)
+2026-06-11T20:18:07.364850+02:00 firewall-conntrack-server kernel: ata8.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100
+2026-06-11T20:18:07.364851+02:00 firewall-conntrack-server kernel: scsi 7:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5
+2026-06-11T20:18:07.364851+02:00 firewall-conntrack-server kernel: sr 7:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray
+2026-06-11T20:18:07.364852+02:00 firewall-conntrack-server kernel: cdrom: Uniform CD-ROM driver Revision: 3.20
+2026-06-11T20:18:07.364855+02:00 firewall-conntrack-server kernel: sr 7:0:0:0: Attached scsi CD-ROM sr0
+2026-06-11T20:18:07.364890+02:00 firewall-conntrack-server kernel: vpsAdminOS 26.05.git.11a751d with kernel 6.12.93
+2026-06-11T20:18:07.364890+02:00 firewall-conntrack-server kernel: Mirror/redirect action on
+2026-06-11T20:18:07.364891+02:00 firewall-conntrack-server kernel: NET: Registered PF_ALG protocol family
+2026-06-11T20:18:07.364892+02:00 firewall-conntrack-server kernel: NET: Registered PF_PACKET protocol family
+2026-06-11T20:18:07.364893+02:00 firewall-conntrack-server kernel: bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+2026-06-11T20:18:07.364897+02:00 firewall-conntrack-server kernel: Bridge firewalling registered
+2026-06-11T20:18:07.364897+02:00 firewall-conntrack-server kernel: PPP generic driver version 2.4.2
+2026-06-11T20:18:07.364898+02:00 firewall-conntrack-server kernel: PPP BSD Compression module registered
+2026-06-11T20:18:07.364898+02:00 firewall-conntrack-server kernel: Key type ceph registered
+2026-06-11T20:18:07.364899+02:00 firewall-conntrack-server kernel: libceph: loaded (mon/osd proto 15/24)
+2026-06-11T20:18:07.364899+02:00 firewall-conntrack-server kernel: ceph: loaded (mds proto 32)
+2026-06-11T20:18:07.364902+02:00 firewall-conntrack-server kernel: Key type dns_resolver registered
+2026-06-11T20:18:07.364903+02:00 firewall-conntrack-server kernel: Key type cifs.spnego registered
+2026-06-11T20:18:07.364903+02:00 firewall-conntrack-server kernel: Key type cifs.idmap registered
+2026-06-11T20:18:07.364904+02:00 firewall-conntrack-server kernel: u32 classifier
+2026-06-11T20:18:07.364904+02:00 firewall-conntrack-server kernel:     Performance counters on
+2026-06-11T20:18:07.364905+02:00 firewall-conntrack-server kernel:     input device check on
+2026-06-11T20:18:07.364905+02:00 firewall-conntrack-server kernel:     Actions configured
+2026-06-11T20:18:07.364908+02:00 firewall-conntrack-server kernel: cryptd: max_cpu_qlen set to 1000
+2026-06-11T20:18:07.364909+02:00 firewall-conntrack-server kernel: fuse: init (API version 7.41)
+2026-06-11T20:18:07.364910+02:00 firewall-conntrack-server kernel: gre: GRE over IPv4 demultiplexor driver
+2026-06-11T20:18:07.364910+02:00 firewall-conntrack-server kernel: ip_gre: GRE over IPv4 tunneling driver
+2026-06-11T20:18:07.364911+02:00 firewall-conntrack-server kernel: IPVS: Registered protocols (TCP, UDP, AH, ESP)
+2026-06-11T20:18:07.364911+02:00 firewall-conntrack-server kernel: IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+2026-06-11T20:18:07.364914+02:00 firewall-conntrack-server kernel: IPVS: ipvs loaded.
+2026-06-11T20:18:07.364915+02:00 firewall-conntrack-server kernel: IPVS: [dh] scheduler registered.
+2026-06-11T20:18:07.364916+02:00 firewall-conntrack-server kernel: IPVS: [fo] scheduler registered.
+2026-06-11T20:18:07.364916+02:00 firewall-conntrack-server kernel: IPVS: [lblc] scheduler registered.
+2026-06-11T20:18:07.364917+02:00 firewall-conntrack-server kernel: IPVS: [lblcr] scheduler registered.
+2026-06-11T20:18:07.364917+02:00 firewall-conntrack-server kernel: IPVS: [lc] scheduler registered.
+2026-06-11T20:18:07.364917+02:00 firewall-conntrack-server kernel: IPVS: [nq] scheduler registered.
+2026-06-11T20:18:07.364921+02:00 firewall-conntrack-server kernel: IPVS: [ovf] scheduler registered.
+2026-06-11T20:18:07.364921+02:00 firewall-conntrack-server kernel: IPVS: [sip] pe registered.
+2026-06-11T20:18:07.364922+02:00 firewall-conntrack-server kernel: IPVS: [rr] scheduler registered.
+2026-06-11T20:18:07.364922+02:00 firewall-conntrack-server kernel: IPVS: [sed] scheduler registered.
+2026-06-11T20:18:07.364923+02:00 firewall-conntrack-server kernel: IPVS: [sh] scheduler registered.
+2026-06-11T20:18:07.364923+02:00 firewall-conntrack-server kernel: IPVS: [wlc] scheduler registered.
+2026-06-11T20:18:07.364927+02:00 firewall-conntrack-server kernel: IPVS: [wrr] scheduler registered.
+2026-06-11T20:18:07.364927+02:00 firewall-conntrack-server kernel: ipip: IPv4 and MPLS over IPv4 tunneling driver
+2026-06-11T20:18:07.364928+02:00 firewall-conntrack-server kernel: l2tp_core: L2TP core driver, V2.0
+2026-06-11T20:18:07.364928+02:00 firewall-conntrack-server kernel: l2tp_netlink: L2TP netlink interface
+2026-06-11T20:18:07.364929+02:00 firewall-conntrack-server kernel: l2tp_eth: L2TP ethernet pseudowire support (L2TPv3)
+2026-06-11T20:18:07.364940+02:00 firewall-conntrack-server kernel: NET: Registered PF_PPPOX protocol family
+2026-06-11T20:18:07.364945+02:00 firewall-conntrack-server kernel: l2tp_ppp: PPPoL2TP kernel driver, V2.0
+2026-06-11T20:18:07.364945+02:00 firewall-conntrack-server kernel: NFS: Registering the id_resolver key type
+2026-06-11T20:18:07.364946+02:00 firewall-conntrack-server kernel: Key type id_resolver registered
+2026-06-11T20:18:07.364946+02:00 firewall-conntrack-server kernel: Key type id_legacy registered
+2026-06-11T20:18:07.364947+02:00 firewall-conntrack-server kernel: PPP Deflate Compression module registered
+2026-06-11T20:18:07.364947+02:00 firewall-conntrack-server kernel: sctp: Hash tables configured (bind 256/256)
+2026-06-11T20:18:07.364947+02:00 firewall-conntrack-server kernel: NET: Registered PF_VSOCK protocol family
+2026-06-11T20:18:07.364951+02:00 firewall-conntrack-server kernel: wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+2026-06-11T20:18:07.364953+02:00 firewall-conntrack-server kernel: wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+2026-06-11T20:18:07.364954+02:00 firewall-conntrack-server kernel: xt_time: kernel timezone is -0000
+2026-06-11T20:18:07.364954+02:00 firewall-conntrack-server kernel: ZFS: Loaded module v2.3.5-1, ZFS pool version 5000, ZFS filesystem version 5
+2026-06-11T20:18:07.364955+02:00 firewall-conntrack-server kernel: Spectre V2 : WARNING: Unprivileged eBPF is enabled with eIBRS on, data leaks possible via Spectre v2 BHB attacks!
+2026-06-11T20:18:07.364955+02:00 firewall-conntrack-server kernel: udevd[843]: starting version 3.2.14
+2026-06-11T20:18:07.361750+02:00 firewall-conntrack-server rsyslogd: getaddrinfo failed obtaining local hostname - using 'firewall-conntrack-server' instead; error: System error [v8.2512.0]
+2026-06-11T20:18:07.361756+02:00 firewall-conntrack-server rsyslogd: [origin software="rsyslogd" swVersion="8.2512.0" x-pid="822" x-info="https://www.rsyslog.com"] start
+2026-06-11T20:18:07.370724+02:00 localhost 2026-06-11_18: 18:07.37065 firewall-conntrack-server haveged haveged: ver: 1.9.21; arch: x86; vend: GenuineIntel; build: (gcc 15.2.0 ITV); collect: 128K
+2026-06-11T20:18:07.370838+02:00 localhost 2026-06-11_18: 18:07.37073 firewall-conntrack-server haveged haveged: cpu: (L4 VC); data: 32K (L4 V); inst: 32K (L4 V); idx: 23/40; sz: 31414/55233
+2026-06-11T20:18:07.370838+02:00 localhost 2026-06-11_18: 18:07.37076 firewall-conntrack-server haveged haveged: tot tests(BA8): A:1/1 B:1/1 continuous tests(B):  last entropy estimate 7.99963
+2026-06-11T20:18:07.370838+02:00 localhost 2026-06-11_18: 18:07.37078 firewall-conntrack-server haveged haveged: fills: 0, generated: 0 
+2026-06-11T20:18:07.390946+02:00 localhost 2026-06-11_18: 18:07.38885 firewall-conntrack-server opensmtpd info: OpenSMTPD 7.8.0-portable starting
+2026-06-11T20:18:07.421512+02:00 firewall-conntrack-server login[925]: pam_unix(login:session): session opened for user root(uid=0) by LOGIN(uid=0)
+2026-06-11T20:18:07.422903+02:00 firewall-conntrack-server login[892]: pam_unix(login:session): session opened for user root(uid=0) by LOGIN(uid=0)
+2026-06-11T20:18:07.423163+02:00 firewall-conntrack-server login[1006]: ROOT LOGIN  on '/dev/tty2'
+2026-06-11T20:18:07.423683+02:00 firewall-conntrack-server login[900]: pam_unix(login:session): session opened for user root(uid=0) by LOGIN(uid=0)
+2026-06-11T20:18:07.425117+02:00 firewall-conntrack-server login[1007]: ROOT LOGIN  on '/dev/tty3'
+2026-06-11T20:18:07.426847+02:00 firewall-conntrack-server login[910]: pam_unix(login:session): session opened for user root(uid=0) by LOGIN(uid=0)
+2026-06-11T20:18:07.427132+02:00 firewall-conntrack-server login[1008]: ROOT LOGIN  on '/dev/tty1'
+2026-06-11T20:18:07.428279+02:00 firewall-conntrack-server login[1009]: ROOT LOGIN  on '/dev/ttyS0'
+2026-06-11T20:18:07.429442+02:00 firewall-conntrack-server login[893]: pam_unix(login:session): session opened for user root(uid=0) by LOGIN(uid=0)
+2026-06-11T20:18:07.432741+02:00 firewall-conntrack-server login[1010]: ROOT LOGIN  on '/dev/tty4'
+2026-06-11T20:18:07.483947+02:00 firewall-conntrack-server kernel: udevd[843]: starting eudev-3.2.14
+2026-06-11T20:18:07.568903+02:00 localhost 2026-06-11_18: 18:07.56720 firewall-conntrack-server zfs-zed ZFS Event Daemon 2.3.5-1 (PID 815)
+2026-06-11T20:18:07.568903+02:00 localhost 2026-06-11_18: 18:07.56881 firewall-conntrack-server zfs-zed Processing events since eid=0
+2026-06-11T20:18:08.167861+02:00 firewall-conntrack-server kernel-modules: loading configured kernel modules
+2026-06-11T20:18:08.176445+02:00 firewall-conntrack-server kernel-modules: loading module act_csum
+2026-06-11T20:18:08.182190+02:00 firewall-conntrack-server kernel-modules: loading module act_mirred
+2026-06-11T20:18:08.186430+02:00 firewall-conntrack-server kernel-modules: loading module af_alg
+2026-06-11T20:18:08.190586+02:00 firewall-conntrack-server kernel-modules: loading module af_packet
+2026-06-11T20:18:08.194418+02:00 firewall-conntrack-server kernel-modules: loading module af_packet_diag
+2026-06-11T20:18:08.198356+02:00 firewall-conntrack-server kernel-modules: loading module ahci
+2026-06-11T20:18:08.201206+02:00 firewall-conntrack-server kernel-modules: loading module algif_hash
+2026-06-11T20:18:08.204105+02:00 firewall-conntrack-server kernel-modules: loading module algif_rng
+2026-06-11T20:18:08.206813+02:00 firewall-conntrack-server kernel-modules: loading module algif_skcipher
+2026-06-11T20:18:08.209621+02:00 firewall-conntrack-server kernel-modules: loading module asn1_encoder
+2026-06-11T20:18:08.220731+02:00 firewall-conntrack-server kernel-modules: loading module atkbd
+2026-06-11T20:18:08.224755+02:00 firewall-conntrack-server kernel-modules: loading module auth_rpcgss
+2026-06-11T20:18:08.228820+02:00 firewall-conntrack-server kernel-modules: loading module autofs4
+2026-06-11T20:18:08.233069+02:00 firewall-conntrack-server kernel-modules: loading module blowfish_common
+2026-06-11T20:18:08.237041+02:00 firewall-conntrack-server kernel-modules: loading module blowfish_generic
+2026-06-11T20:18:08.241113+02:00 firewall-conntrack-server kernel-modules: loading module br_netfilter
+2026-06-11T20:18:08.245143+02:00 firewall-conntrack-server kernel-modules: loading module bridge
+2026-06-11T20:18:08.247931+02:00 firewall-conntrack-server kernel: input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input2
+2026-06-11T20:18:08.249273+02:00 firewall-conntrack-server kernel-modules: loading module bsd_comp
+2026-06-11T20:18:08.251935+02:00 firewall-conntrack-server kernel: rtc_cmos 00:05: RTC can wake from S4
+2026-06-11T20:18:08.253385+02:00 firewall-conntrack-server kernel-modules: loading module camellia_generic
+2026-06-11T20:18:08.254917+02:00 firewall-conntrack-server kernel: rtc_cmos 00:05: registered as rtc0
+2026-06-11T20:18:08.254936+02:00 firewall-conntrack-server kernel: rtc_cmos 00:05: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+2026-06-11T20:18:08.255971+02:00 firewall-conntrack-server kernel: ACPI: button: Power Button [PWRF]
+2026-06-11T20:18:08.257449+02:00 firewall-conntrack-server kernel-modules: loading module cast5_generic
+2026-06-11T20:18:08.260278+02:00 firewall-conntrack-server kernel-modules: loading module cast_common
+2026-06-11T20:18:08.263064+02:00 firewall-conntrack-server kernel-modules: loading module ceph
+2026-06-11T20:18:08.266264+02:00 firewall-conntrack-server kernel-modules: loading module cifs
+2026-06-11T20:18:08.270249+02:00 firewall-conntrack-server kernel-modules: loading module cifs_arc4
+2026-06-11T20:18:08.273928+02:00 firewall-conntrack-server kernel: Floppy drive(s): fd0 is 2.88M AMI BIOS
+2026-06-11T20:18:08.274219+02:00 firewall-conntrack-server kernel-modules: loading module cifs_md4
+2026-06-11T20:18:08.278093+02:00 firewall-conntrack-server kernel-modules: loading module cls_matchall
+2026-06-11T20:18:08.281358+02:00 firewall-conntrack-server kernel-modules: loading module cls_u32
+2026-06-11T20:18:08.281927+02:00 firewall-conntrack-server kernel: piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+2026-06-11T20:18:08.281946+02:00 firewall-conntrack-server kernel: i2c i2c-0: Memory type 0x07 not supported yet, not instantiating SPD
+2026-06-11T20:18:08.285209+02:00 firewall-conntrack-server kernel-modules: loading module cmac
+2026-06-11T20:18:08.288917+02:00 firewall-conntrack-server kernel: FDC 0 is a S82078B
+2026-06-11T20:18:08.289068+02:00 firewall-conntrack-server kernel-modules: loading module crc16
+2026-06-11T20:18:08.290965+02:00 firewall-conntrack-server kernel: parport_pc 00:03: reported by Plug and Play ACPI
+2026-06-11T20:18:08.290979+02:00 firewall-conntrack-server kernel: parport0: PC-style at 0x378, irq 7 [PCSPP(,...)]
+2026-06-11T20:18:08.292541+02:00 firewall-conntrack-server kernel-modules: loading module crc32c_generic
+2026-06-11T20:18:08.292912+02:00 firewall-conntrack-server kernel: bochs-drm 0000:00:02.0: vgaarb: deactivate vga console
+2026-06-11T20:18:08.296688+02:00 firewall-conntrack-server kernel-modules: loading module cryptd
+2026-06-11T20:18:08.297906+02:00 firewall-conntrack-server kernel: Console: switching to colour dummy device 80x25
+2026-06-11T20:18:08.301932+02:00 firewall-conntrack-server kernel-modules: loading module crypto_simd
+2026-06-11T20:18:08.305053+02:00 firewall-conntrack-server kernel-modules: loading module crypto_user
+2026-06-11T20:18:08.307772+02:00 firewall-conntrack-server kernel-modules: loading module des_generic
+2026-06-11T20:18:08.312411+02:00 firewall-conntrack-server kernel-modules: loading module dm_mod
+2026-06-11T20:18:08.318070+02:00 firewall-conntrack-server kernel-modules: loading module dns_resolver
+2026-06-11T20:18:08.319939+02:00 firewall-conntrack-server kernel: [drm] Found bochs VGA, ID 0xb0c5.
+2026-06-11T20:18:08.319956+02:00 firewall-conntrack-server kernel: [drm] Framebuffer size 16384 kB @ 0xfd000000, mmio @ 0xfebd0000.
+2026-06-11T20:18:08.320962+02:00 firewall-conntrack-server kernel-modules: loading module dummy
+2026-06-11T20:18:08.323048+02:00 firewall-conntrack-server kernel: [drm] Found EDID data blob.
+2026-06-11T20:18:08.325663+02:00 firewall-conntrack-server kernel-modules: loading module ehci_hcd
+2026-06-11T20:18:08.328982+02:00 firewall-conntrack-server kernel: [drm] Initialized bochs-drm 1.0.0 for 0000:00:02.0 on minor 0
+2026-06-11T20:18:08.330410+02:00 firewall-conntrack-server kernel-modules: loading module ehci_pci
+2026-06-11T20:18:08.333513+02:00 firewall-conntrack-server kernel: fbcon: bochs-drmdrmfb (fb0) is primary device
+2026-06-11T20:18:08.347475+02:00 firewall-conntrack-server kernel: Console: switching to colour frame buffer device 160x50
+2026-06-11T20:18:08.348291+02:00 firewall-conntrack-server kernel-modules: loading module fuse
+2026-06-11T20:18:08.348914+02:00 firewall-conntrack-server kernel: bochs-drm 0000:00:02.0: [drm] fb0: bochs-drmdrmfb frame buffer device
+2026-06-11T20:18:08.353925+02:00 firewall-conntrack-server kernel-modules: loading module grace
+2026-06-11T20:18:08.354368+02:00 firewall-conntrack-server rpc.statd[798]: Version 2.9.1 starting
+2026-06-11T20:18:08.354379+02:00 firewall-conntrack-server rpc.statd[798]: Flags: No-Daemon TI-RPC 
+2026-06-11T20:18:08.359258+02:00 firewall-conntrack-server kernel-modules: loading module gre
+2026-06-11T20:18:08.368265+02:00 firewall-conntrack-server rpc.statd[798]: Initializing NSM state
+2026-06-11T20:18:08.368990+02:00 firewall-conntrack-server rpc.statd[798]: Running as root.  chown /var/lib/nfs to choose different user
+2026-06-11T20:18:08.371270+02:00 firewall-conntrack-server kernel-modules: loading module hid_apple
+2026-06-11T20:18:08.377117+02:00 firewall-conntrack-server kernel-modules: loading module hid_generic
+2026-06-11T20:18:08.380525+02:00 firewall-conntrack-server kernel-modules: loading module hid_lenovo
+2026-06-11T20:18:08.387858+02:00 firewall-conntrack-server kernel-modules: loading module hid_logitech_dj
+2026-06-11T20:18:08.389926+02:00 firewall-conntrack-server kernel: RAPL PMU: API unit is 2^-32 Joules, 0 fixed counters, 10737418240 ms ovfl timer
+2026-06-11T20:18:08.396782+02:00 firewall-conntrack-server kernel-modules: loading module hid_logitech_hidpp
+2026-06-11T20:18:08.402820+02:00 firewall-conntrack-server kernel-modules: loading module hid_roccat
+2026-06-11T20:18:08.407465+02:00 firewall-conntrack-server kernel-modules: loading module i8042
+2026-06-11T20:18:08.412145+02:00 firewall-conntrack-server kernel-modules: loading module ifb
+2026-06-11T20:18:08.412926+02:00 firewall-conntrack-server kernel: AES CTR mode by8 optimization enabled
+2026-06-11T20:18:08.417749+02:00 firewall-conntrack-server kernel-modules: loading module inet_diag
+2026-06-11T20:18:08.425101+02:00 firewall-conntrack-server kernel-modules: loading module ip6_tables
+2026-06-11T20:18:08.432092+02:00 firewall-conntrack-server kernel-modules: loading module ip6_udp_tunnel
+2026-06-11T20:18:08.435232+02:00 firewall-conntrack-server kernel-modules: loading module ip6t_REJECT
+2026-06-11T20:18:08.437806+02:00 firewall-conntrack-server kernel-modules: loading module ip6t_ah
+2026-06-11T20:18:08.440399+02:00 firewall-conntrack-server kernel-modules: loading module ip6t_rpfilter
+2026-06-11T20:18:08.443757+02:00 firewall-conntrack-server kernel-modules: loading module ip6t_rt
+2026-06-11T20:18:08.448870+02:00 firewall-conntrack-server kernel-modules: loading module ip6table_filter
+2026-06-11T20:18:08.451520+02:00 firewall-conntrack-server kernel-modules: loading module ip6table_mangle
+2026-06-11T20:18:08.456016+02:00 firewall-conntrack-server kernel-modules: loading module ip6table_nat
+2026-06-11T20:18:08.461047+02:00 firewall-conntrack-server kernel-modules: loading module ip6table_raw
+2026-06-11T20:18:08.465839+02:00 firewall-conntrack-server kernel-modules: loading module ip6table_security
+2026-06-11T20:18:08.469839+02:00 firewall-conntrack-server kernel-modules: loading module ip_gre
+2026-06-11T20:18:08.473860+02:00 firewall-conntrack-server kernel-modules: loading module ip_set
+2026-06-11T20:18:08.476808+02:00 firewall-conntrack-server kernel-modules: loading module ip_set_bitmap_port
+2026-06-11T20:18:08.479806+02:00 firewall-conntrack-server kernel-modules: loading module ip_set_hash_ip
+2026-06-11T20:18:08.485702+02:00 firewall-conntrack-server kernel-modules: loading module ip_set_hash_net
+2026-06-11T20:18:08.492701+02:00 firewall-conntrack-server kernel-modules: loading module ip_tables
+2026-06-11T20:18:08.495873+02:00 firewall-conntrack-server kernel-modules: loading module ip_tunnel
+2026-06-11T20:18:08.498811+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs
+2026-06-11T20:18:08.501520+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_dh
+2026-06-11T20:18:08.504416+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_fo
+2026-06-11T20:18:08.507275+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_ftp
+2026-06-11T20:18:08.510914+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_lblc
+2026-06-11T20:18:08.513748+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_lblcr
+2026-06-11T20:18:08.516395+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_lc
+2026-06-11T20:18:08.525532+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_nq
+2026-06-11T20:18:08.529732+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_ovf
+2026-06-11T20:18:08.533486+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_pe_sip
+2026-06-11T20:18:08.538487+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_rr
+2026-06-11T20:18:08.543107+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_sed
+2026-06-11T20:18:08.550086+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_sh
+2026-06-11T20:18:08.556189+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_wlc
+2026-06-11T20:18:08.562816+02:00 firewall-conntrack-server kernel-modules: loading module ip_vs_wrr
+2026-06-11T20:18:08.573664+02:00 firewall-conntrack-server kernel-modules: loading module ipip
+2026-06-11T20:18:08.580604+02:00 firewall-conntrack-server kernel-modules: loading module ipt_REJECT
+2026-06-11T20:18:08.586729+02:00 firewall-conntrack-server kernel-modules: loading module ipt_rpfilter
+2026-06-11T20:18:08.589580+02:00 firewall-conntrack-server kernel-modules: loading module iptable_filter
+2026-06-11T20:18:08.598146+02:00 firewall-conntrack-server kernel-modules: loading module iptable_mangle
+2026-06-11T20:18:08.602988+02:00 firewall-conntrack-server kernel-modules: loading module iptable_nat
+2026-06-11T20:18:08.607501+02:00 firewall-conntrack-server kernel-modules: loading module iptable_raw
+2026-06-11T20:18:08.611225+02:00 firewall-conntrack-server kernel-modules: loading module iptable_security
+2026-06-11T20:18:08.617707+02:00 firewall-conntrack-server kernel-modules: loading module isci
+2026-06-11T20:18:08.625666+02:00 firewall-conntrack-server kernel-modules: loading module l2tp_core
+2026-06-11T20:18:08.631806+02:00 firewall-conntrack-server kernel-modules: loading module l2tp_eth
+2026-06-11T20:18:08.644063+02:00 firewall-conntrack-server kernel-modules: loading module l2tp_netlink
+2026-06-11T20:18:08.651106+02:00 firewall-conntrack-server kernel-modules: loading module l2tp_ppp
+2026-06-11T20:18:08.655922+02:00 firewall-conntrack-server kernel: ppdev: user-space parallel port driver
+2026-06-11T20:18:08.659427+02:00 firewall-conntrack-server kernel-modules: loading module libceph
+2026-06-11T20:18:08.662606+02:00 firewall-conntrack-server kernel-modules: loading module libchacha
+2026-06-11T20:18:08.665571+02:00 firewall-conntrack-server kernel-modules: loading module libchacha20poly1305
+2026-06-11T20:18:08.668228+02:00 firewall-conntrack-server kernel-modules: loading module libcrc32c
+2026-06-11T20:18:08.670770+02:00 firewall-conntrack-server kernel-modules: loading module libcurve25519_generic
+2026-06-11T20:18:08.677376+02:00 firewall-conntrack-server kernel-modules: loading module libdes
+2026-06-11T20:18:08.680344+02:00 firewall-conntrack-server kernel-modules: loading module llc
+2026-06-11T20:18:08.685149+02:00 firewall-conntrack-server kernel-modules: loading module lockd
+2026-06-11T20:18:08.688969+02:00 firewall-conntrack-server kernel-modules: loading module loop
+2026-06-11T20:18:08.692843+02:00 firewall-conntrack-server kernel-modules: loading module md4
+2026-06-11T20:18:08.695770+02:00 firewall-conntrack-server kernel-modules: loading module netfs
+2026-06-11T20:18:08.698477+02:00 firewall-conntrack-server kernel-modules: loading module netlink_diag
+2026-06-11T20:18:08.702550+02:00 firewall-conntrack-server kernel-modules: loading module nf_conncount
+2026-06-11T20:18:08.705133+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack
+2026-06-11T20:18:08.708019+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_amanda
+2026-06-11T20:18:08.710754+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_broadcast
+2026-06-11T20:18:08.713452+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_ftp
+2026-06-11T20:18:08.717783+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_h323
+2026-06-11T20:18:08.720738+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_irc
+2026-06-11T20:18:08.724970+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_netbios_ns
+2026-06-11T20:18:08.729635+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_netlink
+2026-06-11T20:18:08.733071+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_pptp
+2026-06-11T20:18:08.736809+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_sane
+2026-06-11T20:18:08.739759+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_sip
+2026-06-11T20:18:08.743266+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_snmp
+2026-06-11T20:18:08.748820+02:00 firewall-conntrack-server kernel-modules: loading module nf_conntrack_tftp
+2026-06-11T20:18:08.754502+02:00 firewall-conntrack-server kernel-modules: loading module nf_defrag_ipv4
+2026-06-11T20:18:08.758516+02:00 firewall-conntrack-server kernel-modules: loading module nf_defrag_ipv6
+2026-06-11T20:18:08.763070+02:00 firewall-conntrack-server kernel-modules: loading module nf_log_syslog
+2026-06-11T20:18:08.763965+02:00 firewall-conntrack-server kernel: input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+2026-06-11T20:18:08.765467+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-cbc(aes)
+2026-06-11T20:18:08.768083+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-cbc(aes)-all
+2026-06-11T20:18:08.769739+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat
+2026-06-11T20:18:08.770603+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-aes
+2026-06-11T20:18:08.773568+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_amanda
+2026-06-11T20:18:08.773612+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-aes-all
+2026-06-11T20:18:08.776831+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- cryptomgr
+2026-06-11T20:18:08.776932+02:00 firewall-conntrack-server kernel: mousedev: PS/2 mouse device common for all mice
+2026-06-11T20:18:08.778020+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_ftp
+2026-06-11T20:18:08.779302+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-ecb(aes)
+2026-06-11T20:18:08.780789+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_h323
+2026-06-11T20:18:08.781600+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-ecb(aes)-all
+2026-06-11T20:18:08.783449+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_irc
+2026-06-11T20:18:08.784092+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-aes
+2026-06-11T20:18:08.787069+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_pptp
+2026-06-11T20:18:08.789472+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- crypto-aes-all
+2026-06-11T20:18:08.790978+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_sip
+2026-06-11T20:18:08.792253+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- cryptomgr
+2026-06-11T20:18:08.794009+02:00 firewall-conntrack-server kernel: Key type encrypted registered
+2026-06-11T20:18:08.794130+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_snmp_basic
+2026-06-11T20:18:08.796937+02:00 firewall-conntrack-server kernel-modules: loading module nf_nat_tftp
+2026-06-11T20:18:08.799552+02:00 firewall-conntrack-server kernel-modules: loading module nf_reject_ipv4
+2026-06-11T20:18:08.802043+02:00 firewall-conntrack-server kernel-modules: loading module nf_reject_ipv6
+2026-06-11T20:18:08.804657+02:00 firewall-conntrack-server kernel-modules: loading module nf_tables
+2026-06-11T20:18:08.807273+02:00 firewall-conntrack-server kernel-modules: loading module nf_tproxy_ipv4
+2026-06-11T20:18:08.810054+02:00 firewall-conntrack-server kernel-modules: loading module nf_tproxy_ipv6
+2026-06-11T20:18:08.812740+02:00 firewall-conntrack-server kernel-modules: loading module nfnetlink
+2026-06-11T20:18:08.815659+02:00 firewall-conntrack-server kernel-modules: loading module nfnetlink_acct
+2026-06-11T20:18:08.818425+02:00 firewall-conntrack-server kernel-modules: loading module nfnetlink_log
+2026-06-11T20:18:08.821115+02:00 firewall-conntrack-server kernel: EDAC MC: Ver: 3.0.0
+2026-06-11T20:18:08.821102+02:00 firewall-conntrack-server kernel-modules: loading module nfnetlink_queue
+2026-06-11T20:18:08.825640+02:00 firewall-conntrack-server kernel-modules: loading module nfs
+2026-06-11T20:18:08.828334+02:00 firewall-conntrack-server kernel-modules: loading module nfs_acl
+2026-06-11T20:18:08.834197+02:00 firewall-conntrack-server kernel-modules: loading module nfsd
+2026-06-11T20:18:08.838089+02:00 firewall-conntrack-server kernel-modules: loading module nfsv3
+2026-06-11T20:18:08.840790+02:00 firewall-conntrack-server kernel-modules: loading module nfsv4
+2026-06-11T20:18:08.844361+02:00 firewall-conntrack-server kernel-modules: loading module nft_chain_nat
+2026-06-11T20:18:08.847069+02:00 firewall-conntrack-server kernel-modules: loading module nft_compat
+2026-06-11T20:18:08.852860+02:00 firewall-conntrack-server kernel-modules: loading module nft_connlimit
+2026-06-11T20:18:08.856209+02:00 firewall-conntrack-server kernel-modules: loading module nft_ct
+2026-06-11T20:18:08.860709+02:00 firewall-conntrack-server kernel-modules: loading module nft_fib
+2026-06-11T20:18:08.864415+02:00 firewall-conntrack-server kernel-modules: loading module nft_fib_inet
+2026-06-11T20:18:08.868056+02:00 firewall-conntrack-server kernel-modules: loading module nft_fib_ipv4
+2026-06-11T20:18:08.872108+02:00 firewall-conntrack-server kernel-modules: loading module nft_fib_ipv6
+2026-06-11T20:18:08.875075+02:00 firewall-conntrack-server kernel-modules: loading module nft_limit
+2026-06-11T20:18:08.881794+02:00 firewall-conntrack-server kernel-modules: loading module nft_log
+2026-06-11T20:18:08.885494+02:00 firewall-conntrack-server kernel-modules: loading module nft_masq
+2026-06-11T20:18:08.890816+02:00 firewall-conntrack-server kernel-modules: loading module nft_nat
+2026-06-11T20:18:08.895972+02:00 firewall-conntrack-server kernel-modules: loading module nft_redir
+2026-06-11T20:18:08.899247+02:00 firewall-conntrack-server kernel-modules: loading module nft_reject
+2026-06-11T20:18:08.902966+02:00 firewall-conntrack-server kernel-modules: loading module nft_reject_inet
+2026-06-11T20:18:08.905585+02:00 firewall-conntrack-server kernel-modules: loading module nft_reject_ipv4
+2026-06-11T20:18:08.908329+02:00 firewall-conntrack-server kernel-modules: loading module nft_reject_ipv6
+2026-06-11T20:18:08.913241+02:00 firewall-conntrack-server kernel-modules: loading module nft_reject_netdev
+2026-06-11T20:18:08.919140+02:00 firewall-conntrack-server kernel-modules: loading module nls_ucs2_utils
+2026-06-11T20:18:08.923270+02:00 firewall-conntrack-server kernel-modules: loading module nls_utf8
+2026-06-11T20:18:08.925866+02:00 firewall-conntrack-server kernel-modules: loading module nvme
+2026-06-11T20:18:08.931975+02:00 firewall-conntrack-server kernel-modules: loading module ohci_hcd
+2026-06-11T20:18:08.938932+02:00 firewall-conntrack-server kernel-modules: loading module ohci_pci
+2026-06-11T20:18:08.943927+02:00 firewall-conntrack-server kernel-modules: loading module overlay
+2026-06-11T20:18:08.948657+02:00 firewall-conntrack-server kernel-modules: loading module pcips2
+2026-06-11T20:18:08.954953+02:00 firewall-conntrack-server kernel-modules: loading module polyval_generic
+2026-06-11T20:18:08.959178+02:00 firewall-conntrack-server kernel-modules: loading module ppp_async
+2026-06-11T20:18:08.963278+02:00 firewall-conntrack-server kernel-modules: loading module ppp_deflate
+2026-06-11T20:18:08.967404+02:00 firewall-conntrack-server kernel-modules: loading module ppp_generic
+2026-06-11T20:18:08.971194+02:00 firewall-conntrack-server kernel-modules: loading module pppox
+2026-06-11T20:18:08.974944+02:00 firewall-conntrack-server kernel-modules: loading module raw_diag
+2026-06-11T20:18:08.978631+02:00 firewall-conntrack-server kernel-modules: loading module rmd160
+2026-06-11T20:18:08.982445+02:00 firewall-conntrack-server kernel-modules: loading module rpcsec_gss_krb5
+2026-06-11T20:18:08.985630+02:00 firewall-conntrack-server kernel-modules: loading module sata_nv
+2026-06-11T20:18:08.988042+02:00 firewall-conntrack-server kernel-modules: loading module sata_sis
+2026-06-11T20:18:08.990494+02:00 firewall-conntrack-server kernel-modules: loading module sata_uli
+2026-06-11T20:18:08.993607+02:00 firewall-conntrack-server kernel-modules: loading module sata_via
+2026-06-11T20:18:08.997578+02:00 firewall-conntrack-server kernel-modules: loading module sch_cake
+2026-06-11T20:18:09.002401+02:00 firewall-conntrack-server kernel-modules: loading module sch_fq
+2026-06-11T20:18:09.006385+02:00 firewall-conntrack-server kernel-modules: loading module sch_htb
+2026-06-11T20:18:09.010535+02:00 firewall-conntrack-server kernel-modules: loading module sch_ingress
+2026-06-11T20:18:09.013913+02:00 firewall-conntrack-server kernel-modules: loading module sctp
+2026-06-11T20:18:09.017790+02:00 firewall-conntrack-server kernel-modules: loading module sctp_diag
+2026-06-11T20:18:09.023200+02:00 firewall-conntrack-server kernel-modules: loading module sd_mod
+2026-06-11T20:18:09.026545+02:00 firewall-conntrack-server kernel-modules: loading module serpent_generic
+2026-06-11T20:18:09.029620+02:00 firewall-conntrack-server kernel-modules: loading module sha1_generic
+2026-06-11T20:18:09.032517+02:00 firewall-conntrack-server kernel-modules: loading module slhc
+2026-06-11T20:18:09.035224+02:00 firewall-conntrack-server kernel-modules: loading module sm3
+2026-06-11T20:18:09.037803+02:00 firewall-conntrack-server kernel-modules: loading module sm3_generic
+2026-06-11T20:18:09.040299+02:00 firewall-conntrack-server kernel-modules: loading module sm4
+2026-06-11T20:18:09.044575+02:00 firewall-conntrack-server kernel-modules: loading module sm4_generic
+2026-06-11T20:18:09.051499+02:00 firewall-conntrack-server kernel-modules: loading module squashfs
+2026-06-11T20:18:09.054132+02:00 firewall-conntrack-server kernel-modules: loading module sr_mod
+2026-06-11T20:18:09.060273+02:00 firewall-conntrack-server kernel-modules: loading module stp
+2026-06-11T20:18:09.065488+02:00 firewall-conntrack-server kernel-modules: loading module sunrpc
+2026-06-11T20:18:09.069483+02:00 firewall-conntrack-server kernel-modules: loading module tcp_bbr
+2026-06-11T20:18:09.072603+02:00 firewall-conntrack-server kernel-modules: loading module tcp_diag
+2026-06-11T20:18:09.080346+02:00 firewall-conntrack-server kernel-modules: loading module ts_kmp
+2026-06-11T20:18:09.083853+02:00 firewall-conntrack-server kernel-modules: loading module tun
+2026-06-11T20:18:09.090154+02:00 firewall-conntrack-server kernel-modules: loading module twofish_common
+2026-06-11T20:18:09.093741+02:00 firewall-conntrack-server kernel-modules: loading module twofish_generic
+2026-06-11T20:18:09.099333+02:00 firewall-conntrack-server kernel-modules: loading module udp_diag
+2026-06-11T20:18:09.105504+02:00 firewall-conntrack-server kernel-modules: loading module udp_tunnel
+2026-06-11T20:18:09.109502+02:00 firewall-conntrack-server kernel-modules: loading module uhci_hcd
+2026-06-11T20:18:09.114380+02:00 firewall-conntrack-server kernel-modules: loading module unix_diag
+2026-06-11T20:18:09.118817+02:00 firewall-conntrack-server kernel-modules: loading module usbhid
+2026-06-11T20:18:09.123667+02:00 firewall-conntrack-server kernel-modules: loading module veth
+2026-06-11T20:18:09.126898+02:00 firewall-conntrack-server kernel-modules: loading module virtiofs
+2026-06-11T20:18:09.129682+02:00 firewall-conntrack-server kernel-modules: loading module vrf
+2026-06-11T20:18:09.132475+02:00 firewall-conntrack-server kernel-modules: loading module vsock
+2026-06-11T20:18:09.137287+02:00 firewall-conntrack-server kernel-modules: loading module vsock_diag
+2026-06-11T20:18:09.140341+02:00 firewall-conntrack-server kernel-modules: loading module vsock_loopback
+2026-06-11T20:18:09.143167+02:00 firewall-conntrack-server kernel-modules: loading module vxlan
+2026-06-11T20:18:09.145734+02:00 firewall-conntrack-server kernel-modules: loading module wireguard
+2026-06-11T20:18:09.148422+02:00 firewall-conntrack-server kernel-modules: loading module x_tables
+2026-06-11T20:18:09.151136+02:00 firewall-conntrack-server kernel-modules: loading module xcbc
+2026-06-11T20:18:09.153694+02:00 firewall-conntrack-server kernel-modules: loading module xhci_hcd
+2026-06-11T20:18:09.156360+02:00 firewall-conntrack-server kernel-modules: loading module xhci_pci
+2026-06-11T20:18:09.159184+02:00 firewall-conntrack-server kernel-modules: loading module xt_AUDIT
+2026-06-11T20:18:09.162300+02:00 firewall-conntrack-server kernel-modules: loading module xt_CHECKSUM
+2026-06-11T20:18:09.165611+02:00 firewall-conntrack-server kernel-modules: loading module xt_CLASSIFY
+2026-06-11T20:18:09.170187+02:00 firewall-conntrack-server kernel-modules: loading module xt_CT
+2026-06-11T20:18:09.176372+02:00 firewall-conntrack-server kernel-modules: loading module xt_DSCP
+2026-06-11T20:18:09.181372+02:00 firewall-conntrack-server kernel-modules: loading module xt_LOG
+2026-06-11T20:18:09.187576+02:00 firewall-conntrack-server kernel-modules: loading module xt_MASQUERADE
+2026-06-11T20:18:09.192598+02:00 firewall-conntrack-server kernel-modules: loading module xt_NFLOG
+2026-06-11T20:18:09.196389+02:00 firewall-conntrack-server kernel-modules: loading module xt_NFQUEUE
+2026-06-11T20:18:09.200595+02:00 firewall-conntrack-server kernel-modules: loading module xt_REDIRECT
+2026-06-11T20:18:09.204150+02:00 firewall-conntrack-server kernel-modules: loading module xt_TCPMSS
+2026-06-11T20:18:09.207274+02:00 firewall-conntrack-server kernel-modules: loading module xt_TPROXY
+2026-06-11T20:18:09.210404+02:00 firewall-conntrack-server kernel-modules: loading module xt_TRACE
+2026-06-11T20:18:09.214209+02:00 firewall-conntrack-server kernel-modules: loading module xt_addrtype
+2026-06-11T20:18:09.217764+02:00 firewall-conntrack-server kernel-modules: loading module xt_bpf
+2026-06-11T20:18:09.222972+02:00 firewall-conntrack-server kernel-modules: loading module xt_cgroup
+2026-06-11T20:18:09.228513+02:00 firewall-conntrack-server kernel-modules: loading module xt_comment
+2026-06-11T20:18:09.232155+02:00 firewall-conntrack-server kernel-modules: loading module xt_connlimit
+2026-06-11T20:18:09.238994+02:00 firewall-conntrack-server kernel-modules: loading module xt_connmark
+2026-06-11T20:18:09.242592+02:00 firewall-conntrack-server kernel-modules: loading module xt_conntrack
+2026-06-11T20:18:09.245818+02:00 firewall-conntrack-server kernel-modules: loading module xt_dscp
+2026-06-11T20:18:09.251276+02:00 firewall-conntrack-server kernel-modules: loading module xt_hashlimit
+2026-06-11T20:18:09.254734+02:00 firewall-conntrack-server kernel-modules: loading module xt_helper
+2026-06-11T20:18:09.257522+02:00 firewall-conntrack-server kernel-modules: loading module xt_hl
+2026-06-11T20:18:09.263874+02:00 firewall-conntrack-server kernel-modules: loading module xt_iprange
+2026-06-11T20:18:09.265518+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- netdev-veth-host
+2026-06-11T20:18:09.267111+02:00 firewall-conntrack-server kernel-modules: loading module xt_ipvs
+2026-06-11T20:18:09.267468+02:00 firewall-conntrack-server kernel.modprobe: action=deny -q -- veth-host
+2026-06-11T20:18:09.270468+02:00 firewall-conntrack-server kernel-modules: loading module xt_length
+2026-06-11T20:18:09.275548+02:00 firewall-conntrack-server kernel-modules: loading module xt_limit
+2026-06-11T20:18:09.278431+02:00 firewall-conntrack-server kernel-modules: loading module xt_mark
+2026-06-11T20:18:09.281384+02:00 firewall-conntrack-server kernel-modules: loading module xt_multiport
+2026-06-11T20:18:09.285140+02:00 firewall-conntrack-server kernel-modules: loading module xt_nat
+2026-06-11T20:18:09.288207+02:00 firewall-conntrack-server kernel-modules: loading module xt_nfacct
+2026-06-11T20:18:09.291308+02:00 firewall-conntrack-server kernel-modules: loading module xt_owner
+2026-06-11T20:18:09.294428+02:00 firewall-conntrack-server kernel-modules: loading module xt_physdev
+2026-06-11T20:18:09.297656+02:00 firewall-conntrack-server kernel-modules: loading module xt_pkttype
+2026-06-11T20:18:09.300478+02:00 firewall-conntrack-server kernel-modules: loading module xt_policy
+2026-06-11T20:18:09.303318+02:00 firewall-conntrack-server kernel-modules: loading module xt_realm
+2026-06-11T20:18:09.306359+02:00 firewall-conntrack-server kernel-modules: loading module xt_recent
+2026-06-11T20:18:09.309055+02:00 firewall-conntrack-server kernel-modules: loading module xt_sctp
+2026-06-11T20:18:09.311807+02:00 firewall-conntrack-server kernel-modules: loading module xt_set
+2026-06-11T20:18:09.315307+02:00 firewall-conntrack-server kernel-modules: loading module xt_state
+2026-06-11T20:18:09.318522+02:00 firewall-conntrack-server kernel-modules: loading module xt_statistic
+2026-06-11T20:18:09.321710+02:00 firewall-conntrack-server kernel-modules: loading module xt_tcpmss
+2026-06-11T20:18:09.325091+02:00 firewall-conntrack-server kernel-modules: loading module xt_tcpudp
+2026-06-11T20:18:09.332997+02:00 firewall-conntrack-server kernel-modules: loading module xt_time
+2026-06-11T20:18:09.337558+02:00 firewall-conntrack-server kernel-modules: loading module xt_u32
+2026-06-11T20:18:09.341049+02:00 firewall-conntrack-server kernel-modules: loading module zfs
+2026-06-11T20:18:09.348516+02:00 firewall-conntrack-server kernel-modules: configured kernel modules loaded
+2026-06-11T20:18:09.679665+02:00 firewall-conntrack-server sshd[845]: Server listening on 0.0.0.0 port 22.
+2026-06-11T20:18:09.679716+02:00 firewall-conntrack-server sshd[845]: Server listening on :: port 22.
+---
+

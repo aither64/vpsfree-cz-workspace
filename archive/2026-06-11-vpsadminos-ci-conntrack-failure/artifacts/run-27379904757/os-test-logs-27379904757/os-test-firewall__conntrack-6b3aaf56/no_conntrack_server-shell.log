@@ -1,0 +1,317 @@
+SHELL: 0
+
+START: 2026-06-12 00:40:45 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:40:45 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:40:45 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:40:45 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:40:45 +0200
+COMMAND: sv check firewall
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 2.81s
+STATUS: 0
+OUTPUT:
+iptables v1.8.13 (nf_tables): Chain 'nixos-fw' does not exist
+Try `iptables -h' or 'iptables --help' for more information.
+iptables v1.8.13 (nf_tables): Chain 'nixos-fw' does not exist
+Try `iptables -h' or 'iptables --help' for more information.
+iptables v1.8.13 (nf_tables): Chain 'nixos-fw' does not exist
+Try `iptables -h' or 'iptables --help' for more information.
+iptables v1.8.13 (nf_tables): Chain 'nixos-fw' does not exist
+Try `iptables -h' or 'iptables --help' for more information.
+iptables v1.8.13 (nf_tables): Chain 'nixos-fw' does not exist
+Try `iptables -h' or 'iptables --help' for more information.
+iptables v1.8.13 (nf_tables): Chain 'nixos-fw' does not exist
+Try `iptables -h' or 'iptables --help' for more information.
+ok: run: firewall: (pid 838) 4s
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: sv check firewall-test-server
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: firewall-test-server: (pid 835) 4s
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: ip netns exec client ip addr show veth-client | grep -q 192.168.10.11
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: conntrack -L 2>/dev/null | sed "/^$/d" | wc -l
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: test -d /sys/module/xt_CT && echo present
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+present
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: iptables-save -t raw | grep -- "^-A PREROUTING" | grep -q -- "nixos-fw-notrack"
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: iptables-save -t raw | grep -- "^-A OUTPUT" | grep -q -- "nixos-fw-notrack"
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | { grep -c -- " -j LOG" || true; }
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(3) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.10.11"))
+    socket.connect(Socket.sockaddr_in(8080, "192.168.10.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-12 00:40:48 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+protected-tcp
+---
+
+START: 2026-06-12 00:40:48 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+require 'socket'
+
+socket = UDPSocket.new
+socket.bind("192.168.10.11", 0)
+socket.connect("192.168.10.10", 5353)
+socket.send("hello", 0)
+
+raise 'timeout' unless IO.select([socket], nil, nil, 3)
+
+puts socket.recv(4096).strip
+RUBY
+END: 2026-06-12 00:40:49 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+protected-udp
+---
+
+START: 2026-06-12 00:40:49 +0200
+COMMAND: sv 1 firewall
+END: 2026-06-12 00:40:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:40:49 +0200
+COMMAND: test "$(iptables-save -t raw | grep -c -- "--comment nixos-fw-notrack")" = 2
+END: 2026-06-12 00:40:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:40:49 +0200
+COMMAND: iptables-save | grep -- "--comment firewall-test-protected-tcp" | grep -c -- "-j nixos-fw-log-refuse"
+END: 2026-06-12 00:40:49 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-12 00:40:49 +0200
+COMMAND: iptables-save | grep -- "--comment firewall-test-protected-udp" | grep -c -- "-j nixos-fw-log-refuse"
+END: 2026-06-12 00:40:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-06-12 00:40:49 +0200
+COMMAND: timeout 4s ip netns exec client ruby - <<'RUBY'
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(3) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.10.12"))
+    socket.connect(Socket.sockaddr_in(8080, "192.168.10.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-12 00:40:52 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+/nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:40:in 'Timeout::Error.handle_timeout': execution expired (Timeout::Error)
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:194:in 'Timeout.timeout'
+	from -:4:in '<main>'
+-:7:in 'Socket#connect': execution expired (Timeout::ExitException)
+	from -:7:in 'block in <main>'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:185:in 'block in Timeout.timeout'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:38:in 'Timeout::Error.handle_timeout'
+	from /nix/store/lkrkc1fxj9yr3ghsxp7nq30c2hxn9z0k-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:194:in 'Timeout.timeout'
+	from -:4:in '<main>'
+---
+
+START: 2026-06-12 00:40:52 +0200
+COMMAND: timeout 4s ip netns exec client ruby - <<'RUBY'
+require 'socket'
+
+socket = UDPSocket.new
+socket.bind("192.168.10.12", 0)
+socket.connect("192.168.10.10", 5353)
+socket.send("hello", 0)
+
+raise 'timeout' unless IO.select([socket], nil, nil, 3)
+
+puts socket.recv(4096).strip
+RUBY
+END: 2026-06-12 00:40:55 +0200
+ELAPSED: 3.11s
+STATUS: 1
+OUTPUT:
+-:8:in '<main>': timeout (RuntimeError)
+---
+
+START: 2026-06-12 00:40:55 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(3) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.10.12"))
+    socket.connect(Socket.sockaddr_in(8081, "192.168.10.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-12 00:40:55 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+open-tcp
+---
+
+START: 2026-06-12 00:40:55 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+  require 'socket'
+  require 'timeout'
+
+  Timeout.timeout(3) do
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Socket.sockaddr_in(0, "192.168.10.12"))
+    socket.connect(Socket.sockaddr_in(8081, "192.168.10.10"))
+
+    begin
+      puts socket.readpartial(4096).strip
+  ensure
+    socket.close
+  end
+end
+RUBY
+END: 2026-06-12 00:40:55 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+open-tcp
+---
+
+START: 2026-06-12 00:40:55 +0200
+COMMAND: ip netns exec client ruby - <<'RUBY'
+require 'socket'
+
+socket = UDPSocket.new
+socket.bind("192.168.10.12", 0)
+socket.connect("192.168.10.10", 5354)
+socket.send("hello", 0)
+
+raise 'timeout' unless IO.select([socket], nil, nil, 3)
+
+puts socket.recv(4096).strip
+RUBY
+END: 2026-06-12 00:40:55 +0200
+ELAPSED: 0.14s
+STATUS: 0
+OUTPUT:
+open-udp
+---
+
+START: 2026-06-12 00:41:54 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:41:59 +0200
+ELAPSED: 4.66s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown.... ok
+---
+

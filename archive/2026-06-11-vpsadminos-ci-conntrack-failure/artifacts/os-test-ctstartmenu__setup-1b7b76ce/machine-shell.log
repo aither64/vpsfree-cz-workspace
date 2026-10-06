@@ -1,0 +1,392 @@
+SHELL: 0
+
+START: 2026-06-11 19:57:07 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-11 19:57:07 +0200
+ELAPSED: 0.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:07 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-11 19:57:07 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:11 +0200
+ELAPSED: 3.75s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:13 +0200
+ELAPSED: 0.81s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:15 +0200
+ELAPSED: 0.68s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:16 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:18 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:20 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:21 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:21 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:23 +0200
+ELAPSED: 0.72s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:57:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:25 +0200
+ELAPSED: 0.72s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-11 19:57:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:26 +0200
+ELAPSED: 0.9s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-11 19:57:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:57:28 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:57:28 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:57:28 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:57:28 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:57:28 +0200
+COMMAND: osctl ct new --distribution alpine testct
+END: 2026-06-11 19:57:32 +0200
+ELAPSED: 3.6s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 19:57:32 +0200
+COMMAND: osctl ct netif new routed testct eth0
+END: 2026-06-11 19:57:33 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:33 +0200
+COMMAND: osctl ct netif ip add testct eth0 1.2.3.4/32
+END: 2026-06-11 19:57:33 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:33 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-11 19:57:43 +0200
+ELAPSED: 10.02s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-11 19:57:43 +0200
+COMMAND: osctl ct show -H -o start_menu testct
+END: 2026-06-11 19:57:44 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+true
+
+---
+
+START: 2026-06-11 19:57:44 +0200
+COMMAND: osctl ct show -H -o start_menu_timeout testct
+END: 2026-06-11 19:57:45 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+5
+
+---
+
+START: 2026-06-11 19:57:45 +0200
+COMMAND: osctl ct show -H -o lxc_dir testct
+END: 2026-06-11 19:57:45 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+/run/osctl/pools/tank/users/testct/group.default/cts/testct
+
+---
+
+START: 2026-06-11 19:57:45 +0200
+COMMAND: grep -q 'lxc.init.cmd = /dev/.osctl-mount-helper/ctstartmenu -timeout 5 /sbin/init' /run/osctl/pools/tank/users/testct/group.default/cts/testct/config
+END: 2026-06-11 19:57:45 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:45 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-11 19:57:47 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 19:57:47 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-11 19:57:50 +0200
+ELAPSED: 3.08s
+STATUS: 1
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+From 10.0.2.15 icmp_seq=1 Destination Host Unreachable
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+---
+
+START: 2026-06-11 19:57:51 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-11 19:57:53 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=2049 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2049.145/2049.145/2049.145/0.000 ms
+---
+
+START: 2026-06-11 19:57:53 +0200
+COMMAND: osctl ct unset start-menu testct
+END: 2026-06-11 19:57:54 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:54 +0200
+COMMAND: osctl ct show -H -o start_menu testct
+END: 2026-06-11 19:57:55 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+-
+
+---
+
+START: 2026-06-11 19:57:55 +0200
+COMMAND: grep -q 'lxc.init.cmd = /sbin/init' /run/osctl/pools/tank/users/testct/group.default/cts/testct/config
+END: 2026-06-11 19:57:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:57:55 +0200
+COMMAND: osctl ct restart testct
+END: 2026-06-11 19:58:00 +0200
+ELAPSED: 5.51s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 19:58:00 +0200
+COMMAND: ping -c 1 1.2.3.4
+END: 2026-06-11 19:58:01 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4) 56(84) bytes of data.
+64 bytes from 1.2.3.4: icmp_seq=1 ttl=64 time=1025 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1025.184/1025.184/1025.184/0.000 ms
+---
+
+START: 2026-06-11 19:58:01 +0200
+COMMAND: osctl ct set start-menu testct
+END: 2026-06-11 19:58:02 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:58:02 +0200
+COMMAND: osctl ct show -H -o start_menu testct
+END: 2026-06-11 19:58:03 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+true
+
+---
+
+START: 2026-06-11 19:58:03 +0200
+COMMAND: grep -q 'lxc.init.cmd = /dev/.osctl-mount-helper/ctstartmenu -timeout 5 /sbin/init' /run/osctl/pools/tank/users/testct/group.default/cts/testct/config
+END: 2026-06-11 19:58:03 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:58:03 +0200
+COMMAND: osctl ct set start-menu --timeout 10 testct
+END: 2026-06-11 19:58:04 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:58:04 +0200
+COMMAND: osctl ct show -H -o start_menu_timeout testct
+END: 2026-06-11 19:58:05 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+10
+
+---
+
+START: 2026-06-11 19:58:05 +0200
+COMMAND: grep -q 'lxc.init.cmd = /dev/.osctl-mount-helper/ctstartmenu -timeout 10 /sbin/init' /run/osctl/pools/tank/users/testct/group.default/cts/testct/config
+END: 2026-06-11 19:58:05 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:58:05 +0200
+COMMAND: poweroff -f
+END: 2026-06-11 19:58:10 +0200
+ELAPSED: 4.86s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:testct
+Unregistering users, groups and containers
+---
+

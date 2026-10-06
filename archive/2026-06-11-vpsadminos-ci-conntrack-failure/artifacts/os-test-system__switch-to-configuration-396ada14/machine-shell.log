@@ -1,0 +1,391 @@
+SHELL: 0
+
+START: 2026-06-11 19:51:49 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-11 19:51:49 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:49 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-11 19:51:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:49 +0200
+COMMAND: sv check rsyslog
+END: 2026-06-11 19:51:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: rsyslog: (pid 807) 1s
+---
+
+START: 2026-06-11 19:51:49 +0200
+COMMAND: sv check restart-trigger-test
+END: 2026-06-11 19:51:49 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: restart-trigger-test: (pid 810) 1s
+---
+
+START: 2026-06-11 19:51:49 +0200
+COMMAND: sv check kernel-modules
+END: 2026-06-11 19:51:52 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+ok: run: kernel-modules: (pid 867) 3s
+---
+
+START: 2026-06-11 19:51:52 +0200
+COMMAND: test -f /run/restart-trigger-test/state
+END: 2026-06-11 19:51:52 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:52 +0200
+COMMAND: readlink -f /etc/runit/services/restart-trigger-test/run
+END: 2026-06-11 19:51:52 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+/nix/store/pm5rc823ad5vv6nlxijk4fg00zp68b7i-sv-restart-trigger-test-run
+---
+
+START: 2026-06-11 19:51:52 +0200
+COMMAND: readlink -f /nix/store/3386qvzypk01mx32yd3p7crjk71n1jx9-vpsadminos-system-vpsadminos-26.05.git.11a751d/etc/runit/services/restart-trigger-test/run
+END: 2026-06-11 19:51:52 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+/nix/store/pm5rc823ad5vv6nlxijk4fg00zp68b7i-sv-restart-trigger-test-run
+---
+
+START: 2026-06-11 19:51:52 +0200
+COMMAND: /nix/store/3386qvzypk01mx32yd3p7crjk71n1jx9-vpsadminos-system-vpsadminos-26.05.git.11a751d/bin/switch-to-configuration dry-activate
+END: 2026-06-11 19:51:54 +0200
+ELAPSED: 1.86s
+STATUS: 0
+OUTPUT:
+probing runit services...
+probing pools...
+would stop deprecated services...
+would stop changed services...
+> sv stop restart-trigger-test
+would activate the configuration...
+would reload changed services...
+> sv reload kernel-modules
+would restart changed services...
+> sv start restart-trigger-test
+runit would start new services...
+> osctl activate --system
+---
+
+START: 2026-06-11 19:51:54 +0200
+COMMAND: /nix/store/8z86fd6igkgncbm7qvg61mnzmcw7f430-vpsadminos-system-vpsadminos-26.05.git.11a751d/bin/switch-to-configuration dry-activate
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+probing runit services...
+probing pools...
+would stop deprecated services...
+would stop changed services...
+would activate the configuration...
+would reload changed services...
+> sv 1 firewall
+> sv reload kernel-modules
+would restart changed services...
+runit would start new services...
+> osctl activate --system
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: set -e
+for module in bonding macvlan 8021q vpsadminos_missing_test_module; do
+  if lsmod | awk '{print $1}' | grep -qx "$module"; then
+    state=loaded
+  else
+    state=absent
+  fi
+  printf '%s=%s\n' "$module" "$state"
+done
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+bonding=loaded
+macvlan=absent
+8021q=loaded
+vpsadminos_missing_test_module=absent
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: grep -R -q loading\ module\ bonding /var/log/kernel-modules
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: grep -F loading\ module\ bonding /var/log/messages | grep -Fq kernel-modules
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: grep -R -q loading\ module\ 8021q /var/log/kernel-modules
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: grep -F loading\ module\ 8021q /var/log/messages | grep -Fq kernel-modules
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: grep -R -q failed\ to\ load\ module\ vpsadminos_missing_test_module /var/log/kernel-modules
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: grep -F failed\ to\ load\ module\ vpsadminos_missing_test_module /var/log/messages | grep -Fq kernel-modules
+END: 2026-06-11 19:51:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:55 +0200
+COMMAND: /nix/store/3386qvzypk01mx32yd3p7crjk71n1jx9-vpsadminos-system-vpsadminos-26.05.git.11a751d/bin/switch-to-configuration test
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 4.2s
+STATUS: 0
+OUTPUT:
+probing runit services...
+probing pools...
+stopping deprecated services...
+stopping changed services...
+> sv stop restart-trigger-test
+ok: down: restart-trigger-test: 0s, normally up
+activating the configuration...
+setting up /etc...
+reloading changed services...
+> sv reload kernel-modules
+ok: run: kernel-modules: (pid 867) 9s
+restarting changed services...
+> sv start restart-trigger-test
+ok: run: restart-trigger-test: (pid 2214) 1s
+runit will start new services...
+> osctl activate --system
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: sv check kernel-modules
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: kernel-modules: (pid 867) 11s
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: grep -R -q loading\ module\ macvlan /var/log/kernel-modules
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: grep -F loading\ module\ macvlan /var/log/messages | grep -Fq kernel-modules
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: grep -R -q unloading\ removed\ module\ bonding /var/log/kernel-modules
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: grep -F unloading\ removed\ module\ bonding /var/log/messages | grep -Fq kernel-modules
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: ! grep -R -q unloading\ removed\ module\ macvlan /var/log/kernel-modules
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: if grep -F unloading\ removed\ module\ macvlan /var/log/messages | grep -Fq kernel-modules; then exit 1; else exit 0; fi
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: ! grep -R -q unloading\ removed\ module\ 8021q /var/log/kernel-modules
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: if grep -F unloading\ removed\ module\ 8021q /var/log/messages | grep -Fq kernel-modules; then exit 1; else exit 0; fi
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: set -e
+for module in bonding macvlan 8021q vpsadminos_missing_test_module; do
+  if lsmod | awk '{print $1}' | grep -qx "$module"; then
+    state=loaded
+  else
+    state=absent
+  fi
+  printf '%s=%s\n' "$module" "$state"
+done
+END: 2026-06-11 19:52:00 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+bonding=absent
+macvlan=loaded
+8021q=loaded
+vpsadminos_missing_test_module=absent
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: sv stop kernel-modules
+END: 2026-06-11 19:52:01 +0200
+ELAPSED: 0.43s
+STATUS: 0
+OUTPUT:
+ok: down: kernel-modules: 0s, normally up
+---
+
+START: 2026-06-11 19:52:01 +0200
+COMMAND: ! grep -R -q unloading\ module\ macvlan /var/log/kernel-modules
+END: 2026-06-11 19:52:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:01 +0200
+COMMAND: if grep -F unloading\ module\ macvlan /var/log/messages | grep -Fq kernel-modules; then exit 1; else exit 0; fi
+END: 2026-06-11 19:52:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:01 +0200
+COMMAND: ! grep -R -q unloading\ module\ 8021q /var/log/kernel-modules
+END: 2026-06-11 19:52:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:01 +0200
+COMMAND: if grep -F unloading\ module\ 8021q /var/log/messages | grep -Fq kernel-modules; then exit 1; else exit 0; fi
+END: 2026-06-11 19:52:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:01 +0200
+COMMAND: set -e
+for module in bonding macvlan 8021q vpsadminos_missing_test_module; do
+  if lsmod | awk '{print $1}' | grep -qx "$module"; then
+    state=loaded
+  else
+    state=absent
+  fi
+  printf '%s=%s\n' "$module" "$state"
+done
+END: 2026-06-11 19:52:01 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+bonding=absent
+macvlan=loaded
+8021q=loaded
+vpsadminos_missing_test_module=absent
+---
+
+START: 2026-06-11 19:52:01 +0200
+COMMAND: poweroff -f
+END: 2026-06-11 19:52:06 +0200
+ELAPSED: 4.95s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown.... ok
+---
+

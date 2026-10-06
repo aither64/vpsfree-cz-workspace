@@ -1,0 +1,131 @@
+SHELL: client
+
+START: 2026-06-12 00:13:07 +0200
+COMMAND: ruby -rsocket -e '
+  sockets = Array.new(8) do
+    s = UNIXSocket.new("/run/osctl/osctld.sock")
+    s.gets
+    s
+  end
+
+  File.write("/tmp/osctld-restart-jobs/idle-clients.ready", "1
+")
+  sockets.each(&:read)
+'
+END: 2026-06-12 00:13:08 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:13:11 +0200
+COMMAND: ruby <<'RUBY'
+  require 'json'
+  require 'socket'
+
+  socket = UNIXSocket.new("/run/osctl/osctld.sock")
+  socket.gets
+  socket.puts({ cmd: :event_subscribe, opts: {} }.to_json)
+
+  response = JSON.parse(socket.gets, symbolize_names: true)
+
+  unless response[:status] && response[:response] == 'subscribed'
+    raise(response[:message] || "unexpected response: " + response.inspect)
+  end
+
+  File.write("/tmp/osctld-restart-jobs/ct-monitor-osctld-graceful-restart.ready", "1\n")
+
+  socket.each_line do |line|
+    response = JSON.parse(line, symbolize_names: true)
+
+    unless response[:status]
+      warn "error: " + response[:message].to_s
+      exit(1)
+    end
+
+    event = response[:response]
+    break if event.nil?
+
+    puts event.to_json
+    STDOUT.flush
+  end
+RUBY
+END: 2026-06-12 00:13:12 +0200
+ELAPSED: 1.11s
+STATUS: 1
+OUTPUT:
+{"type":"management","opts":{"id":6,"state":"run","cmd":"event_subscribe","opts":{}}}
+{"type":"osctld_shutdown","opts":{}}
+error: osctld is shutting down
+---
+
+START: 2026-06-12 00:13:15 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-monitor-osctld-killed.ready
+osctl ct monitor
+END: 2026-06-12 00:13:16 +0200
+ELAPSED: 1.12s
+STATUS: 1
+OUTPUT:
+error: osctld closed connection
+---
+
+START: 2026-06-12 00:13:19 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-top-osctld-killed.ready
+osctl -j ct top --rate 60
+END: 2026-06-12 00:13:20 +0200
+ELAPSED: 1.69s
+STATUS: 1
+OUTPUT:
+#<Thread:0x00007869b70cad98 /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/cli/top/monitor.rb:16 run> terminated with exception (report_on_exception is true):
+/nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/client.rb:70:in 'block in OsCtl::Client#receive': osctld closed connection (OsCtl::Client::Error)
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/client.rb:68:in 'OsCtl::Client#receive'
+	from /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/client.rb:91:in 'block in OsCtl::Client#receive_resp'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/client.rb:86:in 'OsCtl::Client#receive_resp'
+	from /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/client.rb:112:in 'OsCtl::Client#response!'
+	from /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/cli/top/monitor.rb:43:in 'block in OsCtl::Cli::Top::Monitor#monitor_loop'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/cli/top/monitor.rb:42:in 'OsCtl::Cli::Top::Monitor#monitor_loop'
+	from /nix/store/34f3g5l1r1s4y9pmibp26fsvl2mnf9hy-ruby3.4-osctl-26.05.0.build20260610185909/lib/ruby/gems/3.4.0/gems/osctl-26.05.0.build20260610185909/lib/osctl/cli/top/monitor.rb:17:in 'block in OsCtl::Cli::Top::Monitor#subscribe'
+error: osctld closed connection
+---
+
+START: 2026-06-12 00:13:27 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-start.ready
+osctl ct start testct-c383-start-restart
+END: 2026-06-12 00:13:31 +0200
+ELAPSED: 3.87s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-12 00:13:49 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-restart-osctld-killed.ready
+osctl ct restart testct-e8f0-restart-killed
+END: 2026-06-12 00:13:50 +0200
+ELAPSED: 1.12s
+STATUS: 1
+OUTPUT:
+error: osctld closed connection
+Stopping container
+---
+
+START: 2026-06-12 00:14:09 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-copy-state.ready
+osctl ct cp state testct-4180-copy-restart
+END: 2026-06-12 00:14:16 +0200
+ELAPSED: 6.78s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Starting container
+> Connecting console
+> Waiting for the container to start
+> Copying dataset /
+---
+

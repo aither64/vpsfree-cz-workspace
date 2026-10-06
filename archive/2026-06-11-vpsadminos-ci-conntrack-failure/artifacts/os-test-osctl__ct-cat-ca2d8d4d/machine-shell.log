@@ -1,0 +1,305 @@
+SHELL: 0
+
+START: 2026-06-11 19:51:53 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-11 19:51:54 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:54 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-11 19:51:54 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:51:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:51:57 +0200
+ELAPSED: 2.9s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:51:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:51:59 +0200
+ELAPSED: 1.2s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:01 +0200
+ELAPSED: 1.03s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:02 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:02 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:04 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:06 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:07 +0200
+ELAPSED: 0.84s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:09 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-11 19:52:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:11 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-11 19:52:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-11 19:52:13 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-11 19:52:13 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-11 19:52:13 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 17:52:13 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-11 19:52:13 +0200
+COMMAND: osctl ct new --distribution alpine testct
+END: 2026-06-11 19:52:16 +0200
+ELAPSED: 3.35s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-11 19:52:16 +0200
+COMMAND: osctl ct unset start-menu testct
+END: 2026-06-11 19:52:17 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-11 19:52:17 +0200
+COMMAND: osctl ct cat testct /etc/os-release
+END: 2026-06-11 19:52:17 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: container not running
+---
+
+START: 2026-06-11 19:52:17 +0200
+COMMAND: osctl ct start testct
+END: 2026-06-11 19:52:19 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-06-11 19:52:19 +0200
+COMMAND: osctl ct cat
+END: 2026-06-11 19:52:20 +0200
+ELAPSED: 0.57s
+STATUS: 64
+OUTPUT:
+error: missing argument <id>
+
+NAME
+    cat - Cat files from container
+
+SYNOPSIS
+
+    osctl [global options] ct cat <ctid> <file...>
+---
+
+START: 2026-06-11 19:52:20 +0200
+COMMAND: osctl ct cat testct
+END: 2026-06-11 19:52:20 +0200
+ELAPSED: 0.69s
+STATUS: 64
+OUTPUT:
+error: missing argument <file>
+
+NAME
+    cat - Cat files from container
+
+SYNOPSIS
+
+    osctl [global options] ct cat <ctid> <file...>
+---
+
+START: 2026-06-11 19:52:20 +0200
+COMMAND: osctl ct cat testct /etc/os-release
+END: 2026-06-11 19:52:21 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.24.0
+PRETTY_NAME="Alpine Linux v3.24"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
+---
+
+START: 2026-06-11 19:52:21 +0200
+COMMAND: osctl ct exec testct cat /etc/os-release
+END: 2026-06-11 19:52:22 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.24.0
+PRETTY_NAME="Alpine Linux v3.24"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
+---
+
+START: 2026-06-11 19:52:22 +0200
+COMMAND: osctl ct cat testct /etc/os-release /etc/os-release
+END: 2026-06-11 19:52:23 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.24.0
+PRETTY_NAME="Alpine Linux v3.24"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.24.0
+PRETTY_NAME="Alpine Linux v3.24"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
+---
+
+START: 2026-06-11 19:52:23 +0200
+COMMAND: osctl ct cat testct /no/file
+END: 2026-06-11 19:52:24 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+'/no/file': No such file or directory @ rb_sysopen - /no/file
+error: failed to read one or more files
+---
+
+START: 2026-06-11 19:52:24 +0200
+COMMAND: osctl ct cat testct /etc/os-release /no/file /etc/os-release
+END: 2026-06-11 19:52:24 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.24.0
+PRETTY_NAME="Alpine Linux v3.24"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.24.0
+PRETTY_NAME="Alpine Linux v3.24"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
+'/no/file': No such file or directory @ rb_sysopen - /no/file
+error: failed to read one or more files
+---
+
+START: 2026-06-11 19:52:24 +0200
+COMMAND: poweroff -f
+END: 2026-06-11 19:52:29 +0200
+ELAPSED: 4.8s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:testct
+Unregistering users, groups and containers
+---
+

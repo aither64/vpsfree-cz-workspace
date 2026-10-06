@@ -1,0 +1,847 @@
+SHELL: 0
+
+START: 2026-06-12 00:09:37 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:09:37 +0200
+ELAPSED: 0.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:09:37 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:09:37 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:09:37 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-12 00:09:38 +0200
+ELAPSED: 0.22s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-06-12 00:09:39 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-12 00:09:39 +0200
+ELAPSED: 0.1s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-06-12 00:09:40 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-12 00:09:40 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 22:09:40 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-12 00:09:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:41 +0200
+ELAPSED: 1.33s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:43 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:44 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:46 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:48 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:49 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:51 +0200
+ELAPSED: 0.73s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:53 +0200
+ELAPSED: 0.74s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:09:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:54 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-06-12 00:09:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:09:56 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-12 00:09:56 +0200
+COMMAND: sv check prometheus-zfs-exporter
+END: 2026-06-12 00:09:56 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: prometheus-zfs-exporter: (pid 867) 20s
+---
+
+START: 2026-06-12 00:09:56 +0200
+COMMAND: curl -sSf http://127.0.0.1:9134/metrics
+END: 2026-06-12 00:09:56 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+# HELP go_gc_duration_seconds A summary of the wall-time pause (stop-the-world) duration in garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 0
+go_gc_duration_seconds{quantile="0.25"} 0
+go_gc_duration_seconds{quantile="0.5"} 0
+go_gc_duration_seconds{quantile="0.75"} 0
+go_gc_duration_seconds{quantile="1"} 0
+go_gc_duration_seconds_sum 0
+go_gc_duration_seconds_count 0
+# HELP go_gc_gogc_percent Heap size target percentage configured by the user, otherwise 100. This value is set by the GOGC environment variable, and the runtime/debug.SetGCPercent function. Sourced from /gc/gogc:percent.
+# TYPE go_gc_gogc_percent gauge
+go_gc_gogc_percent 100
+# HELP go_gc_gomemlimit_bytes Go runtime memory limit configured by the user, otherwise math.MaxInt64. This value is set by the GOMEMLIMIT environment variable, and the runtime/debug.SetMemoryLimit function. Sourced from /gc/gomemlimit:bytes.
+# TYPE go_gc_gomemlimit_bytes gauge
+go_gc_gomemlimit_bytes 9.223372036854776e+18
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 8
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.26.3"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated in heap and currently in use. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 354432
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated in heap until now, even if released already. Equals to /gc/heap/allocs:bytes.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 354432
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table. Equals to /memory/classes/profiling/buckets:bytes.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 1.444477e+06
+# HELP go_memstats_frees_total Total number of heap objects frees. Equals to /gc/heap/frees:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 0
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata. Equals to /memory/classes/metadata/other:bytes.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 1.4692e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and currently in use, same as go_memstats_alloc_bytes. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 354432
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used. Equals to /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 5.865472e+06
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 2.064384e+06
+# HELP go_memstats_heap_objects Number of currently allocated objects. Equals to /gc/heap/objects:objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 1392
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS. Equals to /memory/classes/heap/released:bytes.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 5.865472e+06
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes + /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 7.929856e+06
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 0
+# HELP go_memstats_mallocs_total Total number of heap objects allocated, both live and gc-ed. Semantically a counter version for go_memstats_heap_objects gauge. Equals to /gc/heap/allocs:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 1392
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures. Equals to /memory/classes/metadata/mcache/inuse:bytes.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 9184
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system. Equals to /memory/classes/metadata/mcache/inuse:bytes + /memory/classes/metadata/mcache/free:bytes.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 16072
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures. Equals to /memory/classes/metadata/mspan/inuse:bytes.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 54720
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system. Equals to /memory/classes/metadata/mspan/inuse:bytes + /memory/classes/metadata/mspan/free:bytes.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 65280
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place. Equals to /gc/heap/goal:bytes.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 4.194304e+06
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations. Equals to /memory/classes/other:bytes.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 1.156531e+06
+# HELP go_memstats_stack_inuse_bytes Number of bytes obtained from system for stack allocator in non-CGO environments. Equals to /memory/classes/heap/stacks:bytes.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 458752
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator. Equals to /memory/classes/heap/stacks:bytes + /memory/classes/os-stacks:bytes.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 458752
+# HELP go_memstats_sys_bytes Number of bytes obtained from system. Equals to /memory/classes/total:byte.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 1.2540168e+07
+# HELP go_sched_gomaxprocs_threads The current runtime.GOMAXPROCS setting, or the number of operating system threads that can execute user-level Go code simultaneously. Sourced from /sched/gomaxprocs:threads.
+# TYPE go_sched_gomaxprocs_threads gauge
+go_sched_gomaxprocs_threads 4
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 8
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 0.05
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 4095
+# HELP process_network_receive_bytes_total Number of bytes received by the process over the network.
+# TYPE process_network_receive_bytes_total counter
+process_network_receive_bytes_total 111165
+# HELP process_network_transmit_bytes_total Number of bytes sent by the process over the network.
+# TYPE process_network_transmit_bytes_total counter
+process_network_transmit_bytes_total 104397
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 7
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 1.376256e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.78121577653e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 1.421479936e+09
+# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.
+# TYPE process_virtual_memory_max_bytes gauge
+process_virtual_memory_max_bytes 1.8446744073709552e+19
+# HELP promhttp_metric_handler_requests_in_flight Current number of scrapes being served.
+# TYPE promhttp_metric_handler_requests_in_flight gauge
+promhttp_metric_handler_requests_in_flight 1
+# HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
+# TYPE promhttp_metric_handler_requests_total counter
+promhttp_metric_handler_requests_total{code="200"} 0
+promhttp_metric_handler_requests_total{code="500"} 0
+promhttp_metric_handler_requests_total{code="503"} 0
+# HELP zfs_dataset_available_bytes The amount of space in bytes available to the dataset and all its children.
+# TYPE zfs_dataset_available_bytes gauge
+zfs_dataset_available_bytes{name="tank",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/conf",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/ct",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/hook",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/log",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/migration",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/repository",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/trash",pool="tank",type="filesystem"} 9.88146176e+09
+# HELP zfs_dataset_compression_ratio The ratio of compressed size vs uncompressed size for this dataset.
+# TYPE zfs_dataset_compression_ratio gauge
+zfs_dataset_compression_ratio{name="tank",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/conf",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/ct",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/hook",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/log",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/migration",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/repository",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/trash",pool="tank",type="filesystem"} 1
+# HELP zfs_dataset_logical_referenced_bytes The amount of space that is "logically" accessible by this dataset. See the "referenced_bytes" property.
+# TYPE zfs_dataset_logical_referenced_bytes gauge
+zfs_dataset_logical_referenced_bytes{name="tank",pool="tank",type="filesystem"} 13824
+zfs_dataset_logical_referenced_bytes{name="tank/conf",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/ct",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/hook",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/log",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/migration",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/repository",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/trash",pool="tank",type="filesystem"} 12288
+# HELP zfs_dataset_logical_used_bytes The amount of space in bytes that is "logically" consumed by this dataset and all its descendents. See the "used_bytes" property.
+# TYPE zfs_dataset_logical_used_bytes gauge
+zfs_dataset_logical_used_bytes{name="tank",pool="tank",type="filesystem"} 139776
+zfs_dataset_logical_used_bytes{name="tank/conf",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/ct",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/hook",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/log",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/migration",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/repository",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/trash",pool="tank",type="filesystem"} 12288
+# HELP zfs_dataset_quota_bytes The maximum amount of space in bytes this dataset and its descendents can consume.
+# TYPE zfs_dataset_quota_bytes gauge
+zfs_dataset_quota_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_referenced_bytes The amount of data in bytes that is accessible by this dataset, which may or may not be shared with other datasets in the pool.
+# TYPE zfs_dataset_referenced_bytes gauge
+zfs_dataset_referenced_bytes{name="tank",pool="tank",type="filesystem"} 26624
+zfs_dataset_referenced_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_dataset_referenced_compression_ratio The ratio of compressed size vs uncompressed size for the referenced space of this dataset. See also the "compression_ratio" property.
+# TYPE zfs_dataset_referenced_compression_ratio gauge
+zfs_dataset_referenced_compression_ratio{name="tank",pool="tank",type="filesystem"} 0.970873786407767
+zfs_dataset_referenced_compression_ratio{name="tank/conf",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/ct",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/hook",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/log",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/migration",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/repository",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/trash",pool="tank",type="filesystem"} 1
+# HELP zfs_dataset_referenced_quota_bytes The maximum amount of space in bytes this dataset can consume.
+# TYPE zfs_dataset_referenced_quota_bytes gauge
+zfs_dataset_referenced_quota_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_referenced_reservation_bytes The minimum amount of space in bytes guaranteed to this dataset.
+# TYPE zfs_dataset_referenced_reservation_bytes gauge
+zfs_dataset_referenced_reservation_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_reservation_bytes The minimum amount of space in bytes guaranteed to a dataset and its descendants.
+# TYPE zfs_dataset_reservation_bytes gauge
+zfs_dataset_reservation_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_by_children_bytes The amount of space in bytes used by children of this dataset, which would be freed if all the dataset's children were destroyed.
+# TYPE zfs_dataset_used_by_children_bytes gauge
+zfs_dataset_used_by_children_bytes{name="tank",pool="tank",type="filesystem"} 291840
+zfs_dataset_used_by_children_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_by_dataset_bytes The amount of space in bytes used by this dataset itself, which would be freed if the dataset were destroyed.
+# TYPE zfs_dataset_used_by_dataset_bytes gauge
+zfs_dataset_used_by_dataset_bytes{name="tank",pool="tank",type="filesystem"} 26624
+zfs_dataset_used_by_dataset_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_dataset_used_by_referenced_reservation_bytes The amount of space in bytes used by a refreservation set on this dataset, which would be freed if the refreservation was removed.
+# TYPE zfs_dataset_used_by_referenced_reservation_bytes gauge
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_by_snapshot_bytes The amount of space in bytes consumed by snapshots of this dataset.
+# TYPE zfs_dataset_used_by_snapshot_bytes gauge
+zfs_dataset_used_by_snapshot_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_bytes The amount of space in bytes consumed by this dataset and all its descendents.
+# TYPE zfs_dataset_used_bytes gauge
+zfs_dataset_used_bytes{name="tank",pool="tank",type="filesystem"} 318464
+zfs_dataset_used_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_dataset_written_bytes The amount of referenced space in bytes written to this dataset since the previous snapshot.
+# TYPE zfs_dataset_written_bytes gauge
+zfs_dataset_written_bytes{name="tank",pool="tank",type="filesystem"} 26624
+zfs_dataset_written_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_exporter_build_info A metric with a constant '1' value labeled by version, revision, branch, goversion from which zfs_exporter was built, and the goos and goarch for the build.
+# TYPE zfs_exporter_build_info gauge
+zfs_exporter_build_info{branch="unknown",goarch="amd64",goos="linux",goversion="go1.26.3",revision="unknown",tags="unknown",version="2.3.12"} 1
+# HELP zfs_pool_allocated_bytes Amount of storage in bytes used within the pool.
+# TYPE zfs_pool_allocated_bytes gauge
+zfs_pool_allocated_bytes{pool="tank"} 448000
+# HELP zfs_pool_deduplication_ratio The ratio of deduplicated size vs undeduplicated size for data in this pool.
+# TYPE zfs_pool_deduplication_ratio gauge
+zfs_pool_deduplication_ratio{pool="tank"} 1
+# HELP zfs_pool_fragmentation_ratio The fragmentation ratio of the pool.
+# TYPE zfs_pool_fragmentation_ratio gauge
+zfs_pool_fragmentation_ratio{pool="tank"} 0
+# HELP zfs_pool_free_bytes The amount of free space in bytes available in the pool.
+# TYPE zfs_pool_free_bytes gauge
+zfs_pool_free_bytes{pool="tank"} 1.0200099328e+10
+# HELP zfs_pool_freeing_bytes The amount of space in bytes remaining to be freed following the destruction of a file system or snapshot.
+# TYPE zfs_pool_freeing_bytes gauge
+zfs_pool_freeing_bytes{pool="tank"} 0
+# HELP zfs_pool_health Health status code for the pool [0: ONLINE, 1: DEGRADED, 2: FAULTED, 3: OFFLINE, 4: UNAVAIL, 5: REMOVED, 6: SUSPENDED].
+# TYPE zfs_pool_health gauge
+zfs_pool_health{pool="tank"} 0
+# HELP zfs_pool_leaked_bytes Number of leaked bytes in the pool.
+# TYPE zfs_pool_leaked_bytes gauge
+zfs_pool_leaked_bytes{pool="tank"} 0
+# HELP zfs_pool_readonly Read-only status of the pool [0: read-write, 1: read-only].
+# TYPE zfs_pool_readonly gauge
+zfs_pool_readonly{pool="tank"} 0
+# HELP zfs_pool_size_bytes Total size in bytes of the storage pool.
+# TYPE zfs_pool_size_bytes gauge
+zfs_pool_size_bytes{pool="tank"} 1.0200547328e+10
+# HELP zfs_scrape_collector_duration_seconds zfs_exporter: Duration of a collector scrape.
+# TYPE zfs_scrape_collector_duration_seconds gauge
+zfs_scrape_collector_duration_seconds{collector="dataset-filesystem"} 0.014055097
+zfs_scrape_collector_duration_seconds{collector="dataset-volume"} 0.013905735
+zfs_scrape_collector_duration_seconds{collector="pool"} 0.009814817
+# HELP zfs_scrape_collector_success zfs_exporter: Whether a collector succeeded.
+# TYPE zfs_scrape_collector_success gauge
+zfs_scrape_collector_success{collector="dataset-filesystem"} 1
+zfs_scrape_collector_success{collector="dataset-volume"} 1
+zfs_scrape_collector_success{collector="pool"} 1
+---
+
+START: 2026-06-12 00:09:56 +0200
+COMMAND: curl -sSf http://127.0.0.1:9134/metrics
+END: 2026-06-12 00:09:56 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+# HELP go_gc_duration_seconds A summary of the wall-time pause (stop-the-world) duration in garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 0
+go_gc_duration_seconds{quantile="0.25"} 0
+go_gc_duration_seconds{quantile="0.5"} 0
+go_gc_duration_seconds{quantile="0.75"} 0
+go_gc_duration_seconds{quantile="1"} 0
+go_gc_duration_seconds_sum 0
+go_gc_duration_seconds_count 0
+# HELP go_gc_gogc_percent Heap size target percentage configured by the user, otherwise 100. This value is set by the GOGC environment variable, and the runtime/debug.SetGCPercent function. Sourced from /gc/gogc:percent.
+# TYPE go_gc_gogc_percent gauge
+go_gc_gogc_percent 100
+# HELP go_gc_gomemlimit_bytes Go runtime memory limit configured by the user, otherwise math.MaxInt64. This value is set by the GOMEMLIMIT environment variable, and the runtime/debug.SetMemoryLimit function. Sourced from /gc/gomemlimit:bytes.
+# TYPE go_gc_gomemlimit_bytes gauge
+go_gc_gomemlimit_bytes 9.223372036854776e+18
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 10
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.26.3"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated in heap and currently in use. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 562688
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated in heap until now, even if released already. Equals to /gc/heap/allocs:bytes.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 562688
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table. Equals to /memory/classes/profiling/buckets:bytes.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 1.444477e+06
+# HELP go_memstats_frees_total Total number of heap objects frees. Equals to /gc/heap/frees:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 358
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata. Equals to /memory/classes/metadata/other:bytes.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 1.509136e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and currently in use, same as go_memstats_alloc_bytes. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 562688
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used. Equals to /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 5.07904e+06
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 2.78528e+06
+# HELP go_memstats_heap_objects Number of currently allocated objects. Equals to /gc/heap/objects:objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 3806
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS. Equals to /memory/classes/heap/released:bytes.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 5.07904e+06
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes + /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 7.86432e+06
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 0
+# HELP go_memstats_mallocs_total Total number of heap objects allocated, both live and gc-ed. Semantically a counter version for go_memstats_heap_objects gauge. Equals to /gc/heap/allocs:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 4164
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures. Equals to /memory/classes/metadata/mcache/inuse:bytes.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 9184
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system. Equals to /memory/classes/metadata/mcache/inuse:bytes + /memory/classes/metadata/mcache/free:bytes.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 16072
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures. Equals to /memory/classes/metadata/mspan/inuse:bytes.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 64960
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system. Equals to /memory/classes/metadata/mspan/inuse:bytes + /memory/classes/metadata/mspan/free:bytes.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 65280
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place. Equals to /gc/heap/goal:bytes.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 4.194304e+06
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations. Equals to /memory/classes/other:bytes.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 1.116595e+06
+# HELP go_memstats_stack_inuse_bytes Number of bytes obtained from system for stack allocator in non-CGO environments. Equals to /memory/classes/heap/stacks:bytes.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 524288
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator. Equals to /memory/classes/heap/stacks:bytes + /memory/classes/os-stacks:bytes.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 524288
+# HELP go_memstats_sys_bytes Number of bytes obtained from system. Equals to /memory/classes/total:byte.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 1.2540168e+07
+# HELP go_sched_gomaxprocs_threads The current runtime.GOMAXPROCS setting, or the number of operating system threads that can execute user-level Go code simultaneously. Sourced from /sched/gomaxprocs:threads.
+# TYPE go_sched_gomaxprocs_threads gauge
+go_sched_gomaxprocs_threads 4
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 8
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 0.06
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 4095
+# HELP process_network_receive_bytes_total Number of bytes received by the process over the network.
+# TYPE process_network_receive_bytes_total counter
+process_network_receive_bytes_total 170101
+# HELP process_network_transmit_bytes_total Number of bytes sent by the process over the network.
+# TYPE process_network_transmit_bytes_total counter
+process_network_transmit_bytes_total 163333
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 10
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 1.4811136e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.78121577653e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 1.42174208e+09
+# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.
+# TYPE process_virtual_memory_max_bytes gauge
+process_virtual_memory_max_bytes 1.8446744073709552e+19
+# HELP promhttp_metric_handler_requests_in_flight Current number of scrapes being served.
+# TYPE promhttp_metric_handler_requests_in_flight gauge
+promhttp_metric_handler_requests_in_flight 1
+# HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
+# TYPE promhttp_metric_handler_requests_total counter
+promhttp_metric_handler_requests_total{code="200"} 1
+promhttp_metric_handler_requests_total{code="500"} 0
+promhttp_metric_handler_requests_total{code="503"} 0
+# HELP zfs_dataset_available_bytes The amount of space in bytes available to the dataset and all its children.
+# TYPE zfs_dataset_available_bytes gauge
+zfs_dataset_available_bytes{name="tank",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/conf",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/ct",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/hook",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/log",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/migration",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/repository",pool="tank",type="filesystem"} 9.88146176e+09
+zfs_dataset_available_bytes{name="tank/trash",pool="tank",type="filesystem"} 9.88146176e+09
+# HELP zfs_dataset_compression_ratio The ratio of compressed size vs uncompressed size for this dataset.
+# TYPE zfs_dataset_compression_ratio gauge
+zfs_dataset_compression_ratio{name="tank",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/conf",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/ct",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/hook",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/log",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/migration",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/repository",pool="tank",type="filesystem"} 1
+zfs_dataset_compression_ratio{name="tank/trash",pool="tank",type="filesystem"} 1
+# HELP zfs_dataset_logical_referenced_bytes The amount of space that is "logically" accessible by this dataset. See the "referenced_bytes" property.
+# TYPE zfs_dataset_logical_referenced_bytes gauge
+zfs_dataset_logical_referenced_bytes{name="tank",pool="tank",type="filesystem"} 13824
+zfs_dataset_logical_referenced_bytes{name="tank/conf",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/ct",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/hook",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/log",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/migration",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/repository",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_referenced_bytes{name="tank/trash",pool="tank",type="filesystem"} 12288
+# HELP zfs_dataset_logical_used_bytes The amount of space in bytes that is "logically" consumed by this dataset and all its descendents. See the "used_bytes" property.
+# TYPE zfs_dataset_logical_used_bytes gauge
+zfs_dataset_logical_used_bytes{name="tank",pool="tank",type="filesystem"} 139776
+zfs_dataset_logical_used_bytes{name="tank/conf",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/ct",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/hook",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/log",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/migration",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/repository",pool="tank",type="filesystem"} 12288
+zfs_dataset_logical_used_bytes{name="tank/trash",pool="tank",type="filesystem"} 12288
+# HELP zfs_dataset_quota_bytes The maximum amount of space in bytes this dataset and its descendents can consume.
+# TYPE zfs_dataset_quota_bytes gauge
+zfs_dataset_quota_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_quota_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_referenced_bytes The amount of data in bytes that is accessible by this dataset, which may or may not be shared with other datasets in the pool.
+# TYPE zfs_dataset_referenced_bytes gauge
+zfs_dataset_referenced_bytes{name="tank",pool="tank",type="filesystem"} 26624
+zfs_dataset_referenced_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_referenced_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_dataset_referenced_compression_ratio The ratio of compressed size vs uncompressed size for the referenced space of this dataset. See also the "compression_ratio" property.
+# TYPE zfs_dataset_referenced_compression_ratio gauge
+zfs_dataset_referenced_compression_ratio{name="tank",pool="tank",type="filesystem"} 0.970873786407767
+zfs_dataset_referenced_compression_ratio{name="tank/conf",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/ct",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/hook",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/log",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/migration",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/repository",pool="tank",type="filesystem"} 1
+zfs_dataset_referenced_compression_ratio{name="tank/trash",pool="tank",type="filesystem"} 1
+# HELP zfs_dataset_referenced_quota_bytes The maximum amount of space in bytes this dataset can consume.
+# TYPE zfs_dataset_referenced_quota_bytes gauge
+zfs_dataset_referenced_quota_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_quota_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_referenced_reservation_bytes The minimum amount of space in bytes guaranteed to this dataset.
+# TYPE zfs_dataset_referenced_reservation_bytes gauge
+zfs_dataset_referenced_reservation_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_referenced_reservation_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_reservation_bytes The minimum amount of space in bytes guaranteed to a dataset and its descendants.
+# TYPE zfs_dataset_reservation_bytes gauge
+zfs_dataset_reservation_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_reservation_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_by_children_bytes The amount of space in bytes used by children of this dataset, which would be freed if all the dataset's children were destroyed.
+# TYPE zfs_dataset_used_by_children_bytes gauge
+zfs_dataset_used_by_children_bytes{name="tank",pool="tank",type="filesystem"} 291840
+zfs_dataset_used_by_children_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_children_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_by_dataset_bytes The amount of space in bytes used by this dataset itself, which would be freed if the dataset were destroyed.
+# TYPE zfs_dataset_used_by_dataset_bytes gauge
+zfs_dataset_used_by_dataset_bytes{name="tank",pool="tank",type="filesystem"} 26624
+zfs_dataset_used_by_dataset_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_by_dataset_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_dataset_used_by_referenced_reservation_bytes The amount of space in bytes used by a refreservation set on this dataset, which would be freed if the refreservation was removed.
+# TYPE zfs_dataset_used_by_referenced_reservation_bytes gauge
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_referenced_reservation_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_by_snapshot_bytes The amount of space in bytes consumed by snapshots of this dataset.
+# TYPE zfs_dataset_used_by_snapshot_bytes gauge
+zfs_dataset_used_by_snapshot_bytes{name="tank",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/conf",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/ct",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/hook",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/log",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/migration",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/repository",pool="tank",type="filesystem"} 0
+zfs_dataset_used_by_snapshot_bytes{name="tank/trash",pool="tank",type="filesystem"} 0
+# HELP zfs_dataset_used_bytes The amount of space in bytes consumed by this dataset and all its descendents.
+# TYPE zfs_dataset_used_bytes gauge
+zfs_dataset_used_bytes{name="tank",pool="tank",type="filesystem"} 318464
+zfs_dataset_used_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_used_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_dataset_written_bytes The amount of referenced space in bytes written to this dataset since the previous snapshot.
+# TYPE zfs_dataset_written_bytes gauge
+zfs_dataset_written_bytes{name="tank",pool="tank",type="filesystem"} 26624
+zfs_dataset_written_bytes{name="tank/conf",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/ct",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/hook",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/log",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/migration",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/repository",pool="tank",type="filesystem"} 24576
+zfs_dataset_written_bytes{name="tank/trash",pool="tank",type="filesystem"} 24576
+# HELP zfs_exporter_build_info A metric with a constant '1' value labeled by version, revision, branch, goversion from which zfs_exporter was built, and the goos and goarch for the build.
+# TYPE zfs_exporter_build_info gauge
+zfs_exporter_build_info{branch="unknown",goarch="amd64",goos="linux",goversion="go1.26.3",revision="unknown",tags="unknown",version="2.3.12"} 1
+# HELP zfs_pool_allocated_bytes Amount of storage in bytes used within the pool.
+# TYPE zfs_pool_allocated_bytes gauge
+zfs_pool_allocated_bytes{pool="tank"} 448000
+# HELP zfs_pool_deduplication_ratio The ratio of deduplicated size vs undeduplicated size for data in this pool.
+# TYPE zfs_pool_deduplication_ratio gauge
+zfs_pool_deduplication_ratio{pool="tank"} 1
+# HELP zfs_pool_fragmentation_ratio The fragmentation ratio of the pool.
+# TYPE zfs_pool_fragmentation_ratio gauge
+zfs_pool_fragmentation_ratio{pool="tank"} 0
+# HELP zfs_pool_free_bytes The amount of free space in bytes available in the pool.
+# TYPE zfs_pool_free_bytes gauge
+zfs_pool_free_bytes{pool="tank"} 1.0200099328e+10
+# HELP zfs_pool_freeing_bytes The amount of space in bytes remaining to be freed following the destruction of a file system or snapshot.
+# TYPE zfs_pool_freeing_bytes gauge
+zfs_pool_freeing_bytes{pool="tank"} 0
+# HELP zfs_pool_health Health status code for the pool [0: ONLINE, 1: DEGRADED, 2: FAULTED, 3: OFFLINE, 4: UNAVAIL, 5: REMOVED, 6: SUSPENDED].
+# TYPE zfs_pool_health gauge
+zfs_pool_health{pool="tank"} 0
+# HELP zfs_pool_leaked_bytes Number of leaked bytes in the pool.
+# TYPE zfs_pool_leaked_bytes gauge
+zfs_pool_leaked_bytes{pool="tank"} 0
+# HELP zfs_pool_readonly Read-only status of the pool [0: read-write, 1: read-only].
+# TYPE zfs_pool_readonly gauge
+zfs_pool_readonly{pool="tank"} 0
+# HELP zfs_pool_size_bytes Total size in bytes of the storage pool.
+# TYPE zfs_pool_size_bytes gauge
+zfs_pool_size_bytes{pool="tank"} 1.0200547328e+10
+# HELP zfs_scrape_collector_duration_seconds zfs_exporter: Duration of a collector scrape.
+# TYPE zfs_scrape_collector_duration_seconds gauge
+zfs_scrape_collector_duration_seconds{collector="dataset-filesystem"} 0.010577331
+zfs_scrape_collector_duration_seconds{collector="dataset-volume"} 0.010225541
+zfs_scrape_collector_duration_seconds{collector="pool"} 0.008710757
+# HELP zfs_scrape_collector_success zfs_exporter: Whether a collector succeeded.
+# TYPE zfs_scrape_collector_success gauge
+zfs_scrape_collector_success{collector="dataset-filesystem"} 1
+zfs_scrape_collector_success{collector="dataset-volume"} 1
+zfs_scrape_collector_success{collector="pool"} 1
+---
+
+START: 2026-06-12 00:09:56 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:09:57 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

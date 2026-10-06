@@ -1,0 +1,114 @@
+SHELL: 0
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: sv check runit-script-env
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+ok: run: runit-script-env: (pid 812) 1s
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: test -f /run/runit-script-env/run
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: test -f /run/runit-script-env/check
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: sv hup runit-script-env
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: test -f /run/runit-script-env/control
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: test -f /run/runit-script-env/control
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: sv down runit-script-env
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: test -f /run/runit-script-env/finish
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: test -f /run/runit-script-env/finish
+END: 2026-06-12 00:08:23 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:08:23 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:08:39 +0200
+ELAPSED: 15.75s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown...... ok
+---
+

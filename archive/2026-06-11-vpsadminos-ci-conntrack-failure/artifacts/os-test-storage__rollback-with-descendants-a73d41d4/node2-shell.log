@@ -1,0 +1,215 @@
+SHELL: 0
+
+START: 2026-06-10 12:45:29 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-10 12:45:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:45:29 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-10 12:45:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:45:29 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 12:45:29 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2139) 69s
+---
+
+START: 2026-06-10 12:45:29 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 12:45:29 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2139) 69s
+---
+
+START: 2026-06-10 12:45:29 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 12:45:29 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:45:30 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 12:45:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2139) 70s
+---
+
+START: 2026-06-10 12:45:30 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 12:45:30 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:45:31 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 12:45:31 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2139) 71s
+---
+
+START: 2026-06-10 12:45:31 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 12:45:31 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:45:31 +0200
+COMMAND: nodectl status
+END: 2026-06-10 12:45:32 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+   Version: 4.1.0
+     State: initializing
+    Uptime: 00:00:01
+  Consoles: 0
+  Subtasks: 0
+Queue size: 0
+    Queues:
+       general  0 / 6 (+6) 
+       storage  0 / 2 (+2) 
+       network  0 / 1 (+0) 
+           vps  0 / 4 (+4) 
+      zfs_send  0 / 3 (+0) opens in 01:29:59
+      zfs_recv  0 / 3 (+0) opens in 01:29:59
+          mail  0 / 2 (+2) 
+           dns  0 / 1 (+0) 
+        outage  0 / 128 (+0) 
+         queue  0 / 256 (+16) 
+      rollback  0 / 6 (+6) 
+---
+
+START: 2026-06-10 12:45:33 +0200
+COMMAND: sv check nodectld
+END: 2026-06-10 12:45:33 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2139) 73s
+---
+
+START: 2026-06-10 12:45:33 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 12:45:33 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:45:33 +0200
+COMMAND: nodectl status
+END: 2026-06-10 12:45:34 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+   Version: 4.1.0
+     State: running
+    Uptime: 00:00:03
+  Consoles: 0
+  Subtasks: 0
+Queue size: 0
+    Queues:
+       general  0 / 6 (+6) 
+       storage  0 / 2 (+2) 
+       network  0 / 1 (+0) 
+           vps  0 / 4 (+4) 
+      zfs_send  0 / 3 (+0) opens in 01:29:57
+      zfs_recv  0 / 3 (+0) opens in 01:29:57
+          mail  0 / 2 (+2) 
+           dns  0 / 1 (+0) 
+        outage  0 / 128 (+0) 
+         queue  0 / 256 (+16) 
+      rollback  0 / 6 (+6) 
+---
+
+START: 2026-06-10 12:45:40 +0200
+COMMAND: test -S /run/nodectl/nodectld.sock
+END: 2026-06-10 12:45:40 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:45:40 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_send.start_delay=0
+END: 2026-06-10 12:45:40 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-10 12:45:40 +0200
+COMMAND: nodectl set config vpsadmin.queues.zfs_recv.start_delay=0
+END: 2026-06-10 12:45:41 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+Config changed
+---
+
+START: 2026-06-10 12:45:41 +0200
+COMMAND: nodectl queue resume all
+END: 2026-06-10 12:45:41 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-10 12:47:10 +0200
+COMMAND: zfs list -H -o name -t filesystem tank/backup/1
+END: 2026-06-10 12:47:10 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/backup/1
+---
+
+START: 2026-06-10 12:49:40 +0200
+COMMAND: poweroff -f
+END: 2026-06-10 12:49:42 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

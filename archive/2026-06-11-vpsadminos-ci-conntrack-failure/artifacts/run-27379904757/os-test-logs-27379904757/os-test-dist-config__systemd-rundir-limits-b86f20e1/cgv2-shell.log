@@ -1,0 +1,264 @@
+SHELL: 0
+
+START: 2026-06-12 00:37:34 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-06-12 00:37:34 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:37:34 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-06-12 00:37:34 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:37:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:36 +0200
+ELAPSED: 2.22s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:38 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:39 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:41 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:43 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:44 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:46 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:47 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:49 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:51 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-06-12 00:37:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:52 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-06-12 00:37:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-06-12 00:37:54 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-06-12 00:37:54 +0200
+COMMAND: curl --head https://check-online.vpsadminos.org
+END: 2026-06-12 00:37:54 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 11 Jun 2026 22:37:54 GMT
+content-type: text/html
+content-length: 7
+etag: "3smlyc339rqvan71am069x8mnpwwjlw4-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-06-12 00:37:54 +0200
+COMMAND: osctl ct new --distribution arch cgv2-testct
+END: 2026-06-12 00:38:51 +0200
+ELAPSED: 56.96s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-06-12 00:38:51 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run
+END: 2026-06-12 00:38:53 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+1K-blocks
+  4071348
+---
+
+START: 2026-06-12 00:38:53 +0200
+COMMAND: osctl ct set memory cgv2-testct 1G
+END: 2026-06-12 00:38:54 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:38:54 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run | grep 524288
+END: 2026-06-12 00:38:56 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+   524288
+---
+
+START: 2026-06-12 00:38:56 +0200
+COMMAND: osctl ct unset memory cgv2-testct
+END: 2026-06-12 00:38:57 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:38:57 +0200
+COMMAND: osctl group set memory /default 512M
+END: 2026-06-12 00:38:57 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:38:57 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run | grep 262144
+END: 2026-06-12 00:39:00 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+   262144
+---
+
+START: 2026-06-12 00:39:00 +0200
+COMMAND: osctl group unset memory /default
+END: 2026-06-12 00:39:00 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:39:00 +0200
+COMMAND: osctl group set memory / 1G
+END: 2026-06-12 00:39:01 +0200
+ELAPSED: 0.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-06-12 00:39:01 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run | grep 524288
+END: 2026-06-12 00:39:03 +0200
+ELAPSED: 2.4s
+STATUS: 0
+OUTPUT:
+   524288
+---
+
+START: 2026-06-12 00:39:03 +0200
+COMMAND: poweroff -f
+END: 2026-06-12 00:39:04 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:cgv2-testct
+Unregistering users, groups and containers
+---
+
