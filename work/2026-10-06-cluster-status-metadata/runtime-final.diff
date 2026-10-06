@@ -1,0 +1,262 @@
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index d802033bbeecec52c75fc0cfca2cefdf3ecd4523..7f7543258c16ecab57a03b19c62f2d9237d7d539 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -864,6 +864,24 @@ last valid state and displays a local update notice. Other failures indicate
+ unavailable status. Readiness and credentials are replaced by the next complete
+ status response, including an empty response after reset.
+ 
++Schema-2 responses may include optional `webuiSource` and `maintenance`
++metadata. The portal validates these objects without adding them to the rendered
++cluster card. `webuiSource` contains a 40-character lowercase hexadecimal
++`revision`, a boolean `dirty`, and a `kind` of `pinned` or `worktree`.
++`maintenance` contains `version` (1 or 2), `mode` (`maintenance`), `phase`,
++and boolean `pending`, `copied`, and `active` fields. Supported phases are
++`held`, `maintenance_ready`, `copying`, `copied`, `starting_copied`, and
++`released`. Only `released` has `pending: false` and `active: true`.
++Pending maintenance requires `ready: false` and an empty `services` array.
++Metadata requires a found schema-2 cluster. Unknown fields, incomplete metadata,
++and trailing output are rejected.
++
++Helpers that omit these metadata objects remain compatible. Portal generations
++without metadata support reject responses containing either object. Deploy a
++reader that accepts them together with helpers that emit them; removing one
++object does not make the other compatible. This wire contract does not change
++persisted cluster state or the package transition policy.
++
+ The portal gives a release/reset operation
+ `clusterProvider.releaseTimeoutSeconds` (180 seconds). Providers must budget
+ guest shutdown, forced reaping, runner cleanup, and command completion within
+diff --git a/portal/internal/cluster/status.go b/portal/internal/cluster/status.go
+index 15819503576e0202487c83c081d948365acbcb2a..8119b54bbfb795aa90094b78fe25ded0383c3eee 100644
+--- a/portal/internal/cluster/status.go
++++ b/portal/internal/cluster/status.go
+@@ -86,6 +86,31 @@ type Status struct {
+ 	Services    []Service    `json:"services,omitempty"`
+ }
+ 
++// Provider metadata is validated at the wire boundary without changing the
++// portal's rendered Status interface.
++type helperResponse struct {
++	Schema      int                `json:"schema"`
++	Found       bool               `json:"found"`
++	WebUISource *helperWebUISource `json:"webuiSource"`
++	Maintenance *helperMaintenance `json:"maintenance"`
++	Status
++}
++
++type helperWebUISource struct {
++	Revision string `json:"revision"`
++	Dirty    *bool  `json:"dirty"`
++	Kind     string `json:"kind"`
++}
++
++type helperMaintenance struct {
++	Version int    `json:"version"`
++	Mode    string `json:"mode"`
++	Phase   string `json:"phase"`
++	Pending *bool  `json:"pending"`
++	Copied  *bool  `json:"copied"`
++	Active  *bool  `json:"active"`
++}
++
+ type Runner struct {
+ 	Workspace string
+ 	Providers []Provider
+@@ -268,11 +293,7 @@ func (r Runner) inspectProvider(parent context.Context, provider Provider, slug
+ 		}
+ 		return Status{}, false, errors.New(message)
+ 	}
+-	var response struct {
+-		Schema int  `json:"schema"`
+-		Found  bool `json:"found"`
+-		Status
+-	}
++	var response helperResponse
+ 	decoder := json.NewDecoder(bytes.NewReader(output))
+ 	decoder.DisallowUnknownFields()
+ 	if err := decoder.Decode(&response); err != nil {
+@@ -287,6 +308,9 @@ func (r Runner) inspectProvider(parent context.Context, provider Provider, slug
+ 	if response.Label != "" || response.Notice != "" {
+ 		return Status{}, false, errors.New("development cluster helper returned an invalid status")
+ 	}
++	if err := response.validateMetadata(); err != nil {
++		return Status{}, false, fmt.Errorf("development cluster helper returned an invalid status: %w", err)
++	}
+ 	if !response.Found {
+ 		return Status{}, false, nil
+ 	}
+@@ -305,6 +329,40 @@ func (r Runner) inspectProvider(parent context.Context, provider Provider, slug
+ 	return response.Status, true, nil
+ }
+ 
++func (response helperResponse) validateMetadata() error {
++	if response.WebUISource == nil && response.Maintenance == nil {
++		return nil
++	}
++	if response.Schema != 2 || !response.Found {
++		return errors.New("metadata requires a found schema 2 cluster")
++	}
++	if source := response.WebUISource; source != nil {
++		if len(source.Revision) != 40 || strings.Trim(source.Revision, "0123456789abcdef") != "" ||
++			source.Dirty == nil || (source.Kind != "pinned" && source.Kind != "worktree") {
++			return errors.New("WebUI source metadata is invalid")
++		}
++	}
++	if maintenance := response.Maintenance; maintenance != nil {
++		if (maintenance.Version != 1 && maintenance.Version != 2) || maintenance.Mode != "maintenance" ||
++			maintenance.Pending == nil || maintenance.Copied == nil || maintenance.Active == nil {
++			return errors.New("maintenance metadata is invalid")
++		}
++		switch maintenance.Phase {
++		case "held", "maintenance_ready", "copying", "copied", "starting_copied", "released":
++		default:
++			return errors.New("maintenance phase is invalid")
++		}
++		released := maintenance.Phase == "released"
++		if *maintenance.Pending != !released || *maintenance.Active != released {
++			return errors.New("maintenance flags disagree with phase")
++		}
++		if *maintenance.Pending && (response.Ready || len(response.Services) != 0) {
++			return errors.New("pending maintenance contains readiness or services")
++		}
++	}
++	return nil
++}
++
+ func validateStructuredStatus(schema int, status Status) error {
+ 	if schema == 1 && status.Services != nil {
+ 		return errors.New("schema 1 status contains services")
+diff --git a/portal/internal/cluster/status_test.go b/portal/internal/cluster/status_test.go
+index 9812e7b0b1d44f2f5c25f464480f9ed0b77b2968..b09bf7804e3dc0736b07951b558b53319430fc10 100644
+--- a/portal/internal/cluster/status_test.go
++++ b/portal/internal/cluster/status_test.go
+@@ -2,7 +2,9 @@ package cluster
+ 
+ import (
+ 	"context"
++	"encoding/json"
+ 	"errors"
++	"fmt"
+ 	"os"
+ 	"path/filepath"
+ 	"strconv"
+@@ -136,6 +138,118 @@ func TestInspectNormalizesLegacyHelperStatus(t *testing.T) {
+ 	}
+ }
+ 
++const webUISourceMetadata = `"webuiSource":{"revision":"aa2f60b89df65d2f987be48784ed42bab7010833","dirty":false,"kind":"worktree"}`
++const releasedMaintenanceMetadata = `"maintenance":{"version":2,"mode":"maintenance","phase":"released","pending":false,"copied":true,"active":true}`
++
++func TestInspectAcceptsProviderMetadataWithoutChangingStatus(t *testing.T) {
++	for _, testCase := range []struct{ name, metadata string }{
++		{"worktree", webUISourceMetadata},
++		{"pinned-dirty", strings.ReplaceAll(strings.ReplaceAll(webUISourceMetadata, "worktree", "pinned"), "false", "true")},
++		{"maintenance-v1", strings.ReplaceAll(releasedMaintenanceMetadata, `"version":2`, `"version":1`)},
++		{"maintenance-v2", releasedMaintenanceMetadata},
++		{"combined", webUISourceMetadata + "," + releasedMaintenanceMetadata},
++	} {
++		t.Run(testCase.name, func(t *testing.T) {
++			payload := `{"schema":2,"found":true,"kind":"vpsadmin","state":"running","ready":true,"topology":"storage","network":"bridge","services":[{"label":"React Web UI","url":"https://webui.example.test/"}],` + testCase.metadata + `}`
++			statuses, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
++				"vpsadmin", statusHelper(t, payload), "vpsAdmin",
++			)}).Inspect("example")
++			if err != nil || len(statuses) != 1 {
++				t.Fatalf("inspection = %v, %v", statuses, err)
++			}
++			status := statuses[0]
++			if status.State != "running" || !status.Ready || len(status.Services) != 1 || status.Notice != "" {
++				t.Fatalf("status = %#v", status)
++			}
++			encoded, err := json.Marshal(status)
++			if err != nil {
++				t.Fatal(err)
++			}
++			if strings.Contains(string(encoded), "webuiSource") || strings.Contains(string(encoded), "maintenance") {
++				t.Fatalf("provider metadata escaped into public status: %s", encoded)
++			}
++		})
++	}
++}
++
++func TestInspectRejectsInvalidProviderMetadata(t *testing.T) {
++	for _, testCase := range []struct{ name, metadata string }{
++		{"source-revision", strings.ReplaceAll(webUISourceMetadata, "aa2f60b89df65d2f987be48784ed42bab7010833", "invalid")},
++		{"source-uppercase", strings.ReplaceAll(webUISourceMetadata, "aa2f", "AA2F")},
++		{"source-kind", strings.ReplaceAll(webUISourceMetadata, "worktree", "foreign")},
++		{"source-missing-dirty", strings.ReplaceAll(webUISourceMetadata, `"dirty":false,`, "")},
++		{"source-null-dirty", strings.ReplaceAll(webUISourceMetadata, `"dirty":false`, `"dirty":null`)},
++		{"source-wrong-dirty-type", strings.ReplaceAll(webUISourceMetadata, `"dirty":false`, `"dirty":"false"`)},
++		{"source-unknown-field", strings.ReplaceAll(webUISourceMetadata, `"dirty":false`, `"dirty":false,"extra":true`)},
++		{"maintenance-version", strings.ReplaceAll(releasedMaintenanceMetadata, `"version":2`, `"version":3`)},
++		{"maintenance-mode", strings.ReplaceAll(releasedMaintenanceMetadata, `"mode":"maintenance"`, `"mode":"other"`)},
++		{"maintenance-phase", strings.ReplaceAll(releasedMaintenanceMetadata, "released", "unknown")},
++		{"maintenance-missing-pending", strings.ReplaceAll(releasedMaintenanceMetadata, `"pending":false,`, "")},
++		{"maintenance-missing-copied", strings.ReplaceAll(releasedMaintenanceMetadata, `"copied":true,`, "")},
++		{"maintenance-missing-active", strings.ReplaceAll(releasedMaintenanceMetadata, `,"active":true`, "")},
++		{"maintenance-pending-disagrees", strings.ReplaceAll(releasedMaintenanceMetadata, `"pending":false`, `"pending":true`)},
++		{"maintenance-active-disagrees", strings.ReplaceAll(releasedMaintenanceMetadata, `"active":true`, `"active":false`)},
++		{"maintenance-unknown-field", strings.ReplaceAll(releasedMaintenanceMetadata, `"version":2`, `"version":2,"extra":true`)},
++	} {
++		t.Run(testCase.name, func(t *testing.T) {
++			payload := `{"schema":2,"found":true,"kind":"vpsadmin","state":"running","ready":false,"services":[],` + testCase.metadata + `}`
++			_, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
++				"vpsadmin", statusHelper(t, payload), "vpsAdmin",
++			)}).Inspect("example")
++			if err == nil {
++				t.Fatal("invalid metadata was accepted")
++			}
++		})
++	}
++	for _, payload := range []string{
++		`{"schema":1,"found":true,"kind":"vpsadmin","state":"stopped",` + webUISourceMetadata + `}`,
++		`{"schema":2,"found":false,"kind":"vpsadmin",` + releasedMaintenanceMetadata + `}`,
++		`{"schema":2,"found":true,"kind":"vpsadmin","state":"running","services":[],` + webUISourceMetadata + `} {}`,
++	} {
++		_, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
++			"vpsadmin", statusHelper(t, payload), "vpsAdmin",
++		)}).Inspect("example")
++		if err == nil {
++			t.Fatalf("invalid envelope was accepted: %s", payload)
++		}
++	}
++}
++
++func TestPendingMaintenanceReplacesCachedReadinessAndServices(t *testing.T) {
++	for _, phase := range []string{"held", "maintenance_ready", "copying", "copied", "starting_copied"} {
++		t.Run(phase, func(t *testing.T) {
++			cache := &StatusCache{}
++			cache.observe("example\x00vpsadmin", Status{State: "running", Ready: true, Services: []Service{
++				{Label: "Web UI", Accounts: []Account{{Label: "Admin", Fields: []Field{
++					{Label: "Password", Value: "old-password", Secret: true},
++				}}}},
++			}}, true, "")
++			metadata := fmt.Sprintf(`"maintenance":{"version":2,"mode":"maintenance","phase":%q,"pending":true,"copied":false,"active":false}`, phase)
++			payload := `{"schema":2,"found":true,"kind":"vpsadmin","state":"running","ready":false,"services":[],` + metadata + `}`
++			runner := Runner{Workspace: t.TempDir(), Providers: testProviders(
++				"vpsadmin", statusHelper(t, payload), "vpsAdmin",
++			), Cache: cache}
++			statuses, err := runner.Inspect("example")
++			if err != nil || len(statuses) != 1 || statuses[0].Ready || len(statuses[0].Services) != 0 || statuses[0].Notice != "" {
++				t.Fatalf("pending maintenance = %v, %v", statuses, err)
++			}
++			cached := cache.observe("example\x00vpsadmin", Status{}, true, "busy")
++			if cached.Ready || len(cached.Services) != 0 {
++				t.Fatalf("maintenance did not replace cache: %#v", cached)
++			}
++			for _, invalid := range []string{
++				strings.ReplaceAll(payload, `"ready":false`, `"ready":true`),
++				strings.ReplaceAll(payload, `"services":[]`, `"services":[{"label":"Web UI","url":"https://example.test/"}]`),
++			} {
++				runner.Providers[0].Helper = statusHelper(t, invalid)
++				if _, err := runner.Inspect("example"); err == nil {
++					t.Fatal("pending maintenance exposed readiness or services")
++				}
++			}
++		})
++	}
++}
++
+ func TestInspectRejectsIncompatibleOrInvalidHelperStatus(t *testing.T) {
+ 	for _, testCase := range []struct {
+ 		name, payload, message string
