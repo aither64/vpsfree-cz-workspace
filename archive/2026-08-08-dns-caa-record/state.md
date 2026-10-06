@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # 2026-08-08-dns-caa-record
 
