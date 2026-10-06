@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # GitHub event verbosity state
 
@@ -238,3 +238,16 @@ lifecycle: active
 The workspace operator requested archival of sessions dated August 2026 or
 older, retaining recorded work and branches. This checkpoint commits the
 existing plan and active state before the ordinary archive transition.
+
+## Archive recovery, 2026-10-06
+
+The operator requested archival with branches and work retained. Restored the
+deleted feature refs locally at their recorded historical heads:
+`vpsfree-irc-bot` at `c6913e184993de4cbbdc7039ac56ba528c050e98`, and
+`vpsfree-cz-configuration` at `53192f7871db7b035b8eb70fbb3bc51670f3e6a8`.
+Both commits are already ancestors of their existing origin master. The
+configuration SHA corrects the expanded typo in the original prose; its recorded
+short SHA, subject, bot pin, and the later aitherdev session independently agree.
+The original work deleted its remote feature refs. The record is archived using
+the approved abandoned mode because the exact current publication proof is
+unavailable. Code, master, and the restored local feature refs are retained.
