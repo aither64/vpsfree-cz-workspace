@@ -48,9 +48,9 @@ state. Roll back the user profile with `workspace-host rollback`; no data
 migration or coordinated node update is needed.
 
 The dependency order is codex-web, generic dev-workspace, vpsFree extension,
-workspace package, then the aitherdev host-module input. The configuration
-feature branch is deployed but remains unmerged without a separate integration
-direction.
+workspace package, then the aitherdev host-module input. After the successful
+development deployment, the user explicitly directed fast-forward integration
+of every reviewed feature branch into its default branch.
 
 ## Documentation and verification
 
