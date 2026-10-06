@@ -1,0 +1,30 @@
+The external lead has completed the main-context writing pass and approves the
+current two-file draft for commit. Reuse the unchanged instructions already read
+in this context. Do not undo the lead's prose edits. Stage ONLY
+nix/codex-package.nix and docs/codex-package.md, then make a separate commit using
+a temporary message file and git commit -F, with no hook bypass or history
+rewrite. No pushing. Use this approved message (all lines <=80):
+
+codex: document upstream tracking and package workaround removal
+
+Keep the reason for downstream package assembly beside the helper and in
+its contract. Link the native startup regression and upstream Nix packaging
+fix so maintainers can identify when the selected package no longer needs
+our assembly. Migrate workspace and system consumers before removal and
+retain dependency roots and startup regression coverage.
+
+Upstream tracking:
+https://github.com/numtide/llm-agents.nix/issues/9887
+https://github.com/numtide/llm-agents.nix/pull/9889
+https://github.com/openai/codex/issues/48050
+
+This comment/documentation follow-up preserves runtime behavior, input pins
+and persistent formats without rewriting the published assembly commit.
+
+After commit, report exact head, clean index/worktree and whitespace/Nix parse
+results via report_to_lead. The parsed helper hash must remain
+a0814fa30db39602922efb3ea7438fb467bc8a78d0d71cb7be5572534dedd51e.
+The user additionally authorized merging all four registered feature branches
+into their master defaults when done, without waiting for CI. Integration is
+external-lead owned after retained reviewer0's focused review; do not merge or
+deploy yourself.

@@ -26,7 +26,8 @@ deployment. Long checks use fresh utility watchers from the pinned catalog.
 Expose lib.mkCodexPackage { pkgs; codex; } in dev-workspace. Assemble cached
 upstream native binaries in a new derivation, preserving the existing launchers
 and completions. Its runtime root contains codex-package.json, bin/codex,
-bin/codex-code-mode-host, codex-path/rg and codex-resources/bwrap. Helper files
+bin/codex-code-mode-host, bin/logs_client, codex-path/rg and codex-resources/bwrap.
+Helper files
 must be materialized within the runtime root because daemon package copying
 rejects escaping links. Reuse this helper for the workspace App Server and
 aitherdev's system codex and codex-ds.
@@ -50,8 +51,8 @@ desktop widths and a narrow mobile viewport.
 
 ## Compatibility and deployment
 
-Current system and workspace Codex are 0.159.2. SQL migrations in the main,
-queue and thread-history migration trees are identical between 0.159.2 and
+At planning time, system and workspace Codex were 0.159.2. SQL migrations in the
+main, queue and thread-history trees are identical between 0.159.2 and
 0.160.0. Before real-state compatibility probes, validate old/new readers on
 disposable state and inspect any protocol changes. This feature introduces no
 workspace database or manifest migration and preserves session/runtime/cluster
@@ -66,9 +67,10 @@ Retain the previous system generation. Workspace switches are forward-only;
 recover with a corrected newer generation, preserving transition journals.
 No coordinated fleet update is required.
 
-User authorization covers implementation, checks and deployment. It does not
-authorize integrating any feature branch into a default branch, archiving,
-deleting or stopping the initiative. Keep feature refs and active tracking.
+Initial authorization covered implementation, checks and deployment. The later
+explicit integration direction recorded below additionally covers merging all
+four feature branches into their defaults. Archive, delete, stopping the session
+and removing branches remain outside authorization.
 
 ## Verification and documentation
 
@@ -95,3 +97,19 @@ Upstream references:
 - https://github.com/numtide/llm-agents.nix/pull/9889
 - https://github.com/numtide/llm-agents.nix/pull/10132
 - https://github.com/openai/codex/issues/48050
+
+## Requested upstream-reference follow-up
+
+The user asked for upstream issue/PR references in code comments or commit
+messages so the downstream packaging workaround has a clear retirement path.
+Add a focused reference/removal comment beside the shared assembly helper and
+a matching explanation in its existing package-contract page. Link the Nix
+packaging issue9887, complete-layout PR9889 and Codex issue48050. Removal depends
+on the selected upstream revision delivering a complete daemon-copyable package
+that both consumers can use directly, with normal startup and closure-retention
+checks still passing; merely closing an issue does not meet that condition.
+No source patch, disabling daemon startup, runtime/pin change or redeployment
+is part of the reference edit. Preserve the already deployed assembly commit
+and add a separate documentation-purpose commit. The user subsequently approved
+merging all four registered feature branches into their default master branches
+when done, without waiting for CI. Preserve feature refs and the open session.

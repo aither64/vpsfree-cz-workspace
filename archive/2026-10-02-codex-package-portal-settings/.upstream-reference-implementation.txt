@@ -1,0 +1,49 @@
+Bounded implementation task for the verified initiative
+2026-10-02-codex-package-portal-settings, workspace
+/home/aither/workspace/ai/vpsfree.cz. Worktree:
+worktrees/2026-10-02-codex-package-portal-settings/dev-workspace.
+Retain your saved gpt-6.1-sol/xhigh/workspace_write settings.
+
+User asks: commit messages or code comments must point to upstream Codex issues
+so future developers know when our workaround can be removed.
+
+Read applicable guidance before acting: workspace AGENTS.md and
+docs/agent-instructions/{sessions,git,documentation,verification,commits}.md;
+repository AGENTS.md, its skills/dev-session-documentation/SKILL.md, README
+documentation entry point, docs/codex-package.md and nix/codex-package.nix.
+Existing reviewed design.md is unchanged; this is a small direct assignment
+under the bounded-edit exception, not a new substantive design.
+
+Scope: ONLY a top-level Nix comment immediately beside the shared assembly
+helper and a small matching section in existing docs/codex-package.md. Do not
+insert comments inside generated shell strings (that changes derivations).
+Reference all three:
+https://github.com/numtide/llm-agents.nix/issues/9887
+https://github.com/numtide/llm-agents.nix/pull/9889
+https://github.com/openai/codex/issues/48050
+They were freshly verified open. Explain that our assembly is downstream
+compensation for missing complete-package metadata/resources, not a Codex Rust
+patch; complete-package layout is an upstream daemon requirement.
+
+Removal criteria: the pinned/selected llm-agents Codex output itself must supply
+a complete, daemon-copyable package with materialized helpers; both workspace
+and system consumers must be able to use it directly and pass the existing
+normal-startup/resume/fork, manifest/helper/copy and closure-retention checks.
+Issue closure or a newer CLI version alone is insufficient. Migrate consumers
+off the helper before removing it, preserve retained roots/dependencies and
+regression coverage. Keep prose concise and do not promise a fixed upstream
+version or automatic removal. Do not adopt PR10132's direct-store lifecycle patch.
+
+Preserve existing public/persisted/runtime behavior. Leave all pins unchanged.
+No deployment, merge, other project edits, another agent, or shared index edit.
+Do not amend/rebase/rewrite existing published/deployed commit40838aa28c8433e42a4a3fbed4586a3df0146de9.
+Prepare the edits and quick checks, then report the diff and intended commit
+message to the lead BEFORE committing. Main agent applies any required prose
+writing pass. Final commit should be a separate area: action docs-purpose commit
+with upstream references in its body, written to a temp file with git commit -F
+after lead approval; follow declared hooks, never bypass. No pushing until the
+lead completes review.
+
+Quick check: Nix parse and git diff --check. The lead records the pre-edit
+nix-instantiate --parse hash; parsed Nix must be identical after your comment.
+Report changed files, checked paths/links, quick results, and any deviation.
