@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # 2026-06-08-vpsadmin-storage-redesign
 
@@ -131,3 +131,19 @@ lifecycle: active
 The workspace operator requested archival of sessions dated August 2026 or
 older, retaining recorded work and branches. This checkpoint commits the
 existing plan and active state before the ordinary archive transition.
+
+## Preserved uncommitted work, 2026-10-06
+
+This session is being archived at the workspace operator's request. Its
+uncommitted files were saved byte for byte, with original modes, SHA-256 hashes,
+binary Git patches and recovery metadata, before worktree cleanup. The original
+branch and head remain retained.
+
+Backup: `/home/aither/.local/state/dev-workspaces/maintenance/2026-10-06-sidebar-and-old-archives/preserved-work/2026-06-08-vpsadmin-storage-redesign/vpsadmin`
+
+Original head: `b46d38616648b85f19befd4e725ba67d0ad62574` on `2026-06-08-vpsadmin-storage-redesign`.
+
+To recover the files, revive this record and recreate its retained worktree,
+then copy the files beneath the backup's `files/` directory to the same paths.
+`recovery.json` lists every file and checksum; `changes.patch` and `staged.patch`
+preserve the Git diffs. No uncommitted code was merged into a default branch.
