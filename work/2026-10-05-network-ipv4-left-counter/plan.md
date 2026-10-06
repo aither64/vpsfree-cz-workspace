@@ -56,3 +56,15 @@ vpsadmin, UI design/work log with vpsadmin-webui, rollout evidence in session
 records, and required KB impact evidence under the external contract workflow.
 Production KB writes require approval of exact staged changes. Preserve unrelated
 shared workspace work and keep the session open after handoff.
+
+## Independent dependency prerequisite found during CI
+
+Current W CI fails its BFF production dependency audit before the required
+quick/unit gates. Both the original 02ac0c7 base and final e4c49bcd lock
+proxy-addr 2.0.7; network work changed neither package manifest nor lockfile.
+Upstream GHSA-jqcg-44mw-7w3h identifies 2.0.8 as patched. Prepare this one
+transitive dependency update in a separate W worktree/branch and review PR,
+without bundling it into the network feature or changing the currently tested
+W/C heads. Verify production audit and owning BFF/package checks. It is a
+separate prerequisite for green CI/integration; no default merge or deployment
+is authorized. All network runtime work continues at its recorded heads.

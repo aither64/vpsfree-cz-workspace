@@ -1,0 +1,3697 @@
+diff --git a/api/db/migrate/20261006120000_add_network_enabled.rb b/api/db/migrate/20261006120000_add_network_enabled.rb
+new file mode 100644
+index 000000000..ebdae14a3
+--- /dev/null
++++ b/api/db/migrate/20261006120000_add_network_enabled.rb
+@@ -0,0 +1,5 @@
++class AddNetworkEnabled < ActiveRecord::Migration[8.1]
++  def change
++    add_column :networks, :enabled, :boolean, null: false, default: true
++  end
++end
+diff --git a/api/db/schema.rb b/api/db/schema.rb
+index e427aa3ab..47bef8836 100644
+--- a/api/db/schema.rb
++++ b/api/db/schema.rb
+@@ -10,7 +10,7 @@
+ #
+ # It's strongly recommended that you check this file into your version control system.
+ 
+-ActiveRecord::Schema[8.1].define(version: 2026_09_14_190000) do
++ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
+   create_table "auth_tokens", id: { type: :integer, unsigned: true }, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade do |t|
+     t.string "api_ip_addr", limit: 46
+     t.string "api_ip_ptr"
+@@ -957,6 +957,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_190000) do
+     t.integer "role", null: false
+     t.integer "split_access", default: 0, null: false
+     t.integer "split_prefix", null: false
++    t.boolean "enabled", default: true, null: false
+     t.index ["address", "prefix"], name: "index_networks_on_address_and_prefix", unique: true
+     t.index ["purpose"], name: "index_networks_on_purpose"
+   end
+diff --git a/api/lib/vpsadmin/api/locales/cs.yml b/api/lib/vpsadmin/api/locales/cs.yml
+index b9aa9cd76..b91b6ac29 100644
+--- a/api/lib/vpsadmin/api/locales/cs.yml
++++ b/api/lib/vpsadmin/api/locales/cs.yml
+@@ -664,6 +664,11 @@ cs:
+       enable_user_dns_zones:
+         label: Povolit DNS zóny uživatelů
+       enabled:
++        choices:
++          'false':
++            label: Zakázáno
++          'true':
++            label: Povoleno
+         label: Povoleno
+       entity_id:
+         description: Filtrovat hlášení podle ID entity
+@@ -1266,6 +1271,8 @@ cs:
+         label: Namespace
+       network:
+         label: Síť
++      network_enabled:
++        label: Síť povolena
+       network_interface:
+         label: Síťové rozhraní
+       networks:
+@@ -2389,6 +2396,7 @@ cs:
+         keep_disabled: Současná pravidla neumožňují ponechat IP adresy na základě
+           důvodu od uživatele.
+         owner_changed: U některé vybrané IP adresy se změnil vlastník nebo přidělení.
++      network_disabled: Síť je zakázaná pro nové přidělování a přiřazování IP adres.
+       object_not_found: Objekt nebyl nalezen
+       object_not_found_lower: objekt nebyl nalezen
+       object_with_attribute_not_found: objekt %{resource} = %{id} nebyl nalezen
+@@ -3058,6 +3066,8 @@ cs:
+             label: Adresa
+           count:
+             description: Počet přidaných IP adres
++          enabled:
++            description: Povolit nové přidělování a přiřazování IP adres
+           environment:
+             description: Prostředí, kterému jsou adresy účtovány
+           id:
+diff --git a/api/lib/vpsadmin/api/locales/en.yml b/api/lib/vpsadmin/api/locales/en.yml
+index e5185e609..0e7a771bd 100644
+--- a/api/lib/vpsadmin/api/locales/en.yml
++++ b/api/lib/vpsadmin/api/locales/en.yml
+@@ -664,6 +664,11 @@ en:
+       enable_user_dns_zones:
+         label: Enable_user_dns_zones
+       enabled:
++        choices:
++          'false':
++            label: 'false'
++          'true':
++            label: 'true'
+         label: Enabled
+       entity_id:
+         description: Filter outages by entity ID
+@@ -1271,6 +1276,8 @@ en:
+         label: Namespace
+       network:
+         label: Network
++      network_enabled:
++        label: Network enabled
+       network_interface:
+         label: NetworkInterface
+       networks:
+@@ -2393,6 +2400,7 @@ en:
+         invalid_record: Check the campaign settings or retention reason.
+         keep_disabled: The current policy does not allow keeping IPs with a user reason.
+         owner_changed: The owner or allocation of a selected IP has changed.
++      network_disabled: This network is disabled for new allocations and assignments.
+       object_not_found: Object not found
+       object_not_found_lower: object not found
+       object_with_attribute_not_found: object %{resource} = %{id} not found
+@@ -3063,6 +3071,8 @@ en:
+             label: Address
+           count:
+             description: Number of added IP addresses
++          enabled:
++            description: Allow new allocations and assignments
+           environment:
+             description: Environment to which the addresses are charged
+           id:
+diff --git a/api/lib/vpsadmin/api/resources/cluster.rb b/api/lib/vpsadmin/api/resources/cluster.rb
+index 99d3b3949..890a46e14 100644
+--- a/api/lib/vpsadmin/api/resources/cluster.rb
++++ b/api/lib/vpsadmin/api/resources/cluster.rb
+@@ -64,10 +64,11 @@ class VpsAdmin::API::Resources::Cluster < HaveAPI::Resource
+             ::Vps.object_states[:suspended]
+           ]
+         ).count,
+-        ipv4_left: ::IpAddress.joins(:network).where(
++        ipv4_left: ::IpAddress.unreserved.joins(:network).where(
+           user: nil,
+           network_interface: nil,
+           networks: {
++            enabled: true,
+             ip_version: 4,
+             role: ::Network.roles[:public_access]
+           }
+diff --git a/api/lib/vpsadmin/api/resources/ip_address.rb b/api/lib/vpsadmin/api/resources/ip_address.rb
+index 2c0709433..7817c669e 100644
+--- a/api/lib/vpsadmin/api/resources/ip_address.rb
++++ b/api/lib/vpsadmin/api/resources/ip_address.rb
+@@ -20,6 +20,7 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+                                              value_label: :login,
+                                              nullable: true
+     bool :assigned_to_interface, label: 'Assigned to interface'
++    bool :network_enabled, label: 'Network enabled'
+     string :role, choices: ::Network.roles.keys
+     string :purpose, choices: ::Network.purposes.keys
+     string :usable_for, choices: %w[vps export], label: 'Usable for',
+@@ -94,7 +95,7 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+     authorize do |u|
+       allow if u.role == :admin
+       input whitelist: %i[location network version role purpose usable_for addr prefix vps
+-                          network_interface assigned_to_interface order
++                          network_interface assigned_to_interface network_enabled order
+                           limit from_id includes]
+       allow
+     end
+@@ -157,6 +158,7 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+       end
+ 
+       ips = ips.where(networks: { ip_version: input[:version] }) if input[:version]
++      ips = ips.where(networks: { enabled: input[:network_enabled] }) if input.has_key?(:network_enabled)
+ 
+       ips = ips.where(networks: { role: ::Network.roles[input[:role]] }) if input[:role]
+ 
+diff --git a/api/lib/vpsadmin/api/resources/network.rb b/api/lib/vpsadmin/api/resources/network.rb
+index 9c954d499..f842c3efd 100644
+--- a/api/lib/vpsadmin/api/resources/network.rb
++++ b/api/lib/vpsadmin/api/resources/network.rb
+@@ -18,6 +18,7 @@ module VpsAdmin::API::Resources
+       integer :prefix
+       string :role, choices: ::Network.roles.keys
+       bool :managed
++      bool :enabled, label: 'Enabled', desc: 'Allow new allocations and assignments'
+       string :split_access, choices: ::Network.split_accesses.keys
+       integer :split_prefix
+       string :purpose, choices: ::Network.purposes.keys
+@@ -35,7 +36,7 @@ module VpsAdmin::API::Resources
+ 
+       input do
+         resource Location
+-        use :common, include: %i[purpose]
++        use :common, include: %i[purpose enabled]
+         string :usable_for, choices: %w[vps export], label: 'Usable for',
+                             desc: 'Filter by compatible network purpose, including networks with purpose any'
+       end
+@@ -47,7 +48,7 @@ module VpsAdmin::API::Resources
+       authorize do |u|
+         allow if u.role == :admin
+         output whitelist: %i[
+-          id address prefix ip_version role split_access split_prefix purpose
++          id address prefix ip_version role split_access split_prefix purpose enabled
+         ]
+         allow
+       end
+@@ -63,6 +64,7 @@ module VpsAdmin::API::Resources
+ 
+         q = q.where(purpose: ::Network.purposes[input[:purpose]]) if input[:purpose]
+         q = q.where(purpose: ::Network.purposes_for_use(input[:usable_for])) if input[:usable_for]
++        q = q.where(enabled: input[:enabled]) if input.has_key?(:enabled)
+         q
+       end
+ 
+@@ -85,7 +87,7 @@ module VpsAdmin::API::Resources
+       authorize do |u|
+         allow if u.role == :admin
+         output whitelist: %i[
+-          id address prefix ip_version role split_access split_prefix purpose
++          id address prefix ip_version role split_access split_prefix purpose enabled
+         ]
+         allow
+       end
+diff --git a/api/lib/vpsadmin/api/resources/user.rb b/api/lib/vpsadmin/api/resources/user.rb
+index 77d7d82b3..20df78fa8 100644
+--- a/api/lib/vpsadmin/api/resources/user.rb
++++ b/api/lib/vpsadmin/api/resources/user.rb
+@@ -305,18 +305,18 @@ class VpsAdmin::API::Resources::User < HaveAPI::Resource
+ 
+     def count_addrs(ip_v:, role:)
+       q = ::IpAddress
++          .unreserved
+           .joins(network: :location_networks)
+-          .joins("LEFT JOIN resource_locks rl ON rl.resource = 'IpAddress' AND rl.row_id = ip_addresses.id")
+           .where(
+             ip_addresses: { user_id: @user.id },
+             networks: {
++              enabled: true,
+               ip_version: ip_v,
+               role: ::Network.roles[role],
+               purpose: [::Network.purposes[:any], ::Network.purposes[:vps]]
+             }
+           )
+           .where('ip_addresses.network_interface_id IS NULL')
+-          .where('rl.id IS NULL')
+ 
+       q = if @address_location
+             shared_networks = @location.any_shared_networks_with_primary(
+diff --git a/api/models/ip_address.rb b/api/models/ip_address.rb
+index ff36670c8..de60b6f8b 100644
+--- a/api/models/ip_address.rb
++++ b/api/models/ip_address.rb
+@@ -17,6 +17,51 @@ class IpAddress < ApplicationRecord
+ 
+   include Lockable
+ 
++  scope :unreserved, lambda {
++    where("NOT EXISTS (SELECT 1 FROM resource_locks rl WHERE rl.resource = 'IpAddress' AND rl.row_id = ip_addresses.id)")
++  }
++
++  # Capture network identities before IP row locks, then verify them again after
++  # reservation. Never acquire a different pool late in a locked batch.
++  def self.lock_networks_for_use!(ips, extra_network_ids: [])
++    identities = where(id: ips.map(&:id)).pluck(:id, :network_id).to_h
++    networks = ::Network.lock_for_admission!(identities.values + extra_network_ids)
++    ips.each { |ip| ip.remember_admission_network(networks[identities[ip.id]]) }
++    networks
++  end
++
++  def remember_admission_network(network)
++    @admission_network = network
++  end
++
++  def self.bind_admission_networks!(ips, networks)
++    ips.each { |ip| ip.remember_admission_network(networks[ip.network_id]) }
++  end
++
++  def lock_for_new_use!(chain, networks: nil)
++    if networks
++      self.class.bind_admission_networks!([self], networks)
++    else
++      self.class.lock_networks_for_use!([self])
++    end
++    lock_current!(chain)
++    ensure_network_enabled!
++  end
++
++  def ensure_admission_network!
++    unless @admission_network && network_id == @admission_network.id
++      raise VpsAdmin::API::Exceptions::IpAddressInUse,
++            'IP address network changed during allocation'
++    end
++
++    self.network = @admission_network
++  end
++
++  def ensure_network_enabled!
++    ensure_admission_network!
++    network.ensure_enabled!
++  end
++
+   # Reserve parents in a consistent order before reserving their host records.
+   def self.lock_all_current!(chain, ips)
+     ordered = ips.uniq(&:id).sort_by(&:id)
+@@ -73,6 +118,7 @@ class IpAddress < ApplicationRecord
+ 
+     transaction do
+       params[:network].lock_for_registration!
++      params[:network].ensure_enabled! if params[:user]
+       if params[:user] && (params[:allocate].nil? || params[:allocate])
+         user_env = params[:user].environment_user_configs.find_by!(
+           environment: charged_environment
+@@ -165,9 +211,21 @@ class IpAddress < ApplicationRecord
+   # @option opts [Array<::Network>] :except_networks
+   # @option opts [Environment] :allocation_environment require compatible owned charges for automatic VPS allocation
+   def self.pick_addr!(opts)
+-    pick_scope(opts)
+-      .joins("LEFT JOIN resource_locks rl ON rl.resource = 'IpAddress' AND rl.row_id = ip_addresses.id")
+-      .where('rl.id IS NULL').take!
++    ids = candidate_network_ids(opts)
++    networks = ::Network.lock_for_admission!(ids)
++    pick_from_admitted_networks!(opts, networks)
++  end
++
++  # Internal preparation may reuse a map held by this SQL transaction. It must
++  # not expand its pool set after any source IP rows have been locked.
++  def self.pick_from_admitted_networks!(opts, networks)
++    pick_scope(opts).where(network_id: networks.keys).unreserved.take!.tap do |ip|
++      ip.remember_admission_network(networks[ip.network_id])
++    end
++  end
++
++  def self.candidate_network_ids(opts)
++    pick_scope(opts).reorder(nil).distinct.pluck(:network_id)
+   end
+ 
+   # Share selection criteria with the current check made after reservation.
+@@ -179,6 +237,7 @@ class IpAddress < ApplicationRecord
+             .joins(network: :location_networks)
+             .where(
+               networks: {
++                enabled: true,
+                 ip_version: opts[:ip_v],
+                 role: ::Network.roles[opts[:role]]
+               }
+@@ -233,7 +292,9 @@ class IpAddress < ApplicationRecord
+ 
+   def ensure_pickable!(opts)
+     ensure_charge_environment!
+-    return if self.class.pick_scope(opts).where(id:).lock.exists?
++    # The IP row is already exclusively locked. A joined FOR UPDATE would
++    # upgrade the pool's shared admission lock and deadlock sibling allocations.
++    return if self.class.pick_scope(opts).where(id:).lock('LOCK IN SHARE MODE').exists?
+ 
+     raise VpsAdmin::API::Exceptions::IpAddressInUse,
+           'IP address is no longer available for this allocation'
+diff --git a/api/models/ip_release_request_address.rb b/api/models/ip_release_request_address.rb
+index 16cd413b1..889654b29 100644
+--- a/api/models/ip_release_request_address.rb
++++ b/api/models/ip_release_request_address.rb
+@@ -57,7 +57,7 @@ class IpReleaseRequestAddress < ApplicationRecord
+     return if ip_release_campaign.closed_at || released_at || excluded_at || release_in_progress?
+ 
+     ip = IpAddress.find_by(id: ip_address_id)
+-    ip.id if ip && original_allocation?(ip) && ip.free?
++    ip.id if ip && original_allocation?(ip) && ip.free? && ip.network.enabled?
+   end
+ 
+   def location_label
+diff --git a/api/models/network.rb b/api/models/network.rb
+index 55d22f473..7f1a73041 100644
+--- a/api/models/network.rb
++++ b/api/models/network.rb
+@@ -14,7 +14,7 @@ class Network < ApplicationRecord
+   enum :purpose, %i[any vps export]
+ 
+   validates :address, :prefix, :role, :split_prefix, :purpose, presence: true
+-  validates :managed, inclusion: { in: [true, false] }
++  validates :managed, :enabled, inclusion: { in: [true, false] }
+   validates :address, uniqueness: { scope: :prefix }
+   validates :ip_version, inclusion: {
+     in: [4, 6],
+@@ -28,6 +28,21 @@ class Network < ApplicationRecord
+     [purposes.fetch('any'), purposes.fetch(purpose)]
+   end
+ 
++  # Lock pools before current IP rows. Shared admission locks serialize against
++  # disabling/registration without serializing allocations within the same pool.
++  def self.lock_for_admission!(ids)
++    ids.uniq.sort.to_h do |id|
++      [id, where(id:).lock('LOCK IN SHARE MODE').take!]
++    end
++  end
++
++  def ensure_enabled!
++    return if enabled?
++
++    raise VpsAdmin::API::Exceptions::IpAddressInvalid,
++          VpsAdmin::API::I18n.t('errors.network_disabled')
++  end
++
+   # @param attrs [Hash]
+   # @param opts [Hash]
+   # @option opts [Boolean] add_ips
+@@ -157,6 +172,7 @@ class Network < ApplicationRecord
+     ips = []
+     self.class.transaction do
+       lock_for_registration!
++      ensure_enabled! if opts[:user]
+       last_ip = ip_addresses.order("#{ip_order('ip_addr')} DESC").lock.take
+       subsize = subnet_size
+ 
+diff --git a/api/models/network_interface.rb b/api/models/network_interface.rb
+index 130974ed6..0755ff293 100644
+--- a/api/models/network_interface.rb
++++ b/api/models/network_interface.rb
+@@ -123,6 +123,7 @@ class NetworkInterface < ApplicationRecord
+ 
+   def validate_route_assignment!(ip, is_user:)
+     ip.network.reload(lock: 'LOCK IN SHARE MODE')
++    ip.network.ensure_enabled!
+     locnet = ip.network.location_networks.where(
+       location_id: vps.node.location_id
+     ).lock('LOCK IN SHARE MODE').take
+diff --git a/api/models/transaction_chains/export/create.rb b/api/models/transaction_chains/export/create.rb
+index 09df466de..3be6076c3 100644
+--- a/api/models/transaction_chains/export/create.rb
++++ b/api/models/transaction_chains/export/create.rb
+@@ -129,13 +129,15 @@ module TransactionChains
+ 
+     def pick_ip_address(user, location)
+       selection = { user:, location:, ip_v: 4, role: :private_access, purpose: :export }
++      candidate_network_ids = ::IpAddress.candidate_network_ids(selection)
++      admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
+ 
+       loop do
+         ip = nil
+ 
+         ::IpAddress.transaction do
+-          ip = ::IpAddress.pick_addr!(selection)
+-          ip.lock_current!(self)
++          ip = ::IpAddress.pick_from_admitted_networks!(selection, admission_networks)
++          ip.lock_for_new_use!(self, networks: admission_networks)
+           ip.ensure_pickable!(selection)
+         end
+ 
+diff --git a/api/models/transaction_chains/ip/allocate.rb b/api/models/transaction_chains/ip/allocate.rb
+index aa1e515af..5ad473238 100644
+--- a/api/models/transaction_chains/ip/allocate.rb
++++ b/api/models/transaction_chains/ip/allocate.rb
+@@ -8,27 +8,42 @@ module TransactionChains
+       raise NotImplementedError
+     end
+ 
+-    def allocate_to_netif(r, netif, n, strict: true, host_addrs: false, address_location: nil)
++    # Shared with containing VPS batches so destination pool discovery uses
++    # exactly the allocator's owner, location and family policy.
++    def self.selection_for(resource_name, vps, address_location: nil)
++      name = resource_name.to_s
++      {
++        user: vps.user,
++        location: vps.node.location,
++        ip_v: name == 'ipv6' ? 6 : 4,
++        role: name.end_with?('_private') ? :private_access : :public_access,
++        purpose: :vps,
++        allocation_environment: vps.node.location.environment,
++        address_location:
++      }
++    end
++
++    def allocate_to_netif(r, netif, n, strict: true, host_addrs: false, address_location: nil,
++                          admission_networks: nil, candidate_network_ids: nil)
+       return n if n == 0
+ 
+       ips = []
+       v = r.name == 'ipv6' ? 6 : 4
+ 
+-      selection = {
+-        user: netif.vps.user,
+-        location: netif.vps.node.location,
+-        ip_v: v,
+-        role: r.name.end_with?('_private') ? :private_access : :public_access,
+-        purpose: :vps,
+-        allocation_environment: netif.vps.node.location.environment,
+-        address_location:
+-      }
++      selection = self.class.selection_for(r.name, netif.vps, address_location:)
++      if admission_networks
++        raise ArgumentError, 'candidate network IDs required with held admission networks' unless candidate_network_ids
++      else
++        candidate_network_ids = ::IpAddress.candidate_network_ids(selection)
++        admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
++      end
++      candidates = admission_networks.slice(*candidate_network_ids)
+ 
+       loop do
+         begin
+           ::IpAddress.transaction do
+-            ip = ::IpAddress.pick_addr!(selection)
+-            ip.lock_current!(self)
++            ip = ::IpAddress.pick_from_admitted_networks!(selection, candidates)
++            ip.lock_for_new_use!(self, networks: candidates)
+             ip.ensure_pickable!(selection)
+ 
+             ips << ip
+diff --git a/api/models/transaction_chains/ip/update.rb b/api/models/transaction_chains/ip/update.rb
+index 0bb48689a..2700b7589 100644
+--- a/api/models/transaction_chains/ip/update.rb
++++ b/api/models/transaction_chains/ip/update.rb
+@@ -8,11 +8,14 @@ module TransactionChains
+     # @option opts [User] user
+     # @option opts [Environment] environment
+     def link_chain(ip, opts)
++      ::IpAddress.lock_networks_for_use!([ip]) if opts[:user]
+       ip.lock_current!(self)
+       @ip = ip
+ 
+       return unless opts.has_key?(:user) && ip.user != opts[:user]
+ 
++      ip.ensure_network_enabled! if opts[:user]
++
+       vps = ip.network_interface&.vps
+       if vps && vps.node.location.environment.user_ip_ownership
+         raise VpsAdmin::API::Exceptions::IpAddressInUse, 'cannot chown IP while it belongs to a VPS'
+diff --git a/api/models/transaction_chains/network_interface/add_route.rb b/api/models/transaction_chains/network_interface/add_route.rb
+index 0976a4b9e..4acc7e988 100644
+--- a/api/models/transaction_chains/network_interface/add_route.rb
++++ b/api/models/transaction_chains/network_interface/add_route.rb
+@@ -27,8 +27,10 @@ module TransactionChains
+       ips_arr = ips.to_a
+       parents = ips_arr.dup
+       parents << opts[:via].ip_address if opts[:via]
++      ::IpAddress.lock_networks_for_use!(parents)
+       ::IpAddress.lock_all_current!(self, parents)
+       ips_arr.each do |ip|
++        ip.ensure_network_enabled!
+         ip.ensure_charge_environment!
+         netif.validate_route_assignment!(ip, is_user: opts[:actor].role != :admin) if opts[:actor]
+         unless ip.free? && (!ip.user_id || ip.user_id == netif.vps.user_id)
+diff --git a/api/models/transaction_chains/vps/clone/os_to_os.rb b/api/models/transaction_chains/vps/clone/os_to_os.rb
+index 4c323b596..62cd7c084 100644
+--- a/api/models/transaction_chains/vps/clone/os_to_os.rb
++++ b/api/models/transaction_chains/vps/clone/os_to_os.rb
+@@ -439,6 +439,18 @@ module TransactionChains
+     end
+ 
+     def clone_network_interfaces(vps, dst_vps, attrs)
++      netifs = vps.network_interfaces.to_a
++      ip_counts = netifs.to_h { |netif| [netif.id, clone_ip_address_counts(netif)] }
++      candidate_network_ids = netifs.flat_map do |netif|
++        ip_counts.fetch(netif.id).flat_map do |resource, count|
++          next [] if count <= 0 || (resource == :ipv6 && !dst_vps.node.location.has_ipv6)
++
++          ::IpAddress.candidate_network_ids(
++            Ip::Allocate.selection_for(resource, dst_vps, address_location: attrs[:address_location])
++          )
++        end
++      end.uniq
++      admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
+       sums = {
+         ipv4: 0,
+         ipv4_private: 0,
+@@ -446,13 +458,14 @@ module TransactionChains
+       }
+ 
+       # Allocate addresses to interfaces
+-      vps.network_interfaces.each do |netif|
++      netifs.each do |netif|
+         dst_netif = use_chain(
+           NetworkInterface.chain_for(netif.kind, :Clone),
+           args: [netif, dst_vps]
+         )
+ 
+-        sums.merge!(clone_ip_addresses(netif, dst_netif, attrs)) do |_key, old_val, new_val|
++        sums.merge!(clone_ip_addresses(dst_netif, attrs, ips: ip_counts.fetch(netif.id),
++                                                         admission_networks:, candidate_network_ids:)) do |_key, old_val, new_val|
+           old_val + new_val
+         end
+       end
+@@ -484,8 +497,8 @@ module TransactionChains
+     # Clone IP addresses.
+     # Allocates the equal number (or how many are available) of
+     # IP addresses.
+-    def clone_ip_addresses(netif, dst_netif, attrs)
+-      ips = {
++    def clone_ip_address_counts(netif)
++      {
+         ipv4: netif.ip_addresses.joins(:network).where(
+           networks: {
+             ip_version: 4,
+@@ -504,7 +517,9 @@ module TransactionChains
+           networks: { ip_version: 6 }
+         ).count
+       }
++    end
+ 
++    def clone_ip_addresses(dst_netif, attrs, ips:, admission_networks:, candidate_network_ids:)
+       versions = %i[ipv4 ipv4_private]
+       versions << :ipv6 if dst_netif.vps.node.location.has_ipv6
+ 
+@@ -521,7 +536,9 @@ module TransactionChains
+           kwargs: {
+             strict: false,
+             host_addrs: true,
+-            address_location: attrs[:address_location]
++            address_location: attrs[:address_location],
++            admission_networks:,
++            candidate_network_ids:
+           },
+           method: :allocate_to_netif
+         )
+diff --git a/api/models/transaction_chains/vps/create.rb b/api/models/transaction_chains/vps/create.rb
+index 987a00d64..fc87846d5 100644
+--- a/api/models/transaction_chains/vps/create.rb
++++ b/api/models/transaction_chains/vps/create.rb
+@@ -203,6 +203,13 @@ module TransactionChains
+       # Add IP addresses
+       versions = %i[ipv4 ipv4_private]
+       versions << :ipv6 if vps.node.location.has_ipv6
++      versions.select! { |version| opts[version] && opts[version] > 0 }
++      candidate_network_ids = versions.flat_map do |version|
++        ::IpAddress.candidate_network_ids(
++          Ip::Allocate.selection_for(version, vps, address_location: opts[:address_location])
++        )
++      end.uniq
++      admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
+ 
+       ip_resources = []
+       user_env = vps.user.environment_user_configs.find_by!(
+@@ -221,7 +228,9 @@ module TransactionChains
+           ],
+           kwargs: {
+             host_addrs: true,
+-            address_location: opts[:address_location]
++            address_location: opts[:address_location],
++            admission_networks:,
++            candidate_network_ids:
+           },
+           method: :allocate_to_netif
+         )
+diff --git a/api/models/transaction_chains/vps/migrate/base.rb b/api/models/transaction_chains/vps/migrate/base.rb
+index 7144b8b3c..56c2bfbe1 100644
+--- a/api/models/transaction_chains/vps/migrate/base.rb
++++ b/api/models/transaction_chains/vps/migrate/base.rb
+@@ -39,7 +39,8 @@ module TransactionChains
+ 
+     protected
+ 
+-    attr_reader :opts, :vps_user, :datasets, :resources_changes, :maintenance_windows
++    attr_reader :opts, :vps_user, :datasets, :resources_changes, :maintenance_windows,
++                :admission_networks, :replacement_network_ids
+     attr_accessor :userns_map
+ 
+     def setup(vps, dst_node, opts)
+@@ -48,6 +49,7 @@ module TransactionChains
+                               transfer_ips: false,
+                               resources: nil,
+                               handle_ips: true,
++                              admission_networks: nil,
+                               reallocate_ips: true,
+                               swap: :enforce,
+                               maintenance_window: true,
+@@ -64,7 +66,29 @@ module TransactionChains
+       # Keep addresses reserved through temporary detach confirmations and
+       # rollback. Swap includes this setup for both VPSes in its outer chain.
+       reserved_ips = vps.ip_addresses.order(:id).to_a
++      @replacement_network_ids =
++        if @opts[:handle_ips] && @opts[:replace_ips] && !@opts[:transfer_ips] &&
++           vps.node.location_id != dst_node.location_id
++          reserved_ips.flat_map do |ip|
++            ::IpAddress.candidate_network_ids(
++              replacement_selection(ip, vps.user, dst_node.location)
++            )
++          end
++        else
++          []
++        end
++      # Swap supplies the union locked before either source IP batch. Ordinary
++      # migration locks only source and actually needed replacement pools here.
++      @admission_networks = opts[:admission_networks]
++      if @admission_networks
++        ::IpAddress.bind_admission_networks!(reserved_ips, @admission_networks)
++      else
++        @admission_networks = ::IpAddress.lock_networks_for_use!(
++          reserved_ips, extra_network_ids: @replacement_network_ids
++        )
++      end
+       ::IpAddress.lock_all_current!(self, reserved_ips)
++      reserved_ips.each(&:ensure_admission_network!)
+       ::HostIpAddress.lock_all_with_ips!(self, reserved_ips.flat_map { |ip| ip.host_ip_addresses.to_a })
+       lock(vps.dataset_in_pool)
+       concerns(:affect, [vps.class.name, vps.id])
+@@ -572,19 +596,24 @@ module TransactionChains
+     end
+ 
+     def pick_replacement_ip(source_ip)
+-      selection = {
+-        user: dst_vps.user,
+-        location: dst_vps.node.location,
++      selection = replacement_selection(source_ip, dst_vps.user, dst_vps.node.location)
++      networks = admission_networks.slice(*replacement_network_ids)
++      replacement = ::IpAddress.pick_from_admitted_networks!(selection, networks)
++      replacement.lock_for_new_use!(self, networks:)
++      replacement.ensure_pickable!(selection)
++      ::HostIpAddress.lock_all_with_ips!(self, replacement.host_ip_addresses.to_a)
++      replacement
++    end
++
++    def replacement_selection(source_ip, user, location)
++      {
++        user:,
++        location:,
+         ip_v: source_ip.network.ip_version,
+         role: source_ip.network.role.to_sym,
+         purpose: source_ip.network.purpose.to_sym,
+-        allocation_environment: dst_vps.node.location.environment
++        allocation_environment: location.environment
+       }
+-      replacement = ::IpAddress.pick_addr!(selection)
+-      replacement.lock_current!(self)
+-      replacement.ensure_pickable!(selection)
+-      ::HostIpAddress.lock_all_with_ips!(self, replacement.host_ip_addresses.to_a)
+-      replacement
+     end
+ 
+     # Transfer number of `ips` belonging to `user` from `src_env` to `dst_env`.
+diff --git a/api/models/transaction_chains/vps/swap.rb b/api/models/transaction_chains/vps/swap.rb
+index 2dd5891e4..2f7beee4d 100644
+--- a/api/models/transaction_chains/vps/swap.rb
++++ b/api/models/transaction_chains/vps/swap.rb
+@@ -24,6 +24,13 @@ module TransactionChains
+ 
+       lock(primary_vps)
+       lock(secondary_vps)
++      # Both child migrations retain existing allocations. Capture and lock
++      # their network union before either child can lock a current IP row.
++      reserved_ips = (primary_vps.ip_addresses.to_a + secondary_vps.ip_addresses.to_a).uniq(&:id)
++      admission_networks = ::IpAddress.lock_networks_for_use!(reserved_ips)
++      ::IpAddress.lock_all_current!(self, reserved_ips)
++      reserved_ips.each(&:ensure_admission_network!)
++      ::HostIpAddress.lock_all_with_ips!(self, reserved_ips.flat_map { |ip| ip.host_ip_addresses.to_a })
+       concerns(:transform,
+                [secondary_vps.class.name, secondary_vps.id],
+                [primary_vps.class.name, primary_vps.id])
+@@ -131,6 +138,7 @@ module TransactionChains
+             replace_ips: false,
+             resources: opts[:resources] ? primary_resources : nil,
+             handle_ips: false,
++            admission_networks:,
+             reallocate_ips: false,
+             maintenance_window: false,
+             send_mail: false
+@@ -290,6 +298,7 @@ module TransactionChains
+             replace_ips: false,
+             resources: opts[:resources] ? secondary_resources : nil,
+             handle_ips: false,
++            admission_networks:,
+             reallocate_ips: false,
+             maintenance_window: false,
+             send_mail: false
+diff --git a/api/models/transaction_chains/vps/update.rb b/api/models/transaction_chains/vps/update.rb
+index 32e794327..d103ac25c 100644
+--- a/api/models/transaction_chains/vps/update.rb
++++ b/api/models/transaction_chains/vps/update.rb
+@@ -218,8 +218,21 @@ module TransactionChains
+     def chown_vps(vps, orig_user)
+       db_changes = { vps => { user_id: vps.user_id } }
+ 
+-      reserved_ips = vps.ip_addresses.order(:id).to_a
++      datasets = vps.dataset_in_pool.dataset.subtree.to_a
++      chown_exports = datasets.flat_map do |ds|
++        ds.dataset_in_pools.flat_map { |dip| dip.exports.to_a }
++      end
++      vps_ips = vps.ip_addresses.to_a
++      export_ips = chown_exports.flat_map { |ex| ex.ip_addresses.to_a }
++      transferred_exports = chown_exports.reject { |ex| ex.user_id == vps.user_id }
++      new_owner_ip_ids = (vps_ips + transferred_exports.flat_map { |ex| ex.ip_addresses.to_a }).map(&:id)
++      reserved_ips = (vps_ips + export_ips).uniq(&:id).sort_by(&:id)
++      ::IpAddress.lock_networks_for_use!(reserved_ips)
+       ::IpAddress.lock_all_current!(self, reserved_ips)
++      reserved_ips.each do |ip|
++        ip.ensure_admission_network!
++        ip.ensure_network_enabled! if new_owner_ip_ids.include?(ip.id)
++      end
+       ::HostIpAddress.lock_all_with_ips!(self, reserved_ips.flat_map { |ip| ip.host_ip_addresses.to_a })
+ 
+       # VPS and all related objects must be given to the target user:
+@@ -240,11 +253,8 @@ module TransactionChains
+       use_chain(UserNamespaceMap::Use, args: [vps, new_userns_map])
+       db_changes[vps][:user_namespace_map_id] = new_userns_map.id
+ 
+-      datasets = []
+-
+       # Transfer dataset cluster resources
+-      vps.dataset_in_pool.dataset.subtree.each do |ds|
+-        datasets << ds
++      datasets.each do |ds|
+         db_changes[ds] = { user_id: vps.user_id }
+ 
+         dip = ds.primary_dataset_in_pool!
+@@ -302,24 +312,16 @@ module TransactionChains
+       end
+ 
+       # Transfer exports of the VPS's own datasets / snapshots
+-      chown_exports = []
+-
+-      datasets.each do |ds|
+-        ds.dataset_in_pools.each do |dip|
+-          dip.exports.each do |ex|
+-            # Remove hosts belonging to the original user
+-            hosts_to_delete = ex.export_hosts.to_a.reject do |host|
+-              host.ip_address.network_interface.vps_id == vps.id
+-            end
+-
+-            use_chain(Export::DelHosts, args: [ex, hosts_to_delete]) if hosts_to_delete.any?
++      chown_exports.each do |ex|
++        # Remove hosts belonging to the original user
++        hosts_to_delete = ex.export_hosts.to_a.reject do |host|
++          host.ip_address.network_interface.vps_id == vps.id
++        end
+ 
+-            # Add hosts belonging to the target user
+-            add_hosts_to_chowned_export(ex, vps.user) if ex.all_vps
++        use_chain(Export::DelHosts, args: [ex, hosts_to_delete]) if hosts_to_delete.any?
+ 
+-            chown_exports << ex
+-          end
+-        end
++        # Add hosts belonging to the target user
++        add_hosts_to_chowned_export(ex, vps.user) if ex.all_vps
+       end
+ 
+       if chown_exports.any?
+diff --git a/api/spec/api/resources/cluster_spec.rb b/api/spec/api/resources/cluster_spec.rb
+index 7b71af9f3..457726db9 100644
+--- a/api/spec/api/resources/cluster_spec.rb
++++ b/api/spec/api/resources/cluster_spec.rb
+@@ -180,22 +180,32 @@ RSpec.describe 'VpsAdmin::API::Resources::Cluster' do
+       expect(cluster_obj['ipv4_left']).to be_a(Integer)
+     end
+ 
+-    it 'returns correct ipv4_left' do
++    it 'counts enabled public IPv4 inventory once and excludes ownership, assignment and reservations' do
++      Network.update_all(enabled: false)
++      network_v4.update!(enabled: true, purpose: :export)
+       create_ip!(addr: '192.0.2.200', network: network_v4)
+       create_ip!(addr: '192.0.2.201', network: network_v4)
+       create_ip!(addr: '192.0.2.202', network: network_v4, user: SpecSeed.user)
+-
+-      json_get public_stats_path
++      fixture = create_netif_vps_fixture!(user: SpecSeed.user)
++      create_ip!(addr: '192.0.2.203', network: network_v4, netif: fixture[:netif])
++      reserved = create_ip!(addr: '192.0.2.204', network: network_v4)
++      LocationNetwork.find_or_create_by!(network: network_v4, location: SpecSeed.other_location)
++      disabled = network_v4.dup
++      disabled.update!(address: '198.51.100.0', enabled: false)
++      create_ip!(addr: '198.51.100.10', network: disabled)
++      private_network = create_private_network!(location: SpecSeed.location)
++      create_ipv4_address_in_network!(network: private_network, location: SpecSeed.location)
++      ipv6_network = SpecSeed.network_v6
++      ipv6_network.update!(enabled: true)
++      create_ip!(addr: '2001:db8::200', network: ipv6_network)
++
++      reserved.acquire_lock do
++        json_get public_stats_path
++      end
+ 
+       expect_status(200)
+ 
+-      expected = IpAddress.joins(:network).where(
+-        user: nil,
+-        network_interface: nil,
+-        networks: { ip_version: 4, role: Network.roles[:public_access] }
+-      ).count
+-
+-      expect(cluster_obj['ipv4_left']).to eq(expected)
++      expect(cluster_obj['ipv4_left']).to eq(2)
+     end
+ 
+     it 'works for authenticated users as well' do
+diff --git a/api/spec/api/resources/network_write_spec.rb b/api/spec/api/resources/network_write_spec.rb
+index 51b0be732..d6bceda1d 100644
+--- a/api/spec/api/resources/network_write_spec.rb
++++ b/api/spec/api/resources/network_write_spec.rb
+@@ -113,6 +113,34 @@ RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:di
+     expect(IpAddress.count).to eq(count)
+   end
+ 
++  it 'preserves disabled state on unrelated updates and supports both toggle directions' do
++    basic_authorize SpecSeed.admin.login, SpecSeed::PASSWORD
++    expect(ipv4_network.enabled).to be(true)
++    json_put(show_path(ipv4_network.id), network: { enabled: false })
++    expect(json['status']).to be(true)
++    expect(ipv4_network.reload.enabled).to be(false)
++    json_put(show_path(ipv4_network.id), network: { label: 'Retired pool' })
++    expect(json['status']).to be(true)
++    expect(ipv4_network.reload.enabled).to be(false)
++    json_put(show_path(ipv4_network.id), network: { enabled: true })
++    expect(json['status']).to be(true)
++    expect(ipv4_network.reload.enabled).to be(true)
++  end
++
++  it 'rejects member writes while retaining readable disabled inventory and exact filters' do
++    ipv4_network.update!(enabled: false)
++    basic_authorize SpecSeed.user.login, SpecSeed::PASSWORD
++    json_put(show_path(ipv4_network.id), network: { enabled: true })
++    expect_status(403)
++    get show_path(ipv4_network.id)
++    expect_status(200)
++    expect(net_obj['enabled']).to be(false)
++    get index_path, network: { enabled: false }
++    expect_status(200)
++    expect(json.dig('response', 'networks').map { |network| network['id'] }).to include(ipv4_network.id)
++    expect(json.dig('response', 'networks').map { |network| network['enabled'] }).to all(be(false))
++  end
++
+   it 'rejects a charge environment without an owner atomically' do
+     basic_authorize SpecSeed.admin.login, SpecSeed::PASSWORD
+     count = IpAddress.count
+diff --git a/api/spec/api/resources/user_available_ips_spec.rb b/api/spec/api/resources/user_available_ips_spec.rb
+index f655167e3..e376efe2d 100644
+--- a/api/spec/api/resources/user_available_ips_spec.rb
++++ b/api/spec/api/resources/user_available_ips_spec.rb
+@@ -162,6 +162,17 @@ RSpec.describe 'VpsAdmin::API::Resources::User' do
+       expect(response_obj['ipv4']).to eq(2)
+     end
+ 
++    it 'excludes disabled owned inventory and preserves its ownership' do
++      ip = create_ip!(addr: '192.0.2.215', network: SpecSeed.network_v4, user: SpecSeed.user)
++      SpecSeed.network_v4.update!(enabled: false)
++      as(SpecSeed.user) do
++        json_get available_ips_path(SpecSeed.user.id), user: { location: SpecSeed.location.id }
++      end
++      expect_status(200)
++      expect(response_obj['ipv4']).to eq(0)
++      expect(ip.reload.user_id).to eq(SpecSeed.user.id)
++    end
++
+     it 'rejects address_location without shared networks' do
+       vps_location = create_location!
+ 
+diff --git a/api/spec/migrations/20261006120000_add_network_enabled_spec.rb b/api/spec/migrations/20261006120000_add_network_enabled_spec.rb
+new file mode 100644
+index 000000000..80250c141
+--- /dev/null
++++ b/api/spec/migrations/20261006120000_add_network_enabled_spec.rb
+@@ -0,0 +1,29 @@
++require_relative '../migration_helper'
++
++MigrationSpecSupport.require_migration('20261006120000_add_network_enabled')
++
++RSpec.describe AddNetworkEnabled do
++  before do
++    define_schema do
++      create_table(:networks) { |t| t.string :address }
++    end
++  end
++
++  it 'enables existing and new networks by default and persists false' do
++    existing = insert_row(:networks, address: '192.0.2.0')
++    migrate_up!
++    expect(column(:networks, :enabled).null).to be(false)
++    expect(rows(:networks).first['enabled']).to eq(1)
++    insert_row(:networks, address: '198.51.100.0')
++    connection.execute("UPDATE networks SET enabled = 0 WHERE id = #{existing}")
++    expect(rows(:networks).map { |row| row['enabled'] }).to eq([0, 1])
++  end
++
++  it 'removes only the availability column on schema rollback' do
++    insert_row(:networks, address: '192.0.2.0')
++    migrate_up!
++    migrate_down!
++    expect(column_exists?(:networks, :enabled)).to be(false)
++    expect(rows(:networks).first['address']).to eq('192.0.2.0')
++  end
++end
+diff --git a/api/spec/models/ip_ownership_concurrency_spec.rb b/api/spec/models/ip_ownership_concurrency_spec.rb
+index d04fa7483..57c41b1e1 100644
+--- a/api/spec/models/ip_ownership_concurrency_spec.rb
++++ b/api/spec/models/ip_ownership_concurrency_spec.rb
+@@ -3,10 +3,16 @@ require 'timeout'
+ 
+ RSpec.describe Network do
+   let(:committed) { {} }
++  let(:connection_threads) { [] }
+ 
+   before do
+     unlock_transaction_signer!
+     connection_thread do
++      seed_network = SpecSeed.network_v4
++      committed[:seed_network_id] = seed_network.id
++      committed[:seed_enabled] = seed_network.enabled
++      committed[:seed_ips] = IpAddress.where(network: seed_network).order(:id).map(&:attributes)
++      committed[:seed_versions] = PaperTrail::Version.where(item_type: 'Network', item_id: seed_network.id).pluck(:id)
+       config = SpecSeed.user.environment_user_configs.find_by!(environment: SpecSeed.environment)
+       committed[:config_id] = config.id
+       committed[:uses] = ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: config.id).map(&:attributes)
+@@ -15,13 +21,13 @@ RSpec.describe Network do
+       committed[:usage] = config.reload.ipv4
+       network = SpecSeed.network_v4.dup
+       network.update!(address: '198.51.100.0')
+-      LocationNetwork.create!(network:, location: SpecSeed.location, autopick: true, userpick: true)
+       committed[:network_id] = network.id
++      LocationNetwork.create!(network:, location: SpecSeed.location, autopick: true, userpick: true)
+     end.value
+   end
+ 
+   def connection_thread(&block)
+-    Thread.new do
++    thread = Thread.new do
+       ActiveRecord::Base.connection_pool.with_connection do
+         with_current_context do |session|
+           block.call
+@@ -30,26 +36,74 @@ RSpec.describe Network do
+         end
+       end
+     end
++    connection_threads << thread
++    thread
+   end
+ 
+   after do
++    # A failed join must not skip the other worker or committed-fixture cleanup.
++    thread_error = nil
++    connection_threads.each do |thread|
++      thread.join(25) || thread.kill.join
++    rescue StandardError, RSpec::Expectations::ExpectationNotMetError => e
++      thread_error ||= e
++    end
++    restoration_errors = []
+     connection_thread do
+       ips = IpAddress.where(id: [committed[:ip_id], committed[:second_ip_id]]).or(IpAddress.where(network_id: committed[:network_id]))
+       ids = ips.pluck(:id)
++      host_ids = HostIpAddress.where(ip_address_id: ids).pluck(:id)
++      locks = ResourceLock.where(resource: 'IpAddress', row_id: ids)
++                          .or(ResourceLock.where(resource: 'HostIpAddress', row_id: host_ids))
++                          .or(ResourceLock.where(resource: 'Network', row_id: committed[:network_id]))
++      leaked_locks = locks.pluck(:resource, :row_id)
++      locks.delete_all
+       HostIpAddress.where(ip_address_id: ids).delete_all
+       ips.delete_all
+       LocationNetwork.where(network_id: committed[:network_id]).delete_all
+       described_class.where(id: committed[:network_id]).delete_all
+       PaperTrail::Version.where(item_type: 'IpAddress', item_id: ids).delete_all
+       PaperTrail::Version.where(item_type: 'Network', item_id: committed[:network_id]).delete_all
++      if committed[:seed_network_id]
++        described_class.where(id: committed[:seed_network_id]).update_all(enabled: committed[:seed_enabled])
++        PaperTrail::Version.where(item_type: 'Network', item_id: committed[:seed_network_id])
++                           .where.not(id: committed[:seed_versions]).delete_all
++      end
+       [[committed[:config_id], committed[:uses]], [committed[:extra_config_id], committed[:extra_uses]]].each do |id, uses|
+         next unless uses
+ 
+         ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: id)
+                           .where.not(id: uses.map { |attrs| attrs['id'] }).delete_all
+         uses.each { |attrs| ClusterResourceUse.where(id: attrs['id']).update_all(attrs) }
++        actual = ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: id).order(:id).map(&:attributes)
++        expected = uses.sort_by { |attrs| attrs['id'] }
++        if actual != expected
++          restoration_errors << "EnvironmentUserConfig ##{id} usage was not restored: expected #{expected.inspect}, got #{actual.inspect}"
++        end
++      end
++      restoration_errors << "Fixture reservations survived workers: #{leaked_locks.inspect}" unless leaked_locks.empty?
++      remaining_ids = IpAddress.where(id: ids).pluck(:id)
++      restoration_errors << "Fixture allocations survived cleanup: #{remaining_ids.inspect}" unless remaining_ids.empty?
++      remaining_hosts = HostIpAddress.where(ip_address_id: ids).pluck(:id)
++      restoration_errors << "Fixture host addresses survived cleanup: #{remaining_hosts.inspect}" unless remaining_hosts.empty?
++      if described_class.exists?(id: committed[:network_id])
++        restoration_errors << "Fixture network ##{committed[:network_id]} survived cleanup"
++      end
++      if committed[:seed_network_id]
++        if described_class.find(committed[:seed_network_id]).enabled != committed[:seed_enabled]
++          restoration_errors << "Seed network ##{committed[:seed_network_id]} availability was not restored"
++        end
++        actual = IpAddress.where(network_id: committed[:seed_network_id]).order(:id).map(&:attributes)
++        if actual != committed[:seed_ips]
++          restoration_errors << "Seed allocations were not restored: expected #{committed[:seed_ips].inspect}, got #{actual.inspect}"
++        end
+       end
+     end.value
++    unless restoration_errors.empty?
++      restoration_errors << "Worker failed: #{thread_error.class}: #{thread_error.message}" if thread_error
++      raise "Committed fixture restoration failed:\n#{restoration_errors.join("\n")}"
++    end
++    raise thread_error if thread_error
+   end
+ 
+   it 'rejects a role change waiting behind the first direct registration' do
+@@ -96,6 +150,158 @@ RSpec.describe Network do
+     workers&.each { |thread| thread.join(25) || thread.kill.join }
+   end
+ 
++  it 'rejects new ownership when disable commits before admission', :network_admission do
++    selected = Queue.new
++    resume = Queue.new
++    worker = connection_thread do
++      ip = IpAddress.find(committed[:ip_id])
++      selected << true
++      resume.pop
++      expect do
++        TransactionChains::Ip::Update.fire(ip, user: SpecSeed.other_user, environment: SpecSeed.environment)
++      end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled for new allocations/)
++    end
++    Timeout.timeout(10) { selected.pop }
++    connection_thread { IpAddress.find(committed[:ip_id]).network.update!(enabled: false) }.value
++    resume << true
++    Timeout.timeout(20) { worker.value }
++    connection_thread { expect(IpAddress.find(committed[:ip_id]).user_id).to eq(SpecSeed.user.id) }.value
++  ensure
++    resume << true if resume
++    worker&.join(25) || worker&.kill&.join
++    connection_thread { IpAddress.find(committed[:ip_id]).network.update!(enabled: true) }.value
++  end
++
++  it 'lets admitted ownership finish before a waiting disable', :network_admission do
++    connection_thread do
++      config = SpecSeed.other_user.environment_user_configs.find_by!(environment: SpecSeed.environment)
++      committed[:extra_config_id] = config.id
++      committed[:extra_uses] = ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: config.id).map(&:attributes)
++    end.value
++    admitted = Queue.new
++    disabling = Queue.new
++    resume = Queue.new
++    allow_any_instance_of(IpAddress).to receive(:ensure_network_enabled!).and_wrap_original do |original| # rubocop:disable RSpec/AnyInstance
++      result = original.call
++      if Thread.current[:network_admission] == :own
++        Thread.current[:network_admission] = nil
++        admitted << true
++        resume.pop
++      end
++      result
++    end
++    workers = []
++    workers << connection_thread do
++      Thread.current[:network_admission] = :own
++      TransactionChains::Ip::Update.fire(IpAddress.find(committed[:ip_id]),
++                                         user: SpecSeed.other_user, environment: SpecSeed.environment)
++    end
++    Timeout.timeout(10) { admitted.pop }
++    workers << connection_thread do
++      network = IpAddress.find(committed[:ip_id]).network
++      disabling << true
++      network.update!(enabled: false)
++    end
++    Timeout.timeout(10) { disabling.pop }
++    expect(workers.last.join(0.1)).to be_nil
++    resume << true
++    Timeout.timeout(20) { workers.each(&:value) }
++    connection_thread do
++      ip = IpAddress.find(committed[:ip_id])
++      expect(ip.user_id).to eq(SpecSeed.other_user.id)
++      expect(ip.network.enabled?).to be(false)
++    end.value
++  ensure
++    resume << true if resume
++    workers&.each { |thread| thread.join(25) || thread.kill.join }
++    connection_thread { IpAddress.find(committed[:ip_id]).network.update!(enabled: true) }.value
++  end
++
++  it 'allows parallel admissions in one pool without upgrading network locks', :network_admission do
++    ids = connection_thread do
++      network = described_class.find(committed[:network_id])
++      network.add_ips(2).map(&:id)
++    end.value
++    ready = Queue.new
++    resume = Queue.new
++    workers = ids.map do |id|
++      connection_thread do
++        TransactionChain.transaction do
++          chain = build_transaction_chain!(name: 'parallel-network-admission')
++          ip = IpAddress.find(id)
++          ip.lock_for_new_use!(chain)
++          ip.ensure_pickable!(user: SpecSeed.user, location: SpecSeed.location, ip_v: 4, role: :public_access,
++                              purpose: :vps)
++          ready << id
++          resume.pop
++          raise ActiveRecord::Rollback
++        end
++      end
++    end
++    # Both must pass the authoritative joined policy read while the other holds
++    # a shared network lock and a different exclusive IP row lock.
++    admitted_ids = Timeout.timeout(10) { ids.map { ready.pop } }
++    expect(admitted_ids.sort).to eq(ids.sort)
++    ids.each { resume << true }
++    Timeout.timeout(20) { workers.each(&:value) }
++  ensure
++    ids&.each { resume << true } if resume
++    workers&.each { |thread| thread.join(25) || thread.kill.join }
++  end
++
++  it 'serializes owned registration before a waiting disable', :network_admission do
++    registered = Queue.new
++    disabling = Queue.new
++    resume = Queue.new
++    allow_any_instance_of(described_class).to receive(:ensure_enabled!).and_wrap_original do |original| # rubocop:disable RSpec/AnyInstance
++      result = original.call
++      if Thread.current[:network_admission] == :register
++        Thread.current[:network_admission] = nil
++        registered << true
++        resume.pop
++      end
++      result
++    end
++    workers = []
++    workers << connection_thread do
++      Thread.current[:network_admission] = :register
++      network = described_class.find(committed[:network_id])
++      IpAddress.register(IPAddress.parse('198.51.100.1'), network:, user: SpecSeed.user,
++                                                          environment: SpecSeed.environment, prefix: 32, size: 1)
++    end
++    Timeout.timeout(10) { registered.pop }
++    workers << connection_thread do
++      network = described_class.find(committed[:network_id])
++      disabling << true
++      network.update!(enabled: false)
++    end
++    Timeout.timeout(10) { disabling.pop }
++    expect(workers.last.join(0.1)).to be_nil
++    resume << true
++    Timeout.timeout(20) { workers.each(&:value) }
++    connection_thread do
++      expect(described_class.find(committed[:network_id]).enabled?).to be(false)
++      expect(IpAddress.find_by!(network_id: committed[:network_id], ip_addr: '198.51.100.1').user_id)
++        .to eq(SpecSeed.user.id)
++    end.value
++  ensure
++    resume << true if resume
++    workers&.each { |thread| thread.join(25) || thread.kill.join }
++  end
++
++  it 'rejects owned registration after disable commits without changing quota', :network_admission do
++    connection_thread do
++      network = described_class.find(committed[:network_id])
++      network.update!(enabled: false)
++      expect do
++        IpAddress.register(IPAddress.parse('198.51.100.1'), network:, user: SpecSeed.user,
++                                                            environment: SpecSeed.environment, prefix: 32, size: 1)
++      end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled for new allocations/)
++      expect(IpAddress.where(network:)).to be_empty
++      expect(EnvironmentUserConfig.find(committed[:config_id]).ipv4).to eq(committed[:usage])
++    end.value
++  end
++
+   it 'charges additions to the new resource after a concurrent empty-network role change' do
+     locked = Queue.new
+     attempted = Queue.new
+@@ -144,7 +350,7 @@ RSpec.describe Network do
+   it 'reloads a migration replacement selected before a concurrent disown' do
+     selected = Queue.new
+     resume = Queue.new
+-    allow(IpAddress).to receive(:pick_addr!) do
++    allow(IpAddress).to receive(:pick_from_admitted_networks!) do
+       ip = IpAddress.find(committed[:ip_id])
+       expect(ip.user_id).to eq(SpecSeed.user.id)
+       selected << true
+@@ -159,7 +365,11 @@ RSpec.describe Network do
+           user: User.current, user_session: UserSession.current
+         )
+         migration.global_locks = []
+-        allow(migration).to receive(:dst_vps).and_return(Vps.new(user: SpecSeed.user, node: SpecSeed.node))
++        networks = described_class.lock_for_admission!([IpAddress.find(committed[:ip_id]).network_id])
++        allow(migration).to receive_messages(
++          dst_vps: Vps.new(user: SpecSeed.user, node: SpecSeed.node),
++          admission_networks: networks, replacement_network_ids: networks.keys
++        )
+         replacement = migration.send(:pick_replacement_ip, IpAddress.find(committed[:ip_id]))
+         expect(replacement.user_id).to be_nil
+         expect(replacement.charged_environment_id).to be_nil
+diff --git a/api/spec/models/network_registration_spec.rb b/api/spec/models/network_registration_spec.rb
+index e2503f80e..b61217530 100644
+--- a/api/spec/models/network_registration_spec.rb
++++ b/api/spec/models/network_registration_spec.rb
+@@ -3,6 +3,25 @@ require 'spec_helper'
+ RSpec.describe Network do
+   around { |example| with_current_context { example.run } }
+ 
++  it 'permits disabled unowned inventory but rejects owned registration and batch additions atomically' do
++    network = SpecSeed.network_v4
++    network.update!(enabled: false)
++    ip = IpAddress.register(IPAddress.parse('192.0.2.249'), network:, prefix: 32, size: 1)
++    expect(ip.user_id).to be_nil
++    expect(network.add_ips(1)).not_to be_empty
++    before = network.ip_addresses.count
++    usage = SpecSeed.user.environment_user_configs.find_by!(environment: SpecSeed.environment).ipv4
++    expect do
++      IpAddress.register(IPAddress.parse('192.0.2.250'), network:, prefix: 32, size: 1,
++                                                         user: SpecSeed.user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect do
++      network.add_ips(1, user: SpecSeed.user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(network.ip_addresses.count).to eq(before)
++    expect(SpecSeed.user.environment_user_configs.find_by!(environment: SpecSeed.environment).ipv4).to eq(usage)
++  end
++
+   it 'retains a competing network reservation when batch lock acquisition fails' do
+     network = SpecSeed.network_v4
+     reservation = network.acquire_lock(network)
+diff --git a/api/spec/models/transaction_chains/export/create_spec.rb b/api/spec/models/transaction_chains/export/create_spec.rb
+index c3f61f44f..ce4f5a60f 100644
+--- a/api/spec/models/transaction_chains/export/create_spec.rb
++++ b/api/spec/models/transaction_chains/export/create_spec.rb
+@@ -113,7 +113,7 @@ RSpec.describe TransactionChains::Export::Create do
+       when :location
+         LocationNetwork.where(network_id: network.id).delete_all
+       end
+-      allow(IpAddress).to receive(:pick_addr!).and_return(ip)
++      allow(IpAddress).to receive_messages(candidate_network_ids: [network.id], pick_from_admitted_networks!: ip)
+ 
+       expect do
+         described_class.fire(dataset)
+diff --git a/api/spec/models/transaction_chains/ip/allocate_spec.rb b/api/spec/models/transaction_chains/ip/allocate_spec.rb
+index 7fed797e7..39ffe65e9 100644
+--- a/api/spec/models/transaction_chains/ip/allocate_spec.rb
++++ b/api/spec/models/transaction_chains/ip/allocate_spec.rb
+@@ -60,6 +60,56 @@ RSpec.describe TransactionChains::Ip::Allocate do
+     expect(fixture[:ip_addresses].map { |ip| ip.reload.charged_environment_id }).to all(eq(fixture[:environment].id))
+   end
+ 
++  it 'does not widen a multi-address batch when another pool becomes enabled after its first reservation' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    later_network = create_private_network!(location: SpecSeed.location, address: '198.51.100.0', purpose: :vps)
++    later_ip = create_ipv4_address_in_network!(network: later_network, location: SpecSeed.location)
++    later_network.update!(enabled: false)
++    changed = false
++    allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++      result = original.call(*args, **kwargs)
++      unless changed
++        changed = true
++        later_network.update!(enabled: true)
++      end
++      result
++    end
++
++    _chain, allocated = use_chain_method_in_root!(
++      described_class, method: :allocate_to_netif, args: [resource, fixture[:netif], 2], kwargs: { strict: false }
++    )
++    expect(allocated).to eq(1)
++    expect(fixture[:ip_addresses].first.reload.network_interface_id).to eq(fixture[:netif].id)
++    expect(later_ip.reload.network_interface_id).to be_nil
++    expect(later_network.reload.enabled?).to be(true)
++  end
++
++  it 'treats an empty captured destination set as no capacity even with a populated continuity map' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    networks = Network.lock_for_admission!([fixture[:network].id])
++    _chain, allocated = use_chain_method_in_root!(
++      described_class, method: :allocate_to_netif, args: [resource, fixture[:netif], 1],
++                       kwargs: { strict: false, admission_networks: networks, candidate_network_ids: [] }
++    )
++    expect(allocated).to eq(0)
++    expect(fixture[:ip_addresses].first.reload.network_interface_id).to be_nil
++  end
++
++  it 'rejects a selected address outside its captured network identities' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    other_network = create_private_network!(location: SpecSeed.location, address: '198.51.100.0', purpose: :vps)
++    other_ip = create_ipv4_address_in_network!(network: other_network, location: SpecSeed.location)
++    networks = Network.lock_for_admission!([fixture[:network].id])
++    allow(IpAddress).to receive(:pick_from_admitted_networks!).and_return(other_ip)
++    expect do
++      use_chain_method_in_root!(
++        described_class, method: :allocate_to_netif, args: [resource, fixture[:netif], 1],
++                         kwargs: { admission_networks: networks, candidate_network_ids: [fixture[:network].id] }
++      )
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInUse, /network changed/)
++    expect(other_ip.reload.network_interface_id).to be_nil
++  end
++
+   it 'rejects legacy owned addresses with no charge provenance' do
+     fixture = create_allocation_fixture(ip_count: 1, ownership: true)
+     ip = fixture[:ip_addresses].first
+@@ -122,7 +172,7 @@ RSpec.describe TransactionChains::Ip::Allocate do
+   it 'rejects a selected owned address whose current charge is in another environment' do
+     fixture = create_allocation_fixture(ip_count: 0, ownership: true)
+     ip = create_ipv4_address_in_network!(network: fixture[:network], location: SpecSeed.other_location, user: user)
+-    allow(IpAddress).to receive(:pick_addr!).and_return(ip)
++    allow(IpAddress).to receive_messages(candidate_network_ids: [fixture[:network].id], pick_from_admitted_networks!: ip)
+     expect do
+       use_chain_method_in_root!(described_class, method: :allocate_to_netif,
+                                                  args: [resource, fixture[:netif], 1])
+@@ -194,6 +244,29 @@ RSpec.describe TransactionChains::Ip::Allocate do
+     end.to raise_error(VpsAdmin::API::Exceptions::ConfigurationError, /no ipv4_private address available/)
+   end
+ 
++  it 'excludes disabled pools including owned detached reuse' do
++    fixture = create_allocation_fixture(ip_count: 1, ownership: true)
++    create_ipv4_address_in_network!(network: fixture[:network], location: SpecSeed.location, user: user)
++    fixture[:network].update!(enabled: false)
++    expect do
++      use_chain_method_in_root!(described_class, method: :allocate_to_netif,
++                                                 args: [resource, fixture[:netif], 1])
++    end.to raise_error(VpsAdmin::API::Exceptions::ConfigurationError, /no ipv4_private/)
++    expect(fixture[:network].ip_addresses.pluck(:network_interface_id)).to all(be_nil)
++  end
++
++  it 'rejects a stale selected address after its network is disabled' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    ip = fixture[:ip_addresses].first
++    fixture[:network].update!(enabled: false)
++    allow(IpAddress).to receive_messages(candidate_network_ids: [fixture[:network].id], pick_from_admitted_networks!: ip)
++    expect do
++      use_chain_method_in_root!(described_class, method: :allocate_to_netif,
++                                                 args: [resource, fixture[:netif], 1])
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(ip.reload.network_interface_id).to be_nil
++  end
++
+   %i[owner purpose location].each do |changed|
+     it "rechecks #{changed} after reserving a previously selected address" do
+       fixture = create_allocation_fixture(ip_count: 1)
+@@ -208,7 +281,7 @@ RSpec.describe TransactionChains::Ip::Allocate do
+       when :location
+         LocationNetwork.where(network_id: network.id).delete_all
+       end
+-      allow(IpAddress).to receive(:pick_addr!).and_return(ip)
++      allow(IpAddress).to receive_messages(candidate_network_ids: [network.id], pick_from_admitted_networks!: ip)
+ 
+       expect do
+         use_chain_method_in_root!(described_class, method: :allocate_to_netif,
+diff --git a/api/spec/models/transaction_chains/ip/update_spec.rb b/api/spec/models/transaction_chains/ip/update_spec.rb
+index 755e0624c..04f01b3df 100644
+--- a/api/spec/models/transaction_chains/ip/update_spec.rb
++++ b/api/spec/models/transaction_chains/ip/update_spec.rb
+@@ -34,6 +34,21 @@ RSpec.describe TransactionChains::Ip::Update do
+     ip
+   end
+ 
++  it 'rejects new or different ownership while allowing same-owner no-op and disownership' do
++    ip = create_owned_ip
++    ip.network.update!(enabled: false)
++    expect do
++      described_class.fire(ip, user: SpecSeed.other_user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(ip.reload.user_id).to eq(SpecSeed.user.id)
++    expect { described_class.fire(ip, user: SpecSeed.user, environment: SpecSeed.environment) }.not_to raise_error
++    expect { described_class.fire(ip, user: nil) }.not_to raise_error
++    expect(ip.reload.user_id).to be_nil
++    expect do
++      described_class.fire(ip, user: SpecSeed.user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++  end
++
+   it 'moves resource use from the old owner to the new owner' do
+     ip = create_owned_ip
+     before_old = resource_use_value(user: SpecSeed.user, environment: SpecSeed.environment, resource: :ipv4)
+diff --git a/api/spec/models/transaction_chains/network_interface/add_route_spec.rb b/api/spec/models/transaction_chains/network_interface/add_route_spec.rb
+index 793a83066..a7a760aba 100644
+--- a/api/spec/models/transaction_chains/network_interface/add_route_spec.rb
++++ b/api/spec/models/transaction_chains/network_interface/add_route_spec.rb
+@@ -9,6 +9,20 @@ RSpec.describe TransactionChains::NetworkInterface::AddRoute do
+ 
+   let(:user) { SpecSeed.user }
+ 
++  [nil, :admin, :user].each do |actor|
++    it "rejects disabled detached owned allocations for #{actor || 'internal'} callers" do
++      fixture = create_netif_vps_fixture!(user: user)
++      ip = create_ip_address!(user: user)
++      ip.network.update!(enabled: false)
++      actor_user = { admin: SpecSeed.admin, user: user }[actor]
++      opts = actor ? { actor: actor_user } : {}
++      expect { described_class.fire(fixture[:netif], [ip], **opts) }
++        .to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++      expect(ip.reload.user_id).to eq(user.id)
++      expect(ip.network_interface_id).to be_nil
++    end
++  end
++
+   it 'locks resources, adds routes, reallocates resources, and updates exports' do
+     fixture = create_netif_vps_fixture!(
+       user: user,
+diff --git a/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb b/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb
+index bc3aa5a88..d2035155b 100644
+--- a/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb
++++ b/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb
+@@ -670,13 +670,26 @@ RSpec.describe TransactionChains::Vps::Clone::OsToOs do
+     ipv4_use = ClusterResourceUse.for_obj(config).joins(user_cluster_resource: :cluster_resource)
+                                  .find_by!(cluster_resources: { name: 'ipv4' })
+ 
++    # The alternate primary association is real selection policy, not a
++    # rewritten allocator argument. All three families share one held union.
++    [SpecSeed.network_v4, private_network, v6_network].each do |network|
++      LocationNetwork.where(network:).update_all(primary: false)
++      LocationNetwork.find_or_create_by!(network:, location: SpecSeed.other_location).update!(primary: true, userpick: true)
++      network.update!(primary_location: SpecSeed.other_location)
++    end
++    lock_order = []
++    allow(Network).to receive(:lock_for_admission!).and_wrap_original do |original, ids|
++      lock_order << :network
++      original.call(ids)
++    end
++    allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++      lock_order << :ip
++      original.call(*args, **kwargs)
++    end
+     seen_address_locations = []
+     allow(TransactionChains::Ip::Allocate).to receive(:use_in).and_wrap_original do |original, root_chain, opts|
+       seen_address_locations << opts.fetch(:kwargs).fetch(:address_location)
+-      forwarded = opts.dup
+-      forwarded[:kwargs] = opts.fetch(:kwargs).dup
+-      forwarded[:kwargs][:address_location] = nil
+-      original.call(root_chain, forwarded)
++      original.call(root_chain, opts)
+     end
+ 
+     chain, dst_vps = described_class.fire(
+@@ -707,6 +720,9 @@ RSpec.describe TransactionChains::Vps::Clone::OsToOs do
+     end
+     expect(ipv4_edits.map(&:attr_changes)).to eq([{ 'value' => before + 2 }])
+     expect(seen_address_locations).to all(eq(SpecSeed.other_location))
++    expect(lock_order.first).to eq(:network)
++    expect(lock_order.count(:network)).to eq(1)
++    expect(lock_order.count(:ip)).to be >= 4
+     expect(resource_edits.count).to be >= 3
+   end
+ 
+diff --git a/api/spec/models/transaction_chains/vps/create_spec.rb b/api/spec/models/transaction_chains/vps/create_spec.rb
+index 1a26cc897..0d73f98ee 100644
+--- a/api/spec/models/transaction_chains/vps/create_spec.rb
++++ b/api/spec/models/transaction_chains/vps/create_spec.rb
+@@ -42,6 +42,28 @@ RSpec.describe TransactionChains::Vps::Create do
+     [pool, vps]
+   end
+ 
++  it 'prepares all requested address families before reserving any allocation' do
++    _pool, vps = build_create_vps(os_template: create_os_template!)
++    public_ip = create_ip_address!(location: vps.node.location, addr: '192.0.2.240')
++    private_network = create_private_network!(location: vps.node.location, purpose: :vps)
++    private_ip = create_ipv4_address_in_network!(network: private_network, location: vps.node.location)
++    events = []
++    allow(Network).to receive(:lock_for_admission!).and_wrap_original do |original, ids|
++      events << [:networks, ids.sort]
++      original.call(ids)
++    end
++    allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++      events << [:ip, original.receiver.id]
++      original.call(*args, **kwargs)
++    end
++
++    _chain, created = described_class.fire(vps, ipv4: 1, ipv4_private: 1, ipv6: 0, start: false)
++    expect(created.ip_addresses.pluck(:id)).to contain_exactly(public_ip.id, private_ip.id)
++    expect(events.first).to eq([:networks, [public_ip.network_id, private_network.id].sort])
++    expect(events.count { |event| event.first == :networks }).to eq(1)
++    expect(events.count { |event| event.first == :ip }).to be >= 2
++  end
++
+   it 'creates datasets, mounts, features, network configuration, DNS, and start in the expected order' do
+     template = create_os_template!(
+       manage_dns_resolver: true,
+diff --git a/api/spec/models/transaction_chains/vps/migrate_spec.rb b/api/spec/models/transaction_chains/vps/migrate_spec.rb
+index 18186f8e0..2a44dfcf6 100644
+--- a/api/spec/models/transaction_chains/vps/migrate_spec.rb
++++ b/api/spec/models/transaction_chains/vps/migrate_spec.rb
+@@ -82,6 +82,7 @@ RSpec.describe TransactionChains::Vps::Migrate do
+     _dataset, _dip, vps, dst_node = create_vps_migration_fixture
+     netif = create_network_interface!(vps, name: 'eth0')
+     ip = create_ip_address!(network_interface: netif)
++    ip.network.update!(enabled: false)
+     set_vps_running!(vps)
+ 
+     chain, = described_class.chain_for(vps, dst_node).fire(
+diff --git a/api/spec/models/transaction_chains/vps/replace/os_spec.rb b/api/spec/models/transaction_chains/vps/replace/os_spec.rb
+index 9fdcd2a15..346eae545 100644
+--- a/api/spec/models/transaction_chains/vps/replace/os_spec.rb
++++ b/api/spec/models/transaction_chains/vps/replace/os_spec.rb
+@@ -261,12 +261,13 @@ RSpec.describe TransactionChains::Vps::Replace::Os do
+     fixture = create_replace_fixture
+     vps = fixture.fetch(:vps)
+     netif = create_network_interface!(vps, name: 'eth0')
+-    create_ip_address!(
++    ip = create_ip_address!(
+       network: SpecSeed.network_v4,
+       location: fixture.fetch(:src_node).location,
+       network_interface: netif,
+       addr: "192.0.2.#{20 + SecureRandom.random_number(40)}"
+     )
++    ip.network.update!(enabled: false)
+ 
+     chain, dst_vps = described_class.fire(
+       vps,
+diff --git a/api/spec/models/transaction_chains/vps/swap_spec.rb b/api/spec/models/transaction_chains/vps/swap_spec.rb
+index dbbcdb0b1..de7c5431b 100644
+--- a/api/spec/models/transaction_chains/vps/swap_spec.rb
++++ b/api/spec/models/transaction_chains/vps/swap_spec.rb
+@@ -117,6 +117,8 @@ RSpec.describe TransactionChains::Vps::Swap do
+ 
+   it 'builds the expected broad migration and network-mutation subsequences for a cross-location swap' do
+     primary_vps, secondary_vps = create_swap_fixture
++    # Both migrations reuse existing assignments even when their pool is disabled.
++    SpecSeed.network_v4.update!(enabled: false)
+ 
+     chain, = described_class.fire(
+       primary_vps,
+diff --git a/api/spec/models/transaction_chains/vps/update_spec.rb b/api/spec/models/transaction_chains/vps/update_spec.rb
+index dc9f34bf9..1fa532968 100644
+--- a/api/spec/models/transaction_chains/vps/update_spec.rb
++++ b/api/spec/models/transaction_chains/vps/update_spec.rb
+@@ -53,6 +53,32 @@ RSpec.describe TransactionChains::Vps::Update do
+     user.environment_user_configs.find_by!(environment: environment)
+   end
+ 
++  def create_update_export_fixture(dataset, vps, subdataset:)
++    if subdataset
++      dataset, dip = create_dataset_with_pool!(
++        user: user, pool: vps.dataset_in_pool.pool, parent: dataset,
++        name: "update-child-#{SecureRandom.hex(4)}"
++      )
++      allocate_dip_diskspace!(dip, user: user, value: 1024)
++    end
++    backup_dip = DatasetInPool.create!(
++      dataset: dataset, pool: create_pool!(node: SpecSeed.node, role: :backup),
++      confirmed: DatasetInPool.confirmed(:confirmed)
++    )
++    network = create_private_network!(address: '203.0.113.0')
++    ip = create_ipv4_address_in_network!(network: network, location: SpecSeed.location)
++    export, netif, = create_export_for_dataset!(dataset_in_pool: backup_dip, host_ip: ip)
++    ip.update!(network_interface: netif)
++    [export, ip]
++  end
++
++  def prepare_chown_user
++    other_user = SpecSeed.other_user
++    ensure_numeric_resources!(user: other_user, environment: SpecSeed.environment)
++    create_user_namespace_map!(user: other_user)
++    other_user
++  end
++
+   def user_cluster_resource_for(user, resource, environment = SpecSeed.environment)
+     UserClusterResource.joins(:cluster_resource).find_by!(
+       user: user,
+@@ -222,6 +248,96 @@ RSpec.describe TransactionChains::Vps::Update do
+     end.to raise_error(ResourceLocked)
+   end
+ 
++  it 'rejects ownership transfer carrying disabled allocations even without an explicit IP owner' do
++    dataset, vps = create_update_vps_fixture
++    other_user = SpecSeed.other_user
++    ensure_numeric_resources!(user: other_user, environment: SpecSeed.environment)
++    create_user_namespace_map!(user: other_user)
++    ip = create_ip_address!(network: SpecSeed.network_v4, location: SpecSeed.location,
++                            network_interface: vps.network_interfaces.first)
++    ip.network.update!(enabled: false)
++    expect { described_class.fire(vps, { user_id: other_user.id }) }
++      .to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(vps.reload.user_id).to eq(user.id)
++    expect(dataset.reload.user_id).to eq(user.id)
++    expect(ip.reload.user_id).to be_nil
++    expect(ip.network_interface_id).to eq(vps.network_interfaces.first.id)
++  end
++
++  [false, true].each do |subdataset|
++    context "with an export on the #{subdataset ? 'child' : 'root'} dataset's backup pool" do
++      it 'reserves enabled export endpoints with the VPS allocations before queuing ownership transfer' do
++        dataset, vps = create_update_vps_fixture
++        export, endpoint = create_update_export_fixture(dataset, vps, subdataset: subdataset)
++        other_user = prepare_chown_user
++        vps_ip = create_ip_address!(network: SpecSeed.network_v4, location: SpecSeed.location,
++                                    network_interface: vps.network_interfaces.first)
++        environment_config_for(user).reallocate_resource!(
++          :ipv4, vps_ip.size, user: user, save: true,
++                              confirmed: ClusterResourceUse.confirmed(:confirmed)
++        )
++        events = []
++        allow(Network).to receive(:lock_for_admission!).and_wrap_original do |original, ids|
++          events << [:networks, ids.sort]
++          original.call(ids)
++        end
++        allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++          events << [:ip, original.receiver.id]
++          original.call(*args, **kwargs)
++        end
++
++        chain, = described_class.fire(vps, { user_id: other_user.id })
++
++        export_confirmation = confirmations_for(chain).find do |row|
++          row.class_name == 'Export' && row.row_pks == { 'id' => export.id }
++        end
++        expect(export_confirmation.attr_changes).to include('user_id' => other_user.id)
++        expect(events.first).to eq([:networks, [vps_ip.network_id, endpoint.network_id].sort])
++        expect(events.count { |event| event.first == :networks }).to eq(1)
++        expect(events.select { |event| event.first == :ip }.first(2).map(&:last))
++          .to eq([vps_ip.id, endpoint.id].sort)
++        expect(chain.locks.map { |row| [row.resource, row.row_id] }).to include(
++          ['IpAddress', endpoint.id], ['HostIpAddress', endpoint.host_ip_addresses.first.id]
++        )
++        expect(export.reload).to have_attributes(user_id: user.id, enabled: true)
++        expect(endpoint.reload.network_interface_id).to eq(export.network_interface.id)
++      end
++
++      it 'rejects a disabled endpoint before queuing ownership or resource changes' do
++        dataset, vps = create_update_vps_fixture
++        export, endpoint = create_update_export_fixture(dataset, vps, subdataset: subdataset)
++        other_user = prepare_chown_user
++        endpoint.network.update!(enabled: false)
++        original_uses = ClusterResourceUse.order(:id).pluck(:id, :value, :confirmed)
++
++        expect { described_class.fire(vps, { user_id: other_user.id }) }
++          .to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++
++        expect(vps.reload.user_id).to eq(user.id)
++        expect(dataset.reload.user_id).to eq(user.id)
++        expect(export.reload).to have_attributes(user_id: user.id, enabled: true)
++        expect(endpoint.reload.network_interface_id).to eq(export.network_interface.id)
++        expect(ClusterResourceUse.order(:id).pluck(:id, :value, :confirmed)).to eq(original_uses)
++        expect(ResourceLock.where(resource: 'IpAddress', row_id: endpoint.id)).to be_empty
++      end
++    end
++  end
++
++  it 'retains a running same-owner VPS and its existing export on a disabled endpoint network' do
++    dataset, vps = create_update_vps_fixture
++    export, endpoint = create_update_export_fixture(dataset, vps, subdataset: true)
++    set_vps_running!(vps)
++    endpoint.network.update!(enabled: false)
++
++    chain, updated_vps = described_class.fire(vps, { user_id: user.id })
++
++    expect(chain).to be_nil
++    expect(updated_vps.reload.user_id).to eq(user.id)
++    expect(export.reload).to have_attributes(user_id: user.id, enabled: true)
++    expect(endpoint.reload.network_interface_id).to eq(export.network_interface.id)
++    expect(vps.vps_current_status.is_running).to be(true)
++  end
++
+   it 'delegates enable_network changes and map mode changes to the expected transactions' do
+     _dataset, vps = create_update_vps_fixture
+ 
+diff --git a/docs/README.md b/docs/README.md
+index fff86a2a3..3b7d1cee5 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -10,6 +10,7 @@ These pages describe vpsAdmin for developers and operators. Start with the
+ - [IP ownership, accounting and locking](ip-locking.md)
+ - [IP ownership operations](ip-ownership-operations.md)
+ - [Upgrade to coordinated IP ownership reservations](upgrade-ip-ownership-reservations.md)
++- [Upgrade to network availability controls](upgrade-network-availability.md)
+ - [IP release campaigns](ip-release.md)
+ - [Object lifetimes](object-lifetimes.md): suspension, deletion, expiration,
+   and state transitions.
+diff --git a/docs/ip-locking.md b/docs/ip-locking.md
+index b97050d12..7766c054d 100644
+--- a/docs/ip-locking.md
++++ b/docs/ip-locking.md
+@@ -48,6 +48,64 @@ writers. The [upgrade guide](upgrade-ip-ownership-reservations.md) describes how
+ to transition older writers and in-flight chains. The reservation protocol uses
+ the existing node protocol and stored resource-lock format.
+ 
++## Network availability
++
++`Network.enabled` controls new allocations and assignments. It defaults to true;
++only administrators can change it. Disabled networks remain visible in ordinary
++inventory queries. `Network.Index` accepts an exact `enabled` filter, and
++`IpAddress.Index` accepts `network_enabled` for availability selectors. Neither
++filter changes ownership, assignment or visibility rules.
++
++New automatic allocations, explicit assignments of detached addresses, new IP
++ownership, ownership transfers and owned registration require an enabled network.
++Changing a VPS owner also changes the effective owner of its assigned addresses
++and any export endpoints transferred with its datasets. Preparation captures
++these endpoints together with the VPS addresses before reserving any IP row.
++Keeping the same owner, disowning an address and releasing an address remain possible.
++Unowned inventory registration remains possible. Existing assigned service and
++host-address management within an assigned prefix continue. Internal migration,
++replacement, swap and restore can retain the same assigned allocations. Restore
++does not bypass admission for detached historical addresses. Taking a replacement
++address from another pool requires that destination network to be enabled.
++
++Admission takes shared current SQL reads of the relevant network rows in ID order
++before reserving and exclusively reloading IP rows. Parent IP reservations precede
++host reservations. The final check uses the reloaded IP's network identity and
++current allocation policy. A joined policy check uses shared reads so concurrent
++admissions do not upgrade their network locks to exclusive locks. Registration
++keeps its existing network-before-IP exclusive lock order. Network updates do
++not lock all allocation rows or take a chain-long network resource reservation.
++
++Migration preparation captures only its source networks and the destination
++candidates needed for replacement. Later selection is restricted to that captured
++destination set and current eligibility. Swap captures both source sets before
++either migration locks IP rows and passes the same held map to both children.
++This internal map is valid only within the preparation SQL transaction. A new
++pool cannot enter the set after IP locks; changed identity or no remaining
++capacity fails preparation through the normal reservation cleanup.
++
++VPS creation captures the destination candidates for all requested address
++families before locking any IP row. Cloning captures one destination set across
++all interfaces and address families. Each included allocation reuses that set;
++a standalone multi-address allocation captures its set before the first pick.
++Export endpoint selection also reuses its captured set when retrying a
++reservation. These helpers share their containing SQL transaction, so returning
++from a child allocation does not release its SQL locks. Candidate sets cannot
++grow during preparation.
++
++Disable and admission serialize at the network row. If disable commits first,
++new use fails or selects another enabled pool. If admission commits first, the
++accepted operation may finish after disable. Disabling does not cancel existing
++chains. Their resource reservations keep pending addresses out of availability
++counts until completion or rollback.
++
++`Cluster.PublicStats.ipv4_left` counts allocation rows that are unowned,
++unassigned and unreserved in enabled IPv4 networks with role `public_access`.
++Role is the sole public/private classification. Location associations, purpose,
++prefix size and maintenance state do not change this count, and each allocation
++row contributes at most once. See the [network availability upgrade guide](upgrade-network-availability.md)
++before disabling a network in a mixed-version installation.
++
+ ## Accounting
+ 
+ IP accounting uses `adjust_resource!(resource, delta:, ...)`. It shares
+diff --git a/docs/upgrade-network-availability.md b/docs/upgrade-network-availability.md
+new file mode 100644
+index 000000000..9916bd200
+--- /dev/null
++++ b/docs/upgrade-network-availability.md
+@@ -0,0 +1,32 @@
++# Upgrade to network availability controls
++
++This guide applies when upgrading from a schema before migration
++`20261006120000_add_network_enabled` to a version that enforces
++`Network.enabled`. The [IP locking documentation](ip-locking.md#network-availability)
++owns the admission and continuity contract.
++
++The migration adds a non-null boolean column with default true. Existing networks
++and creates that omit the field stay enabled. Updates that omit it preserve the
++current state. The migration changes no routes, owners, resource-lock format or
++node protocol and requires no coordinated node update.
++
++Apply the migration before starting the enforcing API. Replace every old API
++instance and other allocation writer before disabling any network: old writers
++ignore the column and can allocate from a disabled pool. Mixed versions are
++safe only while every network remains enabled. Review site-specific allocation
++writers as well as the normal API. Operations already accepted may finish after
++a network is disabled.
++
++Deploy the administrator interfaces after the API and refresh their normal API
++description caches. New interfaces expose controls only when action metadata
++advertises the field. An older interface can continue ordinary operations but
++cannot manage availability. Existing clients can omit the additive field; they
++need updated discovery or bindings to manage it.
++
++Re-enabling a network restores new use through the normal administrator update.
++Rolling back only the UI preserves enforcement. Rolling back to an API that
++ignores availability is unsafe while any network is disabled. Retain enforcing
++writers, or stop new-allocation writers and explicitly resolve disabled-network
++policy before restoring older code. Do not silently re-enable retired pools.
++The schema rollback removes the column and its policy; it does not remove
++addresses, ownership or assignments. Dropping it is not routine recovery.
+diff --git a/tests/playwright/webui/specs/admin-cluster.spec.cjs b/tests/playwright/webui/specs/admin-cluster.spec.cjs
+index aacc9a518..c50645a78 100644
+--- a/tests/playwright/webui/specs/admin-cluster.spec.cjs
++++ b/tests/playwright/webui/specs/admin-cluster.spec.cjs
+@@ -195,6 +195,43 @@ test.describe.serial('admin cluster browser coverage', () => {
+     await logout(page, fixtures.admin.username);
+   });
+ 
++  test('network availability uses confirmed POST targets and retains inventory in both directions', async ({ page }) => {
++    const network = requireClusterAdminFixtures().networks.networkToLocation;
++    await login(page, fixtures.admin);
++    await gotoCluster(page, 'network_enabled', { network: network.id });
++    let form = formByAction(page, 'action=network_enabled');
++    await expect(form).toBeVisible();
++    await expect(form).toHaveAttribute('method', /post/i);
++    await expect(form).toContainText(`#${network.id}`);
++    await expect(form).toContainText('Assigned');
++    await expect(form).toContainText('Owned');
++    await expect(form).toContainText('Existing service continues');
++    await expect(form.locator('input[name="enabled"]')).toHaveValue('0');
++    // GET renders a confirmation form; it cannot toggle availability.
++    await page.reload();
++    await expect(form.locator('input[name="enabled"]')).toHaveValue('0');
++    await form.locator('input[name="confirm"]').check();
++    await submitForm(form, 'Disable this network');
++    await expectNotification(page, 'Changes saved');
++    const enabledIcon = rowWithText(page, network.label).locator('td').filter({
++      has: page.locator(`a[href="?page=cluster&action=network_enabled&network=${network.id}"]`),
++    }).locator('img');
++    await expect(enabledIcon).toHaveCount(1);
++    await expect(enabledIcon).toHaveAttribute('src', 'template/icons/transact_fail.png');
++    await gotoCluster(page, 'network_enabled', { network: network.id });
++    form = formByAction(page, 'action=network_enabled');
++    await expect(form.locator('input[name="enabled"]')).toHaveValue('1');
++    await form.locator('input[name="confirm"]').check();
++    await submitForm(form, 'Enable this network');
++    await expectNotification(page, 'Changes saved');
++    await expect(enabledIcon).toHaveAttribute('src', 'template/icons/transact_ok.png');
++    await logout(page, fixtures.admin.username);
++    await login(page, fixtures.user);
++    await gotoCluster(page, 'network_enabled', { network: network.id });
++    await expect(formByAction(page, 'action=network_enabled')).toHaveCount(0);
++    await logout(page, fixtures.user.username);
++  });
++
+   test('DNS resolver create, edit, and delete work from cluster admin', async ({ page }) => {
+     const c = requireClusterAdminFixtures();
+ 
+diff --git a/tests/suite/network/export-lifecycle.nix b/tests/suite/network/export-lifecycle.nix
+index 5b6bbfbcf..397e666d5 100644
+--- a/tests/suite/network/export-lifecycle.nix
++++ b/tests/suite/network/export-lifecycle.nix
+@@ -80,6 +80,15 @@ import ../../make-test.nix (
+           expect(runtime).not_to be_nil
+           wait_for_export_present(node, export.fetch('id'), expected_path: export.fetch('path'))
+ 
++          services.api_ruby_json(code: <<~RUBY)
++            IpAddress.find(#{Integer(runtime.fetch('ip_address_id'))}).network.update!(enabled: false)
++            puts JSON.dump(disabled: true)
++          RUBY
++          # Availability controls leave the existing export endpoint active.
++          wait_for_export_present(node, export.fetch('id'), expected_path: export.fetch('path'))
++          expect(export_runtime_row(services, export.fetch('id')).fetch('ip_address_id'))
++            .to eq(runtime.fetch('ip_address_id'))
++
+           destroyed = destroy_export(
+             services,
+             admin_user_id: admin_user_id,
+diff --git a/tests/suite/network/network-interface-routes-and-host-ips.nix b/tests/suite/network/network-interface-routes-and-host-ips.nix
+index edfa526ac..ddd944abd 100644
+--- a/tests/suite/network/network-interface-routes-and-host-ips.nix
++++ b/tests/suite/network/network-interface-routes-and-host-ips.nix
+@@ -118,6 +118,13 @@ import ../../make-test.nix (
+           )
+           wait_for_route_present(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
+ 
++          # Disabling new use leaves the existing route and host management valid.
++          services.api_ruby_json(code: <<~RUBY)
++            Network.find(IpAddress.find(#{Integer(ip.fetch('id'))}).network_id).update!(enabled: false)
++            puts JSON.dump(disabled: true)
++          RUBY
++          wait_for_route_present(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
++
+           added_host_ip = add_host_ip_to_netif(
+             services,
+             admin_user_id: admin_user_id,
+@@ -180,6 +187,34 @@ import ../../make-test.nix (
+             before_uses.fetch('ipv4_private', 0)
+           )
+           wait_for_route_absent(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
++
++          rejection = services.api_ruby_json(code: <<~RUBY)
++            #{api_session_prelude(admin_user_id)}
++            ip = IpAddress.find(#{Integer(ip.fetch('id'))})
++            begin
++              TransactionChains::NetworkInterface::AddRoute.fire(
++                NetworkInterface.find(#{Integer(created.fetch('netif_id'))}), [ip]
++              )
++              raise 'disabled network accepted a detached allocation'
++            rescue VpsAdmin::API::Exceptions::IpAddressInvalid => e
++              puts JSON.dump(rejected: true, message: e.message, assigned: ip.reload.network_interface_id)
++            end
++          RUBY
++          expect(rejection.fetch('rejected')).to be(true)
++          expect(rejection.fetch('message')).to include('disabled for new allocations')
++          expect(rejection.fetch('assigned')).to be_nil
++          wait_for_route_absent(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
++
++          services.api_ruby_json(code: <<~RUBY)
++            Network.find(IpAddress.find(#{Integer(ip.fetch('id'))}).network_id).update!(enabled: true)
++            puts JSON.dump(enabled: true)
++          RUBY
++          restored_route = add_route_to_netif(
++            services, admin_user_id: admin_user_id, netif_id: created.fetch('netif_id'), ip_id: ip.fetch('id')
++          )
++          expect_chain_done(services, restored_route, label: 're-enabled route',
++                            expected_handles: [tx_types(services).fetch('netif_add_route')])
++          wait_for_route_present(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
+         end
+       end
+     '';
+diff --git a/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix b/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix
+index 25a7ea984..c6cb2012f 100644
+--- a/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix
++++ b/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix
+@@ -122,6 +122,13 @@ import ../../make-test.nix (
+             mib: 4
+           )
+ 
++          attach_test_vps_ip(services, admin_user_id: admin_user_id, vps_id: setup.fetch('vps_id'), addr: '198.51.100.10')
++          retained_ips = services.api_ruby_json(code: <<~RUBY)
++            ips = Vps.find(#{Integer(setup.fetch('vps_id'))}).ip_addresses.order(:id).to_a
++            raise 'restore availability fixture has no assigned IPs' if ips.empty?
++            ips.map(&:network).uniq(&:id).each { |network| network.update!(enabled: false) }
++            puts JSON.dump(ids: ips.map(&:id))
++          RUBY
+           restore = rollback_dataset_to_snapshot(
+             services,
+             dataset_id: setup.fetch('dataset_id'),
+@@ -130,6 +137,13 @@ import ../../make-test.nix (
+           services.wait_for_chain_state(restore.fetch('chain_id'), state: :done)
+           wait_for_vps_running(services, setup.fetch('vps_id'))
+ 
++          after_ips = services.api_ruby_json(code: <<~RUBY)
++            ips = Vps.find(#{Integer(setup.fetch('vps_id'))}).ip_addresses.order(:id).to_a
++            puts JSON.dump(ids: ips.map(&:id), enabled: ips.map { |ip| ip.network.enabled? })
++          RUBY
++          expect(after_ips.fetch('ids')).to eq(retained_ips.fetch('ids'))
++          expect(after_ips.fetch('enabled')).to all(be(false))
++
+           expect(
+             read_dataset_text(
+               node1,
+diff --git a/tests/suite/vps/migrate-with-data-check.nix b/tests/suite/vps/migrate-with-data-check.nix
+index d77db2729..787c6eafd 100644
+--- a/tests/suite/vps/migrate-with-data-check.nix
++++ b/tests/suite/vps/migrate-with-data-check.nix
+@@ -87,6 +87,18 @@ import ../../make-test.nix (
+             mib: 4
+           )
+ 
++          attach_test_vps_ip(services, admin_user_id: admin_user_id, vps_id: vps.fetch('id'), addr: '198.51.100.10')
++          retained_ips = services.api_ruby_json(code: <<~RUBY)
++            vps = Vps.find(#{Integer(vps.fetch('id'))})
++            ips = vps.ip_addresses.order(:id).to_a
++            raise 'migration availability fixture has no assigned IPs' if ips.empty?
++            ips.map(&:network).uniq(&:id).each do |network|
++              LocationNetwork.find_or_create_by!(network: network, location: Node.find(#{Integer(node2_id)}).location)
++              network.update!(enabled: false)
++            end
++            puts JSON.dump(ids: ips.map(&:id))
++          RUBY
++
+           response = vps_migrate(
+             services,
+             vps_id: vps.fetch('id'),
+@@ -114,6 +126,12 @@ import ../../make-test.nix (
+ 
+           wait_for_vps_on_node(services, vps_id: vps.fetch('id'), node_id: node2_id, running: true)
+           expect_vps_migration_proof(node2, vps_id: vps.fetch('id'))
++          after_ips = services.api_ruby_json(code: <<~RUBY)
++            ips = Vps.find(#{Integer(vps.fetch('id'))}).ip_addresses.order(:id).to_a
++            puts JSON.dump(ids: ips.map(&:id), enabled: ips.map { |ip| ip.network.enabled? })
++          RUBY
++          expect(after_ips.fetch('ids')).to eq(retained_ips.fetch('ids'))
++          expect(after_ips.fetch('enabled')).to all(be(false))
+           expect_vps_container_absent(node1, vps_id: vps.fetch('id'))
+           dst_dataset_path = find_dataset_path_on_node(node2, info.fetch('dataset_full_name'))
+           expect(read_dataset_text(
+diff --git a/webui/forms/cluster.forms.php b/webui/forms/cluster.forms.php
+index 16bf630d7..078bbcfbe 100644
+--- a/webui/forms/cluster.forms.php
++++ b/webui/forms/cluster.forms.php
+@@ -217,6 +217,7 @@ function networks_list()
+     $xtpl->table_add_category(_('Label'));
+     $xtpl->table_add_category(_('Type'));
+     $xtpl->table_add_category(_('Managed'));
++    $xtpl->table_add_category(_('Enabled'));
+     $xtpl->table_add_category(_('Size'));
+     $xtpl->table_add_category(_('Used'));
+     $xtpl->table_add_category(_('Assigned'));
+@@ -236,6 +237,15 @@ function networks_list()
+             'private_access' => 'Priv',
+         ][$n->role]);
+         $xtpl->table_td(boolean_icon($n->managed));
++        $knownEnabled = isset($n->enabled) && is_bool($n->enabled);
++        $canUpdateEnabled = isset($api->network->update->getParameters('input')->enabled);
++        $xtpl->table_td(
++            $knownEnabled
++            ? boolean_icon($n->enabled) . ($canUpdateEnabled
++                ? ' <a href="?page=cluster&action=network_enabled&network=' . $n->id . '">'
++                    . h(_('Edit')) . '</a>' : '')
++            : '-'
++        );
+         $xtpl->table_td(approx_number($n->size), false, true);
+         $xtpl->table_td($n->used, false, true);
+         $xtpl->table_td($n->assigned, false, true);
+@@ -268,6 +278,40 @@ function networks_list()
+     $xtpl->table_out();
+ }
+ 
++function network_enabled_form($network_id)
++{
++    global $xtpl, $api;
++
++    $network = $api->network->show($network_id);
++    $xtpl->title(_('Network availability'));
++    $xtpl->sbar_add(_('Back to networks'), '?page=cluster&action=networks');
++
++    if (!isset($api->network->update->getParameters('input')->enabled) || !isset($network->enabled)) {
++        return;
++    }
++
++    $xtpl->form_create('?page=cluster&action=network_enabled&network=' . $network->id, 'post');
++    foreach ([
++        _('Network') => $network->address . '/' . $network->prefix . ' (#' . $network->id . ')',
++        _('Assigned') => $network->assigned,
++        _('Owned') => $network->owned,
++    ] as $label => $value) {
++        $xtpl->table_td(h($label) . ':');
++        $xtpl->table_td(h($value));
++        $xtpl->table_tr();
++    }
++    $xtpl->form_set_hidden_fields(['enabled' => $network->enabled ? '0' : '1']);
++    $xtpl->table_td(
++        h(_('Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.')),
++        false,
++        false,
++        2
++    );
++    $xtpl->table_tr();
++    $xtpl->form_add_checkbox(_('Confirm') . ':', 'confirm', '1', false);
++    $xtpl->form_out($network->enabled ? _('Disable this network') : _('Enable this network'));
++}
++
+ function ip_list_link($page, $text, $conds)
+ {
+     $str_conds = [];
+diff --git a/webui/forms/networking.forms.php b/webui/forms/networking.forms.php
+index 60666e4c4..e41a1609a 100644
+--- a/webui/forms/networking.forms.php
++++ b/webui/forms/networking.forms.php
+@@ -132,6 +132,7 @@ function ip_address_list($page)
+     $pagination->setResourceList($ips);
+ 
+     $xtpl->table_add_category(_("Network"));
++    $xtpl->table_add_category(_('Enabled'));
+     $xtpl->table_add_category(_("IP address"));
+     $xtpl->table_add_category(_("Size"));
+ 
+@@ -154,6 +155,7 @@ function ip_address_list($page)
+         $vps = $netif && $netif->vps_id ? $netif->vps : null;
+ 
+         $xtpl->table_td($ip->network->address . '/' . $ip->network->prefix);
++        $xtpl->table_td(isset($ip->network->enabled) ? ($ip->network->enabled ? _('Enabled') : _('Disabled')) : '-');
+         $xtpl->table_td($ip->addr . '/' . $ip->prefix);
+         $xtpl->table_td(approx_number($ip->size), false, true);
+ 
+@@ -190,7 +192,7 @@ function ip_address_list($page)
+                 . '</a>'
+             );
+ 
+-        } elseif (!$netif) {
++        } elseif (!$netif && ($ip->network->enabled ?? true)) {
+             $xtpl->table_td(
+                 '<a href="?page=networking&action=route_assign&id=' . $ip->id . '&return=' . $return_url . '">'
+                 . '<img src="template/icons/vps_add.png" alt="' . _('Add to a VPS') . '" title="' . _('Add to a VPS') . '">'
+@@ -438,7 +440,7 @@ function route_edit_form($id)
+     if ($vps) {
+         $xtpl->sbar_add(_('Remove from VPS'), '?page=networking&action=route_unassign&id=' . $ip->id . '&return=' . $return_url);
+ 
+-    } elseif (!$netif) {
++    } elseif (!$netif && ($ip->network->enabled ?? true)) {
+         $xtpl->sbar_add(_('Add to a VPS'), '?page=networking&action=route_assign&id=' . $ip->id . '&return=' . $return_url);
+     }
+ 
+@@ -449,6 +451,12 @@ function route_edit_form($id)
+     $xtpl->table_td($ip->network->address . '/' . $ip->network->prefix);
+     $xtpl->table_tr();
+ 
++    if (isset($ip->network->enabled)) {
++        $xtpl->table_td(_('Network enabled') . ':');
++        $xtpl->table_td($ip->network->enabled ? _('Enabled') : _('Disabled'));
++        $xtpl->table_tr();
++    }
++
+     $xtpl->table_td(_('IP address') . ':');
+     $xtpl->table_td($ip->addr . '/' . $ip->prefix);
+     $xtpl->table_tr();
+@@ -591,6 +599,11 @@ function route_assign_form($id)
+         $_GET['return'] ? $_GET['return'] : '?page=networking&action=ip_addresses'
+     );
+ 
++    if (isset($ip->network->enabled) && !$ip->network->enabled) {
++        $xtpl->perex(_('Disabled'), _('Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.'));
++        return;
++    }
++
+     if ($_POST['vps']) {
+         try {
+             $vps = $api->vps->show($_POST['vps']);
+diff --git a/webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo b/webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo
+index e455e0bbe402ced8dedf5df37fcd273d63263d8e..d2d627ffbdda1a67f5978696702f83216010d572 100644
+GIT binary patch
+delta 45473
+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
+T@{3DAvL#1mZ-0D~kv|^*G^o(O
+
+delta 44895
+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
+A<^TWy
+
+diff --git a/webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po b/webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po
+index f4b8b5bd6..4f934a9ac 100644
+--- a/webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po
++++ b/webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po
+@@ -415,6 +415,11 @@ msgstr "Typ"
+ msgid "Managed"
+ msgstr "Spravováno"
+ 
++#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
++#: forms/networking.forms.php forms/users.forms.php pages/page_cluster.php
++msgid "Enabled"
++msgstr "Povoleno"
++
+ #: forms/cluster.forms.php pages/page_adminm.php
+ msgid "Used"
+ msgstr "Použitý"
+@@ -443,6 +448,39 @@ msgstr "Vypsat IP adresy v této síti"
+ msgid "List locations this network is available in"
+ msgstr "Vypsat lokace, ve kterých je tato síť dostupná"
+ 
++#: forms/cluster.forms.php
++msgid "Network availability"
++msgstr "Dostupnost sítě"
++
++#: forms/cluster.forms.php pages/page_cluster.php
++msgid "Back to networks"
++msgstr "Zpět k sítím"
++
++#: forms/cluster.forms.php forms/networking.forms.php
++msgid ""
++"Disabling prevents new allocations and assignments. Existing service "
++"continues, and operations already accepted may finish. Detached owned "
++"addresses cannot be assigned until the network is enabled again."
++msgstr ""
++"Zakázání sítě brání novému přidělování a přiřazování IP adres. Stávající "
++"provoz pokračuje a již přijaté operace mohou doběhnout. Nepřiřazené adresy s "
++"vlastníkem lze přiřadit až po opětovném povolení sítě."
++
++#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
++#: forms/monitoring.forms.php forms/networking.forms.php forms/users.forms.php
++#: forms/vps.forms.php pages/page_adminvps.php pages/page_backup.php
++#: pages/page_cluster.php pages/page_dataset.php
++msgid "Confirm"
++msgstr "Potvrdit"
++
++#: forms/cluster.forms.php
++msgid "Disable this network"
++msgstr "Zakázat tuto síť"
++
++#: forms/cluster.forms.php
++msgid "Enable this network"
++msgstr "Povolit tuto síť"
++
+ #: forms/cluster.forms.php
+ msgid "Network locations"
+ msgstr "Lokace sítě"
+@@ -668,13 +706,6 @@ msgstr ""
+ "<b>Upozornění:</b> Balíček bude také okamžitě odebrán všem uživatelům, kteří "
+ "jej používají."
+ 
+-#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
+-#: forms/monitoring.forms.php forms/networking.forms.php forms/users.forms.php
+-#: forms/vps.forms.php pages/page_adminvps.php pages/page_backup.php
+-#: pages/page_cluster.php pages/page_dataset.php
+-msgid "Confirm"
+-msgstr "Potvrdit"
+-
+ #: forms/cluster.forms.php forms/networking.forms.php forms/users.forms.php
+ #: forms/vps.forms.php
+ msgid "Remove"
+@@ -1020,11 +1051,6 @@ msgstr "Role"
+ msgid "Source"
+ msgstr "Zdroj"
+ 
+-#: forms/dns.forms.php forms/export.forms.php forms/users.forms.php
+-#: pages/page_cluster.php
+-msgid "Enabled"
+-msgstr "Povoleno"
+-
+ #: forms/dns.forms.php forms/incidents.forms.php forms/monitoring.forms.php
+ #: forms/oom_reports.forms.php forms/outage.forms.php
+ #: forms/security_advisory.forms.php forms/userns.forms.php
+@@ -1921,7 +1947,7 @@ msgstr "Ponechat"
+ msgid "Allowed"
+ msgstr "povoleno"
+ 
+-#: forms/ip_release.forms.php
++#: forms/ip_release.forms.php forms/networking.forms.php
+ msgid "Disabled"
+ msgstr "Zakázáno"
+ 
+@@ -2120,7 +2146,10 @@ msgid ""
+ "All selected addresses remain owned until the whole release succeeds. If it "
+ "rolls back, none are released. Addresses in a running release cannot be "
+ "retained."
+-msgstr "Všechny vybrané adresy zůstávají vlastníkům až do úspěšného dokončení celého uvolnění. Při vrácení změn se neuvolní žádná adresa. Adresy, které se právě uvolňují, už nelze zachovat."
++msgstr ""
++"Všechny vybrané adresy zůstávají vlastníkům až do úspěšného dokončení celého "
++"uvolnění. Při vrácení změn se neuvolní žádná adresa. Adresy, které se právě "
++"uvolňují, už nelze zachovat."
+ 
+ #: forms/ip_release.forms.php
+ msgid "Cleanup"
+@@ -2187,12 +2216,10 @@ msgid "Rolling back; ownership is retained"
+ msgstr "Probíhá vrácení změn; adresy zůstávají vlastníkům"
+ 
+ #: forms/ip_release.forms.php
+-#| msgid "Host addresses added"
+ msgid "All selected addresses released"
+ msgstr "Všechny vybrané adresy byly uvolněny"
+ 
+ #: forms/ip_release.forms.php
+-#| msgid "Release eligible addresses"
+ msgid "Release rolled back; no addresses released"
+ msgstr "Změny byly vráceny; žádné adresy nebyly uvolněny"
+ 
+@@ -2201,7 +2228,6 @@ msgid "Release could not start; no addresses released"
+ msgstr "Uvolnění se nepodařilo zahájit; žádné adresy nebyly uvolněny"
+ 
+ #: forms/ip_release.forms.php
+-#| msgid "Release eligible addresses"
+ msgid "No eligible addresses"
+ msgstr "Žádné adresy k uvolnění"
+ 
+@@ -2211,21 +2237,20 @@ msgstr "Transakční řetězec vyžaduje zásah administrátora"
+ 
+ #: forms/ip_release.forms.php
+ #, php-format
+-#| msgid "Transaction chain"
+ msgid "Transaction chain #%d"
+ msgstr "Transakční řetězec č. %d"
+ 
+ #: forms/ip_release.forms.php
+ #, php-format
+ msgid "Resource %s #%d is busy. Try again after its transaction finishes."
+-msgstr "Prostředek %s č. %d je zamčený. Zkus to znovu po dokončení jeho transakce."
++msgstr ""
++"Prostředek %s č. %d je zamčený. Zkus to znovu po dokončení jeho transakce."
+ 
+ #: forms/ip_release.forms.php
+ msgid "The database was busy. Try releasing the addresses again."
+ msgstr "Databáze byla zaneprázdněná. Zkus adresy uvolnit znovu."
+ 
+ #: forms/ip_release.forms.php
+-#| msgid "Last release result"
+ msgid "Latest release attempt"
+ msgstr "Poslední pokus o uvolnění"
+ 
+@@ -2243,12 +2268,10 @@ msgid ""
+ msgstr "Před dalším pokusem o uvolnění zkontroluj a oprav transakční řetězec."
+ 
+ #: forms/ip_release.forms.php
+-#| msgid "Recovery code"
+ msgid "Recovery"
+ msgstr "Obnova"
+ 
+ #: forms/ip_release.forms.php
+-#| msgid "Release campaign"
+ msgid "Release attempts"
+ msgstr "Pokusy o uvolnění"
+ 
+@@ -2494,6 +2517,10 @@ msgstr "Seznam incidentů"
+ msgid "Overview"
+ msgstr "Přehled"
+ 
++#: forms/networking.forms.php pages/page_adminvps.php
++msgid "Network enabled"
++msgstr "Síť povolena"
++
+ #: forms/networking.forms.php forms/vps.forms.php
+ msgid "Network interface"
+ msgstr "Síťové rozhraní"
+@@ -6600,10 +6627,6 @@ msgstr "Síť zakázána"
+ msgid "Failed to disable network"
+ msgstr "Síť se nepodařilo zakázat"
+ 
+-#: pages/page_adminvps.php
+-msgid "Network enabled"
+-msgstr "Síť povolena"
+-
+ #: pages/page_adminvps.php
+ msgid "Failed to enable network"
+ msgstr "Nepodařilo se povolit síť"
+@@ -7652,10 +7675,6 @@ msgstr "Balíček prostředků clusteru byl aktualizován."
+ msgid "Delete failed"
+ msgstr "Smazání se nezdařilo"
+ 
+-#: pages/page_cluster.php
+-msgid "Back to networks"
+-msgstr "Zpět k sítím"
+-
+ #: pages/page_cluster.php
+ msgid "Back to locations"
+ msgstr "Zpět k lokacím"
+diff --git a/webui/lang/locale/vpsAdmin.pot b/webui/lang/locale/vpsAdmin.pot
+index cf36c159e..f5850e91a 100644
+--- a/webui/lang/locale/vpsAdmin.pot
++++ b/webui/lang/locale/vpsAdmin.pot
+@@ -416,6 +416,11 @@ msgstr ""
+ msgid "Managed"
+ msgstr ""
+ 
++#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
++#: forms/networking.forms.php forms/users.forms.php pages/page_cluster.php
++msgid "Enabled"
++msgstr ""
++
+ #: forms/cluster.forms.php pages/page_adminm.php
+ msgid "Used"
+ msgstr ""
+@@ -444,6 +449,36 @@ msgstr ""
+ msgid "List locations this network is available in"
+ msgstr ""
+ 
++#: forms/cluster.forms.php
++msgid "Network availability"
++msgstr ""
++
++#: forms/cluster.forms.php pages/page_cluster.php
++msgid "Back to networks"
++msgstr ""
++
++#: forms/cluster.forms.php forms/networking.forms.php
++msgid ""
++"Disabling prevents new allocations and assignments. Existing service "
++"continues, and operations already accepted may finish. Detached owned "
++"addresses cannot be assigned until the network is enabled again."
++msgstr ""
++
++#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
++#: forms/monitoring.forms.php forms/networking.forms.php forms/users.forms.php
++#: forms/vps.forms.php pages/page_adminvps.php pages/page_backup.php
++#: pages/page_cluster.php pages/page_dataset.php
++msgid "Confirm"
++msgstr ""
++
++#: forms/cluster.forms.php
++msgid "Disable this network"
++msgstr ""
++
++#: forms/cluster.forms.php
++msgid "Enable this network"
++msgstr ""
++
+ #: forms/cluster.forms.php
+ msgid "Network locations"
+ msgstr ""
+@@ -667,13 +702,6 @@ msgid ""
+ "that are using it."
+ msgstr ""
+ 
+-#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
+-#: forms/monitoring.forms.php forms/networking.forms.php forms/users.forms.php
+-#: forms/vps.forms.php pages/page_adminvps.php pages/page_backup.php
+-#: pages/page_cluster.php pages/page_dataset.php
+-msgid "Confirm"
+-msgstr ""
+-
+ #: forms/cluster.forms.php forms/networking.forms.php forms/users.forms.php
+ #: forms/vps.forms.php
+ msgid "Remove"
+@@ -1015,11 +1043,6 @@ msgstr ""
+ msgid "Source"
+ msgstr ""
+ 
+-#: forms/dns.forms.php forms/export.forms.php forms/users.forms.php
+-#: pages/page_cluster.php
+-msgid "Enabled"
+-msgstr ""
+-
+ #: forms/dns.forms.php forms/incidents.forms.php forms/monitoring.forms.php
+ #: forms/oom_reports.forms.php forms/outage.forms.php
+ #: forms/security_advisory.forms.php forms/userns.forms.php
+@@ -1905,7 +1928,7 @@ msgstr ""
+ msgid "Allowed"
+ msgstr ""
+ 
+-#: forms/ip_release.forms.php
++#: forms/ip_release.forms.php forms/networking.forms.php
+ msgid "Disabled"
+ msgstr ""
+ 
+@@ -2442,6 +2465,10 @@ msgstr ""
+ msgid "Overview"
+ msgstr ""
+ 
++#: forms/networking.forms.php pages/page_adminvps.php
++msgid "Network enabled"
++msgstr ""
++
+ #: forms/networking.forms.php forms/vps.forms.php
+ msgid "Network interface"
+ msgstr ""
+@@ -6491,10 +6518,6 @@ msgstr ""
+ msgid "Failed to disable network"
+ msgstr ""
+ 
+-#: pages/page_adminvps.php
+-msgid "Network enabled"
+-msgstr ""
+-
+ #: pages/page_adminvps.php
+ msgid "Failed to enable network"
+ msgstr ""
+@@ -7488,10 +7511,6 @@ msgstr ""
+ msgid "Delete failed"
+ msgstr ""
+ 
+-#: pages/page_cluster.php
+-msgid "Back to networks"
+-msgstr ""
+-
+ #: pages/page_cluster.php
+ msgid "Back to locations"
+ msgstr ""
+diff --git a/webui/lib/functions.lib.php b/webui/lib/functions.lib.php
+index 40ed9b48a..888789b67 100644
+--- a/webui/lib/functions.lib.php
++++ b/webui/lib/functions.lib.php
+@@ -56,6 +56,10 @@ function get_free_route_list($res, $vps, $role = null, $limit = null)
+         $filters['role'] = $role;
+     }
+ 
++    if (isset($api->ip_address->list->getParameters('input')->network_enabled)) {
++        $filters['network_enabled'] = true;
++    }
++
+     if ($limit) {
+         $filters['limit'] = $limit;
+     }
+diff --git a/webui/pages/page_cluster.php b/webui/pages/page_cluster.php
+index 5832ed98c..a029f5c05 100644
+--- a/webui/pages/page_cluster.php
++++ b/webui/pages/page_cluster.php
+@@ -529,6 +529,29 @@ if (isAdmin()) {
+             $xtpl->sbar_add(_("Back to networks"), '?page=cluster&action=networks');
+             break;
+ 
++        case 'network_enabled':
++            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
++                csrf_check();
++                $enabled = $_POST['enabled'] ?? null;
++                if (($_POST['confirm'] ?? null) !== '1' || !in_array($enabled, ['0', '1'], true)
++                    || !isset($api->network->update->getParameters('input')->enabled)) {
++                    network_enabled_form($_GET['network']);
++                    break;
++                }
++
++                try {
++                    $api->network($_GET['network'])->update(['enabled' => $enabled === '1']);
++                    notify_user(_('Changes saved'), '');
++                    redirect('?page=cluster&action=networks');
++                } catch (\HaveAPI\Client\Exception\ActionFailed $e) {
++                    $xtpl->perex_format_errors(_('Update failed'), $e->getResponse());
++                    network_enabled_form($_GET['network']);
++                }
++            } else {
++                network_enabled_form($_GET['network']);
++            }
++            break;
++
+         case "location_networks":
+             location_networks_list($_GET['location']);
+             $xtpl->sbar_add(_("Back to locations"), '?page=cluster&action=locations');
+diff --git a/webui/tests/Regression/CsrfStateFormsTest.php b/webui/tests/Regression/CsrfStateFormsTest.php
+index 89977a877..099eccf9f 100644
+--- a/webui/tests/Regression/CsrfStateFormsTest.php
++++ b/webui/tests/Regression/CsrfStateFormsTest.php
+@@ -8,6 +8,8 @@ if (!class_exists('CsrfTokenInvalid')) {
+ 
+ class NullStateFormTemplate
+ {
++    public function title($title) {}
++
+     public function perex($title, $message = '') {}
+ 
+     public function perex_format_errors($title, $response) {}
+@@ -83,6 +85,19 @@ class RejectingStateApi
+ 
+ final class CsrfStateFormsTest extends TestCase
+ {
++    public function testNetworkAvailabilityRejectsMissingCsrfBeforeApiUpdate(): void
++    {
++        $this->installStubs();
++        global $xtpl, $api;
++        $xtpl = new NullStateFormTemplate();
++        $api = new RejectingStateApi();
++        $_SERVER['REQUEST_METHOD'] = 'POST';
++        $_GET = ['action' => 'network_enabled', 'network' => '4242'];
++        $_POST = ['enabled' => '0', 'confirm' => '1'];
++        $this->expectException(CsrfTokenInvalid::class);
++        require dirname(__DIR__, 2) . '/pages/page_cluster.php';
++    }
++
+     public function testLifetimeStateChangeRejectsMissingCsrfBeforeApiUpdate(): void
+     {
+         $this->installStubs();
+diff --git a/webui/tests/Regression/NetworkAvailabilityTest.php b/webui/tests/Regression/NetworkAvailabilityTest.php
+new file mode 100644
+index 000000000..2292956d1
+--- /dev/null
++++ b/webui/tests/Regression/NetworkAvailabilityTest.php
+@@ -0,0 +1,86 @@
++<?php
++
++use PHPUnit\Framework\TestCase;
++
++final class NetworkAvailabilityTest extends TestCase
++{
++    public function testAvailableRouteSelectorUsesOnlyAdvertisedNetworkFilter(): void
++    {
++        require_once dirname(__DIR__, 2) . '/lib/functions.lib.php';
++        global $api;
++        $vps = (object) ['user_id' => 1, 'node' => (object) ['location_id' => 2]];
++
++        foreach ([true, false] as $supported) {
++            $resource = new class ($supported) {
++                public object $list;
++                public array $filters = [];
++
++                public function __construct(bool $supported)
++                {
++                    $this->list = new class ($supported) {
++                        public function __construct(private bool $supported) {}
++
++                        public function getParameters($type)
++                        {
++                            return (object) ($this->supported ? ['network_enabled' => (object) []] : []);
++                        }
++                    };
++                }
++
++                public function list($filters)
++                {
++                    $this->filters = $filters;
++                    return [(object) ['id' => 3, 'addr' => '192.0.2.3', 'prefix' => 32, 'user_id' => 1]];
++                }
++            };
++            $api = (object) ['ip_address' => $resource];
++
++            self::assertSame([3 => '192.0.2.3/32 (owned)'], get_free_route_list('ipv4', $vps));
++            self::assertSame($supported, array_key_exists('network_enabled', $resource->filters));
++            if ($supported) {
++                self::assertTrue($resource->filters['network_enabled']);
++            }
++            self::assertSame(false, $resource->filters['assigned_to_interface']);
++            self::assertSame(2, $resource->filters['location']);
++        }
++    }
++
++    public function testStaleDisabledOwnedAssignmentFormHasNoSubmissionControls(): void
++    {
++        require_once dirname(__DIR__, 2) . '/forms/networking.forms.php';
++        global $api, $xtpl;
++        $_GET = ['return' => ''];
++        $_POST = ['vps' => 4, 'network_interface' => 5];
++        $api = (object) ['ip_address' => new class {
++            public function show($id, $params)
++            {
++                return (object) ['id' => $id, 'user_id' => 1, 'network' => (object) ['enabled' => false]];
++            }
++        }];
++        $xtpl = new class {
++            public array $messages = [];
++
++            public function table_title($title) {}
++
++            public function sbar_add($title, $url) {}
++
++            public function perex($title, $message)
++            {
++                $this->messages[] = $message;
++            }
++
++            public function form_create($url, $method)
++            {
++                throw new RuntimeException('Disabled allocation reached assignment controls');
++            }
++        };
++
++        route_assign_form(3);
++
++        self::assertCount(1, $xtpl->messages);
++        self::assertSame(
++            _('Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.'),
++            $xtpl->messages[0]
++        );
++    }
++}
