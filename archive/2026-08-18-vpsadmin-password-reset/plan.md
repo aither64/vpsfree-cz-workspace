@@ -85,7 +85,8 @@ whether an account exists or can use recovery.
   `api.oauth2TrustedOrigins`. The production and development configurations
   already do so; the integration fixture carries the same explicit trust so it
   exercises the deployed cross-origin OAuth description safely.
-- Production deployment and merging are out of scope for this session. The
+- Production deployment remains out of scope. The user authorized default-branch
+  integration on September 13; see the merge plan below. The
   production configuration will pin the feature revision and include an
   operator guide for deployment ordering, client start URIs, verification, and
   rollback by disabling the feature first.
@@ -179,10 +180,11 @@ whether an account exists or can use recovery.
 ## Final deployment and trust-boundary decisions
 
 - Publish `/oauth2/password-reset` on the real production auth frontend,
-  `cz.vpsfree/containers/prg/proxy`. Its protected vpsAdmin baseline can remain
-  on the stable revision; a low-priority route in shared production frontend
-  configuration proxies this path to `auth_production` and retains the
-  maintenance response.
+  `cz.vpsfree/containers/prg/proxy`, through the current vpsAdmin frontend
+  module. Per the September 13 user decision, remove all proxy-specific
+  baselines and use its normal nixos-stable, os-staging and vpsadmin channels.
+  Remove the unmerged configuration routing workaround commit. The module
+  owns both the recovery route and its maintenance behavior.
 - Install both new production mail templates before starting either upgraded
   API. The password-change security notice is not controlled by the recovery
   feature flag, so making its template available first preserves existing
@@ -716,3 +718,163 @@ whether an account exists or can use recovery.
   Reconcile findings against code and record required remediations or residual
   risks. This assessment does not authorize merging or a production rollout.
 - Leave the existing bridge development cluster and session running.
+
+## Accepted review remediations and preview deployment (2026-09-13)
+
+- Implement all six required findings and both advisories from the September
+  13 reconciliation in the retained branches. Reject pending AuthToken records
+  without an explicit integer authentication generation; these are existing
+  MFA/forced-password-change login continuations, not forgotten-password links.
+  Existing sessions remain valid, while unfinished old logins must restart.
+- Centralize the unchanged eight-character public password minimum in the
+  existing PasswordChanges module, including forms and translated messages.
+  Pass Basic requests through hash upgrades for audit snapshots. Normalize
+  passkey browser metadata to the existing utf8mb3/255-character column and
+  narrow option-generation error handling. Declare MailLog.user nullable.
+- Protect recently claimed queue rows from retention cleanup and make worker
+  completion/retry tolerate an already deleted row, without hiding other DB
+  failures or changing capacity, retention, or retry policy.
+- Rewrite only unmerged history: introduce final migration definitions in
+  their owning commits, fold the identified CI/WebUI/runbook repairs, and
+  preserve independent feature changes and generated confctl messages. Prove
+  history-only tree equality and regenerate exact downstream pins after
+  fetching current defaults. No new schema migration is needed.
+- Refresh both complete KB inventories and guarded schema-5 manifests. Explain
+  when/how password changes are recorded and where members open their history;
+  remove internal session-association and ID explanations. Preserve semantic
+  navigation and translation markers. Stage and verify both language pages in
+  this initiative's existing owned container and return page/revision links.
+  Production publication is not authorized.
+- Run focused regressions, repository hooks, and affected architecture/risk
+  review reruns before long integration tests. Rebuild affected configurations,
+  update the existing bridge development cluster in place, and verify live
+  recovery/MFA/mail/history. The user permits resetting that same development
+  cluster if necessary, but the unchanged final schema should allow an update.
+- Push with explicit leases and record current-head CI without waiting for
+  full CI, as requested. Leave the session, development cluster and KB staging
+  running. Do not merge, deploy production, archive, delete or release ownership.
+
+- Preview preparation found that the installed release guard requires staging
+  content to match the production source or the exact candidate. An older
+  staged candidate cannot be replaced directly. Prepare and verify one
+  four-page bundle retaining the unchanged metrics pages, then reset this
+  initiative's owned KB mirror and stage that bundle. This affects only KB
+  staging; preserve the development cluster and production wikis.
+
+- The architecture rerun found two additional consumers of the repaired
+  contracts. Use the canonical stamped AuthToken test helper in ordinary
+  WebAuthn specs. Move WebAuthn browser normalization to the shared challenge
+  owner and use it in both recovery and ordinary challenge factories, including
+  the ordinary UserAgent dictionary insert. Enforce the advertised password
+  minimum for explicitly supplied User Create passwords; omitted passwords
+  retain the existing disabled-password login state. Existing account passwords and sessions are
+  unaffected. Cover the ordinary challenge and initial-password boundaries,
+  fold these corrections into their owning remediation commits, and ask the
+  risk reviewer to assess the expanded public validation boundary.
+
+- A final upstream fetch advanced only configuration master: scheduled
+  nixpkgsUnstable and vpsAdminOS staging pins (d697bb6b). Rebase the retained
+  configuration branch onto that default and preserve those unrelated input
+  updates. No additional feature code or node protocol is introduced by this
+  rebase; the services-only development update retains its running OS source.
+
+## September 13 metrics heading correction
+
+User review found that metrics versioning appeared under account security. Add
+peer headings `Verzování metrik` / `Metrics versioning` before the existing
+versioning paragraphs in both complete page candidates. Preserve all technical
+content, page IDs, semantic bindings and translation markers. Refresh only the
+two affected navigation inventory fingerprints, generate a replacement bilingual
+four-page release, and verify the staging rendering. This is a narrow editorial
+review correction with no application, schema or compatibility change. Retain
+the existing cluster, session and production pages.
+
+## September 13 proxy baseline correction
+
+Remove all three proxy input overrides and their four unused root baseline
+inputs. Prune the lock with confctl while preserving retained input revisions.
+Drop unmerged routing workaround b13a7a8d; do not rewrite the merged July
+migration commits that introduced the baselines. Add one focused cleanup commit
+with the dependency pruning and matching deployment-guide correction. Preserve
+API/template pins, other initiative commits and all running environments.
+
+Quick checks cover formatting/hooks, strict documentation, role resolution for
+every machine, retained input identities, normal and maintenance auth routes.
+Run fresh general/architecture/scope/risk reviews (sol/xhigh), then build the
+production proxy configuration and inspect package/route changes. This is high
+risk for eventual deployment because the shared proxy advances previously
+frozen dependencies; no production deployment, API migration or cluster action
+is part of this correction. Record rollback to the retained system generation.
+Fetch/rebase the configuration branch as needed, preserve a backup ref and use
+an exact force-with-lease push. Leave full CI running without waiting.
+
+
+## September 13 authorized default-branch integration
+
+Merge all four retained feature branches into their current remote master
+branches using fresh temporary integration worktrees and fast-forward-only
+updates. Preserve the registered feature branches/worktrees, active session,
+bridge development cluster and owned KB staging. Production deployment and
+wiki promotion remain separate operator actions.
+
+Fresh fetch found one API default commit, 6923c7bf, updating packaged
+BigDecimal 4.1.2 to 4.1.3. Rebase the feature and prove that all feature patches
+and runtime sources remain unchanged. Refresh downstream exact API pins and
+the runbook revision with native Nix/confctl tooling. Keep other input nodes
+unchanged. The completed mandatory reviews remain applicable to unchanged
+feature logic; inspect and check the dependency and mechanical revision delta.
+Validate integration worktrees, then push API/templates before KB/configuration.
+Use ordinary default pushes and explicit leases only for rewritten feature
+branches. Verify every exact final feature head is contained in remote master.
+Full CI at original API 050ea526 and KB baf1f97 passed; collect new-head CI
+without waiting for full integration, as previously requested.
+
+
+Integration completed at API 791ab3aa, templates f944ba03, KB 919577d0 and
+configuration c8e5dadc. All exact feature heads are contained in remote master;
+all seven final configuration builds and quick checks pass. The running
+cluster/staging and feature branches/worktrees remain retained. Production
+rollout, wiki promotion and remaining CI are separate follow-up work.
+
+
+## September 13 approved production KB publication
+
+The user explicitly requested publication after merging the repositories.
+Promote the exact staged schema-5 manifests
+kb-metrics-heading-20260913-cs.yml and kb-metrics-heading-20260913-en.yml:
+metrics and user/password-history pages in both languages, four writes total.
+Preserve candidate bytes, reviewed localized revision summaries, language
+mappings and page IDs. Verify production identity/permissions, current staging
+content and production source guards before publication. Use the public
+kb-release promote command with --yes --approved-production, then verify both
+production releases and rendered pages. Do not deploy vpsAdmin or change the
+development cluster, KB staging ownership, or session lifecycle.
+
+
+Publication completed: both exact approved manifests were promoted through
+kb-release and verified on production, including rendered headings and localized
+revision summaries. The single pending-manifest guard required publishing the
+pending English release first, then staging the unchanged Czech manifest again
+before promotion. Staging remains running and owned, with no pending release;
+the dev cluster and session remain open. Application rollout is still separate.
+
+
+## September 13 requested development cleanup
+
+The user requested stopping the development cluster and cleaning up. Stop the
+exact retained bridge cluster through vpsadmin-devcluster stop. Release the
+initiative's now-published KB staging through its public ownership-checked
+command after confirming no pending release. Remove only proven initiative
+transient build/cache/probe outputs after their processes have finished;
+retain durable review/publication evidence and current release candidates.
+Preserve cluster disks/configuration for restart, registered feature worktrees,
+all Git branches, and the active session. Do not reset, archive or delete the
+session, touch another initiative's resources, or perform global Nix GC.
+
+
+The requested stop/cleanup is complete. The stable stop command required its
+normal timeout fallback; a second stop cleared stale readiness state. Cluster
+status is stopped/no-gcroot. KB staging is down and released. About 489.2 MiB
+of verified transient/cache data was removed; all manifest/portal references,
+review evidence and relevant source-page snapshots remain. VM data, feature
+worktrees/branches and the session remain retained. No archive or reset ran.

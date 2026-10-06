@@ -1,10 +1,391 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
+
+## September 13 requested stop and cleanup completed
+
+The user's requested development stop and cleanup are complete. The exact
+bridge cluster reports stopped, with no PID/readiness marker or retained
+result-config GC root. KB staging is down, ownership is released, and no
+pending release remains. Both the cluster's VM disks/configuration and the
+published staging data are retained. The session remains active and open;
+all four registered feature worktrees and local/remote branches remain.
+
+The stable vpsadmin-devcluster stop command first sent TERM to runner 3485102,
+then used its built-in termination fallback after the 120-second grace window.
+Its process and VM descendants are gone. The fallback left a stale ready marker;
+a second ordinary stop invocation cleared it and confirmed the cluster was not
+running. Final status and gcroots report stopped/no-gcroot. The runner log
+records stopping services, node1, dns-secondary and dns-primary. This matches
+the already documented shutdown-deadline workflow in
+notes/vpsadmin/2026-09-11-devcluster-dns-stop-timeout.md; individual guest timing
+was not remeasured. No private helper, reset or manual process kill was used.
+
+After confirming this session owned KB staging and had no pending release,
+`kb-stage release --yes` stopped it and released ownership while retaining its
+data. Production pages and application services were not changed.
+
+Removed 17 verified temporary/cache directory trees and 2,089 unneeded bulk KB
+capture files, about 489.2 MiB of allocated storage. Removed only task-owned
+paths without live process references, tracked Git files or external symlink
+traversal. This includes the known /tmp planning/build/probe directories,
+ignored Ruby/lint/Composer caches and reproducible confctl build state in the
+retained worktrees. Both development Gemfile.lock files are retained. Every
+file referenced by retained release manifests or the portal remains, together
+with relevant original KB page snapshots and all curated review/test/publication
+evidence. Published manifest SHA-256 values are unchanged. The reusable
+MetricsAccessToken exception diagnostic is retained as
+review-2026-09-13-fixes/metrics-token-exception-probe.rb; its old temporary path
+and other historical transient paths are intentionally gone.
+
+`cleanup-20260913.json` records the selected paths, size accounting and retained
+release files. No global Nix GC was run. Cluster disks/configuration and their
+private acceptance fixture remain available for an explicitly requested restart.
+No archive, session deletion, registered-worktree removal or branch deletion
+occurred. All four retained worktrees are clean. Remaining CI and production
+application rollout are separate follow-up work; no CI wait or deployment was
+performed during cleanup. Tracking remains in the shared working tree under
+today's checkpoint ceiling, with unrelated workspace changes preserved.
+
+## September 13 production KB publication completed
+
+The user explicitly requested publication after the merge. All four approved
+pages are now published and verified against their exact candidate bytes and
+localized revision summaries:
+
+- CS metrics: https://kb.vpsfree.cz/doku.php?id=navody%3Avps%3Ametriky
+- EN metrics: https://kb.vpsfree.org/doku.php?id=manuals%3Avps%3Ametrics
+- CS user/password history: https://kb.vpsfree.cz/doku.php?id=navody%3Avps%3Auzivatele
+- EN user/password history: https://kb.vpsfree.org/doku.php?id=manuals%3Avps%3Ausers
+
+Used the unchanged schema-5 manifests kb-metrics-heading-20260913-cs.yml
+(SHA-256 1780f4c49ab662d97cbc3342801a12c03dd88de5593e2e7ba0e5a66dc7969445)
+and kb-metrics-heading-20260913-en.yml
+(SHA-256 8bd8c15089a9aaa26a6fb87b76b56e0636f10ab4512f362877d9de5a99e41648).
+Both production identities and all four page ACLs (255) passed; both staged
+releases matched their reviewed contents and summaries. Each promotion used
+`kb-release promote --manifest FILE --yes --approved-production`, with the
+production source-revision/content and permission guards intact. Each wrote
+two pages, zero deletions and zero media objects. No candidate was edited.
+
+The first Czech promotion stopped before any write: the tool tracks one global
+pending manifest, which was the English release. Public kb-stage status
+confirmed this session's ownership and the exact English manifest digest.
+Promoted and production-verified English first, then idempotently staged the
+same Czech manifest, verified it and promoted it. Matching staged candidates
+were retained; no staging reset, private state edit or guard bypass occurred.
+Recorded this workflow in notes/cross-project/2026-09-13-kb-bilingual-release-promotion.md.
+
+Both `kb-release verify --manifest FILE --production` commands pass, including
+exact localized summaries and clickable production revision-history links.
+Rendered HTTP 200 checks pass for all four pages. Both metrics pages have
+account-security and versioning headings at h2; the version paragraph is under
+its own heading. Both history sections display the approved explanatory text.
+Evidence: kb-publication-20260913-{cs,en}.txt and
+kb-publication-render-check-20260913.json, linked in the portal.
+
+Public kb-stage status confirms container up, ownership retained by this slug,
+and no pending release. The session, registered worktrees and existing bridge
+development cluster remain open. No vpsAdmin production application deployment
+or session/cluster lifecycle action occurred. Next actions, if requested, are
+checking remaining CI and the separate application rollout. Production KB
+publication is complete; no further KB approval or publication is pending.
+The same-day coordination checkpoint ceiling still applies; tracking updates
+remain uncommitted and unrelated shared workspace changes are preserved.
+
+## September 13 default-branch integration completed
+
+All four exact final feature heads are merged and pushed into their remote
+`master` branches. Fresh fetch confirms local feature, remote feature and
+remote master equality, and all four registered feature worktrees are clean:
+
+| Project | Previous master | Merged head |
+| --- | --- | --- |
+| vpsadmin | 6923c7bf | 791ab3aa89e2f613979da6090b89785c78245db5 |
+| vpsfree-mail-templates | 9e1ddbd9 | f944ba03eba5d0d6b58b7eb856f251d1c96f2c11 |
+| vpsfree-kb-contracts | 81d6d7df | 919577d0c770e47b623c591f8bf0cce4e8d30666 |
+| vpsfree-cz-configuration | 8ef765d3 | c8e5dadcf361e3f86b86d43cf8836c7f296b75ef |
+
+The user explicitly authorized integration. Each default was fetched before
+integration, then a fresh detached temporary target worktree was advanced by
+`git merge --ff-only`. Pushes used ordinary `HEAD:refs/heads/master`, in order
+API, templates, KB, configuration. Only the API feature rebase used an explicit
+force-with-lease against 050ea526; default history was never rewritten. No open
+pull requests existed for these branches. Temporary integration worktrees were
+removed non-forcibly after verification; all registered initiative worktrees
+and local/remote feature branches remain. Private tooling, logs and generated
+build state are retained under `/tmp/password-reset-merge-20260913.Gxk6xd`.
+
+Fresh API default 6923c7bf adds only packaged BigDecimal 4.1.2 -> 4.1.3. All 45
+feature patches compare equal in range-diff, and API/WebUI/tests/modules/flake
+inputs match reviewed 050ea526 byte for byte. Only twelve inherited package
+lock/gemset files change. KB updates exact revision metadata in five files;
+every other lock node is identical, including the independent OS revision.
+Configuration changes only vpsadminServices via confctl and two runbook revision
+literals. Generated confctl commit messages remain unchanged. Templates retain
+their reviewed head. The completed high-risk mandatory reviews and all accepted
+fixes remain applicable (general/architecture/scope/risk, gpt-5.6-sol at xhigh).
+This inspected dependency/mechanical delta adds no new design or contract;
+no reviewer rerun is required under skill steps 1, 9 and 10.
+
+Integration-worktree verification passes: template flake checks, API selector
+16 tests/55 assertions, configuration 87 RSpec examples, strict MkDocs, and
+full KB bin/check (60 concepts, 120 variants/PNGs; 94 navigation bindings and
+nine exceptions). All seven configurations build at exact clean c8e5dadc:
+int.api1, int.api2, int.webui1, int.webui2, proxy, int.mon1 and int.mon2.
+An offline probe confirms that the built API's wrapped Ruby loads BigDecimal
+4.1.3. The final proxy nginx configuration is byte-identical to reviewed a310b876.
+No local kernel build or production deployment occurred.
+
+Original exact API 050ea526 full CI 34752301231 and KB baf1f97 Check
+34762027701 completed successfully. At the merge checkpoint all five fast API
+checks pass on both final feature and master; topic/full CI continue. Template
+master Check 34773279834 passes; KB final feature Check 34773059193 passes.
+KB master Check and managed runtime remain running/queued. Current API master
+full CI is 34773269777; KB master runtime is 34773294123. No failed current-head
+workflow was observed. No superseded active feature runs existed, and no
+current-head run was cancelled. Configuration has no push-triggered CI.
+Per the user instruction, do not wait for full CI. Exact URLs and statuses are
+in merge-ci-20260913.json.
+
+The configuration target's initial ambient post-checkout hook lacked gems;
+its creation succeeded and merge/checks passed in the pinned Nix shell. No hook
+was bypassed. Offline package probing initially used an absent package wrapper
+and then a systemd launcher (access denied; no service started); the verified
+entry point is ruby-env-wrapped/bin/ruby, documented in the new vpsAdmin note.
+The nginx probe initially expected a store path in ExecStart; using the actual
+/etc/nginx/nginx.conf within the built closure proves exact content equality.
+
+The session remains active and open. Its bridge cluster still runs clean API
+050ea526 with the same runner and node/DNS state; this merge did not redeploy
+it. KB staging remains owned and running with the current four-page manifests
+kb-metrics-heading-20260913-{cs,en}.yml. Their pinned KB revision baf1f97 is now
+an ancestor of remote master, and recorded managed-page/test sources are
+unchanged. Production rollout and KB promotion remain pending operator actions;
+merging does not authorize either, or any session/cluster lifecycle action.
+Next step: check remaining CI when requested and follow the deployment runbook
+or promote the exact staged KB release only after direct production approval.
+
+Evidence: merge-2026-09-13.md, merge-revisions-20260913.json,
+merge-builds-20260913.json, merge-ci-20260913.json and
+merge-range-diff-20260913.txt. No additional tracking-only commit is made under
+the existing same-day checkpoint ceiling; unrelated shared workspace changes
+are preserved.
+
+## September 13 proxy override correction implemented
+
+The user approved removal of all proxy overrides (nixpkgs, vpsAdminOS and
+vpsAdmin) and dropping the unmerged auth routing workaround. Configuration
+started at bb49f262d263760c26a87b73ad9abae1e28cf9fe, backed up under
+refs/backup/password-reset-proxy-20260913. Rebase onto current default
+8ef765d339ac792ef4f01a5c7a160e48600adcaf preserved all five patches exactly;
+the intervening defaults only changed devWorkspace pins. Dropped the auth
+routing workaround b13a7a8d (rebased d7792d1a). New cleanup commit/current
+review head is 0e0a985ad5daa12ab5ad50fec5ac4cf55b204358. Other project heads
+and running cluster/staging remain unchanged. Private logs and baseline evidence:
+`/tmp/password-reset-proxy-20260913.22Fs24`. No additional tracking-only commit
+is planned today; preserve the shared checkout's unrelated changes.
+
+Quick checks pass: formatting/hooks, strict MkDocs, complete proxy derivation
+evaluation, recursive retained-input graph equality, all 108 machine mappings
+(only proxy changes), and 18 auth-route normal/maintenance checks. Four root
+baseline inputs and nine lock nodes were removed through confctl; API/template
+pins remain unchanged. The initial ambient rebase was refused by the existing
+Overcommit gem dependency check; rebase in the pinned dev shell passed. The
+first mapping assertion assumed human names rather than encoded machine keys;
+the corrected public machineKeys mapping check passes. MkDocs is not part of
+the config tools shell; a shell using the pinned nixpkgs MkDocs package passed.
+
+All four mandatory reviews at sol/xhigh are complete on 0e0a985a, with no
+Blocking/Important findings. Architecture's one Advisory about duplicated
+proxy rollback instructions is fixed in final cleanup commit
+`a310b87625e53434655fd1c3e215f16999615982`. Root inspected the narrow doc-only
+diff and reran strict MkDocs/hooks; no reviewer rerun is required under step 9.
+The full proxy build passes on final a310b876. Built metadata records that
+exact revision with revisionDirty=false, and the built inputs equal the
+validated normal channel mappings. Both auth hosts contain exactly one copy
+of each auth route and preserve maintenance handling. Normalized Nginx diff
+against the prior bb49f262 build changes only the package-version include paths
+(the included contents are identical) and adds the provider-owned recovery
+route on auth-admin. The existing production route and other hosts are intact.
+
+The closure/package diff is retained in review-2026-09-13-proxy/closure-diff.txt;
+it includes nginx 1.30.3 -> 1.30.4, HAProxy 3.3.9 -> 3.3.11, OpenSSL and
+other platform updates, and the download-mounter advance to API 050ea526.
+The preceding built closure is the comparison baseline, not a fresh live
+production capture. No local kernel was built. Built final closure:
+`/nix/store/9ybslw6xdmv3cwv7v4a6wmch58ijrbzz-nixos-system-proxy-26.05.20260911.21a67dc`.
+
+After a final fetch confirmed default 8ef765d3 and remote feature bb49f262,
+the branch was pushed with an explicit lease from bb49f262 to a310b876.
+Remote head equality is confirmed, and the feature worktree is fully clean;
+generated .bin/.bundle tool files were retained privately. The configuration
+repository has no push-triggered CI and no workflow runs for this branch;
+its only workflow performs scheduled/manual dependency updates, so it was not
+triggered as a test. No CI was cancelled, and no full CI wait was performed.
+
+Production switch/rollback remains untested and requires the normal operator
+rollout using the retained preceding generation and checks of other proxy
+sites. The dev cluster and KB staging were not changed. Session lifecycle
+remains active with all branches/worktrees retained. Next operator action:
+review the corrected configuration/closure diff and continue the existing
+integration process.
+
+## September 13 metrics article heading correction
+
+User review identified that the versioning paragraph was grouped under account
+security. Both candidates now add a peer heading: `Verzování metrik` in Czech
+and `Metrics versioning` in English. All other page bytes match the previous
+preview, including both password-history pages and translation markers.
+
+The two corresponding navigation discovery fingerprints are committed and
+pushed in KB contracts `baf1f97e5784b76cc15755b6eeb7fc227b91b023` (parent
+`32888e4f3f0889d869a0e08a9f9519e5ecc36e2d`). Default master remains 81d6d7df;
+the worktree is clean. The other three project heads are unchanged. Focused
+Nix-shell all-page annotation verification passes: 94 bindings, nine exceptions.
+As at the prior checkpoint, the two upstream IP annotations are used only in
+private verification candidates and excluded from the publication bundle.
+
+This is a direct, narrow editorial review correction. Mandatory-change-review
+step 9 applies: inspected the exact heading-only candidate diff and matching
+fingerprints; no design or contract boundary changed, so no reviewer rerun or
+long integration run is required. Existing authentication reviews remain valid.
+
+Fresh production inventory: 114 CS and 77 EN pages. New complete bilingual
+manifests are `kb-metrics-heading-20260913-{cs,en}.yml`, generated from the
+matching replacement plan and one localized changes file. They supersede the
+previous `kb-preview-20260913-{cs,en}.yml` preview. The old four staged pages
+were verified and privately backed up with no concurrent edits. The owned KB
+staging mirror was refreshed through public commands because the release guard
+requires the source baseline before replacing an older candidate. Both new
+manifests stage and verify successfully, including exact localized summaries
+and revision-history links. Rendered HTTP 200 checks confirm that account
+security and versioning are peer h2 sections and the version paragraph is
+contained in its own section. Staging remains running and owned; the vpsAdmin
+development cluster was not touched and production was not written.
+
+Evidence: `kb-metrics-heading-verification-20260913.txt` and
+`kb-metrics-heading-render-check-20260913.json`. KB Check workflow 34762027701
+is running on baf1f97; do not wait for full CI. Next operator action is to review
+the refreshed Czech/English preview, then continue the existing merge process.
+
+## September 13 implementation of accepted review fixes
+
+Implementation and history consolidation are committed and pushed. Final API
+`050ea5263812a76dc39f14c5b58a0e88714d634d` and configuration
+`bb49f262d263760c26a87b73ad9abae1e28cf9fe` replace the first remediation
+snapshot. Templates remain `f944ba03eba5d0d6b58b7eb856f251d1c96f2c11`.
+KB is `32888e4f3f0889d869a0e08a9f9519e5ecc36e2d`; its final full check
+passes and all four remote feature heads match local. All use the same retained
+branches/worktrees; original heads remain in refs/backup/password-reset-review-20260913
+and first remediation heads in refs/backup/password-reset-remediation-20260913.
+
+- All six required and two advisory remediations are implemented. Old tokens
+  means existing MFA/forced-password-change AuthToken continuations, not new
+  forgotten-password links. Explicit integer generation is now required;
+  established sessions survive. Shared password policy, Basic audit snapshots,
+  bounded WebAuthn metadata, nullable MailLog user metadata and queue retention
+  behavior are covered by focused regressions.
+- Targeted architecture/risk reviews (fresh gpt-5.6-sol, xhigh) found three
+  additional issues at 41d590aa: ordinary WebAuthn's unstamped test fixture
+  (Blocking), ordinary metadata normalization and User Create's supplied
+  password validation (Important). All are fixed and folded into their owning
+  six remediation commits. The 74 focused follow-up examples pass; tested tree
+  6e7cabba equals final 6c08f8aa exactly. The bounded risk follow-up
+  found one incorrect doc/test claim: omitted passwords keep password login
+  disabled (`!`), rather than generating one. This is corrected in the test
+  and guide; two focused initial-password examples pass. API 050ea526 differs
+  from reviewed 6c08f8aa only in that test. Root confirms the narrow correction.
+  All Blocking/Important findings are resolved; final pins/hooks/checks pass.
+- History-only API and configuration rewrites matched the original trees.
+  Final API/db and WebUI still match original a2e6d803. Recovery migration is
+  introduced once in 1f8e676cd; history migration once in cffa3116a. Matching
+  ledger backend changes moved with their schema. Runbook is introduced once,
+  with writer barrier, pending-login restart and initial-password validation.
+- Final default fetch changed only configuration master to d697bb6b, bringing
+  scheduled unrelated nixpkgsUnstable/OS staging pins. Rebase preserves those.
+  confctl generated exact service/template pins; messages remain verbatim.
+  KB preserves its independent OS 6bdf458f and all other lock nodes using the
+  explicit nested OS input override. Pushes use recorded explicit leases.
+- Quick checks: 235 API examples accounted for by initial passes and corrected
+  focused reruns, plus 74 follow-up examples; ten migration examples; Ruby lint
+  and i18n health; active hooks; PHPUnit 90 tests/376 assertions; selector
+  16 tests/55 assertions. Final config passes 87 specs and strict MkDocs.
+  Final KB passes full bin/check (120 PNGs); navigation 94 bindings/
+  nine exceptions is unchanged by the mechanical pin. Templates checker
+  passed unchanged head earlier today (71 templates/349 files).
+- Superseded API topic CI 34749479016 failed six ordinary WebAuthn cases in
+  both full/core topics. Failed logs were read: the unstamped fixture caused
+  rejected authority/missing challenge response, matching both reviewers and
+  the now-passing focused checks. Superseded full CI 34749479084 was cancelled
+  after final push; current-head lint, i18n and all API topic suites pass. Both final KB
+  workflows (Check and Managed page runtime) pass.
+  The final automatic CI 34751097329 skipped integrations because its
+  before..head diff was spec-only; logs confirm this. Explicit manual full CI
+  34752301231 is running at exact 050ea526. The user explicitly does not require
+  waiting for that full run.
+- KB preview is fully staged and verified: revised bilingual history pages,
+  preserved metrics pages (byte-for-byte equal to earlier staging), reciprocal
+  English-derived translation marker. Fresh inventories: 114 CS/77 EN pages.
+  Verification-only upstream IP annotations are excluded from publication.
+  Use kb-preview-20260913-{cs,en}.yml and the linked verification artifact;
+  older candidate manifests are superseded. Exact summaries/revision links and
+  rendered HTTP200 checks are retained. Production was not written.
+- KB networking repair restored only declared host address 192.168.123.1 and
+  route to 192.168.123.2; cause of loss remains unknown. The owned public
+  reset/mirror and complete four-page stage were then required by the release
+  guard, which refused overwriting a different old candidate. Staging remains
+  running and owned. Existing pages have private temporary backups.
+- Development deployment is complete and healthy. Public services-only updates
+  use exact API 050ea526 with revisionDirty=false. The original runner PID
+  3485102 stays ready on bridge; node and DNS closures match the before-update
+  capture, with retained OS source 15802517e2d92dda4ddc07ebac3d1d7ea087b430.
+  No cluster reset occurred. All four project worktrees are fully clean.
+- The first update's dirty build flag came from generated caches. Those
+  verified untracked outputs were moved to private temporary storage and a
+  second public services update passed the clean revision/health checks.
+  The final seed reconciliation restores declared member email/MFA defaults,
+  so the accepted shared-email/MFA fixtures were reapplied afterward. The
+  existing enabled/confirmed TOTP value is unchanged. Explicit final fixture
+  assertions pass; do not infer acceptance from probe exit status alone.
+- All seven config builds pass at bb49f262. All three selected browser scripts
+  pass after review: auth 24, admin 6, self-service 11 Playwright tests, zero
+  failures; runner exits 0 including teardown. The bounded single-group run
+  fit measured host capacity despite a conservative scheduler-limit warning.
+  No local kernel compilation occurred. See browser-results-20260913.json.
+- Live recovery passes after fixture restoration: grouped mail for both
+  accounts with one eligible link, retained TOTP, password replacement,
+  sessionless recovery history/client metadata and security notice delivery.
+  The history count is two; no recoverable authority or pending submission
+  remains. Ordinary OAuth login with the reset password/TOTP also returns to
+  WebUI with the expected identity and establishes a session.
+- The failed first live mail wait was investigated: worker completed the
+  unknown identifier neutrally, with no exception or new mail request, because
+  seed had restored default emails. Retry followed fixture restoration and the
+  normal ten-minute throttle. A separate malformed HTTP OAuth probe omitted
+  the form's MFA select and hit a pre-existing null-column 500; the template,
+  journal and 2024 default-branch implementation establish its cause. The
+  corrected complete form passes. No blind rerun or product-code workaround.
+  Detailed evidence is in validation-2026-09-13.md and safe live artifacts.
+
+The retained acceptance TOTP value is now stored outside portal tracking at
+`/home/aither/.local/state/vpsfree-acceptance/2026-08-18-vpsadmin-password-reset/totp-secret`
+(mode 0600, parent 0700). Its value is unchanged. The private fixture helpers
+read that file; current plan/state no longer expose the inline seed. Historical
+Git records are not rewritten.
+
+The user permits an exact development reset if necessary, but unchanged schema
+allowed the completed in-place update. Leave session, dev cluster and KB staging running;
+no production deployment/publication, merge, archive, release or deletion.
+Next operator action: review the bilingual KB preview and the explicit full CI
+run before directing integration or production publication.
+
+Tracking checkpoint 0ab390d already exists today; consolidate these working-tree
+notes without another routine tracking-only commit.
 
 # 2026-08-18-vpsadmin-password-reset
 
-## Current work — September 13 merge-readiness review complete
+## Previous checkpoint — September 13 merge-readiness review complete
 
 **Not ready for merge.** The fresh mandatory review covered the complete
 committed series across all four retained repositories. After reconciliation:
@@ -776,7 +1157,7 @@ handoff and the latest dated entries when older status statements conflict.
 - The shared-address fixture was reapplied after the service switch:
   `test-user1` and `test-user2` both use
   `shared-password-recovery@example.test`; only `test-user1` has effective TOTP,
-  with deterministic secret `JBSWY3DPEHPK3PXP`. A real public request returned
+  with deterministic secret `<stored in the private acceptance fixture file>`. A real public request returned
   the neutral confirmation and produced one grouped multipart message. It has
   one plain-text link and one HTML action button for `test-user1`, a support-only
   entry for `test-user2`, and no user-facing recovery-code or single-use
@@ -910,7 +1291,7 @@ handoff and the latest dated entries when older status statements conflict.
 - The shared-email acceptance fixture is restored on the fresh database:
   `test-user1` and `test-user2` use
   `shared-password-recovery@example.test`; only `test-user1` has effective
-  TOTP, with secret `JBSWY3DPEHPK3PXP`.
+  TOTP, with secret `<stored in the private acceptance fixture file>`.
 - Live acceptance verifies that immediate `test-user2` and `test-user1`
   submissions each return the neutral HTTP 303 and produce separate messages.
   A repeated `test-user1` request returns HTTP 429, a computed `Retry-After`
@@ -1111,7 +1492,7 @@ handoff and the latest dated entries when older status statements conflict.
   `test-user1` and `test-user2` share
   `shared-password-recovery@example.test`; only `test-user1` has account MFA
   enabled and an enabled, confirmed `Acceptance TOTP` device with deterministic
-  secret `JBSWY3DPEHPK3PXP`. The unfinished recovery queue is empty and the
+  secret `<stored in the private acceptance fixture file>`. The unfinished recovery queue is empty and the
   feature flag is enabled.
 - Broad exact-head vpsAdmin CI run `32421058486` remains normally in progress
   in its multi-hour integration step. There is no runner-shutdown signal or
@@ -1225,7 +1606,7 @@ handoff and the latest dated entries when older status statements conflict.
   `test-user1` and `test-user2` share
   `shared-password-recovery@example.test`; only `test-user1` has account MFA
   enabled and an enabled, confirmed `Acceptance TOTP` device with deterministic
-  secret `JBSWY3DPEHPK3PXP`; the test WebUI client has interactive completion
+  secret `<stored in the private acceptance fixture file>`; the test WebUI client has interactive completion
   enabled; and the unfinished submission queue is empty. The temporary fixture
   script was removed after its assertions passed.
 - Exact-head GitHub Actions are green for vpsAdmin API migration specs,
@@ -1405,7 +1786,7 @@ handoff and the latest dated entries when older status statements conflict.
   request. `test-user1` and `test-user2` use
   `shared-password-recovery@example.test`; only `test-user1` has account MFA
   enabled and an enabled, confirmed `Acceptance TOTP` device with deterministic
-  secret `JBSWY3DPEHPK3PXP`. WebUI direct completion and recovery are enabled,
+  secret `<stored in the private acceptance fixture file>`. WebUI direct completion and recovery are enabled,
   and the unfinished submission queue is empty.
 - A live base-exporter run completed successfully and deployed metrics to
   `/run/metrics/vpsadmin-base.prom`. It contains every fixed password-recovery
@@ -2262,7 +2643,7 @@ handoff and the latest dated entries when older status statements conflict.
 - Development-only acceptance state was restored through the application
   models: password recovery is enabled and `test-user1` has one enabled,
   confirmed `Acceptance TOTP` using deterministic secret
-  `JBSWY3DPEHPK3PXP`; `test-user2` and `test-admin` have no MFA. Both temporary
+  `<stored in the private acceptance fixture file>`; `test-user2` and `test-admin` have no MFA. Both temporary
   scripts were removed immediately after their assertions passed.
 - The queryless public recovery form returns HTTP 200 with no-store/security
   headers, the configured logo, labelled login-or-primary-email field, and a
@@ -2539,7 +2920,7 @@ handoff and the latest dated entries when older status statements conflict.
   `test-user1` and `test-user2` share
   `shared-password-recovery@example.test`, and only `test-user1` has effective
   MFA with a confirmed, enabled `Acceptance TOTP` device using deterministic
-  secret `JBSWY3DPEHPK3PXP`. `test-user2` and `test-admin` have no factors.
+  secret `<stored in the private acceptance fixture file>`. `test-user2` and `test-admin` have no factors.
   The WebUI OAuth client is the default direct-continuation client. The public
   recovery form returns HTTP 200 with its logo, labelled identifier field, and
   working OAuth-start sign-in link. The temporary fixture scripts were removed.

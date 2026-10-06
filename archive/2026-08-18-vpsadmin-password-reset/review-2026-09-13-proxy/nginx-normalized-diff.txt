@@ -1,0 +1,24 @@
+--- before
++++ after
+@@ -7,8 +7,8 @@
+ 	# Load mime types and configure maximum size of the types hash tables.
+ 	include /nix/store/HASH-mailcap-2.1.54/etc/nginx/mime.types;
+ 	types_hash_max_size 2688;
+-	include /nix/store/HASH-nginx-1.30.3/conf/fastcgi.conf;
+-	include /nix/store/HASH-nginx-1.30.3/conf/uwsgi_params;
++	include /nix/store/HASH-nginx-1.30.4/conf/fastcgi.conf;
++	include /nix/store/HASH-nginx-1.30.4/conf/uwsgi_params;
+ 	default_type application/octet-stream;
+ 	upstream api_maintenance {
+ 		server unix:/run/varnish/vpsadmin-varnish.sock ;
+@@ -285,6 +285,10 @@
+ 			proxy_pass http://auth_maintenance;
+ 			include /nix/store/HASH-nginx-recommended-proxy_set_header-headers.conf;
+ 		}
++		location /oauth2/password-reset {
++			proxy_pass http://auth_maintenance;
++			include /nix/store/HASH-nginx-recommended-proxy_set_header-headers.conf;
++		}
+ 		location /webauthn {
+ 			proxy_pass http://auth_maintenance;
+ 			include /nix/store/HASH-nginx-recommended-proxy_set_header-headers.conf;

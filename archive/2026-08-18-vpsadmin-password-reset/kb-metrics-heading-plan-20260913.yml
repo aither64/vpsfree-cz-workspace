@@ -1,0 +1,105 @@
+---
+schema: 3
+replacements: []
+content_replacements:
+- language: en
+  page: manuals:vps:metrics
+  before: |-
+    ====== Metrics for Prometheus ======
+    vpsAdmin exports metrics for the monitoring system [[https://prometheus.io|Prometheus]].
+    You can add these metrics to your own monitoring setup, whether it’s running in your VPS or elsewhere.
+
+    The metrics include information about your VPS, such as CPU usage, memory usage, load average, data transfers, OOM reports, node statuses, and more. There are also metrics related to membership, including the date until your membership is paid.
+
+    To set this up, go to <vpsadmin-nav id="member.metrics-access-tokens.open">**Edit profile** -> **Metrics access tokens**</vpsadmin-nav> in vpsAdmin and create an access token. You will be provided with a scrape URL, which you can add to your monitoring configuration. VPS statuses are updated every 2 minutes, so there’s no point in fetching the data more frequently. For a detailed overview of the available metrics, open the URL in your browser.
+
+    The metric ''vpsadmin_metrics_version'' (unless you’ve changed the prefix) indicates the version of the metrics. If we make backward-incompatible changes, the first number will increase, e.g., ''1.0 -> 2.0''. The number after the decimal point may increase when new metrics are added, but the meaning of the original metrics will remain unchanged.
+  replacement: |-
+    ====== Metrics for Prometheus ======
+    vpsAdmin exports metrics for the monitoring system [[https://prometheus.io|Prometheus]].
+    You can add these metrics to your own monitoring setup, whether it runs in your VPS or elsewhere.
+
+    The metrics include information about your VPS, such as CPU and memory usage, load average, data transfers, OOM reports, and node status. They also cover your membership, including the date until which it is paid.
+
+    To set this up, go to <vpsadmin-nav id="member.metrics-access-tokens.open">**Edit profile** -> **Metrics access tokens**</vpsadmin-nav> in vpsAdmin and create an access token. vpsAdmin will show you a scrape URL to add to your monitoring configuration. VPS status is updated every two minutes, so there is no benefit in fetching the data more frequently. Open the scrape URL in your browser for a complete list of the available metrics.
+
+    ===== Account security =====
+    The metrics also describe the current authentication state of your account. The names below use the default ''vpsadmin_'' prefix:
+
+      * ''vpsadmin_user_password_generation'' is the password version. It increases whenever your password changes, so you can use it to detect a change.
+      * ''vpsadmin_user_password_reset_required'' is ''1'' when you must choose a new password and ''0'' otherwise.
+      * ''vpsadmin_user_multi_factor_auth_enabled'' is ''1'' when multi-factor authentication is enabled for the account and ''0'' otherwise.
+      * ''vpsadmin_user_multi_factor_auth_method_count{method="totp"}'' and ''vpsadmin_user_multi_factor_auth_method_count{method="webauthn"}'' show the number of enabled TOTP authenticators and passkeys.
+
+    ===== Metrics versioning =====
+    The metric ''vpsadmin_metrics_version'' indicates the metrics version, unless you have changed the prefix. The current version is ''1.1''. The first number increases for a backward-incompatible change, for example ''1.0 -> 2.0''. The number after the decimal point may increase when metrics are added without changing the meaning of existing metrics.
+    <page>manuals:vps:metrics</page>
+  count: 1
+- language: cs
+  page: navody:vps:metriky
+  before: |-
+    ====== Metriky pro Prometheus ======
+    vpsAdmin exportuje metriky pro monitorovací systém [[https://prometheus.io|Prometheus]].
+    Tyto metriky si můžete přidat do vlastního monitoringu, který provozujete ve VPS, nebo jinde.
+
+    Metriky obsahují informace o VPS jako využití CPU, paměti, load average, datové přenosy,
+    OOM reporty, statusy nodů, apod. Jsou zde taky metriky týkající se členství, včetně data
+    do kdy máte členství uhrazeno.
+
+    Pro nastavení si ve vpsAdminu v <vpsadmin-nav id="member.metrics-access-tokens.open">**Upravit profil** -> **Přístupové tokeny k metrikám**</vpsadmin-nav> vytvořte přístupový
+    token. Zobrazí se vám tzv. scrape URL, kterou přidáte do vašeho monitoringu. Statusy VPS se aktualizují
+    co 2 minuty, takže nemá cenu data stahovat častěji. Pro přesný přehled dostupných metrik si URL
+    otevřete v prohlížeči.
+
+    Metrika ''vpsadmin_metrics_version'' (pokud jste si nezměnili prefix) udává verzi metrik. Pokud bychom
+    dělali zpětně nekompatibilní změny, první číslo se navýší, tj. např. ''1.0 -> 2.0''. Číslo za desetinnou
+    čárkou se může zvyšovat, když přidáme nějaké nové metriky, ale význam původních metrik se nezmění.
+  replacement: |-
+    ====== Metriky pro Prometheus ======
+    vpsAdmin exportuje metriky pro monitorovací systém [[https://prometheus.io|Prometheus]].
+    Tyto metriky si můžeš přidat do vlastního monitoringu, který provozuješ ve VPS nebo jinde.
+
+    Metriky obsahují například využití CPU a paměti, load average, datové přenosy, OOM reporty a stav nodů. Najdeš v nich také informace o členství včetně data, do kterého ho máš uhrazené.
+
+    Pro nastavení si ve vpsAdminu v <vpsadmin-nav id="member.metrics-access-tokens.open">**Upravit profil** -> **Přístupové tokeny k metrikám**</vpsadmin-nav> vytvoř přístupový token. vpsAdmin ti zobrazí scrape URL, kterou přidáš do svého monitoringu. Stav VPS se aktualizuje každé dvě minuty, takže nemá smysl data stahovat častěji. Úplný seznam dostupných metrik najdeš po otevření scrape URL v prohlížeči.
+
+    ===== Zabezpečení účtu =====
+    Metriky popisují také aktuální stav přihlašování k tvému účtu. Následující názvy používají výchozí prefix ''vpsadmin_'':
+
+      * ''vpsadmin_user_password_generation'' je verze hesla. Zvýší se po každé změně hesla, takže pomocí ní můžeš změnu odhalit.
+      * ''vpsadmin_user_password_reset_required'' má hodnotu ''1'', když si musíš zvolit nové heslo, jinak má hodnotu ''0''.
+      * ''vpsadmin_user_multi_factor_auth_enabled'' má hodnotu ''1'', když je u účtu zapnuté vícefaktorové ověřování, jinak má hodnotu ''0''.
+      * ''vpsadmin_user_multi_factor_auth_method_count{method="totp"}'' a ''vpsadmin_user_multi_factor_auth_method_count{method="webauthn"}'' udávají počet zapnutých TOTP autentizátorů a přístupových klíčů.
+
+    ===== Verzování metrik =====
+    Metrika ''vpsadmin_metrics_version'' udává verzi metrik, pokud sis nezměnil prefix. Aktuální verze je ''1.1''. Při zpětně nekompatibilní změně se zvýší první číslo, například ''1.0 -> 2.0''. Číslo za desetinnou čárkou se může zvýšit při přidání metrik, které nemění význam těch stávajících.
+  count: 1
+- language: en
+  page: manuals:vps:users
+  before: "====== User account management ======"
+  replacement: |-
+    <page>manuals:vps:users</page>
+    ====== User account management ======
+  count: 1
+- language: en
+  page: manuals:vps:users
+  before: "===== Session log ====="
+  replacement: |-
+    ===== Password change history =====
+    vpsAdmin records when and how your password changes. Open <vpsadmin-nav id="member.password-changes.open">**Edit profile** -> **Password changes**</vpsadmin-nav> to view the history.
+
+    ===== Session log =====
+  count: 1
+- language: cs
+  page: navody:vps:uzivatele
+  before: "===== Log přihlášení a vykonaných akcí ====="
+  replacement: |-
+    ===== Historie změn hesla =====
+    vpsAdmin eviduje, kdy a jak se tvoje heslo změnilo. Historii najdeš v <vpsadmin-nav id="member.password-changes.open">**Upravit profil** -> **Změny hesla**</vpsadmin-nav>.
+
+    ===== Log přihlášení a vykonaných akcí =====
+  count: 1
+new_pages: []
+media: []
+code_samples: []
+exceptions: []
