@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # Fix libnodectld CtHookInstaller specs
 
