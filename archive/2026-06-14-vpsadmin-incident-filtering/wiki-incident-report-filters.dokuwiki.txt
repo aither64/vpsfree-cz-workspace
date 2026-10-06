@@ -1,0 +1,119 @@
+====== EN draft for manuals:vps:incidents ======
+
+===== Filtering automated incident reports =====
+
+Automated incident reports can be filtered in
+[[https://vpsadmin.vpsfree.cz/?page=incidents&action=rule_list|vpsAdmin]].
+Filtering is meant for recurring automated notices, for example reports created
+from abuse mailboxes. Reports sent directly by administrators are not
+filterable by default, unless an administrator explicitly marks the report as
+filterable when creating it.
+
+Rules are evaluated from top to bottom. The first matching enabled rule decides
+what happens with the report. If no rule matches, the report is delivered as
+usual.
+
+A rule can contain multiple matchers. All matchers in one rule have to match.
+Use multiple rules when you need alternatives.
+
+Available actions are:
+
+  * **Report** - deliver the incident report.
+  * **Ignore** - save the incident report in vpsAdmin, mark it as ignored, and
+    do not send the report by mail.
+
+Report rules can also change recipients:
+
+  * deliver to the default vpsAdmin recipients;
+  * deliver to the default recipients and additional custom addresses;
+  * deliver only to custom addresses.
+
+Useful matcher fields include VPS ID, IP address, incident codename, subject,
+report text and mailbox. Matchers can test equality, inequality, whether a
+field contains text, or whether it does not contain text.
+
+==== Examples ====
+
+Ignore a recurring DNS resolver notice for one VPS:
+
+  * action: **Ignore**
+  * matcher: **VPS ID** equals **123**
+  * matcher: **Codename** equals **DNS-Open-Resolvers**
+
+Send malware reports to a security mailbox in addition to the normal vpsAdmin
+recipient:
+
+  * action: **Report**
+  * recipients: **default and custom**
+  * custom recipient: **security@example.org**
+  * matcher: **Codename** contains **malware**
+
+Send reports for one VPS only to a team mailbox:
+
+  * action: **Report**
+  * recipients: **custom only**
+  * custom recipient: **team@example.org**
+  * matcher: **VPS ID** equals **123**
+
+Ignored reports are still visible in vpsAdmin. Use this only for reports that
+you understand and intentionally do not want to receive by mail.
+
+====== CS draft for navody:vps:incidenty ======
+
+===== Filtrování automatických incident reportů =====
+
+Automatické incident reporty je možné filtrovat ve
+[[https://vpsadmin.vpsfree.cz/?page=incidents&action=rule_list|vpsAdminu]].
+Filtrování je určené pro opakovaná automatická hlášení, například reporty
+vytvořené z abuse mailboxů. Reporty odeslané přímo administrátory nejsou
+filtrovatelné ve výchozím stavu, pokud je administrátor při vytváření výslovně
+neoznačí jako filtrovatelné.
+
+Pravidla se vyhodnocují shora dolů. První zapnuté pravidlo, které odpovídá
+reportu, rozhodne, co se s reportem stane. Pokud neodpovídá žádné pravidlo,
+report se doručí jako obvykle.
+
+Jedno pravidlo může obsahovat více podmínek. Všechny podmínky v jednom pravidle
+musí platit současně. Pokud potřebuješ vyjádřit alternativy, použij více
+pravidel.
+
+Dostupné akce jsou:
+
+  * **Nahlásit** - incident report se doručí.
+  * **Ignorovat** - incident report se uloží ve vpsAdminu, označí se jako
+    ignorovaný a neodešle se e-mailem.
+
+Pravidla s akcí nahlásit mohou také změnit příjemce:
+
+  * doručit výchozím příjemcům podle nastavení ve vpsAdminu;
+  * doručit výchozím příjemcům a dalším vlastním adresám;
+  * doručit jen na vlastní adresy.
+
+Užitečné podmínky mohou pracovat s ID VPS, IP adresou, kódovým označením
+incidentu, předmětem, textem reportu nebo mailboxem. Podmínky umí testovat
+shodu, neshodu, zda pole obsahuje text, nebo zda text neobsahuje.
+
+==== Příklady ====
+
+Ignorování opakovaného hlášení otevřeného DNS resolveru pro jednu VPS:
+
+  * akce: **Ignorovat**
+  * podmínka: **ID VPS** se rovná **123**
+  * podmínka: **Kódové označení** se rovná **DNS-Open-Resolvers**
+
+Odesílání malware reportů také na bezpečnostní mailbox:
+
+  * akce: **Nahlásit**
+  * příjemci: **výchozí a vlastní**
+  * vlastní příjemce: **security@example.org**
+  * podmínka: **Kódové označení** obsahuje **malware**
+
+Odesílání reportů pro jednu VPS jen na týmový mailbox:
+
+  * akce: **Nahlásit**
+  * příjemci: **jen vlastní**
+  * vlastní příjemce: **team@example.org**
+  * podmínka: **ID VPS** se rovná **123**
+
+Ignorované reporty jsou stále vidět ve vpsAdminu. Tuto možnost používej jen pro
+reporty, kterým rozumíš a které záměrně nechceš dostávat e-mailem.
