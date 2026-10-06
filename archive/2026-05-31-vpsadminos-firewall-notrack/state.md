@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # vpsAdminOS Firewall Without Init-Namespace Conntrack State
 
