@@ -1,0 +1,781 @@
+diff --git a/README.md b/README.md
+index 975479c..48b0537 100644
+--- a/README.md
++++ b/README.md
+@@ -232,12 +232,16 @@ content available when selected.
+ ## Prompt attachments
+ 
+ Drag files into the prompt area or choose **Attach files**. File cards show
+-transfer progress and let you retry or remove a file. Wait for all selected
++transfer progress and let you retry or remove a file. Above the cards, a summary
++shows the selected count and full total size, with the completed count while
++uploads remain unfinished. Files stay in the summary until removed. The New
++session form shows every card in page flow; conversation upload lists scroll
++within their existing height limit. Wait for all selected
+ files to become ready before creating a session, sending, steering or queuing
+ a prompt. A prompt can contain files without text. Codex receives their local
+ paths, including for images.
+ 
+-The limits are 1 GiB per file, 10 files and 2 GiB per prompt, 10 GiB per session,
++The limits are 1 GiB per file, 50 files and 2 GiB per prompt, 10 GiB per session,
+ and 100 GiB per workspace. Uploads use 4 MiB chunks with SHA-256 checksums. The
+ browser transfers two files at once; the server admits eight concurrent chunks.
+ Reservations account for unfinished transfers and retain 1 GiB of free disk
+@@ -246,6 +250,12 @@ space. Metadata is limited to 16 MiB and 10,000 records per catalog category, wi
+ are reclaimed. Sent history remains until its session and fork references are
+ deleted.
+ 
++The prompt text and generated file references must together fit within 20,000
++UTF-8 bytes. Long filenames, JSON escaping and storage paths consume that bound,
++so some selections of 50 files need a shorter prompt or fewer files. The encoded
++creation form also retains its 61,024-byte request limit. These limits do not
++truncate references or omit selected files.
++
+ A reload keeps selected files. To resume an unfinished upload, choose the same
+ file; the browser verifies its uploaded prefix before continuing. Unsubmitted
+ files expire after seven days without upload activity. Accepted initial prompts,
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index c938a02..d73629e 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -275,7 +275,32 @@ The CLI scans only unfinished records. A crash after compact replacement but
+ before the directory move remains recoverable. Receipt eviction or later
+ session deletion never allows the same request ID to initialize again.
+ 
+-Older packages ignore the preparation files and retain schema-1 pending uploads.
++The default preparation bound is 50 ordered attachments, matching the upload
++store's prompt limit and the browser's version-2 draft validation. Existing
++records and drafts remain readable without a schema change. Refresh browser
++assets to recover requests with more than 10 files; a new browser still respects
++the file limit advertised by an older backend.
++
++The preceding preparation reader accepts at most 10 attachments in a full
++snapshot. It rejects unfinished records with 11 to 50 files even though their
++schema is unchanged. Data compatibility with that reader requires finishing or
++recovering those requests with a reader that supports 50 files, then confirming
++that normal terminal compaction has durably moved their snapshot-free mappings
++to `session-preparation-mappings/`. A ready receipt or handoff alone does not
++prove compaction. Ready compaction still requires creation proof and upload
++binding. Clear attempted browser drafts through normal identity-confirmed
++acceptance and storage cleanup. Do not delete or hand-edit unfinished records,
++discard drafts or release uploads to force compatibility. Unresolved requests
++that cannot compact require retaining a compatible reader. Completed sessions
++and upload catalogs keep their existing formats; the older store again limits
++new submissions and some submission replays to 10 files.
++
++These are data compatibility prerequisites. Workspace package switches remain
++forward-only; recovery retains the current package or uses a newer compatible
++one.
++
++Packages predating request-ID preparation ignore the preparation files and
++retain schema-1 pending uploads.
+ They cannot resume preparation progress, and older CLI code cannot honor the
+ new destination reservations. Newer recovery refuses a competing destination
+ created by that code. Compatible forward updates restore
+@@ -298,3 +323,10 @@ for a new file and Prepare for a competing submission. The final phase requires
+ current recovery and retry to refuse the conflict before naming/reservation,
+ preserve selected bytes and retain both submission records. Fixture code alone
+ is not passing compatibility evidence; record its actual execution separately.
++
++That baseline predates the preparation reader, so this fixture does not prove
++the 10-to-50 attachment boundary. After review, assess that boundary with an
++isolated reader from the immediately preceding source revision: an unfinished
++snapshot containing more than 10 files must fail, while its normally compacted
++terminal mapping must remain readable. Do not switch the installed runtime to
++an older package for this test.
+diff --git a/flake.lock b/flake.lock
+index 72fb75d..52fb716 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1791094073,
+-        "narHash": "sha256-Twh5X2WD88/AlCzBh8sThCaM4yVcAtBM0sdlhQP2C5E=",
++        "lastModified": 1791144036,
++        "narHash": "sha256-tsVai0aKhc5oStiZHNtHhocXg8nhjib2X21e+KjzyjY=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5",
++        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5",
++        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 3e9244b..48e91f5 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5";
++      url = "github:aither64/codex-web/3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 466ad76..1dbd11d 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -199,7 +199,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-KlckfIvbzTtFvu31Fd5T/GYM/V7Es8Ks7yv/HZwEhOU=";
++  vendorHash = "sha256-KaCjN7jV2hu4DX9sRhqivj4iC8vG5JL9icyv3IVA9jg=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 88cb883..70a49a1 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -3,7 +3,7 @@ module github.com/aither64/dev-workspace/portal
+ go 1.24.0
+ 
+ require (
+-	github.com/aither64/codex-web v0.0.0-20261004060753-32775fa7fdd9
++	github.com/aither64/codex-web v0.0.0-20261004200036-3d07cf60cfde
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 0fb0065..2528bf1 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,5 +1,5 @@
+-github.com/aither64/codex-web v0.0.0-20261004060753-32775fa7fdd9 h1:PTADiJiWZnXWzghgy3V16ZEJJ5AA1sdn05SU+sirJJs=
+-github.com/aither64/codex-web v0.0.0-20261004060753-32775fa7fdd9/go.mod h1:wxfbQeNrjnDW43kExN39RdEflxekqogIDfernCytTEc=
++github.com/aither64/codex-web v0.0.0-20261004200036-3d07cf60cfde h1:pMD3TzOK6FAYFaxDhciALCfqAFeyQtDVeY2nMEwgJww=
++github.com/aither64/codex-web v0.0.0-20261004200036-3d07cf60cfde/go.mod h1:wxfbQeNrjnDW43kExN39RdEflxekqogIDfernCytTEc=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/uploads/store.go b/portal/internal/uploads/store.go
+index 15d072c..d77432c 100644
+--- a/portal/internal/uploads/store.go
++++ b/portal/internal/uploads/store.go
+@@ -34,10 +34,13 @@ const maxCatalogBytes = 16 << 20
+ const maxRecords = 10000
+ const draftLifetime = 7 * 24 * time.Hour
+ 
++// DefaultPromptFiles bounds ordinary prompts and durable session preparations.
++const DefaultPromptFiles = 50
++
+ var idPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+ 
+ func DefaultLimits() conversation.UploadLimits {
+-	return conversation.UploadLimits{FileBytes: 1 << 30, PromptBytes: 2 << 30, SessionBytes: 10 << 30, WorkspaceBytes: 100 << 30, ChunkBytes: 4 << 20, Files: 10}
++	return conversation.UploadLimits{FileBytes: 1 << 30, PromptBytes: 2 << 30, SessionBytes: 10 << 30, WorkspaceBytes: 100 << 30, ChunkBytes: 4 << 20, Files: DefaultPromptFiles}
+ }
+ 
+ type Store struct {
+diff --git a/portal/internal/uploads/store_test.go b/portal/internal/uploads/store_test.go
+index d667c01..1fab1aa 100644
+--- a/portal/internal/uploads/store_test.go
++++ b/portal/internal/uploads/store_test.go
+@@ -7,6 +7,7 @@ import (
+ 	"encoding/hex"
+ 	"encoding/json"
+ 	"errors"
++	"fmt"
+ 	"io"
+ 	"os"
+ 	"path/filepath"
+@@ -66,6 +67,74 @@ func status(t *testing.T, err error, want int) {
+ 	}
+ }
+ 
++func TestDefaultPromptFilesSubmissionAndPreparation(t *testing.T) {
++	store, backend := fixture(t)
++	store.UploadLimits = DefaultLimits()
++	if backend.Limits().Files != 50 {
++		t.Fatalf("default prompt files=%d", backend.Limits().Files)
++	}
++	ctx := context.Background()
++	ids := make([]string, 51)
++	for i := range ids {
++		ids[i] = create(t, backend, fmt.Sprintf("file-%02d.txt", i), []byte("x")).ID
++	}
++	for _, kind := range []string{"send", "steer", "queue"} {
++		t.Run(kind, func(t *testing.T) {
++			attempt, _ := newID()
++			_, err := backend.Prepare(ctx, kind, attempt, "prompt", ids)
++			status(t, err, 400)
++			wire, err := backend.Prepare(ctx, kind, attempt, "prompt", ids[:50])
++			if err != nil || strings.Count(wire, `"name":`) != 50 {
++				t.Fatalf("50-file submission: %v, references=%d", err, strings.Count(wire, `"name":`))
++			}
++			again, err := backend.Prepare(ctx, kind, attempt, "prompt", ids[:50])
++			if err != nil || again != wire {
++				t.Fatal("submission replay changed wire text", err)
++			}
++		})
++	}
++	draft, err := store.NewDraft(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	draftBackend := &Backend{Store: store, ScopeID: draft.ID}
++	for i := range ids {
++		ids[i] = create(t, draftBackend, fmt.Sprintf("draft-%02d.txt", i), []byte("x")).ID
++	}
++	requestID, _ := newID()
++	status(t, store.ValidatePreparation(ctx, requestID, draft.ID, "prompt", ids), 400)
++	if err := store.ValidatePreparation(ctx, requestID, draft.ID, "prompt", ids[:50]); err != nil {
++		t.Fatal(err)
++	}
++	wire, err := store.ClaimPreparation(ctx, requestID, draft.ID, "prompt", ids[:50])
++	if err != nil || strings.Count(wire, `"name":`) != 50 {
++		t.Fatal("50-file preparation claim", err)
++	}
++	again, err := store.ClaimPreparation(ctx, requestID, draft.ID, "prompt", ids[:50])
++	if err != nil || again != wire {
++		t.Fatal("preparation replay changed wire text", err)
++	}
++}
++
++func TestDefaultPromptFilesRetainsByteAndReferenceBounds(t *testing.T) {
++	store, backend := fixture(t)
++	store.UploadLimits = DefaultLimits()
++	ids := []string{create(t, backend, "first.txt", []byte("ab")).ID, create(t, backend, "second.txt", []byte("cd")).ID}
++	store.UploadLimits.PromptBytes = 3
++	_, err := backend.Prepare(context.Background(), "send", "byte-bound", "", ids)
++	status(t, err, 413)
++	store.UploadLimits = DefaultLimits()
++	ids = nil
++	for i := 0; i < 50; i++ {
++		ids = append(ids, create(t, backend, fmt.Sprintf("%02d-%s.txt", i, strings.Repeat("\\", 240)), nil).ID)
++	}
++	_, err = backend.Prepare(context.Background(), "send", "reference-bound", "", ids)
++	status(t, err, 413)
++	if !strings.Contains(err.Error(), "references exceed the prompt limit") {
++		t.Fatalf("wrong reference-bound failure: %v", err)
++	}
++}
++
+ func TestChunkRecoveryAndImmutableCompletion(t *testing.T) {
+ 	store, backend := fixture(t)
+ 	ctx := context.Background()
+diff --git a/portal/internal/web/preparation_browser_contract_test.cjs b/portal/internal/web/preparation_browser_contract_test.cjs
+index 6c21098..d452416 100644
+--- a/portal/internal/web/preparation_browser_contract_test.cjs
++++ b/portal/internal/web/preparation_browser_contract_test.cjs
+@@ -82,6 +82,42 @@ module.exports = async () => {
+     assert.equal(calls[1][1].body, firstBody); assert.equal(request.draft.requestId, id);
+     assert.throws(() => request.update({name:"new"}), /Recover/);
+   });
++  await test("50-file attempted draft survives reload and 404 recovery with exact body and cleanup", async () => {
++    const ids = Array.from({length:50}, (_,i) => `00000000-0000-4000-8000-${String(i+100).padStart(12,"0")}`);
++    const saved = storage(); let firstBody;
++    const original = helpers.createRequestDraft({storage:saved,fields,randomUUID:()=>id,
++      fetch:async (_,options)=>{firstBody=options.body;throw Error("lost response");}});
++    original.bindScope(scope);
++    saved.setItem(`workspace-portal.upload-draft.${scope.id}`,JSON.stringify(ids.map(id=>({id,state:"ready"}))));
++    await assert.rejects(original.submit(ids,true),/lost response/);
++    assert.deepEqual(new URLSearchParams(firstBody).getAll("attachmentIds"),ids);
++    const calls=[];
++    const restored=helpers.createRequestDraft({storage:saved,fields:{...fields,goal:"changed"},randomUUID:()=>assert.fail("new identity"),
++      fetch:async (url,options)=>{calls.push([url,options]);return url==="/sessions" ? response(status,202) : response({},404);}});
++    assert.deepEqual(restored.draft.attachmentIds,ids);assert.equal(restored.draft.body,firstBody);
++    await restored.submit();
++    assert.deepEqual(calls.map(([url])=>url),[`/api/session-creations/${id}`,"/sessions"]);
++    assert.equal(calls[1][1].body,firstBody);assert.equal(restored.draft.requestId,id);
++    assert.equal(restored.draft.accepted.receiptId,status.receiptId);
++    assert.equal(restored.clearAccepted(),status.url);
++    assert.equal(saved.getItem(helpers.draftKey),null);assert.equal(saved.getItem(`workspace-portal.upload-draft.${scope.id}`),null);
++  });
++  await test("51-file, duplicate, malformed and body-mismatched drafts are rejected", async () => {
++    const ids=Array.from({length:51},(_,i)=>`00000000-0000-4000-8000-${String(i+100).padStart(12,"0")}`);
++    for(const invalid of [ids,[ids[0],ids[0]],["invalid"]]) {
++      const request=helpers.createRequestDraft({storage:storage(),fields,randomUUID:()=>id,fetch:()=>assert.fail("invalid POST")});
++      request.bindScope(scope);await assert.rejects(request.submit(invalid,true),/snapshot is invalid/);
++      assert.equal(helpers.normalizeDraft(request.draft),null);
++    }
++    const saved=storage();
++    const request=helpers.createRequestDraft({storage:saved,fields,randomUUID:()=>id,fetch:async()=>{throw Error("lost");}});
++    request.bindScope(scope);await assert.rejects(request.submit(ids.slice(0,50),true),/lost/);
++    const mismatched=request.draft;
++    mismatched.attachmentIds.reverse();
++    saved.setItem(helpers.draftKey,JSON.stringify(mismatched));
++    assert.equal(helpers.normalizeDraft(mismatched),null);
++    assert.throws(()=>helpers.createRequestDraft({storage:saved,fields,randomUUID:()=>assert.fail("replacement")}),/unreadable/);
++  });
+   await test("only an exact request-bound persistence 503 permits frozen POST repair", async () => {
+     for (const failure of [
+       {requestId:otherID,code:"preparation_persistence_unconfirmed"},
+diff --git a/portal/internal/web/preparation_store.go b/portal/internal/web/preparation_store.go
+index a230033..9f251a4 100644
+--- a/portal/internal/web/preparation_store.go
++++ b/portal/internal/web/preparation_store.go
+@@ -17,6 +17,7 @@ import (
+ 
+ 	"github.com/aither64/dev-workspace/portal/internal/session"
+ 	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
++	"github.com/aither64/dev-workspace/portal/internal/uploads"
+ 	"golang.org/x/sys/unix"
+ )
+ 
+@@ -146,7 +147,7 @@ func validatePreparation(record sessionPreparation, workspace string) error {
+ 		return errors.New("preparation snapshot digest mismatch")
+ 	}
+ 	input := record.Snapshot.Input
+-	if !utf8.ValidString(input.RawPrompt) || len(input.RawPrompt) > session.MaxMessageBytes || len(input.Attachments) > 10 ||
++	if !utf8.ValidString(input.RawPrompt) || len(input.RawPrompt) > session.MaxMessageBytes || len(input.Attachments) > uploads.DefaultPromptFiles ||
+ 		(strings.TrimSpace(input.RawPrompt) == "" && len(input.Attachments) == 0) {
+ 		return errors.New("invalid preparation prompt")
+ 	}
+diff --git a/portal/internal/web/preparation_test.go b/portal/internal/web/preparation_test.go
+index e682313..5577f9c 100644
+--- a/portal/internal/web/preparation_test.go
++++ b/portal/internal/web/preparation_test.go
+@@ -13,6 +13,7 @@ import (
+ 	"net/url"
+ 	"os"
+ 	"path/filepath"
++	"slices"
+ 	"strings"
+ 	"sync"
+ 	"sync/atomic"
+@@ -382,6 +383,116 @@ func TestSessionPreparationUploadAdmissionIntentRecoveryAndReplay(t *testing.T)
+ 	}
+ }
+ 
++func TestSessionPreparationFiftyFilesRecoveryAndCompaction(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	ctx := context.Background()
++	server.uploadStore.MinFreeBytes = 0
++	scope, err := server.uploadStore.NewDraft(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	backend := &uploads.Backend{Store: server.uploadStore, ScopeID: scope.ID}
++	ids := make([]string, 51)
++	for i := range ids {
++		file, err := backend.Create(ctx, conversation.UploadRequest{ClientID: preparationTestID(1000 + i), Name: fmt.Sprintf("f-%02d.txt", i), Size: 0})
++		if err != nil {
++			t.Fatal(err)
++		}
++		if _, err := backend.Complete(ctx, file.ID); err != nil {
++			t.Fatal(err)
++		}
++		ids[i] = file.ID
++	}
++	if response := postPreparation(t, server, preparationTestID(2), "prompt", "", url.Values{"uploadScope": {scope.ID}, "attachmentIds": ids}); response.Code != 409 {
++		t.Fatalf("51-file admission=%d %s", response.Code, response.Body.String())
++	}
++	entered := make(chan struct{})
++	server.config.SessionNamer = func(ctx context.Context, _ string) (string, error) {
++		close(entered)
++		<-ctx.Done()
++		return "", ctx.Err()
++	}
++	id, prompt := preparationTestID(1), " raw fifty-file request "
++	extra := url.Values{"uploadScope": {scope.ID}, "attachmentIds": ids[:50]}
++	response := postPreparation(t, server, id, prompt, "", extra)
++	if response.Code != 202 {
++		t.Fatalf("50-file admission=%d %s", response.Code, response.Body.String())
++	}
++	<-entered
++	server.Close()
++	record, err := readPreparation(server.preparationPath(id, false), server.config.Workspace)
++	if err != nil || record.Snapshot == nil || !slices.Equal(record.Snapshot.Input.Attachments, ids[:50]) ||
++		strings.Count(record.Snapshot.Goal, `"name":`) != 50 {
++		t.Fatalf("50-file durable snapshot: %v", err)
++	}
++	wire, receiptID := record.Snapshot.Goal, record.ReceiptID
++	// The full reader, independently of the store, must reject 51 attachments.
++	bad := record
++	snapshot := *record.Snapshot
++	snapshot.Input.Attachments = ids
++	bad.Snapshot, bad.InputDigest, bad.SnapshotDigest = &snapshot, inputPreparationDigest(snapshot.Input), preparationDigest(&snapshot)
++	if err := validatePreparation(bad, server.config.Workspace); err == nil {
++		t.Fatal("preparation reader accepted 51 attachments")
++	}
++	restarted, err := New(server.config)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer restarted.Close()
++	current, ok := restarted.preparationStatus(id)
++	if !ok || current.State != "paused" || current.RequestID != id || current.ReceiptID != receiptID || current.Attempt != 1 {
++		t.Fatalf("50-file recovery=%#v", current)
++	}
++	status := httptest.NewRecorder()
++	restarted.Handler().ServeHTTP(status, httptest.NewRequest("GET", "/api/session-creations/"+id, nil))
++	if status.Code != 200 || !strings.Contains(status.Body.String(), receiptID) {
++		t.Fatalf("recovered status=%d %s", status.Code, status.Body.String())
++	}
++	if replay := postPreparation(t, restarted, id, prompt, "", extra); replay.Code != 202 {
++		t.Fatalf("identical replay=%d %s", replay.Code, replay.Body.String())
++	}
++	reordered := append([]string(nil), ids[:50]...)
++	reordered[0], reordered[1] = reordered[1], reordered[0]
++	for _, changed := range []struct {
++		prompt string
++		ids    []string
++	}{{prompt + "changed", ids[:50]}, {prompt, reordered}} {
++		if conflict := postPreparation(t, restarted, id, changed.prompt, "", url.Values{"uploadScope": {scope.ID}, "attachmentIds": changed.ids}); conflict.Code != 409 {
++			t.Fatalf("changed input=%d %s", conflict.Code, conflict.Body.String())
++		}
++	}
++	restarted.config.SessionNamer = func(context.Context, string) (string, error) { return `{"name":"fifty-file-recovery"}`, nil }
++	retry := postCreation(t, restarted, "/api/session-creations/"+id+"/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receiptID), "application/json")
++	if retry.Code != 202 {
++		t.Fatalf("retry=%d %s", retry.Code, retry.Body.String())
++	}
++	result := awaitPreparation(t, restarted, id)
++	if result.State != "handed_off" || result.ReceiptID != receiptID || result.Attempt != 2 || result.Snapshot.Goal != wire ||
++		!slices.Equal(result.Snapshot.Input.Attachments, ids[:50]) {
++		t.Fatalf("retry changed frozen request: %#v", result)
++	}
++	receipt := awaitCreation(t, restarted, result.Slug)
++	if receipt.Goal != wire || receipt.ReceiptID != receiptID {
++		t.Fatal("creation handoff changed wire text or receipt")
++	}
++	receipt.State, receipt.Validated, receipt.Error = "ready", true, ""
++	if err := restarted.saveCreation(receipt); err != nil {
++		t.Fatal(err)
++	}
++	writeCreationProof(t, restarted, receipt)
++	if err := restarted.retireCreation(receipt); err != nil {
++		t.Fatal(err)
++	}
++	compact, err := readPreparation(restarted.preparationPath(id, true), restarted.config.Workspace)
++	if err != nil || compact.State != "terminal" || compact.Snapshot != nil || compact.Handoff != nil || compact.ReceiptID != receiptID {
++		t.Fatalf("50-file terminal compaction=%#v %v", compact, err)
++	}
++	if _, err := os.Stat(restarted.preparationPath(id, false)); !errors.Is(err, os.ErrNotExist) {
++		t.Fatal("full snapshot remains after compaction", err)
++	}
++}
++
+ func TestSessionPreparationAdmissionReplaysBeforeCatalogAndNaming(t *testing.T) {
+ 	server := newTestServer(t)
+ 	defer server.Close()
+@@ -807,7 +918,7 @@ func TestSessionPreparationPageHasExplicitIdentityAndEscapedRawPrompt(t *testing
+ 	for _, expected := range []string{
+ 		`data-preparation="` + record.RequestID + `"`, `data-receipt-id="` + record.ReceiptID + `"`,
+ 		`data-accepted-at="` + record.StartedAt + `"`, "&lt;script&gt;", "Second line &amp; last.",
+-		`/static/preparation.js?v=2`, `/static/creation.js?v=2`,
++		`/static/preparation.js?v=3`, `/static/creation.js?v=3`,
+ 	} {
+ 		if !strings.Contains(body, expected) {
+ 			t.Errorf("preparation page omits %q", expected)
+@@ -836,7 +947,7 @@ func TestSessionPreparationIndexMakesOnlyNewSessionNameOptional(t *testing.T) {
+ 	if prompt < 0 || options < prompt || name < options {
+ 		t.Fatal("initial request must precede optional settings")
+ 	}
+-	if !strings.Contains(body, `id="new-session-recover"`) || !strings.Contains(body, `/static/preparation.js?v=2`) {
++	if !strings.Contains(body, `id="new-session-recover"`) || !strings.Contains(body, `/static/preparation.js?v=3`) {
+ 		t.Fatal("index is missing durable-request recovery controls")
+ 	}
+ 	if !strings.Contains(body, `href="/" target="_blank" rel="noopener noreferrer"`) || !strings.Contains(body, `Copy saved text`) || !strings.Contains(body, `The original request may still finish.`) {
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 5343b0b..3bc57e0 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -966,7 +966,7 @@
+   const lifecycleTargetId = body.dataset.lifecycleTargetId || "";
+   const interactive = body.dataset.interactive === "true";
+   const request = createRequest(fetch.bind(globalThis));
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=11");
++  const conversationAssets = await import("/codex/assets/conversation.js?v=12");
+   let composerUploads = null;
+   let composerUploadReady = true;
+   configureDurableAttemptStore(conversationAssets.createDurableAttemptStore);
+diff --git a/portal/internal/web/static/creation.js b/portal/internal/web/static/creation.js
+index d262df3..82a23ae 100644
+--- a/portal/internal/web/static/creation.js
++++ b/portal/internal/web/static/creation.js
+@@ -37,7 +37,7 @@
+   const initialRequest = document.getElementById("creation-request");
+   const requestPanel = document.getElementById("creation-request-panel");
+   // The prompt is server-rendered, so asset or polling failures cannot hide it.
+-  void import("/codex/assets/conversation.js").then(({createCopyButton}) => {
++  void import("/codex/assets/conversation.js?v=12").then(({createCopyButton}) => {
+     document.getElementById("creation-request-copy").append(createCopyButton({
+       getText: () => initialRequest.textContent, label: "Copy initial request",
+     }));
+diff --git a/portal/internal/web/static/preparation.js b/portal/internal/web/static/preparation.js
+index 2b5e795..b4c4e8c 100644
+--- a/portal/internal/web/static/preparation.js
++++ b/portal/internal/web/static/preparation.js
+@@ -39,7 +39,7 @@
+     if (!value || value.schema !== 2 || typeof value.requestId !== "string" || !uuid.test(value.requestId) || !validFields(value) ||
+         (value.migratedUploads !== undefined && typeof value.migratedUploads !== "boolean") ||
+         (value.scope !== null && !uploadScope(value.scope)) ||
+-        !Array.isArray(value.attachmentIds) || value.attachmentIds.length > 10 ||
++        !Array.isArray(value.attachmentIds) || value.attachmentIds.length > 50 ||
+         value.attachmentIds.some((id) => typeof id !== "string" || !uuid.test(id)) ||
+         new Set(value.attachmentIds).size !== value.attachmentIds.length ||
+         (value.body !== null && typeof value.body !== "string") ||
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index 8f45a6d..61f3070 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -43,6 +43,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ .page { max-width: 1480px; margin: 0 auto; padding: 1rem clamp(1rem, 4vw, 3rem) 4rem; display: grid; gap: 2rem; }
+ .panel { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem; box-shadow: 0 18px 40px rgba(0,0,0,.16); }
+ #creation-uploads:empty, #message-uploads:empty { display: none; }
++#creation-uploads.codex-upload-composer { max-height: none; overflow-y: visible; }
+ .creation-actions { display: flex; align-items: center; gap: .55rem; }
+ .creation-actions > button { flex: 1; }
+ .stack { display: grid; gap: 1rem; }
+diff --git a/portal/internal/web/templates/creation.html b/portal/internal/web/templates/creation.html
+index ad14f4c..14234a7 100644
+--- a/portal/internal/web/templates/creation.html
++++ b/portal/internal/web/templates/creation.html
+@@ -5,8 +5,8 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>{{if .Preparation}}New session{{else}}{{.Session.Slug}}{{end}} · Workspace</title>
+-  <link rel="stylesheet" href="/static/style.css?v=3">
+-  <link rel="stylesheet" href="/codex/assets/conversation.css">
++  <link rel="stylesheet" href="/static/style.css?v=4">
++  <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
+ </head>
+ <body{{if .Preparation}} data-preparation="{{.Preparation.RequestID}}" data-receipt-id="{{.Preparation.ReceiptID}}" data-accepted-at="{{.Preparation.StartedAt}}"{{else}} data-creation="{{.Session.Slug}}"{{end}}>
+   <main class="page">
+@@ -26,8 +26,8 @@
+       <pre class="creation-request" id="creation-request">{{.InitialRequest}}</pre>
+     </section>
+   </main>
+-  <script src="/static/preparation.js?v=2" defer></script>
+-  <script src="/static/creation.js?v=2" defer></script>
++  <script src="/static/preparation.js?v=3" defer></script>
++  <script src="/static/creation.js?v=3" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 17801b7..05541b2 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -5,8 +5,8 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Workspace</title>
+-  <link rel="stylesheet" href="/static/style.css?v=3">
+-  <link rel="stylesheet" href="/codex/assets/uploads.css?v=2">
++  <link rel="stylesheet" href="/static/style.css?v=4">
++  <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+   <div class="workspace-shell index-shell">
+@@ -90,8 +90,8 @@
+   </main>
+   </div>
+   <template id="session-card-template">{{template "session-card"}}</template>
+-  <script src="/static/preparation.js?v=2" defer></script>
+-  <script src="/static/app.js?v=21" defer></script>
++  <script src="/static/preparation.js?v=3" defer></script>
++  <script src="/static/app.js?v=22" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index c60751c..9758ae8 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -6,9 +6,9 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+-  <link rel="stylesheet" href="/codex/assets/conversation.css?v=4">
+-  <link rel="stylesheet" href="/static/style.css?v=3">
+-  <link rel="stylesheet" href="/codex/assets/uploads.css?v=2">
++  <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
++  <link rel="stylesheet" href="/static/style.css?v=4">
++  <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body class="session-body" data-session="{{.Session.Slug}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-interactive="{{.Session.Interactive}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+   <div class="workspace-shell">
+@@ -205,7 +205,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=21" defer></script>
++  <script src="/static/app.js?v=22" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/source-file.html b/portal/internal/web/templates/source-file.html
+index eac0811..c59f4ce 100644
+--- a/portal/internal/web/templates/source-file.html
++++ b/portal/internal/web/templates/source-file.html
+@@ -6,7 +6,7 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>File · {{.DisplayLabel}}</title>
+-  <link rel="stylesheet" href="/static/style.css?v=3">
++  <link rel="stylesheet" href="/static/style.css?v=4">
+   <link rel="stylesheet" href="/static/repository-review.css?v=3">
+   <link rel="stylesheet" href="/static/source-file.css">
+   <script type="module" src="/static/source-file.js"></script>
+diff --git a/test/README.md b/test/README.md
+index 93f7d53..905e51a 100644
+--- a/test/README.md
++++ b/test/README.md
+@@ -50,3 +50,13 @@ its conversation assets. Run `node test/creation_browser.cjs` from the runtime
+ repository root. This fixture performs no model inference. The separate
+ `team_settings_browser_test.cjs` is also a real browser suite, invoked through
+ the opt-in `TestQuestionBrowser` entry; it is not a pure Node quick check.
++
++The fixture loads the actual host and provider stylesheets in their production
++order. At 1280px and 375px widths it checks 50 cards with long filenames: the
++creation root has no internal vertical scrollbar, every removal action and
++Create session can be reached by scrolling the page, and the conversation root
++retains its 12rem cap. It verifies full total size before completion
++acknowledgement, removal/restoration, file 51 rejection and exact-body recovery
++of a 50-file request after response loss. These assertions need the matching
++provider source with the shared selection summary; syntax checks alone do not
++establish layout acceptance.
+diff --git a/test/creation_browser.cjs b/test/creation_browser.cjs
+index 2ab9449..e4e1ebe 100644
+--- a/test/creation_browser.cjs
++++ b/test/creation_browser.cjs
+@@ -13,8 +13,11 @@ assert(fs.existsSync(process.env.CHROMIUM_EXECUTABLE),"Explicit Chromium executa
+ const prompt = "Keep this request <script>window.promptInjected=true</script>\nSecond line.";
+ const catalog = {current: "a".repeat(64)};
+ let failure = "network-before", modelsUnavailable = true, submissions = [], retries = [], statusReads = [];
+-const operations = new Map(), scopes = new Map();
+-const limits = {fileBytes: 1048576, promptBytes: 10485760, files: 10, chunkBytes: 4096};
++const operations = new Map(), scopes = new Map(), removableScopes = new Set();
++let holdCompletions = false;
++const completionWaiters = [];
++const conversationFiles = Array.from({length:50}, (_,i) => ({id:randomUUID(), clientId:randomUUID(), name:`conversation-${i}-${"long-name-".repeat(20)}.txt`, size:1024, state:"ready"}));
++const limits = {fileBytes: 1048576, promptBytes: 10485760, files: 50, chunkBytes: 4096};
+ const legacy = {slug:"2026-09-13-example",url:"/2026-09-13-example/",receiptId:"legacy-receipt",attempt:1,state:"failed",phase:"Initialization stopped",error:"context deadline exceeded",initialRequest:prompt,startedAt:new Date().toISOString()};
+ const escape = text => text.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+ const managedPolicy = (digest, lead = true) => `<input type="hidden" name="catalogDigest" value="${digest}">
+@@ -22,12 +25,13 @@ const managedPolicy = (digest, lead = true) => `<input type="hidden" name="catal
+ <p data-team-description></p><p data-team-catalog-changed role="status" aria-live="polite" hidden>Available teams changed.</p>
+ <label data-team-catalog-acknowledgement hidden><input type="checkbox" data-team-catalog-acknowledge> I checked the current team and lead settings.</label>`;
+ const settings = `<label>Lead model<select name="model" data-model-select><option value="">Selected team default</option></select></label><label>Lead reasoning effort<select name="effort" data-effort-select><option value="">Selected team default</option></select></label>`;
+-const index = () => `<!doctype html><body data-index><form id="new-session-form"><input name="creation_date" type="hidden" value="2026-09-13"><textarea name="goal" required></textarea>${managedPolicy(catalog.current)}<details><summary>Options</summary><input name="name" maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*">${settings}<div><input data-cli-command readonly><button type="button" data-copy disabled>Copy</button></div></details><p id="creation-draft-notice" hidden>Files from an older draft need to be attached again to this request.</p><input name="uploadScope" type="hidden"><div id="creation-uploads"></div><span id="creation-upload-controls"></span><p id="new-session-progress" hidden></p><div id="new-session-recovery" hidden><p data-request-identity></p><button type="button" id="new-session-recover">Recover saved request</button><div id="new-session-separate" hidden><p>The original request may still finish.</p><div><textarea data-saved-request-text readonly></textarea><button type="button" data-copy>Copy saved text</button></div><a href="/" target="_blank" rel="noopener noreferrer">Start a separate request</a></div></div><button type="submit" disabled>Create session</button></form><script src="/static/preparation.js"></script><script src="/static/app.js"></script>`;
+-const planPage = (turnID, digest) => `<!doctype html><body data-session="source" data-thread-id="thread-1" data-interactive="true"><div id="conversation-connection"></div><div id="codex-status"></div><div id="transcript"></div>
++const styles = (conversation = false) => `<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${conversation ? '<link rel="stylesheet" href="/codex/assets/conversation.css?v=5">' : ""}<link rel="stylesheet" href="/static/style.css?v=4"><link rel="stylesheet" href="/codex/assets/uploads.css?v=3"></head>`;
++const index = () => `<!doctype html>${styles()}<body data-index><div class="workspace-shell index-shell"><aside class="workspace-sidebar index-sidebar"><h1>Workspace</h1></aside><main class="page index-page"><section class="panel new-session"><h2>New session</h2><form id="new-session-form" class="stack"><input name="creation_date" type="hidden" value="2026-09-13"><textarea name="goal" required></textarea>${managedPolicy(catalog.current)}<details><summary>Options</summary><input name="name" maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*">${settings}<div><input data-cli-command readonly><button type="button" data-copy disabled>Copy</button></div></details><p id="creation-draft-notice" hidden>Files from an older draft need to be attached again to this request.</p><input name="uploadScope" type="hidden"><div id="creation-uploads"></div><p id="new-session-progress" hidden></p><div id="new-session-recovery" hidden><p data-request-identity></p><button type="button" id="new-session-recover">Recover saved request</button><div id="new-session-separate" hidden><p>The original request may still finish.</p><div><textarea data-saved-request-text readonly></textarea><button type="button" data-copy>Copy saved text</button></div><a href="/" target="_blank" rel="noopener noreferrer">Start a separate request</a></div></div><div class="creation-actions"><span id="creation-upload-controls"></span><button type="submit" disabled>Create session</button></div></form></section></main></div><script src="/static/preparation.js?v=3"></script><script src="/static/app.js?v=22"></script>`;
++const planPage = (turnID, digest) => `<!doctype html>${styles(true)}<body data-session="source" data-thread-id="thread-1" data-interactive="true"><div id="conversation-connection"></div><div id="codex-status"></div><div id="transcript"></div>
+ <p id="pending-status" class="lane-status" role="status"><span>Loading requests…</span> <button id="pending-retry" type="button" class="quiet" hidden>Retry</button></p><div id="pending" class="pending"></div>
+ <p id="queue-status" class="lane-status" role="status"><span>Checking queued messages…</span> <button id="queue-retry" type="button" class="quiet" hidden>Retry</button></p>
+-<button id="new-output" type="button" hidden>New output</button><section id="plan-actions" data-plan-turn-id="${turnID}" data-plan-sha256="${digest}"><button id="plan-implement-new" type="button">Implement in a new session</button></section><form id="message-form"><textarea name="message"></textarea><div id="message-uploads"></div><span id="message-upload-controls"></span><button id="message-send" type="submit">Send</button><button id="message-queue" type="button"></button><button id="interrupt" type="button">Interrupt</button></form><dialog id="plan-session-dialog"><form id="plan-session-form"><input name="creationDate" value="2026-09-13"><input name="name" required>${managedPolicy(catalog.current, false)}${settings}<p id="plan-session-progress" hidden></p><button type="submit">Create session</button></form></dialog><script>document.getElementById("plan-actions").planText="Approved plan";</script><script src="/static/app.js"></script>`;
+-const creation = record => `<!doctype html><body ${record.requestId ? `data-preparation="${record.requestId}" data-receipt-id="${record.receiptId}" data-accepted-at="${record.startedAt}"` : `data-creation="${record.slug}"`}><h1 id="creation-title"></h1><p id="creation-phase"></p><p id="creation-error"></p><button id="creation-retry" hidden>${record.requestId ? "Retry creation" : "Retry initialization"}</button><p id="creation-elapsed"></p><p><a id="creation-source" hidden>Return to the source session</a></p><p id="creation-leave-note">You can leave this page while initialization continues.</p><section id="creation-request-panel"><span id="creation-request-copy"></span><pre id="creation-request">${escape(record.initialRequest)}</pre></section><script src="/static/preparation.js"></script><script src="/static/creation.js"></script>`;
++<button id="new-output" type="button" hidden>New output</button><section id="plan-actions" data-plan-turn-id="${turnID}" data-plan-sha256="${digest}"><button id="plan-implement-new" type="button">Implement in a new session</button></section><form id="message-form"><textarea name="message"></textarea><div id="message-uploads"></div><span id="message-upload-controls"></span><button id="message-send" type="submit">Send</button><button id="message-queue" type="button"></button><button id="interrupt" type="button">Interrupt</button></form><dialog id="plan-session-dialog"><form id="plan-session-form"><input name="creationDate" value="2026-09-13"><input name="name" required>${managedPolicy(catalog.current, false)}${settings}<p id="plan-session-progress" hidden></p><button type="submit">Create session</button></form></dialog><script>document.getElementById("plan-actions").planText="Approved plan";</script><script src="/static/app.js?v=22"></script>`;
++const creation = record => `<!doctype html>${styles(true)}<body ${record.requestId ? `data-preparation="${record.requestId}" data-receipt-id="${record.receiptId}" data-accepted-at="${record.startedAt}"` : `data-creation="${record.slug}"`}><h1 id="creation-title"></h1><p id="creation-phase"></p><p id="creation-error"></p><button id="creation-retry" hidden>${record.requestId ? "Retry creation" : "Retry initialization"}</button><p id="creation-elapsed"></p><p><a id="creation-source" hidden>Return to the source session</a></p><p id="creation-leave-note">You can leave this page while initialization continues.</p><section id="creation-request-panel"><span id="creation-request-copy"></span><pre id="creation-request">${escape(record.initialRequest)}</pre></section><script src="/static/preparation.js?v=3"></script><script src="/static/creation.js?v=3"></script>`;
+ const server = http.createServer(async (req,res) => {
+  const url = new URL(req.url,"http://fixture");
+  const send = (type,data,status=200) => {res.writeHead(status,{"Content-Type":type});res.end(data);};
+@@ -42,8 +46,8 @@ const server = http.createServer(async (req,res) => {
+   const record=operations.get(url.pathname.split("/")[2]);
+   return record ? send("text/html",creation(record)) : json({},404);
+  }
+- if(url.pathname.startsWith("/static/"))return send("text/javascript",fs.readFileSync(path.join(root,"portal/internal/web/static",path.basename(url.pathname))));
+- if(url.pathname.startsWith("/codex/assets/"))return send("text/javascript",fs.readFileSync(path.join(provider,"conversation/assets",path.basename(url.pathname))));
++ if(url.pathname.startsWith("/static/"))return send(url.pathname.endsWith(".css") ? "text/css" : "text/javascript",fs.readFileSync(path.join(root,"portal/internal/web/static",path.basename(url.pathname))));
++ if(url.pathname.startsWith("/codex/assets/"))return send(url.pathname.endsWith(".css") ? "text/css" : "text/javascript",fs.readFileSync(path.join(provider,"conversation/assets",path.basename(url.pathname))));
+  if(url.pathname==="/sessions") {
+   const raw=await body(),fields=Object.fromEntries(new URLSearchParams(raw));submissions.push({method:req.method,raw,fields});
+   if(failure==="network-before")return req.socket.destroy();
+@@ -84,9 +88,10 @@ const server = http.createServer(async (req,res) => {
+   }
+   const file=files.find(file=>file.id===fileID);
+   if(req.method==="PATCH") {const chunk=await body();file.offset+=Buffer.byteLength(chunk);file.checksums.push(req.headers["upload-checksum"]);return json(file);}
+-  if(req.method==="POST") {file.state="ready";return json(file);}
+-  if(req.method==="DELETE")return json({error:"No fixture deletion authorized"},409);
++  if(req.method==="POST") {if(holdCompletions)await new Promise(resolve=>completionWaiters.push(resolve));file.state="ready";return json(file);}
++  if(req.method==="DELETE") {if(!removableScopes.has(part))return json({error:"No fixture deletion authorized"},409);files.splice(files.indexOf(file),1);return json({});}
+  }
++ if(url.pathname==="/uploads/s-source" && req.method==="GET")return json({files:conversationFiles,limits});
+  if(url.pathname==="/api/sessions/source/operation")return json({state:"idle"});
+  if(url.pathname==="/api/sessions/source/thread")return;
+  return json({error:"Fixture endpoint unavailable"},503);
+@@ -276,6 +281,69 @@ const server = http.createServer(async (req,res) => {
+   await cleanup.evaluate(()=>{Storage.prototype.removeItem=window.restoreRemove;});
+   await cleanup.getByRole("button",{name:"Recover saved request"}).click();
+   await cleanup.waitForURL(origin+`/creations/${cleanupID}/`);assert.equal(submissions.length,cleanupPosts);
++
++  // Load the actual host/provider CSS in production order. The existing page
++  // scroll container owns the expanded creation list, including narrow layouts.
++  for(const width of [1280,375]) {
++   const layout=await context.newPage();layout.on("pageerror",error=>errors.push(error.message));
++   await layout.setViewportSize({width,height:800});await layout.goto(origin);await ready(layout);
++   assert(await layout.locator("#creation-uploads").isHidden());
++   const files=Array.from({length:50},(_,i)=>({name:`file-${String(i).padStart(2,"0")}-${"long-name-".repeat(20)}.txt`,mimeType:"text/plain",buffer:Buffer.alloc(1024,65)}));
++   const selection=(await draft(layout)).scope.id;removableScopes.add(selection);
++   holdCompletions=true;
++   await layout.locator('input[type="file"]').setInputFiles(files);
++   await layout.waitForFunction(()=>document.querySelector("#creation-uploads .codex-upload-summary")?.textContent==="50 files · 50 KiB total · 0 of 50 complete");
++   assert(await layout.getByRole("button",{name:"Create session"}).isDisabled());
++   await layout.waitForFunction(()=>[...document.querySelectorAll("#creation-uploads progress")].some(progress=>progress.value===progress.max));
++   holdCompletions=false;completionWaiters.splice(0).forEach(resolve=>resolve());
++   await layout.waitForFunction(()=>document.querySelector("#creation-uploads .codex-upload-summary")?.textContent==="50 files · 50 KiB total"&&!document.querySelector('#new-session-form button[type="submit"]').disabled);
++   const dimensions=await layout.locator("#creation-uploads").evaluate(root=>({maxHeight:getComputedStyle(root).maxHeight,overflowY:getComputedStyle(root).overflowY,clientHeight:root.clientHeight,scrollHeight:root.scrollHeight}));
++   assert.equal(dimensions.maxHeight,"none");assert.equal(dimensions.overflowY,"visible");
++   assert(dimensions.clientHeight>192);assert(dimensions.scrollHeight<=dimensions.clientHeight+1);
++   assert(await layout.locator(".index-page").evaluate(page=>page.scrollHeight>page.clientHeight));
++   assert.equal(await layout.locator("#creation-uploads .codex-attachment").count(),50);
++   const removals=layout.locator('#creation-uploads button[aria-label^="Remove "]');
++   assert.equal(await removals.count(),50);
++   for(let i=0;i<50;i++) {
++    const remove=removals.nth(i);await remove.scrollIntoViewIfNeeded();
++    const box=await remove.boundingBox();assert(box&&box.y>=0&&box.y+box.height<=800,`unreachable file action ${i} at width ${width}`);
++    assert(await remove.isEnabled());
++   }
++   const submit=layout.getByRole("button",{name:"Create session"});await submit.scrollIntoViewIfNeeded();
++   const submitBox=await submit.boundingBox();assert(submitBox&&submitBox.y>=0&&submitBox.y+submitBox.height<=800);
++   await layout.locator('input[type="file"]').setInputFiles({name:"file-51.txt",mimeType:"text/plain",buffer:Buffer.alloc(1024)});
++   assert.match(await layout.locator("#creation-uploads .codex-upload-notice").textContent(),/exceeds/);
++   assert.equal(await layout.locator("#creation-uploads .codex-upload-summary").textContent(),"50 files · 50 KiB total");
++   assert.equal(scopes.get(selection).length,50);
++   await removals.first().click();
++   await layout.waitForFunction(()=>document.querySelector("#creation-uploads .codex-upload-summary")?.textContent==="49 files · 49 KiB total");
++   await layout.locator('input[type="file"]').setInputFiles(files[0]);
++   await layout.waitForFunction(()=>document.querySelector("#creation-uploads .codex-upload-summary")?.textContent==="50 files · 50 KiB total");
++   await layout.reload();await ready(layout);
++   assert.equal(await layout.locator("#creation-uploads .codex-upload-summary").textContent(),"50 files · 50 KiB total");
++   failure="network-before";await layout.getByRole("button",{name:"Create session"}).click();
++   await layout.waitForFunction(()=>!document.querySelector("#new-session-recovery").hidden&&!document.querySelector("#new-session-recover").disabled);
++   const attempted=await draft(layout);assert.equal(attempted.attachmentIds.length,50);
++   assert.equal(new URLSearchParams(attempted.body).getAll("attachmentIds").length,50);
++   failure="none";await layout.reload();await layout.waitForURL(origin+`/creations/${attempted.requestId}/`);
++   const attempts=submissions.filter(submission=>submission.fields.clientRequestId===attempted.requestId);
++   assert(attempts.length>=2);assert(attempts.every(submission=>submission.raw===attempted.body));
++   assert(statusReads.includes(attempted.requestId));
++   assert.equal(await draft(layout),null);
++   assert.equal(await layout.evaluate(id=>sessionStorage.getItem(`workspace-portal.upload-draft.${id}`),selection),null);
++   assert.equal(scopes.get(selection).length,50);await layout.close();
++
++   const conversation=await context.newPage();conversation.on("pageerror",error=>errors.push(error.message));
++   await conversation.setViewportSize({width,height:800});
++   await conversation.addInitScript(files=>localStorage.setItem("workspace-portal.upload-draft.source.thread-1",JSON.stringify(files)),conversationFiles);
++   await conversation.goto(origin+"/source/");
++   await conversation.waitForFunction(()=>document.querySelectorAll("#message-uploads .codex-attachment").length===50);
++   const capped=await conversation.locator("#message-uploads").evaluate(root=>({maxHeight:getComputedStyle(root).maxHeight,overflowY:getComputedStyle(root).overflowY,clientHeight:root.clientHeight,scrollHeight:root.scrollHeight,rem:parseFloat(getComputedStyle(document.documentElement).fontSize)}));
++   assert.equal(capped.maxHeight,`${12*capped.rem}px`);assert.equal(capped.overflowY,"auto");
++   assert(capped.clientHeight<=12*capped.rem+1);assert(capped.scrollHeight>capped.clientHeight);
++   assert.equal(await conversation.locator("#message-uploads .codex-upload-summary").textContent(),"50 files · 50 KiB total");
++   await conversation.close();
++  }
+   modelsUnavailable=false;
+   // Plan drafts use an immutable plan identity, so unrelated plan proposals
+   // never restore or overwrite this selected team and lead override.
+@@ -323,6 +391,6 @@ const server = http.createServer(async (req,res) => {
+   assert.equal(await page.locator("#creation-source").getAttribute("href"),"/source/");
+   assert(await page.locator("#creation-retry").isHidden());assert(await page.locator("#creation-leave-note").isHidden());
+   assert.deepEqual(errors,[]);
+-  console.log("Creation browser acceptance passed: generated/custom names, immutable recovery, tab scopes, attachment-only, storage, progress and legacy plans/receipts");
++  console.log("Creation browser acceptance passed: generated/custom names, immutable 50-file recovery, desktop/narrow creation CSS, conversation cap, full-size summary, 51-file rejection, tab scopes, attachment-only, storage, progress and legacy plans/receipts");
+  } finally {await browser.close();server.close();}
+ })().catch(error=>{console.error(error);server.close();process.exitCode=1;});

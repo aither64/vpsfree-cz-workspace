@@ -1,0 +1,230 @@
+diff --git a/conversation/assets/conversation.css b/conversation/assets/conversation.css
+index 4bfd2e1..fae8530 100644
+--- a/conversation/assets/conversation.css
++++ b/conversation/assets/conversation.css
+@@ -1,4 +1,4 @@
+-@import url("./uploads.css");
++@import url("./uploads.css?v=3");
+ .codex-connection-status { border: 1px solid #bf8700; padding: .75rem; margin: .5rem 0; }
+ .codex-connection-status button { margin-left: .5rem; }
+ .codex-history-controls { display: flex; align-items: center; gap: .65rem; margin: .5rem 0; font-size: .85rem; }
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index 1dea866..d5b7014 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -1,5 +1,5 @@
+-import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=3";
+-export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=3";
++import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=4";
++export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=4";
+ import {createConversationSync, renderConnectionStatus} from "./sync.js?v=1";
+ export {createConversationSync, renderConnectionStatus, connectionMessage} from "./sync.js?v=1";
+ 
+diff --git a/conversation/assets/uploads.css b/conversation/assets/uploads.css
+index b2332d0..4a090bb 100644
+--- a/conversation/assets/uploads.css
++++ b/conversation/assets/uploads.css
+@@ -1,14 +1,14 @@
+ .codex-attachments { display: flex; flex-wrap: wrap; gap: .5rem; margin: .4rem 0; }
+ .codex-attachment { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .65rem; padding: .5rem .65rem; border: 1px solid #526072; border-radius: .4rem; max-width: 100%; overflow-wrap: anywhere; font-size: .9rem; }
+-.codex-attachment-detail, .codex-upload-notice { color: #a7b3c5; font-size: .8rem; }
+-.codex-upload-notice { margin: .3rem 0; }
++.codex-attachment-detail, .codex-upload-notice, .codex-upload-summary { color: #a7b3c5; font-size: .8rem; }
++.codex-upload-notice, .codex-upload-summary { margin: .3rem 0; }
+ .codex-attachment progress { width: 7rem; max-width: 100%; accent-color: #7eb6f6; }
+ .codex-attachment button { padding: .2rem .45rem; font-size: .8rem; }
+ .codex-upload-drag { outline: 2px dashed #7eb6f6; outline-offset: -2px; }
+ .codex-upload-composer { max-height: 12rem; overflow-y: auto; }
+ @media (max-width: 600px) { .codex-attachment { width: 100%; } }
+ 
+-.codex-upload-composer[hidden], .codex-attachments[hidden], .codex-upload-notice[hidden] { display: none; }
++.codex-upload-composer[hidden], .codex-attachments[hidden], .codex-upload-notice[hidden], .codex-upload-summary[hidden] { display: none; }
+ .codex-upload-controls { display: inline-flex; align-items: center; }
+ button.codex-upload-toggle { display: inline-flex; align-items: center; justify-content: center; padding: .45rem; width: 2.5rem; height: 2.5rem; border: 1px solid #526072; border-radius: 50%; background: transparent; color: inherit; }
+ .codex-upload-toggle svg { width: 1.4rem; height: 1.4rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+diff --git a/conversation/assets/uploads.js b/conversation/assets/uploads.js
+index 2bb5ef1..97ce4bf 100644
+--- a/conversation/assets/uploads.js
++++ b/conversation/assets/uploads.js
+@@ -236,12 +236,14 @@ export function mountUploads(root, options) {
+   globalThis.addEventListener("scroll", positionMenu, true);
+   const notice = document.createElement("p");
+   notice.className = "codex-upload-notice"; notice.setAttribute("role", "status");
++  const summary = document.createElement("p");
++  summary.className = "codex-upload-summary";
+   const list = document.createElement("div"); list.className = "codex-attachments";
+   root.classList.add("codex-upload-composer");
+   controls.append(button, picker, menu); controlsRoot.append(controls);
+-  notice.hidden = true; list.hidden = true;
++  notice.hidden = true; summary.hidden = true; list.hidden = true;
+   if (controlsRoot !== root) root.hidden = true;
+-  root.append(notice, list);
++  root.append(notice, summary, list);
+   const ready = () => Boolean(limits) && !persistenceError && entries.every((entry) => entry.state === "ready" && !entry.error && !entry.removing);
+   const save = (next = entries) => {
+     try {
+@@ -279,6 +281,11 @@ export function mountUploads(root, options) {
+     if (button.disabled) closeMenu();
+     if (persistenceError) notice.textContent = persistenceError;
+     notice.hidden = !notice.textContent; list.hidden = entries.length === 0;
++    summary.hidden = entries.length === 0;
++    const total = entries.reduce((sum, entry) => sum + entry.size, 0);
++    const complete = entries.filter((entry) => entry.state === "ready").length;
++    summary.textContent = entries.length === 0 ? "" :
++      `${entries.length} ${entries.length === 1 ? "file" : "files"} · ${fileSize(total)} total${complete < entries.length ? ` · ${complete} of ${entries.length} complete` : ""}`;
+     if (controlsRoot !== root) root.hidden = notice.hidden && list.hidden;
+     list.replaceChildren();
+     for (const entry of entries) {
+diff --git a/docs/reference.md b/docs/reference.md
+index b0ea076..708a5c3 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -477,8 +477,15 @@ prompt references as JSON, and derive storage paths from application-generated
+ identities. Download responses use MIME filename encoding and attachment
+ disposition. Upload creation accepts at most 4096 bytes of valid UTF-8 JSON;
+ the store owns filename and file-size policy.
+-`mountUploads(root, options)` renders draft cards and errors in `root`. Pass
+-`options.controlsRoot` to put its + attachment menu beside your form actions;
++`mountUploads(root, options)` renders draft cards, a selection summary and errors
++in `root`. The summary shows the selected file count and full total size in
++binary units, plus the completed count while any file is unfinished. Completion
++requires server acknowledgement. Paused, failed, missing and deleted selections
++remain in the total until removed. A file awaiting removal stays selected; a
++failed removal does not undo its completed upload. The summary is separate from
++errors and does not change submission readiness. It disappears with an empty
++selection. Submitted files are cleared from the composer without deleting them.
++Pass `options.controlsRoot` to put its + attachment menu beside your form actions;
+ omit it to keep everything in `root`. A separate empty card root is hidden.
+ `destroy()` removes the component's controls and listeners while preserving
+ adjacent host actions. The menu uses the browser's Popover API.
+diff --git a/test/uploads_browser_contract_test.cjs b/test/uploads_browser_contract_test.cjs
+index a25a3fa..03bf7e9 100644
+--- a/test/uploads_browser_contract_test.cjs
++++ b/test/uploads_browser_contract_test.cjs
+@@ -156,7 +156,7 @@ async function uploadComposer(t, options = {}) {
+     setItem: (key, value) => {if (failWrites) {if (typeof failWrites === 'number') failWrites -= 1; throw Error('Storage write failed');} values.set(key, value);},
+   };
+   const client = {
+-    list: async () => ({limits, files: [...files.values()]}),
++    list: async () => ({limits: options.limits || limits, files: [...files.values()]}),
+     create: async (file, clientId) => {
+       calls.create.push({name: file.name, size: file.size, clientId});
+       if (options.create) return options.create(file, clientId);
+@@ -179,7 +179,7 @@ async function uploadComposer(t, options = {}) {
+     await upload.initialized;
+   };
+   await mount();
+-  const cards = () => root.children[2].children;
++  const cards = () => root.children.find((child) => child.className === 'codex-attachments').children;
+   const card = (name) => cards().find((item) => item.children[0].textContent === name);
+   const click = (name, label) => {
+     const button = card(name)?.children.find((child) => child.textContent === label);
+@@ -188,6 +188,9 @@ async function uploadComposer(t, options = {}) {
+   };
+   return {
+     client, calls, files, changes, card, click, cards,
++    summary: () => root.children.find((child) => child.className === 'codex-upload-summary'),
++    notice: () => root.children.find((child) => child.className === 'codex-upload-notice'),
++    lock: (value) => upload.lock(value), clear: () => upload.clear(),
+     saved: () => JSON.parse(values.get('draft')),
+     ready: () => upload.ready(), count: () => upload.count(), ids: () => upload.ids(),
+     failWrites: (value) => {failWrites = value;},
+@@ -214,6 +217,98 @@ async function eventually(predicate) {
+ const zeroFile = (name = 'input.eml') => new File([], name);
+ const savedDraft = (extra = {}) => ({clientId: id, name: 'input.eml', size: 0, state: 'uploading', ...extra});
+ 
++test('summary uses full sizes during transfer and waits for completion acknowledgement', async (t) => {
++  let finishChunk, finishComplete;
++  const composer = await uploadComposer(t, {limits: {...limits, fileBytes: 4096, promptBytes: 8192, chunkBytes: 2048}});
++  assert.equal(composer.summary().hidden, true);
++  composer.client.append = async (fileID, offset, checksum, chunk, progress) => {
++    progress(512);
++    await new Promise((resolve) => {finishChunk = resolve;});
++    const record = composer.files.get(fileID);
++    record.offset = offset + chunk.size; record.checksums.push(checksum);
++    return {...record};
++  };
++  composer.client.complete = async (fileID) => {
++    await new Promise((resolve) => {finishComplete = resolve;});
++    composer.files.get(fileID).state = 'ready';
++    return {...composer.files.get(fileID)};
++  };
++  composer.add(new File([new Uint8Array(2048)], 'large.txt'));
++  await eventually(() => finishChunk);
++  assert.equal(composer.summary().textContent, '1 file · 2 KiB total · 0 of 1 complete');
++  assert.equal(composer.card('large.txt').children[1].textContent, '2 KiB · 25%');
++  finishChunk(); await eventually(() => finishComplete);
++  assert.equal(composer.summary().textContent, '1 file · 2 KiB total · 0 of 1 complete');
++  assert.equal(composer.ready(), false);
++  finishComplete(); await eventually(() => composer.ready());
++  assert.equal(composer.summary().textContent, '1 file · 2 KiB total');
++  composer.client.complete = async (fileID) => {composer.files.get(fileID).state = 'ready'; return {...composer.files.get(fileID)};};
++  composer.add(zeroFile('empty.txt')); await eventually(() => composer.ready());
++  assert.equal(composer.summary().textContent, '2 files · 2 KiB total');
++  composer.lock(true); assert.equal(composer.summary().textContent, '2 files · 2 KiB total');
++  assert.equal(composer.card('large.txt').children.at(-1).disabled, true);
++  composer.lock(false); composer.clear();
++  assert.equal(composer.summary().hidden, true); assert.equal(composer.summary().textContent, '');
++  assert.deepEqual(composer.saved(), []); assert.equal(composer.files.size, 2);
++});
++
++test('zero-byte failure and retry retain the selection summary separately from errors', async (t) => {
++  const composer = await uploadComposer(t);
++  composer.client.complete = async () => {throw Error('Completion response lost');};
++  composer.add(zeroFile());
++  assert.equal(composer.summary().textContent, '1 file · 0 B total · 0 of 1 complete');
++  await eventually(() => composer.saved()[0]?.error === 'Completion response lost');
++  assert.equal(composer.summary().textContent, '1 file · 0 B total · 0 of 1 complete');
++  assert.equal(composer.ready(), false);
++  composer.client.complete = async (fileID) => {composer.files.get(fileID).state = 'ready'; return {...composer.files.get(fileID)};};
++  composer.click('input.eml', 'Retry'); await eventually(() => composer.ready());
++  assert.equal(composer.summary().textContent, '1 file · 0 B total');
++  composer.add(new File([new Uint8Array(101)], 'too-large.txt'));
++  assert.match(composer.notice().textContent, /exceeds/);
++  assert.equal(composer.summary().textContent, '1 file · 0 B total');
++  assert.equal(composer.count(), 1);
++});
++
++test('restored paused, missing and deleted selections keep their full totals until removed', async (t) => {
++  const records = [
++    savedDraft({id, name: 'ready.txt', size: 1024, state: 'ready'}),
++    savedDraft({clientId: crypto.randomUUID(), id: crypto.randomUUID(), name: 'paused.txt', size: 2048, offset: 512}),
++    savedDraft({clientId: crypto.randomUUID(), id: crypto.randomUUID(), name: 'missing.txt', size: 1024}),
++    savedDraft({clientId: crypto.randomUUID(), id: crypto.randomUUID(), name: 'deleted.txt', size: 0, state: 'deleted'}),
++  ];
++  const composer = await uploadComposer(t, {saved: records, files: [records[0], records[1], records[3]]});
++  assert.equal(composer.summary().textContent, '4 files · 4 KiB total · 1 of 4 complete');
++  await composer.reload();
++  assert.equal(composer.summary().textContent, '4 files · 4 KiB total · 1 of 4 complete');
++  composer.click('paused.txt', 'Remove'); await eventually(() => composer.count() === 3);
++  assert.equal(composer.summary().textContent, '3 files · 2 KiB total · 1 of 3 complete');
++  composer.click('missing.txt', 'Remove'); await eventually(() => composer.count() === 2);
++  composer.click('deleted.txt', 'Remove'); await eventually(() => composer.count() === 1);
++  assert.equal(composer.summary().textContent, '1 file · 1 KiB total');
++});
++
++test('ready files awaiting or failing removal remain complete until removal succeeds', async (t) => {
++  let finishRemoval;
++  const record = savedDraft({id, size: 1024, state: 'ready'});
++  const composer = await uploadComposer(t, {saved: [record], files: [record]});
++  composer.client.remove = () => new Promise((resolve, reject) => {finishRemoval = () => reject(Error('Busy file'));});
++  composer.click('input.eml', 'Remove'); await eventually(() => finishRemoval);
++  assert.equal(composer.summary().textContent, '1 file · 1 KiB total');
++  assert.equal(composer.ready(), false);
++  finishRemoval(); await eventually(() => composer.saved()[0]?.error === 'Busy file');
++  assert.equal(composer.summary().textContent, '1 file · 1 KiB total');
++  composer.client.remove = async (fileID) => composer.files.delete(fileID);
++  composer.click('input.eml', 'Remove'); await eventually(() => composer.count() === 0);
++  assert.equal(composer.summary().hidden, true);
++});
++
++test('generic attachment ID validation retains its 100-entry ceiling', async () => {
++  const {attachmentIDs} = await modules;
++  const ids = Array.from({length: 101}, () => crypto.randomUUID());
++  assert.deepEqual(attachmentIDs(ids.slice(0, 100)), ids.slice(0, 100));
++  assert.throws(() => attachmentIDs(ids), /Invalid attachment IDs/);
++});
++
+ test('rejected files can be removed without another request, before and after reload', async (t) => {
+   for (const reload of [false, true]) {
+     await t.test(`reload=${reload}`, async (t) => {

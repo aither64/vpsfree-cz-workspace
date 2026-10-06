@@ -15,9 +15,10 @@ category, all byte quotas, transfer concurrency and prompt-reference bounds.
 
 Preserve API fields, catalog/preparation schemas and submission identities.
 New versions read existing records. An older package rejects unfinished creation
-records containing more than 10 attachments: finish/recover those requests and
-allow terminal mapping compaction before downgrade; clear browser drafts through
-normal completion. Retain/reinstall the new package for unresolved recovery.
+records containing more than 10 attachments. Recover unresolved requests under
+the new package; normal terminal compaction removes the attachment snapshot.
+These reader prerequisites do not authorize downgrade: workspace switching is
+forward-only. Clear browser drafts through normal completion.
 Completed sessions and upload catalogs retain existing formats. No database,
 NixOS configuration or node fleet migration is required.
 
@@ -44,3 +45,20 @@ direction. Deployment, if performed, uses the user profile package.
   branch series and migrations, then mandatory independent final review.
 - Resolve findings before long packaged/browser checks through a fresh utility
   watcher. Preserve all results in state and link the stable portal URL.
+
+## Authorized deployment and integration follow-up
+
+The user authorized aitherdev deployment using vpsfree-cz-configuration, followed
+by integration into default branches. Keep this initiative and retained roster.
+Generic runtime feature3edc605 and provider3d07cf6 remain reviewed/tested.
+The host configuration's generic runtime input currently predates the installed
+application (924c0ec versus6a972b9). Align host and profile to3edc605 using only
+mechanical deployment input updates: preserve the existing extension revision
+and override its nested runtime in the consuming workspace flake, plus update
+configuration dev-workspace/devWorkspace channel. The extension pin includes
+another initiative's unmerged feature and must not be moved or integrated here. Use separate
+worktrees and scoped commits. Build/check matching host/profile, dry-activate,
+switch host configuration and guarded user profile, verify serving behavior,
+then fast-forward approved default branches. Forward-only workspace recovery;
+preserve generation, journals, credentials, clusters and retained sessions.
+Exact revisions, current generation, commands and results belong in rollout.md.
