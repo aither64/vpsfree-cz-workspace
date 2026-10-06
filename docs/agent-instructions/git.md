@@ -4,6 +4,17 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
+## Published branches and pull requests
+
+Ordinary workspace projects use published development branches. Do not create or
+manage pull requests unless the user explicitly requests them or the affected
+repository's own instructions require them. For example, vpsadmin-webui's PR
+workflow applies only to vpsadmin-webui.
+
+Read each affected repository's instructions separately. Repository-specific PR,
+branch naming, commit and tooling requirements apply only in that repository;
+do not carry them into another project.
+
 ## Feature integration approval
 
 Before any operation that places feature content on a repository's default
@@ -15,6 +26,11 @@ asking to implement it, accepting review, or authorizing deployment does not.
 Do not infer approval from completion criteria or from a prior merge of a
 different initiative. If approval is missing, push only feature branches and
 leave the initiative active as ready for integration, awaiting user approval.
+
+After that approval, integrate locally with `git merge --ff-only` and push the
+target branch directly over SSH, following the applicable worktree procedure
+below. Use this method even when a repository requires a PR. Do not create merge
+commits locally or through GitHub.
 
 Approval covers the named repository/target set, not exact commit IDs. Record
 its source and scope in the initiative state before integration. A clean rebase

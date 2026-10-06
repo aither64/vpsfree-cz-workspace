@@ -57,6 +57,8 @@ the parent's responsibility for choosing scope or accepting results.
   another session. Keep integration fast-forward-only and retain feature refs
   unless the user explicitly requests deletion. Do not rewrite published master
   or already-merged history without the required explicit direction.
+- Publish development branches by default; PR exceptions and integration rules
+  are in the mandatory Git procedure.
 - Clone/push over SSH. Canonical project remotes are `git@github.com:vpsfreecz/<project>.git`;
   generic dev-workspace and codex-web use `git@github.com:aither64/<project>.git`.
   The vpsFree extension is locally vpsfree-dev-workspace and remotely
@@ -218,9 +220,10 @@ This top-level `AGENTS.md` controls workspace orchestration, tracking,
 worktrees, SSH remote policy, cross-project planning, and compatibility
 expectations.
 
-Repository-local `AGENTS.md` files control changes inside that repository:
-project structure, coding style, build and test commands, generated files,
-release rules, hooks, and repository-specific commit formats.
+Repository-local `AGENTS.md` files control only that repository: project
+structure, coding style, build and test commands, generated files, release rules,
+hooks, branch names, PR workflows, commit formats and tooling. Do not apply these
+requirements to other repositories.
 
 When rules conflict, follow the repository-local rule for repository content
 while preserving the top-level requirements for tracking, compatibility
