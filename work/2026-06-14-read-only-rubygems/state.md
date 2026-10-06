@@ -86,3 +86,9 @@ lifecycle: active
 - Feature and merge worktrees were removed.
 - The empty `worktrees/2026-06-14-read-only-rubygems` directory was removed.
 - Feature branch refs were kept locally as requested by workspace policy.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

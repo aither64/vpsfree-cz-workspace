@@ -454,3 +454,9 @@ Runtime validation remains: rerun targeted `confctl health-check --yes`
 commands from an environment with accepted SSH host keys/access. To fully
 validate the netboot machine edits, rerun their `confctl build -y` commands in
 an environment where `/srv/iso-images/systemrescue-11.01-amd64.iso` exists.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

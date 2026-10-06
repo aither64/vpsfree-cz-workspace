@@ -120,3 +120,9 @@ Complete. Shared checkout and `origin/master` are both at reconstructed head
   was installed and pushed.
 - Retain old local/remote branch refs as recovery references unless separately
   requested otherwise.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

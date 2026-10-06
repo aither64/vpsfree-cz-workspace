@@ -130,3 +130,9 @@ lifecycle: active
   netlink prototype files were removed in favor of the requested Bash+nft
   version. A duplicate checker created during subagent timeout handling was
   removed; the final checker is `check-cve-2026-23111-nft.sh`.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

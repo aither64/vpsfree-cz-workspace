@@ -345,3 +345,9 @@ lifecycle: active
   - Removed the now-empty
     `worktrees/2026-06-25-vpsadmin-backup-rotation/` directory.
   - Verified no vpsAdmin worktrees remain for this initiative.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

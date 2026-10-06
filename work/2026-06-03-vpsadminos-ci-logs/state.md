@@ -96,3 +96,9 @@ lifecycle: active
   `/tmp/vpsadminos-local-repro-rocky8`, and
   `/tmp/vpsadminos-local-repro-mount-v1`.
 - Detached investigation worktree was removed.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

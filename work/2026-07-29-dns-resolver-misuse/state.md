@@ -223,3 +223,9 @@ validate the chosen candidate because its exponential decay and
   created while inspecting the package.
 - No production state, branches, commits, resolver configuration, or vpsAdmin
   data was changed.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

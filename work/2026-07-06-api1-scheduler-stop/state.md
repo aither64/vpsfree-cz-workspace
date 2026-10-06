@@ -47,3 +47,9 @@ lifecycle: active
 
 - Remove the one-off timer/service from `api1` config after the maintenance
   window has passed.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

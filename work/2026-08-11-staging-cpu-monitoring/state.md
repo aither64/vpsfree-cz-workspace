@@ -125,3 +125,9 @@ lifecycle: active
 - The local feature branch is retained as required. No remote feature branch
   was created.
 - Initiative plan and state records are retained for future reference.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

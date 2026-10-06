@@ -1172,3 +1172,9 @@ Merged `vpsadminos` into `origin/staging` on 2026-06-04.
   `merge-2026-06-03-nixos-26-05-port-vpsfree-cz-configuration-master`.
 - Kept feature branches as requested by workspace policy:
   `2026-06-03-nixos-26-05-port` in all affected repositories.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

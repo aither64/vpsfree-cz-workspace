@@ -142,3 +142,9 @@ lifecycle: active
 - Merge worktrees removed.
 - Feature branches remain active.
 - Local `master` refs in both bare clones match `origin/master`.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

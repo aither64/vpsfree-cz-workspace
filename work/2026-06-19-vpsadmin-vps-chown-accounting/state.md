@@ -150,3 +150,9 @@ lifecycle: active
 - Removed the `vpsfree-cz-configuration` worktree.
 - Pruned stale worktree metadata for all three repositories.
 - Kept local and remote branch refs intact.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

@@ -498,3 +498,9 @@ lifecycle: active
   `worktrees/2026-07-08-webui-server-errors/` directory. The durable
   `plan.md` and `state.md` notes remain under `work/2026-07-08-webui-server-errors/`.
 - Feature branches were kept locally/remotely as required by workspace policy.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

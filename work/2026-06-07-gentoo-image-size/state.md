@@ -163,3 +163,9 @@ lifecycle: active
 - Removed the feature and temporary staging merge worktrees under
   `worktrees/2026-06-07-gentoo-image-size/`, then removed the empty parent
   directory. Branch refs were left intact.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

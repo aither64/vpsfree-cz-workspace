@@ -147,3 +147,9 @@ lifecycle: active
   - `2026-06-11-vpsadminos-ci-conntrack-failure-merge`
   - `2026-06-11-vpsadminos-ci-conntrack-failure-merge-final`
 - Kept the feature branch refs as required by workspace policy.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

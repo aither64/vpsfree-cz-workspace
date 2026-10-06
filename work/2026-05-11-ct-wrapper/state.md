@@ -169,3 +169,9 @@ lifecycle: active
 - Removed temporary CI log download `/tmp/vpsadminos-ci-26885780878`.
 - Removed the empty worktree group directory
   `worktrees/2026-05-11-ct-wrapper` and pruned stale git worktree metadata.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

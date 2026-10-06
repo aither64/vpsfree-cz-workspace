@@ -111,3 +111,9 @@ Last updated: 2026-06-05T11:13:06+02:00
   and `worktrees/2026-06-04-confctl-skip-current-deploy/confctl`.
 - Keep local and remote feature branch refs unless the user explicitly asks
   for branch deletion.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

@@ -262,3 +262,9 @@ and committed.
   test database tooling.
 - Kept local and remote `2026-05-31-libnodectld-root` branch refs after merge,
   per workspace cleanup policy.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

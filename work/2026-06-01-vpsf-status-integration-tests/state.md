@@ -195,3 +195,9 @@ After the full pass, only example descriptions/indentation were adjusted in
   related test-runner or QEMU processes were active.
 - Removed empty initiative worktree group directory.
 - Kept local and remote feature branch refs as required by workspace policy.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

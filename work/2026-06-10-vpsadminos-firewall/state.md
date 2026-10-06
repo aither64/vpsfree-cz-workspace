@@ -205,3 +205,9 @@ lifecycle: active
 - Configuration temporary merge worktree was removed.
 - Configuration feature worktree was removed.
 - Local feature branches were preserved.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

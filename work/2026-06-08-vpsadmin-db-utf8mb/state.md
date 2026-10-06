@@ -114,3 +114,9 @@ lifecycle: active
 
 - Scratch MariaDB foreground session was stopped.
 - Worktree should be removed after merge or abandonment.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

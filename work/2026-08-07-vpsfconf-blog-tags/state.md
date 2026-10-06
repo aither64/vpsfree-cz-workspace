@@ -88,3 +88,9 @@ lifecycle: active
 - Empty `worktrees/2026-08-07-vpsfconf-blog-tags/` directory removed.
 - Feature branch preserved locally and remotely after merge.
 - Local integration branch preserved; it was not pushed.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

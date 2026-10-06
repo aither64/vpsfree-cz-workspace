@@ -308,3 +308,9 @@ for any repeated failure while deliberately leaving the HTTP 500 test-fatal.
   dependency update. Verified `6fb60827f` is its ancestor and fast-forwarded
   the bare repository's local `master` ref to the new upstream tip; the two fix
   commits remain in the linear `master` history.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

@@ -134,3 +134,9 @@ lifecycle: active
 - Removed the investigation-only `vpsfree-cz-configuration` worktree with its
   untracked `.bin/` and `.bundle/` Nix-shell caches; its feature branch was
   retained.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

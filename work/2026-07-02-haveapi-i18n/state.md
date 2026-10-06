@@ -5906,3 +5906,9 @@ lifecycle: active
       - Cleanup: removed clean worktrees
         `worktrees/2026-07-02-haveapi-i18n/vpsf-status-probe-text` and
         `worktrees/2026-07-02-haveapi-i18n/vpsfree-cz-configuration-probe-text`.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

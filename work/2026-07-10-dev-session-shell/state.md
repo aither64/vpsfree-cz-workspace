@@ -63,3 +63,9 @@ Implementation, verification, commit, and mandatory standalone review complete.
 - Removed the feature worktree and managed tmux session at the user's request.
 - Preserved the local feature branch `2026-07-10-dev-session-shell` at
   `b2b6fdc` and retained these initiative notes.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

@@ -104,3 +104,9 @@ lifecycle: active
   - `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-07-vpsconf-nixpkgs/vpsfree-cz-configuration`
   - `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-06-07-vpsconf-nixpkgs/vpsfree-cz-configuration-master`
 - Remaining worktree group directory is empty.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.

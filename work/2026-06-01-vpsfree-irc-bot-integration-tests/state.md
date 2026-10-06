@@ -180,3 +180,9 @@ Temporary test-runner state directories from successful local runs:
 
 They contained only logs/result metadata after the successful runs and were
 removed after recording results. No interactive `debug` run was needed.
+
+## Archival request, 2026-10-06
+
+The workspace operator requested archival of sessions dated August 2026 or
+older, retaining recorded work and branches. This checkpoint commits the
+existing plan and active state before the ordinary archive transition.
