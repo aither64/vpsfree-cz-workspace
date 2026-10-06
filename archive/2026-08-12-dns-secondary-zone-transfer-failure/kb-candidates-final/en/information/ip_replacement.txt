@@ -1,0 +1,50 @@
+====== IP Address Replacement =======
+
+Since the inception of vpsFree.cz, we have been using IP addresses provided by our ISP. It was only later that we became a member of RIPE NCC and requested our own address ranges. To utilize our own autonomous system, it's necessary to replace these ISP addresses with addresses from the ranges assigned directly to our association by RIPE NCC.
+
+===== Which addresses are changing? ====
+
+We are changing addresses from these ranges:
+
+  * 77.93.223.0/24
+  * 83.167.228.0/25
+  * 2a01:430:17::/48
+
+===== How to replace the addresses? =====
+New addresses have been routed to your VPS, which addresses specifically can be found in the email we sent you. If you haven't received any email and you don't have any IP from the mentioned ranges, this change does not concern you. When you are ready to proceed with the replacement, add the new addresses to your network interface using the "Interface addresses" form in vpsAdmin. You can have multiple addresses on an interface and perform the replacement gradually. Once the original addresses are no longer needed, you can remove them from your VPS using the same form in vpsAdmin.
+
+===== Which addresses do I need to replace? =====
+We have sent you a list of addresses to replace via email. It may concern both IPv4 and IPv6, or just one of them. You don't need to change addresses not mentioned in the email.
+
+===== How much time do I have to replace the addresses? =====
+Please complete the replacement by May 1, 2024. After this date, we will automatically replace any remaining addresses, i.e., we will add new addresses to the interface and remove the original ones.
+
+===== What does the address replacement entail? =====
+Most importantly, changing DNS records for your domains: A, AAAA, MX records. If you wish to set up a [[manuals:vps:rdns|reverse record]] for the new addresses, please contact [[mailto:support@vpsfree.org|support]].
+
+If some of your services are bound to specific IP addresses, you will have to change
+their configuration.
+
+
+===== Can I use old and new addresses at the same time? =====
+
+Yes, you can add new addresses to the network interface. The old addresses will remain
+functional until you will remove them from the VPS. The first address on the interface
+is used as outgoing address.
+===== Is there going to be an outage during the replacement? =====
+
+If you will first add new IP addresses and remove the original addresses after DNS
+records have been changed, there won't be any outage.
+
+===== Do I have to restart the VPS? =====
+
+No, IP addresses can be added and removed on the fly.
+
+===== What is a reverse record for? =====
+A [[manuals:vps:rdns|reverse record]] is necessary if you are running a mail server on your VPS. Its value should match the name under which your mail server identifies itself. You can find out whether and how you have a reverse record set currently, for example, with the command ''host 1.2.3.4'' or ''dig -x 1.2.3.4'', where ''1.2.3.4'' is your IP address.
+
+===== The new IPv6 is /64 instead of /128? =====
+Yes, due to our previous virtualization platform OpenVZ, we used to allocate /128 IPv6 addresses because OpenVZ could not work with larger ranges. Nowadays, /128 addresses are not adequate as spam lists include at least entire /64 networks. Therefore, the new addresses are /64. This does not change how they are used.
+
+===== I need to return to the original address =====
+In the "Interface addresses" form in the vpsAdmin details of your VPS, you can add it back. Alternatively, if you also deleted the route, you can add it just above in the "Routed addresses" form. The original addresses will be available until May 1, 2024.

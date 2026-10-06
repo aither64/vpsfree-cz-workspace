@@ -1,0 +1,79 @@
+====== User namespace ======
+User namespace is a Linux kernel feature used to isolate processes. An unprivileged
+user from the host's point of view can become root in his user namespace. We use
+user namespaces extensively: every VPS is running in one such user namespace.
+As it is, interaction with user namespaces is necessary only in rare cases.
+
+Each member is assigned a unique block of 524 288 (512k) user/group IDs. These
+IDs are unprivileged on the host. For example, let's say one user/group ID block
+starts with ID 1 048 576 as seen on the host. The last ID would be
+1 048 576 + 524 287. From inside the VPS, the first ID would be 0 (root) and the
+last ID would be 524 287. The subsequent ID block belonging to another member would
+start at 1 572 864, etc. Since the ID blocks are unique, should an attacker escape
+from the VPS's mount namespace, he won't be able to access data from other
+members' VPS.
+
+VPS are abstracted from the user namespace that we create. Usually, the only time
+you can notice the user namespace is when you need to use IDs greater than 512k.
+That is not possible in the default UID/GID mapping. You can, however, configure
+a different mapping to use greater IDs, but you can never use more than 512k IDs
+in total.
+
+===== UID/GID mapping =====
+Every VPS uses one UID/GID mapping, it can be seen and configured in VPS details:
+
+{{:en:screenshots:vpsadmin:userns:map.png?600}}
+
+  * **ID within VPS** is the first ID seen in the VPS
+  * **ID within namespace** is the first ID from your unique user/group ID block, can be 0 - 524 287
+  * **ID count** is the number of IDs to map
+
+The default mapping uses IDs 0 - 512 287.
+
+If you need to use greater IDs, you can create your own mapping. Note that UID/GID
+maps which are used by a VPS cannot be changed. You have to create a new map
+and then switch-over the VPS to the new map. One map can have at most **10** UID
+and **10** GID entries.
+
+===== Example UID/GID mapping =====
+Let's say that you need to use user/group ID 5 000 000. You can reorganize your
+512k IDs to include it, e.g.:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 0                   | 65536    |
+| UID/GID | 5000000       | 100000              | 200000   |
+
+This mapping will keep 65 536 IDs as normal, 65 536 is the minimum and usually
+sufficient amount of IDs that VPS needs. IDs 5 000 000 - 5 199 999 will be
+mapped to 100 000 - 199 999 from your namespace. This mapping uses 265 536 IDs
+from your namespace, the rest is unused and not accessible.
+
+===== Mapping rules and caveats =====
+
+  * Each mapping must map 0 - 65 535 **IDs within VPS**. These are essential for the VPS to work.
+  * Changing the mapping does not modify on-disk user/group ownerships, merely shifts the view.
+  * If there are files owned by a certain user/group and the new mapping does not include those IDs, the files will be owned by ''nobody''/''nogroup''.
+
+===== Hardening VPS =====
+While every member has his own unique block of user/group IDs, the default mapping
+uses all available IDs (512k) and all VPS use the same mapping. This means that
+VPS belonging to one member use the same IDs. We do not consider it necessary,
+but it is possible to create 8 unique mappings, each with 65 536 IDs, and use
+a different mapping on every VPS, i.e. on up to 8 VPS.
+
+Mapping #1:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 0                   | 65536    |
+
+Mapping #2:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 65536               | 65536    |
+
+Mapping #3:
+
+| Type    | ID within VPS | ID within namespace | ID count |
+| UID/GID | 0             | 131072              | 65536    |
+
+As you can see, each mapping adds 65 536 to **ID within namespace**.

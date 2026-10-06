@@ -1,0 +1,47 @@
+# KB navigation annotation review
+
+Changed pages: 2
+New pages: 0
+Selected media: 0
+Annotation tags: 0
+Content replacements: 6
+Managed pages: 0
+
+| Language | Page | Semantic path | Count | Existing text | Candidate text |
+| --- | --- | --- | ---: | --- | --- |
+
+## Guarded content replacements
+
+| Language | Page | Count | Existing text | Candidate text |
+| --- | --- | ---: | --- | --- |
+| cs | navody:server:sekundarni_dns | 1 | Jednotlivé zóny nastavíš v menu <vpsadmin-nav id="dns.secondary-zones.open">DNS -> Sekundární zóny</vpsadmin-nav>. Po vytvoření zóny pomocí ↵ formuláře „Primární servery“ přidáš adresu svého primárního autoritativního serveru, ↵ který ti běží ve VPS. | Jednotlivé zóny nastavíš v menu <vpsadmin-nav id="dns.secondary-zones.open">DNS -> Sekundární zóny</vpsadmin-nav>. ↵ Nejprve <vpsadmin-nav id="dns.secondary-zones.create">vytvoř zónu</vpsadmin-nav>. V jejím detailu potom pomocí formuláře ↵ „Primární servery“ <vpsadmin-nav id="dns.secondary-zones.add-primary">přidej adresu svého primárního autoritativního serveru</vpsadmin-nav>, ↵ který ti běží ve VPS. |
+| en | manuals:server:secondary_dns | 1 | You can set up individual zones in the menu <vpsadmin-nav id="dns.secondary-zones.open">DNS -> Secondary zones</vpsadmin-nav>. After creating a zone using the "Primary Servers" form, you add the address of your primary authoritative server that is running in your VPS. | You can set up individual zones in the menu <vpsadmin-nav id="dns.secondary-zones.open">DNS -> Secondary zones</vpsadmin-nav>. ↵ First, <vpsadmin-nav id="dns.secondary-zones.create">create the zone</vpsadmin-nav>. In its details, use the "Primary servers" form to ↵ <vpsadmin-nav id="dns.secondary-zones.add-primary">add the address of your primary authoritative server</vpsadmin-nav> running in your VPS. |
+| cs | navody:server:sekundarni_dns | 1 | V seznamu sekundárních serverů se zobrazuje jejich stav, tj. aktuální sériové číslo zóny ↵ a datumy posledního načtení, dalšího obnovení a expirace. | V tabulce **Jmenné servery** uvidíš, jestli má každý přidělený sekundární server ↵ zónu načtenou a obsluhuje ji. Zobrazuje se také sériové číslo, poslední načtení, ↵ poslední kontrola, další obnovení, expirace a odkaz na záznamy přenosů. ↵  ↵ Tabulka **Primární servery** naproti tomu ověřuje připravenost každého tvého ↵ primárního serveru pro každý přidělený sekundární server. vpsAdmin z adresy ↵ sekundárního serveru pravidelně provede kontrolu připravenosti pomocí IXFR a ↵ použije stejný TSIG jako BIND, pokud je pro primární server nastavený. Když krátká ↵ kontrola nestačí nebo je potřeba ověřit obsah, ↵ stáhne dočasný AXFR a zónu zkontroluje. Zachovává také skutečné chyby přenosů, ↵ které hlásí BIND, například odmítnutí, chyby TSIG nebo neplatný obsah zóny. ↵  ↵ Stav **Úspěšný** znamená, že kontrola uspěla ze všech sekundárních serverů, ↵ **Nepodařilo se**, že selhala alespoň jedna cesta, a **Čeká**, že ještě chybí ↵ průkazný výsledek. Selhání jedné cesty nutně neznamená nedostupnou zónu: aktuální ↵ kopii mohl získat jiný sekundární server a předat ji ostatním. Chyba ale obvykle ↵ upozorňuje na nedostupný primární server, chybějící povolení AXFR/IXFR, nesprávný ↵ TSIG, staré sériové číslo nebo neplatnou zónu. Na síťovou chybu upozorňujeme až ↵ tehdy, když opakované neúspěšné kontroly stejné cesty pokrývají alespoň 24 hodin. ↵ Na ostatní potvrzené chyby upozorňujeme po 30 minutách. |
+| en | manuals:server:secondary_dns | 1 | The list of secondary servers shows their status, i.e., the current zone serial number and the dates of the last load, the next refresh, and expiration. | The **Name servers** table shows whether every assigned secondary has loaded and ↵ is serving the zone. It also shows the serial, load and check times, next refresh, ↵ expiration, and a link to transfer activity. ↵  ↵ The **Primary servers** table instead checks each of your primaries from every ↵ assigned secondary. vpsAdmin regularly sends an IXFR readiness check from the ↵ secondary's real transfer address, using the same TSIG as BIND when one is ↵ configured. When the short check is inconclusive or zone contents need validation, it downloads a ↵ temporary AXFR and validates the zone. Actual transfer errors reported by BIND, ↵ such as refusal, TSIG failure, or invalid zone contents, are retained as well. ↵  ↵ **Successful** means checks succeeded from every secondary, **Failed** means at ↵ least one path failed, and **Pending** means a conclusive result is still missing. ↵ One failed path does not necessarily make the zone unavailable: another secondary ↵ may have obtained a current copy and distributed it to its peers. The failure does, ↵ however, usually indicate an unreachable primary, missing AXFR/IXFR permission, ↵ incorrect TSIG, an old serial, or an invalid zone. We alert on a network error only ↵ after repeated failed checks on the same path span at least 24 hours. We alert on ↵ other confirmed errors after 30 minutes. |
+| cs | navody:server:sekundarni_dns | 1 | Přenos zón mezi primárními a sekundárními servery lze dále zabezpečit pomocí TSIG. ↵ V menu <vpsadmin-nav id="dns.tsig-keys.open">DNS -> TSIG klíče</vpsadmin-nav> si nejprve vytvoříme sdílený klíč. Každý klíč je identifikován ↵ libovolným názvem, zvoleným algoritmem a tajným kódem. Tyto hodnoty se musí shodovat ↵ na všech serverech. Při přidávání primárních serverů k zóně můžeme nastavit vybraný TSIG ↵ klíč. V ukázkové konfiguraci je opět znázorněno, jak TSIG nastavit na primárním serveru. | Přenos zón mezi primárními a sekundárními servery můžeš dále zabezpečit pomocí TSIG. ↵ V menu <vpsadmin-nav id="dns.tsig-keys.open">DNS -> TSIG klíče</vpsadmin-nav> si nejprve <vpsadmin-nav id="dns.tsig-keys.create">vytvoř sdílený klíč</vpsadmin-nav>. Každý klíč je identifikován ↵ libovolným názvem, zvoleným algoritmem a tajným kódem. Tyto hodnoty se musí shodovat ↵ na všech serverech. Při přidávání primárního serveru k zóně ↵ <vpsadmin-nav id="dns.secondary-zones.primary-tsig.select">vyber tento TSIG klíč</vpsadmin-nav>. V ukázkové konfiguraci uvidíš, ↵ jak TSIG nastavit na primárním serveru. |
+| en | manuals:server:secondary_dns | 1 | Zone transfers between primary and secondary servers can be further secured using TSIG. First, create a shared key in the menu <vpsadmin-nav id="dns.tsig-keys.open">DNS -> TSIG keys</vpsadmin-nav>. Each key is identified by an arbitrary name, chosen algorithm, and secret code. These values must match on all servers. When adding primary servers to a zone, you can set the selected TSIG key. The sample configuration again shows how to set up TSIG on the primary server. | Zone transfers between primary and secondary servers can be further secured using TSIG. First, <vpsadmin-nav id="dns.tsig-keys.create">create a shared key</vpsadmin-nav> in the menu <vpsadmin-nav id="dns.tsig-keys.open">DNS -> TSIG keys</vpsadmin-nav>. Each key is identified by an arbitrary name, chosen algorithm, and secret code. These values must match on all servers. When adding a primary server to a zone, <vpsadmin-nav id="dns.secondary-zones.primary-tsig.select">select this TSIG key</vpsadmin-nav>. The sample configuration shows how to set up TSIG on the primary server. |
+
+## Managed articles
+
+| Article | Language | Page | Reconciliation | Canonical source |
+| --- | --- | --- | --- | --- |
+
+## Explicit exceptions
+
+| Language | Page | Semantic path | Reason |
+| --- | --- | --- | --- |
+
+## New pages
+
+| Language | Page | SHA-256 |
+| --- | --- | --- |
+
+## Canonical code samples
+
+| ID | File | Language | Uses | SHA-256 |
+| --- | --- | --- | ---: | --- |
+
+## Selected capture media
+
+| Language | Capture | Media ID | SHA-256 |
+| --- | --- | --- | --- |

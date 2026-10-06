@@ -1,0 +1,32 @@
+====== Instalace na CentOS 7 ======
+
+Zdrojový kod klienta lze najít [[https://github.com/vpsfreecz/vpsfree-client|zde]]
+
+vpsfree-client vyžaduje ruby >–2.30
+
+Ruby ve verzi nižší než [[https://www.ruby-lang.org/en/downloads/branches/|2.5 jsou EOL]]
+
+Aktuální Ruby je možné nainstalovat pomocí [[ https://linuxize.com/post/how-to-install-ruby-on-centos-7/|tohoto návodu]].
+
+Například:
+<code>
+yum install -y openssl-devel readline-devel zlib-devel
+/build/vpsfree-client:curl -sL https://github.com/rbenv/rbenv-installer/raw/main/bin/rbenv-installer | bash -
+# následně je zapotřebí přidat rbenv do PATH a provést trochu magie(snippet z .bashrc):
+export PATH="${PATH}:/root/.rbenv/bin"
+if [ -d '/root/.rbenv' ]; then
+  eval "$(rbenv init -)"
+fi
+/build/vpsfree-client:rbenv install 2.5.7
+/build/vpsfree-client:rbenv global 2.5.7
+#projistotu spustte nový bash který uvidí novou verzi ruby
+/build/vpsfree-client:bash
+#proveďte instalaci
+/build/vpsfree-client:gem install vpsfree-client
+#otestujeme
+/build/vpsfree-client:which vpsfreectl
+/root/.rbenv/shims/vpsfreectl
+/build/vpsfree-client:vpsfreectl -h
+Usage: /root/.rbenv/versions/2.5.7/bin/vpsfreectl [options] <resource> <action> [objects ids] [-- [parameters]]
+...
+</code>
