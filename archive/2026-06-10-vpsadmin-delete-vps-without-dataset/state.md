@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # 2026-06-10-vpsadmin-delete-vps-without-dataset
 
