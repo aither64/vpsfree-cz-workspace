@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # vpsAdmin integration test Mailpit state
 
