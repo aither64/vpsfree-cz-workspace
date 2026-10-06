@@ -1,0 +1,54 @@
+<page>manuals:server:mailgun</page>
+====== Odesílání e-mailů přes Mailgun ======
+
+Prerekvizitou je mít na webu [[https://www.mailgun.com/|Mailgun]] založený účet, zaregistrovanou doménu pro odesílání e-mailů a povolenou e-mailovou adresu. Návod je psaný pro distribucí Debian 10.
+
+Nainstalujeme mailserver exim4:
+
+<code>apt-get install exim4</code>
+
+Upravíme hodnoty v souboru **/etc/exim4/update-exim4.conf.conf**:
+
+<code>
+dc_eximconfig_configtype='smarthost'
+dc_other_hostnames=''
+dc_local_interfaces='127.0.0.1 ; ::1'
+dc_readhost=''
+dc_relay_domains=''
+dc_minimaldns='false'
+dc_relay_nets=''
+dc_smarthost='smtp.mailgun.org::587'
+CFILEMODE='644'
+dc_use_split_config='false'
+dc_hide_mailname='true'
+dc_mailname_in_oh='true'
+dc_localdelivery='mail_spool'
+</code>
+
+Povolíme podporu TLS upravením (či vytvořením) souboru **/etc/exim4/exim4.conf.localmacros**:
+
+<code>
+echo "MAIN_TLS_ENABLE = 1" >> /etc/exim4/exim4.conf.localmacros
+</code>
+
+Údaje o přístupových údajích k e-mailové adrese, na kterou se mají e-maily směrovat, nastavíme do souboru **/etc/exim4/passwd.client**:
+
+<code>
+echo "*:postmaster@sandboxXXXX.mailgun.org:password" >> /etc/exim4/passwd.client
+</code>
+
+(řetězec ''postmaster@sandboxXXXX.mailgun.org'' nahraďte za username a ''password'' za heslo)
+
+Nakonec je třeba ještě e-mailový server restartovat:
+
+<code>
+service exim4 restart
+</code>
+
+Teď už zbývá jen vyzkoušet, jestli vše funguje správně:
+
+<code>
+echo 'Příliš žluťoučký kůň úpěl ďábelské ódy.' | mail -s 'Ahoj světe!' muj@email.dev
+</code>
+
+//Zdroj: https://sendgrid.com/docs/for-developers/sending-email/exim/ //

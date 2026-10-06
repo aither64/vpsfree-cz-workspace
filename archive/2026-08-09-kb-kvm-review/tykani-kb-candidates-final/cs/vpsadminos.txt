@@ -1,0 +1,29 @@
+====== vpsadminOS ======
+
+New hope
+
+Repository: https://github.com/vpsfreecz/vpsadminos
+
+===== Building on NixOS =====
+
+Follow instructions in [[https://github.com/vpsfreecz/vpsadminos#readme|README]]
+
+===== Building on another distribution =====
+
+Installing **nix** is required. Use following instructions as root (best to use virtual machine as a builder):
+
+<code>
+useradd nix
+groupadd -r nixbld
+for n in $(seq 1 10); do 
+    useradd -c "Nix build user $n" \
+            -d /var/empty -g nixbld -G nixbld -M -N -r -s "$(which nologin)" nixbld$n;
+done
+mkdir /nix
+chown -R nix /nix
+su -c "bash <(curl https://nixos.org/nix/install)" nix
+# source nix env
+. ~nix/.nix-profile/etc/profile.d/nix.sh
+</code>
+
+Proceed with instructions in [[https://github.com/vpsfreecz/vpsadminos#readme|README]]

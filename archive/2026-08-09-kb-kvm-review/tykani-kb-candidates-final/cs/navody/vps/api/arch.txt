@@ -1,0 +1,26 @@
+====== Instalace CLI na Linux distribucích založených na Arch Linux ======
+Testováno na [[https://manjaro.org/download/xfce/|Manjaro 18.04 Xfce]]:
+
+<code bash>
+sudo pacman -Syu ruby make gcc
+gem install vpsfree-client # nainstalujeme vpsfree-client (nepoužívejte tady SUDO install!)
+</code>
+
+Přidáme PATH k nainstalovaným gems do ''~./bashrc''.
+
+<code bash>
+sudo nano ~/.bashrc
+</code>
+
+Na konec souboru přidáme:
+
+<code bash>
+if command -v ruby &>/dev/null && command -v gem &>/dev/null; then
+    PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
+fi
+</code>
+
+Restartujeme shell ''exec $SHELL'' nebo počítač. Otestujeme funkčnost CLI, třeba příkazem:
+<code bash>
+vpsfreectl ip_traffic top
+</code>

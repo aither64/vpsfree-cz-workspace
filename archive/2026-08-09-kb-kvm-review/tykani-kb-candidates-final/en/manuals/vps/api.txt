@@ -1,0 +1,639 @@
+====== API ======
+
+Our API is running at https://api.vpsfree.cz. The API can be used to perform
+any action that you can do in the web interface. In fact, the web interface
+running at https://vpsadmin.vpsfree.cz uses the API and calls it for every
+action.
+
+===== API Documentation =====
+The API documentation, i.e. a list of objects, possible actions as well as input and output
+parameters can be found at https://api.vpsfree.cz/.
+
+Even without logging in, you can see a list of all objects, i.e. even those that only
+administrators can work with. On the top right, you can log in using the same credentials
+as in vpsAdmin. Afterwards, you will only see the objects, actions and parameters that
+the user who is currently logged in can work with.
+
+===== Working with the API =====
+The API is built on the [[https://github.com/vpsfreecz/haveapi|HaveAPI]] framework
+which we have developed. The framework creates
+a [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|self-describing]]
+API, which means that premade generic clients can be
+used:
+
+  * Ruby - https://github.com/vpsfreecz/vpsfree-client
+  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
+  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
+  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
+  * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
+  * A file system based on FUSE - https://github.com/vpsfreecz/haveapi-fs (outdated)
+
+Usage examples can always be found in the ''README.md'' of each client. In general, the client
+receives the API URL, then the client downloads the documentation and uses it for setup.
+
+The API is [[wp>Representational state transfer|RESTful]], so any REST client
+can be used for simple actions. A description of the custom data transfer protocol
+that HaveAPI clients abstract can be found in
+[[https://api.vpsfree.cz/doc/protocol.md|the documentation]].
+
+===== Authentication=====
+There are two authentication methods:
+
+  * [[#http_basic|HTTP Basic]]
+  * [[#tokens|Using tokens]]
+
+Example usage in different programming languages can be found in [[https://api.vpsfree.cz/v6.0/#auth|API documentation]].
+
+==== HTTP Basic ====
+ The name and password must be sent along with every API request in HTTP header //Authorization//.
+This is a good choice for one-off actions. However, if you need to call the API repeatedly or
+automatically, storing the password on the disk or entering it constantly is not a good idea.
+HTTP Basic cannot be used if two-factor authentication is enabled on your account.
+
+==== Tokens ====
+The client first requests a token using your credentials and optionally also TOTP.
+As soon as the client receives the token, the credentials can be forgotten and the token
+is used for authentication.
+
+There can be several types of tokens with different lifetimes:
+
+  * //fixed// - token validity is fixed
+  * //renewable_manual// - token validity can be manually extended
+  * //renewable_auto// - token validity is extended after every request
+  * //permanent// - the token is valid permanently, or until it is deleted
+
+The type of token and time period by which its validity is extended is chosen
+by the client.
+
+===== Scopes =====
+Authentication tokens can be restricted to selected actions. Each action has its own scope,
+you can find the available scopes in the documentation. You can configure scopes when you're
+requesting a new authentication token.
+
+Example scopes:
+
+  * ''all'' allow access to all actions, this is used by the web interface and it is the default scope
+  *  an empty scope will allow access only to ''user#current'', which gives information about the current user; this is used for logins from Discourse and KB
+  * ''vps#show'' allow access to action show on vps resource
+  * ''vps#show:vps_id=123'' allow access to action show on a specific VPS
+  * ''vps#*'' allow all actions on vps resource
+  * ''vps#*:vps_id=123'' all actions on vps resource, but only with VPS ID 123
+  * ''{vps,dataset}#{index,show}'' list and show info about VPS and datasets
+
+Scopes can contain globs for resource and action names. Action name is separated from resource name by a hash (''#''). Optional object IDs are separated from action name by a colon ('':'') and cannot contain globs. You can find a list of available scopes and their parameters in the [[https://api.vpsfree.cz/|documentation]]. Each token can have multiple scopes separated by spaces. At least one scope must match the called action in order for access to be granted.
+
+===== Installing vpsfree-client =====
+[[https://github.com/vpsfreecz/vpsfree-client|The Ruby client]] also includes a CLI.
+In order for it to work properly, you need Ruby >= 2.7, Ruby header files and ncurses (mostly packages with the ''-dev'' or ''-devel'' suffix).
+
+<code bash>
+gem install vpsfree-client
+</code>
+
+Platform-specific instructions:
+
+  * [[manuals:vps:api:macos|macOS]]
+  * [[manuals:vps:api:windows|Windows]]
+
+After the installation, ''vpsfreectl'' should be available in ''$PATH''. If not,
+this can be fixed easily:
+
+<code>
+$ gem env | grep "EXECUTABLE DIRECTORY"
+</code>
+
+This command will display the location of all executables installed using
+''gem''. All you need to do is add that folder to ''$PATH'', e.g.:
+
+<code>
+$ PATH="$PATH:/home/user/.gem/ruby/3.0.0/bin"
+</code>
+
+==== Using CLI ====
+
+<code>
+$ vpsfreectl --help
+Usage: vpsfreectl [options] <resource> <action> [objects ids] [-- [parameters]]
+    -u, --api URL                    API URL
+    -a, --auth METHOD                Authentication method
+        --list-versions              List all available API versions
+        --list-auth-methods [VERSION]
+                                     List available authentication methods
+        --list-resources [VERSION]   List all resource in API version
+        --list-actions [VERSION]     List all resources and actions in API version
+        --version VERSION            Use specified API version
+    -c, --columns                    Print output in columns
+    -H, --no-header                  Hide header row
+    -L, --list-parameters            List output parameters
+    -o, --output PARAMETERS          Parameters to display, separated by a comma
+    -r, --rows                       Print output in rows
+    -s, --sort PARAMETER             Sort output by parameter
+        --save                       Save credentials to config file for later use
+        --raw                        Print raw response as is
+        --timestamp                  Display Datetime parameters as timestamp
+        --utc                        Display Datetime parameters in UTC
+        --localtime                  Display Datetime parameters in local timezone
+        --date-format FORMAT         Display Datetime in custom format
+    -v, --[no-]verbose               Run verbosely
+        --client-version             Show client version
+        --protocol-version           Show protocol version
+        --check-compatibility        Check compatibility with API server
+    -h, --help                       Show this message
+
+Commands:
+action_state wait <STATE ID>         Block until the action is finished 
+vps remote_console VPS_ID            Open VPS remote console                       
+vps migrate_many VPS_ID...           Migrate multiple VPSes using a migration plan                                                                                                          
+snapshot download [SNAPSHOT_ID]      Download a snapshot as an archive or a stream
+snapshot send SNAPSHOT_ID            Download a snapshot stream and write it on stdout
+backup dataset [DATASET_ID] FILESYSTEM Backup dataset locally
+backup vps [VPS_ID] FILESYSTEM       Backup VPS locally
+ip_traffic top                       Live IP traffic monitor
+
+Available resources:
+cluster
+cluster_resource
+cluster_resource_package
+cluster_resource_package.item
+dataset
+dataset.snapshot
+dataset.plan
+dataset.property_history
+dataset_plan
+dns_resolver
+environment
+environment.config_chain
+environment.dataset_plan
+host_ip_address
+integrity_check
+integrity_fact
+integrity_object
+ip_address
+ip_traffic
+ip_traffic_monitor
+language
+location
+mail_log
+mail_recipient
+mail_template
+mail_template.recipient
+mail_template.translation
+migration_plan
+migration_plan.vps_migration
+network
+network_interface
+node
+node.status
+object_history
+os_template
+pool
+session_token
+snapshot_download
+system_config
+transaction
+transaction_chain
+user
+user.environment_config
+user.cluster_resource
+user.public_key
+user.mail_role_recipient
+user.mail_template_recipient
+user.state_log
+user_cluster_resource_package
+user_cluster_resource_package.item
+user_namespace
+user_namespace_map
+user_namespace_map.entry
+user_session
+vps
+vps.state_log
+vps.config
+vps.feature
+vps.mount
+vps.outage_window
+vps.console_token
+vps.status
+vps_config
+monitored_event
+monitored_event.log
+outage
+outage.entity
+outage.handler
+outage_update
+user_outage
+vps_outage
+vps_outage_mount
+help_box
+news_log
+incoming_payment
+payment_stats
+user_account
+user_payment
+user_request
+user_request.registration
+user_request.change
+action_state
+</code>
+
+By choosing an authentication method, object or action, help 
+will have new options available:
+
+<code>
+$ vpsfreectl --auth basic --help
+$ vpsfreectl vps --help
+$ vpsfreectl vps list --help
+</code>
+
+==== Authentication ====
+=== HTTP Basic ===
+You can either pass the username and password using the ''%%--username%%'' and ''%%--password%%'' parameters or
+you can skip the parameters and the program will prompt the user to input the credentials.
+<code>
+$ vpsfreectl --auth basic user current
+</code>
+
+=== Tokens ===
+Authentication using tokens creates a few new options:
+
+<code>
+$ vpsfreectl --auth token --help
+    ...
+    -a, --auth METHOD                Authentication method
+    -s, --save                       Save credentials to config file for later
+        --user USER                  User name
+        --password PASSWORD          Password
+        --scope [SCOPE]              Scope
+        --token TOKEN                Token
+        --token-lifetime LIFETIME    Token lifetime, defaults to renewable_auto
+        --token-interval SECONDS     How long will token be valid in seconds
+        --new-token                  Request new token
+        --token-via VIA              Send token as a query parameter or in HTTP header (query_param, header)
+    ...
+</code>
+
+Again, you don’t have to send the username and password as parameters, the program will request them.
+
+One-time token:
+<code>
+$ vpsfreectl --auth token user current
+</code>
+After finishing, the token is forgotten and next time you will need to request a new one. A token for
+a use like this makes no sense.
+
+Saving the token:
+<code>
+$ vpsfreectl --auth token --save user current
+</code>
+
+The token is saved in the  ''~/.haveapi-client.yml'' file and automatically loaded
+upon the next startup.
+<code>
+$ vpsfreectl user current
+</code>
+
+However, a token like this expires within 20 minutes and it is necessary to request a new one. It is possible to
+create a token with a longer validity right away:
+
+<code>
+$ vpsfreectl --auth token --save --token-interval $((24*60*60)) user current # 1 day
+</code>
+
+Or a token with a permanent lifetime straight away:
+<code>
+$ vpsfreectl --auth token --save --token-lifetime permanent user current
+</code>
+
+<note warning>
+Be careful if you’re using tokens with an unlimited validity since anybody with
+access to ''~/.haveapi-client.yml'' can access and use the token.
+</note>
+
+Specify a scope:
+
+<code>
+$ vpsfreectl --auth token --scope 'vps#*:vps_id=123' --save vps show 123
+</code>
+
+The command above will ask for an authentication token that will only be allowed to call actions on the vps resource and only on VPS with ID 123.
+
+==== Actions and Parameters ====
+Objects and actions have the same names as they do in the documentation – they’re just written in lowercase letters and
+underscores are used instead of spaces. Every action has its input and output parameters.
+These can be displayed using the ''%%--help%%'' parameter if you provide the names of both the object and the action.
+
+<code>
+$ vpsfreectl vps list --help
+...
+Action description:
+List VPS
+
+Input parameters:
+        --offset OFFSET              The offset of the first object
+        --limit LIMIT                The number of objects to retrieve
+        --node NODE                  Filter by node
+        --location LOCATION          Filter by location
+        --environment ENVIRONMENT    Filter by environment
+        --os-template OS_TEMPLATE    OS template
+        --object-state OBJECT_STATE  Object state
+    -h, --help                       Show this message
+
+Output parameters:
+    id                               
+    user                             VPS owner
+    hostname                         VPS hostname
+    os_template                      
+    dns_resolver                     DNS resolver the VPS will use
+    node                             Node VPS will run on
+    dataset                          Dataset the VPS resides in
+    created_at                       
+    memory                           Minimally 1024, maximally 12288, step size is 128
+    swap                             Minimally 0, maximally 12288, step size is 128
+    cpu                              Minimally 1, maximally 8, step size is 1
+    maintenance_lock                 
+    maintenance_lock_reason          
+    object_state                     
+    expiration_date                  A date after which the state will progress
+    running                          
+    process_count                    
+    used_memory                      in MB
+    used_disk                        in MB
+...
+</code>
+
+You can filter VPSs by server, location, environment, distro, state
+and limit the number of displayed items or pages.
+
+Action parameters are separated from client parameters by two dashes ''%%--%%''.
+The following command displays the first three VPSs:
+
+<code>
+$ vpsfreectl vps list -- --limit 3
+</code>
+
+If, for example, you want to filter by location, you first have to display a list of locations:
+
+<code>
+$ vpsfreectl location list
+ ID  Label      
+  3  Praha      
+  4  Brno       
+  5  Playground
+</code>
+
+Now let’s display the VPSs found in the “Praha” (Prague) location:
+
+<code>
+$ vpsfreectl vps list -- --location 3
+</code>
+
+==== Output Formatting ====
+The output can be either formatted into columns or rows. Under default settings,
+columns are used to display a group of objects and lines are used for a single object. You can choose
+the format using the ''-c'' option, ''%%--columns%%'' for columns and ''%%--rows%%''
+for rows.
+
+An example of the output formatted in columns (in this case the ''%%--columns%%'' option is
+unnecessary – it will be chosen automatically since the output contains several objects):
+<code>
+$ vpsfreectl vps list --columns
+ ID  Label      
+  3  Praha      
+  4  Brno       
+  5  Playground
+</code>
+
+An example of the output formatted into rows:
+<code>
+$ vpsfreectl location list --rows
+    ID:  3
+ Label:  Praha
+
+    ID:  4
+ Label:  Brno
+
+    ID:  5
+ Label:  Playground
+</code>
+
+When used in scripts, the column formatting could be problematic due to the header
+with parameter names. You can disable it using the ''-H'', ''%%--no-header%%'' option
+so that it won’t be displayed.
+
+==== Choosing the Parameters to Display ====
+The  ''-o'', ''%%--output%%'' option is used to set what output parameters of the action
+and in which order they will be displayed. Parameter names are separated by a comma.
+
+<code>
+$ vpsfreectl vps list -o id,hostname,node,os_template
+      VPS id:  4710
+    Hostname:  vps
+        Node:  node7.prg (#108)
+ OS template:  CentOS 7 (#43)
+</code>
+
+==== Sorting ====
+The ''-s'', ''%%--sort%%'' option can be used to sort the output in ascending order according to a specific
+parameter (on the client’s side).
+
+<code>
+$ vpsfreectl os_template list --sort label
+ ID  Label                  Info   Supported 
+ 42  Arch Linux [TEST]      -      0         
+ 24  CentOS 6               -      1         
+ 43  CentOS 7               -      1         
+ 20  Debian 6               -      1         
+ 31  Debian 7               -      1         
+ 38  Debian 7 [TEST]        -      0         
+ 46  Debian 8               -      1         
+ 33  Fedora 20              -      1         
+ 40  Fedora 22              -      1         
+ 14  Gentoo 13.0            -      1         
+ 37  Gentoo [TEST]          -      0         
+ 32  OpenSUSE 12.3          -      1         
+ 26  Scientific Linux 6.6   -      1         
+ 45  Scientific Linux 7     -      0         
+ 30  Ubuntu 12.04           -      1         
+ 35  Ubuntu 14.04           -      1         
+ 39  Ubuntu 14.04 [TEST]    -      0         
+ 47  openSUSE 13.2 [TEST]   -      0
+</code>
+
+==== Date and Time Format ====
+The client includes several options that are used to choose the date and time format
+if an action returns a parameter of the type ''Datetime''.
+
+  * ''%%--utc%%''
+  * ''%%--localtime%%''
+  * ''%%--timestamp%%''
+  * ''%%--date-format FORMAT%%'' - format according to [[http://ruby-doc.org/core-2.3.0/Time.html#method-i-strftime|Time#strftime]]
+
+===== Updates =====
+
+In order to make use of new features, the client needs to be updated from time to time. This is done
+using the following command:
+
+<code>
+$ gem update vpsfree-client
+</code>
+
+Then you can remove the old version:
+
+<code>
+$ gem cleanup vpsfree-client
+</code>
+
+This command only removes the old versions of the ''vpsfree-client'' gem, but its
+dependencies remain. In order to remove all old gems, use the following command:
+
+<code>
+$ gem cleanup -n  # prints which gems would be deleted
+$ gem cleanup  # deletes the gems
+</code>
+
+===== File system ======
+''haveapi-fs'' is a file system based on FUSE, i.e. it makes it possible to mount
+the API as a file system from userspace. Objects, actions and their parameters can be
+browsed like folders and files in any program. The file system is installed the same way
+as a CLI, it just has a different name:
+
+<code>
+$ gem install haveapi-fs
+</code>
+
+==== Usage ====
+The usage of ''haveapi-fs'' is described in detail in
+[[https://github.com/vpsfreecz/haveapi-fs#usage|README.md]]. This is just a
+brief description.
+
+<code>
+$ haveapi-fs https://api.vpsfree.cz /mnt/api.vpsfree.cz
+Username: mylogin
+Password:
+
+$ cd /mnt/api.vpsfree.cz
+$ ls -1
+auth_token
+cluster
+cluster_resource
+dataset
+dataset_plan
+dns_resolver
+environment
+help.html
+help.man
+help.md
+help.txt
+ip_address
+language
+location
+mail_template
+migration_plan
+node
+object_history
+os_template
+snapshot_download
+transaction
+transaction_chain
+user
+user_session
+vps
+vps_config
+</code>
+
+Each folder contains the files ''help.{html,txt,md,man}'', which describe what
+the current folder contains.
+
+<code>
+$ cat vps/5685/hostname 
+my-vps 
+
+$ echo better-hostname > vps/5685/hostname 
+$ echo 1 > vps/5685/save
+$ cat vps/5685/actions/update/status 
+1
+$ cat vps/5685/hostname
+better-hostname 
+</code>
+
+The example demonstrates that individual object attributes can simply be changed by
+writing into a file. The save action can be called by writing a one, or it can
+be run as an executable file.
+
+In order to get clearer creation/modification of objects, you can use the YAML files
+''create.yml'' or ''update.yml''. These files contain parameters in the form of
+a hash and after saving and closing the file, the corresponding action is performed.
+
+This way, you can perform any operation in the API.
+
+===== Usage Examples =====
+The following scripts demonstrate ways you can use the API. These scripts can be
+run from anywhere – manually, from cron, etc.
+
+<note>
+Although these examples are still valid, the CLI client already contains
+[[manuals:vps:datasets#downloading_backups|commands]] which make downloading backups
+even easier.
+</note>
+
+==== Daily Downloads of VPS Backups ====
+<code>
+#!/usr/bin/env ruby
+# Downloading the last (most recent) backup of all VPSs.
+require 'vpsfree/client'
+
+api = VpsFree::Client.new
+api.authenticate(:token, token: 'PUT YOUR TOKEN HERE')
+
+api.dataset.list(role: :hypervisor).each do |ds|
+  last_snapshot = ds.snapshot.list.last
+
+  # This action may take up to several hours
+  dl = api.snapshot_download.create(snapshot: last_snapshot.id)
+
+  unless dl.api_response.ok?
+    warn "#{ds.name}@#{last_snapshot.created_at}: #{dl.api_response.message}"
+    next
+  end
+  
+  # The file is ready for download
+  puts "Downloading #{id} to #{dl.file_name} (#{dl.size / 1024} GB)"
+  `wget #{dl.url}`
+
+  # Finally, delete the file from the server
+  dl.delete
+end
+
+puts "Done"
+</code>
+
+==== Daily NAS Backups with a Weekly History ====
+<code>
+#!/usr/bin/env ruby
+# Daily NAS snapshotting with a 7-day history
+require 'vpsfree/client'
+
+api = VpsFree::Client.new
+api.authenticate(:token, token: 'PUT YOUR TOKEN HERE')
+
+api.dataset.list(role: :primary).each do |ds|
+  # Creating a new snapshot
+  ds.snapshot.create
+
+  # Deleting older snapshots
+  t = Time.now - 7 * 24 * 60 * 60
+  snapshots = ds.snapshot.list(meta: {count: true})
+  deleted = 0
+  
+  snapshots.each do |snap|
+    # Keep at least 7 snapshots
+    break if snapshots.total_count - deleted < 7
+    
+    # Deleting redundant snapshots older than 7 days
+    if snap.created_at < t
+      puts "Delete #{ds.name}@#{snap.created_at}"
+      snap.delete
+      deleted += 1
+    end
+  end
+end
+</code>

@@ -1,0 +1,80 @@
+<page>information:vps_params</page>
+====== Co dostanu jako člen? ======
+
+===== CPU: 8 jader =====
+
+Ve výchozím stavu neomezujeme procesorový čas žádné VPS - pokud si potřebujete něco zkompilovat, nebo máte náhodou špičku v návštěvnosti, máte k dispozici plný výkon.
+
+Všechny VPS mají nastavenou určitou prioritu, takže se navzájem neomezují, výpočetní čas procesorů fyzického stroje se rovnoměrně rozdělí mezi VPS, které ho právě potřebují.
+
+Pokud ovšem VPS vytěžuje přidělená jádra více než jeden den, nebo pokud je fyzický stroj hodně vytížen, dostanou nejaktivnější VPS omezení jen na dvě jádra. Po vyřešení problémů vrátíme nastavení zpět. Napiš na [[informace:kam_psat|podporu]].
+
+Herní servery mají zvláštní pravidla. Pokud člen spustí více než pět instancí herních serverů, dostává limit na 50 % jednoho jádra.
+
+===== RAM: 4096 MB =====
+
+<note>Bohužel díky tomu, že VPSky sdílí jádro, není (zatím) možné mít ve své VPS ani swap partition ani swapfile.
+</note>
+===== Disk: 120 GB SSD =====
+
+Dalších 250 GB na síťovém úložišti NAS, které si můžete do VPS
+[[navody:vps:datasety#pripojeni_nas_datasetu_do_vps|připojit]].
+
+Rozšířit kapacitu disku je možné [[informace:platby#z_ceho_se_sklada_clensky_poplatek|navýšením]] členského příspěvku (přes [[informace:podpora|podporu]]).
+
+
+===== IP adresy =====
+
+IP adresy si členové přisvojují a zamykají na lokaci (Praha/Brno) - pro odemknutí [[informace:podpora|napiš na podporu]]. 
+**IP adresy mezi lokacemi a prostředím (environment) nezaměňujeme**
+
+==== IPv4 & IPv6  ====
+
+Jedna **IPv4** adresa je samozřejmostí ke každému VPS. Příděl dalších se snažíme postupně snížit tak, aby budoucí členové měli také k dispozici alespoň jednu. V případě dotazů prosím napiš na [[informace:podpora|podporu]].
+
+**IPv6** adres je dostatek, v případě potřeby stačí [[informace:podpora|požádat]] o další a jsme schopni přidělit i větší počet, rozsah.
+
+
+===== Konektivita =====
+
+| Lokace | Rychlost | Měsíční objem |
+| Praha  | 1 Gbps   | 10 TB         |
+| Brno   | 300 Mbps | 10 TB         |
+
+Měsíční objem dat je hlavně doporučením, je možné jej překročit.
+
+===== Vzdálená konzole =====
+
+Každému se občas stane, že si, jak se říká, pod sebou uřeže větev a zablokuje si SSH přístup na server.
+Pro takové případy máme [[navody:vps:konzole|konzoli ve vpsAdminu]].
+
+===== Pravidelné zálohování =====
+
+Celý VPS automaticky [[navody:vps:zalohy|pravidelně zálohujeme]] každý den a uchováváme zálohy po dobu 14 dnů.
+
+===== NAS pro další data =====
+
+V době cloud computingu a obecně trendu přesouvat data z desktopů do datacenter se hodí úložný prostor navíc. My nabízíme všem našim členům 250 GB prostoru jako standardní součást členských výhod. Kapacitu NAS(u) je možné rozšířit až na 2 TB (viz [[informace:platby]] ). NAS **není zálohovaný**. Do budoucna plánujeme pravidelné zálohování umožnit.
+
+NAS slouží k ukládání dat, které je dobré mít k dispozici, ale můžeme si dovolit o ně přijít.
+Například zálohy záloh.
+
+O NASu a způsobu jeho použití [[navody:vps:datasety|píšeme v návodu k vpsAdminu]].
+
+===== Playground =====
+
+Pokud si chcete něco vyzkoušet, sáhněte po [[navody:vps:playgroundvps|Playground VPS]]. Jde o plnohodnotný server, na kterém si otestujete novou konfiguraci a pak ji přenesete do produkce.
+
+===== Staging =====
+
+VPS v prostředí pro vývoj a testování naši virtualizační platformy [[navody:vps:vpsadminos|vpsAdminOS]]. 
+Více systémových prostředků, ale taky častější a předem nehlášené odstávky, viz [[navody:vps:stagingvps|staging VPS]].
+
+===== DNS servery =====
+
+Na našich sdílených DNS serverech můžeš hostovat své domény a spravovat DNS záznamy přes vpsAdmin,
+viz [[navody:server:primarni_dns]]. Registrace domén samotných však prozatím nezajišťujeme. Naše DNS servery lze také využít jako [[navody:server:sekundarni_dns|sekundární servery]], když si primární server spustíš ve VPS.
+
+===== On-line podpora =====
+
+Pro řešení případných problémů s provozem je v běžnou denní dobu vždy online někdo z aktivních členů.

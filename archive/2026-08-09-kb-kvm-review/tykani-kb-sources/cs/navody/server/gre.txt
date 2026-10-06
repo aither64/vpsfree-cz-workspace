@@ -1,0 +1,75 @@
+====== GRE tunely ======
+
+Pokud potřebujete propojit jednoduše dva různé servery (virtuální nebo fyzické), je nejjednodušší použít [[https://en.wikipedia.org/wiki/Generic_Routing_Encapsulation|GRE]]. Jedná se o tunelovací protokol původně vyvinutý v Cisco. Máte možnost si tvořit nová síťová rozhraní propojená tunelem.
+
+Na prvním serveru (185.8.165.156) provedete následující konfiguraci:
+
+<code>[root@185.8.165.156]# ip tunnel add tunnel0 mode gre local 185.8.165.156 remote  37.205.10.152
+[root@185.8.165.156]# ip a add 192.168.1.1/24 dev tunnel0
+[root@185.8.165.156]# ip link set up dev tunnel0</code>
+
+Na tom druhém (37.205.10.152) pak analogicky:
+
+<code>[root@37.205.10.152]# ip tunnel add tunnel0 mode gre remote 185.8.165.156 local 37.205.10.152
+[root@37.205.10.152]# ip a add 192.168.1.2/24 dev tunnel0
+[root@37.205.10.152]# ip link set up dev tunnel0</code>
+
+Teď už by vám měl fungovat:
+
+<code>[root@37.205.10.152]# ping 192.168.1.1</code>
+
+===== Statická konfigurace RHEL/CentOS =====
+
+<code>[root@185.8.165.156]# cat /etc/sysconfig/network-scripts/ifcfg-tun0 
+DEVICE=tunnel0
+BOOTPROTO=none
+ONBOOT=no
+TYPE=GRE
+PEER_OUTER_IPADDR=37.205.10.152
+PEER_INNER_IPADDR=185.8.165.156
+MY_INNER_IPADDR=192.168.1.1</code>
+
+<code>[root@37.205.10.152]# cat /etc/sysconfig/network-scripts/ifcfg-tun0 
+DEVICE=tunnel0
+BOOTPROTO=none
+ONBOOT=no
+TYPE=GRE
+PEER_OUTER_IPADDR=185.8.165.156
+PEER_INNER_IPADDR=37.205.10.152
+MY_INNER_IPADDR=192.168.1.2</code>
+
+Poté na obou stranách tunel nahodíme:
+
+<code># ifup tunnel0</code>
+
+===== Statická konfigurace Debian/Ubuntu =====
+
+<code>
+[root@37.205.10.152]# cat /etc/network/interfaces
+
+auto tunnel0
+iface tunnel0 inet tunnel
+  mode gre
+  netmask 255.255.255.255
+  address 37.205.10.15
+  dstaddr 185.8.165.156
+  endpoint 192.168.1.2
+  local 192.168.1.1
+  ttl 255</code>
+  
+<code>
+[root@185.8.165.156]# cat /etc/network/interfaces
+
+auto tunnel0
+iface tunnel0 inet tunnel
+  mode gre
+  netmask 255.255.255.255
+  address 185.8.165.156
+  dstaddr 37.205.10.15
+  endpoint 192.168.1.1
+  local 192.168.1.2
+  ttl 255</code>
+  
+Poté na obou stranách tunel nahodíme:
+
+<code># ifup tunnel0</code>

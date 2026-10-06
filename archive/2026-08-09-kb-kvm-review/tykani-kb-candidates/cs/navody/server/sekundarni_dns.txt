@@ -1,0 +1,28 @@
+<page>manuals:server:secondary_dns</page>
+====== Sekundární DNS servery ======
+Pokud ve VPS používáš vlastní autoritativní DNS server, ve vpsAdminu si k němu můžeš
+nechat vytvořit sekundární server na sdílené infrastruktuře. Hodí se to například když
+registrátor domény k delegaci na vlastní server vyžaduje, abys jich měl více na různých IP adresách.
+
+Jednotlivé zóny nastavíš v menu <vpsadmin-nav id="dns.secondary-zones.open">DNS -> Sekundární zóny</vpsadmin-nav>. Po vytvoření zóny pomocí
+formuláře „Primární servery“ přidáš adresu svého primárního autoritativního serveru,
+který ti běží ve VPS.
+
+V detailu zóny uvidíš názvy a adresy přidělených sekundárních serverů. Je potřeba
+upravit konfiguraci primárního serveru tak, aby naše sekundární servery informoval o změnách
+v záznamech a aby umožnil přenos zóny. vpsAdmin zobrazuje ukázkovou konfiguraci pro BIND.
+
+V seznamu sekundárních serverů se zobrazuje jejich stav, tj. aktuální sériové číslo zóny
+a datumy posledního načtení, dalšího obnovení a expirace.
+
+===== Skrytý primární server =====
+Jedna z možných konfigurací je primární server ve VPS provozovat na privátní IP adrese, nebo
+jej obecně nemít dostupný z Internetu. V takovém případě doménu u registrátora deleguj jen na sdílené
+sekundární servery, tj. ns3.vpsfree.cz a ns4.vpsfree.cz.
+
+===== TSIG =====
+Přenos zón mezi primárními a sekundárními servery lze dále zabezpečit pomocí TSIG.
+V menu <vpsadmin-nav id="dns.tsig-keys.open">DNS -> TSIG klíče</vpsadmin-nav> si nejprve vytvoříme sdílený klíč. Každý klíč je identifikován
+libovolným názvem, zvoleným algoritmem a tajným kódem. Tyto hodnoty se musí shodovat
+na všech serverech. Při přidávání primárních serverů k zóně můžeme nastavit vybraný TSIG
+klíč. V ukázkové konfiguraci je opět znázorněno, jak TSIG nastavit na primárním serveru.

@@ -1,0 +1,16 @@
+======== Nginx na NixOS =======
+
+Instalace a konfigurace nginx je na nixos triviální záležitostí, nejprve je potřeba jej nainstalovat pomocí příkazu
+<code> nix-env -i nginx</code>
+
+Po nainstalování nás začne zajímat configuration.nix soubor umístěný v /etc/nixos/ - nejprve bude třeba otevřít porty ve firewallu podobným způsobem jako je popsáno [[navody:distribuce:nixos|zde]] v části Initial setup & informations.
+
+Po otevření portu se můžeme vrhnout na konfiguraci nginx v /etc/nixos/configuration.nix samotného - nejprve povolíme nginx přidaným
+<code>services.nginx.enable = true;</code>
+
+a hned pod můžeme situovat cestu ke konfiguračnímu souboru nginx (zde to je /martyet/nginx.conf)
+<code>services.nginx.config = pkgs.lib.readFile /martyet/nginx.conf;</code>
+
+<note important>Tímto řádkem nedefinujeme jediný zdroj konfiguračního souboru pro nginx, stejně jako můžete být zvyklí z jiných OS, i zde se dá rozdělit konfiguraci do několika souborů separátně následně definovaných v configuration.nix </note>
+
+Konfigurace samotného nginx je pak stejná jako na ostatních OS (viz. [[navody:server:nginx|]] )

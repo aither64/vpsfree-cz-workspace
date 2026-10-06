@@ -1,0 +1,118 @@
+====== Chat ======
+
+===== IRC =====
+  * **host:** irc.libera.chat
+  * **channel:** #vpsfree
+  * **web client:** [[http://web.libera.chat/?channels=#vpsfree]]
+  * **archive:** [[https://im.vpsfree.cz/archive/irc.libera.chat/%23vpsfree/]]
+
+===== Matrix =====
+  * **room:** [[https://matrix.to/#/#vpsfree:matrix.org|#vpsfree:matrix.org]]
+  * **archive:** https://view.matrix.org/room/!vOrcaItWgYDyYypqCI:matrix.org/
+  * Interconnected using matterbridge with IRC through user //vpsfbr0//
+
+===== Bot =====
+There is a bot in our channel called ''vpsfbot''. It archives messages and
+responds to commands. The source code is available at
+[[https://github.com/vpsfreecz/vpsfree-irc-bot|github]].
+
+<code>
+[01/26] vpsFree.cz IRC Bot v0.1.0
+[02/26] =========================
+[03/26]   
+[04/26] Channel commands:
+[05/26]     !archive [which]              get URL to the web archive
+[06/26]     !greet <user>                 introduce a new user to vpsFree.cz
+[07/26]     !help [command]               show help
+[08/26]     !lastlog [n]                  print N last messages, defaults to 10
+[09/26]     !ping                         play a game of ping pong
+[10/26]     !rank                         show your rank
+[11/26]     !status                       show cluster status
+[12/26]     !top [n]                      show top N users
+[13/26]     !uptime                       show bot's uptime
+[14/26] 
+[15/26] Private commands:
+[16/26]     archive [which]               get URL to the web archive
+[17/26]     greet <user>                  introduce a new user to vpsFree.cz
+[18/26]     help [command]                show help
+[19/26]     lastlog [n]                   print N last messages, defaults to 10
+[20/26]     ping                          play a game of ping pong
+[21/26]     rank                          show your rank
+[22/26]     status                        show cluster status
+[23/26]     top [n]                       show top N users
+[24/26]     uptime                        show bot's uptime
+[25/26] 
+[26/26] Use !help <command> to get help for a specific command.
+</code>
+
+The bot responds to commands both in the channel and PM. There are two ways to
+call the commands in the channel: with a exclamation mark or addressing the
+bot using his nick:
+
+<code>
+14:28 < user> !ping
+14:28 < vpsfbot> pong
+14:29 < user> vpsfbot: ping
+14:29 < vpsfbot> pong
+</code>
+
+==== Archive and last message log ====
+The bot can be asked to print the URL address of the web archive:
+
+<code>
+14:30 < user> !archive
+14:30 < vpsfbot> https://im.vpsfree.cz/archive/irc.libera.chat/%23vpsfree/
+14:32 < user> !archive today
+14:32 < vpsfbot>
+https://im.vpsfree.cz/archive/irc.libera.chat/%23vpsfree/2016/07/31.html
+</code>
+
+If you don't have a bouncer and wish to see what the people were talking
+about, you can either read the web archive, or you can have to bot send you
+a several latest messages to PM.
+
+<code>
+14:35 < user> !lastlog
+14:35 <vpsfbot> [1/4] Last 3 messages from '#vpsfree':
+14:35 <vpsfbot> [2/4] [2016-07-31 14:35:37] < someone> said something
+14:35 <vpsfbot> [3/4] [2016-07-31 14:35:37] < someone> has replied
+14:35 <vpsfbot> [4/4] [2016-07-31 14:35:40] < david> didn't say anything
+</code>
+
+==== Cluster status ====
+Command ''status'' is used to query the state of our servers, e.g.:
+
+<code>
+14:39 < user> !status
+14:39 < vpsfbot> 18 nodes online, 2 under maintenance, 0 down
+14:39 < vpsfbot> Under maintenance: node1.prg, nasbox.prg
+</code>
+
+The bot is also monitoring the mailing lists, blog, news from vpsAdmin and
+changes in the knowledge base and informs about these events in the channel.
+
+==== Karma ====
+Whenever someone says something ingenious or stupid, we can give him +2 or -1.
+The bot is tracking these messages and saves karma of all users. Command
+''top'' is used to see users with highest karma. Command ''rank'' shows your
+karma and your rank.
+
+<code>
+14:43 < aither> !top
+14:43 < vpsfbot>  1. ewew (karma 10, 186 messages)
+14:43 < vpsfbot>  2. aither (karma 3, 178 messages)
+14:43 < vpsfbot>  3. snajpa (karma 2, 868 messages)
+14:43 < vpsfbot>  4. ghormoon (karma 1, 276 messages)
+14:43 < vpsfbot>  5. jirutka (karma 1, 241 messages)
+
+14:44 < aither> !rank
+14:44 < vpsfbot> Your rank is 2 of 23 users with karma 3 and 178 messages
+</code>
+
+Ways of giving or taking karma points:
+
+  * ''<nick> +<n>'' (''someone +1'', ''someone +5'', ''someone: +2'')
+  * ''<nick> -<n>'' (''someone -1'', ''someone -5'', ''someone: -2'')
+  * ''<nick>++'' (''someone++'')
+  * ''%%<nick>--%%'' (''%%someone--%%'')
+

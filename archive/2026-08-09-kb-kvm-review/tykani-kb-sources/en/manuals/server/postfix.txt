@@ -1,0 +1,48 @@
+====== Several Domains on One Email Server ======
+
+A common task for virtual private servers is receiving and sending emails for several domains. Let us suppose that you need to receive e-mails for the domains “domain1.cz”, “domain2.cz” and “domain3.cz”.
+
+First, configure a [[manuals:vps:rdns|PTR record]] on your server, so that other email servers trust you and don’t mark your emails as spam. It is important that the server **can be placed on a domain other** than the one it receives emails for. Let us assume that the server is called “email.myserver.cz” and you already have PTR records configured for this name.
+
+For all of the previously mentioned domains, you need to configure an **MX record** so that it points to our email server. This way we indicate that the email for this domain is managed by a specific server. The fact that it is located on a different domain plays no role. The result is as follows:
+
+<code>domain1.cz. MX 10 email.myserver.cz.
+domain2.cz. MX 10 email.myserver.cz.
+domain3.cz. MX 10 email.myserver.cz.</code>
+
+In the server settings, we have to configure it to present itself using the correct name, for which we have created a PTR record in the DNS. This means that the “/etc/postfix/main.cf” file has to contain the line:
+
+<code>myhostname = email.myserver.cz</code>
+
+====== Receiving and Forwarding Email ======
+
+In the “/etc/postfix/main.cf” file, we need to configure the path to the file which will contain a list of the managed domains and a list of recipient addresses. The relevant line in the configuration will look like this:
+
+<code>
+virtual_alias_maps = hash:/etc/postfix/virtual
+</code>
+
+We’ll use it to input the domains, addresses and users that will have the emails from the listed addresses saved. Everything will be clearer from this example:
+
+<code>
+domain1.cz     domain
+domain2.cz     domain
+domain3.cz     domain
+
+petr@domain1.cz     petr
+petr@domain2.cz     petr
+petr@domain3.cz     petr
+admin@domain1.cz     pavel
+
+outsideworker@domain2.cz    jiri@otherdomain.cz
+
+office@domain3.cz      adela, martina, pavla
+</code>
+
+Then you have to let the data be processed and create a database file for Postfix
+
+<code>postmap /etc/postfix/virtual</code>
+
+If you make configuration changes other than modifying the table with recipients, you have to let Postfix reload the changes:
+
+<code>/etc/init.d/postfix reload</code>
