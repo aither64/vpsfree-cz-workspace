@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # 2026-08-22-multiple-kernel-scopes
 
