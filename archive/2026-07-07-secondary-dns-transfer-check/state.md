@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # 2026-07-07-secondary-dns-transfer-check
 
