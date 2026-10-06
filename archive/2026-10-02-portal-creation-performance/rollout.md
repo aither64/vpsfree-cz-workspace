@@ -1,15 +1,14 @@
 # Portal creation performance rollout
 
-Status: final sources/pins reviewed and published; corrected application and host
-builds/checks passed, with both outputs retained. Five isolated Full-team creations
-at the original candidate passed: median6.401349s, max6.500734s. Corrected real
-root-loss and partial-team fault acceptance passed. Host dry-activate and switch
-passed for the exact generation; both normal host health checks passed. The
-application user-profile switch refused an unrelated active session and waits
-for normal idle proof. Full-package canary remains pending.
+Status: deployed and live-canary verified. Exact host generation and user-profile
+package are active. The Full-team canary reached ready in 7.562928 seconds and
+first assistant in 10.037592 seconds against 3,482 active/79 archived rollouts.
+All five final feature heads are merged into remote master, and every post-merge
+CI workflow passed. No rollout work remains.
 
-User request "Implement the plan" authorizes the accepted aitherdev rollout.
-Feature branches remain unmerged; deployment does not authorize master integration.
+User direction "ok, deploy it and merge into default branches" on 2026-10-03
+explicitly authorized all five registered master integrations. No archive,
+delete, session stop or branch deletion was requested.
 
 ## Exact current candidates
 
@@ -18,7 +17,7 @@ Feature branches remain unmerged; deployment does not authorize master integrati
 | SDK | 4c170393a96ed0a6ac2e43488d073f6fcab36132 |
 | Generic runtime | 924c0ec28c41dd8b56aaf17f2212b302ca614899 |
 | Site extension | 8f8d8ecf5031c40d3e4a4ee2e9425721fc035800 |
-| Workspace source | 1b670e0329c80b5ed266f6edb92ac2096134677c |
+| Workspace source | 93389c3373647fb3dc2d7ee15efa9acb93a8c62f |
 | aitherdev configuration | 3d26ec396ceb935a233bdda3079618821d099b3e |
 
 Application: /nix/store/xl9mvbb5j19anfbx6qj3lrw8k7a9vnz2-dev-workspace-0.2.0.
@@ -39,54 +38,40 @@ CI37064115624 passed exact heads. Source whole-branch reviews and consumer
 supplement found no findings, no obsolete history and no migrations. Relevant
 reports are linked from state.md; consumer locks and deployment contract match.
 
-## Ordered operations and current result
+## Executed operations
 
-1. Completed host dry-activate for exact generation above using the declared config
-   Nix shell, local aither login, --yes/--no-interactive and normal health checks.
-2. Completed separately reviewed fresh root-loss/member-loss fault cases through
-   the supported corrected-provider boundary. Preserve old unavailable-root
-   receipt/journal, original result, services, claims and five measurements.
-3. Completed deployment of the same exact host generation with confctl switch.
-   Preserve tool health checks and automatic rollback; no configuration merge.
-4. Application activation attempted through installed /home/aither/bin/workspace-host switch
-   --source absolute owned workspace worktree. Respect all transition ownership,
-   generation, activity and journal refusals; do not interrupt other sessions.
-   The idle gate refused storage-redesign's active turn. Old9g8 remains selected;
-   preserve the failed log/status and retry the ordinary switch when idle.
-5. Verify selected package, active services and retained36 roots/owned3 members.
-   Run one actual-history Full-team portal canary, with readiness and first model
-   response measured separately; one goal, no tools, detailed progress.
-6. Reconcile evidence/docs and retain feature branches active awaiting explicit
-   integration approval. Do not archive/delete/stop sessions or remove claims.
+1. Exact host dry-activate passed in the declared configuration Nix shell.
+2. Separately reviewed fresh lost-response and partial-team fault cases passed,
+   preserving old unavailable-root evidence and five isolated measurements.
+3. Host switch activated generation2026-10-02--23-26-29; systemd and firewall
+   health checks passed (2/0). Parent verified exact /run/current-system output.
+4. User-profile activation first refused an unrelated active turn on2026-10-02.
+   The supported command restored prior terminals and retained the old package.
+   Read-only observation stayed busy; no interruption or bypass followed.
+5. On2026-10-03 normal observation proved idle. Installed workspace-host switch
+   --source exact owned workspace worktree then selected xl9, wrapper exit0.
+   All36 earlier roots/owned3 members remained exact; four user services and nginx
+   were active, selected Codex unchanged.
+6. One production portal API Full-team canary passed all readiness, frozen roster,
+   detailed progress, one-goal/model-completion and no-tool gates.
+   [Measured evidence](verification-live-canary.md). Its session is retained.
+7. Refreshed defaults and cleanly rebased workspace over coordination records.
+   Range-diff and exact Nix output established equivalence; no rebuild/switch was
+   necessary. Final comparison captured and feature head published with lease.
+8. Fast-forwarded and pushed all five master branches, verified exact remote
+   feature/default heads, removed four clean temporary target checkouts, retained
+   feature refs/worktrees.
+9. All exact-head master CI passed: SDK run37107007690, runtime run37107040178
+   and extension run37107041005. Final fetched refs prove every exact retained
+   local/remote feature head is merged into remote master. Detailed CI links and
+   final merge proof are recorded in [state.md](state.md).
 
-The parent initiates deployment; fresh catalog Luna utilities only observe its
-long waits. Each long check/build has a fresh watcher. Full logs and identity
-snapshots stay private; only nonsecret curated evidence belongs here.
-
-Host switch completed on 2026-10-02 around 22:07 UTC, wrapper exit0. Parent
-verified `/run/current-system` resolves to the exact toplevel above. Confctl's
-systemd and firewall checks both passed (2 passed, 0 failed). Full host log is
-`.confctl/logs/2026-10-03--00-06-31-confctl-deploy.log` in the configuration
-worktree; its local date differs from UTC. No unexpected kernel build occurred.
-
-The application switch exited1 at 22:08:22 UTC, before package selection. Its
-normal idle check reported storage-redesign thread
-`01a0d230-6068-71d2-9768-4928682cdccf` has an in-progress turn. Parent's read-only
-observation confirmed active status; existing package9g8 remained selected.
-Supported pre-selection recovery restores earlier quiesced terminals. The
-pending update and original failed profile-switch.log/status remain; no journal
-or busy session is cleared. A fresh utility watches only the reported activity;
-the stable switch must recheck all activity on retry. A separate guarded wrapper
-retains the next run as profile-switch-idle.log/status.
-
-Read-only observation from 22:12:18 through 22:22:32 UTC never found idle status.
-The observation window ended incomplete, without changing that session. No
-watcher or deployment remains running. Final blocked-rollout health/retention
-check passed: all36 prior roots and owned3 members remained exact, four user
-workspace services and nginx were active, host4wa remained selected and old
-application9g8 remained selected. Activation and the single live canary are
-prepared, unexecuted next steps. This record does not claim production portal
-latency for the corrected package.
+Parent initiated activation and integration; fresh catalog Luna utilities
+observed long waits and ran the single canary. Full logs and identity snapshots
+remain private. Host log is .confctl/logs/2026-10-03--00-06-31-confctl-deploy.log
+in the configuration worktree; its local date differs from UTC. Successful profile
+retry is profile-switch-idle.log/status; original profile-switch.log/status remains.
+No unexpected kernel build occurred.
 
 ## Execution evidence and historical provenance
 
@@ -123,7 +108,8 @@ build operations activated the host or user profile.
 
 Pre-activation snapshots retain36 root IDs and the owned Full roster. Four user
 workspace services and nginx were active. Final Full preset equals the retained
-preset. Post-activation and single canary wrappers are prepared, not executed.
+preset. Post-activation checks and the single live canary subsequently passed; see the
+executed operations and linked canary report above.
 
 ## Software recovery
 
