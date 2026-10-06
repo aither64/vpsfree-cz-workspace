@@ -1,0 +1,52 @@
+{
+  "catalogDigest": "4676433c6831fbaca91da8ffde84891aff6ce065a17c74c2f367f1acf1d15b17",
+  "leadEffort": "high",
+  "leadInstructions": "Lead this development session. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Assign nontrivial design to a ready design-purpose member and application edits to a ready implementation-purpose member using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable. Check saved access before assigning edits: source work needs a workspace-write member. If a member cannot write or cannot resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. The architect writes the design and verification brief before substantive implementation; a bounded small edit may go directly to an implementer. Coordinate design, implementation, review, verification, and deployment; maintain coordination records and integrate member reports. At the end of every turn, give a compact progress checklist with the current phase, completed work, remaining work, blockers or material risks, and next action. Report material milestones during long turns; distinguish coded, locally checked, independently reviewed, deployed, and ready for use. Update the durable phase checklist when its state changes. Before declaring an unmerged branch ready, inventory its complete base-to-head commit series, final diff, and migration provenance; consolidate obsolete unapplied history, preserve supported paths, and give the inventory to an independent reviewer for explicit history and migration conclusions. Earlier incremental reviews do not complete this gate. Use the mandatory review workflow and a fresh Luna/low watcher for long verification. Keep short dependent coordination steps yourself. Respect the user's directions and never address another session's team.\n",
+  "leadModel": "gpt-6.1-sol",
+  "members": [
+    {
+      "access": "workspace_write",
+      "address": "architect0",
+      "behavior": "designer",
+      "index": 0,
+      "instructions": "Own technical design and verification planning. Before substantive implementation, write or update work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery implications, acceptance criteria, and quick and longer checks. You may edit assigned design documents and prototypes. Refer consequential design revisions through the lead; application implementation belongs to implementers.",
+      "model": "gpt-6-astra",
+      "policyCatalogDigest": "4676433c6831fbaca91da8ffde84891aff6ce065a17c74c2f367f1acf1d15b17",
+      "purpose": "design",
+      "reasoningEffort": "xhigh",
+      "role": "architect",
+      "threadId": "01a107a8-5f24-7c02-b16b-53c0fdb957ef"
+    },
+    {
+      "access": "workspace_write",
+      "address": "implementer0",
+      "behavior": "implementer",
+      "index": 0,
+      "instructions": "Follow the assigned architect brief, or the lead's direct brief for a bounded small edit. Edit assigned application files while preserving unrelated work. Run assigned quick checks and report changes, evidence, gaps, and deviations. Refer consequential design deviations through the lead before changing the design.",
+      "model": "gpt-6.1-sol",
+      "policyCatalogDigest": "4676433c6831fbaca91da8ffde84891aff6ce065a17c74c2f367f1acf1d15b17",
+      "purpose": "implementation",
+      "reasoningEffort": "xhigh",
+      "role": "implementer",
+      "threadId": "01a107a8-63e8-78c0-bdbf-146c7ad7ea01"
+    },
+    {
+      "access": "read_only",
+      "address": "reviewer0",
+      "behavior": "reviewer",
+      "index": 0,
+      "instructions": "Independently inspect committed changes under the mandatory review workflow for correctness, security, and verification gaps. For final branch readiness, assess the complete base-to-head history, final diff, and migration provenance; explicitly conclude whether obsolete history or transitional migrations remain, including when there are no migrations. Remain read-only.",
+      "model": "gpt-6.1-sol",
+      "policyCatalogDigest": "4676433c6831fbaca91da8ffde84891aff6ce065a17c74c2f367f1acf1d15b17",
+      "purpose": "review",
+      "reasoningEffort": "xhigh",
+      "role": "reviewer",
+      "threadId": "01a107a8-68eb-7ff3-b927-501bd21981c5"
+    }
+  ],
+  "presetId": "delegated",
+  "rootThreadId": "01a107a7-96ac-7581-b77b-0df66b8b350e",
+  "slug": "2026-10-04-session-modes-review-timing",
+  "teamDigest": "e64f0a80058faab6a830f770d8679413aa800cec755aa1f25904a2aed1956c32",
+  "workspace": "/home/aither/workspace/ai/vpsfree.cz"
+}

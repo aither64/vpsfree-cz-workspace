@@ -1,0 +1,341 @@
+diff --git a/docs/dev-sessions.md b/docs/dev-sessions.md
+index e86152b..1b9fdb9 100644
+--- a/docs/dev-sessions.md
++++ b/docs/dev-sessions.md
+@@ -340,19 +340,42 @@ settings still apply. Fork, archive, delete, and revive
+ apply the corresponding Codex operation to all roster members with the root
+ session.
+ 
+-The root conversation is the team lead in both the portal and tmux. For each
+-new substantive work item, it checks the current roster, assigns nontrivial
+-design to a ready member with design purpose and separable implementation to a
+-ready member with implementation purpose, then integrates their reports. It
+-handles short or dependent steps itself and uses the applicable mandatory-review
+-workflow for a retained reviewer. Member addresses and settings are read from
+-the live roster, so later team changes
+-apply without restarting the lead. Selecting a team creates no automatic work
+-assignments. The portal binds the lead conversation to its exact workspace and
+-session. This binding and the configured lead instructions are attached before
+-the first user request, with no extra model turn. An existing idle root
+-conversation receives the same lead policy when the portal reconciles its
+-instructions; active turns are left alone until they finish.
++The root conversation is the lead in both the portal and tmux. The selected
++catalog prompt and retained instructions determine design and application
++ownership. A Solo lead can investigate, design and edit application code without
++automatic specialists. A Lead-designed lead owns the design brief and assigns
++application work to an implementer; a Full-team lead assigns nontrivial design
++to its design-purpose member and application work to its implementation-purpose
++member. The design owner writes the design and verification brief before
++substantive implementation. Implementers accept either an architect-owned or
++lead-owned brief; bounded small edits can use a direct lead brief.
++
++For each new substantive team work item, the lead checks the current roster,
++uses ready members with saved settings and suitable access, then integrates
++their reports. It handles short or dependent coordination steps itself. Adding,
++replacing or reconfiguring members requires explicit user direction. Manual
++team controls remain available, and user-directed team changes apply without
++restarting the lead. Selecting a team creates no automatic work assignments.
++
++The applicable mandatory-review workflow runs final independent review after
++the intended substantive deliverable is complete, all intended changes are
++committed and quick checks pass, before long integration tests. Completed
++substantive documentation and configuration deliverables remain in scope.
++Routine planning, investigation, findings, session tracking and evidence alone
++never trigger automatic review. Earlier review requires an explicit user
++request, is advisory, and does not replace final review. Having a reviewer in
++the preset creates no assignment. Solo uses a temporary standalone final
++reviewer without adding a persistent member. The workflow retains whole-branch
++history and migration gates and its narrow-fix policy.
++
++The portal binds the lead conversation to its exact workspace and session
++before the first user request, with no extra model turn. Reconciliation retains
++the saved lead prompt, including an older preset's instructions; active turns
++are left alone until they finish. Catalog updates change new-session defaults.
++Retries and forks keep the saved lineup, prompts, models, efforts and access.
++Shared workspace instructions and installed skills change globally and can
++conflict with older saved prompts; updating them does not refresh those prompts
++or mutate existing rosters.
+ 
+ Long builds, tests, and workflows use a fresh GPT-6 Luna/low watcher instead of a
+ team member. That watcher has no persistent roster identity.
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 47d5c6d..a7b0a28 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -347,18 +347,35 @@ thread identity; browser input cannot claim to be a member.
+ The installed workspace policy supplies three starting teams: Solo (`solo`),
+ Full team (`delegated`), and Lead-designed team (`lead_designed`). Their role
+ lists and exact lead model and reasoning effort appear on the new-session
+-screen. Full team has `lead`, `architect0`, `implementer0`, and `reviewer0`;
+-Lead-designed team omits the architect. The selected team and its member
+-settings are saved with the creation receipt. Member threads are created before
+-the lead receives the initial request. A failed creation can be retried with
+-that saved selection.
++screen. Solo has only the lead, which investigates, designs and edits
++application code without automatic specialists. Full team has `lead`,
++`architect0`, `implementer0`, and `reviewer0`, with architect-owned design and
++delegated application implementation. Lead-designed has `lead`, `implementer0`
++and `reviewer0`; the lead writes the substantive design brief and delegates
++application implementation. Catalog prompts own these mode-specific policies.
++The selected team and its member settings are saved with the creation receipt.
++Member threads are created before the lead receives the initial request. A
++failed creation can be retried with that saved selection.
++
++Final review starts after the substantive deliverable is complete, all intended
++changes are committed and quick checks pass, before long integration tests.
++Completed substantive documentation and configuration changes are included.
++Routine planning, investigation, findings, session tracking and evidence alone never trigger
++automatic review. Earlier review requires an explicit user request, is advisory,
++and does not replace final review. A preset reviewer receives no automatic
++assignment. See the [session guide](dev-sessions.md#team-members) for orchestration.
+ 
+ After creation, the Team tab can add, remove, and configure members, and
+-inspect their messages. Model and reasoning settings apply to a member's next
+-turn. Its add selector lists every role in the installed catalog and starts
+-with that role's model and effort from the retained preset, the installed
+-development default, or the installed default team. An explicit selection stays
+-in place during status refresh. Both add settings may be omitted in the HTTP
++inspect their messages. Adding, replacing or reconfiguring members requires
++explicit user direction; agents do not automatically grow a Solo roster or add
++a designer to a Lead-designed team. The mandatory-review workflow uses a
++temporary independent final reviewer when no eligible retained reviewer exists,
++including Solo; the separate long-check watcher is also outside the roster.
++Neither changes the persistent team. Model and reasoning settings apply to a
++member's next turn. Its add selector lists every role in the installed catalog
++and starts with that role's model and effort from the retained preset, the
++installed development default, or the installed default team. An explicit
++selection stays in place during status refresh. Both add settings may be omitted in the HTTP
+ API or CLI to use those role defaults; supplying only one is invalid. Without
+ an installed catalog, add requires both settings explicitly. Existing rosters
+ keep their saved settings.
+@@ -438,9 +455,12 @@ created expanded receipts require the newer package and are not readable by an
+ older package; this is a forward-only
+ package transition. Host package-switch checks accept both legacy and expanded
+ snapshots, including an architect's saved read-only or workspace-write access;
+-they do not replace saved policy with current catalog defaults. Team mutations
+-remain unavailable until the creation
+-receipt is ready. If a member's App Server
++they do not replace saved policy with current catalog defaults.
++An older Lead-designed snapshot can therefore retain an architect even when the
++current catalog omits that role. Shared workspace rules and installed skills
++change globally, so they can conflict with saved prompts; no prompt refresh or
++existing-roster rewrite accompanies catalog changes. Team mutations remain
++unavailable until the creation receipt is ready. If a member's App Server
+ start has an uncertain outcome, retry reconciles its registered App Server
+ project and refuses to start another thread when the result is ambiguous. Each
+ member's project is created with a durable idempotency key derived from the
+diff --git a/portal/internal/agentteams/catalog_test.go b/portal/internal/agentteams/catalog_test.go
+index c67a3ea..48d81a8 100644
+--- a/portal/internal/agentteams/catalog_test.go
++++ b/portal/internal/agentteams/catalog_test.go
+@@ -299,6 +299,16 @@ func TestDevelopmentTeamAcceptsPurposeBasedCustomRoles(t *testing.T) {
+ 	if !validTeam("custom", team, Capacity{RequiredNativeChildThreads: 3}, catalog.WorkPolicy) {
+ 		t.Fatal("purpose-based role names were rejected")
+ 	}
++	// Lead-owned design uses the same development contract without a designer.
++	leadOwned := team
++	leadOwned.DesignOwner = "team_lead"
++	leadOwned.MaxOpenAgents = 2
++	leadOwned.Roles = map[string]Role{
++		"team_lead": team.Roles["team_lead"], "coder": team.Roles["coder"], "auditor": team.Roles["auditor"],
++	}
++	if !validTeam("lead_designed", leadOwned, Capacity{RequiredNativeChildThreads: 3}, catalog.WorkPolicy) {
++		t.Fatal("lead-owned development without a designer was rejected")
++	}
+ 	team.Roles["bad_name"] = team.Roles["architect"]
+ 	if validTeam("custom", team, Capacity{RequiredNativeChildThreads: 3}, catalog.WorkPolicy) {
+ 		t.Fatal("non-addressable role name was accepted")
+diff --git a/portal/internal/teamruntime/runtime_test.go b/portal/internal/teamruntime/runtime_test.go
+index 5f23ae8..81eb721 100644
+--- a/portal/internal/teamruntime/runtime_test.go
++++ b/portal/internal/teamruntime/runtime_test.go
+@@ -2197,6 +2197,31 @@ func TestCatalogPresetUsesExplicitSiteSettingsAndArchitectAddress(t *testing.T)
+ 	}
+ }
+ 
++func TestCatalogPresetProjectsLeadOwnedDevelopmentWithoutDesigner(t *testing.T) {
++	catalog := agentteams.Catalog{CatalogDigest: fmt.Sprintf("%064x", 1), Teams: map[string]agentteams.Team{
++		"lead_designed": {DesignOwner: "team_lead", MaxOpenAgents: 2, Mode: "development", TeamDigest: fmt.Sprintf("%064x", 2), Roles: map[string]agentteams.Role{
++			"team_lead":   {Model: "model-lead", Effort: "xhigh", Purpose: "lead", Instructions: "Write the design brief and delegate implementation."},
++			"implementer": {Model: "model-implementer", Effort: "xhigh", Behavior: "implementer", Purpose: "implementation", Instructions: "Follow the lead-owned brief.", Access: "workspace_write"},
++			"reviewer":    {Model: "model-reviewer", Effort: "xhigh", Behavior: "reviewer", Purpose: "review", Instructions: "Review the completed deliverable.", Access: "read_only"},
++		}},
++	}}
++	preset, err := FindCatalogPreset(catalog, "lead_designed")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if preset.Name != "Lead-designed team" || preset.MemberCount() != 3 ||
++		preset.RoleSummary() != "1 lead, 1 implementer, 1 reviewer" ||
++		!reflect.DeepEqual(preset.Roles, []string{"lead", "implementer0", "reviewer0"}) ||
++		preset.LeadModel != "model-lead" || preset.LeadEffort != "xhigh" ||
++		preset.LeadInstructions != catalog.Teams["lead_designed"].Roles["team_lead"].Instructions {
++		t.Fatalf("lead-owned preset projection = %#v", preset)
++	}
++	if preset.Members[0].Instructions != "Follow the lead-owned brief." ||
++		preset.Members[0].Access != "workspace_write" || preset.Members[1].Access != "read_only" {
++		t.Fatalf("lead-owned member policies = %#v", preset.Members)
++	}
++}
++
+ func TestCatalogPresetProjectsCustomRole(t *testing.T) {
+ 	catalog := agentteams.Catalog{CatalogDigest: fmt.Sprintf("%064x", 1), Teams: map[string]agentteams.Team{
+ 		"custom": {TeamDigest: fmt.Sprintf("%064x", 2), Roles: map[string]agentteams.Role{
+@@ -2266,6 +2291,10 @@ func TestSoloCatalogPresetSerializesEmptyMembers(t *testing.T) {
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
++	if preset.MemberCount() != 1 || preset.RoleSummary() != "1 lead" ||
++		!reflect.DeepEqual(preset.Roles, []string{"lead"}) {
++		t.Fatalf("solo role projection = %#v", preset)
++	}
+ 	data, err := json.Marshal(preset)
+ 	if err != nil {
+ 		t.Fatal(err)
+@@ -2807,7 +2836,13 @@ func TestForkKnownThreadRetryUsesFrozenSnapshot(t *testing.T) {
+ 	}
+ 	client := &testClient{}
+ 	service := Service{Store: store, Client: client, Workspace: workspace}
+-	_, err = service.Add(context.Background(), "source", "root-source", filepath.Join(workspace, "work", "source"), nil, "reviewer", "gpt-6-sol", "xhigh")
++	preset := Preset{ID: "lead_designed", CatalogDigest: fmt.Sprintf("%064x", 1), TeamDigest: fmt.Sprintf("%064x", 2),
++		LeadModel: "model-lead", LeadEffort: "xhigh", LeadInstructions: "Original architect-led instructions.", Members: []MemberSpec{
++			{Role: "architect", Address: "architect0", Model: "model-design", Effort: "xhigh", Behavior: "designer", Purpose: "design", Instructions: "Original design brief.", Access: "workspace_write"},
++			{Role: "implementer", Address: "implementer0", Model: "model-implementation", Effort: "xhigh", Behavior: "implementer", Purpose: "implementation", Instructions: "Follow the architect brief.", Access: "workspace_write"},
++			{Role: "reviewer", Address: "reviewer0", Model: "model-review", Effort: "xhigh", Behavior: "reviewer", Purpose: "review", Instructions: "Original review instructions.", Access: "read_only"},
++		}}
++	_, err = service.ApplyPresetSpec(context.Background(), "source", "root-source", filepath.Join(workspace, "work", "source"), nil, preset)
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -2821,11 +2856,26 @@ func TestForkKnownThreadRetryUsesFrozenSnapshot(t *testing.T) {
+ 		t.Fatal("expected name failure")
+ 	}
+ 	partial, err := store.Load("target", "root-target")
+-	if err != nil || partial.Members[0].Thread != "thread-2" || partial.Members[0].State != "creating" {
++	if err != nil || partial.Members[0].Thread != "thread-4" || partial.Members[0].State != "creating" {
+ 		t.Fatalf("partial fork = %#v, %v", partial, err)
+ 	}
++	service.Catalog = &agentteams.Catalog{CatalogDigest: fmt.Sprintf("%064x", 3), Teams: map[string]agentteams.Team{
++		"lead_designed": {DesignOwner: "team_lead", Roles: map[string]agentteams.Role{
++			"team_lead":   {Instructions: "New lead-owned instructions."},
++			"implementer": {Instructions: "Follow the lead brief."}, "reviewer": {Instructions: "New review instructions."},
++		}},
++	}}
+ 	ready, err := service.Fork(context.Background(), source, "target", "root-target", cwd, nil)
+-	if err != nil || ready.Members[0].State != "ready" || client.next != 2 || ready.ForkSource.Members[0].Model != "gpt-6-sol" {
++	if err != nil || ready.Members[0].State != "ready" || client.next != 6 || len(ready.Members) != 3 ||
++		ready.PresetID != "lead_designed" || ready.LeadInstructions != source.LeadInstructions ||
++		ready.ForkSource.Members[0].Model != "model-design" {
+ 		t.Fatalf("known-thread fork retry = %#v, starts %d, error %v", ready, client.next, err)
+ 	}
++	for i, member := range ready.Members {
++		original := source.Members[i]
++		if member.Address != original.Address || member.Instructions != original.Instructions ||
++			member.Model != original.Model || member.Effort != original.Effort || member.Access != original.Access {
++			t.Fatalf("fork changed retained member policy: %#v, source %#v", member, original)
++		}
++	}
+ }
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index d18ed59..0ded3ca 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -1743,11 +1743,15 @@ func TestNewSessionShowsConcretePresetLeadSettings(t *testing.T) {
+ 		BaseURL: "https://workspace.example.test", CreationDate: "2026-09-22",
+ 		AgentTeams: &agentTeamsPage{Managed: true, DefaultTeam: "delegated", CatalogDigest: strings.Repeat("a", 64),
+ 			Teams: []agentTeamRow{{Name: "delegated", Label: "Full team", Description: "Separate design and review",
+-				MemberCount: 4, RoleSummary: "1 lead, 1 architect, 1 implementer, 1 reviewer", LeadModel: "gpt-6-sol", LeadEffort: "high"}}},
++				MemberCount: 4, RoleSummary: "1 lead, 1 architect, 1 implementer, 1 reviewer", LeadModel: "gpt-6-sol", LeadEffort: "high"},
++				{Name: "solo", Label: "Solo", MemberCount: 1, RoleSummary: "1 lead", LeadModel: "model-solo", LeadEffort: "high"},
++				{Name: "lead_designed", Label: "Lead-designed team", MemberCount: 3, RoleSummary: "1 lead, 1 implementer, 1 reviewer", LeadModel: "model-lead", LeadEffort: "xhigh"}}},
+ 	}
+ 	server.render(response, "index", data)
+ 	body := response.Body.String()
+-	for _, marker := range []string{`Full team (4): 1 lead, 1 architect, 1 implementer, 1 reviewer</option>`, `data-roles="1 lead, 1 architect, 1 implementer, 1 reviewer"`,
++	for _, marker := range []string{`Full team (4): 1 lead, 1 architect, 1 implementer, 1 reviewer</option>`,
++		`Solo (1): 1 lead</option>`, `Lead-designed team (3): 1 lead, 1 implementer, 1 reviewer</option>`,
++		`data-roles="1 lead, 1 architect, 1 implementer, 1 reviewer"`,
+ 		`data-lead-model="gpt-6-sol"`, `data-lead-effort="high"`, `Lead model<select name="model" data-model-select><option value="">Selected team default</option>`,
+ 		`Lead reasoning effort<select name="effort" data-effort-select><option value="">Selected team default</option>`, `data-cli-command`, `The CLI asks for the initial request on stdin.`} {
+ 		if !strings.Contains(body, marker) {
+@@ -1763,8 +1767,11 @@ func TestNewSessionShowsConcretePresetLeadSettings(t *testing.T) {
+ 	data.Session = &session.Summary{Manifest: session.Manifest{Slug: "example"}, Interactive: true}
+ 	response = httptest.NewRecorder()
+ 	server.render(response, "session", data)
+-	if !strings.Contains(response.Body.String(), `Full team (4): 1 lead, 1 architect, 1 implementer, 1 reviewer</option>`) {
+-		t.Fatal("plan-to-new-session dialog omitted the total member count")
++	for _, marker := range []string{`Full team (4): 1 lead, 1 architect, 1 implementer, 1 reviewer</option>`,
++		`Solo (1): 1 lead</option>`, `Lead-designed team (3): 1 lead, 1 implementer, 1 reviewer</option>`} {
++		if !strings.Contains(response.Body.String(), marker) {
++			t.Fatalf("plan-to-new-session dialog omitted %q", marker)
++		}
+ 	}
+ }
+ 
+diff --git a/portal/internal/workspacecodex/lead_policy_test.go b/portal/internal/workspacecodex/lead_policy_test.go
+index bb1a8ca..e86e7a9 100644
+--- a/portal/internal/workspacecodex/lead_policy_test.go
++++ b/portal/internal/workspacecodex/lead_policy_test.go
+@@ -16,6 +16,13 @@ func TestLeadPolicyBindsSessionWithoutReplacingFrozenRoleInstructions(t *testing
+ 			t.Errorf("lead policy missing %q", expected)
+ 		}
+ 	}
++	_, retained, found := strings.Cut(policy.DeveloperInstructions, "\n\n")
++	if !found || retained != roleInstructions {
++		t.Fatalf("binding rewrote frozen instructions: %q", retained)
++	}
++	if LeadThreadPolicy("", "", roleInstructions).DeveloperInstructions != roleInstructions {
++		t.Fatal("unbound policy rewrote frozen instructions")
++	}
+ 	if strings.Contains(LeadThreadPolicy("", "", "").DeveloperInstructions, slug) {
+ 		t.Fatal("legacy policy unexpectedly has a session binding")
+ 	}
+diff --git a/test/dev_session/agent_team_creation_test.rb b/test/dev_session/agent_team_creation_test.rb
+index 8a8e8da..4f5d97a 100644
+--- a/test/dev_session/agent_team_creation_test.rb
++++ b/test/dev_session/agent_team_creation_test.rb
+@@ -621,9 +621,15 @@ class DevSessionTest < Minitest::Test
+       File.chmod(0o755, portal)
+       scenario = DirectCreationScenario.new
+       original = direct_team_preset
++      original['id'] = 'lead_designed'
++      original['roles'] << 'reviewer0'
++      original['members'] << {
++        'role' => 'reviewer', 'address' => 'reviewer0', 'behavior' => 'reviewer',
++        'access' => 'read_only', 'model' => 'model-reviewer', 'reasoningEffort' => 'xhigh'
++      }
+       original['leadInstructions'] = 'Original frozen lead instructions.'
+       original['members'].each do |member|
+-        member['purpose'] = { 'designer' => 'design', 'implementer' => 'implementation' }.fetch(member['behavior'])
++        member['purpose'] = { 'designer' => 'design', 'implementer' => 'implementation', 'reviewer' => 'review' }.fetch(member['behavior'])
+         member['instructions'] = "Original frozen #{member['role']} instructions."
+       end
+       scenario.catalog_preset = original
+@@ -641,14 +647,17 @@ class DevSessionTest < Minitest::Test
+       first = create_runner.call(first_commands)
+       start = lambda do |runner, model|
+         runner.start(slug, as_is: true, new: false, attach: false, run_codex: true,
+-          goal_file: goal, json: true, team: 'delegated', model:, effort: 'high')
++          goal_file: goal, json: true, team: 'lead_designed', model:, effort: 'high')
+       end
+       assert_raises(DevSession::Error) { start.call(first, 'model-lead') }
+       assert(first_commands.commands.any? { |command| command[1] == 'team-preset' })
+ 
+       changed = JSON.parse(JSON.generate(original))
+       changed['leadInstructions'] = 'New catalog instructions.'
+-      changed['members'].first['instructions'] = 'New member instructions.'
++      changed['members'].reject! { |member| member['role'] == 'architect' }
++      changed['roles'].delete('architect0')
++      changed['members'].first['instructions'] = 'Follow the new lead-owned brief.'
++      changed['leadEffort'] = 'xhigh'
+       scenario.catalog_preset = changed
+       retry_commands = DirectCreationCommandRunner.new(scenario)
+       retry_runner = create_runner.call(retry_commands)
+@@ -658,6 +667,7 @@ class DevSessionTest < Minitest::Test
+ 
+       refute(retry_commands.commands.any? { |command| command[1] == 'team-preset' })
+       assert_equal([original, original], scenario.applied_presets)
++      assert_equal(%w[architect0 implementer0 reviewer0], scenario.member_threads.keys.sort)
+       assert_equal(1, scenario.turn_starts)
+     end
+   end

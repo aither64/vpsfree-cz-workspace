@@ -1,0 +1,163 @@
+diff --git a/README.md b/README.md
+index 25f73c0..131d3c0 100644
+--- a/README.md
++++ b/README.md
+@@ -14,6 +14,14 @@ explains document ownership and rationale capture. This extension connects that
+ workflow to its review packets and handoffs; each consuming workspace names its
+ project and site-specific documentation destinations.
+ 
++The [mandatory review skill](skills/mandatory-change-review/SKILL.md) owns final
++review routing. Invoke it for completed substantive deliverables, including
++standalone documentation and configuration changes, after commits and quick
++checks and before long integration tests. Routine planning, investigation,
++findings, session tracking and evidence alone cause no automatic review.
++Explicitly requested early review is advisory and does not replace final review.
++Solo sessions use a temporary independent reviewer without changing their roster.
++
+ Concrete endpoints, credential paths, and development-cluster defaults are not
+ stored here. A consuming workspace passes them to `lib.mkPackage`:
+ 
+diff --git a/flake.lock b/flake.lock
+index f4097de..5a583da 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -62,17 +62,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1791097438,
+-        "narHash": "sha256-eIAF9uAowRSm8HgwsgbDQ+qT1lvPp7HJYil0lBAcNwA=",
++        "lastModified": 1791131661,
++        "narHash": "sha256-N1jEjNR5Jr4elS2so0fEEaZY4bMR6emmygTA0zRZo7I=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "45d4f13ab14a2dd7d19ea564dc1d364c5ac155c6",
++        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "45d4f13ab14a2dd7d19ea564dc1d364c5ac155c6",
++        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 194956a..80e07d9 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -3,7 +3,7 @@
+ 
+   inputs = {
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+-    dev-workspace.url = "github:aither64/dev-workspace/45d4f13ab14a2dd7d19ea564dc1d364c5ac155c6";
++    dev-workspace.url = "github:aither64/dev-workspace/6a972b9ab01077611b2c60e0fc726c185e050315";
+     devcluster-vpsadminos.url = "github:vpsfreecz/vpsadminos/15802517e2d92dda4ddc07ebac3d1d7ea087b430";
+     devcluster-vpsadmin = {
+       url = "github:vpsfreecz/vpsadmin/5c76e3290481b297dcd0baa76d246133f0353d8f";
+diff --git a/skills/mandatory-change-review/SKILL.md b/skills/mandatory-change-review/SKILL.md
+index c5e254a..debb49f 100644
+--- a/skills/mandatory-change-review/SKILL.md
++++ b/skills/mandatory-change-review/SKILL.md
+@@ -1,16 +1,28 @@
+ ---
+ name: mandatory-change-review
+-description: Run the required adaptive review of committed vpsFree.cz development changes after quick verification and before integration tests. Use for feature, bugfix, refactor, or cross-project work that changes code, schemas, APIs, protocols, configuration, documentation, tests, deployment behavior, or security posture; skip only dependency-only or generated update sessions without relevant code changes.
++description: Run independent final review of completed substantive vpsFree.cz deliverables after all intended changes are committed and quick checks pass, before long integration tests. Includes code, schemas, APIs, protocols, configuration, documentation, instructions, tests, deployment and security changes. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. Earlier review requires an explicit user request, is advisory, and does not replace final review; mechanical dependency/generated updates remain exempt when they contain no substantive changes.
+ ---
+ 
+ # Mandatory Change Review
+ 
+ ## Purpose
+ 
+-Use this skill after all intended changes are committed and quick local
+-verification has passed, but before long integration tests are started. The
+-review is advisory, but Blocking and Important findings must be addressed as
+-described below before continuing.
++Use this skill for final review after the intended substantive deliverable is
++complete, all intended changes are committed and quick local verification has
++passed, but before long integration tests are started. Completed substantive
++documentation, instructions and configuration deliverables remain in scope,
++alongside code, schema, API, protocol, test, deployment and security changes.
++The review is advisory, but Blocking and Important findings must be addressed
++as described below before continuing.
++
++Routine planning, investigation, findings, design reconciliation, session
++tracking (plans/state) and evidence alone never trigger automatic review.
++These records provide context for final review. Merely having a reviewer in a
++preset creates no assignment. Earlier review requires an explicit user request:
++inspect the requested scope and report advisory findings as an early review.
++It does not require a completed or committed implementation, does not claim
++final readiness, and does not replace final committed-deliverable review.
++Apply the final workflow below when the substantive deliverable is ready.
+ 
+ The coordinating agent assigns one independent reviewer the adaptive set of
+ applicable review lanes. Prefer an eligible retained member whose saved purpose
+@@ -97,9 +109,13 @@ into a superficial general review.
+ 
+ ## Main Agent Workflow
+ 
+-1. Confirm the review is required. Skip only when the session contains no
+-   relevant code or design change, such as dependency-only updates, generated
+-   lockfile refreshes, or other mechanical metadata updates.
++1. Confirm that the intended substantive deliverable is complete. Routine
++   planning, investigation, findings, session tracking and evidence alone do
++   not trigger review. Completed substantive documentation and configuration
++   deliverables do require final review. Earlier review requires an explicit
++   user request, is advisory, and does not replace this final workflow. Skip
++   genuinely mechanical dependency-only updates, generated lockfile refreshes
++   or metadata updates when they contain no substantive changes.
+ 2. Make sure all intended changes are committed in every affected repository.
+    Do not review a half-staged or partly uncommitted implementation.
+    Before claiming an unmerged feature branch ready, arrange a final review of
+@@ -179,7 +195,9 @@ into a superficial general review.
+ 
+ ## Shared Reviewer Instructions
+ 
+-Review committed changes across all affected projects. Inspect diffs, commit
++For final review, review committed changes across all affected projects. For
++explicitly requested early review, inspect the requested scope and report
++advisory findings without claiming final readiness. Inspect diffs, commit
+ history, local `AGENTS.md` files, relevant tests, documentation, and project
+ context before forming conclusions. Review the commit series, not only the
+ final tree, and compare it with the user request and initiative plan/state.
+diff --git a/skills/mandatory-change-review/agents/openai.yaml b/skills/mandatory-change-review/agents/openai.yaml
+index 664f061..38a7c5e 100644
+--- a/skills/mandatory-change-review/agents/openai.yaml
++++ b/skills/mandatory-change-review/agents/openai.yaml
+@@ -1,4 +1,4 @@
+ interface:
+   display_name: "Mandatory Change Review"
+-  short_description: "Review committed changes before long tests."
+-  default_prompt: "Use $mandatory-change-review to review the committed changes before integration tests."
++  short_description: "Final review after commits and quick checks."
++  default_prompt: "Use $mandatory-change-review for final review of the completed substantive deliverable after all intended changes are committed and quick checks pass, before long integration tests. Do not automatically review routine planning, investigation or session tracking. Earlier review requires an explicit user request, is advisory, and does not replace final review."
+diff --git a/test/skill_policy_test.rb b/test/skill_policy_test.rb
+index 66c9508..313bf4c 100644
+--- a/test/skill_policy_test.rb
++++ b/test/skill_policy_test.rb
+@@ -17,6 +17,23 @@ class SkillPolicyTest < Minitest::Test
+     assert_match(/does not add a member or change the roster/, skill)
+   end
+ 
++  def test_review_starts_at_completed_deliverables_and_early_review_is_explicit
++    skill = File.read(File.join(ROOT, 'skills/mandatory-change-review/SKILL.md'))
++    metadata = File.read(File.join(ROOT, 'skills/mandatory-change-review/agents/openai.yaml'))
++
++    assert_match(/deliverable is\s+complete, all intended changes are committed and quick local verification has\s+passed/, skill)
++    assert_match(/before long integration tests are started/, skill)
++    assert_match(/Completed substantive\s+documentation, instructions and configuration deliverables remain in scope/, skill)
++    assert_match(/Routine planning, investigation, findings, design reconciliation, session\s+tracking \(plans\/state\) and evidence alone never trigger automatic review/, skill)
++    assert_match(/Earlier review requires an explicit user request/, skill)
++    assert_match(/report advisory findings as an early review/, skill)
++    assert_match(/does not replace final committed-deliverable review/, skill)
++    assert_match(/no substantive changes/, skill)
++    assert_includes(metadata, 'completed substantive deliverable')
++    assert_includes(metadata, 'quick checks pass')
++    assert_includes(metadata, 'Earlier review requires an explicit user request')
++  end
++
+   def test_final_review_requires_complete_history_and_explicit_conclusions
+     skill = File.read(File.join(ROOT, 'skills/mandatory-change-review/SKILL.md'))
+     general = File.read(File.join(ROOT, 'skills/mandatory-change-review/references/general-review.md'))

@@ -1,0 +1,447 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 7de8bef0..dec9d904 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -109,32 +109,29 @@ the parent's responsibility for choosing scope or accepting results.
+   through `~/.codex/skills/dev-session-monitor/SKILL.md`. The watcher is not a
+   team member; retain the skill's ownership, cancellation and visible-fallback
+   rules. Respect instructions not to await CI.
+-- As the lead of a direct team, check the live same-session roster with
+-  `dev-session team list <verified-slug> --as-is` at the start of each new
+-  substantive work item. Give a ready member whose saved purpose is `design`
+-  nontrivial design work and a ready member whose purpose is `implementation`
+-  application edits, with a concrete deliverable. Check saved access before
+-  assigning edits. If access or session identity fails, resolve that failure
+-  rather than taking over delegated application work. The installed
+-  catalog can define custom role names; use the retained member addresses and
+-  purposes rather than assuming `architectN` or `implementerN`; those names
+-  identify design and implementation only in legacy rosters without a purpose.
+-  Briefly tell the user who owns what and integrate their reports. Keep
+-  coordination records and short dependent coordination steps yourself;
+-  assign bounded application edits to an implementer. Use the mandatory-review
+-  workflow for review and the separate Luna watcher for long verification.
+-  Respect user directions and the current collaboration mode; never invent
+-  members or address another
+-  session's roster. [Site team roles](docs/agent-teams.md) shows a custom role.
+-- The architect records the design and verification brief in
+-  `work/<slug>/design.md` before substantive implementation. It covers scope,
+-  interfaces, invariants, compatibility, deployment and recovery, acceptance
+-  criteria, and quick and longer checks. Architects may edit assigned design
+-  documents and prototypes; implementers edit application code. Route material
+-  design deviations through the lead. A small bounded edit may go straight to
+-  an implementer without a separate design document. A solo session is for
+-  discussion and read-only investigation; set up an appropriate team before
+-  substantive development.
++- Follow the selected mode and retained lead instructions. Solo leads investigate,
++  design and edit application code without automatic specialists. Lead-designed
++  leads own design and delegate application edits; Full-team leads delegate
++  nontrivial design and application edits. Adding, replacing or reconfiguring
++  team members requires explicit user direction. Check the live same-session
++  roster with `dev-session team list <verified-slug> --as-is` before each new
++  substantive team work item. Use saved member addresses, purposes and access;
++  check workspace-write access before assigning edits. If access or session
++  identity fails, resolve that failure rather than taking over delegated
++  application work. Briefly tell the user who owns what and integrate member
++  reports. Keep coordination records and short dependent steps yourself.
++  Never invent members or address another session's roster.
++  [Site team roles](docs/agent-teams.md) owns the mode table.
++- The selected design owner records the design and verification brief in
++  `work/<slug>/design.md` before substantive implementation: the Solo or
++  Lead-designed lead, or the Full-team architect. It covers scope, interfaces,
++  invariants, compatibility, deployment and recovery, acceptance criteria, and
++  quick and longer checks. Architects may edit assigned design documents and
++  prototypes; implementers edit application code from architect-owned or
++  lead-owned briefs. Solo leads edit their own application code. Route material
++  design deviations through the lead. A small bounded edit may use a direct
++  lead brief without a separate design document. Preserve retained instructions
++  and respect the current collaboration mode.
+ - Use the dev-session-documentation skill for substantive work, and the
+   dev-session-handoff skill after material changes/review/status requests. Keep
+   tracking and the portal manifest current and include the stable session URL.
+@@ -198,11 +195,14 @@ content.
+ 
+ ## Mandatory Change Review
+ 
+-For feature, bugfix, refactor, or cross-project work with relevant code,
+-schema, API, protocol, configuration, documentation, deployment, or security
+-impact, run the `mandatory-change-review` skill after all intended changes are
+-committed and quick local verification has passed, but before starting long
+-integration tests. The canonical workflow is
++Run the `mandatory-change-review` skill for a completed substantive deliverable,
++including code, schema, API, protocol, configuration, documentation, tests,
++deployment or security changes, after all intended changes are committed and
++quick local verification has passed, but before starting long integration tests.
++Routine planning, investigation, findings, session tracking and evidence alone
++never trigger automatic review. Earlier review requires an explicit user request,
++is advisory, and does not replace final committed-deliverable review. Having a
++reviewer in a preset creates no assignment. The canonical workflow is
+ `~/.codex/skills/mandatory-change-review/SKILL.md`; it owns reviewer model and effort,
+ adaptive lane selection, review packets, finding reconciliation, reruns, and
+ recording requirements. Follow it exactly, including its skip criteria.
+diff --git a/config/agent-teams.nix b/config/agent-teams.nix
+index 92138e41..29baceb9 100644
+--- a/config/agent-teams.nix
++++ b/config/agent-teams.nix
+@@ -6,14 +6,25 @@ let
+     reviewer = "review";
+     general = "general";
+   };
++  leadRequirements = ''
++    Coordinate verification and deployment and maintain session records. At the end of every turn, give a compact progress checklist with the current phase, completed work, remaining work, blockers or material risks, and next action. Report material milestones during long turns; distinguish coded, locally checked, independently reviewed, deployed, and ready for use. Update the durable phase checklist when its state changes.
++    Run mandatory independent final review after the intended substantive deliverable is complete, all intended changes are committed, and quick checks pass, before long integration tests. Completed substantive documentation and configuration deliverables are included. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. Earlier review requires an explicit user request, is advisory, and does not replace final review. Merely having a reviewer in the preset creates no assignment.
++    Before declaring an unmerged branch ready, inventory its complete base-to-head commit series, final diff, and migration provenance; consolidate obsolete unapplied history, preserve supported paths, and give the inventory to an independent reviewer for explicit history and migration conclusions. Earlier incremental reviews do not complete this gate. Preserve the mandatory review workflow's narrow-fix policy. Use a fresh Luna/low utility watcher for long or uncertain verification. Temporary review and verification agents do not join the roster.
++    Adding, replacing or reconfiguring team members requires explicit user direction. Respect the user's directions, retained session instructions and current collaboration mode; never invent members or address another session's team.
++  '';
+   defaultInstructions = {
+     team_lead = ''
+-      Lead this development session. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Assign nontrivial design to a ready design-purpose member and application edits to a ready implementation-purpose member using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable. Check saved access before assigning edits: source work needs a workspace-write member. If a member cannot write or cannot resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. The architect writes the design and verification brief before substantive implementation; a bounded small edit may go directly to an implementer. Coordinate design, implementation, review, verification, and deployment; maintain coordination records and integrate member reports. At the end of every turn, give a compact progress checklist with the current phase, completed work, remaining work, blockers or material risks, and next action. Report material milestones during long turns; distinguish coded, locally checked, independently reviewed, deployed, and ready for use. Update the durable phase checklist when its state changes. Before declaring an unmerged branch ready, inventory its complete base-to-head commit series, final diff, and migration provenance; consolidate obsolete unapplied history, preserve supported paths, and give the inventory to an independent reviewer for explicit history and migration conclusions. Earlier incremental reviews do not complete this gate. Use the mandatory review workflow and a fresh Luna/low watcher for long verification. Keep short dependent coordination steps yourself. Respect the user's directions and never address another session's team.
+-    '';
+-    solo_lead = "Discuss and investigate read-only. Set up an appropriate team before substantive development; do not take over application editing. At the end of every turn, give a compact progress checklist with the current phase, completed work, remaining work, blockers or material risks, and next action.";
++      Lead this Full-team development session. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Assign nontrivial design to a ready design-purpose member and application edits to a ready implementation-purpose member using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable. Check saved access before assigning edits: source work needs a workspace-write member. If a member cannot write or cannot resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. The architect writes work/<slug>/design.md with the design and verification brief before substantive implementation; a bounded small edit may go directly to an implementer. Briefly tell the user who owns what and integrate member reports. Keep short dependent coordination steps yourself.
++    '' + leadRequirements;
++    lead_designed_lead = ''
++      Lead this Lead-designed development session. Own substantive technical design and write work/<slug>/design.md before assigning application implementation. Include scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Assign application edits to a ready implementation-purpose member using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable and the lead-owned brief; a bounded small edit may use a direct brief. Check saved workspace-write access before assigning source work. Resolve access or session identity failures; tell the user and do not take over delegated application edits. Briefly tell the user who owns what and integrate member reports. Keep short dependent coordination steps yourself. Do not acquire a designer automatically.
++    '' + leadRequirements;
++    solo_lead = ''
++      Lead this Solo development session. Investigate, design and edit application code yourself without automatic specialists. Before substantive implementation, write work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks; a bounded small edit does not need a separate design document. Use the mandatory review workflow's temporary independent final reviewer and the separate utility watcher for long verification; neither is a persistent team member. Do not acquire specialists automatically.
++    '' + leadRequirements;
+     designer = "Own technical design and verification planning. Before substantive implementation, write or update work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery implications, acceptance criteria, and quick and longer checks. You may edit assigned design documents and prototypes. Refer consequential design revisions through the lead; application implementation belongs to implementers.";
+-    implementer = "Follow the assigned architect brief, or the lead's direct brief for a bounded small edit. Edit assigned application files while preserving unrelated work. Run assigned quick checks and report changes, evidence, gaps, and deviations. Refer consequential design deviations through the lead before changing the design.";
+-    reviewer = "Independently inspect committed changes under the mandatory review workflow for correctness, security, and verification gaps. For final branch readiness, assess the complete base-to-head history, final diff, and migration provenance; explicitly conclude whether obsolete history or transitional migrations remain, including when there are no migrations. Remain read-only.";
++    implementer = "Follow the assigned architect-owned or lead-owned design and verification brief for substantive work; a bounded small edit may use the lead's direct brief. Edit assigned application files while preserving unrelated work. Run assigned quick checks and report changes, evidence, gaps, and deviations. Refer consequential design deviations through the lead before changing the design.";
++    reviewer = "Independently inspect completed substantive deliverables under the mandatory review workflow for correctness, security, and verification gaps. Default to final review after all intended changes are committed and quick checks pass, before long integration tests. Earlier review is allowed only on an explicit user request, is advisory, may inspect uncommitted work, and never replaces final review. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. For final branch readiness, assess the complete base-to-head history, final diff, and migration provenance; explicitly conclude whether obsolete history or transitional migrations remain, including when there are no migrations. Remain read-only.";
+     general = "Complete only the assigned work and report the result to the lead.";
+   };
+   mkRole =
+@@ -131,7 +142,7 @@ in
+ 
+   teams = {
+     solo = {
+-      description = "Investigate and discuss without automatic specialists";
++      description = "Lead investigates, designs and implements without automatic specialists";
+       mode = "solo";
+       design_owner = "team_lead";
+       service_policy = "non_priority";
+@@ -161,15 +172,18 @@ in
+     };
+ 
+     lead_designed = commonDevelopment // {
+-      description = "Architect-led development (legacy preset name)";
+-      design_owner = "designer";
++      description = "Sol lead designs; Sol implements and reviews";
++      design_owner = "team_lead";
++      max_open_agents = 2;
+       routing = {
+         design_simple_effort = "high";
+         implementer_simple_effort = "high";
+       };
+       roles = commonDevelopment.roles // {
+-        team_lead = solLead // { effort = "xhigh"; };
+-        inherit designer;
++        team_lead = solLead // {
++          effort = "xhigh";
++          instructions = defaultInstructions.lead_designed_lead;
++        };
+       };
+     };
+   };
+diff --git a/docs/agent-instructions/sessions.md b/docs/agent-instructions/sessions.md
+index 68455cff..2420f1a8 100644
+--- a/docs/agent-instructions/sessions.md
++++ b/docs/agent-instructions/sessions.md
+@@ -126,10 +126,19 @@ Keep these files current enough that a future agent can resume the work without
+ guessing. When plans change because code or tests reveal new facts, update the
+ tracking notes.
+ 
+-For a team initiative, the architect keeps the technical design and verification
+-brief in `work/<slug>/design.md` before substantive implementation. Keep a phase
+-checklist in `state.md` and update it when its state changes. The lead reports a
+-compact progress checklist at the end of every turn, including the current
++The selected design owner keeps the technical design and verification brief in
++`work/<slug>/design.md` before substantive implementation: the Solo or
++Lead-designed lead, or the Full-team architect. Implementers accept either
++architect-owned or lead-owned briefs. Solo leads also edit application code.
++Adding, replacing or reconfiguring members requires explicit user direction.
++Routine planning, investigation, findings, session tracking and evidence alone
++never trigger automatic review. Explicitly requested earlier review is advisory
++and does not replace final review of the completed, committed substantive
++deliverable after quick checks and before long integration tests. Completed
++substantive documentation and configuration deliverables remain in scope.
++
++Keep a phase checklist in `state.md` and update it when its state changes. The
++lead reports a compact progress checklist at the end of every turn, including the current
+ phase, completed and remaining work, blockers or material risks, and next
+ action. This does not add a tracking-only commit for each turn; use the cadence
+ above.
+diff --git a/docs/agent-instructions/verification.md b/docs/agent-instructions/verification.md
+index 0c96a357..8762a483 100644
+--- a/docs/agent-instructions/verification.md
++++ b/docs/agent-instructions/verification.md
+@@ -16,7 +16,13 @@ settings from the retained team roster. Mandatory review uses an eligible
+ retained review-purpose member's saved model and effort; without one, use a
+ review-purpose role from the installed catalog's default development team in a
+ fresh standalone thread, including for solo sessions. Do not invent a team or
+-change the roster. Pass
++change the roster. Run final review only after the substantive deliverable is
++complete, all intended changes are committed, and quick checks pass, before
++long integration tests. Completed substantive documentation and configuration
++deliverables remain in scope. Routine planning, investigation, findings,
++session tracking and evidence alone never trigger automatic review. Earlier
++review requires an explicit user request, is advisory, and does not replace
++final review. A reviewer in a preset receives no automatic assignment. Pass
+ project escalation rules, including
+ unexpected local kernel builds, in the watcher's brief. The parent continues
+ automatically on completion or escalation. If the skill or delegation is
+diff --git a/docs/agent-teams.md b/docs/agent-teams.md
+index 9d1bd5c7..834783d0 100644
+--- a/docs/agent-teams.md
++++ b/docs/agent-teams.md
+@@ -26,25 +26,51 @@ review workflow can select it independently of its role name. Existing session
+ members keep their saved instructions and settings; a member added later uses
+ the currently installed catalog.
+ 
+-The site catalog gives architects (`designer` in the catalog) and implementers
+-workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`) for the lead,
+-implementer and independent reviewer. Architects use GPT-6 Astra/xhigh. The
+-architect writes the design and verification brief before substantive
+-implementation and may edit assigned design documents and prototypes. The
+-implementer makes application edits. The lead coordinates their work and reports
+-a compact progress checklist at the end of every turn.
+-Reviewers stay read-only, and a separate GPT-6 Luna/low utility watches long
+-checks.
+-
+-`delegated` is the default team. The `lead_designed` key remains available for
+-compatibility but creates the same architect, implementer, and reviewer roles;
+-its Sol lead retains xhigh effort. Its name no longer means that the lead owns
+-design. The generic portal may still display its built-in "Lead-designed team"
+-label. `solo` is for discussion and read-only investigation. Substantive
+-development requires a suitable team.
+-
+-The portal shows each member's saved access, which may differ from the current
+-catalog. Existing members retain their saved model, effort, access, and
+-instructions. Newly added members use the installed catalog; creation retries
+-and forks keep the retained snapshots. Do not reconfigure an existing roster
+-just to apply new defaults.
++The site catalog gives leads, architects (`designer` in the catalog) and
++implementers workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`)
++for leads, implementers and independent reviewers. Architects use GPT-6
++Astra/xhigh. Reviewers stay read-only, and a separate GPT-6 Luna/low utility
++watches long checks.
++
++| Preset | Persistent members | Design owner | Application edits | Specialist slots |
++| --- | --- | --- | --- | --- |
++| `solo` | lead (1 total) | lead | lead | 0 |
++| `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
++| `delegated` (Full team, default) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
++
++Solo leads investigate, design and implement without automatic specialists.
++Lead-designed leads write the design and verification brief before substantive
++implementation. Full-team architects write that brief. The brief lives in
++`work/<slug>/design.md`; implementers accept either owner's brief. A bounded
++small edit may use a direct lead brief. Leads report a compact progress
++checklist at the end of every turn and integrate member reports.
++
++Solo and Full-team leads default to high effort and allow high/xhigh;
++Lead-designed leads default to xhigh and allow high/xhigh. Substantive design
++and implementation use xhigh, with high allowed for a bounded simple unit when
++the reason is recorded. Independent reviewers retain their saved effort.
++
++Run independent final review after the intended substantive deliverable is
++complete, all intended changes are committed and quick checks pass, before
++long integration tests. Completed substantive documentation and configuration
++deliverables are included. Routine
++planning, investigation, findings, session tracking and evidence alone never
++trigger automatic review. Earlier review requires an explicit user request,
++is advisory, and does not replace final review. A reviewer in a preset receives
++no automatic assignment. Solo uses the mandatory-review skill's temporary
++standalone reviewer. That reviewer and the utility watcher do not join its
++roster. Preserve whole-branch history and migration review and the skill's
++narrow-fix policy.
++
++Adding, replacing or reconfiguring members requires explicit user direction;
++manual team controls remain available. The portal shows each member's saved
++access, which may differ from the current catalog. Existing members retain
++their saved model, effort, access, and instructions. Newly added members use
++the installed catalog; creation retries and forks keep retained snapshots,
++including an older Lead-designed lineup containing an architect. Do not
++reconfigure an existing roster to apply new defaults.
++
++Shared workspace rules and installed skills change globally rather than being
++frozen with a session. They can conflict with older saved prompts. These defaults
++do not refresh those prompts, change existing rosters or add a policy-refresh
++mechanism.
+diff --git a/flake.lock b/flake.lock
+index deb23e1f..22fbfa75 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1791097438,
+-        "narHash": "sha256-eIAF9uAowRSm8HgwsgbDQ+qT1lvPp7HJYil0lBAcNwA=",
++        "lastModified": 1791131661,
++        "narHash": "sha256-N1jEjNR5Jr4elS2so0fEEaZY4bMR6emmygTA0zRZo7I=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "45d4f13ab14a2dd7d19ea564dc1d364c5ac155c6",
++        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "45d4f13ab14a2dd7d19ea564dc1d364c5ac155c6",
++        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
+         "type": "github"
+       }
+     },
+@@ -462,17 +462,17 @@
+         "nixpkgs": "nixpkgs_5"
+       },
+       "locked": {
+-        "lastModified": 1791097530,
+-        "narHash": "sha256-9qO+PH83znbPU35QaQ8OPRKsM/k2hZy3hSs1zBznISc=",
++        "lastModified": 1791131784,
++        "narHash": "sha256-XsyaztXxPrBhm3WHZD7+Hq7r8pVqzTjk0fAxg12W5zo=",
+         "owner": "vpsfreecz",
+         "repo": "dev-workspace",
+-        "rev": "67c9a60b802537bbb7154959405b67f168f85397",
++        "rev": "e1bb5cf3ad37c5ef31445a68ab85f53db2858777",
+         "type": "github"
+       },
+       "original": {
+         "owner": "vpsfreecz",
+         "repo": "dev-workspace",
+-        "rev": "67c9a60b802537bbb7154959405b67f168f85397",
++        "rev": "e1bb5cf3ad37c5ef31445a68ab85f53db2858777",
+         "type": "github"
+       }
+     }
+diff --git a/flake.nix b/flake.nix
+index 1fd748c7..2e76e0b1 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -3,7 +3,7 @@
+ 
+   inputs = {
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+-    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/67c9a60b802537bbb7154959405b67f168f85397";
++    vpsfree-dev-workspace.url = "github:vpsfreecz/dev-workspace/e1bb5cf3ad37c5ef31445a68ab85f53db2858777";
+   };
+ 
+   outputs =
+@@ -96,12 +96,20 @@
+             .work_policy.implementation.simple_requires_reason == true and
+             .work_policy.implementation.followup == "retain" and
+             .teams.solo.max_open_agents == 0 and
++            .teams.solo.design_owner == "team_lead" and
++            (.teams.solo.roles | keys) == ["team_lead"] and
++            .teams.solo.roles.team_lead.access == "workspace_write" and
++            .teams.solo.roles.team_lead.effort == "high" and
++            .teams.solo.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
+             .teams.solo.roles.team_lead.model == "gpt-6.1-sol" and
+             .teams.solo.roles.team_lead.purpose == "lead" and
+-            (.teams.solo.roles.team_lead.instructions | contains("Set up an appropriate team before substantive development")) and
++            (.teams.solo.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself without automatic specialists")) and
+             (.teams.solo.roles.team_lead.instructions | contains("At the end of every turn")) and
+             .teams.delegated.max_open_agents == 3 and
+             .teams.delegated.design_owner == "designer" and
++            (.teams.delegated.roles | keys | sort) == (["designer", "implementer", "reviewer", "team_lead"] | sort) and
++            .teams.delegated.roles.team_lead.access == "workspace_write" and
++            .teams.delegated.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
+             .teams.delegated.roles.team_lead.model == "gpt-6.1-sol" and
+             .teams.delegated.roles.team_lead.effort == "high" and
+             (.teams.delegated.roles.team_lead.instructions | contains("At the end of every turn")) and
+@@ -128,16 +136,29 @@
+             .teams.delegated.roles.reviewer.lifetime == "session" and
+             .teams.delegated.roles.reviewer.fresh_context == true and
+             (.teams.delegated.roles.reviewer.instructions | contains("complete base-to-head history")) and
++            (.teams.delegated.roles.reviewer.instructions | contains("Earlier review is allowed only on an explicit user request")) and
++            (.teams.delegated.roles.reviewer.instructions | contains("after all intended changes are committed and quick checks pass")) and
+             .teams.lead_designed.roles.team_lead.model == "gpt-6.1-sol" and
+             .teams.lead_designed.roles.team_lead.effort == "xhigh" and
+-            .teams.lead_designed.design_owner == "designer" and
+-            .teams.lead_designed.max_open_agents == 3 and
+-            (.teams.lead_designed.roles | keys | sort) == (["designer", "implementer", "reviewer", "team_lead"] | sort) and
+-            .teams.lead_designed.roles.designer.model == "gpt-6-astra" and
+-            .teams.lead_designed.roles.designer.effort == "xhigh" and
+-            .teams.lead_designed.roles.designer.access == "workspace_write" and
++            .teams.lead_designed.design_owner == "team_lead" and
++            .teams.lead_designed.max_open_agents == 2 and
++            (.teams.lead_designed.roles | keys | sort) == (["implementer", "reviewer", "team_lead"] | sort) and
++            .teams.lead_designed.roles.team_lead.access == "workspace_write" and
++            .teams.lead_designed.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
++            (.teams.lead_designed.roles.team_lead.instructions | contains("Own substantive technical design and write work/<slug>/design.md")) and
+             .teams.lead_designed.roles.implementer.model == "gpt-6.1-sol" and
+             .teams.lead_designed.roles.reviewer.model == "gpt-6.1-sol" and
++            ([.teams[].roles.team_lead.instructions] | unique | length) == 3 and
++            ([.teams[].roles.team_lead.instructions] | all(
++              contains("all intended changes are committed, and quick checks pass, before long integration tests") and
++              contains("Completed substantive documentation and configuration deliverables are included") and
++              contains("Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review") and
++              contains("Earlier review requires an explicit user request, is advisory, and does not replace final review") and
++              contains("Adding, replacing or reconfiguring team members requires explicit user direction")
++            )) and
++            ([.teams.delegated, .teams.lead_designed] | all(
++              .roles.implementer.instructions | contains("architect-owned or lead-owned design and verification brief for substantive work")
++            )) and
+             .utilities.verification_watcher.model == "gpt-6-luna" and
+             .utilities.verification_watcher.effort == "low" and
+             .utilities.verification_watcher.behavior == "verification_watcher" and
+diff --git a/test/agent_instructions_test.rb b/test/agent_instructions_test.rb
+index b5478f78..460c00bf 100644
+--- a/test/agent_instructions_test.rb
++++ b/test/agent_instructions_test.rb
+@@ -48,9 +48,22 @@ class AgentInstructionsTest < Minitest::Test
+     assert_match(/including for solo sessions/, verification)
+   end
+ 
++  def test_final_review_timing_and_substantive_documentation_are_consistent
++    paths = %w[AGENTS.md docs/agent-teams.md docs/agent-instructions/sessions.md
++               docs/agent-instructions/verification.md]
++    paths.each do |path|
++      text = File.read(File.join(ROOT, path)).gsub(/\s+/, ' ')
++      assert_match(/Routine\s+planning, investigation, findings,.*evidence alone\s+never trigger automatic review/m, text, path)
++      assert_match(/(?:Earlier review requires an explicit user request|Explicitly requested earlier review)/, text, path)
++      assert_match(/is advisory/, text, path)
++      assert_match(/does not replace final/, text, path)
++      assert_match(/substantive documentation and configuration|configuration, documentation/, text, path)
++    end
++  end
++
+   def test_default_sol_policy_documents_exact_requested_model
+-    core = File.read(File.join(ROOT, 'AGENTS.md'))
+-    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'))
++    core = File.read(File.join(ROOT, 'AGENTS.md')).gsub(/\s+/, ' ')
++    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
+ 
+     assert_includes(core, '`gpt-6.1-sol`')
+     assert_includes(teams, 'model = "gpt-6.1-sol";')
+@@ -61,16 +74,20 @@ class AgentInstructionsTest < Minitest::Test
+   end
+ 
+   def test_team_ownership_and_progress_policy_is_routed_consistently
+-    core = File.read(File.join(ROOT, 'AGENTS.md'))
+-    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'))
+-    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'))
++    core = File.read(File.join(ROOT, 'AGENTS.md')).gsub(/\s+/, ' ')
++    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md')).gsub(/\s+/, ' ')
++    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
+ 
+-    assert_match(/architect records the design and verification brief/, core)
+-    assert_match(/implementers edit application code/, core)
++    assert_match(/selected design owner records the design and verification brief/, core)
++    assert_match(/implementers edit application code from architect-owned or\s+lead-owned briefs/, core)
+     assert_match(/resolve that failure\s+rather than taking over delegated application work/, core)
+     assert_match(/At the end of every lead turn.*current\s+phase.*completed work.*remaining work.*next\s+action/m, core)
+     assert_match(/phase\s+checklist in `state\.md`/, sessions)
+-    assert_match(/`solo` is for discussion\s+and read-only investigation/, teams)
++    assert_match(/Solo leads investigate, design and implement without automatic specialists/, teams)
++    assert_match(/Lead-designed leads write the design and verification brief/, teams)
++    assert_match(/Full-team architects write that brief/, teams)
++    assert_match(/Adding, replacing or reconfiguring members requires explicit user direction/, teams)
++    assert_match(/creation retries and forks keep retained snapshots/, teams)
+   end
+ 
+   def test_final_readiness_requires_complete_history_and_migration_lineage
