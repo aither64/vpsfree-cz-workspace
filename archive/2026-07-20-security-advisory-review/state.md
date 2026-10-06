@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 # 2026-07-20-security-advisory-review
 
@@ -1043,3 +1043,12 @@ lifecycle: active
   remain at content revision 28, and store the requested time as
   `2026-07-21T20:00:00Z`. No evidence collection was run after the user's
   correction and no email notification was requested.
+
+## Archive ref recovery, 2026-10-06
+
+The old `vpsfree-mail-templates` clone lacked its local session branch. Restored
+that ref at `04921d75ab5321962b207bb380deff90906bd662` after confirming the retained
+origin/session ref, live origin/session ref, and the renamed
+`vpsfree-notification-templates` canonical clone agree exactly. Both registered
+repository obligations and their heads are preserved. No code, origin refs or
+default branches changed.
