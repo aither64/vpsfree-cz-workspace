@@ -1,0 +1,701 @@
+diff --git a/docs/dev-sessions.md b/docs/dev-sessions.md
+index 8ad1b66..f403707 100644
+--- a/docs/dev-sessions.md
++++ b/docs/dev-sessions.md
+@@ -341,7 +341,9 @@ session.
+ The root conversation is the lead in both the portal and tmux. The selected
+ catalog prompt and retained instructions determine design and application
+ ownership. A Solo lead can investigate, design and edit application code without
+-automatic specialists. A Lead-designed lead owns the design brief and assigns
++automatic specialists. A Lead and reviewer lead also owns design and application
++edits and uses its retained reviewer for independent final review.
++A Lead-designed lead owns the design brief and assigns
+ application work to an implementer; a Full-team lead assigns nontrivial design
+ to its design-purpose member and application work to its implementation-purpose
+ member. The design owner writes the design and verification brief before
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 50c9a89..5b13434 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -519,8 +519,9 @@ The portal's Team assignment API sends as `lead` only. A member can report to
+ `lead` through its bound host tool, which checks that member's roster and
+ thread identity; browser input cannot claim to be a member.
+ 
+-The installed workspace policy supplies three starting teams: Solo (`solo`),
+-Full team (`delegated`), and Lead-designed team (`lead_designed`). Their role
++The installed workspace policy supplies starting teams such as Solo (`solo`),
++Full team (`delegated`), Lead-designed team (`lead_designed`), and Lead and
++reviewer (`lead_reviewed`). Their role
+ lists and exact lead model and reasoning effort appear on the new-session
+ screen. Solo has only the lead, which investigates, designs and edits
+ application code without automatic specialists. Full team has `lead`,
+@@ -528,6 +529,9 @@ application code without automatic specialists. Full team has `lead`,
+ delegated application implementation. Lead-designed has `lead`, `implementer0`
+ and `reviewer0`; the lead writes the substantive design brief and delegates
+ application implementation. Catalog prompts own these mode-specific policies.
++Lead and reviewer has `lead` and `reviewer0`; the lead owns investigation,
++design and application implementation, while the retained reviewer performs
++independent final review.
+ The selected team and its member settings are saved with the creation receipt.
+ Member threads are created before the lead receives the initial request. A
+ failed creation can be retried with that saved selection.
+@@ -612,8 +616,11 @@ the lead. Member role names use lowercase letters and digits and are at most
+ `implementation`, `review`, or `general`. The lead uses purpose `lead`.
+ The generic package requires instructions for every role. A site can provide
+ defaults for known roles and supply instructions for its own roles. A
+-development team still needs a design owner, an implementer, and a reviewer,
+-but their role names can differ from the built-in names. The package records
++development team needs a design owner and an independent reviewer. It can use
++an implementation-purpose member, or a lead that owns design and satisfies
++the implementation policy when no implementer is present. An existing
++implementer must satisfy its policy; the lead cannot substitute for an invalid
++implementer. Role names can differ from the built-in names. The package records
+ its catalog digest, and the host launch marker binds it through the
+ registration-plan digest. No native child-agent capacity or per-role startup
+ arguments are required for direct threads.
+@@ -722,7 +729,17 @@ ownership and recovery for New session API callers.
+ New session needs an initial request or attachments and a starting team. Options
+ contains a custom short name and advanced lead settings. An empty custom name
+ generates a dated name; the CLI preview asks for an explicit name. Installed
+-team defaults remain available when model discovery fails.
++team defaults appear as exact selected model and reasoning values, including
++when model discovery fails. Changing the starting team selects that team's
++lead defaults. A manual model selection uses the model's advertised default
++reasoning effort; both settings can then be changed. Reloading preserves explicit
++unsent choices. Older unsent drafts with empty settings select the team's concrete
++defaults, while submitted requests retain their original body for recovery.
++
++This lead-owned composition uses the existing catalog and receipt schemas. Its
++catalog must be paired with a runtime that accepts the composition; older
++validators still require a separate implementer. Existing saved rosters remain
++unchanged, and package updates follow the existing forward-only transition policy.
+ 
+ Automatic naming uses a private Codex child owned by the portal service, with a
+ fixed original catalog and `gpt-5.5`/`low`. Ordinary conversations keep their
+diff --git a/nix/agent-teams.nix b/nix/agent-teams.nix
+index d6a782b..1b3fca1 100644
+--- a/nix/agent-teams.nix
++++ b/nix/agent-teams.nix
+@@ -249,9 +249,15 @@ let
+         && roleSupportsWorkPolicy team.roles.team_lead workPolicy.implementation
+       else
+         roleMatchesWorkPolicy (builtins.getAttr team.design_owner team.roles) workPolicy.design
+-        && builtins.any (
+-          role: role.purpose == "implementation" && roleMatchesWorkPolicy role workPolicy.implementation
+-        ) (builtins.attrValues team.roles)
++        && (
++          if builtins.any (role: role.purpose == "implementation") (builtins.attrValues team.roles) then
++            builtins.any (
++              role: role.purpose == "implementation" && roleMatchesWorkPolicy role workPolicy.implementation
++            ) (builtins.attrValues team.roles)
++          else
++            team.design_owner == "team_lead"
++            && roleMatchesWorkPolicy team.roles.team_lead workPolicy.implementation
++        )
+         && builtins.any (role: role.purpose == "review" && role.fresh_context) (
+           builtins.attrValues team.roles
+         )
+diff --git a/nix/tests/agent-team-catalog.nix b/nix/tests/agent-team-catalog.nix
+index 23400e9..c284eef 100644
+--- a/nix/tests/agent-team-catalog.nix
++++ b/nix/tests/agent-team-catalog.nix
+@@ -125,9 +125,9 @@ let
+   };
+   evaluate =
+     teamConfig:
+-    builtins.tryEval (builtins.deepSeq (mkPackage {
++    builtins.tryEval (builtins.seq (mkPackage {
+       inherit pkgs teamConfig;
+-    }) true);
++    }).drvPath true);
+   invalidExtraField = validTeamConfig // { unexpected = true; };
+   invalidCapacity = validTeamConfig // {
+     capacity.required_native_child_threads = 0;
+@@ -182,8 +182,58 @@ let
+     inherit pkgs;
+     teamConfig = renamedTeamConfig;
+   };
++  leadReviewedConfig = validTeamConfig // {
++    work_policy = validTeamConfig.work_policy // {
++      design = implementationPolicy;
++    };
++    teams = validTeamConfig.teams // {
++      development = validTeamConfig.teams.development // {
++        design_owner = "team_lead";
++        max_open_agents = 1;
++        roles = {
++          team_lead = validTeamConfig.teams.development.roles.team_lead // {
++            effort = "xhigh";
++          };
++          reviewer = validTeamConfig.teams.development.roles.reviewer;
++        };
++      };
++    };
++  };
++  invalidLeadReviewedReviewer = libUpdateTeamRoles leadReviewedConfig {
++    reviewer = leadReviewedConfig.teams.development.roles.reviewer // {
++      fresh_context = false;
++    };
++  };
++  invalidLeadReviewedImplementer = libUpdateTeamRoles leadReviewedConfig {
++    implementer = validTeamConfig.teams.development.roles.implementer // {
++      effort = "high";
++    };
++  };
++  invalidLeadReviewedLead = libUpdateTeamRoles leadReviewedConfig {
++    team_lead = leadReviewedConfig.teams.development.roles.team_lead // {
++      effort = "high";
++    };
++  };
++  libUpdateTeamRoles =
++    config: roles:
++    config
++    // {
++      teams = config.teams // {
++        development = config.teams.development // {
++          roles = config.teams.development.roles // roles;
++        };
++      };
++    };
++  leadReviewedPackage = mkPackage {
++    inherit pkgs;
++    teamConfig = leadReviewedConfig;
++  };
+   unmanagedPackage = mkPackage { inherit pkgs; };
+ in
++assert (evaluate leadReviewedConfig).success;
++assert !((evaluate invalidLeadReviewedReviewer).success);
++assert !((evaluate invalidLeadReviewedImplementer).success);
++assert !((evaluate invalidLeadReviewedLead).success);
+ assert !((evaluate invalidExtraField).success);
+ assert !((evaluate invalidCapacity).success);
+ assert !((evaluate invalidFreshContext).success);
+@@ -198,6 +248,8 @@ pkgs.runCommand "dev-workspace-agent-team-catalog" {
+   catalog=${configuredPackage}/share/dev-workspace/agent-teams.json
+   metadata=${configuredPackage}/share/dev-workspace/package.json
+   renamed_catalog=${renamedPackage}/share/dev-workspace/agent-teams.json
++  jq -e '.teams.development.roles | keys == ["reviewer", "team_lead"]' \
++    ${leadReviewedPackage}/share/dev-workspace/agent-teams.json >/dev/null
+ 
+   test -f "$catalog"
+   test ! -e ${unmanagedPackage}/share/dev-workspace/agent-teams.json
+diff --git a/portal/internal/agentteams/catalog.go b/portal/internal/agentteams/catalog.go
+index 7212e93..f5f9b91 100644
+--- a/portal/internal/agentteams/catalog.go
++++ b/portal/internal/agentteams/catalog.go
+@@ -493,15 +493,21 @@ func validTeam(name string, team Team, capacity Capacity, policies WorkPolicies)
+ 		return len(team.Roles) == 1 && team.DesignOwner == "team_lead" && team.MaxOpenAgents == 0 &&
+ 			team.Routing == (Routing{}) && supportsPolicy(lead, policies.Design) && supportsPolicy(lead, policies.Implementation)
+ 	}
+-	hasImplementation, hasReviewer := false, false
++	hasImplementationRole, hasImplementation, hasReviewer := false, false, false
+ 	for _, role := range team.Roles {
+-		if role.Purpose == "implementation" && matchesPolicy(role, policies.Implementation) {
+-			hasImplementation = true
++		if role.Purpose == "implementation" {
++			hasImplementationRole = true
++			hasImplementation = hasImplementation || matchesPolicy(role, policies.Implementation)
+ 		}
+ 		if role.Purpose == "review" && role.FreshContext {
+ 			hasReviewer = true
+ 		}
+ 	}
++	// Without an implementer, a lead-owned team must satisfy implementation
++	// policy itself. An invalid existing implementer must not use this fallback.
++	if !hasImplementationRole && team.DesignOwner == "team_lead" {
++		hasImplementation = lead.Access == "workspace_write" && matchesPolicy(lead, policies.Implementation)
++	}
+ 	if !matchesPolicy(owner, policies.Design) || !hasImplementation || !hasReviewer || team.MaxOpenAgents < 1 ||
+ 		team.MaxOpenAgents > capacity.RequiredNativeChildThreads || team.Routing.DesignSimpleEffort == nil ||
+ 		team.Routing.ImplementerSimpleEffort == nil || *team.Routing.DesignSimpleEffort != policies.Design.Simple ||
+diff --git a/portal/internal/agentteams/catalog_test.go b/portal/internal/agentteams/catalog_test.go
+index 48d81a8..3557cb4 100644
+--- a/portal/internal/agentteams/catalog_test.go
++++ b/portal/internal/agentteams/catalog_test.go
+@@ -12,6 +12,72 @@ import (
+ 
+ func ptrString(value string) *string { return &value }
+ 
++func TestDevelopmentTeamCanImplementWithLead(t *testing.T) {
++	fixture := catalogFixture(t)
++	base := fixture.Teams["solo"]
++	base.Mode, base.MaxOpenAgents = "development", 1
++	base.Routing = Routing{DesignSimpleEffort: ptrString("high"), ImplementerSimpleEffort: ptrString("high")}
++	base.Roles["reviewer"] = Role{Model: "model-review", Effort: "high", Behavior: "reviewer", Purpose: "review",
++		Instructions: "Review the work.", Lifetime: "session", AllowedEfforts: []string{"high"}, Access: "read_only", FreshContext: true}
++	for _, test := range []struct {
++		name   string
++		change func(*Team)
++		valid  bool
++	}{
++		{"lead and reviewer", func(*Team) {}, true},
++		{"lead cannot write", func(team *Team) {
++			role := team.Roles["team_lead"]
++			role.Access = "read_only"
++			team.Roles["team_lead"] = role
++		}, false},
++		{"missing reviewer", func(team *Team) { delete(team.Roles, "reviewer") }, false},
++		{"reviewer can write", func(team *Team) {
++			role := team.Roles["reviewer"]
++			role.Access = "workspace_write"
++			team.Roles["reviewer"] = role
++		}, false},
++		{"reviewer lacks fresh context", func(team *Team) {
++			role := team.Roles["reviewer"]
++			role.FreshContext = false
++			team.Roles["reviewer"] = role
++		}, false},
++		{"lead lacks implementation policy", func(team *Team) {
++			role := team.Roles["team_lead"]
++			role.AllowedEfforts = []string{"high", "xhigh"}
++			team.Roles["team_lead"] = role
++		}, false},
++		{"separate design owner needs implementer", func(team *Team) {
++			role := team.Roles["team_lead"]
++			role.Behavior, role.Purpose = "designer", "design"
++			team.Roles["designer"] = role
++			team.DesignOwner = "designer"
++		}, false},
++		{"valid separate implementer", func(team *Team) {
++			role := team.Roles["team_lead"]
++			role.Behavior, role.Purpose = "implementer", "implementation"
++			team.Roles["implementer"] = role
++		}, true},
++		{"invalid implementer cannot fall back to lead", func(team *Team) {
++			role := team.Roles["team_lead"]
++			role.Behavior, role.Purpose = "implementer", "implementation"
++			role.Effort = "xhigh"
++			role.AllowedEfforts = []string{"high", "xhigh"}
++			team.Roles["implementer"] = role
++		}, false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			var team Team
++			if err := json.Unmarshal(marshalFixture(t, base), &team); err != nil {
++				t.Fatal(err)
++			}
++			test.change(&team)
++			if got := validTeam("development", team, fixture.Capacity, fixture.WorkPolicy); got != test.valid {
++				t.Fatalf("team valid = %t, want %t", got, test.valid)
++			}
++		})
++	}
++}
++
+ func catalogFixture(t *testing.T) Catalog {
+ 	t.Helper()
+ 	identity := NativeIdentity{
+diff --git a/portal/internal/teamruntime/runtime.go b/portal/internal/teamruntime/runtime.go
+index 11fb382..51a810b 100644
+--- a/portal/internal/teamruntime/runtime.go
++++ b/portal/internal/teamruntime/runtime.go
+@@ -387,7 +387,7 @@ func PresetsFromCatalog(catalog agentteams.Catalog) ([]Preset, error) {
+ 		if err := validateCatalogInstructions(&catalog, id, "team_lead", lead); err != nil {
+ 			return nil, err
+ 		}
+-		name := map[string]string{"solo": "Solo", "delegated": "Full team", "lead_designed": "Lead-designed team"}[id]
++		name := map[string]string{"solo": "Solo", "delegated": "Full team", "lead_designed": "Lead-designed team", "lead_reviewed": "Lead and reviewer"}[id]
+ 		if name == "" {
+ 			name = strings.ReplaceAll(id, "_", " ")
+ 			name = strings.ToUpper(name[:1]) + name[1:]
+diff --git a/portal/internal/teamruntime/runtime_test.go b/portal/internal/teamruntime/runtime_test.go
+index ce5b22b..1db243a 100644
+--- a/portal/internal/teamruntime/runtime_test.go
++++ b/portal/internal/teamruntime/runtime_test.go
+@@ -2282,6 +2282,42 @@ func TestCatalogPresetProjectsLeadOwnedDevelopmentWithoutDesigner(t *testing.T)
+ 	}
+ }
+ 
++func TestCatalogPresetCreatesLeadAndReviewerOnly(t *testing.T) {
++	catalog := agentteams.Catalog{CatalogDigest: fmt.Sprintf("%064x", 1), Teams: map[string]agentteams.Team{
++		"lead_reviewed": {Description: "Lead implements; reviewer reviews.", DesignOwner: "team_lead", MaxOpenAgents: 1, Mode: "development", TeamDigest: fmt.Sprintf("%064x", 2), Roles: map[string]agentteams.Role{
++			"team_lead": {Model: "gpt-6.1-sol", Effort: "xhigh", Purpose: "lead", Instructions: "Own design and implementation."},
++			"reviewer":  {Model: "gpt-6-astra", Effort: "xhigh", Behavior: "reviewer", Purpose: "review", Instructions: "Review independently.", Access: "read_only", FreshContext: true},
++		}},
++	}}
++	preset, err := FindCatalogPreset(catalog, "lead_reviewed")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if preset.Name != "Lead and reviewer" || preset.MemberCount() != 2 ||
++		preset.RoleSummary() != "1 lead, 1 reviewer" || !reflect.DeepEqual(preset.Roles, []string{"lead", "reviewer0"}) ||
++		preset.LeadModel != "gpt-6.1-sol" || preset.LeadEffort != "xhigh" {
++		t.Fatalf("lead and reviewer projection = %#v", preset)
++	}
++	workspace := filepath.Join(t.TempDir(), "workspace")
++	store, err := NewStore(t.TempDir(), workspace)
++	if err != nil {
++		t.Fatal(err)
++	}
++	client := &testClient{}
++	service := Service{Store: store, Client: client, Workspace: workspace}
++	ready, err := service.ApplyPresetSpec(context.Background(), "one", "root-one", filepath.Join(workspace, "work", "one"), nil, preset)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(ready.Members) != 1 || ready.Members[0].Address != "reviewer0" || ready.Members[0].State != "ready" ||
++		ready.LeadInstructions != preset.LeadInstructions || len(client.starts) != 1 ||
++		client.starts[0].Model != "gpt-6-astra" || client.starts[0].ReasoningEffort != "xhigh" ||
++		client.starts[0].Policy.Sandbox != "read-only" ||
++		!strings.HasSuffix(client.starts[0].Policy.DeveloperInstructions, "Review independently.") {
++		t.Fatalf("created team = %#v, starts = %#v", ready, client.starts)
++	}
++}
++
+ func TestCatalogPresetProjectsCustomRole(t *testing.T) {
+ 	catalog := agentteams.Catalog{CatalogDigest: fmt.Sprintf("%064x", 1), Teams: map[string]agentteams.Team{
+ 		"custom": {TeamDigest: fmt.Sprintf("%064x", 2), Roles: map[string]agentteams.Role{
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index 21dcf94..2863bdf 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=25`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=26`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/creation_settings_browser_test.cjs b/portal/internal/web/creation_settings_browser_test.cjs
+new file mode 100644
+index 0000000..adf92ff
+--- /dev/null
++++ b/portal/internal/web/creation_settings_browser_test.cjs
+@@ -0,0 +1,111 @@
++"use strict";
++const assert = require("node:assert/strict");
++const {chromium, expect} = require("@playwright/test");
++const {draftKey} = require("./static/preparation.js");
++const baseURL = process.argv[2];
++
++(async () => {
++  const browser = await chromium.launch({headless: true, channel: "chromium"});
++  try {
++    const page = await browser.newPage({ignoreHTTPSErrors: true});
++    const errors = [];
++    let releaseModels, failModels = false, holdModels = true, modelReads = 0;
++    page.on("pageerror", error => errors.push(error.message));
++    await page.route("**/api/models", async route => {
++      modelReads++;
++      if (holdModels) await new Promise(resolve => { releaseModels = resolve; });
++      if (failModels) return route.fulfill({status: 503, json: {error: "Models unavailable"}});
++      return route.fulfill({json: [
++        {model: "model-lead", displayName: "Lead model", isDefault: false, defaultReasoningEffort: "high",
++          supportedReasoningEfforts: [{reasoningEffort: "high"}, {reasoningEffort: "xhigh"}]},
++        {model: "model-solo", displayName: "Solo model", isDefault: true, defaultReasoningEffort: "medium",
++          supportedReasoningEfforts: [{reasoningEffort: "medium"}, {reasoningEffort: "high"}]},
++      ]});
++    });
++    await page.route("**/api/upload-drafts", route => route.fulfill({status: 503, json: {error: "Fixture has no files"}}));
++    await page.route("**/api/index-status*", route => route.fulfill({json: {sessions: [], operations: []}}));
++    const form = page.locator("#new-session-form");
++    const model = form.locator("[name=model]"), effort = form.locator("[name=effort]");
++    const team = form.locator("[name=team]");
++    const pair = async (m, e) => { await expect(model).toHaveValue(m); await expect(effort).toHaveValue(e); };
++    const open = async () => {
++      await page.goto(baseURL, {waitUntil: "domcontentloaded"});
++      await form.locator("summary").click();
++    };
++    await open();
++    await expect.poll(() => Boolean(releaseModels)).toBe(true);
++    await expect(team).toHaveValue("lead_reviewed");
++    await pair("model-lead", "xhigh");
++    await team.selectOption("solo");
++    await pair("model-solo", "high");
++    holdModels = false; releaseModels();
++    await expect(model.locator("option")).toHaveCount(2);
++    await pair("model-solo", "high");
++    await model.selectOption("model-lead");
++    await pair("model-lead", "high");
++    await effort.selectOption("xhigh");
++    await pair("model-lead", "xhigh");
++    await page.reload({waitUntil: "domcontentloaded"});
++    await form.locator("summary").click();
++    await pair("model-lead", "xhigh");
++    await expect(team).toHaveValue("solo");
++    await team.selectOption("lead_reviewed");
++    await pair("model-lead", "xhigh");
++    await team.selectOption("solo");
++    await pair("model-solo", "high");
++    assert.equal(await model.locator("option[value='']").count(), 0);
++    assert.equal(await effort.locator("option[value='']").count(), 0);
++
++    // An unsent predecessor draft used an empty pair to mean the team's defaults.
++    await page.evaluate(key => {
++      const draft = JSON.parse(sessionStorage.getItem(key));
++      draft.model = ""; draft.effort = "";
++      sessionStorage.setItem(key, JSON.stringify(draft));
++    }, draftKey);
++    failModels = true;
++    const readsBefore = modelReads;
++    await page.reload({waitUntil: "domcontentloaded"});
++    await form.locator("summary").click();
++    await expect.poll(() => modelReads).toBeGreaterThan(readsBefore);
++    await pair("model-solo", "high");
++    await team.selectOption("lead_reviewed");
++    await pair("model-lead", "xhigh");
++
++    // A catalog change still needs acknowledgement before an unsent request.
++    await page.evaluate(key => {
++      const draft = JSON.parse(sessionStorage.getItem(key));
++      draft.catalogDigest = "b".repeat(64);
++      sessionStorage.setItem(key, JSON.stringify(draft));
++    }, draftKey);
++    await page.reload({waitUntil: "domcontentloaded"});
++    await expect(form.locator("[data-team-catalog-changed]")).toBeVisible();
++    await pair("model-lead", "xhigh");
++    await expect(form.locator("[type=submit]")).toBeDisabled();
++    await form.locator("[data-team-catalog-acknowledge]").check();
++
++    // Submitted requests retain their exact body, even with empty legacy settings.
++    let retryBody;
++    await page.route("**/api/session-creations/*", route => route.fulfill({status: 404, json: {error: "Not found"}}));
++    await page.route("**/sessions", route => {
++      retryBody = route.request().postData();
++      return route.fulfill({status: 503, json: {error: "Fixture retry remains pending"}});
++    });
++    const frozenBody = await page.evaluate(key => {
++      const draft = JSON.parse(sessionStorage.getItem(key));
++      draft.model = ""; draft.effort = "";
++      draft.body = new URLSearchParams({clientRequestId: draft.requestId, name: draft.name,
++        goal: draft.goal, creation_date: draft.date, team: draft.team, catalogDigest: draft.catalogDigest,
++        model: "", effort: "", uploadScope: draft.scope?.id || ""}).toString();
++      sessionStorage.setItem(key, JSON.stringify(draft));
++      return draft.body;
++    }, draftKey);
++    await page.reload({waitUntil: "domcontentloaded"});
++    await expect.poll(() => retryBody).toBe(frozenBody);
++    await expect(team).toBeDisabled();
++    assert.equal(await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)).body, draftKey), frozenBody);
++    assert.deepEqual(errors, []);
++    console.log("Concrete creation settings, drafts and recovery passed");
++  } finally {
++    await browser.close();
++  }
++})().catch(error => { console.error(error); process.exitCode = 1; });
+diff --git a/portal/internal/web/creation_settings_browser_test.go b/portal/internal/web/creation_settings_browser_test.go
+new file mode 100644
+index 0000000..cc634aa
+--- /dev/null
++++ b/portal/internal/web/creation_settings_browser_test.go
+@@ -0,0 +1,41 @@
++package web
++
++import (
++	"net/http/httptest"
++	"os"
++	"os/exec"
++	"strings"
++	"testing"
++
++	"github.com/aither64/dev-workspace/portal/internal/agentteams"
++)
++
++func TestNewSessionSettingsBrowser(t *testing.T) {
++	if os.Getenv("PORTAL_BROWSER_TEST") != "1" {
++		t.Skip("set PORTAL_BROWSER_TEST=1 to run the Playwright creation settings regression")
++	}
++	server := newTestServer(t)
++	server.installedTeams = &agentteams.Installed{Managed: true, Catalog: &agentteams.Catalog{
++		CatalogDigest: strings.Repeat("a", 64), DefaultTeam: "lead_reviewed",
++		Teams: map[string]agentteams.Team{
++			"lead_reviewed": {Description: "Lead implements and reviewer reviews.", TeamDigest: strings.Repeat("b", 64), Roles: map[string]agentteams.Role{
++				"team_lead": {Model: "model-lead", Effort: "xhigh", Purpose: "lead", Instructions: "Design and implement the work."},
++				"reviewer":  {Model: "model-review", Effort: "xhigh", Behavior: "reviewer", Purpose: "review", Access: "read_only", Instructions: "Review the work."},
++			}},
++			"solo": {Description: "A single lead.", TeamDigest: strings.Repeat("c", 64), Roles: map[string]agentteams.Role{
++				"team_lead": {Model: "model-solo", Effort: "high", Purpose: "lead", Instructions: "Own the work."},
++			}},
++		},
++	}}
++	httpServer := httptest.NewUnstartedServer(nil)
++	server.config.BaseURL = "https://" + httpServer.Listener.Addr().String()
++	httpServer.Config.Handler = server.Handler()
++	httpServer.StartTLS()
++	defer httpServer.Close()
++	command := exec.Command("node", "creation_settings_browser_test.cjs", httpServer.URL)
++	if output, err := command.CombinedOutput(); err != nil {
++		t.Fatalf("creation settings browser: %v\n%s", err, output)
++	} else {
++		t.Log(string(output))
++	}
++}
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index b4a0f97..a106548 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -1771,16 +1771,13 @@ func TestNewSessionShowsConcretePresetLeadSettings(t *testing.T) {
+ 	for _, marker := range []string{`Full team (4): 1 lead, 1 architect, 1 implementer, 1 reviewer</option>`,
+ 		`Solo (1): 1 lead</option>`, `Lead-designed team (3): 1 lead, 1 implementer, 1 reviewer</option>`,
+ 		`data-roles="1 lead, 1 architect, 1 implementer, 1 reviewer"`,
+-		`data-lead-model="gpt-6-sol"`, `data-lead-effort="high"`, `Lead model<select name="model" data-model-select><option value="">Selected team default</option>`,
+-		`Lead reasoning effort<select name="effort" data-effort-select><option value="">Selected team default</option>`, `data-cli-command`, `The CLI asks for the initial request on stdin.`} {
++		`data-lead-model="gpt-6-sol"`, `data-lead-effort="high"`, `Lead model<select name="model" data-model-select required><option value="gpt-6-sol" selected>gpt-6-sol</option>`,
++		`Lead reasoning effort<select name="effort" data-effort-select required><option value="high" selected>high</option>`, `data-cli-command`, `The CLI asks for the initial request on stdin.`} {
+ 		if !strings.Contains(body, marker) {
+ 			t.Fatalf("new session omitted %q", marker)
+ 		}
+ 	}
+-	if strings.Contains(body, `name="model" data-model-select required`) || strings.Contains(body, `name="effort" data-effort-select required`) {
+-		t.Fatal("managed New session requires overrides instead of accepting installed team defaults")
+-	}
+-	if strings.Contains(body, `Advanced lead override`) || strings.Contains(body, `Configured default`) {
++	if strings.Contains(body, `Selected team default`) || strings.Contains(body, `Configured default`) {
+ 		t.Fatal("new session still exposes an ambiguous lead override")
+ 	}
+ 	data.Session = &session.Summary{Manifest: session.Manifest{Slug: "example"}, Interactive: true}
+@@ -1855,7 +1852,7 @@ func TestCreationAndMemberReasoningSelectorsRequireExplicitValues(t *testing.T)
+ 	}
+ 	if !strings.Contains(string(javascript),
+ 		`const existingSettings = modelSelect.dataset.existingSettings === "true"`) ||
+-		!strings.Contains(string(javascript), `if (!existingSettings && !effortSelect.required)`) {
++		!strings.Contains(string(javascript), `if (!newSession && !existingSettings && !effortSelect.required)`) {
+ 		t.Fatal("existing-thread settings still offer unsupported automatic reasoning")
+ 	}
+ }
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index d3060a8..48098b4 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1705,9 +1705,10 @@
+     if (!selected || !modelSelect || !effortSelect) return;
+     if (form.id === "new-session-form") {
+       if (form.dataset.requestLocked === "true") return;
+-      modelSelect.value = "";
+-      populateEfforts(modelSelect, effortSelect);
+-      effortSelect.value = "";
++      selectCreationSetting(modelSelect, selected.dataset.leadModel || "");
++      populateEfforts(modelSelect, effortSelect, selected.dataset.leadEffort || "");
++      modelSelect.dataset.userEdited = "false";
++      effortSelect.dataset.userEdited = "false";
+       return;
+     }
+     if (!models.length) return;
+@@ -1719,9 +1720,23 @@
+     effortSelect.dataset.userEdited = "false";
+   };
+ 
++  // Catalog defaults stay explicit while live model discovery is pending or
++  // unavailable. Backend validation still decides whether a pair is supported.
++  const selectCreationSetting = (select, value) => {
++    if (!value) return;
++    if (!Array.from(select.options).some((option) => option.value === value)) {
++      const option = document.createElement("option");
++      option.value = value;
++      option.textContent = value;
++      select.append(option);
++    }
++    select.value = value;
++  };
++
+   const restoreDraftSelect = (select, value, unavailableLabel) => {
+     if (!select || typeof value !== "string") return;
+-    if (!Array.from(select.options).some((option) => option.value === value) && value !== "") {
++    if (!Array.from(select.options).some((option) => option.value === value) &&
++        (value !== "" || select.closest("form")?.dataset.requestLocked === "true")) {
+       const option = document.createElement("option");
+       option.value = value;
+       option.textContent = unavailableLabel;
+@@ -1815,6 +1830,10 @@
+       if (form.elements.catalogDigest) form.elements.catalogDigest.value = draft.catalogDigest;
+       restoreDraftSelect(form.elements.team, draft.team, "Saved team");
+       if (form.elements.team) updateTeamDescription(form.elements.team);
++      if (form.dataset.requestLocked !== "true" && form.elements.team && !draft.model && !draft.effort) {
++        applyTeamLeadSettings(form.elements.team);
++        return;
++      }
+       restoreDraftSelect(form.elements.model, draft.model, "Saved model");
+       if (form.dataset.requestLocked !== "true") populateEfforts(form.elements.model, form.elements.effort, draft.effort);
+       restoreDraftSelect(form.elements.effort, draft.effort, "Saved reasoning effort");
+@@ -1853,7 +1872,7 @@
+     const model = models.find((candidate) => candidate.model === modelSelect.value);
+     const existingSettings = modelSelect.dataset.existingSettings === "true";
+     effortSelect.replaceChildren();
+-    if (!existingSettings && !effortSelect.required) {
++    if (!newSession && !existingSettings && !effortSelect.required) {
+       const fallback = document.createElement("option");
+       fallback.value = "";
+       fallback.textContent = automaticReasoningLabel(model);
+@@ -1867,6 +1886,7 @@
+       effortSelect.append(element);
+     }
+     const desired = selected || effortSelect.dataset.currentValue || model?.defaultReasoningEffort || "";
++    if (newSession) selectCreationSetting(effortSelect, desired);
+     if (Array.from(effortSelect.options).some((option) => option.value === desired)) {
+       effortSelect.value = desired;
+     }
+@@ -1926,6 +1946,8 @@
+       if (!models.length) models = await request("/api/models");
+       for (const modelSelect of modelSelects) {
+         if (modelSelect.closest("form")?.dataset.requestLocked === "true") continue;
++        const newSession = modelSelect.closest("form")?.id === "new-session-form";
++        const savedModel = modelSelect.value;
+         const allowDefault = !modelSelect.required;
+         modelSelect.replaceChildren();
+         if (allowDefault) {
+@@ -1937,11 +1959,13 @@
+         for (const model of models) {
+           const option = document.createElement("option");
+           option.value = model.model;
+-          option.textContent = model.displayName;
++          option.textContent = newSession ? model.model : model.displayName;
+           option.title = model.description || "";
+           modelSelect.append(option);
+         }
+-        if (!currentModel && modelSelect.required) {
++        if (newSession && savedModel) {
++          selectCreationSetting(modelSelect, savedModel);
++        } else if (!currentModel && modelSelect.required) {
+           const defaultModel = models.find((model) => model.isDefault);
+           if (defaultModel) modelSelect.value = defaultModel.model;
+         }
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index 3989666..644c7fe 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=25" defer></script>
++  <script src="/static/app.js?v=26" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 9c0738e..4a275fe 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -53,7 +53,7 @@
+         <label>Custom short name (optional)<input name="name" maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*" placeholder="api-token-rotation"></label>
+         <p class="muted">Leave the name blank to generate a dated session name from your request.</p>
+         {{if .AgentTeams.Managed}}
+-        <div class="field-grid"><label>Lead model<select name="model" data-model-select><option value="">Selected team default</option></select></label><label>Lead reasoning effort<select name="effort" data-effort-select><option value="">Selected team default</option></select></label></div>
++        <div class="field-grid"><label>Lead model<select name="model" data-model-select required>{{range .AgentTeams.Teams}}{{if eq .Name $.AgentTeams.DefaultTeam}}<option value="{{.LeadModel}}" selected>{{.LeadModel}}</option>{{end}}{{end}}</select></label><label>Lead reasoning effort<select name="effort" data-effort-select required>{{range .AgentTeams.Teams}}{{if eq .Name $.AgentTeams.DefaultTeam}}<option value="{{.LeadEffort}}" selected>{{.LeadEffort}}</option>{{end}}{{end}}</select></label></div>
+         {{else}}
+         <div class="field-grid">
+           <label>Model<select name="model" data-model-select required><option value="">Loading models…</option></select></label>
+@@ -91,7 +91,7 @@
+   </div>
+   <template id="session-card-template">{{template "session-card"}}</template>
+   <script src="/static/preparation.js?v=3" defer></script>
+-  <script src="/static/app.js?v=25" defer></script>
++  <script src="/static/app.js?v=26" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 04f714c..1c9be88 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -205,7 +205,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=25" defer></script>
++  <script src="/static/app.js?v=26" defer></script>
+ </body>
+ </html>
+ {{end}}

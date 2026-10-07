@@ -1,0 +1,233 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 24c322f1..87340888 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -95,8 +95,9 @@ the parent's responsibility for choosing scope or accepting results.
+   and investigate under the verification procedure's documented exceptions.
+ - For a direct team, use the session's retained roster settings for members
+   and the installed catalog for new presets. New architects use GPT-6 Astra
+-  with xhigh effort. New leads, implementers and reviewers use
+-  `gpt-6.1-sol`; verification watchers use GPT-6 Luna/low.
++  with xhigh effort. Leads and implementers use `gpt-6.1-sol`. The default
++  `lead_reviewed` uses Sol/xhigh and Astra/xhigh; other reviewers use their
++  catalog settings. Verification watchers use GPT-6 Luna/low.
+   Existing members retain their saved model, effort, access, and instructions.
+   Substantive design uses xhigh. High is allowed for a bounded simple design or
+   implementation unit only with a recorded reason. Independent review uses an
+@@ -111,8 +112,9 @@ the parent's responsibility for choosing scope or accepting results.
+   through `~/.codex/skills/dev-session-monitor/SKILL.md`. The watcher is not a
+   team member; retain the skill's ownership, cancellation and visible-fallback
+   rules. Respect instructions not to await CI.
+-- Follow the selected mode and retained lead instructions. Solo leads investigate,
+-  design and edit application code without automatic specialists. Lead-designed
++- Follow the selected mode and retained lead instructions. Solo and Lead and
++  reviewer leads investigate, design and edit application code without automatic
++  specialists; the latter use a retained independent reviewer. Lead-designed
+   leads own design and delegate application edits; Full-team leads delegate
+   nontrivial design and application edits. Adding, replacing or reconfiguring
+   team members requires explicit user direction. Check the live same-session
+@@ -125,12 +127,12 @@ the parent's responsibility for choosing scope or accepting results.
+   Never invent members or address another session's roster.
+   [Site team roles](docs/agent-teams.md) owns the mode table.
+ - The selected design owner records the design and verification brief in
+-  `work/<slug>/design.md` before substantive implementation: the Solo or
+-  Lead-designed lead, or the Full-team architect. It covers scope, interfaces,
++  `work/<slug>/design.md` before substantive implementation, as specified by
++  [Site team roles](docs/agent-teams.md). It covers scope, interfaces,
+   invariants, compatibility, deployment and recovery, acceptance criteria, and
+   quick and longer checks. Architects may edit assigned design documents and
+   prototypes; implementers edit application code from architect-owned or
+-  lead-owned briefs. Solo leads edit their own application code. Route material
++  lead-owned briefs. Route material
+   design deviations through the lead. A small bounded edit may use a direct
+   lead brief without a separate design document. Preserve retained instructions
+   and respect the current collaboration mode.
+diff --git a/config/agent-teams.nix b/config/agent-teams.nix
+index 29baceb9..ab7490f5 100644
+--- a/config/agent-teams.nix
++++ b/config/agent-teams.nix
+@@ -22,6 +22,9 @@ let
+     solo_lead = ''
+       Lead this Solo development session. Investigate, design and edit application code yourself without automatic specialists. Before substantive implementation, write work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks; a bounded small edit does not need a separate design document. Use the mandatory review workflow's temporary independent final reviewer and the separate utility watcher for long verification; neither is a persistent team member. Do not acquire specialists automatically.
+     '' + leadRequirements;
++    lead_reviewed_lead = ''
++      Lead this Lead and reviewer development session. Investigate, design and edit application code yourself. Before substantive implementation, write work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks; a bounded small edit does not need a separate design document. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Use a ready retained review-purpose member for independent final review under the mandatory review workflow, keeping its saved model, effort, access and instructions. The reviewer remains read-only. Use the separate utility watcher for long verification. Do not acquire design or implementation specialists automatically.
++    '' + leadRequirements;
+     designer = "Own technical design and verification planning. Before substantive implementation, write or update work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery implications, acceptance criteria, and quick and longer checks. You may edit assigned design documents and prototypes. Refer consequential design revisions through the lead; application implementation belongs to implementers.";
+     implementer = "Follow the assigned architect-owned or lead-owned design and verification brief for substantive work; a bounded small edit may use the lead's direct brief. Edit assigned application files while preserving unrelated work. Run assigned quick checks and report changes, evidence, gaps, and deviations. Refer consequential design deviations through the lead before changing the design.";
+     reviewer = "Independently inspect completed substantive deliverables under the mandatory review workflow for correctness, security, and verification gaps. Default to final review after all intended changes are committed and quick checks pass, before long integration tests. Earlier review is allowed only on an explicit user request, is advisory, may inspect uncommitted work, and never replaces final review. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. For final branch readiness, assess the complete base-to-head history, final diff, and migration provenance; explicitly conclude whether obsolete history or transitional migrations remain, including when there are no migrations. Remain read-only.";
+@@ -112,8 +115,8 @@ let
+ in
+ {
+   schema_version = 4;
+-  default_team = "delegated";
+-  default_development_team = "delegated";
++  default_team = "lead_reviewed";
++  default_development_team = "lead_reviewed";
+ 
+   capacity.required_native_child_threads = 4;
+ 
+@@ -141,6 +144,25 @@ in
+   };
+ 
+   teams = {
++    lead_reviewed = commonDevelopment // {
++      description = "Sol lead investigates, designs and implements; Astra reviews";
++      design_owner = "team_lead";
++      max_open_agents = 1;
++      routing = {
++        design_simple_effort = "high";
++        implementer_simple_effort = "high";
++      };
++      roles = {
++        team_lead = solLead // {
++          effort = "xhigh";
++          instructions = defaultInstructions.lead_reviewed_lead;
++        };
++        reviewer = reviewer // {
++          model = "gpt-6-astra";
++        };
++      };
++    };
++
+     solo = {
+       description = "Lead investigates, designs and implements without automatic specialists";
+       mode = "solo";
+diff --git a/docs/agent-instructions/sessions.md b/docs/agent-instructions/sessions.md
+index 887f73d5..4ad02f18 100644
+--- a/docs/agent-instructions/sessions.md
++++ b/docs/agent-instructions/sessions.md
+@@ -142,9 +142,10 @@ guessing. When plans change because code or tests reveal new facts, update the
+ tracking notes.
+ 
+ The selected design owner keeps the technical design and verification brief in
+-`work/<slug>/design.md` before substantive implementation: the Solo or
+-Lead-designed lead, or the Full-team architect. Implementers accept either
+-architect-owned or lead-owned briefs. Solo leads also edit application code.
++`work/<slug>/design.md` before substantive implementation. The
++[site mode table](../agent-teams.md) defines design ownership and responsibility
++for application edits for each preset. Implementers accept either
++architect-owned or lead-owned briefs.
+ Adding, replacing or reconfiguring members requires explicit user direction.
+ Routine planning, investigation, findings, session tracking and evidence alone
+ never trigger automatic review. Explicitly requested earlier review is advisory
+diff --git a/docs/agent-teams.md b/docs/agent-teams.md
+index 834783d0..3aa97e49 100644
+--- a/docs/agent-teams.md
++++ b/docs/agent-teams.md
+@@ -28,26 +28,31 @@ the currently installed catalog.
+ 
+ The site catalog gives leads, architects (`designer` in the catalog) and
+ implementers workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`)
+-for leads, implementers and independent reviewers. Architects use GPT-6
+-Astra/xhigh. Reviewers stay read-only, and a separate GPT-6 Luna/low utility
+-watches long checks.
++for leads and implementers. The default Lead and reviewer team uses a Sol/xhigh
++lead and an Astra/xhigh reviewer; the other presets use Sol reviewers. Architects
++use GPT-6 Astra/xhigh. Reviewers stay read-only, and a separate GPT-6 Luna/low
++utility watches long checks.
+ 
+ | Preset | Persistent members | Design owner | Application edits | Specialist slots |
+ | --- | --- | --- | --- | --- |
+ | `solo` | lead (1 total) | lead | lead | 0 |
++| `lead_reviewed` (Lead and reviewer, default) | lead, reviewer (2 total) | lead | lead | 1 |
+ | `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
+-| `delegated` (Full team, default) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
++| `delegated` (Full team) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
+ 
+ Solo leads investigate, design and implement without automatic specialists.
+-Lead-designed leads write the design and verification brief before substantive
+-implementation. Full-team architects write that brief. The brief lives in
++In Lead and reviewer sessions, the lead does the same and uses the retained
++reviewer for independent final review. Lead-designed leads write the design
++and verification brief before substantive implementation. Full-team architects
++write that brief. The brief lives in
+ `work/<slug>/design.md`; implementers accept either owner's brief. A bounded
+ small edit may use a direct lead brief. Leads report a compact progress
+ checklist at the end of every turn and integrate member reports.
+ 
+ Solo and Full-team leads default to high effort and allow high/xhigh;
+-Lead-designed leads default to xhigh and allow high/xhigh. Substantive design
+-and implementation use xhigh, with high allowed for a bounded simple unit when
++the lead in Lead-designed and Lead and reviewer sessions defaults to xhigh
++and allows high/xhigh. Substantive design and implementation use xhigh, with high
++allowed for a bounded simple unit when
+ the reason is recorded. Independent reviewers retain their saved effort.
+ 
+ Run independent final review after the intended substantive deliverable is
+diff --git a/flake.lock b/flake.lock
+index 59b1b445..d01c2a55 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1791357734,
+-        "narHash": "sha256-1uzy1ZBzcbBNiG7uHq0bYD0TGUnoR3xSSYAga6nm74E=",
++        "lastModified": 1791371517,
++        "narHash": "sha256-UVgS6P8FB0V68bQQHBhuUUd+uajFaf1ObeBqbsqqW68=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "9e8e6e87a5a4844d4639ddf4008de483d1897f4c",
++        "rev": "a2bbf2f1c588de7eec0d7d52580a89a9d4bef984",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "9e8e6e87a5a4844d4639ddf4008de483d1897f4c",
++        "rev": "a2bbf2f1c588de7eec0d7d52580a89a9d4bef984",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 7eb63cc3..e341e577 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+     vpsfree-dev-workspace = {
+       url = "github:vpsfreecz/dev-workspace/0ff827df13e82dfab4b536ff29979280f264e8f5";
+-      inputs.dev-workspace.url = "github:aither64/dev-workspace/9e8e6e87a5a4844d4639ddf4008de483d1897f4c";
++      inputs.dev-workspace.url = "github:aither64/dev-workspace/a2bbf2f1c588de7eec0d7d52580a89a9d4bef984";
+     };
+   };
+ 
+@@ -85,8 +85,8 @@
+           test -f "$catalog"
+           ${pkgs.jq}/bin/jq -e '
+             .schema_version == 4 and
+-            .default_team == "delegated" and
+-            .default_development_team == "delegated" and
++            .default_team == "lead_reviewed" and
++            .default_development_team == "lead_reviewed" and
+             .capacity.required_native_child_threads == 4 and
+             .work_policy.design.default == "xhigh" and
+             .work_policy.design.simple == "high" and
+@@ -151,7 +151,24 @@
+             (.teams.lead_designed.roles.team_lead.instructions | contains("Own substantive technical design and write work/<slug>/design.md")) and
+             .teams.lead_designed.roles.implementer.model == "gpt-6.1-sol" and
+             .teams.lead_designed.roles.reviewer.model == "gpt-6.1-sol" and
+-            ([.teams[].roles.team_lead.instructions] | unique | length) == 3 and
++            .teams.lead_reviewed.mode == "development" and
++            .teams.lead_reviewed.design_owner == "team_lead" and
++            .teams.lead_reviewed.max_open_agents == 1 and
++            (.teams.lead_reviewed.roles | keys) == ["reviewer", "team_lead"] and
++            .teams.lead_reviewed.roles.team_lead.model == "gpt-6.1-sol" and
++            .teams.lead_reviewed.roles.team_lead.effort == "xhigh" and
++            .teams.lead_reviewed.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
++            .teams.lead_reviewed.roles.team_lead.access == "workspace_write" and
++            (.teams.lead_reviewed.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself")) and
++            (.teams.lead_reviewed.roles.team_lead.instructions | contains("ready retained review-purpose member")) and
++            .teams.lead_reviewed.roles.reviewer.model == "gpt-6-astra" and
++            .teams.lead_reviewed.roles.reviewer.effort == "xhigh" and
++            .teams.lead_reviewed.roles.reviewer.allowed_efforts == ["xhigh"] and
++            .teams.lead_reviewed.roles.reviewer.access == "read_only" and
++            .teams.lead_reviewed.roles.reviewer.purpose == "review" and
++            .teams.lead_reviewed.roles.reviewer.fresh_context == true and
++            .teams.lead_reviewed.roles.reviewer.lifetime == "session" and
++            ([.teams[].roles.team_lead.instructions] | unique | length) == 4 and
+             ([.teams[].roles.team_lead.instructions] | all(
+               contains("all intended changes are committed, and quick checks pass, before long integration tests") and
+               contains("Completed substantive documentation and configuration deliverables are included") and
