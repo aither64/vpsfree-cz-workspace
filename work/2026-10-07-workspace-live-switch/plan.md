@@ -71,17 +71,3 @@ plan." Record exact final heads and deployment results before fast-forwarding.
 Patch-equivalent rebases retain that approval; material changes require the
 workspace Git procedure's reconciliation. Completion requires exact final
 heads merged and no remaining deployment, verification or owned work.
-
-## Goal
-
-## Affected repositories
-
-## Approach
-
-## Decisions
-
-## Compatibility and deployment
-
-## Documentation
-
-## Testing plan
