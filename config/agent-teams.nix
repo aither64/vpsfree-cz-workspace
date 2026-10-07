@@ -22,6 +22,9 @@ let
     solo_lead = ''
       Lead this Solo development session. Investigate, design and edit application code yourself without automatic specialists. Before substantive implementation, write work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks; a bounded small edit does not need a separate design document. Use the mandatory review workflow's temporary independent final reviewer and the separate utility watcher for long verification; neither is a persistent team member. Do not acquire specialists automatically.
     '' + leadRequirements;
+    lead_reviewed_lead = ''
+      Lead this Lead and reviewer development session. Investigate, design and edit application code yourself. Before substantive implementation, write work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks; a bounded small edit does not need a separate design document. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Use a ready retained review-purpose member for independent final review under the mandatory review workflow, keeping its saved model, effort, access and instructions. The reviewer remains read-only. Use the separate utility watcher for long verification. Do not acquire design or implementation specialists automatically.
+    '' + leadRequirements;
     designer = "Own technical design and verification planning. Before substantive implementation, write or update work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery implications, acceptance criteria, and quick and longer checks. You may edit assigned design documents and prototypes. Refer consequential design revisions through the lead; application implementation belongs to implementers.";
     implementer = "Follow the assigned architect-owned or lead-owned design and verification brief for substantive work; a bounded small edit may use the lead's direct brief. Edit assigned application files while preserving unrelated work. Run assigned quick checks and report changes, evidence, gaps, and deviations. Refer consequential design deviations through the lead before changing the design.";
     reviewer = "Independently inspect completed substantive deliverables under the mandatory review workflow for correctness, security, and verification gaps. Default to final review after all intended changes are committed and quick checks pass, before long integration tests. Earlier review is allowed only on an explicit user request, is advisory, may inspect uncommitted work, and never replaces final review. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. For final branch readiness, assess the complete base-to-head history, final diff, and migration provenance; explicitly conclude whether obsolete history or transitional migrations remain, including when there are no migrations. Remain read-only.";
@@ -112,8 +115,8 @@ let
 in
 {
   schema_version = 4;
-  default_team = "delegated";
-  default_development_team = "delegated";
+  default_team = "lead_reviewed";
+  default_development_team = "lead_reviewed";
 
   capacity.required_native_child_threads = 4;
 
@@ -141,6 +144,25 @@ in
   };
 
   teams = {
+    lead_reviewed = commonDevelopment // {
+      description = "Sol lead investigates, designs and implements; Astra reviews";
+      design_owner = "team_lead";
+      max_open_agents = 1;
+      routing = {
+        design_simple_effort = "high";
+        implementer_simple_effort = "high";
+      };
+      roles = {
+        team_lead = solLead // {
+          effort = "xhigh";
+          instructions = defaultInstructions.lead_reviewed_lead;
+        };
+        reviewer = reviewer // {
+          model = "gpt-6-astra";
+        };
+      };
+    };
+
     solo = {
       description = "Lead investigates, designs and implements without automatic specialists";
       mode = "solo";

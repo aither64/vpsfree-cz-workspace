@@ -142,9 +142,10 @@ guessing. When plans change because code or tests reveal new facts, update the
 tracking notes.
 
 The selected design owner keeps the technical design and verification brief in
-`work/<slug>/design.md` before substantive implementation: the Solo or
-Lead-designed lead, or the Full-team architect. Implementers accept either
-architect-owned or lead-owned briefs. Solo leads also edit application code.
+`work/<slug>/design.md` before substantive implementation. The
+[site mode table](../agent-teams.md) defines design ownership and responsibility
+for application edits for each preset. Implementers accept either
+architect-owned or lead-owned briefs.
 Adding, replacing or reconfiguring members requires explicit user direction.
 Routine planning, investigation, findings, session tracking and evidence alone
 never trigger automatic review. Explicitly requested earlier review is advisory

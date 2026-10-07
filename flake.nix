@@ -85,8 +85,8 @@
           test -f "$catalog"
           ${pkgs.jq}/bin/jq -e '
             .schema_version == 4 and
-            .default_team == "delegated" and
-            .default_development_team == "delegated" and
+            .default_team == "lead_reviewed" and
+            .default_development_team == "lead_reviewed" and
             .capacity.required_native_child_threads == 4 and
             .work_policy.design.default == "xhigh" and
             .work_policy.design.simple == "high" and
@@ -151,7 +151,24 @@
             (.teams.lead_designed.roles.team_lead.instructions | contains("Own substantive technical design and write work/<slug>/design.md")) and
             .teams.lead_designed.roles.implementer.model == "gpt-6.1-sol" and
             .teams.lead_designed.roles.reviewer.model == "gpt-6.1-sol" and
-            ([.teams[].roles.team_lead.instructions] | unique | length) == 3 and
+            .teams.lead_reviewed.mode == "development" and
+            .teams.lead_reviewed.design_owner == "team_lead" and
+            .teams.lead_reviewed.max_open_agents == 1 and
+            (.teams.lead_reviewed.roles | keys) == ["reviewer", "team_lead"] and
+            .teams.lead_reviewed.roles.team_lead.model == "gpt-6.1-sol" and
+            .teams.lead_reviewed.roles.team_lead.effort == "xhigh" and
+            .teams.lead_reviewed.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
+            .teams.lead_reviewed.roles.team_lead.access == "workspace_write" and
+            (.teams.lead_reviewed.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself")) and
+            (.teams.lead_reviewed.roles.team_lead.instructions | contains("ready retained review-purpose member")) and
+            .teams.lead_reviewed.roles.reviewer.model == "gpt-6-astra" and
+            .teams.lead_reviewed.roles.reviewer.effort == "xhigh" and
+            .teams.lead_reviewed.roles.reviewer.allowed_efforts == ["xhigh"] and
+            .teams.lead_reviewed.roles.reviewer.access == "read_only" and
+            .teams.lead_reviewed.roles.reviewer.purpose == "review" and
+            .teams.lead_reviewed.roles.reviewer.fresh_context == true and
+            .teams.lead_reviewed.roles.reviewer.lifetime == "session" and
+            ([.teams[].roles.team_lead.instructions] | unique | length) == 4 and
             ([.teams[].roles.team_lead.instructions] | all(
               contains("all intended changes are committed, and quick checks pass, before long integration tests") and
               contains("Completed substantive documentation and configuration deliverables are included") and

@@ -95,8 +95,9 @@ the parent's responsibility for choosing scope or accepting results.
   and investigate under the verification procedure's documented exceptions.
 - For a direct team, use the session's retained roster settings for members
   and the installed catalog for new presets. New architects use GPT-6 Astra
-  with xhigh effort. New leads, implementers and reviewers use
-  `gpt-6.1-sol`; verification watchers use GPT-6 Luna/low.
+  with xhigh effort. Leads and implementers use `gpt-6.1-sol`. The default
+  `lead_reviewed` uses Sol/xhigh and Astra/xhigh; other reviewers use their
+  catalog settings. Verification watchers use GPT-6 Luna/low.
   Existing members retain their saved model, effort, access, and instructions.
   Substantive design uses xhigh. High is allowed for a bounded simple design or
   implementation unit only with a recorded reason. Independent review uses an
@@ -111,8 +112,9 @@ the parent's responsibility for choosing scope or accepting results.
   through `~/.codex/skills/dev-session-monitor/SKILL.md`. The watcher is not a
   team member; retain the skill's ownership, cancellation and visible-fallback
   rules. Respect instructions not to await CI.
-- Follow the selected mode and retained lead instructions. Solo leads investigate,
-  design and edit application code without automatic specialists. Lead-designed
+- Follow the selected mode and retained lead instructions. Solo and Lead and
+  reviewer leads investigate, design and edit application code without automatic
+  specialists; the latter use a retained independent reviewer. Lead-designed
   leads own design and delegate application edits; Full-team leads delegate
   nontrivial design and application edits. Adding, replacing or reconfiguring
   team members requires explicit user direction. Check the live same-session
@@ -125,12 +127,12 @@ the parent's responsibility for choosing scope or accepting results.
   Never invent members or address another session's roster.
   [Site team roles](docs/agent-teams.md) owns the mode table.
 - The selected design owner records the design and verification brief in
-  `work/<slug>/design.md` before substantive implementation: the Solo or
-  Lead-designed lead, or the Full-team architect. It covers scope, interfaces,
+  `work/<slug>/design.md` before substantive implementation, as specified by
+  [Site team roles](docs/agent-teams.md). It covers scope, interfaces,
   invariants, compatibility, deployment and recovery, acceptance criteria, and
   quick and longer checks. Architects may edit assigned design documents and
   prototypes; implementers edit application code from architect-owned or
-  lead-owned briefs. Solo leads edit their own application code. Route material
+  lead-owned briefs. Route material
   design deviations through the lead. A small bounded edit may use a direct
   lead brief without a separate design document. Preserve retained instructions
   and respect the current collaboration mode.

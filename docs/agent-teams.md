@@ -28,26 +28,31 @@ the currently installed catalog.
 
 The site catalog gives leads, architects (`designer` in the catalog) and
 implementers workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`)
-for leads, implementers and independent reviewers. Architects use GPT-6
-Astra/xhigh. Reviewers stay read-only, and a separate GPT-6 Luna/low utility
-watches long checks.
+for leads and implementers. The default Lead and reviewer team uses a Sol/xhigh
+lead and an Astra/xhigh reviewer; the other presets use Sol reviewers. Architects
+use GPT-6 Astra/xhigh. Reviewers stay read-only, and a separate GPT-6 Luna/low
+utility watches long checks.
 
 | Preset | Persistent members | Design owner | Application edits | Specialist slots |
 | --- | --- | --- | --- | --- |
 | `solo` | lead (1 total) | lead | lead | 0 |
+| `lead_reviewed` (Lead and reviewer, default) | lead, reviewer (2 total) | lead | lead | 1 |
 | `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
-| `delegated` (Full team, default) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
+| `delegated` (Full team) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
 
 Solo leads investigate, design and implement without automatic specialists.
-Lead-designed leads write the design and verification brief before substantive
-implementation. Full-team architects write that brief. The brief lives in
+In Lead and reviewer sessions, the lead does the same and uses the retained
+reviewer for independent final review. Lead-designed leads write the design
+and verification brief before substantive implementation. Full-team architects
+write that brief. The brief lives in
 `work/<slug>/design.md`; implementers accept either owner's brief. A bounded
 small edit may use a direct lead brief. Leads report a compact progress
 checklist at the end of every turn and integrate member reports.
 
 Solo and Full-team leads default to high effort and allow high/xhigh;
-Lead-designed leads default to xhigh and allow high/xhigh. Substantive design
-and implementation use xhigh, with high allowed for a bounded simple unit when
+the lead in Lead-designed and Lead and reviewer sessions defaults to xhigh
+and allows high/xhigh. Substantive design and implementation use xhigh, with high
+allowed for a bounded simple unit when
 the reason is recorded. Independent reviewers retain their saved effort.
 
 Run independent final review after the intended substantive deliverable is
