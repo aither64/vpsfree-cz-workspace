@@ -1,10 +1,15 @@
 # KB impact investigation
 
-Current handoff: K 291566b2c0bd43389802f607852fd9a4f8241752 targets V
-be136b6c00f03b85b7a12cc57550b4a1394a94a7. Static checks passed; the two
-networking/ip-address-list bitmaps remain pending the supported capture runtime
-prerequisite described below. This is investigation evidence, not publication or
-deployment proof. Earlier pin checkpoints below retain their original revisions.
+Current handoff: published K `a50f8c1a11ea642edf823f04521f9eaa97132fd2`
+pins published V `5d5527a67315c18b595345aa6996d7724c1ed071` in all five
+revision records. The generated lock and source records were inspected; fresh
+pinned-shell static checks passed against the actual final source. Inventory
+remains 60 concepts/120 variants, with 66 Czech and 61 English references. The
+two networking/ip-address-list bitmaps still need a supported capture runtime.
+The PHP client correction restores the intended column/control behavior and
+changes no capture selection, page binding or fingerprint. No media or page
+publication/deployment is claimed. Earlier checkpoints below retain their
+original revisions.
 
 Canonical contract baseline after fetch: 873758fd6aec0c03f50a94600e0ceab97946f255.
 Read repository AGENTS.md and docs/webui-change-workflow.md completely.

@@ -68,3 +68,40 @@ without bundling it into the network feature or changing the currently tested
 W/C heads. Verify production audit and owning BFF/package checks. It is a
 separate prerequisite for green CI/integration; no default merge or deployment
 is authorized. All network runtime work continues at its recorded heads.
+
+## User-requested workflow correction (2026-10-06)
+
+Update workspace AGENTS.md and the Git procedure to make development branches
+the ordinary deliverable, without creating or managing pull requests unless
+the user explicitly asks or that repository's own instructions require them.
+The vpsadmin-webui PR requirement remains local to vpsadmin-webui. Preserve
+fast-forward-only default integration, explicit integration authorization,
+independent source review, hooks and verification. Do not use GitHub merge
+commits to integrate workspace projects. No change to existing application
+branches, PR state, pins, package selection or deployments is part of this edit.
+
+This bounded instructions-only change uses the registered workspace feature
+worktree at the current shared master base 9b37d3900045f965ebc6581cec6c114d0064e696.
+Implementer0 owns the edit; lead owns final wording and scope; reviewer0 performs
+the independent final general-lane review after commit and existing quick
+instruction checks. No migration or long build is needed.
+
+## Accepted user-list visibility follow-up
+
+User requested implementation after selecting “Keep owned IPs visible”.
+Network Index for non-admins lists enabled networks only. IP Index applies
+existing access permissions, then keeps enabled-network addresses, the caller's
+owned addresses and currently assigned addresses they may access. Disabled free
+inventory is hidden before count/pagination. Explicit filters cannot widen this
+visibility. Admin inventory remains unchanged. Show and association permissions
+remain independent of enumeration; assigned hosts/export endpoints and history
+retain current access. No model-wide default scope, migration, new field, numeric
+classification or allocation/counter change. Both UIs must retain owned/assigned
+disabled addresses and included network details without client-side removal.
+
+Architect0 reconciles the owning brief; implementer0 owns source/tests/docs and
+prepared pin helpers. Lead owns final prose, review, checks and publication.
+Refresh the vpsadmin configuration role and KB V revision to final source; W pin
+changes only if W actually changes. Keep application/configuration/KB/dependency
+changes in existing feature branches; do not create/manage PRs outside W, merge,
+deploy, retire production networks or mutate lifecycle/package state.

@@ -6,39 +6,86 @@ lifecycle: active
 
 ## Status
 
-Phase: implemented and independently reviewed; verification handoff (2026-10-06).
-Backend, both UIs and configuration/KB contract pins are committed and published.
-All four independent review findings were corrected and verified. Final heads:
-V be136b6c00f03b85b7a12cc57550b4a1394a94a7,
-W e4c49bcdc91b33b7f644a2f125231cb413cf4bf4,
-C dd10d88073da3aed6c4512e938abe4374422aab1,
-K 291566b2c0bd43389802f607852fd9a4f8241752. All five worktrees, including the
-separate dependency maintenance branch, are clean.
+Phase: local implementation and verification complete; external release prerequisites remain.
 
-Passed evidence includes the 26-job API CI matrix, core/full SQL admission and
-Create tests, React desktop/mobile synthetic browser tests and production build,
-route/host-address and export-lifecycle VM scenarios, and all 12 affected-host
-configuration builds. [Final verification](fixture-final-verification.md) records
-exact revisions, receipts and limits. Migration, restore and legacy browser tests
-still need matching exact-selector CI evidence or sufficient real VM capacity;
-existing integration CI 37485699588 remains in progress at the latest snapshot.
-Two member IP-list KB images still need a supported owned capture environment.
+Current committed heads are V `5d5527a67315c18b595345aa6996d7724c1ed071`,
+W `e4c49bcdc91b33b7f644a2f125231cb413cf4bf4`,
+C `072cee195d826baf78351bfc283786eb63d6dfae` and
+K `a50f8c1a11ea642edf823f04521f9eaa97132fd2`. All worktrees are clean.
+V, C and K are published on their exact feature refs. The publication batch
+and bounded superseded-run cancellation exited 0; neither cancellation
+inventory selected a run. W is unchanged. The user requires all four
+repositories to remain on feature branches; no default integration, deployment
+or production network retirement is authorized.
 
-The network WebUI CI audit fails on proxy-addr 2.0.7 already present in main.
-The separate maintenance branch a7361bb2912485b61a5a0b1472d51158ac08ec96 is
-ready, awaiting merge approval, in [WebUI PR #20](https://github.com/vpsfreecz/vpsadmin-webui/pull/20).
-Its audits, tests, clean package/provenance checks and CI passed; its smoke
-workflow remains in progress. Network feature/configuration heads do not bundle
-that patch. Proper integration of this prerequisite remains necessary before
-network WebUI CI can clear its dependency audit.
+The non-admin Index refinement is implemented and verified. Network lists hide
+disabled pools; IP lists retain permitted owned or assigned rows while hiding
+disabled free inventory. Show and association permission scopes are unchanged.
+The prior final review's Important stale network-list test was corrected and
+verified in core and full modes (29 examples each), preserving disabled Show
+and forbidden member writes. See [prior dispositions](visibility-review-findings.md)
+and the [original report](visibility-review-result.md).
 
-Draft implementation PRs: [backend/legacy #45](https://github.com/vpsfreecz/vpsadmin/pull/45),
-[React UI #19](https://github.com/vpsfreecz/vpsadmin-webui/pull/19),
-[configuration #3](https://github.com/vpsfreecz/vpsfree-cz-configuration/pull/3).
-The network branches retain the verification gaps above. No production deployment,
-network retirement or default-branch integration is authorized. The initiative
-remains active; no verification process launched here remains running.
+Runtime verification at V `cc3337d0` passed migration-with-data and remote
+restore-with-descendants with the exact payload, checksum, assigned-IP identity
+and disabled-state assertions. The legacy admin-control scenario failed before
+its first toggle because its confirmation form was absent. The first-failure
+wrapper did not start configuration builds. HaveAPI PHP client 0.29.6 exposes
+fields through `__get` and `attributes()` without `__isset`; the introduced
+presence checks incorrectly treated real values as missing.
 
+The four-path PHP correction now uses the typed ResourceInstance attributes
+contract, preserving true, false and absent values without a shape fallback.
+Real-client rendering regressions cover network controls, IP inventory/detail,
+detached assignment hints, stale forms and existing assigned links. Quick4
+passed formatting, syntax, full PHP tests and locale health: 104 tests and 515
+assertions, including seven real-client tests and 116 assertions, with no
+failures, errors or skips. One deprecation comes from the unchanged baseline
+Pagination constructor; no suppression or unrelated fix was added.
+
+Normal-hook consolidation folded the correction into the owning legacy commit.
+The original API commit and separate Index patch remain unchanged; the final
+series has three V, one W, two canonical C and one K commits. Root inspected the
+exact four-path correction, generated lock graphs and five-record KB pin.
+The fresh pinned KB static check passed against the actual final V source;
+fingerprints and PNGs remain unchanged. Reviewer0 completed all four applicable
+lanes with no new findings. Complete
+history/migration conclusions are recorded in the
+[final review](legacy-network-client-review-result.md). See the
+[final inventory](legacy-network-client-final-inventory.json),
+[review packet](legacy-network-client-review-packet.md) and
+[correction evidence](legacy-network-client-verification.md).
+
+Fresh Luna/low utility `legacy_client_final_runtime` completed the exact
+`webui#admin-cluster` selector at final V and all 12 consumers at final C.
+Aggregate, selector and all host exits are 0. Original browser assertions were
+retained: example 448.5 seconds, successful script 804.32 seconds, one successful
+test with runner duration 1036.31 seconds. Total batch took about 32 minutes;
+no unexpected local kernel build or owned running process remains. Root
+verified actual receipts and final clean heads. See
+[runtime/build proof](legacy-network-client-runtime-result.json).
+The unchanged vpsadminos pin is 8e44a5124439b1f3048ffc56b1717614a5360358;
+K a50f8c1a is the KB contract revision, not a kernel revision.
+
+Migration-with-data and remote descendant restore successes remain attributed
+to cc3337d0; their backend and scenario bytes are unchanged, and neither was
+rerun. Their payload, checksum, assigned-IP identity and disabled-state
+assertions remain intact. Historical SQL admission, React browser, route/export
+and earlier configuration checks retain their original revision attribution.
+
+Remaining limits: two bilingual member-IP-list PNGs require a supported owned
+capture runtime; no lifecycle bypass is authorized. The accepted W Advisory
+records a shared OPTIONS lookup that can outlast the suggestion timeout. W also
+retains its original baseline and proxy-addr 2.0.7; independently advanced main
+contains the separate patch, so reconciliation is needed before current-release
+or deployment readiness. No W rebase is included in this backend follow-up.
+Production revision/writer inventory, migration consumption, actual counter
+attribution and the network retirement list remain unverified.
+
+Workspace PR/branch guidance was fast-forwarded as explicitly directed. Ordinary
+V/C/K work uses feature branches; only W's own PR workflow applies there.
+Previously created V/C PRs remain untouched. No new PR management is planned
+outside W. The initiative remains active and unmerged.
 Session identity verified against `dev-session current` from the bound directory
 and trusted thread binding; both shell markers are absent. Retained Full-team
 roster is unchanged: architect0 owns design, implementer0 owns source/configuration
@@ -46,6 +93,16 @@ edits, and reviewer0 completed the independent committed-deliverable review.
 
 ## Phase checklist
 
+- [x] Accept Index-only visibility design; keep owned and assigned IPs visible.
+- [x] Implement and check the non-admin list refinement.
+- [x] Commit and independently review the refinement; resolve the required test finding.
+- [x] Publish the final refreshed backend pins.
+- [x] Verify migration and remote descendant restore at V cc3337d0.
+- [x] Correct and check the legacy real-client field-presence handling.
+- [x] Finish independent review of the committed PHP correction and refreshed pins.
+- [x] Rerun the legacy admin-control selector at final V.
+- [x] Build all 12 current C consumers.
+- [ ] Refresh the two member-IP-list KB captures (supported runtime required).
 - [x] Verify session identity and retained roster.
 - [x] Establish proposal-only scope and affected repositories.
 - [x] Trace counters and allocation semantics; produce architect proposal.
@@ -55,11 +112,108 @@ edits, and reviewer0 completed the independent committed-deliverable review.
 - [x] Quick checks, hooks and committed whole-branch source inventory.
 - [x] Independent final source review of committed original branches.
 - [x] Correct and verify four accepted review findings; reconcile final heads/pins.
-- [x] Affected-host builds (all 12); route and export runtime verification.
-- [ ] Remaining migration/restore/legacy evidence and KB images (external prerequisites).
+- [x] Earlier-head affected-host builds (all 12); route and export runtime verification.
+- [x] Finish current-head legacy/configuration evidence.
+- [ ] Finish the two KB images after the supported runtime prerequisite.
 - [x] Separate BFF dependency maintenance commit, package verification and PR.
 - [x] Handoff committed branches with passed evidence and explicit remaining limits.
 - [ ] Default integration and production activation (not authorized).
+
+## Visibility follow-up implementation history
+
+Architect0 recorded the accepted Index-only design in
+[design.md](design.md#accepted-non-admin-list-visibility-refinement-2026-10-06).
+Root inspected the two resource query deltas, five affected API spec files and
+the owning `docs/ip-locking.md` paragraph. The draft preserves shared Show and
+association scopes, all allocator/counter logic and the existing migration.
+Both UI consumer inspections found no required source edit; the React feature
+head and pin remain unchanged. Implementer0 owns the draft and focused check
+packet. The fresh Luna/low watchers completed the first three check batches
+and left no verification process running. No follow-up integration,
+publication or pin operation has run yet.
+
+Visibility quick1 stopped at one RuboCop `RSpec/ContainExactly` offense in
+`ip_address_spec.rb:265`; all Ruby syntax checks passed, but neither API mode
+ran. Root assigned the matcher-only correction and a new quick2 packet. The
+watcher exited 1 after 26.2 seconds and left no process running; quick1 logs
+remain intact.
+
+Quick2 passed Ruby syntax and scoped lint. Its core API process ran zero examples:
+the tracking-based `TMPDIR` made the automatic MariaDB Unix socket path exceed
+107 bytes. Root traced `Dir.mktmpdir` in the existing test helper and assigned a
+harness-only change to use standard `/tmp`; quick3 selected the uncompleted
+core/full checks. Product and fixture bytes stayed unchanged. The reusable
+[short socket-path note](../../notes/vpsadmin/2026-10-06-test-db-socket-path-length.md)
+records the cause. Quick2 exited 1 after about 50 seconds; no process remains.
+
+Quick3 core completed 226 examples at seed 36954: 223 passed and three new
+assertions failed; full mode did not run. The failed Show/history assertions
+assumed expanded associations, while the existing actions leave those references
+unresolved. The count assertion requested metadata omitted by the existing
+non-admin input whitelist. Root traced the installed HaveAPI code and assigned
+bounded test corrections, retaining direct Show/association permissions and
+pagination coverage, with a focused check of the restricted count query. Product,
+docs, schema and migrations remain unchanged. Next checks will cover the three
+corrected core cases and the still-unexecuted full five-file mode. Old receipts
+and frozen operation controls are retained; no commit/pin operation is eligible
+until the corrected evidence passes.
+
+Root inspected the three corrected examples and the real authorized HaveAPI
+action count check. Fresh Luna/low watcher `visibility_quick4` owns scoped
+syntax/lint, the three repaired core cases and the previously unrun full mode.
+Source and helpers remain frozen; no operation or pin step has run.
+Quick4 corrected-spec syntax/lint and all three selected core cases passed.
+The full five-file API run passed: 226 examples, zero failures or pending
+examples, seed 9346. RSpec took 27m21s. The three corrected core examples passed
+at seed 36954; the earlier 223 unaffected core passes remain recorded in quick3.
+All quick4 aggregate/step exits are zero. Root verified native JSON and the
+frozen operation manifest. Fresh Luna/low watcher `visibility_commit_pins` now
+owns the reviewed commit, publication, superseded-CI cancellation and C/K pin
+batch. K stopped before commit; root inspected its five-record diff and committed
+1f8817e5 with normal Git and verified absence of active/declared hooks. Fresh
+KB shell checks used /nix/store/wjs4ijnhgr4z95h5viyn5xl9nn24yadj-source, the
+current exact V pin, and passed the static inventory and all contract tests.
+
+The visibility commit is d7d7fb66865fd1a5548a45a559f5c2be436bc470, appended
+after the original two V commits with mandatory hooks passing. Publication
+failed outside the repository Nix shell: ambient Overcommit 0.71.0 rejected
+the signature established by bundled 0.73.0. Root verified unchanged hook/config
+bytes and corrected only the publication shell routing in a separately frozen
+retry wrapper. The repository-shell retry published d7d7fb668 and completed superseded-run
+cancellation. Its C attempt stopped before mutation after independently advanced
+React main failed an unnecessary ancestry check. Root retained the agreed exact
+W head/pin, inspected incoming upstream changes and narrowed that guard to the
+unchanged original W feature base. Fresh watcher `visibility_retained_w_pins`
+completed another guard-only stop when C master advanced to 6f6aff90.
+Root inspected the upstream release/runtime pin changes and preserved them by
+regenerating the two canonical pin commits on that new base. Fresh watcher
+`visibility_current_base2_pins` completed both operations. The preceding attempt
+stopped at a wrapper manifest-path typo before entering any repository shell;
+root corrected that path in a new outer wrapper, preserving the failed receipts.
+No W rebase, source change or signature bypass is used. See
+[configuration base refresh](visibility-config-base-refresh.md).
+The original failure receipts remain in place. See
+[hook environment evidence](visibility-push-hook-environment.md).
+
+Prepared final operation controls supersede the unused old gates with quick4
+source/evidence. Root also corrected the KB check environment: after changing
+the pin, enter a fresh K Nix shell and verify its actual source path against the
+current devShell input. The previous outer shell would retain the old exported
+source path. The later batch passed those fresh-source contract checks, and
+root inspected and committed the five-record K candidate. Exact source and
+publication receipts are linked in the final review packet.
+
+A read-only capacity snapshot showed about 47 GiB free shared memory and 68 GiB
+available RAM. This can satisfy the unchanged 24 GiB three-VM scenarios with
+default 8 GiB reserve if still available at their fresh start. Root prepared
+unique-state/log commands with a fresh capacity refusal; no VM has launched.
+The KB owned capture-runtime prerequisite remains unchanged.
+
+The accepted list refinement is one focused V commit after the original API and
+legacy commits. Repeated C/K pin updates were consolidated into canonical streams
+before final review; the assertion-only remediation is folded into the visibility
+commit and its mechanical downstream pins. The original evidence
+and exact starting heads are retained in [visibility-baseline.json](visibility-baseline.json).
 
 ## Repositories and evidence
 
@@ -119,14 +273,14 @@ and a read-only per-network diagnostic query (prepared, not executed).
 - Upgrade every allocator/writer before disabling pools. Older writer rollback
   ignores policy and is unsafe while disabled networks exist.
 
-Next action: inspect completed CI 37485699588 for selection and successful results
-of the three exact remaining scenarios, or supply a supported runner with adequate
-capacity. No supported lower-memory route exists at the unchanged V head: these
-scenarios require 24 GiB effective memory/shared memory, normally at least 32 GiB
-detected free with the runner's default 8 GiB reserves. Regenerate the two KB
-images only after a supported capture runtime is supplied. Merge approval for the
-separate maintenance PR is distinct from network verification and production
-rollout. Production attribution and an explicit retirement list remain operator
+Next action: interpret the fresh watcher's exact migration, restore, legacy
+admin-cluster and 12 configuration consumer checks. A fresh capacity check guards
+each VM launch; unchanged scenarios require 24 GiB effective memory/shared memory,
+normally at least 32 GiB detected available with the default 8 GiB reserve.
+The fresh runtime watcher owns the canonical runner and no other cluster.
+Regenerate the two KB images only after a supported owned capture runtime is
+supplied. Keep V/W/C/K feature branches as the user directed. Production
+attribution, writer inventory and an explicit retirement list remain operator
 inputs for a separately authorized rollout.
 
 ## Documentation and cleanup
@@ -589,3 +743,65 @@ compilation was found in inspected logs. Full logs were retained for the final
 two hosts; confctl removed earlier full logs before copying, but all per-host
 console summaries and exit receipts remain. Built generations were not deployed.
 All five worktrees were rechecked clean after verification.
+
+User requested a workspace instruction correction: development branches are
+sufficient outside repositories that explicitly require PRs. vpsadmin-webui's
+PR workflow must remain local; fast-forward-only integration is retained.
+Registered workspace worktree/branch 2026-10-05-network-ipv4-left-counter from
+shared master 9b37d3900045f965ebc6581cec6c114d0064e696. Scope is AGENTS.md and
+docs/agent-instructions/git.md only, with existing instruction tests; no PR
+creation/closure, application/pin change or default integration authorized.
+Implementer0 owns the bounded edit; final independent general review follows.
+
+Workspace workflow correction is committed at
+4f22fc750aab877e6fae64ceca869a49173412a1 on its dedicated feature branch.
+Only AGENTS.md and docs/agent-instructions/git.md changed; core is 16239 bytes.
+Existing Nix-pinned instruction check passed 8 runs/144 assertions. Replayed
+onto concurrent shared-master tracking-only advance 8dfb2bf8 with unchanged
+patch/document blobs, preserving other sessions. Complete diff/history and
+comparison are saved in workspace-pr-policy.* and the portal repository tab.
+Retained reviewer0 gpt-6.1-sol/xhigh/read_only is performing final general-lane
+review. Ordinary project PR creation/management is no longer a default workflow;
+vpsadmin-webui's repository-local requirement remains applicable there. No
+existing PRs were edited or closed and no application or configuration pin changed.
+Workspace default integration remains subject to explicit user direction.
+
+Workspace instructions final independent general-lane review completed with no
+findings at 4f22fc750aab877e6fae64ceca869a49173412a1; retained reviewer0
+gpt-6.1-sol/xhigh/read_only. One logical commit, no obsolete history or migrations;
+8 tests/144 assertions passed at identical final document/test bytes. No long
+verification needed. Feature branch is published, clean and ready, awaiting
+explicit workspace/master integration direction under the existing Git approval
+gate. No PR was created. Report: workspace-pr-policy-review-result.md.
+
+Integration approval: user explicitly directed “workspace can be fast-forwaded,
+keep the rest in feature branches.” Scope is the reviewed workspace instruction
+patch into workspace/master only. Other registered application/configuration/KB
+and dependency branches remain unmerged. Approval preserves the no-merge-commit
+policy and does not authorize deployment, production retirement or cleanup.
+
+Workspace-only integration completed at f8b7271d8791ebcc1e11ef7d950667cda59d0884.
+The reviewed instruction patch was replayed onto concurrently advanced shared
+master f0a203e2; range-diff shows equality and both instruction files plus the
+instruction test remain byte-identical to reviewed/checked source. The intervening
+master changes were unrelated coordination/archive records, preserved intact.
+Local `git merge --ff-only` completed without a merge commit, and remote master
+and retained workspace feature ref both prove the exact f8b7271d head. No PR was
+created. The shared dirty working diff and empty index were preserved. All five
+other registered application/configuration/KB/dependency feature heads remained
+unchanged, and user direction explicitly keeps them in feature branches.
+
+The explicit comparison-save call refused a different base for an already saved
+final-head snapshot. The shell did not initially stop after that refusal and the
+authorized local fast-forward ran. Before publication, root verified the existing
+normal saved comparison: c4229f74336cf26014004468956f09d6833b0537 to final f8b7271d.
+The exact two-file instruction delta from f0a203e2 and unchanged-patch range-diff
+are retained separately. No saved comparison was overwritten or forged; publication
+used a fail-fast guarded command. Session stays active; no deployment, production
+retirement, branch deletion, package activation or lifecycle cleanup occurred.
+
+Visibility follow-up authorized by “Implement the plan” after the explicit owned
+IP preference. Session identity and retained roster verified. Architect0 owns
+brief reconciliation; implementer0 owns API/query tests and documentation. Source
+starts at V be136b6c; W e4c49bcd, C dd10d880 and K 291566b2 remain initial pins.
+List restrictions must not touch shared Show/association permission scopes.

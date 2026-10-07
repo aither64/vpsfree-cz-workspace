@@ -1,0 +1,48 @@
+commit fc4f01a025e373ba5c85a7e78ea8b61ac1e1dc1f
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:09:44 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 16:51:37 2026 +0200
+
+    api: add network availability admission controls
+    
+    Allow administrators to disable new use of a network without interrupting
+    existing assigned addresses. Count available public IPv4 allocation rows
+    only in enabled pools and expose optional availability metadata and filters.
+    
+    Capture each operation's source and destination networks before reserving IP
+    rows, retaining that set through included allocations and retries. Recheck
+    current address identity and eligibility after reservation while preserving
+    trusted assigned-address continuity during migration, swap and restore.
+    
+    The additive enabled column defaults to true. Update all API writers before
+    disabling a network; older writers do not enforce this policy.
+
+commit 70314e816099855b31b56ee42d3b887e2195566a
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:10:41 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 7 02:17:34 2026 +0200
+
+    webui: expose network availability and enabled address selectors
+    
+    Show enabled state in network and owned-address inventory. Add a confirmed
+    administrator POST form and exclude disabled pools from available selectors
+    when the API advertises support. Keep old API requests compatible.
+    
+    Detached owned addresses in disabled networks remain visible with assignment
+    controls unavailable, including stale assignment forms. Preserve controls for
+    existing service and cover confirmation, CSRF and selector behavior.
+
+commit 5d5527a67315c18b595345aa6996d7724c1ed071
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 00:07:08 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 7 02:17:35 2026 +0200
+
+    api: restrict non-admin network and IP lists
+    
+    Disabled inventory is unavailable for new use and should be omitted from
+    member lists. Retain owned and assigned addresses within existing
+    permissions, and preserve direct Show and association access. Apply the
+    restriction before counts and pagination; admin inventory stays unchanged.

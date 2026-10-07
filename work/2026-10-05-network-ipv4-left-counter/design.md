@@ -470,3 +470,71 @@ operator-selected obsolete networks; runtime coverage of each continuity path
 and third-party/site allocation writers. Implementation is authorized through
 the lead; production inspection/mutation and rollout are not authorized by this
 architect assignment.
+
+## Accepted non-admin list visibility refinement (2026-10-06)
+
+The user selected “Keep owned IPs visible” and authorized implementation. This
+supersedes the earlier unrestricted non-admin inventory-list wording only.
+Evidence baseline: V `be136b6c00f03b85b7a12cc57550b4a1394a94a7`, W
+`e4c49bcdc91b33b7f644a2f125231cb413cf4bf4`, C
+`dd10d88073da3aed6c4512e938abe4374422aab1`, K
+`291566b2c0bd43389802f607852fd9a4f8241752`.
+
+The minimum implementation is two resource-level query restrictions in V:
+
+- `api/lib/vpsadmin/api/resources/network.rb`, `Index#query`: non-admins
+  always intersect the query with `enabled=true`. An explicit `enabled=false`
+  filter consequently returns no rows; it cannot widen access. Administrators
+  retain existing inventory and exact filter behavior.
+- `api/lib/vpsadmin/api/resources/ip_address.rb`, `Index#query`: retain all
+  existing filters and `user_visible_scope`, then intersect non-admin results
+  with `(network enabled OR owned by caller OR currently assigned)`. The
+  assignment arm is safe only inside that existing permission intersection:
+  it must not independently admit another user's assigned IP. Keep detached
+  owned IPs and nonowned IPs assigned to an accessible VPS on disabled networks;
+  remove disabled unowned/unassigned inventory. Explicit `network_enabled`,
+  network, address, interface and VPS filters only narrow that result.
+
+Apply both predicates in SQL before `count`, ordering and pagination. Do not
+filter serialized pages, add joins that duplicate rows, introduce a model
+`default_scope`, or change the shared `user_visible_scope`. `IpAddress.Show`
+uses that scope, while `user_visible_as_association_scope` additionally permits
+the caller's export endpoints. Preserve both paths and their existing field and
+ownership restrictions: disabled known-ID records previously readable stay
+readable, previously forbidden records stay forbidden, and host-IP, export and
+history associations keep their current access. Association-only access to an
+unowned export endpoint does not become direct Index access.
+
+Consumer evidence: legacy `webui/forms/networking.forms.php#ip_address_list`
+requests included network details without an enabled-only IP-list filter. W
+`src/pages/app/networking/UserNetworkPage.tsx` combines active assignment history
+with owned detached IPs and retains disabled badges. Its
+`fetchAssignableIpAddresses.ts` and legacy `webui/lib/functions.lib.php` apply
+enabled-only filtering to new-assignment choices; keep those restrictions.
+Included details must continue to resolve through existing Show permissions,
+even though the non-admin network filter menu now enumerates enabled pools.
+No concrete frontend edit is required by these inspected consumers; do not add
+blanket enabled filtering in either UI. Root owns final product/documentation prose.
+
+Extend existing Network/IP API specs with member and support fixtures covering
+enabled/free, disabled/free, disabled owned/detached, assigned nonowned, and
+another user's owned/assigned addresses. Assert explicit false/network/address
+filters cannot reveal hidden inventory; visible counts and multi-page cursors
+exclude it while retaining eligible owned/assigned rows. Cover unchanged admin
+inventory, disabled Network/IP Show, forbidden Show, included disabled network
+details, assigned host IPs, own/foreign export associations and assignment
+history. Preserve existing role, purpose, userpick and location permissions.
+Update V `docs/ip-locking.md` inventory semantics. Run focused existing API specs
+and relevant hooks, commit, and obtain independent final review before any
+longer verification. This design clarification runs no checks.
+
+No field, migration, allocator, locking, counter or role-classification changes
+are needed. Existing disabled admission and continuity rules remain binding;
+list visibility never grants assignment. After publishing the final V feature
+head, regenerate only C's `vpsadmin` channel/`vpsadmin` role and K's exact V pins;
+retain the W channel pin unless a concrete W change is required. The schema and
+API shape remain compatible; older APIs may enumerate more inventory, and
+rolling readers may temporarily differ. Reverting this refinement restores that
+enumeration without changing allocations or admission. Keep all changes on
+feature branches; no PR management outside W, integration, deployment, capture,
+package transition or lifecycle action is authorized by this refinement.
