@@ -2,14 +2,16 @@
 
 ## Goal
 
-Prepare a repository-wide implementation plan for making confctl support only
+Implement the accepted repository-wide plan for making confctl support only
 flake-based cluster configurations. Remove software-pin management, evaluation,
 build and status paths; delete the software-pin example and rename
-`example-flake/` to `example/` in the eventual implementation.
+`example-flake/` to `example/`.
 
-This request authorizes investigation and planning. Application implementation,
-publication, deployment and integration are later phases. The current deliverable
-is this plan and the architect's [design and verification brief](design.md).
+The initial request authorized investigation and planning. The user's subsequent
+"proceed" authorizes implementation of this plan, local verification, independent
+review and publication of the feature branch. Deployment, release and default
+branch integration remain later, separately directed phases. The architect's
+[design and verification brief](design.md) governs implementation.
 
 ## Affected repositories
 
@@ -21,8 +23,8 @@ is this plan and the architect's [design and verification brief](design.md).
 
 Full-team mode: retained `architect0` (Astra/xhigh, workspace-write) owns the
 repository walkthrough and technical design; the lead owns reconciliation and
-tracking. Retained `implementer0` will own application changes when implementation
-is requested. The reviewer receives no assignment for routine planning.
+tracking. Retained `implementer0` owns the authorized application changes.
+Reviewer0 receives independent final review after commits and quick checks.
 
 Inventory Ruby CLI/library paths, Nix evaluation and exports, persisted build
 generations, shared deployment helpers, examples, documentation generation,
@@ -52,7 +54,7 @@ implementation sequence is:
 
 The [design brief](design.md) supplies exact files/functions, acceptance criteria
 and commands. Coupled changes may share commits to avoid broken intermediate
-states. No application implementation is part of this planning turn.
+states. The initial planning checkpoint preceded application implementation.
 
 ## Decisions
 
