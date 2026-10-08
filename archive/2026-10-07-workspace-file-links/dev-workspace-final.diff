@@ -1,0 +1,666 @@
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 7f75432..50c9a89 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -51,6 +51,13 @@ and displays its revision. A link is a live reference, so later edits can move
+ the referenced line. The viewer reports a missing line instead of selecting a
+ different one.
+ 
++Shared workspace links show current contents of Git-tracked files, including
++uncommitted edits and newly staged files. They can open documentation, the root
++`AGENTS.md`, scripts and notes without a session registration. The configured
++workspace must be the Git repository root. Files under `work/`, `archive/`,
++`worktrees/` and `repos/` are excluded from this shared reader so session files
++keep their repository registration and artifact publication checks.
++
+ Tracking files are limited to `plan.md`, `state.md` and artifacts declared in
+ `portal.yml`. Their links continue to work when tracking moves into `archive/`.
+ Untracked repository files, Git metadata, symlinks and other host files are not
+@@ -64,6 +71,12 @@ repository ID is the same opaque ID used by repository review. The read-only
+ returns `path`, `repository` when applicable, `source`, the archived `revision`
+ when applicable, and a `content` object with the existing review preview fields.
+ Source values are `worktree`, `archive`, `artifact` and `archived-artifact`.
++Shared files use `/workspace-files?path=<relative-path>#L10` and
++`GET /api/workspace/file?path=<relative-path>`. This endpoint returns the same
++preview fields with `source: "workspace"` and no repository or revision. It
++accepts exactly one `path` value and no other query parameters. The viewer labels
++these files as current workspace contents; archived conversations still open
++their current shared files rather than a historical version.
+ Existing URLs whose website path contains the absolute workspace file path
+ redirect to the viewer. The original conversation text remains unchanged.
+ 
+@@ -303,6 +316,10 @@ Lifecycle status reads return published snapshots without waiting for package
+ locks or native inspection. One background task reconciles them with the owning
+ receipts and journals; unavailable proof keeps the last known state marked stale.
+ Retry, dismissal and new confirmations still perform fresh ownership checks.
++If another receipt writer wins during that check, the mutation reader checks
++the current receipt and journal again within its existing deadline. Display
++refreshes can discard a stale proposal; mutation checks cannot treat that
++discard as successful proof of the winning receipt.
+ 
+ The index polls cached operation progress once per second while a command runs.
+ Repository, activity and cluster enrichment refresh separately, at most once
+diff --git a/portal/internal/repository/source.go b/portal/internal/repository/source.go
+index 8ddd376..bb21a28 100644
+--- a/portal/internal/repository/source.go
++++ b/portal/internal/repository/source.go
+@@ -12,7 +12,7 @@ import (
+ )
+ 
+ // SourceKind identifies whether the displayed bytes came from a live worktree,
+-// an archived final commit, or an explicitly published tracking artifact.
++// an archived final commit, a shared workspace, or a published tracking artifact.
+ type SourceKind string
+ 
+ const (
+@@ -20,6 +20,7 @@ const (
+ 	SourceArchive          SourceKind = "archive"
+ 	SourceArtifact         SourceKind = "artifact"
+ 	SourceArchivedArtifact SourceKind = "archived-artifact"
++	SourceWorkspace        SourceKind = "workspace"
+ )
+ 
+ type SourceFile struct {
+@@ -43,6 +44,36 @@ func ValidSourcePath(path string) bool {
+ 	return true
+ }
+ 
++// Session files retain their registration and artifact publication checks even
++// when they are tracked by the workspace repository.
++func ValidWorkspaceSourcePath(path string) bool {
++	if !ValidSourcePath(path) {
++		return false
++	}
++	first, _, _ := strings.Cut(path, "/")
++	switch first {
++	case "work", "archive", "worktrees", "repos":
++		return false
++	}
++	return true
++}
++
++func (r ReviewReader) WorkspaceSource(ctx context.Context, path string) (SourceFile, error) {
++	result := SourceFile{Path: path, Source: SourceWorkspace}
++	if !ValidWorkspaceSourcePath(path) {
++		return result, errors.New("invalid shared workspace path")
++	}
++	root, err := r.git(ctx, r.Workspace, 8192, "rev-parse", "--show-toplevel")
++	if err != nil {
++		return result, err
++	}
++	if strings.TrimSuffix(string(root), "\n") != r.Workspace {
++		return result, errors.New("configured workspace is not the repository root")
++	}
++	result.Content, err = r.trackedSource(ctx, "", path)
++	return result, err
++}
++
+ // Source revalidates repository ownership on each request. Browser input selects
+ // only a literal path; the session registration supplies the repository and ref.
+ func (r ReviewReader) Source(ctx context.Context, slug string, item session.Repository, archived bool, path string) (SourceFile, error) {
+@@ -71,28 +102,31 @@ func (r ReviewReader) Source(ctx context.Context, slug string, item session.Repo
+ 		return result, err
+ 	}
+ 
+-	worktree := filepath.Join(r.Workspace, "worktrees", slug, item.Name)
+-	out, err := r.git(ctx, worktree, 64*1024, "--literal-pathspecs", "ls-files", "--stage", "-z", "--", path)
++	result.Content, err = r.trackedSource(ctx, filepath.Join("worktrees", slug, item.Name), path)
++	return result, err
++}
++
++func (r ReviewReader) trackedSource(ctx context.Context, directory, path string) (ReviewBlob, error) {
++	out, err := r.git(ctx, filepath.Join(r.Workspace, directory), 64*1024, "--literal-pathspecs", "ls-files", "--stage", "-z", "--", path)
+ 	if err != nil {
+-		return result, err
++		return ReviewBlob{}, err
+ 	}
+ 	if len(out) == 0 {
+-		return result, errors.New("file is not tracked")
++		return ReviewBlob{}, errors.New("file is not tracked")
+ 	}
+ 	for _, entry := range strings.Split(strings.TrimSuffix(string(out), "\x00"), "\x00") {
+ 		metadata, name, ok := strings.Cut(entry, "\t")
+ 		fields := strings.Fields(metadata)
+ 		if !ok || name != path || len(fields) != 3 || !regularGitMode(fields[0]) {
+-			return result, errors.New("file is not a tracked regular file")
++			return ReviewBlob{}, errors.New("file is not a tracked regular file")
+ 		}
+ 	}
+-	file, info, err := session.OpenRegularFile(r.Workspace, filepath.Join("worktrees", slug, item.Name, path))
++	file, info, err := session.OpenRegularFile(r.Workspace, filepath.Join(directory, path))
+ 	if err != nil {
+-		return result, err
++		return ReviewBlob{}, err
+ 	}
+ 	defer file.Close()
+-	result.Content, err = ReadSourcePreview(file, info.Size())
+-	return result, err
++	return ReadSourcePreview(file, info.Size())
+ }
+ 
+ func regularGitMode(mode string) bool { return mode == "100644" || mode == "100755" }
+diff --git a/portal/internal/web/operation_state.go b/portal/internal/web/operation_state.go
+index b70e719..3abe602 100644
+--- a/portal/internal/web/operation_state.go
++++ b/portal/internal/web/operation_state.go
+@@ -186,7 +186,7 @@ func (s *Server) refreshDisplaySnapshots(ctx context.Context, full bool) (result
+ 		if full {
+ 			view = s.lifecycleOperationView(slug, operation)
+ 		}
+-		if err := s.acceptLifecycleReconciliation(slug, original, existed, revisions[slug], operation, exists, view); err != nil {
++		if _, err := s.acceptLifecycleReconciliation(slug, original, existed, revisions[slug], operation, exists, view); err != nil {
+ 			return err
+ 		}
+ 	}
+@@ -341,14 +341,25 @@ func (s *Server) lifecycleOperationForSlug(slug string) (lifecycleOperation, boo
+ 	if err := s.requireCurrentHostProfile(); err != nil {
+ 		return original, existed, err
+ 	}
+-	progress, proofErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
+-	operation, exists, err := s.proposeLifecycleOperation(slug, original, existed, progress, proofErr, time.Now().UTC())
+-	view := s.lifecycleOperationView(slug, operation)
+-	if saveErr := s.acceptLifecycleReconciliation(slug, original, existed, revision, operation, exists, view); saveErr != nil {
+-		return original, existed, errors.Join(err, saveErr)
++	for {
++		if err := ctx.Err(); err != nil {
++			return original, existed, err
++		}
++		progress, proofErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
++		operation, exists, err := s.proposeLifecycleOperation(slug, original, existed, progress, proofErr, time.Now().UTC())
++		view := s.lifecycleOperationView(slug, operation)
++		accepted, saveErr := s.acceptLifecycleReconciliation(slug, original, existed, revision, operation, exists, view)
++		if saveErr != nil {
++			return original, existed, errors.Join(err, saveErr)
++		}
++		if accepted {
++			return operation, exists, err
++		}
++		// A display refresh, retry or executor changed the receipt during proof.
++		// Re-read its journal too; the winning receipt may still describe an old
++		// journal, so returning it without reconciliation is not fresh proof.
++		original, existed, revision = s.captureLifecycleOperation(slug)
+ 	}
+-	current, present, _ := s.captureLifecycleOperation(slug)
+-	return current, present, err
+ }
+ 
+ func (s *Server) captureLifecycleOperation(slug string) (lifecycleOperation, bool, uint64) {
+@@ -438,24 +449,26 @@ func (s *Server) lifecycleOperationView(slug string, operation lifecycleOperatio
+ 
+ func (s *Server) acceptLifecycleReconciliation(slug string, original lifecycleOperation, existed bool,
+ 	revision uint64, proposed lifecycleOperation, exists bool, view lifecycleOperation,
+-) error {
++) (bool, error) {
+ 	s.operationMu.Lock()
+ 	defer s.operationMu.Unlock()
+ 	current, present := s.operations[slug]
+ 	if present != existed || (present && current != original) || (!present && s.operationRevisions[slug] != revision) {
+-		return nil // Retry, dismissal or a newer executor result owns the receipt.
++		return false, nil // Retry, dismissal or a newer executor result owns the receipt.
+ 	}
+ 	if exists {
+ 		if !existed || current != proposed {
+ 			if err := s.replaceLifecycleOperationLocked(slug, proposed); err != nil {
+-				return err
++				return false, err
+ 			}
+ 		}
+ 		s.publishLifecycleSnapshot(slug, view, time.Now().UTC())
+ 	} else if existed {
+-		return s.removeLifecycleOperationLocked(slug)
++		if err := s.removeLifecycleOperationLocked(slug); err != nil {
++			return false, err
++		}
+ 	}
+-	return nil
++	return true, nil
+ }
+ 
+ func (s *Server) lifecycleOperationSucceeded(slug string, operation lifecycleOperation) (bool, error) {
+diff --git a/portal/internal/web/operation_state_test.go b/portal/internal/web/operation_state_test.go
+index 7102d26..eccfd33 100644
+--- a/portal/internal/web/operation_state_test.go
++++ b/portal/internal/web/operation_state_test.go
+@@ -849,8 +849,8 @@ func TestLifecycleReconciliationCannotOverwriteRetryOrResurrectDismissedReceipt(
+ 			if err != nil {
+ 				t.Fatal(err)
+ 			}
+-			if err := server.acceptLifecycleReconciliation("example", captured, existed, revision, proposed, true, proposed); err != nil {
+-				t.Fatal(err)
++			if accepted, err := server.acceptLifecycleReconciliation("example", captured, existed, revision, proposed, true, proposed); err != nil || accepted {
++				t.Fatalf("stale reconciliation accepted = %t, error = %v", accepted, err)
+ 			}
+ 			current, exists, _ := server.captureLifecycleOperation("example")
+ 			if change == "dismiss" {
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index 9d1e6cf..e7a871d 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -248,6 +248,7 @@ type pageData struct {
+ 	SelectedThreadID  string
+ 	ConversationID    string
+ 	MemberNotice      string
++	SourceFileAPI     string
+ }
+ 
+ type teamRoleOption struct {
+@@ -702,6 +703,10 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
+ 		s.artifactImage(w, r)
+ 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/files/"):
+ 		s.sourcePage(w, r)
++	case r.Method == http.MethodGet && r.URL.Path == "/workspace-files":
++		s.workspaceSourcePage(w, r)
++	case r.Method == http.MethodGet && r.URL.Path == "/api/workspace/file":
++		s.workspaceSourceFile(w, r)
+ 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, s.config.Workspace+"/"):
+ 		s.sourceRedirect(w, r)
+ 	case strings.HasPrefix(r.URL.Path, "/api/sessions/"):
+diff --git a/portal/internal/web/source_files.go b/portal/internal/web/source_files.go
+index 18c0294..1e5f4dc 100644
+--- a/portal/internal/web/source_files.go
++++ b/portal/internal/web/source_files.go
+@@ -24,8 +24,8 @@ func sourceLine(value string) bool {
+ }
+ 
+ // sourceLink maps workspace path structure without filesystem reads. Rendering
+-// a transcript never grants access: the file API checks the current session,
+-// registration, index membership and confinement when the link is opened.
++// a transcript never grants access: the file API checks index membership and
++// confinement, plus session registration/publication for session files.
+ func (s *Server) sourceLink(input *url.URL) (string, bool) {
+ 	if input.Scheme != "" || input.Host != "" || input.User != nil || input.RawQuery != "" || input.ForceQuery {
+ 		return "", false
+@@ -55,27 +55,34 @@ func (s *Server) sourceLink(input *url.URL) (string, bool) {
+ 		return "", false
+ 	}
+ 	parts := strings.SplitN(relative, "/", 4)
+-	if len(parts) < 3 || !session.ValidSlug(parts[1]) {
+-		return "", false
+-	}
+ 	query := url.Values{}
+-	switch parts[0] {
+-	case "worktrees":
+-		if len(parts) != 4 || !session.ValidSlug(parts[2]) || !repository.ValidSourcePath(parts[3]) {
++	target := url.URL{}
++	if repository.ValidWorkspaceSourcePath(relative) {
++		target.Path = "/workspace-files"
++		query.Set("path", relative)
++	} else {
++		if len(parts) < 3 || !session.ValidSlug(parts[1]) {
+ 			return "", false
+ 		}
+-		query.Set("repository", repository.ReviewID(parts[2]))
+-		query.Set("path", parts[3])
+-	case "work", "archive":
+-		artifact, ok := session.NormalizeArtifactPath(strings.Join(parts[2:], "/"))
+-		if !ok {
++		switch parts[0] {
++		case "worktrees":
++			if len(parts) != 4 || !session.ValidSlug(parts[2]) || !repository.ValidSourcePath(parts[3]) {
++				return "", false
++			}
++			query.Set("repository", repository.ReviewID(parts[2]))
++			query.Set("path", parts[3])
++		case "work", "archive":
++			artifact, ok := session.NormalizeArtifactPath(strings.Join(parts[2:], "/"))
++			if !ok {
++				return "", false
++			}
++			query.Set("artifact", artifact)
++		default:
+ 			return "", false
+ 		}
+-		query.Set("artifact", artifact)
+-	default:
+-		return "", false
++		target.Path = "/files/" + parts[1]
+ 	}
+-	target := url.URL{Path: "/files/" + parts[1], RawQuery: query.Encode()}
++	target.RawQuery = query.Encode()
+ 	if line != "" {
+ 		number, _ := strconv.ParseUint(line, 10, 64)
+ 		target.Fragment = "L" + strconv.FormatUint(number, 10)
+@@ -140,6 +147,40 @@ func (s *Server) sourcePage(w http.ResponseWriter, r *http.Request) {
+ 	s.render(w, "source-file", data)
+ }
+ 
++func workspaceSourceTarget(rawQuery string) (string, bool) {
++	query, err := url.ParseQuery(rawQuery)
++	if err != nil || len(query) != 1 || len(query["path"]) != 1 {
++		return "", false
++	}
++	path := query.Get("path")
++	return path, repository.ValidWorkspaceSourcePath(path)
++}
++
++func (s *Server) workspaceSourcePage(w http.ResponseWriter, r *http.Request) {
++	data := pageData{SourceFileAPI: "/api/workspace/file"}
++	if _, ok := workspaceSourceTarget(r.URL.RawQuery); !ok {
++		data.Error = "This workspace file link is invalid."
++		s.renderStatus(w, http.StatusNotFound, "source-file", data)
++		return
++	}
++	s.render(w, "source-file", data)
++}
++
++func (s *Server) workspaceSourceFile(w http.ResponseWriter, r *http.Request) {
++	path, ok := workspaceSourceTarget(r.URL.RawQuery)
++	if !ok {
++		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "This workspace file link is invalid."})
++		return
++	}
++	result, err := s.reviews().reader.WorkspaceSource(r.Context(), path)
++	if err != nil {
++		s.config.Logger.Printf("workspace source file %s: %v", path, err)
++		s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "This file is unavailable. It must be a tracked regular file in the workspace repository."})
++		return
++	}
++	s.writeJSON(w, http.StatusOK, result)
++}
++
+ func (s *Server) sourceFile(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+ 	query, ok := sourceTarget(r.URL.RawQuery)
+ 	if !ok {
+diff --git a/portal/internal/web/source_files_browser_test.cjs b/portal/internal/web/source_files_browser_test.cjs
+index 45839db..5a35066 100644
+--- a/portal/internal/web/source_files_browser_test.cjs
++++ b/portal/internal/web/source_files_browser_test.cjs
+@@ -18,6 +18,7 @@ const fs = require("node:fs");
+   assert.match(sourceFileVersion({source: "worktree"}), /uncommitted/);
+   assert.match(sourceFileVersion({source: "archived-artifact"}), /Archived/);
+   assert.equal(sourceFileVersion({source: "artifact"}), "Current session artifact");
++  assert.match(sourceFileVersion({source: "workspace"}), /Current workspace.*uncommitted/);
+   assert.throws(() => sourceFileVersion({source: "unknown"}), /source is unknown/);
+ 
+   // Keep the mounted UI and event handlers intact; replace only the browser's
+@@ -32,13 +33,18 @@ const fs = require("node:fs");
+   globalThis.document = {getElementById: id => elements[id], querySelector: () => ({content: "nonce"})};
+   globalThis.location = new URL(original + "#L10");
+   globalThis.addEventListener = (name, callback) => { events[name] = callback; };
+-  globalThis.fetch = async () => ({ok: true, json: async () => ({path: "example.nix", source: "worktree", content: {text: "line\n"}})});
++  let fetchedURL;
++  globalThis.fetch = async url => {
++    fetchedURL = url;
++    return {ok: true, json: async () => ({path: "example.nix", source: "worktree", content: {text: "line\n"}})};
++  };
+   let finishOldReveal;
+   globalThis.sourceTestEditor = {clearLine() {}, revealLine: (_side, line) => line === 10
+     ? new Promise(resolve => { finishOldReveal = resolve; }) : Promise.resolve(false)};
+   const mounting = mountSourceFile({dataset: {slug: "example"}});
+   for (let tries = 0; !finishOldReveal && tries < 50; tries++) await new Promise(setImmediate);
+   assert.equal(typeof finishOldReveal, "function");
++  assert.equal(fetchedURL, `/api/sessions/example/file${location.search}`);
+   globalThis.location = new URL(original + "#L999");
+   await events.hashchange();
+   assert.match(elements["source-file-notice"].textContent, /Line 999 is not present/);
+@@ -52,5 +58,17 @@ const fs = require("node:fs");
+   globalThis.location = new URL(original + "#L1");
+   await mountSourceFile({dataset: {slug: "example"}});
+   assert.equal(elements["source-file-notice"].textContent, "");
++  globalThis.location = new URL("https://workspace.example.test/workspace-files?path=docs%2Fguide.md#L93");
++  let revealedLine;
++  globalThis.sourceTestEditor = {clearLine() {}, revealLine: async (_side, line) => { revealedLine = line; return true; }};
++  globalThis.fetch = async url => {
++    fetchedURL = url;
++    return {ok: true, json: async () => ({path: "docs/guide.md", source: "workspace", content: {text: "line\n"}})};
++  };
++  await mountSourceFile({dataset: {fileApi: "/api/workspace/file"}});
++  assert.equal(fetchedURL, "/api/workspace/file?path=docs%2Fguide.md");
++  assert.equal(revealedLine, 93);
++  assert.equal(elements["source-file-title"].textContent, "docs/guide.md");
++  assert.match(elements["source-file-version"].textContent, /Current workspace/);
+   console.log("Source file URL and source identity contracts passed.");
+ })().catch(error => { console.error(error); process.exitCode = 1; });
+diff --git a/portal/internal/web/source_files_test.go b/portal/internal/web/source_files_test.go
+index 6cca3d0..dee1274 100644
+--- a/portal/internal/web/source_files_test.go
++++ b/portal/internal/web/source_files_test.go
+@@ -95,7 +95,7 @@ func TestSourceLinksEscapingAndRejectedDestinations(t *testing.T) {
+ 		root + "/worktrees/example/project/.git/config", root + "/worktrees/example/project/file:0",
+ 		root + "/worktrees/example/project/file:9007199254740992", root + "/worktrees/example/project/file:10:0",
+ 		root + "/worktrees/example/project/file#L0", root + "/worktrees/example/project/file:10#L11",
+-		root + "/notes/private", root + "/worktrees/example/project/file?download=1",
++		root + "/repos/private", root + "/worktrees/example/project/file?download=1",
+ 	} {
+ 		input, err := url.Parse(raw)
+ 		if err != nil {
+diff --git a/portal/internal/web/static/source-file.js b/portal/internal/web/static/source-file.js
+index cee246b..0123de4 100644
+--- a/portal/internal/web/static/source-file.js
++++ b/portal/internal/web/static/source-file.js
+@@ -16,6 +16,7 @@ export function sourceFileVersion(file) {
+     case "archive": return `Archived final commit · ${file.revision}`;
+     case "archived-artifact": return "Archived session artifact";
+     case "artifact": return "Current session artifact";
++    case "workspace": return "Current workspace · includes uncommitted edits";
+     default: throw new Error("The file source is unknown. Reload the page to try again.");
+   }
+ }
+@@ -36,7 +37,8 @@ export async function mountSourceFile(root) {
+     }
+   });
+   try {
+-    const response = await fetch(`/api/sessions/${encodeURIComponent(root.dataset.slug)}/file${location.search}`, {credentials: "same-origin"});
++    const api = root.dataset.fileApi || `/api/sessions/${encodeURIComponent(root.dataset.slug)}/file`;
++    const response = await fetch(`${api}${location.search}`, {credentials: "same-origin"});
+     const file = await response.json().catch(() => ({}));
+     if (!response.ok) throw new Error(file.error || "This file is unavailable. Check that the session and file still exist.");
+     title.textContent = file.repository ? `${file.repository}/${file.path}` : file.path;
+diff --git a/portal/internal/web/templates/source-file.html b/portal/internal/web/templates/source-file.html
+index e51bb64..d2ca65d 100644
+--- a/portal/internal/web/templates/source-file.html
++++ b/portal/internal/web/templates/source-file.html
+@@ -15,7 +15,7 @@
+   <main class="source-file-page">
+     <nav><a href="/">{{.DisplayLabel}}</a>{{if .Session}} · <a href="/{{.Session.Slug}}/">Back to session</a>{{end}}</nav>
+     {{if .Error}}<p class="notice warning" role="alert">{{.Error}}</p>{{else}}
+-    <section id="source-file" data-slug="{{.Session.Slug}}" aria-labelledby="source-file-title">
++    <section id="source-file"{{if .Session}} data-slug="{{.Session.Slug}}"{{end}}{{if .SourceFileAPI}} data-file-api="{{.SourceFileAPI}}"{{end}} aria-labelledby="source-file-title">
+       <header class="source-file-heading">
+         <div><h1 id="source-file-title">File</h1><p id="source-file-version" class="muted"></p></div>
+         <button id="source-file-copy" type="button" class="quiet">Copy link</button>
+diff --git a/portal/internal/web/workspace_source_files_test.go b/portal/internal/web/workspace_source_files_test.go
+new file mode 100644
+index 0000000..5bf1434
+--- /dev/null
++++ b/portal/internal/web/workspace_source_files_test.go
+@@ -0,0 +1,177 @@
++package web
++
++import (
++	"encoding/json"
++	"net/http/httptest"
++	"net/url"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/aither64/dev-workspace/portal/internal/repository"
++	"golang.org/x/sys/unix"
++)
++
++func workspaceSourceQuery(path string) string {
++	return "?" + url.Values{"path": {path}}.Encode()
++}
++
++func readWorkspaceSource(t *testing.T, s *Server, path string, status int) repository.SourceFile {
++	t.Helper()
++	result := reviewRequest(t, s, "GET", "/api/workspace/file"+workspaceSourceQuery(path), "", status)
++	encoded, err := json.Marshal(result)
++	if err != nil {
++		t.Fatal(err)
++	}
++	var file repository.SourceFile
++	if err := json.Unmarshal(encoded, &file); err != nil {
++		t.Fatal(err)
++	}
++	return file
++}
++
++func TestWorkspaceSourceLinksRewriteAndRedirect(t *testing.T) {
++	s := newTestServer(t)
++	// Mapping does not depend on a session, Git registration, or file existence.
++	for _, path := range []string{"docs/agent-instructions/lifecycle.md", "AGENTS.md", "bin/check", "notes/lesson.md"} {
++		for _, suffix := range []string{"", ":93", ":93:5", ":0093", "#L93"} {
++			input, err := url.Parse(s.config.Workspace + "/" + path + suffix)
++			if err != nil {
++				t.Fatal(err)
++			}
++			want := "/workspace-files" + workspaceSourceQuery(path)
++			if suffix != "" {
++				want += "#L93"
++			}
++			got, ok := s.sourceLink(input)
++			if !ok || got != want {
++				t.Fatalf("%s%s: %q, %v, want %q", path, suffix, got, ok, want)
++			}
++		}
++	}
++	for _, path := range []string{"space žluťoučký.md", "percent%20.txt", "hash#name?.rb", "literal:10"} {
++		input := &url.URL{Path: s.config.Workspace + "/" + path}
++		raw := strings.ReplaceAll(input.String(), ":", "%3A")
++		parsed, _ := url.Parse(raw)
++		if got, ok := s.sourceLink(parsed); !ok || got != "/workspace-files"+workspaceSourceQuery(path) {
++			t.Fatalf("escaped workspace name %q: %q %v", path, got, ok)
++		}
++	}
++	path := s.config.Workspace + "/docs/agent-instructions/lifecycle.md:93"
++	want := "/workspace-files" + workspaceSourceQuery("docs/agent-instructions/lifecycle.md") + "#L93"
++	original := "[workspace lifecycle rules](" + path + ")"
++	transcript := codex.Transcript{Entries: []codex.TranscriptEntry{{Kind: "agentMessage", Text: original}}}
++	s.presentTranscript(&transcript)
++	if entry := transcript.Entries[0]; entry.Text != original || !strings.Contains(entry.HTML, want) {
++		t.Fatalf("shared transcript link: %#v", entry)
++	}
++	response := httptest.NewRecorder()
++	s.Handler().ServeHTTP(response, httptest.NewRequest("GET", path, nil))
++	if response.Code != 302 || response.Header().Get("Location") != want {
++		t.Fatalf("old shared URL: %d %s", response.Code, response.Header().Get("Location"))
++	}
++	response = httptest.NewRecorder()
++	s.Handler().ServeHTTP(response, httptest.NewRequest("GET", want, nil))
++	if response.Code != 200 || !strings.Contains(response.Body.String(), `data-file-api="/api/workspace/file"`) ||
++		strings.Contains(response.Body.String(), "Back to session") || response.Header().Get("Cache-Control") != "no-store" ||
++		!strings.Contains(response.Header().Get("Content-Security-Policy"), "style-src 'self' 'nonce-") {
++		t.Fatalf("shared viewer: %d %s", response.Code, response.Body.String())
++	}
++	for _, raw := range []string{"../private", "%2e%2e/private", ".git/config", "repos/project.git/config", "AGENTS.md:0", "AGENTS.md:1#L2"} {
++		input, _ := url.Parse(s.config.Workspace + "/" + raw)
++		if got, ok := s.sourceLink(input); ok {
++			t.Fatalf("rewrote invalid shared path %q as %q", raw, got)
++		}
++	}
++}
++
++func TestWorkspaceSourceReadsTrackedCurrentFilesAndPreservesSessionBoundary(t *testing.T) {
++	s := newTestServer(t)
++	root := s.config.Workspace
++	runWebGit(t, "init", "--initial-branch=master", root)
++	write := func(path string, content []byte) {
++		t.Helper()
++		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0755); err != nil {
++			t.Fatal(err)
++		}
++		if err := os.WriteFile(filepath.Join(root, path), content, 0644); err != nil {
++			t.Fatal(err)
++		}
++	}
++	paths := []string{"AGENTS.md", "docs/agent-instructions/lifecycle.md", "bin/check", "notes/lesson.md", "space ž.md", "literal*name", "percent%2Fname", "literal:10"}
++	for _, path := range paths {
++		write(path, []byte("staged\n"))
++		runWebGit(t, "-C", root, "add", "--", path)
++		write(path, []byte("current\n<script>window.bad=true</script>\n"))
++		file := readWorkspaceSource(t, s, path, 200)
++		if file.Source != "workspace" || file.Path != path || file.Repository != "" || file.Revision != "" || file.Content.Text != "current\n<script>window.bad=true</script>\n" {
++			t.Fatalf("shared working contents: %#v", file)
++		}
++	}
++	write("binary", []byte{0, 255})
++	write("large", []byte(strings.Repeat("a", repository.MaxReviewBlobBytes+1)))
++	runWebGit(t, "-C", root, "add", "binary", "large")
++	if !readWorkspaceSource(t, s, "binary", 200).Content.Binary || !readWorkspaceSource(t, s, "large", 200).Content.Limited {
++		t.Fatal("workspace preview limits changed")
++	}
++	write("untracked", []byte("private\n"))
++	readWorkspaceSource(t, s, "untracked", 404)
++	readWorkspaceSource(t, s, "missing", 404)
++	for _, path := range []string{"work/example/private.md", "archive/example/private.md", "worktrees/example/project/private", "repos/project.git/private"} {
++		write(path, []byte("private\n"))
++		runWebGit(t, "-C", root, "add", "--", path)
++		readWorkspaceSource(t, s, path, 400)
++	}
++	for _, path := range []string{"../private", "docs/../AGENTS.md", "/etc/passwd", ".git/config", "docs/.git/config", "a//b"} {
++		readWorkspaceSource(t, s, path, 400)
++	}
++	for _, query := range []string{"", "?path=AGENTS.md&path=bin/check", "?path=AGENTS.md&repository=abc", "?path=%zz", "?other=AGENTS.md"} {
++		reviewRequest(t, s, "GET", "/api/workspace/file"+query, "", 400)
++		response := httptest.NewRecorder()
++		s.Handler().ServeHTTP(response, httptest.NewRequest("GET", "/workspace-files"+query, nil))
++		if response.Code != 404 || !strings.Contains(response.Body.String(), "workspace file link is invalid") {
++			t.Fatalf("invalid shared viewer query %q: %d %s", query, response.Code, response.Body.String())
++		}
++	}
++	if err := os.Symlink("untracked", filepath.Join(root, "link")); err != nil {
++		t.Fatal(err)
++	}
++	runWebGit(t, "-C", root, "add", "link")
++	readWorkspaceSource(t, s, "link", 404)
++	if err := os.Remove(filepath.Join(root, "AGENTS.md")); err != nil {
++		t.Fatal(err)
++	}
++	readWorkspaceSource(t, s, "AGENTS.md", 404)
++	if err := os.Symlink("untracked", filepath.Join(root, "AGENTS.md")); err != nil {
++		t.Fatal(err)
++	}
++	readWorkspaceSource(t, s, "AGENTS.md", 404)
++	if err := os.Remove(filepath.Join(root, "AGENTS.md")); err != nil {
++		t.Fatal(err)
++	}
++	if err := unix.Mkfifo(filepath.Join(root, "AGENTS.md"), 0600); err != nil {
++		t.Fatal(err)
++	}
++	readWorkspaceSource(t, s, "AGENTS.md", 404)
++	if err := os.Rename(filepath.Join(root, "docs"), filepath.Join(root, "original-docs")); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.Symlink("original-docs", filepath.Join(root, "docs")); err != nil {
++		t.Fatal(err)
++	}
++	readWorkspaceSource(t, s, "docs/agent-instructions/lifecycle.md", 404)
++}
++
++func TestWorkspaceSourceRequiresExactGitRoot(t *testing.T) {
++	s := newTestServer(t)
++	readWorkspaceSource(t, s, "AGENTS.md", 404)
++	parent := filepath.Dir(s.config.Workspace)
++	runWebGit(t, "init", "--initial-branch=master", parent)
++	if err := os.WriteFile(filepath.Join(s.config.Workspace, "AGENTS.md"), []byte("nested file\n"), 0644); err != nil {
++		t.Fatal(err)
++	}
++	runWebGit(t, "-C", parent, "add", "--", filepath.Join(filepath.Base(s.config.Workspace), "AGENTS.md"))
++	readWorkspaceSource(t, s, "AGENTS.md", 404)
++}
+diff --git a/portal/internal/workspacecodex/observation_test.go b/portal/internal/workspacecodex/observation_test.go
+index 876a538..d3d1a64 100644
+--- a/portal/internal/workspacecodex/observation_test.go
++++ b/portal/internal/workspacecodex/observation_test.go
+@@ -51,6 +51,8 @@ func TestObserveArchivedSemanticActivityPreservesColdQueueBoundary(t *testing.T)
+ 	identity, _, path := archiveProofFixture(t)
+ 	t.Setenv("DEV_WORKSPACE_CODEX_HOME", identity.CodexHome)
+ 	loadedReads, turnReads := 0, 0
++	// Repeated reads describe the same unchanged archived thread.
++	updatedAt := time.Now().Unix()
+ 	socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
+ 		if err := handshake(connection); err != nil {
+ 			return err
+@@ -63,7 +65,7 @@ func TestObserveArchivedSemanticActivityPreservesColdQueueBoundary(t *testing.T)
+ 			var result any
+ 			switch request["method"] {
+ 			case "thread/read":
+-				result = map[string]any{"thread": map[string]any{"id": identity.ThreadID, "cwd": identity.Cwd, "projectId": identity.ProjectID, "source": "vscode", "path": path, "status": map[string]any{"type": "notLoaded"}, "updatedAt": time.Now().Unix()}}
++				result = map[string]any{"thread": map[string]any{"id": identity.ThreadID, "cwd": identity.Cwd, "projectId": identity.ProjectID, "source": "vscode", "path": path, "status": map[string]any{"type": "notLoaded"}, "updatedAt": updatedAt}}
+ 			case "thread/turns/list":
+ 				turnReads++
+ 				result = map[string]any{"data": []any{map[string]any{"id": "terminal-turn", "status": "completed", "startedAt": 900, "completedAt": 950}}, "nextCursor": nil, "backwardsCursor": nil}

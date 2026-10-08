@@ -57,6 +57,18 @@ Publish feature branches. Implementation and deployment authorization does not
 authorize integrating any feature branch into master. Keep the initiative active
 after deployment, ready and awaiting explicit repository/target merge direction.
 
+Packaged verification exposed a pre-existing lifecycle reconciliation race
+which also reproduces on the clean baseline and prevents reliable package
+builds. Include a focused prerequisite fix: report whether receipt CAS accepted
+the proposal, retry mutation proof after a lost CAS within its current deadline,
+and return the accepted proposal. Preserve display behavior, persisted state
+and lifecycle authorization. Keep it in a separate runtime commit and include
+it in final independent review before rerunning packaged verification.
+The later packaged run also exposed an existing archived test fixture whose
+metadata timestamp changed between reads. Capture that mock timestamp once,
+retain production metadata equality and queue assertions, and review this
+separate test-only correction with the final matching pins.
+
 ## Verification
 
 Quick checks cover shared/source-file Go tests, JavaScript contracts and syntax,
