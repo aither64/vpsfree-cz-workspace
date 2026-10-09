@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-09T20:39:02.251274+00:00",
+  "review": "unfinished final affected task-discovery review",
+  "reviewer": "reviewer0",
+  "severity": "Important",
+  "lanes": [
+    "GENERAL",
+    "risk/compatibility"
+  ],
+  "head": "29b17bf4bb151fbbb6b693c559cb16a196fa41c5",
+  "owner": "cluster/lib/devcluster_runner.rb:182-187",
+  "source_cause": "Valid first stop latches stopping/withdraws readiness; notifier follows interruptible peer reply. EPIPE/IOError consumed by StandardError rescue can skip sole notification, while later requests latch=false and main body only sleeps.",
+  "parent_source_confirmation": "Current run_owned/latch/control/main loop read; no local test or process probe.",
+  "status": "fixed and verified; direct step9 source gate clear, real admission pending",
+  "bounded_remedy": "Guarantee the existing one-shot notification once the valid first request wins latch, independently of reply delivery; no new protocol/authority/retry. Existing real machine suite regression with first valid peer closed before actual acknowledgement write.",
+  "review_boundary": "Keep K/E exact committed objects clean until original review completes; then delegate two-path narrow repair. No remediation certification or affected review result yet.",
+  "disposition": {
+    "at": "2026-10-09T21:51:38.765716+00:00",
+    "acceptance": "finish-stop-waiter-step9-acceptance.json",
+    "generator": "922e71e5eb75b6eb416bf55e39160e9a7236e654",
+    "e_head": "2c1d3e86435292303f9c2f3f3386dc90e6b9efd0",
+    "original_review_retained": true
+  }
+}

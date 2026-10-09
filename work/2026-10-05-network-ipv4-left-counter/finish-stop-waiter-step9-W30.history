@@ -1,0 +1,14 @@
+commit cce681424b866f6a51cbc0a1e4daa226ed33fc07
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 9 20:30:58 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Fri Oct 9 21:02:35 2026 +0200
+
+    ip addresses: bound suggestion capability discovery
+    
+    Keep one twelve-second caller budget across shared capability discovery and
+    the address request. Abort-aware waits settle stalled callers and prevent
+    late requests or rows while preserving shared metadata for other queries.
+    
+    Retain old-API support, progressive loading, retries and the separate
+    manual-filter list.

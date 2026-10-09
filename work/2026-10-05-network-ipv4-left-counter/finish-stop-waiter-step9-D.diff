@@ -1,0 +1,948 @@
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 22fc8173cfa32497935e3da27e2215a8f923810e..7417f3120ad54659f61b6eaeff99a3b08c3ae30b 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -514,6 +514,26 @@ Cluster helpers receive
+ the selected workspace through `DEVCLUSTER_WORKSPACE` and keep ownership of
+ their `status`, `reset`, `cleanup-paths` and `transition-adopt` protocols.
+ 
++Provider commands whose first argument is `capture-lease` use a full-duplex
++relay. Readiness and diagnostics reach the caller immediately, on separate
++stdout and stderr channels. The dispatcher retains the package-generation
++guard until the provider has exited and been reaped. Other commands keep their
++buffered dispatch behavior.
++
++The provider receives new pipes with inherited authority descriptors closed.
++Caller EOF, broken channels and interruption close provider input and perform
++bounded cleanup of that spawned child. Provider exit cancels a blocked caller
++input relay. Abrupt dispatcher loss closes the mediated channels too. Providers
++must treat input EOF as lease loss, and capture peers must stop fixture work on
++controller loss. A request accepted before loss may already have taken effect.
++This transport does not change provider catalogs, state schemas, package
++transition policy or command exit mapping.
++
++Protocol stdout EOF ends a lease even if the provider is still running. The
++dispatcher closes the caller's protocol output promptly and keeps the generation
++guard while it closes provider input and reaps the child. Closing diagnostic
++stderr alone does not end the lease.
++
+ The package constructor also accepts `userNamespace` and `routerSocket` for a
+ deployment-specific compatibility generation. `userNamespace` selects the
+ default user config, state, runtime and profile paths, including portal
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index aa217723c6360d35d34614ed4857feab729efa1a..7c474b00160f3d3681fc3e3a6a998da59f709c62 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -363,8 +363,9 @@ module DevWorkspaceHost
+   end
+ 
+   class Host
+-    def initialize(env: ENV, out: $stdout, err: $stderr)
++    def initialize(env: ENV, input: $stdin, out: $stdout, err: $stderr)
+       @env = env
++      @input = input
+       @out = out
+       @err = err
+       @home = File.expand_path(env.fetch('HOME'))
+@@ -1179,7 +1180,11 @@ module DevWorkspaceHost
+         provider = extension_catalog.provider_programs.fetch(program) do
+           raise Error, "unknown development cluster command: #{program}"
+         end
+-        system_env!(environment, provider.fetch('command'), *argv)
++        if argv.first == 'capture-lease'
++          system_env_streaming!(environment, provider.fetch('command'), *argv)
++        else
++          system_env!(environment, provider.fetch('command'), *argv)
++        end
+       end
+     end
+ 
+@@ -2979,6 +2984,127 @@ module DevWorkspaceHost
+       raise Error, "command failed: #{argv.map(&:shellescape).join(' ')}"
+     end
+ 
++    # Mediate the peer channels while the caller holds the generation guard.
++    # The provider gets new pipes, never the original peer or authority FDs.
++    def system_env_streaming!(environment, *argv)
++      raise Error, 'development cluster protocol output must support close' unless @out.respond_to?(:close) && @out.respond_to?(:closed?)
++
++      child_input, input = IO.pipe
++      output, child_output = IO.pipe
++      errors, child_errors = IO.pipe
++      child = { pid: Process.spawn(environment, *argv, in: child_input,
++                out: child_output, err: child_errors, close_others: true,
++                unsetenv_others: true), status: nil }
++      [child_input, child_output, child_errors].each(&:close)
++      events = Queue.new
++      pumps = [[output, @out, true], [errors, @err, false]].map do |source, destination, protocol|
++        Thread.new do
++          loop do
++            destination.write(source.readpartial(16 * 1024))
++            destination.flush if destination.respond_to?(:flush)
++          end
++        rescue EOFError
++          events << [:protocol_eof, nil] if protocol
++        rescue StandardError => error
++          events << [:error, error]
++        ensure
++          if protocol
++            begin
++              # Ruby protects standard descriptors even on explicit close.
++              # Detach the actual protocol pipe before closing its Ruby sink.
++              if destination.is_a?(IO) && !destination.closed? && destination.fileno <= 2
++                destination.reopen(File::NULL, 'w')
++              end
++              destination.close unless destination.closed?
++            rescue StandardError => error
++              events << [:error, error]
++            end
++          end
++        end
++      end
++      peer = Thread.new do
++        loop do
++          input.write(@input.readpartial(16 * 1024))
++          input.flush
++        end
++      rescue EOFError
++        events << [:eof, nil]
++      rescue StandardError => error
++        events << [:error, error]
++      end
++      event = detail = nil
++      loop do
++        if wait_streaming_child(child, 0)
++          event = :exit
++          break
++        end
++        begin
++          event, detail = events.pop(true)
++          break
++        rescue ThreadError
++          sleep 0.01
++        end
++      end
++      peer.kill.join
++      input.close unless input.closed?
++      cancel_streaming_child(child) unless event == :exit
++      status = child.fetch(:status)
++      pumps.each do |pump|
++        next if pump.join(1)
++
++        raise Error, 'development cluster provider did not close its output channels'
++      end
++      until events.empty?
++        pending_event, pending_detail = events.pop
++        event, detail = pending_event, pending_detail if pending_event == :error
++      end
++      raise Error, "development cluster relay failed: #{detail.class}" if event == :error
++      return if status.success?
++
++      raise Error, "command failed: #{argv.map(&:shellescape).join(' ')}"
++    ensure
++      peer&.kill&.join
++      input&.close unless input&.closed?
++      cancel_streaming_child(child) if child && child[:pid]
++      [output, errors, child_input, child_output, child_errors].compact.each do |pipe|
++        pipe.close unless pipe.closed?
++      end
++      pumps&.each { |pump| pump.kill.join }
++    end
++
++    def cancel_streaming_child(child)
++      return if wait_streaming_child(child, 2)
++
++      %w[TERM KILL].each do |signal|
++        begin
++          # This dispatcher alone reaps the child. An exited, unreaped child
++          # still owns its PID; there is no detached wait thread racing signals.
++          Process.kill(signal, child.fetch(:pid))
++        rescue Errno::ESRCH
++          # Reap the exact child below even if it has already exited.
++        end
++        return if wait_streaming_child(child, 2)
++      end
++      raise Error, 'development cluster provider could not be reaped'
++    end
++
++    def wait_streaming_child(child, seconds)
++      return true unless child[:pid]
++
++      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
++      loop do
++        result = Process.waitpid2(child.fetch(:pid), Process::WNOHANG)
++        if result
++          child[:pid] = nil
++          child[:status] = result.last
++          return true
++        end
++        return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
++
++        sleep 0.01
++      end
++    end
++
+     def system_env_interactive!(environment, *argv)
+       return if system(environment, *argv)
+ 
+diff --git a/portal/internal/web/operation_state.go b/portal/internal/web/operation_state.go
+index 3abe6028e608997d3158adf78a8f2f2a32b8ff2a..5add8ea10ac3342482f50985e8d869d8452a792e 100644
+--- a/portal/internal/web/operation_state.go
++++ b/portal/internal/web/operation_state.go
+@@ -341,6 +341,14 @@ func (s *Server) lifecycleOperationForSlug(slug string) (lifecycleOperation, boo
+ 	if err := s.requireCurrentHostProfile(); err != nil {
+ 		return original, existed, err
+ 	}
++	return s.reconcileLifecycleOperation(ctx, slug, original, existed, revision)
++}
++
++// The caller retains its transition guard and original deadline. A lost CAS
++// requires new receipt and journal proof, never a recapture reported as success.
++func (s *Server) reconcileLifecycleOperation(ctx context.Context, slug string,
++	original lifecycleOperation, existed bool, revision uint64,
++) (lifecycleOperation, bool, error) {
+ 	for {
+ 		if err := ctx.Err(); err != nil {
+ 			return original, existed, err
+@@ -348,6 +356,9 @@ func (s *Server) lifecycleOperationForSlug(slug string) (lifecycleOperation, boo
+ 		progress, proofErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
+ 		operation, exists, err := s.proposeLifecycleOperation(slug, original, existed, progress, proofErr, time.Now().UTC())
+ 		view := s.lifecycleOperationView(slug, operation)
++		if contextErr := ctx.Err(); contextErr != nil {
++			return original, existed, errors.Join(err, contextErr)
++		}
+ 		accepted, saveErr := s.acceptLifecycleReconciliation(slug, original, existed, revision, operation, exists, view)
+ 		if saveErr != nil {
+ 			return original, existed, errors.Join(err, saveErr)
+diff --git a/portal/internal/web/operation_state_test.go b/portal/internal/web/operation_state_test.go
+index eccfd33c75ec2c9e15b8d8de365fec11f02a820c..21dcef2748666fc81463bbf77ed637b602730529 100644
+--- a/portal/internal/web/operation_state_test.go
++++ b/portal/internal/web/operation_state_test.go
+@@ -16,6 +16,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/aither64/dev-workspace/portal/internal/session"
+ 	"golang.org/x/sys/unix"
+ )
+ 
+@@ -334,8 +335,9 @@ func TestMatchingDeleteJournalPreservesTheAcceptedBrowserIdentity(t *testing.T)
+ 	now := time.Now().UTC().Format(time.RFC3339Nano)
+ 	server.operationMu.Lock()
+ 	if err := server.replaceLifecycleOperationLocked("example", lifecycleOperation{
+-		Slug: "example", Kind: "delete", State: "running", Phase: "starting",
++		Slug: "example", Kind: "delete", State: "complete", Phase: "complete",
+ 		StartedAt: now, UpdatedAt: now, Redirect: "/",
++		ReceiptID: strings.Repeat("b", 64), Attempt: 1,
+ 		Options: lifecycleOperationOptions{
+ 			TargetID: targetID, DeletedThreadID: "deleted-thread",
+ 			JournalID: journalID,
+@@ -344,6 +346,7 @@ func TestMatchingDeleteJournalPreservesTheAcceptedBrowserIdentity(t *testing.T)
+ 		server.operationMu.Unlock()
+ 		t.Fatal(err)
+ 	}
++	accepted := server.operations["example"]
+ 	server.operationMu.Unlock()
+ 
+ 	// Rewriting the manifest changes the tracking directory ctime. The accepted
+@@ -367,6 +370,11 @@ func TestMatchingDeleteJournalPreservesTheAcceptedBrowserIdentity(t *testing.T)
+ 	if err != nil || !exists {
+ 		t.Fatalf("matching journal reconciliation = %#v, %t, %v", operation, exists, err)
+ 	}
++	if operation.State != "paused" || operation.Phase != "validated" ||
++		operation.ReceiptID != accepted.ReceiptID || operation.Attempt != accepted.Attempt ||
++		operation.Options.Force != accepted.Options.Force || operation.StartedAt != accepted.StartedAt {
++		t.Fatalf("complete receipt with a retained matching journal = %#v", operation)
++	}
+ 	if operation.Options.TargetID != targetID ||
+ 		operation.Options.DeletedThreadID != "deleted-thread" ||
+ 		operation.Options.JournalID != journalID ||
+@@ -864,6 +872,153 @@ func TestLifecycleReconciliationCannotOverwriteRetryOrResurrectDismissedReceipt(
+ 	}
+ }
+ 
++// These store fixtures exercise fresh reconciliation without a background owner.
++func freshLifecycleStoreServer(t *testing.T) *Server {
++	t.Helper()
++	workspace := t.TempDir()
++	store, err := newLifecycleOperationStore(workspace, t.TempDir())
++	if err != nil {
++		t.Fatal(err)
++	}
++	return &Server{
++		config: Config{Workspace: workspace}, operationStore: store,
++		operations: make(map[string]lifecycleOperation), operationRevisions: make(map[string]uint64),
++	}
++}
++
++func TestLifecycleFreshOwnerReconciliationRetriesProgressConflict(t *testing.T) {
++	server := freshLifecycleStoreServer(t)
++	journalRoot := filepath.Join(server.config.Workspace, "worktrees", ".locks")
++	if err := os.MkdirAll(journalRoot, 0o700); err != nil {
++		t.Fatal(err)
++	}
++	journalPath := filepath.Join(journalRoot, "example.archive.json")
++	writeJournal := func(mode, journalID string) {
++		t.Helper()
++		payload := fmt.Sprintf(
++			`{"schema":2,"slug":"example","workspace":%q,"phase":"prepared","mode":%q,"operation_id":%q}`,
++			server.config.Workspace, mode, journalID,
++		)
++		if err := os.WriteFile(journalPath+".tmp", []byte(payload), 0o600); err != nil {
++			t.Fatal(err)
++		}
++		if err := os.Rename(journalPath+".tmp", journalPath); err != nil {
++			t.Fatal(err)
++		}
++	}
++	journalA, journalB := strings.Repeat("a", 64), strings.Repeat("b", 64)
++	writeJournal("complete", journalA)
++	progressA, err := session.PendingLifecycleProgress(server.config.Workspace, "example")
++	if err != nil || progressA == nil {
++		t.Fatalf("journal A progress = %#v, %v", progressA, err)
++	}
++	original := operationFromProgress("example", *progressA)
++	original.State, original.Phase = "running", "starting"
++	server.operationMu.Lock()
++	err = server.replaceLifecycleOperationLocked("example", original)
++	server.operationMu.Unlock()
++	if err != nil {
++		t.Fatal(err)
++	}
++	captured, existed, revision := server.captureLifecycleOperation("example")
++	preparedA, exists, err := server.proposeLifecycleOperation("example", captured, existed, progressA, nil, time.Now().UTC())
++	if err != nil || !exists || preparedA.Phase != "prepared" {
++		t.Fatalf("A proposal = %#v, %t, %v", preparedA, exists, err)
++	}
++	// A worker accepts its already-computed A progress after B replaces the journal.
++	writeJournal("abandoned", journalB)
++	if applied, err := server.acceptLifecycleReconciliation("example", captured, existed, revision, preparedA, true, preparedA); err != nil || !applied {
++		t.Fatalf("A progress acceptance = %t, %v", applied, err)
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
++	defer cancel()
++	operation, exists, err := server.reconcileLifecycleOperation(ctx, "example", captured, existed, revision)
++	if err != nil || !exists || operation.State != "paused" || operation.Phase != "prepared" ||
++		operation.Options.JournalID != journalB || operation.Options.Mode != "abandoned" ||
++		operation.ReceiptID == original.ReceiptID {
++		t.Fatalf("fresh replacement = %#v, %t, %v", operation, exists, err)
++	}
++	stored, present, _ := server.captureLifecycleOperation("example")
++	if !present || stored != operation {
++		t.Fatalf("accepted replacement = %#v, want %#v", stored, operation)
++	}
++	reloaded, err := server.operationStore.loadReadOnly()
++	if err != nil || reloaded["example"] != operation {
++		t.Fatalf("durable replacement = %#v, %v", reloaded, err)
++	}
++}
++
++func TestLifecycleFreshOwnerReconciliationHonorsDeadline(t *testing.T) {
++	for _, name := range []string{"canceled", "expired"} {
++		t.Run(name, func(t *testing.T) {
++			server := freshLifecycleStoreServer(t)
++			now := time.Now().UTC().Format(time.RFC3339Nano)
++			original := lifecycleOperation{Slug: "example", Kind: "archive", State: "running", Phase: "starting", StartedAt: now, UpdatedAt: now, Redirect: "/", ReceiptID: strings.Repeat("a", 64), Options: lifecycleOperationOptions{Mode: "complete"}}
++			server.operationMu.Lock()
++			err := server.replaceLifecycleOperationLocked("example", original)
++			server.operationMu.Unlock()
++			if err != nil {
++				t.Fatal(err)
++			}
++			before, err := os.ReadFile(server.operationStore.path)
++			if err != nil {
++				t.Fatal(err)
++			}
++			captured, existed, revision := server.captureLifecycleOperation("example")
++			ctx, cancel := context.WithCancel(context.Background())
++			cancel()
++			wantErr := context.Canceled
++			if name == "expired" {
++				ctx, cancel = context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
++				defer cancel()
++				wantErr = context.DeadlineExceeded
++			}
++			operation, exists, err := server.reconcileLifecycleOperation(ctx, "example", captured, existed, revision)
++			if !errors.Is(err, wantErr) || !exists || operation != original {
++				t.Fatalf("bounded result = %#v, %t, %v", operation, exists, err)
++			}
++			after, err := os.ReadFile(server.operationStore.path)
++			if err != nil {
++				t.Fatal(err)
++			}
++			stored, present, currentRevision := server.captureLifecycleOperation("example")
++			if string(before) != string(after) || !present || stored != original || currentRevision != revision {
++				t.Fatal("expired owner changed durable receipt authority")
++			}
++		})
++	}
++}
++
++func TestLifecycleFreshOwnerReconciliationAcceptsNoopAndAbsence(t *testing.T) {
++	server := freshLifecycleStoreServer(t)
++	now := time.Now().UTC().Format(time.RFC3339Nano)
++	original := lifecycleOperation{Slug: "example", Kind: "archive", State: "running", Phase: "starting", StartedAt: now, UpdatedAt: now, Redirect: "/", ReceiptID: strings.Repeat("a", 64), Options: lifecycleOperationOptions{Mode: "complete"}}
++	server.operationMu.Lock()
++	err := server.replaceLifecycleOperationLocked("example", original)
++	server.operationMu.Unlock()
++	if err != nil {
++		t.Fatal(err)
++	}
++	captured, existed, revision := server.captureLifecycleOperation("example")
++	if applied, err := server.acceptLifecycleReconciliation("example", captured, existed, revision, captured, true, captured); err != nil || !applied {
++		t.Fatalf("matched no-op acceptance = %t, %v", applied, err)
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
++	defer cancel()
++	operation, exists, err := server.reconcileLifecycleOperation(ctx, "example", captured, existed, revision)
++	if err != nil || !exists || operation != original {
++		t.Fatalf("unchanged reconciliation = %#v, %t, %v", operation, exists, err)
++	}
++	missing, present, missingRevision := server.captureLifecycleOperation("missing")
++	if applied, err := server.acceptLifecycleReconciliation("missing", missing, present, missingRevision, missing, false, missing); err != nil || !applied {
++		t.Fatalf("matched absence acceptance = %t, %v", applied, err)
++	}
++	operation, exists, err = server.reconcileLifecycleOperation(ctx, "missing", missing, present, missingRevision)
++	if err != nil || exists || operation != missing {
++		t.Fatalf("absent reconciliation = %#v, %t, %v", operation, exists, err)
++	}
++}
++
+ func TestLifecycleOperationTimeoutIncludesBothLockWaits(t *testing.T) {
+ 	for _, gate := range []string{"generation", "session"} {
+ 		t.Run(gate, func(t *testing.T) {
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index a10654839348fd978ac46d775132baabc42252c2..cc616f341bbd4aa1e31bcbaaeee55248e5ba8624 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -3968,17 +3968,19 @@ func TestDeleteOperationRetryUsesTheJournaledForceSetting(t *testing.T) {
+ 		`{"schema":1,"slug":"example","workspace":%q,"phase":"validated","force":true,"operation_id":%q}`,
+ 		server.config.Workspace, strings.Repeat("a", 64),
+ 	)
+-	if err := os.WriteFile(filepath.Join(root, "example.removal.json"), []byte(journal), 0o600); err != nil {
++	journalPath := filepath.Join(root, "example.removal.json")
++	if err := os.WriteFile(journalPath, []byte(journal), 0o600); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	arguments := filepath.Join(t.TempDir(), "arguments")
+ 	helper := filepath.Join(t.TempDir(), "dev-session")
+ 	if err := os.WriteFile(
+-		helper, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$ARGUMENTS\"\n"), 0o755,
++		helper, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$ARGUMENTS\" || exit 1\nrm -- \"$DELETE_JOURNAL\" || exit 1\nexit 0\n"), 0o755,
+ 	); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	t.Setenv("ARGUMENTS", arguments)
++	t.Setenv("DELETE_JOURNAL", journalPath)
+ 	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+ 	freshDelete := httptest.NewRecorder()
+ 	server.deleteSession(freshDelete, httptest.NewRequest(
+@@ -4002,8 +4004,22 @@ func TestDeleteOperationRetryUsesTheJournaledForceSetting(t *testing.T) {
+ 	if response.Code != http.StatusAccepted {
+ 		t.Fatalf("delete retry = %d %q", response.Code, response.Body.String())
+ 	}
+-	if operation := waitLifecycleOperation(t, server, "example"); operation.State != "complete" {
+-		t.Fatalf("delete retry operation = %#v", operation)
++	completed := waitLifecycleOperation(t, server, "example")
++	if completed.State != "complete" || completed.ReceiptID != pendingOperation.ReceiptID ||
++		completed.Attempt != pendingOperation.Attempt+1 || !completed.Options.Force ||
++		completed.StartedAt != pendingOperation.StartedAt {
++		t.Fatalf("delete retry operation = %#v", completed)
++	}
++	if _, err := os.Stat(journalPath); !errors.Is(err, os.ErrNotExist) {
++		t.Fatalf("delete retry journal remains: %v", err)
++	}
++	reconciled, exists, err := server.lifecycleOperationForSlug("example")
++	if err != nil || !exists || reconciled.State != "complete" ||
++		reconciled.ReceiptID != completed.ReceiptID || reconciled.Attempt != completed.Attempt ||
++		reconciled.Options.Force != completed.Options.Force ||
++		reconciled.Options.JournalID != completed.Options.JournalID ||
++		reconciled.StartedAt != completed.StartedAt {
++		t.Fatalf("completed delete retry reconciliation = %#v, %t, %v", reconciled, exists, err)
+ 	}
+ 	data, err := os.ReadFile(arguments)
+ 	if err != nil {
+@@ -4026,17 +4042,19 @@ func TestDeleteOperationRetryCanUpgradeTheJournaledForceSetting(t *testing.T) {
+ 		`{"schema":1,"slug":"example","workspace":%q,"phase":"prepared","force":false,"operation_id":%q}`,
+ 		server.config.Workspace, journalID,
+ 	)
+-	if err := os.WriteFile(filepath.Join(root, "example.removal.json"), []byte(journal), 0o600); err != nil {
++	journalPath := filepath.Join(root, "example.removal.json")
++	if err := os.WriteFile(journalPath, []byte(journal), 0o600); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	arguments := filepath.Join(t.TempDir(), "arguments")
+ 	helper := filepath.Join(t.TempDir(), "dev-session")
+ 	if err := os.WriteFile(
+-		helper, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$ARGUMENTS\"\n"), 0o755,
++		helper, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$ARGUMENTS\" || exit 1\nrm -- \"$DELETE_JOURNAL\" || exit 1\nexit 0\n"), 0o755,
+ 	); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	t.Setenv("ARGUMENTS", arguments)
++	t.Setenv("DELETE_JOURNAL", journalPath)
+ 	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+ 	operation, exists, err := server.lifecycleOperationForSlug("example")
+ 	if err != nil || !exists {
+@@ -4053,9 +4071,22 @@ func TestDeleteOperationRetryCanUpgradeTheJournaledForceSetting(t *testing.T) {
+ 	if response.Code != http.StatusAccepted {
+ 		t.Fatalf("force-upgrade retry = %d %q", response.Code, response.Body.String())
+ 	}
+-	if operation := waitLifecycleOperation(t, server, "example"); operation.State != "complete" ||
+-		!operation.Options.Force || operation.StartedAt != originalStartedAt {
+-		t.Fatalf("force-upgrade operation = %#v", operation)
++	completed := waitLifecycleOperation(t, server, "example")
++	if completed.State != "complete" || !completed.Options.Force ||
++		completed.StartedAt != originalStartedAt || completed.ReceiptID != operation.ReceiptID ||
++		completed.Attempt != operation.Attempt+1 {
++		t.Fatalf("force-upgrade operation = %#v", completed)
++	}
++	if _, err := os.Stat(journalPath); !errors.Is(err, os.ErrNotExist) {
++		t.Fatalf("force-upgrade journal remains: %v", err)
++	}
++	reconciled, exists, err := server.lifecycleOperationForSlug("example")
++	if err != nil || !exists || reconciled.State != "complete" ||
++		reconciled.ReceiptID != completed.ReceiptID || reconciled.Attempt != completed.Attempt ||
++		reconciled.Options.Force != completed.Options.Force ||
++		reconciled.Options.JournalID != completed.Options.JournalID ||
++		reconciled.StartedAt != completed.StartedAt {
++		t.Fatalf("completed force-upgrade reconciliation = %#v, %t, %v", reconciled, exists, err)
+ 	}
+ 	data, err := os.ReadFile(arguments)
+ 	if err != nil {
+diff --git a/test/workspace_host/commands_and_locks_test.rb b/test/workspace_host/commands_and_locks_test.rb
+index fd2d257c244064b84530c800618167bdc5c45e64..1a6899d12bad2e42a794df54fa1a371b1b6deac1 100644
+--- a/test/workspace_host/commands_and_locks_test.rb
++++ b/test/workspace_host/commands_and_locks_test.rb
+@@ -1,8 +1,431 @@
+ # frozen_string_literal: true
+ 
+ require_relative '../support/workspace_host_test_case'
++require 'timeout'
+ 
+ class WorkspaceHostTest < Minitest::Test
++  class StreamingClusterHost < DevWorkspaceHost::Host
++    def initialize(provider:, **options)
++      @provider = provider
++      super(**options)
++    end
++
++    private
++
++    def extension_catalog(_package = package_root)
++      Struct.new(:provider_programs).new({
++        'alpha-devcluster' => { 'command' => @provider }
++      })
++    end
++  end
++
++  def test_capture_lease_streams_readiness_input_and_stderr_under_generation_guard
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      errors = StringIO.new
++      original_channels = [input, output].map { |io| File.readlink("/proc/self/fd/#{io.fileno}") }
++      host = streaming_host(context, input:, out: output, err: errors)
++      result = Thread.new { host.run('alpha-devcluster', ['capture-lease', 'instance']) }
++      ready = JSON.parse(Timeout.timeout(5) { reader.gets })
++      assert_equal('ready', ready.fetch('event'))
++      refute(ready.fetch('fds').any? { |target| original_channels.include?(target) })
++      refute_includes(ready.fetch('fds'), context.fetch(:lock))
++      assert_equal({}, ready.fetch('authority'))
++      assert_equal(context.fetch(:workspace), ready.fetch('workspace'))
++      assert_equal('example-workspace', ready.fetch('name'))
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        refute(probe.flock(File::LOCK_EX | File::LOCK_NB))
++      end
++      writer.write("fixture-request\n")
++      writer.flush
++      assert_equal("echo:fixture-request\n", Timeout.timeout(5) { reader.gets })
++      assert(result.alive?, 'readiness must precede provider exit')
++      writer.close
++      Timeout.timeout(5) { sleep 0.01 until File.exist?(context.fetch(:ended)) }
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        refute(probe.flock(File::LOCK_EX | File::LOCK_NB), 'guard must cover provider cleanup')
++      end
++      assert_equal(0, Timeout.timeout(5) { result.value })
++      assert_equal("provider diagnostics\n", errors.string)
++      assert_equal('EOF', File.read(context.fetch(:ended)))
++      assert_provider_reaped(context)
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        assert(probe.flock(File::LOCK_EX | File::LOCK_NB))
++      end
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++      result&.kill&.join
++    end
++  end
++
++  def test_capture_lease_early_failure_cancels_blocked_input_and_preserves_exit_mapping
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      output, errors = StringIO.new, StringIO.new
++      host = streaming_host(context, input:, out: output, err: errors)
++      assert_equal(1, Timeout.timeout(5) { host.run('alpha-devcluster', ['capture-lease', 'fail']) })
++      assert_includes(output.string, 'early output')
++      assert_includes(errors.string, 'early error')
++      assert_includes(errors.string, 'command failed:')
++      assert_provider_reaped(context)
++    ensure
++      [input, writer].compact.each { |io| io.close unless io.closed? }
++    end
++  end
++
++  def test_capture_lease_early_success_cancels_blocked_input
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      host = streaming_host(context, input:, out: StringIO.new, err: StringIO.new)
++      assert_equal(0, Timeout.timeout(5) { host.run('alpha-devcluster', ['capture-lease', 'exit']) })
++      assert_provider_reaped(context)
++    ensure
++      [input, writer].compact.each { |io| io.close unless io.closed? }
++    end
++  end
++
++  def test_capture_lease_broken_output_closes_provider_input_and_reaps_it
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      reader.close
++      errors = StringIO.new
++      host = streaming_host(context, input:, out: output, err: errors)
++      assert_equal(1, Timeout.timeout(5) { host.run('alpha-devcluster', ['capture-lease', 'instance']) })
++      assert_includes(errors.string, 'development cluster relay failed: Errno::EPIPE')
++      assert_equal('EOF', File.read(context.fetch(:ended)))
++      assert_provider_reaped(context)
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++    end
++  end
++
++  def test_capture_lease_interruption_finishes_owned_child_before_releasing_guard
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      host = streaming_host(context, input:, out: output, err: StringIO.new)
++      result = Thread.new do
++        host.run('alpha-devcluster', ['capture-lease', 'instance'])
++      rescue Interrupt
++        :interrupted
++      end
++      Timeout.timeout(5) { reader.gets }
++      result.raise(Interrupt)
++      assert_equal(:interrupted, Timeout.timeout(5) { result.value })
++      assert_equal('EOF', File.read(context.fetch(:ended)))
++      assert_provider_reaped(context)
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        assert(probe.flock(File::LOCK_EX | File::LOCK_NB))
++      end
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++      result&.kill&.join
++    end
++  end
++
++  def test_capture_lease_abrupt_dispatcher_loss_closes_both_mediated_peer_channels
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      dispatcher = fork do
++        writer.close
++        reader.close
++        host = streaming_host(context, input:, out: output, err: StringIO.new)
++        exit! host.run('alpha-devcluster', ['capture-lease', 'instance'])
++      rescue StandardError => error
++        warn "dispatcher fixture failed: #{error.class}: #{error.message}"
++        exit! 1
++      end
++      input.close
++      output.close
++      ready = JSON.parse(Timeout.timeout(5) { reader.gets })
++      assert_equal('ready', ready.fetch('event'))
++      Process.kill('KILL', dispatcher)
++      Process.waitpid(dispatcher)
++      dispatcher = nil
++      assert_nil(Timeout.timeout(5) { reader.gets }, 'caller must observe dispatcher loss')
++      Timeout.timeout(5) { sleep 0.01 until File.exist?(context.fetch(:ended)) }
++      assert_equal('EOF', File.read(context.fetch(:ended)), 'provider must observe input EOF')
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        assert(probe.flock(File::LOCK_EX | File::LOCK_NB))
++      end
++    ensure
++      if dispatcher
++        Process.kill('KILL', dispatcher)
++        Process.waitpid(dispatcher)
++      end
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++    end
++  end
++
++  def test_capture_lease_cancellation_reaps_a_provider_that_ignores_eof_and_term
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      host = streaming_host(context, input:, out: output, err: StringIO.new)
++      result = Thread.new { host.run('alpha-devcluster', ['capture-lease', 'stall']) }
++      Timeout.timeout(5) { reader.gets }
++      writer.close
++      assert_equal(1, Timeout.timeout(8) { result.value })
++      assert_provider_reaped(context)
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++      result&.kill&.join
++    end
++  end
++
++  def test_waiting_capture_lease_rejects_a_changed_package_generation
++    with_streaming_provider do |context|
++      FileUtils.mkdir_p(File.dirname(context.fetch(:lock)))
++      owner = File.open(context.fetch(:lock), File::RDWR | File::CREAT, 0o600)
++      owner.flock(File::LOCK_EX)
++      errors = StringIO.new
++      host = streaming_host(context, input: StringIO.new, out: StringIO.new, err: errors)
++      result = Thread.new { host.run('alpha-devcluster', ['capture-lease', 'instance']) }
++      sleep 0.05
++      refute(File.exist?(context.fetch(:pid)))
++      profile = context.fetch(:environment).fetch('DEV_WORKSPACES_PROFILE')
++      File.unlink(profile)
++      File.symlink(context.fetch(:workspace), profile)
++      owner.flock(File::LOCK_UN)
++      assert_equal(1, Timeout.timeout(5) { result.value })
++      assert_includes(errors.string, 'package transition completed')
++      refute(File.exist?(context.fetch(:pid)))
++    ensure
++      owner&.close
++      result&.kill&.join
++    end
++  end
++
++  def test_non_streaming_provider_dispatch_retains_buffered_path
++    with_streaming_provider do |context|
++      host = streaming_host(context, input: StringIO.new, out: StringIO.new, err: StringIO.new)
++      captured = nil
++      host.define_singleton_method(:system_env!) { |*arguments| captured = arguments }
++      assert_equal(0, host.run('alpha-devcluster', ['status', 'capture-lease']))
++      assert_equal(['status', 'capture-lease'], captured.drop(2))
++      refute(File.exist?(context.fetch(:pid)))
++    end
++  end
++
++  def test_capture_lease_stdout_eof_closes_the_peer_while_input_stays_open_and_guard_covers_reap
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      host = streaming_host(context, input:, out: output, err: StringIO.new)
++      result = Thread.new { host.run('alpha-devcluster', ['capture-lease', 'stdout-ready']) }
++      assert_equal('ready', JSON.parse(Timeout.timeout(5) { reader.gets })['event'])
++      writer.puts('close-output')
++      writer.flush
++      assert_nil(Timeout.timeout(5) { reader.gets }, 'protocol EOF must reach the caller before provider exit')
++      refute(writer.closed?, 'caller stdin deliberately remains open')
++      Timeout.timeout(5) { sleep 0.01 until File.exist?(context.fetch(:ended)) }
++      assert_equal('EOF', File.read(context.fetch(:ended)), 'provider stdin must close after stdout loss')
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        refute(probe.flock(File::LOCK_EX | File::LOCK_NB), 'guard remains held during provider cleanup')
++      end
++      assert_equal(0, Timeout.timeout(5) { result.value })
++      assert(output.closed?, 'injected protocol sink is closed too')
++      assert_provider_reaped(context)
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++      result&.kill&.join
++    end
++  end
++
++  def test_capture_lease_stdout_eof_before_or_immediately_after_readiness_closes_injected_sink
++    %w[stdout-before stdout-same].each do |mode|
++      with_streaming_provider do |context|
++        input, writer = IO.pipe
++        output = StringIO.new
++        host = streaming_host(context, input:, out: output, err: StringIO.new)
++        assert_equal(0, Timeout.timeout(5) { host.run('alpha-devcluster', ['capture-lease', mode]) })
++        assert(output.closed?, 'StringIO closure has the same protocol meaning as pipe EOF')
++        assert_equal('EOF', File.read(context.fetch(:ended)))
++        if mode == 'stdout-before'
++          assert_empty(output.string)
++        else
++          assert_equal('ready', JSON.parse(output.string)['event'])
++        end
++        refute(writer.closed?)
++        assert_provider_reaped(context)
++      ensure
++        [input, writer].compact.each { |io| io.close unless io.closed? }
++      end
++    end
++  end
++
++  def test_capture_lease_default_stdout_closes_its_os_descriptor_before_provider_cleanup
++    with_streaming_provider do |context|
++      catalog = context.fetch(:environment).fetch('DEV_WORKSPACES_EXTENSION_CATALOG')
++      File.write(catalog, JSON.generate(
++        'schema' => 1, 'commands' => [], 'skills' => [],
++        'clusterProviders' => [
++          { 'id' => 'alpha', 'label' => 'Alpha', 'command' => context.fetch(:provider) }
++        ]
++      ))
++      release = context.fetch(:ended) + '.release'
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      diagnostics = File.open(context.fetch(:ended) + '.diagnostics', 'w+')
++      dispatcher = Process.spawn(
++        context.fetch(:environment).merge(
++          'DEV_WORKSPACE_HOST_MODE' => 'alpha-devcluster',
++          'PROVIDER_PID' => context.fetch(:pid), 'PROVIDER_ENDED' => context.fetch(:ended),
++          'PROVIDER_RELEASE' => release
++        ),
++        RbConfig.ruby, File.expand_path('../../libexec/workspace-host', __dir__),
++        'capture-lease', 'stdout-default', in: input, out: output, err: diagnostics,
++        close_others: true
++      )
++      input.close
++      output.close
++      assert_equal('ready', JSON.parse(Timeout.timeout(5) { reader.gets })['event'])
++      writer.puts('close-output')
++      writer.flush
++      assert_nil(Timeout.timeout(5) { reader.gets }, 'default stdout must close its actual fd')
++      refute(writer.closed?, 'caller input remains open after protocol loss')
++      Timeout.timeout(5) { sleep 0.01 until File.exist?(context.fetch(:ended)) }
++      provider_pid = Integer(File.read(context.fetch(:pid)))
++      assert(File.exist?("/proc/#{provider_pid}"), 'provider cleanup has not finished')
++      assert_nil(Process.waitpid(dispatcher, Process::WNOHANG))
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        refute(probe.flock(File::LOCK_EX | File::LOCK_NB), 'generation guard covers cleanup')
++      end
++      File.write(release, 'finish')
++      _, status = Timeout.timeout(5) { Process.waitpid2(dispatcher) }
++      dispatcher = nil
++      assert(status.success?)
++      refute(File.exist?("/proc/#{provider_pid}"), 'dispatcher reaped its exact provider')
++    ensure
++      File.write(release, 'finish') if release
++      if dispatcher
++        Process.kill('KILL', dispatcher) rescue Errno::ESRCH
++        Process.waitpid(dispatcher)
++      end
++      [input, writer, reader, output, diagnostics].compact.each { |io| io.close unless io.closed? }
++    end
++  end
++
++  def test_capture_lease_stderr_eof_leaves_protocol_input_and_output_usable
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      errors = StringIO.new
++      host = streaming_host(context, input:, out: output, err: errors)
++      result = Thread.new { host.run('alpha-devcluster', ['capture-lease', 'stderr-close']) }
++      assert_equal('ready', JSON.parse(Timeout.timeout(5) { reader.gets })['event'])
++      writer.puts('still-leased')
++      writer.flush
++      assert_equal("echo:still-leased\n", Timeout.timeout(5) { reader.gets })
++      refute(output.closed?)
++      refute(errors.closed?, 'diagnostic sink remains owned by the caller')
++      assert(result.alive?)
++      writer.close
++      assert_equal(0, Timeout.timeout(5) { result.value })
++      assert_provider_reaped(context)
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++      result&.kill&.join
++    end
++  end
++
++  private
++
++  def with_streaming_provider
++    Dir.mktmpdir('workspace-host-streaming') do |directory|
++      root = make_workspace(directory, 'workspace')
++      config = File.join(directory, 'config', 'registry.json')
++      DevWorkspaceHost::Registry.new(config).register(
++        name: 'example-workspace', root:, hostname: 'example-workspace.workspace.example.test',
++        aliases: [], replace: false
++      )
++      context = {
++        workspace: root,
++        provider: File.join(directory, 'provider'),
++        pid: File.join(directory, 'provider.pid'),
++        ended: File.join(directory, 'provider-ended'),
++        lock: File.join(directory, 'state', 'transition.lock'),
++        environment: install_source_profile(host_environment(directory, config:))
++      }
++      File.write(context.fetch(:provider), <<~RUBY)
++        #!#{RbConfig.ruby}
++        require 'json'
++        File.write(ENV.fetch('PROVIDER_PID'), Process.pid.to_s)
++        STDOUT.sync = true
++        STDERR.sync = true
++        if ARGV[1] == 'fail'
++          puts 'early output'
++          warn 'early error'
++          exit 7
++        end
++        exit 0 if ARGV[1] == 'exit'
++        if ARGV[1] == 'stdout-before'
++          STDOUT.reopen(File::NULL, 'w')
++          STDOUT.close
++          STDIN.read
++          File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
++          sleep 0.2
++          exit 0
++        end
++        fds = Dir.glob('/proc/self/fd/*').filter_map do |path|
++          File.readlink(path) rescue nil
++        end
++        authority = ENV.select { |name, _| name.match?(/TRANSITION_HELD|TRANSITION_LOCK_FD|LIFECYCLE/) }
++        puts JSON.generate(event: 'ready', fds:, authority:,
++                           workspace: ENV['DEVCLUSTER_WORKSPACE'], name: ENV['DEV_WORKSPACE_NAME'])
++        warn 'provider diagnostics'
++        if %w[stdout-ready stdout-same stdout-default].include?(ARGV[1])
++          STDIN.gets unless ARGV[1] == 'stdout-same'
++          STDOUT.reopen(File::NULL, 'w')
++          STDOUT.close
++          STDIN.read
++          File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
++          if ARGV[1] == 'stdout-default'
++            sleep 0.01 until File.exist?(ENV.fetch('PROVIDER_RELEASE'))
++          else
++            sleep 0.2
++          end
++          exit 0
++        end
++        if ARGV[1] == 'stderr-close'
++          STDERR.reopen(File::NULL, 'w')
++          STDERR.close
++        end
++        if ARGV[1] == 'stall'
++          Signal.trap('TERM', 'IGNORE')
++          STDIN.read
++          loop { sleep 1 }
++        end
++        STDIN.each_line { |line| puts 'echo:' + line }
++        File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
++        sleep 0.2
++      RUBY
++      File.chmod(0o755, context.fetch(:provider))
++      yield context
++    end
++  end
++
++  def streaming_host(context, **channels)
++    environment = context.fetch(:environment).merge(
++      'PROVIDER_PID' => context.fetch(:pid), 'PROVIDER_ENDED' => context.fetch(:ended),
++      'DEV_WORKSPACE_TRANSITION_HELD' => '1', 'DEV_WORKSPACE_TRANSITION_LOCK_FD' => '999',
++      'DEV_SESSION_LIFECYCLE_OPERATION' => 'archive',
++      'DEV_SESSION_LIFECYCLE_LOCK_FD' => '998', 'DEV_SESSION_LIFECYCLE_LOCK_PATH' => '/ignored'
++    )
++    StreamingClusterHost.new(provider: context.fetch(:provider), env: environment, **channels)
++  end
++
++  def assert_provider_reaped(context)
++    pid = Integer(File.read(context.fetch(:pid)))
++    assert_raises(Errno::ECHILD) { Process.waitpid(pid, Process::WNOHANG) }
++    refute(File.exist?("/proc/#{pid}"), 'exact spawned provider must be gone')
++  end
++
++  public
++
+   def test_quiesce_ignores_a_manifest_from_another_codex_runtime
+     Dir.mktmpdir('workspace-host-test') do |directory|
+       root = make_workspace(directory, 'workspace')
