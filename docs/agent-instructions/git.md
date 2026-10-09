@@ -153,6 +153,8 @@ and has not been merged into the main branch. Use this to keep functional
 commits, generated updates, and follow-up fixes reviewable. Do not rewrite
 history that has already been merged.
 
+## Final branch history and merge readiness
+
 Before final review of an unmerged branch, compare its complete base-to-head
 commit series and final diff with the intended result. Identify superseded
 approaches, follow-up fixes, unused compatibility paths, and every migration.
@@ -161,6 +163,33 @@ externally consumed before rewriting it. Consolidate obsolete, unapplied branch
 history while preserving supported paths. Give this inventory to the dedicated
 independent reviewer for a whole-branch assessment. Earlier incremental
 reviews do not complete this gate.
+
+Consolidate repeated dependency or channel-pin updates in one logical update
+stream into one final update, including generated lockfiles and metadata.
+Identify streams by the dependency, channel/role or input and their logical
+purpose. Branch publication, development deployment and earlier incremental
+review do not justify retaining superseded pins. Preserve supported deployed
+behavior and migration lineage; that compatibility obligation does not require
+keeping each intermediate pin commit. Retain separate updates only when a
+concrete release, supported consumer or state boundary requires them, with
+evidence explaining why the final update alone is insufficient. Keep rollout
+SHAs and execution evidence in rollout records. If a supported consumer needs
+an exact source revision, preserve its required ref as part of consolidation.
+Existing published-history protections still apply.
+
+Include these streams and their commit dispositions in the review packet under
+the mandatory-change-review skill. The reviewer must independently assess
+consolidation and any retained boundary; a mechanical-content review exemption
+does not exempt commits from whole-branch history assessment.
+
+Immediately before an approved merge, the lead checks the current complete
+base-to-head series and final diff against the final review. Confirm that
+superseded updates were consolidated and any retained updates have the required
+evidence and reviewer conclusion. Record the checked final heads and history
+conclusion in session state. For later changes, apply the skill's existing
+narrow-fix and affected-lane review rules and this procedure's patch-equivalent
+rebase rules; do not substitute an earlier incremental review for the final
+series check. Integration still requires explicit user approval.
 
 Before changing code in a repository, read its local `AGENTS.md` if present.
 When a repository has no `AGENTS.md`, infer commands and style from its

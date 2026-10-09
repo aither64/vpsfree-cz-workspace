@@ -159,6 +159,12 @@ Consolidate obsolete, unapplied branch history while preserving supported
 paths. Give the inventory to the dedicated independent reviewer for an explicit
 whole-branch history and migration conclusion under the mandatory-change-review
 workflow. Earlier incremental reviews do not complete this gate.
+Repeated dependency and channel-pin updates in one logical update stream must
+be consolidated to the final update. Development deployments do not exempt
+superseded pin commits; keep rollout provenance in rollout records and preserve
+required deployed compatibility. Before an approved merge, the lead verifies
+the current complete series and the reviewer's repeated-update conclusion under
+the [Git procedure](docs/agent-instructions/git.md).
 
 ## Compatibility And Deployment
 
