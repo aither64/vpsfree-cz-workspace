@@ -1,0 +1,2232 @@
+diff --git a/README.md b/README.md
+index 1b08cb9..c3dafb3 100644
+--- a/README.md
++++ b/README.md
+@@ -113,14 +113,36 @@ the configured hostname and aliases; the registry stores the resolved values.
+ The portal sidebar shows the main Codex allowance, with percentage remaining
+ and reset times in the browser's local timezone. The weekly and 5-hour windows
+ appear only when Codex reports them. Model-specific allowances are excluded.
+-On narrow screens, select the compact limit indicator to open the details.
++Reported credits and banked reset counts appear alongside the allowance.
++Select **Account details**, the account summary or the compact limit indicator
++to see reset details and expiration times. Expired or unsupported reset rows
++cannot be used. If Codex reports only a count or partial details, **Use next
++available reset** lets Codex choose. Every use asks for confirmation.
+ 
+ The session-independent `GET /api/codex-limits` endpoint reads the configured
+ App Server account and returns `windows` plus an `updatedAt` snapshot time.
+ Each window contains `usedPercent`, `windowDurationMins` and nullable `resetsAt`
+ (Unix seconds). Reads share a 30-second server cache. Open pages refresh every
+-minute while visible and when focused. A failed refresh keeps prior values
+-marked with their last update time.
++minute while visible; focus skips reads while the snapshot is still fresh.
++Background reads retain prior values. Failures show a warning after 30 continuous
++visible seconds, with the last update time. Browser timing defaults live in
++codex-web's `conversation/assets/refresh.js`.
++
++`POST /api/codex-limits/reset` requires the portal's exact origin, a UUID
++`idempotencyKey`, optional `creditId` and the snapshot's opaque `accountScope`.
++The server checks the current account before every attempt, serializes reset
++operations and invalidates its cache even when the RPC response is lost. Reads
++started before that mutation cannot repopulate the cache. Raw account IDs are
++not exposed. Reset actions are unavailable when Codex cannot report account
++identity or the browser cannot verify storage writes and coordinate tabs.
++
++An origin-scoped Web Lock protects saving, sending and clearing each attempt
++across tabs. The browser reloads the saved attempt inside the lock and saves
++one attempt before sending it. Browsers without Web Locks cannot redeem resets. A lost acknowledgement keeps
++that attempt across reloads and blocks another reset until **Retry saved
++attempt** resolves it with the same key. A different account cannot retry it.
++Confirmed outcomes trigger a fresh account read; the browser never estimates
++remaining counts. Opening details and refreshing limits never consume a reset.
+ 
+ ## Session creation
+ 
+@@ -236,7 +258,9 @@ content available when selected.
+ 
+ ## Prompt attachments
+ 
+-Drag files into the prompt area or choose **Attach files**. File cards show
++Drag files into the prompt area or choose **Attach files**. In a conversation,
++Ctrl+V or Cmd+V also attaches binary clipboard files or images. Text paste keeps
++its native behavior, including clipboard data that contains both text and files. File cards show
+ transfer progress and let you retry or remove a file. Above the cards, a summary
+ shows the selected count and full total size, with the completed count while
+ uploads remain unfinished. Files stay in the summary until removed. The New
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 22fc817..c4d3f4e 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -191,24 +191,34 @@ legacy read succeeds. Authorization failures, timeouts and invalid cursors
+ remain errors. A changed cursor keeps loaded messages visible while a fresh
+ bounded history repair checks their continuity.
+ 
+-In lead and member conversations, model and reasoning changes stay in a draft
+-until **Apply** sends the pair as one settings update. **Cancel** restores the
+-most recent server-confirmed pair. A dirty draft survives polling, reconnects
+-and page reloads in that browser tab.
+-
+-Active or unknown turn state blocks editing but keeps an existing draft. A
+-failed or uncertain update also keeps the draft and rereads the thread before
+-another attempt. The controls never send a compensating update automatically.
+-
+-The centered history row shows loading progress and a Retry control after a
+-page read fails. Automatic loading pauses until Retry repeats the failed older
+-page or continuity repair. An expired cursor prompts reconnection and a check
+-of retained history. Servers without paging keep the existing legacy behavior.
+-
+-Requests, queued messages and activity timing refresh separately from the
+-transcript. A slow queue reconciliation does not delay the first conversation
+-page. A failed request or queue refresh keeps the last visible result and shows
+-a retry control. Transcript receipt and upload clearing require positive
++In lead and member conversations, the composer shows the last confirmed model
++and reasoning effort. **Edit** opens a dialog with both selectors and **Save**
++sends the pair together. Closing the dialog or pressing Escape discards edits.
++An open dialog keeps its draft during polling and reconnects. Reloading starts
++from the server-confirmed pair.
++
++Active or unknown turn state blocks saving. A failed or uncertain update keeps
++the dialog open and rereads the thread. The controls never send a compensating
++update automatically. Reads begun before a successful save cannot overwrite its
++confirmed pair.
++
++Browser refresh timings come from codex-web's `conversation/assets/refresh.js`.
++That policy contains resource intervals, deadlines, retry backoff and notice
++delays. Background refreshes keep the last values visible. Initial loading
++appears after 750 ms and manual older-history loading after 250 ms. Refresh
++failures appear after 30 continuous visible seconds; returning to a hidden tab
++or restoring a page starts a fresh grace period. Access errors and failures of
++user actions appear immediately.
++
++Automatic history repair retries with capped backoff without loading banners.
++A manual older-page failure offers Retry for that page. Expired cursors trigger
++reconnection and a check of retained history. Servers without paging keep the
++existing legacy behavior.
++
++Requests, queued messages, activity timing, session details and index status
++refresh separately from the transcript. A slow queue reconciliation does not
++delay the first conversation page. Failed refreshes retain their last result;
++request and queue warnings offer Retry after the shared grace period. Transcript receipt and upload clearing require positive
+ server evidence across all retained pages, including automatically loaded older
+ messages. While the server is still checking conversation metadata, the
+ mode is shown as pending and plan actions stay hidden. The tab retries metadata
+diff --git a/flake.lock b/flake.lock
+index 52fb716..66230bd 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1791144036,
+-        "narHash": "sha256-tsVai0aKhc5oStiZHNtHhocXg8nhjib2X21e+KjzyjY=",
++        "lastModified": 1791555684,
++        "narHash": "sha256-Nxv6EZHzo41kvdbdk/yO8qQbW8AS2PjYL61yGq4OXvs=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
++        "rev": "860d515d0aa5d2f7ad68893db41f0969c78e00a7",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
++        "rev": "860d515d0aa5d2f7ad68893db41f0969c78e00a7",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 48e91f5..18a575c 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c";
++      url = "github:aither64/codex-web/860d515d0aa5d2f7ad68893db41f0969c78e00a7";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 8cc4e96..48d3e1b 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -199,7 +199,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-KaCjN7jV2hu4DX9sRhqivj4iC8vG5JL9icyv3IVA9jg=";
++  vendorHash = "sha256-vuk4thcCAxg2JuuVFv2IdLWgm7mCr/bFl36irl+y2v0=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 70a49a1..2cc81c6 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -3,7 +3,7 @@ module github.com/aither64/dev-workspace/portal
+ go 1.24.0
+ 
+ require (
+-	github.com/aither64/codex-web v0.0.0-20261004200036-3d07cf60cfde
++	github.com/aither64/codex-web v0.0.0-20261009142124-860d515d0aa5
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 2528bf1..69488de 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,5 +1,5 @@
+-github.com/aither64/codex-web v0.0.0-20261004200036-3d07cf60cfde h1:pMD3TzOK6FAYFaxDhciALCfqAFeyQtDVeY2nMEwgJww=
+-github.com/aither64/codex-web v0.0.0-20261004200036-3d07cf60cfde/go.mod h1:wxfbQeNrjnDW43kExN39RdEflxekqogIDfernCytTEc=
++github.com/aither64/codex-web v0.0.0-20261009142124-860d515d0aa5 h1:eZHEJ1hfaZ+PMFEkR613PQEV3SxPk/wOqn/YGTHF4g4=
++github.com/aither64/codex-web v0.0.0-20261009142124-860d515d0aa5/go.mod h1:wxfbQeNrjnDW43kExN39RdEflxekqogIDfernCytTEc=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/web/browser_contract_test.cjs b/portal/internal/web/browser_contract_test.cjs
+index ab30223..e19a979 100644
+--- a/portal/internal/web/browser_contract_test.cjs
++++ b/portal/internal/web/browser_contract_test.cjs
+@@ -908,14 +908,14 @@ assert.equal(loadRequestInputDraft(storage, "example", "thread-1", "request-1",
+ assert.deepEqual(loadQueueAttempts(storage, "example", "thread-2"), [firstAttempt]);
+ 
+ // Hidden time never extends the last known working state. A stale value stays
+-// visible during ten seconds of visible recovery, then reports unavailability.
++// visible during thirty seconds of visible recovery, then reports unavailability.
+ let timingNow = 0;
+ const clock = createTimingClock(() => timingNow);
+ clock.received(); timingNow = 5000;
+ assert.equal(clock.view().elapsed, 5000);
+ clock.pause(); timingNow = 600_000; clock.resume();
+ assert.deepEqual(clock.view(), {elapsed: 5000, stale: true, unavailable: false});
+-timingNow += 9999; clock.failed(); assert.equal(clock.view().unavailable, false);
++timingNow += 29999; clock.failed(); assert.equal(clock.view().unavailable, false);
+ timingNow += 1; assert.equal(clock.view().unavailable, true);
+ clock.pause(); timingNow += 600_000; clock.resume(); assert.equal(clock.view().unavailable, false);
+ clock.received(); assert.deepEqual(clock.view(), {elapsed: 0, stale: false, unavailable: false});
+@@ -992,7 +992,9 @@ if (!unitOnly) {
+   assert.match(sessionHTML, /id="lifecycle-operation-status"/);
+   assert.match(sessionHTML, /id="codex-mode"[^>]*><\/div>/);
+   assert.doesNotMatch(sessionHTML, /data-codex-mode=/);
+-  assert.doesNotMatch(sessionHTML, /codex-settings-dialog|codex-settings-open/);
++  assert.match(sessionHTML, /codex-settings-dialog/);
++  assert.match(sessionHTML, /codex-settings-open/);
++  assert.doesNotMatch(sessionHTML, /codex-settings-apply|codex-settings-cancel/);
+ 
+   const details = await client.details();
+   assert.equal(details.repositoryCount, 0);
+diff --git a/portal/internal/web/codex_limits.go b/portal/internal/web/codex_limits.go
+index 426e64e..b77da09 100644
+--- a/portal/internal/web/codex_limits.go
++++ b/portal/internal/web/codex_limits.go
+@@ -2,6 +2,8 @@ package web
+ 
+ import (
+ 	"context"
++	"crypto/sha256"
++	"encoding/hex"
+ 	"errors"
+ 	"net/http"
+ 	"time"
+@@ -10,8 +12,12 @@ import (
+ )
+ 
+ type codexLimitsSnapshot struct {
+-	Windows   []codex.RateLimitWindow `json:"windows"`
+-	UpdatedAt time.Time               `json:"updatedAt"`
++	Windows      []codex.RateLimitWindow      `json:"windows"`
++	UpdatedAt    time.Time                    `json:"updatedAt"`
++	Credits      *codex.CreditsSnapshot       `json:"credits,omitempty"`
++	ResetCredits *codex.RateLimitResetCredits `json:"rateLimitResetCredits,omitempty"`
++	AccountScope string                       `json:"accountScope,omitempty"`
++	CanReset     bool                         `json:"canReset"`
+ }
+ 
+ type codexLimitsCall struct {
+@@ -47,6 +53,7 @@ func (s *Server) loadCodexLimits(requestContext context.Context) (codexLimitsSna
+ 		}
+ 	}
+ 	call := &codexLimitsCall{done: make(chan struct{})}
++	generation := s.codexLimitsGeneration
+ 	s.codexLimitsWait = call
+ 	s.codexLimitsMu.Unlock()
+ 
+@@ -58,31 +65,114 @@ func (s *Server) loadCodexLimits(requestContext context.Context) (codexLimitsSna
+ 		var limits codex.AccountRateLimits
+ 		limits, call.err = s.config.Codex.ReadAccountRateLimits(ctx)
+ 		if call.err == nil {
+-			call.result = codexLimitsSnapshot{
+-				Windows: mainCodexWindows(limits), UpdatedAt: time.Now().UTC(),
+-			}
++			call.result = s.codexLimitsSnapshot(limits)
+ 		}
+ 	}
+ 	cancel()
+ 
+ 	s.codexLimitsMu.Lock()
+-	if call.err == nil {
++	if call.err == nil && generation == s.codexLimitsGeneration {
+ 		s.codexLimitsCache = call.result
+ 	}
+-	s.codexLimitsWait = nil
++	if s.codexLimitsWait == call {
++		s.codexLimitsWait = nil
++	}
+ 	close(call.done)
+ 	s.codexLimitsMu.Unlock()
+ 	return call.result, call.err
+ }
+ 
+-func mainCodexWindows(limits codex.AccountRateLimits) []codex.RateLimitWindow {
++type resetCreditConsumer interface {
++	ConsumeRateLimitResetCredit(context.Context, string, string) (codex.ResetCreditResult, error)
++}
++
++func accountLimitsScope(limits codex.AccountRateLimits) string {
++	if limits.AccountID == nil || *limits.AccountID == "" {
++		return ""
++	}
++	digest := sha256.Sum256([]byte(*limits.AccountID))
++	return hex.EncodeToString(digest[:])
++}
++
++func (s *Server) codexLimitsSnapshot(limits codex.AccountRateLimits) codexLimitsSnapshot {
++	_, supported := s.config.Codex.(resetCreditConsumer)
++	scope := accountLimitsScope(limits)
++	return codexLimitsSnapshot{Windows: mainCodexWindows(limits), UpdatedAt: time.Now().UTC(),
++		Credits: mainCodexBucket(limits).Credits, ResetCredits: limits.ResetCredits,
++		AccountScope: scope, CanReset: supported && scope != ""}
++}
++
++func (s *Server) invalidateCodexLimits() {
++	s.codexLimitsMu.Lock()
++	s.codexLimitsGeneration++
++	s.codexLimitsCache = codexLimitsSnapshot{}
++	// A read that began before redemption must not become the post-reset read.
++	s.codexLimitsWait = nil
++	s.codexLimitsMu.Unlock()
++}
++
++func (s *Server) consumeCodexReset(w http.ResponseWriter, r *http.Request) {
++	r.Body = http.MaxBytesReader(w, r.Body, 4096)
++	var body struct {
++		IdempotencyKey string `json:"idempotencyKey"`
++		CreditID       string `json:"creditId"`
++		AccountScope   string `json:"accountScope"`
++	}
++	if !s.decodeJSON(w, r, &body) {
++		return
++	}
++	if !queueClientMessageIDPattern.MatchString(body.IdempotencyKey) ||
++		!messageDigestPattern.MatchString(body.AccountScope) || len(body.CreditID) > 512 {
++		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid reset attempt"})
++		return
++	}
++	consumer, ok := s.config.Codex.(resetCreditConsumer)
++	if !ok {
++		s.writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "Reset credits are unavailable"})
++		return
++	}
++	s.codexResetMu.Lock()
++	defer s.codexResetMu.Unlock()
++	ctx, cancel := context.WithTimeout(s.operationContext, 35*time.Second)
++	defer cancel()
++	// Check the live account before every attempt, including a retained retry.
++	limits, err := s.config.Codex.ReadAccountRateLimits(ctx)
++	if err != nil {
++		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "The current account could not be verified"})
++		return
++	}
++	if accountLimitsScope(limits) != body.AccountScope {
++		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "The Codex account changed. The saved reset attempt was not sent."})
++		return
++	}
++	result, err := consumer.ConsumeRateLimitResetCredit(ctx, body.IdempotencyKey, body.CreditID)
++	// Even a lost response may have consumed the credit. Retire pre-attempt reads.
++	s.invalidateCodexLimits()
++	if err != nil {
++		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "The reset outcome could not be confirmed. Retry the same attempt."})
++		return
++	}
++	switch result.Outcome {
++	case "reset", "alreadyRedeemed", "nothingToReset", "noCredit":
++		s.writeJSON(w, http.StatusOK, result)
++	default:
++		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "The reset outcome could not be confirmed. Retry the same attempt."})
++	}
++}
++
++func mainCodexBucket(limits codex.AccountRateLimits) codex.RateLimitSnapshot {
+ 	snapshot, found := limits.RateLimitsByLimitID["codex"]
+ 	if !found {
+ 		snapshot = limits.RateLimits
+ 		if snapshot.LimitID != "" && snapshot.LimitID != "codex" {
+-			return []codex.RateLimitWindow{}
++			return codex.RateLimitSnapshot{}
+ 		}
+ 	}
++	return snapshot
++}
++
++func mainCodexWindows(limits codex.AccountRateLimits) []codex.RateLimitWindow {
++	snapshot := mainCodexBucket(limits)
+ 	windows := make([]codex.RateLimitWindow, 0, 2)
+ 	for _, duration := range []int64{300, 10080} {
+ 		for _, window := range []*codex.RateLimitWindow{snapshot.Primary, snapshot.Secondary} {
+diff --git a/portal/internal/web/paging_browser_live_test.cjs b/portal/internal/web/paging_browser_live_test.cjs
+index de7e3af..fad1c8b 100644
+--- a/portal/internal/web/paging_browser_live_test.cjs
++++ b/portal/internal/web/paging_browser_live_test.cjs
+@@ -180,12 +180,19 @@ const items = (first, last) => Array.from({length: last - first + 1}, (_, index)
+     repairScenario = true; newest = items(401, 500);
+     await page.evaluate(() => fetch("/fixture/refresh"));
+     await expect.poll(() => repairReads).toBe(1);
+-    await expect(page.locator("#history-status")).toContainText("Earlier messages could not be loaded");
+-    await page.evaluate(() => fetch("/fixture/refresh"));
+-    await expect(page.locator("#repair-history")).toBeVisible();
+-    assert.equal(repairReads, 1, "newest refresh must not retry a failed repair");
+-    await page.locator("#repair-history").click();
++    await expect(page.locator("#repair-history")).toBeHidden();
++    await page.evaluate(() => {
++      Object.defineProperty(document, "hidden", {configurable: true, value: true});
++      document.dispatchEvent(new Event("visibilitychange"));
++    });
++    await page.waitForTimeout(2500);
++    assert.equal(repairReads, 1, "background tabs must pause failed automatic repair");
++    await page.evaluate(() => {
++      Object.defineProperty(document, "hidden", {configurable: true, value: false});
++      document.dispatchEvent(new Event("visibilitychange"));
++    });
+     await expect.poll(() => repairReads).toBe(2);
++    await expect(page.locator("#repair-history")).toBeHidden();
+     await expect(page.locator("#transcript .message")).toHaveCount(500);
+     repairScenario = false;
+     smallPage = true;
+diff --git a/portal/internal/web/presentation_browser_test.cjs b/portal/internal/web/presentation_browser_test.cjs
+index 6e43429..be3972d 100644
+--- a/portal/internal/web/presentation_browser_test.cjs
++++ b/portal/internal/web/presentation_browser_test.cjs
+@@ -294,8 +294,8 @@ const cards = (version, mode, bodyVersion, runURL) => '<div class="repo-grid">'
+       await page.keyboard.press("End");
+       assert.equal(await page.evaluate(() => history.length), historyLength, "same-tab key added a history entry");
+       await width(250);
+-      await expect(page.locator("#auto-archive-values")).toContainText("once all registered branches are merged");
+-      await expect(page.locator("#auto-archive-values li")).toHaveText(["The session has uncommitted worktree changes.", "Codex has an active turn."]);
++      await expect(page.locator("#auto-archive-details dl")).toContainText("once all registered branches are merged");
++      await expect(page.locator("#auto-archive-values")).toHaveText("The session has uncommitted worktree changes. Codex has an active turn.");
+       const technical = page.locator("#auto-archive-details");
+       await expect(technical).not.toHaveAttribute("open");
+       await expect(technical.locator("pre")).toBeHidden();
+@@ -306,13 +306,13 @@ const cards = (version, mode, bodyVersion, runURL) => '<div class="repo-grid">'
+       await page.getByRole("tab", {name: "Codex", exact: true}).click();
+       await page.getByRole("tab", {name: "Settings", exact: true}).click();
+       await expect(page.locator("#auto-archive-status")).toContainText("Showing the last available settings");
+-      await expect(page.locator("#auto-archive-values")).toContainText("Not before");
++      await expect(page.locator("#auto-archive-details dl")).toContainText("Not before");
+       await expect(technical.locator("pre")).toContainText("Fixture read failure");
+       failArchive = false;
+       await page.getByRole("checkbox", {name: "Keep open", exact: true}).check();
+       await expect(page.getByRole("checkbox", {name: "Keep open", exact: true})).toBeEnabled();
+-      await expect(page.locator("#auto-archive-values")).not.toContainText("Not before");
+-      await expect(technical).toBeHidden();
++      await expect(page.locator("#auto-archive-details dl")).not.toContainText("Not before");
++      await expect(technical.locator("pre")).toHaveText("");
+       const hold = page.getByRole("checkbox", {name: "Keep open", exact: true});
+       await expect(hold).toBeChecked();
+       failHold = true;
+@@ -331,8 +331,8 @@ const cards = (version, mode, bodyVersion, runURL) => '<div class="repo-grid">'
+         await expireAutoArchiveCache();
+         await page.getByRole("tab", {name: "Codex", exact: true}).click();
+         await page.getByRole("tab", {name: "Settings", exact: true}).click();
+-        await expect(page.locator("#auto-archive-values")).toContainText("Waiting for the first scan");
+-        await expect(page.locator("#auto-archive-values")).not.toContainText("Not before");
++        await expect(page.locator("#auto-archive-details dl")).toContainText("Waiting for the first scan");
++        await expect(page.locator("#auto-archive-details dl")).not.toContainText("Not before");
+       }
+       await expect(technical.locator("pre")).toHaveText("unknown <script>diagnostic</script>");
+       await expect(page.locator("#auto-archive-values")).toContainText("An archival check could not be completed.");
+@@ -369,8 +369,8 @@ const cards = (version, mode, bodyVersion, runURL) => '<div class="repo-grid">'
+       await page.setViewportSize({width: 600, height: 720}); await width(180);
+       await limits.focus(); await page.keyboard.press("Enter");
+       await expect(limits).toHaveAttribute("aria-expanded", "true");
+-      const limitsBox = await page.locator("#codex-limits-panel").boundingBox();
+-      assert(limitsBox.x >= 180 && limitsBox.x + limitsBox.width <= 600, "index limits popover escaped the viewport");
++      const limitsBox = await page.locator("#codex-limits-dialog").boundingBox();
++      assert(limitsBox.x >= 0 && limitsBox.x + limitsBox.width <= 600, "account limits dialog escaped the viewport");
+       await page.keyboard.press("Escape");
+       await expect(limits).toHaveAttribute("aria-expanded", "false");
+       await page.setViewportSize({width: 1440, height: 720}); await width(310);
+@@ -398,6 +398,7 @@ const cards = (version, mode, bodyVersion, runURL) => '<div class="repo-grid">'
+       await page.evaluate(() => { Object.defineProperty(document, "hidden", {configurable: true, value: false}); document.dispatchEvent(new Event("visibilitychange")); });
+       assert.equal(workspaceArchiveReads, 0);
+       await expect(page.locator("#workspace-auto-archive")).toHaveCount(0);
++      await page.getByRole("button", {name: "Workspace menu", exact: true}).click();
+       await page.getByRole("link", {name: "Automatic archival", exact: true}).click();
+       await page.waitForURL("**/automatic-archival");
+       await expect(page.locator("#workspace-auto-archive-status")).toContainText("disabled");
+@@ -413,6 +414,9 @@ const cards = (version, mode, bodyVersion, runURL) => '<div class="repo-grid">'
+       assert.equal(workspaceArchiveReads, 1);
+       failWorkspaceArchive = true;
+       await page.clock.runFor(30_000);
++      await expect.poll(() => workspaceArchiveReads).toBeGreaterThan(1);
++      await expect(page.locator("#workspace-auto-archive-status")).not.toContainText("unavailable");
++      await page.clock.runFor(30_001);
+       await expect(page.locator("#workspace-auto-archive-status")).toContainText("unavailable");
+       await expect(page.locator("#workspace-auto-archive-rows a")).toHaveCount(3);
+       assert.equal(indexReads, overviewIndexReads);
+diff --git a/portal/internal/web/question_browser_test.cjs b/portal/internal/web/question_browser_test.cjs
+index 8ea1ef8..ed565fb 100644
+--- a/portal/internal/web/question_browser_test.cjs
++++ b/portal/internal/web/question_browser_test.cjs
+@@ -110,8 +110,9 @@ const question = (id, isBlocking = true) => ({
+     await expect(wizard().locator("textarea")).toHaveValue("Keep this answer");
+     offline = true;
+     await page.request.post(baseURL + "/fixture/refresh");
+-    // The shared connection indicator intentionally waits ten seconds.
+-    await expect(page.locator("#conversation-connection")).toBeVisible({timeout: 15000});
++    // Transient refresh failures stay quiet for thirty visible seconds.
++    await expect(page.locator("#conversation-connection")).toBeHidden();
++    await expect(page.locator("#conversation-connection")).toBeVisible({timeout: 35000});
+     await expect(composer).toBeHidden();
+     offline = false; failAnswer = false;
+     await page.locator("#conversation-connection button").click();
+diff --git a/portal/internal/web/question_browser_test.go b/portal/internal/web/question_browser_test.go
+index 5e5ac0e..ee42034 100644
+--- a/portal/internal/web/question_browser_test.go
++++ b/portal/internal/web/question_browser_test.go
+@@ -73,7 +73,7 @@ func TestQuestionBrowser(t *testing.T) {
+ 	})
+ 	httpServer.StartTLS()
+ 	defer httpServer.Close()
+-	for _, script := range []string{"question_browser_test.cjs", "page_lifecycle_browser_test.cjs", "presentation_browser_test.cjs", "team_settings_browser_test.cjs", "repository_review_live_browser_test.cjs", "paging_browser_live_test.cjs"} {
++	for _, script := range []string{"question_browser_test.cjs", "page_lifecycle_browser_test.cjs", "presentation_browser_test.cjs", "team_settings_browser_test.cjs", "usability_browser_test.cjs", "repository_review_live_browser_test.cjs", "paging_browser_live_test.cjs"} {
+ 		t.Run(script, func(t *testing.T) {
+ 			command := exec.Command("node", script, httpServer.URL)
+ 			if output, err := command.CombinedOutput(); err != nil {
+diff --git a/portal/internal/web/reset_credits_browser_test.cjs b/portal/internal/web/reset_credits_browser_test.cjs
+new file mode 100644
+index 0000000..efec7cd
+--- /dev/null
++++ b/portal/internal/web/reset_credits_browser_test.cjs
+@@ -0,0 +1,115 @@
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const {test} = require('node:test');
++const ready = import('data:text/javascript;base64,' + Buffer.from(fs.readFileSync(__dirname + '/static/reset-credits.js')).toString('base64'));
++const key = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
++const withLock = operation => operation();
++const scope = 'b'.repeat(64);
++
++function store() {
++  let attempt = null;
++  return {available: () => true, load: () => attempt ? [{...attempt}] : [],
++    store: value => {attempt = {...value}; return true;}, remove: () => {attempt = null; return true;}};
++}
++
++test('opening/reset cancellation sends no request and a saved retry spends only one mocked reset', async () => {
++  const {createResetCreditAction} = await ready;
++  const memory = store(), calls = [], keys = new Set();
++  let confirmed = false, loseResponse = true, remaining = 3, refreshed = 0;
++  const options = {store: memory, withLock, confirm: () => confirmed, randomUUID: () => key,
++    refresh: async () => {refreshed++;}, request: async (path, request) => {
++      assert.equal(path, '/api/codex-limits/reset');
++      const body = JSON.parse(request.body); calls.push(body);
++      const duplicate = keys.has(body.idempotencyKey);
++      if (!duplicate) {keys.add(body.idempotencyKey); remaining--;}
++      if (loseResponse) {loseResponse = false; throw Error('Lost response');}
++      return {outcome: duplicate ? 'alreadyRedeemed' : 'reset'};
++    }};
++  let action = createResetCreditAction(options);
++  assert.equal(calls.length, 0);
++  await action.use({accountScope: scope, creditId: 'reset-1'});
++  assert.equal(calls.length, 0); assert.equal(memory.load().length, 0);
++  confirmed = true;
++  await assert.rejects(action.use({accountScope: scope, creditId: 'reset-1'}), /Lost response/);
++  assert.equal(remaining, 2); assert.equal(memory.load()[0].id, key);
++  action = createResetCreditAction(options);
++  assert.equal(calls.length, 1);
++  await assert.rejects(action.use({accountScope: scope, creditId: 'reset-2'}), /Resolve/);
++  assert.equal(await action.retry(), 'alreadyRedeemed');
++  assert.deepEqual(calls[1], calls[0]); assert.equal(remaining, 2);
++  assert.equal(refreshed, 1); assert.equal(memory.load().length, 0);
++});
++
++test('duplicate clicks share the in-flight attempt and count-only redemption omits a selected ID', async () => {
++  const {createResetCreditAction} = await ready;
++  let finish, calls = 0;
++  const action = createResetCreditAction({store: store(), withLock, confirm: () => true, randomUUID: () => key,
++    refresh: async () => {}, request: async (_path, request) => {
++      calls++; assert.equal(JSON.parse(request.body).creditId, '');
++      return new Promise(resolve => {finish = resolve;});
++    }});
++  const pending = action.use({accountScope: scope});
++  await action.use({accountScope: scope}); assert.equal(calls, 1);
++  finish({outcome:'nothingToReset'}); assert.equal(await pending, 'nothingToReset');
++  assert.equal(action.state().pending, null);
++});
++
++test('failed storage and unknown responses retain safe behavior', async () => {
++  const {createResetCreditAction} = await ready;
++  let calls = 0;
++  const memory = store(); memory.store = () => false;
++  const options = {store: memory, withLock, confirm: () => true, randomUUID: () => key,
++    refresh: async () => {}, request: async () => {calls++; return {outcome:'unexpected'};}};
++  await assert.rejects(createResetCreditAction(options).use({accountScope:scope}), /not sent/);
++  assert.equal(calls, 0);
++  const action = createResetCreditAction({...options, store:store()});
++  await assert.rejects(action.use({accountScope:scope}), /could not be confirmed/);
++  assert.equal(action.state().pending.id, key);
++});
++
++
++test('two stale tabs cannot overwrite or clear an unresolved shared attempt', async () => {
++  const {createResetCreditAction} = await ready;
++  const memory = store(), calls = [];
++  let locked = false, finish;
++  const exclusive = async operation => {
++    if (locked) throw Error('Another tab owns the lock');
++    locked = true;
++    try { return await operation(); } finally { locked = false; }
++  };
++  const options = {store: memory, withLock: exclusive, confirm: () => true, randomUUID: () => key,
++    refresh: async () => {}, request: async (_path, request) => {
++      calls.push(JSON.parse(request.body));
++      return new Promise((resolve, reject) => {finish = {resolve, reject};});
++    }};
++  const first = createResetCreditAction(options);
++  const stale = createResetCreditAction({...options, randomUUID: () => 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'});
++  const sending = first.use({accountScope:scope, creditId:'reset-1'});
++  await assert.rejects(stale.use({accountScope:scope, creditId:'reset-2'}), /lock/);
++  assert.equal(memory.load()[0].id, key);
++  finish.reject(Error('Lost acknowledgement'));
++  await assert.rejects(sending, /Lost/);
++  await assert.rejects(stale.use({accountScope:scope, creditId:'reset-2'}), /Resolve/);
++  assert.equal(calls.length, 1);
++  assert.equal(stale.state().pending.id, key);
++  const retrying = stale.retry();
++  await assert.rejects(first.use({accountScope:scope}), /lock/);
++  finish.resolve({outcome:'alreadyRedeemed'});
++  assert.equal(await retrying, 'alreadyRedeemed');
++  assert.deepEqual(calls[1], calls[0]);
++  const next = stale.use({accountScope:scope, creditId:'reset-2'});
++  first.reload(); assert.equal(first.state().pending.id, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc');
++  finish.reject(Error('Lost second acknowledgement'));
++  await assert.rejects(next, /Lost second/);
++  assert.equal(memory.load()[0].creditId, 'reset-2');
++});
++
++test('missing tab coordination fails closed without sending a reset', async () => {
++  const {createResetCreditAction} = await ready;
++  let calls = 0;
++  const action = createResetCreditAction({store:store(), confirm:() => true, randomUUID:() => key,
++    refresh:async () => {}, request:async () => {calls++;}});
++  assert.equal(action.state().unavailable, true);
++  await action.use({accountScope:scope}); await action.retry();
++  assert.equal(calls, 0);
++});
+diff --git a/portal/internal/web/reset_credits_browser_test.go b/portal/internal/web/reset_credits_browser_test.go
+new file mode 100644
+index 0000000..f2d1c25
+--- /dev/null
++++ b/portal/internal/web/reset_credits_browser_test.go
+@@ -0,0 +1,16 @@
++package web
++
++import (
++	"os/exec"
++	"testing"
++)
++
++func TestResetCreditBrowserContracts(t *testing.T) {
++	if _, err := exec.LookPath("node"); err != nil {
++		t.Skip("Node is supplied by the Nix check environment")
++	}
++	output, err := exec.Command("node", "--test", "reset_credits_browser_test.cjs").CombinedOutput()
++	if err != nil {
++		t.Fatalf("reset browser contracts: %v\n%s", err, output)
++	}
++}
+diff --git a/portal/internal/web/reset_credits_test.go b/portal/internal/web/reset_credits_test.go
+new file mode 100644
+index 0000000..c4d3c18
+--- /dev/null
++++ b/portal/internal/web/reset_credits_test.go
+@@ -0,0 +1,126 @@
++package web
++
++import (
++	"context"
++	"encoding/json"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"sync/atomic"
++	"testing"
++
++	"github.com/aither64/codex-web/codex"
++)
++
++type resetLimitsCodex struct {
++	*limitsCodex
++	consume func(context.Context, string, string) (codex.ResetCreditResult, error)
++}
++
++func (c *resetLimitsCodex) ConsumeRateLimitResetCredit(ctx context.Context, key, id string) (codex.ResetCreditResult, error) {
++	return c.consume(ctx, key, id)
++}
++
++func fixtureAccountLimits(count int64) codex.AccountRateLimits {
++	account, balance := "fixture-account", "12.50"
++	return codex.AccountRateLimits{AccountID: &account,
++		RateLimits:   codex.RateLimitSnapshot{Credits: &codex.CreditsSnapshot{HasCredits: true, Balance: &balance}},
++		ResetCredits: &codex.RateLimitResetCredits{AvailableCount: count}}
++}
++
++func resetRequest(server *Server, origin, scope, key string) *httptest.ResponseRecorder {
++	response := httptest.NewRecorder()
++	body, _ := json.Marshal(map[string]string{"accountScope": scope, "idempotencyKey": key, "creditId": "fixture-reset"})
++	r := httptest.NewRequest(http.MethodPost, "/api/codex-limits/reset", strings.NewReader(string(body)))
++	r.Header.Set("Origin", origin)
++	server.Handler().ServeHTTP(response, r)
++	return response
++}
++
++func TestResetCreditsOriginAccountAndIdempotency(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	used, calls := 0, 0
++	keys := map[string]bool{}
++	server.config.Codex = &resetLimitsCodex{limitsCodex: &limitsCodex{browserContractCodex: &browserContractCodex{},
++		read: func(context.Context) (codex.AccountRateLimits, error) {
++			return fixtureAccountLimits(int64(3 - used)), nil
++		}},
++		consume: func(_ context.Context, key, id string) (codex.ResetCreditResult, error) {
++			calls++
++			if id != "fixture-reset" {
++				t.Fatal("credit changed")
++			}
++			outcome := "alreadyRedeemed"
++			if !keys[key] {
++				keys[key] = true
++				used++
++				outcome = "reset"
++			}
++			return codex.ResetCreditResult{Outcome: outcome}, nil
++		}}
++	snapshot, err := server.loadCodexLimits(context.Background())
++	if err != nil || !snapshot.CanReset || snapshot.ResetCredits.AvailableCount != 3 || *snapshot.Credits.Balance != "12.50" {
++		t.Fatalf("snapshot: %#v, %v", snapshot, err)
++	}
++	const key = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
++	if response := resetRequest(server, "https://untrusted.invalid", snapshot.AccountScope, key); response.Code != 403 {
++		t.Fatalf("origin: %d", response.Code)
++	}
++	if response := resetRequest(server, server.config.BaseURL, strings.Repeat("b", 64), key); response.Code != 409 {
++		t.Fatalf("account: %d %s", response.Code, response.Body)
++	}
++	if calls != 0 {
++		t.Fatal("rejected request consumed a reset")
++	}
++	for _, outcome := range []string{"reset", "alreadyRedeemed"} {
++		response := resetRequest(server, server.config.BaseURL, snapshot.AccountScope, key)
++		if response.Code != 200 || !strings.Contains(response.Body.String(), outcome) {
++			t.Fatalf("reset: %d %s", response.Code, response.Body)
++		}
++	}
++	if used != 1 || calls != 2 {
++		t.Fatalf("used %d; calls %d", used, calls)
++	}
++	fresh, err := server.loadCodexLimits(context.Background())
++	if err != nil || fresh.ResetCredits.AvailableCount != 2 {
++		t.Fatalf("fresh: %#v, %v", fresh, err)
++	}
++	encoded, _ := json.Marshal(fresh)
++	if strings.Contains(string(encoded), "fixture-account") || strings.Contains(string(encoded), "accountId") {
++		t.Fatal("raw account ID exposed")
++	}
++}
++
++func TestResetInvalidationFencesAnOlderRead(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	entered, release, finished := make(chan struct{}), make(chan struct{}), make(chan struct{})
++	var reads atomic.Int32
++	server.config.Codex = &resetLimitsCodex{limitsCodex: &limitsCodex{browserContractCodex: &browserContractCodex{},
++		read: func(context.Context) (codex.AccountRateLimits, error) {
++			if reads.Add(1) == 1 {
++				close(entered)
++				<-release
++				return fixtureAccountLimits(3), nil
++			}
++			return fixtureAccountLimits(2), nil
++		}}, consume: func(context.Context, string, string) (codex.ResetCreditResult, error) {
++		return codex.ResetCreditResult{Outcome: "reset"}, nil
++	}}
++	go func() { defer close(finished); _, _ = server.loadCodexLimits(context.Background()) }()
++	<-entered
++	response := resetRequest(server, server.config.BaseURL, accountLimitsScope(fixtureAccountLimits(3)), "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
++	if response.Code != 200 {
++		t.Fatalf("reset: %d %s", response.Code, response.Body)
++	}
++	if _, err := server.loadCodexLimits(context.Background()); err != nil {
++		t.Fatal(err)
++	}
++	close(release)
++	<-finished
++	fresh, err := server.loadCodexLimits(context.Background())
++	if err != nil || fresh.ResetCredits.AvailableCount != 2 {
++		t.Fatalf("older read poisoned cache: %#v, %v", fresh, err)
++	}
++}
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index a13b9d8..fa964d8 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -175,6 +175,8 @@ type Server struct {
+ 	codexLimitsMu          sync.Mutex
+ 	codexLimitsCache       codexLimitsSnapshot
+ 	codexLimitsWait        *codexLimitsCall
++	codexLimitsGeneration  uint64
++	codexResetMu           sync.Mutex
+ 	messageMu              sync.Mutex
+ 	messageLocks           map[string]conversation.MutationLocker
+ 	clusters               cluster.Runner
+@@ -691,6 +693,8 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
+ 		s.models(w, r)
+ 	case r.Method == http.MethodGet && r.URL.Path == "/api/codex-limits":
+ 		s.codexLimits(w, r)
++	case r.Method == http.MethodPost && r.URL.Path == "/api/codex-limits/reset":
++		s.consumeCodexReset(w, r)
+ 	case r.Method == http.MethodGet && r.URL.Path == "/api/collaboration-modes":
+ 		s.collaborationModes(w, r)
+ 	case r.URL.Path == "/api/auto-archive":
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index a106548..2ef513c 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -1468,12 +1468,12 @@ func TestSessionPageUsesOnlyTrustedLiveRuntimeAuthority(t *testing.T) {
+ 			}
+ 			if testCase.authority {
+ 				body := response.Body.String()
+-				for _, marker := range []string{`id="codex-model"`, `id="codex-effort"`, `class="compact-select"`} {
++				for _, marker := range []string{`id="codex-model"`, `id="codex-effort"`, `id="codex-settings-dialog"`} {
+ 					if !strings.Contains(body, marker) {
+-						t.Fatalf("session page is missing inline setting %s", marker)
++						t.Fatalf("session page is missing setting %s", marker)
+ 					}
+ 				}
+-				for _, marker := range []string{`id="codex-settings-open"`, `id="codex-settings-dialog"`} {
++				for _, marker := range []string{`id="codex-settings-apply"`, `id="codex-settings-cancel"`} {
+ 					if strings.Contains(body, marker) {
+ 						t.Fatalf("session page retained obsolete setting %s", marker)
+ 					}
+@@ -1804,7 +1804,7 @@ func TestBrowserClientShipsMessageAndLifecycleInteractions(t *testing.T) {
+ 		"const signature = JSON.stringify([entries,", "client.operation().then((operation)",
+ 		"dialog.showModal()", `lifecycleKind === "revive" && (needsOptions || lastLifecycleOperation.code === "target_changed")`,
+ 		`openLifecycleConfirmation("delete")`, "confirmationForLifecycle",
+-		"void retryRevive(lifecycleRetry)", "indexStatusFreshForPage", "setTimeout(refreshIndexProgress, Math.max(1000,",
++		"void retryRevive(lifecycleRetry)", "indexStatusFreshForPage", "setTimeout(refreshIndexProgress, Math.max(refreshPolicy.indexProgressMs,",
+ 		"renderIndexOperations(payload.operations)", "indexNavigationPending = true",
+ 		`timedProgress(progress, "Preparing session")`, `operation")}/retry`, "fork-progress",
+ 	} {
+@@ -4215,7 +4215,7 @@ func TestShippedBrowserClientMatchesSessionAPI(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	modulePath := filepath.Join(t.TempDir(), "conversation.mjs")
+-	for _, name := range []string{"uploads.js", "sync.js"} {
++	for _, name := range []string{"uploads.js", "sync.js", "refresh.js"} {
+ 		dependency, err := http.Get(httpServer.URL + "/codex/assets/" + name)
+ 		if err != nil {
+ 			t.Fatal(err)
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index e50aa91..4ed922f 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1,4 +1,5 @@
+ (async () => {
++  let refreshPolicy = null;
+   const apiPath = (slug, operation) => `/api/sessions/${encodeURIComponent(slug)}/${operation}`;
+   const createRequest = (fetchRequest) => async (path, options = {}) => {
+     const response = await fetchRequest(path, {
+@@ -359,7 +360,7 @@
+     const reads = new Set();
+     return {
+       get paused() { return paused; },
+-      begin(timeout = 10_000) {
++      begin(timeout = refreshPolicy?.readDeadlineMs || 10_000) {
+         const abort = new AbortController(), ticket = generation;
+         const timer = setTimeout(() => abort.abort(), timeout);
+         reads.add(abort);
+@@ -383,7 +384,7 @@
+         const stale = needsFresh || age > maxAge;
+         if (!paused && !stale) elapsed = age;
+         if (!paused && stale && recovery === null) recovery = now();
+-        return {elapsed, stale, unavailable: !paused && stale && recovery !== null && now() - recovery >= 10_000};
++        return {elapsed, stale, unavailable: !paused && stale && recovery !== null && now() - recovery >= (refreshPolicy?.warningMs || 30_000)};
+       },
+     };
+   };
+@@ -869,25 +870,45 @@
+     return {message: presentation.blockers.join(" "), attemptedAt: state.last_attempt_at || state.checked_at};
+   };
+ 
+-  const createCodexLimitsReader = (request, render) => {
+-    let snapshot = null;
+-    let pending = null;
+-    return {
+-      refresh() {
+-        if (pending) return pending;
+-        pending = (async () => {
++  const createCodexLimitsReader = (request, render, options = {}) => {
++    let snapshot = null, pending = null, generation = 0, rerun = false;
++    let lastSuccessAt = -Infinity, retryTimer = null;
++    const now = options.now || Date.now;
++    let retryDelay = options.retryInitialMs || 2000;
++    const reader = {
++      refresh(force = false) {
++        if (options.isVisible?.() === false) return Promise.resolve();
++        if (pending) { if (force) rerun = true; return pending.promise; }
++        if (!force && now() - lastSuccessAt < (options.freshnessMs || 0)) return Promise.resolve();
++        clearTimeout(retryTimer); retryTimer = null;
++        const read = {generation, abort: new AbortController(), promise: null};
++        const timeout = setTimeout(() => read.abort.abort(), options.deadlineMs || 10_000);
++        pending = read; options.onStart?.();
++        read.promise = (async () => {
+           try {
+-            snapshot = await request("/api/codex-limits");
++            const value = await request("/api/codex-limits", {signal: read.abort.signal});
++            if (read.generation !== generation || read.abort.signal.aborted) return;
++            snapshot = value; lastSuccessAt = now(); retryDelay = options.retryInitialMs || 2000;
+             render(snapshot, false);
+-          } catch (_error) {
+-            render(snapshot, true);
++          } catch (error) {
++            if (read.generation !== generation) return;
++            render(snapshot, true, error);
++            if (options.retryInitialMs && options.isVisible?.() !== false && error.status !== 401 && error.status !== 403) {
++              retryTimer = setTimeout(() => { retryTimer = null; void reader.refresh(true); }, retryDelay);
++              retryDelay = Math.min(options.retryMaxMs || 30_000, retryDelay * 2);
++            }
+           } finally {
+-            pending = null;
++            clearTimeout(timeout);
++            if (pending === read) pending = null;
++            if (rerun) { rerun = false; void reader.refresh(true); }
+           }
+         })();
+-        return pending;
++        return read.promise;
+       },
++      invalidate() { ++generation; lastSuccessAt = -Infinity; },
++      pause() { ++generation; pending?.abort.abort(); clearTimeout(retryTimer); retryTimer = null; },
+     };
++    return reader;
+   };
+ 
+   // Creation drafts are deliberately small browser-local retry records. The
+@@ -1007,6 +1028,8 @@
+     return;
+   }
+ 
++  const conversationAssets = await import("/codex/assets/conversation.js?v=13");
++  refreshPolicy = conversationAssets.refreshPolicy;
+   const body = document.body;
+   const sidebarMenu = document.getElementById("sidebar-menu");
+   const sidebarMenuToggle = document.querySelector(".sidebar-menu-toggle");
+@@ -1020,12 +1043,11 @@
+   window.addEventListener("resize", positionSidebarMenu);
+   document.querySelector(".sidebar-content")?.addEventListener("scroll", positionSidebarMenu, {passive: true});
+   const narrowSidebar = globalThis.matchMedia("(max-width: 760px)");
+-  let comparisonOpen = false, updateLimitsPopover = () => {};
++  let comparisonOpen = false;
+   const updateSidebar = () => {
+     const reviewing = comparisonOpen && document.getElementById("repositories")?.classList.contains("active");
+     body.classList.toggle("compact-sidebar", narrowSidebar.matches || Boolean(reviewing));
+     positionSidebarMenu();
+-    updateLimitsPopover();
+   };
+   narrowSidebar.addEventListener("change", updateSidebar);
+   document.addEventListener("session-section-change", updateSidebar);
+@@ -1058,18 +1080,23 @@
+     const list = document.getElementById("workspace-auto-archive-rows");
+     const reads = createReadScope();
+     let timer = null, running = false, checkedAt = 0, leaving = false;
++    let summary = status.textContent;
++    const notice = conversationAssets.createRefreshNotice({render: state => {
++      status.textContent = state.warning ? "Cached archival status is unavailable. Previously displayed rows are retained." : summary;
++    }});
+     const refresh = async () => {
+       clearTimeout(timer);
+       if (document.hidden || leaving || reads.paused || running) return;
+-      const remaining = 30_000 - (Date.now() - checkedAt);
++      const remaining = refreshPolicy.archivalMs - (Date.now() - checkedAt);
+       if (remaining > 0) { timer = setTimeout(refresh, remaining); return; }
+       running = true;
+-      const read = reads.begin(60_000);
++      const read = reads.begin(refreshPolicy.archivalDeadlineMs);
+       try {
+         const payload = await request("/api/auto-archive", {signal: read.signal});
+         if (!read.isCurrent()) return;
+         const presentation = workspaceArchivePresentation(payload);
+-        status.textContent = `${presentation.summary} Last scan: ${payload.last_scan?.checked_at ? activityAge(payload.last_scan.checked_at) : "not recorded"}.`;
++        summary = `${presentation.summary} Last scan: ${payload.last_scan?.checked_at ? activityAge(payload.last_scan.checked_at) : "not recorded"}.`;
++        notice.success();
+         list.replaceChildren();
+         for (const row of presentation.rows) {
+           const item = document.createElement("div"); item.className = "auto-archive-overview-row";
+@@ -1078,11 +1105,11 @@
+           item.append(link, details); list.append(item);
+         }
+       } catch (error) {
+-        if (read.isCurrent()) status.textContent = "Cached archival status is unavailable. Previously displayed rows are retained.";
++        if (read.isCurrent()) notice.failure(error);
+       } finally {
+         if (read.isCurrent()) checkedAt = Date.now();
+         read.finish(); running = false;
+-        if (!reads.paused && !leaving) timer = setTimeout(refresh, Math.max(0, 30_000 - (Date.now() - checkedAt)));
++        if (!reads.paused && !leaving) timer = setTimeout(refresh, Math.max(0, refreshPolicy.archivalMs - (Date.now() - checkedAt)));
+       }
+     };
+     const pause = () => { reads.pause(); clearTimeout(timer); timer = null; };
+@@ -1094,7 +1121,6 @@
+     if (document.hidden) pause(); else void refresh();
+     return;
+   }
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=12");
+   let composerUploads = null;
+   let composerUploadReady = true;
+   configureDurableAttemptStore(conversationAssets.createDurableAttemptStore);
+@@ -1102,16 +1128,84 @@
+   const limitsPanel = document.getElementById("codex-limits-panel");
+   if (limitsPanel) {
+     const toggle = document.querySelector(".codex-limits-toggle");
++    const dialog = document.getElementById("codex-limits-dialog");
++    const details = dialog.querySelector("[data-account-limits]");
++    const resetStatus = dialog.querySelector("[data-reset-status]");
++    let limitsSnapshot = null, resetAction = null, limits = null, limitsLeaving = false;
++    const openDetails = () => { renderAccountDetails(); dialog.showModal(); void limits?.refresh(); };
++    limitsPanel.querySelector("[data-limits-details]").addEventListener("click", openDetails);
++    dialog.querySelector("[data-limits-close]").addEventListener("click", () => dialog.close());
++    toggle.removeAttribute("popovertarget");
++    toggle.setAttribute("aria-controls", dialog.id); toggle.setAttribute("aria-haspopup", "dialog");
++    toggle.addEventListener("click", openDetails);
++    dialog.addEventListener("close", () => toggle.setAttribute("aria-expanded", "false"));
++    dialog.addEventListener("toggle", event => toggle.setAttribute("aria-expanded", String(event.newState === "open")));
++    const resetFeedback = outcome => {
++      if (!outcome) return;
++      resetStatus.textContent = ({reset: "Reset used.",
++        alreadyRedeemed: "This reset attempt already completed.",
++        nothingToReset: "No limit is eligible for a reset.", noCredit: "No banked resets are available."})[outcome];
++    };
++    const redeem = async credit => {
++      resetStatus.textContent = "";
++      try {
++        const expires = credit?.expiresAt != null ? ` (expires ${new Date(credit.expiresAt * 1000).toLocaleString()})` : "";
++        resetFeedback(await resetAction.use({creditId: credit?.id || "", accountScope: limitsSnapshot?.accountScope,
++          description: credit ? `${credit.title || "this reset"}${expires}` : "the next available reset"}));
++      } catch (error) { resetStatus.textContent = error.message; }
++    };
++    const renderAccountDetails = () => {
++      details.replaceChildren();
++      const snapshot = limitsSnapshot;
++      const line = text => { const p = document.createElement("p"); p.textContent = text; details.append(p); };
++      if (!snapshot) { line("Account details are unavailable."); return; }
++      renderLimitWindows(details, snapshot.windows || []);
++      const credits = snapshot.credits;
++      if (credits) line(credits.unlimited ? "Unlimited credits" : `Credits: ${credits.balance ?? (credits.hasCredits ? "Available" : "0")}`);
++      else line("Credits were not reported.");
++      const resets = snapshot.rateLimitResetCredits;
++      line(resets ? `Banked resets: ${resets.availableCount}` : "Banked resets were not reported.");
++      const state = resetAction?.state();
++      const blocked = !snapshot.canReset || !snapshot.accountScope || !state || state.busy || state.unavailable || Boolean(state.pending);
++      if (state?.pending) {
++        line("A saved reset attempt has an unconfirmed outcome. Resolve it before using another reset.");
++        const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "Retry saved attempt";
++        retry.disabled = state.busy || state.unavailable || state.pending.accountScope !== snapshot.accountScope;
++        retry.addEventListener("click", async () => { try { resetFeedback(await resetAction.retry()); } catch (error) { resetStatus.textContent = error.message; } });
++        details.append(retry);
++        if (state.pending.accountScope !== snapshot.accountScope) line("The saved attempt belongs to a different Codex account.");
++      }
++      if (state?.unavailable) line("Reset actions are unavailable because this browser cannot safely save and coordinate attempts.");
++      if (resets?.availableCount > 0) {
++        if (resets.credits == null) line("Individual reset details are unavailable.");
++        else if (resets.credits.length < resets.availableCount) line("Codex reported details for only some available resets.");
++        const rows = [...(resets.credits || [])].sort((a, b) => (a.expiresAt ?? Infinity) - (b.expiresAt ?? Infinity));
++        for (const credit of rows) {
++          const row = document.createElement("div"); row.className = "reset-credit";
++          const text = document.createElement("span");
++          text.textContent = `${credit.title || "Rate-limit reset"} · ${credit.expiresAt == null ? "No expiration" : `Expires ${new Date(credit.expiresAt * 1000).toLocaleString()}`}`;
++          const button = document.createElement("button"); button.type = "button"; button.textContent = "Use reset…";
++          button.disabled = blocked || credit.status !== "available" || credit.resetType !== "codexRateLimits" ||
++            credit.expiresAt != null && credit.expiresAt * 1000 <= Date.now();
++          button.addEventListener("click", () => { void redeem(credit); });
++          row.append(text, button); details.append(row);
++        }
++        if (resets.credits == null || resets.credits.length < resets.availableCount) {
++          const next = document.createElement("button"); next.type = "button"; next.textContent = "Use next available reset…";
++          next.disabled = blocked; next.addEventListener("click", () => { void redeem(); }); details.append(next);
++        }
++        if (!snapshot.canReset) line("Reset redemption is unavailable until the current account can be verified.");
++      }
++      line(`Updated ${new Date(snapshot.updatedAt).toLocaleString()}`);
++    };
+     const content = limitsPanel.querySelector("[data-limits-content]");
+     const compactLabel = toggle.querySelector("[data-limits-compact-label]");
+     const compactValue = toggle.querySelector("[data-limits-compact-value]");
+     const formatLimitDate = (date) => date.toLocaleString(undefined, {
+       month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+     });
+-    const renderLimits = (snapshot, failed) => {
+-      content.replaceChildren();
++    const renderLimitWindows = (target, windows) => {
+       const summaries = [];
+-      const windows = snapshot?.windows || [];
+       for (const window of windows) {
+         const remaining = Math.max(0, Math.min(100, 100 - window.usedPercent));
+         const label = window.windowDurationMins === 10080 ? "Weekly" : "5h";
+@@ -1143,13 +1237,19 @@
+           resetLine.append("Resets ", time);
+           item.append(resetLine);
+         }
+-        content.append(item);
++        target.append(item);
+       }
++      return summaries;
++    };
++    const renderLimits = (snapshot, failed) => {
++      content.replaceChildren();
++      const windows = snapshot?.windows || [];
++      const summaries = renderLimitWindows(content, windows);
+       if (!windows.length) {
+         const status = document.createElement("p");
+         status.className = "limits-status";
+-        status.textContent = snapshot ? "No limits reported." : "Limits unavailable.";
+-        content.append(status);
++        status.textContent = snapshot ? "No limits reported." : failed ? "Limits unavailable." : "";
++        if (status.textContent) content.append(status);
+       }
+       if (failed && snapshot) {
+         const stale = document.createElement("p");
+@@ -1157,6 +1257,20 @@
+         stale.textContent = `Update failed. Last updated ${formatLimitDate(new Date(snapshot.updatedAt))}.`;
+         content.append(stale);
+       }
++      const credits = snapshot?.credits;
++      const resets = snapshot?.rateLimitResetCredits;
++      const extra = [];
++      if (credits?.unlimited) extra.push("Unlimited credits");
++      else if (credits?.hasCredits) extra.push(credits.balance != null ? `${credits.balance} credits` : "Credits available");
++      if (resets?.availableCount > 0) extra.push(`${resets.availableCount} banked resets`);
++      if (extra.length) {
++        const summary = document.createElement("button"); summary.type = "button"; summary.className = "quiet limits-account-summary";
++        summary.textContent = extra.join(" · "); summary.addEventListener("click", openDetails); content.append(summary);
++      }
++      if (failed) {
++        const retry = document.createElement("button"); retry.type = "button"; retry.className = "quiet"; retry.textContent = "Retry";
++        retry.addEventListener("click", () => { void limits?.refresh(true); }); content.append(retry);
++      }
+       const compactWindow = windows.find((window) => window.windowDurationMins === 10080) || windows[0];
+       compactLabel.textContent = compactWindow ? (compactWindow.windowDurationMins === 10080 ? "Weekly" : "5h") : "Limits";
+       compactValue.textContent = compactWindow ? `${Math.max(0, Math.min(100, 100 - compactWindow.usedPercent))}%` : "?";
+@@ -1165,27 +1279,46 @@
+       toggle.title = `Codex limits. ${summary}${failed && snapshot ? ". Update failed." : ""}`;
+       toggle.setAttribute("aria-label", toggle.title);
+     };
+-    updateLimitsPopover = () => {
+-      const compact = body.classList.contains("compact-sidebar");
+-      if (compact === limitsPanel.hasAttribute("popover")) return;
+-      if (compact) limitsPanel.setAttribute("popover", "auto");
+-      else {
+-        if (limitsPanel.matches(":popover-open")) limitsPanel.hidePopover();
+-        limitsPanel.removeAttribute("popover");
++    const notice = conversationAssets.createRefreshNotice({render: state => {
++      renderLimits(limitsSnapshot, state.warning);
++      if (state.loading && !limitsSnapshot) {
++        const loading = document.createElement("p"); loading.className = "limits-status";
++        loading.textContent = "Loading limits…"; content.append(loading);
+       }
+-      toggle.setAttribute("aria-expanded", "false");
+-    };
+-    limitsPanel.addEventListener("toggle", (event) => {
+-      toggle.setAttribute("aria-expanded", String(event.newState === "open"));
++      renderAccountDetails();
++    }});
++    limits = createCodexLimitsReader(request, (snapshot, failed, error) => {
++      if (failed) notice.failure(error);
++      else { limitsSnapshot = snapshot; notice.success(); }
++    }, {freshnessMs: refreshPolicy.limitsMs, deadlineMs: refreshPolicy.limitsDeadlineMs,
++      retryInitialMs: refreshPolicy.retryInitialMs, retryMaxMs: refreshPolicy.retryMaxMs,
++      isVisible: () => !document.hidden, onStart: () => notice.begin()});
++    const {createResetCreditAction} = await import("/static/reset-credits.js?v=1");
++    let resetStorage = null;
++    try { resetStorage = localStorage; } catch (_) {}
++    const resetStorageKey = `workspace-portal.reset-attempt.${location.origin}`;
++    const store = conversationAssets.createDurableAttemptStore({storage: resetStorage,
++      key: resetStorageKey,
++      decode: (id, value) => typeof value.creditId === "string" && value.creditId.length <= 512 &&
++        /^[0-9a-f]{64}$/.test(value.accountScope) ? {...value, id} : null});
++    const withLock = navigator.locks?.request ? operation => navigator.locks.request(resetStorageKey,
++      {ifAvailable: true}, lock => {
++        if (!lock) throw new Error("A reset attempt is already running in another tab.");
++        return operation();
++      }) : null;
++    resetAction = createResetCreditAction({request, store, withLock,
++      confirm: message => globalThis.confirm(message), randomUUID: () => crypto.randomUUID(),
++      refresh: async () => {limits.invalidate(); await limits.refresh(true);}, onChange: renderAccountDetails});
++    globalThis.addEventListener("storage", event => {
++      if (event.key === resetStorageKey || event.key === null) resetAction.reload();
+     });
+-    updateLimitsPopover();
+-    const limits = createCodexLimitsReader(request, renderLimits);
+-    const refreshVisibleLimits = () => {
+-      if (!document.hidden) void limits.refresh();
+-    };
++    globalThis.addEventListener("focus", () => resetAction.reload());
++    const refreshVisibleLimits = () => { if (!document.hidden && !limitsLeaving) void limits.refresh(); else { limits.pause(); notice.cancel(); } };
++    globalThis.addEventListener("pagehide", () => { limitsLeaving = true; refreshVisibleLimits(); });
++    globalThis.addEventListener("pageshow", () => { limitsLeaving = false; refreshVisibleLimits(); });
+     document.addEventListener("visibilitychange", refreshVisibleLimits);
+     globalThis.addEventListener("focus", refreshVisibleLimits);
+-    globalThis.setInterval(refreshVisibleLimits, 60_000);
++    globalThis.setInterval(refreshVisibleLimits, refreshPolicy.limitsMs);
+     refreshVisibleLimits();
+   }
+ 
+@@ -1195,6 +1328,16 @@
+   let indexRefreshRunning = false, indexProgressRunning = false, indexHasRunningOperations = false;
+   let indexFullNextAt = 0, indexProgressNextAt = 0;
+   const indexReads = createReadScope();
++  let indexSnapshotWarning = "", indexFailure = null, progressFailure = null;
++  const renderIndexWarning = () => {
++    const warning = document.getElementById("index-status-warning");
++    if (!warning) return;
++    warning.textContent = indexFailure?.warning ? `Live session status is temporarily unavailable: ${indexFailure.error.message}` :
++      progressFailure?.warning ? `Operation status is temporarily unavailable: ${progressFailure.error.message}` : indexSnapshotWarning;
++    warning.hidden = !warning.textContent;
++  };
++  const indexNotice = conversationAssets.createRefreshNotice({render: state => {indexFailure = state; renderIndexWarning();}});
++  const progressNotice = conversationAssets.createRefreshNotice({render: state => {progressFailure = state; renderIndexWarning();}});
+   const renderIndexOperations = (operations) => {
+     const panel = document.getElementById("operations");
+     const list = document.getElementById("operation-list");
+@@ -1348,7 +1491,7 @@
+     indexRefreshRunning = true;
+     const read = indexReads.begin();
+     const warning = document.getElementById("index-status-warning");
+-    let nextRefresh = 15_000;
++    let nextRefresh = refreshPolicy.indexMs;
+     try {
+       const payload = await request("/api/index-status", {signal: read.signal});
+       if (indexNavigationPending || !read.isCurrent()) return;
+@@ -1425,17 +1568,12 @@
+           .filter(Boolean);
+         ordered.forEach((card) => grid.append(card));
+       }
+-      if (warning) {
+-        warning.textContent = payload.warning || "";
+-        warning.hidden = !warning.textContent;
+-      }
++      indexSnapshotWarning = payload.warning || "";
++      indexNotice.success();
+       if (sidebar) sidebar.scrollTop = previousSidebarTop;
+     } catch (error) {
+-      nextRefresh = 30_000;
+-      if (read.isCurrent() && warning) {
+-        warning.textContent = `Live session status is temporarily unavailable: ${error.message}`;
+-        warning.hidden = false;
+-      }
++      nextRefresh = refreshPolicy.indexRetryMs;
++      if (read.isCurrent()) indexNotice.failure(error);
+     } finally {
+       read.finish(); indexRefreshRunning = false;
+       indexFullNextAt = Date.now() + nextRefresh;
+@@ -1448,7 +1586,7 @@
+     if (indexProgressTimer !== null) clearTimeout(indexProgressTimer);
+     indexProgressTimer = null;
+     if (indexHasRunningOperations && !indexNavigationPending && !document.hidden && !indexReads.paused && !indexProgressRunning) {
+-      indexProgressTimer = setTimeout(refreshIndexProgress, Math.max(1000, indexProgressNextAt - Date.now()));
++      indexProgressTimer = setTimeout(refreshIndexProgress, Math.max(refreshPolicy.indexProgressMs, indexProgressNextAt - Date.now()));
+     }
+   };
+   const refreshIndexProgress = async () => {
+@@ -1456,17 +1594,16 @@
+     if (indexNavigationPending || document.hidden || indexReads.paused || indexProgressRunning) return;
+     indexProgressRunning = true;
+     const read = indexReads.begin();
+-    let delay = 1000;
++    let delay = refreshPolicy.indexProgressMs;
+     try {
+       const payload = await request("/api/index-status?progress=1", {signal: read.signal});
+-      if (read.isCurrent() && !indexNavigationPending) indexHasRunningOperations = renderIndexOperations(payload.operations);
+-    } catch (error) {
+-      delay = 15_000;
+-      const warning = document.getElementById("index-status-warning");
+-      if (read.isCurrent() && warning) {
+-        warning.textContent = `Operation status is temporarily unavailable: ${error.message}`;
+-        warning.hidden = false;
++      if (read.isCurrent() && !indexNavigationPending) {
++        indexHasRunningOperations = renderIndexOperations(payload.operations);
++        progressNotice.success();
+       }
++    } catch (error) {
++      delay = refreshPolicy.indexMs;
++      if (read.isCurrent()) progressNotice.failure(error);
+     } finally {
+       read.finish(); indexProgressRunning = false;
+       indexProgressNextAt = Date.now() + delay;
+@@ -2269,7 +2406,7 @@
+   };
+   const loadAutoArchive = (force = false) => {
+     if (autoArchiveLoading) return autoArchiveLoading;
+-    if (autoArchiveSaving || (!force && Date.now() - autoArchiveReadAt < 30_000)) return Promise.resolve();
++    if (autoArchiveSaving || (!force && Date.now() - autoArchiveReadAt < refreshPolicy.archivalMs)) return Promise.resolve();
+     autoArchiveReadAt = Date.now();
+     const read = ++autoArchiveRead;
+     autoArchiveLoading = (async () => {
+@@ -2656,7 +2793,7 @@
+   });
+ 
+   const pageReads = createReadScope();
+-  let pageLeaving = false, pauseTiming = () => {}, resumeTiming = () => {};
++  let pageLeaving = false, pauseTiming = () => {}, resumeTiming = () => {}, resumeHistory = () => {};
+   let repositoryReview = null;
+   let repositoryReviewLoading = null;
+   const loadRepositoryReview = async () => {
+@@ -2691,11 +2828,17 @@
+   let lastClustersHTML = "";
+   let lastTeamHTML = "";
+   let releasingCluster = false;
++  const detailsNotice = conversationAssets.createRefreshNotice({render: state => {
++    const warning = document.getElementById("session-details-warning");
++    if (!warning) return;
++    warning.textContent = state.warning ? `Session details could not be refreshed: ${state.error.message}` : "";
++    warning.hidden = !state.warning;
++  }});
+   const refreshSessionDetails = async () => {
+     if (detailsRunning || pageReads.paused || document.hidden || !artifactList) return;
+     if (detailsTimer !== null) clearTimeout(detailsTimer);
+     detailsRunning = true;
+-    const read = pageReads.begin(15_000);
++    const read = pageReads.begin(refreshPolicy.detailsDeadlineMs);
+     const warning = document.getElementById("session-details-warning");
+     try {
+       const payload = await client.details({signal: read.signal});
+@@ -2780,14 +2923,13 @@
+           tab.setAttribute("aria-label", title);
+         }
+       }
+-      warning.hidden = true;
++      detailsNotice.success();
+     } catch (error) {
+       if (!read.isCurrent()) return;
+-      warning.textContent = `Session details could not be refreshed: ${error.message}`;
+-      warning.hidden = false;
++      detailsNotice.failure(error);
+     } finally {
+       read.finish(); detailsRunning = false;
+-      if (!pageReads.paused) detailsTimer = setTimeout(refreshSessionDetails, 15_000);
++      if (!pageReads.paused) detailsTimer = setTimeout(refreshSessionDetails, refreshPolicy.detailsMs);
+     }
+   };
+   const suspendPageReads = (leaving = false) => {
+@@ -2800,6 +2942,7 @@
+     const wasPaused = pageReads.paused;
+     pageReads.resume();
+     if (wasPaused) { resumeTiming(); repositoryReview?.resume(); }
++    resumeHistory();
+     void refreshSessionDetails();
+   };
+   // Firefox can reject old-document fetches before pagehide. Stop these reads
+@@ -2955,7 +3098,7 @@
+   let archiveRefreshRunning = false, archiveRefreshAt = -Infinity;
+   const refreshPendingArchive = async () => {
+     if (pendingLifecycle !== "archive" || document.hidden || archiveRefreshRunning ||
+-        Date.now() - archiveRefreshAt < 30_000 || lastLifecycleOperation.state === "complete") return;
++        Date.now() - archiveRefreshAt < refreshPolicy.archivalMs || lastLifecycleOperation.state === "complete") return;
+     archiveRefreshRunning = true;
+     archiveRefreshAt = Date.now();
+     const observedOperation = lastLifecycleOperation;
+@@ -2973,10 +3116,10 @@
+     } finally { archiveRefreshRunning = false; }
+   };
+   if (pendingLifecycle === "archive") {
+-    let timer = setInterval(() => void refreshPendingArchive(), 30_000);
++    let timer = setInterval(() => void refreshPendingArchive(), refreshPolicy.archivalMs);
+     document.addEventListener("visibilitychange", () => void refreshPendingArchive());
+     window.addEventListener("pageshow", () => {
+-      if (timer === null) timer = setInterval(() => void refreshPendingArchive(), 30_000);
++      if (timer === null) timer = setInterval(() => void refreshPendingArchive(), refreshPolicy.archivalMs);
+       void refreshPendingArchive();
+     });
+     window.addEventListener("pagehide", () => { clearInterval(timer); timer = null; });
+@@ -3009,7 +3152,7 @@
+   const transcriptHistory = pagingHelpersAvailable ? conversationAssets.createTranscriptHistory() : null;
+   let pagingUnavailable = !pagingHelpersAvailable;
+   let historyRead = null, historyRetryTimer = null, historyError = "", historyFailure = null;
+-  let metadataRetryTimer = null, metadataRetryDelay = 2000;
++  let metadataRetryTimer = null, metadataRetryDelay = refreshPolicy.retryInitialMs;
+   let latestThreadPayload = null;
+   let transcriptFilter = "messages";
+   let transcriptEntries = [];
+@@ -3035,7 +3178,7 @@
+   const timingClock = createTimingClock();
+   let activityRead = null;
+   let activityTimer = null, lastActivityReadAt = -Infinity;
+-  const activityFreshnessBudget = () => activitySnapshot?.currentState === "idle" ? 35_000 : 15_000;
++  const activityFreshnessBudget = () => activitySnapshot?.currentState === "idle" ? refreshPolicy.activityIdleFreshMs : refreshPolicy.activityActiveFreshMs;
+ 
+   let sendAttemptStorage = null;
+   try { sendAttemptStorage = globalThis.sessionStorage; } catch (_error) {}
+@@ -3097,7 +3240,7 @@
+     if (!client.activity || document.hidden || pageReads.paused) return Promise.resolve();
+     if (!interactive && activitySnapshot) return Promise.resolve();
+     if (activityRead) return activityRead;
+-    const interval = activityAvailable && activitySnapshot?.currentState === "idle" ? 30_000 : 5000;
++    const interval = activityAvailable && activitySnapshot?.currentState === "idle" ? refreshPolicy.activityIdleMs : refreshPolicy.activityActiveMs;
+     const elapsed = Date.now() - lastActivityReadAt;
+     if (!force && elapsed < interval) {
+       scheduleActivity(interval - elapsed);
+@@ -3111,7 +3254,7 @@
+     }).catch(() => { if (read.isCurrent()) { activityAvailable = false; timingClock.failed(); } }).finally(() => {
+       read.finish(); activityRead = null;
+       if (!pageReads.paused) updateCodexWork();
+-      scheduleActivity(activityAvailable && activitySnapshot?.currentState === "idle" ? 30_000 : 5000);
++      scheduleActivity(activityAvailable && activitySnapshot?.currentState === "idle" ? refreshPolicy.activityIdleMs : refreshPolicy.activityActiveMs);
+     });
+     return activityRead;
+   };
+@@ -3646,14 +3789,18 @@
+   const historyControls = document.getElementById("history-controls");
+   const repairHistoryButton = document.getElementById("repair-history");
+   const historyStatus = document.getElementById("history-status");
++  let historyNoticeState = {loading: false, warning: false}, historyRetryDelay = refreshPolicy.retryInitialMs;
++  const historyNotice = conversationAssets.createRefreshNotice({render: state => {
++    historyNoticeState = state; renderHistoryControls();
++  }});
+   const renderHistoryControls = () => {
+     if (!historyControls) return;
+     resetHistoryNavigation();
+-    repairHistoryButton.hidden = !historyFailure && !(transcriptHistory?.gap && !pagingUnavailable);
++    repairHistoryButton.hidden = !historyNoticeState.warning;
+     repairHistoryButton.disabled = Boolean(historyRead);
+-    historyStatus.textContent = historyRead ? "Loading earlier messages…" :
+-      (historyError || (transcriptHistory?.gap ? "Checking earlier messages…" :
+-        pagingUnavailable ? "Older history is unavailable on this server." : ""));
++    historyStatus.textContent = historyNoticeState.warning ? historyError :
++      historyNoticeState.loading ? "Loading earlier messages…" :
++        pagingUnavailable ? "Older history is unavailable on this server." : "";
+     historyControls.hidden = !historyStatus.textContent && repairHistoryButton.hidden;
+   };
+   const observePageReceipts = (entries, threadID) => {
+@@ -3709,7 +3856,10 @@
+             repairVersion: transcriptHistory.repairVersion};
+         }
+       }
+-      if (!historyFailure) historyError = "";
++      if (!historyFailure) {
++        historyError = "";
++        if (!historyRead && !transcriptHistory?.gap) historyNotice.success();
++      }
+       recoverPlanAttempts(payload.latestTurnId);
+       const threadStatus = payload.status;
+       threadActive = threadStatus === "active";
+@@ -3736,8 +3886,8 @@
+       metadataRetryTimer = null;
+       if (payload.metadataPending && !pageReads.paused) {
+         metadataRetryTimer = setTimeout(() => { metadataRetryTimer = null; scheduleRefresh(0); }, metadataRetryDelay);
+-        metadataRetryDelay = Math.min(30_000, metadataRetryDelay * 2);
+-      } else metadataRetryDelay = 2000;
++        metadataRetryDelay = Math.min(refreshPolicy.retryMaxMs, metadataRetryDelay * 2);
++      } else metadataRetryDelay = refreshPolicy.retryInitialMs;
+     }
+     transcriptInitialized = true;
+     observePageReceipts(transcriptEntries, currentThreadId);
+@@ -3746,15 +3896,16 @@
+     renderPlanActions({...((latestThreadPayload) || payload), entries: transcriptEntries});
+   };
+ 
+-  const runHistoryRead = async (kind) => {
++  const runHistoryRead = async (kind, manual = kind === "older") => {
+     if (!transcriptHistory || historyRead || pageReads.paused || document.hidden || pagingUnavailable || typeof client.threadPage !== "function") return;
+     const cursor = kind === "older" ? transcriptHistory.olderCursor : transcriptHistory.repairCursor;
+     if (!cursor) return;
+     resetHistoryNavigation();
+     const threadID = currentThreadId;
+     const readVersion = transcriptHistory.repairVersion;
+-    const read = pageReads.begin(35_000);
++    const read = pageReads.begin(refreshPolicy.transcriptDeadlineMs);
+     historyRead = true;
++    historyNotice.begin({manual});
+     historyError = "";
+     historyFailure = null;
+     renderHistoryControls();
+@@ -3765,6 +3916,7 @@
+       if (!read.isCurrent() || threadID !== currentThreadId ||
+           readVersion !== transcriptHistory.repairVersion) return;
+       renderThread(page, () => read.isCurrent() && threadID === currentThreadId, kind);
++      historyRetryDelay = refreshPolicy.retryInitialMs; historyNotice.success();
+     } catch (error) {
+       if (!read.isCurrent() || threadID !== currentThreadId ||
+           readVersion !== transcriptHistory.repairVersion) return;
+@@ -3781,18 +3933,25 @@
+         historyFailure = {kind, threadId: threadID, repairVersion: readVersion};
+         if (historyRetryTimer !== null) clearTimeout(historyRetryTimer);
+         historyRetryTimer = null;
++        historyNotice.failure(error);
++        if (kind === "repair" && error.status !== 401 && error.status !== 403) {
++          historyRetryTimer = setTimeout(() => {historyRetryTimer = null; void runHistoryRead("repair");}, historyRetryDelay);
++          historyRetryDelay = Math.min(refreshPolicy.retryMaxMs, historyRetryDelay * 2);
++        }
+       }
+     } finally {
+       read.finish();
+       historyRead = null;
++      historyNotice.cancel();
+       renderHistoryControls();
+-      if (!historyError && transcriptHistory.gap && transcriptHistory.repairCursor) scheduleHistoryRepair(40);
++      if (!historyError && transcriptHistory.gap && transcriptHistory.repairCursor) scheduleHistoryRepair(refreshPolicy.historyPageMs);
+     }
+   };
+   startOlderHistoryRead = () => { void runHistoryRead("older"); };
+   const canRepairHistory = () => transcriptHistory?.gap && transcriptHistory.repairCursor &&
+-    !historyError && !historyFailure && !pageReads.paused && !document.hidden && !pagingUnavailable;
+-  const scheduleHistoryRepair = (delay = 40) => {
++    (!historyFailure || historyFailure.kind === "repair") && (!historyError || historyFailure?.kind === "repair") &&
++    !pageReads.paused && !document.hidden && !pagingUnavailable;
++  const scheduleHistoryRepair = (delay = refreshPolicy.historyPageMs) => {
+     if (!canRepairHistory() || historyRetryTimer !== null) return;
+     historyRetryTimer = setTimeout(() => {
+       historyRetryTimer = null;
+@@ -3801,16 +3960,17 @@
+       else void runHistoryRead("repair");
+     }, delay);
+   };
++  resumeHistory = () => scheduleHistoryRepair(historyFailure ? historyRetryDelay : refreshPolicy.historyPageMs);
+   repairHistoryButton?.addEventListener("click", () => {
+     if (historyRead) return;
+     const retryKind = historyFailure?.kind;
+     if (retryKind) {
+       const kind = transcriptHistory?.gap ? "repair" : retryKind;
+       const cursor = kind === "repair" ? transcriptHistory?.repairCursor : transcriptHistory?.olderCursor;
+-      if (cursor) { void runHistoryRead(kind); return; }
++      if (cursor) { clearTimeout(historyRetryTimer); historyRetryTimer = null; void runHistoryRead(kind, true); return; }
+       if (transcriptHistory?.gap || transcriptHistory?.hasOlder) return;
+       historyFailure = null; historyError = "";
+-    } else if (transcriptHistory?.repairCursor) scheduleHistoryRepair(0);
++    } else if (transcriptHistory?.repairCursor) void runHistoryRead("repair", true);
+     else scheduleRefresh(0);
+     renderHistoryControls();
+   });
+@@ -4202,31 +4362,36 @@
+ 
+   const pendingStatus = document.getElementById("pending-status");
+   const pendingRetry = document.getElementById("pending-retry");
+-  let pendingRead = null, pendingRetryTimer = null, pendingRetryDelay = 2000;
+-  const refreshPending = (force = false) => {
++  const pendingNotice = conversationAssets.createRefreshNotice({render: state => {
++    pendingStatus.hidden = !state.loading && !state.warning;
++    if (state.loading) pendingStatus.querySelector("span").textContent = "Loading requests…";
++    pendingRetry.hidden = !state.warning;
++  }});
++  let pendingRead = null, pendingRetryTimer = null, pendingRetryDelay = refreshPolicy.retryInitialMs;
++  const refreshPending = (force = false, manual = false) => {
+     if (!interactive || !client.pending || pageReads.paused || document.hidden) return Promise.resolve();
+     if (pendingRead) return pendingRead;
+     if (pendingRetryTimer !== null && !force) return Promise.resolve();
+     if (pendingRetryTimer !== null) clearTimeout(pendingRetryTimer);
+     pendingRetryTimer = null;
+-    const read = pageReads.begin(10_000);
++    const read = pageReads.begin(refreshPolicy.pendingDeadlineMs);
++    pendingNotice.begin({manual});
+     pendingRead = client.pending({signal: read.signal}).then((entries) => {
+       if (!read.isCurrent()) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid request list");
+       renderPendingEntries(entries);
+-      pendingStatus.hidden = true;
+-      pendingRetryDelay = 2000;
+-    }).catch(() => {
++      pendingNotice.success();
++      pendingRetryDelay = refreshPolicy.retryInitialMs;
++    }).catch(error => {
+       if (!read.isCurrent()) return;
+       pendingStatus.querySelector("span").textContent = "Requests could not be refreshed. Previously shown questions remain available.";
+-      pendingRetry.hidden = false;
+-      pendingStatus.hidden = false;
++      pendingNotice.failure(error);
+       pendingRetryTimer = setTimeout(() => { pendingRetryTimer = null; void refreshPending(); }, pendingRetryDelay);
+-      pendingRetryDelay = Math.min(30_000, pendingRetryDelay * 2);
++      pendingRetryDelay = Math.min(refreshPolicy.retryMaxMs, pendingRetryDelay * 2);
+     }).finally(() => { read.finish(); pendingRead = null; });
+     return pendingRead;
+   };
+-  pendingRetry?.addEventListener("click", () => { void refreshPending(true); });
++  pendingRetry?.addEventListener("click", () => { void refreshPending(true, true); });
+ 
+   const queuePanel = document.getElementById("queue-panel");
+   const queueList = document.getElementById("queue-list");
+@@ -4269,31 +4434,36 @@
+ 
+   const queueStatus = document.getElementById("queue-status");
+   const queueRetry = document.getElementById("queue-retry");
+-  let queueRead = null, queueRetryTimer = null, queueRetryDelay = 2000;
+-  const refreshQueue = (force = false) => {
++  const queueNotice = conversationAssets.createRefreshNotice({render: state => {
++    queueStatus.hidden = !state.loading && !state.warning;
++    if (state.loading) queueStatus.querySelector("span").textContent = "Checking queued messages…";
++    queueRetry.hidden = !state.warning;
++  }});
++  let queueRead = null, queueRetryTimer = null, queueRetryDelay = refreshPolicy.retryInitialMs;
++  const refreshQueue = (force = false, manual = false) => {
+     if (!interactive || !client.reconcileQueue || pageReads.paused || document.hidden) return Promise.resolve();
+     if (queueRead) return queueRead;
+     if (queueRetryTimer !== null && !force) return Promise.resolve();
+     if (queueRetryTimer !== null) clearTimeout(queueRetryTimer);
+     queueRetryTimer = null;
+-    const read = pageReads.begin(12_000);
++    const read = pageReads.begin(refreshPolicy.queueDeadlineMs);
++    queueNotice.begin({manual});
+     queueRead = client.reconcileQueue({signal: read.signal}).then(() => client.queue({signal: read.signal})).then((entries) => {
+       if (!read.isCurrent()) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid queue");
+       renderQueue(entries);
+-      queueStatus.hidden = true;
+-      queueRetryDelay = 2000;
+-    }).catch(() => {
++      queueNotice.success();
++      queueRetryDelay = refreshPolicy.retryInitialMs;
++    }).catch(error => {
+       if (!read.isCurrent()) return;
+       queueStatus.querySelector("span").textContent = "Queued messages could not be refreshed. The last result may be out of date.";
+-      queueRetry.hidden = false;
+-      queueStatus.hidden = false;
++      queueNotice.failure(error);
+       queueRetryTimer = setTimeout(() => { queueRetryTimer = null; void refreshQueue(); }, queueRetryDelay);
+-      queueRetryDelay = Math.min(30_000, queueRetryDelay * 2);
++      queueRetryDelay = Math.min(refreshPolicy.retryMaxMs, queueRetryDelay * 2);
+     }).finally(() => { read.finish(); queueRead = null; });
+     return queueRead;
+   };
+-  queueRetry?.addEventListener("click", () => { void refreshQueue(true); });
++  queueRetry?.addEventListener("click", () => { void refreshQueue(true, true); });
+ 
+   function scheduleRefresh(delay = 200) {
+     sync?.scheduleRefresh(delay);
+@@ -4347,7 +4517,7 @@
+   if (form && interactive) {
+     const textarea = form.elements.message;
+     composerUploads = conversationAssets.mountUploads(document.getElementById("message-uploads"), {
+-      basePath: `/uploads/s-${encodeURIComponent(conversationID)}`, dropTarget: form,
++      basePath: `/uploads/s-${encodeURIComponent(conversationID)}`, dropTarget: form, pasteTarget: textarea,
+       controlsRoot: document.getElementById("message-upload-controls"),
+       storageKey: `workspace-portal.upload-draft.${slug}.${currentThreadId}`,
+       onChange: ({ready, count}) => { composerUploadReady = ready; textarea.required = !count; updateMessageActions(); },
+@@ -4625,27 +4795,21 @@
+   const liveEffortSelect = document.getElementById("codex-effort");
+   const liveSettingsStatus = document.getElementById("codex-settings-status");
+   if (liveModelSelect && liveEffortSelect) {
+-    const applyButton = document.getElementById("codex-settings-apply");
+-    const cancelButton = document.getElementById("codex-settings-cancel");
+-    const storageKey = `workspace-portal.settings-draft.${location.origin}.${slug}.${conversationID}.${currentThreadId}`;
+-    let storage = null, savedDraft = null;
+-    try {
+-      storage = sessionStorage;
+-      const candidate = JSON.parse(storage.getItem(storageKey) || "null");
+-      if (candidate && typeof candidate.model === "string" && candidate.model.length <= 128 &&
+-          typeof candidate.effort === "string" && candidate.effort.length <= 128) savedDraft = candidate;
+-    } catch (_) { /* The controls still work without browser storage. */ }
+-    const draft = {model: savedDraft?.model || "", effort: savedDraft?.effort || ""};
+-    let dirty = Boolean(savedDraft), saving = false, writeGeneration = 0, notice = "";
+-    const persist = () => {
+-      if (!storage || draft.model.length > 128 || draft.effort.length > 128) return;
+-      try { storage.setItem(storageKey, JSON.stringify(draft)); } catch (_) {}
+-    };
+-    const clearStored = () => { try { storage?.removeItem(storageKey); } catch (_) {} };
++    const applyButton = document.getElementById("codex-settings-save");
++    const cancelButton = document.getElementById("codex-settings-close");
++    const dialog = document.getElementById("codex-settings-dialog");
++    const editButton = document.getElementById("codex-settings-open");
++    const summary = document.getElementById("codex-settings-summary");
++    const draft = {model: "", effort: ""};
++    let dirty = false, saving = false, writeGeneration = 0, notice = "";
+     const validPair = () => models.some(model => model.model === draft.model &&
+       model.supportedReasoningEfforts?.some(option => option.reasoningEffort === draft.effort));
+     liveSettingsController = {
+       render() {
++        summary.textContent = [currentModel, currentEffort].filter(Boolean).join(" · ") || "Settings unavailable";
++        editButton.disabled = !interactive || !threadIdle || saving;
++        applyButton.disabled = !interactive || !threadIdle || saving || !dirty || !validPair();
++        cancelButton.disabled = saving;
+         if (!models.length) return;
+         restoreDraftSelect(liveModelSelect, draft.model, "Selected model is unavailable");
+         if (draft.model) liveModelSelect.value = draft.model;
+@@ -4658,7 +4822,7 @@
+         liveModelSelect.disabled = !editable;
+         liveEffortSelect.disabled = !editable || !models.some(model => model.model === draft.model);
+         applyButton.disabled = !editable || !dirty || !validPair();
+-        cancelButton.disabled = saving || !dirty;
++        cancelButton.disabled = saving;
+         if (liveSettingsStatus && !saving) liveSettingsStatus.textContent = notice;
+       },
+       confirm(model, effort) {
+@@ -4673,16 +4837,16 @@
+         if (!selected?.supportedReasoningEfforts?.some(option => option.reasoningEffort === draft.effort)) {
+           draft.effort = selected?.defaultReasoningEffort || "";
+         }
+-        notice = ""; dirty = true; persist(); this.render();
++        notice = ""; dirty = true; this.render();
+       },
+       effortChanged() {
+         draft.effort = liveEffortSelect.value;
+-        notice = ""; dirty = true; persist(); this.render();
++        notice = ""; dirty = true; this.render();
+       },
+       cancel() {
+         if (saving) return;
+         draft.model = currentModel; draft.effort = currentEffort;
+-        notice = ""; dirty = false; clearStored(); this.render();
++        notice = ""; dirty = false; this.render();
+       },
+       async apply() {
+         if (!interactive || !threadIdle || saving || !dirty || !validPair()) return;
+@@ -4699,7 +4863,7 @@
+           ++settingsWriteGeneration;
+           currentModel = saved.model; currentEffort = saved.reasoningEffort;
+           draft.model = saved.model; draft.effort = saved.reasoningEffort;
+-          notice = ""; dirty = false; clearStored(); scheduleRefresh(0);
++          notice = ""; dirty = false; dialog.close(); scheduleRefresh(0);
+         } catch (error) {
+           try {
+             const observed = await client.thread();
+@@ -4707,7 +4871,7 @@
+               currentModel = observed.model; currentEffort = observed.reasoningEffort;
+               if (observed.model === selected.model && observed.reasoningEffort === selected.effort) {
+                 ++settingsWriteGeneration;
+-                notice = ""; dirty = false; clearStored(); scheduleRefresh(0);
++                notice = ""; dirty = false; dialog.close(); scheduleRefresh(0);
+               }
+             }
+           } catch (_) { /* Keep the draft if the write outcome cannot be read. */ }
+@@ -4719,7 +4883,13 @@
+       },
+     };
+     applyButton?.addEventListener("click", () => { void liveSettingsController.apply(); });
+-    cancelButton?.addEventListener("click", () => liveSettingsController.cancel());
++    editButton.addEventListener("click", () => {
++      liveSettingsController.cancel(); dialog.showModal();
++      if (!models.length) void loadModels(dialog);
++    });
++    cancelButton.addEventListener("click", () => { if (!saving) {liveSettingsController.cancel(); dialog.close();} });
++    dialog.addEventListener("cancel", event => { if (saving) event.preventDefault(); else liveSettingsController.cancel(); });
++    dialog.addEventListener("close", () => liveSettingsController.cancel());
+     liveSettingsController.render();
+   }
+ 
+@@ -4813,7 +4983,7 @@
+   void refreshPending();
+   void refreshQueue();
+   void refreshActivity(true);
+-  setInterval(() => { void refreshPending(); }, 15_000);
+-  setInterval(() => { void refreshQueue(); }, 30_000);
++  setInterval(() => { void refreshPending(); }, refreshPolicy.pendingMs);
++  setInterval(() => { void refreshQueue(); }, refreshPolicy.queueMs);
+   if (interactive) loadCollaborationModes();
+ })();
+diff --git a/portal/internal/web/static/reset-credits.js b/portal/internal/web/static/reset-credits.js
+new file mode 100644
+index 0000000..395ab08
+--- /dev/null
++++ b/portal/internal/web/static/reset-credits.js
+@@ -0,0 +1,55 @@
++// Every tab coordinates through the same origin-scoped lock. Reload the durable
++// attempt under that lock before creating, retrying or clearing a redemption.
++export function createResetCreditAction({request, store, withLock, refresh, onChange, confirm, randomUUID}) {
++  let unavailable = false, pending = null, busy = false;
++  const read = () => {
++    const loaded = store.load();
++    unavailable = typeof withLock !== "function" || !loaded || loaded.length > 1;
++    pending = loaded?.[0] || null;
++  };
++  read();
++  const state = () => ({pending, busy, unavailable});
++  const publish = () => onChange?.(state());
++  const coordinated = async operation => {
++    if (busy || typeof withLock !== "function") return;
++    busy = true; publish();
++    try {
++      return await withLock(async () => {
++        read(); publish();
++        if (unavailable) throw new Error("The saved reset attempt could not be read. The reset was not sent.");
++        return operation();
++      });
++    } finally { busy = false; read(); publish(); }
++  };
++  const submit = async () => {
++    if (!pending) return;
++    const attempt = pending;
++    const result = await request("/api/codex-limits/reset", {method: "POST", body: JSON.stringify({
++      idempotencyKey: attempt.id, creditId: attempt.creditId, accountScope: attempt.accountScope,
++    })});
++    if (!["reset", "alreadyRedeemed", "nothingToReset", "noCredit"].includes(result.outcome)) {
++      throw new Error("The reset outcome could not be confirmed. Retry the saved attempt.");
++    }
++    if (!store.remove(attempt.id)) throw new Error("The completed reset attempt could not be cleared. Retry the saved attempt.");
++    pending = null;
++    await refresh();
++    return result.outcome;
++  };
++  return {
++    state,
++    reload() { if (!busy) { read(); publish(); } },
++    use({creditId = "", accountScope, description}) {
++      return coordinated(async () => {
++        if (pending) throw new Error("Resolve the saved reset attempt before using another reset.");
++        if (!accountScope) throw new Error("The current Codex account could not be verified.");
++        if (!confirm(`Use ${description || "the next available reset"}? This consumes one banked reset if a limit is eligible.`)) return;
++        if (!store.available()) throw new Error("Browser storage is unavailable. The reset was not sent.");
++        const attempt = {id: randomUUID(), creditId, accountScope};
++        if (!store.store(attempt)) throw new Error("The reset attempt could not be saved. The reset was not sent.");
++        pending = attempt; publish();
++        return submit();
++      });
++    },
++    retry() { return coordinated(submit); },
++  };
++}
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index ff7b2cc..1a7f79a 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -425,6 +425,15 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ }
+ 
+ .activity-summary { flex: none; padding: .4rem 0; color: var(--muted); font-size: .75rem; }
++.settings-summary { font-size: .8rem; overflow-wrap: anywhere; }
++#codex-settings-dialog, #codex-limits-dialog { max-width: min(36rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; }
++#codex-settings-dialog select { width: 100%; }
++#codex-settings-status { overflow-wrap: anywhere; max-height: 12rem; overflow: auto; }
++.reset-credit { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1rem 0; }
++.reset-credit span, [data-reset-status] { overflow-wrap: anywhere; }
++.reset-credit button { flex: none; }
++.limits-account-summary { width: 100%; text-align: left; }
++@media (max-width: 480px) { .reset-credit { flex-wrap: wrap; } }
+ .codex-work { flex-wrap: wrap; }
+ .codex-work.waiting { border-color: #66532e; background: #211d14; color: var(--warning); }
+ #codex-work-counts { color: var(--muted); }
+diff --git a/portal/internal/web/team_settings_browser_test.cjs b/portal/internal/web/team_settings_browser_test.cjs
+index ba37d8b..0b69fa2 100644
+--- a/portal/internal/web/team_settings_browser_test.cjs
++++ b/portal/internal/web/team_settings_browser_test.cjs
+@@ -74,182 +74,89 @@ const baseURL = process.argv[2];
+       return route.continue();
+     });
+     const liveModel = page.locator("#codex-model"), liveEffort = page.locator("#codex-effort");
+-    const apply = page.locator("#codex-settings-apply"), cancel = page.locator("#codex-settings-cancel");
+-    const feedback = page.locator("#codex-settings-status");
+-    const geometry = () => page.evaluate(() => {
+-      const bounds = element => {
+-        const box = element.getBoundingClientRect();
+-        return {id: element.id || element.className, x: box.x, y: box.y, width: box.width,
+-          height: box.height, right: box.right, bottom: box.bottom};
+-      };
+-      const actions = document.querySelector("#message-form .chat-actions");
+-      const status = document.getElementById("codex-settings-status");
+-      const controls = [...actions.querySelectorAll("button, select")]
+-        .filter(element => element.getBoundingClientRect().width > 0);
+-      return {actions: bounds(actions), composer: bounds(actions.querySelector(".composer-controls")),
+-        form: bounds(document.getElementById("message-form")),
+-        controls: controls.map(element => ({...bounds(element), inComposer: Boolean(element.closest(".composer-controls"))})),
+-        status: {...bounds(status), text: status.textContent,
+-          scrollWidth: status.scrollWidth, clientWidth: status.clientWidth,
+-          scrollHeight: status.scrollHeight, clientHeight: status.clientHeight},
+-        viewport: {width: innerWidth, height: innerHeight}, documentWidth: document.documentElement.scrollWidth};
+-    });
+-    const assertLayout = async (baseline, hasFeedback = false) => {
++    const edit = page.locator("#codex-settings-open"), save = page.locator("#codex-settings-save");
++    const close = page.locator("#codex-settings-close"), dialog = page.locator("#codex-settings-dialog");
++    const summary = page.locator("#codex-settings-summary"), feedback = page.locator("#codex-settings-status");
++    const assertLayout = async () => {
++      const layout = await page.evaluate(() => {
++        const bounds = element => {
++          const box = element.getBoundingClientRect();
++          return {x: box.x, y: box.y, right: box.right, bottom: box.bottom, width: box.width, height: box.height};
++        };
++        const actions = document.querySelector("#message-form .chat-actions");
++        const popup = document.getElementById("codex-settings-dialog");
++        return {form: bounds(document.getElementById("message-form")), popup: popup.open ? bounds(popup) : null,
++          controls: [...actions.querySelectorAll("button, select")].filter(el => el.getBoundingClientRect().width > 0)
++            .map(el => ({id: el.id, ...bounds(el)})), width: innerWidth, height: innerHeight,
++          documentWidth: document.documentElement.scrollWidth};
++      });
+       await expect(page.locator("#codex-mode")).toBeVisible();
+-      const layout = await geometry();
+       const diagnostic = JSON.stringify(layout);
+-      assert(layout.documentWidth <= layout.viewport.width, diagnostic);
++      assert(layout.documentWidth <= layout.width, diagnostic);
+       for (const control of layout.controls) {
+         assert(control.x >= layout.form.x - 1 && control.right <= layout.form.right + 1, diagnostic);
+-        assert(control.y >= 0 && control.bottom <= layout.viewport.height + 1, diagnostic);
+         assert(control.width >= 28 && control.height >= 28, diagnostic);
+-        if (control.inComposer) {
+-          assert(control.x >= layout.composer.x - 1 && control.right <= layout.composer.right + 1 &&
+-            control.y >= layout.composer.y - 1 && control.bottom <= layout.composer.bottom + 1,
+-            "control escaped its composer group: " + diagnostic);
+-        }
+-      }
+-      for (let index = 0; index < layout.controls.length; index++) {
+-        const first = layout.controls[index];
+-        for (const second of layout.controls.slice(index + 1)) {
+-          const overlapWidth = Math.min(first.right, second.right) - Math.max(first.x, second.x);
+-          const overlapHeight = Math.min(first.bottom, second.bottom) - Math.max(first.y, second.y);
+-          assert(overlapWidth <= 1 || overlapHeight <= 1,
+-            `controls overlap (${first.id}, ${second.id}): ` + diagnostic);
+-        }
+       }
+-      for (const id of ["codex-model", "codex-effort", "codex-settings-apply", "codex-settings-cancel", "message-send", "interrupt"]) {
++      for (const id of ["codex-settings-open", "message-send", "interrupt"]) {
+         assert(layout.controls.some(control => control.id === id), "missing visible control: " + id);
+       }
+-      const top = Math.max(...layout.controls.map(control => control.y));
+-      const bottom = Math.min(...layout.controls.map(control => control.bottom));
+-      if (layout.viewport.width >= 1280) assert(top < bottom, "desktop controls must share one row: " + diagnostic);
+-      else if (layout.viewport.width <= 760) assert(top >= bottom, "mobile controls must retain wrapping: " + diagnostic);
+-      if (baseline) {
+-        assert(Math.abs(layout.actions.height - baseline.actions.height) <= 1, "feedback changed the control row height: " + diagnostic);
+-        for (const control of layout.controls) {
+-          const before = baseline.controls.find(candidate => candidate.id === control.id);
+-          assert(before && Math.abs(control.x - before.x) <= 1 && Math.abs(control.width - before.width) <= 1,
+-            "feedback changed control widths or positions: " + diagnostic);
+-        }
+-      }
+-      if (hasFeedback) {
+-        assert(layout.status.y >= layout.actions.bottom - 1, "feedback overlaps controls: " + diagnostic);
+-        assert(layout.status.bottom <= layout.form.bottom + 1 && layout.status.bottom <= layout.viewport.height + 1, diagnostic);
+-        assert(layout.status.scrollWidth <= layout.status.clientWidth + 1 &&
+-          layout.status.scrollHeight <= layout.status.clientHeight + 1, "feedback is clipped: " + diagnostic);
+-      } else {
+-        await expect(feedback).toBeEmpty();
+-        await expect(feedback).toBeHidden();
+-        assert.equal(layout.status.height, 0, "empty feedback must occupy no space");
++      assert(!layout.controls.some(control => ["codex-model", "codex-effort"].includes(control.id)));
++      if (layout.popup) {
++        assert(layout.popup.x >= 0 && layout.popup.right <= layout.width + 1, diagnostic);
++        assert(layout.popup.y >= 0 && layout.popup.bottom <= layout.height + 1, diagnostic);
+       }
+-      return layout;
+     };
+     for (const width of [981, 1024, 1100, 1200, 1280, 1440, 390]) {
+       await page.setViewportSize({width, height: width >= 981 ? 900 : 844});
+-      serverPair = {model: "model-1", reasoningEffort: "medium"};
+-      savedSettings.length = 0;
++      serverPair = {model: "model-1", reasoningEffort: "medium"}; savedSettings.length = 0;
+       stalePollStarted = false; stalePollFinished = false;
+       await page.goto(baseURL + "/example/");
+-      await expect(liveModel).toHaveValue("model-1");
+-      await expect(liveModel).toBeEnabled();
+-      await expect(page.locator("#codex-mode")).toBeVisible();
+-      await expect(apply).toBeDisabled();
+-      await expect(cancel).toBeDisabled();
+-      const baseline = await assertLayout();
+-      await liveModel.selectOption("model-2");
++      await expect(summary).toContainText("medium");
++      await expect(edit).toBeEnabled(); await expect(dialog).toBeHidden();
++      await assertLayout();
++      await edit.click(); await expect(liveModel).toHaveValue("model-1");
++      await expect(save).toBeDisabled();
++      await liveModel.selectOption("model-2"); await liveEffort.selectOption("high");
++      await expect(save).toBeEnabled(); await assertLayout();
++      await page.evaluate(() => dispatchEvent(new Event("focus")));
++      await expect(liveModel).toHaveValue("model-2"); await expect(liveEffort).toHaveValue("high");
++      await page.keyboard.press("Escape"); await expect(dialog).toBeHidden();
++      assert.equal(savedSettings.length, 0);
++      await edit.click(); await expect(liveModel).toHaveValue("model-1");
+       await expect(liveEffort).toHaveValue("medium");
+-      await expect(apply).toBeEnabled();
+-      await expect(cancel).toBeEnabled();
+-      await assertLayout(baseline);
+-      await cancel.click();
++      await liveModel.selectOption("model-2"); await close.click(); await edit.click();
+       await expect(liveModel).toHaveValue("model-1");
+-      await liveEffort.selectOption("high");
+-      await expect(liveModel).toHaveValue("model-1");
+-      await expect(apply).toBeEnabled();
+-      await assertLayout(baseline);
+-      await cancel.click();
+-      await expect(liveEffort).toHaveValue("medium");
+-      await liveModel.selectOption("model-2");
+-      await liveEffort.selectOption("high");
+-      assert.equal(savedSettings.length, 0);
+-      await page.evaluate(() => dispatchEvent(new Event("focus")));
+-      await expect(liveModel).toHaveValue("model-2");
+-      await expect(liveEffort).toHaveValue("high");
+-      await page.reload();
++      await liveModel.selectOption("model-2"); await liveEffort.selectOption("high");
++      await page.reload(); await expect(dialog).toBeHidden(); await edit.click();
++      await expect(liveModel).toHaveValue("model-1"); await expect(liveEffort).toHaveValue("medium");
++      await liveModel.selectOption("model-2"); await liveEffort.selectOption("high");
++      threadStatus = "active"; await page.request.post(baseURL + "/fixture/refresh");
++      await expect(save).toBeDisabled(); await expect(close).toBeEnabled();
+       await expect(liveModel).toHaveValue("model-2");
+-      await expect(liveEffort).toHaveValue("high");
+-      await expect(apply).toBeEnabled();
+-      await assertLayout(baseline);
+-      threadStatus = "active";
+-      await page.request.post(baseURL + "/fixture/refresh");
+-      await expect(page.locator("#message-queue")).toBeVisible();
+-      await expect(liveModel).toBeDisabled();
+-      await expect(apply).toBeDisabled();
+-      await expect(cancel).toBeEnabled();
+-      await expect(liveModel).toHaveValue("model-2");
+-      await expect(liveEffort).toHaveValue("high");
+-      await assertLayout();
+-      threadStatus = "idle";
+-      await page.request.post(baseURL + "/fixture/refresh");
+-      await expect(apply).toBeEnabled();
+-      await expect(page.locator("#message-queue")).toBeHidden();
+-      await cancel.click();
+-      await expect(liveModel).toHaveValue("model-1");
+-      await expect(liveEffort).toHaveValue("medium");
+-      await liveModel.selectOption("model-2");
+-      await liveEffort.selectOption("high");
+-      holdStalePoll = true;
+-      await page.request.post(baseURL + "/fixture/refresh");
++      threadStatus = "idle"; await page.request.post(baseURL + "/fixture/refresh");
++      await expect(save).toBeEnabled();
++      holdStalePoll = true; await page.request.post(baseURL + "/fixture/refresh");
+       await expect.poll(() => stalePollStarted).toBe(true);
+-      holdSettingsWrite = true;
+-      await apply.click();
++      holdSettingsWrite = true; await save.click();
+       await expect.poll(() => savedSettings.length).toBe(1);
+       assert.deepEqual(savedSettings[0], {model: "model-2", reasoningEffort: "high"});
+       await expect(feedback).toHaveText("Saving Codex settings…");
+-      await expect(feedback).toHaveAttribute("aria-live", "polite");
+-      await expect(apply).toBeDisabled();
+-      await expect(cancel).toBeDisabled();
+-      await assertLayout(baseline, true);
+-      releaseSettingsWrite();
+-      await expect(feedback).toBeEmpty();
+-      await expect(apply).toBeDisabled();
+-      await expect(cancel).toBeDisabled();
+-      releaseStalePoll();
+-      await expect.poll(() => stalePollFinished).toBe(true);
+-      await page.waitForTimeout(50);
+-      await expect(liveModel).toHaveValue("model-2");
+-      await expect(liveEffort).toHaveValue("high");
+-      await expect(apply).toBeDisabled();
+-      await expect(cancel).toBeDisabled();
+-      await assertLayout(baseline);
+-      await page.reload();
+-      await expect(liveModel).toHaveValue("model-2");
+-      await expect(liveEffort).toHaveValue("high");
+-      await liveModel.selectOption("model-1");
+-      await liveEffort.selectOption("medium");
+-      failSettingsWrite = true; failSettingsRead = true;
+-      await apply.click();
++      await expect(close).toBeDisabled(); await expect(save).toBeDisabled();
++      await page.keyboard.press("Escape"); await expect(dialog).toBeVisible();
++      releaseSettingsWrite(); await expect(dialog).toBeHidden();
++      releaseStalePoll(); await expect.poll(() => stalePollFinished).toBe(true);
++      await expect(summary).toContainText("high");
++      await page.reload(); await expect(summary).toContainText("high"); await edit.click();
++      await expect(liveModel).toHaveValue("model-2"); await expect(liveEffort).toHaveValue("high");
++      await liveModel.selectOption("model-1"); await liveEffort.selectOption("medium");
++      failSettingsWrite = true; failSettingsRead = true; await save.click();
+       await expect.poll(() => savedSettings.length).toBe(2);
+-      assert.deepEqual(savedSettings[1], {model: "model-1", reasoningEffort: "medium"});
+       await expect(feedback).toHaveText("The settings update could not be confirmed: " + writeFailure);
+-      await expect(feedback).toBeVisible();
+-      await expect(liveModel).toHaveValue("model-1");
+-      await expect(liveEffort).toHaveValue("medium");
+-      await expect(cancel).toBeEnabled();
+-      await assertLayout(baseline, true);
++      await expect(dialog).toBeVisible(); await expect(close).toBeEnabled(); await assertLayout();
+       failSettingsWrite = false; failSettingsRead = false;
+-      await page.reload();
+-      await expect(liveModel).toHaveValue("model-1");
+-      await expect(liveEffort).toHaveValue("medium");
+-      await expect(apply).toBeEnabled();
+-      await assertLayout(baseline);
+-      await cancel.click();
+-      await expect(liveModel).toHaveValue("model-2");
+-      await expect(liveEffort).toHaveValue("high");
+-      await expect(apply).toBeDisabled();
+-      await expect(cancel).toBeDisabled();
+-      await assertLayout(baseline);
++      await close.click(); await page.reload(); await edit.click();
++      await expect(liveModel).toHaveValue("model-2"); await expect(liveEffort).toHaveValue("high");
++      await expect(save).toBeDisabled(); await close.click(); await assertLayout();
+     }
+     await page.setViewportSize({width: 1280, height: 720});
+     await page.getByRole("tab", {name: "Team"}).click();
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 4a275fe..964f203 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -110,9 +110,11 @@
+   </button>
+   <div id="codex-limits-panel" class="codex-limits-panel">
+     <h2>Codex limits</h2>
+-    <div data-limits-content><p class="limits-status">Loading limits…</p></div>
++    <div data-limits-content></div>
++    <button type="button" class="quiet" data-limits-details>Account details</button>
+   </div>
+ </section>
++<dialog id="codex-limits-dialog" aria-labelledby="codex-limits-title"><div class="section-heading"><h2 id="codex-limits-title">Codex limits</h2><button type="button" class="quiet" data-limits-close>Close</button></div><div data-account-limits></div><p data-reset-status role="status"></p></dialog>
+ {{end}}
+ 
+ {{define "session-card"}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 1c9be88..a12e8e6 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -80,7 +80,7 @@
+           <div id="history-controls" class="history-controls" hidden><span id="history-status" role="status"></span><button id="repair-history" type="button" class="quiet" hidden>Retry history</button></div>
+           <div id="transcript" class="transcript" role="log" aria-label="Codex conversation"><p class="empty">Loading conversation…</p></div>
+         </div>
+-        {{if .Session.Interactive}}<p id="pending-status" class="lane-status" role="status"><span>Loading requests…</span> <button id="pending-retry" type="button" class="quiet" hidden>Retry</button></p><div id="pending" class="pending"></div>{{end}}
++        {{if .Session.Interactive}}<p id="pending-status" class="lane-status" role="status" hidden><span>Loading requests…</span> <button id="pending-retry" type="button" class="quiet" hidden>Retry</button></p><div id="pending" class="pending"></div>{{end}}
+         <div class="composer-context">
+         {{if .Session.Interactive}}
+         <div id="message-receipts" class="message-receipts" hidden></div>
+@@ -88,7 +88,7 @@
+           <div class="queue-heading"><h3>Queued messages</h3><button id="queue-start" type="button" class="quiet">Start next</button></div>
+           <ol id="queue-list"></ol>
+         </section>
+-        {{if .Session.Interactive}}<p id="queue-status" class="lane-status" role="status"><span>Checking queued messages…</span> <button id="queue-retry" type="button" class="quiet" hidden>Retry</button></p>{{end}}
++        {{if .Session.Interactive}}<p id="queue-status" class="lane-status" role="status" hidden><span>Checking queued messages…</span> <button id="queue-retry" type="button" class="quiet" hidden>Retry</button></p>{{end}}
+         {{end}}
+         <div id="codex-work" class="codex-work" aria-live="polite" hidden><span id="codex-work-label">Codex is working</span><span id="codex-work-counts"></span><time id="codex-work-elapsed"></time></div>
+         <button id="new-output" type="button" class="new-output" hidden>New output ↓</button>
+@@ -103,9 +103,15 @@
+         <form id="message-form" class="chat-form">
+           <textarea name="message" required rows="3" maxlength="{{.MaxMessageBytes}}" placeholder="Send a message or steer the current turn…"></textarea>
+           <div id="message-uploads"></div>
+-          <div class="chat-actions"><div><span id="message-upload-controls"></span><button id="message-send" type="submit">Send</button><button id="message-queue" type="button" class="quiet" hidden>Queue next</button></div><div class="composer-controls"><div id="codex-mode" class="mode-toggle" aria-label="Codex mode" hidden></div><span id="codex-mode-status" class="lane-status" role="status" hidden></span><label class="compact-select"><span>Model</span><select id="codex-model" data-model-select data-existing-settings="true" required><option value="">Loading models…</option></select></label><label class="compact-select"><span>Reasoning</span><select id="codex-effort" data-effort-select data-existing-settings="true"><option value="">Loading efforts…</option></select></label><button id="codex-settings-apply" type="button" class="quiet" disabled>Apply</button><button id="codex-settings-cancel" type="button" class="quiet" disabled>Cancel</button><button id="interrupt" type="button" class="danger">Interrupt</button></div></div>
+-          <div id="codex-settings-status" class="lane-status" aria-live="polite"></div>
++          <div class="chat-actions"><div><span id="message-upload-controls"></span><button id="message-send" type="submit">Send</button><button id="message-queue" type="button" class="quiet" hidden>Queue next</button></div><div class="composer-controls"><div id="codex-mode" class="mode-toggle" aria-label="Codex mode" hidden></div><span id="codex-mode-status" class="lane-status" role="status" hidden></span><span id="codex-settings-summary" class="settings-summary">Settings unavailable</span><button id="codex-settings-open" type="button" class="quiet" disabled>Edit</button><button id="interrupt" type="button" class="danger">Interrupt</button></div></div>
+         </form>
++        <dialog id="codex-settings-dialog" aria-labelledby="codex-settings-title">
++          <div class="section-heading"><h2 id="codex-settings-title">Codex settings</h2><button id="codex-settings-close" type="button" class="quiet" aria-label="Close settings">Close</button></div>
++          <label>Model<select id="codex-model" data-model-select data-existing-settings="true" required><option value="">Loading models…</option></select></label>
++          <label>Reasoning<select id="codex-effort" data-effort-select data-existing-settings="true"><option value="">Loading efforts…</option></select></label>
++          <p id="codex-settings-status" class="lane-status" role="status"></p>
++          <button id="codex-settings-save" type="button" disabled>Save</button>
++        </dialog>
+         {{end}}
+       </section>
+       {{end}}
+diff --git a/portal/internal/web/usability_browser_test.cjs b/portal/internal/web/usability_browser_test.cjs
+new file mode 100644
+index 0000000..cdba720
+--- /dev/null
++++ b/portal/internal/web/usability_browser_test.cjs
+@@ -0,0 +1,105 @@
++"use strict";
++const assert = require("node:assert/strict");
++const {chromium, expect} = require("@playwright/test");
++const baseURL = process.argv[2];
++
++(async () => {
++  const browser = await chromium.launch({headless: true, channel: "chromium"});
++  try {
++    const context = await browser.newContext({ignoreHTTPSErrors: true,
++      permissions: ["clipboard-read", "clipboard-write"]});
++    const page = await context.newPage(), errors = [], attempts = [];
++    page.on("pageerror", error => errors.push(error.message));
++    const accountScope = "a".repeat(64);
++    let count = 3, consumed = false;
++    const snapshot = () => ({windows: [{windowDurationMins: 10080, usedPercent: 20, resetsAt: 1900000000},
++      {windowDurationMins: 300, usedPercent: 35, resetsAt: 1900000300}],
++      updatedAt: Date.now(), credits: {hasCredits: true, unlimited: false, balance: "12.5"},
++      accountScope, canReset: true, rateLimitResetCredits: {availableCount: count, credits: [
++        {id: "reset-1", title: "Available fixture reset", resetType: "codexRateLimits", status: consumed ? "redeemed" : "available", expiresAt: Math.floor(Date.now() / 1000) + 86400},
++        {id: "reset-2", title: "Expired fixture reset", resetType: "codexRateLimits", status: "available", expiresAt: 1},
++        {id: "reset-3", title: "Unknown fixture reset", resetType: "unknown", status: "available", expiresAt: null},
++      ]}});
++    // Every account read and mutation is intercepted. This fixture never uses a live reset.
++    await context.route("**/api/codex-limits", route => route.fulfill({json: snapshot()}));
++    await context.route("**/api/codex-limits/reset", route => {
++      attempts.push(route.request().postDataJSON());
++      if (!consumed) {
++        consumed = true; count--;
++        return route.fulfill({status: 503, json: {error: "Fixture lost acknowledgement"}});
++      }
++      return route.fulfill({json: {outcome: "alreadyRedeemed"}});
++    });
++    await page.goto(baseURL + "/example/");
++    await expect(page.locator(".limits-account-summary")).toContainText("12.5");
++    await expect(page.locator(".limits-account-summary")).toContainText("3 banked resets");
++    await page.getByRole("button", {name: "Account details", exact: true}).click();
++    const dialog = page.locator("#codex-limits-dialog");
++    await expect(dialog).toBeVisible();
++    await expect(dialog).toContainText("Expires");
++    await page.setViewportSize({width:390, height:844});
++    await expect(dialog.locator('[data-limit-duration="300"]')).toContainText('65% left');
++    await expect(dialog.locator('[data-limit-duration="10080"]')).toContainText('80% left');
++    await expect(dialog.locator('time')).toHaveCount(2);
++    await dialog.getByRole("button", {name:"Close", exact:true}).click();
++    await page.locator('.codex-limits-toggle').click();
++    await expect(dialog.locator('[data-limit-duration="300"]')).toBeVisible();
++    await page.setViewportSize({width:1280, height:900});
++    await expect(dialog.getByRole("button", {name: "Use reset…"}).nth(0)).toBeDisabled();
++    const available = dialog.locator(".reset-credit").filter({hasText: "Available fixture reset"}).getByRole("button");
++    // Two already-open pages share the native lock and durable pending record.
++    const peer = await context.newPage();
++    await peer.goto(baseURL + "/example/");
++    await expect(peer.locator(".limits-account-summary")).toContainText("3 banked resets");
++    await peer.evaluate(() => new Promise(resolve => {
++      navigator.locks.request(`workspace-portal.reset-attempt.${location.origin}`, async () => {
++        resolve(); await new Promise(release => {window.releaseResetLock = release;});
++      });
++    }));
++    await page.bringToFront();
++    await available.click();
++    await expect(page.locator("[data-reset-status]")).toHaveText("A reset attempt is already running in another tab.");
++    assert.equal(attempts.length,0);
++    await peer.evaluate(() => window.releaseResetLock());
++    await Promise.all([page.waitForEvent("dialog").then(prompt => prompt.dismiss()), available.click()]);
++    await expect(available).toBeEnabled(); assert.equal(attempts.length, 0);
++    await Promise.all([page.waitForEvent("dialog").then(prompt => prompt.accept()), available.click()]);
++    await expect(page.locator("[data-reset-status]")).toHaveText("Fixture lost acknowledgement");
++    assert.equal(attempts.length, 1);
++    await peer.bringToFront();
++    await peer.getByRole("button", {name:"Account details", exact:true}).click();
++    await expect(peer.getByRole("button", {name:"Retry saved attempt", exact:true})).toBeEnabled();
++    for (const button of await peer.locator("#codex-limits-dialog").getByRole("button", {name:"Use reset…"}).all()) await expect(button).toBeDisabled();
++    await peer.close(); await page.bringToFront();
++    await page.reload(); await page.getByRole("button", {name: "Account details", exact: true}).click();
++    await expect(dialog.getByRole("button", {name: "Retry saved attempt"})).toBeEnabled();
++    await dialog.getByRole("button", {name: "Retry saved attempt"}).click();
++    await expect(page.locator("[data-reset-status]")).toHaveText("This reset attempt already completed.");
++    assert.equal(attempts.length, 2); assert.deepEqual(attempts[1], attempts[0]);
++    assert.equal(attempts[0].creditId, "reset-1");
++    await expect(page.locator(".limits-account-summary")).toContainText("2 banked resets");
++    await dialog.getByRole("button", {name: "Close", exact: true}).click();
++
++    const input = page.locator("#message-form textarea");
++    await input.fill("Existing text ");
++    await page.evaluate(() => navigator.clipboard.writeText("native clipboard text"));
++    await input.focus(); await page.keyboard.press("Control+End"); await page.keyboard.press("Control+V");
++    await expect(input).toHaveValue("Existing text native clipboard text");
++    assert.equal(await page.evaluate(() => {
++      const data = new DataTransfer();
++      data.items.add(new File([new Uint8Array([137, 80, 78, 71])], "clipboard.png", {type: "image/png"}));
++      return document.querySelector("#message-form textarea").dispatchEvent(new ClipboardEvent("paste", {clipboardData: data, bubbles: true, cancelable: true}));
++    }), false, "binary paste is handled as files");
++    await expect(page.locator("#message-uploads")).toContainText("clipboard.png");
++    await expect(page.locator("#message-uploads")).toContainText("1 file");
++    await expect(input).toHaveValue("Existing text native clipboard text");
++    assert.equal(await page.evaluate(() => {
++      const data = new DataTransfer(); data.setData("text/plain", "mixed native text");
++      data.items.add(new File(["binary file"], "clipboard.bin", {type: "application/octet-stream"}));
++      return document.querySelector("#message-form textarea").dispatchEvent(new ClipboardEvent("paste", {clipboardData: data, bubbles: true, cancelable: true}));
++    }), true, "mixed paste leaves native text handling enabled");
++    await expect(page.locator("#message-uploads")).toContainText("clipboard.bin");
++    await expect(page.locator("#message-uploads")).toContainText("2 files");
++    assert.deepEqual(errors, []);
++  } finally { await browser.close(); }
++})().catch(error => {console.error(error); process.exitCode = 1;});

@@ -1,0 +1,1271 @@
+diff --git a/codex/client.go b/codex/client.go
+index 3e3ebb5..2686104 100644
+--- a/codex/client.go
++++ b/codex/client.go
+@@ -513,16 +513,44 @@ type CollaborationMode struct {
+ }
+ 
+ // AccountRateLimits contains the legacy allowance and any named allowance buckets.
+-// Account identity, plan and credit details are intentionally not included.
++// Optional account and credit fields remain absent when the backend cannot report them.
+ type AccountRateLimits struct {
+ 	RateLimits          RateLimitSnapshot            `json:"rateLimits"`
+ 	RateLimitsByLimitID map[string]RateLimitSnapshot `json:"rateLimitsByLimitId"`
++	AccountID           *string                      `json:"accountId,omitempty"`
++	ResetCredits        *RateLimitResetCredits       `json:"rateLimitResetCredits,omitempty"`
+ }
+ 
+ type RateLimitSnapshot struct {
+ 	LimitID   string           `json:"limitId"`
+ 	Primary   *RateLimitWindow `json:"primary"`
+ 	Secondary *RateLimitWindow `json:"secondary"`
++	Credits   *CreditsSnapshot `json:"credits,omitempty"`
++}
++
++type CreditsSnapshot struct {
++	HasCredits bool    `json:"hasCredits"`
++	Unlimited  bool    `json:"unlimited"`
++	Balance    *string `json:"balance"`
++}
++
++type RateLimitResetCredits struct {
++	AvailableCount int64                  `json:"availableCount"`
++	Credits        []RateLimitResetCredit `json:"credits"`
++}
++
++type RateLimitResetCredit struct {
++	ID          string  `json:"id"`
++	ResetType   string  `json:"resetType"`
++	Status      string  `json:"status"`
++	GrantedAt   int64   `json:"grantedAt"`
++	ExpiresAt   *int64  `json:"expiresAt"`
++	Title       *string `json:"title"`
++	Description *string `json:"description"`
++}
++
++type ResetCreditResult struct {
++	Outcome string `json:"outcome"`
+ }
+ 
+ // RateLimitWindow describes usage over a reported duration. Primary and
+@@ -3361,6 +3389,29 @@ func (c *Client) ReadAccountRateLimits(ctx context.Context) (AccountRateLimits,
+ 	return limits, err
+ }
+ 
++// ConsumeRateLimitResetCredit redeems one reset. Reuse the key for every retry
++// of the same logical attempt; an empty creditID lets the backend select a credit.
++// Applications must authorize this account-level mutation independently.
++func (c *Client) ConsumeRateLimitResetCredit(ctx context.Context, key, creditID string) (ResetCreditResult, error) {
++	var result ResetCreditResult
++	if strings.TrimSpace(key) == "" {
++		return result, errors.New("reset idempotency key is required")
++	}
++	params := map[string]string{"idempotencyKey": key}
++	if creditID != "" {
++		params["creditId"] = creditID
++	}
++	err := c.Request(ctx, "account/rateLimitResetCredit/consume", params, &result)
++	if err == nil {
++		switch result.Outcome {
++		case "reset", "alreadyRedeemed", "nothingToReset", "noCredit":
++		default:
++			err = errors.New("unknown reset-credit outcome")
++		}
++	}
++	return result, err
++}
++
+ func (c *Client) ListCollaborationModes(ctx context.Context) ([]CollaborationMode, error) {
+ 	var response struct {
+ 		Data *[]struct {
+diff --git a/codex/client_test.go b/codex/client_test.go
+index 836fd56..15c2b6d 100644
+--- a/codex/client_test.go
++++ b/codex/client_test.go
+@@ -92,8 +92,8 @@ func TestReadAccountRateLimits(t *testing.T) {
+ 					t.Fatalf("other snapshot = %#v", other)
+ 				}
+ 				encoded, err := json.Marshal(limits)
+-				if err != nil || strings.Contains(string(encoded), "accountId") ||
+-					strings.Contains(string(encoded), "rateLimitResetCredits") {
++				if err != nil || limits.AccountID == nil || *limits.AccountID != "not-exposed" ||
++					limits.ResetCredits == nil || limits.ResetCredits.AvailableCount != 5 {
+ 					t.Fatalf("public result = %s, %v", encoded, err)
+ 				}
+ 			},
+diff --git a/codex/reset_credit_test.go b/codex/reset_credit_test.go
+new file mode 100644
+index 0000000..1fb6bdc
+--- /dev/null
++++ b/codex/reset_credit_test.go
+@@ -0,0 +1,78 @@
++package codex
++
++import (
++	"context"
++	"fmt"
++	"testing"
++
++	"github.com/coder/websocket"
++)
++
++func TestResetCreditRetryKeepsKeyAndCredit(t *testing.T) {
++	const key = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
++	socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
++		if err := handshake(connection); err != nil {
++			return err
++		}
++		for _, outcome := range []string{"reset", "alreadyRedeemed"} {
++			request, err := readObject(connection)
++			if err != nil {
++				return err
++			}
++			params, _ := request["params"].(map[string]any)
++			if request["method"] != "account/rateLimitResetCredit/consume" || params["idempotencyKey"] != key || params["creditId"] != "fixture-credit" {
++				return fmt.Errorf("unexpected reset request: %#v", request)
++			}
++			if err := writeObject(connection, map[string]any{"id": request["id"], "result": map[string]string{"outcome": outcome}}); err != nil {
++				return err
++			}
++		}
++		return nil
++	})
++	client := newTestClient(socket)
++	defer client.Close()
++	for _, outcome := range []string{"reset", "alreadyRedeemed"} {
++		result, err := client.ConsumeRateLimitResetCredit(context.Background(), key, "fixture-credit")
++		if err != nil || result.Outcome != outcome {
++			t.Fatalf("result = %#v, %v", result, err)
++		}
++	}
++}
++
++func TestResetCreditNextAndUnknownOutcome(t *testing.T) {
++	for _, outcome := range []string{"nothingToReset", "noCredit", "unexpected"} {
++		t.Run(outcome, func(t *testing.T) {
++			socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
++				if err := handshake(connection); err != nil {
++					return err
++				}
++				request, err := readObject(connection)
++				if err != nil {
++					return err
++				}
++				params := request["params"].(map[string]any)
++				if _, found := params["creditId"]; found {
++					return fmt.Errorf("next credit was not omitted")
++				}
++				return writeObject(connection, map[string]any{"id": request["id"], "result": map[string]string{"outcome": outcome}})
++			})
++			client := newTestClient(socket)
++			defer client.Close()
++			result, err := client.ConsumeRateLimitResetCredit(context.Background(), "fixture-key", "")
++			if outcome == "unexpected" {
++				if err == nil {
++					t.Fatal("unknown outcome accepted")
++				}
++				return
++			}
++			if err != nil || result.Outcome != outcome {
++				t.Fatalf("result = %#v, %v", result, err)
++			}
++		})
++	}
++	client := newTestClient("/not-connected")
++	defer client.Close()
++	if _, err := client.ConsumeRateLimitResetCredit(context.Background(), "", ""); err == nil {
++		t.Fatal("empty key accepted")
++	}
++}
+diff --git a/conversation/assets/conversation.css b/conversation/assets/conversation.css
+index fae8530..a668a63 100644
+--- a/conversation/assets/conversation.css
++++ b/conversation/assets/conversation.css
+@@ -6,6 +6,10 @@
+ .codex-history-controls button[hidden], .codex-lane-status button[hidden] { display: none; }
+ .codex-lane-status { margin: .4rem 0; color: #bf8700; font-size: .85rem; }
+ .codex-lane-status button { margin-left: .5rem; }
++.codex-conversation-settings { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
++.codex-settings-dialog { max-width: min(32rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; }
++.codex-settings-dialog form { display: grid; gap: .75rem; }
++.codex-settings-dialog p { overflow-wrap: anywhere; }
+ .codex-conversation-transcript {
+   display: grid;
+   gap: 0.75rem;
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index d5b7014..f0bfde2 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -1,7 +1,9 @@
+-import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=4";
+-export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=4";
+-import {createConversationSync, renderConnectionStatus} from "./sync.js?v=1";
+-export {createConversationSync, renderConnectionStatus, connectionMessage} from "./sync.js?v=1";
++import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=5";
++export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=5";
++import {createConversationSync, renderConnectionStatus} from "./sync.js?v=2";
++export {createConversationSync, renderConnectionStatus, connectionMessage} from "./sync.js?v=2";
++import {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
++export {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+ 
+ const defaultLabels = {
+   send: "Send",
+@@ -320,7 +322,8 @@ export async function readTranscriptPage(client, {signal, cursor, legacy = false
+   return {...page, legacy: false};
+ }
+ 
+-export function createTranscriptHistory() {
++export function createTranscriptHistory(options = {}) {
++  const policy = {...refreshPolicy, ...options.policy};
+   let threadId = "", rows = [], initialized = false, legacy = false;
+   let olderCursor = null, hasOlder = false, gapCursor = null, gapStart = -1;
+   let repairCursor = null, repairTarget = "", lastActiveRepair = -Infinity, cursorReset = false;
+@@ -453,7 +456,7 @@ export function createTranscriptHistory() {
+       hasOlder = Boolean(page.hasOlder);
+     }
+     initialized = true;
+-    if (!legacy && gapStart < 0 && page.olderCursor && now - lastActiveRepair >= 30_000) {
++    if (!legacy && gapStart < 0 && page.olderCursor && now - lastActiveRepair >= policy.historyRepairMs) {
+       const newest = new Set(incoming.map((row) => row.key));
+       const active = rows.find((row) => row.entry.turnStatus &&
+         !["completed", "failed", "interrupted", "error"].includes(row.entry.turnStatus) && !newest.has(row.key));
+@@ -893,16 +896,31 @@ export function mountConversation(root, options) {
+   if (capabilities.interrupt) actions.append(interrupt);
+   const form = createElement("form", {class: "codex-conversation-form"});
+   form.append(textarea, actions);
+-  const settingsForm = createElement("form", {class: "codex-conversation-settings"});
++  const policy = {...refreshPolicy, ...options?.refreshPolicy};
++  const settingsBar = createElement("div", {class: "codex-conversation-settings"});
++  const settingsSummary = createElement("span", {}, "Settings unavailable");
++  const editSettings = createElement("button", {type: "button"}, "Edit");
++  editSettings.disabled = true;
++  const settingsDialog = createElement("dialog", {class: "codex-settings-dialog", "aria-label": "Codex settings"});
++  const settingsForm = createElement("form");
++  const closeSettings = createElement("button", {type: "button", "aria-label": "Close settings"}, "Close");
++  const settingsError = createElement("p", {role: "status"});
++  let settingsSaving = false, confirmedModel = "", confirmedEffort = "", settingsGeneration = 0;
++  settingsBar.append(settingsSummary, editSettings);
+   const model = createElement("select", {"aria-label": "Model"});
+   const effort = createElement("select", {"aria-label": "Reasoning effort"});
+   const mode = createElement("select", {"aria-label": "Collaboration mode"});
+   mode.disabled = true;
+   const modeStatus = createElement("span", {role: "status"}, "Checking mode…");
+   const saveSettings = createElement("button", {type: "submit"}, "Save settings");
+-  settingsForm.append(model, effort, mode, modeStatus, saveSettings);
++  const settingField = (title, select) => {
++    const label = createElement("label", {}, title); label.append(select); return label;
++  };
++  settingsForm.append(settingField("Model", model), settingField("Reasoning effort", effort),
++    settingField("Collaboration mode", mode), modeStatus, settingsError, saveSettings, closeSettings);
++  settingsDialog.append(settingsForm);
+   const children = [status, connectionStatus];
+-  if (capabilities.settings) children.push(settingsForm);
++  if (capabilities.settings) children.push(settingsBar, settingsDialog);
+   children.push(historyControls, transcript);
+   if (capabilities.pending) children.push(pendingStatus, prompts);
+   if (capabilities.queueRead) children.push(queueStatus, queue);
+@@ -915,7 +933,7 @@ export function mountConversation(root, options) {
+     const uploadControls = document.createElement("span");
+     actions.prepend(uploadControls);
+     uploads = mountUploads(uploadRoot, {
+-      basePath: options.uploadBasePath, dropTarget: form, controlsRoot: uploadControls,
++      basePath: options.uploadBasePath, dropTarget: form, controlsRoot: uploadControls, pasteTarget: textarea,
+       storage: options.storage || globalThis.localStorage,
+       storageKey: `codex-web:uploads:${options.uploadBasePath}`,
+       onChange: ({ready, count}) => { textarea.required = !count; send.disabled = !ready; queueButton.disabled = !ready; },
+@@ -934,24 +952,43 @@ export function mountConversation(root, options) {
+     effort.value = selectedEffort || selected?.defaultReasoningEffort || "";
+   };
+   const applyThreadSettings = () => {
+-    if (!capabilities.settings || !currentThread || modelCatalog.length === 0) return;
+-    if (modelCatalog.some((entry) => entry.model === currentThread.model)) {
+-      model.value = currentThread.model;
++    if (!capabilities.settings || !currentThread) return;
++    if ((currentThread.settingsGeneration ?? settingsGeneration) >= settingsGeneration &&
++        currentThread.model && currentThread.reasoningEffort) {
++      confirmedModel = currentThread.model; confirmedEffort = currentThread.reasoningEffort;
+     }
+-    populateEfforts(currentThread.reasoningEffort || "");
+-    mode.value = currentThread.collaborationMode || "";
++    settingsSummary.textContent = [confirmedModel, confirmedEffort].filter(Boolean).join(" · ") || "Settings unavailable";
++    editSettings.disabled = currentThread.status !== "idle" || settingsSaving;
++    saveSettings.disabled = currentThread.status !== "idle" || settingsSaving || !modelCatalog.length;
+     mode.disabled = !currentThread.collaborationMode;
+     modeStatus.hidden = !mode.disabled;
+     modeStatus.textContent = currentThread.metadataPending ? "Checking mode…" : "Mode unavailable";
++    if (settingsDialog.open || modelCatalog.length === 0) return;
++    if (modelCatalog.some((entry) => entry.model === confirmedModel)) {
++      model.value = confirmedModel;
++    }
++    populateEfforts(confirmedEffort);
++    mode.value = currentThread.collaborationMode || "";
+   };
++  editSettings.addEventListener("click", () => {
++    if (editSettings.disabled) return;
++    applyThreadSettings(); settingsError.textContent = ""; settingsDialog.showModal();
++    if (!modelCatalog.length) void loadSettings().catch(error => {settingsError.textContent = error.message;});
++  });
++  closeSettings.addEventListener("click", () => { if (!settingsSaving) settingsDialog.close(); });
++  settingsDialog.addEventListener("cancel", event => { if (settingsSaving) event.preventDefault(); });
++  settingsDialog.addEventListener("close", applyThreadSettings);
+   const loadSettings = async () => {
+     const [models, modes] = await Promise.all([client.models(), client.modes()]);
+     modelCatalog = models;
+     model.replaceChildren(...models.map((entry) => createElement("option", {value: entry.model}, entry.displayName || entry.model)));
+     mode.replaceChildren(...modes.map((entry) => createElement("option", {value: entry.mode}, entry.name || entry.mode)));
+-    model.addEventListener("change", () => populateEfforts());
++    model.value = confirmedModel;
++    populateEfforts(confirmedEffort);
++    mode.value = currentThread?.collaborationMode || "";
+     applyThreadSettings();
+   };
++  model.addEventListener("change", () => populateEfforts());
+ 
+   const renderQueue = (entries) => {
+     queue.replaceChildren(createElement("h2", {}, "Queued messages"));
+@@ -1027,24 +1064,37 @@ export function mountConversation(root, options) {
+     }
+   };
+ 
+-  const history = createTranscriptHistory();
+-  let legacy = false, historyRead = null, historyError = "", historyRetryTimer = null;
+-  let metadataRetryTimer = null, metadataRetryDelay = 2000;
++  const history = createTranscriptHistory({policy});
++  let legacy = false, historyRead = null, historyError = "", historyRetryTimer = null, historyFailureKind = null;
++  let metadataRetryTimer = null, metadataRetryDelay = policy.retryInitialMs;
+   let pendingRead = null, queueRead = null, pendingScope = null, queueScope = null;
+   let pendingRetryTimer = null, queueRetryTimer = null;
+-  let pendingRetryDelay = 2000, queueRetryDelay = 2000, pendingLastRead = 0;
++  let pendingRetryDelay = policy.retryInitialMs, queueRetryDelay = policy.retryInitialMs, pendingLastRead = 0;
+   let lastSyncStatus = "", lastThreadStatus = "", destroyed = false, paused = false;
+   let generation = 0, sync = null;
+   let entryNodes = new Map();
++  let historyNoticeState = {loading: false, warning: false}, historyRetryDelay = policy.retryInitialMs;
++  const historyNotice = createRefreshNotice({policy, render: state => {historyNoticeState = state; renderHistoryControls();}});
++  const pendingNotice = createRefreshNotice({policy, render: state => {
++    pendingStatus.hidden = !state.loading && !state.warning;
++    if (state.loading) pendingStatusLabel.textContent = "Loading requests…";
++    retryPending.hidden = !state.warning;
++  }});
++  const queueNotice = createRefreshNotice({policy, render: state => {
++    queueStatus.hidden = !state.loading && !state.warning;
++    if (state.loading) queueStatusLabel.textContent = "Checking queued messages…";
++    retryQueue.hidden = !state.warning;
++  }});
++  pendingStatus.hidden = queueStatus.hidden = true;
+   const renderHistoryControls = () => {
+     const older = history.hasOlder && !history.gap && !legacy;
+     loadOlder.hidden = !older;
+     loadOlder.disabled = Boolean(historyRead);
+-    retryHistory.hidden = !history.gap && !historyError;
++    retryHistory.hidden = !historyNoticeState.warning;
+     retryHistory.disabled = Boolean(historyRead);
+-    historyStatus.textContent = historyRead ? "Loading history…" : historyError ||
+-      (history.gap ? "Checking earlier messages…" :
+-        legacy ? "Older history is unavailable on this server." : "");
++    historyStatus.textContent = historyNoticeState.warning ? historyError :
++      historyNoticeState.loading ? "Loading earlier messages…" :
++        legacy ? "Older history is unavailable on this server." : "";
+     historyControls.hidden = !older && !historyStatus.textContent && retryHistory.hidden;
+   };
+   const laneRead = (timeout) => {
+@@ -1140,7 +1190,7 @@ export function mountConversation(root, options) {
+       });
+       currentThread = page;
+       legacy = Boolean(page.legacy);
+-      historyError = "";
++      if (!history.gap && !historyRead) {historyError = ""; historyFailureKind = null; historyNotice.success();}
+       applyThreadSettings();
+       const active = page.status === "active";
+       status.textContent = active ? "Working" : labels.idle;
+@@ -1152,44 +1202,46 @@ export function mountConversation(root, options) {
+       metadataRetryTimer = null;
+       if (page.metadataPending && !destroyed && !paused) {
+         metadataRetryTimer = setTimeout(() => { metadataRetryTimer = null; sync?.scheduleRefresh(0); }, metadataRetryDelay);
+-        metadataRetryDelay = Math.min(30_000, metadataRetryDelay * 2);
+-      } else metadataRetryDelay = 2000;
+-      if (Date.now() - pendingLastRead >= 5000) void refreshPending();
++        metadataRetryDelay = Math.min(policy.retryMaxMs, metadataRetryDelay * 2);
++      } else metadataRetryDelay = policy.retryInitialMs;
++      if (Date.now() - pendingLastRead >= policy.pendingMs) void refreshPending();
+     }
+     acknowledgeRetained(page.threadId);
+     renderHistoryControls();
+     scheduleHistoryRepair();
+   };
+-  const refreshPending = (force = false) => {
++  const refreshPending = (force = false, manual = false) => {
+     if (!capabilities.pending || destroyed || paused || globalThis.document?.hidden || pendingRead) return pendingRead || Promise.resolve();
+     if (pendingRetryTimer !== null && !force) return Promise.resolve();
+     if (pendingRetryTimer !== null) clearTimeout(pendingRetryTimer);
+     pendingRetryTimer = null;
+-    const read = laneRead(12_000), threadId = currentThread?.threadId;
++    const read = laneRead(policy.pendingDeadlineMs), threadId = currentThread?.threadId;
+     pendingScope = read;
++    pendingNotice.begin({manual});
+     pendingRead = client.pending({signal: read.signal}).then(entries => {
+       if (destroyed || (threadId && currentThread?.threadId !== threadId)) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid pending requests");
+       renderPrompts(entries);
+-      pendingStatus.hidden = true;
++      pendingNotice.success();
+       pendingLastRead = Date.now();
+-      pendingRetryDelay = 2000;
+-    }).catch(() => {
++      pendingRetryDelay = policy.retryInitialMs;
++    }).catch(error => {
+       if (destroyed || paused || globalThis.document?.hidden) return;
+       pendingStatusLabel.textContent = "Requests could not be refreshed. The last result may be out of date.";
+-      retryPending.hidden = false; pendingStatus.hidden = false;
++      pendingNotice.failure(error);
+       pendingRetryTimer = setTimeout(() => { pendingRetryTimer = null; void refreshPending(); }, pendingRetryDelay);
+-      pendingRetryDelay = Math.min(30_000, pendingRetryDelay * 2);
++      pendingRetryDelay = Math.min(policy.retryMaxMs, pendingRetryDelay * 2);
+     }).finally(() => { read.finish(); pendingScope = null; pendingRead = null; });
+     return pendingRead;
+   };
+-  const refreshQueue = (force = false) => {
++  const refreshQueue = (force = false, manual = false) => {
+     if (!capabilities.queueRead || destroyed || paused || globalThis.document?.hidden || queueRead) return queueRead || Promise.resolve();
+     if (queueRetryTimer !== null && !force) return Promise.resolve();
+     if (queueRetryTimer !== null) clearTimeout(queueRetryTimer);
+     queueRetryTimer = null;
+-    const read = laneRead(12_000), threadId = currentThread?.threadId;
++    const read = laneRead(policy.queueDeadlineMs), threadId = currentThread?.threadId;
+     queueScope = read;
++    queueNotice.begin({manual});
+     queueRead = Promise.resolve().then(async () => {
+       if (capabilities.queue && typeof client.reconcileQueue === "function") await client.reconcileQueue({signal: read.signal});
+       return client.queue({signal: read.signal});
+@@ -1197,25 +1249,25 @@ export function mountConversation(root, options) {
+       if (destroyed || (threadId && currentThread?.threadId !== threadId)) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid queue");
+       renderQueue(entries);
+-      queueStatus.hidden = true;
+-      queueRetryDelay = 2000;
+-    }).catch(() => {
++      queueNotice.success();
++      queueRetryDelay = policy.retryInitialMs;
++    }).catch(error => {
+       if (destroyed || paused || globalThis.document?.hidden) return;
+       queueStatusLabel.textContent = "Queued messages could not be refreshed. The last result may be out of date.";
+-      retryQueue.hidden = false; queueStatus.hidden = false;
++      queueNotice.failure(error);
+       queueRetryTimer = setTimeout(() => { queueRetryTimer = null; void refreshQueue(); }, queueRetryDelay);
+-      queueRetryDelay = Math.min(30_000, queueRetryDelay * 2);
++      queueRetryDelay = Math.min(policy.retryMaxMs, queueRetryDelay * 2);
+     }).finally(() => { read.finish(); queueScope = null; queueRead = null; });
+     return queueRead;
+   };
+-  const runHistoryRead = async (kind) => {
++  const runHistoryRead = async (kind, manual = kind === "older") => {
+     if (destroyed || paused || historyRead || legacy || globalThis.document?.hidden) return;
+     const cursor = kind === "older" ? history.olderCursor : history.repairCursor;
+     if (!cursor) return;
+     const threadId = history.threadId, readGeneration = generation;
+     const readVersion = history.repairVersion;
+-    const read = laneRead(35_000);
+-    historyRead = {...read, newerKeys: new Set()}; historyError = ""; renderHistoryControls();
++    const read = laneRead(policy.transcriptDeadlineMs);
++    historyRead = {...read, kind, newerKeys: new Set()}; historyError = ""; historyFailureKind = null; historyNotice.begin({manual}); renderHistoryControls();
+     try {
+       const page = await readTranscriptPage(client, {cursor, signal: read.signal, expectedThreadId: threadId});
+       if (destroyed || paused || readGeneration !== generation || history.threadId !== threadId ||
+@@ -1226,6 +1278,7 @@ export function mountConversation(root, options) {
+         return historyRead.newerKeys.has(key) ? current.get(key) || entry : entry;
+       });
+       renderThread({...page, entries}, () => true, kind);
++      historyRetryDelay = policy.retryInitialMs; historyNotice.success();
+     } catch (error) {
+       if (destroyed || paused || readGeneration !== generation || history.threadId !== threadId ||
+           readVersion !== history.repairVersion) return;
+@@ -1237,25 +1290,36 @@ export function mountConversation(root, options) {
+           (error.status === 501 && error.code === "transcript_paging_unavailable")) {
+         historyError = "Checking history on this server…";
+         sync?.scheduleRefresh(0);
+-      } else historyError = "Earlier messages could not be loaded. Retry.";
++      } else {
++        historyError = "Earlier messages could not be loaded. Retry.";
++        historyFailureKind = kind;
++        historyNotice.failure(error);
++        if (kind === "repair" && error.status !== 401 && error.status !== 403) {
++          historyRetryTimer = setTimeout(() => {historyRetryTimer = null; void runHistoryRead("repair");}, historyRetryDelay);
++          historyRetryDelay = Math.min(policy.retryMaxMs, historyRetryDelay * 2);
++        }
++      }
+     } finally {
+-      read.finish(); historyRead = null; renderHistoryControls();
++      read.finish(); historyRead = null; historyNotice.cancel(); renderHistoryControls();
+       if (!historyError) scheduleHistoryRepair();
+     }
+   };
+-  const scheduleHistoryRepair = () => {
++  const scheduleHistoryRepair = (delay = policy.historyPageMs) => {
+     if (!history.gap || !history.repairCursor || historyRetryTimer !== null ||
+-        historyRead || historyError || legacy || destroyed || paused || globalThis.document?.hidden) return;
+-    historyRetryTimer = setTimeout(() => { historyRetryTimer = null; void runHistoryRead("repair"); }, 40);
++        historyRead || historyError && historyFailureKind !== "repair" || legacy || destroyed || paused || globalThis.document?.hidden) return;
++    historyRetryTimer = setTimeout(() => { historyRetryTimer = null; void runHistoryRead("repair"); }, delay);
+   };
+   loadOlder.addEventListener("click", () => { void runHistoryRead("older"); });
+   retryHistory.addEventListener("click", () => {
++    clearTimeout(historyRetryTimer); historyRetryTimer = null;
+     historyError = "";
+-    if (history.repairCursor) scheduleHistoryRepair(); else sync?.scheduleRefresh(0);
++    if (history.repairCursor) void runHistoryRead("repair", true);
++    else if (history.olderCursor) void runHistoryRead("older");
++    else sync?.scheduleRefresh(0);
+     renderHistoryControls();
+   });
+-  retryPending.addEventListener("click", () => { void refreshPending(true); });
+-  retryQueue.addEventListener("click", () => { void refreshQueue(true); });
++  retryPending.addEventListener("click", () => { void refreshPending(true, true); });
++  retryQueue.addEventListener("click", () => { void refreshQueue(true, true); });
+   const suspendLanes = () => {
+     paused = true;
+     historyRead?.cancel(); pendingScope?.cancel(); queueScope?.cancel();
+@@ -1264,7 +1328,7 @@ export function mountConversation(root, options) {
+   };
+   const onVisibility = () => {
+     if (globalThis.document?.hidden) suspendLanes();
+-    else { paused = false; void refreshPending(true); void refreshQueue(true); scheduleHistoryRepair(); }
++    else { paused = false; void refreshPending(true); void refreshQueue(true); scheduleHistoryRepair(historyFailureKind ? historyRetryDelay : policy.historyPageMs); }
+   };
+   const onPageshow = () => { paused = false; onVisibility(); };
+   globalThis.document?.addEventListener?.("visibilitychange", onVisibility);
+@@ -1273,9 +1337,12 @@ export function mountConversation(root, options) {
+   renderHistoryControls();
+ 
+   sync = createConversationSync({
+-    EventSource: EventSourceClass, eventStream: capabilities.eventStream,
++    EventSource: EventSourceClass, eventStream: capabilities.eventStream, policy,
+     eventsPath: capabilities.eventStream ? client.eventsPath() : null,
+-    read: signal => readTranscriptPage(client, {signal, legacy}),
++    read: async signal => {
++      const readGeneration = settingsGeneration;
++      return {...await readTranscriptPage(client, {signal, legacy}), settingsGeneration: readGeneration};
++    },
+     apply: (page, {isCurrent}) => renderThread(page, isCurrent),
+     onStateChange: state => {
+       renderConnectionStatus(connectionStatus, state, () => sync.retry());
+@@ -1289,6 +1356,7 @@ export function mountConversation(root, options) {
+ 
+   if (capabilities.send) form.addEventListener("submit", async (event) => {
+     event.preventDefault();
++    if (settingsSaving) return;
+     send.disabled = true;
+     send.textContent = labels.sending;
+     try {
+@@ -1307,18 +1375,37 @@ export function mountConversation(root, options) {
+ 
+   if (capabilities.settings) settingsForm.addEventListener("submit", async (event) => {
+     event.preventDefault();
+-    saveSettings.disabled = true;
++    if (settingsSaving || currentThread?.status !== "idle") return;
++    const selected = {model: model.value, reasoningEffort: effort.value};
++    if (!modelCatalog.some(entry => entry.model === selected.model &&
++        entry.supportedReasoningEfforts?.some(option => option.reasoningEffort === selected.reasoningEffort))) return;
++    settingsGeneration++;
++    settingsSaving = true; saveSettings.disabled = true; closeSettings.disabled = true;
++    model.disabled = effort.disabled = true;
++    settingsError.textContent = "Saving settings…";
+     try {
+-      await client.settings(model.value, effort.value, currentThread?.collaborationMode ? mode.value : undefined);
+-      await refresh();
++      const saved = await client.settings(selected.model, selected.reasoningEffort, currentThread?.collaborationMode ? mode.value : undefined);
++      if (saved.model !== selected.model || saved.reasoningEffort !== selected.reasoningEffort) throw new Error("The settings update could not be confirmed.");
++      confirmedModel = saved.model; confirmedEffort = saved.reasoningEffort;
++      settingsGeneration++;
++      settingsDialog.close(); await refresh();
+     } catch (error) {
+-      status.textContent = error.message;
++      try {
++        const observed = await client.thread();
++        if (observed.model === selected.model && observed.reasoningEffort === selected.reasoningEffort) {
++          confirmedModel = observed.model; confirmedEffort = observed.reasoningEffort;
++          settingsGeneration++;
++          settingsDialog.close(); void refresh();
++        } else settingsError.textContent = error.message;
++      } catch (_) { settingsError.textContent = error.message; }
+     } finally {
+-      saveSettings.disabled = false;
++      settingsSaving = false; closeSettings.disabled = false; model.disabled = effort.disabled = false;
++      applyThreadSettings();
+     }
+   });
+ 
+   if (capabilities.queue) queueButton.addEventListener("click", async () => {
++    if (settingsSaving) return;
+     const message = textarea.value.trim();
+     if (!message && !uploads?.count()) return;
+     try {
+@@ -1336,12 +1423,12 @@ export function mountConversation(root, options) {
+     status.textContent = error.message;
+   }));
+ 
+-  if (capabilities.settings) void loadSettings().catch(error => { status.textContent = error.message; });
++  if (capabilities.settings) void loadSettings().catch(() => {});
+   void refresh();
+   void refreshPending();
+   void refreshQueue();
+-  const pendingInterval = setInterval(() => { void refreshPending(); }, 15_000);
+-  const queueInterval = setInterval(() => { void refreshQueue(); }, 30_000);
++  const pendingInterval = setInterval(() => { void refreshPending(); }, policy.pendingMs);
++  const queueInterval = setInterval(() => { void refreshQueue(); }, policy.queueMs);
+ 
+   return () => {
+     destroyed = true;
+@@ -1351,6 +1438,7 @@ export function mountConversation(root, options) {
+     globalThis.removeEventListener?.("pagehide", suspendLanes);
+     globalThis.removeEventListener?.("pageshow", onPageshow);
+     uploads?.destroy();
++    historyNotice.destroy(); pendingNotice.destroy(); queueNotice.destroy();
+     abort.abort();
+     sync.destroy();
+     root.replaceChildren();
+diff --git a/conversation/assets/refresh.js b/conversation/assets/refresh.js
+new file mode 100644
+index 0000000..7db6f91
+--- /dev/null
++++ b/conversation/assets/refresh.js
+@@ -0,0 +1,75 @@
++// Resource-specific freshness budgets share presentation and retry defaults.
++// Hosts may override individual values without replacing their domain controllers.
++export const refreshPolicy = Object.freeze({
++  initialLoadingMs: 750, manualLoadingMs: 250, warningMs: 30_000,
++  retryInitialMs: 2000, retryMaxMs: 30_000, eventDebounceMs: 200,
++  resumeDebounceMs: 250, watchMs: 5000, heartbeatGraceMs: 5000,
++  stalledMs: 45_000, transcriptMs: 60_000, transcriptDeadlineMs: 35_000,
++  historyRepairMs: 30_000, historyPageMs: 40,
++  limitsMs: 60_000, limitsDeadlineMs: 10_000,
++  pendingMs: 15_000, pendingDeadlineMs: 10_000,
++  queueMs: 30_000, queueDeadlineMs: 12_000,
++  activityActiveMs: 5000, activityIdleMs: 30_000,
++  activityActiveFreshMs: 15_000, activityIdleFreshMs: 35_000,
++  detailsMs: 15_000, detailsDeadlineMs: 15_000,
++  indexMs: 15_000, indexRetryMs: 30_000, indexProgressMs: 1000,
++  archivalMs: 30_000, archivalDeadlineMs: 60_000, readDeadlineMs: 10_000,
++});
++
++export function createRefreshNotice(options = {}) {
++  const policy = {...refreshPolicy, ...options.policy};
++  const page = options.document || globalThis.document;
++  const browser = options.window || globalThis;
++  const now = options.now || Date.now;
++  const later = options.setTimeout || globalThis.setTimeout;
++  const clear = options.clearTimeout || globalThis.clearTimeout;
++  let timer = null, stopped = false, suspended = false, pending = false, manual = false;
++  let started = null, failed = null, error = null, lastSuccessAt = null, urgent = false;
++  const publish = () => {
++    clear(timer); timer = null;
++    if (stopped) return;
++    const hidden = suspended || Boolean(page?.hidden);
++    const accessDenied = error?.status === 401 || error?.status === 403;
++    const warning = !hidden && Boolean(error) && (urgent || accessDenied ||
++      failed !== null && now() - failed >= policy.warningMs);
++    const loadingDelay = manual ? policy.manualLoadingMs : policy.initialLoadingMs;
++    const loading = !hidden && pending && !error && (manual || lastSuccessAt === null) &&
++      started !== null && now() - started >= loadingDelay;
++    options.render?.({loading, warning, error, lastSuccessAt, hasValue: lastSuccessAt !== null});
++    if (hidden) return;
++    const remaining = [];
++    if (error && !warning && failed !== null) remaining.push(policy.warningMs - (now() - failed));
++    if (pending && !error && !loading && (manual || lastSuccessAt === null)) remaining.push(loadingDelay - (now() - started));
++    if (remaining.length) timer = later(publish, Math.max(0, Math.min(...remaining)));
++  };
++  const visibility = () => {
++    // Background time never counts toward a visible warning.
++    if (error) failed = page?.hidden ? null : now();
++    if (pending) started = now();
++    publish();
++  };
++  page?.addEventListener?.("visibilitychange", visibility);
++  const hide = () => { suspended = true; failed = null; publish(); };
++  const show = () => { suspended = false; visibility(); };
++  browser?.addEventListener?.("pagehide", hide);
++  browser?.addEventListener?.("pageshow", show);
++  return {
++    begin({manual: requested = false} = {}) {
++      pending = true; manual = requested; started = now(); publish();
++    },
++    success() { pending = false; error = null; failed = null; lastSuccessAt = now(); publish(); },
++    failure(value, {immediate = manual} = {}) {
++      urgent = immediate;
++      pending = false; error = value instanceof Error ? value : new Error(String(value || "Update failed"));
++      if (failed === null && !page?.hidden) failed = now();
++      publish();
++    },
++    cancel() { pending = false; publish(); },
++    destroy() {
++      stopped = true; clear(timer);
++      page?.removeEventListener?.("visibilitychange", visibility);
++      browser?.removeEventListener?.("pagehide", hide);
++      browser?.removeEventListener?.("pageshow", show);
++    },
++  };
++}
+diff --git a/conversation/assets/sync.js b/conversation/assets/sync.js
+index 81d968c..1b9b722 100644
+--- a/conversation/assets/sync.js
++++ b/conversation/assets/sync.js
+@@ -1,9 +1,12 @@
++import {refreshPolicy} from "./refresh.js?v=1";
++
+ // Stream notifications are hints. A bounded snapshot read establishes freshness.
+ // All timers and browser event sources can be supplied by an embedding/test host.
+ export function createConversationSync(options) {
+   if (typeof options?.read !== "function" || typeof options?.apply !== "function") {
+     throw new TypeError("conversation read and apply callbacks are required");
+   }
++  const policy = {...refreshPolicy, ...options.policy};
+   const browser = options.window || globalThis;
+   const page = options.document || globalThis.document;
+   const EventSourceClass = options.EventSource === undefined ? globalThis.EventSource : options.EventSource;
+@@ -34,9 +37,9 @@ export function createConversationSync(options) {
+     } else if (recoverySince === null) {
+       recoverySince = now();
+     }
+-    const showWarning = accessDenied || (recoverySince !== null && now() - recoverySince >= 10_000);
++    const showWarning = accessDenied || (recoverySince !== null && now() - recoverySince >= policy.warningMs);
+     if (!showWarning && recoverySince !== null && warningTimer === null) {
+-      warningTimer = later(() => { warningTimer = null; publish(); }, Math.max(0, 10_000 - (now() - recoverySince)));
++      warningTimer = later(() => { warningTimer = null; publish(); }, Math.max(0, policy.warningMs - (now() - recoverySince)));
+     }
+     const state = {status, showWarning, lastSuccessAt, error: readError?.message || "", httpStatus: readError?.status || null};
+     const signature = JSON.stringify(state);
+@@ -60,7 +63,7 @@ export function createConversationSync(options) {
+   const clearRefresh = () => { clear(refreshTimer); refreshTimer = null; };
+   const scheduleRetry = () => {
+     if (destroyed || suspended || !live || retryTimer !== null) return;
+-    const delay = Math.min(30_000, 1000 * 2 ** Math.min(retryAttempt++, 5));
++    const delay = Math.min(policy.retryMaxMs, 1000 * 2 ** Math.min(retryAttempt++, 5));
+     retryTimer = later(() => {
+       retryTimer = null;
+       if (hidden()) return;
+@@ -69,7 +72,7 @@ export function createConversationSync(options) {
+     }, Math.round(delay * (0.8 + random() * 0.2)));
+   };
+ 
+-  function scheduleRefresh(delay = 200) {
++  function scheduleRefresh(delay = policy.eventDebounceMs) {
+     if (destroyed || suspended) return;
+     dirty = true;
+     if (readError && retryTimer !== null) return;
+@@ -96,7 +99,7 @@ export function createConversationSync(options) {
+     signal.addEventListener("abort", onAbort, {once: true});
+     const deadline = later(() => {
+       cycle.abort.abort(new Error("Conversation refresh timed out"));
+-    }, 35_000);
++    }, policy.transcriptDeadlineMs);
+     cycle.promise = (async () => {
+       try {
+         const value = await Promise.race([Promise.resolve().then(() => options.read(signal)), aborted]);
+@@ -159,7 +162,7 @@ export function createConversationSync(options) {
+       if (!current()) return;
+       try {
+         const interval = JSON.parse(event.data).heartbeatIntervalMs;
+-        if (Number.isSafeInteger(interval) && interval > 0) heartbeatDeadline = interval * 2 + 5000;
++        if (Number.isSafeInteger(interval) && interval > 0) heartbeatDeadline = interval * 2 + policy.heartbeatGraceMs;
+       } catch (_) {}
+       lastTraffic = now();
+     });
+@@ -182,10 +185,12 @@ export function createConversationSync(options) {
+   }
+ 
+   const recover = (force = true) => {
+-    if (destroyed || suspended || hidden() || now() - lastRecovery < 250) return;
++    if (destroyed || suspended || hidden() || now() - lastRecovery < policy.resumeDebounceMs) return;
+     lastRecovery = now(); lastWatch = now();
+     clear(retryTimer); retryTimer = null;
+-    const stale = now() - lastTraffic > (heartbeatDeadline ?? 45_000);
++    const stale = now() - lastTraffic > (heartbeatDeadline ?? policy.stalledMs);
++    if (!force && streamOpen && !stale && !needsSync && !dirty && !readError &&
++        lastSuccessAt !== null && now() - lastSuccessAt < policy.transcriptMs) return;
+     if (force || !streamOpen || stale) {
+       cancelRead();
+       closeStream();
+@@ -200,17 +205,17 @@ export function createConversationSync(options) {
+     if (destroyed || suspended) return;
+     const at = now();
+     if (!hidden()) {
+-      if (at - lastWatch > 45_000) recover();
+-      else if (streaming && source && at - lastTraffic > (heartbeatDeadline ?? 45_000) && (heartbeatDeadline !== null || !streamOpen)) {
++      if (at - lastWatch > policy.stalledMs) recover();
++      else if (streaming && source && at - lastTraffic > (heartbeatDeadline ?? policy.stalledMs) && (heartbeatDeadline !== null || !streamOpen)) {
+         closeStream(); streamFailed = true; needsSync = true;
+         publish(); scheduleRetry(); scheduleRefresh(0);
+       }
+-      if (lastSuccessAt === null || at - lastSuccessAt >= 60_000) {
++      if (lastSuccessAt === null || at - lastSuccessAt >= policy.transcriptMs) {
+         if (!active && retryTimer === null) scheduleRefresh(0);
+       }
+     }
+     lastWatch = at;
+-    watchTimer = later(watch, 5000);
++    watchTimer = later(watch, policy.watchMs);
+   };
+   const visibility = () => { if (!hidden()) recover(false); else publish(); };
+   const focus = () => recover(false);
+@@ -232,14 +237,14 @@ export function createConversationSync(options) {
+     suspended = false;
+     lastRecovery = -Infinity;
+     recover();
+-    if (live && watchTimer === null) watchTimer = later(watch, 5000);
++    if (live && watchTimer === null) watchTimer = later(watch, policy.watchMs);
+   };
+   const listeners = [[page, "visibilitychange", visibility], [browser, "focus", focus],
+     [browser, "online", online], [browser, "offline", offline],
+     [browser, "pagehide", pagehide], [browser, "pageshow", pageshow]];
+   for (const [target, name, callback] of listeners) target?.addEventListener?.(name, callback);
+   publish(); connect(); scheduleRefresh(0);
+-  if (live) watchTimer = later(watch, 5000);
++  if (live) watchTimer = later(watch, policy.watchMs);
+   return {
+     refresh, scheduleRefresh, retry: recover,
+     destroy() {
+diff --git a/conversation/assets/uploads.js b/conversation/assets/uploads.js
+index 97ce4bf..c57834f 100644
+--- a/conversation/assets/uploads.js
++++ b/conversation/assets/uploads.js
+@@ -1,3 +1,10 @@
++// Prefer file items so a clipboard exposing both collections attaches each file once.
++export function clipboardFiles(data) {
++  const items = Array.from(data?.items || []).filter(item => item.kind === "file")
++    .map(item => item.getAsFile()).filter(Boolean);
++  return items.length ? items : Array.from(data?.files || []);
++}
++
+ const idPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+ 
+ export function attachmentIDs(value = []) {
+@@ -385,6 +392,15 @@ export function mountUploads(root, options) {
+   const leave = () => dropTarget.classList.remove("codex-upload-drag");
+   const drop = (event) => { if (!event.dataTransfer?.types?.includes("Files")) return; event.preventDefault(); leave(); add(event.dataTransfer.files); };
+   dropTarget.addEventListener("dragover", drag); dropTarget.addEventListener("dragleave", leave); dropTarget.addEventListener("drop", drop);
++  const pasteTarget = options.pasteTarget;
++  const paste = event => {
++    const files = clipboardFiles(event.clipboardData);
++    if (!files.length || stopped || locked || !limits) return;
++    // Let the browser paste accompanying text, preserving selection and undo.
++    if (!event.clipboardData.getData("text/plain") && !event.clipboardData.getData("text/html")) event.preventDefault();
++    add(files);
++  };
++  pasteTarget?.addEventListener("paste", paste);
+   const initialized = (async () => {
+     try {
+       const saved = JSON.parse(storage.getItem(key) || "[]");
+@@ -415,6 +431,7 @@ export function mountUploads(root, options) {
+       closeMenu(); stopped = true; controllers.forEach((controller) => controller.abort());
+       globalThis.removeEventListener("resize", positionMenu); globalThis.removeEventListener("scroll", positionMenu, true);
+       dropTarget.removeEventListener("dragover", drag); dropTarget.removeEventListener("dragleave", leave); dropTarget.removeEventListener("drop", drop);
++      pasteTarget?.removeEventListener("paste", paste);
+       controls.remove(); root.replaceChildren(); root.hidden = initiallyHidden;
+     },
+   };
+diff --git a/conversation/handler.go b/conversation/handler.go
+index 9e986cd..89b4770 100644
+--- a/conversation/handler.go
++++ b/conversation/handler.go
+@@ -35,7 +35,7 @@ var messageDigestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
+ var pageCursorPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{32}$`)
+ var basePathPattern = regexp.MustCompile(`^[A-Za-z0-9/._~!$&'()*+,;=:@-]+$`)
+ 
+-//go:embed assets/conversation.js assets/conversation.css assets/uploads.js assets/uploads.css assets/sync.js
++//go:embed assets/conversation.js assets/conversation.css assets/uploads.js assets/uploads.css assets/sync.js assets/refresh.js
+ var assetFiles embed.FS
+ 
+ // Capabilities grants an opaque conversation ID access to individual
+diff --git a/docs/reference.md b/docs/reference.md
+index 708a5c3..cbdf310 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -134,9 +134,19 @@ backed by `PromptResponder` must supply tokens; older browser requests receive
+ snapshot and named `RateLimitsByLimitID` buckets, with nullable windows,
+ durations and reset times. Match `WindowDurationMins` to identify a window;
+ primary and secondary positions can represent different durations. `ResetsAt`
+-is Unix time in seconds. The result omits account identity, plan and credit
+-details. Applications authorize and expose this account-level read separately
+-from the conversation handler.
++is Unix time in seconds. Optional `AccountID`, bucket `Credits` and account-level
++`ResetCredits` preserve unreported values. `AvailableCount` is authoritative;
++`Credits` may be null or contain only some reset details. Applications authorize
++and expose this account-level read separately from the conversation handler.
++
++`Client.ConsumeRateLimitResetCredit(ctx, idempotencyKey, creditID)` redeems one
++banked reset through `account/rateLimitResetCredit/consume`. Pass a nonempty,
++unique key for one confirmed user action and retain it across uncertain retries.
++An empty credit ID asks Codex to choose the next available reset. The method
++accepts the outcomes `reset`, `alreadyRedeemed`, `nothingToReset` and `noCredit`;
++unknown outcomes fail. Account reads never call this method. Embedding
++applications own confirmation, account binding, durable retry records and an
++explicit mutation route. The conversation `Client` interface is unchanged.
+ 
+ `github.com/aither64/codex-web/conversation` exposes those operations through
+ an `http.Handler`. The application supplies a resolver that maps its opaque
+@@ -252,6 +262,23 @@ position when older entries are added. A missing page route or an explicit
+ read; the interface then says that older history is unavailable. Other HTTP,
+ timeout, cursor and malformed-response errors do not trigger that fallback.
+ 
++The composer shows the last confirmed model and reasoning effort with **Edit**.
++The dialog saves both values together while the thread is idle. Closing it or
++pressing Escape discards edits. Background reads preserve edits while the dialog
++is open, and reads started before a successful save cannot replace the saved
++pair. An uncertain save rereads the thread without sending a compensating write.
++
++`refreshPolicy` in `conversation/assets/refresh.js` owns resource freshness,
++deadlines, retry backoff and notice delays. `createRefreshNotice()` retains the
++last successful value during background reads. Initial loading appears after
++750 ms, manual loading after 250 ms, and refresh failures after 30 continuous
++visible seconds. Hidden tabs and page restoration restart that warning grace.
++Access failures and failed user actions appear immediately. Automatic history
++repair retries with capped backoff; manual older-page failures wait for Retry.
++Hosts can override individual policy values when mounting a conversation or
++creating a notice or sync controller. Domain controllers retain cursor,
++generation and mutation-recovery rules.
++
+ Custom interfaces can use `readTranscriptPage(client, {signal, cursor, legacy,
+ expectedThreadId})` for the same page validation and fallback policy, and
+ `createTranscriptHistory()` to merge newest, older and repair pages. The history
+@@ -485,6 +512,12 @@ remain in the total until removed. A file awaiting removal stays selected; a
+ failed removal does not undo its completed upload. The summary is separate from
+ errors and does not change submission readiness. It disappears with an empty
+ selection. Submitted files are cleared from the composer without deleting them.
++Pass `options.pasteTarget` to attach clipboard Files from a textarea's paste
++event. File items take precedence over the clipboard file list, so browsers that
++expose both attach each file once. Plain text and HTML retain native paste
++behavior, including mixed text/file pastes. Clipboard text, URLs and paths do
++not become files. Pasted files follow the same limits, upload retry and readiness
++checks as selected or dropped files.
+ Pass `options.controlsRoot` to put its + attachment menu beside your form actions;
+ omit it to keep everything in `root`. A separate empty card root is hidden.
+ `destroy()` removes the component's controls and listeners while preserving
+diff --git a/flake.nix b/flake.nix
+index 0fb77aa..46e3abd 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -25,7 +25,7 @@
+             --coverage-only codex/client.go
+           go test ./...
+           ${pkgs.nodejs}/bin/node --check conversation/assets/conversation.js
+-          ${pkgs.nodejs}/bin/node --test test/conversation_browser_contract_test.cjs test/uploads_browser_contract_test.cjs test/sync_browser_contract_test.cjs
++          ${pkgs.nodejs}/bin/node --test test/conversation_browser_contract_test.cjs test/uploads_browser_contract_test.cjs test/sync_browser_contract_test.cjs test/refresh_browser_contract_test.cjs
+           runHook postCheck
+         '';
+         installPhase = ''
+diff --git a/test/codex_protocol_contract.py b/test/codex_protocol_contract.py
+index 2d54b38..48f4dee 100644
+--- a/test/codex_protocol_contract.py
++++ b/test/codex_protocol_contract.py
+@@ -127,6 +127,7 @@ client_requests = [
+     ),
+     request("collaborationMode/list", {}),
+     request("account/rateLimits/read", None),
++    request("account/rateLimitResetCredit/consume", {"idempotencyKey": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "creditId": "reset-credit-1"}),
+     request(
+         "thread/settings/update",
+         {
+@@ -363,7 +364,13 @@ rate_limits = {
+         "model-specific": {"primary": {"usedPercent": 1}},
+     },
+ }
++rate_limits["accountId"] = "fixture-account"
++rate_limits["rateLimitResetCredits"] = {"availableCount": 3, "credits": [{"id": "reset-credit-1", "resetType": "codexRateLimits", "status": "available", "grantedAt": 1789730400, "expiresAt": None, "title": None, "description": None}]}
++rate_limits["rateLimitsByLimitId"]["codex"]["credits"] = {"hasCredits": True, "unlimited": False, "balance": "12.50"}
+ validate("v2/GetAccountRateLimitsResponse.json", rate_limits, "account rate limits result")
++for outcome in ["reset", "alreadyRedeemed", "nothingToReset", "noCredit"]:
++    validate("v2/ConsumeAccountRateLimitResetCreditResponse.json", {"outcome": outcome}, "reset-credit result")
++validate("v2/ConsumeAccountRateLimitResetCreditParams.json", {"idempotencyKey": "fixture-next"}, "next reset-credit request")
+ validate(
+     "v2/GetAccountRateLimitsResponse.json",
+     {"rateLimits": {"primary": None, "secondary": None}, "rateLimitsByLimitId": None},
+diff --git a/test/conversation_browser_contract_test.cjs b/test/conversation_browser_contract_test.cjs
+index bb19433..310f94d 100644
+--- a/test/conversation_browser_contract_test.cjs
++++ b/test/conversation_browser_contract_test.cjs
+@@ -545,6 +545,8 @@ class MemoryStorage {
+       }
+     }
+     addEventListener(name, listener) { this.listeners.set(name, listener); }
++    showModal() { this.open = true; }
++    close() { this.open = false; this.listeners.get("close")?.(); }
+     descendants() { return [this, ...this.children.flatMap((child) => child.descendants())]; }
+   }
+   globalThis.Element = FakeElement;
+@@ -697,6 +699,64 @@ class MemoryStorage {
+   assert.equal(root.descendants().filter((element) => element.attributes.class === "codex-conversation-date").length, 2);
+   unmount();
+ 
++  // A late catalog must initialize an already-open editor, and stale reads
++  // must not overwrite a settings acknowledgement.
++  let releaseCatalog, releaseSnapshot, releaseSave, settingsWrites = 0, snapshots = 0;
++  const settingsRoot = new FakeElement("main");
++  const settingsClient = {
++    eventsPath() {return "/settings-events";},
++    async thread() {
++      snapshots++;
++      const pair = {threadId: "thread-settings", status: "idle", entries: [], model: "model-a", reasoningEffort: "medium"};
++      if (snapshots > 1) return new Promise(resolve => {releaseSnapshot = () => resolve(pair);});
++      return pair;
++    },
++    models() { return new Promise(resolve => {releaseCatalog = () => resolve([
++      {model: "model-a", supportedReasoningEfforts: [{reasoningEffort: "medium"}]},
++      {model: "model-b", supportedReasoningEfforts: [{reasoningEffort: "xhigh"}]},
++    ]);}); },
++    async modes() { return [{mode: "default"}]; },
++    settings(model, reasoningEffort) {
++      settingsWrites++;
++      return new Promise(resolve => {releaseSave = () => resolve({model, reasoningEffort});});
++    },
++  };
++  let settingsEvents;
++  class SettingsEvents {
++    constructor() { settingsEvents = this; }
++    addEventListener() {}
++    close() {}
++  }
++  const disposeSettings = mountConversation(settingsRoot, {EventSource: SettingsEvents, refreshPolicy: {eventDebounceMs: 0}, id: "settings", client: settingsClient,
++    capabilities: {pending: false, queueRead: false, send: false, queue: false,
++      interrupt: false, respond: false, eventStream: true}});
++  await new Promise(resolve => setImmediate(resolve));
++  const settingsControl = label => settingsRoot.descendants().find(el => el.attributes["aria-label"] === label);
++  const editor = settingsControl("Codex settings");
++  const edit = settingsRoot.descendants().find(el => el.textContent === "Edit");
++  const settingsForm = editor.children[0];
++  edit.listeners.get("click")();
++  releaseCatalog(); await new Promise(resolve => setImmediate(resolve));
++  assert.equal(settingsControl("Model").value, "model-a");
++  assert.equal(settingsControl("Reasoning effort").value, "medium");
++  settingsControl("Model").value = "model-b"; settingsControl("Model").listeners.get("change")();
++  settingsControl("Reasoning effort").value = "xhigh";
++  editor.close(); edit.listeners.get("click")();
++  assert.equal(settingsControl("Model").value, "model-a"); assert.equal(settingsWrites, 0);
++  settingsControl("Model").value = "model-b"; settingsControl("Model").listeners.get("change")();
++  settingsControl("Reasoning effort").value = "xhigh";
++  settingsEvents.onmessage(); await new Promise(resolve => setTimeout(resolve, 5));
++  const saving = settingsForm.listeners.get("submit")({preventDefault() {}});
++  let escapeCanceled = false;
++  editor.listeners.get("cancel")({preventDefault() {escapeCanceled = true;}});
++  assert.equal(escapeCanceled, true);
++  releaseSave(); await new Promise(resolve => setImmediate(resolve));
++  releaseSnapshot(); await saving;
++  const settingsSummary = settingsRoot.descendants().find(el => el.textContent === "model-b · xhigh");
++  assert(settingsSummary, "a stale snapshot must retain the acknowledged model pair");
++  assert.equal(editor.open, false); assert.equal(settingsWrites, 1);
++  disposeSettings();
++
+   let releaseQueue, releasePending;
+   const pageCalls = [];
+   const pagedClient = {
+@@ -735,6 +795,46 @@ class MemoryStorage {
+   await new Promise(resolve => setImmediate(resolve));
+   unmountPaged();
+ 
++  // A failed automatic repair must restart after hiding during its backoff.
++  const plainDocument = globalThis.document;
++  globalThis.document = Object.assign(new EventTarget(), plainDocument, {hidden:false});
++  let repairEvents, newestReads = 0, repairReads = 0;
++  class RepairEvents {
++    constructor() {repairEvents = this;}
++    addEventListener() {}
++    close() {}
++  }
++  const repairEntry = index => ({turnId:"repair-turn", itemId:`item-${index}`, kind:"agentMessage", text:`Entry ${index}`});
++  const repairClient = {
++    eventsPath:() => "/repair-events",
++    async threadPage({cursor} = {}) {
++      if (cursor) {
++        repairReads++;
++        if (repairReads === 1) throw Error("Temporary history failure");
++        return {threadId:"repair-thread", status:"idle", entries:[repairEntry(1), repairEntry(2)], hasOlder:false};
++      }
++      newestReads++;
++      return {threadId:"repair-thread", status:"idle", entries:[repairEntry(newestReads === 1 ? 1 : 3)],
++        hasOlder:true, olderCursor:"repair-cursor"};
++    },
++  };
++  const repairRoot = new FakeElement("main");
++  const disposeRepair = mountConversation(repairRoot, {id:"repair", client:repairClient, EventSource:RepairEvents,
++    refreshPolicy:{eventDebounceMs:0, historyPageMs:1, retryInitialMs:40, retryMaxMs:80},
++    capabilities:{pending:false, queueRead:false, settings:false, send:false, queue:false, interrupt:false, respond:false, eventStream:true}});
++  const until = async check => {
++    for (let count=0; count<100 && !check(); count++) await new Promise(resolve => setTimeout(resolve,5));
++    assert(check());
++  };
++  await until(() => newestReads === 1);
++  repairEvents.onmessage(); await until(() => repairReads === 1);
++  globalThis.document.hidden = true; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++  await new Promise(resolve => setTimeout(resolve,100)); assert.equal(repairReads,1);
++  globalThis.document.hidden = false; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++  await until(() => repairReads === 2);
++  assert.equal(repairRoot.descendants().filter(el => el.attributes.class?.startsWith("codex-entry ")).length,3);
++  disposeRepair(); globalThis.document = plainDocument;
++
+   const promptRoot = new FakeElement("main");
+   const promptActions = [];
+   const promptClient = {
+diff --git a/test/refresh_browser_contract_test.cjs b/test/refresh_browser_contract_test.cjs
+new file mode 100644
+index 0000000..d684502
+--- /dev/null
++++ b/test/refresh_browser_contract_test.cjs
+@@ -0,0 +1,66 @@
++const assert = require('node:assert/strict');
++const {test} = require('node:test');
++const ready = import('../conversation/assets/refresh.js');
++
++async function fixture(t) {
++  const {createRefreshNotice} = await ready;
++  let at = 100_000, sequence = 0, latest;
++  const timers = new Map(), page = new EventTarget(), browser = new EventTarget(); page.hidden = false;
++  const notice = createRefreshNotice({document: page, window: browser, now: () => at,
++    setTimeout: (fn, ms) => {const id = ++sequence; timers.set(id, {fn, at: at + ms}); return id;},
++    clearTimeout: id => timers.delete(id), render: state => {latest = state;}});
++  t.after(() => notice.destroy());
++  return {notice, state: () => latest,
++    pageEvent(name) {browser.dispatchEvent(new Event(name));},
++    visible(value) {page.hidden = !value; page.dispatchEvent(new Event('visibilitychange'));},
++    advance(ms) {
++      const end = at + ms;
++      for (;;) {
++        const next = [...timers].sort((a,b) => a[1].at-b[1].at)[0];
++        if (!next || next[1].at > end) break;
++        at = next[1].at; timers.delete(next[0]); next[1].fn();
++      }
++      at = end;
++    },
++  };
++}
++
++test('initial loading is delayed and subsequent background refreshes keep values quiet', async t => {
++  const f = await fixture(t); f.notice.begin(); f.advance(749);
++  assert.equal(f.state().loading, false); f.advance(1); assert.equal(f.state().loading, true);
++  f.notice.success(); f.notice.begin(); f.advance(60_000);
++  assert.equal(f.state().loading, false); assert.equal(f.state().hasValue, true);
++  f.notice.cancel();
++});
++
++test('persistent failures share one visible grace across retries and recover cleanly', async t => {
++  const f = await fixture(t); f.notice.success(); f.notice.begin(); f.notice.failure(Error('offline'));
++  f.advance(15_000); f.notice.begin(); f.notice.failure(Error('still offline'));
++  f.advance(14_999); assert.equal(f.state().warning, false);
++  f.advance(1); assert.equal(f.state().warning, true);
++  f.notice.success(); assert.equal(f.state().warning, false);
++});
++
++test('hidden time does not count and returning to a tab starts a fresh warning grace', async t => {
++  const f = await fixture(t); f.notice.failure(Error('offline')); f.advance(10_000);
++  f.visible(false); f.advance(120_000); assert.equal(f.state().warning, false);
++  f.visible(true); f.advance(29_999); assert.equal(f.state().warning, false);
++  f.advance(1); assert.equal(f.state().warning, true);
++});
++
++test('manual loads use a short delay and manual/access failures appear immediately', async t => {
++  const f = await fixture(t); f.notice.success(); f.notice.begin({manual:true});
++  f.advance(249); assert.equal(f.state().loading, false); f.advance(1); assert.equal(f.state().loading, true);
++  f.notice.failure(Error('manual failure')); assert.equal(f.state().warning, true);
++  f.notice.success(); f.notice.begin(); f.notice.failure(Object.assign(Error('denied'), {status:403}));
++  assert.equal(f.state().warning, true);
++});
++
++test('page restoration starts a fresh grace and destroyed notices stop publishing', async t => {
++  const f = await fixture(t); f.notice.failure(Error('offline')); f.advance(20_000);
++  f.pageEvent('pagehide'); f.advance(120_000); assert.equal(f.state().warning, false);
++  f.pageEvent('pageshow'); f.advance(29_999); assert.equal(f.state().warning, false);
++  f.advance(1); assert.equal(f.state().warning, true);
++  const previous = f.state(); f.notice.destroy(); f.pageEvent('pageshow'); f.advance(60_000);
++  assert.equal(f.state(), previous);
++});
+diff --git a/test/sync_browser_contract_test.cjs b/test/sync_browser_contract_test.cjs
+index 56ea99a..eb73b1f 100644
+--- a/test/sync_browser_contract_test.cjs
++++ b/test/sync_browser_contract_test.cjs
+@@ -260,19 +260,20 @@ test("brief focus refresh keeps the healthy stream and stays quiet", async t =>
+   f.browser.hidden = true; f.emit("visibilitychange"); await f.clock.advance(1000);
+   f.browser.hidden = false; f.emit("visibilitychange"); f.emit("focus");
+   assert.equal(f.sources.length, 1);
++  assert.equal(f.reads.length, 1);
+   assert.equal(f.state().showWarning, false);
+   await f.clock.advance(0);
+   assert.equal(f.state().status, "connected");
+ });
+ 
+-test("recovery gets ten visible seconds regardless of hidden time or repeated focus", async t => {
++test("recovery gets thirty visible seconds regardless of hidden time or repeated focus", async t => {
+   const f = await fixture(t, {read: (_, n) => n === 1 ? "initial" : new Promise(() => {})});
+   f.open(); await f.clock.advance(0);
+   f.browser.hidden = true; f.emit("visibilitychange"); await f.clock.advance(120_000);
+   f.browser.hidden = false; f.emit("visibilitychange"); f.open(); await f.clock.advance(0);
+   assert.equal(f.state().showWarning, false);
+   await f.clock.advance(5000); f.emit("focus");
+-  await f.clock.advance(4999); assert.equal(f.state().showWarning, false);
++  await f.clock.advance(24999); assert.equal(f.state().showWarning, false);
+   await f.clock.advance(1); assert.equal(f.state().showWarning, true);
+ });
+ 
+diff --git a/test/uploads_browser_contract_test.cjs b/test/uploads_browser_contract_test.cjs
+index 03bf7e9..bb8a9fa 100644
+--- a/test/uploads_browser_contract_test.cjs
++++ b/test/uploads_browser_contract_test.cjs
+@@ -175,7 +175,7 @@ async function uploadComposer(t, options = {}) {
+   const {mountUploads} = await modules;
+   const mount = async () => {
+     root = new Element();
+-    upload = mountUploads(root, {client, storage, storageKey: 'draft', onChange: (value) => changes.push(value)});
++    upload = mountUploads(root, {client, storage, pasteTarget: root, storageKey: 'draft', onChange: (value) => changes.push(value)});
+     await upload.initialized;
+   };
+   await mount();
+@@ -199,6 +199,14 @@ async function uploadComposer(t, options = {}) {
+       Object.defineProperty(event, 'dataTransfer', {value: {types: ['Files'], files}});
+       root.dispatchEvent(event);
+     },
++    destroy: () => upload.destroy(),
++    paste: (files, text = '', html = '') => {
++      const event = new Event('paste', {cancelable: true});
++      Object.defineProperty(event, 'clipboardData', {value: {files,
++        items: files.map(file => ({kind: 'file', getAsFile: () => file})),
++        getData: kind => kind === 'text/plain' ? text : kind === 'text/html' ? html : ''}});
++      root.dispatchEvent(event); return event;
++    },
+     reload: async () => {upload.destroy(); await mount();},
+     choose: (name, file, label = 'Choose file to retry') => {
+       click(name, label);
+@@ -501,3 +509,38 @@ test('a lost deletion response blocks submission until the file is reconciled',
+   composer.click('input.eml', 'Remove');
+   await eventually(() => composer.count() === 0);
+ });
++
++
++test('clipboard binaries use upload cards once and native text paste remains uncanceled', async t => {
++  const composer = await uploadComposer(t);
++  assert.equal(composer.paste([], 'ordinary text').defaultPrevented, false);
++  assert.equal(composer.count(), 0);
++  const file = new File([], 'screenshot.png', {type: 'image/png'});
++  assert.equal(composer.paste([file]).defaultPrevented, true);
++  await eventually(() => composer.ready());
++  assert.equal(composer.count(), 1);
++  assert.equal(composer.calls.create.length, 1);
++  assert.equal(composer.card('screenshot.png').children[0].textContent, 'screenshot.png');
++  assert.equal(composer.paste([zeroFile('mixed.pdf')], 'accompanying text').defaultPrevented, false);
++  assert.equal(composer.paste([zeroFile('html.pdf')], '', '<b>text</b>').defaultPrevented, false);
++  assert.equal(composer.count(), 3);
++  composer.lock(true);
++  assert.equal(composer.paste([zeroFile('locked.pdf')]).defaultPrevented, false);
++  assert.equal(composer.count(), 3);
++  composer.lock(false);
++  composer.paste([new File([new Uint8Array(101)], 'too-large.bin')]);
++  assert.equal(composer.count(), 3);
++  assert.match(composer.notice().textContent, /limit/);
++  await eventually(() => composer.ready());
++  const count = composer.calls.create.length;
++  composer.destroy();
++  composer.paste([zeroFile('after-destroy.pdf')]);
++  assert.equal(composer.calls.create.length, count);
++});
++
++test('clipboard file-list fallback preserves multiple file objects', async () => {
++  const {clipboardFiles} = await modules;
++  const files = [zeroFile('one.pdf'), zeroFile('two.zip')];
++  assert.deepEqual(clipboardFiles({items: [], files}), files);
++  assert.deepEqual(clipboardFiles({items: [{kind:'string'}], files: []}), []);
++});
