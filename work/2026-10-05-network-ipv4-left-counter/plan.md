@@ -8,9 +8,14 @@ both 2 GiB guests, then failed before resource/API/PHP/lease and stop/resume
 checks because the public SSH launcher discarded script input. The correction
 is published at K49221a07 with exact E265bd789; final hosted checks and affected
 four-lane source/history review are complete. The exported private-input evidence
-copy was redacted and its earlier exposure recorded. No replay, new VM or upscale
-is selected. The final
-C selection is b5c37e01 (Vebe4fab3 and W30cce68142). Full runtime qualification
+copy was redacted and its earlier exposure recorded. Subsequent continuation
+selected one fresh corrected reduced qualification, without replay or upscale.
+Its prerequisite public G13 stop proved complete process exit but refused six
+virtiofs PID files. Root accepted the prospective descriptor-listener correction
+and retention of the fully exited G13 state, with fresh ownership/capacity
+proof and source gates required before the still-unstarted corrected campaign.
+See [the explicit disposition](finish-corrected-virtiofs-source-acceptance1.json).
+The final C selection is b5c37e01 (Vebe4fab3 and W30cce68142). Full runtime qualification
 and both fresh canonical PNGs remain unfinished.
 Earlier accepted plans below retain their historical scope and evidence.
 
@@ -388,3 +393,21 @@ No further capacity or lifecycle operation follows automatically from this hando
 The active session retains failed campaigns, preview, branches and worktrees.
 Default integration, production KB writes, deployment, activation and cleanup
 remain outside this disposition. See [current handoff](finish-smoke-handoff1.md).
+
+## G14 finite-result disposition and bounded verifier repair (2026-10-10)
+
+The one reduced attempt built and booted the fixed profile and attested both
+guests, then failed an invalid GNU inode command. Preserve this result and do
+not replay it. A separately selected public shutdown succeeded with complete
+recorded-process exit and reservation/socket retirement; disks and original
+private failure evidence remain retained. Only the two-file generated-resource
+script correction, its meaningful hosted regressions, exact E selection and
+focused committed review continue. No further VM, resume, reset, unit retirement
+or capture is selected. The old full campaign remains deferred.
+
+The corrected K22e2fb77/Ef104eb27 source checks and independent four-lane review
+are complete with no findings. The source handoff is accepted separately from
+the failed real qualification; its result remains tied to G725c325. Full live
+API/PHP, lease, resume continuity and media remain pending. Keep the session
+active and use the recorded handoff for any later operation or integration
+decision; this checkpoint does not select another runtime attempt.

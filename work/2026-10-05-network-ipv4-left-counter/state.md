@@ -6,65 +6,64 @@ lifecycle: active
 
 ## Status
 
-### Current phase (2026-10-10, source gates complete; handoff)
+### Current phase (2026-10-11, source accepted; reduced-runtime handoff)
 
-The reduced profile is implemented and exact K9c551/Ecbb8 source gates passed.
-One real attempt built the fixed8GiB services image and started both2GiB guests.
-Both guest identity records and actual current-system closures matched. The next
-public SSH resource script received empty stdin; the verifier failed with
-`services real resource observations` and native exit1. This is a launcher
-stdin-forwarding defect, not a measured image-fit or memory failure.
+The one reduced G14 qualification ended with native exit 1 after 9m32s.
+Its fixed 8-GiB image built, public start succeeded, and both 2048-MiB guests
+passed exact identity/current-system attestation. A GNU `df` option defect
+then produced an empty inode field; this does not establish a capacity shortfall.
+The finite failed attempt remains immutable and is not replayed.
 
-- [x] Required resources reduced to one cluster,4GiB guests and24GiB eventual
-  image/root/tank output. Actual8GiB image/root/tank lengths and2048MiB guest
-  declarations independently recorded in finish-runtime-reduction-real-start-proof1.json.
-- [x] Existing K/E exact source, independent whole-history/migration review and
-  narrow live-capture accounting fix accepted. Native hosted4 checks pass;
-  strict media remained skipped. Original reports/evidence are preserved.
-- [x] One finite durable-service runtime-smoke ended natively after10m51s.
-  Public start/attested guest identity/current-system passed. Whole smoke did
-  not pass; no TLS/API/PHP/lease/ordinary stop/resume/capture was reached.
-- [x] Implementer0 completed the two-path public SSH stdin fix/regression under
-  finish-k-public-ssh-stdin-brief1.md. Root inspected its frozen packet, owning
-  prose and exact publication. No replay/new VM/upscale.
-- [x] Final canonical Cb5c37e01 selects Vebe/W30cce with normal confctl/hooks;
-  retained V patch is equal after rebase, only the W lock node newly changes.
-- [x] Public SSH fix K49221a07 and exact E265bd789 are published; unchanged
-  provider and whole K/D input graphs verified. Hosted K38071236937,
-  runtime-K38071232693 and E38071327643 passed at those exact heads; root matched
-  all27 evidence hashes and native jobs/results. Runtime99/1242,
-  verifier30/348 and selected E SDK8/68/public5/58 pass with zero skips.
-  Strict media remained skipped. finish-final-stdin-hosted-acceptance1.json.
-- [x] Reviewer0 completed all four affected lanes and the complete K/E/C
-  histories on turn01a126e7-c60a-7443-b1f6-0bb0902ffc1c, retaining
-  Sol/xhigh/read_only settings. No new implementation finding. Actual native
-  task completion and exact final report were collected without reviewer writes.
-  [Review](finish-final-review1-report.md),
-  [root disposition](finish-final-review1-acceptance.json).
-- [x] The sole Important evidence finding is directly fixed under review step9:
-  private configuration was removed from the exported start proof; its original
-  is retained privately0600. No Git-tracked/history copy exists at that path.
-  The streamed tracking scan finds no other generated-account password copies.
-  Earlier portal/tool-output exposure remains recorded, and those credentials
-  must not be reused. No source rerun or failed-campaign mutation was needed.
-  [Redaction](finish-final-proof-redaction1.json),
-  [scan and public-fixture distinction](finish-final-evidence-secret-scan2.json).
-- [x] Final source/history gates and the curated handoff are complete.
-  Source units are ready, awaiting merge approval and required target
-  reconciliation. Seven registered refs remain unmerged; V/D reconciliation
-  precedes any later fast-forward integration. Full real qualification and
-  fresh media remain unfinished.
+- [x] Exact K725c / D91c / E02ed source and package gates and independent
+  four-lane whole-branch review passed before that attempt.
+- [x] Fresh private configuration, one 4-GiB guest pair, 24-GiB image/root/tank
+  extent, 2048-MiB sequential builder and separately measured host obligations.
+- [x] All 33 native command records are complete/exit 0, including one public
+  start and guest attestation. The enclosing resource assertion failed.
+  [Allowlisted native proof](finish-virtiofs-runtime-failure-proof1.json).
+- [x] Separately selected ordinary public G14 stop returned 0 in about 24s.
+  Fresh guarded proof establishes phase stopped, complete receipt, runner and
+  all 14 recorded children gone, own reservation absent and socket namespace
+  absent. Both disks remain. The failed attempt hash is unchanged, and no
+  completed runtime qualification receipt exists.
+  [Independent shutdown proof](finish-virtiofs-g14-stop-proof1.json).
+- [x] Implementer0's two-file resource-command fix is frozen, inspected,
+  consolidated and published at K22e2fb772f69ec1f5e32e3a8d314ab3ffb63d3cd.
+  It selects GNU inode output correctly and preserves producer failures. All
+  original tests and other tracked source remain unchanged.
+- [x] Ef104eb27281f2df23484561fd13c629be749790d selects exact K22e2fb77.
+  Complete K45/D17 graphs, unrelated follows and provider patch/message remain
+  exact; both branches preserve their two logical commits and clean trees.
+- [x] Canonical K38089515368/runtime-K38089511931 at K22e2fb77 and
+  E38089608618 at Ef104eb27 succeed; all 27 evidence hashes match. Runtime
+  99/1242, machine34/1244, verifier33/744 and selected E SDK8/68/public5/58
+  have zero failures/errors/skips. Strict media is skipped. No local CI ran.
+  [Native acceptance](finish-resource-command-hosted1-acceptance.json).
+- [x] Retained independent reviewer0 Sol/xhigh completed all four affected
+  lanes with no findings at exact K22e2fb77/Ef104eb27. The overall initiative
+  remains HIGH risk; this compatible resource-observation repair is MEDIUM.
+  Complete histories, migration lineage, selected K45/D17 graphs and all 27
+  native evidence hashes were independently checked. Prior conclusions apply
+  only to confirmed unchanged objects.
+  [Review](finish-resource-command-review1-report.md),
+  [acceptance](finish-resource-command-review1-acceptance.json).
+- [x] Managed38089515732/38089511921 are cancelled before preparation/tests.
+  They supply no integration pass. Updated exact K/E comparisons are captured.
+- [ ] TLS/API/member PHP, live lease, same-artifact resume/continuity and genuine
+  CS/EN PNGs remain unproved. No capture prerequisite is satisfied.
 
-The failed G13 campaign, original immutable generating source, guest state and
-unit remain retained. Current liveness has not been inferred from disk receipts;
-no stop/reset/signal/recovery/cleanup is authorized by this record. G4/G6/
-isolation3 and preview remain untouched. No fresh CS/EN PNGs exist.
+G14 is stopped with disks/evidence retained. G13/G4/G6/isolation3 and preview
+remain untouched. No reset, disk deletion, unit retirement, upscale, another
+instance, qualification replay or media operation is selected. The session
+stays active with feature refs retained; default integration is not approved,
+and V/D target reconciliation remains outstanding.
 
-Next action: review the [handoff](finish-final-handoff1.md). Any further real
-runtime/capture operation needs separate selection; no replay is scheduled.
-Default integration still requires explicit repository/target approval.
-Detailed diagnosis: finish-runtime-reduction-public-ssh-stdin-diagnosis1.json.
-Prior source/planning/admission account: finish-runtime-reduction-pre-attempt-state1.md.
+The corrected source gate and this handoff checkpoint are complete. Full real
+qualification and media remain unfinished. No owned operation is running.
+Next: use the [current handoff](finish-virtiofs-handoff1.md) for a separately
+selected real-verification decision or approved integration preparation; retain
+the finite failed attempt and reconcile V/D targets before integration.
+[Diagnosis](design.md#diagnosis--proposal-g14-resource-observation-command-2026-10-10).
 
 ### Previous checkpoint (2026-10-10, installed smoke only)
 
