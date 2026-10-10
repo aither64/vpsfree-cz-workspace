@@ -20,7 +20,7 @@ file cannot be read, stop the affected action and report the missing guidance.
 | --- | --- |
 | Selecting affected projects or changing cross-project scope | [Project map](docs/agent-instructions/projects.md) |
 | Starting/resuming an initiative; writing plans, state, notes or handoffs | [Session setup and tracking](docs/agent-instructions/sessions.md) |
-| Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records | [Git and worktrees](docs/agent-instructions/git.md) |
+| Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records; declaring an unmerged branch ready | [Git and worktrees](docs/agent-instructions/git.md) |
 | Any session mutation; archiving, deleting, reviving, enabling auto-archive or changing its hold; creating/accessing/resetting development clusters; implementing/reviewing session, cluster or package-transition behavior; switching/rolling back workspace packages; suspending/unregistering workspaces or reconciling Codex | [Lifecycle and package transitions](docs/agent-instructions/lifecycle.md) |
 | Planning substantive development, investigation or operations; writing/reorganizing docs; preparing review or handoff | [Development documentation](docs/agent-instructions/documentation.md) |
 | Pushing branches (including force-pushes and follow-up fixes); selecting/running builds, tests or CI; editing test runners, image verification or GitHub workflows; handling failed checks | [Environment and verification](docs/agent-instructions/verification.md) |
@@ -151,20 +151,13 @@ local checks, independent review, deployment, and readiness for use. Update the
 durable phase checklist in `state.md` when a phase changes, under the normal
 tracking-commit cadence. Integrate member reports into the lead's account.
 
-Before calling an unmerged feature branch ready, inventory its complete
-base-to-head commit series and final diff. Identify superseded approaches,
-follow-up fixes, unused compatibility paths, and migrations. Establish whether
-each migration version was merged, released, deployed, or externally consumed.
-Consolidate obsolete, unapplied branch history while preserving supported
-paths. Give the inventory to the dedicated independent reviewer for an explicit
-whole-branch history and migration conclusion under the mandatory-change-review
-workflow. Earlier incremental reviews do not complete this gate.
-Repeated dependency and channel-pin updates in one logical update stream must
-be consolidated to the final update. Development deployments do not exempt
-superseded pin commits; keep rollout provenance in rollout records and preserve
-required deployed compatibility. Before an approved merge, the lead verifies
-the current complete series and the reviewer's repeated-update conclusion under
-the [Git procedure](docs/agent-instructions/git.md).
+Before calling an unmerged feature branch ready, read the
+[Git procedure](docs/agent-instructions/git.md) and inventory its complete
+base-to-head series, final diff and migration lineage. Give the inventory to the
+independent reviewer for an explicit whole-branch history and migration
+conclusion, including whether migrations were merged, released, deployed, or
+externally consumed. Apply that procedure's consolidation and final pre-merge
+checks under the mandatory-change-review workflow.
 
 ## Compatibility And Deployment
 

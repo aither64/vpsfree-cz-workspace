@@ -161,7 +161,8 @@ approaches, follow-up fixes, unused compatibility paths, and every migration.
 Establish whether each migration version was merged, released, deployed, or
 externally consumed before rewriting it. Consolidate obsolete, unapplied branch
 history while preserving supported paths. Give this inventory to the dedicated
-independent reviewer for a whole-branch assessment. Earlier incremental
+independent reviewer for an explicit whole-branch history and migration
+conclusion under the mandatory-change-review workflow. Earlier incremental
 reviews do not complete this gate.
 
 Consolidate repeated dependency or channel-pin updates in one logical update
