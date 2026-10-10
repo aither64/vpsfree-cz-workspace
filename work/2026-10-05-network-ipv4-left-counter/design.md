@@ -5306,3 +5306,260 @@ existing declared K machine/runtime check route. Root owns source acceptance,
 hosted selection, affected review and any eventual operation; this design-only
 clarification leaves application drafts, all private campaigns and preview
 unchanged.
+
+### Separate screenshot operation and proportionate smoke fallback (2026-10-10)
+
+This bounded operation proposal supersedes coupling the two KB images to the
+finite historical upgrade/isolation campaign. It does not delete that campaign's
+accepted criteria or report them passed. Following the user's further objection
+to the remaining resource cost, recommend **no-new-VM smoke first**, with live
+checks conditional on a separately proved existing environment. Canonical PNGs
+remain pending unless their full capture contract can actually be satisfied.
+The lead selects the operation; this section authorizes no launch or cleanup.
+
+Source evidence is immutable K `922e71e5eb75b6eb416bf55e39160e9a7236e654`, selected
+by E `2c1d3e86435292303f9c2f3f3386dc90e6b9efd0`:
+`finish-stop-waiter-step9-acceptance.json` and
+`finish-direct-package-realize5-acceptance.json`. Its source is
+`/nix/store/6zgfm2h7wipl6ba0bqrfh03qk1lymwiq-source`; metadata is
+`/nix/store/0k3n1hhck9br6663zlwppjvqrh1hhwhk-vpsfree-kb-runtime-source.json`.
+It pins V `ebe4fab3d50a51bda1f94014ca95c73ba2a967a8`, including the final PHP UI
+and policy-error work. The accepted package/source receipt is not guest proof.
+Owning guidance already supports single-topology `ip-inventory` captures in
+`docs/webui-change-workflow.md`; `cluster/runtime-contract.md` remains the
+authority for runtime, source, readiness, leases and output ownership.
+
+#### Options and their actual evidence
+
+| Option | Smallest useful operation | Evidence and limit |
+| --- | --- | --- |
+| Installed package smoke, recommended now | In a new private ordinary directory, use the exact realized runtime/capture wrappers for help, noncreating status of an absent slug, and one missing-connection capture refusal. Preserve native exits and private output placement. | Exercises installed paths and refusal before fixtures without guests or new guest images. Does not prove boot, live API/PHP, allocation, leases on a live cluster, or PNG correctness. |
+| Read-only live API/PHP smoke, conditional | Use an already owned reachable environment only after the lead proves its actual source, endpoint/trust and existing account authority. Inspect current-user/network/IP responses and the PHP IP list with existing data and sessions. | Can prove the observed API/PHP behavior at that exact source. Missing disabled/assigned rows mean those cases are untested. A read-only smoke cannot prove write rejection/atomicity; retain the accepted hosted V tests for those cases. No fixture provisioning, preview writes, runtime adoption or image publication. |
+| Canonical CS/EN images, optional separate operation | One fresh final-source single/local cluster, or an already existing fully compatible exact-source cluster with all normal ownership/readiness/lease/fixture authority established. Use the public sequence below. | Proves the two real canonical bitmaps and the exercised initial-start/capture path only. It does not prove historical update, two-root isolation, cold continuity, all-six-credential persistence across update, or the rest of the finite campaign. |
+
+The supplied facts do **not** establish an existing ready G922 environment.
+The retained G4/G6/isolation3 resources are not substitutes; old live or copied
+tuple evidence cannot establish current readiness. Preview source/readiness is
+not established by this design and preview remains unchanged. Thus package
+smoke is immediately specifiable; live smoke needs a concrete positive target
+proof, and canonical captures need more than a reachable old page. Existing
+accepted V/W/K/E hosted suites remain valid at their recorded heads: do not
+rerun a broad suite or construct a new framework to relabel them as smoke.
+
+For the finite package smoke, reuse the selected clean PATH/environment and
+exact packages below. Run runtime and capture `--help`; then
+`vpsfree-kb-devcluster --state-root "$SMOKE_STATE" status absent --json` against
+an intentionally absent fresh state root. Expect native 0, `found:false`, and
+no state initialization. From an existing private ordinary output CWD, run
+`vpsfree-kb-capture --connection "$ABSENT_CONNECTION" --language en
+--checkpoint networking/ip-address-list`; expect native 1 before any fixture or
+browser activity, no published PNG/results, and only the package's private
+artifact-lock/scratch output. That negative case is expected refusal, not a
+successful capture. Preserve source/metadata hashes and exact native results in
+one smoke receipt. It is sufficient to reuse an already accepted exact-head
+observation of these same facts; no duplicate test campaign is required. Do not
+invoke `vpsfree-kb-verify` or manufacture its phase/attempt receipts.
+
+#### Resource reduction supported by source, and its limits
+
+K `cluster/nix/test.nix:73–75,1907–1925,1969–1975` exposes services
+`memoryMiB`, `rootDiskMiB`, node `memoryMiB` and `tankDiskGiB`. Public `start`
+merges the explicit config; it does not enforce the verifier's 4096/4096 MiB,
+12288 MiB root and 16 GiB tank profile. Those exact checks belong to
+`tools/runtime-verify.rb:179–180`, not a universal engine minimum. The pinned
+OS `tests/make-test.nix:253–266` builds a raw services image of the requested
+size with the guest store included; `tests/configs/nixos/test-vm.nix` disables
+mounting the host store. OS's generic default RAM or image `auto` sizing is not
+evidence that this API/database/RabbitMQ/PHP guest fits or has sufficient
+writable headroom. No smaller operationally qualified full profile is
+established here. Do not select guessed 2 GiB RAM or 4/8 GiB disks to obtain a
+nominal saving and then begin another build/boot qualification campaign.
+
+The existing minimal fixture itself is exact: `fixtures/prepare.cjs:544–545`
+requires one real VPS with one CPU, 1024 MiB RAM, zero swap and 4096 MiB disk
+quota. `prepareFixtures` takes its separate `ip-inventory` branch and
+`scenarios/networking.cjs` skips unrelated navigation. It needs services and
+node1; no NAS/backuper/traffic fixture is needed. A smaller node must still
+support that real VPS, its template, ZFS space/quota and node services. A 4 GiB
+VPS quota is neither measured host allocation nor a sufficient tank size.
+Lowering the fixed fixture resources, dropping the actual assigned address,
+mocking the page, or replacing the guest store would be substantive new scope.
+The smoke fallback avoids all such changes.
+
+For the optional existing single-cluster profile, retain 4+4 GiB guest RAM,
+12 GiB services root and explicit 16 GiB node tank. The disk formula for one
+fresh instance is **2R + T = 40 GiB** of eventual image/root/tank extents:
+
+- One 12 GiB immutable raw services image. New instance credentials/identity
+  affect its closure; do not presume an earlier instance's image is reusable.
+- One distinct 12 GiB writable root. K `cluster/lib/kb_machine.rb:prepare_disks`
+  uses `IO.copy_stream`, so do not assume a sparse/reflink copy.
+- One 16 GiB sparse tank, created by pinned OS `Machine#prepare_disks` using
+  `truncate`; retain its remaining possible growth. The VPS/template occupies
+  this tank, so its 4 GiB quota is not another host image charge.
+
+This replaces the full campaign's three images, two roots and two tanks
+(92 GiB) for **this screenshot operation only**. It saves 52 GiB of that
+eventual-output envelope and halves the new guest RAM/shm peak to 8 GiB. It
+does not establish that 40 GiB is the mathematical minimum or a universal
+free-space prerequisite for screenshots.
+
+`finish-direct-capacity-observation5.json` identifies state, store and daemon
+scratch on the same device. Four retained tanks have 68,713,852,928 bytes of
+unallocated possible growth; their already allocated roots are already
+reflected in free space. Preserve that roughly 64 GiB obligation and the
+existing 16 GiB host reserve. With the fresh 40 GiB envelope the known combined
+requirement is about **120 GiB**, rather than 172 GiB, before missing closures
+and temporary build use. Against the later blocker measurement of
+178,829,410,304 free bytes (166.55 GiB), this leaves about **46.55 GiB** to
+assess for those costs. This is arithmetic on recorded observations, **not
+launch admission or a newly imposed 120 GiB screenshot floor**. The roughly
+80 GiB retained-growth/reserve component is this host's existing obligation,
+not new screenshot allocation. No old cleanup savings are assumed.
+
+The parent must refresh measured free/allocated bytes and deduplicate exact
+store outputs and filesystem roles; count already allocated image/root blocks
+once and remaining growth once. Raw-image construction and Nix closure copies
+can overlap and require temporary space. No finite scratch bound is proved.
+Missing store paths, actual substitutions and chosen build headroom need an
+operator assessment with live reserve monitoring, not an invented allowance.
+The public `start` owns prepare/build/spawn; there is no proposed private
+prepare call, fake artifact or pause between its internal phases. Its
+pre-operation budget must cover the whole admitted operation. If the parent
+cannot justify that headroom, use smoke and leave captures pending.
+
+#### Optional one-cluster public capture packet
+
+No source, schema, provider, package activation or new review lane is needed to
+select this already documented path. Bind these exact installed executables:
+
+```sh
+RUNTIME=/nix/store/8z7p3bqmanmn4cam69jfw8h3wjvzd6cg-vpsfree-kb-devcluster/bin/vpsfree-kb-devcluster
+CAPTURE=/nix/store/klpjidbd36w3m6p1rsvjrx24jdsxpbqp-vpsfree-kb-capture/bin/vpsfree-kb-capture
+VALIDATE=/nix/store/klpjidbd36w3m6p1rsvjrx24jdsxpbqp-vpsfree-kb-capture/bin/vpsfree-kb-validate
+SOURCE=/nix/store/6zgfm2h7wipl6ba0bqrfh03qk1lymwiq-source
+```
+
+Select the immutable source directly from the verified receipt, with no source
+override. All path variables below are concrete
+private packet inputs, not values to discover from ambient CWD/environment.
+Use a new ordinary root outside checkouts and a unique slug, absent state/output
+destinations, explicit disjoint local TCP ports and numeric multicast port,
+QEMU DNS `10.0.2.3` and `example.test` domains. Initial config records the three
+dedicated synthetic users, including level-99 `test-admin` and level-1
+`test-user1`, with the accepted quota/block allocation. No ambient credentials,
+role promotion or old-state adoption. Keep the unselected topology nodes and
+services disabled as in the accepted single/local profile.
+
+Reuse the accepted ordinary user-service context (`ExitType=cgroup`, explicit
+unit/controller tuple and RUNNING/MainPID admission before guest work), clean
+package-selected environment, private logs and one finite operation receipt.
+The fresh watcher owns launching/monitoring the exact public command packet.
+Never call the two-root verifier or record a fictitious completed phase.
+Kernel/cache evidence must be refreshed for this exact source/config using
+the already accepted public `runtimePlan` kernel projection and actual store/
+substitution facts. Projection without instance credentials is kernel planning,
+not final guest closure proof. Stop unexpected kernel builds under the existing
+policy. Retain capacity/KVM checks, physical RAM/shm headroom and monitoring;
+8 GiB is guest demand, not a whole-host sufficiency assertion. No new host
+allocator, persistent supervision framework or workspace dependency is needed.
+
+From a private ordinary CWD distinct from the existing writable `$OUT`, use:
+
+```sh
+"$RUNTIME" --state-root "$STATE" start "$SLUG" --topology single \
+  --network local --config "$CONFIG" --timeout 900
+"$RUNTIME" --state-root "$STATE" status "$SLUG" --json
+"$CAPTURE" --cluster "$SLUG" --state-root "$STATE" --language cs \
+  --checkpoint networking/ip-address-list --output-root "$OUT"
+"$RUNTIME" --state-root "$STATE" connection "$SLUG" > "$CONNECTION"
+"$CAPTURE" --connection "$CONNECTION" --language en \
+  --checkpoint networking/ip-address-list --output-root "$OUT"
+```
+
+Create `$CONNECTION` exclusively with mode 0600 inside the private root, using
+the operation's no-clobber writer, rather than an unchecked shell overwrite.
+The redirection illustrates the private destination; never print its contents.
+Run one additional EN invocation from `$OUT` with the same connection and no
+`--output-root`, retaining native success to prove the installed default CWD
+path. It replaces the EN result at the same semantic key; only two canonical
+PNGs remain. Sequential languages share the same physical output lock and
+source receipt. Then run the installed validator from the ordinary CWD:
+
+```sh
+"$VALIDATE" --update --output-root "$OUT"
+"$VALIDATE" --output-root "$OUT"
+```
+
+No `--allow-missing`, limited-inventory validator or local `bin/check` is used.
+Strict validation covers the full inventory with unchanged assets resolved
+from immutable G. It is an artifact acceptance operation, not permission to
+run local source CI. Missing unrelated assets still cause refusal.
+
+`Engine#await_ready` must complete first-contact SSH trust, exact guest
+metadata and `/run/current-system` checks, pool refresh, disk/prepared proof,
+accepted-artifact publication and canonical `ready?`. Each capture separately
+validates the leased descriptor and exact G metadata before browser/fixtures;
+TLS and explicit endpoint routing remain. The fixture proves synthetic member
+and admin API identities and ordinary member browser identity. It creates or
+validates its dedicated `203.0.113.0/24` pool and owned unassigned
+`203.0.113.10/32`, then disables only that pool. Primary pools stay enabled.
+The scenario verifies the actual gray row, translated title/focus semantics,
+retained links, missing obsolete Enabled column and a contrasting real enabled
+assigned row. A PNG does not certify the native browser tooltip popup.
+
+After strict validation, export only the existing five-file allowlist through
+G's existing `tools/capture-export.rb` under its own artifact flock. This is a
+file-export helper, not a public lifecycle command or private Engine call.
+The parent can invoke it with the package-selected Ruby as a small finite
+command, without adding a new CLI or wrapping its lock in a second lock:
+
+```sh
+"$RUBY" -rjson -r "$SOURCE/tools/capture-export.rb" \
+  -e 'puts JSON.generate(KbCaptureArtifacts.export(ARGV.fetch(0), ARGV.fetch(1)))' \
+  "$OUT" "$EXPORT"
+```
+
+The destination must be absent under a private parent. Export comprises only
+both `screenshots/{cs,en}/networking/ip-address-list.png`, candidate
+`captures.json`, `tmp/capture-results.json` and `tmp/capture-source.json`;
+retain the helper's per-file checksums. Do not export connections, credentials,
+config, raw transcripts or incidental scratch. Revalidate the exported bundle
+against G with the installed validator and review both actual images for crop,
+language, gray/enabled contrast and absence of secrets/production identifiers.
+No bitmap editing or synthetic substitute is acceptable.
+
+#### Acceptance, failure retention and generator-to-media provenance
+
+The root's operation receipt records the selected alternative, exact executable/
+source/config hashes, measured admission, native statuses and artifact hashes.
+It records skipped proofs explicitly. Package smoke success does not set any
+runtime/capture phase complete. A live smoke on another proved software revision
+reports that revision; it cannot be renamed G922 evidence or used to mint a
+canonical connection. No accepted hosted checks are replaced by this plan.
+
+For actual captures, retain G922 and its original source/lock/fixture metadata
+as the generator. The later reviewed media commit M may carry these two PNGs
+and inventory changes but must not rewrite their provenance to M. Preserve the
+one authoritative K lineage and normal input graph; the root owns eventual E
+selection of M and consolidation of the existing input stream. The original
+K branch must not acquire a new fixture or unrelated provenance stream. Exact
+media-head hosted `workflow_dispatch` with `strict=true` remains the canonical
+full `bin/check` gate; this does not call for rerunning already accepted source
+suites merely to choose smoke. Visual acceptance and final pin disposition
+remain pending, with no production KB publication/default integration.
+
+On any failure, retain the private attempt/native evidence and any new owned
+instance in its actual state. No automatic replay, image rollback, claim/socket
+removal, GC, public reset or service-group stop follows from this plan. Unit
+state is not campaign success; readiness loss prevents capture acceptance.
+The parent must make a separate concrete disposition using the unchanged
+public ownership/complete-exit contracts. G4/G6/isolation3 A/B, their possible
+disk growth, preview and foreign resources remain untouched. Historical update,
+two-root isolation and continuity verification are explicitly **deferred and
+unfinished**. The session stays active for the selected verified handoff.
+
+This is source-supported design readiness, not resource admission or execution
+evidence. Only this document was appended; no application changes, checks,
+evaluations, builds, live probes, guests, lifecycle actions or Git operations
+were performed by the architect.

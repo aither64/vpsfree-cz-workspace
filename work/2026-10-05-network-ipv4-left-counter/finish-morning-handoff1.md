@@ -1,3 +1,7 @@
+This historical full-campaign handoff is superseded by the user-selected
+[installed-smoke disposition](finish-smoke-handoff1.md). Its earlier measurements
+and evidence remain preserved below.
+
 The source fixes and package preparation are verified. Real guest verification
 and fresh PHP KB images remain blocked by disk capacity. The session stays active.
 

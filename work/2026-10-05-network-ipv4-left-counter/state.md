@@ -6,7 +6,42 @@ lifecycle: active
 
 ## Status
 
-### Current checkpoint (2026-10-09, source verified; real campaign blocked by capacity)
+### Current phase (2026-10-10, installed smoke complete; heavy campaign deferred)
+
+The user rejected the full campaign's resource cost. The selected fallback is
+finite installed-command smoke with no new VM. Architect0's
+[separation and alternatives](design.md#separate-screenshot-operation-and-proportionate-smoke-fallback-2026-10-10)
+are accepted for this operation. The 172 GiB figure describes the previous full
+campaign plus this host's retained obligations; it is not a KB screenshot minimum.
+
+- [x] Exact G922 installed runtime and capture help succeed from an ordinary
+  private CWD. Absent-state status returns schema 2 / found false without creating
+  state. Missing connection access and capture both refuse with native exit 1.
+  The negative capture leaves only its private lock and empty scratch directory;
+  no PNG, manifest or success receipt is published.
+  [Native smoke receipt](finish-installed-smoke1.json).
+- [x] Accepted source/check/package evidence remains unchanged. All seven final
+  source heads still match the accepted inventory and their worktrees are clean.
+  W issue30 [PR39](https://github.com/vpsfreecz/vpsadmin-webui/pull/39) is ready,
+  awaiting explicit merge approval, with accepted CI, browser smoke, visual and
+  independent review evidence.
+- [ ] Fresh canonical PHP CS/EN PNGs and live API/PHP verification remain pending.
+  No ready exact-G live target is established. A single-cluster capture can use
+  the existing public path, but practical smaller disks/RAM are unqualified;
+  no guessed profile or new qualification campaign was launched.
+- [ ] Historical upgrade/isolation/continuity verification is deferred and
+  unfinished. Its larger capacity refusal is preserved separately; additional
+  storage is not the next prerequisite imposed on the selected smoke handoff.
+- [ ] Strict fresh-media/final E evidence, final configuration selection and
+  explicitly approved default integration remain separate unfinished work.
+
+Next action: review the [smoke handoff](finish-smoke-handoff1.md) and ready source
+units. Resume real capture or broader runtime verification only as a separately
+selected, measured operation. No guest/config pair, old-state cleanup, deployment,
+activation or merge occurred. Failed campaigns and preview remain untouched;
+the session stays active, with feature refs retained.
+
+### Historical checkpoint (2026-10-09, source verified; full campaign refused)
 
 - [x] The sole Important lost-ack notification finding has a bounded production
   ensure and an owned-runner EPIPE regression. Both are source-inspected, with
@@ -52,16 +87,16 @@ lifecycle: active
   Builder scratch and remaining guest closure costs are unknown.
   [Fresh measurement](finish-direct-capacity-observation5.json),
   [blocker](finish-direct-capacity-blocker5.json).
-- [ ] Await additional disk capacity or an explicitly owned writable disk-backed
-  campaign path, then refresh all role/config/kernel/cache/closure measurements.
+- [ ] If the deferred full campaign is selected again, obtain adequate measured
+  capacity and refresh all role/config/kernel/cache/closure measurements.
   No new config pair/campaign or guest was created. No retained state, claims,
   disks, sockets, processes, preview or foreign store was cleaned or changed.
 - [ ] Finite real runtime continuity, genuine PHP CS/EN PNGs, strict media/final E
   evidence and final C pin remain pending. Published source checks and existing
   PNG inventory do not establish those results.
 
-Current phase: source and package preparation complete; capacity prerequisite
-blocks real verification. The source Important is resolved. W issue30 PR39 is
+At this historical checkpoint, source/package preparation was complete and
+capacity blocked the full real campaign. The current smoke disposition is above. The source Important is resolved. W issue30 PR39 is
 ready, awaiting explicit merge approval. The session remains active with all
 feature refs and incomplete campaigns retained. No deployment/default integration,
 activation, production KB publication, archive or deletion occurred.

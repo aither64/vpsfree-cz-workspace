@@ -343,3 +343,34 @@ found. Keep all four incomplete allocations and possible sparse growth.
 Continue only after additional capacity or an owned campaign filesystem is
 established and fresh receipts/kernel/cache/concurrency/monitor facts qualify.
 No cleanup savings or another finite guest attempt is inferred.
+
+2026-10-10 user correction: reduce the verification footprint; use focused smoke
+if further reduction is not feasible. Separate the historical runtime upgrade
+experiment from KB capture acceptance. Assess one current-source instance and
+existing supported smaller settings before any further guest work. Preserve
+truthful distinctions between package/source tests, live smoke and reproducible
+canonical images. Do not invent a new broad test framework or cleanup authority.
+
+## Selected smoke disposition (2026-10-10)
+
+Following the user's resource-cost objection, choose the already supported
+installed CLI/read/negative smoke instead of launching the full historical
+upgrade/isolation campaign or qualifying guessed smaller guests. Architect0's
+[bounded separation](design.md#separate-screenshot-operation-and-proportionate-smoke-fallback-2026-10-10)
+requires no source/API/schema/provider change. Exact G922 smoke is completed in
+[the native receipt](finish-installed-smoke1.json): two help commands, noncreating
+absent status, missing connection refusal and missing-connection capture refusal.
+No new VM, guest config or published image/result was created.
+
+Accepted hosted/source/package and W issue30 browser evidence is retained.
+Historical upgrade/isolation/continuity remains explicitly deferred and unfinished.
+Fresh canonical CS/EN PHP images, live API/PHP observations, strict media and final
+configuration selection remain pending; package smoke does not satisfy them.
+The previous 172 GiB refusal belongs to the full campaign and this host's retained
+obligations. One existing capture profile has 40 GiB new eventual output, but this
+is an optional separately admitted operation, not the chosen smoke or a minimum.
+No further capacity or lifecycle operation follows automatically from this handoff.
+
+The active session retains failed campaigns, preview, branches and worktrees.
+Default integration, production KB writes, deployment, activation and cleanup
+remain outside this disposition. See [current handoff](finish-smoke-handoff1.md).
