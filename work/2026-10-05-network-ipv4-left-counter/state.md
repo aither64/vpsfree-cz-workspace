@@ -6,7 +6,67 @@ lifecycle: active
 
 ## Status
 
-### Current phase (2026-10-10, installed smoke complete; heavy campaign deferred)
+### Current phase (2026-10-10, source gates complete; handoff)
+
+The reduced profile is implemented and exact K9c551/Ecbb8 source gates passed.
+One real attempt built the fixed8GiB services image and started both2GiB guests.
+Both guest identity records and actual current-system closures matched. The next
+public SSH resource script received empty stdin; the verifier failed with
+`services real resource observations` and native exit1. This is a launcher
+stdin-forwarding defect, not a measured image-fit or memory failure.
+
+- [x] Required resources reduced to one cluster,4GiB guests and24GiB eventual
+  image/root/tank output. Actual8GiB image/root/tank lengths and2048MiB guest
+  declarations independently recorded in finish-runtime-reduction-real-start-proof1.json.
+- [x] Existing K/E exact source, independent whole-history/migration review and
+  narrow live-capture accounting fix accepted. Native hosted4 checks pass;
+  strict media remained skipped. Original reports/evidence are preserved.
+- [x] One finite durable-service runtime-smoke ended natively after10m51s.
+  Public start/attested guest identity/current-system passed. Whole smoke did
+  not pass; no TLS/API/PHP/lease/ordinary stop/resume/capture was reached.
+- [x] Implementer0 completed the two-path public SSH stdin fix/regression under
+  finish-k-public-ssh-stdin-brief1.md. Root inspected its frozen packet, owning
+  prose and exact publication. No replay/new VM/upscale.
+- [x] Final canonical Cb5c37e01 selects Vebe/W30cce with normal confctl/hooks;
+  retained V patch is equal after rebase, only the W lock node newly changes.
+- [x] Public SSH fix K49221a07 and exact E265bd789 are published; unchanged
+  provider and whole K/D input graphs verified. Hosted K38071236937,
+  runtime-K38071232693 and E38071327643 passed at those exact heads; root matched
+  all27 evidence hashes and native jobs/results. Runtime99/1242,
+  verifier30/348 and selected E SDK8/68/public5/58 pass with zero skips.
+  Strict media remained skipped. finish-final-stdin-hosted-acceptance1.json.
+- [x] Reviewer0 completed all four affected lanes and the complete K/E/C
+  histories on turn01a126e7-c60a-7443-b1f6-0bb0902ffc1c, retaining
+  Sol/xhigh/read_only settings. No new implementation finding. Actual native
+  task completion and exact final report were collected without reviewer writes.
+  [Review](finish-final-review1-report.md),
+  [root disposition](finish-final-review1-acceptance.json).
+- [x] The sole Important evidence finding is directly fixed under review step9:
+  private configuration was removed from the exported start proof; its original
+  is retained privately0600. No Git-tracked/history copy exists at that path.
+  The streamed tracking scan finds no other generated-account password copies.
+  Earlier portal/tool-output exposure remains recorded, and those credentials
+  must not be reused. No source rerun or failed-campaign mutation was needed.
+  [Redaction](finish-final-proof-redaction1.json),
+  [scan and public-fixture distinction](finish-final-evidence-secret-scan2.json).
+- [x] Final source/history gates and the curated handoff are complete.
+  Source units are ready, awaiting merge approval and required target
+  reconciliation. Seven registered refs remain unmerged; V/D reconciliation
+  precedes any later fast-forward integration. Full real qualification and
+  fresh media remain unfinished.
+
+The failed G13 campaign, original immutable generating source, guest state and
+unit remain retained. Current liveness has not been inferred from disk receipts;
+no stop/reset/signal/recovery/cleanup is authorized by this record. G4/G6/
+isolation3 and preview remain untouched. No fresh CS/EN PNGs exist.
+
+Next action: review the [handoff](finish-final-handoff1.md). Any further real
+runtime/capture operation needs separate selection; no replay is scheduled.
+Default integration still requires explicit repository/target approval.
+Detailed diagnosis: finish-runtime-reduction-public-ssh-stdin-diagnosis1.json.
+Prior source/planning/admission account: finish-runtime-reduction-pre-attempt-state1.md.
+
+### Previous checkpoint (2026-10-10, installed smoke only)
 
 The user rejected the full campaign's resource cost. The selected fallback is
 finite installed-command smoke with no new VM. Architect0's

@@ -5563,3 +5563,293 @@ This is source-supported design readiness, not resource admission or execution
 evidence. Only this document was appended; no application changes, checks,
 evaluations, builds, live probes, guests, lifecycle actions or Git operations
 were performed by the architect.
+
+### Reduced real runtime qualification and finish plan — proposal (2026-10-10)
+
+This supersedes the preceding recommendation to use installed help/refusal
+smoke as the immediate answer to resource reduction. The user requests cheaper
+**real runtime tests**. Recommend one final-source full-product cluster with
+a smaller explicit profile, one public start/lease/stop/resume qualification,
+and optional canonical CS/EN captures from that same instance. Remove genuine
+historical-source upgrade and simultaneous two-root isolation from this
+session's required real-guest acceptance. Their prior failures and unproved
+criteria remain recorded as **optional, deferred proof**, not successful tests.
+This is a plan for lead acceptance before source assignment or execution.
+
+Exact inspection base remains K `922e71e5eb75b6eb416bf55e39160e9a7236e654`, E
+`2c1d3e86435292303f9c2f3f3386dc90e6b9efd0`, and the immutable sources/packages
+identified in the preceding section. Binding/current and retained roster 17
+were reverified for this work item; architect settings are unchanged. Existing
+hosted/review evidence remains valid at those exact objects. No new real run
+or source gate has been established here.
+
+#### Chosen profile and the work removed
+
+Use one fresh `single`/explicit-local instance with this qualification target:
+
+| Resource | Proposed value | Meaning |
+| --- | --- | --- |
+| Services RAM | 2048 MiB | Actual API, database, queue and PHP services remain. |
+| Node1 RAM | 2048 MiB | Actual vpsAdminOS/ZFS node, not a mock. |
+| Services image/root | 8192 MiB each | One immutable image and one independent writable copy. |
+| Node1 tank | 8 GiB | Sparse file with its full future growth still accounted. |
+| Inventory VPS | Existing 1 CPU, 1024 MiB RAM, 4096 MiB disk, zero swap | Runs inside node1; its RAM/quota is not a third VM or an additional host disk. |
+| Live runtime machines | Two maximum | Services and node1; stop completes before the same two resume. |
+
+These values are **finite qualification targets, not measured sufficient
+minima**. Keep the existing CPU settings, product payload, quota checks,
+synthetic accounts, explicit ports/multicast/DNS and source/trust controls. No
+automatic retry with more RAM/disk or a second configuration is allowed.
+This targets 4 GiB of runtime guest RAM/shm, versus 16 GiB for two former full
+instances, and **24 GiB of eventual new image/root/tank extents**, versus
+92 GiB. It also improves on the previous one-instance 8 GiB RAM/40 GiB proposal.
+There is no predecessor package build, second instance, third service image,
+closure import, historical guest preparation or live update in the new route.
+Stop/resume reuses the accepted artifact and existing disks; it creates no new
+guest image. Capture follows in the same environment if justified by its
+observed resources; it is never conditional on broad upgrade testing.
+
+The base verifier's excess is concrete: `installed_layout` builds a predecessor;
+`isolation_continuity_update` starts A and old B concurrently, resumes old B,
+updates B, resets A, and resumes B again. `remaining_growth` charges three
+12 GiB service images and two roots/tanks; `capacity` retains 24 GiB RAM,
+18 GiB shm and reports a 108 GiB envelope including reserve. Changing only
+`validate_config` would leave those wrong requirements intact. The reduced
+verifier must replace the operation graph and its accounting together.
+
+#### Why use a smaller full cluster rather than another runtime fixture
+
+The relevant knobs already reach OSVM/Nix at K
+`cluster/nix/test.nix:73–75,1907–1925,1969–1975`. The current portable engine
+does not impose the verifier's fixed 4+4/12/16 profile. Its `refresh` genuinely
+waits for MySQL/API seed state and the node's ZFS/osctld/nodectld. A one-VM
+lightweight fixture could be cheaper, but would require a new Nix payload plus
+explicit engine refresh/profile/capability branches; advertising `ip-inventory`
+for that payload would be false. It would not produce the requested PHP images
+and would leave a second full environment to qualify later. Do not add that
+new product/runtime branch to finish this initiative.
+
+The pinned OS `6bdf458...` `tests/make-test.nix:253–266` supports numeric or
+automatic raw-image sizing. The exact pinned
+[Nix image builder](https://raw.githubusercontent.com/NixOS/nixpkgs/5dfba6236110080a54247d6460bc2ff5dda939cc/nixos/lib/make-disk-image.nix)
+computes `auto` from installed payload, filesystem overhead and extra space;
+the OS wrapper supplies only 512 MiB extra by default. Numeric size instead
+fixes the image extent, and a payload that cannot be copied into it fails the
+build. Neither automatic sizing nor NAR bytes alone proves usable database/log
+headroom. The builder stages a root and image and can run its own temporary
+image-finalization VM before runtime guests exist. Account this sequential
+construction work separately, not as an outer runtime-test VM.
+
+Choose the bounded numeric 8 GiB image for this one attempt, rather than an
+unbounded `auto` result or a new automatic capacity policy. Record actual
+payload/available-space observations. K `PreparedDisks#prepare_disks` copies
+with `IO.copy_stream`; existing evidence shows fully allocated roots. A sparse
+copy implementation or qcow2 overlay could reduce initial blocks but would
+change retained-disk creation/dependencies and need new failure/identity tests.
+It also cannot erase future guest growth. Leave that production path unchanged;
+the smaller numeric image already reduces both image and copy. No host-store
+mount, root substitution, speculative reflink saving or payload removal.
+
+There is one necessary K-owned Nix correction, separate from the verifier:
+`machines.services.memory = serviceMemoryMiB` controls OSVM's running guest,
+but OS `tests/make-test.nix:266` independently passes
+`nixos.config.virtualisation.memorySize` to the image builder. Exact pinned V
+`ebe4fab...:tests/configs/nixos/vpsadmin-services.nix:249` sets that value to
+8192; G922's services module has no override. Thus the 2 GiB runtime knob alone
+would leave an 8 GiB image-finalization builder. In K
+`cluster/nix/test.nix:servicesModule`, align
+`virtualisation.memorySize = lib.mkForce serviceMemoryMiB`. This is the
+existing services profile's RAM setting, not a new fixture or V/OS edit.
+Qualify both the runtime machine value and actual image-derivation `memSize`
+at 2048. Keep kernels unchanged. The preparation builder then has a 2 GiB
+target and finishes before the two runtime guests start; its successful fit
+is part of the same finite qualification, not an already established fact.
+
+#### Small preparation measurement and finite fit boundary
+
+After the narrow source gates below, the parent performs one measured
+preparation/admission step, under the existing fresh watcher/context policy:
+
+1. Bind the new exact immutable package/source, one private initial config and
+   ordinary root. Project the public `runtimePlan` machine/memory/disk/kernel
+   and image-derivation facts: two machines, 2048 MiB each, 8 GiB tank and
+   expected cached kernels. The validated config and owning Nix mapping prove
+   fixed image size 8192 MiB; inspect the actual image derivation's builder RAM
+   rather than inventing a `diskSize` field in the resulting machine JSON.
+   Inspect actual local/substitutable closure paths and their
+   sizes; no private `Software.prepare/build`, fabricated credentials, guest
+   identity or accepted-artifact receipt. A projection with placeholder
+   credentials is planning evidence, not the final guest closure.
+2. Measure shared filesystem roles/free space, existing allocated store paths,
+   missing closure costs, RAM/shm availability and actual daemon build location.
+   Reuse valid exact kernel/cache facts; substitute expected outputs and refuse
+   unexpected kernel compilation. Limit construction concurrency to one job
+   and one core in this qualification. Record what can be bounded and keep
+   remaining builder scratch explicitly unknown with assessed headroom and
+   live reserve monitoring. Do not build another probe image just to guess the
+   intended image's footprint.
+3. Before launch, refuse any projected payload already too large for 8 GiB or
+   any unjustified host headroom. During the one public `start`, the **native
+   fixed-size image build is the final exact pre-runtime-launch fit check**:
+   `Software.build` must finish before `start_locked` reserves/spawns the
+   runner. A build/copy-to-image failure ends qualification without guest
+   launch. This is not a claim that all exact final image bytes can be checked
+   before the public call creates its genuine credentials/artifact. No public
+   prepare-only interface currently exists; do not invent a private substitute.
+4. Once ready, record actual image/root lengths and allocated blocks, services
+   free bytes/inodes, node ZFS available space and memory pressure. Require
+   1 GiB services free space as this short qualification's writable headroom
+   target before adding fixtures. Before optional VPS/capture work, preserve
+   real quota checks and assess available tank space against its 4 GiB quota,
+   selected template and metadata costs. A passing initial boot alone does not
+   qualify capture resources. If space or memory is inadequate, stop advancing
+   the experiment and report which target failed; do not resize or upscale.
+
+This deliberately permits one bounded build/boot qualification, rather than
+requiring an impossible advance measurement of future scratch or promising
+that an unmeasured target fits. Failure at any preparation, image fit, readiness,
+resource, lease or lifecycle stage ends the attempt. Preserve its native result
+and state; no probability-based replay or automatic alternative profile.
+
+#### Correct accounting for the reduced verifier
+
+Replace the old 24/18 GiB admission constants and 108 GiB reported envelope.
+Derive guest RAM and shm demand from the one exact validated config: 4 GiB.
+Keep a separately recorded positive operator-assessed process/browser/build
+overhead in the capacity receipt, refreshed against actual availability. Aim
+for a qualification envelope around **6 GiB available RAM and 5 GiB free shm**
+(4 GiB guests plus 2/1 GiB assessment margins), rather than hardcoding the old
+two-cluster thresholds. Those margins are planning targets to assess, not
+measured facts or universal requirements. Account sequential build and running
+guest/browser peaks; do not add an image-builder VM to the runtime peak when
+it has already exited. Use the larger phase requirement, not their sum.
+
+Intrinsic final disk extent is one 8 GiB image + one 8 GiB root + one 8 GiB
+tank. `remaining_growth` must enumerate only that instance and one distinct
+image, deduct actual allocated blocks once, retain sparse future growth and
+deduplicate paths/inodes/filesystems. Resume must not budget a second image.
+Report `intrinsic_output_envelope_bytes = 24 GiB` separately from closures,
+construction headroom and host obligations; missing service-image inventory
+allows only the one planned image. During preparation, account staging payload,
+image/store-import overlap and other observed build costs; during runtime,
+account image+copy+tank and any remaining closure demand. Use their actual
+sequential peak and never assume temporary overlap is zero without evidence.
+
+The current host's roughly 64 GiB retained possible tank growth and 16 GiB
+reserve remain protected **separate host obligations**. They are not an
+intrinsic 80 GiB runtime-test requirement and confer no cleanup authority.
+Already allocated old files are reflected in current free space, so do not
+charge them again. There is no universal 120/172 GiB floor. Unknown scratch
+cannot be replaced with a guessed allowance, and measured local scarcity still
+may refuse this particular host even when the test itself is much smaller.
+
+#### Narrow implementation boundary and real proof sequence
+
+Implementation proposal: simplify K's existing `tools/runtime-verify.rb` to
+one final-source campaign with `--config FILE`, one state root and the existing
+packaged source selection. Required real phase becomes `runtime-smoke`;
+`bilingual-capture` remains a separate optional phase on its accepted instance.
+Keep installed-layout checks inexpensive and optional/reusable; remove their
+predecessor build and their prerequisite status for real smoke. Remove the
+old predecessor/two-root operation from the active verifier instead of retaining
+an unused second workflow. Its exact old source and receipts remain historical
+evidence; deferred future upgrade work needs a new explicit plan.
+
+Use an explicit new verifier campaign kind to reject old finite-campaign roots
+and argument combinations before mutation. Do not migrate or reinterpret old
+attempts. This concerns verifier receipt/CLI compatibility only: runtime state
+2, artifact 1, connection 1, public engine/runner, physical locks and E SDK
+contracts are unchanged. Refactor existing helpers to select the single state,
+preserving their command supervision, diagnostics, source checks and hashes.
+No generic host framework, new launcher or runtime schema is needed.
+
+The one permitted sequence is:
+
+1. Public final-source `start`, native success and canonical readiness; obtain
+   connection and recheck both guest identities and actual system closures.
+   Exercise real TLS/API current-user identity and PHP ordinary member page
+   access through the existing leased connection/account/browser helpers, with
+   no mock responses or fixture bypass. Record read smoke separately from PNGs.
+2. Reuse `tools/verify-live-lease.cjs` on this one descriptor: exact source and
+   endpoint routing, wrong-source refusal before SSH, physical gate held while
+   public stop/update/reset return 75 unchanged, EOF and owned-controller
+   interruption followed by reacquisition. No request is queued for later
+   destructive execution. Keep controller authority and complete-exit guards.
+3. Write only the existing dedicated services-root and node-ZFS sentinels
+   through public SSH. Retain six credential hashes, accounts hash, disk
+   device/inode/length and accepted artifact identity privately. Public `stop`
+   must prove complete exit; then public `resume` must use the same artifact,
+   disks, credentials, accounts and sentinel data with a fresh run ID. Recheck
+   source/closures/SSH trust/readiness and absence of a new image/build. Keep
+   native 900-second public observation budgets and configured machine budget
+   distinct; a caller timeout is failure, not permission to kill a runner.
+4. If the observed smaller environment passes resource/fixture prerequisites,
+   optionally capture both canonical IP-list images from this resumed instance
+   using the preceding explicit cluster/connection/default-output sequence,
+   strict installed validation and five-file export. Keep the real 1/1/4 VPS,
+   synthetic admin provisioning/member capture, gray disabled owned row and
+   enabled assigned row. No third guest, storage node or historical update.
+
+The public capture path remains usable independently; a broad historical test
+is not introduced as a screenshot prerequisite. Stop/resume in this plan is
+the small runtime acceptance being requested. No final reset or deferred unit/
+session cleanup is implied. On timeout/readiness loss/incomplete exit, retain
+the current owner and evidence under existing rules and end qualification.
+
+#### Files, verification gates and completion limits
+
+Primary edits are `tools/runtime-verify.rb`, `tools/test-runtime-verify.rb`,
+the one services image-builder memory alignment in `cluster/nix/test.nix`,
+and the owning `cluster/runtime-contract.md`, README and
+`docs/webui-change-workflow.md` examples as needed. Reuse existing
+`tools/verify-live-lease.cjs` and capture/identity helpers; a small single-state
+argument adjustment belongs there only if necessary. Private config generation
+is parent-owned and must use the exact new profile/accounts from initial
+creation. No engine/runner/disk-copy/OS/V application modification is proposed.
+E needs only the normal exact K input selection with K's own graph preserved;
+there is no E functional or installed-activation change.
+
+Hosted focused verification must prove one config/instance/image, exact reduced
+profile validation, no predecessor build/update/second root, correct
+remaining-growth deduplication before and after resume, independent RAM/shm
+margins, retained host reserve, old-root refusal, failure/no-replay behavior,
+and reuse of source/credential/sentinel assertions. Include the narrow Nix
+profile projection asserting both runtime RAM and image-builder `memSize`
+follow 2048 MiB, and that this profile keeps the expected kernel outputs.
+Its owning existing quick
+command is `nix develop --command ruby tools/test-runtime-verify.rb`; if the
+Node lease helper changes, include its existing affected hosted owner.
+Normal exact-head K source/package and E composition checks plus independent
+review of the narrow committed diff precede the one real attempt. No local CI,
+new broad VM suite or rerun of unrelated accepted V/W/D suites is requested.
+
+Retain the distinction between existing hosted evidence and the new real
+proof. `tools/test-runtime.rb` already covers real filesystem/process/socket
+ownership, resource conflicts, same-slug identity separation, lease locks,
+safe atomic reads and synthetic-runner lifecycle/readiness. The machine tests
+exercise the pinned driver with tiny files and controlled processes, including
+thread descendants, delayed stop and finalization ordering. Mocked closure
+tests verify import arguments/content/failure rules. They remain strong scoped
+evidence, but are not actual guest boots, full-product service shutdown,
+historical closure imports or two live clusters. One real final-source
+start/stop/resume closes the immediate guest-driver integration gap without
+repeating all hosted cases in expensive guests.
+
+After a successful one-shot qualification, record actual peak allocation/RAM,
+what ran and every omitted case. A failed optional capture does not erase a
+completed separately receipted lifecycle smoke, but PNG acceptance stays open.
+If either fails, return a bounded handoff with the specific failed stage; no
+second qualification is implied. Retain all previous allocations and preview.
+No rollback means booting an old image or adopting a failed state; source
+rollback leaves the new private attempt untouched.
+
+The finish plan then carries any approved two PNGs to media commit M retaining
+their real generating G metadata, runs the existing strict hosted media gate,
+consolidates E's canonical K input and C's final V/W pins, and produces a
+verified handoff with the exact remaining feature heads and unmet proofs.
+The lead must enumerate the actual final merge set (including any unmerged
+V, W, K, E, D and C features) and seek the user's later explicit per-repository
+integration direction. This plan itself approves no merge, deployment,
+activation, production KB publication or session archive. No material product
+choice remains in this proposal; measured fit and the user's final scope/merge
+disposition remain facts/decisions for that handoff.

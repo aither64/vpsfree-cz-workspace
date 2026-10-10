@@ -1,5 +1,27 @@
 # KB impact investigation
 
+Current checkpoint (2026-10-10): the published combined K source is
+49221a07e2fabbee4a3621979f814eac8c8bad9d, selecting V
+ebe4fab3d50a51bda1f94014ca95c73ba2a967a8 in all five pin records. The
+reduced real G13 attempt built the fixed 8 GiB image and booted both 2 GiB
+guests, but failed on public SSH script-input forwarding before API/PHP,
+capture lease, ordinary stop/resume or fixtures. The source correction is
+published separately from that failed execution. Both CS/EN
+networking/ip-address-list PNGs remain pending; none was regenerated. The
+existing 120-PNG inventory is not freshness proof. No member page, production
+media or workspace package activation occurred. Earlier checkpoints below
+retain their actual revisions and evidence.
+
+Portable tooling follow-up (2026-10-07): the user authorized a standalone KB
+launcher with an optional workspace adapter. Implementation is underway in
+the separate registered vpsfree-kb-contracts-runtime and vpsfree-dev-workspace
+worktrees, from a50f8c1a and 0ff827df respectively. The accepted design in
+design.md keeps the KB engine independent of this workspace and adds explicit
+state ownership, connection/lease contracts and live source verification. Source
+implementation, independent review and isolated runtime/capture proof remain
+pending; no workspace package has been activated. The original K pin branch
+and both selected PNGs remain unchanged.
+
 Current handoff: published K `a50f8c1a11ea642edf823f04521f9eaa97132fd2`
 pins published V `5d5527a67315c18b595345aa6996d7724c1ed071` in all five
 revision records. The generated lock and source records were inspected; fresh

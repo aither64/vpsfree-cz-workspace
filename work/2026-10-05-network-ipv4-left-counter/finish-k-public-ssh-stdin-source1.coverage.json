@@ -1,0 +1,25 @@
+{
+  "added_methods": [
+    "test_public_ssh_forwards_exact_piped_bytes_and_empty_eof_to_the_real_transport",
+    "test_public_ssh_forwards_file_backed_standard_input_without_buffering_in_the_launcher",
+    "test_public_ssh_terminal_branch_never_reads_input_and_sends_empty_eof"
+  ],
+  "canonical_hosted_selector": "nix develop --command bin/check --allow-missing",
+  "cases": [
+    "Direct launcher process receives empty pipe/EOF, textual bytes without a trailing newline and binary NUL/invalid-UTF8/newline bytes exactly.",
+    "A fixture-local bootstrap reopens standard input on a private binary file, loads the actual public launcher entrypoint, and checks exact file bytes without a trailing newline.",
+    "A child invokes the actual CLI with an injected tty? input object whose read/readpartial raise; the real synthetic SSH child receives empty EOF. This is branch coverage, not a physical PTY or interactive-session proof.",
+    "Every synthetic SSH invocation checks full argv including remote quoting, exact private key/known_hosts paths, strict host-key/auth options and endpoint.",
+    "The synthetic SSH child tries the exact fixture gate on a separate open description and observes exclusion while the public command runs.",
+    "Known synthetic SSH/Nix/source environment overrides are absent in the synthetic child; no inherited environment is dumped.",
+    "Private identity/phase/launch/credential fixture bytes remain unchanged after each case."
+  ],
+  "compatibility": "No schema/protocol/migration/credential/guest/package/workflow/Engine/verifier change. Terminal input remains unsupported as an interactive session.",
+  "execution_owner": "root only; no checks launched",
+  "fixture_limits": "Synthetic private launch and credential references; no VM, guest, real SSH server or cryptographic trust/network authentication is claimed. Open3 owns and waits for only the exact fixture child; no process searches/signals or cleanup framework is added.",
+  "focused_hosted_selector": "nix develop --command ruby tools/test-runtime.rb",
+  "reached_boundary": "Actual public Ruby launcher process -> real State gate/identity/launch -> unchanged Engine#ssh -> unchanged Open3.capture3 stdin_data IO seam -> real owned synthetic ssh executable",
+  "status": "declared and statically inspected; all tests UNRUN",
+  "unchanged_baseline_tests": "The entire previous test file is recovered exactly by removing the single inserted block; every original method/guard/assertion remains byte-identical.",
+  "workflow_change": false
+}

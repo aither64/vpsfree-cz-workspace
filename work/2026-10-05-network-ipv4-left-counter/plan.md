@@ -1,5 +1,19 @@
 # Network availability and IPv4 counter implementation
 
+The current requested finish path is the
+[resource-reduction plan](finish-resource-reduction-plan.md) (2026-10-10).
+It replaces the required two-instance/historical campaign with one smaller
+final-source cluster. The one finite attempt built its 8 GiB image and booted
+both 2 GiB guests, then failed before resource/API/PHP/lease and stop/resume
+checks because the public SSH launcher discarded script input. The correction
+is published at K49221a07 with exact E265bd789; final hosted checks and affected
+four-lane source/history review are complete. The exported private-input evidence
+copy was redacted and its earlier exposure recorded. No replay, new VM or upscale
+is selected. The final
+C selection is b5c37e01 (Vebe4fab3 and W30cce68142). Full runtime qualification
+and both fresh canonical PNGs remain unfinished.
+Earlier accepted plans below retain their historical scope and evidence.
+
 ## Accepted finish plan (2026-10-08)
 
 The user explicitly requested implementation of the revised finish plan.

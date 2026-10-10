@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "finding": "Public SSH CLI drops noninteractive stdin",
+  "baseline": "9c551c6ad68650d12f3d8e91f8bf33a76e2ffe0e",
+  "source": "cluster/launcher.rb:79",
+  "consumer": "tools/runtime-verify.rb:594",
+  "transport": "cluster/lib/kb_runtime.rb:606-615",
+  "actual_result": "Resource sh -s command exited0 with stdout newline only; verifier then failed assertion services real resource observations",
+  "source_mechanism": "CLI omits Engine#ssh input: while Commands supplies script on its public child stdin; Engine defaults empty stdin_data",
+  "historical_cause_limit": "The dropped input follows the exact current source route; no guest resource insufficiency inferred",
+  "direct_bounded_fix_brief": "finish-k-public-ssh-stdin-brief1.md",
+  "no_replay": true,
+  "source_packet_pending": true,
+  "native_start_proof": "finish-runtime-reduction-real-start-proof1.json"
+}
