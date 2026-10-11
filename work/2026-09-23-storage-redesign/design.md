@@ -2,6 +2,79 @@
 
 ## Current retained storage trial continuation, 2026-10-04
 
+Feature source delivery remains complete. Lead accepted completed OS6157 CI;
+Admina933 API CI failed; lead accepted the completed bounded read-only diagnosis.
+The user-directed root-cause investigation is COMPLETE under the accepted
+[private disposable diagnostic brief](#disposable-admin-lock-wait-root-cause-diagnostic-2026-10-10),
+with a causally reproduced fixture/connection-lifetime mismatch. HaveAPI cleanup
+returns A while Admin's unpinned fixture transaction remains open; reordered
+selection gives GET B, whose Password `user.with_lock` waits on A's user lock.
+Corrected control PASS0/40.957s/native1/0 returned403 on A with no waits;
+trigger exit1/91.485s/native1/1 returned500 on B/backend11, with50 matching
+InnoDB samples showing its wait on A/backend9. This matches the CI failure
+mechanism without proving the historical CI holder identity. The user has now
+approved the bounded [Admin pinned-fixture correction](#admin-pinned-transaction-fixtures-2026-10-10)
+at the spec transaction/connection cleanup boundary. Its original seven-path
+unit was implemented and quick-checked at old488, then history consolidated onto
+8a50010. Predecessor full/core complete suites each ran5007 examples with exactly
+three `network_interface_ownership` failures and outside errors0. The accepted
+earlier one-path correction was folded into published predecessor head
+`0b8f901b8107e7d5c3192103a0bd5e8d1d66105f`, tree
+`ac2146416ccd448b2bd29a3ebfcfdab88b2a78d2`:29 commits/232 paths/28509+/502-.
+Focused full/core each4/0, component/root lint1, syntax/hooks passed. Mandatory
+related all-four-HIGH review is COMPLETE with no new Blocking/Important; the
+quadratic offline comparator and unmeasured global retained-lock selector fanout
+Advisories remain. Lead accepted exact-head full/core434 verification: driver0/
+11h34m54s, each5007 examples with0 failures/outside0, full8 pending/core404 pending.
+Feature0b8 was published by exact force lease froma933 with exact SSH readback
+and base8a50010/head0b8 comparison. API Specs38153750656 subsequently passed both
+platform-config topics and all core topics, but full foundation failed the
+remove-route ownership example with `LockWaitTimeout` instead of `IpAddressNotOwned`.
+Coverage failed solely on that matrix result. The one-path
+[fixture ordering correction](#network-interface-ownership-fixture-ordering-correction-2026-10-11)
+is now implemented and reviewed at final head
+`99087d478f30678db448a875584b0f64c3ebc541`, tree
+`3768e6c280ae1f3b31c67620a0d649b38ea1b777`, base8a50010,
+29 commits/232 paths/28528+/512-. Focused full/core each4/0 at seed30306,
+both one-file lints/syntax/hooks passed; related reviewer0 all-four-HIGH review
+is complete with no new Blocking/Important and the same two Advisories.
+Lead accepted corrected workflow-derived foundation seed30306 on990:
+full1699/0 failures/3 pending/outside0 and core1699/0 failures/52 pending/outside0,
+with the exact296-file manifest and all four ownership examples passing at
+ordinals1643–1646. Exact-lease feature publication, SSH readback and registered
+base8a50010/head990 comparison are COMPLETE. Ambient push-hook refusals caused
+no remote mutation; the same push succeeded through declared `nix develop` hooks.
+Lead accepted exact published990 API Specs38160746915 as SUCCESS in22m18s:
+all full/core matrix jobs and topic coverage passed, with no retry, cancellation
+or failure evidence for this run. The unmerged Admin feature is **ready, awaiting
+explicit default-branch merge approval**. Prior0b8 is historical. The first redundant-`cd api`
+selection refusal remains preparation history, with no RSpec/DB/helper execution.
+The detailed checkpoint below
+preserves failed runs, preparation and dependency scopes. Broad local flake
+validation remains baseline-blocked; no default integration or deployment.
+
+The natural full36/498 seed42286 result remains accepted and inspected:
+PASS0/1871.085s,498/0/3 pending/outside0, exact IDs/order; target43 passed4.381s.
+The complete target prefix shows OPTIONS checking in A with its fixture
+transaction open and GET reusing A, without a wait. Later recorder truncation
+makes the global chronology incomplete. Parent accepted the final one-file
+counterfactual hook freeze and16 pure recording cases0/0.973s, with no DB/spec/
+server in those checks. Both guarded preflights passed. Fresh Luna/low
+`/root/admin_debug_rootcause_control_20261010` launched `before_options` once
+at exacta933; it failed setup1/37.783s/native1/1 with
+`counterfactual_client_unavailable` before B's transaction, HTTP requests0 and
+intentional reaps0. That setup failure is historical. Parent accepted deletion
+of the premature pre-SQL B snapshot in a fresh private hook copy and17 pure
+recording cases; all post-transaction proofs remained exact, without a forced
+connection/query. Corrected control and trigger are complete; the original
+packet stays exact.
+Parent accepted exact CI lock,
+Bundler2.6.9 and98 resolved gem tuples; local Ruby3.4.9 versus CI3.4.11 remains
+explicit. The original CI query/holder remains unrecorded despite the causal
+reproduction matching its failure. Current exact990 API CI is accepted as recorded
+above; default integration requires explicit approval. The stopped-cluster and
+operational holds remain. Session active/open.
+
 The user's original **“ok, continue”** resumed the already approved retained-profile
 trial. Lead owns operations; this is the source-confirmed continuation brief,
 not execution evidence. That continuation used selected **3fzi/wg7**,
@@ -14,7 +87,143 @@ authority follows.
 
 ### Current execution checkpoint
 
-**Current lead-reported phase, 2026-10-07:** the user earlier continued and
+**Current fixture-fix phase, 2026-10-11:** final99087d4/base8a50010 includes the
+ordering correction, focused full/core4/0 at seed30306 and completed related
+all-four-HIGH review. Lead accepted corrected foundation seed30306 on exact990:
+full1699/0/3 pending/outside0 and core1699/0/52 pending/outside0, exact296-file
+manifest `46c320d4` and ownership ordinals1643–1646 all passing. Feature publication,
+SSH readback and base8a50010 comparison are complete. Exact-head API Specs38160746915
+completed SUCCESS in22m18s, with all full/core matrix jobs and topic coverage passed
+and no retry/cancellation/failure evidence for this run. The unmerged Admin feature
+is ready, awaiting explicit default-branch merge approval. The first selection-only driver failure
+and nonmutating push-hook refusals are preserved below; remote prior0b8 is history.
+The earlier5007-example complete suites passed on0b8, then CI38153750656 full
+foundation failed `[1:2]`; those results and earlier predecessor failures retain
+their separate source/order scopes. No default integration or deployment approval.
+The final OS800 pin is represented by one consolidated
+commit;8d05 rollout records remain historical evidence, not a retained pin
+boundary. See the exact head/tree, review scope, watcher and preparation history
+in the fixture checkpoint below. No deployment/default integration approval.
+
+**Prior lead-reported execution, 2026-10-09:** Admin source is published at
+`a933f73c968444c3de2e07c0ab0308056722933b` on current base81f1. Contract2,
+current-requested-actor, opt-in maintenance profile and durable diagnostic
+source delivery are complete. Primary81f1..d59 all-four-HIGH review has no
+Blocking/Important; lead's narrow docs step9 and two accepted liveness
+Advisories retain their scope. Fresh core65/full65 and both four-file lints
+belong to the d59/81f1 composition. Original32d Environment500 remains unknown.
+Current Admina933 has eight of nine workflows successful; API37686690438 failed.
+Full-platform-config498/1/3 pending/outside0 failed Debug ArrayTop support-user
+refusal `[1:4:3]`, expected403/actual500. Two format1 observations of the same
+request2 GET establish `ActiveRecord::LockWaitTimeout` with
+`Mysql2::Error::TimeoutError` cause, without query/row/holder or two-wait proof.
+This is a different example from the historical Environment failure. Actual CI
+Bundler2.6.9 produced the native/environment/effective-lock companion; its helper
+execution is proved for this attempt, not general dependency equality or root cause.
+Core-platform-infrastructure cancellation is now annotation-confirmed one-hour
+job-budget expiry; aggregate mapping has no membership errors. This does not
+identify the independent Debug failure's SQL/holder cause or why dependency setup
+failed to finish. Lead accepted implementer0's FINAL bounded read-only diagnosis;
+no query/row/table/connection/blocking holder or concrete auth collaborator is
+recorded, and exact13 baseline blobs supply no source/dependency causal exemption.
+This October9 evidence remains the completed read-only checkpoint. The user's
+October10 root-cause request is addressed by the private brief below: observe the
+full unchanged topic first, including lease/sticky/checkin/reap chronology and
+an independent waiter/blocker graph. Parent's dependency-only preparation passed
+89.708s; applying the workflow's development exclusion gives exact98 gem tuples
+from the unchanged CI lock, while the first118-spec projection is retained.
+The earlier authoring/static-only release is complete: parent accepted the
+final two-file freeze,35 pure recording checks/240 events and syntax. Parent
+copied the accepted guard byte-identically and derived the workflow36 files,
+equal to the native file set. Preflight0/parity1/executed0/0.989s is preparation
+only. Lead accepted the completed natural full36/498 seed42286 result
+PASS0/1871.085s with exact IDs/order,498/0/3 pending/outside0. Target43 passed
+4.381s, GET reused the still-open fixture adapter after OPTIONS checkin; no wait
+was observed. Its target prefix is contiguous, but later64MiB recorder truncation
+precludes a whole-chronology claim. The earlier436-record sampler report is
+progress history. The one-file counterfactual hook freeze and parent16 pure
+recording checks were accepted before the first `before_options` control.
+That control failed setup1/37.783s/native1/1 before B's real transaction, with
+HTTP requests0/intentional reaps0. Worker joined/dead, observer29/error0/
+incompletefalse and cleanup/waits/source-cache parity passed. Parent accepted
+the corrected hook/17 pure cases and both controlled results: before_options
+PASS0/40.957s/native1/0/HTTP403, after_options exit1/91.485s/native1/1/HTTP500.
+The trigger binds B/backend11 Password#with_lock to50 observed waits on unchanged
+A/backend9's open fixture transaction. Root-cause investigation is COMPLETE;
+the historical CI holder remains unrecorded. The subsequent user-approved remedy
+is the bounded pinned-fixture brief below, with genuine multi-connection cases
+explicitly outside that fixture. No implementation or verification is claimed.
+See the
+[current diagnostic checkpoint](#completed-ci-diagnostic-checkpoint-2026-10-09)
+and public [CI result](ci-results-20261009.json). No operational invocation,
+termination/release, default, package delivery, live or physical approval follows.
+
+OS entry precursor source is delivered ate9 with original-composition10/0;
+generic entry is implemented but complete incarnation/orphan/adoption/wait
+accounting, delegated-GC exclusion and physical settlement remain absent.
+Complete reviewed eb26..15aeb has4 commits/30 paths, no findings or OS
+migrations and preserved consumed activity/disabled blobs/messages. Its two
+kernel-selection fixtures add4 lines and retain45 existing examples. Fresh
+Luna `os_capability_owning_vm_classified_20261007` completed FAILED1/3322.676s,
+waited1/parity1: NFS39/40 passed; the final4.2 PID1 dirty-descriptor example
+timed out at its control FIFO. Livepatch remained unrun. Earlier11/40 was
+progress only. Read-only diagnosis completed before authoring; actual cause
+remains UNKNOWN. Lead accepted the one-path11-line readiness-reset freeze,
+NFS JSON construction and normal owning fold/message-only amend to
+`363d571815dcc58e96a26ee74a4cfa2ebafbda66`, tree3a416249/parente9. Primary
+eb26..15aeb independent review remains original; lead accepted directstep9
+without an independent rerun. Fresh exact363d Luna
+`os_capability_readiness_owning_vm_20261008` completed FAILED1/2764.189s,
+waited1/parity1: all45 observed/44 passed/1 failed, NFS39/40 and livepatch5/5.
+All four PID1 cases passed24.96/22.56/23.36/25.41s. The sole NFS4.1 failure
+was initial lock contention at source250: `flock -n` unexpectedly returned0
+before waiter launch/isolation/cancellation. Actual cause remains UNKNOWN;
+no cancellation defect is inferred. Parent recovered the native primary message,
+source-attributed `OsVm::CommandSucceeded` rather than aggregate RuntimeError726;
+the primary class was not separately serialized. Implementer0's bounded read-only
+diagnosis is COMPLETE. No causal behavior correction is established. Lead accepted
+the final one-path diagnostic source29900ce3 and owner-tuple correction, actual
+CI testJson construction/instantiation and ten recording-Machine error-flow
+cases on generated Ruby. No guest commands, Bash projections or owning examples
+ran in those checks. Normal unpublished amend produced
+`6157bdd41ca864ae22532a09e4d7e3cc2e969955`, tree69eedc8252dbe354121cda52e54eee43f81dab6c,
+parent e9, with actual hooks OK. Complete4 commits/30 paths/2427 insertions/
+87 deletions preserve the first three units and consumed messages/blobs; no OS
+migrations. Lead selected step10 for the new privileged observer and its identity,
+privacy/error boundaries. Retained reviewer0 Sol/xhigh/read_only has complete
+eb26..6157 all-four-HIGH review COMPLETE with no Blocking/Important/Advisory;
+reviewer executions0. Lead accepted the same45 owning run on exact6157/tree69eedc:
+PASS0/2974.220s/waited1/parity1, NFS40/40 and livepatch5/5, both expected_success,
+native script2530.490/270.900s. Remote-lock and PID1 cases all passed; diagnostic
+labels0 confirms the failure-only guest Bash observer was NOT entered. No actual
+proc/mount/FD parser proof or attribution of either historical cause follows.
+Parent all2239 OS/3251 Admin byte/stat/raw-index/foreign/cache parity passed;
+recordedPID1750343 absent/PGID0 and no Linux compilation are bounded observations,
+not universal reap. Original15aeb review and PID1 step9 retain their scopes.
+Lead accepted normal exact-lease feature publication0/18.090s, exact SSH readback
+feature6157/stagingeb26/consumed800 and registered baseeb26/head6157 comparison.
+This source slice's feature delivery is COMPLETE; default integration awaits
+explicit approval. CI37744525878 was queued in the publication snapshot;
+returned older-head runs were completed and no cancellation was needed then.
+The October9 completed result is OS CI PASS: build/cache, AMD and Intel livepatch
+lifecycle and Run test suite, all four jobs successful. This is separate from
+local45/45 and does not certify the failure-only guest observer. The local
+broad-flake baseline remains blocked; Admin's API failure prevents overall CI
+clearance/default merge. No downstream pin/package/live or physical approval follows.
+See [prior owning result](os-capability-readiness-vm-result.json)
+and the current [owning status](os-remote-lock-diagnostic-owning-status.json)/
+[publication result](os-remote-lock-diagnostic-publication-result.json).
+The five exact metadata monitor exceptions are rebound to unchanged guest
+configuration/kernel/inputs/wrapper/C; no kernel-build exception is added.
+
+Both earlier zero-example monitor false positives, private projection failures,
+three-selector carry plus separate remaining-three construction/cache proof,
+original6.12.109 CI failures and old800/e9 review/VM scopes remain below.
+Admin still pinsOS800; broad-flake baseline remains blocked. Complete G1b/G2 and
+all physical/alias/NAS/scheduler/destination/object authority remain held.
+The retained cluster stays STOPPED without automatic restart; session is open.
+
+**Detailed lead-reported history, 2026-10-05–07:** the user earlier continued and
 requested the ordinary retained dev-cluster stop to free resources for another
 initiative. Lead completed that one public stop; the retained cluster is stopped
 and will not restart automatically. Lead accepted the resumed disposable
@@ -41,8 +250,120 @@ Normal unpublished owner amend produced32d7f0ac on6cd with all declared hooks
 passed; tracked/index are clean. Lead resolved the Important through direct
 step9 inspection and checks, retaining the original review without a rerun.
 Feature publication/readback32d and comparison c4d..32d are complete; defaultc4d
-is unchanged. This source slice delivery is complete. Current CI is unawaited;
-only superseded6cd CI cancellation was requested, with completion unproved.
+is unchanged. This source slice delivery is complete. Lead's later CI observation
+reports API Specs37547187372 failed, the other six workflows succeeded and
+superseded6cd CI37530868383 completed cancelled. The read-only CI diagnosis
+did not establish the missing original server exception or a cause. A fresh
+bounded local dispatcher diagnostic passed0/1933.541s,498 examples/0 failures/
+3 pending at seed9899, including the target invalid-domain example. It did not
+reproduce the original generic500 and captured no exception events. Local and
+CI Ruby/Bundler/effective-lock versions differ; no original cause or CI repair
+is established. Parent also compared all498 example IDs and their order equal
+to original CI. Lead accepted the separate exact six-path durable diagnostic
+brief and released authoring/static work to implementer0 on clean published32d.
+Lead received the testing-doc handoff, completed its prose pass and accepted the
+six-path freeze. The first owning core batch failed65/1 on a controlled Password
+fault installed before `vpath`'s OPTIONS discovery, rather than the intended GET.
+The smoke example's path-before-fault correction at53775d6d passed its core65/0
+and full65/0 selections in the later batch1/418.068s, which then failed API lint
+with58 offenses/40 correctable across4 files; root lint was unrun. Lead accepted
+the subsequent three-path style/compatibility freeze and exact reversal before
+the pause; the implementer acknowledged no operation in flight. The user has
+now explicitly continued. The fresh style batch finished1/381.446s: core65/0
+and full65/0, each with0 pending/0 outside errors, then one API
+Style/StringConcatenation fallback offense; root lint was unrun. Lead accepted
+the final one-expression support correction d00c1368 with exact fixed-JSON
+output parity and reversal. Lead accepted final two-stage lint PASS0/30.052s,
+API/root4 files each0, with functional65+65 carried only for the equivalent
+fixed literal. Normal NEW commit e5552f46 on32d passed all actual hooks.
+Upstream master advanced fromc4d to81f1f1aa through six generated package files,
+without feature overlap. Parent accepted the ordinary28-commit replay to
+d59b551b on81f1, exact complete feature-patch equality and range-diff28=28.
+Earlier checks remain evidence for the original composition. Lead accepted the
+fresh exact d59/81f1 four-stage batch PASS0/376.437s: core65/0 and full65/0,
+each pending0/outside0, with both four-file lints clean. Final primary review
+is COMPLETE with retained reviewer0, HIGH/all four lanes, over complete81f1..d59
+and28 commits/226 paths: no Blocking/Important, two accepted liveness Advisories.
+Lead directly corrected one inaccurate identity-owner sentence under step9,
+without an independent rerun. New docs-only b339 passed67.534s/all precommit
+hooks; its normal message-only amend produceda933f73c with the same tree/parent
+and all actual hooks OK without warnings. Lead accepted exact-lease feature
+publication/readback and comparison; API final source delivery is COMPLETE.
+The one-shot overall1 was solely an unsupported portal `title` key, corrected
+to `label` in two new entries before comparison, without another push. The
+primary reviewed range remains81f1..d59. At publication CI was unawaited; the
+October9 completed result is recorded in the current checkpoint. No overall-CI,
+default/package/live acceptance follows. The accepted
+Bundler2.6.9 single-expression brief is
+unchanged. Its original source-supported `valid?` removal and local checks did
+not provide executed2.6.9 CI proof. The later actual2.6.9 CI diagnostic evidence
+is scoped to the October9 checkpoint and does not attribute the original500.
+Lead accepted the separate exact five-path OS entry-refusal brief. Parent
+completed the two-commit replay ontoeb26 at678f28d6 with exact feature parity,
+then released initial authoring/static work to implementer0. Lead accepted the
+five-path freeze and three-stage quick PASS0/229.842s/parity1: actual9 module+
+7 generated cases passed; all six check drvPaths and the owning JSON constructed.
+The other five check bodies remain unrun. Normal new commit
+and message-only unpublished amend producedad228c6a/tree5640 on678, unchanged
+source/tree, tracked/index clean, final hooks all OK without warnings. Complete
+all-four-HIGH review of eb26..ad228 is FINAL with no findings in any lane; lead
+accepted its source/history/migration conclusions. Reviewer tests0 and owning
+VM unrun at review remain explicit. The exactad228 owning VM subsequently failed
+wrapper1/597.676s,10 examples/4 failed: both membership and all four predecessor
+environment cases passed; all four namespace refusal cases failed before the
+helper ran because its store path was absent from the guests. Lead accepted the
+exact one-line guest-closure correction, construction eval and normal unpublished
+amend toe9b3eb32, preserving the original review with narrow direct step9.
+Lead accepted the fresh exacte9b3 owning VM PASS0/646.634s, native all10/0,
+including the four kernel refusal cases. Lead also accepted the ordinary
+Nix/SSH atomic exact-lease publication before the pause: featuree9b3 read back
+exactly, stagingeb26 is unchanged, the consumed800 branch is preserved and the
+registered comparison is complete. OS source delivery is complete. RSpec and
+RuboCop succeeded. The main CI subsequently failed two unchanged upstream
+fixtures: NFS hard-mount expectation and livepatch identity setup, both booted
+with default6.12.109. The public completed-attempt evidence supports the
+separate two-path kernel-selection brief below. Lead accepted its full scope and
+released INITIAL2 authoring/static work to saved implementer0. Lead accepted
+the exact two-file4+/0- freeze, unchanged test scripts/outside/foreign/index
+parity and static parse2/format2/diff0. The first construction/cache batch failed
+1/107.196s after all three ordinary drvPath selectors passed; the private
+projection lacked a Git revision. The second private batch failed1/23.349s on
+Nix string context in generated monitor JSON. After the private parser correction,
+lead accepted remaining projection/closure/cache stages PASS0/46.334s/parity1;
+the three original selector passes carry exact unchanged bytes, without a
+fresh-six-stage claim. No build was requested. Lead accepted normal NEWa7c9
+and its message-only unpublished amend to15aeb53bc4fb6fc1ca63a4f7e10b5da3a0f48a78,
+same tree195dbbbe/parente9, clean source/index and unchanged foreign64/17.
+Lead accepted retained reviewer0's complete eb26..15aeb all-four-HIGH review:
+no Blocking, Important or Advisory findings, no obsolete history and no OS
+migrations. Two exact-head owning45 attempts ended1/100.521s and1/85.040s,
+both with zero examples: the monitor stopped ordinary module assembly and then
+module-closure packaging. Released metadata establishes monitor false positives;
+neither attempt establishes actual kernel compilation or a scenario/runtime/cache
+defect. Lead accepted the five exact noncompiling derivation exceptions bound
+to captured fixture closures and reviewed metadata. Both actual kernel
+derivations and every unforeseen Linux path remain detected. The fresh exact-head
+classified run failed1/3322.676s with NFS39/40 and livepatch unrun; the final
+PID1 control-FIFO timeout remains unattributed after completed read-only diagnosis.
+Lead accepted the one-path correction, construction, normal owning amend and
+narrow directstep9; final363d owning45 completed FAILED1/2764.189s with44/45
+passed, including all four PID1 and all five livepatch cases. The initial
+NFS4.1 contention check failed before cancellation; its cause remains unknown
+and bounded read-only diagnosis is complete. The later one-path diagnostic and
+owner-fence correction passed static/construction/recording-Machine checks and
+were folded into6157. Lead selected step10; complete eb26..6157 all-four-HIGH
+review is complete with no findings. The separately released exact6157 owning
+run subsequently passed45/45 and lead accepted feature publication/readback/
+comparison. Guest diagnostic labels0 leaves the observer unexecuted and both
+historical causes unknown. Published e9 remains the predecessor. Local runit10/0
+and the three earlier CI feature-scenario passes retain their scope; that earlier
+whole CI failed. The later6157 CI completed successfully as recorded in the
+October9 checkpoint; the publication-time queued snapshot remains historical.
+This proves neither universal descendant reap nor
+physical authority; downstream pin/package/default/live and Contract2 release
+remain held.
+The broad flake baseline remains blocked.
+This adds no gate to reviewed source and provides no stop/reap or physical capability.
 Generation failures remain historical. Operational invocation remains held.
 Retained alias/NAS, scheduler, destination, default/package/live,
 physical/G2 limits remain unchanged. The session remains active/open.
@@ -277,7 +598,13 @@ capture/action authority and a supported responsibility termination path
 remain unimplemented.
 Lead accepted the separate containment assessment as source assessment only.
 It identifies runit as the service owner, but finds no complete descendant
-termination/reap contract; the prospective entry precursor is not released.
+termination/reap contract. The later exact five-path entry precursor is now
+committed ate9b3 after the one-line guest-closure fix and construction eval.
+The original no-findings complete-range ad228 review and narrow direct-step9
+disposition remain distinct; the fresh corrected owning VM passed all10/0.
+Lead accepted featuree9b3 publication/readback and comparison before the pause,
+with stagingeb26 and consumed800 preserved. OS source delivery is complete;
+downstream delivery and physical authority remain held.
 It supplies neither physical clearance nor another composition/handoff gate.
 The failed first schema generation remains historical evidence. This adds no placement
 gate. The collision supplies
@@ -4855,8 +5182,54 @@ cancelled. This source slice delivery is complete, without default integration,
 new package, live schema use or physical authority. All failed check/generation
 histories and stopped-cluster/Contract2 invocation/termination/release,
 alias/NAS history/destination/scheduler/objects/evidence/G2/default/package/live
-holds remain. The containment/entry precursor stays source assessment only and
-unreleased. These are supplied parent results, not architect execution.
+holds remain. At this publication checkpoint, the containment/entry precursor
+was source assessment only and unreleased; the later narrow entry authoring
+release below supplies no containment/reap capability. These are supplied
+parent results, not architect execution.
+
+**Later independent CI observation, lead-reported, 2026-10-07:** published32d
+API Specs37547187372 completed failure; the other six workflows completed
+success. Superseded6cd CI37530868383 completed cancelled. This supersedes only
+the pending CI snapshot above. Parent is inspecting the finished API evidence,
+without a rerun. No cause, source correction or new release is inferred by this
+design assessment; original quick checks and review retain their exact scopes.
+
+**Historical32d CI diagnostic checkpoint, lead-reported:** the separate read-only
+implementer investigation is complete. The actual original server exception
+is absent. Unchanged upstream Environment/auth/hooks source and lack of storage
+admission establish source parity only, not an upstream failure or its cause.
+Full/core dependencies and seeds differ; duration does not establish cause.
+Parent prepared a private HaveAPI dispatcher-entry observation of
+`exec_exception`/`request_exception`, limited to the exact failing example and
+PUT path. Semantic delegation is unchanged; output is bounded class/cause,
+public frames, errno and SQLSTATE, excluding messages, SQL and tokens.
+
+Native Luna/low `/root/api_32d_platform_config_diagnostic_20261007` completed,
+and lead accepted PASS0/1933.541s: driver1922.783s, stage1916.884s,
+native1903.3925s,498 examples/0 failures/3 pending at seed9899. Target Environment
+invalid-domain `[1:3:6]` passed7.303s. The exact original actual matrix topic/native
+manifests agree at36 files, full plugins. Parent further compared all498 native
+example IDs and their order exactly equal to original CI. Observer events are empty and
+observation_error0; the original37547187372 generic500 was not reproduced.
+Cleanup1/childrenwaited1/source3248 parity1, original DB1839487/outer1836596/
+RSpec1839525 absent, owned PGID empty and private socket/pidfile absent were
+parent-proved, without signals/prune. Local Ruby3.4.9/Bundler4.0.21 and effective
+lock SHA256 `0ecd77cc1f4c69c4c5158014a4dcc100a65e5ddefe1cfe52d377e1b368eda2af`
+differ from CI Ruby3.4.11/Bundler2.6.9 and full lock
+`5463f1eb084cee89c16fca27d27e47d155da7375c27a4b82bfaacbda41644db2`.
+This diagnostic is not a CI rerun or acceptance. No original server error or
+root cause was captured; source parity is not upstream-failure proof.
+Admin32d source/index were clean at this diagnostic checkpoint; lead subsequently
+released only the six diagnostic paths for static authoring below. Unread private
+reference `/tmp/api-32d-platform-config-diagnostic-20261007.7r9g0648/checks.py`
+binds3,248 sources with frozen SHA256
+`c753015c25c53ed5a3135503a49aeb4e8f9bea6626b4d292b1d299bae5cd9860`,
+driver `ca7cce264df21b16a0cc3553c18847170d0d563b7254fc43ae05368dafc9ef9e`,
+unchanged guard `911c91cbcb38a459954d81306a4fd9b237af2f02c9adec38b0eaeb16a682fd2b`,
+probe `305bff2afd892f577651d356b6c75eef6c709058e2f156579ce9ffc38bcfa461`.
+The result above is lead-supplied evidence, not an architect rerun. The separate
+durable diagnostic brief now has a separate explicit six-path authoring/static
+release; this result establishes no cause repair or OS gate.
 
 **Source decision and lock order.**
 `api/models/storage_mutation_admission.rb:299–322` locks current User and
@@ -5225,8 +5598,10 @@ session-open constraints remain unchanged.
 
 **SOURCE ASSESSMENT ACCEPTED; no source release or operational capability.** Lead
 read and accepted this complete assessment. The five-path entry-failure
-precursor remains prospective, insufficient for G1b acquisition and unreleased;
-no further source projection or entry implementation is requested. This assessment
+precursor was prospective, insufficient for G1b acquisition and unreleased at
+this checkpoint. The separate 2026-10-07 brief below now specifies that first
+unit; lead has since accepted and released only that narrow entry authoring.
+This earlier containment/reap assessment remains source assessment only. It
 follows the accepted generation composition and record-only contract2 design.
 It adds no gate to either. The accepted ownership direction is to
 reuse runit, retain the existing process-only selections, and account separately
@@ -5346,6 +5721,1385 @@ Isolated signed5290/result/capture binding, G2 approval/journal/executor,
 exceptional-work resolution, the DIP5/DIP12 alias, NAS history/integrity and
 actual distinct-destination availability remain unresolved. Scheduler, admitted
 objects, source/default/package/live holds and the active session are preserved.
+
+### G1b termination/accounting prerequisite: runit entry refusal, 2026-10-07
+
+**SOURCE DELIVERY COMPLETE; e9b3 publication accepted.** Lead read
+this entire brief through the next placement heading and accepted its scope,
+invariants, verification and compatibility limits. The inspected design source
+boundary was published Admin32d7f0ac/tree3d9 and OS80034c8c; parent completed the
+equivalent OS replay below before releasing initial five-path authoring to
+saved implementer0, turn `01a116d6-9549-72d2-8e1c-1b3ed1c831e2`. That static
+authoring was frozen before the checks below. Lead reports complete source inspection with no
+concrete deviation and independent verification of all five hashes/stat,
+outside2234 tracked files,64 foreign files/17 directories, inputs/lock and exact
+HEAD678/tree4598. The index was empty before lead staged only the new
+`tests/runit-cgroup-entry-eval.nix` for Git-backed Nix access. Static checks retain
+exactly the member-reported scope. The fresh quick batch subsequently executed
+the9 module and7 generated cases;10 owning examples across3 machines were unrun
+at review. Their first owning VM subsequently failed; the corrected VM and
+feature publication were later accepted as recorded below. Current source is
+committed and published, with tracked/index clean at the accepted checkpoint.
+This supplies no stop/reap/physical capability, package, deployment or
+retained-cluster action. The cluster remains stopped, without automatic restart.
+
+Unread final packet reference:
+`/tmp/os-runit-entry-authoring-20261007.dzux_pf3`, manifest SHA256
+`f2398c4e26a3bbf70b9c646d03ea01d8ec6ea8acec194d9a6963a94132e2f5a9`,
+complete patch
+`2d8f78cf7cfa551b4423f54645755f2df6d023c566af0ce4f9dc4918f5a9c6a5`,
+new message
+`4141f7126c643ebb3567a14b4adb0289b7839e268bfba5af58c3d2bfa98aa8a2`.
+Lead prepared `/tmp/runit-entry-checks-20261007.ylcsuy_z`, driver
+`dd360ae09babfb43d33a86254edff6f895b188c96261c75b18c02c2493436ebf`,
+frozen manifest
+`77ef837f07444096cf90baa569996b814e589445a08da9265f481deb60c67043`.
+It binds2239 source entries, frozen foreign/index state and the three quick
+commands below. Preparation was previously unrun while the API diagnostic
+owned the watcher slot. Lead accepted the subsequent unchanged-source batch
+PASS0/229.842s/parity1, all three children waited: focused actual9 module+
+7 generated execution cases0/7.935s; all SIX check drvPaths0/182.041s; actual
+owning JSON0/33.605s. These construction evaluations do not execute the other
+five check bodies or10 VM examples. Actual dirty-tree and existing firewall
+warnings remain distinct from failed checks; broad flake validation stays
+blocked on its reproduced baseline output shape.
+
+Lead reports normal NEW6f79 commit0/11.009s with four TextWidth warnings above72
+but at most80 columns. A message-only normal unpublished amend0/11.156s produced
+`ad228c6a896f24f0bebe59fa7160b50751e661b7`, tree
+`5640e99cdce8ae0e2e46705acd4f29a5dd03d4fa`, parent
+`678f28d6d5846514887d371a6e54ab29913c3422`. Final actual hooks are all OK/no warnings;
+source/tree and foreign64 files/17 directories are unchanged, tracked/index
+clean, parent child2983247 absent. Fresh SSH staging remains
+`eb26edbf8b40475f7288f3facfb6dbf962765a1d`. Complete final range has3 commits,
+28 paths,2069+/85-, full SHA256
+`44126d4c39253eb22982a163c4f2f66f46e5e0a5c665657ce30988ec7fee0a21`,
+unit `73dbf0257a1b70fa0ab0159ea7db9759447c6943b8b9f183be2068af6a1bd373`.
+There are no OS SQL/schema migrations; the four Admin migrations remain separate
+and unchanged. Public `runit-entry-review-packet.md` and
+`runit-entry-final-inventory.json` preserve the packet. Retained reviewer0's
+all-four-HIGH complete eb26..ad228 review under turn
+`01a11700-a4ad-7092-8b84-f92dc03f41f1` is now FINAL, no findings in any lane.
+Lead accepted source/history/migration review and saved
+`runit-entry-independent-review.md`, preserving reviewer tests0 and owning VM
+UNRUN at review. Exact head/tree/parent and complete/unit hashes above remain
+unchanged. Fresh exact-head Luna `/root/os_runit_entry_owning_vm_20261007`
+followed parent preflight0.828s/parity1/executed0, then completed FAILED:
+wrapper1/597.676s, stage1/595.200s, waited1/source-index-foreign parity1.
+Native10 examples/4 failed. Both v1/v2 membership examples and all four
+predecessor environment cases passed, but all four namespace refusal examples
+failed before executing the fixture, with missing
+`/nix/store/f1vdc1js1ibds3rn3sv9m4q0a0827p1l-runit-entry-refusal`.
+This is lead-supplied result/log evidence, not an architect execution. It proves
+neither completed namespace refusal nor a cgroup runtime failure. That failed
+run supplied no VM success, publication, pin, delivery or retry authority.
+Old800 proof retains its
+original composition scope.
+Private packet/log references were not read for this reconciliation.
+
+#### Missing namespace helper in guest closures: one-path fixture brief
+
+**CORRECTION/OWNING VM/PUBLICATION COMPLETE, lead-reported.** Lead
+accepted the exact one-line `system.extraDependencies = [ namespaceProbe ];`
+addition in shared `entryMachine`, scenario SHA256
+`6f4b317c2c3f114390744e5d4a91b851c7b27d29ee8fb5d4fe80b613894d0f4f`.
+Removing only that line reverses to original25c71aaa. Parent complete source2239,
+foreign64 files/17 directories, index parity and source inspection passed.
+Selected owning JSON drvPath eval passed0/27.023s, stage24.597s/waited1/parity1;
+this is construction only. Normal unpublished amend passed0/11.469s, actual
+hooks all OK without hook warnings, with the Nix dirty-tree warning distinct:
+`e9b3eb32d2981ca1ff08fae772518c4604ba6c05`, tree
+`a178e053e608c71ebc3b05ead68466372e0523f6`, parent678f; ad228 backup retained.
+Complete eb26..e9b3 has3 commits/28 paths/2070+/85-, complete SHA256
+`e0973aef8ad1f622e0e825d2c0571bc3069c8c9ee569185eb433bcaa52d27ef4`,
+unit `2df07314836f075d1072b22e3dc67d845aad266055c61c220ad2751f537b779e`,
+remediation `a0dd69613a4a9e3e8a22a28980ac6bf33ea705654a00a46b4325eb63e27d3ca5`.
+Primary eb26..ad228 all-four-HIGH no-findings review is preserved with parent
+direct-step9 fixture disposition, without a reviewer rerun. Public
+`runit-entry-fixture-disposition.md`, final inventory and original failed VM
+record preserve those separate scopes.
+
+Lead accepted fresh exacte9b3 Luna `/root/os_runit_entry_fixed_vm_20261007`
+PASS0/646.634s, stage644.163s/waited1/parity1, native expected_success all10/0.
+All four original environment examples, v1/v2 membership and four kernel
+refusal cases passed. Native v1 membership took253.19s; this supplies no
+failure or timeout attribution. Parent repeated allsource/index/foreign guards;
+runner7128 was absent, owned PGID/prefix commands/visible FD holders0, with16
+inaccessible current-UID FD observations. This is not universal reap proof.
+No signals/prune; state/disks retained. Unread private reference
+`/tmp/runit-entry-fixed-vm-20261007.y0k315xm`, frozen
+`3e40a74f267941f5436c98fd3c14a98f9e8cb164f9ecc6d6d3d68dd52333c53c`,
+driver `a2bbb4471e6d60829336746a44fdd48f38df721d4d1acabf4bbe47f051540888`.
+The preceding repeated preflight0.803s/parity1/executed0 remains distinct from
+the accepted VM result. The
+original597.676s/10 examples/4 failures from the missing guest helper remains
+separate. Old800 proof and broad baseline block persist.
+
+Lead accepted publication completed before the pause: unread reference
+`/tmp/runit-entry-publication-20261007.p2vwerbf`, wrapper0/18.015s/parity1/waited1.
+The actual ordinary Nix/SSH atomic exact-lease push passed0/10.409s, remote
+readback0/1.333s and registered comparison0/0.655s. Feature
+`e9b3eb32d2981ca1ff08fae772518c4604ba6c05` read back exactly; staging
+`eb26edbf8b40475f7288f3facfb6dbf962765a1d` is unchanged. Consumed
+`80034c8cc6489db6287b43f439a9617511f14908` is preserved on
+`2026-09-23-storage-redesign-consumed-80034c8c`; the checkpoint branch was
+untouched. Parent accepted actual logs/readback/comparison and postguard
+0.716s/parity1, with the original three stage PIDs absent and no signals/prune.
+Public `runit-entry-publication-result.json` records that bounded acceptance.
+The publication-time CI snapshot reported RSpec37656497299 and RuboCop37656497477
+success, CI37656497281 in progress/unawaited, zero superseded queued/in-progress
+runs on the same feature and zero cancellation requests. OS source delivery
+is complete, without downstream pin/package/default/live/physical or Contract2
+release. The later completed main-CI failure and separate two-fixture kernel
+brief below supersede that in-progress snapshot without changing these proofs.
+The retained cluster stays stopped and the session active/open.
+
+The accepted one-path design below is retained. The smallest owning
+correction is solely `tests/suite/system/boot/runit.nix`: add
+`system.extraDependencies = [ namespaceProbe ];` inside the existing shared
+`entryMachine` configuration, so both `entry_v1` and `entry_v2` include the
+already-defined helper. Leave the predecessor `machine` configuration alone.
+The recursive Nix let can refer to the existing later `namespaceProbe` binding;
+do not reconstruct, rename or move its `pkgs.writeShellScript` producer.
+
+Public source at originalad228 established the missing dependency boundary:
+
+- `tests/suite/system/boot/runit.nix:60–105` creates the helper; its only current
+  use at199 interpolates a store path into the host-run Ruby test script. Neither
+  entry machine's configuration refers to it.
+- `tests/make-test.nix:201–228,322–352` constructs each guest's toplevel/squashfs
+  separately from host test-script JSON. A JSON reference can make a helper
+  available on the host without including it in the guest's boot image.
+- `os/modules/system/activation/top-level.nix:54,69–84,236–243` owns the existing
+  typed `system.extraDependencies` option and copies its paths into the system
+  output. Lines424–428 build squashfs from that system closure.
+  `os/lib/make-squashfs.nix:38` onward uses closureInfo and copies the registered
+  store paths. This is the supported dependency mechanism, also used by
+  `tests/suite/system/switch-to-configuration.nix:120` onward for guest fixtures.
+
+Thus preserve the exact generated probe bytes, shebang/dependencies, mount
+namespace setup and failure guards, all ten example bodies/assertions, service
+defaults, run producer, three-machine topology and normal cleanup/timeouts.
+Do not use `system.checks` (build-only), PATH/systemPackages, host store sharing,
+guest copy/install commands, a new framework interface or a timeout increase.
+No runtime, documentation, input, lock, schema or migration path is needed;
+the lasting entry-refusal contract is unchanged. Only the two disposable guest
+closures intentionally gain the already-existing helper and its dependencies.
+
+After lead release, member work remains static: Nix parse/format, scoped diff,
+and exact reverse comparison showing the configuration dependency is the only
+delta. Keep the probe derivation expression and entire Ruby testScript byte
+equal. Parent accepts that bounded freeze and runs only the existing registered
+scenario construction evaluation under a fresh watcher:
+
+```sh
+nix eval --raw '.#tests.x86_64-linux."system/boot/runit".drvPath'
+```
+
+The focused9 module/7 generated-script PASS and other unchanged quick inputs
+carry only through exact byte equality. No repeat of those bodies or all-six
+check evaluation is needed for this one fixture dependency. The selected JSON
+evaluation proves construction, not realized guest presence or refusal behavior.
+Actual closure delivery and all four refusal paths must pass in the same owning
+ten-example VM, after the normal unpublished owner fold and lead direct-step9
+inspection. Retain ad228's original complete all-four review and failed VM
+packet; no automatic whole-review rerun is warranted by this bounded missing
+fixture dependency. If the change alters probe/runtime/assertion semantics,
+return that deviation before extending the release.
+
+The later owning command remains the existing `system/boot/runit` selection
+with a fresh short private state, `--no-destructive --stop-on-failure`, unchanged
+ordinary runner/stop/timeouts and unexpected-kernel policy. No VM retry is
+authorized by this brief. Success must include all ten examples on the exact
+folded source; no partial membership pass substitutes for namespace refusal.
+Rollback only removes the fixture dependency and restores this missing-helper
+failure; it changes no live generation or authority. Original OS review and
+old800 proof retain their scopes; publication/pin/delivery stay held. Durable
+API6 static authoring is independent. The retained cluster stays stopped and
+all physical/Contract2/G2/alias/default/live holds persist.
+
+**Decision:** first make the existing generic runit `run` producer refuse
+failed cgroup setup before executing its helpers or configured body. This is
+independently useful: a service must not silently continue after its existing
+entry operations fail. It is also necessary for a later owner to reason about
+where a new service started. It does not establish lifetime accounting, actual
+termination/reaping, a physical interval or any Contract2 termination action.
+The full stop/reap capability cannot yet be honestly reduced to this manifest.
+Do not add a wrapper daemon, automatic hold protocol or API release operation
+to make the precursor appear complete.
+
+#### Source-backed wait ownership and later obligations
+
+The following distinguishes an existing wait from the additional contract
+needed after loss. Source paths are relative to their named repository.
+
+| Existing owner | Actual wait/accounting boundary | Required later obligation |
+| --- | --- | --- |
+| Admin `nodectld/lib/nodectld/cli.rb:90–191` | The wrapper forks the daemon, waits that exact direct child, and may restart it. Stop sends TERM, then KILL after its existing deadline. It does not wait every daemon descendant. | A supervisor surviving daemon loss must own or receive valid completion for the whole enrolled incarnation before a successor can be treated as covered. Wrapper loss currently supplies no such acknowledgement. |
+| Admin `libnodectld/lib/nodectld/daemon.rb:461–501`, `utils/subprocess.rb`, `worker.rb:21–31` | Registered-child threads call `Process.wait(pid)`; the blocker/activity record is in memory. `blocking_fork` forks before registering. Cancellation signals a process group, with a PID fallback, but does not perform that wait. Worker cancellation marks uncertainty. | Close the fork-to-registration gap before claiming complete enrollment. Preserve primary wait errors and child-loss uncertainty. A dead Ruby worker or group signal is not a child-completion record. |
+| OS runit module `mkServiceRun`, `killCGroup`, `mkServiceFinish` | The generated service enters a named group; finish samples only its immediate `cgroup.procs` and sends TERM. There is no recursive enrollment/wait result or incarnation record in this interface. Node and osctld explicitly use `killMode = "process"`. | The generic supervisory owner belongs beside runit, outside the daemon being stopped. Its future parent/wait and restart protocol must survive daemon loss or explicitly refuse after supervisor loss. Do not change either service's kill mode as a substitute. |
+| OS `osctld/lib/osctld/{daemon,pool,garbage_collector,trash_bin}.rb` | GC/trash have independent thread/queue lifetimes; their `stop` methods join their own worker threads. `Pool#begin_stop` stops trash/autostart, not GC. GC registrations persist and may later move data to trash; direct methods can introduce work independently of a timer. | Drain/close every applicable producer entry before recording completion, including GC-to-trash calls and delegated work already accepted from Node. Thread join alone does not certify each spawned process or settle its storage effects. Preserve deferred registrations; do not silently discard them. |
+| OS `generic/server.rb`, `thread_reaper.rb`, `send_receive/server.rb`, `send_receive/commands/receive_{base,incremental}.rb` | GenericServer closes its accept socket separately from handler threads. ThreadReaper joins registered threads; request_stop is cooperative. Receive handlers spawn mbuffer and zfs and normally wait both. Daemon stop calls ThreadReaper.stop before SendReceive.stop. | A later stop owner must close all ingress and account for in-flight handler registration, both pipeline children, partial spawn/failure and daemon loss. No atomic complete receive barrier is exposed by socket close or the current join ordering. |
+| OS `container_control/frontend.rb:95–145,190–222`, `switch_user.rb:102–117`; Admin `dataset.rb:27–40` | Container runners can deliberately enter other cgroups and normally have direct waits. Node disposal can delegate to osctld trash. | Reject an inapplicable storage-only participant or include these owners explicitly. An escaped container runner or server-side effect is not certified by the Node service group. Desired empty configuration is insufficient. |
+
+For a later complete interval, choose the **existing runit supervisory boundary**
+as the generic service-incarnation owner, with the actual daemon parent retaining
+its direct-child wait obligations. The present source does not expose a protocol
+for transferring orphan wait ownership or a durable completion ledger. The
+packaged runit override (`os/overlays/packages.nix:50–55`) supplies kexec and
+maximum-service patches, not this capability. A Node-only wrapper change cannot
+cover osctld's independent producers, and an external CLI cannot later wait for
+arbitrary nonchildren. `ECHILD`, `ESRCH`, disappearance or an empty cgroup must
+therefore remain unknown for this purpose.
+
+This is an ownership decision, not a selected new runit ABI or a claim that PID1
+fails to reap. Before a later implementation manifest is approved, the actual
+runit/PID1 ownership path must resolve whether an existing supervisor can adopt
+the relevant descendants and expose matching waits, or whether another reusable
+supervisor primitive is necessary. No subreaper, pidfd, kernel kill facility or
+new wait-result format is assumed available or certified by this brief.
+
+The later accounting contract must satisfy these concrete requirements:
+
+- Enrollment begins before startup effects/fork escape. Bind host boot,
+  supervisor and daemon incarnations, process start identities, exact generated
+  entry/system payload and the selected cgroup hierarchy/object. Numeric PID,
+  service name and reused directory pathname cannot carry old completion.
+  Daemon restart, removed/recreated cgroup or changed boot invalidates the old
+  evidence. A replacement owner cannot infer continuity from matching names.
+- Account for grandchildren and changed sessions/process groups independently
+  of PGID. Inheritance helps only while migration is excluded or accounted for.
+  Deliberate container cgroup moves and external server delegation require their
+  actual owners. An unsupported route, lost enrollment, bound overflow or
+  unknown child status refuses completion and retains API responsibility.
+- v1 and v2 need distinct, tested membership/identity adapters. Stage1 maps v1
+  services to the named systemd hierarchy and v2 to `/system/service`; neither
+  a v1 resource-controller listing nor a v2 empty/populated observation is a
+  wait acknowledgement. Recursive emptiness, even after a kernel kill, cannot
+  establish historical coverage, wait status or zombie reaping.
+- Only the actual parent/adopting reaper can supply a corresponding successful
+  wait. On daemon/wrapper death without that handoff, retain uncertainty; do not
+  convert reparenting, supervisor restart or lack of visible tasks into success.
+  No current interface provides a runit/PID1 acknowledgement for these orphans.
+  A returned exit/signal status proves that exact child's wait completed; a
+  nonzero or signalled child is not a successful physical operation.
+- Close producer admission before accepting a final accounting result. The
+  persistent manual generation prevents its configured automatic starts, but
+  check/control/finish/log scripts, hooks, exports, manually started daemons and
+  delegated GC/trash/send-receive routes need explicit applicability and coverage.
+  This is not a universal fence against independent privileged actions.
+
+Termination and physical settlement remain separate. A successfully waited
+child can have partially changed ZFS before exit; a killed sender can have
+caused independent remote receives or queued trash. Reboot removes the old
+process identities but does not resolve those effects. Preserve failures,
+catalog/physical evidence and exceptional-work uncertainty. The future API
+termination/recovery owner must authenticate and audit a supported resolution
+bound to the run/epoch/scope and complete physical evidence before release.
+Contract2 has no such action, and contract1 abandonment cannot be reused.
+Any future executable result must also bind authenticated API run identity,
+closed scope, actual Node/zpool identity and the boot/system/process tuple;
+caller-supplied labels alone cannot authenticate that association.
+
+#### Exact first source unit
+
+**Owner: vpsAdminOS, five paths; no Admin or dependency edit in this unit.**
+
+1. `os/modules/system/boot/runit/default.nix`: add explicit local failure
+   branches around the existing `mkdir -p` and PID write in `mkServiceRun`.
+2. New `tests/runit-cgroup-entry-eval.nix`: build and execute actual generated
+   scripts with bounded recorded external effects and controlled failure paths.
+3. `flake.nix`: declare `checks.<system>.runit-cgroup-entry-eval`, using the
+   existing `makeSystem`/check pattern; preserve inputs and all existing outputs.
+4. `tests/suite/system/boot/runit.nix`: extend this already registered owning
+   scenario for real v1/v2 entry/refusal; retain its four environment cases.
+5. `docs/os/runlevels.md`: describe entry refusal, supported hierarchy premise,
+   ordinary retries/activation consequences and explicit lifetime-proof limits.
+
+No runit package patch, osctld/Node runtime, registry, CLI, option, kill-mode
+default, service runlevel, hook consumer, storage schema or wire change belongs
+to this unit. `tests/all-tests.nix` already registers `system/boot/runit`, and
+the existing CI path coverage includes `os/**`, `tests/**` and `flake.nix`;
+no selector/workflow edit is needed. A flake check declaration does not imply
+that current CI executes every check body.
+
+The first two generated entry operations stay in their present order and place,
+before log redirection, helper sourcing, PATH/environment setup and `service.run`.
+If creation fails, write a fixed nonsecret stderr diagnostic and exit1 without
+attempting attachment. If the PID write fails (including redirection-open
+failure), write a distinct fixed diagnostic and exit1. Check the operation's
+actual exit status. On success, execute the existing body unchanged, with its
+original exec/exit and one-shot behavior. Use local conditional guards; do not
+enable global `set -e`, add a sleep/retry or change the body shell semantics.
+Do not remove the cgroup on error or signal any existing member.
+
+The invariant is deliberately precise: **these setup failures cannot fall
+through to the configured run body**. It assumes the existing trusted stage1
+hierarchy. `mkdir`/write success on a spoofed ordinary filesystem would not prove
+kernel membership; authentic hierarchy/incarnation validation remains part of
+the later accounting owner. This unit issues no membership or lifetime receipt.
+It does not change check/control/finish/log scripts: ordinary runit may still
+run a finish handler after entry failure and may retry the service. Thus it
+does not promise zero effects across all service hooks or permanent stop.
+
+#### Focused and owning verification
+
+Released initial member work is static only: parse/format the four owned
+Nix files, inspect extracted shell/Ruby syntax and scoped whitespace. Parent
+owns any required staging of the new Nix file for Git-backed flake evaluation.
+Use the repository's declared environment/hooks; no input update or broad
+overlay-output repair is part of this manifest.
+
+The focused derivation must execute the actual module-produced `run` script,
+not a copied guard. Use an ordinary no-storage fixture and a one-shot fixture.
+Rebase only the exact fixture cgroup/done paths into its disposable test root,
+assert replacement counts, and preserve the remainder of the generated script.
+Capture owned child exit status with the normal process owner; no process-name
+scan or arbitrary-PID cleanup. Meaningful cases are:
+
+- successful entry records the script's own PID before helper/body effects;
+  helper, PATH/environment and ordinary exec/exit behavior remain effective;
+- a creation failure (fixture leaf blocked by a regular file) exits1, emits its
+  specific label and performs no attach/helper/body/done/sv-once effects;
+- a write/open failure (fixture `cgroup.procs` is a directory) exits1 after
+  successful creation, emits the other label and performs no later run effects;
+- one-shot success preserves done-marker/`sv once` ordering, while either entry
+  failure creates no success marker. Include an ordinary body that runs `false`
+  followed by a successful command, outside a conditional, to catch an
+  unintended global-errexit change;
+- projections retain process/control-group option values, runlevels and the
+  existing check/control/finish definitions. Failure assertions concern the run
+  script only; do not manufacture a promise that runsv never invokes finish.
+
+After a frozen-source inspection, a fresh watcher may run the focused build
+and bounded construction evaluations, subject to lead release:
+
+```sh
+nix build --no-link .#checks.x86_64-linux.runit-cgroup-entry-eval
+nix eval --json .#checks.x86_64-linux --apply 'checks: builtins.mapAttrs (_: check: check.drvPath) checks'
+nix eval --raw '.#tests.x86_64-linux."system/boot/runit".drvPath'
+```
+
+The latter two prove construction, not other check bodies or a VM pass. Retain
+the already reproduced broad flake `overlays.all` list baseline failure; do not
+claim it green or rerun it only to rediscover the unchanged output shape.
+The previous OS800 checks/VM remain old-byte evidence, not validation of this
+new common producer. Complete-range review of the eventual normal new source
+commit precedes the longer owning VM; no new review is requested now.
+
+Extend the existing `system/boot/runit` test with two no-storage machines using
+`boot.enableUnifiedCgroupHierarchy = false/true`, following the existing
+`cgroups/system-v1`/`system-v2` composition. Verify the actual selected hierarchy
+and kernel membership from inside each fixture body, including a normally
+waited short child using a separate session. Preserve the existing run, check,
+hangup-control and finish PATH/environment cases and ordinary `sv` stop.
+This proves these generated entries and immediate inheritance, not arbitrary
+descendant reaping or migration exclusion.
+
+Exercise the installed generated failure scripts using fixture-only services
+with no runlevel links. In a private mount namespace, mark propagation private
+and bind-remount the exact test hierarchy read-only: an absent fixture leaf
+must fail creation; a precreated empty fixture leaf must fail the PID write.
+Require the exact refusal status/label and absent run-body/one-shot effects,
+with namespace setup errors treated as failures. Never make the real VM's
+global service hierarchy read-only or substitute failure of the test setup for
+the expected script refusal. Namespace exit releases only its private mounts;
+normal owning runner cleanup remains responsible for the disposable machines.
+No ZFS dataset, alias object or retained cluster is used.
+
+After reviewed quick acceptance, the existing public runner selection is:
+
+```sh
+./test-runner.sh test --no-destructive --stop-on-failure --state-dir "$RUNIT_ENTRY_TEST_STATE" system/boot/runit
+```
+
+Parent supplies a fresh short private state path, source binding and watcher;
+there is no `--fresh` on retained disks, new runner engine, timeout inflation or
+unapproved local kernel build. A namespace or v1/v2 support failure stops the
+acceptance; do not weaken it into an empty-group assertion.
+
+#### Compatibility, recovery and what this enables
+
+Successful configured service behavior and all existing defaults remain the
+same; failures that previously fell through now refuse before the run body.
+This is a generic start-safety change for future entries, not a retrospectively
+applied bound. It introduces no persistent record, database migration, reader
+version or API authority. Existing older generations remain bootable and retain
+their old behavior. No coordinated fleet update is required for this independent
+OS improvement, but mixed old starts cannot satisfy later claimed coverage.
+
+Every generated run path changes. Existing activation compares those paths
+(`switch-to-configuration.rb:190–203,278–296`) and may restart selected services
+under their existing onChange/protection rules. Do not call rollout inert or
+alter those rules. Delivery would require reviewed/published OS source and
+separate ordinary immutable consumer updates before new starts are claimed;
+no future revision or package transition is assumed here. A body that never
+started is not entitled to clear any API owner. Interrupted setup can leave a
+directory; preserve it and use ordinary owner diagnostics, not automatic prune.
+Rolling back restores the old entry gap and may restart writers. It is not a
+maintenance-release procedure.
+
+**Completed upstream replay and source release, parent-reported:** OS staging is
+`eb26edbf8b40475f7288f3facfb6dbf962765a1d`, one mechanical commit aftercbfc,
+changing only three `flake.lock` lines for nixpkgsUnstable494ce7fd2 ->151fa4e8d.
+The earlier prospective22-path count is corrected to the actual26 feature
+paths; the original22-path review provenance remains separately preserved.
+Runit/runlevel/OSVM sources are unchanged. Parent completed the ordinary
+declared-Nix-environment two-commit replay: first
+`0bcb0e03ecf62e11fdf481f448ff26d71e75bd8d`, then final
+`678f28d6d5846514887d371a6e54ab29913c3422`, tree
+`4598c4e8d00a4faeccb2e7074934af2d7fd7e061`. Range-diff is two1=1;
+all26 actual feature paths/blobs and messages match. Tracked/index are clean,
+foreign64 files/17 directories retain byte/stat parity, and the lock equals
+incomingeb26. Backup800 and remote800 are retained. The normal declared shell
+fetched/built development tools with no Linux build; hooks were present with
+no bypass. This is no runtime test or new-composition acceptance. Lead then
+released exactly five paths for authoring/static work; no broader source scope
+is supplied. Admin32d's lock remains800. Source at `flake.nix` routes that unstable input to unstable
+container template composition; this is not a claim of whole-output equality.
+The new composition needs its own exact source/input comparison, focused build,
+actual declared-check/owning-JSON construction evaluations and eventual owning
+runit VM at the final head. Old800 consumer and eight-example VM proofs remain
+tied to their original composition; no automatic unrelated whole-VM matrix or
+coordinated fleet update follows from the mechanical input change.
+
+This unit enables a later supervisor to require a proved successful entry as
+one precondition for enrollment. It does **not** solve the fork/registration
+race, surviving-parent/adoption/wait ledger, service-incarnation persistence,
+v1/v2 recursive accounting/migration coverage or independent osctld producers.
+Those source-specific obligations must be settled before a complete stop/reap
+implementation manifest is credible. In particular, simply adding the missing
+GC stop call would not close direct enqueue/call routes or prove child waits.
+
+No external user preference is needed to implement this bounded precursor.
+The remaining blockers to operational termination are capability/evidence
+contracts: authenticated recovery/termination of Contract2, actual complete
+producer/child ownership, exceptional physical settlement, signed5290/result
+and complete capture binding, G2 approval/journal/executor, retained NAS history
+and distinct destination availability. Unknown coverage retains the API owner;
+no timeout, quiet sample, successful kill, empty group, reboot or declaration
+automatically releases it. Existing scheduler/objects/evidence, four migrations,
+primary review/directstep9 and all default/package/live/alias/G2 holds remain.
+
+### OS capability-bearing fixture kernels: NFS cancellation and livepatch identity, 2026-10-07
+
+**PRIMARY15aeb REVIEW / PID1 STEP9 RETAINED; diagnostic6157 review/owning45/feature delivery COMPLETE.** Lead
+read the complete brief through the next placement heading and accepted the
+exact two-path scope. INITIAL2 authoring/static work was released to saved
+implementer0, without tests/evaluation/build/index/ref authority. The resulting
+freeze, construction/cache evidence, final normal commit and complete independent
+review are accepted as recorded below. Both earlier attempts completed zero
+examples. Lead accepted the complete captured-closure detector classification;
+the fresh same-head owning run failed with NFS39/40 and livepatch unrun.
+The one-path readiness correction is frozen, construction-checked and folded
+normally into363d with lead directstep9 accepted. Its fresh owning45 run completed
+1/2764.189s/parity1: NFS39/40 and livepatch5/5, all four PID1 cases passed.
+The sole failure was the initial NFS4.1 lock-contention check before cancellation;
+its cause is unknown. Bounded read-only diagnosis is complete. The one-path
+diagnostic's final owner-fence freeze, parent construction/recording checks and
+normal amend to6157 are accepted. Complete eb26..6157 all-four-HIGH review is
+complete under lead-selected step10 with no findings. Lead accepted source
+review and the separately released same45 owning VM passed0/2974.220s/parity1:
+NFS40/40 and livepatch5/5. Feature publication/readback/comparison is complete
+at6157. Failure-only guest diagnostics were not entered; original FIFO and
+initial contention causes remain unknown. Default integration awaits approval.
+The heading date is corrected to2026-10-07
+from the supplied actual clock2026-10-07 21:05:50 UTC; no future acceptance date
+is inferred. Source boundary is published OS
+`e9b3eb32d2981ca1ff08fae772518c4604ba6c05`, base
+`eb26edbf8b40475f7288f3facfb6dbf962765a1d`. Choose the existing catalog kernel
+`6.12.95` explicitly in these two fixtures. No new kernel version, variant,
+runtime capability, package override or builder output is needed by the inspected
+source. This is independent of API diagnostic publication and adds no gate to it.
+
+Lead accepted the initial two-file freeze, exact4+/0-, with source SHA256:
+
+- NFS `f3ab45b7abca56a44b6ca5298d6bb932a095a57aca34f7dd108c847a526719b8`.
+- Livepatch `1d5145a9f5b9c756b0cd77be85137ad0e7b5e96abaa2c269c96ece1dd1a5c299`.
+
+Full testScript/suffix/reverse, outside2237 tracked files, foreign64 files/17
+directories and empty index parity were accepted. Main-agent comment inspection
+required no source/doc rewrite. Member parse2/format2/diff0 is static evidence
+only; all45 existing authored examples remain unrun. Packet SHA256
+`b863abf134cc47de2d679172fedc5fc13a8befdf6d19114325075cf9bbed6461`
+is a reference only and was not read by the architect.
+
+Initial native utility `os_capability_kernel_construction_20261007` launched ONCE
+for six construction/cache stages. Its original frozen SHA256
+`baf337096633ad9b5bcfa0705717d8757274a84034fc55fd739e5c57f40cb697`,
+driver `44e2ad639a974043277028560ba4bf44e2ada120b23d6e142c767d0a4b9bd24f`.
+Selection covers the three existing drvPath outputs, actual CI fixture/system/
+catalog projection, existing versioned-builder derivation closure and anonymous
+cache metadata. Lead reports that first batch failed1/107.196s: ordinary NFS
+drvPath passed0/14.019s, livepatch drvPath passed0/11.516s and versioned-kernel
+CI drvPath passed0/52.068s. Private projection failed1/22.533s at channel
+registration because it could not coerce null. The public flake selects its
+revision from `self.rev`/`dirtyRev`; the private plain-local-path `getFlake`
+reference lacked Git revision metadata, while the ordinary `.#` selectors
+passed. Parent postguard0.733s/parity1 and absence of all four original PIDs
+were accepted. No Linux build, cancellation or VM occurred.
+
+Parent corrected only the private projection reference to
+`git+file:///registeredOSroot`; application, guards, constraints and cleanup
+remain unchanged. Fresh native utility `os_capability_git_projection_20261007`
+launched once for remaining stages4 actual projection,5 builder derivation
+closure and6 cache metadata. Its frozen SHA256
+`14d7779e3f27ee43ff44998e8ee9df828ae7ae7676528ae372a07b59d8c5139c`,
+driver `6b2f131880edce45b513b32d3d35ab24602f8a06ba125c8615ce79153f4d2ac0`
+are unread references only. Parent preflight0.754s/parity1/executed0 is separate
+from verification results. This second private batch failed1/23.349s, fresh
+projection1/21.028s: generated monitor JSON carried Nix string context and
+`fromJSON` refused it. Parent corrected only the private parser to apply
+`unsafeDiscardStringContext` before `fromJSON`; actual text, bytes, assertions,
+runtime and source stayed unchanged.
+
+Lead accepted the fresh remaining three stages PASS0/46.334s/parity1:
+projection39.051s, existing-builder derivation closure1.003s and anonymous cache
+metadata1.004s. Actual CI NFS and livepatch fixture kernel paths equal the
+catalog kernel and monitor image (`4h7gff...6.12.95/bzImage`), binding revision
+563bbb35, nfs-cancel, builtin ZFS, `livepatch_6_nfs_cancel` version6 and exact
+notes. The existing `ci-toplevel-kernel-6_12_95` derivation closure has3772 paths
+and contains kernel, base-kernel and livepatch derivations. Cache metadata shows
+all six kernel/dev, base/dev, module and notes outputs present; no build was
+requested. Parent guard0.733s/parity1 and absence of all six original PIDs were
+accepted. Public `os-capability-fixture-quick-result.json` owns this proof.
+The three original selector passes14.019/11.516/52.068s carry only for exact
+unchanged source; this is not one fresh six-stage run. Both private preparation
+failures remain historical. No VM result is inferred.
+
+Fresh SSH fetch found stagingeb26 unchanged. Parent staged exactly the two
+owning paths4+/0-, tree `195dbbbe8c9f2c5d4ce1485f24a124984fbccfc8`.
+Normal NEW commit utility `os_capability_fixture_commit_20261007` used frozen SHA256
+`9d613b7771c574fb344df761d551d1a871179c37ce75b124e2f037661b302554`,
+driver `23724bc1f2714cb59adfd10177b766e3e5769f269e91921486dea836f4a1095c`
+as unread references only. Its preflight0.718s/parity1/executed0 remains distinct
+from the subsequently accepted commit results.
+
+Lead accepted normal NEW `a7c9c7e5d85bba82fca27acff9c0db6e7a834e23`,
+tree `195dbbbe8c9f2c5d4ce1485f24a124984fbccfc8`, parent published e9:
+PASS0/171.391s/source-foreignparity1/committed1/waited1. Actual Nixfmt and
+precommit hooks passed. Its62-character subject produced a nonfatal TextWidth
+warning within80. The original is preserved in the owned
+`capability-message-predecessor` ref. Normal MESSAGE-ONLY unpublished amend
+`15aeb53bc4fb6fc1ca63a4f7e10b5da3a0f48a78` passed0/10.897s with the same tree
+and parent; all actual precommit and commit-message hooks passed without
+warnings. Source/index are clean and foreign64 files/17 directories unchanged.
+Parent postguard0.729s/parity1 and original-operation PID absence are bounded
+evidence, not universal reap proof. Two utility identity preflights were
+unstarted because absolute-command/CWD usage was omitted; these were explicitly
+corrected before their single operations and were not runtime failures.
+
+Fresh upstream stagingeb26 is unchanged. Public `os-capability-fixture-review`
+packet/inventory covers complete eb26..15aeb:4 commits/30 paths/2074 insertions/
+85 deletions, full SHA256
+`dd636c3046e84a73f1ad261c363c2c2a61f888a413ea1dd719892d98f6654b15`,
+unit `e9901c0c0e543848fb5e978f4516aa67c3a70e29708ae49700e205879fa3352c`.
+Parent independently checked all first15 activity blobs/full message equal8d05
+and all second11 disabled-generation blobs/full message equal800. There are no
+OS SQL, osup, persistent-format or wire migrations. Retained reviewer0 completed
+the whole eb26..15aeb HIGH/all-four review, turn
+`01a1184a-56aa-7100-8ac5-a2d1d0d3cfbe`. Lead accepted the FINAL COMPLETE report
+at exact `15aeb53bc4fb6fc1ca63a4f7e10b5da3a0f48a78`/
+tree `195dbbbe8c9f2c5d4ce1485f24a124984fbccfc8`: no Blocking, Important or
+Advisory findings, all four commits/30 paths and full/unit hashes above exact,
+consumed15+11 messages/blobs preserved, explicit no obsolete history and no OS
+migrations. Reviewer ran no verification. Public
+`os-capability-fixture-review/final-report.md` and the accepted summary retain
+this conclusion; original source reviews and VM evidence retain their historical
+scopes.
+
+Fresh Luna/low `os_capability_owning_vm_20261007` was assigned the once-only
+exact-head owning45 command after verified identity/head/tree/packet preflight.
+Parent preparation preflight0.718s/parity1/executed0 remains separate from the
+subsequent attempt below. Private packet reference
+`/tmp/os-capability-owning-vm-20261007.rg374lrd`, frozen SHA256
+`cb6e39a24c6b5534fd79a7a4cfe04c2c8af6fcf624adfa04b3ca87480129109e`,
+driver `a268097987d3f549e9f5ebe7c49c90da679519a95a6a9dfa8e4ebb97baaddca2`,
+review receipt `47da85e105458f8031d753677492851e70d4f2f9bd30c2bb164d29dfcfb16df3`.
+The existing runner uses one quoted brace selector, fresh exclusively owned
+packet/state, jobs1/no-destructive/stop-on-failure and unchanged45 examples.
+Whole-CI and broad-flake acceptance, source publication and any new consumer pin
+remain pending. Published e9 is not amended; no default or live approval follows.
+
+#### Bounded packaging-detector disposition
+
+Lead reports wrapper1/100.521s, child1/waited1/parity1, zero examples and null
+native markers. The driver used TERM only against its verified exact runner
+PID/PGID1495955 when its broad Linux-build regex matched
+`/nix/store/zcsqxx4g005slaj6b6qjsvlm9xzqfrhy-linux-6.12.95-modules.drv`.
+Parent postguard0.837s/parity1, original PID absence and PGID members0/signals0
+are bounded postrun evidence; they do not establish universal reap. No actual
+kernel compilation is established. Preserve this first attempt as a monitor
+false positive, with no scenario/runtime/cache-failure conclusion.
+
+The architect read only the specifically released private
+`/tmp/os-capability-owning-vm-20261007.rg374lrd/stopped-derivation.json`, SHA256
+`27561f370998671f315592fb61cb198ac8364435bd671967dd887f3af556507e`;
+other packet files/logs remain unread. Its version4 `derivations` entry and
+`structuredAttrs` bind the exact path above to ordinary `buildEnv` packaging:
+`allowSubstitutes=false`, `preferLocalBuild=true`, existing kernel output
+`/nix/store/4h7gffbbybydbdl9yb5n4sif5s0g7zwh-linux-6.12.95` and ZFS chosen
+outputs. `buildCommand` invokes the exact immutable Perl `builder.pl`, then
+`postBuild`. The architect read that public builder: it joins package trees
+with collision checks and symlinks. The recorded post-build script checks the
+single module version, regenerates module maps and invokes kmod `depmod`.
+There is no kernel compiler/configure/make command in this packaging derivation.
+Public `os/modules/nixos-modules.nix:49` imports the NixOS kernel-module owner;
+`os/modules/system/boot/stage-1.nix:11–17` consumes `config.system.modulesTree`.
+The parent first assumed top-level `env` and received KeyError; its corrected
+version4/structured-attrs projection is preparation history only.
+
+**Initial decision, retained as history:** allow only that full exact derivation path in the parent's frozen
+packaging allowlist, bound to the reviewed derivation evidence/hash. Missing or
+mismatched binding refuses the exception. Preserve the broad actual Linux
+derivation detector for every other path, including this package's input
+derivations; do not generalize by suffix/name or suppress another match on the
+same output line. Preserve verified-current-runner/PGID ownership and TERM-only
+cancellation. This permits ordinary packaging; it is not a local kernel
+compilation exception. No application, fixture, runtime, timeout, assertion,
+default or cache-builder change is needed.
+
+**Second attempt and complete expected-closure classification.** Lead reports
+the fresh `n38sdbkq` attempt ended1/85.040s/waited1/parity1, zero examples and
+null native markers. The exact assembly path above was allowed; the next match
+was `/nix/store/ni2wkny1w5q4r3yafvrjvkzyc5mnrpfv-linux-6.12.95-modules-shrunk.drv`.
+Parent postguard0.781s/parity1, recorded PID1501887 absent and PGIDmembers0/
+signals0 retain the same bounded scope, without universal reap. This second
+attempt is another monitor false positive, not a scenario, cache or runtime
+defect. Both original incomplete attempts remain evidence.
+
+The architect read only these additionally released metadata files beneath
+`/tmp/os-capability-owning-vm-module-guard-20261007.n38sdbkq`:
+
+- `stopped-shrunk-derivation.json`, SHA256
+  `37ea1074449e44d6aed5112af8ed59d4fa41e49343e775a01790e7a04540a4e6`.
+- `linux-derivation-closure.json`, SHA256
+  `4a100bd9cb97fd7fc1c918762e980d5dc3b7d3365fb8e613fe26c3c9d937f963`.
+- `linux-source-fetch-derivations.json`, SHA256
+  `e40638cbbc7532514e27e10ae2f84193567820e11a49ce62398e44227f760a29`.
+
+Parent's query of the already constructed CI fixture derivation closures took
+1.944s with no evaluation/build: NFS3817 paths and livepatch3787 paths contain
+the same seven Linux-named derivations. Their source drv identities are
+`/nix/store/5nmmvc4a1jqi844xbajbbfhgbypdp2lm-os-test-osctl-nfs-cancellation.json.drv`
+and `/nix/store/w624fcrls4p17m7ddcwlii1iigwi7cz0-os-test-kernel-livepatch-kernel-identity.json.drv`.
+This inventory is complete for those two captured closures, not a claim about
+arbitrary future compositions.
+
+The architect also read the two exact immutable scripts referenced by the new
+metadata. `/nix/store/si4096gvz57msi558j26vx5iarzmxnz1-modules-closure.sh`
+uses `modprobe --show-depends`, copies existing `.ko` files/firmware, applies
+`nuke-refs` and runs `depmod`; it consumes the existing module-assembly output
+and does not compile a kernel. Two archives use `builtin:fetchurl` with empty
+arguments and fixed flat SHA256 output hashes. The third invokes
+`/nix/store/vvlgjnnch92k53af32iwim3d7jdxai3y-builder.sh`: ordinary curl download
+with a fixed flat output hash, empty `postFetch`, no executable output and no
+compiler. Its two6.18.7 fetch variants have the same fixed output/hash but
+distinct derivation identities; neither may be collapsed into a name exemption.
+Archive version strings do not change the selected6.12.95 fixture kernel.
+
+**Current decision:** freeze exactly these five noncompiling paths against the
+reviewed metadata hashes and unchanged15aeb fixture composition. This replaces
+the initial singleton exception without widening the detector by naming pattern.
+
+| Exact derivation path | Classification |
+| --- | --- |
+| `/nix/store/zcsqxx4g005slaj6b6qjsvlm9xzqfrhy-linux-6.12.95-modules.drv` | Existing module-tree assembly; initial released metadata/builder proof above |
+| `/nix/store/ni2wkny1w5q4r3yafvrjvkzyc5mnrpfv-linux-6.12.95-modules-shrunk.drv` | Existing module/firmware closure packaging |
+| `/nix/store/0rjn4fs706rp2zf5xfyycf1pfqnkjmgg-linux-6.5.6.tar.xz.drv` | Fixed-hash source archive, `builtin:fetchurl` |
+| `/nix/store/8lfpv18kcxvb7ipxrbw10pahkg5iw61k-linux-6.18.7.tar.xz.drv` | Fixed-hash source archive, `builtin:fetchurl` |
+| `/nix/store/jbrx6vnrkhw25cfva734px1hmma0r2qg-linux-6.18.7.tar.xz.drv` | Fixed-hash source archive, exact curl builder/empty postFetch |
+
+Keep both actual kernel-compilation derivations under the unchanged broad
+detector: `/nix/store/khla989r998f7ibccrydp31cwrydwrb9-linux-6.12.95.drv`
+and `/nix/store/16x6lbdbxrywwmgmxrhi1c0cp459dpbg-linux-6.12.95.drv`.
+Every unforeseen Linux derivation also remains detected. Exception matching is
+full-path equality per detected path, with frozen metadata binding; missing or
+mismatched evidence refuses the exception. No suffix wildcard, generic builder
+exemption, whole-line suppression or transitive exemption of inputs/dependencies
+is permitted. The only exceptions are the five explicit rows, including where
+one listed packaging derivation consumes another listed output. Source-fetch
+exceptions authorize no kernel compilation. Verified-current-runner/PGID and
+TERM-only cancellation remain unchanged; all application, fixture, assertion,
+timeout, runtime, default and cache-builder bytes remain unchanged.
+
+Lead accepted this exact five-path monitor decision and launched fresh Luna
+`os_capability_owning_vm_classified_20261007` on the same15aeb head with unchanged
+45-example selection. Runner PID/PGID1506675 and both scenario selections were
+lead-reported; the earlier11/40 NFS observation was progress only. The completed
+failure and its limits are recorded below. Parent preflight0.757s/parity1/executed0
+remains preparation only.
+Unread packet reference
+`/tmp/os-capability-owning-vm-classified-20261007.o8d7p3bk`, frozen SHA256
+`3284528342b084717564b7ae28f8e33cd6d3e0f9c49fa81bd3e4669e1561b39a`,
+driver `ed768a7c0cc26be714ea85c00d96f8a989beb6156a529c47848ed2ddf0a51828`.
+No operation was performed by the architect. Full all-four source review retains
+its exact unchanged-head scope; it is not runtime clearance. This
+disposition supplies no physical/termination authority; retained-cluster and
+all existing holds remain.
+
+Source stays held. Unavailable cache still routes to its existing owner without
+assuming local compilation. API a933 source delivery is complete and still pins
+OS800; CI was unawaited at that checkpoint. October9 completed results are
+recorded above. Retained-cluster and all authority holds
+remain unchanged.
+
+#### Evidence and owning source
+
+The architect read public `os-e9-ci-kernel-diagnosis.json`; raw logs remain
+private/unread. Completed CI37656497281/job112929459959/attempt1 reports:
+
+- `osctl/nfs-cancellation`:141.47s, script112.19s; NFS4.0 `before(:context)`
+  observed `soft` while `mount_nfs` requires `hard`. Its existing guest `uname -a`
+  projection reports6.12.109.
+- `kernel/livepatch-kernel-identity`:65.57s, script22.32s; `before(:suite)`
+  cannot read `/etc/vpsadminos/livepatch-monitor.json`. Existing guest `uname -r`
+  and `uname -a` projections both report6.12.109.
+
+Parent established both scenario blobs and relevant runtime producers/workflow/
+OSVM equal actual upstream eb26. The expected driver/RSpec failure is excluded.
+CI runit127.89s, switch162.85s and activity64.46s passed; local runit10/0 passed
+646.634s. Those scopes do not clear whole CI or prove these two corrected fixtures.
+
+Public owners establish the selection mismatch:
+
+- `os/packages/linux/available-kernels.nix:4–23` sets stable/unstable defaults
+  to6.12.109. Its retained6.12.95 entry binds kernel revision
+  `563bbb35e8753e1bb34dad19ebeec8962ee3c1cd` and
+  `features.livepatchVariant = "nfs-cancel"`, with the catalog's matching ZFS.
+  `docs/os/livepatches/6.12.95.md` identifies that NFS/SUNRPC ABI and distinguishes
+  the old same-version kernel at a2384967.
+- `os/modules/config/kernel.nix:104–144` owns `boot.kernelVersion` and derives
+  the kernel, builtin-ZFS configuration and ZFS userspace from the catalog.
+  Existing default `boot.zfsBuiltin = true` remains. Package generation in
+  `os/packages/linux/packages.nix` retains the variant; `linux/default.nix`
+  enables the content-derived build ID for it.
+- `os/livepatches/available-patches.nix` selects cumulative patch version6 for
+  6.12.95, with the two `nfs-cancel` patch inputs. It selects no patch for
+  6.12.109. `os/modules/services/livepatches/default.nix:11–33,350–387` derives
+  `buildEnable` from both availability and enablement, then installs the monitor
+  JSON only when enabled. It binds `livepatch_6_nfs_cancel`, kernel notes and
+  the exact boot image. Enabling the service alone cannot supply a missing
+  catalog patch.
+- `tests/make-test.nix:97–123,201–232` builds each actual machine through its
+  supplied configuration and emits that system's kernel/initrd/toplevel. Both
+  fixtures currently omit a kernel selection and therefore inherit the default.
+
+#### Exact prospective manifest and invariants
+
+Only these two existing OS files:
+
+1. `tests/suite/osctl/nfs-cancellation.nix`: add
+   `boot.kernelVersion = "6.12.95";` in its existing `machine` configuration,
+   with a short comment identifying the required host-controlled NFS cancellation
+   kernel. Keep the server/exportfs settings and all test-script bytes unchanged.
+2. `tests/suite/kernel/livepatch-kernel-identity.nix`: add the same explicit
+   selection in its existing configuration function, with a short comment tying
+   it to the catalog's matching livepatch. Preserve service enablement and the
+   existing `lib.mkForce "sleep inf"` automatic-load suppression.
+
+Use the ordinary supported option assignment, without a custom kernel package,
+new selector helper or fallback. Do not import
+`tests/configs/vpsadminos/livepatch-6.12.95-boot-base.nix`: that separate owner
+deliberately reconstructs the old a2384967 ABI for legacy transition tests.
+The version spelling alone is not capability proof; the pinned catalog/package
+and actual constructed closure are part of acceptance.
+
+Preserve the NFS default-hard/no-soft/no-softerr checks without adding `hard`
+to mount options. Keep all four protocol versions3/4.0/4.1/4.2 and all ten cases
+per version: outage/data hashes, shared/blocked mounts, graceful fallback,
+remote-lock isolation, processless child namespace, terminal admission and
+descendants, daemon restart, unexpected init exit and dirty-PID1 exit. Preserve
+all cleanup/error paths, existing delays/timeouts and payload assertions.
+Keep all five livepatch examples, image-plus-notes equality, wrong-notes and
+wrong-image refusal without disturbing protection, load/unload/reload/release
+identity and kernel-warning checks. No assertion skipping or broader diagnostics.
+
+Default kernel6.12.109, kernel sources/config, livepatch catalog/runtime, osctld,
+OSVM, runner, workflow/action refs, inputs/lock and other fixtures remain untouched.
+No lasting guide change is required: the existing kernel/livepatch owners already
+document the variant; fixture comments explain the local dependency.
+
+#### Existing builder and verification selection
+
+`flake.nix:25–30,144–152,313–340,411–432` exports
+`packages.x86_64-linux.ci-toplevel-kernel-6_12_95` from the same catalog. Its
+cache toplevel retains the actual kernel `.dev` and builtin-configuration `.dev`.
+The QEMU configuration uses the same default builtin-ZFS kernel; livepatch
+enablement defaults true, and its installed etc/tool references retain the
+matching module and notes. `.github/workflows/kernels.yml` enumerates all catalog
+versions, builds this output on the designated runner and copies the closure
+to the existing cache. One existing version output covers both chosen fixture
+kernel/livepatch dependencies. No missing output or additional builder path is
+identified by source. Ordinary `ci.yml` builds default `ci-toplevel`; its success
+alone does not establish the6.12.95 cache contents.
+
+Lead accepted the actual fixture/catalog equality, existing-builder derivation
+closure and six cache metadata entries as recorded above; the architect did not
+execute those checks. A missing substitution routes to the existing
+versioned builder under lead authority; do not silently compile a kernel locally
+or expand the workflow. No new kernel output is authorized by this design.
+
+Accepted static checks cover the two Nix files and exact unchanged test-script
+bodies. The first lead-owned construction/cache batch passed these three
+existing output selections in the ordinary declared environment, without
+builds/VMs. The separately completed projection/closure/cache stages retain
+their recorded scope above:
+
+```sh
+nix eval --raw '.#tests.x86_64-linux."osctl/nfs-cancellation".drvPath'
+nix eval --raw '.#tests.x86_64-linux."kernel/livepatch-kernel-identity".drvPath'
+nix eval --raw .#packages.x86_64-linux.ci-toplevel-kernel-6_12_95.drvPath
+```
+
+Lead accepted the bounded actual configuration/JSON projection binding both
+fixture kernel paths to the catalog6.12.95 package/variant, matching builtin-ZFS
+and livepatch module/notes/image, with every script/body preserved. Construction is
+not runtime acceptance. No full-flake pass is inferred; the pre-existing
+`overlays.all` baseline refusal remains separate.
+
+Following the accepted normal owning commit and complete review, the existing
+selection remains these two named scenarios on fresh private disposable state.
+Both earlier attempts stopped before examples; the completed classified run used
+the accepted bounded monitor disposition above. The completed exact363d readiness
+run retained this selection after the fixture disposition below:
+
+```sh
+./test-runner.sh test --test-config tests/test-configs/ci.nix --state-dir "$OWNED_STATE" --fresh --jobs 1 --no-destructive --stop-on-failure '{osctl/nfs-cancellation,kernel/livepatch-kernel-identity}'
+```
+
+Public `test-runner/lib/test-runner/cli/command.rb:23–24,102–115` selects only
+`args[0]`; `test-runner/lib/test-runner/test_script.rb:40–46` uses
+`File.fnmatch?(pattern, path, File::FNM_EXTGLOB)` and gives singleton scripts
+their test path. Pass the quoted brace glob as one literal final argument to
+select exactly these two scenarios. The earlier prepared two-positional-name
+argv was unused and would select only NFS; it is superseded here without a
+runner/source change or execution. Existing CI config, fresh owned state,
+jobs1, no-destructive and stop-on-failure settings are unchanged.
+
+The unchanged source inventory is40 NFS examples plus5 livepatch examples;
+none completed in either earlier attempt. The classified15aeb run passed39/40
+NFS examples and failed the last; livepatch5 remained unrun. The later exact363d
+run observed all45, with NFS39/40 and livepatch5/5 passed; its sole failure was
+the initial NFS4.1 contention precondition, with all four PID1 cases passed.
+No retry is released. Acceptance requires actual native results and
+existing assertions, preserving failures/state under normal runner ownership.
+No blind CI retry, timeout extension or extra scenario substitutes for that proof.
+Unexpected local Linux compilation stops for the documented cache investigation.
+
+#### Delivery and recovery boundary
+
+This is a new fixture-only source correction committed after published e9b3;
+ordinary feature publication follows its owning verification/review. No default
+integration, Admin pin update (still consumed800), package or running-system
+update is implied. Mixed-version runtime and persisted formats are unchanged;
+rolling fleet coordination is unnecessary. Reverting the fixtures restores
+their changing-default dependency and can reproduce these setup failures; it
+does not roll back a live kernel or repair interrupted storage. Neither a future
+green result nor this source selection establishes general6.12.109 capability,
+physical containment/reap or G1b/G2 authority. The stopped cluster, retained
+alias/NAS/destination, scheduler/objects and Contract2 termination/invocation
+holds remain. Session stays active/open. Construction/cache proof, reviewed
+predecessor15aeb and complete branch review are retained. Both earlier owning45
+attempts stopped on packaging monitor false positives. The classified exact-head
+run failed with NFS39/40 and livepatch unrun. The accepted correction/fold and
+directstep9 were followed by the exact363d owning45 run, FAILED with44/45 passed.
+Read-only diagnosis of the initial contention failure is complete. The diagnostic
+is committed6157 after scoped quick checks; complete step10 review has no findings.
+Lead accepted source review, same45 owning PASS and normal feature publication
+after SSH freshness/lease/readback, as detailed in the diagnostic checkpoint.
+Acceptance covers those45 cases; the failure-only guest observer was not entered.
+No historical cause or broader runtime/physical capability is established.
+Operational actions remain held.
+
+#### PID1 fixture readiness reset before start, 2026-10-08
+
+**PID1 CORRECTION/FOLD/STEP9 ACCEPTED; exact363d owning45 FAILED; later6157 review/owning45/feature delivery COMPLETE.** Manifest is one
+existing OS path: `tests/suite/osctl/nfs-cancellation.nix`, limited to setup of
+the existing “finishes PID1 exit with its own dirty NFS file descriptor” example.
+No C helper, wrapper, runtime, kernel, input, default, runner or guide companion
+is needed. This source-supported fixture correction closes a stale-readiness
+window; the observed failure's cause remains unestablished.
+
+**Current lead-accepted checkpoint.** Read-only diagnosis completed before
+authoring; original FIFO cause remains UNKNOWN. Source freeze SHA256
+`4d30c6d7dd431f58da9896d70c508840975463aec5d90f8c571dc1761a566d5c`
+contains only the11-line stopped pre-start exact ready/written/control reset
+and absence checks. Full reversal restores priorf3ab45b7; wrapper/C, other nine
+bodies, livepatch, inputs and lock are unchanged. Lead inspected the complete
+delta and accepted member manifest9ad1c46a plus all2238 outside paths,
+foreign64 files/17 directories, Admin3251/cache/index parity. Static checks
+passed. Registered NFS JSON drvPath construction passed0/14.391s/parity1,
+child12.161s/waited1, with no examples.
+
+Normal source-owner amend917a3e86 passed0/11.877s, but actual child output had
+TextWidth WARNING for three lines longer than72/max74. The watcher's wrapper-only
+no-warning claim was rejected. Lead's normal MESSAGE-ONLY amend
+`363d571815dcc58e96a26ee74a4cfa2ebafbda66` passed0/12.040s,
+child9.771s/waited1/parity1, tree
+`3a4162499ef0122d38b3593e48ad5bdbab261a76`, parent e9. All actual hooks passed
+without warnings. Failed15aeb and917 predecessor refs are retained.
+
+Public `os-capability-readiness-remediation/` contains `complete.diff`,
+`unit.diff`, `correction.diff`, `inventory.json`, `commits.txt` and
+`disposition.json`. Complete inventory is4 commits/30 paths/2085 insertions/
+85 deletions, full SHA256
+`e5acf7e9361a720a27c086af34ab6f7656b7079987c720027c54df888653d397`,
+unit `79151a8eb2be2076812e590fb60860cb5ccfc291ea34ca5a93bf0eef296a2361`,
+correction `00107a8905e892ff9b896492d8128ee706dbe1f41e12cd1f80938f11654abce3`.
+Primary completed independent eb26..15aeb all-four-HIGH/no-findings review remains
+the original report. Lead accepted narrow directstep9 without an independent
+rerun or new design; first three units are exact and no OS migrations were added.
+
+Fresh exact363d Luna `os_capability_readiness_owning_vm_20261008` completed
+FAILED1/2764.189s/waited1/parity1, all45 examples observed/44 passed/1 failed.
+Parent0.926s/parity1/executed0 remains preparation-only evidence. Unread private
+reference `/tmp/os-capability-readiness-owning-vm-20261008.1ogpl_kb`, checks SHA256
+`f16cb845ef824ce87fd1f68ef43ae781b2a4424503b9875b93cbae854e0b67d2`,
+frozen `556f653366ef9f785171e85f268626bbbfc1d763b4618079c1d3ecce1949f578`,
+receipt `03a828e78aa045fc38bb69b1d6df880b5ed9f361db36f0b3a6ae9415e0ab97dc`.
+Single-brace40 NFS+5 livepatch/jobs1/no-destructive/stop-on-failure/timeouts
+remain unchanged. The same five exact immutable metadata-bound noncompiling
+paths are rebound because guest machine configuration/kernel/inputs/wrapper/C
+are unchanged. All actual/unknown Linux derivations and dependencies remain
+detected except those exact five entries; no kernel-build exception follows.
+Remote feature remains e9/stagingeb26. Admina933 source delivery/OS800 pin,
+publication hold and all retained-cluster/authority limits remain unchanged.
+
+**Completed exact363d owning result, lead-attributed.** The architect read the
+public [os-capability-readiness-vm-result.json](os-capability-readiness-vm-result.json)
+and current `state.md` summary, without private artifacts or logs. NFS39/40 and
+livepatch5/5 passed; native markers are `unexpected_failure` and
+`expected_success`, respectively. All four PID1 dirty-descriptor cases passed
+24.96/22.56/23.36/25.41s. Those passes do not establish the original15aeb FIFO
+timeout cause.
+
+The parent independently recovered the sole failure from the native summary:
+NFS4.1 remote-lock example25 failed109.63s at source250. The initial
+`osctl ct exec nfs1 flock -n /mnt/nfs/cancel-lock true` unexpectedly returned0
+with empty output, before waiter launch, isolation or cancellation/stop.
+`OsVm::CommandSucceeded` is attributed through owning `Shell#fails`; the native
+record serializes the primary message, not that class separately. RuntimeError
+at test_evaluator.rb:726 is the later aggregate. The watcher's earlier
+primary-unavailable projection was incomplete and is corrected by this evidence.
+The actual missing-contention cause remains UNKNOWN; no cancellation defect is
+inferred and this reconciliation proposes no source correction.
+
+Parent postguard0.885s proves all2239 OS/3251 Admin entries byte/stat equal,
+empty/raw index parity, foreign64 files/17 directories and cache exact.
+WrapperPID/PGID1620881 and actual runnerPID/PGID1620962 are absent/members0;
+stat failures0/signals0. Full assigned-log Linux build tokens0. Initial symlink
+representation used target text instead of baseline target SHA and refused
+before writes; the corrected exact representation owns the proof. Bounded
+absence does not establish universal descendant reap.
+
+Implementer0 read-only turn01a118e2-dc8d-76c3-8677-76ffa41609ac is COMPLETE.
+Lead accepted its bounded report; only the completed result/NFS runner/marker
+were released to that member. Its findings are integrated in the diagnostic
+brief below. That later diagnostic is now committed6157 with quick checks
+accepted and complete step10 review without findings. Lead accepted exact6157
+same45 PASS and feature publication; no cause correction or guest-observer
+execution is claimed. Remote feature is6157; default stagingeb26, consumed800
+and Admina933/OS800 pin remain unchanged. Primary
+15aeb all-four-HIGH review and lead narrow step9 retain their exact scopes;
+original failures and all stopped-cluster/authority holds persist.
+
+**Prior exact15aeb completed evidence.** The architect read only public
+`os-capability-fixture-classified-vm-result.json`, not the private packet/logs.
+Exact15aeb/tree195dbbbe ended1/3322.676s, child1/waited1/parity1. Native NFS
+was `unexpected_failure`:39 successes/1 failure/0 pending/0 skipped. The final
+NFS4.2 dirty-PID1 example, ordinal40, failed after969.6s at source line444,
+`printf d > /tank/ct/nfs1/private/root/nfs-init-control`, with empty output.
+Script elapsed3251.48s; livepatch's marker is null and its five examples were
+unrun under stop-on-failure. Lead reports earlier PID1 ordinals10/20/30 passed
+in about24s each. Keep all39 passes scoped to this exact composition; neither
+those passes nor the source review clear the remaining scenario.
+
+The complete assigned-log token projection contained only the metadata-bound
+modules-shrunk derivation, with no other Linux-build token; no actual local
+Linux compilation was observed. Parent postguard0.296s established2239 tracked
+entries (2234 regular/5 symlinks), exact raw index bytes/cached-empty and
+foreign64 files/17 directories. Recorded PID1506675 was absent and current
+PGID members0/signals0, without universal reap. The earlier postguard assumption
+about a stage-entry digest refused before writes; final raw-index equality is
+authoritative. Both zero-example monitor false positives remain separate.
+Implementer0's bounded read-only diagnosis01a11897 completed before authoring;
+it did not establish the original cause. The later released work is recorded
+separately above.
+
+**Source decision and placement.** The fixture reuses `nfs1`'s rootfs across
+all four protocol groups. Lead observed group order4.1,3,4.0,4.2. Public source
+lines15–27 removes ready/written/control only inside the newly started wrapper,
+after its network setup. Lines426–445 stop/mount the container, reuse that
+rootfs, start the next init and accept `test -e` of a fixed ready path before
+isolating NFS. Thus a prior group's marker can satisfy the host before the new
+wrapper removes it. Public `dirty-init.c:45–59` creates/opens the FIFO O_RDWR,
+opens the NFS file, then publishes ready; it publishes written only after the
+commanded write. Preserve that ordering and its assertions.
+
+Add one small initialization block after existing stop/mount/rootfs resolution
+and before pushing/starting the current init:
+
+1. Read the existing public `osctl ct show -H -o state nfs1` and require exactly
+   `stopped` using the fixture's ordinary `machine.succeeds`/state assertion.
+   `Commands::Container::Stop#execute` can log an exit-promise timeout before
+   returning, so do not infer this precondition from command success alone.
+   This fixture state assertion is not a descendant-reap or physical proof.
+2. Remove only `#{rootfs}/root/nfs-init-ready`,
+   `#{rootfs}/root/nfs-init-written` and `#{rootfs}/root/nfs-init-control`
+   through ordinary host `machine.succeeds`, with no wildcard, recursive
+   removal, external path or running-container cleanup. Require absence of
+   those exact three paths before proceeding. A failed stop/state/removal/
+   absence check must fail the example before start or isolation.
+3. Retain the current wrapper's defensive cleanup and all remaining setup,
+   start, ready wait, isolation, `d`/written/`e` sequence, stopped-state check,
+   other-container proof, ensure cleanup, restart and remount unchanged.
+   Add only a short comment explaining reuse of the marker paths across groups.
+
+A fresh per-incarnation name/token would require changing the wrapper/C helper
+interface and its consumers. The serial example already has a stopped setup
+window, so exact pre-start reset is the smaller coherent owner correction.
+With prior ready/written absent, their existing waits can only observe markers
+created after this setup by the current helper. No new sleep, timeout extension,
+readiness shortcut, FIFO-write bypass or extra retry is selected.
+
+Source establishes the race window, not which ordering happened in this failed
+run. The public result supplies neither the timed-out FIFO's inode/current
+reader binding nor a current-init cleanup/open/ready timeline. Those missing
+facts prevent retrospective cause attribution; they do not block correcting
+the independently demonstrated fixture hazard. No new live/private projection
+is requested by this brief.
+
+**Invariants, verification and delivery.** Preserve all40 NFS cases, protocol
+values/group-order policy, every cancellation/data/state assertion and timeout,
+the ordinary stop owner, kernel6.12.95 selection, payloads, isolation and cleanup
+semantics. Other nine example bodies and the wrapper/C helper must remain byte
+exact; all five livepatch cases and source/runtime/default/input bytes remain
+unchanged. The correction changes only setup in the shared tenth example.
+Reversing the added block/comment must restore the exact15aeb fixture blob;
+record full outside-path and existing fixture-kernel-selection parity.
+
+After lead release, member static scope is Nix parse/format, extracted Ruby
+syntax and scoped diff/reversal. Parent's quick selection is the existing
+`nix eval --raw '.#tests.x86_64-linux."osctl/nfs-cancellation".drvPath'` to
+construct the actual changed scenario. No cache/kernel recompilation or broad
+flake rerun is needed merely for this setup change; earlier construction/cache
+and baseline-failure evidence retain their original scope.
+
+Once frozen and construction-checked, lead may normally fold the narrow fix
+into the unpublished owning unit, preserving15aeb and the original failure.
+Lead inspects the exact correction and applies narrow mandatory-review step9
+before preparing a fresh exact-head owning packet. If the patch stays within
+this fixture setup, it fits the retained primary review's narrow-fix path;
+there is no automatic all-lane rerun or physical gate. Lead then owns any
+separately released fresh Luna run of the same quoted brace selector above,
+all40 NFS cases across four groups plus the five livepatch cases (unrun at that
+brief's preparation, now5/5 passed in the completed363d run),
+unchanged jobs1/no-destructive/stop-on-failure and existing timeouts. Repeated
+group use exercises the reset through the owning scenario; a last-case-only
+rerun would omit that sequence. Actual results must establish acceptance.
+
+The original design-only assignment released no application or operations work;
+subsequent lead release, accepted fold/checks and completed failed owning run are
+recorded above. Bounded read-only diagnosis is complete; the separate diagnostic
+brief was subsequently accepted, authored, checked and folded into6157, as
+recorded below. Complete step10 review has no findings; the separately released
+exact6157 same45 owning run passed and feature publication is complete, with
+failure-only guest diagnostics unexecuted. Source rollback restores the old fixture
+setup; it changes no live format, schema or mixed-version contract. Retained
+cluster STOPPED/session open and all Contract2/termination/physical/G2/alias/
+default/package/live holds remain. No retained storage cleanup is authorized.
+
+#### Remote-lock precondition failure diagnostic: DESIGN ONLY, 2026-10-08
+
+**Subsequent lead acceptance/release:** lead read this complete brief and
+accepted its technical boundary. Exact ONE path AUTHORING/STATIC ONLY was
+released to ready retained implementer0, saved Sol/xhigh/workspace_write,
+turn `01a118f5-be71-7c22-a98b-8033743ffd92`, on clean363d/tree3a416. The initial
+design-only recommendation below remains its rationale; no causal correction
+is claimed. Authoring/static work, parent quick verification and normal owning
+fold and complete review are now finished as recorded next. The separately
+released same45 owning VM passed; feature publication/readback/comparison is complete.
+No guest diagnostics or owning examples were executed by the quick checks.
+
+**Current lead-accepted checkpoint:6157 step10 review, owning45 and feature delivery COMPLETE.**
+Lead accepted final one-path source SHA256
+`29900ce3ea98e56068d06eda3f1a5605df5cbae21fa42e4d36cb437eb4824c61`,
+member manifest
+`6472cf1470dbb5647c26d4829c67795362ca8633799a65b7ca0e543cc57db3e8`.
+The exact three-site correction retains the SAME verified first owner tuple
+through child-list and each direct-child observation. It widens no output,
+call or parser and adopts no new incarnation. Priorb145 source, its initial
+337-line authoring report and original363d source4d30c6d7 remain historical.
+Member Nix parse/nixfmt/Ruby/Bash/diff and full reversal passed; member runtime0.
+
+Parent's actual CI `evaluate-tests.nix` testJson construction and instantiation
+passed, with generated Ruby SHA256
+`0af57e41d74758b974a4c6c795b6bd5d25f962c45a171eeb585bfa003a13eebd`
+and drv `/nix/store/jhb2asyap07af9ry862cdvdkz2xnq3jj-os-test-osctl-nfs-cancellation.json.drv`.
+All ten recording-Machine error-flow cases passed on that actual generated Ruby.
+They exercise primary identity/backtrace preservation, bounded capture stopping,
+reporter/release failures, no-capture paths and SystemExit propagation. They
+execute NO guest commands, Bash projections or owning examples. The public
+[quick result](os-remote-lock-diagnostic-quick-result.json) is the attribution
+source; its pre-commit source_head363d and pending-commit label retain that timing.
+
+Parent outside2238 OS/3251 Admin byte/stat/raw-index/foreign/cache parity passed
+before staging. Private projection preparation first attempted an uninstantiated
+drv, then used the exact v4 basename-key/config-name schema and literal-symlink
+baseline. Those corrected preparation assumptions had zero source effects.
+No private packet or logs were read for this reconciliation.
+
+Normal unpublished amend passed0/12.330s, child waited1/source-foreign-cache
+parity1, producing `6157bdd41ca864ae22532a09e4d7e3cc2e969955`, tree
+`69eedc8252dbe354121cda52e54eee43f81dab6c`, parent e9. All actual Nixfmt and
+commit-message hooks passed. The nonfatal Nix dirty-tree warning is separate;
+wrapper logs were absent and provide no hook claim. Parent PID1740929 absence,
+PGID members0/stat-permission failures0/signals0 is bounded evidence, not
+universal reap. Complete branch is4 commits/30 paths/2427 insertions/87 deletions;
+the current owning unit is357 insertions/2 deletions in two fixture paths.
+First three unit IDs are exact, as are the first15 and second11 consumed
+messages/blobs. No OS migrations; Admina933/four additive migrations/OS800 pin
+remain unchanged.
+
+Lead selected mandatory-review **step10**, because the newly handwritten
+privileged process observer, identity fences, privacy, error propagation and
+maintenance surface affect all four HIGH lanes and were absent from the
+original15aeb review. Retained reviewer0 Sol/xhigh/read_only turn
+`01a11921-4c4f-7153-aa5d-071b4c94ff24` is COMPLETE on entire eb26..6157/tree69eedc,
+all four HIGH lanes, no Blocking/Important/Advisory. Reviewer executions0,
+public committed source only; no private reads. Lead accepted all30 blob IDs/
+SHA256s/sizes and complete4/30/2427+/87-, with full/unit/diagnostic diff equality:
+
+- Complete `70719c5299490c1082a56155d50167cd7d12c5b1973eda343b3697b079787329`.
+- Unit `a05382cc9e2c7cab930e569ab59d627710f77ce6c3bfd36034ec8b99887a4f64`.
+- Diagnostic `1e385d2c340100e921ce7551b40ad640c10213bc28ea27909cdbbbf088190639`.
+
+Consumed15 activity and11 disabled full blobs/messages match; first three units
+remain unchanged. History and current357+/2- two-fixture unit are coherent,
+without obsolete approaches. No OS SQL/schema/osup/persistent/activity-wire
+migrations. Exact published consumer is Admin
+`a933f73c968444c3de2e07c0ab0308056722933b`, still pinned toOS800; its four additive
+migrations are separate and unchanged. Public
+[final report](os-remote-lock-diagnostic-review/final-report.md) records findings/
+conclusions; `disposition.json` and original request/inventories remain preserved.
+Original15aeb primary review and narrow PID1 step9 still apply to their exact
+scopes; the new observer's affected lanes are now complete under step10.
+No source edit or independent review rerun followed this result.
+
+Lead accepted source-only review and separately released the same45 owning verification.
+Exact6157/tree69eedc, NFS29900ce3/livepatch1d5145 and clean index are unchanged.
+Luna/low `/root/os_remote_lock_diagnostic_vm_20261008` completed the accepted
+PASS0/2974.220s/waited1/parity1. Historical launch reference, still unread:
+`/tmp/os-remote-lock-diagnostic-owning-vm-20261008.rpfbxhdf`, driver SHA256
+`f16cb845ef824ce87fd1f68ef43ae781b2a4424503b9875b93cbae854e0b67d2`,
+frozen `c1e738b10fb032b063fe674c4cef6387e5b07316465e2b6bc4ebe6e91c7e7359`,
+review `1da27364216ebeab851fcd4e0c4f7dd128ad6c0236e42e4ed2a2cac9946c9cd0`.
+Parent0.859s command batch included zero-operation preflight/parity1/executed0;
+separate all2239 OS/3251 Admin byte/stat/raw-index/foreign/cache prelaunch proof
+6f86bdcd passed. These are preparation evidence, not VM execution results.
+
+The exact same40 NFS+5 livepatch use ONE quoted brace selector, jobs1, fresh owned
+state, no-destructive and stop-on-failure. Five exact metadata-bound noncompiling
+drv allowances retain detection of every actual/unforeseen Linux derivation and
+the same verified-current-runner/PGID TERM-only policy; no KILL or kernel-build
+exception. The public [owning status](os-remote-lock-diagnostic-owning-status.json)
+records all45 succeeded,0 failed/pending/skipped: NFS40/40 and livepatch5/5,
+both native `expected_success`, script2530.490/270.900s. All four remote-lock and
+all four PID1 cases passed. Diagnostic labels0 confirms that failure-only guest
+Bash projections remain UNRUN. This result provides no actual proc/mount/FD
+parser proof or original-cause attribution.
+
+Parent's completed postguard preserves all2239 OS/3251 Admin source entries,
+byte/stat/raw-index/foreign64 files/17 directories/cache equality. Recorded
+PID1750343 is absent, PGID members0/stat-permission failures0/signals0; no Linux
+compilation was observed. This is bounded absence, not universal descendant reap.
+Parent's first native projection refused its format and was corrected without
+rerun. Earlier watcher root-log absence reports addressed a non-owning path;
+the actual native owners and accepted public result are authoritative.
+
+**Feature publication accepted.** Public
+[publication result](os-remote-lock-diagnostic-publication-result.json) records
+PASS0/18.090s/waited1/parity1: normal Nix-develop exact-lease push10.638s,
+SSH readback1.309s and registered comparison0.702s. Lead's preceding SSH
+freshness0/2.049s confirmed base/stagingeb26, old featuree9 and consumed800.
+Exact readback is feature6157/stagingeb26/consumed800; registered comparison
+baseeb26/head6157 is complete. Source/runtime are unchanged. Actual child logs
+record Bundler4.0.22 installed,6 dependencies/42 gems and the branch update;
+no warning or extra hook result was logged, so no additional hook list is claimed.
+The previous fresh watcher invoked a superseded CLI and refused before any
+driver/push. Parent verified the current profile CLI with parity1/executed0,
+then a different fresh Luna watcher completed the unchanged operation once.
+
+Parent publication postguard preserves all sources/indices/foreign/cache;
+recorded stagePIDs2117821/2118286/2118461 are absent, their PGID member counts0,
+stat-permission failures0/signals0. This remains bounded absence. One-shot CI
+publication snapshot37744525878 was queued/unawaited; all15 returned older-head
+runs were completed, with no cancellation requests. The October9 public
+[CI result](ci-results-20261009.json) now records this exact6157 run completed
+successfully: all four build/cache, AMD/Intel livepatch lifecycle and test-suite
+jobs passed. Local45/45 remains separate; guest failure-only observation was not
+entered and both historical causes remain UNKNOWN. The local broad-flake
+baseline remains blocked. Feature source delivery is COMPLETE; default
+integration awaits explicit approval. Admina933/OS800 and its four additive
+migrations remain unchanged. No downstream pin/package/live, physical/reap,
+Contract2 invocation/termination/release, G2 or alias authority follows.
+Original44/45 failure/101.58s cause and earlier FIFO cause remain UNKNOWN;
+all previous evidence, monitor/projection history and authority limits persist.
+
+**Original design decision: no behavior correction was justified.** The accepted
+fixture-only diagnostic unit's manifest is ONLY
+`tests/suite/osctl/nfs-cancellation.nix`, authored from363d/tree3a416. Limit the
+change to a local diagnostic method and the existing remote-lock example's
+initial contention call/error preservation. Do not change its holder launch,
+readiness command, lock flags, assertions, waiter, isolation, cancellation,
+data checks, restart/remount or timeouts. The PID1 reset, other nine example
+bodies, livepatch fixture, kernel/default/input/OSVM/runtime stay exact.
+
+**Accepted evidence and irretrievable history.** Public
+`os-capability-readiness-vm-result.json` and lead's accepted implementer report
+establish holder outer launch0/2.81s, held poll0/2.65s, initial nfs1 probe0/
+101.58s, then outer ensure release0/2.58s. The probe failed the expectation
+before waiter/isolation/stop/postcancel. A full-command duration cannot identify
+a blocked syscall, lease expiry, network failure or kernel cause. Current363d
+has44/45 passes, including the other three remote-lock cases, all four PID1
+cases and livepatch5/5; these do not establish either failure's cause.
+
+Public source239–250 invokes removal of held/control before launch, but setup uses
+semicolon-separated removal, mkfifo and background launch. Outer status0 does
+not record each internal status or the later child outcome. The flock-owned
+child touches held, then opens/reads the FIFO. Held is an acquisition-event
+marker, not a current holder/reader/lock receipt. This is not evidence of a
+recurrence of the PID1 stale-ready issue. Intended export/path and hard-mount
+assertions do not establish the actual shared lock domain. The missing facts
+are holder/reader/FIFO state at the probe, mounted file/domain bindings and the
+underlying probe child's outcome/blocking location. Later reused logs cannot
+reconstruct them. No further completed-log projection is requested.
+
+Implementer0 inspected the eight owning exec/error/result paths and reports
+the remote-lock block/setup/helpers equal15aeb/e9/eb26; only the unrelated
+11-line PID1 reset is new. Private member packet and its manifest914ad19c/
+diagnosis6c887bc2 are references only and were not read by the architect.
+
+**Smallest useful capture.** Keep the original
+`machine.fails("osctl ct exec nfs1 flock -n /mnt/nfs/cancel-lock true")`
+unchanged. Rescue only its `OsVm::CommandSucceeded`, collect once before the
+existing outer release ensure, then re-raise the SAME exception with its
+original backtrace. Do not probe again, attempt another flock, open/read/write
+the control FIFO, touch markers, inspect file contents or change any resource.
+No capture runs on successful contention or in later cancellation phases.
+This is an observation after failure, not a time machine or acquisition receipt.
+
+Use ordinary `machine.execute(..., timeout: 15)` with a small fixed list of
+read-only guest commands, as the existing `stop_nfs_client` diagnostic does.
+At most three calls (identity/local proc; mounted file observations; matching
+current lock/descriptor observations), no polling/retries/background work.
+Stop capture after a transport/timeout/kernel exception; retain unavailable
+labels for remaining fields and proceed through the unchanged ensure. Bounds
+apply only to diagnostic calls after the assertion has failed; no existing
+assertion/command timeout is extended. Do not signal, unlock or terminate any
+holder, reader or workload.
+
+The projection is confined to fixed fixture nfs1/nfs2 and
+`/mnt/nfs/cancel-lock`, nfs2 held/control and host backing
+`/srv/nfs-cancellation/cancel-lock`. Use these evidence groups:
+
+| Observation | Exact scope and interpretation |
+| --- | --- |
+| Phase and identity | Fixed `initial_remote_contention` label, protocol from the existing four-value loop, original exception class/status0; public `osctl ct show` state/init PID for both containers. Accept only positive integer init PIDs; bracket proc reads with init PID/start-time and namespace identifiers. Changed/missing identity marks that block unavailable/changed. |
+| Readiness and FIFO | Metadata/type only for the exact held/control paths through the current nfs2 root. Distinguish regular held marker, FIFO, other type and unavailable; never open the FIFO. No setup exit statuses or acquisition-incarnation claim can be recovered from these current observations. |
+| Mounted file/domain | Only each init's mountinfo entry for exact `/mnt/nfs`: numeric mount ID/device, NFS/NFS4 type, expected source/root match, selected `vers`, `proto`, `hard/soft/softerr` and `local_lock` options. Read each fixed lockfile's type/device/inode and the host backing file tuple separately. Device/inode values are scoped to their mount view; cross-client equality/inequality alone proves neither shared nor different server lock identity. |
+| Current lock/reader candidates | Project only `/proc/locks` rows matching the successfully observed file tuple within that same proc/mount view; classify granted versus blocked, POSIX/FLOCK, read/write, numeric PID and range. For matching owners, project PID/start-time/PPID/state and only descriptors matching the exact lock/control paths, with numeric fdinfo inode/mount/lock fields. A directly related child may be inspected only with matching PPID and stable start-time; expose syscall number/wchan only, no syscall arguments, environment or command line. A shell blocked opening a FIFO may have no installed FIFO FD yet, so no matching FD is not proof of no reader. No scan by similar command name or adoption of an unrelated PID. |
+
+These are sequential observations, never an atomic lease or lifetime proof.
+In particular, a current matching lock row can corroborate a current owner;
+no row cannot establish that acquisition never happened or that a holder was
+lost during the101.58s interval. If no matching owner/child is identifiable,
+record unknown rather than widening to whole-machine process inspection.
+No success-path PID journal or new incarnation protocol is justified for this
+first diagnostic. Original internal setup statuses and original syscall history
+remain unavailable. If this bounded evidence is insufficient after an actual
+failure, a further source decision belongs to lead, not an automatic retry.
+
+**Tool and output ownership.** `os/modules/config/system-path.nix` installs
+host bash/coreutils/gawk/grep/util-linux; the with-tank fixture does not replace
+that list. Use host tools against exact `/proc/<init>/root` and proc views,
+not assumed Alpine `lslocks`, Python, Ruby, procps or distribution-specific
+column support. Existing fixture lines55–68 create Alpine containers and install
+`nfs-utils`, `iproute2`, `util-linux` through ordinary `container_apk`; that does
+not establish the exact selected flock executable/version from this failed run.
+For prospectively identified owner/direct-child PIDs, hash only their current
+`/proc/<pid>/exe` through the same proc view, bracketed by the recorded start-time
+checks. Emit numeric process identity and binary SHA256, not arbitrary executable
+paths or command lines. These identify only the observed executable; a shell
+binary is not proof of its parent's flock version. An exited/unidentified flock
+executable stays unavailable. Do not reconstruct a version from the Alpine
+package name, run an extra flock invocation, install packages or switch
+executables. No probe uses optional `findmnt`/`lslocks` output formats or a
+second parser of lock policy.
+
+Use existing shell/native logs and one fixture-local fixed-label summary; no new
+artifact/CLI/framework schema. Each block returns an integer status and bounded
+typed fields (numeric identities, allowlisted enums/booleans, fixed path labels).
+Status0 is usable only after complete parsing and stable before/after identity;
+nonzero, timeout, parse/permission failure, truncation or changed identity yields
+explicit unavailable/changed/truncated. Empty output must never mean no owner.
+Cap each projected block at8KiB and16 matching rows; mark overflow without
+printing arbitrary raw rows. Do not dump mounts, `/proc/locks`, process lists,
+cmdlines, logs, configuration, environment, credentials or payloads. Project
+inside the guest command before the native logger receives output; suppress raw
+tool stderr and preserve its status as unavailable. No blanket `|| true`
+turns capture failure into a meaningful observation.
+
+**Preserve primary failure through existing cleanup.** Public
+`osvm/lib/osvm/shell.rb:173–180` owns CommandSucceeded; `Machine#fails` delegates
+without a new exception contract. `ShellLog` already records command/status/
+output/timing, and `ExampleResult#error` uses the original message. Save the
+precondition exception locally before diagnostics. Catch diagnostic
+`StandardError` only to emit a bounded secondary-status label; do not replace
+or reformat the primary. Run the existing FIFO release command exactly once
+with its existing15s timeout. If release also raises while that saved
+precondition exception is propagating, record the secondary class/status and
+keep the primary exception; if there is no saved precondition exception, retain
+the release failure's original behavior. Do not add release attempts, swallow
+failures on the successful path, or catch cancellation/SystemExit as success.
+The later RSpec/runner aggregate remains unchanged.
+
+**Original verification plan and current delivery boundary.** Member static scope after
+release: Nix parse/format, extracted Ruby syntax, scoped whitespace and reversal.
+Reversal must restore exact363d NFS SHA4d30c6d7 and all outside bytes, including
+the PID1 reset and livepatch. Parent quick construction is only the existing
+registered NFS JSON drvPath evaluation. Inspect the generated script and exact
+rescue/ensure control flow: primary unchanged on capture failure and secondary
+release failure, normal release failure preserved without a saved primary,
+no capture on successful precondition and no second lock attempt. A bounded
+recording-Machine exercise of that extracted method may verify these exception
+paths without a guest; it must use the actual generated code and adds no
+committed helper/spec path or alternate runner. Direct inspection must also
+check output caps, identity/parse refusals and that no FIFO open is introduced.
+
+The original design proposed lead assessment of a narrow step9 route after
+checks/fold, preserving363d and both failed owning records. Lead instead selected
+step10 for the actual new observer surface; the complete eb26..6157 all-four-HIGH
+review above is now complete without findings. This explicit decision supersedes that proposed
+review route, without changing the technical contract. Lead's separately
+released owning run completed45/45 using the SAME quoted brace selector above,
+40 NFS+5 livepatch, jobs1/no-destructive/stop-on-failure and all existing timeouts,
+with the exact metadata-bound no-kernel-compilation monitor policy retained.
+The accepted green run neither reproduces/solves the prior causes nor exercises
+failure-only capture. The original plan required a failing run to retain its
+primary assertion and bounded evidence before disposition; that contract is unchanged.
+
+No schema/wire/runtime/kernel/default/consumer-package change is proposed.
+Mixed deployed versions and Admina933/OS800 are unaffected; reverting this
+fixture-only diagnostic removes evidence, not a live compatibility contract.
+Feature publication/readback/comparison is complete at6157, stagingeb26 and
+consumed800 unchanged. Reviewed source and owning45 acceptance supply no broader
+operation or new gate to delivered API/e9. Default integration awaits explicit
+approval; downstream pin/package/live and all physical authority remain held.
+Retained cluster STOPPED/session open; all Contract2 invocation/termination/
+release, physical/G2/alias/NAS/destination/scheduler/object and
+default/pin/package/live holds remain.
 
 ### Proposed backup placement: preserve existing copies, choose a distinct VPS destination, 2026-10-05
 
@@ -9436,7 +11190,1758 @@ previously interrupted chain. No additional rollout, production strict,
 node-quiet, verified topology, repair/APPLY or default integration is claimed.
 Material deviation from the lock/lifecycle/error contract returns to the lead.
 
+## Durable API spec exception diagnostics, 2026-10-07
+
+**SOURCE DELIVERY COMPLETE; a933 feature publication accepted.** Lead read
+the complete brief and owning public consumers, accepted this one coherent
+primary-exception plus exact-dependency-evidence unit, and released only these
+six paths to implementer0, turn `01a11703-df4a-7c93-a83d-7f90990f771d`, on clean
+published32d. Initial member work was static only. Lead received the testing-doc
+handoff and completed the owning prose pass: final SHA256
+`35e64374983c8a21c4e10305f7176cba5ee0b28a96fc0bc33595054888e10211`,
+scoped diff0, code blocks and topic reproduction suffix equal. This is prose/
+static evidence only. Lead subsequently accepted complete six-path source
+inspection and freeze, with outside3245/inputs/schema/locales/four migrations/
+cache/index parity proved. Parent staged exactly three new owned Ruby files.
+
+The first four-stage owning watcher FAILED1/178.761s: core stage175.916s,
+native65 examples/1 failure/0 pending/0 outside errors in154.054s. Later full
+and both lint stages were UNRUN. Source parity/waited1 and driver cleanup1 were
+reported; parent proved original wrapper4193873/DB4194053/RSpec4194097 absent,
+private socket/pidfile absent and original visible PGID empty, with no signal
+or prune. This is bounded cleanup evidence, not universal reap proof. Public
+`api-request-diagnostics-first-check-result.json` preserves the first result.
+
+The controlled Password fault fired during OPTIONS version discovery from
+`vpath`, before the intended GET. This is a test fixture ordering failure, not
+production behavior or the original CI500 cause. Lead released only the smoke
+request-fault example to implementer0, turn
+`01a11731-bc50-7411-957a-79b5f1ad4dbe`, to resolve its local path BEFORE installing
+the fault, retaining all assertions. That correction was frozen at smoke SHA256
+`53775d6d81b511302cbc64f057d4ef7c8b262bb678bb3eea7f15fa41e975a099`.
+Parent inspected the exact local path-before-stub/GET-path delta and reversal
+to full priorb9d155da. All3251 sources except this path, index/cache/inputs and
+four migrations match; the other five source paths and existing three staged
+new-file entries were unchanged. Static syntax/diff/reverse passed;39+3 was
+authored inventory, unrun at that checkpoint. Unread member packet
+`/tmp/api-request-diagnostics-auth-path-fix-20261007.xbn_ia3n`, manifest
+`0e33558aab4066af407cb0d804ed39d5bc98a56d18ac58acfba2bce641c7307c`,
+correction `07c9cfd10200e77f45dcbcc0f7fa6204e8e8b777e56b1b286694ddc23347f1ec`.
+
+The preceding parent packet
+`/tmp/api-request-diagnostics-fixture-checks-20261007.9nbxozbc` was prepared and
+queued after the OS e9b3 watcher. Frozen SHA256
+`87826e6574e96c5a0e99fbcb5d27fb01adbe9f59744e8a93c6cb26ea515d666e`
+and copied drivers checks26f55f19/Ruby4d3fe100/guard911c91cb bound those bytes.
+Preflight1.085s/parity1/executed0 was not execution of the four checks. Its
+watcher initially could not find the CLI through PATH; parent supplied the
+supported absolute `/home/aither/bin/dev-session`. Lead subsequently accepted
+the corrected batch result1/418.068s: core65/0 and full65/0 passed, then API lint
+reported58 offenses/40 correctable across4 files; root lint was UNRUN. Those
+passes retain their exact source scope, separately from the first65/1 failure.
+
+Before the pause, implementer0 completed the subsequent static freeze and
+acknowledged no operation in flight. Parent accepted the exact three-path
+style/compatibility delta and reversal, all3251 source/index parity and
+outside3248 byte/stat/cache parity. Final six-path member manifest SHA256
+`c634146103951739112072de32c7c577a17e3e2cf6b825e91da8348f51250671`,
+full patch `a994995ce0dd0073c7ec25e9bc5f177cd3535c2c5c25e8e1eee4fd8355482589`;
+changed support679391d9, smoke1e335319 and CI-helper1bfcad19, other three paths
+unchanged. The accepted durable diagnostic and one-expression Bundler2.6.9
+briefs retain their original technical scope. A preparation cached-diff digest
+assertion compared ordinary with full-index rendering; the exact index and
+matching ordinary rendering were unchanged. Resolution preceded the final
+preflight, without a source or check effect.
+
+After the user's explicit continuation, fresh utility
+`/root/api_request_diagnostics_style_checks_20261007` launched ONCE for core/full
+focus and both four-file lints. Unread packet
+`/tmp/api-request-diagnostics-style-checks-20261007.685xow_b`, frozen SHA256
+`8829164e5a5de6be192635c802007c41bf41bdf0be07f7ef03e5925b94c30c5c`,
+unchanged wrapper26f55f19/driver4d3fe100/guard911c91cb; parent preflight
+0.762s/parity1/executed0 remains distinct from checks. Lead accepted the resulting
+batch1/381.446s: core65/0/0 pending/0 outside errors, then full65/0/0 pending/
+0 outside errors. API lint found one Style/StringConcatenation offense in the
+fallback expression; root lint was unrun. Both owned DB cleanup1, waited1 and
+source parity1 were accepted. Parent postguard0.876s and the seven original
+PID/socket absence checks passed, with no signals/prune; these are bounded
+observations, not universal reap proof. Public
+`api-request-diagnostics-style-check-result.json` preserves this result.
+
+Lead accepted the final one-expression support correction SHA256
+`d00c1368f67511a64981e77c0aa79bafd19a516c6737f58ad5d2b920a79cd14f`,
+exact fixed-JSON output parity and reversal to679391d9. Other five paths,
+index/outside/cache are unchanged. Unread member packet
+`/tmp/api-request-diagnostics-fallback-fix-20261008.yeenj6dl`, manifest47958a06,
+complete packetb85916d6. Parent inspected the complete expression and accepted
+the all3251/source/index/cache preflight.
+
+The TWO-stage watcher `/root/api_request_diagnostics_final_lints_20261008`
+completed parent-accepted PASS0/30.052s: API4 files0 and root4 files0. Unread packet
+`/tmp/api-request-diagnostics-final-lints-20261008.j5hwz8v6`, frozen SHA256
+`7e7ed24a82831b9e11abaae63b18368ae02b12c17eea21e297165463a651f5a9`;
+parent preflight0.852s/parity1/executed0 remains distinct from the accepted
+result. The65+65 functional results carry only for fixed-literal equivalence,
+without a fresh functional run or executed old-Bundler CI claim.
+
+Lead accepted normal NEW commit
+`e5552f465b0dc00201528940d73af14aa5a0b85a`, tree388ba43f, parent32d,
+PASS0/57.030s. All actual precommit and commit-message hooks passed without
+hook warnings; the nonfatal Nix dirty-tree warning remains separate. Parent
+full guard/PID-absence check0.845s passed. Published32d was not amended.
+
+Fresh origin master advanced fromc4d to
+`81f1f1aabdd18a042d276aa4be3ca32173ff14d0`: only six generated package lock/gemset
+paths,9+/9-, updating mime-types-data3.2026.0929 to3.2026.1006, with zero overlap
+against the226 feature paths. Parent inspected the whole upstream patch and
+saved session backup `before-api-diagnostics-rebase-20261008` at e555. Normal
+28-commit replay passed0/29.221s/child_waited1 to
+`d59b551b77a255e146ad5bf68889360d7539a9b9` on81f1. The complete binary feature
+patch is byte-identical and independent range-diff shows28=28; no conflicts
+or source edits were needed. Only the six upstream files entered the union,
+with cache parity retained. All four migration blobs/schema, the six-path unit
+and inputs remain exact. Earlier checks retain their original-composition scope.
+
+The four-stage watcher `/root/api_request_diagnostics_rebased_checks_20261008`
+completed parent-accepted PASS0/376.437s on exact d59/81f1. Core65/0/pending0/
+outside0 passed, native136.337s/stage159.798s; full65/0/pending0/outside0 passed,
+native165.373s/stage193.585s. Both four-file lint selections are clean; mode
+ID/status/pending parity is exact. Both DB cleanup/wait/completed1 were accepted
+and private states retained. Parent repeated full source/index/cache guard
+0.849s and proved eight original stage/RSpec/DB PIDs and sockets absent, with
+no signals/prune. These bounded observations supply no universal reap proof.
+Public `api-request-diagnostics-rebased-check-result.json` records the result. Unread
+packet `/tmp/api-request-diagnostics-rebased-checks-20261008.mn9vwh3v`, frozen
+`add3780ecd43f5044ce8d7004c9a8ad239557f53848de4b3c118a69fd109b2a3`;
+parent preflight0.821s/parity1/executed0 remains separate from the accepted checks.
+
+Final primary review is COMPLETE with retained reviewer0, turn
+`01a1180f-a449-79b0-858d-fa9669f12b53`, HIGH/all four lanes, over complete
+`81f1f1aabdd18a042d276aa4be3ca32173ff14d0`..
+`d59b551b77a255e146ad5bf68889360d7539a9b9`, treeafc223b4. Complete inventory is
+28 commits/226 paths/28353+/491-, plus binary translation. Full diff SHA256
+`dfb1667e0d1f7fdd4496a12df6133db697e72f95a981a8e26e34466ea619e7ee`,
+unit `e9cf8709fc7255964399f10fde5e72b1127d513b0242d97d4224c8c7aad5b736`.
+Complete series/inventory/migrations/range-diff are in the distinct
+`api-request-diagnostics-rebased-review` artifacts; c4d..e555 remains historical
+with28=28 replay and all four migration blobs/schema unchanged. A summary-only
+binary-numstat preparation refusal was corrected without source or inventory
+mutation. Public `api-request-diagnostics-rebased-review/final-report.md` records
+no Blocking or Important findings across all four HIGH lanes and no obsolete
+unapplied/fixup/transitional history needing consolidation. The reviewer ran no
+tests. Lead accepted two separate liveness Advisories: the offline comparator's
+quadratic scans and GLOBAL retained ResourceLock fanout. Their future measured
+cohorts/index decisions stay with their owners; neither adds a gate here.
+
+Lead directly corrected one inaccurate filesystem-identity owner sentence under
+mandatory-review step9. `StorageFilesystemIdentity` retains restrictive owner
+FKs without copied owner columns; `StorageIntegrityScope` and mutation targets
+retain copied IDs plus nullifying live links. Only
+`docs/storage/integrity-foundation.md` changed4+/2-, SHA256
+`0e598db650b903d73effaabc82b739c266988f5b089f4edcd993042e524e016e`,
+reversing to priorf64f6688. Other3250 tracked hashes, inputs, four migrations,
+schema/locales and foreign cache are unchanged. Normal NEW unpublishedb339719b,
+tree `dfbe6ef54abb6a8c2ce3c3ac9992c72d0d0b9910`, parentd59, passed0/67.534s/
+waited1/parity1, actual precommit hooks all OK. Commit-message hooks passed with
+nonfatal TextWidth warnings for two lines within80. The separate Nix dirty-tree
+warning remains recorded. Normal message-only amend then produced
+`a933f73c968444c3de2e07c0ab0308056722933b`, retaining that exact tree and parentd59;
+all actual hooks passed without warnings. The primary reviewed range remains
+81f1..d59, without an independent rerun; fresh65+65/lint evidence carries for
+exact runtime/spec/CI-source parity only.
+
+Lead accepted final source publication: fresh SSH master81f1 is unchanged,
+exact-lease feature push from32d passed0/12.455s and readback0/1.269s. The one-shot
+overall1/85.684s was solely because two newly added portal artifacts used the
+unsupported `title` key. Parent changed only those entries to `label`; ordinary
+comparison then passed0/0.707s, without another push. Parent source/index/cache
+guard0.884s/parity1 and original five stage-PID absence passed. Public
+`api-request-diagnostics-publication-result.json` and `final-inventory.json`
+record final29 commits/226 paths/28355+/491- plus binary, full SHA prefix30790215
+and exact doc-step9 SHA prefix14100f57. Primary complete81f1..d59/all-four review,
+the lead's direct sentence correction and two accepted liveness Advisories keep
+their separate provenance. No reviewer rerun is claimed.
+
+API final source delivery is COMPLETE. The publication-time CI snapshot had9 runs:
+migration/WebUI/RuboCop/client completed success, five others queued/in progress
+and unawaited; superseded active0/cancellations0. Original CI500 remains unknown.
+The completed October9 result below supersedes those pending labels only.
+No overall-CI, default integration, package or live acceptance follows.
+All operational holds, stopped retained cluster and active/open session remain.
+The178.761s and418.068s failures retain their original scopes. No runtime/cause
+repair follows. OS e9b3 source delivery separately completed
+after its all10/0 VM pass and accepted publication. Private references remain
+unread by the architect.
+This unit prepares evidence for a future ordinary test failure. It neither
+explains nor repairs the original37547187372 generic500. The exact32d local
+full/platform-config diagnostic passed498/0/3 pending without reproducing it;
+the Ruby/Bundler/effective-lock differences and missing original exception
+remain material. Keep that result and the original failure separate. This
+proposal adds no gate to the independent OS five-path unit. It supersedes the
+unimplemented October3 request-only listener proposal for future authoring;
+that historical proposal and its original failures remain recorded below.
+
+### Completed CI diagnostic checkpoint, 2026-10-09
+
+Lead accepted the public [completed CI result](ci-results-20261009.json) and
+current state summary. Exact held Admin
+`a933f73c968444c3de2e07c0ab0308056722933b`, tree
+`dfbe6ef54abb6a8c2ce3c3ac9992c72d0d0b9910`, and OS
+`6157bdd41ca864ae22532a09e4d7e3cc2e969955`, tree
+`69eedc8252dbe354121cda52e54eee43f81dab6c`, are unchanged. Publication/default
+boundaries, Admin's OS800 pin and all four additive migrations retain their
+recorded scope. This reconciliation reads public evidence only.
+
+OS CI37744525878 completed PASS: build/cache, AMD livepatch lifecycle, Intel
+livepatch lifecycle and Run test suite all succeeded. This is distinct from
+the accepted local45/45. The failure-only guest Bash observer was not entered
+(labels0), historical OS contention/FIFO causes remain UNKNOWN and the local
+broad-flake baseline blockage remains separate.
+
+Admina933 completed eight of nine workflows successfully; only API topic-parallel
+37686690438 failed. Full-platform-config job113016228924 native output reports
+498 examples/1 failure/3 pending/0 outside errors at seed42286. Debug ArrayTop's
+support-user refusal `./spec/api/resources/debug_spec.rb[1:4:3]`, declaration196/
+assertion199, expected403 and returned500 in51.976989635s. The format1 packet
+captures TWO `request_exception` observations for the SAME request2 GET/status500:
+`ActiveRecord::LockWaitTimeout` with `Mysql2::Error::TimeoutError` cause. Primary
+trace is unavailable; the bounded cause trace contains only six low-level frames.
+There is no captured query, row, table, connection, blocking holder or concrete
+auth collaborator, and no evidence of two separate waits. The request-stage
+exception is established; its deeper cause remains UNKNOWN after completed
+bounded read-only diagnosis. This differs from the historical32d Environment500,
+whose cause remains UNKNOWN. Exact13 baseline blobs do not prove a source or
+dependency causal exemption.
+
+Actual native/environment/lock evidence was produced under CI Ruby3.4.11,
+Bundler2.6.9, RSpec3.13.6 and RubyGems3.6.9, with effective lock SHA256
+`24b25d546d3fe72c724123297cd4ba1ee77edd07bca376618c62ddba74f00ced`.
+The new helper and format executed successfully in this actual2.6.9 attempt.
+This extends the earlier source-only compatibility evidence for this attempt;
+it does not establish general dependency equality, complete compatibility with
+every version or the original failure's cause.
+
+Core-platform-infrastructure113016229068 was cancelled during dependency setup
+after3612s (job3621s). Ruby setup/environment capture/RSpec were skipped; upload
+had no files. Parent's subsequent ordinary read-only exact check-run and
+annotations requests both succeeded. The1542-byte annotation record, SHA256
+`93b65edd8eedca9b524f24cbb9f0bbf10ca30383d49e16a51a79300ff8ea967c`,
+expressly reports maximum execution time1h0m0s exceeded. Job-budget expiry is
+therefore confirmed. Why dependency setup failed to finish remains UNKNOWN;
+Ruby/environment/RSpec stayed skipped and no-files upload is secondary. The
+earlier timing-only UNKNOWN checkpoint remains
+historical: the source budget and duration alone did not establish the trigger.
+This annotation supplies no SQL/holder cause for the independent full Debug
+failure. Aggregate113040406105 reports
+full13/core13, each433 mapped/433 eligible, with ONLY full-matrix failure and
+core-matrix cancellation errors. No missing/duplicate/extra/mode membership error
+is recorded; no selector correction is justified.
+
+Evidence acquisition remains separate from CI execution. The initial6.670s
+utility batch obtained metadata but raw-log capture refused gh's terminal-escape
+guard; no CI rerun occurred. An outer `--slurp` page-count projection incorrectly
+reported no artifacts. Parent flattened51 artifacts and located exact
+full-platform-config artifact11512153002. Fresh bounded fetch0/10.355s verified
+archive size/digest, exact three native/environment/lock hashes and source-index
+parity1. Raw ANSI was never rendered. Parent independently inspected the native
+exception/evidence classes and aggregate output; no private artifacts are read
+by the architect.
+
+Lead accepted implementer0's FINAL bounded read-only source/evidence diagnosis.
+The earlier active/pending status is superseded by this completion; the evidence
+limits above remain. The existing `project_exception` selector is only a
+prospective, unreleased seam: it might prioritize an enumerated checkout cause
+frame, if present, within the SAME first64/six-frame/byte/event limits. It cannot
+identify a blocking holder. No design or source release follows from recording
+that possibility. No correction, assertion relaxation, timeout/dependency/pin
+change, reproduction or CI retry is justified by the existing evidence.
+Source delivery remains complete; the Admin API failure prevents overall CI
+clearance/default merge. No new review gate is introduced. Prior reviews,
+comparisons, failures and verification retain their exact source/input scopes.
+Cluster STOPPED/session OPEN and all Contract2 invocation/termination/release,
+physical/G2/default/pin/package/live/alias/NAS/destination/scheduler/object holds
+remain unchanged.
+
+### Admin pinned transaction fixtures, 2026-10-10
+
+**User-approved correction implemented; final ownership-fixture ordering follow-up
+focused-checked and related mandatory review complete at99087d4. Corrected full/core
+foundation seed30306 passed and feature publication/readback/comparison are complete.
+Exact-head API Specs38160746915 SUCCESS in22m18s; all full/core matrix jobs and
+topic coverage passed. Unmerged feature ready, awaiting explicit default-branch
+merge approval. First preparation failure and nonmutating push refusals preserved.
+Prior0b8 is history.**
+Original implementation baseline was published
+Admin `a933f73c968444c3de2e07c0ab0308056722933b`. Root-cause investigation is complete:
+the controlled after-OPTIONS reap made GET use B while A retained the fixture's
+open transaction, producing the observed user-row wait and HTTP500. The control
+kept GET on A and returned403. These results establish the mechanism without
+recovering the historical CI holder. The natural full-topic pass, incomplete
+global trace, localRuby3.4.9/CI3.4.11 difference, first private setup refusal and
+separate apt-update job-budget expiry retain their recorded limits below.
+
+This unit corrects the owning test fixture and explicitly marks the affected
+genuine multi-connection tests. Parent releases/accepts implementation and owns
+disposable verification, commit, review and feature publication. Architect edits
+the assigned tracking only; no tests or application edits are performed here.
+
+#### Network-interface ownership fixture ordering correction, 2026-10-11
+
+**Current accepted implementation/review/foundation/publication/CI checkpoint.**
+Lead reports final Admin
+`99087d478f30678db448a875584b0f64c3ebc541`, tree
+`3768e6c280ae1f3b31c67620a0d649b38ea1b777`, base8a50010,
+29 commits/232 paths/28528+/512-. One-path source SHA prefix `b1d2e274`,25+/16-.
+Actual focused full/core each4/0 at seed30306, syntax and both one-file lints pass;
+all commit hooks pass. The first stale Overcommit signature refusal created no
+commit and was corrected in the declared environment; preserve it as preparation
+history rather than a source/test failure.
+
+Related reviewer0 all-four-HIGH review is COMPLETE with no new Blocking/Important.
+The two retained liveness Advisories are the quadratic offline comparator and
+unmeasured global retained-lock selector fanout. Supplied complete/follow-up/unit
+hash prefixes are `3aa9254e`, `d703e843`, `c434d608`; prefixes are recorded as
+supplied. One final OS pin, four unchanged migration blobs/schema and the
+complete-history conclusions remain. No new production or compatibility claim.
+
+First parent-owned foundation driver
+`/tmp/admin-netif-order-foundation-20261011.jxxXig/run.sh`, SHA256
+`5c0e408c1b4cdaeeaa35be6decd22faa406b716423400908e748cb5ba1687749`,
+failed1/21.68s at both selection steps with `cd: api: No such file or directory`.
+The API dev shell already sets api CWD. No RSpec, DB, `ci_environment`, manifest
+or companion ran; head/tree/source/index stayed unchanged. Preserve that first
+packet as preparation failure, not a fixture/runtime result.
+
+Fresh corrected driver
+`/tmp/admin-netif-order-foundation-corrected-20261011.iS4NIG/run.sh`, SHA256
+`21c35c466e09b02c84458189cb7df178a2a8b642035b2c75191790b483995f92`,
+removes ONLY the two redundant `cd api` lines and uses a fresh output directory.
+Lead accepted the corrected workflow-derived foundation results on exact990 at
+seed30306. Both modes used the exact296-file manifest SHA256
+`46c320d4e7e619f8346e7a34bfcbc0e739203da41ae4428a69dcd347effe342b`:
+
+| Mode | Examples | Failures | Pending | Outside errors | Ownership ordinals1643–1646 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Full | 1699 | 0 | 3 | 0 | All four passed |
+| Core | 1699 | 0 | 52 | 0 | All four passed |
+
+Both private paths/hashes remain unread references. Exact-lease feature
+publication of990, SSH readback and registered base8a50010/head990 comparison
+are COMPLETE. The push hook first failed in the ambient environment even after
+declared signature refresh; refusals caused no remote mutation. The exact same
+push succeeded through declared `nix develop` hooks. Prior remote0b8 remains
+historical evidence. Lead accepted API Specs38160746915 on exact published
+`99087d478f30678db448a875584b0f64c3ebc541` as SUCCESS in22m18s. All full/core
+matrix jobs and topic coverage passed; no retry, cancellation or failure evidence
+is reported for this run. Publication/readback/comparison, mandatory review and
+foundation verification remain complete. The unmerged Admin feature is **ready,
+awaiting explicit default-branch merge approval**. No default merge, deployment or
+physical authority follows. These are supplied lead/reviewer conclusions, not
+architect checks. Two accepted liveness Advisories, the broad local flake baseline
+limit, four migration blobs/schema and the consolidated single OS pin remain.
+Cluster STOPPED/session OPEN and every existing operational/physical/Contract2/
+G2/alias/default/live hold remain.
+
+**Historical accepted design, implemented by the checkpoint above.** Original
+source boundary was published Admin
+`0b8f901b8107e7d5c3192103a0bd5e8d1d66105f`, tree
+`ac2146416ccd448b2bd29a3ebfcfdab88b2a78d2`, base
+`8a50010f46ad134e132394f2159d031601c17778`. Architect inspected public source
+and the owning procedures; CI facts below are supplied by lead, with no private
+artifact read or independent execution.
+
+**Failure and source seam.** API run38153750656 full foundation native JSON SHA256
+`acae0248475a5c289ee4f1cd1ca078d838fa0c9bcf22eea1a73f0f021525e32a`:
+seed30306,1699 examples/1 failure/3 pending,420.826362118s. The ownership cases
+were ordinals1643–1646 in order `[1:3]` pass0.261s, `[1:1]` pass0.352s,
+`[1:2]` fail50.170s, `[1:4]` pass0.107s. Preserve this exact order evidence,
+without raw messages. The failed expectation was `IpAddressNotOwned`; actual
+exception was `ActiveRecord::LockWaitTimeout`. Both platform-config modes and
+all core topics passed. Aggregate membership is clean; its failure follows
+the unsuccessful full matrix, so no selector/workflow correction is justified.
+
+At0b8, `api/spec/models/network_interface_ownership_spec.rb:96–109` intercepted
+each chain's `fire2`, commits Vps/IpAddress ownership updates through a worker,
+then delegates. This is too late for the public operation boundary:
+
+- `api/models/network_interface.rb:65–93` opens an IpAddress transaction for
+  add-route; its precheck makes shared policy reads. `remove_route:104–111`
+  also opens one and `validate_route_removal!:145–155` performs a locking
+  routed-address query before reaching the intercepted chain.
+- `remove_host_address:169–176` opens an outer transaction and reads/validates
+  the host before chain entry. `add_host_address:158–160` directly enters its chain.
+- `api/models/transaction_chain.rb:76–127` routes `fire` through `fire2`, whose
+  `requires_new: true` transaction is nested when a public outer transaction
+  already exists. It does not end the outer locks before the worker transfer.
+- All four `api/models/transaction_chains/network_interface/{add_route,del_route,
+  add_host_ip,del_host_ip}.rb#link_chain` reserve netif/VPS and invoke real
+  `ensure_actor!` before proceeding. `NetworkInterface#ensure_actor!:115–122`
+  reloads the interface and VPS with shared locking reads and rejects the old actor.
+
+Thus the late transfer can wait on the caller's transaction. The supplied CI
+does not identify a specific blocking row/lock graph; the source-supported
+fixture correction removes this ordering dependency without changing production
+authorization. It is not evidence of an authorization bypass or cancellation bug.
+
+**Exact prospective application manifest: one file.**
+
+`api/spec/models/network_interface_ownership_spec.rb`
+
+Keep its `:no_transaction`, committed minimal fixtures, `owned_records` reverse
+cleanup, current-context restoration, signer setup and primary-error preservation.
+Keep the existing worker/transaction/join owner and bounds unchanged. No shared
+helper, testing policy, production model/chain, API, schema/migration, dependency,
+workflow, configuration or additional spec path changes. The existing testing
+guide already documents committed setup and explicit cleanup for this opt-out;
+no prose companion is needed. Put the timing rationale in this spec's existing
+nearby comment. The original four example descriptions and declaration order
+must remain, preserving `[1:1]` through `[1:4]` and foundation membership.
+
+**Concrete arrangement and invariants.**
+
+1. Create the same committed netif/VPS/IP/host fixtures. Keep add-route's IP
+   unassigned, the other IPs assigned to this netif, and remove-host's order0;
+   save the same original interface ID and host order.
+2. Before transfer, explicitly retain `selected_vps = fixture[:netif].vps` and
+   the selected IP/host objects. Prove cached VPS and selected IP still have
+   the original actor's user ID. There is no main fixture/operation transaction
+   open at this boundary; fail the setup if `transaction_open?` says otherwise.
+3. Move the existing `commit_ownership_transfer` call outside any `fire2` wrapper,
+   before invoking the public operation. In its real separate transaction,
+   update only these fixture Vps and IpAddress rows to `SpecSeed.other_user.id`.
+   Await the existing worker's value/commit. Do not write through the retained
+   model instances or reload their cached ownership. Main connection remains
+   outside a transaction until the production call begins.
+4. Before invocation, prove both persisted owner IDs are the other user using
+   fresh scalar queries, while the retained VPS/IP objects still carry the old
+   IDs. A scalar query must not replace or reload the retained objects. This
+   establishes committed state versus stale selection without timing sleeps,
+   queue reordering or dependence on an earlier example's connections.
+5. Invoke the exact public operations below with the old current actor. Remove
+   the `allow(chain_class).to receive(:fire2)` interception entirely. No stub of
+   `find`, transaction/lock helpers, `ensure_actor!`, chain execution or errors.
+   A small local argument distinction for add-route is sufficient; preserve the
+   four-operation iteration order if replacing its now-unused chain-class map.
+
+| Existing example | Exact invocation | Real path and refusal |
+| --- | --- | --- |
+| `[1:1]` add_route | `fixture[:netif].add_route(ip, safe: true)` | Existing safe-selection path retains the stale IP for the public precheck; real AddRoute reserves netif/VPS and refreshes actor ownership. |
+| `[1:2]` remove_route | `fixture[:netif].remove_route(ip)` | Keep default refetch and removal precheck/locking query; transfer is already committed before its outer transaction. Real DelRoute rejects the old actor. |
+| `[1:3]` add_host_address | `fixture[:netif].add_host_address(host)` | Keep the real direct AddHostIp path and current-owner refusal. |
+| `[1:4]` remove_host_address | `fixture[:netif].remove_host_address(host)` | Keep default host refetch/assigned check and real DelHostIp path; transfer predates the outer transaction. |
+
+The sole call-option change is add-route's supported `safe: true`. Its default
+path refetches the newly owned IP while the selected netif's VPS is deliberately
+stale, causing the earlier `IpAddressInUse` precheck rather than reaching the
+actor-refresh regression. `safe: true` bypasses only that IP refetch; it does
+not bypass policy checks, chain resource locks or current-owner authorization.
+Existing `ip_assignment_owner_concurrency_spec.rb:135,143` already exercises
+this selection interface. Do not apply `safe: true` to removals or claim the
+default add-route refetch was exercised by this example. The stale netif/VPS
+selection is retained across all four cases even where a public method refreshes
+its IP/host. This is a deterministic selection-then-transfer regression, not
+proof of arbitrary concurrent-writer timing or every IP policy branch.
+
+Keep each original assertion: exact `IpAddressNotOwned`, persisted IP owner
+is the other user, interface ID unchanged, host order unchanged. Retain actual
+production operation bodies semantically and byte-for-byte in their owning
+files. A timeout, earlier unrelated exception, skipped chain, missing transfer,
+or altered assignment/order fails acceptance. No sleep, retry, assertion
+relaxation, transaction/isolation override, exception swallowing or timeout change.
+The completed transfer touches only already-owned fixture IDs, so existing exact
+reverse cleanup remains the owner of committed rows and PaperTrail versions;
+do not substitute broad deletion or fixture rollback for it.
+
+**Compatibility and reversal.** Test-only ordering change with the existing AR8.1
+and production interfaces; no runtime or deployment behavior, migration, persisted
+format, wire contract or mixed-fleet requirement. Pinned ordinary fixtures and
+all other opt-outs stay exact. No coordination with OS6157/OS800 is introduced.
+Preserve the four migration/schema blobs and consolidated pin history. Retain
+the original published spec SHA `dd6cd5ea917bc71608239f257a00a526c1f10561eef289b9e1d47fad3edaa96c`.
+The correction's exact reverse must restore that file and leave every other
+tracked byte/index/cache outside authorized preparation unchanged. A source
+rollback restores the known order-sensitive test limitation and needs no DB or
+production rollback; use fresh disposable test state.
+
+**Acceptance commands, not executed by architect.** Parent owns exact source/
+index/cache and dependency guards, ordinary disposable TestDb ownership and
+cleanup/waits. Refuse configured/live DB reuse; retain the accepted pre-effect
+guard and no-prune contract. Use fresh output paths and separate full/core DBs.
+Uncertain-duration checks belong to fresh Luna/low watchers. From Admin root:
+
+```sh
+VPSADMIN_PLUGINS=all nix develop .#api -c ruby -c spec/models/network_interface_ownership_spec.rb
+VPSADMIN_PLUGINS=all nix develop .#api -c bundle exec rubocop --force-exclusion spec/models/network_interface_ownership_spec.rb
+nix develop .#vpsadmin -c bundle exec rubocop --force-exclusion api/spec/models/network_interface_ownership_spec.rb
+VPSADMIN_PLUGINS=all nix develop .#api -c bundle exec rspec spec/models/network_interface_ownership_spec.rb --seed 30306 --format documentation --format json --out "$OWNERSHIP_FULL_RESULT"
+VPSADMIN_PLUGINS=none nix develop .#api -c bundle exec rspec spec/models/network_interface_ownership_spec.rb --seed 30306 --format documentation --format json --out "$OWNERSHIP_CORE_RESULT"
+```
+
+Static acceptance includes scoped diff-check, one-file component/root lint,
+exact reversal and unchanged production/other-source proof. Focused acceptance:
+four unchanged IDs,4 examples/0 failures/0 pending/outside0 in each mode and no
+cleanup failure. These commands do not assert historical order equality merely
+because the seed is the same in an isolated four-example run.
+
+After normal commit and related mandatory review, run the actual **foundation**
+topic at seed30306 separately in full and core. Enter
+`VPSADMIN_PLUGINS=all nix develop .#api` with `mode=full`, then a fresh
+`VPSADMIN_PLUGINS=none nix develop .#api` with `mode=core`. In each shell (CWD api),
+use the ordinary workflow-derived selector below, with parent-owned fresh
+`FOUNDATION_RESULTS` and a fresh ordinary `api/tmp` evidence destination:
+
+```bash
+set -euo pipefail
+shopt -s nullglob globstar
+topic=foundation
+: "${mode:?set full or core for the matching shell}"
+: "${FOUNDATION_RESULTS:?fresh absolute parent-owned directory}"
+patterns="$(bundle exec ruby -ryaml -e '
+  workflow = YAML.load_file("../.github/workflows/api-specs.yml", aliases: true)
+  topics = workflow.fetch("jobs").fetch("api-specs-" + ARGV.fetch(0)).fetch("strategy").fetch("matrix").fetch("include")
+  entry = topics.find { |row| row.fetch("topic") == ARGV.fetch(1) }
+  abort "Unknown topic" unless entry
+  puts entry.fetch("patterns")
+' "$mode" "$topic")"
+files=()
+while IFS= read -r pattern; do
+  [[ -z "$pattern" ]] && continue
+  for file in $pattern; do files+=("$file"); done
+done <<< "$patterns"
+(( ${#files[@]} > 0 )) || { echo "Empty topic" >&2; exit 2; }
+manifest="$FOUNDATION_RESULTS/rspec-files-$mode-$topic.txt"
+printf '%s\n' "${files[@]}" | sort -u > "$manifest"
+mapfile -t files < "$manifest"
+SPEC_MODE="$mode" TOPIC="$topic" bundle exec ruby spec/ci_environment.rb
+bundle exec rspec "${files[@]}" --seed 30306 --format documentation --format json \
+  --out "$FOUNDATION_RESULTS/rspec-results-$mode-$topic.json"
+```
+
+Parent preserves the helper's exact environment/lock companions under its normal
+artifact owner; no helper/output-path rewrite is proposed. Compare the generated
+manifest against the exact failed attempt and preserve its sorted load order,
+effective gem/Ruby evidence, IDs, pending reasons and seed. Full acceptance is
+1699 examples/0 failures/3 pending with no outside errors, including the recorded
+ownership order `[1:3],[1:1],[1:2],[1:4]` at1643–1646; all four must pass. Any
+order or dependency mismatch is explicit and does not become historical-runtime
+equivalence. Core uses the same manifest/seed, records actual mode-specific
+counts/pending reasons and must have0 failures/outside errors. Do not select
+only `[1:2]`, reorder/filter examples, retry until green or assume a previous
+whole-suite pass covers this corrected fixture. No other topic/selector source
+change is needed; eligible434 and all13 topic membership stay unchanged.
+
+**Commit, related review and publication order.** After lead release and focused
+checks, parent retains published0b8 plus its review/results as predecessor proof.
+This is the same unmerged final fixture owner: recommend normal owning amend/
+fold into that final test commit, with an explicit parent release, rather than
+retaining the superseded late-transfer implementation as a new compatibility
+boundary. This brief performs/authorizes no rewrite itself. Never amend unrelated
+earlier commits or migrations; preserve complete branch provenance and the one
+OS pin. Actual hooks must pass without bypass; save the final one-path delta,
+full history/inventory and exact tree before review.
+
+Assign the retained reviewer a real related all-four-HIGH turn over the final
+complete branch and exact fixture delta: authorization coverage, setup/cleanup,
+order independence and scope are affected. The old0b8 review remains exact but
+does not certify the new arrangement. Resolve findings under the normal workflow
+before the longer foundation checks; no automatic replay of unrelated runtime
+verification or physical gate follows. After accepted full/core foundation and
+freshness inspection, parent publishes the final feature via its normal SSH/exact
+lease and readback/comparison, then requires full/core API matrices and topic
+coverage green at that final head. Preserve every failed CI/local attempt. If
+fresh upstream composition materially changes inputs, parent selects the required
+additional checks; never claim earlier5007/0 runs executed the new bytes. Default
+integration needs separate approval. Cluster STOPPED/session OPEN and all existing
+operational/physical/Contract2/G2/alias/default/live holds remain.
+
+#### Accepted published fixture checkpoint and later CI failure, 2026-10-11
+
+Lead accepted exact Admin head `0b8f901b8107e7d5c3192103a0bd5e8d1d66105f`,
+tree `ac2146416ccd448b2bd29a3ebfcfdab88b2a78d2`, base8a50010,29 commits/
+232 paths/28509+/502-. Predecessor complete full/core each ran5007 examples,
+with exactly `network_interface_ownership` failures `[1:1]`, `[1:2]`, `[1:4]`;
+`[1:3]` passed and outside errors were0. No full-suite pass is inferred from
+the later focused checks.
+
+The accepted one-path correction78+/4- is folded into the final fixture commit:
+explicit `:no_transaction`, minimal committed fixtures, a separate committed
+ownership transfer, and exact reverse cleanup. Final source SHA256 is
+`dd6cd5ea917bc71608239f257a00a526c1f10561eef289b9e1d47fad3edaa96c`.
+Final focused full/core each4/0, component/root lint1 clean, syntax and hooks
+passed. Initial lint path/style failures remain resolved preparation history.
+This is the bounded follow-up to the original seven-path fixture brief below.
+
+Mandatory related review is COMPLETE, all four HIGH lanes, with no new Blocking
+or Important. The two prior liveness Advisories remain; the same four migration
+blobs/schema, cleaned history and consolidated OS pin conclusions are preserved.
+Supplied exact complete/follow-up/unit hash prefixes are respectively
+`aa496a82`, `2afb699b`, `bb8beb84`; prefixes are recorded as supplied.
+
+Lead accepted the completed exact-head full/core434 plus effective-dependency
+driver:
+`/tmp/admin-pinned-fixture-final-suites-20261011.mByq0J/run.sh`, SHA256
+`1f1952cec5fa2d75f5278fd31ccc0a660ec4da9a279eda2addc124a92f8a4f44`.
+Exit0 after11h34m54s; full/core effective-dependency helpers both0. This private
+path/hash remains an unread reference. Accepted results and supplied SHA prefixes:
+
+| Mode | Examples | Passed | Failures | Pending | Outside errors | Resolved specs | Lock SHA prefix | Companion JSON SHA prefix |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| Full | 5007 | 4999 | 0 | 8 | 0 | 121 | `b7bf927c` | `ca176f8c` |
+| Core | 5007 | 4603 | 0 | 404 | 0 | 117 | `1287387e` | `7901caa5` |
+
+Eligible inventory434 SHA prefix `46e36898`. Both modes used Ruby3.4.9,
+Bundler4.0.14, RubyGems3.7.2 and RSpec3.13.6; effective lock hashes match their
+companions. These versions/counts bind this accepted run, without asserting
+equality with historical CI or diagnostic dependencies. Parent postflight proved
+exact0b8/treeac214, clean source/index, only declared PHP cache; no process was
+reported. This is supplied bounded evidence, not a universal reap claim.
+
+Parent fetched and confirmed origin/master exactbase8a50010 and remote featurea933.
+Exact force lease published featurea933→0b8; SSH readback matched, and registered
+comparison base8a50010/head0b8 was captured. API Specs run38153750656 subsequently
+failed full foundation `[1:2]` with `LockWaitTimeout`; both platform-config
+modes and all core topics passed. Aggregate failed solely on the matrix result,
+with434/434 membership clean. The exact seed30306 failure and prospective fixture
+correction are recorded above. No overall CI pass, default integration or
+deployment is inferred. Two retained liveness
+Advisories and the broad local flake baseline block remain.
+
+Original quick results, predecessor failures and preparation history retain their
+source/input scopes. These are supplied lead facts, not independent architect
+execution. Cluster remains STOPPED/session OPEN; all operational/physical/
+Contract2 invocation/termination/release/G2/default/pin/package/live and existing
+alias/NAS/destination/scheduler/object holds remain.
+
+#### Historical consolidated-history checkpoint, 2026-10-10
+
+Lead reports the fixture unit was committed at
+`48861e1b44adc0a91cac2edcee9da66860c78fbf`. Its accepted quick evidence is syntax6,
+component/root lint6/0, full/core targeted72/0 and exact platform-config
+seed42286 full/core498/0; actual original commit hooks passed without warnings.
+These are checks of the original composition, not fresh checks of the later
+upstream union. The original seven-path contract below retains its scope;
+the accepted one-path follow-up is recorded in the current checkpoint above.
+
+Fetched origin/master advanced81f1→8a50010 through two generated gem updates,
+12 `packages/*` lock/gemset paths and zero feature overlap. Local backup ref
+`2026-09-23-storage-redesign-pre-pin-consolidation-20261010` retains old488.
+The normal interactive rebase onto origin/master consolidated repeated e4bbe/
+9f105 OS pins: one new `614cf240f` commit,
+`flake: vpsadminos 8e44a5124 -> 80034c8cc`, replaces that stream and the later
+9f105 pin is dropped. The accepted final review verifies28 range-diff entries `=`,
+old9f dropped and e4 transformed, correcting the earlier supplied count.
+Final source feature patch is byte-identical to
+old81f1..488, SHA256 prefix `7a5f9375` (abbreviated as supplied).
+Old-to-new tree differences are only the12 upstream package paths.
+
+Predecessor head `064d069d6318e0bb4e029ecdb5efedefc2bc3457`, tree
+`aec9edfeb07d938ab4a7fd69affe17cf8fa41a66`, base8a50010, has29 commits.
+The8d05 rollout is preserved as historical evidence; it does not justify a
+separate retained pin boundary. Final OS800 consumption and the original
+rollout/test compositions retain their distinct provenance.
+
+Amended pin hooks passed. Preparation signature/version refusals and one
+rescheduled scheduler commit are retained; that scheduler commit's full hooks
+subsequently passed with its historical TextWidth warning. Rebase completed.
+Reviewer confirmed the repeated-pin finding on old81f1..488. Lead accepted
+the final mandatory review of then-current8a50010..064d/treeaec9ed: all four original
+HIGH lanes plus current GENERAL/RISK follow-up, no Blocking/Important and the
+repeated-pin Important resolved. Two liveness Advisories remain accepted:
+quadratic offline comparator and unmeasured global retained-lock selector fanout.
+The independent review verifies29 commits/231 paths/28431+/498-, exact complete
+and unit hashes,28 equal range-diff entries plus transformed/dropped pin history,
+one final614cf OS update, unchanged four migration blobs/schema and no obsolete
+history. Upstream generated package locks change date3.6/net-http0.10/uri1.1.2/
+rubocop1.92; AR8.1.4/HaveAPI0.29.8/Mysql2/Bunny remain unchanged. Review found no
+source incompatibility. It clears complete API suites, not publication,
+deployment or default integration.
+
+Lead corrects the earlier433 count: the current selection
+`git -C api ls-files 'spec/**/*_spec.rb' ':!spec/migrations/*_spec.rb'` contains434
+eligible specs because `spec/smoke/transaction_fixture_spec.rb` is now included.
+This is supplied inventory evidence; architect did not execute the selector.
+Fresh Luna/low watcher `/root/admin_pinned_fixture_full_suites_20261010` first
+refused with no current session; the subsequent exact-CWD preflight refused a
+superseded package-generation command. Both attempts executed zero tests.
+Under `dev-session-monitor` visible fallback, parent launched the same guarded
+private driver. Its first manifest preparation refused (97), expecting433,
+with zero RSpec/DB process. Parent changed only the private count guard433→434.
+The earlier driver SHA prefix `2b6c675f` remains preparation history.
+
+Final parent-owned driver `/tmp/admin-pinned-fixture-full-20261010.3yOZce/run.sh`,
+SHA256 `656a40e35dc8d6364a745e919c57dd4ac032f53bb59261a2b6768b49788ecbbb`,
+was launched once on exact064d/treeaec9ed to run full then core separately.
+At that checkpoint full mode was ACTIVE and core/results PENDING; both suites
+subsequently completed with the three ownership-fixture failures recorded above.
+The private path/hash remains an unread reference. No source/index/ref/publication
+change occurred during that preparation.
+Parent owns result inspection and acceptance. Original488 quick results retain their
+original source/input scope; no fresh complete-suite pass or publication follows
+from review or patch equality. Lead supplied these facts; architect performed
+only record reconciliation. All previous proofs/failures and source/input scopes
+remain historical evidence, with no operational or physical approval.
+
+#### Original seven-path manifest
+
+Paths are relative to the Admin checkout.
+
+| Path | Bounded change |
+| --- | --- |
+| `api/spec/spec_helper.rb` | Replace only the ordinary per-example transaction wrapper with pin/lease/ensure-unpin; preserve `:no_transaction` and suite setup. |
+| `api/spec/models/ip_ownership_concurrency_spec.rb` | Add `:no_transaction` to the full `RSpec.describe Network` group. |
+| `api/spec/models/ip_release_concurrency_spec.rb` | Add `:no_transaction` to the full `RSpec.describe IpReleaseCampaign` group. |
+| `api/spec/models/mail_templates_spec.rb` | Add `:no_transaction` only to `serializes concurrent reconciliations on separate database connections`. |
+| `api/spec/models/password_recovery_submission_spec.rb` | Add `:no_transaction` only to the `queue admission serialization` and `retention cleanup serialization` describe contexts. |
+| `api/spec/smoke/transaction_fixture_spec.rb` | New focused fixture/request/lease/no-transaction regression spec. |
+| `docs/agent-instructions/testing.md` | Document ordinary pinned fixtures and explicit multi-connection opt-out/cleanup policy. |
+
+Six Ruby paths and one owning procedure form one coherent source unit. Preserve
+the four existing concurrency files' bodies, synchronization, actual separate
+connections, assertions, timeouts and explicit cleanup; the additions there are
+metadata only. No production/API/authentication/HaveAPI/AR code, diagnostic
+observer, dependency, workflow, cop configuration, schema or migration change.
+The new smoke path already matches `foundation`'s
+`spec/smoke/**/*_spec.rb` in `.github/workflows/api-specs.yml`, shared by full and
+core. No second topic registry or workflow-pattern change is required.
+
+#### Canonical fixture lifetime and cleanup
+
+`api/spec/spec_helper.rb` currently wraps ordinary examples in
+`ActiveRecord::Base.transaction`, then raises `ActiveRecord::Rollback`.
+Use the installed AR8.1 fixture lifetime instead:
+
+```ruby
+config.around do |example|
+  if example.metadata[:no_transaction]
+    example.run
+  else
+    pool = ActiveRecord::Base.connection_pool
+    pool.pin_connection!(true)
+
+    begin
+      pool.lease_connection
+      example.run
+    ensure
+      pool.unpin_connection!
+    end
+  end
+end
+```
+
+The ensure covers lease/example execution after a successful pin, including
+example failure. Remove the old transaction block and explicit Rollback; do not
+nest them around the pin or manually release/rollback the adapter. Preserve
+RSpec ordering, filters, support loading, `before(:suite)`, GlobalReset and
+the exact `:no_transaction` branch. Do not rescue setup/teardown failures as
+success or add a fallback to the unpinned wrapper.
+
+Source owners are AR8.1.4 `test_fixtures.rb:194` and
+`connection_adapters/abstract/connection_pool.rb:357–406,433–441,640–675`:
+
+- `pin_connection!(true)` retains an existing leased adapter or checks one out,
+  binds its lock to the execution context, eagerly verifies it and starts a
+  nonjoinable, nonlazy fixture transaction. `lease_connection` establishes the
+  ordinary lease of that pinned adapter.
+- HaveAPI0.29.8 `server.rb:449–454` still calls
+  `clear_active_connections!`. This may clear the thread's lease, but pool
+  `checkin` returns immediately for the pinned adapter. It therefore cannot
+  enter the available queue with its fixture transaction still open. A later
+  checkout/lease returns the same pinned adapter.
+- `unpin_connection!` rolls back the open fixture transaction. At the final
+  pin depth it removes the pin/thread binding and checks the connection in.
+  AR's existing reset/false-return behavior if a test itself ended the
+  transaction is retained; it is not proof that committed fixture writes were
+  undone. Tests requiring commits, rollbacks of the outer fixture or genuine
+  independent DB sessions must use `:no_transaction` and own their cleanup.
+
+The pin is pool-wide. Leaving genuine multi-connection tests pinned would make
+their workers obtain the same adapter and could serialize/block their intended
+concurrency. The exact metadata changes above preserve those tests' existing
+committed setup and cleanup rather than claiming isolation from a shared pin.
+The IP groups already own `connection_thread`/after cleanup; the mail example
+owns its cleanup proc/worker joins; the two password-recovery contexts own
+committed before/after-context fixtures and worker joins. Keep those owners.
+Existing opt-outs, including dataset-plan concurrency and
+`ip_assignment_owner_concurrency_spec.rb`, remain unchanged. If checks expose
+another concrete multi-connection consumer, report it to lead before expanding
+this manifest or weakening its assertions.
+
+#### Meaningful smoke regression and procedure update
+
+Add `api/spec/smoke/transaction_fixture_spec.rb` using ordinary RSpec/support
+helpers, with these three independently readable examples:
+
+1. An ordinary example obtains the normal pool/lease and proves the retained
+   adapter equals `pool.instance_variable_get(:@pinned_connection)`, the
+   transaction is open and the ordinary fixture has depth1. Do not manufacture
+   a pin inside the example; the global fixture must establish it.
+2. An ordinary real support-user Debug request proves the cleanup boundary.
+   Record the pool's pinned adapter and its current outer transaction before
+   the request. Use `as(SpecSeed.support)` and the existing `vpath` discovery
+   for `/debugs/array_top`, with the Debug spec's JSON request shape. Keep the
+   real OPTIONS/authentication/GET path and assert HTTP403 plus logical status
+   false. Immediately after request cleanup, before any new DB lease/query,
+   assert `pool.active_connection?` is nil and the private pin still equals
+   the saved adapter. The next `pool.lease_connection` must equal that adapter;
+   its original transaction remains open, the same transaction object and
+   depth1. No stub of HaveAPI cleanup, authentication, connection selection or
+   reaper; no artificial second adapter or private diagnostic hook is needed.
+3. A `:no_transaction` example proves `@pinned_connection` is nil and the
+   ordinary leased connection has no fixture transaction/depth0. It creates
+   no persistent data and does not unpin manually. Preserve normal test cleanup.
+
+Private inspection of `@pinned_connection` is intentionally accepted for this
+test because the pin API is nodoc and the exact installed lifetime contract is
+what needs protection. Use object identity, not raw backend IDs or pool order.
+Each example must stand alone under randomized ordering. Do not rely on one
+example observing another's records to prove rollback.
+
+Update only the relevant policy in `docs/agent-instructions/testing.md`: ordinary
+examples receive a pinned fixture transaction, real request cleanup may clear
+the lease without releasing the pin, and ensure-unpin owns rollback. Require
+`:no_transaction` at the narrowest appropriate example/context for genuine
+multi-connection behavior, with committed setup as needed, explicit data/config
+restoration and joined workers in failure paths. Do not imply metadata itself
+supplies cleanup or apply it to all tests merely to avoid a failure. Preserve
+the existing topic/artifact/reproduction instructions.
+
+#### Compatibility, rollback and source delivery
+
+- This is a test-only correction for the declared AR8.1 dependency, source-read
+  against8.1.4. Pin/lease/unpin and the nodoc regression are deliberate; no
+  version/reflection fallback or new adapter abstraction. Future AR changes
+  must satisfy these regressions before updating the test fixture contract.
+- Full/core plugin modes use the same Base pool contract and their existing
+  separate disposable databases. No persisted format, public API, schema,
+  migration, seed, production cleanup/auth behavior or deployment ordering
+  changes. The four existing additive migration blobs and schema remain exact.
+  OS6157 and Admin's OS800 pin remain unchanged; no coordinated fleet update.
+- The fixture, metadata exceptions, smoke test and policy were delivered
+  together in one normal follow-up commit488 on published a933. The subsequent
+  lead-required complete-history replay/consolidation above preserves the final
+  feature patch and supersedes that old series for current review. Parent owns
+  upstream freshness, declared hooks, complete-series inventory and publication;
+  this record update authorizes no further rewrite.
+- A rollback is a normal source revert of this follow-up in a fresh test
+  process/disposable DB. It restores the known unpinned test limitation; it
+  requires no DB migration or production rollback. Do not switch fixture code
+  under an already-running test process or reuse uncertain disposable state.
+
+#### Verification and acceptance order
+
+Commands below retain the parent-owned verification plan. Accepted original
+quick results and predecessor suite failures are recorded above. Related final
+review and complete full/core verification are accepted at0b8f901b; feature
+publication is complete for0b8. API Specs38153750656 failed full foundation;
+the one-path ordering correction is implemented/focused-checked/reviewed at990.
+Its corrected foundation full/core checks passed at seed30306 and feature
+publication/readback/comparison are complete. API Specs38160746915 on exact990
+completed SUCCESS in22m18s, all full/core matrix jobs and topic coverage passed.
+The unmerged branch is ready, awaiting explicit default-branch merge approval.
+Eligible nonmigration inventory remains434; the accepted foundation manifest
+contains296 paths.
+The architect runs none of these commands. Use declared environments and the
+existing ordinary guarded disposable
+DB owner/cleanup/waits. Reject configured/live DB reuse. Preserve exact source,
+index, foreign/cache and mode/dependency evidence, with separate fresh native
+JSON/results per run. No private observer/counterfactual requires are loaded.
+Long or uncertain checks belong to a fresh Luna/low watcher; known quick static
+checks may remain inline with their authorized owner.
+
+1. **Static and focused quick checks:** syntax each of the six touched Ruby
+   paths, scoped diff-check, component and root RuboCop. In the API shell, use
+   `bundle exec rubocop --force-exclusion` with the six `spec/...` paths; in
+   the root shell use the corresponding six `api/spec/...` paths. Keep ordinary
+   cop configuration and inspect actual output/inspected-file counts. Run the
+   focused selection below separately under `VPSADMIN_PLUGINS=all` and `none`,
+   each in `nix develop .#api` (which enters `api/`), with a fresh guarded DB:
+
+   ```sh
+   bundle exec rspec \
+     spec/smoke/transaction_fixture_spec.rb \
+     spec/api/resources/debug_spec.rb \
+     spec/models/ip_ownership_concurrency_spec.rb \
+     spec/models/ip_release_concurrency_spec.rb \
+     spec/models/mail_templates_spec.rb \
+     spec/models/password_recovery_submission_spec.rb \
+     --seed 42286 --format documentation --format json --out "$fixture_result"
+   ```
+
+2. **Exact failing-topic reproduction on the correction:** use the existing
+   testing procedure's workflow-derived `platform-config` manifest and ordinary
+   single RSpec process in both modes, retaining the exact36 selected paths and
+   seed42286. Append `--seed 42286` to its command; retain both formatters and
+   fresh per-mode native/environment/lock companions. The new smoke remains in
+   foundation, so it does not change this topic's selection. Historical full
+   inventory is498; collect actual per-mode counts, IDs and pending reasons,
+   without assuming full/core pending behavior is identical or claiming old
+   evidence validates corrected bytes. The support-user Debug example must
+   return403 with no outside-example errors or fixture-cleanup failure.
+3. **Normal new commit/hooks, then mandatory final review:** parent commits the
+   complete seven-path unit after quick checks; inspect actual declared hook
+   results without bypass. Supply the independent retained reviewer the final
+   complete branch history/base-to-head diff, quick results and four-migration
+   provenance, explicitly recording that this unit adds no migration. Earlier
+   review of a933 does not review this new fixture policy. Parent selects the
+   applicable lanes under mandatory-change-review; the existing complete
+   storage/auth/schema branch warrants its established all-four-HIGH scope.
+   Resolve Blocking/Important findings under that workflow before long checks.
+4. **Owning longer checks after review disposition:** fresh Luna/low watcher
+   runs complete ordinary API suites separately in full and core, using the
+   existing eligible nonmigration spec set and normal generator/plugin filters.
+   The explicit workflow manifests supply the file inventory; do not silently
+   fold migration specs into the RSpec process. Use ordinary `bundle exec rspec`
+   over those files with native JSON and both-mode dependency evidence. No
+   timeout/skip/expectation relaxation or database cleanup substitution.
+5. **Feature publication and CI:** parent publishes the normal follow-up branch
+   through its ordinary freshness/SSH workflow, then requires API Specs matrices
+   and the stable topic-coverage aggregate green at the final head, including
+   exact-once coverage of the new smoke in foundation for full/core. Preserve
+   historical failed attempts and actual effective dependencies. This is not
+   default-branch integration approval.
+
+If pre-RSpec apt setup again exhausts the one-hour job budget, classify it
+separately from test execution. A retry of that failed job is allowed only after
+parent proves from its exact attempt that no specs ran; a timing guess or missing
+upload alone is insufficient. Keep the budget unchanged and retain the failed
+attempt/annotation. Any actual RSpec failure still needs its own diagnosis;
+do not treat a blind green rerun as a correction.
+
+Acceptance requires the pin/same-adapter/open-transaction/no-transaction smoke
+proof, unchanged real403 authorization, preserved separate-connection assertions
+and cleanup, both focused/topic modes and complete suites successful, declared
+hooks and complete-branch review accepted, final feature publication and API
+Specs aggregate green. Original quick results and complete suites retain their
+recorded source scopes; the complete suites ran on0b8. The old foundation failure
+also retains its scope. The correction at990 is reviewed,
+foundation verification passed and feature publication is complete. Exact-head API
+Specs38160746915 succeeded in22m18s, all full/core matrix jobs and topic coverage
+passed, with no retry/cancellation/failure evidence for this run. The unmerged
+feature is ready, awaiting explicit default-branch merge approval.
+The stopped cluster stays stopped; session stays open.
+Contract2 invocation/termination/
+release, physical/G2/default/pin/package/live/alias/NAS/destination/scheduler/
+object holds remain. No new production or physical authority follows.
+
+### Disposable Admin lock-wait root-cause diagnostic, 2026-10-10
+
+**Root-cause investigation COMPLETE: corrected control and trigger accepted,
+fixture/connection-lifetime mismatch causally reproduced; remedy not selected.**
+The earlier two-file task
+`01a12494-62c2-7d43-8162-47c362738f61` is complete. Parent accepted:
+
+- Probe SHA256 `5679387f3ef03b629a2699c455c3d9f9cfb3368fdf254bc7b4d1f833ae0035c1`.
+- Observer SHA256 `b45f6181e18f805207c2417c452f11e8c1f6d661686637484d61abc41400be28`.
+- Manifest SHA256 `df1fa8f14b7be5f9afc83fad63d377fe07d459b983ff7e3928a5ceb2f0a64687`.
+- Source/library/env/cache freeze SHA256
+  `96a3cd4c2ac8f089fa944a460bd74d5a006b10456f09a34a4c0c234c31d56541`.
+
+Actual35 pure recording checks/240 events and syntax passed; this is no
+DB/runtime proof. Parent preflight0/parity1/executed0/0.989s is preparation only.
+Parent copied accepted `guarded_instance.rb` byte-identically and derived the
+actual workflow36 topic files, equal to the native file set. Natural full36/498
+seed42286 execution is assigned once to fresh Luna/low
+`/root/admin_debug_rootcause_natural_20261010`. Parent subsequently confirms actual
+observer3104564/RSpec3104601/PGID3104336 launched. Watcher reports sampler active,
+436 records and no gaps or row overflow at that historical progress checkpoint.
+The earlier no-start acknowledgement and pending-outcome checkpoints are now
+superseded by lead's accepted result below, not architect polling/private reads.
+
+Natural result PASS0/1871.085s:498 examples/0 failures/3 pending/0 outside errors,
+exact498 IDs/order, target ordinal43 passed4.381s. Target capture seq40134..40419
+is contiguous: OPTIONS checks in Aadapter3/backend9 while depth1/fixtureTx381
+remain, owner becomes nil, then GET reuses A. No waits were observed. Observer
+1857 polls stopped normally/errors0/overflow0. All children waited; guarded
+cleanup and source/index/cache parity1 are accepted. Recorder errors0 but the
+later64MiB cap leaves110393 retained/82325 dropped, first retained sequence
+gap110391 and global incomplete=true. This proves the scoped target prefix,
+not full chronological coverage or an original CI cause. The lease snapshot
+was unavailable because this MRI registry is the native WeakKeyMap subclass,
+not an object with `@map`; this is an observation source-read gap with no
+application effect. Original freeze and passive probes remain unchanged.
+Parent projection SHA256
+`c97de576c8e0edf9bd7cde53c841ced50195c80a32b78f571e7d7bda17cd9398`.
+
+Parent's completed-attempt projection also records reap seq39171..39259 before
+the target: three dead-owner/depth0 adapters278/280/282 retain their adapter
+identities while reset changes backend10/11/12 to backend13/14/15. Retained
+transactions are empty. Sticky snapshot fields remain unavailable; the observed
+dead owners, depth and reset chronology do not supply those missing fields or
+prove the original CI chronology. This normal client replacement informs the
+controlled identity rule below; it is not an application fault.
+
+No forced reap, filtering or fail-fast occurred in the natural run. Its required
+inspection is complete. The one-file counterfactual authoring/static task
+`01a124d3-75da-7d62-a6e8-4c80b59959ca` produced the accepted original freeze.
+Its once-launched control failed during setup before any HTTP request or
+intentional reap. Parent accepted the narrow private lazy-client correction
+and completed control/trigger results below, preserving that original packet.
+All results above are supplied parent
+evidence; no private artifact is read by the architect.
+The user requests the root cause of Admina933 API37686690438, full-platform-config
+job113016228924, seed42286: Debug `[1:4:3]`, request2 GET, expected403/actual500,
+`ActiveRecord::LockWaitTimeout` caused by `Mysql2::Error::TimeoutError`.
+The first diagnostic is the unchanged full36-file/498-example process, with
+passive in-process attribution and one separate bound InnoDB wait observer.
+No application correction, permanent diagnostic framework, frame-selector change
+or artificial reaper trigger belongs to this first run. Parent owns orchestration,
+DB guards/cleanup and the fresh Luna watcher; implementer owns only the released
+private prototype. The natural execution release above is lead-owned; the
+architect performs no execution.
+
+#### Original source-supported candidate, subsequently reproduced below
+
+- `api/spec/spec_helper.rb:24–27` holds the ordinary fixture AR transaction across
+  `example.run`. `version_helpers.rb` issues OPTIONS before GET; preserve both
+  requests, their normal authentication and the original403 assertion.
+- HaveAPI0.29.8 `lib/haveapi/server.rb:449–454` unconditionally calls
+  `clear_active_connections!` after a request. AR8.1.4 handler/pool release,
+  checkin and adapter expire return the connection without rolling back its
+  open transaction. Adapter `clean!` is not a transaction reset. Fixture adapter
+  A can therefore remain the lock owner after becoming available to the pool.
+- `dataset_plans_spec.rb:478` uses three `with_connection` workers.
+  `DatasetPlans.with_configuration_lock` calls admission, whose
+  `StorageFreezeControl.connection.transaction_open?` makes the lease sticky.
+  AR's `with_connection` then does not release it. The plan transaction commits
+  and successful `workers.each(&:value)` waits for thread exit: no surviving
+  worker or still-open worker transaction is proved.
+- AR `ConnectionPool#reap` steals a dead owner's adapter, resets it and checks it
+  in; its available queue is LIFO. A reap/checkin between OPTIONS returning A
+  and GET's checkout could make GET use B and wait on A. Actual order, A/B server
+  IDs and ownership must be observed; not every checkin switches connections.
+  Password's `user.with_lock` and NewBasicLogin's `user.lock!`/login/session writes
+  are candidate callsites before Debug's role refusal, not established failures.
+
+Lead supplied implementer's order evidence: target ordinal43; preceding42 are
+monitor3, dataset_plans25, console/rpc11 and three Debug cases. The sole preceding
+worker seam is dataset_plans `[1:24]` ordinal12. GlobalReset clears SpecSeed and
+current actor/session/PaperTrail; a support-user memo leak is not established.
+The preceding11.988s excludes suite/pool startup and proves no reaper interval.
+The original CI artifact lacks a query/row/table/connection/holder; reproduction
+cannot retroactively recover those missing historical observations.
+
+#### Environment and exact private manifest
+
+Parent accepted dependency-only setup PASS0/89.708s, source3251/raw-index parity,
+DB/examples0. Keep its declared `.#api` environment obtained through
+`nix print-dev-env` JSON without shellHook, private exact-copy Gemfile and public
+plugin source, Bundler2.6.9, frozen original CI lock SHA256
+`24b25d546d3fe72c724123297cd4ba1ee77edd07bca376618c62ddba74f00ced`.
+Authoritative `BUNDLE_WITHOUT=development` with jobs4/retry3 gives exact98 resolved
+name/version/platform tuples. Initial118 included20 development gems; it is
+retained separately without reinstall or source/lock rewrite. Parent accepted
+runtime dependency evidence SHA256
+`e24cf20271139c7f996a69b5a12f06e71b12d3ce57a77e66479b882b4b616589`.
+Local Ruby3.4.9 versus CI3.4.11 remains explicit; exact gems do not establish
+whole-environment/server equality. No repeat setup or project pin change.
+
+**Two private files now frozen and accepted**, in the parent-owned
+directory `/tmp/admin-debug-rootcause-20261010.o__5axte/`:
+
+1. `root_cause_probe.rb`: one in-process observer of SQL, pool/transaction and
+   existing fixture/request phases.
+2. `lock_wait_observer.rb`: separate autocommit observer of the same owned DB.
+
+Parent supplies the existing driver, frozen source/library/prototype hashes,
+private outputs and accepted `GuardedGenerationDb`; no second DB owner or new
+tracked test path. The completed authoring and pure recording checks retain
+their non-DB scope; the separate natural run release is recorded above.
+The architect does not read that private packet. All3251 application/source/
+index/cache bytes remain held.
+
+#### First-run observation invariants
+
+- Use evented `sql.active_record` start/finish observation so the callsite is
+  captured **before** a wait. AR's `start_transaction.active_record` and
+  `transaction.active_record` supply transaction origin/outcome. Use a local
+  monotonic invocation sequence; notification instrumenter IDs are not unique
+  statement IDs. Nested/logical transactions are not assumed to be server IDs.
+- At the actual MySQL2 `perform_query` boundary, read the supplied client's
+  in-memory `thread_id` and delegate unchanged. This binds an executing SQL
+  event to its server connection without an extra query. Never call
+  `adapter.raw_connection` for observation: it disables lazy transactions and
+  marks the adapter dirty. Cached events without a query entry are not server
+  executions. Do not checkout, lease, materialize, ping or run SQL to observe.
+- Observe existing release/checkin/reap and actual checkout/lease behavior,
+  including sticky state and transaction depth at the relevant boundaries.
+  Retain the actual returned adapter and owner-thread alive/dead/unknown state;
+  observe existing returned leases without calling a lookup that creates one.
+  Existing adapter lease/expire/steal calls can expose state under the original
+  pool lock. Mark unlocked before/after snapshots as such. No extra pool locks,
+  queue changes, reaper calls, schedule changes or application connection use.
+- Assign bounded process-local identities to adapters, raw clients and owner
+  contexts; retain their mapping rather than reuse bare object IDs. A changed
+  raw client/server ID is a new connection incarnation. Keep transaction origin
+  across request checkin and example completion until observed outcome/reset.
+  Correlate actual checkout/SQL events; never infer an A/B switch from LIFO alone.
+- Use actual `RSpec.current_example.id`/phase and the existing request scope's
+  ordinal/method only when example identity matches. Keep OPTIONS as request1
+  and observe whether GET is request2. A background thread without an example
+  is runtime-owner-unknown; its public spec callsite is separate source evidence.
+  Do not label it using whichever example happens to be globally running.
+- Record only monotonic time/sequence, safe SQL kind, public file/line callsite,
+  connection/transaction/owner identities and bounded state/status. Classify
+  the leading SQL kind conservatively; obtain the table from the wait graph,
+  not a general SQL parser. Keep at most six enumerated public checkout/gem
+  frames from the first64 caller frames. No SQL text/hash, values/binds, request
+  parameters, messages, credentials, row/user IDs, configuration or raw objects.
+- All wrappers delegate exactly once with original arguments/keywords/block,
+  return value and exceptions/backtraces. Observation errors have a fixed flag;
+  they cannot replace the original request/spec outcome. Bounded hot-path memory
+  only, with explicit truncation/drop/error counters; no blocking output while
+  holding pool/adapter locks. Parent/member fix finite buffer/output caps in the
+  manifest before execution. Overflow means incomplete evidence, not success.
+
+#### Separate InnoDB observer
+
+The public installed MariaDB11.4.12 `mariadb_sys_schema.sql` defines
+`x$innodb_lock_waits` using `INFORMATION_SCHEMA.INNODB_LOCK_WAITS`, two
+`INNODB_TRX` joins and two `INNODB_LOCKS` joins. Reuse that explicit join shape:
+requesting/blocking transaction IDs to `trx_id` and requested/blocking lock IDs
+to `lock_id`. Check these columns on the actual declared owned server before
+examples; do not substitute MySQL8 tables or enable new server instrumentation.
+Do not select the whole sys view: it includes queries and generated KILL text.
+
+Use a separately spawned process/direct Mysql2 client, never an inherited AR
+connection. Parent's existing guard binds its owned Unix socket and the same
+connection/server identity before reads. Autocommit only, reconnect disabled,
+finite connect/read/write deadlines, explicit `as: :hash, symbolize_keys: false`.
+It must not borrow or issue SQL through the blocked application connection.
+
+Project only waiter/blocker `trx_id`/`trx_mysql_thread_id` (DB IDs, not OS PIDs),
+transaction/wait start times, lock mode/type and the public table name after
+matching the exact private DB and known schema. Unknown names remain redacted.
+No `trx_query`, `lock_data`, processlist `INFO`, row keys, full status/config dumps,
+SQL values or credentials. No DML, KILL, transaction or server-setting changes.
+
+Poll at most once per second with bounded rows/time/output, recording sample
+begin/end, changed edges and gaps/errors/overflow. Start before examples and
+retain coverage through normal RSpec cleanup. Correlate an edge with the
+in-flight SQL, server/client incarnation, transaction and overlapping monotonic
+interval. This can establish the timed-out callsite/table and blocking
+transaction's fixture/lease origin. A prior statement in that transaction is
+not automatically the exact row-lock acquisition statement. Short waits,
+metadata/advisory locks, unmanaged clients, non-atomic views and missing events
+remain limitations; an empty graph is not proof of no blocker. Observer timing
+can perturb the race. No fallback guesses or lifetime/reap receipt follows.
+
+#### Execution, checks and cleanup ownership
+
+The natural execution release above assigns parent/fresh Luna one full run;
+all outcomes remain pending. Reuse unchanged ordinary
+TestDb/SpecDbSetup/schema/seeds/full-plugin setup and the already accepted
+pre-effect Instance guard: fresh owned state, configured/inherited DB refusal,
+owned socket URL, no auto-start/shared DB/fallback, source/index/cache guards.
+Parent retains lifecycle/error/cleanup policy; member must not replace it.
+
+From ordinary `api/`, in the prepared private bundle environment, derive the36
+sorted files from the authoritative workflow and use this command shape:
+
+```sh
+bundle exec rspec "${files[@]}" --seed 42286 \
+  --require "$private_root_cause_probe" \
+  --format documentation --format json --out "$private_native_result"
+```
+
+Keep `.rspec`'s normal spec_helper require. RSpec applies seed before requires;
+append the private require after that helper and before spec files/before-suite
+execution. Mark earlier schema/pool initialization outside observation coverage.
+Do not manually boot the helper before seed parsing, filter to Debug, fail fast,
+prewarm the pool or force reap in this first run. Compare actual498 IDs/order,
+three pending cases, target ordinal/request phases and coverage with the native
+CI manifest. A green result alone does not settle the cause or clear CI.
+
+Parent reviews the complete private files before release and selects small
+recording checks for unchanged delegation/exception propagation, start-before-
+wait capture, A/B identity and transaction retention, unknown owner handling,
+redaction and bounded error/overflow behavior. Ordinary syntax plus these
+checks and the owned-server projection shape establish probe mechanics only;
+no separate general diagnostic test framework is required. Freeze all actual
+code/env/library inputs; verify loaded bundle entries agree with the accepted
+resolved tuples, without loading every gem solely for observation.
+
+Native RSpec primary/result remains authoritative. Report diagnostic and cleanup
+failures separately. Parent stops/drains/waits the owned observer and tool
+children, then uses the existing guarded socket shutdown only while bound;
+retain private state, refuse bare-PID fallback/prune/restart and quarantine lost
+ownership. Never KILL a DB blocker to make the example finish. Cleanup must not
+mask the primary failure. Bounded PID/listener absence is not universal reap.
+No source/schema/production interface changes; rollback is omission of the
+private require/observer on a fresh process, not retained-cluster cleanup.
+
+#### Controlled results: causal reproduction complete, remedy not selected
+
+Parent accepted the corrected private hook and mechanics:
+
+- Hook SHA256 `cfef36d7c00fb22dc21d9853ac184071db347faadee94d4cc84d22b5f576aa31`.
+- Mechanics SHA256 `c0b508a573268dc7c587d78f78babc2168be4a830a65c64dfd96c4ddbd8f4816`.
+- Manifest SHA256 `8da13213b372218bac5e377fca3cd7d59fcd704c5e5d6362bca11345618df046`.
+- Parent pure recording17/0, SHA256
+  `05b16fbe5c839a0b0f00bd2874b6f199f785f3d7e2c2385034e41291ffdfa075`.
+
+Corrected `before_options` control PASS0/40.957s, native1/0: Aadapter3/backend9
+retained depth1; B adapter92/backend10 reset to backend11 before OPTIONS.
+OPTIONS and GET both used A; GET returned the expected HTTP403, with no waits.
+Safe projection SHA256
+`f41a2ce393873be413692a897ae1214cfa741452cda5535e15c4349e297e5ee1`.
+
+Corrected `after_options` trigger exited1/91.485s, native1/1. Aadapter3/client4/
+backend9/depth1/fixture transaction90 remained unchanged. OPTIONS returned200
+on A; HaveAPI cleanup checked A into the pool while that transaction stayed
+open. Intentional reap reset the same B adapter92/backend10 to backend11 at
+depth0 and checked it in; GET then selected B/backend11.
+`Password#user.with_lock` at `api/lib/vpsadmin/api/operations/authentication/password.rb:49`
+began on B. The InnoDB observer captured50 identical wait samples: B transaction2580
+requested an X RECORD lock on `users`, blocked by A transaction2579/backend9's
+X RECORD lock. Mysql2::Error::TimeoutError became ActiveRecord::LockWaitTimeout,
+then HTTP500 instead of the unchanged403 assertion. Observer83 polls/errors0/
+overflow0/incompletefalse; cleanup, waits and source/index/cache parity passed.
+Safe projection SHA256
+`ac013013b9f4c546c07e54a70a349e507c131935b496dd33726b75791c6c3fed`.
+
+**Accepted conclusion:** the controlled experiment causally reproduces a
+fixture/connection-lifetime mismatch. Admin's hand-rolled unpinned outer
+transaction stays open while HaveAPI's `clear_active_connections!` returns A
+without rollback. Pool reordering lets GET borrow B; its Password `with_lock`
+then blocks on the fixture's own locks held by A. The natural run reused A and
+passed, showing how connection selection determines manifestation. This is a
+causal reproduction matching CI, not proof of the historical holder: the CI
+attempt did not capture backend/query evidence. The localRuby3.4.9/CI3.4.11 gap,
+natural capture cap/gaps and unavailable lease snapshots remain explicit.
+The separate core apt job remains a dependency-setup budget expiry, with its
+stalled transport unrecorded.
+
+Root-cause investigation is complete. At its completion no remedy had yet been
+selected; the subsequent user-approved pinned-fixture unit is specified above.
+The diagnostic results remain separate from its future verification. All results here
+are parent-accepted supplied safe evidence; no private raw packet was read or
+execution performed by the architect. No operational authority follows.
+
+**Historical preparation and first setup refusal:**
+
+Parent accepted and inspected the natural full-topic result above; the
+inspected-first condition is fulfilled. The one-file AUTHORING + STATIC ONLY
+task `01a124d3-75da-7d62-a6e8-4c80b59959ca` produced the accepted final hook.
+Parent independently read the full hook and recording and accepted:
+
+- Hook SHA256 `3c739b34489fe5875a3351e3224788a8badae04f632897f9879e1f94d848175e`.
+- Member manifest SHA256 `a26881410ee2867dfc7b6ac598a5093fe680d551902e64d3bc1b3ddd109f8566`.
+- Final16 pure recording cases PASS0/0.973s, with no DB/spec/server execution.
+- Both guarded preflights0; frozen SHA256
+  `61fa013346c48dd42972cd0c553e3f82d0dd14f0b6d5cff95bc3f1d312db43c6`
+  binds33 inputs/1191 libraries.
+
+The control `before_options` launched once on exacta933 under fresh Luna/low
+`/root/admin_debug_rootcause_control_20261010` and failed setup1/37.783s,
+native1/1. The hook refused `counterfactual_client_unavailable` before
+`b.transaction`; the worker joined/dead, HTTP requests0 and intentional reaps0.
+Observer29/error0/incompletefalse and cleanup/waits/source-cache parity passed.
+This is a private setup refusal, not evidence of the proposed contention
+mechanism or an application failure. The original control frozen packet and
+passive files remain exact; `after_options` was still prepared UNRUN at that
+historical checkpoint.
+
+Parent's installed-source inspection establishes that `pool.new_connection`
+creates an adapter and `checkout_and_verify` only calls `clean!`; checkout need
+not have a raw client. The real client appears lazily on the first normal query.
+Parent directly released the smallest correction in fresh private packet
+`/tmp/admin-debug-rootcause-counterfactual-lazy-20261010`: delete ONLY pre-SQL
+`@b_tuple = snapshot(b)`. Retain B's reference, difference from A and depth0,
+then every existing post-real-transaction identity/commit/sticky/owner/reset
+proof. Do not force connect, issue an identity query or rewrite the original
+file. The added pure lazy-checkout case and corrected freeze were then accepted
+by parent before the completed runs above. This retained the one-hook manifest
+and the accepted experiment unchanged.
+
+Parent corrected private launcher output-path parentheses
+before any launch; AST/static pass records preparation only, not an application
+failure. Original passive files remain held unchanged. The accepted intentional
+same-B reset mapping and unchanged A binding below remain exact. These facts
+are lead-supplied; the architect reads no private evidence or performs execution.
+This is a controlled experiment, not an application remedy
+or an additional gate for delivered source. Both historical causes and the
+local Ruby3.4.9/CI3.4.11 difference retain their limits.
+
+Additional source confirmation: AR8.1.4 `test_fixtures.rb:194` implements its
+own transactional fixtures using `pool.pin_connection!` and `lease_connection`;
+`ConnectionPool#checkin` returns immediately for that pinned adapter. Admin's
+ordinary `spec_helper` around transaction does not pin. This independently
+establishes the different fixture/lease lifetime contracts, not a selected
+remedy or proof of the historical A/B switch. The controlled hook preserves
+Admin's existing unpinned wrapper; it must not add pinning or AR fixture setup.
+
+**Minimal additional manifest:** one private `root_cause_counterfactual.rb` in a
+new parent-owned packet, with a strict `before_options` or `after_options` mode.
+Parent supplies two fresh guarded DB/state/driver instances and separate outputs;
+reuse byte-identical accepted passive probe5679387f and observerb45f6181, exact
+98-gem/lock24b25d54 environment and ordinary spec helper/setup/cleanup. No edits
+to those probes, application/gem source, request helpers, schema or pool policy.
+Do not load this hook into the natural run. The parent driver/watcher remains
+the sole lifecycle owner; the hook does not acquire an independent DB owner.
+
+**Exact method seam:** privately prepend only `VersionHelpers#api_versions`.
+Guard the exact normalized example ID
+`spec/api/resources/debug_spec.rb[1:4:3]` and require one entry in that example;
+all other examples delegate untouched. This original method sets the Accept
+header, calls `options '/'`, asserts200, parses and asserts a nonempty version
+list, then returns it to `api_version`/`vpath`. `as(SpecSeed.support)` has already
+selected the support fixture and set authentication before entering it. Thus
+wrapping this method preserves the original support user, OPTIONS/GET, paths,
+headers, JSON handling and403/logical-failure assertions. Do not wrap/reimplement
+`vpath`, memoize versions, issue another request or pre-resolve the path.
+
+The wrapper's order is exactly:
+
+1. **Identify existing fixture A.** Obtain the existing pool and
+   its already-present main-context lease through the noncreating MRI getter
+   below, not `.connection`/`lease_connection`/checkout or a creating lookup.
+   Require `StorageFreezeControl.connection_pool` is that same pool.
+   The positive path must already have A, owned by the current thread with
+   `open_transactions == 1`, from the original outer fixture transaction.
+   That around transaction already leases A even while lazy; do not force
+   materialization or add another before-example transaction. The selected
+   hook prepares B inside the original example, before its OPTIONS call.
+   Absence or another depth refuses preparation; do not create/replace A.
+   Record its exact adapter/client identity and server connection ID in memory.
+2. **Create one real sticky worker B.** Start exactly one ordinary Thread.
+   Inside `pool.with_connection do |b|`, require B differs from A and starts
+   at depth0; retain B without taking a pre-SQL client/backend snapshot.
+   A lazy checkout may have no raw client yet. Run
+   `b.transaction { StorageMutationAdmission.check! }` unchanged.
+   The real admission method calls `StorageFreezeControl.connection`, making
+   this worker lease sticky, then locks/reads the seeded read-write singleton.
+   Do not stub admission, modify its mode or manually set sticky state. On
+   normal return take the existing B client/backend snapshot, record depth0
+   and return its reference from the worker. Every post-real-transaction
+   identity, commit, sticky, owner and reset proof remains required.
+   There is no explicit checkin/release in its block or ensure. This retains
+   the ordinary `with_connection` behavior being tested.
+3. **Join before any OPTIONS/reap action.** Use a bounded join (the existing
+   dataset-worker10s bound), then `worker.value` only after successful join.
+   Require normal worker completion, `alive? == false`, B's owner still exactly
+   that worker, B depth0, and A still the same main-thread fixture transaction.
+   The passive trace must establish successful admission, sticky upgrade and
+   committed transaction before worker exit; depth0 alone is not commit proof.
+   Never treat a rescued worker error or timed-out join as a prepared case.
+4. **Control, `before_options`:** invoke exactly one real `pool.reap` here.
+   Require B was the dead leased adapter immediately before this call and is
+   reset/expired/checked in by that call, while A remains the open fixture.
+   Then call `super` exactly once and return its exact version-list object.
+   Do not reap again after OPTIONS. The original example subsequently issues
+   GET and asserts403; observe which adapter actually serves it.
+5. **Trigger, `after_options`:** first call `super` exactly once. Only after its
+   successful return (therefore OPTIONS200/nonempty versions and server after
+   cleanup complete), verify A retains its original open transaction but has
+   been checked in, and B is still the dead owner's depth0 adapter. Invoke the
+   one real `pool.reap` now, before returning the unchanged version-list object
+   to `vpath`; the original GET follows without a new helper or synthetic SQL.
+   If `super` raises, preserve that original failure and do not invoke reap in
+   an ensure. Never retry or move the injection point to obtain a desired result.
+
+The valid case has **one worker and one intentional real reap**, not one forced
+checkout. Observe actual next-adapter selection. Preconditions may refuse with
+zero intentional reaps; this is setup-inconclusive, not a completed control.
+The control should ordinarily use A for both requests; a successful trigger
+must actually use distinct B for the waiting GET while A remains the blocker.
+Neither expectation may be substituted for observed identities/wait evidence.
+
+**Identity/chronology proof without changing the passive probes:** the hook may
+retain A/B/worker references and emit bounded fixed-label phase records into
+its own private result. Read only the retained adapter's existing `@raw_connection`
+object, verify it is an existing Mysql2 client and use its in-memory `thread_id`;
+never invoke the adapter's `raw_connection` accessor, connect/verify/ping or run
+an identity query. Retain adapter/client references and record their object
+identities and server IDs before/after each applicable phase; B's first client/
+backend tuple is taken after its real transaction, never at lazy checkout.
+A's original adapter, client,
+backend and fixture transaction must remain unchanged throughout.
+
+The installed AR8.1.4 `mysql2_adapter.rb:118` aliases `reset!` to `reconnect!`.
+Its `reconnect` closes the old raw client and creates a new client on the same
+adapter; `abstract_adapter.rb:716` then resets transaction state and configures
+that connection. `ConnectionPool#reap` resets the selected active dead-owner
+adapter before checking it in. Therefore B's intentional reset is expected to
+replace its client/backend; rejecting every such replacement would reject the
+real source path. Permit only the same retained B adapter's fully observed
+transition from its prepared old client/backend to the new client/backend
+created inside that intentional reap's actual reset interval. Bind both tuples
+to the passive `connection_incarnation` and reset begin/end chronology, require
+successful reset and depth0/empty retained transactions before checkin, and keep
+the old tuple as history. Correlate the GET and wait-graph waiter with B's **new**
+backend and the same B adapter, never its pre-reset server ID. This permits no
+arbitrary reconnect or incarnation adoption outside that exact transition.
+Unknown identities, an unmatched/failed reset, additional unbound transitions,
+or any change to A's fixture binding make the comparison inconclusive. Observe
+ordinary reconnect behavior without adding, suppressing or retrying it.
+Use the same safe field/public-callsite limits as the accepted probe; no object
+inspection, SQL, row values, credentials or configuration output.
+
+**Independent MRI lease lookup in this one private hook only:** AR8.1.4 selects
+`WeakThreadKeyMap = ObjectSpace::WeakKeyMap` on the actual Ruby3.4.9 MRI and its
+`LeaseRegistry` directly subclasses it. The registry's overridden `[]` creates
+a Lease on a miss; `connection_lease` calls that override. Read the existing
+pool `@leases`, require the actual MRI/LeaseRegistry/native superclass shape,
+then use `ObjectSpace::WeakKeyMap.instance_method(:[]).bind_call(leases, context)`.
+This invokes the native base getter without the creating override or `@map`
+assumption. Use the recorded actual execution context (main context or joined
+worker Thread), not a newly invented owner; an absent entry stays nil/refuses
+the claimed preparation. No generic compatibility fallback, mutation or passive
+probe change. Author pure recording checks against the actual AR subclass:
+missing keys remain absent; an existing lease is returned by identity with its
+connection/sticky values unchanged. Execution of such checks remains parent-
+owned. Actual lease_connection/with_connection chronology plus the retained
+dead owner can also establish sticky behavior; do not backfill the natural
+run's unavailable snapshot from this new getter.
+
+Record worker created/joined, OPTIONS entry/successful return and intentional
+reap begin/end, with monotonic times and thread/adapter/server identities.
+Correlate these with the unchanged passive lease/sticky/transaction/reap/checkin
+and query events plus the separate InnoDB wait graph. The intended reap must be
+on the main thread inside the labeled interval; record every natural reap as a
+separate call. Make the timing comparison inconclusive only for interference
+with the prepared worker, connection selection, fixture transaction or observed
+wait, or evidence too incomplete to distinguish it. Relevant cases include B
+reclaimed before the intended injection; competing reclaim/checkin that changes
+or obscures selection between A's OPTIONS checkin and GET's actual SQL entry;
+selection of another adapter; changes to A or changes to B beyond the exact
+intentional reset transition above that affect the wait; and missing events or
+ambiguous ordering across those boundaries. B's source-required client/backend
+replacement inside that fully bound reset is not interference.
+
+AR's `reap` resets/checks in or removes only the stale adapters it selected. A
+fully observed empty reap makes none of those changes. In particular, an empty
+natural reap after GET's statement has already selected B cannot reorder that
+in-flight statement and is not an automatic rejection. Preserve it in the
+chronology; an observed B-waits-for-A graph after the intentional checkin remains
+direct evidence of that wait. Other later activity matters only if it affects
+the relevant identities/transaction/wait or leaves that effect ambiguous. Do not
+disable the reaper, lock it out, manipulate the available queue or claim that
+all checkins switch connections. No default reaper-frequency assertion is needed.
+
+A trigger's useful evidence is an actual SQL entry/timeout on B's post-reset
+backend, an overlapping graph/table showing that backend waiting for unchanged
+A and its still-open original fixture transaction, following A's OPTIONS checkin
+and B's intentional reap/reset/checkin. A control
+must preserve the native403 assertion and record its actual request/adapter
+chronology. A prior successful statement in A does not alone prove the exact
+row-lock acquisition. Neither an artificial timeout nor a green control proves
+the original CI had the same reaper timing; report a reproduced mechanism and
+its historical attribution limit separately.
+
+**Parent execution recipe after separate release:** each mode uses fresh state,
+ordinary full-plugin schema/seeds and the original single example (not a copied
+body), with the same accepted passive observers and seed42286:
+
+```sh
+bundle exec rspec 'spec/api/resources/debug_spec.rb[1:4:3]' --seed 42286 \
+  --require "$private_root_cause_probe" \
+  --require "$private_root_cause_counterfactual" \
+  --format documentation --format json --out "$private_native_result"
+```
+
+Parent sets the strict mode for each child; no default or automatic second case.
+The normal `.rspec` helper precedes the two requires. Retain each native result
+and hook/probe/observer output separately. This one-example comparison is not
+full498 verification or an acceptance pass; keep the original403 assertion even
+when the trigger produces500. No SQL/test timeout, retry, isolation, pool size,
+callback or auth behavior change. Natural-result inspection comes first; parent
+may release control then trigger as separately identified fresh operations.
+
+Before execution, inspect the complete one-file hook and use bounded recording
+checks for mode/ID/single-entry refusal, exact before/after-super ordering,
+original return/exception preservation and zero extra reap on failure. Include
+the same B adapter's expected old-to-new client/backend transition, waiter
+matching against the new backend, and refusal of A churn, unmatched reset or
+identity adoption outside that interval. This checks the mechanical hook, not
+DB causality. Add the pure lazy-checkout case: B initially has no raw client,
+ordinary transaction/admission establishes it, and the unchanged post-transaction
+checks bind its tuple without any extra connect/query. Parent executes the case;
+no DB proof follows from recording checks. A worker timeout/error or loss of
+A/B ownership stops that case as inconclusive without continuing GET, retrying,
+reaping for cleanup or killing/unlocking a DB holder. The10s join is only the
+preparation worker bound; it changes no existing example or database timeout.
+The hook must not leave an unreported live worker. Parent's unchanged guarded
+process/DB cleanup owns any incomplete child, preserves the primary error and
+quarantines uncertainty; no new cleanup or termination facility is proposed.
+The original hook freeze/inspection and pure recording checks retain their
+historical scope. The first control failed setup as recorded above; the accepted
+private lazy-client correction and17 pure cases preceded the completed control
+and trigger. Their causal result is recorded above with its historical CI
+attribution limit. No application remedy or operational authority follows.
+
+Parent separately traced the dependency job to `apt-get update`: eight repository
+metadata events then approximately one hour of silence, before package install.
+The stalled transport remains unrecorded; that budget expiry is independent.
+Admina933/OS6157 source/index, four migrations, OS800 pin and all prior review/
+proof scopes remain. Cluster STOPPED/session OPEN and Contract2 invocation/
+termination/release, physical/G2/default/live/alias/NAS/destination/scheduler/
+object holds are unchanged. No application authoring or correction is released.
+
+### Bundler2.6.9 parser compatibility: bounded correction brief
+
+**ACCEPTED BRIEF; local checks/review complete, actual2.6.9 evidence now scoped above.**
+Lead accepted the one-expression correction within the three-path freeze above;
+the original design and verification scope remain unchanged. Its exact manifest
+is `api/spec/ci_environment.rb` only, within the accepted six paths.
+Delete only `parsed.valid? &&` from the guard following
+`Bundler::LockfileParser.new(text)`, leaving
+`raise Invalid unless parsed.sources.any?`. Keep the constructor, section and
+source-option prechecks, actual Rubygems source type/remotes validation, size,
+privacy, exact-byte/output/error and workflow-derived topic guards unchanged.
+No `respond_to?`, version/reflection fallback, replacement parser or dependency
+pin is needed. No workflow/action/extra spec path/production change is proposed.
+
+The source boundary is concrete. Lead read official RubyGems v3.6.9
+[Bundler version.rb](https://raw.githubusercontent.com/rubygems/rubygems/v3.6.9/bundler/lib/bundler/version.rb)
+and [complete lockfile_parser.rb](https://raw.githubusercontent.com/rubygems/rubygems/v3.6.9/bundler/lib/bundler/lockfile_parser.rb):
+Bundler2.6.9 has the constructor, `sources` and `KNOWN_SECTIONS`, but no `valid?`.
+The architect independently read the installed public Ruby3.4.9 Bundler2.6.9
+version/parser source and ambient Bundler4.0.14 version/parser source, without
+network or execution. The latter assigns `@valid` only for empty stripped input
+or at least one exact known section. The helper already rejects empty input,
+requires an exact `GEM` section and rejects top-level sections outside the
+owning `KNOWN_SECTIONS` allowlist. Thus every input reaching the newer predicate
+already satisfies it; removing that call removes no independent validation.
+Both parsers still construct real source objects, and the helper continues to
+require a nonempty set consisting only of permitted Rubygems remotes.
+
+Calling the absent method in2.6.9 would be caught by the helper's existing
+StandardError handling and refuse environment evidence with its fixed message.
+That is a new diagnostic-helper compatibility issue, not a cause of the
+original CI500. The current local parser exposing `valid?` cannot itself prove
+compatibility with the recorded CI Bundler2.6.9. No original server exception
+or broader dependency equivalence follows from this source finding.
+
+**Regression decision:** retain the existing15 real-parser CI-provenance
+examples in `api/spec/smoke/request_exception_diagnostics_spec.rb` unchanged.
+They cover full/core exact lock copy/digest/resolved versions, invalid labels,
+unsafe remotes/unsupported sections, wrong or symlinked locks, bounds/existing
+outputs and failed publication. Combined with the demonstrated redundancy and
+the2.6.9 API source, they are sufficient for this single-call removal. Do not
+mock a second parser, remove methods reflectively or add an assertion that
+merely mirrors the deleted call. At the design checkpoint this was source-backed
+2.6.9 compatibility, not an executed2.6.9 CI job. The later October9 packet
+establishes helper execution for that actual CI attempt only; no claim about all
+future Bundler versions follows.
+
+The accepted verification brief requires the exact one-expression reverse diff,
+static Ruby/scoped whitespace and all-other-source/index parity. Lead accepted
+that static freeze and bound fresh8829164e before the already-planned
+core/full/API-lint/root-lint selection; prior87826e65 results cover older bytes
+only.
+The existing full/core focused selection includes all15 provenance examples,
+so no additional suite, dependency install, CI rerun/wait, DB engine, parser
+matrix or runtime operation is added. Existing guarded disposable DB/cleanup
+ownership remains unchanged. The381.446s batch passed core/full65 before its
+fallback lint offense; those functional results carry only for the final fixed
+literal's equivalence. Both final lints subsequently passed0/30.052s. Those
+checks cover the original composition. The fresh d59b/81f1 four-stage batch
+then passed0/376.437s with core65/full65 and both four-file lints clean. Those local
+checks supplied no executed2.6.9 CI proof or original500 attribution. The later
+actual2.6.9 native/environment/lock capture is recorded separately above, without
+dependency-equality or original-cause inference. Preserve the first
+core65/1/178.761s and corrected smoke53775d6d/418.068s histories. A rollback restores the
+unsupported-call refusal in2.6.9; there is no persistent/wire/schema migration
+or production deployment effect. Source/index remain held under lead-owned
+verification, independent of the OS unit and every retained-cluster authority hold.
+
+### Owning seams and source decision
+
+- `api/spec/spec_helper.rb:8–9` loads spec support before application setup;
+  `spec/support/app_helper.rb:5–13` owns the memoized Rack app used by Rack::Test.
+  Its only source callers use the Rack interface or force initialization.
+- Installed HaveAPI0.29.8 `lib/haveapi/action.rb:398–434` dispatches
+  `exec_exception` for execution and output failures; `server.rb:203–230`
+  dispatches `request_exception` before its generic response. Both reach
+  `Hooks.call_for` in `hooks.rb:146–196`, whose listener loop catches
+  `Hooks.stop`. Admin `api/lib/vpsadmin/api.rb:216` onward installs handlers
+  that may stop this loop. An appended listener cannot guarantee observation.
+- RSpec3.13.6 `formatters/json_formatter.rb` records reporter messages in its
+  native `messages` array; `example.rb:246–299` finishes after example hooks.
+  Use ordinary reporter notifications and `reporter.message`, keeping native
+  documentation/JSON formatters and their failure exit behavior intact.
+- `.github/workflows/api-specs.yml` already has identical full/core environment
+  steps, native JSON, seven-day always-upload results and separate file-list
+  artifacts. It records the effective lock digest, not its bytes. The thirteen
+  topic patterns and aggregate already cover `spec/smoke/**/*_spec.rb`.
+
+Choose a **spec-only dispatcher-entry observer**, not a HaveAPI patch, production
+hook, replacement exception handler or custom formatter. Prepend once to the
+test process's `HaveAPI::Hooks` singleton dispatcher, observing only the two
+literal exception hook names before calling the original method. Do not edit
+the listener list or catch its stop. Forward every original positional/keyword
+argument and block exactly once, preserving object identity, mutation, return,
+throw and raised-error semantics. Put the observer's own StandardError handling
+entirely before delegation; it must never rescue or retry the delegated call.
+Keep installation idempotent and inactive outside an actual RSpec Rack request.
+
+### Request scope, bounded evidence and error behavior
+
+The test app helper wraps its one memoized original app with a small Rack-call
+observer. It calls that same app once with the exact env and returns the exact
+status/headers/body triple, without reading or wrapping the body. It neither
+remounts routes nor calls `VpsAdmin::API.default` again. While the call is active,
+bind a fresh request ordinal to the actual current example and exact Rack env
+object. Dispatcher capture requires that same example/context env on the
+current execution thread; no fallback to the last request, global exception,
+guessed path or asynchronous child. Restore nested scope and clear it in ensure,
+including throw/error paths. No request/env/context/exception reference survives
+the call; only sanitized bounded values may enter the example's private buffer.
+
+Record only: diagnostic format1; repository-relative native example ID with
+its scoped suffix; request ordinal; enumerated HTTP method; final integer HTTP
+status when available; dispatcher name; primary exception class and at most
+two cause classes with public frame projections. An unknown method/status or
+missing context has a fixed marker. Do not log raw request paths, resolved IDs,
+query strings, action inputs, user/session objects, headers or response bodies.
+The ordinal and example identify the actual request without copying its data.
+If both dispatchers see a failure, retain their distinct stage labels rather
+than guessing which was the cause.
+
+Use class constant names with strict lexical/length bounds; anonymous/malformed
+names become fixed markers. Walk at most three exception objects, detect cause
+cycles, inspect at most64 locations per object and retain at most six public
+`{source_id, line}` frames per object. Public source IDs must map to enumerated
+Ruby files in the checkout's `api/{lib,models,spec}` and owning plugin API source,
+or the loaded bundle's public gem `lib` source. Emit repository-relative IDs or
+`gem-name/version/lib/...`, never absolute paths or method labels. Exclude
+config, seeds, temporary/private/eval paths and unknown files. Do not invoke
+exception message, full_message, inspect, SQL, params or arbitrary formatting.
+Cause inspection has the same rules as the primary exception. Errno/SQLSTATE
+are not required for this smallest durable unit; do not add generic exception
+attribute discovery.
+
+Bound each example to eight captured events and16KiB serialized output,
+including fixed truncation/observation-error indicators. Output only after the
+reporter's `example_failed` notification; passed/pending examples discard their
+buffers. Keep the whole failed example's bounded request grouping, so an earlier
+exception is not silently assigned to its later assertion. Use a fixed message
+prefix plus JSON through the existing reporter; native JSON remains parseable
+and captures the same sanitized packet. Listener cleanup runs on failure/pass/
+pending, without changing the example outcome or global reset hooks. Observer
+failure produces only a fixed unavailable/error marker and cannot replace the
+application exception, response or RSpec failure. Missing output after a killed
+process or outside-example error is incomplete evidence, not an empty-success
+certificate. This controls the new diagnostics; it does not claim to sanitize
+all pre-existing HaveAPI/RSpec logging or failure messages.
+
+### Exact accepted manifest
+
+All six paths are in vpsAdmin; no runtime, HaveAPI, schema, locale or pin edits.
+
+1. New `api/spec/support/request_exception_diagnostics.rb`: bounded projector,
+   spec-only dispatcher observer, request/example state and native reporter
+   listener; ordinary support loading installs it once.
+2. `api/spec/support/app_helper.rb`: bind the observer around the original
+   memoized Rack app without changing authentication or Rack response behavior.
+3. New `api/spec/smoke/request_exception_diagnostics_spec.rb`: actual dispatcher,
+   app, native output, privacy/error/isolation and environment-artifact tests.
+   The existing foundation smoke glob covers it exactly once in both modes.
+4. New `api/spec/ci_environment.rb`: a small explicit CLI/library for the current
+   environment evidence step; it is outside auto-loaded support and is not a
+   new runner. No DB, application boot, dependency resolution or network.
+5. `.github/workflows/api-specs.yml`: call that helper in both existing mode
+   steps and include the exact lock companion in their existing results artifact.
+   Keep action refs, matrix/topics, manifests, timeouts, commands/seed selection,
+   cancellation, native formatters and aggregate unchanged.
+6. `docs/agent-instructions/testing.md`: describe the bounded failure message,
+   dependency companions, reproduction/evidence limits and local quick selection.
+
+Use owning Bundler parsing/APIs for lock sources and resolved specifications;
+do not rebuild lock semantics. Derive topic membership from the authoritative
+workflow when needed, without a second thirteen-topic registry. These are lead
+precisions within the accepted interface, not new scope or a runtime change.
+
+The environment helper reads `Bundler.default_lockfile` after the job's normal
+setup and requires it to be this checkout's effective `api/Gemfile.lock` regular
+file. Read once; compute the SHA256 and copy those exact bytes to
+`tmp/rspec-Gemfile-<mode>-<topic>.lock`. Preserve existing environment keys and
+add a sorted name/version/platform list from the resolved Bundler specification
+set, plus Ruby/RubyGems/Bundler/RSpec versions. Do not dump gem install paths,
+Bundler settings, environment variables, plugin config or credentials. This
+proves the captured job dependency state, not that every resolved gem was loaded
+or that another run used an equivalent native platform.
+
+Guard the artifact against credential-bearing or unexpected source entries:
+the current public API/plugin Gemfiles and packaged lock declare only the
+public `https://rubygems.org` GEM source. Accept that URL with optional trailing
+slash; refuse other remote, GIT/PATH or unknown source-section forms before
+copy/upload, with a fixed diagnostic and no content excerpt. Do not redact or
+rewrite bytes and then label them exact. Require strict full/core and existing
+topic labels for filenames, a fresh ordinary output destination, and bounded
+lock size. No source lockfile is changed and no package lock substitutes for the
+effective one. Write companions atomically after validation; evidence-step
+failure remains a distinct nonzero preparation failure, never a successful
+RSpec run. The existing upload allowlist gains only this companion, not a tmp
+wildcard. Missing companions mean dependency reproduction is unproved.
+
+### Acceptance and verification selection
+
+Released initial member scope is source/static only. Lead owns fresh watched
+checks in the declared component environment and the existing guarded disposable
+DB contract: configured/live DB refusal, pre-effect binding, ordinary owner
+shutdown, primary-error preservation and no prune remain unchanged. This source
+unit introduces no DB helper, SQL, timeout, cleanup or retry behavior.
+
+Focused tests must exercise the real dispatcher with handlers that stop early,
+return overrides, mutate initial hashes, throw or raise; both hook names and
+unchanged argument/block/result identities are required. Exercise the actual
+memoized app with scoped request/exec faults, ordinary validation, authentication
+and successful requests, repeated app access, successive examples/requests,
+nested requests and unbound/background capture refusal. Preserve HTTP envelope
+and all normal auth/session behavior. Prove cause cycles, nil/oversized traces,
+secret sentinels, excluded frames and injected observer failures cannot escape
+into output or change primary behavior. No permanent route or application
+exception handler is added.
+
+Use a small ordinary RSpec subprocess in the diagnostic spec for intentionally
+failing/passing/pending examples and the existing documentation/native JSON
+formatters: verify nonzero failure exit, parseable JSON with the bounded message,
+no pass/pending leakage and no cross-example state. Its fixtures need no DB or
+second harness. Test the environment helper with fixture lock bytes and exact
+copy/digest/version evidence, both modes, invalid labels/remote credentials,
+unsupported source forms and failed artifact writes. Do not use private locks
+or real credentials as test inputs. Captured output does not feed API behavior.
+
+Prospective quick argv, each mode in its own fresh declared environment:
+
+```sh
+VPSADMIN_PLUGINS=none nix develop .#api -c bundle exec rspec spec/smoke/request_exception_diagnostics_spec.rb spec/smoke/api_boot_spec.rb spec/api/resources/environment_write_spec.rb --format documentation --format json --out "$DIAGNOSTIC_RESULT"
+VPSADMIN_PLUGINS=all nix develop .#api -c bundle exec rspec spec/smoke/request_exception_diagnostics_spec.rb spec/smoke/api_boot_spec.rb spec/api/resources/environment_write_spec.rb --format documentation --format json --out "$DIAGNOSTIC_RESULT"
+```
+
+Parent supplies separate fresh results/owned DBs and watches uncertain duration.
+Run the declared component and root RuboCop over the four owned Ruby files,
+workflow/shell syntax checks and scoped diff check. Validate existing full/core
+topic exact-once coverage including the single new smoke spec; do not repartition
+topics. Verify both artifact steps retain native failure status and their fixed
+allowlists. This does not require another full platform reproduction, CI retry,
+VM, kernel build or migration suite merely to establish diagnostic behavior.
+Normal new coherent commit and independent review of this test/privacy/artifact
+unit follow accepted quick checks; it is not a correction to published32d's
+authorization behavior and does not rewrite its consumed history.
+
+Production API contracts, database/wire versions and generated clients remain
+unchanged. Old test checkouts simply lack the new evidence; optional new native
+messages/environment fields and a separate companion preserve old result readers.
+Rollback removes test evidence only. No deployment, package/default integration,
+Contract2 invocation/release, retained-cluster restart, physical/G2 or alias
+disposition follows. The normal new commit, equivalent rebase and accepted
+four-stage verification of that composition are recorded above. Complete-branch
+primary review is complete, with the narrow docs-only step9 correction recorded
+separately; message-only wrap, feature publication/readback and comparison are
+accepted. Source delivery is complete; the October9 current CI checkpoint records
+OS PASS and completed bounded read-only diagnosis of Admin's API failure. Overall CI
+clearance/default merge remain held, with all default/package/live/physical holds retained.
+Original failure cause
+and exact CI environment reproduction remain unresolved even if this diagnostic
+unit passes.
+
 ## API platform request-exception diagnostic brief, 2026-10-03
+
+**Historical unimplemented proposal:** the October7 durable dispatcher-entry
+brief above supersedes this proposal for future source release. The original
+failure evidence and source assessment below retain their historical scope.
 
 **Design saved; application authoring remains held.** The lead releases this
 test-only change after the current retained-cluster operation. Keep exact
